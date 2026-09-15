@@ -47,18 +47,20 @@ export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
 
 /**
  * Most bytes `app.js` may take gzipped (launch ≤ 10 s on the TV, shmup_feat.md §23): 350 KB from
- * M1-19, 384 KB since M2-16 (the Options pages, rebinding and the UI string table — the built-in
- * English table and its content copy — took the bundle to ≈ 359 KB).
+ * M1-19, 384 KB from M2-16 (the Options pages, rebinding and the UI string table — the built-in
+ * English table and its content copy — took the bundle to ≈ 359 KB), **512 KB since M3-02**.
  *
  * @remarks
- * The owner has authorised raising this budget when a plan step genuinely needs the room (M3-01
- * left only ≈ 9 KB free). Raise it deliberately: prefer leaner shipped code first, then bump this
- * constant together with the expectation in `apps/tizen/test/scripts/check-bundle.test.ts`, the
- * budget table in `docs/dev/debug-and-replays.md` and `docs/dev/api-reference.md`, and say in the
- * commit message what the extra bytes bought. The launch must still stay ≤ 10 s on the TV, which
- * M2-18's boot-time check guards.
+ * 512 KB is the owner's agreed ceiling: M3-01 left only ≈ 9 KB under the old 384 KB budget, and
+ * M3-02 / M3-03 both ship more code, so the headroom was granted up front rather than argued over
+ * per step. Spend it, do not treat it as a target — prefer leaner shipped code first. Raising it
+ * **above** 512 KB needs the owner's say-so; a raise also updates the expectation in
+ * `apps/tizen/test/scripts/check-bundle.test.ts` and the budget tables in
+ * `docs/dev/debug-and-replays.md`, `docs/dev/build-test-deploy.md`, `docs/dev/api-reference.md` and
+ * `apps/tizen/README.md`. The real constraint is unchanged: the launch must stay ≤ 10 s on the TV
+ * (`shmup_feat.md` §23), which M2-18's boot-time check guards.
  */
-export const APP_JS_GZIP_BUDGET = 384 * 1024;
+export const APP_JS_GZIP_BUDGET = 512 * 1024;
 
 /** Largest atlas page edge in pixels (2048² — shmup_feat.md §22 budgets). */
 export const ATLAS_PAGE_MAX_SIZE = 2048;

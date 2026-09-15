@@ -38,9 +38,11 @@
 
 ### Open items and risks for the remaining steps
 
-- **Tizen bundle size:** `app.js` is at **374.7 KB gzip of its 384 KB budget** (`APP_JS_GZIP_BUDGET`, already raised
-  from 350 KB during M2). M3-02 adds an affine-floor shader, a pseudo-3D stage, a CRT filter and new bosses. Expect
-  to need lazy content or trimming, or a deliberate, documented budget decision.
+- **Tizen bundle size:** `app.js` is at **374.7 KB gzip**; `APP_JS_GZIP_BUDGET` was **384 KB and is now 512 KB**
+  (350 → 384 during M2, 384 → 512 before M3-02 — the owner's agreed ceiling, since M3-02 adds an affine-floor
+  shader, a pseudo-3D stage, a CRT filter and new bosses and M3-03 adds CJK font atlases). Spend the headroom, do
+  not treat it as a target: prefer lean shipped code, lazy content or trimming first. Raising it **above 512 KB**
+  needs the owner's say-so. The real constraint is the ≤ 10 s launch, guarded by M2-18's boot-time check.
 - **M3-03 has parts no agent can finish:** TV Seller Office submission and alpha test, Steamworks with a real Steam
   app id, LG webOS on real hardware, and Steam Deck verification. The agents should build the code, adapters with
   fakes, scripts and docs, and leave the account- and hardware-only actions as a checklist for the user. That is

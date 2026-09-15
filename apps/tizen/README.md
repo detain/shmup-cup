@@ -48,7 +48,7 @@ as a classic deferred script, **it parses with acorn as an ES2018 script**, it s
 the polyfill, `config.xml` / `icon.png` are present, every other file lives under
 `dist/assets/` (so nothing unexpected is packaged into the `.wgt`), and at least one atlas
 page exists under `dist/assets/atlas/` (the shell cannot boot without it), and — since M1-19 — the
-**budgets** hold: `app.js` ≤ 384 KB gzipped (350 KB until M2-16), every atlas page a PNG of at most 2048², the whole
+**budgets** hold: `app.js` ≤ 512 KB gzipped (350 KB until M2-16, 384 KB until M3-02), every atlas page a PNG of at most 2048², the whole
 `dist/` ≤ 8 MB (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
 228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped, after M2-12 313.5 KB,
 after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB, after M2-16 ≈ 359 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos, M2-16 the two UI string tables, the Options pages and the rebinding). The checks are also exported as `checkTizenBundle(distDir)`

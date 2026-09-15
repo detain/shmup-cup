@@ -245,9 +245,9 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect(pngSize(notIhdr)).toBeNull();
   });
 
-  it('keeps the budgets: 384 KB gzip (350 KB until M2-16), 2048² pages, 8 MB', () => {
+  it('keeps the budgets: 512 KB gzip (350 KB until M2-16, 384 KB until M3-02), 2048² pages, 8 MB', () => {
     expect([APP_JS_GZIP_BUDGET, ATLAS_PAGE_MAX_SIZE, DIST_BUDGET]).toEqual([
-      384 * 1024,
+      512 * 1024,
       2048,
       8 * 1024 * 1024,
     ]);
@@ -267,11 +267,11 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     ]);
   });
 
-  it('rejects an app.js over 384 KB gzipped and a dist/ over 8 MB', () => {
-    // Random-looking text barely compresses: ~800 KB of it stays far over the gzip budget.
+  it('rejects an app.js over 512 KB gzipped and a dist/ over 8 MB', () => {
+    // Random-looking text barely compresses: ~1.3 MB of it stays far over the gzip budget.
     let state = 1;
     let noise = '';
-    for (let i = 0; i < 120_000; i++) {
+    for (let i = 0; i < 200_000; i++) {
       state = (Math.imul(state, 1103515245) + 12345) >>> 0;
       noise += state.toString(36);
     }
@@ -279,7 +279,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     put('assets/big.bin', new Uint8Array(DIST_BUDGET));
     const problems = checkTizenBundle(dir).problems;
     expect(problems).toHaveLength(2);
-    expect(problems[0]).toMatch(/^app\.js is [\d.]+ KB gzipped, over the 384\.0 KB budget$/);
+    expect(problems[0]).toMatch(/^app\.js is [\d.]+ KB gzipped, over the 512\.0 KB budget$/);
     expect(problems[1]).toMatch(/^dist\/ holds [\d.]+ KB, over the 8192\.0 KB budget$/);
   });
 

@@ -629,7 +629,7 @@ heap without V8's code spaces — `dataHeapBytes()` — flat within 1 MB), one f
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **384 KB since M2-16** (350 KB before; launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB), **374.7 KB after M3-01** (the extra modes, the run replays and their screens, the zones' remixes — the budget was not raised) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **512 KB since M3-02** (350 KB until M2-16, 384 KB until M3-02; the owner's agreed ceiling — going above it needs their say-so. Launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB), **374.7 KB after M3-01** (the extra modes, the run replays and their screens, the zones' remixes — the budget was not raised) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 

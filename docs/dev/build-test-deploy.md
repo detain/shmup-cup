@@ -125,8 +125,8 @@ exactly one script `app.js`, `index.html` loads it as a deferred classic script,
 `config.xml` / `icon.png` are present, every other file lives under `dist/assets/`
 (the atlas pages — anything else would be packaged into the `.wgt` by accident), and at
 least one atlas page exists under `dist/assets/atlas/` (without it the widget can only show
-the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` ≤ 384 KB gzipped
-(`APP_JS_GZIP_BUDGET`; 350 KB until M2-16), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
+the boot error screen), and — since M1-19 — the **budgets** hold: `app.js` ≤ 512 KB gzipped
+(`APP_JS_GZIP_BUDGET`; 350 KB until M2-16, 384 KB until M3-02), every atlas page a readable PNG of at most 2048² (`ATLAS_PAGE_MAX_SIZE`),
 the whole `dist/` ≤ 8 MB (`DIST_BUDGET`). The OK line prints the sizes against them
 (M1-19: `app.js` 773.6 KB, 228.6 KB gzipped; `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB
 gzipped, after M2-12 313.5 KB, after M2-13 320.3 KB, after M2-14 331.5 KB and after M2-15
@@ -136,8 +136,10 @@ end added ~9 KB of scene code and ~3 KB of demos —
 [front-end-and-attract.md](front-end-and-attract.md#budgets-string-slots-and-the-bundle); after
 M2-16 **≈ 359 KB** — the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB —,
 so M2-16 raised the budget to 384 KB
-([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#budgets); M2-18's
-boot-time check still guards the launch). A release build must also carry
+([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#budgets)); M3-01
+took it to **374.7 KB**, leaving ≈ 9 KB, so before M3-02 the owner set **512 KB** as the agreed
+ceiling — room to spend, not a target, and going above it needs their say-so (M2-18's boot-time
+check still guards the launch, which is the real constraint). A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
