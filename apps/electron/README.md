@@ -11,8 +11,23 @@ Minimal **Electron** desktop shell (Windows / macOS / Linux / Steam Deck —
   optional fullscreen.
 - `src/main/app-protocol.ts`: URL → file mapping with path-traversal protection.
 - `src/preload/preload.cts`: sandboxed CommonJS preload exposing `window.shmupElectron`
-  (`platform`, `quit()`); channel names shared with `src/shared/ipc.ts`.
-- Placeholders: `src/main/saves.ts` (file-based storage), `src/main/steam.ts` (Steamworks).
+  (`platform`, `quit()`, `storage.get` / `storage.set`); channel names shared with
+  `src/shared/ipc.ts`.
+- `src/main/saves.ts` (M2-17): the file saves — one JSON file per key in
+  `<userData>/saves/` (`save.v1.json`, `window.json`), atomic write (temp file + fsync + rename),
+  the previous text kept as `<key>.json.bak` and read when the file is missing or corrupt, a 1 MiB
+  per-value and 8 MiB folder quota.
+- `src/main/ipc-handlers.ts` (M2-17): the main side of the IPC contract — quit and the storage
+  channels, refused for any page but the game's (`app://game/`, or `SHMUP_DEV_URL`'s origin) and for
+  invalid keys / values.
+- `src/main/window-state.ts` (M2-17): the remembered window — fullscreen, the scale of the 384×216
+  frame (×1 … ×10, lowered to fit the screen), the position — and the shortcuts **F11** /
+  **Alt+Enter** (fullscreen), **Ctrl+=** / **Ctrl+-** / **Ctrl+0** (scale; Cmd on macOS).
+- The web build it loads detects the bridge (`apps/web` `getElectronBridge`): platform
+  `'electron'`, file saves, EXIT on the title quits, audio unlocked at boot. Gamepads, the 60 Hz
+  fixed step with its accumulator and render interpolation on 120 / 144 Hz monitors come from the
+  web build's shell (M2-08).
+- Placeholder: `src/main/steam.ts` (Steamworks).
 
 ```sh
 pnpm --filter @shmup/electron build   # tsc → dist/main/*.js, dist/preload/preload.cjs + copy apps/web/dist → dist/renderer
@@ -23,5 +38,9 @@ SHMUP_DEV_URL=http://localhost:5173 pnpm --filter @shmup/electron start   # agai
 Environment: `SHMUP_DEV_URL`, `SHMUP_RENDERER_DIR`, `SHMUP_FULLSCREEN=1`.
 
 **CI** only type-checks, tests and compiles this app, with
-`ELECTRON_SKIP_BINARY_DOWNLOAD=1` (no binary download). Packaging (electron-builder /
-Steam depots) is a later step.
+`ELECTRON_SKIP_BINARY_DOWNLOAD=1` (no binary download).
+
+**Packaging (M2-17, never in CI):** `pnpm --filter @shmup/electron build` then
+`pnpm --filter @shmup/electron package` runs a pinned `electron-builder` through `pnpm dlx` with
+`electron-builder.json` (Windows NSIS + portable, Linux AppImage + tar.gz for the Steam Deck, macOS
+dmg; `--publish never`) into `release/` (git-ignored). Steam depots come with M3.

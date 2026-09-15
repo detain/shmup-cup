@@ -29,6 +29,7 @@ const compiled = ts.transpileModule(source, {
 function runPreload() {
   const exposed = new Map<string, unknown>();
   const sent: unknown[][] = [];
+  const invoked: unknown[][] = [];
   const required: string[] = [];
   const electron = {
     contextBridge: {
@@ -39,6 +40,10 @@ function runPreload() {
     ipcRenderer: {
       send: (...args: unknown[]) => {
         sent.push(args);
+      },
+      invoke: (...args: unknown[]) => {
+        invoked.push(args);
+        return Promise.resolve(args[0] === IPC_CHANNELS.storageGet ? 'stored' : undefined);
       },
     },
   };
@@ -52,7 +57,7 @@ function runPreload() {
     module,
     exports: module.exports,
   });
-  return { exposed, sent, required };
+  return { exposed, sent, invoked, required };
 }
 
 describe('electron/preload runtime behaviour', () => {
@@ -62,12 +67,24 @@ describe('electron/preload runtime behaviour', () => {
     expect(compiled).not.toMatch(/^\s*import\s/m);
   });
 
-  it('exposes exactly window.shmupElectron = { platform, quit }', () => {
+  it('exposes exactly window.shmupElectron = { platform, quit, storage: { get, set } }', () => {
     const { exposed } = runPreload();
     expect([...exposed.keys()]).toEqual(['shmupElectron']);
     const api = exposed.get('shmupElectron') as ShmupElectronApi;
-    expect(Object.keys(api).sort()).toEqual(['platform', 'quit']);
+    expect(Object.keys(api).sort()).toEqual(['platform', 'quit', 'storage']);
+    expect(Object.keys(api.storage).sort()).toEqual(['get', 'set']);
     expect(api.platform).toBe('electron');
+  });
+
+  it('storage.get / storage.set invoke the storage channels with the key (and value) only (M2-17)', async () => {
+    const { exposed, invoked } = runPreload();
+    const api = exposed.get('shmupElectron') as ShmupElectronApi;
+    expect(await api.storage.get('save.v1')).toBe('stored');
+    await expect(api.storage.set('save.v1', '{}')).resolves.toBeUndefined();
+    expect(invoked).toEqual([
+      [IPC_CHANNELS.storageGet, 'save.v1'],
+      [IPC_CHANNELS.storageSet, 'save.v1', '{}'],
+    ]);
   });
 
   it('quit() sends the quit channel the main process listens on, with no payload', () => {

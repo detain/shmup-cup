@@ -13,6 +13,11 @@ describe('electron/preload', () => {
     expect(preloadSource).toContain(`const QUIT_CHANNEL = '${IPC_CHANNELS.quit}';`);
   });
 
+  it('uses the same storage channels as the main process (M2-17)', () => {
+    expect(preloadSource).toContain(`const STORAGE_GET_CHANNEL = '${IPC_CHANNELS.storageGet}';`);
+    expect(preloadSource).toContain(`const STORAGE_SET_CHANNEL = '${IPC_CHANNELS.storageSet}';`);
+  });
+
   it('exposes only the narrow shmupElectron API via contextBridge', () => {
     expect(preloadSource).toContain("exposeInMainWorld('shmupElectron'");
     expect(preloadSource).not.toMatch(/nodeIntegration|require\(['"](fs|child_process)/);

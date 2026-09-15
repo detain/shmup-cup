@@ -16,6 +16,8 @@ import {
 } from '../../scripts/check-bundle.mjs';
 
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
+/** The shipped (default-variant) config.xml — the bundle check validates it (M2-17). */
+const CONFIG_XML = readFileSync(new URL('../../public/config.xml', import.meta.url), 'utf8');
 const GOOD_HTML =
   '<!doctype html><html><head><script defer src="./app.js"></script></head><body></body></html>';
 const GOOD_APP = `${polyfill}\n(function () { 'use strict'; })();\n`;
@@ -63,7 +65,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'shmup-check-budgets-'));
   put('index.html', GOOD_HTML);
   put('app.js', GOOD_APP);
-  put('config.xml', '<widget/>');
+  put('config.xml', CONFIG_XML);
   put('icon.png', 'png');
   put('assets/atlas/main.png', png(256, 256));
 });

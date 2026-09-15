@@ -15,3 +15,10 @@ declare const __SHMUP_DEV__: boolean;
 
 /** The build id: the short git SHA of the build (`+` when the work tree had changes). */
 declare const __SHMUP_BUILD__: string;
+
+/**
+ * The live-reload WebSocket URL of a `tizen:watch` dev build (`ws://<desktop>:<port>`, M2-17 —
+ * `apps/tizen/scripts/tizen-watch.mjs` sets `SHMUP_LIVE_RELOAD_URL`); `''` in every other build.
+ * Defined by `apps/tizen/vite.config.ts` only — the Tizen entry point reads it.
+ */
+declare const __SHMUP_LIVE_RELOAD__: string;

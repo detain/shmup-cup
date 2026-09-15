@@ -11,8 +11,11 @@
  * Pause, Ch+, Ch+, Ch+, the overlay, `window.__shmupDebug`). Since M2-16 it applies the save's
  * input settings through the app ({@link ShellInputProfiles}'s `customize`) and gives the scene
  * flow the rebind screen's host side ({@link createShellControls} — key names, the adapter's
- * capture, rebinding with conflict detection, reset). The apps stay thin adapters (input, audio,
- * platform, Back key).
+ * capture, rebinding with conflict detection, reset). Since M2-17 it also holds the hosts' one
+ * `localStorage` adapter with quota checks ({@link createWebStorage}), the debug save export /
+ * import ({@link exportSaveText}, {@link importSaveText}) and the TV memory budget — the estimator
+ * ({@link estimateStageMemory}) and the atlas-page residency between zones
+ * ({@link createAtlasResidency}). The apps stay thin adapters (input, audio, platform, Back key).
  *
  * Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
  *
@@ -119,6 +122,52 @@ export {
   type DebugTools,
   type DebugToolsFactory,
   type DebugToolsHost,
+  type DebugSaveApi,
   type DebugToolsOptions,
   type ShmupDebugApi,
 } from './debug/index.js';
+export {
+  DISPOSABLE_STORAGE_KEYS,
+  STORAGE_PREFIX,
+  STORAGE_QUOTA_BYTES,
+  STORAGE_VALUE_MAX_BYTES,
+  createWebStorage,
+  exportSaveText,
+  importSaveText,
+  isQuotaExceededError,
+  storageBytes,
+  type QuotaStorage,
+  type SaveImportResult,
+  type StorageIssue,
+  type StorageIssueKind,
+  type StorageUsage,
+  type WebStorageLike,
+  type WebStorageOptions,
+} from './storage/index.js';
+export {
+  AUDIO_BUDGET_BYTES,
+  FILE_TRACK_FALLBACK_SECONDS,
+  HEAP_BASELINE_BYTES,
+  MEMORY_BUDGET_BYTES,
+  MIB,
+  TEXTURE_BUDGET_BYTES,
+  atlasPageNeeds,
+  connectAtlasResidency,
+  createAtlasResidency,
+  estimateMemory,
+  estimateStageMemory,
+  pageBytes,
+  sfxBankBytes,
+  songFrameBound,
+  stageMusicTracks,
+  stagePages,
+  stageSpriteSets,
+  trackBytes,
+  type AtlasPageLike,
+  type AtlasPageNeeds,
+  type AtlasResidency,
+  type MemoryEstimate,
+  type MemoryInputs,
+  type StageMemoryInputs,
+  type StageSpriteSets,
+} from './memory/index.js';

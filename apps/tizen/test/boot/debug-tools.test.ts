@@ -126,6 +126,29 @@ describe('tizen/boot debug tools (M1-19)', () => {
     tools.destroy();
   });
 
+  it('shows the TV facts on the overlay once unlocked — model and firmware from webapis (M2-17)', async () => {
+    const win = new FakeWindow(true);
+    Object.assign(win, {
+      navigator: { userAgent: 'Mozilla/5.0 (SMART-TV; Tizen 5.5) Chrome/69.0.3497.106 TV Safari' },
+      innerWidth: 1920,
+      innerHeight: 1080,
+      devicePixelRatio: 1,
+      webapis: {
+        productinfo: { getRealModel: () => 'LS43AM702U', getFirmware: () => 'T-KSU2-1' },
+      },
+    });
+    const tools = create(win);
+    const lines = (): string[] => [...tools.overlay.panel.values.strings];
+    tools.beforeRender();
+    expect(lines().some((text) => text.includes('LS43AM702U'))).toBe(false);
+    win.unlock();
+    await Promise.resolve();
+    await Promise.resolve();
+    tools.beforeRender();
+    expect(lines()).toContain('LS43AM702U FW T-KSU2-1 1920x1080@1 C69 GL1');
+    tools.destroy();
+  });
+
   it('unlocks outside a TV too (no window.tizen), without registering anything', () => {
     const win = new FakeWindow(false);
     const tools = create(win);

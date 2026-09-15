@@ -59,6 +59,7 @@ export default defineConfig([
     '**/coverage/',
     '**/.turbo/',
     'assets/generated/',
+    'apps/electron/release/',
     'tools/',
   ]),
 

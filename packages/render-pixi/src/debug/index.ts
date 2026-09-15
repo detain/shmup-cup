@@ -5,7 +5,8 @@
  * (plan M1-19, shmup_feat.md §24): a **panel** with FPS, tick ms / render ms (measured by the host
  * — `@shmup/shell`), WebGL draw calls, pool usage (enemy bullets, enemies, player shots,
  * particles, lasers, items), rank, gameplay RNG calls, the state hash taken every 60 ticks, the
- * WebGL version, boot ms, the build id, the active debug switches and a **frame graph** of the
+ * WebGL version, boot ms, the build id, the active debug switches, an optional device line (M2-17 —
+ * the TV's model and firmware) and a **frame graph** of the
  * last 60 frame times (hitches stand out in yellow / red); and the **outlines**: the ships' hurt
  * circles and terrain boxes, enemy and boss-part hurtboxes (every boss slot's — M2-09),
  * player-shot boxes, enemy bullet circles, item radii, active laser capsules and the broad-phase
@@ -35,7 +36,9 @@
  * {@link DebugOverlayStats}, {@link createDebugOverlayStats}, {@link DebugPanelLists},
  * {@link createDebugPanelLists}, {@link buildDebugPanel}, {@link DebugOutlineLists},
  * {@link createDebugOutlineLists}, {@link buildDebugOutlines}, {@link createFrameGraph},
- * {@link FrameGraph}, {@link OUTLINE_COLORS}, {@link PANEL_COLORS}, {@link FRAME_GRAPH_LENGTH}.
+ * {@link FrameGraph}, {@link OUTLINE_COLORS}, {@link PANEL_COLORS}, {@link FRAME_GRAPH_LENGTH};
+ * M2-17: {@link setDebugPanelDevice}, {@link debugDeviceText}, {@link DEBUG_DEVICE_MAX} (the
+ * device line — the TV's model and firmware under the panel).
  *
  * @module
  */
@@ -207,6 +210,21 @@ export interface DebugPanelLists {
   readonly bad: DrawList;
 }
 
+/**
+ * Sets the panel's device line (M2-17 — the TV's model, firmware, display: a sixth line under the
+ * five; `''`, the web's case, removes it). The line lives in a string slot of the values list.
+ *
+ * @remarks
+ * Cold: writes the slot only when the text changed.
+ *
+ * @param lists - The panel lists.
+ * @param text - The line ({@link debugDeviceText} is applied).
+ */
+export function setDebugPanelDevice(lists: DebugPanelLists, text: string): void {
+  const line = debugDeviceText(text);
+  if (line !== lists.values.strings[DEVICE]) lists.values.setString(DEVICE, line);
+}
+
 /** The panel lists in drawing order. */
 const PANEL_KINDS = ['backdrop', 'good', 'warn', 'bad', 'labels', 'values', 'alerts'] as const;
 
@@ -256,6 +274,29 @@ const DOT = 0;
 /** Values-list slot of the build id. */
 const BUILD = 1;
 
+/** Values-list slot of the device line (M2-17). */
+const DEVICE = 2;
+
+/** Longest device line the panel draws, in characters (the panel and its frame graph). */
+export const DEBUG_DEVICE_MAX = 56;
+
+/**
+ * Makes a device line drawable by the pixel font: characters outside printable ASCII become `?`,
+ * and the line is cut to {@link DEBUG_DEVICE_MAX} characters.
+ *
+ * @param text - The line (e.g. the TV's model and firmware — `apps/tizen` `device-info`).
+ * @returns The drawable line.
+ *
+ * @example
+ * ```ts
+ * debugDeviceText('QN43LS03 ✓ T-KSU2'); // → 'QN43LS03 ? T-KSU2'
+ * ```
+ */
+export function debugDeviceText(text: string): string {
+  const cut = text.length > DEBUG_DEVICE_MAX ? text.slice(0, DEBUG_DEVICE_MAX) : text;
+  return cut.replace(/[^\x20-\x7e]/g, '?');
+}
+
 /**
  * Creates the panel lists with their static strings (labels, switches, the build id).
  *
@@ -271,9 +312,10 @@ const BUILD = 1;
 export function createDebugPanelLists(buildId: string): DebugPanelLists {
   const labels = createDrawList(96, LABELS.length);
   LABELS.forEach((text, slot) => labels.setString(slot, text));
-  const values = createDrawList(64, 2);
+  const values = createDrawList(64, 3);
   values.setString(DOT, '.');
   values.setString(BUILD, buildId.toUpperCase());
+  values.setString(DEVICE, '');
   const alerts = createDrawList(16, ALERTS.length);
   ALERTS.forEach((text, slot) => alerts.setString(slot, text));
   return {
@@ -481,12 +523,14 @@ export function buildDebugPanel(
   const graphX = PANEL_X + PANEL_W + GRAPH_GAP;
   const baseY = PANEL_Y + PANEL_LINES * ROW - 2;
   const backdrop = lists.backdrop;
+  const device = values.strings[DEVICE] !== '';
+  const lines = device ? PANEL_LINES + 1 : PANEL_LINES;
   backdrop.clear();
   backdrop.rect(
     PANEL_X - 2,
     PANEL_Y - 2,
     PANEL_W + GRAPH_GAP + length + 4,
-    PANEL_LINES * ROW + 2,
+    lines * ROW + 2,
     PANEL_COLORS.backdrop,
     150,
   );
@@ -561,6 +605,8 @@ export function buildDebugPanel(
     label(alerts, A('SLOW'), ac, col, 4);
     number(alerts, flags.slowMo, ac, col + 5, 4);
   }
+  // Line 5 (M2-17): the device line (model, firmware, display) when the host set one.
+  if (device) label(values, DEVICE, vc, 0, 5);
 
   // The frame graph, newest bar on the right.
   const good = lists.good;
@@ -841,6 +887,13 @@ export interface DebugOverlay {
    * @param counters - The sim counters for the panel, or `null` without a World.
    */
   update(world: World | null, flags: DebugFlags, counters: DebugCounters | null): void;
+  /**
+   * Sets the panel's device line (M2-17 — {@link setDebugPanelDevice}; `''` removes it). Cheap
+   * when the text did not change.
+   *
+   * @param text - The line.
+   */
+  setDevice(text: string): void;
   /** Removes the overlay from the renderer and destroys its quads (idempotent). */
   destroy(): void;
 }
@@ -952,6 +1005,9 @@ export function createDebugOverlay(
         buildDebugPanel(panel, stats, counters, flags, graph);
         for (let i = 0; i < panelViews.length; i++) panelViews[i].view.draw(panelViews[i].list);
       }
+    },
+    setDevice(text) {
+      setDebugPanelDevice(panel, text);
     },
     destroy() {
       if (destroyed) return;

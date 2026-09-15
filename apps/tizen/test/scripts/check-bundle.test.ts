@@ -17,6 +17,8 @@ import {
 } from '../../scripts/check-bundle.mjs';
 
 const polyfill = readFileSync(new URL('../../polyfills/global-this.js', import.meta.url), 'utf8');
+/** The shipped (default-variant) config.xml — the bundle check validates it (M2-17). */
+const CONFIG_XML = readFileSync(new URL('../../public/config.xml', import.meta.url), 'utf8');
 const GOOD_HTML =
   '<!doctype html><html><head><script defer src="./app.js"></script></head><body><canvas id="game"></canvas></body></html>';
 const GOOD_APP = `${polyfill}\n(function () {\n  'use strict';\n  var x = { a: 1 };\n  var y = Object.assign({}, x, { b: 2 });\n  async function f() { for await (const v of []) { void v; } }\n  void f; void y;\n})();\n`;
@@ -58,7 +60,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'shmup-check-bundle-'));
   put('index.html', GOOD_HTML);
   put('app.js', GOOD_APP);
-  put('config.xml', '<widget/>');
+  put('config.xml', CONFIG_XML);
   put('icon.png', 'png');
   put('assets/atlas/main.png', PAGE);
 });

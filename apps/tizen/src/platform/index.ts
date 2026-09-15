@@ -15,7 +15,8 @@
  *   (game frozen, audio suspended), visible → resume. JS is frozen while hidden, so the
  *   core never trusts the wall clock across a resume.
  * - **Exit** — `tizen.application.getCurrentApplication().exit()`.
- * - Storage via `localStorage` (Tizen deletes it on uninstall — store requirement).
+ * - Storage via `localStorage` with quota checks (the shell's `createWebStorage`, M2-17; Tizen
+ *   deletes it on uninstall — store requirement).
  *
  * Works in a desktop browser too (no `window.tizen`): registration is skipped and
  * `exit` is `null`, so `pnpm --filter @shmup/tizen dev` runs anywhere.
@@ -30,8 +31,8 @@
  * @module
  */
 import { SYSTEM_REMOTE_KEYS } from '@shmup/input-web';
+import { createWebStorage, type WebStorageLike } from '@shmup/shell';
 import {
-  createMemoryStorage,
   defineModule,
   type Platform,
   type PlatformAudio,
@@ -218,66 +219,30 @@ export function watchBackKey(target: EventTarget, onBack: () => void): () => voi
   };
 }
 
-/** The parts of the Web Storage API used here. */
-export interface StorageLike {
-  /**
-   * Reads a value.
-   *
-   * @param key - Full (already prefixed) key.
-   * @returns The value, or `null` when missing.
-   * @throws DOMException when storage access is denied (the adapter then falls back
-   *   to memory).
-   */
-  getItem(key: string): string | null;
-  /**
-   * Writes a value.
-   *
-   * @param key - Full (already prefixed) key.
-   * @param value - Value to store.
-   * @throws DOMException `QuotaExceededError` when storage is full or disabled (the
-   *   adapter then falls back to memory).
-   */
-  setItem(key: string, value: string): void;
-}
+/** The parts of the Web Storage API used here (the shell's `WebStorageLike`). */
+export type StorageLike = WebStorageLike;
 
 /**
- * Wraps `localStorage` as async storage (keys prefixed `shmup-cup:`); the first
- * storage error switches to an in-memory store for the rest of the session.
+ * Wraps `localStorage` as async storage (keys prefixed `shmup-cup:`) with the shell's quota
+ * checks (M2-17 — `createWebStorage`): a full storage keeps that one value in memory for the
+ * session, any other storage error switches to memory for the rest of it. Issues are logged
+ * (visible in the remote Web Inspector).
  *
  * @remarks
  * Tizen deletes an app's `localStorage` on uninstall (a store requirement), so no
  * extra cleanup is needed.
  *
  * @param storage - `window.localStorage` or `null`.
- * @returns Platform storage.
+ * @returns Platform storage (with `usage()` — the debug tools' save API reads it).
  */
 function createTvStorage(storage: StorageLike | null): PlatformStorage {
-  const fallback = createMemoryStorage();
-  const prefix = 'shmup-cup:';
-  let backend = storage;
-  return {
-    get(key) {
-      if (backend !== null) {
-        try {
-          return Promise.resolve(backend.getItem(prefix + key));
-        } catch (_error) {
-          backend = null;
-        }
-      }
-      return fallback.get(key);
+  return createWebStorage(storage, {
+    onIssue: (issue) => {
+      console.warn(
+        `Shmup Cup: "${issue.key}" was not stored (${issue.kind}, ${issue.bytes} bytes)`,
+      );
     },
-    set(key, value) {
-      if (backend !== null) {
-        try {
-          backend.setItem(prefix + key, value);
-          return Promise.resolve();
-        } catch (_error) {
-          backend = null;
-        }
-      }
-      return fallback.set(key, value);
-    },
-  };
+  });
 }
 
 /** A document-like visibility source. */

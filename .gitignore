@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 *.wgt
+# Electron packages (pnpm --filter @shmup/electron package — never in CI)
+apps/electron/release/
 *.tsbuildinfo
 .vite/
 

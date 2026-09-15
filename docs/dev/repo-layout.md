@@ -75,7 +75,7 @@ shmup-cup/
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ (+ KeyCapture — M2-16) gamepad ✔ web-input ✔ (player seats — M2-06; the rebinding capture beginCapture — M2-16) remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (input profiles, game/menu tables, the split keyboard, profile choice; M2-16: rebinding — customizeInputProfile, rebindAction with conflict detection, resetBindings, captureToken, key labels)
 │   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
-│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents, connectOptionEvents / applyAudioOptions — M1-17, applyDisplayOptions — M2-08) error-screen ✔ frame-loop ✔ (+ the refresh probe that switches render interpolation — M2-08) scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery) debug ✔ (dev / test builds: F1–F8, the TV's Pause + Ch+ ×3 unlock, per-frame timing, window.__shmupDebug — M1-19) controls ✔ (the rebind screen's host side createShellControls — M2-16)
+│       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents, connectOptionEvents / applyAudioOptions — M1-17, applyDisplayOptions — M2-08) error-screen ✔ frame-loop ✔ (+ the refresh probe that switches render interpolation — M2-08) scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery) debug ✔ (dev / test builds: F1–F8, the TV's Pause + Ch+ ×3 unlock, per-frame timing, window.__shmupDebug — M1-19) controls ✔ (the rebind screen's host side createShellControls — M2-16) storage ✔ (the hosts' localStorage adapter with quota checks, the debug save export / import — M2-17) memory ✔ (the TV memory estimator, atlas-page residency between zones — M2-17)
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
 │   ├── web/                @shmup/web — Vite dev app (HMR), browser Platform; also Electron's renderer
@@ -83,12 +83,13 @@ shmup-cup/
 │   ├── tizen/              @shmup/tizen — Samsung TV .wgt (Tizen 5.5+, Chromium 69)
 │   │   ├── public/         config.xml (tv-samsung, tv.inputdevice + internet), icon.png → copied to dist/
 │   │   ├── polyfills/      global-this.js (ES5, prepended to app.js)
-│   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script + size budgets) · tizen-package/install/run.mjs (env-driven, Windows-friendly)
+│   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script + size budgets + a valid config.xml) · tizen-package/install/run.mjs (env-driven, Windows-friendly) · config-xml.mjs (the config.xml variants: game mode, gamepad check — M2-17) · tizen-watch.mjs (the live-reload dev server — M2-17)
 │   │   ├── vite.config.ts  target chrome69+es2018, IIFE, no code splitting, classic <script defer>
-│   │   └── src/ main.ts · boot ✔ (Back exits only before the game runs — then the scene flow's exit confirmation; tizenDebugTools in dev / test builds) platform ✔ (keys, Back 10009, visibility, exit) · device-info live-reload (placeholders)
+│   │   └── src/ main.ts · boot ✔ (Back exits only before the game runs — then the scene flow's exit confirmation; tizenDebugTools in dev / test builds) platform ✔ (keys, Back 10009, visibility, exit) · device-info ✔ (model / firmware via webapis.productinfo → the debug overlay — M2-17) · live-reload ✔ (dev-only WebSocket reload, `tizen:watch` — M2-17)
 │   └── electron/           @shmup/electron — desktop shell; compiles in CI, binary never downloaded there
 │       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
-│       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts steam.ts placeholders) · preload/preload.cts · shared/ipc.ts
+│       ├── electron-builder.json  packaging config (`pnpm --filter @shmup/electron package` — never in CI; output release/, ignored) — M2-17
+│       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts ✔ file saves, atomic + backup + quota · ipc-handlers.ts ✔ · window-state.ts ✔ fullscreen / scale / position — M2-17 · steam.ts placeholder) · preload/preload.cts (+ storage) · shared/ipc.ts
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers, power-up model; kestrel (meter), manta (Direct mode, M2-05) (+ README, example)

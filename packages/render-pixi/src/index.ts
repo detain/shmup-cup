@@ -171,6 +171,7 @@ export {
   type ScreenEffects,
 } from './effects/index.js';
 export {
+  DEBUG_DEVICE_MAX,
   FRAME_GRAPH_LENGTH,
   OUTLINE_COLORS,
   PANEL_COLORS,
@@ -181,6 +182,8 @@ export {
   createDebugOverlayStats,
   createDebugPanelLists,
   createFrameGraph,
+  debugDeviceText,
+  setDebugPanelDevice,
   type DebugOutlineLists,
   type DebugOverlay,
   type DebugOverlayOptions,

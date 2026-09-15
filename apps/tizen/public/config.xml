@@ -4,8 +4,12 @@
   Target: Tizen 5.5+ (2020+ Samsung TVs / Smart Monitors, Chromium 69).
   - tizen:application package id must be exactly 10 alphanumeric characters.
   - Privileges: tv.inputdevice (registerKey for Play/Pause, Ch+/-, colour keys),
-    internet (optional remote logging / future online features).
+    internet (optional remote logging, the tizen:watch live reload),
+    productinfo (webapis.productinfo model / firmware for the dev build's debug overlay).
   - Long-press Back (Exit) is never registered; Back (10009) is handled by the app.
+  - This is the default variant: no Samsung metadata. `build:game-mode` (or TIZEN_GAME_MODE=1)
+    adds the use.game.mode metadata for the on-device A/B latency test, TIZEN_GAMEPADS=<models>
+    the launch-time gamepad check (scripts/config-xml.mjs, plan M2-17).
 -->
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
         id="http://shmupcup.dev/ShmupCup" version="0.1.0" viewmodes="maximized">
@@ -16,6 +20,7 @@
   <access origin="*" subdomains="true"/>
   <tizen:privilege name="http://tizen.org/privilege/internet"/>
   <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <tizen:privilege name="http://developer.samsung.com/privilege/productinfo"/>
   <tizen:profile name="tv-samsung"/>
   <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable"
                  encryption="disable" install-location="auto" hwkey-event="enable"/>

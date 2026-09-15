@@ -9,7 +9,8 @@
  *     this also rejects `import`/`export`, `import()`, `import.meta`, `?.`, `??`,
  *     class fields and optional catch binding that would slip through).
  *  4. app.js starts with the globalThis polyfill banner.
- *  5. config.xml and icon.png were copied from public/.
+ *  5. config.xml and icon.png were copied from public/, and config.xml — whichever variant was
+ *     built (default, game mode, gamepad check — `config-xml.mjs`, M2-17) — validates.
  *  6. Every other file is a non-script asset under dist/assets/ (atlas pages emitted by
  *     the shmupAssets() plugin, M1-03); anything else in dist/ would be packaged into the
  *     .wgt by accident.
@@ -32,6 +33,7 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { parse } from 'acorn';
+import { validateConfigXml } from './config-xml.mjs';
 import { DIST_DIR } from './tizen-env.mjs';
 
 /**
@@ -179,6 +181,10 @@ export function checkTizenBundle(distDir) {
   // 5. Tizen widget files.
   for (const required of ['config.xml', 'icon.png', 'index.html', 'app.js']) {
     if (!files.includes(required)) problems.push(`dist/${required} is missing`);
+  }
+  const configXml = readOptional(join(distDir, 'config.xml'));
+  if (configXml !== null) {
+    for (const problem of validateConfigXml(configXml)) problems.push(`config.xml: ${problem}`);
   }
 
   // 6. Non-script assets only under assets/ (scripts anywhere are already reported by 1).

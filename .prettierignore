@@ -1,6 +1,7 @@
 # Generated / vendored
 node_modules/
 dist/
+apps/electron/release/
 coverage/
 .turbo/
 assets/generated/

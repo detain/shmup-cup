@@ -24,6 +24,11 @@
  * ({@link ShmupDebugApi}: the scene id, ticks, switches, counters, a command runner, the game) for
  * tests and the TV's remote inspector — the e2e smoke reads `sceneId` from it.
  *
+ * **Save export / import and the device line (M2-17).** `window.__shmupDebug.save` exports the save
+ * the game plays with as readable JSON, imports one (parsed like a stored save and written — reload
+ * to apply its options) and reports the storage's usage ({@link DebugSaveApi}); the TV app hands
+ * {@link DebugToolsOptions.device} its model / firmware line, shown under the overlay's panel.
+ *
  * **Dev / test builds only.** The apps pass {@link debugToolsFactory}'s result to `bootShell` only
  * when the `__SHMUP_DEV__` Vite define is true (the dev server, `build:test`, `build:dev`); in a
  * release build the expression folds to `null` and this module, the overlay and the controls are
@@ -37,7 +42,7 @@
  * **Public API.** {@link debugToolsFactory}, {@link createDebugTools}, {@link DebugTools},
  * {@link DebugToolsFactory}, {@link DebugToolsHost}, {@link DebugToolsOptions},
  * {@link ShmupDebugApi}, {@link DEBUG_KEYS}, {@link DebugKey}, {@link DEBUG_UNLOCK_SEQUENCE},
- * {@link DEBUG_UNLOCK_WINDOW_MS}, {@link DEBUG_GLOBAL}.
+ * {@link DEBUG_UNLOCK_WINDOW_MS}, {@link DEBUG_GLOBAL}; M2-17: {@link DebugSaveApi}.
  *
  * @module
  */
@@ -51,6 +56,8 @@ import {
   type DebugCounters,
   type DebugFlags,
   type Game,
+  type PlatformStorage,
+  type SaveStore,
   type World,
 } from '@shmup/core';
 import {
@@ -59,6 +66,13 @@ import {
   type DebugOverlayStats,
   type PixiRenderer,
 } from '@shmup/render-pixi';
+import {
+  exportSaveText,
+  importSaveText,
+  type QuotaStorage,
+  type SaveImportResult,
+  type StorageUsage,
+} from '../storage/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -119,6 +133,39 @@ export interface DebugToolsOptions {
   readonly buildId?: string;
   /** Called once, when the TV sequence unlocks the tools (the Tizen app registers keys 1–8). */
   readonly onUnlock?: () => void;
+  /**
+   * The overlay's device line (M2-17 — the Tizen app's model, firmware and display from
+   * `device-info`), read every frame: return the same string until it changes (no allocation);
+   * `''` shows no line. Default: none.
+   *
+   * @returns The line.
+   */
+  readonly device?: () => string;
+}
+
+/** The save export / import of {@link ShmupDebugApi.save} (M2-17). */
+export interface DebugSaveApi {
+  /**
+   * The save the game plays with, as readable JSON (`storage` module `exportSaveText`).
+   *
+   * @returns The text.
+   */
+  export(): string;
+  /**
+   * Imports a save text (`storage` module `importSaveText`: parsed like a stored save, then
+   * written); reload to apply its options.
+   *
+   * @param text - A save document.
+   * @returns Resolves with what happened.
+   */
+  import(text: string): Promise<SaveImportResult>;
+  /**
+   * What the app's storage keys take, when the platform's storage can tell (`createWebStorage`
+   * can), else `null`.
+   *
+   * @returns The usage.
+   */
+  usage(): StorageUsage | null;
 }
 
 /** What the shell gives the tools. */
@@ -137,6 +184,8 @@ export interface DebugToolsHost {
   readonly now: () => number;
   /** Launch-to-ready time in ms (`Shell.bootTiming.readyMs`). */
   readonly bootMs: number;
+  /** The save store (M2-17 — the save export / import), or `null` / absent without one. */
+  readonly save?: SaveStore | null;
   /**
    * The id of what is shown: the scene flow's top scene, or the dev scene's name.
    *
@@ -191,6 +240,11 @@ export interface ShmupDebugApi {
    * and the DevTools console).
    */
   readonly renderer: PixiRenderer;
+  /**
+   * The save export / import (M2-17 — a tester's save out of the TV for a bug report, or a save
+   * into it to reproduce one), or `null` without a save store.
+   */
+  readonly save: DebugSaveApi | null;
   /**
    * Runs a debug command (`DebugCommand` code), unlocked or not.
    *
@@ -259,6 +313,25 @@ export function debugToolsFactory(options: DebugToolsOptions = {}): DebugToolsFa
 }
 
 /**
+ * The save part of the debug API (M2-17).
+ *
+ * @param save - The save store, or `null`.
+ * @param game - The game (its platform's storage reports the usage when it can).
+ * @returns The API, or `null` without a store.
+ */
+function createSaveApi(save: SaveStore | null, game: Game): DebugSaveApi | null {
+  if (save === null) return null;
+  return {
+    export: () => exportSaveText(save),
+    import: (text) => importSaveText(save, text),
+    usage: () => {
+      const storage = game.platform.storage as PlatformStorage & Partial<QuotaStorage>;
+      return typeof storage.usage === 'function' ? storage.usage() : null;
+    },
+  };
+}
+
+/**
  * Options of the key listener (capture phase: the debug keys are seen before the input adapter).
  * One shared object for `addEventListener` and `removeEventListener`: some `EventTarget`
  * implementations (Node's) only match a capture listener's removal by the same options object.
@@ -312,6 +385,7 @@ export function createDebugTools(
   stats.webGLVersion = renderer.webGLVersion;
   stats.bootMs = host.bootMs;
   const times = new Float64Array(7);
+  const device = options.device ?? null;
   const state = { unlocked: !sequenceMode, progress: 0, destroyed: false };
 
   /**
@@ -399,6 +473,7 @@ export function createDebugTools(
     buildId,
     game,
     renderer: host.renderer,
+    save: createSaveApi(host.save ?? null, game),
     run(command) {
       return controls.run(command);
     },
@@ -432,6 +507,7 @@ export function createDebugTools(
       stats.tickMs = times[T.tickMs];
     },
     beforeRender() {
+      if (device !== null) overlay.setDevice(device());
       const world = host.visibleWorld();
       if (world !== null) collectDebugCounters(world, counters);
       stats.drawCalls = renderer.drawCalls;

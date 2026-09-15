@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "dev.shmupcup.game",
+  "productName": "Shmup Cup",
+  "electronVersion": "44.3.0",
+  "directories": {
+    "output": "release"
+  },
+  "files": ["dist/**/*", "package.json", "!dist/**/*.map", "!dist/**/*.d.ts"],
+  "asar": true,
+  "win": {
+    "target": ["nsis", "portable"]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  },
+  "linux": {
+    "target": ["AppImage", "tar.gz"],
+    "category": "Game"
+  },
+  "mac": {
+    "target": ["dmg"],
+    "category": "public.app-category.arcade-games"
+  }
+}

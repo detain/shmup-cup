@@ -40,8 +40,14 @@
  * rebind screen rebinds the keyboard profile in use and the gamepad profile (the adapter captures
  * the keys — `WebInput.beginCapture`).
  *
- * **Saves (M1-17).** Options and hi-scores live in `localStorage` (`shmup-cup:save.v1`); the
- * shell loads them before the title and applies the volumes.
+ * **Saves (M1-17).** Options and hi-scores live in `localStorage` (`shmup-cup:save.v1`, with the
+ * shell's quota checks since M2-17); the shell loads them before the title and applies the volumes.
+ *
+ * **Electron (M2-17).** The desktop app loads this build; when its preload's bridge is present
+ * (`window.shmupElectron`, {@link getElectronBridge}) the platform is `'electron'`: saves are JSON
+ * files in the user-data folder (written by the main process — atomic, with a backup), the title
+ * offers EXIT (the app quits after YES) and audio is unlocked at boot (the window needs no
+ * gesture).
  *
  * **Debug tools (M1-19).** In dev / test builds (`pnpm dev`, `build:test`) `main.ts` hands over the
  * shell's debug tools ({@link WebAppResources.debugTools}): F1 overlay, F2 god mode, F3 hitboxes /
@@ -93,7 +99,7 @@ import {
   type Shell,
   type ShellAssets,
 } from '@shmup/shell';
-import { createWebPlatform, type StorageLike } from '../platform/index.js';
+import { createWebPlatform, getElectronBridge, type StorageLike } from '../platform/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -355,6 +361,8 @@ export async function bootWebApp(
   });
   const audio = createWebAudio();
   const profiles = createInputProfileRegistry();
+  // Inside the Electron desktop app (M2-17): file saves through the preload's bridge, EXIT quits.
+  const electron = getElectronBridge(win);
   const search = searchOf(win);
   const overrides = inputOverridesFromSearch(search);
   const scene = sceneFromSearch(search);
@@ -430,6 +438,7 @@ export async function bootWebApp(
         displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
         gamepad: hasGamepadApi,
         webgl2: renderer.webGLVersion === 2,
+        electron,
       });
     },
     gameConfig: {
@@ -439,7 +448,8 @@ export async function bootWebApp(
       loadout: loadoutFromSearch(search) ?? 'default',
     },
     scene,
-    audioUnlock: 'gesture',
+    // Electron's window allows audio without a gesture (`autoplayPolicy`); browsers do not.
+    audioUnlock: electron === null ? 'gesture' : 'immediate',
     debugTools: resources.debugTools ?? null,
     /**
      * The Options screen's CONTROLS (plan M1-17): the keyboard profiles a desktop keyboard can

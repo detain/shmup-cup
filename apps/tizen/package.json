@@ -10,6 +10,7 @@
     "build": "vite build && node scripts/check-bundle.mjs",
     "build:test": "vite build --mode test && node scripts/check-bundle.mjs",
     "build:dev": "vite build --mode development && node scripts/check-bundle.mjs",
+    "build:game-mode": "vite build --mode game-mode && node scripts/check-bundle.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
     "lint": "eslint --max-warnings=0 .",
@@ -17,7 +18,8 @@
     "clean": "node ../../scripts/clean.mjs dist coverage .turbo",
     "tizen:package": "node scripts/tizen-package.mjs",
     "tizen:install": "node scripts/tizen-install.mjs",
-    "tizen:run": "node scripts/tizen-run.mjs"
+    "tizen:run": "node scripts/tizen-run.mjs",
+    "tizen:watch": "node scripts/tizen-watch.mjs"
   },
   "dependencies": {
     "@shmup/audio-web": "workspace:*",

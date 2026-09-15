@@ -2,20 +2,29 @@
  * # platform — the browser `Platform` adapter
  *
  * **Responsibility.** Implements the core's `Platform` for a desktop/mobile browser:
- * input from `@shmup/input-web`, `localStorage` persistence (falling back to memory in
- * private mode or when storage throws), gesture-unlocked Web Audio, page-visibility
- * lifecycle (hidden → suspend, visible → resume), live display size, and no `exit`
- * (browsers cannot quit — menus hide "Quit").
+ * input from `@shmup/input-web`, `localStorage` persistence with quota checks (the shell's
+ * `createWebStorage` — falling back to memory in private mode, when storage throws or is full),
+ * gesture-unlocked Web Audio, page-visibility lifecycle (hidden → suspend, visible → resume),
+ * live display size, and no `exit` (browsers cannot quit — menus hide "Quit"). In the Electron
+ * desktop app (M2-17 — `window.shmupElectron`) the same build gets file saves through the
+ * preload's bridge and an `exit` that quits the app.
  *
  * **Implements.** shmup_tech.md §3.2 (Platform interface), shmup_feat.md §23
  * (web-specific: dev target, localStorage) and §3 (pause on `visibilitychange`).
  *
  * **Public API.** {@link createWebPlatform}, {@link createLocalStorage},
  * {@link createVisibilityLifecycle}, {@link WebPlatformOptions}, {@link StorageLike},
- * {@link VisibilitySource}.
+ * {@link VisibilitySource}; M2-17: {@link ElectronBridge}, {@link getElectronBridge},
+ * {@link createBridgeStorage}.
  *
  * @module
  */
+import {
+  STORAGE_PREFIX,
+  createWebStorage,
+  type QuotaStorage,
+  type WebStorageLike,
+} from '@shmup/shell';
 import {
   createMemoryStorage,
   defineModule,
@@ -30,30 +39,11 @@ import {
 export const moduleInfo = defineModule({
   name: 'platform',
   status: 'partial',
-  specRefs: ['shmup_tech.md §3.2', 'shmup_feat.md §23', 'shmup_feat.md §3'],
+  specRefs: ['shmup_tech.md §3.2', 'shmup_feat.md §23', 'shmup_feat.md §3', 'shmup_feat.md §21'],
 });
 
-/** The parts of the Web Storage API used here. */
-export interface StorageLike {
-  /**
-   * Reads a value.
-   *
-   * @param key - Full (already prefixed) key.
-   * @returns The value, or `null` when missing.
-   * @throws DOMException when storage access is denied (the adapter then falls back
-   *   to memory).
-   */
-  getItem(key: string): string | null;
-  /**
-   * Writes a value.
-   *
-   * @param key - Full (already prefixed) key.
-   * @param value - Value to store.
-   * @throws DOMException `QuotaExceededError` when storage is full or disabled (the
-   *   adapter then falls back to memory).
-   */
-  setItem(key: string, value: string): void;
-}
+/** The parts of the Web Storage API used here (the shell's `WebStorageLike`). */
+export type StorageLike = WebStorageLike;
 
 /** A document-like object that reports visibility changes. */
 export interface VisibilitySource {
@@ -69,18 +59,21 @@ export interface VisibilitySource {
 }
 
 /**
- * Wraps Web Storage as async {@link PlatformStorage} with a key prefix. Any storage
- * error (quota, private mode, disabled storage) degrades to an in-memory store instead
- * of crashing the game.
+ * Wraps Web Storage as async {@link PlatformStorage} with a key prefix and quota checks (the
+ * shell's `createWebStorage`, M2-17). Storage errors (quota, private mode, disabled storage)
+ * degrade to an in-memory store instead of crashing the game.
  *
  * @remarks
- * The first error switches the adapter to memory *permanently* for the session;
- * values written before the switch stay in Web Storage, values written after it are
- * lost on reload. The in-memory fallback does not use the prefix.
+ * An error other than a full storage switches the adapter to memory *permanently* for the
+ * session; values written before the switch stay in Web Storage, values written after it are
+ * lost on reload. A full storage (`QuotaExceededError`) or a value over the app's budget keeps
+ * only that value in memory (the next write tries storage again) — see `@shmup/shell`
+ * `createWebStorage`. The in-memory fallback does not use the prefix. Issues are logged with
+ * `console.warn`.
  *
  * @param storage - `window.localStorage`, or `null` when unavailable.
  * @param prefix - Namespace for keys (default `shmup-cup:`).
- * @returns The storage adapter.
+ * @returns The storage adapter (with `usage()` and `issues` — `QuotaStorage`).
  *
  * @example
  * ```ts
@@ -90,31 +83,97 @@ export interface VisibilitySource {
  */
 export function createLocalStorage(
   storage: StorageLike | null,
-  prefix = 'shmup-cup:',
-): PlatformStorage {
-  const fallback = createMemoryStorage();
-  let backend: StorageLike | null = storage;
+  prefix = STORAGE_PREFIX,
+): QuotaStorage {
+  return createWebStorage(storage, {
+    prefix,
+    onIssue: (issue) => {
+      console.warn(
+        `Shmup Cup: "${issue.key}" was not stored (${issue.kind}, ${issue.bytes} bytes)`,
+      );
+    },
+  });
+}
+
+/**
+ * The API the Electron preload exposes as `window.shmupElectron` (M2-17 — the desktop build loads
+ * this web build). Mirrors `apps/electron/src/shared/ipc.ts` `ShmupElectronApi` (a test keeps the
+ * two in step; the web app cannot import the desktop app).
+ */
+export interface ElectronBridge {
+  /** Always `'electron'`. */
+  readonly platform: 'electron';
+  /** Asks the main process to quit. */
+  quit(): void;
+  /** File saves in the desktop user-data folder (JSON files, atomic write + backup). */
+  readonly storage: {
+    /**
+     * Reads a key.
+     *
+     * @param key - Storage key.
+     * @returns Resolves with the value or `null`; rejects when the main process refuses.
+     */
+    get(key: string): Promise<string | null>;
+    /**
+     * Writes a key.
+     *
+     * @param key - Storage key.
+     * @param value - Value.
+     * @returns Resolves once the file is on disk; rejects when the main process refuses (quota,
+     *   invalid key) or the disk fails.
+     */
+    set(key: string, value: string): Promise<void>;
+  };
+}
+
+/**
+ * Reads the Electron preload's bridge (`window.shmupElectron`), checking its shape.
+ *
+ * @param win - The window.
+ * @returns The bridge, or `null` in a browser (or when the object is not the expected API).
+ */
+export function getElectronBridge(win: Window): ElectronBridge | null {
+  const candidate = (win as Window & { shmupElectron?: unknown }).shmupElectron;
+  if (candidate === null || typeof candidate !== 'object') return null;
+  const api = candidate as Partial<ElectronBridge>;
+  const storage = api.storage;
+  if (
+    api.platform !== 'electron' ||
+    typeof api.quit !== 'function' ||
+    storage === undefined ||
+    storage === null ||
+    typeof storage.get !== 'function' ||
+    typeof storage.set !== 'function'
+  ) {
+    return null;
+  }
+  return candidate as ElectronBridge;
+}
+
+/**
+ * Platform storage over the Electron bridge (M2-17): the desktop build's saves go to JSON files in
+ * the user-data folder through the main process.
+ *
+ * @remarks
+ * A failing read resolves from memory (the save then loads as empty — never a boot failure); a
+ * failing write rejects, so the save store counts it as not written and tries again at its next
+ * flush. Written values are also kept in memory, so a later failing read still returns them.
+ *
+ * @param bridge - `window.shmupElectron`.
+ * @returns The storage.
+ */
+export function createBridgeStorage(bridge: ElectronBridge): PlatformStorage {
+  const memory = createMemoryStorage();
   return {
     get(key) {
-      if (backend !== null) {
-        try {
-          return Promise.resolve(backend.getItem(prefix + key));
-        } catch (_error) {
-          backend = null;
-        }
-      }
-      return fallback.get(key);
+      return bridge.storage.get(key).then(
+        (value) => value,
+        () => memory.get(key),
+      );
     },
     set(key, value) {
-      if (backend !== null) {
-        try {
-          backend.setItem(prefix + key, value);
-          return Promise.resolve();
-        } catch (_error) {
-          backend = null;
-        }
-      }
-      return fallback.set(key, value);
+      void memory.set(key, value);
+      return bridge.storage.set(key, value);
     },
   };
 }
@@ -174,14 +233,21 @@ export interface WebPlatformOptions {
   readonly gamepad: boolean;
   /** WebGL2 context obtained by the renderer. */
   readonly webgl2: boolean;
+  /**
+   * The Electron preload's bridge when this build runs in the desktop app
+   * ({@link getElectronBridge}), else `null` / absent (M2-17).
+   */
+  readonly electron?: ElectronBridge | null;
 }
 
 /**
  * Creates the browser platform.
  *
  * @remarks
- * `id` is `'web'`, `exit` is `null` and `caps.remoteOnly` is `false`. Electron's
- * renderer also uses this platform (it loads the same build).
+ * `id` is `'web'`, `exit` is `null` and `caps.remoteOnly` is `false`. Electron's renderer loads
+ * the same build: with {@link WebPlatformOptions.electron} (M2-17) `id` is `'electron'`, saves go
+ * to files through the bridge ({@link createBridgeStorage}) and `exit` quits the app (the title
+ * then offers EXIT).
  *
  * @param options - Browser services to wrap.
  * @returns The `Platform` for `createGame`.
@@ -201,13 +267,20 @@ export interface WebPlatformOptions {
  */
 export function createWebPlatform(options: WebPlatformOptions): Platform {
   const displaySize = options.displaySize;
+  const electron = options.electron ?? null;
   return {
-    id: 'web',
+    id: electron === null ? 'web' : 'electron',
     input: options.input,
-    storage: createLocalStorage(options.storage),
+    storage:
+      electron === null ? createLocalStorage(options.storage) : createBridgeStorage(electron),
     audio: options.audio,
     lifecycle: createVisibilityLifecycle(options.visibility),
-    exit: null,
+    exit:
+      electron === null
+        ? null
+        : () => {
+            electron.quit();
+          },
     display: {
       get cssWidth() {
         return displaySize().width;

@@ -3630,6 +3630,76 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   live-reload tests with fakes, memory estimator test (atlas + audio budget per zone).
 - **Manual:** §8.5 on-device checks for game-mode metadata and memory.
 - **Refs:** `shmup_feat.md` §23 (Tizen, Electron), §24 (live reload to TV); `shmup_tech.md` §2.3, §2.5, §4.8.
+- **As built:**
+  - **Electron file saves.** `main/saves.ts` `createFileStore(dir)`: `<userData>/saves/<key>.json`, write = temp file
+    + `fsync` + copy of the current file to `<key>.json.bak` + rename (never half-written), writes per key serialised;
+    a missing or non-JSON file falls back to its backup; keys checked by `shared/ipc` `isStorageKey` (one plain file
+    name); quota 1 MiB a value, 8 MiB the folder after the write (`StorageQuotaError`). The placeholder's `FileStore`
+    gained `directory` and `usage()`. IPC: `shmup:storage-get` / `shmup:storage-set` (`ipcMain.handle` ↔
+    `ipcRenderer.invoke`) in the new `main/ipc-handlers.ts`, which also refuses any sender that is not the game's page
+    (`app://game/…`, or `SHMUP_DEV_URL`'s origin) — quit included; the window blocks navigation away and pop-ups.
+  - **Web build in Electron.** `apps/web` detects the preload's bridge (`getElectronBridge`): platform id
+    `'electron'`, storage through the bridge (`createBridgeStorage` — a failing read resolves from memory, a failing
+    write rejects so the save store retries), `exit` = quit (the title offers EXIT), audio unlocked at boot
+    (`autoplayPolicy: 'no-user-gesture-required'` in the window options). `ElectronBridge` repeats the preload's API; a
+    web test runs the real compiled preload against it.
+  - **Window / scale / fullscreen** (`main/window-state.ts`): remembered in `window.json` through the same store —
+    fullscreen, the scale of the 384×216 frame (×1 … ×10, lowered to fit the work area; `useContentSize`), the
+    position (kept only while on a screen). Shortcuts in the main process (`before-input-event`): F11 / Alt+Enter
+    fullscreen, Ctrl+= / Ctrl+- / Ctrl+0 scale (Cmd on macOS). No in-game Options entry (that would be core UI work
+    outside this step; the game's own SCALE option still picks integer / fit / stretch inside the window).
+  - **Gamepad and 120 / 144 Hz** needed no Electron code: the web build's Gamepad API adapter and the shell's fixed
+    60 Hz step with its accumulator and render interpolation (M2-08, `createRefreshMonitor`) run in the renderer as
+    they are; `backgroundThrottling: false` stays.
+  - **Packaging config** `apps/electron/electron-builder.json` + `pnpm --filter @shmup/electron package` =
+    `pnpm dlx electron-builder@26.15.3 … --publish never` — electron-builder is not a dependency (the step names none);
+    `electronVersion` is pinned in the config (electron-builder cannot read the `catalog:` specifier; a test keeps its
+    major equal to the catalog's); output `release/` is git-, Prettier- and ESLint-ignored. No icons yet (M2-18's icon
+    set).
+  - **Tizen config.xml variants** (`scripts/config-xml.mjs`): `public/config.xml` stays the default (no metadata) and
+    gained the `http://developer.samsung.com/privilege/productinfo` privilege (Samsung's ProductInfo API needs it).
+    The Vite plugin `configXmlVariant()` rewrites the copied `dist/config.xml`: `build:game-mode` (`--mode game-mode`,
+    a release build) or `TIZEN_GAME_MODE=1` add `use.game.mode`; **gamepad metadata** is opt-in only
+    (`TIZEN_GAMEPADS=dualshock4::usbgamepad`) — Samsung's `http://samsung.com/tv/metadata/gamepad` makes the TV check
+    at launch for the named pads and show a popup when none is connected, which a remote-first game must not ship.
+    `check-bundle.mjs` validates whatever variant was built (`validateConfigXml`: well-formed tags, widget parts,
+    privileges, known metadata once each); its test fixtures now use the real `config.xml`.
+  - **device-info** (implemented): pure `collectDeviceInfo` + `formatDeviceLine`, `loadWebapis` (adds the
+    `$WEBAPIS/webapis/webapis.js` script only when `window.tizen` exists, once, 3 s timeout, never rejects);
+    `DeviceInfo` gained `modelCode`. It reaches the **debug overlay** as a sixth panel line: render-pixi
+    `setDebugPanelDevice` / `DebugOverlay.setDevice` (printable ASCII, ≤ 56 characters), the shell's
+    `DebugToolsOptions.device`; `tizenDebugTools(win, buildId, canvas?)` collects the facts when the remote unlock
+    opens the tools (release and locked builds never load `webapis.js`) and logs the snapshot for the inspector.
+  - **live-reload** (implemented): `connectLiveReload({ url }, window)` — `main.ts` calls it only under `__SHMUP_DEV__`
+    with a non-empty `__SHMUP_LIVE_RELOAD__` (new define, `liveReloadDefine()` in the Tizen Vite config: the
+    `SHMUP_LIVE_RELOAD_URL` of dev builds, `''` otherwise), so release bundles fold it away. `scripts/tizen-watch.mjs`
+    (`tizen:watch`, never in CI): Vite build `--watch` in development mode + a Node HTTP server for `dist/` + a
+    hand-written RFC 6455 WebSocket on the same port (no dependency); after each build it sends `{type:'reload', url}`.
+    A page the server serves reloads in place; the installed widget navigates to the served `index.html`, so the TV
+    runs new builds without repackaging — whether the Tizen runtime keeps the widget's APIs on that page is part of
+    the manual §8.5 check. The placeholder's `'hot-data'` mode was dropped.
+  - **Storage quota checks.** New shell module `storage`: `createWebStorage` replaces the two duplicated
+    `localStorage` adapters of `apps/web` / `apps/tizen` — the app's own budget (1 MiB for all keys, 256 KiB a value,
+    counted as UTF-16), a `QuotaExceededError` drops `save.corrupt` and retries once, a value that still does not fit
+    stays in memory for the session (the backend stays in use — before, any error switched to memory for good; other
+    errors still do), `usage()` / `issues`. **Debug save export / import**: `window.__shmupDebug.save`
+    (`DebugSaveApi`: `export()`, `import(text)` — parsed like a stored save, written; reload to apply its options —,
+    `usage()`), built on `exportSaveText` / `importSaveText` and the new core `SaveStore.replace(data)`.
+  - **Memory budget.** New shell module `memory`: `estimateMemory` / `estimateStageMemory` (atlas pages + decoded
+    images, SFX bank, the zone's music set — chip songs sized from their rows, `songFrameBound` — render targets at
+    1080p, a 24 MiB heap baseline that the §8.5 on-device check must confirm). Every campaign zone is tested under
+    100 MB: zones A–G ≈ 66.7 MiB, H ≈ 73.6, I ≈ 74.3 (4 MiB atlas + 4 MiB image, 0.8 MiB SFX, 9–17 MiB music,
+    24.7 MiB targets). **Atlas unloading between zones**: `stageSpriteSets` (a walk of each campaign stage through its
+    enemies, bosses, children, tilesets and linked stages) → `atlasPageNeeds` → `createAtlasResidency`, connected to
+    `PrepareStage` in the shell's boot (`Shell.atlasResidency`): pages the next zone does not need are `unload()`ed
+    (Pixi re-uploads a page on its next draw). Today's atlas is one 1024² page every zone needs, so nothing is unloaded
+    yet; the mechanism is tested on a synthetic three-page atlas. Music was already one set resident (M1-15 / M2-10).
+  - **Tests.** Electron: `saves` (temp dir: atomic write, backup recovery, failed rename, ordering, keys, quota),
+    `ipc-contract` (compiled preload ↔ real handlers ↔ real store), `window-state`, `packaging`, updated `main` (real
+    user-data folder, restore / shortcuts / navigation), preload tests. Tizen: `device-info`, `live-reload` (fakes),
+    `config-xml-variants` (+ a real `build --mode game-mode` through the bundle check), `tizen-watch` (a real server
+    and WebSocket client), the debug tools' device line. Shell: `memory` (per-zone budget, song bounds, residency),
+    `storage`, `debug-save`. render-pixi `debug-device`, core `save-replace`, web `platform-electron`.
 
 ### M2-18 — v1.0 hardening & release candidate
 
@@ -3759,8 +3829,14 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 - [ ] Play at least 3 different routes to both final zones; endings and credits display.
 - [ ] Attract mode runs unattended for 10 minutes; any remote key returns to the title.
 - [ ] Rebinding on remote/gamepad, remote profile switch, one-button preset.
-- [ ] `use.game.mode` metadata A/B test: build both config variants, compare 240-fps latency videos; keep the better.
-- [ ] 30-minute soak: memory stable < 100 MB, no audio drift; zone transitions ≤ 2 s.
+- [ ] `use.game.mode` metadata A/B test: build both config variants (`pnpm --filter @shmup/tizen build` and
+      `build:game-mode`), compare 240-fps latency videos; keep the better.
+- [ ] 30-minute soak: memory stable < 100 MB, no audio drift; zone transitions ≤ 2 s. Compare DevTools' heap with the
+      estimator's 24 MiB heap baseline (`@shmup/shell` `HEAP_BASELINE_BYTES`) and correct it if it is off.
+- [ ] Debug build (`build:dev`): after Pause, Ch+ ×3 the overlay's last line shows the monitor's model and firmware
+      (`webapis.productinfo`); `__shmupDebug.save.export()` in the remote inspector prints the save.
+- [ ] Live reload (`tizen:watch`, M2-17): install its first build, save a change on the desktop — the TV reloads into
+      the new build without reinstalling (if the widget cannot open the served page, note it here).
 - [ ] Update install over the previous version keeps saves; **uninstall removes** saves (store requirement).
 
 ### 8.6 Store readiness (end of M2)

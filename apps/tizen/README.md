@@ -160,9 +160,25 @@ pnpm --filter @shmup/tizen tizen:run       # tizen run -p ShmpCupGam.ShmupCup -s
 
 ## config.xml
 
-`public/config.xml`: profile `tv-samsung`, privileges `tv.inputdevice` (extra remote keys)
-and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumerics),
-`required_version="5.5"`, landscape, no background support.
+`public/config.xml`: profile `tv-samsung`, privileges `tv.inputdevice` (extra remote keys),
+`internet` and — since M2-17 — `productinfo` (the debug overlay's model and firmware), application id
+`ShmpCupGam.ShmupCup` (package id = 10 alphanumerics), `required_version="5.5"`, landscape, no
+background support. It is the **default variant** (no Samsung metadata). Opt-in variants
+(`scripts/config-xml.mjs`, applied to `dist/config.xml` by the Vite build and validated by the bundle
+check): `pnpm --filter @shmup/tizen build:game-mode` (or `TIZEN_GAME_MODE=1`) adds
+`http://samsung.com/tv/metadata/use.game.mode` for the on-device A/B latency test;
+`TIZEN_GAMEPADS=dualshock4::usbgamepad` adds Samsung's launch-time gamepad check (it shows a popup
+when none of the pads is connected, so no shipped build uses it — the game is remote-first).
+
+## Live reload to the TV (M2-17 — never in CI)
+
+`pnpm --filter @shmup/tizen tizen:watch` (`scripts/tizen-watch.mjs`) builds a development bundle
+that knows this desktop's address (`SHMUP_LIVE_RELOAD_HOST` / `SHMUP_LIVE_RELOAD_PORT`, default the
+first LAN IPv4 and port 5175), keeps rebuilding on every change, serves `dist/` over HTTP and a
+WebSocket on that port, and after each build tells the app to reload. Package and install the first
+build once (`tizen:package`, `tizen:install`, `tizen:run` in another terminal); the installed widget
+then opens the served build and every saved change reloads the TV — no repackaging. The TV must
+reach the desktop on the port (firewall).
 
 ## Modules
 
@@ -171,8 +187,8 @@ and `internet`, application id `ShmpCupGam.ShmupCup` (package id = 10 alphanumer
 | `main.ts` | — | Entry (no `import.meta`, no top-level await); `tizenDebugTools` when `__SHMUP_DEV__` (M1-19) |
 | `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the choice saved from OPTIONS → CONTROLS, applied when the shell has read the save — M1-17; `gamepad-standard`; since M2-16 both applied with the player's rebinding, SOCD and debounce — `ProfileState`, `customizeInputProfile` — and offered to the rebind screen through `inputProfiles.customize` / `rebindable`: the remote's buttons are rebound with the remote itself, Back never moves), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
-| `device-info` | placeholder | UA / resolution / WebGL / product-info diagnostics |
-| `live-reload` | placeholder | Dev-only reload-on-change on the TV |
+| `device-info` | implemented | M2-17: UA / resolution / WebGL (`MAX_TEXTURE_SIZE`) / Samsung `webapis.productinfo` model, model code and firmware (`$WEBAPIS/webapis/webapis.js` loaded only on a TV, only when the debug tools unlock) → the debug overlay's device line (`tizenDebugTools`) and the remote inspector's console |
+| `live-reload` | implemented | M2-17: dev-only reload-on-change on the TV — `tizen:watch` builds with the dev server's WebSocket URL (`__SHMUP_LIVE_RELOAD__`); on each rebuild the app reloads, the installed widget navigating to the served build; reconnects with a growing delay; absent from release builds |
 
 Input device facts (diagonals, repeat behaviour, extra keys, latency) come from
 `tools/input-probe` (a separate npm project) — results change the input profiles in

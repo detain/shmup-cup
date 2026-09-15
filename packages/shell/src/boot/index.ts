@@ -83,6 +83,12 @@
  * display runs faster than `INTERPOLATION_MIN_HZ` (70 — 120 / 144 Hz monitors) and draws the
  * current tick at 60 Hz. The probe restarts when the app resumes; {@link Shell.refresh} exposes it.
  *
+ * **Memory (M2-17).** Once the atlas and the content are ready the shell works out which atlas
+ * pages each campaign zone needs (`memory` module) and, in the scene flow, unloads from the GPU the
+ * pages the next zone does not need on its `PrepareStage` event ({@link Shell.atlasResidency}; with
+ * today's single placeholder page nothing is unloaded). The debug tools get the save store (the
+ * save export / import of `window.__shmupDebug.save`).
+ *
  * **Boot time.** The shell measures its boot (`ShellOptions.now`, default `performance.now()` —
  * whose origin is the page's start, i.e. the app launch on the TV) and exposes it as
  * {@link Shell.bootTiming} for the debug overlay (M1-19) and on the canvas
@@ -199,6 +205,13 @@ import { createFlightScene, type FlightScene } from '../flight/index.js';
 import { createFxGallery, type FxGallery } from '../fx-gallery/index.js';
 import { createSceneView, type SceneView } from '../scene-view/index.js';
 import { createShowcase, type Showcase } from '../showcase/index.js';
+import {
+  atlasPageNeeds,
+  connectAtlasResidency,
+  createAtlasResidency,
+  stageSpriteSets,
+  type AtlasResidency,
+} from '../memory/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -551,6 +564,11 @@ export interface Shell {
   readonly bootTiming: BootTiming;
   /** The refresh-rate probe the frame loop feeds (M2-08: it switches render interpolation). */
   readonly refresh: RefreshMonitor;
+  /**
+   * The atlas pages' GPU residency (M2-17 — `memory` module): in the scene flow, pages the next
+   * zone does not need are unloaded on its `PrepareStage` event.
+   */
+  readonly atlasResidency: AtlasResidency;
   /** The debug tools (dev / test builds — {@link ShellOptions.debugTools}), else `null`. */
   readonly debug: DebugTools | null;
   /**
@@ -985,6 +1003,11 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     readyRenderer.setSpriteNames(content.db.sprites.names);
   }
   const calibration = createCalibrationFrame(game.renderFrame());
+  // Atlas-page residency (M2-17): which pages each campaign zone needs (load time).
+  const atlasResidency = createAtlasResidency(
+    readyAtlas.pages,
+    atlasPageNeeds(options.assets.manifest, content.db.sprites.names, stageSpriteSets(content.db)),
+  );
   const events = createEventDispatcher();
   // The game's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
   // audio engine (M1-15) — in the scene flow and free flight: the other scenes do not show the
@@ -995,6 +1018,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     // `PrepareStage` (M2-10): the music set follows the stage about to play — the zone map's
     // launch, the title's return to the start stage, a run or practice start on another stage.
     connectStagePreparation(events, engine, game.content.stages, stageMusicCues);
+    // Between zones (M2-17): the atlas pages the next stage does not need leave the GPU.
+    connectAtlasResidency(events, atlasResidency);
     // The sound test's tracks (M2-15): loaded on demand, played from their start.
     connectSoundTest(events, engine);
     // The Options screen's changes, live (plan M1-17). The profile event carries an index into
@@ -1160,6 +1185,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       win,
       now,
       bootMs: readyMs,
+      save,
       sceneId: () => (flow === null ? scene : (flow.stack.top?.id ?? '')),
       visibleWorld: () => (worldShown ? game.world : null),
     });
@@ -1184,6 +1210,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     save,
     bootTiming,
     refresh,
+    atlasResidency,
     get debug() {
       return debug;
     },

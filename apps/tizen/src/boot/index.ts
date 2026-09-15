@@ -81,6 +81,14 @@ import {
   type ShellAssets,
 } from '@shmup/shell';
 import {
+  collectDeviceInfo,
+  formatDeviceLine,
+  loadWebapis,
+  type DeviceInfo,
+  type GlParameterSource,
+  type WebapisLike,
+} from '../device-info/index.js';
+import {
   createTizenPlatform,
   getTizenApi,
   registerRemoteKeys,
@@ -127,26 +135,94 @@ export const DEBUG_REMOTE_KEYS: readonly string[] = Object.freeze([
 /**
  * The TV's debug tools (dev / test builds): the shell's tools behind the remote sequence Pause,
  * Ch+, Ch+, Ch+ — which also registers the number keys 1–8 ({@link DEBUG_REMOTE_KEYS}) so the
- * remote's number pad can run the commands.
+ * remote's number pad can run the commands, and (M2-17) collects the TV's facts (`device-info`:
+ * model, firmware — Samsung's `webapis.productinfo`, loaded only then —, display, Chrome and
+ * WebGL) for the overlay's device line.
  *
  * @param win - The window (its `tizen` API registers the keys; none outside a TV).
  * @param buildId - The build id (`__SHMUP_BUILD__`).
+ * @param canvas - The game canvas, for the device line's `MAX_TEXTURE_SIZE` (default `null`).
  * @returns The factory for {@link TizenAppResources.debugTools}.
  *
  * @example
  * ```ts
- * debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__) : null
+ * debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__, canvas) : null
  * ```
  */
-export function tizenDebugTools(win: Window, buildId: string): DebugToolsFactory {
-  return debugToolsFactory({
+export function tizenDebugTools(
+  win: Window,
+  buildId: string,
+  canvas: HTMLCanvasElement | null = null,
+): DebugToolsFactory {
+  /** The overlay's device line (M2-17), filled once the tools are unlocked. */
+  const device = { line: '' };
+  /** The renderer the tools were created on (its WebGL version). */
+  let renderer: PixiRenderer | null = null;
+  const factory = debugToolsFactory({
     unlock: 'sequence',
     buildId,
     onUnlock: () => {
       const tizen = getTizenApi(win);
       if (tizen !== null) registerRemoteKeys(tizen, DEBUG_REMOTE_KEYS);
+      if (renderer !== null) {
+        // Diagnostics only: a failure leaves the line as far as it got.
+        describeDevice(win, canvas, renderer.webGLVersion, device).catch(() => undefined);
+      }
     },
+    device: () => device.line,
   });
+  return (host) => {
+    renderer = host.renderer;
+    return factory(host);
+  };
+}
+
+/**
+ * Collects the TV's facts for the debug overlay (M2-17 — `device-info`): at once from the window
+ * and the renderer, then again with the model and firmware once Samsung's `webapis.js` has loaded
+ * (TV only). Logs the snapshot for the remote Web Inspector.
+ *
+ * @param win - The window.
+ * @param canvas - The game canvas (its WebGL context gives `MAX_TEXTURE_SIZE`), or `null`.
+ * @param webGLVersion - The renderer's WebGL version.
+ * @param device - Receives the overlay line.
+ * @returns Resolves once the product info was read (or found missing).
+ */
+async function describeDevice(
+  win: Window,
+  canvas: HTMLCanvasElement | null,
+  webGLVersion: number,
+  device: { line: string },
+): Promise<void> {
+  let gl: GlParameterSource | null = null;
+  try {
+    // The context the renderer created (getContext returns the existing one).
+    if (canvas !== null && typeof canvas.getContext === 'function') {
+      gl = webGLVersion === 2 ? canvas.getContext('webgl2') : canvas.getContext('webgl');
+    }
+  } catch (_error) {
+    gl = null;
+  }
+  /**
+   * Reads the snapshot.
+   *
+   * @param webapis - Samsung's API, or `null`.
+   * @returns The snapshot.
+   */
+  const collect = (webapis: WebapisLike | null): DeviceInfo =>
+    collectDeviceInfo({
+      userAgent: (win.navigator as Navigator | undefined)?.userAgent ?? '',
+      innerWidth: win.innerWidth,
+      innerHeight: win.innerHeight,
+      devicePixelRatio: win.devicePixelRatio,
+      webglVersion: webGLVersion,
+      gl,
+      webapis,
+    });
+  device.line = formatDeviceLine(collect(null));
+  const info = collect(await loadWebapis(win));
+  device.line = formatDeviceLine(info);
+  console.info('Shmup Cup device', info);
 }
 
 /** Handles to the running TV app. */

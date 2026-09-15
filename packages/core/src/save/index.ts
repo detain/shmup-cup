@@ -891,6 +891,28 @@ export class SaveStore {
   }
 
   /**
+   * Replaces the whole document (M2-17 — the debug tools' save import): the document is
+   * sanitised again ({@link sanitizeSave}), so any `SaveData`-shaped object is safe to hand in.
+   * Not written until {@link SaveStore.flush}.
+   *
+   * @remarks
+   * Cold path (a developer command). The options a running session already applied (volumes,
+   * input profile) are not re-applied by the store — the host reloads for that.
+   *
+   * @param data - The new document (normally `parseSave(text).data`).
+   *
+   * @example
+   * ```ts
+   * const parsed = parseSave(exportedText);
+   * if (parsed.status !== 'corrupt' && parsed.status !== 'unreadable') store.replace(parsed.data);
+   * await store.flush();
+   * ```
+   */
+  replace(data: SaveData): void {
+    this.current = sanitizeSave(data as unknown as Readonly<Record<string, unknown>>);
+  }
+
+  /**
    * Replaces the options (sanitised through `resolveUserOptions`). Not written until
    * {@link SaveStore.flush}.
    *

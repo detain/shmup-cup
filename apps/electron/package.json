@@ -9,10 +9,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/copy-renderer.mjs",
     "start": "electron .",
+    "package": "pnpm dlx electron-builder@26.15.3 --config electron-builder.json --publish never",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
     "lint": "eslint --max-warnings=0 .",
     "test": "vitest run",
-    "clean": "node ../../scripts/clean.mjs dist coverage .turbo"
+    "clean": "node ../../scripts/clean.mjs dist release coverage .turbo"
   },
   "devDependencies": {
     "@shmup/web": "workspace:*",
