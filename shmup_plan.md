@@ -1,7 +1,8 @@
 # Shmup Cup — Implementation Plan
 
 > **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-15: **M1 and M2 complete** (`1.0.0-rc.1`),
-> **M3-01 done**, next **M3-02** then M3-03 — 38 of 40 steps. Progress, the resume point and open risks are in
+> **M3-01 done**, next **M3-02**, then **M3-02b** (remote & hardware tuning from the 2026-09-15 input-probe run) and
+> M3-03 — 38 of 41 steps. Progress, the resume point and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
@@ -39,7 +40,9 @@
   `keyboard`, `gamepad`, `web-input`; audio-web `web-audio`; render-pixi `renderer`, `viewport`, `test-pattern`,
   `palette`; the apps' `boot`, `platform`, `frame-loop`; the Tizen Chromium-69 IIFE build + `check-bundle.mjs`.
 - **Input probe** (`tools/input-probe/`) — built and tested, **waiting to be run on the M7 monitors**. Its results
-  feed the remote profile data introduced in M1-05 (no code change needed when they arrive).
+  feed the remote profile data introduced in M1-05 (no code change needed when they arrive). *Update 2026-09-15:* it
+  ran on both monitors ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)); some findings do need
+  code (Home is only a `blur`, rAF jitter, release-only Back / Pause) — plan step **M3-02b**.
 
 ### 1.2 Per-step pipeline (automatic — do not add separate test/doc steps)
 
@@ -152,14 +155,16 @@ simulation lives in `GameConfig` or content data, so changing it later is a data
 
 ### 2.2 Hardware-dependent assumptions (verified later, by the user)
 
-| Assumption | Default in code | Where it changes |
-|---|---|---|
-| Remote cannot hold two arrows; OK may drop a held arrow | 4-way-dodgeable design, `combine` policy, no chords needed | `content/input/remote-profiles.json` |
-| Remote may send fake keyup/keydown pairs while held | `releaseDebounceTicks: 2` | same file |
-| Ch± / Play/Pause registrable | registered, optional | profile `register` list |
-| Web viewport 1920×1080 | ×5 integer scale | automatic (`computeIntegerViewport`) |
-| WebGL1 only | WebGL1 preferred | `preferWebGLVersion` |
-| `decodeAudioData` slow | nothing decoded mid-stage | — |
+| Assumption | Default in code | Where it changes | Measured on the M7s (2026-09-15, [results](docs/dev/input-probe-results.md)) |
+|---|---|---|---|
+| Remote cannot hold two arrows; OK may drop a held arrow | 4-way-dodgeable design, `combine` policy, no chords needed | `content/input/remote-profiles.json` | **Confirmed, stricter:** a second arrow **or OK** during a hold is never delivered; the held arrow continues → M3-02b (bot model, docs) |
+| Remote may send fake keyup/keydown pairs while held | `releaseDebounceTicks: 2` | same file | **No fake pairs**; repeats are flagless keydowns (≈ 355 ms, then ≈ 108 ms) → debounce 0 in M3-02b |
+| Ch± / Play/Pause registrable | registered, optional | profile `register` list | **Yes** (all 45 non-`Exit` keys); Back / Play/Pause / Mute arrive only on release → no held-Pause gestures (M3-02b) |
+| Web viewport 1920×1080 | ×5 integer scale | automatic (`computeIntegerViewport`) | **Confirmed** (1920×1080, DPR 1) |
+| WebGL1 only | WebGL1 preferred | `preferWebGLVersion` | WebGL **2** also available (Mali-G51, 8192) — WebGL1 stays the default |
+| `decodeAudioData` slow | nothing decoded mid-stage | — | not measured |
+| Home hides the app (`visibilitychange`) | pause + audio suspend on hidden | `apps/tizen` lifecycle | **No:** Home is an overlay, only `blur` / `focus` → pause on blur in M3-02b |
+| 60 Hz rAF → one tick per frame (D32) | accumulator, ±1 ms snap | `core/loop` | rAF jitters (27–32 % of deltas > 20 ms) → 0/2-tick frames; vsync lock in M3-02b |
 
 ---
 
@@ -239,7 +244,7 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 |---|---|---|
 | **M1 — Playable vertical slice** | Zone A with boss is playable start → boss → stage clear with the remote-first scheme in `pnpm dev`, and `pnpm --filter @shmup/tizen build` produces a checked `.wgt`-ready `dist/`; title/pause/game over/stage clear; HUD; audio; saves; debug tools; golden replays | M1-01 … M1-19 |
 | **M2 — Complete v1.0** | All P1 features: rank/difficulty, full meter arsenal, Direct mode + ship select, co-op, 9-zone map with 16 routes, advanced stage & boss systems, front-end screens, options/rebinding/accessibility, Electron + TV polish, release candidate | M2-01 … M2-18 |
-| **M3 — Post-launch backlog** | P2 features grouped coarsely | M3-01 … M3-03 |
+| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) | M3-01 … M3-03 (incl. M3-02b) |
 
 | Id | Title | Fills (placeholder → implemented) |
 |---|---|---|
@@ -282,6 +287,7 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 | M2-18 | v1.0 hardening & release candidate | tests, budgets, release |
 | M3-01 | Extra modes & replay features | — |
 | M3-02 | Visual & mechanic extras | — |
+| M3-02b | Remote & hardware tuning from the input-probe results | input profiles, input-web, core `loop`, apps `tizen` lifecycle, `test/playtest`, content tuning, `tools/input-probe` |
 | M3-03 | Reach: localization, more platforms, tracker music | apps `electron` (`steam.ts`), new adapters |
 
 ---
@@ -3849,9 +3855,133 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Refs:** `shmup_feat.md` §18 (Mode 7, CRT, widescreen), §3 (slowdown), §7C, §13 (P2 bosses), §14 (escape, 3D
   stage), §10, §22 (graze).
 
+### M3-02b — Remote & hardware tuning from the input-probe results
+
+- **Goal:** make the game fit how the M7 monitors and the Smart Remote *actually* behave — measured by the input
+  probe on both monitors on 2026-09-15 — and tune the game around it. **Depends on:** M3-02.
+- **Source of truth:** [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) (numbers, per-finding
+  meaning), raw logs and the analyzer in `tools/input-probe/results/2026-09-15-m7/`, `shmup_tech.md` §2.7. Every
+  timing below is on the handler clock (`t + delay`), **not** the probe's verdicts (see finding "probe clock").
+- **Measured facts this step designs for:**
+  1. **One key at a time.** While an arrow is held a second arrow or OK is **never delivered** (not on press, not on
+     release) and the held arrow keeps repeating. ⇒ no diagonals, no move + OK / Ch± / Pause, and a new direction
+     only registers if pressed after the previous key is up.
+  2. **Flagless auto-repeat.** Repeats are `keydown` with `repeat === false`, first after ≈ 355 ms (≈ 21 ticks), then
+     every ≈ 108 ms (≈ 6.5 ticks, ± 40 ms). **No fake key-up/key-down pairs, no bounces**; the key-up comes 0–100 ms
+     after the last repeat.
+  3. **Taps** last 120–260 ms (7–16 ticks, median ≈ 10–12); fastest OK re-tap ≈ 276 ms.
+  4. **Release-only keys:** Back (10009), Play/Pause (10252) and Mute (449) arrive as keydown + keyup together when
+     the button is *released* — never holdable, ≈ one tap late.
+  5. **Key codes:** Ch rocker pressed = Guide 458, screen button = Extra 10253 (both registrable), Vol rocker
+     pressed = Mute 449; `registerKey` works for all 45 non-`Exit` keys (volume included — still never registered).
+  6. **Home / a pad's PS button = window `blur` / `focus` only** — no `visibilitychange`; the app keeps running
+     under the overlay. Today the game neither pauses nor suspends audio then.
+  7. **rAF jitter:** median 16.5 ms (60 Hz) but 27–32 % of deltas > 20 ms, p95 ≈ 30 ms, ~59 fps delivered (≈ 1.5 %
+     real drops). The loop's ±1 ms snap (`core/loop` `DEFAULT_SNAP_TOLERANCE_MS`) turns this into 0-tick and 2-tick
+     frames (judder), against D32's "one tick per rAF at 60 Hz".
+  8. **Environment:** Chromium 69.0.3497.106, 1920×1080 @1, Mali-G51 with WebGL 1 + 2 (`MAX_TEXTURE_SIZE` 8192),
+     WASM / AudioWorklet / OffscreenCanvas present, no native `globalThis`, audio 44.1 kHz with 50 ms base latency,
+     4 cores. DualShock 4 (Bluetooth): standard mapping, 17 buttons / 4 axes, D-pad diagonals work.
+  9. **Probe clock:** Tizen 5.5's `event.timeStamp` only advances in whole seconds; the probe accepted it, so its
+     on-screen verdicts were wrong.
+- **Scope:**
+  - **Remote profiles (data + small code):**
+    - `tizen-remote-safe`: `releaseDebounceTicks` **2 → 0** (fact 2; the plan §8.2 recipe for clean / flagless
+      repeats); relabel it (e.g. `REMOTE (DEFAULT)` — string table) since "SAFE 4-WAY" vs "FAST 8-WAY" no longer means
+      anything: the two TV profiles differ only in this debounce and the remote cannot send diagonals.
+    - Retire `tizen-remote-diagonal` from the TV's CONTROLS choices (keep it loadable, or remove it with a save
+      migration: a saved `tizen-remote-diagonal` becomes the default remote profile — `save` sanitising, tested).
+    - A profile knob for the **single-key remote** (e.g. `singleKey: true`: while any key of the device is down,
+      further keydowns of other keys are dropped and the held one continues — fact 1). `keyboard-remote-emulation`
+      uses it instead of `lastWins`, so the desktop feels like the real remote; the TV profile may set it too
+      (harmless, and it makes the emulation and the bot model the same thing).
+    - Register Guide 458 and Extra 10253 so the REBIND page can capture them (no default binding; allowed by the
+      rebind validator); volume keys stay forbidden.
+    - `content/input/README.md` "Tuning after the input probe" and `docs/dev/input-profiles.md` rewritten with the
+      measured values (the recipe table in plan §8.2 becomes history).
+  - **Nothing asks for a held Back / Pause or a chord (fact 4):**
+    - INPUT TEST: "hold Pause 60 ticks to exit" is impossible on the remote → exit with **Back / Pause pressed three
+      times within ~1.5 s** (the probe's gesture; release-only keys count at release); string
+      `HOLD PAUSE TO EXIT` updated; the hold still works for keyboard / pad if kept.
+    - Audit every held-key gesture and hint (scenes, the shell's debug unlock, docs) for Back / Pause holds and
+      chords; remote-reachable alternatives where one is needed.
+    - Regression test: keydown + keyup of Back / Play/Pause inside one frame (and inside one tick) still gives one
+      pressed edge (the latch already does this — pin it).
+  - **Flagless repeats (fact 2):** `@shmup/input-web` already treats a keydown of a held key as "still held" — add
+    tests with the measured stream (press, 21-tick first repeat, 6.5 ± 2.4-tick repeats, all `repeat=false`, key-up
+    1–6 ticks after the last one ⇒ exactly one pressed edge, held throughout, released on the key-up tick). Fix the
+    places that trust `event.repeat` themselves: the shell's debug unlock sequence (flagless Ch+ repeats count as
+    steps) and debug number keys (re-fire while held) must track held keys. Add a lint rule or test forbidding
+    `event.timeStamp` / `.timeStamp` in shipped input code (fact 9).
+  - **Pause on Home (fact 6):** the Tizen platform's lifecycle (and the web one) fires suspend on window `blur` and
+    resume on `focus`, de-duplicated with `visibilitychange` (a blur + hidden pair suspends once; resume only when
+    both are back). Effect: the pause menu opens and audio suspends under the Home overlay; on return the game stays
+    paused (the M1-16 "platform resume opens the pause menu" path) with no catch-up burst (`refresh.reset()`, loop
+    reset). Electron keeps its own policy (document it). Tests with a fake window / document.
+  - **Frame pacing (fact 7):** a **vsync-locked** tick policy for fixed ~60 Hz displays (refresh monitor reading
+    ≈ 55–65 Hz, or a `GameConfig`/shell option forcing it on Tizen): exactly **one tick per rAF callback** while
+    deltas stay under ~1.5–1.75 steps, extra ticks only for really dropped frames, the long-run tick debt bounded
+    (≤ ±1 tick, reset on resume) — replacing the drift-carrying accumulator on that path; the free-running
+    accumulator stays for other rates, slow motion, frame advance and the game-speed assist. Presentation-only: the
+    simulation, replays and goldens do not change. The debug overlay gains **ticks-per-frame counters (0 / 1 / 2 / 3+)
+    and a rAF-delta histogram** so the on-device check can confirm it.
+  - **Playtest bot learns the remote (facts 1–3) and the game is re-tuned under it:**
+    - A `remote-strict` input model in `test/playtest/` (used by `fourWayBot` by default): never a direction on a
+      tick that holds PowerUp / Special / Speed / Pause; such a press is a **tap of 8–15 ticks with no direction**,
+      preceded by ≥ 2 empty ticks; switching from one direction to another needs ≥ 1 empty tick; Back / Pause edges
+      at release. The harness enforces the model (a violation fails the run, like `diagonalTicks` today).
+    - Re-run every zone A–I, all 16 routes, the boss rush, the caravan zones and practice runs with it — god mode
+      within the 3–6 min budget, the recovery rule (≥ 3 capsule sources within 900 px after every checkpoint) still
+      holding, and the no-god-mode expectations of M2-11 … M2-14. Where the stricter bot fails or turns marginal
+      (equips it can no longer afford, dodges that needed an instant direction switch), **tune the content**:
+      capsule / carrier placement before calm moments, the density or speed of aimed fire in sections that expect an
+      equip, gaps and lane widths that relied on instant turns. Record every tuned value in "As built".
+    - Re-bless golden replays and attract demos (content changes and the new bot inputs), reason in the commit.
+    - A first-time hint for remote players that OK / Ch± need the arrow released (existing text / banner
+      facilities, once per save, remote profiles only) — or record why it was left out.
+  - **Probe fixes (tools/input-probe, fact 9):** `chooseEventTime` detects coarse timestamps (or simply always uses
+    handler time) so the verdicts are right on Tizen; verdict "second key never arrived" for a diagonal / OK attempt
+    that produced no event during a long hold (so the panel says *NO — not delivered* instead of *not tested*); the
+    report carries a raw rAF-delta histogram; `results/analyze.mjs` stays as the reference re-analysis; probe tests
+    updated. (Re-running it on the monitors is optional — plan §8.2.)
+  - **Environment facts (fact 8):** keep WebGL1 as the renderer default (older sets), but record WebGL2 / 8192 on the
+    M7 in `docs/dev/rendering-and-shell.md`; note AudioWorklet + WASM availability for M3-03's tracker-music
+    benchmark; revisit the audio engine's latency hint against the 50 ms base latency (document, change only with a
+    test).
+  - **Docs** (the DOCS agent): `shmup_feat.md` §3 (pause on blur, frame locking) and §4 (actions: 4-way only on the
+    remote, "ignore `e.repeat`" → "ignore keydowns of held keys", remote-first rules 2 and 3 rewritten with the
+    measurements), `docs/client/controls.md` ("OK never stops a direction", Home pauses, input-test exit,
+    troubleshooting), `docs/client/preview-build.md` TV checks, `docs/dev/input-profiles.md`,
+    `docs/dev/options-rebinding-and-accessibility.md`, `docs/dev/architecture.md` (input pipeline, lifecycle table),
+    `docs/dev/input-probe.md`, `docs/client/release-candidate.md` / `debug-tools.md` / `apps/tizen/README.md`
+    (Home-pause wording), plan §8.2 / §8.4 items.
+- **Acceptance:**
+  - Profile tests: the TV default has `releaseDebounceTicks: 0`; the retired / migrated diagonal profile; the
+    single-key knob drops a second key and keeps the first; Guide / Extra capturable in REBIND, volume keys rejected.
+  - input-web tests: the measured flagless-repeat stream → one edge; same-frame down + up of Back / Play/Pause → one
+    edge; no `timeStamp` use in shipped code.
+  - Scene test: the INPUT TEST closes with three Back presses on the remote profile.
+  - Lifecycle tests: blur → suspend + pause menu; focus → resume with the game still paused; blur + hidden →
+    one suspend; no catch-up ticks after resume.
+  - Loop tests: steady 16.67 ms → 1 tick every frame; alternating 12 / 21.3 ms → 1 tick every frame; a synthetic
+    trace with the measured distribution (≈ 27 % of deltas 20–34 ms paired with short ones, ≈ 1.5 % real 33 ms
+    drops) → no 0-tick frames outside real drops and ticks within 1 % of frames; 120 Hz / slow-mo / game-speed
+    behaviour unchanged; allocation guard green.
+  - Playtest: the `remote-strict` bot clears every zone, route and the boss rush under the M1-18 / M2 budgets with
+    zero model violations; goldens and demos green after the intended re-bless.
+  - Probe: `npm run verify` green; a test feeds Tizen-like whole-second timestamps and gets correct verdicts.
+  - Bundle within `APP_JS_GZIP_BUDGET`.
+- **Manual (user, on the monitors — plan §8.4):** with the new `build:dev`, check the overlay's ticks-per-frame
+  counters stay at "1" while flying (both monitors); Home during play → the pause menu is up on return and the music
+  was silent; the INPUT TEST exits with Back ×3; a **240 fps** video of the probe's flash box and of the game (the
+  latency figure is still open — the first video was 30 fps); optionally re-run the fixed probe and try Back / Ch±
+  during an arrow hold and two gamepads at once.
+- **Refs:** [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), `shmup_tech.md` §2.3, §2.5, §2.7;
+  `shmup_feat.md` §3, §4; decisions D2, D12–D14, D32; plan §2.2, §8.2.
+
 ### M3-03 — Reach: localization, more platforms, tracker music
 
-- **Goal:** more players and platforms. **Depends on:** M3-02.
+- **Goal:** more players and platforms. **Depends on:** M3-02b.
 - **Scope:** localization via the M2-16 string tables + CJK bitmap font atlases; LG webOS adapter (`apps/webos`, Back =
   461, `appinfo.json`); public web / itch.io build; Steamworks (`steam.ts` via steamworks-ffi-node: achievements, cloud
   saves) and Steam Deck verification; chiptune3 (libopenmpt WASM + AudioWorklet) benchmark and optional tracker-music
@@ -3878,13 +4008,20 @@ go. Do them on **both** M7 monitors where it says so.
 
 ### 8.2 Input probe protocol (do this first — it tunes the controls)
 
-- [ ] Package and deploy the probe (cmd.exe): `cd tools\input-probe`, `npm install`, `set TIZEN_PROFILE=<profile>`,
+> **Done 2026-09-15** on both monitors, with the log server — results in
+> [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), raw logs in `tools/input-probe/results/`.
+> The probe's on-screen timing verdicts are wrong on Tizen 5.5 (whole-second `event.timeStamp`); the write-up
+> re-times the logs. Applying the results (profile values *and* the code changes they turned out to need) is plan
+> step **M3-02b**. Still open: the 240-fps latency video (only a 30 fps one exists), two gamepads at once.
+
+- [x] Package and deploy the probe (cmd.exe): `cd tools\input-probe`, `npm install`, `set TIZEN_PROFILE=<profile>`,
       `set TV_IP=<ip1>,<ip2>`, `npm run package`, `npm run deploy`. Optional log server: `npm run log-server` and build
       with `VITE_REPORT_URL=http://<desktop-ip>:8787`.
-- [ ] Run the protocol in [`docs/client/input-probe.md`](docs/client/input-probe.md) on both monitors: taps; 3-s holds
+- [x] Run the protocol in [`docs/client/input-probe.md`](docs/client/input-probe.md) on both monitors: taps; 3-s holds
       of → and ↑; diagonal attempt; OK while holding an arrow; every extra key; 240-fps video of the flash box (~10 OK
-      taps); gamepad(s); Home and return.
-- [ ] Record the verdicts in `shmup_tech.md` §2.7, then apply them to `content/input/remote-profiles.json`:
+      taps) *(open — 30 fps only)*; gamepad(s) *(one DualShock 4)*; Home and return *(monitor B)*.
+- [x] Record the verdicts in `shmup_tech.md` §2.7, then apply them to `content/input/remote-profiles.json` *(the
+      applying is M3-02b; the file is `content/input/remote.input-profiles.json`)*:
 
 | Probe verdict | Set in the `tizen-remote-safe` profile |
 |---|---|
@@ -3920,7 +4057,8 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 - [ ] Remote only: title → OK starts; the ship moves on every arrow without stutter while held; equip with OK works;
       zone A is clearable without diagonals; Back pauses; Back on pause resumes; Play/Pause pauses.
 - [ ] Back on title → exit confirm → YES closes the app; NO stays.
-- [ ] Home during play, then return: game is paused, audio resumes without glitches, no catch-up burst.
+- [ ] Home during play, then return: game is paused, audio resumes without glitches, no catch-up burst. *(On the M7
+      Home is an overlay that fires only `blur` — this passes only after M3-02b.)*
 - [ ] Audio: SFX feel immediate; the music loop seam is inaudible; WARNING siren plays; volumes persist after relaunch.
 - [ ] Hi-score and options persist across relaunch; after reinstalling the same version (update install) they persist.
 - [ ] 15 minutes continuous play: no hitches > 1 frame visible in the overlay's frame graph, memory in DevTools < 100 MB.
@@ -3956,8 +4094,8 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 
 | `shmup_feat.md` section | P0 → step | P1 → step | P2 → step |
 |---|---|---|---|
-| §3 Display & timing | M1-04, M1-06, M1-16 (pause on hidden) | M2-08 (scale modes), M2-17 (>60 Hz) | M3-02 |
-| §4 Controls & input | M1-05, M1-10 (autofire), M1-11 | M2-06, M2-16 | M3-01 |
+| §3 Display & timing | M1-04, M1-06, M1-16 (pause on hidden) | M2-08 (scale modes), M2-17 (>60 Hz) | M3-02, M3-02b (vsync lock, pause on blur) |
+| §4 Controls & input | M1-05, M1-10 (autofire), M1-11 | M2-06, M2-16 | M3-01, M3-02b (measured remote) |
 | §5 Player ship | M1-06, M1-12 | M2-05, M2-10 | — |
 | §6 Power-ups | M1-11 | M2-03, M2-05 | — |
 | §7 Weapons | M1-10 | M2-03, M2-05 | M3-01, M3-02 |
@@ -3987,7 +4125,8 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 | Risk | Detection | Fallback |
 |---|---|---|
 | PixiJS v8 misbehaves on the M7 GPU / Chromium 69 | M1-04 manual check, e2e on `file://` | Replace `render-pixi` with a ~500-line WebGL1 batcher (twgl.js) behind the same `IRenderer` + batch-view contract |
-| Remote cannot hold keys reliably (stutter) | Input probe, M1-05 tests | Raise `releaseDebounceTicks` in the profile; design already 4-way |
+| Remote cannot hold keys reliably (stutter) | Input probe, M1-05 tests | Raise `releaseDebounceTicks` in the profile; design already 4-way. *Measured 2026-09-15: holds are clean (no fake pairs) — debounce 0 in M3-02b* |
+| rAF jitter on the M7 double-steps the fixed-step loop (measured 2026-09-15) | Probe frame stats; M3-02b's ticks-per-frame counters on device | Vsync-locked tick policy (M3-02b); if the counters still show 0/2-tick frames, turn on render interpolation for 60 Hz too |
 | Frame budget blown on the Kant-SU2 SoC | Debug overlay tick/render ms; `pnpm bench` trends | Lower particle cap, fewer parallax layers, smaller bullet budget per zone (data) |
 | Memory > 100 MB with real music | M2-17 estimator, on-device DevTools | 32-kHz mono decode, shorter loops, or `<audio>` streaming for long tracks |
 | Golden replays churn on every change | CI | Re-bless in the same commit with a reason; keep golden runs short (≤ 3 min of play) |

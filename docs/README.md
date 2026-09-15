@@ -61,6 +61,7 @@
 | [`dev/build-test-deploy.md`](dev/build-test-deploy.md) | Contributors | Prerequisites, scripts (incl. `build:test` / `build:dev`, `golden:update`, `bench`), Turborepo, build outputs, Chromium 69 Tizen build contract and size budgets, TV packaging/installing (the `config.xml` variants, live reload, the remote Web Inspector), Electron (file saves, window keys, packaging), tests (incl. `pnpm test:e2e`, golden replays, the benchmark), CI, troubleshooting |
 | [`dev/conventions.md`](dev/conventions.md) | Contributors | Module layout, TSDoc, TypeScript, core purity, Chromium 69 API rules, zero allocation, tests, formatting, content rules, checklists |
 | [`dev/input-probe.md`](dev/input-probe.md) | Contributors | Input probe architecture, modules & APIs, verdict rules, Chromium 69 build contract, configuration, packaging / deploying, remote-logging format, tests, extension points, gotchas |
+| [`dev/input-probe-results.md`](dev/input-probe-results.md) | Contributors / owner | What the input probe measured on both M7 monitors (2026-09-15): the single-key remote, flagless repeats, release-only Back / Play/Pause, key codes, the DualShock 4, Home as a `blur`-only overlay, rAF jitter, the environment — the probe's timestamp bug, the raw logs and analyzer, and what plan step M3-02b changes |
 
 ## Elsewhere in the repository
 

@@ -148,6 +148,11 @@ which matters because the monitor has no Game Mode for apps.
   up: [../dev/input-probe.md#remote-logging](../dev/input-probe.md#remote-logging).
 
 Results are summarised in `shmup_tech.md` §2.7 and drive the remote control scheme in `shmup_feat.md` §4.
+Keep a run by copying its log files into `tools/input-probe/results/<date>-<hardware>/`.
+
+**Results so far:** the 2026-09-15 run on both M7 monitors is written up in
+[../dev/input-probe-results.md](../dev/input-probe-results.md). On those monitors the Verdicts panel's timings are
+wrong (the monitor's key timestamps only move once a second); the write-up re-times the logged events instead.
 
 ## Troubleshooting
 

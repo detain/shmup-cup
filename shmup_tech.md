@@ -7,8 +7,10 @@
 >
 > **Implementation status (2026-09-15):** the stack chosen here is built and in use (see [`shmup_plan.md`](shmup_plan.md)
 > and [`shmup_progress.md`](shmup_progress.md)). Later decisions that override this snapshot live in the plan's
-> "As built" notes — for example, dev machines need **Node 24.15+**, not Node 22. The **[UNVERIFIED]** items are still
-> unverified: they wait on the input probe run and the on-device checks (plan §8), which need the M7 monitors.
+> "As built" notes — for example, dev machines need **Node 24.15+**, not Node 22. The **input probe ran on both M7
+> monitors on 2026-09-15**: its measurements are in §2.2, §2.3, §2.5, §2.7 and §6 (marked *measured* / *verified*;
+> full write-up [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)) and are applied by plan step
+> M3-02b. The remaining **[UNVERIFIED]** items wait on the on-device checks (plan §8).
 
 ---
 
@@ -69,12 +71,18 @@ Build rules:
 ### 2.2 Rendering
 - **Web apps render at 1920×1080 on UHD TVs and 1280×720 on FHD TVs** (no 4K web rendering). ⇒ internal res **384×216** (×5 on 1080p; ×3 + small letterbox on 720p) or **320×180** (integer ×6 / ×4 on both).
 - **Design for WebGL1**, detect WebGL2 at runtime (WebGL2 availability on TV GPUs is unconfirmed). Keep atlases ≤ 2048².
+  *Measured on our M7s (2026-09-15):* WebGL 1 **and** WebGL 2 (OpenGL ES 3.0) on a **Mali-G51**,
+  `MAX_TEXTURE_SIZE` 8192 — WebGL1 stays the baseline for older sets; the 2048² atlas cap is now a memory budget, not
+  a hardware limit.
 - Draw the whole game into a low-res render texture, then one nearest-neighbor upscale quad — ~29× less fill than drawing at 1080p. Fill rate and GC pauses are the real TV bottlenecks, not sprite count.
 
 ### 2.3 Input
 - Remote: arrows (37–40), Enter (13), Back (**10009**) arrive by default. Everything else (Play/Pause 10252, colors 403–406, digits) needs `tizen.tvinputdevice.registerKeyBatch()`. Long-press Back = Exit — don't register it.
-- Remotes probably **can't hold two keys at once** (no diagonal + fire) ⇒ "remote mode" with forced autofire. **[UNVERIFIED]**
-- **The remote is our PRIMARY controller (decided)** — see `shmup_feat.md` §4 "Remote-first control design". Channel ± (427/428) and Play/Pause (10252) are the extra registerable keys worth testing; volume keys are likely system-reserved **[?]**. First spike: an input-probe `.wgt` that logs remote key behavior on the M7.
+- The remote **cannot hold two keys at once** — **verified on the M7 (2026-09-15)**: while an arrow is held, a second arrow or OK is never delivered (no diagonal, no move + OK); the held arrow keeps going ⇒ "remote mode" with forced autofire, and any other button needs the arrow released first.
+- **Held keys repeat as `keydown` with `event.repeat === false`** (verified): first repeat ≈ 355 ms after the press, then every ≈ 108 ms (± 40 ms). Filtering on `event.repeat` does not work on Tizen — ignore a keydown of a key that is already down. No fake keyup/keydown pairs.
+- **Back, Play/Pause and Mute are sent only on release** (keydown + keyup together) — they can never be held.
+- **`event.timeStamp` only advances in whole seconds** on Tizen 5.5 — time input with `performance.now()` in the handler.
+- **The remote is our PRIMARY controller (decided)** — see `shmup_feat.md` §4 "Remote-first control design". Channel ± (427/428), the Ch rocker's press (Guide 458), the screen button (Extra 10253) and Play/Pause (10252) are registrable; **volume keys are registrable too** (not system-reserved) but registering them takes volume control away, so the game never does. Full key map and numbers: §2.7 and [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md).
 - **Gamepads:** all Samsung TVs since 2016 support the W3C Gamepad API (up to 4 pads, rumble via `vibrationActuator`). A pad is invisible until its first button press. Not available in the emulator.
 - Metadata `http://samsung.com/tv/metadata/use.game.mode` (2022+) may switch the panel into low-latency Game Mode **[UNVERIFIED for non-streaming games — test]**.
 
@@ -86,6 +94,9 @@ Build rules:
 ### 2.5 Memory & lifecycle
 - Dev-installed apps are capped at **120 MB**; no published store limit ⇒ budget **< 100 MB**.
 - `visibilitychange` must pause the game and suspend audio (JS is frozen while hidden).
+- **Home is an overlay on the M7** (verified 2026-09-15): Home and a gamepad's PS / Home button fire only window
+  `blur` (then `focus` on return) — **no `visibilitychange`**, and the app keeps running under the overlay. Pause and
+  suspend audio on `blur` as well.
 - Back from title ⇒ your own exit-confirm popup ⇒ `tizen.application.getCurrentApplication().exit()`.
 
 ### 2.6 Tooling & store
@@ -99,17 +110,24 @@ Build rules:
 | Item | Finding | Confidence |
 |---|---|---|
 | Model | **M70A**, 2021 model year (letter after "LS43": A=2021, B=2022 … F=2025; "M70F" is the 2025 LS43FM702) | High |
-| OS / engine | **Tizen 5.5**; Samsung lists M70A with its **2020** models ⇒ Chromium **M69** (Tizen 5.5 UA: `… Tizen 5.5 … Chrome/69.0.3497.106 TV Safari`) | Tizen 5.5 high; M69 inferred — confirm on device |
-| Platform / SoC | Firmware `M-KSU2SMWWC` ⇒ likely **Kant-SU2** (Samsung's entry-level 2020 TV SoC); CPU/GPU/RAM unpublished ⇒ **assume weak** | Medium |
+| OS / engine | **Tizen 5.5, Chromium 69** — UA `Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.5) AppleWebKit/537.36 (KHTML, like Gecko) 69.0.3497.106/5.5 TV Safari/537.36`; firmware `M-KSU2SMWWC-2750.0` on both units; no native `globalThis` | **Measured** (probe, 2026-09-15) |
+| Platform / SoC | Model code `20_KANTSU2_43UHD_MNT` ⇒ **Kant-SU2**; **4 cores**; GPU **ARM Mali-G51**; RAM unpublished ⇒ still **assume weak** | Measured (RAM unknown) |
+| WebGL / APIs | WebGL 1 **and WebGL 2** (OpenGL ES 3.0 Chromium), `MAX_TEXTURE_SIZE` **8192**; WebAssembly, **AudioWorklet**, OffscreenCanvas, Gamepad API all present | Measured |
+| Audio | `AudioContext` at **44,100 Hz**, `baseLatency` **0.05 s** | Measured |
 | Panel | VA, 3840×2160, **60 Hz max, no VRR/FreeSync**, 8 ms GtG, HDR10, 300 nits | High |
-| Web app resolution | Almost certainly **1920×1080 CSS px** (Samsung UHD rule) ⇒ 384×216 ×5 integer fits exactly | Likely — confirm `innerWidth` |
+| Web app resolution | **1920×1080 CSS px, DPR 1** (screen 1920×1080) ⇒ 384×216 ×5 integer fits exactly | **Measured** |
+| Frame timing | rAF median 16.4–16.5 ms (60 Hz) but **strong jitter**: 27–32 % of deltas > 20 ms, p95 29–30 ms, max ~45–56 ms (182 ms under the Home overlay); ~59 fps delivered ⇒ mostly jitter, ~1.5 % real drops. A fixed-step loop must lock to vsync or it double-steps (plan M3-02b) | Measured on the probe page — confirm with the game's overlay |
 | Ports / radios | 2× HDMI 2.0, USB-C 65 W, 3× USB-A 2.0, Wi-Fi 5, **Bluetooth 4.2** | High |
-| Gamepads | Bluetooth + USB; manual: "XInput USB gamepads are supported"; Samsung 2020/21 list: Xbox Series/One, DualShock 4, DualSense, Luna, Shield, Logitech F310/F510/F710. Standard W3C Gamepad API, ≤ 4 pads, visible after first press | High |
+| Gamepads | Bluetooth + USB; manual: "XInput USB gamepads are supported"; Samsung 2020/21 list: Xbox Series/One, DualShock 4, DualSense, Luna, Shield, Logitech F310/F510/F710. Standard W3C Gamepad API, ≤ 4 pads, visible after first press. **DualShock 4 over Bluetooth verified:** `mapping="standard"`, 17 buttons / 4 axes all delivered, D-pad diagonals work; button 16 (PS) also opens the system overlay (`blur`). Two pads at once not tried yet | High (1 pad measured) |
 | Keyboard | Bluetooth + USB supported | High |
 | **Mouse** | **Only works in the Internet (browser) app and Remote Access — NOT in our app** ⇒ never depend on mouse | High (manual) |
 | Remote | Samsung Smart Remote (rechargeable/solar, mic): D-pad, Select, Return, Home, Color/Number (on-screen pad — **no physical number keys**), Vol, Ch, Play/Pause, app shortcuts | High |
+| Remote — behaviour | **One key at a time** (a second arrow or OK during a hold is never delivered); held keys repeat as `keydown` **without** the repeat flag after ≈ 355 ms, every ≈ 108 ms; **no fake key-up/key-down pairs, no bounces**; key-up arrives 0–100 ms after the last repeat; taps last 120–260 ms (median 165–195); fastest OK re-tap ≈ 276 ms. Back / Play/Pause / Mute are sent **only on release** | **Measured** (both units) |
+| Remote — key codes | D-pad 37–40, Select 13, Return 10009, Play/Pause 10252, Ch ± 427/428, **Ch rocker pressed = Guide 458**, Vol ± 447/448, **Vol rocker pressed = VolumeMute 449**, **screen button (top right) = Extra 10253**; Home is never delivered. `getSupportedKeys()` = 46; `registerKey` works for all 45 non-`Exit` keys, volume keys included | **Measured** |
+| Lifecycle | Home (and a pad's PS button) shows an **overlay**: `blur` / `focus` only, **no `visibilitychange`**, the app keeps running | **Measured** (one unit) |
+| `event.timeStamp` | On the `performance.now()` clock but **only advances in whole seconds** (0–1.3 s behind) ⇒ useless for timing | **Measured** |
 | **Game Mode** | Manual: "only available when an external input source is being used" ⇒ **our built-in app never gets Game Mode** ⇒ measure real input-to-photon latency ourselves | High |
-| Input lag | Unmeasured for built-in apps. RTINGS (2022 S43BM70 successor): 12.7 ms PC mode, 68.5 ms "BluRay" mode, Game Mode figure paywalled | Unknown — measure (240 fps phone video) |
+| Input lag | Unmeasured for built-in apps (the first try was a 30 fps video — too coarse). RTINGS (2022 S43BM70 successor): 12.7 ms PC mode, 68.5 ms "BluRay" mode, Game Mode figure paywalled | Unknown — measure (240 fps phone video) |
 | Gaming Hub | Unclear (probably later-added streaming apps, not full Gaming Hub) — irrelevant to us | Low |
 | Dev Mode | Works: Apps → 12345 (via Color/Number on-screen pad or SmartThings virtual remote) → host IP; then normal `sdb connect` / `tizen install` TV flow | Medium-high (forum snippet + user confirmed it's enabled) |
 | Store | Seller Office has **no monitor category** — distributed via TV model groups by year; M70A presumably in the 2020 group ⇒ **alpha test (≤ 50 DUIDs) works, beta test is 2021+ only** | Medium — ask Seller Office |
@@ -117,10 +135,16 @@ Build rules:
 **Quirks to handle:**
 - **Auto Source Switch+** can yank the display to HDMI/USB-C when a connected PC wakes — turn it off on the test rigs.
 - **VA-panel smearing** on dark→bright transitions: avoid pure-black backgrounds behind small bright bullets; use slightly lifted dark backgrounds (e.g. deep navy) so bullets stay crisp.
-- 60 Hz fixed, no VRR ⇒ the "one sim tick per rAF" loop mode is the normal path on our hardware.
+- 60 Hz fixed, no VRR ⇒ the "one sim tick per rAF" loop mode is the normal path on our hardware — and because rAF
+  jitters by up to ± 8 ms, the loop has to *lock* to it (one tick per callback unless a frame was really dropped),
+  not just accumulate time.
 - No Game Mode ⇒ latency budget is tighter than on a TV in Game Mode; keep our own pipeline at ≤ 1 frame and tune (hitbox generosity, no unnecessary input buffering).
+- **Single-key remote:** every non-arrow action (OK = power-up, Ch± = Special / Speed, Back / Play/Pause = pause)
+  needs the arrow released first, and Back / Play/Pause register only when released (≈ 150–250 ms after the press).
+  Never ask for a held Back / Pause or a chord; the release debounce is unnecessary (`releaseDebounceTicks` 0).
+- **Home = `blur`, not `visibilitychange`** — pause on both.
 
-**First thing to run on the device:** read `navigator.userAgent`, `sdb capability` (`platform_version`), `innerWidth`/`innerHeight`/`devicePixelRatio`, WebGL1/2 + `MAX_TEXTURE_SIZE` — the input-probe app will report all of these.
+**First thing to run on the device:** read `navigator.userAgent`, `sdb capability` (`platform_version`), `innerWidth`/`innerHeight`/`devicePixelRatio`, WebGL1/2 + `MAX_TEXTURE_SIZE` — the input-probe app reports all of these. **Done on 2026-09-15** (both monitors): results, raw logs and the analyzer in [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) and [`tools/input-probe/results/`](tools/input-probe/results/README.md); the game-side changes are plan step **M3-02b**.
 
 Sources: [Samsung CA product page](https://www.samsung.com/ca/monitors/high-resolution/smart-m7-43-inch-smart-tv-apps-ls43am702unxza/) · [Laptop Mag review (Tizen 5.5)](https://www.laptopmag.com/reviews/samsung-43am70a-smart-monitor) · [Samsung US 2020–2021 gaming models (M70A listed as 2020)](https://www.samsung.com/us/tvs/gaming-hub/2020-2021-tvs/) · [RTINGS S43BM70](https://www.rtings.com/monitor/reviews/samsung/smart-monitor-m7-s43bm70) · [Samsung Gamepad guide](https://developer.samsung.com/smarttv/develop/guides/user-interaction/gamepad.html) · [Seller Office distribution](https://developer.samsung.com/tv-seller-office/guides/applications/distributing-application.html) · M50A/M70A user manual BN81-20136D-04 (Samsung support).
 
@@ -362,18 +386,18 @@ Possible exception, later: if the Electron build wants a DOM-based launcher/sett
 
 ## 6. Verify on our Tizen 5.5 displays in week one
 
-1. WebGL2 exposure and `MAX_TEXTURE_SIZE`; Pixi v8 (`chrome69` build + `globalThis` polyfill) with `preferWebGLVersion: 1` and `2`.
+1. WebGL2 exposure and `MAX_TEXTURE_SIZE`; Pixi v8 (`chrome69` build + `globalThis` polyfill) with `preferWebGLVersion: 1` and `2`. → **M7: WebGL2 yes, 8192, Mali-G51** (Pixi on WebGL2 not tried yet).
 2. Bullet-count stress test (fill-rate & CPU headroom) — the 5.5 displays are our performance floor.
-3. Viewport size (1920×1080 vs 1280×720) and rAF rate on 120 Hz / 50 Hz panels.
+3. Viewport size (1920×1080 vs 1280×720) and rAF rate on 120 Hz / 50 Hz panels. → **M7: 1920×1080 @1, 60 Hz with heavy rAF jitter** (§2.7).
 4. Input-to-photon latency with Game Mode on/off; effect of `use.game.mode` metadata.
-5. Remote: key-repeat timing; can two keys be held at once?
+5. Remote: key-repeat timing; can two keys be held at once? → **No; flagless repeats ≈ 355 ms / 108 ms, no fake pairs** (§2.3, §2.7).
 6. Web Audio output latency, voice limits, OGG decode speed per engine version.
 7. localStorage/IndexedDB persistence across app updates; store-app memory limit.
 8. Whether a Tizen OS upgrade on an older set also upgrades its web engine (assume not).
 9. chiptune3 (WASM + AudioWorklet) CPU cost vs streamed OGG on 5.5.
-10. ~~Which input devices the displays accept~~ → **confirmed:** Bluetooth + USB gamepads and keyboards (mouse pairs but only works in the browser app, not ours). Still verify: Gamepad API `mapping === 'standard'` for our specific pads, button-press-to-activate behavior, and simultaneous 2-pad co-op.
-11. Input-to-photon latency with **no Game Mode available** for apps (240 fps phone video of the probe's flash box).
-12. Confirm Chromium 69 via `navigator.userAgent`, and 1920×1080 via `innerWidth`.
+10. ~~Which input devices the displays accept~~ → **confirmed:** Bluetooth + USB gamepads and keyboards (mouse pairs but only works in the browser app, not ours). ~~Gamepad API `mapping === 'standard'` for our specific pads, button-press-to-activate behavior~~ → **DualShock 4: standard, all buttons** (2026-09-15). Still verify: simultaneous 2-pad co-op.
+11. Input-to-photon latency with **no Game Mode available** for apps (240 fps phone video of the probe's flash box). → still open (only a 30 fps video so far).
+12. ~~Confirm Chromium 69 via `navigator.userAgent`, and 1920×1080 via `innerWidth`~~ → **confirmed** (2026-09-15).
 
 ---
 

@@ -776,9 +776,17 @@ secret codes and the game-speed / invincibility assists
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
-  display on the real monitors — is built and tested
-  ([`tools/input-probe/`](tools/input-probe/README.md)). It is waiting to be packaged and run on
-  the M7 monitors.
+  display on the real monitors ([`tools/input-probe/`](tools/input-probe/README.md)) — **ran on both
+  M7 monitors on 2026-09-15**
+  - The remote sends one key at a time: no diagonals, and no OK or another button while an arrow is held.
+  - Held keys repeat as flagless keydowns with no fake key-ups.
+  - Back and Play/Pause arrive only when released.
+  - Home is an overlay that fires only `blur`, so the game does not pause today.
+  - rAF jitters enough to double-step the loop.
+  - DualShock 4, WebGL2 (Mali-G51), 1920×1080 and Chromium 69 are confirmed.
+  - Docs: [results](docs/dev/input-probe-results.md) · raw logs and analyzer in
+    [`tools/input-probe/results/`](tools/input-probe/results/README.md) · applied by plan step
+    **M3-02b**
 
 ## Documents
 
@@ -972,15 +980,13 @@ Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option 
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
 transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G), M2-14 (final zones H & I, endings
-& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) is done, next is **M3-02** (visual & mechanic extras); every simulation change re-blesses the golden replays in the same
+& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) is done, next is **M3-02** (visual & mechanic extras), then **M3-02b** (remote & hardware tuning from the input-probe results) and M3-03; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
-Also on hardware (unchanged, and still the gate for the remote control scheme): package and
-deploy the input probe from the **Windows desktop** that sits on the same LAN as the monitors and holds
-the Samsung certificate profile, run the test protocol on both monitors, and record the results in `shmup_tech.md`
-§2.7 (they decide the remote control scheme in `shmup_feat.md` §4). Since M1-05 the verdicts
-become edits to `content/input/remote.input-profiles.json` (`releaseDebounceTicks`,
-`diagonals`, `register`) — recipes in [`content/input/README.md`](content/input/README.md).
+The input probe has run on both monitors (2026-09-15). Its results are recorded in `shmup_tech.md` §2.7 and
+[`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), and plan step **M3-02b** applies them. It sets
+the remote profile's debounce to 0, pauses on Home's `blur`, locks the loop to the jittery 60 Hz rAF, drops
+held-Pause gestures and re-tunes the zones under a bot that plays like the single-key remote.
 Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
 is the first hands-on check of the control scheme — since M1-16 moving through the title and
 pause menus and quitting with Back, since M1-17 the Options screen, settings kept after a

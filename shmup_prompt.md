@@ -4,7 +4,8 @@
 > (`/home/sites/shmup-cup`, or your own clone). It is safe to paste again later — it resumes from `shmup_progress.md`.
 > Edit the two settings in **Run settings** first if you want to limit the run.
 >
-> **State on 2026-09-15:** 38 of 40 steps done (M1, M2 and M3-01; `1.0.0-rc.1`). Remaining: **M3-02, M3-03**. Read
+> **State on 2026-09-15:** 38 of 41 steps done (M1, M2 and M3-01; `1.0.0-rc.1`). Remaining: **M3-02, M3-02b,
+> M3-03** (M3-02b — remote & hardware tuning — was added from the input-probe run on the monitors). Read
 > the "Current state — resume point" section of `shmup_progress.md` first: it lists the infrastructure changes made
 > between batches, open risks (the Tizen bundle budget is nearly full) and the manual on-device work.
 
@@ -17,7 +18,7 @@ batches, checking results, and reporting to me.
 
 ## Run settings (edit before pasting)
 
-- **SCOPE:** `all remaining steps` — every step in `shmup_plan.md` (M1-01 … M3-03) whose status in
+- **SCOPE:** `all remaining steps` — every step in `shmup_plan.md` (M1-01 … M3-03, including M3-02b) whose status in
   `shmup_progress.md` is not `done`, in plan order. (Alternatives: `milestone M1`, or a range such as `M1-01..M1-06`.)
 - **PAUSE_BETWEEN_MILESTONES:** `no` — if `yes`, stop after finishing each milestone, report the milestone's
   on-device checklist (plan §8.4 / §8.5) and wait for me before continuing.

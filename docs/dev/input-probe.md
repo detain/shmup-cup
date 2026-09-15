@@ -162,6 +162,9 @@ exact contracts.
 
 ### Key-state model and verdict rules
 
+> **On the M7 monitors these verdicts are unreliable:** Tizen 5.5's `event.timeStamp` moves in whole seconds (see
+> [Gotchas](#gotchas)). The measured results are in [input-probe-results.md](input-probe-results.md).
+
 `KeyTracker` keeps, per key code, four views of "held":
 
 | View | Definition | Used by |
@@ -352,6 +355,11 @@ verdicts from the last line.
 - **Gamepads** appear only after their first button press, and `getGamepads()` returns snapshots — poll every
   frame once one is known. `Gamepad.index` need not equal the array position.
 - **`event.timeStamp`** is compared with `performance.now()`; implausible values fall back to handler time.
+  **Known bug (measured 2026-09-15):** on Tizen 5.5 the timestamp is on the right clock but only advances in whole
+  seconds, so it passes the plausibility check and every key timing, verdict and the dispatch delay on the device
+  is wrong. Until plan step M3-02b fixes `chooseEventTime`, re-time logged events with
+  `tools/input-probe/results/analyze.mjs` (handler time = `t + delay`) — see
+  [input-probe-results.md](input-probe-results.md).
 - **`blur`** can swallow keyups (e.g. a system popup) — the tracker releases everything and discards open
   diagonal / OK observations instead of judging them.
 - **Per-frame allocations:** the probe measures frame pacing, so keep the rAF path allocation-free (typed arrays,

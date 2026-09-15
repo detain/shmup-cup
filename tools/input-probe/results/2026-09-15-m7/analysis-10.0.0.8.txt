@@ -1,0 +1,154 @@
+# ip-mu37lye3-yj1x  (from 10.0.0.8, 163 reports, 308 events, dropped 0)
+
+## Environment
+UA: Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.5) AppleWebKit/537.36 (KHTML, like Gecko) 69.0.3497.106/5.5 TV Safari/537.36
+Chrome 69 · Tizen 5.5 · model M70AET (20_KANTSU2_43UHD_MNT) · firmware M-KSU2SMWWC-2750.0
+viewport 1920×1080 @1 · screen 1920×1080 · cores 4
+WebGL1: WebGL 1.0 (OpenGL ES 2.0 Chromium) · Mali-G51 (ARM) · MAX_TEXTURE_SIZE 8192
+WebGL2: WebGL 2.0 (OpenGL ES 3.0 Chromium) · Mali-G51 (ARM) · MAX_TEXTURE_SIZE 8192
+WASM true · AudioWorklet true · OffscreenCanvas true · Gamepad API true · native globalThis false
+audio: 44100 Hz, baseLatency 0.05 s
+keys: getSupportedKeys() = 46; registerKey ok 45/45
+
+## event.timeStamp (probe clock problem)
+handler − timeStamp: n=297 min 50.5 · p10 319.0 · median 721.7 · mean 717.8 · p90 1144.9 · max 1301.8
+distinct non-zero timeStamp steps between key events (ms): 1000, 4000, 5000, 6000, 7000, 8000, 99000
+⇒ timeStamp advances in whole seconds; never use it for timing on Tizen 5.5.
+
+## Keys seen
+  ArrowRight(39) downs 212 ups 7 non-press downs 205
+  ArrowUp(38) downs 23 ups 3 non-press downs 20
+  ArrowDown(40) downs 1 ups 1 non-press downs 0
+  ArrowLeft(37) downs 1 ups 1 non-press downs 0
+  Enter(13) downs 14 ups 14 non-press downs 0
+  Back(10009) downs 1 ups 1 non-press downs 0
+  ChannelDown(428) downs 1 ups 1 non-press downs 0
+  ChannelUp(427) downs 1 ups 1 non-press downs 0
+  Guide(458) downs 1 ups 1 non-press downs 0
+  VolumeMute(449) downs 1 ups 1 non-press downs 0
+  VolumeUp(447) downs 1 ups 1 non-press downs 0
+  VolumeDown(448) downs 1 ups 1 non-press downs 0
+  MediaPlayPause(10252) downs 2 ups 2 non-press downs 0
+  Extra(10253) downs 1 ups 1 non-press downs 0
+
+## Press / release
+release-only keys (keydown+keyup < 15 ms apart, i.e. sent on release): Back ×1, VolumeMute ×1, MediaPlayPause ×2
+taps (no repeat) on keys with a real down/up: ArrowRight, ArrowUp, ArrowDown, ArrowLeft, Enter, ChannelDown, ChannelUp, Guide, VolumeUp, VolumeDown, Extra
+  tap duration (down → up, ms): n=25 min 122.0 · p10 130.0 · median 164.5 · mean 171.3 · p90 215.7 · max 247.0
+  OK re-tap (press → next press within 600 ms): n=12 min 198.1 · p10 240.9 · median 276.0 · mean 273.4 · p90 318.1 · max 355.6
+
+## Held keys (auto-repeat)
+holds with repeats: 7 (ArrowRight 2047 ms, ArrowUp 2289 ms, ArrowRight 10996 ms, ArrowRight 3140 ms, ArrowUp 445 ms, ArrowRight 899 ms, ArrowRight 6663 ms)
+repeat events: 0 with repeat=true, 225 with repeat=false (keydown without the flag)
+first repeat after press (ms): n=7 min 323.7 · p10 343.2 · median 356.0 · mean 358.8 · p90 379.3 · max 384.3
+repeat interval (ms): n=218 min 41.8 · p10 82.8 · median 109.8 · mean 108.1 · p90 129.9 · max 157.6
+keyup after the last repeat (ms): n=7 min 0.4 · p10 33.3 · median 53.8 · mean 57.0 · p90 79.5 · max 102.2
+bounces (keyup → keydown of the same key < 60 ms): 0
+max keys down at once: 1
+new keydowns while an arrow was held: 0 (a second arrow / OK pressed during a hold never arrived)
+gaps > 200 ms inside a hold's repeat stream: none
+
+## Lifecycle & info
+     1996.3 focus
+     1996.6 focus
+    96871.1 hold/repeat/frame stats reset
+    97791.9 hold/repeat/frame stats reset
+  visibilitychange seen: no
+
+## Frames (requestAnimationFrame)
+last 600 deltas: median 16.5 ms (60.5 Hz) · p95 30.1 · max 55.9 · worst since reset 68.2
+since the last reset: 23047 frames, 6196 deltas > 20 ms (26.9 %), pauses 0
+average delivered frame rate over 388 s: 59.05 fps (from report timestamps)
+
+## Timeline (handler clock; repeats folded)
+    595.9           info supported keys: 46, registered 45/45
+    758.9           info input probe started · session ip-mu37lye3-yj1x · reporting to http://10.0.0.2:8787/report
+   1995.1           info environment collected (startup): Chrome 69 · Tizen 5.5 · 1920×1080@1 · WebGL2 yes · M70AET
+   1996.3           info focus
+   1996.6           info focus
+  23513.3           DOWN ArrowRight(39)
+  23661.7    +148.4 UP   ArrowRight(39)
+  24242.1    +580.4 DOWN ArrowUp(38)
+  24442.1    +200.0 UP   ArrowUp(38)
+  25115.5    +673.4 DOWN ArrowDown(40)
+  25306.7    +191.2 UP   ArrowDown(40)
+  26138.3    +831.6 DOWN ArrowLeft(37)
+  26176.8           info checklist ✓ Tapped all 4 arrows
+  26313.5    +175.2 UP   ArrowLeft(37)
+  27350.9   +1037.4 DOWN Enter(13)
+  27535.4    +184.5 UP   Enter(13)
+  29175.3   +1639.9 DOWN Back(10009)
+  29176.2      +0.9 UP   Back(10009)
+  29241.5           info checklist ✓ Tapped OK & Back
+  34504.9   +5328.7 DOWN ArrowRight(39)
+          … 9 repeat keydowns
+  35728.5           info checklist ✓ Held a key ≥ 1.5 s
+          … 7 repeat keydowns
+  36552.0   +2047.1 UP   ArrowRight(39)
+  37909.6   +1357.6 DOWN ArrowUp(38)
+          … 19 repeat keydowns
+  40198.5   +2288.9 UP   ArrowUp(38)
+  47444.0   +7245.5 DOWN ArrowRight(39)
+          … 99 repeat keydowns
+  58440.3  +10996.3 UP   ArrowRight(39)
+  59143.9    +703.6 DOWN ArrowRight(39)
+          … 26 repeat keydowns
+  62284.2   +3140.3 UP   ArrowRight(39)
+  67152.2   +4868.0 DOWN ArrowUp(38)
+          … 1 repeat keydowns
+  67597.6    +445.4 UP   ArrowUp(38)
+  68001.8    +404.2 DOWN ArrowRight(39)
+          … 5 repeat keydowns
+  68900.6    +898.8 UP   ArrowRight(39)
+  69094.8    +194.2 DOWN ArrowRight(39)
+  69341.8    +247.0 UP   ArrowRight(39)
+  73970.3   +4628.5 DOWN ArrowRight(39)
+          … 59 repeat keydowns
+  80632.9   +6662.6 UP   ArrowRight(39)
+  87550.6   +6917.7 DOWN ChannelDown(428)
+  87627.8           info checklist ✓ Pressed an extra key
+  87766.3    +215.7 UP   ChannelDown(428)
+  88981.5   +1215.2 DOWN ChannelUp(427)
+  89180.3    +198.8 UP   ChannelUp(427)
+  89653.3    +473.0 DOWN Guide(458)
+  89775.3    +122.0 UP   Guide(458)
+  90563.0    +787.7 DOWN VolumeMute(449)
+  90563.6      +0.6 UP   VolumeMute(449)
+  91176.3    +612.7 DOWN VolumeUp(447)
+  91370.8    +194.5 UP   VolumeUp(447)
+  91670.9    +300.1 DOWN VolumeDown(448)
+  91908.5    +237.6 UP   VolumeDown(448)
+  96869.8   +4961.3 DOWN MediaPlayPause(10252)
+  96871.1           info hold/repeat/frame stats reset
+  96878.7      +8.9 UP   MediaPlayPause(10252)
+  97791.2    +912.5 DOWN MediaPlayPause(10252)
+  97791.9           info hold/repeat/frame stats reset
+  97792.1      +0.9 UP   MediaPlayPause(10252)
+ 104678.8   +6886.7 DOWN Extra(10253)
+ 104855.2    +176.4 UP   Extra(10253)
+ 204196.9  +99341.7 DOWN Enter(13)
+ 204373.8    +176.9 UP   Enter(13)
+ 204552.5    +178.7 DOWN Enter(13)
+ 204714.5    +162.0 UP   Enter(13)
+ 204870.6    +156.1 DOWN Enter(13)
+ 204998.7    +128.1 UP   Enter(13)
+ 205148.6    +149.9 DOWN Enter(13)
+ 205291.2    +142.6 UP   Enter(13)
+ 205429.0    +137.8 DOWN Enter(13)
+ 205600.5    +171.5 UP   Enter(13)
+ 205696.6     +96.1 DOWN Enter(13)
+ 205856.6    +160.0 UP   Enter(13)
+ 205975.8    +119.2 DOWN Enter(13)
+ 206116.8    +141.0 UP   Enter(13)
+ 206249.0    +132.2 DOWN Enter(13)
+ 206402.8    +153.8 UP   Enter(13)
+ 206497.0     +94.2 DOWN Enter(13)
+ 206631.6    +134.6 UP   Enter(13)
+ 206763.2    +131.6 DOWN Enter(13)
+ 206925.6    +162.4 UP   Enter(13)
+ 207039.2    +113.6 DOWN Enter(13)
+ 207169.2    +130.0 UP   Enter(13)
+ 207237.3     +68.1 DOWN Enter(13)
+ 207401.8    +164.5 UP   Enter(13)
+ 207478.2     +76.4 DOWN Enter(13)
+ 207641.7    +163.5 UP   Enter(13)

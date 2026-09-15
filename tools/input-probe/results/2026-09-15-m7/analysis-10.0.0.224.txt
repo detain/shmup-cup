@@ -1,0 +1,387 @@
+# ip-mu37m64b-aqnb  (from 10.0.0.224, 155 reports, 421 events, dropped 0)
+
+## Environment
+UA: Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.5) AppleWebKit/537.36 (KHTML, like Gecko) 69.0.3497.106/5.5 TV Safari/537.36
+Chrome 69 · Tizen 5.5 · model M70AET (20_KANTSU2_43UHD_MNT) · firmware M-KSU2SMWWC-2750.0
+viewport 1920×1080 @1 · screen 1920×1080 · cores 4
+WebGL1: WebGL 1.0 (OpenGL ES 2.0 Chromium) · Mali-G51 (ARM) · MAX_TEXTURE_SIZE 8192
+WebGL2: WebGL 2.0 (OpenGL ES 3.0 Chromium) · Mali-G51 (ARM) · MAX_TEXTURE_SIZE 8192
+WASM true · AudioWorklet true · OffscreenCanvas true · Gamepad API true · native globalThis false
+audio: 44100 Hz, baseLatency 0.05 s
+keys: getSupportedKeys() = 46; registerKey ok 45/45
+
+## event.timeStamp (probe clock problem)
+handler − timeStamp: n=161 min 56.8 · p10 309.7 · median 670.4 · mean 690.6 · p90 1133.4 · max 1295.2
+distinct non-zero timeStamp steps between key events (ms): 1000, 2000, 3000, 4000
+⇒ timeStamp advances in whole seconds; never use it for timing on Tizen 5.5.
+
+## Keys seen
+  ArrowRight(39) downs 87 ups 4 non-press downs 83
+  ArrowLeft(37) downs 1 ups 1 non-press downs 0
+  ArrowUp(38) downs 32 ups 2 non-press downs 30
+  ArrowDown(40) downs 1 ups 1 non-press downs 0
+  Enter(13) downs 2 ups 2 non-press downs 0
+  Back(10009) downs 2 ups 2 non-press downs 0
+  MediaPlayPause(10252) downs 2 ups 2 non-press downs 0
+  VolumeUp(447) downs 1 ups 1 non-press downs 0
+  ChannelUp(427) downs 1 ups 1 non-press downs 0
+  VolumeDown(448) downs 1 ups 1 non-press downs 0
+  ChannelDown(428) downs 1 ups 1 non-press downs 0
+  Guide(458) downs 3 ups 3 non-press downs 0
+  VolumeMute(449) downs 2 ups 2 non-press downs 0
+  Extra(10253) downs 1 ups 1 non-press downs 0
+
+## Press / release
+release-only keys (keydown+keyup < 15 ms apart, i.e. sent on release): Back ×2, MediaPlayPause ×2, VolumeMute ×2
+taps (no repeat) on keys with a real down/up: ArrowRight, ArrowLeft, ArrowUp, ArrowDown, Enter, VolumeUp, ChannelUp, VolumeDown, ChannelDown, Guide, Extra
+  tap duration (down → up, ms): n=14 min 137.2 · p10 143.3 · median 194.8 · mean 196.8 · p90 238.8 · max 259.0
+
+## Held keys (auto-repeat)
+holds with repeats: 4 (ArrowRight 2306 ms, ArrowUp 3548 ms, ArrowRight 4149 ms, ArrowRight 3331 ms)
+repeat events: 0 with repeat=true, 113 with repeat=false (keydown without the flag)
+first repeat after press (ms): n=4 min 327.0 · p10 327.0 · median 357.8 · mean 347.1 · p90 361.2 · max 361.2
+repeat interval (ms): n=109 min 57.8 · p10 86.0 · median 107.8 · mean 107.9 · p90 127.7 · max 156.6
+keyup after the last repeat (ms): n=4 min 24.2 · p10 24.2 · median 54.1 · mean 47.1 · p90 81.2 · max 81.2
+bounces (keyup → keydown of the same key < 60 ms): 0
+max keys down at once: 1
+new keydowns while an arrow was held: 0 (a second arrow / OK pressed during a hold never arrived)
+gaps > 200 ms inside a hold's repeat stream: none
+
+## Gamepads
+  GP0 connected id=""Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc)" mapping="standard"
+  buttons seen: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+  axis zones seen: a0 +1, a0 -1, a0 0, a1 +1, a1 -1, a1 0, a2 +1, a2 -1, a2 0, a3 +1, a3 -1, a3 0
+  D-pad presses while another D-pad direction was held (diagonals): 6
+  final: #0 "Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc) mapping=standard buttons 17 axes 4 presses 81
+
+## Lifecycle & info
+     3074.8 focus
+     3075.0 focus
+   256293.6 hold/repeat/frame stats reset
+   261832.0 hold/repeat/frame stats reset
+   281466.9 gamepadconnected #0 ""Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc)" mapping="standard"
+   316039.1 blur — cleared held keys
+   319301.8 focus
+   333019.0 blur — cleared held keys
+   341158.4 focus
+  visibilitychange seen: no
+
+## Frames (requestAnimationFrame)
+last 600 deltas: median 16.4 ms (61.1 Hz) · p95 29.1 · max 45.2 · worst since reset 181.5
+since the last reset: 11356 frames, 3616 deltas > 20 ms (31.8 %), pauses 0
+average delivered frame rate over 202 s: 56.08 fps (from report timestamps)
+
+## Timeline (handler clock; repeats folded)
+   1087.2           info supported keys: 46, registered 45/45
+   1318.9           info input probe started · session ip-mu37m64b-aqnb · reporting to http://10.0.0.2:8787/report
+   3072.2           info environment collected (startup): Chrome 69 · Tizen 5.5 · 1920×1080@1 · WebGL2 yes · M70AET
+   3074.8           info focus
+   3075.0           info focus
+ 229898.3           DOWN ArrowRight(39)
+ 230084.9    +186.6 UP   ArrowRight(39)
+ 230724.8    +639.9 DOWN ArrowLeft(37)
+ 230941.8    +217.0 UP   ArrowLeft(37)
+ 231149.0    +207.2 DOWN ArrowUp(38)
+ 231286.2    +137.2 UP   ArrowUp(38)
+ 231597.7    +311.5 DOWN ArrowDown(40)
+ 231603.4           info checklist ✓ Tapped all 4 arrows
+ 231741.0    +143.3 UP   ArrowDown(40)
+ 232308.8    +567.8 DOWN Enter(13)
+ 232497.5    +188.7 UP   Enter(13)
+ 233350.9    +853.4 DOWN Back(10009)
+ 233352.2      +1.3 UP   Back(10009)
+ 233361.5           info checklist ✓ Tapped OK & Back
+ 234865.3   +1513.1 DOWN ArrowRight(39)
+          … 11 repeat keydowns
+ 236316.1           info checklist ✓ Held a key ≥ 1.5 s
+          … 8 repeat keydowns
+ 237170.8   +2305.5 UP   ArrowRight(39)
+ 237830.3    +659.5 DOWN ArrowUp(38)
+          … 30 repeat keydowns
+ 241378.3   +3548.0 UP   ArrowUp(38)
+ 244327.0   +2948.7 DOWN ArrowRight(39)
+          … 36 repeat keydowns
+ 248476.0   +4149.0 UP   ArrowRight(39)
+ 250750.7   +2274.7 DOWN ArrowRight(39)
+          … 28 repeat keydowns
+ 254081.3   +3330.6 UP   ArrowRight(39)
+ 256292.5   +2211.2 DOWN MediaPlayPause(10252)
+ 256293.6           info hold/repeat/frame stats reset
+ 256293.9      +1.4 UP   MediaPlayPause(10252)
+ 256333.9           info checklist ✓ Pressed an extra key
+ 257157.7    +863.8 DOWN VolumeUp(447)
+ 257376.9    +219.2 UP   VolumeUp(447)
+ 257627.1    +250.2 DOWN ChannelUp(427)
+ 257886.1    +259.0 UP   ChannelUp(427)
+ 258332.3    +446.2 DOWN VolumeDown(448)
+ 258534.9    +202.6 UP   VolumeDown(448)
+ 258792.8    +257.9 DOWN ChannelDown(428)
+ 259019.4    +226.6 UP   ChannelDown(428)
+ 259358.9    +339.5 DOWN Guide(458)
+ 259543.5    +184.6 UP   Guide(458)
+ 259951.7    +408.2 DOWN VolumeMute(449)
+ 259952.4      +0.7 UP   VolumeMute(449)
+ 261831.5   +1879.1 DOWN MediaPlayPause(10252)
+ 261832.0           info hold/repeat/frame stats reset
+ 261832.3      +0.8 UP   MediaPlayPause(10252)
+ 262451.0    +618.7 DOWN Extra(10253)
+ 262689.8    +238.8 UP   Extra(10253)
+ 263407.4    +717.6 DOWN Enter(13)
+ 263602.2    +194.8 UP   Enter(13)
+ 264070.7    +468.5 DOWN VolumeMute(449)
+ 264071.5      +0.8 UP   VolumeMute(449)
+ 264098.2     +26.7 DOWN Guide(458)
+ 264289.8    +191.6 UP   Guide(458)
+ 264629.9    +340.1 DOWN Guide(458)
+ 264795.2    +165.3 UP   Guide(458)
+ 268141.1   +3345.9 DOWN Back(10009)
+ 268141.8      +0.7 UP   Back(10009)
+ 281466.9           info gamepadconnected #0 ""Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc)" mapping="standard"
+ 281793.3           gamepad GP0 connected id=""Wireless Controller" (STANDARD GAMEPAD Vendor: 0x054c Product: 0x09cc)" mapping="standard"
+ 281812.7           info checklist ✓ Gamepad seen
+ 282170.3           gamepad GP0 b1 down
+ 282300.1           gamepad GP0 b1 up
+ 283366.0           gamepad GP0 b0 down
+ 283552.3           gamepad GP0 b0 up
+ 283694.5           gamepad GP0 b1 down
+ 283784.9           gamepad GP0 b1 up
+ 284040.7           gamepad GP0 b2 down
+ 284165.5           gamepad GP0 b2 up
+ 284320.3           gamepad GP0 b3 down
+ 284527.6           gamepad GP0 b3 up
+ 284831.1           gamepad GP0 a2 -1
+ 284999.2           gamepad GP0 a2 0
+ 284999.3           gamepad GP0 a3 -1
+ 285151.8           gamepad GP0 a2 +1
+ 285250.3           gamepad GP0 a3 0
+ 285308.9           gamepad GP0 a3 +1
+ 285359.7           gamepad GP0 a2 0
+ 285373.0           gamepad GP0 a2 -1
+ 285451.9           gamepad GP0 a3 0
+ 285481.9           gamepad GP0 a3 -1
+ 285540.2           gamepad GP0 a2 0
+ 285566.5           gamepad GP0 a2 +1
+ 285646.8           gamepad GP0 a3 0
+ 285712.0           gamepad GP0 a3 +1
+ 285791.3           gamepad GP0 a2 0
+ 285808.1           gamepad GP0 a2 -1
+ 285871.9           gamepad GP0 a3 0
+ 285982.6           gamepad GP0 a2 0
+ 285982.9           gamepad GP0 a3 -1
+ 285999.3           gamepad GP0 a2 +1
+ 286045.4           gamepad GP0 a3 0
+ 286125.5           gamepad GP0 a3 +1
+ 286201.7           gamepad GP0 a2 0
+ 286230.6           gamepad GP0 a2 -1
+ 286257.2           gamepad GP0 a3 0
+ 286328.6           gamepad GP0 a2 0
+ 286632.8           gamepad GP0 a2 -1
+ 286633.0           gamepad GP0 a3 +1
+ 286724.5           gamepad GP0 a2 0
+ 286792.3           gamepad GP0 a2 +1
+ 286863.6           gamepad GP0 a3 0
+ 286941.0           gamepad GP0 a2 0
+ 286941.3           gamepad GP0 a3 -1
+ 287016.6           gamepad GP0 a2 -1
+ 287016.9           gamepad GP0 a3 0
+ 287060.7           gamepad GP0 a3 +1
+ 287159.7           gamepad GP0 a2 0
+ 287200.8           gamepad GP0 a3 0
+ 287587.1           gamepad GP0 a0 +1
+ 287587.4           gamepad GP0 a1 +1
+ 287643.7           gamepad GP0 a1 0
+ 287725.1           gamepad GP0 a1 -1
+ 287791.3           gamepad GP0 a0 0
+ 287814.6           gamepad GP0 a0 -1
+ 287897.5           gamepad GP0 a1 +1
+ 287988.2           gamepad GP0 a0 0
+ 288016.6           gamepad GP0 a0 +1
+ 288039.9           gamepad GP0 a1 0
+ 288108.0           gamepad GP0 a1 -1
+ 288167.7           gamepad GP0 a0 0
+ 288181.7           gamepad GP0 a0 -1
+ 288236.5           gamepad GP0 a1 0
+ 288254.5           gamepad GP0 a1 +1
+ 288335.2           gamepad GP0 a0 0
+ 288383.7           gamepad GP0 a0 +1
+ 288383.9           gamepad GP0 a1 0
+ 288486.4           gamepad GP0 a1 +1
+ 288544.2           gamepad GP0 a0 0
+ 288568.3           gamepad GP0 a0 -1
+ 288592.6           gamepad GP0 a1 0
+ 288669.8           gamepad GP0 a0 0
+ 288670.0           gamepad GP0 a1 -1
+ 288727.0           gamepad GP0 a0 +1
+ 288773.3           gamepad GP0 a1 0
+ 288798.9           gamepad GP0 a1 +1
+ 288869.6           gamepad GP0 a0 -1
+ 288948.4           gamepad GP0 a1 0
+ 288995.1           gamepad GP0 a1 -1
+ 289017.6           gamepad GP0 a0 0
+ 289095.5           gamepad GP0 a0 +1
+ 289144.2           gamepad GP0 a1 0
+ 289185.8           gamepad GP0 a1 +1
+ 289215.6           gamepad GP0 a0 0
+ 289250.3           gamepad GP0 a0 -1
+ 289250.8           gamepad GP0 a1 0
+ 289332.3           gamepad GP0 a0 0
+ 289400.6           gamepad GP0 a0 +1
+ 289440.4           gamepad GP0 a0 0
+ 290073.8           gamepad GP0 b15 down
+ 290181.9           gamepad GP0 b15 up
+ 290286.7           gamepad GP0 b15 down
+ 290450.2           gamepad GP0 b15 up
+ 290597.0           gamepad GP0 b13 down
+ 290692.2           gamepad GP0 b13 up
+ 290805.4           gamepad GP0 b13 down
+ 290866.5           gamepad GP0 b13 up
+ 291043.4           gamepad GP0 b14 down
+ 291169.9           gamepad GP0 b14 up
+ 291272.8           gamepad GP0 b14 down
+ 291363.7           gamepad GP0 b14 up
+ 291545.5           gamepad GP0 b12 down
+ 291676.7           gamepad GP0 b12 up
+ 291776.0           gamepad GP0 b12 down
+ 291872.7           gamepad GP0 b12 up
+ 292034.7           gamepad GP0 b15 down
+ 292166.6           gamepad GP0 b12 down
+ 292468.4           gamepad GP0 b12 up
+ 292468.7           gamepad GP0 b15 up
+ 292570.7           gamepad GP0 b12 down
+ 292654.6           gamepad GP0 b15 down
+ 293095.2           gamepad GP0 b12 up
+ 293097.3           gamepad GP0 b15 up
+ 293255.8           gamepad GP0 b13 down
+ 293319.5           gamepad GP0 b15 down
+ 293766.6           gamepad GP0 b13 up
+ 293766.8           gamepad GP0 b15 up
+ 294002.0           gamepad GP0 b14 down
+ 294034.3           gamepad GP0 b13 down
+ 294407.2           gamepad GP0 b13 up
+ 294407.4           gamepad GP0 b14 up
+ 294620.2           gamepad GP0 b12 down
+ 294676.1           gamepad GP0 b14 down
+ 294952.3           gamepad GP0 b14 up
+ 294969.8           gamepad GP0 b12 up
+ 295434.3           gamepad GP0 b15 down
+ 295492.1           gamepad GP0 b13 down
+ 295618.5           gamepad GP0 b0 down
+ 295632.4           gamepad GP0 b2 down
+ 295632.8           gamepad GP0 b13 up
+ 295632.8           gamepad GP0 b15 up
+ 295771.8           gamepad GP0 b0 up
+ 295772.0           gamepad GP0 b2 up
+ 295887.3           gamepad GP0 b0 down
+ 295887.6           gamepad GP0 b3 down
+ 295918.9           gamepad GP0 b2 down
+ 295960.5           gamepad GP0 b1 down
+ 295960.8           gamepad GP0 b2 up
+ 296025.6           gamepad GP0 b0 up
+ 296025.8           gamepad GP0 b1 up
+ 296025.9           gamepad GP0 b3 up
+ 296084.6           gamepad GP0 b3 down
+ 296150.6           gamepad GP0 b1 down
+ 296263.3           gamepad GP0 b1 up
+ 296263.6           gamepad GP0 b3 up
+ 297287.2           gamepad GP0 b6 down
+ 297531.9           gamepad GP0 b6 up
+ 297583.3           gamepad GP0 b7 down
+ 297695.5           gamepad GP0 b6 down
+ 297695.7           gamepad GP0 b7 up
+ 297839.5           gamepad GP0 b6 up
+ 297839.8           gamepad GP0 b7 down
+ 297983.6           gamepad GP0 b6 down
+ 297983.8           gamepad GP0 b7 up
+ 298182.7           gamepad GP0 b6 up
+ 298182.9           gamepad GP0 b7 down
+ 298299.2           gamepad GP0 b7 up
+ 298330.6           gamepad GP0 b6 down
+ 298432.9           gamepad GP0 b7 down
+ 298462.3           gamepad GP0 b6 up
+ 298559.4           gamepad GP0 b6 down
+ 298559.6           gamepad GP0 b7 up
+ 298669.1           gamepad GP0 b7 down
+ 298770.7           gamepad GP0 b6 up
+ 298830.6           gamepad GP0 b7 up
+ 299091.2           gamepad GP0 b4 down
+ 299235.2           gamepad GP0 b4 up
+ 299307.0           gamepad GP0 b4 down
+ 299307.4           gamepad GP0 b5 down
+ 299459.7           gamepad GP0 b4 up
+ 299459.9           gamepad GP0 b5 up
+ 299537.8           gamepad GP0 b4 down
+ 299537.9           gamepad GP0 b5 down
+ 299645.6           gamepad GP0 b4 up
+ 299683.0           gamepad GP0 b5 up
+ 299781.7           gamepad GP0 b4 down
+ 299781.9           gamepad GP0 b5 down
+ 299859.8           gamepad GP0 b4 up
+ 299882.3           gamepad GP0 b5 up
+ 299955.9           gamepad GP0 b4 down
+ 300034.8           gamepad GP0 b5 down
+ 300082.5           gamepad GP0 b4 up
+ 300104.0           gamepad GP0 b5 up
+ 300104.3           gamepad GP0 b7 down
+ 300188.3           gamepad GP0 b6 down
+ 300295.2           gamepad GP0 b7 up
+ 300345.3           gamepad GP0 b7 down
+ 300450.0           gamepad GP0 b6 up
+ 300450.4           gamepad GP0 b7 up
+ 300583.4           gamepad GP0 b6 down
+ 300653.4           gamepad GP0 b7 down
+ 300804.6           gamepad GP0 b7 up
+ 300876.7           gamepad GP0 b6 up
+ 300991.8           gamepad GP0 b6 down
+ 300992.1           gamepad GP0 b7 down
+ 301438.5           gamepad GP0 b6 up
+ 301466.8           gamepad GP0 b7 up
+ 301710.6           gamepad GP0 b4 down
+ 301710.9           gamepad GP0 b5 down
+ 301838.8           gamepad GP0 b4 up
+ 301838.9           gamepad GP0 b5 up
+ 302638.8           gamepad GP0 b10 down
+ 302783.8           gamepad GP0 b10 up
+ 302952.3           gamepad GP0 b10 down
+ 302952.5           gamepad GP0 b11 down
+ 303090.7           gamepad GP0 b10 up
+ 303158.5           gamepad GP0 b11 up
+ 303324.6           gamepad GP0 b10 down
+ 303399.9           gamepad GP0 b10 up
+ 303400.2           gamepad GP0 b11 down
+ 303400.4           gamepad GP0 a3 -1
+ 303495.5           gamepad GP0 a3 0
+ 303601.8           gamepad GP0 b11 up
+ 303612.6           gamepad GP0 b10 down
+ 303693.4           gamepad GP0 b11 down
+ 303807.5           gamepad GP0 b10 up
+ 303894.6           gamepad GP0 b11 up
+ 304019.9           gamepad GP0 b10 down
+ 304102.6           gamepad GP0 b10 up
+ 304103.0           gamepad GP0 b11 down
+ 304215.6           gamepad GP0 b11 up
+ 304273.9           gamepad GP0 b10 down
+ 304440.1           gamepad GP0 b10 up
+ 304440.2           gamepad GP0 b11 down
+ 304593.9           gamepad GP0 b11 up
+ 305332.0           gamepad GP0 b8 down
+ 305569.2           gamepad GP0 b8 up
+ 305883.9           gamepad GP0 b9 down
+ 306033.7           gamepad GP0 b9 up
+ 306342.4           gamepad GP0 b8 down
+ 306431.3           gamepad GP0 b9 down
+ 306452.1           gamepad GP0 b8 up
+ 306570.4           gamepad GP0 b9 up
+ 306682.7           gamepad GP0 b8 down
+ 306815.0           gamepad GP0 b8 up
+ 306815.2           gamepad GP0 b9 down
+ 306946.3           gamepad GP0 b9 up
+ 313371.0           gamepad GP0 b10 down
+ 313371.2           gamepad GP0 b11 down
+ 313545.0           gamepad GP0 b11 up
+ 313567.5           gamepad GP0 b10 up
+ 314900.1           gamepad GP0 b16 down
+ 315063.8           gamepad GP0 b16 up
+ 316039.1           info blur — cleared held keys
+ 319301.8           info focus
+ 333019.0           info blur — cleared held keys
+ 341158.4           info focus
