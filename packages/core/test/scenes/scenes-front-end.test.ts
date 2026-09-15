@@ -388,6 +388,29 @@ describe('core/scenes practice select (M2-15)', () => {
     expect(save.data.stats.gameOvers).toBe(0);
   });
 
+  it('keeps a practice score out of the next normal game`s HI', () => {
+    const save = createSaveStore(null);
+    save.recordScore('meter-normal', createHiScoreEntry(3_000, { name: 'TOP' }));
+    const s = new Session({ save });
+    expect(s.flow.startPractice('l', -1, 'default')).toBe(true);
+    s.hold(0);
+    s.gameOver(50_000);
+    expect(s.top).toBe('nameEntry');
+    s.presses([Action.Confirm, Action.Confirm, Action.Confirm, Action.Confirm]);
+    expect(s.top).toBe('hiScore');
+    s.hold(0, HI_SCORE_LOCK_TICKS);
+    s.press(Action.Confirm);
+    expect(s.top).toBe('title');
+    expect(s.flow.hiScore).toBe(3_000);
+    // The new 1P game starts while the practice World is still the game scene's: its score is
+    // the practice run's, not the session hi-score's.
+    s.start();
+    expect(s.flow.run.practice).toBe(false);
+    expect(s.flow.hiScore).toBe(3_000);
+    expect(s.game.world.scoring.board.hiScore).toBe(3_000);
+    expect(save.bestScore('meter-normal')).toBe(3_000);
+  });
+
   it('is disabled without a campaign; Back closes it and a normal start follows', () => {
     const plain = frontEndContent({ demos: false });
     const noCampaign: ContentDb = { ...plain.db, campaign: null };

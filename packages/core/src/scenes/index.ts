@@ -1700,6 +1700,12 @@ export class GameScene extends SceneBase {
   private cardTitle = '';
   /** The title card's second line (the zone's or stage's name). */
   private cardName = '';
+  /**
+   * Whether {@link GameScene.world} is a practice run's World — the World's own, set when it is
+   * adopted: the run's flag is reset by the next `beginRun` before the old World's score is
+   * recorded (M2-15: a practice score never raises the session hi-score).
+   */
+  private worldPractice = false;
 
   /**
    * Creates the scene with a placeholder World (so `world` is never null).
@@ -1797,6 +1803,7 @@ export class GameScene extends SceneBase {
         : Math.min(MAX_SCORE, flow.save.bestScore(hiScoreModeKey(world.config, mode))),
     );
     this.world = world;
+    this.worldPractice = run.practice;
     const campaign = run.campaign;
     this.cardTitle = 'STAGE';
     this.cardName = world.stage === null ? '' : world.stage.stage.name;
@@ -1818,12 +1825,14 @@ export class GameScene extends SceneBase {
 
   /**
    * Raises the session hi-score of the World's power-up mode and difficulty (the one-player
-   * tables') from the World's — not for a practice run or a co-op game (M2-15: their scores stay
-   * in their own tables).
+   * tables') from the World's — not for a practice run's World or a co-op game (M2-15: their
+   * scores stay in their own tables). Decided from the World itself (its config, the practice flag
+   * noted when it was adopted), never from the run's current state: a new game's `beginRun` has
+   * already cleared the run's practice flag when the old World is recorded.
    */
   private recordHiScore(): void {
     const world = this.world;
-    if (this.flow.run.practice || world.config.coop) return;
+    if (this.worldPractice || world.config.coop) return;
     const preset = DIFFICULTY_PRESETS.indexOf(world.config.difficulty);
     const mode = POWER_UP_MODES.indexOf(world.config.powerUpMode);
     const bests = this.flow.bests;
