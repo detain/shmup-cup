@@ -781,7 +781,8 @@ export function insertHiScore(table: readonly HiScoreEntry[], entry: HiScoreEntr
  * config, whose preset was chosen under START); since M2-05 the Direct-mode MANTA's games play
  * into their own (`direct-easy` … `direct-arcade`): the power-up model names the ship (one ship
  * per model in the content). Co-op games (M2-06) shared the one-player tables until M2-15, each
- * row with the mode `2p` — {@link sanitizeSave} moves such rows into their `-2p` table when a save is read.
+ * row with the mode `2p` — the version-1 → 2 migration ({@link SAVE_MIGRATIONS}, M2-16) moves such
+ * rows into their `-2p` table.
  *
  * @example
  * ```ts

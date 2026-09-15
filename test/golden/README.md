@@ -5,8 +5,8 @@ Committed replays of zone A (AZURE VERGE) — and, since M2-07 / M2-08 / M2-09, 
 since M2-10 of `bonus-range` and `bonus-vault`, since M2-11 of zones B and C (BRINE NEBULA,
 DUNE EXPANSE) and zone B's bonus stage `brine-grotto`, since M2-12 of zones D and E (MAGMA
 DEEP, TEMPEST RIDGE), since M2-13 of zones F and G (CELL VAULT, PRISM LABYRINTH) and zone G's
-bonus stage `glimmer-cache`, and since M2-14 of the final zones H and I (IRON CITADEL, ABYSSAL
-THRONE) —
+bonus stage `glimmer-cache`, since M2-14 of the final zones H and I (IRON CITADEL, ABYSSAL
+THRONE), and since M2-16 zone A in the toggle and hold autofire modes —
 that pin down what the simulation does (plan M1-19, `shmup_feat.md` §24). Each `<scenario>.replay.json` is a `core/replay` document — the header (every
 sim-affecting `GameConfig` field, the stage, god mode as `assisted`), every tick's input
 (`held | pressed << 16` per player, run-length encoded, base64), a state hash every 600 ticks and
@@ -69,6 +69,8 @@ continues).
 | `zone-i-god` | 4-way playtest bot, god mode | ABYSSAL THRONE (M2-14) start to `stageClear`: the descent, the trench's eels, the mine field, the undertow, the ABYSS ARK raid and THE HOLLOW KING its final blast reveals, both shot down |
 | `zone-i-boss` | 4-way playtest bot, full loadout | the stage skip to the ABYSS ARK (M2-14 tests) under the Arcade penalty: the raid's two phases, THE HOLLOW KING's three |
 | `zone-i-escape` | a weaving pilot, god mode, no power-ups | the stage skip to the ABYSS ARK (M2-14 tests): the ARK escapes after its 90-s time limit — `EndingFlag.BossEscaped` (the campaign's THE FLAGSHIP SLIPS AWAY), no king, `stageClear` |
+| `zone-a-manta-toggle` | the 4-way bot tapping SHOT every 150 ticks, god mode, full loadout | the MANTA in the toggle autofire mode (M2-16 tests, `remoteMode: false`): its Direct-mode volleys switched off and on again by the taps (the switch hashed in that mode), HALCYON BULWARK shot down; `golden-autofire.test.ts` checks it desyncs under `always` |
+| `zone-a-hold` | the 4-way bot holding SHOT / SUB in bursts, god mode, full loadout | the KESTREL in the hold autofire mode at the fastest rate (M2-16 tests, `remoteMode: false`): shots only while SHOT is held, HALCYON BULWARK shot down |
 
 - `golden.test.ts` (part of `pnpm test`) plays every file back into a fresh session: every hash and
   the outcome must match. A failure means the simulation changed.

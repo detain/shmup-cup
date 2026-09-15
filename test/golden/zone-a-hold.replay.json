@@ -1,0 +1,77 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 62,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 62,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "autofireMode": "hold",
+      "remoteMode": false,
+      "stage": "zone-a",
+      "stageSkip": "boss",
+      "aimDirections": 32,
+      "autofireInterval": 2,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 1058,
+  "hashInterval": 600,
+  "inputs": [
+    "sIDAAQEwJ7KACAEyATADAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsABc=",
+    "AKII"
+  ],
+  "hashes": [
+    3207146234
+  ],
+  "finalHash": 3592468327,
+  "description": "HALCYON BULWARK with the full loadout, god mode and the hold autofire mode at the fastest rate (M2-16 tests): SHOT and SUB held in bursts",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 1058,
+    "score": 37120,
+    "lives": 4,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

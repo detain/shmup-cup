@@ -933,3 +933,66 @@ describe('web/boot saves and the Options screen (M1-17 edge)', () => {
     expect(stored.stats.gamesStarted).toBe(1);
   });
 });
+
+describe('web/boot rebinding (M2-16)', () => {
+  /** A version-2 save with the player's keyboard and pad rebinding, SOCD and debounce. */
+  const REBOUND = JSON.stringify({
+    version: 2,
+    options: {
+      input: {
+        profileId: null,
+        socd: 'lastWins',
+        releaseDebounce: 3,
+        bindings: {
+          'keyboard-default': { game: { Shot: ['code:KeyJ'] } },
+          'gamepad-standard': { game: { PowerUp: ['button:6'] } },
+        },
+      },
+    },
+  });
+
+  it('applies the saved rebinding, SOCD and debounce at boot; J shoots in the game', async () => {
+    win.stored.set('shmup-cup:save.v1', REBOUND);
+    win.location.search = '?scene=flight'; // the game context from the first frame
+    const { app } = await boot();
+    const keys = app.input.keyProfile;
+    expect(keys?.id).toBe('keyboard-default');
+    expect([keys?.tables.game.keys.byCode.KeyJ, keys?.tables.game.keys.byCode.KeyZ]).toEqual([
+      Action.Shot,
+      0,
+    ]);
+    expect(app.input.keyboard.tuning).toMatchObject({ releaseDebounceTicks: 3, socd: 'lastWins' });
+    expect(app.input.gamepadProfile?.tables.game.buttons[6]).toBe(Action.PowerUp);
+    expect(app.input.gamepadProfile?.releaseDebounceTicks).toBe(0);
+    win.frame(0);
+    win.key('keydown', 'KeyJ', 74);
+    win.frame(STEP);
+    expect(app.game.state.input?.players[0]?.held).toBe(Action.Shot);
+    // A dev scene has no scene flow (no rebind screen).
+    expect(app.game.scenes).toBeNull();
+  });
+
+  it('?debounce= still overrides the saved debounce (a dev override)', async () => {
+    win.stored.set('shmup-cup:save.v1', REBOUND);
+    win.location.search = '?debounce=0';
+    const { app } = await boot();
+    expect(app.input.keyboard.tuning).toMatchObject({ releaseDebounceTicks: 0, socd: 'lastWins' });
+    // The rebinding still applies.
+    expect(app.input.keyProfile?.tables.game.keys.byCode.KeyJ).toBe(Action.Shot);
+  });
+
+  it('a profile switch applies that profile’s own rebinding (none) with the player’s SOCD', async () => {
+    win.stored.set('shmup-cup:save.v1', REBOUND);
+    const { app } = await boot();
+    win.frame(0);
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
+    win.frame(STEP);
+    const emulation = app.input.keyProfile;
+    expect(emulation?.id).toBe('keyboard-remote-emulation');
+    expect(emulation?.tables.game.keys.byCode.KeyJ).toBeUndefined();
+    expect(emulation?.releaseDebounceTicks).toBe(3);
+    // The rebind screen gets both devices: the key profile in use and the gamepad.
+    const page = app.game.scenes!.controlsPage;
+    expect([page.deviceIndex(false), page.deviceIndex(true)]).toEqual([0, 1]);
+  });
+});

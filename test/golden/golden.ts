@@ -70,7 +70,12 @@
  * SOVEREIGN's four phases; the raid and THE HOLLOW KING), the 4-way bot through the whole of zone
  * H at Arcade difficulty without god mode, the weaving pilot in zone H on Easy under the Arcade
  * penalty (deaths, the restarts, `gameOver`) and, with god mode and no power-ups, the weaving pilot
- * that lets the ARK escape after its time limit (the `bossEscaped` ending flag, no king).
+ * that lets the ARK escape after its time limit (the `bossEscaped` ending flag, no king). Two more
+ * (M2-16 tests) fly the autofire modes of the Options screen (`remoteMode: false` — the TV forces
+ * autofire always on) to HALCYON BULWARK with the full loadout and god mode: the MANTA in the
+ * `'toggle'` mode, the 4-way bot tapping `Shot` every 150 ticks (its Direct-mode volleys switched
+ * off and on again — the per-player switch hashed in that mode), and the KESTREL in the `'hold'`
+ * mode at the fastest rate, `Shot` and `Sub` held in bursts ({@link fireButtonBot}).
  *
  * @module
  */
@@ -117,8 +122,12 @@ export interface GoldenScenario {
   readonly config: Partial<GameConfig>;
   /** God mode for the whole run (the replay's `assisted`). */
   readonly godMode: boolean;
-  /** Who plays: the 4-way playtest bot or the careless {@link weaverBot}. */
-  readonly bot: 'four-way' | 'weaver';
+  /**
+   * Who plays: the 4-way playtest bot, the careless {@link weaverBot}, or the 4-way bot with a fire
+   * button ({@link fireButtonBot}: `'toggler'` taps `Shot`, `'burster'` holds `Shot` and `Sub` in
+   * bursts — M2-16's autofire modes).
+   */
+  readonly bot: 'four-way' | 'weaver' | 'toggler' | 'burster';
   /**
    * Co-op (M2-06; with `config.coop`): player 2's pilot and the tick its controller first presses
    * START (it drops in); afterwards it presses START again every other tick while it may join —
@@ -145,6 +154,53 @@ export function weaverBot(): PlaytestBot {
       return (world.tick / 40) % 2 < 1 ? Action.Up : Action.Down;
     },
   };
+}
+
+/** Ticks between two `Shot` taps of the {@link fireButtonBot}'s `'tap'` pattern. */
+export const TOGGLE_TAP_TICKS = 150;
+
+/** Ticks of one `'burst'` cycle of the {@link fireButtonBot}: fire held for the first half. */
+export const BURST_CYCLE_TICKS = 90;
+
+/**
+ * The 4-way bot with a fire button (M2-16 tests — the autofire modes): `'tap'` presses `Shot` for
+ * one tick every {@link TOGGLE_TAP_TICKS} ticks (in the `'toggle'` mode firing goes off, then on
+ * again); `'burst'` holds `Shot` and `Sub` for the first half of every {@link BURST_CYCLE_TICKS}
+ * ticks (in the `'hold'` mode the ship fires only then).
+ *
+ * @param pattern - How the fire button is pressed.
+ * @returns The bot.
+ */
+export function fireButtonBot(pattern: 'tap' | 'burst'): PlaytestBot {
+  const pilot = fourWayBot();
+  return {
+    name: pattern === 'tap' ? 'toggler' : 'burster',
+    decide(world) {
+      const tick = world.tick;
+      const fire =
+        pattern === 'tap'
+          ? tick > 0 && tick % TOGGLE_TAP_TICKS === 0
+            ? Action.Shot
+            : 0
+          : tick % BURST_CYCLE_TICKS < BURST_CYCLE_TICKS / 2
+            ? Action.Shot | Action.Sub
+            : 0;
+      return pilot.decide(world) | fire;
+    },
+  };
+}
+
+/**
+ * The pilot of a scenario's player 1.
+ *
+ * @param kind - {@link GoldenScenario.bot}.
+ * @returns A fresh bot.
+ */
+function pilotOf(kind: GoldenScenario['bot']): PlaytestBot {
+  if (kind === 'weaver') return weaverBot();
+  if (kind === 'toggler') return fireButtonBot('tap');
+  if (kind === 'burster') return fireButtonBot('burst');
+  return fourWayBot();
 }
 
 /** The committed golden replays. */
@@ -672,6 +728,39 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     godMode: true,
     bot: 'weaver',
   },
+  {
+    name: 'zone-a-manta-toggle',
+    description:
+      'HALCYON BULWARK with a fully powered MANTA, god mode and the toggle autofire mode (M2-16 tests): the 4-way bot taps SHOT every 150 ticks — the Direct-mode volleys off, then on again',
+    stageId: 'zone-a',
+    config: {
+      seed: 61,
+      shipId: 'manta',
+      powerUpMode: 'direct',
+      stageSkip: 'boss',
+      loadout: 'full',
+      remoteMode: false,
+      autofireMode: 'toggle',
+    },
+    godMode: true,
+    bot: 'toggler',
+  },
+  {
+    name: 'zone-a-hold',
+    description:
+      'HALCYON BULWARK with the full loadout, god mode and the hold autofire mode at the fastest rate (M2-16 tests): SHOT and SUB held in bursts',
+    stageId: 'zone-a',
+    config: {
+      seed: 62,
+      stageSkip: 'boss',
+      loadout: 'full',
+      remoteMode: false,
+      autofireMode: 'hold',
+      autofireInterval: 2,
+    },
+    godMode: true,
+    bot: 'burster',
+  },
 ]);
 
 /** Player 2's side of a co-op golden run (M2-06). */
@@ -804,7 +893,7 @@ export function recordGolden(scenario: GoldenScenario): { replay: Replay; outcom
   const platform = createHeadlessPlatform();
   const recorder = createReplayRecorder(platform.input, header);
   const game = createReplayGame({ ...platform, input: recorder }, header, shippedContent());
-  const bot = scenario.bot === 'weaver' ? weaverBot() : fourWayBot();
+  const bot = pilotOf(scenario.bot);
   const p2 = scenario.p2;
   const bot2 = p2 === undefined ? null : p2.bot === 'weaver' ? weaverBot() : fourWayBot(1);
   const watch = new OutcomeWatch(game);

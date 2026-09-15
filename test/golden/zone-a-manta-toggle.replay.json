@@ -1,0 +1,77 @@
+{
+  "kind": "replay",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "golden",
+    "seed": 61,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "full",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 61,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "direct",
+      "shipId": "manta",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "autofireMode": "toggle",
+      "remoteMode": false,
+      "stage": "zone-a",
+      "stageSkip": "boss",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "full",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 855,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEAbJCAQAEAlQGQgEABAJUBkIBAAQCVAZCAQAEAlQGQgEABAGg=",
+    "ANcG"
+  ],
+  "hashes": [
+    1967589278
+  ],
+  "finalHash": 1760534983,
+  "description": "HALCYON BULWARK with a fully powered MANTA, god mode and the toggle autofire mode (M2-16 tests): the 4-way bot taps SHOT every 150 ticks — the Direct-mode volleys off, then on again",
+  "expected": {
+    "status": "stageClear",
+    "ticks": 855,
+    "score": 37060,
+    "lives": 4,
+    "deathTicks": [],
+    "bossDefeated": true
+  }
+}

@@ -736,3 +736,95 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
     expect(second.app.game.scenes!.activeInputProfile).toBe(1);
   });
 });
+
+describe('tizen/boot rebinding (M2-16)', () => {
+  /** A version-2 save with the player's remote rebinding, SOCD and debounce. */
+  const REBOUND = JSON.stringify({
+    version: 2,
+    options: {
+      input: {
+        profileId: null,
+        socd: 'lastWins',
+        releaseDebounce: 0,
+        bindings: {
+          'tizen-remote-safe': { game: { PowerUp: ['key:428'], Speed: ['key:13'] } },
+          'gamepad-standard': { game: { Shot: ['button:1'], Sub: ['button:0'] } },
+        },
+      },
+    },
+  });
+
+  it('applies the saved rebinding, SOCD and debounce to the remote and the pads at boot', async () => {
+    win.stored.set('shmup-cup:save.v1', REBOUND);
+    const { app } = await boot();
+    const keys = app.input.keyProfile;
+    expect(keys?.id).toBe('tizen-remote-safe');
+    expect([keys?.tables.game.keys.byKeyCode[428], keys?.tables.game.keys.byKeyCode[13]]).toEqual([
+      Action.PowerUp,
+      Action.Speed,
+    ]);
+    // The menu table keeps OK as Confirm.
+    expect(keys?.tables.menu.keys.byKeyCode[13]).toBe(Action.Confirm);
+    expect(app.input.keyboard.tuning).toMatchObject({ releaseDebounceTicks: 0, socd: 'lastWins' });
+    const pads = app.input.gamepadProfile;
+    expect([pads?.tables.game.buttons[1], pads?.tables.game.buttons[0]]).toEqual([
+      Action.Shot,
+      Action.Sub,
+    ]);
+    expect([pads?.socd, pads?.releaseDebounceTicks]).toEqual(['lastWins', 0]);
+    // The rebind screen gets both devices.
+    const page = app.game.scenes!.controlsPage;
+    expect([page.deviceIndex(false), page.deviceIndex(true)]).toEqual([0, 1]);
+  });
+
+  it('a profile switch applies that profile’s rebinding; switching back restores the saved one', async () => {
+    win.stored.set('shmup-cup:save.v1', REBOUND);
+    const { app } = await boot();
+    win.frame(0);
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
+    win.frame(STEP);
+    const diagonal = app.input.keyProfile;
+    expect(diagonal?.id).toBe('tizen-remote-diagonal');
+    // No rebinding of its own: OK is PowerUp again — but the player's SOCD still applies.
+    expect(diagonal?.tables.game.keys.byKeyCode[13]).toBe(Action.PowerUp);
+    expect(diagonal?.socd).toBe('lastWins');
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
+    win.frame(2 * STEP);
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    expect(app.input.keyProfile?.tables.game.keys.byKeyCode[428]).toBe(Action.PowerUp);
+  });
+
+  it('re-applies the save on an InputSettings event (the CONTROLS page’s SOCD / DEBOUNCE)', async () => {
+    const { app } = await boot();
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    const save = app.game.scenes!.save;
+    save.setOptions({
+      ...save.options,
+      input: { ...save.options.input, releaseDebounce: 5, socd: 'lastWins' },
+    });
+    // Nothing changes until the event arrives.
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    win.frame(0);
+    app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputSettings, 0, 0, 0);
+    win.frame(STEP);
+    expect(app.input.keyboard.tuning).toMatchObject({ releaseDebounceTicks: 5, socd: 'lastWins' });
+    expect(app.input.gamepadProfile?.releaseDebounceTicks).toBe(0);
+  });
+
+  it('a hand-edited save that would lock the remote out of the menus keeps the content’s table', async () => {
+    win.stored.set(
+      'shmup-cup:save.v1',
+      JSON.stringify({
+        version: 2,
+        options: { input: { bindings: { 'tizen-remote-safe': { menu: { Back: [] } } } } },
+      }),
+    );
+    const { app } = await boot();
+    expect(app.input.keyProfile?.tables.menu.keys.byKeyCode[10009]).toBe(Action.Back);
+    // Back still reaches the menus (not an exit on the title's menu).
+    win.frame(0);
+    win.key('keydown', 10009);
+    win.frame(STEP);
+    expect(app.game.state.input?.players[0]?.pressed).toBe(Action.Back);
+  });
+});
