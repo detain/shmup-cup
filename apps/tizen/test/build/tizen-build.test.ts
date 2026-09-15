@@ -97,6 +97,13 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(code).not.toContain('__SHMUP_BUILD__');
   });
 
+  it('leaves the cross-engine determinism check out of the TV bundle (plan M2-18)', () => {
+    // Only the web app's dev / test builds install it (`?determinism`); the Tizen app never
+    // imports it, and the shell's module is tree-shaken away.
+    expect(code).not.toContain('__shmupDeterminism');
+    expect(code).not.toContain('data-shmup-determinism');
+  });
+
   it('never references import.meta or dynamic import()', () => {
     expect(code).not.toMatch(/\bimport\.meta\b/);
     expect(code).not.toMatch(/\bimport\s*\(/);

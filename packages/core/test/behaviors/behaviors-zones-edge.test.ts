@@ -215,6 +215,24 @@ const DB: ContentDb = (() => {
               telegraph: 50,
               active: 40,
             }),
+            boss('sandgrave-widow', 'widow-slow', {
+              ...WIDOW_QUIET,
+              laserTicks: 300,
+              telegraph: 5,
+              active: 5,
+            }),
+            boss('sandgrave-widow', 'widow-fraction', {
+              ...WIDOW_QUIET,
+              laserTicks: 1,
+              telegraph: 20.4,
+              active: 10.2,
+            }),
+            boss('sandgrave-widow', 'widow-negative', {
+              ...WIDOW_QUIET,
+              laserTicks: 1,
+              telegraph: -5,
+              active: 12,
+            }),
           ],
         },
       },
@@ -882,6 +900,72 @@ describe('core/behaviors boss.widow — edge cases (M2-11)', () => {
     expect(starts.length).toBeGreaterThanOrEqual(5);
     for (let k = 1; k < starts.length; k++) {
       expect(starts[k] - starts[k - 1]).toBeGreaterThanOrEqual(lane);
+    }
+  });
+});
+
+/**
+ * Fights a `boss.widow` variant and records when each silk line was fired (the World's
+ * `bullets.fireLaser` wrapped) and the most lines alive at once.
+ *
+ * @param id - The variant.
+ * @param ticks - Ticks to fight.
+ * @returns The fire ticks and the most live lines.
+ */
+function silkLines(id: string, ticks: number): { starts: number[]; mostLive: number } {
+  const w = fighting(id);
+  const bullets = w.bullets;
+  const fire = bullets.fireLaser.bind(bullets);
+  const starts: number[] = [];
+  bullets.fireLaser = (...args: Parameters<typeof fire>): number => {
+    starts.push(w.tick);
+    return fire(...args);
+  };
+  const lf = bullets.lasers.fields;
+  let mostLive = 0;
+  for (let t = 0; t < ticks; t++) {
+    run(w, 1);
+    let alive = 0;
+    for (let i = 0; i < bullets.lasers.count; i++) {
+      if ((lf.flags[i] & BulletFlag.Dead) === 0) alive++;
+    }
+    if (alive > mostLive) mostLive = alive;
+  }
+  return { starts, mostLive };
+}
+
+describe('core/behaviors boss.widow — the whole-lane wait, edge cases (M2-18 tests)', () => {
+  it('does not stretch a laserTicks longer than a lane: the lines keep their own rhythm', () => {
+    const { starts, mostLive } = silkLines('widow-slow', 1300);
+    const lane = 5 + LASER_GROW_TICKS + 5 + LASER_FADE_TICKS;
+    expect(starts.length).toBeGreaterThanOrEqual(3);
+    expect(mostLive).toBe(1);
+    const gaps = starts.slice(1).map((s, k) => s - starts[k]);
+    for (const gap of gaps) {
+      // Far longer than a lane (the rank-scaled 300), and the same every time.
+      expect(gap).toBeGreaterThan(lane * 4);
+      expect(gap).toBe(gaps[0]);
+    }
+  });
+
+  it('rounds a fractional telegraph and active time up for the wait: never two lines at once', () => {
+    const { starts, mostLive } = silkLines('widow-fraction', 600);
+    const lane = 21 + LASER_GROW_TICKS + 11 + LASER_FADE_TICKS;
+    expect(starts.length).toBeGreaterThanOrEqual(8);
+    expect(mostLive).toBe(1);
+    for (let k = 1; k < starts.length; k++) {
+      // laserTicks 1: the lane alone sets the rhythm.
+      expect(starts[k] - starts[k - 1]).toBe(lane);
+    }
+  });
+
+  it('counts a negative telegraph as none: the lane is grow + active + fade', () => {
+    const { starts, mostLive } = silkLines('widow-negative', 400);
+    const lane = LASER_GROW_TICKS + 12 + LASER_FADE_TICKS;
+    expect(starts.length).toBeGreaterThanOrEqual(8);
+    expect(mostLive).toBe(1);
+    for (let k = 1; k < starts.length; k++) {
+      expect(starts[k] - starts[k - 1]).toBe(lane);
     }
   });
 });

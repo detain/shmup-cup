@@ -71,6 +71,7 @@ describe('web build output', () => {
       const code = readFileSync(join(outDir, 'assets', name), 'utf8');
       expect(code, name).not.toContain('__shmupDebug');
       expect(code, name).not.toContain('__shmupDeterminism');
+      expect(code, name).not.toContain('data-shmup-determinism');
     }
   });
 });

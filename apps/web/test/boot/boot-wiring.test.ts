@@ -650,6 +650,21 @@ describe('web/boot determinismFromSearch', () => {
     expect(determinismFromSearch('?determinisms&xdeterminism')).toBe(false);
     expect(determinismFromSearch('?Determinism')).toBe(false);
   });
+
+  it('reads the parameter anywhere in the query, any value — even "0" or "false" (M2-18 tests)', () => {
+    expect(determinismFromSearch('?a=1&b=2&determinism')).toBe(true);
+    expect(determinismFromSearch('&determinism')).toBe(true);
+    expect(determinismFromSearch('?determinism&determinism')).toBe(true);
+    expect(determinismFromSearch('?determinism=0')).toBe(true);
+    expect(determinismFromSearch('?determinism=false')).toBe(true);
+    expect(determinismFromSearch('?determinism=a=b')).toBe(true);
+    expect(determinismFromSearch('??determinism')).toBe(false);
+    // Names are compared as written: no decoding, no trimming.
+    expect(determinismFromSearch('?determ%69nism')).toBe(false);
+    expect(determinismFromSearch('? determinism')).toBe(false);
+    expect(determinismFromSearch('?=determinism')).toBe(false);
+    expect(determinismFromSearch('?&&')).toBe(false);
+  });
 });
 
 describe('web/boot stageSkipFromSearch', () => {

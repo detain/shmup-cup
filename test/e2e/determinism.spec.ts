@@ -76,6 +76,36 @@ test.describe('cross-engine determinism: golden replays in the browser (M2-18)',
     expect(replays('content/demos')).toHaveLength(9);
   });
 
+  test('the ?determinism page runs the check instead of the game, and rejects a non-replay', async ({
+    page,
+  }) => {
+    const errors = await openCheck(page);
+    const state = await page.evaluate(() => {
+      const w = window as unknown as {
+        __shmupDeterminism?: { issues: readonly unknown[]; play(replay: unknown): unknown };
+        __shmupDebug?: unknown;
+      };
+      const check = w.__shmupDeterminism;
+      let thrown = '';
+      try {
+        check?.play({ kind: 'replay' });
+      } catch (error) {
+        thrown = error instanceof Error ? error.name : String(error);
+      }
+      return {
+        installed: typeof check?.play === 'function',
+        issues: check?.issues.length ?? -1,
+        // The game never booted: no debug API (a test build's boot would publish it).
+        debug: typeof w.__shmupDebug,
+        thrown,
+      };
+    });
+    expect(state).toEqual({ installed: true, issues: 0, debug: 'undefined', thrown: 'RangeError' });
+    // The page stays usable after the throw.
+    await expect(page.locator('html')).toHaveAttribute('data-shmup-determinism', 'ready');
+    expect(errors).toEqual([]);
+  });
+
   for (const file of FILES) {
     test(`${file.name} reproduces every recorded state hash`, async ({ page, browserName }) => {
       test.setTimeout(180_000);
