@@ -32,12 +32,12 @@ export const TEST_STORY = Object.freeze([
 /**
  * The content files without demos.
  *
- * @param story - Give the campaign the test story (default `true`).
+ * @param story - Give the campaign the test story (default `true`), or these story pages.
  * @param checkpoints - Checkpoint x positions per stage id (the stage helper's otherwise).
  * @returns The files.
  */
-function baseFiles(
-  story = true,
+export function frontEndFiles(
+  story: boolean | readonly unknown[] = true,
   checkpoints: Readonly<Record<string, readonly number[]>> = {},
 ): ContentFile[] {
   const campaign = CAMPAIGN.data as Record<string, unknown>;
@@ -48,7 +48,11 @@ function baseFiles(
   return [
     shipped('player/kestrel.player.json'),
     shipped('weapons/type-a.weapons.json'),
-    { path: CAMPAIGN.path, data: story ? { ...campaign, story: TEST_STORY } : campaign },
+    {
+      path: CAMPAIGN.path,
+      data:
+        story === false ? campaign : { ...campaign, story: story === true ? TEST_STORY : story },
+    },
     zoneStage('t-s'),
     zoneStage('t-u'),
     zoneStage('t-l'),
@@ -126,7 +130,7 @@ export function frontEndContent(
   db: ContentDb;
   demo: Replay | null;
 } {
-  const files = baseFiles(options.story ?? true, options.checkpoints);
+  const files = frontEndFiles(options.story ?? true, options.checkpoints);
   const load = (list: readonly ContentFile[]): ContentDb => {
     const { db, issues } = loadContent(list, { extraSprites: ENGINE_SPRITES });
     expect(issues).toEqual([]);
