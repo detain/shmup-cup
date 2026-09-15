@@ -4,7 +4,16 @@ All notable changes to Shmup Cup. The project follows [Semantic Versioning](http
 versions before 1.0 may change anything between minor releases. Development follows the step plan in
 [`shmup_plan.md`](shmup_plan.md); progress is tracked in [`shmup_progress.md`](shmup_progress.md).
 
-## [Unreleased] — M2: complete v1.0
+## [Unreleased]
+
+Nothing yet — the next changes after the v1.0 release candidate go here.
+
+## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
+
+The second milestone (plan steps M2-01 … M2-18): the complete game — nine zones on a diamond map,
+16 routes, two ships, co-op, the front end and the options — hardened and cut as the first release
+candidate. Every package manifest says `1.0.0-rc.1`; the Tizen widget, which only takes numbers,
+says `1.0.0`.
 
 ### Game
 
@@ -400,6 +409,34 @@ versions before 1.0 may change anything between minor releases. Development foll
   argument and the `__SHMUP_LIVE_RELOAD__` define are new; `device-info` and `live-reload` are
   implemented. No simulation change — the golden replays are unchanged. The Tizen `app.js` is ≈ 361 KB
   gzip of 384 KB.
+- **Release hardening** (M2-18) — what the release bot runs found and fixed:
+  - the **MANTA's waves** (the LASER → WAVE family's top four levels) now pass through armour: a
+    wave clinks on an armoured part at most once every 6 ticks and flies on to the weak point behind
+    it (a new `passArmour` weapon tunable) — before, a fully powered MANTA could not hurt MANTLE
+    REGENT, IRON SOVEREIGN or THE HOLLOW KING at all;
+  - the **MANTA's fifth disc level** fires two parallel small discs instead of a narrow V whose gap
+    let a small core straight ahead through (CINDER BASTION survived it);
+  - **GALVANIC MAW** opens its jaws wider (8 px, 9 in its last phase) so the MANTA's biggest discs
+    reach its mouth;
+  - **SANDGRAVE WIDOW** waits a whole silk line before spinning the next one however high the rank
+    is — a fully powered ship's rank used to bring two lines 16 px apart (under the 4-way gap);
+  - the golden replay `zone-b-god` was re-blessed for the wider jaws (nine ticks longer, same
+    outcome); no other replay or attract demo changed.
+- **Release checks** (M2-18): the 4-way bot clears all **16 routes with both ships** (every zone in
+  3–6 minutes, the 4-way rules holding on every tick); a **release audit** of the content (capsule
+  and item budgets, the recovery rule, every bullet pattern at Normal and at loop 1's top rank,
+  every boss fight's laser lanes with both ships); **cross-engine determinism** — every golden
+  replay and attract demo reproduces its state hashes in Chromium and Firefox; per-zone stress
+  benchmarks and a 30-minute soak (`pnpm bench`); boot to title in under 3 s and the Tizen
+  certification self-checks (Back / exit, multitasking, resume, user data) in the browser tests.
+- **Icons and store placeholders** (M2-18): `pnpm store:assets` draws the TV icon (512 × 423), the
+  desktop app's icon (512 × 512 — the installers now have one) and placeholder store screenshots
+  and listing text from the game's own placeholder art.
+- Behaviour change for tools and tests (M2-18): `ShotFlag.PassArmour` and the `direct.bolt`
+  tunable `passArmour`; `@shmup/shell`'s `determinism` module (`createDeterminismCheck`,
+  `installDeterminismCheck`); the web app's `?determinism` page in dev / test builds; the playtest
+  harness's `CampaignFlags.observe`, `columnGap` and `RuleWatch.narrowestColumn`; Playwright's
+  `firefox` project; version `1.0.0-rc.1`.
 
 ### Documentation
 
@@ -468,7 +505,9 @@ versions before 1.0 may change anything between minor releases. Development foll
   reload, the debug tools'
   [device line](docs/client/debug-tools.md#the-device-line) and save export, and the remote Web
   Inspector in [`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md#the-remote-web-inspector-devtools-on-the-tv)
-  (M2-17).
+  (M2-17); the developer guide [`docs/dev/release-hardening.md`](docs/dev/release-hardening.md) —
+  the release gate, what it found, the determinism check, the benchmarks, the release checks, the
+  icons, the version and what stays manual (M2-18).
 
 ## [0.1.0] — M1: playable vertical slice
 
@@ -530,4 +569,5 @@ widget bundle (`pnpm --filter @shmup/tizen build` → a checked `dist/` ready to
   [API reference](docs/dev/api-reference.md).
 
 [Unreleased]: https://github.com/detain/shmup-cup/commits/master
+[1.0.0-rc.1]: https://github.com/detain/shmup-cup/tree/master
 [0.1.0]: https://github.com/detain/shmup-cup/tree/master

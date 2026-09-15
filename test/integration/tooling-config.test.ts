@@ -300,8 +300,41 @@ describe('tooling: test concurrency', () => {
   it('runs every Playwright test in parallel and shards the e2e job in CI', () => {
     expect(read('test/e2e/playwright.config.ts')).toContain('fullyParallel: true,');
     const ci = read('.github/workflows/ci.yml');
-    expect(ci).toContain('pnpm test:e2e --shard=${{ matrix.shard }}/');
+    expect(ci).toContain('pnpm test:e2e --project=chromium --shard=${{ matrix.shard }}/');
     expect(ci).toContain('pnpm test --shard=${{ matrix.shard }}/');
     expect(ci).toContain('cancel-in-progress: true');
+  });
+
+  it('runs the cross-engine determinism spec in Firefox in a job of its own (M2-18)', () => {
+    const config = read('test/e2e/playwright.config.ts');
+    expect(config).toContain("name: 'firefox'");
+    expect(config).toContain("testMatch: 'determinism.spec.ts'");
+    const ci = read('.github/workflows/ci.yml');
+    expect(ci).toContain('pnpm exec playwright install --with-deps firefox');
+    expect(ci).toContain('run: pnpm test:e2e --project=firefox');
+  });
+});
+
+describe('tooling: the release version (M2-18)', () => {
+  /** The release candidate of v1.0 (plan M2-18). */
+  const RELEASE = '1.0.0-rc.1';
+
+  it('gives the root and every workspace project the same release version', () => {
+    expect(root.version).toBe(RELEASE);
+    expect(semver.valid(root.version)).toBe(RELEASE);
+    expect(semver.prerelease(root.version ?? '')).toEqual(['rc', 1]);
+    for (const project of projects) {
+      expect(readJson<{ version: string }>(`${project}/package.json`).version, project).toBe(
+        RELEASE,
+      );
+    }
+  });
+
+  it('has a CHANGELOG section for it', () => {
+    expect(read('CHANGELOG.md')).toContain(`## [${RELEASE}]`);
+  });
+
+  it('offers pnpm store:assets for the icons and the store-listing placeholders', () => {
+    expect(root.scripts?.['store:assets']).toBe('node scripts/store-assets.mjs');
   });
 });

@@ -63,4 +63,14 @@ describe('web build output', () => {
     const png = readFileSync(join(outDir, 'assets', 'atlas', 'main.png'));
     expect([...png.subarray(1, 4)].map((c) => String.fromCharCode(c)).join('')).toBe('PNG');
   });
+
+  it('leaves the dev-only tools out of the release bundle: no debug API, no determinism check', () => {
+    const scripts = readdirSync(join(outDir, 'assets')).filter((name) => name.endsWith('.js'));
+    expect(scripts.length).toBeGreaterThan(0);
+    for (const name of scripts) {
+      const code = readFileSync(join(outDir, 'assets', name), 'utf8');
+      expect(code, name).not.toContain('__shmupDebug');
+      expect(code, name).not.toContain('__shmupDeterminism');
+    }
+  });
 });

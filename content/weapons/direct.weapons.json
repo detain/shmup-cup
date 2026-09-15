@@ -188,7 +188,8 @@
         "frame": 0,
         "hw": 4,
         "hh": 7,
-        "hitCooldownTicks": 6
+        "hitCooldownTicks": 6,
+        "passArmour": 1
       }
     },
     {
@@ -206,7 +207,8 @@
         "frame": 1,
         "hw": 5,
         "hh": 10,
-        "hitCooldownTicks": 6
+        "hitCooldownTicks": 6,
+        "passArmour": 1
       }
     },
     {
@@ -224,7 +226,8 @@
         "frame": 2,
         "hw": 6,
         "hh": 13,
-        "hitCooldownTicks": 6
+        "hitCooldownTicks": 6,
+        "passArmour": 1
       }
     },
     {
@@ -242,7 +245,8 @@
         "frame": 3,
         "hw": 7,
         "hh": 16,
-        "hitCooldownTicks": 6
+        "hitCooldownTicks": 6,
+        "passArmour": 1
       }
     },
     {
@@ -398,11 +402,11 @@
           "shots": [
             {
               "weapon": "direct.disc.small",
-              "angle": -16
+              "oy": -4
             },
             {
               "weapon": "direct.disc.small",
-              "angle": 16
+              "oy": 4
             }
           ],
           "volleys": 3

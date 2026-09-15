@@ -1985,9 +1985,11 @@ const bossMaw = defineBossBehavior(
  * 384], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
  *
  * @remarks
- * One lane at a time as long as `laserTicks` outlasts a lane (telegraph + grow + active + fade),
- * each dodged by moving up or down (4-way). The script sleeps until the soonest of its four timers;
- * every timer is a whole number.
+ * One lane at a time, each dodged by moving up or down (4-way): the next silk line waits at least a
+ * whole lane (telegraph + grow + active + fade) however high the rank scales `laserTicks` — M2-18's
+ * release audit caught a fully powered ship's rank bringing a second, telegraphed line 16 px from
+ * the first before it faded. The script sleeps until the soonest of its four timers; every timer is
+ * a whole number.
  */
 const bossWidow = defineBossBehavior(
   'boss.widow',
@@ -2027,6 +2029,12 @@ const bossWidow = defineBossBehavior(
     let fireIn = api.fireWait(p.fireTicks);
     let launchIn = count > 0 ? api.fireWait(p.launchTicks) : NEVER_TICKS;
     let laserIn = lanes ? api.fireWait(p.laserTicks) : NEVER_TICKS;
+    // A whole lane's life: the next line never overlaps the last one (see the remarks).
+    const laneTicks =
+      Math.ceil(p.telegraph > 0 ? p.telegraph : 0) +
+      LASER_GROW_TICKS +
+      Math.ceil(p.active > 0 ? p.active : 0) +
+      LASER_FADE_TICKS;
     for (;;) {
       let wait = stepIn < fireIn ? stepIn : fireIn;
       if (launchIn < wait) wait = launchIn;
@@ -2068,7 +2076,8 @@ const bossWidow = defineBossBehavior(
           nextLane = i + 1;
           break;
         }
-        laserIn = api.fireWait(p.laserTicks);
+        const next = api.fireWait(p.laserTicks);
+        laserIn = next > laneTicks ? next : laneTicks;
       }
     }
   },

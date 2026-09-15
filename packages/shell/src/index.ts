@@ -15,7 +15,10 @@
  * `localStorage` adapter with quota checks ({@link createWebStorage}), the debug save export /
  * import ({@link exportSaveText}, {@link importSaveText}) and the TV memory budget — the estimator
  * ({@link estimateStageMemory}) and the atlas-page residency between zones
- * ({@link createAtlasResidency}). The apps stay thin adapters (input, audio, platform, Back key).
+ * ({@link createAtlasResidency}). Since M2-18 dev / test builds of the web app can run the
+ * cross-engine determinism check instead of the game ({@link installDeterminismCheck} — golden
+ * replays played in the page's own engine). The apps stay thin adapters (input, audio, platform,
+ * Back key).
  *
  * Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
  *
@@ -144,6 +147,15 @@ export {
   type WebStorageLike,
   type WebStorageOptions,
 } from './storage/index.js';
+export {
+  DETERMINISM_GLOBAL,
+  DETERMINISM_READY_ATTRIBUTE,
+  createDeterminismCheck,
+  installDeterminismCheck,
+  type DeterminismCheck,
+  type DeterminismRun,
+  type DeterminismWindowLike,
+} from './determinism/index.js';
 export {
   AUDIO_BUDGET_BYTES,
   FILE_TRACK_FALLBACK_SECONDS,

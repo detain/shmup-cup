@@ -1,6 +1,6 @@
 {
   "name": "shmup-cup",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Shmup Cup — a TypeScript 2D horizontal shoot-'em-up for Samsung Tizen TVs, the browser and Electron.",
   "license": "MPL-2.0",
@@ -35,6 +35,7 @@
     "format:check": "prettier --check .",
     "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",
     "assets": "node scripts/generate-assets.mjs",
+    "store:assets": "node scripts/store-assets.mjs",
     "trig:tables": "node scripts/gen-trig-tables.mjs",
     "audio:preview": "node scripts/audio-preview.mjs"
   },

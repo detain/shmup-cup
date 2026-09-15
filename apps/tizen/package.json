@@ -1,6 +1,6 @@
 {
   "name": "@shmup/tizen",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Samsung Tizen TV web app (.wgt), Tizen 5.5+ / Chromium 69: one classic IIFE script, remote-first input, Tizen lifecycle.",
   "license": "MPL-2.0",

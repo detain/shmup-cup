@@ -27,7 +27,13 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
 import { BossHit, BossState } from '../../src/bosses/index.js';
-import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
+import {
+  BulletFlag,
+  BulletKind,
+  LASER_FADE_TICKS,
+  LASER_GROW_TICKS,
+  LaserPhase,
+} from '../../src/bullets/index.js';
 import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { DropKind, EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
@@ -202,6 +208,12 @@ const DB: ContentDb = (() => {
               laserWidth: 8,
               telegraph: 5,
               active: 5,
+            }),
+            boss('sandgrave-widow', 'widow-overlap', {
+              ...WIDOW_QUIET,
+              laserTicks: 40,
+              telegraph: 50,
+              active: 40,
             }),
           ],
         },
@@ -742,7 +754,7 @@ describe('core/bosses BossPart.restX / restY (M2-11 review fix)', () => {
     });
     untilMouth(w, true);
     const jaw = parts[part(w, 'jaw-top')];
-    expect(jaw.localY).toBe(-13);
+    expect(jaw.localY).toBe(-17); // the shipped gape 8 (M2-18: the MANTA's biggest disc fits)
     expect(jaw.restY).toBe(-9);
   });
 
@@ -844,5 +856,32 @@ describe('core/behaviors boss.widow — edge cases (M2-11)', () => {
     w.bosses.damagePart(bottom, 99, 0);
     expect(next(120)).toBe('none');
     expect(boss.state).toBe(BossState.Fight);
+  });
+
+  it('waits a whole lane before the next silk line, however short laserTicks is (M2-18)', () => {
+    const w = fighting('widow-overlap');
+    const lasers = w.bullets.lasers;
+    const lf = lasers.fields;
+    // telegraph 50 + grow + active 40 + fade: never two lines at once, never sooner.
+    const lane = 50 + LASER_GROW_TICKS + 40 + LASER_FADE_TICKS;
+    const starts: number[] = [];
+    for (let t = 0; t < 800; t++) {
+      run(w, 1);
+      let live = 0;
+      for (let i = 0; i < lasers.count; i++) {
+        if ((lf.flags[i] & BulletFlag.Dead) !== 0) continue;
+        live++;
+        // A line just telegraphed (its first ticks), counted once.
+        const fresh = lf.phase[i] === LaserPhase.Telegraph && lf.ticks[i] <= 1;
+        if (fresh && (starts.length === 0 || w.tick - starts[starts.length - 1] > 2)) {
+          starts.push(w.tick);
+        }
+      }
+      expect(live).toBeLessThanOrEqual(1);
+    }
+    expect(starts.length).toBeGreaterThanOrEqual(5);
+    for (let k = 1; k < starts.length; k++) {
+      expect(starts[k] - starts[k - 1]).toBeGreaterThanOrEqual(lane);
+    }
   });
 });

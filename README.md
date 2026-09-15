@@ -9,14 +9,16 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-17 done: all nine zones, the endings
-and the credits — the game can be played from the title to its credits —, the complete arcade
-front end: the attract loop, the mode select, name entry, high-score tables, practice and the sound
-test —, the complete Options screen: autofire modes, rebinding per device, the input test, the
-game options, one-button play and every UI label in a string table — and the platform polish: a
-first-class desktop app with file saves, a remembered window and packaging, the TV's game-mode
-build, device info and live reload, storage quota checks and the memory budget; only M2-18, the
-v1.0 hardening and release candidate, is left).
+is next — and **M2 — complete v1.0** is code-complete as the release candidate **1.0.0-rc.1**
+(M2-01 … M2-18: all nine zones, the endings and the credits — the game can be played from the
+title to its credits —, the complete arcade front end: the attract loop, the mode select, name
+entry, high-score tables, practice and the sound test —, the complete Options screen: autofire
+modes, rebinding per device, the input test, the game options, one-button play and every UI label
+in a string table —, the platform polish: a first-class desktop app with file saves, a remembered
+window and packaging, the TV's game-mode build, device info and live reload, storage quota checks
+and the memory budget — and the v1.0 hardening: every route with both ships, the release audit,
+cross-engine determinism, the soak, the release checks, the icons). Its on-device checklist
+(plan §8.5, §8.6) on the monitors is next.
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -722,6 +724,27 @@ v1.0 hardening and release candidate, is left).
     [game-mode build and live reload on the TV](docs/client/install-on-tv.md#the-game-mode-build-latency-ab-test) ·
     [the device line and the save export](docs/client/debug-tools.md#the-device-line)
 
+- **v1.0 hardening & release candidate** (M2-18) — version **1.0.0-rc.1**
+  - **Every route with both ships** — the 4-way bot clears all 16 routes with the KESTREL and with
+    the MANTA in god mode, every zone in 3–6 minutes, the 4-way rules checked on every tick
+    (`test/playtest/campaign-routes*.test.ts`).
+  - **Release audit** — capsule and item budgets, the recovery rule after every checkpoint, every
+    bullet pattern at Normal and at loop 1's top rank (speed, rank scaling, the ship's open
+    column), every boss fight's laser lanes with both ships (`test/integration/release-audit.test.ts`).
+  - **What it found** — the MANTA's waves could not pass armour (a new `passArmour` tunable lets
+    them clink through), its fifth disc level left a gap straight ahead, GALVANIC MAW's mouth was too
+    narrow for the biggest disc, SANDGRAVE WIDOW's silk lines could come 16 px apart at a high rank;
+    `zone-b-god` re-blessed.
+  - **Cross-engine determinism** — every golden replay and attract demo reproduces its state hashes
+    in Chromium and Firefox against the web build (`?determinism`, `test/e2e/determinism.spec.ts`;
+    a Firefox job in CI).
+  - **Performance** — every zone under stress and a 30-minute soak through the scene flow with a
+    flat heap (`pnpm bench`); boot to title under 3 s and the Tizen certification self-checks — Back /
+    exit, multitasking, resume, user data — in the browser tests (`test/e2e/release-check.spec.ts`).
+  - **Icons and store placeholders** — `pnpm store:assets` draws the TV and desktop icons and
+    placeholder store screenshots and listing text from the game's placeholder art.
+  - Docs: [developer guide](docs/dev/release-hardening.md)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -738,7 +761,7 @@ v1.0 hardening and release candidate, is left).
 | [`input_probe_spec.md`](input_probe_spec.md) | Spec for the first spike: a diagnostic Tizen app that measures the Samsung remote / gamepad / display behavior |
 | [`shmup_plan.md`](shmup_plan.md) | Implementation plan: resolved design decisions, milestones M1 (vertical slice) → M2 (v1.0) → M3, ordered agent-sized build steps, manual on-device checklist, "as built" notes per step |
 | [`shmup_progress.md`](shmup_progress.md) | Execution progress: one row per plan step (status, review rounds, tests, commits, deviations) |
-| [`CHANGELOG.md`](CHANGELOG.md) | Release notes per version (0.1.0 = milestone M1) |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release notes per version (0.1.0 = milestone M1, 1.0.0-rc.1 = milestone M2's release candidate) |
 | [`shmup_prompt.md`](shmup_prompt.md) | Paste-into-a-new-session prompt that drives execution of the plan (workflow: build → review/fix loop → tests → docs → CI gate per step, progress in `shmup_progress.md`) |
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
@@ -811,8 +834,9 @@ pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # every package's Vitest tests + repo integration tests, one process, one worker pool (VITEST_MAX_WORKERS=n to throttle)
 pnpm test:e2e         # build web + Tizen test builds, boot both in headless Chromium, tests in parallel (E2E_WORKERS=n; once: pnpm exec playwright install --with-deps chromium)
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE within its size budgets), apps/electron
-pnpm bench            # stress benchmark: ms per tick and heap growth under maximum load
+pnpm bench            # benchmarks: the stress run, every zone under stress, the 30-minute soak (ms per tick, heap)
 pnpm golden:update    # re-bless the golden replays and the attract demos (only for an intended simulation change)
+pnpm store:assets     # regenerate the TV / desktop icons and the store-listing placeholders (assets/generated/store/)
 pnpm format           # Prettier
 pnpm trig:tables      # regenerate the committed core trig tables (a test checks they are current)
 pnpm content:check    # validate every JSON under content/ + its sprite names exist in the atlas + zone A's 4-way design rules + en.strings.json equals the built-in UI table (part of pnpm test)
@@ -880,7 +904,7 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) and the build-info defines (`__SHMUP_DEV__`, `__SHMUP_BUILD__`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |
 | [`scripts/`](scripts/README.md) | Repo-level Node scripts (asset pipeline, trig tables, audio preview, golden update, the Tiled importer `content/tiled-import.mjs`) |
-| [`test/`](test/README.md) | Cross-package integration tests; `test/playtest/` the 4-way playtest bot; `test/golden/` golden replays; `test/bench/` the stress benchmark; `test/e2e/` browser smoke tests (Playwright) |
+| [`test/`](test/README.md) | Cross-package integration tests; `test/playtest/` the 4-way playtest bot; `test/golden/` golden replays; `test/bench/` the benchmarks (stress, every zone, the 30-minute soak); `test/e2e/` browser smoke tests (Playwright) |
 | [`docs/`](docs/README.md) | Player (`client/`) and developer (`dev/`) documentation |
 | `tools/` | Standalone dev tools with their own npm projects (not workspace members) |
 | [`tools/input-probe`](tools/input-probe/README.md) | Input probe `.wgt`: remote / gamepad / display diagnostics for the M7 monitors (npm, Vite, Vitest; log server) |
@@ -903,7 +927,11 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-18** (v1.0 hardening & release candidate) — M2-01
+Also on hardware: the **v1.0 checklist** (plan §8.5 on-device checks and §8.6 store readiness) on
+both monitors with the release candidate 1.0.0-rc.1 — see
+[`docs/dev/release-hardening.md`](docs/dev/release-hardening.md#what-stays-manual).
+
+Code: milestone **M2** is complete with plan step **M2-18** (v1.0 hardening & release candidate) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
 (pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
 Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
@@ -911,7 +939,7 @@ Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option 
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
 transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G), M2-14 (final zones H & I, endings
-& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility) and M2-17 (platform polish: Electron, Tizen extras, storage) followed; every simulation change re-blesses the golden replays in the same
+& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed; next is the M3 backlog; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and

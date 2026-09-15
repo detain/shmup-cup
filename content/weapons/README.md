@@ -124,7 +124,7 @@ content:check`). Two behaviours are made for them:
 
 | Behaviour | Slot | Params |
 |---|---|---|
-| `direct.bolt` | main, sub | `ox` 8, `oy` 0, `hw` 4, `hh` 2, `frame` 0 (the still sprite frame), `turn` 0 (1 = the frame of the heading's octant: 0 right, 1 down-right … 7 up-right), `hitCooldownTicks` 6 (with `pierce`) — flies straight in its emitter's heading |
+| `direct.bolt` | main, sub | `ox` 8, `oy` 0, `hw` 4, `hh` 2, `frame` 0 (the still sprite frame), `turn` 0 (1 = the frame of the heading's octant: 0 right, 1 down-right … 7 up-right), `hitCooldownTicks` 6 (with `pierce`), `passArmour` 0 (1 with `pierce` = armour does not stop it: it clinks at most once per cooldown and flies on — the waves, M2-18) — flies straight in its emitter's heading |
 | `direct.bomb` | sub | `gravity` 0, `ox` 2, `oy` 0, `hw` 3, `hh` 3, `blastRadius` 8, `blastTicks` 8, `hitCooldownTicks` 6, `frames` 4 (blast), `frame` 0 — a Spread Bomb fired in its emitter's heading |
 
 See [`example.weapons.json`](example.weapons.json).

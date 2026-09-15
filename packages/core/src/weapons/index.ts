@@ -95,8 +95,10 @@
  * timer (the level's `refireTicks`, else `config.autofireInterval` / `missileInterval`); a volley
  * fires each weapon's shots only while `live + n` fits its cap (the level's `volleys × n`, else
  * the weapon's `cap`). Two behaviours are made for the families: `direct.bolt` (a straight shot in
- * the emitter's heading, optionally piercing; its sprite frame is the `frame` tunable, or with
- * `turn` the heading's octant — un-rotated art) and `direct.bomb` (a Spread Bomb fired in the
+ * the emitter's heading, optionally piercing — with `passArmour` 1 (M2-18, the waves) a piercing
+ * bolt clinks on armour at most once per hit cooldown and flies on instead of dying, so a tall wave
+ * reaches a core behind armoured parts; its sprite frame is the `frame` tunable, or with `turn` the
+ * heading's octant — un-rotated art) and `direct.bomb` (a Spread Bomb fired in the
  * emitter's heading: `gravity` bends it, it bursts on terrain or its first target into a small
  * blast). {@link applyDirectLoadout} sets a Direct-mode starting loadout. Meter mode never fires
  * the families; Direct mode never fires the meter roles.
@@ -315,7 +317,8 @@ export const WEAPON_BEHAVIOR_KINDS: Readonly<Record<WeaponBehaviorId, ShotKind>>
  * tick and width ÷ height), `gap` (the distance between the Twin Laser's beams) and `frames` (the
  * blast's, ring's or swirl's animation frames). The M2-05 Direct-mode behaviours add `frame`
  * (the still frame a `direct.bolt` / `direct.bomb` shows) and `turn` (1 = a `direct.bolt` shows the
- * frame of its heading's octant instead: 0 right, 1 down-right … 7 up-right).
+ * frame of its heading's octant instead: 0 right, 1 down-right … 7 up-right); M2-18 adds
+ * `passArmour` (1 = a piercing `direct.bolt` is not stopped by armour — see {@link ShotFlag}).
  */
 export const WEAPON_BEHAVIOR_PARAMS: Readonly<
   Record<WeaponBehaviorId, Readonly<Record<string, number>>>
@@ -383,6 +386,7 @@ export const WEAPON_BEHAVIOR_PARAMS: Readonly<
     frame: 0,
     turn: 0,
     hitCooldownTicks: 6,
+    passArmour: 0,
   }),
   'direct.bomb': Object.freeze({
     gravity: 0,
@@ -524,6 +528,11 @@ export const ShotFlag = {
   Dead: 8,
   /** A Spread Bomb that burst: the blast (piercing, world-anchored — M2-03). */
   Blast: 16,
+  /**
+   * A piercing shot that armour does not stop (M2-18 — the Direct-mode waves, `passArmour`): it
+   * clinks on armour at most once per hit cooldown and flies on, like a blast.
+   */
+  PassArmour: 32,
 } as const;
 
 /** Field layout of the shot pool (hashed in sorted field order). */
@@ -1232,6 +1241,8 @@ class RoleTables {
   readonly turn = new Uint8Array(WEAPON_ROLE_SLOTS);
   /** Direct mode: the still frame of a `direct.bolt` / `direct.bomb` (`frame`). */
   readonly frame0 = new Int32Array(WEAPON_ROLE_SLOTS);
+  /** 1 = a piercing shot armour does not stop (`passArmour`, M2-18). */
+  readonly passArmour = new Uint8Array(WEAPON_ROLE_SLOTS);
 }
 
 /**
@@ -1311,6 +1322,7 @@ function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback
   t.halfGap[r] = 0;
   t.turn[r] = 0;
   t.frame0[r] = 0;
+  t.passArmour[r] = 0;
   if (spec === null) return;
   const kind = Object.prototype.hasOwnProperty.call(WEAPON_BEHAVIOR_KINDS, spec.behavior)
     ? WEAPON_BEHAVIOR_KINDS[spec.behavior]
@@ -1354,6 +1366,7 @@ function compileRole(t: RoleTables, r: number, spec: WeaponSpec | null, fallback
   t.turn[r] = tunable(spec, 'turn') > 0 ? 1 : 0;
   const frame0 = Math.floor(tunable(spec, 'frame'));
   t.frame0[r] = frame0 > 0 ? frame0 : 0;
+  t.passArmour[r] = spec.pierce && tunable(spec, 'passArmour') > 0 ? 1 : 0;
 }
 
 /**
@@ -1548,8 +1561,8 @@ class WeaponSystemImpl implements WeaponSystem {
   /** Whether the queried shot is a Ripple (its ring, not its box, is the hitbox). */
   private qRing = false;
   /**
-   * Whether the queried shot is a Spread Bomb's blast (its cooldown applies to armour too: it
-   * clinks and burns on instead of dying).
+   * Whether the queried shot burns on through armour: a Spread Bomb's blast or a `passArmour` shot
+   * (M2-18) — its cooldown applies to armour too: it clinks and flies on instead of dying.
    */
   private qBlast = false;
   /** The ring's centre x. */
@@ -2028,8 +2041,12 @@ class WeaponSystemImpl implements WeaponSystem {
     f.role[i] = role;
     f.kind[i] = kind;
     f.shooter[i] = s;
-    // A Spread Bomb is not piercing until it bursts (its blast is — `detonate`).
-    f.flags[i] = pierce && kind !== ShotKind.SpreadBomb ? ShotFlag.Pierce : 0;
+    // A Spread Bomb is not piercing until it bursts (its blast is — `detonate`); a `passArmour`
+    // shot (M2-18) is not stopped by armour either.
+    f.flags[i] =
+      pierce && kind !== ShotKind.SpreadBomb
+        ? ShotFlag.Pierce | (t.passArmour[role] === 1 ? ShotFlag.PassArmour : 0)
+        : 0;
     const sprite = forward === 1 && t.sprite[look] >= 0 ? t.sprite[look] : t.sprite[role];
     f.sprite[i] = sprite < 0 ? 0 : sprite;
     f.draw[i] = sprite < 0 ? SpriteFlag.Hidden : 0;
@@ -2345,7 +2362,7 @@ class WeaponSystemImpl implements WeaponSystem {
       if (!(this.qx0 <= this.qx1 && this.qy0 <= this.qy1)) continue;
       const pierce = (flags & ShotFlag.Pierce) !== 0;
       this.qPierce = pierce;
-      this.qBlast = (flags & ShotFlag.Blast) !== 0;
+      this.qBlast = (flags & (ShotFlag.Blast | ShotFlag.PassArmour)) !== 0;
       // A Ripple hits with its ring: targets it touches, not those wholly inside it.
       const ring = kind === ShotKind.Ripple && f.hw[i] > 0 && hh > 0;
       this.qRing = ring;
@@ -2546,8 +2563,9 @@ class WeaponSystemImpl implements WeaponSystem {
         this.fx = f.x[i];
         this.fy = f.y[i];
         this.sfx(SFX_CUES.Clink);
-        // A blast keeps burning (its cooldown spaces the clinks); every other shot dies.
-        if ((flags & ShotFlag.Blast) !== 0) {
+        // A blast keeps burning and a `passArmour` shot flies on (the cooldown spaces the clinks);
+        // every other shot dies.
+        if ((flags & (ShotFlag.Blast | ShotFlag.PassArmour)) !== 0) {
           this.cooldowns[(f.table[i] - 1) * MAX_ENEMIES + e.slot] = t.cooldown[f.role[i]];
         } else {
           this.kill(i);
@@ -2588,7 +2606,7 @@ class WeaponSystemImpl implements WeaponSystem {
       this.fx = f.x[i];
       this.fy = f.y[i];
       this.sfx(SFX_CUES.Clink);
-      if ((f.flags[i] & ShotFlag.Blast) !== 0) {
+      if ((f.flags[i] & (ShotFlag.Blast | ShotFlag.PassArmour)) !== 0) {
         this.partCooldowns[(f.table[i] - 1) * BOSS_PART_SLOTS + index] =
           this.roles.cooldown[f.role[i]];
       } else {

@@ -213,10 +213,11 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     expect(w.bosses.damagePart(maw, 1, 0)).toBe(BossHit.Clink);
     run(w, 100);
     expect(w.bullets.count).toBe(0);
-    // Phase 0: shut for 150 ticks, then open with the jaws 4 px apart — and the cutters come.
+    // Phase 0: shut for 150 ticks, then open with the jaws 8 px apart (M2-18: wide enough for the
+    // MANTA's biggest disc) — and the cutters come.
     run(w, 60);
     expect(boss.parts[maw].open).toBe(true);
-    expect(boss.parts[jaw].localY).toBe(jawY - 4);
+    expect(boss.parts[jaw].localY).toBe(jawY - 8);
     expect(w.bosses.damagePart(maw, 1, 0)).toBe(BossHit.Damaged);
     run(w, 20);
     expect(w.bullets.count).toBeGreaterThanOrEqual(3);
@@ -242,10 +243,10 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     expect(boss.phase).toBe(1);
     expect(boss.parts[jaw].localY).toBe(jawY);
     expect(boss.parts[maw].open).toBe(false);
-    // Phase 1 opens it again later (130 shut): 4 px apart, not 8.
+    // Phase 1 opens it again later (130 shut): 8 px apart, not 16.
     run(w, 135);
     expect(boss.parts[maw].open).toBe(true);
-    expect(boss.parts[jaw].localY).toBe(jawY + 4);
+    expect(boss.parts[jaw].localY).toBe(jawY + 8);
   });
 
   it('boss.maw: after every phase change the shut jaws stand at their spec offsets, whatever the gapes', () => {
@@ -254,7 +255,7 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     const maw = part(w, 'maw');
     const top = part(w, 'jaw-top');
     const bottom = part(w, 'jaw-bottom');
-    // The shipped spec: the jaws rest 9 px above and below the mouth; gape 4, 4, then 5.
+    // The shipped spec: the jaws rest 9 px above and below the mouth; gape 8, 8, then 9 (M2-18).
     const spec = DB.enemies[DB.enemyIndex.get('galvanic-maw') ?? -1].boss?.parts ?? [];
     const topY = spec[top].y;
     const bottomY = spec[bottom].y;
@@ -264,7 +265,7 @@ describe('core/behaviors — zones B and C (M2-11)', () => {
     const gapes = (DB.enemies[DB.enemyIndex.get('galvanic-maw') ?? -1].boss?.phases ?? []).map(
       (phase) => phase.params.gape,
     );
-    expect(gapes).toEqual([4, 4, 5]);
+    expect(gapes).toEqual([8, 8, 9]);
     /**
      * Steps until the mouth is open (or shut).
      *

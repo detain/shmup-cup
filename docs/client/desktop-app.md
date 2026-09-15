@@ -99,8 +99,9 @@ This downloads a fixed version of the packaging tool on first use and writes the
 `apps/electron/release/`: on **Windows** an installer (you choose the folder) and a portable
 `.exe`; on **Linux** an AppImage and a `.tar.gz` (the Steam Deck's desktop mode runs the AppImage);
 on **macOS** a `.dmg`. Build each on its own operating system. The installers are **not signed**
-(Windows SmartScreen and macOS Gatekeeper will warn) and have no icon of their own yet — the icon
-set comes with the release candidate. Nothing is uploaded anywhere.
+(Windows SmartScreen and macOS Gatekeeper will warn); since the release candidate (1.0.0-rc.1)
+they carry the game's placeholder icon — the logo over the two ships, drawn from the game's own
+pixel art. Nothing is uploaded anywhere.
 
 ## Troubleshooting
 

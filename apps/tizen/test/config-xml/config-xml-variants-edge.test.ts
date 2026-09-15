@@ -47,7 +47,7 @@ describe('tizen config.xml validator edges', () => {
     expect(problems(XML.replace(' xmlns:tizen="http://tizen.org/ns/widgets"', ''))).toMatch(
       /xmlns:tizen/,
     );
-    expect(problems(XML.replace('version="0.1.0"', 'version="0.1"'))).toMatch(
+    expect(problems(XML.replace('version="1.0.0"', 'version="1.0"'))).toMatch(
       /major\.minor\.patch/,
     );
   });

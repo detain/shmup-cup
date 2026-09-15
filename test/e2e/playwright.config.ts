@@ -22,6 +22,12 @@
  * and a stale forwarded display (an SSH session's `localhost:11.0`) makes ANGLE's SwiftShader
  * Vulkan back-end try XCB, fail, and leave every WebGL context creation hanging.
  *
+ * Projects (plan M2-18): `chromium` runs every spec; `firefox` runs only the cross-engine
+ * determinism spec (`determinism.spec.ts` — the golden replays in SpiderMonkey against the web
+ * build's renderer-free `?determinism` page: headless Firefox on a machine without a GPU cannot
+ * create the WebGL context the game itself needs). CI runs them in separate jobs
+ * (`--project=chromium` sharded, `--project=firefox` on its own).
+ *
  * Concurrency: every test is independent (its own browser context: fresh `localStorage`, its own
  * page on the shared `vite preview` server or `file://` build), so the tests of one spec file run
  * in parallel too (`fullyParallel`), on {@link WORKERS} browsers (`E2E_WORKERS` overrides it).
@@ -88,21 +94,38 @@ export default defineConfig({
   reporter: 'list',
   timeout: 60_000,
   use: {
-    ...devices['Desktop Chrome'],
-    // ×3 of the 384×216 frame: one frame pixel = 3×3 screenshot pixels, no letterbox.
-    viewport: { width: 1152, height: 648 },
     baseURL: `http://localhost:${WEB_PORT}/`,
-    launchOptions: {
-      args: [
-        '--use-angle=swiftshader',
-        '--enable-unsafe-swiftshader',
-        '--allow-file-access-from-files',
-        '--autoplay-policy=no-user-gesture-required',
-      ],
-      env: browserEnv,
-    },
   },
-  projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        browserName: 'chromium',
+        // ×3 of the 384×216 frame: one frame pixel = 3×3 screenshot pixels, no letterbox.
+        viewport: { width: 1152, height: 648 },
+        launchOptions: {
+          args: [
+            '--use-angle=swiftshader',
+            '--enable-unsafe-swiftshader',
+            '--allow-file-access-from-files',
+            '--autoplay-policy=no-user-gesture-required',
+          ],
+          env: browserEnv,
+        },
+      },
+    },
+    {
+      name: 'firefox',
+      testMatch: 'determinism.spec.ts',
+      use: {
+        ...devices['Desktop Firefox'],
+        browserName: 'firefox',
+        viewport: { width: 1152, height: 648 },
+        launchOptions: { env: browserEnv },
+      },
+    },
+  ],
   webServer: {
     command: `pnpm --filter @shmup/web exec vite preview --port ${WEB_PORT} --strictPort`,
     cwd: repoRoot,

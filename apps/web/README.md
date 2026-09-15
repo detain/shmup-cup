@@ -109,7 +109,11 @@ overlay (FPS, tick / render ms, draw calls, pools, rank, RNG calls, state hash, 
 id, frame graph), F2 god mode, F3 hitbox / grid outlines, F4 frame advance, F5 step, F6 slow
 motion, F7 next checkpoint, F8 skip to the boss, and `window.__shmupDebug` for the console and the
 e2e suite. A release build (`pnpm build`) contains none of it — guide:
-[`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md).
+[`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md). Since M2-18 those builds
+opened with **`?determinism`** do not boot the game: they install `@shmup/shell`'s cross-engine
+determinism check (`window.__shmupDeterminism.play(replay)` — the golden replays' state hashes
+computed in the page's own engine, no WebGL needed), which `test/e2e/determinism.spec.ts` runs in
+Chromium and Firefox ([`docs/dev/release-hardening.md`](../../docs/dev/release-hardening.md)).
 
 Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sliders; since M2-16
 the CONTROLS, DISPLAY and GAME pages — autofire modes, rebinding, the input test, the game options),

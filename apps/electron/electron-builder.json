@@ -4,12 +4,14 @@
   "productName": "Shmup Cup",
   "electronVersion": "44.3.0",
   "directories": {
-    "output": "release"
+    "output": "release",
+    "buildResources": "build"
   },
   "files": ["dist/**/*", "package.json", "!dist/**/*.map", "!dist/**/*.d.ts"],
   "asar": true,
   "win": {
-    "target": ["nsis", "portable"]
+    "target": ["nsis", "portable"],
+    "icon": "build/icon.png"
   },
   "nsis": {
     "oneClick": false,
@@ -17,10 +19,12 @@
   },
   "linux": {
     "target": ["AppImage", "tar.gz"],
-    "category": "Game"
+    "category": "Game",
+    "icon": "build/icon.png"
   },
   "mac": {
     "target": ["dmg"],
-    "category": "public.app-category.arcade-games"
+    "category": "public.app-category.arcade-games",
+    "icon": "build/icon.png"
   }
 }

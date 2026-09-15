@@ -1,6 +1,6 @@
 {
   "name": "@shmup/render-pixi",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "IRenderer implementation on PixiJS v8 (renderer only): WebGL1-first, 384x216 low-res render texture, nearest-neighbour integer upscale.",
   "license": "MPL-2.0",

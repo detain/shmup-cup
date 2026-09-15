@@ -248,7 +248,8 @@ Since M2-17 the app keeps its **saves as files** in `<userData>/saves/` (`save.v
 **Ctrl+-** / **Ctrl+0**, Cmd on macOS —, the position) and the web build it loads runs as platform
 `'electron'` (EXIT quits, sound from boot). `package` runs a pinned electron-builder through
 `pnpm dlx` with `electron-builder.json` (Windows NSIS + portable, Linux AppImage + tar.gz, macOS dmg;
-`--publish never`, unsigned, no icons until M2-18); `electronVersion` is pinned there because
+`--publish never`, unsigned; since M2-18 every platform takes `build/icon.png`, drawn by
+`pnpm store:assets` — [release-hardening.md](release-hardening.md#icons-and-store-listing-placeholders)); `electronVersion` is pinned there because
 electron-builder cannot read `catalog:` — bump it with the catalog. Details:
 [platform-polish.md](platform-polish.md), for players [../client/desktop-app.md](../client/desktop-app.md).
 

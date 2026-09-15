@@ -112,8 +112,10 @@ jobs:
         run: pnpm build
 
       # Plan M1-19: 20,000 stress ticks (512 bullets, 64 enemies, full loadout, lasers) — fails
-      # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up. It has
-      # this runner to itself, so the timing is not disturbed by other checks.
+      # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up. Plan
+      # M2-18 adds every zone under stress (the zone itself, full loadout, 512 bullets: median
+      # < 1.0 ms/tick, < 1 MB retained) and a 30-minute soak through the scene flow (a flat heap).
+      # It has this runner to itself, so the timing is not disturbed by other checks.
       - name: Benchmark
         run: pnpm bench
 
@@ -147,7 +149,35 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Browser smoke tests
-        run: pnpm test:e2e --shard=${{ matrix.shard }}/5
+        run: pnpm test:e2e --project=chromium --shard=${{ matrix.shard }}/5
+
+  e2e-firefox:
+    # Plan M2-18, cross-engine determinism (shmup_feat.md §22): the golden replays and the attract
+    # demos played in Firefox (SpiderMonkey) against the web build's `?determinism` page must
+    # reproduce every recorded state hash — as they must in Chromium (the e2e shards run the same
+    # spec). Only this spec runs in Firefox (headless Firefox without a GPU has no WebGL for the
+    # game itself).
+    name: e2e · headless Firefox (cross-engine determinism)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Firefox
+        run: pnpm exec playwright install --with-deps firefox
+
+      - name: Golden replays in Firefox
+        run: pnpm test:e2e --project=firefox
 
   input-probe:
     # tools/input-probe is a standalone npm project (not in the pnpm workspace), so it gets its own job.

@@ -12,7 +12,7 @@
     the launch-time gamepad check (scripts/config-xml.mjs, plan M2-17).
 -->
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
-        id="http://shmupcup.dev/ShmupCup" version="0.1.0" viewmodes="maximized">
+        id="http://shmupcup.dev/ShmupCup" version="1.0.0" viewmodes="maximized">
   <tizen:application id="ShmpCupGam.ShmupCup" package="ShmpCupGam" required_version="5.5"/>
   <content src="index.html"/>
   <icon src="icon.png"/>

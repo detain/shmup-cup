@@ -1,6 +1,6 @@
 {
   "name": "@shmup/input-web",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Keyboard / TV-remote key events + W3C Gamepad API -> per-tick InputSnapshot (action bitmasks).",
   "license": "MPL-2.0",

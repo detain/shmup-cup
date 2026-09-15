@@ -1,6 +1,6 @@
 {
   "name": "@shmup/audio-web",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "IAudio implementation over the Web Audio API: interactive-latency context, mixer buses, suspend/resume.",
   "license": "MPL-2.0",

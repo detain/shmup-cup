@@ -43,6 +43,13 @@ export interface CampaignFlags {
   readonly config?: Partial<GameConfig>;
   /** Tick limit of one zone (default {@link DEFAULT_MAX_TICKS}). */
   readonly maxTicks?: number;
+  /**
+   * Called after every tick of every zone (rule checks, statistics — M2-18). It must not change
+   * the World.
+   *
+   * @param world - The World after the tick.
+   */
+  readonly observe?: (world: World) => void;
 }
 
 /** What one zone of a run did. */
@@ -145,6 +152,7 @@ export function playRunZone(
     stepWorld(world, input);
     world.events.clear();
     ticks++;
+    flags.observe?.(world);
     if (world.status === 'stageClear' || world.status === 'gameOver') break;
   }
   const result = run.result;

@@ -12,12 +12,12 @@ const config = JSON.parse(read('../../electron-builder.json')) as {
   appId: string;
   productName: string;
   electronVersion: string;
-  directories: { output: string };
+  directories: { output: string; buildResources: string };
   files: string[];
   asar: boolean;
-  win: { target: string[] };
-  linux: { target: string[]; category: string };
-  mac: { target: string[] };
+  win: { target: string[]; icon: string };
+  linux: { target: string[]; category: string; icon: string };
+  mac: { target: string[]; icon: string };
 };
 const pkg = JSON.parse(read('../../package.json')) as {
   main: string;
@@ -59,6 +59,16 @@ describe('electron packaging config (electron-builder.json)', () => {
     expect(config.directories.output).toBe('release');
     expect(read('../../../../.gitignore')).toContain('apps/electron/release/');
     expect(read('../../../../.prettierignore')).toContain('apps/electron/release/');
+  });
+
+  it('gives every platform the generated 512 × 512 icon (M2-18, pnpm store:assets)', () => {
+    expect(config.directories.buildResources).toBe('build');
+    for (const icon of [config.win.icon, config.linux.icon, config.mac.icon]) {
+      expect(icon).toBe('build/icon.png');
+    }
+    const png = readFileSync(new URL('../../build/icon.png', import.meta.url));
+    expect([...png.subarray(1, 4)].map((c) => String.fromCharCode(c)).join('')).toBe('PNG');
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([512, 512]);
   });
 
   it('offers a package script that pins electron-builder and never publishes', () => {

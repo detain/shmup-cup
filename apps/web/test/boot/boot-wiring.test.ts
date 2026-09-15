@@ -20,6 +20,7 @@ import {
   loadoutFromSearch,
   stageFromSearch,
   stageSkipFromSearch,
+  determinismFromSearch,
   type WebAppResources,
 } from '../../src/boot/index.js';
 
@@ -634,6 +635,20 @@ describe('web/boot loadoutFromSearch', () => {
     expect(loadoutFromSearch('?loadout=full&loadout=')).toBe('full');
     expect(loadoutFromSearch('?stage=test-range&profile=x&loadout=default')).toBe('default');
     expect(loadoutFromSearch('?')).toBeNull();
+  });
+});
+
+describe('web/boot determinismFromSearch', () => {
+  it('asks for the determinism check with a `determinism` parameter of any value (M2-18)', () => {
+    expect(determinismFromSearch('?determinism')).toBe(true);
+    expect(determinismFromSearch('determinism')).toBe(true);
+    expect(determinismFromSearch('?stage=zone-a&determinism=1')).toBe(true);
+    expect(determinismFromSearch('?determinism=')).toBe(true);
+    expect(determinismFromSearch('')).toBe(false);
+    expect(determinismFromSearch('?')).toBe(false);
+    expect(determinismFromSearch('?stage=determinism')).toBe(false);
+    expect(determinismFromSearch('?determinisms&xdeterminism')).toBe(false);
+    expect(determinismFromSearch('?Determinism')).toBe(false);
   });
 });
 

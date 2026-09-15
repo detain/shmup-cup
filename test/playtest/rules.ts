@@ -11,6 +11,11 @@
  *   is as good as closed) are the rows their beam covers plus the ship's hurt radius;
  *   {@link laserLaneGaps} measures the open rows between two such lanes and the widest open band
  *   of the playfield. A 4-way player dodges lasers only by moving up or down into such a gap.
+ * - **The ship's column keeps a {@link MIN_LANE_GAP}-px gap** (M2-18, the release audit): the enemy
+ *   bullets crossing the column the ship flies in ({@link COLUMN_HALF_WIDTH} px either side of it,
+ *   each widened by its radius and the ship's hurt radius) and every live laser lane together never
+ *   leave less than a {@link MIN_LANE_GAP}-px open band of rows ({@link columnGap}) — a pattern
+ *   never walls a remote player in.
  *
  * @module
  */
@@ -21,6 +26,9 @@ export const MAX_AIMED_BULLET_SPEED = 2.0;
 
 /** Narrowest open gap between two simultaneous laser lanes (px). */
 export const MIN_LANE_GAP = 16;
+
+/** Half width of the ship's column that {@link columnGap} checks (px either side of the ship). */
+export const COLUMN_HALF_WIDTH = 8;
 
 /**
  * The fastest live enemy bullet.
@@ -95,6 +103,61 @@ export function laserLaneGaps(world: World): LaneGaps {
   return { lanes: bands.length, separate, narrowestBetween: narrowest, widestOpen: widest };
 }
 
+/**
+ * The widest open band of playfield rows in the ship's column (see the module docs): every live
+ * enemy bullet whose circle reaches within {@link COLUMN_HALF_WIDTH} px of the ship's x closes its
+ * rows ± its radius and the ship's hurt radius, every live laser lane (not fading) the rows of
+ * {@link laserLaneGaps}; overlapping bands merge.
+ *
+ * @param world - The World.
+ * @param player - The ship's player slot (default 0).
+ * @returns The widest open band in px (`PLAYFIELD_H` when nothing crosses the column).
+ */
+export function columnGap(world: World, player = 0): number {
+  const cx = world.players[player].x;
+  const camera = world.camera;
+  const hurt = world.ship.hurtRadius;
+  const bands: [number, number][] = [];
+  /**
+   * Adds a closed band of rows (clipped to the playfield; outside it closes nothing).
+   *
+   * @param top - First row.
+   * @param bottom - Last row.
+   */
+  const close = (top: number, bottom: number): void => {
+    if (bottom <= 0 || top >= PLAYFIELD_H) return;
+    bands.push([Math.max(0, top), Math.min(PLAYFIELD_H, bottom)]);
+  };
+  const pool = world.bullets.pool;
+  const f = pool.fields;
+  for (let i = 0; i < pool.count; i++) {
+    if ((f.flags[i] & BulletFlag.Dead) !== 0) continue;
+    const r = f.radius[i];
+    if (Math.abs(f.x[i] - cx) > COLUMN_HALF_WIDTH + r) continue;
+    const y = f.y[i] - camera.y;
+    close(y - r - hurt, y + r + hurt);
+  }
+  const lasers = world.bullets.lasers;
+  const lf = lasers.fields;
+  for (let i = 0; i < lasers.count; i++) {
+    if ((lf.flags[i] & BulletFlag.Dead) !== 0 || lf.phase[i] === LaserPhase.Fade) continue;
+    const half = lf.width[i] / 2 + hurt;
+    close(
+      Math.min(lf.y[i], lf.ey[i]) - camera.y - half,
+      Math.max(lf.y[i], lf.ey[i]) - camera.y + half,
+    );
+  }
+  if (bands.length === 0) return PLAYFIELD_H;
+  bands.sort((a, b) => a[0] - b[0]);
+  let widest = 0;
+  let edge = 0;
+  for (const [top, bottom] of bands) {
+    if (top - edge > widest) widest = top - edge;
+    if (bottom > edge) edge = bottom;
+  }
+  return PLAYFIELD_H - edge > widest ? PLAYFIELD_H - edge : widest;
+}
+
 /** Violations of the 4-way rules collected over a run ({@link createRuleWatch}). */
 export interface RuleWatch {
   /** Fastest enemy bullet seen (px/tick). */
@@ -107,6 +170,8 @@ export interface RuleWatch {
   narrowestGap: number;
   /** Narrowest "widest open band" seen while lanes were live. */
   narrowestOpen: number;
+  /** Narrowest open band seen in the ship's column ({@link columnGap}, M2-18). */
+  narrowestColumn: number;
   /** Ticks on which a rule was broken, with what broke it (the first 20). */
   readonly violations: string[];
   /**
@@ -136,6 +201,7 @@ export function createRuleWatch(): RuleWatch {
     maxSeparate: 0,
     narrowestGap: Number.POSITIVE_INFINITY,
     narrowestOpen: PLAYFIELD_H,
+    narrowestColumn: PLAYFIELD_H,
     violations: [],
     observe: (world) => {
       const speed = maxBulletSpeed(world);
@@ -155,6 +221,9 @@ export function createRuleWatch(): RuleWatch {
       if (gaps.lanes > 0 && gaps.widestOpen < MIN_LANE_GAP) {
         broken.push(`widest open band ${gaps.widestOpen.toFixed(1)}`);
       }
+      const column = columnGap(world);
+      if (column < watch.narrowestColumn) watch.narrowestColumn = column;
+      if (column < MIN_LANE_GAP) broken.push(`ship's column open ${column.toFixed(1)}`);
       if (broken.length > 0 && watch.violations.length < 20) {
         watch.violations.push(`tick ${String(world.tick)}: ${broken.join(', ')}`);
       }

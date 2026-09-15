@@ -29,16 +29,20 @@ describe('tizen/public/config.xml consistency', () => {
     expect(APP_ID.startsWith(`${attr('tizen:application', 'package') ?? '?'}.`)).toBe(true);
   });
 
-  it('carries the release version of the package manifests (0.1.0 = M1, plan M1-19)', () => {
+  it('carries the release version of the package manifests (1.0.0-rc.1 = the M2 release candidate)', () => {
     const pkg = JSON.parse(
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as { version: string };
     const root = JSON.parse(
       readFileSync(new URL('../../../../package.json', import.meta.url), 'utf8'),
     ) as { version: string };
-    expect(attr('widget', 'version')).toBe(pkg.version);
     expect(pkg.version).toBe(root.version);
-    expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
+    // Semantic versioning in the manifests (a pre-release such as -rc.1 allowed); the widget takes
+    // the numeric core only — Tizen accepts major.minor.patch and nothing else (M2-18).
+    const semver = /^(\d+\.\d+\.\d+)(?:-[0-9A-Za-z.]+)?$/.exec(pkg.version);
+    expect(semver).not.toBeNull();
+    expect(attr('widget', 'version')).toBe(semver?.[1]);
+    expect(attr('widget', 'version')).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   it('targets Tizen 5.5 or newer', () => {

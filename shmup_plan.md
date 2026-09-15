@@ -3717,6 +3717,50 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Manual:** the complete v1.0 checklist (§8.5, §8.6).
 - **Refs:** `shmup_feat.md` §22 (budgets, determinism), §24 (automated tests), §23 (store requirements), §10
   (recovery design).
+- **As built:**
+  - **Routes × ships.** `test/playtest/campaign-routes.ts` `flyRoutesThrough(exit, ship)` flies the KESTREL or the
+    MANTA (`ROUTE_SHIPS`); four files (`campaign-routes-b` / `-c` / `-manta-b` / `-manta-c.test.ts`) run the quarters
+    in parallel. Each zone must last 3–6 min (`ZONE_MIN_SECONDS` / `ZONE_MAX_SECONDS`) and the 4-way rules are
+    checked on **every tick of every route** (new `CampaignFlags.observe`). New rule `columnGap` in `rules.ts`: the
+    bullets crossing the ship's column (±8 px) and every live laser lane must leave a ≥ 16-px open band — the "4-way
+    gap rule" generalised from lasers to bullet walls (measured minimum over all routes: 38 px).
+  - **Findings fixed (sim changes).** The MANTA could not finish several routes: (1) the LASER → WAVE family's tall
+    piercing waves died on armour in front of MANTLE REGENT's, IRON SOVEREIGN's and THE HOLLOW KING's cores — new
+    `direct.bolt` tunable `passArmour` / `ShotFlag.PassArmour` (clink at most once per hit cooldown and fly on, like a
+    blast), set on the four waves; (2) its fifth disc level was a ±16-unit V with a blind spot straight ahead (CINDER
+    BASTION) — now two parallel discs (`oy` ±4); (3) GALVANIC MAW's jaws (gape 4 / 4 / 5) always caught the HUGE
+    DISC — gape 8 / 8 / 9. The boss sweep found (4) SANDGRAVE WIDOW's rank-scaled `laserTicks` bringing a second silk
+    line 16 px from the first — `boss.widow` now waits a whole lane. `zone-b-god` re-blessed (the jaws; nine ticks
+    longer, same outcome); no other golden or demo changed.
+  - **Static audits** are `test/integration/release-audit.test.ts` (budgets: 12–32 capsule sources before the WARNING,
+    ≥ 3 in 900 px after every checkpoint, the Direct item plan 20–30 with ≥ 6 red / green / blue, one octagon, ≤ 1
+    orange / yellow, no meter 1UP / bonus capsule outside bonus stages, ≤ 2 blue capsules; every pattern on a probe at
+    rank 2 and 16; every boss fight with both ships). "Static" is partly headless-runtime: the laser lanes are measured
+    in real fights, the patterns on probes.
+  - **Cross-engine determinism.** Headless Firefox on a GPU-less machine cannot create a WebGL context
+    (`FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS`), so the game page cannot boot there. The replays run instead on the
+    web **test build's** renderer-free `?determinism` page (`@shmup/shell` `determinism` module — the same bundle of
+    the core and the content, dev / test builds only, folded out of releases); `test/e2e/determinism.spec.ts` plays
+    every golden replay and attract demo in the Playwright projects `chromium` and `firefox` and compares every hash
+    with the file (so Node, Chromium and Firefox agree). There is no separate `e2e` workflow: CI's `ci.yml` has the
+    `e2e` shards (`--project=chromium`) and a new `e2e-firefox` job (`--project=firefox`).
+  - **Benches.** `test/bench/zones.perf.ts` (each zone start → clear with the bot, full loadout, god mode, bullets
+    topped up to 512: median < 1 ms/tick, < 1 MB retained) and `soak.perf.ts` (30 min through the scene flow — runs,
+    endings, credits, name entry, the next run; heap flat within 1 MB). The soak measures the heap without V8's code
+    and trusted spaces (`dataHeapBytes`): those grow ~1 MB over 30 min with JIT work, the objects ~300 KB, levelling.
+  - **Release checks.** `test/e2e/release-check.spec.ts`: boot to title < 3 s (both builds, measured from the
+    navigation by a `MutationObserver` init script; ≈ 1.1 s) and the Tizen self-checks on the Tizen build with a fake
+    `window.tizen` (Back / exit, pause, `visibilitychange` suspend / resume without a catch-up burst, five resume
+    cycles, user data only in `shmup-cup:` `localStorage` keys).
+  - **Icons / store.** `scripts/store-assets.mjs` (`pnpm store:assets`, `--check`): the committed icons
+    `apps/tizen/public/icon.png` (512 × 423, replacing the skeleton's binary) and `apps/electron/build/icon.png`
+    (512 × 512, named in `electron-builder.json`) and the ignored `assets/generated/store/` (icon, four 1920 × 1080
+    placeholder screenshots, `listing.json`), all from the placeholder art. The test compares decoded pixels, not PNG
+    bytes (zlib versions may differ). The Seller Office sizes could not be verified online — the listing says to check
+    them before a submission.
+  - **Version.** Manifests `1.0.0-rc.1`; `config.xml` `1.0.0` — Tizen accepts `major.minor.patch` numbers only, so the
+    widget takes the numeric core (`config-xml-consistency.test.ts`). CHANGELOG `[1.0.0-rc.1]` with an empty
+    `[Unreleased]`. Docs: `docs/dev/release-hardening.md`.
 
 ---
 

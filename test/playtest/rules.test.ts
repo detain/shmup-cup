@@ -8,7 +8,10 @@
  *   merges overlapping and touching bands, and measures the narrowest gap between separate ones
  *   and the widest open band; a laser entirely above or below the playfield is no lane
  *   (regression: it used to count as a lane at row 0 / 200 and fake a narrow gap);
- * - `createRuleWatch` keeps the extremes over a run and lists at most 20 violations.
+ * - `createRuleWatch` keeps the extremes over a run and lists at most 20 violations;
+ * - `columnGap` (M2-18) closes the rows of the bullets crossing the ship's column (±8 px, each
+ *   widened by its radius and the hurt radius) and of every live laser lane, and gives the widest
+ *   open band — a wall of bullets across the column is a violation of the watch.
  */
 import {
   ANGLE_UNITS,
@@ -23,8 +26,10 @@ import {
 import { describe, expect, it } from 'vitest';
 import { shippedContent } from './harness.js';
 import {
+  COLUMN_HALF_WIDTH,
   MAX_AIMED_BULLET_SPEED,
   MIN_LANE_GAP,
+  columnGap,
   createRuleWatch,
   laserLaneGaps,
   maxBulletSpeed,
@@ -229,5 +234,56 @@ describe('playtest rules: createRuleWatch', () => {
     const watch = createRuleWatch();
     for (let i = 0; i < 25; i++) watch.observe(w);
     expect(watch.violations).toHaveLength(20);
+  });
+});
+
+describe('playtest rules: columnGap (M2-18)', () => {
+  it('is the whole playfield with nothing in the ship’s column', () => {
+    const w = world();
+    expect(columnGap(w)).toBe(PLAYFIELD_H);
+    // A bullet well away from the column closes nothing.
+    spawnBullet(w, w.players[0].x + 60, 100, ANGLE_UNITS / 2, 1, BulletKind.RoundPink);
+    expect(columnGap(w)).toBe(PLAYFIELD_H);
+  });
+
+  it('closes the rows of a bullet crossing the column, widened by its radius and the hurt radius', () => {
+    const w = world();
+    const x = w.players[0].x + COLUMN_HALF_WIDTH;
+    spawnBullet(w, x, 100, ANGLE_UNITS / 2, 1, BulletKind.RoundPink);
+    const f = w.bullets.pool.fields;
+    const half = f.radius[0] + w.ship.hurtRadius;
+    // The open band above (100 − half rows) is wider than the one below.
+    expect(columnGap(w)).toBeCloseTo(100 - half, 9);
+  });
+
+  it('finds the gap a wall of bullets leaves, and the watch flags a wall under 16 px', () => {
+    const w = world();
+    const x = w.players[0].x;
+    // A wall every 8 px from row 0 to 200 but a 30-px hole around row 100.
+    for (let y = 4; y < PLAYFIELD_H; y += 8) {
+      if (y > 85 && y < 115) continue;
+      spawnBullet(w, x, y, ANGLE_UNITS / 2, 0.5, BulletKind.RoundPink);
+    }
+    const open = columnGap(w);
+    expect(open).toBeGreaterThan(MIN_LANE_GAP);
+    expect(open).toBeLessThan(40);
+    const watch = createRuleWatch();
+    watch.observe(w);
+    expect(watch.narrowestColumn).toBe(open);
+    expect(watch.violations).toEqual([]);
+    // Plug the hole: the column is walled in.
+    for (const y of [92, 100, 108])
+      spawnBullet(w, x, y, ANGLE_UNITS / 2, 0.5, BulletKind.RoundPink);
+    expect(columnGap(w)).toBeLessThan(MIN_LANE_GAP);
+    watch.observe(w);
+    expect(watch.violations.some((v) => v.includes("ship's column"))).toBe(true);
+  });
+
+  it('counts every live laser lane, wherever it is along the playfield', () => {
+    const w = world();
+    lane(w, 100, 6);
+    const open = columnGap(w);
+    const half = 3 + w.ship.hurtRadius;
+    expect(open).toBeCloseTo(Math.max(100 - half, PLAYFIELD_H - (100 + half)), 9);
   });
 });

@@ -52,14 +52,18 @@
  * **Debug tools (M1-19).** In dev / test builds (`pnpm dev`, `build:test`) `main.ts` hands over the
  * shell's debug tools ({@link WebAppResources.debugTools}): F1 overlay, F2 god mode, F3 hitboxes /
  * grid, F4 frame advance, F5 step, F6 slow motion, F7 next checkpoint, F8 skip to the boss, and
- * `window.__shmupDebug`. A release build (`pnpm build`) has none.
+ * `window.__shmupDebug`. A release build (`pnpm build`) has none. There `?determinism` (M2-18,
+ * {@link determinismFromSearch}) opens the cross-engine determinism check instead of the game
+ * (`@shmup/shell` `installDeterminismCheck`: golden replays played in the page's engine, no WebGL
+ * needed — `test/e2e/determinism.spec.ts` runs it in Chromium and Firefox).
  *
  * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
  * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
  *
  * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
  * {@link inputOverridesFromSearch}, {@link InputOverrides}, {@link stageFromSearch},
- * {@link contentStageIds}, {@link loadoutFromSearch}, {@link stageSkipFromSearch}.
+ * {@link contentStageIds}, {@link loadoutFromSearch}, {@link stageSkipFromSearch},
+ * {@link determinismFromSearch}.
  *
  * @module
  */
@@ -291,6 +295,29 @@ export function stageSkipFromSearch(search: string): StageSkip | null {
     if (value === 'boss' || value === 'none') skip = value;
   }
   return skip;
+}
+
+/**
+ * Whether the page asks for the cross-engine determinism check instead of the game: a
+ * `determinism` parameter (`?determinism`, with any value) — M2-18. `main.ts` honours it only in
+ * dev / test builds (`__SHMUP_DEV__`).
+ *
+ * @param search - `location.search` (with or without the leading `?`).
+ * @returns `true` when the parameter is present.
+ *
+ * @example
+ * ```ts
+ * determinismFromSearch('?determinism'); // → true
+ * determinismFromSearch('?stage=zone-a'); // → false
+ * ```
+ */
+export function determinismFromSearch(search: string): boolean {
+  const query = search.charAt(0) === '?' ? search.slice(1) : search;
+  for (const pair of query.split('&')) {
+    const eq = pair.indexOf('=');
+    if ((eq < 0 ? pair : pair.slice(0, eq)) === 'determinism') return true;
+  }
+  return false;
 }
 
 /**
