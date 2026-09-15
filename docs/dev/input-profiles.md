@@ -386,9 +386,10 @@ it; `main.ts` does not put it on `window`): `app.input.keyProfile?.id`,
 nothing: the keyboard's slots are typed arrays created once, the debouncer is two typed
 arrays, `resolveDirections` works on numbers, the per-pad state objects and direction
 trackers are created with the adapter. Profiles are compiled once at load; `setProfile()` is
-a load-time call. An allocation probe in `web-input-profiles-edge.test.ts` runs `poll()` with
-profiles, debounce, policies and pads (a per-poll array would show as ~0.5 MB; today it
-measures ~30 KB of test noise).
+a load-time call. An allocation guard in `web-input-profiles-edge.test.ts` runs `poll()` with
+profiles, debounce, policies and pads through the core's `measureHeapGrowth` (a per-poll array
+would show as ~0.5 MB, one boxed number per poll as 160 KB against the 128 KB budget; today it
+measures ~4 KB).
 
 ## Extending it
 

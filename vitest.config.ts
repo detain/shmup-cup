@@ -11,11 +11,16 @@
  * own `VITEST_MAX_WORKERS=<n>` overrides it — lower it to share a busy machine), fed longest file
  * first across the projects by {@link LongestFirstSequencer}. `pnpm test` used to be Turborepo
  * running every package's `vitest run` at once: nine processes, each with a worker per core —
- * about nine busy workers per core, which starved V8's background compiler threads and made the
- * allocation guards flaky. One pool keeps the machine at about one worker per core and needs
- * ~40 % less CPU for the same wall time. The allocation guards share the pool: with it they
- * passed 21 full runs in a row, while a separate low-parallelism group for them (tried too)
- * added 8–12 s a run and was no steadier.
+ * about nine busy workers per core. One pool keeps the machine at about one worker per core and
+ * needs ~40 % less CPU for the same wall time.
+ *
+ * The allocation guards share the pool (a separate low-parallelism group for them, tried too,
+ * added 8–12 s a run). Under either setup's load they failed now and then and passed alone —
+ * 1 run in 8 with nine processes, 2 in 20 with one pool — because V8's background compiles of
+ * the code under test landed inside their measured windows. Their helper
+ * (`packages/core/test/helpers/alloc.ts`, `measureHeapGrowth`) now lands those compiles before
+ * every round it measures and leaves compiled code out of the count: 22 full runs in a row
+ * passed with it (see docs/dev/build-test-deploy.md, "Test concurrency").
  *
  * `tools/*` is intentionally not listed: tools are standalone npm projects.
  *

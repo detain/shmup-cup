@@ -75,7 +75,9 @@ exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmuprend
 
 Tests run in Node: pure modules are tested fully; Pixi display objects need no GPU, so the
 atlas (over fake page images), bindings, quad pools, the particle pool, the popups and the
-renderer (with WebGL faked) are exercised too, including their per-frame allocation. The real WebGL path is covered by `pnpm test:e2e` (headless Chromium).
+renderer (with WebGL faked) are exercised too, including their per-frame allocation (the core's
+allocation guard, `packages/core/test/helpers/alloc.ts`, with the workers started with
+`ALLOCATION_GUARD_EXEC_ARGV`). The real WebGL path is covered by `pnpm test:e2e` (headless Chromium).
 
 **Bundle size note:** importing from `'pixi.js'` pulls Pixi's default extension set; the
 whole Tizen `app.js` is ~129 KB gzip today. Dropping unused Pixi subsystems

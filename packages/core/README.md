@@ -54,7 +54,7 @@ marked *partial* above still have planned work — see
 ## Scripts
 
 ```sh
-pnpm --filter @shmup/core test        # Vitest (Node, headless; workers get --expose-gc for the allocation guard)
+pnpm --filter @shmup/core test        # Vitest (Node, headless; workers get --expose-gc --allow-natives-syntax for the allocation guard)
 pnpm trig:tables                      # regenerate src/math/trig-table.ts (repo root; a test diffs it)
 pnpm content:check                    # validate content/ with loadContent() (repo root)
 pnpm --filter @shmup/core typecheck   # src (pure) + test/ (Node) programs
@@ -136,11 +136,15 @@ Consumers inside the workspace resolve `@shmup/core` to `src/index.ts` through t
 `@shmup/source` export condition (no build needed for dev/test); `dist/` is for `tsc`
 builds of dependent packages and any future external consumer.
 
-`test/helpers/alloc.ts` is the **allocation guard** (plan §1.4): `measureHeapGrowth(fn,
-iterations)` measures the bytes a hot path allocates (V8 `GCProfiler`, needs `--expose-gc`,
-which `vitest.config.ts` passes to the workers). Every per-tick entry point (`stepWorld`,
+`test/helpers/alloc.ts` is the **allocation guard** (plan §1.4) of every package — shell,
+render-pixi and input-web import it by relative path: `measureHeapGrowth(fn, iterations,
+warmup?)` measures the bytes a hot path allocates (V8 `GCProfiler`, without compiled code; needs
+`--expose-gc --allow-natives-syntax`, which `vitest.config.ts` passes to the workers as
+`ALLOCATION_GUARD_EXEC_ARGV`). Every per-tick entry point (`stepWorld`,
 `updatePlayer`, the grid, the stage runner, a 64-enemy World running every mover kind, a World
 with 512 live bullets and 16 lasers, a fully powered World firing lasers and missiles from
 four Options, a World collecting capsules, equipping the meter and wearing the Force Field down — one and two players, deaths and restarts, a whole boss fight — `hashWorld`, `game.frame` (also slowed and frame-advanced), the debug counters, replay recording and playback, the scene flow through a whole game and 20,000 menu ticks, the UI widgets and the HUD, rank-modified shooters and revenge kills, the difficulty menu and the continue countdown, every Types B–D weapon firing from four Options and the weapon select flying its live preview, the MANTA's family volleys, colour items, Arm and speed toggle and the HUD's tier pips) has a test that keeps it under budget. The helper
-keeps the steadiest of up to three measured windows (`attempts`, stopping at the first within
-`settled` bytes), so one window spent in a lower V8 tier cannot fail a guard.
+runs its warm-up and windows through one loop, lands V8's background compiles before every round
+and keeps the steadiest of up to three measured windows (`attempts`, stopping at the first within
+`settled` bytes), so the full suite's load does not show in a guard
+([docs/dev/build-test-deploy.md](../../docs/dev/build-test-deploy.md#test-concurrency)).

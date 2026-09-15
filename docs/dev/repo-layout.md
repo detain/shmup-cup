@@ -24,7 +24,7 @@ shmup-cup/
 ├── tsconfig.json           type-checks repo-root tooling files
 ├── eslint.config.js        flat config: typescript-eslint (type-aware), compat (chrome >= 69), jsdoc, core purity rules
 ├── vite.shared.ts          @shmup/source resolve conditions shared by Vite + Vitest; shmupContent() → virtual:shmup-content; shmupAssets() → virtual:shmup-assets + dist/assets/atlas/; shmupBuildInfo() → __SHMUP_DEV__ / __SHMUP_BUILD__ (M1-19)
-├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env, optional worker execArgv such as --expose-gc)
+├── vitest.shared.ts        defineShmupProject(): per-project Vitest defaults (tests in test/, Node env, optional worker execArgv such as ALLOCATION_GUARD_EXEC_ARGV)
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test — one process, one worker pool, longest file first (→ `pnpm test` / `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
 ├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
@@ -64,7 +64,7 @@ shmup-cup/
 │   │   │   ├── debug/          ✔ hashWorld state hash, debug switches + controls (god mode, outlines, frame advance, slow-mo, checkpoint jump, stage skip), overlay counters (M1-19)
 │   │   │   ├── save/           ✔ versioned save (save.v1): options, hi-score tables, stats; migrations, defensive parsing, SaveStore (writes only on change) — M1-17
 │   │   │   └── replay/         ✔ replays: header, per-tick input recorder, playback + desync report, RLE/varint/base64 JSON format (M1-19)
-│   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants); test/helpers/alloc.ts = allocation guard (measureHeapGrowth)
+│   │   ├── test/<module>/  one folder per module + index.test.ts (module tree invariants); test/helpers/alloc.ts = the allocation guard of every package (measureHeapGrowth; shell, render-pixi and input-web import it by relative path)
 │   │   ├── tsconfig.json   src only, lib ES2018, no types (purity)
 │   │   ├── tsconfig.build.json  emits dist/ (customConditions off)
 │   │   └── test/tsconfig.json   Node-side program for tests

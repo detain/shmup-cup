@@ -252,19 +252,28 @@ ES5 and linted with `ecmaVersion: 5`.
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
-- Prove it with the allocation guard: `measureHeapGrowth(fn, iterations)`
-  (`packages/core/test/helpers/alloc.ts`, needs `--expose-gc` through
-  `defineShmupProject(name, { execArgv })`) — every per-tick or per-frame entry point gets a
-  test asserting its bytes stay under budget ([sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard)).
-  It keeps the steadiest of three measured windows by default (`attempts`, stopping at the
-  first within `settled` = 32 KiB — a guard that is only flaky under the full suite's load may ask
-  for more: M2-13's `boss.squid` / `boss.facet` guards take five, their best of three came in at
-  66 KB of 64 now and then). A guard of a script that wakes often allows the bytes of its wakes
-  on top of its budget (M2-14: `WakeCount` counts them — `see(wakeTick)` per call — and
-  `allowance(iterations)` gives `SCRIPT_WAKE_BYTES` 96 per wake; the heavy boss guards use it) —
-  those bytes are D29's by design, a real leak grows with the calls; give short, cheap loops a long `warmup` (e.g. 20,000), and
-  never move its measured loop into a separate helper — V8 optimises the warm-up loop on stack
-  with `fn` inlined, and only that code runs allocation-free.
+- Prove it with the allocation guard: `measureHeapGrowth(fn, iterations, warmup, attempts?,
+  settled?)` (`packages/core/test/helpers/alloc.ts` — the only one; other packages import it by
+  relative path, and their `vitest.config.ts` passes `execArgv: ALLOCATION_GUARD_EXEC_ARGV`) —
+  every per-tick or per-frame entry point gets a test asserting its bytes stay under budget
+  ([sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard)). Its rules:
+  - a **warm-up** of at least `max(iterations, 20_000)` calls for a cheap loop (microseconds a
+    call) — V8 promotes code to its top tier only after enough calls, and a window must not meet
+    indices the warm-up never ran; a heavy World guard warms up about two windows' worth;
+  - `settled` (default 32 KiB, the window that ends the search early) at most **half the
+    budget** — the 32 KiB guards pass 16 KiB;
+  - three windows by default (`attempts`); a guard whose windows still differ under the full
+    suite's load may take five (M2-13's `boss.squid` / `boss.facet` do);
+  - the measured work is the code under test only: fakes the loop calls must not log or allocate
+    (the fx gallery guard measured ~53 KB of its popups fake's call log);
+  - never raise a budget to quiet a flaky guard, never move a measured loop into a helper of its
+    own (the guard runs warm-up and windows through one loop so the windows run the code the
+    warm-up compiled), and never collect garbage between a warm-up and a measurement yourself.
+
+  A guard of a script that wakes often allows the bytes of its wakes on top of its budget (M2-14:
+  `WakeCount` counts them — `see(wakeTick)` per call — and `allowance(iterations)` gives
+  `SCRIPT_WAKE_BYTES` 96 per wake; the heavy boss guards use it) — those bytes are D29's by
+  design, a real leak grows with the calls.
 
 ## Debug-only code
 
@@ -304,12 +313,13 @@ records as `assisted` ([debug-and-replays.md](debug-and-replays.md#release-build
   writes to a fixed path another test reads (use a temp dir). A Playwright file whose tests
   truly must share state says so with `test.describe.configure({ mode: 'serial' })`; none does
   today.
-- **Allocation guards** run in the shared worker pool, next to everything else: a guard of a
-  cheap loop (microseconds a call) gets a long warm-up, e.g. 20,000 calls — with the default the
-  measured windows can still run before V8's background compile has landed, and the guard fails
-  for nothing the code does (render-pixi's `sprites-interpolation` guard did one run in ten even
-  on an idle machine, core's `patterns-ballistic` guard on a busy one; both warm up 20,000 calls
-  since).
+- **Allocation guards** run in the shared worker pool, next to everything else: the guard lands
+  V8's background compiles before every round it measures and leaves compiled code out of its
+  count, so the full suite's load no longer shows in its result
+  ([build-test-deploy.md](build-test-deploy.md#test-concurrency)). A guard that fails only under
+  load is too close to its steady state — follow the guard rules under
+  [Performance](#performance-zero-allocation-in-hot-paths) (warm-up, windows, `settled`), never
+  the budget.
 - Browser specs that compare two captures a known number of ticks apart freeze the sim and step
   exact ticks (`test/e2e/frame-advance.ts` — `freezeSim`, `stepTo`); never count rAF frames, the
   loop runs 1–4 ticks per frame under load.

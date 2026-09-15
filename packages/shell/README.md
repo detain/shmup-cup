@@ -121,7 +121,7 @@ the audio wiring: [`docs/dev/audio.md`](../../docs/dev/audio.md#the-shells-wirin
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmupshell).
 
 Tests run in Node with fakes for the window, images and the WebGL renderer; the workers get
-`--expose-gc`, so the scene view's, the free-flight scene's and the fx gallery's per-frame
+`ALLOCATION_GUARD_EXEC_ARGV` (`--expose-gc --allow-natives-syntax`), so the scene view's, the free-flight scene's and the fx gallery's per-frame
 `update()` and the
 whole game-feel event path (`connectFxEvents` → particles / effects / popups) and the audio
 event path (`connectAudioEvents` → a real `AudioEngine` on a fake Web Audio context: dropped,

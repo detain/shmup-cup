@@ -209,11 +209,14 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
 - `apps/tizen/test/build/` and `apps/web/test/build/` run **real Vite builds** into temp
   folders — the slowest tests in the repo.
 - The Tizen CLI wrappers are tested with `spawnSync` mocked; nothing is ever executed.
-- **Allocation guard** (plan §1.4): `measureHeapGrowth(fn, iterations)` in
-  `packages/core/test/helpers/alloc.ts` measures the bytes a hot path allocates (heap growth
-  plus what in-loop GCs reclaimed, via V8's `GCProfiler`). It needs `--expose-gc`, which
-  `defineShmupProject(name, { execArgv: ['--expose-gc'] })` passes to the Vitest workers of
-  `@shmup/core` and `@shmup/shell`. A cheap loop (microseconds a call) needs a long warm-up
+- **Allocation guard** (plan §1.4): `measureHeapGrowth(fn, iterations, warmup?, attempts?,
+  settled?)` in `packages/core/test/helpers/alloc.ts` — the one guard of every package; shell,
+  render-pixi and input-web import it by relative path — measures the bytes a hot path allocates
+  (heap growth plus what in-loop GCs reclaimed, via V8's `GCProfiler`, without the heap spaces of
+  compiled code), the steadiest of up to three windows. It needs `--expose-gc` and
+  `--allow-natives-syntax`: `defineShmupProject(name, { execArgv: ALLOCATION_GUARD_EXEC_ARGV })`
+  passes both to the Vitest workers of `@shmup/core`, `@shmup/shell`, `@shmup/render-pixi` and
+  `@shmup/input-web`. A cheap loop (microseconds a call) needs a long warm-up
   ([conventions.md](conventions.md#tests)). `stepWorld` must stay under 256 KB per 10,000 ticks, a
   64-enemy World under 64 KB — see
   [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard) and
@@ -383,15 +386,28 @@ whole-campaign playtests do not end the run alone. `pnpm --filter <pkg> test` ru
 config the same way.
 
 `pnpm test` used to be `turbo run test test:integration`: nine Vitest processes at once, each
-with a worker per core — about nine busy workers per core. That starved V8's background compiler
-threads, so the allocation guards' short measured windows ran in the lower tiers (which box
-doubles) and failed now and then for nothing the code did. One pool keeps the machine at about
-one worker per core: the guards passed 21 full runs in a row (a separate low-parallelism group
-for them, also tried, added 8–12 s a run and was no steadier), and the run needs ~40 % less CPU.
-The wall time shrank less than the CPU (53–56 s, before 63–71 s): the dev box's throughput (48
-vCPUs on hyper-threaded host cores) and the longest files (the campaign playtests, ~27 s alone)
-bound it. Keep test files independent of each other and of their order — see
-[conventions.md](conventions.md#tests).
+with a worker per core — about nine busy workers per core. One pool keeps the machine at about
+one worker per core, and the run needs ~40 % less CPU. The wall time shrank less than the CPU
+(53–56 s, before 63–71 s): the dev box's throughput (48 vCPUs on hyper-threaded host cores) and
+the longest files (the campaign playtests, ~27 s alone) bound it. Keep test files independent of
+each other and of their order — see [conventions.md](conventions.md#tests).
+
+The **allocation guards** run in the shared pool like every other test (a separate
+low-parallelism group for them, also tried, added 8–12 s a run). Under load they used to fail
+now and then and pass alone — 1 full run in 8 with nine processes, still 2 in 20 with one pool
+(render-pixi's effects guard at 131 KB of 64, input-web's poll guard at 156 KB of 128): V8
+compiles the code under test on background threads, and with every core busy those compiles
+landed inside the measured windows, which then ran the lower tiers (they box doubles) and
+counted the compiled code. The guard (`measureHeapGrowth`, `packages/core/test/helpers/alloc.ts`
+— since this change the only one; render-pixi and input-web had their own, noisier probes) now
+lands every background compile before each round it measures (V8's `%FinalizeOptimization()`,
+hence `--allow-natives-syntax` in `ALLOCATION_GUARD_EXEC_ARGV`), leaves the heap spaces of
+compiled code out of its count, and runs the warm-up and the windows through one loop — see its
+module docs. Over 8 instrumented full runs every guard's result stayed within 71 % of its
+budget (before, over 13: up to 98 %), and 5 % of first windows went over a budget (before: 19 %);
+22 full runs in a row passed (52–61 s each). A guard that still wavers is too close to its steady
+state: give it a longer warm-up or more windows, never a bigger budget
+([conventions.md](conventions.md#tests)).
 
 **Playwright** (`pnpm test:e2e`, `test/e2e/playwright.config.ts`): `fullyParallel` — every test
 (each has its own browser context: fresh `localStorage`, its own page on the shared
@@ -406,7 +422,8 @@ time out. CI splits the tests over five runners (`--shard=i/5`).
 | `E2E_WORKERS` | `max(2, ⌊cores / 5⌋)` | Playwright browsers of `pnpm test:e2e` |
 
 Do not turn on Vitest's `fsModuleCache`: with it render-pixi's `sprites-interpolation` guard
-measured over its budget one run in four (the cached module code tiers up differently).
+measured over its budget one run in four (the cached module code tiers up differently; measured
+with render-pixi's earlier probe, not retried since).
 
 ## CI
 
@@ -453,8 +470,8 @@ the frozen install fails.
 | `pnpm test:e2e`: `Executable doesn't exist … chromium` | Playwright's browser is not installed: `pnpm exec playwright install --with-deps chromium` |
 | `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |
 | `pnpm test:e2e`: port 4173 already in use | Another `vite preview` is running; locally it is reused (`reuseExistingServer`), so make sure it serves a current `apps/web/dist`, or stop it |
-| A test fails with `measureHeapGrowth needs node --expose-gc` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ['--expose-gc'] })` |
-| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). If it fails only now and then and always passes alone (`pnpm --filter <package> test <file>`), it is JIT noise: a cheap loop needs a long warm-up (e.g. 20,000 calls — V8's optimised code must land before the measured windows), a guard flaky under load may take more windows (`attempts`); report it if it keeps happening. A machine busy with something else (a second `pnpm test`, Playwright) makes every guard less steady — `VITEST_MAX_WORKERS=<n>` leaves it room |
+| A test fails with `the allocation guard needs node --expose-gc --allow-natives-syntax` | The package's `vitest.config.ts` lacks `defineShmupProject(name, { execArgv: ALLOCATION_GUARD_EXEC_ARGV })` (`vitest.shared.ts`) |
+| An allocation test (`… toBeLessThan(…)` on `growth.bytes`) fails | A hot path allocates: a new object / array / closure per tick, or a fractional number V8 boxes (a fractional `let` in a closure, a mixed ternary, a fractional argument) — see [sim-world.md](sim-world.md#zero-allocation-and-the-allocation-guard). Check the test's own fakes too: a fake that logs its calls allocates (the fx gallery guard measured its popups fake). If it fails only now and then and always passes alone (`pnpm --filter <package> test <file>`), the guard is too close to its steady state: a cheap loop needs a warm-up of at least `max(iterations, 20_000)` calls, and a window whose calls meet paths the warm-up never ran may need more windows (`attempts`); never raise the budget for it, and report it if it keeps happening. Compiles landing in a window (V8's background threads starved by the load) no longer count — the guard lands them before each round and leaves compiled code out |
 | `golden.test.ts` fails: a hash or the outcome differs | The simulation changed. Unintended: find the change (the report names the first diverging hash tick). Intended: `pnpm golden:update`, review the diff of `test/golden/*.replay.json`, commit it with the reason — [debug-and-replays.md](debug-and-replays.md#gotchas) |
 | `pnpm bench` fails on the median | Timing: run it alone on a quiet machine. On the heap: something in the tick allocates — see the allocation guard rows above |
 | Tizen build fails with `app.js is … gzipped, over the … budget` (or an atlas page / `dist/` budget) | The bundle grew past a plan budget (`check-bundle.mjs` rule 8). Find what grew (a new dependency, inlined data); raising a budget is a plan decision, not a fix |

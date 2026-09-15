@@ -494,27 +494,30 @@ Details of the boot and the renderer: [rendering-and-shell.md](rendering-and-she
 
 Nothing allocates per tick: `createWorld` builds every object, array and typed array, and the
 systems only write numbers. Plan §1.4 turns that into a test: `measureHeapGrowth(fn,
-iterations, warmup?)` in `packages/core/test/helpers/alloc.ts` runs `fn` under V8's
-`GCProfiler` and adds the bytes the in-loop collections reclaimed to the heap growth, so it
-measures everything the loop *allocated*, not only what survived:
+iterations, warmup?, attempts?, settled?)` in `packages/core/test/helpers/alloc.ts` runs `fn`
+under V8's `GCProfiler` and adds the bytes the in-loop collections reclaimed to the heap growth,
+so it measures everything the loop *allocated*, not only what survived:
 
 ```ts
 import { measureHeapGrowth } from '../helpers/alloc.js';
 
-const growth = measureHeapGrowth(() => stepWorld(world, input), 10_000);
+const growth = measureHeapGrowth(() => stepWorld(world, input), 10_000, 20_000);
 expect(growth.bytes).toBeLessThan(256 * 1024); // plan: < 256 KB over 10,000 ticks
 ```
 
-It needs `node --expose-gc`: `defineShmupProject(name, { execArgv: ['--expose-gc'] })` passes
-it to the Vitest workers of `@shmup/core` and `@shmup/shell` (the shell's flight tests import
-the helper by relative path). It collects garbage before the warm-up too, so a collection that
-clears earlier tests' hidden classes cannot drop the measured loop into V8's lower tiers. It
-measures up to `attempts` windows (default 3) and returns the steadiest, stopping at the first
-that measures at most `settled` bytes (default 32 KiB, half the smallest budget): under the load
-of the full suite V8 can still spend one window in a lower tier or installing optimised code
-(tens to hundreds of KB), which real per-iteration allocation does in every window. Give short,
-cheap loops a long warm-up (`warmup` of e.g. 20,000 instead of the default 1000), or the
-measured window pays for the tier-up.
+It needs `node --expose-gc --allow-natives-syntax`: `defineShmupProject(name, { execArgv:
+ALLOCATION_GUARD_EXEC_ARGV })` passes both to the Vitest workers of `@shmup/core`,
+`@shmup/shell`, `@shmup/render-pixi` and `@shmup/input-web` (the last three import the helper by
+relative path). It runs the warm-up (two rounds) and up to `attempts` measured windows (default
+3) through one loop, and before every round it collects garbage twice and lands V8's background
+compiles (`%FinalizeOptimization()`); it leaves the heap spaces of compiled code
+(`JIT_SPACES`) out of the count, and returns the steadiest window, stopping at the first that
+measures at most `settled` bytes (default 32 KiB — at most half the guard's budget). So a
+compile that lands late — the full suite's load starves V8's compiler threads — neither keeps a
+window in the lower tiers (they box doubles: hundreds of KB) nor counts its own code, while real
+per-iteration allocation shows in every window. Give short, cheap loops a warm-up of at least
+`max(iterations, 20_000)` calls; the module docs of `alloc.ts` explain each choice with the
+numbers that led to it.
 
 The guard found three real per-tick / per-frame allocations in M1-06, all of the same kind —
 **V8 boxes a non-integer number into a 16-byte heap object** in some positions:
@@ -580,7 +583,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 | `packages/core/test/collision/` | every shape test incl. edge contact and degenerate shapes, `segmentAabb` against an exact reference (4,000 cases), the layer matrix, grid = brute force (1,000 random boxes, several cell sizes, fractional origins), the 9-cell overflow, capacity, `build`/`query` protocol, zero allocation |
 | `packages/core/test/debug/` | `hashWorld` against an independent FNV-1a of the documented sequence, every hashed field matters, presentation state does not, NaN / ±0 / Infinity, purity, allocation bound |
 | `packages/core/test/game/game-world.test.ts` | `game.frame(now)` → one world tick per 1/60 s (capped), pause / suspend freeze the world, 5,000-tick sessions reproducible, the whole per-frame path within budget |
-| `packages/core/test/helpers/alloc.test.ts` | the allocation guard itself (zero loop, one object per iteration, garbage already collected; three windows by default, the early stop at `settled`, `attempts = 1`) |
+| `packages/core/test/helpers/alloc.test.ts` | the allocation guard itself (zero loop, one object per iteration, garbage already collected; three windows by default, the early stop at `settled`, `attempts = 1`; the warm-up and window indices; the compiled-code spaces it leaves out still exist under those names) |
 | `packages/shell/test/flight/` | the scene's sprite ids, starfield drift / wrap / pause, HUD (score, `HI`, stock, `GAME OVER` — rebuilt only on a change), the WARNING band (M1-13), empty content, zero allocation per displayed frame |
 | `test/integration/world-flight.test.ts` | shipped KESTREL = plan tunables = built-in fallback, atlas has every bank frame, a remote session under `tizen-remote-safe` replays to an equal hash |
 | `test/e2e/flight.spec.ts`, `boot.spec.ts` | in Chromium: arrow keys move the ship (pixel diff on its hull colour), holding a direction stops it at the margin clear of the HUD, the Tizen build from `file://` too; free flight is the default scene |
@@ -596,7 +599,7 @@ Inside the game, use `createGame(platform, overrides, db)` and `game.step()` /
 | The ship follows a change of scroll speed one tick late (and the clamp edges are off by up to one scroll step on screen) | By design: phase 2 applies the camera step recorded in phase 3 of the *previous* tick and clamps to the camera before this tick's move |
 | Nothing is drawn in a headless test's view | The content has no `player` file, so `DEFAULT_PLAYER_SHIP` (`spriteId -1`) is used — load the real content |
 | An allocation test fails only in the full suite | Code deoptimised by an earlier test's garbage; the guard already collects before its warm-up — raise `warmup` for code with many shapes, and look for fractional `let`s, mixed-kind ternaries and fractional arguments (above). A cheap loop with the default warm-up can also fail when the CPU is busy (V8's background compile lands after the measured windows): warm it up 20,000 calls |
-| `measureHeapGrowth needs node --expose-gc` | The project's `vitest.config.ts` lacks `execArgv: ['--expose-gc']` |
+| `the allocation guard needs node --expose-gc --allow-natives-syntax` | The project's `vitest.config.ts` lacks `execArgv: ALLOCATION_GUARD_EXEC_ARGV` |
 | `SpatialGrid.query() before build()` | Every tick is `begin` → `insert`… → `build` → `query`…; an insert after `build` needs another `build` |
 | Grid misses a hit | It cannot: queries equal brute force. Check the layer masks and the box sizes (half sizes vs full sizes) instead |
 | Player 2 never moves | It is inactive until it joins a co-op game: use a `coop: true` config and press START on its slot (or call `joinPlayer(world, 1)`) — or, in a one-player test, set `world.players[1].active = true` and `spawnPlayer` it |
