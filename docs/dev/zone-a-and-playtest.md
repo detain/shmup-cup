@@ -170,6 +170,7 @@ geometry for every phase (below).
 |---|---|---|
 | Aimed bullet speed ≤ 2.0 px/tick (Normal) | `MAX_AIMED_BULLET_SPEED` | Statically: every `bulletSpeed` tunable of zone A's enemies and boss phases, behaviour defaults merged. Dynamically: `maxBulletSpeed(world)` — the fastest live enemy bullet (zone A fires nothing faster than its aimed shots, so every bullet is held to it) |
 | No simultaneous laser lanes leaving < 16 px of safe gap | `MIN_LANE_GAP` | `laserLaneGaps(world)`: a **lane** is a laser in its telegraph, grow or active phase (a warned lane is as good as closed), its rows = the beam's vertical extent ± half its width, **widened by the ship's hurt radius** and clipped to the playfield (a beam wholly above or below it is no lane); overlapping or touching lanes merge. Reports the narrowest gap between separate lanes and the widest open band |
+| The ship's column keeps ≥ 16 px open (M2-18) | `MIN_LANE_GAP`, `COLUMN_HALF_WIDTH` (8) | `columnGap(world, player = 0)`: every live enemy bullet whose circle comes within 8 px of the ship's x closes its rows ± its radius and the hurt radius, every live laser lane its rows as above; the widest open band left must be ≥ 16 px. The laser-lane rule generalised to bullet walls — no pattern walls a remote player in. Measured on all 16 routes × both ships: never under 38 px ([release-hardening.md](release-hardening.md#the-ships-open-column-columngap)) |
 
 **Rank (M2-01).** The rules are written for Normal's speeds. With rank growth on, a fully
 powered ship raises the rank and so the bullet speeds; the static check reads the content's
@@ -178,9 +179,10 @@ keeps Normal at rank ≤ 7, and every check passes unchanged. Zone A's only rank
 is the `vane` revenge bullet from rank 12, which the bot never reaches
 ([difficulty-and-rank.md](difficulty-and-rank.md#revenge-bullets)).
 
-`createRuleWatch()` collects both over a run (`observe` is a bound function to pass as the
-playtest's observer): maxima, the narrowest gap, the narrowest widest-open band while lanes were
-live, and the first 20 violations as `tick N: …` strings.
+`createRuleWatch()` collects them over a run (`observe` is a bound function to pass as the
+playtest's observer — or, since M2-18, as `CampaignFlags.observe` of the route runs): maxima, the
+narrowest gap, the narrowest widest-open band while lanes were live, the narrowest open column
+(`narrowestColumn`, M2-18) and the first 20 violations as `tick N: …` strings.
 
 What `pnpm content:check` (`test/integration/content.test.ts`, "zone A holds to the 4-way design
 rules") asserts:

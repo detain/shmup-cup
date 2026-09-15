@@ -32,7 +32,8 @@ in [../client/debug-tools.md](../client/debug-tools.md).
 | Remote number keys, the TV's unlock callback | `apps/tizen` `boot` (`tizenDebugTools`, `DEBUG_REMOTE_KEYS`) | the TV app |
 | `__SHMUP_DEV__`, `__SHMUP_BUILD__` | `vite.shared.ts` `shmupBuildInfo()`, `types/build-info.d.ts` | the app builds |
 | Golden replays | `test/golden/` (`golden.ts`, `golden.test.ts`, `*.replay.json`), `scripts/golden-update.mjs` | `pnpm test`, `pnpm golden:update` |
-| Stress benchmark | `test/bench/` (`stress.perf.ts`, own `vitest.config.ts`) | `pnpm bench`, CI |
+| Stress benchmark | `test/bench/` (`stress.perf.ts`, own `vitest.config.ts`; since M2-18 also `zones.perf.ts` and `soak.perf.ts`) | `pnpm bench`, CI |
+| Cross-engine determinism page (M2-18) | `@shmup/shell` `determinism`, `apps/web` `main.ts` (`?determinism`, dev / test builds), `test/e2e/determinism.spec.ts` | `pnpm test:e2e` (Chromium and Firefox) |
 | Bundle budgets | `apps/tizen/scripts/check-bundle.mjs` | every Tizen build |
 | Gameplay smoke, debug-tool and frame-advance e2e | `test/e2e/smoke.spec.ts`, `debug-tools.spec.ts`, `frame-advance.ts` | `pnpm test:e2e` |
 
@@ -280,8 +281,10 @@ nothing. `renderer.drawCalls` is the last frame's count over both passes, `-1` w
 ## Replays (`core/replay`)
 
 A replay reproduces a session tick for tick from its input (`shmup_feat.md` §21). It is the one
-playback path for golden tests, the future cross-engine check (M2-18) and — since M2-15 — the
-attract loop's demo play.
+playback path for golden tests, the cross-engine check (M2-18 — `@shmup/shell` `determinism` plays
+the golden replays and demos in Chromium and Firefox and compares every hash with the file,
+[release-hardening.md](release-hardening.md#cross-engine-determinism-in-the-browser)) and — since
+M2-15 — the attract loop's demo play.
 
 **Files (M2-15).** The session-free parts — header, recorder, playback and the file format — live
 in `replay/format.ts`, which does not import `core/game`, so `core/scenes` (which `core/game`
@@ -550,6 +553,11 @@ and `zone-a-hold` (the autofire modes with `remoteMode: false`, the new pilots o
 with shots only while on, the hold run's shots only while `Shot` is held, and that both desync when
 replayed under `'always'`
 ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#determinism)).
+M2-18 re-blessed **`zone-b-god` alone** (GALVANIC MAW's jaws open wider — `gape` 8 / 8 / 9 — so a
+fully powered MANTA's HUGE DISC reaches the gullet): the same outcome, nine ticks longer; every
+other golden and demo is byte-identical. Since then `test/e2e/determinism.spec.ts` also plays every
+golden file and demo in headless Chromium and Firefox and requires the same hashes
+([release-hardening.md](release-hardening.md#what-the-checks-found-and-the-fixes)).
 Each file is an encoded replay plus the scenario's `description` and its
 `expected` outcome (status, ticks, player 1's score and lives, death ticks, boss killed — and for
 a co-op run player 2's score, lives, death ticks and continues).
@@ -595,6 +603,12 @@ timing needs a quiet machine. CI runs it after `pnpm build`.
 - Measured at M1-19 on the dev machine: median 0.12 ms/tick, p95 0.18 ms, 510 bullets and 64
   enemies on average. The TV's SoC is much slower than a desktop CPU; the debug overlay's `TICK`
   figure is the on-device number to watch.
+
+Since M2-18 the same config also runs **`zones.perf.ts`** (every campaign zone start → stage clear
+with the 4-way bot, the full loadout, god mode and the bullets topped up to 512: median < 1 ms/tick,
+< 1 MB retained) and **`soak.perf.ts`** (30 minutes of the shipped game through the scene flow; the
+heap without V8's code spaces — `dataHeapBytes()` — flat within 1 MB), one file at a time
+([release-hardening.md](release-hardening.md#benchmarks-every-zone-and-the-soak)).
 
 ## Tizen bundle budgets (`check-bundle.mjs` rule 8)
 

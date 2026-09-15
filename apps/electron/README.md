@@ -48,4 +48,7 @@ Environment: `SHMUP_DEV_URL`, `SHMUP_RENDERER_DIR`, `SHMUP_FULLSCREEN=1`.
 **Packaging (M2-17, never in CI):** `pnpm --filter @shmup/electron build` then
 `pnpm --filter @shmup/electron package` runs a pinned `electron-builder` through `pnpm dlx` with
 `electron-builder.json` (Windows NSIS + portable, Linux AppImage + tar.gz for the Steam Deck, macOS
-dmg; `--publish never`) into `release/` (git-ignored). Steam depots come with M3.
+dmg; `--publish never`) into `release/` (git-ignored). Since M2-18 every target takes
+`build/icon.png` (512 × 512, electron-builder's `buildResources`), drawn by `pnpm store:assets` (repo
+root) from the placeholder art — commit it again after changing the logo or the ships. Steam depots
+come with M3.

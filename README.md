@@ -18,7 +18,8 @@ in a string table —, the platform polish: a first-class desktop app with file 
 window and packaging, the TV's game-mode build, device info and live reload, storage quota checks
 and the memory budget — and the v1.0 hardening: every route with both ships, the release audit,
 cross-engine determinism, the soak, the release checks, the icons). Its on-device checklist
-(plan §8.5, §8.6) on the monitors is next.
+(plan §8.5, §8.6) on the monitors is next — the player-facing guide with the checklist is
+[`docs/client/release-candidate.md`](docs/client/release-candidate.md).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -743,7 +744,10 @@ cross-engine determinism, the soak, the release checks, the icons). Its on-devic
     exit, multitasking, resume, user data — in the browser tests (`test/e2e/release-check.spec.ts`).
   - **Icons and store placeholders** — `pnpm store:assets` draws the TV and desktop icons and
     placeholder store screenshots and listing text from the game's placeholder art.
-  - Docs: [developer guide](docs/dev/release-hardening.md)
+  - Docs: [developer guide](docs/dev/release-hardening.md) ·
+    [the release candidate and the v1.0 checklist](docs/client/release-candidate.md) ·
+    [API reference](docs/dev/api-reference.md) (`determinism`, `passArmour`, the playtest and bench
+    additions)
 
 ### Hardware spike
 
@@ -767,7 +771,8 @@ cross-engine determinism, the soak, the release checks, the icons). Its on-devic
 
 Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), two players at once (2 PLAYERS, joining with START, the split keyboard), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, the zone map and the real zones B–I, the endings and the credits, the front end — the attract loop, typing your initials, the high-score tables, practice and the sound test —, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
-[debug tools & release checks](docs/client/debug-tools.md) · [the desktop app](docs/client/desktop-app.md).
+[debug tools & release checks](docs/client/debug-tools.md) · [the desktop app](docs/client/desktop-app.md) ·
+[the v1.0 release candidate & checklist](docs/client/release-candidate.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
@@ -802,6 +807,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [front end & attract mode](docs/dev/front-end-and-attract.md) ·
 [options, rebinding & accessibility](docs/dev/options-rebinding-and-accessibility.md) ·
 [platform polish: Electron, Tizen extras, storage & memory](docs/dev/platform-polish.md) ·
+[v1.0 hardening & the release candidate](docs/dev/release-hardening.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -928,8 +934,9 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 is tagged `v0.1.0` on the final commit of step M1-19.
 
 Also on hardware: the **v1.0 checklist** (plan §8.5 on-device checks and §8.6 store readiness) on
-both monitors with the release candidate 1.0.0-rc.1 — see
-[`docs/dev/release-hardening.md`](docs/dev/release-hardening.md#what-stays-manual).
+both monitors with the release candidate 1.0.0-rc.1 — the checklist in
+[`docs/client/release-candidate.md`](docs/client/release-candidate.md#the-v10-checklist-both-monitors),
+background in [`docs/dev/release-hardening.md`](docs/dev/release-hardening.md#what-stays-manual).
 
 Code: milestone **M2** is complete with plan step **M2-18** (v1.0 hardening & release candidate) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02

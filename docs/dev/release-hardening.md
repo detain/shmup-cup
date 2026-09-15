@@ -3,7 +3,9 @@
 Plan step M2-18 proves v1.0 is complete, fair, fast and deterministic, and cuts the release
 candidate **1.0.0-rc.1**. It adds no gameplay system: it adds the checks that gate a release, and
 fixes what those checks found. Everything here runs headless — in Vitest, in `pnpm bench` or in the
-Playwright browser tests — and in CI; what needs the monitors is listed at the end.
+Playwright browser tests — and in CI; what needs the monitors is listed at the end. The
+player-facing side (what changed, where the version shows, the owner's v1.0 checklist) is
+[`docs/client/release-candidate.md`](../client/release-candidate.md).
 
 | Check | Where | Runs in |
 |---|---|---|
@@ -70,8 +72,8 @@ The route runs failed at first with the MANTA — the bot could not finish some 
 | Finding | Cause | Fix |
 |---|---|---|
 | A fully powered MANTA could not hurt MANTLE REGENT, IRON SOVEREIGN or THE HOLLOW KING | The LASER → WAVE family's waves are tall (7–16 px half height) piercing shots; a piercing shot **dies on armour**, and every one of those bosses has armoured parts in front of its core's row | New `direct.bolt` tunable **`passArmour`** (`ShotFlag.PassArmour`): a piercing bolt with it clinks on armour at most once per hit cooldown and flies on (the Spread Bomb blast's rule). The four waves have `passArmour: 1` (`content/weapons/direct.weapons.json`) |
-| CINDER BASTION survived the MANTA at disc level 5 | The level fired two small discs ±16 binary units apart — a V with a blind spot straight ahead where a small core sat | Level 5 fires two **parallel** small discs (`oy` ±4) |
-| GALVANIC MAW survived a fully powered MANTA | The mouth's jaws opened to ±9 px; the HUGE DISC (half height 9) always touched a jaw first and clinked | `gape` 8 / 8 / 9 (was 4 / 4 / 5) in `content/enemies/zone-b.enemies.json` |
+| CINDER BASTION survived the MANTA at the fifth disc level (`beam-disc` level index 4 — four SHOT pips) | The level fired two small discs ±16 binary units apart — a V with a blind spot straight ahead where a small core sat | That level fires two **parallel** small discs (`oy` ±4) |
+| GALVANIC MAW survived a fully powered MANTA | Opened 4 px, the jaws' hurtboxes left an 18-px gap (±9 px); the HUGE DISC (half height 9) always touched a jaw first and clinked | `gape` 8 / 8 / 9 (was 4 / 4 / 5) in `content/enemies/zone-b.enemies.json` |
 | Two silk lines 16 px apart (7 px of gap) in SANDGRAVE WIDOW's last phase | `laserTicks` is rank-scaled; a fully powered ship's rank shortened it below a lane's life (telegraph + grow + active + fade) | `boss.widow` waits at least a whole lane before the next line |
 
 `zone-b-god` was re-blessed for the wider jaws (nine ticks longer, the same outcome); no other golden
@@ -197,14 +199,20 @@ listing come from the monitors too.
 |---|---|
 | `test/playtest/campaign-routes-b.test.ts`, `-c`, `-manta-b`, `-manta-c` | The 16 routes × both ships, durations, endings, rules on every tick |
 | `test/playtest/rules.test.ts` | The rule helpers, `columnGap` on hand-made bullets and lanes (a bullet in the column, a wall with a hole, the hole plugged — the watch's violation, a laser lane) |
+| `test/playtest/rules-column-edge.test.ts`, `test/playtest/campaign-observe.test.ts` | Test round: `columnGap`'s edges (dead bullets, fading lasers, the column's exact edge, the camera's y, clipping, merged bands, slanted lasers, the `player` argument, the watch at exactly 16 px); `CampaignFlags.observe` once per tick, `ROUTE_SHIPS` flying the right ship |
 | `test/integration/release-audit.test.ts` | The budgets, the recovery rule, every pattern, every boss fight with both ships |
 | `packages/core/test/weapons/weapons-pass-armour.test.ts` | `passArmour`: a piercing wave clinks through armour to the target behind; without it (or without `pierce`) armour stops the shot |
-| `packages/core/test/behaviors/behaviors-zones-edge.test.ts` | `boss.widow` waits a whole lane before the next silk line |
+| `packages/core/test/weapons/weapons-pass-armour-edge.test.ts` | Test round: `passArmour` on an armoured **boss part** (the part cooldown path) reaching the core, the clinks spaced by the hit cooldown, any positive value turning it on (0, negative, missing do not), only the four shipped waves setting it |
+| `packages/core/test/behaviors/behaviors-zones-edge.test.ts` | `boss.widow` waits a whole lane before the next silk line — and (test round) never stretches a long `laserTicks`, rounds a fractional telegraph / active up, treats a negative telegraph as none |
+| `test/integration/release-content-edge.test.ts` | Test round: the fixes as relations of the shipped JSON — every Direct main level fires straight ahead, the fifth disc level's parallel discs, the waves' `passArmour`, GALVANIC MAW's open jaws wider than the HUGE DISC in every phase |
 | `packages/shell/test/determinism/determinism.test.ts` | The check reproduces golden hashes in Node, reports a tampered hash at its tick, refuses bad content, publishes and marks the page |
+| `packages/shell/test/determinism/determinism-edge.test.ts` | Test round: short hash intervals (a length that is or is not a multiple, zero ticks), checkpoint and god-mode starts, tampered final / later hashes, a missing stage / checkpoint (`RangeError`), one check playing many replays independently, the injected clock, every attract demo |
 | `apps/web/test/boot/boot-wiring.test.ts`, `apps/web/test/build/web-build.test.ts` | `determinismFromSearch`; no dev tooling in the release bundle |
 | `test/e2e/determinism.spec.ts`, `test/e2e/release-check.spec.ts` | See above |
 | `test/bench/zones.perf.ts`, `test/bench/soak.perf.ts` | See above |
-| `test/scripts/store-assets.test.ts` | The icons and the store folder |
+| `test/scripts/store-assets.test.ts`, `store-assets-edge.test.ts` | The icons and the store folder; `--check` / usage exit codes, pixel (not byte) comparison, out-of-range screenshots, the listing agreeing with `config.xml`, the git-ignored store folder |
+| `test/integration/e2e-docs.test.ts` | Review-round regression: every e2e doc installs both projects' browsers and explains `--project`; the CI table of `build-test-deploy.md` lists every `pnpm` command of `ci.yml` as written and the `e2e-firefox` job |
+| `apps/tizen/test/build/tizen-build.test.ts` | The release Tizen bundle carries no determinism check |
 | `apps/tizen/test/config-xml/config-xml-consistency.test.ts`, `test/integration/tooling-config.test.ts` | The version, the Firefox project and CI job, `pnpm store:assets` |
 
 ## Gotchas

@@ -40,11 +40,15 @@ import { decodePng, encodePng } from './assets/png.mjs';
 /** Where `pnpm store:assets` writes the store-listing placeholders. */
 export const STORE_DIR = join(REPO_ROOT, 'assets', 'generated', 'store');
 
-/** The game's internal frame (decision D19). */
+/** Width of the game's internal frame (decision D19), px. */
 const FRAME_W = 384;
+/** Height of the game's internal frame (decision D19), px. */
 const FRAME_H = 216;
 
-/** The committed icons: repository path, size. */
+/**
+ * The committed icons: repository path, size. The Tizen icon's 512 × 423 is the aspect the widget
+ * and the Seller Office use; electron-builder takes a square 512 × 512.
+ */
 export const ICON_TARGETS = Object.freeze([
   Object.freeze({ path: 'apps/tizen/public/icon.png', width: 512, height: 423 }),
   Object.freeze({ path: 'apps/electron/build/icon.png', width: 512, height: 512 }),
@@ -105,10 +109,13 @@ export const STORE_LISTING = Object.freeze({
   ]),
 });
 
-/** Background colours: the deep navy of the playfield and its lighter band. */
+/** Background colour: the deep navy of the playfield. */
 const NAVY = /** @type {Rgba} */ ([0x0a, 0x10, 0x2a, 0xff]);
+/** Background colour: the playfield's lighter lower band and the screenshots' frame bars. */
 const NAVY_LIGHT = /** @type {Rgba} */ ([0x1d, 0x2a, 0x5c, 0xff]);
+/** Ink of the screenshots' `PLACEHOLDER` caption. */
 const CAPTION = /** @type {Rgba} */ ([0xf8, 0xd0, 0x30, 0xff]);
+/** Ink of the screenshots' zone name. */
 const WHITE = /** @type {Rgba} */ ([0xff, 0xff, 0xff, 0xff]);
 
 /**
@@ -265,6 +272,12 @@ function backdrop(image, scale) {
  * @param {number} width - Width in pixels (≥ 200).
  * @param {number} height - Height in pixels (≥ 160).
  * @returns {Image} The icon.
+ * @throws {Error} When the asset sources have issues or the logo / a ship sprite is missing.
+ *
+ * @example
+ * ```js
+ * const png = encodePng(renderIcon(512, 423)); // the Tizen widget icon's pixels
+ * ```
  */
 export function renderIcon(width, height) {
   const image = createImage(width, height);
@@ -295,6 +308,7 @@ export function renderIcon(width, height) {
  * @param {number} index - Index into {@link SCREENSHOTS}.
  * @returns {Image} The screenshot.
  * @throws {RangeError} For an index outside {@link SCREENSHOTS}.
+ * @throws {Error} When the asset sources have issues or a sprite / the bitmap font is missing.
  */
 export function renderScreenshot(index) {
   const shot = SCREENSHOTS[index];
@@ -321,6 +335,7 @@ export function renderScreenshot(index) {
  * Renders every committed icon.
  *
  * @returns {{ path: string, image: Image }[]} The icons with their repository paths.
+ * @throws {Error} When the asset sources have issues (see {@link renderIcon}).
  */
 export function renderIcons() {
   return ICON_TARGETS.map((target) => ({
@@ -333,7 +348,18 @@ export function renderIcons() {
  * The committed icons that differ from a fresh rendering (or are missing).
  *
  * @param {string} [root] - Repository root (default this checkout's).
- * @returns {string[]} Their repository paths.
+ * @returns {string[]} Their repository paths (empty when every icon is current).
+ * @throws {Error} When the asset sources have issues, or a committed file is not a readable PNG.
+ *
+ * @remarks
+ * Compares **decoded pixels**, not PNG bytes: a PNG written on another machine (another zlib)
+ * may compress the same pixels differently. `--check` and `test/scripts/store-assets.test.ts` use
+ * it.
+ *
+ * @example
+ * ```js
+ * staleIcons(); // → [] when the committed icons match the art
+ * ```
  */
 export function staleIcons(root = REPO_ROOT) {
   const stale = [];
@@ -349,7 +375,14 @@ export function staleIcons(root = REPO_ROOT) {
  *
  * @param {{ root?: string, storeDir?: string }} [options] - Repository root for the icons (default
  *   this checkout's) and the store folder (default {@link STORE_DIR}).
- * @returns {string[]} Every file written (absolute paths).
+ * @returns {string[]} Every file written (absolute paths): the icons, then the store folder's
+ *   `icon-512x423.png`, `screenshot-<n>-1920x1080.png` files and `listing.json`.
+ * @throws {Error} When the asset sources have issues, or a file cannot be written.
+ *
+ * @example
+ * ```js
+ * writeStoreAssets({ storeDir: '/tmp/store' }); // icons into the checkout, placeholders to /tmp
+ * ```
  */
 export function writeStoreAssets(options = {}) {
   const root = options.root ?? REPO_ROOT;
@@ -379,7 +412,8 @@ export function writeStoreAssets(options = {}) {
 /**
  * Command-line entry point.
  *
- * @returns {number} Process exit code.
+ * @returns {number} Process exit code: 0 on success, 1 when `--check` found a stale icon, 2 for
+ *   an unknown argument list (the usage is printed).
  */
 function main() {
   const args = process.argv.slice(2);

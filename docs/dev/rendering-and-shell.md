@@ -1005,3 +1005,10 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `PrepareStage` — nothing yet with the single page); the debug tools' `save` API and device line
   (`DebugToolsOptions.device` → render-pixi `DebugOverlay.setDevice`, the panel's sixth line)
   ([platform-polish.md](platform-polish.md)).
+- **M2-18** (done) — the shell's new module `determinism` (`createDeterminismCheck` /
+  `installDeterminismCheck`: golden replays played headless in the page's own engine, published as
+  `window.__shmupDeterminism`; the web app's dev / test builds open it with `?determinism` instead
+  of booting the game, so it needs no WebGL and runs in headless Firefox too); the Playwright config
+  gained the `firefox` project and the release checks (boot to title < 3 s, the Tizen
+  certification self-checks); the renderer needed nothing new
+  ([release-hardening.md](release-hardening.md)).

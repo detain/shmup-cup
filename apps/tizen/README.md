@@ -14,8 +14,15 @@ pnpm --filter @shmup/tizen tizen:watch     # M2-17: dev build + live reload to t
 pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
-The widget version is **0.1.0** (M1) in `public/config.xml` and `package.json`, kept equal by a
-test.
+The package version is **1.0.0-rc.1** (M2-18, the v1.0 release candidate); the widget version in
+`public/config.xml` is **1.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget
+takes the numeric core of the package's version, kept in step by a test
+(`test/config-xml/config-xml-consistency.test.ts`). Never write a pre-release tag into
+`config.xml`.
+
+`public/icon.png` (512 × 423) is drawn by `pnpm store:assets` (repo root, M2-18) from the
+placeholder art — the logo above the two ships; regenerate it after changing those sprites
+(`pnpm test` fails while it is stale).
 
 `dist/` then contains `index.html`, **one classic IIFE script `app.js`**, `config.xml`,
 `icon.png` and the sprite-atlas pages under `assets/atlas/` (`main.png`). The build (`vite.config.ts`) follows `shmup_tech.md` §2.1:
@@ -81,7 +88,9 @@ developer guide: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-repl
   renderer and AudioContext; `test/boot/debug-tools.test.ts` checks the TV debug tools (number
   keys registered once, only on the unlock);
 - `test/build/tizen-build.test.ts` also asserts that the release bundle holds no debug code, and
-  `test/config-xml/` that `config.xml`'s version equals the package's (M1-19).
+  `test/config-xml/` that `config.xml`'s version is the package's numeric core (M1-19; since
+  M2-18 `1.0.0` for `1.0.0-rc.1`); since M2-18 the build test also asserts that the release
+  bundle holds no cross-engine determinism check (`__shmupDeterminism`).
 
 `pnpm test:e2e` (repo root) builds `build:test` and opens `dist/index.html` via `file://` in
 headless Chromium (since M1-19 the smoke also checks the locked debug tools and their unlock), like the TV runs the widget, and checks it boots to the title, that the remote's OK

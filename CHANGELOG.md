@@ -507,7 +507,10 @@ says `1.0.0`.
   Inspector in [`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md#the-remote-web-inspector-devtools-on-the-tv)
   (M2-17); the developer guide [`docs/dev/release-hardening.md`](docs/dev/release-hardening.md) —
   the release gate, what it found, the determinism check, the benchmarks, the release checks, the
-  icons, the version and what stays manual (M2-18).
+  icons, the version and what stays manual — and the player / owner page
+  [`docs/client/release-candidate.md`](docs/client/release-candidate.md): where the version shows,
+  what changed for players, what the automated checks cover and the v1.0 checklist for the
+  monitors (M2-18).
 
 ## [0.1.0] — M1: playable vertical slice
 

@@ -665,6 +665,11 @@ These are enforced now so that replays, golden tests and attract mode work later
   `assisted`); the stage jumps are cold restarts a replay reproduces when it contains them; frame
   advance and slow motion only change how many ticks a displayed frame runs. The tools exist
   only in dev / test builds (`__SHMUP_DEV__`).
+- **Across engines** (M2-18): `test/e2e/determinism.spec.ts` plays every golden replay and attract
+  demo in headless Chromium and Firefox through the web test build's renderer-free
+  `?determinism` page (`@shmup/shell` `determinism`) and requires the hashes recorded in Node — so
+  V8 and SpiderMonkey agree tick for tick
+  ([release-hardening.md](release-hardening.md#cross-engine-determinism-in-the-browser)).
 
 ## Module status tracking
 

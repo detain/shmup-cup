@@ -12,6 +12,10 @@ monitor, how to open the tools, how to read the panel (on the TV with a line nam
 model and firmware), how to copy a save out for a bug report, and the checklists for the release
 and for the platform-polish build.
 
+The current build is the **v1.0 release candidate (1.0.0-rc.1)**; its own checklist for the
+monitors — which uses these tools — is in
+[release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors).
+
 ## Which build has the tools
 
 | Where | Build | Tools |

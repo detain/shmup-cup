@@ -135,9 +135,16 @@ The mechanical-fish archetype. 35,000 points; the WARNING reads `GIANT HOSTILE "
 
 | Phase | Until | `boss.maw` tunables |
 |---|---|---|
-| 1 | the core below 40 hp | track 0.35, shut 150 / open 90 ticks, 3-way cutters every 40 at 1.3, a rocket every 170 (one pod), `gape` 4 |
-| 2 | the core below 16 hp | track 0.45, shut 130 / open 100, cutters every 34 at 1.4, a ring of 8 at 1.0 as it opens, rockets every 140 (both pods), `gape` 4 |
-| 3 | — | track 0.55, shut 100 / open 110, 5-way cutters (spread 40) every 30 at 1.5, rings of 10 at 1.1, rockets every 110, `gape` 5 |
+| 1 | the core below 40 hp | track 0.35, shut 150 / open 90 ticks, 3-way cutters every 40 at 1.3, a rocket every 170 (one pod), `gape` 8 |
+| 2 | the core below 16 hp | track 0.45, shut 130 / open 100, cutters every 34 at 1.4, a ring of 8 at 1.0 as it opens, rockets every 140 (both pods), `gape` 8 |
+| 3 | — | track 0.55, shut 100 / open 110, 5-way cutters (spread 40) every 30 at 1.5, rings of 10 at 1.1, rockets every 110, `gape` 9 |
+
+The gapes were 4 / 4 / 5 until M2-18: opened 4 px, the jaws' hurtboxes left an 18-px gap — exactly
+the height of a fully powered MANTA's HUGE DISC (half height 9), which always touched a jaw first,
+clinked on the armour and died, so the release route runs could not beat the boss. At 8 / 8 / 9 the
+gap between the open jaws is taller than the biggest Direct-mode disc in every phase
+(`test/integration/release-content-edge.test.ts` holds that relation;
+[release-hardening.md](release-hardening.md#what-the-checks-found-and-the-fixes)).
 
 **Homing rockets are minions.** `BossScriptApi` has no homing-bullet call; the rocket is the
 boss's `minion` (`maw-rocket`, `rocket.homing`), launched from a pod with `api.launch(part)` like a
@@ -214,8 +221,11 @@ The insect / arachnid archetype. 35,000 points.
 
 A silk line is a telegraphed, **detached** horizontal laser fired to the left from the next standing
 spinneret in its row (length 384, width 6, 50 warning ticks, 40 beam ticks) — it stays where it
-was fired while the widow keeps scuttling. One lane at a time as long as `laserTicks` outlasts a
-lane; the content test's boss fight asserts `maxSeparate ≤ 1`.
+was fired while the widow keeps scuttling. One lane at a time: since M2-18 the next line waits at
+least a whole lane (telegraph + grow + active + fade) even when the rank shortens `laserTicks`
+below that — the release audit's boss sweep caught a fully powered ship's rank bringing a second,
+telegraphed line 16 px from the first before it faded. The content test's boss fight asserts
+`maxSeparate ≤ 1`.
 
 ## The new behaviours (`core/behaviors`)
 
@@ -277,8 +287,10 @@ in 60 % of the step; swapped bounds are put in order), [`fireTicks` 80, `ways` 3
 `bulletSpeed` 1.3] (each standing core spits an aimed spread of red ovals — also while the core is
 still armoured), [`launchTicks` 160, `count` 1] (drones from the guns in turn), [`laserTicks` 0 =
 never] with [`laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40] (every `laserTicks`,
-rank-scaled, the next standing gun spins a silk line). It starts with `api.hold()` and sleeps until
-the soonest of its four timers.
+rank-scaled, the next standing gun spins a silk line — but never sooner than a whole lane after the
+last one: `⌈telegraph⌉ + LASER_GROW_TICKS + ⌈active⌉ + LASER_FADE_TICKS`, a negative telegraph or
+active counting as 0, M2-18). It starts with `api.hold()` and sleeps until the soonest of its four
+timers.
 
 ### Shared helpers
 
@@ -301,7 +313,7 @@ moves a part and wants it back measures from the rest offsets, never from the cu
 
 Why: the first version moved the jaws *relative* to where they stood and undid "the new phase's
 gape" at a phase start — but the jaws had been moved by the *previous* phase's gape. GALVANIC MAW's
-gapes are 4, 4, 5, so in phase 3 the jaws sat at ±8 shut and ±13 open instead of ±9 and ±14, and
+gapes were then 4, 4, 5 (8, 8, 9 since M2-18), so in phase 3 the jaws sat at ±8 shut and ±13 open instead of ±9 and ±14, and
 their hurtboxes moved with them (review round 1). Now every phase starts with `setJaws(api, 0)` —
 shut and at rest — and every move is absolute, so no phase can inherit another's drift.
 `behaviors-zones.test.ts` pins the shut jaws at the data's −9 / 9 after both phase changes and the
@@ -411,6 +423,9 @@ The block "zones B and C hold to the plan and the 4-way design rules" (part of `
 - **The review fix re-blessed one file** (`c428e1d`): `zone-b-god` desynced at tick 13,200 because
   the phase-3 jaw hurtboxes moved 1 px; it still clears with no death and the boss beaten, now in
   13,538 ticks (was 13,523) with 70,480 points (was 70,450). No other golden changed.
+- **M2-18 re-blessed `zone-b-god` again** for the wider jaws (`gape` 8 / 8 / 9): the same outcome —
+  a clear with no death and the boss beaten — nine ticks longer. The widow's whole-lane wait
+  changed no golden replay or attract demo.
 
 ## Zero allocation
 

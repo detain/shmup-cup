@@ -90,8 +90,8 @@ exactly what it played.
 
 | Family | Slot | Levels 0 … 8 |
 |---|---|---|
-| `beam-disc` (BEAM > DISC, HUD `DISC`) | main | weak missile → wide missile → twin wide missiles → one, two, three small discs (fanned ±16 / ±32 units) → disc → big disc → huge disc |
-| `laser-wave` (LASER > WAVE, HUD `WAVE`) | main | weak missile → blue laser → wider blue laser → long yellow laser → round piercing laser → ever bigger piercing crescent waves (four sizes) |
+| `beam-disc` (BEAM > DISC, HUD `DISC`) | main | weak missile → wide missile → twin wide missiles → one small disc → two parallel small discs (`oy` ±4 — M2-18; they were a ±16-unit V with a blind spot straight ahead) → three small discs (straight and ±32 units) → disc → big disc → huge disc |
+| `laser-wave` (LASER > WAVE, HUD `WAVE`) | main | weak missile → blue laser → wider blue laser → long yellow laser → round piercing laser → ever bigger piercing crescent waves (four sizes; since M2-18 with `passArmour` 1 — armour does not stop them, see below) |
 | `sub-weapon` (HUD `SUB`) | sub | an arcing bomb (`gravity` 0.06) → two diagonal bombs → four (forward and back) → two diagonal lasers + two bombs → four diagonal lasers → four piercing wide lasers → eight → four piercing discs → four big ones |
 
 ## Drop resolution and the item plan (`core/powerups`)
@@ -171,7 +171,11 @@ order — `WeaponSystem.mainFamilies` — and the first `sub` family — `subFam
   weapon's SFX (rate-limited).
 - **Behaviours.** `direct.bolt` (`ShotKind.Straight`: a straight shot in the emitter's heading;
   `frame` a still frame, or `turn: 1` = the heading's octant frame `((a + 64) >> 7) & 7` —
-  un-rotated art, 0 right … 7 up-right; piercing with the weapon's `pierce`) and `direct.bomb`
+  un-rotated art, 0 right … 7 up-right; piercing with the weapon's `pierce`) — with `passArmour` 1
+  as well (M2-18, `RoleTables.passArmour` → `ShotFlag.PassArmour` on the shot) armour no longer
+  kills a piercing bolt: it clinks at most once per `hitCooldownTicks` on each armoured enemy or
+  boss part (the blast's cooldown tables) and flies on to what stands behind; `passArmour` without
+  `pierce` does nothing — and `direct.bomb`
   (`ShotKind.SpreadBomb` fired in the heading: `gravity` bends it, it bursts on terrain or its first
   target). `emit` adds the emitter offset from the `offX` / `offY` class fields set around the call
   (no fractional argument crosses it).
@@ -385,6 +389,7 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
 | A yellow item did not hurt the boss | Expected: neither bosses nor the captains of M2-09 take damage from it yet |
 | The Direct allocation guard grew after adding carriers to its stage | Spawns allocate their coroutine (D29); keep enemies out of that guard |
 | `pnpm test` timed out in `eslint-rules.test.ts` | Its ESLint instance is warmed up once in `beforeAll` (120 s hook timeout) since M2-05 — a first lint under the full test load was too slow; keep new lint checks inside that suite |
+| A piercing shot dies on a boss's armour in front of its core | Piercing alone stops at armour; set `passArmour: 1` on the `direct.bolt` (M2-18 — the waves have it) so it clinks through, once per `hitCooldownTicks` |
 | Golden hashes differ after adding a weapons / enemies file | Sprite ids and spec indices are hashed; an intended re-bless, with the reason in the commit message |
 
 ## Next steps that build on this page
@@ -409,3 +414,9 @@ for (let t = 0; t < 600; t++) stepWorld(world, input);
   REGENT and FACET MONARCH down ([zones-f-and-g.md](zones-f-and-g.md#direct-mode-item-plans)).
 - **M2-14** (done) — the final zones' `directItems` plans (26 entries each) and carrier waves
   ([zones-h-and-i.md](zones-h-and-i.md#direct-mode-item-plans)).
+- **M2-18** (done) — the release route runs fly all 16 routes with the MANTA too, and the release
+  audit checks every zone's `directItems` plan (20–30 entries, ≥ 6 red / green / blue, one octagon,
+  ≤ 1 orange and yellow). They found three MANTA fairness bugs, fixed in content and one engine
+  flag: the waves pierce armour (`passArmour`), the fifth disc level fires parallel discs, and
+  GALVANIC MAW's jaws open wider than the HUGE DISC
+  ([release-hardening.md](release-hardening.md#what-the-checks-found-and-the-fixes)).

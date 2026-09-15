@@ -153,8 +153,9 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **0.1.0** — the end of the first milestone — plus the first sixteen steps of
-the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
+This build is version **1.0.0-rc.1** — the **release candidate of version 1.0**, checked from end
+to end ([release-candidate.md](release-candidate.md)) — built on version 0.1.0, the end of the first
+milestone, and the steps of the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
 **blue capsule**, then the **second ship, the MANTA**, with its colour items, its growing
@@ -185,13 +186,16 @@ their own songs, and now the **front end**: the attract loop (demo play, high-sc
 typing your initials, high-score tables per difficulty, ship and kind of game, PRACTICE and the
 SOUND TEST, and now the **Options pages**: CONTROLS (autofire modes and rate, SOCD, the hiccup
 protection, rebinding every key and button, the input test), DISPLAY and GAME (difficulty, lives,
-penalty, Auto Power-Up, the magnet, one-button play).
+penalty, Auto Power-Up, the magnet, one-button play), then the **platform polish** (the desktop
+app's save files, window keys and EXIT, the game-mode build for the TV) and last the **release
+checks** with their fixes for the MANTA, GALVANIC MAW and SANDGRAVE WIDOW and the new icon.
 For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
 three times. It comes with the **M1 release check**, the list to run on both monitors
-([debug-tools.md](debug-tools.md)).
+([debug-tools.md](debug-tools.md)), and the release candidate adds the **v1.0 checklist**
+([release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors)).
 
 This page explains how to open the preview on each device, what you should see, how the ship
 and the menus should behave, and what to report if something is wrong. The full button layouts
@@ -882,7 +886,17 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: platform polish.** Nothing changes in the game itself. The **desktop app**
+**New in this build: the v1.0 release candidate (1.0.0-rc.1).** Nothing new to play — the whole
+game was played through by the computer, all 16 runs with both ships, and four unfair spots were
+fixed: the MANTA's **waves now pass through armour** (a clink, and they fly on — so a fully powered
+MANTA with waves can reach the cores of MANTLE REGENT, IRON SOVEREIGN and THE HOLLOW KING), its
+**two small discs** (four SHOT pips on BEAM > DISC) fly side by side straight ahead instead of in a
+V with a gap in the middle, **GALVANIC MAW** opens its jaws wider so every shot fits into the open
+mouth, and **SANDGRAVE WIDOW** never spins a second silk line before the first has faded. The app
+has a new placeholder **icon** (the logo above the two ships). What else was checked, where the
+version shows and the v1.0 checklist for the monitors: [release-candidate.md](release-candidate.md).
+
+Before that, **platform polish.** Nothing changed in the game itself. The **desktop app**
 now has an EXIT entry on the title, plays sound from the start, keeps its settings and high scores
 in files (with a backup of each), and remembers its window — **F11** / **Alt+Enter** fullscreen,
 **Ctrl + =** / **Ctrl + -** / **Ctrl + 0** window size ([desktop-app.md](desktop-app.md)). On the
@@ -1476,7 +1490,7 @@ A big mechanical fish on the right that **follows your ship's height up and down
 | Part | Looks like | What your shots do |
 |---|---|---|
 | **Hull** | The steel body with its eye, gill slits and plating; a tail fin behind | Nothing, ever (a small spark bounces back) |
-| **Jaws** | Two steel jaws at the front, above and below the mouth | Nothing — they are armour. They **open apart** when the mouth opens |
+| **Jaws** | Two steel jaws at the front, above and below the mouth | Nothing — they are armour. They **open apart** when the mouth opens — wide enough for any of your shots, even the MANTA's huge disc |
 | **Mouth** | The glowing gullet between the jaws | Nothing while it is **shut**; while it is **open** it takes the hits: 64 in all. Destroying it destroys the boss (35,000 points) |
 | **Rocket pods** | Two pods above and below the hull | 16 hits each, 1,000 points — each one destroyed means fewer rockets |
 
@@ -1553,7 +1567,8 @@ spinnerets send out **spider drones** that stop, aim and dash at you. **Once bot
 it gets angry: both spinnerets send drones, and every few seconds a spinneret spins a **silk line**
 — a thin blinking warning line straight across the screen along its row for almost a second, then
 a beam for about ⅔ of a second. Only the beam hurts, and it **stays where it was spun** while the
-spider keeps moving — step up or down out of its row. When the head has taken 32 hits, the fans have
+spider keeps moving — step up or down out of its row. There is only ever **one silk line at a
+time**: the next one waits until the last has faded, however strong your ship is. When the head has taken 32 hits, the fans have
 five ovals and everything comes faster.
 
 **Tip:** clear the fangs quickly while there are no silk lines yet, then stay level with the head
@@ -3072,8 +3087,8 @@ stronger, from level 0 to level 8, in one of two styles — the octagon switches
 | 1 | A wider missile | A thin blue laser |
 | 2 | Two wide missiles | A wider blue laser |
 | 3 | A small gold disc | A longer yellow laser |
-| 4 | Two small discs, slightly fanned out | A round-ended yellow laser that **passes through** enemies |
-| 5 | Three small discs in a fan | A crescent **wave** that passes through enemies |
+| 4 | Two small discs side by side, straight ahead | A round-ended yellow laser that **passes through** enemies |
+| 5 | Three small discs in a fan | A crescent **wave** that passes through enemies — and through **armour** (a clink, and it flies on) |
 | 6 | A bigger disc | A bigger wave |
 | 7 | A bigger disc still | A wider wave |
 | 8 | A huge disc | The biggest wave |

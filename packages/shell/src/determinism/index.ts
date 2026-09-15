@@ -18,9 +18,9 @@
  * GPU cannot create a WebGL context, which the game's own boot needs).
  *
  * The web app installs it in dev / test builds only, instead of booting the game, when the page is
- * opened with `?determinism` (`apps/web` `main.ts` — {@link installDeterminismCheck} publishes it as
- * `window.__shmupDeterminism` and marks the page ready); `test/e2e/determinism.spec.ts` plays the
- * golden replays through it in Chromium and Firefox. A release build folds the branch away.
+ * opened with `?determinism` (`apps/web` `main.ts` — {@link installDeterminismCheck} publishes it
+ * as `window.__shmupDeterminism` and marks the page ready); `test/e2e/determinism.spec.ts` plays
+ * the golden replays through it in Chromium and Firefox. A release build folds the branch away.
  *
  * **Implements.**
  * - shmup_feat.md §22 — cross-engine determinism test (P1)
@@ -97,6 +97,14 @@ export interface DeterminismCheck {
    * @throws {RangeError} When the document is not a valid replay or names a stage or checkpoint
    *   the content does not have (`decodeReplay` / `createReplayGame`).
    * @throws {Error} When the content had issues.
+   *
+   * @remarks
+   * Every call builds a fresh session from the replay's header, so one check plays any number of
+   * replays in any order with no state carried between them. A cold path: it allocates the session,
+   * the playback and the hash list per call (test tooling, never in the game's frame loop). The
+   * hashes are computed by the page's own engine, which is the point — compare
+   * {@link DeterminismRun.hashes} and {@link DeterminismRun.finalHash} with the recording's to
+   * prove two engines agree.
    */
   play(replay: unknown): DeterminismRun;
 }
@@ -108,6 +116,14 @@ export interface DeterminismCheck {
  * @param now - A millisecond clock for {@link DeterminismRun.ms} (`performance.now`; omitted →
  *   0 ms).
  * @returns The check.
+ * @throws {TypeError} Only for a programming error — `contentFiles` not a file list
+ *   (`loadGameContent`).
+ *
+ * @remarks
+ * Content with issues does not throw here: the check is still returned with its
+ * {@link DeterminismCheck.issues} filled, and only {@link DeterminismCheck.play} refuses to run —
+ * so a page can report what is wrong instead of failing to load. The content is validated once;
+ * every `play` reuses the resulting database.
  *
  * @example
  * ```ts
@@ -163,11 +179,20 @@ export function createDeterminismCheck(
   };
 }
 
-/** The bits of a window {@link installDeterminismCheck} uses. */
+/** The bits of a window {@link installDeterminismCheck} uses (a real `Window` or a test fake). */
 export interface DeterminismWindowLike {
   /** The document (its root element gets {@link DETERMINISM_READY_ATTRIBUTE}). */
   readonly document: {
-    readonly documentElement: { setAttribute(name: string, value: string): void };
+    /** The root element (`<html>`). */
+    readonly documentElement: {
+      /**
+       * Sets an attribute (`Element.setAttribute`).
+       *
+       * @param name - Attribute name.
+       * @param value - Attribute value.
+       */
+      setAttribute(name: string, value: string): void;
+    };
   };
 }
 
@@ -180,6 +205,20 @@ export interface DeterminismWindowLike {
  * @param contentFiles - The content files (`virtual:shmup-content`).
  * @param now - A millisecond clock (`performance.now`).
  * @returns The check.
+ * @throws {TypeError} Only for a programming error (see {@link createDeterminismCheck}).
+ *
+ * @remarks
+ * The attribute is set after the global exists, so a browser test that waits for
+ * `data-shmup-determinism` can call `window.__shmupDeterminism` at once. `apps/web` `main.ts` calls
+ * this only in dev / test builds opened with `?determinism`, in place of `bootWebApp`.
+ *
+ * @example
+ * ```ts
+ * // apps/web main.ts (dev / test builds)
+ * installDeterminismCheck(window, contentFiles, () => performance.now());
+ * // a Playwright spec, once <html data-shmup-determinism="ready">:
+ * // await page.evaluate((r) => window.__shmupDeterminism.play(r), replay)
+ * ```
  */
 export function installDeterminismCheck(
   win: DeterminismWindowLike,
