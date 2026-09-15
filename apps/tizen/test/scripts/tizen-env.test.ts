@@ -10,9 +10,19 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as TizenEnvModule from '../../scripts/tizen-env.mjs';
 
+/** File name of a path (either separator). Hoisted: the node:fs mock factory uses it. */
+const baseName = vi.hoisted(
+  () =>
+    (path: string): string =>
+      path.split(/[\\/]/).pop() ?? '',
+);
+
 const mocks = vi.hoisted(() => ({
   spawnSync: vi.fn<(...args: unknown[]) => { status: number | null; error?: Error }>(),
+  renameSync: vi.fn<(from: string, to: string) => void>(),
+  rmSync: vi.fn<(path: string, options?: unknown) => void>(),
   existing: new Set<string>(),
+  /** dist/ contents: file name → mtime. rmSync / renameSync update it. */
   files: new Map<string, number>(),
 }));
 
@@ -25,9 +35,18 @@ vi.mock('node:fs', async (importOriginal) => {
     existsSync: (path: string) => mocks.existing.has(path),
     readdirSync: () => [...mocks.files.keys()],
     statSync: (path: string) => ({
-      mtimeMs: mocks.files.get(path.split(/[\\/]/).pop() ?? '') ?? 0,
+      mtimeMs: mocks.files.get(baseName(path)) ?? 0,
       isDirectory: () => false,
     }),
+    renameSync: (from: string, to: string) => {
+      mocks.renameSync(from, to);
+      mocks.files.set(baseName(to), mocks.files.get(baseName(from)) ?? 0);
+      mocks.files.delete(baseName(from));
+    },
+    rmSync: (path: string, options?: unknown) => {
+      mocks.rmSync(path, options);
+      mocks.files.delete(baseName(path));
+    },
   };
 });
 
@@ -76,9 +95,16 @@ function spawned(): Array<{ command: unknown; args: unknown }> {
 
 let errors: string[] = [];
 
+/** The real `process.platform` descriptor (the tests pin Linux; one test switches to win32). */
+const realPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+
 beforeEach(() => {
+  // Expectations below are for the plain (no-shell) spawn, so they hold on a Windows dev box too.
+  Object.defineProperty(process, 'platform', { value: 'linux' });
   mocks.spawnSync.mockReset();
   mocks.spawnSync.mockReturnValue({ status: 0 });
+  mocks.renameSync.mockReset();
+  mocks.rmSync.mockReset();
   mocks.existing.clear();
   mocks.files.clear();
   errors = [];
@@ -95,6 +121,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  if (realPlatform !== undefined) Object.defineProperty(process, 'platform', realPlatform);
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
@@ -109,7 +136,7 @@ describe('tizen/scripts/tizen-env', () => {
 
   it('defaults to tizen / sdb on PATH and honours TIZEN_CLI / SDB', async () => {
     const env = await loadEnv();
-    expect(env.tizenCli()).toBe(process.platform === 'win32' ? 'tizen.bat' : 'tizen');
+    expect(env.tizenCli()).toBe('tizen');
     expect(env.sdbCli()).toBe('sdb');
     vi.stubEnv('TIZEN_CLI', 'C:\\tizen-studio\\tools\\ide\\bin\\tizen.bat');
     vi.stubEnv('SDB', '/opt/tizen/sdb');
@@ -128,7 +155,6 @@ describe('tizen/scripts/tizen-env', () => {
 
   it('run() spawns without a shell on Linux/macOS and passes arguments unquoted', async () => {
     const env = await loadEnv();
-    if (process.platform === 'win32') return; // covered by the win32 test below
     env.run('tizen', ['package', '-s', 'my profile'], { cwd: '/x' });
     expect(mocks.spawnSync).toHaveBeenCalledWith('tizen', ['package', '-s', 'my profile'], {
       stdio: 'inherit',
@@ -148,25 +174,20 @@ describe('tizen/scripts/tizen-env', () => {
   });
 
   it('run() goes through a quoted shell command line on Windows (tizen.bat)', async () => {
-    const platform = Object.getOwnPropertyDescriptor(process, 'platform');
-    Object.defineProperty(process, 'platform', { value: 'win32' });
-    try {
-      const env = await loadEnv();
-      expect(env.tizenCli()).toBe('tizen.bat');
-      env.run('C:\\Program Files\\tizen\\tizen.bat', [
-        'package',
-        '-s',
-        'my "profile"',
-        '--',
-        'C:\\a b',
-      ]);
-      expect(mocks.spawnSync).toHaveBeenCalledWith(
-        '"C:\\Program Files\\tizen\\tizen.bat" package -s "my \\"profile\\"" -- "C:\\a b"',
-        { stdio: 'inherit', shell: true, cwd: undefined },
-      );
-    } finally {
-      if (platform !== undefined) Object.defineProperty(process, 'platform', platform);
-    }
+    Object.defineProperty(process, 'platform', { value: 'win32' }); // afterEach restores it
+    const env = await loadEnv();
+    expect(env.tizenCli()).toBe('tizen.bat');
+    env.run('C:\\Program Files\\tizen\\tizen.bat', [
+      'package',
+      '-s',
+      'my "profile"',
+      '--',
+      'C:\\a b',
+    ]);
+    expect(mocks.spawnSync).toHaveBeenCalledWith(
+      '"C:\\Program Files\\tizen\\tizen.bat" package -s "my \\"profile\\"" -- "C:\\a b"',
+      { stdio: 'inherit', shell: true, cwd: undefined },
+    );
   });
 
   it('resolveTarget connects to TV_IP and derives the sdb serial', async () => {
@@ -194,6 +215,32 @@ describe('tizen/scripts/tizen-env', () => {
     expect(env.findWgt()).toBe('ShmupCup.WGT');
   });
 
+  it('installableWgt strips whitespace from the file name (the TV cannot install "Shmup Cup.wgt")', async () => {
+    const env = await loadEnv();
+    mocks.files.set('Shmup Cup.wgt', 1);
+    expect(env.installableWgt('Shmup Cup.wgt')).toBe('ShmupCup.wgt');
+    expect(mocks.renameSync).toHaveBeenCalledWith(
+      join(DIST, 'Shmup Cup.wgt'),
+      join(DIST, 'ShmupCup.wgt'),
+    );
+    expect([...mocks.files.keys()]).toEqual(['ShmupCup.wgt']);
+
+    mocks.renameSync.mockClear();
+    expect(env.installableWgt('ShmupCup.wgt')).toBe('ShmupCup.wgt');
+    expect(mocks.renameSync).not.toHaveBeenCalled();
+  });
+
+  it('removeWgts deletes every .wgt in dist/ and nothing else', async () => {
+    const env = await loadEnv();
+    env.removeWgts();
+    expect(mocks.rmSync).not.toHaveBeenCalled();
+    mocks.existing.add(DIST);
+    mocks.files.set('app.js', 1).set('Shmup Cup.wgt', 2).set('ShmupCup.WGT', 3);
+    env.removeWgts();
+    expect([...mocks.files.keys()]).toEqual(['app.js']);
+    expect(mocks.rmSync).toHaveBeenCalledWith(join(DIST, 'Shmup Cup.wgt'), { force: true });
+  });
+
   it('requireBuild exits unless dist/config.xml and dist/app.js exist', async () => {
     const env = await loadEnv();
     expect(() => env.requireBuild()).toThrow(ExitError);
@@ -216,13 +263,35 @@ describe('tizen/scripts wrappers (package / install / run)', () => {
     ]);
   });
 
+  it('tizen-package removes old packages first and leaves a space-free ShmupCup.wgt', async () => {
+    mocks.existing.add(DIST).add(join(DIST, 'config.xml')).add(join(DIST, 'app.js'));
+    mocks.files.set('app.js', 1).set('ShmupCup.wgt', 2);
+    vi.stubEnv('TIZEN_PROFILE', 'shmup-profile');
+    vi.stubEnv('TIZEN_CLI', 'tizen');
+    /** dist/ as the CLI saw it (it packs every file there, an old .wgt included). */
+    let packed: string[] = [];
+    mocks.spawnSync.mockImplementation(() => {
+      packed = [...mocks.files.keys()];
+      mocks.files.set('Shmup Cup.wgt', 3); // the CLI names it after <name> in config.xml
+      return { status: 0 };
+    });
+    await runScript('tizen-package');
+    expect(packed).toEqual(['app.js']);
+    expect([...mocks.files.keys()]).toEqual(['app.js', 'ShmupCup.wgt']);
+    expect(console.log).toHaveBeenLastCalledWith(
+      `Packaged ShmupCup.wgt in ${DIST}. Next: tizen:install`,
+    );
+  });
+
   it('tizen-package refuses to run without a build or without a profile', async () => {
+    mocks.files.set('ShmupCup.wgt', 1);
     vi.stubEnv('TIZEN_PROFILE', 'shmup-profile');
     await expect(runScript('tizen-package')).rejects.toThrow(ExitError);
-    mocks.existing.add(join(DIST, 'config.xml')).add(join(DIST, 'app.js'));
+    mocks.existing.add(DIST).add(join(DIST, 'config.xml')).add(join(DIST, 'app.js'));
     vi.stubEnv('TIZEN_PROFILE', undefined);
     await expect(runScript('tizen-package')).rejects.toThrow(ExitError);
     expect(mocks.spawnSync).not.toHaveBeenCalled();
+    expect(mocks.rmSync).not.toHaveBeenCalled();
   });
 
   it('tizen-install installs the newest .wgt on the TV_IP target', async () => {
@@ -237,6 +306,22 @@ describe('tizen/scripts wrappers (package / install / run)', () => {
         command: 'tizen',
         args: ['install', '-n', 'ShmupCup.wgt', '-s', '10.0.0.7:26101', '--', DIST],
       },
+    ]);
+    expect(mocks.renameSync).not.toHaveBeenCalled();
+  });
+
+  it('tizen-install renames a package with a space in its name before installing it', async () => {
+    mocks.existing.add(DIST);
+    mocks.files.set('Shmup Cup.wgt', 1);
+    vi.stubEnv('TIZEN_CLI', 'tizen');
+    vi.stubEnv('TIZEN_TARGET', 'tv-1');
+    await runScript('tizen-install');
+    expect(mocks.renameSync).toHaveBeenCalledWith(
+      join(DIST, 'Shmup Cup.wgt'),
+      join(DIST, 'ShmupCup.wgt'),
+    );
+    expect(spawned()).toEqual([
+      { command: 'tizen', args: ['install', '-n', 'ShmupCup.wgt', '-s', 'tv-1', '--', DIST] },
     ]);
   });
 

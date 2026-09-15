@@ -175,7 +175,8 @@ PowerShell and POSIX shells.
 pnpm --filter @shmup/tizen build
 set TIZEN_PROFILE=shmupcup
 set TV_IP=192.168.1.50
-:: tizen package -t wgt -s shmupcup -- apps\tizen\dist
+:: tizen package -t wgt -s shmupcup -- apps\tizen\dist (old .wgt removed first; the new
+:: "Shmup Cup.wgt" is renamed ShmupCup.wgt — the monitor cannot install a name with a space)
 pnpm --filter @shmup/tizen tizen:package
 :: sdb connect 192.168.1.50, then tizen install -n <newest .wgt> -s 192.168.1.50:26101
 pnpm --filter @shmup/tizen tizen:install

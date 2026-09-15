@@ -168,10 +168,16 @@ Cross-platform Node wrappers around the Tizen CLI; configure with environment va
 # Windows PowerShell
 $env:TIZEN_PROFILE = "shmup"; $env:TV_IP = "192.168.1.50"
 pnpm --filter @shmup/tizen build
-pnpm --filter @shmup/tizen tizen:package   # tizen package -t wgt -s shmup -- dist
-pnpm --filter @shmup/tizen tizen:install   # tizen install -n <wgt> -s 192.168.1.50:26101 -- dist
+pnpm --filter @shmup/tizen tizen:package   # tizen package -t wgt -s shmup -- dist → dist/ShmupCup.wgt
+pnpm --filter @shmup/tizen tizen:install   # tizen install -n ShmupCup.wgt -s 192.168.1.50:26101 -- dist
 pnpm --filter @shmup/tizen tizen:run       # tizen run -p ShmpCupGam.ShmupCup -s …
 ```
+
+The CLI names the package after `<name>` (`Shmup Cup.wgt`), but the monitor cannot install a
+package with a space in its file name (`Failed to install Tizen application.` under an empty
+"Platform log view"). So `tizen:package` renames it to `ShmupCup.wgt`, and `tizen:install`
+renames any `.wgt` that still has a space. `tizen:package` also deletes old `.wgt` files first,
+because the CLI packs every file in `dist/`.
 
 ## config.xml
 

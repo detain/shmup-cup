@@ -201,6 +201,7 @@ saved settings and high scores.
 | Game preview: `ERR_PNPM_BROKEN_LOCKFILE` during `pnpm install` | An old pnpm is being used. `pnpm -v` must print 12.x — run `npm i -g pnpm@latest` and open a new Command Prompt |
 | Game preview: `Missing environment variable TIZEN_PROFILE` | `set TIZEN_PROFILE=<profile name>` in the same Command Prompt before `tizen:package` |
 | Game preview: `apps/tizen/dist is missing` | Run `pnpm --filter @shmup/tizen build` first |
+| Game preview: `Failed to install Tizen application.` right after `Transferred the package: …\Shmup Cup.wgt`, with nothing under "Platform log view" | The package name has a space, which the monitor cannot install. Current scripts rename it to `ShmupCup.wgt` — update the repository (`git pull`) and run `tizen:package` and `tizen:install` again |
 | Game preview: `No .wgt found` | Run `tizen:package` after the build (a new build removes the old `.wgt`) |
 | Game preview: Play/Pause + Ch ▲ ×3 opens nothing | The installed widget is a normal build — build with `pnpm --filter @shmup/tizen build:dev`, package and install again ([debug-tools.md](debug-tools.md)) |
 | Game preview: Play/Pause + Ch ▲ ×3 opens the developer panel on what should be a normal build | `apps\tizen\dist` came from `build:dev` or from a developer's `pnpm test:e2e` (which leaves a test build there) — run `pnpm --filter @shmup/tizen build`, then package and install again |

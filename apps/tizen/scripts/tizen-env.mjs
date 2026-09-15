@@ -18,7 +18,7 @@
  * These scripts are never run in CI (no Tizen CLI there).
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -144,6 +144,36 @@ export function findWgt() {
     .map((file) => ({ file, time: statSync(join(DIST_DIR, file)).mtimeMs }))
     .sort((a, b) => b.time - a.time);
   return candidates.length > 0 ? candidates[0].file : null;
+}
+
+/**
+ * Gives a .wgt in dist/ a name the TV can install: the CLI names the package after `<name>`
+ * in config.xml ("Shmup Cup.wgt"), and with a space in the name the monitor's installer never
+ * starts — `tizen install` fails with an empty "Platform log view" (the transfer succeeds).
+ *
+ * @remarks Renames the file without its whitespace, replacing a file of that name.
+ *
+ * @param {string} file - File name (not path) in dist/, e.g. from {@link findWgt}.
+ * @returns {string} The name to install — `file` itself when it has no whitespace.
+ *
+ * @example
+ * installableWgt('Shmup Cup.wgt'); // renames dist/Shmup Cup.wgt → 'ShmupCup.wgt'
+ */
+export function installableWgt(file) {
+  const name = file.replace(/\s+/g, '');
+  if (name !== file) renameSync(join(DIST_DIR, file), join(DIST_DIR, name));
+  return name;
+}
+
+/**
+ * Deletes every .wgt in dist/ — `tizen package` packs all files in the folder, so an old
+ * package would otherwise end up inside the new one.
+ */
+export function removeWgts() {
+  if (!existsSync(DIST_DIR)) return;
+  for (const file of readdirSync(DIST_DIR)) {
+    if (file.toLowerCase().endsWith('.wgt')) rmSync(join(DIST_DIR, file), { force: true });
+  }
 }
 
 /**
