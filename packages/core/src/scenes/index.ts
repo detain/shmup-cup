@@ -252,6 +252,7 @@ import {
   POWER_UP_MODES,
   SHIELD_CHOICES,
   VOLUME_LEVELS,
+  PLAYFIELD_W,
   arsenalMatches,
   resolveGameConfig,
   withArsenal,
@@ -5539,6 +5540,13 @@ export class PracticeScene extends SceneBase {
   /**
    * Keeps CHECKPOINT within the zone's checkpoints after a change.
    *
+   * @remarks
+   * The choice's labels run to the busiest zone's count, so a step can land past the focused
+   * zone's last: on CHECKPOINT a step forward from the zone's last wraps to `START`, a step back
+   * from `START` (the choice wrapped to its own last label) wraps to the zone's last; a ZONE change
+   * to a zone with fewer checkpoints takes its last. The index stays within the zone's count after
+   * every tick, so on CHECKPOINT only a step from `START` can be the backward wrap.
+   *
    * @param focus - The row that changed.
    * @param before - CHECKPOINT's index before the change.
    */
@@ -5546,8 +5554,7 @@ export class PracticeScene extends SceneBase {
     const count = this.zoneCheckpoints;
     const choice = this.checkpoint;
     if (choice.index <= count) return;
-    // Stepping CHECKPOINT past the zone's last wraps; a zone with fewer takes its last.
-    choice.index = focus === PracticeItem.Checkpoint && choice.index > before ? 0 : count;
+    choice.index = focus === PracticeItem.Checkpoint && before !== 0 ? 0 : count;
   }
 
   /**
@@ -5605,6 +5612,12 @@ export class PracticeScene extends SceneBase {
 /** The sound test's panel: left, top, width, height. */
 const SOUND_TEST_PANEL = Object.freeze({ x: CX - 128, y: 52, w: 256, h: 112 });
 
+/**
+ * The x the sound test plays a cue at: the playfield's centre, so a positional cue (the `sfx` bus
+ * pans by x relative to the camera — the title's backdrop camera stays at 0) plays centred.
+ */
+const SOUND_TEST_SFX_X = PLAYFIELD_W / 2;
+
 /** Where the sound test's menu is drawn. */
 const SOUND_TEST_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: CX - 112,
@@ -5623,7 +5636,7 @@ const SOUND_TEST_MENU_LAYOUT: MenuLayout = Object.freeze({
  * {@link SoundTestSetup}; disabled without one), SFX (every `SFX_CUES` cue, {@link SFX_TEST_LABELS}),
  * STOP and BACK. Left / Right choose a track or a sound, **OK plays it** — the track through a
  * `SimEventKind.SoundTest` event (the host loads it if needed and plays it), the sound as an `Sfx`
- * event; STOP fades the music out; BACK or Back brings the title theme back and closes the screen.
+ * event at the playfield's centre (panned to the middle); STOP fades the music out; BACK or Back brings the title theme back and closes the screen.
  */
 export class SoundTestScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -5701,7 +5714,7 @@ export class SoundTestScene extends SceneBase {
       if (focus === SoundTestItem.Music) {
         flow.host.events.push(SimEventKind.SoundTest, this.music.index, 0, 0, 0);
       } else {
-        flow.sfx(this.sound.index);
+        flow.host.events.push(SimEventKind.Sfx, this.sound.index, SOUND_TEST_SFX_X, 0, 0);
       }
     }
     const before = menu.revision;

@@ -6,6 +6,7 @@
  * polished continue countdown.
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import type { ContentDb } from '../../src/data/index.js';
 import { MUSIC_CUES, SFX_CUES, SimEventKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
@@ -38,8 +39,8 @@ class Session {
   readonly platform = createHeadlessPlatform();
   readonly game: Game;
   readonly flow: SceneFlow;
-  /** Drained events: `[kind, id, param]`. */
-  readonly events: Array<[number, number, number]> = [];
+  /** Drained events: `[kind, id, param, x]`. */
+  readonly events: Array<[number, number, number, number]> = [];
 
   /**
    * Starts on the title (campaign mode: the host stage is the start zone's).
@@ -90,7 +91,7 @@ class Session {
       this.game.step();
       this.game.renderFrame();
       this.game.events.drain((e) => {
-        this.events.push([e.kind, e.id, e.param]);
+        this.events.push([e.kind, e.id, e.param, e.x]);
       });
     }
   }
@@ -165,6 +166,17 @@ class Session {
    */
   of(kind: number, from = 0): Array<[number, number]> {
     return this.events.slice(from).flatMap((e) => (e[0] === kind ? [[e[1], e[2]]] : []));
+  }
+
+  /**
+   * The x positions of a kind's events drained from an index on.
+   *
+   * @param kind - A `SimEventKind`.
+   * @param from - First event index.
+   * @returns Their x.
+   */
+  xOf(kind: number, from = 0): number[] {
+    return this.events.slice(from).flatMap((e) => (e[0] === kind ? [e[3]] : []));
   }
 }
 
@@ -297,6 +309,62 @@ describe('core/scenes practice select (M2-15)', () => {
     expect(world.camera.x).toBeGreaterThanOrEqual(100);
   });
 
+  it('wraps CHECKPOINT within the focused zone`s checkpoints both ways', () => {
+    // S has two checkpoints after its start, U three (the choice's labels run to three), L none.
+    const db = frontEndContent({
+      demos: false,
+      checkpoints: { 't-s': [0, 50, 100], 't-u': [0, 40, 80, 120], 't-l': [0] },
+    }).db;
+    const s = new Session({ db });
+    s.press(Action.Confirm);
+    s.presses([Action.Down, Action.Down, Action.Confirm]); // PRACTICE
+    expect(s.top).toBe('practice');
+    const practice = s.flow.practiceSelect;
+    expect(practice.checkpoint.labels).toEqual([
+      'START',
+      'CHECKPOINT 1',
+      'CHECKPOINT 2',
+      'CHECKPOINT 3',
+    ]);
+    s.presses([Action.Down]); // CHECKPOINT (zone S)
+    const labels = (): string[] => {
+      const out: string[] = [];
+      for (const action of [Action.Left, Action.Left, Action.Left, Action.Right, Action.Right]) {
+        s.press(action);
+        out.push(practice.checkpoint.label);
+      }
+      return out;
+    };
+    // Left from START wraps to the zone's last, Right from its last wraps to START.
+    expect(labels()).toEqual([
+      'CHECKPOINT 2',
+      'CHECKPOINT 1',
+      'START',
+      'CHECKPOINT 1',
+      'CHECKPOINT 2',
+    ]);
+    s.press(Action.Right);
+    expect(practice.checkpoint.label).toBe('START');
+    // U: the choice's full range.
+    s.press(Action.Up);
+    s.press(Action.Right);
+    s.press(Action.Down);
+    expect(practice.checkpoint.label).toBe('START');
+    s.press(Action.Left);
+    expect(practice.checkpoint.label).toBe('CHECKPOINT 3');
+    // A zone with fewer takes its last; L (none) keeps START both ways.
+    s.press(Action.Up);
+    s.press(Action.Left);
+    expect([practice.zone.index, practice.checkpoint.label]).toEqual([0, 'CHECKPOINT 2']);
+    s.press(Action.Left); // L (wraps)
+    expect([practice.zone.index, practice.checkpoint.label]).toEqual([2, 'START']);
+    s.press(Action.Down);
+    s.press(Action.Left);
+    expect(practice.checkpoint.label).toBe('START');
+    s.press(Action.Right);
+    expect(practice.checkpoint.label).toBe('START');
+  });
+
   it('keeps practice scores in their own table and out of the session hi-score', () => {
     const save = createSaveStore(null);
     save.recordScore('meter-normal', createHiScoreEntry(3_000, { name: 'TOP' }));
@@ -367,6 +435,8 @@ describe('core/scenes sound test (M2-15)', () => {
     const sfxFrom = s.events.length;
     s.press(Action.Confirm);
     expect(s.of(SimEventKind.Sfx, sfxFrom)).toEqual([[SFX_CUES.LaserHum, 0]]);
+    // At the playfield's centre: a positional cue pans to the middle.
+    expect(s.xOf(SimEventKind.Sfx, sfxFrom)).toEqual([PLAYFIELD_W / 2]);
     s.press(Action.Down); // STOP
     expect(test.menu.focus).toBe(SoundTestItem.Stop);
     const stopFrom = s.events.length;
@@ -390,6 +460,7 @@ describe('core/scenes sound test (M2-15)', () => {
     const from = s.events.length;
     s.presses([Action.Confirm]);
     expect(s.of(SimEventKind.Sfx, from)).toEqual([[SFX_CUES.PlayerShot, 0]]);
+    expect(s.xOf(SimEventKind.Sfx, from)).toEqual([PLAYFIELD_W / 2]);
     s.press(Action.Back);
     expect(s.top).toBe('title');
     expect(s.of(SimEventKind.SoundTest)).toEqual([]);

@@ -3472,7 +3472,8 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     (`HI_SCORE_RESULT_TICKS` 900, OK / Back after `HI_SCORE_LOCK_TICKS` 30) → title. Every flow
     test and e2e spec that went from an end screen to the title passes the name entry now.
   - **Practice select** (`PracticeScene`, overlay): ZONE (`A AZURE VERGE` …), CHECKPOINT (`START`,
-    `CHECKPOINT n` for the zone's checkpoints after x 0, wrapping within the zone's), LOADOUT
+    `CHECKPOINT n` for the zone's checkpoints after x 0, wrapping within the zone's both ways — Left
+    on `START` goes to the zone's last), LOADOUT
     (`PRACTICE_LOADOUTS` default / full — `STANDARD` / `FULL POWER`), START → the difficulty menu,
     ship and weapon select as a normal start; their last OK is `FlowControl.launchGame()` (it
     replaced the three `stack.reset(game)` calls), which starts the practice run
@@ -3482,7 +3483,8 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   - **Sound test** (`SoundTestScene`, overlay): MUSIC (the host's titles — new
     `SceneFlowHost.soundTest` / `GameOptions.soundTest` `SoundTestSetup { music }`; disabled
     without), SFX (`SFX_TEST_LABELS`, every `SFX_CUES` cue in words), STOP, BACK. **OK plays**
-    (MUSIC: new `SimEventKind.SoundTest` 16, id = the library index; SFX: an `Sfx` event) — the
+    (MUSIC: new `SimEventKind.SoundTest` 16, id = the library index; SFX: an `Sfx` event at the
+    playfield's centre, x = `PLAYFIELD_W / 2`, so a positional cue plays centred) — the
     scene masks OK from `menuTick` so it does not step the choice; BACK / Back bring the title
     theme back. Audio: new `AudioEngine.playTrack(index, fade)` (loads a non-resident track — a
     menu, never a stage — keeps it as the one extra track, releasing other tracks outside the

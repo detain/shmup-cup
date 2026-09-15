@@ -33,17 +33,25 @@ export const TEST_STORY = Object.freeze([
  * The content files without demos.
  *
  * @param story - Give the campaign the test story (default `true`).
+ * @param checkpoints - Checkpoint x positions per stage id (the stage helper's otherwise).
  * @returns The files.
  */
-function baseFiles(story = true): ContentFile[] {
+function baseFiles(
+  story = true,
+  checkpoints: Readonly<Record<string, readonly number[]>> = {},
+): ContentFile[] {
   const campaign = CAMPAIGN.data as Record<string, unknown>;
+  const zoneStage = (id: string): ContentFile => {
+    const xs = checkpoints[id];
+    return xs === undefined ? stage(id) : stage(id, { checkpoints: xs.map((x) => ({ x })) });
+  };
   return [
     shipped('player/kestrel.player.json'),
     shipped('weapons/type-a.weapons.json'),
     { path: CAMPAIGN.path, data: story ? { ...campaign, story: TEST_STORY } : campaign },
-    stage('t-s'),
-    stage('t-u'),
-    stage('t-l'),
+    zoneStage('t-s'),
+    zoneStage('t-u'),
+    zoneStage('t-l'),
     // The demo's stage: long and slow (no end within the demo).
     stage('t-d', {
       length: 6000,
@@ -104,13 +112,21 @@ export function demoFile(id: string, replay: Replay): ContentFile {
  * @param options - What to leave out.
  * @param options.demos - Record the demo (default `true`).
  * @param options.story - Give the campaign its story (default `true`).
+ * @param options.checkpoints - Checkpoint x positions per zone stage id (`t-s`, `t-u`, `t-l`;
+ *   default `[0, 100]` each).
  * @returns The DB and the demo's replay (`null` without demos).
  */
-export function frontEndContent(options: { demos?: boolean; story?: boolean } = {}): {
+export function frontEndContent(
+  options: {
+    demos?: boolean;
+    story?: boolean;
+    checkpoints?: Readonly<Record<string, readonly number[]>>;
+  } = {},
+): {
   db: ContentDb;
   demo: Replay | null;
 } {
-  const files = baseFiles(options.story ?? true);
+  const files = baseFiles(options.story ?? true, options.checkpoints);
   const load = (list: readonly ContentFile[]): ContentDb => {
     const { db, issues } = loadContent(list, { extraSprites: ENGINE_SPRITES });
     expect(issues).toEqual([]);
