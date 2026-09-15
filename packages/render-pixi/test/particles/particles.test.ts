@@ -446,9 +446,13 @@ describe('render-pixi/particles system', () => {
     expect(simBytes).toBeLessThan(64 * 1024);
     const frameBytes = measureHeapGrowth(
       (tick) => {
-        system.emit(tick & 1, 100 + (tick % 50), 80, 1);
+        // The camera scrolls on (a new position every frame, as in play); bursts start on screen.
+        // Whole pixels: this file's other tests hand `sync` cameras of other shapes, and a
+        // fractional x read through a site that has seen that many shapes is boxed (12 B a
+        // frame) — the renderer's own guards scroll a fractional camera through it.
+        camera.x = tick;
+        system.emit(tick & 1, tick + 100 + (tick % 50), 80, 1);
         system.step(1);
-        camera.x = tick % 17;
         system.sync(camera);
       },
       10_000,

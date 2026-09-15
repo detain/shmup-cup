@@ -238,7 +238,8 @@ describe('render-pixi/renderer per-frame work (edge)', () => {
     const bytes = measureHeapGrowth(step, 10_000, 20_000).bytes;
     forceGc();
     const before = process.memoryUsage().heapUsed;
-    for (let tick = 0; tick < 10_000; tick++) step(tick);
+    // Frames after every one the guard ran (its warm-up and at most three windows): new ticks.
+    for (let tick = 50_000; tick < 60_000; tick++) step(tick);
     forceGc();
     expect(process.memoryUsage().heapUsed - before).toBeLessThan(256 * 1024);
     // ~0.6 MB (Pixi's own event plumbing when sprites blink); re-tinting every HUD quad on

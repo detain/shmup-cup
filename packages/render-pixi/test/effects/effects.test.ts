@@ -295,9 +295,11 @@ describe('render-pixi/effects score popups', () => {
     const camera = { x: 0, y: 0 };
     const bytes = measureHeapGrowth(
       (tick) => {
-        if (tick % 5 === 0) popups.show(100 * (1 + (tick % 7)), 50 + (tick % 300), 90, 0xf8f8f8);
+        // The camera scrolls on (a new position every frame, as in play); popups show on screen.
+        camera.x = tick * 0.25;
+        const x = Math.floor(camera.x) + 50 + (tick % 300);
+        if (tick % 5 === 0) popups.show(100 * (1 + (tick % 7)), x, 90, 0xf8f8f8);
         popups.step(1);
-        camera.x = tick % 3;
         popups.sync(camera);
       },
       10_000,

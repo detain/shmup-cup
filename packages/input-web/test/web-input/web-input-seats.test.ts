@@ -201,8 +201,10 @@ describe('input-web/web-input split keyboard (M2-06)', () => {
   });
 
   it('polls two seats, a split keyboard and pads without allocating', () => {
-    const idle = pad(0);
-    const firing = pad(0, [0, 12]);
+    // Pad 0's stick sweeps round: its axes read new values on every poll, as a real stick's do.
+    const axes = [0.5, 0.5, 0, 0];
+    const idle = pad(0, [], axes);
+    const firing = pad(0, [0, 12], axes);
     const pads: Array<GamepadLike | null> = [idle, pad(1, [9])];
     const input = createWebInput({ keyTarget: null, getGamepads: () => pads });
     input.setProfile(profile('keyboard-split'));
@@ -210,6 +212,8 @@ describe('input-web/web-input split keyboard (M2-06)', () => {
     const down = key('keydown', 'ArrowUp');
     const up = key('keyup', 'ArrowUp');
     const step = (i: number): void => {
+      axes[0] = Math.sin(i / 40);
+      axes[1] = Math.cos(i / 57);
       pads[0] = (i & 8) === 0 ? idle : firing;
       input.splitKeyboard.handleEvent((i & 4) === 0 ? down : up);
       input.poll();

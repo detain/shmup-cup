@@ -10,8 +10,9 @@
  * all through one loop in one function:
  *
  * 1. {@link WARMUP_ROUNDS} warm-up rounds share the `warmup` calls (indices `0 … warmup − 1`),
- *    then up to `attempts` measured windows run `iterations` calls each (indices
- *    `0 … iterations − 1`);
+ *    then up to `attempts` measured windows run `iterations` calls each on the indices that
+ *    follow — window `w` (from 0) runs `warmup + w × iterations` up to (not including)
+ *    `warmup + (w + 1) × iterations` — so no index runs twice;
  * 2. before every round, the warm-up ones included: two full collections, then V8's
  *    `%FinalizeOptimization()`, which waits for the optimising compiles still running on V8's
  *    background threads and installs their code;
@@ -52,9 +53,22 @@
  *   between the warm-up and a window.
  * - **Several windows.** V8 can still deoptimise and re-optimise inside a window (a path the
  *   warm-up never took); a real per-call allocation shows in every window.
+ * - **New indices in every window.** A call derives its per-call values from its index — a camera
+ *   position, a tick, a clock, a stick reading — and in the game those are new on every frame. A
+ *   window that replayed the warm-up's indices met only values the warm-up had already seen, so a
+ *   cache keyed on such a value (a `Map` entry per camera position) allocated during the warm-up
+ *   and never in a window: the guards could not see it (render-pixi's hitbox guard passed its
+ *   64 KiB with one in its `sync`; on new indices it measures 224 KB). So the windows run the
+ *   indices after the warm-up, and a guard's values must really come from its index: a quantity
+ *   that grows in the game (tick, camera, clock, score) grows with it; one bounded in the game (a
+ *   screen position, an animation frame, a pattern phase) may cycle. A guard that wants to count
+ *   what happened in its windows can: their indices start at `warmup`.
  * - **Long warm-ups for cheap loops.** V8 promotes a function to its top tier only after enough
- *   calls, and a window that runs indices the warm-up never ran can take new paths: give a loop of
- *   microseconds a call a warm-up of at least `max(iterations, 20_000)` calls.
+ *   calls: give a loop of microseconds a call a warm-up of at least `max(iterations, 20_000)`
+ *   calls. The windows run indices the warm-up never ran, so the code under test must already be
+ *   warm for every path they lead to: pick its paths by the index's remainders (`i % n`, `i & m`),
+ *   which the warm-up has all met, not by its size (the test's own bookkeeping may, like
+ *   world-stage's count of the windows' terrain hits).
  *
  * Earlier probes of render-pixi and input-web sampled `heapUsed` every 100 calls, and each sample
  * allocated a `process.memoryUsage()` result (their guards measure 10–35 KB less per window with
@@ -169,9 +183,10 @@ function jitUsed(): number {
 /**
  * Measures the bytes `fn` allocates over `iterations` calls, after a warm-up.
  *
- * @param fn - The code under test; receives the iteration index: `0 … warmup − 1` across the
- *   warm-up, `0 … iterations − 1` in every measured window. Must not keep references to what it
- *   allocates *for the test's sake* — the measurement counts allocations, retained or not.
+ * @param fn - The code under test; receives the call's index, which never repeats: `0 … warmup − 1`
+ *   across the warm-up, then `warmup + w × iterations` onwards in window `w` (from 0). Derive the
+ *   per-call values from it (see the module docs). Must not keep references to what it allocates
+ *   *for the test's sake* — the measurement counts allocations, retained or not.
  * @param iterations - Calls per measured window.
  * @param warmup - Warm-up calls first, split into {@link WARMUP_ROUNDS} rounds (default:
  *   `min(iterations, 1000)`; a cheap loop needs at least `max(iterations, 20_000)`).
@@ -204,8 +219,13 @@ export function measureHeapGrowth(
   // windows run in the code the warm-up rounds made V8 compile (see the module docs).
   for (let round = 0; round < rounds; round++) {
     const measured = round >= WARMUP_ROUNDS;
-    const start = measured ? 0 : Math.floor((warmup * round) / WARMUP_ROUNDS);
-    const end = measured ? iterations : Math.floor((warmup * (round + 1)) / WARMUP_ROUNDS);
+    // Indices never repeat: window w (from 0) runs `warmup + w × iterations …` onwards, so a value
+    // a call derives from its index (a camera position, a tick, a clock) is new in every window,
+    // as in the game — a cache keyed on it allocates there as it would in play.
+    const start = measured
+      ? warmup + (round - WARMUP_ROUNDS) * iterations
+      : Math.floor((warmup * round) / WARMUP_ROUNDS);
+    const end = measured ? start + iterations : Math.floor((warmup * (round + 1)) / WARMUP_ROUNDS);
     gc();
     gc();
     finalize();

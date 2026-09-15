@@ -15,19 +15,23 @@ describe('core/debug allocation', () => {
     const game = createGame(createHeadlessPlatform(), {}, EMPTY_CONTENT_DB);
     game.debug.slowMo = 2;
     // A 1-ms-resolution rAF clock (16/17/17 ms frames) — whole numbers, as in the loop's guard.
+    let frames = 0;
     const slow = measureHeapGrowth(
       (i) => {
-        game.frame(Math.floor(((i + 1) * 1000) / 60));
+        frames = i + 1;
+        game.frame(Math.floor((frames * 1000) / 60));
       },
       10_000,
       20_000,
     );
     expect(slow.bytes).toBeLessThan(64 * 1024);
     game.debug.frameAdvance = true;
+    // The clock runs on from the last frame above, however many windows that guard measured.
+    const base = frames;
     const stepped = measureHeapGrowth(
       (i) => {
         if (i % 3 === 0) game.requestStep(1);
-        game.frame(Math.floor(((i + 40_000) * 1000) / 60));
+        game.frame(Math.floor(((base + i + 1) * 1000) / 60));
       },
       10_000,
       20_000,

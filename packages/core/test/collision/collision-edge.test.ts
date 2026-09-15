@@ -575,11 +575,19 @@ describe('core/collision spatial grid — edge cases', () => {
     // grid itself allocates. Fractional coordinates can additionally cost 16 B per argument when
     // V8 does not inline a call site (a JS call passes doubles boxed) — keep collision call
     // sites small, and let the world-level guard (world tests) catch it if one is not.
+    // The grid follows a scrolling camera — a new origin every tick, as in play — and the bodies
+    // move with it.
     const growth = measureHeapGrowth((tick) => {
-      grid.begin(tick & 7, -(tick & 3));
-      for (let i = 0; i < n; i++) grid.insert(i, xs[i], ys[i], xs[i] + 12, ys[i] + 9);
+      const ox = tick;
+      const oy = -(tick & 3);
+      grid.begin(ox, oy);
+      for (let i = 0; i < n; i++) {
+        grid.insert(i, ox + xs[i], oy + ys[i], ox + xs[i] + 12, oy + ys[i] + 9);
+      }
       grid.build();
-      for (let i = 0; i < n; i++) grid.query(xs[i] - 2, ys[i] - 2, xs[i] + 2, ys[i] + 2, visit);
+      for (let i = 0; i < n; i++) {
+        grid.query(ox + xs[i] - 2, oy + ys[i] - 2, ox + xs[i] + 2, oy + ys[i] + 2, visit);
+      }
     }, 10_000);
     expect(hits).toBeGreaterThan(0);
     expect(growth.bytes).toBeLessThan(256 * 1024);

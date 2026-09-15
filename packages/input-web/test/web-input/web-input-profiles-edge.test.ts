@@ -363,8 +363,10 @@ describe('input-web/web-input gamepad profiles (edge cases)', () => {
 
 describe('input-web/web-input allocations (plan §1.3)', () => {
   it('poll() with profiles, debounce, policies and pads allocates next to nothing', () => {
-    const idle = pad(0);
-    const firing = pad(0, [0, 12, 15]);
+    // The pad's stick sweeps round: its axes read new values on every poll, as a real stick's do.
+    const axes = [0.5, 0.5, 0, 0];
+    const idle = pad(0, [], axes);
+    const firing = pad(0, [0, 12, 15], axes);
     const pads: Array<GamepadLike | null> = [idle, null];
     const input = createWebInput({ keyTarget: null, getGamepads: () => pads });
     input.setProfile(profile('tizen-remote-safe', { diagonals: 'lastWins', socd: 'lastWins' }));
@@ -383,6 +385,8 @@ describe('input-web/web-input allocations (plan §1.3)', () => {
       key('keyup', '', RIGHT),
     ];
     const step = (tick: number): void => {
+      axes[0] = Math.sin(tick / 40);
+      axes[1] = Math.cos(tick / 57);
       const event = events[tick % events.length];
       if (event !== undefined) input.keyboard.handleEvent(event);
       pads[0] = (tick & 8) === 0 ? idle : firing;

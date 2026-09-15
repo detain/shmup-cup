@@ -1,7 +1,8 @@
 /**
  * Self-test of the allocation guard (`helpers/alloc.ts`): it must see allocations — retained
- * or already garbage — and report (close to) nothing for an empty loop; its rounds run the calls
- * and indices it documents.
+ * or already garbage, and a cache keyed on a value the calls derive from their index — and report
+ * (close to) nothing for an empty loop; its rounds run the calls and indices it documents (no
+ * index twice).
  */
 import { getHeapSpaceStatistics } from 'node:v8';
 import { describe, expect, it } from 'vitest';
@@ -74,12 +75,54 @@ describe('test helper measureHeapGrowth', () => {
     expect(quiet).toBe(20_000 + 3 * 10_000);
   });
 
-  it('passes the warm-up indices once, split into rounds, then 0 … iterations − 1 per window', () => {
+  it('passes every index once: the warm-up 0 … warmup − 1 in rounds, then new ones per window', () => {
     const seen: number[] = [];
     measureHeapGrowth((i) => void seen.push(i), 4, 11, 2, -1);
-    const warmup = Array.from({ length: 11 }, (_, i) => i);
-    expect(seen).toEqual([...warmup, 0, 1, 2, 3, 0, 1, 2, 3]);
+    // Warm-up 0 … 10, window 1 11 … 14, window 2 15 … 18: no window meets an index run before.
+    expect(seen).toEqual(Array.from({ length: 11 + 2 * 4 }, (_, i) => i));
     expect(WARMUP_ROUNDS).toBeGreaterThanOrEqual(2);
+    // A settled window ends the indices too.
+    seen.length = 0;
+    measureHeapGrowth((i) => void seen.push(i), 4, 11, 3);
+    expect(seen).toEqual(Array.from({ length: 11 + 4 }, (_, i) => i));
+  });
+
+  it('sees a cache keyed on a value derived from the index (new values in every window)', () => {
+    // What a renderer might do wrongly: memoise something per camera position. In play the camera
+    // never comes back to a position, so every frame adds an entry; a window that replayed the
+    // warm-up's indices would find every key cached and measure nothing. (Whole-pixel keys: a
+    // fractional one would be boxed on every lookup, cached or not.)
+    const cache = new Map<number, { x: number }>();
+    const memo = (x: number): { x: number } => {
+      let entry = cache.get(x);
+      if (entry === undefined) {
+        entry = { x };
+        cache.set(x, entry);
+      }
+      return entry;
+    };
+    const scrolling = measureHeapGrowth(
+      (i) => {
+        if (memo(1000 + i * 3).x < 0) throw new Error('unreachable');
+      },
+      10_000,
+      20_000,
+    );
+    // A Map entry and a small object per call: far over any 64 KiB budget.
+    expect(scrolling.bytes).toBeGreaterThan(256 * 1024);
+    expect(scrolling.windows).toBe(3); // none settles
+    expect(cache.size).toBe(20_000 + 3 * 10_000); // a new key on every call
+    // The same calls on 64 positions the warm-up has cached: nothing left to see.
+    cache.clear();
+    const cycling = measureHeapGrowth(
+      (i) => {
+        if (memo(1000 + (i & 63) * 3).x < 0) throw new Error('unreachable');
+      },
+      10_000,
+      20_000,
+    );
+    expect(cache.size).toBe(64);
+    expect(cycling.bytes).toBeLessThan(32 * 1024);
   });
 
   it('leaves out the spaces of compiled code, which V8 still has under these names', () => {

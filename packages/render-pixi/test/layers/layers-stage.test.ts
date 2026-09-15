@@ -173,14 +173,16 @@ describe('render-pixi/layers terrain binding', () => {
   it('syncs without allocating', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
+    // 8,000 columns (64,000 px): the warm-up and three windows scroll 62,500 px without wrapping,
+    // so every frame meets a camera position no earlier frame had, as in play.
     const cells: [number, number, number][] = [];
-    for (let c = 0; c < 2000; c++) cells.push([c, 24 - (c % 5), 1 + (c % 3)]);
-    const view = terrainView(2000, 25, cells);
+    for (let c = 0; c < 8000; c++) cells.push([c, 24 - (c % 5), 1 + (c % 3)]);
+    const view = terrainView(8000, 25, cells);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     const camera = { x: 0, y: 0.5 };
     const bytes = measureHeapGrowth(
       (tick) => {
-        camera.x = (tick * 1.25) % 15000;
+        camera.x = tick * 1.25;
         binding.sync(view, camera);
       },
       10_000,

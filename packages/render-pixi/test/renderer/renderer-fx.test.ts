@@ -17,6 +17,7 @@ import {
   type DrawList,
   type RenderFrame,
   type ScreenView,
+  type SpriteBatch,
   type WorldView,
 } from '@shmup/core';
 import type * as Pixi from 'pixi.js';
@@ -94,9 +95,14 @@ interface TestFrame extends RenderFrame {
 /**
  * A frame over a world with an item batch and an enemy-bullet batch.
  *
- * @returns The frame and the world's camera.
+ * @returns The frame, the world's camera and its two batches.
  */
-function frameWithWorld(): { frame: TestFrame; camera: { x: number; y: number } } {
+function frameWithWorld(): {
+  frame: TestFrame;
+  camera: { x: number; y: number };
+  items: SpriteBatch;
+  bullets: SpriteBatch;
+} {
   const camera = { x: 0, y: 0 };
   const items = createSpriteBatch(LayerId.Items, 2);
   const bullets = createSpriteBatch(LayerId.EnemyBullets, 2);
@@ -111,7 +117,7 @@ function frameWithWorld(): { frame: TestFrame; camera: { x: number; y: number } 
     ui: createDrawList(4, 1),
     screen: { shakeX: 0, shakeY: 0, flash: 0, dim: 0 },
   };
-  return { frame, camera };
+  return { frame, camera, items, bullets };
 }
 
 /** @returns A renderer over the test atlas with the fx content set. */
@@ -293,16 +299,22 @@ describe('render-pixi/renderer game feel (plan M1-14)', () => {
 
   it('allocates little per frame with particles, popups, shake and flashes running', async () => {
     const renderer = await makeRenderer();
-    const { frame, camera } = frameWithWorld();
+    const { frame, camera, items, bullets } = frameWithWorld();
     const particles = renderer.particles;
     const popups = renderer.popups;
     if (particles === null || popups === null) throw new Error('fx parts missing');
     const bytes = measureHeapGrowth(
       (tick) => {
         frame.tick = tick;
-        camera.x = tick % 64;
-        if (tick % 3 === 0) particles.emitFxCue(FX_CUES.ExplosionSmall, 80 + (tick % 90), 70, 1);
-        if (tick % 20 === 0) popups.show(100, 90 + (tick % 50), 80, 0xf8f8f8);
+        // The camera scrolls on (a new position every frame, as in play); the sprites, bursts and
+        // popups stay on screen, at whole pixels.
+        camera.x = tick * 0.25;
+        const left = Math.floor(camera.x);
+        items.x[0] = left + 50;
+        bullets.x[0] = left + 60;
+        const burst = left + 80 + (tick % 90);
+        if (tick % 3 === 0) particles.emitFxCue(FX_CUES.ExplosionSmall, burst, 70, 1);
+        if (tick % 20 === 0) popups.show(100, left + 90 + (tick % 50), 80, 0xf8f8f8);
         if (tick % 40 === 0) renderer.effects.shake(2, 20);
         if (tick % 25 === 0) renderer.effects.flash(tick % 3, 12);
         renderer.render(frame);

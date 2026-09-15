@@ -268,18 +268,27 @@ describe('core/world with a stage — determinism and allocation', () => {
       }),
     );
     const input = createInputSnapshot();
+    const ship = w.players[0];
     const masks = [Action.Down, Action.Down | Action.Right, Action.Up, Action.Up | Action.Left];
+    const warmup = 20_000;
+    let measuredHits = 0;
     const growth = measureHeapGrowth(
       (i) => {
-        commitPlayerInput(input.players[0], masks[(i >> 5) & 3]);
+        // The weave alone keeps the ship in the air; a 100-tick dive every 1,000 ticks takes it
+        // into the floor (a terrain hit, then the death and the respawn — lives never run out).
+        const dive = i % 1000 >= 900;
+        commitPlayerInput(input.players[0], dive ? Action.Down : masks[(i >> 5) & 3]);
         if (i % 3000 === 2999) w.stage?.restartAt(i % 6000 === 2999 ? 0 : 1);
+        if (ship.lives < 3) ship.lives = 3;
+        const hits = ship.hits;
         stepWorld(w, input);
+        if (i >= warmup) measuredHits += ship.hits - hits; // the windows' indices follow the warm-up
         w.events.clear();
       },
       10_000,
-      20_000,
+      warmup,
     );
-    expect(w.players[0].hits).toBeGreaterThan(0);
+    expect(measuredHits).toBeGreaterThan(0);
     expect(growth.bytes).toBeLessThan(256 * 1024);
   });
 });

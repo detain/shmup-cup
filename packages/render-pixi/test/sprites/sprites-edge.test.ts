@@ -363,18 +363,22 @@ describe('render-pixi/sprites per-frame allocation (edge)', () => {
     const batch = createSpriteBatch(LayerId.Fx, 16);
     const bytes = measureHeapGrowth(
       (tick) => {
+        // The camera scrolls on (a new position every frame, as in play); the sprites stay on
+        // screen.
+        const camX = tick * 0.25;
+        const left = Math.floor(camX);
         batch.count = 0;
         for (let i = 0; i < 12; i++) {
           pushSprite(
             batch,
-            i * 9 + (tick % 7),
+            left + i * 9 + (tick % 7),
             tick % 200,
             i % 2,
             tick % 3,
             i === 3 ? SpriteFlag.FlipX : 0,
           );
         }
-        b.sync(batch, tick % 13, 0);
+        b.sync(batch, camX, 0);
       },
       10_000,
       20_000,
