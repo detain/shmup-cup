@@ -100,8 +100,10 @@ export interface ShellControlsOptions {
  * @remarks
  * Devices are read from {@link ShellRebindProfiles.rebindable} on every call, so a profile the
  * player switched to in CONTROLS is the one rebound. A captured key is turned into a binding token
- * for the device's profile (`captureToken` — a button for a gamepad, a `code` on a keyboard, a key
- * code on a remote); one that does not fit gives `RebindStatus.Rejected`. A rebinding or a reset
+ * for the device's profile (`captureToken` over the context and the player's rebinding — a button
+ * for a gamepad, else the `code` or key code the profile binds that key by, so the conflict
+ * detection sees whichever action has the key); one that does not fit gives
+ * `RebindStatus.Rejected`. A rebinding or a reset
  * that changes something replaces the save's options (written with the next `SaveStore.flush` — the
  * screen flushes when it closes) and calls {@link ShellRebindProfiles.customize}.
  *
@@ -161,9 +163,9 @@ export function createShellControls(options: ShellControlsOptions): ControlsSetu
       if (profile === null || input.capture.status !== CaptureStatus.Captured) {
         return { status: RebindStatus.Rejected, other: null };
       }
-      const token = captureToken(profile, input.capture);
-      if (token === null) return { status: RebindStatus.Rejected, other: null };
       const bindings = save.options.input.bindings;
+      const token = captureToken(profile, input.capture, context, bindings[profile.id]);
+      if (token === null) return { status: RebindStatus.Rejected, other: null };
       const result = rebindAction(profile, bindings, context, action, token);
       if (result.overrides !== bindings) store(result.overrides);
       return { status: result.status, other: result.other };

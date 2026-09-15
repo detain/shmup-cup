@@ -63,8 +63,13 @@ function key(type: 'keydown' | 'keyup', code: string, keyCode: number): KeyEvent
   return { type, code, keyCode, repeat: false, preventDefault: () => undefined };
 }
 
-/** A web input with the keyboard and gamepad profiles applied the way the apps do. */
-function setup() {
+/**
+ * A web input with the keyboard and gamepad profiles applied the way the apps do.
+ *
+ * @param keys - The key profile in use.
+ * @returns The adapter, the save, the controls, the pad and every applied settings.
+ */
+function setup(keys = 'keyboard-default') {
   const pad: { buttons: Array<{ pressed: boolean }> } = {
     buttons: Array.from({ length: 17 }, () => ({ pressed: false })),
   };
@@ -79,7 +84,7 @@ function setup() {
   };
   const input = createWebInput({ keyTarget: null, getGamepads: () => [gamepad] });
   const save = createSaveStore(null);
-  const base = [profile('keyboard-default'), profile('gamepad-standard')];
+  const base = [profile(keys), profile('gamepad-standard')];
   const customized: InputOptions[] = [];
   /**
    * Applies both profiles with the player's settings (the apps' `customize`).
@@ -181,6 +186,47 @@ describe('shell/controls (M2-16)', () => {
       Sub: ['button:0'],
     });
     expect(controls.keysLabel(1, 'game', 'Sub')).toBe('A');
+  });
+
+  it('rebinds KEYBOARD AS REMOTE by code: menu CONFIRM → ↑ swaps with UP (review round 2)', () => {
+    const { input, save, controls } = setup('keyboard-remote-emulation');
+    controls.beginCapture(0);
+    input.keyboard.handleEvent(key('keydown', 'ArrowUp', 38));
+    input.poll();
+    expect(controls.bindCaptured(0, 'menu', 'Confirm')).toEqual({
+      status: RebindStatus.Swapped,
+      other: 'Up',
+    });
+    controls.endCapture();
+    expect(save.options.input.bindings['keyboard-remote-emulation']?.menu).toEqual({
+      Up: ['code:Enter', 'code:NumpadEnter'],
+      Confirm: ['code:ArrowUp'],
+    });
+    expect(controls.keysLabel(0, 'menu', 'Confirm')).toBe('↑');
+    expect(controls.keysLabel(0, 'menu', 'Up')).toBe('ENTER  NUM ENTER');
+    // The adapter uses it: in menus the arrow confirms and Enter moves up.
+    input.keyboard.handleEvent(key('keyup', 'ArrowUp', 38));
+    for (let i = 0; i < 4; i++) input.poll();
+    input.setContext('menu');
+    input.keyboard.handleEvent(key('keydown', 'ArrowUp', 38));
+    expect(input.poll().players[0].held & (Action.Confirm | Action.Up)).toBe(Action.Confirm);
+    input.keyboard.handleEvent(key('keyup', 'ArrowUp', 38));
+    for (let i = 0; i < 4; i++) input.poll();
+    input.keyboard.handleEvent(key('keydown', 'Enter', 13));
+    expect(input.poll().players[0].held & (Action.Confirm | Action.Up)).toBe(Action.Up);
+  });
+
+  it('rejects a key of the split keyboard’s player-2 half for player 1 (review round 2)', () => {
+    const { input, save, controls } = setup('keyboard-split');
+    controls.beginCapture(0);
+    input.keyboard.handleEvent(key('keydown', 'ArrowUp', 38));
+    input.poll();
+    expect(controls.bindCaptured(0, 'game', 'Shot')).toEqual({
+      status: RebindStatus.Rejected,
+      other: null,
+    });
+    controls.endCapture();
+    expect(save.options.input.bindings).toEqual({});
   });
 
   it('resets one context of a device', () => {

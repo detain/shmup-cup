@@ -29,9 +29,10 @@
  * set of each rebound action, as binding tokens `code:<code>` / `key:<keyCode>` /
  * `button:<index>`); {@link customizeInputProfile} applies them — with the player's SOCD policy and
  * release debounce — to a profile before `WebInput.setProfile`. The Options screen's rebind prompt
- * captures the next key or button (`WebInput.beginCapture`, {@link captureToken}), then
- * {@link rebindAction} binds it with **conflict detection** (a key another action has is moved, or
- * the two actions swap keys; nothing is ever left without a key it needs), {@link resetBindings}
+ * captures the next key or button (`WebInput.beginCapture`; {@link captureToken} names it the way
+ * the profile binds that key, `code:` or `key:`), then {@link rebindAction} binds it with **conflict
+ * detection** (a key another action has is moved, or the two actions swap keys; nothing is ever left
+ * without a key it needs; a split keyboard's player-2 key is never player 1's), {@link resetBindings}
  * restores the content's bindings, {@link findBindingConflicts} lists keys that trigger several
  * actions, and {@link bindingTokenLabel} / {@link bindingKeysLabel} name keys and buttons on
  * screen. Escape and the remote's Back ({@link RESERVED_BINDING_TOKENS}) cancel a capture and never
@@ -840,6 +841,138 @@ export const RESERVED_BINDING_TOKENS: readonly string[] = Object.freeze([
 type TokenTable = Array<{ token: string; actions: ActionName[] }>;
 
 /**
+ * Legacy key codes (US layout) of the `KeyboardEvent.code`s that are not a letter, a digit, a
+ * numpad digit or an F key — {@link legacyKeyCode}.
+ */
+const CODE_KEY_CODES: Readonly<Record<string, number>> = Object.freeze({
+  Backspace: 8,
+  Tab: 9,
+  Enter: 13,
+  NumpadEnter: 13,
+  ShiftLeft: 16,
+  ShiftRight: 16,
+  ControlLeft: 17,
+  ControlRight: 17,
+  AltLeft: 18,
+  AltRight: 18,
+  Pause: 19,
+  Escape: 27,
+  Space: 32,
+  PageUp: 33,
+  PageDown: 34,
+  End: 35,
+  Home: 36,
+  ArrowLeft: 37,
+  ArrowUp: 38,
+  ArrowRight: 39,
+  ArrowDown: 40,
+  Insert: 45,
+  Delete: 46,
+  Semicolon: 186,
+  Equal: 187,
+  Comma: 188,
+  Minus: 189,
+  Period: 190,
+  Slash: 191,
+  Backquote: 192,
+  BracketLeft: 219,
+  Backslash: 220,
+  BracketRight: 221,
+  Quote: 222,
+});
+
+/**
+ * The legacy `KeyboardEvent.keyCode` a desktop key with this `code` sends (US layout).
+ *
+ * @param code - A `KeyboardEvent.code`.
+ * @returns The key code, or 0 when unknown.
+ */
+function legacyKeyCode(code: string): number {
+  if (/^Key[A-Z]$/.test(code)) return code.charCodeAt(3);
+  if (/^Digit[0-9]$/.test(code)) return code.charCodeAt(5);
+  if (/^Numpad[0-9]$/.test(code)) return 48 + code.charCodeAt(6);
+  if (/^F(?:[1-9]|1[0-9]|2[0-4])$/.test(code)) return 111 + Number(code.slice(1));
+  return Object.prototype.hasOwnProperty.call(CODE_KEY_CODES, code) ? CODE_KEY_CODES[code] : 0;
+}
+
+/**
+ * Whether two binding tokens name the same physical key: equal tokens, or a `code:<code>` and the
+ * `key:<keyCode>` that key sends (`code:ArrowUp` and `key:38`). A profile may bind a key either way;
+ * `findKeyActions` lets a `byCode` entry with actions hide the `byKeyCode` one.
+ *
+ * @param a - A binding token.
+ * @param b - Another.
+ * @returns `true` when one key press reaches both.
+ */
+function sameKey(a: string, b: string): boolean {
+  if (a === b) return true;
+  const code = a.indexOf('code:') === 0 ? a : b.indexOf('code:') === 0 ? b : '';
+  const key = a.indexOf('key:') === 0 ? a : b.indexOf('key:') === 0 ? b : '';
+  if (code === '' || key === '') return false;
+  const keyCode = legacyKeyCode(code.slice(5));
+  return keyCode > 0 && keyCode === Number(key.slice(4));
+}
+
+/**
+ * Whether a token is one of the {@link RESERVED_BINDING_TOKENS} (or the same key as one).
+ *
+ * @param token - A binding token.
+ * @returns `true` for Escape and the remote's Back.
+ */
+function isReserved(token: string): boolean {
+  return RESERVED_BINDING_TOKENS.some((reserved) => sameKey(reserved, token));
+}
+
+/**
+ * Whether one binding table (as written) lists a key — by that token or the same key's other
+ * kind of token ({@link sameKey}) — whatever actions it has (even none).
+ *
+ * @param bindings - The binding table.
+ * @param token - A binding token.
+ * @returns `true` when the table knows the key.
+ */
+function bindsKey(bindings: ProfileBindings, token: string): boolean {
+  for (const kind of ['byCode', 'byKeyCode'] as const) {
+    for (const key of Object.keys(bindings[kind])) {
+      if (sameKey(tokenOf(kind, key), token)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether a key is player 2's on a split keyboard (M2-06): the profile's `split` half binds it in
+ * that context. Player 1's half may never take it — one key must never drive both players (the
+ * content check `checkSplit` holds the content to the same rule).
+ *
+ * @param profile - The profile.
+ * @param context - The binding context.
+ * @param token - A binding token.
+ * @returns `true` when the split half binds the key.
+ */
+function splitBinds(profile: InputProfile, context: InputContext, token: string): boolean {
+  return profile.split !== undefined && bindsKey(profile.split[context], token);
+}
+
+/**
+ * Whether a token table entry's actions are ever triggered: a `key:<keyCode>` entry is hidden when
+ * the same key's `code:` entry has actions (`findKeyActions` looks `byCode` up first).
+ *
+ * @param table - The token table.
+ * @param entry - One of its entries.
+ * @returns `true` when a press of the key reaches the entry's actions.
+ */
+function reaches(table: TokenTable, entry: TokenTable[number]): boolean {
+  if (entry.token.indexOf('key:') !== 0) return true;
+  return !table.some(
+    (other) =>
+      other.actions.length > 0 &&
+      other.token.indexOf('code:') === 0 &&
+      sameKey(other.token, entry.token),
+  );
+}
+
+/**
  * The binding token of a table key: `code:<code>`, `key:<keyCode>` or `button:<index>`.
  *
  * @param kind - Which table of {@link ProfileBindings} the key comes from.
@@ -883,23 +1016,25 @@ function tokenFits(device: InputProfileDevice, token: string): boolean {
 
 /**
  * Applies one context's override to a token table: every overridden action leaves every token,
- * then joins the tokens its override lists (tokens the device cannot hold are skipped; a token the
- * table lacks is appended).
+ * then joins the tokens its override lists (tokens the device cannot hold and keys of a split
+ * keyboard's player-2 half are skipped; a token the table lacks is appended).
  *
  * @param table - The working copy (changed in place).
  * @param override - The context's override.
- * @param device - The profile's device.
+ * @param profile - The profile.
+ * @param context - The binding context.
  */
 function applyContextOverride(
   table: TokenTable,
   override: ContextBindingOverride,
-  device: InputProfileDevice,
+  profile: InputProfile,
+  context: InputContext,
 ): void {
   const names = ACTION_NAMES.filter((name) => override[name] !== undefined);
   for (const entry of table) entry.actions = entry.actions.filter((a) => names.indexOf(a) < 0);
   for (const name of names) {
     for (const token of override[name] ?? []) {
-      if (!tokenFits(device, token)) continue;
+      if (!tokenFits(profile.device, token) || splitBinds(profile, context, token)) continue;
       let entry = table.find((e) => e.token === token);
       if (entry === undefined) {
         entry = { token, actions: [] };
@@ -939,7 +1074,9 @@ function bindingsOf(table: TokenTable, gamepad: boolean): ProfileBindings {
 }
 
 /**
- * Whether a token table binds every action a context requires ({@link REQUIRED_CONTEXT_ACTIONS}).
+ * Whether a token table binds every action a context requires ({@link REQUIRED_CONTEXT_ACTIONS})
+ * to a key that reaches it — a `key:` entry hidden by the same key's `code:` entry does not count
+ * ({@link reaches}).
  *
  * @param table - The token table.
  * @param context - Its context.
@@ -947,7 +1084,9 @@ function bindingsOf(table: TokenTable, gamepad: boolean): ProfileBindings {
  */
 function bindsRequired(table: TokenTable, context: InputContext): boolean {
   for (const name of REQUIRED_CONTEXT_ACTIONS[context]) {
-    if (!table.some((entry) => entry.actions.indexOf(name) >= 0)) return false;
+    if (!table.some((entry) => entry.actions.indexOf(name) >= 0 && reaches(table, entry))) {
+      return false;
+    }
   }
   return true;
 }
@@ -971,10 +1110,12 @@ export interface InputCustomization {
  *
  * @remarks
  * Tokens the device cannot hold (a `button:` on a key profile, a key on a gamepad profile) are
- * skipped. A context whose override would leave an action it requires unbound
- * ({@link REQUIRED_CONTEXT_ACTIONS} — a hand-edited or stale save) keeps the profile's own table,
- * so the player can never be locked out. A split keyboard's second half (M2-06) is not rebound. A
- * cold path (a rebinding, a profile switch, boot).
+ * skipped, and so are the keys a split keyboard's second half binds in the context (M2-06 — one key
+ * never drives both players). A context whose override would leave an action it requires without a
+ * key that reaches it ({@link REQUIRED_CONTEXT_ACTIONS}; a `key:<keyCode>` hidden by the same key's
+ * `code:` entry does not count — a hand-edited or stale save) keeps the profile's own table, so the
+ * player can never be locked out. A split keyboard's second half is not rebound. A cold path (a
+ * rebinding, a profile switch, boot).
  *
  * @param profile - The profile (the registry's, as written in the content).
  * @param override - Its override (`undefined` = none: the profile itself is returned).
@@ -1002,7 +1143,7 @@ export function applyBindingOverride(
     const own = override[name];
     if (own === undefined) continue;
     const table = tokenTable(profile.context[name]);
-    applyContextOverride(table, own, profile.device);
+    applyContextOverride(table, own, profile, name);
     if (bindsRequired(table, name)) context[name] = bindingsOf(table, gamepad);
   }
   const parsed: ParsedProfile = { ...profile, context: Object.freeze(context) };
@@ -1040,7 +1181,8 @@ export function customizeInputProfile(
 
 /**
  * The binding tokens an action has in a profile's context (with its override applied), in table
- * order.
+ * order — only keys that reach it (a `key:<keyCode>` hidden by the same key's `code:` entry is
+ * left out: the rebind screen never shows a key that does nothing).
  *
  * @param profile - The profile as written.
  * @param override - Its override, if any.
@@ -1055,9 +1197,10 @@ export function actionTokens(
   action: ActionName,
 ): string[] {
   const bound = applyBindingOverride(profile, override);
+  const table = tokenTable(bound.context[context]);
   const out: string[] = [];
-  for (const entry of tokenTable(bound.context[context])) {
-    if (entry.actions.indexOf(action) >= 0) out.push(entry.token);
+  for (const entry of table) {
+    if (entry.actions.indexOf(action) >= 0 && reaches(table, entry)) out.push(entry.token);
   }
   return out;
 }
@@ -1112,15 +1255,17 @@ export interface RebindResult {
  *
  * @remarks
  * The action's keys become the captured `token` (plus any {@link RESERVED_BINDING_TOKENS} it had —
- * those never move). When another action of the context already has that token (a conflict) it
+ * those never move). When another action of the context already has that key (a conflict — by the
+ * same token, or by the same key's other kind of token: `code:ArrowUp` and `key:38` are one key) it
  * loses it: if it keeps other keys the result is `Moved`; if not it takes the action's old keys —
  * `Swapped` (so no action is left unbound); if the action had no old keys to give and the other one
  * is required in the context ({@link REQUIRED_CONTEXT_ACTIONS}) nothing changes: `Refused`; a
- * reserved token ({@link RESERVED_BINDING_TOKENS}) or one the device cannot hold (a key on a
- * gamepad profile) changes nothing either: `Rejected`. Binding the token the action already has
- * alone is `Unchanged`. The override of the context then lists the
- * whole key set of every action that changed, merged into the profile's other overrides. Never
- * throws; a cold path.
+ * reserved token ({@link RESERVED_BINDING_TOKENS}), one the device cannot hold (a key on a gamepad
+ * profile) or a key of a split keyboard's player-2 half in the context (M2-06 — one key never drives
+ * both players) changes nothing either: `Rejected`. Binding the token the action already has alone
+ * (and no other action has) is `Unchanged`. The override of the context then lists the whole key
+ * set of every action that changed, merged into the profile's other overrides. Never throws; a cold
+ * path.
  *
  * @param profile - The profile as written in the content.
  * @param overrides - Every profile's overrides (the save's `options.input.bindings`).
@@ -1147,25 +1292,38 @@ export function rebindAction(
     status,
     other,
   });
-  if (!tokenFits(profile.device, token) || RESERVED_BINDING_TOKENS.indexOf(token) >= 0) {
+  if (
+    !tokenFits(profile.device, token) ||
+    isReserved(token) ||
+    splitBinds(profile, context, token)
+  ) {
     return unchanged(RebindStatus.Rejected);
   }
   const current = overrides[profile.id];
   const table = tokenTable(applyBindingOverride(profile, current).context[context]);
   const keysOf = (name: ActionName): string[] =>
     table.filter((e) => e.actions.indexOf(name) >= 0).map((e) => e.token);
+  // The actions the key already triggers — by this token or by the same key's other kind of token
+  // (`code:ArrowUp` holds `key:38` too: a code entry with actions hides the key-code entry).
+  const holders: ActionName[] = [];
+  for (const entry of table) {
+    if (!sameKey(entry.token, token)) continue;
+    for (const name of entry.actions) {
+      if (name !== action && holders.indexOf(name) < 0) holders.push(name);
+    }
+  }
   const old = keysOf(action);
-  if (old.length === 1 && old[0] === token) return unchanged(RebindStatus.Unchanged);
-  const reserved = old.filter((t) => RESERVED_BINDING_TOKENS.indexOf(t) >= 0);
-  const movable = old.filter((t) => RESERVED_BINDING_TOKENS.indexOf(t) < 0 && t !== token);
+  if (holders.length === 0 && old.length === 1 && old[0] === token) {
+    return unchanged(RebindStatus.Unchanged);
+  }
+  const reserved = old.filter(isReserved);
+  const movable = old.filter((t) => !isReserved(t) && !sameKey(t, token));
   const next: Partial<Record<ActionName, string[]>> = {};
   next[action] = reserved.concat([token]);
   let status: number = RebindStatus.Bound;
   let other: ActionName | null = null;
-  const holder = table.find((e) => e.token === token);
-  for (const name of holder === undefined ? [] : holder.actions) {
-    if (name === action) continue;
-    const left = keysOf(name).filter((t) => t !== token);
+  for (const name of holders) {
+    const left = keysOf(name).filter((t) => !sameKey(t, token));
     if (other === null) other = name;
     if (left.length > 0) {
       next[name] = left;
@@ -1247,23 +1405,91 @@ export interface CapturedInput {
 }
 
 /**
- * The binding token a captured key or button makes for a profile: a gamepad profile takes the
- * button (`button:<index>`); a `keyboard` profile the key's `code` (`code:<code>` — `key:<keyCode>`
- * when the key has no code); a `remote` profile the key code (`key:<keyCode>` — remote profiles
- * bind by key code, and a desktop keyboard's arrows / Enter reach them that way too).
+ * Whether one of a profile's contexts binds a key of one table to at least one action.
  *
- * @param profile - The profile being rebound.
+ * @param profile - The profile (with any override applied).
+ * @param contexts - The contexts to look in.
+ * @param kind - The table.
+ * @param key - The table key (`''` = none).
+ * @returns `true` when a context gives the key an action.
+ */
+function hasActions(
+  profile: InputProfile,
+  contexts: readonly InputContext[],
+  kind: 'byCode' | 'byKeyCode',
+  key: string,
+): boolean {
+  if (key === '') return false;
+  for (const context of contexts) {
+    const table = profile.context[context][kind];
+    if (Object.prototype.hasOwnProperty.call(table, key) && (table[key] ?? []).length > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Whether a key profile binds any key by its `KeyboardEvent.code` (in either context).
+ *
+ * @param profile - The profile (with any override applied).
+ * @returns `true` for a profile with a `byCode` entry.
+ */
+function bindsByCode(profile: InputProfile): boolean {
+  for (const context of INPUT_CONTEXTS) {
+    if (Object.keys(profile.context[context].byCode).length > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * The binding token a captured key or button makes for a profile — the one a press of that key
+ * reaches in the profile's tables, so the conflict detection of {@link rebindAction} sees the
+ * action that has the key and the new binding is never hidden by an old one.
+ *
+ * @remarks
+ * A gamepad profile takes the button (`button:<index>`). A key profile (`keyboard` or `remote`)
+ * takes, in order: `code:<code>` when the context binds the key's `code` to an action (`byCode` is
+ * looked up first, and a code entry with actions hides the key code); `key:<keyCode>` when it binds
+ * the key's key code to an action; otherwise — a key the context does not use yet — `code:<code>`
+ * when the key has a code and the profile binds by code at all (every `keyboard` profile, the web's
+ * `keyboard-remote-emulation`), else `key:<keyCode>` (the TV remote's keys, which arrive without a
+ * code, and the `tizen-remote-*` profiles, which bind key codes only).
+ *
+ * @param profile - The profile being rebound (as written in the content).
  * @param captured - What the capture caught.
+ * @param context - The binding context being rebound (`undefined` = look in both).
+ * @param override - The profile's current override (the save's `options.input.bindings[id]`),
+ *   if any.
  * @returns The token, or `null` when the capture does not fit the profile (a key for a gamepad
  *   profile, a button for a key profile, a key without a usable code).
+ *
+ * @example
+ * ```ts
+ * captureToken(keyboardAsRemote, { code: 'ArrowUp', keyCode: 38, button: -1 }, 'menu');
+ * // → 'code:ArrowUp' (the profile binds the arrows by code)
+ * captureToken(tizenRemote, { code: '', keyCode: 427, button: -1 }, 'game'); // → 'key:427'
+ * ```
  */
-export function captureToken(profile: InputProfile, captured: CapturedInput): string | null {
+export function captureToken(
+  profile: InputProfile,
+  captured: CapturedInput,
+  context?: InputContext,
+  override?: ProfileBindingOverride,
+): string | null {
   let token: string | null = null;
   if (profile.device === 'gamepad') {
     token = captured.button >= 0 ? 'button:' + String(captured.button) : null;
   } else if (captured.button < 0) {
-    if (profile.device === 'keyboard' && captured.code !== '') token = 'code:' + captured.code;
-    else if (captured.keyCode > 0) token = 'key:' + String(captured.keyCode);
+    const bound = applyBindingOverride(profile, override);
+    const contexts = context === undefined ? INPUT_CONTEXTS : [context];
+    const code = captured.code;
+    const keyCode = captured.keyCode > 0 ? String(captured.keyCode) : '';
+    if (hasActions(bound, contexts, 'byCode', code)) token = 'code:' + code;
+    else if (hasActions(bound, contexts, 'byKeyCode', keyCode)) token = 'key:' + keyCode;
+    else if (code !== '' && (profile.device === 'keyboard' || bindsByCode(bound))) {
+      token = 'code:' + code;
+    } else if (keyCode !== '') token = 'key:' + keyCode;
   }
   return token !== null && BINDING_TOKEN_PATTERN.test(token) ? token : null;
 }

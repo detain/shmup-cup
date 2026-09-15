@@ -3571,6 +3571,13 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     `KeyCapture` in the keyboard source catches the next *new* key — a remote's fake keyup/keydown pair does not count —
     and `poll()` catches the lowest newly pressed pad button). Devices = the key profile in use and the gamepad profile
     ("each gamepad" = the one gamepad profile every pad uses; the split keyboard's player-2 half is not rebindable).
+    Review round 2: `captureToken(profile, captured, context, override)` names a key the way the profile binds it
+    (`code:` when the context gives the code an action or the profile binds by code at all — `keyboard-remote-emulation`
+    is a `remote` profile binding `byCode` — else `key:`), so the conflict detection finds the holder and a new binding
+    is never hidden by an old `code:` entry; `rebindAction` also treats `code:<code>` and the `key:<keyCode>` that key
+    sends as one key, and `applyBindingOverride` / `actionTokens` count a `key:` entry hidden by a `code:` entry with
+    actions as no key. On a split keyboard a key player 2's half binds in the context is `Rejected` for player 1 (and
+    skipped in a hand-edited override) — one key never drives both players, as `checkSplit` demands of the content.
   - **Core rebind widget** (`core/ui`: `RebindPanel`, `rebindTick`, `drawRebindPanel`, `RebindEvent`, `RebindStatus`,
     `CaptureStatus`, `REBINDABLE_ACTIONS`, `REBIND_CAPTURE_TICKS` 300): MODE (GAME / MENU), one row per action with its
     keys, RESET, DONE, the capture prompt with a draining bar and a message line. `RebindScene` drives it through the new
