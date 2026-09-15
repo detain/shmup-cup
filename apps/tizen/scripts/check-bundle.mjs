@@ -49,6 +49,14 @@ export const POLYFILL_BANNER = '/* Shmup Cup — globalThis polyfill';
  * Most bytes `app.js` may take gzipped (launch ≤ 10 s on the TV, shmup_feat.md §23): 350 KB from
  * M1-19, 384 KB since M2-16 (the Options pages, rebinding and the UI string table — the built-in
  * English table and its content copy — took the bundle to ≈ 359 KB).
+ *
+ * @remarks
+ * The owner has authorised raising this budget when a plan step genuinely needs the room (M3-01
+ * left only ≈ 9 KB free). Raise it deliberately: prefer leaner shipped code first, then bump this
+ * constant together with the expectation in `apps/tizen/test/scripts/check-bundle.test.ts`, the
+ * budget table in `docs/dev/debug-and-replays.md` and `docs/dev/api-reference.md`, and say in the
+ * commit message what the extra bytes bought. The launch must still stay ≤ 10 s on the TV, which
+ * M2-18's boot-time check guards.
  */
 export const APP_JS_GZIP_BUDGET = 384 * 1024;
 
