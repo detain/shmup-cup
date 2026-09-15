@@ -706,8 +706,8 @@ Input probe docs: [tester guide](docs/client/input-probe.md) · [monitor setup &
 
 ## Quick start
 
-Prerequisites: Node 22.22.2+ or 24.15+ (24 recommended, see `.nvmrc`; Node 23/25 are not
-supported) and pnpm 12 (`npm i -g pnpm@latest`; the exact version is pinned in
+Prerequisites: Node 24.15+ (see `.nvmrc`; Node 26+ also works, Node 22 and the odd majors 23/25
+are not supported) and pnpm 12 (`npm i -g pnpm@latest`; the exact version is pinned in
 `package.json` → `packageManager`). pnpm refuses to install or run scripts on other Node
 versions (`devEngines.runtime`).
 
@@ -792,10 +792,12 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 
 Toolchain note: TypeScript is pinned to **6.0.x** — TypeScript 7 (native) has no JS API
 until 7.1 and typescript-eslint 8.x requires `typescript < 6.1`. The Node floor is
-`^22.22.2 || ^24.15.0 || >=26` rather than the original `>=20` because the pinned dev
-toolchain requires it: Vitest 5 (`^22.12 || ^24 || >=26`), Electron 44 (`>=22.12`) and
-eslint-plugin-jsdoc 64 (`^22.22.2 || >=24.15`). This only affects the machines that build
-the game — the shipped Tizen bundle still targets Chromium 69.
+`^24.15.0 || >=26` rather than the original `>=20`. The pinned dev toolchain alone would allow
+`^22.22.2` too — Vitest 5 (`^22.12 || ^24 || >=26`), Electron 44 (`>=22.12`),
+eslint-plugin-jsdoc 64 (`^22.22.2 || >=24.15`) — but the allocation guards are calibrated on
+Node 24's V8, and 17 of them fail on Node 22's older V8 (12.4), so Node 22 is not supported.
+This only affects the machines that build the game — the shipped Tizen bundle still targets
+Chromium 69.
 
 ## Next step
 
@@ -846,7 +848,7 @@ since M2-14 the finales **IRON CITADEL** (the pistons and the parade) and **ABYS
 raid and THE HOLLOW KING), the ending scenes and the credits — a whole run to its ending (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
-Desktop prerequisites: Git, Node 24 (22.12+), Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung
+Desktop prerequisites: Git, Node 24.15+, Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung
 certificate profile whose distributor cert includes both monitors' DUIDs), monitors in Developer Mode pointing at the
 desktop's IP — step by step in [`docs/client/install-on-tv.md`](docs/client/install-on-tv.md).
 

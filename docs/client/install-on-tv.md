@@ -13,7 +13,8 @@ Test hardware: 2× Samsung Smart Monitor M7 43" (LS43AM702UNXZA / M70A, Tizen 5.
 
 ### 1. On the PC
 
-- **Git** and **Node.js 24** (22.12+ also works; 20.19 is enough to build and deploy but not to run the tests).
+- **Git** and **Node.js 24** (24.15+). The input probe alone also runs on 22.12+ (20.19 is enough to build and
+  deploy it but not to run its tests); the game itself needs Node 24.
 - **Tizen Studio** with the TV extensions, **or** **VS Code** with the **Samsung Tizen extension** and its SDK. Either
   one provides the `tizen` command (`tizen.bat` on Windows) and `sdb`.
 - A **Samsung certificate profile**, created in *Tools → Certificate Manager* (Tizen Studio) or
@@ -55,7 +56,7 @@ After installation the app stays in the monitor's **Apps** panel and can be star
 ## Installing the game preview
 
 The game lives in the main part of the repository, which uses **pnpm** instead of npm and needs a slightly
-newer Node.js: **Node 24.15+** (or 22.22.2+) and **pnpm 12** (`npm i -g pnpm@latest`; `pnpm -v` must print 12.x).
+newer Node.js: **Node 24.15+** (Node 22 is not supported) and **pnpm 12** (`npm i -g pnpm@latest`; `pnpm -v` must print 12.x).
 From the repository root, in a Command Prompt:
 
 ```bat

@@ -88,19 +88,21 @@ describe('tooling: Node.js version (regression: review round 1)', () => {
     expect(unsupported, 'packages that do not support every Node version we declare').toEqual([]);
   });
 
-  it('no longer claims Node 20 (or the old 20.19.0 floor) and skips odd, non-LTS majors', () => {
+  it('excludes Node 20 and 22 (the allocation guards need Node 24+ V8) and odd, non-LTS majors', () => {
     for (const version of [
       '20.19.0',
       '20.99.0',
       '22.12.0',
       '22.22.1',
+      '22.22.2',
+      '22.99.0',
       '23.11.0',
       '24.14.0',
       '25.0.0',
     ]) {
       expect(semver.satisfies(version, nodeRange), version).toBe(false);
     }
-    for (const version of ['22.22.2', '22.99.0', '24.15.0', '24.99.0', '26.0.0']) {
+    for (const version of ['24.15.0', '24.99.0', '26.0.0']) {
       expect(semver.satisfies(version, nodeRange), version).toBe(true);
     }
   });
@@ -113,8 +115,8 @@ describe('tooling: Node.js version (regression: review round 1)', () => {
   });
 
   it('documents the same floor in the README', () => {
-    expect(read('README.md')).toMatch(/22\.22\.2/);
-    expect(read('README.md')).toMatch(/24\.15/);
+    expect(read('README.md')).toMatch(/Node 24\.15\+/);
+    expect(read('README.md')).toMatch(/`\^24\.15\.0 \|\| >=26`/);
   });
 });
 

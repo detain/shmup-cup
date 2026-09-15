@@ -68,7 +68,7 @@ PRs — this is my explicit instruction), following the git protocol embedded in
 ## Preflight (do this yourself, inline, before the first batch)
 
 1. `git status` must be clean apart from ignored files; `git pull --rebase origin master`.
-2. `node -v` (≥ 24.15 or 22.22.2+) and `pnpm -v` (must be 12.x; if not, `npm i -g pnpm@latest`).
+2. `node -v` (≥ 24.15; Node 22 is not supported) and `pnpm -v` (must be 12.x; if not, `npm i -g pnpm@latest`).
 3. `pnpm install --frozen-lockfile`, then `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build`
    (and `pnpm test:e2e` once it exists — if Playwright's browser is missing run `pnpm exec playwright install
    chromium`). Also `cd tools/input-probe && npm ci && npm run verify`.

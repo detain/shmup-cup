@@ -9,7 +9,7 @@ see [repo-layout.md](repo-layout.md); for the tester-facing TV install walkthrou
 
 | Tool | Version | Why |
 |---|---|---|
-| Node.js | `^22.22.2 \|\| ^24.15.0 \|\| >=26` (`.nvmrc` = 24) | Intersection of the dev toolchain's own requirements (Vitest 5, Electron 44, eslint-plugin-jsdoc 64, ESLint 10). `devEngines.runtime.onFail: "error"` makes pnpm refuse other versions up front |
+| Node.js | `^24.15.0 \|\| >=26` (`.nvmrc` = 24) | Within the dev toolchain's own requirements (Vitest 5, Electron 44, eslint-plugin-jsdoc 64, ESLint 10), which would also allow `^22.22.2` — but the allocation guards are calibrated on Node 24's V8 and 17 of them fail on Node 22 (V8 12.4), so Node 22 is excluded. `devEngines.runtime.onFail: "error"` makes pnpm refuse other versions up front |
 | pnpm | 12.x, exactly `12.3.4` pinned in `package.json` → `packageManager` | Install with `npm i -g pnpm@latest` under the active Node |
 | Git | any recent | — |
 | Tizen CLI + `sdb` + Samsung certificate profile | Tizen Studio or VS Code Tizen extension | Only for packaging/installing on a TV — never needed for build or tests |
