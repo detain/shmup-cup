@@ -5,10 +5,18 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  CRT_FRAGMENT,
+  CRT_FULL_MASK,
+  CRT_FULL_SCAN,
+  CRT_FULL_VIGNETTE,
+  CRT_LIGHT_SCAN,
+  CRT_VERTEX,
   LAYER_EFFECT_FRAGMENT,
   LAYER_EFFECT_MAX_COLORS,
   LAYER_EFFECT_ROWS,
   LAYER_EFFECT_VERTEX,
+  MODE7_FRAGMENT,
+  MODE7_VERTEX,
 } from '../../src/effects/shaders.js';
 import { checkGlslEs100 } from './glsl-es100.js';
 
@@ -45,6 +53,85 @@ describe('render-pixi/effects layer shader sources', () => {
     }
     // Starts with a precision statement (Pixi then leaves it alone).
     expect(LAYER_EFFECT_FRAGMENT.startsWith('precision mediump float;')).toBe(true);
+  });
+});
+
+/** Pixi's preprocessor preamble for a WebGL1 fragment program (pixi.js v8). */
+const preamble = (name: string): string => `#define SHADER_NAME ${name}
+#ifdef GL_ES
+#define in varying
+#define finalColor gl_FragColor
+#define texture texture2D
+#endif
+`;
+
+describe('render-pixi/effects Mode-7 shader sources (M3-02)', () => {
+  it('pass the GLSL ES 1.0 syntax check, bare and with the Pixi preamble', () => {
+    expect(checkGlslEs100(MODE7_VERTEX, 'vertex')).toEqual([]);
+    expect(checkGlslEs100(MODE7_FRAGMENT, 'fragment')).toEqual([]);
+    expect(checkGlslEs100(preamble('shmup-mode7-fragment') + MODE7_FRAGMENT, 'fragment')).toEqual(
+      [],
+    );
+  });
+
+  it('declare every uniform the filter writes and no trigonometry', () => {
+    for (const name of [
+      'uTile',
+      'uTileRect',
+      'uRight',
+      'uForward',
+      'uOrigin',
+      'uFog',
+      'uHorizon',
+      'uBottom',
+      'uCentre',
+      'uHeight',
+      'uFogDepth',
+      'uMaxScale',
+      'uAlpha',
+    ]) {
+      expect(MODE7_FRAGMENT).toMatch(new RegExp(`uniform [A-Za-z0-9]+ ${name}\\b`));
+    }
+    // The host passes the turned axes: the shader itself never calls a trig function (the core's
+    // tables are the only angle source — plan §1.5).
+    expect(MODE7_FRAGMENT).not.toMatch(/\b(sin|cos|tan|atan|asin|acos)\s*\(/);
+    // The scale is clamped, so the horizon row cannot divide by zero into a NaN texel.
+    expect(MODE7_FRAGMENT).toContain('min(z, uMaxScale)');
+    // The varyings agree between the stages (the vertex stage is the layer effect's).
+    for (const varying of ['vTextureCoord', 'vScreen']) {
+      expect(MODE7_VERTEX).toContain(`varying vec2 ${varying};`);
+      expect(MODE7_FRAGMENT).toContain(`varying vec2 ${varying};`);
+    }
+    expect(MODE7_FRAGMENT.startsWith('precision mediump float;')).toBe(true);
+  });
+});
+
+describe('render-pixi/effects CRT shader sources (M3-02)', () => {
+  it('pass the GLSL ES 1.0 syntax check, bare and with the Pixi preamble', () => {
+    expect(checkGlslEs100(CRT_VERTEX, 'vertex')).toEqual([]);
+    expect(checkGlslEs100(CRT_FRAGMENT, 'fragment')).toEqual([]);
+    expect(checkGlslEs100(preamble('shmup-crt-fragment') + CRT_FRAGMENT, 'fragment')).toEqual([]);
+  });
+
+  it('declare the uniforms the pass writes, and only ever darken', () => {
+    for (const name of ['uTexture', 'uInputClamp', 'uHalf', 'uLinePitch', 'uScan', 'uMask']) {
+      expect(CRT_FRAGMENT).toMatch(new RegExp(`\\b${name}\\b`));
+    }
+    expect(CRT_FRAGMENT).toContain('uVignette');
+    // The mask and the vignette are switched off by their uniform, so `light` runs one program.
+    expect(CRT_FRAGMENT).toContain('if (uMask > 0.0)');
+    expect(CRT_FRAGMENT).toContain('if (uVignette > 0.0)');
+    // Nothing is brightened: every write to the colour is a multiply by at most 1.
+    expect(CRT_FRAGMENT).not.toMatch(/color\.rgb\s*\+=/);
+    expect(CRT_FRAGMENT.startsWith('precision mediump float;')).toBe(true);
+  });
+
+  it('the strengths of the two settings stay in range, `full` above `light`', () => {
+    for (const value of [CRT_LIGHT_SCAN, CRT_FULL_SCAN, CRT_FULL_MASK, CRT_FULL_VIGNETTE]) {
+      expect(value).toBeGreaterThan(0);
+      expect(value).toBeLessThan(1);
+    }
+    expect(CRT_FULL_SCAN).toBeGreaterThan(CRT_LIGHT_SCAN);
   });
 });
 

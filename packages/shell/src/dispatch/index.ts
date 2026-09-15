@@ -75,7 +75,9 @@
  * @module
  */
 import {
+  ASPECT_MODES,
   BULLET_PALETTES,
+  CRT_FILTERS,
   MUSIC_CUES,
   SCALE_MODES,
   SIM_EVENT_KIND_NAMES,
@@ -83,9 +85,11 @@ import {
   UserOptionKind,
   defineModule,
   volumeGain,
+  type AspectMode,
   type AudioBus,
   type AudioOptions,
   type BulletPalette,
+  type CrtFilter,
   type DisplayOptions,
   type EventQueue,
   type ScaleMode,
@@ -546,6 +550,18 @@ export interface DisplayTarget {
    * @param on - `true` to show them.
    */
   setShowHitbox(on: boolean): void;
+  /**
+   * Switches the CRT / scanline filter (M3-02). Absent: CRT events are ignored.
+   *
+   * @param setting - One of `core/config` `CRT_FILTERS`.
+   */
+  setCrtFilter?(setting: CrtFilter): void;
+  /**
+   * Switches how the picture is shaped on the display (M3-02). Absent: aspect events are ignored.
+   *
+   * @param mode - One of `core/config` `ASPECT_MODES`.
+   */
+  setAspect?(mode: AspectMode): void;
   /** The screen effects, whose settings hold the shake switch and reduced flashing. */
   readonly effects: {
     /** Mutable effect settings. */
@@ -576,6 +592,9 @@ export function applyDisplayOptions(target: DisplayTarget, display: DisplayOptio
   target.effects.settings.screenShake = display.screenShake;
   target.effects.settings.reduceFlashing = display.reduceFlashing;
   target.setShowHitbox(display.showHitbox);
+  // M3-02: the CRT filter and the picture's shape (a target without them keeps its own).
+  target.setCrtFilter?.(display.crtFilter);
+  target.setAspect?.(display.aspect);
 }
 
 /**
@@ -659,6 +678,16 @@ export function connectOptionEvents(
       case UserOptionKind.ShowHitbox:
         if (display !== null) display.setShowHitbox(value !== 0);
         break;
+      case UserOptionKind.CrtFilter: {
+        const setting = CRT_FILTERS[value];
+        if (display !== null && setting !== undefined) display.setCrtFilter?.(setting);
+        break;
+      }
+      case UserOptionKind.Aspect: {
+        const mode = ASPECT_MODES[value];
+        if (display !== null && mode !== undefined) display.setAspect?.(mode);
+        break;
+      }
       case UserOptionKind.InputSettings:
         if (onInputSettings !== null) onInputSettings();
         break;

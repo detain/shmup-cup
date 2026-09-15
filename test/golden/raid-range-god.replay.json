@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 3567,
@@ -67,13 +71,13 @@
     "AO8b"
   ],
   "hashes": [
-    110817057,
-    1066233449,
-    3825316586,
-    3280695190,
-    3338017738
+    2823363957,
+    3264857358,
+    2975515850,
+    4217076470,
+    3465582280
   ],
-  "finalHash": 1183132076,
+  "finalHash": 3932810316,
   "description": "RAID RANGE with god mode and the full loadout (M2-09): IRON LEVIATHAN’s camera path, its death, LEVIATHAN HEART revealed and shot down",
   "expected": {
     "status": "stageClear",

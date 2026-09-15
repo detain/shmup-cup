@@ -104,10 +104,11 @@ describe('integration: the zone map in the scene flow (M2-10)', () => {
     let top: string | undefined = 'game';
     for (let i = 0; i < 60 * 60 * 15 && top !== 'ending'; i++) top = tick();
     expect(top).toBe('ending');
-    expect(zones).toEqual(['zone-a', 'zone-c', 'zone-e', 'zone-g', 'zone-i']);
-    expect(ranks).toEqual([1, 2, 3, 4, 5]);
+    // M3-02: the final zone's escape sequence comes between its boss and the ending.
+    expect(zones).toEqual(['zone-a', 'zone-c', 'zone-e', 'zone-g', 'zone-i', 'escape']);
+    expect(ranks).toEqual([1, 2, 3, 4, 5, 5]);
     // The score is carried from zone to zone (and grows with each tally).
-    for (let z = 1; z < scores.length; z++) expect(scores[z]).toBeGreaterThan(scores[z - 1]);
+    for (let z = 1; z < scores.length; z++) expect(scores[z]).toBeGreaterThanOrEqual(scores[z - 1]);
     expect(prepared.map((i) => db.stages[i].id)).toEqual(['zone-c', 'zone-e', 'zone-g', 'zone-i']);
     expect(flow.run.route.map((z) => campaign?.zones[z].label).join('')).toBe('ACEGI');
     expect(flow.run.ending?.zone).toBe('i');

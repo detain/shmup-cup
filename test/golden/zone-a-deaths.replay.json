@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 5324,
@@ -67,16 +71,16 @@
     "AMwp"
   ],
   "hashes": [
-    3105141812,
-    2627876064,
-    3855565805,
-    693715382,
-    4265669876,
-    4092351573,
-    2673301879,
-    2626193827
+    488766046,
+    3464333661,
+    552071089,
+    4222817908,
+    2390596342,
+    3341122313,
+    1120423415,
+    3017348977
   ],
-  "finalHash": 838021361,
+  "finalHash": 2273379164,
   "description": "a weaving pilot that never dodges, Classic penalty: deaths, respawns in place, game over",
   "expected": {
     "status": "gameOver",

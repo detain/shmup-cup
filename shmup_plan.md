@@ -3854,6 +3854,67 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Acceptance:** shader syntax checks + e2e screenshots, headless tests for slowdown determinism, bomb, graze.
 - **Refs:** `shmup_feat.md` §18 (Mode 7, CRT, widescreen), §3 (slowdown), §7C, §13 (P2 bosses), §14 (escape, 3D
   stage), §10, §22 (graze).
+- **As built:**
+  - **Mode-7 floor.** One GLSL ES 1.0 Pixi filter (`render-pixi` `effects/shaders.ts` `MODE7_VERTEX` /
+    `MODE7_FRAGMENT`, built by `effects/mode7.ts` `createMode7Filter`) evaluates mode 7's per-row affine matrix per
+    pixel over a full-frame sprite at the bottom of `BG_MID`, sampling the tile straight out of the atlas with
+    `fract` (no separate floor texture). The host passes the plane's **turned axes** from the core's angle tables, so
+    the shader has no trigonometry; the scale is clamped (`MODE7_MAX_SCALE`) so the horizon row cannot divide by zero.
+    Stages describe it in a new optional `mode7` section (`StageMode7` → `Mode7View`, presentation only — the
+    simulation never reads it and a stage's hash is unchanged); `createMode7Floor` attaches the filter only while the
+    camera is inside `[from, to)` and a frame writes numbers only.
+  - **Pseudo-3D stage.** `content/stages/dimension.stage.json` (**HIGH-SPEED DIMENSION**) is a **dev stage**
+    (`?stage=dimension`, the `raster-range` precedent), not a campaign zone: adding a tenth zone would change the
+    diamond map, every route and every golden for no gain. Its art comes from the committed generator
+    `scripts/assets/procedural/dimension.mjs` (a seamless neon grid tile, a violet sky band, the pylon and the three
+    boss parts). `test/integration/dimension-runtime.test.ts` flies the whole stage and drives the floor.
+  - **Escape sequence.** A zone's optional `escape` stage id (`CampaignZoneSpec.escape` / `escapeId`; the loader
+    rejects one on a zone that still has exits). The final zone's stage-clear goes `ClearNext.Escape` →
+    `FlowControl.enterEscape()`, which swaps the World for one on that stage with the run's carry (`RunState.inEscape`
+    / `escapeStage`, no caravan clock), and the next clear (`ESCAPE COMPLETE`) goes to the ending. It is **not** a zone
+    of its own: the route, the zone count and the hi-score row's `reached` are unchanged. Zones H and I ship
+    `content/stages/escape.stage.json` with its own `content/audio/music/escape.music.json`.
+  - **CRT filter.** `effects/crt.ts`: one program for both strengths (`CRT_LOOKS` — scanlines at `light`; scanlines,
+    an aperture-grille mask and a vignette at `full`), run over the **upscaled** second pass and capped at
+    `CRT_MAX_HEIGHT` (1080) rows through the filter's resolution (`crtResolution`), so a 4K TV pays for a 1080p pass.
+    The scanline pitch follows the frame's scale on the display, and the shader only ever multiplies the colour down,
+    so the flash overlay's limiter still holds.
+  - **Aspect modes** are a **window** on the display, never a crop and never a wider playfield (the internal 384×216
+    is fixed — D19): `computeAspectViewport` places the frame in the largest 64:27 (`wide`) or 4:3 (`classic`)
+    rectangle that fits and reports the leftover width as side panels. On a real ultra-wide `wide` fills the display
+    edge to edge; on a 16:9 TV it letterboxes into a cabinet window, and `classic` pillarboxes with panels. The panels
+    are a dimmed space-navy surround (`PANEL_ALPHA`), not painted side art — no new art was needed for them.
+  - **Authentic slowdown** is sim-side and deterministic: phase 9 counts the tick's live objects into `World.slowLoad`
+    (enemy bullets + lasers + live enemies + standing boss parts + player shots + items) and steps `World.slowRun`;
+    `stepWorld` then skips the next tick exactly as hit-stop does once the load is over `SLOWDOWN_THRESHOLD` (96), so
+    a busy screen runs at half speed and a quiet one never slows. Both fields are hashed only in a World that has the
+    option on, so older goldens keep their hashes.
+  - **Graze** (`GameConfig.graze`): an enemy bullet that passes within `GRAZE_MARGIN` of a ship's hurtbox without hitting
+    it is marked once (`BulletFlag.Grazed`) and pays `ContentDb.scoring.graze` points.
+  - **Black-hole bomb** is the one signature mechanic (feat §7C), in the new `core/blackhole` module: the Direct
+    ship's Special throws a vortex that drifts with the camera, pulls enemy bullets in and swallows the ones that
+    reach its core (points like a cancel), drags enemies towards its centre, then discharges bolts that destroy every
+    non-immune enemy in reach and damage boss parts. `MAX_BLACK_HOLES` 2 (one per player), stock `MAX_BLACK_HOLE_STOCK`
+    3, and the yellow Direct item stocks a bomb instead of detonating a smart bomb. `update()` passes **whole-pixel**
+    centres to `bullets.vortex` / `enemies.pullTowards`: a fractional argument of the six-argument (not inlined) call
+    boxed a heap number every tick a vortex was open — found by the new guard
+    `packages/core/test/blackhole/blackhole-alloc.test.ts`.
+  - **Death-bomb window** (`GameConfig.deathBomb`, 0–`MAX_DEATH_BOMB_TICKS`): a fatal hit on a ship with a bomb opens
+    the window instead of killing it; a Special (Direct) or PowerUp (meter — its armed `!` slot) press inside it wipes
+    the hit and grants `DEATH_BOMB_INVULN_TICKS` of invulnerability, and a window that runs out kills on the tick it
+    closes.
+  - **P2 bosses** GRASPING BLOOM (suction), IRON TALON (grabber) and SHADOW STRIDER (the invincible walker that must
+    be dodged) live in `content/enemies/extras.enemies.json` with their behaviours in `core/behaviors` / `core/bosses`.
+  - **Options.** The four sim-affecting extras are `GameConfig` fields (replay-recorded) offered on a new **EXTRAS**
+    options page (`APPLIES FROM THE NEXT GAME`); the CRT filter and the aspect mode are presentation-only
+    `UserOptions.display` rows applied live through the shell's `DisplayTarget` (`setCrtFilter` / `setAspect`, both
+    optional so a renderer without them is untouched).
+  - **Goldens and demos re-blessed** (`pnpm golden:update`): every replay header gained the four new `GameConfig`
+    fields, which changes each state hash. Nothing else moved — no `expected` status, score or tick count changed in
+    any golden or attract demo, which is the evidence that the simulation is unchanged with the extras off.
+  - `eslint.config.js` `globalIgnores` gained the git-ignored agent / editor directories (`.claude/`, `.caliber/`,
+    `.playwright-mcp/`) so `pnpm lint` does not try to parse tooling that is not ours.
+  - The Tizen bundle is 383.4 KB gzip of its 512 KB budget (374.6 KB at M3-01).
 
 ### M3-02b — Remote & hardware tuning from the input-probe results
 

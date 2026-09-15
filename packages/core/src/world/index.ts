@@ -257,7 +257,13 @@
  * @module
  */
 import { Action, MAX_PLAYERS, type InputSnapshot } from '../input/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W, type GameConfig } from '../config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  SLOWDOWN_RUN_TICKS,
+  SLOWDOWN_THRESHOLD,
+  type GameConfig,
+} from '../config/index.js';
 import {
   TerrainType,
   createSpatialGrid,
@@ -285,6 +291,7 @@ import {
 import { createDebugFlags, skipToBoss, type DebugFlags } from '../debug/index.js';
 import {
   DropKind,
+  EnemyState,
   createEnemySystem,
   type EnemyBehaviorLookup,
   type EnemySystem,
@@ -297,16 +304,24 @@ import {
   tickFx,
   type FxState,
 } from '../fx/index.js';
+import {
+  BLACK_HOLE_SPRITES,
+  BLACK_HOLE_START_STOCK,
+  createBlackHoleSystem,
+  type BlackHoleSystem,
+} from '../blackhole/index.js';
 import { OPTION_SPRITE } from '../options/index.js';
 import { createPatternVm, type PatternVm } from '../patterns/index.js';
 import {
   ITEM_SPRITES,
+  MeterSlot,
   applyDeathPenalty,
   applyDirectDeathPenalty,
   createPowerUpSystem,
   type PowerUpSystem,
 } from '../powerups/index.js';
 import {
+  DEFAULT_GRAZE_POINTS,
   addScore,
   createScoringSystem,
   markContinue,
@@ -595,6 +610,28 @@ export interface World {
    * {@link CARAVAN_TIME_BONUS} per second left; once).
    */
   clockPaid: boolean;
+  /**
+   * The black-hole bombs (M3-02, `core/blackhole`): the Direct ship's signature special. Present in
+   * every World; it opens a vortex only while `GameConfig.blackHole` is on.
+   */
+  readonly blackholes: BlackHoleSystem;
+  /**
+   * Live objects the last tick carried (M3-02 — the authentic slowdown's load metric): enemy
+   * bullets + lasers + live enemies + standing boss parts + player shots + items, counted at the
+   * end of phase 9. 0 until the first tick ends.
+   */
+  slowLoad: number;
+  /**
+   * The authentic slowdown's state (M3-02 — `GameConfig.slowdown`): ticks run since the last
+   * skipped one, capped at {@link SLOWDOWN_RUN_TICKS}. A tick that starts with the count full and
+   * {@link World.slowLoad} over `SLOWDOWN_THRESHOLD` is **skipped** (phases 2–8 do not run, like
+   * hit-stop) and sets it back to 0. Hashed only with the option on.
+   */
+  slowRun: number;
+  /** Whether the tick being run is skipped by the authentic slowdown (M3-02). */
+  slowSkip: boolean;
+  /** Bullets grazed this session (M3-02 — `GameConfig.graze`). Hashed only with the option on. */
+  grazes: number;
   /** What the renderer draws: live references, refreshed at the end of every tick. */
   readonly view: WorldView;
 }
@@ -740,12 +777,85 @@ const playersSystem: WorldSystem = (world) => {
   for (let i = 0; i < players.length; i++) {
     updatePlayer(players[i], world.ship, world.intents[i], world.camera);
   }
-  // Pull fields (M2-07: suction, the tentacle's grab) draw the ships after they moved.
+  // Pull fields (M2-07: suction, the tentacle's grab; M3-02: the suction and grabber bosses) draw
+  // the ships after they moved.
   world.gimmicks.applyFields();
+  world.bosses.applyFields();
   lifecycleSystem(world);
   world.powerups.updatePlayers();
+  bombSystem(world);
   world.weapons.updatePlayers();
 };
+
+/**
+ * Part of phase 2, after the power-ups read their presses (M3-02): the bombs.
+ *
+ * @remarks
+ * With the black-hole bomb on ({@link World.blackholes} `enabled` — a Direct-mode session with
+ * `GameConfig.blackHole`) a `Special` press on an alive ship throws a vortex (`core/blackhole`
+ * `fire`). A ship whose **death-bomb window** is open ({@link PlayerShip.bombTicks},
+ * `GameConfig.deathBomb`) answers a `Special` **or** `PowerUp` press by spending a bomb — a black
+ * hole for the Direct ship, the meter's `!` slot (its Mega Crash, armed for this tick's phase 7)
+ * for the other: the pending hit is wiped and the ship is invulnerable for
+ * {@link DEATH_BOMB_INVULN_TICKS} ticks. A window that runs out marks the ship as hit *this* tick,
+ * so phase 7 starts its death sequence. Never allocates.
+ *
+ * @param world - The world.
+ */
+function bombSystem(world: World): void {
+  const players = world.players;
+  const intents = world.intents;
+  const holes = world.blackholes;
+  const direct = holes.enabled;
+  const window = world.config.deathBomb;
+  for (let p = 0; p < players.length; p++) {
+    const ship = players[p];
+    if (!ship.active) continue;
+    const pressed = p < intents.length ? intents[p].pressed : 0;
+    if (ship.bombTicks > 0) {
+      if ((pressed & DEATH_BOMB_ACTIONS) !== 0 && spendBomb(world, p)) {
+        ship.bombTicks = 0;
+        ship.hitCause = PlayerHitCause.None;
+        ship.hitTick = -1;
+        ship.invulnTicks = DEATH_BOMB_INVULN_TICKS;
+        continue;
+      }
+      ship.bombTicks--;
+      // The window closed: phase 7 of this tick starts the death sequence. -1 marks it spent, so
+      // phase 7 does not open a second one for the same hit.
+      if (ship.bombTicks === 0) {
+        ship.bombTicks = -1;
+        ship.hitTick = world.tick;
+      }
+      continue;
+    }
+    if (!direct || window === 0) {
+      if (direct && ship.state === 'alive' && (pressed & Action.Special) !== 0) holes.fire(p);
+      continue;
+    }
+    if (ship.state === 'alive' && (pressed & Action.Special) !== 0) holes.fire(p);
+  }
+}
+
+/** Presses that spend a death bomb (M3-02): the Direct ship's Special, the meter ship's PowerUp. */
+const DEATH_BOMB_ACTIONS = Action.Special | Action.PowerUp;
+
+/** Invulnerability a ship gets for cancelling its death with a bomb (M3-02). */
+export const DEATH_BOMB_INVULN_TICKS = 90;
+
+/**
+ * Spends one bomb for a player (M3-02 — the death bomb): a black hole for the Direct ship, the
+ * meter's `!` slot for the other (only when its Mega Crash can be equipped right now).
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns Whether a bomb went off.
+ */
+function spendBomb(world: World, slot: number): boolean {
+  if (world.blackholes.enabled) return world.blackholes.fire(slot);
+  if (!world.powerups.canEquip(slot, MeterSlot.Mega)) return false;
+  return world.powerups.equipMeterSlot(slot, MeterSlot.Mega);
+}
 
 /**
  * Part of phase 2, after the ships' timers advanced: respawns every ship whose dead time is over
@@ -879,6 +989,8 @@ const movementSystem: WorldSystem = (world) => {
   world.enemies.move();
   world.bosses.move();
   world.bullets.update();
+  // The black holes (M3-02) pull the bullets and enemies that just moved.
+  if (world.blackholes.enabled) world.blackholes.update();
   world.weapons.update();
   world.powerups.update();
 };
@@ -909,6 +1021,10 @@ const collisionSystem: WorldSystem = (world) => {
   world.bosses.collidePlayers();
   world.weapons.collide(grid);
   world.bullets.collidePlayers();
+  // Graze scoring (M3-02): the bullets that went by without hitting.
+  if (world.config.graze) {
+    world.grazes += world.bullets.grazePlayers(world.scoring.rules.graze ?? DEFAULT_GRAZE_POINTS);
+  }
   const terrain = world.terrain;
   if (terrain !== null) terrainSystem(world, terrain);
   world.powerups.collide();
@@ -955,15 +1071,36 @@ const damageSystem: WorldSystem = (world) => {
   world.bosses.resolve();
   world.enemies.huntOptions();
   world.powerups.resolve();
+  if (world.blackholes.enabled) world.blackholes.resolve();
   world.scoring.resolve();
   const players = world.players;
   const tick = world.tick;
+  const window = world.config.deathBomb;
   for (let i = 0; i < players.length; i++) {
     const ship = players[i];
     if (!ship.active || ship.state !== 'alive') continue;
-    if (ship.hitTick === tick && ship.hitCause !== PlayerHitCause.None) killShip(world, i);
+    if (ship.hitTick !== tick || ship.hitCause === PlayerHitCause.None) continue;
+    // The death-bomb window (M3-02): a ship that still holds a bomb gets a few ticks to use it
+    // (`bombSystem`, phase 2 of the next ticks) instead of dying now.
+    if (window > 0 && ship.bombTicks === 0 && hasBomb(world, i)) {
+      ship.bombTicks = window;
+      continue;
+    }
+    killShip(world, i);
   }
 };
+
+/**
+ * Whether a player could spend a death bomb right now (M3-02).
+ *
+ * @param world - The world.
+ * @param slot - The player slot.
+ * @returns `true` with a black hole in stock (Direct mode) or an equippable `!` slot (meter mode).
+ */
+function hasBomb(world: World, slot: number): boolean {
+  if (world.blackholes.enabled) return world.players[slot].bombs > 0;
+  return world.powerups.canEquip(slot, MeterSlot.Mega);
+}
 
 /**
  * Recomputes the World's rank (shmup_feat.md §15): the power term of the most powerful active
@@ -1265,6 +1402,8 @@ export const DEATH_MUSIC_DUCK_TICKS = 120;
 function killShip(world: World, slot: number): void {
   const ship = world.players[slot];
   killPlayer(ship);
+  // The death-bomb window (M3-02) is over, whether it was used or never opened.
+  ship.bombTicks = 0;
   const events = world.events;
   const x = Math.floor(ship.x) | 0;
   const y = Math.floor(ship.y) | 0;
@@ -1389,7 +1528,39 @@ const fxSystem: WorldSystem = (world) => {
   tickFx(world);
   if (world.timeLeft >= 0) updateClock(world);
   syncWorldView(world);
+  if (world.config.slowdown) updateSlowdown(world);
 };
+
+/**
+ * Part of phase 9 with the **authentic slowdown** on (M3-02 — `GameConfig.slowdown`,
+ * shmup_feat.md §3 "[P2] optional authentic slowdown: deterministic tick-skipping when on-screen
+ * object load exceeds a threshold (Gradius III SNES feel)"): counts the tick's live objects into
+ * {@link World.slowLoad} and steps the skip clock ({@link World.slowRun}).
+ *
+ * @remarks
+ * The load is enemy bullets + enemy lasers + live enemies + standing boss parts + player shots +
+ * items — everything a SNES would have had to move and draw. {@link World.slowRun} counts the
+ * ticks run since the last skipped one (capped at {@link SLOWDOWN_RUN_TICKS}); {@link stepWorld}
+ * skips the next tick once the count is full **and** the load is over
+ * {@link SLOWDOWN_THRESHOLD} — phases 2–8 do not run, exactly what hit-stop does — so a busy
+ * screen runs at half speed and an empty one never slows. Everything here is read from simulation
+ * state, so two runs of the same replay skip the same ticks. Never allocates.
+ *
+ * @param world - The world.
+ */
+function updateSlowdown(world: World): void {
+  let load = world.bullets.count + world.bullets.lasers.count;
+  const enemies = world.enemies.enemies;
+  for (let i = 0; i < enemies.length; i++) if (enemies[i].state === EnemyState.Live) load++;
+  const parts = world.bosses.parts;
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].active && !parts[i].destroyed) load++;
+  }
+  load += world.weapons.pool.count + world.powerups.count;
+  world.slowLoad = load;
+  // Ticks run since the last skipped one (a skipped tick does not count towards the next skip).
+  if (!world.slowSkip && world.slowRun < SLOWDOWN_RUN_TICKS) world.slowRun++;
+}
 
 /** Points per second left on the caravan's clock when its stage is cleared (M3-01). */
 export const CARAVAN_TIME_BONUS = 1000;
@@ -1513,7 +1684,10 @@ type WorldUnderConstruction = Omit<
   | 'laserSources'
   | 'gimmicks'
   | 'bonus'
+  | 'blackholes'
 > & {
+  /** See {@link World.blackholes}. */
+  blackholes: BlackHoleSystem;
   /** See {@link World.stage}. */
   stage: StageRunner | null;
   /** See {@link World.enemies}. */
@@ -1560,6 +1734,7 @@ export const ENGINE_SPRITES: readonly string[] = Object.freeze([
   ...SHIELD_SPRITES,
   ...UI_SPRITES,
   ...GIMMICK_SPRITES,
+  ...BLACK_HOLE_SPRITES,
 ]);
 
 /**
@@ -1670,6 +1845,11 @@ export function createWorld(
     timeLeft: config.timeLimit > 0 ? config.timeLimit : -1,
     timeUp: false,
     clockPaid: false,
+    blackholes: null as unknown as BlackHoleSystem,
+    slowLoad: 0,
+    slowRun: 0,
+    slowSkip: false,
+    grazes: 0,
     view,
   };
   world.rank = computeRank(world.rankInputs);
@@ -1693,6 +1873,17 @@ export function createWorld(
   world.weapons = createWeaponSystem(world);
   world.powerups = createPowerUpSystem(world, stageSpec);
   world.scoring = createScoringSystem(world);
+  // The black-hole bomb (M3-02): every World has the system; only a Direct-mode session with
+  // `GameConfig.blackHole` stocks and throws.
+  world.blackholes = createBlackHoleSystem(
+    world,
+    content.sprites.index.get(BLACK_HOLE_SPRITES[0]) ?? -1,
+  );
+  if (world.blackholes.enabled) {
+    for (let slot = 0; slot < MAX_PLAYERS; slot++) {
+      players[slot].bombs = BLACK_HOLE_START_STOCK;
+    }
+  }
   for (let slot = 0; slot < MAX_PLAYERS; slot++) applyStartingLoadout(world, slot);
   // The starting loadout counts towards the rank from the first tick.
   updateWorldRank(world);
@@ -1717,6 +1908,8 @@ export function createWorld(
   );
   const blocks = world.gimmicks.blocks;
   if (blocks !== null) batches.push(blocks.batch);
+  // The black holes (M3-02) are drawn on FX, over the particles and under the enemy bullets.
+  if (world.blackholes.enabled) batches.push(world.blackholes.batch);
   view.lasers = world.bullets.laserView;
   view.bendingLasers = world.bullets.bending;
   view.warning = world.bosses.warning;
@@ -1798,8 +1991,20 @@ function createWorldStageHooks(world: WorldUnderConstruction): StageHooks {
  * ```
  */
 export function stepWorld(world: World, input: Readonly<InputSnapshot>): void {
-  const frozen = world.hitStop > 0;
-  world.fx.frozen = frozen;
+  // The authentic slowdown (M3-02): a tick whose skip clock ran out is skipped like a hit-stop
+  // tick — phases 2–8 do not run — and the clock starts again.
+  let slow = false;
+  if (
+    world.config.slowdown &&
+    world.slowLoad > SLOWDOWN_THRESHOLD &&
+    world.slowRun >= SLOWDOWN_RUN_TICKS
+  ) {
+    slow = true;
+    world.slowRun = 0;
+  }
+  world.slowSkip = slow;
+  const frozen = world.hitStop > 0 || slow;
+  world.fx.frozen = world.hitStop > 0;
   for (let i = 0; i < WORLD_PHASES.length; i++) {
     const entry = WORLD_PHASES[i];
     if (frozen && !entry.runsDuringHitStop) continue;
@@ -1854,6 +2059,7 @@ export function syncWorldView(world: World): void {
   world.bosses.sync();
   world.weapons.sync();
   world.powerups.sync();
+  if (world.blackholes.enabled) world.blackholes.sync();
   const batch = world.playerBatch;
   batch.count = 0;
   const spec = world.ship;

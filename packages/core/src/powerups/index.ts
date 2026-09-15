@@ -1066,6 +1066,22 @@ export interface PowerUpHost {
      */
     clearOnScreen(by: number): number;
   };
+  /**
+   * The black-hole bombs (M3-02, `core/blackhole`): with them on, the Direct-mode yellow item
+   * stocks one instead of detonating a smart bomb. Absent (hand-made test hosts): always the
+   * smart bomb.
+   */
+  readonly blackholes?: {
+    /** Whether the black-hole bomb is on (`BlackHoleSystem.enabled`). */
+    readonly enabled: boolean;
+    /**
+     * Stocks one bomb for a player (`BlackHoleSystem.addStock`).
+     *
+     * @param player - Player slot.
+     * @returns Whether the stock grew.
+     */
+    addStock(player: number): boolean;
+  };
   /** The enemy bullets (Mega Crash cancels them). */
   readonly bullets: {
     /**
@@ -1216,6 +1232,17 @@ export interface PowerUpSystem {
    * @returns Whether a slot was equipped.
    */
   equipHighlighted(player: number): boolean;
+  /**
+   * Equips one meter slot directly (M3-02 — the meter ship's death bomb equips `!`): the slot's
+   * effect, the `!` slot's Mega Crash arming, the cursor reset and the equip events, exactly as
+   * {@link PowerUpSystem.equipHighlighted} does for the highlighted slot.
+   *
+   * @param player - Player slot.
+   * @param slot - {@link MeterSlot} code.
+   * @returns `false` for a bad player, a bad slot or one that cannot be equipped now (nothing
+   *   happens, not even the denial sound).
+   */
+  equipMeterSlot(player: number, slot: number): boolean;
   /**
    * A capsule's effect on a player's meter (every pickup calls it): advances the cursor, pushes
    * the meter ding and applies Auto Power-Up.
@@ -1566,6 +1593,13 @@ class PowerUpSystemImpl implements PowerUpSystem {
       this.pushAtShip(SimEventKind.Sfx, SFX_CUES.PowerUpDenied, ship, 0);
       return false;
     }
+    this.equip(player, slot);
+    return true;
+  }
+
+  /** See {@link PowerUpSystem.equipMeterSlot}. */
+  equipMeterSlot(player: number, slot: number): boolean {
+    if (!this.valid(player) || !this.canEquip(player, slot)) return false;
     this.equip(player, slot);
     return true;
   }
@@ -2040,8 +2074,13 @@ class PowerUpSystemImpl implements PowerUpSystem {
         }
         break;
       case 4:
-        // Yellow: the smart bomb.
-        this.detonateMegaCrash(player);
+        // Yellow: the smart bomb — or, with the black-hole bomb on (M3-02), one more black hole
+        // in stock (`core/blackhole`; a full stock still counts as collected).
+        if (this.host.blackholes !== undefined && this.host.blackholes.enabled) {
+          this.host.blackholes.addStock(player);
+        } else {
+          this.detonateMegaCrash(player);
+        }
         changed = true;
         break;
       case 5:

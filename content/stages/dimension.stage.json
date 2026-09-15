@@ -1,0 +1,52 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "dimension",
+  "name": "HIGH-SPEED DIMENSION",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 6400,
+  "camera": [
+    { "x": 0, "speed": 2, "ramp": 60 },
+    { "x": 800, "speed": 4, "ramp": 120 },
+    { "x": 3600, "speed": 5, "ramp": 120 },
+    { "x": 5200, "speed": 2, "ramp": 120, "lock": true }
+  ],
+  "checkpoints": [{ "x": 0 }, { "x": 1800 }, { "x": 3600 }],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/dimension-sky",
+      "factor": 0.15,
+      "y": 52,
+      "spacing": 128
+    }
+  ],
+  "mode7": {
+    "sprite": "bg/dimension-floor",
+    "horizon": 100,
+    "bottom": 200,
+    "height": 34,
+    "scroll": 0.09,
+    "sway": 0.05,
+    "fog": "#20124a",
+    "fogDepth": 220,
+    "alpha": 1
+  },
+  "tilemap": null,
+  "events": [
+    { "x": 240, "type": "spawn", "enemy": "dim-pylon", "y": 40 },
+    { "x": 240, "type": "spawn", "enemy": "dim-pylon", "y": 168 },
+    { "x": 520, "type": "spawn", "enemy": "dim-pylon", "y": 28 },
+    { "x": 760, "type": "spawn", "enemy": "dim-pylon", "y": 180 },
+    { "x": 1000, "type": "spawn", "enemy": "dim-pylon", "y": 40 },
+    { "x": 1000, "type": "spawn", "enemy": "dim-pylon", "y": 168 },
+    { "x": 1300, "type": "spawn", "enemy": "dim-pylon", "y": 30 },
+    { "x": 1600, "type": "spawn", "enemy": "dim-pylon", "y": 176 },
+    { "x": 1900, "type": "boss", "enemy": "shadow-strider" },
+    { "x": 3800, "type": "spawn", "enemy": "dim-pylon", "y": 36 },
+    { "x": 4100, "type": "spawn", "enemy": "dim-pylon", "y": 172 },
+    { "x": 4400, "type": "boss", "enemy": "iron-talon" },
+    { "x": 5000, "type": "warning", "enemy": "grasping-bloom" },
+    { "x": 6200, "type": "end" }
+  ]
+}

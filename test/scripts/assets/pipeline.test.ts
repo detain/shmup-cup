@@ -188,8 +188,9 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     // (M2-07) — plus their chain link, an engine sprite outside `enemies/` —, zones B and C's
     // seven each (M2-11, the `brine` / `dune` generators), zones D's seven and E's six (M2-12,
     // the `magma` / `tempest` generators) and zones F's six and G's seven (M2-13, the `vault` /
-    // `prism` generators) and zones H's and I's six each (M2-14, the `citadel` / `abyss` generators).
-    expect(enemies).toHaveLength(72);
+    // `prism` generators) and zones H's and I's six each (M2-14, the `citadel` / `abyss`
+    // generators), plus the dimension stage's pylon (M3-02, the `dimension` generator).
+    expect(enemies).toHaveLength(73);
     expect(count('gimmicks/chain-link')).toBe(1);
     expect(manifest.sprites['enemies/bubble'].flash).toBe('enemies/bubble@flash');
     // The Direct-mode ship MANTA (M2-05): level, banking up, banking down.

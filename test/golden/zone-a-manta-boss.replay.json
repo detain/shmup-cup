@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 716,
@@ -67,9 +71,9 @@
     "AMwF"
   ],
   "hashes": [
-    904152215
+    4210424830
   ],
-  "finalHash": 239418114,
+  "finalHash": 1495221783,
   "description": "HALCYON BULWARK with a fully powered MANTA (M2-05): level-8 discs and sub discs, the gold Hyper Arm",
   "expected": {
     "status": "stageClear",

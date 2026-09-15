@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": true
+      "optionRecovery": true,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1514,
@@ -67,10 +71,10 @@
     "AOoL"
   ],
   "hashes": [
-    3353282221,
-    4269080554
+    1375729643,
+    3582579276
   ],
-  "finalHash": 1134225621,
+  "finalHash": 3185547355,
   "description": "a weaving pilot with the full loadout and option recovery (M3-01): each death drops the Options it loses, drifting to be caught again",
   "expected": {
     "status": "gameOver",

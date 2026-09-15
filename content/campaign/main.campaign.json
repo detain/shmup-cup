@@ -59,14 +59,16 @@
       "label": "H",
       "name": "IRON CITADEL",
       "stage": "zone-h",
-      "preview": ["THE ENEMY FORTRESS.", "ITS MASTER WAITS INSIDE."]
+      "preview": ["THE ENEMY FORTRESS.", "ITS MASTER WAITS INSIDE."],
+      "escape": "escape"
     },
     {
       "id": "i",
       "label": "I",
       "name": "ABYSSAL THRONE",
       "stage": "zone-i",
-      "preview": ["THE FLAGSHIP OF THE DEEP.", "STRIKE AT ITS HEART."]
+      "preview": ["THE FLAGSHIP OF THE DEEP.", "STRIKE AT ITS HEART."],
+      "escape": "escape"
     }
   ],
   "edges": [
@@ -249,11 +251,12 @@
         "scripts/assets/procedural/",
         "abyss.mjs  backdrops.mjs  bosses.mjs",
         "brine.mjs  bullets.mjs  citadel.mjs",
-        "direct.mjs  dune.mjs  ending.mjs",
-        "explosions.mjs  hud.mjs  items.mjs",
-        "lasers.mjs  magma.mjs  palettes.mjs",
-        "particles.mjs  prism.mjs  raster-bands.mjs",
-        "shields.mjs  starfield.mjs  tempest.mjs",
+        "dimension.mjs  direct.mjs  dune.mjs",
+        "ending.mjs  explosions.mjs  hud.mjs",
+        "items.mjs  lasers.mjs  magma.mjs",
+        "palettes.mjs  particles.mjs  prism.mjs",
+        "raster-bands.mjs  shields.mjs",
+        "starfield.mjs  tempest.mjs",
         "terrain.mjs  ui.mjs  vault.mjs",
         "weapons.mjs"
       ]

@@ -495,7 +495,7 @@ describe('render-pixi/renderer scale modes: edges (plan M2-08)', () => {
     const { renderer } = await makeRenderer({ displayWidth: 300, displayHeight: 200 });
     const { frame } = shipWorld();
     renderer.render(frame);
-    const quad = (presented.screen as Pixi.Container).children[0] as Pixi.Sprite;
+    const quad = (presented.screen as Pixi.Container).children[2] as Pixi.Sprite;
     expect(renderer.viewport).toMatchObject({ scale: 1, x: -42, y: -8, width: 384, height: 216 });
     expect([quad.x, quad.y, quad.scale.x]).toEqual([-42, -8, 1]);
     renderer.setScaleMode('fit');

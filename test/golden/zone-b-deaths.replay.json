@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 4412,
@@ -67,15 +71,15 @@
     "ALwi"
   ],
   "hashes": [
-    3184008651,
-    2179200733,
-    2148104940,
-    3540741941,
-    2535405682,
-    3975345816,
-    2303201170
+    1382673805,
+    2960953197,
+    2928485304,
+    424637589,
+    2259779348,
+    416964474,
+    1898162710
   ],
-  "finalHash": 3850893285,
+  "finalHash": 3945565152,
   "description": "BRINE NEBULA, a weaving pilot that never dodges, Arcade penalty (M2-11 tests): deaths among the bubbles, the checkpoint restarts, game over",
   "expected": {
     "status": "gameOver",

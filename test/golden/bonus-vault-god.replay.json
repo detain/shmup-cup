@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1615,
@@ -67,10 +71,10 @@
     "AM8M"
   ],
   "hashes": [
-    3485477587,
-    2342385479
+    4280425744,
+    1170044199
   ],
-  "finalHash": 3171366507,
+  "finalHash": 1470318396,
   "description": "BONUS VAULT with god mode and the full loadout (M2-10): the vault carriers drop 1,000-point bonus capsules and a 1UP, the bot collects them to the end",
   "expected": {
     "status": "stageClear",

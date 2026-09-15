@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 6415,
@@ -67,18 +71,18 @@
     "AI8y"
   ],
   "hashes": [
-    1213528719,
-    995134348,
-    2744260475,
-    2254144048,
-    3553851617,
-    3826095968,
-    818319522,
-    2476195406,
-    2487713552,
-    1153210820
+    2432309989,
+    2663004396,
+    2542867411,
+    2680399768,
+    3721814060,
+    1144482833,
+    4267808304,
+    2334849628,
+    2471224947,
+    1186333188
   ],
-  "finalHash": 3509854448,
+  "finalHash": 2592585441,
   "description": "CAPTAIN RANGE with god mode (M2-09): four captains fly in on the scrolling camera, the 4-way bot fights them, the stage ends at its end",
   "expected": {
     "status": "stageClear",

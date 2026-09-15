@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1131,
@@ -67,9 +71,9 @@
     "AOsI"
   ],
   "hashes": [
-    4098550681
+    861574212
   ],
-  "finalHash": 4291829608,
+  "finalHash": 1122168500,
   "description": "a weaving MANTA that never dodges, Arcade penalty (M2-05): Direct-mode deaths, checkpoint restarts, game over",
   "expected": {
     "status": "gameOver",

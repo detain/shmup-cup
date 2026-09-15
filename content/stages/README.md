@@ -62,6 +62,14 @@ the screen: the camera pans round it, and its final blast reveals LEVIATHAN HEAR
 taking turns; the survivor enrages) and `gauntlet-range.stage.json` (**GAUNTLET RANGE**, a boss
 rush: TRIAL WARDEN with its WARNING, LEVIATHAN HEART, the twins). `?stage=<id>` plays each.
 
+**The showpieces of M3-02.** `dimension.stage.json` (**HIGH-SPEED DIMENSION**) is the pseudo-3D
+dev stage of the **Mode-7 floor** — see [The Mode-7 floor](#the-mode-7-floor-m3-02) below —, with
+the step's three P2 bosses in it; `?stage=dimension` plays it. `escape.stage.json` (**ESCAPE**) is
+the collapsing way out the final zone is flown **after its boss is down**: it is not a zone of its
+own but the `escape` stage of zones H and I (`content/campaign/`), a fast, scroll-locked corridor
+with no boss, its own music (`audio/music/escape.music.json`) and an `end` event that leads
+straight to the ending. `?stage=escape` plays it on its own.
+
 **Loops (M3-01).** The ARCADE mode plays the campaign again on loop 2 and beyond
 (`GameConfig.loop`). A stage's optional `remix` list holds extra `spawn` and `formation` events
 (sorted by `x`, within the stage, no `branch`) merged into its timeline from loop 2 on, after the
@@ -313,9 +321,40 @@ orange 1UP).
   ],
   "cycles": [                      // optional (M2-08): palette cycling of a layer
     { "layer": "terrain", "colors": ["#801808", "#c83010", "#f06018"], "ticks": 8 }
-  ]
+  ],
+  "mode7": {                       // optional (M3-02): the pseudo-3D floor under the horizon
+    "sprite": "bg/dimension-floor", // the tile the shader repeats (frame 0, wraps on both axes)
+    "horizon": 100,                // playfield row of the horizon (rows above stay sky)
+    "bottom": 200,                 // last row the plane covers (> horizon, ≤ 200)
+    "height": 34,                  // camera height above the plane in texels
+    "scroll": 0.09,                // texels forward per pixel of camera x (default 0.08)
+    "sway": 0.05,                  // texels sideways per pixel of camera y (default 0)
+    "turn": 0,                     // how far the plane is turned, binary units [0, 1024)
+    "fog": "#20124a",              // colour the plane fades into at the horizon
+    "fogDepth": 220,               // texels over which it fades (default 192)
+    "alpha": 1,                    // opacity of the whole floor
+    "from": 0, "to": 6400          // camera-x range it is drawn in (default the whole stage)
+  }
 }
 ```
+
+## The Mode-7 floor (M3-02)
+
+`mode7` is presentation only — the simulation never reads it, and a stage keeps its hash with or
+without one. The renderer draws it with one GLSL ES 1.0 filter over a full-frame sprite at the
+bottom of the `mid` background layer, evaluating mode 7's per-row affine matrix per pixel: a row
+`y` under the horizon sees the plane at depth `uHeight / (y − horizon)`. The plane's position comes
+from the camera alone (`scroll` forward, `sway` sideways), so nothing about it is simulated, and
+the filter is attached only while the camera is inside `[from, to)`.
+
+The tile is sampled with `fract`, so it **must wrap seamlessly on both axes** — the `dimension`
+generator keeps its grid lines on the tile's first row and column for exactly that reason. Give
+the stage a parallax band whose bottom edge reaches `horizon`, or the sky meets nothing.
+
+`content/stages/dimension.stage.json` (**HIGH-SPEED DIMENSION**, `?stage=dimension`) is the
+showpiece: a neon grid floor under a violet sky, a camera that ramps to 5 px/tick, corridors of
+`dim-pylon` wall segments and the three P2 bosses of M3-02 (SHADOW STRIDER the invincible walker,
+IRON TALON the grabber, GRASPING BLOOM the suction boss).
 
 ## Camera
 

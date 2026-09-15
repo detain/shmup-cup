@@ -5,6 +5,8 @@
  * ones over at boot.
  */
 import {
+  ASPECT_MODES,
+  CRT_FILTERS,
   DEFAULT_USER_OPTIONS,
   SCALE_MODES,
   SimEventKind,
@@ -31,6 +33,8 @@ function display(): { target: DisplayTarget; calls: unknown[][] } {
     setBulletPalette: (palette) => calls.push(['palette', palette]),
     setScaleMode: (mode: ScaleMode) => calls.push(['scale', mode]),
     setShowHitbox: (on) => calls.push(['hitbox', on]),
+    setCrtFilter: (setting) => calls.push(['crt', setting]),
+    setAspect: (mode) => calls.push(['aspect', mode]),
     effects: { settings: { screenShake: true, reduceFlashing: false } },
   };
   return { target, calls };
@@ -70,6 +74,50 @@ describe('shell/dispatch display option events (M2-08)', () => {
     expect(target.effects.settings).toEqual({ screenShake: false, reduceFlashing: true });
   });
 
+  it('switches the CRT filter and the picture shape live (M3-02)', () => {
+    const dispatcher = createEventDispatcher();
+    const { target, calls } = display();
+    connectOptionEvents(dispatcher, silent, null, null, target);
+    const queue = createEventQueue(32);
+    for (let k = 0; k < CRT_FILTERS.length; k++) {
+      queue.push(SimEventKind.UserOption, UserOptionKind.CrtFilter, 0, 0, k);
+    }
+    for (let k = 0; k < ASPECT_MODES.length; k++) {
+      queue.push(SimEventKind.UserOption, UserOptionKind.Aspect, 0, 0, k);
+    }
+    for (const bad of [-1, 0.5, CRT_FILTERS.length]) {
+      queue.push(SimEventKind.UserOption, UserOptionKind.CrtFilter, 0, 0, bad);
+      queue.push(SimEventKind.UserOption, UserOptionKind.Aspect, 0, 0, bad);
+    }
+    dispatcher.drain(queue);
+    expect(calls).toEqual([
+      ['crt', 'off'],
+      ['crt', 'light'],
+      ['crt', 'full'],
+      ['aspect', 'normal'],
+      ['aspect', 'wide'],
+      ['aspect', 'classic'],
+    ]);
+  });
+
+  it('ignores CRT and aspect events a renderer cannot honour (M3-02)', () => {
+    const dispatcher = createEventDispatcher();
+    const { target, calls } = display();
+    const bare: DisplayTarget = {
+      setBulletPalette: target.setBulletPalette.bind(target),
+      setScaleMode: target.setScaleMode.bind(target),
+      setShowHitbox: target.setShowHitbox.bind(target),
+      effects: target.effects,
+    };
+    connectOptionEvents(dispatcher, silent, null, null, bare);
+    const queue = createEventQueue(8);
+    queue.push(SimEventKind.UserOption, UserOptionKind.CrtFilter, 0, 0, 2);
+    queue.push(SimEventKind.UserOption, UserOptionKind.Aspect, 0, 0, 1);
+    expect(() => dispatcher.drain(queue)).not.toThrow();
+    expect(() => applyDisplayOptions(bare, DEFAULT_USER_OPTIONS.display)).not.toThrow();
+    expect(calls.some((c) => c[0] === 'crt' || c[0] === 'aspect')).toBe(false);
+  });
+
   it('ignores display events without a display target', () => {
     for (const none of [null, undefined]) {
       const dispatcher = createEventDispatcher();
@@ -92,11 +140,15 @@ describe('shell/dispatch display option events (M2-08)', () => {
       reduceFlashing: true,
       showHitbox: true,
       bossHpBar: false,
+      crtFilter: 'full',
+      aspect: 'wide',
     });
     expect(calls).toEqual([
       ['palette', 'deuteranopia'],
       ['scale', 'fit'],
       ['hitbox', true],
+      ['crt', 'full'],
+      ['aspect', 'wide'],
     ]);
     expect(target.effects.settings).toEqual({ screenShake: false, reduceFlashing: true });
     const defaults = display();
@@ -105,6 +157,8 @@ describe('shell/dispatch display option events (M2-08)', () => {
       ['palette', 'standard'],
       ['scale', 'integer'],
       ['hitbox', false],
+      ['crt', 'off'],
+      ['aspect', 'normal'],
     ]);
     expect(defaults.target.effects.settings).toEqual({ screenShake: true, reduceFlashing: false });
   });

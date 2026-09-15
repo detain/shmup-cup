@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 2906,
@@ -67,12 +71,12 @@
     "ANoW"
   ],
   "hashes": [
-    680927977,
-    2060977149,
-    2107338069,
-    2813411894
+    2146495372,
+    2394338851,
+    275866356,
+    3848079302
   ],
-  "finalHash": 363454384,
+  "finalHash": 816968268,
   "description": "GIMMICK RANGE with a weaving pilot and god mode (M2-07): it dives through the region trigger — the low branch",
   "expected": {
     "status": "stageClear",

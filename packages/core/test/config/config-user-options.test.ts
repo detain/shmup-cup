@@ -40,9 +40,21 @@ describe('core/config user options', () => {
         reduceFlashing: false,
         showHitbox: false,
         bossHpBar: false,
+        // M3-02: the CRT filter and the picture's shape.
+        crtFilter: 'off',
+        aspect: 'normal',
       },
-      // M3-01: the assists and feel.
-      play: { speed: 100, invincible: false, optionRecovery: null, rumble: true },
+      // M3-01: the assists and feel; M3-02: the mechanic extras.
+      play: {
+        speed: 100,
+        invincible: false,
+        optionRecovery: null,
+        rumble: true,
+        slowdown: false,
+        graze: false,
+        deathBomb: false,
+        blackHole: false,
+      },
     });
     expect(Object.isFrozen(DEFAULT_USER_OPTIONS.audio)).toBe(true);
   });
@@ -66,6 +78,8 @@ describe('core/config user options', () => {
       reduceFlashing: false,
       showHitbox: false,
       bossHpBar: false,
+      crtFilter: 'off',
+      aspect: 'normal',
     });
   });
 
@@ -88,6 +102,8 @@ describe('core/config user options', () => {
       reduceFlashing: true,
       showHitbox: true,
       bossHpBar: false,
+      crtFilter: 'off',
+      aspect: 'normal',
     });
     // Anything but a boolean takes the default.
     expect(
@@ -126,6 +142,8 @@ describe('core/config user options', () => {
         reduceFlashing: false,
         showHitbox: false,
         bossHpBar: false,
+        crtFilter: 'off',
+        aspect: 'normal',
       },
       play: DEFAULT_USER_OPTIONS.play,
     });

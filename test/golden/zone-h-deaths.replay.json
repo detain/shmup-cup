@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 5575,
@@ -67,17 +71,17 @@
     "AMcr"
   ],
   "hashes": [
-    2456913582,
-    1443903817,
-    3655758598,
-    3429860222,
-    1074059801,
-    1473650804,
-    212260406,
-    4157719345,
-    1009685185
+    4279762320,
+    3620123689,
+    2665471369,
+    4044405726,
+    3390851149,
+    159180784,
+    3433036042,
+    189981913,
+    1984438804
   ],
-  "finalHash": 2938756934,
+  "finalHash": 1769043195,
   "description": "IRON CITADEL on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-14 tests): deaths at the outer walls, every restart back at the start, game over",
   "expected": {
     "status": "gameOver",

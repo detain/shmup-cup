@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1716,
@@ -67,10 +71,10 @@
     "ALQN"
   ],
   "hashes": [
-    3029869433,
-    185420906
+    874249864,
+    2464551780
   ],
-  "finalHash": 2311653197,
+  "finalHash": 1141744348,
   "description": "the stage skip to MANTLE REGENT (M2-13 tests): the full loadout under the Arcade penalty, the eye shot between the curls of its tentacles",
   "expected": {
     "status": "stageClear",

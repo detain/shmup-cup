@@ -49,6 +49,8 @@ describe('core/save version 2 (M2-16)', () => {
         reduceFlashing: true,
         showHitbox: true,
         bossHpBar: true,
+        crtFilter: 'off',
+        aspect: 'normal',
       },
       // M3-01: the assists and feel resolve to their defaults (no migration needed).
       play: DEFAULT_USER_OPTIONS.play,

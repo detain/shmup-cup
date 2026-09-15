@@ -106,7 +106,9 @@
  * {@link BulletShot}, {@link BulletProgramRunner}, and from `./kinds.ts` {@link BULLET_SHAPES},
  * {@link BULLET_COLORS}, {@link BULLET_KIND_NAMES}.
  *
- * **Planned API.** Graze detection (P2 — the {@link BulletFlag.Grazed} bit is reserved).
+ * M3-02: {@link BulletSystem.vortex} (the black-hole bomb's pull), {@link VORTEX_FALLOFF},
+ * {@link BulletSystem.grazePlayers} and {@link GRAZE_MARGIN} (graze scoring — the
+ * {@link BulletFlag.Grazed} bit).
  *
  * @module
  */
@@ -209,7 +211,10 @@ export const BulletFlag = {
   DieOnTerrain: 1,
   /** Removed by {@link cancelAllBullets}. */
   Cancelable: 2,
-  /** Reserved for graze scoring (shmup_feat.md §22 [P2]); never set in M1. */
+  /**
+   * Grazed (M3-02 — `GameConfig.graze`): the bullet already passed close by a ship and paid its
+   * graze points ({@link BulletSystem.grazePlayers} sets it once per bullet).
+   */
   Grazed: 4,
   /** Internal: a delayed bullet re-aims when it launches. */
   AimOnLaunch: 8,
@@ -219,6 +224,20 @@ export const BulletFlag = {
 
 /** The public {@link BulletFlag} bits. */
 const PUBLIC_FLAGS = BulletFlag.DieOnTerrain | BulletFlag.Cancelable | BulletFlag.Grazed;
+
+/**
+ * How much of a vortex's pull ({@link BulletSystem.vortex}, M3-02) the falloff takes away at its
+ * rim: the pull at distance `d` of a vortex of radius `r` is `pull · (1 − VORTEX_FALLOFF · d / r)`,
+ * so the rim still draws bullets in (a quarter of the strength) while the centre pulls hardest.
+ * `core/blackhole` re-exports it as `BLACK_HOLE_FALLOFF`.
+ */
+export const VORTEX_FALLOFF = 0.75;
+
+/**
+ * Extra reach of the graze test beyond the bullet's radius and the ship's hurt radius, in pixels
+ * (M3-02 — shmup_feat.md §22 "radius > hurtbox"): a bullet must pass this close to score.
+ */
+export const GRAZE_MARGIN = 7;
 
 /** How {@link cancelAllBullets} turns bullets into something else. */
 export const CancelMode = {
@@ -975,6 +994,39 @@ export interface BulletSystem {
    * bullet; a refused one (fly-in, invulnerable, god mode) leaves it flying.
    */
   collidePlayers(): void;
+  /**
+   * Phase 6, after {@link BulletSystem.collidePlayers} (M3-02 — shmup_feat.md §22 "[P2] graze
+   * detection (radius > hurtbox, per-bullet grazed bit)"): every live enemy bullet whose centre
+   * comes within its own radius + the ship's hurt radius + {@link GRAZE_MARGIN} of a living ship,
+   * and that was not grazed before, gets {@link BulletFlag.Grazed}, pays `points` to that player
+   * and pushes a `FX_CUES.Graze` particle event. Never allocates.
+   *
+   * @param points - Points one graze pays (`ContentDb.scoring.graze`).
+   * @returns Bullets grazed this tick.
+   */
+  grazePlayers(points: number): number;
+  /**
+   * The black-hole bomb's pull (M3-02, `core/blackhole`): every live bullet within `radius` of
+   * (`cx`, `cy`) is drawn towards it by `pull · (1 − `{@link BLACK_HOLE_FALLOFF}` · d / radius)`
+   * pixels ({@link VORTEX_FALLOFF}), and one that reaches `core` is swallowed — a point item for `player` exactly like a
+   * cancelled bullet, or a sparkle without one. Never allocates.
+   *
+   * @param cx - World x of the vortex.
+   * @param cy - World y of the vortex.
+   * @param radius - Reach in pixels.
+   * @param core - Radius bullets are swallowed inside.
+   * @param pull - Strongest pull in pixels per tick.
+   * @param player - Player credited with the swallowed bullets (-1 = nobody).
+   * @returns Bullets swallowed.
+   */
+  vortex(
+    cx: number,
+    cy: number,
+    radius: number,
+    core: number,
+    pull: number,
+    player: number,
+  ): number;
   /**
    * Removes every cancelable bullet and laser, straight or bending (see
    * {@link cancelAllBullets}).
@@ -2184,6 +2236,89 @@ class BulletSystemImpl implements BulletSystem {
         return;
       }
     }
+  }
+
+  /** See {@link BulletSystem.grazePlayers}. */
+  grazePlayers(points: number): number {
+    const f = this.pool.fields;
+    const n = this.pool.count;
+    const players = this.host.players;
+    const events = this.host.events;
+    const scoring = this.host.scoring;
+    let grazed = 0;
+    for (let p = 0; p < players.length; p++) {
+      const ship = players[p];
+      if (!ship.active || ship.state !== 'alive') continue;
+      const sx = ship.x;
+      const sy = ship.y;
+      const r = this.hurtRadius * ship.shield.hurtScale + GRAZE_MARGIN;
+      for (let i = 0; i < n; i++) {
+        const bits = f.flags[i];
+        if ((bits & (BulletFlag.Dead | BulletFlag.Grazed)) !== 0) continue;
+        const dx = f.x[i] - sx;
+        const dy = f.y[i] - sy;
+        const reach = f.radius[i] + r;
+        if (!(dx * dx + dy * dy <= reach * reach)) continue;
+        f.flags[i] = bits | BulletFlag.Grazed;
+        grazed++;
+        // Whole pixels: a fractional argument of the (not inlined) push would be boxed.
+        events.push(
+          SimEventKind.Particles,
+          FX_CUES.Graze,
+          Math.floor(f.x[i]) | 0,
+          Math.floor(f.y[i]) | 0,
+          p,
+        );
+        if (points > 0 && scoring !== undefined) addScore(this.host as ScoreHost, p, points);
+      }
+    }
+    return grazed;
+  }
+
+  /** See {@link BulletSystem.vortex}. */
+  vortex(
+    cx: number,
+    cy: number,
+    radius: number,
+    core: number,
+    pull: number,
+    player: number,
+  ): number {
+    const f = this.pool.fields;
+    const n = this.pool.count;
+    const r2 = radius * radius;
+    const core2 = core * core;
+    const points =
+      player >= 0 && player < this.host.players.length && player % 1 === 0 && this.cancelPoints > 0;
+    const events = this.host.events;
+    let swallowed = 0;
+    for (let i = 0; i < n; i++) {
+      if ((f.flags[i] & BulletFlag.Dead) !== 0) continue;
+      const dx = cx - f.x[i];
+      const dy = cy - f.y[i];
+      const d2 = dx * dx + dy * dy;
+      if (!(d2 <= r2)) continue;
+      if (d2 <= core2) {
+        events.push(
+          SimEventKind.Particles,
+          FX_CUES.BulletCancel,
+          Math.floor(f.x[i]) | 0,
+          Math.floor(f.y[i]) | 0,
+          1,
+        );
+        if (points) this.spawnPoint(i, player);
+        this.killBullet(i);
+        swallowed++;
+        continue;
+      }
+      const d = Math.sqrt(d2);
+      // Strongest at the centre, a quarter of it at the rim; never past the centre in one tick.
+      const step = pull * (1 - VORTEX_FALLOFF * (d / radius));
+      const move = step < d ? step : d;
+      f.x[i] += (dx / d) * move;
+      f.y[i] += (dy / d) * move;
+    }
+    return swallowed;
   }
 
   /** See {@link BulletSystem.cancelAll}. */

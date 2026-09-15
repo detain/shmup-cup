@@ -139,6 +139,7 @@ describe('shell/loader loadGameContent', () => {
       'audio/music/boss.music.json',
       'audio/music/credits.music.json',
       'audio/music/ending.music.json',
+      'audio/music/escape.music.json',
       'audio/music/game-over.music.json',
       'audio/music/stage-clear.music.json',
       'audio/music/title.music.json',

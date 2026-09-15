@@ -17,7 +17,12 @@
  * GLSL ES 1.0 filter per layer ({@link createLayerEffects}, {@link addRasterEffect},
  * {@link colorCycleStep}) —, the additive Mega Crash flash, the scale modes
  * ({@link computeViewport}), the hitbox markers ({@link createHitboxBinding}) and render
- * interpolation for displays faster than the tick rate.
+ * interpolation for displays faster than the tick rate. Plan M3-02 adds the **Mode-7 floor**
+ * ({@link createMode7Floor}: mode 7's per-row affine matrix in a GLSL ES 1.0 filter — the pseudo-3D
+ * high-speed stage), the **CRT / scanline filter** ({@link createCrtPass}: off / light / full over
+ * the upscaled picture, capped at 1080p) and the **aspect modes**
+ * ({@link computeAspectViewport}: the ultra-wide desktop window and the classic 4:3 one, with side
+ * panels instead of black bars).
  * Dev and test builds add the debug overlay (plan M1-19, {@link createDebugOverlay}): a stats panel
  * with a frame graph and the hitbox / grid outlines on the `DEBUG` layer.
  *
@@ -28,7 +33,14 @@ export {
   type PixiRenderer,
   type PixiRendererOptions,
 } from './renderer/index.js';
-export { computeIntegerViewport, computeViewport, type Viewport } from './viewport/index.js';
+export {
+  ASPECT_RATIOS,
+  computeAspectViewport,
+  computeIntegerViewport,
+  computeViewport,
+  type AspectViewport,
+  type Viewport,
+} from './viewport/index.js';
 export {
   createTestPattern,
   pixelArtToRects,
@@ -143,6 +155,18 @@ export {
   LAYER_EFFECT_MAX_COLORS,
   LAYER_EFFECT_ROWS,
   LAYER_EFFECT_VERTEX,
+  MODE7_ANGLE_UNITS,
+  MODE7_FRAGMENT,
+  MODE7_MAX_SCALE,
+  MODE7_VERTEX,
+  CRT_FRAGMENT,
+  CRT_FULL_MASK,
+  CRT_FULL_SCAN,
+  CRT_FULL_VIGNETTE,
+  CRT_LIGHT_SCAN,
+  CRT_LOOKS,
+  CRT_MIN_PITCH,
+  CRT_VERTEX,
   RASTER_MAX_OFFSET,
   REDUCED_FLASH_ALPHA,
   SCORE_POPUP_COLOR,
@@ -152,16 +176,28 @@ export {
   SHAKE_PATTERN_Y,
   addRasterEffect,
   clearRasterTable,
+  createCrtFilter,
+  createCrtPass,
   createLayerEffectFilter,
   createLayerEffects,
+  createMode7Filter,
+  createMode7Floor,
   createRasterTable,
+  crtResolution,
   createScorePopups,
   createScreenEffects,
   decodeRasterRow,
   encodeRasterTable,
   stageEffectActive,
+  type CrtFilterHandle,
+  type CrtLook,
+  type CrtPass,
+  type CrtPassOptions,
   type EffectSettings,
   type FlashLook,
+  type Mode7Filter,
+  type Mode7Floor,
+  type Mode7FloorOptions,
   type LayerEffectFilter,
   type LayerEffects,
   type LayerEffectsOptions,

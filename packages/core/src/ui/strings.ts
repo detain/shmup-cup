@@ -371,6 +371,25 @@ const STATIC_UI_TEXT = {
   replayAssisted: 'ASSISTED',
   replayEnd: 'REPLAY END',
   replayDesync: 'REPLAY OUT OF SYNC',
+  // M3-02: the DISPLAY page's CRT / ASPECT rows and the EXTRAS page.
+  optCrt: 'CRT',
+  optAspect: 'ASPECT',
+  crtOff: 'OFF',
+  crtLight: 'LIGHT',
+  crtFull: 'FULL',
+  aspectNormal: 'NORMAL',
+  aspectWide: 'ULTRA-WIDE',
+  aspectClassic: 'CLASSIC 4:3',
+  optExtras: 'EXTRAS',
+  extrasTitle: 'EXTRAS',
+  optSlowdown: 'SLOWDOWN',
+  optGraze: 'GRAZE',
+  optDeathBomb: 'DEATH BOMB',
+  optBlackHole: 'BLACK HOLE',
+  extrasHint: 'APPLIES FROM THE NEXT GAME',
+  blackHoleHint: 'BLACK HOLE: THE DIRECT SHIP ONLY',
+  hudBombs: 'BOMB',
+  escapeClear: 'ESCAPE COMPLETE',
 } as const;
 
 /** Id of a UI label with a fixed id (a key of the built-in table). */

@@ -307,6 +307,13 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     const from = music.length;
     step(Action.Confirm);
     step(0);
+    // M3-02: the final zone's escape sequence comes first — fly it to its `end` event.
+    expect(flow.stack.top?.id).toBe('game');
+    expect(game.world.stage?.stage.id).toBe('escape');
+    expect(flow.run.inEscape).toBe(true);
+    until('stageClear', 20000);
+    step(Action.Confirm);
+    step(0);
     expect(flow.stack.top?.id).toBe('ending');
     // Flawless and escaped: the escape decides.
     const flags = flow.run.endingFlags;

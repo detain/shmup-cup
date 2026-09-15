@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 2906,
@@ -67,12 +71,12 @@
     "ANoW"
   ],
   "hashes": [
-    2574333166,
-    3048429002,
-    3871507100,
-    1487698864
+    3614729506,
+    2562982880,
+    3391406508,
+    3743940232
   ],
-  "finalHash": 916618598,
+  "finalHash": 2156904634,
   "description": "GIMMICK RANGE with god mode (M2-07): a brick shot open, moving blocks, suction, a tentacle, the cube rush",
   "expected": {
     "status": "stageClear",

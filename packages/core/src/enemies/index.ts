@@ -171,6 +171,7 @@ import {
   LASER_TELEGRAPH_TICKS,
   LASER_WIDTH,
   NO_TARGET_ANGLE,
+  VORTEX_FALLOFF,
   type BulletSystem,
 } from '../bullets/index.js';
 import {
@@ -1251,6 +1252,31 @@ export interface EnemySystem {
    * ```
    */
   clearOnScreen(by?: number): number;
+  /**
+   * The black-hole bomb's pull (M3-02, `core/blackhole`): every live enemy within `radius` of
+   * (`cx`, `cy`) is drawn towards it by `strength · (1 − VORTEX_FALLOFF · d / radius)` pixels
+   * (`core/bullets` {@link VORTEX_FALLOFF} — the same falloff the vortex gives the bullets).
+   * Cosmetic-free and deterministic; never allocates.
+   *
+   * @param cx - World x of the vortex.
+   * @param cy - World y of the vortex.
+   * @param radius - Reach in pixels.
+   * @param strength - Strongest pull in pixels per tick (at the centre).
+   * @returns Enemies pulled.
+   */
+  pullTowards(cx: number, cy: number, radius: number, strength: number): number;
+  /**
+   * The black-hole bomb's lightning (M3-02): kills every live enemy within `radius` of
+   * (`cx`, `cy`) whose spec is not `megaCrashImmune`, credited to `by` — a Mega Crash limited to a
+   * circle (armour does not protect, no revenge bullets). Never allocates.
+   *
+   * @param cx - World x of the blast.
+   * @param cy - World y of the blast.
+   * @param radius - Reach in pixels.
+   * @param by - Player slot credited (-1 = nobody).
+   * @returns Enemies killed.
+   */
+  blast(cx: number, cy: number, radius: number, by: number): number;
   /**
    * Phase 7, after the player shots' hits and before the power-ups (so a Mega Crash of the same
    * tick frees what was just taken): every live Option Hunter steals the Options it touches (see
@@ -2951,6 +2977,48 @@ class EnemySystemImpl implements EnemySystem {
       const e = enemies[i];
       if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
       if ((e.flags & EnemyFlag.OnScreen) === 0 || immune[e.specIndex] === 1) continue;
+      if (this.kill(e, by)) killed++;
+    }
+    this.crashing = false;
+    return killed;
+  }
+
+  /** See {@link EnemySystem.pullTowards}. */
+  pullTowards(cx: number, cy: number, radius: number, strength: number): number {
+    const enemies = this.enemies;
+    const r2 = radius * radius;
+    let pulled = 0;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
+      const dx = cx - e.x;
+      const dy = cy - e.y;
+      const d2 = dx * dx + dy * dy;
+      if (!(d2 <= r2) || d2 === 0) continue;
+      const d = Math.sqrt(d2);
+      const step = strength * (1 - VORTEX_FALLOFF * (d / radius));
+      const move = step < d ? step : d;
+      e.x += (dx / d) * move;
+      e.y += (dy / d) * move;
+      pulled++;
+    }
+    return pulled;
+  }
+
+  /** See {@link EnemySystem.blast}. */
+  blast(cx: number, cy: number, radius: number, by: number): number {
+    const enemies = this.enemies;
+    const immune = this.specs.immune;
+    const r2 = radius * radius;
+    let killed = 0;
+    this.crashing = true;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
+      if (immune[e.specIndex] === 1) continue;
+      const dx = e.x - cx;
+      const dy = e.y - cy;
+      if (!(dx * dx + dy * dy <= r2)) continue;
       if (this.kill(e, by)) killed++;
     }
     this.crashing = false;

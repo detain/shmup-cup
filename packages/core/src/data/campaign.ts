@@ -177,6 +177,14 @@ export interface CampaignZoneSpec {
   readonly stageId: number;
   /** Preview text shown on the map screen (0–{@link MAX_ZONE_PREVIEW_LINES} lines). */
   readonly preview: readonly string[];
+  /**
+   * The **escape sequence** a final zone plays after its boss (M3-02, shmup_feat.md §14 "[P2]
+   * escape sequence (collapsing, fast-scrolling maze after the final boss)"): the id of the stage
+   * the run flies before its ending, or `''` for none. Only a final zone may name one.
+   */
+  readonly escape: string;
+  /** Resolved `ContentDb.stages` index of {@link CampaignZoneSpec.escape} (-1 = none). */
+  readonly escapeId: number;
   /** Distance from the start zone in edges (0 = the start). */
   readonly depth: number;
   /** Place among the zones of its depth, in file order (0 = the top one on the map). */
@@ -288,6 +296,8 @@ interface RawCampaign {
     stage: string;
     stageId?: number;
     preview?: string[];
+    escape?: string;
+    escapeId?: number;
     depth?: number;
     row?: number;
     exits?: number[];
@@ -345,6 +355,11 @@ export function completeCampaign(
     if (index.has(zone.id)) fail('zones[' + String(i) + '].id', 'duplicate zone "' + zone.id + '"');
     else index.set(zone.id, i);
     if (zone.preview === undefined) zone.preview = [];
+    // The escape sequence (M3-02): `escapeId` is filled by the loader's reference pass.
+    if (zone.escape === undefined) {
+      zone.escape = '';
+      zone.escapeId = -1;
+    }
     zone.exits = [];
   }
   const start = index.get(raw.start);
@@ -428,6 +443,10 @@ export function completeCampaign(
     zone.row = row;
     rows.set(d, row + 1);
     zone.final = (zone.exits as number[]).length === 0;
+    // Only a final zone plays an escape sequence (M3-02): it runs between the boss and the ending.
+    if (zone.final !== true && zone.escape !== '') {
+      fail('zones[' + String(i) + '].escape', 'only a final zone may name an escape stage');
+    }
     if (d + 1 > depths) depths = d + 1;
   }
   const finals = new Set<number>();

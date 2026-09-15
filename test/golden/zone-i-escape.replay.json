@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 6038,
@@ -67,18 +71,18 @@
     "AJYv"
   ],
   "hashes": [
-    2811106256,
-    3835455745,
-    1066039871,
-    3217198413,
-    130872588,
-    653119496,
-    3768656030,
-    3414458021,
-    3400727481,
-    3152623215
+    3784778913,
+    1639241584,
+    1989481593,
+    298644980,
+    2055908981,
+    1890740838,
+    1699518752,
+    2957682359,
+    1774878496,
+    1729107072
   ],
-  "finalHash": 1285842010,
+  "finalHash": 2005553288,
   "description": "the stage skip to the ABYSS ARK with a weaving pilot, god mode and no power-ups (M2-14 tests): the ARK outlasts it and sails off after its 90-s time limit — EndingFlag.BossEscaped, THE HOLLOW KING never revealed, stageClear",
   "expected": {
     "status": "stageClear",

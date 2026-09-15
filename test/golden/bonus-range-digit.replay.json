@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 4367,
@@ -67,15 +71,15 @@
     "AI8i"
   ],
   "hashes": [
-    3036544141,
-    1039419788,
-    2553971121,
-    1406390531,
-    3721261397,
-    3071540600,
-    3164495006
+    2659388333,
+    2681509914,
+    3269786249,
+    2310628451,
+    2514168582,
+    193139214,
+    444581452
   ],
-  "finalHash": 4079928867,
+  "finalHash": 2924833873,
   "description": "BONUS RANGE with god mode and no power-ups (M2-10): the turrets survive, the score shows a thousands 0 at the digit window — that entrance opens",
   "expected": {
     "status": "stageClear",

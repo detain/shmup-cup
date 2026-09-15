@@ -350,6 +350,9 @@ describe('core/player edge cases — fly-in and state', () => {
       shield: createShieldState(),
       // M3-01: the invincibility assist (off unless the config asks for it).
       invincible: false,
+      // M3-02: the bomb stock and the death-bomb window.
+      bombs: 0,
+      bombTicks: 0,
     });
     expect(createPlayer(0, 3, true).invincible).toBe(true);
   });

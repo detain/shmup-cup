@@ -124,9 +124,20 @@ describe('core/save round trip', () => {
         reduceFlashing: true,
         showHitbox: true,
         bossHpBar: false,
+        crtFilter: 'full',
+        aspect: 'wide',
       },
       // The assists and feel of M3-01 round-trip too.
-      play: { speed: 75, invincible: true, optionRecovery: false, rumble: false },
+      play: {
+        speed: 75,
+        invincible: true,
+        optionRecovery: false,
+        rumble: false,
+        slowdown: true,
+        graze: true,
+        deathBomb: true,
+        blackHole: true,
+      },
     });
     store.recordScore('meter-normal', createHiScoreEntry(12300, { reached: 'zone-a', mode: '1p' }));
     store.count('gameOvers');
@@ -151,6 +162,8 @@ describe('core/save round trip', () => {
       reduceFlashing: true,
       showHitbox: true,
       bossHpBar: false,
+      crtFilter: 'full',
+      aspect: 'wide',
     });
   });
 
@@ -172,6 +185,8 @@ describe('core/save round trip', () => {
       reduceFlashing: false,
       showHitbox: false,
       bossHpBar: false,
+      crtFilter: 'off',
+      aspect: 'normal',
     });
   });
 
@@ -210,9 +225,20 @@ describe('core/save round trip', () => {
           reduceFlashing: false,
           showHitbox: false,
           bossHpBar: false,
+          crtFilter: 'off',
+          aspect: 'normal',
         },
-        // M3-01: the assists and feel.
-        play: { speed: 100, invincible: false, optionRecovery: null, rumble: true },
+        // M3-01: the assists and feel; M3-02: the mechanic extras.
+        play: {
+          speed: 100,
+          invincible: false,
+          optionRecovery: null,
+          rumble: true,
+          slowdown: false,
+          graze: false,
+          deathBomb: false,
+          blackHole: false,
+        },
       },
       hiScores: {
         'meter-hard': [{ name: 'ZED', score: 5, reached: '', mode: '', difficulty: '' }],
@@ -247,6 +273,8 @@ describe('core/save migrations', () => {
         reduceFlashing: false,
         showHitbox: false,
         bossHpBar: false,
+        crtFilter: 'off',
+        aspect: 'normal',
       },
       play: DEFAULT_USER_OPTIONS.play,
     });
@@ -375,6 +403,8 @@ describe('core/save sanitising', () => {
         reduceFlashing: false,
         showHitbox: false,
         bossHpBar: false,
+        crtFilter: 'off',
+        aspect: 'normal',
       },
       play: DEFAULT_USER_OPTIONS.play,
     });

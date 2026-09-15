@@ -135,3 +135,157 @@ void main(void)
     gl_FragColor = color;
 }
 `;
+
+// ------------------------------------------------------------------ Mode 7 (plan M3-02)
+
+/**
+ * Vertex shader of the **Mode-7 floor** (plan M3-02, shmup_feat.md §18 "[P2] Mode 7-style effects:
+ * scaling/rotation, pseudo-3D floor (per-row affine matrix in shader)"): Pixi's default filter
+ * quad plus `vScreen`, the fragment's pixel position in the 384×216 frame — the row is what the
+ * per-row affine transform is built from.
+ */
+export const MODE7_VERTEX = LAYER_EFFECT_VERTEX;
+
+/**
+ * Fragment shader of the Mode-7 floor.
+ *
+ * @remarks
+ * The **per-row affine matrix** of the SNES's mode 7, evaluated per pixel: a row `y` below the
+ * horizon sees the ground plane at depth `z = uHeight / (y − uHorizon)`, so its scale is `z`; the
+ * texel under the pixel is
+ *
+ * ```
+ * u = uOriginU + z · (uRight.x · sx + uForward.x)
+ * v = uOriginV + z · (uRight.y · sx + uForward.y)
+ * ```
+ *
+ * with `sx = (x − uCentre) / uHeight`. `uRight` / `uForward` are the plane's rotated axes (the
+ * host passes the turned unit vectors — the shader needs no trigonometry), `uOrigin` the camera's
+ * position on the plane in texels. The texel is wrapped into the tile
+ * (`fract`) and read from the atlas rectangle `uTile` (origin `xy`, size `zw`, in atlas UV), so no
+ * separate floor texture is needed. Distance fades the colour towards `uFog` over
+ * `uFogDepth` texels, and rows above the horizon (or past `uBottom`) are left transparent — the
+ * parallax sky shows through. The filter's own input is not read: the pass writes the floor.
+ *
+ * The scale `z` is clamped to `uMaxScale`, so a row on the horizon cannot produce an infinite
+ * coordinate (a `NaN` texel on some drivers).
+ */
+export const MODE7_FRAGMENT = `precision mediump float;
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#endif
+
+varying vec2 vTextureCoord;
+varying vec2 vScreen;
+
+uniform sampler2D uTexture;
+uniform sampler2D uTile;
+uniform vec4 uTileRect;
+uniform vec2 uRight;
+uniform vec2 uForward;
+uniform vec2 uOrigin;
+uniform vec3 uFog;
+uniform float uHorizon;
+uniform float uBottom;
+uniform float uCentre;
+uniform float uHeight;
+uniform float uFogDepth;
+uniform float uMaxScale;
+uniform float uAlpha;
+
+void main(void)
+{
+    float row = floor(vScreen.y) + 0.5;
+    if (row <= uHorizon || row > uBottom) {
+        gl_FragColor = vec4(0.0);
+        return;
+    }
+    float depth = row - uHorizon;
+    float z = uHeight / depth;
+    z = min(z, uMaxScale);
+    float sx = (floor(vScreen.x) + 0.5 - uCentre) / uHeight;
+    vec2 plane = uOrigin + z * (uRight * sx + uForward);
+    vec2 uv = uTileRect.xy + fract(plane) * uTileRect.zw;
+    vec4 color = texture2D(uTile, uv);
+    float fog = clamp(z / uFogDepth, 0.0, 1.0);
+    color.rgb = mix(color.rgb, uFog * color.a, fog);
+    gl_FragColor = color * uAlpha;
+}
+`;
+
+// ------------------------------------------------------------------ CRT (plan M3-02)
+
+/**
+ * Vertex shader of the **CRT / scanline filter** (plan M3-02, shmup_feat.md §18 "[P2] CRT /
+ * scanline filter: Off / Light / Full"): Pixi's default filter quad plus `vScreen`, the
+ * fragment's pixel position in the **display** pass — the scanlines and the aperture mask are laid
+ * out in output pixels, not frame pixels.
+ */
+export const CRT_VERTEX = LAYER_EFFECT_VERTEX;
+
+/**
+ * Fragment shader of the CRT filter.
+ *
+ * @remarks
+ * Three effects over the already-upscaled picture, each switched by a uniform so one program
+ * serves both strengths:
+ *
+ * - **Scanlines** — the lower half of every `uLinePitch`-pixel band is multiplied by
+ *   `1 − uScan`. The pitch is the integer scale of the frame on the display, so one dark line
+ *   falls between two frame rows however big the picture is.
+ * - **Aperture mask** (`uMask` > 0, the `full` setting) — the output columns repeat a
+ *   red / green / blue triad: each third keeps its own channel and dims the other two by `uMask`,
+ *   the shadow mask of a colour tube.
+ * - **Vignette** (`uVignette` > 0) — the corners darken with the squared distance from the centre
+ *   (`uHalf`), a subtle bulge without any geometric distortion (the picture must stay pixel-exact).
+ *
+ * Nothing is ever brightened, so the limiter of the flash overlay still holds.
+ */
+export const CRT_FRAGMENT = `precision mediump float;
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#endif
+
+varying vec2 vTextureCoord;
+varying vec2 vScreen;
+
+uniform sampler2D uTexture;
+uniform vec4 uInputClamp;
+uniform vec2 uHalf;
+uniform float uLinePitch;
+uniform float uScan;
+uniform float uMask;
+uniform float uVignette;
+
+void main(void)
+{
+    vec2 coord = clamp(vTextureCoord, uInputClamp.xy, uInputClamp.zw);
+    vec4 color = texture2D(uTexture, coord);
+    float band = vScreen.y / uLinePitch;
+    float line = band - floor(band);
+    color.rgb *= 1.0 - uScan * step(0.5, line);
+    if (uMask > 0.0) {
+        float triad = vScreen.x / 3.0;
+        float phase = floor((triad - floor(triad)) * 3.0);
+        vec3 keep = vec3(step(phase, 0.5), step(0.5, phase) * step(phase, 1.5), step(1.5, phase));
+        color.rgb *= mix(vec3(1.0 - uMask), vec3(1.0), keep);
+    }
+    if (uVignette > 0.0) {
+        vec2 d = (vScreen - uHalf) / uHalf;
+        color.rgb *= 1.0 - uVignette * clamp(dot(d, d), 0.0, 1.0);
+    }
+    gl_FragColor = color;
+}
+`;
+
+/** Scanline darkening of the `light` CRT setting (a fifth of the brightness on every other row). */
+export const CRT_LIGHT_SCAN = 0.2;
+
+/** Scanline darkening of the `full` setting. */
+export const CRT_FULL_SCAN = 0.34;
+
+/** Aperture-mask strength of the `full` setting (the `light` one has no mask). */
+export const CRT_FULL_MASK = 0.18;
+
+/** Vignette strength of the `full` setting. */
+export const CRT_FULL_VIGNETTE = 0.22;

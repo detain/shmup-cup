@@ -38,6 +38,7 @@
  * {@link TerrainChanges} (M2-07),
  * {@link LaserView}, {@link BendingLaserView} (M2-02), {@link WarningView},
  * {@link StageEffectsView}, {@link RasterEffectView}, {@link RasterKind}, {@link ColorCycleView},
+ * {@link Mode7View} (M3-02),
  * {@link HitboxView}, {@link HitboxBatch}, {@link createHitboxBatch} (M2-08),
  * {@link SpriteBatchView}, {@link SpriteBatch}, {@link createSpriteBatch}, {@link pushSprite},
  * {@link SpriteFlag}. Layers: {@link LayerId}, {@link LAYER_COUNT}, {@link LAYER_NAMES}.
@@ -509,14 +510,54 @@ export interface ColorCycleView {
 }
 
 /**
+ * A stage's **Mode-7 floor** (plan M3-02, shmup_feat.md §18 "[P2] Mode 7-style effects … pseudo-3D
+ * floor (per-row affine matrix in shader)"): the ground plane the renderer draws under the horizon
+ * while the camera is inside `[from, to)`. Static data, read once when the view is bound;
+ * presentation only — the simulation never reads it.
+ *
+ * @remarks
+ * Rows are **playfield rows** on screen (0 = the row under the top HUD bar); the renderer adds
+ * `PLAYFIELD_Y`. The plane's position follows the camera alone (`scroll` texels forward per pixel
+ * of camera x, `sway` texels sideways per pixel of camera y), so nothing about it is simulated.
+ */
+export interface Mode7View {
+  /** Atlas sprite whose frame 0 tiles the plane (-1 = nothing to draw). */
+  readonly spriteId: number;
+  /** Playfield row of the horizon. */
+  readonly horizon: number;
+  /** Last playfield row the plane covers. */
+  readonly bottom: number;
+  /** Camera height above the plane in texels. */
+  readonly height: number;
+  /** Texels the plane moves forward per pixel of camera x. */
+  readonly scroll: number;
+  /** Texels the plane slides sideways per pixel of camera y. */
+  readonly sway: number;
+  /** How far the plane is turned, in binary units `[0, 1024)`. */
+  readonly turn: number;
+  /** Fog colour at the horizon, 0xRRGGBB. */
+  readonly fog: number;
+  /** Depth in texels over which the plane fades into the fog. */
+  readonly fogDepth: number;
+  /** Opacity of the whole floor, 0 … 1. */
+  readonly alpha: number;
+  /** Camera x from which the floor is drawn. */
+  readonly from: number;
+  /** Camera x from which it stops (`Infinity` = to the stage's end). */
+  readonly to: number;
+}
+
+/**
  * The presentation effects a stage asks for (plan M2-08): raster effects and palette cycles, both
- * static data read once when the renderer binds the view.
+ * static data read once when the renderer binds the view; since M3-02 the Mode-7 floor.
  */
 export interface StageEffectsView {
   /** Raster effects, in file order. */
   readonly raster: readonly RasterEffectView[];
   /** Palette cycles, in file order. */
   readonly cycles: readonly ColorCycleView[];
+  /** The Mode-7 floor (M3-02), or `null` for a stage without one. */
+  readonly mode7?: Mode7View | null;
 }
 
 /**

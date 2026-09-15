@@ -260,6 +260,8 @@ describe('core/data campaign endings and credits — edge cases (M2-14 tests)', 
     const { db, issues } = loadContent([
       { path: 'campaign/main.campaign.json', data: SHIPPED },
       ...['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'].map((z) => stage('zone-' + z)),
+      // M3-02: the final zones' escape stage.
+      stage('escape'),
     ]);
     expect(issues).toEqual([]);
     const c = db.campaign as CampaignSpec;

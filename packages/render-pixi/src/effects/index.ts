@@ -72,7 +72,16 @@
  * {@link createLayerEffectFilter}, {@link LAYER_EFFECT_VERTEX}, {@link LAYER_EFFECT_FRAGMENT},
  * {@link LAYER_EFFECT_ROWS}, {@link LAYER_EFFECT_MAX_COLORS}.
  *
- * **Planned.** CRT filter (M3-02), Mode 7-style floors (M3-02).
+ * - **The Mode-7 floor (M3-02, `./mode7.ts`)** — {@link createMode7Floor}: a tiled ground plane
+ *   under the horizon, written by one GLSL ES 1.0 filter ({@link createMode7Filter}; sources
+ *   {@link MODE7_VERTEX} / {@link MODE7_FRAGMENT}) that evaluates mode 7's per-row affine matrix
+ *   per pixel and samples the tile straight out of the atlas. Driven by the stage's `mode7` data
+ *   (core `Mode7View`) and the camera alone, so nothing about it is simulated; attached only while
+ *   the camera is inside the floor's range.
+ * - **The CRT / scanline filter (M3-02, `./crt.ts`)** — {@link createCrtPass}: scanlines, an
+ *   aperture-grille mask and a vignette ({@link CRT_LOOKS} per `core/config` `CRT_FILTERS`
+ *   setting) over the renderer's **upscaled** second pass, capped at `CRT_MAX_HEIGHT` rows
+ *   ({@link crtResolution}) so a 4K TV pays for a 1080p pass.
  *
  * @module
  */
@@ -107,11 +116,39 @@ export {
   type LayerEffectsOptions,
 } from './layer-effects.js';
 export {
+  CRT_FRAGMENT,
+  CRT_FULL_MASK,
+  CRT_FULL_SCAN,
+  CRT_FULL_VIGNETTE,
+  CRT_LIGHT_SCAN,
+  CRT_VERTEX,
   LAYER_EFFECT_FRAGMENT,
   LAYER_EFFECT_MAX_COLORS,
   LAYER_EFFECT_ROWS,
   LAYER_EFFECT_VERTEX,
+  MODE7_FRAGMENT,
+  MODE7_VERTEX,
 } from './shaders.js';
+export {
+  CRT_LOOKS,
+  CRT_MIN_PITCH,
+  createCrtFilter,
+  createCrtPass,
+  crtResolution,
+  type CrtFilterHandle,
+  type CrtLook,
+  type CrtPass,
+  type CrtPassOptions,
+} from './crt.js';
+export {
+  MODE7_ANGLE_UNITS,
+  MODE7_MAX_SCALE,
+  createMode7Filter,
+  createMode7Floor,
+  type Mode7Filter,
+  type Mode7Floor,
+  type Mode7FloorOptions,
+} from './mode7.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({

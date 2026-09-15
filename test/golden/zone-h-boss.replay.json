@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 9289,
@@ -67,23 +71,23 @@
     "AMlI"
   ],
   "hashes": [
-    4195549003,
-    925186101,
-    2018451250,
-    1486735991,
-    3980915746,
-    1958992069,
-    533006582,
-    243170387,
-    1863903460,
-    3195048280,
-    2323298558,
-    404061311,
-    3780609838,
-    709857923,
-    2543806519
+    1621054960,
+    28537796,
+    1559613415,
+    4269328464,
+    3632917507,
+    2578558116,
+    3974454214,
+    3818198302,
+    4235550676,
+    2723971657,
+    1078139456,
+    3990614929,
+    3936163291,
+    4184455042,
+    4142375058
   ],
-  "finalHash": 3924093295,
+  "finalHash": 2429452778,
   "description": "the stage skip into the parade hangar of IRON CITADEL (M2-14 tests): the full loadout under the Arcade penalty, the four echoes of earlier bosses shot down, the core run, then IRON SOVEREIGN through its four phases",
   "expected": {
     "status": "stageClear",

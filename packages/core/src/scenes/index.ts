@@ -299,9 +299,11 @@
  * @module
  */
 import {
+  ASPECT_MODES,
   AUTOFIRE_INTERVALS,
   AUTOFIRE_MODES,
   BULLET_PALETTES,
+  CRT_FILTERS,
   DEATH_PENALTY_PRESETS,
   MAX_DEBOUNCE_OPTION,
   SCALE_MODES,
@@ -342,6 +344,7 @@ import {
   type CampaignSpec,
   type ContentDb,
   type PlayerShipSpec,
+  type StageSpec,
   type WeaponPresetSpec,
   type WeaponSlot,
   type WeaponSpec,
@@ -562,6 +565,7 @@ export type SceneId =
   | 'controls'
   | 'display'
   | 'gameOptions'
+  | 'extras'
   | 'rebind'
   | 'inputTest'
   | 'extra'
@@ -1114,8 +1118,10 @@ export const OptionsItem = {
   Display: 4,
   /** GAME: the {@link GameOptionsScene} page. */
   Game: 5,
+  /** EXTRAS: the {@link ExtrasScene} page (M3-02). */
+  Extras: 6,
   /** BACK: store the volumes, write the save and close. */
-  Back: 6,
+  Back: 7,
 } as const;
 
 /** The DISPLAY page's items (M2-16 — the display rows of M2-02 / M2-08 / M2-09). */
@@ -1132,8 +1138,12 @@ export const DisplayItem = {
   Hitbox: 4,
   /** BOSS HP: the boss HP bar in the top HUD bar off / on (M2-09). */
   BossHp: 5,
+  /** CRT: the CRT / scanline filter — `CRT_FILTERS` (M3-02). */
+  Crt: 6,
+  /** ASPECT: how the picture is shaped on the display — `ASPECT_MODES` (M3-02). */
+  Aspect: 7,
   /** BACK: store and return to the Options screen. */
-  Back: 6,
+  Back: 8,
 } as const;
 
 /** The CONTROLS page's items (M2-16). */
@@ -1183,6 +1193,23 @@ export const GameOptionsItem = {
   /** BACK: store and return to the Options screen. */
   Back: 9,
 } as const;
+
+/** The EXTRAS page's items (M3-02 — {@link ExtrasScene}). */
+export const ExtrasItem = {
+  /** SLOWDOWN: the authentic slowdown. */
+  Slowdown: 0,
+  /** GRAZE: graze scoring. */
+  Graze: 1,
+  /** DEATH BOMB: the death-bomb window. */
+  DeathBomb: 2,
+  /** BLACK HOLE: the Direct ship's black-hole bomb. */
+  BlackHole: 3,
+  /** BACK: store and return to the Options screen. */
+  Back: 4,
+} as const;
+
+/** An {@link ExtrasItem} code. */
+export type ExtrasItem = (typeof ExtrasItem)[keyof typeof ExtrasItem];
 
 /** The EXTRA menu's items (M3-01 — {@link ExtraScene}). */
 export const ExtraItem = {
@@ -1394,6 +1421,10 @@ export interface SceneLabels {
   readonly gameSpeeds: readonly string[];
   /** The ARCADE row's loops: `LOOP 1`, `LOOP 2` (M3-01). */
   readonly arcadeLoops: readonly string[];
+  /** CRT, in `core/config` `CRT_FILTERS` order (M3-02). */
+  readonly crt: readonly string[];
+  /** ASPECT, in `core/config` `ASPECT_MODES` order (M3-02). */
+  readonly aspect: readonly string[];
 }
 
 /**
@@ -1425,6 +1456,8 @@ export function buildSceneLabels(t: UiText): SceneLabels {
     ),
     scaleMode: list(t.scaleInteger, t.scaleFit, t.scaleStretch),
     flash: list(t.flashNormal, t.flashReduced),
+    crt: list(t.crtOff, t.crtLight, t.crtFull),
+    aspect: list(t.aspectNormal, t.aspectWide, t.aspectClassic),
     shipModes: list(t.shipModeMeter, t.shipModeDirect),
     shipHints: Object.freeze([
       list(t.shipHintMeter1, t.shipHintMeter2, t.shipHintMeter3),
@@ -1685,6 +1718,8 @@ interface FlowControl {
   readonly displayPage: DisplayScene;
   /** The Options screen's GAME page (M2-16). */
   readonly gameOptionsPage: GameOptionsScene;
+  /** The Options screen's EXTRAS page (M3-02). */
+  readonly extrasPage: ExtrasScene;
   /** The rebind screen (M2-16). */
   readonly rebind: RebindScene;
   /** The input test (M2-16). */
@@ -1857,6 +1892,11 @@ interface FlowControl {
   createRunWorld(carry: CarryState | null): World;
   /** Flies the players into the bonus stage the game World's entrance opened (M2-10). */
   enterBonus(): void;
+  /**
+   * Starts the final zone's **escape sequence** (M3-02): the World under the stage-clear overlay
+   * is swapped for one on the zone's `escape` stage, with the players carried in. A transition.
+   */
+  enterEscape(): void;
   /** A death in the bonus stage: back to its zone at the entrance, now locked (M2-10). */
   failBonus(): void;
   /**
@@ -2906,6 +2946,7 @@ export class OptionsScene extends SceneBase {
       t.optControls,
       t.optDisplay,
       t.optGame,
+      t.optExtras,
       t.back,
     ]);
   }
@@ -2970,7 +3011,9 @@ export class OptionsScene extends SceneBase {
             ? flow.displayPage
             : menu.focus === OptionsItem.Game
               ? flow.gameOptionsPage
-              : null;
+              : menu.focus === OptionsItem.Extras
+                ? flow.extrasPage
+                : null;
       // OK on a slider changes nothing and makes no sound.
       if (page === null) return;
       flow.sfx(SFX_CUES.MenuSelect);
@@ -3009,13 +3052,15 @@ export class OptionsScene extends SceneBase {
  * The Options screen's DISPLAY page (M2-16 — shmup_feat.md §21 "Display: scale mode, screen shake
  * on/off, flash reduction, show hitbox"; accessibility "colorblind bullet palettes"): BULLETS (the
  * enemy bullet colour set — M2-02), SCALE (integer / fit / stretch), SHAKE, FLASHES (normal /
- * reduced), HITBOX (M2-08), BOSS HP (M2-09) and BACK.
+ * reduced), HITBOX (M2-08), BOSS HP (M2-09), CRT (off / light / full) and ASPECT (normal /
+ * ultra-wide / classic 4:3) — both M3-02 — and BACK.
  *
  * @remarks
  * An overlay over the Options screen (opaque panel). Opening it reads the save's display options.
  * Every change applies **live** through a `UserOption` event with the choice's index
  * (`BulletPalette` — the index in `BULLET_PALETTES` —, `ScaleMode` — in `SCALE_MODES` —,
- * `ScreenShake`, `ReduceFlashing`, `ShowHitbox`, `BossHpBar` — 1 = on; the host applies them to the
+ * `ScreenShake`, `ReduceFlashing`, `ShowHitbox`, `BossHpBar` — 1 = on —, `CrtFilter` — the index in
+ * `CRT_FILTERS` — and `Aspect` — the index in `ASPECT_MODES`; the host applies them to the
  * renderer; the game's HUD follows the saved boss HP bar once the page closes). SHAKE, HITBOX and
  * BOSS HP are toggles (Left = OFF, Right = ON, OK flips). BACK or Back stores them in the save,
  * writes it when it changed and returns to the Options screen.
@@ -3039,6 +3084,10 @@ export class DisplayScene extends SceneBase {
   readonly hitbox: Toggle = createToggle(false);
   /** BOSS HP: the boss HP bar on / off. */
   readonly bossHp: Toggle = createToggle(false);
+  /** CRT: the CRT / scanline filter (`CRT_FILTERS`; M3-02). */
+  readonly crt: Choice;
+  /** ASPECT: the picture's shape (`ASPECT_MODES`; M3-02). */
+  readonly aspect: Choice;
   /** The menu ({@link DisplayItem} order). */
   readonly menu: ListMenu;
 
@@ -3054,6 +3103,8 @@ export class DisplayScene extends SceneBase {
     this.bullets = createChoice(labels.bulletPalette, 0);
     this.scale = createChoice(labels.scaleMode, 0);
     this.flashes = createChoice(labels.flash, 0);
+    this.crt = createChoice(labels.crt, 0);
+    this.aspect = createChoice(labels.aspect, 0);
     this.menu = createListMenu([
       { label: t.optBullets, choice: this.bullets },
       { label: t.optScale, choice: this.scale },
@@ -3061,6 +3112,8 @@ export class DisplayScene extends SceneBase {
       { label: t.optFlashes, choice: this.flashes },
       { label: t.optHitbox, toggle: this.hitbox },
       { label: t.optBossHp, toggle: this.bossHp },
+      { label: t.optCrt, choice: this.crt },
+      { label: t.optAspect, choice: this.aspect },
       t.back,
     ]);
   }
@@ -3082,6 +3135,10 @@ export class DisplayScene extends SceneBase {
     this.flashes.index = display.reduceFlashing ? 1 : 0;
     this.hitbox.value = display.showHitbox;
     this.bossHp.value = display.bossHpBar;
+    const crt = CRT_FILTERS.indexOf(display.crtFilter);
+    this.crt.index = crt >= 0 ? crt : 0;
+    const aspect = ASPECT_MODES.indexOf(display.aspect);
+    this.aspect.index = aspect >= 0 ? aspect : 0;
     this.menu.focus = DisplayItem.Bullets;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
@@ -3099,6 +3156,8 @@ export class DisplayScene extends SceneBase {
         reduceFlashing: this.flashes.index === 1,
         showHitbox: this.hitbox.value,
         bossHpBar: this.bossHp.value,
+        crtFilter: CRT_FILTERS[this.crt.index] ?? 'off',
+        aspect: ASPECT_MODES[this.aspect.index] ?? 'normal',
       },
     });
     void save.flush();
@@ -3139,6 +3198,12 @@ export class DisplayScene extends SceneBase {
           break;
         case DisplayItem.BossHp:
           flow.userOption(UserOptionKind.BossHpBar, this.bossHp.value ? 1 : 0);
+          break;
+        case DisplayItem.Crt:
+          flow.userOption(UserOptionKind.CrtFilter, this.crt.index);
+          break;
+        case DisplayItem.Aspect:
+          flow.userOption(UserOptionKind.Aspect, this.aspect.index);
           break;
         default:
           break;
@@ -3671,6 +3736,132 @@ const GAME_OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
   valueX: 150,
 });
 
+/**
+ * The Options screen's EXTRAS page (plan M3-02 — shmup_feat.md §3 "[P2] optional authentic
+ * slowdown", §22 "[P2] graze detection … if we add grazing score", §10 "[P2] death-bomb window",
+ * §7C "[P2] modern series mechanics … black-hole bomb"): the four **mechanic extras** of M3-02 as
+ * toggles — SLOWDOWN, GRAZE, DEATH BOMB, BLACK HOLE — and BACK.
+ *
+ * @remarks
+ * An overlay over the Options screen (opaque panel). Every row is sim-affecting, so — like the
+ * GAME page — the choices are stored in the save (`UserOptions.play`) and reach the configs of the
+ * games started afterwards (`core/config` `withUserGameOptions`), never the World in play. BLACK
+ * HOLE only does anything for the Direct-mode ship (its note says so while the row is focused).
+ * BACK or Back stores the page, re-arms the next games' configs, writes the save when it changed
+ * and returns to the Options screen.
+ */
+export class ExtrasScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'extras' as const;
+  /** An overlay over the Options screen. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** SLOWDOWN: the authentic slowdown. */
+  readonly slowdown: Toggle = createToggle(false);
+  /** GRAZE: graze scoring. */
+  readonly graze: Toggle = createToggle(false);
+  /** DEATH BOMB: the death-bomb window. */
+  readonly deathBomb: Toggle = createToggle(false);
+  /** BLACK HOLE: the Direct ship's black-hole bomb. */
+  readonly blackHole: Toggle = createToggle(false);
+  /** The menu ({@link ExtrasItem} order). */
+  readonly menu: ListMenu;
+
+  /**
+   * Creates the page.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const t = flow.text;
+    this.menu = createListMenu([
+      { label: t.optSlowdown, toggle: this.slowdown },
+      { label: t.optGraze, toggle: this.graze },
+      { label: t.optDeathBomb, toggle: this.deathBomb },
+      { label: t.optBlackHole, toggle: this.blackHole },
+      t.back,
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 3 + menuStringSlots(this.menu);
+  }
+
+  /** Reads the save's extras; focus on SLOWDOWN, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    const play = this.flow.save.options.play;
+    this.slowdown.value = play.slowdown;
+    this.graze.value = play.graze;
+    this.deathBomb.value = play.deathBomb;
+    this.blackHole.value = play.blackHole;
+    this.menu.focus = ExtrasItem.Slowdown;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Stores the extras, re-arms the next games' configs, writes the save and closes the page. */
+  private close(): void {
+    const flow = this.flow;
+    const save = flow.save;
+    save.setOptions({
+      ...save.options,
+      play: {
+        ...save.options.play,
+        slowdown: this.slowdown.value,
+        graze: this.graze.value,
+        deathBomb: this.deathBomb.value,
+        blackHole: this.blackHole.value,
+      },
+    });
+    flow.applyOptions();
+    void save.flush();
+    flow.sfx(SFX_CUES.MenuBack);
+    flow.stack.pop();
+  }
+
+  /** Moves the focus, flips a toggle, BACK / Back stores and closes. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const result = menuTick(menu, flow.menuInput);
+    if (menu.revision !== before) this.uiRevision++;
+    if (
+      result === MenuResult.Back ||
+      (result === MenuResult.Confirmed && menu.focus === ExtrasItem.Back)
+    ) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Confirmed) return;
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `EXTRAS`, the menu and the note (BLACK HOLE's while it is focused).
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = OPTIONS_PANEL;
+    const t = this.flow.text;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, t.extrasTitle);
+    list.setString(base + 1, t.extrasHint);
+    list.setString(
+      base + 2,
+      this.menu.focus === ExtrasItem.BlackHole ? t.blackHoleHint : t.extrasHint,
+    );
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 3, OPTIONS_MENU_LAYOUT, t);
+    list.text(base + 2, CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
+  }
+}
+
 /** Where the rebind screen's rows go (labels left, keys from x 150). */
 const REBIND_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: 72,
@@ -4073,6 +4264,22 @@ export class InputTestScene extends SceneBase {
 const ClearPhase = { Tally: 0, Continued: 1 } as const;
 
 /** Where the stage-clear screen goes after its tally (M2-10). */
+/**
+ * The stage a run's current final zone escapes through (M3-02 — `CampaignZoneSpec.escape`), or
+ * `null` when the zone has none (or the content lost it).
+ *
+ * @param flow - The flow.
+ * @returns The escape stage, or `null`.
+ */
+function escapeStageOf(flow: FlowControl): StageSpec | null {
+  const run = flow.run;
+  const campaign = run.campaign;
+  if (campaign === null || run.zone < 0) return null;
+  const zone = campaign.zones[run.zone];
+  if (zone === undefined || zone.escapeId < 0) return null;
+  return flow.host.content.stages[zone.escapeId] ?? null;
+}
+
 const ClearNext = {
   /** `TO BE CONTINUED`, then the title (a single-stage run — the M1 screen). */
   Continued: 0,
@@ -4082,6 +4289,8 @@ const ClearNext = {
   Ending: 2,
   /** The title (a practice run). */
   Title: 3,
+  /** The final zone's escape sequence (M3-02), then this screen again and the ending. */
+  Escape: 4,
 } as const;
 
 /**
@@ -4164,17 +4373,22 @@ export class StageClearScene extends SceneBase {
       if (bonus) run.flags |= RunFlag.Bonus;
       captureCarry(world, run.carry);
       const zone = run.zone >= 0 ? campaign.zones[run.zone] : null;
-      this.title = bonus
-        ? flow.text.bonusStageClear
-        : world.timeUp
-          ? flow.text.timeUp
-          : formatUiText(flow.text.zoneClear, zone === null ? '' : zone.label);
+      this.title = run.inEscape
+        ? flow.text.escapeClear
+        : bonus
+          ? flow.text.bonusStageClear
+          : world.timeUp
+            ? flow.text.timeUp
+            : formatUiText(flow.text.zoneClear, zone === null ? '' : zone.label);
       this.zoneName = zone === null ? '' : zone.name;
       if (run.practice || run.mode === 'caravan') {
         // A practice clear goes into the practice table (M2-15), a CARAVAN's (its time up or its
         // zone cleared — M3-01) into its own; then the title.
         this.next = ClearNext.Title;
         this.rank = flow.recordRun(true);
+      } else if (run.finalZone && !run.inEscape && escapeStageOf(flow) !== null) {
+        // The escape sequence (M3-02): the final zone's boss is down, the way out comes first.
+        this.next = ClearNext.Escape;
       } else if (run.finalZone) {
         this.next = ClearNext.Ending;
         run.ending = selectCampaignEnding(campaign, run.zone, run.endingFlags);
@@ -4208,7 +4422,11 @@ export class StageClearScene extends SceneBase {
         if (ok) flow.sfx(SFX_CUES.MenuSelect);
         if (this.next === ClearNext.Map) flow.stack.reset(flow.map);
         else if (this.next === ClearNext.Ending) flow.stack.reset(flow.ending);
-        else flow.finishGame();
+        else if (this.next === ClearNext.Escape) {
+          // M3-02: the escape stage replaces the World under this overlay, which then closes.
+          flow.enterEscape();
+          flow.stack.pop();
+        } else flow.finishGame();
       }
       return;
     }
@@ -8349,6 +8567,8 @@ export interface SceneFlow {
   readonly displayPage: DisplayScene;
   /** The Options screen's GAME page (M2-16). */
   readonly gameOptionsPage: GameOptionsScene;
+  /** The Options screen's EXTRAS page (M3-02). */
+  readonly extrasPage: ExtrasScene;
   /** The rebind screen (M2-16). */
   readonly rebind: RebindScene;
   /** The input test (M2-16). */
@@ -8848,6 +9068,16 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       run.bonusStage = spec.id;
       control.game.swapWorld(control.createRunWorld(run.carry));
     },
+    enterEscape(): void {
+      const campaign = run.campaign;
+      if (campaign === null || run.zone < 0) return;
+      const zone = campaign.zones[run.zone];
+      const spec = zone === undefined ? undefined : host.content.stages[zone.escapeId];
+      if (spec === undefined) return;
+      run.inEscape = true;
+      run.escapeStage = spec.id;
+      control.game.swapWorld(control.createRunWorld(run.carry));
+    },
     failBonus(): void {
       const world = control.game.world;
       run.noteWorldEnd(world);
@@ -8931,7 +9161,15 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     recordRun(cleared: boolean): number {
       const world = control.game.world;
       const scores = world.scoring.board.scores;
-      const reached = world.stage === null ? '' : world.stage.stage.id;
+      // M3-02: the escape sequence is the final zone's, not a zone of its own — the row keeps the
+      // zone the run actually reached.
+      const zone = run.campaign !== null && run.zone >= 0 ? run.campaign.zones[run.zone] : null;
+      const reached =
+        run.inEscape && zone !== undefined && zone !== null
+          ? zone.stage
+          : world.stage === null
+            ? ''
+            : world.stage.stage.id;
       // The World's own table: its difficulty (chosen under START), ship and mode name it — a
       // practice run has tables of its own (M2-15), so have the EXTRA modes (M3-01).
       const mode: HiScoreMode = tableMode(world.config.coop);
@@ -9084,6 +9322,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.controlsPage = new ControlsScene(control);
   control.displayPage = new DisplayScene(control);
   control.gameOptionsPage = new GameOptionsScene(control);
+  control.extrasPage = new ExtrasScene(control);
   control.rebind = new RebindScene(control);
   control.inputTest = new InputTestScene(control);
   control.extra = new ExtraScene(control);
@@ -9122,6 +9361,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.controlsPage,
     control.displayPage,
     control.gameOptionsPage,
+    control.extrasPage,
     control.rebind,
     control.inputTest,
     control.extra,
@@ -9184,6 +9424,7 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     controlsPage: control.controlsPage,
     displayPage: control.displayPage,
     gameOptionsPage: control.gameOptionsPage,
+    extrasPage: control.extrasPage,
     rebind: control.rebind,
     inputTest: control.inputTest,
     extra: control.extra,

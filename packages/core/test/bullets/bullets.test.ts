@@ -234,6 +234,8 @@ describe('core/bullets', () => {
       ...UI_SPRITES,
       // The stage gimmicks' chain link (M2-07).
       'gimmicks/chain-link',
+      // The black-hole bomb's vortex (M3-02).
+      'fx/black-hole',
     ]);
     for (const kind of BULLET_KINDS) {
       expect(kind.flags).toBe(BulletFlag.DieOnTerrain | BulletFlag.Cancelable);

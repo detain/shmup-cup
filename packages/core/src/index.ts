@@ -199,6 +199,15 @@ export {
   type StartingLoadout,
   type UserOptions,
   type WeaponEdit,
+  ASPECT_MODES,
+  CRT_FILTERS,
+  CRT_MAX_HEIGHT,
+  DEFAULT_DEATH_BOMB_TICKS,
+  MAX_DEATH_BOMB_TICKS,
+  SLOWDOWN_RUN_TICKS,
+  SLOWDOWN_THRESHOLD,
+  type AspectMode,
+  type CrtFilter,
 } from './config/index.js';
 
 export {
@@ -245,6 +254,7 @@ export {
   type TextMetrics,
   type WarningView,
   type WorldView,
+  type Mode7View,
 } from './presentation/index.js';
 
 export {
@@ -432,6 +442,9 @@ export {
   type WeaponPresetSpec,
   type WeaponSlot,
   type WeaponSpec,
+  DEFAULT_MODE7_FOG_DEPTH,
+  DEFAULT_MODE7_SCROLL,
+  type StageMode7,
 } from './data/index.js';
 
 export {
@@ -687,6 +700,8 @@ export {
   type BulletSystem,
   type LaserSchema,
   type LaserSource,
+  GRAZE_MARGIN,
+  VORTEX_FALLOFF,
 } from './bullets/index.js';
 
 export {
@@ -779,6 +794,31 @@ export {
   type BossScriptApi,
   type BossSystem,
 } from './bosses/index.js';
+
+export {
+  BLACK_HOLE_BOLT_DAMAGE,
+  BLACK_HOLE_BOLT_INTERVAL,
+  BLACK_HOLE_BURST_TICKS,
+  BLACK_HOLE_CORE_RADIUS,
+  BLACK_HOLE_DRIFT,
+  BLACK_HOLE_ENEMY_PULL,
+  BLACK_HOLE_FALLOFF,
+  BLACK_HOLE_FRAMES,
+  BLACK_HOLE_FRAME_TICKS,
+  BLACK_HOLE_PULL,
+  BLACK_HOLE_PULL_TICKS,
+  BLACK_HOLE_RADIUS,
+  BLACK_HOLE_SPRITE,
+  BLACK_HOLE_SPRITES,
+  BLACK_HOLE_START_STOCK,
+  BLACK_HOLE_THROW_X,
+  BlackHole,
+  MAX_BLACK_HOLES,
+  MAX_BLACK_HOLE_STOCK,
+  createBlackHoleSystem,
+  type BlackHoleHost,
+  type BlackHoleSystem,
+} from './blackhole/index.js';
 
 export {
   FORMATION_RETRACTED,
@@ -1003,6 +1043,8 @@ export {
   type ScoreHost,
   type ScoringHost,
   type ScoringSystem,
+  DEFAULT_GRAZE_POINTS,
+  MAX_GRAZE_POINTS,
 } from './scoring/index.js';
 
 export {
@@ -1034,6 +1076,7 @@ export {
   type WorldPhaseEntry,
   type WorldStatus,
   type WorldSystem,
+  DEATH_BOMB_INVULN_TICKS,
 } from './world/index.js';
 
 export {
@@ -1263,6 +1306,8 @@ export {
   ControlsItem,
   ControlsScene,
   DisplayItem,
+  ExtrasItem,
+  ExtrasScene,
   DisplayScene,
   GameOptionsItem,
   GameOptionsScene,

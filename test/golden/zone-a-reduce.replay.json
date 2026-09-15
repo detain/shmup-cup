@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1058,
@@ -67,9 +71,9 @@
     "AKII"
   ],
   "hashes": [
-    2533807958
+    2687823463
   ],
-  "finalHash": 2208060823,
+  "finalHash": 628991469,
   "description": "HALCYON BULWARK with Formation Options and Reduce (M2-04): a `>` of Options, the shrunken hurtbox",
   "expected": {
     "status": "stageClear",

@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 5031,
@@ -67,16 +71,16 @@
     "AKcn"
   ],
   "hashes": [
-    3071613594,
-    1213662497,
-    1304245123,
-    645299122,
-    2819260636,
-    2198668541,
-    721278812,
-    532013997
+    1317055275,
+    3737623766,
+    3540864016,
+    1839887708,
+    3228012172,
+    1364228180,
+    2621280003,
+    235317341
   ],
-  "finalHash": 3661533664,
+  "finalHash": 3548393360,
   "description": "the stage skip to the ABYSS ARK (M2-14 tests): the full loadout under the Arcade penalty, the raid shot down in its two phases, then THE HOLLOW KING its final blast reveals through its three",
   "expected": {
     "status": "stageClear",

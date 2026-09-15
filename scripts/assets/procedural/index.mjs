@@ -21,6 +21,7 @@ import * as bosses from './bosses.mjs';
 import * as brine from './brine.mjs';
 import * as bullets from './bullets.mjs';
 import * as citadel from './citadel.mjs';
+import * as dimension from './dimension.mjs';
 import * as direct from './direct.mjs';
 import * as dune from './dune.mjs';
 import * as ending from './ending.mjs';
@@ -55,6 +56,7 @@ export const PROCEDURAL_GENERATORS = [
   { id: 'brine', generate: brine.generate },
   { id: 'bullets', generate: bullets.generate },
   { id: 'citadel', generate: citadel.generate },
+  { id: 'dimension', generate: dimension.generate },
   { id: 'direct', generate: direct.generate },
   { id: 'dune', generate: dune.generate },
   { id: 'ending', generate: ending.generate },

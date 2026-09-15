@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 763,
@@ -67,9 +71,9 @@
     "APsF"
   ],
   "hashes": [
-    1634861593
+    1757895530
   ],
-  "finalHash": 539218720,
+  "finalHash": 2835101747,
   "description": "HALCYON BULWARK with a full Type D loadout (M2-03): Twin Laser, Photon Torpedo, Free Way, FULL BARRIER on `!`",
   "expected": {
     "status": "stageClear",

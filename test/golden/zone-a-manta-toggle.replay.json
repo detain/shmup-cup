@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 855,
@@ -67,9 +71,9 @@
     "ANcG"
   ],
   "hashes": [
-    1967589278
+    2799039952
   ],
-  "finalHash": 1760534983,
+  "finalHash": 1581652861,
   "description": "HALCYON BULWARK with a fully powered MANTA, god mode and the toggle autofire mode (M2-16 tests): the 4-way bot taps SHOT every 150 ticks — the Direct-mode volleys off, then on again",
   "expected": {
     "status": "stageClear",

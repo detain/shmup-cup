@@ -293,8 +293,8 @@ describe('core/scenes options (edge): opening and closing', () => {
     expect(s.ids).toEqual(['game', 'pause', 'options']);
     s.focus(OptionsItem.Sfx);
     s.press(Action.Left); // SFX 9
-    // Past the CONTROLS, DISPLAY and GAME pages (M2-16).
-    for (let i = 0; i < 4; i++) s.press(Action.Down);
+    // Past the CONTROLS, DISPLAY and GAME pages (M2-16) and EXTRAS (M3-02).
+    for (let i = 0; i < 5; i++) s.press(Action.Down);
     expect(s.flow.options.menu.focus).toBe(OptionsItem.Back);
     s.press(Action.Confirm);
     expect(s.ids).toEqual(['game', 'pause']);

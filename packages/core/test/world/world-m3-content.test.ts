@@ -257,6 +257,7 @@ describe('core config and save additions (M3-01)', () => {
       play: { speed: 75, invincible: true, optionRecovery: true, rumble: false },
     });
     expect(options.play).toEqual({
+      ...DEFAULT_PLAY_OPTIONS,
       speed: 75,
       invincible: true,
       optionRecovery: true,

@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 3573,
@@ -67,13 +71,13 @@
     "APUb"
   ],
   "hashes": [
-    727358649,
-    3411251171,
-    1464054613,
-    887904863,
-    1895256623
+    1515504349,
+    2213002627,
+    3708313063,
+    2235371828,
+    1955830933
   ],
-  "finalHash": 2954024880,
+  "finalHash": 1000590371,
   "description": "TWIN RANGE with god mode and the full loadout (M2-09): the EMBER and FROST twins take turns, the survivor enrages, both shot down",
   "expected": {
     "status": "stageClear",

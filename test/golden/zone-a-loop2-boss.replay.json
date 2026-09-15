@@ -57,7 +57,11 @@
       "loop": 2,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1949,
@@ -67,11 +71,11 @@
     "AJ0P"
   ],
   "hashes": [
-    1017055222,
-    1125709178,
-    1808450642
+    976073768,
+    3174684332,
+    1332567321
   ],
-  "finalHash": 64794624,
+  "finalHash": 1586297522,
   "description": "HALCYON BULWARK on loop 2 without power-ups or god mode (M3-01): the loop-2 rank, bullet speed and revenge bullets against the 4-way bot",
   "expected": {
     "status": "stageClear",

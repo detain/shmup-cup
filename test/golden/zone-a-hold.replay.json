@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1058,
@@ -67,9 +71,9 @@
     "AKII"
   ],
   "hashes": [
-    3207146234
+    2481413704
   ],
-  "finalHash": 3592468327,
+  "finalHash": 609844309,
   "description": "HALCYON BULWARK with the full loadout, god mode and the hold autofire mode at the fastest rate (M2-16 tests): SHOT and SUB held in bursts",
   "expected": {
     "status": "stageClear",

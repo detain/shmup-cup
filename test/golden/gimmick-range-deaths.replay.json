@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1429,
@@ -67,10 +71,10 @@
     "AJUL"
   ],
   "hashes": [
-    3760650480,
-    360264730
+    2776213072,
+    3145943766
   ],
-  "finalHash": 734478036,
+  "finalHash": 2451465476,
   "description": "GIMMICK RANGE, a weaving pilot that never dodges, Arcade penalty (M2-07): checkpoint restarts roll the terrain back",
   "expected": {
     "status": "gameOver",

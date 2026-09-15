@@ -18,10 +18,18 @@
  * ×3.33 = 1280×720, no border.
  *
  * **Implements.** shmup_feat.md §3 (integer upscale, nearest-neighbour, letterbox; the scale
- * modes integer / fit / stretch), shmup_feat.md §21 (the display option), shmup_tech.md §2.2
- * (1080p/720p web resolutions → 384×216 ×5 / ×3).
+ * modes integer / fit / stretch; the classic 4:3 mode with pillarbox side art — M3-02),
+ * shmup_feat.md §18 (the ultra-wide desktop mode — M3-02), shmup_feat.md §21 (the display
+ * option), shmup_tech.md §2.2 (1080p/720p web resolutions → 384×216 ×5 / ×3).
  *
- * **Public API.** {@link computeViewport}, {@link computeIntegerViewport}, {@link Viewport}.
+ * Since M3-02 the **aspect modes** of `core/config` `ASPECT_MODES` sit on top
+ * ({@link computeAspectViewport}): `normal` (the whole display), `wide` (a 21:9 window for
+ * ultra-wide desktops) and `classic` (a 4:3 window — the console look on a widescreen TV). The
+ * frame is never cropped; the mode only limits the **window** it is centred in, and the leftover
+ * width is reported as side panels the renderer fills with the stage's dimmed backdrop.
+ *
+ * **Public API.** {@link computeViewport}, {@link computeIntegerViewport}, {@link Viewport};
+ * M3-02 {@link computeAspectViewport}, {@link AspectViewport}, {@link ASPECT_RATIOS}.
  *
  * @module
  */
@@ -31,7 +39,7 @@ import { defineModule, type ScaleMode } from '@shmup/core';
 export const moduleInfo = defineModule({
   name: 'viewport',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §3', 'shmup_feat.md §21', 'shmup_tech.md §2.2'],
+  specRefs: ['shmup_feat.md §3', 'shmup_feat.md §18', 'shmup_feat.md §21', 'shmup_tech.md §2.2'],
 });
 
 /** Placement of the scaled frame inside the display, in CSS/canvas pixels. */
@@ -163,4 +171,99 @@ export function computeViewport(
     };
   }
   return computeIntegerViewport(dw, dh, baseWidth, baseHeight);
+}
+
+/**
+ * Aspect ratio of the window the frame is placed in, per `core/config` `ASPECT_MODES` (plan
+ * M3-02): `normal` uses the whole display (0 = no limit), `wide` the ultra-wide 64:27 (21:9) of a
+ * Darius-style cabinet, `classic` the 4:3 of a console on a widescreen TV.
+ */
+export const ASPECT_RATIOS: readonly number[] = Object.freeze([0, 64 / 27, 4 / 3]);
+
+/** Where the frame and its side panels go on the display ({@link computeAspectViewport}). */
+export interface AspectViewport {
+  /** The frame's placement inside the window. */
+  readonly viewport: Viewport;
+  /** Left edge of the window on the display. */
+  readonly windowX: number;
+  /** Top edge of the window. */
+  readonly windowY: number;
+  /** Window width in pixels. */
+  readonly windowWidth: number;
+  /** Window height in pixels. */
+  readonly windowHeight: number;
+  /** Width of the side panel left of the window (0 = none). */
+  readonly panelLeft: number;
+  /** Width of the side panel right of the window. */
+  readonly panelRight: number;
+}
+
+/**
+ * Places the frame on the display in an **aspect mode** (plan M3-02, shmup_feat.md §18 "[P2]
+ * widescreen Darius-style ultra-wide mode for desktop" and §3 "classic 4:3 mode with pillarbox side
+ * art").
+ *
+ * @remarks
+ * The frame is never cropped and never distorted beyond what the scale mode already does: the
+ * aspect mode only decides the **window** it is placed in. `normal` is the whole display (the
+ * leftover is plain letterbox, as before). `wide` and `classic` limit the window to the largest
+ * rectangle of {@link ASPECT_RATIOS} that fits, centred, and report the leftover width as **side
+ * panels** — the renderer fills them with the stage's dimmed backdrop instead of black, which is
+ * what makes an ultra-wide monitor look like a wide cabinet and a 16:9 TV look like a 4:3 console.
+ * A window narrower than the display leaves panels; one as wide as the display leaves none.
+ *
+ * @param aspect - Index into {@link ASPECT_RATIOS} (`ASPECT_MODES` order).
+ * @param mode - The scale mode inside the window.
+ * @param displayWidth - Available width in pixels.
+ * @param displayHeight - Available height in pixels.
+ * @param baseWidth - Internal frame width.
+ * @param baseHeight - Internal frame height.
+ * @returns The frame's placement (display coordinates) and the side panels.
+ *
+ * @example
+ * ```ts
+ * computeAspectViewport(2, 'integer', 1920, 1080, 384, 216).panelLeft; // → 240 (4:3 on 16:9)
+ * computeAspectViewport(0, 'integer', 1920, 1080, 384, 216).panelLeft; // → 0
+ * ```
+ */
+export function computeAspectViewport(
+  aspect: number,
+  mode: ScaleMode,
+  displayWidth: number,
+  displayHeight: number,
+  baseWidth: number,
+  baseHeight: number,
+): AspectViewport {
+  const dw = displayWidth > 0 ? displayWidth : 1;
+  const dh = displayHeight > 0 ? displayHeight : 1;
+  const ratio = ASPECT_RATIOS[aspect] ?? 0;
+  let windowWidth = dw;
+  let windowHeight = dh;
+  if (ratio > 0) {
+    const byHeight = Math.floor(dh * ratio);
+    if (byHeight <= dw) windowWidth = Math.max(1, byHeight);
+    else windowHeight = Math.max(1, Math.floor(dw / ratio));
+  }
+  const windowX = Math.floor((dw - windowWidth) / 2);
+  const windowY = Math.floor((dh - windowHeight) / 2);
+  const inner = computeViewport(mode, windowWidth, windowHeight, baseWidth, baseHeight);
+  const viewport: Viewport = {
+    mode: inner.mode,
+    scale: inner.scale,
+    scaleX: inner.scaleX,
+    scaleY: inner.scaleY,
+    x: inner.x + windowX,
+    y: inner.y + windowY,
+    width: inner.width,
+    height: inner.height,
+  };
+  return {
+    viewport,
+    windowX,
+    windowY,
+    windowWidth,
+    windowHeight,
+    panelLeft: windowX,
+    panelRight: dw - windowX - windowWidth,
+  };
 }

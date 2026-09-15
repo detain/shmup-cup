@@ -1,0 +1,129 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "escape",
+  "name": "ESCAPE",
+  "music": {
+    "stage": "Escape",
+    "boss": "Boss",
+    "ending": "Ending",
+    "credits": "Credits"
+  },
+  "length": 4200,
+  "camera": [
+    {
+      "x": 0,
+      "speed": 3,
+      "ramp": 30
+    },
+    {
+      "x": 1200,
+      "speed": 4.5,
+      "ramp": 120
+    },
+    {
+      "x": 3000,
+      "speed": 6,
+      "ramp": 120
+    }
+  ],
+  "checkpoints": [
+    {
+      "x": 0
+    }
+  ],
+  "parallax": [
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "far",
+      "sprite": "bg/stars-far",
+      "factor": 0.25,
+      "y": 128,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.6,
+      "y": 0,
+      "spacing": 128
+    },
+    {
+      "layer": "mid",
+      "sprite": "bg/stars-mid",
+      "factor": 0.6,
+      "y": 128,
+      "spacing": 128
+    }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        {
+          "from": 0,
+          "to": 1400,
+          "floor": {
+            "base": 36,
+            "amp": 14,
+            "period": 260,
+            "seed": 71
+          },
+          "ceiling": {
+            "base": 32,
+            "amp": 12,
+            "period": 300,
+            "seed": 72
+          }
+        },
+        {
+          "from": 1400,
+          "to": 2800,
+          "floor": {
+            "base": 52,
+            "amp": 18,
+            "period": 220,
+            "seed": 73
+          },
+          "ceiling": {
+            "base": 44,
+            "amp": 16,
+            "period": 240,
+            "seed": 74
+          }
+        },
+        {
+          "from": 2800,
+          "to": 4352,
+          "floor": {
+            "base": 40,
+            "amp": 14,
+            "period": 200,
+            "seed": 75
+          },
+          "ceiling": {
+            "base": 36,
+            "amp": 14,
+            "period": 220,
+            "seed": 76
+          }
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 4100,
+      "type": "end"
+    }
+  ]
+}

@@ -206,6 +206,19 @@ export interface PlayerShip {
    * ignores every hit, like the debug god mode.
    */
   readonly invincible: boolean;
+  /**
+   * Bombs the ship holds (M3-02 — `core/blackhole`): the Direct ship's black holes, stocked by the
+   * stage's yellow items while `GameConfig.blackHole` is on, at most `MAX_BLACK_HOLE_STOCK`. 0 in
+   * every other mode.
+   */
+  bombs: number;
+  /**
+   * Ticks left of the **death-bomb window** (M3-02 — `GameConfig.deathBomb`): a fatal hit opened it
+   * instead of killing the ship, and a bomb press during it cancels the death. 0 = closed, -1 = it
+   * ran out and the death it held back happens in this tick's damage phase (`core/world`).
+   * {@link playerHit} ignores hits while it is open.
+   */
+  bombTicks: number;
 }
 
 /**
@@ -338,6 +351,8 @@ export function createPlayer(slot: number, lives: number, invincible = false): P
     hits: 0,
     shield: createShieldState(),
     invincible,
+    bombs: 0,
+    bombTicks: 0,
   };
 }
 
@@ -347,8 +362,9 @@ export function createPlayer(slot: number, lives: number, invincible = false): P
  *
  * @remarks
  * The hit is ignored when the ship is inactive, not `alive` (fly-in, dying, dead), still
- * invulnerable (`invulnTicks > 0`), when the debug god mode is on or the ship has the invincibility
- * assist (M3-01 — {@link PlayerShip.invincible}). Otherwise the ship's
+ * invulnerable (`invulnTicks > 0`), while its **death-bomb window** is open (M3-02 —
+ * {@link PlayerShip.bombTicks}: the ship is already dying unless it bombs), when the debug god mode
+ * is on or the ship has the invincibility assist (M3-01 — {@link PlayerShip.invincible}). Otherwise the ship's
  * {@link PlayerShip.shield} gets it first (`core/shields` `absorbShieldHit`: the Force Field takes
  * bullets, lasers and contact — not terrain — and swallows hits during its shield-hit i-frames);
  * an absorbed hit is accepted (`true`) without touching the ship. A hit that gets through is
@@ -380,6 +396,7 @@ export function playerHit(
     !ship.active ||
     ship.state !== 'alive' ||
     ship.invulnTicks > 0 ||
+    ship.bombTicks > 0 ||
     debug.godMode ||
     ship.invincible
   ) {

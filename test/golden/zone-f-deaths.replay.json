@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 7274,
@@ -67,20 +71,20 @@
     "AOo4"
   ],
   "hashes": [
-    4038928089,
-    3094408020,
-    3069869597,
-    4253162519,
-    1871890203,
-    3890685743,
-    1017910685,
-    3420044059,
-    2312617626,
-    3207210025,
-    1464751395,
-    3155786894
+    2344435486,
+    2047471594,
+    2981252025,
+    2247502425,
+    1887045396,
+    2533169366,
+    1643877748,
+    1590097867,
+    1609326608,
+    621467348,
+    875309152,
+    1385065868
   ],
-  "finalHash": 1269553379,
+  "finalHash": 3439106820,
   "description": "CELL VAULT on Easy under the Arcade penalty with a weaving pilot that never dodges (M2-13 tests): deaths in the membrane and at the first tissue walls, the checkpoint restarts at 2,200 rolling the tissue it shot open back, game over",
   "expected": {
     "status": "gameOver",

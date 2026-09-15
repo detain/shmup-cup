@@ -145,6 +145,7 @@ import {
   LayerId,
   RasterKind,
   type ColorCycleView,
+  type Mode7View,
   type ParallaxView,
   type RasterEffectView,
   type StageEffectsView,
@@ -1593,7 +1594,8 @@ const RASTER_KINDS: Readonly<Record<string, RasterKind>> = Object.freeze({
  * ```
  */
 export function createStageEffectsView(stage: StageSpec): StageEffectsView | null {
-  if (stage.raster.length === 0 && stage.cycles.length === 0) return null;
+  const floor = stage.mode7;
+  if (stage.raster.length === 0 && stage.cycles.length === 0 && floor === null) return null;
   const raster: RasterEffectView[] = [];
   for (const effect of stage.raster) {
     raster.push(
@@ -1626,5 +1628,27 @@ export function createStageEffectsView(stage: StageSpec): StageEffectsView | nul
       }),
     );
   }
-  return Object.freeze({ raster: Object.freeze(raster), cycles: Object.freeze(cycles) });
+  // The Mode-7 floor (M3-02): static presentation data, drawn by `render-pixi`'s Mode-7 filter.
+  const mode7: Mode7View | null =
+    floor === null
+      ? null
+      : Object.freeze({
+          spriteId: floor.spriteId,
+          horizon: floor.horizon,
+          bottom: floor.bottom,
+          height: floor.height,
+          scroll: floor.scroll,
+          sway: floor.sway,
+          turn: floor.turn,
+          fog: floor.fogRgb,
+          fogDepth: floor.fogDepth,
+          alpha: floor.alpha,
+          from: floor.from,
+          to: floor.to,
+        });
+  return Object.freeze({
+    raster: Object.freeze(raster),
+    cycles: Object.freeze(cycles),
+    mode7,
+  });
 }

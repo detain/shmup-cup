@@ -32,7 +32,9 @@ scene (`citadel` / `abyss`) and its epilogue, and the file's `credits` scroll af
       "preview": ["UP TO THREE LINES", "OF ≤ 40 CHARACTERS."] // optional: the map's preview text
     },
     { "id": "b", "label": "B", "name": "BRINE NEBULA", "stage": "zone-b" },
-    { "id": "c", "label": "C", "name": "DUNE EXPANSE", "stage": "zone-c" }
+    { "id": "c", "label": "C", "name": "DUNE EXPANSE", "stage": "zone-c",
+      "escape": "escape" }               // optional (M3-02): only on a final zone (no exits) —
+                                         // the stage flown after its boss, before the ending
   ],
   "edges": [                             // clearing `from` may lead to `to` (≤ 4 exits per zone)
     { "from": "a", "to": "b" },
@@ -105,5 +107,11 @@ A campaign without a story leaves it out of the attract loop. The shipped story 
   exits, OK launches (the next zone's music is prepared meanwhile), Back asks "quit to title?".
   Back on the title (after the ending, a game over or a practice), the start zone's music is
   prepared again, so a zone's own `stages`-scoped track never leaks into the next run.
+- **The escape sequence (M3-02).** When the final zone has an `escape` stage, its boss's clear
+  screen (`ESCAPE COMPLETE` the next time round) leads into that stage instead of the ending: the
+  same run, the same ships, score and loadout, with no clock and no boss. Flying it to its `end`
+  event brings the clear screen back, and only then the ending. It is not a zone of its own — the
+  hi-score row still names the zone the run reached, and a death there ends the run as any other
+  would. Zones H and I ship one (`escape`); zones with none go straight to the ending.
 - The final zone's clear picks the ending (the first match for the run's flags) and records the
   run in the hi-score table; the ending screen, then the credits follow.

@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": true,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 6975,
@@ -67,19 +71,19 @@
     "AL82"
   ],
   "hashes": [
-    2296319588,
-    2982637398,
-    1668688840,
-    3250637791,
-    1227708630,
-    2730254325,
-    2568422094,
-    1126900801,
-    3788802176,
-    1879576236,
-    2469468815
+    2539220562,
+    2801831224,
+    2465728014,
+    1297883174,
+    2934025599,
+    2103254227,
+    1973246912,
+    2202983424,
+    2698862905,
+    160870210,
+    2277041761
   ],
-  "finalHash": 1407934249,
+  "finalHash": 2404042195,
   "description": "HALCYON BULWARK with the invincibility assist (M3-01): hits ignored like god mode, the replay header flags it in `assists` (not as god mode)",
   "expected": {
     "status": "stageClear",

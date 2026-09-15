@@ -293,10 +293,12 @@ describe('core/scenes campaign edges: the zone map (M2-10)', () => {
         new URL('../../../../content/campaign/main.campaign.json', import.meta.url),
         'utf8',
       ),
-    ) as { zones: Array<{ stage: string }> };
+    ) as { zones: Array<{ stage: string; escape?: string }> };
     const nine = db([
       { path: 'campaign/main.campaign.json', data },
       ...data.zones.map((z) => stage(z.stage)),
+      // M3-02: the final zones' escape stage.
+      stage('escape'),
     ]);
     const s = new Session(nine, 'zone-a');
     expect(s.flow.campaign?.routes).toBe(16);

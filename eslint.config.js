@@ -61,6 +61,10 @@ export default defineConfig([
     'assets/generated/',
     'apps/electron/release/',
     'tools/',
+    // Git-ignored agent / editor tooling directories: never ours to lint.
+    '.claude/',
+    '.caliber/',
+    '.playwright-mcp/',
   ]),
 
   // 1. Baseline for all JS/TS.

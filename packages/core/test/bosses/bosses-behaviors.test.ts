@@ -100,13 +100,15 @@ describe('core/behaviors — the boss roster (M1-13)', () => {
   it('registers the boss roster, frozen, next to the enemy roster', () => {
     // boss.bulwark (HB-01) joined with the zone A content of M1-18; the captains and the raid
     // turrets with M2-09; the zone B and C bosses with M2-11; the zone D and E bosses with M2-12;
-    // the zone F and G bosses with M2-13; the final bosses of zones H and I with M2-14.
+    // the zone F and G bosses with M2-13; the final bosses of zones H and I with M2-14; the
+    // suction, grabber and walker bosses with M3-02.
     expect(BOSS_BEHAVIOR_IDS).toEqual([
       'boss.angler',
       'boss.ark',
       'boss.bastion',
       'boss.bulwark',
       'boss.facet',
+      'boss.grabber',
       'boss.hover',
       'boss.lanes',
       'boss.maw',
@@ -114,6 +116,8 @@ describe('core/behaviors — the boss roster (M1-13)', () => {
       'boss.sovereign',
       'boss.squid',
       'boss.steed',
+      'boss.suction',
+      'boss.walker',
       'boss.widow',
       'captain.circler',
       'captain.crab',

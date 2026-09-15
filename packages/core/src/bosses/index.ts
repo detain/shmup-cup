@@ -136,6 +136,7 @@ import {
   LASER_GROW_TICKS,
   LASER_TELEGRAPH_TICKS,
   LASER_WIDTH,
+  VORTEX_FALLOFF,
   type BulletSystem,
 } from '../bullets/index.js';
 import type { SpatialGrid } from '../collision/index.js';
@@ -659,6 +660,16 @@ export class Boss implements ScriptHolder {
   spiralAngle = 0;
   /** Ticks until the next volley. */
   spiralClock = 0;
+  /**
+   * The boss's **pull field** (M3-02 — the suction and grabber bosses, shmup_feat.md §13 "[P2]
+   * suction boss (pulls ship toward it), grabber boss"): reach in pixels, 0 = none. Applied in
+   * phase 2 ({@link BossSystem.applyFields}) after the ships moved.
+   */
+  pullRadius = 0;
+  /** Strongest pull of the field, in pixels per tick (at the boss's origin). */
+  pullStrength = 0;
+  /** Ticks the field still lasts, -1 = until the script releases it. */
+  pullTicks = -1;
   /** Its partner died: faster (M2-09). */
   enraged = false;
   /** Fire-interval factor while enraged. */
@@ -1025,6 +1036,21 @@ export interface BossScriptApi {
    * @returns `true` when one was launched (the boss may fire, has a minion, a slot was free).
    */
   launch(index: number): boolean;
+  /**
+   * Opens a **pull field** around the boss (M3-02 — shmup_feat.md §13 "[P2] suction boss (pulls
+   * ship toward it — Choking Weed), grabber boss"): every living ship within `radius` of the
+   * boss's origin is drawn towards it, hardest at the centre (`core/bullets` `VORTEX_FALLOFF` —
+   * the same falloff the black hole gives its bullets) and clamped to the view. The field is
+   * applied in phase 2 of every tick, after the ships moved, until {@link BossScriptApi.release}
+   * or `ticks` run out; opening it again replaces it.
+   *
+   * @param radius - Reach in pixels (≤ 0 closes the field).
+   * @param strength - Strongest pull in pixels per tick.
+   * @param ticks - Ticks it lasts (default -1 = until released or the boss leaves).
+   */
+  pull(radius: number, strength: number, ticks?: number): void;
+  /** Closes the boss's pull field (M3-02). */
+  release(): void;
 }
 
 /** A boss behaviour as the boss system uses it (`core/behaviors` provides the roster). */
@@ -1239,6 +1265,12 @@ export interface BossSystem {
    *
    * @param grid - The World's grid.
    */
+  /**
+   * Phase 2, after the ships moved (M3-02): every boss with an open pull field
+   * ({@link BossScriptApi.pull} — the suction and grabber bosses) draws the living ships towards
+   * its origin and clamps them to the view; a field whose ticks ran out closes. Never allocates.
+   */
+  applyFields(): void;
   insertColliders(grid: SpatialGrid): void;
   /**
    * Phase 6: the ships' hurt circles against the target parts' boxes (closed) or circles →
@@ -1805,6 +1837,21 @@ class BossScriptApiImpl implements BossScriptApi {
           fade,
           attach ? this.self.parts[index].slot : -1,
         );
+  }
+
+  /** See {@link BossScriptApi.pull}. */
+  pull(radius: number, strength: number, ticks = -1): void {
+    const boss = this.self;
+    boss.pullRadius = radius > 0 ? radius : 0;
+    boss.pullStrength = strength > 0 ? strength : 0;
+    boss.pullTicks = ticks > 0 ? Math.floor(ticks) : -1;
+  }
+
+  /** See {@link BossScriptApi.release}. */
+  release(): void {
+    this.self.pullRadius = 0;
+    this.self.pullStrength = 0;
+    this.self.pullTicks = -1;
   }
 
   /** See {@link BossScriptApi.launch}. */
@@ -3044,6 +3091,63 @@ class BossSystemImpl implements BossSystem {
     if (!(index >= 0 && index < BOSS_PART_SLOTS && index % 1 === 0)) return false;
     const part = this.parts[index];
     return this.armouredNow(this.slots[part.owner], part);
+  }
+
+  /** See {@link BossSystem.applyFields}. */
+  applyFields(): void {
+    const slots = this.slots;
+    for (let i = 0; i < slots.length; i++) {
+      const boss = slots[i];
+      if (boss.pullRadius <= 0) continue;
+      if (boss.state !== BossState.Fight || boss.resting) continue;
+      this.pullShips(boss);
+      const ticks = boss.pullTicks;
+      if (ticks > 0) {
+        if (ticks <= 1) {
+          boss.pullRadius = 0;
+          boss.pullStrength = 0;
+          boss.pullTicks = -1;
+        } else {
+          boss.pullTicks = ticks - 1;
+        }
+      }
+    }
+  }
+
+  /**
+   * One boss's pull on every living ship in its radius (M3-02): the same linear falloff the black
+   * hole gives its bullets, then the ship is clamped back into the view.
+   *
+   * @param boss - The boss (its field is open).
+   */
+  private pullShips(boss: Boss): void {
+    const host = this.host;
+    const players = host.players;
+    const radius = boss.pullRadius;
+    const r2 = radius * radius;
+    const camera = host.camera;
+    const margins = host.ship.margins;
+    const minX = camera.x + margins.left;
+    const maxX = camera.x + PLAYFIELD_W - margins.right;
+    const minY = camera.y + margins.top;
+    const maxY = camera.y + PLAYFIELD_H - margins.bottom;
+    for (let i = 0; i < players.length; i++) {
+      const ship = players[i];
+      if (!ship.active || ship.state !== 'alive') continue;
+      const dx = boss.x - ship.x;
+      const dy = boss.y - ship.y;
+      const d2 = dx * dx + dy * dy;
+      if (!(d2 <= r2) || d2 === 0) continue;
+      const d = Math.sqrt(d2);
+      const step = boss.pullStrength * (1 - VORTEX_FALLOFF * (d / radius));
+      const move = step < d ? step : d;
+      ship.x += (dx / d) * move;
+      ship.y += (dy / d) * move;
+      if (ship.x < minX) ship.x = minX;
+      else if (ship.x > maxX) ship.x = maxX;
+      if (ship.y < minY) ship.y = minY;
+      else if (ship.y > maxY) ship.y = maxY;
+    }
   }
 
   /** See {@link BossSystem.insertColliders}. */

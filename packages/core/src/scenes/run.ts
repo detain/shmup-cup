@@ -12,7 +12,8 @@
  * - {@link RunState}: the campaign and the current zone, the route so far, the zones cleared
  *   (the rank's stage term), practice (its checkpoint and loadout), the zone's entry state (RETRY
  *   STAGE starts the zone again from it), the bonus-stage state (inside one, the entrance's `x`
- *   to return to, the lock), the run's flags, deaths and continues — what picks the ending.
+ *   to return to, the lock), the final zone's escape sequence (M3-02 — {@link RunState.inEscape}),
+ *   the run's flags, deaths and continues — what picks the ending.
  * - {@link ZoneResult} / {@link tallyZone} / {@link awardZoneBonus}: the zone result tally — the
  *   kill rate ({@link KILL_BONUS_PER_PERCENT} points per percent) and the boss time bonus
  *   ({@link TIME_BONUS_PER_SECOND} points per second under {@link TIME_BONUS_PAR_TICKS}).
@@ -454,6 +455,14 @@ export class RunState {
   bonusReturnX = -1;
   /** The current zone's bonus entrances are locked (a death in its bonus stage). */
   bonusLocked = false;
+  /**
+   * Whether the World being played is the final zone's **escape sequence** (M3-02 —
+   * shmup_feat.md §14 "[P2] escape sequence (collapsing, fast-scrolling maze after the final
+   * boss)"): the run flies it between the final zone's boss and its ending.
+   */
+  inEscape = false;
+  /** The escape stage's id while {@link RunState.inEscape} (`CampaignZoneSpec.escape`). */
+  escapeStage: string | null = null;
   /** Run flags so far ({@link RunFlag}: `BossEscaped`, `Bonus`). */
   flags = 0;
   /** Ships lost by the Worlds that ended so far (captured or left). */
@@ -635,6 +644,8 @@ export class RunState {
   leaveBonus(lock: boolean): void {
     this.inBonus = false;
     this.bonusStage = null;
+    this.inEscape = false;
+    this.escapeStage = null;
     if (!lock) {
       this.bonusReturnX = -1;
       this.bonusLocked = false;
@@ -672,11 +683,12 @@ export class RunState {
  *   throws for an unknown one).
  */
 export function runWorldConfig(base: GameConfig, run: RunState): GameConfig {
-  const stage = run.inBonus ? run.bonusStage : run.stage;
+  // M3-02: the final zone's escape sequence takes the place of its stage.
+  const stage = run.inEscape ? run.escapeStage : run.inBonus ? run.bonusStage : run.stage;
   const loadout = run.practice && run.loadout !== null ? run.loadout : base.loadout;
-  // M3-01: the run's loop and the caravan's clock (a bonus stage has no clock).
+  // M3-01: the run's loop and the caravan's clock (a bonus stage and the escape have no clock).
   const loop = run.loop;
-  const timeLimit = run.inBonus ? 0 : run.timeLimit;
+  const timeLimit = run.inBonus || run.inEscape ? 0 : run.timeLimit;
   return stage === base.stage &&
     loadout === base.loadout &&
     loop === base.loop &&

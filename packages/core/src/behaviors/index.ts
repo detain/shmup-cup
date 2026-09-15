@@ -225,6 +225,19 @@
  *   `spread` 44, `bulletSpeed` 1.3] and a [`ring` 0 = none] as it opens [`ringSpeed` 1]; its lure
  *   (an arm) sways [`sway` 1, `swayTicks` 40]; the lure's gun fires a needle every [`gunTicks` 0 =
  *   never] and launches [`count` 1] minions every [`launchTicks` 0 = never].
+ * - `boss.suction` (M3-02) — the suction boss: it breathes in for [`pullTicks` 150] with a pull
+ *   field [`pullRadius` 200, `pullStrength` 1.1] open (its parts opened with [`openTicks` 1]),
+ *   then out for [`restTicks` 120], firing aimed [`ways` 3]-ways [`fireTicks` 50, `spread` 40,
+ *   `bulletSpeed` 1.2] while the field is shut; tracks like `boss.hover` [`trackSpeed` 0.3,
+ *   `margin` 48].
+ * - `boss.grabber` (M3-02) — the grabber: it stalks the nearest ship [`trackSpeed` 0.6, `margin`
+ *   40], telegraphs for [`windUp` 40] with its claw open, then lunges — a short, very strong pull
+ *   field [`grabTicks` 45, `grabRadius` 104, `grabStrength` 2.6] — and recovers for [`restTicks`
+ *   90], firing a [`ways` 2]-way [`spread` 56, `bulletSpeed` 1.4] as it does.
+ * - `boss.walker` (M3-02) — the invincible walker: it paces between screen columns [`frontX` 96]
+ *   and [`backX` 280], [`stepTicks` 90] a stride with [`pauseTicks` 45] planted, sweeping aimed
+ *   [`ways` 3]-ways [`fireTicks` 55, `spread` 48, `bulletSpeed` 1.3]. Its parts are armour in the
+ *   content, so it can only be dodged: give its entry a `timeLimit` and it walks off again.
  *
  * **Implements.**
  * - shmup_feat.md §11 — archetypes (popcorn, formation fliers, capsule carriers, turrets,
@@ -232,6 +245,8 @@
  * - shmup_feat.md §6B — the Direct-mode item carriers: six-cube pincer waves (M2-05)
  * - shmup_feat.md §14 — stage gimmicks as reusable modules: falling rocks, splitting bubbles,
  *   volcanoes, suction, grabbing tentacles, the cube rush (M2-07)
+ * - shmup_feat.md §13 — the P2 bosses: the suction boss, the grabber and the invincible walker
+ *   (M3-02: `boss.suction`, `boss.grabber`, `boss.walker`)
  * - shmup_feat.md §11 / §14 — zone B and C archetypes: homing rockets and segmented sand worms
  *   (M2-11)
  * - shmup_feat.md §13 — the zone bosses GALVANIC MAW (mechanical fish: mouth weak point, homing
@@ -3011,8 +3026,161 @@ const bossAngler = defineBossBehavior(
 );
 
 /**
- * The boss roster's definitions: M1's, the captains and raid turrets of M2-09 and the zone bosses
- * of M2-11, M2-12, M2-13 and M2-14.
+ * `boss.suction` — the **suction boss** (plan M3-02, shmup_feat.md §13 "[P2] suction boss (pulls
+ * ship toward it — Choking Weed)"): it hangs in the lane, breathes in and out and, while it
+ * breathes in, opens a wide pull field that drags every ship towards it
+ * ({@link BossScriptApi.pull}) — the players have to fly against it to stay clear of its body.
+ *
+ * @remarks
+ * Tunables: `trackSpeed` / `margin` (the tracking, as `boss.hover`), `pullTicks` / `restTicks`
+ * (how long it breathes in and out), `pullRadius` / `pullStrength` (the field), `fireTicks` /
+ * `ways` / `spread` / `bulletSpeed` (aimed spreads from its guns, fired only while it rests, so
+ * the pull and the bullets never pile up) and `openTicks` (the parts open while it pulls, so a
+ * `whenOpen` core is only vulnerable then; 0 = they stay as they are). The field closes with the
+ * script's rest phase, and the boss system drops it when the boss leaves.
+ */
+const bossSuction = defineBossBehavior(
+  'boss.suction',
+  {
+    trackSpeed: 0.3,
+    margin: 48,
+    pullTicks: 150,
+    restTicks: 120,
+    pullRadius: 200,
+    pullStrength: 1.1,
+    fireTicks: 50,
+    ways: 3,
+    spread: 40,
+    bulletSpeed: 1.2,
+    openTicks: 1,
+  },
+  function* suction(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const pullTicks = p.pullTicks >= 1 ? Math.floor(p.pullTicks) : 1;
+    const restTicks = p.restTicks >= 1 ? Math.floor(p.restTicks) : 1;
+    const opens = p.openTicks >= 1;
+    for (;;) {
+      // Breathe in: the field is open, the guns hold their fire.
+      api.pull(p.pullRadius, p.pullStrength);
+      if (opens) api.setOpenAll(true);
+      yield pullTicks;
+      // Breathe out: the field closes and the guns answer.
+      api.release();
+      if (opens) api.setOpenAll(false);
+      let left = restTicks;
+      while (left > 0) {
+        const wait = api.fireWait(p.fireTicks);
+        const step = wait < left ? wait : left;
+        yield step;
+        left -= step;
+        if (step === wait) fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalPurple);
+      }
+    }
+  },
+);
+
+/**
+ * `boss.grabber` — the **grabber boss** (plan M3-02, shmup_feat.md §13 "[P2] … grabber boss"): it
+ * stalks the nearest ship's height and lunges. A lunge is a short, very strong pull field
+ * ({@link BossScriptApi.pull}) inside a small radius — the claw closing — followed by a recovery
+ * the players use to get away; a ship it reaches is killed by contact with its body like any boss
+ * part, so the grab is a threat, never an instant death.
+ *
+ * @remarks
+ * Tunables: `trackSpeed` / `margin` (the stalking), `windUp` (ticks it telegraphs before a lunge,
+ * with the parts opened so the claw reads), `grabTicks` / `grabRadius` / `grabStrength` (the
+ * lunge's field), `restTicks` (the recovery) and `fireTicks` / `ways` / `spread` / `bulletSpeed`
+ * (a spread on every recovery, 0 ways = none).
+ */
+const bossGrabber = defineBossBehavior(
+  'boss.grabber',
+  {
+    trackSpeed: 0.6,
+    margin: 40,
+    windUp: 40,
+    grabTicks: 45,
+    grabRadius: 104,
+    grabStrength: 2.6,
+    restTicks: 90,
+    fireTicks: 0,
+    ways: 2,
+    spread: 56,
+    bulletSpeed: 1.4,
+  },
+  function* grabber(api, p): Script {
+    api.track(p.trackSpeed, p.margin, PLAYFIELD_H - p.margin);
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 0;
+    const windUp = p.windUp >= 1 ? Math.floor(p.windUp) : 1;
+    const grabTicks = p.grabTicks >= 1 ? Math.floor(p.grabTicks) : 1;
+    const restTicks = p.restTicks >= 1 ? Math.floor(p.restTicks) : 1;
+    api.setOpenAll(false);
+    for (;;) {
+      // Wind up: the claw opens where the players can see it.
+      api.setOpenAll(true);
+      yield windUp;
+      // The lunge: a short, very strong pull.
+      api.pull(p.grabRadius, p.grabStrength, grabTicks);
+      yield grabTicks;
+      api.release();
+      api.setOpenAll(false);
+      if (ways > 0) fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.NeedleRed);
+      yield api.fireWait(restTicks);
+    }
+  },
+);
+
+/**
+ * `boss.walker` — the **invincible walker** (plan M3-02, shmup_feat.md §13 "[P2] … invincible
+ * walker that must be dodged — Shadow Gear"): it strides in from the right, plants itself, sweeps
+ * the lane with aimed fire and leaves again. Its parts are armour in the content
+ * (`vulnerable: "never"`), so nothing the players fire touches it: the encounter is a dodging
+ * section that ends when its `timeLimit` runs out and it walks off.
+ *
+ * @remarks
+ * The walk is a chain of {@link BossScriptApi.moveTo} steps between `frontX` and `backX` at the
+ * boss's own height, `stepTicks` each with a `pauseTicks` halt between them — the gait — while
+ * the legs animate from the part frames. Tunables: `frontX` / `backX` (screen columns it paces
+ * between), `stepTicks` / `pauseTicks`, `fireTicks` / `ways` / `spread` / `bulletSpeed` (the
+ * aimed sweep from every standing gun) and `stompShake` (the shake magnitude of each planted
+ * step, 0 = none). Give the boss entry a `timeLimit`, or it never leaves.
+ */
+const bossWalker = defineBossBehavior(
+  'boss.walker',
+  {
+    frontX: 96,
+    backX: 280,
+    stepTicks: 90,
+    pauseTicks: 45,
+    fireTicks: 55,
+    ways: 3,
+    spread: 48,
+    bulletSpeed: 1.3,
+    stompShake: 0,
+  },
+  function* walker(api, p): Script {
+    const ways = p.ways >= 1 ? Math.floor(p.ways) : 1;
+    const stepTicks = p.stepTicks >= 1 ? Math.floor(p.stepTicks) : 1;
+    const pauseTicks = p.pauseTicks >= 1 ? Math.floor(p.pauseTicks) : 1;
+    let front = true;
+    for (;;) {
+      api.moveTo(front ? p.frontX : p.backX, api.self.screenY, stepTicks);
+      front = !front;
+      let left = stepTicks + pauseTicks;
+      while (left > 0) {
+        const wait = api.fireWait(p.fireTicks);
+        const step = wait < left ? wait : left;
+        yield step;
+        left -= step;
+        if (step === wait) fireGuns(api, ways, p.spread, p.bulletSpeed, BulletKind.OvalRed);
+      }
+    }
+  },
+);
+
+/**
+ * The boss roster's definitions: M1's, the captains and raid turrets of M2-09, the zone bosses
+ * of M2-11, M2-12, M2-13 and M2-14, and the three P2 bosses of M3-02.
  */
 export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.freeze([
   bossHover,
@@ -3032,6 +3200,9 @@ export const DEFAULT_BOSS_BEHAVIOR_DEFS: readonly BossBehaviorDef[] = Object.fre
   bossSovereign,
   bossArk,
   bossAngler,
+  bossSuction,
+  bossGrabber,
+  bossWalker,
 ]);
 
 /** The boss roster as a registry (what the World uses). */

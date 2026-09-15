@@ -242,7 +242,12 @@ import {
   type CollectedPatterns,
   type PatternBank,
 } from '../patterns/dsl.js';
-import { MAX_BULLET_CANCEL_POINTS, MAX_REPEAT_KILLS, type ScoringRules } from '../scoring/index.js';
+import {
+  MAX_BULLET_CANCEL_POINTS,
+  MAX_GRAZE_POINTS,
+  MAX_REPEAT_KILLS,
+  type ScoringRules,
+} from '../scoring/index.js';
 import {
   ENDING_SCENES,
   MAX_CAMPAIGN_ENDINGS,
@@ -1352,6 +1357,56 @@ export interface StageRasterEffect {
   readonly to: number;
 }
 
+/** Default {@link StageMode7.scroll}: a quarter of a texel forward per pixel of camera x. */
+export const DEFAULT_MODE7_SCROLL = 0.25;
+
+/** Default {@link StageMode7.fogDepth} in texels. */
+export const DEFAULT_MODE7_FOG_DEPTH = 96;
+
+/**
+ * A stage's **Mode-7 floor** (M3-02, shmup_feat.md §18 "[P2] Mode 7-style effects: scaling /
+ * rotation, pseudo-3D floor (per-row affine matrix in shader)", §14 "[P2] pseudo-3D high-speed
+ * dimension stage"): a ground plane drawn under the horizon by `render-pixi`'s Mode-7 filter while
+ * the camera is inside `[from, to)` — presentation only, the simulation never reads it.
+ *
+ * @remarks
+ * The plane is tiled with frame 0 of `sprite`, one tile per `1 × 1` of plane space. Every row `y`
+ * below `horizon` sees the plane at depth `height / (y − horizon)`, so `height` sets how fast it
+ * rushes past; the plane's own position follows the **camera** (`scroll` texels forward per pixel
+ * of camera x, `sway` texels sideways per pixel of camera y), so the floor and the stage never
+ * drift apart and nothing has to be simulated.
+ */
+export interface StageMode7 {
+  /** Atlas sprite whose frame 0 tiles the plane. */
+  readonly sprite: string;
+  /** Resolved {@link ContentDb.sprites} index of {@link StageMode7.sprite}. */
+  readonly spriteId: number;
+  /** Playfield row of the horizon (the plane vanishes there; 0 … `PLAYFIELD_H` − 2). */
+  readonly horizon: number;
+  /** Last playfield row the plane is drawn on (`horizon < bottom ≤ PLAYFIELD_H`). */
+  readonly bottom: number;
+  /** Camera height above the plane in texels: the bigger, the further the view reaches. */
+  readonly height: number;
+  /** Texels the plane moves forward per pixel of camera x (default {@link DEFAULT_MODE7_SCROLL}). */
+  readonly scroll: number;
+  /** Texels the plane slides sideways per pixel of camera y (default 0). */
+  readonly sway: number;
+  /** How far the plane is turned, in binary units `[0, 1024)` (default 0 — straight ahead). */
+  readonly turn: number;
+  /** Fog colour at the horizon as written (`#rrggbb`). */
+  readonly fog: string;
+  /** Fog colour as 0xRRGGBB (resolved by the loader). */
+  readonly fogRgb: number;
+  /** Depth in texels over which the plane fades into the fog (default {@link DEFAULT_MODE7_FOG_DEPTH}). */
+  readonly fogDepth: number;
+  /** Opacity of the whole floor, 0 … 1 (default 1). */
+  readonly alpha: number;
+  /** Camera x from which the floor is drawn (default 0). */
+  readonly from: number;
+  /** Camera x from which it stops (default `Infinity`). */
+  readonly to: number;
+}
+
 /**
  * One **palette cycle** of a stage (M2-08, shmup_feat.md §18 "palette cycling (glowing cores,
  * water, lava)"): pixels of the layer drawn in `colors[i]` show `colors[(i + step) mod n]`, `step`
@@ -1876,6 +1931,8 @@ export interface StageSpec {
   readonly raster: readonly StageRasterEffect[];
   /** Palette cycles (M2-08; omitted in the file = none). Presentation only. */
   readonly cycles: readonly StageColorCycle[];
+  /** The Mode-7 floor (M3-02; omitted in the file = none). Presentation only. */
+  readonly mode7: StageMode7 | null;
   /** Terrain block, or `null` for an open-space stage. */
   readonly tilemap: StageTilemapSpec | null;
   /** Timeline, sorted by `x` (several events may share one `x`; they fire in file order). */
@@ -2840,6 +2897,25 @@ const COLOR_CYCLE_SCHEMA = s.object(
   { optional: ['from', 'to'] },
 );
 
+/** The `mode7` section of a stage file (M3-02, {@link StageMode7}). */
+const MODE7_SCHEMA = s.object(
+  {
+    sprite: s.ref('sprite'),
+    horizon: s.int({ min: 0, max: PLAYFIELD_H - 2 }),
+    bottom: s.int({ min: 1, max: PLAYFIELD_H }),
+    height: s.num({ min: 1, max: 4096 }),
+    scroll: s.num({ min: -64, max: 64 }),
+    sway: s.num({ min: -64, max: 64 }),
+    turn: s.int({ min: 0, max: 1023 }),
+    fog: HEX_COLOR,
+    fogDepth: s.num({ min: 1, max: 100000 }),
+    alpha: s.num({ min: 0, max: 1 }),
+    from: EVENT_X,
+    to: EVENT_X,
+  },
+  { optional: ['bottom', 'scroll', 'sway', 'turn', 'fogDepth', 'alpha', 'from', 'to'] },
+);
+
 /** A `content/stages/*.stage.json` file. */
 const STAGE_FILE_SCHEMA = s.object(
   {
@@ -2893,6 +2969,7 @@ const STAGE_FILE_SCHEMA = s.object(
     ),
     raster: s.array(RASTER_EFFECT_SCHEMA, { max: MAX_STAGE_RASTER_EFFECTS }),
     cycles: s.array(COLOR_CYCLE_SCHEMA, { max: MAX_STAGE_COLOR_CYCLES }),
+    mode7: MODE7_SCHEMA,
     type: s.enumOf(STAGE_TYPES),
     rush: s.array(
       s.object(
@@ -2903,7 +2980,9 @@ const STAGE_FILE_SCHEMA = s.object(
     ),
     remix: s.array(STAGE_EVENT_SCHEMA, { max: MAX_STAGE_REMIX }),
   },
-  { optional: ['directItems', 'branches', 'raster', 'cycles', 'type', 'rush', 'remix'] },
+  {
+    optional: ['directItems', 'branches', 'raster', 'cycles', 'mode7', 'type', 'rush', 'remix'],
+  },
 );
 
 /** One entry of `tiles` in a `tileset` file. */
@@ -2960,8 +3039,9 @@ const SCORING_RULES_SCHEMA = s.object(
     bulletCancel: s.int({ min: 0, max: MAX_BULLET_CANCEL_POINTS }),
     repeatKills: s.int({ min: 0, max: MAX_REPEAT_KILLS }),
     repeatPercent: s.int({ min: 0, max: 100 }),
+    graze: s.int({ min: 0, max: MAX_GRAZE_POINTS }),
   },
-  { optional: ['repeatKills', 'repeatPercent'] },
+  { optional: ['repeatKills', 'repeatPercent', 'graze'] },
 );
 
 /**
@@ -2997,8 +3077,9 @@ const CAMPAIGN_FILE_SCHEMA = s.object(
           name: s.str({ maxLength: 24 }),
           stage: s.ref('stage'),
           preview: s.array(s.str({ maxLength: 40 }), { max: MAX_ZONE_PREVIEW_LINES }),
+          escape: s.ref('stage'),
         },
-        { optional: ['preview'] },
+        { optional: ['preview', 'escape'] },
       ),
       { min: 1, max: MAX_CAMPAIGN_ZONES },
     ),
@@ -4594,6 +4675,7 @@ type MutableStage = Omit<
   | 'branches'
   | 'raster'
   | 'cycles'
+  | 'mode7'
   | 'type'
   | 'rush'
   | 'remix'
@@ -4613,6 +4695,8 @@ type MutableStage = Omit<
   raster?: Array<{ -readonly [K in keyof StageRasterEffect]?: StageRasterEffect[K] }>;
   /** See {@link StageSpec.cycles} (optional in the file; the loader resolves the colours). */
   cycles?: Array<{ -readonly [K in keyof StageColorCycle]?: StageColorCycle[K] }>;
+  /** See {@link StageSpec.mode7} (optional in the file; the loader fills the defaults — M3-02). */
+  mode7?: { -readonly [K in keyof StageMode7]?: StageMode7[K] } | null;
   /** See {@link StageSpec.directItems} (optional in the file). */
   directItems?: DirectItemName[];
   /** See {@link StageSpec.branches} (optional in the file; the loader resolves the flags). */
@@ -5001,6 +5085,44 @@ function checkBonusEvent(
 }
 
 /**
+ * Checks and completes a stage's **Mode-7 floor** (M3-02) in place: `horizon < bottom`,
+ * `from < to`, then the defaults (`bottom` {@link PLAYFIELD_H}, `scroll`
+ * {@link DEFAULT_MODE7_SCROLL}, `sway` / `turn` / `from` 0, `fogDepth`
+ * {@link DEFAULT_MODE7_FOG_DEPTH}, `alpha` 1, `to` `Infinity`) and the fog colour as 0xRRGGBB.
+ * Load time.
+ *
+ * @param stage - The parsed stage (completed in place).
+ * @param file - Repo-relative file path.
+ * @param issues - Collector.
+ * @returns `true` when the floor is usable (a stage without one always is).
+ */
+function checkStageMode7(stage: MutableStage, file: string, issues: ValidationIssue[]): boolean {
+  const mode7 = stage.mode7;
+  if (mode7 === undefined || mode7 === null) {
+    stage.mode7 = null;
+    return true;
+  }
+  let ok = true;
+  if (mode7.bottom !== undefined && mode7.bottom <= (mode7.horizon ?? 0)) {
+    ok = issue(issues, at(file, 'mode7.bottom'), 'must be greater than horizon');
+  }
+  if (mode7.to !== undefined && mode7.to <= (mode7.from ?? 0)) {
+    ok = issue(issues, at(file, 'mode7.to'), 'must be greater than from');
+  }
+  if (mode7.bottom === undefined) mode7.bottom = PLAYFIELD_H;
+  if (mode7.scroll === undefined) mode7.scroll = DEFAULT_MODE7_SCROLL;
+  if (mode7.sway === undefined) mode7.sway = 0;
+  if (mode7.turn === undefined) mode7.turn = 0;
+  if (mode7.fogDepth === undefined) mode7.fogDepth = DEFAULT_MODE7_FOG_DEPTH;
+  if (mode7.alpha === undefined) mode7.alpha = 1;
+  if (mode7.from === undefined) mode7.from = 0;
+  if (mode7.to === undefined) mode7.to = Number.POSITIVE_INFINITY;
+  mode7.fogRgb = parseInt(String(mode7.fog).slice(1), 16);
+  // `mode7.spriteId` is filled by the loader's reference pass (`s.ref('sprite')`).
+  return ok;
+}
+
+/**
  * Checks and completes a stage's raster effects and palette cycles (M2-08) in place.
  *
  * @remarks
@@ -5067,6 +5189,7 @@ function checkStageEffects(stage: MutableStage, file: string, issues: Validation
     if (effect.to === undefined) effect.to = Number.POSITIVE_INFINITY;
   }
   stage.raster = raster;
+  ok = checkStageMode7(stage, file, issues) && ok;
   const cycles = stage.cycles ?? [];
   // Colours already cycled on each layer (the shader's key colours must be distinct).
   const layerColors = new Map<string, number[]>();

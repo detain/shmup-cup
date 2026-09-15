@@ -433,10 +433,13 @@ describe('core/data campaign edges: the shipped endings (M2-10)', () => {
         new URL('../../../../content/campaign/main.campaign.json', import.meta.url),
         'utf8',
       ),
-    ) as { zones: Array<{ stage: string }> };
-    const stages: ContentFile[] = data.zones.map((z) => ({
-      path: `stages/${z.stage}.stage.json`,
-      data: { ...(STAGE.data as Record<string, unknown>), id: z.stage },
+    ) as { zones: Array<{ stage: string; escape?: string }> };
+    const ids = new Set<string>(data.zones.map((z) => z.stage));
+    // M3-02: the final zones' escape stage is a stage of its own.
+    for (const zone of data.zones) if (zone.escape !== undefined) ids.add(zone.escape);
+    const stages: ContentFile[] = [...ids].map((id) => ({
+      path: `stages/${id}.stage.json`,
+      data: { ...(STAGE.data as Record<string, unknown>), id },
     }));
     const { db, issues } = loadContent([{ path: 'campaign/main.campaign.json', data }, ...stages]);
     expect(issues).toEqual([]);

@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 3600,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 3600,
@@ -67,14 +71,14 @@
     "AJAc"
   ],
   "hashes": [
-    3265842522,
-    467768681,
-    3961573600,
-    1446151783,
-    2386707120,
-    2940959918
+    1427670324,
+    3882919303,
+    2792420630,
+    1683842411,
+    523733114,
+    1256395804
   ],
-  "finalHash": 2940959918,
+  "finalHash": 1256395804,
   "description": "the CARAVAN clock on AZURE VERGE (M3-01): one minute with god mode, then time up — status stageClear with the World timeUp",
   "expected": {
     "status": "stageClear",

@@ -15,11 +15,13 @@
  *   key {@link SAVE_STORAGE_KEY} (`save.v1` — the format family's key; the document's `version`
  *   drives the migrations): `{ version, options: { audio: { master, music, sfx }, input: {
  *   profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
- *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar }, game: {
+ *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar, crtFilter,
+ *   aspect }, game: {
  *   difficulty, lives, deathPenalty, autoPowerUp, pickupMagnet, oneButton } }, hiScores: {
  *   [modeKey]: HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers, stagesCleared } }`. The
  *   display fields needed no migration: a version-1 save written before `bulletPalette` (M2-02),
- *   the M2-08 fields or `bossHpBar` (M2-09) resolves the missing ones to their defaults
+ *   the M2-08 fields, `bossHpBar` (M2-09) or `crtFilter` / `aspect` (M3-02) resolves the missing
+ *   ones to their defaults
  *   (`standard`, `integer`, shake on, normal flashing, no hitbox marker, no boss HP bar —
  *   `core/config` `resolveUserOptions`). **Version 2** (M2-16) added the controls options (autofire
  *   mode and rate, SOCD, the release debounce, the rebinding — `input.*`) and the game options
@@ -674,6 +676,9 @@ export function serializeSave(data: SaveData): string {
         reduceFlashing: display.reduceFlashing,
         showHitbox: display.showHitbox,
         bossHpBar: display.bossHpBar,
+        // M3-02: the CRT filter and the picture's shape.
+        crtFilter: display.crtFilter,
+        aspect: display.aspect,
       },
       // M3-01: the assists and feel (a save written before resolves them to their defaults).
       play:
@@ -684,6 +689,11 @@ export function serializeSave(data: SaveData): string {
               invincible: play.invincible,
               optionRecovery: play.optionRecovery,
               rumble: play.rumble,
+              // M3-02: the mechanic extras.
+              slowdown: play.slowdown,
+              graze: play.graze,
+              deathBomb: play.deathBomb,
+              blackHole: play.blackHole,
             },
     },
     hiScores,

@@ -290,6 +290,9 @@ describe('core/events — cue registries', () => {
       BossHpBar: 9,
       // M2-16.
       InputSettings: 10,
+      // M3-02.
+      CrtFilter: 11,
+      Aspect: 12,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,
@@ -300,6 +303,9 @@ describe('core/events — cue registries', () => {
       Debris: 5,
       BossChain: 6,
       BossBlast: 7,
+      // M3-02.
+      Graze: 8,
+      BlackHole: 9,
     });
     expect(FX_CUE_NAMES).toEqual([
       'ExplosionSmall',
@@ -310,6 +316,8 @@ describe('core/events — cue registries', () => {
       'Debris',
       'BossChain',
       'BossBlast',
+      'Graze',
+      'BlackHole',
     ]);
     expect(Object.isFrozen(FX_CUE_NAMES)).toBe(true);
   });

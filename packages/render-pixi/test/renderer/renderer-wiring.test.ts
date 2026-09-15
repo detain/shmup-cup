@@ -223,8 +223,10 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     expect(lowRes?.clear).toBe(true);
     expect(present?.target).toBeUndefined();
     const screen = present?.container as Pixi.Container;
-    expect(screen.children).toHaveLength(1);
-    const quad = screen.children[0] as Pixi.Sprite;
+    // The two side panels of the M3-02 aspect modes sit behind the frame quad (hidden in `normal`).
+    expect(screen.children).toHaveLength(3);
+    expect(screen.children.filter((child) => child.visible)).toHaveLength(1);
+    const quad = screen.children[2] as Pixi.Sprite;
     expect(quad.texture).toBe(record.textures[0]);
     expect([quad.scale.x, quad.x, quad.y]).toEqual([5, 0, 0]);
     expect(renderer.viewport).toMatchObject({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
@@ -650,6 +652,144 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     renderer.setBulletPalette('deuteranopia'); // no variant: the plain frames
     renderer.render(frameOf(2, world));
     expect(sprite.texture).toBe(atlas.textures[atlas.spriteBase('ships/a') + 1]);
+  });
+
+  it('places the frame in the M3-02 aspect modes and lights the side panels', async () => {
+    const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
+    expect(renderer.aspect).toBe('normal');
+    expect([renderer.panels.panelLeft, renderer.panels.panelRight]).toEqual([0, 0]);
+    renderer.render(frameOf(0));
+    const screen = record.renders[1]?.container as Pixi.Container;
+    // Both panels were added at index 0, so the right one is first; the frame quad is last.
+    const [right, left, quad] = screen.children as Pixi.Sprite[];
+    expect(quad.texture).toBe(record.textures[0]);
+    expect([left.visible, right.visible]).toEqual([false, false]);
+    // Classic 4:3: a 1440-wide window, a panel either side, the frame still whole and centred.
+    renderer.setAspect('classic');
+    expect(renderer.aspect).toBe('classic');
+    expect([renderer.panels.panelLeft, renderer.panels.panelRight]).toEqual([240, 240]);
+    expect([left.visible, right.visible]).toEqual([true, true]);
+    expect([left.x, left.scale.x, left.scale.y]).toEqual([0, 240, 1080]);
+    expect([right.x, right.scale.x]).toEqual([1680, 240]);
+    // Dim, never bright: the panels sit behind the frame and cannot wash the picture out.
+    expect(left.tint).toBe(PALETTE.space);
+    expect(left.alpha).toBeLessThan(1);
+    expect(renderer.viewport.scale).toBe(3);
+    expect(renderer.viewport.x).toBe((1920 - renderer.viewport.width) / 2);
+    // Ultra-wide on a 16:9 display: a cabinet window, no panels, the whole frame kept.
+    renderer.setAspect('wide');
+    expect([renderer.panels.panelLeft, renderer.panels.panelRight]).toEqual([0, 0]);
+    expect([left.visible, right.visible]).toEqual([false, false]);
+    expect(renderer.viewport.width / renderer.viewport.scaleX).toBe(384);
+    // Back to normal, and setting the same mode twice changes nothing.
+    renderer.setAspect('normal');
+    renderer.setAspect('normal');
+    expect(renderer.viewport).toMatchObject({ scale: 5, x: 0, y: 0 });
+  });
+
+  it('runs the M3-02 CRT pass over the screen container, told the picture and the display', async () => {
+    // The real filter needs a WebGL context to pick its precision, so the pass gets a fake one.
+    const applied: Array<[number, number, number, number]> = [];
+    const heights: number[] = [];
+    const fake = { enabled: true } as unknown as Pixi.Filter;
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 3840,
+      displayHeight: 2160,
+      createCrtFilter: () => ({
+        filter: fake,
+        apply: (look, pitch, w, h) => applied.push([look.scan, pitch, w, h]),
+        setDisplayHeight: (h) => heights.push(h),
+        destroy: () => {},
+      }),
+    });
+    renderer.render(frameOf(0));
+    const screen = record.renders[1]?.container as Pixi.Container;
+    expect(screen.filters ?? []).toEqual([]);
+    expect(renderer.crtFilter).toBe('off');
+    renderer.setCrtFilter('light');
+    expect(renderer.crtFilter).toBe('light');
+    expect(screen.filters).toEqual([fake]);
+    // The scanline pitch is the frame's scale on the display; the cap sees the display's rows.
+    expect(applied.at(-1)?.slice(1)).toEqual([10, 3840, 2160]);
+    expect(heights.at(-1)).toBe(2160);
+    expect(applied.at(-1)?.[0]).toBeGreaterThan(0);
+    renderer.setCrtFilter('full');
+    expect(screen.filters).toEqual([fake]);
+    expect(applied.at(-1)?.[0]).toBeGreaterThan(applied.at(-2)?.[0] ?? 1);
+    // A resize follows the picture through.
+    renderer.resize(1920, 1080);
+    expect(applied.at(-1)?.slice(1)).toEqual([5, 1920, 1080]);
+    renderer.setCrtFilter('off');
+    expect(renderer.crtFilter).toBe('off');
+    expect(screen.filters).toEqual([]);
+  });
+
+  it('binds a stage Mode-7 floor to the mid-background layer and follows the camera', async () => {
+    // The real filter needs a WebGL context to pick its precision, so the floor gets a fake one.
+    const tiles: number[][] = [];
+    const origins: Array<[number, number]> = [];
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas: testAtlas(),
+      createMode7Filter: () => ({
+        filter: { enabled: true } as unknown as Pixi.Filter,
+        apply: (_view, u, v) => origins.push([u, v]),
+        setTile: (...rect: number[]) => tiles.push(rect),
+        destroy: () => {},
+      }),
+    });
+    renderer.setSpriteNames(['bg/tile']);
+    const { world, batch } = oneShipWorld();
+    const floor = {
+      spriteId: 0,
+      horizon: 100,
+      bottom: 200,
+      height: 24,
+      scroll: 0.5,
+      sway: 0,
+      turn: 0,
+      fog: 0x102040,
+      fogDepth: 128,
+      alpha: 1,
+      from: 50,
+      to: 500,
+    };
+    const camera = { x: 0, y: 0 };
+    const floored: WorldView = {
+      camera,
+      parallax: null,
+      terrain: null,
+      batches: [batch],
+      effects: { raster: [], cycles: [], mode7: floor },
+    };
+    // Without a floor: nothing on the layer but the idle sprite, and no filter.
+    renderer.bindWorld(world);
+    expect(renderer.mode7.active).toBe(false);
+    expect(renderer.mode7.filter).toBeNull();
+    renderer.bindWorld(floored);
+    expect(renderer.mode7.filter).not.toBeNull();
+    expect(renderer.layers.layers[LayerId.BgMid].children[0]).toBe(renderer.mode7.sprite);
+    // Outside the floor's range: hidden.
+    renderer.render(frameOf(0, floored));
+    expect(renderer.mode7.active).toBe(false);
+    expect(renderer.mode7.sprite.visible).toBe(false);
+    // Inside it: drawn, with the filter attached.
+    camera.x = 120;
+    renderer.render(frameOf(1, floored));
+    expect(renderer.mode7.active).toBe(true);
+    expect(renderer.mode7.sprite.visible).toBe(true);
+    expect(renderer.mode7.sprite.filters).toHaveLength(1);
+    // The tile came from the atlas (`bg/tile` is 16×16 on the 32×16 second page) and the plane's
+    // origin from the camera.
+    expect(tiles).toEqual([[0, 0, 16, 16, 32, 16]]);
+    expect(origins.at(-1)).toEqual([60, 0]);
+    // A world without one unbinds it again.
+    renderer.bindWorld(world);
+    expect(renderer.mode7.active).toBe(false);
+    expect(renderer.mode7.sprite.visible).toBe(false);
   });
 
   it('rejects a parallax band off the background layers before binding anything', async () => {

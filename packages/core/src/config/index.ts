@@ -66,6 +66,13 @@
  * {@link GameConfig.optionRecovery}; {@link MAX_LOOP}, {@link MAX_TIME_LIMIT},
  * {@link MAX_STARTING_LIVES}) and the assists / feel options ({@link PlayOptions},
  * {@link DEFAULT_PLAY_OPTIONS}, {@link GAME_SPEEDS} — `UserOptions.play`).
+ * M3-02: the visual & mechanic extras — {@link GameConfig.slowdown} ({@link SLOWDOWN_THRESHOLD},
+ * {@link SLOWDOWN_RUN_TICKS}), {@link GameConfig.graze}, {@link GameConfig.deathBomb}
+ * ({@link MAX_DEATH_BOMB_TICKS}, {@link DEFAULT_DEATH_BOMB_TICKS}) and
+ * {@link GameConfig.blackHole}, all four offered as `UserOptions.play` rows — and the display
+ * options {@link DisplayOptions.crtFilter} ({@link CRT_FILTERS}, {@link CrtFilter},
+ * {@link CRT_MAX_HEIGHT}) and {@link DisplayOptions.aspect} ({@link ASPECT_MODES},
+ * {@link AspectMode}).
  *
  * **User options (M1-17).** {@link UserOptions} — the *presentation-only* options the player sets
  * in the Options screen and `core/save` persists (plan §1.5: sim-affecting options live in
@@ -227,6 +234,26 @@ export const MAX_TIME_LIMIT = 216_000;
  * `core/scoring` `MAX_LIVES`.
  */
 export const MAX_STARTING_LIVES = 9;
+
+/**
+ * Longest {@link GameConfig.deathBomb} window in ticks (M3-02 — shmup_feat.md §10 "[P2] death-bomb
+ * window: bomb within a few frames after hit cancels death"; half a second at 60 Hz).
+ */
+export const MAX_DEATH_BOMB_TICKS = 30;
+
+/**
+ * On-screen objects a tick must carry before the **authentic slowdown** kicks in (M3-02 —
+ * shmup_feat.md §3 "[P2] optional authentic slowdown: deterministic tick-skipping when on-screen
+ * object load exceeds a threshold"): enemy bullets + lasers + enemies + boss parts + player shots +
+ * items of the tick just simulated ({@link GameConfig.slowdown}).
+ */
+export const SLOWDOWN_THRESHOLD = 96;
+
+/**
+ * Ticks the authentic slowdown runs for every tick it skips (M3-02): 1 = the classic every-other
+ * frame halving of the SNES.
+ */
+export const SLOWDOWN_RUN_TICKS = 1;
 
 /** Lowest {@link GameConfig.bulletSpeedMul}. */
 export const MIN_BULLET_SPEED_MUL = 0.25;
@@ -658,6 +685,39 @@ export interface GameConfig {
    * Meter mode only (the Direct-mode ship has no Options). Default `false`.
    */
   readonly optionRecovery: boolean;
+  /**
+   * **Authentic slowdown** (M3-02 — shmup_feat.md §3 "[P2] optional authentic slowdown:
+   * deterministic tick-skipping when on-screen object load exceeds a threshold (Gradius III SNES
+   * feel)"): while a tick ends with more than {@link SLOWDOWN_THRESHOLD} live objects on screen the
+   * World runs only every other tick (`core/world` — the skipped ticks behave like hit-stop:
+   * phases 2–8 do not run). Computed from simulation state alone, so it is deterministic and
+   * replays stay in sync. Default `false`.
+   */
+  readonly slowdown: boolean;
+  /**
+   * **Graze scoring** (M3-02 — shmup_feat.md §22 "[P2] graze detection (radius > hurtbox,
+   * per-bullet grazed bit) if we add grazing score"): an enemy bullet that passes within
+   * `core/bullets` `GRAZE_MARGIN` of a living ship without hitting it is *grazed* once (the
+   * bullet's `BulletFlag.Grazed` bit) and pays the content's `ContentDb.scoring.graze` points.
+   * Default `false`.
+   */
+  readonly graze: boolean;
+  /**
+   * The **death-bomb window** in ticks (M3-02 — shmup_feat.md §10 "[P2] death-bomb window (bomb
+   * within a few frames after hit cancels death) — only if we include bombs"): a fatal hit on a
+   * ship that still holds a bomb (`PlayerShip.bombs`, the Direct ship's black holes) does not kill
+   * it at once — for this many ticks a Special press spends a bomb and cancels the death. 0 (the
+   * default) = off; at most {@link MAX_DEATH_BOMB_TICKS}.
+   */
+  readonly deathBomb: number;
+  /**
+   * The **black-hole bomb** (M3-02 — shmup_feat.md §7C "[P2] modern series mechanics … black-hole
+   * bomb (vortex pulls bullets/enemies, then lightning)"): the Direct-mode ship's signature
+   * special. The stage's yellow item **stocks** a black hole (`core/blackhole`
+   * `MAX_BLACK_HOLE_STOCK`) instead of detonating a smart bomb at once, and a Special press throws
+   * one. Ignored in meter mode (whose Special steers the Options). Default `false`.
+   */
+  readonly blackHole: boolean;
 }
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20). */
@@ -722,6 +782,10 @@ export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
   timeLimit: 0,
   invincible: false,
   optionRecovery: false,
+  slowdown: false,
+  graze: false,
+  deathBomb: 0,
+  blackHole: false,
 });
 
 /**
@@ -818,7 +882,9 @@ export function withDifficulty(
  * a {@link ShieldChoice} (M2-03), `optionChoice` an {@link OptionChoice} (M2-04),
  * `autofireMode` an {@link AutofireMode} (M2-16); M3-01: `loop` an integer 1–{@link MAX_LOOP},
  * `timeLimit` an integer 0–{@link MAX_TIME_LIMIT}, `invincible` / `optionRecovery` booleans, and
- * `startingLives` reaches {@link MAX_STARTING_LIVES} (the secret code's lives). Other string presets
+ * `startingLives` reaches {@link MAX_STARTING_LIVES} (the secret code's lives); M3-02: `slowdown` /
+ * `graze` / `blackHole` booleans and `deathBomb` an integer 0–{@link MAX_DEATH_BOMB_TICKS}. Other
+ * string presets
  * and booleans are not validated at runtime — the types cover them.
  *
  * @param overrides - Fields to change.
@@ -876,11 +942,12 @@ export function resolveGameConfig(
   requireNumber('coopExtra', config.coopExtra, 0, MAX_COOP_EXTRA);
   requireInteger('loop', config.loop, 1, MAX_LOOP);
   requireInteger('timeLimit', config.timeLimit, 0, MAX_TIME_LIMIT);
+  requireInteger('deathBomb', config.deathBomb, 0, MAX_DEATH_BOMB_TICKS);
   const coop: unknown = config.coop;
   if (typeof coop !== 'boolean') {
     throw new RangeError(`GameConfig.coop must be a boolean, got ${String(coop)}`);
   }
-  for (const name of ['invincible', 'optionRecovery'] as const) {
+  for (const name of ['invincible', 'optionRecovery', 'slowdown', 'graze', 'blackHole'] as const) {
     const flag: unknown = config[name];
     if (typeof flag !== 'boolean') {
       throw new RangeError(`GameConfig.${name} must be a boolean, got ${String(flag)}`);
@@ -1331,6 +1398,44 @@ export const SCALE_MODES = Object.freeze(['integer', 'fit', 'stretch'] as const)
 export type ScaleMode = (typeof SCALE_MODES)[number];
 
 /**
+ * The CRT / scanline filter (M3-02, shmup_feat.md §18 "[P2] CRT / scanline filter: Off / Light /
+ * Full (cap output to 1080p on TV for cost)"): `off` (the default), `light` (scanlines only) and
+ * `full` (scanlines, an aperture-grille mask and a vignette). `render-pixi` `effects`
+ * ({@link CRT_LOOKS}) runs it over the **upscaled** frame in the second pass, at most
+ * {@link CRT_MAX_HEIGHT} rows on a TV.
+ */
+export const CRT_FILTERS = Object.freeze(['off', 'light', 'full'] as const);
+
+/** One of {@link CRT_FILTERS}. */
+export type CrtFilter = (typeof CRT_FILTERS)[number];
+
+/**
+ * Display rows the CRT filter is computed at, at most (shmup_feat.md §18 "cap output to 1080p on
+ * TV"): a 4K TV still pays for a 1080p filter pass, the result scaled up by the canvas.
+ */
+export const CRT_MAX_HEIGHT = 1080;
+
+/**
+ * How the frame's picture is shaped on the display (M3-02, shmup_feat.md §18 "[P2] widescreen
+ * Darius-style ultra-wide mode for desktop" and §3 "classic 4:3 mode with pillarbox side art"):
+ *
+ * - `normal` (the default) — the frame fills the display as {@link DisplayOptions.scaleMode} says;
+ *   what is left over is plain letterbox.
+ * - `wide` — **ultra-wide desktop**: the frame keeps the same picture but the space beside it is
+ *   filled with **side panels** (a dimmed extension of the stage's backdrop) instead of black, so a
+ *   21:9 monitor shows a Darius-style wide cabinet rather than two black bars.
+ * - `classic` — **4:3 pillarbox**: the frame is confined to the largest 4:3 window of the display
+ *   (the picture is never cropped — it is letterboxed inside that window) and the rest of the width
+ *   becomes side panels, the console look on a widescreen TV.
+ *
+ * Presentation only: the playfield stays 384×216 in every mode, so the simulation never changes.
+ */
+export const ASPECT_MODES = Object.freeze(['normal', 'wide', 'classic'] as const);
+
+/** One of {@link ASPECT_MODES}. */
+export type AspectMode = (typeof ASPECT_MODES)[number];
+
+/**
  * Display options (presentation only). M2-02 brought the bullet palette, M2-08 the scale mode, the
  * screen-shake switch, reduced flashing and the hitbox marker, M2-09 the boss HP bar.
  */
@@ -1353,6 +1458,13 @@ export interface DisplayOptions {
    * game had one; M2-09, shmup_feat.md §13).
    */
   readonly bossHpBar: boolean;
+  /**
+   * The CRT / scanline filter ({@link CRT_FILTERS}; default `off`; M3-02). Costs one full-screen
+   * pass over the upscaled frame, capped at {@link CRT_MAX_HEIGHT} rows.
+   */
+  readonly crtFilter: CrtFilter;
+  /** How the picture is shaped on the display ({@link ASPECT_MODES}; default `normal`; M3-02). */
+  readonly aspect: AspectMode;
 }
 
 /**
@@ -1382,14 +1494,35 @@ export interface PlayOptions {
   readonly optionRecovery: boolean | null;
   /** RUMBLE: gamepads rumble on deaths and boss blasts (`vibrationActuator`; default on). */
   readonly rumble: boolean;
+  /** SLOWDOWN: {@link GameConfig.slowdown} of the next games (M3-02; default off). */
+  readonly slowdown: boolean;
+  /** GRAZE: {@link GameConfig.graze} of the next games (M3-02; default off). */
+  readonly graze: boolean;
+  /**
+   * DEATH BOMB: turns on {@link GameConfig.deathBomb} for the next games (M3-02) — the window is
+   * {@link DEFAULT_DEATH_BOMB_TICKS} ticks. Default off.
+   */
+  readonly deathBomb: boolean;
+  /** BLACK HOLE: {@link GameConfig.blackHole} of the next games (M3-02; default off). */
+  readonly blackHole: boolean;
 }
 
-/** Assists off, the normal speed, rumble on. */
+/**
+ * The death-bomb window the DEATH BOMB option asks for, in ticks (M3-02): eight ticks — a touch
+ * over an eighth of a second, the classic "one blink" reaction window.
+ */
+export const DEFAULT_DEATH_BOMB_TICKS = 8;
+
+/** Assists off, the normal speed, rumble on, every M3-02 extra off. */
 export const DEFAULT_PLAY_OPTIONS: PlayOptions = Object.freeze({
   speed: 100,
   invincible: false,
   optionRecovery: null,
   rumble: true,
+  slowdown: false,
+  graze: false,
+  deathBomb: false,
+  blackHole: false,
 });
 
 /**
@@ -1434,6 +1567,8 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
     reduceFlashing: false,
     showHitbox: false,
     bossHpBar: false,
+    crtFilter: 'off',
+    aspect: 'normal',
   }),
   play: DEFAULT_PLAY_OPTIONS,
 });
@@ -1561,6 +1696,8 @@ export function resolveUserOptions(value: unknown): UserOptions {
         typeof display.reduceFlashing === 'boolean' ? display.reduceFlashing : dd.reduceFlashing,
       showHitbox: typeof display.showHitbox === 'boolean' ? display.showHitbox : dd.showHitbox,
       bossHpBar: typeof display.bossHpBar === 'boolean' ? display.bossHpBar : dd.bossHpBar,
+      crtFilter: oneOf(display.crtFilter, CRT_FILTERS) ?? dd.crtFilter,
+      aspect: oneOf(display.aspect, ASPECT_MODES) ?? dd.aspect,
     }),
     play: resolvePlayOptions(root.play),
   });
@@ -1582,6 +1719,10 @@ function resolvePlayOptions(value: unknown): PlayOptions {
     invincible: typeof play.invincible === 'boolean' ? play.invincible : d.invincible,
     optionRecovery: typeof play.optionRecovery === 'boolean' ? play.optionRecovery : null,
     rumble: typeof play.rumble === 'boolean' ? play.rumble : d.rumble,
+    slowdown: typeof play.slowdown === 'boolean' ? play.slowdown : d.slowdown,
+    graze: typeof play.graze === 'boolean' ? play.graze : d.graze,
+    deathBomb: typeof play.deathBomb === 'boolean' ? play.deathBomb : d.deathBomb,
+    blackHole: typeof play.blackHole === 'boolean' ? play.blackHole : d.blackHole,
   });
 }
 
@@ -1706,6 +1847,11 @@ export function userGameOverrides(options: UserOptions): Partial<GameConfig> {
   if (play !== undefined) {
     if (play.invincible) out.invincible = true;
     if (play.optionRecovery !== null) out.optionRecovery = play.optionRecovery;
+    // M3-02: the visual & mechanic extras that change what a tick does.
+    if (play.slowdown) out.slowdown = true;
+    if (play.graze) out.graze = true;
+    if (play.deathBomb) out.deathBomb = DEFAULT_DEATH_BOMB_TICKS;
+    if (play.blackHole) out.blackHole = true;
   }
   if (game.oneButton) {
     out.autofire = true;

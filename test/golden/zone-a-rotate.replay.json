@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 1127,
@@ -67,9 +71,9 @@
     "AOcI"
   ],
   "hashes": [
-    441248327
+    3419182513
   ],
-  "finalHash": 2311545315,
+  "finalHash": 3883111441,
   "description": "HALCYON BULWARK with Rotate Options and the Rotate Shield (M2-04): orbiting Options, spinning pods",
   "expected": {
     "status": "stageClear",

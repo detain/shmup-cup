@@ -232,6 +232,8 @@ describe('core/scenes options: display rows (edges)', () => {
         reduceFlashing: true,
         showHitbox: true,
         bossHpBar: false,
+        crtFilter: 'light',
+        aspect: 'classic',
       },
     });
     await first.flush();
@@ -295,7 +297,7 @@ describe('core/scenes options: display rows (edges)', () => {
     expect(save.options.display.scaleMode).toBe('integer');
   });
 
-  it('draws all seven rows of the DISPLAY page inside the panel and the frame, one line apart', () => {
+  it('draws all nine rows of the DISPLAY page inside the panel and the frame, one line apart', () => {
     const s = new Session(createSaveStore(null));
     s.openOptionsFromTitle();
     const ui = s.game.renderFrame().ui;
@@ -311,7 +313,17 @@ describe('core/scenes options: display rows (edges)', () => {
       }
     }
     // The page is drawn last (over the Options screen): its rows win the map.
-    const labels = ['BULLETS', 'SCALE', 'SHAKE', 'FLASHES', 'HITBOX', 'BOSS HP', 'BACK'];
+    const labels = [
+      'BULLETS',
+      'SCALE',
+      'SHAKE',
+      'FLASHES',
+      'HITBOX',
+      'BOSS HP',
+      'CRT',
+      'ASPECT',
+      'BACK',
+    ];
     const ys = labels.map((label) => rows.get(label));
     expect(ys.every((y) => y !== undefined)).toBe(true);
     for (let i = 1; i < ys.length; i++) expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBe(14);

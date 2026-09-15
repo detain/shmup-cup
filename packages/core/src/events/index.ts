@@ -203,6 +203,16 @@ export const UserOptionKind = {
    * `SaveStore.options`) to its input adapter; `param` is unused (0).
    */
   InputSettings: 10,
+  /**
+   * CRT (M3-02): `param` = index of the chosen filter in `core/config` `CRT_FILTERS` (the host
+   * switches the renderer's CRT pass).
+   */
+  CrtFilter: 11,
+  /**
+   * ASPECT (M3-02): `param` = index of the chosen picture shape in `core/config` `ASPECT_MODES`
+   * (the host re-places the frame and its side panels on the display).
+   */
+  Aspect: 12,
 } as const;
 
 /** A {@link UserOptionKind} code. */
@@ -388,6 +398,15 @@ export const FX_CUES = {
   BossChain: 6,
   /** The final blast of a boss's death sequence (M1-13): `x`/`y` = the boss's origin. */
   BossBlast: 7,
+  /**
+   * An enemy bullet was **grazed** (M3-02 — `GameConfig.graze`): `x`/`y` = the bullet, `param` =
+   * the player slot. One per bullet (its `BulletFlag.Grazed` bit).
+   */
+  Graze: 8,
+  /**
+   * A **black hole** opened or discharged (M3-02 — `core/blackhole`): `x`/`y` = its centre.
+   */
+  BlackHole: 9,
 } as const;
 
 /** One of the {@link FX_CUES} ids. */

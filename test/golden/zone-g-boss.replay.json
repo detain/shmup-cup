@@ -57,7 +57,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 2003,
@@ -67,11 +71,11 @@
     "ANMP"
   ],
   "hashes": [
-    2261836573,
-    2646378707,
-    853934229
+    837402096,
+    915003046,
+    605222500
   ],
-  "finalHash": 345617505,
+  "finalHash": 1206678007,
   "description": "the stage skip to FACET MONARCH (M2-13 tests): the full loadout under the Arcade penalty, its crystals broken, then the core behind them shot down",
   "expected": {
     "status": "stageClear",

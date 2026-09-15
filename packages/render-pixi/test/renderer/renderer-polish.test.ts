@@ -193,7 +193,7 @@ describe('render-pixi/renderer scale modes (plan M2-08)', () => {
     const { renderer } = await makeRenderer();
     const { frame } = frameWithWorld();
     renderer.render(frame);
-    const quad = (presented.screen as Pixi.Container).children[0] as Pixi.Sprite;
+    const quad = (presented.screen as Pixi.Container).children[2] as Pixi.Sprite;
     expect(renderer.scaleMode).toBe('integer');
     expect([quad.scale.x, quad.scale.y, quad.x, quad.y]).toEqual([2, 2, 116, 84]);
     renderer.setScaleMode('stretch');

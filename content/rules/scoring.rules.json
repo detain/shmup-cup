@@ -4,6 +4,7 @@
   "scoring": {
     "bulletCancel": 10,
     "repeatKills": 40,
-    "repeatPercent": 10
+    "repeatPercent": 10,
+    "graze": 10
   }
 }

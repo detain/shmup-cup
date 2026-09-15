@@ -73,7 +73,9 @@
  * score-milking cap ({@link ScoringRules.repeatKills} / {@link ScoringRules.repeatPercent},
  * {@link MAX_REPEAT_KILLS}, {@link DEFAULT_REPEAT_KILLS}, {@link DEFAULT_REPEAT_PERCENT} — applied
  * by `core/enemies` to script- and boss-spawned enemies) and the assisted mark of a hi-score row
- * ({@link HiScoreEntry.assisted}).
+ * ({@link HiScoreEntry.assisted}); M3-02 the graze value ({@link ScoringRules.graze},
+ * {@link MAX_GRAZE_POINTS}, {@link DEFAULT_GRAZE_POINTS} — paid by `core/bullets` `grazePlayers`)
+ * and {@link ScoringSystem.rules}.
  *
  * **Planned API.** Rare 1UP items (Direct mode, M2-05). (The planned `insertHiScore` became
  * `core/save`'s in M1-17.)
@@ -122,6 +124,13 @@ export interface ScoringRules {
   readonly repeatKills?: number;
   /** Percent of the score a capped kill still gives (0–100; omitted: {@link DEFAULT_REPEAT_PERCENT}). */
   readonly repeatPercent?: number;
+  /**
+   * Points one **graze** pays (M3-02 — `GameConfig.graze`, shmup_feat.md §22 "[P2] graze
+   * detection … if we add grazing score"): an enemy bullet that passes close by a ship without
+   * hitting it scores this much, once per bullet (`core/bullets` `grazePlayers`). Omitted:
+   * {@link DEFAULT_GRAZE_POINTS}; 0 = grazes score nothing (the bullets are still marked).
+   */
+  readonly graze?: number;
 }
 
 /** Highest {@link ScoringRules.bulletCancel} a rules file may give. */
@@ -136,14 +145,22 @@ export const DEFAULT_REPEAT_KILLS = 40;
 /** The milking cap's default share of the score after the cap, in percent (M3-01). */
 export const DEFAULT_REPEAT_PERCENT = 10;
 
+/** Highest {@link ScoringRules.graze} a rules file may give (M3-02). */
+export const MAX_GRAZE_POINTS = 1000;
+
+/** Points one graze pays by default (M3-02). */
+export const DEFAULT_GRAZE_POINTS = 10;
+
 /**
  * The built-in scoring rules (what `content/rules/scoring.rules.json` ships with): 10 points per
- * cancelled bullet; M3-01's milking cap — 40 full-score kills per spawned enemy kind, then 10 %.
+ * cancelled bullet; M3-01's milking cap — 40 full-score kills per spawned enemy kind, then 10 %;
+ * M3-02's 10 points a graze.
  */
 export const DEFAULT_SCORING_RULES: ScoringRules = Object.freeze({
   bulletCancel: 10,
   repeatKills: DEFAULT_REPEAT_KILLS,
   repeatPercent: DEFAULT_REPEAT_PERCENT,
+  graze: DEFAULT_GRAZE_POINTS,
 });
 
 /** Score state of one player (a class: its fields stay unboxed numbers). */
@@ -375,12 +392,19 @@ export interface ScoringHost extends ScoreHost {
   readonly config?: Pick<GameConfig, 'extendFirst' | 'extendEvery'>;
   /** The session status: no extends while it is `gameOver`. */
   readonly status?: string;
+  /**
+   * The validated content, for its scoring rules ({@link ScoringSystem.rules}; M3-02 — the graze
+   * value). Absent = {@link DEFAULT_SCORING_RULES}.
+   */
+  readonly content?: { readonly scoring: ScoringRules | null };
 }
 
 /** Credits the tick's scoring events (see the module docs). */
 export interface ScoringSystem {
   /** The session's scores. */
   readonly board: ScoreBoard;
+  /** The content's scoring rules (`ContentDb.scoring`, else {@link DEFAULT_SCORING_RULES}). */
+  readonly rules: ScoringRules;
   /** Enemy kills of the current outcomes already credited (hashed). */
   readonly killsScored: number;
   /** Formation bonuses of the current outcomes already credited (hashed). */
@@ -421,6 +445,8 @@ export interface ScoringSystem {
 class ScoringSystemImpl implements ScoringSystem {
   /** See {@link ScoringSystem.board}. */
   readonly board: ScoreBoard;
+  /** See {@link ScoringSystem.rules}. */
+  readonly rules: ScoringRules;
   /** See {@link ScoringSystem.killsScored}. */
   killsScored = 0;
   /** See {@link ScoringSystem.bonusesScored}. */
@@ -436,6 +462,7 @@ class ScoringSystemImpl implements ScoringSystem {
   constructor(host: ScoringHost) {
     this.host = host;
     this.board = createScoreBoard(MAX_PLAYERS);
+    this.rules = host.content?.scoring ?? DEFAULT_SCORING_RULES;
     this.resetExtends();
   }
 

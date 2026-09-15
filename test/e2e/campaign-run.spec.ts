@@ -255,8 +255,16 @@ test.describe('campaign run (web build)', () => {
       await tap(page, 'Enter'); // the top exit
       await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     }
+    // M3-02: zone H is a final zone with an escape stage — the way out is flown before the ending.
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    await expect.poll(async () => (await view(page)).stage).toBe('escape');
+    await clearZone(page);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'stageClear');
+    await waitFrames(page, 10);
+    await tap(page, 'Enter'); // skip the escape's tally
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'ending');
     const end = await view(page);
+    // The escape is the final zone's, not a zone of its own: the route is unchanged.
     expect(end.route).toEqual([0, 1, 3, 5, 7]);
     // No ship lost: the flawless ending of the citadel.
     expect(end.ending).toBe('citadel-flawless');

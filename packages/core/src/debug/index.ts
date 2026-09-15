@@ -61,6 +61,10 @@
  * M3-01 added two terms, each hashed **only when in use** so every World recorded before them
  * hashes as it did: a loadout's Spread Gun level (`Loadout.spread`, when non-zero) and the
  * caravan's clock (`World.timeLeft`, `timeUp`, `clockPaid` — only in a World with a time limit).
+ * M3-02 added the same way (`mixExtras`, each term only in a World whose config asks for it): the
+ * authentic slowdown's load, skip clock and skip flag (`GameConfig.slowdown`), the graze count
+ * (`GameConfig.graze`), every ship's bomb stock and death-bomb window (with the black-hole bomb or
+ * a death-bomb window) and every open black hole (`GameConfig.blackHole`).
  *
  * **Stage jumps.** {@link skipToBoss} jumps a World's stage to {@link BOSS_SKIP_LEAD} px before its
  * first `warning` / `boss` event and {@link jumpToCheckpoint} / {@link jumpToNextCheckpoint}
@@ -616,6 +620,13 @@ function mixBosses(world: World): void {
     mixNumber(b.phaseTicks);
     mixNumber(b.fightTicks);
     mixWord(b.escaped ? 1 : 0);
+    // The boss pull field (M3-02 — the suction and grabber bosses), only while one is open, so
+    // every boss recorded before it hashes as it did.
+    if (b.pullRadius > 0) {
+      mixNumber(b.pullRadius);
+      mixNumber(b.pullStrength);
+      mixNumber(b.pullTicks);
+    }
     mixWord(b.script === null ? 0 : 1);
     mixNumber(b.wakeTick);
     mixNumber(b.spiralWays);
@@ -796,7 +807,51 @@ export function hashWorld(world: World): number {
     mixNumber(world.timeLeft);
     mixWord((world.timeUp ? 1 : 0) | (world.clockPaid ? 2 : 0));
   }
+  mixExtras(world);
   return accumulator[0];
+}
+
+/**
+ * Mixes the M3-02 extras — each one only in a World that has it on, so every earlier golden
+ * replay's hashes stay exactly as they were.
+ *
+ * @remarks
+ * `GameConfig.slowdown`: the load metric, the skip clock and whether this tick was skipped.
+ * `GameConfig.graze`: the grazes so far (the per-bullet `Grazed` bit is already in the bullet
+ * pool). The bombs and the death-bomb window: each ship's stock and window, with a World that has
+ * either the black-hole bomb or a death-bomb window. The black holes: every open vortex.
+ *
+ * @param world - The world.
+ */
+function mixExtras(world: World): void {
+  const config = world.config;
+  if (config.slowdown) {
+    mixNumber(world.slowLoad);
+    mixNumber(world.slowRun);
+    mixWord(world.slowSkip ? 1 : 0);
+  }
+  if (config.graze) mixNumber(world.grazes);
+  const holes = world.blackholes;
+  const bombs = holes.enabled || config.deathBomb > 0;
+  if (bombs) {
+    const players = world.players;
+    for (let i = 0; i < players.length; i++) {
+      mixNumber(players[i].bombs);
+      mixNumber(players[i].bombTicks);
+    }
+  }
+  if (!holes.enabled) return;
+  const slots = holes.holes;
+  for (let i = 0; i < slots.length; i++) {
+    const hole = slots[i];
+    mixWord(hole.active ? 1 : 0);
+    if (!hole.active) continue;
+    mixNumber(hole.x);
+    mixNumber(hole.y);
+    mixNumber(hole.age);
+    mixNumber(hole.owner);
+    mixNumber(hole.bolt);
+  }
 }
 
 /**

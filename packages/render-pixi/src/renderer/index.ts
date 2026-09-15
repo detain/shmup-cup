@@ -70,10 +70,13 @@
  * @module
  */
 import {
+  ASPECT_MODES,
   LayerId,
   defineModule,
+  type AspectMode,
   type BulletPalette,
   type CameraView,
+  type CrtFilter,
   type IRenderer,
   type ScaleMode,
   type RenderFrame,
@@ -90,12 +93,19 @@ import {
 } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import {
+  createCrtPass,
   createLayerEffects,
+  createMode7Filter,
+  createMode7Floor,
   createScorePopups,
   createScreenEffects,
+  type CrtFilterHandle,
+  type CrtPass,
   type EffectSettings,
   type LayerEffectFilter,
   type LayerEffects,
+  type Mode7Filter,
+  type Mode7Floor,
   type ScorePopups,
   type ScreenEffects,
 } from '../effects/index.js';
@@ -136,7 +146,7 @@ import {
   type BitmapFont,
 } from '../text/index.js';
 import { createDrawListView, type DrawListView } from '../ui/index.js';
-import { computeViewport, type Viewport } from '../viewport/index.js';
+import { computeAspectViewport, type AspectViewport, type Viewport } from '../viewport/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -157,6 +167,39 @@ const OVERLAY_MARGIN = 32;
 
 /** Most ticks one frame advances the effects (a longer gap — a hitch — is cut). */
 const MAX_EFFECT_STEP = 60;
+
+/**
+ * Opacity of the aspect modes' side panels (plan M3-02): a dim surround, never bright enough to
+ * pull the eye off the picture.
+ */
+export const PANEL_ALPHA = 0.35;
+
+/**
+ * The atlas rectangle of a Mode-7 floor's tile, for {@link Mode7Floor.bind} (plan M3-02).
+ *
+ * @param atlas - The atlas, or `null`.
+ * @param names - The world's sprite name table, or `null`.
+ * @param spriteId - Index of the floor's sprite in that table (-1 = none).
+ * @returns `[x, y, w, h, pageWidth, pageHeight]` of the sprite's frame 0, or `null` when the atlas
+ *   does not have it.
+ */
+function mode7TileRect(
+  atlas: Atlas | null,
+  names: readonly string[] | null,
+  spriteId: number,
+): readonly number[] | null {
+  if (atlas === null || names === null || spriteId < 0 || spriteId >= names.length) return null;
+  const manifest = atlas.manifest;
+  const sprite = manifest.sprites[names[spriteId]] as { frames?: readonly string[] } | undefined;
+  const frameName = sprite?.frames?.[0];
+  if (frameName === undefined) return null;
+  const info = manifest.frames[frameName] as
+    { x: number; y: number; w: number; h: number; p: number } | undefined;
+  if (info === undefined) return null;
+  const page = manifest.pages[info.p] as { w: number; h: number } | undefined;
+  if (page === undefined) return null;
+  return [info.x, info.y, info.w, info.h, page.w, page.h];
+}
 
 /** Camera of frames without a world (particles and popups then use frame pixels). */
 const NO_CAMERA: CameraView = Object.freeze({ x: 0, y: 0 });
@@ -234,6 +277,22 @@ export interface PixiRendererOptions {
    * @returns The filter.
    */
   readonly createLayerEffectFilter?: (rows: number) => LayerEffectFilter;
+  /** How the picture is shaped on the display (plan M3-02; default `normal`). */
+  readonly aspect?: AspectMode;
+  /**
+   * Creates the CRT pass's filter (default the `effects` module's `createCrtFilter`). Tests in
+   * Node — where Pixi cannot probe a WebGL context — pass a fake.
+   *
+   * @returns The filter.
+   */
+  readonly createCrtFilter?: () => CrtFilterHandle;
+  /**
+   * Creates the Mode-7 floor's filter (default the `effects` module's `createMode7Filter` on the
+   * atlas's first page; without an atlas there is none). Tests pass a fake.
+   *
+   * @returns The filter.
+   */
+  readonly createMode7Filter?: () => Mode7Filter;
 }
 
 /** The Pixi-backed renderer. */
@@ -256,6 +315,30 @@ export interface PixiRenderer extends IRenderer {
    * @param mode - The mode.
    */
   setScaleMode(mode: ScaleMode): void;
+  /** How the picture is shaped on the display (plan M3-02). */
+  readonly aspect: AspectMode;
+  /**
+   * Switches the aspect mode (normal / ultra-wide / classic 4:3 — the Options screen's ASPECT,
+   * plan M3-02) and re-places the frame and its side panels at once.
+   *
+   * @param mode - The mode.
+   */
+  setAspect(mode: AspectMode): void;
+  /** The frame's window on the display and the side panels beside it (plan M3-02). */
+  readonly panels: AspectViewport;
+  /** The CRT / scanline setting in use (plan M3-02). */
+  readonly crtFilter: CrtFilter;
+  /**
+   * Switches the CRT / scanline filter (off / light / full — the Options screen's CRT, plan
+   * M3-02); it runs over the upscaled picture, capped at `core/config` `CRT_MAX_HEIGHT` rows.
+   *
+   * @param setting - One of `core/config` `CRT_FILTERS`.
+   */
+  setCrtFilter(setting: CrtFilter): void;
+  /** The CRT pass (plan M3-02). */
+  readonly crt: CrtPass;
+  /** The bound world's Mode-7 floor (plan M3-02; idle without one). */
+  readonly mode7: Mode7Floor;
   /** Whether the ships' hitbox markers are drawn (plan M2-08). */
   readonly showHitbox: boolean;
   /**
@@ -633,6 +716,17 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     height,
     createFilter: options.createLayerEffectFilter,
   });
+  // The Mode-7 floor (M3-02): a filtered sprite at the bottom of the mid-background layer.
+  const mode7: Mode7Floor = createMode7Floor({
+    layer: layers.layers[LayerId.BgMid],
+    width,
+    height,
+    createFilter:
+      options.createMode7Filter ??
+      (atlas !== null && atlas.pages.length > 0
+        ? (): Mode7Filter => createMode7Filter(atlas.pages[0])
+        : undefined),
+  });
   const hitboxLayer = layers.layers[LayerId.Hitbox];
   let showHitbox = options.showHitbox === true;
   hitboxLayer.visible = showHitbox;
@@ -654,14 +748,64 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   screen.addChild(frameSprite);
 
   let scaleMode: ScaleMode = options.scaleMode ?? 'integer';
+  let aspect: AspectMode = options.aspect ?? 'normal';
   let displayW = Math.max(1, Math.floor(options.displayWidth));
   let displayH = Math.max(1, Math.floor(options.displayHeight));
-  let viewport = computeViewport(scaleMode, displayW, displayH, width, height);
+  let placement: AspectViewport = computeAspectViewport(
+    ASPECT_MODES.indexOf(aspect),
+    scaleMode,
+    displayW,
+    displayH,
+    width,
+    height,
+  );
+  let viewport: Viewport = placement.viewport;
 
-  /** Positions and scales the frame sprite according to the current `viewport`. */
+  // The side panels of the `wide` / `classic` aspect modes (M3-02): two rectangles beside the
+  // window, tinted with the frame's own backdrop so the picture sits in a lit surround instead of
+  // black. They are behind the frame sprite in the screen pass.
+  const panelLeftSprite = new Sprite(Texture.WHITE);
+  const panelRightSprite = new Sprite(Texture.WHITE);
+  for (const panel of [panelLeftSprite, panelRightSprite]) {
+    panel.tint = PALETTE.space;
+    panel.alpha = PANEL_ALPHA;
+    panel.visible = false;
+    screen.addChildAt(panel, 0);
+  }
+
+  // The CRT / scanline pass (M3-02): a filter over the whole second pass, off until asked for.
+  const crt: CrtPass = createCrtPass({
+    screen,
+    createFilter: options.createCrtFilter,
+  });
+
+  /** Positions and scales the frame sprite and the side panels for the current placement. */
   const applyViewport = (): void => {
     frameSprite.scale.set(viewport.scaleX, viewport.scaleY);
     frameSprite.position.set(viewport.x, viewport.y);
+    const left = placement.panelLeft;
+    const right = placement.panelRight;
+    panelLeftSprite.visible = left > 0;
+    panelLeftSprite.position.set(0, 0);
+    panelLeftSprite.scale.set(left > 0 ? left : 1, displayH);
+    panelRightSprite.visible = right > 0;
+    panelRightSprite.position.set(displayW - (right > 0 ? right : 0), 0);
+    panelRightSprite.scale.set(right > 0 ? right : 1, displayH);
+    crt.setViewport(viewport.scale, viewport.width, viewport.height, displayH);
+  };
+
+  /** Recomputes the placement from the display size, the scale mode and the aspect mode. */
+  const place = (): void => {
+    placement = computeAspectViewport(
+      ASPECT_MODES.indexOf(aspect),
+      scaleMode,
+      displayW,
+      displayH,
+      width,
+      height,
+    );
+    viewport = placement.viewport;
+    applyViewport();
   };
   applyViewport();
 
@@ -698,6 +842,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     bendingLasers = null;
     hitboxes?.destroy();
     hitboxes = null;
+    mode7.bind(null, null);
     layerEffects.bind(null);
     interpolatedTick = -1;
     boundWorld = null;
@@ -763,6 +908,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       }
       // Presentation effects (M2-08) — also without an atlas (they only filter layers).
       layerEffects.bind(world.effects ?? null);
+      // The Mode-7 floor (M3-02): it samples the atlas page the tile sits on.
+      const floor = world.effects?.mode7 ?? null;
+      mode7.bind(floor, floor === null ? null : mode7TileRect(atlas, spriteNames, floor.spriteId));
     }
     boundWorld = world;
   };
@@ -801,9 +949,27 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     setScaleMode(mode) {
       if (mode === scaleMode) return;
       scaleMode = mode;
-      viewport = computeViewport(scaleMode, displayW, displayH, width, height);
-      applyViewport();
+      place();
     },
+    get aspect() {
+      return aspect;
+    },
+    setAspect(mode: AspectMode) {
+      if (mode === aspect) return;
+      aspect = mode;
+      place();
+    },
+    get panels() {
+      return placement;
+    },
+    get crtFilter() {
+      return crt.setting;
+    },
+    setCrtFilter(setting: CrtFilter) {
+      crt.setSetting(setting);
+    },
+    crt,
+    mode7,
     get showHitbox() {
       return showHitbox;
     },
@@ -864,8 +1030,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       renderer.resize(w, h);
       displayW = w;
       displayH = h;
-      viewport = computeViewport(scaleMode, w, h, width, height);
-      applyViewport();
+      place();
     },
     render(frame: RenderFrame) {
       if (pattern !== null) pattern.update(frame.tick);
@@ -957,6 +1122,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
           }
         }
         layerEffects.sync(tick, camera, shakeY, effects.settings.rasterEffects);
+        mode7.sync(camera);
       }
       hitboxHistory = hitboxesInterpolated;
       layers.world.position.set(shakeX, shakeY);

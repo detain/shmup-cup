@@ -60,7 +60,11 @@
       "loop": 1,
       "timeLimit": 0,
       "invincible": false,
-      "optionRecovery": false
+      "optionRecovery": false,
+      "slowdown": false,
+      "graze": false,
+      "deathBomb": 0,
+      "blackHole": false
     }
   },
   "ticks": 2400,
@@ -70,10 +74,10 @@
     "AOAS"
   ],
   "hashes": [
-    400451789,
-    2058307509,
-    2739427361,
-    2674341093
+    1995640552,
+    4136768352,
+    3828796343,
+    37315241
   ],
-  "finalHash": 2674341093
+  "finalHash": 37315241
 }
