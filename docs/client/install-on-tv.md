@@ -2,7 +2,8 @@
 
 Shmup Cup builds are not in the Samsung store. During development they are installed ("side-loaded") from the
 Windows desktop that sits on the same network as the monitors. This page covers the one-time setup of a
-monitor and the PC, and how to install, start and remove an app. Two apps can be installed today: the
+monitor and the PC, how to install, start and remove an app, the game-mode build for the latency
+test and live reload for developers. Two apps can be installed today: the
 **Input Probe** ([input-probe.md](input-probe.md)) and the **game preview**, in which you fly the KESTREL ship
 around an empty starfield with the remote ([preview-build.md](preview-build.md)). Both use the same one-time
 setup.
@@ -111,6 +112,73 @@ but Play/Pause followed by Channel up three times opens a measuring panel and th
 tools — see [debug-tools.md](debug-tools.md). Build with plain `build` again before handing the
 game to anyone else.
 
+Since the platform-polish build the app also asks the TV for its **product information**
+permission (model name and firmware — only the debug build's panel reads them). The monitor grants
+it on install; nothing to confirm.
+
+## The game-mode build (latency A/B test)
+
+Newer Samsung TVs can switch their panel to a low-latency **Game Mode** when an app asks for it.
+Whether that works for a game like this one — and whether the M7 monitors react at all — is
+unknown, so the normal build does **not** ask for it. A second build that does lets you compare
+the delay from the remote to the screen (plan §8.5):
+
+```bat
+pnpm --filter @shmup/tizen build:game-mode
+pnpm --filter @shmup/tizen tizen:package
+pnpm --filter @shmup/tizen tizen:install
+pnpm --filter @shmup/tizen tizen:run
+```
+
+1. Install the **game-mode build**, start a game and film about ten short arrow presses and the
+   ship's movement at 240 frames per second, the remote and the screen in the same shot (as in the
+   input probe's latency test — [input-probe.md](input-probe.md)), and note whether the monitor
+   shows a Game Mode notice or changes its picture.
+2. Install the **normal build** (`pnpm --filter @shmup/tizen build`, then the same three commands)
+   and film the same.
+3. Report both delays (frames between the press and the ship moving) per monitor. The faster one
+   becomes the shipped build.
+
+It is the same app as the normal build (it installs over it and keeps your saves) and plays the
+same. For the debug build with game mode, set `TIZEN_GAME_MODE=1` before `build:dev`
+(Command Prompt: `set TIZEN_GAME_MODE=1`) — and clear it again afterwards (`set TIZEN_GAME_MODE=`),
+or every later build asks for Game Mode too.
+
+**Never ship a build made with `TIZEN_GAMEPADS` set.** That variable makes a build that checks for
+a gamepad when it starts — the TV then shows a popup whenever no gamepad is connected, which is
+wrong for a game played with the remote. It exists only for testing that Samsung feature.
+
+## Live reload while developing (`tizen:watch`)
+
+For quick iteration a developer can let the TV pick up every change automatically, without
+packaging and installing each time. On the PC (the TV must be able to reach it — allow port 5175
+through the firewall):
+
+```bat
+pnpm --filter @shmup/tizen tizen:watch
+```
+
+It builds the debug version, keeps rebuilding whenever a file changes, and serves the build from
+the PC. **Once**, after its first build, package and install that build — in a second Command
+Prompt, with `TIZEN_PROFILE` and `TV_IP` set as usual:
+
+```bat
+pnpm --filter @shmup/tizen tizen:package
+pnpm --filter @shmup/tizen tizen:install
+pnpm --filter @shmup/tizen tizen:run
+```
+
+From then on, every saved change rebuilds on the PC and the game on the TV **reloads itself** into
+the new build (it restarts at the loading bar). Stop the watcher with Ctrl+C. If the PC has several
+network addresses and the TV does not reload, set the right one first: `set
+SHMUP_LIVE_RELOAD_HOST=192.168.1.20` (and `SHMUP_LIVE_RELOAD_PORT` for another port).
+
+After the first reload the TV runs the game **from the PC** — whether everything still works there
+(the remote's extra buttons, EXIT) is one of the checks of plan §8.5: please note what does and
+does not. This build is for development only: build with plain `build` and install again before
+anyone else plays, and never leave a live-reload build on a monitor — without the PC it cannot
+reload (it keeps playing the build it has).
+
 ## Removing an app
 
 Remove it from the monitor's Apps panel like any other app (highlight it and use its options menu), or with the
@@ -134,3 +202,7 @@ saved settings and high scores.
 | Game preview: `No .wgt found` | Run `tizen:package` after the build (a new build removes the old `.wgt`) |
 | Game preview: Play/Pause + Ch ▲ ×3 opens nothing | The installed widget is a normal build — build with `pnpm --filter @shmup/tizen build:dev`, package and install again ([debug-tools.md](debug-tools.md)) |
 | Game preview: Play/Pause + Ch ▲ ×3 opens the developer panel on what should be a normal build | `apps\tizen\dist` came from `build:dev` or from a developer's `pnpm test:e2e` (which leaves a test build there) — run `pnpm --filter @shmup/tizen build`, then package and install again |
+| Game preview: at start the TV says a gamepad must be connected | The build was made with `TIZEN_GAMEPADS` set (the launch-time gamepad check). Clear it (`set TIZEN_GAMEPADS=`), build, package and install again |
+| Game preview: the game-mode build looks and feels exactly like the normal one | Possible — the M7 may ignore the Game Mode request. Film both builds anyway and report the two delays ([above](#the-game-mode-build-latency-ab-test)) |
+| Game preview: every build asks for Game Mode | `TIZEN_GAME_MODE` is still set in this Command Prompt — `set TIZEN_GAME_MODE=`, then build again |
+| `tizen:watch`: the TV does not reload after a change | The TV cannot reach the PC on port 5175 (firewall, another network), or the watcher picked the wrong network address — set `SHMUP_LIVE_RELOAD_HOST` to the PC's IP and restart it. The build installed on the TV must be the watcher's own first build |

@@ -41,12 +41,16 @@ export interface WindowSettings {
  * `webPreferences`: `contextIsolation`, `sandbox`, no `nodeIntegration`,
  * `backgroundThrottling: false`, no spellcheck, `autoplayPolicy: 'no-user-gesture-required'`.
  *
- * @param settings - Preload path and fullscreen flag.
+ * @param settings - Preload path, fullscreen flag and (M2-17) the remembered scale and position.
  * @returns Constructor options.
  *
  * @example
  * ```ts
  * new BrowserWindow(createWindowOptions({ preloadPath, fullscreen: false }));
+ * // M2-17: the remembered window — content 1536×864 (×4) at (300, 200)
+ * new BrowserWindow(
+ *   createWindowOptions({ preloadPath, fullscreen: false, scale: 4, x: 300, y: 200 }),
+ * );
  * ```
  */
 export function createWindowOptions(settings: WindowSettings): BrowserWindowConstructorOptions {

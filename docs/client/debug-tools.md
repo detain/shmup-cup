@@ -8,7 +8,9 @@ steps, slow motion, and shortcuts to the next checkpoint and to the boss.
 
 The tools exist only in **debug builds**. The normal build (the one a player would get) has none
 of them — no key combination turns them on. This page explains how to get a debug build onto the
-monitor, how to open the tools, how to read the panel, and the checklist for the release.
+monitor, how to open the tools, how to read the panel (on the TV with a line naming the monitor's
+model and firmware), how to copy a save out for a bug report, and the checklists for the release
+and for the platform-polish build.
 
 ## Which build has the tools
 
@@ -90,7 +92,10 @@ BUL 123/512 ENM 12/64 SHT 40/96 PRT 30/256
 RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  9524C84
 GOD HITBOX GRID STEP SLOW 2
+LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
+
+(The last line is the TV's **device line** — [below](#the-device-line). A browser has none.)
 
 | Field | Meaning | What is normal |
 |---|---|---|
@@ -106,6 +111,7 @@ GOD HITBOX GRID STEP SLOW 2
 | `BOOT` | Milliseconds from starting the app to the title | **under 10,000** (target 5,000) |
 | last on line 4 | The build id | quote it in reports |
 | line 5 | The tools that are on | empty in normal play |
+| line 6 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
 
 On the title (no game on screen) the bullet, enemy, rank and hash fields stay empty; in the pause
 menu they show the paused game's values.
@@ -130,6 +136,48 @@ simpler marker of the ship's hit spot: OPTIONS → DISPLAY → **HITBOX** in eve
 | Cyan boxes | Your shots |
 | White squares | Capsules |
 | Faint grid (second press) | The game's collision grid (for developers) |
+
+## The device line
+
+On the TV the panel has a **sixth line** with facts about the monitor, so every photo of the panel
+also says which monitor and firmware it came from:
+
+```text
+LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C69 GL1/4096
+```
+
+| Part | Meaning |
+|---|---|
+| `LS43AM702U` | The model (from the TV itself) |
+| `20_KANTSU2` | Samsung's model code (the year and chassis) |
+| `FW T-KSU2EUC-1234.5` | The firmware version — quote it when you report a problem |
+| `1920x1080@1` | The picture size the game gets and the pixel ratio (expect `1920x1080@1`) |
+| `C69` | The browser engine's version (Chrome 69 on Tizen 5.5) |
+| `GL1/4096` | The graphics version the game got and the largest picture it can load |
+
+- The line appears a moment after you open the tools (the TV is asked only then — a normal build
+  never asks). The panel shows at most 56 characters, so the end of a long line (`C69 GL1/…`) may
+  be cut off; the full facts are also written to the remote inspector's console as
+  `Shmup Cup device`.
+- A `?` means the TV did not tell: `? FW ?` for the model and firmware means the monitor's product
+  information could not be read (report it with a photo — the rest of the line is still right).
+- In a browser (`pnpm dev`) there is no device line.
+
+## Saving a save for a bug report (and loading one)
+
+A developer with the **remote Web Inspector** (Chrome DevTools connected to the monitor — see
+[`../dev/build-test-deploy.md`](../dev/build-test-deploy.md#the-remote-web-inspector-devtools-on-the-tv))
+— or with `pnpm dev` in a browser —
+can copy the game's save out of a debug build and put one in:
+
+| In the console | What it does |
+|---|---|
+| `copy(__shmupDebug.save.export())` | Copies the save — your settings, keys and high scores, as readable text — to the clipboard; paste it into the bug report |
+| `await __shmupDebug.save.import(text)` then `location.reload()` | Replaces the save with `text` (a save someone exported) and writes it; the reload applies its settings. A broken text is refused (`ok: false`) and changes nothing |
+| `__shmupDebug.save.usage()` | How much of the game's storage the save takes (`bytes` of `quotaBytes`); `persistent: false` means the storage is not working and nothing is kept after closing |
+
+Importing replaces everything saved on that monitor or browser — export the old save first if you
+want it back. Normal builds have none of this.
 
 ## The M1 release check
 
@@ -165,6 +213,20 @@ list the plan asks for before the milestone counts as done (plan §8.4); the num
 Report each check as passed or failed with the monitor, the build id, a photo of the panel for
 anything measured, and the time into the stage for anything that went wrong.
 
+## Extra checks for the platform-polish build (plan §8.5)
+
+With the debug build on each monitor:
+
+1. **Device line.** Open the tools: the sixth line shows the monitor's model and firmware
+   ([The device line](#the-device-line)).
+2. **Save export.** In the remote inspector, `__shmupDebug.save.export()` prints the save.
+3. **Memory.** With the remote inspector's *Memory* tab (or *Performance monitor → JS heap size*),
+   play a run across three zones: the total should stay **under 100 MB** and not keep growing from
+   zone to zone. Note the JS heap size on the title and in a zone — the game's own estimate assumes
+   about **24 MB** for it; report the real number so the estimate can be corrected.
+4. **Game mode.** The latency comparison of the normal and the game-mode build —
+   [install-on-tv.md](install-on-tv.md#the-game-mode-build-latency-ab-test).
+
 ## Troubleshooting
 
 | Problem | What to do |
@@ -178,3 +240,6 @@ anything measured, and the time into the stage for anything that went wrong.
 | 7 or 8 does nothing | Only during play: not on the title, in the pause menu, after the game ended, or after the last checkpoint (7) |
 | The panel covers the top-left of the picture | Press **1** to hide it; the tools stay on |
 | F1–F8 do nothing in a browser | The page shows a normal build (`vite preview`) — use `pnpm dev`; or click into the game first so it has keyboard focus |
+| No sixth line (device line) on the TV | It appears a second or two after the tools open; if it never does, the build predates it — build `build:dev` again. A browser never shows it |
+| The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
+| `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |

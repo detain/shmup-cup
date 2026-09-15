@@ -117,7 +117,7 @@ Any controller the TV or browser recognises as a standard gamepad (Xbox / PlaySt
 layout). A controller becomes visible to the game only after you **press one of its
 buttons** once — press any button to activate it. In a browser a gamepad button does **not**
 turn the sound on: browsers allow sound only after a key press or a click, so press a key or
-click the picture once.
+click the picture once (the TV and the desktop app play sound from the start).
 
 | Button (Xbox / PlayStation) | In the game | In menus |
 |---|---|---|
@@ -156,6 +156,20 @@ is never lost. Pressing Left and Right (or Up and Down) together cancels out on 
 The game keeps the keys it uses from scrolling or navigating the page; browser shortcuts
 with Ctrl / Cmd (reload, developer tools) keep working. Switching to another window
 releases every key, so nothing stays stuck.
+
+### The desktop app's window keys
+
+The desktop app uses the same keyboard and gamepad controls, plus a few keys for its window that
+never reach the game ([desktop-app.md](desktop-app.md#the-window)):
+
+| Key | What it does |
+|---|---|
+| F11 or Alt+Enter | Fullscreen on / off (remembered) |
+| Ctrl + = (or Ctrl + +) / Ctrl + - | Window one whole size bigger / smaller (remembered) |
+| Ctrl + 0 | Window back to ×3 (1152×648) |
+
+On a Mac, Cmd instead of Ctrl. In the desktop app the title has **EXIT** and Esc on the title asks
+**EXIT SHMUP CUP?**, as Back does on the TV.
 
 ## Two players
 
@@ -420,7 +434,7 @@ directions alone; no button is ever needed except to pause. It applies from the 
 | With the SPLIT KEYBOARD both halves move the menu highlight | Expected: in the menus (and in 1 PLAYER games) both halves are player 1's; the right half is player 2's only in a 2 PLAYERS game |
 | A menu moves two steps for one press, or skips a press | Not expected — please report the device (and the remote model) |
 | BULLETS, SCALE, SHAKE, FLASHES, HITBOX or BOSS HP are missing from OPTIONS | Expected since the Options build: they are on the **DISPLAY** page (OK on DISPLAY); the control profile is on the **CONTROLS** page |
-| ▼ ▼ from the title's first entry no longer reaches OPTIONS | Expected since the front end build: the menu is 1 PLAYER, 2 PLAYERS, PRACTICE, OPTIONS, SOUND TEST (and EXIT on the TV) — OPTIONS is three ▼ down |
+| ▼ ▼ from the title's first entry no longer reaches OPTIONS | Expected since the front end build: the menu is 1 PLAYER, 2 PLAYERS, PRACTICE, OPTIONS, SOUND TEST (and EXIT on the TV and in the desktop app) — OPTIONS is three ▼ down |
 | The title plays a zone by itself | The attract loop's demo (after 12 seconds untouched on `PRESS OK`) — any button returns to the title |
 | I cannot get past the name entry | OK moves letter by letter; on `END` OK finishes. ▶ jumps towards `END` too. After 30 seconds the entry finishes by itself |
 | OK on a tune in the SOUND TEST box changes the tune instead of playing it | Not expected — OK plays, ◀ ▶ change. Please report the device |

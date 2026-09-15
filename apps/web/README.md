@@ -115,7 +115,12 @@ Since M1-17 **OPTIONS** opens the Options screen (MASTER / MUSIC / SFX volume sl
 the CONTROLS, DISPLAY and GAME pages — autofire modes, rebinding, the input test, the game options),
 and the shell keeps the options and the hi-scores in a versioned save in `localStorage`
 (`shmup-cup:save.v1`, read before the title; a corrupt one is copied to `shmup-cup:save.corrupt`
-and replaced by defaults). This app gives the shell its `inputProfiles`: CONTROLS offers
+and replaced by defaults; since M2-17 through the shell's `createWebStorage`, whose quota checks
+keep a value that does not fit in memory for the session instead of giving up on storage). Inside
+the **Electron** app (M2-17) the same build finds the preload's `window.shmupElectron`
+(`getElectronBridge`) and becomes platform `'electron'`: the save is a JSON file in the user-data
+folder (`createBridgeStorage` → the main process), the title offers EXIT (the app quits after YES)
+and audio is unlocked at boot. This app gives the shell its `inputProfiles`: CONTROLS offers
 `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE` and `SPLIT KEYBOARD` (M2-06: two players on one
 keyboard — also `?profile=keyboard-split`) (plus a `?profile=` override in use) and switches
 at once (with `?debounce=` applied); guide:
@@ -167,7 +172,7 @@ the shell loads the pages with `new Image()`; see
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game` (with `debugToolsFactory` when `__SHMUP_DEV__`, M1-19), disposes on HMR |
 | `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); the scene flow by default (title → game ⇄ pause …, M1-16), `?scene=flight` for free flight, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14) |
-| `platform` | partial | Browser `Platform`: localStorage (memory fallback), visibility lifecycle, no `exit` |
+| `platform` | partial | Browser `Platform`: localStorage through the shell's `createWebStorage` (quota checks, memory fallback — M2-17), visibility lifecycle, no `exit`; inside Electron (M2-17: `getElectronBridge`, `createBridgeStorage`) id `'electron'`, file saves through the bridge, `exit` quits |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).
 

@@ -180,8 +180,19 @@ export function resolveStaticFile(root, urlPath) {
  * Creates the dev server: static files from `root` over HTTP, a WebSocket for the reload
  * messages on the same port (call `server.listen(port, host)` to start it).
  *
+ * @remarks
+ * Files are read from disk per request with `cache-control: no-store` (a TV never keeps a stale
+ * build); a path outside `root` or a missing file answers 404. Every WebSocket client is greeted
+ * with `{"type":"hello"}`; a client's close frame ends its socket. Not for the open internet — it
+ * serves a build folder on the LAN during development.
+ *
  * @param {{ root: string }} options - The served folder.
  * @returns {LiveReloadServer} The server.
+ *
+ * @example
+ * const live = createLiveReloadServer({ root: DIST_DIR });
+ * live.server.listen(5175, '0.0.0.0');
+ * live.notify(reloadMessage('http://192.168.1.20:5175/index.html')); // → clients told
  */
 export function createLiveReloadServer(options) {
   /** @type {Set<import('node:stream').Duplex>} */
@@ -231,7 +242,15 @@ export function createLiveReloadServer(options) {
   };
 }
 
-/** Command-line entry: serve, build, watch and notify. */
+/**
+ * Command-line entry: serve, build, watch and notify (see the module docs). Runs until Ctrl+C
+ * (SIGINT / SIGTERM close the watcher and the server, then exit 0).
+ *
+ * @returns {Promise<void>} Resolves once Vite's watcher runs (the server was started before it);
+ *   the process keeps running on the watcher.
+ * @throws {Error} Rejects when Vite cannot start watching (the caller prints it and exits 1). A
+ *   failed rebuild only logs `Build failed:` and the watcher waits for the next change.
+ */
 async function main() {
   const host = process.env.SHMUP_LIVE_RELOAD_HOST || lanAddress();
   const port = Number(process.env.SHMUP_LIVE_RELOAD_PORT || DEFAULT_PORT);

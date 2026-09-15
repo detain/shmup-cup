@@ -131,6 +131,12 @@ export interface ElectronBridge {
  *
  * @param win - The window.
  * @returns The bridge, or `null` in a browser (or when the object is not the expected API).
+ *
+ * @example
+ * ```ts
+ * const electron = getElectronBridge(window); // null in a browser
+ * createWebPlatform({ …services, electron }); // id 'electron', file saves, EXIT quits
+ * ```
  */
 export function getElectronBridge(win: Window): ElectronBridge | null {
   const candidate = (win as Window & { shmupElectron?: unknown }).shmupElectron;
@@ -160,7 +166,13 @@ export function getElectronBridge(win: Window): ElectronBridge | null {
  * flush. Written values are also kept in memory, so a later failing read still returns them.
  *
  * @param bridge - `window.shmupElectron`.
- * @returns The storage.
+ * @returns The storage — no key prefix (each key is one file in the saves folder).
+ *
+ * @example
+ * ```ts
+ * const storage = createBridgeStorage(bridge);
+ * await storage.set('save.v1', text); // <userData>/saves/save.v1.json (+ .bak)
+ * ```
  */
 export function createBridgeStorage(bridge: ElectronBridge): PlatformStorage {
   const memory = createMemoryStorage();

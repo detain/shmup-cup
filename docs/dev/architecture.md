@@ -86,7 +86,8 @@ extends, continues, the difficulty menu and the continue countdown).
 - **Apps are thin composition roots.** `src/boot/` in each app creates the input adapter,
   audio back-end and a `Platform` factory and calls `bootShell()`, which creates the atlas,
   renderer and game and drives them from `requestAnimationFrame`. Electron has no game code
-  of its own — it serves the `apps/web` build over `app://game/`.
+  of its own — it serves the `apps/web` build over `app://game/`; its main process only keeps
+  the save files and the window settings and answers the preload's IPC (M2-17).
 
 ## The hard sim / presentation split
 
@@ -546,7 +547,8 @@ changes nothing in the game.
 Details: [saves-and-options.md](saves-and-options.md).
 
 - **One versioned JSON document** under `Platform.storage` key `save.v1` (`shmup-cup:save.v1` in
-  `localStorage`; format **2** since M2-16): the player's `UserOptions` (volumes, the input profile,
+  `localStorage` — through the shell's quota-checked `createWebStorage` since M2-17 —, the file
+  `save.v1.json` in the Electron app's user-data folder since M2-17; format **2** since M2-16): the player's `UserOptions` (volumes, the input profile,
   the display options; since M2-16 the controls — autofire mode and rate, SOCD, the debounce, the
   rebinding — and the game options), hi-score tables per mode key (top 10; per difficulty × ship ×
   mode since M2-15) and play statistics. Loading never fails the boot: JSON →
@@ -598,16 +600,16 @@ time passed "normally" across a resume — the loop reset handles it.
 `Platform` (`packages/core/src/platform/`, `shmup_tech.md` §3.2) is everything the core
 may ask of a host:
 
-| Member | Web | Tizen | Headless (tests) |
-|---|---|---|---|
-| `id` | `'web'` | `'tizen'` | `'headless'` |
-| `input.poll()` | `createWebInput` (`keyDevice: 'keyboard'`) + `keyboard-default` / `gamepad-standard` profiles | `createWebInput` (`keyDevice: 'remote'`) + `tizen-remote-safe` / `gamepad-standard` profiles | returns `platform.snapshot` (tests set bits) |
-| `storage` | `localStorage`, prefix `shmup-cup:`, memory fallback — holds the save (`save.v1`, M1-17) | same (deleted with the app on uninstall) | in-memory `Map` |
-| `audio.unlock()` | the `WebAudio` instance | the `WebAudio` instance | resolves immediately |
-| `lifecycle` | Page Visibility | Page Visibility | `platform.suspend()` / `resume()` |
-| `exit` | `null` (browsers cannot quit) | `tizen.application.getCurrentApplication().exit()`, `null` outside a TV | `null` |
-| `display` | live `innerWidth`/`innerHeight` | same | fixed, default 1920×1080 |
-| `caps` | `remoteOnly: false`, `gamepad`, `webgl2` from the renderer | `remoteOnly: true` | all `false` |
+| Member | Web | Tizen | Electron (the web build inside it, M2-17) | Headless (tests) |
+|---|---|---|---|---|
+| `id` | `'web'` | `'tizen'` | `'electron'` | `'headless'` |
+| `input.poll()` | `createWebInput` (`keyDevice: 'keyboard'`) + `keyboard-default` / `gamepad-standard` profiles | `createWebInput` (`keyDevice: 'remote'`) + `tizen-remote-safe` / `gamepad-standard` profiles | as web | returns `platform.snapshot` (tests set bits) |
+| `storage` | `localStorage`, prefix `shmup-cup:`, through the shell's `createWebStorage` (M2-17: the app's 1 MiB budget, a quota error keeps that value in memory, other errors → memory for the session) — holds the save (`save.v1`, M1-17) | same (deleted with the app on uninstall) | JSON files in `<userData>/saves/` through the preload's bridge and IPC (`createBridgeStorage` → `main/saves.ts`: atomic write + backup, 1 MiB / 8 MiB quota) | in-memory `Map` |
+| `audio.unlock()` | the `WebAudio` instance (after a gesture) | the `WebAudio` instance (at boot) | the `WebAudio` instance (at boot — `autoplayPolicy`) | resolves immediately |
+| `lifecycle` | Page Visibility | Page Visibility | Page Visibility | `platform.suspend()` / `resume()` |
+| `exit` | `null` (browsers cannot quit) | `tizen.application.getCurrentApplication().exit()`, `null` outside a TV | `shmupElectron.quit()` → `app.quit()` | `null` |
+| `display` | live `innerWidth`/`innerHeight` | same | same | fixed, default 1920×1080 |
+| `caps` | `remoteOnly: false`, `gamepad`, `webgl2` from the renderer | `remoteOnly: true` | as web | all `false` |
 
 Tizen extras live in `apps/tizen/src/platform/`: `registerRemoteKeys()` registers the
 active input profile's `register` list at startup (Play/Pause and Ch± for
@@ -615,7 +617,15 @@ active input profile's `register` list at startup (Play/Pause and Ch± for
 profile is known), never `Exit` or volume (filtered whatever the list says), falling back to
 per-key registration when the batch call reports an unsupported key. Since M1-17 the saved
 profile choice (read with the save before the title) and every pick in OPTIONS → CONTROLS register
-the new profile's keys.
+the new profile's keys. Since M2-17 the TV also has `device-info` (model, firmware — Samsung's
+`webapis.productinfo` — for the debug overlay's device line), a dev-only `live-reload` and
+`config.xml` variants (game mode, gamepad check).
+
+Electron (M2-17) has no platform code of its own in the renderer: the web build detects the
+preload's `window.shmupElectron` (`apps/web` `getElectronBridge`) and switches `id`, `storage` and
+`exit` as in the table. The main process owns the files (`main/saves.ts`), validates every IPC
+message and its sender (`main/ipc-handlers.ts`) and remembers the window (`main/window-state.ts`) —
+[platform-polish.md](platform-polish.md).
 
 ## Determinism rules
 

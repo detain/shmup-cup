@@ -374,6 +374,32 @@ versions before 1.0 may change anything between minor releases. Development foll
   `UserOptionKind.InputSettings` (10), `GameOptions.controls`, `@shmup/input-web`'s rebinding API and
   the shell's `createShellControls` are new; 512 UI string slots. The Tizen `app.js` is ≈ 359 KB gzip
   of a budget raised to 384 KB.
+- **The desktop app, first-class** (M2-17): settings and high scores are kept in **files** in the
+  user-data folder (`saves/save.v1.json`, written atomically with the previous version kept as a
+  `.bak` and read back if a file is missing or damaged); the title has **EXIT**; sound starts at
+  once; the window **remembers** fullscreen (**F11** / **Alt+Enter**), its size in whole steps of
+  the picture (**Ctrl + =** / **Ctrl + -** / **Ctrl + 0**, Cmd on macOS) and its position (on Linux
+  and the Steam Deck too); installers can be built with `pnpm --filter @shmup/electron package`
+  (Windows, Linux AppImage, macOS — unsigned, no icon yet). Desktop builds before M2-17 kept their
+  save in the app's browser storage, which is not carried over.
+- **TV extras** (M2-17): a **game-mode build** (`build:game-mode` — Samsung's `use.game.mode`
+  metadata) for the latency A/B test on the monitors; the default build stays without metadata, and
+  the launch-time gamepad check exists only as an opt-in test build (it shows a popup without a
+  pad). The debug build's panel shows the monitor's **model and firmware** (a sixth line; the app now
+  requests the `productinfo` privilege), and `tizen:watch` **live-reloads** a development build on
+  the TV after every change.
+- **Storage** (M2-17): a full browser / TV storage no longer stops saving for the rest of the session
+  — only the value that did not fit waits in memory; debug builds can **export and import the
+  save** (`__shmupDebug.save`) for bug reports. The shell estimates the TV memory per zone (every
+  zone under 100 MB) and unloads atlas pages a zone does not need (none yet — one page).
+- Behaviour change for tools and tests (M2-17): `apps/web` and `apps/tizen` use the shell's
+  `createWebStorage` (`@shmup/shell` `storage`); `createLocalStorage` returns a `QuotaStorage`; the
+  web platform takes `electron` (`getElectronBridge`) and is `'electron'` with it; the Electron
+  preload exposes `storage.get` / `storage.set`; `SaveStore.replace`, `DebugToolsOptions.device`,
+  `DebugOverlay.setDevice`, `Shell.atlasResidency`, the `memory` module, `tizenDebugTools`'s `canvas`
+  argument and the `__SHMUP_LIVE_RELOAD__` define are new; `device-info` and `live-reload` are
+  implemented. No simulation change — the golden replays are unchanged. The Tizen `app.js` is ≈ 361 KB
+  gzip of 384 KB.
 
 ### Documentation
 
@@ -435,7 +461,14 @@ versions before 1.0 may change anything between minor releases. Development foll
   [CONTROLS page](docs/client/controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection),
   [Rebinding](docs/client/controls.md#rebinding-keys-and-buttons),
   [Input test](docs/client/controls.md#the-input-test) and
-  [One-button play](docs/client/controls.md#one-button-play) (M2-16).
+  [One-button play](docs/client/controls.md#one-button-play) (M2-16); the developer guide
+  [`docs/dev/platform-polish.md`](docs/dev/platform-polish.md), the new player page
+  [`docs/client/desktop-app.md`](docs/client/desktop-app.md), the TV page's
+  [game-mode build](docs/client/install-on-tv.md#the-game-mode-build-latency-ab-test) and live
+  reload, the debug tools'
+  [device line](docs/client/debug-tools.md#the-device-line) and save export, and the remote Web
+  Inspector in [`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md#the-remote-web-inspector-devtools-on-the-tv)
+  (M2-17).
 
 ## [0.1.0] — M1: playable vertical slice
 

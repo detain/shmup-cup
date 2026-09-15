@@ -161,6 +161,13 @@ function originOf(url: string): string | null {
  * @param current - `location.href`.
  * @param message - The reload message.
  * @returns The page to open, or `null`.
+ *
+ * @example
+ * ```ts
+ * const message = { type: 'reload', url: 'http://192.168.1.20:5175/index.html' } as const;
+ * reloadTarget('file:///opt/usr/apps/…/index.html', message); // → the served page (the widget)
+ * reloadTarget('http://192.168.1.20:5175/index.html', message); // → null (reload in place)
+ * ```
  */
 export function reloadTarget(current: string, message: LiveReloadMessage): string | null {
   if (message.url === null) return null;

@@ -183,7 +183,15 @@ function productValue(info: ProductInfoLike, name: keyof ProductInfoLike): strin
  * Reads the model, model code and firmware from `webapis.productinfo`.
  *
  * @param webapis - `window.webapis`, or `null`.
- * @returns The facts (`null` fields when unavailable).
+ * @returns The facts (`null` fields when unavailable). Never throws: a missing getter, a
+ *   `SecurityError` (no `productinfo` privilege) or an empty answer gives `null`; the model prefers
+ *   `getRealModel` and falls back to `getModel`.
+ *
+ * @example
+ * ```ts
+ * readProductInfo(null); // → { model: null, modelCode: null, firmware: null }
+ * readProductInfo(await loadWebapis(window)); // on the TV: { model: 'LS43AM702U', … }
+ * ```
  */
 export function readProductInfo(webapis: WebapisLike | null): ProductInfo {
   const info = webapis?.productinfo;
@@ -246,8 +254,20 @@ export function collectDeviceInfo(sources: DeviceInfoSources): DeviceInfo {
  * The one-line summary the debug overlay draws: model (and code), firmware, CSS size and pixel
  * ratio, Chrome version, WebGL version and its largest texture — `?` for what is unknown.
  *
+ * @remarks
+ * Cold (called when the facts change, never per frame). A TV's full line is about 66 characters;
+ * the overlay cuts it to `@shmup/render-pixi` `DEBUG_DEVICE_MAX` (56) and replaces anything outside
+ * printable ASCII with `?` — the model, firmware and display come first so they survive the cut
+ * (the Chrome and WebGL fields at the end may not; the logged snapshot has everything).
+ *
  * @param info - The snapshot.
  * @returns The line, e.g. `LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C69 GL1/4096`.
+ *
+ * @example
+ * ```ts
+ * formatDeviceLine(collectDeviceInfo(sources));
+ * // a desktop browser: '? FW ? 1152x648@1 C120 GL2/16384'
+ * ```
  */
 export function formatDeviceLine(info: DeviceInfo): string {
   const model = info.model ?? '?';
@@ -277,6 +297,11 @@ const pending = new WeakMap<object, Promise<WebapisLike | null>>();
  * @param win - The window.
  * @param timeoutMs - Give-up time (default {@link WEBAPIS_TIMEOUT_MS}).
  * @returns Resolves with the API or `null`.
+ *
+ * @example
+ * ```ts
+ * const info = readProductInfo(await loadWebapis(window)); // null fields in a desktop browser
+ * ```
  */
 export function loadWebapis(
   win: Window,

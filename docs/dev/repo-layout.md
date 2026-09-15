@@ -110,11 +110,11 @@ shmup-cup/
 │   ├── source/             editable sources — in git: sprites/**/*.sprite.json pixel maps (+ real-art PNG overrides), fonts/*.font.json, tilesets, audio
 │   └── generated/          pipeline output (atlas/main.png + main.json, cache) — ignored
 ├── scripts/                repo-level Node scripts: clean.mjs, generate-assets.mjs (pnpm assets) + assets/ (PNG encoder, sprite sources, procedural generators, packer, font, the `@flash` and — M2-06, coop.mjs — player 2's `@p2` palette-swap siblings; the raster-bands generator — M2-08; the bosses generator — turret heading frames, orb, raid hull, captain shell — M2-09; the zone generators brine.mjs / dune.mjs and the zone tilesets of terrain.mjs — M2-11; magma.mjs / tempest.mjs — M2-12; vault.mjs / prism.mjs — M2-13; citadel.mjs / abyss.mjs and the ending scenes' ending.mjs — M2-14), gen-trig-tables.mjs, audio-preview.mjs (pnpm audio:preview → WAV files), golden-update.mjs (pnpm golden:update), content/tiled-import.mjs (pnpm content:tiled: a Tiled map → stage JSON — M2-07)
-├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets) and the build-info defines (build-info.d.ts: __SHMUP_DEV__, __SHMUP_BUILD__)
+├── types/                  ambient declarations for the Vite virtual modules (virtual:shmup-content, virtual:shmup-assets) and the build-info defines (build-info.d.ts: __SHMUP_DEV__, __SHMUP_BUILD__, __SHMUP_LIVE_RELOAD__ — M2-17)
 ├── test/                   cross-package integration tests (Vitest project "integration", part of `pnpm test`); playtest/ = headless playtest harness + 4-way bot + design rules (M1-18, same project); golden/ = golden replays + their test (M1-19, same project; two co-op runs since M2-06, three gimmick-range runs since M2-07, one raster-range run since M2-08, four advanced-boss runs since M2-09, three bonus-stage runs since M2-10, zones B and C and zone B's bonus stage since M2-11, zones D and E since M2-12, zones F and G and zone G's bonus stage since M2-13, the final zones since M2-14, the toggle / hold autofire modes since M2-16 — golden-autofire.test.ts; demos.ts / demos.test.ts = the attract demos of content/demos/, recorded and locked like the goldens — M2-15); playtest/campaign.ts = the zone-map route harness (M2-10); playtest/zone-b … zone-g tests and recovery.ts (the recovery rule of every zone — M2-11 … M2-13); scripts/content/ = the Tiled importer's tests + its fixture map and expected JSON (M2-07); bench/ = `pnpm bench` stress benchmark (own Vitest config, not in `pnpm test`); e2e/ = Playwright browser smoke tests (`pnpm test:e2e`)
 ├── docs/
-│   ├── client/             player/tester docs
-│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, coop, advanced-stages, presentation-polish, advanced-bosses, campaign-and-bonus-stages, zones-b-and-c, zones-d-and-e, zones-f-and-g, zones-h-and-i, front-end-and-attract, options-rebinding-and-accessibility, api-reference, …)
+│   ├── client/             player/tester docs (preview-build, controls, install-on-tv, debug-tools, desktop-app — M2-17, input-probe)
+│   └── dev/                contributor docs (this file, architecture, engine-foundations, content-data, asset-pipeline, rendering-and-shell, sim-world, stage-runtime, enemies-and-behaviors, fx-and-game-feel, scenes-and-ui, saves-and-options, zone-a-and-playtest, debug-and-replays, difficulty-and-rank, pattern-dsl, meter-arsenal, options-shields-hunter, direct-mode, coop, advanced-stages, presentation-polish, advanced-bosses, campaign-and-bonus-stages, zones-b-and-c, zones-d-and-e, zones-f-and-g, zones-h-and-i, front-end-and-attract, options-rebinding-and-accessibility, platform-polish, api-reference, …)
 ├── tools/                  standalone tools, NOT workspace members (own package.json/lockfile, npm not pnpm)
 │   └── input-probe/        Tizen diagnostic .wgt: remote/gamepad/display measurements (see input-probe.md)
 └── shmup_feat.md  shmup_tech.md  input_probe_spec.md  shmup_plan.md  shmup_progress.md  CHANGELOG.md  README.md  LICENSE (MPL-2.0)
@@ -179,6 +179,9 @@ pnpm test:all           # same as pnpm test: every Vitest project in one process
 pnpm test:e2e           # build web + tizen test builds, then browser smoke tests (headless Chromium, Playwright)
 pnpm --filter @shmup/tizen build    # TV bundle (release) + bundle check with size budgets
 pnpm --filter @shmup/tizen build:dev  # TV debug build (debug tools behind Pause, Ch+ ×3) for on-device checks
+pnpm --filter @shmup/tizen build:game-mode  # TV release build with the use.game.mode metadata (the §8.5 latency A/B test) — M2-17
+pnpm --filter @shmup/tizen tizen:watch      # live reload to the TV (never in CI) — M2-17
+pnpm --filter @shmup/electron package       # desktop installers into apps/electron/release/ (after build; never in CI) — M2-17
 pnpm golden:update      # re-bless the golden replays and the attract demos (intended sim changes only — say why in the commit)
 pnpm bench              # stress benchmark: ms/tick and heap growth under maximum load
 pnpm content:check      # validate content/ against the core schemas (+ sprite names exist in the atlas, zone A's 4-way rules, en.strings.json = the built-in UI table)
@@ -212,5 +215,7 @@ tally, bonus stages, the ending hook), [front-end-and-attract.md](front-end-and-
 attract loop, the mode select, the name entry, the hi-score tables, practice, the sound test),
 [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md) (the Options pages,
 the autofire modes, the game options, rebinding, the input test, save v2, the UI string table),
+[platform-polish.md](platform-polish.md) (Electron file saves, window and packaging; the Tizen
+`config.xml` variants, device info and live reload; storage quota checks; the memory budget),
 [api-reference.md](api-reference.md) and
 [conventions.md](conventions.md).

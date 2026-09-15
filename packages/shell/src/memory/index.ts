@@ -127,6 +127,11 @@ interface PageSize {
  *
  * @param page - The page size.
  * @returns `w × h × 4`.
+ *
+ * @example
+ * ```ts
+ * pageBytes({ w: 1024, h: 1024 }) / MIB; // → 4
+ * ```
  */
 export function pageBytes(page: PageSize): number {
   return page.w * page.h * 4;
@@ -489,7 +494,13 @@ export function atlasPageNeeds(
  *
  * @param needs - {@link atlasPageNeeds}.
  * @param stageIndex - The stage (`content.stages` index), or -1 for none (menus: every page).
- * @returns Page indices, ascending.
+ * @returns Page indices, ascending (a new array — cold path).
+ *
+ * @example
+ * ```ts
+ * stagePages(needs, content.stageIndex.get('zone-b') ?? -1); // → [0] with today's one-page atlas
+ * stagePages(needs, -1);                                     // → every page
+ * ```
  */
 export function stagePages(needs: AtlasPageNeeds, stageIndex: number): number[] {
   const all = stageIndex < 0 || needs.campaign[stageIndex] !== true;
@@ -571,9 +582,21 @@ export function createAtlasResidency(
  * Registers the residency on the scene flow's `PrepareStage` events (the zone map's launch, a run
  * or practice start, the title's return): the next stage's pages stay, the others are unloaded.
  *
+ * @remarks
+ * `PrepareStage` comes once per stage change (never per frame), so `prepare` — which builds the
+ * stage's page list — may allocate. `bootShell` registers it in the scene flow only (the dev
+ * scenes never emit the event).
+ *
  * @param dispatcher - The shell's event dispatcher.
  * @param residency - The residency.
  * @returns A function that unregisters the handler.
+ *
+ * @example
+ * ```ts
+ * const off = connectAtlasResidency(events, createAtlasResidency(atlas.pages, needs));
+ * // … later, when the shell stops:
+ * off();
+ * ```
  */
 export function connectAtlasResidency(
   dispatcher: EventDispatcher,

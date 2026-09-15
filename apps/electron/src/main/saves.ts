@@ -255,6 +255,14 @@ function isJson(text: string): boolean {
 /**
  * Creates the file store over a folder (created on the first write).
  *
+ * @remarks
+ * Reads and writes of one key run one after the other in call order (a read queued after a write
+ * sees the new text); different keys run independently. The quota counts every `*.json` and
+ * `*.json.bak` in the folder — the key's own file becomes its backup, so it is counted too — but
+ * not the `*.tmp` files of writes in progress. A write that fails part-way (a full disk, a failed
+ * rename) removes its temporary file and rejects; the key's file is then as before (its backup
+ * may already be a copy of it).
+ *
  * @param directory - Absolute folder, normally `join(app.getPath('userData'), SAVES_DIRECTORY)`.
  * @param options - Quotas and the file system.
  * @returns The store.

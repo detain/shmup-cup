@@ -137,6 +137,15 @@ export function isTrustedRendererUrl(url: string, devUrl: string | null): boolea
 /**
  * Registers the handlers of every channel on `ipcMain`.
  *
+ * @remarks
+ * `shmup:storage-get` / `shmup:storage-set` are `invoke` handlers: an untrusted sender, a bad key
+ * or a value that is not a string of at most `STORAGE_VALUE_MAX_BYTES` UTF-8 bytes throws an
+ * {@link IpcRefusedError} (the renderer's `invoke` rejects — the store is never reached); otherwise
+ * the handler returns the store's promise, so its `StorageKeyError` / `StorageQuotaError` / disk
+ * errors reject the renderer's call too. `shmup:quit` is a `send` channel with no answer: a quit
+ * from an untrusted sender is dropped silently. Register once per `ipcMain` — Electron throws for
+ * a second `handle` on the same channel; call the returned function first.
+ *
  * @param ipc - `ipcMain` (or a fake).
  * @param options - The store, the quit callback, the dev server URL.
  * @returns A function that removes them.

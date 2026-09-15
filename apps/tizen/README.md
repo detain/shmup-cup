@@ -9,6 +9,8 @@ our Smart Monitor M7 / M70A test displays, Chromium 69). Remote-first.
 pnpm --filter @shmup/tizen build      # release: vite build + scripts/check-bundle.mjs (no debug code)
 pnpm --filter @shmup/tizen build:dev  # on-device debug build (--mode development): the debug tools behind Pause, Ch+ ×3
 pnpm --filter @shmup/tizen build:test # the same as a test build (--mode test) — what pnpm test:e2e opens
+pnpm --filter @shmup/tizen build:game-mode # M2-17: release build with the use.game.mode config.xml metadata (the §8.5 A/B test)
+pnpm --filter @shmup/tizen tizen:watch     # M2-17: dev build + live reload to the TV (never in CI; see below)
 pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
@@ -48,13 +50,17 @@ after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB, after M2-16 �
 ## Debug build (M1-19)
 
 `build:dev` / `build:test` set `__SHMUP_DEV__`, so `main.ts` passes `tizenDebugTools(window,
-__SHMUP_BUILD__)` to the boot: the shell's debug tools in **sequence** mode. Nothing reacts until
+__SHMUP_BUILD__, canvas)` to the boot: the shell's debug tools in **sequence** mode. Nothing reacts until
 the remote enters **Pause (Play/Pause 10252, or a keyboard's Pause 19), Ch+, Ch+, Ch+** within
 3 s; that unlocks the tools, shows the overlay (FPS, tick / render ms, draw calls, pools, rank, RNG
 calls, state hash, WebGL version, boot ms, build id, frame graph), registers the number keys
 (`DEBUG_REMOTE_KEYS`, `'1'` … `'8'`) with `tvinputdevice`, and **1–8** then work like the web's
 F1–F8 (overlay, god mode, outlines, frame advance, step, slow motion, next checkpoint, skip to the
-boss). `window.__shmupDebug` is there for the remote inspector. Package and install a debug build
+boss). `window.__shmupDebug` is there for the remote inspector (since M2-17 with
+`__shmupDebug.save` — export / import the save, the storage usage). Since M2-17 the unlock also
+loads Samsung's `webapis.js` (only then, only on a TV) and shows the **device line** — model, model
+code, firmware, display, Chrome and WebGL (`device-info`) — as the panel's sixth line, logging the
+snapshot as `Shmup Cup device`. Package and install a debug build
 like any other; package from a plain `build` for anything else (`pnpm test:e2e` leaves a test build
 in `dist/`). Tester guide: [`docs/client/debug-tools.md`](../../docs/client/debug-tools.md);
 developer guide: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md).
@@ -186,7 +192,7 @@ reach the desktop on the port (firewall).
 |---|---|---|
 | `main.ts` | — | Entry (no `import.meta`, no top-level await); `tizenDebugTools` when `__SHMUP_DEV__` (M1-19) |
 | `boot` | implemented | Composition root: remote-first input (`tizen-remote-safe` profile, or the choice saved from OPTIONS → CONTROLS, applied when the shell has read the save — M1-17; `gamepad-standard`; since M2-16 both applied with the player's rebinding, SOCD and debounce — `ProfileState`, `customizeInputProfile` — and offered to the rebind screen through `inputProfiles.customize` / `rebindable`: the remote's buttons are rebound with the remote itself, Back never moves), Web Audio and the Tizen platform handed to `@shmup/shell`'s `bootShell` (content + atlas from `file://`, boot error screen, renderer, game, rAF loop, audio unlocked at boot — the shell's audio engine plays the sound effects from the start; the title theme plays in the scene flow, M1-16); Back goes through the scene stack (game → pause, menus → back, title → exit confirmation → `platform.exit()` after YES); only while the game is not running (loading, boot error screen) does Back exit directly |
-| `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage |
+| `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, `visibilitychange` lifecycle, `exit()`, localStorage (since M2-17 the shell's quota-checked `createWebStorage`, issues logged) |
 | `device-info` | implemented | M2-17: UA / resolution / WebGL (`MAX_TEXTURE_SIZE`) / Samsung `webapis.productinfo` model, model code and firmware (`$WEBAPIS/webapis/webapis.js` loaded only on a TV, only when the debug tools unlock) → the debug overlay's device line (`tizenDebugTools`) and the remote inspector's console |
 | `live-reload` | implemented | M2-17: dev-only reload-on-change on the TV — `tizen:watch` builds with the dev server's WebSocket URL (`__SHMUP_LIVE_RELOAD__`); on each rebuild the app reloads, the installed widget navigating to the served build; reconnects with a growing delay; absent from release builds |
 

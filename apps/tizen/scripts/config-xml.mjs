@@ -95,6 +95,10 @@ export function isDefaultVariant(variant) {
  *
  * @param {ConfigVariant} variant - The variant.
  * @returns {string} The name.
+ *
+ * @example
+ * variantName(variantFromEnv({ TIZEN_GAMEPADS: 'usbgamepad' }, 'game-mode'));
+ * // → 'game-mode+gamepad'
  */
 export function variantName(variant) {
   const parts = [];

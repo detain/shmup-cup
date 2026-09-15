@@ -28,6 +28,7 @@ const shell = await bootShell({
 shell.debug?.api.sceneId; // dev / test builds: the tools, also window.__shmupDebug (M1-19)
 shell.loadedSave.status; // 'empty' | 'ok' | 'migrated' | 'corrupt' | 'unreadable' (M1-17)
 shell.bootTiming.readyMs; // launch-to-ready time, also on the canvas as data-shmup-boot-ms
+shell.atlasResidency.unloads; // M2-17: atlas pages unloaded between zones (0 with today's one page)
 shell.events.on(SimEventKind.Music, (event) => { /* presentation handler */ });
 // the scene flow and free flight already feed the game's events to the renderer's particles,
 // shake, flash, dim and score popups (connectFxEvents, M1-14) and to the audio engine

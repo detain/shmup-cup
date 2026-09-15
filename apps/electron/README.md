@@ -2,13 +2,17 @@
 
 Minimal **Electron** desktop shell (Windows / macOS / Linux / Steam Deck —
 `shmup_tech.md` §4.8). It loads the `apps/web` build; there is no separate renderer code.
+Developer guide: [`docs/dev/platform-polish.md`](../../docs/dev/platform-polish.md) (M2-17); for
+players: [`docs/client/desktop-app.md`](../../docs/client/desktop-app.md).
 
 - `src/main/main.ts` (ESM main process): registers a privileged `app://` scheme and serves
   `dist/renderer/` (the copied web build) through it — safer and more reliable than
-  `file://`; opens one window; handles the renderer's quit request.
+  `file://`; opens one window (restored from `window.json`, shortcuts, no navigation away, no
+  pop-ups — M2-17); registers the IPC handlers (quit, the file saves).
 - `src/main/window-options.ts`: context isolation + sandbox + no Node integration,
-  **`backgroundThrottling: false`** (steady fixed-step cadence), 1152×648 (= 384×216 ×3),
-  optional fullscreen.
+  **`backgroundThrottling: false`** (steady fixed-step cadence), content 384×216 × the remembered
+  scale (default ×3 = 1152×648, `useContentSize`), the remembered position, optional fullscreen,
+  `autoplayPolicy: 'no-user-gesture-required'` (M2-17 — sound from boot).
 - `src/main/app-protocol.ts`: URL → file mapping with path-traversal protection.
 - `src/preload/preload.cts`: sandboxed CommonJS preload exposing `window.shmupElectron`
   (`platform`, `quit()`, `storage.get` / `storage.set`); channel names shared with

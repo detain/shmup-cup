@@ -232,7 +232,7 @@ tables and the story; any button brings the title back
 | **PRACTICE** | Practise one zone from a checkpoint of your choice, with its own high-score tables — see [Practice](#practice) |
 | **OPTIONS** | Opens the **Options screen**: the volumes and the CONTROLS, DISPLAY and GAME pages — see [The Options screen](#the-options-screen) |
 | **SOUND TEST** | Plays any tune or sound effect of the game — see [The sound test](#the-sound-test) |
-| **EXIT** | Only on the TV: asks **EXIT SHMUP CUP?** — see below |
+| **EXIT** | On the TV and in the desktop app (not in a browser): asks **EXIT SHMUP CUP?** — see below |
 
 - The highlighted entry is yellow with a small arrow `→` in front of it. **▲ / ▼** move the
   highlight (from the last entry it wraps round to the first); holding an arrow moves it again
@@ -240,10 +240,11 @@ tables and the story; any button brings the title back
 - **OK** chooses the highlighted entry (a short chime). The menu ignores OK for a split second
   after it appears, so the OK that opened it never also starts the game — but an OK pressed in
   that moment is remembered, not lost.
-- **Back** on the TV asks **EXIT SHMUP CUP?** with **YES** and **NO** — NO is highlighted, so a
-  stray OK never quits. ◀ / ▶ move between YES and NO; OK on **YES** closes the app and returns
-  to the monitor's home screen, OK on **NO** (or Back again) goes back to the title. In a browser
-  (which cannot close itself) Back only goes from the menu back to `PRESS OK`.
+- **Back** on the TV (Esc in the desktop app) asks **EXIT SHMUP CUP?** with **YES** and **NO** — NO
+  is highlighted, so a stray OK never quits. ◀ / ▶ move between YES and NO; OK on **YES** closes the
+  app and returns to the monitor's home screen (the desktop app's window closes), OK on **NO** (or
+  Back again) goes back to the title. In a browser (which cannot close itself) Back only goes from
+  the menu back to `PRESS OK`.
 - Any controller works in the menus — also a second gamepad (in the menus every controller
   counts as player 1's).
 
@@ -800,7 +801,7 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
 
 | What | When it is saved | Where |
 |---|---|---|
-| The three volumes, the CONTROLS page (the control profile, AUTOFIRE, RATE, SOCD, DEBOUNCE), the DISPLAY page (BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and the GAME page (DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON) | When you leave the page — or the Options screen — with BACK or Back | On the TV inside the app itself; in a browser (and the desktop app) in that browser's storage for the page |
+| The three volumes, the CONTROLS page (the control profile, AUTOFIRE, RATE, SOCD, DEBOUNCE), the DISPLAY page (BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and the GAME page (DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON) | When you leave the page — or the Options screen — with BACK or Back | On the TV inside the app itself; in a browser in that browser's storage for the page; in the desktop app in a file on the computer ([desktop-app.md](desktop-app.md#where-the-saves-live)) |
 | Your own keys and buttons (REBIND KEYS / REBIND PAD) | When you leave the rebind box with DONE or Back | The same place |
 | The difficulty you chose in the DIFFICULTY box | The next time something is saved (the Options screen closing, a game ending) | The same place |
 | High scores | When a run ends: the **GAME OVER** screen, or clearing the last zone (before the ending) — in a browser test stage the **STAGE CLEAR** screen, in practice its GAME OVER or zone result; the name you type afterwards when you finish it | The same place |
@@ -834,7 +835,10 @@ the ship, disappears while the ship is exploding, and changes nothing about the 
   starts with the default settings and no high scores — no error screen. Please report it if that
   happens without a reason.
 - To start from scratch: on the TV remove the app and install it again (removing it deletes the
-  saved data — [install-on-tv.md](install-on-tv.md)); in a browser clear the page's site data.
+  saved data — [install-on-tv.md](install-on-tv.md)); in a browser clear the page's site data; in
+  the desktop app delete its `saves` folder ([desktop-app.md](desktop-app.md#where-the-saves-live)).
+- If a browser's storage is full or blocked, the game keeps playing: a setting that could not be
+  stored is kept until the page is closed (nothing else is lost).
 
 ## Flying the ship
 
@@ -878,7 +882,19 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the Options pages.** OPTIONS lists MASTER, MUSIC, SFX, then **CONTROLS**,
+**New in this build: platform polish.** Nothing changes in the game itself. The **desktop app**
+now has an EXIT entry on the title, plays sound from the start, keeps its settings and high scores
+in files (with a backup of each), and remembers its window — **F11** / **Alt+Enter** fullscreen,
+**Ctrl + =** / **Ctrl + -** / **Ctrl + 0** window size ([desktop-app.md](desktop-app.md)). On the
+TV the **debug build's panel** names the monitor's model and firmware, a developer can copy the
+save out for a bug report ([debug-tools.md](debug-tools.md#the-device-line)), and a **game-mode
+build** exists for the latency test ([install-on-tv.md](install-on-tv.md#the-game-mode-build-latency-ab-test)).
+In a browser a full storage no longer stops saving for the rest of the session. On the TV and in
+a browser your saved settings and high scores from earlier builds are kept; the **desktop app
+starts fresh once** — earlier desktop builds kept them in the app's internal browser storage, which
+the new save files do not read.
+
+Before that, **the Options pages.** OPTIONS lists MASTER, MUSIC, SFX, then **CONTROLS**,
 **DISPLAY** and **GAME**, then BACK. The control profile moved to CONTROLS (its first line,
 PROFILE), and BULLETS, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP to DISPLAY — they work as before.
 New: AUTOFIRE and RATE, SOCD, DEBOUNCE, REBIND KEYS / REBIND PAD (your own keys and buttons, with
@@ -2633,6 +2649,17 @@ Things to check on the monitor and report:
    GAME: DIFFICULTY is greyed out. Set ONE BUTTON to ON: AUTO POWER and PENALTY grey out; RETRY
    STAGE — capsules are now taken by themselves. Close and reopen the app: the GAME settings and the
    difficulty you chose last are kept.
+88. **The monitor's name in the debug panel** (new, debug build): open the developer tools (Play/Pause,
+   then Ch ▲ three times). A moment later the panel has a sixth line starting with the monitor's
+   model (`LS43AM702U` or similar) and firmware (`FW …`) — [debug-tools.md](debug-tools.md#the-device-line).
+   Photograph it once per monitor.
+89. **The game-mode build** (new): install the game-mode build and the normal build one after the
+   other and film the delay from an arrow press to the ship moving in each — the steps are in
+   [install-on-tv.md](install-on-tv.md#the-game-mode-build-latency-ab-test). Note whether the monitor
+   shows anything when the game-mode build starts.
+90. **Memory over a long run** (new, debug build, with the remote inspector): play a run through
+   three or more zones — the memory stays under 100 MB and does not climb from zone to zone
+   ([debug-tools.md](debug-tools.md#extra-checks-for-the-platform-polish-build-plan-85)).
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
@@ -2650,7 +2677,9 @@ build:dev`, the app plays exactly like the normal build until you press **Play/P
 three times** within three seconds: a panel with the frame rate, the frame times and the
 start-up time appears, and the number keys 1–8 turn on invincibility, hit-area outlines, a freeze
 with single steps, slow motion, and jumps to the next checkpoint (7) or the boss (8) — the TV's
-own shortcut to the boss. Everything about it, and the release checklist to run with it, is in
+own shortcut to the boss. Since the platform-polish build the panel's last line names the
+monitor's model and firmware, and a developer can copy the save out through the remote inspector
+for a bug report. Everything about it, and the release checklist to run with it, is in
 [debug-tools.md](debug-tools.md).
 
 ## In a desktop browser
@@ -3625,11 +3654,12 @@ will be replaced by finished sound and music later.
 | **Browser** | After your first key press or click | The title theme from that first key press; in a game the same as on the TV |
 | **Browser**, `?stage=test-range` or `?stage=test-boss` | After your first key press or click | The title theme, then the stage theme when the game starts; the boss theme, the stage-clear and game-over tunes |
 | **Browser**, `?scene=flight` (free flight) | After your first key press or click | None in open space; with `&stage=…` the stage theme starts with the first key press |
-| **Desktop** (Electron) | After your first key press or click | As in the browser |
+| **Desktop** (Electron) | From the start | As on the TV — the title theme from the start |
 
-In a browser (and the desktop app) nothing can be heard before the first key press or click —
-browsers do not allow a page to make sound before that, and a gamepad button does not count.
-Sounds of that first moment are simply skipped.
+In a browser nothing can be heard before the first key press or click — browsers do not allow a
+page to make sound before that, and a gamepad button does not count. Sounds of that first moment
+are simply skipped. The desktop app is not limited like that (since the platform-polish build): its
+sound starts at once, like the TV's.
 
 The attract loop's **demo play is silent** on purpose (the title music fades out while it plays and
 comes back with the high-score tables). Every tune and sound effect can be played on its own in the
@@ -3733,11 +3763,17 @@ pnpm build
 pnpm --filter @shmup/electron start
 ```
 
-A 1152×648 window (×3) opens with the same title screen as the browser (no EXIT entry yet —
-close the window to quit); 1 PLAYER plays AZURE VERGE; play with the keyboard or a gamepad (2 PLAYERS with a second gamepad or the SPLIT KEYBOARD). The Options screen and the saved
-settings and high scores work as in the browser.
-Set `SHMUP_FULLSCREEN=1` before the last command to start in fullscreen. Close the window (or
-Alt+F4 / Cmd+Q) to quit.
+A 1152×648 window (×3) opens with the same title screen as the browser — with the title music
+from the start and, like the TV, an **EXIT** entry (Back / Esc on the title asks **EXIT SHMUP
+CUP?**; YES closes the app); 1 PLAYER plays AZURE VERGE; play with the keyboard or a gamepad
+(2 PLAYERS with a second gamepad or the SPLIT KEYBOARD). The Options screen works as in the
+browser; the settings and high scores are kept in files on the computer (with a backup of each),
+separately from any browser. **F11** or **Alt+Enter** switches fullscreen, **Ctrl + =** / **Ctrl +
+-** make the window a whole size bigger or smaller and **Ctrl + 0** resets it (Cmd on a Mac); the
+app remembers fullscreen, the size and the position for the next launch. Set `SHMUP_FULLSCREEN=1`
+before the last command to start in fullscreen once. Closing the window (or Alt+F4 / Cmd+Q) also
+quits. Everything about the desktop app — the window keys, where the saves live, making
+installers, troubleshooting — is in [desktop-app.md](desktop-app.md).
 
 ## When the app shows an error screen
 
@@ -3983,7 +4019,7 @@ mean the build itself is broken; they are not caused by anything you did.
 | Black or empty screen that stays black | Should not happen any more — the app shows an error screen instead. In a browser open the developer console: the message "Shmup Cup failed to start" gives the reason. On the TV, report it with the firmware version |
 | Magenta-and-black checkered squares instead of some pictures | A picture the game asked for is missing from the sprite sheet. Report which element shows it (e.g. "the ship", "the second enemy") |
 | Blurry picture in the browser | Browser zoom is not 100 % (press Ctrl+0), or the operating system scales the window unevenly. At 100 % zoom the pixels stay sharp on any display |
-| Stars or ship stutter in the browser | Expected on 120/144 Hz monitors for now (smooth-motion interpolation is not in the preview yet); on a 60 Hz display it should be smooth. Also check the PC is not busy |
+| Stars or ship stutter in the browser or the desktop app | Should not happen on 60, 120 or 144 Hz monitors (the picture is smoothed between the game's 60 steps a second on faster displays). Check the PC is not busy and the browser tab is in front; report the monitor's refresh rate if it persists |
 | Stars or ship stutter on the TV | Please report it — the M7 runs at 60 Hz and should show one step per refresh |
 | Player 2's gamepad does nothing when I press START | The game must be a **2 PLAYERS** one (1 PLAYER games have no player 2). Press any button on the pad once so the TV / browser notices it. If `PRESS START` is not blinking, player 2 cannot join right now (the stage is ending, or the game is over) |
 | In a 2 PLAYERS game my gamepad moves player 1's ship | Expected until you press START or A on it — then it flies player 2. Only one gamepad can be player 2; any other stays player 1's |
@@ -3993,5 +4029,6 @@ mean the build itself is broken; they are not caused by anything you did.
 | Top or bottom HUD bar cut off on the TV | Check the monitor's picture size setting ("Fit to screen" / no overscan) and report which edge is missing |
 | Opening `apps/tizen/dist/index.html` by double-clicking it shows an error or nothing | Desktop Chrome blocks the sprite sheet for files opened straight from disk. Use `pnpm --filter @shmup/tizen dev` instead (the TV itself is not affected) |
 | The app does not appear on the TV | See the troubleshooting table in [install-on-tv.md](install-on-tv.md#troubleshooting) |
-| Electron says it is not installed | It was skipped during installation; run `pnpm rebuild electron` |
+| Electron says it is not installed | It was skipped during installation; run `pnpm rebuild electron` — more in [desktop-app.md](desktop-app.md#troubleshooting) |
+| In a browser a setting or high score is kept only until the page is closed | The browser's storage for the page is full or blocked (a private window, strict privacy settings): the game keeps playing and keeps that value until the page closes. The developer console shows `Shmup Cup: "save.v1" was not stored (…)`. Free some site data or leave private mode |
 | `pnpm dev` or `pnpm build` stops with "asset sources are invalid" | A graphics source file in the checkout is broken. Update to the latest version of the repository; if it persists, report the file names the message lists |

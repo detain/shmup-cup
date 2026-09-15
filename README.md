@@ -9,11 +9,14 @@ with the browser and Electron as additional targets.
 The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
 [`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
-is next — and **M2 — complete v1.0** is under way (M2-01 … M2-16 done: all nine zones, the endings
+is next — and **M2 — complete v1.0** is under way (M2-01 … M2-17 done: all nine zones, the endings
 and the credits — the game can be played from the title to its credits —, the complete arcade
 front end: the attract loop, the mode select, name entry, high-score tables, practice and the sound
-test — and the complete Options screen: autofire modes, rebinding per device, the input test, the
-game options, one-button play and every UI label in a string table).
+test —, the complete Options screen: autofire modes, rebinding per device, the input test, the
+game options, one-button play and every UI label in a string table — and the platform polish: a
+first-class desktop app with file saves, a remembered window and packaging, the TV's game-mode
+build, device info and live reload, storage quota checks and the memory budget; only M2-18, the
+v1.0 hardening and release candidate, is left).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -691,6 +694,34 @@ game options, one-button play and every UI label in a string table).
     [rebinding and the CONTROLS page](docs/client/controls.md#rebinding-keys-and-buttons) ·
     [saves](docs/dev/saves-and-options.md) · [translating the UI](content/strings/README.md)
 
+- **Platform polish: Electron, Tizen extras, storage** (M2-17)
+  - **Desktop saves** — JSON files in the user-data folder (`save.v1.json`, `window.json`), written
+    atomically (temp file + fsync + rename) with the previous text kept as a `.bak` and read back
+    when a file is missing or damaged; 1 MiB a value, 8 MiB the folder; through IPC channels whose
+    handlers refuse any page but the game's and any bad key or value.
+  - **Desktop window** — remembered fullscreen (**F11** / **Alt+Enter**), scale of the 384×216 frame
+    (**Ctrl+=** / **Ctrl+-** / **Ctrl+0**, fitted to the screen) and position (also on Linux / the
+    Steam Deck); no navigation away, no pop-ups. The web build knows it runs in Electron: EXIT on the
+    title, sound from boot. **Packaging** config for electron-builder (Windows, Linux AppImage,
+    macOS; never in CI).
+  - **Tizen extras** — opt-in `config.xml` variants (`build:game-mode` for the `use.game.mode`
+    latency A/B test; the launch-time gamepad check only on request — it pops up without a pad),
+    validated by the bundle check; the `productinfo` privilege and **device info** (model, firmware)
+    as the debug overlay's sixth line; **live reload** to the TV (`tizen:watch` — a Node HTTP +
+    WebSocket dev server, no dependency).
+  - **Storage quota checks** — one shared `localStorage` adapter for web and TV (`createWebStorage`:
+    the app's 1 MiB budget, a full storage keeps only that value in memory); the **debug save export
+    / import** (`__shmupDebug.save`).
+  - **Memory budget** — an estimator that keeps every campaign zone under 100 MB (A–G ≈ 67 MiB, I ≈
+    74 MiB) and atlas-page unloading between zones on `PrepareStage` (nothing to unload with today's
+    single page).
+  - Review fixes: the device line no longer allocates a string per frame, and the window position
+    is saved on Linux (`move` + a 400 ms settle, `will-quit` waiting for the write). No simulation
+    change (no golden re-bless); Tizen bundle ≈ 361 of 384 KB gzip.
+  - Docs: [developer guide](docs/dev/platform-polish.md) · [the desktop app](docs/client/desktop-app.md) ·
+    [game-mode build and live reload on the TV](docs/client/install-on-tv.md#the-game-mode-build-latency-ab-test) ·
+    [the device line and the save export](docs/client/debug-tools.md#the-device-line)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -712,7 +743,8 @@ game options, one-button play and every UI label in a string table).
 | [`docs/`](docs/README.md) | Player and developer documentation (start with [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)) |
 
 Game docs — testers: [preview build (the title screen, menus, HUD and pause menu, the ship select (the KESTREL or the MANTA), the weapon select (weapon types A–D, Weapon Edit, the Option types, the `?` shields and `!` choices, Auto Power-Up), two players at once (2 PLAYERS, joining with START, the split keyboard), the Options screen — volumes, controls and the colour-blind bullet colours — and saved settings and high scores, the game-over and stage-clear screens, the difficulties, extra ships and continues, zone A — AZURE VERGE and its boss HALCYON BULWARK —, the zone map and the real zones B–I, the endings and the credits, the front end — the attract loop, typing your initials, the high-score tables, practice and the sound test —, test stage, its enemies and their bullets, your weapons, power-ups, the MANTA's colour items, weapons and Arm, lives and score, the boss and its WARNING, the Option Hunter range, the Direct range, explosions, shake and flashes, sound and music)](docs/client/preview-build.md) ·
-[controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md).
+[controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
+[debug tools & release checks](docs/client/debug-tools.md) · [the desktop app](docs/client/desktop-app.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
@@ -746,6 +778,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [zones H & I, endings & credits](docs/dev/zones-h-and-i.md) ·
 [front end & attract mode](docs/dev/front-end-and-attract.md) ·
 [options, rebinding & accessibility](docs/dev/options-rebinding-and-accessibility.md) ·
+[platform polish: Electron, Tizen extras, storage & memory](docs/dev/platform-polish.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -798,7 +831,11 @@ variables and the Chromium 69 build contract in
 [`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md) and
 [`apps/tizen/README.md`](apps/tizen/README.md).
 
-Desktop: `pnpm build && pnpm --filter @shmup/electron start` (needs the Electron binary).
+Desktop: `pnpm build && pnpm --filter @shmup/electron start` (needs the Electron binary; F11
+fullscreen, Ctrl+= / Ctrl+- window size), installers with `pnpm --filter @shmup/electron package` —
+[`docs/client/desktop-app.md`](docs/client/desktop-app.md). TV extras: `pnpm --filter @shmup/tizen
+build:game-mode` (the latency A/B build) and `tizen:watch` (live reload) —
+[`docs/client/install-on-tv.md`](docs/client/install-on-tv.md#the-game-mode-build-latency-ab-test).
 
 ### Input probe (standalone npm project)
 
@@ -866,7 +903,7 @@ hitch in the overlay's frame graph, gamepad and keyboard — checklist in
 [`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-m1-release-check). The M1 release
 is tagged `v0.1.0` on the final commit of step M1-19.
 
-Code: plan step **M2-17** (platform polish: Electron, Tizen extras, storage) — M2-01
+Code: plan step **M2-18** (v1.0 hardening & release candidate) — M2-01
 (rank, difficulty presets, extends & continues) opened milestone **M2 — complete v1.0**, M2-02
 (pattern DSL, bending lasers, bullet cancel & readability), M2-03 (meter arsenal: loadouts B–D,
 Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option Hunter), M2-05
@@ -874,7 +911,7 @@ Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option 
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
 transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G), M2-14 (final zones H & I, endings
-& credits), M2-15 (front-end screens & attract mode) and M2-16 (options, rebinding & accessibility) followed; every simulation change re-blesses the golden replays in the same
+& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility) and M2-17 (platform polish: Electron, Tizen extras, storage) followed; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 Also on hardware (unchanged, and still the gate for the remote control scheme): package and
@@ -906,7 +943,9 @@ since M2-14 the finales **IRON CITADEL** (the pistons and the parade) and **ABYS
 raid and THE HOLLOW KING), the ending scenes and the credits — a whole run to its ending —, and since
 M2-15 the attract loop, typing initials with the remote's arrows and OK, the high-score tables,
 practice and the sound test, and since M2-16 the Options pages — rebinding remote buttons, the input
-test, RATE, DEBOUNCE and the GAME options with the remote (checklist in
+test, RATE, DEBOUNCE and the GAME options with the remote —, and since M2-17 the game-mode build's
+latency A/B test, the debug panel's device line, the memory over a long run and live reload
+(`tizen:watch`) (checklist in
 [`docs/client/preview-build.md`](docs/client/preview-build.md#on-the-samsung-smart-monitor--tv)).
 
 Desktop prerequisites: Git, Node 24.15+, Tizen Studio **or** VS Code + Samsung Tizen extension (with a Samsung

@@ -183,14 +183,20 @@ boot is done (after the canvas is marked `running`, before the first frame), cal
   (`game.state.tick`), `worldTick`, `flags` (the live `game.debug`), `counters`, `stats`,
   `unlocked`, `buildId`, `game`, since M2-08 `renderer` (the `PixiRenderer` — its scale mode,
   hitbox markers, interpolation, layer effects and effect settings, for the M2-08 browser specs and
-  the console) and `run(command)` (works locked or not — for tests and the remote inspector);
+  the console), since M2-17 `save` (`DebugSaveApi`: `export()` — the save as readable JSON —,
+  `import(text)` — parsed like a stored save, written; reload to apply its options —, `usage()` —
+  the storage's `StorageUsage` or `null`; `null` without a save store —
+  [platform-polish.md](platform-polish.md#debug-save-export--import-shmupshell-storage--debug-coresave))
+  and `run(command)` (works locked or not — for tests and the remote inspector);
 - hooks into the shell's frame (below).
 
-On the TV, `apps/tizen` `tizenDebugTools(win, buildId)` is `debugToolsFactory({ unlock:
-'sequence', buildId, onUnlock })` whose `onUnlock` registers `DEBUG_REMOTE_KEYS` (`'1'` … `'8'`)
-with `tvinputdevice` (`registerRemoteKeys`) — only then, so a locked dev build behaves like a
-release build, and the number keys are registered once. Outside a TV (no `window.tizen`) the
-unlock still works and nothing is registered.
+On the TV, `apps/tizen` `tizenDebugTools(win, buildId, canvas?)` is `debugToolsFactory({ unlock:
+'sequence', buildId, onUnlock, device })` whose `onUnlock` registers `DEBUG_REMOTE_KEYS` (`'1'` …
+`'8'`) with `tvinputdevice` (`registerRemoteKeys`) — only then, so a locked dev build behaves like a
+release build, and the number keys are registered once — and (M2-17) collects `device-info` for the
+overlay's device line (`device` returns it; Samsung's `webapis.js` is loaded only at that moment)
+and logs the snapshot as `Shmup Cup device`. Outside a TV (no `window.tizen`) the unlock still works,
+nothing is registered and `webapis.js` is never requested.
 
 ### The frame with the tools
 
@@ -226,10 +232,16 @@ BUL 123/512 ENM 12/64 SHT 40/96 PRT 30/256
 RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  ABC1234
 GOD HITBOX GRID STEP SLOW 2
+LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
 
-The fourth line ends with the build id (upper-cased: the pixel font has capitals only); the fifth
-lists only the switches that are on. Without a World on screen (the title, a menu over no game)
+The fourth line ends with the build id (upper-cased); the fifth lists only the switches that are
+on; the sixth (M2-17, only when the host set one — the TV) is the **device line**:
+`DebugOverlay.setDevice(text)` → `setDebugPanelDevice`, the text made drawable by
+`debugDeviceText` (printable ASCII, cut to `DEBUG_DEVICE_MAX` = 56 — here the TV's 66-character
+line lost its end), and the backdrop grows by a row. `setDevice` is called every frame by the
+shell's `beforeRender` and compares its input first, so an unchanged line allocates nothing
+([platform-polish.md](platform-polish.md#the-debug-overlays-device-line-shmuprender-pixi-debug-shmupshell-debug)). Without a World on screen (the title, a menu over no game)
 the bullet, enemy, shot, laser, item, rank, RNG and hash fields stay empty; under the pause menu
 the dimmed game is on screen, so they show. To the right, the **frame graph** (`createFrameGraph`, 60 frames, newest on
 the right): one 1-px bar per frame, 8 px per 16.7 ms (capped at 40 px), green up to 17.5 ms,
@@ -722,6 +734,8 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   out, the demos re-recorded by `pnpm golden:update` and locked by `test/golden/demos.test.ts`
   ([front-end-and-attract.md](front-end-and-attract.md)). The scene flow itself is still not
   recorded (M3-01).
-- **M2-17** — the device info (model, firmware) in the debug overlay.
+- **M2-17** (done) — the device line (the TV's model, model code, firmware, display, Chrome and
+  WebGL) as the overlay's sixth line, `window.__shmupDebug.save` (the save export / import and the
+  storage usage); no simulation change, no golden re-bless ([platform-polish.md](platform-polish.md)).
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.
 - **M3-01** — replay save / share / browser, fast-forward, assists flagged as `assisted`.

@@ -61,8 +61,11 @@ through `Platform.storage`).
 
 One JSON document under the storage key **`save.v1`** (`SAVE_STORAGE_KEY`). The web and Tizen
 storage adapters prefix their keys, so in `localStorage` it is **`shmup-cup:save.v1`**; headless
-tests use `createMemoryStorage()`. Electron's renderer runs the web build and uses the same
-`localStorage` until the file store of M2-17.
+tests use `createMemoryStorage()`. Since M2-17 the web and Tizen adapters are one — the shell's
+`createWebStorage`, with quota checks — and Electron's renderer (the web build) stores the document
+as a file, `<userData>/saves/save.v1.json` (no prefix; atomic write + backup, through the preload's
+bridge and the main process's `FileStore` — [platform-polish.md](platform-polish.md#electron-file-saves-mainsavests)).
+Before M2-17 Electron used the web build's `localStorage`; that save is not migrated.
 
 ```json
 {
@@ -560,7 +563,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | An Options item | A row on the page it belongs to (`ControlsScene` / `DisplayScene` / `GameOptionsScene` — the root only holds the volumes and the pages since M2-16): a widget, its index in the page's `…Item` const (BACK moves down), a `userOption` push on `Changed` for a live option, the value in the page's `close()`, a label id in the UI string table; keep within 31 items, the flow's 512 string slots (the constructor throws otherwise) and the panel (ten rows of 14 px) |
 | A statistic | A counter in `SaveStats`, its default in `createDefaultSave`, `counter()` in `sanitizeSave`, a field in `serializeSave`, `save.count('…')` where it happens |
 | A hi-score mode | Append it to `HI_SCORE_MODES` (and the hi-score screen's `HI_SCORE_MODE_LABELS`), pick it in the flow's `recordRun` and `GameScene.useWorld` / `recordHiScore` (1P, co-op and practice have theirs since M2-15); keys must stay lower-case kebab ≤ 32 characters and the tables ≤ `MAX_HI_SCORE_TABLES` |
-| Another storage (Electron files, M2-17) | Implement `PlatformStorage` (`get` / `set`, async); nothing in `core/save` changes. Keep failures as rejections or swallow them — `flush` handles both |
+| Another storage (like Electron's files, M2-17) | Implement `PlatformStorage` (`get` / `set`, async); nothing in `core/save` changes. Keep failures as rejections or swallow them — `flush` handles both (Electron's `createBridgeStorage` rejects a failed write so the next flush retries; `createWebStorage` never rejects and keeps what does not fit in memory). A browser host should use `createWebStorage` for the quota checks |
 | A selectable profile | A `keyboard` / `remote` profile whose menu table binds the six menu actions in the host's key space (`byCode` on the web, `byKeyCode` on the TV) appears in CONTROLS by itself |
 
 ## Tests
@@ -588,7 +591,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 
 | Symptom | Cause / fix |
 |---|---|
-| A change in the Options screen is heard but gone after a reload | The screen was left some other way than BACK / Back (the page reloaded or the app was killed while it was open) — only closing it writes. Or storage failed: the web / TV adapters switch to memory for the session on the first `localStorage` error (private mode, quota), so writes "succeed" but vanish |
+| A change in the Options screen is heard but gone after a reload | The screen was left some other way than BACK / Back (the page reloaded or the app was killed while it was open) — only closing it writes. Or storage failed: since M2-17 a full storage or a value over the app's budget keeps that value in memory for the session, any other `localStorage` error (private mode, disabled storage) switches to memory for good — writes "succeed" but vanish; the hosts log `Shmup Cup: "…" was not stored (…)` and `__shmupDebug.save.usage()` shows `persistent` |
 | A co-op game's rows vanished from the `meter-normal` table after the update | They moved into `meter-normal-2p` (M2-15 in `sanitizeSave`, since M2-16 the version-1 → 2 migration): each mode has its own table now |
 | A saved row is still `---` | The name entry was skipped (the game was left on the name entry by closing the app — the row was saved at the game's end) or left blank; or the test kept the old row object — `renameScore` replaces it |
 | The title's `HI` shows a score that is gone after a reload | That game was quit or retried: the session hi-score takes it, the saved table only takes games that reached the game-over or stage-clear screen |
@@ -639,5 +642,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
   (`UserOptionKind.InputSettings` 10), the chosen difficulty saved; **save v2** with the migration
   from v1 that also moves the old co-op / practice rows
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
-- **M2-17** — Electron's file store (`PlatformStorage` over JSON in `userData`), storage quota checks,
-  debug save export / import.
+- **M2-17** (done) — Electron's file store (JSON files in `<userData>/saves/`, atomic write +
+  backup, a quota, through IPC), the shell's `createWebStorage` with quota checks for the web and
+  TV (a full storage keeps only that value in memory), and the debug save export / import
+  (`__shmupDebug.save`, `exportSaveText` / `importSaveText`, the new `SaveStore.replace`) — no save
+  format change ([platform-polish.md](platform-polish.md)).

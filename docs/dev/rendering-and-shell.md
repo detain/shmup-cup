@@ -428,7 +428,7 @@ const shell = await bootShell({
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2 /* … */ }),
   gameConfig: { remoteMode: false, stage: stageFromSearch(location.search) }, // apps/web: ?stage=
   scene: sceneFromSearch(location.search), // 'game' (default: the scene flow) | 'flight' | 'showcase' | 'calibration' | 'fx-gallery'
-  audioUnlock: 'gesture', // 'immediate' on the TV
+  audioUnlock: 'gesture', // 'immediate' on the TV and (M2-17) inside the Electron app
   contentOwners: { [INPUT_PROFILES_KIND]: profiles.load }, // optional: merged over DEFAULT_CONTENT_OWNERS
   inputProfiles: { choices, active, apply, customize, rebindable }, // optional (M1-17): CONTROLS; M2-16: the player's rebinding / SOCD / debounce and the rebind screen's profiles
   debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null, // M1-19
@@ -448,7 +448,14 @@ const shell = await bootShell({
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
 | 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers; M2-16: `InputSettings` → the app's `customize(save.options.input)`) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups); audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
-| 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later) | — |
+| 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later; since M2-17 with the save store for `__shmupDebug.save`) | — |
+
+Once the atlas and the content are ready (M2-17) the shell also works out which atlas pages each
+campaign zone needs (`memory` module: `stageSpriteSets` → `atlasPageNeeds` →
+`createAtlasResidency`, `Shell.atlasResidency`) and, in the scene flow, connects it to
+`PrepareStage` next to the music preparation — [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory).
+The platforms' `localStorage` adapter is the shell's `createWebStorage` (the `storage` module,
+quota checks) since M2-17.
 
 On any failure the error screen stays up, the canvas is marked `error`, everything created so
 far (input and audio included) is released, and the promise rejects with a `ShellBootError`
@@ -986,3 +993,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `connectOptionEvents`; the renderer needed nothing new (the Options pages, the rebind screen and
   the input test are UI draw lists; the labels come from the core's string table)
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
+- **M2-17** (done) — the shell's new modules `storage` (`createWebStorage`, the one `localStorage`
+  adapter of both apps, with quota checks; the debug save export / import) and `memory` (the TV
+  memory estimator; `Shell.atlasResidency`, unloading the atlas pages the next zone does not need on
+  `PrepareStage` — nothing yet with the single page); the debug tools' `save` API and device line
+  (`DebugToolsOptions.device` → render-pixi `DebugOverlay.setDevice`, the panel's sixth line)
+  ([platform-polish.md](platform-polish.md)).

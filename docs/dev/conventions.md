@@ -264,6 +264,12 @@ ES5 and linted with `ecmaVersion: 5`.
   (`ControlsSetup.pollCapture`) returns a number read from a field; a UI string template
   (`formatUiText`) is filled on a transition, never per frame
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#zero-allocation)).
+  And from M2-17: a setter a host calls every frame "just in case" must compare its **raw input**
+  with the last one before it transforms anything — the overlay's device line compared its result
+  instead, so cutting the ~66-character TV line with `slice()` made a new string on every frame
+  (≈ 1.7 MB per 20,000 calls, caught in review). `DebugOverlay.setDevice` keeps the last input and
+  returns at once when it is the same string
+  ([platform-polish.md](platform-polish.md#the-debug-overlays-device-line-shmuprender-pixi-debug-shmupshell-debug)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

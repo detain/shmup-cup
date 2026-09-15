@@ -195,6 +195,40 @@ release build and keeps its save; the remote sequence Pause, Ch+, Ch+, Ch+ unloc
 tools ([../client/debug-tools.md](../client/debug-tools.md)). Package from a plain `build` for
 anything that is not a test build — `pnpm test:e2e` leaves a test build in `dist/` too.
 
+**`config.xml` variants** (M2-17, [platform-polish.md](platform-polish.md#tizen-configxml-variants-appstizenscriptsconfig-xmlmjs)):
+`pnpm --filter @shmup/tizen build:game-mode` (`vite build --mode game-mode`, a release build) or
+`TIZEN_GAME_MODE=1` with any build adds Samsung's `use.game.mode` metadata for the §8.5 latency A/B
+test; `TIZEN_GAMEPADS=dualshock4::usbgamepad` adds the launch-time gamepad check (a popup when no
+listed pad is connected — testing only, never shipped). `check-bundle.mjs` validates whichever
+variant was built. The environment variables persist in a Command Prompt — clear them afterwards.
+
+**Live reload** (M2-17, never in CI): `pnpm --filter @shmup/tizen tizen:watch` builds a development
+bundle that knows this desktop's address (`SHMUP_LIVE_RELOAD_HOST`, default the first LAN IPv4;
+`SHMUP_LIVE_RELOAD_PORT`, default 5175), rebuilds on every change, serves `dist/` over HTTP with a
+WebSocket on the same port and tells the app to reload after each build. Package and install its
+first build once (another terminal: `tizen:package`, `tizen:install`, `tizen:run`); the widget then
+opens the served build. The TV must reach the port.
+
+### The remote Web Inspector (DevTools on the TV)
+
+The debug build's console (`window.__shmupDebug`, the `Shmup Cup device` snapshot, boot errors) and
+DevTools' Memory / Performance panels are reached through `sdb` — the usual Tizen web-app route:
+
+```bat
+sdb connect 192.168.1.50:26101
+sdb -s 192.168.1.50:26101 shell 0 debug ShmpCupGam.ShmupCup
+:: → prints "… port: 7011" (the number varies)
+sdb -s 192.168.1.50:26101 forward tcp:7011 tcp:7011
+```
+
+Then open `http://localhost:7011` in desktop Chrome (the TV's own DevTools front end), or add
+`localhost:7011` under `chrome://inspect` → *Configure*. Tizen Studio's *Debug As → Tizen Web
+Application* and the VS Code extension's debug command do the same in one step. `shell 0 debug`
+restarts the app in debug mode; run it again after every install. Useful there:
+`copy(__shmupDebug.save.export())` (the save for a bug report — M2-17), `__shmupDebug.save.usage()`,
+and the heap size for the §8.5 memory check (compare with the estimator's 24 MiB
+`HEAP_BASELINE_BYTES`, [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)).
+
 ## Electron
 
 ```sh
@@ -202,10 +236,21 @@ pnpm --filter @shmup/electron build    # tsc + copy apps/web/dist → dist/rende
 pnpm --filter @shmup/electron start    # needs the Electron binary
 SHMUP_DEV_URL=http://localhost:5173 pnpm --filter @shmup/electron start   # against `pnpm dev` (HMR)
 SHMUP_FULLSCREEN=1 pnpm --filter @shmup/electron start
+pnpm --filter @shmup/electron package  # M2-17, after build: installers in apps/electron/release/ — never in CI
 ```
 
 `SHMUP_RENDERER_DIR` points the `app://game/` protocol at another web build. The preload
 is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES modules.
+
+Since M2-17 the app keeps its **saves as files** in `<userData>/saves/` (`save.v1.json`,
+`window.json`, a `.bak` of each; atomic writes, 1 MiB a value, 8 MiB the folder), remembers the
+**window** (fullscreen — **F11** / **Alt+Enter** —, the scale of the 384×216 frame — **Ctrl+=** /
+**Ctrl+-** / **Ctrl+0**, Cmd on macOS —, the position) and the web build it loads runs as platform
+`'electron'` (EXIT quits, sound from boot). `package` runs a pinned electron-builder through
+`pnpm dlx` with `electron-builder.json` (Windows NSIS + portable, Linux AppImage + tar.gz, macOS dmg;
+`--publish never`, unsigned, no icons until M2-18); `electronVersion` is pinned there because
+electron-builder cannot read `catalog:` — bump it with the catalog. Details:
+[platform-polish.md](platform-polish.md), for players [../client/desktop-app.md](../client/desktop-app.md).
 
 ## Tests
 
@@ -357,7 +402,12 @@ is compiled to CommonJS (`preload.cjs`) because sandboxed preloads cannot be ES 
   row moved, LIVES 5 and ONE BUTTON reaching the next game, Escape cancelling a capture, RESET
   restoring a key, SOCD / DEBOUNCE saved, and LIVES 1 set with the remote's keys on the Tizen build
   (`game-options.spec.ts`) — the options, display-options and bullet-palette specs walk to the
-  DISPLAY page since. The gameplay specs
+  DISPLAY page since —, and M2-17's platform polish: on the web build `__shmupDebug.save` exporting
+  the save, importing an edited one (written under `shmup-cup:`, reported by `usage()` against the
+  1 MiB budget, loaded by the next launch) and refusing a broken text; on the Tizen build from
+  `file://` no device facts and no `webapis.js` request before the unlock, the `Shmup Cup device`
+  snapshot after Pause, Ch+ ×3, the storage usage, no console errors (`platform-polish.spec.ts`).
+  The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
   (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
@@ -479,6 +529,11 @@ the frozen install fails.
 | `Error: Test timed out in 5000ms.` in CI (e.g. an atlas build in `flight.test.ts` or `pipeline.test.ts`) | Vitest's 5 s default was too short while every package's suite runs at once on a 4-vCPU runner (a 0.5 s local test took 5.2 s). Since M2-10 `defineShmupProject` sets `testTimeout` to `TEST_TIMEOUT_MS` (30 s) for every project, and the atlas packer prunes only new free rectangles (same layout, about half the build time). A test that needs more passes its own timeout |
 | `electron: command not found` / Electron failed to install | The binary was skipped (`ELECTRON_SKIP_BINARY_DOWNLOAD=1`); run `pnpm rebuild electron` |
 | Electron window blank: "Web build not found" at build | Build `@shmup/web` first (`pnpm build` does it via Turborepo) |
+| `pnpm --filter @shmup/electron package` fails to find or download Electron | `electronVersion` in `apps/electron/electron-builder.json` no longer matches an Electron release — bump it together with the catalog's `electron` (the packaging test compares the majors) |
+| The desktop app forgets its window position on Linux | Something saves on `moved` again — Electron emits it on macOS / Windows only; `main.ts` saves 400 ms after the last `move` and on `close` ([platform-polish.md](platform-polish.md#electron-the-window-mainwindow-statets-mainwindow-optionsts-mainmaints)) |
+| Tizen build fails with `config.xml: …` | `check-bundle.mjs` validates the built `config.xml` variant: a hand edit broke `public/config.xml` (a missing privilege, an unbalanced tag), or unknown / repeated metadata |
+| Every Tizen build suddenly has game mode or the gamepad check | `TIZEN_GAME_MODE` / `TIZEN_GAMEPADS` is still set in the shell — unset it (`set TIZEN_GAME_MODE=`); the build logs `config.xml: <variant> variant` whenever it is not the default |
+| `tizen:watch` runs but the TV never reloads | The TV cannot reach the port (firewall, other subnet) or the wrong LAN address was picked — set `SHMUP_LIVE_RELOAD_HOST`; the widget on the TV must be the watch's own first build (a release bundle has no live reload) |
 | `pnpm content:check` (or `pnpm test`) lists `path` / `message` issues | A content file breaks its schema (`unknown field`, a bound, an id that does not resolve). The path is `<file>:<json path>`; fix the file or, if the format changed on purpose, the schema in `packages/core/src/data` — see [content-data.md](content-data.md#gotchas) |
 | Build fails with `SyntaxError: <file>.json: …` from `shmup:content` | A file under `content/` is not valid JSON (comments and trailing commas are not allowed; only the README samples are JSONC) |
 | `asset sources are invalid (N issues)` from `pnpm assets`, `pnpm build` or `pnpm dev` | A sprite pixel map, PNG override or font breaks its format; every line names `<file>:<json path>`. See [asset-pipeline.md](asset-pipeline.md#gotchas) |

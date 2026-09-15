@@ -26,7 +26,8 @@
  *
  * **Saves (M1-17).** Options and hi-scores live in `localStorage` (deleted with the app on
  * uninstall); the save is written when the Options screen closes and when a game ends, so
- * quitting with Back → YES loses nothing.
+ * quitting with Back → YES loses nothing. Since M2-17 the storage has quota checks (the shell's
+ * `createWebStorage`, through the platform adapter).
  *
  * **Back key** (shmup_feat.md §17/§23). Once the game runs, Back is an ordinary remote key
  * (`Action.Back` in menus, `Action.Pause` in the game — the input profile) and the scene stack
@@ -43,8 +44,11 @@
  * shows the overlay (boot ms, WebGL version, FPS and the frame graph for the on-device checks),
  * registers the number keys, and 1–8 then run the eight commands (1 overlay, 2 god mode, 3
  * hitboxes / grid, 4 frame advance, 5 step, 6 slow motion, 7 next checkpoint, 8 skip to the boss);
- * `window.__shmupDebug` is published for the remote inspector. The release bundle (`pnpm build`)
- * has none of it.
+ * `window.__shmupDebug` is published for the remote inspector (since M2-17 with the save export /
+ * import, `__shmupDebug.save`). Since M2-17 the unlock also collects the TV's facts (`device-info`:
+ * model, model code and firmware from Samsung's `webapis.productinfo` — `webapis.js` is loaded only
+ * then —, the display, Chrome and WebGL) for the overlay's sixth line, the **device line**, and logs
+ * the snapshot as `Shmup Cup device`. The release bundle (`pnpm build`) has none of it.
  *
  * **Public API.** {@link bootTizenApp}, {@link TizenApp}, {@link TizenAppResources},
  * {@link tizenDebugTools}, {@link DEBUG_REMOTE_KEYS}.
@@ -138,6 +142,15 @@ export const DEBUG_REMOTE_KEYS: readonly string[] = Object.freeze([
  * remote's number pad can run the commands, and (M2-17) collects the TV's facts (`device-info`:
  * model, firmware — Samsung's `webapis.productinfo`, loaded only then —, display, Chrome and
  * WebGL) for the overlay's device line.
+ *
+ * @remarks
+ * The factory remembers the renderer of the host it is called with (its WebGL version). The
+ * device line starts empty (no sixth panel line), is filled from the window and the renderer as
+ * soon as the sequence unlocks the tools, then again with the model and firmware once
+ * `loadWebapis` settles (at most `WEBAPIS_TIMEOUT_MS`); the shell reads it every frame through
+ * `DebugToolsOptions.device`, which returns the same string until then (no allocation). A failure
+ * while collecting leaves the line as far as it got. Outside a TV `webapis.js` is never requested
+ * and the model and firmware show as `?`.
  *
  * @param win - The window (its `tizen` API registers the keys; none outside a TV).
  * @param buildId - The build id (`__SHMUP_BUILD__`).

@@ -143,7 +143,14 @@ export function parseWindowState(text: string | null): WindowState {
  * The stored text of the settings.
  *
  * @param state - The settings.
- * @returns Compact JSON.
+ * @returns Compact JSON, every field written (a centred window stores `null` coordinates) —
+ *   {@link parseWindowState} reads it back unchanged.
+ *
+ * @example
+ * ```ts
+ * serializeWindowState(DEFAULT_WINDOW_STATE);
+ * // → '{"version":1,"fullscreen":false,"scale":3,"x":null,"y":null}'
+ * ```
  */
 export function serializeWindowState(state: WindowState): string {
   return JSON.stringify({
@@ -159,7 +166,12 @@ export function serializeWindowState(state: WindowState): string {
  * The window's content size at a scale.
  *
  * @param scale - The scale.
- * @returns `384 × scale` by `216 × scale`.
+ * @returns `384 × scale` by `216 × scale` (a new object).
+ *
+ * @example
+ * ```ts
+ * windowContentSize(3); // → { width: 1152, height: 648 }
+ * ```
  */
 export function windowContentSize(scale: number): {
   /** Width in pixels. */
@@ -205,11 +217,24 @@ export function fitWindowScale(scale: number, area: Pick<ScreenArea, 'width' | '
  * Whether a window placed at (`x`, `y`) with a content size keeps its title-bar corner on one of
  * the screens (at least 64×32 px of it inside a work area).
  *
+ * @remarks
+ * Only the window's top 32 px (its title bar) are tested, so a window whose lower part hangs
+ * off the bottom of a screen still counts — the player can drag it back. A monitor that was
+ * unplugged since the position was saved no longer offers its work area, and the window is
+ * centred instead.
+ *
  * @param x - Left edge.
  * @param y - Top edge.
  * @param width - Window width.
  * @param areas - The screens' work areas.
  * @returns `true` when it is reachable.
+ *
+ * @example
+ * ```ts
+ * const screens = [{ x: 0, y: 0, width: 1920, height: 1040 }];
+ * isOnScreen(300, 200, 1152, screens);  // → true
+ * isOnScreen(2500, 200, 1152, screens); // → false (the monitor on the right is gone)
+ * ```
  */
 export function isOnScreen(
   x: number,
@@ -249,9 +274,23 @@ export type WindowShortcut = 'fullscreen' | 'scale-up' | 'scale-down' | 'scale-r
 /**
  * The window shortcut a key press is, if any (see the module docs).
  *
+ * @remarks
+ * Only a first key-down counts (auto-repeats and key-ups return `null`). F11 and Alt+Enter work
+ * on every platform; the scale keys need Ctrl (Cmd on macOS) without Alt, so AltGr layouts do not
+ * trigger them. `main.ts` prevents the default of a matched key, so the game never sees it.
+ *
  * @param input - The key event.
  * @param mac - macOS (Cmd instead of Ctrl for the scale keys).
  * @returns The shortcut, or `null` (the key goes to the game).
+ *
+ * @example
+ * ```ts
+ * const key = { type: 'keyDown', alt: false, control: true, meta: false };
+ * windowShortcut({ ...key, key: '=' });                 // → 'scale-up'
+ * windowShortcut({ ...key, key: '0' });                 // → 'scale-reset'
+ * windowShortcut({ ...key, key: 'F11', control: false }); // → 'fullscreen'
+ * windowShortcut({ ...key, key: 'z' });                 // → null (a game key)
+ * ```
  */
 export function windowShortcut(input: ShortcutInput, mac = false): WindowShortcut | null {
   if (input.type !== 'keyDown' || input.isAutoRepeat === true) return null;
