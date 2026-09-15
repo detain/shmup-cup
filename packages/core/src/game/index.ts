@@ -19,7 +19,8 @@
  *   resume while playing opens the pause menu. Since M1-17 the flow plays with a `core/save`
  *   store (`options.save` — the Options screen's options, the title's HI, finished games recorded;
  *   a memory-only store when omitted) and offers the host's input profiles in CONTROLS
- *   (`options.inputProfiles`).
+ *   (`options.inputProfiles`); since M2-15 the sound test gets the host's music titles
+ *   (`options.soundTest`).
  *
  * Every World of a session pushes into the same {@link EventQueue} ({@link Game.events}), so the
  * host drains one queue, and shares the session's debug switches ({@link Game.debug}, `core/debug`
@@ -73,6 +74,7 @@ import {
   type InputProfileSetup,
   type SceneFlow,
   type SceneStart,
+  type SoundTestSetup,
 } from '../scenes/index.js';
 import type { SaveStore } from '../save/index.js';
 import { createWorld, stepWorld, type World } from '../world/index.js';
@@ -257,6 +259,12 @@ export interface GameOptions {
    * disabled. Ignored for bare gameplay.
    */
   readonly inputProfiles?: InputProfileSetup | null;
+  /**
+   * What the sound test offers besides the SFX cues (M2-15): the host's music titles (it plays a
+   * track when it reads a `SoundTest` event). Omitted or `null`: the sound test has no MUSIC row.
+   * Ignored for bare gameplay.
+   */
+  readonly soundTest?: SoundTestSetup | null;
 }
 
 /**
@@ -321,6 +329,7 @@ export function createGame(
               createWorld(worldConfig ?? config, content, { events, debugFlags: debug }),
             save: options.save ?? null,
             inputProfiles: options.inputProfiles ?? null,
+            soundTest: options.soundTest ?? null,
           },
           start,
         );

@@ -3409,6 +3409,107 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
 - **Acceptance:** attract cycle timing, demo replays play without desync, name entry with 4-way input only, table
   insertion/sorting, practice isolation, e2e run through the attract loop.
 - **Refs:** `shmup_feat.md` §16 (attract, practice), §17 (screens), §15 (hi-score table), §21 (sound test).
+- **As built:**
+  - **Mode select = the title's menu** (no separate scene): 1 PLAYER / 2 PLAYERS / PRACTICE /
+    OPTIONS / SOUND TEST / EXIT (EXIT only with `platform.exit` — the TV). `TitleItem` is
+    `Start` 0, `TwoPlayers` 1, `Practice` 2, `Options` **3**, `SoundTest` 4, `Exit` **5**; every
+    test and e2e spec that walked to OPTIONS presses Down once more. PRACTICE is disabled without a
+    campaign. `core/scenes` is `implemented`; the skeleton's placeholder scene ids `attract` /
+    `select` became `demo`, `story`, `practice`, `soundTest` (plus `nameEntry`, `hiScore`).
+  - **Attract loop:** title (`PRESS OK` idle `TITLE_ATTRACT_TICKS` 720 — any press or held key
+    resets it; the open menu never idles out) → `DemoScene` → `HiScoreScene` (attract: the chosen
+    ship / difficulty's 1P table first, then every other table with rows, ≤ 4 pages of
+    `HI_SCORE_PAGE_TICKS` 300) → `StoryScene` → title; any input on those three → title (Back too —
+    never the exit dialog). Without demos the loop starts at the tables, without a story the tables
+    return to the title. The title theme plays through the tables and the story.
+  - **Demos are content:** new `core/data` kind `replay` (`content/demos/<id>.replay.json` —
+    folder README + `example.replay.json`, `ContentDb.demos` / `demoIndex`, `DemoSpec`,
+    `MAX_DEMO_TICKS` 18,000): an `encodeReplay` document plus the content header, `id` and
+    `description`; the loader checks the structure and the recorded stage (`unknown stage id`), the
+    flow decodes them once (`SceneFlow.demos`; a broken one is left out). Nine demos, one per zone,
+    recorded by `test/golden/demos.ts` — the 4-way bot with god mode, 2,400 ticks (40 s) from the
+    zone's start, three zones in the MANTA — with the build id `DEMO_BUILD_ID` (`demo`);
+    `test/golden/demos.test.ts` plays each back through the attract path (and the golden path) with
+    every hash, and **`pnpm golden:update` re-records them with the golden replays** (they are
+    locked by hashes like goldens; Prettier skips them). ≈ 1.7 KB each.
+  - **Attract playback (`core/replay`):** the module was split — `replay/format.ts` (header,
+    recorder, playback, file format; no `core/game` import, so `core/scenes` can use it without a
+    cycle) and `replay/demo.ts` (`DemoPlayback`, `createDemoPlayback(replay, content, { events })`:
+    the header's World like `createReplayGame` — config re-resolved over the content's difficulty
+    table, god mode from `assisted` in the World's own `DebugFlags`, the start checkpoint — stepped
+    by `step()` with `createPlayback`; a desync or the recording's end stops it). `index.ts`
+    re-exports everything. The `DemoScene` gives the World a private queue and forwards what the
+    screen shows (particles, shake, flash, dim, popups — `DEMO_SILENT_KINDS` drops Sfx, Music,
+    ducking, rumble, host requests): **the demo is silent** (the music fades out), shows its own HUD,
+    `DEMO PLAY` / `PRESS OK` blinking and the zone card; the World is dropped when the scene leaves.
+  - **Story crawl** is campaign content: `campaign.story` (≤ 8 pages: `scene` of `STORY_SCENES`
+    none / dawn / invasion / launch, ≤ 6 lines of ≤ 40 characters; `CampaignStoryPage`). The rows
+    rise 1 px every `STORY_SCROLL_TICKS` (4) through a panel under the scene (10 string slots taken
+    by row number); a page's scene takes over when its first row is half-way up the panel; the
+    panel goes after the last row, `STORY_HOLD_TICKS` 90. The scenes reuse existing sprites (the
+    ending pieces, the ships, the logo) — **no new art**. The shipped story: three pages of
+    original text (the Verge worlds, the Iron Tide, KESTREL and MANTA).
+  - **Hi-score tables per difficulty × ship × mode:** `core/save` `hiScoreModeKey(config, mode)` —
+    `<powerUpMode>-<difficulty>` for 1P (unchanged keys, no save migration), `-2p` for co-op,
+    `-practice` for practice (`HI_SCORE_MODES`, `HiScoreMode`, `parseHiScoreModeKey`); the
+    "ship" dimension is the power-up model (one ship per model in the content), named after the
+    content's ship on screen (`KESTREL  NORMAL  1 PLAYER`). Co-op rows that older builds kept in
+    the 1P tables move into their `-2p` table when a save is read (`sanitizeSave`; no version bump
+    — M2-16 owns save v2). `SceneFlow.modeKey` names the co-op table for a co-op game; co-op and
+    practice Worlds play against their own table's best and never raise the (1P) session
+    hi-score. The zone column shows the campaign label of the stage reached (`-` otherwise).
+  - **Name entry:** `core/ui` `NameEntry` / `createNameEntry` / `nameEntryTick` / `drawNameEntry`
+    (`NAME_ENTRY_GLYPHS` A–Z 0–9 . - ! space, `NAME_ENTRY_LENGTH` 3): Up / Down the letter
+    (held-duration repeat), Right / OK next, Left / Back back, OK on the `END` field finishes; the
+    first letter starts on `A`, empty letters (`_`) are left out (`A`, OK ×4 = "A"; a blank name
+    is `---`). `recordRun` still inserts the rows as `---` at the game's end (the save is written
+    then) and keeps them as pending (`PendingName`, by object identity — player 2's row may move
+    player 1's); `finishGame()` (replacing `toTitle()` after a game over, the stage clear's `TO BE
+    CONTINUED`, a practice clear, an ending without credits and the credits) opens the
+    `NameEntryScene` for each row still in its table (both players of a co-op game, in turn;
+    `NAME_ENTRY_TIMEOUT_TICKS` 1,800 takes the name as it stands), names it
+    (`SaveStore.renameScore`), writes the save and shows the table with the new rows blinking
+    (`HI_SCORE_RESULT_TICKS` 900, OK / Back after `HI_SCORE_LOCK_TICKS` 30) → title. Every flow
+    test and e2e spec that went from an end screen to the title passes the name entry now.
+  - **Practice select** (`PracticeScene`, overlay): ZONE (`A AZURE VERGE` …), CHECKPOINT (`START`,
+    `CHECKPOINT n` for the zone's checkpoints after x 0, wrapping within the zone's), LOADOUT
+    (`PRACTICE_LOADOUTS` default / full — `STANDARD` / `FULL POWER`), START → the difficulty menu,
+    ship and weapon select as a normal start; their last OK is `FlowControl.launchGame()` (it
+    replaced the three `stack.reset(game)` calls), which starts the practice run
+    (`SceneFlow.startPractice(zone, checkpoint, loadout)` — `RunState.loadout`, `runWorldConfig`
+    applies it). Practice records into its table with the name entry, counts no game over /
+    stage clear, and returns to the title.
+  - **Sound test** (`SoundTestScene`, overlay): MUSIC (the host's titles — new
+    `SceneFlowHost.soundTest` / `GameOptions.soundTest` `SoundTestSetup { music }`; disabled
+    without), SFX (`SFX_TEST_LABELS`, every `SFX_CUES` cue in words), STOP, BACK. **OK plays**
+    (MUSIC: new `SimEventKind.SoundTest` 16, id = the library index; SFX: an `Sfx` event) — the
+    scene masks OK from `menuTick` so it does not step the choice; BACK / Back bring the title
+    theme back. Audio: new `AudioEngine.playTrack(index, fade)` (loads a non-resident track — a
+    menu, never a stage — keeps it as the one extra track, releasing other tracks outside the
+    prepared set; restarts a playing one); shell: `connectSoundTest` and the boot hands the music
+    library's titles to the flow.
+  - **Continue countdown polish:** a draining time bar (the last three seconds red, the digit
+    flashing), the score, and — once OK counts — a blinking `PRESS OK` and `BACK: GIVE UP`.
+  - UI string slots 256 → **384** (the name entry, the table's 30 row slots, the story, the new
+    menus). The Tizen `app.js` is **343.8 KB gzip of its 350 KB budget** (331.5 after M2-14 —
+    ~9 KB of scene code, ~3 KB of demos).
+  - **Tests:** core `ui-name-entry` (4-way only, repeat, lock, trimming, drawing),
+    `save-hiscore-modes` (keys, parsing, insertion / sorting, renaming by identity, the co-op rows'
+    move), `replay-demo`, `data-demos` (the kind, the story), `scenes-attract` (the cycle's exact
+    timings, the demo in sync with the bare replay, silence, any input → title, idle reset, missing
+    demos / story, the tables' pages, the story's pages), `scenes-front-end` (name entry with the
+    four directions, timeout, no entry, co-op names in the `-2p` table, the practice select and
+    its isolation, the sound test's events, the continue polish), the `scenes-attract-alloc`
+    guard (demo play, table paging, story, name entry); audio-web `engine-sound-test`; shell
+    `dispatch-sound-test` and a boot test; integration `attract-flow` (all nine demos through the
+    flow in sync, then the tables and the story), `test/golden/demos.test.ts`; e2e
+    `attract.spec.ts` (web: the loop's timings under frame advance, zone A then zone B's demo, a key
+    → title; Tizen from disk: the demo and the remote's OK). `campaign-flow.test.ts` enters "ACE"
+    with the four directions after the credits.
+  - **Gotcha (allocation guards):** a long replay-*recording* session in the same worker left V8
+    feedback that made any World allocate ~12 bytes a tick afterwards (a plain game's World does
+    not) — the demo guard therefore plays a synthetic weaving recording (no periodic hash) instead
+    of recording one; the shipped game never records.
 
 ### M2-16 — Options, rebinding & accessibility
 

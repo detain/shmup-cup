@@ -137,8 +137,10 @@ describe('core/data module', () => {
       'rules',
       'patterns',
       'campaign',
+      'replay',
     ]);
     expect(isContentKind('weapons')).toBe(true);
+    expect(isContentKind('replay')).toBe(true);
     expect(isContentKind('campaign')).toBe(true);
     expect(isContentKind('rules')).toBe(true);
     expect(isContentKind('input-profiles')).toBe(false);

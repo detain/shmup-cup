@@ -271,13 +271,24 @@ test.describe('campaign run (web build)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'credits');
     await waitFrames(page, 90);
     await tap(page, 'Enter');
+    // M2-15: the run's score entered its table — the name entry (A, then OK past the empty letters
+    // and on END), the table with the new row, and after its lock OK the title.
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'nameEntry');
+    await waitFrames(page, 10);
+    for (let i = 0; i < 4; i++) await tap(page, 'Enter');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'hiScore');
+    await waitFrames(page, 60);
+    await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     const saved = await page.evaluate((key) => window.localStorage.getItem(key), SAVE_KEY);
     expect(saved).not.toBeNull();
     const table = (
-      JSON.parse(saved ?? '{}') as { hiScores: Record<string, Array<{ reached: string }>> }
+      JSON.parse(saved ?? '{}') as {
+        hiScores: Record<string, Array<{ reached: string; name: string }>>;
+      }
     ).hiScores['meter-normal'];
     expect(table?.[0]?.reached).toBe('zone-h');
+    expect(table?.[0]?.name).toBe('A');
     expect(errors).toEqual([]);
   });
 

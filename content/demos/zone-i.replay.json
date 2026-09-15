@@ -1,0 +1,73 @@
+{
+  "formatVersion": 1,
+  "kind": "replay",
+  "id": "zone-i",
+  "description": "ABYSSAL THRONE: the KESTREL in the descent",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "demo",
+    "seed": 109,
+    "stageId": "zone-i",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 109,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-i",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 2400,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIAuAeCgAgBAh8A1QOBgAQBAQoAVoGABAEBI4KACAGBgAQBgoAIAQIjAFqBgAQBgoAIAYGABAGCgAgBgYAEAYKACAGBgAQBAQoAFcCAgAIBANwE",
+    "AOAS"
+  ],
+  "hashes": [
+    400451789,
+    2058307509,
+    2739427361,
+    2674341093
+  ],
+  "finalHash": 2674341093
+}

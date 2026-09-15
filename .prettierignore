@@ -25,3 +25,6 @@ tools/
 
 # Golden replays: written by `pnpm golden:update` (JSON.stringify layout — re-bless, never hand-edit)
 test/golden/*.replay.json
+
+# Attract demos: written by `pnpm golden:update` like the golden replays (M2-15)
+content/demos/*.replay.json

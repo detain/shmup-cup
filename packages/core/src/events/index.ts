@@ -22,8 +22,9 @@
  * {@link UserOptionKind}, {@link SimEvent}, {@link EventQueue},
  * {@link DEFAULT_EVENT_QUEUE_CAPACITY}, {@link createEventQueue}.
  *
- * **Planned API (later steps).** More cue names as weapons, bosses and menus land; a
- * replay-side event log for attract mode (M2-15).
+ * **Planned API (later steps).** More cue names as weapons, bosses and menus land. (Attract mode
+ * — M2-15 — plays its demo World into a private queue and forwards the non-audio events to the
+ * session's; no replay-side event log is needed.)
  *
  * @module
  */
@@ -131,6 +132,14 @@ export const SimEventKind = {
    * engine to prepare it, keeping the title theme); the tileset art is resident in the one atlas.
    */
   PrepareStage: 15,
+  /**
+   * Play a music track of the host's library from the sound test (M2-15, shmup_feat.md §21 "sound
+   * test"): `id` = the track's index in the list the scene flow was given
+   * (`core/scenes` `SoundTestSetup.music` — `@shmup/shell` passes the music library's titles in
+   * library order). The host loads the track when it is not resident and plays it; `Music`
+   * `Silence` stops it like any track.
+   */
+  SoundTest: 16,
 } as const;
 
 /** One of the {@link SimEventKind} codes. */
@@ -154,6 +163,7 @@ export const SIM_EVENT_KIND_NAMES: readonly string[] = Object.freeze([
   'userOption',
   'bossEscaped',
   'prepareStage',
+  'soundTest',
 ]);
 
 /**

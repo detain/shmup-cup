@@ -311,8 +311,9 @@ describe('core/scenes flow edge: construction', () => {
         next += scene.stringSlots;
       }
       expect(next).toBeLessThanOrEqual(flow.view.ui.stringCapacity);
-      // PRESS OK, HI, the logo's text, the cursor and the items (2 PLAYERS since M2-06).
-      expect(flow.title.stringSlots).toBe(canExit ? 10 : 9);
+      // PRESS OK, HI, the logo's text, the cursor and the items (2 PLAYERS since M2-06, PRACTICE
+      // and SOUND TEST since M2-15).
+      expect(flow.title.stringSlots).toBe(canExit ? 12 : 11);
     }
   });
 
@@ -422,7 +423,8 @@ describe('core/scenes flow edge: title', () => {
     expect(s.sounds(from)).toEqual([SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
   });
 
-  it('without EXIT the menu moves between 1 PLAYER, 2 PLAYERS and OPTIONS only', () => {
+  it('without EXIT the menu moves between 1 PLAYER, 2 PLAYERS, OPTIONS and SOUND TEST only', () => {
+    // No campaign in this content: PRACTICE is disabled and skipped (M2-15).
     const s = new Session('title', false);
     s.press(Action.Confirm);
     const from = s.events.length;
@@ -430,9 +432,16 @@ describe('core/scenes flow edge: title', () => {
     expect(s.flow.title.menu.focus).toBe(TitleItem.TwoPlayers);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
+    s.press(Action.Down);
+    expect(s.flow.title.menu.focus).toBe(TitleItem.SoundTest);
     s.press(Action.Down); // wraps
     expect(s.flow.title.menu.focus).toBe(TitleItem.Start);
-    expect(s.sounds(from)).toEqual([SFX_CUES.MenuMove, SFX_CUES.MenuMove, SFX_CUES.MenuMove]);
+    expect(s.sounds(from)).toEqual([
+      SFX_CUES.MenuMove,
+      SFX_CUES.MenuMove,
+      SFX_CUES.MenuMove,
+      SFX_CUES.MenuMove,
+    ]);
   });
 
   it('Back from the menu without EXIT shows PRESS OK at once with the back sound', () => {
@@ -751,7 +760,8 @@ describe('core/scenes flow edge: end screens', () => {
     s.hold(0);
     expect(s.uiTexts()).toEqual(['TO BE CONTINUED']);
     s.press(Action.Confirm);
-    expect(s.ids).toEqual(['title']);
+    // 3,100 entered the empty table: its name entry comes first (M2-15).
+    expect(s.ids).toEqual(['nameEntry']);
     expect(s.flow.hiScore).toBe(9000);
   });
 

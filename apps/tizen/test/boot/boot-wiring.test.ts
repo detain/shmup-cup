@@ -296,9 +296,13 @@ describe('tizen/boot bootTizenApp wiring', () => {
       {} as HTMLCanvasElement,
       {
         ...resources,
-        // Without zone A — and so without the campaign that starts there (M2-10).
+        // Without zone A — and so without the campaign that starts there (M2-10) and its demo
+        // (M2-15).
         contentFiles: resources.contentFiles.filter(
-          (f) => f.path !== 'stages/zone-a.stage.json' && f.path !== 'campaign/main.campaign.json',
+          (f) =>
+            f.path !== 'stages/zone-a.stage.json' &&
+            f.path !== 'campaign/main.campaign.json' &&
+            f.path !== 'demos/zone-a.replay.json',
         ),
       },
       win as unknown as Window,
@@ -688,6 +692,7 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
     frames(2);
     tap(13); // PRESS OK → menu
     tap(40); // 2 PLAYERS (M2-06)
+    tap(40); // PRACTICE (M2-15)
     tap(40); // OPTIONS
     tap(13);
     frames(2);

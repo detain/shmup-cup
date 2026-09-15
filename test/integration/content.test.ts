@@ -308,6 +308,8 @@ describe('integration: content/ validates', () => {
       rules: ['rules'],
       patterns: ['patterns'],
       campaign: ['campaign'],
+      // The attract loop's demos (M2-15): replay recordings.
+      demos: ['replay'],
       input: ['input-profiles'],
       fx: ['fx'],
       // The SFX bank next to the music folder (audio/main.sfx.json, audio/music/*.music.json).

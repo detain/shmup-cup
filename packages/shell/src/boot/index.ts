@@ -42,7 +42,9 @@
  * jingles), behind the progress bar; nothing is rendered or decoded during play. Since M2-10 the
  * scene flow's `PrepareStage` events (`connectStagePreparation`: the zone map's launch, the title
  * after a run through the map, a run or practice start on another stage) have the engine prepare
- * another stage's set, plus the title theme, between Worlds. Once the app's
+ * another stage's set, plus the title theme, between Worlds; since M2-15 the sound test gets the
+ * music library's titles (`GameOptions.soundTest`) and its `SoundTest` events have the engine play
+ * that track (`connectSoundTest`). Once the app's
  * `audio.unlock()` has created the context (first gesture on the web, at boot on TV) the engine
  * attaches to the web-audio buses; in the scene flow and free flight the `Sfx`, `Music` and
  * `MusicDuck` events (the World's, and in the flow the menus' sounds and the scenes' music) play
@@ -160,6 +162,7 @@ import {
   applyAudioOptions,
   applyDisplayOptions,
   connectAudioEvents,
+  connectSoundTest,
   connectStagePreparation,
   connectFxEvents,
   connectOptionEvents,
@@ -848,6 +851,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
             scenes: 'boot',
             save,
             inputProfiles: { choices: profileChoices, active: activeProfile },
+            // The sound test's MUSIC row (M2-15): the library's titles, in library order.
+            soundTest: { music: musicContent.tracks.map((track) => track.title) },
           }
         : {},
     );
@@ -923,6 +928,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     // `PrepareStage` (M2-10): the music set follows the stage about to play — the zone map's
     // launch, the title's return to the start stage, a run or practice start on another stage.
     connectStagePreparation(events, engine, game.content.stages, stageMusicCues);
+    // The sound test's tracks (M2-15): loaded on demand, played from their start.
+    connectSoundTest(events, engine);
     // The Options screen's changes, live (plan M1-17). The profile event carries an index into
     // the same `profileChoices` the flow was given; out-of-range indices are ignored.
     connectOptionEvents(

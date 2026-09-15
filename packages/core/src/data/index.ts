@@ -3,8 +3,8 @@
  *
  * **Status: partial.** The loader, the schema combinators and the `player`, `weapons`,
  * `enemies` (with its boss section, M1-13), `paths`, `stage`, `tileset`, `rules` (M2-01, its
- * `scoring` section M2-02), `patterns` (M2-02) and `campaign` (M2-10) formats are implemented;
- * later steps add their kinds.
+ * `scoring` section M2-02), `patterns` (M2-02), `campaign` (M2-10) and `replay` (M2-15 — the
+ * attract loop's demos) formats are implemented; later steps add their kinds.
  *
  * **Responsibility.** Data-driven content (design pillar 4). Declares the shape of every
  * file under `content/`, validates it at load time with the in-house combinators in
@@ -183,6 +183,13 @@
  * {@link MAX_CREDITS_LINES}, {@link MAX_CREDITS_LINE_LENGTH}); a stage's music may name the
  * `ending` and `credits` cues its final zone needs ({@link StageMusic}).
  *
+ * M2-15: the attract loop. A `replay` file (`content/demos/*.replay.json`) is a demo — a
+ * `core/replay` recording of the 4-way bot with an `id` and a `description` ({@link DemoSpec},
+ * {@link ContentDb.demos}, {@link MAX_DEMO_TICKS}); the loader checks its structure and that its
+ * stage exists, `core/replay` decodes the recording when it plays. The campaign gained the
+ * attract **story** ({@link CampaignStoryPage}, {@link STORY_SCENES}, {@link StorySceneName},
+ * {@link MAX_STORY_PAGES}, {@link MAX_STORY_LINES}, {@link MAX_STORY_LINE_LENGTH}).
+ *
  * **Planned API (later steps).** Kind `strings` (M2-16); `input-profiles`,
  * `sfx`/`music` and `fx` files stay *foreign* here and are validated by their owning packages
  * (see plan §3.5). Hosts pass
@@ -212,6 +219,7 @@ import {
   type PowerUpMode,
 } from '../config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../events/index.js';
+import { MAX_PLAYERS } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import {
   EMPTY_PATTERN_BANK,
@@ -230,9 +238,13 @@ import {
   MAX_CREDITS_SECTIONS,
   MAX_ENDING_LINE_LENGTH,
   MAX_ENDING_TEXT_LINES,
+  MAX_STORY_LINES,
+  MAX_STORY_LINE_LENGTH,
+  MAX_STORY_PAGES,
   MAX_ZONE_EXITS,
   MAX_ZONE_PREVIEW_LINES,
   RUN_FLAG_NAMES,
+  STORY_SCENES,
   completeCampaign,
   type CampaignSpec,
 } from './campaign.js';
@@ -251,9 +263,13 @@ export {
   MAX_CREDITS_SECTIONS,
   MAX_ENDING_LINE_LENGTH,
   MAX_ENDING_TEXT_LINES,
+  MAX_STORY_LINES,
+  MAX_STORY_LINE_LENGTH,
+  MAX_STORY_PAGES,
   MAX_ZONE_EXITS,
   MAX_ZONE_PREVIEW_LINES,
   RUN_FLAG_NAMES,
+  STORY_SCENES,
   campaignRoutes,
   campaignZoneIndex,
   completeCampaign,
@@ -265,9 +281,11 @@ export {
   type CampaignEdgeSpec,
   type CampaignEndingSpec,
   type CampaignSpec,
+  type CampaignStoryPage,
   type CampaignZoneSpec,
   type EndingSceneName,
   type RunFlagName,
+  type StorySceneName,
 } from './campaign.js';
 
 export {
@@ -322,6 +340,7 @@ export const CONTENT_KINDS = Object.freeze([
   'rules',
   'patterns',
   'campaign',
+  'replay',
 ] as const);
 
 /** Kinds of content file this module owns (`content/player/`, `weapons/`, …). */
@@ -1967,6 +1986,37 @@ export interface ContentDb {
    * stages).
    */
   readonly campaign: CampaignSpec | null;
+  /**
+   * The attract loop's demos (M2-15): the `content/demos/*.replay.json` files, in path order
+   * ({@link DemoSpec}; empty without any — the attract loop then has no demo play).
+   */
+  readonly demos: readonly DemoSpec[];
+  /** Demo id → index in {@link ContentDb.demos}. */
+  readonly demoIndex: ReadonlyMap<string, number>;
+}
+
+/** Longest recording a demo file may hold: 5 minutes at 60 Hz (M2-15). */
+export const MAX_DEMO_TICKS = 18_000;
+
+/**
+ * One demo of the attract loop (M2-15 — shmup_feat.md §16 "attract / demo mode plays bundled
+ * replays"): a `content/demos/*.replay.json` file, a `core/replay` recording of the 4-way playtest
+ * bot. The loader checks the document's structure and its stage; `core/replay` `decodeReplay`
+ * decodes {@link DemoSpec.document} when the attract loop plays it.
+ */
+export interface DemoSpec {
+  /** Unique id (the zone it shows, e.g. `zone-a`). */
+  readonly id: string;
+  /** What it shows (default `''`). */
+  readonly description: string;
+  /** The recorded stage id (`header.stageId`; `null` = free flight). */
+  readonly stage: string | null;
+  /** Resolved `ContentDb.stages` index of {@link DemoSpec.stage} (-1 for free flight or unknown). */
+  readonly stageIndex: number;
+  /** Recorded ticks (1–{@link MAX_DEMO_TICKS}). */
+  readonly ticks: number;
+  /** The validated replay document (`decodeReplay(document)` gives the `Replay`). */
+  readonly document: Readonly<Record<string, unknown>>;
 }
 
 /** Options of {@link loadContent}. */
@@ -2880,8 +2930,68 @@ const CAMPAIGN_FILE_SCHEMA = s.object(
       ),
       { max: MAX_CREDITS_SECTIONS },
     ),
+    story: s.array(
+      s.object(
+        {
+          scene: s.enumOf(STORY_SCENES),
+          lines: s.array(s.str({ maxLength: MAX_STORY_LINE_LENGTH }), { max: MAX_STORY_LINES }),
+        },
+        { optional: ['scene', 'lines'] },
+      ),
+      { max: MAX_STORY_PAGES },
+    ),
   },
-  { optional: ['name', 'credits'] },
+  { optional: ['name', 'credits', 'story'] },
+);
+
+/**
+ * A JSON object of any shape (a demo's recorded `GameConfig`: `core/replay` `decodeReplay`
+ * validates it field by field when the demo is played).
+ */
+const JSON_OBJECT_SCHEMA: Schema<Readonly<Record<string, unknown>>> = Object.freeze({
+  typeName: 'object',
+  refKind: null,
+  parse(value: unknown, path: string, issues: ValidationIssue[]) {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      return value as Readonly<Record<string, unknown>>;
+    }
+    issues.push({ path, message: 'must be an object' });
+    return undefined;
+  },
+});
+
+/** An unsigned 32-bit integer (a state hash, a seed). */
+const U32_SCHEMA = s.int({ min: 0, max: 0xffffffff });
+
+/**
+ * A `content/demos/*.replay.json` file (M2-15): a `core/replay` document (`encodeReplay`'s
+ * fields) with the content header, an `id` and a `description`. The structure is checked here;
+ * the recording itself (config, input runs, hash count) is decoded by `core/replay` `decodeReplay`
+ * when the attract loop plays it — `pnpm content:check` plays every shipped demo.
+ */
+const DEMO_FILE_SCHEMA = s.object(
+  {
+    ...HEADER_SHAPE,
+    kind: s.enumOf(['replay'] as const),
+    id: s.str({ maxLength: 32, pattern: /^[a-z0-9][a-z0-9-]*$/ }),
+    description: s.str({ maxLength: 200 }),
+    header: s.object({
+      formatVersion: s.int({ min: 1 }),
+      buildId: s.str({ minLength: 0, maxLength: 64 }),
+      seed: U32_SCHEMA,
+      stageId: s.nullable(s.str({ maxLength: 64 })),
+      checkpoint: s.int({ min: -1 }),
+      loadout: s.str({ maxLength: 16 }),
+      assisted: s.bool(),
+      config: JSON_OBJECT_SCHEMA,
+    }),
+    ticks: s.int({ min: 1, max: MAX_DEMO_TICKS }),
+    hashInterval: s.int({ min: 1 }),
+    inputs: s.array(s.str({ minLength: 0 }), { min: MAX_PLAYERS, max: MAX_PLAYERS }),
+    hashes: s.array(U32_SCHEMA),
+    finalHash: U32_SCHEMA,
+  },
+  { optional: ['description'] },
 );
 
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
@@ -2934,6 +3044,12 @@ interface DbBuilder {
   campaign: CampaignSpec | null;
   /** Repo-relative path of the campaign's file (issue paths of the reference pass). */
   campaignPath: string;
+  /** Collected demos (M2-15). */
+  demos: DemoSpec[];
+  /** Demo id → position in {@link DbBuilder.demos}. */
+  demoIndex: Map<string, number>;
+  /** Repo-relative file path of every collected demo (issue paths of the reference pass). */
+  demoPaths: string[];
 }
 
 /** Empty {@link StringTable}. */
@@ -2974,6 +3090,8 @@ export const EMPTY_CONTENT_DB: ContentDb = Object.freeze({
   scoring: null,
   patterns: EMPTY_PATTERN_BANK,
   campaign: null,
+  demos: Object.freeze([]),
+  demoIndex: new Map<string, number>(),
 });
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -3290,6 +3408,9 @@ export function loadContent(
     patternFiles: [],
     campaign: null,
     campaignPath: '',
+    demos: [],
+    demoIndex: new Map(),
+    demoPaths: [],
   };
 
   const sorted = files.slice().sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -3338,6 +3459,7 @@ export function loadContent(
   checkWeaponFamilies(db, issues);
   checkBonusReferences(db, issues);
   checkCampaignStages(db, issues);
+  checkDemoStages(db, issues);
   expandStageTerrains(db, issues);
 
   return {
@@ -3364,6 +3486,8 @@ export function loadContent(
       scoring: db.scoring,
       patterns,
       campaign: db.campaign,
+      demos: db.demos,
+      demoIndex: db.demoIndex,
     },
     issues,
     foreign,
@@ -3404,6 +3528,8 @@ function parseFile(
       return PATTERNS_FILE_SCHEMA.parse(data, '', issues, refs);
     case 'campaign':
       return CAMPAIGN_FILE_SCHEMA.parse(data, '', issues, refs);
+    case 'replay':
+      return DEMO_FILE_SCHEMA.parse(data, '', issues, refs);
   }
 }
 
@@ -3603,6 +3729,48 @@ function collect(
       db.campaignPath = path;
       return;
     }
+    case 'replay': {
+      const header = parsed['header'] as { stageId: string | null };
+      const before = db.demos.length;
+      addEntry(
+        db.demos,
+        db.demoIndex,
+        Object.freeze({
+          id: parsed['id'] as string,
+          description: (parsed['description'] as string | undefined) ?? '',
+          stage: header.stageId,
+          stageIndex: -1,
+          ticks: parsed['ticks'] as number,
+          document: Object.freeze(parsed),
+        }),
+        at(path, 'id'),
+        'demo',
+        issues,
+      );
+      if (db.demos.length > before) db.demoPaths.push(path);
+      return;
+    }
+  }
+}
+
+/**
+ * The M2-15 part of the reference pass for the demos: a demo's recorded stage must be a stage of
+ * the content (free flight — `null` — needs none).
+ *
+ * @param db - The builder (stages collected).
+ * @param issues - Collector.
+ */
+function checkDemoStages(db: DbBuilder, issues: ValidationIssue[]): void {
+  const demos = db.demos;
+  for (let i = 0; i < demos.length; i++) {
+    const demo = demos[i];
+    if (demo.stage === null) continue;
+    const index = db.stageIndex.get(demo.stage);
+    if (index === undefined) {
+      issue(issues, at(db.demoPaths[i], 'header.stageId'), 'unknown stage id "' + demo.stage + '"');
+      continue;
+    }
+    demos[i] = Object.freeze({ ...demo, stageIndex: index });
   }
 }
 

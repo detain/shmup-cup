@@ -36,6 +36,7 @@ import {
   ENDING_TIMEOUT_TICKS,
   RunFlag,
   type SceneFlow,
+  HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
 import { resolveUiSprites, type UiSprites } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
@@ -153,6 +154,22 @@ class Session {
   press(action: ActionMask): void {
     this.hold(action);
     this.hold(0);
+  }
+
+  /**
+   * Passes the name entries of new hi-scores (M2-15) when one is on top: `A`, OK on END (for each
+   * row that entered), then the table's OK after its lock — the title.
+   */
+  leaveNames(): void {
+    if (this.top !== 'nameEntry') return;
+    // One name per row that entered (both players' in a co-op game).
+    for (let names = 0; names < 2 && this.top === 'nameEntry'; names++) {
+      this.hold(0, 2);
+      for (let i = 0; i < 4; i++) this.press(Action.Confirm);
+    }
+    expect(this.top).toBe('hiScore');
+    this.hold(0, HI_SCORE_LOCK_TICKS);
+    this.press(Action.Confirm);
   }
 
   /**
@@ -310,6 +327,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(s.uiTexts()).toContain('OK: TITLE');
     expect(s.uiTexts()).not.toContain('OK: CREDITS');
     s.press(Action.Confirm);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
   });
 
@@ -326,6 +344,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.hold(0, ENDING_TIMEOUT_TICKS - 2);
     expect(s.top).toBe('ending');
     s.hold(0, 2);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
   });
 
@@ -525,6 +544,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.press(Action.Confirm);
     s.hold(0, ENDING_LOCK_TICKS + 1);
     s.press(Action.Confirm);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
     // The next run from the title: START, the menus, the zone — then the same ending.
     s.flow.stack.reset(s.flow.ending);
@@ -610,6 +630,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.hold(0, CREDITS_HOLD_TICKS - 52);
     expect(s.top).toBe('credits');
     s.hold(0, 2);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
     expect(CREDITS_LOCK_TICKS).toBeLessThan(scene.scrollEnd * CREDITS_SCROLL_TICKS);
   });

@@ -14,6 +14,7 @@ import {
   ENDING_LINE_TICKS,
   ENDING_LOCK_TICKS,
   ENDING_STORY_HOLD_TICKS,
+  HI_SCORE_LOCK_TICKS,
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   MUSIC_CUES,
@@ -138,6 +139,27 @@ describe('integration: the zone map in the scene flow (M2-10)', () => {
     expect(flow.credits.rows.length).toBeGreaterThanOrEqual(40);
     expect(music).toEqual(expect.arrayContaining([MUSIC_CUES.Credits]));
     for (let t = 0; t < 60 * 60 * 2 && flow.stack.top?.id === 'credits'; t++) step(0);
+    // M2-15: the run's score entered its table — the name entry, with the four directions and OK
+    // only (the remote): A (as it starts), Right, Up ×3 → C, Right, Up ×5 → E, Right → END, OK.
+    expect(flow.stack.top?.id).toBe('nameEntry');
+    const tap = (action: number): void => {
+      step(action);
+      step(0);
+    };
+    step(0);
+    step(0); // the entry's lock
+    const keys = [Action.Right, Action.Up, Action.Up, Action.Up, Action.Right];
+    for (let i = 0; i < 5; i++) keys.push(Action.Up);
+    keys.push(Action.Right);
+    for (const key of keys) tap(key);
+    expect(flow.nameEntry.entry.name).toBe('ACE');
+    tap(Action.Confirm);
+    expect(save.hiScores('meter-normal')[0]).toMatchObject({ name: 'ACE', reached: 'zone-i' });
+    // The table with the new row, then (after its lock) OK → the title.
+    expect(flow.stack.top?.id).toBe('hiScore');
+    expect(flow.hiScores.key).toBe('meter-normal');
+    for (let t = 0; t < HI_SCORE_LOCK_TICKS; t++) step(0);
+    tap(Action.Confirm);
     expect(flow.stack.top?.id).toBe('title');
   }, 60_000);
 });

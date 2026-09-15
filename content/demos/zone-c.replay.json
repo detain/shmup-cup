@@ -1,0 +1,73 @@
+{
+  "formatVersion": 1,
+  "kind": "replay",
+  "id": "zone-c",
+  "description": "DUNE EXPANSE: the KESTREL over the dunes",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "demo",
+    "seed": 103,
+    "stageId": "zone-c",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 103,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-c",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 2400,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIAyQPAgIACAQDtCIGABAEBFwCfAsCAgAIBAMYD",
+    "AOAS"
+  ],
+  "hashes": [
+    1617211790,
+    3779679890,
+    2894639567,
+    3428614095
+  ],
+  "finalHash": 3428614095
+}

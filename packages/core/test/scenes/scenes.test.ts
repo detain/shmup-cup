@@ -81,7 +81,7 @@ const INPUT = createInputSnapshot();
 describe('core/scenes stack', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('scenes');
-    expect(moduleInfo.status).toBe('partial');
+    expect(moduleInfo.status).toBe('implemented');
     expect(moduleInfo.specRefs).toContain('shmup_feat.md §23');
   });
 

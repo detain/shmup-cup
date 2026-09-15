@@ -58,6 +58,7 @@
  * - shmup_tech.md §4.10 — no UI framework; canvas menus + bitmap font
  * - shmup_feat.md §6B — the Direct-mode HUD's visible tier pips (M2-05)
  * - shmup_feat.md §17 — the co-op P2 HUD and the `PRESS START` join prompt (M2-06)
+ * - shmup_feat.md §17 — the 3-letter name entry of the hi-score table (M2-15)
  *
  * **Public API.** Widgets: {@link ListMenu}, {@link MenuItem}, {@link MenuItemKind},
  * {@link Slider}, {@link Toggle}, {@link Choice}, {@link Confirm}, {@link ConfirmChoice},
@@ -88,7 +89,12 @@
  * (player 2's stock icon in its palette swap), and a player out of lives shows `PRESS START` (it
  * may continue) or `GAME OVER` in its half — see {@link buildHud}.
  *
- * **Planned.** The key-rebind prompt and the 3-letter name entry (M2-15 / M2-16).
+ * **Name entry (M2-15).** {@link NameEntry} / {@link nameEntryTick} / {@link drawNameEntry}: the
+ * 3-letter hi-score name picked with the four directions and OK only — Up / Down change the letter,
+ * Right / OK move on, Left goes back, OK on `END` finishes ({@link NAME_ENTRY_GLYPHS},
+ * {@link NAME_ENTRY_LENGTH}, {@link NAME_ENTRY_STRING_SLOTS}, {@link createNameEntry}).
+ *
+ * **Planned.** The key-rebind prompt (M2-16).
  *
  * @module
  */
@@ -880,6 +886,203 @@ export function confirmTick(confirm: Confirm, input: Readonly<PlayerInput>): Men
   return MenuResult.Moved;
 }
 
+// ------------------------------------------------------------------------------ name entry
+
+/**
+ * The glyphs of the hi-score name entry (M2-15), in Up order — Up after the last one comes back to
+ * the first: `A`–`Z`, `0`–`9`, `.`, `-`, `!` and a space. All of them are in the pixel font.
+ */
+export const NAME_ENTRY_GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-! ';
+
+/** Letters of a hi-score name (shmup_feat.md §17 "name entry (3 letters)"). */
+export const NAME_ENTRY_LENGTH = 3;
+
+/** String slots {@link drawNameEntry} uses: one per letter, `END`, the arrows and `_`. */
+export const NAME_ENTRY_STRING_SLOTS = NAME_ENTRY_LENGTH + 4;
+
+/** A letter with no glyph chosen yet (drawn as `_`, left out of the name). */
+const NO_GLYPH = -1;
+
+/** The glyphs as one-character strings, built once (drawing never builds a string). */
+const GLYPH_STRINGS: readonly string[] = Object.freeze(NAME_ENTRY_GLYPHS.split(''));
+
+/**
+ * The 3-letter name entry of the hi-score table (shmup_feat.md §17 "canvas-drawn UI kit: 3-letter
+ * name entry", plan M2-15) — a D-pad letter picker that needs **only the four directions and OK**
+ * (the Samsung remote): Up / Down change the letter under the cursor (auto-repeat), Right or OK
+ * move on to the next letter, Left (or Back) goes back one, and OK on `END` — the field after the
+ * last letter — finishes. A class: its counters stay unboxed.
+ *
+ * @remarks
+ * The first letter starts on `A`, the others empty (`_`): a letter left empty is not part of the
+ * name, so `A`, OK, OK, OK, OK enters `A`. Confirm presses are buffered and held back by
+ * {@link NameEntry.lockTicks} like the menus' ({@link menuTick}).
+ */
+export class NameEntry {
+  /** Letters of the name. */
+  readonly length: number;
+  /** Per letter: its index in {@link NAME_ENTRY_GLYPHS}, or -1 while empty. */
+  readonly glyphs: Int8Array;
+  /** The letter under the cursor, or {@link NameEntry.length} for `END`. */
+  cursor = 0;
+  /** Whether OK was pressed on `END` (the entry is finished; further input is ignored). */
+  done = false;
+  /** Ticks activation still waits (the entry just opened): a Confirm meanwhile is buffered. */
+  lockTicks = 0;
+  /** Ticks a buffered Confirm press stays pending. */
+  confirmBuffer = 0;
+  /** Held-duration auto-repeat of the directions. */
+  readonly repeat = new DirectionRepeat();
+  /** Increases whenever the entry's look changes (a letter, the cursor, done). */
+  revision = 0;
+
+  /**
+   * Creates the entry (use {@link createNameEntry}).
+   *
+   * @param length - Letters of the name.
+   */
+  constructor(length: number) {
+    this.length = length;
+    this.glyphs = new Int8Array(length).fill(NO_GLYPH);
+    this.glyphs[0] = 0;
+  }
+
+  /**
+   * Starts a new name: `A` and empty letters, the cursor on the first, input state cleared.
+   *
+   * @param lockTicks - Ticks activation waits for (default 0).
+   */
+  open(lockTicks = 0): void {
+    this.glyphs.fill(NO_GLYPH);
+    this.glyphs[0] = 0;
+    this.cursor = 0;
+    this.done = false;
+    this.repeat.reset();
+    this.confirmBuffer = 0;
+    this.lockTicks = lockTicks;
+    this.revision++;
+  }
+
+  /**
+   * The glyph a letter shows.
+   *
+   * @param index - Letter index.
+   * @returns Its one-character string, or `''` while the letter is empty (never builds a string).
+   */
+  letter(index: number): string {
+    const glyph = index >= 0 && index < this.length ? this.glyphs[index] : NO_GLYPH;
+    return glyph >= 0 ? GLYPH_STRINGS[glyph] : '';
+  }
+
+  /**
+   * The name entered so far: the chosen letters (an empty one counts as a space), trailing spaces
+   * removed. Builds a string — call it once the entry is done, not per frame.
+   *
+   * @returns The name (`''` when nothing but spaces was entered).
+   */
+  get name(): string {
+    let text = '';
+    for (let i = 0; i < this.length; i++) {
+      const glyph = this.glyphs[i];
+      text += glyph >= 0 ? GLYPH_STRINGS[glyph] : ' ';
+    }
+    return text.replace(/ +$/, '');
+  }
+}
+
+/**
+ * Creates a name entry.
+ *
+ * @param length - Letters of the name (default {@link NAME_ENTRY_LENGTH}; 1–8).
+ * @returns The entry, `A` on the first letter.
+ * @throws {RangeError} For a length outside 1–8.
+ *
+ * @example
+ * ```ts
+ * const entry = createNameEntry();
+ * const result = nameEntryTick(entry, input); // MenuResult.Confirmed once OK is pressed on END
+ * if (entry.done) store.renameScore(key, row, entry.name);
+ * ```
+ */
+export function createNameEntry(length = NAME_ENTRY_LENGTH): NameEntry {
+  if (!Number.isInteger(length) || length < 1 || length > 8) {
+    throw new RangeError(`a name entry has 1–8 letters, got ${length}`);
+  }
+  return new NameEntry(length);
+}
+
+/**
+ * Advances a name entry by one tick of input (see {@link NameEntry}).
+ *
+ * @remarks
+ * Order: a Confirm press (re)fills the confirm buffer; Back acts like Left; while
+ * {@link NameEntry.lockTicks} > 0 the buffered press waits (dropped after
+ * {@link MENU_CONFIRM_BUFFER_TICKS} ticks), otherwise it moves on to the next letter (`Moved`) or,
+ * on `END`, finishes the entry (`Confirmed`, {@link NameEntry.done}). Then the auto-repeated
+ * direction: Up / Down step the letter under the cursor through {@link NAME_ENTRY_GLYPHS}
+ * (wrapping; an empty letter starts at `A` going up, at the space going down — `Changed`), Right /
+ * Left move the cursor (`Moved`; not past the first letter or `END`). A finished entry ignores
+ * input (`None`). Never allocates.
+ *
+ * @param entry - The entry (updated; `revision` increases on visible changes).
+ * @param input - This tick's menu input.
+ * @returns What happened ({@link MenuResult}): `Changed`, `Moved`, `Confirmed` or `None`.
+ *
+ * @example
+ * ```ts
+ * // The first letter shows A: Up → B, then OK, OK, OK (past the empty letters) and OK on END.
+ * if (nameEntryTick(entry, input) === MenuResult.Confirmed) save(entry.name); // → 'B'
+ * ```
+ */
+export function nameEntryTick(entry: NameEntry, input: Readonly<PlayerInput>): MenuResult {
+  if (entry.done) return MenuResult.None;
+  if ((input.pressed & Action.Confirm) !== 0) entry.confirmBuffer = MENU_CONFIRM_BUFFER_TICKS;
+  if ((input.pressed & Action.Back) !== 0) {
+    entry.confirmBuffer = 0;
+    return moveNameCursor(entry, -1);
+  }
+  if (entry.lockTicks > 0) {
+    entry.lockTicks--;
+    if (entry.confirmBuffer > 0) entry.confirmBuffer--;
+  } else if (entry.confirmBuffer > 0) {
+    entry.confirmBuffer = 0;
+    if (entry.cursor >= entry.length) {
+      entry.done = true;
+      entry.revision++;
+      return MenuResult.Confirmed;
+    }
+    return moveNameCursor(entry, 1);
+  }
+  const dir = repeatDirections(entry.repeat, input);
+  if (dir === Action.Left || dir === Action.Right) {
+    return moveNameCursor(entry, dir === Action.Left ? -1 : 1);
+  }
+  if ((dir === Action.Up || dir === Action.Down) && entry.cursor < entry.length) {
+    const n = GLYPH_STRINGS.length;
+    const glyph = entry.glyphs[entry.cursor];
+    const next = dir === Action.Up ? glyph + 1 : glyph < 0 ? n - 1 : glyph - 1;
+    entry.glyphs[entry.cursor] = next >= n ? 0 : next < 0 ? n - 1 : next;
+    entry.revision++;
+    return MenuResult.Changed;
+  }
+  return MenuResult.None;
+}
+
+/**
+ * Moves the name entry's cursor one letter left or right (`END` is the last position).
+ *
+ * @param entry - The entry.
+ * @param delta - -1 or +1.
+ * @returns `Moved` when the cursor moved, else `None`.
+ */
+function moveNameCursor(entry: NameEntry, delta: number): MenuResult {
+  const next = entry.cursor + delta;
+  if (next < 0 || next > entry.length) return MenuResult.None;
+  entry.cursor = next;
+  entry.revision++;
+  return MenuResult.Moved;
+}
+
 // ------------------------------------------------------------------------------ builders
 
 /** Colours of the UI kit (VA-friendly, shmup_feat.md §18). */
@@ -1076,6 +1279,73 @@ export function drawConfirm(
   list.text(stringBase + 3, (yes ? yesX : noX) - 18, row, UI_COLORS.focus);
   list.text(stringBase + 1, yesX, row, yes ? UI_COLORS.focus : UI_COLORS.text, TextAlign.Center);
   list.text(stringBase + 2, noX, row, yes ? UI_COLORS.text : UI_COLORS.focus, TextAlign.Center);
+}
+
+/** Pitch in pixels between two letters of {@link drawNameEntry}. */
+const NAME_CELL_PITCH = 16;
+
+/**
+ * Draws a name entry centred at a point: one cell per letter (the letter, or `_` while empty,
+ * over an underline), then `END`; the cursor's cell in {@link UI_COLORS}.focus with `↑` / `↓` above
+ * and below it (hidden while `blinkOff`), `END` highlighted when the cursor is on it.
+ *
+ * @remarks
+ * Uses the string slots `stringBase … stringBase + NAME_ENTRY_STRING_SLOTS − 1` (the letters, `END`,
+ * `↑`, `↓`, `_`) and writes them only when changed (the letters are the glyph table's own
+ * strings). Never allocates.
+ *
+ * @param list - Target draw list.
+ * @param entry - The entry.
+ * @param stringBase - First string slot it may use.
+ * @param cx - Centre x of the row.
+ * @param y - Top of the letters.
+ * @param blinkOff - Hide the cursor's arrows and the letter's highlight this frame (a blink).
+ */
+export function drawNameEntry(
+  list: DrawList,
+  entry: NameEntry,
+  stringBase: number,
+  cx: number,
+  y: number,
+  blinkOff = false,
+): void {
+  const n = entry.length;
+  const endSlot = stringBase + n;
+  const upSlot = endSlot + 1;
+  const downSlot = endSlot + 2;
+  const blankSlot = endSlot + 3;
+  list.setString(endSlot, 'END');
+  list.setString(upSlot, '↑');
+  list.setString(downSlot, '↓');
+  list.setString(blankSlot, '_');
+  const left = Math.round(cx - ((n + 2) * NAME_CELL_PITCH) / 2);
+  for (let i = 0; i < n; i++) {
+    const x = left + i * NAME_CELL_PITCH + NAME_CELL_PITCH / 2;
+    const focused = entry.cursor === i && !entry.done;
+    const color = focused && !blinkOff ? UI_COLORS.focus : UI_COLORS.text;
+    const letter = entry.letter(i);
+    if (letter !== '') {
+      list.setString(stringBase + i, letter);
+      list.text(stringBase + i, x, y, color, TextAlign.Center);
+    } else {
+      list.text(blankSlot, x, y, UI_COLORS.disabled, TextAlign.Center);
+    }
+    list.rect(x - 5, y + 10, 10, 1, focused ? UI_COLORS.focus : UI_COLORS.border);
+    if (focused && !blinkOff) {
+      list.text(upSlot, x, y - 11, UI_COLORS.focus, TextAlign.Center);
+      list.text(downSlot, x, y + 13, UI_COLORS.focus, TextAlign.Center);
+    }
+  }
+  const endX = left + n * NAME_CELL_PITCH + NAME_CELL_PITCH;
+  const onEnd = entry.cursor >= n && !entry.done;
+  list.text(
+    endSlot,
+    endX,
+    y,
+    onEnd && !blinkOff ? UI_COLORS.focus : onEnd ? UI_COLORS.text : UI_COLORS.disabled,
+    TextAlign.Center,
+  );
+  if (onEnd) list.rect(endX - 10, y + 10, 20, 1, UI_COLORS.focus);
 }
 
 // ------------------------------------------------------------------------------ HUD

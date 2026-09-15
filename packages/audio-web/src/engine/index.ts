@@ -16,6 +16,8 @@
  *    the music player (on the `music` bus) and starts the music requested meanwhile. Sounds
  *    requested before that are dropped; a context without buffer playback (test fakes) leaves the
  *    engine silent instead of failing.
+ * 4. **Sound test** (M2-15). {@link AudioEngine.playTrack} plays any track of the library by index
+ *    — loading it first when it is not resident (a menu) and keeping it as the one extra track.
  * 3. **Playback.** {@link AudioEngine.playSfx} pans a positional cue from the event's screen x
  *    ({@link DEFAULT_PAN_WIDTH} at the playfield edges), {@link AudioEngine.playMusic} maps a
  *    `MUSIC_CUES` id to the stage's track (`Silence` fades out; the track already playing is not
@@ -169,6 +171,19 @@ export interface AudioEngine {
    * @param ticks - Ticks until the music is back at full volume.
    */
   duckMusic(ticks: number): void;
+  /**
+   * Plays one track of the music library by index — the sound test (M2-15, a sim `SoundTest`
+   * event): a track outside the prepared set is loaded first (rendered / decoded — a menu, never a
+   * stage) and kept resident as the one extra track (every other track outside the set is
+   * released); then it plays from its start (it restarts when it is the track playing).
+   *
+   * @param index - Index into the music content's `tracks`.
+   * @param fadeTicks - Fade-in (the previous track stops).
+   * @returns Resolves with `true` once the track started, `false` for an unknown index, when the
+   *   engine is not attached (the track is loaded all the same) or was destroyed meanwhile.
+   * @throws Rejects with the loader's `AudioLoadError` when a recorded track cannot be loaded.
+   */
+  playTrack(index: number, fadeTicks?: number): Promise<boolean>;
   /** Ends the SFX dedupe window (call once after each frame's events are drained). */
   endFrame(): void;
   /** The music cue requested last (−1 = none / silence). */
@@ -241,6 +256,8 @@ export function createAudioEngine(options: AudioEngineOptions): AudioEngine {
   let playingTrack = -1;
   let missedMusic = 0;
   let destroyed = false;
+  // The tracks of the prepared set (the sound test never releases them — M2-15).
+  const prepared = new Set<number>();
 
   /** Copies prepared SFX samples into buffers (when attached). */
   const syncSfxBuffers = (): void => {
@@ -331,6 +348,8 @@ export function createAudioEngine(options: AudioEngineOptions): AudioEngine {
         }
       });
       onProgress?.(wanted.length === 0 ? 1 : 0);
+      prepared.clear();
+      for (const index of wanted) prepared.add(index);
       for (let i = 0; i < wanted.length; i++) {
         const index = wanted[i];
         if (!resident.has(index)) {
@@ -391,6 +410,30 @@ export function createAudioEngine(options: AudioEngineOptions): AudioEngine {
     },
     duckMusic(ticks) {
       music?.duck(duckLevel, ticks);
+    },
+    async playTrack(index, fadeTicks = 0) {
+      if (destroyed || !Number.isInteger(index) || index < 0) return false;
+      const def = musicContent.tracks[index];
+      if (def === undefined) return false;
+      if (!resident.has(index)) {
+        const track = await loader.loadTrack(def);
+        if (destroyed) return false;
+        resident.set(index, track);
+      }
+      // One extra track at most: every other track outside the prepared set is released (the
+      // one playing too — it stops now; its source keeps its buffer while it fades).
+      resident.forEach((_track, other) => {
+        if (other !== index && !prepared.has(other)) {
+          resident.delete(other);
+          trackBuffers.delete(other);
+        }
+      });
+      musicCue = -1;
+      const buffer = trackBuffer(index);
+      if (music === null || buffer === null) return false;
+      music.play(buffer, { fadeInTicks: fadeTicks });
+      playingTrack = index;
+      return true;
     },
     endFrame() {
       sfx?.endFrame();

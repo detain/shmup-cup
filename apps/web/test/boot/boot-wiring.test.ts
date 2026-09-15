@@ -319,7 +319,9 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.game.scenes?.title.menu.items.map((item) => item.label)).toEqual([
       '1 PLAYER',
       '2 PLAYERS',
+      'PRACTICE',
       'OPTIONS',
+      'SOUND TEST',
     ]);
   });
 
@@ -515,9 +517,13 @@ describe('web/boot bootWebApp wiring', () => {
   it('flies in open space when the content has no zone A (M1-18)', async () => {
     const withoutZoneA: WebAppResources = {
       ...resources,
-      // Without zone A — and so without the campaign that starts there (M2-10).
+      // Without zone A — and so without the campaign that starts there (M2-10) and its demo
+      // (M2-15).
       contentFiles: resources.contentFiles.filter(
-        (f) => f.path !== 'stages/zone-a.stage.json' && f.path !== 'campaign/main.campaign.json',
+        (f) =>
+          f.path !== 'stages/zone-a.stage.json' &&
+          f.path !== 'campaign/main.campaign.json' &&
+          f.path !== 'demos/zone-a.replay.json',
       ),
     };
     const app = await bootWebApp({} as HTMLCanvasElement, withoutZoneA, win as unknown as Window);

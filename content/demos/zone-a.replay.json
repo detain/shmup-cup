@@ -1,0 +1,73 @@
+{
+  "formatVersion": 1,
+  "kind": "replay",
+  "id": "zone-a",
+  "description": "AZURE VERGE: the KESTREL through the popcorn and the first carriers",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "demo",
+    "seed": 101,
+    "stageId": "zone-a",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 101,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-a",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 2400,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIAlAeBgAQBAR8A9ALAgIACAQAqgoAIAQIXAA+CgAgBAg8AsQTAgIACAQD5Ag==",
+    "AOAS"
+  ],
+  "hashes": [
+    2548729238,
+    769287256,
+    4065187139,
+    1830255722
+  ],
+  "finalHash": 1830255722
+}

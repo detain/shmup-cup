@@ -252,7 +252,7 @@ describe('core/events — cue registries', () => {
     expect(MUSIC_CUE_NAMES.length).toBe(15);
 
     expect(Object.values(SimEventKind)).toEqual([
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
     ]);
     expect(SIM_EVENT_KIND_NAMES).toEqual([
       'sfx',
@@ -273,6 +273,8 @@ describe('core/events — cue registries', () => {
       'bossEscaped',
       // M2-10: the zone map prepares the next zone's stage.
       'prepareStage',
+      // M2-15: the sound test plays a track of the host's library.
+      'soundTest',
     ]);
     expect(UserOptionKind).toEqual({
       MasterVolume: 0,

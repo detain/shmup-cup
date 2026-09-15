@@ -9,6 +9,7 @@
 import {
   Action,
   ENDING_LOCK_TICKS,
+  HI_SCORE_LOCK_TICKS,
   MUSIC_CUES,
   SimEventKind,
   commitPlayerInput,
@@ -164,6 +165,14 @@ describe('shell/dispatch stage preparation through the flow (M2-10, review round
     await press();
     await until('ending');
     await step(ENDING_LOCK_TICKS);
+    await press();
+    // The run's score entered its table: the name entry (M2-15) — the title theme plays there —,
+    // `A` and OK on END, then the table, then the title.
+    expect(flow.stack.top?.id).toBe('nameEntry');
+    await step(2);
+    for (let i = 0; i < 4; i++) await press();
+    expect(flow.stack.top?.id).toBe('hiScore');
+    await step(HI_SCORE_LOCK_TICKS);
     await press();
     expect(flow.stack.top?.id).toBe('title');
     expect(playing(engine)).toBe('title');

@@ -30,6 +30,7 @@ import {
   ENDING_TIMEOUT_TICKS,
   RunFlag,
   type SceneFlow,
+  HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
 import { UI_COLORS, resolveUiSprites } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
@@ -146,6 +147,22 @@ class Session {
   press(action: ActionMask): void {
     this.hold(action);
     this.hold(0);
+  }
+
+  /**
+   * Passes the name entries of new hi-scores (M2-15) when one is on top: `A`, OK on END (for each
+   * row that entered), then the table's OK after its lock — the title.
+   */
+  leaveNames(): void {
+    if (this.top !== 'nameEntry') return;
+    // One name per row that entered (both players' in a co-op game).
+    for (let names = 0; names < 2 && this.top === 'nameEntry'; names++) {
+      this.hold(0, 2);
+      for (let i = 0; i < 4; i++) this.press(Action.Confirm);
+    }
+    expect(this.top).toBe('hiScore');
+    this.hold(0, HI_SCORE_LOCK_TICKS);
+    this.press(Action.Confirm);
   }
 
   /**
@@ -285,6 +302,7 @@ describe('core/scenes ending screens and credits (M2-14)', () => {
       expect(ui.color[i]).toBe(title ? UI_COLORS.title : UI_COLORS.text);
     }
     s.press(Action.Confirm); // past the lock by now
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
   });
 
@@ -316,6 +334,7 @@ describe('core/scenes ending screens and credits (M2-14)', () => {
     expect(credits.stopped).toBe(true);
     expect(s.top).toBe('credits');
     s.hold(0, 2);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
   });
 
@@ -333,6 +352,7 @@ describe('core/scenes ending screens and credits (M2-14)', () => {
     expect(s.top).toBe('credits');
     s.hold(0, CREDITS_LOCK_TICKS);
     s.press(Action.Back);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
   });
 

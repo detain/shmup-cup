@@ -1092,6 +1092,23 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
     expect(shell.sceneView?.backdrop.batches[0].count).toBeGreaterThan(0); // the starfield
   });
 
+  it('hands the sound test the music library`s titles and plays its track events (M2-15)', async () => {
+    const { promise } = boot({ scene: 'game' });
+    const shell = await promise;
+    const flow = shell.game.scenes!;
+    const titles = flow.soundTest.music.labels;
+    expect(titles.length).toBeGreaterThan(20); // every shipped track, in library order
+    expect(titles).toContain('AZURE VERGE');
+    expect(flow.soundTest.menu.enabled(0)).toBe(true);
+    // A SoundTest event reaches the audio engine (which loads the track: it is not in the set).
+    const before = shell.audioEngine.residentTracks.length;
+    shell.game.events.push(SimEventKind.SoundTest, titles.indexOf('AZURE VERGE'), 0, 0, 0);
+    win.frame(1000);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(shell.audioEngine.residentTracks).toContain('zone-a');
+    expect(shell.audioEngine.residentTracks.length).toBeGreaterThanOrEqual(before);
+  });
+
   it('OK on the title and on START runs a game: its World under the starfield, the game context', async () => {
     const { promise, attributes } = boot({ scene: 'game' });
     const shell = await promise;
@@ -1304,6 +1321,7 @@ describe('shell/boot saves and options (M1-17)', () => {
     press(0);
     press(Action.Confirm); // PRESS OK
     press(Action.Down); // 2 PLAYERS (M2-06)
+    press(Action.Down); // PRACTICE (M2-15)
     press(Action.Down); // OPTIONS
     press(Action.Confirm);
     press(0);

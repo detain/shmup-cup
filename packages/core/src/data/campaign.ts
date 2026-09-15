@@ -37,9 +37,15 @@
  * `CreditsScene`). Both are optional: an ending without them shows the card, a campaign without
  * credits skips the scroll.
  *
+ * **The attract story (M2-15).** The campaign also holds the attract loop's **story** crawl
+ * ({@link CampaignStoryPage}: up to {@link MAX_STORY_PAGES} pages, each a sprite scene of
+ * {@link STORY_SCENES} and ≤ {@link MAX_STORY_LINES} lines of ≤ {@link MAX_STORY_LINE_LENGTH}
+ * characters) — original text that crawls up over the scenes between the title and the demo play.
+ * Optional: a campaign without one leaves the story out of the attract loop.
+ *
  * **Implements.** shmup_feat.md §14 — the branching zone map with multiple final zones; §15 —
  * multiple endings chosen by route and flags (the selection hook); §17 — the ending(s) and the
- * credits (M2-14).
+ * credits (M2-14); §17 — the attract loop's story crawl (M2-15).
  *
  * **Public API.** Re-exported by `core/data`: {@link CampaignSpec}, {@link CampaignZoneSpec},
  * {@link CampaignEdgeSpec}, {@link CampaignEndingSpec}, {@link RUN_FLAG_NAMES},
@@ -49,7 +55,9 @@
  * {@link selectCampaignEnding}; M2-14: {@link ENDING_SCENES}, {@link EndingSceneName},
  * {@link CampaignCreditsSection}, {@link MAX_ENDING_TEXT_LINES}, {@link MAX_ENDING_LINE_LENGTH},
  * {@link MAX_CREDITS_SECTIONS}, {@link MAX_CREDITS_LINES}, {@link MAX_CREDITS_LINE_LENGTH},
- * {@link creditsLineCount}.
+ * {@link creditsLineCount}; M2-15: {@link STORY_SCENES}, {@link StorySceneName},
+ * {@link CampaignStoryPage}, {@link MAX_STORY_PAGES}, {@link MAX_STORY_LINES},
+ * {@link MAX_STORY_LINE_LENGTH}.
  *
  * @remarks
  * Load time only: nothing here runs per tick, so it allocates freely.
@@ -116,6 +124,36 @@ export const MAX_CREDITS_LINES = 16;
 
 /** Most characters of a credits line or title (60 × 6-px glyphs fit the 384-px frame). */
 export const MAX_CREDITS_LINE_LENGTH = 60;
+
+/**
+ * The sprite scenes a page of the attract loop's story crawl can play over (M2-15, `core/scenes`
+ * `StoryScene`), by name — drawn from sprites the game already has (the ships, the ending pieces):
+ * - `none` — no scene: the crawl over the starfield alone;
+ * - `dawn` — a star rising over a quiet sea (the home world before the war);
+ * - `invasion` — the enemy's fortress and flagship closing in through chained blasts;
+ * - `launch` — the player's ships launching one after the other and racing off.
+ */
+export const STORY_SCENES = Object.freeze(['none', 'dawn', 'invasion', 'launch'] as const);
+
+/** A {@link STORY_SCENES} entry. */
+export type StorySceneName = (typeof STORY_SCENES)[number];
+
+/** Most pages of the attract story (M2-15). */
+export const MAX_STORY_PAGES = 8;
+
+/** Most lines of one story page. */
+export const MAX_STORY_LINES = 6;
+
+/** Most characters of a story line (40 × 6-px glyphs fit the story panel). */
+export const MAX_STORY_LINE_LENGTH = 40;
+
+/** One page of the attract loop's story crawl (M2-15): a sprite scene and the lines over it. */
+export interface CampaignStoryPage {
+  /** The sprite scene shown while the page's lines crawl ({@link STORY_SCENES}; default `none`). */
+  readonly scene: StorySceneName;
+  /** The page's lines (0–{@link MAX_STORY_LINES}). */
+  readonly lines: readonly string[];
+}
 
 /** One section of the credits scroll (M2-14): a title and its lines. */
 export interface CampaignCreditsSection {
@@ -203,6 +241,11 @@ export interface CampaignSpec {
   readonly endings: readonly CampaignEndingSpec[];
   /** The credits scroll after an ending (M2-14; empty = no scroll). */
   readonly credits: readonly CampaignCreditsSection[];
+  /**
+   * The attract loop's story crawl (M2-15, `core/scenes` `StoryScene`; empty = the attract loop
+   * has no story).
+   */
+  readonly story: readonly CampaignStoryPage[];
   /** Number of depth levels (the zones of a run: the longest route has this many). */
   readonly depths: number;
   /** Number of distinct routes from the start to a final zone. */
@@ -264,6 +307,7 @@ interface RawCampaign {
     text?: string[];
   }>;
   credits?: Array<{ title: string; lines?: string[] }>;
+  story?: Array<{ scene?: StorySceneName; lines?: string[] }>;
   startIndex?: number;
   depths?: number;
   routes?: number;
@@ -431,6 +475,12 @@ export function completeCampaign(
   const credits = raw.credits ?? [];
   for (const section of credits) section.lines = section.lines ?? [];
   raw.credits = credits;
+  const story = raw.story ?? [];
+  for (const page of story) {
+    page.scene = page.scene ?? 'none';
+    page.lines = page.lines ?? [];
+  }
+  raw.story = story;
   const spec = raw as unknown as CampaignSpec;
   raw.routes = countCampaignRoutes(spec);
   return spec;

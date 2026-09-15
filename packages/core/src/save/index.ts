@@ -20,7 +20,9 @@
  *   flashing, no hitbox marker, no boss HP bar — `core/config` `resolveUserOptions`).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
- *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`).
+ *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`; since M2-15 the
+ *   co-op games' and practice runs' own tables — `meter-normal-2p`, `meter-normal-practice`: one
+ *   table per difficulty × ship × {@link HI_SCORE_MODES | mode}).
  * - **Loading** ({@link loadSave}, {@link parseSave}): JSON → migrations ({@link SAVE_MIGRATIONS}:
  *   entry `n` turns version `n` into `n + 1`; a document without a version counts as version 0) →
  *   sanitising ({@link sanitizeSave}: every field checked, clamped or replaced by its default,
@@ -32,8 +34,9 @@
  *   over, stage clear). Writes are best-effort: a failing storage never throws into the game.
  * - **Hi-scores** ({@link insertHiScore}, {@link SaveStore.recordScore}): rows are the `core/scoring`
  *   `HiScoreEntry` (name, score, stage reached, game mode, difficulty); a score enters its table
- *   when it beats the 10th entry (ties go below the older entries); names are
- *   {@link DEFAULT_HI_SCORE_NAME} (`---`) until the name entry of M2-15.
+ *   when it beats the 10th entry (ties go below the older entries); a row is recorded as
+ *   {@link DEFAULT_HI_SCORE_NAME} (`---`) and named by the scene flow's name entry afterwards
+ *   ({@link SaveStore.renameScore}, M2-15).
  *
  * Everything here is pure (no platform globals): the storage arrives as a `PlatformStorage`; the
  * shell loads the save before the title and hands a {@link SaveStore} to the game
@@ -52,10 +55,11 @@
  * {@link serializeSave}, {@link loadSave}, {@link LoadedSave}, {@link writeSave},
  * {@link createHiScoreEntry}, {@link insertHiScore}, {@link HiScoreInsert}, {@link hiScoreModeKey},
  * {@link SaveStore},
- * {@link createSaveStore}.
+ * {@link createSaveStore}; M2-15: {@link HI_SCORE_MODES}, {@link HiScoreMode},
+ * {@link parseHiScoreModeKey}, {@link HiScoreKeyParts}, {@link SaveStore.renameScore}.
  *
- * **Planned.** Unlocks (Extra Edit, stages, ships — M2), the Electron file store (M2-17), names
- * from the name entry (M2-15), more stats and option groups as their screens arrive.
+ * **Planned.** Unlocks (Extra Edit, stages, ships — M2), the Electron file store (M2-17), more
+ * stats and option groups as their screens arrive.
  *
  * @module
  */
@@ -90,8 +94,21 @@ export const SAVE_CORRUPT_KEY = 'save.corrupt';
 /** Entries kept per hi-score table. */
 export const HI_SCORE_TABLE_SIZE = 10;
 
-/** Name of a hi-score entry until the name entry exists (M2-15). */
+/**
+ * Name of a hi-score entry nobody named: the row a game records before its name entry (M2-15)
+ * finishes, and a name entry left blank.
+ */
 export const DEFAULT_HI_SCORE_NAME = '---';
+
+/**
+ * The game modes that keep hi-score tables of their own (M2-15 — shmup_feat.md §15 "per
+ * difficulty / mode", §16 "practice: separate score table"): one-player games, co-op games and
+ * practice runs. The value is also the `mode` field of the rows recorded in them.
+ */
+export const HI_SCORE_MODES = Object.freeze(['1p', '2p', 'practice'] as const);
+
+/** A {@link HI_SCORE_MODES} entry. */
+export type HiScoreMode = (typeof HI_SCORE_MODES)[number];
 
 /** Longest name a hi-score entry keeps (longer names are cut). */
 export const HI_SCORE_NAME_MAX = 8;
@@ -324,7 +341,9 @@ function counter(value: unknown): number {
  * are read like {@link createHiScoreEntry} does (a missing or empty name becomes
  * {@link DEFAULT_HI_SCORE_NAME}, a long one is cut to {@link HI_SCORE_NAME_MAX});
  * each table is sorted best first and cut to {@link HI_SCORE_TABLE_SIZE}; empty tables are
- * dropped. Stats: whole numbers ≥ 0, else 0. Unknown fields are dropped.
+ * dropped. Rows of mode `2p` or `practice` found in a one-player table (co-op games recorded them
+ * there before M2-15) move into that table's `-2p` / `-practice` table first (M2-15). Stats:
+ * whole numbers ≥ 0, else 0. Unknown fields are dropped.
  *
  * @param data - A migrated document.
  * @returns A frozen, valid document at {@link SAVE_VERSION}.
@@ -333,11 +352,36 @@ export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData 
   const hiScores: Record<string, readonly HiScoreEntry[]> = {};
   const tables = asRecord(data.hiScores);
   if (tables !== null) {
-    let count = 0;
+    // Rows of another mode kept in a one-player table (co-op games before M2-15) move to the
+    // table of their own mode.
+    const rows: Record<string, unknown[]> = Object.create(null) as Record<string, unknown[]>;
+    const order: string[] = [];
+    const add = (key: string, row: unknown): void => {
+      if (rows[key] === undefined) {
+        rows[key] = [];
+        order.push(key);
+      }
+      rows[key].push(row);
+    };
     for (const key of Object.keys(tables).sort()) {
-      if (count >= MAX_HI_SCORE_TABLES) break;
       if (key.length > 32 || !MODE_KEY_PATTERN.test(key)) continue;
-      const table = sanitizeTable(tables[key]);
+      const list = tables[key];
+      if (!Array.isArray(list)) continue;
+      const parts = parseHiScoreModeKey(key);
+      for (const row of list as unknown[]) {
+        const mode = asRecord(row)?.mode;
+        const moved =
+          parts !== null &&
+          parts.mode === '1p' &&
+          (mode === '2p' || mode === 'practice') &&
+          key.length + mode.length < 32;
+        add(moved ? key + '-' + mode : key, row);
+      }
+    }
+    let count = 0;
+    for (const key of order.sort()) {
+      if (count >= MAX_HI_SCORE_TABLES) break;
+      const table = sanitizeTable(rows[key]);
       if (table === null) continue;
       hiScores[key] = table;
       count++;
@@ -618,25 +662,64 @@ export function insertHiScore(table: readonly HiScoreEntry[], entry: HiScoreEntr
 }
 
 /**
- * The hi-score table a game belongs to: `<powerUpMode>-<difficulty>` (`meter-normal` in M1). Since
- * M2-01 each difficulty preset has its own table (`meter-easy`, `meter-normal`, `meter-hard`,
- * `meter-arcade`) — the scene flow passes the World's config, whose preset was chosen under
- * START. Since M2-05 the ship select's Direct-mode ship (the MANTA) plays into its own tables
- * (`direct-easy` … `direct-arcade`): the power-up model is part of the key. A co-op game (M2-06)
- * plays into the same tables — both players' scores are recorded there, each row with the mode
- * `2p` (`HiScoreEntry.mode`). Other modes of M2 (practice, boss rush …) may add their own keys.
+ * The hi-score table a game belongs to: `<powerUpMode>-<difficulty>` for one-player games
+ * (`meter-normal` in M1), with `-2p` / `-practice` appended for co-op games and practice runs
+ * (M2-15 — one table per difficulty × ship × mode, shmup_feat.md §15). Since M2-01 each difficulty
+ * preset has its own table (`meter-easy` … `meter-arcade` — the scene flow passes the World's
+ * config, whose preset was chosen under START); since M2-05 the Direct-mode MANTA's games play
+ * into their own (`direct-easy` … `direct-arcade`): the power-up model names the ship (one ship per
+ * model in the content). Co-op games (M2-06) shared the one-player tables until M2-15, each row with
+ * the mode `2p` — {@link sanitizeSave} moves such rows into their `-2p` table when a save is read.
  *
  * @example
  * ```ts
  * hiScoreModeKey(resolveGameConfig({ difficulty: 'hard' })); // → 'meter-hard'
- * hiScoreModeKey({ powerUpMode: 'direct', difficulty: 'normal' }); // → 'direct-normal'
+ * hiScoreModeKey({ powerUpMode: 'direct', difficulty: 'normal' }, '2p'); // → 'direct-normal-2p'
+ * hiScoreModeKey({ powerUpMode: 'meter', difficulty: 'easy' }, 'practice'); // → 'meter-easy-practice'
  * ```
  *
  * @param config - The session config.
+ * @param mode - The game mode (default `'1p'`).
  * @returns The mode key.
  */
-export function hiScoreModeKey(config: Pick<GameConfig, 'powerUpMode' | 'difficulty'>): string {
-  return `${config.powerUpMode}-${config.difficulty}`;
+export function hiScoreModeKey(
+  config: Pick<GameConfig, 'powerUpMode' | 'difficulty'>,
+  mode: HiScoreMode = '1p',
+): string {
+  const base = `${config.powerUpMode}-${config.difficulty}`;
+  return mode === '1p' ? base : `${base}-${mode}`;
+}
+
+/** The parts of a mode key ({@link parseHiScoreModeKey}). */
+export interface HiScoreKeyParts {
+  /** The power-up model (the ship): `meter`, `direct`. */
+  readonly powerUpMode: string;
+  /** The difficulty preset. */
+  readonly difficulty: string;
+  /** The game mode. */
+  readonly mode: HiScoreMode;
+}
+
+/**
+ * Splits a mode key made by {@link hiScoreModeKey} into its parts (M2-15: the hi-score screen's
+ * title).
+ *
+ * @param key - A mode key.
+ * @returns The parts, or `null` for a key that does not have the `<mode>-<difficulty>[-<mode>]`
+ *   shape.
+ *
+ * @example
+ * ```ts
+ * parseHiScoreModeKey('direct-hard-2p'); // → { powerUpMode: 'direct', difficulty: 'hard', mode: '2p' }
+ * ```
+ */
+export function parseHiScoreModeKey(key: string): HiScoreKeyParts | null {
+  const parts = key.split('-');
+  if (parts.length < 2 || parts.length > 3 || parts[0] === '' || parts[1] === '') return null;
+  const mode = parts.length === 3 ? parts[2] : '1p';
+  if (mode === '1p' && parts.length === 3) return null;
+  if ((HI_SCORE_MODES as readonly string[]).indexOf(mode) < 0) return null;
+  return { powerUpMode: parts[0], difficulty: parts[1], mode: mode as HiScoreMode };
 }
 
 /**
@@ -744,6 +827,39 @@ export class SaveStore {
     hiScores[modeKey] = result.table;
     this.current = Object.freeze({ ...this.current, hiScores: Object.freeze(hiScores) });
     return result.rank;
+  }
+
+  /**
+   * Names a row already in a table (M2-15 — the name entry after a game that recorded it). The
+   * row is found by identity (`hiScores(modeKey)[rank]` right after {@link SaveStore.recordScore}),
+   * so rows recorded after it (player 2's) cannot misplace it; a row that has meanwhile left the
+   * table is not found. Not written until {@link SaveStore.flush}.
+   *
+   * @param modeKey - The row's table.
+   * @param entry - The row (the object the table holds).
+   * @param name - The name (cut to {@link HI_SCORE_NAME_MAX}; empty → {@link DEFAULT_HI_SCORE_NAME}).
+   * @returns The row's rank (0 = best), or -1 when the table does not hold it.
+   *
+   * @example
+   * ```ts
+   * const rank = store.recordScore(key, createHiScoreEntry(12300));
+   * const row = store.hiScores(key)[rank];
+   * store.renameScore(key, row, 'ACE'); // → rank
+   * ```
+   */
+  renameScore(modeKey: string, entry: HiScoreEntry, name: string): number {
+    const table = this.hiScores(modeKey);
+    const rank = table.indexOf(entry);
+    if (rank < 0) return -1;
+    const renamed = createHiScoreEntry(entry.score, { ...entry, name });
+    const next = table.slice();
+    next[rank] = renamed;
+    const hiScores: Record<string, readonly HiScoreEntry[]> = {};
+    for (const key of Object.keys(this.current.hiScores))
+      hiScores[key] = this.current.hiScores[key];
+    hiScores[modeKey] = Object.freeze(next);
+    this.current = Object.freeze({ ...this.current, hiScores: Object.freeze(hiScores) });
+    return rank;
   }
 
   /**

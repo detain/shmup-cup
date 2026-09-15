@@ -1,0 +1,73 @@
+{
+  "formatVersion": 1,
+  "kind": "replay",
+  "id": "zone-e",
+  "description": "TEMPEST RIDGE: the MANTA in the heavy weather",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "demo",
+    "seed": 105,
+    "stageId": "zone-e",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 105,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "direct",
+      "shipId": "manta",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-e",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 2400,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgEAkgmBgAQBAQYAO4KACAECBgBLgYAEAQEGAC6BgAQBAQYAL4GABAEBBwAtgYAEAQEGAC6BgAQBAQYAHIKACAECKgASgoAIAQIGALwCgYAEAQEjANQCgoAIAQIHABg=",
+    "AOAS"
+  ],
+  "hashes": [
+    1602167033,
+    4189435325,
+    1814934863,
+    2541576075
+  ],
+  "finalHash": 2541576075
+}

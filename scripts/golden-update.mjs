@@ -3,8 +3,10 @@
  * `pnpm golden:update` — re-blesses the golden replays (plan M1-19): runs
  * `test/golden/golden.test.ts` with `SHMUP_GOLDEN_UPDATE=1`, which re-records every scenario of
  * `test/golden/golden.ts` from the 4-way playtest bot, rewrites its `test/golden/<name>.replay.json`
- * and then checks the new files like `pnpm test` does. Run it only when a simulation change is
- * intended, and say why in the commit message.
+ * and then checks the new files like `pnpm test` does — and, since M2-15, `demos.test.ts`, which
+ * re-records the attract loop's demos (`content/demos/<id>.replay.json`, `test/golden/demos.ts`)
+ * the same way. Run it only when a simulation change is intended, and say why in the commit
+ * message.
  *
  * Cross-platform: sets the variable itself (no `VAR=1 cmd` shell syntax, which cmd.exe lacks) and
  * starts Vitest with the running Node. Exits with Vitest's exit code.

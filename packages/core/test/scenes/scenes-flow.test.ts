@@ -19,6 +19,7 @@ import {
   GAME_OVER_DELAY_TICKS,
   GAME_OVER_LOCK_TICKS,
   GAME_OVER_TIMEOUT_TICKS,
+  HI_SCORE_LOCK_TICKS,
   PAUSE_DIM,
   PauseItem,
   STAGE_CLEAR_CONTINUED_TICKS,
@@ -179,16 +180,30 @@ describe('core/scenes flow: boot and title', () => {
     expect(s.uiTexts()).toEqual(['HI']); // the off half of the blink
     s.press(Action.Confirm);
     expect(s.flow.title.menuOpen).toBe(true);
-    expect(s.uiTexts()).toEqual(['→', '1 PLAYER', '2 PLAYERS', 'OPTIONS', 'EXIT', 'HI']);
+    // The mode select (M2-15): PRACTICE (disabled — this content has no campaign) and SOUND TEST.
+    expect(s.uiTexts()).toEqual([
+      '→',
+      '1 PLAYER',
+      '2 PLAYERS',
+      'PRACTICE',
+      'OPTIONS',
+      'SOUND TEST',
+      'EXIT',
+      'HI',
+    ]);
     expect(s.flow.title.menu.enabled(TitleItem.Options)).toBe(true);
+    expect(s.flow.title.menu.enabled(TitleItem.Practice)).toBe(false);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.TwoPlayers);
-    s.press(Action.Down);
+    s.press(Action.Down); // PRACTICE is skipped
     expect(s.flow.title.menu.focus).toBe(TitleItem.Options);
+    s.press(Action.Down);
+    expect(s.flow.title.menu.focus).toBe(TitleItem.SoundTest);
     s.press(Action.Down);
     expect(s.flow.title.menu.focus).toBe(TitleItem.Exit);
     expect(s.sounds()).toEqual([
       SFX_CUES.MenuSelect,
+      SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
       SFX_CUES.MenuMove,
@@ -201,7 +216,9 @@ describe('core/scenes flow: boot and title', () => {
     expect(s.flow.title.menu.items.map((i) => i.label)).toEqual([
       '1 PLAYER',
       '2 PLAYERS',
+      'PRACTICE',
       'OPTIONS',
+      'SOUND TEST',
     ]);
     s.press(Action.Back);
     expect([s.top, s.flow.title.menuOpen]).toEqual(['title', false]);
@@ -390,7 +407,15 @@ describe('core/scenes flow: game over and stage clear', () => {
     s.game.world.scoring.board.setHiScore(4200);
     s.game.world.status = 'gameOver';
     s.hold(0, GAME_OVER_DELAY_TICKS + GAME_OVER_TIMEOUT_TICKS);
+    // A new hi-score (M2-15): the name entry — `A` and OK on END —, then the table, then the title.
+    expect(s.top).toBe('nameEntry');
+    s.hold(0, 2); // the entry's 2-tick lock
+    for (let i = 0; i < 4; i++) s.press(Action.Confirm);
+    expect(s.top).toBe('hiScore');
+    s.hold(0, HI_SCORE_LOCK_TICKS);
+    s.press(Action.Confirm);
     expect(s.top).toBe('title');
+    expect(s.flow.save.hiScores('meter-normal')[0]).toMatchObject({ name: 'A', score: 4200 });
     expect(s.flow.hiScore).toBe(4200);
     s.press(Action.Confirm);
     s.press(Action.Confirm);

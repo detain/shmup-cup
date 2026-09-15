@@ -27,6 +27,7 @@ import {
   ZONE_CARD_TICKS,
   ZONE_TALLY_TICKS,
   type SceneFlow,
+  HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
 import { campaignContent as content } from '../helpers/campaign.js';
 
@@ -83,6 +84,22 @@ class Session {
   press(action: ActionMask): void {
     this.hold(action);
     this.hold(0);
+  }
+
+  /**
+   * Passes the name entries of new hi-scores (M2-15) when one is on top: `A`, OK on END (for each
+   * row that entered), then the table's OK after its lock — the title.
+   */
+  leaveNames(): void {
+    if (this.top !== 'nameEntry') return;
+    // One name per row that entered (both players' in a co-op game).
+    for (let names = 0; names < 2 && this.top === 'nameEntry'; names++) {
+      this.hold(0, 2);
+      for (let i = 0; i < 4; i++) this.press(Action.Confirm);
+    }
+    expect(this.top).toBe('hiScore');
+    this.hold(0, HI_SCORE_LOCK_TICKS);
+    this.press(Action.Confirm);
   }
 
   /**
@@ -223,6 +240,7 @@ describe('core/scenes campaign run (M2-10)', () => {
     expect(s.top).toBe('ending');
     s.hold(0, ENDING_LOCK_TICKS);
     s.press(Action.Confirm);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
     // The title brings the next run's start stage back (U's set was resident).
     expect(prepared()).toEqual([index('t-u'), index('t-s')]);
@@ -260,6 +278,7 @@ describe('core/scenes campaign run (M2-10)', () => {
     s.hold(0);
     s.until('stageClear');
     s.press(Action.Confirm);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
     expect(prepared()).toEqual([index('t-l'), index('t-s'), index('t-u'), index('t-s')]);
   });
@@ -330,6 +349,7 @@ describe('core/scenes campaign run (M2-10)', () => {
     s.hold(0, ENDING_LOCK_TICKS);
     expect(s.uiTexts()).toContain('OK: TITLE');
     s.press(Action.Confirm);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
   });
 
@@ -351,7 +371,7 @@ describe('core/scenes campaign run (M2-10)', () => {
     expect(s.flow.run.ending?.id).toBe('l');
   });
 
-  it('starts a practice run at a zone and checkpoint: fresh, depth-ranked, no record, title after', () => {
+  it('starts a practice run at a zone and checkpoint: fresh, depth-ranked, its own table, title after', () => {
     const s = new Session();
     expect(s.flow.startPractice('nowhere')).toBe(false);
     expect(s.flow.startPractice('l', 5)).toBe(false);
@@ -365,8 +385,17 @@ describe('core/scenes campaign run (M2-10)', () => {
     expect(s.game.world.scoring.board.scores[0].score).toBe(0);
     s.until('stageClear');
     s.press(Action.Confirm);
+    // The practice table (M2-15), never the game's.
+    expect(s.top).toBe('nameEntry');
+    expect(s.save.hiScores('meter-normal-practice')).toHaveLength(1);
+    s.leaveNames();
     expect(s.top).toBe('title');
     expect(s.save.hiScores('meter-normal')).toEqual([]);
+    expect(s.save.hiScores('meter-normal-practice')[0]).toMatchObject({
+      name: 'A',
+      mode: 'practice',
+      reached: 't-l',
+    });
   });
 });
 

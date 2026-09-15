@@ -1,0 +1,73 @@
+{
+  "formatVersion": 1,
+  "kind": "replay",
+  "id": "zone-f",
+  "description": "CELL VAULT: the KESTREL among the chasing cells",
+  "header": {
+    "formatVersion": 1,
+    "buildId": "demo",
+    "seed": 106,
+    "stageId": "zone-f",
+    "checkpoint": -1,
+    "loadout": "default",
+    "assisted": true,
+    "config": {
+      "internalWidth": 384,
+      "internalHeight": 216,
+      "tickRate": 60,
+      "maxTicksPerFrame": 4,
+      "seed": 106,
+      "difficulty": "normal",
+      "rankBase": 2,
+      "rankGrowth": 1,
+      "extendFirst": 20000,
+      "extendEvery": 70000,
+      "continues": 3,
+      "bulletSpeedMul": 1,
+      "powerUpMode": "meter",
+      "shipId": "kestrel",
+      "deathPenalty": "classic",
+      "startingLives": 3,
+      "autofire": true,
+      "remoteMode": true,
+      "stage": "zone-f",
+      "stageSkip": "none",
+      "aimDirections": 32,
+      "autofireInterval": 4,
+      "missileInterval": 10,
+      "loadout": "default",
+      "autoPowerUp": false,
+      "autoPowerUpOrder": [
+        "speed",
+        "missile",
+        "laser",
+        "option",
+        "option",
+        "option",
+        "option",
+        "shield"
+      ],
+      "pickupMagnet": true,
+      "weaponPreset": "type-a",
+      "weaponEdit": null,
+      "megaChoice": "megaCrash",
+      "shieldChoice": "forceField",
+      "optionChoice": "trail",
+      "coop": false,
+      "coopExtra": 0.5
+    }
+  },
+  "ticks": 2400,
+  "hashInterval": 600,
+  "inputs": [
+    "ACiCgAgBAgIA9gXAgIACAQBKgYAEAQEHAF2BgAQBAQcAiALAgIACAQCOAYKACAECDoGABAEBCAAQgYAEAYKACAGBgAQBAQUABoGABAGCgAgBgYAEAQEGANoCgoAIAQIMAAiCgAgBAgYADYKACAECBQCIAoGABAEBBQA5wICAAgEA4AE=",
+    "AOAS"
+  ],
+  "hashes": [
+    2150584820,
+    3846479151,
+    1570968737,
+    1688157893
+  ],
+  "finalHash": 1688157893
+}

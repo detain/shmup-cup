@@ -55,17 +55,22 @@ describe('core/game edge: the scene flow', () => {
   it('offers EXIT only on a platform that can quit', () => {
     const tv = Object.assign(createHeadlessPlatform(), { exit: () => {} });
     const labels = (game: Game): string[] => game.scenes!.title.menu.items.map((i) => i.label);
+    // The mode select (M2-15).
     expect(labels(createGame(tv, {}, undefined, { scenes: 'title' }))).toEqual([
       '1 PLAYER',
       '2 PLAYERS',
+      'PRACTICE',
       'OPTIONS',
+      'SOUND TEST',
       'EXIT',
     ]);
     const browser = Object.assign(createHeadlessPlatform(), { exit: null });
     expect(labels(createGame(browser, {}, undefined, { scenes: 'title' }))).toEqual([
       '1 PLAYER',
       '2 PLAYERS',
+      'PRACTICE',
       'OPTIONS',
+      'SOUND TEST',
     ]);
   });
 

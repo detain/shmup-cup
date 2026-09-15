@@ -285,5 +285,34 @@
       "title": "THANK YOU FOR PLAYING",
       "lines": []
     }
+  ],
+  "story": [
+    {
+      "scene": "dawn",
+      "lines": [
+        "THE VERGE WORLDS TURNED IN QUIET ORBIT",
+        "AROUND A BLUE AND PATIENT STAR.",
+        "FOR A THOUSAND YEARS THEIR SKIES",
+        "KNEW ONLY TRADERS AND STORMS."
+      ]
+    },
+    {
+      "scene": "invasion",
+      "lines": [
+        "THEN THE IRON TIDE ROSE FROM THE DEEP:",
+        "FORTRESS-SHIPS THAT SWALLOW SUNS,",
+        "FLEETS THAT SING AS THEY BURN.",
+        "ONE BY ONE THE BEACONS WENT DARK."
+      ]
+    },
+    {
+      "scene": "launch",
+      "lines": [
+        "TWO PROTOTYPE FIGHTERS REMAIN -",
+        "KESTREL AND MANTA.",
+        "FLY THROUGH NINE ZONES. FIND THE HEART",
+        "OF THE TIDE. BRING THE CUP HOME, PILOT."
+      ]
+    }
   ]
 }

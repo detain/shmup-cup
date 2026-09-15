@@ -54,6 +54,10 @@ scene (`citadel` / `abyss`) and its epilogue, and the file's `credits` scroll af
   "credits": [                           // optional (M2-14): scrolls after every ending
     { "title": "SAMPLE CREDITS", "lines": ["UP TO SIXTEEN LINES", "OF ≤ 60 CHARACTERS"] },
     { "title": "THANK YOU FOR PLAYING" }  // `lines` is optional
+  ],
+  "story": [                             // optional (M2-15): the attract loop's story crawl
+    { "scene": "dawn", "lines": ["UP TO SIX LINES A PAGE", "OF ≤ 40 CHARACTERS."] },
+    { "lines": ["A PAGE WITHOUT A SCENE:", "THE STARS ALONE."] } // scene: none (default)
   ]
 }
 ```
@@ -81,6 +85,14 @@ ending without scene and text shows the card at once; a campaign without credits
 title after the card. The ending and credits themes are the final zone's stage `music.ending` /
 `music.credits` cues (see [`content/stages/README.md`](../stages/README.md)), prepared with the
 zone's music set.
+
+**The attract story (M2-15).** `story` (up to 8 pages) is the original text the attract loop
+crawls up through a panel at the bottom of the screen between the hi-score tables and the title
+(`packages/core/src/scenes` `StoryScene`). Each page names the sprite scene played above its lines
+while they crawl — `dawn` (a star rising out of a quiet sea), `invasion` (the enemy's fortress and
+flagship closing in through chained blasts), `launch` (the player's ships racing off, then the
+logo) or `none` — drawn from sprites the game already has; its `lines` are 0–6 of ≤ 40 characters.
+A campaign without a story leaves it out of the attract loop. The shipped story has three pages.
 
 ## How the map is played
 

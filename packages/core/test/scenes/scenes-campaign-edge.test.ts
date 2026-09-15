@@ -36,6 +36,7 @@ import {
   RunFlag,
   ZONE_TALLY_TICKS,
   type SceneFlow,
+  HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { CAMPAIGN, campaignContent as content, shipped, stage } from '../helpers/campaign.js';
@@ -100,6 +101,22 @@ class Session {
   press(action: ActionMask): void {
     this.hold(action);
     this.hold(0);
+  }
+
+  /**
+   * Passes the name entries of new hi-scores (M2-15) when one is on top: `A`, OK on END (for each
+   * row that entered), then the table's OK after its lock — the title.
+   */
+  leaveNames(): void {
+    if (this.top !== 'nameEntry') return;
+    // One name per row that entered (both players' in a co-op game).
+    for (let names = 0; names < 2 && this.top === 'nameEntry'; names++) {
+      this.hold(0, 2);
+      for (let i = 0; i < 4; i++) this.press(Action.Confirm);
+    }
+    expect(this.top).toBe('hiScore');
+    this.hold(0, HI_SCORE_LOCK_TICKS);
+    this.press(Action.Confirm);
   }
 
   /**
@@ -408,6 +425,7 @@ describe('core/scenes campaign edges: tally and ending (M2-10)', () => {
     s.hold(0, ENDING_TIMEOUT_TICKS - 3);
     expect(s.top).toBe('ending');
     s.hold(0, 2);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
     expect(ENDING_TIMEOUT_TICKS).toBeGreaterThan(ENDING_LOCK_TICKS);
   });
@@ -503,6 +521,7 @@ describe('core/scenes campaign edges: game over, continues and practice (M2-10)'
     s.until('stageClear');
     expect(s.uiTexts()).toContain('ZONE U CLEAR');
     s.press(Action.Confirm);
+    s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
     // The next game is a single-stage run of the host stage again.
     s.flow.stack.reset(s.flow.game);

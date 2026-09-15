@@ -51,6 +51,10 @@
  * otherwise drop it); a failure is reported to the host's callback and never breaks the game (the
  * stage then plays silent cues).
  *
+ * **Sound test (M2-15).** {@link connectSoundTest} answers `SoundTest` (`id` = the music library
+ * index of the track the sound test's MUSIC row chose): the audio engine loads it when it is not
+ * resident and plays it.
+ *
  * {@link applyAudioOptions} sets all three volumes from saved options at boot;
  * {@link applyDisplayOptions} (M2-08) hands the saved display options to the renderer (the bullet
  * palette, the scale mode, shake, flash reduction and the hitbox markers).
@@ -64,7 +68,8 @@
  * {@link connectAudioEvents}, {@link AudioEventTarget}, {@link CameraPosition},
  * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget},
  * {@link applyDisplayOptions}, {@link DisplayTarget} (M2-08), {@link connectStagePreparation},
- * {@link StagePreparationTarget} (M2-10).
+ * {@link StagePreparationTarget} (M2-10), {@link connectSoundTest}, {@link SoundTestTarget}
+ * (M2-15).
  *
  * @module
  */
@@ -419,6 +424,44 @@ export function connectStagePreparation(
     const cues: number[] = [MUSIC_CUES.Title];
     for (const cue of cuesOf(stage)) if (cue !== MUSIC_CUES.Title) cues.push(cue);
     audio.prepareMusic(stage.id, cues).catch(onError);
+  });
+}
+
+/** What plays the sound test's tracks (`@shmup/audio-web` `AudioEngine` has it — M2-15). */
+export interface SoundTestTarget {
+  /**
+   * Plays a music library track by index (loading it first when it is not resident).
+   *
+   * @param index - Index into the library.
+   * @param fadeTicks - Fade-in.
+   * @returns Resolves with whether it started.
+   */
+  playTrack(index: number, fadeTicks?: number): Promise<boolean>;
+}
+
+/**
+ * Registers the `SoundTest` handler (M2-15 — the sound test's MUSIC row): `id` = the track's
+ * index in the music library (the titles the host handed the scene flow, in library order); the
+ * audio engine loads it when needed and plays it. A failure goes to the host's callback and never
+ * breaks the menu (the track stays silent).
+ *
+ * @param dispatcher - The dispatcher.
+ * @param audio - The audio engine.
+ * @param onError - Called when the track fails to load (default: ignored).
+ * @returns A function that unregisters the handler.
+ *
+ * @example
+ * ```ts
+ * connectSoundTest(events, engine);
+ * ```
+ */
+export function connectSoundTest(
+  dispatcher: EventDispatcher,
+  audio: SoundTestTarget,
+  onError: (error: unknown) => void = () => {},
+): () => void {
+  return dispatcher.on(SimEventKind.SoundTest, (event) => {
+    audio.playTrack(event.id, 0).catch(onError);
   });
 }
 

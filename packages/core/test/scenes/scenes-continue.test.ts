@@ -262,7 +262,8 @@ describe('core/scenes the continue countdown (M2-01)', () => {
     expect(s.ids).toEqual(['game', 'continue']);
     expect(s.game.inputContext).toBe('menu');
     expect(s.flow.continueScreen.seconds).toBe(9);
-    expect(s.uiTexts()).toEqual(['CONTINUE?', 'CREDITS']);
+    // The score and the continues left (the polish of M2-15 added the score).
+    expect(s.uiTexts()).toEqual(['CONTINUE?', 'SCORE', 'CREDITS']);
     expect(s.uiNumbers()).toContain(3); // three continues left
     expect(s.events.some((e) => e[0] === SimEventKind.Music && e[1] === MUSIC_CUES.Silence)).toBe(
       true,

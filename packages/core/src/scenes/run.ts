@@ -10,9 +10,9 @@
  * stage and back out of it.
  *
  * - {@link RunState}: the campaign and the current zone, the route so far, the zones cleared
- *   (the rank's stage term), practice, the zone's entry state (RETRY STAGE starts the zone again
- *   from it), the bonus-stage state (inside one, the entrance's `x` to return to, the lock), the
- *   run's flags, deaths and continues — what picks the ending.
+ *   (the rank's stage term), practice (its checkpoint and loadout), the zone's entry state (RETRY
+ *   STAGE starts the zone again from it), the bonus-stage state (inside one, the entrance's `x`
+ *   to return to, the lock), the run's flags, deaths and continues — what picks the ending.
  * - {@link ZoneResult} / {@link tallyZone} / {@link awardZoneBonus}: the zone result tally — the
  *   kill rate ({@link KILL_BONUS_PER_PERCENT} points per percent) and the boss time bonus
  *   ({@link TIME_BONUS_PER_SECOND} points per second under {@link TIME_BONUS_PAR_TICKS}).
@@ -38,7 +38,7 @@
  * @module
  */
 import { BossRole, BossState } from '../bosses/index.js';
-import { resolveGameConfig, type GameConfig } from '../config/index.js';
+import { resolveGameConfig, type GameConfig, type StartingLoadout } from '../config/index.js';
 import type { CampaignEndingSpec, CampaignSpec } from '../data/index.js';
 import { jumpToCheckpoint } from '../debug/index.js';
 import { MAX_PLAYERS } from '../input/index.js';
@@ -406,6 +406,11 @@ export class RunState {
   /** The checkpoint the current zone starts at (-1 = its start). */
   checkpoint = -1;
   /**
+   * A practice run's starting loadout (M2-15 — the practice select's LOADOUT), or `null`: the
+   * config's own.
+   */
+  loadout: StartingLoadout | null = null;
+  /**
    * Set by the zone map and practice before the game scene opens: its `enter` then plays the
    * prepared zone instead of starting a new run.
    */
@@ -474,6 +479,7 @@ export class RunState {
     this.depth = 0;
     this.practice = false;
     this.checkpoint = -1;
+    this.loadout = null;
     this.entry.valid = false;
     this.carry.valid = false;
     this.flags = 0;
@@ -490,8 +496,14 @@ export class RunState {
    * @param campaign - The campaign.
    * @param zone - Zone index.
    * @param checkpoint - Checkpoint index (-1 = the zone's start).
+   * @param loadout - The starting loadout (M2-15; default `null` — the config's).
    */
-  beginPractice(campaign: CampaignSpec, zone: number, checkpoint: number): void {
+  beginPractice(
+    campaign: CampaignSpec,
+    zone: number,
+    checkpoint: number,
+    loadout: StartingLoadout | null = null,
+  ): void {
     this.begin(campaign, null);
     this.zone = zone;
     this.stage = campaign.zones[zone].stage;
@@ -500,6 +512,7 @@ export class RunState {
     this.depth = campaign.zones[zone].depth;
     this.practice = true;
     this.checkpoint = checkpoint;
+    this.loadout = loadout;
   }
 
   /**
@@ -553,8 +566,9 @@ export class RunState {
 
 /**
  * The config of the World a run plays now: `base` (the chosen difficulty, ship and loadout) with
- * the current zone's stage — or the bonus stage while inside one. A stage `base` already has keeps
- * the `base` object (the first zone of a campaign run, every single-stage run).
+ * the current zone's stage — or the bonus stage while inside one — and, in a practice run, the
+ * practice select's starting loadout (M2-15). A config `base` already matches keeps the `base`
+ * object (the first zone of a campaign run, every single-stage run).
  *
  * @param base - The config of the run's games (`SceneFlow.gameConfig`).
  * @param run - The run.
@@ -564,7 +578,10 @@ export class RunState {
  */
 export function runWorldConfig(base: GameConfig, run: RunState): GameConfig {
   const stage = run.inBonus ? run.bonusStage : run.stage;
-  return stage === base.stage ? base : resolveGameConfig({ ...base, stage });
+  const loadout = run.practice && run.loadout !== null ? run.loadout : base.loadout;
+  return stage === base.stage && loadout === base.loadout
+    ? base
+    : resolveGameConfig({ ...base, stage, loadout });
 }
 
 /**

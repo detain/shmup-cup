@@ -17,10 +17,11 @@
  * - **{@link SceneFlow}** — the M1 scene set and its rules, built by {@link createSceneFlow}:
  *   - {@link BootScene}: a progress bar until the host calls {@link SceneFlow.finishBoot}; then the
  *     title.
- *   - {@link TitleScene}: the logo, a blinking `PRESS OK`, then the menu 1 PLAYER / 2 PLAYERS /
- *     OPTIONS / EXIT — EXIT only when the platform can quit (`platform.exit`); 2 PLAYERS (M2-06)
- *     makes the next games co-op ones (`core/config` `withCoop` — player 2 drops in with START).
- *     Shows the saved hi-score, plays the title music.
+ *   - {@link TitleScene}: the logo, a blinking `PRESS OK`, then the **mode select** (M2-15) 1
+ *     PLAYER / 2 PLAYERS / PRACTICE / OPTIONS / SOUND TEST / EXIT — EXIT only when the platform can
+ *     quit (`platform.exit`); 2 PLAYERS (M2-06) makes the next games co-op ones (`core/config`
+ *     `withCoop` — player 2 drops in with START). Shows the saved hi-score, plays the title music;
+ *     left alone on `PRESS OK` it hands over to the attract loop (below).
  *   - {@link DifficultyScene} (overlay, M2-01 — START): EASY / NORMAL / HARD / ARCADE with the
  *     focused preset's lives, continues and hi-score; OK chooses that preset (its World gets
  *     `core/config` `withDifficulty` of the host config — {@link SceneFlow.gameConfig}) and opens
@@ -85,16 +86,32 @@
  *   zone's clear (the boss is skipped) — `BONUS STAGE CLEAR` in the tally. Single-stage runs have
  *   bonus stages too (their clear is the M1 stage clear).
  *
- *   **Practice (M2-10 plumbing).** {@link SceneFlow.startPractice} plays one campaign zone from a
- *   checkpoint (its rank stage term, a fresh loadout): its clear returns to the title and nothing is
- *   recorded (M2-15 brings the practice select and its table).
+ *   **Practice (M2-10 plumbing, M2-15 select).** PRACTICE opens the {@link PracticeScene} (zone,
+ *   checkpoint, loadout), then the difficulty / ship / weapon select as a game start does; their
+ *   last OK plays the zone from the checkpoint ({@link SceneFlow.startPractice}: its rank stage
+ *   term, the chosen starting loadout). Its clear or game over returns to the title through the
+ *   name entry; its scores go into the **practice tables** only (`core/save`
+ *   `hiScoreModeKey(…, 'practice')`) and never raise the session hi-score.
+ *
+ *   **Front end (M2-15).** The **attract loop** (shmup_feat.md §17): the title idles
+ *   {@link TITLE_ATTRACT_TICKS} on `PRESS OK`, then the {@link DemoScene} plays the next of the
+ *   content's demos (`ContentDb.demos`, the 4-way bot's recordings — `core/replay`
+ *   `createDemoPlayback`, hashes checked, silent), the {@link HiScoreScene} shows the tables, the
+ *   {@link StoryScene} crawls the campaign's story over sprite scenes, and the title comes back;
+ *   any input on those returns to the title. A game that ends (game over, a stage clear, the
+ *   credits) with a score in its table goes to the {@link NameEntryScene} (3 letters with the four
+ *   directions and OK), then the {@link HiScoreScene} with the new rows lit, then the title. The
+ *   hi-score tables are per difficulty × ship × mode (1 PLAYER, 2 PLAYERS, PRACTICE — `core/save`
+ *   `hiScoreModeKey`). The {@link SoundTestScene} plays the host's music tracks
+ *   ({@link SoundTestSetup}, `SimEventKind.SoundTest`) and every SFX cue; the continue countdown
+ *   got a draining bar, the score and a `PRESS OK` prompt.
  *
  *   **Saves (M1-17).** The flow plays with a `core/save` {@link SaveStore} (the host's, loaded
  *   before the title — or a memory-only one): the session hi-score of each difficulty starts from
  *   the saved best of its table ({@link SceneFlow.modeKey}: power-up mode and difficulty); when a
- *   game ends on the game-over or stage-clear screen its score is inserted into its difficulty's
- *   table (name `---` until the name entry of M2-15), the statistics count, and the save is
- *   written (only when it changed); closing the Options screen writes the options the same way.
+ *   game ends on the game-over or stage-clear screen its score is inserted into its table (as `---`,
+ *   named by the name entry afterwards — M2-15), the statistics count, and the save is written
+ *   (only when it changed); closing the Options screen writes the options the same way.
  *   - {@link ConfirmDialog} (overlay): YES / NO, focused on NO — the Tizen **exit confirmation**
  *     (Back on the title, or EXIT: `platform.exit()` runs only after YES — shmup_feat.md §23) and
  *     "quit to title?".
@@ -140,11 +157,19 @@
  * - **Options** — Up / Down: move; Left / Right: change the slider / profile (OK steps the profile
  *   too); Back or BACK: save and close.
  * - **Confirm** — Left / Up: YES, Right / Down: NO; OK: answer; Back: NO.
- * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): title.
+ * - **Stage clear** — OK: skip ahead. **Game over** — OK or Back (after a 30-tick lock): the name
+ *   entry (a new hi-score) or the title.
  * - **Zone map** (M2-10) — Up / Down: choose the next zone; OK: launch; Back: "quit to title?".
  * - **Ending** (M2-10; M2-14) — OK (after a 60-tick lock): the whole epilogue, then the result card,
- *   then the credits (or the title without credits).
- * - **Credits** (M2-14) — OK or Back (after a 60-tick lock): title.
+ *   then the credits (or the name entry / title without credits).
+ * - **Credits** (M2-14) — OK or Back (after a 60-tick lock): the name entry or the title.
+ * - **Name entry** (M2-15) — Up / Down: the letter; Right or OK: next; Left or Back: back; OK on
+ *   END: done. **Hi-score table** after a game — OK or Back (after a 30-tick lock): title.
+ * - **Demo play, hi-score tables, story** (the attract loop, M2-15) — any input: title.
+ * - **Practice select** (M2-15) — Up / Down: move; Left / Right (or OK): change; OK on START: the
+ *   difficulty menu; Back: mode select.
+ * - **Sound test** (M2-15) — Up / Down: move; Left / Right: choose; OK: play (MUSIC, SFX) / stop
+ *   (STOP) / close (BACK); Back: close.
  *
  * **Implements.**
  * - shmup_feat.md §17 Screens, UI flow & HUD — scene flow, title / pause / game over / stage clear
@@ -162,6 +187,10 @@
  *   launch intro card; §15 — the time bonus and the ending chosen by route and flags (M2-10)
  * - shmup_feat.md §17 — the ending(s) and the credits; §15 — multiple endings: one scene per final
  *   zone and a no-death variant (M2-14)
+ * - shmup_feat.md §17 — the attract loop (story crawl ⇄ title ⇄ demo play ⇄ hi-score table), the
+ *   mode select, name entry, hi-score tables, the continue countdown; §16 — attract / demo mode,
+ *   practice (zone, checkpoint, loadout; separate score table); §15 — the hi-score table per
+ *   difficulty / mode; §21 — the sound test (M2-15)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -188,7 +217,15 @@
  * {@link ZONE_TALLY_TICKS}, {@link MAP_LAUNCH_TICKS}, {@link ENDING_LOCK_TICKS},
  * {@link ENDING_TIMEOUT_TICKS}; M2-14: {@link CreditsScene}, {@link ENDING_LINE_TICKS},
  * {@link ENDING_STORY_HOLD_TICKS}, {@link CREDITS_SCROLL_TICKS}, {@link CREDITS_ROW_HEIGHT},
- * {@link CREDITS_LOCK_TICKS}, {@link CREDITS_HOLD_TICKS}, {@link CREDITS_STRING_SLOTS} and, from
+ * {@link CREDITS_LOCK_TICKS}, {@link CREDITS_HOLD_TICKS}, {@link CREDITS_STRING_SLOTS}; M2-15:
+ * {@link NameEntryScene}, {@link HiScoreScene}, {@link DemoScene}, {@link StoryScene},
+ * {@link PracticeScene}, {@link SoundTestScene}, {@link SoundTestSetup}, {@link PracticeItem},
+ * {@link SoundTestItem}, {@link PRACTICE_LOADOUTS}, {@link PRACTICE_LOADOUT_LABELS},
+ * {@link SFX_TEST_LABELS}, {@link HI_SCORE_MODE_LABELS}, {@link HI_SCORE_RANK_LABELS},
+ * {@link TITLE_ATTRACT_TICKS}, {@link HI_SCORE_PAGE_TICKS}, {@link HI_SCORE_ATTRACT_PAGES},
+ * {@link HI_SCORE_RESULT_TICKS}, {@link HI_SCORE_LOCK_TICKS}, {@link NAME_ENTRY_TIMEOUT_TICKS},
+ * {@link STORY_SCROLL_TICKS}, {@link STORY_ROW_HEIGHT}, {@link STORY_HOLD_TICKS},
+ * {@link STORY_STRING_SLOTS} and, from
  * `./run.ts`, {@link RunState}, {@link CarryState},
  * {@link CarriedPlayer}, {@link captureCarry}, {@link applyCarry}, {@link copyShieldState},
  * {@link worldDeaths}, {@link ZoneResult}, {@link tallyZone}, {@link awardZoneBonus},
@@ -199,8 +236,7 @@
  * tells the host's input adapter whether player 2's seat is routed (a co-op game or its continue
  * countdown on top). A co-op game records its scores with the hi-score mode `2p`.
  *
- * **Planned.** Attract mode, the mode select, name entry, the hi-score table, the practice select
- * (M2-15); more option groups (controls rebinding, game — M2-16).
+ * **Planned.** More option groups (controls rebinding, game — M2-16).
  *
  * @module
  */
@@ -226,6 +262,7 @@ import {
   type ShipChoice,
   type DifficultyPreset,
   type GameConfig,
+  type StartingLoadout,
   type InputProfileChoice,
   type MeterSlotName,
   type UserOptions,
@@ -234,6 +271,7 @@ import {
 import {
   MAX_ENDING_TEXT_LINES,
   MAX_ZONE_PREVIEW_LINES,
+  STORY_SCENES,
   campaignZoneIndex,
   selectCampaignEnding,
   type CampaignSpec,
@@ -247,13 +285,16 @@ import { createDebugFlags, type DebugFlags } from '../debug/index.js';
 import {
   MUSIC_CUES,
   SFX_CUES,
+  SFX_CUE_NAMES,
   SimEventKind,
   UserOptionKind,
   createEventQueue,
   type EventQueue,
+  type SimEvent,
 } from '../events/index.js';
 import {
   Action,
+  MAX_PLAYERS,
   createInputSnapshot,
   type InputContext,
   type InputSnapshot,
@@ -261,10 +302,17 @@ import {
 } from '../input/index.js';
 import { defineModule } from '../module-info.js';
 import { TextAlign, createDrawList, type DrawList, type WorldView } from '../presentation/index.js';
+import { createDemoPlayback, type DemoPlayback } from '../replay/demo.js';
+import { decodeReplay, type Replay } from '../replay/format.js';
 import {
+  HI_SCORE_MODES,
+  HI_SCORE_TABLE_SIZE,
   createHiScoreEntry,
   createSaveStore,
   hiScoreModeKey,
+  parseHiScoreModeKey,
+  type HiScoreEntry,
+  type HiScoreMode,
   type SaveStore,
 } from '../save/index.js';
 import { DEFAULT_PLAYER_SHIP } from '../player/index.js';
@@ -275,20 +323,24 @@ import {
   HUD_COMMAND_COUNT,
   HUD_STRING_COUNT,
   MenuResult,
+  NAME_ENTRY_STRING_SLOTS,
   UI_COLORS,
   confirmTick,
   createChoice,
   createConfirm,
   createHud,
   createListMenu,
+  createNameEntry,
   createSlider,
   createToggle,
   drawConfirm,
   drawMenu,
+  drawNameEntry,
   drawPanel,
   menuResultSfx,
   menuStringSlots,
   menuTick,
+  nameEntryTick,
   resolveUiSprites,
   type Choice,
   type Confirm,
@@ -296,6 +348,7 @@ import {
   type ListMenu,
   type MenuItemSpec,
   type MenuLayout,
+  type NameEntry,
   type Slider,
   type Toggle,
   type UiSprites,
@@ -351,7 +404,7 @@ export {
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
   name: 'scenes',
-  status: 'partial',
+  status: 'implemented',
   specRefs: [
     'shmup_feat.md §17',
     'shmup_feat.md §22',
@@ -369,7 +422,10 @@ export const moduleInfo = defineModule({
 /**
  * Scene identifiers (the M1 set, the difficulty menu and continue countdown of M2-01, the weapon
  * select and its order editor of M2-03, the ship select of M2-05, the zone map and the ending of
- * M2-10, the credits of M2-14, plus the M2 screens already named by the spec).
+ * M2-10, the credits of M2-14, and the front end of M2-15 — the attract loop's demo play and story
+ * crawl, the name entry, the hi-score tables, the practice select and the sound test; the
+ * placeholder ids `attract` and `select` of the skeleton became `demo` / `story` and the title's
+ * mode select).
  */
 export type SceneId =
   | 'boot'
@@ -384,14 +440,16 @@ export type SceneId =
   | 'weaponSelect'
   | 'autoOrder'
   | 'continue'
-  | 'attract'
-  | 'select'
   | 'map'
   | 'options'
   | 'nameEntry'
   | 'hiScore'
   | 'ending'
-  | 'credits';
+  | 'credits'
+  | 'demo'
+  | 'story'
+  | 'practice'
+  | 'soundTest';
 
 /** A scene on the stack. */
 export interface Scene {
@@ -764,6 +822,11 @@ export interface SceneFlowHost {
    * use. Omitted or `null` (or no choices): CONTROLS is disabled.
    */
   readonly inputProfiles?: InputProfileSetup | null;
+  /**
+   * What the sound test offers besides the SFX cues (M2-15): the music library's track titles.
+   * Omitted or `null` (or no titles): the sound test's MUSIC row is disabled.
+   */
+  readonly soundTest?: SoundTestSetup | null;
 }
 
 /** The input profiles a host lets the player choose from (the Options screen's CONTROLS). */
@@ -789,11 +852,21 @@ export const ConfirmPurpose = {
 export type ConfirmPurpose = (typeof ConfirmPurpose)[keyof typeof ConfirmPurpose];
 
 /**
- * Title menu items (indices into the title menu; EXIT only exists when the platform can quit):
- * `1 PLAYER` (`Start`), `2 PLAYERS` (a co-op game — M2-06; both open the difficulty menu), OPTIONS
- * (the {@link OptionsScene}), EXIT. OPTIONS and EXIT moved down one row in M2-06.
+ * The title's menu items — the **mode select** (M2-15; indices into the title menu; EXIT only
+ * exists when the platform can quit — the TV): `1 PLAYER` (`Start`), `2 PLAYERS` (a co-op game —
+ * M2-06; both open the difficulty menu), PRACTICE (the {@link PracticeScene} — M2-15; disabled
+ * without a campaign), OPTIONS (the {@link OptionsScene}), SOUND TEST (the {@link SoundTestScene} —
+ * M2-15), EXIT. OPTIONS and EXIT moved down one row in M2-06 and again (OPTIONS 3, EXIT 5) in
+ * M2-15.
  */
-export const TitleItem = { Start: 0, TwoPlayers: 1, Options: 2, Exit: 3 } as const;
+export const TitleItem = {
+  Start: 0,
+  TwoPlayers: 1,
+  Practice: 2,
+  Options: 3,
+  SoundTest: 4,
+  Exit: 5,
+} as const;
 
 /**
  * Pause menu items: RESUME, OPTIONS (the {@link OptionsScene} over the paused game), RETRY STAGE
@@ -932,12 +1005,6 @@ export const CONTINUE_COUNTDOWN_TICKS = 600;
 /** Ticks the continue countdown ignores OK and Back (so a mashed button decides nothing). */
 export const CONTINUE_LOCK_TICKS = 30;
 
-/** The `mode` of the hi-score rows a game records (one player — shmup_feat.md §16). */
-const HI_SCORE_MODE_1P = '1p';
-
-/** The `mode` of the hi-score rows a co-op game records (M2-06). */
-const HI_SCORE_MODE_2P = '2p';
-
 /** Ticks a menu ignores input after it opened (a buffered OK still counts). */
 const MENU_OPEN_LOCK_TICKS = 2;
 
@@ -961,9 +1028,10 @@ const CX = 192;
 
 /**
  * String slots of the UI list (M2-10: 224 — the zone map, the zone tally and the ending; M2-14:
- * 256 — the ending's epilogue lines and the credits' rows).
+ * 256 — the ending's epilogue lines and the credits' rows; M2-15: 384 — the name entry, the
+ * hi-score table's rows, the story crawl, the practice select and the sound test).
  */
-const UI_STRINGS = 256;
+const UI_STRINGS = 384;
 
 /** Commands of the UI list (M2-10: 384 — the zone map's graph). */
 const UI_COMMANDS = 384;
@@ -1041,6 +1109,89 @@ interface FlowControl {
   readonly ending: EndingScene;
   /** The credits scroll after the ending (M2-14). */
   readonly credits: CreditsScene;
+  /** The name entry after a game whose score entered a hi-score table (M2-15). */
+  readonly nameEntry: NameEntryScene;
+  /** The hi-score tables: the attract loop's and a game's result (M2-15). */
+  readonly hiScores: HiScoreScene;
+  /** The attract loop's demo play (M2-15). */
+  readonly demo: DemoScene;
+  /** The attract loop's story crawl (M2-15). */
+  readonly story: StoryScene;
+  /** The practice select (M2-15). */
+  readonly practiceSelect: PracticeScene;
+  /** The sound test (M2-15). */
+  readonly soundTest: SoundTestScene;
+  /**
+   * The content's demos, decoded (M2-15; a demo that does not decode or names a stage the content
+   * lacks is left out).
+   */
+  readonly demos: readonly Replay[];
+  /** The music titles the sound test offers (the host's; empty: MUSIC is disabled). */
+  readonly soundTracks: readonly string[];
+  /** The practice select's choice, waiting for the difficulty / ship / weapon select (M2-15). */
+  readonly practice: PracticeChoice;
+  /** The rows of the game just ended that wait for a name (the first `pendingCount`, M2-15). */
+  readonly pendingNames: readonly PendingName[];
+  /** How many of {@link FlowControl.pendingNames} are in use. */
+  pendingCount: number;
+  /** The table the game just ended recorded into (`''` before the first). */
+  resultKey: string;
+  /**
+   * The title waited on `PRESS OK`: the attract loop starts — the demo play, or the hi-score tables
+   * without demos (M2-15).
+   */
+  startAttract(): void;
+  /**
+   * An attract screen ended: demo → hi-score tables → story (when the campaign has one) → title.
+   *
+   * @param from - The screen that ended.
+   */
+  nextAttract(from: Scene): void;
+  /**
+   * A game ended on its last screen (game over, stage clear, credits): the name entry when a score
+   * of it entered a table, else the title (M2-15).
+   */
+  finishGame(): void;
+  /** The name entry is done: the game's table with its new rows (M2-15). */
+  showResults(): void;
+  /**
+   * Whether a hi-score row is one the game just ended recorded (the result table lights it).
+   *
+   * @param row - A row of a table.
+   * @returns `true` for a pending row (named or not).
+   */
+  isNewRow(row: HiScoreEntry): boolean;
+  /**
+   * The hi-score screen's title line of a table: the ship, the difficulty and the mode
+   * (`KESTREL  NORMAL  1 PLAYER`). Builds a string — the screen's `enter` only.
+   *
+   * @param key - A mode key.
+   * @returns The line (the key itself when it is not a mode key).
+   */
+  tableTitle(key: string): string;
+  /**
+   * What a hi-score row's zone column shows: the campaign zone's map label of the stage reached,
+   * `-` for another stage or none. Never allocates (a lookup).
+   *
+   * @param stage - The row's `reached` stage id.
+   * @returns The label.
+   */
+  zoneLabel(stage: string): string;
+  /**
+   * Starts the game the menus set up (the last select's OK): the practice run the practice select
+   * chose, else a new game (a transition).
+   */
+  launchGame(): void;
+  /**
+   * Starts a practice run of a campaign zone (M2-10 plumbing; M2-15 the practice select and its
+   * loadout).
+   *
+   * @param zone - Campaign zone index.
+   * @param checkpoint - Checkpoint index into its stage's checkpoints (-1 = the start).
+   * @param loadout - The starting loadout (`null` = the config's).
+   * @returns `true` when the practice game starts (with the next applied transition).
+   */
+  beginPractice(zone: number, checkpoint: number, loadout: StartingLoadout | null): boolean;
   /** The run in progress (M2-10: zone, route, carried players, bonus stage, flags). */
   readonly run: RunState;
   /**
@@ -1114,7 +1265,7 @@ interface FlowControl {
   chooseShip(index: number): void;
   /**
    * The hi-score table of the chosen difficulty's games ({@link hiScoreModeKey} of
-   * {@link FlowControl.worldConfig}).
+   * {@link FlowControl.worldConfig} — the co-op table for a co-op game since M2-15).
    */
   readonly modeKey: string;
   /** The difficulty the next game plays (the host config's until one is chosen under START). */
@@ -1158,9 +1309,10 @@ interface FlowControl {
    */
   userOption(kind: number, value: number): void;
   /**
-   * A game ended on its end screen: records every playing player's score in the mode's table,
-   * counts the statistic and writes the save when it changed. A practice run (M2-10) records
-   * nothing.
+   * A game ended on its end screen: records every playing player's score in its table — the
+   * difficulty × ship × mode table (`core/save` `hiScoreModeKey`: one player, co-op, or a practice
+   * run's own — M2-15) —, notes the rows that entered for the name entry, counts the statistic (not
+   * for practice) and writes the save when it changed.
    *
    * @param cleared - `true` for a stage clear (a run's final zone), `false` for a game over.
    * @returns Player 1's rank in the table (0 = best), or -1 when the score did not enter.
@@ -1326,17 +1478,23 @@ export class BootScene extends SceneBase {
 const TitlePhase = { Prompt: 0, Menu: 1 } as const;
 
 /**
- * The title: logo, `PRESS OK`, then START / OPTIONS / EXIT.
+ * The title: logo, `PRESS OK`, then the mode select — 1 PLAYER / 2 PLAYERS / PRACTICE / OPTIONS /
+ * SOUND TEST / EXIT (M2-15).
  *
  * @remarks
  * Draws the `ui/logo` sprite (or `SHMUP CUP` as text when the content lacks it), a `PRESS OK` that
  * blinks with a 32-tick half-period, and the session hi-score of the chosen difficulty (from the
- * save's best at start). OK opens the menu (locked for 2 ticks, focus on START). START opens the
- * difficulty menu ({@link DifficultyScene}) over the title, which starts the game;
- * OPTIONS opens the {@link OptionsScene} over the title; EXIT and Back open the exit
- * confirmation when the platform can exit — otherwise Back returns from the menu to `PRESS OK`
- * (and does nothing on `PRESS OK`). Entering the title always shows `PRESS OK` and queues the title
- * music.
+ * save's best at start). OK opens the menu (locked for 2 ticks, focus on 1 PLAYER). 1 PLAYER /
+ * 2 PLAYERS open the difficulty menu ({@link DifficultyScene}) over the title, which starts the
+ * game; PRACTICE opens the {@link PracticeScene}, OPTIONS the {@link OptionsScene}, SOUND TEST the
+ * {@link SoundTestScene} — all over the title; EXIT and Back open the exit confirmation when the
+ * platform can exit — otherwise Back returns from the menu to `PRESS OK` (and does nothing on
+ * `PRESS OK`). Entering the title always shows `PRESS OK` and queues the title music.
+ *
+ * **Attract loop (M2-15).** The title is one screen of the attract loop (shmup_feat.md §17): after
+ * {@link TITLE_ATTRACT_TICKS} on `PRESS OK` without any input the loop moves on — the demo play
+ * ({@link DemoScene}), the hi-score tables ({@link HiScoreScene}), the story crawl
+ * ({@link StoryScene}) and back to the title; any input on those returns here.
  */
 export class TitleScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -1348,6 +1506,11 @@ export class TitleScene extends SceneBase {
   readonly menu: ListMenu;
   /** 0 = `PRESS OK`, 1 = the menu. */
   phase: number = TitlePhase.Prompt;
+  /**
+   * Ticks on `PRESS OK` without any input (M2-15): at {@link TITLE_ATTRACT_TICKS} the attract loop
+   * moves on.
+   */
+  idle = 0;
   /** Ticks since the title (or its prompt) was shown — the blink's clock. */
   private ticks = 0;
 
@@ -1358,11 +1521,12 @@ export class TitleScene extends SceneBase {
    */
   constructor(flow: FlowControl) {
     super(flow);
-    const items =
-      flow.host.exit !== null
-        ? ['1 PLAYER', '2 PLAYERS', 'OPTIONS', 'EXIT']
-        : ['1 PLAYER', '2 PLAYERS', 'OPTIONS'];
-    this.menu = createListMenu(items);
+    const items = ['1 PLAYER', '2 PLAYERS', 'PRACTICE', 'OPTIONS', 'SOUND TEST'];
+    if (flow.host.exit !== null) items.push('EXIT');
+    this.menu = createListMenu(items, {
+      // Practice plays a campaign zone (M2-15).
+      disabledMask: flow.host.content.campaign === null ? 1 << TitleItem.Practice : 0,
+    });
   }
 
   /** Whether the menu is showing (else `PRESS OK`). */
@@ -1384,6 +1548,7 @@ export class TitleScene extends SceneBase {
     super.enter();
     this.phase = TitlePhase.Prompt;
     this.ticks = 0;
+    this.idle = 0;
     this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
     this.flow.prepareStage(this.flow.host.config.stage);
   }
@@ -1395,9 +1560,11 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * `PRESS OK` → menu; 1 PLAYER / 2 PLAYERS → the difficulty menu (then the game — one player or a
-   * co-op game, M2-06); OPTIONS → the Options screen; EXIT / Back → exit confirmation (when the
-   * platform can quit). Reads the merged menu input. Never allocates.
+   * `PRESS OK` → menu (idle there: the attract loop); 1 PLAYER / 2 PLAYERS → the difficulty menu
+   * (then the game — one player or a co-op game, M2-06); PRACTICE → the practice select; OPTIONS →
+   * the Options screen; SOUND TEST → the sound test; EXIT / Back → exit confirmation (when the
+   * platform can quit). Reads the merged menu input. Never allocates (the attract loop's demo
+   * creates its World — a transition).
    */
   tick(): void {
     const flow = this.flow;
@@ -1405,6 +1572,12 @@ export class TitleScene extends SceneBase {
     this.ticks++;
     if (this.phase === TitlePhase.Prompt) {
       if (this.ticks % PROMPT_BLINK_TICKS === 0) this.uiRevision++;
+      this.idle = input.pressed !== 0 || input.held !== 0 ? 0 : this.idle + 1;
+      if (this.idle >= TITLE_ATTRACT_TICKS) {
+        this.idle = 0;
+        flow.startAttract();
+        return;
+      }
       if ((input.pressed & Action.Back) !== 0) {
         if (flow.host.exit !== null) flow.ask(ConfirmPurpose.Exit);
         return;
@@ -1436,11 +1609,18 @@ export class TitleScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       if (menu.focus === TitleItem.Start || menu.focus === TitleItem.TwoPlayers) {
         flow.sfx(SFX_CUES.MenuSelect);
+        flow.practice.active = false;
         flow.choosePlayers(menu.focus === TitleItem.TwoPlayers);
         flow.stack.push(flow.difficultyMenu);
+      } else if (menu.focus === TitleItem.Practice) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.practiceSelect);
       } else if (menu.focus === TitleItem.Options) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.stack.push(flow.options);
+      } else if (menu.focus === TitleItem.SoundTest) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.stack.push(flow.soundTest);
       } else if (menu.focus === TitleItem.Exit) {
         flow.ask(ConfirmPurpose.Exit);
       }
@@ -1605,9 +1785,17 @@ export class GameScene extends SceneBase {
    * @param world - The World.
    */
   private useWorld(world: World): void {
-    world.scoring.board.setHiScore(this.flow.hiScore);
+    const flow = this.flow;
+    const run = flow.run;
+    // A practice run or a co-op game plays against its own table's best (M2-15 — one table per
+    // mode); a one-player game against the session hi-score.
+    const mode: HiScoreMode = run.practice ? 'practice' : world.config.coop ? '2p' : '1p';
+    world.scoring.board.setHiScore(
+      mode === '1p'
+        ? flow.hiScore
+        : Math.min(MAX_SCORE, flow.save.bestScore(hiScoreModeKey(world.config, mode))),
+    );
     this.world = world;
-    const run = this.flow.run;
     const campaign = run.campaign;
     this.cardTitle = 'STAGE';
     this.cardName = world.stage === null ? '' : world.stage.stage.name;
@@ -1627,9 +1815,14 @@ export class GameScene extends SceneBase {
     this.uiRevision++;
   }
 
-  /** Raises the session hi-score of the World's power-up mode and difficulty from the World's. */
+  /**
+   * Raises the session hi-score of the World's power-up mode and difficulty (the one-player
+   * tables') from the World's — not for a practice run or a co-op game (M2-15: their scores stay
+   * in their own tables).
+   */
   private recordHiScore(): void {
     const world = this.world;
+    if (this.flow.run.practice || world.config.coop) return;
     const preset = DIFFICULTY_PRESETS.indexOf(world.config.difficulty);
     const mode = POWER_UP_MODES.indexOf(world.config.powerUpMode);
     const bests = this.flow.bests;
@@ -2091,7 +2284,8 @@ const ClearNext = {
  *
  * - **A single-stage run** (no campaign): a panel with `STAGE CLEAR`, player 1's score and the
  *   hi-score for {@link STAGE_CLEAR_TALLY_TICKS}, then `TO BE CONTINUED` for
- *   {@link STAGE_CLEAR_CONTINUED_TICKS}, then the title; OK skips each phase at once (Back does
+ *   {@link STAGE_CLEAR_CONTINUED_TICKS}, then the name entry (a new hi-score — M2-15) or the
+ *   title; OK skips each phase at once (Back does
  *   nothing). Entering it ends the run: the score goes into the saved hi-score table and the save
  *   is written.
  * - **A campaign zone** (M2-10): entering it tallies the zone (`ZoneResult`: the kill rate and the
@@ -2102,7 +2296,7 @@ const ClearNext = {
  *   {@link ZONE_TALLY_TICKS} (OK skips). Then: a zone with exits → the zone map (counted as a
  *   cleared stage in the save); the final zone → the ending picked by `core/data`
  *   `selectCampaignEnding` from the run's flags (the run is recorded now); a practice run → the
- *   title (nothing recorded).
+ *   name entry or the title (M2-15: recorded in the practice table).
  */
 export class StageClearScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -2162,7 +2356,9 @@ export class StageClearScene extends SceneBase {
         : 'ZONE ' + (zone === null ? '' : zone.label) + ' CLEAR';
       this.zoneName = zone === null ? '' : zone.name;
       if (run.practice) {
+        // A practice clear goes into the practice table (M2-15), then the title.
         this.next = ClearNext.Title;
+        this.rank = flow.recordRun(true);
       } else if (run.finalZone) {
         this.next = ClearNext.Ending;
         run.ending = selectCampaignEnding(campaign, run.zone, run.endingFlags);
@@ -2189,7 +2385,7 @@ export class StageClearScene extends SceneBase {
         if (ok) flow.sfx(SFX_CUES.MenuSelect);
         if (this.next === ClearNext.Map) flow.stack.reset(flow.map);
         else if (this.next === ClearNext.Ending) flow.stack.reset(flow.ending);
-        else flow.toTitle();
+        else flow.finishGame();
       }
       return;
     }
@@ -2204,7 +2400,7 @@ export class StageClearScene extends SceneBase {
     }
     if (ok || this.ticks >= STAGE_CLEAR_CONTINUED_TICKS) {
       if (ok) flow.sfx(SFX_CUES.MenuSelect);
-      flow.toTitle();
+      flow.finishGame();
     }
   }
 
@@ -2296,13 +2492,15 @@ export class StageClearScene extends SceneBase {
 }
 
 /**
- * Game over: OK (after a short lock) or 10 s → title.
+ * Game over: OK (after a short lock) or 10 s → the name entry (a new hi-score — M2-15) or the
+ * title.
  *
  * @remarks
  * An overlay (dim 0.35) over the frozen game: a red-edged panel with `GAME OVER` and player 1's
  * final score, the game-over music. OK or Back are ignored for {@link GAME_OVER_LOCK_TICKS}
- * ticks (a mashed button does not skip it), then return to the title; after
- * {@link GAME_OVER_TIMEOUT_TICKS} it returns by itself. Entering it records the run: the score goes
+ * ticks (a mashed button does not skip it), then move on — to the {@link NameEntryScene} when the
+ * score entered its table, else the title; after {@link GAME_OVER_TIMEOUT_TICKS} it moves on by
+ * itself. Entering it records the run: the score goes
  * into the saved hi-score table (`NEW HI-SCORE` under the panel when it is the new best) and the
  * save is written; the score joins the session hi-score when the game scene leaves the stack.
  */
@@ -2341,7 +2539,7 @@ export class GameOverScene extends SceneBase {
       this.ticks >= GAME_OVER_TIMEOUT_TICKS
     ) {
       if (pressed !== 0) flow.sfx(SFX_CUES.MenuSelect);
-      flow.toTitle();
+      flow.finishGame();
     }
   }
 
@@ -2533,7 +2731,7 @@ export class DifficultyScene extends SceneBase {
       flow.chooseDifficulty(this.focused);
       // With a single ship there is nothing to choose (M2-05): straight to what it plays with.
       if (flow.ships.length > 1) flow.stack.push(flow.shipSelect);
-      else if (flow.worldConfig.powerUpMode === 'direct') flow.stack.reset(flow.game);
+      else if (flow.worldConfig.powerUpMode === 'direct') flow.launchGame();
       else flow.stack.push(flow.weaponSelect);
       return;
     }
@@ -2576,13 +2774,15 @@ export class DifficultyScene extends SceneBase {
 }
 
 /**
- * The continue countdown (shmup_feat.md §10 continues, §17 "continue countdown"; plan M2-01).
+ * The continue countdown (shmup_feat.md §10 continues, §17 "continue countdown"; plan M2-01,
+ * polished in M2-15).
  *
  * @remarks
  * An overlay (dim 0.35) over the frozen game, pushed instead of the game-over screen when the game
  * is over and continues are left (`core/world` `canContinue`). It fades the music out and counts
  * down {@link CONTINUE_COUNTDOWN_TICKS} ticks, showing the seconds left (9 … 0, a tick sound on
- * every change) and the continues left. After {@link CONTINUE_LOCK_TICKS} ticks OK continues —
+ * every change; the last three flash) over a draining time bar, the score and the continues left,
+ * and — once OK counts — a blinking `PRESS OK` and `BACK: GIVE UP`. After {@link CONTINUE_LOCK_TICKS} ticks OK continues —
  * `continueWorld`: the stage restarts at its last checkpoint with fresh lives, the score's last
  * digit counts the continue — and closes the countdown (the game runs on); Back gives up. Giving up
  * or running out of time replaces it with the {@link GameOverScene} (which records the run). In a
@@ -2601,7 +2801,7 @@ export class ContinueScene extends SceneBase {
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 4;
+    return 7;
   }
 
   /** Seconds left on the countdown: 9 … 0. */
@@ -2632,6 +2832,8 @@ export class ContinueScene extends SceneBase {
       this.uiRevision++;
       flow.sfx(SFX_CUES.MenuMove);
     }
+    // The draining bar (every 6 ticks), the prompt's blink and the last seconds' flash (M2-15).
+    if (this.ticks % 6 === 0 || this.ticks === CONTINUE_LOCK_TICKS + 1) this.uiRevision++;
     const pressed = this.ticks > CONTINUE_LOCK_TICKS ? flow.menuInput.pressed : 0;
     if ((pressed & Action.Confirm) !== 0) {
       const world = flow.game.world;
@@ -2665,23 +2867,43 @@ export class ContinueScene extends SceneBase {
   drawUi(list: DrawList): void {
     const base = this.stringBase;
     const world = this.flow.game.world;
-    drawPanel(list, CX - 72, 72, 144, 64, UI_COLORS.panel, UI_COLORS.alert);
+    const scores = world.scoring.board.scores;
+    drawPanel(list, CX - 80, 60, 160, 96, UI_COLORS.panel, UI_COLORS.alert);
     list.setString(base, 'CONTINUE?');
     list.setString(base + 1, 'CREDITS');
     list.setString(base + 2, '1P');
     list.setString(base + 3, '2P');
-    list.text(base, CX, 80, UI_COLORS.focus, TextAlign.Center);
-    list.number(this.seconds, CX, 96, 0, UI_COLORS.alert, TextAlign.Center);
-    if (world.config.coop && world.players.length > 1 && world.players[1].active) {
+    list.setString(base + 4, 'PRESS OK');
+    list.setString(base + 5, 'SCORE');
+    list.setString(base + 6, 'BACK: GIVE UP');
+    list.text(base, CX, 68, UI_COLORS.focus, TextAlign.Center);
+    // The seconds (M2-15 polish): the last three flash red / yellow, a bar drains under them.
+    const seconds = this.seconds;
+    const flash = seconds < 3 && ((this.ticks >> 3) & 1) === 1;
+    list.number(seconds, CX, 82, 0, flash ? UI_COLORS.focus : UI_COLORS.alert, TextAlign.Center);
+    const left = CONTINUE_COUNTDOWN_TICKS - this.ticks;
+    const bar = left > 0 ? Math.floor((120 * left) / CONTINUE_COUNTDOWN_TICKS) : 0;
+    list.rect(CX - 60, 94, 120, 3, UI_COLORS.track);
+    if (bar > 0) list.rect(CX - 60, 94, bar, 3, seconds < 3 ? UI_COLORS.alert : UI_COLORS.title);
+    const coop = world.config.coop && world.players.length > 1 && world.players[1].active;
+    if (coop) {
       // Co-op (M2-06): each player's own continues.
-      list.text(base + 2, CX - 56, 118, UI_COLORS.title);
-      list.number(continuesLeft(world, 0), CX - 16, 118, 0, UI_COLORS.text, TextAlign.Right);
-      list.text(base + 3, CX + 16, 118, UI_COLORS.title);
-      list.number(continuesLeft(world, 1), CX + 56, 118, 0, UI_COLORS.text, TextAlign.Right);
-      return;
+      list.text(base + 2, CX - 64, 106, UI_COLORS.title);
+      list.number(continuesLeft(world, 0), CX - 16, 106, 0, UI_COLORS.text, TextAlign.Right);
+      list.text(base + 3, CX + 16, 106, UI_COLORS.title);
+      list.number(continuesLeft(world, 1), CX + 64, 106, 0, UI_COLORS.text, TextAlign.Right);
+    } else {
+      list.text(base + 5, CX - 64, 104, UI_COLORS.title);
+      list.number(scores[0].score, CX + 64, 104, 8, UI_COLORS.text, TextAlign.Right);
+      list.text(base + 1, CX - 64, 116, UI_COLORS.title);
+      list.number(continuesLeft(world, 0), CX + 64, 116, 0, UI_COLORS.text, TextAlign.Right);
     }
-    list.text(base + 1, CX - 56, 118, UI_COLORS.title);
-    list.number(continuesLeft(world, 0), CX + 56, 118, 0, UI_COLORS.text, TextAlign.Right);
+    if (this.ticks > CONTINUE_LOCK_TICKS) {
+      if (Math.floor(this.ticks / PROMPT_BLINK_TICKS) % 2 === 0) {
+        list.text(base + 4, CX, 130, UI_COLORS.focus, TextAlign.Center);
+      }
+      list.text(base + 6, CX, 142, UI_COLORS.disabled, TextAlign.Center);
+    }
   }
 }
 
@@ -2793,7 +3015,7 @@ export class ShipSelectScene extends SceneBase {
     if (result === MenuResult.Confirmed) {
       flow.sfx(SFX_CUES.MenuSelect);
       flow.chooseShip(menu.focus);
-      if (this.focused.mode === 'direct') flow.stack.reset(flow.game);
+      if (this.focused.mode === 'direct') flow.launchGame();
       else flow.stack.push(flow.weaponSelect);
       return;
     }
@@ -3248,7 +3470,7 @@ export class WeaponSelectScene extends SceneBase {
       if (menu.focus === WeaponSelectItem.Start) {
         flow.sfx(SFX_CUES.MenuSelect);
         flow.chooseArsenal(this.arsenal());
-        flow.stack.reset(flow.game);
+        flow.launchGame();
         return;
       }
       if (menu.focus === WeaponSelectItem.Order) {
@@ -4057,7 +4279,7 @@ export class EndingScene extends SceneBase {
     if (ok || this.phaseTicks >= ENDING_TIMEOUT_TICKS) {
       if (ok) flow.sfx(SFX_CUES.MenuSelect);
       if (this.creditsNext) flow.stack.reset(flow.credits);
-      else flow.toTitle();
+      else flow.finishGame();
     }
   }
 
@@ -4261,8 +4483,8 @@ function finalZoneCue(flow: FlowControl, credits: boolean): number {
  * `credits` (`core/data` `CampaignCreditsSection`) scroll up from below the screen, a section's
  * title in the title colour, its lines under it, a blank row between sections, one pixel every
  * {@link CREDITS_SCROLL_TICKS} ticks; when the last row has come up to the middle of the screen the
- * scroll stops for {@link CREDITS_HOLD_TICKS}, then the title. OK or Back (after
- * {@link CREDITS_LOCK_TICKS}) skip to the title. The final zone's credits theme (its stage's
+ * scroll stops for {@link CREDITS_HOLD_TICKS}, then the name entry (the run's score entered its
+ * table — M2-15) or the title. OK or Back (after {@link CREDITS_LOCK_TICKS}) skip ahead. The final zone's credits theme (its stage's
  * `music.credits` cue — `Credits` in the shipped zones) plays.
  *
  * @remarks
@@ -4348,7 +4570,7 @@ export class CreditsScene extends SceneBase {
       (this.scrollEnd > 0 ? this.scrollEnd : 0) * CREDITS_SCROLL_TICKS + CREDITS_HOLD_TICKS;
     if (skip || over) {
       if (skip) flow.sfx(SFX_CUES.MenuSelect);
-      flow.toTitle();
+      flow.finishGame();
     }
   }
 
@@ -4376,6 +4598,1146 @@ export class CreditsScene extends SceneBase {
         TextAlign.Center,
       );
     }
+  }
+}
+
+// ------------------------------------------------------------------------------ front end (M2-15)
+
+/**
+ * Ticks the title waits on `PRESS OK` without any input before the attract loop moves on to the
+ * demo play (12 s — shmup_feat.md §17 "attract loop").
+ */
+export const TITLE_ATTRACT_TICKS = 720;
+
+/** Ticks one hi-score table stays on screen in the attract loop (5 s). */
+export const HI_SCORE_PAGE_TICKS = 300;
+
+/** Most tables the attract loop's hi-score screen shows, one after the other. */
+export const HI_SCORE_ATTRACT_PAGES = 4;
+
+/** Ticks the hi-score table stays after a game's name entry before the title (15 s). */
+export const HI_SCORE_RESULT_TICKS = 900;
+
+/** Ticks the hi-score table after a game ignores OK and Back. */
+export const HI_SCORE_LOCK_TICKS = 30;
+
+/** Ticks a name entry waits before it takes the name as it stands (30 s, arcade style). */
+export const NAME_ENTRY_TIMEOUT_TICKS = 1800;
+
+/** Ticks per pixel of the story crawl (4 — 15 px a second). */
+export const STORY_SCROLL_TICKS = 4;
+
+/** Height of one story row in pixels. */
+export const STORY_ROW_HEIGHT = 11;
+
+/** Ticks the story stays after its last row has crawled out, before the title. */
+export const STORY_HOLD_TICKS = 90;
+
+/** String slots of the story crawl: rows in its window at once, taken by row number. */
+export const STORY_STRING_SLOTS = 10;
+
+/** Top of the story crawl's window (a row above it is not drawn). */
+const STORY_WINDOW_TOP = 132;
+
+/** Bottom of the story crawl's window: rows come in here. */
+const STORY_WINDOW_BOTTOM = 206;
+
+/**
+ * How far a page's first row has crawled into the window (pixels) when its scene takes over:
+ * half the window, so the scene changes while the page's text is on screen.
+ */
+const STORY_PAGE_LEAD = (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP) >> 1;
+
+/** The story's text panel under the sprite scene: left, top, width, height. */
+const STORY_PANEL = Object.freeze({ x: 40, y: 128, w: 304, h: 82 });
+
+/** Ticks after which a demo's zone card (its zone's label and name) disappears. */
+const DEMO_CARD_TICKS = 180;
+
+/** The game modes' labels on the hi-score screen, in `core/save` `HI_SCORE_MODES` order. */
+export const HI_SCORE_MODE_LABELS: readonly string[] = Object.freeze([
+  '1 PLAYER',
+  '2 PLAYERS',
+  'PRACTICE',
+]);
+
+/** The hi-score table's rank column, best first ({@link HI_SCORE_TABLE_SIZE} labels). */
+export const HI_SCORE_RANK_LABELS: readonly string[] = Object.freeze([
+  '1ST',
+  '2ND',
+  '3RD',
+  '4TH',
+  '5TH',
+  '6TH',
+  '7TH',
+  '8TH',
+  '9TH',
+  '10TH',
+]);
+
+/** The practice select's LOADOUT choices (`core/config` `StartingLoadout`s). */
+export const PRACTICE_LOADOUTS: readonly StartingLoadout[] = Object.freeze(['default', 'full']);
+
+/** The practice select's LOADOUT labels, in {@link PRACTICE_LOADOUTS} order. */
+export const PRACTICE_LOADOUT_LABELS: readonly string[] = Object.freeze(['STANDARD', 'FULL POWER']);
+
+/** The practice select's rows: ZONE, CHECKPOINT, LOADOUT, START. */
+export const PracticeItem = { Zone: 0, Checkpoint: 1, Loadout: 2, Start: 3 } as const;
+
+/** The sound test's rows: MUSIC, SFX, STOP (the music), BACK. */
+export const SoundTestItem = { Music: 0, Sfx: 1, Stop: 2, Back: 3 } as const;
+
+/**
+ * The sound test's SFX labels, in `SFX_CUES` order: the cue names in words (`PlayerShot` →
+ * `PLAYER SHOT`).
+ */
+export const SFX_TEST_LABELS: readonly string[] = Object.freeze(
+  SFX_CUE_NAMES.map((name) => name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toUpperCase()),
+);
+
+/** What a host offers the sound test besides the SFX cues (M2-15). */
+export interface SoundTestSetup {
+  /**
+   * The music library's track titles, in the host's library order: the sound test's MUSIC row
+   * offers them and pushes `SimEventKind.SoundTest` with the chosen index (`@shmup/shell` passes
+   * the titles of `@shmup/audio-web`'s music content and plays the track).
+   */
+  readonly music: readonly string[];
+}
+
+/** A hi-score row of the game just ended that waits for its name (M2-15). */
+class PendingName {
+  /** The row's table (`core/save` `hiScoreModeKey`). */
+  key = '';
+  /** The row (the object the table holds; `null` = none). */
+  row: HiScoreEntry | null = null;
+  /** The player slot whose score it is. */
+  player = 0;
+}
+
+/** The practice select's choice, waiting for the difficulty / ship / weapon select (M2-15). */
+class PracticeChoice {
+  /** Whether a practice run is being set up. */
+  active = false;
+  /** Campaign zone index. */
+  zone = 0;
+  /** Checkpoint index into the zone stage's checkpoints (-1 = its start). */
+  checkpoint = -1;
+  /** The starting loadout. */
+  loadout: StartingLoadout = 'default';
+}
+
+/**
+ * The name entry after a game whose score entered a hi-score table (shmup_feat.md §17 "name entry
+ * (3 letters) → hi-score table → attract"; plan M2-15).
+ *
+ * @remarks
+ * A full screen over the starfield: `NEW HI-SCORE`, whose score (`1P` / `2P` in a co-op game) and
+ * rank, and the `core/ui` {@link NameEntry} — Up / Down pick a letter, Right / OK move on, Left (or
+ * Back) goes back, OK on `END` finishes — **four directions and OK only**, so the remote enters a
+ * name. The entry also finishes by itself after {@link NAME_ENTRY_TIMEOUT_TICKS}. The name goes into
+ * the row the game recorded (`core/save` `SaveStore.renameScore` — `---` for a blank name); in a
+ * co-op game player 2's row is named next (either controller types — menus merge the input). Then
+ * the save is written and the {@link HiScoreScene} shows the table with the new rows lit. A row
+ * that left the table meanwhile (player 2's score pushed player 1's tenth place out) is skipped.
+ * The title theme plays.
+ */
+export class NameEntryScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'nameEntry' as const;
+  /** The letter picker. */
+  readonly entry: NameEntry = createNameEntry();
+  /** Index of the pending row being named. */
+  current = 0;
+  /** Ticks since the current name was started. */
+  ticks = 0;
+  /** The current row's rank in its table (0 = best). */
+  rank = 0;
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 8 + NAME_ENTRY_STRING_SLOTS;
+  }
+
+  /** Seconds left before the entry finishes by itself. */
+  get seconds(): number {
+    const left = NAME_ENTRY_TIMEOUT_TICKS - this.ticks;
+    return left > 0 ? Math.ceil(left / 60) : 0;
+  }
+
+  /** Starts on the first pending row still in its table; the title theme. */
+  override enter(): void {
+    super.enter();
+    this.current = -1;
+    this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
+    this.next();
+  }
+
+  /**
+   * Moves on to the next pending row still in its table (a transition), or — none left — writes
+   * the save and shows the table.
+   */
+  private next(): void {
+    const flow = this.flow;
+    const pending = flow.pendingNames;
+    for (let i = this.current + 1; i < flow.pendingCount; i++) {
+      const item = pending[i];
+      const row = item.row;
+      if (row === null) continue;
+      const rank = flow.save.hiScores(item.key).indexOf(row);
+      if (rank < 0) continue;
+      this.current = i;
+      this.rank = rank;
+      this.ticks = 0;
+      this.entry.open(MENU_OPEN_LOCK_TICKS);
+      this.uiRevision++;
+      return;
+    }
+    void flow.save.flush();
+    flow.showResults();
+  }
+
+  /** Letters, cursor, END; the timeout takes the name as it stands. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    this.ticks++;
+    if (this.ticks % 16 === 0) this.uiRevision++; // the cursor's blink, the seconds
+    const entry = this.entry;
+    const before = entry.revision;
+    const result = nameEntryTick(entry, flow.menuInput);
+    if (entry.revision !== before) this.uiRevision++;
+    if (entry.done || this.ticks >= NAME_ENTRY_TIMEOUT_TICKS) {
+      flow.sfx(SFX_CUES.MenuSelect);
+      const item = flow.pendingNames[this.current];
+      const row = item.row;
+      if (row !== null) {
+        // Naming builds the name and a new row — once per finished entry, not per tick.
+        const rank = flow.save.renameScore(item.key, row, entry.name);
+        item.row = rank >= 0 ? flow.save.hiScores(item.key)[rank] : null;
+      }
+      this.next();
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the heading, the player's score and rank, the letter picker and the time left.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const flow = this.flow;
+    const item = flow.pendingNames[this.current < 0 ? 0 : this.current];
+    const score = item.row === null ? 0 : item.row.score;
+    drawPanel(list, CX - 112, 28, 224, 164, UI_COLORS.panel, UI_COLORS.focus, 255);
+    list.setString(base, 'NEW HI-SCORE!');
+    list.setString(base + 1, item.player === 0 ? '1P' : '2P');
+    list.setString(base + 2, 'SCORE');
+    list.setString(base + 3, 'RANK');
+    list.setString(base + 4, HI_SCORE_RANK_LABELS[this.rank] ?? '');
+    list.setString(base + 5, 'ENTER YOUR NAME');
+    list.setString(base + 6, '↑↓ LETTER  → NEXT  ← BACK');
+    list.setString(base + 7, 'TIME');
+    list.text(base, CX, 38, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, CX - 96, 60, UI_COLORS.title);
+    list.text(base + 2, CX - 72, 60, UI_COLORS.text);
+    list.number(score, CX + 96, 60, 8, UI_COLORS.text, TextAlign.Right);
+    list.text(base + 3, CX - 72, 74, UI_COLORS.text);
+    list.text(base + 4, CX + 96, 74, UI_COLORS.focus, TextAlign.Right);
+    list.text(base + 5, CX, 98, UI_COLORS.title, TextAlign.Center);
+    const blinkOff = ((this.ticks >> 4) & 1) === 1;
+    drawNameEntry(list, this.entry, base + 8, CX, 126, blinkOff);
+    list.text(base + 6, CX, 158, UI_COLORS.disabled, TextAlign.Center);
+    list.text(base + 7, CX - 20, 176, UI_COLORS.text);
+    list.number(this.seconds, CX + 20, 176, 2, UI_COLORS.text, TextAlign.Right);
+  }
+}
+
+/** Hi-score screen modes. */
+const HiScoreScreen = {
+  /** The attract loop: a few tables in turn, any input → title. */
+  Attract: 0,
+  /** After a name entry: the game's table with its new rows lit, OK / timeout → title. */
+  Result: 1,
+} as const;
+
+/**
+ * The hi-score tables (shmup_feat.md §15 "hi-score table: top 10, name, score, zone reached, per
+ * difficulty / mode"; §17; plan M2-15): one table per difficulty × ship × game mode (`core/save`
+ * `hiScoreModeKey` — 1 PLAYER, 2 PLAYERS, PRACTICE).
+ *
+ * @remarks
+ * A full screen over the starfield: `HI-SCORES`, the table's ship, difficulty and mode, then ten
+ * rows — rank, name, score, zone reached (the campaign zone's map label, `-` for another stage;
+ * empty rows `---`).
+ *
+ * - **In the attract loop** it shows the table of the chosen ship and difficulty for one player,
+ *   then every other table that has scores (up to {@link HI_SCORE_ATTRACT_PAGES} in all), each for
+ *   {@link HI_SCORE_PAGE_TICKS}, then the story (or the title); any input returns to the title.
+ * - **After a game's name entry** it shows that game's table with its new rows blinking for
+ *   {@link HI_SCORE_RESULT_TICKS}; OK or Back (after {@link HI_SCORE_LOCK_TICKS}) → the title.
+ *
+ * The page titles are built when the screen opens; rows are drawn from the table's own strings.
+ */
+export class HiScoreScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'hiScore' as const;
+  /** 0 = attract, 1 = after a game (see the class docs). */
+  mode: number = HiScoreScreen.Attract;
+  /** The tables shown, as mode keys (built on `enter`). */
+  readonly pages: string[] = [];
+  /** Each page's title line (`KESTREL  NORMAL  1 PLAYER`; built on `enter`). */
+  private readonly titles: string[] = [];
+  /** The page showing. */
+  page = 0;
+  /** Ticks since the screen (or its page) opened. */
+  ticks = 0;
+  /** The key of the table a game's result shows (set by {@link HiScoreScene.showResult}). */
+  private resultKey = '';
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 7 + 3 * HI_SCORE_TABLE_SIZE;
+  }
+
+  /** The mode key of the table showing (`''` without one). */
+  get key(): string {
+    return this.pages[this.page] ?? '';
+  }
+
+  /**
+   * Prepares the screen for the attract loop (before it is pushed).
+   */
+  showAttract(): void {
+    this.mode = HiScoreScreen.Attract;
+  }
+
+  /**
+   * Prepares the screen for a game's result (before it is pushed).
+   *
+   * @param key - The table the game's rows are in.
+   */
+  showResult(key: string): void {
+    this.mode = HiScoreScreen.Result;
+    this.resultKey = key;
+  }
+
+  /** Builds the pages and their titles; the title theme. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    this.page = 0;
+    this.ticks = 0;
+    this.pages.length = 0;
+    this.titles.length = 0;
+    if (this.mode === HiScoreScreen.Result) {
+      this.pages.push(this.resultKey);
+    } else {
+      const first = hiScoreModeKey(flow.worldConfig);
+      this.pages.push(first);
+      for (const mode of POWER_UP_MODES) {
+        for (const preset of DIFFICULTY_PRESETS) {
+          for (const kind of HI_SCORE_MODES) {
+            if (this.pages.length >= HI_SCORE_ATTRACT_PAGES) break;
+            const key = hiScoreModeKey({ powerUpMode: mode, difficulty: preset }, kind);
+            if (key === first || flow.save.hiScores(key).length === 0) continue;
+            this.pages.push(key);
+          }
+        }
+      }
+    }
+    for (const key of this.pages) this.titles.push(flow.tableTitle(key));
+    flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
+  }
+
+  /**
+   * Attract: pages in turn, then the story; any input → title. Result: the blink, OK / Back
+   * after the lock or the timeout → title. Never allocates.
+   */
+  tick(): void {
+    const flow = this.flow;
+    this.ticks++;
+    const pressed = flow.menuInput.pressed;
+    if (this.mode === HiScoreScreen.Attract) {
+      if (pressed !== 0) {
+        flow.toTitle();
+        return;
+      }
+      if (this.ticks >= HI_SCORE_PAGE_TICKS) {
+        this.ticks = 0;
+        this.page++;
+        this.uiRevision++;
+        if (this.page >= this.pages.length) flow.nextAttract(this);
+      }
+      return;
+    }
+    if (this.ticks % 16 === 0) this.uiRevision++; // the new rows blink
+    const leave =
+      this.ticks > HI_SCORE_LOCK_TICKS && (pressed & (Action.Confirm | Action.Back)) !== 0;
+    if (leave || this.ticks >= HI_SCORE_RESULT_TICKS) {
+      if (leave) flow.sfx(SFX_CUES.MenuSelect);
+      flow.toTitle();
+    }
+  }
+
+  /**
+   * Draws the title, the table's name and its ten rows.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const flow = this.flow;
+    const key = this.key;
+    const rows = key === '' ? NO_ROWS : flow.save.hiScores(key);
+    list.setString(base, 'HI-SCORES');
+    list.setString(base + 1, this.titles[this.page] ?? '');
+    list.setString(base + 2, 'RANK');
+    list.setString(base + 3, 'NAME');
+    list.setString(base + 4, 'SCORE');
+    list.setString(base + 5, 'ZONE');
+    list.setString(base + 6, '---');
+    drawPanel(list, CX - 124, 8, 248, 200, UI_COLORS.panel, UI_COLORS.border, 232);
+    list.text(base, CX, 16, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, CX, 30, UI_COLORS.title, TextAlign.Center);
+    const rankX = CX - 108;
+    const nameX = CX - 60;
+    const scoreX = CX + 60;
+    const zoneX = CX + 100;
+    list.text(base + 2, rankX, 48, UI_COLORS.disabled);
+    list.text(base + 3, nameX, 48, UI_COLORS.disabled);
+    list.text(base + 4, scoreX, 48, UI_COLORS.disabled, TextAlign.Right);
+    list.text(base + 5, zoneX, 48, UI_COLORS.disabled, TextAlign.Center);
+    const blinkOff = ((this.ticks >> 4) & 1) === 1;
+    for (let i = 0; i < HI_SCORE_TABLE_SIZE; i++) {
+      const y = 62 + i * 14;
+      const row = i < rows.length ? rows[i] : null;
+      const lit = row !== null && this.mode === HiScoreScreen.Result && flow.isNewRow(row);
+      const color = lit ? (blinkOff ? UI_COLORS.text : UI_COLORS.focus) : UI_COLORS.text;
+      const rankSlot = base + 7 + i;
+      list.setString(rankSlot, HI_SCORE_RANK_LABELS[i]);
+      list.text(rankSlot, rankX, y, i === 0 ? UI_COLORS.focus : UI_COLORS.title);
+      if (row === null) {
+        list.text(base + 6, nameX, y, UI_COLORS.disabled);
+        continue;
+      }
+      const nameSlot = base + 7 + HI_SCORE_TABLE_SIZE + i;
+      const zoneSlot = base + 7 + 2 * HI_SCORE_TABLE_SIZE + i;
+      list.setString(nameSlot, row.name);
+      list.setString(zoneSlot, flow.zoneLabel(row.reached));
+      list.text(nameSlot, nameX, y, color);
+      list.number(row.score, scoreX, y, 8, color, TextAlign.Right);
+      list.text(zoneSlot, zoneX, y, color, TextAlign.Center);
+    }
+  }
+}
+
+/** An empty hi-score table. */
+const NO_ROWS: readonly HiScoreEntry[] = Object.freeze([]);
+
+/**
+ * The attract loop's demo play (shmup_feat.md §16 "attract / demo mode: plays bundled replays";
+ * plan M2-15): one of the content's demos (`core/data` `ContentDb.demos` — the 4-way bot's
+ * recordings of the zones) in turn, played through `core/replay` {@link createDemoPlayback} — the
+ * replay playback path, hashes checked.
+ *
+ * @remarks
+ * A full screen: the flow shows the demo World's view and its own HUD (`DEMO PLAY` blinking over
+ * it, the zone's label and name at the start). Its presentation events go to a private queue and
+ * are forwarded to the session's — particles, shake, flash, dim and score popups, but no sound
+ * effects or music (the demo is silent; the music fades out when it starts). When the recording
+ * ends (or a hash differs — a demo recorded against other content) the hi-score screen follows;
+ * **any input** returns to the title. The World is created when the demo starts and dropped when
+ * the scene leaves (transitions); a tick plays one recorded tick without allocating, apart from
+ * the behaviour coroutines of the stage's spawns (decision D29 — as in a game).
+ */
+export class DemoScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'demo' as const;
+  /** The HUD draw list of the demo World. */
+  readonly hudList: DrawList = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
+  /** The HUD's change detection. */
+  readonly hud: Hud;
+  /** The demo playing, or `null` (none — or the scene is not on the stack). */
+  demo: DemoPlayback | null = null;
+  /** Demos started so far (the next one is `started % demos`). */
+  started = 0;
+  /** Ticks since the demo started. */
+  ticks = 0;
+  /** The demo World's own event queue. */
+  private readonly events: EventQueue = createEventQueue();
+  /** Forwards one of the demo World's events to the session's queue (not sounds; bound once). */
+  private readonly forward: (event: Readonly<SimEvent>) => void;
+  /** The zone card's first line (`ZONE B`; built when the demo starts). */
+  private cardTitle = '';
+  /** The zone card's second line (the zone's name). */
+  private cardName = '';
+
+  /**
+   * Creates the scene.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    this.hud = createHud(flow.sprites);
+    const target = flow.host.events;
+    this.forward = (event) => {
+      const kind = event.kind;
+      if (DEMO_SILENT_KINDS[kind] === 1) return;
+      target.push(kind, event.id, event.x, event.y, event.param);
+    };
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 4;
+  }
+
+  /** The demo's World, or `null`. */
+  get world(): World | null {
+    return this.demo === null ? null : this.demo.world;
+  }
+
+  /** Starts the next demo (the music fades out); a demo that cannot start ends at once. */
+  override enter(): void {
+    super.enter();
+    const flow = this.flow;
+    const demos = flow.demos;
+    this.ticks = 0;
+    this.demo = null;
+    this.events.clear();
+    flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+    if (demos.length === 0) return;
+    const replay = demos[this.started % demos.length];
+    this.started++;
+    try {
+      this.demo = createDemoPlayback(replay, flow.host.content, { events: this.events });
+    } catch (_error) {
+      this.demo = null;
+      return;
+    }
+    this.cardTitle = 'STAGE';
+    this.cardName = '';
+    const world = this.demo.world;
+    if (world.stage !== null) {
+      const stage = world.stage.stage;
+      this.cardName = stage.name;
+      const campaign = flow.host.content.campaign;
+      if (campaign !== null) {
+        for (const zone of campaign.zones) {
+          if (zone.stage !== stage.id) continue;
+          this.cardTitle = 'ZONE ' + zone.label;
+          this.cardName = zone.name;
+        }
+      }
+    }
+    // The events of the World's creation (its stage theme) are not the screen's.
+    this.events.clear();
+    this.hud.invalidate();
+  }
+
+  /** Drops the demo World. */
+  override exit(): void {
+    this.demo = null;
+    this.events.clear();
+  }
+
+  /**
+   * Any input → title; else one recorded tick (its visible events forwarded), and when the demo
+   * is over, the hi-score screen. Never allocates (see the class remarks).
+   */
+  tick(): void {
+    const flow = this.flow;
+    if (flow.menuInput.pressed !== 0) {
+      flow.toTitle();
+      return;
+    }
+    this.ticks++;
+    if (this.ticks % PROMPT_BLINK_TICKS === 0 || this.ticks === DEMO_CARD_TICKS) {
+      this.uiRevision++;
+    }
+    const demo = this.demo;
+    if (demo === null) {
+      flow.nextAttract(this);
+      return;
+    }
+    const going = demo.step();
+    this.events.drain(this.forward);
+    if (!going) flow.nextAttract(this);
+  }
+
+  /**
+   * Draws `DEMO PLAY` (blinking) and, at the start, the zone card.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    list.setString(base, 'DEMO PLAY');
+    list.setString(base + 1, 'PRESS OK');
+    list.setString(base + 2, this.cardTitle);
+    list.setString(base + 3, this.cardName);
+    if (Math.floor(this.ticks / PROMPT_BLINK_TICKS) % 2 === 0) {
+      list.text(base, CX, 14, UI_COLORS.focus, TextAlign.Center);
+    } else {
+      list.text(base + 1, CX, 14, UI_COLORS.text, TextAlign.Center);
+    }
+    if (this.demo !== null && this.ticks < DEMO_CARD_TICKS) {
+      list.rect(0, ZONE_CARD_Y, 384, 32, 0x000000, 128);
+      list.text(base + 2, CX, ZONE_CARD_Y + 5, UI_COLORS.focus, TextAlign.Center);
+      list.text(base + 3, CX, ZONE_CARD_Y + 18, UI_COLORS.title, TextAlign.Center);
+    }
+  }
+}
+
+/**
+ * Per `SimEventKind`: 1 for the kinds a demo does **not** forward to the session — sounds, music,
+ * ducking, rumble and host requests (the demo is silent and changes nothing outside its World).
+ */
+const DEMO_SILENT_KINDS: Uint8Array = (() => {
+  const kinds = new Uint8Array(32);
+  kinds[SimEventKind.Sfx] = 1;
+  kinds[SimEventKind.Music] = 1;
+  kinds[SimEventKind.MusicDuck] = 1;
+  kinds[SimEventKind.Rumble] = 1;
+  kinds[SimEventKind.UserOption] = 1;
+  kinds[SimEventKind.PrepareStage] = 1;
+  kinds[SimEventKind.SoundTest] = 1;
+  return kinds;
+})();
+
+/** Story scene kinds, as codes (the `core/data` `STORY_SCENES` order). */
+const StorySceneCode = { None: 0, Dawn: 1, Invasion: 2, Launch: 3 } as const;
+
+/** Where the invasion scene's blasts flash: x, y pairs taken in turn (a fixed table). */
+const INVASION_BLASTS: readonly number[] = Object.freeze([
+  40, 60, 92, 88, 64, 40, 120, 70, 30, 96, 108, 50, 76, 104, 52, 76,
+]);
+
+/**
+ * The attract loop's story crawl (shmup_feat.md §17 "attract-mode story crawl — text over sprite
+ * scenes"; plan M2-15): the campaign's story (`core/data` `CampaignStoryPage`s — original text)
+ * crawls up through a panel at the bottom of the screen while each page's sprite scene plays
+ * above it: `dawn` (a star rising out of a quiet sea), `invasion` (the enemy's fortress and
+ * flagship closing in through chained blasts), `launch` (the player's ships launching one after
+ * the other, then the logo).
+ *
+ * @remarks
+ * The rows (every page's lines and a blank row after each page) are flattened when the flow is
+ * built; they rise one pixel every {@link STORY_SCROLL_TICKS} ticks and only those inside the
+ * panel are drawn, through {@link STORY_STRING_SLOTS} slots taken by row number. A page's scene
+ * takes over when its first row has crawled half-way up the panel. When the last row has left the
+ * panel (the panel goes with it) and
+ * {@link STORY_HOLD_TICKS} more have passed the attract loop returns to the title; **any input**
+ * returns at once. The scenes are arithmetic on the tick count over fixed tables and the
+ * sprites the game already has (the content's ships, the ending pieces, the logo). The title
+ * theme plays on.
+ */
+export class StoryScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'story' as const;
+  /** Ticks since it opened. */
+  ticks = 0;
+  /** The rows' texts (a page's lines, `''` for the blank row after a page). */
+  readonly rows: readonly string[];
+  /** Per page: its sprite scene (a `StorySceneCode`). */
+  private readonly scenes: Uint8Array;
+  /** Per page: the index of its first row. */
+  private readonly firstRows: Int32Array;
+
+  /**
+   * Flattens the campaign's story into rows.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const campaign = flow.host.content.campaign;
+    const pages = campaign === null ? [] : campaign.story;
+    const rows: string[] = [];
+    this.scenes = new Uint8Array(pages.length);
+    this.firstRows = new Int32Array(pages.length);
+    for (let p = 0; p < pages.length; p++) {
+      const page = pages[p];
+      this.scenes[p] = Math.max(0, STORY_SCENES.indexOf(page.scene));
+      this.firstRows[p] = rows.length;
+      for (const line of page.lines) rows.push(line);
+      rows.push('');
+    }
+    this.rows = rows;
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return STORY_STRING_SLOTS;
+  }
+
+  /** Pixels crawled so far. */
+  get scroll(): number {
+    return Math.floor(this.ticks / STORY_SCROLL_TICKS);
+  }
+
+  /** Ticks the whole story takes: every row through the panel, then the hold. */
+  get duration(): number {
+    const travel = this.rows.length * STORY_ROW_HEIGHT + (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP);
+    return travel * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
+  }
+
+  /**
+   * The page whose scene plays: the last one whose first row has crawled half-way up the window
+   * (0 before).
+   */
+  get page(): number {
+    const scroll = this.scroll;
+    let page = 0;
+    for (let p = 1; p < this.firstRows.length; p++) {
+      if (scroll >= this.pageStart(p)) page = p;
+    }
+    return page;
+  }
+
+  /**
+   * The scroll at which a page's scene takes over.
+   *
+   * @param page - Page index.
+   * @returns Pixels crawled.
+   */
+  private pageStart(page: number): number {
+    return page <= 0 ? 0 : this.firstRows[page] * STORY_ROW_HEIGHT + STORY_PAGE_LEAD;
+  }
+
+  /** Starts from the bottom; the title theme plays on. */
+  override enter(): void {
+    super.enter();
+    this.ticks = 0;
+    this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
+  }
+
+  /** Crawls; any input or the end → title. Never allocates. */
+  tick(): void {
+    const flow = this.flow;
+    if (flow.menuInput.pressed !== 0) {
+      flow.toTitle();
+      return;
+    }
+    this.ticks++;
+    if (this.ticks % STORY_SCROLL_TICKS === 0 || (this.ticks & 1) === 0) this.uiRevision++;
+    if (this.ticks >= this.duration) flow.nextAttract(this);
+  }
+
+  /**
+   * Draws the page's scene and the rows inside the panel.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const page = this.page;
+    const since = this.ticks - this.pageStart(page) * STORY_SCROLL_TICKS;
+    const t = since > 0 ? since : 0;
+    const scene = page < this.scenes.length ? this.scenes[page] : StorySceneCode.None;
+    if (scene === StorySceneCode.Dawn) this.drawDawn(list, t);
+    else if (scene === StorySceneCode.Invasion) this.drawInvasion(list, t);
+    else if (scene === StorySceneCode.Launch) this.drawLaunch(list, t);
+    const base = this.stringBase;
+    const scroll = this.scroll;
+    const rows = this.rows;
+    // The panel while a row can be in it (the hold after the last row shows the scene alone).
+    const p = STORY_PANEL;
+    if (scroll < rows.length * STORY_ROW_HEIGHT + (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP)) {
+      drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 232);
+    }
+    for (let r = 0; r < rows.length; r++) {
+      const y = STORY_WINDOW_BOTTOM + r * STORY_ROW_HEIGHT - scroll;
+      if (y < STORY_WINDOW_TOP || y > STORY_WINDOW_BOTTOM - 8) continue;
+      const text = rows[r];
+      if (text.length === 0) continue;
+      const slot = base + (r % STORY_STRING_SLOTS);
+      list.setString(slot, text);
+      list.text(slot, CX, y, UI_COLORS.text, TextAlign.Center);
+    }
+  }
+
+  /**
+   * The dawn: a star rising out of a quiet sea.
+   *
+   * @param list - The UI list.
+   * @param t - Ticks since the page began.
+   */
+  private drawDawn(list: DrawList, t: number): void {
+    const sprites = this.flow.sprites;
+    const rise = t > 360 ? 60 : Math.floor(t / 6);
+    if (sprites.endingSun >= 0) list.sprite(sprites.endingSun, 0, 192, 104 - rise);
+    list.rect(0, 100, 384, 24, 0x0a1e3a);
+    if (sprites.endingSurface >= 0) {
+      const drift = (t >> 3) % 64;
+      for (let k = -1; k < 6; k++) list.sprite(sprites.endingSurface, 0, k * 64 + 32 - drift, 98);
+    }
+  }
+
+  /**
+   * The invasion: the fortress and the flagship closing in, blasts flashing over the home world.
+   *
+   * @param list - The UI list.
+   * @param t - Ticks since the page began.
+   */
+  private drawInvasion(list: DrawList, t: number): void {
+    const sprites = this.flow.sprites;
+    const near = t > 300 ? 0 : 300 - t;
+    if (sprites.endingCitadel >= 0) list.sprite(sprites.endingCitadel, 0, 270 + (near >> 1), 70);
+    if (sprites.endingArk >= 0) list.sprite(sprites.endingArk, 0, 330 + near, 100);
+    if (sprites.endingBlast >= 0 && t > 60) {
+      const count = INVASION_BLASTS.length >> 1;
+      for (let k = 0; k < 3; k++) {
+        const age = t + k * 8;
+        const n = Math.floor(age / 24) % count;
+        const frame = (age % 24) >> 3;
+        list.sprite(sprites.endingBlast, frame, INVASION_BLASTS[n * 2], INVASION_BLASTS[n * 2 + 1]);
+      }
+    }
+  }
+
+  /**
+   * The launch: the ships racing off one after the other, then the logo.
+   *
+   * @param list - The UI list.
+   * @param t - Ticks since the page began.
+   */
+  private drawLaunch(list: DrawList, t: number): void {
+    const flow = this.flow;
+    const ships = flow.ships;
+    for (let i = 0; i < ships.length && i < 2; i++) {
+      const start = i * 90;
+      if (t < start) continue;
+      const u = t - start;
+      const x = -16 + Math.floor((u * u) / 128);
+      if (x > 420) continue;
+      const y = 56 + i * 32;
+      const sprite = ships[i].spriteId;
+      if (sprite >= 0) list.sprite(sprite, 0, x, y);
+      list.rect(x - 40, y, 24, 1, UI_COLORS.title, 160);
+    }
+    const logo = flow.sprites.logo;
+    if (t > 240 && logo >= 0) list.sprite(logo, 0, CX, 72);
+  }
+}
+
+/** The practice select's panel: left, top, width, height. */
+const PRACTICE_PANEL = Object.freeze({ x: CX - 120, y: 52, w: 240, h: 116 });
+
+/** Where the practice select's menu is drawn (labels left, values from `valueX`). */
+const PRACTICE_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: CX - 104,
+  y: 74,
+  lineHeight: 14,
+  cursorX: CX - 114,
+  valueX: CX - 28,
+});
+
+/**
+ * The practice select (shmup_feat.md §16 "practice / stage select: choose stage, checkpoint,
+ * loadout; separate score table"; plan M2-15): PRACTICE on the mode select.
+ *
+ * @remarks
+ * An overlay over the title (dim {@link PAUSE_DIM}) with an opaque panel: ZONE (the campaign's
+ * zones — `A AZURE VERGE` …), CHECKPOINT (`START` or the zone's checkpoints after its start —
+ * stepping wraps within the zone's), LOADOUT ({@link PRACTICE_LOADOUT_LABELS}: the config's
+ * starting loadout or full power) and START. START goes on to the difficulty menu and the ship /
+ * weapon select as a normal start does; their last OK starts the practice run (`SceneFlow`
+ * `startPractice`): one zone from that checkpoint with the zone's rank stage term, its clear
+ * returning to the title. A practice run's scores go into **their own tables** (`core/save`
+ * `hiScoreModeKey(…, 'practice')`, with the name entry), never the game's, and do not raise the
+ * session hi-score; the HUD's HI is the practice table's best. Back returns to the mode select.
+ * The mode select disables PRACTICE when the content has no campaign.
+ */
+export class PracticeScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'practice' as const;
+  /** An overlay: the title stays visible under it. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** ZONE: the campaign's zones. */
+  readonly zone: Choice;
+  /** CHECKPOINT: `START`, then `CHECKPOINT 1` … (as many as the zone with the most has). */
+  readonly checkpoint: Choice;
+  /** LOADOUT: {@link PRACTICE_LOADOUT_LABELS}. */
+  readonly loadout: Choice = createChoice(PRACTICE_LOADOUT_LABELS, 0);
+  /** The menu ({@link PracticeItem} order). */
+  readonly menu: ListMenu;
+  /**
+   * Per zone: the indices into its stage's checkpoints CHECKPOINT offers (those after the stage's
+   * start — the one at x 0 is START).
+   */
+  readonly checkpoints: readonly (readonly number[])[];
+
+  /**
+   * Creates the screen from the content's campaign.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const content = flow.host.content;
+    const campaign = content.campaign;
+    const zones = campaign === null ? [] : campaign.zones;
+    const labels: string[] = [];
+    const checkpoints: (readonly number[])[] = [];
+    let most = 0;
+    for (const zone of zones) {
+      labels.push(zone.label + ' ' + zone.name);
+      const stage = content.stages[zone.stageId];
+      const list: number[] = [];
+      if (stage !== undefined) {
+        for (let i = 0; i < stage.checkpoints.length; i++) {
+          if (stage.checkpoints[i].x > 0) list.push(i);
+        }
+      }
+      if (list.length > most) most = list.length;
+      checkpoints.push(Object.freeze(list));
+    }
+    if (labels.length === 0) labels.push('NONE');
+    const points = ['START'];
+    for (let i = 1; i <= most; i++) points.push('CHECKPOINT ' + String(i));
+    this.checkpoints = Object.freeze(checkpoints);
+    this.zone = createChoice(labels, 0);
+    this.checkpoint = createChoice(points, 0);
+    this.menu = createListMenu([
+      { label: 'ZONE', choice: this.zone },
+      { label: 'CHECKPOINT', choice: this.checkpoint },
+      { label: 'LOADOUT', choice: this.loadout },
+      'START',
+    ]);
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 3 + menuStringSlots(this.menu);
+  }
+
+  /** Checkpoints the focused zone offers after its start. */
+  private get zoneCheckpoints(): number {
+    const list = this.checkpoints[this.zone.index];
+    return list === undefined ? 0 : list.length;
+  }
+
+  /** Focus on ZONE (the last choices kept), locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    this.menu.focus = PracticeItem.Zone;
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Back from the difficulty menu: the menu takes input again after a short lock. */
+  override uncover(): void {
+    super.uncover();
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /**
+   * Keeps CHECKPOINT within the zone's checkpoints after a change.
+   *
+   * @param focus - The row that changed.
+   * @param before - CHECKPOINT's index before the change.
+   */
+  private clampCheckpoint(focus: number, before: number): void {
+    const count = this.zoneCheckpoints;
+    const choice = this.checkpoint;
+    if (choice.index <= count) return;
+    // Stepping CHECKPOINT past the zone's last wraps; a zone with fewer takes its last.
+    choice.index = focus === PracticeItem.Checkpoint && choice.index > before ? 0 : count;
+  }
+
+  /**
+   * Moves the focus, changes a row, START → the difficulty menu (the practice run starts after the
+   * ship / weapon select), Back → the mode select. Never allocates.
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const before = menu.revision;
+    const checkpointBefore = this.checkpoint.index;
+    const result = menuTick(menu, flow.menuInput);
+    if (result === MenuResult.Changed) this.clampCheckpoint(menu.focus, checkpointBefore);
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Back) {
+      flow.practice.active = false;
+      flow.sfx(SFX_CUES.MenuBack);
+      flow.stack.pop();
+      return;
+    }
+    if (result === MenuResult.Confirmed && menu.focus === PracticeItem.Start) {
+      const practice = flow.practice;
+      practice.active = true;
+      practice.zone = this.zone.index;
+      const index = this.checkpoint.index;
+      const list = this.checkpoints[this.zone.index];
+      practice.checkpoint = index > 0 && list !== undefined ? (list[index - 1] ?? -1) : -1;
+      practice.loadout = PRACTICE_LOADOUTS[this.loadout.index] ?? 'default';
+      flow.sfx(SFX_CUES.MenuSelect);
+      flow.choosePlayers(false);
+      flow.stack.push(flow.difficultyMenu);
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `PRACTICE`, the rows and the table hint.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = PRACTICE_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'PRACTICE');
+    list.setString(base + 1, 'SCORES GO TO THE PRACTICE TABLES');
+    list.setString(base + 2, '');
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 3, PRACTICE_MENU_LAYOUT);
+    list.text(base + 1, CX, p.y + p.h - 16, UI_COLORS.disabled, TextAlign.Center);
+  }
+}
+
+/** The sound test's panel: left, top, width, height. */
+const SOUND_TEST_PANEL = Object.freeze({ x: CX - 128, y: 52, w: 256, h: 112 });
+
+/** Where the sound test's menu is drawn. */
+const SOUND_TEST_MENU_LAYOUT: MenuLayout = Object.freeze({
+  x: CX - 112,
+  y: 74,
+  lineHeight: 14,
+  cursorX: CX - 122,
+  valueX: CX - 64,
+});
+
+/**
+ * The sound test (shmup_feat.md §21 "sound test — both originals had one"; plan M2-15): SOUND TEST
+ * on the mode select.
+ *
+ * @remarks
+ * An overlay over the title (dim {@link PAUSE_DIM}): MUSIC (the host's music library by title —
+ * {@link SoundTestSetup}; disabled without one), SFX (every `SFX_CUES` cue, {@link SFX_TEST_LABELS}),
+ * STOP and BACK. Left / Right choose a track or a sound, **OK plays it** — the track through a
+ * `SimEventKind.SoundTest` event (the host loads it if needed and plays it), the sound as an `Sfx`
+ * event; STOP fades the music out; BACK or Back brings the title theme back and closes the screen.
+ */
+export class SoundTestScene extends SceneBase {
+  /** See {@link Scene.id}. */
+  readonly id = 'soundTest' as const;
+  /** An overlay: the title stays visible under it. */
+  override readonly overlay = true;
+  /** {@link PAUSE_DIM}. */
+  override readonly dim = PAUSE_DIM;
+  /** MUSIC: the host's track titles (`NONE` when it has none). */
+  readonly music: Choice;
+  /** SFX: {@link SFX_TEST_LABELS}. */
+  readonly sound: Choice = createChoice(SFX_TEST_LABELS, 0);
+  /** The menu ({@link SoundTestItem} order). */
+  readonly menu: ListMenu;
+  /** The input the menu reads: the menu input without OK on MUSIC / SFX (reused). */
+  private readonly input: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'none' };
+
+  /**
+   * Creates the screen from the host's music titles.
+   *
+   * @param flow - The flow.
+   */
+  constructor(flow: FlowControl) {
+    super(flow);
+    const titles = flow.soundTracks;
+    this.music = createChoice(titles.length > 0 ? titles : ['NONE'], 0);
+    this.menu = createListMenu(
+      [
+        { label: 'MUSIC', choice: this.music },
+        { label: 'SFX', choice: this.sound },
+        'STOP',
+        'BACK',
+      ],
+      { disabledMask: titles.length === 0 ? 1 << SoundTestItem.Music : 0 },
+    );
+  }
+
+  /** See {@link SceneBase.stringSlots}. */
+  get stringSlots(): number {
+    return 3 + menuStringSlots(this.menu);
+  }
+
+  /** Focus on the first enabled row, locked for 2 ticks. */
+  override enter(): void {
+    super.enter();
+    this.menu.focusFirstEnabled(SoundTestItem.Music);
+    this.menu.open(MENU_OPEN_LOCK_TICKS);
+  }
+
+  /** Brings the title theme back and closes the screen. */
+  private close(): void {
+    this.flow.sfx(SFX_CUES.MenuBack);
+    this.flow.music(MUSIC_CUES.Title, MUSIC_FADE_TICKS);
+    this.flow.stack.pop();
+  }
+
+  /**
+   * Left / Right choose, OK plays (MUSIC, SFX) / stops (STOP) / closes (BACK); Back closes. Never
+   * allocates.
+   */
+  tick(): void {
+    const flow = this.flow;
+    const menu = this.menu;
+    const source = flow.menuInput;
+    const input = this.input;
+    const focus = menu.focus;
+    const playable = focus === SoundTestItem.Music || focus === SoundTestItem.Sfx;
+    const play = playable && menu.lockTicks === 0 && (source.pressed & Action.Confirm) !== 0;
+    // OK on MUSIC / SFX plays instead of stepping the choice (the menu never sees it).
+    input.held = source.held;
+    input.pressed = playable ? source.pressed & ~Action.Confirm : source.pressed;
+    input.released = source.released;
+    input.device = source.device;
+    if (play) {
+      if (focus === SoundTestItem.Music) {
+        flow.host.events.push(SimEventKind.SoundTest, this.music.index, 0, 0, 0);
+      } else {
+        flow.sfx(this.sound.index);
+      }
+    }
+    const before = menu.revision;
+    const result = menuTick(menu, input);
+    if (menu.revision !== before) this.uiRevision++;
+    if (result === MenuResult.Back) {
+      this.close();
+      return;
+    }
+    if (result === MenuResult.Confirmed) {
+      if (menu.focus === SoundTestItem.Back) {
+        this.close();
+      } else if (menu.focus === SoundTestItem.Stop) {
+        flow.sfx(SFX_CUES.MenuSelect);
+        flow.music(MUSIC_CUES.Silence, MUSIC_FADE_TICKS);
+      }
+      return;
+    }
+    flow.menuSound(result);
+  }
+
+  /**
+   * Draws the panel, `SOUND TEST`, the rows and the hint.
+   *
+   * @param list - The UI list.
+   */
+  drawUi(list: DrawList): void {
+    const base = this.stringBase;
+    const p = SOUND_TEST_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
+    list.setString(base, 'SOUND TEST');
+    list.setString(base + 1, '← → CHOOSE   OK PLAY');
+    list.setString(base + 2, '');
+    list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
+    drawMenu(list, this.menu, base + 3, SOUND_TEST_MENU_LAYOUT);
+    list.text(base + 1, CX, p.y + p.h - 16, UI_COLORS.disabled, TextAlign.Center);
   }
 }
 
@@ -4415,6 +5777,23 @@ export interface SceneFlow {
   readonly ending: EndingScene;
   /** The credits scroll after the ending (M2-14). */
   readonly credits: CreditsScene;
+  /** The name entry after a game whose score entered a hi-score table (M2-15). */
+  readonly nameEntry: NameEntryScene;
+  /** The hi-score tables — the attract loop's and a game's result (M2-15). */
+  readonly hiScores: HiScoreScene;
+  /** The attract loop's demo play (M2-15). */
+  readonly demo: DemoScene;
+  /** The attract loop's story crawl (M2-15). */
+  readonly story: StoryScene;
+  /** The practice select (M2-15). */
+  readonly practiceSelect: PracticeScene;
+  /** The sound test (M2-15). */
+  readonly soundTest: SoundTestScene;
+  /**
+   * The demos the attract loop plays, decoded from the content (`ContentDb.demos`, M2-15 — a demo
+   * that does not decode is left out).
+   */
+  readonly demos: readonly Replay[];
   /**
    * The run in progress (M2-10): the campaign zone, the route, the players carried between zones,
    * the bonus-stage state and the run's flags.
@@ -4427,16 +5806,18 @@ export interface SceneFlow {
    */
   readonly campaign: CampaignSpec | null;
   /**
-   * Practice plumbing (plan M2-10; the practice select is M2-15): starts a practice run of one
-   * campaign zone at a checkpoint with the next game's config — the zone's rank stage term, a fresh
-   * start, no hi-score; its clear returns to the title.
+   * Starts a practice run (plan M2-10 plumbing; M2-15: the practice select calls it after the
+   * difficulty / ship / weapon select): one campaign zone at a checkpoint with the next game's
+   * config — the zone's rank stage term, a fresh start with the given loadout; its scores go into
+   * the practice tables (with the name entry), its clear returns to the title.
    *
    * @param zone - A campaign zone id (the content's campaign, even outside campaign mode).
    * @param checkpoint - Index into the zone stage's checkpoints (-1 = its start; default).
+   * @param loadout - The starting loadout (default `null` — the config's).
    * @returns `true` when the practice game starts (on the next applied transition); `false`
    *   without a campaign, for an unknown zone or an out-of-range checkpoint.
    */
-  startPractice(zone: string, checkpoint?: number): boolean;
+  startPractice(zone: string, checkpoint?: number, loadout?: StartingLoadout | null): boolean;
   /**
    * The save the flow plays with (the host's store, or a memory-only one): options, hi-score
    * tables, stats.
@@ -4444,7 +5825,8 @@ export interface SceneFlow {
   readonly save: SaveStore;
   /**
    * The hi-score table the next game goes into (`core/save` `hiScoreModeKey` of
-   * {@link SceneFlow.gameConfig} — one table per power-up mode and difficulty).
+   * {@link SceneFlow.gameConfig} — one table per power-up mode and difficulty; since M2-15 a co-op
+   * game's own `-2p` table; a practice run records into its `-practice` table instead).
    */
   readonly modeKey: string;
   /** The difficulty the next game plays (the host config's until one is chosen under START). */
@@ -4652,6 +6034,26 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       ? contentCampaign
       : null;
   const run = new RunState();
+  // The attract loop's demos (M2-15): decoded once; a demo that does not decode or names a stage
+  // the content lacks is left out (the loop plays the others).
+  const demos: Replay[] = [];
+  for (const demo of host.content.demos) {
+    if (demo.stage !== null && demo.stageIndex < 0) continue;
+    try {
+      demos.push(decodeReplay(demo.document));
+    } catch (_error) {
+      // A broken demo is skipped (`pnpm content:check` plays every shipped one).
+    }
+  }
+  // The hi-score rows' zone column (M2-15): a stage's campaign label.
+  const zoneLabels = new Map<string, string>();
+  if (contentCampaign !== null) {
+    for (const zone of contentCampaign.zones) zoneLabels.set(zone.stage, zone.label);
+  }
+  const soundTracks: readonly string[] =
+    host.soundTest === undefined || host.soundTest === null ? [] : host.soundTest.music;
+  const pendingNames: PendingName[] = [];
+  for (let p = 0; p < MAX_PLAYERS; p++) pendingNames.push(new PendingName());
   const setup = host.inputProfiles ?? null;
   const profiles: readonly InputProfileChoice[] = setup === null ? [] : setup.choices;
   let activeProfile = -1;
@@ -4669,6 +6071,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     campaign,
     beginRun(): void {
       run.begin(campaign, control.worldConfig.stage);
+      // Rows of an earlier game are named already (or were never asked for — a quit).
+      control.pendingCount = 0;
       // Pushed before the World's stage theme: a set already resident switches at once.
       control.prepareStage(run.stage);
     },
@@ -4741,7 +6145,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       return (mode >= 0 ? mode : 0) * presets + presetIndex(preset);
     },
     get modeKey(): string {
-      return hiScoreModeKey(control.worldConfig);
+      const config = control.worldConfig;
+      return hiScoreModeKey(config, config.coop ? '2p' : '1p');
     },
     get hiScore(): number {
       return bests[control.bestIndex(control.difficulty)];
@@ -4761,13 +6166,15 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       events.push(SimEventKind.UserOption, kind, 0, 0, value);
     },
     recordRun(cleared: boolean): number {
-      // A practice run is not a real game (M2-10; its own table comes with M2-15).
-      if (run.practice) return -1;
       const world = control.game.world;
       const scores = world.scoring.board.scores;
       const reached = world.stage === null ? '' : world.stage.stage.id;
-      // The World's own table: its difficulty (chosen under START) names it.
-      const key = hiScoreModeKey(world.config);
+      // The World's own table: its difficulty (chosen under START), ship and mode name it — a
+      // practice run has tables of its own (M2-15).
+      const mode: HiScoreMode = run.practice ? 'practice' : world.config.coop ? '2p' : '1p';
+      const key = hiScoreModeKey(world.config, mode);
+      control.resultKey = key;
+      control.pendingCount = 0;
       let rank = -1;
       for (let p = 0; p < scores.length && p < world.players.length; p++) {
         if (p > 0 && !world.players[p].active) continue;
@@ -4775,15 +6182,92 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
           key,
           createHiScoreEntry(scores[p].score, {
             reached,
-            mode: world.config.coop ? HI_SCORE_MODE_2P : HI_SCORE_MODE_1P,
+            mode,
             difficulty: world.config.difficulty,
           }),
         );
         if (p === 0) rank = r;
+        if (r >= 0 && control.pendingCount < pendingNames.length) {
+          // The name entry names the row the table now holds (found again by identity).
+          const pending = pendingNames[control.pendingCount++];
+          pending.key = key;
+          pending.row = save.hiScores(key)[r] ?? null;
+          pending.player = p;
+        }
       }
-      save.count(cleared ? 'stagesCleared' : 'gameOvers');
+      if (!run.practice) save.count(cleared ? 'stagesCleared' : 'gameOvers');
       void save.flush();
       return rank;
+    },
+    demos,
+    soundTracks,
+    practice: new PracticeChoice(),
+    pendingNames,
+    pendingCount: 0,
+    resultKey: '',
+    startAttract(): void {
+      if (demos.length > 0) stack.reset(control.demo);
+      else control.nextAttract(control.demo);
+    },
+    nextAttract(from: Scene): void {
+      if (from === control.demo) {
+        control.hiScores.showAttract();
+        stack.reset(control.hiScores);
+      } else if (from === control.hiScores && control.story.rows.length > 0) {
+        stack.reset(control.story);
+      } else {
+        control.toTitle();
+      }
+    },
+    finishGame(): void {
+      if (control.pendingCount > 0) stack.reset(control.nameEntry);
+      else control.toTitle();
+    },
+    showResults(): void {
+      control.hiScores.showResult(control.resultKey);
+      stack.reset(control.hiScores);
+    },
+    isNewRow(row: HiScoreEntry): boolean {
+      for (let i = 0; i < control.pendingCount; i++) if (pendingNames[i].row === row) return true;
+      return false;
+    },
+    tableTitle(key: string): string {
+      const parts = parseHiScoreModeKey(key);
+      if (parts === null) return key.toUpperCase();
+      let ship = parts.powerUpMode.toUpperCase();
+      for (let i = ships.length - 1; i >= 0; i--) {
+        if (ships[i].mode === parts.powerUpMode) ship = ships[i].name.toUpperCase();
+      }
+      const preset = DIFFICULTY_PRESETS.indexOf(parts.difficulty as DifficultyPreset);
+      const difficulty = preset >= 0 ? DIFFICULTY_LABELS[preset] : parts.difficulty.toUpperCase();
+      const label = HI_SCORE_MODE_LABELS[HI_SCORE_MODES.indexOf(parts.mode)] ?? '';
+      return ship + '  ' + difficulty + '  ' + label;
+    },
+    zoneLabel(stage: string): string {
+      return zoneLabels.get(stage) ?? '-';
+    },
+    launchGame(): void {
+      const practice = control.practice;
+      if (practice.active) {
+        practice.active = false;
+        if (control.beginPractice(practice.zone, practice.checkpoint, practice.loadout)) return;
+      }
+      stack.reset(control.game);
+    },
+    beginPractice(zone: number, checkpoint: number, loadout: StartingLoadout | null): boolean {
+      const practice = host.content.campaign;
+      if (practice === null || zone < 0 || zone >= practice.zones.length) return false;
+      const stage = host.content.stages[practice.zones[zone].stageId];
+      if (stage === undefined) return false;
+      if (!Number.isInteger(checkpoint) || checkpoint < -1) return false;
+      if (checkpoint >= stage.checkpoints.length) return false;
+      run.beginPractice(practice, zone, checkpoint, loadout);
+      run.pendingStart = true;
+      control.pendingCount = 0;
+      control.prepareStage(run.stage);
+      save.count('gamesStarted');
+      stack.reset(control.game);
+      return true;
     },
     sfx(cue: number): void {
       events.push(SimEventKind.Sfx, cue, 0, 0, 0);
@@ -4821,6 +6305,12 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   control.map = new MapScene(control);
   control.ending = new EndingScene(control);
   control.credits = new CreditsScene(control);
+  control.nameEntry = new NameEntryScene(control);
+  control.hiScores = new HiScoreScene(control);
+  control.demo = new DemoScene(control);
+  control.story = new StoryScene(control);
+  control.practiceSelect = new PracticeScene(control);
+  control.soundTest = new SoundTestScene(control);
   control.game.world.scoring.board.setHiScore(control.hiScore);
   // The placeholder World queued its stage theme; the flow does not start in the stage.
   events.clear();
@@ -4842,6 +6332,12 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     control.map,
     control.ending,
     control.credits,
+    control.nameEntry,
+    control.hiScores,
+    control.demo,
+    control.story,
+    control.practiceSelect,
+    control.soundTest,
   ];
   let base = 0;
   for (const scene of scenes) {
@@ -4890,23 +6386,21 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     map: control.map,
     ending: control.ending,
     credits: control.credits,
+    nameEntry: control.nameEntry,
+    hiScores: control.hiScores,
+    demo: control.demo,
+    story: control.story,
+    practiceSelect: control.practiceSelect,
+    soundTest: control.soundTest,
+    demos,
     run,
     campaign,
-    startPractice(zone: string, checkpoint = -1): boolean {
+    startPractice(zone: string, checkpoint = -1, loadout: StartingLoadout | null = null): boolean {
       const practice = host.content.campaign;
       if (practice === null) return false;
       const index = campaignZoneIndex(practice, zone);
       if (index < 0) return false;
-      const stage = host.content.stages[practice.zones[index].stageId];
-      if (stage === undefined) return false;
-      if (!Number.isInteger(checkpoint) || checkpoint < -1) return false;
-      if (checkpoint >= stage.checkpoints.length) return false;
-      run.beginPractice(practice, index, checkpoint);
-      run.pendingStart = true;
-      control.prepareStage(run.stage);
-      save.count('gamesStarted');
-      stack.reset(control.game);
-      return true;
+      return control.beginPractice(index, checkpoint, loadout);
     },
     save,
     get modeKey(): string {
@@ -4962,15 +6456,26 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
       if (bottom < 0) bottom = 0;
       const game = control.game;
       const select = control.weaponSelect;
+      const demo = control.demo;
       let gameVisible = false;
       let selectVisible = false;
+      let demoVisible = false;
       for (let i = bottom; i < depth; i++) {
         const scene = stack.sceneAt(i);
         if (scene === game) gameVisible = true;
         else if (scene === select) selectVisible = true;
+        else if (scene === demo) demoVisible = true;
       }
       const preview = select.preview;
-      if (gameVisible) {
+      const demoWorld = demo.world;
+      if (demoVisible && demoWorld !== null) {
+        // The attract loop's demo (M2-15): its World and its own HUD.
+        view.tick = demoWorld.tick;
+        view.world = demoWorld.view;
+        demo.hud.showBossHp = control.save.options.display.bossHpBar;
+        demo.hud.update(demoWorld, demo.hudList);
+        view.hud = demo.hudList;
+      } else if (gameVisible) {
         view.tick = game.world.tick;
         view.world = game.world.view;
         // The boss HP bar follows the saved display option (M2-09).

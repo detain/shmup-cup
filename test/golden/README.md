@@ -77,5 +77,10 @@ continues).
   steps that change simulation behaviour re-bless in the same commit). Re-recording an unchanged
   simulation writes byte-identical files.
 - The files are generated: never edit them by hand (Prettier skips them).
+- **Attract demos (M2-15).** `demos.ts` records the attract loop's demos — the 4-way bot with god
+  mode, 40 s of each zone from its start — into `content/demos/<id>.replay.json` (bundled content,
+  kind `replay`); `demos.test.ts` plays each back through the attract playback
+  (`createDemoPlayback`) with every hash, and `pnpm golden:update` re-records them with the golden
+  replays.
 
 Guide (replay format, re-blessing, gotchas): [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#golden-replays-testgolden).

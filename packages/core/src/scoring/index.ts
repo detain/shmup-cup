@@ -143,16 +143,16 @@ export class PlayerScore {
  * `createHiScoreEntry`).
  */
 export interface HiScoreEntry {
-  /** Up to 8 characters: three letters from the name entry (M2-15), `---` until then. */
+  /** Up to 8 characters: the three letters of the name entry (M2-15), `---` until named. */
   readonly name: string;
   /** Final score. */
   readonly score: number;
   /** Stage / zone reached (a stage id; `''` in open space). */
   readonly reached: string;
   /**
-   * Game mode the score was set in: `1p` for a one-player game, `2p` for either player's score of
-   * a co-op game (M2-06 — the scene flow records both players' rows in the same table); practice,
-   * boss rush … later.
+   * Game mode the score was set in (`core/save` `HI_SCORE_MODES`): `1p` for a one-player game, `2p`
+   * for either player's score of a co-op game (M2-06), `practice` for a practice run (M2-15); each
+   * mode has its own tables since M2-15 (`core/save` `hiScoreModeKey`).
    */
   readonly mode: string;
   /** Difficulty preset of the run. */

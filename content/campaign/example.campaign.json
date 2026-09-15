@@ -70,5 +70,14 @@
     {
       "title": "THANK YOU FOR PLAYING"
     }
+  ],
+  "story": [
+    {
+      "scene": "dawn",
+      "lines": ["UP TO SIX LINES A PAGE,", "OF AT MOST 40 CHARACTERS."]
+    },
+    {
+      "lines": ["A PAGE WITHOUT A SCENE CRAWLS OVER", "THE STARFIELD."]
+    }
   ]
 }

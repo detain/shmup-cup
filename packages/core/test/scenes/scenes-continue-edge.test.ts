@@ -211,10 +211,10 @@ describe('core/scenes continue countdown edges (M2-01)', () => {
     s.press(Action.Back);
     expect(s.ids).toEqual(['game', 'gameOver']);
     expect(s.flow.save.bestScore('meter-normal')).toBe(6_001);
-    // Back on the title the session best has it too.
+    // After the name entry (M2-15) the session best has it too.
     s.hold(0, GAME_OVER_LOCK_TICKS);
     s.press(Action.Confirm);
-    expect(s.ids).toEqual(['title']);
+    expect(s.ids).toEqual(['nameEntry']);
     expect(s.flow.hiScore).toBe(6_001);
   });
 });

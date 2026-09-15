@@ -29,6 +29,7 @@ import {
 import {
   GAME_OVER_DELAY_TICKS,
   GAME_OVER_LOCK_TICKS,
+  HI_SCORE_LOCK_TICKS,
   OptionsItem,
   PauseItem,
   STAGE_CLEAR_DELAY_TICKS,
@@ -164,6 +165,20 @@ class Session {
   focus(item: number): void {
     for (let i = 0; i < item; i++) this.press(Action.Down);
     expect(this.flow.options.menu.focus).toBe(item);
+  }
+
+  /**
+   * Enters `A` in the name entry of a new hi-score (M2-15: OK four times — the entry's lock, then
+   * OK past the empty letters and on END), then leaves the table after its lock: the title.
+   */
+  nameAndLeave(): void {
+    expect(this.ids).toEqual(['nameEntry']);
+    this.hold(0, 2);
+    for (let i = 0; i < 4; i++) this.press(Action.Confirm);
+    expect(this.ids).toEqual(['hiScore']);
+    this.hold(0, HI_SCORE_LOCK_TICKS);
+    this.press(Action.Confirm);
+    expect(this.ids).toEqual(['title']);
   }
 
   /** Ends the game on the game-over screen. */
@@ -514,8 +529,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     expect(s.flow.gameOver.rank).toBe(0);
     await settle();
     s.hold(0, GAME_OVER_LOCK_TICKS + 1);
-    s.press(Action.Confirm); // → title
-    expect(s.ids).toEqual(['title']);
+    s.press(Action.Confirm); // → the name entry (M2-15), whose end writes the name
+    s.nameAndLeave();
     expect(s.flow.hiScore).toBe(2000);
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
@@ -528,8 +543,10 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     expect(s.flow.gameOver.rank).toBe(1);
     expect(s.uiTexts()).not.toContain('NEW HI-SCORE');
     await settle();
-    expect(writes).toEqual([SAVE_STORAGE_KEY, SAVE_STORAGE_KEY]);
+    // Game over 1, its name, game over 2 (the second row waits for its name).
+    expect(writes).toEqual([SAVE_STORAGE_KEY, SAVE_STORAGE_KEY, SAVE_STORAGE_KEY]);
     expect(save.hiScores('meter-normal').map((r) => r.score)).toEqual([2000, 100]);
+    expect(save.hiScores('meter-normal').map((r) => r.name)).toEqual(['A', '---']);
     expect(save.data.stats).toEqual({ gamesStarted: 2, gameOvers: 2, stagesCleared: 0 });
   });
 
@@ -546,6 +563,15 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     state.fail = false;
     s.hold(0, GAME_OVER_LOCK_TICKS + 1);
     s.press(Action.Confirm);
+    // The name entry's end (M2-15) is the next write: everything the failed one lost.
+    s.nameAndLeave();
+    await settle();
+    expect(writes).toEqual([SAVE_STORAGE_KEY]);
+    let stored = await loadSave(inner);
+    expect(stored.data.hiScores['meter-normal'].map((r) => [r.name, r.score])).toEqual([
+      ['A', 3000],
+    ]);
+    expect(stored.data.stats).toEqual({ gamesStarted: 1, gameOvers: 1, stagesCleared: 0 });
     s.press(Action.Confirm);
     s.press(Action.Confirm); // START
     s.press(Action.Confirm); // NORMAL
@@ -555,8 +581,8 @@ describe('core/scenes saves (edge): what counts as a finished game', () => {
     s.game.world.status = 'stageClear';
     s.hold(0, STAGE_CLEAR_DELAY_TICKS + 1);
     await settle();
-    expect(writes).toEqual([SAVE_STORAGE_KEY]);
-    const stored = await loadSave(inner);
+    expect(writes).toEqual([SAVE_STORAGE_KEY, SAVE_STORAGE_KEY]);
+    stored = await loadSave(inner);
     expect(stored.data.hiScores['meter-normal'].map((r) => r.score)).toEqual([3000]);
     expect(stored.data.stats).toEqual({ gamesStarted: 2, gameOvers: 1, stagesCleared: 1 });
   });
