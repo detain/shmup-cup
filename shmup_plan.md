@@ -3645,7 +3645,8 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
     web test runs the real compiled preload against it.
   - **Window / scale / fullscreen** (`main/window-state.ts`): remembered in `window.json` through the same store —
     fullscreen, the scale of the 384×216 frame (×1 … ×10, lowered to fit the work area; `useContentSize`), the
-    position (kept only while on a screen). Shortcuts in the main process (`before-input-event`): F11 / Alt+Enter
+    position (kept only while on a screen; saved 400 ms after the last `move` and on `close` — Electron emits `moved`
+    on macOS / Windows only —, the app waiting for that write in `will-quit`). Shortcuts in the main process (`before-input-event`): F11 / Alt+Enter
     fullscreen, Ctrl+= / Ctrl+- / Ctrl+0 scale (Cmd on macOS). No in-game Options entry (that would be core UI work
     outside this step; the game's own SCALE option still picks integer / fit / stretch inside the window).
   - **Gamepad and 120 / 144 Hz** needed no Electron code: the web build's Gamepad API adapter and the shell's fixed
@@ -3667,7 +3668,8 @@ Goal of the milestone: every **[P1]** feature. Steps are ordered so systems land
   - **device-info** (implemented): pure `collectDeviceInfo` + `formatDeviceLine`, `loadWebapis` (adds the
     `$WEBAPIS/webapis/webapis.js` script only when `window.tizen` exists, once, 3 s timeout, never rejects);
     `DeviceInfo` gained `modelCode`. It reaches the **debug overlay** as a sixth panel line: render-pixi
-    `setDebugPanelDevice` / `DebugOverlay.setDevice` (printable ASCII, ≤ 56 characters), the shell's
+    `setDebugPanelDevice` / `DebugOverlay.setDevice` (printable ASCII, ≤ 56 characters; `setDevice`, called every
+    frame, compares its input first and allocates nothing while it stays the same), the shell's
     `DebugToolsOptions.device`; `tizenDebugTools(win, buildId, canvas?)` collects the facts when the remote unlock
     opens the tools (release and locked builds never load `webapis.js`) and logs the snapshot for the inspector.
   - **live-reload** (implemented): `connectLiveReload({ url }, window)` — `main.ts` calls it only under `__SHMUP_DEV__`

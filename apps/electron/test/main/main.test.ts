@@ -3,14 +3,17 @@
  * so it runs in plain Node without the Electron binary (CI sets
  * ELECTRON_SKIP_BINARY_DOWNLOAD=1). Each test imports a fresh copy because main.ts does
  * its work at import time and reads its environment variables then. The user-data folder is a
- * temporary directory, so the file saves and the window settings (M2-17) are real files.
+ * temporary directory, so the file saves and the window settings (M2-17) are real files. The fake
+ * window emits only what its tests trigger — like Linux, never `moved` (M2-17 review: the position
+ * is saved from `move`, once it settles, and on `close`).
  */
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IPC_CHANNELS } from '../../src/shared/ipc.js';
+import { WINDOW_MOVE_SAVE_MS } from '../../src/main/window-state.js';
 
 type Handler = (request: { url: string }) => Response | Promise<Response>;
 type IpcListener = (event: unknown, ...args: unknown[]) => unknown;
@@ -22,12 +25,13 @@ const electron = vi.hoisted(() => {
     handlers: new Map<string, Handler>(),
     ipc: new Map<string, IpcListener>(),
     invokeHandlers: new Map<string, IpcListener>(),
-    appEvents: new Map<string, () => void>(),
+    appEvents: new Map<string, Listener>(),
     windows: [] as Array<{
       options: { fullscreen?: boolean; width?: number; height?: number; x?: number; y?: number };
       url: string | null;
       shown: boolean;
       fullScreen: boolean;
+      minimized: boolean;
       contentSize: [number, number] | null;
       position: [number, number];
       once: Map<string, Listener>;
@@ -55,6 +59,7 @@ const electron = vi.hoisted(() => {
         url: null,
         shown: false,
         fullScreen: options.fullscreen === true,
+        minimized: false,
         contentSize: null,
         position: [options.x ?? 100, options.y ?? 100],
         once: new Map(),
@@ -89,6 +94,12 @@ const electron = vi.hoisted(() => {
     isFullScreen(): boolean {
       return this.record.fullScreen;
     }
+    isMinimized(): boolean {
+      return this.record.minimized;
+    }
+    isDestroyed(): boolean {
+      return false;
+    }
     setFullScreen(on: boolean): void {
       this.record.fullScreen = on;
       this.record.events.get(on ? 'enter-full-screen' : 'leave-full-screen')?.();
@@ -109,7 +120,7 @@ const electron = vi.hoisted(() => {
       quit: () => {
         state.quits++;
       },
-      on: (event: string, listener: () => void) => {
+      on: (event: string, listener: Listener) => {
         state.appEvents.set(event, listener);
       },
       getPath: (name: string) => {
@@ -361,10 +372,63 @@ describe('electron/main/main', () => {
     expect(press({ key: 'Enter', alt: true })).toBe(true);
     expect(win?.fullScreen).toBe(false);
     await vi.waitFor(() => expect(storedWindow()).toMatchObject({ fullscreen: false }));
-    // A move is remembered.
-    if (win !== undefined) win.position = [300, 200];
-    win?.events.get('moved')?.();
-    await vi.waitFor(() => expect(storedWindow()).toMatchObject({ x: 300, y: 200 }));
+  });
+
+  it('remembers the position once a move settles, from `move` alone (Linux emits no `moved`)', async () => {
+    await startMain();
+    const win = electron.state.windows[0];
+    if (win === undefined) throw new Error('no window');
+    expect(win.events.has('moved')).toBe(false);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      // A drag: many `move` events; nothing is written until the window stands still.
+      for (let x = 110; x <= 300; x += 10) {
+        win.position = [x, 200];
+        win.events.get('move')?.();
+        vi.advanceTimersByTime(WINDOW_MOVE_SAVE_MS - 1);
+      }
+      expect(existsSync(join(electron.state.userData, 'saves', 'window.json'))).toBe(false);
+      vi.advanceTimersByTime(1);
+      await vi.waitFor(() => expect(storedWindow()).toMatchObject({ x: 300, y: 200 }));
+      // Not while fullscreen or minimised (Windows parks a minimised window at -32000).
+      win.fullScreen = true;
+      win.position = [0, 0];
+      win.events.get('move')?.();
+      vi.advanceTimersByTime(WINDOW_MOVE_SAVE_MS);
+      win.fullScreen = false;
+      win.minimized = true;
+      win.position = [-32000, -32000];
+      win.events.get('move')?.();
+      vi.advanceTimersByTime(WINDOW_MOVE_SAVE_MS);
+      // The next write (a scale step) still carries the last real position: neither was taken.
+      win.minimized = false;
+      expect(press({ key: '-', control: true })).toBe(true);
+      await vi.waitFor(() => expect(storedWindow()).toMatchObject({ scale: 2 }));
+      expect(storedWindow()).toMatchObject({ x: 300, y: 200 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('saves the position when the window closes, and quits only once it is written', async () => {
+    await startMain();
+    const win = electron.state.windows[0];
+    if (win === undefined) throw new Error('no window');
+    const willQuit = electron.state.appEvents.get('will-quit');
+    // Nothing pending: quitting goes ahead.
+    let prevented = false;
+    willQuit?.({ preventDefault: () => (prevented = true) });
+    expect(prevented).toBe(false);
+    // Closed right after a move, before it settled.
+    win.position = [640, 300];
+    win.events.get('move')?.();
+    win.events.get('close')?.({ preventDefault: () => undefined });
+    electron.state.appEvents.get('window-all-closed')?.();
+    expect(electron.state.quits).toBe(1);
+    willQuit?.({ preventDefault: () => (prevented = true) });
+    expect(prevented).toBe(true);
+    await vi.waitFor(() => expect(electron.state.quits).toBe(2));
+    expect(storedWindow()).toMatchObject({ x: 640, y: 300 });
   });
 
   it('keeps the window on the game: no navigation away, no pop-ups', async () => {

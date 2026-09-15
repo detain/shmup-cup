@@ -11,7 +11,8 @@
  *   no longer fits the screen's work area.
  * - **Fullscreen.** Remembered; `SHMUP_FULLSCREEN=1` still forces it for one launch.
  * - **Position.** The window's last top-left corner, kept only while it lies on a screen
- *   ({@link isOnScreen}) — else the window is centred.
+ *   ({@link isOnScreen}) — else the window is centred. `main.ts` saves it
+ *   {@link WINDOW_MOVE_SAVE_MS} after the window's last `move` event and when it closes.
  * - **Shortcuts** ({@link windowShortcut}, read in the main process from the window's
  *   `before-input-event`): **F11** or **Alt+Enter** toggle fullscreen; **Ctrl+=** / **Ctrl++**
  *   and **Ctrl+-** step the window scale up / down, **Ctrl+0** resets it to ×3 (Cmd on macOS).
@@ -27,7 +28,7 @@
  * {@link serializeWindowState}, {@link windowContentSize}, {@link fitWindowScale},
  * {@link isOnScreen}, {@link windowShortcut}, {@link WindowShortcut}, {@link ShortcutInput},
  * {@link ScreenArea}, {@link WINDOW_STATE_KEY}, {@link FRAME_WIDTH}, {@link FRAME_HEIGHT},
- * {@link DEFAULT_WINDOW_SCALE}, {@link MAX_WINDOW_SCALE}.
+ * {@link DEFAULT_WINDOW_SCALE}, {@link MAX_WINDOW_SCALE}, {@link WINDOW_MOVE_SAVE_MS}.
  *
  * @module
  */
@@ -46,6 +47,12 @@ export const DEFAULT_WINDOW_SCALE = 3;
 
 /** The largest window scale (×10 = 3840×2160). */
 export const MAX_WINDOW_SCALE = 10;
+
+/**
+ * How long the window must stand still after a `move` event before its position is saved (a drag
+ * sends many `move` events; Linux sends no `moved`).
+ */
+export const WINDOW_MOVE_SAVE_MS = 400;
 
 /** The remembered window settings. */
 export interface WindowState {

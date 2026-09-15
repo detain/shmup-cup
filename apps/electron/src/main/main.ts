@@ -10,7 +10,9 @@
  *
  * **Window (M2-17).** The window remembers its settings in the same folder (`window.json`,
  * `main/window-state.ts`): fullscreen, the scale of the 384×216 frame (×1 … ×10, lowered to fit
- * the screen) and its position. **F11** / **Alt+Enter** toggle fullscreen, **Ctrl+=** / **Ctrl+-**
+ * the screen) and its position — saved once a move settles (`move`, which every platform emits:
+ * Linux has no `moved`) and again when the window closes; the app waits for these writes before it
+ * quits. **F11** / **Alt+Enter** toggle fullscreen, **Ctrl+=** / **Ctrl+-**
  * step the scale, **Ctrl+0** resets it to ×3 (Cmd on macOS). The window never navigates away from
  * the game and opens no other windows. Gamepads, render interpolation on 120 / 144 Hz monitors
  * and the 60 Hz fixed step with its accumulator all come from the web build itself (the shell's
@@ -37,6 +39,7 @@ import { createWindowOptions } from './window-options.js';
 import {
   DEFAULT_WINDOW_SCALE,
   DEFAULT_WINDOW_STATE,
+  WINDOW_MOVE_SAVE_MS,
   WINDOW_STATE_KEY,
   fitWindowScale,
   isOnScreen,
@@ -62,6 +65,13 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 /**
+ * The window-setting writes still running: the app waits for them before it quits (a position
+ * saved as the window closes would otherwise be cut off by the process exit — the write itself is
+ * atomic, so at worst it is lost, never half-written).
+ */
+const windowWrites = { pending: 0, settled: Promise.resolve() };
+
+/**
  * Reads the remembered window settings (defaults when missing, corrupt or unreadable).
  *
  * @param store - The save files.
@@ -81,8 +91,9 @@ async function loadWindowState(store: FileStore): Promise<WindowState> {
  * @remarks
  * The window is created hidden and shown on `ready-to-show` (no white flash). It loads
  * `SHMUP_DEV_URL` when set, otherwise `app://game/index.html`. A load failure is not
- * handled yet (the promise is deliberately ignored). Fullscreen, scale and position changes are
- * written to `window.json` as they happen (best effort).
+ * handled yet (the promise is deliberately ignored). Fullscreen and scale changes are written to
+ * `window.json` as they happen (best effort); the position {@link WINDOW_MOVE_SAVE_MS} after the
+ * last `move` event and when the window closes (neither while fullscreen or minimised).
  *
  * @param store - The save files (the window settings are stored there too).
  * @param state - The remembered settings.
@@ -110,7 +121,23 @@ function createGameWindow(store: FileStore, state: WindowState): void {
    */
   const remember = (next: WindowState): void => {
     current = next;
-    store.set(WINDOW_STATE_KEY, serializeWindowState(next)).catch(() => undefined);
+    windowWrites.pending++;
+    windowWrites.settled = store
+      .set(WINDOW_STATE_KEY, serializeWindowState(next))
+      .catch(() => undefined)
+      .finally(() => {
+        windowWrites.pending--;
+      });
+  };
+  /** The timer of a position save waiting for a move to settle. */
+  let moveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Remembers the window's position (not while fullscreen or minimised, and only a change). */
+  const rememberPosition = (): void => {
+    if (moveTimer !== null) clearTimeout(moveTimer);
+    moveTimer = null;
+    if (gameWindow.isDestroyed() || gameWindow.isFullScreen() || gameWindow.isMinimized()) return;
+    const [x, y] = gameWindow.getPosition();
+    if (x !== current.x || y !== current.y) remember({ ...current, x, y });
   };
   const contents = gameWindow.webContents;
   contents.on('before-input-event', (event, input) => {
@@ -135,11 +162,15 @@ function createGameWindow(store: FileStore, state: WindowState): void {
   });
   gameWindow.on('enter-full-screen', () => remember({ ...current, fullscreen: true }));
   gameWindow.on('leave-full-screen', () => remember({ ...current, fullscreen: false }));
-  gameWindow.on('moved', () => {
-    if (gameWindow.isFullScreen()) return;
-    const [x, y] = gameWindow.getPosition();
-    remember({ ...current, x, y });
+  // `move`, not `moved`: Electron emits `moved` on macOS and Windows only, so the Linux builds
+  // (AppImage, Steam Deck) never saw a move. `move` comes on every platform, many times a drag:
+  // the position is saved once the window has stood still for WINDOW_MOVE_SAVE_MS.
+  gameWindow.on('move', () => {
+    if (moveTimer !== null) clearTimeout(moveTimer);
+    moveTimer = setTimeout(rememberPosition, WINDOW_MOVE_SAVE_MS);
   });
+  // And where it is when it closes (a move still settling, a window manager without move events).
+  gameWindow.on('close', rememberPosition);
   // The window only ever shows the game: no navigation away, no pop-up windows.
   contents.on('will-navigate', (event, url) => {
     if (!isTrustedRendererUrl(url, devUrl)) event.preventDefault();
@@ -177,4 +208,13 @@ void app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   app.quit();
+});
+
+// Quit only once the window settings are on disk (the position saved on `close`).
+app.on('will-quit', (event) => {
+  if (windowWrites.pending === 0) return;
+  event.preventDefault();
+  void windowWrites.settled.then(() => {
+    app.quit();
+  });
 });

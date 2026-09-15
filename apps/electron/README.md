@@ -21,7 +21,8 @@ Minimal **Electron** desktop shell (Windows / macOS / Linux / Steam Deck —
   channels, refused for any page but the game's (`app://game/`, or `SHMUP_DEV_URL`'s origin) and for
   invalid keys / values.
 - `src/main/window-state.ts` (M2-17): the remembered window — fullscreen, the scale of the 384×216
-  frame (×1 … ×10, lowered to fit the screen), the position — and the shortcuts **F11** /
+  frame (×1 … ×10, lowered to fit the screen), the position (saved once a `move` settles and on
+  `close` — Linux emits no `moved`; the app quits after that write) — and the shortcuts **F11** /
   **Alt+Enter** (fullscreen), **Ctrl+=** / **Ctrl+-** / **Ctrl+0** (scale; Cmd on macOS).
 - The web build it loads detects the bridge (`apps/web` `getElectronBridge`): platform
   `'electron'`, file saves, EXIT on the title quits, audio unlocked at boot. Gamepads, the 60 Hz

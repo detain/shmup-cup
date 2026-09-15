@@ -215,7 +215,10 @@ export interface DebugPanelLists {
  * five; `''`, the web's case, removes it). The line lives in a string slot of the values list.
  *
  * @remarks
- * Cold: writes the slot only when the text changed.
+ * Cold: runs {@link debugDeviceText} on every call (a longer line or one with characters outside
+ * printable ASCII makes a new string), and writes the slot only when the result changed. Call it
+ * when the text changes, not every frame — {@link DebugOverlay.setDevice}, which the shell calls
+ * every frame, remembers its last input and calls this only when that input changes.
  *
  * @param lists - The panel lists.
  * @param text - The line ({@link debugDeviceText} is applied).
@@ -888,8 +891,9 @@ export interface DebugOverlay {
    */
   update(world: World | null, flags: DebugFlags, counters: DebugCounters | null): void;
   /**
-   * Sets the panel's device line (M2-17 — {@link setDebugPanelDevice}; `''` removes it). Cheap
-   * when the text did not change.
+   * Sets the panel's device line (M2-17 — {@link setDebugPanelDevice}; `''` removes it). Safe to
+   * call every frame: the same string as the last call returns at once and allocates nothing (the
+   * line is cleaned and cut only when the input changes).
    *
    * @param text - The line.
    */
@@ -985,6 +989,8 @@ export function createDebugOverlay(
     }
   }
   let destroyed = false;
+  /** The text of the last `setDevice` (the slot starts empty). */
+  let deviceInput = '';
   return {
     container,
     stats,
@@ -1007,6 +1013,10 @@ export function createDebugOverlay(
       }
     },
     setDevice(text) {
+      // Every frame from the shell: compare the input first, so a line longer than the panel (a
+      // TV's full line is ~66 characters) is not cut into a new string on every frame.
+      if (text === deviceInput) return;
+      deviceInput = text;
       setDebugPanelDevice(panel, text);
     },
     destroy() {
