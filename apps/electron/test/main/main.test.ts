@@ -431,6 +431,73 @@ describe('electron/main/main', () => {
     expect(storedWindow()).toMatchObject({ x: 640, y: 300 });
   });
 
+  it('falls back to the defaults for a corrupt window.json', async () => {
+    const saves = join(electron.state.userData, 'saves');
+    mkdirSync(saves, { recursive: true });
+    writeFileSync(join(saves, 'window.json'), '{"scale":4,');
+    await startMain();
+    expect(electron.state.windows[0]?.options).toMatchObject({
+      fullscreen: false,
+      width: 1152,
+      height: 648,
+      center: true,
+    });
+  });
+
+  it('remembers the scale it lowered to fit, not the one it read', async () => {
+    const saves = join(electron.state.userData, 'saves');
+    mkdirSync(saves, { recursive: true });
+    writeFileSync(join(saves, 'window.json'), '{"version":1,"scale":9}');
+    await startMain();
+    expect(press({ key: 'F11' })).toBe(true);
+    await vi.waitFor(() => expect(storedWindow()).toMatchObject({ fullscreen: true, scale: 4 }));
+  });
+
+  it('writes nothing for a close where the window did not move, a step below ×1 or a close in fullscreen', async () => {
+    const saves = join(electron.state.userData, 'saves');
+    const backup = join(saves, 'window.json.bak');
+    mkdirSync(saves, { recursive: true });
+    writeFileSync(join(saves, 'window.json'), '{"version":1,"scale":1,"x":200,"y":120}');
+    await startMain();
+    const win = electron.state.windows[0];
+    if (win === undefined) throw new Error('no window');
+    // ×1 is the smallest: the key is still taken from the game, nothing changes.
+    expect(press({ key: '-', control: true })).toBe(true);
+    expect(win.contentSize).toBeNull();
+    // Closed where it was restored: nothing to save, the quit goes ahead at once.
+    win.events.get('close')?.({ preventDefault: () => undefined });
+    let prevented = false;
+    electron.state.appEvents.get('will-quit')?.({ preventDefault: () => (prevented = true) });
+    expect(prevented).toBe(false);
+    // In fullscreen the window's position is the screen's: not saved either.
+    win.fullScreen = true;
+    win.position = [0, 0];
+    win.events.get('close')?.({ preventDefault: () => undefined });
+    electron.state.appEvents.get('will-quit')?.({ preventDefault: () => (prevented = true) });
+    expect(prevented).toBe(false);
+    expect(existsSync(backup)).toBe(false);
+    expect(storedWindow()).toMatchObject({ scale: 1, x: 200, y: 120 });
+  });
+
+  it('still quits when the window settings cannot be written', async () => {
+    // A file where the saves folder should be: every write fails, reads find nothing.
+    writeFileSync(join(electron.state.userData, 'saves'), 'in the way');
+    await startMain();
+    const win = electron.state.windows[0];
+    if (win === undefined) throw new Error('no window');
+    expect(win.options).toMatchObject({ width: 1152, center: true });
+    win.position = [321, 123];
+    win.events.get('close')?.({ preventDefault: () => undefined });
+    let prevented = false;
+    electron.state.appEvents.get('will-quit')?.({ preventDefault: () => (prevented = true) });
+    expect(prevented).toBe(true);
+    await vi.waitFor(() => expect(electron.state.quits).toBe(1));
+    // Once the failed write settled nothing is pending: the second will-quit goes ahead.
+    prevented = false;
+    electron.state.appEvents.get('will-quit')?.({ preventDefault: () => (prevented = true) });
+    expect(prevented).toBe(false);
+  });
+
   it('keeps the window on the game: no navigation away, no pop-ups', async () => {
     await startMain();
     const contents = electron.state.windows[0]?.contents;

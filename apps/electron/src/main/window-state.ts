@@ -185,7 +185,7 @@ export interface ScreenArea {
 /**
  * The largest scale up to `scale` whose window fits the work area (at least ×1).
  *
- * @param scale - The wanted scale.
+ * @param scale - The wanted scale (a fraction rounds down; `NaN` counts as ×1).
  * @param area - The work area (or its size).
  * @returns The scale to use.
  *
@@ -195,7 +195,8 @@ export interface ScreenArea {
  * ```
  */
 export function fitWindowScale(scale: number, area: Pick<ScreenArea, 'width' | 'height'>): number {
-  let fit = Math.max(1, Math.min(MAX_WINDOW_SCALE, Math.floor(scale)));
+  // `|| 1`: NaN would slip through Math.max / Math.min and come back as the scale.
+  let fit = Math.max(1, Math.min(MAX_WINDOW_SCALE, Math.floor(scale) || 1));
   while (fit > 1 && (FRAME_WIDTH * fit > area.width || FRAME_HEIGHT * fit > area.height)) fit--;
   return fit;
 }
