@@ -926,6 +926,9 @@ function clearSession(world: World): void {
   world.bosses.clear();
   world.weapons.clear();
   world.powerups.clear();
+  // Any vortex still open closes with the session: it would otherwise keep pulling — and
+  // discharging bolts into — the objects the restarted checkpoint spawns (M3-02).
+  world.blackholes.clear();
   world.scoring.clear();
   // The stage's own terrain again, no fields or chains, the blocks before the camera (M2-07).
   world.gimmicks.clear(world.stage, world.camera.x);

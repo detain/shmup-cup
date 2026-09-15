@@ -3912,6 +3912,11 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   - **Goldens and demos re-blessed** (`pnpm golden:update`): every replay header gained the four new `GameConfig`
     fields, which changes each state hash. Nothing else moved — no `expected` status, score or tick count changed in
     any golden or attract demo, which is the evidence that the simulation is unchanged with the extras off.
+  - **Review fixes (round 1).** A checkpoint restart now closes the open vortices too
+    (`clearSession` calls `world.blackholes.clear()`, which had no call site), and a boss slot no
+    longer inherits the pull field of the boss that vacated it (`enter()` and the session `clear()`
+    reset `pullRadius` / `pullStrength` / `pullTicks`, so a `boss.walker` reusing a suction boss's
+    slot cannot suck the ships in). Both have regression tests; no golden hash moved.
   - `eslint.config.js` `globalIgnores` gained the git-ignored agent / editor directories (`.claude/`, `.caliber/`,
     `.playwright-mcp/`) so `pnpm lint` does not try to parse tooling that is not ours.
   - The Tizen bundle is 383.4 KB gzip of its 512 KB budget (374.6 KB at M3-01).

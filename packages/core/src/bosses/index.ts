@@ -2253,6 +2253,11 @@ class BossSystemImpl implements BossSystem {
     boss.resting = false;
     boss.turning = false;
     boss.turnTicks = 0;
+    // No pull field until this boss's own script opens one (M3-02): the slot may have been
+    // vacated by a suction / grabber boss whose field was still open.
+    boss.pullRadius = 0;
+    boss.pullStrength = 0;
+    boss.pullTicks = -1;
     boss.enraged = false;
     boss.enrageFireRate = entry.enrageFireRate;
     boss.enrageSpeed = entry.enrageSpeed;
@@ -3456,6 +3461,9 @@ class BossSystemImpl implements BossSystem {
       boss.blasted = false;
       boss.resting = false;
       boss.turning = false;
+      boss.pullRadius = 0;
+      boss.pullStrength = 0;
+      boss.pullTicks = -1;
       boss.enraged = false;
       boss.partner = -1;
       boss.leader = false;

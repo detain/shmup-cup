@@ -131,6 +131,31 @@ describe('core/behaviors — the boss roster (M1-13)', () => {
     ).toThrow(/defined twice/);
   });
 
+  it('a boss slot never inherits the pull field of the boss that vacated it (M3-02)', () => {
+    const w = fighting(db());
+    const boss = w.bosses.boss;
+    const stage = w.stage;
+    expect(stage).not.toBeNull();
+    // A suction / grabber boss is cleared with its field (`api.pull`) still open.
+    boss.pullRadius = 200;
+    boss.pullStrength = 1.1;
+    boss.pullTicks = -1;
+    stage?.restartAt(stage.checkpoint);
+    expect(boss.pullRadius).toBe(0);
+    expect(boss.pullStrength).toBe(0);
+    expect(boss.pullTicks).toBe(-1);
+    // And a field left on a free slot does not survive the next boss's entry either: the test
+    // boss (`boss.hover`) never calls `api.pull`, so it must fight with no field at all.
+    boss.pullRadius = 200;
+    boss.pullStrength = 1.1;
+    boss.pullTicks = -1;
+    for (let i = 0; i < 3000 && boss.state !== BossState.Fight; i++) run(w, 1);
+    expect(boss.state).toBe(BossState.Fight);
+    expect(boss.pullRadius).toBe(0);
+    expect(boss.pullStrength).toBe(0);
+    expect(boss.pullTicks).toBe(-1);
+  });
+
   it('boss.hover fires aimed spreads from the standing guns and tracks the player', () => {
     const w = fighting(db());
     const boss = w.bosses.boss;

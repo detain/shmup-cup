@@ -247,6 +247,27 @@ describe('core/world — the death-bomb window (M3-02)', () => {
   });
 });
 
+describe('core/blackhole — a checkpoint restart (M3-02)', () => {
+  it('closes every open vortex with the rest of the session', () => {
+    const w = bombWorld();
+    const input = createInputSnapshot();
+    run(w, input, Action.Special);
+    expect(w.blackholes.count).toBe(1);
+    const hole = w.blackholes.holes[0];
+    expect(hole.active).toBe(true);
+    // The stage hooks' `clear()` — every checkpoint restart and the `arcade` death penalty.
+    const stage = w.stage;
+    expect(stage).not.toBeNull();
+    stage?.restartAt(stage.checkpoint);
+    expect(w.blackholes.count).toBe(0);
+    expect(hole.active).toBe(false);
+    expect(hole.owner).toBe(-1);
+    // And the restarted session never sees a bolt from it.
+    run(w, input, 0, BLACK_HOLE_PULL_TICKS + BLACK_HOLE_BURST_TICKS + 2);
+    expect(w.blackholes.count).toBe(0);
+  });
+});
+
 describe('core/blackhole — the config', () => {
   it('rejects a death-bomb window that is not a whole number of ticks in range', () => {
     expect(() => resolveGameConfig({ deathBomb: -1 })).toThrow(RangeError);
