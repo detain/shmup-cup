@@ -64,6 +64,7 @@
 | [`dev/conventions.md`](dev/conventions.md) | Contributors | Module layout, TSDoc, TypeScript, core purity, Chromium 69 API rules, zero allocation, tests, formatting, content rules, checklists |
 | [`dev/input-probe.md`](dev/input-probe.md) | Contributors | Input probe architecture, modules & APIs, verdict rules, Chromium 69 build contract, configuration, packaging / deploying, remote-logging format, tests, extension points, gotchas |
 | [`dev/input-probe-results.md`](dev/input-probe-results.md) | Contributors / owner | What the input probe measured on both M7 monitors (2026-09-15): the single-key remote, flagless repeats, release-only Back / Play/Pause, key codes, the DualShock 4, Home as a `blur`-only overlay, rAF jitter, the environment — the probe's timestamp bug, the raw logs and analyzer, and what plan step M3-02b changes |
+| [`dev/render-performance-review.md`](dev/render-performance-review.md) | Contributors / owner | How the renderer behaves on the M7 (Pixi v8 as a renderer only, 384x216 upscaled, one atlas page): the per-frame scene-graph rebuild, what the CRT and Mode-7 filters really cost, the render-target memory the estimator misses, shader compiles and Pixi-internal allocation during gameplay, a verdict on each piece of third-party Tizen/Pixi advice, and what still has to be measured on the monitors — plan steps M3-02c / M3-02d / M3-02e |
 
 ## Elsewhere in the repository
 

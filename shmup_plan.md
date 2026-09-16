@@ -1,8 +1,9 @@
 # Shmup Cup — Implementation Plan
 
 > **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-15: **M1 and M2 complete** (`1.0.0-rc.1`),
-> **M3-01 done**, next **M3-02**, then **M3-02b** (remote & hardware tuning from the 2026-09-15 input-probe run) and
-> M3-03 — 38 of 41 steps. Progress, the resume point and open risks are in
+> **M3-01 and M3-02 done**, **M3-02b** (remote & hardware tuning from the 2026-09-15 input-probe run) in its review
+> loop, then **M3-02c … M3-02e** (the render-performance work in
+> [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03 — 40 of 44 steps. Progress, the resume point and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
@@ -244,7 +245,7 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 |---|---|---|
 | **M1 — Playable vertical slice** | Zone A with boss is playable start → boss → stage clear with the remote-first scheme in `pnpm dev`, and `pnpm --filter @shmup/tizen build` produces a checked `.wgt`-ready `dist/`; title/pause/game over/stage clear; HUD; audio; saves; debug tools; golden replays | M1-01 … M1-19 |
 | **M2 — Complete v1.0** | All P1 features: rank/difficulty, full meter arsenal, Direct mode + ship select, co-op, 9-zone map with 16 routes, advanced stage & boss systems, front-end screens, options/rebinding/accessibility, Electron + TV polish, release candidate | M2-01 … M2-18 |
-| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) | M3-01 … M3-03 (incl. M3-02b) |
+| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) and the render-performance work it exposed (M3-02c … M3-02e) | M3-01 … M3-03 (incl. M3-02b … M3-02e) |
 
 | Id | Title | Fills (placeholder → implemented) |
 |---|---|---|
@@ -288,6 +289,9 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 | M3-01 | Extra modes & replay features | — |
 | M3-02 | Visual & mechanic extras | — |
 | M3-02b | Remote & hardware tuning from the input-probe results | input profiles, input-web, core `loop`, apps `tizen` lifecycle, `test/playtest`, content tuning, `tools/input-probe` |
+| M3-02c | Render profiling: on-device numbers and a render benchmark | render-pixi `debug`, `test/bench`, `docs/dev` |
+| M3-02d | Fold the full-screen effects into their draw passes | render-pixi `effects`, shell `memory`, shell `boot` |
+| M3-02e | Cut the per-frame scene-graph rebuild | render-pixi `layers`, `sprites`, `particles` |
 | M3-03 | Reach: localization, more platforms, tracker music | apps `electron` (`steam.ts`), new adapters |
 
 ---
@@ -4150,9 +4154,114 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     `APP_JS_GZIP_BUDGET` headroom is better spent on M3-03's localization. Recorded here so the
     decision is visible rather than forgotten.
 
+### M3-02c — Render profiling: on-device numbers and a render benchmark
+
+- **Goal:** find out, in milliseconds, where the M7's frame time actually goes, and gain a headless gate that stops the
+  render path regressing. **Depends on:** M3-02b.
+- **Source of truth:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) — findings
+  **F10** (no render-side benchmark exists), **F8** (the WebGL1 justification is stale), and the harness that settles
+  the open magnitudes behind **F1**, **F2**, **F4** and **F5**. Hardware facts:
+  [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §8–§9.
+- **Why it comes first:** F1's *mechanism* is certain but its *size* is not, and no one should rewrite the frame path
+  on a guess. This step makes both the headless and the on-device numbers available. It does **not** block M3-02d or
+  M3-02e: those are gated by this step's headless bench, and the owner's device run confirms them afterwards.
+- **Scope:**
+  - **Debug overlay** (`@shmup/render-pixi` `debug`, on the existing TPF / RAF line): a **structure-rebuild counter**
+    (how many frames rebuilt the scene's instruction set rather than taking Pixi's update path) and the **pooled
+    render-target byte total** read from Pixi's `TexturePool`. Both allocation-free, one `DrawList` per colour, as the
+    module already requires. These two numbers are what make F1 and F2 visible on the TV at all.
+  - **Render benchmark** `test/bench/render.perf.ts`, driven by Playwright against the built web bundle (the existing
+    `pnpm bench` suites are Node-only and measure the simulation): scripted worst-case frames — 512 enemy bullets,
+    512 point items, the full particle pool, a filtered layer active, Mode-7 active, CRT `off` / `light` / `full` —
+    asserting `renderer.drawCalls` (already exposed) against a documented budget and a **render-ms p95**.
+  - **A browser-side JS-heap delta** over ~600 frames that fails on growth. This is the gate F5 is currently invisible
+    to: the allocation guards run in Node against fake atlases, so they stop at the `renderer.render()` boundary and
+    cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation.
+  - **F8:** correct the stale docblock in `packages/render-pixi/src/renderer/index.ts` (it still says WebGL2 on Tizen
+    5.5 is unverified — the probe verified WebGL 1 *and* 2 on both monitors, `MAX_TEXTURE_SIZE` 8192), and add a dev
+    switch (`?gl=2` or a debug-tools toggle) so the owner can A/B the renderer on device. **Keep WebGL1 as the shipped
+    default** — the project also targets older sets, and there is no evidence yet that 2 is better.
+  - **Docs:** a "measuring on the TV" recipe in [`docs/dev/rendering-and-shell.md`](docs/dev/rendering-and-shell.md)
+    (the review's §4 table M1–M8), and a place in `docs/dev/input-probe-results.md` for the numbers to land.
+- **Acceptance:** `pnpm bench` prints render p95 and draw calls per scenario and fails on budget; the heap-delta gate
+  fails on a deliberately leaky fixture; the overlay shows both new figures and the allocation guards stay green; the
+  renderer docblock matches what the probe measured.
+- **Manual (owner, on the monitors — plan §8.4):** with a `build:dev` bundle (debug unlock: Pause, Ch+, Ch+, Ch+) run
+  the review's §4 measurement table — baseline FPS / TICK / RENDER / DRAW and the frame graph on the title, zone A and
+  a boss; confirm **TPF reads 1** and LOCK is showing (if not, M3-02b's vsync lock is not engaging); **M1** the cost of
+  the structure rebuild; **M2** RENDER ms with CRT off / light / full on the same stage section; **M3** a one-off hitch
+  entering the Mode-7 and raster stages; **M4** a hitch on the first very dense pattern of a fresh launch; **M5** the
+  WebGL1-vs-2 A/B; **M7** whether the app really stops rendering under the Home overlay.
+- **Refs:** `shmup_feat.md` §22 (render <= 8 ms, 20–50 draw calls), §24; review F8, F10.
+
+### M3-02d — Fold the full-screen effects into their draw passes
+
+- **Goal:** make the CRT and Mode-7 effects cost one draw call each instead of a pooled render target plus two passes,
+  free ~17 MB of VRAM at 1080p, and stop shader compiles and buffer growth happening mid-gameplay.
+  **Depends on:** M3-02c (its headless render bench is the before/after gate; the owner's device numbers confirm it
+  afterwards and are not a precondition).
+- **Source of truth:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) findings
+  **F2**, **F6**, **F3**, **F4**, **F5**.
+- **Scope:**
+  - **F2 — CRT.** It is attached as a filter to the pass-2 `screen` container, so at 1920x1080 Pixi pools a
+    **2048x2048 RGBA target (16.8 MB)** and runs a second full-screen pass: roughly **2x** the frame's fragment work
+    and bandwidth. `light` costs exactly what `full` costs — same program, same passes, different uniforms. The
+    "capped at 1080p" comment is inert on the M7, whose web viewport *is* 1080p. Replace the filter with a custom
+    pass-2 blit: a `Mesh` + `Shader` built from the existing `CRT_VERTEX` / `CRT_FRAGMENT`, with `uScan` / `uMask` /
+    `uVignette` at 0 when CRT is off. Retire `crtResolution` / `CRT_MAX_HEIGHT` or repurpose the constant as a
+    documented TV cap.
+  - **F6 — Mode-7.** Same shape: it currently renders an `alpha: 0` full-frame sprite into a pooled target purely to
+    give the filter an area, and the shader never reads that input. Draw it as a `Mesh` on `BG_MID` instead.
+  - **F3 — the memory estimator is wrong.** `packages/shell/src/memory/index.ts` models only
+    `frame x (1 + FILTER_TARGETS)` at 384x216: it misses the CRT target entirely (16x the whole modelled figure),
+    ignores Pixi's power-of-two rounding (a 384x216 target is pooled as 512x256), and its `FILTER_TARGETS = 2`
+    predates M3-02. Add a `potBytes(w, h)` helper and count `1 + active filtered layers + mode7 + crt`. This function
+    exists to defend the <100 MB budget, so being 16 MB out matters.
+  - **F4 / F5 — boot warm-up.** GL programs compile on first *draw*, not at construction, so the layer-effect, Mode-7
+    and CRT programs link mid-stage (a 5–50 ms hitch on a Mali-G51, exactly at a dramatic moment); and Pixi allocates
+    a `BatchableSprite` per sprite on its first ever draw while its attribute buffer doubles from 16 bytes, so the
+    first frame busier than any before it allocates and copies inside `renderer.render()`. Add one throwaway warm-up
+    frame behind the loading screen: every filter the bound world can use attached, every pooled sprite drawn once.
+    Never present it; do not disturb `lastTick` or effect state.
+- **Acceptance:** `test/e2e/mode7.spec.ts` and `test/e2e/raster.spec.ts` pass within their draw-call budgets; a unit
+  test pins `estimateMemory` against hand-computed power-of-two figures with CRT on and off; M3-02c's render bench
+  shows CRT `full` within ~10 % of CRT `off` and no heap growth across the warm-up boundary; **no visual golden
+  changes** (this is presentation only — the simulation never sees it).
+- **Risk:** the pass-2 rewrite touches the one path every frame goes through. Keep the plain-sprite path behind a flag
+  until the bench confirms the new one.
+- **Refs:** `shmup_feat.md` §18 (CRT off/light/full, Mode-7 floor), §22 (memory budget); review F2, F3, F4, F5, F6.
+
+### M3-02e — Cut the per-frame scene-graph rebuild
+
+- **Goal:** stop one hidden bullet costing a walk over the whole ~6,400-object scene.
+  **Depends on:** M3-02d (and M3-02c's bench, which decides how far this has to go).
+- **Source of truth:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) findings
+  **F1** and **F9**.
+- **The mechanism** (certain; the magnitude is what M3-02c measures): in Pixi v8 every `sprite.visible = ...` sets
+  `structureDidChange` on the *root* render group, and the renderer then throws away and rebuilds the entire
+  instruction set — a full tree walk plus a re-pack of every visible quad — instead of taking the cheap "update only
+  what moved" path. Our draw path toggles `visible` in every binding, every frame.
+- **Scope, in the order the measurements justify — stop as soon as the bench says it is enough:**
+  1. **Render groups** for the big sub-trees, since Pixi does not descend into a child render group: the terrain grid
+     (up to 1,274 tiles), the enemy-bullet and point-item bindings, the particle container, the HUD and UI quad pools.
+     Each group is a batch boundary, so draw calls rise by roughly the number of groups — raise `DRAW_CALL_BUDGET` in
+     the two e2e specs **deliberately**, recording the new number in `shmup_feat.md` §22's budget line.
+  2. If that is not enough, **park unused slots as degenerate quads** (scale 0, texture unchanged) instead of
+     `visible = false`, so the structure stays stable. Keep `visible` for whole containers, which flip rarely.
+  3. Only if 1 + 2 still fall short, **`ParticleContainer`** for the enemy-bullet, point-item and particle pools —
+     `dynamicProperties: { position: true, uvs: true, ... }` (v8 API: the widely-copied `maxSize` / `properties` form
+     is v7, and `uvs: false` would freeze every bullet on one atlas frame), `autoGarbageCollect = false`, and a
+     bundle-size check. This is the review's least-certain recommendation; treat it as a last resort.
+  - **F9 (opportunistic):** the background, flash, dim and Mode-7 sprites use `Texture.WHITE` while everything else
+    draws from the atlas page; the atlas already has `ui/pixel`. Using it makes the low-res pass single-texture. It
+    saves no draw call today — do it only if it falls out of the work above.
+- **Acceptance:** M3-02c's render bench shows a measured drop in render p95 on the worst-case frame and the overlay's
+  structure-rebuild counter falls; every render-pixi allocation guard still passes; **golden replays unchanged**.
+- **Refs:** `shmup_feat.md` §22, decision D19, `docs/dev/conventions.md` "zero allocation in hot paths"; review F1, F9.
+
 ### M3-03 — Reach: localization, more platforms, tracker music
 
-- **Goal:** more players and platforms. **Depends on:** M3-02b.
+- **Goal:** more players and platforms. **Depends on:** M3-02e.
 - **Scope:** localization via the M2-16 string tables + CJK bitmap font atlases; LG webOS adapter (`apps/webos`, Back =
   461, `appinfo.json`); public web / itch.io build; Steamworks (`steam.ts` via steamworks-ffi-node: achievements, cloud
   saves) and Steam Deck verification; chiptune3 (libopenmpt WASM + AudioWorklet) benchmark and optional tracker-music
