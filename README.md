@@ -6,8 +6,16 @@ with the browser and Electron as additional targets.
 
 ## Status
 
-The [implementation plan](shmup_plan.md) is approved and under way. Progress per step is tracked in
-[`shmup_progress.md`](shmup_progress.md); milestone **M1 — playable vertical slice** is code-complete
+**The [implementation plan](shmup_plan.md) is finished: 45 of 45 steps, M1, M2 and M3 all done**
+(progress per step in [`shmup_progress.md`](shmup_progress.md)). **The code is complete; the product
+is not.** The game has never been installed on the Samsung monitors it was written for, never run on
+an LG set, never spoken to Steam and never been submitted to a store, and its art, music and the
+Spanish and Japanese texts are placeholders made by the build rather than by an artist, a composer
+or a native speaker. Everything still outstanding needs an account, a device or a human, and it is
+listed in one place — **[what is left](docs/client/outstanding-work.md)** — grouped by what each item
+blocks.
+
+Milestone **M1 — playable vertical slice** is code-complete
 as version **0.1.0** ([`CHANGELOG.md`](CHANGELOG.md)) — its on-device release check on the monitors
 is next — and **M2 — complete v1.0** is code-complete as the release candidate **1.0.0-rc.1**
 (M2-01 … M2-18: all nine zones, the endings and the credits — the game can be played from the
@@ -20,13 +28,17 @@ and the memory budget — and the v1.0 hardening: every route with both ships, t
 cross-engine determinism, the soak, the release checks, the icons). Its on-device checklist
 (plan §8.5, §8.6) on the monitors is next — the player-facing guide with the checklist is
 [`docs/client/release-candidate.md`](docs/client/release-candidate.md). Milestone **M3 — extras**
-has begun: M3-01 added the title's EXTRA menu (boss rush, the caravan score attack, the looping
+is complete too: M3-01 added the title's EXTRA menu (boss rush, the caravan score attack, the looping
 arcade mode), whole-run replays with a browser, fast-forward and sharing, the Extra Edit weapons,
 secret codes and the game-speed / invincibility assists
 ([`docs/client/extra-modes-and-replays.md`](docs/client/extra-modes-and-replays.md)), M3-02 the
 visual & mechanic extras, and **M3-02b tuned the game to the hardware it is played on** — the
 measured single-key Samsung remote, Home as a `blur`-only overlay, and a vsync-locked loop for the
-M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)).
+M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)),
+M3-02c … M3-02f answered the render-performance review, and **M3-03 closed the plan**: the game
+speaks three languages, runs on LG webOS as well as Tizen, carries an optional Steamworks layer and
+a seam for tracker music, and packs itself for itch.io — none of which has been run on a device, a
+store or a Steam client.
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -919,6 +931,47 @@ M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-res
     [the tables it fills](docs/dev/input-probe-results.md#11-render-profile-m3-02c) ·
     [the log server](docs/dev/input-probe.md)
 
+- **Three languages, a fourth host, Steam and a tracker seam** (M3-03 — the plan's last step). Read
+  it as two halves: what is built and tested here, and what is written but has never run.
+  - **The game speaks three languages.** OPTIONS → DISPLAY → **LANGUAGE**: ENGLISH, **ESPAÑOL** and
+    **ニホンゴ** (katakana only, the way 1980s arcade hardware wrote Japanese), from the next
+    launch. All 365 string ids are answered in every language — `pnpm content:check` requires it of
+    a shipped language — and a handful of ids are fixed in every language on purpose (the game's
+    name, `HI`, `1P` / `2P`, the two-character HUD and meter codes the HUD draws in a few pixels it
+    cannot grow). The offered languages come from the content: dropping in
+    `content/strings/<id>.strings.json` adds a menu row with no code change.
+    **The Spanish and Japanese are placeholders nobody who speaks them has read.**
+  - **The font grew by 93 glyphs** (102 → 195): 84 katakana in the classic 5 × 7 LCD box — the
+    voiced and semi-voiced kana derived from their base by a mark on row 0 — and 9 accented capitals
+    for Spanish. Cost: **1.6 KB of atlas** (still one 1024² page) and **8.6 KB of `app.js` gzip**
+    (386.9 → 395.5 KB of the 512 KB budget). No budget was raised. Why not kanji, with the
+    arithmetic re-derived from the atlas itself:
+    [asset-pipeline.md](docs/dev/asset-pipeline.md#katakana-and-the-cjk-budget-m3-03).
+  - **A fourth host: `apps/webos`** — LG webOS 5+, Back **461** instead of Samsung's 10009, its own
+    `appinfo.json` and `ares-*` wrappers, the Tizen build contract and budgets shared rather than
+    copied. A profile now names its `hosts`, so neither TV can offer the other's remote profile and
+    lose Back. **It has never run on hardware** ([docs/client/webos.md](docs/client/webos.md)).
+  - **An optional Steamworks layer** in the desktop app: eleven achievements **derived from the save
+    document** (so no game code knows about Steam, and an assisted run never earns one) and Steam
+    Cloud wrapped around the file store, disk first. `steamworks-ffi-node` is deliberately not a
+    dependency — a Steam build passes one `load` callback. **Nothing has touched Steam**
+    ([docs/client/steam.md](docs/client/steam.md)).
+  - **A seam for tracker music**, not a player: capability detection, the `TrackerBackend` port and
+    `chooseMusicPath` (`tracker` → `file` → `song` → `none`). A track's optional `module` sits
+    *alongside* its song or file, so turning the path on can never silence a device. The size half
+    of the benchmark is answered in code — libopenmpt's worklet is ≈ 518 KB gzip against a 512 KB
+    bundle budget, so it could only ever be a separately loaded file; the CPU half needs a monitor.
+  - **`pnpm itch:package`** archives the browser build for itch.io (a zero-dependency ZIP writer,
+    `index.html` at the root, byte-identical for the same build) — **never run against a real build
+    here** — and [real-assets.md](docs/dev/real-assets.md) is the hand-off guide for when real art,
+    music or translations arrive.
+  - Docs: [what is left](docs/client/outstanding-work.md) ·
+    [webOS](docs/client/webos.md) · [Steam & the Deck](docs/client/steam.md) ·
+    [the itch.io release](docs/client/web-release.md) ·
+    [store submission](docs/client/store-submission.md) ·
+    [real assets](docs/dev/real-assets.md) ·
+    [the two TVs' engine floor](docs/dev/conventions.md#two-tvs-two-engines)
+
 
 ### Hardware spike
 
@@ -953,7 +1006,11 @@ Game docs — testers: [preview build (the title screen, menus, HUD and pause me
 [debug tools & release checks](docs/client/debug-tools.md) · [the desktop app](docs/client/desktop-app.md) ·
 [the v1.0 release candidate & checklist](docs/client/release-candidate.md) ·
 [extra modes, replays & assists](docs/client/extra-modes-and-replays.md) ·
-[the visual & mechanic extras](docs/client/visual-and-mechanic-extras.md).
+[the visual & mechanic extras](docs/client/visual-and-mechanic-extras.md) ·
+[**what is left** (every manual action, grouped by what it blocks)](docs/client/outstanding-work.md) ·
+[LG webOS](docs/client/webos.md) · [Steam & the Steam Deck](docs/client/steam.md) ·
+[the itch.io release](docs/client/web-release.md) ·
+[store submission](docs/client/store-submission.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
@@ -992,6 +1049,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [extra modes, replays & assists](docs/dev/extra-modes-and-replays.md) ·
 [visual & mechanic extras](docs/dev/visual-and-mechanic-extras.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
+[real art, music & translations](docs/dev/real-assets.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
 
@@ -1110,6 +1168,11 @@ Chromium 69.
 
 ## Next step
 
+**Everything left is off the keyboard.** The plan has no step 46: the code is done, and what remains
+needs a monitor, a TV, a store account or a person. One list, grouped by what each item blocks:
+**[docs/client/outstanding-work.md](docs/client/outstanding-work.md)**. The largest item by far is
+the first one — *nobody has ever played this game on the hardware it was written for.*
+
 On hardware: the **M1 release check** (plan §8.4) on both monitors with the debug build —
 launch ≤ 10 s, a crisp picture, AZURE VERGE played through with the remote alone, Back / Home /
 exit behaviour, sound, saves kept after a relaunch and an update install, 15 minutes without a
@@ -1138,8 +1201,9 @@ done, and **M3-02c** (render profiling), **M3-02d** (the CRT and Mode-7 effects 
 their draw passes, a corrected memory estimator and a boot warm-up frame), **M3-02e** (one render
 group per high-churn layer, so the per-frame scene-graph rebuild stopped —
 [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and **M3-02f**
-(the guided render capture the dev build streams to the log server) with them; next is M3-03. Every
-simulation change re-blesses the golden replays in the same
+(the guided render capture the dev build streams to the log server) with them, and **M3-03**
+(localization, the LG webOS host, Steamworks, the tracker seam and the itch.io packaging) closed the
+plan at **45 of 45 steps**. Every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 The input probe ran on both monitors (2026-09-15). Its results are recorded in `shmup_tech.md` §2.7 and

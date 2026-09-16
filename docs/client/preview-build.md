@@ -32,6 +32,10 @@ page — **EXTRAS** (the authentic slowdown, graze points, a death-bomb window a
 **black-hole bomb**) —, the final zone ends with an **escape sequence**, and the browser has a
 pseudo-3D showcase stage
 ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).
+Since M3-03 the DISPLAY page ends with **LANGUAGE** — the game's text in **ENGLISH**, **ESPAÑOL** or
+**ニホンゴ**, from the next launch ([Playing in another language](#playing-in-another-language)).
+**The Spanish and Japanese are placeholders no native speaker has read yet**, like the placeholder
+art and music.
 Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
@@ -685,7 +689,7 @@ darkened picture with the three volumes and four **pages**:
 | **MUSIC** | The music's volume, 0–10 |
 | **SFX** | The sound effects' volume, 0–10 — the menu clicks and chimes follow it too |
 | **CONTROLS** | Opens the **CONTROLS** page: the control profile, how the gun fires (AUTOFIRE, RATE), SOCD, the remote's hiccup protection (DEBOUNCE), **your own keys and buttons** (REBIND KEYS / REBIND PAD) and the INPUT TEST — see [controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection) |
-| **DISPLAY** | Opens the **DISPLAY** page: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP — [below](#the-display-page) |
+| **DISPLAY** | Opens the **DISPLAY** page: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP, CRT, ASPECT and (M3-03) LANGUAGE — [below](#the-display-page) |
 | **GAME** | Opens the **GAME** page: DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — [below](#the-game-page) |
 | **EXTRAS** | Opens the **EXTRAS** page (M3-02): SLOWDOWN, GRAZE, DEATH BOMB, BLACK HOLE — four toggles that apply from the next game, see [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mechanic-extras-options--extras) |
 | **BACK** | Keeps the settings and closes the box |
@@ -754,6 +758,7 @@ game** (or RETRY STAGE) — a game already running keeps what it started with.
      BOSS HP  OFF
      CRT      OFF
      ASPECT   NORMAL
+     LANGUAGE ENGLISH
      BACK
 ```
 
@@ -767,9 +772,10 @@ game** (or RETRY STAGE) — a game already running keeps what it started with.
 | **BOSS HP** | **OFF** (the start setting) or **ON**: during a boss fight the middle of the top bar shows `BOSS` and a red bar of the boss's remaining strength instead of `HI` — see [The boss HP bar](#the-boss-hp-bar-every-device) |
 | **CRT** | The CRT / scanline look (M3-02): **OFF** (the start setting), **LIGHT** (dark scanlines over the picture) or **FULL** (scanlines, a red / green / blue aperture pattern and darkened corners). It is drawn as part of the pass that puts the picture on the screen, so any setting costs the same — see [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#picture-settings-options--display) |
 | **ASPECT** | The shape of the window the picture sits in (M3-02): **NORMAL** (the whole screen, the start setting), **ULTRA-WIDE** (a very wide cabinet window) or **CLASSIC 4:3** — the space beside the picture becomes a dim blue side panel instead of a black bar, and the picture is never cropped |
+| **LANGUAGE** | The language of the game's text (M3-03): **ENGLISH**, **ESPAÑOL** or **ニホンゴ** (Japanese, written in katakana the way 1980s arcade machines wrote it). The page's bottom line says `LANGUAGE: FROM THE NEXT LAUNCH` — see [Playing in another language](#playing-in-another-language) |
 | **BACK** | Keeps the settings and returns to OPTIONS |
 
-- On BULLETS, SCALE, FLASHES, CRT and ASPECT, **◀ / ▶** (or OK) step to the next choice. On SHAKE, HITBOX and
+- On BULLETS, SCALE, FLASHES, CRT, ASPECT and LANGUAGE, **◀ / ▶** (or OK) step to the next choice. On SHAKE, HITBOX and
   BOSS HP, **◀** is OFF, **▶** is ON and OK switches.
 - **Every change works at once**: new bullet colours, a new SCALE, the HITBOX marker and the SHAKE /
   FLASHES settings show on the very next picture or effect (over a paused game too). BOSS HP shows
@@ -797,6 +803,27 @@ middle of the KESTREL or the MANTA (smaller while a **REDUCE** shield is up). It
 the ship, disappears while the ship is exploding, and changes nothing about the game. (The
 *hit-area outlines* of the debug build are a different, developer-only tool —
 [debug-tools.md](debug-tools.md).)
+
+#### Playing in another language
+
+The game ships in three languages: **ENGLISH**, **ESPAÑOL** and **ニホンゴ**. Pick one on
+OPTIONS → DISPLAY → **LANGUAGE**; the choice is saved with the rest of your settings.
+
+- **It takes effect the next time the game starts.** Unlike every other DISPLAY setting, this one
+  does not change the screen you are looking at — the menus and the HUD are built once when the
+  game boots. The DISPLAY page says so along its bottom edge: `LANGUAGE: FROM THE NEXT LAUNCH`.
+- **A few things never change language**: the game's own name, `HI`, `1P` / `2P`, and the short
+  two-letter codes in the top bar and on the power meter. They are drawn in a few pixels of a bar
+  that cannot grow, so they stay the same everywhere.
+- **The Japanese is katakana only** — no kanji, no hiragana — because that is what the arcade
+  hardware of the era could draw, and it is what the game's 6 × 8 pixel font can draw.
+
+> **Both translations are placeholders.** The Spanish and Japanese texts were written by the build,
+> and **nobody who speaks either language has read them**; the katakana letters themselves were
+> drawn by the build too. They are complete and they are consistent — every line of the game has
+> one — but expect them to read like what they are until a native speaker and a pixel artist have
+> been through them ([what is left](outstanding-work.md#13-decide-what-to-do-about-the-placeholder-spanish-and-japanese)).
+> The English is the language the game was written in.
 
 ### The GAME page
 

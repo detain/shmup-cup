@@ -168,7 +168,16 @@ pnpm --filter @shmup/web build    # → apps/web/dist (relocatable, base './'), 
 pnpm --filter @shmup/web build:test   # the same plus the debug tools (vite build --mode test — what pnpm test:e2e builds)
 pnpm --filter @shmup/web build:dev    # likewise, --mode development
 pnpm --filter @shmup/web exec vite preview   # serve the last build in apps/web/dist
+pnpm itch:package                 # M3-03: zip dist/ for itch.io → assets/generated/itch/shmup-cup-web.zip
 ```
+
+**itch.io (M3-03).** This build has been relocatable since M1-04 (`base: './'`, relative asset
+URLs, `new Image()` instead of `fetch`), which is exactly what itch.io's HTML5 hosting wants, so no
+separate build mode was needed. `pnpm itch:package` (`scripts/itch-package.mjs`) archives
+`apps/web/dist` with `index.html` at the archive root and the source maps left out, using a
+zero-dependency ZIP writer, so the same build always produces a byte-identical archive.
+**It has never been run against a real build here, and nothing has been uploaded** — the account
+and the upload are plan §8.9: [`docs/client/web-release.md`](../../docs/client/web-release.md).
 
 Workspace packages are resolved to their TypeScript sources (`@shmup/source` export
 condition), so edits in `packages/*` hot-reload without a package build.

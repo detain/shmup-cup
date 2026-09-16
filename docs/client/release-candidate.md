@@ -10,6 +10,13 @@ found were fixed (below).
 "Release candidate" means: if the checks on the monitors (the checklist at the end of this page)
 find nothing serious, this is what version 1.0 will be.
 
+> **Those checks are still open**, and the version is still `1.0.0-rc.1`. The milestone-M3 work that
+> followed — the extra modes and replays, the visual extras, the hardware tuning, the render work,
+> and M3-03's three languages, the LG webOS host, the Steam layer and the itch.io packaging — is
+> listed under `[Unreleased]` in [`CHANGELOG.md`](../../CHANGELOG.md) and is in the build you would
+> install today. Nobody has yet played any of it on a monitor:
+> [what is left](outstanding-work.md).
+
 What each screen looks like and how to play: [preview-build.md](preview-build.md). Installing it on
 the monitors: [install-on-tv.md](install-on-tv.md). The desktop app:
 [desktop-app.md](desktop-app.md).

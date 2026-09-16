@@ -220,8 +220,9 @@ The number that made this decision is the one a **real kanji set** would cost �
   and about 0.95 of that page on its own;
 - one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
   **one extra atlas page**, not five;
-- `apps/tizen/dist` is **1.75 MB** of the 8 MB `DIST_BUDGET`, and the page above encodes to 136.6
-  KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
+- `apps/tizen/dist` is **1,676.1 KB** of the 8,192 KB `DIST_BUDGET` (the figure the build's own
+  check prints; measured again 2026-09-16), and the page above encodes to 136.6 KB, so an extra
+  page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
 
 A kanji language is therefore **feasible** — do not read this section as saying it is impossible.
 What rules it out *here* is that an extra page of that size roughly **doubles the atlas download

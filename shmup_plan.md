@@ -1,13 +1,20 @@
 # Shmup Cup — Implementation Plan
 
-> **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-16: **M1 and M2 complete** (`1.0.0-rc.1`),
-> **M3-01, M3-02 and M3-02b done** (the last of those tuned the game to the 2026-09-15 input-probe run), then
-> **M3-02c … M3-02e** (the render-performance work in
-> [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)), **M3-02f** (guided
-> render telemetry) and **M3-03** (localization, the LG webOS host, Steamworks, the tracker seam,
-> the itch.io packaging) — **45 of 45 steps: the plan is complete.** What is left is the
-> account- and hardware-only work of §8.4 … §8.9, which no agent can do. Progress, the resume point
-> and open risks are in
+> **Status:** **complete as a plan — 45 of 45 steps built, reviewed, tested and documented** (approved
+> 2026-09-10, last step 2026-09-16). **M1** and **M2** are done (`1.0.0-rc.1`), and so is all of **M3**:
+> M3-01, M3-02 and M3-02b (which tuned the game to the 2026-09-15 input-probe run), M3-02c … M3-02e
+> (the render-performance work in
+> [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)), M3-02f (guided
+> render telemetry) and M3-03 (localization, the LG webOS host, Steamworks, the tracker seam, the
+> itch.io packaging).
+>
+> **The code is finished; the product is not.** Nothing here has been packaged for a store, submitted,
+> uploaded or run on the hardware it targets — the game itself has never been installed on the Samsung
+> monitors, never run on an LG set, never spoken to Steam — and the art, the music and the Spanish and
+> Japanese strings are placeholders made by the build, not by an artist, a composer or a native speaker.
+> Every one of those actions needs an account, a device or a human, and all of them are listed, grouped
+> by what each blocks, in **[`docs/client/outstanding-work.md`](docs/client/outstanding-work.md)**
+> (details stay in §8.2 and §8.4 … §8.9 below). Progress, the resume point and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
@@ -4634,8 +4641,9 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     number, not a budget overrun. The whole JIS X 0208 set (levels 1 *and* 2) is ~6,900 glyphs ≈
     **993,600 pixels** at 12×12: about **2.1×** the 479,505 pixels the entire atlas occupies today
     (one 1024² page, 46 % full, 136.6 KB of PNG) and under a **quarter of one 2048² page**, so it
-    is *one* extra page, and it fits `DIST_BUDGET` comfortably (`apps/tizen/dist` is 1.75 MB of 8
-    MB). A kanji language is feasible; what rules it out here is roughly **doubling the atlas
+    is *one* extra page, and it fits `DIST_BUDGET` comfortably (`apps/tizen/dist` is 1,676.1 KB of
+    the 8,192 KB budget — the build check's own figure, re-measured 2026-09-16). A kanji language
+    is feasible; what rules it out here is roughly **doubling the atlas
     download and boot decode for every player**, including everyone who never picks that language,
     against the ≤ 10 s launch rule. [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md)
     records that arithmetic and what to do if one ever arrives (subset by use, its own lazily
@@ -4727,6 +4735,11 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 
 Agents cannot touch the monitors, the Tizen CLI or the certificate. These checks are yours; each lists where results
 go. Do them on **both** M7 monitors where it says so.
+
+> **All of §8's open items are also collected in one actionable list:**
+> [`docs/client/outstanding-work.md`](docs/client/outstanding-work.md) — the same work grouped by
+> what it blocks (a Samsung release · one other platform each · polish that blocks nothing), with a
+> link back to the recipe for each. This section stays the reference; that page is where to start.
 
 ### 8.1 One-time Windows desktop setup
 

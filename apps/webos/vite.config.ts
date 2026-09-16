@@ -8,8 +8,13 @@
  *
  * The rules are the Tizen build's, for the same reasons and one more: webOS 5 runs Chromium 68,
  * one release *older* than Tizen 5.5's 69, so the same `chrome69` + `es2018` target and the same
- * `globalThis` polyfill cover both (`.browserslistrc` stays the single floor — every API the
- * lint allows is a Chrome 69 API, and the only Chrome-69-only syntax the target emits is ES2018).
+ * `globalThis` polyfill cover both. The target list is a set of constraints and the **lowest**
+ * wins, so what is emitted is **ES2018** — every ES2018 feature shipped in Chrome 60–64, well
+ * inside 68, and Chrome 69 added no syntax at all (only `Array.prototype.flat` / `flatMap`). What
+ * the target cannot do is conjure those two methods onto an older engine, and `.browserslistrc`'s
+ * `chrome >= 69` floor means the **lint accepts them** — so `test/integration/tv-engine-floor.test.ts`
+ * scans the shipped sources for the Chrome-68 gap and pins these settings. See
+ * `docs/dev/conventions.md` § "Two TVs, two engines".
  * A webOS app is loaded from the device's own file system, so relative URLs and no `fetch()`
  * (decision D25) apply here exactly as on Tizen.
  *

@@ -148,9 +148,17 @@ no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`)
 `globalThis` deleted.
 
 Syntax is lowered by the build, **APIs are not polyfilled** — so runtime APIs newer than
-Chrome 69 must not be used in shipped code. `eslint-plugin-compat` (browserslist
+the TVs' engines must not be used in shipped code. `eslint-plugin-compat` (browserslist
 `chrome >= 69`) catches most; extra rules ban the common offenders (list in
-[conventions.md](conventions.md#chromium-69-rules)).
+[conventions.md](conventions.md#chromium-68--69-rules-the-tv-engine-floor)).
+
+> **The floor is 68, not 69.** `apps/webos` targets LG webOS 5, which is Chromium **68** —
+> one release older than Tizen's 69, and one release below the lint's browserslist floor. The
+> two APIs in the gap, `Array.prototype.flat` and `flatMap`, therefore **pass the lint** and
+> would throw on an LG set; `test/integration/tv-engine-floor.test.ts` is what catches them,
+> and [conventions.md § Two TVs, two engines](conventions.md#two-tvs-two-engines) explains what
+> that scan does and does not cover. The syntax half is safe for both engines because the
+> target list's `es2018` entry, not its `chrome69` entry, decides what is emitted.
 
 `pnpm --filter @shmup/tizen dev` serves the Tizen entry in a desktop browser on port 5174
 (no `window.tizen`: key registration is skipped and there is no `platform.exit`, so the title
@@ -158,6 +166,33 @@ has no EXIT item and Back never exits — it still pauses and backs out of menus
 `apps/tizen/dist/index.html` straight from disk in desktop Chrome needs
 `--allow-file-access-from-files`: Chrome gives every `file://` URL its own origin, so WebGL
 refuses to upload the atlas page; the TV serves the widget's files as same-origin.
+
+## The webOS build (M3-03)
+
+`apps/webos` builds the same way and on purpose shares the Tizen contract rather than
+restating it: the same `target: ['chrome69', 'es2018']`, the same IIFE / classic-script
+rules, and **the same polyfill file** — `apps/webos/vite.config.ts` reads
+`../tizen/polyfills/global-this.js` instead of keeping a copy, so the two cannot drift.
+`apps/webos/scripts/check-bundle.mjs` **imports** `APP_JS_GZIP_BUDGET`,
+`ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET` and `POLYFILL_BANNER` from the Tizen check and adds
+only what differs: its own file set (`app.js`, `appinfo.json`, `icon.png`, `index.html`,
+`largeIcon.png`) and the `appinfo.json` rules that `scripts/appinfo.mjs` validates —
+which is what stands in for the `ares-package` nobody here can run.
+`test/integration/tv-engine-floor.test.ts` pins all of that shared-ness.
+
+```sh
+pnpm --filter @shmup/webos build            # dist/ + the bundle check
+pnpm --filter @shmup/webos webos:package    # ares-package  → release/<id>_<version>_all.ipk
+WEBOS_DEVICE=tv1 pnpm --filter @shmup/webos webos:install
+WEBOS_DEVICE=tv1 pnpm --filter @shmup/webos webos:run
+```
+
+`ARES_BIN=<path>` points the wrappers at an SDK that is not on `PATH`.
+**None of the three `ares-*` wrappers has ever been executed** — there is no LG TV, account
+or SDK here, so they are covered only by tests that assert the command lines they would run.
+The device recipe and the on-hardware checklist are in
+[../client/webos.md](../client/webos.md); the adapter itself in
+[platform-polish.md](platform-polish.md).
 
 ## Deploying to a Samsung TV / Smart Monitor
 

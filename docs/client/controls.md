@@ -3,6 +3,11 @@
 Shmup Cup is designed for the **Samsung Smart Remote** first; a gamepad or a keyboard
 work too, and every device drives both the game and the menus.
 
+> **On an LG webOS TV** (M3-03) everything below reads the same except the **Back** key, which is
+> webOS' 461 rather than Samsung's 10009, and the CONTROLS page, which offers that TV's
+> `REMOTE (DEFAULT)` profile and never the Samsung one — the two would bind different keys to Back.
+> The LG build has **never run on hardware**: [webos.md](webos.md).
+
 > **Status:** these controls are built into the game as **control profiles** and are read
 > every frame. The current build ([preview-build.md](preview-build.md)) starts on the **title
 > screen**: OK (Enter / A) opens the menu, ▲ ▼ move the highlight, OK chooses — **1 PLAYER** (or

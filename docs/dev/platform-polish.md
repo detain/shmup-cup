@@ -403,10 +403,19 @@ a different manifest and a different Back key (`shmup_tech.md` §3.3 — "LG web
 
 Three things are worth knowing beyond the table:
 
-- **The engine floor is shared.** webOS 5 runs Chromium 68, one release *older* than Tizen 5.5's
-  69, so the webOS build uses the same `chrome69` + `es2018` target, the same `.browserslistrc` and
-  the **same** `globalThis` polyfill — read straight out of `apps/tizen/polyfills/`, so the two
-  cannot drift. webOS 4 (Chromium 53) is not a target.
+- **The engine floor is shared — and it is 68, not 69.** webOS 5 runs Chromium **68**
+  (LG's published [web engine table](https://webostv.developer.lge.com/develop/specifications/web-api-and-web-engine),
+  re-checked 2026-09-16), one release *older* than Tizen 5.5's 69, so the webOS build uses the same
+  `chrome69` + `es2018` target, the same `.browserslistrc` and the **same** `globalThis` polyfill —
+  read straight out of `apps/tizen/polyfills/`, so the two cannot drift. webOS 4 (Chromium 53) is
+  not a target. The subtlety worth carrying away: the target list lowers **syntax** and its
+  `es2018` entry is what makes the output safe on 68 (Chrome 69 added no syntax, only
+  `Array.prototype.flat` / `flatMap`), while **runtime APIs** are nobody's job but yours — and
+  because the lint's browserslist floor is `chrome >= 69`, `[].flat()` *passes the lint* and would
+  throw on an LG set. `test/integration/tv-engine-floor.test.ts` scans the shipped sources for that
+  gap and pins the shared target, polyfill and budgets;
+  [conventions.md § Two TVs, two engines](conventions.md#two-tvs-two-engines) says exactly what it
+  covers and what it does not.
 - **The budgets are shared too.** `apps/webos/scripts/check-bundle.mjs` imports
   `APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE` and `DIST_BUDGET` from the Tizen check, so there is
   one source of truth; it adds its own file-set and `appinfo.json` rules.

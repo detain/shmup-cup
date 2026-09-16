@@ -34,10 +34,21 @@ player can never pick the profile whose Back is 461.
 
 ## Engine floor
 
-webOS 5 runs Chromium 68 — one release older than Tizen 5.5's 69. The build therefore uses the
-**same** `chrome69` + `es2018` target, the same `.browserslistrc` floor and the same hand-written
+webOS 5 runs Chromium 68 — one release older than Tizen 5.5's 69 (LG's published
+[web-engine table](https://webostv.developer.lge.com/develop/specifications/web-api-and-web-engine),
+re-checked 2026-09-16: 4.x = 53, 5.x = 68, 6.x = 79). The build therefore uses the **same**
+`chrome69` + `es2018` target, the same `.browserslistrc` floor and the same hand-written
 `globalThis` polyfill (read straight out of `apps/tizen/polyfills/`, so the two cannot drift).
 webOS 4 is Chromium 53 and is **not** a target: nothing here was written for it.
+
+**So the real floor of this app's code is 68, not 69, and the lint cannot see the difference.**
+The target list lowers *syntax* and its `es2018` entry is what makes the output safe here (Chrome 69
+added no syntax — only `Array.prototype.flat` and `flatMap`), while *runtime APIs* are never
+polyfilled: those two methods pass `eslint-plugin-compat` at its `chrome >= 69` floor and would
+throw `[].flat is not a function` on an LG set. `test/integration/tv-engine-floor.test.ts` scans the
+shipped sources for that gap and pins the shared target, polyfill and budgets; what it does and does
+not cover is in [`docs/dev/conventions.md`](../../docs/dev/conventions.md#two-tvs-two-engines).
+Nothing has ever executed this bundle on a webOS device, so "inside the floor" is a static claim.
 
 ## Commands
 

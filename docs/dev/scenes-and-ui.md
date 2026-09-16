@@ -113,7 +113,7 @@ already on the stack (scenes are singletons — the flow owns one instance of ea
 requests in one tick.
 
 The lookup method is `sceneAt(i)` (0 = bottom) — not `at(i)`: the Chrome-69 ESLint rule rejects
-any `.at(` call, whatever the receiver ([conventions.md](conventions.md#chromium-69-rules)).
+any `.at(` call, whatever the receiver ([conventions.md](conventions.md#chromium-68--69-rules-the-tv-engine-floor)).
 
 A `Scene` declares `id`, `overlay` (the scene below keeps being drawn — frozen, since only the
 top ticks), `inputContext` (D15), `dim` (0…1 darkening of the world and HUD under the UI while it

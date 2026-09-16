@@ -5,8 +5,15 @@ screen, zones, Options screen and controls — in a window of its own, with its 
 scores and window size kept in files on the computer. This page covers starting it, the window and
 its keys, where the saves live, making installers, and troubleshooting.
 
-The TV remains the main target; the desktop app is for playing and testing on a PC (and, later, on
+The TV remains the main target; the desktop app is for playing and testing on a PC (and, one day, on
 Steam). Nothing on this page is needed for the TV.
+
+> **Steam.** Since M3-03 the desktop app *can* carry a Steamworks layer — achievements derived from
+> the save file, and Steam Cloud around it — but **nothing here has ever talked to Steam**: there is
+> no partner account, no app id and no Steamworks binding in this repository, so every build it
+> produces behaves exactly as this page describes and reports Steam as unavailable. What a Steam
+> release would still need, and the Steam Deck checks nobody has run, are in
+> [steam.md](steam.md).
 
 ## Starting it
 

@@ -7,9 +7,12 @@ versions before 1.0 may change anything between minor releases. Development foll
 ## [Unreleased]
 
 The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 … M3-03), which is
-now **complete**. What remains needs an account or a device nobody here has: plan §8.7 (an LG
-webOS set), §8.8 (Steam and a Steam Deck) and §8.9 (the Seller Office, itch.io, a native-speaker
-pass over the translations, and the tracker-music CPU benchmark).
+now **complete**, and with it the whole plan: **45 of 45 steps**. What remains needs an account, a
+device or a human nobody here has: plan §8.7 (an LG webOS set), §8.8 (Steam and a Steam Deck) and
+§8.9 (the Seller Office, itch.io, a native-speaker pass over the translations, and the
+tracker-music CPU benchmark), on top of the §8.4 … §8.6 checks on the Samsung monitors — where the
+game has still never been installed. All of it is collected, grouped by what each item blocks, in
+[`docs/client/outstanding-work.md`](docs/client/outstanding-work.md).
 
 ### Game
 
@@ -26,6 +29,13 @@ pass over the translations, and the tracker-music CPU benchmark).
   its own `appinfo.json` and the webOS Back key (461 instead of Samsung's 10009). **It has never run
   on a real LG set** — the project has no LG hardware, developer account or SDK — so treat the first
   run as untested; the recipe and the checklist are in [`docs/client/webos.md`](docs/client/webos.md).
+- **The desktop app can talk to Steam, if a Steam build asks it to** (M3-03): eleven achievements
+  derived from the save document and Steam Cloud around the file store. **Nothing has touched
+  Steam** — there is no partner account and no app id, and the Steamworks binding is deliberately
+  not a dependency, so every build this repo produces behaves exactly as before
+  ([`docs/client/steam.md`](docs/client/steam.md)). The browser build can be packed for **itch.io**
+  with `pnpm itch:package`, which has never been run against a real build
+  ([`docs/client/web-release.md`](docs/client/web-release.md)).
 
 - **EXTRA menu** on the title (M3-01), between SOUND TEST and EXIT: **BOSS RUSH** (the nine zone
   bosses A–I in a row — a new `boss-rush` stage), **CARAVAN** (one zone from its start against a
@@ -138,7 +148,18 @@ pass over the translations, and the tracker-music CPU benchmark).
   [`docs/client/webos.md`](docs/client/webos.md), [`docs/client/steam.md`](docs/client/steam.md),
   [`docs/client/web-release.md`](docs/client/web-release.md) and
   [`docs/client/store-submission.md`](docs/client/store-submission.md) — each says in its first
-  paragraph that nothing in it has been run.
+  paragraph that nothing in it has been run — and, as the plan closes,
+  [`docs/client/outstanding-work.md`](docs/client/outstanding-work.md): every manual action from
+  plan §8.2 and §8.4 … §8.9 in one list, grouped by what each blocks, with what "placeholder" means
+  for the art, the audio and the translations.
+- **The TV engine floor is documented as what it is: Chromium 68.** webOS 5 is one release older
+  than Tizen 5.5's 69 (LG's published web-engine table, re-checked 2026-09-16), while the lint's
+  browserslist floor is `chrome >= 69` — so `Array.prototype.flat` / `flatMap` pass ESLint and would
+  throw on an LG set. [`docs/dev/conventions.md`](docs/dev/conventions.md#two-tvs-two-engines) now
+  separates the three things involved (syntax lowered by the `es2018` target, runtime APIs nobody
+  polyfills, and the `globalThis` polyfill both TVs prepend) and states what
+  `test/integration/tv-engine-floor.test.ts` does **not** cover: only the API names in its list,
+  only first-party source, only JavaScript, and nothing at runtime.
 - `GameConfig` gained `loop`, `timeLimit`, `invincible` and `optionRecovery`; `startingLives` goes
   up to 9. Stages may carry a `remix` and `minLoop` / `maxLoop` on any event; weapons an `extra`
   flag; the `rules` file's `scoring` section `repeatKills` / `repeatPercent`.

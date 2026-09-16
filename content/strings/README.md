@@ -24,7 +24,15 @@ labels — lives with that content, not here.
 > **These translations are placeholders, like the art and the music.** They were written by the
 > build agent, not by a native speaker, and nobody has reviewed them. Treat them the way you treat
 > `PLACEHOLDER_SHIP`: correct in shape, provisional in wording. A native-speaker pass is on the
-> owner's list (plan §8.9) and needs no code — it is an edit of these two files.
+> owner's list (plan §8.9,
+> [`docs/client/outstanding-work.md`](../../docs/client/outstanding-work.md#13-decide-what-to-do-about-the-placeholder-spanish-and-japanese))
+> and needs no code — it is an edit of these two files. The katakana **glyphs** are placeholder
+> pixel art for the same reason ([`docs/dev/real-assets.md`](../../docs/dev/real-assets.md)).
+>
+> **A native speaker reviewing a file needs four things:** every id must stay answered; the fixed
+> ids below must keep their English text; every character must be one the font draws (`UI_GLYPHS`);
+> and a value must fit the width its screen gives the English — 6 px a character. `pnpm content:check`
+> enforces the first three.
 
 The player picks the language in **OPTIONS → DISPLAY → LANGUAGE**; the choice is stored in the save
 (`options.display.language`) and is shown **from the next launch**, because the scene flow resolves

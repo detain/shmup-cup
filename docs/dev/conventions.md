@@ -71,15 +71,18 @@ tests — the "Enforced by" column says where, so a red check points you here.
 active (one ESLint instance, warmed up in `beforeAll` since M2-05 — its first lint timed out
 under the full `pnpm test` load).
 
-## Chromium 69 rules
+## Chromium 68 / 69 rules (the TV engine floor)
 
-Shipped runtime code (`packages/*/src`, `apps/web/src`, `apps/tizen/src`) targets
-`chrome >= 69` (`.browserslistrc`). The build lowers **syntax**, not **APIs**. Lint
-errors you may meet:
+Shipped runtime code (`packages/*/src`, `apps/web/src`, `apps/tizen/src`,
+`apps/webos/src`) is linted against `chrome >= 69` (`.browserslistrc`) — but since
+M3-03 there are **two** TVs and the older one is **Chromium 68**. Read
+[Two TVs, two engines](#two-tvs-two-engines) below before you rely on the lint. The build
+lowers **syntax**, not **APIs**. Lint errors you may meet:
 
 | Don't use | Needs | Use instead |
 |---|---|---|
-| `globalThis` | Chrome 71 | Allowed — polyfilled by `apps/tizen/polyfills/global-this.js` |
+| `Array.prototype.flat` / `flatMap` | Chrome 69 — **not a lint error**, and webOS 5 is Chromium 68 | a loop, or `concat.apply`; caught by `test/integration/tv-engine-floor.test.ts` |
+| `globalThis` | Chrome 71 | Allowed — polyfilled by `apps/tizen/polyfills/global-this.js` (both TV builds prepend that same file) |
 | `Object.hasOwn` | Chrome 93 | `Object.prototype.hasOwnProperty.call(o, k)` |
 | `Object.fromEntries` | Chrome 73 | a loop filling an object |
 | `Promise.allSettled` / `Promise.any` | Chrome 76 / 85 | `Promise.all` with per-promise `.catch` |
@@ -90,10 +93,63 @@ errors you may meet:
 | `import.meta` | ES modules only | pass values in through config (allowed only in `apps/web`, which is served as a module) |
 | other newer APIs | — | `compat/compat` (eslint-plugin-compat, `lintAllEsApis`) reports them |
 
-Also avoid on the TV: top-level `await` and dynamic `import()` (the Tizen bundle is one
-classic IIFE script), WebGL2-only features (WebGL1 is the baseline), and CSS newer than
-Chrome 69 in `index.html`. Hand-written files prepended to the bundle (polyfills) are
+Also avoid on the TV: top-level `await` and dynamic `import()` (the TV bundles are one
+classic IIFE script each), WebGL2-only features (WebGL1 is the baseline), and CSS newer than
+Chrome 68 in `index.html`. Hand-written files prepended to the bundle (polyfills) are
 ES5 and linted with `ecmaVersion: 5`.
+
+### Two TVs, two engines
+
+| Host | Platform | Engine |
+|---|---|---|
+| `@shmup/tizen` | Samsung Tizen 5.5 (the M7 monitors) | Chromium **69** — measured on both units, UA `… 69.0.3497.106/5.5 …` (`shmup_tech.md` §2.7) |
+| `@shmup/webos` | LG webOS TV **5.x** (2020 sets) | Chromium **68** — LG's published [web engine table](https://webostv.developer.lge.com/develop/specifications/web-api-and-web-engine) (re-checked 2026-09-16: webOS 4.x = 53, **5.x = 68**, 6.x = 79, 22 = 87, 23 = 94, 24 = 108) |
+
+**The real floor of shipped code is therefore Chromium 68, not 69.** Three separate
+things are involved, and confusing them is the trap:
+
+1. **Syntax — handled by the build, and safe.** Both TV apps build with
+   `target: ['chrome69', 'es2018']`. A target list is a set of constraints, so the
+   *lowest* wins: the emitted syntax is **ES2018**, and every ES2018 feature (object rest
+   and spread, async iteration, `Promise.prototype.finally`, `RegExp` `dotAll`, named
+   groups and lookbehind) shipped in Chrome 60–64 — comfortably inside 68. The `chrome69`
+   entry is not what makes the output safe — `es2018` is. (Chrome 69 added no JavaScript
+   *syntax* over 68; what it added was the two library methods in point 2, which no target
+   setting can conjure onto an older engine.)
+2. **Runtime APIs — not handled by anything automatic.** A bundler never polyfills library
+   methods. `Array.prototype.flat` and `flatMap` landed in **Chrome 69**, so
+   `eslint-plugin-compat` at a `chrome >= 69` floor **accepts them**
+   (`test/integration/eslint-rules.test.ts` asserts that it does) and they would throw
+   `TypeError: [].flat is not a function` on an LG set. The one guard is
+   **`test/integration/tv-engine-floor.test.ts`**, which scans every shipped source tree
+   (`packages/{core,audio-web,input-web,render-pixi,shell}/src`, `apps/{web,tizen,webos}/src`)
+   with comments stripped for a fixed list of API names newer than Chrome 68, and also pins
+   the shared build settings — the same target string in both Vite configs, the same
+   polyfill *file* (webOS reads `apps/tizen/polyfills/global-this.js` rather than keeping a
+   copy) and the budgets imported from the Tizen check rather than repeated.
+3. **`globalThis` (Chrome 71) exists on neither TV.** It works because both builds prepend
+   the same ES5 polyfill, whose banner both bundle checks verify.
+
+**What the scan does not cover — do not read a green run as proof of anything wider:**
+
+- **Only the names in its list.** It is a string search, not a semantic analysis: a new
+  Chrome 69+ API nobody thought of passes, and so would `arr['flat']()` or any other
+  indirect call. Add the name to `TOO_NEW` when you learn of one.
+- **Only first-party source.** Dependencies are not scanned. PixiJS and everything else in
+  the bundle are the build's problem, and today they are clean — a `grep` over the built
+  `apps/tizen/dist/app.js` finds no `.flat(`, `.flatMap(`, `.at(`, `Object.fromEntries`,
+  `matchAll`, `replaceAll`, `structuredClone`, `queueMicrotask` or `Promise.allSettled` at
+  all (2026-09-16). A dependency upgrade can change that silently, so re-run that grep when
+  one lands.
+- **Only JavaScript.** DOM, CSS, WebGL and Web Audio surfaces between 68 and 69 are not
+  checked by anything; WebGL1 is the baseline for a different reason (the Mali driver), and
+  CSS in `index.html` is a hand-review item.
+- **Nothing at runtime.** No webOS device has ever run this code
+  ([plan §8.7](../../shmup_plan.md#87-lg-webos-on-a-real-set-m3-03)), so "inside the floor"
+  is a static claim about APIs, not a report from hardware.
+
+The safest habit is the simplest one: **write for Chromium 68**, and treat the lint's 69 as
+the looser of two rules rather than the rule.
 
 ## Performance: zero allocation in hot paths
 

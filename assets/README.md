@@ -51,8 +51,15 @@ the shield pod's wear states and Reduce's shimmer (`shields`, M2-04), star layer
   picks OPTIONS → BULLETS. **Real art for a bullet needs its three variants too**
   (`bullets/oval-red@tritanopia.png` …, same frames in the same order), or the colour-blind sets
   keep the placeholder's frames; `pnpm content:check` requires every variant.
-- **Fonts** — `pixel6x8.font.json` is an original 6×8 font (ASCII 32–126 + `← ↑ → ↓ ● ✕ ★`);
-  its glyphs become frames of the sprite `font/pixel`, its metrics go into the manifest.
+- **Fonts** — `pixel6x8.font.json` is an original 6×8 font: ASCII 32–126 + `← ↑ → ↓ ● ✕ ★`, and
+  since **M3-03** 84 **katakana** (the 46 base kana, 20 voiced, 5 semi-voiced, 9 small, `ー ・ 、 。`
+  — drawn in the classic 5 × 7 LCD box with row 0 left for the voicing marks, so the voiced kana are
+  derived from their base) and 9 accented capitals for Spanish: **195 glyphs**. Its glyphs become
+  frames of the sprite `font/pixel`, its metrics go into the manifest. The charset has one owner —
+  it must equal `@shmup/core`'s `UI_GLYPHS` exactly, and `test/scripts/assets/font.test.ts` fails in
+  either direction, so anything a string table may contain can really be drawn.
+  **The kana are placeholder pixel art like the rest**, drawn by an agent and not by a pixel-font
+  artist ([`docs/dev/real-assets.md`](../docs/dev/real-assets.md)).
 - **Manifest** (`atlas/main.json`, inlined into builds as `virtual:shmup-assets`):
   `{ formatVersion, pages: [{ file, w, h }], frames: { "<sprite>#<i>": { p, x, y, w, h, ax, ay } },
   sprites: { "<sprite>": { frames, flash } }, animations: { "<sprite>": { tag: [frames] } },

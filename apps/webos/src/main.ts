@@ -1,6 +1,8 @@
 /**
  * LG webOS entry point. Bundled into the single classic IIFE `app.js` — so no `import.meta`, no
- * top-level `await`, nothing newer than Chrome 69 at runtime. The content and the atlas manifest
+ * top-level `await`, and **nothing newer than Chrome 68 at runtime**: webOS 5 is Chromium 68, one
+ * release below the lint's `chrome >= 69` floor (`test/integration/tv-engine-floor.test.ts` is the
+ * guard; `docs/dev/conventions.md` § "Two TVs, two engines"). The content and the atlas manifest
  * are inlined into the bundle (`virtual:shmup-content`, `virtual:shmup-assets` — decision D25);
  * the atlas pages load from `assets/atlas/`. Dev / test builds (`__SHMUP_DEV__`) add the debug
  * tools behind the remote's Pause, Ch+, Ch+, Ch+ (plan M1-19).
