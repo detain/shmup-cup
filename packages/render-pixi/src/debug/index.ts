@@ -7,7 +7,9 @@
  * particles, lasers, items), rank, gameplay RNG calls, the state hash taken every 60 ticks, the
  * WebGL version, boot ms, the build id, the active debug switches, the frame-pacing line (M3-02b),
  * the render-profile line (M3-02c — `REB`, the frames Pixi rebuilt the scene's instruction set on,
- * and `RT`, the kilobytes of pooled render targets), an optional device line (M2-17 —
+ * and `RT`, the kilobytes of pooled render targets; since M3-02e `REB` should barely move, and it
+ * is read **with the panel hidden** because these very quads sit on `DEBUG`, which is deliberately
+ * not a render group — see the `layers` module's `RENDER_GROUP_LAYERS`), an optional device line (M2-17 —
  * the TV's model and firmware) and a **frame graph** of the
  * last 60 frame times (hitches stand out in yellow / red); and the **outlines**: the ships' hurt
  * circles and terrain boxes, enemy and boss-part hurtboxes (every boss slot's — M2-09),
@@ -784,7 +786,8 @@ export function buildRafHistogram(
  * `RANK · RNG · HASH @tick`; `WEBGL · BOOT ms · LAS · ITM · build id`; the active switches
  * (`GOD`, `HITBOX`, `GRID`, `STEP`, `SLOW n`, `LOCK`); `TPF` — frames that ran 0 / 1 / 2 / 3+
  * ticks — and the rAF-delta histogram (M3-02b); `REB` — frames that rebuilt the scene's
- * instruction set — and `RT` — pooled render-target KB (M3-02c). Frame-graph bars are 1 px per frame, newest on the
+ * instruction set, which this panel's own text quads add to whenever a printed number changes
+ * width (M3-02e: `DEBUG` is not a render group) — and `RT` — pooled render-target KB (M3-02c). Frame-graph bars are 1 px per frame, newest on the
  * right, 8 px per 16.7 ms (capped at 40 px), in the `good` (≤ 17.5 ms), `warn` (≤ 34 ms) or `bad`
  * list; two guide lines mark one and two 60 Hz frames.
  *

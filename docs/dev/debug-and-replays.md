@@ -281,9 +281,22 @@ visible on a TV at all ([render-performance-review.md](render-performance-review
   re-walked the tree instead of taking its cheap "update what moved" path
   (`PixiRenderer.structureRebuilds`, counted by the renderer with `countStructureRebuilds`, read in
   the shell's `beforeRender`; blank when the renderer is not counting). In Pixi v8 every
-  `sprite.visible = …` sets `structureDidChange` on the *root* render group, and our draw path
-  toggles `visible` in every binding, every frame — so today `REB` tracks the frame count almost
-  exactly. That is the review's **F1**, and M3-02e is the step that has to move this number.
+  `sprite.visible = …` sets `structureDidChange` on the sprite's *enclosing* render group, and our
+  draw path toggles `visible` in every binding, every frame — so while the scene was one group
+  `REB` tracked the frame count almost exactly (the review's **F1**). Since **M3-02e** each
+  high-churn layer is its own render group and the figure sits at **0**; the bench counted it from
+  659 of 660 frames to 0 of 660.
+
+  **Read it with the panel hidden.** `DEBUG` is deliberately *not* a render group (it is empty in a
+  release build), so the panel's own text quads dirty the scene's group whenever a printed number
+  changes width — 6 % of frames on an idle machine, 49 % on a loaded one, 0 % in the same run once
+  `DEBUG` is grouped (`test/e2e/render-groups.spec.ts`). That rate measures the machine, not the
+  renderer. The shell reads `renderer.structureRebuilds` in `beforeRender` and commits the frame to
+  M3-02f's telemetry in `afterRender` **whether or not `flags.overlay` is set**, and the capture's
+  checklist is a DOM `<div>`, so pressing debug key **1** hides the panel and the true rate still
+  reaches the JSONL and `analyze-render.mjs`'s tables. The second counter,
+  `PixiRenderer.groupRebuilds` (every render group of the scene, not just its root), is deliberately
+  **not** on the panel — it is the bench's check that the churn did not merely move out of sight.
 - **`RT`** — kilobytes of pooled render targets Pixi has created (`createRenderTargetMeter`, which
   hooks `TexturePool.createTexture` once so reading the total is a property read). Pixi rounds a
   target **up to the next power of two on each axis**, so a 384×216 filter pass costs a 512×256
@@ -830,6 +843,13 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   demos were re-blessed once because the replay header gained the four new `GameConfig` fields; no
   `expected` value moved. The new golden `zone-a-extras` flies zone A with every extra on, thrown by
   the `bomberBot` ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#determinism)).
+- **M3-02e** (done) — `REB` reads 0: each high-churn layer is its own Pixi render group
+  (`render-pixi` `layers`' `RENDER_GROUP_LAYERS`), so hiding one sprite rebuilds that layer's
+  instruction set and not the whole scene's (review **F1**). The overlay gained nothing —
+  `PixiRenderer.groupRebuilds` is for the bench — but how to *read* `REB` changed: with the panel
+  hidden, because `DEBUG` is not a group and the panel's own quads inflate the figure by a
+  machine-dependent amount ([above](#the-overlay-shmuprender-pixi-debug),
+  [rendering-and-shell.md](rendering-and-shell.md#render-groups-m3-02e--the-reviews-f1)).
 - **M3-02c** (done) — the overlay's seventh line (`REB`, `RT`) and its two sources
   (`PixiRenderer.structureRebuilds` behind `countStructureRebuilds`, `createRenderTargetMeter` over
   Pixi's `TexturePool`), plus the render benchmark `test/bench/render.perf.ts` — the first thing in

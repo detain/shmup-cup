@@ -211,8 +211,57 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   summary line the owner watches while playing. Every nested value a formatter prints now goes
   through a total `str()`, and a seeded fuzz suite POSTs generated junk at both formatters and at a
   live server to keep it that way.
-- The Tizen bundle is 386.8 KB gzip of its 512 KB budget (384.1 KB after M3-02c; M3-02d's +2.7 KB
-  is Pixi's mesh pipeline, no longer tree-shaken out; M3-02f adds nothing — it is dev-build only).
+- M3-02e: **one render group per high-churn layer** (the render review's **F1**). In Pixi v8
+  `sprite.visible = …` dirties the sprite's enclosing render group, and a dirty group has its whole
+  instruction set thrown away and rebuilt — a walk over every node under it, a re-pack of every quad
+  and a re-upload of its vertex buffer. The scene was one group and the draw path toggles `visible`
+  in every binding every frame, so one hidden bullet cost all of that over ~6,400 display objects,
+  on 655–659 of every 660 frames the bench measured. Every layer whose bindings toggle `visible`
+  while the game runs is now its own render group (`@shmup/render-pixi` `layers`'
+  `RENDER_GROUP_LAYERS`: `TERRAIN`, `GROUND_ENEMIES`, `AIR_ENEMIES`, `PLAYER_SHOTS`, `PLAYER`,
+  `HITBOX`, `ITEMS`, `FX`, `ENEMY_BULLETS`, `HUD`, `UI`), so a bullet appearing rebuilds the
+  512-sprite bullet group and leaves the 1,274-tile terrain grid, the HUD and the UI alone, buffers
+  included. `BG_FAR` and `BG_MID` stay plain (the parallax bands are shown once when bound and only
+  their containers move; the Mode-7 mesh follows a camera range) and so does `DEBUG` (empty in a
+  release build). Measured by the bench, which builds both scenes in one run
+  (`PixiRendererOptions.renderGroups: false` restores the old one — the review's measurement
+  **M1**, done headlessly): **659 of 660 frames rebuilding the whole scene → 0 of 660**, on every
+  shipped scenario. Scope items 2 (degenerate-quad parking) and 3 (`ParticleContainer`) were
+  deliberately **not** done — the first was enough, and parking dead slots in the batch would have
+  grown the per-frame attribute upload from the visible quads to all ~6,400.
+- M3-02e: **the trade, stated plainly.** Each render group is a batch boundary, so the bench's busy
+  frame went **4 → 9** draw calls, the `raster-range` frame 7 → 10 and the Mode-7 frame 6 → 9, and
+  the two e2e specs' `DRAW_CALL_BUDGET` was raised **12 → 16** deliberately (`shmup_feat.md` §22
+  allows 20–50; the arithmetic is in each spec's docblock and the measured figures in §22's budget
+  line). The p95 the bench reports for the change — 0.65–0.94× over five runs, a spread that is
+  itself the caveat — is **SwiftShader's**
+  and is the least transferable number of the step: software WebGL charges CPU time for the extra
+  draw calls while making the 6,400-node tree walk cheap on a desktop core, and the M7's Cortex-A55
+  and Mali-G51 pay the opposite way round. The result to believe is the counted 659 → 0; the
+  hardware verdict is the owner's M1 measurement on the monitors.
+- M3-02e: `PixiRenderer.groupRebuilds` — the same `structureDidChange` flag counted over **every**
+  render group of the scene rather than the scene's own (−1 without `countStructureRebuilds`, like
+  `structureRebuilds`), so a fall in the first figure cannot be read as churn that merely moved out
+  of sight: it read 659 of 660 before the step and about 1,590 after (≈ 2.4 small layer groups a
+  frame). It is deliberately **not** on the debug overlay and not in M3-02f's telemetry — `REB` stays
+  the one figure to read on the TV, and what it now says is 0. The bench gained the gate
+  `renderGroupViolations` and `test/e2e/render-groups.spec.ts` proves the picture is **byte-identical**
+  with the groups on and off, on seven scenes.
+- M3-02e: **how to read `REB` on the TV.** The `DEBUG` layer is deliberately not a render group, so
+  the overlay panel's own text quads dirty the scene's group whenever a printed number changes width
+  — at 6 % of frames on an idle machine and 49 % on a loaded one, a property of the machine and not
+  of the renderer. The debug tools read `renderer.structureRebuilds` and commit the frame to the
+  telemetry **whether or not the panel is visible**, and M3-02f's checklist is a DOM `<div>`, so the
+  owner hides the panel (debug key **1**) and still captures the true rate. Documented in
+  `docs/client/debug-tools.md` and `docs/dev/rendering-and-shell.md`.
+- M3-02e: the review's **F9** fell out of the same work — the five full-screen overlays of pass 1
+  (the backdrop, both flashes, the playfield dim and the UI dim) draw the atlas' own `ui/pixel`
+  instead of Pixi's global `Texture.WHITE`, so pass 1 samples a single texture. The side panels keep
+  `Texture.WHITE`: they are in pass 2, where the atlas page would be a binding added rather than one
+  saved. No draw call changed, as the finding predicted.
+- The Tizen bundle is 386.9 KB gzip of its 512 KB budget (384.1 KB after M3-02c; M3-02d's +2.7 KB
+  is Pixi's mesh pipeline, no longer tree-shaken out; M3-02f adds nothing — it is dev-build only;
+  M3-02e adds 0.1 KB — one array and one option, no new Pixi code path).
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

@@ -204,13 +204,15 @@ histograms existed): it is the median of the windows' own percentiles, understat
 not even the same statistic as §11.3's.
 
 **Which build these expectations describe.** Everything below assumes a build **at or after plan
-step M3-02d** (commit `1cbbf42`), which folded the CRT look and the Mode-7 floor into their draw
-passes. That changed the very figures this table compares against, so §11.3 prints each headless
-measurement **twice**: `M3-02c` — what the bench read before the fold, kept because it is the
-evidence the fold worked — and `M3-02d` — what it reads now and what an on-device reading should
-be compared with. Nothing in §11.1 / §11.2 has ever been measured on the hardware, so those tables
-have no "before" to keep: they are to be filled in against the **M3-02d** column. If you are
-measuring an older bundle, say so in the table — the CRT and Mode-7 rows will not match.
+step M3-02e** (commit `f18c7de`), which gave the high-churn layers their own render groups, and so
+also after **M3-02d** (commit `1cbbf42`), which folded the CRT look and the Mode-7 floor into their
+draw passes. Both changed the very figures this table compares against, so §11.3 prints each headless
+measurement **once per step**: `M3-02c` — what the bench read before either change, kept because it
+is the evidence they worked — then `M3-02d` and `M3-02e`, the last of which is what it reads now and
+what an on-device reading should be compared with. Nothing in §11.1 / §11.2 has ever been measured
+on the hardware, so those tables have no "before" to keep: they are to be filled in against the
+**M3-02e** column. If you are measuring an older bundle, say so in the table — the CRT and Mode-7
+rows will not match, and neither will `REB` or `DRAW`.
 
 ### 11.1 Baseline — fill this in
 
@@ -221,7 +223,7 @@ measuring an older bundle, say so in the table — the CRT and Mode-7 rows will 
 | Zone A, boss | | | | | | | | |
 
 Boot ms (`data-shmup-boot-ms`): ____ (budget 10 s). Bundle measured (git short SHA): ____ (it must
-be at or after `1cbbf42`, M3-02d — see above).
+be at or after `f18c7de`, M3-02e — see above).
 
 `RT` is expected to read **0 KB** on these three rows whatever CRT is set to, and about **512 KB**
 on a stage with a layer effect. A reading of ~16,384 KB with CRT on means the bundle predates
@@ -230,11 +232,22 @@ the frame count means the bundle predates it, or that something started toggling
 sprite outside the layer render groups. `DRAW` is about 7–10 on these rows since M3-02e (one batch
 boundary per render group), where it was 2–4.
 
+> **Read `REB` with the overlay panel hidden.** The panel's own text quads sit on `DEBUG`, which is
+> deliberately not a render group, so a printed number changing width rebuilds the scene's group:
+> headless Chromium measured that at **6 % of frames on an idle machine and 49 % on a loaded one**,
+> and at 0 % in the same run once `DEBUG` was grouped too (`test/e2e/render-groups.spec.ts`). That
+> rate is a property of the machine, not of the renderer. The guided capture reads
+> `renderer.structureRebuilds` in `beforeRender()` and commits the frame in `afterRender()` whether
+> the panel is visible or not (`packages/shell/src/debug/index.ts`), and its checklist is a DOM
+> `<div>` rather than a Pixi container — so unlock the tools, **press debug key 1 to hide the
+> panel**, fly, and take `REB / frames` from the analyzer's rows. A panel-on reading measures the
+> overlay.
+
 ### 11.2 The measurements — fill these in
 
 | # | What | Result |
 |---|---|---|
-| M1 | RENDER ms with the scene rebuild on vs. patched out (**F1**) — since **M3-02e** the shipped build never rebuilds the whole scene (`REB` should read ≈ 0); what is left to measure on the TV is how much Mali-G51 time that saved, by comparing this build's `RENDER` with the last one's over the same practice section | |
+| M1 | RENDER ms with the scene rebuild on vs. patched out (**F1**) — since **M3-02e** the shipped build never rebuilds the whole scene (`REB` should read ≈ 0, **taken from the capture with the panel hidden**; a panel-on reading measures the overlay's own churn and varies by machine); what is left to measure on the TV is how much Mali-G51 time that saved, by comparing this build's `RENDER` with the last one's over the same practice section. This measurement, not the headless bench, is the hardware verdict: the bench's p95 ratio (0.65–0.94× over five runs) is SwiftShader's, where a desktop core makes the tree walk cheap and charges for the extra draw calls, and the Cortex-A55 / Mali-G51 pays the opposite way round | |
 | M2 | RENDER ms and RT with CRT off / light / full on the same section — after M3-02d all three should read the same, and RT should not move at all (**F2**) | |
 | M3 | Frame-graph spike entering the Mode-7 and raster stages — M3-02d's boot warm-up should have removed it (**F4**) | |
 | M4 | Frame-graph spike on the first very dense pattern of a fresh launch — likewise (**F5**) | |
@@ -296,7 +309,8 @@ Four things it settles without the hardware:
   **M3-02e** gave each high-churn layer its own render group; the same scenarios now rebuild the
   scene on **none** of their 660 frames. The bench runs the worst-case frame both ways in one run
   (`renderGroups: false` restores the old single-group scene), which is M1 done headlessly: under
-  SwiftShader the grouped scene reads **0.92–0.94×** the single-group p95 over three runs. That ratio is the least
+  SwiftShader the grouped scene reads **0.65–0.94×** the single-group p95 — 0.92–0.94× over the
+  step's three runs, 0.85× when the docs were written, 0.65× in the review's run. That ratio is the least
   transferable number on this page — software WebGL charges CPU time for the extra draw calls
   while making the tree walk cheap on a desktop core, and the Kant-SU2 pays the opposite way
   round — so M1 on the TV is still worth doing. The **counted** result is what transfers.

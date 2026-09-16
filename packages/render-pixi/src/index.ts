@@ -23,8 +23,14 @@
  * the upscaled picture, capped at 1080p) and the **aspect modes**
  * ({@link computeAspectViewport}: the ultra-wide desktop window and the classic 4:3 one, with side
  * panels instead of black bars).
+ * Plan M3-02e makes each layer whose bindings toggle `visible` while the game runs its own Pixi
+ * **render group** ({@link RENDER_GROUP_LAYERS}, {@link LayerStackOptions}), so hiding one sprite
+ * rebuilds that layer's instruction set instead of the whole ~6,400-object scene's — the render
+ * review's **F1**, at the price of one batch boundary per group.
  * Dev and test builds add the debug overlay (plan M1-19, {@link createDebugOverlay}): a stats panel
- * with a frame graph and the hitbox / grid outlines on the `DEBUG` layer.
+ * with a frame graph and the hitbox / grid outlines on the `DEBUG` layer (deliberately *not* a
+ * render group, which is why the panel's own quads move {@link PixiRenderer.structureRebuilds} —
+ * read that figure with the panel hidden).
  *
  * @packageDocumentation
  */

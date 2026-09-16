@@ -80,10 +80,12 @@
  * scale mode, hitbox, interpolation and layer effects, M2-08; M3-02 the Mode-7 floor, the CRT
  * filter — {@link PixiRenderer.setCrtFilter} — and the aspect modes —
  * {@link PixiRenderer.setAspect}, {@link PANEL_ALPHA}), {@link PixiRendererOptions} (incl.
- * `countDrawCalls` and M3-02c's `countStructureRebuilds`, M1-19;
+ * `countDrawCalls` and M3-02c's `countStructureRebuilds` — with M3-02e's
+ * {@link PixiRenderer.groupRebuilds} beside {@link PixiRenderer.structureRebuilds} —, M1-19;
  * `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
  * M2-08; `aspect`, `createCrtFilter` and `createMode7Shader`, M3-02; `screenPass`,
- * `createCrtBlit` and {@link PixiRenderer.warmUp}, M3-02d).
+ * `createCrtBlit` and {@link PixiRenderer.warmUp}, M3-02d;
+ * {@link PixiRendererOptions.renderGroups}, M3-02e).
  *
  * **The extras of M3-02.** The renderer owns three presentation-only additions, each idle until
  * asked for: the **Mode-7 floor** (`effects` {@link createMode7Floor} — a full-frame mesh at the
@@ -93,6 +95,13 @@
  * {@link computeAspectViewport}: the frame is placed in the largest ultra-wide or 4:3 window that
  * fits and the leftover width becomes two dimmed side panels at {@link PANEL_ALPHA} — a window on
  * the display, never a crop, and the internal 384×216 playfield is unchanged).
+ *
+ * **The render review's fixes (M3-02e).** The scene structure above is **F1**, counted from 659
+ * of every 660 frames rebuilding the whole scene to 0 (`pnpm bench`, which builds both scenes in
+ * one run). **F9** is the `overlayTexture` of pass 1: the backdrop, both flashes and the two dims
+ * draw the atlas' own `ui/pixel` rather than Pixi's global `Texture.WHITE`, so pass 1 samples one
+ * texture. The side panels keep `Texture.WHITE` on purpose — they are in pass 2, where the atlas
+ * page would be a binding added rather than one saved.
  *
  * **The render review's fixes (M3-02d).** Pass 2 draws the frame with a `Mesh` whose shader is
  * the CRT program (`effects` `createCrtBlit`), so CRT `full` costs one draw call and no pooled

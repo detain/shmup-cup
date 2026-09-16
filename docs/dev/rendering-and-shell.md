@@ -968,7 +968,9 @@ target, which is F2's claim exactly.
 objects. Running both in the same session, against the same load and the same GPU, is the review's
 measurement **M1** done headlessly — and it is the only honest way to show what the change bought,
 because a p95 compared across runs on a shared machine is noise. It reads **0 vs 659 of 660 scene
-rebuilds, 9 vs 4 draw calls, and 0.92–0.94× the p95** (three runs). Treat that last figure with the caution
+rebuilds, 9 vs 4 draw calls, and 0.65–0.94× the p95** — 0.92–0.94× over the step's own three runs,
+0.85× in the docs run and 0.65× in the review's, which is the spread of the figure on a shared
+machine. Treat that last figure with the caution
 this section already asks for: SwiftShader charges CPU time for the extra draw calls while making
 the tree walk cheap on a desktop core, and the M7's Cortex-A55 pays the opposite way round, so the
 counted 659 → 0 is the result that transfers.
@@ -980,7 +982,7 @@ overlay's panel shows the two figures M3-02c added on its sixth line:
 
 | Figure | Meaning |
 |---|---|
-| `REB` | Frames since boot on which Pixi rebuilt the scene's whole instruction set (`PixiRenderer.structureRebuilds`). Since **M3-02e** the high-churn layers are their own render groups, so this should sit at **0** or very near it; a figure that tracks the frame count means every frame pays the full tree walk again — the review's **F1** — because something outside those groups is toggling `visible`. **Read the rate, not the total, and read it against the panel:** the `DEBUG` layer is deliberately not a render group, so the panel's own text quads push `REB` up whenever a printed number changes width — measured in headless Chromium at 6 % of frames on an idle machine and 49 % on a loaded one, with the same run at 0 % once `DEBUG` is grouped (`test/e2e/render-groups.spec.ts`). So the figure to trust is the one the *rest* of the scene produces: watch it climb over a few seconds with the panel hidden (it must barely move), and treat the panel-on rate as the overlay's own cost. (The bench's companion figure, `groupRebuilds`, is deliberately **not** on the overlay: one number the owner has to read while playing.) |
+| `REB` | Frames since boot on which Pixi rebuilt the scene's whole instruction set (`PixiRenderer.structureRebuilds`). Since **M3-02e** the high-churn layers are their own render groups, so this should sit at **0** or very near it; a figure that tracks the frame count means every frame pays the full tree walk again — the review's **F1** — because something outside those groups is toggling `visible`. **Read the rate, not the total, and read it against the panel:** the `DEBUG` layer is deliberately not a render group, so the panel's own text quads push `REB` up whenever a printed number changes width — measured in headless Chromium at 6 % of frames on an idle machine and 49 % on a loaded one, with the same run at 0 % once `DEBUG` is grouped (`test/e2e/render-groups.spec.ts`). So the figure to trust is the one the *rest* of the scene produces: watch it climb over a few seconds with the panel hidden (it must barely move), and treat the panel-on rate as the overlay's own cost. **That is not the catch-22 it looks like**, because the overlay is not the only reader: `createDebugTools` refreshes `stats.structureRebuilds` in `beforeRender()` and calls `telemetry.commitFrame()` in `afterRender()` **unconditionally** (`packages/shell/src/debug/index.ts`) — neither is gated on `flags.overlay`, and M3-02f's checklist panel is a plain DOM `<div>`, not a Pixi container. So on a capture build the owner hides the panel (debug key **1**) and still gets the per-window `REB` in the JSONL and in `analyze-render.mjs`'s tables. `overlay.update` skips `buildDebugPanel` entirely while the panel is hidden, so the churn really is gone rather than merely invisible. (The bench's companion figure, `groupRebuilds`, is deliberately **not** on the overlay: one number the owner has to read while playing.) |
 | `RT` | Kilobytes of pooled render targets (`createRenderTargetMeter` over Pixi's `TexturePool`, seeded with what the pool already holds when it starts — M3-02d's warm-up draws every filter before the debug tools exist). Since **M3-02d** the CRT and the Mode-7 floor add nothing to it (review **F2** / **F6**; before the fold, CRT on jumped it by ~16 MB at 1080p); a stage with a layer effect still pools ~512 KB |
 
 Both obey the overlay's own rules: one `DrawList` per colour, and allocation-free per frame (the
@@ -1065,6 +1067,12 @@ Lines, top to bottom (counting from 1):
 
 `RENDER`, `REB` and `RT` are the three this exercise is really about.
 
+> **`REB` is the one figure the panel cannot report about itself.** The panel's own text quads live
+> on `DEBUG`, which is deliberately not a render group, so a printed number changing width rebuilds
+> the scene's group — at a rate that depends on the machine's load, not on the renderer. Read `REB`
+> **with the panel hidden (key 1)**, from the guided capture's per-window figure; the capture is not
+> gated on the panel being visible. Photograph the rest of the line with the panel up as usual.
+
 #### 3. Baseline first — it is the control for everything else
 
 1. Title screen idle, then zone A, then the boss. For each, record `FPS`, `TICK`, `RENDER`, `DRAW`,
@@ -1079,7 +1087,7 @@ Lines, top to bottom (counting from 1):
 
 | # | Question | How | What a result looks like |
 |---|---|---|---|
-| **M1** | What does the per-frame scene rebuild (**F1**) cost? | Compare `RENDER` on the title (few sprites, structure nearly static) with a busy boss frame, watching `REB` against the frame count. Then, as a throwaway experiment, comment out the `visible = false` lines in `SpriteLayerBinding.sync` for one build: the `RENDER` delta is the rebuild cost. **Do not ship that build** | The headless bench shows 655–659 of every 660 frames rebuilding. This measurement turns that into milliseconds, and it is what decides how far M3-02e has to go |
+| **M1** | What did fixing the per-frame scene rebuild (**F1**) buy on the Mali-G51? | **Read `REB` from the telemetry with the panel hidden** — press **1** after unlocking and fly; a panel-on reading measures the overlay's own churn and varies by machine (6 % of frames idle, 49 % loaded), while the capture records the figure every frame whether the panel is shown or not. Then compare `RENDER` over the same practice section with the **previous** build (anything before `f18c7de`), which is the only way left to price the rebuild on hardware: the shipped build no longer does it, and `renderGroups: false` is a bench-only option that no TV bundle exposes | `REB` ≈ **0** — the headless bench went 655–659 of every 660 frames rebuilding to **0 of 660**, and the counted result is what transfers. The milliseconds are what is still unknown: under SwiftShader the grouped scene reads 0.92–0.94× the old one's p95, but that machine makes the tree walk cheap and charges for the extra draw calls, and the Cortex-A55 / Mali-G51 pays the opposite way round. **This measurement, not the bench, is the hardware verdict.** `DRAW` rising from 2–4 to about 7–10 is the deliberate price (one batch boundary per render group) |
 | **M2** | What does the CRT look (**F2**) cost after M3-02d? | Pause → **OPTIONS → DISPLAY → CRT**, Left/Right to switch **OFF / LIGHT / FULL**. Run the same practice section three times, once per setting, reading `RENDER`, `FPS` and `RT` each time | Expect all three to read the same `RENDER` within a few per cent and **`RT` not to move at all**: M3-02d made the CRT the pass-2 blit's own shader, and the headless bench measured 4 draw calls and 0 pooled bytes for `off`, `light` and `full` alike. A jump in `RT`, or `full` visibly dearer than `off`, means the fold regressed. There should be **no** stall the first time CRT goes on either — the boot warm-up linked that program (**F4**) |
 | **M3** | Mode-7 and layer-effect entry hitches (**F4**) | Play into the Mode-7 stage and the water / heat-haze stage and watch the frame graph at the moment the effect starts | Since M3-02d's boot warm-up the graph should stay **flat** at the range boundary. A single ~30–50 ms bar there is worth reporting (the warm-up missed that program); one on every entry means something else is wrong |
 | **M4** | The batch-growth hitch (**F5**) | Frame graph during the first very dense pattern after a **fresh launch**, then the same pattern again after a checkpoint restart | M3-02d's warm-up draws every pooled sprite once, so the buffer should already be at its high-water mark and **both** runs clean. A red bar on the first one only is Pixi's attribute buffer still doubling — report it |
@@ -1151,7 +1159,10 @@ max` of the frame, tick and render times and of the draw calls, a **quantized hi
 those four series**, the `TPF` and `RAF` bucket counts, the structure rebuilds **of that window** and
 the pooled render-target total, plus the context that makes the row mean something (build id, device
 line — re-read every window, since the M2-17 line only arrives after boot —, scene, stage and zone,
-camera, CRT setting, aspect, scale, GL version, viewport and the assists that were on). It also
+camera, CRT setting, aspect, scale, GL version, viewport and the assists that were on). Because the capture hangs off `createDebugTools`'
+`beforeRender` / `afterRender` and not off the overlay's visibility, every one of those figures —
+`REB` included — is recorded with the panel hidden, which is the only way to read `REB` without the
+panel's own quads in it. It also
 records `sendInFlightFrames` — the frames the POST itself was still outstanding during. That matters:
 the request runs on the main thread, so a window it spans may have recorded the sender as a render
 cost. The analyzer leaves those windows out by default.
@@ -1257,7 +1268,11 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/debug/`, `renderer/renderer-draw-calls.test.ts` | The debug overlay (M1-19): panel lines and values, frame graph, every outline kind, one colour per list, no dropped commands with every pool full, allocation-free `update`; the draw-call counter ([debug-and-replays.md](debug-and-replays.md#tests)) |
 | `packages/shell/test/debug/` | The debug tools (M1-19): F-keys, the TV unlock sequence, `window.__shmupDebug`, the frame hooks |
 | `packages/render-pixi/test/debug/debug-render-profile.test.ts`, `renderer/renderer-structure-rebuilds.test.ts`, `packages/shell/test/debug/debug-render-profile.test.ts` | M3-02c: the overlay's `REB` / `RT` line (placement, the blank `REB` when nothing counts, allocation-free rebuilds), `createRenderTargetMeter` (totals, `stop()` restoring the pool, an allocation-free read), the renderer counting only the frames whose scene structure changed (−1 without the option), and the shell refreshing both figures every frame and stopping the meter on `destroy` |
-| `test/bench/render.perf.ts` | M3-02c: the render benchmark itself — the scenarios really are under the load they claim, the draw-call / p95 / heap budgets, and a deliberately leaky fixture that must blow the heap gate |
+| `test/bench/render.perf.ts` | M3-02c: the render benchmark itself — the scenarios really are under the load they claim, the draw-call / p95 / heap budgets, and a deliberately leaky fixture that must blow the heap gate. Since M3-02e every scenario is gated through `renderGroupViolations` and one runs the A/B arm with `renderGroups: false` |
+| `packages/render-pixi/test/layers/layers-render-groups.test.ts`, `layers/layers-render-groups-edge.test.ts` | M3-02e: `RENDER_GROUP_LAYERS` membership (`TERRAIN` … `UI`, the three deliberate omissions named), `createLayerStack({ renderGroups })` — only an explicit `false` ungroups — and the grouped stack compared container by container with the ungrouped one, so a group boundary provably changes nothing structural |
+| `packages/render-pixi/test/renderer/renderer-render-groups.test.ts`, `renderer/renderer-render-groups-edge.test.ts`, `renderer/renderer-render-groups-alloc.test.ts` | M3-02e: the option reaching the layer stack, `groupRebuilds` counting every dirty group of a frame (never falling, never below `structureRebuilds`, −1 without `countStructureRebuilds`, kept after `destroy()`), the F9 overlay texture (the five pass-1 overlays on the atlas' `ui/pixel`, the side panels on `Texture.WHITE`, both fallbacks), and the counting walk measured as an allocation A/B against the same loop with counting off |
+| `test/integration/render-groups.test.ts` | M3-02e against the *shipped* game: four stages played through the real sim use only grouped batch layers, every `createSpriteBatch(LayerId.…)` in core names one, no app / shell / core code mentions `renderGroups`, and the two e2e `DRAW_CALL_BUDGET`s agree with each other and with `gates.ts` |
+| `test/e2e/render-groups.spec.ts` | M3-02e in a real browser: seven scenes screenshotted with the groups on and then with `disableRenderGroup()` called on all eleven layers — byte-identical PNGs — plus the sensitivity controls (moving or hiding a layer must change the picture) and the `REB` annotation with the overlay off (0 of 180 frames) and on |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -1297,7 +1312,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Scanlines over everything | The saved CRT option is `light` / `full` (M3-02, `renderer.crtFilter`). Since M3-02d it is the pass-2 blit's own shader, not a filter: OPTIONS → DISPLAY → CRT → OFF writes `uScan` / `uMask` / `uVignette` back to 0 (only the `screenPass: 'filter'` escape hatch still runs a capped second pass) |
 | A black picture on an older set, with the game plainly running (sound, `data-shmup-scene` moving) | Since M3-02d both full-screen effects are Pixi meshes, and `MeshGeometry` builds `Uint32Array` indices, so pass 2 needs WebGL1's **`OES_element_index_uint`**. Pixi requests it and every GPU of the M7's generation has it, but it is now on the path every frame takes. Check `gl.getExtension('OES_element_index_uint')` in the Web Inspector; if it really is `null`, `screenPass: 'filter'` (and the Mode-7 stage left alone) is the only path that avoids a mesh |
 | The Mode-7 floor never appears | The stage has no `mode7` section, the camera is outside its `[from, to)`, the atlas has no such sprite (`Mode7Floor.bind` got `null`) or the scene's `WorldView` dropped `effects` — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor) |
-| The overlay's `REB` figure equals the frame count | Expected today: Pixi rebuilds the scene's instruction set whenever any `visible` changed, and the draw path toggles `visible` every frame (review **F1**). M3-02e is the step that has to move it |
+| The overlay's `REB` figure climbs while the panel is up | Expected, and it is the *panel*: its text quads sit on `DEBUG`, which is deliberately not a render group, so a printed number changing width dirties the scene's group. The rate depends on the machine's load (6 % of frames idle, 49 % loaded — `test/e2e/render-groups.spec.ts`), not on the renderer. Hide the panel (key **1**) and read `REB` from M3-02f's capture, which records it either way |
+| `REB` keeps pace with the frame count **with the panel hidden** | A real regression of review **F1**: something outside the `RENDER_GROUP_LAYERS` groups is toggling `visible` on a sprite — a new binding added to `BG_FAR`, `BG_MID` or `DEBUG`, or a container flipped every frame. Since M3-02e the bench gates this (`renderGroupViolations`, budget a tenth of the measured frames) |
 | The overlay's `RT` figure jumps by ~16 MB when CRT goes on | It should not any more: M3-02d made the CRT the pass-2 blit's own shader, so it pools nothing (review **F2**). If it does, the build predates M3-02d — or it was created with `screenPass: 'filter'`, which restores the old 2048×2048 pooled target on purpose |
 | The render bench cannot find the Mode-7 floor or draws magenta checkers | The harness did not call `renderer.setSpriteNames(db.sprites.names)` — the World's sprite ids index into that table, and without it `Mode7Floor.bind` gets no tile |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
@@ -1408,6 +1424,11 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   / `PixiRenderer.structureRebuilds`, `createRenderTargetMeter` and the overlay's seventh line
   (`REB`, `RT`), `webGLVersionFromSearch` (the `?gl=` A/B switch; WebGL1 stays the default) and the
   render benchmark `test/bench/render.perf.ts` ([above](#measuring-render-performance-m3-02c),
+  [render-performance-review.md](render-performance-review.md)).
+- **M3-02e** (done) — the render groups above: `layers`' `RENDER_GROUP_LAYERS` /
+  `LayerStackOptions`, `PixiRendererOptions.renderGroups` (bench-only when `false`) and
+  `PixiRenderer.groupRebuilds`; the review's **F1** counted to 0 and **F9** (the pass-1 overlays on
+  the atlas' `ui/pixel`) ([above](#render-groups-m3-02e--the-reviews-f1),
   [render-performance-review.md](render-performance-review.md)).
 - **M2-18** (done) — the shell's new module `determinism` (`createDeterminismCheck` /
   `installDeterminismCheck`: golden replays played headless in the page's own engine, published as

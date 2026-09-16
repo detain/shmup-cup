@@ -3,7 +3,10 @@
  *
  * The gates of `pnpm bench`'s render suite (plan M3-02c): the budgets, and
  * {@link renderBenchViolations}, which turns one {@link RenderBenchResult} into the list of
- * reasons it must fail.
+ * reasons it must fail. Since plan **M3-02e** a second gate, {@link renderGroupViolations}, reads
+ * the same result against *how the scenario was configured* — the shipped scene must have stopped
+ * rebuilding itself (the review's **F1**), while the deliberate `renderGroups: false` arm must
+ * still be the single-group scene it is there to compare against.
  *
  * Its own module so the gates can be tested without a browser
  * (`test/integration/render-bench.test.ts`). The first thing it checks is not a budget at all but

@@ -35,6 +35,15 @@
  * {@link readRenderContext} and POSTs it. Without such a URL — every release build, and every dev
  * build that was not pointed at a server — nothing of it runs.
  *
+ * The capture is deliberately **not gated on the overlay being visible**: `beforeRender` reads
+ * `renderer.structureRebuilds` and `afterRender` calls `telemetry.commitFrame()` on every frame,
+ * and the checklist is a DOM `<div>` rather than a Pixi container. That matters for the one figure
+ * the overlay cannot report about itself — since plan M3-02e the `DEBUG` layer is the only busy
+ * layer that is *not* its own render group, so the panel's own text quads dirty the scene's group
+ * whenever a printed number changes width, at a rate that depends on the machine's load rather than
+ * on the renderer (measured at 6 % of frames idle and 49 % loaded). The owner therefore hides the
+ * panel (key **1**) and reads `REB` from the capture, which keeps recording it.
+ *
  * **Save export / import and the device line (M2-17).** `window.__shmupDebug.save` exports the save
  * the game plays with as readable JSON, imports one (parsed like a stored save and written — reload
  * to apply its options) and reports the storage's usage ({@link DebugSaveApi}); the TV app hands

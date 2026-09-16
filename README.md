@@ -865,6 +865,32 @@ M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-res
     [results](docs/dev/input-probe-results.md#11-render-profile-m3-02c) ·
     [the review behind it](docs/dev/render-performance-review.md)
 
+- **One render group per busy layer** (M3-02e) — the first of the review's findings the bench
+  could size, and the one it said mattered most.
+  - **What was wrong.** In Pixi v8 `sprite.visible = …` dirties the sprite's *enclosing render
+    group*, and a dirty group has its whole instruction set thrown away and rebuilt: a walk over
+    every node under it, a re-pack of every quad, a re-upload of its vertex buffer. The scene was
+    one group, and the draw path toggles `visible` in every binding every frame — so one hidden
+    bullet cost all of that over ~6,400 display objects, on **655–659 of every 660 frames**.
+  - **What changed.** Every layer whose bindings toggle `visible` while the game runs is now its
+    own render group (`TERRAIN`, `GROUND_ENEMIES`, `AIR_ENEMIES`, `PLAYER_SHOTS`, `PLAYER`,
+    `HITBOX`, `ITEMS`, `FX`, `ENEMY_BULLETS`, `HUD`, `UI`). Pixi emits one instruction for a child
+    group instead of descending into it, so a bullet appearing rebuilds the 512-sprite bullet group
+    and leaves the 1,274-tile terrain grid, the HUD and the UI untouched, buffers included. The
+    parallax bands and the debug layer stay plain on purpose.
+  - **Measured, both ways in one run** (the bench builds the old single-group scene too):
+    **659 of 660 frames rebuilding the whole scene → 0 of 660**. A second counter over *every*
+    group of the scene proves the churn did not merely move out of sight.
+  - **The trade, stated plainly.** Each group is a batch boundary: the busy frame went **4 → 9
+    draw calls** and the two e2e budgets 12 → 16 (the spec allows 20–50). The p95 gain the bench
+    reports — 0.65–0.94×, that spread being run-to-run noise — is **SwiftShader's**, where a
+    desktop core makes the tree walk cheap and
+    charges for draw calls; the TV's Cortex-A55 and Mali-G51 pay the opposite way round. The
+    counted 659 → 0 is the result; the milliseconds are the owner's M1 measurement to make.
+  - Docs: [render groups](docs/dev/rendering-and-shell.md#render-groups-m3-02e--the-reviews-f1) ·
+    [the overlay's `REB`](docs/client/debug-tools.md#render-profile-reb-and-rt) ·
+    [the review's F1](docs/dev/render-performance-review.md)
+
 - **The render profile records itself** (M3-02f) — the measurement table above used to mean reading
   six figures off a moving overlay and typing them into a document. Now the game captures them.
   - **A guided capture in the dev build.** Start the input probe's log server on the desktop
@@ -1108,10 +1134,10 @@ extras: the Mode-7 floor and the dimension stage, the CRT pass, the ultra-wide a
 modes, authentic slowdown, graze, the death-bomb window, the black-hole bomb, the P2 bosses and the
 final zone's escape sequence) and M3-02b (remote & hardware tuning from the input-probe results) are
 done, and **M3-02c** (render profiling), **M3-02d** (the CRT and Mode-7 effects folded into
-their draw passes, a corrected memory estimator and a boot warm-up frame) and **M3-02f** (the
-guided render capture the dev build streams to the log server) with them; next are
-M3-02e (the per-frame scene-graph rebuild —
-[`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03. Every
+their draw passes, a corrected memory estimator and a boot warm-up frame), **M3-02e** (one render
+group per high-churn layer, so the per-frame scene-graph rebuild stopped —
+[`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and **M3-02f**
+(the guided render capture the dev build streams to the log server) with them; next is M3-03. Every
 simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 

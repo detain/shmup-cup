@@ -113,7 +113,7 @@ LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 | `FPS` | Frames drawn per second | **60** on the monitors |
 | `TICK` | Milliseconds the game logic took this frame | well under 16 |
 | `RENDER` | Milliseconds the drawing took this frame | well under 16; `TICK` + `RENDER` must stay under 16.7 for 60 FPS |
-| `DRAW` | Draw calls sent to the graphics chip this frame | for developers — note it if it jumps much higher at some point of the zone |
+| `DRAW` | Draw calls sent to the graphics chip this frame | for developers — roughly **7–10** on an ordinary stage since the render-group build (each separated part of the picture is drawn in its own batch; it was 2–4 before, and the budget is 20–50). Note it if it jumps much higher at some point of the zone |
 | `BUL` · `ENM` · `SHT` · `PRT` | Enemy bullets · enemies · your shots · particles: in use / room for | the first number never reaching the second for long |
 | `LAS` · `ITM` | Enemy lasers · capsules on screen | — |
 | `RANK` | The hidden difficulty level the game is running at (0–31) | Starts at the difficulty's level — EASY 0, NORMAL 2, HARD 4, ARCADE 6 — and goes up as the ship powers up (Missile +1, Double +2, Laser +3, each Option +1, Force Field +4; on EASY half as fast), down again when it loses power, and a little higher in each later zone of a run; at most 16 on the first loop ([preview-build.md](preview-build.md#the-game-gets-harder-as-your-ship-gets-stronger)) |
@@ -124,7 +124,7 @@ LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 | line 5 | The tools that are on, and `LOCK` when the game runs one step per frame | in normal play on the monitors: only `LOCK` — see [Frame pacing](#frame-pacing-tpf-and-the-raf-histogram) |
 | `TPF` (line 6) | Frames that ran 0 / 1 / 2 / 3-or-more game steps, counted since the app started | only the second number climbing |
 | `RAF` (line 6) | A bar chart of how long the frames took — [below](#frame-pacing-tpf-and-the-raf-histogram) | most of it in the middle bars |
-| `REB` (line 7) | Frames the picture had to be rebuilt from scratch on, counted since the app started — [below](#render-profile-reb-and-rt) | for developers: today it climbs with almost every frame |
+| `REB` (line 7) | Frames the picture had to be rebuilt from scratch on, counted since the app started — [below](#render-profile-reb-and-rt) | for developers: it should **barely move** — but only read it with the panel *hidden*, because the panel itself pushes it up ([below](#render-profile-reb-and-rt)) |
 | `RT` (line 7) | Kilobytes of off-screen picture memory the drawing has taken — [below](#render-profile-reb-and-rt) | `0` on an ordinary stage, whatever CRT is set to; about **512 KB** on a stage with a wavy-water or heat-haze effect |
 | line 8 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
 
@@ -187,9 +187,28 @@ the one thing the panel could not show before. Nothing here changes how the game
 there so the picture can be made cheaper in a later build without guessing.
 
 - **`REB`** — the number of frames, counted since the app started, on which the drawing library
-  threw the whole picture away and put it back together instead of only moving what moved. Today
-  it climbs with almost every frame, which is exactly the thing that is being looked into. Read it
-  next to the frame count: near-equal means every frame pays for the rebuild.
+  threw the whole picture away and put it back together instead of only moving what moved. It used
+  to climb with almost every frame; since the render-group build (each busy part of the picture is
+  now rebuilt on its own) it should **barely move**. Read the *rate*, not the total: watch it over
+  a few seconds and compare with how many frames went by. A figure that keeps pace with the frame
+  count means every frame is paying for a full rebuild again, and is worth reporting.
+
+  **Read it with the panel hidden — and read it from the capture, not off the screen.** The panel
+  is drawn into the picture like everything else, and it is deliberately *not* one of the
+  separated parts, so every time one of its numbers changes width it costs one rebuilt frame. How
+  much that adds depends on the machine rather than on the game: the automated browser tests
+  measured 6 % of frames on an idle machine and 49 % on a busy one, and 0 % in the very same run
+  once the panel's own layer was separated too. So a `REB` read while the panel is on the screen
+  measures **the panel**, not the game.
+
+  That would be a trap — you can only see `REB` by showing the thing that spoils it — except that
+  the panel is not the only thing that reads it. The [guided capture](#the-guided-capture-preferred)
+  records `REB` every frame whether the panel is shown or hidden, and its own list in the corner is
+  ordinary text laid over the picture, not part of it. So: **press `1` to hide the panel, fly, and
+  read `REB` off the table the analyzer prints** (`REB / frames` per row, and the `M1` line). That
+  figure is the game's own. If there is no capture running, hide the panel, fly for a while, and
+  only then press `1` to show it again and read the total — the counter keeps counting while the
+  panel is hidden.
 - **`RT`** — kilobytes of off-screen picture memory the drawing has taken since the app started.
   It should stay **0** on an ordinary stage whatever the CRT setting is: since the render fix the
   CRT look is part of the one pass that puts the picture on screen, so it needs no full-screen
@@ -356,12 +375,16 @@ which nobody can read off a moving panel.
    at all before you walk to the monitors.
 
 3. **On the monitor**, open the tools (Play/Pause, Ch▲, Ch▲, Ch▲). A list appears in the **top-right
-   corner**. Play the way each line asks; a line ticks itself when enough has been recorded, and a
-   ticked line never goes back:
+   corner**. Opening the tools also brings up the panel: **press `1` to hide it again before you
+   start**. The list in the corner is ordinary text over the picture and costs the drawing nothing,
+   but the panel is drawn *into* the picture and inflates `REB` by its own numbers changing width
+   ([Render profile](#render-profile-reb-and-rt)). The capture records everything either way, so
+   the whole session is best flown with the panel hidden. Play the way each line asks; a line ticks
+   itself when enough has been recorded, and a ticked line never goes back:
 
    | Line | What to do |
    |---|---|
-   | **M1** | 30 seconds on the title, then 30 seconds of a busy scene (key **8** jumps to the boss) |
+   | **M1** | 30 seconds on the title, then 30 seconds of a busy scene (key **8** jumps to the boss) — **panel hidden**, so the `REB` it records is the game's and not the panel's |
    | **M2** | OPTIONS → DISPLAY → **CRT OFF / LIGHT / FULL**, 20 seconds of the same piece of stage each |
    | **M3** | Fly 10 seconds in three different stages — include the Mode-7 one and the water / heat-haze one |
    | **M4** | A very dense pattern now, and the same one again after a checkpoint restart (key **7**) |
@@ -414,7 +437,10 @@ With the debug build on **each** monitor:
 
 1. **Baseline.** On the title, in zone A and on the boss, note `FPS`, `TICK`, `RENDER`, `DRAW`,
    `REB` and `RT`, and photograph the frame graph and the `RAF` bars. This is the control for
-   everything below.
+   everything below. For `REB`, note it, **hide the panel with `1`**, fly the section, then show the
+   panel again and note it a second time: the difference over those frames is the game's own rate.
+   A `REB` watched while the panel is up is measuring the panel
+   ([Render profile](#render-profile-reb-and-rt)).
 2. **What CRT costs.** OPTIONS → DISPLAY → CRT **OFF / LIGHT / FULL** on the *same* piece of
    stage, reading `RENDER` and `RT` each time. Since the render fix all three should read the
    **same** `RENDER` within a few per cent and `RT` should **not move at all**. Report it if `RT`
@@ -445,6 +471,8 @@ With the debug build on **each** monitor:
 | The `TPF` 0 and 2 counters climb together while flying | The lock is not engaging on this monitor. Report the model, the firmware and a photo of the panel with the `RAF` bars |
 | No `REB` / `RT` line | The build predates the render profiling — build `build:dev` again |
 | `REB` is blank | Only the debug build counts it; a `build:dev` bundle always does, so report it with the build id if the rest of the panel is there |
+| `REB` climbs several times a second while the panel is up | Expected — that is the panel's own numbers, not the game ([Render profile](#render-profile-reb-and-rt)). Hide the panel with **1** and read `REB` from the guided capture, or from the difference between two readings taken around a hidden stretch |
+| `REB` keeps pace with the frame count *with the panel hidden* | Worth reporting with the build id: since the render-group build it should barely move, so something is rebuilding the whole picture every frame again |
 | `RT` jumps by ~16 MB when CRT goes on | Worth reporting with a photo: since the render fix the CRT should take no scratch picture at all. (`RT` counts from the start of the app, not from when you opened the panel, so switching CRT off again never brings it back down.) |
 | The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
 | `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |
