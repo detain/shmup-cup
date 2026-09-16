@@ -433,7 +433,7 @@ const refresh = createRefreshMonitor();
 | A new raster kind | Append to `STAGE_RASTER_KINDS` (core `data`) and `RasterKind` (same index), map it in `createStageEffectsView`'s `RASTER_KINDS`, add its formula to `addRasterEffect`, its required fields to `checkStageEffects`; the shader needs no change while the effect is a per-row horizontal offset |
 | A raster effect on another layer | Add the name to `STAGE_RASTER_LAYERS` and `EFFECT_LAYERS` (core `stage`); any world layer below `Hud` works in the renderer |
 | More than 8 colours on one layer | Raise `LAYER_EFFECT_MAX_COLORS` **and** the shader's `uCycleFrom[8]` / `uCycleTo[8]` / loop bound together, then `MAX_CYCLE_COLORS_PER_LAYER`; every extra colour is a comparison per pixel of the layer |
-| A vertical (per-column) or Mode 7 effect | A new program: the table texture's layout and the shader change (M3-02 plans Mode 7-style floors); keep GLSL ES 1.0 and run it through `glsl-es100.ts` and the WebGL1 spec |
+| A vertical (per-column) or Mode 7 effect | A new program: the table texture's layout and the shader change — M3-02's Mode-7 floor is exactly that (`MODE7_*`, [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor)); keep GLSL ES 1.0 and run it through `glsl-es100.ts` and the WebGL1 spec |
 | A new display option | A `DisplayOptions` field with a default in `DEFAULT_USER_OPTIONS` and a branch in `resolveUserOptions` (no migration when a default is safe), `serializeSave`, an Options row and `OptionsItem` (BACK moves), a `UserOptionKind` (append), `DisplayTarget` + `connectOptionEvents` + `applyDisplayOptions` — see [saves-and-options.md](saves-and-options.md#extending-it) |
 | Interpolating a new binding | Give it a `syncInterpolated(view, camera, blend)` with the same history rules (`advance` 1 shifts, 0 keeps, else reset; blend only a slot that kept its sprite and moved ≤ `INTERPOLATION_MAX_STEP`) and call it from `render()` when `interpolation` is on |
 
@@ -500,4 +500,7 @@ const refresh = createRefreshMonitor();
   unchanged behaviour), next to the CONTROLS and GAME pages
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
 - **M2-17** — Electron's window, fullscreen and refresh settings.
-- **M3-02** — the CRT filter (`EffectSettings.crt`) and Mode 7-style floors as further filters.
+- **M3-02** (done) — the CRT / scanline pass over the upscaled picture (`createCrtPass`, capped at
+  1080 rows) and the Mode-7 floor (`createMode7Floor`, a stage's `mode7` section) as two further
+  filters, plus the aspect modes' window and side panels (`computeAspectViewport`) —
+  [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md).

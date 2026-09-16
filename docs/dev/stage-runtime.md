@@ -683,3 +683,9 @@ world.stage!.restartAt(1); // back to x 1500: speed, pan and flags as live play 
   `core/data` `stageForLoop` merges a stage's `remix` events into its timeline from loop 2 — loop 1
   plays the stage as before, indices and hashes included; every zone ships a remix
   ([extra-modes-and-replays.md](extra-modes-and-replays.md#arcade--loops-gameconfigloop)).
+- **M3-02** (done) — the optional `mode7` section joins the stage's presentation view
+  (`createStageEffectsView` → `Mode7View`, drawn by `@shmup/render-pixi` `createMode7Floor`): the
+  runner never reads it, so a stage's state and hash are unchanged. The dev stage `dimension`
+  (`?stage=dimension`) is the showcase, and `escape.stage.json` — a heightfield corridor with a
+  ramping camera — is what a final zone flies out through
+  ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).

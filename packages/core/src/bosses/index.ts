@@ -124,6 +124,16 @@
  * {@link BOSS_TURN_TICKS}, {@link BOSS_REST_X}, {@link RAID_RETURN_TICKS},
  * {@link BOSS_FIRE_MARGIN}, {@link turnedFrame}.
  *
+ * **Pull fields (M3-02).** A boss script may open a **pull field** around its boss
+ * ({@link BossScriptApi.pull} / {@link BossScriptApi.release} — `Boss.pullRadius`,
+ * `pullStrength`, `pullTicks`): every living ship within reach is drawn towards the boss's origin
+ * with the vortex falloff `core/bullets` `VORTEX_FALLOFF` and clamped to the view. The World
+ * applies it in phase 2, after the ships moved ({@link BossSystem.applyFields}), and a field whose
+ * ticks ran out closes itself. It is what the P2 suction and grabber bosses are made of
+ * (shmup_feat.md §13 — GRASPING BLOOM, IRON TALON; SHADOW STRIDER, the invincible walker, needs no
+ * field). A field never survives its boss: entering a slot and clearing the session reset all
+ * three fields, so a boss can never inherit the pull of the one that vacated its slot.
+ *
  * @module
  */
 import {

@@ -582,3 +582,10 @@ the menus with action presses; `game.scenes.run` / `.map` / `.ending` expose the
   of every World as data (`WorldStart`, `prepareWorldStart` — what `prepareRunWorld` runs) so a run
   replay can rebuild each World, `CarriedPlayer.spread`, and the tally sealing the World's replay
   segment before it pays ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+- **M3-02** (done) — a **final** zone may name an `escape` stage
+  (`CampaignZoneSpec.escape` / `escapeId`, rejected on a zone that still has exits): its boss's
+  clear takes `ClearNext.Escape` → `FlowControl.enterEscape()`, which swaps the World for one on
+  that stage with the run's carry (`RunState.inEscape` / `escapeStage`), and the next clear
+  (`ESCAPE COMPLETE`) runs the ending. It is not a zone of its own — depths, routes, the route
+  count, the zone tally and the hi-score row's `reached` are unchanged
+  ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#the-escape-sequence)).

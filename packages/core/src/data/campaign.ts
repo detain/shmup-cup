@@ -43,9 +43,17 @@
  * characters) — original text that crawls up over the scenes between the title and the demo play.
  * Optional: a campaign without one leaves the story out of the attract loop.
  *
+ * **The escape sequence (M3-02).** A **final** zone may name an `escape` stage
+ * ({@link CampaignZoneSpec.escape} / {@link CampaignZoneSpec.escapeId}, shmup_feat.md §14
+ * "[P2] escape sequence"): the stage the run flies out through once that zone's boss is down,
+ * before the ending. {@link completeCampaign} rejects one on a zone that still has exits, and
+ * the id is resolved against `ContentDb.stages` by the loader's reference pass. It is not a zone
+ * of its own — the depths, the routes, the route count and the zone tally are unchanged.
+ *
  * **Implements.** shmup_feat.md §14 — the branching zone map with multiple final zones; §15 —
  * multiple endings chosen by route and flags (the selection hook); §17 — the ending(s) and the
- * credits (M2-14); §17 — the attract loop's story crawl (M2-15).
+ * credits (M2-14); §17 — the attract loop's story crawl (M2-15); §14 — the final zone's escape
+ * sequence (M3-02).
  *
  * **Public API.** Re-exported by `core/data`: {@link CampaignSpec}, {@link CampaignZoneSpec},
  * {@link CampaignEdgeSpec}, {@link CampaignEndingSpec}, {@link RUN_FLAG_NAMES},
@@ -57,7 +65,8 @@
  * {@link MAX_CREDITS_SECTIONS}, {@link MAX_CREDITS_LINES}, {@link MAX_CREDITS_LINE_LENGTH},
  * {@link creditsLineCount}; M2-15: {@link STORY_SCENES}, {@link StorySceneName},
  * {@link CampaignStoryPage}, {@link MAX_STORY_PAGES}, {@link MAX_STORY_LINES},
- * {@link MAX_STORY_LINE_LENGTH}.
+ * {@link MAX_STORY_LINE_LENGTH}; M3-02: {@link CampaignZoneSpec.escape} /
+ * {@link CampaignZoneSpec.escapeId}.
  *
  * @remarks
  * Load time only: nothing here runs per tick, so it allocates freely.

@@ -296,7 +296,11 @@ interface UserOptions {
     readonly reduceFlashing: boolean; // M2-08
     readonly showHitbox: boolean; // M2-08
     readonly bossHpBar: boolean; // M2-09
+    readonly crtFilter: CrtFilter; // M3-02: 'off' | 'light' | 'full'
+    readonly aspect: AspectMode; // M3-02: 'normal' | 'wide' | 'classic'
   };
+  readonly play: PlayOptions; // M3-01 — speed, invincible, optionRecovery, rumble;
+  //                             M3-02 — slowdown, graze, deathBomb, blackHole (sim-affecting)
 }
 ```
 
@@ -316,6 +320,15 @@ rounded and clamped to 0–10 (anything else takes the default; `-0.4` becomes `
 skipped when applied. The M2-16 fields are read the same way: an `AutofireMode`, an integer 1–60, a
 `SocdChoice`, an integer 0–10, `resolveBindingOverrides(bindings)`, a difficulty preset, lives 1–5, a
 death penalty preset, booleans — each else `null`; `oneButton` else `false`.
+
+**The picture and the extras (M3-02).** `display.crtFilter` (one of `CRT_FILTERS`) and
+`display.aspect` (one of `ASPECT_MODES`) are presentation again — they reach the renderer live
+through `UserOptionKind.CrtFilter` / `Aspect` and at boot through `applyDisplayOptions`, and an
+unknown value resolves to `'off'` / `'normal'`. The four extras in `play` — `slowdown`, `graze`,
+`deathBomb`, `blackHole` (the Options screen's **EXTRAS** page) — are **sim-affecting**, so they
+follow the M2-16 rule: the flow folds them into the next games' configs
+(`withUserGameOptions`, where `deathBomb` becomes `DEFAULT_DEATH_BOMB_TICKS` ticks) and the replay
+header records the result — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#options).
 
 **The bullet palette (M2-02).** `display.bulletPalette` is one of `BULLET_PALETTES` —
 `standard` (the default), `deuteranopia`, `protanopia`, `tritanopia` (`shmup_feat.md` §21); any

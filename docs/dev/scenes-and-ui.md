@@ -674,3 +674,9 @@ rate, the game options) reach a World only through the config the flow resolves 
   recorder (`SceneFlow.recorder`) fed by the game scene every tick; `SceneFlow.speedPercent` slowing
   `core/game`'s clock; the caravan's clock in the HUD (`hudClockSeconds`, `HUD_STRING_COUNT` 24)
   ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+- **M3-02** (done) — the Options screen's **EXTRAS** page (`OptionsItem.Extras`, `ExtrasScene`,
+  `ExtrasItem`: SLOWDOWN, GRAZE, DEATH BOMB, BLACK HOLE under `APPLIES FROM THE NEXT GAME`) and the
+  DISPLAY page's **CRT** and **ASPECT** rows (presentation, pushed live as `UserOption` events); the
+  final zone's escape sequence in the stage-clear flow (`ClearNext.Escape`,
+  `FlowControl.enterEscape`, the `ESCAPE COMPLETE` title)
+  ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).

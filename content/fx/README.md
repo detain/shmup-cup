@@ -21,6 +21,8 @@ the atlas.
 | `pickup` | `fx/ring` | The ring flash of a capsule pickup |
 | `muzzle` | `fx/spark` | A tiny flash at the ship's nose when it fires |
 | `shield.break` | `fx/spark` | A burst of sparks when the Force Field breaks |
+| `graze` | `fx/sparkle` | M3-02: the single speck of a grazed enemy bullet (`FX_CUES.Graze`) |
+| `black.hole` | `fx/ring` | M3-02: the rings of a black hole opening or discharging (`FX_CUES.BlackHole`, fired together with `spark`) |
 
 and binds them to the events with **triggers**: `fx` triggers listen to the sim's `Particles`
 events (their cue names are `FX_CUES` in `@shmup/core` `events`), `sfx` triggers to `Sfx`

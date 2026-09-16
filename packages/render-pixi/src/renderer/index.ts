@@ -63,9 +63,21 @@
  * reduction, hitbox).
  *
  * **Public API.** {@link createPixiRenderer}, {@link PixiRenderer} (incl. `drawCalls`, M1-19; the
- * scale mode, hitbox, interpolation and layer effects, M2-08), {@link PixiRendererOptions} (incl.
+ * scale mode, hitbox, interpolation and layer effects, M2-08; M3-02 the Mode-7 floor, the CRT
+ * filter — {@link PixiRenderer.setCrtFilter} — and the aspect modes —
+ * {@link PixiRenderer.setAspect}, {@link PANEL_ALPHA}), {@link PixiRendererOptions} (incl.
  * `countDrawCalls`, M1-19; `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
- * M2-08).
+ * M2-08; `aspect`, `createCrtFilter` and `createMode7Filter`, M3-02).
+ *
+ * **The extras of M3-02.** The renderer owns three presentation-only additions, each idle until
+ * asked for: the **Mode-7 floor** (`effects` {@link createMode7Floor} — a filtered full-frame
+ * sprite at the bottom of `BG_MID`, bound from the world view's `mode7` section and given the
+ * plane's turned axes every frame), the **CRT / scanline pass** (`effects`
+ * {@link createCrtPass} over the upscaled second pass, capped at `core/config` `CRT_MAX_HEIGHT`
+ * rows) and the **aspect modes** (`viewport` {@link computeAspectViewport}: the frame is placed
+ * in the largest ultra-wide or 4:3 window that fits and the leftover width becomes two dimmed
+ * side panels at {@link PANEL_ALPHA} — a window on the display, never a crop, and the internal
+ * 384×216 playfield is unchanged).
  *
  * @module
  */

@@ -901,6 +901,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `stage.spec.ts` / `enemies.spec.ts` fail with "not scrolling" / "not moving" on a busy machine | Fixed in M1-19: they no longer count rAF frames (the loop runs 1–4 ticks a frame under load) but freeze the sim and step exact ticks (`test/e2e/frame-advance.ts`). A new spec comparing two captures should do the same |
 | A raster effect / palette cycle never shows | The camera x is outside the effect's `[from, to)`, `renderer.effects.settings.rasterEffects` is off, or a scene's own `WorldView` dropped `effects` (the flight scene and the scene view pass it through) — [presentation-polish.md](presentation-polish.md#gotchas) |
 | The frame is stretched, or has no black border on a PC | The saved SCALE option is `fit` / `stretch`; OPTIONS → DISPLAY → SCALE → INTEGER restores the letterbox (`renderer.scaleMode`) |
+| The picture sits in a window with dim panels beside it | The saved ASPECT option is `wide` / `classic` (M3-02): the frame is placed in a 64:27 or 4:3 window and the leftover width is drawn as side panels (`renderer.panels`, `PANEL_ALPHA`). OPTIONS → DISPLAY → ASPECT → NORMAL fills the display again |
+| Scanlines over everything | The saved CRT option is `light` / `full` (M3-02, `renderer.crtFilter`); it is one filter over the upscaled second pass, computed at at most 1080 rows |
+| The Mode-7 floor never appears | The stage has no `mode7` section, the camera is outside its `[from, to)`, the atlas has no such sprite (`Mode7Floor.bind` got `null`) or the scene's `WorldView` dropped `effects` — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor) |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
 
 ## Next steps that build on this page

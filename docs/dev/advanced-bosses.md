@@ -532,3 +532,11 @@ hashWorld(game.world); // covers every slot, the raid camera, the rush and the e
   (`content/stages/boss-rush.stage.json`: the nine zone bosses A–I, each with its WARNING), with its
   own hi-score table; the 4-way bot clears it (`test/playtest/boss-rush.test.ts`)
   ([extra-modes-and-replays.md](extra-modes-and-replays.md#boss-rush-content-boss-rushstagejson)).
+- **M3-02** (done) — **pull fields**: `BossScriptApi.pull(radius, strength, ticks?)` / `release()`
+  set `Boss.pullRadius` / `pullStrength` / `pullTicks`, and `BossSystem.applyFields()` (phase 2,
+  after the ships moved) draws every living ship towards the boss's origin with the vortex falloff,
+  clamped to the view; a field is reset when a slot is entered and when the session is cleared, and
+  hashed only while it is open. The three P2 bosses ride it: `boss.suction` (GRASPING BLOOM),
+  `boss.grabber` (IRON TALON) and `boss.walker` (SHADOW STRIDER — armour parts and a `timeLimit`, so
+  it can only be dodged)
+  ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#boss-pull-fields-and-the-three-p2-bosses)).

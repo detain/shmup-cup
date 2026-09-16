@@ -204,6 +204,20 @@ a 90-s time limit; `inner` → the king) and **THE HOLLOW KING** (`hollow-king`,
 `boss.angler`: an anglerfish whose `whenOpen` mouth — the core — opens with its jaws, a lure of
 chained beads ending in a gun swaying in front of it; three phases).
 
+`extras.enemies.json` (M3-02) is the roster of the pseudo-3D **HIGH-SPEED DIMENSION** dev stage
+(`?stage=dimension`): `dim-pylon` (a lit corridor pillar on `drifter.sine` with no drift) and the
+three **P2 bosses** of `shmup_feat.md` §13, all built on a boss script's **pull field**
+(`BossScriptApi.pull`, applied in phase 2 after the ships moved):
+
+- **GRASPING BLOOM** (`grasping-bloom`, GB-11 — `boss.suction`): a flower whose maw breathes in with
+  a wide field open (its `whenOpen` core is vulnerable only then) and breathes out firing aimed
+  spreads; two petals to break, then a stronger second phase.
+- **IRON TALON** (`iron-talon`, IT-12, `role: "captain"` — `boss.grabber`): stalks the nearest ship,
+  telegraphs with the claw open, lunges with a short, very strong field, then recovers.
+- **SHADOW STRIDER** (`shadow-strider`, SS-13, a captain with `timeLimit` 2400 — `boss.walker`): an
+  armoured walker that **cannot be destroyed** — it paces between two screen columns sweeping aimed
+  3-ways and walks off when its time is up (`score` 0, so there is nothing to farm).
+
 Several files may exist (e.g. one per theme); ids must be unique across all of them.
 The bonus stages' drops (M2-10): `"drop": "oneUp"` leaves a 1UP (an extra life, up to 9) and
 `"drop": "bonusCapsule"` a gold bonus capsule worth 1,000 points — world-space items like the
@@ -383,3 +397,10 @@ with `anim`; `bosses/turret` has 16).
 player's row), `captain.launcher` (launches its `minion` from the guns in turn), `captain.circler`
 (circles an ellipse round the playfield's middle, rings), `captain.crab` (sidesteps in a box,
 turning rings) and `boss.raid` (turrets turned to the player, firing along their headings).
+
+**Pull fields (M3-02).** `boss.suction`, `boss.grabber` and `boss.walker` are the P2 bosses of
+`extras.enemies.json`; the first two open a **pull field** that drags every living ship towards the
+boss's origin (tunables `pullRadius` / `pullStrength` / `pullTicks` and `grabRadius` /
+`grabStrength` / `grabTicks`, with the vortex falloff of `core/bullets` `VORTEX_FALLOFF`). A field
+never outlives its boss, so a reused slot cannot inherit one —
+[`docs/dev/visual-and-mechanic-extras.md`](../../docs/dev/visual-and-mechanic-extras.md#boss-pull-fields-and-the-three-p2-bosses).

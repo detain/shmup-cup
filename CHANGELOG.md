@@ -6,7 +6,7 @@ versions before 1.0 may change anything between minor releases. Development foll
 
 ## [Unreleased]
 
-The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 …).
+The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01, M3-02 …).
 
 ### Game
 
@@ -30,6 +30,27 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 
   `*`.
 - **Score-milking cap**: enemies spawned by a boss or a spawner score in full for the first 40 of a
   kind in a zone, then 10 %.
+- **Picture settings** on the Options screen's DISPLAY page (M3-02): **CRT** (OFF / LIGHT / FULL —
+  scanlines, an aperture-grille mask and a vignette over the upscaled picture, computed at at most
+  1080 rows so a 4K TV pays for a 1080p pass) and **ASPECT** (NORMAL / ULTRA-WIDE / CLASSIC 4:3 —
+  the picture is placed in a 64:27 or 4:3 window with dimmed side panels beside it instead of black
+  bars; it is never cropped and the playfield stays 384×216). Both apply at once and are saved.
+- **EXTRAS** options page (M3-02) with four toggles that apply from the next game: **SLOWDOWN**
+  (the deterministic 16-bit slow-down once the screen carries more than 96 objects), **GRAZE**
+  (points for an enemy bullet that passes just clear of the ship), **DEATH BOMB** (a few frames to
+  bomb out of a fatal hit, with a moment of invulnerability) and **BLACK HOLE**.
+- **The black-hole bomb** (M3-02), the game's signature special for the **MANTA**: yellow items
+  stock up to three bombs, `Special` throws a vortex that drags enemy bullets in and swallows the
+  ones that reach its core (points each, like a cancel), pulls enemies towards it and then
+  discharges lightning that destroys them and hurts boss parts. Two can be open at once, one per
+  player.
+- **An escape sequence** after the final zone's boss (M3-02): a collapsing corridor that scrolls
+  faster and faster, then **ESCAPE COMPLETE** and the ending. It is part of that zone — routes, the
+  zone count and high-score rows are unchanged.
+- **Three P2 bosses** (M3-02) on the new pull fields: **GRASPING BLOOM** (breathes in, dragging the
+  ships towards its maw), **IRON TALON** (lunges and grabs) and **SHADOW STRIDER** (an armoured
+  walker that can only be dodged) — on the browser's new showcase stage **HIGH-SPEED DIMENSION**
+  (`?stage=dimension`), which flies over a pseudo-3D Mode-7 neon floor.
 
 ### For developers
 
@@ -44,6 +65,21 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 
 - Golden replays re-blessed: every file for its header (the new config fields and `assists`),
   `captain-range-god` also for the milking cap (25,120 → 20,980); six new goldens of the extra modes
   and assists.
+- M3-02: `GameConfig` gained `slowdown`, `graze`, `deathBomb` and `blackHole` (so every replay
+  header records them), `UserOptions.display` `crtFilter` / `aspect` and `UserOptions.play` the four
+  extras' switches. New core module **`blackhole`** (the bomb stock, the vortices, the lightning and
+  the death-bomb window's bombs); `core/bullets` gained `grazePlayers` and `vortex`, `core/enemies`
+  `pullTowards` and `blast`, `core/bosses` `BossScriptApi.pull` / `release` with
+  `BossSystem.applyFields`, `core/powerups` `equipMeterSlot`. A stage may carry an optional `mode7`
+  section and a **final** campaign zone an `escape` stage; the `rules` file's `scoring.graze` pays a
+  graze. `@shmup/render-pixi` gained the Mode-7 filter and floor, the CRT pass and
+  `computeAspectViewport` (plus `setAspect` / `setCrtFilter` on the renderer and the optional
+  `DisplayTarget` methods behind them).
+- `hashWorld` mixes the new state only in a World that uses it (`mixExtras`, and a boss's pull field
+  only while one is open), so recordings made before M3-02 keep their hashes; all goldens and
+  attract demos were re-blessed once for the four new header fields, with no expected status, score
+  or tick count moved, and `zone-a-extras` joined them (zone A with every extra on).
+- The Tizen bundle is 383.4 KB gzip of its 512 KB budget.
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

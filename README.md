@@ -773,6 +773,33 @@ secret codes and the game-speed / invincibility assists
     [API reference](docs/dev/api-reference.md) (`replay/run.ts`, the EXTRA scenes, `PlayOptions`,
     rumble)
 
+- **Visual & mechanic extras** (M3-02)
+  - **Mode-7 floor** — one GLSL ES 1.0 filter evaluates mode 7's per-row affine matrix over a
+    full-frame sprite at the bottom of `BG_MID`, driven by a stage's new optional `mode7` section
+    (presentation only, so no hash moved); the plane's turned axes come from the core's angle
+    tables, so the shader has no trigonometry. The pseudo-3D **HIGH-SPEED DIMENSION** dev stage
+    (`?stage=dimension`) flies over it.
+  - **CRT / scanline filter** (OFF / LIGHT / FULL) over the upscaled picture, capped at 1080 rows
+    so a 4K TV pays for a 1080p pass, and two **aspect modes** — ultra-wide 64:27 and classic 4:3 —
+    that place the frame in a window with dimmed side panels instead of black bars (never a crop:
+    the playfield stays 384×216).
+  - The **black-hole bomb**, the game's one signature mechanic (`core/blackhole`): the MANTA's
+    yellow items stock a bomb, `Special` throws a vortex that pulls enemy bullets in, swallows the
+    ones reaching its core and then discharges lightning; one vortex per player.
+  - Deterministic **authentic slowdown** (a sim-side tick skip once the on-screen load passes 96
+    objects), **graze** scoring, the **death-bomb window**, and the three P2 bosses on boss **pull
+    fields** — GRASPING BLOOM (suction), IRON TALON (grabber) and SHADOW STRIDER (the invincible
+    walker).
+  - The final zone's **escape sequence** (a collapsing corridor before the ending; not a zone of its
+    own), a new **EXTRAS** options page for the four sim-affecting extras and CRT / ASPECT rows on
+    the DISPLAY page.
+  - One new golden replay (zone A with every extra on); all goldens and demos re-blessed once for
+    the four new header fields — no expected score, status or tick count moved.
+  - Docs: [developer guide](docs/dev/visual-and-mechanic-extras.md) ·
+    [the extras for players](docs/client/visual-and-mechanic-extras.md) ·
+    [API reference](docs/dev/api-reference.md) (`core/blackhole`, `StageMode7`, the `effects` and
+    `viewport` additions)
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -805,7 +832,8 @@ Game docs — testers: [preview build (the title screen, menus, HUD and pause me
 [controls](docs/client/controls.md) · [monitor setup & install](docs/client/install-on-tv.md) ·
 [debug tools & release checks](docs/client/debug-tools.md) · [the desktop app](docs/client/desktop-app.md) ·
 [the v1.0 release candidate & checklist](docs/client/release-candidate.md) ·
-[extra modes, replays & assists](docs/client/extra-modes-and-replays.md).
+[extra modes, replays & assists](docs/client/extra-modes-and-replays.md) ·
+[the visual & mechanic extras](docs/client/visual-and-mechanic-extras.md).
 Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/architecture.md) ·
 [engine foundations](docs/dev/engine-foundations.md) · [content data](docs/dev/content-data.md) ·
 [asset pipeline](docs/dev/asset-pipeline.md) ·
@@ -842,6 +870,7 @@ Developers: [repo layout](docs/dev/repo-layout.md) · [architecture](docs/dev/ar
 [platform polish: Electron, Tizen extras, storage & memory](docs/dev/platform-polish.md) ·
 [v1.0 hardening & the release candidate](docs/dev/release-hardening.md) ·
 [extra modes, replays & assists](docs/dev/extra-modes-and-replays.md) ·
+[visual & mechanic extras](docs/dev/visual-and-mechanic-extras.md) ·
 [input profiles](docs/dev/input-profiles.md) ·
 [API reference](docs/dev/api-reference.md) ·
 [build, test & deploy](docs/dev/build-test-deploy.md) · [conventions](docs/dev/conventions.md).
@@ -980,7 +1009,11 @@ Weapon Edit, parking & weapon select), M2-04 (Option & shield variants + Option 
 systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, visual options) and
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
 transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G), M2-14 (final zones H & I, endings
-& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) is done, next is **M3-02** (visual & mechanic extras), then **M3-02b** (remote & hardware tuning from the input-probe results) and M3-03; every simulation change re-blesses the golden replays in the same
+& credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) and M3-02 (visual & mechanic
+extras: the Mode-7 floor and the dimension stage, the CRT filter, the ultra-wide and 4:3 aspect
+modes, authentic slowdown, graze, the death-bomb window, the black-hole bomb, the P2 bosses and the
+final zone's escape sequence) are done, next is **M3-02b** (remote & hardware tuning from the
+input-probe results) and then M3-03; every simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
 The input probe has run on both monitors (2026-09-15). Its results are recorded in `shmup_tech.md` §2.7 and

@@ -616,4 +616,8 @@ world.players[0].hits; // hits recorded by playerHit — each one a death since 
 - **M2-09** (done) — advanced bosses with TS behaviours ([advanced-bosses.md](advanced-bosses.md)); boss
   behaviours and revenge bullets running DSL patterns and DSL-fired lasers are still planned (with the
   zones' bosses, M2-11 … M2-14).
-- **P2** — graze scoring (`BulletFlag.Grazed`).
+- **M3-02** (done) — **graze** scoring (`BulletSystem.grazePlayers(points)`, `GRAZE_MARGIN`,
+  `BulletFlag.Grazed` set once per bullet, `FX_CUES.Graze`) and the black hole's
+  **vortex** (`BulletSystem.vortex(cx, cy, radius, core, pull, player)`, `VORTEX_FALLOFF`: bullets
+  pulled in, the ones reaching the core swallowed as point items like a cancel) —
+  [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md).

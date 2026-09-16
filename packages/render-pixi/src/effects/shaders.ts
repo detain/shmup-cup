@@ -1,8 +1,29 @@
 /**
- * The layer-effect shader sources of the `effects` module (plan M2-08): one **GLSL ES 1.0**
- * (WebGL1) program that a Pixi filter runs over a whole world layer — the per-scanline raster
- * offset (wavy water, heat haze, line-band parallax floors) and the palette cycle (water, lava,
- * glowing cores) in one pass, so a layer with both costs one filter.
+ * The **shader sources** of the `effects` module — three **GLSL ES 1.0** (WebGL1) programs, each a
+ * pair of `*_VERTEX` / `*_FRAGMENT` strings a Pixi filter is built from:
+ *
+ * | Program | Step | Runs over | Built by |
+ * |---|---|---|---|
+ * | `LAYER_EFFECT_*` | M2-08 | one world layer | `./layer-effects.ts` `createLayerEffectFilter` |
+ * | `MODE7_*` | M3-02 | a full-frame sprite on `BG_MID` | `./mode7.ts` `createMode7Filter` |
+ * | `CRT_*` | M3-02 | the upscaled second pass | `./crt.ts` `createCrtFilter` |
+ *
+ * The **layer effect** (plan M2-08) does the per-scanline raster offset (wavy water, heat haze,
+ * line-band parallax floors) and the palette cycle (water, lava, glowing cores) in one pass, so a
+ * layer with both costs one filter.
+ *
+ * The **Mode-7 floor** (plan M3-02, shmup_feat.md §18) evaluates mode 7's per-row affine matrix
+ * per pixel: the fragment shader turns the row's distance below the horizon into the plane's
+ * depth, walks the plane's origin along the **turned axes** the host passes in (`uRight` /
+ * `uForward`, from the core's angle tables — the shader has no trigonometry) and samples the floor
+ * tile straight out of the atlas with `fract`, fading it into the fog colour with depth. The scale
+ * is clamped (`./mode7.ts` `MODE7_MAX_SCALE`) so the horizon row cannot divide by zero, and
+ * angles are the project's 1024 binary units (`MODE7_ANGLE_UNITS`).
+ *
+ * The **CRT / scanline filter** (plan M3-02, shmup_feat.md §18) is one program for both strengths:
+ * `uScan`, `uMask` and `uVignette` switch the scanlines, the aperture-grille mask and the vignette
+ * (`./crt.ts` `CRT_LOOKS` — scanlines at `light`, all three at `full`), and it only ever
+ * multiplies the colour **down**, so the flash overlay's limiter still holds.
  *
  * Plain strings with no imports, so tests and the browser smoke test can compile them without
  * loading Pixi. Pixi (v8) keeps a source without `#version 300 es` as GLSL ES 1.0 and only adds
@@ -10,7 +31,7 @@
  * `texture2D`), none of which these sources use.
  *
  * **Uniforms.** Pixi's filter system fills `uInputSize`, `uInputClamp`, `uOutputFrame`,
- * `uOutputTexture` and the input `uTexture`; the effect sets:
+ * `uOutputTexture` and the input `uTexture`; the layer effect sets:
  *
  * | Uniform | Meaning |
  * |---|---|

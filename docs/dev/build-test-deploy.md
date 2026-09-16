@@ -138,7 +138,8 @@ M2-16 **≈ 359 KB** — the two UI string tables ≈ 6 KB, the Options pages an
 so M2-16 raised the budget to 384 KB
 ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#budgets)); M3-01
 took it to **374.7 KB**, leaving ≈ 9 KB, so before M3-02 the owner set **512 KB** as the agreed
-ceiling — room to spend, not a target, and going above it needs their say-so (M2-18's boot-time
+ceiling (M3-02's shaders, Mode-7 floor, CRT pass, black-hole module and two new stages took it to
+**383.4 KB**) — room to spend, not a target, and going above it needs their say-so (M2-18's boot-time
 check still guards the launch, which is the real constraint). A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with

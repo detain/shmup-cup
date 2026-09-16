@@ -220,6 +220,9 @@
  *   browser, save / share replays, fast-forward, the game-speed and invincibility assists flagging
  *   scores and replays, unlocks; §7A — Extra Edit as an unlock; §4 — secret codes and rumble;
  *   §8 — option recovery (M3-01)
+ * - shmup_feat.md §3 / §7C / §10 / §22 — the EXTRAS options page (authentic slowdown, graze,
+ *   death bomb, black-hole bomb); §18 — the DISPLAY page's CRT and ASPECT rows; §14 — the final
+ *   zone's escape sequence (M3-02)
  *
  * **Public API.** {@link SceneStack}, {@link createSceneStack}, {@link SCENE_STACK_DEPTH},
  * {@link Scene}, {@link SceneId}, {@link SceneFlow}, {@link SceneFlowHost}, {@link SceneStart},
@@ -259,7 +262,8 @@
  * {@link CarriedPlayer}, {@link captureCarry}, {@link applyCarry}, {@link copyShieldState},
  * {@link worldDeaths}, {@link ZoneResult}, {@link tallyZone}, {@link awardZoneBonus},
  * {@link runWorldConfig}, {@link prepareRunWorld}, {@link RunFlag},
- * {@link KILL_BONUS_PER_PERCENT}, {@link TIME_BONUS_PAR_TICKS}, {@link TIME_BONUS_PER_SECOND}.
+ * {@link KILL_BONUS_PER_PERCENT}, {@link TIME_BONUS_PAR_TICKS}, {@link TIME_BONUS_PER_SECOND};
+ * M3-02: {@link ExtrasScene}, {@link ExtrasItem}, {@link SceneFlowView}.
  *
  * **Co-op (M2-06).** {@link SceneFlow.coop} is the title's choice; {@link SceneFlow.inputSeats}
  * tells the host's input adapter whether player 2's seat is routed (a co-op game or its continue
@@ -295,6 +299,19 @@
  * assisted run ({@link AssistFlag}, {@link runAssisted}) marks its hi-score rows. Reaching an
  * ending unlocks the weapon select's EXTRA and the ARCADE's LOOP 2 (`core/save` `unlocks`); the
  * debug stage jumps tell the flow ({@link SceneFlow.noteWorldEdited}) and the run is not saved.
+ *
+ * **Visual & mechanic extras (M3-02).** The Options screen gained the **EXTRAS** page
+ * ({@link OptionsItem}.Extras, {@link ExtrasScene}, {@link ExtrasItem}): the four sim-affecting
+ * extras — SLOWDOWN, GRAZE, DEATH BOMB and BLACK HOLE (`core/config` `PlayOptions`) — under an
+ * `APPLIES FROM THE NEXT GAME` note, and the DISPLAY page gained the presentation-only CRT
+ * ({@link DisplayItem}.Crt, `core/config` `CRT_FILTERS`) and ASPECT
+ * ({@link DisplayItem}.Aspect, `ASPECT_MODES`) rows, both pushed live to the host through
+ * `UserOptionKind`. The final zone's **escape sequence** is the flow's: a stage clear on a zone
+ * with an escape stage goes `ClearNext.Escape` → {@link FlowControl.enterEscape}, which
+ * swaps the World for one on that stage with the run's carry
+ * ({@link RunState.inEscape} / {@link RunState.escapeStage}), and the next clear runs the ending.
+ * It is not a zone of its own: the route, the zone count and the hi-score row's `reached` are
+ * unchanged.
  *
  * @module
  */

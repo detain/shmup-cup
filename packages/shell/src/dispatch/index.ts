@@ -58,7 +58,9 @@
  *
  * {@link applyAudioOptions} sets all three volumes from saved options at boot;
  * {@link applyDisplayOptions} (M2-08) hands the saved display options to the renderer (the bullet
- * palette, the scale mode, shake, flash reduction and the hitbox markers).
+ * palette, the scale mode, shake, flash reduction and the hitbox markers; M3-02 the CRT / scanline
+ * filter and the picture's shape — {@link DisplayTarget.setCrtFilter} / {@link DisplayTarget.setAspect},
+ * both optional, so a renderer without them is left alone).
  *
  * **Implements.**
  * - shmup_feat.md §22 Architecture — presentation fed by read-only views + the event queue
@@ -70,7 +72,8 @@
  * {@link connectOptionEvents}, {@link applyAudioOptions}, {@link VolumeTarget},
  * {@link applyDisplayOptions}, {@link DisplayTarget} (M2-08), {@link connectStagePreparation},
  * {@link StagePreparationTarget} (M2-10), {@link connectSoundTest}, {@link SoundTestTarget}
- * (M2-15), {@link connectRumbleEvents} (M3-01 — gamepad rumble).
+ * (M2-15), {@link connectRumbleEvents} (M3-01 — gamepad rumble); the CRT and aspect rows of
+ * M3-02 travel through the same {@link DisplayTarget}.
  *
  * @module
  */

@@ -568,3 +568,11 @@ owns" ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibil
   score-milking cap) and a demo header's optional `assists` — every one optional, so no format
   change; the shipped `boss-rush` stage and `types-extra` weapons
   ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+- **M3-02** (done) — a stage's optional `mode7` section (`StageMode7`, checked by
+  `checkStageMode7`: `horizon < bottom`, a sprite that exists, a `#rrggbb` fog) — presentation
+  only, so no hash changed —, a **final** campaign zone's optional `escape` stage id
+  (`CampaignZoneSpec.escape`, resolved against `ContentDb.stages` in the reference pass) and the
+  `rules` file's `scoring.graze`; the shipped `dimension` and `escape` stages,
+  `extras.enemies.json` (the three P2 bosses), `escape.music.json` and the new `graze` /
+  `black.hole` fx presets. Every field is optional, so the format version stayed 1
+  ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).

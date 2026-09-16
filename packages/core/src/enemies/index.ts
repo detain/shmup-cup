@@ -147,6 +147,10 @@
  * {@link HIT_FLASH_TICKS}; M2-04: {@link MAX_CARRIED_OPTIONS}, {@link CARRIED_OPTION_SPACING},
  * {@link CARRIED_BATCH_CAPACITY}; M2-07: {@link EnemyGimmicks}; M2-10: {@link EnemyStats}.
  *
+ * M3-02: {@link EnemySystem.pullTowards} and {@link EnemySystem.blast} — the black-hole bomb's
+ * pull and lightning (`core/blackhole`): a circular pull with the vortex falloff, and a Mega Crash
+ * limited to a circle (no revenge bullets, `megaCrashImmune` specs untouched).
+ *
  * **Planned API.** More behaviours' needs with the zones of M2 (M2-11 … M2-14).
  *
  * **Bosses (M1-13).** Boss entries (`EnemySpec.boss`) are never spawned here (`spawn` returns

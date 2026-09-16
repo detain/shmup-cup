@@ -277,6 +277,13 @@ ES5 and linted with `ecmaVersion: 5`.
   instead of testing the mode inside; a new piece of per-tick state that older recordings do not
   have is hashed only when in use (the caravan clock, `Loadout.spread`) so their hashes stay valid
   ([extra-modes-and-replays.md](extra-modes-and-replays.md#zero-allocation)).
+  And from M3-02: a **centre passed to a many-argument call** V8 does not inline is boxed like any
+  other fractional argument — `BlackHoleSystem.update` hands whole-pixel centres to the
+  six-argument `bullets.vortex` and to `enemies.pullTowards`, or a heap number appeared on every
+  tick a vortex was open; and a filter attached per frame copies Pixi's filter list, so a
+  presentation pass attaches and detaches only at a range or setting edge (the Mode-7 floor's
+  camera range, the CRT pass's setting and viewport)
+  ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#zero-allocation)).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.

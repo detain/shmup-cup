@@ -121,6 +121,11 @@
  * runner.restartAt(runner.checkpoint); // after a death with the `arcade` penalty
  * ```
  *
+ * **The Mode-7 floor (M3-02).** A stage's optional `mode7` section (`core/data` `StageMode7`)
+ * becomes part of the effects view the renderer reads (`core/presentation` `Mode7View`, built by
+ * {@link createStageEffectsView}): the floor's tile, horizon, fog and camera range.
+ * Presentation only — the simulation never reads it, so a stage's hash is unchanged by it.
+ *
  * **Bonus entrances (M2-10, `./bonus.ts`).** {@link BonusEntrances}, {@link BonusEntrancesHost},
  * {@link createBonusEntrances}, {@link BonusEntrance}: a stage's `bonus` events (hidden bonus-stage
  * entrances — a marked gap, all ground targets destroyed, a score digit) armed through the World's

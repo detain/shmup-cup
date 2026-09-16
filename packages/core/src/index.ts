@@ -17,7 +17,8 @@
  * cancel point items, the scoring rules and the bullet palettes with M2-02; the meter arsenal
  * (Types B–D, Weapon Edit, the `!` / `?` choices, the weapon select) with M2-03; the campaign
  * (zone map, run state, zone tally, endings hook, practice), bonus stages and the fly-out with
- * M2-10.
+ * M2-10; `blackhole` (the black-hole bomb — the Direct ship's signature special — and the
+ * death-bomb window) with M3-02.
  *
  * @packageDocumentation
  */
@@ -795,6 +796,8 @@ export {
   type BossSystem,
 } from './bosses/index.js';
 
+// The black-hole bomb (M3-02): the Direct ship's signature special and the death-bomb window's
+// ammunition.
 export {
   BLACK_HOLE_BOLT_DAMAGE,
   BLACK_HOLE_BOLT_INTERVAL,

@@ -185,6 +185,12 @@
  * sets `Loadout.spread` (forward too); {@link canEquipSlot} keeps DOUBLE equippable until then, and
  * equipping the laser clears it.
  *
+ * **The black-hole bomb (M3-02).** With `GameConfig.blackHole` on, the Direct-mode **yellow item
+ * stocks a black hole** ({@link PowerUpHost}'s optional `blackholes` hook — `core/blackhole`
+ * `BlackHoleSystem.addStock`) instead of detonating a smart bomb at once; a host without the hook
+ * (a hand-made test host) always gets the smart bomb. {@link PowerUpSystem.equipMeterSlot} equips
+ * one meter slot directly, which is how the meter ship's death bomb arms and spends its `!` slot.
+ *
  * **Co-op (M2-06).** Every player has its own meter (or Direct-mode levels) and shield; an item
  * goes to whoever touches it first (player 1 when both touch it on the same tick). While two ships
  * are in play, power-up drops are scaled by `GameConfig.coopExtra`

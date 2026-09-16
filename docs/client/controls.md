@@ -66,7 +66,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 | Shot | Main gun. It fires **on its own** by default (and always with the TV remote), so you never need to press it. In a browser **OPTIONS → CONTROLS → AUTOFIRE** can change that: **TOGGLE** — each press switches firing off and on; **HOLD** — hold it to fire ([The CONTROLS page](#the-controls-page-autofire-socd-and-the-hiccup-protection)) |
 | Sub | Missiles / sub-weapon, once you have them — automatic in the same way (with AUTOFIRE on HOLD: hold it to fire them; on TOGGLE holding it fires them while the gun is switched off) |
 | PowerUp | KESTREL: take the highlighted power-up of the power meter — one per press (holding the button never takes a second); a press on an empty or maxed-out slot does nothing. **Held** for a quarter of a second or more, it also spreads FORMATION / ROTATE Options for as long as you hold it. MANTA: nothing (its colour items work when you touch them) |
-| Special | Spread FORMATION / ROTATE Options out, and back in on the next press (a press, never a hold); TRAIL and SNAKE Options ignore it |
+| Special | Spread FORMATION / ROTATE Options out, and back in on the next press (a press, never a hold); TRAIL and SNAKE Options ignore it. With the **MANTA** and the BLACK HOLE extra on, it instead throws a **black-hole bomb** from your stock ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#the-black-hole-bomb)) |
 | Speed | MANTA: switch to its next speed — middle → fast → slow → middle — one step per press, with a ding. KESTREL: nothing (it speeds up with the power meter's SPEED UP) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
 | Confirm | Menus: select the highlighted entry; in the rebind box OK on an action asks for its new key; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game; on the zone result OK skips ahead, on the ZONE MAP it launches the chosen zone, in the ending (after a second) it shows every line of the story, then goes on to the card, and on the card to the credits; in the credits (after a second) it ends them; in the name entry it moves to the next letter and, on `END`, finishes; on the high-score table after a game (after half a second) it returns to the title; in the SOUND TEST box it plays the chosen tune or sound; in the attract loop (demo, high scores, story) any button — OK too — returns to the title. A press made while a menu is just appearing is remembered for a moment, not lost |
@@ -260,6 +260,20 @@ The title's **EXTRA** menu and its screens use the menu controls
 **Rumble:** a gamepad that can rumble does so when your ship is destroyed and at a boss's final
 explosion; OPTIONS → CONTROLS → **RUMBLE** turns it off. The TV remote never rumbles.
 
+## The black-hole bomb and the death bomb
+
+Two of the extras on OPTIONS → **EXTRAS** change what a button does
+([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)):
+
+| Where | Remote | Keyboard | Gamepad |
+|---|---|---|---|
+| **BLACK HOLE** on, flying the MANTA: throw a bomb (one of your stock) | Channel up | V | Y / Triangle |
+| **DEATH BOMB** on, in the few frames after a fatal hit: save the ship — MANTA | Channel up | V | Y / Triangle |
+| **DEATH BOMB** on, the same moment — KESTREL (it spends the armed `!` slot: the PowerUp button) | OK | C or Enter | X / Square |
+
+The KESTREL has no black hole: its Special keeps steering the Options, and its death bomb is the
+armed **!** on the power meter. Neither extra adds a new button, so nothing has to be rebound.
+
 ## Control profiles
 
 The button layouts above are **profiles**, stored as game data rather than built into the
@@ -448,7 +462,7 @@ directions alone; no button is ever needed except to pause. It applies from the 
 | Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
 | OK or Back does nothing on the CONTINUE? countdown | Both are ignored for the first half second, so a button still pressed from the game never decides; press again. If they never react, please report it |
 | Pause does nothing | On the title, the DIFFICULTY box, the SHIP SELECT box, the WEAPON SELECT screen, the PRACTICE and SOUND TEST boxes, the name entry, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game (in the attract loop it returns to the title, like any button). In the game it should open the PAUSE menu; if not, please report the device and the button |
-| Special (Channel up, V, Y) does nothing | Expected unless your Options fly FORMATION or ROTATE (chosen on the WEAPON SELECT screen's OPTION line) — then each press spreads them out or back in. Holding OK does the same while held |
+| Special (Channel up, V, Y) does nothing | Expected unless your Options fly FORMATION or ROTATE (chosen on the WEAPON SELECT screen's OPTION line) — then each press spreads them out or back in. Holding OK does the same while held. With the MANTA it throws a black-hole bomb, if BLACK HOLE is on in OPTIONS → EXTRAS and you have one stocked |
 | Speed (Channel down, Left Shift, LB / RB) does nothing | Expected with the KESTREL. With the MANTA each press switches its speed (the SPD squares in the bottom bar follow) — if not, please report the device and the remote model |
 | Speed changed twice for one press | Not expected — the game ignores held buttons and the remote's hiccups for it. Please report the remote model |
 | My FORMATION / ROTATE Options spread when I take a power-up | OK was held a quarter of a second or more — a longer hold spreads them. Press OK briefly |

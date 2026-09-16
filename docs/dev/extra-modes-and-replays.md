@@ -484,8 +484,10 @@ is the replay JSON — paste it on another browser's page to import it). The unl
 
 ## Next steps that build on this page
 
-- **M3-02** — the "authentic slowdown" toggle will be sim-affecting (unlike the game-speed assist)
-  and belongs in `GameConfig`; the death-bomb window and graze scoring join the score rules; new
-  replay flags if they assist.
+- **M3-02** (done) — the "authentic slowdown" toggle is sim-affecting (unlike the game-speed
+  assist) and lives in `GameConfig` next to `graze`, `deathBomb` and `blackHole`; the graze value
+  joined the score rules. None of the four marks a run assisted, but all four are in the replay
+  header, so a replay plays back exactly as it was recorded —
+  [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md).
 - **M3-03** — localization of the new labels (`content/strings/`); on Steam, cloud saves for the
   replay library's keys.

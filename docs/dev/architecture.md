@@ -688,7 +688,7 @@ sections of `shmup_feat.md` / `shmup_tech.md`.
 Implemented or partial today: core `platform`, `input`, `config` (partial: `GameConfig` with the difficulty
 presets since M2-01 and, since M1-17, the `UserOptions` — the display options of M2-02 / M2-08 /
 M2-09, the controls and game options, the autofire modes and `withUserGameOptions` of M2-16; the
-M3 assists and the language later), `loop`, `game`,
+M3 assists of M3-01 and the visual & mechanic extras of M3-02 — the language later), `loop`, `game`,
 `presentation`, `rng`, `math`, `events`, `pools`, `save` (M1-17; the per-mode tables and the name entry's rows since M2-15, format 2 with the v1 → v2 migration since M2-16), `data` (partial: `rules` since M2-01, `patterns` since M2-02, `campaign` since M2-10, `replay` — the attract demos — since M2-15, `strings` — the UI string tables — since M2-16), `world`, `stage`, `player` (implemented for P0 since
 M1-12; co-op joining lives in `world` since M2-06), `collision` (implemented with M2-07: moving blocks and destructible tiles — the bending lasers' circle chains live in `bullets`), `debug` (M1-19: state hash, switches, controls,
 counters, the stage skip and checkpoint jumps), `replay` (M1-19; the attract playback `replay/demo.ts` and the session-free `replay/format.ts` since M2-15), `enemies` (partial: rank modifiers and revenge bullets since M2-01, the Option Hunter and
@@ -696,11 +696,11 @@ the blue capsule's clear since M2-04, the proximity wake since M2-14), `patterns
 `behaviors` (implemented with M2-14 — the roster of all nine zones: the M1 enemy and boss rosters, `pattern.loop`, `hunter.option`, `cube.pincer`, the six stage gimmicks of M2-07, the captains and raid turrets of M2-09, zones B and C's `rocket.homing`, `worm.burst`, `boss.maw` and `boss.widow` of M2-11, zones D and E's `rear.swoop`, `boss.bastion` and `boss.steed` of M2-12, zones F and G's `cell.chase`, `boss.squid` and `boss.facet` of M2-13, zones H and I's `emitter.laser`, `mine.burst`, `boss.sovereign`, `boss.ark` and `boss.angler` of M2-14), `bosses` (implemented with M2-09: the P0
 mechanics plus four slots, turned parts, captains, raids, double and inner bosses, timers, the HP
 bar's model and boss rushes; the spiral stream since M2-14), `bullets` (implemented: bending lasers and cancel
-into points since M2-02 — graze is P2), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
-(implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate — recovery after death in M3),
+into points since M2-02, graze and the black hole's vortex since M3-02), `rank` (implemented with M2-01: growth, power terms, per-enemy sensitivity), `weapons`
+(implemented: Types A–D and Weapon Edit with M2-03, the Direct-mode families with M2-05), `options` (implemented with M2-04: trail, Snake, Formation, Rotate; recovery after death since M3-01),
 `powerups` (implemented with M2-05: meter mode, the `!` / `?` choices since M2-03, the blue capsule and freed Options since M2-04, Direct mode's items, plan and Speed toggle), `shields` (implemented: the meter shields with M2-04, the Arm with M2-05), `scoring` (partial:
 scores, the session hi-score, extends and the continue digit — per player, co-op included, since M2-06), `fx` (partial: the
-hit-stop / shake / flash requests — slowdown later), `ui` (partial: the list menu, slider,
+hit-stop / shake / flash requests; M3-02's authentic slowdown became the World's own tick skip, not an `fx` timer), `ui` (partial: the list menu, slider,
 toggle, choice and confirm widgets, builders and the HUD with the Direct-mode tier pips since M2-05, the co-op halves since M2-06
 and the boss HP bar since M2-09, the name entry since M2-15, the rebind widget and the string table (`ui/strings.ts`) since M2-16 — the language choice later), `scenes` (implemented since M2-15: the scene stack, the M1 flow, the Options screen, the difficulty
 menu and the continue countdown, the weapon select with its live preview and the Auto order editor
@@ -710,10 +710,11 @@ input-web `keymap`, `keyboard` (the rebinding's key capture since M2-16), `gamep
 conflict detection and reset); audio-web `web-audio` (partial; driven by the Options sliders since M1-17), `synth`, `sfx`,
 `music`, `loader`,
 `engine` (the sound test's `playTrack` since M2-15);
-render-pixi `renderer`, `viewport` (the scale modes since M2-08), `test-pattern`, `palette` (the colour-blind bullet
+core `blackhole` (implemented with M3-02: the black-hole bomb and the death-bomb window's bombs);
+render-pixi `renderer`, `viewport` (the scale modes since M2-08, the aspect windows and side panels since M3-02), `test-pattern`, `palette` (the colour-blind bullet
 palette tables since M2-02, palette cycling since M2-08), `atlas`, `layers`, `sprites`,
 `text`, `ui`, `particles`, `effects` (shake, flash, dim, popups; raster and palette-cycle layer
-filters since M2-08), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
+filters since M2-08, the Mode-7 floor and the CRT pass since M3-02), `debug` (the overlay, M1-19); shell `boot`, `loader`, `dispatch`, `error-screen`,
 `frame-loop`, `scene-view`, `flight`, `showcase`, `fx-gallery`, `debug` (M1-19), `controls` (the
 rebind screen's host side, M2-16);
 the apps' `boot` and `platform`. Everything else declares its intended API only. The

@@ -10,7 +10,7 @@ Plan step **M1-19** closes the first milestone with the developer tooling of `sh
   Ch+, Ch+ on the TV, and `window.__shmupDebug` for tests and the remote inspector;
 - **replays** (`core/replay`): a session's input per tick, a header with everything needed to
   recreate its start, state hashes to detect a desync;
-- **golden replays** (`test/golden/` — sixty-one since M3-01: zone A and every later zone, the dev ranges, the autofire modes, the extra modes and assists) checked by every `pnpm test`, re-blessed with
+- **golden replays** (`test/golden/` — sixty-two since M3-02: zone A and every later zone, the dev ranges, the autofire modes, the extra modes and assists, and the M3-02 extras) checked by every `pnpm test`, re-blessed with
   `pnpm golden:update`;
 - **budgets**: `pnpm bench` (ms per tick and heap growth under maximum load) and the Tizen bundle
   check's size limits;
@@ -392,11 +392,13 @@ debug stage jumps are reproducible only when the replay contains them (a session
 
 ## Golden replays (`test/golden/`)
 
-Fifty-three committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
+Sixty-two committed runs — seventeen of zone A, since M2-07 three of the `gimmick-range` dev
 stage, since M2-08 one of the `raster-range` dev stage, since M2-09 four of the advanced-boss
 dev stages, since M2-10 three of the bonus-stage dev stages, since M2-11 five of the real zones
-B and C, since M2-12 five of the real zones D and E, since M2-13 eight of the real zones F and G
-and since M2-14 seven of the final zones H and I — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
+B and C, since M2-12 five of the real zones D and E, since M2-13 eight of the real zones F and G,
+since M2-14 seven of the final zones H and I, since M2-16 two of the autofire modes, since M3-01
+six of the extra modes and assists and since M3-02 one of the visual & mechanic extras
+(`zone-a-extras`) — pin down what the simulation does (`test/golden/golden.ts` `GOLDEN_SCENARIOS`, recorded
 from the M1-18 playtest bots with the build id `'golden'`):
 
 | File | Who plays | Covers | Ends |
@@ -629,7 +631,7 @@ heap without V8's code spaces — `dataHeapBytes()` — flat within 1 MB), one f
 
 | Budget | Constant | Limit | At M1-19 |
 |---|---|---|---|
-| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **512 KB since M3-02** (350 KB until M2-16, 384 KB until M3-02; the owner's agreed ceiling — going above it needs their say-so. Launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB), **374.7 KB after M3-01** (the extra modes, the run replays and their screens, the zones' remixes — the budget was not raised) |
+| `app.js` gzipped | `APP_JS_GZIP_BUDGET` | **512 KB since M3-02** (350 KB until M2-16, 384 KB until M3-02; the owner's agreed ceiling — going above it needs their say-so. Launch ≤ 10 s, `shmup_feat.md` §23 — M2-18's boot-time check still guards the launch) | 228.6 KB (773.6 KB raw); **307.5 KB after M2-11**, **313.5 KB after M2-12**, **320.3 KB after M2-13** (the inlined content grows with every zone — ≈ 6 KB a pair), **331.5 KB after M2-14**, **343.8 KB after M2-15** (~9 KB of front-end scene code, ~3 KB of demos), **359.3 KB after M2-16** (the two UI string tables ≈ 6 KB, the Options pages and the rebinding ≈ 9 KB), **374.7 KB after M3-01** (the extra modes, the run replays and their screens, the zones' remixes — the budget was not raised), **383.4 KB after M3-02** (the two new shaders, the Mode-7 floor, the CRT pass, the black-hole module, the extras' options page and the dimension / escape stages — the budget was not touched) |
 | Atlas page edge | `ATLAS_PAGE_MAX_SIZE` | 2048 px (and every page must be a readable PNG — `pngSize` reads its IHDR) | one page |
 | Whole `dist/` | `DIST_BUDGET` | 8 MB | 812.4 KB |
 
@@ -772,3 +774,10 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   debug stage jump marks the run unsaveable; six goldens of the extra modes and assists, every file
   re-blessed for its header (`captain-range-god` also for the score-milking cap)
   ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+- **M3-02** (done) — `hashWorld` gained `mixExtras`, which mixes the authentic slowdown's load,
+  skip clock and skip flag, the graze count, every ship's bombs and death-bomb window and every
+  open black hole — **each only in a World whose config asks for it**, plus a boss's pull field only
+  while one is open, so every replay recorded earlier still hashes the same. All goldens and attract
+  demos were re-blessed once because the replay header gained the four new `GameConfig` fields; no
+  `expected` value moved. The new golden `zone-a-extras` flies zone A with every extra on, thrown by
+  the `bomberBot` ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#determinism)).

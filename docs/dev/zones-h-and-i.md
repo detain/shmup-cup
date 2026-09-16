@@ -772,4 +772,6 @@ selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; 
   ([front-end-and-attract.md](front-end-and-attract.md)).
 - **M2-17** — per-zone texture unloading between zones; the bundle budget for nine zones.
 - **M2-18** — the release-candidate audits over all 16 routes × both ships (the endings included).
-- **M3-02** — an escape sequence after the final boss (`shmup_feat.md` §14).
+- **M3-02** (done) — the escape sequence after the final boss: both final zones name
+  `content/stages/escape.stage.json` as their `escape` stage and the flow plays it before the
+  ending ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#the-escape-sequence)).

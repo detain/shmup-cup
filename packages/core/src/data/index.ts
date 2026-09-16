@@ -124,6 +124,12 @@
  *   {@link StageParallaxLayerName}, {@link StageTilemapSpec}, {@link HeightfieldSpec},
  *   {@link HeightfieldSegment}, {@link HeightfieldProfile}, {@link StageTerrain},
  *   {@link StageEvent} and its variants, {@link STAGE_EVENT_TYPES},
+ *   M2-08 {@link STAGE_RASTER_LAYERS} / {@link StageRasterLayerName}, {@link STAGE_RASTER_KINDS} /
+ *   {@link StageRasterKindName}, {@link STAGE_CYCLE_LAYERS} / {@link StageCycleLayerName},
+ *   {@link MAX_STAGE_RASTER_EFFECTS}, {@link MAX_STAGE_COLOR_CYCLES}, {@link MAX_RASTER_BANDS},
+ *   {@link DEFAULT_RASTER_PERIOD}; M3-02 {@link StageMode7} (the pseudo-3D floor — presentation
+ *   only, never read by the simulation), {@link DEFAULT_MODE7_SCROLL},
+ *   {@link DEFAULT_MODE7_FOG_DEPTH},
  *   {@link MAX_STAGE_FLAGS}; M2-07 {@link StageEventBase}, {@link StageBranch},
  *   {@link StageTriggerEvent}, {@link StageRegion}, {@link StageBlockEvent},
  *   {@link MAX_STAGE_TRIGGERS}, {@link MAX_STAGE_BRANCHES}, {@link MAX_BLOCK_CELLS},

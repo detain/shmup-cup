@@ -521,3 +521,12 @@ their `@flash` / palette siblings; the page grew to 1024×1024, inside the 2048-
 campaign's credits list every generator, and the content test holds them to
 `PROCEDURAL_GENERATORS` — a new generator needs its line in `main.campaign.json`
 ([zones-h-and-i.md](zones-h-and-i.md#placeholder-art-scriptsassetsprocedural)).
+
+M3-02 (done) added the `dimension` generator (`scripts/assets/procedural/dimension.mjs`:
+`bg/dimension-floor` — a 32×32 tile that must wrap seamlessly on both axes, because the Mode-7
+shader samples it with `fract` —, `bg/dimension-sky`, `enemies/dim-pylon` and the boss parts
+`bosses/bloom-maw`, `bosses/talon-claw`, `bosses/strider-leg`) and `fx/black-hole` (32×32, four
+frames — three of the swirl, then the discharge) in the `particles` generator, whose spiral is built
+from a **pseudo-angle** (`+ - * /` only, no `Math.atan2`) so the pixels are identical on every
+engine. Both are listed in `main.campaign.json`'s credits, as the content test requires
+([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).

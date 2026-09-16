@@ -30,6 +30,13 @@ no Pixi ticker; the host's fixed-step loop calls `render()` (`shmup_tech.md` §4
   attached only while an effect is in camera range), an **additive** Mega Crash flash, the ships'
   **hitbox markers** (`setShowHitbox`) and, with `setInterpolation(true)`, the world between the
   last two ticks for displays faster than 60 Hz.
+  Since M3-02 it draws the **Mode-7 floor** of a stage's `mode7` section (one GLSL ES 1.0 filter
+  evaluating mode 7's per-row affine matrix over a full-frame sprite at the bottom of `BG_MID`, the
+  plane's turned axes passed in from the core's angle tables), runs the optional **CRT / scanline
+  filter** over the upscaled second pass (`setCrtFilter`: off / light / full, computed at at most
+  1080 rows so a 4K TV pays for a 1080p pass) and places the frame in an **aspect window**
+  (`setAspect`: normal / ultra-wide 64:27 / classic 4:3 — a window, never a crop, with the leftover
+  width drawn as dimmed side panels).
   With `testPattern: true` it also shows the
   **calibration test pattern** (1-px checker border, 16-px grid, colour bars, a placeholder
   ship, a marker moving one pixel per tick).
@@ -50,8 +57,8 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 
 | Module | Status | Responsibility |
 |---|---|---|
-| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, lasers, bending lasers — M2-02 —, HUD / UI draw lists, shake, flash, dim); `setBulletPalette` (M2-02); M2-08: `setScaleMode`, `setShowHitbox` (the `HITBOX` layer), `setInterpolation`, `layerEffects` (bound from `world.effects`), the additive flash quad; owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19) |
-| `viewport` | implemented | Scale modes (pure): `computeIntegerViewport` (the default letterbox) and `computeViewport` (M2-08: integer / fit / stretch) |
+| `renderer` | partial | Pixi WebGL renderer, low-res target, upscale pass; draws a core `RenderFrame` (world batches, lasers, bending lasers — M2-02 —, HUD / UI draw lists, shake, flash, dim); `setBulletPalette` (M2-02); M2-08: `setScaleMode`, `setShowHitbox` (the `HITBOX` layer), `setInterpolation`, `layerEffects` (bound from `world.effects`), the additive flash quad; owns the particles, popups and screen effects and steps them by the `frame.tick` delta (M1-14); optional calibration pattern; optional draw-call counter (`countDrawCalls` → `drawCalls`, M1-19); M3-02: `setAspect` (the ultra-wide / classic window and its side panels — `panels`, `PANEL_ALPHA`), `setCrtFilter` (the CRT pass over the second pass) and the bound world's Mode-7 floor |
+| `viewport` | implemented | Scale modes (pure): `computeIntegerViewport` (the default letterbox) and `computeViewport` (M2-08: integer / fit / stretch); `computeAspectViewport` + `ASPECT_RATIOS` (M3-02: the ultra-wide / classic windows and their side panels) |
 | `test-pattern` | implemented | Calibration scene (`?scene=calibration`) |
 | `palette` | implemented | Placeholder colours (VA-panel-friendly, no pure black); the colour-blind bullet palettes (M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable`, `BULLET_PALETTE_SUFFIX`); palette cycling (M2-08: `colorCycleStep`, `writeCycleColors`, `writeColorUnit` — the layer shader's colour pairs; the art keeps its RGBA colours) — `implemented` |
 | `atlas` | implemented | `createAtlas(manifest, images)`: one nearest-neighbour source per page, consecutive frame ids per sprite, `resolveSpriteTable` / `resolveFlashTable` (unknown → `ui/missing`, warned once) |
@@ -60,7 +67,7 @@ renderer.render(game.renderFrame()); // steps particles / popups / effects by th
 | `text` | implemented | Bitmap font from the atlas, `TextMetrics`, allocation-free text and number layout |
 | `ui` | implemented | Draws a core `DrawList` (rect, sprite, text, number) into the HUD or UI layer — the core HUD and the scene flow's menus since M1-16 |
 | `particles` | implemented | `content/fx/` presets (kind `fx`: `loadFxContent`) and the 256-particle pool on the FX layer (additive / normal, presentation RNG, oldest recycled, world space, ticks not frames), spawned by FX and SFX cues (M1-14) |
-| `effects` | implemented | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter (additive Mega Crash look — M2-08), playfield dim, score popups (M1-14); M2-08: the raster offset tables (`raster.ts`: `addRasterEffect`, `encodeRasterTable` into a 1 × 216 RGBA8 texture), the GLSL ES 1.0 layer shader (`shaders.ts`) and `createLayerEffects` / `createLayerEffectFilter` (`layer-effects.ts`: one filter per layer, raster + palette cycle in one pass); CRT later (M3-02) |
+| `effects` | implemented | Screen shake (3 magnitudes, decaying, off switch), per-kind flash behind a ≤ 3-a-second limiter (additive Mega Crash look — M2-08), playfield dim, score popups (M1-14); M2-08: the raster offset tables (`raster.ts`: `addRasterEffect`, `encodeRasterTable` into a 1 × 216 RGBA8 texture), the GLSL ES 1.0 layer shader (`shaders.ts`) and `createLayerEffects` / `createLayerEffectFilter` (`layer-effects.ts`: one filter per layer, raster + palette cycle in one pass); M3-02: `mode7.ts` (the Mode-7 floor — `createMode7Filter` / `createMode7Floor`, the filtered `BG_MID` sprite) and `crt.ts` (`createCrtPass` / `createCrtFilter` / `CRT_LOOKS` / `crtResolution` — the CRT pass over the upscaled frame, capped at 1080 rows) |
 | `debug` | implemented | The debug overlay on the `DEBUG` layer (M1-19): `createDebugOverlay`, the pure builders `buildDebugPanel` (five lines — six with the M2-17 device line, `setDebugPanelDevice` / `DebugOverlay.setDevice`, the TV's model and firmware cut to `DEBUG_DEVICE_MAX` 56 printable characters; `setDevice` compares its input, so calling it every frame allocates nothing — + the frame graph) and `buildDebugOutlines` (hurt circles, terrain boxes, enemy / boss-part hurtboxes — every boss slot's since M2-09 —, shot boxes, bullet circles, items, laser capsules, grid cells) — sixteen one-colour draw lists, allocation-free; created only by dev / test builds |
 
 Guide (sprite ids → frames, bindings, quad pools, the terrain ring and parallax bands, text,
@@ -70,6 +77,7 @@ the laser view and the beam art: [`docs/dev/bullets-and-patterns.md`](../../docs
 the bending lasers and the colour-blind palettes: [`docs/dev/rendering-and-shell.md`](../../docs/dev/rendering-and-shell.md#colour-blind-bullet-palettes), [`docs/dev/pattern-dsl.md`](../../docs/dev/pattern-dsl.md);
 particles, screen effects, score popups and the `fx` content: [`docs/dev/fx-and-game-feel.md`](../../docs/dev/fx-and-game-feel.md);
 raster effects, palette cycling, scale modes, hitbox markers and render interpolation (M2-08): [`docs/dev/presentation-polish.md`](../../docs/dev/presentation-polish.md);
+the Mode-7 floor, the CRT pass and the aspect modes (M3-02): [`docs/dev/visual-and-mechanic-extras.md`](../../docs/dev/visual-and-mechanic-extras.md);
 the debug overlay and the draw-call counter: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#the-overlay-shmuprender-pixi-debug);
 exports: [`docs/dev/api-reference.md`](../../docs/dev/api-reference.md#shmuprender-pixi).
 

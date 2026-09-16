@@ -39,14 +39,16 @@
  * {@link DifficultyRules}, {@link DifficultyExtends}, {@link DifficultyTable},
  * {@link DEFAULT_DIFFICULTY_TABLE}, {@link difficultyOverrides}, {@link withDifficulty},
  * {@link MAX_RANK_GROWTH}, {@link MAX_CONTINUES}, {@link MAX_EXTEND_SCORE},
- * {@link MIN_BULLET_SPEED_MUL}, {@link MAX_BULLET_SPEED_MUL}, {@link DEATH_PENALTY_PRESETS}), the
+ * {@link MIN_BULLET_SPEED_MUL}, {@link MAX_BULLET_SPEED_MUL}, {@link DEATH_PENALTY_PRESETS},
+ * {@link DifficultyPreset}, {@link DeathPenaltyPreset}), the
  * preset types ({@link StartingLoadout}, {@link StageSkip} …), the power-meter slot names
  * ({@link MeterSlotName}, {@link METER_SLOT_NAMES}, {@link DEFAULT_AUTO_POWER_UP_ORDER},
  * {@link MAX_AUTO_POWER_UP_ORDER}), the meter arsenal of M2-03 ({@link MegaChoice},
  * {@link MEGA_CHOICES}, {@link ShieldChoice}, {@link SHIELD_CHOICES}, {@link WeaponEdit},
  * {@link WEAPON_EDIT_SLOTS}, {@link ArsenalChoice}, {@link withArsenal}, {@link arsenalMatches};
  * M2-04: {@link OptionChoice}, {@link OPTION_CHOICES}; M2-05: the ship choice {@link ShipChoice},
- * {@link withShip}, {@link shipMatches}, {@link POWER_UP_MODES}, {@link DEFAULT_SHIP_ID}; M2-06:
+ * {@link withShip}, {@link shipMatches}, {@link POWER_UP_MODES}, {@link PowerUpMode},
+ * {@link DEFAULT_SHIP_ID}; M2-06:
  * the co-op choice {@link withCoop}, {@link DEFAULT_COOP_EXTRA}, {@link MAX_COOP_EXTRA}) and the
  * screen layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
  * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:

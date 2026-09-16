@@ -434,6 +434,20 @@ The next `game.step()` runs that tick, and its phase 7 turns the recorded hit in
 | The HUD score never updates in a custom scene | Rebuild on `displayDirty` / `hiScoreDirty` and clear them yourself, as the flight scene does |
 | The allocation guard creeps up after a change here | A fractional argument to a non-inlined call (events, easing helpers), a closure or literal in the per-tick branches, or rare death code moved into a hot path |
 
+## The M3-02 extras next door
+
+Three of M3-02's mechanic extras touch this page's code but are documented in
+[visual-and-mechanic-extras.md](visual-and-mechanic-extras.md):
+
+- the **death-bomb window** (`GameConfig.deathBomb`) sits inside the death path: a fatal hit on a
+  ship that still holds a bomb opens `PlayerShip.bombTicks` instead of killing it, `playerHit`
+  ignores hits while it is open, and the World either spends a bomb (`DEATH_BOMB_INVULN_TICKS` of
+  invulnerability) or kills the ship on the tick the window closes;
+- **graze** (`GameConfig.graze`) pays `ContentDb.scoring.graze` through the same `addScore` as every
+  other credit, once per bullet (`BulletFlag.Grazed`);
+- the **authentic slowdown** (`GameConfig.slowdown`) is *not* an `core/fx` timer: phase 9 counts the
+  tick's live objects and `stepWorld` skips the next tick exactly as hit-stop does.
+
 ## Next steps that build on this page
 
 - **M1-13** (done) — bosses: part and tally scores through `addScore`, the final blast's

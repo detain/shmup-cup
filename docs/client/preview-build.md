@@ -27,6 +27,11 @@ power-ups, the capsule magnet and **one-button play**), and the game **remembers
 **BOSS RUSH**, the **CARAVAN** score attack, the looping **ARCADE** mode and **REPLAYS** of your
 games; reaching an ending unlocks the **Extra Edit** weapons, and the GAME page gained a slower game
 speed, invincibility and option recovery ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+Since M3-02 the DISPLAY page also has a **CRT** filter and an **ASPECT** setting, there is a fourth
+page — **EXTRAS** (the authentic slowdown, graze points, a death-bomb window and the MANTA's
+**black-hole bomb**) —, the final zone ends with an **escape sequence**, and the browser has a
+pseudo-3D showcase stage
+([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).
 Everything is drawn by the game
 itself and works with the remote's arrows, OK and Back alone ([The title screen and the
 menus](#the-title-screen-and-the-menus), [Pausing, quitting and the end
@@ -656,7 +661,7 @@ one-player scores; the **NEW HI-SCORE** line refers to player 1's score.
 ## The Options screen
 
 **OPTIONS** on the title menu — or in the pause menu during a game — opens a framed box over the
-darkened picture with the three volumes and three **pages**:
+darkened picture with the three volumes and four **pages**:
 
 ```text
             OPTIONS
@@ -666,6 +671,7 @@ darkened picture with the three volumes and three **pages**:
      CONTROLS
      DISPLAY
      GAME
+     EXTRAS
      BACK
 ```
 
@@ -677,6 +683,7 @@ darkened picture with the three volumes and three **pages**:
 | **CONTROLS** | Opens the **CONTROLS** page: the control profile, how the gun fires (AUTOFIRE, RATE), SOCD, the remote's hiccup protection (DEBOUNCE), **your own keys and buttons** (REBIND KEYS / REBIND PAD) and the INPUT TEST — see [controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection) |
 | **DISPLAY** | Opens the **DISPLAY** page: BULLETS, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP — [below](#the-display-page) |
 | **GAME** | Opens the **GAME** page: DIFFICULTY, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — [below](#the-game-page) |
+| **EXTRAS** | Opens the **EXTRAS** page (M3-02): SLOWDOWN, GRAZE, DEATH BOMB, BLACK HOLE — four toggles that apply from the next game, see [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mechanic-extras-options--extras) |
 | **BACK** | Keeps the settings and closes the box |
 
 - **▲ / ▼** move the highlight (MASTER is highlighted first). On a volume, **◀ / ▶** turn it down
@@ -741,6 +748,8 @@ game** (or RETRY STAGE) — a game already running keeps what it started with.
      FLASHES  NORMAL
      HITBOX   OFF
      BOSS HP  OFF
+     CRT      OFF
+     ASPECT   NORMAL
      BACK
 ```
 
@@ -752,9 +761,11 @@ game** (or RETRY STAGE) — a game already running keeps what it started with.
 | **FLASHES** | **NORMAL** (the start setting) or **REDUCED**: at most one full-screen flash a second, and every flash much dimmer — for players sensitive to flashing light (even on NORMAL the game never flashes more than three times a second) |
 | **HITBOX** | **OFF** (the start setting) or **ON**: a small white square with a pink-red rim in the middle of your ship (and player 2's) shows the spot that must not be hit — only that spot counts for bullets and enemies |
 | **BOSS HP** | **OFF** (the start setting) or **ON**: during a boss fight the middle of the top bar shows `BOSS` and a red bar of the boss's remaining strength instead of `HI` — see [The boss HP bar](#the-boss-hp-bar-every-device) |
+| **CRT** | The CRT / scanline look (M3-02): **OFF** (the start setting), **LIGHT** (dark scanlines over the picture) or **FULL** (scanlines, a red / green / blue aperture pattern and darkened corners) — see [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#picture-settings-options--display) |
+| **ASPECT** | The shape of the window the picture sits in (M3-02): **NORMAL** (the whole screen, the start setting), **ULTRA-WIDE** (a very wide cabinet window) or **CLASSIC 4:3** — the space beside the picture becomes a dim blue side panel instead of a black bar, and the picture is never cropped |
 | **BACK** | Keeps the settings and returns to OPTIONS |
 
-- On BULLETS, SCALE and FLASHES, **◀ / ▶** (or OK) step to the next choice. On SHAKE, HITBOX and
+- On BULLETS, SCALE, FLASHES, CRT and ASPECT, **◀ / ▶** (or OK) step to the next choice. On SHAKE, HITBOX and
   BOSS HP, **◀** is OFF, **▶** is ON and OK switches.
 - **Every change works at once**: new bullet colours, a new SCALE, the HITBOX marker and the SHAKE /
   FLASHES settings show on the very next picture or effect (over a paused game too). BOSS HP shows
@@ -3486,6 +3497,27 @@ What "good" looks like:
 - The effects stay put when the picture shakes (lose a ship): the waves stay on the sea.
 - The game stays as smooth as elsewhere. If a monitor or browser gets jerky here and not in
   AZURE VERGE, please report it with the device.
+
+## The dimension range: HIGH-SPEED DIMENSION (browser only)
+
+Open http://localhost:5173/?stage=dimension and choose 1 PLAYER. A violet **neon grid** rushes
+under the ship towards a lit horizon — a pseudo-3D floor drawn the way the 16-bit machines did it —
+past pulsing pillars, while the screen speeds up twice. Three new bosses fight on it: the armoured
+walker **SHADOW STRIDER** (which cannot be destroyed — survive it until it walks off), the grabber
+**IRON TALON** (it lunges and pulls you towards it) and the suction boss **GRASPING BLOOM** (its
+open maw drags everything in, and only then can its core be hurt). The TV cannot open it (the
+widget has no address bar) and it is not part of the run across the zone map — details in
+[visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#the-showcase-stage-browser-only).
+
+What to check:
+
+- The floor's grid lines get finer towards the horizon and never break up into noise or show a
+  seam, and the floor fades into the violet haze at the horizon rather than ending in a hard line.
+- The floor and the pillars move together — the floor must not drift away from the stage.
+- The grid never distorts your ship, the enemies, the bullets or the HUD.
+- With OPTIONS → DISPLAY → CRT on LIGHT or FULL, the scanlines lie over the whole picture and the
+  game stays as smooth as elsewhere.
+- GRASPING BLOOM's and IRON TALON's pull drags the ship but never through the edge of the screen.
 
 ## The advanced boss ranges (browser only)
 

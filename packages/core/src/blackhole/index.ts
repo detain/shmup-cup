@@ -78,7 +78,11 @@ export const MAX_BLACK_HOLES = 2;
 /** Bombs a ship may hold ({@link PlayerShip.bombs}). */
 export const MAX_BLACK_HOLE_STOCK = 3;
 
-/** Bombs a ship starts (and respawns) with while the black hole is on. */
+/**
+ * Bombs each ship holds when a World is created while the black hole is on (`core/world`
+ * `createWorld` — so every stage of a run starts with one). A respawn and a checkpoint restart keep
+ * whatever stock the ship had.
+ */
 export const BLACK_HOLE_START_STOCK = 1;
 
 /** Ticks a vortex pulls before it discharges. */

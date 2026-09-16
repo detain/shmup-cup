@@ -81,6 +81,12 @@
  * the fly-out (M2-10) {@link flyOutPlayer}, {@link LEAVE_ACCELERATION}, {@link LEAVE_MAX_SPEED},
  * {@link LEAVE_END_X}.
  *
+ * **Bombs and the death-bomb window (M3-02).** A ship carries {@link PlayerShip.bombs} (the
+ * Direct ship's stocked black holes — `core/blackhole`) and {@link PlayerShip.bombTicks}, the
+ * death-bomb window a fatal hit opens instead of killing it while it still holds one
+ * (`GameConfig.deathBomb`). {@link playerHit} ignores hits while the window is open; `core/world`
+ * spends the bomb, or lets the window run out and kills the ship on the tick it closes.
+ *
  * **Planned API.** None (joining co-op mid-game and the per-player continues live in
  * `core/world`: `joinPlayer`, `continueWorld` — M2-01 / M2-06).
  *

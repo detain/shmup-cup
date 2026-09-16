@@ -22,6 +22,10 @@
  * {@link UserOptionKind}, {@link SimEvent}, {@link EventQueue},
  * {@link DEFAULT_EVENT_QUEUE_CAPACITY}, {@link createEventQueue}.
  *
+ * M3-02 adds the fx cues {@link FX_CUES}.Graze and {@link FX_CUES}.BlackHole and the user-option
+ * kinds {@link UserOptionKind}.CrtFilter and {@link UserOptionKind}.Aspect (the DISPLAY page's CRT
+ * and ASPECT rows, applied live by `@shmup/shell`'s `connectOptionEvents`).
+ *
  * **Planned API (later steps).** More cue names as weapons, bosses and menus land. (Attract mode
  * — M2-15 — plays its demo World into a private queue and forwards the non-audio events to the
  * session's; no replay-side event log is needed.)

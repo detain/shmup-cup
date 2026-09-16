@@ -220,6 +220,26 @@
  * {@link grantFullPower} and {@link selfDestruct} (the pause menu's secret codes — a run replay
  * records them as flow actions).
  *
+ * **Visual & mechanic extras (M3-02).** Four `GameConfig` switches, all replay-recorded, so a
+ * World without them behaves — and hashes — exactly as it did:
+ *
+ * - **Authentic slowdown** (`GameConfig.slowdown`): phase 9 counts the tick's live objects into
+ *   {@link World.slowLoad} (enemy bullets + lasers + live enemies + standing boss parts + player
+ *   shots + items) and steps {@link World.slowRun}; once the load is over `core/config`
+ *   `SLOWDOWN_THRESHOLD` {@link stepWorld} skips the next tick exactly as hit-stop does
+ *   ({@link World.slowSkip}), so a busy screen runs at half speed and a quiet one never slows.
+ * - **Graze** (`GameConfig.graze`): phase 7 marks every enemy bullet that passed within
+ *   `core/bullets` `GRAZE_MARGIN` of a living hurtbox without hitting it and pays
+ *   `ContentDb.scoring.graze` ({@link World.grazes}).
+ * - **The black-hole bomb** (`GameConfig.blackHole`, `core/blackhole` — the Direct ship's
+ *   signature special): {@link World.blackholes} runs in phases 2, 5, 7 and 9, and
+ *   a checkpoint restart (`clearSession`) closes every open vortex.
+ * - **The death-bomb window** (`GameConfig.deathBomb`): a fatal hit on a ship that still holds a
+ *   bomb opens the window ({@link PlayerShip.bombTicks}) instead of killing it; a press of
+ *   `Special` (the Direct ship) or `PowerUp` (the meter ship's armed `!` slot) inside it spends the
+ *   bomb, wipes the hit and grants {@link DEATH_BOMB_INVULN_TICKS} of invulnerability; a window
+ *   that runs out kills on the tick it closes.
+ *
  * **Zero allocation.** Everything is allocated by {@link createWorld}; {@link stepWorld} and the
  * systems only write numbers into existing objects and typed arrays.
  *
@@ -242,6 +262,8 @@
  * - shmup_feat.md §15 — the 2nd loop's remixed layouts, faster bullets and revenge bullets;
  *   §16 — the caravan's time limit; §4 — the pause-menu secrets; §8 — option recovery; §21 — the
  *   invincibility assist (M3-01)
+ * - shmup_feat.md §3 — the deterministic authentic slowdown; §22 — graze detection; §7C — the
+ *   black-hole bomb; §10 — the death-bomb window (M3-02)
  *
  * **Public API.** {@link createWorld}, {@link WorldOptions}, {@link stepWorld}, {@link World},
  * {@link WorldCamera},
@@ -252,7 +274,7 @@
  * {@link DEATH_MUSIC_DUCK_TICKS}, {@link updateWorldRank}, {@link canContinue},
  * {@link continueWorld}; co-op (M2-06): {@link JOIN_ACTIONS}, {@link playerCanJoin},
  * {@link joinPlayer}, {@link continuesLeft}; M3-01: {@link grantFullPower},
- * {@link selfDestruct}, {@link CARAVAN_TIME_BONUS}.
+ * {@link selfDestruct}, {@link CARAVAN_TIME_BONUS}; M3-02: {@link DEATH_BOMB_INVULN_TICKS}.
  *
  * @module
  */
