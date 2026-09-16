@@ -1322,9 +1322,15 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     destroy() {
       bindWorld(null);
       layerEffects.destroy();
+      // The floor's mesh, geometry and GL program are the pass's own, not the scene's: unbinding
+      // only hides them (plan M3-02d — `bindWorld(null)` above keeps the mesh for the next world).
+      mode7.destroy();
       hudView?.destroy();
       uiView?.destroy();
       crt.destroy();
+      // The second pass's own container: the frame quad is the CRT pass's, the side panels are
+      // this container's (`Container.destroy` ignores an already-destroyed child).
+      screen.destroy({ children: true });
       scene.destroy({ children: true });
       frameTexture.destroy(true);
       renderer.destroy();

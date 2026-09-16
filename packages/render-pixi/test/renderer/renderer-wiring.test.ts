@@ -340,6 +340,112 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     expect(record.destroyedTextures).toEqual([[true]]);
     expect(record.rendererDestroyed).toBe(1);
   });
+
+  it('destroy() also frees the Mode-7 shader, the CRT pass and the side panels (M3-02d)', async () => {
+    // Regression: `destroy()` unbound the world (which only *hides* the floor's mesh) and never
+    // destroyed the floor, so its `Shader` / `GlProgram` — and the pass-2 container's two panel
+    // sprites — outlived the renderer. Everything M3-02d added on the every-frame path is freed.
+    let mode7Destroyed = 0;
+    let blitDestroyed = 0;
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas: testAtlas(),
+      createCrtBlit: () => ({
+        mesh: new Container({ label: 'crt-blit' }) as unknown as CrtBlitHandle['mesh'],
+        apply: () => {},
+        destroy: () => {
+          blitDestroyed++;
+        },
+      }),
+      createMode7Shader: () => ({
+        mesh: new Container() as unknown as Mode7Shader['mesh'],
+        apply: () => {},
+        setTile: () => {},
+        destroy: () => {
+          mode7Destroyed++;
+        },
+      }),
+    });
+    renderer.setSpriteNames(['bg/tile']);
+    const { batch } = oneShipWorld();
+    const floored: WorldView = {
+      camera: { x: 0, y: 0 },
+      parallax: null,
+      terrain: null,
+      batches: [batch],
+      effects: {
+        raster: [],
+        cycles: [],
+        mode7: {
+          spriteId: 0,
+          horizon: 100,
+          bottom: 200,
+          height: 24,
+          scroll: 0.5,
+          sway: 0,
+          turn: 0,
+          fog: 0x102040,
+          fogDepth: 128,
+          alpha: 1,
+          from: 0,
+          to: 500,
+        },
+      },
+    };
+    renderer.bindWorld(floored);
+    expect(renderer.mode7.shader).not.toBeNull();
+    const screen = renderer.crt.view.parent as Pixi.Container;
+    const panels = screen.children.filter((child) => child !== renderer.crt.view);
+    expect(panels).toHaveLength(2);
+    renderer.destroy();
+    expect(mode7Destroyed).toBe(1);
+    expect(blitDestroyed).toBe(1);
+    expect(renderer.mode7.shader).toBeNull();
+    expect(renderer.mode7.view).toBeNull();
+    for (const panel of panels) expect(panel.destroyed).toBe(true);
+    expect(screen.destroyed).toBe(true);
+  });
+
+  it("destroy() frees the legacy filter too, on the `screenPass: 'filter'` path (M3-02d)", async () => {
+    let filterDestroyed = 0;
+    const fake = { enabled: true } as unknown as Pixi.Filter;
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      screenPass: 'filter',
+      createCrtFilter: () => ({
+        filter: fake,
+        apply: () => {},
+        setDisplayHeight: () => {},
+        destroy: () => {
+          filterDestroyed++;
+        },
+      }),
+    });
+    // Nothing is built while the setting is off, so nothing is destroyed either.
+    renderer.destroy();
+    expect(filterDestroyed).toBe(0);
+    const second = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      screenPass: 'filter',
+      createCrtFilter: () => ({
+        filter: fake,
+        apply: () => {},
+        setDisplayHeight: () => {},
+        destroy: () => {
+          filterDestroyed++;
+        },
+      }),
+    });
+    second.setCrtFilter('full');
+    second.destroy();
+    expect(filterDestroyed).toBe(1);
+  });
 });
 
 describe('render-pixi/renderer render contract (plan §3.4)', () => {

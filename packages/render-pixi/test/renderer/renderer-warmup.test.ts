@@ -239,6 +239,61 @@ describe('render-pixi/renderer boot warm-up (M3-02d)', () => {
     renderer.destroy();
   });
 
+  it('runs before any world is bound, and a second time, without changing anything', async () => {
+    // `bootShell` calls it after `bindWorld`, but nothing stops a host calling it earlier (or
+    // twice): it must be idempotent in effect, never throw and never present a frame.
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 1920,
+      displayHeight: 1080,
+      atlas: testAtlas(),
+      countDrawCalls: false,
+      createLayerEffectFilter: fakeLayerEffect,
+    });
+    record.passes.length = 0;
+    renderer.warmUp();
+    expect(record.passes.map((pass) => pass.toCanvas)).toEqual([false, false]);
+    expect(renderer.layerEffects.attachedMask).toBe(0);
+
+    renderer.setSpriteNames(['bg/tile']);
+    renderer.bindWorld(floorWorld());
+    // Effect state the warm-up must not touch: a setting chosen before it is still in force.
+    renderer.setCrtFilter('full');
+    renderer.setShowHitbox(true);
+    const hidden = (): string[] => {
+      const out: string[] = [];
+      /**
+       * Collects the labels of the hidden descendants of a container.
+       *
+       * @param node - The container to walk.
+       */
+      const walk = (node: Container): void => {
+        for (const child of node.children) {
+          if (!child.visible && typeof child.label === 'string') out.push(child.label);
+          walk(child);
+        }
+      };
+      walk(renderer.scene);
+      return out;
+    };
+    const before = hidden();
+    renderer.warmUp();
+    renderer.warmUp();
+    expect(hidden()).toEqual(before);
+    expect(renderer.crt.setting).toBe('full');
+    expect(renderer.showHitbox).toBe(true);
+    expect(renderer.mode7.view?.visible).toBe(false);
+    expect(renderer.layerEffects.attachedMask).toBe(0);
+    // Four passes, none of them the canvas.
+    expect(record.passes.slice(-4).map((pass) => pass.toCanvas)).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
+    renderer.destroy();
+  });
+
   it('leaves the draw-call counter of the last real frame alone', async () => {
     const renderer = await createPixiRenderer({
       canvas,

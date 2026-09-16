@@ -354,6 +354,56 @@ describe('render-pixi/effects CRT pass — the legacy filter mode (M3-02)', () =
     expect(screen.filters).toEqual([]);
   });
 
+  it('places its node at the same pixels whichever path draws the frame (M3-02d)', () => {
+    // The renderer hands the pass one viewport and the pass places whatever node draws the frame.
+    // Nothing shipped can select `filter`, so no browser exercises it — but the one thing that
+    // *must* match between the two paths is where the picture lands, and that is asserted here:
+    // the blit mesh and M3-02's `Sprite` are placed and scaled identically, and for a picture
+    // that fills the display the look they are handed is the same one too.
+    for (const viewport of [
+      [3, 0, 0, 1152, 648, 3, 3, 648],
+      [2, 192, 108, 768, 432, 2, 2, 648],
+      [2, 192, 138, 768, 432, 2, 2, 720],
+      [5, 0, 0, 1920, 1080, 5, 5, 1080],
+    ] as Array<[number, number, number, number, number, number, number, number]>) {
+      const blit = fakeBlit();
+      const filter = fakeFilter();
+      const withBlit = createCrtPass({
+        screen: new Container(),
+        ...frameOptions,
+        createBlit: () => blit,
+      });
+      const withFilter = createCrtPass({
+        screen: new Container(),
+        ...frameOptions,
+        mode: 'filter',
+        createFilter: () => filter,
+      });
+      withBlit.setSetting('full');
+      withFilter.setSetting('full');
+      withBlit.setViewport(...viewport);
+      withFilter.setViewport(...viewport);
+      expect([withBlit.view.position.x, withBlit.view.position.y]).toEqual([
+        withFilter.view.position.x,
+        withFilter.view.position.y,
+      ]);
+      expect([withBlit.view.scale.x, withBlit.view.scale.y]).toEqual([
+        withFilter.view.scale.x,
+        withFilter.view.scale.y,
+      ]);
+      // Same look, same scanline pitch.
+      expect(blit.applied.at(-1)?.[0]).toBe(filter.applied.at(-1)?.[0]);
+      expect(blit.applied.at(-1)?.[1]).toBe(filter.applied.at(-1)?.[1]);
+      // Both are told the picture's size; only the blit is told where it starts, which is the
+      // whole of the `vec4 uHalf` change (the filter runs over the display and centres on it).
+      const applied = blit.applied.at(-1) as [unknown, number, number, number, number, number];
+      expect(filter.applied.at(-1)?.slice(2)).toEqual([applied[4], applied[5]]);
+      expect([applied[2], applied[3]]).toEqual([viewport[1], viewport[2]]);
+      withBlit.destroy();
+      withFilter.destroy();
+    }
+  });
+
   it('uses the real filter when none is given', () => {
     const screen = new Container();
     const pass = createCrtPass({ screen, ...frameOptions, mode: 'filter' });

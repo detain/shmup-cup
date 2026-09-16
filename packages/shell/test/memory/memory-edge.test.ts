@@ -320,6 +320,63 @@ describe('shell/memory estimate edges', () => {
     expect(uhd.targets).toBeLessThan(100 * MIB);
   });
 
+  it("over-estimates the legacy CRT filter's target on purpose (M3-02d, review F3)", () => {
+    // `crtAsFilter` models the `screenPass: 'filter'` escape hatch, which is the only path that
+    // still pools a display-sized target. The term is `potBytes(display)` — deliberately the
+    // **worst case**, and it is wrong in two directions that both make it larger than life:
+    //
+    //  * it ignores `crtResolution`, so a 4K display is charged a 4096² target although the
+    //    legacy filter runs capped at 1080 rows there (a pooled 2048²) — four times too much;
+    //  * it ignores letterboxing: in an aspect mode the picture is smaller than the display, but
+    //    the filter is attached to the whole second pass, so the display is what is charged.
+    //
+    // Both are safe for a budget check and neither is on a shipped path, so the behaviour is
+    // pinned rather than fixed: nothing but the escape hatch reads it.
+    const base = { atlasPages: [], sfxBytes: 0, musicBytes: 0 } as const;
+    const hd = estimateMemory({ ...base, crtFilter: 'full', crtAsFilter: true });
+    const hdOff = estimateMemory({ ...base, crtFilter: 'off', crtAsFilter: true });
+    expect(hd.targets - hdOff.targets).toBe(2048 * 2048 * 4);
+    // `light` costs the same as `full`: same program, same pass — the review's F2 in one line.
+    expect(estimateMemory({ ...base, crtFilter: 'light', crtAsFilter: true }).targets).toBe(
+      hd.targets,
+    );
+    // 4K: the charge quadruples although the pass itself would not (the cap keeps it at 1080p).
+    const uhd = estimateMemory({
+      ...base,
+      crtFilter: 'full',
+      crtAsFilter: true,
+      display: { width: 3840, height: 2160 },
+    });
+    const uhdOff = estimateMemory({
+      ...base,
+      crtFilter: 'off',
+      crtAsFilter: true,
+      display: { width: 3840, height: 2160 },
+    });
+    expect(uhd.targets - uhdOff.targets).toBe(4096 * 4096 * 4);
+    expect(uhd.targets - uhdOff.targets).toBe(4 * (hd.targets - hdOff.targets));
+    // A pillarboxed 4:3 picture on a 1080p display is charged the whole display all the same.
+    const boxed = estimateMemory({
+      ...base,
+      crtFilter: 'full',
+      crtAsFilter: true,
+      display: { width: 1440, height: 1080 },
+    });
+    const boxedOff = estimateMemory({
+      ...base,
+      crtFilter: 'off',
+      crtAsFilter: true,
+      display: { width: 1440, height: 1080 },
+    });
+    expect(boxed.targets - boxedOff.targets).toBe(2048 * 2048 * 4);
+    // The shipped `blit` path is charged nothing at any setting, on any display (M3-02d).
+    for (const setting of ['off', 'light', 'full'] as const) {
+      expect(estimateMemory({ ...base, crtFilter: setting }).targets).toBe(
+        estimateMemory(base).targets,
+      );
+    }
+  });
+
   it('estimates a stage index past the stage list with no music and every page', () => {
     const db = content([0, 1]);
     const manifest = {
