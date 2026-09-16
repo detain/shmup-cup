@@ -4174,6 +4174,11 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     `pnpm bench` suites are Node-only and measure the simulation): scripted worst-case frames — 512 enemy bullets,
     512 point items, the full particle pool, a filtered layer active, Mode-7 active, CRT `off` / `light` / `full` —
     asserting `renderer.drawCalls` (already exposed) against a documented budget and a **render-ms p95**.
+  - **Take the internal frame size as a bench parameter** (default 384x216) and report render-ms p95, draw calls and
+    render-target bytes per resolution. This is one parameter now and a retrofit later: the owner intends to try a
+    higher internal resolution once the plan is done, and this turns "does 768x432 still hold 60 fps?" into a bench
+    run rather than build-and-hope. See
+    [`docs/dev/render-performance-review.md` §7](docs/dev/render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-).
   - **A browser-side JS-heap delta** over ~600 frames that fails on growth. This is the gate F5 is currently invisible
     to: the allocation guards run in Node against fake atlases, so they stop at the `renderer.render()` boundary and
     cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation.
