@@ -41,12 +41,21 @@ import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
 import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
-import { HEAP_BUDGET, renderBenchViolations } from './render-harness/gates.js';
+import {
+  HEAP_BUDGET,
+  renderBenchViolations,
+  renderGroupViolations,
+} from './render-harness/gates.js';
 import { WARMUP_TICKS } from './render-harness/load.js';
 import type { RenderBenchOptions, RenderBenchResult } from './render-harness/protocol.js';
 
 // Re-exported so the budgets are still readable from this file, where the docs name them.
-export { DRAW_CALL_BUDGET, MIN_LIVE_LOAD, RENDER_P95_BUDGET_MS } from './render-harness/gates.js';
+export {
+  DRAW_CALL_BUDGET,
+  MIN_LIVE_LOAD,
+  RENDER_P95_BUDGET_MS,
+  SCENE_REBUILD_BUDGET,
+} from './render-harness/gates.js';
 export { WARMUP_TICKS } from './render-harness/load.js';
 
 /** The harness sources. */
@@ -348,6 +357,10 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
       // harness saw over the measured frames, so the load holds for every frame that was timed,
       // not just the last one: a scenario that measured an empty scene fails here.
       expect(renderBenchViolations(result)).toEqual([]);
+      // M3-02e: and the render groups did what this scenario's configuration says they must —
+      // the shipped scene never re-walking all ~6,400 objects, the deliberate one-group arm
+      // doing it on every frame.
+      expect(renderGroupViolations(result, scenario.options.renderGroups !== false)).toEqual([]);
       scenario.check?.(result);
     }, 300_000);
   }

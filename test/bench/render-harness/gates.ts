@@ -17,10 +17,12 @@
 import type { RenderBenchResult } from './protocol.js';
 
 /**
- * Most WebGL draw calls a measured frame may take. `shmup_feat.md` §22 allows 20–50; the two e2e
- * specs pin the plain frame at 12. This is the render bench's own ceiling, deliberately above the
+ * Most WebGL draw calls a measured frame may take. `shmup_feat.md` §22 allows 20–50; since plan
+ * **M3-02e** — one render group, and so one batch boundary, per high-churn layer — the two e2e
+ * specs pin the plain frame at 16. This is the render bench's own ceiling, deliberately above the
  * e2e one because a scenario stacks the busiest frame, a filtered layer or the Mode-7 floor *and*
- * the CRT pass.
+ * the CRT pass. (`test/integration/render-groups.test.ts` keeps this sentence and those two specs
+ * in step.)
  */
 export const DRAW_CALL_BUDGET = 20;
 
@@ -78,6 +80,75 @@ export function renderBenchViolations(result: RenderBenchResult): string[] {
       `the heap grew ${result.heapDeltaBytes} bytes over ${result.frames} frames, ` +
         `over the budget of ${HEAP_BUDGET}`,
     );
+  }
+  return out;
+}
+
+/**
+ * Fraction of a scenario's measured frames on which the **scene's own** instruction set may be
+ * rebuilt (plan M3-02e, the review's **F1**).
+ *
+ * @remarks
+ * Before the step every frame rebuilt it: the bench measured 655–659 of every 660. After it the
+ * measured figure is 0, and the counter accumulates over the warm-up frames too, so a tenth of
+ * the *measured* frames is a ceiling nothing but F1 coming back can reach.
+ */
+export const SCENE_REBUILD_BUDGET = 0.1;
+
+/**
+ * Every reason a bench result's render-group behaviour must fail (plan M3-02e).
+ *
+ * @remarks
+ * Separate from {@link renderBenchViolations} because it is the one gate that depends on *how the
+ * scenario was configured*: the bench deliberately runs one scenario with the layer groups off —
+ * the review's measurement **M1**, the pre-M3-02e scene measured against the shipped one in the
+ * same session — and that arm must fail the ordinary expectation and meet the opposite one.
+ *
+ * @param result - What the harness measured.
+ * @param renderGroups - Whether the scenario asked for the layer render groups (the shipped scene).
+ * @returns The violations; empty when the scenario behaved as its configuration says it must.
+ */
+export function renderGroupViolations(result: RenderBenchResult, renderGroups: boolean): string[] {
+  const out: string[] = [];
+  // The scene's group is one of the groups the second counter walks, so it can never be the
+  // larger of the two — whichever scene was built.
+  if (result.groupRebuilds < result.structureRebuilds) {
+    out.push(
+      `${result.groupRebuilds} render-group rebuilds is fewer than the ` +
+        `${result.structureRebuilds} rebuilds of the scene's own group, which is one of them`,
+    );
+  }
+  if (renderGroups) {
+    const budget = Math.floor(result.frames * SCENE_REBUILD_BUDGET);
+    if (result.structureRebuilds > budget) {
+      out.push(
+        `the whole scene was rebuilt on ${result.structureRebuilds} frames, over the budget of ` +
+          `${budget} — the review's F1 is back`,
+      );
+    }
+    // A fall in the figure above means nothing unless the churn is still happening somewhere: a
+    // scene that drew nothing would score 0 too.
+    if (result.groupRebuilds <= 0) {
+      out.push(
+        `no render group was rebuilt at all (${result.groupRebuilds}) — the scene was empty, or ` +
+          'the counters are read in the wrong place',
+      );
+    }
+  } else {
+    // The A/B arm: one group for everything, so essentially every frame throws the whole
+    // instruction set away and the two counters are the same figure.
+    if (!(result.structureRebuilds > result.frames * 0.9)) {
+      out.push(
+        `the single-group scene rebuilt itself on only ${result.structureRebuilds} of ` +
+          `${result.frames} frames — it is not the pre-M3-02e scene`,
+      );
+    }
+    if (result.groupRebuilds !== result.structureRebuilds) {
+      out.push(
+        `the single-group scene counted ${result.groupRebuilds} render-group rebuilds and ` +
+          `${result.structureRebuilds} scene rebuilds — with one group they are the same figure`,
+      );
+    }
   }
   return out;
 }

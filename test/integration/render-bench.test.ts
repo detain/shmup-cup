@@ -54,7 +54,9 @@ import {
   HEAP_BUDGET,
   MIN_LIVE_LOAD,
   RENDER_P95_BUDGET_MS,
+  SCENE_REBUILD_BUDGET,
   renderBenchViolations,
+  renderGroupViolations,
 } from '../bench/render-harness/gates.js';
 import type { RenderBenchResult } from '../bench/render-harness/protocol.js';
 import { shippedContent } from '../playtest/harness.js';
@@ -187,9 +189,11 @@ const HEALTHY: RenderBenchResult = {
   renderMedianMs: 2.1,
   renderP95Ms: 3.2,
   renderMaxMs: 9.4,
-  drawCalls: 7,
-  structureRebuilds: 659,
-  groupRebuilds: 659,
+  drawCalls: 10,
+  // The shipped scene since M3-02e: the whole instruction set is never thrown away, and the churn
+  // it no longer carries shows up in the layer groups (measured 0 and ~1,590 of 660 frames).
+  structureRebuilds: 0,
+  groupRebuilds: 1590,
   renderTargetBytes: 512 * 256 * 4,
   heapDeltaBytes: 485 * 1024,
   heapMeasured: true,
@@ -501,6 +505,74 @@ describe('render bench: the gates (renderBenchViolations)', () => {
   });
 });
 
+describe('render bench: the render-group gate (renderGroupViolations, M3-02e)', () => {
+  it('passes the shipped scene and the deliberate one-group arm', () => {
+    expect(renderGroupViolations(HEALTHY, true)).toEqual([]);
+    // Right at the edge: the budget is inclusive.
+    expect(
+      renderGroupViolations(
+        result({ structureRebuilds: Math.floor(600 * SCENE_REBUILD_BUDGET), groupRebuilds: 1590 }),
+        true,
+      ),
+    ).toEqual([]);
+    // The A/B arm the bench runs beside it: one group, every frame rebuilding it.
+    expect(
+      renderGroupViolations(result({ structureRebuilds: 659, groupRebuilds: 659 }), false),
+    ).toEqual([]);
+  });
+
+  it('fails the shipped scene when F1 comes back', () => {
+    const violations = renderGroupViolations(
+      result({ structureRebuilds: 659, groupRebuilds: 659 }),
+      true,
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain("the review's F1 is back");
+    // One frame over the budget is already a failure.
+    expect(
+      renderGroupViolations(
+        result({ structureRebuilds: Math.floor(600 * SCENE_REBUILD_BUDGET) + 1 }),
+        true,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('refuses a scene that simply drew nothing', () => {
+    // The gaming the second counter exists to stop: `structureRebuilds` at 0 because the churn
+    // moved is the fix; at 0 because nothing was on screen is not.
+    const violations = renderGroupViolations(
+      result({ structureRebuilds: 0, groupRebuilds: 0 }),
+      true,
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain('no render group was rebuilt at all');
+    expect(renderGroupViolations(result({ groupRebuilds: -1 }), true)).toHaveLength(2);
+  });
+
+  it('refuses counters that cannot both be true', () => {
+    // The scene's own group is one of the groups the second figure walks.
+    const violations = renderGroupViolations(
+      result({ structureRebuilds: 40, groupRebuilds: 12 }),
+      true,
+    );
+    expect(violations[0]).toContain('is fewer than the');
+  });
+
+  it('refuses a one-group arm that is not one', () => {
+    // Someone passing `renderGroups: false` while the groups are still on.
+    expect(
+      renderGroupViolations(result({ structureRebuilds: 0, groupRebuilds: 1590 }), false),
+    ).toHaveLength(2);
+    // …and the two counters must agree when there is only one group to count.
+    const split = renderGroupViolations(
+      result({ structureRebuilds: 595, groupRebuilds: 1590 }),
+      false,
+    );
+    expect(split).toHaveLength(1);
+    expect(split[0]).toContain('with one group they are the same figure');
+  });
+});
+
 describe('render bench: the halves stay wired to the tested code', () => {
   it('drives the page through benchTick instead of its own tick order', () => {
     const main = benchSource('render-harness/main.ts');
@@ -517,6 +589,13 @@ describe('render bench: the halves stay wired to the tested code', () => {
   it('gates every scenario of the Node driver through renderBenchViolations', () => {
     const perf = benchSource('render.perf.ts');
     expect(perf).toContain('expect(renderBenchViolations(result)).toEqual([])');
+    // …and M3-02e's render-group gate, for every scenario, with the scenario's own configuration.
+    expect(perf).toContain(
+      'expect(renderGroupViolations(result, scenario.options.renderGroups !== false)).toEqual([])',
+    );
+    // The A/B arm itself must still be one of the scenarios, or the gate above has nothing to
+    // compare the shipped scene with (the review's measurement M1, done headlessly).
+    expect(perf).toContain('renderGroups: false');
     // …and does not hand-roll the load floors it replaced (`> 400` in three places).
     expect(perf).not.toContain('toBeGreaterThan(400)');
   });
