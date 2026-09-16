@@ -17,6 +17,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  BLACK_HOLE_PULL_TICKS,
   BONUS_CAPSULE_SCORE,
   BonusEntrance,
   BossState,
@@ -24,6 +25,7 @@ import {
   EndingFlag,
   KNOWN_SCRIPT_IDS,
   REPLAY_HASH_INTERVAL,
+  SLOWDOWN_THRESHOLD,
   loadContent,
 } from '@shmup/core';
 import { shippedContent } from '../playtest/harness.js';
@@ -722,6 +724,42 @@ describe('golden replays of the extra modes (M3-01)', () => {
     const recovery = readGolden('zone-a-recovery');
     expect(recovery.replay.header.config.optionRecovery).toBe(true);
     expect(recovery.file.expected.deathTicks.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('the M3-02 extras really run: vortices thrown, bullets grazed, ticks skipped', () => {
+    const extras = readGolden('zone-a-extras');
+    expect(extras.replay.header.config).toMatchObject({
+      shipId: 'manta',
+      powerUpMode: 'direct',
+      slowdown: true,
+      graze: true,
+      deathBomb: 8,
+      blackHole: true,
+    });
+    let vortexTicks = 0;
+    let maxLoad = 0;
+    let skipped = 0;
+    let bolts = 0;
+    const { outcome, world } = playGolden(extras.replay, undefined, (w) => {
+      if (w.blackholes.count > 0) vortexTicks++;
+      if (w.slowLoad > maxLoad) maxLoad = w.slowLoad;
+      if (w.slowSkip) skipped++;
+      for (const hole of w.blackholes.holes) {
+        if (hole.active && hole.age > BLACK_HOLE_PULL_TICKS) bolts++;
+      }
+    });
+    // The run covers each extra: a vortex was open, it reached its burst, bullets were grazed.
+    expect(vortexTicks).toBeGreaterThan(0);
+    expect(bolts).toBeGreaterThan(0);
+    expect(world.grazes).toBeGreaterThan(0);
+    // The slowdown counted the load every tick — and zone A never reaches the threshold, so a
+    // normal run of it never slows down (the tuning of `SLOWDOWN_THRESHOLD`, D18: responsiveness
+    // first). `world-extras.test.ts` covers the skipping itself.
+    expect(maxLoad).toBeGreaterThan(0);
+    expect(maxLoad).toBeLessThanOrEqual(SLOWDOWN_THRESHOLD);
+    expect(skipped).toBe(0);
+    expect(outcome).toEqual(extras.file.expected);
+    expect(outcome.status).toBe('stageClear');
   });
 
   it('flags the assists in the replay headers: god mode, the invincibility assist', () => {

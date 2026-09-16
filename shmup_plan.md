@@ -3920,6 +3920,22 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   - `eslint.config.js` `globalIgnores` gained the git-ignored agent / editor directories (`.claude/`, `.caliber/`,
     `.playwright-mcp/`) so `pnpm lint` does not try to parse tooling that is not ours.
   - The Tizen bundle is 383.4 KB gzip of its 512 KB budget (374.6 KB at M3-01).
+  - **Test suite.** Fifteen suites were added around the step's code: `core/blackhole` edges
+    (`blackhole-edge`: the slot bookkeeping, the camera ride, the burst's bolt cadence, the enemies and boss parts
+    its lightning takes, the swirl's animation frames, a World with the option off) and co-op
+    (`world-extras-coop`: one vortex per player, each crediting its thrower); `core/bullets`'s `vortex` and
+    `grazePlayers` (`bullets-vortex-edge`); `core/enemies`'s `pullTowards` / `blast` (`enemies-vortex`);
+    the bosses' pull field (`bosses-pull`, `bosses-pull-alloc`) and the three P2 boss scripts
+    (`behaviors-p2-bosses`); the tick-pipeline edges of the slowdown and the death-bomb window
+    (`world-extras-edge`); the graze value (`scoring-graze`); the stage `mode7` section and its view
+    (`stage-mode7`) and the Mode-7 floor's rebinding (`render-pixi` `mode7-edge`); the EXTRAS options page and the
+    DISPLAY page's CRT / ASPECT rows (`scenes-extras-page`); the escape sequence in the loader (`campaign-escape`)
+    and through the scene flow (`scenes-escape`); and `hashWorld`'s `mixExtras`, term by term
+    (`debug-extras-hash`) — the evidence that a World without an extra hashes exactly as it did.
+    A new golden replay `zone-a-extras` flies the whole of zone A with the MANTA and **every extra on**, throwing a
+    black hole every 90 ticks (`bomberBot`): its hashes cover the vortices' pull, their lightning and the grazes,
+    and recording it moved no other golden or demo file. Both review-round-1 fixes have regression tests that fail
+    with the fix removed.
 
 ### M3-02b — Remote & hardware tuning from the input-probe results
 

@@ -76,6 +76,10 @@
  * `'toggle'` mode, the 4-way bot tapping `Shot` every 150 ticks (its Direct-mode volleys switched
  * off and on again — the per-player switch hashed in that mode), and the KESTREL in the `'hold'`
  * mode at the fastest rate, `Shot` and `Sub` held in bursts ({@link fireButtonBot}).
+ * One more (M3-02 tests) flies the whole of zone A with the MANTA and **every mechanic extra on**
+ * (`slowdown`, `graze`, `deathBomb`, `blackHole`), the {@link bomberBot} throwing a black hole
+ * every {@link BOMB_THROW_TICKS} ticks: the vortices' pull, the bullets they swallow and their
+ * lightning, the grazes the run scores and the slowdown's load count are all in its hashes.
  *
  * @module
  */
@@ -125,9 +129,10 @@ export interface GoldenScenario {
   /**
    * Who plays: the 4-way playtest bot, the careless {@link weaverBot}, or the 4-way bot with a fire
    * button ({@link fireButtonBot}: `'toggler'` taps `Shot`, `'burster'` holds `Shot` and `Sub` in
-   * bursts — M2-16's autofire modes).
+   * bursts — M2-16's autofire modes), or the {@link bomberBot} that also throws a black hole every
+   * {@link BOMB_THROW_TICKS} ticks (M3-02's extras).
    */
-  readonly bot: 'four-way' | 'weaver' | 'toggler' | 'burster';
+  readonly bot: 'four-way' | 'weaver' | 'toggler' | 'burster' | 'bomber';
   /**
    * Co-op (M2-06; with `config.coop`): player 2's pilot and the tick its controller first presses
    * START (it drops in); afterwards it presses START again every other tick while it may join —
@@ -190,6 +195,28 @@ export function fireButtonBot(pattern: 'tap' | 'burst'): PlaytestBot {
   };
 }
 
+/** Ticks between two `Special` presses of the {@link bomberBot} (M3-02). */
+export const BOMB_THROW_TICKS = 90;
+
+/**
+ * The 4-way bot that throws a black hole (M3-02 — the extras golden): it presses `Special` for one
+ * tick every {@link BOMB_THROW_TICKS} ticks, so the Direct ship spends every bomb the stage's
+ * yellow items stock and the run covers the vortex's pull, its swallowed bullets and its lightning.
+ *
+ * @returns The bot.
+ */
+export function bomberBot(): PlaytestBot {
+  const pilot = fourWayBot();
+  return {
+    name: 'bomber',
+    decide(world) {
+      const tick = world.tick;
+      const bomb = tick > 0 && tick % BOMB_THROW_TICKS === 0 ? Action.Special : 0;
+      return pilot.decide(world) | bomb;
+    },
+  };
+}
+
 /**
  * The pilot of a scenario's player 1.
  *
@@ -200,6 +227,7 @@ function pilotOf(kind: GoldenScenario['bot']): PlaytestBot {
   if (kind === 'weaver') return weaverBot();
   if (kind === 'toggler') return fireButtonBot('tap');
   if (kind === 'burster') return fireButtonBot('burst');
+  if (kind === 'bomber') return bomberBot();
   return fourWayBot();
 }
 
@@ -819,6 +847,24 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
     config: { seed: 76, stageSkip: 'boss', loadout: 'full', invincible: true },
     godMode: false,
     bot: 'weaver',
+  },
+  {
+    name: 'zone-a-extras',
+    description:
+      'the M3-02 mechanic extras all on with the MANTA over the whole of AZURE VERGE: black-hole vortices thrown and discharged, bullets grazed, the death-bomb window armed and the authentic slowdown counting the load',
+    stageId: 'zone-a',
+    config: {
+      seed: 77,
+      shipId: 'manta',
+      powerUpMode: 'direct',
+      loadout: 'full',
+      slowdown: true,
+      graze: true,
+      deathBomb: 8,
+      blackHole: true,
+    },
+    godMode: true,
+    bot: 'bomber',
   },
 ]);
 
