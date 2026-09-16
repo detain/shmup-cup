@@ -1076,11 +1076,12 @@ systems & Tiled import), M2-08 (presentation polish: raster effects, palettes, v
 M2-09 (advanced bosses: mid-bosses, raids, multi-bosses), M2-10 (zone map, campaign flow,
 transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zones F & G), M2-14 (final zones H & I, endings
 & credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) and M3-02 (visual & mechanic
-extras: the Mode-7 floor and the dimension stage, the CRT filter, the ultra-wide and 4:3 aspect
+extras: the Mode-7 floor and the dimension stage, the CRT pass, the ultra-wide and 4:3 aspect
 modes, authentic slowdown, graze, the death-bomb window, the black-hole bomb, the P2 bosses and the
 final zone's escape sequence) and M3-02b (remote & hardware tuning from the input-probe results) are
-done, and **M3-02c** (render profiling) with them; next are M3-02d / M3-02e (the rest of the
-render-performance work M3-02b exposed —
+done, and **M3-02c** (render profiling) and **M3-02d** (the CRT and Mode-7 effects folded into
+their draw passes, a corrected memory estimator and a boot warm-up frame) with them; next are
+M3-02e (the per-frame scene-graph rebuild —
 [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03. Every
 simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).

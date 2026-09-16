@@ -15,9 +15,12 @@
  * 4. creates the renderer (WebGL1 first) and, through the app's factory, the platform; **reads
  *    the save** (`core/save` `loadSave`, M1-17) and applies its volumes and input profile; then
  *    creates the core game with the validated content and the save;
- * 5. wires the lifecycle (suspend clears held input and suspends audio; so does the window losing
+ * 5. warms the renderer up behind the loading screen (`renderer.warmUp()`, plan M3-02d: one
+ *    throwaway off-screen frame with every GL program and every pooled sprite in it, so nothing
+ *    links or grows a batch buffer mid-gameplay), wires the lifecycle (suspend clears held input
+ *    and suspends audio; so does the window losing
  *    focus — `blur` clears held input), the audio unlock (first gesture on the web, immediately on
- *    TV), window resizes, and
+ *    TV) and window resizes, and
  * 6. runs the rAF frame loop: `game.frame(now)` → `game.events.drain(dispatch)` →
  *    `renderer.render(frame)` (plan §3.3). Before the ticks of each frame it forwards a change of
  *    `game.inputContext` to the input adapter (`input.setContext` — the `game` / `menu` binding
@@ -1098,6 +1101,11 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   } else {
     readyRenderer.setSpriteNames(content.db.sprites.names);
   }
+  // The boot warm-up frame (plan M3-02d, the render review's F4 / F5): with the world bound and
+  // the loading screen still up, the renderer draws one throwaway frame off-screen with every GL
+  // program and every pooled sprite in it, so no shader links and no batch buffer grows once the
+  // game is running. Never presented; the effect state and the tick are untouched.
+  readyRenderer.warmUp();
   const calibration = createCalibrationFrame(game.renderFrame());
   // Atlas-page residency (M2-17): which pages each campaign zone needs (load time).
   const atlasResidency = createAtlasResidency(

@@ -31,8 +31,8 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
 - **Score-milking cap**: enemies spawned by a boss or a spawner score in full for the first 40 of a
   kind in a zone, then 10 %.
 - **Picture settings** on the Options screen's DISPLAY page (M3-02): **CRT** (OFF / LIGHT / FULL —
-  scanlines, an aperture-grille mask and a vignette over the upscaled picture, computed at at most
-  1080 rows so a 4K TV pays for a 1080p pass) and **ASPECT** (NORMAL / ULTRA-WIDE / CLASSIC 4:3 —
+  scanlines, an aperture-grille mask and a vignette over the upscaled picture; since M3-02d it is
+  the upscale's own shader, so any setting costs one draw call) and **ASPECT** (NORMAL / ULTRA-WIDE / CLASSIC 4:3 —
   the picture is placed in a 64:27 or 4:3 window with dimmed side panels beside it instead of black
   bars; it is never cropped and the playfield stays 384×216). Both apply at once and are saved.
 - **EXTRAS** options page (M3-02) with four toggles that apply from the next game: **SLOWDOWN**
@@ -148,7 +148,29 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   `WEBGL_VERSION_KEY` (`localStorage['shmup-cup:gl']`, dev / test builds only) — the review's **F8**
   A/B switch after the probe verified WebGL 1 *and* 2 on Tizen 5.5. **WebGL1 stays the shipped
   default** and the renderer's stale "WebGL2 is unverified" docblock is gone.
-- The Tizen bundle is 383.9 KB gzip of its 512 KB budget (384.1 KB after M3-02c).
+- M3-02d: the **full-screen effects are folded into their draw passes** (the render review's
+  **F2** / **F6**). The second pass draws the frame with a `Mesh` whose shader *is* the CRT program
+  (`@shmup/render-pixi` `effects` `createCrtBlit`, `CrtPass.view`, the new `EFFECT_MESH_VERTEX`
+  shared vertex shader), and the Mode-7 floor is a `Mesh` on `BG_MID` (`createMode7Shader`,
+  replacing `createMode7Filter`; `Mode7Floor.view` / `.shader` replace `.sprite` / `.filter`). The
+  bench measured it: CRT `light` / `full` went **5 draw calls and 2,048 KB of pooled render targets
+  → 4 and 0**, the same as CRT `off` (16.8 MB of VRAM and a second full-screen pass over 2 Mpx
+  freed at 1080p), and the Mode-7 stage **7 and 512 KB → 6 and 0**. `PixiRendererOptions.screenPass:
+  'filter'` restores the old sprite + Pixi-filter pass as an escape hatch, which is what
+  `createCrtFilter` / `crtResolution` / `CRT_MAX_HEIGHT` now serve.
+- M3-02d: `PixiRenderer.warmUp()` (**F4** / **F5**) draws one throwaway off-screen frame with every
+  GL program and every pooled sprite in it; `bootShell` calls it after `bindWorld`, behind the
+  loading screen, so no shader links and no batch buffer grows mid-gameplay. `LayerEffects` gained
+  `attachAll(on)` for it.
+- M3-02d: `createRenderTargetMeter` counts the targets Pixi's pool already holds when it starts —
+  the boot warm-up frame draws every filter, and the pool never releases, so the overlay's `RT`
+  figure would otherwise read 0 on a stage whose effect is running.
+- M3-02d: `@shmup/shell` `memory` counts render targets the way Pixi really pools them (**F3**):
+  new `potBytes(w, h)` (next power of two on each axis) and exported `FILTER_TARGETS`;
+  `estimateMemory` gained `frame`, `filterTargets`, `crtFilter` and `crtAsFilter` inputs, and
+  `estimateStageMemory` passes them through.
+- The Tizen bundle is 386.8 KB gzip of its 512 KB budget (384.1 KB after M3-02c; M3-02d's +2.7 KB
+  is Pixi's mesh pipeline, no longer tree-shaken out).
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

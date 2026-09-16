@@ -25,6 +25,7 @@ import {
   MEMORY_BUDGET_BYTES,
   MIB,
   TEXTURE_BUDGET_BYTES,
+  FILTER_TARGETS,
   atlasPageNeeds,
   connectAtlasResidency,
   createAtlasResidency,
@@ -32,6 +33,7 @@ import {
   estimateStageMemory,
   moduleInfo,
   pageBytes,
+  potBytes,
   sfxBankBytes,
   songFrameBound,
   stageMusicTracks,
@@ -103,6 +105,58 @@ describe('shell/memory', () => {
       one.textures + one.images + one.sfx + one.music + one.targets + one.heap,
     );
     expect(pageBytes({ w: 2048, h: 2048 })).toBe(16 * MIB);
+  });
+
+  it('counts the render targets as Pixi really pools them, CRT on and off (M3-02d, review F3)', () => {
+    // Hand-computed, in bytes:
+    //   frame target   384 × 216 × 4                       =        331 776  (created directly)
+    //   2 filter passes  nextPow2(384, 216) = 512 × 256 × 4 = 2 ×  524 288
+    //   canvas buffers 1920 × 1080 × 4 × 3                  =     24 883 200
+    const FRAME = 331_776;
+    const FILTER_PASS = 512 * 256 * 4;
+    const CANVAS = 1920 * 1080 * 4 * 3;
+    expect(potBytes(384, 216)).toBe(FILTER_PASS);
+    expect(FILTER_PASS).toBe(524_288);
+    expect(potBytes(1920, 1080)).toBe(2048 * 2048 * 4);
+    expect(potBytes(768, 432)).toBe(1024 * 512 * 4);
+    expect(potBytes(0, 216)).toBe(0);
+    expect(potBytes(512, 256)).toBe(FILTER_PASS);
+    const off = estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0, crtFilter: 'off' });
+    expect(off.targets).toBe(FRAME + FILTER_TARGETS * FILTER_PASS + CANVAS);
+    expect(FILTER_TARGETS).toBe(2);
+    // M3-02d folded the CRT into the pass-2 blit, so `full` costs no render target at all: the
+    // 16.8 MB the review's F2 measured is simply not allocated any more.
+    const full = estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0, crtFilter: 'full' });
+    expect(full.targets).toBe(off.targets);
+    // With the `screenPass: 'filter'` escape hatch it is back, pooled 2048 × 2048 at 1080p.
+    const legacy = estimateMemory({
+      atlasPages: [],
+      sfxBytes: 0,
+      musicBytes: 0,
+      crtFilter: 'full',
+      crtAsFilter: true,
+    });
+    expect(legacy.targets).toBe(off.targets + 2048 * 2048 * 4);
+    expect(legacy.targets - off.targets).toBe(16_777_216);
+    // …and `off` costs nothing even then.
+    expect(
+      estimateMemory({
+        atlasPages: [],
+        sfxBytes: 0,
+        musicBytes: 0,
+        crtFilter: 'off',
+        crtAsFilter: true,
+      }).targets,
+    ).toBe(off.targets);
+    // A higher internal resolution is the knob review §7 cares about: ×2 of the frame is ×4 the
+    // frame target and ×4 each pooled pass (1024 × 512).
+    const twice = estimateMemory({
+      atlasPages: [],
+      sfxBytes: 0,
+      musicBytes: 0,
+      frame: { width: 768, height: 432 },
+    });
+    expect(twice.targets).toBe(768 * 432 * 4 + FILTER_TARGETS * 1024 * 512 * 4 + CANVAS);
   });
 
   it('fails the budget when the atlas or the audio outgrows its share, even under 100 MB', () => {

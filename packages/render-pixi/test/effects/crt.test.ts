@@ -1,17 +1,22 @@
 /**
- * The **CRT / scanline filter** of plan M3-02 (`createCrtFilter`, `createCrtPass`,
- * `crtResolution`), built in Node with PixiJS's `GlProgram.from` faked (the real one probes a
- * WebGL context for the GPU's precision):
+ * The **CRT / scanline pass** of plan M3-02 and its M3-02d rewrite (`createCrtBlit`,
+ * `createCrtFilter`, `createCrtPass`, `crtResolution`), built in Node with PixiJS's
+ * `GlProgram.from` faked (the real one probes a WebGL context for the GPU's precision):
  *
- * - the filter gets the GLSL ES 1.0 sources and declares the uniforms the shader reads; `apply`
- *   writes a look, clamps the scanline pitch and halves the output size for the vignette;
- * - the pass builds nothing while the setting is `off`, attaches the filter to the screen the
- *   moment it is not, writes the look of `light` / `full`, follows the viewport and detaches
- *   again;
- * - the resolution is capped at 1080 rows, so a 4K TV pays for a 1080p pass (shmup_feat.md §18).
+ * - the **blit** (the shipped path since M3-02d, the render review's **F2**) is a `Mesh` over the
+ *   frame texture carrying the CRT program: it is always drawn, `off` just writes three zero
+ *   uniforms, and no filter is ever attached to the screen container — so CRT `full` costs what
+ *   CRT `off` costs;
+ * - the legacy **filter** still gets the GLSL ES 1.0 sources and declares the uniforms the shader
+ *   reads; `apply` writes a look, clamps the scanline pitch and halves the output size for the
+ *   vignette;
+ * - the pass places the frame quad, follows the viewport with the scanline pitch and, in `filter`
+ *   mode, builds nothing until the setting leaves `off`, attaches the filter and detaches again;
+ * - the legacy filter's resolution is capped at 1080 rows, so a 4K TV pays for a 1080p pass
+ *   (shmup_feat.md §18).
  */
 import { CRT_FILTERS, CRT_MAX_HEIGHT } from '@shmup/core';
-import { Container, type Filter } from 'pixi.js';
+import { Container, Texture, type Filter } from 'pixi.js';
 import type * as Pixi from 'pixi.js';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -23,9 +28,11 @@ import {
   CRT_LOOKS,
   CRT_MIN_PITCH,
   CRT_VERTEX,
+  EFFECT_MESH_VERTEX,
   createCrtFilter,
   createCrtPass,
   crtResolution,
+  type CrtBlitHandle,
   type CrtFilterHandle,
   type CrtLook,
 } from '../../src/effects/index.js';
@@ -45,7 +52,7 @@ vi.mock('pixi.js', async (importOriginal) => {
      */
     static from(options: { vertex: string; fragment: string; name: string }): object {
       programs.push(options);
-      return { ...options };
+      return { ...options, destroy: (): void => {} };
     }
   }
   return { ...real, GlProgram: FakeGlProgram };
@@ -105,6 +112,34 @@ function fakeFilter(): FakeFilter {
   return fake;
 }
 
+/** A fake blit that records what the pass asks of it. */
+interface FakeBlit extends CrtBlitHandle {
+  /** Every `apply` call: look, pitch, x, y, width, height. */
+  readonly applied: Array<[CrtLook, number, number, number, number, number]>;
+  /** Times `destroy` was called. */
+  destroyed: number;
+}
+
+/**
+ * Builds a fake blit (a plain container stands in for the mesh).
+ *
+ * @returns The blit.
+ */
+function fakeBlit(): FakeBlit {
+  const fake: FakeBlit = {
+    mesh: new Container() as unknown as CrtBlitHandle['mesh'],
+    applied: [],
+    destroyed: 0,
+    apply(look, pitch, x, y, width, height) {
+      fake.applied.push([look, pitch, x, y, width, height]);
+    },
+    destroy() {
+      fake.destroyed++;
+    },
+  };
+  return fake;
+}
+
 describe('render-pixi/effects CRT looks (M3-02)', () => {
   it('has one look per core CRT setting: nothing, scanlines, the full tube', () => {
     expect(CRT_FILTERS).toEqual(['off', 'light', 'full']);
@@ -118,7 +153,7 @@ describe('render-pixi/effects CRT looks (M3-02)', () => {
     });
   });
 
-  it('caps the pass at 1080 rows however big the display is', () => {
+  it('caps the legacy filter pass at 1080 rows however big the display is', () => {
     expect(CRT_MAX_HEIGHT).toBe(1080);
     for (const height of [0, -1, 216, 720, 1080]) expect(crtResolution(height)).toBe(1);
     expect(crtResolution(2160)).toBe(0.5);
@@ -130,7 +165,7 @@ describe('render-pixi/effects CRT looks (M3-02)', () => {
   });
 });
 
-describe('render-pixi/effects CRT filter (M3-02)', () => {
+describe('render-pixi/effects CRT filter — the legacy pass-2 path (M3-02)', () => {
   it('is built from the GLSL ES 1.0 sources, off by default', () => {
     const before = programs.length;
     const crt = createCrtFilter();
@@ -143,7 +178,7 @@ describe('render-pixi/effects CRT filter (M3-02)', () => {
     crt.destroy();
   });
 
-  it('writes a look, the pitch and half the output size', () => {
+  it('writes a look, the pitch, the picture centre and half the output size', () => {
     const crt = createCrtFilter();
     crt.apply(CRT_LOOKS[2], 5, 1920, 1080);
     const u = uniformsOf(crt.filter);
@@ -153,11 +188,11 @@ describe('render-pixi/effects CRT filter (M3-02)', () => {
       CRT_FULL_VIGNETTE,
     ]);
     expect(u.uLinePitch).toBe(5);
-    expect([...u.uHalf]).toEqual([960, 540]);
+    expect([...u.uHalf]).toEqual([960, 540, 960, 540]);
     // A pitch below two output pixels would eat half the picture; a zero size would divide by 0.
     crt.apply(CRT_LOOKS[1], 1, 0, 0);
     expect(u.uLinePitch).toBe(CRT_MIN_PITCH);
-    expect([...u.uHalf]).toEqual([1, 1]);
+    expect([...u.uHalf]).toEqual([0, 0, 1, 1]);
     expect([u.uScan, u.uMask]).toEqual([CRT_LIGHT_SCAN, 0]);
     crt.destroy();
   });
@@ -172,15 +207,112 @@ describe('render-pixi/effects CRT filter (M3-02)', () => {
   });
 });
 
-describe('render-pixi/effects CRT pass (M3-02)', () => {
+/** Options every pass in these tests shares (the frame texture and its size). */
+const frameOptions = { frame: Texture.WHITE, width: 384, height: 216 } as const;
+
+describe('render-pixi/effects CRT pass — the blit (M3-02d)', () => {
+  it('draws the frame with the CRT program and never attaches a filter', () => {
+    const screen = new Container();
+    const blit = fakeBlit();
+    const pass = createCrtPass({ screen, ...frameOptions, createBlit: () => blit });
+    expect(pass.mode).toBe('blit');
+    expect(pass.view).toBe(blit.mesh);
+    expect(screen.children).toEqual([blit.mesh]);
+    expect(pass.filter).toBeNull();
+    expect(pass.blit).toBe(blit);
+    expect(pass.setting).toBe('off');
+    expect(pass.active).toBe(false);
+    // `off` is not "no pass": the blit still draws, with a zero look.
+    pass.setViewport(5, 0, 0, 1920, 1080, 5, 5, 1080);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[0], 5, 0, 0, 1920, 1080]);
+    expect(screen.filters ?? []).toEqual([]);
+    // The frame quad is placed by the pass, so the renderer has one node to think about.
+    expect([blit.mesh.position.x, blit.mesh.position.y]).toEqual([0, 0]);
+    expect([blit.mesh.scale.x, blit.mesh.scale.y]).toEqual([5, 5]);
+    pass.setSetting('full');
+    expect(pass.active).toBe(true);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[2], 5, 0, 0, 1920, 1080]);
+    // Still no filter, and therefore no pooled render target and no second pass (review F2).
+    expect(screen.filters ?? []).toEqual([]);
+    pass.setSetting('off');
+    expect(pass.active).toBe(false);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[0], 5, 0, 0, 1920, 1080]);
+    pass.destroy();
+    expect(blit.destroyed).toBe(1);
+  });
+
+  it('places a letterboxed picture and centres the vignette on it', () => {
+    const screen = new Container();
+    const blit = fakeBlit();
+    const pass = createCrtPass({ screen, ...frameOptions, createBlit: () => blit });
+    pass.setSetting('full');
+    pass.setViewport(3, 144, 36, 1152, 648, 3, 3, 720);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[2], 3, 144, 36, 1152, 648]);
+    expect([blit.mesh.position.x, blit.mesh.position.y]).toEqual([144, 36]);
+    pass.destroy();
+  });
+
+  it('follows the viewport: one dark line between two frame rows, whatever the zoom', () => {
+    const screen = new Container();
+    const blit = fakeBlit();
+    const pass = createCrtPass({ screen, ...frameOptions, createBlit: () => blit });
+    pass.setSetting('full');
+    for (const [scale, width, height, pitch] of [
+      [5, 1920, 1080, 5],
+      [3, 1152, 648, 3],
+      [3.33, 1280, 720, 3],
+      [10, 3840, 2160, 10],
+      [1, 384, 216, CRT_MIN_PITCH],
+      [0.5, 192, 108, CRT_MIN_PITCH],
+    ]) {
+      pass.setViewport(scale, 0, 0, width, height, scale, scale, height);
+      expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[2], pitch, 0, 0, width, height]);
+    }
+    pass.destroy();
+  });
+
+  it('uses the real blit by default: the mesh vertex shader and the CRT fragment', () => {
+    const screen = new Container();
+    const before = programs.length;
+    const pass = createCrtPass({ screen, ...frameOptions });
+    expect(programs.slice(before)).toEqual([
+      { vertex: EFFECT_MESH_VERTEX, fragment: CRT_FRAGMENT, name: 'shmup-crt-blit' },
+    ]);
+    expect(pass.blit).not.toBeNull();
+    expect(pass.view).toBe(pass.blit?.mesh);
+    // The blit's own uniforms: the look is off, and the clamp is the frame's half-texel inset.
+    const group = pass.blit?.mesh.shader?.resources.crtUniforms as Pixi.UniformGroup;
+    const u = group.uniforms as unknown as Uniforms & { uInputClamp: Float32Array };
+    expect([u.uScan, u.uMask, u.uVignette]).toEqual([0, 0, 0]);
+    const clamp = [0.5 / 384, 0.5 / 216, 383.5 / 384, 215.5 / 216];
+    for (let i = 0; i < clamp.length; i++) expect(u.uInputClamp[i]).toBeCloseTo(clamp[i], 6);
+    pass.setSetting('full');
+    expect([u.uScan, u.uMask, u.uVignette]).toEqual([
+      CRT_FULL_SCAN,
+      CRT_FULL_MASK,
+      CRT_FULL_VIGNETTE,
+    ]);
+    pass.destroy();
+  });
+});
+
+describe('render-pixi/effects CRT pass — the legacy filter mode (M3-02)', () => {
   it('builds nothing and touches nothing while the setting is off', () => {
     const screen = new Container();
     const fake = fakeFilter();
-    const pass = createCrtPass({ screen, createFilter: () => fake });
+    const pass = createCrtPass({
+      screen,
+      ...frameOptions,
+      mode: 'filter',
+      createFilter: () => fake,
+    });
+    expect(pass.mode).toBe('filter');
+    expect(pass.blit).toBeNull();
+    expect(screen.children).toEqual([pass.view]);
     expect(pass.setting).toBe('off');
     expect(pass.active).toBe(false);
     expect(pass.filter).toBeNull();
-    pass.setViewport(5, 1920, 1080, 1080);
+    pass.setViewport(5, 0, 0, 1920, 1080, 5, 5, 1080);
     expect(pass.filter).toBeNull();
     expect(fake.applied).toEqual([]);
     // Never touched: the screen keeps whatever filter list Pixi gave it (none).
@@ -193,8 +325,13 @@ describe('render-pixi/effects CRT pass (M3-02)', () => {
   it('attaches the filter for `light` and `full`, and detaches it again', () => {
     const screen = new Container();
     const fake = fakeFilter();
-    const pass = createCrtPass({ screen, createFilter: () => fake });
-    pass.setViewport(5, 1920, 1080, 1080);
+    const pass = createCrtPass({
+      screen,
+      ...frameOptions,
+      mode: 'filter',
+      createFilter: () => fake,
+    });
+    pass.setViewport(5, 0, 0, 1920, 1080, 5, 5, 1080);
     pass.setSetting('light');
     expect(pass.active).toBe(true);
     expect(pass.filter).toBe(fake);
@@ -217,29 +354,9 @@ describe('render-pixi/effects CRT pass (M3-02)', () => {
     expect(screen.filters).toEqual([]);
   });
 
-  it('follows the viewport: one dark line between two frame rows, whatever the zoom', () => {
+  it('uses the real filter when none is given', () => {
     const screen = new Container();
-    const fake = fakeFilter();
-    const pass = createCrtPass({ screen, createFilter: () => fake });
-    pass.setSetting('full');
-    for (const [scale, width, height, display, pitch] of [
-      [5, 1920, 1080, 1080, 5],
-      [3, 1152, 648, 720, 3],
-      [3.33, 1280, 720, 720, 3],
-      [10, 3840, 2160, 2160, 10],
-      [1, 384, 216, 216, CRT_MIN_PITCH],
-      [0.5, 192, 108, 108, CRT_MIN_PITCH],
-    ]) {
-      pass.setViewport(scale, width, height, display);
-      expect(fake.applied.at(-1)).toEqual([CRT_LOOKS[2], pitch, width, height]);
-      expect(fake.heights.at(-1)).toBe(display);
-    }
-    pass.destroy();
-  });
-
-  it('uses the real filter by default (the renderer passes none)', () => {
-    const screen = new Container();
-    const pass = createCrtPass({ screen });
+    const pass = createCrtPass({ screen, ...frameOptions, mode: 'filter' });
     pass.setSetting('light');
     expect(pass.filter).not.toBeNull();
     expect(screen.filters).toEqual([pass.filter?.filter]);

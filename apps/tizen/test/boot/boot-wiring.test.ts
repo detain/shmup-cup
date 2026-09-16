@@ -30,6 +30,10 @@ const fakes = vi.hoisted(() => {
     options: null as Record<string, unknown> | null,
     setSpriteNames() {},
     bindWorld() {},
+    warmUps: 0,
+    warmUp() {
+      renderer.warmUps++;
+    },
     resize(w: number, h: number) {
       renderer.sizes.push([w, h]);
     },

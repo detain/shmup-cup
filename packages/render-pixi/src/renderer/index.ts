@@ -74,17 +74,25 @@
  * {@link PixiRenderer.setAspect}, {@link PANEL_ALPHA}), {@link PixiRendererOptions} (incl.
  * `countDrawCalls` and M3-02c's `countStructureRebuilds`, M1-19;
  * `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
- * M2-08; `aspect`, `createCrtFilter` and `createMode7Filter`, M3-02).
+ * M2-08; `aspect`, `createCrtFilter` and `createMode7Shader`, M3-02; `screenPass`,
+ * `createCrtBlit` and {@link PixiRenderer.warmUp}, M3-02d).
  *
  * **The extras of M3-02.** The renderer owns three presentation-only additions, each idle until
- * asked for: the **Mode-7 floor** (`effects` {@link createMode7Floor} — a filtered full-frame
- * sprite at the bottom of `BG_MID`, bound from the world view's `mode7` section and given the
- * plane's turned axes every frame), the **CRT / scanline pass** (`effects`
- * {@link createCrtPass} over the upscaled second pass, capped at `core/config` `CRT_MAX_HEIGHT`
- * rows) and the **aspect modes** (`viewport` {@link computeAspectViewport}: the frame is placed
- * in the largest ultra-wide or 4:3 window that fits and the leftover width becomes two dimmed
- * side panels at {@link PANEL_ALPHA} — a window on the display, never a crop, and the internal
- * 384×216 playfield is unchanged).
+ * asked for: the **Mode-7 floor** (`effects` {@link createMode7Floor} — a full-frame mesh at the
+ * bottom of `BG_MID`, bound from the world view's `mode7` section and given the plane's turned
+ * axes every frame), the **CRT / scanline pass** (`effects` {@link createCrtPass}, folded into
+ * pass 2's blit since M3-02d) and the **aspect modes** (`viewport`
+ * {@link computeAspectViewport}: the frame is placed in the largest ultra-wide or 4:3 window that
+ * fits and the leftover width becomes two dimmed side panels at {@link PANEL_ALPHA} — a window on
+ * the display, never a crop, and the internal 384×216 playfield is unchanged).
+ *
+ * **The render review's fixes (M3-02d).** Pass 2 draws the frame with a `Mesh` whose shader is
+ * the CRT program (`effects` `createCrtBlit`), so CRT `full` costs one draw call and no pooled
+ * 2048² render target (**F2**), and the Mode-7 floor is a mesh rather than a filter over an
+ * invisible sprite (**F6**). {@link PixiRenderer.warmUp} draws one throwaway frame with every
+ * program and every pooled sprite in it, so no GL program links and no batch buffer grows
+ * mid-gameplay (**F4** / **F5**). `screenPass: 'filter'` restores the pre-M3-02d sprite + filter
+ * pass-2 as an escape hatch.
  *
  * @module
  */
@@ -114,19 +122,21 @@ import type { Atlas } from '../atlas/index.js';
 import {
   createCrtPass,
   createLayerEffects,
-  createMode7Filter,
   createMode7Floor,
+  createMode7Shader,
   createScorePopups,
   createScreenEffects,
+  type CrtBlitHandle,
   type CrtFilterHandle,
   type CrtPass,
   type EffectSettings,
   type LayerEffectFilter,
   type LayerEffects,
-  type Mode7Filter,
   type Mode7Floor,
+  type Mode7Shader,
   type ScorePopups,
   type ScreenEffects,
+  type ScreenPassMode,
 } from '../effects/index.js';
 import {
   createBendingLaserBinding,
@@ -306,19 +316,39 @@ export interface PixiRendererOptions {
   /** How the picture is shaped on the display (plan M3-02; default `normal`). */
   readonly aspect?: AspectMode;
   /**
-   * Creates the CRT pass's filter (default the `effects` module's `createCrtFilter`). Tests in
-   * Node — where Pixi cannot probe a WebGL context — pass a fake.
+   * How the second pass draws the frame (plan M3-02d): `blit` (default) binds the CRT program to
+   * the blit mesh — one draw call whatever the CRT setting is; `filter` restores M3-02's sprite
+   * plus a Pixi filter, which pools a full-display render target and runs a second full-screen
+   * pass (the render review's **F2**). The escape hatch, not a setting players see.
+   */
+  readonly screenPass?: ScreenPassMode;
+  /**
+   * Creates the pass-2 blit (default the `effects` module's `createCrtBlit`). Tests in Node —
+   * where Pixi cannot probe a WebGL context — pass a fake.
+   *
+   * @param frame - The frame texture pass 1 renders into.
+   * @param width - The frame's width in pixels.
+   * @param height - The frame's height in pixels.
+   * @returns The blit.
+   */
+  readonly createCrtBlit?: (frame: Texture, width: number, height: number) => CrtBlitHandle;
+  /**
+   * Creates the legacy CRT filter of `screenPass: 'filter'` (default the `effects` module's
+   * `createCrtFilter`). Tests in Node pass a fake.
    *
    * @returns The filter.
    */
   readonly createCrtFilter?: () => CrtFilterHandle;
   /**
-   * Creates the Mode-7 floor's filter (default the `effects` module's `createMode7Filter` on the
-   * atlas's first page; without an atlas there is none). Tests pass a fake.
+   * Creates the Mode-7 floor's mesh and shader (default the `effects` module's
+   * `createMode7Shader` on the atlas's first page; without an atlas there is none). Tests pass a
+   * fake.
    *
-   * @returns The filter.
+   * @param width - The frame's width in pixels.
+   * @param height - The frame's height in pixels.
+   * @returns The mesh and its uniforms.
    */
-  readonly createMode7Filter?: () => Mode7Filter;
+  readonly createMode7Shader?: (width: number, height: number) => Mode7Shader;
 }
 
 /** The Pixi-backed renderer. */
@@ -363,13 +393,30 @@ export interface PixiRenderer extends IRenderer {
   readonly crtFilter: CrtFilter;
   /**
    * Switches the CRT / scanline filter (off / light / full — the Options screen's CRT, plan
-   * M3-02); it runs over the upscaled picture, capped at `core/config` `CRT_MAX_HEIGHT` rows.
+   * M3-02); since M3-02d it only writes the blit shader's three uniforms.
    *
    * @param setting - One of `core/config` `CRT_FILTERS`.
    */
   setCrtFilter(setting: CrtFilter): void;
-  /** The CRT pass (plan M3-02). */
+  /** The CRT pass (plan M3-02; folded into pass 2's blit since M3-02d). */
   readonly crt: CrtPass;
+  /** How the second pass draws the frame (plan M3-02d). */
+  readonly screenPass: ScreenPassMode;
+  /**
+   * Draws **one throwaway frame** into an off-screen target with every GL program the bound world
+   * can use and every pooled sprite in it, then puts everything back (plan M3-02d, the render
+   * review's **F4** / **F5**).
+   *
+   * @remarks
+   * Pixi links a GL program the first time it *draws* with it and grows its batch attribute
+   * buffer by doubling as frames get busier, so without this the layer-effect, Mode-7 and CRT
+   * programs link mid-stage (5–50 ms on a Mali-G51) and the first really busy frame allocates and
+   * copies a few hundred KB inside `renderer.render()`. Call it once at boot, behind the loading
+   * screen, **after** `bindWorld`: it never presents anything, never touches the tick the
+   * particles are stepped from and leaves the effect state exactly as it found it. Calling it
+   * again is allowed (it is idempotent in effect, not a no-op) but pointless.
+   */
+  warmUp(): void;
   /** The bound world's Mode-7 floor (plan M3-02; idle without one). */
   readonly mode7: Mode7Floor;
   /** Whether the ships' hitbox markers are drawn (plan M2-08). */
@@ -754,15 +801,15 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     height,
     createFilter: options.createLayerEffectFilter,
   });
-  // The Mode-7 floor (M3-02): a filtered sprite at the bottom of the mid-background layer.
+  // The Mode-7 floor (M3-02; a mesh since M3-02d) at the bottom of the mid-background layer.
   const mode7: Mode7Floor = createMode7Floor({
     layer: layers.layers[LayerId.BgMid],
     width,
     height,
-    createFilter:
-      options.createMode7Filter ??
+    createShader:
+      options.createMode7Shader ??
       (atlas !== null && atlas.pages.length > 0
-        ? (): Mode7Filter => createMode7Filter(atlas.pages[0])
+        ? (w: number, h: number): Mode7Shader => createMode7Shader(atlas.pages[0], w, h)
         : undefined),
   });
   const hitboxLayer = layers.layers[LayerId.Hitbox];
@@ -780,10 +827,10 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   const hitboxBlend = new FrameBlend();
   let hitboxHistory = false;
 
-  // Pass 2: one sprite showing the frame texture, integer-scaled and centred.
+  // Pass 2: one quad showing the frame texture, integer-scaled and centred. Since M3-02d the
+  // quad is a mesh whose shader *is* the CRT program (`createCrtPass` owns it, and adds it to the
+  // screen container below the panels' `addChildAt(0)`), so the CRT costs no extra pass.
   const screen = new Container({ label: 'screen' });
-  const frameSprite = new Sprite(frameTexture);
-  screen.addChild(frameSprite);
 
   let scaleMode: ScaleMode = options.scaleMode ?? 'integer';
   let aspect: AspectMode = options.aspect ?? 'normal';
@@ -799,9 +846,23 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   );
   let viewport: Viewport = placement.viewport;
 
+  // The CRT / scanline pass (M3-02): since M3-02d it owns the node the second pass draws the
+  // frame with — a mesh carrying the CRT program, or (with `screenPass: 'filter'`) M3-02's sprite
+  // with the filter over the whole pass.
+  const screenPass: ScreenPassMode = options.screenPass ?? 'blit';
+  const crt: CrtPass = createCrtPass({
+    screen,
+    frame: frameTexture,
+    width,
+    height,
+    mode: screenPass,
+    createBlit: options.createCrtBlit,
+    createFilter: options.createCrtFilter,
+  });
+
   // The side panels of the `wide` / `classic` aspect modes (M3-02): two rectangles beside the
   // window, tinted with the frame's own backdrop so the picture sits in a lit surround instead of
-  // black. They are behind the frame sprite in the screen pass.
+  // black. They are behind the frame quad in the screen pass.
   const panelLeftSprite = new Sprite(Texture.WHITE);
   const panelRightSprite = new Sprite(Texture.WHITE);
   for (const panel of [panelLeftSprite, panelRightSprite]) {
@@ -811,16 +872,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     screen.addChildAt(panel, 0);
   }
 
-  // The CRT / scanline pass (M3-02): a filter over the whole second pass, off until asked for.
-  const crt: CrtPass = createCrtPass({
-    screen,
-    createFilter: options.createCrtFilter,
-  });
-
-  /** Positions and scales the frame sprite and the side panels for the current placement. */
+  /** Positions and scales the frame quad and the side panels for the current placement. */
   const applyViewport = (): void => {
-    frameSprite.scale.set(viewport.scaleX, viewport.scaleY);
-    frameSprite.position.set(viewport.x, viewport.y);
     const left = placement.panelLeft;
     const right = placement.panelRight;
     panelLeftSprite.visible = left > 0;
@@ -829,7 +882,17 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     panelRightSprite.visible = right > 0;
     panelRightSprite.position.set(displayW - (right > 0 ? right : 0), 0);
     panelRightSprite.scale.set(right > 0 ? right : 1, displayH);
-    crt.setViewport(viewport.scale, viewport.width, viewport.height, displayH);
+    // The pass owns the frame quad: it places it and follows it with the scanline pitch.
+    crt.setViewport(
+      viewport.scale,
+      viewport.x,
+      viewport.y,
+      viewport.width,
+      viewport.height,
+      viewport.scaleX,
+      viewport.scaleY,
+      displayH,
+    );
   };
 
   /** Recomputes the placement from the display size, the scale mode and the aspect mode. */
@@ -850,7 +913,54 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   // The two passes' render options, allocated once (no per-frame literals — plan §1.3);
   // `resetPass` restores them before every call.
   const scenePass: RenderOptions = { container: scene, target: frameTexture, clear: true };
-  const screenPass: RenderOptions = { container: screen };
+  const displayPass: RenderOptions = { container: screen };
+
+  /**
+   * Shows every hidden descendant of a container, collecting the ones it changed.
+   *
+   * @param node - The container to walk.
+   * @param hidden - Collects the nodes that were hidden (so they can be hidden again).
+   */
+  const showAll = (node: Container, hidden: Container[]): void => {
+    const children = node.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (!child.visible) {
+        child.visible = true;
+        hidden.push(child);
+      }
+      if (child.children.length > 0) showAll(child, hidden);
+    }
+  };
+
+  /**
+   * The boot warm-up frame (plan M3-02d; see {@link PixiRenderer.warmUp}). A cold path: it walks
+   * the whole scene and allocates freely.
+   */
+  const warmUp = (): void => {
+    const hidden: Container[] = [];
+    layerEffects.attachAll(true);
+    showAll(scene, hidden);
+    const calls = drawCounter.last;
+    renderer.render(resetPass(scenePass, frameTexture, true));
+    // Pass 2 goes into a throwaway target, never the canvas: presenting it would flash a frame of
+    // nonsense over the loading screen, and the frame texture is the blit's own input so it
+    // cannot be the target either. Eight rows are enough to link the program.
+    const scratch = RenderTexture.create({
+      width: 8,
+      height: 8,
+      resolution: 1,
+      antialias: false,
+      scaleMode: 'nearest',
+    });
+    renderer.render({ container: screen, target: scratch, clear: true });
+    scratch.destroy(true);
+    for (let i = 0; i < hidden.length; i++) hidden[i].visible = false;
+    // The next `sync()` re-attaches whatever the camera really needs.
+    layerEffects.attachAll(false);
+    drawCounter.calls = 0;
+    drawCounter.last = calls;
+  };
 
   let boundWorld: WorldView | null = null;
   let bindings: SpriteLayerBinding[] = [];
@@ -1007,7 +1117,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       crt.setSetting(setting);
     },
     crt,
+    screenPass,
     mode7,
+    warmUp,
     get showHitbox() {
       return showHitbox;
     },
@@ -1204,7 +1316,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       // Before pass 1: Pixi clears the flag while rendering, so it has to be read now.
       if (countRebuilds && scene.renderGroup?.structureDidChange === true) structureRebuilds++;
       renderer.render(resetPass(scenePass, frameTexture, true));
-      renderer.render(resetPass(screenPass, undefined, undefined));
+      renderer.render(resetPass(displayPass, undefined, undefined));
       if (countDraws) drawCounter.last = drawCounter.calls;
     },
     destroy() {
@@ -1212,6 +1324,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       layerEffects.destroy();
       hudView?.destroy();
       uiView?.destroy();
+      crt.destroy();
       scene.destroy({ children: true });
       frameTexture.destroy(true);
       renderer.destroy();

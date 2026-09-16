@@ -332,9 +332,12 @@ particle pool and the score popups (the last two on the `FX` layer, with an atla
    brighter of the frame's white flash and the effects' tinted flash (on the additive quad for an
    additive look — the Mega Crash since M2-08), sets both dims;
 5. draws the HUD and UI lists (skipped when unchanged);
-6. renders the scene into the 384×216 render texture, then that texture as one sprite onto the
+6. renders the scene into the 384×216 render texture, then that texture as one **quad** onto the
    canvas, placed by the scale mode (`computeViewport` — integer-scaled and centred by default;
-   `fit` / `stretch` since M2-08).
+   `fit` / `stretch` since M2-08). Since **M3-02d** that quad is a `Mesh` whose shader is the CRT
+   program (`effects` `createCrtBlit`), so the CRT look costs no extra pass and no pooled render
+   target — `PixiRendererOptions.screenPass: 'filter'` restores M3-02's plain sprite plus a Pixi
+   filter if a device ever needs it.
 
 How the effects work: [fx-and-game-feel.md](fx-and-game-feel.md).
 
@@ -342,6 +345,15 @@ Both passes reuse option objects created with the renderer. Pixi's `render(optio
 into the object it gets (`target`, `clear`, `clearColor`, a cached `transform`), so a small
 `resetPass()` restores those fields before each call — without it, the second frame would
 reuse the first frame's cached state.
+
+**The boot warm-up (M3-02d).** Pixi links a GL program the first time it *draws* with it, and its
+batch attribute buffer starts at 16 bytes and doubles as frames get busier — so without help the
+layer-effect, Mode-7 and CRT programs would link mid-stage (5–50 ms on a Mali-G51) and the first
+frame busier than any before it would allocate and copy a few hundred KB **inside**
+`renderer.render()`, past where the Node allocation guards can see. `PixiRenderer.warmUp()` draws
+one throwaway frame into an off-screen target with every filter attached and every pooled sprite
+visible, then puts everything back; `bootShell` calls it once, after `bindWorld` and while the
+loading screen is still up. Nothing is ever presented and no effect state or tick moves.
 
 **Allocation budget.** Pixi objects are created in `createPixiRenderer` and in `bindWorld()`
 (which also creates the parallax sprites and the terrain grid, below the batches, the laser
@@ -450,6 +462,7 @@ const shell = await bootShell({
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
 | 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08; M3-02b: the probe also drives `game.setVsyncLock` while `framePacing` is `'auto'` and it reads `VSYNC_LOCK_MIN_HZ … VSYNC_LOCK_MAX_HZ`); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers; M2-16: `InputSettings` → the app's `customize(save.options.input)`) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()` + `refresh.reset()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups) **and, since M3-02b, a platform suspend**: the apps' lifecycles treat `blur` / `focus` like hidden / visible (the M7's Home bar is only an overlay — it fires no `visibilitychange`), de-duplicated so a `blur` + `hidden` pair suspends once and the resume waits for both; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
+| 7a | `renderer.warmUp()` (M3-02d) — one throwaway frame into an off-screen target with every GL program and every pooled sprite in it, so nothing links or grows a batch buffer once the game is running; never presented | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later; since M2-17 with the save store for `__shmupDebug.save`) | — |
 
 Once the atlas and the content are ready (M2-17) the shell also works out which atlas pages each
@@ -918,7 +931,7 @@ overlay's panel shows the two figures M3-02c added on its sixth line:
 | Figure | Meaning |
 |---|---|
 | `REB` | Frames since boot on which Pixi rebuilt the scene's whole instruction set (`PixiRenderer.structureRebuilds`). Near the frame count means every frame pays the full tree walk — the review's **F1** |
-| `RT` | Kilobytes of pooled render targets (`createRenderTargetMeter` over Pixi's `TexturePool`). Jumps by ~16 MB the moment CRT is switched on at 1080p — the review's **F2** |
+| `RT` | Kilobytes of pooled render targets (`createRenderTargetMeter` over Pixi's `TexturePool`, seeded with what the pool already holds when it starts — M3-02d's warm-up draws every filter before the debug tools exist). Since **M3-02d** the CRT and the Mode-7 floor add nothing to it (review **F2** / **F6**; before the fold, CRT on jumped it by ~16 MB at 1080p); a stage with a layer effect still pools ~512 KB |
 
 Both obey the overlay's own rules: one `DrawList` per colour, and allocation-free per frame (the
 meter hooks `TexturePool.createTexture` once, so reading the total is a property read).
@@ -1002,11 +1015,11 @@ Lines, top to bottom (counting from 1):
 | # | Question | How | What a result looks like |
 |---|---|---|---|
 | **M1** | What does the per-frame scene rebuild (**F1**) cost? | Compare `RENDER` on the title (few sprites, structure nearly static) with a busy boss frame, watching `REB` against the frame count. Then, as a throwaway experiment, comment out the `visible = false` lines in `SpriteLayerBinding.sync` for one build: the `RENDER` delta is the rebuild cost. **Do not ship that build** | The headless bench shows 655–659 of every 660 frames rebuilding. This measurement turns that into milliseconds, and it is what decides how far M3-02e has to go |
-| **M2** | What does the CRT filter (**F2**) cost? | Pause → **OPTIONS → DISPLAY → CRT**, Left/Right to switch **OFF / LIGHT / FULL**. Run the same practice section three times, once per setting, reading `RENDER`, `FPS` and `RT` each time | Expect `LIGHT` to cost the same as `FULL` (same program, same passes) and `RT` to jump by ~16 MB when either is on. Also watch for a one-frame stall the *first* time CRT goes on — that is **F4**'s shader link, not the filter's steady cost |
-| **M3** | Mode-7 and layer-effect entry hitches (**F4**) | Play into the Mode-7 stage and the water / heat-haze stage and watch the frame graph at the moment the effect starts | A single ~30–50 ms bar at the range boundary, **once per session**, confirms it. If it happens every time you enter, something else is wrong |
-| **M4** | The batch-growth hitch (**F5**) | Frame graph during the first very dense pattern after a **fresh launch**, then the same pattern again after a checkpoint restart | A red bar that appears only the *first* time is Pixi's attribute buffer doubling. Second time clean = confirmed |
+| **M2** | What does the CRT look (**F2**) cost after M3-02d? | Pause → **OPTIONS → DISPLAY → CRT**, Left/Right to switch **OFF / LIGHT / FULL**. Run the same practice section three times, once per setting, reading `RENDER`, `FPS` and `RT` each time | Expect all three to read the same `RENDER` within a few per cent and **`RT` not to move at all**: M3-02d made the CRT the pass-2 blit's own shader, and the headless bench measured 4 draw calls and 0 pooled bytes for `off`, `light` and `full` alike. A jump in `RT`, or `full` visibly dearer than `off`, means the fold regressed. There should be **no** stall the first time CRT goes on either — the boot warm-up linked that program (**F4**) |
+| **M3** | Mode-7 and layer-effect entry hitches (**F4**) | Play into the Mode-7 stage and the water / heat-haze stage and watch the frame graph at the moment the effect starts | Since M3-02d's boot warm-up the graph should stay **flat** at the range boundary. A single ~30–50 ms bar there is worth reporting (the warm-up missed that program); one on every entry means something else is wrong |
+| **M4** | The batch-growth hitch (**F5**) | Frame graph during the first very dense pattern after a **fresh launch**, then the same pattern again after a checkpoint restart | M3-02d's warm-up draws every pooled sprite once, so the buffer should already be at its high-water mark and **both** runs clean. A red bar on the first one only is Pixi's attribute buffer still doubling — report it |
 | **M5** | WebGL1 vs WebGL2 (**F8**) | Set `localStorage['shmup-cup:gl'] = '2'` from the remote Web Inspector and relaunch (on the web build it is `?gl=2`). Compare `RENDER` and the `RAF` histogram over 60 s of the same practice section; the `WEBGL` field shows what the context really is | Probably little difference. **WebGL1 stays the shipped default** — this is an A/B to retire a guess in the code, not a change |
-| **M6** | Memory | DevTools over `sdb` → Memory, plus `estimateStageMemory(...)` per zone with CRT on and off, cross-checked against `RT` | The estimator is known to under-count (review **F3**) and M3-02d fixes it; this is the before-reading |
+| **M6** | Memory | DevTools over `sdb` → Memory, plus `estimateStageMemory(...)` per zone with CRT on and off, cross-checked against `RT` | M3-02d corrected the estimator (review **F3**: power-of-two pooling, and the CRT no longer pooling anything), so the three should now agree — a zone's figure that is still well over the DevTools reading is worth reporting |
 | **M7** | Does the app stop rendering under the Home overlay? | Press **Home** mid-game, wait 10 s, come back | The probe recorded rAF continuing at ~56 fps with no `visibilitychange`. Confirm M3-02b's `blur` handling now pauses the game and silences the music, and that you come back to the pause menu |
 | **M8** | Input-to-photon latency | Still unmeasured: a 240 fps phone video, `build:game-mode` versus the default, per plan §8.4/§8.5 | The one number none of this instrumentation can reach |
 
@@ -1129,7 +1142,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | Scanlines over everything | The saved CRT option is `light` / `full` (M3-02, `renderer.crtFilter`); it is one filter over the upscaled second pass, computed at at most 1080 rows |
 | The Mode-7 floor never appears | The stage has no `mode7` section, the camera is outside its `[from, to)`, the atlas has no such sprite (`Mode7Floor.bind` got `null`) or the scene's `WorldView` dropped `effects` — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor) |
 | The overlay's `REB` figure equals the frame count | Expected today: Pixi rebuilds the scene's instruction set whenever any `visible` changed, and the draw path toggles `visible` every frame (review **F1**). M3-02e is the step that has to move it |
-| The overlay's `RT` figure jumps by ~16 MB | The CRT filter was switched on: at a 1080p viewport Pixi pools a 2048×2048 RGBA target for its pass (review **F2**). `light` costs the same as `full` |
+| The overlay's `RT` figure jumps by ~16 MB when CRT goes on | It should not any more: M3-02d made the CRT the pass-2 blit's own shader, so it pools nothing (review **F2**). If it does, the build predates M3-02d — or it was created with `screenPass: 'filter'`, which restores the old 2048×2048 pooled target on purpose |
 | The render bench cannot find the Mode-7 floor or draws magenta checkers | The harness did not call `renderer.setSpriteNames(db.sprites.names)` — the World's sprite ids index into that table, and without it `Mode7Floor.bind` gets no tile |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
 

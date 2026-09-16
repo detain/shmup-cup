@@ -4,6 +4,16 @@ A code-level review of how the renderer behaves on the M7, written 2026-09-16 ag
 M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds the hardware facts in the real
 [input-probe run](input-probe-results.md) on both monitors.
 
+> **Update (M3-02d).** **F2, F3, F4, F5 and F6 are fixed.** The CRT is the pass-2 blit's own
+> shader and the Mode-7 floor a mesh on `BG_MID`, so neither pools a render target or runs a second
+> full-screen pass (`effects/crt.ts` `createCrtBlit`, `effects/mode7.ts` `createMode7Shader`;
+> `PixiRendererOptions.screenPass: 'filter'` keeps the old path as an escape hatch);
+> `estimateMemory` models Pixi's power-of-two pooling (`potBytes`); and `PixiRenderer.warmUp()`,
+> called by `bootShell` behind the loading screen, draws one throwaway off-screen frame with every
+> program and every pooled sprite in it. Measured by the bench: CRT `light` / `full` went 5 draw
+> calls and 2,048 KB of pooled targets → **4 and 0** (the same as CRT `off`), the Mode-7 stage
+> 7 and 512 KB → **6 and 0**. **F1 and F9 remain** — they are M3-02e's.
+>
 > **Update (M3-02c).** The instrument this report asked for exists: `pnpm bench` →
 > `test/bench/render.perf.ts` measures `renderer.render()` in a real browser (**F10**), the debug
 > overlay shows the structure-rebuild count and the pooled render-target total on the TV, the stale
@@ -98,7 +108,7 @@ else { this._updateRenderables(renderGroup); }
 ---
 
 ### F2 — The CRT filter costs a 16 MB render target and an extra full‑screen pass at 1080p
-**Impact: High · Confirmed**
+**Impact: High · Confirmed · FIXED in M3-02d**
 
 **Today.** `createCrtPass` attaches the filter to the pass‑2 `screen` container (`effects/crt.ts:231`). That container holds the two side panels and the frame sprite, which at 1920×1080 in `normal`/`integer` mode covers the canvas exactly (384 × 5 = 1920, 216 × 5 = 1080). Pixi clips filter bounds to the viewport (`FilterSystem.mjs:_calculateFilterBounds` → `bounds.fitBounds(0, viewPort.width/res, …)`), giving 1920×1080, then `TexturePool.getOptimalTexture` rounds **up to the next power of two on each axis** (`TexturePool.mjs:51-56`) → a **2048 × 2048 RGBA8 texture = 16.8 MB**, of which 8.3 MB is used.
 
@@ -120,7 +130,7 @@ The docblock's promise — *"caps the pass at `CRT_MAX_HEIGHT` rows … a 4K TV 
 ---
 
 ### F3 — `estimateMemory` under‑counts GPU render targets (misses the CRT target entirely)
-**Impact: Medium · Confirmed**
+**Impact: Medium · Confirmed · FIXED in M3-02d**
 
 **Today** (`packages/shell/src/memory/index.ts:106-109, 208-210`):
 
@@ -142,7 +152,7 @@ Three things are wrong or missing:
 ---
 
 ### F4 — Shaders compile on first draw, mid‑gameplay
-**Impact: Medium · Confirmed**
+**Impact: Medium · Confirmed · FIXED in M3-02d**
 
 `GlShaderSystem._getProgramData` compiles and links lazily: `this._programDataHash[program._key] || this._createProgramData(program)` (`GlShaderSystem.mjs:90-95`). Construction of a `Filter`/`GlProgram` does *not* touch the GL context.
 
@@ -160,7 +170,7 @@ On a Mali‑G51 with Chromium 69, a GLSL compile + link is typically 5–50 ms; 
 ---
 
 ### F5 — Pixi allocates inside `renderer.render()` on "busiest frame yet" — and CI cannot see it
-**Impact: Medium · Mechanism Confirmed, size Needs‑measurement**
+**Impact: Medium · Mechanism Confirmed, size Needs‑measurement · FIXED in M3-02d**
 
 Two allocation sources live *past* the boundary our guards measure:
 
@@ -176,7 +186,7 @@ Our allocation guards run in Node with fake atlases and fake images (`packages/r
 ---
 
 ### F6 — Mode‑7 is a filter over a dummy sprite whose input the shader never reads
-**Impact: Medium‑Low · Confirmed**
+**Impact: Medium‑Low · Confirmed · FIXED in M3-02d**
 
 `createMode7Floor` puts a full‑frame `Texture.WHITE` sprite with `alpha = 0` at the bottom of `BG_MID` purely to give the filter an area (`effects/mode7.ts:239-243`), and the fragment shader ignores `uTexture` entirely — it samples `uTile` from the atlas and writes the floor (`shaders.ts`, MODE7_FRAGMENT). Pixi still does the full filter dance: pool a 512×256 target (POT of 384×216 = 512 KB), render the (invisible) sprite into it, then run the filter pass. One wasted render‑target allocation, one wasted pass, one wasted clear.
 

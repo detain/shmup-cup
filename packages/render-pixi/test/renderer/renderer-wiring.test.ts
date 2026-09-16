@@ -13,13 +13,16 @@ import {
   createSpriteBatch,
   pushSprite,
   type DrawList,
+  type Mode7View,
   type RenderFrame,
   type ScreenView,
   type WorldView,
 } from '@shmup/core';
+import { Container } from 'pixi.js';
 import type * as Pixi from 'pixi.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
+import type { CrtBlitHandle, Mode7Shader } from '../../src/effects/index.js';
 import { PALETTE } from '../../src/palette/index.js';
 import { createPixiRenderer } from '../../src/renderer/index.js';
 import { pageImages, testManifest } from '../helpers.js';
@@ -49,6 +52,21 @@ const record = vi.hoisted(() => ({
 
 vi.mock('pixi.js', async (importOriginal) => {
   const real = await importOriginal<typeof Pixi>();
+  /**
+   * Stands in for Pixi's `GlProgram`, whose constructor probes a WebGL context for the GPU's
+   * fragment precision (M3-02d: the pass-2 blit builds a program with the renderer).
+   */
+  class FakeGlProgram {
+    /**
+     * Ignores the sources.
+     *
+     * @param options - The program options.
+     * @returns A plain stand-in program.
+     */
+    static from(options: object): object {
+      return { ...options, destroy: (): void => {} };
+    }
+  }
   const CANVAS_TARGET = { label: 'canvas render target' };
   class FakeWebGLRenderer {
     readonly context = {
@@ -96,7 +114,12 @@ vi.mock('pixi.js', async (importOriginal) => {
       return texture;
     },
   };
-  return { ...real, WebGLRenderer: FakeWebGLRenderer, RenderTexture: FakeRenderTexture };
+  return {
+    ...real,
+    WebGLRenderer: FakeWebGLRenderer,
+    RenderTexture: FakeRenderTexture,
+    GlProgram: FakeGlProgram,
+  };
 });
 
 const canvas = { width: 0, height: 0 } as HTMLCanvasElement;
@@ -687,8 +710,48 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     expect(renderer.viewport).toMatchObject({ scale: 5, x: 0, y: 0 });
   });
 
-  it('runs the M3-02 CRT pass over the screen container, told the picture and the display', async () => {
-    // The real filter needs a WebGL context to pick its precision, so the pass gets a fake one.
+  it('folds the M3-02 CRT into the pass-2 blit, told the picture and the display (M3-02d)', async () => {
+    // The real blit needs a WebGL context to pick the program's precision, so it gets a fake.
+    const applied: Array<[number, number, number, number, number, number]> = [];
+    const mesh = new Container();
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: 3840,
+      displayHeight: 2160,
+      createCrtBlit: () => ({
+        mesh: mesh as unknown as CrtBlitHandle['mesh'],
+        apply: (look, pitch, x, y, w, h) => applied.push([look.scan, pitch, x, y, w, h]),
+        destroy: () => {},
+      }),
+    });
+    expect(renderer.screenPass).toBe('blit');
+    renderer.render(frameOf(0));
+    const screen = record.renders[1]?.container as Pixi.Container;
+    // The blit is the frame quad of the second pass, placed and scaled by the CRT pass.
+    expect(screen.children).toContain(mesh);
+    expect([mesh.scale.x, mesh.scale.y]).toEqual([10, 10]);
+    expect(renderer.crtFilter).toBe('off');
+    // No filter is ever attached: `off` and `full` cost the same one draw call (review F2).
+    expect(screen.filters ?? []).toEqual([]);
+    expect(applied.at(-1)).toEqual([0, 10, 0, 0, 3840, 2160]);
+    renderer.setCrtFilter('light');
+    expect(renderer.crtFilter).toBe('light');
+    expect(screen.filters ?? []).toEqual([]);
+    // The scanline pitch is the frame's scale on the display.
+    expect(applied.at(-1)?.slice(1)).toEqual([10, 0, 0, 3840, 2160]);
+    expect(applied.at(-1)?.[0]).toBeGreaterThan(0);
+    renderer.setCrtFilter('full');
+    expect(applied.at(-1)?.[0]).toBeGreaterThan(applied.at(-2)?.[0] ?? 1);
+    // A resize follows the picture through.
+    renderer.resize(1920, 1080);
+    expect(applied.at(-1)?.slice(1)).toEqual([5, 0, 0, 1920, 1080]);
+    renderer.setCrtFilter('off');
+    expect(renderer.crtFilter).toBe('off');
+    expect(applied.at(-1)?.[0]).toBe(0);
+    expect(screen.filters ?? []).toEqual([]);
+  });
+
+  it("keeps M3-02’s sprite + filter pass behind `screenPass: 'filter'` (M3-02d)", async () => {
     const applied: Array<[number, number, number, number]> = [];
     const heights: number[] = [];
     const fake = { enabled: true } as unknown as Pixi.Filter;
@@ -696,6 +759,7 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
       canvas,
       displayWidth: 3840,
       displayHeight: 2160,
+      screenPass: 'filter',
       createCrtFilter: () => ({
         filter: fake,
         apply: (look, pitch, w, h) => applied.push([look.scan, pitch, w, h]),
@@ -703,25 +767,15 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
         destroy: () => {},
       }),
     });
+    expect(renderer.screenPass).toBe('filter');
     renderer.render(frameOf(0));
     const screen = record.renders[1]?.container as Pixi.Container;
     expect(screen.filters ?? []).toEqual([]);
-    expect(renderer.crtFilter).toBe('off');
     renderer.setCrtFilter('light');
-    expect(renderer.crtFilter).toBe('light');
     expect(screen.filters).toEqual([fake]);
-    // The scanline pitch is the frame's scale on the display; the cap sees the display's rows.
     expect(applied.at(-1)?.slice(1)).toEqual([10, 3840, 2160]);
     expect(heights.at(-1)).toBe(2160);
-    expect(applied.at(-1)?.[0]).toBeGreaterThan(0);
-    renderer.setCrtFilter('full');
-    expect(screen.filters).toEqual([fake]);
-    expect(applied.at(-1)?.[0]).toBeGreaterThan(applied.at(-2)?.[0] ?? 1);
-    // A resize follows the picture through.
-    renderer.resize(1920, 1080);
-    expect(applied.at(-1)?.slice(1)).toEqual([5, 1920, 1080]);
     renderer.setCrtFilter('off');
-    expect(renderer.crtFilter).toBe('off');
     expect(screen.filters).toEqual([]);
   });
 
@@ -734,9 +788,9 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
       displayWidth: 1920,
       displayHeight: 1080,
       atlas: testAtlas(),
-      createMode7Filter: () => ({
-        filter: { enabled: true } as unknown as Pixi.Filter,
-        apply: (_view, u, v) => origins.push([u, v]),
+      createMode7Shader: () => ({
+        mesh: new Container() as unknown as Mode7Shader['mesh'],
+        apply: (_view: Mode7View, u: number, v: number) => origins.push([u, v]),
         setTile: (...rect: number[]) => tiles.push(rect),
         destroy: () => {},
       }),
@@ -768,20 +822,20 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     // Without a floor: nothing on the layer but the idle sprite, and no filter.
     renderer.bindWorld(world);
     expect(renderer.mode7.active).toBe(false);
-    expect(renderer.mode7.filter).toBeNull();
+    expect(renderer.mode7.shader).toBeNull();
     renderer.bindWorld(floored);
-    expect(renderer.mode7.filter).not.toBeNull();
-    expect(renderer.layers.layers[LayerId.BgMid].children[0]).toBe(renderer.mode7.sprite);
+    expect(renderer.mode7.shader).not.toBeNull();
+    expect(renderer.layers.layers[LayerId.BgMid].children[0]).toBe(renderer.mode7.view);
     // Outside the floor's range: hidden.
     renderer.render(frameOf(0, floored));
     expect(renderer.mode7.active).toBe(false);
-    expect(renderer.mode7.sprite.visible).toBe(false);
-    // Inside it: drawn, with the filter attached.
+    expect(renderer.mode7.view?.visible).toBe(false);
+    // Inside it: drawn as a mesh — no filter on the layer at all (M3-02d, review F6).
     camera.x = 120;
     renderer.render(frameOf(1, floored));
     expect(renderer.mode7.active).toBe(true);
-    expect(renderer.mode7.sprite.visible).toBe(true);
-    expect(renderer.mode7.sprite.filters).toHaveLength(1);
+    expect(renderer.mode7.view?.visible).toBe(true);
+    expect(renderer.layers.layers[LayerId.BgMid].filters ?? []).toEqual([]);
     // The tile came from the atlas (`bg/tile` is 16×16 on the 32×16 second page) and the plane's
     // origin from the camera.
     expect(tiles).toEqual([[0, 0, 16, 16, 32, 16]]);
@@ -789,7 +843,7 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     // A world without one unbinds it again.
     renderer.bindWorld(world);
     expect(renderer.mode7.active).toBe(false);
-    expect(renderer.mode7.sprite.visible).toBe(false);
+    expect(renderer.mode7.view?.visible).toBe(false);
   });
 
   it('rejects a parallax band off the background layers before binding anything', async () => {

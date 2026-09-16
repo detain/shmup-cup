@@ -123,13 +123,19 @@ const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: 'worst-case, CRT light',
-    what: 'review F2 — `light` runs the same program and the same extra pass as `full`',
+    what: 'review F2 — `light` runs the same program as `full`; since M3-02d, also the same pass',
     options: load({ crt: 'light' }),
+    check: (result) => {
+      expect(result.renderTargetBytes, 'M3-02d: the CRT pools no render target').toBe(0);
+    },
   },
   {
     id: 'worst-case, CRT full',
-    what: 'review F2 — the pooled render target and the second full-screen pass',
+    what: 'review F2 — M3-02d folded the CRT into the blit: no pooled target, no second pass',
     options: load({ crt: 'full' }),
+    check: (result) => {
+      expect(result.renderTargetBytes, 'M3-02d: the CRT pools no render target').toBe(0);
+    },
   },
   {
     id: 'layer effects (raster-range)',
@@ -141,10 +147,11 @@ const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: 'Mode-7 floor (dimension)',
-    what: 'review F6 — the floor renders a full-frame sprite into a pooled target',
+    what: 'review F6 — M3-02d draws the floor as a mesh, so it pools no target either',
     options: load({ stage: 'dimension' }),
     check: (result) => {
       expect(result.mode7, 'the Mode-7 floor must be drawn').toBe(true);
+      expect(result.renderTargetBytes, 'M3-02d: the floor pools no render target').toBe(0);
     },
   },
   {
@@ -314,9 +321,13 @@ function report(id: string, options: RenderBenchOptions, result: RenderBenchResu
 }
 
 describe('bench: render (worst-case frames through the real renderer, M3-02c)', () => {
+  /** Every scenario's result, by id — read by the M3-02d comparison below. */
+  const results = new Map<string, RenderBenchResult>();
+
   for (const scenario of SCENARIOS) {
     it(`${scenario.id} — ${scenario.what}`, async () => {
       const result = await runScenario(scenario.options);
+      results.set(scenario.id, result);
       report(scenario.id, scenario.options, result);
       // The load floors first, then the budgets — `renderBenchViolations` (its own module, unit
       // tested in `test/integration/render-bench.test.ts`). Each live count is the *smallest* the
@@ -326,6 +337,31 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
       scenario.check?.(result);
     }, 300_000);
   }
+
+  it('CRT `full` costs what CRT `off` costs (M3-02d, review F2)', () => {
+    const off = results.get('worst-case, CRT off');
+    const light = results.get('worst-case, CRT light');
+    const full = results.get('worst-case, CRT full');
+    expect(
+      [off, light, full].every((r) => r !== undefined),
+      'the CRT scenarios must have run',
+    ).toBe(true);
+    if (off === undefined || light === undefined || full === undefined) return;
+    // The hardware-independent gate: the CRT look is the blit's own shader, so it adds no draw
+    // call and no pooled render target. Before M3-02d this was 5 draw calls and 2,048 KB.
+    expect([light.drawCalls, full.drawCalls]).toEqual([off.drawCalls, off.drawCalls]);
+    expect([light.renderTargetBytes, full.renderTargetBytes]).toEqual([0, 0]);
+    expect(off.renderTargetBytes).toBe(0);
+    // The milliseconds are only reported. Under SwiftShader the renderer is CPU-bound, so even
+    // the pre-M3-02d filter path cost just ~12 % more p95 here while costing 2x the fill on the
+    // TV — a tight time gate would be flaky without detecting anything the counts above miss.
+    // A quiet run measures CRT `full` at 0.94x CRT `off` (the step's "within ~10 %").
+    console.info(
+      `[bench] render CRT p95 ratio: light ${(light.renderP95Ms / off.renderP95Ms).toFixed(2)}x, ` +
+        `full ${(full.renderP95Ms / off.renderP95Ms).toFixed(2)}x of CRT off`,
+    );
+    expect(full.renderP95Ms).toBeLessThan(off.renderP95Ms * 2);
+  });
 
   it('the heap gate fails on a deliberately leaky frame', async () => {
     const options = load({ frames: 200, warmupFrames: 20, leakPerFrame: LEAK_PER_FRAME });

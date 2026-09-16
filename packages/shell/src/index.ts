@@ -163,6 +163,7 @@ export {
 export {
   AUDIO_BUDGET_BYTES,
   FILE_TRACK_FALLBACK_SECONDS,
+  FILTER_TARGETS,
   HEAP_BASELINE_BYTES,
   MEMORY_BUDGET_BYTES,
   MIB,
@@ -173,6 +174,7 @@ export {
   estimateMemory,
   estimateStageMemory,
   pageBytes,
+  potBytes,
   sfxBankBytes,
   songFrameBound,
   stageMusicTracks,

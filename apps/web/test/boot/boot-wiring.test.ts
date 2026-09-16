@@ -40,6 +40,10 @@ const fakes = vi.hoisted(() => {
       renderer.spriteNames.push(names);
     },
     bindWorld() {},
+    warmUps: 0,
+    warmUp() {
+      renderer.warmUps++;
+    },
     resize(w: number, h: number) {
       renderer.sizes.push([w, h]);
     },

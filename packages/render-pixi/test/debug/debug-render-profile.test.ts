@@ -72,10 +72,15 @@ interface PoolHandle {
 /**
  * A `TexturePool`-shaped stand-in: `createTexture` only records what it was asked for.
  *
+ * @param free - Free textures the pool already holds (Pixi's `_texturePool`), if any.
  * @returns The fake pool (as both shapes — the meter's argument type and the handle the test
  *   reads) and the calls it saw.
  */
-function fakePool(): { pool: TexturePoolClass; handle: PoolHandle; calls: number[][] } {
+function fakePool(free?: Record<string, Array<{ source?: Record<string, number> }>>): {
+  pool: TexturePoolClass;
+  handle: PoolHandle;
+  calls: number[][];
+} {
   const calls: number[][] = [];
   const handle: PoolHandle = {
     createTexture: (w, h, antialias, mipmaps): unknown => {
@@ -83,6 +88,8 @@ function fakePool(): { pool: TexturePoolClass; handle: PoolHandle; calls: number
       return { w, h };
     },
   };
+  const pool = handle as unknown as Record<string, unknown>;
+  if (free !== undefined) pool._texturePool = free;
   return { pool: handle as unknown as TexturePoolClass, handle, calls };
 }
 
@@ -156,6 +163,35 @@ describe('render-pixi/debug createRenderTargetMeter (M3-02c)', () => {
       [512, 256, 0, 0],
       [2048, 2048, 0, 0],
     ]);
+  });
+
+  it('counts the targets the pool already held when it started (M3-02d warm-up)', () => {
+    // The renderer's boot warm-up frame (M3-02d) draws every filter once, so by the time the
+    // shell's debug tools start their meter the pool may already hold that pass's target. The
+    // overlay's `RT` figure would otherwise read 0 on a stage whose effect is plainly running.
+    const { pool, handle } = fakePool({
+      // Pixi's own shape: free textures by size key, each with a sized source.
+      '67108872': [{ source: { pixelWidth: 512, pixelHeight: 256 } }],
+      '268435464': [
+        { source: { pixelWidth: 1024, pixelHeight: 512 } },
+        // A texture with no usable size is skipped rather than counted as 0 or crashed on.
+        { source: { pixelWidth: 0, pixelHeight: 0 } },
+        {},
+      ],
+    });
+    const meter = createRenderTargetMeter(pool);
+    expect(meter.bytes).toBe(512 * 256 * 4 + 1024 * 512 * 4);
+    expect(meter.count).toBe(2);
+    // …and it goes on counting from there.
+    handle.createTexture(2048, 2048, false, false);
+    expect(meter.bytes).toBe(512 * 256 * 4 + 1024 * 512 * 4 + 2048 * 2048 * 4);
+    expect(meter.count).toBe(3);
+    meter.stop();
+  });
+
+  it('starts at zero on a pool with no free list of its own', () => {
+    const { pool } = fakePool();
+    expect(createRenderTargetMeter(pool).bytes).toBe(0);
   });
 
   it('gives the pool its own method back on stop, and stops counting', () => {

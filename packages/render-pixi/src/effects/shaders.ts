@@ -1,12 +1,21 @@
 /**
- * The **shader sources** of the `effects` module — three **GLSL ES 1.0** (WebGL1) programs, each a
- * pair of `*_VERTEX` / `*_FRAGMENT` strings a Pixi filter is built from:
+ * The **shader sources** of the `effects` module — four **GLSL ES 1.0** (WebGL1) vertex shaders and
+ * three fragment shaders, plain strings a Pixi `Filter` or a Pixi `Shader` on a `Mesh` is built
+ * from:
  *
  * | Program | Step | Runs over | Built by |
  * |---|---|---|---|
  * | `LAYER_EFFECT_*` | M2-08 | one world layer | `./layer-effects.ts` `createLayerEffectFilter` |
- * | `MODE7_*` | M3-02 | a full-frame sprite on `BG_MID` | `./mode7.ts` `createMode7Filter` |
- * | `CRT_*` | M3-02 | the upscaled second pass | `./crt.ts` `createCrtFilter` |
+ * | `MODE7_*` | M3-02 / M3-02d | a full-frame **mesh** on `BG_MID` | `./mode7.ts` `createMode7Shader` |
+ * | `CRT_*` | M3-02 / M3-02d | the pass-2 blit **mesh** | `./crt.ts` `createCrtBlit` |
+ * | `CRT_*` (legacy) | M3-02 | the upscaled second pass, as a filter | `./crt.ts` `createCrtFilter` |
+ *
+ * Since **M3-02d** the Mode-7 floor and the CRT look are drawn by a `Mesh` with the program bound
+ * straight to it ({@link EFFECT_MESH_VERTEX}) instead of a Pixi `Filter` over a pooled render
+ * target: same fragment sources, one draw call, no second full-screen pass and no pooled target
+ * (the render review's **F2** / **F6**). The two fragment shaders are therefore shared by both
+ * paths — only the vertex shader differs, because a filter's quad and a mesh's quad reach clip
+ * space by different uniforms.
  *
  * The **layer effect** (plan M2-08) does the per-scanline raster offset (wavy water, heat haze,
  * line-band parallax floors) and the palette cycle (water, lava, glowing cores) in one pass, so a
@@ -31,7 +40,9 @@
  * `texture2D`), none of which these sources use.
  *
  * **Uniforms.** Pixi's filter system fills `uInputSize`, `uInputClamp`, `uOutputFrame`,
- * `uOutputTexture` and the input `uTexture`; the layer effect sets:
+ * `uOutputTexture` and the input `uTexture` (for a mesh, {@link EFFECT_MESH_VERTEX} reads Pixi's
+ * global and mesh-pipe uniforms instead and the host supplies `uTexture` / `uInputClamp` itself);
+ * the layer effect sets:
  *
  * | Uniform | Meaning |
  * |---|---|
@@ -157,6 +168,53 @@ void main(void)
 }
 `;
 
+// --------------------------------------------------- the mesh vertex shader (plan M3-02d)
+
+/**
+ * Vertex shader of the **full-screen effect meshes** (plan M3-02d, the render review's **F2** /
+ * **F6**): the mesh counterpart of {@link LAYER_EFFECT_VERTEX}.
+ *
+ * @remarks
+ * A Pixi *filter* is handed `uInputSize` / `uOutputFrame` / `uOutputTexture` and draws a quad over
+ * the filter's area; a Pixi *mesh* is handed the renderer's global uniforms (`uProjectionMatrix`,
+ * `uWorldTransformMatrix`, `uResolution`) and the mesh pipe's local ones (`uTransformMatrix`,
+ * `uRound`). This shader turns the second into the first's two varyings, so
+ * {@link MODE7_FRAGMENT} and {@link CRT_FRAGMENT} are unchanged between the two paths:
+ *
+ * - `vScreen` — the vertex's position in the render target the mesh is being drawn into (frame
+ *   pixels for the Mode-7 floor on `BG_MID`, display pixels for the pass-2 blit), which is what
+ *   `uOutputFrame` gave the filter;
+ * - `vTextureCoord` — the mesh's own `aUV` (the quad is built with the texture's own `0 … 1`
+ *   coordinates, so a `RenderTexture` reads the same way a `Sprite` would read it).
+ *
+ * `uRound` reproduces Pixi's own pixel snapping (the renderer is created with `roundPixels`), so
+ * the blit lands on exactly the pixels a `Sprite` would have covered.
+ */
+export const EFFECT_MESH_VERTEX = `attribute vec2 aPosition;
+attribute vec2 aUV;
+
+varying vec2 vTextureCoord;
+varying vec2 vScreen;
+
+uniform mat3 uProjectionMatrix;
+uniform mat3 uWorldTransformMatrix;
+uniform mat3 uTransformMatrix;
+uniform vec2 uResolution;
+uniform float uRound;
+
+void main(void)
+{
+    vec3 world = uWorldTransformMatrix * uTransformMatrix * vec3(aPosition, 1.0);
+    vScreen = world.xy;
+    vec2 clip = (uProjectionMatrix * world).xy;
+    if (uRound == 1.0) {
+        clip = (floor(((clip * 0.5 + 0.5) * uResolution) + 0.5) / uResolution) * 2.0 - 1.0;
+    }
+    gl_Position = vec4(clip, 0.0, 1.0);
+    vTextureCoord = aUV;
+}
+`;
+
 // ------------------------------------------------------------------ Mode 7 (plan M3-02)
 
 /**
@@ -257,8 +315,9 @@ export const CRT_VERTEX = LAYER_EFFECT_VERTEX;
  * - **Aperture mask** (`uMask` > 0, the `full` setting) — the output columns repeat a
  *   red / green / blue triad: each third keeps its own channel and dims the other two by `uMask`,
  *   the shadow mask of a colour tube.
- * - **Vignette** (`uVignette` > 0) — the corners darken with the squared distance from the centre
- *   (`uHalf`), a subtle bulge without any geometric distortion (the picture must stay pixel-exact).
+ * - **Vignette** (`uVignette` > 0) — the corners darken with the squared distance from the
+ *   picture's centre (`uHalf.xy`, in output pixels) measured in half-pictures (`uHalf.zw`), a
+ *   subtle bulge without any geometric distortion (the picture must stay pixel-exact).
  *
  * Nothing is ever brightened, so the limiter of the flash overlay still holds.
  */
@@ -272,7 +331,7 @@ varying vec2 vScreen;
 
 uniform sampler2D uTexture;
 uniform vec4 uInputClamp;
-uniform vec2 uHalf;
+uniform vec4 uHalf;
 uniform float uLinePitch;
 uniform float uScan;
 uniform float uMask;
@@ -292,7 +351,7 @@ void main(void)
         color.rgb *= mix(vec3(1.0 - uMask), vec3(1.0), keep);
     }
     if (uVignette > 0.0) {
-        vec2 d = (vScreen - uHalf) / uHalf;
+        vec2 d = (vScreen - uHalf.xy) / uHalf.zw;
         color.rgb *= 1.0 - uVignette * clamp(dot(d, d), 0.0, 1.0);
     }
     gl_FragColor = color;

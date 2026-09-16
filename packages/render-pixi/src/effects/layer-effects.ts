@@ -231,6 +231,16 @@ export interface LayerEffects {
    * @param enabled - `false` detaches every filter (the effects setting is off).
    */
   sync(tick: number, camera: CameraView, rowShift: number, enabled: boolean): void;
+  /**
+   * Attaches or detaches **every** filter the bound world has, whatever the camera says (plan
+   * M3-02d, the render review's **F4**): the renderer's boot warm-up draws one throwaway frame
+   * with all of them on so their GL programs link behind the loading screen instead of mid-stage,
+   * then turns them all off again — the next {@link LayerEffects.sync} re-attaches the ones a
+   * frame really needs.
+   *
+   * @param on - `true` to attach every layer that has a filter, `false` to detach every layer.
+   */
+  attachAll(on: boolean): void;
   /** Detaches and destroys every filter. */
   destroy(): void;
 }
@@ -394,6 +404,12 @@ export function createLayerEffects(options: LayerEffectsOptions): LayerEffects {
         const changed = rasterOn && encodeRasterTable(effect.table, effect.bytes);
         effect.apply(rasterOn, count, rowShift, changed);
         attach(layer);
+      }
+    },
+    attachAll(on) {
+      for (let i = 0; i < LAYER_COUNT; i++) {
+        if (on) attach(i);
+        else detach(i);
       }
     },
     destroy() {

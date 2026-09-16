@@ -20,7 +20,7 @@ import {
   type ContentDb,
   type Mode7View,
 } from '@shmup/core';
-import { createLayerStack, createMode7Floor, type Mode7Filter } from '@shmup/render-pixi';
+import { createLayerStack, createMode7Floor, type Mode7Shader } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
@@ -104,8 +104,11 @@ describe('integration: the high-speed dimension stage (M3-02)', () => {
     const stack = createLayerStack();
     const applied: Array<[number, number]> = [];
     const tiles: number[][] = [];
-    const fake: Mode7Filter = {
-      filter: { enabled: true } as unknown as Mode7Filter['filter'],
+    // A real Pixi container stands in for the mesh — a spare layer of a second stack, since the
+    // root test project has no direct `pixi.js` dependency.
+    const spare = createLayerStack();
+    const fake: Mode7Shader = {
+      mesh: spare.layers[LayerId.Debug] as unknown as Mode7Shader['mesh'],
       apply(_view: Mode7View, originU: number, originV: number) {
         applied.push([originU, originV]);
       },
@@ -116,7 +119,7 @@ describe('integration: the high-speed dimension stage (M3-02)', () => {
     };
     const mode7 = createMode7Floor({
       layer: stack.layers[LayerId.BgMid],
-      createFilter: () => fake,
+      createShader: () => fake,
     });
     // The tile rectangle the renderer would hand it, straight out of the packed atlas.
     const name = manifest.sprites['bg/dimension-floor'].frames[0];
@@ -136,7 +139,7 @@ describe('integration: the high-speed dimension stage (M3-02)', () => {
       topSpeed = Math.max(topSpeed, camera.x - lastX);
       lastX = camera.x;
       // The floor covers the whole stage (`from` 0, `to` the end), so it is never detached.
-      if (!mode7.active) failures.push(`tick ${tick} x ${camera.x}: floor detached`);
+      if (!mode7.active) failures.push(`tick ${tick} x ${camera.x}: floor hidden`);
       const last = applied.at(-1);
       if (last === undefined || last[0] !== camera.x * floor.scroll) {
         failures.push(`tick ${tick}: origin ${String(last?.[0])} for camera ${camera.x}`);

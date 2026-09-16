@@ -205,18 +205,31 @@ the tick that was rendered) and **≥ 489 of 512 particles**.
 
 | Scenario (384×216 internal, the load above) | Draw calls | Pooled render targets | Structure rebuilds |
 |---|---|---|---|
-| CRT off | 4 | 0 KB | 659 / 660 frames |
-| CRT light | 5 | 2,048 KB | 659 / 660 |
-| CRT full | 5 | 2,048 KB | 659 / 660 |
+| CRT off | 4 → **4** | 0 KB → **0 KB** | 659 / 660 frames |
+| CRT light | 5 → **4** | 2,048 KB → **0 KB** | 659 / 660 |
+| CRT full | 5 → **4** | 2,048 KB → **0 KB** | 659 / 660 |
 | Layer effects (`raster-range`) | 7 | 512 KB | 655 / 660 |
-| Mode-7 floor (`dimension`) | 7 | 512 KB | 655 / 660 |
+| Mode-7 floor (`dimension`) | 7 → **6** | 512 KB → **0 KB** | 655 / 660 |
 | Layer effects at **768×432** internal | 7 | 2,048 KB (+1,296 KB frame target) | 655 / 660 |
 
-Three things it settles without the hardware:
+The first number in each cell is M3-02c's measurement, the bold one the same scenario after
+**M3-02d** folded the CRT and the Mode-7 floor into their draw passes. p95 render time moved
+2.4–3.2 ms → 2.5–3.3 ms between runs, which is SwiftShader noise on a shared machine, not a
+signal. What is comparable is CRT `full` against CRT `off` **in the same run**: **0.94× and 1.10×**
+over three runs, inside the step's "within ~10 %", where before the fold it was 1.12× (`pnpm bench`
+prints the ratio and asserts it). The **counted** quantities
+are the transferable result — on the TV, CRT `full` stopped costing a 16.8 MB pooled target
+(2048×2048 at 1080p) and a second full-screen pass over 2.07 Mpx.
+
+Four things it settles without the hardware:
 
 - **F1's mechanism is real, not just plausible.** Essentially *every* frame rebuilds the scene's
   whole instruction set (655–659 of 660, reproduced run to run). How many milliseconds that is on a
-  Kant-SU2 is M1's job.
-- **F2 is right that `light` is not cheaper than `full`.** Same draw call, same pooled target.
+  Kant-SU2 is M1's job. **Unchanged by M3-02d** — it is M3-02e's work.
+- **F2 was right that `light` is not cheaper than `full`** — and after M3-02d neither is dearer than
+  `off`: one draw call, no pooled target, whatever the setting.
 - **F3's power-of-two rounding is real.** A 384×216 filter pass pools a 512×256 target; the same
-  pass at 768×432 pools 1024×512 — ×4, exactly as the review's §7.3 table predicts.
+  pass at 768×432 pools 1024×512 — ×4, exactly as the review's §7.3 table predicts. (`estimateMemory`
+  now models it — M3-02d.)
+- **F6's wasted pass was real.** The Mode-7 floor pooled a 512 KB target and ran a filter pass whose
+  input its shader never read; as a mesh it is one draw call and no target.

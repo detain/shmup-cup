@@ -70,18 +70,21 @@
  * {@link stageEffectActive}, {@link RASTER_MAX_OFFSET}; layer effects: {@link LayerEffects},
  * {@link LayerEffectsOptions}, {@link createLayerEffects}, {@link LayerEffectFilter},
  * {@link createLayerEffectFilter}, {@link LAYER_EFFECT_VERTEX}, {@link LAYER_EFFECT_FRAGMENT},
- * {@link LAYER_EFFECT_ROWS}, {@link LAYER_EFFECT_MAX_COLORS}.
+ * {@link LAYER_EFFECT_ROWS}, {@link LAYER_EFFECT_MAX_COLORS}, {@link EFFECT_MESH_VERTEX}.
  *
  * - **The Mode-7 floor (M3-02, `./mode7.ts`)** — {@link createMode7Floor}: a tiled ground plane
- *   under the horizon, written by one GLSL ES 1.0 filter ({@link createMode7Filter}; sources
- *   {@link MODE7_VERTEX} / {@link MODE7_FRAGMENT}) that evaluates mode 7's per-row affine matrix
- *   per pixel and samples the tile straight out of the atlas. Driven by the stage's `mode7` data
- *   (core `Mode7View`) and the camera alone, so nothing about it is simulated; attached only while
- *   the camera is inside the floor's range.
- * - **The CRT / scanline filter (M3-02, `./crt.ts`)** — {@link createCrtPass}: scanlines, an
+ *   under the horizon, written by one GLSL ES 1.0 program ({@link createMode7Shader}; sources
+ *   {@link EFFECT_MESH_VERTEX} / {@link MODE7_FRAGMENT}) that evaluates mode 7's per-row affine
+ *   matrix per pixel and samples the tile straight out of the atlas. Driven by the stage's `mode7`
+ *   data (core `Mode7View`) and the camera alone, so nothing about it is simulated; drawn only
+ *   while the camera is inside the floor's range. **M3-02d** made it a `Mesh` on `BG_MID` instead
+ *   of a filter over an invisible sprite (review **F6**).
+ * - **The CRT / scanline pass (M3-02, `./crt.ts`)** — {@link createCrtPass}: scanlines, an
  *   aperture-grille mask and a vignette ({@link CRT_LOOKS} per `core/config` `CRT_FILTERS`
- *   setting) over the renderer's **upscaled** second pass, capped at `CRT_MAX_HEIGHT` rows
- *   ({@link crtResolution}) so a 4K TV pays for a 1080p pass.
+ *   setting) over the renderer's **upscaled** second pass. **M3-02d** folded the program into the
+ *   pass-2 blit itself ({@link createCrtBlit}) — one draw call, no pooled 2048² render target and
+ *   no second full-screen pass (review **F2**); the old filter ({@link createCrtFilter},
+ *   {@link crtResolution}) stays behind the renderer's `screenPass: 'filter'` escape hatch.
  *
  * @module
  */
@@ -122,6 +125,7 @@ export {
   CRT_FULL_VIGNETTE,
   CRT_LIGHT_SCAN,
   CRT_VERTEX,
+  EFFECT_MESH_VERTEX,
   LAYER_EFFECT_FRAGMENT,
   LAYER_EFFECT_MAX_COLORS,
   LAYER_EFFECT_ROWS,
@@ -132,22 +136,25 @@ export {
 export {
   CRT_LOOKS,
   CRT_MIN_PITCH,
+  createCrtBlit,
   createCrtFilter,
   createCrtPass,
   crtResolution,
+  type CrtBlitHandle,
   type CrtFilterHandle,
   type CrtLook,
   type CrtPass,
   type CrtPassOptions,
+  type ScreenPassMode,
 } from './crt.js';
 export {
   MODE7_ANGLE_UNITS,
   MODE7_MAX_SCALE,
-  createMode7Filter,
   createMode7Floor,
-  type Mode7Filter,
+  createMode7Shader,
   type Mode7Floor,
   type Mode7FloorOptions,
+  type Mode7Shader,
 } from './mode7.js';
 
 /** Module descriptor. */

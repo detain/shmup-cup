@@ -1,14 +1,16 @@
 /**
  * Browser test of the visual showpieces of plan M3-02 in headless Chromium (SwiftShader WebGL):
  *
- * - the **Mode-7** shader (`MODE7_VERTEX` / `MODE7_FRAGMENT`) and the **CRT** shader
- *   (`CRT_VERTEX` / `CRT_FRAGMENT`) compile and link in a real **WebGL1** context — the GLSL ES
- *   1.0 check by the browser's own compiler, the one Chromium 69 on the TV will run;
+ * - the **Mode-7** and **CRT** programs compile and link in a real **WebGL1** context — the GLSL
+ *   ES 1.0 check by the browser's own compiler, the one Chromium 69 on the TV will run — in both
+ *   the shipped mesh pairing (`EFFECT_MESH_VERTEX` with each fragment shader, plan M3-02d) and
+ *   the filter pairing the `screenPass: 'filter'` escape hatch still uses;
  * - the pseudo-3D stage `?stage=dimension` boots without errors and its floor shows: the rows
- *   under the horizon change when the floor is hidden, while the sky above them does not, and the
- *   frame stays inside {@link DRAW_CALL_BUDGET} WebGL draw calls;
- * - the CRT filter only ever darkens (scanlines at `light`, plus the mask and vignette at `full`),
- *   and switching it off restores the picture pixel for pixel;
+ *   under the horizon change when the floor's mesh is hidden, while the sky above them does not,
+ *   and the frame stays inside {@link DRAW_CALL_BUDGET} WebGL draw calls;
+ * - the CRT look only ever darkens (scanlines at `light`, plus the mask and vignette at `full`),
+ *   and switching it off restores the picture pixel for pixel — since plan M3-02d it is the pass-2
+ *   blit's own shader, so the picture must survive the fold unchanged with CRT `off`;
  * - the aspect modes reshape the picture: `classic` pillarboxes it with lit side panels, `wide`
  *   makes a cabinet window, `normal` fills the display again.
  *
@@ -20,6 +22,7 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   CRT_FRAGMENT,
   CRT_VERTEX,
+  EFFECT_MESH_VERTEX,
   MODE7_FRAGMENT,
   MODE7_VERTEX,
 } from '../../packages/render-pixi/src/effects/shaders.js';
@@ -28,8 +31,10 @@ import { freezeSim, stepTo } from './frame-advance.js';
 
 /**
  * Most WebGL draw calls one frame of the dimension stage may take: the plain frame takes 2 (one
- * batch for the scene, the upscale quad) and the Mode-7 floor adds its own layer render, its
- * filter pass and a batch break, with room for the stage's own layers on top.
+ * batch for the scene, the upscale quad) and since plan **M3-02d** the Mode-7 floor adds one draw
+ * call and a batch break — it is a mesh on `BG_MID`, not a filter over a pooled render target
+ * (the render review's **F6**) — with room for the stage's own layers on top. Kept at 12 so the
+ * budget is the same number M2-08 set: the fold made the frame cheaper, never dearer.
  */
 const DRAW_CALL_BUDGET = 12;
 
@@ -48,7 +53,7 @@ interface Shot {
 
 /** The parts of the renderer this spec touches. */
 interface DebugRenderer {
-  readonly mode7: { readonly active: boolean; readonly sprite: { visible: boolean } };
+  readonly mode7: { readonly active: boolean; readonly view: { visible: boolean } | null };
   readonly panels: { readonly panelLeft: number; readonly panelRight: number };
   readonly crtFilter: string;
   readonly aspect: string;
@@ -218,11 +223,17 @@ test.describe('the M3-02 shaders (GLSL ES 1.0)', () => {
         });
       },
       [
+        // The shipped pairing since M3-02d: one mesh vertex shader, the same two fragments.
+        { name: 'mode7-mesh', vertex: EFFECT_MESH_VERTEX, fragment: MODE7_FRAGMENT },
+        { name: 'crt-blit', vertex: EFFECT_MESH_VERTEX, fragment: CRT_FRAGMENT },
+        // The filter pairing, still built by `screenPass: 'filter'` and by the layer effects.
         { name: 'mode7', vertex: MODE7_VERTEX, fragment: MODE7_FRAGMENT },
         { name: 'crt', vertex: CRT_VERTEX, fragment: CRT_FRAGMENT },
       ],
     );
     expect(result).toEqual([
+      { name: 'mode7-mesh', ok: true, log: '' },
+      { name: 'crt-blit', ok: true, log: '' },
       { name: 'mode7', ok: true, log: '' },
       { name: 'crt', ok: true, log: '' },
     ]);
@@ -247,7 +258,8 @@ test.describe('the pseudo-3D dimension stage (web build, ?stage=dimension)', () 
     // The same tick with the floor sprite hidden: the rows under the horizon change, the sky
     // above them does not.
     await page.evaluate(() => {
-      (window as unknown as DebugWindow).__shmupDebug.renderer.mode7.sprite.visible = false;
+      const floor = (window as unknown as DebugWindow).__shmupDebug.renderer.mode7.view;
+      if (floor !== null) floor.visible = false;
     });
     await stepTo(page, tick);
     await settle(page);

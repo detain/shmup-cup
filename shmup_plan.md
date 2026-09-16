@@ -4303,6 +4303,79 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Risk:** the pass-2 rewrite touches the one path every frame goes through. Keep the plain-sprite path behind a flag
   until the bench confirms the new one.
 - **Refs:** `shmup_feat.md` §18 (CRT off/light/full, Mode-7 floor), §22 (memory budget); review F2, F3, F4, F5, F6.
+- **As built:**
+  - **Measured, before → after** (`pnpm bench`, same machine, 600 frames per scenario, the same
+    per-frame load floor of 512 bullets / ≥ 489 point items / ≥ 489 particles). CRT `off` 4 draw
+    calls, 0 KB pooled → **4 / 0 KB**; CRT `light` 5 / 2,048 KB → **4 / 0 KB**; CRT `full`
+    5 / 2,048 KB → **4 / 0 KB**; Mode-7 (`dimension`) 7 / 512 KB → **6 / 0 KB**; layer effects
+    unchanged at 7 / 512 KB (that is F1/F7 territory, not this step's). p95 in the after-run: CRT
+    `full` against CRT `off` **in the same run**: **0.94× and 1.10×** over three runs, inside the
+    asked-for ~10 % (it was 1.12× before the fold). The absolute milliseconds moved 2.4–3.2 →
+    2.5–3.3 between runs, which is SwiftShader noise on a shared machine (§11 of
+    `docs/dev/input-probe-results.md` says so wherever the numbers are printed). The bench prints
+    the ratio and gates it loosely on purpose: under SwiftShader the renderer is CPU-bound, so
+    even the old filter path cost only ~12 % more p95 here while costing 2× the fill on the TV —
+    a tight time gate would flake without catching anything the counted quantities miss.
+    Heap 350–504 KB over 600 frames, all inside the 1 MB gate. The bench now **asserts** the win:
+    a new case compares the three CRT scenarios and fails if `light` / `full` ever cost a draw call
+    or a pooled byte more than `off`.
+  - **The fragment shaders are shared by both paths; only the vertex shader is new.**
+    `EFFECT_MESH_VERTEX` (`effects/shaders.ts`) turns Pixi's global (`uProjectionMatrix`,
+    `uWorldTransformMatrix`, `uResolution`) and mesh-pipe (`uTransformMatrix`, `uRound`) uniforms
+    into the same `vScreen` / `vTextureCoord` varyings a filter's vertex shader produces — so
+    `CRT_FRAGMENT` and `MODE7_FRAGMENT` are untouched, and the e2e spec still compiles
+    `CRT_VERTEX` / `CRT_FRAGMENT` and `MODE7_*` in a real WebGL1 context. It reproduces Pixi's own
+    `roundPixels` snapping, so the blit lands on exactly the pixels the `Sprite` covered.
+  - **`uHalf` became a `vec4`.** The vignette needs the picture's *centre* as well as its half-size,
+    because in an aspect mode the picture is not at the display's origin (the old code implicitly
+    assumed it was). `CrtBlitHandle.apply(look, pitch, x, y, width, height)` passes both; the legacy
+    `CrtFilterHandle.apply(look, pitch, width, height)` keeps its old signature and its old
+    behaviour.
+  - **The CRT pass owns the frame quad** (`CrtPass.view`), so the renderer has one node to place
+    whichever path is selected, and `setViewport` grew the picture's origin and scale.
+    `createCrtPass` therefore needs the frame texture and its size.
+  - **`createMode7Filter` / `Mode7Filter` are now `createMode7Shader` / `Mode7Shader`**, and
+    `Mode7Floor.sprite` / `.filter` are `Mode7Floor.view` / `.shader` (`view` is `null` until a
+    world with a floor is bound — the mesh is created with the shader, not before). Renaming beat
+    keeping "filter" on something that is not one. `createCrtFilter` / `crtResolution` /
+    `CRT_MAX_HEIGHT` were **kept, not retired**: they are exactly what `screenPass: 'filter'` needs,
+    and the constant stays documented as the TV cap of that path.
+  - **The flag is `PixiRendererOptions.screenPass`** (`'blit'` by default, `'filter'` for M3-02's
+    sprite + Pixi filter), exposed as `PixiRenderer.screenPass`. It is a renderer option, not a
+    player setting and not a URL switch: the bench and the e2e specs confirmed the new path, so
+    nothing shipped needs to choose it at runtime, and a dev switch would cost bundle bytes for a
+    knob only a developer would turn.
+  - **F3 is `1 + filterTargets (+ crt only on the legacy path)`, not the plan's
+    `1 + layers + mode7 + crt`.** After F2 and F6 in this same step neither the CRT nor the Mode-7
+    floor pools a render target at all, so counting them would re-introduce the very error F3 is
+    about. What the estimator gained: `potBytes(w, h)` (next power of two on each axis — Pixi's
+    `TexturePool`), the frame target at its **exact** size (it is created by `RenderTexture.create`,
+    not pooled, so it is not rounded), `filterTargets` POT-rounded pooled passes, and a
+    `crtFilter` / `crtAsFilter` pair that adds `potBytes(display)` only for `screenPass: 'filter'`.
+    `FILTER_TARGETS` stayed at **2** but is now exported and documented as the *nesting depth*
+    (Pixi's pool hands out one texture per size class and takes it back when a filter pops — the
+    bench measures exactly one 512×256 target for a stage with layer effects), not the number of
+    filtered layers. A `frame` input makes the 768×432 experiment computable.
+  - **The warm-up is one method, `PixiRenderer.warmUp()`, called by `bootShell` after `bindWorld`.**
+    It attaches every layer-effect filter (`LayerEffects.attachAll(on)`, new), shows every hidden
+    descendant of the scene, renders pass 1 into the frame texture and pass 2 into a throwaway
+    8×8 target — **not** the frame texture, which is the blit's own input, and **never** the canvas
+    — then restores every flag it changed and leaves `lastTick`, the effect state and the draw-call
+    figure alone.
+  - **The warm-up broke the overlay's `RT` figure, and the fix is in the meter.** Pixi's
+    `TexturePool` never releases a texture, so once the warm-up has drawn a filtered layer the
+    pooled target already exists when the shell's debug tools start their meter — and
+    `createRenderTargetMeter` only counted *creations*, so `RT` read 0 on a stage whose effect was
+    plainly running (caught by `test/e2e/render-profile.spec.ts`, which measures exactly that).
+    The meter now counts what the pool already holds when it starts, once, on its cold path.
+  - **Node tests needed a `GlProgram` fake.** The blit builds its program in `createPixiRenderer`
+    rather than lazily on the first non-`off` setting, and `GlProgram.from` probes a WebGL context
+    for the GPU's precision, so the nine renderer test files that mock `pixi.js` now stub it too.
+  - **Bundle:** the `Mesh` / `MeshGeometry` / `MeshPipe` / `GlMeshAdaptor` pipeline is no longer
+    tree-shaken out, which cost **+2.7 KB gzip** (384.1 → 386.8 KB of the unchanged 512 KB budget).
+  - **Draw-call budgets unchanged.** `test/e2e/mode7.spec.ts` and `test/e2e/raster.spec.ts` keep
+    `DRAW_CALL_BUDGET = 12` — the fold only ever removes draw calls — and both specs pass. No
+    golden replay or attract demo moved: nothing here is visible to the simulation.
 
 ### M3-02e — Cut the per-frame scene-graph rebuild
 

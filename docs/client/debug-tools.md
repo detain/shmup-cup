@@ -97,7 +97,7 @@ RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  9524C84
 GOD HITBOX GRID STEP SLOW 2 LOCK
 TPF 0      3541   2      0     RAF ▁▃█▅▂▁▁▁
-REB 3540      RT     16384 KB
+REB 3540      RT       512 KB
 LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
 
@@ -120,7 +120,7 @@ LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 | `TPF` (line 6) | Frames that ran 0 / 1 / 2 / 3-or-more game steps, counted since the app started | only the second number climbing |
 | `RAF` (line 6) | A bar chart of how long the frames took — [below](#frame-pacing-tpf-and-the-raf-histogram) | most of it in the middle bars |
 | `REB` (line 7) | Frames the picture had to be rebuilt from scratch on, counted since the app started — [below](#render-profile-reb-and-rt) | for developers: today it climbs with almost every frame |
-| `RT` (line 7) | Kilobytes of off-screen picture memory the drawing has taken — [below](#render-profile-reb-and-rt) | `0` with CRT off; about **16384 KB** once CRT is on |
+| `RT` (line 7) | Kilobytes of off-screen picture memory the drawing has taken — [below](#render-profile-reb-and-rt) | `0` on an ordinary stage, whatever CRT is set to; about **512 KB** on a stage with a wavy-water or heat-haze effect |
 | line 8 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
 
 On the title (no game on screen) the bullet, enemy, rank and hash fields stay empty; in the pause
@@ -186,10 +186,12 @@ there so the picture can be made cheaper in a later build without guessing.
   it climbs with almost every frame, which is exactly the thing that is being looked into. Read it
   next to the frame count: near-equal means every frame pays for the rebuild.
 - **`RT`** — kilobytes of off-screen picture memory the drawing has taken since the app started.
-  It is **0** while the CRT filter is off and jumps to about **16384 KB** (16 MB) the moment CRT
-  goes to LIGHT or FULL: the filter needs a full-screen scratch picture, and LIGHT costs exactly
-  what FULL costs. It only ever goes up — the memory is kept and reused, never handed back — so
-  compare readings from the same session.
+  It should stay **0** on an ordinary stage whatever the CRT setting is: since the render fix the
+  CRT look is part of the one pass that puts the picture on screen, so it needs no full-screen
+  scratch picture at all. (Before the fix it jumped to about 16384 KB — 16 MB — the moment CRT went
+  to LIGHT or FULL.) A stage with a wavy-water or heat-haze effect still takes a small one (about
+  512 KB). It only ever goes up — the memory is kept and reused, never handed back — so compare
+  readings from the same session.
 
 Both numbers are also in the remote inspector, as `__shmupDebug.stats.structureRebuilds` and
 `__shmupDebug.stats.renderTargetBytes`. A developer's view of what they mean, and the full
@@ -318,11 +320,12 @@ version, with the debug build on **each** monitor:
    `REB` and `RT`, and photograph the frame graph and the `RAF` bars. This is the control for
    everything below.
 2. **What CRT costs.** OPTIONS → DISPLAY → CRT **OFF / LIGHT / FULL** on the *same* piece of
-   stage, reading `RENDER` and `RT` each time. Expect LIGHT to cost what FULL costs and `RT` to
-   jump by about 16 MB. Watch for a single stutter the first time CRT goes on.
-3. **Entering the special stages.** Fly into the Mode-7 stage and the water / heat-haze stage: a
-   single tall bar in the frame graph at the boundary, once per session, is expected — report it
-   if it is worse than that.
+   stage, reading `RENDER` and `RT` each time. Since the render fix all three should read the
+   **same** `RENDER` within a few per cent and `RT` should **not move at all**. Report it if `RT`
+   jumps, if FULL costs visibly more than OFF, or if there is a stutter the first time CRT goes on.
+3. **Entering the special stages.** Fly into the Mode-7 stage and the water / heat-haze stage: the
+   frame graph should stay flat at the boundary now that the drawing is warmed up at start-up.
+   A single tall bar there is worth reporting, and anything worse certainly is.
 4. **Graphics version A/B** (needs the remote Web Inspector): `localStorage['shmup-cup:gl'] = '2'`
    and relaunch, then compare `RENDER` and the `RAF` bars over a minute of the same stage. The
    panel's `WEBGL` figure shows what the game actually got. **The normal build stays on version 1**
@@ -346,6 +349,6 @@ version, with the debug build on **each** monitor:
 | The `TPF` 0 and 2 counters climb together while flying | The lock is not engaging on this monitor. Report the model, the firmware and a photo of the panel with the `RAF` bars |
 | No `REB` / `RT` line | The build predates the render profiling — build `build:dev` again |
 | `REB` is blank | Only the debug build counts it; a `build:dev` bundle always does, so report it with the build id if the rest of the panel is there |
-| `RT` stays at `0` with CRT on | Worth reporting with a photo: the CRT filter should always take its scratch picture. (`RT` counts from the start of the app, not from when you opened the panel, so switching CRT off again does not bring it back down.) |
+| `RT` jumps by ~16 MB when CRT goes on | Worth reporting with a photo: since the render fix the CRT should take no scratch picture at all. (`RT` counts from the start of the app, not from when you opened the panel, so switching CRT off again never brings it back down.) |
 | The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
 | `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |

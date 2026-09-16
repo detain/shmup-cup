@@ -63,6 +63,8 @@ const fakes = vi.hoisted(() => ({
   bound: [] as unknown[],
   frames: [] as Array<{ tick: number; world: unknown; hudCount: number; uiCount: number }>,
   sizes: [] as Array<[number, number]>,
+  /** Boot warm-up frames the renderer was asked for (M3-02d). */
+  warmUps: 0,
   destroyed: 0,
   /** The fx content handed to the renderer. */
   fxContent: null as RenderPixi.FxContent | null,
@@ -112,6 +114,9 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         },
         setSpriteNames: (names: readonly string[]) => fakes.spriteNames.push(names),
         bindWorld: (world: unknown) => fakes.bound.push(world),
+        warmUp: () => {
+          fakes.warmUps++;
+        },
         render: (frame: RenderFrame) =>
           fakes.frames.push({
             tick: frame.tick,
@@ -228,6 +233,7 @@ beforeEach(() => {
   fakes.bound.length = 0;
   fakes.frames.length = 0;
   fakes.sizes.length = 0;
+  fakes.warmUps = 0;
   fakes.destroyed = 0;
   fakes.fxContent = null;
   fakes.fxCalls.length = 0;
@@ -427,6 +433,20 @@ describe('shell/boot bootShell', () => {
     expect(fakes.spriteNames).toEqual([[...shell.game.content.sprites.names, ...FLIGHT_SPRITES]]);
     expect(fakes.bound).toEqual([shell.flight?.world]);
     expect(shell.flight?.world.batches.slice(2)).toEqual(shell.game.world.view.batches);
+  });
+
+  it('warms the renderer up once, behind the loading screen, before the first frame (M3-02d)', async () => {
+    const shell = await boot().promise;
+    // One throwaway frame, asked for while the boot was still loading — so the layer-effect,
+    // Mode-7 and CRT programs link and Pixi's batch buffer grows before anything is presented
+    // (the render review's F4 / F5).
+    expect(fakes.warmUps).toBe(1);
+    expect(fakes.frames).toEqual([]);
+    // …and after the world was bound, so the warm-up covers the filters that world can use.
+    expect(fakes.bound).toEqual([shell.flight?.world]);
+    win.frame(0);
+    expect(fakes.frames).toHaveLength(1);
+    expect(fakes.warmUps).toBe(1);
   });
 
   it('?scene=showcase: its sprite names and world are handed to the renderer', async () => {

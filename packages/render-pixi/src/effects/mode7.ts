@@ -1,20 +1,26 @@
 /**
  * The **Mode-7 floor** of the `effects` module (plan M3-02, shmup_feat.md §18 "[P2] Mode 7-style
  * effects: scaling/rotation, pseudo-3D floor (per-row affine matrix in shader)", §14 "[P2]
- * pseudo-3D high-speed dimension stage"): one GLSL ES 1.0 Pixi filter
- * ({@link createMode7Filter}, the sources in `./shaders.ts`) that writes a tiled ground plane
+ * pseudo-3D high-speed dimension stage"): one GLSL ES 1.0 program
+ * ({@link createMode7Shader}, the sources in `./shaders.ts`) that writes a tiled ground plane
  * under the horizon, driven by the stage's `mode7` data (core `Mode7View`) and the camera.
  *
- * {@link createMode7Floor} owns the pieces the renderer needs: a full-frame sprite on the
- * `BG_MID` layer whose only job is to give the filter an area to run over, the filter itself,
- * and a per-frame {@link Mode7Floor.sync} that turns the camera position into the plane's origin
- * and axes. The sprite is hidden — and the filter detached — whenever the camera is outside the
- * floor's `[from, to)` range or the stage has no floor at all, so a stage without one renders
- * exactly as before.
+ * **Since plan M3-02d the program is bound to a `Mesh`** on the `BG_MID` layer and drawn directly.
+ * It used to be a Pixi `Filter` over a full-frame `alpha: 0` sprite that existed only to give the
+ * filter an area — the render review's **F6**: Pixi pooled a 512 × 256 render target, rendered the
+ * invisible sprite into it and ran a filter pass whose shader never reads that input (it samples
+ * the floor tile straight out of the atlas). The mesh is one draw call, no pooled target, no
+ * wasted clear, and no filter on the `BG_MID` layer at all.
  *
- * **Allocation.** The sprite, the filter and its uniform group are created once; a frame only
- * writes numbers. Attaching or detaching the filter (Pixi copies the filter list) happens only
- * when the camera enters or leaves the floor's range.
+ * {@link createMode7Floor} owns the pieces the renderer needs: the mesh at the bottom of `BG_MID`,
+ * the shader, and a per-frame {@link Mode7Floor.sync} that turns the camera position into the
+ * plane's origin and axes. The mesh is hidden whenever the camera is outside the floor's
+ * `[from, to)` range or the stage has no floor at all, so a stage without one renders exactly as
+ * before.
+ *
+ * **Allocation.** The mesh, the shader and its uniform group are created when a view is bound
+ * (load time); a frame only writes numbers, and entering or leaving the floor's range flips one
+ * `visible` flag.
  *
  * @module
  */
@@ -29,15 +35,15 @@ import {
   type Mode7View,
 } from '@shmup/core';
 import {
-  Filter,
   GlProgram,
-  Sprite,
-  Texture,
+  Mesh,
+  MeshGeometry,
+  Shader,
   UniformGroup,
   type Container,
   type TextureSource,
 } from 'pixi.js';
-import { MODE7_FRAGMENT, MODE7_VERTEX } from './shaders.js';
+import { EFFECT_MESH_VERTEX, MODE7_FRAGMENT } from './shaders.js';
 
 /** The uniforms the Mode-7 shader reads (see `./shaders.ts`). */
 interface Mode7Uniforms {
@@ -67,10 +73,10 @@ interface Mode7Uniforms {
   uAlpha: number;
 }
 
-/** One Mode-7 filter and the uniforms a frame writes. */
-export interface Mode7Filter {
-  /** The Pixi filter (GLSL ES 1.0; WebGL only). */
-  readonly filter: Filter;
+/** One Mode-7 mesh and the uniforms a frame writes. */
+export interface Mode7Shader {
+  /** The mesh the floor is drawn with (a full-frame quad on `BG_MID`). */
+  readonly mesh: Mesh<MeshGeometry, Shader>;
   /**
    * Hands the frame's plane to the shader. Never allocates.
    *
@@ -80,7 +86,7 @@ export interface Mode7Filter {
    */
   apply(view: Mode7View, originU: number, originV: number): void;
   /**
-   * Points the filter at a tile of the atlas.
+   * Points the shader at a tile of the atlas.
    *
    * @param x - Left column of the tile on its atlas page.
    * @param y - Top row.
@@ -90,7 +96,7 @@ export interface Mode7Filter {
    * @param pageHeight - The atlas page's height.
    */
   setTile(x: number, y: number, w: number, h: number, pageWidth: number, pageHeight: number): void;
-  /** Destroys the filter. */
+  /** Destroys the mesh, its geometry and its shader. */
   destroy(): void;
 }
 
@@ -101,19 +107,21 @@ export interface Mode7Filter {
 export const MODE7_MAX_SCALE = 4096;
 
 /**
- * Creates the Mode-7 filter (load time).
+ * Creates the Mode-7 mesh and its shader (load time).
  *
  * @param tile - The atlas page the floor tile lives on (the shader samples it directly).
- * @returns The filter.
+ * @param width - Frame width in pixels (the quad's size).
+ * @param height - Frame height in pixels.
+ * @returns The mesh and its uniforms.
  *
  * @example
  * ```ts
- * const mode7 = createMode7Filter(atlas.pages[0]);
+ * const mode7 = createMode7Shader(atlas.pages[0], 384, 216);
  * mode7.setTile(0, 0, 32, 32, 1024, 1024);
- * layer.filters = [mode7.filter];
+ * layer.addChildAt(mode7.mesh, 0);
  * ```
  */
-export function createMode7Filter(tile: TextureSource): Mode7Filter {
+export function createMode7Shader(tile: TextureSource, width: number, height: number): Mode7Shader {
   const group = new UniformGroup({
     uTileRect: { value: new Float32Array([0, 0, 1, 1]), type: 'vec4<f32>' },
     uRight: { value: new Float32Array([1, 0]), type: 'vec2<f32>' },
@@ -130,18 +138,25 @@ export function createMode7Filter(tile: TextureSource): Mode7Filter {
   });
   const uniforms = group.uniforms as unknown as Mode7Uniforms;
   const glProgram = GlProgram.from({
-    vertex: MODE7_VERTEX,
+    vertex: EFFECT_MESH_VERTEX,
     fragment: MODE7_FRAGMENT,
     name: 'shmup-mode7',
   });
-  const filter = new Filter({
+  const shader = new Shader({
     glProgram,
     resources: { mode7Uniforms: group, uTile: tile },
-    resolution: 1,
-    antialias: 'off',
   });
+  const w = width > 0 ? width : 1;
+  const h = height > 0 ? height : 1;
+  const geometry = new MeshGeometry({
+    positions: new Float32Array([0, 0, w, 0, w, h, 0, h]),
+    uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
+    indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+  });
+  const mesh = new Mesh({ geometry, shader, label: 'mode7' });
+  mesh.visible = false;
   return {
-    filter,
+    mesh,
     apply(view, originU, originV) {
       // The plane's axes: the turn as a unit vector, from the core's tables (no trigonometry).
       const cos = cosB(view.turn);
@@ -161,15 +176,17 @@ export function createMode7Filter(tile: TextureSource): Mode7Filter {
       uniforms.uFogDepth = view.fogDepth;
       uniforms.uAlpha = view.alpha;
     },
-    setTile(x, y, w, h, pageWidth, pageHeight) {
+    setTile(x, y, w2, h2, pageWidth, pageHeight) {
       const rect = uniforms.uTileRect;
       rect[0] = x / pageWidth;
       rect[1] = y / pageHeight;
-      rect[2] = w / pageWidth;
-      rect[3] = h / pageHeight;
+      rect[2] = w2 / pageWidth;
+      rect[3] = h2 / pageHeight;
     },
     destroy() {
-      filter.destroy();
+      mesh.destroy();
+      geometry.destroy();
+      shader.destroy(true);
     },
   };
 }
@@ -183,20 +200,22 @@ export interface Mode7FloorOptions {
   /** Frame height in pixels (default 216). */
   readonly height?: number;
   /**
-   * Creates the filter (default {@link createMode7Filter}; tests in Node, where Pixi cannot probe
-   * a WebGL context, pass a fake).
+   * Creates the mesh and its shader (default {@link createMode7Shader} on the atlas page; tests
+   * in Node, where Pixi cannot probe a WebGL context, pass a fake).
    *
-   * @returns The filter.
+   * @param width - Frame width in pixels.
+   * @param height - Frame height in pixels.
+   * @returns The mesh and its uniforms.
    */
-  readonly createFilter?: () => Mode7Filter;
+  readonly createShader?: (width: number, height: number) => Mode7Shader;
 }
 
 /** The Mode-7 floor of one renderer. */
 export interface Mode7Floor {
-  /** The sprite the filter runs over (hidden while there is no floor on screen). */
-  readonly sprite: Sprite;
-  /** The filter, or `null` until a bound view asks for one. */
-  readonly filter: Mode7Filter | null;
+  /** The mesh the floor is drawn with, or `null` until a bound world asks for one. */
+  readonly view: Container | null;
+  /** The shader, or `null` until a bound view asks for one. */
+  readonly shader: Mode7Shader | null;
   /** Whether the floor is drawn now. */
   readonly active: boolean;
   /**
@@ -208,13 +227,13 @@ export interface Mode7Floor {
    */
   bind(view: Mode7View | null, tile: readonly number[] | null): void;
   /**
-   * Updates the floor for one frame: the plane's origin from the camera, the filter attached
-   * only while the camera is inside `[from, to)`. Never allocates.
+   * Updates the floor for one frame: the plane's origin from the camera, the mesh drawn only
+   * while the camera is inside `[from, to)`. Never allocates.
    *
    * @param camera - The frame's camera.
    */
   sync(camera: CameraView): void;
-  /** Destroys the sprite and the filter. */
+  /** Destroys the mesh and the shader. */
   destroy(): void;
 }
 
@@ -234,20 +253,17 @@ export interface Mode7Floor {
 export function createMode7Floor(options: Mode7FloorOptions): Mode7Floor {
   const width = options.width ?? PLAYFIELD_W;
   const height = options.height ?? PLAYFIELD_Y * 2 + PLAYFIELD_H;
-  const make = options.createFilter ?? null;
-  const sprite = new Sprite(Texture.WHITE);
-  sprite.label = 'mode7';
-  sprite.scale.set(width, height);
-  sprite.alpha = 0;
-  sprite.visible = false;
-  options.layer.addChildAt(sprite, 0);
-  let filter: Mode7Filter | null = null;
+  const make = options.createShader ?? null;
+  let shader: Mode7Shader | null = null;
+  let mesh: Container | null = null;
   let view: Mode7View | null = null;
   let active = false;
   return {
-    sprite,
-    get filter(): Mode7Filter | null {
-      return filter;
+    get view(): Container | null {
+      return mesh;
+    },
+    get shader(): Mode7Shader | null {
+      return shader;
     },
     get active(): boolean {
       return active;
@@ -255,36 +271,37 @@ export function createMode7Floor(options: Mode7FloorOptions): Mode7Floor {
     bind(next, tile) {
       view = next !== null && next.spriteId >= 0 && tile !== null ? next : null;
       if (view === null) {
-        sprite.visible = false;
-        sprite.filters = [];
+        if (mesh !== null) mesh.visible = false;
         active = false;
         return;
       }
-      if (filter === null && make !== null) filter = make();
-      if (filter !== null && tile !== null) {
-        filter.setTile(tile[0], tile[1], tile[2], tile[3], tile[4], tile[5]);
+      if (shader === null && make !== null) {
+        shader = make(width, height);
+        mesh = shader.mesh;
+        mesh.visible = false;
+        options.layer.addChildAt(mesh, 0);
+      }
+      if (shader !== null && tile !== null) {
+        shader.setTile(tile[0], tile[1], tile[2], tile[3], tile[4], tile[5]);
       }
       active = false;
-      sprite.visible = false;
-      sprite.filters = [];
+      if (mesh !== null) mesh.visible = false;
     },
     sync(camera) {
       const floor = view;
-      if (floor === null || filter === null) return;
+      if (floor === null || shader === null || mesh === null) return;
       const on = camera.x >= floor.from && camera.x < floor.to;
       if (on !== active) {
         active = on;
-        sprite.visible = on;
-        sprite.filters = on ? [filter.filter] : [];
+        mesh.visible = on;
       }
       if (!on) return;
-      filter.apply(floor, camera.x * floor.scroll, camera.y * floor.sway);
+      shader.apply(floor, camera.x * floor.scroll, camera.y * floor.sway);
     },
     destroy() {
-      sprite.filters = [];
-      sprite.destroy();
-      filter?.destroy();
-      filter = null;
+      shader?.destroy();
+      shader = null;
+      mesh = null;
       view = null;
       active = false;
     },

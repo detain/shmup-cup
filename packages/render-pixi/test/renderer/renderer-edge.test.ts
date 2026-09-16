@@ -36,6 +36,21 @@ const record = vi.hoisted(() => ({
 
 vi.mock('pixi.js', async (importOriginal) => {
   const real = await importOriginal<typeof Pixi>();
+  /**
+   * Stands in for Pixi's `GlProgram`, whose constructor probes a WebGL context for the GPU's
+   * fragment precision (M3-02d: the pass-2 blit builds a program with the renderer).
+   */
+  class FakeGlProgram {
+    /**
+     * Ignores the sources.
+     *
+     * @param options - The program options.
+     * @returns A plain stand-in program.
+     */
+    static from(options: object): object {
+      return { ...options, destroy: (): void => {} };
+    }
+  }
   const CANVAS_TARGET = { label: 'canvas render target' };
   class FakeWebGLRenderer {
     readonly context = { webGLVersion: 1 };
@@ -61,7 +76,12 @@ vi.mock('pixi.js', async (importOriginal) => {
       });
     },
   };
-  return { ...real, WebGLRenderer: FakeWebGLRenderer, RenderTexture: FakeRenderTexture };
+  return {
+    ...real,
+    WebGLRenderer: FakeWebGLRenderer,
+    RenderTexture: FakeRenderTexture,
+    GlProgram: FakeGlProgram,
+  };
 });
 
 const canvas = { width: 0, height: 0 } as HTMLCanvasElement;

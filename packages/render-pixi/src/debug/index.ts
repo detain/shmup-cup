@@ -528,6 +528,52 @@ export interface RenderTargetMeter {
 /** Bytes per pixel of a pooled render target (Pixi's `TexturePool` creates RGBA8 sources). */
 const RENDER_TARGET_BYTES_PER_PIXEL = 4;
 
+/** The pool's free lists, as {@link seedPooledBytes} reads them. */
+interface PooledTextureLists {
+  /** Pixi's `_texturePool`: free textures by size key. */
+  readonly _texturePool?: Record<string, ReadonlyArray<{ source?: PooledTextureSize }> | undefined>;
+}
+
+/** What a pooled texture's source says about its size. */
+interface PooledTextureSize {
+  /** Width in pixels (power-of-two rounded by `getOptimalTexture`). */
+  readonly pixelWidth?: number;
+  /** Height in pixels. */
+  readonly pixelHeight?: number;
+}
+
+/**
+ * Bytes and count of the targets already sitting in the pool when a meter starts.
+ *
+ * @remarks
+ * Since plan **M3-02d** the renderer draws a boot warm-up frame with every filter attached
+ * (`PixiRenderer.warmUp`, the review's F4), so by the time the shell's debug tools start their
+ * meter the pool may already hold the layer-effect pass's target. Counting what is there keeps
+ * the overlay's `RT` figure honest; it runs once, on a cold path, so walking the pool is fine —
+ * what would be forbidden is doing it per frame.
+ *
+ * @param pool - The pool (Pixi's `TexturePool`).
+ * @returns `[bytes, count]` of the free textures it already holds.
+ */
+function seedPooledBytes(pool: unknown): [number, number] {
+  const lists = (pool as PooledTextureLists)._texturePool;
+  if (lists === undefined || lists === null || typeof lists !== 'object') return [0, 0];
+  let bytes = 0;
+  let count = 0;
+  for (const key of Object.keys(lists)) {
+    const textures = lists[key];
+    if (textures === undefined) continue;
+    for (const texture of textures) {
+      const w = texture.source?.pixelWidth ?? 0;
+      const h = texture.source?.pixelHeight ?? 0;
+      if (!(w > 0) || !(h > 0)) continue;
+      bytes += w * h * RENDER_TARGET_BYTES_PER_PIXEL;
+      count++;
+    }
+  }
+  return [bytes, count];
+}
+
 /** The one method {@link createRenderTargetMeter} hooks, as a plain property. */
 interface PooledTextureFactory {
   /**
@@ -560,8 +606,10 @@ interface PooledTextureFactory {
  * {@link RenderTargetMeter.bytes} is a plain number read — **allocation-free**, unlike walking the
  * pool's hashes would be.
  *
- * Start it before the first frame: targets created earlier are not counted (nothing creates one
- * before a filter is first drawn, so at boot the total is 0).
+ * Targets the pool already holds when the meter starts are counted once, at the start (M3-02d:
+ * the renderer's boot warm-up frame draws every filter, so the pool is no longer empty by the time
+ * the shell's debug tools appear). A target *in use* at that moment cannot be seen — in practice
+ * nothing is, because a filter returns its target before the frame ends.
  *
  * Dev / test builds only — the debug module is not in a release bundle.
  *
@@ -571,8 +619,8 @@ interface PooledTextureFactory {
  * @example
  * ```ts
  * const meter = createRenderTargetMeter();
- * // … the player switches the CRT filter on …
- * meter.bytes; // → 16_777_216 (one 2048×2048 RGBA target)
+ * // … the camera enters a stage's wavy-water effect …
+ * meter.bytes; // → 524_288 (one 512×256 RGBA target for the 384×216 filter pass)
  * meter.stop();
  * ```
  */
@@ -581,8 +629,9 @@ export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): R
   // assignment (and not an "unbound method").
   const hookable = pool as unknown as PooledTextureFactory;
   const original = hookable.createTexture;
-  let bytes = 0;
-  let count = 0;
+  const [seedBytes, seedCount] = seedPooledBytes(pool);
+  let bytes = seedBytes;
+  let count = seedCount;
   // A stopped meter counts nothing, even when a later meter wrapped this one and `stop()` could
   // therefore not take the hook back out of the chain (it must never steal the later one's).
   let stopped = false;

@@ -1,29 +1,32 @@
 /**
- * The **Mode-7 floor** of plan M3-02 (`createMode7Filter`, `createMode7Floor`), built in Node with
- * PixiJS's `GlProgram.from` faked (the real one probes a WebGL context for the GPU's precision):
+ * The **Mode-7 floor** of plan M3-02, rewritten as a mesh by M3-02d (`createMode7Shader`,
+ * `createMode7Floor`), built in Node with PixiJS's `GlProgram.from` faked (the real one probes a
+ * WebGL context for the GPU's precision):
  *
- * - the filter gets the GLSL ES 1.0 sources, declares the uniforms the shader reads, turns a stage
- *   floor into the plane's rotated axes (from the core's angle tables — no trigonometry), its
- *   origin, fog colour and rows, and maps a tile rectangle into atlas UV;
- * - the floor manages the sprite the filter runs over: nothing is drawn for a stage without a
- *   floor or without the sprite in the atlas, the filter is attached only while the camera is
- *   inside `[from, to)`, re-attached when it comes back, and a frame inside the range allocates
- *   nothing;
- * - `destroy` frees the sprite and the filter.
+ * - the shader gets the GLSL ES 1.0 sources — the **mesh** vertex shader since M3-02d — declares
+ *   the uniforms the shader reads, turns a stage floor into the plane's rotated axes (from the
+ *   core's angle tables — no trigonometry), its origin, fog colour and rows, and maps a tile
+ *   rectangle into atlas UV;
+ * - the floor manages the mesh: nothing is created for a stage without a floor or without the
+ *   sprite in the atlas, the mesh is drawn only while the camera is inside `[from, to)`, drawn
+ *   again when it comes back, and a frame inside the range allocates nothing;
+ * - no Pixi filter is involved at all any more (the render review's **F6**: the old shape pooled a
+ *   512 × 256 render target and ran a pass whose input the shader never read);
+ * - `destroy` frees the mesh and the shader.
  */
 import { PLAYFIELD_H, PLAYFIELD_W, PLAYFIELD_Y, cosB, sinB, type Mode7View } from '@shmup/core';
 import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
-import { Container, type Filter } from 'pixi.js';
+import { Container } from 'pixi.js';
 import type * as Pixi from 'pixi.js';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  EFFECT_MESH_VERTEX,
   MODE7_ANGLE_UNITS,
   MODE7_FRAGMENT,
   MODE7_MAX_SCALE,
-  MODE7_VERTEX,
-  createMode7Filter,
   createMode7Floor,
-  type Mode7Filter,
+  createMode7Shader,
+  type Mode7Shader,
 } from '../../src/effects/index.js';
 
 /** What the fake `GlProgram.from` was given. */
@@ -41,13 +44,13 @@ vi.mock('pixi.js', async (importOriginal) => {
      */
     static from(options: { vertex: string; fragment: string; name: string }): object {
       programs.push(options);
-      return { ...options };
+      return { ...options, destroy: (): void => {} };
     }
   }
   return { ...real, GlProgram: FakeGlProgram };
 });
 
-/** The uniform fields the Mode-7 filter writes. */
+/** The uniform fields the Mode-7 shader writes. */
 interface Uniforms {
   uTileRect: Float32Array;
   uRight: Float32Array;
@@ -64,13 +67,13 @@ interface Uniforms {
 }
 
 /**
- * The filter's uniform group.
+ * The mesh shader's uniform group.
  *
- * @param filter - The filter.
+ * @param mode7 - The shader handle.
  * @returns Its uniforms.
  */
-function uniformsOf(filter: Filter): Uniforms {
-  const group = filter.resources.mode7Uniforms as Pixi.UniformGroup;
+function uniformsOf(mode7: Mode7Shader): Uniforms {
+  const group = mode7.mesh.shader?.resources.mode7Uniforms as Pixi.UniformGroup;
   return group.uniforms as unknown as Uniforms;
 }
 
@@ -107,8 +110,8 @@ function view(over: Partial<Mode7View> = {}): Mode7View {
  */
 const camera = (x: number, y = 0): { x: number; y: number } => ({ x, y });
 
-/** A fake filter that records what the floor asks of it. */
-interface FakeFilter extends Mode7Filter {
+/** A fake shader that records what the floor asks of it. */
+interface FakeShader extends Mode7Shader {
   /** Every `apply` call. */
   readonly applied: Array<[Mode7View, number, number]>;
   /** Every `setTile` call. */
@@ -118,13 +121,13 @@ interface FakeFilter extends Mode7Filter {
 }
 
 /**
- * Builds a fake filter.
+ * Builds a fake shader (a plain container stands in for the mesh).
  *
- * @returns The filter.
+ * @returns The shader.
  */
-function fakeFilter(): FakeFilter {
-  const fake: FakeFilter = {
-    filter: { enabled: true } as unknown as Filter,
+function fakeShader(): FakeShader {
+  const fake: FakeShader = {
+    mesh: new Container() as unknown as Mode7Shader['mesh'],
     applied: [],
     tiles: [],
     destroyed: 0,
@@ -141,38 +144,35 @@ function fakeFilter(): FakeFilter {
   return fake;
 }
 
-describe('render-pixi/effects Mode-7 filter (M3-02)', () => {
+describe('render-pixi/effects Mode-7 shader (M3-02, a mesh since M3-02d)', () => {
   it('is built from the GLSL ES 1.0 sources with the uniforms the shader reads', () => {
     const before = programs.length;
-    const mode7 = createMode7Filter({} as Pixi.TextureSource);
+    const mode7 = createMode7Shader({} as Pixi.TextureSource, 384, 216);
     expect(programs.slice(before)).toEqual([
-      { vertex: MODE7_VERTEX, fragment: MODE7_FRAGMENT, name: 'shmup-mode7' },
+      { vertex: EFFECT_MESH_VERTEX, fragment: MODE7_FRAGMENT, name: 'shmup-mode7' },
     ]);
-    const u = uniformsOf(mode7.filter);
+    const u = uniformsOf(mode7);
     expect([...u.uTileRect]).toEqual([0, 0, 1, 1]);
     expect(u.uCentre).toBe(PLAYFIELD_W / 2);
     expect(u.uBottom).toBe(PLAYFIELD_Y + PLAYFIELD_H);
     expect(u.uMaxScale).toBe(MODE7_MAX_SCALE);
-    expect(mode7.filter.resolution).toBe(1);
+    // The quad is the frame, hidden until the camera reaches the floor's range.
+    expect(mode7.mesh.visible).toBe(false);
+    expect([...mode7.mesh.geometry.positions]).toEqual([0, 0, 384, 0, 384, 216, 0, 216]);
     mode7.destroy();
   });
 
   it('maps a tile rectangle into atlas UV', () => {
-    const mode7 = createMode7Filter({} as Pixi.TextureSource);
+    const mode7 = createMode7Shader({} as Pixi.TextureSource, 384, 216);
     mode7.setTile(64, 32, 32, 16, 1024, 512);
-    expect([...uniformsOf(mode7.filter).uTileRect]).toEqual([
-      64 / 1024,
-      32 / 512,
-      32 / 1024,
-      16 / 512,
-    ]);
+    expect([...uniformsOf(mode7).uTileRect]).toEqual([64 / 1024, 32 / 512, 32 / 1024, 16 / 512]);
     mode7.destroy();
   });
 
   it('turns a floor into the plane rows, axes, origin and fog', () => {
-    const mode7 = createMode7Filter({} as Pixi.TextureSource);
+    const mode7 = createMode7Shader({} as Pixi.TextureSource, 384, 216);
     mode7.apply(view({ turn: 0 }), 12, -4);
-    const u = uniformsOf(mode7.filter);
+    const u = uniformsOf(mode7);
     expect(u.uHorizon).toBe(PLAYFIELD_Y + 100);
     expect(u.uBottom).toBe(PLAYFIELD_Y + 200);
     expect(u.uHeight).toBe(34);
@@ -189,8 +189,8 @@ describe('render-pixi/effects Mode-7 filter (M3-02)', () => {
   });
 
   it('takes the turned axes from the core angle tables, never trigonometry', () => {
-    const mode7 = createMode7Filter({} as Pixi.TextureSource);
-    const u = uniformsOf(mode7.filter);
+    const mode7 = createMode7Shader({} as Pixi.TextureSource, 384, 216);
+    const u = uniformsOf(mode7);
     for (const turn of [0, 64, 256, 511, MODE7_ANGLE_UNITS - 1]) {
       mode7.apply(view({ turn }), 0, 0);
       expect([...u.uRight]).toEqual([cosB(turn), -sinB(turn)]);
@@ -206,15 +206,16 @@ describe('render-pixi/effects Mode-7 filter (M3-02)', () => {
 describe('render-pixi/effects Mode-7 floor (M3-02)', () => {
   it('draws nothing for a stage without a floor', () => {
     const layer = new Container();
-    const fake = fakeFilter();
-    const floor = createMode7Floor({ layer, createFilter: () => fake });
-    expect(layer.children).toHaveLength(1);
-    expect(floor.sprite.visible).toBe(false);
+    const fake = fakeShader();
+    const floor = createMode7Floor({ layer, createShader: () => fake });
+    // Nothing is even created until a world with a floor is bound (M3-02d).
+    expect(layer.children).toHaveLength(0);
+    expect(floor.view).toBeNull();
     floor.bind(null, [0, 0, 8, 8, 64, 64]);
     floor.sync(camera(10));
     expect(floor.active).toBe(false);
-    expect(floor.filter).toBeNull();
-    expect(floor.sprite.visible).toBe(false);
+    expect(floor.shader).toBeNull();
+    expect(floor.view).toBeNull();
     expect(fake.applied).toEqual([]);
     floor.destroy();
   });
@@ -224,8 +225,8 @@ describe('render-pixi/effects Mode-7 floor (M3-02)', () => {
       [view(), null],
       [view({ spriteId: -1 }), [0, 0, 8, 8, 64, 64]],
     ] as Array<[Mode7View, number[] | null]>) {
-      const fake = fakeFilter();
-      const floor = createMode7Floor({ layer: new Container(), createFilter: () => fake });
+      const fake = fakeShader();
+      const floor = createMode7Floor({ layer: new Container(), createShader: () => fake });
       floor.bind(v, tile);
       floor.sync(camera(0));
       expect(floor.active).toBe(false);
@@ -234,32 +235,32 @@ describe('render-pixi/effects Mode-7 floor (M3-02)', () => {
     }
   });
 
-  it('binds the tile once and attaches the filter only inside the floor range', () => {
+  it('binds the tile once and draws the mesh only inside the floor range', () => {
     const layer = new Container();
-    const fake = fakeFilter();
-    const floor = createMode7Floor({ layer, createFilter: () => fake });
+    const fake = fakeShader();
+    const floor = createMode7Floor({ layer, createShader: () => fake });
     floor.bind(view({ from: 100, to: 300 }), [16, 8, 32, 32, 512, 256]);
     expect(fake.tiles).toEqual([[16, 8, 32, 32, 512, 256]]);
-    expect(floor.filter).toBe(fake);
-    // Before the range: hidden, unfiltered, nothing applied.
+    expect(floor.shader).toBe(fake);
+    expect(floor.view).toBe(fake.mesh);
+    // Before the range: hidden, nothing applied — and never a filter on the layer (review F6).
     floor.sync(camera(99));
     expect(floor.active).toBe(false);
-    expect(floor.sprite.visible).toBe(false);
-    expect(floor.sprite.filters).toEqual([]);
+    expect(fake.mesh.visible).toBe(false);
+    expect(layer.filters ?? []).toEqual([]);
     expect(fake.applied).toHaveLength(0);
-    // Inside: shown and filtered, the origin from the camera.
+    // Inside: drawn, the origin from the camera.
     floor.sync(camera(120, 40));
     expect(floor.active).toBe(true);
-    expect(floor.sprite.visible).toBe(true);
-    expect(floor.sprite.filters).toEqual([fake.filter]);
+    expect(fake.mesh.visible).toBe(true);
     expect(fake.applied.at(-1)?.slice(1)).toEqual([120 * 0.5, 40 * 0.25]);
-    // Past it: detached again, and back when the camera returns (a vertical section).
+    // Past it: hidden again, and back when the camera returns (a vertical section).
     floor.sync(camera(300));
     expect(floor.active).toBe(false);
-    expect(floor.sprite.filters).toEqual([]);
+    expect(fake.mesh.visible).toBe(false);
     floor.sync(camera(299));
     expect(floor.active).toBe(true);
-    expect(floor.sprite.filters).toEqual([fake.filter]);
+    expect(fake.mesh.visible).toBe(true);
     floor.destroy();
     expect(fake.destroyed).toBe(1);
     expect(floor.active).toBe(false);
@@ -269,28 +270,39 @@ describe('render-pixi/effects Mode-7 floor (M3-02)', () => {
     const layer = new Container();
     const other = new Container();
     layer.addChild(other);
-    const floor = createMode7Floor({ layer, createFilter: fakeFilter });
-    expect(layer.children[0]).toBe(floor.sprite);
-    expect(floor.sprite.label).toBe('mode7');
-    expect([floor.sprite.scale.x, floor.sprite.scale.y]).toEqual([
-      PLAYFIELD_W,
-      PLAYFIELD_Y * 2 + PLAYFIELD_H,
-    ]);
-    const sized = createMode7Floor({ layer, width: 320, height: 180, createFilter: fakeFilter });
-    expect([sized.sprite.scale.x, sized.sprite.scale.y]).toEqual([320, 180]);
+    const sizes: Array<[number, number]> = [];
+    /**
+     * A fake shader that records the frame size the floor asked for.
+     *
+     * @param w - Frame width.
+     * @param h - Frame height.
+     * @returns The fake.
+     */
+    const sizing = (w: number, h: number): Mode7Shader => {
+      sizes.push([w, h]);
+      return fakeShader();
+    };
+    const floor = createMode7Floor({ layer, createShader: sizing });
+    floor.bind(view(), [0, 0, 8, 8, 64, 64]);
+    expect(layer.children[0]).toBe(floor.view);
+    expect(layer.children[1]).toBe(other);
+    expect(sizes).toEqual([[PLAYFIELD_W, PLAYFIELD_Y * 2 + PLAYFIELD_H]]);
+    const sized = createMode7Floor({ layer, width: 320, height: 180, createShader: sizing });
+    sized.bind(view(), [0, 0, 8, 8, 64, 64]);
+    expect(sizes.at(-1)).toEqual([320, 180]);
     floor.destroy();
     sized.destroy();
   });
 
   it('a frame inside the range allocates nothing (plan §1.3)', () => {
     // A filter that records nothing: the recording fake would allocate itself.
-    const quiet: Mode7Filter = {
-      filter: { enabled: true } as unknown as Filter,
+    const quiet: Mode7Shader = {
+      mesh: new Container() as unknown as Mode7Shader['mesh'],
       apply() {},
       setTile() {},
       destroy() {},
     };
-    const floor = createMode7Floor({ layer: new Container(), createFilter: () => quiet });
+    const floor = createMode7Floor({ layer: new Container(), createShader: () => quiet });
     floor.bind(view(), [0, 0, 32, 32, 256, 256]);
     const cam = { x: 0, y: 0 };
     const { bytes } = measureHeapGrowth(

@@ -69,18 +69,19 @@ generators).
 ## Mode-7 floor
 
 `shmup_feat.md` §18 asks for "Mode 7-style effects: scaling/rotation, pseudo-3D floor (per-row
-affine matrix in shader)". One GLSL ES 1.0 program does it, and it is a **filter**, not geometry:
+affine matrix in shader)". One GLSL ES 1.0 program does it, and it is a **shader on one quad**, not
+geometry:
 
 | Piece | Where |
 |---|---|
-| Shader sources `MODE7_VERTEX` / `MODE7_FRAGMENT` | `render-pixi` `effects/shaders.ts` |
-| The Pixi filter and its uniforms (`createMode7Filter`, `Mode7Filter`) | `effects/mode7.ts` |
+| Shader sources `EFFECT_MESH_VERTEX` / `MODE7_FRAGMENT` | `render-pixi` `effects/shaders.ts` |
+| The Pixi mesh and its uniforms (`createMode7Shader`, `Mode7Shader`) | `effects/mode7.ts` |
 | The renderer's floor (`createMode7Floor`, `Mode7Floor`) | `effects/mode7.ts` |
 | A stage's data (`StageMode7`, `mode7` section) | `core/data` |
 | The view the renderer reads (`Mode7View`) | `core/presentation`, built by `core/stage` `createStageEffectsView` |
 
-**How it draws.** `Mode7Floor` owns a full-frame sprite at the bottom of the `BG_MID` layer whose
-only job is to give the filter an area. For every output row the fragment shader turns the row's
+**How it draws.** `Mode7Floor` owns a full-frame `Mesh` at the bottom of the `BG_MID` layer with the
+Mode-7 program bound to it. For every output row the fragment shader turns the row's
 distance below `horizon` into the plane's depth `height / (row − horizon)`, walks the plane's origin
 along the plane's **turned axes** and samples the floor tile straight out of the atlas with `fract`
 — no separate floor texture, no per-row draw call. Distance fades the colour into `fog` over
@@ -94,9 +95,15 @@ so the GPU never has to agree with the CPU about a sine. The scale is clamped to
 **The plane follows the camera.** `scroll` texels forward per pixel of camera x and `sway` texels
 sideways per pixel of camera y (`Mode7Floor.sync(camera)`), so the floor and the stage can never
 drift apart and **nothing about it is simulated**: the section is presentation only, the World never
-reads it and a stage's hash is unchanged by adding one. The filter is attached only while the camera
+reads it and a stage's hash is unchanged by adding one. The mesh is drawn only while the camera
 is inside `[from, to)` — a stage without a floor renders exactly as it did before M3-02, and a frame
 inside the range only writes numbers.
+
+> **Plan M3-02d (the render review's F6).** Until M3-02d the floor was a Pixi **filter** over a
+> full-frame `alpha: 0` sprite that existed only to give the filter an area: Pixi pooled a 512 × 256
+> render target, rendered the invisible sprite into it and then ran the filter pass — whose shader
+> never reads that input. It is now a mesh drawn straight onto `BG_MID`: one draw call, no pooled
+> target, no wasted clear, and no filter on the layer at all.
 
 A stage's section (see [`content/stages/README.md`](../../content/stages/README.md) for the
 authoring reference):
@@ -131,7 +138,7 @@ only, so the pixels are identical on every engine.
 
 `test/integration/dimension-runtime.test.ts` flies the whole stage headlessly and drives the floor.
 
-## CRT / scanline filter
+## CRT / scanline pass
 
 `effects/crt.ts`, one program for both strengths (`CRT_LOOKS`, in `core/config` `CRT_FILTERS`
 order):
@@ -144,14 +151,29 @@ order):
 
 It runs over the **upscaled** second pass, so the scanline pitch follows the frame's scale on the
 display (`CrtPass.setViewport`, at least `CRT_MIN_PITCH` output pixels) and one dark line falls
-between two frame rows at any zoom. The cost is capped at `CRT_MAX_HEIGHT` (1080) rows through the
-filter's resolution (`crtResolution(displayHeight)`: 1 up to 1080, `1080 / height` above it), so a
-4K TV pays for a 1080p pass that the canvas scales up — exactly what the feature list asks for.
+between two frame rows at any zoom.
+
+**Since plan M3-02d the program is the blit's own shader** (`createCrtBlit`): the second pass draws
+the frame texture with a `Mesh` whose shader *is* the CRT program, and `off` simply writes
+`uScan = uMask = uVignette = 0`. So the CRT costs **one draw call whatever the setting is** — the
+same draw the plain upscale always took.
+
+> **Why (the render review's F2).** Until M3-02d the CRT was a Pixi filter on the pass-2 container.
+> At 1920 × 1080 Pixi therefore pooled a **2048 × 2048 RGBA render target (16.8 MB)**, drew the
+> upscaled picture into it and ran a *second* full-screen pass — roughly twice the frame's fragment
+> work and bandwidth, with `light` costing exactly what `full` cost (same program, same passes,
+> different uniforms). `CRT_MAX_HEIGHT` / `crtResolution` capped that pass at 1080 rows, which buys
+> nothing on the M7, whose web viewport *is* 1080p. The headless render bench measured the fold:
+> CRT `full` went from 5 draw calls and 2,048 KB of pooled render targets to 4 and 0 — the same
+> numbers as CRT `off`.
+
+`createCrtFilter` and `crtResolution` are still there behind `PixiRendererOptions.screenPass:
+'filter'`, which restores M3-02's sprite + filter pass exactly. It is an escape hatch for a device
+that dislikes the mesh path, not a setting players see.
 
 The shader only ever multiplies the colour **down**, which is why the flash overlay's
-three-per-second limiter still holds with the filter on. The filter is created on the first
-non-`off` setting and attached / detached only when the setting or the viewport changes (Pixi copies
-a filter list on assignment); a frame writes numbers only.
+three-per-second limiter still holds with the CRT on; a frame writes numbers only, and so does
+switching the setting.
 
 ## Aspect modes
 
@@ -167,7 +189,7 @@ leftover width as **side panels**:
 | 16:9 (1920×1080) | letterbox | 64:27 window, letterboxed inside it | 4:3 window, 240-px panels |
 
 The renderer fills the panels with two `Texture.WHITE` sprites tinted with the space-navy palette
-colour at `PANEL_ALPHA` (0.35) behind the frame sprite — a dimmed surround, not painted side art, so
+colour at `PANEL_ALPHA` (0.35) behind the frame quad — a dimmed surround, not painted side art, so
 the mode needed no new assets. `PixiRenderer.panels` exposes the placement, `setAspect(mode)`
 switches it and re-places the frame and the panels at once.
 

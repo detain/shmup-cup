@@ -307,7 +307,8 @@ describe('shell/memory estimate edges', () => {
 
   it('counts the 1080p canvas buffers, and a 4K display costs four times as much', () => {
     const hd = estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0 });
-    const frame = 384 * 216 * 4 * 3;
+    // The frame target is exact (created directly), the two filter passes are pooled at 512 × 256.
+    const frame = 384 * 216 * 4 + 512 * 256 * 4 * 2;
     expect(hd.targets).toBe(frame + 1920 * 1080 * 4 * 3);
     const uhd = estimateMemory({
       atlasPages: [],

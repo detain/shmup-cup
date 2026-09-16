@@ -30,8 +30,8 @@ Notes:
 
 - The **picture itself never changes size or gets cropped**: the game always draws the same
   playfield, and ASPECT only decides the frame it sits in. You never see more or less of a stage.
-- On a 4K TV the CRT filter is computed at 1080p and scaled up, so FULL costs the same there as on
-  a 1080p set. If you ever see the game drop frames with FULL on, switch to LIGHT.
+- The CRT look is drawn as part of the one pass that puts the picture on the screen, so **FULL
+  costs the same as OFF** — turning it on does not cost frames on any set, 4K included.
 - Scanlines are drawn on the screen's pixels, not the game's, so they stay one line thick whatever
   the window size or the SCALE setting.
 

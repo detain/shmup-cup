@@ -32,6 +32,8 @@ const fakes = vi.hoisted(() => ({
   rendererFails: false,
   /** Ticks of the frames rendered so far. */
   renders: [] as Array<{ tick: number }>,
+  /** Boot warm-up frames the renderer was asked for (M3-02d). */
+  warmUps: 0,
   destroyed: 0,
 }));
 
@@ -59,6 +61,9 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         },
         setSpriteNames: () => {},
         bindWorld: () => {},
+        warmUp: () => {
+          fakes.warmUps++;
+        },
         render: (frame: RenderFrame) => fakes.renders.push({ tick: frame.tick }),
         resize: () => {},
         destroy: () => {

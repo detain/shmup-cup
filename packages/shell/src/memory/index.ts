@@ -10,8 +10,11 @@
  *   page was uploaded from), the audio (the whole SFX bank — pre-rendered at boot — and the zone's
  *   music set: the title theme plus every cue the stage can ask for, `stageMusicCues`; mono
  *   32-bit float buffers, one copy — `audio-web` `toAudioBuffer` drops the PCM once the buffer
- *   exists), the render targets (the 384×216 frame, the layer-effect filter passes, the canvas's
- *   front / back / depth-stencil buffers at the display size) and a JS heap baseline. Chip songs
+ *   exists), the render targets (the 384×216 frame, the layer-effect filter passes **rounded up
+ *   to a power of two on each axis** as Pixi's `TexturePool` really allocates them
+ *   ({@link potBytes}), the CRT filter's display-sized target when the renderer's
+ *   `screenPass: 'filter'` escape hatch is on, and the canvas's front / back / depth-stencil
+ *   buffers at the display size) and a JS heap baseline. Chip songs
  *   are sized from their rows ({@link songFrameBound}) without rendering them; recorded tracks
  *   from their loop end, or {@link FILE_TRACK_FALLBACK_SECONDS} of stereo when it is unknown.
  * - **Residency** ({@link stageSpriteSets}, {@link atlasPageNeeds}, {@link createAtlasResidency}).
@@ -40,6 +43,7 @@
  * {@link StageMemoryInputs}, {@link MemoryEstimate}, {@link pageBytes}, {@link sfxBankBytes},
  * {@link songFrameBound}, {@link trackBytes}, {@link stageMusicTracks},
  * {@link stageSpriteSets}, {@link StageSpriteSets}, {@link atlasPageNeeds}, {@link AtlasPageNeeds},
+ * {@link potBytes}, {@link FILTER_TARGETS},
  * {@link stagePages}, {@link createAtlasResidency}, {@link AtlasResidency}, {@link AtlasPageLike},
  * {@link connectAtlasResidency}, {@link MEMORY_BUDGET_BYTES}, {@link TEXTURE_BUDGET_BYTES},
  * {@link AUDIO_BUDGET_BYTES}, {@link HEAP_BASELINE_BYTES}, {@link FILE_TRACK_FALLBACK_SECONDS},
@@ -60,7 +64,13 @@ import {
   type SfxContent,
   type Song,
 } from '@shmup/audio-web';
-import { MUSIC_CUES, SimEventKind, defineModule, type ContentDb } from '@shmup/core';
+import {
+  MUSIC_CUES,
+  SimEventKind,
+  defineModule,
+  type ContentDb,
+  type CrtFilter,
+} from '@shmup/core';
 import type { AtlasManifest } from '@shmup/render-pixi';
 import type { EventDispatcher } from '../dispatch/index.js';
 
@@ -102,8 +112,14 @@ const FILE_SFX_SECONDS = 2;
 /** Bytes per sample of an `AudioBuffer` (32-bit float). */
 const SAMPLE_BYTES = 4;
 
-/** Layer-effect filter passes the renderer may hold at the internal size (M2-08). */
-const FILTER_TARGETS = 2;
+/**
+ * Filter passes the renderer may hold **at once** at the internal frame size (M2-08 layer
+ * effects). Pixi's `TexturePool` hands out one texture per size class and takes it back when the
+ * filter pops, so this is the nesting depth — a filtered layer with another filter inside it —
+ * not the number of filtered layers a stage has. The render bench measures exactly one 512 × 256
+ * target for the layer-effect scenario (`docs/dev/input-probe-results.md` §11); 2 is headroom.
+ */
+export const FILTER_TARGETS = 2;
 
 /** Buffers of the canvas at the display size: front, back and depth / stencil. */
 const CANVAS_BUFFERS = 3;
@@ -113,6 +129,30 @@ const FRAME_WIDTH = 384;
 
 /** Height of the internal frame. */
 const FRAME_HEIGHT = 216;
+
+/**
+ * Bytes a **pooled** RGBA render target of `w × h` really takes: Pixi's `TexturePool` rounds each
+ * axis up to the next power of two (`TexturePool.getOptimalTexture`), so a 384 × 216 filter pass
+ * is a 512 × 256 texture — 1.6× what the naive product says (the render review's **F3**).
+ *
+ * @param w - Requested width in pixels.
+ * @param h - Requested height in pixels.
+ * @returns `nextPow2(w) × nextPow2(h) × 4`, or 0 when either axis is not positive.
+ *
+ * @example
+ * ```ts
+ * potBytes(384, 216); // → 524 288 (512 × 256 × 4)
+ * potBytes(1920, 1080); // → 16 777 216 (2048 × 2048 × 4)
+ * ```
+ */
+export function potBytes(w: number, h: number): number {
+  if (!(w > 0) || !(h > 0)) return 0;
+  let pw = 1;
+  while (pw < w) pw *= 2;
+  let ph = 1;
+  while (ph < h) ph *= 2;
+  return pw * ph * 4;
+}
 
 /** A page size. */
 interface PageSize {
@@ -157,6 +197,27 @@ export interface MemoryInputs {
     /** Height in pixels. */
     readonly height: number;
   };
+  /** The internal frame the renderer draws into (default 384 × 216 — decision D19). */
+  readonly frame?: {
+    /** Width in pixels. */
+    readonly width: number;
+    /** Height in pixels. */
+    readonly height: number;
+  };
+  /**
+   * Filter passes live at once at the internal frame size (default {@link FILTER_TARGETS}); each
+   * is pooled power-of-two-rounded ({@link potBytes}).
+   */
+  readonly filterTargets?: number;
+  /** The CRT / scanline setting (`core/config` `CRT_FILTERS`; default `off`). */
+  readonly crtFilter?: CrtFilter;
+  /**
+   * Whether the CRT runs as a Pixi **filter** over the second pass (the renderer's
+   * `screenPass: 'filter'` escape hatch), which pools a display-sized render target — 16.8 MB at
+   * 1920 × 1080. Default `false`: since plan **M3-02d** the shipped path folds the CRT into the
+   * pass-2 blit, so it costs no render target at all (the render review's **F2** / **F3**).
+   */
+  readonly crtAsFilter?: boolean;
   /** JS heap baseline (default {@link HEAP_BASELINE_BYTES}). */
   readonly heapBytes?: number;
   /** The budget (default {@link MEMORY_BUDGET_BYTES}). */
@@ -173,7 +234,7 @@ export interface MemoryEstimate {
   readonly sfx: number;
   /** Music set. */
   readonly music: number;
-  /** Render targets (the internal frame, filter passes, the canvas buffers). */
+  /** Render targets (the internal frame, the pooled filter passes, the canvas buffers). */
   readonly targets: number;
   /** JS heap baseline. */
   readonly heap: number;
@@ -205,9 +266,19 @@ export function estimateMemory(inputs: MemoryInputs): MemoryEstimate {
   for (const page of inputs.atlasPages) textures += pageBytes(page);
   const images = inputs.keepPageImages === false ? 0 : textures;
   const display = inputs.display ?? { width: 1920, height: 1080 };
-  const frame = FRAME_WIDTH * FRAME_HEIGHT * 4;
+  const frame = inputs.frame ?? { width: FRAME_WIDTH, height: FRAME_HEIGHT };
+  // The frame target is created directly (`RenderTexture.create`), so it is exactly its own
+  // size; only the *pooled* filter passes are rounded up to a power of two on each axis.
+  const filterCount = inputs.filterTargets ?? FILTER_TARGETS;
+  const crtTarget =
+    inputs.crtAsFilter === true && (inputs.crtFilter ?? 'off') !== 'off'
+      ? potBytes(display.width, display.height)
+      : 0;
   const targets =
-    frame * (1 + FILTER_TARGETS) + display.width * display.height * 4 * CANVAS_BUFFERS;
+    frame.width * frame.height * 4 +
+    potBytes(frame.width, frame.height) * filterCount +
+    crtTarget +
+    display.width * display.height * 4 * CANVAS_BUFFERS;
   const heap = inputs.heapBytes ?? HEAP_BASELINE_BYTES;
   const budget = inputs.budget ?? MEMORY_BUDGET_BYTES;
   const total = textures + images + inputs.sfxBytes + inputs.musicBytes + targets + heap;
@@ -623,6 +694,12 @@ export interface StageMemoryInputs {
   readonly needs?: AtlasPageNeeds;
   /** Display size (default 1920×1080). */
   readonly display?: MemoryInputs['display'];
+  /** The internal frame size (default 384×216). */
+  readonly frame?: MemoryInputs['frame'];
+  /** The CRT setting (default `off`). */
+  readonly crtFilter?: CrtFilter;
+  /** Whether the CRT runs as a Pixi filter (default `false` — see {@link MemoryInputs}). */
+  readonly crtAsFilter?: boolean;
   /** The synth rate (default `SYNTH_SAMPLE_RATE`). */
   readonly sampleRate?: number;
 }
@@ -658,5 +735,8 @@ export function estimateStageMemory(inputs: StageMemoryInputs): MemoryEstimate {
     sfxBytes: sfxBankBytes(inputs.sfx, rate),
     musicBytes,
     display: inputs.display,
+    frame: inputs.frame,
+    crtFilter: inputs.crtFilter,
+    crtAsFilter: inputs.crtAsFilter,
   });
 }
