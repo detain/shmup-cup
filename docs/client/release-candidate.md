@@ -65,7 +65,10 @@ So you do not have to repeat them by hand, these run automatically on every chan
 - on a stand-in for the TV: **Back** on the title asks **EXIT SHMUP CUP?** — YES closes, NO and
   Back stay; Back in a game pauses and Back again resumes, never exits;
 - leaving the app (Home) freezes the game and the sound, coming back shows the pause menu with
-  **no jump ahead**, five times in a row without an error;
+  **no jump ahead**, five times in a row without an error — and since the remote-and-hardware
+  tuning that also covers the M7's real behaviour, where Home is only an **overlay**: the window
+  losing focus pauses and silences the game just as being hidden does, a "hidden *and* unfocused"
+  pair pauses once, and the game resumes only when both are back;
 - saved data is kept only in the app's own storage, so removing the app removes it;
 - 30 minutes of play through runs, endings, credits and name entry **without the memory
   growing**; every zone runs well within its time budget even with the screen full of bullets;
@@ -112,8 +115,9 @@ still apply; this is what v1.0 adds (plan §8.5 and §8.6).
     still there. Then remove the app and install it again: they are **gone** (the store requires
     it).
 11. **The TV's own rules.** Start-up to the title in at most **10 seconds**; no crash or freeze in
-    any of the above; Back and EXIT behave as described; Home and back resumes paused; reopening
-    from the Smart Hub's recent apps works.
+    any of the above; Back and EXIT behave as described; **Home during a game pauses it and
+    silences the music while the TV's bar is up, and coming back leaves the pause menu on screen
+    with nothing fast-forwarded**; reopening from the Smart Hub's recent apps works.
 12. **Names and look.** Look over the title, the logo and the key art: nothing may resemble an
     existing game's name, text or logo.
 13. **Store account.** The TV Seller Office account and an alpha test with at most 50 monitors

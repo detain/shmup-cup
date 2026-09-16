@@ -172,6 +172,19 @@ Details: [sim-world.md](sim-world.md).
 - **Delta snapping:** a frame delta within ±1 ms (`DEFAULT_SNAP_TOLERANCE_MS`) of a whole
   number of ticks counts as exactly that many ticks. On a 60 Hz display this yields
   exactly one tick per rAF despite timer jitter.
+- **Vsync lock (M3-02b):** delta snapping alone was not enough on the M7 monitors, whose rAF
+  deltas have a p95 of ~30 ms although the average is 60 Hz, so the ±1 ms window is missed on a
+  quarter of the frames and the accumulator produces 0- and 2-tick frames. With
+  `setVsyncLock(true)` the loop runs **exactly one tick per frame**, and a second one only when
+  the frame's delta *plus the debt carried from earlier frames* covers `VSYNC_DROP_STEPS` (2)
+  whole steps — a really dropped frame, or a step of debt a slightly-off-60 Hz panel piled up.
+  The debt is clamped to ±1 step (no catch-up burst), `alpha` is 0 while locked, and switching
+  the lock resets the debt, not the tick count. The threshold counts *covered time* rather than
+  the raw delta on purpose: a raw-delta rule double-ticks on ~5 % of ordinary M7 frames. The
+  shell turns it on from the refresh probe (`framePacing: 'auto'`, 55–65 Hz —
+  `VSYNC_LOCK_MIN_HZ` / `VSYNC_LOCK_MAX_HZ`), and `core/game` suspends it while frame advance,
+  slow motion or the game-speed assist feed the loop a slowed clock. Presentation only: the same
+  inputs still produce the same ticks, so replays and goldens are untouched.
 - Other refresh rates (50/120/144 Hz) accumulate time; `alpha` (0 ≤ α < 1) is the
   leftover fraction for interpolated rendering (carried in `RenderFrame`, not used by the
   renderer until M2 — decision D32).
@@ -454,17 +467,27 @@ D24, "art as code"); nothing is drawn at run time and nothing is fetched on the 
 - Keys resolve by `KeyboardEvent.code` first and fall back to `keyCode` for TV-remote keys
   that have no `code` (Back 10009, Play/Pause 10252, Ch± 427/428). Remote profiles bind by
   `keyCode` only.
-- **Held state comes from keydown/keyup only** — auto-repeat keydowns are ignored and each
+- **Held state comes from keydown/keyup only** — a keydown of a key that is **already held** is
+  ignored whether or not `event.repeat` is set (the Samsung remote's auto-repeats are flagless:
+  the first after ≈ 21 ticks, then every ≈ 6.5 — M3-02b), and each
   physical key is counted separately, so two keys bound to one action keep it held until
-  both are released. `blur` clears all held keys (since M1-17 the shell's own window `blur`
+  both are released. Code outside the pipeline that watches keys (the shell's debug unlock and
+  toggles) tracks held keys itself for the same reason, and a repo-wide ESLint rule forbids
+  `.timeStamp` in runtime sources — Tizen 5.5 only advances it in whole seconds. `blur` clears all held keys (since M1-17 the shell's own window `blur`
   listener calls `input.clear()` too).
 - **Taps are latched:** a key pressed and released between two polls still appears in
   `pressed` for the next tick (important for the remote's short OK/Back presses).
 - **Device quirks are profile knobs** (`input-web/remote`): a release debounce (a released
   key stays held for `releaseDebounceTicks` more ticks; a keydown inside the window resumes it
-  without a new edge — hides the remote's fake keyup/keydown pairs), SOCD (`neutral` /
-  `lastWins`) and a diagonal policy (`combine` / `lastWins` / `firstWins`) applied to the held
-  mask with the press order.
+  without a new edge — meant for remotes that send fake keyup/keydown pairs), SOCD (`neutral` /
+  `lastWins`), a diagonal policy (`combine` / `lastWins` / `firstWins`) applied to the held
+  mask with the press order, and since M3-02b **`singleKey`**: while any tracked key is
+  physically down, a `keydown` of another key is dropped and the held key continues. The
+  measured Samsung remote is a single-key device that sends no fake pairs, so the TV profile is
+  `singleKey: true` with `releaseDebounceTicks: 0`, and `keyboard-remote-emulation` matches it
+  (which is also the model the playtest bot flies under —
+  [input-profiles.md](input-profiles.md), [input-probe-results.md](input-probe-results.md)).
+  `singleKey` is rejected on gamepad profiles: pads are polled, not event-driven.
 - Pads are polled once per tick: standard-mapping buttons + left stick (radial deadzone
   0.2, 8-way with hysteresis 0.1). Devices reach the players by **seats** (M2-06): the shell
   forwards `Game.inputSeats` to `input.setSeats()` like the context. With one seat (menus,
@@ -587,16 +610,26 @@ Details: [saves-and-options.md](saves-and-options.md).
 | Event | Browser (`apps/web`) | TV (`apps/tizen`) | Effect |
 |---|---|---|---|
 | Boot | loading bar → content / atlas / WebGL checks → save read → running | same, pages from `file://` | canvas `data-shmup-state` = `loading` → `running`, or `error` with the boot error screen listing every problem; `data-shmup-boot-ms` = the launch-to-ready time (M1-17) |
-| App hidden | tab hidden (`visibilitychange`) | Home, source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
+| App hidden | tab hidden (`visibilitychange`) | source switch, multitasking (`visibilitychange`) | `platform.lifecycle` suspend → `game.state.suspended = true` (no ticks), held input cleared, audio suspended |
 | App visible | tab visible | back to the app | resume → `suspended = false`, loop accumulator reset, audio resumed; with the game scene on top the scene flow opens the pause menu (M1-16) |
-| Window loses focus | `blur` (another window, devtools) | `blur` | held input cleared (M1-17) — the key-ups of a window without focus never arrive |
+| Window loses focus | `blur` (another window, a system overlay, devtools) | `blur` — **Home and a pad's PS button on the M7 fire only this** (the app keeps running under the overlay; there is no `visibilitychange`) | held input cleared (M1-17) **and, since M3-02b, the same suspend as "app hidden"**: the pause menu opens and the audio suspends |
+| Window regains focus | `focus` | `focus` | resume, as "app visible" — the game stays paused (the M1-16 platform-resume path) with no catch-up burst |
 | Options closed, game ended | BACK / Back on the Options screen or one of its pages (M2-16), DONE on the rebind screen; the game-over or stage-clear screen | same (remote only) | the save is written when it changed (M1-17); nothing is written on exit, and nothing needs to be |
 | Pause menu | Esc / P / Backspace in the game | remote Back or Play/Pause in the game | the flow pushes `PauseScene` over the frozen, dimmed game; Pause / Back / RESUME close it (M1-16) |
 | Host pause | `game.pause()` (no UI; a debugger) | same | `state.paused`; survives suspend/resume — resuming the platform does not un-pause |
 | Back | Esc / Backspace (`keyboard-default`: `Pause` in the game, `Back` in menus); no exit | remote Back (10009): `tizen-remote-safe` maps it to `Pause` (game) / `Back` (menus); before the shell runs, `watchBackKey` exits (`tizen.application` directly) — the loading and boot error screens | The scene stack owns Back (M1-16): game → pause, pause → resume, menus → back, title → exit confirmation → `platform.exit()` after YES (the TV); in a browser the title's Back only backs out of its menu |
 | Resize | `resize` → `renderer.resize()` | same (rare on TV) | new integer viewport |
 
-JavaScript is frozen while a Tizen app is hidden, so nothing in the core may assume wall
+**Both lifecycles are edge-triggered (M3-02b).** `apps/web`'s `createVisibilityLifecycle` and the
+Tizen platform's `createTvLifecycle` take an optional focus source (`window`) beside the
+visibility source and track *hidden* and *unfocused* as two independent reasons to be away: the
+suspend callbacks run once on the edge into "away" (a `blur` + `hidden` pair suspends **once**)
+and the resume callbacks only when the app is visible *and* focused again. A repeated event with
+the same state fires nothing — the pre-M3-02b contract, where every `visibilitychange` fired one
+of the two lists, is gone. Electron keeps the same web lifecycle (it renders the web app), which
+is the documented policy: an Electron window that loses focus pauses like every other host.
+
+JavaScript is frozen while a Tizen app is really hidden, so nothing in the core may assume wall
 time passed "normally" across a resume — the loop reset handles it.
 
 ## Platform contract
@@ -610,7 +643,7 @@ may ask of a host:
 | `input.poll()` | `createWebInput` (`keyDevice: 'keyboard'`) + `keyboard-default` / `gamepad-standard` profiles | `createWebInput` (`keyDevice: 'remote'`) + `tizen-remote-safe` / `gamepad-standard` profiles | as web | returns `platform.snapshot` (tests set bits) |
 | `storage` | `localStorage`, prefix `shmup-cup:`, through the shell's `createWebStorage` (M2-17: the app's 1 MiB budget, a quota error keeps that value in memory, other errors → memory for the session) — holds the save (`save.v1`, M1-17) | same (deleted with the app on uninstall) | JSON files in `<userData>/saves/` through the preload's bridge and IPC (`createBridgeStorage` → `main/saves.ts`: atomic write + backup, 1 MiB / 8 MiB quota) | in-memory `Map` |
 | `audio.unlock()` | the `WebAudio` instance (after a gesture) | the `WebAudio` instance (at boot) | the `WebAudio` instance (at boot — `autoplayPolicy`) | resolves immediately |
-| `lifecycle` | Page Visibility | Page Visibility | Page Visibility | `platform.suspend()` / `resume()` |
+| `lifecycle` | Page Visibility + window focus (M3-02b) | Page Visibility + window focus (M3-02b — Home is overlay-only) | Page Visibility + window focus | `platform.suspend()` / `resume()` |
 | `exit` | `null` (browsers cannot quit) | `tizen.application.getCurrentApplication().exit()`, `null` outside a TV | `shmupElectron.quit()` → `app.quit()` | `null` |
 | `display` | live `innerWidth`/`innerHeight` | same | same | fixed, default 1920×1080 |
 | `caps` | `remoteOnly: false`, `gamepad`, `webgl2` from the renderer | `remoteOnly: true` | as web | all `false` |

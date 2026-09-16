@@ -49,8 +49,9 @@ work too, and every device drives both the game and the menus.
 > ([preview-build.md](preview-build.md#choosing-your-weapons)); **Speed** (Channel down on the
 > remote, Left Shift on a keyboard, LB / RB on a gamepad) switches the **MANTA** between its three
 > speeds ([preview-build.md](preview-build.md#the-manta-colour-items-weapons-and-the-arm)) and does
-> nothing for the KESTREL. The remote's settings may still change once
-> the input probe results from the M7 monitors are in; every button can already be moved to
+> nothing for the KESTREL. The remote's settings are **measured**: the game was tested on both
+> Smart Monitor M7s on 2026-09-15 and retuned to what the remote really does
+> ([below](#samsung-smart-remote)); every button can also be moved to
 > another key with **OPTIONS → CONTROLS → REBIND KEYS / REBIND PAD**
 > ([Rebinding](#rebinding-keys-and-buttons)).
 
@@ -70,7 +71,7 @@ and selects a menu entry in menus; Back pauses the game and goes back in menus.
 | Speed | MANTA: switch to its next speed — middle → fast → slow → middle — one step per press, with a ding. KESTREL: nothing (it speeds up with the power meter's SPEED UP) |
 | Pause | Pause / resume (the pause menu: RESUME, OPTIONS, RETRY STAGE, QUIT TO TITLE) |
 | Confirm | Menus: select the highlighted entry; in the rebind box OK on an action asks for its new key; on the title first leaves `PRESS OK`; in the WEAPON SELECT screen OK also steps the highlighted choice, opens ORDER and, on START, begins the game; on the zone result OK skips ahead, on the ZONE MAP it launches the chosen zone, in the ending (after a second) it shows every line of the story, then goes on to the card, and on the card to the credits; in the credits (after a second) it ends them; in the name entry it moves to the next letter and, on `END`, finishes; on the high-score table after a game (after half a second) it returns to the title; in the SOUND TEST box it plays the chosen tune or sound; in the attract loop (demo, high scores, story) any button — OK too — returns to the title. A press made while a menu is just appearing is remembered for a moment, not lost |
-| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen and its pages: keep the settings and close it, like BACK; in the rebind box: close it (DONE) — while it waits for a key, Back cancels instead; the input test ignores Back — hold Pause to leave it; in the DIFFICULTY box: back to the title menu; in the SHIP SELECT box: back to the DIFFICULTY box; in the WEAPON SELECT screen: back to the SHIP SELECT box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER; on the ZONE MAP: ask **QUIT TO TITLE?**; nothing in the ending's story and card; in the credits (after a second): end them; in the name entry: the previous letter (it never leaves the entry); on the high-score table after a game: the title; in the PRACTICE and SOUND TEST boxes: back to the title menu; in the attract loop: the title — never the exit question); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
+| Back | Menus: previous screen (in the pause menu: resume; in a YES / NO question: NO; in the Options screen and its pages: keep the settings and close it, like BACK; in the rebind box: close it (DONE) — while it waits for a key, Back cancels instead; the input test ignores Back as "back" — three Pause presses (or a one-second hold) leave it; in the DIFFICULTY box: back to the title menu; in the SHIP SELECT box: back to the DIFFICULTY box; in the WEAPON SELECT screen: back to the SHIP SELECT box; in its AUTO ORDER box: keep the order and close it, like DONE; on the CONTINUE? countdown: give up — GAME OVER; on the ZONE MAP: ask **QUIT TO TITLE?**; nothing in the ending's story and card; in the credits (after a second): end them; in the name entry: the previous letter (it never leaves the entry); on the high-score table after a game: the title; in the PRACTICE and SOUND TEST boxes: back to the title menu; in the attract loop: the title — never the exit question); on the TV's title screen it asks **EXIT SHMUP CUP?** — only YES quits |
 
 If you are holding a button at the moment a menu opens (or closes), it keeps doing only what
 it does in both sets until you let go — holding the Sub key while the pause menu appears will
@@ -90,19 +91,38 @@ the TV remote, the keyboard and both gamepads.
 
 - On the TV the ship fires its main gun **and** its missiles automatically, so no button is
   ever needed for shooting (in the current build the gun starts firing as soon as the ship has
-  flown in). **OK** is the only other button the game needs: a rare press to take a power-up,
-  which never stops a direction you are holding. Channel up / down are optional extras —
+  flown in). **OK** is the only other button the game needs: a rare press to take a power-up.
+  Channel up / down are optional extras —
   nothing ever requires them: Channel up spreads FORMATION / ROTATE Options, which holding OK
   does too, and Channel down switches the MANTA's speed (it starts at a good middle speed). With
   the MANTA even OK is not needed in the game.
-- Some TV remotes briefly report a held button as released and pressed again. The game hides
-  such hiccups (up to about 1/30 of a second), so a held direction never stutters; in return,
-  letting go of a button registers two frames later — too short to notice.
-- Whether pressing two directions at once moves the ship diagonally depends on the remote;
-  many can only report one arrow at a time. The game is designed to be fully playable with
-  four directions.
-- **Home** always leaves the app; the game pauses in the background and continues when you
-  return. Long-pressing Back and the volume keys belong to the TV and are never used by the
+- **The remote sends one button at a time.** Measured on both M7 monitors: while you hold an
+  arrow, the remote sends the game **nothing else** — not a second arrow, not OK, not Channel
+  up or down. Two things follow, and the whole game is built around them:
+  - **OK never stops a direction you are holding.** The direction simply keeps going; the OK
+    press is swallowed by the remote before the game can see it. To take a power-up, **let go of
+    the direction, press OK, then hold the direction again** — that is why power-ups are never
+    urgent, and why AUTO POWER-UP (OPTIONS → GAME) exists for players who would rather not think
+    about it at all. The **INPUT TEST** shows this live: hold an arrow, press OK, and the
+    POWER-UP box stays dark.
+  - **There are no diagonals on the remote**, and there never will be — the hardware cannot send
+    them. Every bullet pattern, every boss and every gap in the game is designed to be dodged
+    with the four arrow directions alone, and the test program that plays the whole game does so
+    with one arrow at a time.
+- **Holding an arrow just works.** The remote repeats a held button as a stream of fresh presses
+  (the first after about a third of a second, then about nine a second), which the game
+  recognises as "still held"; it sends no false releases at all, so the TV profile waits **0
+  frames** before it believes a release — letting go stops the ship immediately. (The
+  **DEBOUNCE** line under OPTIONS → CONTROLS can still add a wait if some other remote ever
+  needs it.)
+- **Back and Play/Pause cannot be held.** The remote reports them only when you **let go**, so
+  nothing in the game ever asks you to hold them: the pause menu opens on the press, the INPUT
+  TEST closes after three presses, and the debug tools open with four taps.
+- **Home pauses the game.** Home opens the TV's bar over the app instead of closing it, so the
+  game **pauses itself and goes silent** the moment the bar appears. When you come back the
+  PAUSE menu is on screen where you left it — no bullets moved in between, and nothing is
+  fast-forwarded. Press OK on RESUME to carry on.
+  Long-pressing Back and the volume keys belong to the TV and are never used by the
   game — they set the monitor's volume as usual; the game's own volumes (MASTER, MUSIC, SFX)
   are in **OPTIONS**. The colour buttons (red/green/yellow/blue on the on-screen number pad) are reserved
   for later use.
@@ -277,13 +297,16 @@ armed **!** on the power meter. Neither extra adds a new button, so nothing has 
 ## Control profiles
 
 The button layouts above are **profiles**, stored as game data rather than built into the
-program — so the remote's behaviour can be retuned after measuring it without a new version
-of the code.
+program — so the remote's behaviour could be retuned after measuring it without a new version
+of the code. That is exactly what happened on 2026-09-15: the TV profile now waits 0 frames
+before believing a release and knows the remote sends one key at a time. The old **FAST 8-WAY**
+profile is gone — it differed only in that waiting time, and the remote cannot send diagonals
+whatever the profile says. If your game still had it chosen, it now uses **REMOTE**; nothing
+else changes and nothing is lost.
 
 | Profile | Name in the game | Used |
 |---|---|---|
-| `tizen-remote-safe` | SAFE 4-WAY | On the TV (default) |
-| `tizen-remote-diagonal` | FAST 8-WAY | On the TV, when chosen: the same buttons, without the hiccup protection — for remotes that turn out not to need it (the ship then also stops the instant you let go) |
+| `tizen-remote-safe` | REMOTE | On the TV (the only remote profile) |
 | `keyboard-default` | KEYBOARD | In a browser and on the desktop (default) |
 | `keyboard-remote-emulation` | KEYBOARD AS REMOTE | In a browser, when chosen: for desktop testers who want to feel the remote's limits (below) |
 | `keyboard-split` | SPLIT KEYBOARD | In a browser, when chosen: two players on one keyboard ([below](#the-split-keyboard)) |
@@ -291,7 +314,7 @@ of the code.
 
 **Choosing a profile.** Open **OPTIONS** (on the title, or in the pause menu during a game), OK on
 **CONTROLS**, and on its first line, **PROFILE**, press ◀ / ▶ (or OK) to step through the profiles
-this device can use: on the TV **SAFE 4-WAY (DEFAULT)** and **FAST 8-WAY**, in a browser **KEYBOARD
+this device can use: on the TV **REMOTE (DEFAULT)** — the only one —, in a browser **KEYBOARD
 (DEFAULT)**, **KEYBOARD AS REMOTE** and **SPLIT KEYBOARD**. `(DEFAULT)` marks the one the game starts with until you
 choose another. The new profile works **at once** — you can try it right away in the menu — and
 the game remembers it when you leave the CONTROLS page with **BACK** (or the Back button), also
@@ -304,8 +327,10 @@ keeps its own rebound keys ([Rebinding](#rebinding-keys-and-buttons)).
 
 In a browser, add `?profile=keyboard-remote-emulation` to the address (for example
 http://localhost:5173/?profile=keyboard-remote-emulation when running `pnpm dev`). The
-keyboard then behaves like the Samsung remote: only one direction at a time (the arrow pressed
-last wins), the same hiccup protection as on the TV, and only the remote's buttons:
+keyboard then behaves like the **measured** Samsung remote: **one key at a time** — while you
+hold a key, every other key is ignored until you let go, exactly as the hardware does, so a
+second arrow gives no diagonal and Enter (OK) does nothing at all while an arrow is down — no
+waiting time on a release, and only the remote's buttons:
 
 | Key | Remote button |
 |---|---|
@@ -318,11 +343,12 @@ last wins), the same hiccup protection as on the TV, and only the remote's butto
 Every other key (Z, X, W A S D, …) does nothing in this profile. The same profile can be chosen
 in the browser under **OPTIONS → CONTROLS → PROFILE** (KEYBOARD AS REMOTE) without changing the
 address. Testers can also add `&debounce=0` … `&debounce=10` to change how long the hiccup protection
-waits (in frames of 1/60 s; the TV uses 2) — it wins over the CONTROLS page's DEBOUNCE, which does
+waits (in frames of 1/60 s; every shipped profile now uses 0, because the measured remote sends
+no false releases) — it wins over the CONTROLS page's DEBOUNCE, which does
 the same without touching the address. These address options exist only in the browser; a
 `?profile=` in the address wins over the profile chosen in the Options screen when the page
 loads (it is also listed under CONTROLS, and a pick there still switches). The TV starts with the
-profile chosen under CONTROLS — SAFE 4-WAY until you pick another.
+profile chosen under CONTROLS — REMOTE, the only one.
 
 ## The CONTROLS page: autofire, SOCD and the hiccup protection
 
@@ -348,8 +374,8 @@ the controls:
 | **PROFILE** | the device's control profiles | Which button layout the keyboard or remote uses ([Control profiles](#control-profiles)) — switches at once |
 | **AUTOFIRE** | **ALWAYS** (the start setting), **TOGGLE**, **HOLD** | How the gun fires. ALWAYS: on its own, no button needed. TOGGLE: each press of **Shot** switches firing off and on (it starts on; holding **Sub** still fires the missiles). HOLD: the gun fires while you hold **Shot**, the missiles while you hold **Sub**. **On the TV this line is greyed out** — the remote has no fire button, so the gun always fires on its own |
 | **RATE** | **7.5/S**, **10/S**, **12/S**, **15/S** (the start setting), **20/S**, **30/S** | How many main shots a second the gun tries to fire (a weapon that allows only two shots on screen still keeps to that) — on the TV too |
-| **SOCD** | **PROFILE** (the start setting), **NEUTRAL**, **LAST WINS** | What happens when opposite directions are held together (Left + Right, Up + Down): NEUTRAL — they cancel out; LAST WINS — the one pressed last counts. PROFILE keeps the profile's own rule (NEUTRAL, except KEYBOARD AS REMOTE) |
-| **DEBOUNCE** | **AUTO** (the start setting), **0 TICKS** … **10 TICKS** | The **hiccup protection**: how many frames (1/60 s) the game waits before it believes a released button (some remotes briefly report a held button as released). AUTO keeps the profile's own: 2 on SAFE 4-WAY and KEYBOARD AS REMOTE, 0 elsewhere. Gamepads never need it |
+| **SOCD** | **PROFILE** (the start setting), **NEUTRAL**, **LAST WINS** | What happens when opposite directions are held together (Left + Right, Up + Down): NEUTRAL — they cancel out; LAST WINS — the one pressed last counts. PROFILE keeps the profile's own rule (NEUTRAL everywhere; on the remote and KEYBOARD AS REMOTE the question never arises — a second direction is never delivered while the first is held) |
+| **DEBOUNCE** | **AUTO** (the start setting), **0 TICKS** … **10 TICKS** | The **hiccup protection**: how many frames (1/60 s) the game waits before it believes a released button (some remotes briefly report a held button as released). AUTO keeps the profile's own, which is **0 on every shipped profile** since the Samsung remote was measured — it sends no false releases, so the ship stops the instant you let go. Raise it only if some other remote ever stutters. Gamepads never need it |
 | **REBIND KEYS** | — | Choose your own keys (keyboard) or buttons (remote) — [below](#rebinding-keys-and-buttons) |
 | **REBIND PAD** | — | Choose your own gamepad buttons — [below](#rebinding-keys-and-buttons) |
 | **INPUT TEST** | — | See what every button does — [below](#the-input-test) |
@@ -421,12 +447,25 @@ CONTROLS` or `GAMEPAD CONTROLS`) and one line per action with the keys it has no
 
 **OPTIONS → CONTROLS → INPUT TEST** shows what the game receives: the name of the device you last
 used (KEYBOARD, REMOTE or GAMEPAD), a cross that lights the directions you hold (two light together
-on a diagonal — on remotes that can only report one arrow at a time, never), and a box per game
+on a diagonal — on the Samsung remote, never: it sends one key at a time), and a box per game
 action (SHOT, SUB, POWER-UP, SPECIAL, SPEED, PAUSE) that lights while held — briefly after a quick
 tap too. It uses the **game** buttons of the active profile, with your rebinding — so every button
-does what it does in a game. To leave, **hold Pause** (Back or Play/Pause on the remote, Esc / P /
-Backspace on a keyboard, Start on a gamepad) for a second: the bar at the bottom fills and the test
-closes.
+does what it does in a game.
+
+The hint at the bottom reads **PAUSE X3 OR HOLD TO EXIT**, and there are two ways out:
+
+- **Press Pause three times** within about a second and a half — Back or Play/Pause on the remote,
+  Esc / P / Backspace on a keyboard, Start on a gamepad. This is the way out on the TV: the
+  remote reports Back and Play/Pause only when you let go, so they can never be *held*.
+- **Hold Pause** for a second on a keyboard or a gamepad — the bar at the bottom fills and the
+  test closes.
+
+The bar shows whichever of the two is further along, so it also counts your presses (a third of
+it per press).
+
+It is also the quickest way to see the remote's one-key-at-a-time behaviour for yourself: hold
+an arrow — its arm of the cross lights — and press OK or another arrow while holding. Nothing
+else lights, and the first direction stays lit.
 
 ## One-button play
 
@@ -442,7 +481,9 @@ directions alone; no button is ever needed except to pause. It applies from the 
 | Play/Pause or Channel up / down do nothing on the TV | Not every remote has these buttons or sends them to apps. They are optional — use Back to pause. Please report the remote model (the input probe records which keys arrive) |
 | Diagonals never work with the keyboard | The address probably contains `?profile=keyboard-remote-emulation`, or KEYBOARD AS REMOTE is chosen under OPTIONS → CONTROLS — both allow one direction at a time. Remove it from the address and reload, or choose KEYBOARD (DEFAULT) |
 | The control profile I chose was forgotten | The CONTROLS page keeps a choice when you leave it with **BACK** or the Back button. In a browser, a `?profile=` in the address wins over it when the page loads. If it is still forgotten after a relaunch, please report it (and whether the build was reinstalled in between) |
-| After choosing FAST 8-WAY the ship stutters or stops for a moment while I hold a direction (TV) | This remote needs the hiccup protection — choose SAFE 4-WAY again (OPTIONS → CONTROLS) and please report the remote model: it is exactly what we want to know |
+| The ship stutters or stops for a moment while I hold a direction (TV) | Not expected — the measured Samsung remote sends no false releases, so the profile waits 0 frames. If your remote does stutter, raise **DEBOUNCE** (OPTIONS → CONTROLS) to 2 TICKS and please report the remote model: it is exactly what we want to know |
+| FAST 8-WAY is gone from the PROFILE line (TV) | Expected since the remote was measured: it differed only in the waiting time before a release, and the remote cannot send diagonals whatever the profile says. The one remote profile is now called **REMOTE**, and a game that still had FAST 8-WAY chosen simply uses it |
+| Pressing OK while holding a direction does nothing (TV) | Expected — the remote sends one button at a time and swallows the OK. Let go of the direction, press OK, then hold the direction again; or switch **AUTO POWER-UP** on (OPTIONS → GAME) and never press it |
 | `?profile=…` seems to be ignored | The name is misspelled or is not a keyboard/remote profile (a gamepad profile cannot drive the keyboard). The game then uses the normal keyboard profile and writes a warning in the browser's developer console |
 | A button does something in the game but nothing in a menu (or the other way round) | Expected — see the two tables above; for example C (PowerUp) has no menu function |
 | The game shows a start-up error screen mentioning `input-profiles.json` | The control profiles in this build are broken. Report the lines on the screen — see [preview-build.md](preview-build.md) |
@@ -455,11 +496,13 @@ directions alone; no button is ever needed except to pause. It applies from the 
 | A key I rebound does nothing | Check the MODE: GAME keys work while you play, MENU keys in the menus. The **INPUT TEST** shows what the game receives. If the key still does nothing, please report the key and the profile |
 | `THAT KEY CANNOT BE USED` when rebinding | Esc and the remote's Back cannot be moved; with the SPLIT KEYBOARD the right half's keys (arrows, K, L, Enter) belong to player 2; a keyboard key cannot go on the gamepad |
 | `NOT POSSIBLE: … NEEDS A KEY` when rebinding | That key was the only one of an action the game needs (a direction, Pause, OK or Back). Give that action a second key first, or rebind it instead |
-| I cannot leave the INPUT TEST | Hold **Pause** (Back or Play/Pause on the remote, Esc on a keyboard, Start on a gamepad) for a whole second — a quick press only lights the PAUSE box |
+| I cannot leave the INPUT TEST | Press **Pause** three times within about a second and a half (Back or Play/Pause on the remote, Esc on a keyboard, Start on a gamepad) — that is the way out on the TV, where Back cannot be held. On a keyboard or a gamepad holding Pause for a whole second works too |
 | My rebound keys are gone after choosing another profile | Each profile has its own keys — switch PROFILE back, or rebind the new one. RESET puts back the standard keys of the GAME or MENU set shown |
 | PowerUp (OK, Enter, C, X) does nothing | Always expected with the **MANTA** (no power meter — its colour items work when you fly into them). With the KESTREL expected until you have collected a power capsule (no box of the power meter is highlighted) — the red saucers and completed formations of AZURE VERGE leave them. Also expected when you already have the most of the highlighted power-up. Such a press plays a short, low "no" buzz. See [preview-build.md](preview-build.md#power-ups) |
 | No sound in the browser | Press a key or click into the picture once — the sound starts then (a gamepad button does not count). See [preview-build.md](preview-build.md#sound-and-music) |
-| Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held. Please report it with the remote model: it means the remote itself drops the arrow when OK is pressed |
+| Pressing OK while holding an arrow stops the ship on the TV | Not expected — the game keeps the arrow held, and the measured remote does not even deliver the OK. Please report it with the remote model |
+| Pressing Home during a game and coming back — where was I? | Exactly where you left off, with the **PAUSE** menu open and the music silent while the TV's bar was up. Press OK on RESUME. Nothing is fast-forwarded to catch up |
+| The music kept playing under the TV's Home bar | Not expected since the remote and hardware tuning — the game suspends its sound when it loses the screen. Please report the monitor model and firmware |
 | OK or Back does nothing on the CONTINUE? countdown | Both are ignored for the first half second, so a button still pressed from the game never decides; press again. If they never react, please report it |
 | Pause does nothing | On the title, the DIFFICULTY box, the SHIP SELECT box, the WEAPON SELECT screen, the PRACTICE and SOUND TEST boxes, the name entry, the CONTINUE? countdown and the end screens Pause has no job — it pauses only a running game (in the attract loop it returns to the title, like any button). In the game it should open the PAUSE menu; if not, please report the device and the button |
 | Special (Channel up, V, Y) does nothing | Expected unless your Options fly FORMATION or ROTATE (chosen on the WEAPON SELECT screen's OPTION line) — then each press spreads them out or back in. Holding OK does the same while held. With the MANTA it throws a black-hole bomb, if BLACK HOLE is on in OPTIONS → EXTRAS and you have one stocked |

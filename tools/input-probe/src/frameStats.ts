@@ -3,7 +3,11 @@
  *
  * Pure module: callers pass in the measured values. {@link FrameStats.push} is allocation-free so it can
  * run every frame; {@link FrameStats.summary} sorts into a preallocated scratch buffer and is meant for the
- * ~10 Hz UI refresh.
+ * ~10 Hz UI refresh. Since M3-02b a summary also carries a raw bucket histogram of the deltas
+ * ({@link FRAME_BUCKET_EDGES_MS}, {@link frameBucket}): the 2026-09-15 run on the Smart Monitor M7s
+ * showed a quarter of the deltas above 20 ms, which no median or p95 conveys on its own, and
+ * {@link chooseEventTime} now measures with the handler clock only (Tizen 5.5's `event.timeStamp`
+ * advances in whole seconds — `docs/dev/input-probe-results.md`).
  *
  * @module frameStats
  */

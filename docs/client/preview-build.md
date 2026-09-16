@@ -708,7 +708,7 @@ darkened picture with the three volumes and four **pages**:
 
 ```text
              CONTROLS
-   → PROFILE  SAFE 4-WAY (DEFAULT)
+   → PROFILE  REMOTE (DEFAULT)
      AUTOFIRE ALWAYS
      RATE     15/S
      SOCD     PROFILE
@@ -721,8 +721,8 @@ darkened picture with the three volumes and four **pages**:
    AUTOFIRE / RATE: FROM THE NEXT GAME
 ```
 
-**PROFILE** is the control profile (on the TV **SAFE 4-WAY (DEFAULT)** or **FAST 8-WAY**, in a
-browser **KEYBOARD (DEFAULT)**, **KEYBOARD AS REMOTE** or **SPLIT KEYBOARD** — two players on one
+**PROFILE** is the control profile (on the TV **REMOTE (DEFAULT)**, the only one since the remote
+was measured, in a browser **KEYBOARD (DEFAULT)**, **KEYBOARD AS REMOTE** or **SPLIT KEYBOARD** — two players on one
 keyboard, [Two players](#two-players)). **AUTOFIRE** chooses how the gun fires — **ALWAYS** (on its
 own, the start setting), **TOGGLE** (each press of Shot switches it off and on) or **HOLD** (while
 Shot is held); on the TV it is greyed out, because the remote has no fire button. **RATE** sets how
@@ -919,7 +919,33 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the v1.0 release candidate (1.0.0-rc.1).** Nothing new to play — the whole
+**New in this build: the game is tuned to the measured remote and monitors.** The input probe was
+run on both Smart Monitor M7s on 2026-09-15 and the game was retuned to what it found. Nothing in
+the game itself plays differently, but the TV feels different:
+
+- **The remote sends one button at a time**, and the game now says so everywhere instead of
+  guessing: while you hold an arrow, OK, a second arrow and Ch ▲ / Ch ▼ never reach the game.
+  **OK never stops a direction** — but to take a power-up you have to let the direction go first
+  (or switch AUTO POWER-UP on). There are no diagonals on the remote and there never will be; the
+  whole game is dodgeable with single arrow presses ([controls.md](controls.md#samsung-smart-remote)).
+- **Holding a direction is clean**, so the profile no longer waits before believing a release —
+  the ship stops the instant you let go. The old **FAST 8-WAY** profile is gone (it differed only
+  in that wait); the one remote profile is called **REMOTE**, and a game that had FAST 8-WAY
+  chosen simply uses it.
+- **Home pauses the game.** Home opens the TV's bar over the app instead of closing it, so the
+  game now pauses itself and goes silent; when you come back the PAUSE menu is where you left it,
+  with nothing fast-forwarded.
+- **The INPUT TEST closes with three Pause presses** (`PAUSE X3 OR HOLD TO EXIT`). The remote
+  reports Back and Play/Pause only when you let go, so it could never be *held* — nothing in the
+  game asks for a held Back any more.
+- **Smoother scrolling on these monitors.** They deliver frames a little unevenly (a quarter of
+  them arrive late even though the average is right), which used to make the game run two steps on
+  one frame and none on the next. It now runs exactly one step per frame on a 60 Hz screen — the
+  picture should look steadier, especially in the fast stretches.
+- Debug builds' panel gained a **TPF** line and a small bar chart of the frame times
+  ([debug-tools.md](debug-tools.md#frame-pacing-tpf-and-the-raf-histogram)).
+
+Before that, **the v1.0 release candidate (1.0.0-rc.1).** Nothing new to play — the whole
 game was played through by the computer, all 16 runs with both ships, and four unfair spots were
 fixed: the MANTA's **waves now pass through armour** (a clink, and they fly on — so a fully powered
 MANTA with waves can reach the cores of MANTLE REGENT, IRON SOVEREIGN and THE HOLLOW KING), its
@@ -945,7 +971,7 @@ Before that, **the Options pages.** OPTIONS lists MASTER, MUSIC, SFX, then **CON
 **DISPLAY** and **GAME**, then BACK. The control profile moved to CONTROLS (its first line,
 PROFILE), and BULLETS, SCALE, SHAKE, FLASHES, HITBOX and BOSS HP to DISPLAY — they work as before.
 New: AUTOFIRE and RATE, SOCD, DEBOUNCE, REBIND KEYS / REBIND PAD (your own keys and buttons, with
-conflicts moved or swapped, and RESET), the INPUT TEST (hold Pause to leave it), and on GAME the
+conflicts moved or swapped, and RESET), the INPUT TEST (three Pause presses leave it), and on GAME the
 difficulty (remembered now), LIVES, PENALTY, AUTO POWER, MAGNET and ONE BUTTON — they apply from the
 next game. Your saved settings and high scores from earlier builds are kept
 ([The Options screen](#the-options-screen)).
@@ -1110,8 +1136,9 @@ before the boss. See [The first zone: AZURE VERGE](#the-first-zone-azure-verge).
 Before that, **the Options screen, and the game remembers.** **OPTIONS** — greyed out until
 then — works on the title and in the pause menu: three volume sliders (MASTER, MUSIC, SFX, from 0 to
 10) that change the sound the moment you press ◀ / ▶, and **CONTROLS**, the control profile —
-on the TV **SAFE 4-WAY** (the default, with the hiccup protection) or **FAST 8-WAY** (without it),
-in a browser KEYBOARD or KEYBOARD AS REMOTE — which also takes effect at once. **BACK** keeps the
+on the TV **SAFE 4-WAY** (the default then, with the hiccup protection) or **FAST 8-WAY** (without
+it; both are one **REMOTE** profile since the remote was measured), in a browser KEYBOARD or
+KEYBOARD AS REMOTE — which also takes effect at once. **BACK** keeps the
 settings, and the game now **remembers** them after it is closed, together with your **high
 scores**: every game that ends on the GAME OVER or STAGE CLEAR screen is saved, the title's `HI`
 shows the best score kept on this device, and a new best gets **NEW HI-SCORE** on the GAME OVER
@@ -1246,8 +1273,8 @@ during the action, whether the boss is fair, and how many ships you lost and whe
 answering: the **Options screen** and **settings that are kept after the app is closed**
 (checks 16–18): please say whether the volume steps feel even and the MUSIC and SFX
 sliders change what they should at once, whether the settings are still there after Back → YES
-and opening the app again, and — the most useful answer — whether the ship still moves smoothly
-with **FAST 8-WAY** (no hiccup protection) on your remote. Still worth answering: the **title
+and opening the app again, and — answered since: the ship moves smoothly without any hiccup protection, so every profile now
+waits 0 frames. Still worth answering: the **title
 screen, the menus and the pause menu** (checks 12–15):
 please say whether moving through the menus with the arrows and choosing with OK feels quick and
 reliable (never a skipped or doubled move), whether **Back** pauses the game and gets you back
@@ -1256,8 +1283,9 @@ app closes, and whether the new **HUD** — the top bar's three scores and the b
 meter — is complete and readable from the sofa (check 2). **Sound** (check 11): every shot should
 be heard the moment it leaves the ship — please say whether the sound feels immediate or lags
 behind the picture, and whether it ever crackles, stutters or drops out. **Whether pressing OK
-while you hold an arrow stops the ship** (check 9) still needs answers — it matters more now that
-there are capsules to take on the TV. On a PC — or in the monitor's own web browser, pointed at
+while you hold an arrow stops the ship** (check 9) is answered: it does not — the remote does not
+even deliver the OK while an arrow is down, so the ship flies on and the press is lost. Let the
+direction go, press OK, hold it again (or switch AUTO POWER-UP on). On a PC — or in the monitor's own web browser, pointed at
 the PC (see [In a desktop browser](#in-a-desktop-browser)) — AZURE VERGE plays the same;
 `?skip=boss` takes you straight to the boss to try it again and again. Please also report anything
 from [the sound checklist](#sound-and-music): in particular whether you can hear the **loop point**
@@ -2259,7 +2287,7 @@ the first install it appears in the monitor's **Apps** list as **Shmup Cup**.
 | **OK** (centre) | Menus: chooses the highlighted entry (on the title first `PRESS OK`). Game: takes the highlighted power-up once you have collected capsules (see checks 9 and 20); with nothing to take, a short low "no" buzz |
 | **Back** (↩) | Game: opens the pause menu. Pause menu: resumes. A question: answers NO. Title: asks **EXIT SHMUP CUP?** — YES closes the app and returns to the monitor's home screen. Attract loop (demo, high scores, story): back to the title. Name entry: back one letter. On the loading and error screens it closes the app at once |
 | **Play/Pause** ⏯ (if your remote has it) | Pauses and resumes the game |
-| **Home** | Leaves the app; everything freezes (and falls silent) while it is in the background. Reopening it brings you back where you were — during a game, to the pause menu — and nothing jumps ahead |
+| **Home** | Opens the monitor's bar **over** the app (it is not closed). The game pauses itself and falls silent while the bar is up; coming back leaves you where you were — during a game, on the pause menu — and nothing jumps ahead |
 | **Volume +/−, Mute** | The monitor's own volume, as in any app. The game's own volumes (MASTER, MUSIC, SFX) are under **OPTIONS** |
 | Everything else | Read by the game every tick, but nothing reacts to it yet (the gun fires without any button) |
 | A **gamepad** (USB or Bluetooth, optional) | Menus and 1 PLAYER games: works like the remote (player 1). In a **2 PLAYERS** game: START (or A) makes it **player 2's** and brings player 2 in ([Two players](#two-players), checks 45–47) |
@@ -2301,11 +2329,15 @@ Things to check on the monitor and report:
    darts or the spark stutter, flicker, show up as magenta-and-black squares, or stop.
 9. **Hold an arrow and press OK while you hold it** (for example hold ▶ and press OK a few
    times): the ship must keep moving the whole time, without stopping or stuttering when OK is
-   pressed or released. Report whether it does — it tells us if the remote drops a held arrow
-   when OK is pressed, which decides how comfortable power-ups are on the TV.
-10. After Home → reopen during a game, the app comes back without a black screen, on the **pause
-   menu** over the ship where you left it; RESUME continues — and the shot sounds come back with
-   it.
+   pressed or released. **Measured on both monitors:** it does — the remote does not deliver the
+   OK at all while an arrow is down, so the direction simply continues and the press is lost. To
+   take a power-up, let the direction go first. Report it if your remote behaves differently.
+10. **Home during a game** (retuned): press Home while flying. On the M7 the Home bar is an
+   overlay — the app keeps running underneath — so the game now pauses itself and the music goes
+   silent the moment the bar appears. Come back: no black screen, the **pause menu** over the ship
+   where you left it, nothing fast-forwarded to catch up; RESUME continues, and the shot sounds
+   come back with it. Report it if the music kept playing under the bar, or if the game ran on
+   while you were away.
 11. **Sound** (new in this build — turn the monitor's volume up): every shot plays a short, high
    blip, a little to the left of the middle (the ship flies on the left side of the picture;
    sounds come from where they happen — fly to the right edge and they move towards the right
@@ -2328,7 +2360,7 @@ Things to check on the monitor and report:
 15. The menus answer the remote **quickly** — as quickly as the ship does — and the text in the
    boxes is readable from the sofa.
 16. **The Options screen** (new): on the title, OK → **OPTIONS** shows a box with MASTER, MUSIC
-   and SFX (full bars, `10`), `CONTROLS  SAFE 4-WAY (DEFAULT)` and BACK. On **MUSIC** press ◀ a few
+   and SFX (full bars, `10`), `CONTROLS  REMOTE (DEFAULT)` and BACK. On **MUSIC** press ◀ a few
    times: the title music gets quieter with every step, and at `0` it is silent; ▶ brings it back.
    On **SFX** the clicks of each step get quieter; on **MASTER** everything does. Report whether
    the steps feel even (no big jump between two steps), whether a change comes at once, and
@@ -2339,12 +2371,12 @@ Things to check on the monitor and report:
    music plays at the lower volume, and OPTIONS shows `5` and `3`. Also press **Home** while the
    Options screen is open and come back: the box is still there with your changes, and they are
    kept once you choose BACK.
-18. **CONTROLS** (new): in OPTIONS move to CONTROLS and press ◀ / ▶: it switches between
-   `SAFE 4-WAY (DEFAULT)` and `FAST 8-WAY`, and the menu keeps working with the arrows, OK and Back
-   whichever is shown. Choose **FAST 8-WAY**, BACK, 1 PLAYER and fly: hold each direction for a few
-   seconds — report whether the ship moves smoothly or stutters / stops for a moment (FAST 8-WAY
-   has no hiccup protection; if it stutters, your remote needs SAFE 4-WAY — switch back). Close
-   and reopen the app: CONTROLS still shows the profile you chose.
+18. **CONTROLS**: in OPTIONS move to CONTROLS. Since the remote was measured there is exactly one
+   remote profile, `REMOTE (DEFAULT)`, so ◀ / ▶ change nothing there — the choice that mattered
+   (the hiccup protection) is the **DEBOUNCE** line, and it is 0 frames for every profile now. Fly
+   and hold each direction for a few seconds: the ship must move smoothly and stop the instant you
+   let go. Report any stutter — then set DEBOUNCE to 2 TICKS and say whether it goes away, because
+   that would mean your remote differs from the two we measured.
 19. **AZURE VERGE** (new): once the game starts the view scrolls to the right on its own over rolling
    ground, with a blue planet's rim low in the background, and the first row of green pods weaves
    in about three seconds later. Watch the scrolling for a few minutes: it should stay smooth in
@@ -2356,8 +2388,8 @@ Things to check on the monitor and report:
    taking power-ups with OK in the middle of the action feels natural with the remote.
 21. **Dodging with the remote** (new): every bullet of the zone — and every laser and needle of the
    boss — is meant to be avoidable with **single arrow presses**. Report the time into the stage
-   of any spot where you could not get out of the way, and whether FAST 8-WAY (check 18) makes a
-   difference there.
+   of any spot where you could not get out of the way. (Single arrow presses are all the remote
+   can send — see check 9 — so there is no 8-way profile to compare against any more.)
 22. **The rock** (new): in the cave (about 1:15–2:25) the ship explodes when it touches the floor
    or the ceiling; the cave is always wide enough to fly through. Report any spot that felt too
    narrow or where the ship exploded without touching rock.
@@ -2691,10 +2723,14 @@ Things to check on the monitor and report:
    speed. Back while `PRESS A KEY FOR …` shows cancels (`CANCELLED`), and Back is never taken as a new
    key. RESET brings OK back to POWER-UP. Close and reopen the app: a change you left in place is
    still there. Report any remote button that was not accepted.
-86. **The input test** (new): CONTROLS → INPUT TEST: `DEVICE REMOTE`; each arrow lights its side of
-   the cross, OK lights POWER-UP, Ch ▲ SPECIAL, Ch ▼ SPEED, Play/Pause PAUSE. Press two arrows at
-   once: report whether two sides light (the remote reports diagonals) or only one. Holding Back
-   for a second closes the test.
+86. **The input test**: CONTROLS → INPUT TEST: `DEVICE REMOTE`; each arrow lights its side of
+   the cross, OK lights POWER-UP, Ch ▲ SPECIAL, Ch ▼ SPEED, Play/Pause PAUSE — each on its own.
+   Now **hold one arrow** and press the opposite arrow, then OK, then Ch ▲: nothing else may
+   light, and the held arrow must stay lit (that is the one-key-at-a-time behaviour the whole game
+   is designed around). The hint reads `PAUSE X3 OR HOLD TO EXIT`: **press Back three times**
+   within about a second and a half to leave — the bar at the bottom fills a third per press.
+   (Holding Back no longer does anything on the remote: it only reports the button when you let
+   go.)
 87. **The GAME page** (new): set LIVES to 5, PENALTY to ARCADE, BACK, then 1 PLAYER: the DIFFICULTY
    box shows `LIVES 5` on every difficulty, the game starts with five ships, and losing one takes
    all your power and sends you back to the checkpoint. Then from the pause menu open OPTIONS →
@@ -2712,6 +2748,36 @@ Things to check on the monitor and report:
 90. **Memory over a long run** (new, debug build, with the remote inspector): play a run through
    three or more zones — the memory stays under 100 MB and does not climb from zone to zone
    ([debug-tools.md](debug-tools.md#extra-checks-for-the-platform-polish-build-plan-85)).
+91. **One step per frame** (new, debug build — the check the remote-and-hardware build asks for):
+   open the developer tools (Play/Pause, then Ch ▲ three times) and start a game. The panel's
+   **TPF** line counts the frames that ran 0, 1, 2 and 3-or-more simulation steps. While you fly,
+   **only the second number may keep climbing**; the others should stay where they were (a handful
+   over a whole zone is fine — a real dropped frame). `LOCK` must show among the switches on the
+   line above: it means the game recognised the monitor as a 60 Hz screen. Beside TPF a small bar
+   chart shows how long the frames took — most bars in the green middle, a few yellow, red only
+   rarely. **Do this on both monitors** and photograph the panel once per monitor; if the second
+   number is not the only one climbing, or `LOCK` is missing, say which monitor
+   ([debug-tools.md](debug-tools.md#frame-pacing-tpf-and-the-raf-histogram)).
+92. **Home during play** (new): while flying, press **Home**, wait a few seconds with the TV's bar
+   up, then come back to the app. Expected: the music went silent the moment the bar appeared, and
+   the game is on the **PAUSE** menu when you return, exactly where you left it — no bullets moved,
+   nothing was fast-forwarded to catch up. Report it if the music kept playing, if the ship had
+   flown on, or if the game raced for a moment after you came back.
+93. **Leaving the INPUT TEST with Back** (new): OPTIONS → CONTROLS → INPUT TEST, then press
+   **Back** three times within about a second and a half. The test must close (the bar at the
+   bottom fills a third per press). Try it slowly too — leave more than about 1.5 s between two
+   presses and the count starts again, so it should *not* close. This replaces the old "hold Back"
+   exit, which the remote can never send.
+94. **A 240 fps latency video** (new, still open): film the ship and your thumb at **240 frames a
+   second** (a recent phone's slow-motion mode) while you tap an arrow, and again while you tap OK
+   on a power-up. Count the frames between the button going down and the ship moving. The earlier
+   video was 30 fps, which is too coarse to answer the question. Do it once per monitor, and once
+   with the input probe's flash box ([input-probe.md](input-probe.md)) for comparison.
+95. **Optional: the fixed input probe** (new): the probe now measures with its own clock (the TV's
+   event timestamps only advance in whole seconds, which made its earlier verdicts wrong) and
+   reports "not delivered" instead of "not tested" when the remote swallows a key. If you re-run
+   it, try **Back and Ch ▲ / Ch ▼ while holding an arrow**, and **two gamepads at once**
+   ([input-probe.md](input-probe.md)).
 
 The fully powered ship (`?loadout=full`), the shortcut to each zone's boss (`?skip=boss`), the
 twelve test stages (the Test Range, the Boss Range with its test boss, the Hunter Range with the
@@ -3994,7 +4060,8 @@ mean the build itself is broken; they are not caused by anything you did.
 | No sound at all, or no music, but everything else works | Check OPTIONS: MASTER, MUSIC or SFX may be at `0` (0 is silent). Then the monitor's or PC's volume |
 | The menu clicks are very quiet | They follow the **SFX** volume — turn it up in OPTIONS |
 | OK on MASTER, MUSIC or SFX does nothing | Expected: the volumes change with ◀ / ▶; OK only works on CONTROLS and BACK |
-| The ship stutters while I hold a direction after choosing FAST 8-WAY (TV) | This remote needs the hiccup protection: choose SAFE 4-WAY again under OPTIONS → CONTROLS → PROFILE (or set DEBOUNCE to AUTO), and please report the remote model |
+| The ship stutters while I hold a direction (TV) | Not expected: the two measured remotes send no false releases, so every profile waits 0 frames. Set **DEBOUNCE** to 2 TICKS under OPTIONS → CONTROLS and please report the remote model |
+| FAST 8-WAY has disappeared from CONTROLS (TV) | Expected: it differed from the default only in the waiting time before a release, and the remote cannot send diagonals whatever the profile says. The one profile is now **REMOTE**, and a save that named FAST 8-WAY uses it |
 | My high score is gone | Only runs that end on the GAME OVER screen or reach their ending (in a browser test stage: the STAGE CLEAR screen) are saved — QUIT TO TITLE (also on the ZONE MAP) and RETRY STAGE are not. In a browser, a private window or cleared site data forgets them, and another browser has its own. On the TV, removing the app deletes them; if they vanish otherwise, please report it |
 | The settings and high scores were back to the start after an update | Installing a new build over the old one should keep them; please report it with how the build was installed. After removing and reinstalling the app this is expected |
 | The ship does not move | Wait until it has finished flying in (⅔ of a second). In a browser, click once into the page so it has the keyboard focus; with a gamepad, press any button first. On the TV, report it together with the remote model |

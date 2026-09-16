@@ -85,6 +85,10 @@ export interface Verdicts {
  *
  * @param s - measured statistics.
  * @param keyName - maps a key code to its display name (for `longestHoldKey`).
+ * @param seenCodes - every key code seen at least once (M3-02b): with a single-key device an
+ *   attempted diagonal or OK-while-arrow leaves no event behind, so the verdict "NO — not
+ *   delivered" is inferred from which keys were seen at all. Defaults to none, which keeps the
+ *   pre-M3-02b "not tested" wording.
  * @returns the verdict record (fresh object).
  */
 export function buildVerdicts(

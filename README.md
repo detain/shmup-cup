@@ -23,7 +23,10 @@ cross-engine determinism, the soak, the release checks, the icons). Its on-devic
 has begun: M3-01 added the title's EXTRA menu (boss rush, the caravan score attack, the looping
 arcade mode), whole-run replays with a browser, fast-forward and sharing, the Extra Edit weapons,
 secret codes and the game-speed / invincibility assists
-([`docs/client/extra-modes-and-replays.md`](docs/client/extra-modes-and-replays.md)).
+([`docs/client/extra-modes-and-replays.md`](docs/client/extra-modes-and-replays.md)), M3-02 the
+visual & mechanic extras, and **M3-02b tuned the game to the hardware it is played on** — the
+measured single-key Samsung remote, Home as a `blur`-only overlay, and a vsync-locked loop for the
+M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)).
 
 <!--
   Keep this section scannable: one entry per plan step, in plan order — a bold headline with the
@@ -272,8 +275,8 @@ secret codes and the game-speed / invincibility assists
 - **Options and saves** (M1-17)
   - **OPTIONS** on the title and in the pause menu opens the Options screen: MASTER / MUSIC / SFX
     sliders (0–10, applied live as bus volumes on a perceptual curve — the SFX slider also drives
-    the menu sounds) and **CONTROLS**, the remote / keyboard profile (`SAFE 4-WAY (DEFAULT)` /
-    `FAST 8-WAY` on the TV), switched at once; BACK keeps them.
+    the menu sounds) and **CONTROLS**, the remote / keyboard profile (`REMOTE (DEFAULT)` on the TV
+    since M3-02b folded the two remote profiles into one), switched at once; BACK keeps them.
   - A versioned save (`save.v1` in `Platform.storage`) keeps the options, the hi-score tables and
     play stats: forward migrations, field-by-field sanitising, and a corrupt save falls back to
     defaults (the text kept under `save.corrupt`) instead of breaking the boot.
@@ -677,8 +680,8 @@ secret codes and the game-speed / invincibility assists
     earlier picture settings, unchanged) and **GAME**.
   - **CONTROLS** — the profile, **AUTOFIRE** always / toggle / hold (a replay-recorded
     `GameConfig.autofireMode`; the TV stays always-on) and **RATE**, **SOCD**, the remote's
-    **DEBOUNCE**, **REBIND KEYS / PAD** and an **INPUT TEST** (the game table live; hold Pause to
-    leave).
+    **DEBOUNCE**, **REBIND KEYS / PAD** and an **INPUT TEST** (the game table live; three Pause
+    presses — or a one-second hold — leave, M3-02b).
   - **Rebinding** — per device (the key profile in use, the gamepad profile) and binding context,
     with a capture prompt, **conflict detection** (a key another action has is moved, or the two
     swap; nothing required is ever left without a key; Esc / the remote's Back never move; a split
@@ -800,6 +803,39 @@ secret codes and the game-speed / invincibility assists
     [API reference](docs/dev/api-reference.md) (`core/blackhole`, `StageMode7`, the `effects` and
     `viewport` additions)
 
+- **Remote & hardware tuning** (M3-02b) — the probe's findings turned into the game
+  - **The remote profile is measured, not guessed**: `tizen-remote-safe` is labelled `REMOTE`,
+    debounces **0** ticks, carries the new `singleKey` knob (while a key is down, another key's
+    `keydown` is dropped — as the hardware does) and registers Guide 458 / Extra 10253 so REBIND
+    can capture them. `tizen-remote-diagonal` was retired; a save naming it resolves through
+    `core/config` `migrateInputProfileId`. `keyboard-remote-emulation` now feels like the real
+    remote.
+  - **Nothing asks for a held Back or Play/Pause** (they arrive only on release): the INPUT TEST
+    leaves on three Pause presses inside 90 ticks (`PAUSE X3 OR HOLD TO EXIT`), and the debug
+    unlock is four taps. The shell's debug tools track held keys themselves — the remote's
+    auto-repeats carry `repeat === false` — and an ESLint rule forbids `.timeStamp` in runtime
+    sources (Tizen 5.5 advances it in whole seconds).
+  - **Pause on Home**: both hosts' lifecycles take a focus source and are edge-triggered over
+    hidden ∨ unfocused, so the Home overlay opens the pause menu and suspends the audio, and the
+    return resumes with no catch-up burst.
+  - **Vsync lock** (`core/loop` `setVsyncLock`, shell `framePacing`, `VSYNC_LOCK_MIN_HZ … MAX_HZ`
+    55–65): one tick per frame on a fixed ~60 Hz display, a second only when the frame's delta plus
+    the carried debt covers two whole steps; debt bounded to ±1 step. Presentation only — no replay
+    or golden hash moved. The debug overlay gained a **TPF** line (0 / 1 / 2 / 3+ ticks per frame),
+    a rAF-delta histogram and a `LOCK` alert for the on-device check.
+  - **The playtest bot flies the remote's model** (`test/playtest/remote-strict.ts`): one key a
+    tick, an equip is a direction-free tap, a direction change costs a tick. Every zone, all 16
+    routes, the boss rush and the caravan still clear inside their budgets — **no zone content
+    needed re-tuning**; three bot changes and one golden expectation did.
+  - **The probe was fixed**: handler time only, a raw rAF-delta histogram, and the verdict
+    `NO — not delivered` for a key the hardware swallows.
+  - Docs: [controls](docs/client/controls.md#samsung-smart-remote) ·
+    [input profiles](docs/dev/input-profiles.md#what-the-2026-09-15-input-probe-changed-m3-02b) ·
+    [architecture](docs/dev/architecture.md#fixed-step-loop-coreloop) ·
+    [debug tools](docs/client/debug-tools.md#frame-pacing-tpf-and-the-raf-histogram) ·
+    [API reference](docs/dev/api-reference.md)
+
+
 ### Hardware spike
 
 - The **input probe** — a diagnostic Tizen app that measures the Samsung remote, gamepads and
@@ -808,8 +844,8 @@ secret codes and the game-speed / invincibility assists
   - The remote sends one key at a time: no diagonals, and no OK or another button while an arrow is held.
   - Held keys repeat as flagless keydowns with no fake key-ups.
   - Back and Play/Pause arrive only when released.
-  - Home is an overlay that fires only `blur`, so the game does not pause today.
-  - rAF jitters enough to double-step the loop.
+  - Home is an overlay that fires only `blur`, so the game did not pause (it does since M3-02b).
+  - rAF jitters enough to double-step the loop (the vsync lock answers it — M3-02b).
   - DualShock 4, WebGL2 (Mali-G51), 1920×1080 and Chromium 69 are confirmed.
   - Docs: [results](docs/dev/input-probe-results.md) · raw logs and analyzer in
     [`tools/input-probe/results/`](tools/input-probe/results/README.md) · applied by plan step
@@ -897,7 +933,7 @@ versions (`devEngines.runtime`).
 ```sh
 pnpm -v               # must print 12.x — an older global pnpm fails with ERR_PNPM_BROKEN_LOCKFILE
 pnpm install          # set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to skip the Electron binary
-pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down ×3, Enter opens OPTIONS — volumes and the CONTROLS (profile, AUTOFIRE always / toggle / hold, RATE, SOCD, DEBOUNCE, REBIND KEYS / PAD — press a key to rebind, Esc cancels —, INPUT TEST — hold P / Esc to leave), DISPLAY (bullet colours, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and GAME (difficulty, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — from the next game) pages (M2-16), saved in localStorage; Enter, Down ×2, Enter opens PRACTICE, Enter, Down ×4, Enter the SOUND TEST and Enter, Down ×5, Enter the EXTRA menu — BOSS RUSH, CARAVAN, ARCADE and REPLAYS (the last game at ×1 / ×2 / ×4 with → / ←; SHARE copies it, Ctrl+V on the page loads a shared one — M3-01); left alone for 12 s the title plays the attract loop — a zone demo, the high-score tables, the story; after a high score type your initials with the arrows and Enter (M2-15); Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f / zone-g plays CELL VAULT (tissue walls, tentacles, MANTLE REGENT) / PRISM LABYRINTH (crystal walls, the cube rush, FACET MONARCH — shoot the gallery's four turrets for ?stage=glimmer-cache, its bonus stage) alone (M2-13); ?stage=zone-h / zone-i plays the finales IRON CITADEL (the piston hall, the parade, IRON SOVEREIGN) / ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE HOLLOW KING) alone (M2-14 — a whole run from the title ends in an ending scene and the credits); ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
+pnpm dev              # browser dev app → http://localhost:5173 (F1–F8: debug tools): the title (Enter five times — PRESS OK, 1 PLAYER, NORMAL, KESTREL in the ship select, START in the weapon select — starts zone A, AZURE VERGE, the first of a run across the zone map (after each boss the tally, then Up / Down + Enter on the ZONE MAP choose the next zone); Down on the title picks 2 PLAYERS — a gamepad's START (or Enter with ?profile=keyboard-split) drops player 2 in; Down + Enter in the ship select flies the MANTA instead — its colour items power up on contact, Left Shift toggles its speed; in the weapon select ↑ / ←→ choose the weapon type, EDIT, the Option type, the ? shield, the ! choice and Auto Power-Up — V or a held Enter spreads FORMATION / ROTATE Options in the game; ?skip=boss starts every zone right before its boss (HALCYON BULWARK in zone A); Enter, Down ×3, Enter opens OPTIONS — volumes and the CONTROLS (profile, AUTOFIRE always / toggle / hold, RATE, SOCD, DEBOUNCE, REBIND KEYS / PAD — press a key to rebind, Esc cancels —, INPUT TEST — P / Esc three times, or held, leaves), DISPLAY (bullet colours, SCALE, SHAKE, FLASHES, HITBOX, BOSS HP) and GAME (difficulty, LIVES, PENALTY, AUTO POWER, MAGNET, ONE BUTTON — from the next game) pages (M2-16), saved in localStorage; Enter, Down ×2, Enter opens PRACTICE, Enter, Down ×4, Enter the SOUND TEST and Enter, Down ×5, Enter the EXTRA menu — BOSS RUSH, CARAVAN, ARCADE and REPLAYS (the last game at ×1 / ×2 / ×4 with → / ←; SHARE copies it, Ctrl+V on the page loads a shared one — M3-01); left alone for 12 s the title plays the attract loop — a zone demo, the high-score tables, the story; after a high score type your initials with the arrows and Enter (M2-15); Esc pauses), then fly the KESTREL (arrows/WASD, gamepad; the first key press turns the sound on; Enter/C takes a power-up; ?scene=flight skips the title; ?stage=test-range scrolls the test stage, its enemies, their bullets and the power capsules; ?stage=test-boss plays the WARNING and the test boss; ?stage=hunter-range&loadout=full sends in the Option Hunters; ?stage=direct-range (then the MANTA) sends pincer waves of item carriers; ?stage=gimmick-range tries the M2-07 stage systems — bricks to shoot through, regrowing walls, rocks, bubbles, a volcano, suction, tentacles, the cube rush, moving blocks, a pan, a fork; ?stage=raster-range shows the M2-08 raster effects and palette cycling — a waving, colour-rolling sea, a line-band floor, heat haze; ?stage=captain-range / raid-range / twin-range / gauntlet-range play the M2-09 advanced bosses — mid-bosses on the scrolling screen, the IRON LEVIATHAN raid with its heart and time limit, the twins' turns, a boss rush; ?stage=bonus-range tries the M2-10 hidden bonus entrances into the bonus vault; ?stage=zone-b / zone-c plays BRINE NEBULA / DUNE EXPANSE alone and ?stage=brine-grotto zone B's bonus stage PEARL GROTTO (M2-11); ?stage=zone-d / zone-e plays MAGMA DEEP (the dive, the brick maze, CINDER BASTION) / TEMPEST RIDGE (rear attackers, SQUALL STEED) alone (M2-12); ?stage=zone-f / zone-g plays CELL VAULT (tissue walls, tentacles, MANTLE REGENT) / PRISM LABYRINTH (crystal walls, the cube rush, FACET MONARCH — shoot the gallery's four turrets for ?stage=glimmer-cache, its bonus stage) alone (M2-13); ?stage=zone-h / zone-i plays the finales IRON CITADEL (the piston hall, the parade, IRON SOVEREIGN) / ABYSSAL THRONE (depth mines, the ABYSS ARK raid, THE HOLLOW KING) alone (M2-14 — a whole run from the title ends in an ending scene and the credits); ?profile=keyboard-remote-emulation feels like the TV remote; ?profile=keyboard-split puts two players on one keyboard; ?scene=showcase / ?scene=calibration / ?scene=fx-gallery)
 pnpm lint             # ESLint (typescript-eslint + compat: chrome >= 69)
 pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # every package's Vitest tests + repo integration tests, one process, one worker pool (VITEST_MAX_WORKERS=n to throttle)
@@ -1012,18 +1048,21 @@ transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zo
 & credits), M2-15 (front-end screens & attract mode), M2-16 (options, rebinding & accessibility), M2-17 (platform polish: Electron, Tizen extras, storage) and M2-18 followed. Milestone **M3** is under way: M3-01 (extra modes & replay features) and M3-02 (visual & mechanic
 extras: the Mode-7 floor and the dimension stage, the CRT filter, the ultra-wide and 4:3 aspect
 modes, authentic slowdown, graze, the death-bomb window, the black-hole bomb, the P2 bosses and the
-final zone's escape sequence) are done, next is **M3-02b** (remote & hardware tuning from the
-input-probe results) and then M3-03; every simulation change re-blesses the golden replays in the same
+final zone's escape sequence) and M3-02b (remote & hardware tuning from the input-probe results) are
+done; next are M3-02c … M3-02e (the render-performance work M3-02b exposed —
+[`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03. Every
+simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).
 
-The input probe has run on both monitors (2026-09-15). Its results are recorded in `shmup_tech.md` §2.7 and
-[`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), and plan step **M3-02b** applies them. It sets
-the remote profile's debounce to 0, pauses on Home's `blur`, locks the loop to the jittery 60 Hz rAF, drops
-held-Pause gestures and re-tunes the zones under a bot that plays like the single-key remote.
+The input probe ran on both monitors (2026-09-15). Its results are recorded in `shmup_tech.md` §2.7 and
+[`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), and plan step **M3-02b** applied them: the
+remote profile debounces 0 ticks and carries the `singleKey` model, the game pauses on Home's `blur`, the loop is
+vsync-locked on the jittery 60 Hz panel, no gesture asks for a held Back or Play/Pause any more, and every zone was
+re-flown by a bot that plays like the single-key remote (no zone needed re-tuning).
 Since M1-06 the preview build is worth installing too: flying the KESTREL with the real remote
 is the first hands-on check of the control scheme — since M1-16 moving through the title and
 pause menus and quitting with Back, since M1-17 the Options screen, settings kept after a
-relaunch and the FAST 8-WAY profile, since M1-18 **playing zone A through with the remote**
+relaunch and the control profile, since M1-18 **playing zone A through with the remote**
 — the plan's manual M1-18 check: every bullet and laser dodgeable with single arrow presses —
 since M2-01 the DIFFICULTY box, the extra-ship jingle and the CONTINUE? countdown, since
 M2-02 the colour-blind **BULLETS** option and the points of cancelled bullets, since M2-03 the

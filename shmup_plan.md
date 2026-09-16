@@ -1,8 +1,8 @@
 # Shmup Cup — Implementation Plan
 
-> **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-15: **M1 and M2 complete** (`1.0.0-rc.1`),
-> **M3-01 and M3-02 done**, **M3-02b** (remote & hardware tuning from the 2026-09-15 input-probe run) in its review
-> loop, then **M3-02c … M3-02e** (the render-performance work in
+> **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-16: **M1 and M2 complete** (`1.0.0-rc.1`),
+> **M3-01, M3-02 and M3-02b done** (the last of those tuned the game to the 2026-09-15 input-probe run), then
+> **M3-02c … M3-02e** (the render-performance work in
 > [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03 — 40 of 44 steps. Progress, the resume point and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
@@ -4295,9 +4295,12 @@ go. Do them on **both** M7 monitors where it says so.
 
 > **Done 2026-09-15** on both monitors, with the log server — results in
 > [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), raw logs in `tools/input-probe/results/`.
-> The probe's on-screen timing verdicts are wrong on Tizen 5.5 (whole-second `event.timeStamp`); the write-up
-> re-times the logs. Applying the results (profile values *and* the code changes they turned out to need) is plan
-> step **M3-02b**. Still open: the 240-fps latency video (only a 30 fps one exists), two gamepads at once.
+> The probe's on-screen timing verdicts were wrong on Tizen 5.5 (whole-second `event.timeStamp`); the write-up
+> re-times the logs, and **M3-02b fixed the probe** — `chooseEventTime` always returns handler time now, so a new run
+> shows right verdicts (and `NO — not delivered` where the hardware swallows a key). The results were applied
+> (profile values *and* the code changes they turned out to need) in plan step **M3-02b**; the recipe table below is
+> history. Still open: the 240-fps latency video (only a 30 fps one exists), two gamepads at once — both on the §8.4
+> list.
 
 - [x] Package and deploy the probe (cmd.exe): `cd tools\input-probe`, `npm install`, `set TIZEN_PROFILE=<profile>`,
       `set TV_IP=<ip1>,<ip2>`, `npm run package`, `npm run deploy`. Optional log server: `npm run log-server` and build
@@ -4307,6 +4310,11 @@ go. Do them on **both** M7 monitors where it says so.
       taps) *(open — 30 fps only)*; gamepad(s) *(one DualShock 4)*; Home and return *(monitor B)*.
 - [x] Record the verdicts in `shmup_tech.md` §2.7, then apply them to `content/input/remote-profiles.json` *(the
       applying is M3-02b; the file is `content/input/remote.input-profiles.json`)*:
+
+**What the run actually gave** (M3-02b, so the table below is kept only as the recipe it was): diagonals **NO —
+not delivered**, repeats **flagless keydowns with no fake pairs** ⇒ `releaseDebounceTicks: 0`, OK while an arrow is
+held **not delivered** ⇒ the new `singleKey: true` knob, every `registerKey` accepted ⇒ `Guide` and `Extra` added to
+`register` (never the volume keys), viewport 1920×1080 with WebGL 1 + 2.
 
 | Probe verdict | Set in the `tizen-remote-safe` profile |
 |---|---|
@@ -4343,12 +4351,27 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
       zone A is clearable without diagonals; Back pauses; Back on pause resumes; Play/Pause pauses.
 - [ ] Back on title → exit confirm → YES closes the app; NO stays.
 - [ ] Home during play, then return: game is paused, audio resumes without glitches, no catch-up burst. *(On the M7
-      Home is an overlay that fires only `blur` — this passes only after M3-02b.)*
+      Home is an overlay that fires only `blur`; M3-02b made the lifecycles edge-triggered over hidden ∨ unfocused,
+      so this should pass now — the music must be silent while the Home bar is up.)*
 - [ ] Audio: SFX feel immediate; the music loop seam is inaudible; WARNING siren plays; volumes persist after relaunch.
 - [ ] Hi-score and options persist across relaunch; after reinstalling the same version (update install) they persist.
 - [ ] 15 minutes continuous play: no hitches > 1 frame visible in the overlay's frame graph, memory in DevTools < 100 MB.
 - [ ] Gamepad and Bluetooth keyboard also work (press a button first to activate the pad).
 - [ ] Optional: 240-fps video of a button press → ship reaction to estimate end-to-end latency.
+
+**M3-02b additions (dev build, both monitors — the step's manual list):**
+
+- [ ] Overlay line 6: while flying, only the **second** `TPF` counter climbs (0 / 2 / 3+ stay near zero) and `LOCK`
+      shows among the switches; the `RAF` histogram's mass sits in the middle buckets. Photograph the panel per
+      monitor. (`__shmupDebug.stats.tickFrames` / `.rafHistogram` in the remote inspector.)
+- [ ] Home during play → on return the pause menu is up and the music was silent while the bar was; nothing was
+      fast-forwarded.
+- [ ] OPTIONS → CONTROLS → INPUT TEST closes on **Back ×3** within ~1.5 s; with > 1.5 s between presses it does not.
+      Also: hold an arrow and press OK / another arrow — nothing else lights, the held arrow stays lit.
+- [ ] A **240 fps** video of the probe's flash box and one of the game (the latency figure is still open — the first
+      video was 30 fps).
+- [ ] Optional: re-run the fixed probe (handler-clock timings, the `NO — not delivered` verdicts) and try Back / Ch±
+      during an arrow hold, and two gamepads at once.
 
 ### 8.5 M2 on-device checks (both monitors)
 
@@ -4365,6 +4388,10 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 - [ ] Live reload (`tizen:watch`, M2-17): install its first build, save a change on the desktop — the TV reloads into
       the new build without reinstalling (if the widget cannot open the served page, note it here).
 - [ ] Update install over the previous version keeps saves; **uninstall removes** saves (store requirement).
+- [ ] M3-02b: a save that still names the retired `tizen-remote-diagonal` profile boots on **REMOTE** with the rest of
+      the save intact (CONTROLS shows `REMOTE (DEFAULT)` and the volumes / hi-scores are unchanged).
+- [ ] M3-02b: CONTROLS → REBIND KEYS captures **Guide** (the Ch rocker pressed in) and **Extra** (the screen button);
+      the volume keys are still refused (`THAT KEY CANNOT BE USED`) and still control the monitor's volume.
 
 ### 8.6 Store readiness (end of M2)
 

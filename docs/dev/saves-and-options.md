@@ -114,7 +114,7 @@ Before M2-17 Electron used the web build's `localStorage`; that save is not migr
 | Field | Meaning |
 |---|---|
 | `version` | `SAVE_VERSION` = **2** since M2-16 (1 before). Drives the migrations; a document without it counts as version 0 |
-| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`); M2-16: the controls (`input.autofire`, `autofireInterval`, `socd`, `releaseDebounce` — `null` = the host config's / the profile's —, `bindings` — the rebinding per profile and context) and the game options (`game.difficulty`, `lives`, `deathPenalty`, `autoPowerUp`, `pickupMagnet` — `null` = the host config's / the preset's —, `oneButton`); M3-01: the assists and feel (`play.speed` 100 / 75 / 50, `invincible`, `optionRecovery` — `null` = the host config's —, `rumble`) — resolved when missing, so no new format |
+| `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default; M3-02b: a **retired** id is migrated on load — see [Retired profile ids](#retired-profile-ids-m3-02b)), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`); M2-16: the controls (`input.autofire`, `autofireInterval`, `socd`, `releaseDebounce` — `null` = the host config's / the profile's —, `bindings` — the rebinding per profile and context) and the game options (`game.difficulty`, `lives`, `deathPenalty`, `autoPowerUp`, `pickupMagnet` — `null` = the host config's / the preset's —, `oneButton`); M3-01: the assists and feel (`play.speed` 100 / 75 / 50, `invincible`, `optionRecovery` — `null` = the host config's —, `rumble`) — resolved when missing, so no new format |
 | `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`; since M2-15 `hiScoreModeKey(config, mode)` appends `-2p` for co-op games and `-practice` for practice runs — `meter-normal-2p`, `direct-hard-practice`: one table per difficulty × ship × mode, still no format change; since M3-01 also `-bossrush`, `-caravan` and `-arcade` for the EXTRA modes), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 64 tables (32 before M3-01). A mode nobody scored in has no table. Since M3-01 a row set with an assist carries `"assisted": true` (left out otherwise) |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 | `unlocks` | M3-01 (`SaveUnlocks`): `extraEdit` (the weapon select's EXTRA) and `loop2` (the ARCADE mode's LOOP 2 start) — set by reaching an ending (or the title's EXTRA EDIT code), never taken back; written only once something is unlocked, so a save without it simply has nothing unlocked ([extra-modes-and-replays.md](extra-modes-and-replays.md#extra-edit-weapons-contentweaponstypes-extraweaponsjson)) |
@@ -122,6 +122,24 @@ Before M2-17 Electron used the web build's `localStorage`; that save is not migr
 The replays are **not** in this document: the replay library keeps each one under its own key
 (`replay.last`, `replay.1`–`3`), sized so it can never crowd the save out of the storage budget
 ([extra-modes-and-replays.md](extra-modes-and-replays.md#the-replay-library-createreplaylibrary-replaylibrary)).
+
+### Retired profile ids (M3-02b)
+
+The example above is a save written before the input probe ran: it names `tizen-remote-diagonal`
+(`FAST 8-WAY`), the TV profile that M3-02b removed from the content. It needs **no save
+migration** — `resolveUserOptions` maps it on every load:
+
+| `core/config` | Behaviour |
+|---|---|
+| `RETIRED_INPUT_PROFILE_IDS` | `{ 'tizen-remote-diagonal': 'tizen-remote-safe' }` — what a retired id resolves to |
+| `migrateInputProfileId(id)` | Returns the replacement for a retired id (read through `Object.prototype.hasOwnProperty.call`, so a poisoned `Object.prototype` cannot make it return a non-string), else `id` unchanged |
+| `resolveUserOptions(value)` | Applies it to `options.input.profileId` after the pattern check, so every reader of the resolved options sees the shipped id |
+
+Only `input.profileId` is migrated. A **binding override keyed by the retired id**
+(`input.bindings['tizen-remote-diagonal']`, as in the example) is left where it is: nothing loads
+it any more, so it is inert, and rewriting it would cost bytes in the Tizen bundle for a case a
+player only reaches by having rebound a profile that no longer exists. It disappears the next time
+the rebinding table is rewritten past the 16-profile limit.
 
 The key stays `save.v1` for the whole format family: a new format bumps the document's
 `version`, not the key, so an older save is always found and migrated. Hi-score rows reuse the
@@ -375,7 +393,7 @@ names the constants follows, a test or tool that counts rows does not.
 
 ```text
             OPTIONS                          CONTROLS                        DISPLAY
-   → MASTER   ▬▬▬▬▬▬▬▬▬▬  10          → PROFILE  SAFE 4-WAY (DEFAULT)   → BULLETS  STANDARD
+   → MASTER   ▬▬▬▬▬▬▬▬▬▬  10          → PROFILE  REMOTE (DEFAULT)      → BULLETS  STANDARD
      MUSIC    ▬▬▬▬▬▬▬     7             AUTOFIRE ALWAYS                   SCALE    INTEGER
      SFX      ▬▬▬▬▬▬▬▬▬▬  10            RATE     15/S                     SHAKE    ON
      CONTROLS                           SOCD     PROFILE                  FLASHES  NORMAL
@@ -456,7 +474,7 @@ Down, Left, Right, Confirm and Back through the host's key space:
 | `KeySpace` | Host | Selectable shipped profiles | CONTROLS shows |
 |---|---|---|---|
 | `'code'` | web, Electron (`KeyboardEvent.code`) | `keyboard-default`, `keyboard-remote-emulation` | `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE` (+ a `?profile=` override in use) |
-| `'keyCode'` | the TV remote (legacy key codes) | `tizen-remote-safe`, `tizen-remote-diagonal` | `SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY` |
+| `'keyCode'` | the TV remote (legacy key codes) | `tizen-remote-safe` (M3-02b retired `tizen-remote-diagonal`) | `REMOTE (DEFAULT)` |
 
 Gamepad profiles are never offered here — every pad uses `gamepad-standard`; since M2-16 the player
 rebinds it with CONTROLS → REBIND PAD instead
@@ -464,7 +482,9 @@ rebinds it with CONTROLS → REBIND PAD instead
 `inputProfileChoices(profiles,
 keySpace, defaultId, extra)` turns them into `InputProfileChoice { id, label }` entries, the
 platform default suffixed with `DEFAULT_PROFILE_SUFFIX` (`' (DEFAULT)'`). M1-17 renamed the shipped
-labels for the screen: `SAFE 4-WAY`, `FAST 8-WAY`, `KEYBOARD`, `KEYBOARD AS REMOTE`, `GAMEPAD`.
+labels for the screen: `SAFE 4-WAY`, `FAST 8-WAY`, `KEYBOARD`, `KEYBOARD AS REMOTE`, `GAMEPAD`;
+M3-02b folded the two TV profiles into one labelled **`REMOTE`** (the measured remote sends no
+diagonals and needs no debounce, so `SAFE` vs `FAST` no longer meant anything).
 
 The apps implement `ShellOptions.inputProfiles` (`ShellInputProfiles`):
 
@@ -604,7 +624,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | `packages/input-web/test/rebind/rebind-choices.test.ts`, `-edge.test.ts` | Selectable profiles per key space, gamepads never offered, packed keys, order, the default suffix, the `extra` profile, fresh arrays |
 | `packages/shell/test/dispatch/dispatch-options.test.ts`, `-edge.test.ts`, `dispatch-options-palette.test.ts`, `dispatch-options-display*.test.ts` | The event → bus table (fake audio), SFX driving `sfx` + `ui`, clamped levels, raw profile indices, unregistering, `applyAudioOptions` at every level; M2-02: every palette by its index, indices outside the list and a missing callback ignored, nothing after disconnecting |
 | `packages/shell/test/boot/boot.test.ts` | The save at boot (fake audio volumes, fake app profiles, corrupt / unreadable / v0 saves, a failing storage, `choices()` asked once, dev scenes, no app profiles, a throwing `apply` as the start error), Options end to end, `blur`, boot timing and `data-shmup-boot-ms`, a game over writing the hi-score to the platform storage |
-| `apps/*/test/boot/boot-wiring.test.ts` | Web: the saved choice through the save, CONTROLS entries, a pick winning over `?profile=`, out-of-range picks, `?debounce=` kept, a corrupt save, the save on prefixed `localStorage`. TV: CONTROLS, a live switch registering keys, a pick of the profile in use registering nothing, switching back from a saved FAST 8-WAY, a corrupt save, and the manual M1-17 check driven by remote keys only (SFX + CONTROLS saved on Back, kept after a relaunch) |
+| `apps/*/test/boot/boot-wiring.test.ts` | Web: the saved choice through the save, CONTROLS entries, a pick winning over `?profile=`, out-of-range picks, `?debounce=` kept, a corrupt save, the save on prefixed `localStorage`. TV: CONTROLS, a live switch registering keys, a pick of the profile in use registering nothing, a saved retired profile id resolving to `REMOTE`, a corrupt save, and the manual M1-17 check driven by remote keys only (SFX + CONTROLS saved on Back, kept after a relaunch) |
 | `test/e2e/bullet-palette.spec.ts` | M2-02, web build: BULLETS → DEUTERANOPIA saved on Back and drawn by the next boot's bullets; without a save none of its colours (the control) |
 | `test/e2e/display-options.spec.ts` | M2-08, web keyboard and the Tizen build's remote keys: SCALE / SHAKE / FLASHES / HITBOX applied live, saved on Back (`display` in `shmup-cup:save.v1`) and applied at the next boot (`stretch` fills the canvas, markers on the ship); without a save the frame is letterboxed and no marker shows |
 | `test/e2e/game-options.spec.ts`, `rebind.spec.ts` | M2-16: a version-1 save booting and rewritten as version 2 (the co-op row moved), LIVES 5 and ONE BUTTON reaching the next game, the rebind screen (Escape cancelling, RESET, SHOT → J applied after a reload), SOCD / DEBOUNCE saved; Tizen from disk: LIVES 1 and a POWER-UP ↔ CH− swap with the remote, kept across a relaunch |

@@ -344,7 +344,15 @@ its original press order (so a fake pair never makes an arrow "most recent" unde
   per tick. `setTuning()` with a shorter window shortens pending releases (`0` releases them
   at once); it never extends one.
 - An auto-repeat `keydown` is ignored with or without the `repeat` flag (the key is already
-  down). `blur`, `clear()` and suspend drop every key immediately, debounce included.
+  down) — and that is not a nicety: the Samsung remote's repeats carry **`repeat === false`**
+  (M3-02b). Measured 2026-09-15, a held remote key repeats after `REMOTE_REPEAT_DELAY_TICKS` (21 ≈
+  355 ms) and then every `REMOTE_REPEAT_INTERVAL_TICKS` (6.5 ≈ 108 ms, ± 40 ms), with the real
+  `keyup` 0–100 ms after the last repeat — one `pressed` edge, held throughout, released on the
+  key-up tick. Both constants are exported from `input-web/remote` for the docs and the playtest
+  model; nothing in the pipeline waits on them. Code that watches keys **outside** this pipeline
+  must track held keys itself (the shell's debug tools do), and an ESLint rule forbids
+  `.timeStamp` in runtime sources — Tizen 5.5 advances it in whole seconds only.
+  `blur`, `clear()` and suspend drop every key immediately, debounce included.
 - The keyboard source tracks up to `MAX_TRACKED_KEYS` = 32 physical keys in fixed slots; a
   33rd simultaneous key is ignored until one is released.
 
@@ -503,7 +511,7 @@ keys, a key the device cannot hold). The whole feature — tokens, statuses, the
 | A key does nothing in menus but works in the game | It is bound only in the `game` table. Keys of the other context are known (`0`) and prevented, but act only where bound |
 | Releases feel late with a remote profile | The release debounce delays every release by `releaseDebounceTicks` ticks (2 = 33 ms). The shipped profiles use 0 since M3-02b; check the player's DEBOUNCE option and `?debounce=` |
 | A second arrow or OK does nothing while an arrow is held | Expected on a `singleKey` profile (the real remote behaves this way): let the first key go first |
-| Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or KEYBOARD AS REMOTE picked in OPTIONS → CONTROLS and saved) — `lastWins` keeps one arrow |
+| Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or KEYBOARD AS REMOTE picked in OPTIONS → CONTROLS and saved) — since M3-02b its `singleKey` drops the second arrow's `keydown` outright, as the hardware does |
 | Holding a key through a menu switch "loses" it | By design: a held key keeps only the actions common to both tables until released. Release and press again |
 | A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
 | Back closes the TV app instead of pausing | Only expected on the loading and boot error screens; since M1-16 Back pauses in the game and asks before quitting on the title. An older build exits — reinstall |

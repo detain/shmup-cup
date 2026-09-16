@@ -82,7 +82,8 @@ Profile choice (done by the apps in their platform factory and through the shell
 Options screen's CONTROLS, stored in the `core/save` document (`options.input.profileId`); the
 screen offers only `selectableKeyProfiles(profiles, 'code' | 'keyCode')` — keyboard / remote
 profiles whose **menu** table the host's keys can drive (web: `KEYBOARD`, `KEYBOARD AS REMOTE`; TV:
-`SAFE 4-WAY`, `FAST 8-WAY`), the default labelled ` (DEFAULT)` by `inputProfileChoices`. The older
+`REMOTE` — the only one since M3-02b retired `tizen-remote-diagonal`), the default labelled
+` (DEFAULT)` by `inputProfileChoices`. The older
 `loadInputProfileChoice` / `saveInputProfileChoice` (key `input.profile`) stay exported but are
 unused. Validation
 beyond the schema: every `game` table binds the directions + Pause, every `menu` table the

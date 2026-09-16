@@ -133,7 +133,7 @@ Pure modules (no DOM access; imported by the tests directly):
 | `keys.ts` | Key codes, code → name mapping, which keys to register, `preventDefault` policy | `KeyCode`, `ARROW_CODES`, `MANDATORY_CODES`, `STATIC_KEY_NAMES`, `KeyNames`, `isArrow`, `isExtraKey`, `selectKeysToRegister`, `shouldPreventDefault`, `SupportedKey`, `RegisterResult` |
 | `keyTracker.ts` | Raw / logical / debounced / naive key state; classification of every keydown; all key verdicts and hold/repeat statistics | `KeyTracker`, `DEFAULT_KEY_TRACKER_OPTIONS`, `KeyStats`, `KeyDownKind`, `RepeatStyle`, `DiagonalVerdict`, `ChordVerdict`, `SeenKey`, `dominantRepeatStyle` |
 | `ships.ts` | The three lanes (A raw, B debounced, C naive), trails and 240-frame movement timelines | `Ship`, `Lanes`, `createLanes`, `stepLanes`, `wrap`, `axis`, `SHIP_SPEED_PX`, `NAIVE_STEP_PX`, `TRAIL_LENGTH`, `TIMELINE_FRAMES` |
-| `frameStats.ts` | Frame-delta ring (600 = 10 s), median / p95 / max, hitches, pauses; dispatch-delay accumulator; event-timestamp sanity | `FrameStats`, `FrameSummary`, `RunningStats`, `RunningSummary`, `percentileSorted`, `chooseEventTime`, `HITCH_MS`, `PAUSE_MS` |
+| `frameStats.ts` | Frame-delta ring (600 = 10 s), median / p95 / max, hitches, pauses, and since M3-02b a raw bucket **histogram** of the deltas (the 2026-09-15 run's "27 % above 20 ms" is invisible in a median); dispatch-delay accumulator; handler-time event timing | `FrameStats`, `FrameSummary`, `RunningStats`, `RunningSummary`, `percentileSorted`, `chooseEventTime`, `frameBucket`, `FRAME_BUCKET_EDGES_MS`, `HITCH_MS`, `PAUSE_MS` |
 | `gamepad.ts` | Gamepad snapshots → connect / disconnect / button / axis-zone edges; panel & report formatting | `GamepadMonitor`, `GamepadLike`, `GamepadEdge`, `PadState`, `axisZone`, `describePads`, `padsForReport` |
 | `checklist.ts` | Sticky auto-ticking test checklist | `Checklist`, `evaluateChecklist`, `ChecklistFacts`, `ChecklistId`, `CHECKLIST_LABELS`, `CHECKLIST_ORDER`, `LONG_HOLD_MS` |
 | `summary.ts` | Stats → human verdicts, panel lines, report parts | `buildVerdicts`, `Verdicts`, `ProbeSnapshot`, `verdictLines`, `seenKeyLines`, `registerLines`, `checklistLines`, `buildReportParts` |
@@ -162,8 +162,10 @@ exact contracts.
 
 ### Key-state model and verdict rules
 
-> **On the M7 monitors these verdicts are unreliable:** Tizen 5.5's `event.timeStamp` moves in whole seconds (see
-> [Gotchas](#gotchas)). The measured results are in [input-probe-results.md](input-probe-results.md).
+> **Fixed in M3-02b.** The 2026-09-15 run's on-screen verdicts were wrong because Tizen 5.5's `event.timeStamp`
+> moves in whole seconds (see [Gotchas](#gotchas)); `chooseEventTime` now **always** returns handler time, so the
+> verdicts a new run shows are right. The logs of that run were re-analysed with
+> `results/analyze.mjs`; the measured results are in [input-probe-results.md](input-probe-results.md).
 
 `KeyTracker` keeps, per key code, four views of "held":
 
@@ -181,6 +183,8 @@ this key's keyup → `bounce` (a *fake pair*); otherwise `press` (new logical ho
 |---|---|
 | Diagonals **YES** | Two arrows logically held together for ≥ 60 ms (`replaceWindowMs`). One success is enough |
 | Diagonals **NO** | Only "replacements" seen: the first arrow's hold ended within 60 ms of the second arrow's press (just before or after it), **and** the first had been held ≥ 200 ms (`minHoldMs`) — quick sequential taps are ignored |
+| Diagonals **NO — not delivered** (M3-02b) | No diagonal observation at all, but `maxSimultaneous === 1` after a hold of at least `LONG_HOLD_MS`, with **two or more arrows** seen: a single-key device swallows the second key, so there is no event to judge and "not tested" would be a lie. Inferred in `buildVerdicts(snapshot, keyName, seenCodes)` — the checklist itself cannot express "tried" |
+| OK **NO — not delivered** (M3-02b) | The same condition with at least one arrow and `Enter` among the seen keys |
 | OK **kept** | The arrow is still held 60 ms (`chordWindowMs`) after the OK press |
 | OK **blip** | The arrow got a keyup within ±60 ms of the OK press but was re-pressed within the bounce window |
 | OK **dropped** | The arrow's hold ended within ±60 ms of the OK press, after having been held ≥ 200 ms |
@@ -354,12 +358,15 @@ verdicts from the last line.
 - **Back** is handled in-app (triple press exits); a single Back must not exit or testers lose their session.
 - **Gamepads** appear only after their first button press, and `getGamepads()` returns snapshots — poll every
   frame once one is known. `Gamepad.index` need not equal the array position.
-- **`event.timeStamp`** is compared with `performance.now()`; implausible values fall back to handler time.
-  **Known bug (measured 2026-09-15):** on Tizen 5.5 the timestamp is on the right clock but only advances in whole
-  seconds, so it passes the plausibility check and every key timing, verdict and the dispatch delay on the device
-  is wrong. Until plan step M3-02b fixes `chooseEventTime`, re-time logged events with
+- **`event.timeStamp` is never used as a clock** (M3-02b). On Tizen 5.5 it is on the `performance.now()` clock
+  but only advances in **whole seconds**, so it passed every plausibility check and quantised every derived
+  timing — the 2026-09-15 run's on-screen verdicts were all wrong. `chooseEventTime` therefore always returns
+  handler time and keeps the `timeStamp` comparison only as the dispatch-delay statistic (which, with a coarse
+  clock, simply shows up as the huge spread it is). Detecting coarseness was considered and dropped: it would
+  still leave a clock nothing can be derived from. The logs of the 2026-09-15 run can be re-timed with
   `tools/input-probe/results/analyze.mjs` (handler time = `t + delay`) — see
-  [input-probe-results.md](input-probe-results.md).
+  [input-probe-results.md](input-probe-results.md). The same lesson is an ESLint rule in the game's repo:
+  `.timeStamp` is banned in runtime sources.
 - **`blur`** can swallow keyups (e.g. a system popup) — the tracker releases everything and discards open
   diagonal / OK observations instead of judging them.
 - **Per-frame allocations:** the probe measures frame pacing, so keep the rAF path allocation-free (typed arrays,

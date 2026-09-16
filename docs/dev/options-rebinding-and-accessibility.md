@@ -85,7 +85,7 @@ never by counting rows.
 | AUTOFIRE | `ALWAYS` / `TOGGLE` / `HOLD` (`AUTOFIRE_MODES`) | Opens on the next game's value (the saved one, else the host config's); **disabled on a remote-mode host** (the TV — `GameConfig.remoteMode` forces always-on autofire, the remote has no fire button) |
 | RATE | `7.5/S` `10/S` `12/S` `15/S` `20/S` `30/S` (`AUTOFIRE_INTERVALS` 8, 6, 5, 4, 3, 2 ticks) | The config's `autofireInterval` as shots a second; opens on the closest interval (`rateIndex`); works on the TV too |
 | SOCD | `PROFILE` / `NEUTRAL` / `LAST WINS` (`null`, then `SOCD_CHOICES`) | Every profile's opposite-direction policy (`input-web` `resolveDirections`) |
-| DEBOUNCE | `AUTO` / `0 TICKS` … `10 TICKS` (`null`, then 0–`MAX_DEBOUNCE_OPTION`) | The key / remote profile's release debounce (the plan's "advanced debounce slider", as a choice with the profile's own value first — D14's `tizen-remote-safe` has 2). Gamepads keep 0 |
+| DEBOUNCE | `AUTO` / `0 TICKS` … `10 TICKS` (`null`, then 0–`MAX_DEBOUNCE_OPTION`) | The key / remote profile's release debounce (the plan's "advanced debounce slider", as a choice with the profile's own value first). **Since M3-02b `AUTO` is 0 on every shipped profile**: the measured Samsung remote sends no fake keyup/keydown pairs at all, so D14's window of 2 only added 33 ms of release latency. The option stays for a remote model that does need it. Gamepads keep 0 |
 | REBIND KEYS / REBIND PAD | — | The rebind screen for the host's key device / gamepad profile; disabled without `SceneFlowHost.controls` or that device |
 | INPUT TEST | — | The input test |
 
@@ -217,9 +217,14 @@ override lists; the tables are recompiled. Three safety rules:
 (`InputCaptureState`, reused) reports it through `poll()`:
 
 - **Keys**: the keyboard source's `KeyCapture` (`armed`, `count`, `code`, `keyCode` — a class, so
-  the fields stay unboxed) catches the next keydown of a key **not already down** — auto-repeats, a
-  key still held and a key inside its release debounce (a TV remote's fake keyup / keydown pair) do
-  not count — whether the tables bind it or not. The event is `preventDefault()`-ed (Ctrl / Cmd
+  the fields stay unboxed) catches the next keydown of a key **not already down** — auto-repeats
+  (flagged or, as on the Samsung remote, flagless), a
+  key still held and a key inside its release debounce do
+  not count — whether the tables bind it or not. Since M3-02b the TV profile registers **`Guide`
+  (458)** — the Ch rocker pressed in — and **`Extra` (10253)** — the screen button — so REBIND can
+  capture them as well; nothing binds them by default. The **volume keys are never registered**
+  even though `registerKey` accepts all 45 non-`Exit` keys: registering them takes volume control
+  away from the viewer, and the profile validator rejects them (`SYSTEM_REMOTE_KEYS`). The event is `preventDefault()`-ed (Ctrl / Cmd
   shortcuts excepted) and then handled as usual.
 - **Buttons**: `poll()` catches the lowest gamepad button **newly pressed** on any connected pad.
   A key pressed during a button capture is ignored (the keyboard re-arms).
@@ -326,9 +331,15 @@ so the player sees the gameplay table through the active profile and their rebin
 on the remote, X = Sub on the keyboard …): the four directions as a cross (two light together on a
 diagonal — or not, under the profile's diagonal / SOCD policy), a box per other game action lit while
 held and for 8 ticks after a press (a tap shorter than a frame still shows), and the device that
-sent the last input. Every key does what it does in a game, so leaving takes **holding Pause** for
-`INPUT_TEST_EXIT_TICKS` (60 — a bar fills; remote Back / Play-Pause, keyboard Esc / P / Backspace,
-pad START in the shipped profiles). It redraws only when what it shows changes.
+sent the last input. Every key does what it does in a game, so leaving takes a **Pause gesture**:
+`INPUT_TEST_EXIT_PRESSES` (3) presses inside `INPUT_TEST_EXIT_WINDOW_TICKS` (90 ≈ 1.5 s), or
+**holding Pause** for `INPUT_TEST_EXIT_TICKS` (60) — remote Back / Play-Pause, keyboard
+Esc / P / Backspace, pad START in the shipped profiles. The three presses are M3-02b's doing: the
+Samsung remote reports Back and Play/Pause only when the button is **released**
+([input-probe-results.md](input-probe-results.md) finding 4), so the hold alone made the screen
+impossible to leave with the remote. The bar shows whichever exit is further along (a third per
+press), the counted presses expire with the window, and the string became
+`PAUSE X3 OR HOLD TO EXIT`. It redraws only when what it shows changes.
 
 ## Save version 2 (`core/save`)
 

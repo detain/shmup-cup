@@ -6,7 +6,7 @@ versions before 1.0 may change anything between minor releases. Development foll
 
 ## [Unreleased]
 
-The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01, M3-02 …).
+The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01, M3-02, M3-02b …).
 
 ### Game
 
@@ -47,6 +47,23 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
 - **An escape sequence** after the final zone's boss (M3-02): a collapsing corridor that scrolls
   faster and faster, then **ESCAPE COMPLETE** and the ending. It is part of that zone — routes, the
   zone count and high-score rows are unchanged.
+- **The game is tuned to the measured hardware** (M3-02b — the input probe ran on both Smart
+  Monitor M7s on 2026-09-15, [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)):
+  - **The remote sends one key at a time.** While an arrow is held, OK, a second arrow and Ch ± are
+    never delivered, so OK never stops a direction — but a power-up has to be taken with the
+    direction released. There are no diagonals on the remote, and the whole game is designed for
+    single arrow presses.
+  - The TV's control profile is now simply **REMOTE**: it waits **0** frames before believing a
+    release (the remote sends no false releases), so the ship stops the instant you let go.
+    **FAST 8-WAY** is gone — it differed only in that wait — and a save that chose it uses REMOTE.
+  - **Home pauses the game.** The TV's Home bar is an overlay, so the game now pauses itself and
+    goes silent while it is up; coming back leaves the PAUSE menu where you left it, with nothing
+    fast-forwarded.
+  - **The INPUT TEST closes with three Pause presses** (`PAUSE X3 OR HOLD TO EXIT`) — the remote
+    reports Back and Play/Pause only when you let go, so nothing asks for a held button any more.
+  - **Steadier scrolling on a 60 Hz screen**: the game runs exactly one simulation step per frame
+    instead of letting the monitors' uneven frame delivery turn into two steps on one frame and
+    none on the next.
 - **Three P2 bosses** (M3-02) on the new pull fields: **GRASPING BLOOM** (breathes in, dragging the
   ships towards its maw), **IRON TALON** (lunges and grabs) and **SHADOW STRIDER** (an armoured
   walker that can only be dodged) — on the browser's new showcase stage **HIGH-SPEED DIMENSION**
@@ -79,7 +96,36 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   only while one is open), so recordings made before M3-02 keep their hashes; all goldens and
   attract demos were re-blessed once for the four new header fields, with no expected status, score
   or tick count moved, and `zone-a-extras` joined them (zone A with every extra on).
-- The Tizen bundle is 383.4 KB gzip of its 512 KB budget.
+- M3-02b: `core/config` gained `RETIRED_INPUT_PROFILE_IDS` / `migrateInputProfileId` (applied by
+  `resolveUserOptions` to `options.input.profileId`; a binding override keyed by a retired id is
+  left inert). `@shmup/input-web` `remote` gained `InputTuning.singleKey` — while any tracked key is
+  physically down the keyboard source drops other keydowns — and the measured
+  `REMOTE_REPEAT_DELAY_TICKS` (21) / `REMOTE_REPEAT_INTERVAL_TICKS` (6.5); the profile validator
+  rejects `singleKey` on gamepad profiles. `content/input/remote.input-profiles.json` ships five
+  profiles (`tizen-remote-diagonal` retired) and registers `Guide` / `Extra`.
+- M3-02b: `core/loop` gained the **vsync lock** (`setVsyncLock` / `vsyncLock` / `VSYNC_DROP_STEPS`,
+  module `partial` → `implemented`) and `core/game` `setVsyncLock` / `vsyncLock`, suspended while a
+  debug timing mode runs; `@shmup/shell` gained `ShellOptions.framePacing` (`'auto' | 'lock' |
+  'free'`) and `VSYNC_LOCK_MIN_HZ` / `VSYNC_LOCK_MAX_HZ` (55 / 65). Presentation only — no replay,
+  golden or demo hash moved because of it.
+- M3-02b: `apps/web` `createVisibilityLifecycle(source, focus)` and the Tizen platform's lifecycle
+  take an optional focus source and are **edge-triggered** over hidden ∨ unfocused; the old
+  "a repeated event fires the callbacks again" contract is gone. Electron keeps the web policy.
+- M3-02b: the debug overlay gained a sixth line — `DebugOverlayStats.tickFrames` /
+  `rafHistogram` / `vsyncLock`, `RAF_BUCKET_EDGES_MS`, `RAF_BUCKETS`, `rafDeltaBucket`,
+  `buildRafHistogram` and the `LOCK` alert; `DebugTools.endTicks(ticks)` takes `game.frame`'s
+  return value. The shell's debug tools track held keys themselves (the remote's auto-repeats carry
+  `repeat === false`), and a repo-wide ESLint rule forbids `.timeStamp` in runtime sources.
+- M3-02b: `test/playtest/remote-strict.ts` (`createRemoteStrictModel` / `createRemoteStrictCheck`)
+  models the remote, and `fourWayBot()` flies under it by default; `PlaytestResult` reports
+  `remoteViolations`. Every zone, route, the boss rush and the caravan clear under it with **no
+  zone content re-tuned**; three bot changes (a clear-lane equip window, a stronger boss-core
+  preference, god-mode core-row aiming) re-blessed the goldens and attract demos, and
+  `gimmick-range-god` now expects `destroyed === 0`.
+- M3-02b: `tools/input-probe` `chooseEventTime` always returns handler time (Tizen 5.5 advances
+  `event.timeStamp` in whole seconds), `FrameSummary` carries a raw `histogram`
+  (`FRAME_BUCKET_EDGES_MS` / `frameBucket`) and the verdicts gained `NO — not delivered`.
+- The Tizen bundle is 383.9 KB gzip of its 512 KB budget.
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

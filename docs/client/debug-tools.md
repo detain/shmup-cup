@@ -95,7 +95,8 @@ FPS 60  TICK  0.21  RENDER  1.30  DRAW 12
 BUL 123/512 ENM 12/64 SHT 40/96 PRT 30/256
 RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  9524C84
-GOD HITBOX GRID STEP SLOW 2
+GOD HITBOX GRID STEP SLOW 2 LOCK
+TPF 0      3541   2      0     RAF ▁▃█▅▂▁▁▁
 LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
 
@@ -114,8 +115,10 @@ LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 | `WEBGL` | Graphics version the game got | 1 |
 | `BOOT` | Milliseconds from starting the app to the title | **under 10,000** (target 5,000) |
 | last on line 4 | The build id | quote it in reports |
-| line 5 | The tools that are on | empty in normal play |
-| line 6 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
+| line 5 | The tools that are on, and `LOCK` when the game runs one step per frame | in normal play on the monitors: only `LOCK` — see [Frame pacing](#frame-pacing-tpf-and-the-raf-histogram) |
+| `TPF` (line 6) | Frames that ran 0 / 1 / 2 / 3-or-more game steps, counted since the app started | only the second number climbing |
+| `RAF` (line 6) | A bar chart of how long the frames took — [below](#frame-pacing-tpf-and-the-raf-histogram) | most of it in the middle bars |
+| line 7 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
 
 On the title (no game on screen) the bullet, enemy, rank and hash fields stay empty; in the pause
 menu they show the paused game's values.
@@ -124,6 +127,34 @@ menu they show the paused game's values.
 newest on the right. A **green** bar is a frame on time; a **yellow** bar (reaching the first
 guide line and above) is one missed frame — a small hitch; a **red** bar is a longer stall.
 During normal play the graph should be a flat row of short green bars.
+
+## Frame pacing: `TPF` and the rAF histogram
+
+The game simulates in steps of 1/60 s and draws one picture per step. The monitors do not hand
+their frames over quite that evenly: measured on both M7s, the *average* is 60 a second, but a
+quarter of the frames arrive more than 20 ms apart while the ones beside them arrive early. Left
+alone, that makes the game run two steps on one frame and none on the next — the average is right,
+but the picture judders.
+
+Since the remote-and-hardware build the game therefore **locks to the screen** when it recognises a
+fixed ~60 Hz display: one step per frame, a second one only when a frame was really dropped. The
+panel shows both halves of that:
+
+- **`LOCK`** among the switches on line 5 — the lock is on. On the monitors it should always be
+  there during play. (It is dropped automatically while the freeze, single-step or slow-motion
+  tools run, which need the old free-running timing.)
+- **`TPF`** — four counters: frames that ran **0**, **1**, **2** and **3 or more** steps, counted
+  since the app started. While you fly, **only the second one may keep climbing**. A handful in the
+  0 and 2 columns over a whole zone is normal (a real dropped frame runs two steps to catch up);
+  a steady stream in them means the lock is not engaging, and is worth a report with the monitor's
+  model.
+- **`RAF`** — eight bars, short frames on the left, long ones on the right, each scaled against the
+  busiest bar. The middle (green) bars are 60 Hz frames; the yellow ones are the monitor's jitter;
+  a red bar on the right is a really dropped frame and should be rare.
+
+In a browser the lock is on only if the display is between 55 and 65 Hz; on a 120 or 144 Hz monitor
+`LOCK` is absent and `TPF` spreads across the 0 and 1 columns, which is correct — two screen frames
+per game step.
 
 **The outlines** (key 3) show what the game really checks for hits (players have their own,
 simpler marker of the ship's hit spot: OPTIONS → DISPLAY → **HITBOX** in every build —
@@ -199,8 +230,10 @@ list the plan asks for before the milestone counts as done (plan §8.4); the num
    while you hold it; OK takes power-ups; AZURE VERGE can be finished **without pressing two
    arrows at once**; Back pauses, Back in the pause menu resumes; Play/Pause pauses.
 4. **Leaving.** Back on the title → **EXIT SHMUP CUP?** → YES closes the app; NO keeps it open.
-5. **Home and back.** Press Home during a game, then reopen the app: it is paused, the sound comes
-   back without crackles, and nothing jumps ahead.
+5. **Home and back.** Press Home during a game: the TV's bar opens **over** the app (it keeps
+   running underneath), so the game pauses itself and the music stops at once. Reopen the app: the
+   pause menu is on screen where you left it, the sound comes back without crackles, and nothing
+   jumps ahead.
 6. **Sound.** Effects feel immediate; you cannot hear where the stage music loops; the WARNING
    siren plays; volumes you set in OPTIONS are still set after closing and reopening the app.
 7. **Kept after closing and after an update.** High score and options survive closing the app;
@@ -231,6 +264,24 @@ With the debug build on each monitor:
 4. **Game mode.** The latency comparison of the normal and the game-mode build —
    [install-on-tv.md](install-on-tv.md#the-game-mode-build-latency-ab-test).
 
+## Extra checks for the remote & hardware build (plan §8.4)
+
+With the debug build on **each** monitor:
+
+1. **`TPF` while flying.** Open the tools, start a game and fly for a minute or two: `LOCK` shows
+   on line 5 and only the **second** `TPF` counter keeps climbing
+   ([Frame pacing](#frame-pacing-tpf-and-the-raf-histogram)). Photograph the panel per monitor.
+   The same counters are in the remote inspector as `__shmupDebug.stats.tickFrames` and
+   `__shmupDebug.stats.rafHistogram`.
+2. **Home during play.** Press Home while flying, wait, come back: the music was silent, the pause
+   menu is up, nothing was fast-forwarded.
+3. **The INPUT TEST's exit.** OPTIONS → CONTROLS → INPUT TEST, then **Back three times** within
+   about 1.5 s closes it. With more than 1.5 s between presses it must not close.
+4. **A 240 fps latency video** of the ship reacting to an arrow, and one of the input probe's flash
+   box — the earlier video was 30 fps, too coarse to answer the question.
+5. **Optional:** re-run the fixed input probe and try **Back / Ch ▲ / Ch ▼ while holding an
+   arrow** (it should report *NO — not delivered*) and **two gamepads at once**.
+
 ## Troubleshooting
 
 | Problem | What to do |
@@ -244,6 +295,8 @@ With the debug build on each monitor:
 | 7 or 8 does nothing | Only during play: not on the title, in the pause menu, after the game ended, or after the last checkpoint (7) |
 | The panel covers the top-left of the picture | Press **1** to hide it; the tools stay on |
 | F1–F8 do nothing in a browser | The page shows a normal build (`vite preview`) — use `pnpm dev`; or click into the game first so it has keyboard focus |
-| No sixth line (device line) on the TV | It appears a second or two after the tools open; if it never does, the build predates it — build `build:dev` again. A browser never shows it |
+| No device line on the TV (the last line) | It appears a second or two after the tools open; if it never does, the build predates it — build `build:dev` again. A browser never shows it |
+| No `TPF` line, or no `LOCK` | The build predates the remote-and-hardware tuning — build `build:dev` again. `LOCK` is also absent while the freeze, single-step or slow-motion tools run (they need the old timing), and on a display faster than 65 Hz |
+| The `TPF` 0 and 2 counters climb together while flying | The lock is not engaging on this monitor. Report the model, the firmware and a photo of the panel with the `RAF` bars |
 | The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
 | `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |

@@ -239,12 +239,29 @@ FPS 60  TICK  0.21  RENDER  1.30  DRAW 12
 BUL 123/512 ENM 12/64 SHT 40/96 PRT 30/256
 RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  ABC1234
-GOD HITBOX GRID STEP SLOW 2
+GOD HITBOX GRID STEP SLOW 2 LOCK
+TPF 0      3541   2      0     RAF ▁▃█▅▂▁▁▁
 LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
 
 The fourth line ends with the build id (upper-cased); the fifth lists only the switches that are
-on; the sixth (M2-17, only when the host set one — the TV) is the **device line**:
+on — since M3-02b including **`LOCK`**, the loop's vsync lock (`DebugOverlayStats.vsyncLock`, read
+from `game.vsyncLock` in the shell's `beforeRender`).
+
+The sixth line is M3-02b's **frame pacing**, the on-device check of that lock: **`TPF`** — the
+frames that ran 0 / 1 / 2 / 3-or-more ticks (`DebugOverlayStats.tickFrames`, an `Int32Array(4)`
+counted in the shell's `endTicks(ticks)` from `game.frame`'s return value) — and **`RAF`**, an
+eight-bucket histogram of the rAF deltas (`rafDeltaBucket`, `RAF_BUCKET_EDGES_MS`
+`12/15/17/19/21/25/33` ms plus an overflow bucket, counted in `beginFrame`) drawn by
+`buildRafHistogram` into the panel's own `pacing` list: one bar per bucket, scaled to the busiest
+one, at least 1 px so a rare bucket stays visible, green for the 60 Hz buckets and yellow / red for
+the long ones. Both counters are on `window.__shmupDebug.stats` for a device session. On a locked
+60 Hz panel only `TPF`'s second counter may climb; a stream in the 0 and 2 columns means the lock
+is not engaging. `rafDeltaBucket` uses a negated `>=` chain rather than `<`, so a `NaN` delta lands
+in bucket 0 instead of the "dropped frame" overflow bucket (a bug the M3-02b test agent found; the
+probe's `frameBucket` had it too).
+
+The seventh line (M2-17, only when the host set one — the TV) is the **device line**:
 `DebugOverlay.setDevice(text)` → `setDebugPanelDevice`, the text made drawable by
 `debugDeviceText` (printable ASCII, cut to `DEBUG_DEVICE_MAX` = 56 — here the TV's 66-character
 line lost its end), and the backdrop grows by a row. `setDevice` is called every frame by the
@@ -275,8 +292,8 @@ bounding square:
 **One colour per list.** The overlay is core `DrawList`s drawn through the `ui` module's quad
 pools (`createDrawListView`) — no Pixi `Graphics`. Pixi's `tint` setter allocates, and a quad pool
 shared by items of different tints re-tints its quads whenever the items shift, so every list has
-**one** colour: nine outline lists and seven panel lists (backdrop, labels, values, alerts, the
-three graph colours). A quad then keeps its tint for good, and the overlay allocates nothing per
+**one** colour: nine outline lists and eight panel lists (backdrop, labels, values, alerts, the
+three graph colours and — M3-02b — `pacing`, the rAF histogram's bars). A quad then keeps its tint for good, and the overlay allocates nothing per
 frame (guarded in `packages/render-pixi/test/debug/debug-alloc.test.ts`). Numbers go through the
 `number` command, milliseconds as two whole numbers around a dot slot — never a string per frame.
 

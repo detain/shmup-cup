@@ -2,7 +2,8 @@
 
 > **Status:** research catalog (2026-09-10), now **implemented through [`shmup_plan.md`](shmup_plan.md)**: every
 > [P0] feature shipped in M1 and every [P1] feature in M2 (`1.0.0-rc.1`). The [P2] features are M3, which is under way
-> (2026-09-15: M3-01 done, M3-02 and M3-03 remaining). Where the build differs from this catalog, the plan's
+> (2026-09-16: M3-01, M3-02 and M3-02b done — the last of those retuned §3 and §4 to what the input probe
+> measured on the hardware —, M3-02c … M3-02e and M3-03 remaining). Where the build differs from this catalog, the plan's
 > "As built" notes and [`shmup_progress.md`](shmup_progress.md) are authoritative. The catalog is the raw list of
 > everything a Gradius III / Darius Twin–style horizontal shmup needs.
 >
@@ -100,7 +101,23 @@ These are the forks in the road where we must pick one approach (or support both
   - On 60 Hz displays (most TVs): exactly one sim tick per `requestAnimationFrame` — lowest latency.
   - 120/144 Hz: accumulator + interpolated render. 50 Hz: accumulator + interpolation.
   - Refresh rate probed at boot (median rAF delta). Delta snapping to kill jitter. Max ticks/frame cap (anti spiral-of-death).
+  - **Measured 2026-09-15 (M3-02b):** delta snapping alone is not enough on the M7 monitors. They deliver
+    ~59 fps with a median rAF delta of 16.5 ms but 27–32 % of the deltas above 20 ms (p95 ≈ 30 ms), which
+    the ±1 ms snap turns into 0-tick and 2-tick frames — visible judder although the average is right. The
+    loop therefore has a **vsync lock** for fixed ~60 Hz displays (refresh probe reading 55–65 Hz, or the
+    shell option `framePacing: 'lock'`): exactly **one tick per frame**, a second one only when the frame
+    really covered two whole steps (a dropped frame, or a step of accumulated debt), the debt bounded to
+    ±1 step and reset on resume. The free-running accumulator stays for every other refresh rate and for
+    slow motion, frame advance and the game-speed assist. Presentation only — the same inputs still produce
+    the same ticks, so replays and goldens are unaffected. See
+    [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md).
 - **[P0] Pause on `visibilitychange` / blur;** reset accumulator on resume (required for Tizen certification).
+  - **Measured 2026-09-15 (M3-02b):** on the M7, **Home is an overlay** — the app keeps running and only
+    the window's `blur` / `focus` fire, never `visibilitychange`. Both hosts' lifecycles therefore track
+    *hidden* and *unfocused* as two independent reasons to be away and are **edge-triggered**: the suspend
+    callbacks run once on the way into "away" (a `blur` + `hidden` pair suspends once) and the resume
+    callbacks only when the app is visible *and* focused again. Pressing Home during play now opens the
+    pause menu and suspends the audio; the game is still paused on return, with no catch-up burst.
 - **[P2] Optional "authentic slowdown":** deterministic tick-skipping when on-screen object load exceeds a threshold (Gradius III SNES feel).
 
 ---
@@ -110,7 +127,7 @@ These are the forks in the road where we must pick one approach (or support both
 ### Actions
 | Action | Notes |
 |---|---|
-| Move (8-way) | D-pad / stick / arrows / WASD |
+| Move (8-way) | D-pad / stick / arrows / WASD. **The Samsung remote is 4-way only** — measured 2026-09-15: while an arrow is held, a second arrow is never delivered (M3-02b) |
 | Shot (main) | Hold = autofire (configurable rate) |
 | Sub-weapon / Missile | Gradius "missile" / Darius "bomb"; can be merged with Shot via "fire both" option |
 | Power-up (select) | Gradius meter mode only — buys highlighted slot. Hold on Option slot = spread/retract Formation/Rotate options |
@@ -119,7 +136,7 @@ These are the forks in the road where we must pick one approach (or support both
 | Pause / Menu | Start / Esc / TV Back key |
 
 ### Input requirements
-- **[P0] Keyboard:** `e.code` (layout independent), ignore `e.repeat`, `preventDefault` on arrows/space, clear all keys on `blur`. Event-driven keys latched into a per-tick bitmask with "pressed since last tick" edge flags so taps are never lost.
+- **[P0] Keyboard:** `e.code` (layout independent), **ignore keydowns of keys that are already held** (not just the ones flagged `e.repeat` — the Samsung remote's auto-repeats are plain `keydown`s with `repeat === false`, M3-02b), `preventDefault` on arrows/space, clear all keys on `blur`. Event-driven keys latched into a per-tick bitmask with "pressed since last tick" edge flags so taps are never lost.
 - **[P0] Gamepad API:** standard mapping (D-pad = buttons 12–15), radial deadzone ~0.2, stick → 8-way digital with hysteresis, polled once per rAF right before sim ticks. "Press any button" to activate (required on Tizen). Auto-pause on disconnect.
 - **[P0] ⭐ Samsung remote is the PRIMARY controller (decided).** The user plans to play mostly with the Samsung Smart Remote on the M7 Smart Monitors. Gamepad/keyboard remain fully supported (keyboard is the browser dev input), but **every feature must be playable and fun on the remote alone.** See "Remote-first control design" below.
 
@@ -133,23 +150,40 @@ These are the forks in the road where we must pick one approach (or support both
 | OK / Enter | 13 | Always | Gradius mode: **equip highlighted power-up**. Direct mode: special/bomb. Menus: select |
 | Back | 10009 | Always (must handle) | Pause menu (in game); back (menus); exit-confirm (title) |
 | Play/Pause | 10252 | `registerKey('MediaPlayPause')` | Pause / resume |
-| Ch + / Ch − | 427 / 428 | `registerKey('ChannelUp'/'ChannelDown')` **[verify]** | Candidates: special weapon / cycle speed / Option formation |
-| Vol ± / Mute | 447–449 | **[?]** likely reserved by the system | Don't depend on them |
+| Ch + / Ch − | 427 / 428 | `registerKey('ChannelUp'/'ChannelDown')` — **confirmed 2026-09-15**; pressing the rocker *in* is Guide 458, the screen button Extra 10253 (both registrable, capturable in REBIND) | Candidates: special weapon / cycle speed / Option formation |
+| Vol ± / Mute | 447–449 | `registerKey` accepts them (**confirmed 2026-09-15**) — but pressing the Vol rocker in reports Mute 449, and taking the volume keys from the viewer is never acceptable | Never registered; the rebind validator rejects them |
 | Home, Exit (long-press Back), shortcut buttons | — | System | Never used |
 
 **Design rules for remote play:**
 1. **Always-on autofire** for both main shot *and* missile/sub-weapon — the player never holds a fire button. (Autofire-toggle option for gamepad players.)
-2. **Assume 4-way movement and no chords** until the input probe proves otherwise: the D-pad ring may not report two arrows at once (no diagonals), and pressing OK may interrupt a held arrow. So:
-   - Level & pattern design must be **dodgeable with 4-way movement** (fewer diagonal-only gaps, slightly slower aimed bullets, more readable patterns). If diagonals turn out to work, it's a bonus.
-   - Button presses must be **rare, non-urgent actions** (power-up equip, special), never something needed mid-dodge.
-3. **Robust key-state tracking:** track held state from `keydown`/`keyup` only, ignore auto-repeat `keydown`s. If the remote sends *fake keyup/keydown pairs during repeat* (some TV remotes do), add a short release-debounce (~2–3 frames) so movement doesn't stutter. Needs the input probe.
+2. **One key at a time — 4-way movement and no chords. Measured 2026-09-15 (M3-02b), and stricter than
+   this rule assumed:** while any key is down the remote delivers **no other key at all** — not a second
+   arrow, not OK, not Ch±, not on press and not on release — and the held arrow simply keeps repeating. So:
+   - Level & pattern design must be **dodgeable with 4-way movement** (fewer diagonal-only gaps, slightly
+     slower aimed bullets, more readable patterns). Diagonals are not a bonus that may still arrive: the
+     hardware cannot send them, and the playtest bot flies under that model (`test/playtest/remote-strict.ts`).
+   - Button presses must be **rare, non-urgent actions** (power-up equip, special), never something needed
+     mid-dodge — and a press only registers once the direction is **released**, so the ship stops moving
+     for the length of the tap (7–16 ticks; the fastest OK re-tap is ~276 ms).
+   - Nothing may ask for a **held** Back or Play/Pause, or for two buttons at once: those two (and Mute)
+     arrive as a keydown + keyup pair **when the button is released**, so they can never be held. The
+     INPUT TEST is left with three Pause presses inside ~1.5 s, and the debug unlock is four taps.
+   - The profile knob `singleKey` models this, so `keyboard-remote-emulation` on a desktop behaves like
+     the real remote.
+3. **Robust key-state tracking:** track held state from `keydown`/`keyup` only, and treat a `keydown` of a
+   key that is already down as "still held" **whether or not `e.repeat` is set**. **Measured 2026-09-15
+   (M3-02b):** the remote's auto-repeats are flagless `keydown`s — the first after ≈ 355 ms (≈ 21 ticks),
+   then every ≈ 108 ms (≈ 6.5 ticks, ± 40 ms) — with **no fake keyup/keydown pairs and no bounces**; the
+   real key-up follows 0–100 ms after the last repeat. The release-debounce is therefore **0 ticks** on the
+   TV profile (the ~2–3 frame value this rule anticipated only added latency), and any code that counted
+   `keydown`s (a debug unlock sequence, a toggle) must track held keys itself.
 4. **Power-up model fit:** Darius-style **direct items** need zero buttons (ideal for remote). Gradius **meter** needs only OK = "equip" (fine, since it's infrequent). Offer **Auto Power-Up** as a remote-friendly option.
 5. **Speed control:** with 4-way digital movement, ship speed matters a lot — Gradius Speed Ups (via meter) or a Ch± speed cycle. Default speed tuned for remote.
 6. **Latency:** Bluetooth remote latency is unknown — measure it. The M7 **never enables Game Mode for built-in apps** (only for HDMI/USB-C inputs), so display latency is also higher than a TV in Game Mode. Keep sim input-to-render at ≤1 frame so the remote's and panel's own latency is the only extra.
 7. **2-player co-op** on remotes: only one remote per display ⇒ P2 uses a gamepad (or a second paired remote **[?]**).
 8. **Menus:** fully D-pad + OK + Back navigable; no mouse, no text entry (name entry = D-pad letter picker).
 
-- **[P0] Input probe app (first spike):** a tiny `.wgt` that logs keyCode/`code`/`repeat`/timestamps for keydown/keyup, shows which keys are held simultaneously, measures repeat delay/interval, tests `registerKey` for Ch±/Play/Vol, and shows Gamepad API state. Run it on the M7 before designing controls further.
+- **[P0] Input probe app (first spike):** a tiny `.wgt` that logs keyCode/`code`/`repeat`/timestamps for keydown/keyup, shows which keys are held simultaneously, measures repeat delay/interval, tests `registerKey` for Ch±/Play/Vol, and shows Gamepad API state. **Run on both M7 monitors on 2026-09-15** — results in [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), applied by plan step M3-02b. (It measures with the handler clock: Tizen 5.5's `event.timeStamp` only advances in whole seconds.)
 - **[P1] Gamepad & keyboard play** (full 8-way, manual fire buttons, rebinding). Our M7 displays accept Bluetooth *and* USB gamepads, keyboards and mice.
 - **[P0] Autofire:** hold-to-fire, toggle mode, configurable rate; rate stored in replay header.
 - **[P1] Rebinding** per device (keyboard / each gamepad / remote), conflict detection, reset to defaults, persistence.

@@ -33,8 +33,8 @@ the replays — below) and, on the TV and in the desktop app, **EXIT**. Left
 alone for 12 seconds the title plays a silent **demo** of a zone, shows the **high-score tables** and
 a short **story**, then comes back — any button returns
 ([preview-build.md](preview-build.md#the-front-end-attract-mode-high-scores-practice-and-the-sound-test)). **OPTIONS** sets the game's own volumes (MASTER, MUSIC, SFX)
-and opens three pages. **CONTROLS**: the control profile (on the TV **SAFE 4-WAY** or **FAST
-8-WAY**), how the gun fires (**AUTOFIRE** — always, toggle or hold, in a browser — and **RATE**),
+and opens three pages. **CONTROLS**: the control profile (on the TV **REMOTE**, the only
+one), how the gun fires (**AUTOFIRE** — always, toggle or hold, in a browser — and **RATE**),
 **SOCD**, the remote's hiccup protection (**DEBOUNCE**), **REBIND KEYS** / **REBIND PAD** — your own
 keys, remote buttons and gamepad buttons, conflicts moved or swapped, RESET — and an **INPUT TEST**
 ([controls.md](controls.md#rebinding-keys-and-buttons)). **DISPLAY**: the enemy bullets' colours

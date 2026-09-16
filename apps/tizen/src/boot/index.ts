@@ -18,8 +18,9 @@
  * applies the saved choice (plan M1-17 — the choice lives in the save document), gamepads use
  * `gamepad-standard`, and the platform registers the active profile's `register` keys (falling
  * back to `REMOTE_KEYS_TO_REGISTER` when the content has no remote profile). The Options screen's
- * CONTROLS offers the profiles whose menus the remote can drive (`SAFE 4-WAY (DEFAULT)`,
- * `FAST 8-WAY`) and switches live, registering the new profile's keys. Since M2-16 the player's
+ * CONTROLS offers the profiles whose menus the remote can drive (since M3-02b just
+ * `REMOTE (DEFAULT)` — `tizen-remote-diagonal` was retired) and switches live, registering the new
+ * profile's keys. Since M2-16 the player's
  * rebinding, SOCD policy and release debounce (the save's `options.input`) are applied to the
  * remote and gamepad profiles, and the rebind screen rebinds them (the remote's Back never moves —
  * it cancels a capture).
@@ -468,7 +469,7 @@ export async function bootTizenApp(
     buildId: resources.buildId ?? 'dev',
     /**
      * The Options screen's CONTROLS (plan M1-17): the remote profiles whose menus the remote can
-     * drive (`SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY`); `apply` — for the saved choice at boot and the
+     * drive (`REMOTE (DEFAULT)` — the only one since M3-02b); `apply` — for the saved choice at boot and the
      * player's pick alike — switches the key profile and registers its `register` keys, ignoring
      * an id it does not offer and the profile already in use.
      */

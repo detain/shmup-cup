@@ -762,7 +762,7 @@ export const DEFAULT_PROFILE_SUFFIX = ' (DEFAULT)';
 
 /**
  * The Options screen's CONTROLS entries: the {@link selectableKeyProfiles} as `{ id, label }`, the
- * platform's default marked with {@link DEFAULT_PROFILE_SUFFIX} (`SAFE 4-WAY (DEFAULT)`).
+ * platform's default marked with {@link DEFAULT_PROFILE_SUFFIX} (`REMOTE (DEFAULT)`).
  *
  * @param profiles - Every profile.
  * @param keySpace - How the host's keys arrive.
@@ -775,7 +775,7 @@ export const DEFAULT_PROFILE_SUFFIX = ' (DEFAULT)';
  * @example
  * ```ts
  * inputProfileChoices(registry.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID);
- * // → [{ id: 'tizen-remote-safe', label: 'SAFE 4-WAY (DEFAULT)' }, { id: …, label: 'FAST 8-WAY' }]
+ * // → [{ id: 'tizen-remote-safe', label: 'REMOTE (DEFAULT)' }]   (M3-02b: the one TV profile)
  * ```
  */
 export function inputProfileChoices(

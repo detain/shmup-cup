@@ -317,6 +317,47 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 - It reads the World only, so a run replays from its recorded input. One bot per run (it keeps its
   target lane and last press).
 
+### `remote-strict` — what the remote can really deliver (M3-02b)
+
+`remote-strict.ts` turns the 2026-09-15 input-probe findings
+([input-probe-results.md](input-probe-results.md)) into a filter and a checker, and
+**`fourWayBot()` flies under it by default** (`fourWayBot({ remote: false })` gives the pre-M3-02b
+bot). Being 4-way was never enough: the remote delivers **one key at a time**, so a button press
+costs the player its movement.
+
+| Rule (from a finding) | Constant |
+|---|---|
+| At most one key per tick — a wish for several keeps the lowest bit | `REMOTE_DIRECTIONS`, `REMOTE_BUTTONS` |
+| A button press is a **tap with no direction**, 7–16 ticks (the model produces 10) | `REMOTE_TAP_MIN_TICKS` / `REMOTE_TAP_MAX_TICKS` / `REMOTE_TAP_TICKS` |
+| The thumb needs empty ticks off the D-pad before a tap | `REMOTE_PRE_TAP_TICKS` (2) |
+| A direction change costs an empty tick (the first key must come up) | `REMOTE_GAP_TICKS` (1) |
+| Back / Play-Pause arrive **on release**: one tick, never held | `REMOTE_EDGE_ACTIONS`, `REMOTE_EDGE_TICKS` (1) |
+
+`createRemoteStrictModel().filter(want)` maps a bot's wish for a tick onto what a remote player
+could produce; `createRemoteStrictCheck()` reads a recorded run back and counts every tick that
+breaks the model. `PlaytestBot.remoteStrict` opts a bot into the check and the harness reports
+`PlaytestResult.remoteViolations` / `.remoteViolation` — a violation fails a run exactly as
+`diagonalTicks` does.
+
+**What it changed.** Every zone A–I, all 16 routes, the boss rush, the caravan zones and the
+practice runs still clear under it, inside the M1-18 / M2 budgets and with the recovery rule
+intact — **no zone content needed re-tuning**. What the stricter model exposed was the bot's own
+play, and three bot changes fixed it (they move every golden, which is why they are recorded here):
+
+- it waits for a lane that stays clear for `EQUIP_WINDOW_TICKS` (`REMOTE_PRE_TAP_TICKS +
+  REMOTE_TAP_TICKS` = 12) before starting a PowerUp tap, with `EQUIP_PATIENCE_TICKS` (150) as the
+  "take the risk anyway" deadline — a tap is now blind movement, so it must be spent in a calm lane;
+- it prefers a boss core's lane much more strongly (`BOSS_CORE_BONUS` 160, was 60);
+- **in god mode only** it lines up on the core's exact row instead of the lane centre. That is
+  deliberate: the audit runs ask "does this boss go down at all", while a run that can die must
+  keep dodging by lanes — the core's row is where aimed fire converges, and doing it always cost
+  zones D / F / H their no-god-mode clears.
+
+**One golden expectation changed:** `gimmick-range-god` no longer breaks a destructible brick —
+under the remote model the bot flies the high branch and never fires into the terrain. Its
+assertion is `destroyed === 0` now; the brick coverage stays with `gimmick-range-weaver` (≥ 5
+broken) and the rollbacks of `gimmick-range-deaths`.
+
 ### The playtest tests
 
 | File | What |
@@ -328,6 +369,7 @@ with a second bot; `scanLanes(world, scan, player)` scans from that ship).
 | `zone-f.test.ts`, `zone-g.test.ts`, `zone-fg-recovery.test.ts` (M2-13) | The same for CELL VAULT (shots break tissue, the claws lunge) and PRISM LABYRINTH (the rush stacks cubes into the terrain): god-mode clears in 3–6 minutes (219.8 s and 234.1 s), the rules on every tick, a reported no-god run (no death in either); the recovery rule at all eight checkpoints ([zones-f-and-g.md](zones-f-and-g.md#playtests-and-the-recovery-rule)) |
 | `campaign-routes-b.test.ts`, `campaign-routes-c.test.ts` (M2-10) | All 16 routes of the zone map flown in god mode with the campaign harness `campaign.ts` (`playRunZone`, `walkCampaignRoutes` — each zone a fresh World built as the scene flow builds it, the players carried): every zone cleared, the rank stage term = depth + 1, the score growing, an ending per route ([campaign-and-bonus-stages.md](campaign-and-bonus-stages.md#using-it-headlessly)) |
 | `harness.test.ts`, `four-way-bot.test.ts`, `rules.test.ts` | The tooling itself: scripted bots, the tick limit, a terrain death to `gameOver` that replays; lane geometry, the danger scan, the decisions (including the two regressions), one-tick presses; the rules on hand-made lasers and bullets (merging, clipping, the off-playfield beam regression, the violation cap) |
+| `remote-strict.test.ts`, `remote-strict-edge.test.ts` (M3-02b) | The model and its checker: one key a tick, the pre-tap gap, tap length, the direction-change gap, release-only actions, a recorded run counted back, and the harness reporting `remoteViolations` |
 
 At the time of writing the bot clears zone A in ≈ 210 s (HB-01 in ≈ 22 s) with no death, also
 without god mode:

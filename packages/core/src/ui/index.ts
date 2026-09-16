@@ -687,7 +687,7 @@ export function createToggle(value: boolean): Toggle {
  *
  * @example
  * ```ts
- * const profile = createChoice(['SAFE 4-WAY (DEFAULT)', 'FAST 8-WAY'], 0);
+ * const profile = createChoice(['KEYBOARD (DEFAULT)', 'KEYBOARD AS REMOTE'], 0);
  * createListMenu([{ label: 'CONTROLS', choice: profile }]);
  * ```
  */

@@ -1616,7 +1616,7 @@ export function migrateInputProfileId(id: string): string {
 export interface InputProfileChoice {
   /** Profile id (`content/input/`). */
   readonly id: string;
-  /** Text shown in the selector (upper case, e.g. `SAFE 4-WAY (DEFAULT)`). */
+  /** Text shown in the selector (upper case, e.g. `REMOTE (DEFAULT)`). */
   readonly label: string;
 }
 
