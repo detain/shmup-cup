@@ -10,9 +10,11 @@
  * a global that never releases a texture: one page, one pooled-render-target total.
  *
  * **Scenarios** are the worst-case frames the review names: the enemy-bullet pool full (512), the
- * point-item pool full (512 — a bomber's screen clear turns bullets into points), the particle
- * pool full, CRT `off` / `light` / `full`, a stage with layer effects (`raster-range`) and one
- * with the Mode-7 floor (`dimension`). The **internal frame size is a parameter** (review §7.5):
+ * point-item pool full (512 — a bomber's screen clear turns bullets into points, re-run on every
+ * tick that freed a slot), the particle pool full, CRT `off` / `light` / `full`, a stage with
+ * layer effects (`raster-range`) and one with the Mode-7 floor (`dimension`). Each scenario
+ * asserts the *minimum* live count over the measured frames, so the stated load is the load every
+ * timed frame carried. The **internal frame size is a parameter** (review §7.5):
  * the last scenario runs the same load at 768×432 (×2 of the shipped 384×216 — the first integer
  * step the owner would try), so "what would a higher internal resolution cost?" is a bench run.
  *
@@ -320,8 +322,9 @@ function report(id: string, options: RenderBenchOptions, result: RenderBenchResu
       `(+ ${((options.width * options.height * 4) / 1024).toFixed(0)} KB frame target), ` +
       `${result.structureRebuilds}/${result.frames + options.warmupFrames} structure rebuilds, ` +
       `heap ${(result.heapDeltaBytes / 1024).toFixed(0)} KB over ${result.frames} frames ` +
-      `[WebGL ${result.webGLVersion}; ${result.bullets} bullets, ${result.points} points, ` +
-      `${result.particles} particles; camera x ${result.cameraX}, ${result.worldStatus}]`,
+      `[WebGL ${result.webGLVersion}; per-frame minimum load ${result.bullets} bullets, ` +
+      `${result.points} points, ${result.particles} particles; ` +
+      `camera x ${result.cameraX}, ${result.worldStatus}]`,
   );
 }
 
@@ -331,9 +334,11 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
       const result = await runScenario(scenario.options);
       report(scenario.id, scenario.options, result);
       // The scenario really was under the load it claims.
+      // Each count is the *smallest* the harness saw over the measured frames, so these hold for
+      // every frame that was timed, not just the last one.
       expect(result.bullets, 'the enemy-bullet pool must be full').toBeGreaterThan(400);
-      expect(result.points, 'the point-item pool must be busy').toBeGreaterThan(200);
-      expect(result.particles, 'the particle pool must be busy').toBeGreaterThan(100);
+      expect(result.points, 'the point-item pool must be full').toBeGreaterThan(400);
+      expect(result.particles, 'the particle pool must be full').toBeGreaterThan(400);
       scenario.check?.(result);
       // The gates.
       expect(result.drawCalls).toBeGreaterThan(0);

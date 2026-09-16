@@ -28,7 +28,7 @@ shmup-cup/
 ├── vitest.config.ts        Vitest *projects*: packages/*, apps/*, test — one process, one worker pool, longest file first (→ `pnpm test` / `pnpm test:all`)
 ├── .browserslistrc         chrome >= 69 (Tizen 5.5) for eslint-plugin-compat
 ├── .editorconfig  .prettierrc.json  .prettierignore  .nvmrc (Node 24)  .gitignore
-├── .github/workflows/ci.yml   parallel jobs, each installing (frozen): format + lint, typecheck, test ×3 shards (golden replays), build (Tizen budgets) + bench, e2e ×5 shards (Playwright Chromium → pnpm test:e2e --project=chromium on the test builds), e2e-firefox (the cross-engine determinism spec — M2-18), input probe; ELECTRON_SKIP_BINARY_DOWNLOAD=1
+├── .github/workflows/ci.yml   parallel jobs, each installing (frozen): format + lint, typecheck, test ×3 shards (golden replays), build (Tizen budgets) + bench (Playwright Chromium installed for the render bench — M3-02c), e2e ×5 shards (Playwright Chromium → pnpm test:e2e --project=chromium on the test builds), e2e-firefox (the cross-engine determinism spec — M2-18), input probe; ELECTRON_SKIP_BINARY_DOWNLOAD=1
 │
 ├── packages/               reusable libraries (the "engine + game")
 │   ├── core/               @shmup/core — PURE TS: no DOM/WebGL/audio/Node/platform APIs, no clocks, no Math.random

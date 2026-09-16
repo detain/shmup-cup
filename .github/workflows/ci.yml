@@ -94,7 +94,8 @@ jobs:
   build:
     name: build · benchmark
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The render bench (plan M3-02c) adds ~5 minutes of Chromium time to the simulation benches.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
 
@@ -110,6 +111,12 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # The render bench (plan M3-02c) drives the built harness in Playwright's Chromium with
+      # SwiftShader, so this job needs the browser and its system libraries just as the e2e jobs
+      # do — `pnpm install` alone downloads no browser.
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       # Plan M1-19: 20,000 stress ticks (512 bullets, 64 enemies, full loadout, lasers) — fails
       # when the median reaches 1.0 ms/tick or the heap grows by 512 KB after the warm-up. Plan

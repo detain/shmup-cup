@@ -823,6 +823,7 @@ readout — and they answer different questions.
 ### The headless gate: `pnpm bench` → `test/bench/render.perf.ts`
 
 ```sh
+pnpm exec playwright install --with-deps chromium      # once per machine (CI's bench job too)
 pnpm bench                                             # every bench, the render one included
 npx vitest run --config test/bench/vitest.config.ts render.perf.ts   # only the render bench
 ```
@@ -830,11 +831,17 @@ npx vitest run --config test/bench/vitest.config.ts render.perf.ts   # only the 
 It builds `test/bench/render-harness/` with Vite (the repo's own `shmupContent()` /
 `shmupAssets()` plugins, so the shipped content and the real atlas go in), serves it on an
 ephemeral port and drives it in Playwright's Chromium with SwiftShader. The page puts the **real**
-renderer in front of the **real** simulation: `createGame` on the shipped content, the bullet pool
-topped to 512 every tick, a bomber's screen clear turning those bullets into 512 point items, the
-particle pool kept full, and the frame drawn through the same two passes the TV runs. Each
-scenario gets its own page, because Pixi's `TexturePool` is a global that never gives a texture
-back — one page, one pooled-render-target total.
+renderer in front of the **real** simulation: `createGame` on the shipped content, a bomber's
+screen clear turning the live bullets into point items on every tick that freed an item slot, the
+bullet pool topped back to 512 *after* each step (a cancelled bullet only frees its slot in the
+step's removal phase), the particle pool kept full, and the frame drawn through the same two
+passes the TV runs. Each scenario gets its own page, because Pixi's `TexturePool` is a global that
+never gives a texture back — one page, one pooled-render-target total.
+
+The harness reports the **smallest** live count any measured frame carried, and each scenario
+asserts those floors, so a scenario cannot claim a load one frame in six hundred happened to
+reach. Today every measured frame holds 512 of 512 bullets, ≥ 489 of 512 point items (the ~20
+missing are the items that reached the score during that tick) and ≥ 489 of 512 particles.
 
 | What it reports | Why |
 |---|---|
@@ -850,7 +857,7 @@ a higher internal resolution cost?" is a bench run rather than a build-and-hope.
 today: the pooled filter target goes 512 KB → 2,048 KB and the frame render texture 324 KB →
 1,296 KB, exactly the ×4 of §7.3's table.
 
-What the first run measured (headless, so read the shape, not the milliseconds): **659 of 660
+What the first runs measured (headless, so read the shape, not the milliseconds): **655–659 of 660
 frames rebuilt the scene's instruction set** — F1's mechanism confirmed against a real browser,
 not just against Pixi's source — and CRT `light` costs what CRT `full` costs and pools the same
 target, which is F2's claim exactly.

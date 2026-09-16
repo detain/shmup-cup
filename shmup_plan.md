@@ -4230,12 +4230,27 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     stacks the busy frame, a filter *and* the CRT pass) and the heap delta are the sharp gates;
     `RENDER_P95_BUDGET_MS = 16` is deliberately loose, because the bench renders through
     SwiftShader on whatever machine runs it — it catches a structural regression, not a Mali-G51
-    prediction. Measured on the first run: p95 2.1–3.1 ms, 4–7 draw calls, heap 350–470 KB over
+    prediction. Measured over two runs: p95 2.4–3.2 ms, 4–7 draw calls, heap 325–485 KB over
     600 frames. A leaky fixture in the same file proves the heap gate fails when it should.
+  - **The claimed load is a per-frame floor, not the last frame's reading** (review round 1). The
+    harness reports the *smallest* live bullet / point-item / particle count any measured frame
+    carried, and the scenarios assert those floors. Getting the item pool genuinely full needed the
+    tick reordered: a cancelled bullet only marks its slot dead (`pools.flushAll()` in the step's
+    removal phase frees it), so the screen clear runs *before* `step()` and the bullet pool is
+    topped up *after* it — and the clear re-runs on every tick that freed an item slot, where one
+    clear per half-pool had let the item pool sawtooth 512 → 256. Every measured frame now carries
+    512 of 512 bullets, ≥ 489 of 512 point items (the rest reached the score during that tick) and
+    ≥ 489 of 512 particles.
   - **What the bench already settled** (recorded in `docs/dev/input-probe-results.md` §11.3):
-    **659 of 660 frames rebuild the scene's whole instruction set** — F1's mechanism confirmed
+    **655–659 of 660 frames rebuild the scene's whole instruction set** — F1's mechanism confirmed
     against a real browser rather than Pixi's source; CRT `light` costs what CRT `full` costs and
     pools the same target (F2); and a 384×216 filter pass really is pooled as 512×256 (F3).
+  - **CI needs the browser installed** (review round 1). The `build · benchmark` job now runs
+    `pnpm exec playwright install --with-deps chromium` between the build and the bench, exactly as
+    the e2e jobs do — `pnpm install` downloads no browser (Playwright ships no postinstall script
+    and the repo sets no `pnpm.onlyBuiltDependencies`), and `--use-angle=swiftshader` needs the
+    system libraries `--with-deps` brings. The job's `timeout-minutes` went 15 → 25 for the extra
+    Chromium time.
   - **F8's dev switch is two switches, because the TV has no query string.** `apps/web` reads
     `?gl=2` (`webGLVersionFromSearch`, new in `@shmup/shell` `boot`); `apps/tizen` reads
     `localStorage['shmup-cup:gl']` (`WEBGL_VERSION_KEY`) — but only in a build that has the debug

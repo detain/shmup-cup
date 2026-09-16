@@ -21,6 +21,7 @@ import {
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
   MAX_ENEMY_BULLETS,
+  MAX_POINT_ITEMS,
   PLAYFIELD_H,
   PLAYFIELD_W,
   createGame,
@@ -90,11 +91,11 @@ export interface RenderBenchResult {
   readonly heapMeasured: boolean;
   /** WebGL version the context really is. */
   readonly webGLVersion: number;
-  /** Live enemy bullets in the measured frames. */
+  /** Fewest live enemy bullets any measured frame carried. */
   readonly bullets: number;
-  /** Live point items. */
+  /** Fewest live point items any measured frame carried. */
   readonly points: number;
-  /** Live particles. */
+  /** Fewest live particles any measured frame carried. */
   readonly particles: number;
   /** Whether the Mode-7 floor was drawn. */
   readonly mode7: boolean;
@@ -328,17 +329,26 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     );
     game.world.debugFlags.godMode = true;
     const random = new Lcg();
-    /** One simulated tick under the scripted worst-case load. */
+    /**
+     * One simulated tick under the scripted worst-case load, leaving every pool full for the
+     * frame that is rendered next.
+     *
+     * The order is what makes the load real. The bomber's screen clear (M2-02) is how a frame
+     * ever holds 512 point items, and it is re-run on every tick that left a free item slot —
+     * items are credited and freed a few at a time as they reach the score, so clearing only
+     * once per half-pool (as this did before review round 1) let the item pool sawtooth from 512
+     * down to 256 and the measured frames carried barely half the claimed load. But a cancelled
+     * bullet only *marks* its slot dead: `pools.flushAll()` in the step's removal phase frees it,
+     * so the cancel has to come **before** `step()` and the bullet pool has to be topped up
+     * **after** it — topping up first would find 512 dead slots and spawn nothing.
+     */
     const tick = (): void => {
-      fillBullets(game, random);
-      // The bomber's screen clear (M2-02): every cancelled bullet becomes a point item, which is
-      // how a real frame ever holds 512 of them.
-      if (game.world.bullets.points.count < MAX_ENEMY_BULLETS / 2) {
+      if (game.world.bullets.points.count < MAX_POINT_ITEMS) {
         game.world.bullets.cancelAll(CancelMode.Points, 0);
-        fillBullets(game, random);
       }
       game.step();
       game.events.drain(() => {});
+      fillBullets(game, random);
       fillParticles(renderer, game, random);
     };
     for (let i = 0; i < options.warmupTicks; i++) tick();
@@ -350,12 +360,23 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     collect();
     const heapBefore = heapUsed();
     const samples = new Float64Array(options.frames);
+    const world = game.world;
+    // The load is reported as the *smallest* live count any measured frame carried, so the
+    // scenario's claim ("512 bullets, 512 point items, the particle pool full") is checked
+    // against every frame rather than against the last one.
+    let bullets = MAX_ENEMY_BULLETS;
+    let points = MAX_POINT_ITEMS;
+    let particles = renderer.particles?.capacity ?? 0;
     for (let i = 0; i < options.frames; i++) {
       tick();
       const frame = game.renderFrame();
       const start = performance.now();
       renderer.render(frame);
       samples[i] = performance.now() - start;
+      if (world.bullets.pool.count < bullets) bullets = world.bullets.pool.count;
+      if (world.bullets.points.count < points) points = world.bullets.points.count;
+      const live = renderer.particles?.liveCount ?? 0;
+      if (live < particles) particles = live;
       for (let k = 0; k < options.leakPerFrame; k++) leaked.push({ i, k, pad: `${i}:${k}` });
       await nextFrame();
     }
@@ -364,7 +385,6 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     // Pixi's batch buffers and its lazy `BatchableSprite`s live past the boundary the Node
     // allocation guards can see.
     const heapAfter = heapUsed();
-    const world = game.world;
     const sorted = samples.slice().sort();
     return {
       frames: options.frames,
@@ -377,9 +397,9 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
       heapDeltaBytes: heapBefore < 0 ? 0 : heapAfter - heapBefore,
       heapMeasured: heapBefore >= 0,
       webGLVersion: renderer.webGLVersion,
-      bullets: world.bullets.pool.count,
-      points: world.bullets.points.count,
-      particles: renderer.particles?.liveCount ?? 0,
+      bullets,
+      points,
+      particles,
       mode7: renderer.mode7.active,
       layerEffectMask: renderer.layerEffects.attachedMask,
       cameraX: Math.round(world.camera.x),
