@@ -4496,9 +4496,22 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     the owner repeats it with `?gl=2` / `localStorage['shmup-cup:gl']`), M6 two zones with CRT on and off, M7 a
     `blur` → `focus` (the M7 monitors deliver no `visibilitychange`; both are listened for).
   - **Analyzer** is `tools/input-probe/results/analyze-render.mjs` (zero-dependency, exports
-    `readSession` / `aggregate` / `analyzeRenderSession` for its test). A group's figures are folded from the
-    windows' own tuples: min of mins, **median of the windows' p50s and p95s** (not a p95 of p95s — one bad
-    window must not become the answer) and the worst single frame.
+    `readSession` / `aggregate` / `analyzeRenderSession` for its test). A group's `min` and `max` come from
+    the windows' own tuples (min of mins, the worst single frame); its **`p50` / `p95` are pooled
+    percentiles over every frame of the group**. Each window therefore carries a quantized histogram of its
+    frame, tick, render and draw-call series (`RenderSample.hist`, 0.05 ms for tick / render, 0.25 ms for
+    frame times, exact for draw calls, coarsened by doubling until a window fits 48 buckets so a payload
+    stays bounded); the analyzer sums a group's histograms and reads the percentile off the total. The first
+    cut folded the windows' own p95s instead (their median), which discards the worse half of the windows,
+    systematically understates the tail — the one direction that matters against a frame budget — and would
+    not have been the same quantity as the `pnpm bench` p95s §11.3 prints right under the pasted tables.
+    Building the histograms costs the frame path nothing: they are folded out of the already-recorded
+    per-frame series in `RenderSampler.close`, on the report timer. A session recorded without them falls
+    back to the old median and is printed with a trailing `~`, which the tables' footnote explains.
+  - **The device line is re-read once per window**, not read once when the capture is constructed: on Tizen
+    the M2-17 line is `''` until the async `describeDevice()` resolves, long after boot, so a session-wide
+    snapshot would have stamped every payload of a monitor capture with `''` and the analyzer would have
+    reported it as `device (browser)`.
 
 ### M3-03 — Reach: localization, more platforms, tracker music
 

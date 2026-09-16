@@ -12,6 +12,8 @@ import {
   MAX_QUEUED_SAMPLES,
   RENDER_CHECK_ORDER,
   RENDER_FRAME_SLOT,
+  RENDER_HIST_MAX_BUCKETS,
+  RENDER_HIST_STEP,
   RENDER_PROFILE_KIND,
   RENDER_WINDOW_MAX_FRAMES,
   RenderCheckTally,
@@ -102,6 +104,12 @@ function sample(
     tickMs: [0.1, 0.2, 0.3, 0.4],
     renderMs: [0.9, 1.2, 2.1, 4],
     drawCalls: [12, 12, 12, 12],
+    hist: {
+      frameMs: [16, 1, 16.75, 178, 20, 1],
+      tickMs: [0.1, 1, 0.2, 178, 0.4, 1],
+      renderMs: [0.9, 1, 1.2, 170, 2.1, 8, 4, 1],
+      drawCalls: [12, 180],
+    },
     rebuilds: 179,
     renderTargetKb: 0,
     tickFrames: [0, 180, 0, 0],
@@ -143,6 +151,50 @@ describe('telemetry/makeRenderSessionId', () => {
     expect(a < b).toBe(true);
   });
 });
+
+/**
+ * How many frames a flat `[value, count, …]` histogram holds.
+ *
+ * @param hist - The histogram.
+ * @returns The total count.
+ */
+function histFrames(hist: number[]): number {
+  let total = 0;
+  for (let i = 1; i < hist.length; i += 2) total += hist[i];
+  return total;
+}
+
+/**
+ * The bucket values of a flat `[value, count, …]` histogram.
+ *
+ * @param hist - The histogram.
+ * @returns The values, in the order they are stored.
+ */
+function histValues(hist: number[]): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < hist.length; i += 2) out.push(hist[i]);
+  return out;
+}
+
+/**
+ * The value at a quantile of a flat `[value, count, …]` histogram — what
+ * `results/analyze-render.mjs` does to a whole group.
+ *
+ * @param hist - The histogram.
+ * @param fraction - 0 … 1.
+ * @returns The value, or `NaN` when the histogram is empty.
+ */
+function histPercentile(hist: number[], fraction: number): number {
+  const total = histFrames(hist);
+  if (total === 0) return Number.NaN;
+  const target = Math.min(total - 1, Math.floor(fraction * (total - 1) + 0.5));
+  let seen = 0;
+  for (let i = 0; i < hist.length; i += 2) {
+    seen += hist[i + 1];
+    if (seen > target) return hist[i];
+  }
+  return Number.NaN;
+}
 
 describe('telemetry/RenderSampler', () => {
   /**
@@ -212,6 +264,55 @@ describe('telemetry/RenderSampler', () => {
     expect(window.rebuilds).toBe(99);
     expect(window.renderTargetKb).toBe(512);
     expect(window.context.zone).toBe('A');
+  });
+
+  it('carries a quantized histogram of every series, so a group can be pooled exactly', () => {
+    const sampler = new RenderSampler();
+    // A plausible window: 180 frames whose render time sits at ~1.2 ms with a tail at ~3 ms.
+    for (let i = 0; i < 180; i++) {
+      frame(sampler, {
+        renderMs: i < 171 ? 1.18 + (i % 3) * 0.02 : 2.95 + (i % 3) * 0.04,
+        drawCalls: 12 + (i % 2),
+      });
+    }
+    const window = sampler.close(1, 0, 3000, context(), []) as RenderSample;
+    // Every measured frame is in each histogram (the frame series skips the no-delta frames only).
+    expect(histFrames(window.hist.renderMs)).toBe(window.measuredFrames);
+    expect(histFrames(window.hist.tickMs)).toBe(window.measuredFrames);
+    expect(histFrames(window.hist.drawCalls)).toBe(window.measuredFrames);
+    // Values ascend and the pair count stays bounded, so a payload cannot grow without limit.
+    expect(histValues(window.hist.renderMs)).toEqual(
+      [...histValues(window.hist.renderMs)].sort((a, b) => a - b),
+    );
+    expect(window.hist.renderMs.length / 2).toBeLessThanOrEqual(RENDER_HIST_MAX_BUCKETS);
+    // The percentile read off the histogram is the window's own, up to the quantum.
+    expect(
+      Math.abs(histPercentile(window.hist.renderMs, 0.95) - window.renderMs[2]),
+    ).toBeLessThanOrEqual(RENDER_HIST_STEP.renderMs);
+    expect(
+      Math.abs(histPercentile(window.hist.renderMs, 0.5) - window.renderMs[1]),
+    ).toBeLessThanOrEqual(RENDER_HIST_STEP.renderMs);
+    // Draw calls are whole numbers, so their histogram is exact: 90 frames each of 12 and 13.
+    expect(window.hist.drawCalls).toEqual([12, 90, 13, 90]);
+    // A window with nothing in it carries empty histograms rather than junk.
+    frame(sampler, { frameMs: 0, rafBucket: -1 });
+    const first = sampler.close(2, 3000, 6000, context(), []) as RenderSample;
+    expect(first.hist.frameMs).toEqual([]);
+    expect(first.frameMs).toEqual([0, 0, 0, 0]);
+  });
+
+  it('coarsens the histogram of a wildly spread window instead of one bucket per frame', () => {
+    const sampler = new RenderSampler();
+    // A stalling window: every frame a different render time across two orders of magnitude.
+    for (let i = 0; i < 400; i++) frame(sampler, { renderMs: 0.5 + i * 0.37 });
+    const window = sampler.close(1, 0, 6000, context(), []) as RenderSample;
+    expect(window.hist.renderMs.length / 2).toBeLessThanOrEqual(RENDER_HIST_MAX_BUCKETS);
+    expect(histFrames(window.hist.renderMs)).toBe(400);
+    // Coarse, but still the right answer to within a few per cent of the real p95.
+    expect(
+      Math.abs(histPercentile(window.hist.renderMs, 0.95) - window.renderMs[2]) /
+        window.renderMs[2],
+    ).toBeLessThan(0.05);
   });
 
   it('counts the frames a send was in flight during so a perturbed window can be excluded', () => {

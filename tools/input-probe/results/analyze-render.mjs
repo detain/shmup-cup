@@ -17,9 +17,14 @@
  *              XHR runs on the main thread, so such a window may have recorded the sender as a render cost)
  *   --windows  also list every window
  *
- * How a group's figures are derived from the windows' own distributions: **min** is the smallest window
- * minimum, **p50** and **p95** are the medians of the windows' p50s and p95s (a median of p95s, not a p95
- * of p95s — one bad window must not become the answer), and **max** is the single worst frame seen.
+ * How a group's figures are derived. **min** is the smallest window minimum and **max** the single worst
+ * frame, both straight from the windows' own tuples. **p50 and p95 are pooled percentiles over every frame
+ * of the group**: each window carries a quantized histogram of its frame, tick, render and draw-call series
+ * (`RenderSample.hist`, 0.05 ms for render and tick, 0.25 ms for frame times), the histograms are summed
+ * and the percentile is read off the total. That is the same quantity `pnpm bench` reports, so the tables
+ * this prints are directly comparable with the headless figures in `docs/dev/input-probe-results.md` §11.3.
+ * A session recorded before the histograms existed falls back to the median of the windows' own p50s / p95s,
+ * which understates the tail; such figures are printed with a trailing `~` and the tables say so.
  *
  * Zero dependencies; prints plain text with Markdown tables.
  *
@@ -86,17 +91,51 @@ function median(values) {
 }
 
 /**
- * Folds the windows' own `[min, p50, p95, max]` tuples of one field into the group's figures.
+ * The value at a quantile of a pooled `value → count` histogram, by the same index rule the sampler uses
+ * within a window (`packages/shell/src/telemetry/index.ts` `quantileIndex`), so a one-window group's
+ * figure is identical to that window's own.
+ *
+ * @param {Map<number, number>} counts - quantized value → how many frames.
+ * @param {number} total - the sum of the counts.
+ * @param {number} fraction - 0 … 1.
+ * @returns {number | null} the value, or null when the histogram is empty.
+ */
+function percentileOf(counts, total, fraction) {
+  if (total === 0) return null;
+  const target = Math.min(total - 1, Math.floor(fraction * (total - 1) + 0.5));
+  let seen = 0;
+  for (const value of [...counts.keys()].sort((a, b) => a - b)) {
+    seen += counts.get(value);
+    if (seen > target) return value;
+  }
+  return null;
+}
+
+/**
+ * The group's figures for one field: **true pooled percentiles** over every frame the group's windows
+ * recorded, from their quantized histograms.
+ *
+ * A group of the §11 tables spans many windows and is not homogeneous — the boss row mixes calm approach
+ * frames with the pattern that actually costs. Folding the windows' own p95s (taking their median, say)
+ * would discard the worse half of the windows and understate the tail, the one direction that matters when
+ * the figure is checked against a frame budget and compared with §11.3's bench p95s. Summing the histograms
+ * and reading the percentile off the total is the percentile of the group's frames.
  *
  * @param {any[]} windows - the group's windows.
  * @param {string} field - `'renderMs'`, `'tickMs'`, `'frameMs'` or `'drawCalls'`.
- * @returns {{min: number|null, p50: number|null, p95: number|null, max: number|null}} the figures.
+ * @returns {{min: number|null, p50: number|null, p95: number|null, max: number|null, frames: number,
+ *   pooled: boolean}} the figures; `frames` is how many frames the percentiles were pooled over and
+ *   `pooled` is false when a window carried no histogram and the medians of the windows' own p50s / p95s
+ *   had to stand in.
  */
 export function aggregate(windows, field) {
   const mins = [];
   const p50s = [];
   const p95s = [];
   const maxes = [];
+  const counts = new Map();
+  let frames = 0;
+  let pooled = true;
   for (const w of windows) {
     const d = w[field];
     if (!Array.isArray(d) || d.length < 4) continue;
@@ -104,15 +143,50 @@ export function aggregate(windows, field) {
     p50s.push(d[1]);
     p95s.push(d[2]);
     maxes.push(d[3]);
+    const h = w.hist?.[field];
+    if (!Array.isArray(h) || h.length < 2) {
+      pooled = false;
+      continue;
+    }
+    for (let i = 0; i + 1 < h.length; i += 2) {
+      const value = h[i];
+      const n = h[i + 1];
+      if (typeof value !== 'number' || typeof n !== 'number' || !(n > 0)) continue;
+      counts.set(value, (counts.get(value) ?? 0) + n);
+      frames += n;
+    }
   }
-  if (p50s.length === 0) return { min: null, p50: null, p95: null, max: null };
+  if (p50s.length === 0) return { min: null, p50: null, p95: null, max: null, frames: 0, pooled: false };
+  const usable = pooled && frames > 0;
   return {
     min: Math.min(...mins),
-    p50: median(p50s),
-    p95: median(p95s),
+    p50: usable ? percentileOf(counts, frames, 0.5) : median(p50s),
+    p95: usable ? percentileOf(counts, frames, 0.95) : median(p95s),
     max: Math.max(...maxes),
+    frames: usable ? frames : 0,
+    pooled: usable,
   };
 }
+
+/**
+ * A percentile cell: the number, marked `~` when it could not be pooled (see {@link aggregate}).
+ *
+ * @param {{p50: number|null, p95: number|null, pooled: boolean}} agg - what {@link aggregate} returned.
+ * @param {'p50' | 'p95'} key - which percentile.
+ * @param {number} [digits] - decimals (default 2).
+ * @returns {string} the text.
+ */
+function pct(agg, key, digits = 2) {
+  return num(agg[key], digits) + (agg.pooled || agg[key] === null ? '' : '~');
+}
+
+/** Footnote printed under each table that quotes a percentile, so nobody mistakes what it is. */
+const PERCENTILE_NOTE =
+  '`p50` / `p95` are **pooled percentiles over every frame** of the row (the windows’ quantized frame-time' +
+  ' histograms summed — 0.05 ms for TICK / RENDER, 0.25 ms for FRAME, exact for DRAW), so they are the same' +
+  ' quantity as the `pnpm bench` p95s in §11.3 and comparable with them. `min` / `max` are the single best' +
+  ' and worst frames. A figure marked `~` could not be pooled (a session recorded before the histograms' +
+  ' existed) and is the median of the windows’ own percentiles, which understates the tail.'
 
 /**
  * Frames per second over a group, from the windows' frame counts and durations.
@@ -222,8 +296,8 @@ function baselineRow(label, windows) {
   const tpf = buckets(windows, 'tickFrames', 4);
   const locked = windows.every((w) => w.context?.vsyncLock === true);
   return (
-    `| ${label} | ${num(groupFps(windows), 1)} | ${num(tick.p50)} (p95 ${num(tick.p95)}) |` +
-    ` ${num(render.p50)} (p95 ${num(render.p95)}, max ${num(render.max)}) | ${num(draw.p50, 0)} |` +
+    `| ${label} | ${num(groupFps(windows), 1)} | ${pct(tick, 'p50')} (p95 ${pct(tick, 'p95')}) |` +
+    ` ${pct(render, 'p50')} (p95 ${pct(render, 'p95')}, max ${num(render.max)}) | ${pct(draw, 'p50', 0)} |` +
     ` ${reb.rebuilds} / ${reb.frames} | ${renderTargetKb(windows) ?? '—'} | ${tpf.join('/')} |` +
     ` ${locked ? 'yes' : 'no'} |`
   );
@@ -248,6 +322,8 @@ function baselineTable(windows, env) {
     baselineRow('Title, idle', title),
     baselineRow('Zone A, mid-stage', stage),
     baselineRow('Zone A, boss', boss),
+    '',
+    PERCENTILE_NOTE,
     '',
     `Boot ms: ${env.bootMs ?? '—'} (budget 10 000). Bundle measured: \`${env.buildId ?? '?'}\`.`,
     `rAF histogram over everything (12/15/17/19/21/25/33 ms buckets): ${buckets(windows, 'raf', 8).join(' ')}`,
@@ -292,7 +368,7 @@ function measurementTable(windows, last) {
   const all = rebuilds(windows);
   lines.push(
     `| M1 | RENDER ms, title vs. a dense scene, against the rebuild rate (**F1**) |` +
-      ` title p95 ${num(titleRender.p95)} ms, dense p95 ${num(denseRender.p95)} ms;` +
+      ` title p95 ${pct(titleRender, 'p95')} ms, dense p95 ${pct(denseRender, 'p95')} ms;` +
       ` ${all.rebuilds} of ${all.frames} frames rebuilt the scene |`,
   );
 
@@ -303,7 +379,7 @@ function measurementTable(windows, last) {
     const group = byCrt.get(setting) ?? [];
     const render = aggregate(group, 'renderMs');
     crtCells.push(
-      `${setting}: ${group.length === 0 ? 'not captured' : `p95 ${num(render.p95)} ms, RT ${renderTargetKb(group) ?? '—'} KB (${num(seconds(group), 0)} s)`}`,
+      `${setting}: ${group.length === 0 ? 'not captured' : `p95 ${pct(render, 'p95')} ms, RT ${renderTargetKb(group) ?? '—'} KB (${num(seconds(group), 0)} s)`}`,
     );
   }
   lines.push(`| M2 | RENDER ms and RT with CRT off / light / full (**F2**) | ${crtCells.join('; ')} |`);
@@ -333,7 +409,7 @@ function measurementTable(windows, last) {
   const glCells = [];
   for (const [version, group] of byGl) {
     const render = aggregate(group, 'renderMs');
-    glCells.push(`WebGL${version}: p95 ${num(render.p95)} ms over ${num(seconds(group), 0)} s`);
+    glCells.push(`WebGL${version}: p95 ${pct(render, 'p95')} ms over ${num(seconds(group), 0)} s`);
   }
   lines.push(
     `| M5 | WebGL1 vs WebGL2 (**F8**) | ${glCells.join('; ') || 'not captured'} — compare with the other session's row |`,
@@ -359,6 +435,8 @@ function measurementTable(windows, last) {
 
   // M8 — the one number no instrumentation reaches.
   lines.push('| M8 | Input-to-photon latency, 240 fps video | manual — nothing here can measure it |');
+  lines.push('');
+  lines.push(PERCENTILE_NOTE);
   lines.push('');
 
   const checklist = last.checklist ?? [];
@@ -432,6 +510,17 @@ export function analyzeRenderSession(file, options = {}) {
       ' — the sender runs on the main thread, so those frames may carry its cost rather than the renderer’s.',
   );
   out.push(`${hitched.length} of the ${used.length} used window(s) contain a frame of ${HITCH_MS} ms or more.`);
+  const pooledFrames = aggregate(used, 'renderMs');
+  if (used.length > 0) {
+    out.push(
+      pooledFrames.pooled
+        ? `Every p50 / p95 below is pooled over the row’s frames (${pooledFrames.frames} frames in this` +
+          ' session’s windows), the same quantity as the `pnpm bench` p95s in §11.3.'
+        : 'Some p50 / p95 below are marked `~`: those windows carry no frame-time histogram, so the median' +
+          ' of the windows’ own percentiles stands in and understates the tail (it is **not** comparable' +
+          ' with §11.3’s bench p95s).',
+    );
+  }
   out.push('');
   out.push('Paste the two tables below into `docs/dev/input-probe-results.md` §11.');
   out.push('');

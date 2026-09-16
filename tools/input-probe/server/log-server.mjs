@@ -155,12 +155,18 @@ function fmtDist(d, digits = 2) {
 /**
  * One line per render sample: where it was taken and the window's distributions.
  *
- * @param {Record<string, any>} s - one entry of a render payload's `samples`.
+ * Never trusts the payload's shape, exactly like {@link formatEvent}: `validatePayload` only checks that
+ * `samples` **is an array**, so a malformed entry (`samples: [null]` from a hand-rolled POST — the server
+ * listens on the LAN and authenticates nobody) must print as junk rather than throw inside the request
+ * handler and take the receiver, and the rest of the capture, down with it.
+ *
+ * @param {unknown} s - one entry of a render payload's `samples`.
  * @returns {string} e.g.
  *   `    #7 game/azure-verge crt=off gl=1 · 59.9 fps/3.0 s · RENDER 0.9/1.2/2.1/4.0 · DRAW 12 · REB 178/180 · RT 0 KB`.
  */
 function formatRenderSample(s) {
-  const c = s.context ?? {};
+  if (!s || typeof s !== 'object') return '    ' + String(s);
+  const c = (s.context !== null && typeof s.context === 'object' ? s.context : null) ?? {};
   const where = `${c.scene ?? '?'}/${c.zone ?? c.stage ?? '-'}`;
   const secs = typeof s.durationMs === 'number' ? (s.durationMs / 1000).toFixed(1) : '?';
   const marks = Array.isArray(s.marks) && s.marks.length > 0 ? ` · marks ${s.marks.join(',')}` : '';
@@ -195,8 +201,10 @@ function fmt1(v) {
  */
 export function formatRenderSummary(p) {
   const samples = Array.isArray(p.samples) ? p.samples : [];
-  const checklist = Array.isArray(p.checklist) ? p.checklist : [];
-  const done = checklist.filter((i) => i && i.done);
+  const checklist = (Array.isArray(p.checklist) ? p.checklist : []).filter(
+    (i) => i !== null && typeof i === 'object',
+  );
+  const done = checklist.filter((i) => i.done);
   const env = p.env ?? {};
   const lines = [
     `[${p.session} #${p.seq}] render-profile · ${samples.length} window(s)` +
@@ -205,7 +213,7 @@ export function formatRenderSummary(p) {
     `  checklist ${done.length}/${checklist.length}` +
       (done.length > 0 ? ': ' + done.map((i) => i.id).join(' ') : '') +
       (checklist.length > done.length
-        ? ' — next: ' + (checklist.find((i) => i && !i.done)?.label ?? '?')
+        ? ' — next: ' + (checklist.find((i) => !i.done)?.label ?? '?')
         : ' — done'),
   ];
   for (const s of samples.slice(-8)) lines.push(formatRenderSample(s));
@@ -303,7 +311,13 @@ export function createLogServer({ logDir, log = console.log }) {
       } catch (e) {
         return reply(res, 500, 'write failed: ' + e.message + '\n');
       }
-      log(formatSummary(payload));
+      // The payload is on disk; a formatter that cannot make sense of it must not take the receiver
+      // down mid-capture (an uncaught throw in this handler ends the process).
+      try {
+        log(formatSummary(payload));
+      } catch (e) {
+        log(`[${session}] (payload stored; could not be summarized: ${e && e.message ? e.message : String(e)})`);
+      }
       reply(res, 200, 'ok\n');
     });
   });

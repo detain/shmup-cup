@@ -175,6 +175,19 @@ describe('formatRenderSummary', () => {
     expect(text).toContain('#? ?/- crt=? aspect=? gl=?');
     expect(text).toContain('TICK —');
   });
+
+  it('never throws on a window or a checklist row that is not an object', () => {
+    // `validatePayload` only checks that `samples` is an array; the server listens on the LAN and
+    // authenticates nobody, so a formatter must print junk rather than throw (an uncaught throw in
+    // the request handler ends the process and loses the rest of a capture).
+    for (const bad of [null, 0, 'x', [], true]) {
+      const text = formatRenderSummary({ session: 's', seq: 1, samples: [bad], checklist: [bad] });
+      expect(text).toContain('[s #1] render-profile · 1 window(s)');
+    }
+    expect(formatRenderSummary({ session: 's', seq: 1, samples: [{ context: 'nope' }] })).toContain(
+      'crt=?',
+    );
+  });
 });
 
 describe('formatSummary', () => {
@@ -366,6 +379,19 @@ describe('log server (HTTP)', () => {
     expect(rows[0]).toMatchObject({ kind: RENDER_PROFILE_KIND, session: 'rp-test-0001', seq: 1 });
     expect((rows[0]?.['samples'] as unknown[])[0]).toMatchObject({ renderMs: [0.9, 1.2, 2.1, 4] });
     expect(logged.some((l) => l.startsWith('[rp-test-0001 #1] render-profile'))).toBe(true);
+  });
+
+  it('survives a render payload whose samples are malformed, and keeps serving', async () => {
+    const before = logged.length;
+    const res = await post(
+      JSON.stringify({ kind: RENDER_PROFILE_KIND, session: 'rp-malformed', seq: 1, samples: [null] }),
+    );
+    // Stored, acknowledged, summarised as junk — and above all the process is still here.
+    expect(res.status).toBe(200);
+    expect(readJsonl('rp-malformed')).toHaveLength(1);
+    expect(logged.length).toBeGreaterThan(before);
+    expect((await fetch(base + '/health')).status).toBe(200);
+    expect((await post(JSON.stringify(renderPayload()))).status).toBe(200);
   });
 
   it('a probe payload built by ReportQueue is accepted as-is', async () => {

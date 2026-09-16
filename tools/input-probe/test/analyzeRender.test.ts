@@ -36,6 +36,25 @@ interface WindowOver extends ContextOver {
   renderTargetKb?: number;
   sendInFlightFrames?: number;
   marks?: string[];
+  /** Leaves the window without a histogram, as a session recorded before M3-02f's fix would be. */
+  noHist?: boolean;
+}
+
+/** Frames a fixture window measured (the shell caps a window at 1024 stored timings). */
+const MEASURED = 1024;
+
+/**
+ * A plausible window histogram for a `[min, p50, p95, max]` tuple: one worst and one best frame,
+ * the bulk at the median and a 6 % tail at the p95 — shaped so the percentile read off it is the
+ * window's own, exactly as the shell's sampler produces.
+ *
+ * @param d - The window's tuple.
+ * @param frames - How many frames it holds (default {@link MEASURED}).
+ * @returns Flat `[value, count, …]` pairs.
+ */
+function histOf(d: number[], frames = MEASURED): number[] {
+  const tail = Math.round(frames * 0.06);
+  return [d[0], 1, d[1], frames - tail - 2, d[2], tail, d[3], 1];
 }
 
 /**
@@ -45,6 +64,10 @@ interface WindowOver extends ContextOver {
  * @returns The window, shaped exactly as the shell's `RenderSample`.
  */
 function win(over: WindowOver = {}): Record<string, unknown> {
+  const frameMs = over.frameMs ?? [16, 16.7, 17, 20];
+  const renderMs = over.renderMs ?? [0.9, 1.2, 2.1, 4];
+  const tickMs = [0.1, 0.2, 0.3, 0.4];
+  const drawCalls = [12, 12, 12, 12];
   return {
     seq: over.seq ?? 1,
     startMs: over.startMs ?? 0,
@@ -53,10 +76,19 @@ function win(over: WindowOver = {}): Record<string, unknown> {
     measuredFrames: 1024,
     fps: 60,
     sendInFlightFrames: over.sendInFlightFrames ?? 0,
-    frameMs: over.frameMs ?? [16, 16.7, 17, 20],
-    tickMs: [0.1, 0.2, 0.3, 0.4],
-    renderMs: over.renderMs ?? [0.9, 1.2, 2.1, 4],
-    drawCalls: [12, 12, 12, 12],
+    frameMs,
+    tickMs,
+    renderMs,
+    drawCalls,
+    hist:
+      over.noHist === true
+        ? undefined
+        : {
+            frameMs: histOf(frameMs),
+            tickMs: histOf(tickMs),
+            renderMs: histOf(renderMs),
+            drawCalls: histOf(drawCalls),
+          },
     rebuilds: 1790,
     renderTargetKb: over.renderTargetKb ?? 0,
     tickFrames: [0, 1800, 0, 0],
@@ -181,7 +213,53 @@ describe('analyze-render', () => {
     const all = aggregate(windows, 'renderMs');
     expect(all.min).toBe(0.9);
     expect(all.max).toBe(99); // the perturbed window is only excluded by the report, not here
-    expect(aggregate([], 'renderMs')).toEqual({ min: null, p50: null, p95: null, max: null });
+    expect(all.pooled).toBe(true);
+    expect(all.frames).toBe(windows.length * MEASURED);
+    expect(aggregate([], 'renderMs')).toEqual({
+      min: null,
+      p50: null,
+      p95: null,
+      max: null,
+      frames: 0,
+      pooled: false,
+    });
+  });
+
+  it('pools the group’s frames instead of taking a median of the windows’ p95s', () => {
+    // Three windows of 100 frames. Two are calm (their own p95 is 2 ms); the third spends half its
+    // frames at 9 ms. A median of the windows' p95s answers 2 ms — it throws the worst window away
+    // and understates the tail, which is the one direction that matters against a frame budget.
+    // A sixth of the group's frames really are at 9 ms, so the group's p95 is 9 ms.
+    const calm = { renderMs: [1, 1, 2, 2], hist: { renderMs: [1, 90, 2, 10] } };
+    const heavy = { renderMs: [1, 1, 9, 9], hist: { renderMs: [1, 50, 9, 50] } };
+    const group = [calm, calm, heavy];
+    const pooled = aggregate(group, 'renderMs');
+    expect(pooled.pooled).toBe(true);
+    expect(pooled.frames).toBe(300);
+    expect(pooled.p95).toBe(9);
+    expect(pooled.p50).toBe(1);
+
+    // Without the histograms only the median of the windows' own percentiles is available, and it
+    // is marked as such rather than quoted as a p95.
+    const legacy = aggregate(
+      group.map((w) => ({ renderMs: w.renderMs })),
+      'renderMs',
+    );
+    expect(legacy.pooled).toBe(false);
+    expect(legacy.p95).toBe(2);
+  });
+
+  it('says in the report what the percentiles are, and marks the ones it could not pool', () => {
+    expect(report).toContain('pooled over the row’s frames');
+    expect(report).toContain('pooled percentiles over every frame');
+    expect(report).toContain('comparable with them');
+    expect(report).not.toMatch(/p95 \d+\.\d+~/);
+
+    const legacyFile = join(dir, 'rp-legacy-0001.jsonl');
+    writeFileSync(legacyFile, JSON.stringify(payload(1, [win({ seq: 1, noHist: true })])) + '\n');
+    const legacy = analyzeRenderSession(legacyFile);
+    expect(legacy).toContain('understates the tail');
+    expect(legacy).toContain('p95 2.10~ ms');
   });
 
   it('prints the §11.1 baseline table with a row per scene', () => {

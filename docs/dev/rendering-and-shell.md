@@ -957,9 +957,10 @@ guessing. The numbers land in
 
 > **Do this with the guided capture** ([below](#6-automated-capture-the-guided-checklist), plan
 > **M3-02f**): the game streams its own render profile to a log server on the desktop, an on-screen
-> checklist tells you where to fly, and an analyzer prints the §11 tables. It records **p95s**, which
-> nobody can read off a moving overlay. Everything from here to §5 is then the recipe the checklist
-> walks you through — and the fallback for when no log server is reachable.
+> checklist tells you where to fly, and an analyzer prints the §11 tables. It records **true p95s**
+> — pooled over every frame of a row, the same quantity `pnpm bench` reports, and something nobody
+> can read off a moving overlay. Everything from here to §5 is then the recipe the checklist walks
+> you through — and the fallback for when no log server is reachable.
 
 #### 0. Before you start
 
@@ -1108,13 +1109,24 @@ queued N · fails N`). `queued` climbing and `fails` rising means the monitor ca
 desktop — check the firewall and the IP.
 
 **What a window carries.** Every ~3 s the capture closes a window and POSTs it: `min / median / p95 /
-max` of the frame, tick and render times and of the draw calls, the `TPF` and `RAF` bucket counts, the
-structure rebuilds **of that window** and the pooled render-target total, plus the context that makes
-the row mean something (build id, device line, scene, stage and zone, camera, CRT setting, aspect,
-scale, GL version, viewport and the assists that were on). It also records
-`sendInFlightFrames` — the frames the POST itself was still outstanding during. That matters: the
-request runs on the main thread, so a window it spans may have recorded the sender as a render cost.
-The analyzer leaves those windows out by default.
+max` of the frame, tick and render times and of the draw calls, a **quantized histogram of each of
+those four series**, the `TPF` and `RAF` bucket counts, the structure rebuilds **of that window** and
+the pooled render-target total, plus the context that makes the row mean something (build id, device
+line — re-read every window, since the M2-17 line only arrives after boot —, scene, stage and zone,
+camera, CRT setting, aspect, scale, GL version, viewport and the assists that were on). It also
+records `sendInFlightFrames` — the frames the POST itself was still outstanding during. That matters:
+the request runs on the main thread, so a window it spans may have recorded the sender as a render
+cost. The analyzer leaves those windows out by default.
+
+**Why the histograms.** A row of the §11 tables spans many windows and is not homogeneous. Folding
+the windows' own p95s (taking their median, say) would throw away the worse half of the windows and
+understate the tail — the one direction that matters against a frame budget. Summing the histograms
+of a row's windows and reading the percentile off the total gives the percentile of *that row's
+frames*, which is what `pnpm bench` reports too, so the on-device numbers and §11.3's headless ones
+are the same quantity. The histograms cost the frame path nothing: they are folded out of the
+already-recorded per-frame series when the window closes, on the report timer. Steps are 0.05 ms for
+tick and render times, 0.25 ms for frame times and 1 for draw calls; a window whose values are
+unusually spread has its step doubled until it fits 48 buckets, which also bounds a payload's size.
 
 **Turn the session into the tables:**
 

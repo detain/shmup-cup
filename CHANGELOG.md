@@ -188,8 +188,12 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   log-server`, which now takes both senders — `ip-…` sessions from the probe, `rp-…` from the game):
   a new `@shmup/shell` `telemetry` module samples every frame into preallocated typed arrays, closes
   a window every 3 s into **min / median / p95 / max** of the frame, tick and render times and of
-  the draw calls (plus the `TPF` and rAF bucket counts, the window's structure rebuilds and the
-  pooled render-target total), and POSTs it with the context that makes the row mean something.
+  the draw calls — plus a **quantized histogram of each of those series**, so the analyzer sums a
+  table row's windows and prints the p95 of *that row's frames* instead of a median of the windows'
+  p95s, which understates the tail and would not be comparable with the `pnpm bench` p95s the same
+  document quotes — and the `TPF` and rAF bucket counts, the window's structure rebuilds and the
+  pooled render-target total, and POSTs it with the context that makes the row mean something (the
+  M2-17 device line among it, re-read every window because it only resolves after boot).
   An on-screen checklist walks the render review's §4 measurement table (M1–M8) and ticks itself, so
   the owner plays where the game says instead of keeping notes, and
   `tools/input-probe/results/analyze-render.mjs` turns a session into the tables of

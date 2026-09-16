@@ -26,11 +26,14 @@
  *   the guided capture costs the renderer nothing at all.
  *
  * **A sample carries distributions, not readings** ({@link RenderSample}): min / median / p95 / max
- * of the frame, tick, render and draw-call series over the window, the ticks-per-frame and rAF
- * bucket counts, the structure rebuilds of the window and the pooled render-target total — plus the
+ * of the frame, tick, render and draw-call series over the window, a quantized histogram of each of
+ * those series ({@link RenderSampleHistograms}) so the analyzer can pool a group's frames into a
+ * **true** percentile rather than a percentile of percentiles, the ticks-per-frame and rAF bucket
+ * counts, the structure rebuilds of the window and the pooled render-target total — plus the
  * {@link RenderSampleContext} that makes a row meaningful (build id, device line, scene, stage and
  * zone, camera, CRT setting, aspect and scale, GL version, viewport, internal size and the active
- * assists).
+ * assists). The histograms are folded out of the already-recorded series when a window closes, on
+ * the report timer, so they cost the frame path nothing.
  *
  * **Dev / test builds only.** Nothing here is reachable from a release bundle: the module is only
  * imported by `../debug/index.js`, which the apps reach through `__SHMUP_DEV__ ? … : null`, and the
@@ -45,7 +48,8 @@
  * **Public API.** {@link createRenderTelemetry}, {@link RenderTelemetry},
  * {@link RenderTelemetryOptions}, {@link RenderTelemetryEnv}; the sampler
  * ({@link RenderSampler}, {@link RENDER_FRAME_SLOT}, {@link RENDER_FRAME_SLOTS},
- * {@link RENDER_WINDOW_MAX_FRAMES}, {@link RenderSample}, {@link RenderSampleContext}); the
+ * {@link RENDER_WINDOW_MAX_FRAMES}, {@link RenderSample}, {@link RenderSampleContext},
+ * {@link RenderSampleHistograms}, {@link RENDER_HIST_STEP}, {@link RENDER_HIST_MAX_BUCKETS}); the
  * checklist ({@link RenderChecklist}, {@link RenderCheckTally}, {@link evaluateRenderChecklist},
  * {@link RenderCheckId}, {@link RenderCheckItem}, {@link RenderCheckFacts},
  * {@link RENDER_CHECK_LABELS}, {@link RENDER_CHECK_ORDER}, {@link RENDER_MANUAL_CHECKS},
@@ -124,11 +128,20 @@ export function makeRenderSessionId(nowMs: number, random: number): string {
   return 'rp-' + Math.floor(nowMs).toString(36) + '-' + r;
 }
 
-/** Session-level facts every payload repeats, collected once when the capture starts. */
+/**
+ * Session-level facts every payload repeats, collected once when the capture starts — except
+ * {@link RenderTelemetryEnv.device}, which is re-read once per window.
+ */
 export interface RenderTelemetryEnv {
   /** The build id (`__SHMUP_BUILD__`) — every row must say which bundle produced it. */
   buildId: string;
-  /** The M2-17 device line (model, firmware, display, Chrome, GL); `''` in a browser. */
+  /**
+   * The M2-17 device line (model, firmware, display, Chrome, GL); `''` in a browser.
+   *
+   * @remarks
+   * Refreshed from {@link RenderTelemetryOptions.device} before every send, because on Tizen it is
+   * still `''` when the capture is constructed (`describeDevice()` is async).
+   */
   device: string;
   /** `navigator.userAgent`, or `''` when unavailable. */
   userAgent: string;
@@ -459,6 +472,30 @@ export const RENDER_TICK_BUCKETS = 4;
 /** Decimals the millisecond distributions are rounded to before they go into the JSONL. */
 const MS_DIGITS = 3;
 
+/**
+ * Quantization step of each field's window histogram ({@link RenderSample.hist}), in the field's own
+ * unit — fine enough that a pooled p95 is worth quoting to two decimals, coarse enough that a
+ * window's frames fall into a few dozen buckets rather than one each.
+ */
+export const RENDER_HIST_STEP: Readonly<Record<keyof RenderSampleHistograms, number>> =
+  Object.freeze({
+    /** Frame deltas cluster at 16.7 ms; a quarter of a millisecond is well under any hitch. */
+    frameMs: 0.25,
+    /** Tick times are tenths of a millisecond on the TV. */
+    tickMs: 0.05,
+    /** Render times are 1–4 ms on the TV; 0.05 ms is ~2 % of a p95 worth arguing about. */
+    renderMs: 0.05,
+    /** Draw calls are whole numbers, so their histogram is exact. */
+    drawCalls: 1,
+  });
+
+/**
+ * Buckets one field's window histogram may use. Beyond it the step is doubled until the values fit,
+ * which bounds a payload: {@link MAX_QUEUED_SAMPLES} windows of four histograms must stay well
+ * under the log server's 2 MiB body limit even after a long outage.
+ */
+export const RENDER_HIST_MAX_BUCKETS = 48;
+
 /** Where a window was taken — the context that makes a row of the §4 table meaningful. */
 export interface RenderSampleContext {
   /** The scene flow's top scene id (`'title'`, `'game'`, `'pause'` …). */
@@ -505,6 +542,35 @@ export interface RenderSampleContext {
   assists: string[];
 }
 
+/**
+ * Coarse histograms of a window's four series, one per field, as flat `[value, count, value,
+ * count, …]` pairs with the values ascending.
+ *
+ * @remarks
+ * **Why a window carries these as well as its own `[min, p50, p95, max]` tuple.** A group of the
+ * §11 tables spans many windows, and a group's p95 must be the p95 of *its frames*. Folding the
+ * windows' own p95s (a median of them, say) throws away the worse half of the windows and
+ * systematically understates the tail — the one direction that matters when the figure is checked
+ * against a frame budget, and the one that would make the analyzer's numbers incomparable with the
+ * true p95s `pnpm bench` prints in `docs/dev/input-probe-results.md` §11.3. Summing these
+ * histograms across a group and reading the percentile off the total is the pooled percentile over
+ * every frame, exact up to {@link RENDER_HIST_STEP}.
+ *
+ * Building them costs the frame path nothing: the per-frame series are already stored in
+ * {@link RenderSampler}'s preallocated arrays, and the histogram is folded out of them in
+ * {@link RenderSampler.close}, which runs on the report timer.
+ */
+export interface RenderSampleHistograms {
+  /** Frame deltas, quantized to {@link RENDER_HIST_STEP}`.frameMs`. */
+  frameMs: number[];
+  /** Tick times, quantized to {@link RENDER_HIST_STEP}`.tickMs`. */
+  tickMs: number[];
+  /** Render times, quantized to {@link RENDER_HIST_STEP}`.renderMs`. */
+  renderMs: number[];
+  /** Draw calls (exact — the step is 1). */
+  drawCalls: number[];
+}
+
 /** One closed sampling window: distributions over the window, plus where it was taken. */
 export interface RenderSample {
   /** Window number within the session, starting at 1. */
@@ -532,6 +598,11 @@ export interface RenderSample {
   renderMs: number[];
   /** `[min, median, p95, max]` of the draw calls. */
   drawCalls: number[];
+  /**
+   * Quantized histograms of the same four series, so the analyzer can pool a group's frames and
+   * report a **true** percentile instead of a percentile of percentiles.
+   */
+  hist: RenderSampleHistograms;
   /** Frames of this window on which Pixi rebuilt the whole instruction set (the review's F1). */
   rebuilds: number;
   /** Pooled render-target total at the end of the window, KB (F2 / F3). */
@@ -673,6 +744,19 @@ export class RenderSampler {
     const measured = counts[RenderSampler.MEASURED] | 0;
     const durationMs = endMs - startMs;
     const rebuildsStart = counts[RenderSampler.REBUILDS_START];
+    // One fold per series: the tuple the panel and the server line show, and the quantized
+    // histogram the analyzer pools into a group's true percentiles. Both come out of the same
+    // sorted scratch, and both run here — on the report timer, never on a frame.
+    const frame = this.fold(this.frameSeries, measured, 1, true, RENDER_HIST_STEP.frameMs);
+    const tick = this.fold(this.tickSeries, measured, MS_DIGITS, false, RENDER_HIST_STEP.tickMs);
+    const render = this.fold(
+      this.renderSeries,
+      measured,
+      MS_DIGITS,
+      false,
+      RENDER_HIST_STEP.renderMs,
+    );
+    const draw = this.fold(this.drawSeries, measured, 0, false, RENDER_HIST_STEP.drawCalls);
     const sample: RenderSample = {
       seq,
       startMs: round(startMs, 1),
@@ -681,10 +765,16 @@ export class RenderSampler {
       measuredFrames: measured,
       fps: durationMs > 0 ? round((frames * 1000) / durationMs, 2) : 0,
       sendInFlightFrames: counts[RenderSampler.IN_FLIGHT],
-      frameMs: this.quartiles(this.frameSeries, measured, 1, true),
-      tickMs: this.quartiles(this.tickSeries, measured, MS_DIGITS, false),
-      renderMs: this.quartiles(this.renderSeries, measured, MS_DIGITS, false),
-      drawCalls: this.quartiles(this.drawSeries, measured, 0, false),
+      frameMs: frame.dist,
+      tickMs: tick.dist,
+      renderMs: render.dist,
+      drawCalls: draw.dist,
+      hist: {
+        frameMs: frame.hist,
+        tickMs: tick.hist,
+        renderMs: render.hist,
+        drawCalls: draw.hist,
+      },
       rebuilds: rebuildsStart < 0 ? 0 : counts[RenderSampler.REBUILDS_END] - rebuildsStart,
       renderTargetKb: Math.round(counts[RenderSampler.RT_BYTES] / 1024),
       tickFrames: toArray(this.tickBuckets),
@@ -708,20 +798,29 @@ export class RenderSampler {
   }
 
   /**
-   * `[min, median, p95, max]` of the first `count` entries of a series.
+   * `[min, median, p95, max]` of the first `count` entries of a series, and the series' quantized
+   * histogram.
    *
    * @param series - The stored values.
    * @param count - How many are valid.
-   * @param digits - Decimals to round to.
+   * @param digits - Decimals to round the tuple to.
    * @param skipZero - Drop zero entries (frames with no delta yet).
-   * @returns The four figures, `[0, 0, 0, 0]` when nothing qualifies.
+   * @param step - Histogram quantum ({@link RENDER_HIST_STEP}); doubled until the values fit into
+   *   {@link RENDER_HIST_MAX_BUCKETS} buckets.
+   * @returns `dist`: the four figures (`[0, 0, 0, 0]` when nothing qualifies); `hist`: flat
+   *   `[value, count, …]` pairs, values ascending (empty when nothing qualifies).
+   *
+   * @remarks
+   * Runs from {@link RenderSampler.close}, on the report timer — the arrays it allocates never
+   * touch a frame.
    */
-  private quartiles(
+  private fold(
     series: Float64Array,
     count: number,
     digits: number,
     skipZero: boolean,
-  ): number[] {
+    step: number,
+  ): { dist: number[]; hist: number[] } {
     const scratch = this.scratch;
     let n = 0;
     for (let i = 0; i < count; i++) {
@@ -729,16 +828,60 @@ export class RenderSampler {
       if (skipZero && v === 0) continue;
       scratch[n++] = v;
     }
-    if (n === 0) return [0, 0, 0, 0];
+    if (n === 0) return { dist: [0, 0, 0, 0], hist: [] };
     const sorted = scratch.subarray(0, n);
     sorted.sort();
-    return [
+    const dist = [
       round(sorted[0], digits),
       round(sorted[quantileIndex(n, 0.5)], digits),
       round(sorted[quantileIndex(n, 0.95)], digits),
       round(sorted[n - 1], digits),
     ];
+    // A window whose values are unusually spread (a stall, a stage change) would otherwise get one
+    // bucket per frame: coarsen until it fits, so a payload's size stays bounded.
+    let q = step > 0 ? step : 1;
+    while (countBuckets(sorted, n, q) > RENDER_HIST_MAX_BUCKETS) q *= 2;
+    const hist: number[] = [];
+    let key = Number.NaN;
+    let run = 0;
+    for (let i = 0; i < n; i++) {
+      // Nearest multiple, so a bucket's label is its centre and the error is unbiased.
+      const value = round(Math.round(sorted[i] / q) * q, HIST_DIGITS);
+      if (value === key) {
+        run++;
+        continue;
+      }
+      if (run > 0) hist.push(key, run);
+      key = value;
+      run = 1;
+    }
+    if (run > 0) hist.push(key, run);
+    return { dist, hist };
   }
+}
+
+/** Decimals a histogram's bucket labels are rounded to (every step used is a multiple of 0.05). */
+const HIST_DIGITS = 3;
+
+/**
+ * How many distinct buckets a sorted run falls into at a given quantum.
+ *
+ * @param sorted - The values, ascending.
+ * @param n - How many.
+ * @param step - The quantum.
+ * @returns The bucket count.
+ */
+function countBuckets(sorted: Float64Array, n: number, step: number): number {
+  let buckets = 0;
+  let last = Number.NaN;
+  for (let i = 0; i < n; i++) {
+    const value = Math.round(sorted[i] / step);
+    if (value !== last) {
+      buckets++;
+      last = value;
+    }
+  }
+  return buckets;
 }
 
 /**
@@ -1089,6 +1232,20 @@ export interface RenderTelemetryOptions {
   /** Session-level facts (`env` of every payload). */
   readonly env: RenderTelemetryEnv;
   /**
+   * The M2-17 device line, re-read once per window.
+   *
+   * @returns The model / firmware / display line, or `''` when there is none yet.
+   *
+   * @remarks
+   * A getter rather than a string in {@link RenderTelemetryOptions.env} because on Tizen the line is
+   * **empty at boot**: `describeDevice()` is async and resolves long after the debug tools (and this
+   * capture) are constructed. Reading it once at construction would stamp every payload of a monitor
+   * session with `''`, and the analyzer would report the capture as `device (browser)` — the plan
+   * asks for "device info (the M2-17 line)" in every row. Called once per closed window (never per
+   * frame), so it may allocate.
+   */
+  readonly device?: () => string;
+  /**
    * Fills the context of a window that is about to close. Called once per window (never per
    * frame), so it may read strings.
    *
@@ -1295,6 +1452,9 @@ export function createRenderTelemetry(options: RenderTelemetryOptions): RenderTe
    */
   const report = (): RenderSample | null => {
     const now = options.now();
+    // The M2-17 line arrives asynchronously, well after this capture was constructed: re-read it
+    // here (once per window, never per frame) so a monitor session is not labelled `(browser)`.
+    if (options.device !== undefined) options.env.device = options.device();
     const seq = state.windowSeq + 1;
     const sample = sampler.close(seq, state.windowStart, now, options.context(), []);
     state.windowStart = now;

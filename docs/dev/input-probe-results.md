@@ -185,6 +185,15 @@ during are excluded from the tables (`--all` keeps them). Copy the raw JSONL int
 `tools/input-probe/results/<date>-<hardware>/` as evidence. Reading the overlay by hand still works
 and stays the fallback when no log server is reachable.
 
+**What the `p50` / `p95` in §11.1 and §11.2 are.** They are **pooled percentiles over every frame of
+the row**: each window also carries a quantized histogram of its frame, tick, render and draw-call
+series (0.05 ms for TICK / RENDER, 0.25 ms for FRAME, exact for DRAW), the analyzer sums the
+histograms of a row's windows and reads the percentile off the total. That is the same quantity the
+headless `pnpm bench` figures in §11.3 are, so the two **are** directly comparable. `min` and `max`
+are the single best and worst frames of the row. A figure the analyzer prints with a trailing `~`
+could not be pooled (a session captured before the histograms existed): it is the median of the
+windows' own percentiles, understates the tail, and must **not** be compared with §11.3.
+
 **Which build these expectations describe.** Everything below assumes a build **at or after plan
 step M3-02d** (commit `1cbbf42`), which folded the CRT look and the Mode-7 floor into their draw
 passes. That changed the very figures this table compares against, so §11.3 prints each headless

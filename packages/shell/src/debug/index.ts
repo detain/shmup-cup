@@ -520,6 +520,9 @@ export function createDebugTools(
     win,
     now: host.now,
     env: telemetryEnv,
+    // Re-read once per window: on Tizen `describeDevice()` resolves long after boot, so the line is
+    // still `''` here and a monitor capture would be labelled `(browser)` in the §11 report.
+    device: device ?? undefined,
     context: () => readRenderContext(host, counters, stats),
   });
   /** The sampler's per-frame inbox — written by the frame hooks, never allocated. */

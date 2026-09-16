@@ -365,8 +365,11 @@ which nobody can read off a moving panel.
    node results/analyze-render.mjs logs/rp-<session>.jsonl
    ```
 
-   Paste its output into the results document. Use **god mode (key 2)** throughout so a death never
-   cuts a run short, and leave the outlines (3) and slow motion (6) off — both change what is drawn.
+   Paste its output into the results document. The `p50` / `p95` it prints are worked out over
+   **every frame** of each row, not from a few readings, so they mean the same thing as the figures
+   the desktop benchmark prints and can be compared with them directly. Use **god mode (key 2)**
+   throughout so a death never cuts a run short, and leave the outlines (3) and slow motion (6)
+   off — both change what is drawn.
 
 Nothing of this runs in a build without that address, and none of it exists in the normal build.
 

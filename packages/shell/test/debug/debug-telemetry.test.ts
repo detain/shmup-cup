@@ -49,8 +49,13 @@ class TimerWindow extends EventTarget {
 /** The requests the capture made; nothing leaves the process. */
 const sent: string[] = [];
 
-/** An `XMLHttpRequest` stand-in that records the body and never answers. */
+/** The request objects, so a test can answer one (the sender allows only one in flight). */
+const requests: SilentXhr[] = [];
+
+/** An `XMLHttpRequest` stand-in that records the body and answers only when a test says so. */
 class SilentXhr {
+  /** Response status a test hands back through {@link SilentXhr.finish}. */
+  status = 200;
   /** Timeout the sender set. */
   timeout = 0;
   /** Success handler. */
@@ -73,6 +78,12 @@ class SilentXhr {
    */
   send(body: string): void {
     sent.push(body);
+    requests.push(this);
+  }
+
+  /** Answers the request, so the sender can start the next one. */
+  finish(): void {
+    this.onload?.();
   }
 }
 
@@ -102,9 +113,10 @@ const renderer = {
  * Creates tools on the fake host.
  *
  * @param reportUrl - The log-server URL (`''` leaves the capture off).
+ * @param device - The M2-17 device-line getter, as `tizenDebugTools` passes it.
  * @returns The tools.
  */
-function createTools(reportUrl: string): DebugTools {
+function createTools(reportUrl: string, device?: () => string): DebugTools {
   return createDebugTools(
     {
       game,
@@ -115,7 +127,7 @@ function createTools(reportUrl: string): DebugTools {
       sceneId: () => 'game',
       visibleWorld: () => null,
     },
-    { buildId: 'abc1234', reportUrl },
+    { buildId: 'abc1234', reportUrl, device },
   );
 }
 
@@ -139,6 +151,7 @@ function frame(frameMs: number, tickMs: number, renderMs: number): void {
 
 beforeEach(() => {
   sent.length = 0;
+  requests.length = 0;
   clock.now = 0;
   win = new TimerWindow();
   Object.defineProperty(win, 'XMLHttpRequest', { value: SilentXhr, configurable: true });
@@ -223,6 +236,24 @@ describe('shell/debug render telemetry (M3-02f)', () => {
     expect(payload.checklist).toHaveLength(8);
     expect(payload.samples).toHaveLength(1);
     expect(payload.samples[0].frames).toBe(5);
+  });
+
+  it('picks up the device line that only arrives after boot (M2-17 is async)', () => {
+    // Exactly what `tizenDebugTools` hands over: `() => device.line`, empty until the async
+    // `describeDevice()` resolves — long after the tools were constructed. A payload stamped `''`
+    // makes the analyzer report a monitor capture as `device (browser)`.
+    const line = { value: '' };
+    tools = createTools('http://10.0.0.2:8787', () => line.value);
+    for (let i = 0; i < 3; i++) frame(16.7, 0.2, 1);
+    win.timer?.();
+    expect((JSON.parse(sent[0]) as { env: { device: string } }).env.device).toBe('');
+    requests[0].finish();
+
+    line.value = 'LS43AM702U 20_KANTSU2 FW M-KSU2SMWWC-2750.0 1920x1080@1 C69 GL1/4096';
+    for (let i = 0; i < 3; i++) frame(16.7, 0.2, 1);
+    win.timer?.();
+    expect(sent).toHaveLength(2);
+    expect((JSON.parse(sent[1]) as { env: { device: string } }).env.device).toBe(line.value);
   });
 
   it('stops the capture on destroy, once', () => {

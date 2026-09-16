@@ -41,9 +41,13 @@ node results/analyze-render.mjs logs/rp-<session>.jsonl --all       # keep the w
 An `rp-…` session is written by the game's own dev build (`@shmup/shell`'s `telemetry` module, built with the same
 `VITE_REPORT_URL`). Each JSONL line is `{kind:'render-profile', session, seq, sentAt, env, checklist, samples,
 droppedSamples}` plus the server's `receivedAt` / `from`; each entry of `samples` is one ~3-second window with
-`[min, median, p95, max]` of the frame, tick and render times and of the draw calls, the `TPF` and `RAF` bucket
-counts, that window's structure rebuilds, the pooled render-target total, the context it was taken in and the
-checklist items it fed (`marks`). `sendInFlightFrames` counts the frames the report POST itself was outstanding
+`[min, median, p95, max]` of the frame, tick and render times and of the draw calls, a quantized histogram of each
+of those series (`hist`), the `TPF` and `RAF` bucket counts, that window's structure rebuilds, the pooled
+render-target total, the context it was taken in and the checklist items it fed (`marks`). A group's `p50` / `p95`
+in the printed tables are **pooled over every frame of the group** — the histograms summed, the percentile read off
+the total — so they are the same quantity as the `pnpm bench` p95s in `docs/dev/input-probe-results.md` §11.3 and
+comparable with them; a figure marked `~` could not be pooled (a session older than the histograms) and is the
+median of the windows' own percentiles, which understates the tail. `sendInFlightFrames` counts the frames the report POST itself was outstanding
 during — the analyzer drops those windows unless `--all`, because the request runs on the main thread and its cost
 would otherwise be recorded as the renderer's. Recipe:
 [rendering-and-shell.md § Measuring on the TV](../../../docs/dev/rendering-and-shell.md#measuring-on-the-tv).
