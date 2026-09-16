@@ -188,11 +188,16 @@ and stays the fallback when no log server is reachable.
 **What the `p50` / `p95` in §11.1 and §11.2 are.** They are **pooled percentiles over every frame of
 the row**: each window also carries a quantized histogram of its frame, tick, render and draw-call
 series (0.05 ms for TICK / RENDER, 0.25 ms for FRAME, exact for DRAW), the analyzer sums the
-histograms of a row's windows and reads the percentile off the total. That is the same quantity the
-headless `pnpm bench` figures in §11.3 are, so the two **are** directly comparable. `min` and `max`
-are the single best and worst frames of the row. A figure the analyzer prints with a trailing `~`
-could not be pooled (a session captured before the histograms existed): it is the median of the
-windows' own percentiles, understates the tail, and must **not** be compared with §11.3.
+histograms of a row's windows and reads the percentile off the total. That is the same statistic the
+headless `pnpm bench` figures in §11.3 are — **the same statistic, not a comparable magnitude**.
+These are Mali-G51 milliseconds; the bench runs Chromium + SwiftShader on a desktop, so what
+transfers from it is its **counted** quantities (draw calls, pooled render-target bytes, structure
+rebuilds, heap delta) and its **in-run ratios**, never its milliseconds — as
+[rendering-and-shell.md § What this bench can and cannot tell you](rendering-and-shell.md#what-this-bench-can-and-cannot-tell-you)
+and §11.3's own preamble say. `min` and `max` are the single best and worst frames of the row. A
+figure the analyzer prints with a trailing `~` could not be pooled (a session captured before the
+histograms existed): it is the median of the windows' own percentiles, understates the tail, and is
+not even the same statistic as §11.3's.
 
 **Which build these expectations describe.** Everything below assumes a build **at or after plan
 step M3-02d** (commit `1cbbf42`), which folded the CRT look and the Mode-7 floor into their draw

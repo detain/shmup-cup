@@ -551,8 +551,9 @@ export interface RenderSampleContext {
  * §11 tables spans many windows, and a group's p95 must be the p95 of *its frames*. Folding the
  * windows' own p95s (a median of them, say) throws away the worse half of the windows and
  * systematically understates the tail — the one direction that matters when the figure is checked
- * against a frame budget, and the one that would make the analyzer's numbers incomparable with the
- * true p95s `pnpm bench` prints in `docs/dev/input-probe-results.md` §11.3. Summing these
+ * against a frame budget, and the one that would stop the analyzer's figure being the same
+ * statistic as the true p95s `pnpm bench` prints in `docs/dev/input-probe-results.md` §11.3 (the
+ * same statistic, not a comparable magnitude — the bench runs under SwiftShader). Summing these
  * histograms across a group and reading the percentile off the total is the pooled percentile over
  * every frame, exact up to {@link RENDER_HIST_STEP}.
  *
@@ -886,7 +887,7 @@ function countBuckets(sorted: Float64Array, n: number, step: number): number {
 
 /**
  * Index of a quantile in a sorted run of `n` values (the input probe analyzer's rule, so the two
- * write-ups quote comparable figures).
+ * write-ups quote the same statistic).
  *
  * @param n - How many values.
  * @param fraction - 0 … 1.

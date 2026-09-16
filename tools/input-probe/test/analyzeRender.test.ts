@@ -252,7 +252,7 @@ describe('analyze-render', () => {
   it('says in the report what the percentiles are, and marks the ones it could not pool', () => {
     expect(report).toContain('pooled over the row’s frames');
     expect(report).toContain('pooled percentiles over every frame');
-    expect(report).toContain('comparable with them');
+    expect(report).toContain('not a comparable magnitude');
     expect(report).not.toMatch(/p95 \d+\.\d+~/);
 
     const legacyFile = join(dir, 'rp-legacy-0001.jsonl');

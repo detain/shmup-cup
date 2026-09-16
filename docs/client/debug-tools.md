@@ -367,7 +367,10 @@ which nobody can read off a moving panel.
 
    Paste its output into the results document. The `p50` / `p95` it prints are worked out over
    **every frame** of each row, not from a few readings, so they mean the same thing as the figures
-   the desktop benchmark prints and can be compared with them directly. Use **god mode (key 2)**
+   the desktop benchmark prints — the same *statistic*, not a comparable *magnitude*. These are the
+   TV's milliseconds; the benchmark runs under software WebGL, so only its counted quantities (draw
+   calls, pooled render-target bytes, structure rebuilds, heap delta) and its in-run ratios carry
+   over to the panel, never its milliseconds. Use **god mode (key 2)**
    throughout so a death never cuts a run short, and leave the outlines (3) and slow motion (6)
    off — both change what is drawn.
 

@@ -21,8 +21,11 @@
  * frame, both straight from the windows' own tuples. **p50 and p95 are pooled percentiles over every frame
  * of the group**: each window carries a quantized histogram of its frame, tick, render and draw-call series
  * (`RenderSample.hist`, 0.05 ms for render and tick, 0.25 ms for frame times), the histograms are summed
- * and the percentile is read off the total. That is the same quantity `pnpm bench` reports, so the tables
- * this prints are directly comparable with the headless figures in `docs/dev/input-probe-results.md` §11.3.
+ * and the percentile is read off the total. That is the same statistic `pnpm bench` reports in
+ * `docs/dev/input-probe-results.md` §11.3 — **the same statistic, not a comparable magnitude**: these are the
+ * TV's milliseconds and the bench runs under SwiftShader, so what transfers from it is its counted quantities
+ * (draw calls, pooled render-target bytes, structure rebuilds, heap delta) and its in-run ratios, never its
+ * milliseconds.
  * A session recorded before the histograms existed falls back to the median of the windows' own p50s / p95s,
  * which understates the tail; such figures are printed with a trailing `~` and the tables say so.
  *
@@ -184,7 +187,10 @@ function pct(agg, key, digits = 2) {
 const PERCENTILE_NOTE =
   '`p50` / `p95` are **pooled percentiles over every frame** of the row (the windows’ quantized frame-time' +
   ' histograms summed — 0.05 ms for TICK / RENDER, 0.25 ms for FRAME, exact for DRAW), so they are the same' +
-  ' quantity as the `pnpm bench` p95s in §11.3 and comparable with them. `min` / `max` are the single best' +
+  ' statistic as the `pnpm bench` p95s in §11.3 — **the same statistic, not a comparable magnitude**: these are' +
+  ' this panel’s milliseconds and the bench runs under SwiftShader, so what transfers from it is its counted' +
+  ' quantities (draw calls, pooled render-target bytes, structure rebuilds, heap delta) and its in-run ratios,' +
+  ' never its milliseconds. `min` / `max` are the single best' +
   ' and worst frames. A figure marked `~` could not be pooled (a session recorded before the histograms' +
   ' existed) and is the median of the windows’ own percentiles, which understates the tail.'
 
@@ -515,10 +521,11 @@ export function analyzeRenderSession(file, options = {}) {
     out.push(
       pooledFrames.pooled
         ? `Every p50 / p95 below is pooled over the row’s frames (${pooledFrames.frames} frames in this` +
-          ' session’s windows), the same quantity as the `pnpm bench` p95s in §11.3.'
+          ' session’s windows), the same statistic as the `pnpm bench` p95s in §11.3 — the same statistic,' +
+          ' not a comparable magnitude (the bench runs under SwiftShader).'
         : 'Some p50 / p95 below are marked `~`: those windows carry no frame-time histogram, so the median' +
-          ' of the windows’ own percentiles stands in and understates the tail (it is **not** comparable' +
-          ' with §11.3’s bench p95s).',
+          ' of the windows’ own percentiles stands in and understates the tail (it is not even the same' +
+          ' statistic as §11.3’s bench p95s).',
     );
   }
   out.push('');

@@ -45,9 +45,11 @@ droppedSamples}` plus the server's `receivedAt` / `from`; each entry of `samples
 of those series (`hist`), the `TPF` and `RAF` bucket counts, that window's structure rebuilds, the pooled
 render-target total, the context it was taken in and the checklist items it fed (`marks`). A group's `p50` / `p95`
 in the printed tables are **pooled over every frame of the group** — the histograms summed, the percentile read off
-the total — so they are the same quantity as the `pnpm bench` p95s in `docs/dev/input-probe-results.md` §11.3 and
-comparable with them; a figure marked `~` could not be pooled (a session older than the histograms) and is the
-median of the windows' own percentiles, which understates the tail. `sendInFlightFrames` counts the frames the report POST itself was outstanding
+the total — so they are the same statistic as the `pnpm bench` p95s in `docs/dev/input-probe-results.md` §11.3.
+The same *statistic*, not a comparable *magnitude*: these are the panel's milliseconds and the bench runs under
+SwiftShader, so what transfers from it is its counted quantities (draw calls, pooled render-target bytes, structure
+rebuilds, heap delta) and its in-run ratios, never its milliseconds. A figure marked `~` could not be pooled (a
+session older than the histograms) and is the median of the windows' own percentiles, which understates the tail. `sendInFlightFrames` counts the frames the report POST itself was outstanding
 during — the analyzer drops those windows unless `--all`, because the request runs on the main thread and its cost
 would otherwise be recorded as the renderer's. Recipe:
 [rendering-and-shell.md § Measuring on the TV](../../../docs/dev/rendering-and-shell.md#measuring-on-the-tv).
