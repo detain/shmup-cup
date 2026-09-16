@@ -3,7 +3,8 @@
 > **Status:** **approved — executing** (since 2026-09-10). As of 2026-09-16: **M1 and M2 complete** (`1.0.0-rc.1`),
 > **M3-01, M3-02 and M3-02b done** (the last of those tuned the game to the 2026-09-15 input-probe run), then
 > **M3-02c … M3-02e** (the render-performance work in
-> [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03 — 40 of 44 steps. Progress, the resume point and open risks are in
+> [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)), **M3-02f** (guided
+> render telemetry) and M3-03 — 42 of 45 steps. Progress, the resume point and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
@@ -245,7 +246,7 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 |---|---|---|
 | **M1 — Playable vertical slice** | Zone A with boss is playable start → boss → stage clear with the remote-first scheme in `pnpm dev`, and `pnpm --filter @shmup/tizen build` produces a checked `.wgt`-ready `dist/`; title/pause/game over/stage clear; HUD; audio; saves; debug tools; golden replays | M1-01 … M1-19 |
 | **M2 — Complete v1.0** | All P1 features: rank/difficulty, full meter arsenal, Direct mode + ship select, co-op, 9-zone map with 16 routes, advanced stage & boss systems, front-end screens, options/rebinding/accessibility, Electron + TV polish, release candidate | M2-01 … M2-18 |
-| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) and the render-performance work it exposed (M3-02c … M3-02e) | M3-01 … M3-03 (incl. M3-02b … M3-02e) |
+| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) and the render-performance work it exposed (M3-02c … M3-02e) | M3-01 … M3-03 (incl. M3-02b … M3-02f) |
 
 | Id | Title | Fills (placeholder → implemented) |
 |---|---|---|
@@ -292,6 +293,7 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 | M3-02c | Render profiling: on-device numbers and a render benchmark | render-pixi `debug`, `test/bench`, `docs/dev` |
 | M3-02d | Fold the full-screen effects into their draw passes | render-pixi `effects`, shell `memory`, shell `boot` |
 | M3-02e | Cut the per-frame scene-graph rebuild | render-pixi `layers`, `sprites`, `particles` |
+| M3-02f | Render telemetry: guided capture streamed to a log server | shell `debug`, `tools/input-probe` server, new analyzer |
 | M3-03 | Reach: localization, more platforms, tracker music | apps `electron` (`steam.ts`), new adapters |
 
 ---
@@ -4329,6 +4331,63 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Acceptance:** M3-02c's render bench shows a measured drop in render p95 on the worst-case frame and the overlay's
   structure-rebuild counter falls; every render-pixi allocation guard still passes; **golden replays unchanged**.
 - **Refs:** `shmup_feat.md` §22, decision D19, `docs/dev/conventions.md` "zero allocation in hot paths"; review F1, F9.
+
+### M3-02f — Render telemetry: guided capture streamed to a log server
+
+- **Goal:** the owner plays where the game tells them to and the numbers record themselves, instead of being read off
+  the overlay and typed into a table by hand. **Depends on:** M3-02c (it streams that step's stats). Independent of
+  M3-02d / M3-02e, and best done **before** the M3-02e work it has to size.
+- **Why:** the measurement table in `docs/dev/render-performance-review.md` §4 / plan §8.4 (M1-M8) is eight scenarios
+  across two monitors, each needing several figures read off a debug overlay while playing. That is error-prone,
+  cannot capture per-frame distributions at all, and the most valuable numbers (the cost of the structure rebuild,
+  the real CRT delta) are exactly the ones a human cannot eyeball reliably.
+- **Precedent to reuse, not reinvent:** the input probe already does this end to end. `tools/input-probe/server/
+  log-server.mjs` is a zero-dependency Node receiver (`POST /report` appends one JSONL line per payload under
+  `<LOG_DIR>/<session>.jsonl`, `GET /` lists sessions, `GET /health`), and it is **payload-agnostic** apart from the
+  line it prints. `tools/input-probe/src/reporter.ts` + `report.ts` already solve the Chromium 69 problems:
+  `XMLHttpRequest` (not `fetch`) for its built-in timeout, `Content-Type: text/plain` so the POST stays a CORS
+  "simple request" with no preflight, at most one request in flight, and a failed request re-queues its payload.
+  `tools/input-probe/src/checklist.ts` is the "play where it wants" pattern: sticky items that tick themselves when
+  the behaviour has been observed. `tools/input-probe/results/analyze.mjs` is the reference re-analysis.
+- **Scope:**
+  - **Receiver.** Reuse the probe's log server rather than writing a second one — lift it to a shared location (or
+    add a documented `LOG_DIR` / route for render sessions) so `npm run log-server` receives both kinds. Keep it
+    zero-dependency and keep its existing tests passing.
+  - **Sender (dev builds only).** A reporter in the shell's debug tools that batches render-profile samples and POSTs
+    every ~3 s, modelled on the probe's. It must be **absent from a release bundle** (the same
+    `resources.debugTools` / `__SHMUP_DEV__` gate the M3-02c `?gl=` override uses) and configured at build time
+    (`VITE_REPORT_URL`, as the probe is). The internet privilege is already in `apps/tizen/public/config.xml`.
+  - **Do not perturb what you measure.** This is the whole point of the step and its main risk. Sample off the render
+    path, allocate nothing per frame (reuse buffers, as the overlay's own counters do), and send on a timer rather
+    than a frame boundary. Record whether a send was in flight during each sampling window so a frame spike caused by
+    the sender can be identified and excluded rather than silently recorded as a render cost.
+  - **What a sample carries:** the M3-02c overlay figures (FPS, TICK ms, RENDER ms, DRAW, REB, RT), the TPF counters
+    and the rAF histogram, as **distributions over the window** (min / median / p95 / max and the bucket counts), not
+    just the latest reading — a p95 is the figure the review actually needs and the one a human cannot read off a
+    moving overlay. Plus the context needed to make a row meaningful: build id, device info (the M2-17 line), stage /
+    zone and camera position, CRT setting, aspect mode, GL version, viewport and scale, and the active assists.
+  - **Guided capture.** An on-screen checklist that walks the owner through the §4 / §8.4 table (M1-M8): each item
+    names what to do ("fly zone A for 30 s", "switch CRT to full and fly the same section", "press Home, wait, come
+    back"), ticks itself when enough samples of the right kind have arrived, and marks each captured window in the
+    stream so the analyzer can find it. Sticky ticks, like the probe's. The owner should be able to finish the whole
+    table without a notebook.
+  - **Analyzer.** A `results/analyze-render.mjs` (mirroring the probe's `analyze.mjs`) that turns a session's JSONL
+    into exactly the tables waiting in `docs/dev/input-probe-results.md` §11 — per scenario and per monitor — so the
+    results are pasted, not transcribed.
+  - **Docs:** the capture recipe in `docs/dev/rendering-and-shell.md` ("Measuring on the TV") and
+    `docs/client/debug-tools.md` rewritten around the guided flow, with the manual overlay reading kept as the
+    fallback for when no log server is reachable.
+- **Acceptance:** log-server tests still pass and cover a render payload; the sender is proven absent from a release
+  bundle (a build-output assertion, as M3-02c does for the `?gl=` override); a headless test drives the sampler over
+  a scripted frame sequence and checks the distributions it reports, that it allocates nothing per frame, and that a
+  send in flight is flagged; the checklist ticks from synthetic sample streams; the analyzer turns a fixture session
+  into the §11 table shape; full check suite and the M3-02c render bench unchanged.
+- **Manual (owner):** run `npm run log-server` on the desktop, build with `VITE_REPORT_URL=http://<desktop-ip>:8787`,
+  install on both monitors, and play the checklist through. Windows will prompt to allow Node through the firewall on
+  the private network — the probe's run needed the same.
+- **Refs:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) §4 (the measurement
+  table) and §7; [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §11 (the tables to fill);
+  `docs/dev/input-probe.md`; plan §8.2 (the probe's own protocol, as the model) and §8.4.
 
 ### M3-03 — Reach: localization, more platforms, tracker music
 
