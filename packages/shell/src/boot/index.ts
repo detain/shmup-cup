@@ -127,7 +127,8 @@
  * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},
  * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming},
  * {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE},
- * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}. Debug tools: the `debug` module.
+ * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}; M3-02c: {@link webGLVersionFromSearch} (the
+ * `?gl=` dev switch). Debug tools: the `debug` module.
  *
  * @module
  */
@@ -364,6 +365,39 @@ export function sceneFromSearch(search: string): ShellScene {
     for (const scene of SHELL_SCENES) if (scene === value) return scene;
   }
   return 'game';
+}
+
+/**
+ * Reads the `gl` query parameter — the dev switch that A/Bs the WebGL version on device
+ * (plan M3-02c, the render review's **F8**).
+ *
+ * @remarks
+ * **WebGL1 stays the shipped default.** The M7 probe found WebGL 1 *and* 2 available on Tizen 5.5 /
+ * Chromium 69 with `MAX_TEXTURE_SIZE` 8192 (`docs/dev/input-probe-results.md` §9), so the old
+ * "WebGL2 is unverified" reason is gone — but nothing yet says 2 is *faster*, and the project also
+ * targets older sets. This switch exists so the owner can measure the difference (review §4, M5)
+ * rather than guess it; `PixiRenderer.webGLVersion` (the overlay's WEBGL figure) reports what was
+ * actually obtained, which may be 2 even when 1 was asked for.
+ *
+ * @param search - `location.search` (with or without the leading `?`).
+ * @returns `1` or `2` when the parameter names one, else `null` (use the default).
+ *
+ * @example
+ * ```ts
+ * webGLVersionFromSearch('?gl=2'); // → 2
+ * webGLVersionFromSearch('?scene=flight'); // → null
+ * ```
+ */
+export function webGLVersionFromSearch(search: string): 1 | 2 | null {
+  const query = search.charAt(0) === '?' ? search.slice(1) : search;
+  for (const pair of query.split('&')) {
+    const eq = pair.indexOf('=');
+    if ((eq < 0 ? pair : pair.slice(0, eq)) !== 'gl') continue;
+    const value = eq < 0 ? '' : pair.slice(eq + 1);
+    if (value === '1') return 1;
+    if (value === '2') return 2;
+  }
+  return null;
 }
 
 /**
@@ -926,8 +960,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       effects: options.effects,
       // The particles' own RNG, seeded per session from the game's seed (never the sim's streams).
       fxSeed: ((options.gameConfig?.seed ?? DEFAULT_GAME_CONFIG.seed) ^ FX_SEED_SALT) >>> 0,
-      // The debug overlay's draw-call figure (dev / test builds only).
+      // The debug overlay's draw-call and structure-rebuild figures (dev / test builds only).
       countDrawCalls: options.debugTools !== undefined && options.debugTools !== null,
+      countStructureRebuilds: options.debugTools !== undefined && options.debugTools !== null,
     });
   } catch (error) {
     throw fail('WEBGL IS NOT AVAILABLE', [describe(error)], [], error);

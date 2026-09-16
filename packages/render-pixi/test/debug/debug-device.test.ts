@@ -1,6 +1,6 @@
 /**
- * The debug panel's device line (plan M2-17 — the TV's model, firmware and display under the five
- * panel lines): absent until a host sets it, drawn on a sixth line with a taller backdrop once set,
+ * The debug panel's device line (plan M2-17 — the TV's model, firmware and display under the other
+ * panel lines): absent until a host sets it, drawn on the last line with a taller backdrop once set,
  * kept to printable ASCII and the panel's width, and rewritten only when it changes. The overlay's
  * `setDevice`, which the shell calls every frame, allocates nothing while its input stays the same —
  * even for a TV line longer than the panel, which cleaning cuts into a new string (M2-17 review).
@@ -61,8 +61,8 @@ describe('render-pixi/debug device line (M2-17)', () => {
     buildDebugPanel(panel, stats, null, flags, graph);
     expect(backdropHeight(panel.backdrop)).toBe(plain + 10);
     const device = texts(panel.values).find(([text]) => text.startsWith('QN43'));
-    // Line 6 since M3-02b (the frame-pacing line comes before it).
-    expect(device).toEqual(['QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096', PLAYFIELD_Y + 2 + 60]);
+    // Line 7 since M3-02c (the frame-pacing and render-profile lines come before it).
+    expect(device).toEqual(['QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096', PLAYFIELD_Y + 2 + 70]);
 
     setDebugPanelDevice(panel, '');
     buildDebugPanel(panel, stats, null, flags, graph);

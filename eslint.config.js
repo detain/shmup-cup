@@ -334,6 +334,11 @@ export default defineConfig([
     languageOptions: { globals: { ...globals.node } },
   },
   {
+    // The render bench's page (plan M3-02c): test code, but it runs in a browser, not in Node.
+    files: ['test/bench/render-harness/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['apps/electron/src/preload/**/*.cts'],
     rules: {
       // Sandboxed preloads must be CommonJS; `import x = require()` is the TS-native form.

@@ -14,7 +14,7 @@ import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
-import { bootTizenApp, type TizenAppResources } from '../../src/boot/index.js';
+import { WEBGL_VERSION_KEY, bootTizenApp, type TizenAppResources } from '../../src/boot/index.js';
 import { REMOTE_KEYS_TO_REGISTER } from '../../src/platform/index.js';
 
 const fakes = vi.hoisted(() => {
@@ -323,6 +323,37 @@ describe('tizen/boot bootTizenApp wiring', () => {
     });
     expect(app.shell.scene).toBe('game'); // the scene flow (title first)
     expect(app.game.scenes).not.toBeNull();
+  });
+
+  // M3-02c / review F8: the TV has no query string, so a dev build reads the override from
+  // localStorage; a release build (no debug tools) never looks at it.
+  it('A/Bs WebGL2 from the dev override, and only in a build with the debug tools', async () => {
+    win.stored.set(WEBGL_VERSION_KEY, '2');
+    const release = await boot();
+    expect(fakes.renderer.options).toMatchObject({ preferWebGLVersion: 1 });
+    release.app.stop();
+
+    // A dev build's marker is simply that it has debug tools; a stub is enough here.
+    const devTools = {
+      beginFrame: () => {},
+      endTicks: () => {},
+      beforeRender: () => {},
+      afterRender: () => {},
+      handleKey: () => false,
+      destroy: () => {},
+    } as unknown as ReturnType<NonNullable<TizenAppResources['debugTools']>>;
+    const devResources: TizenAppResources = { ...resources, debugTools: () => devTools };
+    win = new FakeWindow();
+    win.stored.set(WEBGL_VERSION_KEY, '2');
+    const two = await bootTizenApp({} as HTMLCanvasElement, devResources, win as unknown as Window);
+    expect(fakes.renderer.options).toMatchObject({ preferWebGLVersion: 2 });
+    two.stop();
+
+    win = new FakeWindow();
+    win.stored.set(WEBGL_VERSION_KEY, 'nope');
+    const one = await bootTizenApp({} as HTMLCanvasElement, devResources, win as unknown as Window);
+    expect(fakes.renderer.options).toMatchObject({ preferWebGLVersion: 1 });
+    one.stop();
   });
 
   it('builds a remote-first Tizen platform and game (keys registered, autofire forced)', async () => {

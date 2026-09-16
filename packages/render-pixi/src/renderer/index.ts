@@ -1,8 +1,11 @@
 /**
  * # renderer — the PixiJS v8 `IRenderer` implementation
  *
- * **Responsibility.** Owns the Pixi `WebGLRenderer` (WebGL1 preferred — WebGL2 on
- * Tizen 5.5 GPUs is unverified), a 384×216 render texture with nearest-neighbour
+ * **Responsibility.** Owns the Pixi `WebGLRenderer` (WebGL1 preferred — the conservative default
+ * for the older sets the project also targets; the M7 probe of 2026-09-15 found WebGL **1 and 2**
+ * both available on Tizen 5.5 / Chromium 69 with `MAX_TEXTURE_SIZE` 8192, so 2 is *possible*, not
+ * *better* — see `docs/dev/input-probe-results.md` §9 and the review's F8. Dev builds can A/B it
+ * with `?gl=2`), a 384×216 render texture with nearest-neighbour
  * sampling, and the two-pass frame: (1) draw the low-res scene into the render texture,
  * (2) draw that texture once, integer-scaled and letterboxed, to the canvas. Pixi is
  * used as a *renderer only*: no `Application`, no Pixi ticker — the host's fixed-step
@@ -47,7 +50,10 @@
  * **Debug (plan M1-19).** With {@link PixiRendererOptions.countDrawCalls} (the shell sets it only
  * in dev / test builds, together with its debug tools) the WebGL context's draw entry points are
  * wrapped with a counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (both
- * passes; -1 when not counting). The debug overlay (`debug` module) adds its own containers to
+ * passes; -1 when not counting). With {@link PixiRendererOptions.countStructureRebuilds} (M3-02c)
+ * {@link PixiRenderer.structureRebuilds} counts the frames on which Pixi rebuilt the scene's whole
+ * instruction set rather than updating what moved — the overlay's REB figure, the review's F1. The
+ * debug overlay (`debug` module) adds its own containers to
  * the `DEBUG` layer; the renderer draws that layer like the others.
  *
  * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
@@ -66,7 +72,8 @@
  * scale mode, hitbox, interpolation and layer effects, M2-08; M3-02 the Mode-7 floor, the CRT
  * filter — {@link PixiRenderer.setCrtFilter} — and the aspect modes —
  * {@link PixiRenderer.setAspect}, {@link PANEL_ALPHA}), {@link PixiRendererOptions} (incl.
- * `countDrawCalls`, M1-19; `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
+ * `countDrawCalls` and M3-02c's `countStructureRebuilds`, M1-19;
+ * `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
  * M2-08; `aspect`, `createCrtFilter` and `createMode7Filter`, M3-02).
  *
  * **The extras of M3-02.** The renderer owns three presentation-only additions, each idle until
@@ -272,6 +279,13 @@ export interface PixiRendererOptions {
    * counter; dev / test builds only (default `false`).
    */
   readonly countDrawCalls?: boolean;
+  /**
+   * Count the frames whose scene rebuilt Pixi's instruction set
+   * ({@link PixiRenderer.structureRebuilds} — the debug overlay's REB figure, plan M3-02c). Reads
+   * the scene render group's `structureDidChange` before each pass 1; dev / test builds only
+   * (default `false`).
+   */
+  readonly countStructureRebuilds?: boolean;
   /** How the frame fills the display (default `'integer'` — plan M2-08, the scale modes). */
   readonly scaleMode?: ScaleMode;
   /** Draw the ships' hitbox markers (default `false` — the "show hitbox" display option, M2-08). */
@@ -316,6 +330,13 @@ export interface PixiRenderer extends IRenderer {
    * without {@link PixiRendererOptions.countDrawCalls} (or the context could not be wrapped).
    */
   readonly drawCalls: number;
+  /**
+   * Frames since creation whose scene render group had `structureDidChange` set when `render()`
+   * was called — the frames on which Pixi threw the whole instruction set away and re-walked the
+   * scene instead of taking its cheap "update what moved" path (the review's F1). -1 when the
+   * renderer was created without {@link PixiRendererOptions.countStructureRebuilds}.
+   */
+  readonly structureRebuilds: number;
   /** Current placement of the scaled frame on the canvas. */
   readonly viewport: Viewport;
   /** The scale mode in use (plan M2-08). */
@@ -571,7 +592,9 @@ const resetPass = (
  * - Without `setSpriteNames()` every sprite id draws `ui/missing`; call it once the content
  *   (or a dev scene's name table) is known.
  * - Debug (M1-19): with `countDrawCalls` the context's draw entry points are wrapped with a
- *   counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (else -1); the debug
+ *   counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (else -1); with
+ *   `countStructureRebuilds` (M3-02c) {@link PixiRenderer.structureRebuilds} counts the frames
+ *   Pixi rebuilt the scene's instruction set on (else -1); the debug
  *   overlay (`debug` module) adds its own containers to the `DEBUG` layer.
  * - Game feel (M1-14): with an atlas, a particle pool of `particleCapacity` sprites per blend
  *   mode (seeded with `fxSeed`) and, with a font too, the 16 score popups are created on the
@@ -625,6 +648,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     options.countDrawCalls === true &&
     installDrawCallCounter((renderer as unknown as { gl?: unknown }).gl, drawCounter);
   if (countDraws) drawCounter.last = 0;
+  // M3-02c: frames on which Pixi rebuilt the scene's whole instruction set (the review's F1).
+  const countRebuilds = options.countStructureRebuilds === true;
+  let structureRebuilds = countRebuilds ? 0 : -1;
 
   // Pass 1 target: the internal frame, sampled nearest-neighbour when upscaled.
   const frameTexture = RenderTexture.create({
@@ -1023,6 +1049,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     get drawCalls() {
       return drawCounter.last;
     },
+    get structureRebuilds() {
+      return structureRebuilds;
+    },
     setSpriteNames(names) {
       if (atlas === null) return;
       spriteNames = names;
@@ -1172,6 +1201,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       if (hudView !== null) hudView.draw(frame.hud);
       if (uiView !== null) uiView.draw(frame.ui);
       drawCounter.calls = 0;
+      // Before pass 1: Pixi clears the flag while rendering, so it has to be read now.
+      if (countRebuilds && scene.renderGroup?.structureDidChange === true) structureRebuilds++;
       renderer.render(resetPass(scenePass, frameTexture, true));
       renderer.render(resetPass(screenPass, undefined, undefined));
       if (countDraws) drawCounter.last = drawCounter.calls;

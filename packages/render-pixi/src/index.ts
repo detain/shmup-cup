@@ -221,6 +221,7 @@ export {
   createDebugOverlayStats,
   createDebugPanelLists,
   createFrameGraph,
+  createRenderTargetMeter,
   debugDeviceText,
   rafDeltaBucket,
   setDebugPanelDevice,
@@ -230,4 +231,5 @@ export {
   type DebugOverlayStats,
   type DebugPanelLists,
   type FrameGraph,
+  type RenderTargetMeter,
 } from './debug/index.js';

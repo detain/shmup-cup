@@ -4198,6 +4198,57 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   entering the Mode-7 and raster stages; **M4** a hitch on the first very dense pattern of a fresh launch; **M5** the
   WebGL1-vs-2 A/B; **M7** whether the app really stops rendering under the Home overlay.
 - **Refs:** `shmup_feat.md` §22 (render <= 8 ms, 20–50 draw calls), §24; review F8, F10.
+- **As built:**
+  - **The overlay's two figures got their own line, not the TPF / RAF one.** Line 5 is full to
+    column 46 (`TPF` and its four counters, then `RAF` and the eight-bucket histogram), so `REB`
+    and `RT` are line 6 and the M2-17 device line moved to line 7 (`PANEL_LINES` 6 → 7, the
+    backdrop and the frame graph follow). Same rules as the rest: one `DrawList` per colour,
+    allocation-free (guarded).
+  - **The pooled-target total is measured with a hook, not a scan.** `createRenderTargetMeter`
+    (`@shmup/render-pixi` `debug`) wraps Pixi's global `TexturePool.createTexture` once and
+    accumulates `w × h × 4`, so the overlay reads a number. Walking the pool's `_poolKeyHash` every
+    frame would have allocated — the very thing the module forbids. `stop()` (called by the debug
+    tools' `destroy`) puts the pool's own method back and never steals a later meter's hook.
+  - **The structure-rebuild count is a renderer option**, `countStructureRebuilds`, alongside
+    `countDrawCalls` and set by the shell in dev / test builds: `render()` reads the scene render
+    group's `structureDidChange` *before* pass 1 (Pixi clears it while rendering).
+    `PixiRenderer.structureRebuilds` is -1 when not counting, exactly like `drawCalls`.
+  - **The bench drives a purpose-built page, not the game app.** The plan said "the built web
+    bundle"; the bench has to choose the internal frame size, the stage and the exact scene load,
+    and the shipped shell exposes none of those. `test/bench/render-harness/` is built by the bench
+    itself with Vite and the repo's own `shmupContent()` / `shmupAssets()` plugins, so it runs the
+    real renderer over the real simulation and the real atlas — but it needs no shipped code to
+    grow a bench-only knob. It is served on an ephemeral port and driven in Playwright's Chromium;
+    one page per scenario, because Pixi's `TexturePool` is a global that never releases a texture.
+  - **The resolution parameter is compared on the layer-effect scenario**, where it actually moves:
+    a filter pass is pooled at the *internal* frame size, so 384×216 → 768×432 takes the pooled
+    target 512 KB → 2,048 KB and the frame render texture 324 KB → 1,296 KB (review §7.3's ×4).
+    The scene's *content* is still 384×216 of world — rendering the same world scaled up is a
+    renderer change nobody has made yet — so the knob measures fill and render-target cost, not
+    content density. Recorded here so the next reader does not over-read the number.
+  - **Budgets.** Draw calls (`DRAW_CALL_BUDGET = 20`, above the e2e specs' 12 because a scenario
+    stacks the busy frame, a filter *and* the CRT pass) and the heap delta are the sharp gates;
+    `RENDER_P95_BUDGET_MS = 16` is deliberately loose, because the bench renders through
+    SwiftShader on whatever machine runs it — it catches a structural regression, not a Mali-G51
+    prediction. Measured on the first run: p95 2.1–3.1 ms, 4–7 draw calls, heap 350–470 KB over
+    600 frames. A leaky fixture in the same file proves the heap gate fails when it should.
+  - **What the bench already settled** (recorded in `docs/dev/input-probe-results.md` §11.3):
+    **659 of 660 frames rebuild the scene's whole instruction set** — F1's mechanism confirmed
+    against a real browser rather than Pixi's source; CRT `light` costs what CRT `full` costs and
+    pools the same target (F2); and a 384×216 filter pass really is pooled as 512×256 (F3).
+  - **F8's dev switch is two switches, because the TV has no query string.** `apps/web` reads
+    `?gl=2` (`webGLVersionFromSearch`, new in `@shmup/shell` `boot`); `apps/tizen` reads
+    `localStorage['shmup-cup:gl']` (`WEBGL_VERSION_KEY`) — but only in a build that has the debug
+    tools, so the release bundle never looks at it and the `APP_JS_GZIP_BUDGET` is untouched.
+    WebGL1 stays the shipped default everywhere.
+  - **Still manual (hardware):** the owner's §4 / §8.4 measurement table M1–M8. The recipe is
+    `docs/dev/rendering-and-shell.md` § "Measuring on the TV" and the numbers land in
+    `docs/dev/input-probe-results.md` §11, whose baseline and per-measurement tables are already
+    there to be filled in. Nothing in this step is blocked on it: M3-02d and M3-02e are gated by
+    the headless bench.
+  - **Deliberately not done** (it belongs to M3-02d / M3-02e, and an instrument must not fix what
+    it measures): no CRT rewrite, no render groups, no boot warm-up frame, no `estimateMemory`
+    correction.
 
 ### M3-02d — Fold the full-screen effects into their draw passes
 

@@ -42,6 +42,7 @@ import {
   moduleInfo,
   defaultStageId,
   sceneFromSearch,
+  webGLVersionFromSearch,
   type ShellInput,
   type ShellInputProfiles,
   type ShellOptions,
@@ -323,6 +324,18 @@ describe('shell/boot sceneFromSearch', () => {
     expect(sceneFromSearch('?scene=nope')).toBe('game');
     expect(sceneFromSearch('?scene')).toBe('game');
     expect(sceneFromSearch('')).toBe('game');
+  });
+
+  // M3-02c / review F8: the dev switch that A/Bs the WebGL version on device.
+  it('reads ?gl= and leaves the default alone otherwise', () => {
+    expect(webGLVersionFromSearch('?gl=2')).toBe(2);
+    expect(webGLVersionFromSearch('?gl=1')).toBe(1);
+    expect(webGLVersionFromSearch('scene=flight&gl=2')).toBe(2);
+    expect(webGLVersionFromSearch('?gl=3')).toBeNull();
+    expect(webGLVersionFromSearch('?gl=')).toBeNull();
+    expect(webGLVersionFromSearch('?gl')).toBeNull();
+    expect(webGLVersionFromSearch('?glossy=2')).toBeNull();
+    expect(webGLVersionFromSearch('')).toBeNull();
   });
 });
 

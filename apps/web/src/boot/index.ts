@@ -24,7 +24,9 @@
  * `?scene=showcase` shows the M1-04 sprite showcase, `?scene=calibration` the test pattern and
  * `?scene=fx-gallery` every particle preset and screen effect in turn (plan M1-14);
  * `?loadout=full` starts fully powered — speed 2, Missile, Laser, four Options (dev override,
- * plan M1-10; {@link loadoutFromSearch}).
+ * plan M1-10; {@link loadoutFromSearch}); `?gl=2` asks Pixi for a WebGL2 context instead of the
+ * default WebGL1 (M3-02c, the render review's F8 — the A/B switch, not a new default; the debug
+ * overlay's WEBGL figure shows what was obtained).
  *
  * **Input profiles** (decisions D13–D15). The `input-profiles` content is parsed into a
  * registry during boot. Keys use `?profile=<id>` when given (dev override — e.g.
@@ -106,6 +108,7 @@ import {
   bootShell,
   defaultStageId,
   sceneFromSearch,
+  webGLVersionFromSearch,
   type DebugToolsFactory,
   type Shell,
   type ShellAssets,
@@ -535,6 +538,8 @@ export async function bootWebApp(
     scene,
     // Electron's window allows audio without a gesture (`autoplayPolicy`); browsers do not.
     audioUnlock: electron === null ? 'gesture' : 'immediate',
+    // M3-02c / review F8: `?gl=2` A/Bs the renderer against WebGL2; WebGL1 stays the default.
+    preferWebGLVersion: webGLVersionFromSearch(search) ?? 1,
     debugTools: resources.debugTools ?? null,
     // M3-01: the build the replays record, SHARE through the clipboard.
     buildId: resources.buildId ?? 'dev',

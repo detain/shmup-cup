@@ -4,6 +4,16 @@ A code-level review of how the renderer behaves on the M7, written 2026-09-16 ag
 M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds the hardware facts in the real
 [input-probe run](input-probe-results.md) on both monitors.
 
+> **Update (M3-02c).** The instrument this report asked for exists: `pnpm bench` →
+> `test/bench/render.perf.ts` measures `renderer.render()` in a real browser (**F10**), the debug
+> overlay shows the structure-rebuild count and the pooled render-target total on the TV, the stale
+> WebGL2 docblock is corrected and a dev switch A/Bs the version (**F8**). What it already settles
+> without the hardware is in [input-probe-results.md §11.3](input-probe-results.md#113-what-the-headless-bench-already-says):
+> essentially **every** frame rebuilds the scene's instruction set (F1's mechanism, confirmed against
+> a browser), CRT `light` costs what CRT `full` costs (F2), and a 384×216 filter pass really is
+> pooled as 512×256 (F3). The *milliseconds* on the M7 still need §4's table — the recipe is in
+> [rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv).
+>
 > **Nothing here was measured on the hardware.** Every claim is marked *Confirmed* (read from the code and verifiable
 > headlessly) or *Needs-measurement* (mechanism certain, magnitude unknown). §4 lists exactly what has to be measured
 > on the monitors, and §6 says where the author was unsure. The work it proposes is plan steps
@@ -46,7 +56,7 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 **Currently at risk**
 
 - There is **no render‑side performance test at all**. `pnpm bench` (`test/bench/*.perf.ts`) measures the *simulation* only (median ≈ 0.12 ms/tick against a 1.0 ms budget). The render budget from `shmup_feat.md:671` ("render ≤ 8 ms, 20–50 draw calls") is checked only incidentally by two e2e specs with `DRAW_CALL_BUDGET = 12` (`test/e2e/mode7.spec.ts:34`, `test/e2e/raster.spec.ts:32`). Nothing would catch a render regression from M3‑03 onwards.
-- The renderer's module docblock still says *"WebGL2 on Tizen 5.5 GPUs is unverified"* (`renderer/index.ts:4-5`) — the probe verified it on both monitors (`docs/dev/input-probe-results.md` §9). Stale, and it is the stated reason for `preferWebGLVersion: 1`.
+- ~~The renderer's module docblock still says *"WebGL2 on Tizen 5.5 GPUs is unverified"*~~ — **fixed in M3-02c**, together with a dev switch (`?gl=2` on the web, `localStorage['shmup-cup:gl']` on the TV) so the version can be A/B'd. WebGL1 remains the shipped default.
 - `docs/dev/input-probe-results.md` §7 (Home = `blur`, no `visibilitychange`) has been addressed by M3‑02b (`apps/tizen/src/boot/index.ts` passes `focus: win`), but the renderer keeps drawing under the Home overlay at ~56 fps. Worth confirming the renderer actually stops.
 
 **Good news worth stating plainly:** the rendering architecture is *already* right for this hardware. Low‑res render texture + one nearest integer upscale (~29× less fill than drawing at 1080p), one atlas page, no mipmaps, no antialias, pixel‑snapped integer positions, pooled everything, texture bindings never changed mid‑frame in a way that breaks batching, blend modes fixed at creation, and a genuinely allocation‑free sync path. Most of the third‑party advice is either already implemented or actively wrong here.
@@ -184,7 +194,7 @@ Our allocation guards run in Node with fake atlases and fake images (`packages/r
 ---
 
 ### F8 — `preferWebGLVersion: 1` is defensible, but its stated justification is now false
-**Impact: Low · Needs‑measurement**
+**Impact: Low · Needs‑measurement · Docblock fixed and the A/B switch added in M3‑02c**
 
 `renderer/index.ts:4-5` says *"WebGL1 preferred — WebGL2 on Tizen 5.5 GPUs is unverified"*, and `:619` defaults to 1 (both hosts pass 1: `apps/tizen/src/boot/index.ts` `preferWebGLVersion: 1`; `shell/src/boot/index.ts:922`). The probe **verified WebGL 2 (OpenGL ES 3.0) on both M7s** with `MAX_TEXTURE_SIZE 8192` (probe §9); `shmup_tech.md` §2.2 has already been annotated with the measurement but the code comment has not.
 
@@ -204,7 +214,7 @@ It does **not** save a draw call today — Pixi's multi‑texture batcher handle
 ---
 
 ### F10 — No render‑side benchmark or regression gate
-**Impact: Medium (process) · Confirmed**
+**Impact: Medium (process) · Confirmed · Addressed by M3‑02c**
 
 `test/bench/stress.perf.ts`, `zones.perf.ts` and `soak.perf.ts` all drive `stepWorld` / `createGame` headlessly — pure simulation. `stress.perf.ts:39-43` budgets 1.0 ms/tick and 512 KB heap; the plan records the measured median as ≈ 0.12 ms/tick (`shmup_plan.md:2039`). **Nothing measures `renderer.render()`.** The only render‑cost assertions in the repo are `DRAW_CALL_BUDGET = 12` in `test/e2e/mode7.spec.ts:246` and `test/e2e/raster.spec.ts:223,254`.
 

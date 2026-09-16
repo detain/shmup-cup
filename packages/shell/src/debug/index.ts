@@ -18,7 +18,9 @@
  *
  * Each frame the tools measure the shell's work with the host clock — the time spent in the
  * frame's ticks (`game.frame`) and in `renderer.render` (smoothed), the frame time (graph and FPS)
- * — read the renderer's draw calls and particle pool, collect the sim counters
+ * — read the renderer's draw calls, its M3-02c structure-rebuild count and the pooled
+ * render-target total (`createRenderTargetMeter`, stopped on `destroy`) and its particle pool,
+ * collect the sim counters
  * (`collectDebugCounters`: pools, rank, RNG calls, a state hash every 60 ticks) and rebuild the
  * overlay before the frame is rendered. They also publish **`window.__shmupDebug`**
  * ({@link ShmupDebugApi}: the scene id, ticks, switches, counters, a command runner, the game) for
@@ -62,6 +64,7 @@ import {
 } from '@shmup/core';
 import {
   createDebugOverlay,
+  createRenderTargetMeter,
   rafDeltaBucket,
   type DebugOverlay,
   type DebugOverlayStats,
@@ -393,6 +396,9 @@ export function createDebugTools(
   const controls = createDebugControls(game);
   const overlay = createDebugOverlay(renderer, { buildId });
   const counters = createDebugCounters();
+  // M3-02c: the pooled render-target total the overlay's RT figure shows (the review's F2). One
+  // hook on Pixi's `TexturePool`, so reading it every frame costs a property read.
+  const renderTargets = createRenderTargetMeter();
   const stats = overlay.stats;
   stats.webGLVersion = renderer.webGLVersion;
   stats.bootMs = host.bootMs;
@@ -594,6 +600,9 @@ export function createDebugTools(
       if (world !== null) collectDebugCounters(world, counters);
       stats.drawCalls = renderer.drawCalls;
       stats.vsyncLock = game.vsyncLock;
+      // M3-02c: the two render-profile figures (the review's F1 and F2).
+      stats.structureRebuilds = renderer.structureRebuilds;
+      stats.renderTargetBytes = renderTargets.bytes;
       const particles = renderer.particles;
       stats.particles = particles === null ? 0 : particles.liveCount;
       stats.particleCapacity = particles === null ? 0 : particles.capacity;
@@ -611,6 +620,7 @@ export function createDebugTools(
       win.removeEventListener('keydown', onKeyDown, KEY_OPTIONS);
       win.removeEventListener('keyup', onKeyUp, KEY_OPTIONS);
       win.removeEventListener('blur', onBlur);
+      renderTargets.stop();
       overlay.destroy();
       const globals = win as unknown as Record<string, unknown>;
       if (globals[DEBUG_GLOBAL] === api) delete globals[DEBUG_GLOBAL];

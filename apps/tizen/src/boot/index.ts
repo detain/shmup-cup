@@ -54,8 +54,13 @@
  * then —, the display, Chrome and WebGL) for the overlay's sixth line, the **device line**, and logs
  * the snapshot as `Shmup Cup device`. The release bundle (`pnpm build`) has none of it.
  *
+ * **WebGL version (M3-02c / review F8).** WebGL1 is the shipped default. A dev / test build reads
+ * {@link WEBGL_VERSION_KEY} from `localStorage` (or `?gl=2` on the Tizen dev server) so the owner
+ * can A/B WebGL2 on the monitors; the overlay's WEBGL figure shows what the context really is. A
+ * release bundle (no debug tools) never reads the override.
+ *
  * **Public API.** {@link bootTizenApp}, {@link TizenApp}, {@link TizenAppResources},
- * {@link tizenDebugTools}, {@link DEBUG_REMOTE_KEYS}.
+ * {@link tizenDebugTools}, {@link DEBUG_REMOTE_KEYS}; M3-02c: {@link WEBGL_VERSION_KEY}.
  *
  * @module
  */
@@ -84,6 +89,7 @@ import {
   debugToolsFactory,
   defaultStageId,
   sceneFromSearch,
+  webGLVersionFromSearch,
   type DebugToolsFactory,
   type Shell,
   type ShellAssets,
@@ -290,6 +296,37 @@ function searchOf(win: Window): string {
 }
 
 /**
+ * `localStorage` key of the dev-build WebGL override (plan M3-02c, the render review's **F8**):
+ * set it to `'2'` from the remote Web Inspector and relaunch the app to run the next session on a
+ * WebGL2 context. Any other value (or none) keeps the shipped WebGL1 default.
+ */
+export const WEBGL_VERSION_KEY = 'shmup-cup:gl';
+
+/**
+ * The WebGL version a dev / test build asks Pixi for: `?gl=1` / `?gl=2` (the Tizen dev server),
+ * else {@link WEBGL_VERSION_KEY} in `localStorage` (the TV, which has no query string), else 1.
+ *
+ * @remarks
+ * **WebGL1 stays the shipped default** — the M7 probe found both versions available
+ * (`docs/dev/input-probe-results.md` §9), which retires the old "unverified" reason but is not
+ * evidence that 2 is faster, and the project also targets older sets. This override exists so the
+ * owner can run the review's §4 M5 A/B on the monitors; only a build with the debug tools
+ * (`__SHMUP_DEV__`) calls it.
+ *
+ * @param win - The window.
+ * @returns 1 or 2.
+ */
+function devWebGLVersion(win: Window): 1 | 2 {
+  const fromSearch = webGLVersionFromSearch(searchOf(win));
+  if (fromSearch !== null) return fromSearch;
+  try {
+    return safeLocalStorage(win)?.getItem(WEBGL_VERSION_KEY) === '2' ? 2 : 1;
+  } catch (_error) {
+    return 1;
+  }
+}
+
+/**
  * Exits through the Tizen API directly (used by Back before the platform exists, i.e. on the
  * boot error screen).
  *
@@ -463,7 +500,9 @@ export async function bootTizenApp(
     },
     scene,
     audioUnlock: 'immediate',
-    preferWebGLVersion: 1,
+    // M3-02c / review F8: WebGL1 is the shipped default; a dev build (the one that has the debug
+    // tools) can A/B WebGL2 on the TV.
+    preferWebGLVersion: (resources.debugTools ?? null) === null ? 1 : devWebGLVersion(win),
     debugTools: resources.debugTools ?? null,
     // The build the replays record (M3-01; the TV has no SHARE).
     buildId: resources.buildId ?? 'dev',

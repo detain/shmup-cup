@@ -813,6 +813,89 @@ Prettier-ignored). CI runs the suite as its own `e2e` job. Unit tests stay in No
 display objects need no GPU, so atlas, bindings, quad pools, text and the renderer (with
 `WebGLRenderer` faked) are all tested headless.
 
+## Measuring render performance (M3-02c)
+
+Until M3-02c nothing in the repo measured `renderer.render()` (the render review's **F10**):
+`pnpm bench` drove the *simulation* and the only render-cost assertions were the two e2e specs'
+`DRAW_CALL_BUDGET = 12`. There are now two instruments — one headless gate and one on-device
+readout — and they answer different questions.
+
+### The headless gate: `pnpm bench` → `test/bench/render.perf.ts`
+
+```sh
+pnpm bench                                             # every bench, the render one included
+npx vitest run --config test/bench/vitest.config.ts render.perf.ts   # only the render bench
+```
+
+It builds `test/bench/render-harness/` with Vite (the repo's own `shmupContent()` /
+`shmupAssets()` plugins, so the shipped content and the real atlas go in), serves it on an
+ephemeral port and drives it in Playwright's Chromium with SwiftShader. The page puts the **real**
+renderer in front of the **real** simulation: `createGame` on the shipped content, the bullet pool
+topped to 512 every tick, a bomber's screen clear turning those bullets into 512 point items, the
+particle pool kept full, and the frame drawn through the same two passes the TV runs. Each
+scenario gets its own page, because Pixi's `TexturePool` is a global that never gives a texture
+back — one page, one pooled-render-target total.
+
+| What it reports | Why |
+|---|---|
+| **render-ms p50 / p95 / max** | CPU time inside `renderer.render()`. Under SwiftShader, so it is a *regression* gate (`RENDER_P95_BUDGET_MS`), never a prediction of the Mali-G51 |
+| **draw calls** | Hardware-independent — the strict gate (`DRAW_CALL_BUDGET`; `shmup_feat.md` §22 allows 20–50) |
+| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 512×256 for a 384×216 pass, and the CRT filter one the size of the canvas |
+| **structure rebuilds** | Frames on which Pixi threw the instruction set away and re-walked the scene (review **F1**) |
+| **JS-heap delta over 600 frames** | The gate **F5** needs: the Node allocation guards stop at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation. A deliberately leaky fixture in the same file proves the gate really fails |
+
+The **internal frame size is a scenario parameter** (review §7.5): one scenario runs the
+layer-effect load at 768×432 — ×2 of the shipped 384×216, the first integer step — so "what would
+a higher internal resolution cost?" is a bench run rather than a build-and-hope. What it shows
+today: the pooled filter target goes 512 KB → 2,048 KB and the frame render texture 324 KB →
+1,296 KB, exactly the ×4 of §7.3's table.
+
+What the first run measured (headless, so read the shape, not the milliseconds): **659 of 660
+frames rebuilt the scene's instruction set** — F1's mechanism confirmed against a real browser,
+not just against Pixi's source — and CRT `light` costs what CRT `full` costs and pools the same
+target, which is F2's claim exactly.
+
+### The on-device readout: the debug overlay
+
+A `build:dev` bundle, the debug tools unlocked (web: F1; TV: **Pause, Ch+, Ch+, Ch+**), and the
+overlay's panel shows the two figures M3-02c added on its sixth line:
+
+| Figure | Meaning |
+|---|---|
+| `REB` | Frames since boot on which Pixi rebuilt the scene's whole instruction set (`PixiRenderer.structureRebuilds`). Near the frame count means every frame pays the full tree walk — the review's **F1** |
+| `RT` | Kilobytes of pooled render targets (`createRenderTargetMeter` over Pixi's `TexturePool`). Jumps by ~16 MB the moment CRT is switched on at 1080p — the review's **F2** |
+
+Both obey the overlay's own rules: one `DrawList` per colour, and allocation-free per frame (the
+meter hooks `TexturePool.createTexture` once, so reading the total is a property read).
+
+### Measuring on the TV
+
+The measurement table of the review's §4, in the order to run it. Everything needs
+`pnpm --filter @shmup/tizen build:dev` installed on the set and the tools unlocked with **Pause,
+Ch+, Ch+, Ch+**; the numbers land in
+[input-probe-results.md](input-probe-results.md#11-render-profile-m3-02c) next to the input probe's.
+
+**Baseline first — it is the control for everything else.**
+
+1. Title screen idle, then zone A, then the boss. For each: read **FPS**, **TICK ms**,
+   **RENDER ms**, **DRAW**, **REB** and **RT**, and photograph the frame graph and the RAF
+   histogram (buckets 12 / 15 / 17 / 19 / 21 / 25 / 33 ms).
+2. Confirm **TPF** reads overwhelmingly `1` and **LOCK** is showing. If not, M3-02b's vsync lock
+   is not engaging — check the refresh probe lands inside 55–65 Hz.
+3. Note **boot ms** against the 10 s store budget.
+
+| # | Question | How |
+|---|---|---|
+| **M1** | What does the per-frame scene rebuild (**F1**) cost? | Compare RENDER ms on the title (few sprites, structure nearly static) with a busy boss frame, and watch **REB** against the frame count. Then, as a throwaway experiment, comment out the `visible = false` lines in `SpriteLayerBinding.sync` for one build: the RENDER-ms delta is the rebuild cost. Do not ship that build |
+| **M2** | What does the CRT filter (**F2**) cost? | OPTIONS → DISPLAY → CRT off / light / full on the *same* stage section, reading RENDER ms, FPS and **RT** each time. Expect `light` to cost what `full` costs and **RT** to jump by ~16 MB. Watch for a one-frame stall the first time CRT goes on — that is **F4**'s shader link |
+| **M3** | Mode-7 and layer-effect entry hitches (**F4**) | Play into the Mode-7 stage and the water / heat-haze stage; a single ~30–50 ms bar in the frame graph at the range boundary, once per session, confirms it |
+| **M4** | The batch-growth hitch (**F5**) | Frame graph during the first very dense pattern of a fresh launch, then again after a checkpoint restart. A red bar that appears only the first time is Pixi's buffer doubling |
+| **M5** | WebGL1 vs WebGL2 (**F8**) | Set `localStorage['shmup-cup:gl'] = '2'` from the remote Web Inspector and relaunch (the web build uses `?gl=2`). Compare RENDER ms and the RAF histogram over 60 s of the same stage; the overlay's **WEBGL** figure shows what the context really is. **WebGL1 stays the shipped default** — this is an A/B, not a new default |
+| **M6** | Memory | DevTools over `sdb` → Memory, plus `estimateStageMemory(...)` per zone with CRT on and off, cross-checked against **RT**. The estimator is known to under-count (review **F3**); M3-02d fixes it |
+| **M7** | Does the app stop rendering under the Home overlay? | Press Home mid-game, wait 10 s, come back. The probe recorded rAF continuing at ~56 fps with no `visibilitychange`; confirm M3-02b's `blur` handling now pauses and suspends audio |
+| **M8** | Input-to-photon latency | Still unmeasured: a 240 fps phone video, `build:game-mode` vs the default, per plan §8.4/§8.5 |
+
+
 ## Extending it
 
 ### Drawing a new entity kind
@@ -868,6 +951,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/shell/test/` | The save at boot (M1-17: volumes on a fake audio, the app's profile callbacks, corrupt / unreadable / v0 saves, a failing storage, the Options screen end to end, `blur`, boot timing and `data-shmup-boot-ms`), `connectOptionEvents` / `applyAudioOptions` (`dispatch-options*.test.ts`; `dispatch-options-palette.test.ts` — M2-02: every palette by its index, bad indices and no callback ignored, disconnect), the saved palette applied at boot (`boot.test.ts`); the scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `packages/render-pixi/test/debug/`, `renderer/renderer-draw-calls.test.ts` | The debug overlay (M1-19): panel lines and values, frame graph, every outline kind, one colour per list, no dropped commands with every pool full, allocation-free `update`; the draw-call counter ([debug-and-replays.md](debug-and-replays.md#tests)) |
 | `packages/shell/test/debug/` | The debug tools (M1-19): F-keys, the TV unlock sequence, `window.__shmupDebug`, the frame hooks |
+| `packages/render-pixi/test/debug/debug-render-profile.test.ts`, `renderer/renderer-structure-rebuilds.test.ts`, `packages/shell/test/debug/debug-render-profile.test.ts` | M3-02c: the overlay's `REB` / `RT` line (placement, the blank `REB` when nothing counts, allocation-free rebuilds), `createRenderTargetMeter` (totals, `stop()` restoring the pool, an allocation-free read), the renderer counting only the frames whose scene structure changed (−1 without the option), and the shell refreshing both figures every frame and stopping the meter on `destroy` |
+| `test/bench/render.perf.ts` | M3-02c: the render benchmark itself — the scenarios really are under the load they claim, the draw-call / p95 / heap budgets, and a deliberately leaky fixture that must blow the heap gate |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -906,6 +991,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | The picture sits in a window with dim panels beside it | The saved ASPECT option is `wide` / `classic` (M3-02): the frame is placed in a 64:27 or 4:3 window and the leftover width is drawn as side panels (`renderer.panels`, `PANEL_ALPHA`). OPTIONS → DISPLAY → ASPECT → NORMAL fills the display again |
 | Scanlines over everything | The saved CRT option is `light` / `full` (M3-02, `renderer.crtFilter`); it is one filter over the upscaled second pass, computed at at most 1080 rows |
 | The Mode-7 floor never appears | The stage has no `mode7` section, the camera is outside its `[from, to)`, the atlas has no such sprite (`Mode7Floor.bind` got `null`) or the scene's `WorldView` dropped `effects` — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor) |
+| The overlay's `REB` figure equals the frame count | Expected today: Pixi rebuilds the scene's instruction set whenever any `visible` changed, and the draw path toggles `visible` every frame (review **F1**). M3-02e is the step that has to move it |
+| The overlay's `RT` figure jumps by ~16 MB | The CRT filter was switched on: at a 1080p viewport Pixi pools a 2048×2048 RGBA target for its pass (review **F2**). `light` costs the same as `full` |
+| The render bench cannot find the Mode-7 floor or draws magenta checkers | The harness did not call `renderer.setSpriteNames(db.sprites.names)` — the World's sprite ids index into that table, and without it `Mode7Floor.bind` gets no tile |
 | e2e specs time out waiting for `window.__shmupDebug` | The `dist/` folders are release builds (`pnpm build` ran after the test builds). `pnpm test:e2e` builds `build:test` first; do not run `playwright test` alone on release builds |
 
 ## Next steps that build on this page
@@ -1010,6 +1098,11 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `PrepareStage` — nothing yet with the single page); the debug tools' `save` API and device line
   (`DebugToolsOptions.device` → render-pixi `DebugOverlay.setDevice`, the panel's sixth line)
   ([platform-polish.md](platform-polish.md)).
+- **M3-02c** (done) — the render-performance instruments: `PixiRendererOptions.countStructureRebuilds`
+  / `PixiRenderer.structureRebuilds`, `createRenderTargetMeter` and the overlay's seventh line
+  (`REB`, `RT`), `webGLVersionFromSearch` (the `?gl=` A/B switch; WebGL1 stays the default) and the
+  render benchmark `test/bench/render.perf.ts` ([above](#measuring-render-performance-m3-02c),
+  [render-performance-review.md](render-performance-review.md)).
 - **M2-18** (done) — the shell's new module `determinism` (`createDeterminismCheck` /
   `installDeterminismCheck`: golden replays played headless in the page's own engine, published as
   `window.__shmupDeterminism`; the web app's dev / test builds open it with `?determinism` instead

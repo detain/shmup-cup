@@ -34,6 +34,7 @@ export {
   bootShell,
   defaultStageId,
   sceneFromSearch,
+  webGLVersionFromSearch,
   type BootTiming,
   type Shell,
   type ShellAssets,

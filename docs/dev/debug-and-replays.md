@@ -241,6 +241,7 @@ RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  ABC1234
 GOD HITBOX GRID STEP SLOW 2 LOCK
 TPF 0      3541   2      0     RAF ▁▃█▅▂▁▁▁
+REB 3540      RT     16384 KB
 LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
 
@@ -261,7 +262,24 @@ is not engaging. `rafDeltaBucket` uses a negated `>=` chain rather than `<`, so 
 in bucket 0 instead of the "dropped frame" overflow bucket (a bug the M3-02b test agent found; the
 probe's `frameBucket` had it too).
 
-The seventh line (M2-17, only when the host set one — the TV) is the **device line**:
+The seventh line is M3-02c's **render profile**, the two figures the render review needs to be
+visible on a TV at all ([render-performance-review.md](render-performance-review.md),
+[rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv)):
+
+- **`REB`** — frames since boot on which Pixi threw the scene's whole instruction set away and
+  re-walked the tree instead of taking its cheap "update what moved" path
+  (`PixiRenderer.structureRebuilds`, counted by the renderer with `countStructureRebuilds`, read in
+  the shell's `beforeRender`; blank when the renderer is not counting). In Pixi v8 every
+  `sprite.visible = …` sets `structureDidChange` on the *root* render group, and our draw path
+  toggles `visible` in every binding, every frame — so today `REB` tracks the frame count almost
+  exactly. That is the review's **F1**, and M3-02e is the step that has to move this number.
+- **`RT`** — kilobytes of pooled render targets Pixi has created (`createRenderTargetMeter`, which
+  hooks `TexturePool.createTexture` once so reading the total is a property read). Pixi rounds a
+  target **up to the next power of two on each axis**, so a 384×216 filter pass costs a 512×256
+  target and the CRT filter at 1080p costs a 2048×2048 one — 16.8 MB, which is the review's **F2**
+  arriving on screen the moment the player switches CRT on.
+
+The eighth line (M2-17, only when the host set one — the TV) is the **device line**:
 `DebugOverlay.setDevice(text)` → `setDebugPanelDevice`, the text made drawable by
 `debugDeviceText` (printable ASCII, cut to `DEBUG_DEVICE_MAX` = 56 — here the TV's 66-character
 line lost its end), and the backdrop grows by a row. `setDevice` is called every frame by the
@@ -783,7 +801,7 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   ([front-end-and-attract.md](front-end-and-attract.md)). The scene flow itself is still not
   recorded (M3-01).
 - **M2-17** (done) — the device line (the TV's model, model code, firmware, display, Chrome and
-  WebGL) as the overlay's sixth line, `window.__shmupDebug.save` (the save export / import and the
+  WebGL) as the overlay's last line, `window.__shmupDebug.save` (the save export / import and the
   storage usage); no simulation change, no golden re-bless ([platform-polish.md](platform-polish.md)).
 - **M2-18** — cross-engine determinism: golden replays in Chromium and Firefox.
 - **M3-01** (done) — whole-run replays recorded by the scene flow (`replay/run.ts`), the replay
@@ -798,3 +816,9 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   demos were re-blessed once because the replay header gained the four new `GameConfig` fields; no
   `expected` value moved. The new golden `zone-a-extras` flies zone A with every extra on, thrown by
   the `bomberBot` ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#determinism)).
+- **M3-02c** (done) — the overlay's seventh line (`REB`, `RT`) and its two sources
+  (`PixiRenderer.structureRebuilds` behind `countStructureRebuilds`, `createRenderTargetMeter` over
+  Pixi's `TexturePool`), plus the render benchmark `test/bench/render.perf.ts` — the first thing in
+  the repo that measures `renderer.render()` at all. Presentation only: no simulation change, no
+  golden re-bless ([rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c),
+  [render-performance-review.md](render-performance-review.md)).

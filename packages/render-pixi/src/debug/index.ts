@@ -5,7 +5,9 @@
  * (plan M1-19, shmup_feat.md §24): a **panel** with FPS, tick ms / render ms (measured by the host
  * — `@shmup/shell`), WebGL draw calls, pool usage (enemy bullets, enemies, player shots,
  * particles, lasers, items), rank, gameplay RNG calls, the state hash taken every 60 ticks, the
- * WebGL version, boot ms, the build id, the active debug switches, an optional device line (M2-17 —
+ * WebGL version, boot ms, the build id, the active debug switches, the frame-pacing line (M3-02b),
+ * the render-profile line (M3-02c — `REB`, the frames Pixi rebuilt the scene's instruction set on,
+ * and `RT`, the kilobytes of pooled render targets), an optional device line (M2-17 —
  * the TV's model and firmware) and a **frame graph** of the
  * last 60 frame times (hitches stand out in yellow / red); and the **outlines**: the ships' hurt
  * circles and terrain boxes, enemy and boss-part hurtboxes (every boss slot's — M2-09),
@@ -40,7 +42,9 @@
  * {@link createDebugOutlineLists}, {@link buildDebugOutlines}, {@link createFrameGraph},
  * {@link FrameGraph}, {@link OUTLINE_COLORS}, {@link PANEL_COLORS}, {@link FRAME_GRAPH_LENGTH};
  * M2-17: {@link setDebugPanelDevice}, {@link debugDeviceText}, {@link DEBUG_DEVICE_MAX} (the
- * device line — the TV's model and firmware under the panel).
+ * device line — the TV's model and firmware under the panel); M3-02c:
+ * {@link createRenderTargetMeter}, {@link RenderTargetMeter} (the pooled render-target byte
+ * total the panel's `RT` figure reads).
  *
  * @module
  */
@@ -61,7 +65,7 @@ import {
   type DrawList,
   type World,
 } from '@shmup/core';
-import { Container } from 'pixi.js';
+import { Container, TexturePool, type TexturePoolClass } from 'pixi.js';
 import type { PixiRenderer } from '../renderer/index.js';
 import type { SpriteTables } from '../sprites/index.js';
 import { DEFAULT_FONT, createBitmapFont, type BitmapFont } from '../text/index.js';
@@ -265,6 +269,9 @@ const LABELS = [
   '/',
   'TPF',
   'RAF',
+  'REB',
+  'RT',
+  'KB',
 ] as const;
 
 /** String slots of the alerts list. */
@@ -375,6 +382,17 @@ export interface DebugOverlayStats {
   readonly rafHistogram: Int32Array;
   /** Whether the loop's vsync lock is on (`core/loop`). */
   vsyncLock: boolean;
+  /**
+   * Frames since boot on which Pixi rebuilt the scene's whole instruction set instead of updating
+   * what moved (M3-02c — `PixiRenderer.structureRebuilds`, the review's F1); -1 when the renderer
+   * does not count them.
+   */
+  structureRebuilds: number;
+  /**
+   * Bytes of pooled render targets Pixi has created (M3-02c — {@link createRenderTargetMeter}, the
+   * review's F2: at 1080p the CRT filter alone pools a 2048×2048 RGBA target).
+   */
+  renderTargetBytes: number;
 }
 
 /**
@@ -429,6 +447,8 @@ export function createDebugOverlayStats(): DebugOverlayStats {
     tickFrames: new Int32Array(4),
     rafHistogram: new Int32Array(RAF_BUCKETS),
     vsyncLock: false,
+    structureRebuilds: -1,
+    renderTargetBytes: 0,
   };
 }
 
@@ -485,6 +505,115 @@ export function createFrameGraph(length: number = FRAME_GRAPH_LENGTH): FrameGrap
   };
 }
 
+/**
+ * A running total of the render targets Pixi's global `TexturePool` has created
+ * ({@link createRenderTargetMeter}).
+ */
+export interface RenderTargetMeter {
+  /**
+   * Bytes of pooled render targets created since the meter started (power-of-two rounded, RGBA8 —
+   * `width × height × 4`).
+   */
+  readonly bytes: number;
+  /** Pooled render targets created since the meter started. */
+  readonly count: number;
+  /** Restores the pool's own `createTexture` (idempotent; a later meter may wrap it again). */
+  stop(): void;
+}
+
+/** Bytes per pixel of a pooled render target (Pixi's `TexturePool` creates RGBA8 sources). */
+const RENDER_TARGET_BYTES_PER_PIXEL = 4;
+
+/** The one method {@link createRenderTargetMeter} hooks, as a plain property. */
+interface PooledTextureFactory {
+  /**
+   * Creates a pooled render target (Pixi's `TexturePoolClass.createTexture`).
+   *
+   * @param pixelWidth - Width in pixels (already power-of-two rounded).
+   * @param pixelHeight - Height in pixels.
+   * @param antialias - Whether the target is multisampled.
+   * @param autoGenerateMipmaps - Whether the target generates mipmaps.
+   * @returns The texture.
+   */
+  createTexture: (
+    pixelWidth: number,
+    pixelHeight: number,
+    antialias: boolean,
+    autoGenerateMipmaps: boolean,
+  ) => unknown;
+}
+
+/**
+ * Starts measuring the GPU memory Pixi's pooled render targets take (plan M3-02c — the overlay's
+ * `RT` figure and the render bench's per-resolution report).
+ *
+ * @remarks
+ * Every filter pass, and the CRT pass in particular, asks `TexturePool.getOptimalTexture` for a
+ * target rounded **up to the next power of two on each axis**, so a 1920×1080 filter bounds box
+ * costs a 2048×2048 RGBA8 texture — 16.8 MB (the render review's F2 and F3). The pool never
+ * releases what it created, so the total only grows, and reading it must not cost anything per
+ * frame: the meter wraps the pool's `createTexture` once and accumulates there, so
+ * {@link RenderTargetMeter.bytes} is a plain number read — **allocation-free**, unlike walking the
+ * pool's hashes would be.
+ *
+ * Start it before the first frame: targets created earlier are not counted (nothing creates one
+ * before a filter is first drawn, so at boot the total is 0).
+ *
+ * Dev / test builds only — the debug module is not in a release bundle.
+ *
+ * @param pool - The pool to meter (default Pixi's global `TexturePool`).
+ * @returns The meter.
+ *
+ * @example
+ * ```ts
+ * const meter = createRenderTargetMeter();
+ * // … the player switches the CRT filter on …
+ * meter.bytes; // → 16_777_216 (one 2048×2048 RGBA target)
+ * meter.stop();
+ * ```
+ */
+export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): RenderTargetMeter {
+  // A property type rather than the class's method, so reading and swapping it is an ordinary
+  // assignment (and not an "unbound method").
+  const hookable = pool as unknown as PooledTextureFactory;
+  const original = hookable.createTexture;
+  let bytes = 0;
+  let count = 0;
+  /**
+   * Creates a pooled texture and adds its bytes to the total.
+   *
+   * @param pixelWidth - Width of the texture in pixels (already power-of-two rounded).
+   * @param pixelHeight - Height of the texture in pixels.
+   * @param antialias - Whether the target is multisampled.
+   * @param autoGenerateMipmaps - Whether the target generates mipmaps.
+   * @returns The texture the pool created.
+   */
+  const metered = (
+    pixelWidth: number,
+    pixelHeight: number,
+    antialias: boolean,
+    autoGenerateMipmaps: boolean,
+  ): unknown => {
+    const texture = original.call(pool, pixelWidth, pixelHeight, antialias, autoGenerateMipmaps);
+    bytes += pixelWidth * pixelHeight * RENDER_TARGET_BYTES_PER_PIXEL;
+    count++;
+    return texture;
+  };
+  hookable.createTexture = metered;
+  return {
+    get bytes() {
+      return bytes;
+    },
+    get count() {
+      return count;
+    },
+    stop() {
+      // Only when nothing else wrapped it in the meantime (never steal another meter's hook).
+      if (hookable.createTexture === metered) hookable.createTexture = original;
+    },
+  };
+}
+
 /** Width of one panel character (the pixel font is monospaced, 6 px). */
 const COL = 6;
 
@@ -497,8 +626,8 @@ const PANEL_X = 2;
 /** Screen y of the panel's first line (2 px into the playfield). */
 const PANEL_Y = PLAYFIELD_Y + 2;
 
-/** Panel lines (M3-02b added the frame-pacing line). */
-const PANEL_LINES = 6;
+/** Panel lines (M3-02b added the frame-pacing line, M3-02c the render-profile line). */
+const PANEL_LINES = 7;
 
 /** Width of the panel's text, in pixels. */
 const PANEL_W = 46 * COL;
@@ -585,7 +714,7 @@ export function buildRafHistogram(
 }
 
 /**
- * Builds the panel lists: the backdrop, six lines of labels and numbers and the frame graph to
+ * Builds the panel lists: the backdrop, seven lines of labels and numbers and the frame graph to
  * their right. Never allocates (numbers use the `number` command, labels the lists' fixed string
  * slots).
  *
@@ -593,7 +722,8 @@ export function buildRafHistogram(
  * Lines: `FPS · TICK ms · RENDER ms · DRAW`; `BUL · ENM · SHT · PRT` (used / capacity);
  * `RANK · RNG · HASH @tick`; `WEBGL · BOOT ms · LAS · ITM · build id`; the active switches
  * (`GOD`, `HITBOX`, `GRID`, `STEP`, `SLOW n`, `LOCK`); `TPF` — frames that ran 0 / 1 / 2 / 3+
- * ticks — and the rAF-delta histogram (M3-02b). Frame-graph bars are 1 px per frame, newest on the
+ * ticks — and the rAF-delta histogram (M3-02b); `REB` — frames that rebuilt the scene's
+ * instruction set — and `RT` — pooled render-target KB (M3-02c). Frame-graph bars are 1 px per frame, newest on the
  * right, 8 px per 16.7 ms (capped at 40 px), in the `good` (≤ 17.5 ms), `warn` (≤ 34 ms) or `bad`
  * list; two guide lines mark one and two 60 Hz frames.
  *
@@ -720,8 +850,15 @@ export function buildDebugPanel(
   for (let i = 0; i < 4; i++) number(values, tpf[i] | 0, vc, 4 + i * 7, 5);
   label(labels, L('RAF'), lc, 32, 5);
   buildRafHistogram(lists.pacing, stats.rafHistogram, PANEL_X + 36 * COL, PANEL_Y + 5 * ROW);
-  // Line 6 (M2-17): the device line (model, firmware, display) when the host set one.
-  if (device) label(values, DEVICE, vc, 0, 6);
+  // Line 6 (M3-02c): the render profile — REB, the frames Pixi rebuilt the scene's instruction set
+  // on (the review's F1), and RT, the pooled render-target total in KB (its F2).
+  label(labels, L('REB'), lc, 0, 6);
+  if (stats.structureRebuilds >= 0) number(values, stats.structureRebuilds, vc, 4, 6);
+  label(labels, L('RT'), lc, 14, 6);
+  number(values, Math.round(stats.renderTargetBytes / 1024) | 0, vc, 24, 6, TextAlign.Right);
+  label(labels, L('KB'), lc, 24, 6);
+  // Line 7 (M2-17): the device line (model, firmware, display) when the host set one.
+  if (device) label(values, DEVICE, vc, 0, 7);
 
   // The frame graph, newest bar on the right.
   const good = lists.good;

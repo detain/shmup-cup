@@ -257,6 +257,23 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.shell.atlas.manifest).toBe(manifest);
   });
 
+  // M3-02c / review F8: WebGL1 stays the default; `?gl=2` is the A/B switch.
+  it('asks for WebGL2 with ?gl=2 and for WebGL1 otherwise', async () => {
+    const plain = await boot();
+    expect(fakes.renderer.options).toMatchObject({ preferWebGLVersion: 1 });
+    plain.app.stop();
+    win = new FakeWindow();
+    win.location.search = '?gl=2';
+    const two = await boot();
+    expect(fakes.renderer.options).toMatchObject({ preferWebGLVersion: 2 });
+    two.app.stop();
+    win = new FakeWindow();
+    win.location.search = '?gl=nope';
+    const bad = await boot();
+    expect(fakes.renderer.options).toMatchObject({ preferWebGLVersion: 1 });
+    bad.app.stop();
+  });
+
   it('runs the scene flow by default, free flight with ?scene=flight, the test pattern with ?scene=calibration', async () => {
     const { app } = await boot();
     expect(app.shell.scene).toBe('game');

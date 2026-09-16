@@ -160,3 +160,56 @@ DOM-heavy (10 Hz panel updates); the game's own debug overlay must confirm the p
 | 7 Home = blur only | The Tizen (and web) lifecycle treats `blur` / `focus` like hidden / visible: pause menu + audio suspend under the overlay |
 | 8 rAF jitter | Vsync-locked tick policy on ~60 Hz displays (one tick per frame unless a frame was really dropped); tick-per-frame counters in the debug overlay |
 | Probe clock bug | Probe uses handler time only; reports a raw rAF-delta histogram |
+
+## 11. Render profile (M3-02c)
+
+Where the M7's frame time goes. **Not yet measured on the hardware** — this section is the place
+for the numbers, and the recipe that produces them is
+[rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv)
+(the review's §4 table M1–M8). Run it from a `pnpm --filter @shmup/tizen build:dev` bundle with the
+tools unlocked (**Pause, Ch+, Ch+, Ch+**).
+
+### 11.1 Baseline — fill this in
+
+| Where | FPS | TICK ms | RENDER ms | DRAW | REB / frames | RT KB | TPF 0/1/2/3+ | LOCK |
+|---|---|---|---|---|---|---|---|---|
+| Title, idle | | | | | | | | |
+| Zone A, mid-stage | | | | | | | | |
+| Zone A, boss | | | | | | | | |
+
+Boot ms (`data-shmup-boot-ms`): ____ (budget 10 s).
+
+### 11.2 The measurements — fill these in
+
+| # | What | Result |
+|---|---|---|
+| M1 | RENDER ms with the scene rebuild on vs. patched out (**F1**) | |
+| M2 | RENDER ms and RT with CRT off / light / full on the same section (**F2**) | |
+| M3 | Frame-graph spike entering the Mode-7 and raster stages (**F4**) | |
+| M4 | Frame-graph spike on the first very dense pattern of a fresh launch (**F5**) | |
+| M5 | WebGL1 vs WebGL2 over 60 s of the same stage (**F8**) | |
+| M6 | `estimateStageMemory` per zone vs. RT, CRT on and off (**F3**) | |
+| M7 | Does the app stop rendering under the Home overlay? | |
+| M8 | Input-to-photon latency, 240 fps video (§10 above) | |
+
+### 11.3 What the headless bench already says
+
+`pnpm bench` → `test/bench/render.perf.ts` (Chromium + SwiftShader, so the shape matters and the
+milliseconds do not):
+
+| Scenario (384×216 internal, 512 bullets + 512 point items + the particle pool) | Draw calls | Pooled render targets | Structure rebuilds |
+|---|---|---|---|
+| CRT off | 4 | 0 KB | 659 / 660 frames |
+| CRT light | 5 | 2,048 KB | 659 / 660 |
+| CRT full | 5 | 2,048 KB | 659 / 660 |
+| Layer effects (`raster-range`) | 7 | 512 KB | 659 / 660 |
+| Mode-7 floor (`dimension`) | 7 | 512 KB | 659 / 660 |
+| Layer effects at **768×432** internal | 7 | 2,048 KB (+1,296 KB frame target) | 659 / 660 |
+
+Three things it settles without the hardware:
+
+- **F1's mechanism is real, not just plausible.** Essentially *every* frame rebuilds the scene's
+  whole instruction set. How many milliseconds that is on a Kant-SU2 is M1's job.
+- **F2 is right that `light` is not cheaper than `full`.** Same draw call, same pooled target.
+- **F3's power-of-two rounding is real.** A 384×216 filter pass pools a 512×256 target; the same
+  pass at 768×432 pools 1024×512 — ×4, exactly as the review's §7.3 table predicts.
