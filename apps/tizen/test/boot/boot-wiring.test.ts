@@ -10,6 +10,7 @@
  */
 import type * as AudioWeb from '@shmup/audio-web';
 import { Action, SimEventKind, UserOptionKind } from '@shmup/core';
+import { selectableKeyProfiles } from '@shmup/input-web';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -523,6 +524,24 @@ describe('tizen/boot bootTizenApp wiring', () => {
       expect(win.registeredKeys, saved).toEqual(REGISTERED_KEYS);
       app.stop();
     }
+  });
+
+  // Regression, M3-03: the lock-out the `hosts` list was added for. Both TVs read the same
+  // `content/input/`, and `webos-remote-safe` binds every action the menu context requires — so
+  // the completeness check alone would have offered it here, and a Samsung player who picked it
+  // would have Back on 461, a key the remote never sends, with no way to change it back. The
+  // filter has to hold on `apply` as well as on `choices`: the shell applies the *saved* profile
+  // id without ever consulting the choices.
+  it('ignores a save that names the webOS remote — Back must stay on 10009', async () => {
+    win.stored.set('shmup-cup:save.v1', savedProfile('webos-remote-safe'));
+    const { app } = await boot();
+    expect(app.profiles.profiles.map((p) => p.id)).toContain('webos-remote-safe');
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
+    expect(win.registeredKeys).toEqual(REGISTERED_KEYS);
+    expect(
+      selectableKeyProfiles(app.profiles.profiles, 'keyCode', 'tizen').map((p) => p.id),
+    ).toEqual(['tizen-remote-safe']);
+    app.stop();
   });
 
   it('unlocks audio immediately (no user gesture on TV)', async () => {

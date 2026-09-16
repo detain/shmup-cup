@@ -119,6 +119,21 @@ pass over the translations, and the tracker-music CPU benchmark).
 - **`pnpm itch:package` (M3-03)** archives the browser build for itch.io with a zero-dependency ZIP
   writer (`index.html` at the root, no source maps, byte-identical for the same build). Never run
   against a real build here.
+- **M3-03's cross-file invariants are tests now, not review notes.** The things only a careful
+  reader was keeping true: `core/config` `LANGUAGE_ID_PATTERN` and the `strings` schema's own
+  pattern are driven through the same id list and must answer alike (a shipped language the save
+  would throw away is now a red test); `FIXED_UI_TEXT_IDS` is proved to be enforced at **both**
+  gates (`core/data` at load, `resolveUiText` at resolve); the kanji arithmetic is **recomputed
+  from `assets/generated/atlas/main.json` and the committed PNG** and cross-checked against the six
+  documents that quote it, with round 1's retracted claims asserted absent; and a source scan keeps
+  shipped code inside **Chromium 68** (webOS 5) — the lint's floor is 69, so `[].flat()` passes
+  ESLint and would throw on an LG set. The profile lock-out has regression tests on both TV hosts
+  (a save naming the *other* TV's remote is ignored) and `test/e2e/webos.spec.ts` runs the real
+  webOS bundle from `file://` — the only place it is ever executed. `pnpm test:e2e` therefore
+  builds `@shmup/webos` as well.
+- **Fixed (M3-03)**: `initSteam`'s `syncAchievements` called `this.unlockAchievement`, so the
+  service threw if any of its methods was ever pulled off it (`const { syncAchievements } = steam`).
+  It calls the closure directly now. Found by the test that destructures the service.
 - **New docs**: [`docs/dev/real-assets.md`](docs/dev/real-assets.md) (Aseprite / Furnace hand-off),
   [`docs/client/webos.md`](docs/client/webos.md), [`docs/client/steam.md`](docs/client/steam.md),
   [`docs/client/web-release.md`](docs/client/web-release.md) and

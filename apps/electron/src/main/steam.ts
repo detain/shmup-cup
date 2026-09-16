@@ -409,24 +409,33 @@ export function initSteam(options: SteamOptions = {}): SteamService {
         }
       : UNAVAILABLE_CLOUD;
   let open = live !== null;
+  /**
+   * Unlocks one achievement. Declared before the service so {@link SteamService.syncAchievements}
+   * can call it directly: a method taken off the service (`const { syncAchievements } = steam`)
+   * would have no `this`, and the main process passes the service around by value.
+   *
+   * @param id - An {@link STEAM_ACHIEVEMENTS} API name.
+   * @returns `true` when this call unlocked it.
+   */
+  const unlockAchievement = (id: string): boolean => {
+    if (live === null || !open || !known.has(id) || unlocked.has(id)) return false;
+    unlocked.add(id);
+    try {
+      return live.activateAchievement(id);
+    } catch (error) {
+      onIssue(`Steam did not accept the achievement "${id}": ${String(error)}`);
+      return false;
+    }
+  };
   return {
     available: live !== null,
     appId,
     cloud,
-    unlockAchievement(id) {
-      if (live === null || !open || !known.has(id) || unlocked.has(id)) return false;
-      unlocked.add(id);
-      try {
-        return live.activateAchievement(id);
-      } catch (error) {
-        onIssue(`Steam did not accept the achievement "${id}": ${String(error)}`);
-        return false;
-      }
-    },
+    unlockAchievement,
     syncAchievements(save) {
       const out: string[] = [];
       for (const id of achievementsFor(save)) {
-        if (this.unlockAchievement(id)) out.push(id);
+        if (unlockAchievement(id)) out.push(id);
       }
       return out;
     },

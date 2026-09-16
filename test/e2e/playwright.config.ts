@@ -1,9 +1,10 @@
 /**
  * Playwright config for the browser smoke tests (`pnpm test:e2e`, plan §1.4): headless
- * Chromium with SwiftShader WebGL opens the web build (served by `vite preview`) and the Tizen
- * `dist/` straight from disk via `file://`, the way the TV runs the widget.
+ * Chromium with SwiftShader WebGL opens the web build (served by `vite preview`) and the two TV
+ * builds — Tizen and, since M3-03, webOS — straight from disk via `file://`, the way a TV runs the
+ * installed package.
  *
- * `pnpm test:e2e` builds both apps first as test builds (Turborepo `build:test`, which also
+ * `pnpm test:e2e` builds all three apps first as test builds (Turborepo `build:test`, which also
  * generates the atlas: release code plus `__SHMUP_DEV__`, so `window.__shmupDebug` exists for
  * the smoke and the frame-advance helpers); this config only serves and tests the existing
  * `dist/` folders.

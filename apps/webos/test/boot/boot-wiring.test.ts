@@ -12,7 +12,11 @@
  * @module
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { DEFAULT_WEBOS_PROFILE_ID, inputProfileChoices } from '@shmup/input-web';
+import {
+  DEFAULT_WEBOS_PROFILE_ID,
+  inputProfileChoices,
+  selectableKeyProfiles,
+} from '@shmup/input-web';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -210,6 +214,16 @@ class FakeWindow extends EventTarget {
 /** @returns A settled microtask queue (lets `void promise` chains finish). */
 const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
+/**
+ * A save document (`core/save` v1) that names an input profile.
+ *
+ * @param profileId - The saved profile id.
+ * @returns The stored JSON text.
+ */
+function savedProfile(profileId: string): string {
+  return JSON.stringify({ version: 1, options: { input: { profileId } } });
+}
+
 let win: FakeWindow;
 
 beforeEach(() => {
@@ -357,5 +371,37 @@ describe('webos/boot bootWebosApp wiring (M3-03)', () => {
     expect(fakes.renderer.frames.length).toBeGreaterThan(0);
     app.stop();
     expect(fakes.renderer.destroyed).toBe(1);
+  });
+
+  // Regression, M3-03: the lock-out the `hosts` list was added for. `tizen-remote-safe` binds
+  // every action the menu context requires, so nothing but the host filter keeps it out — and a
+  // webOS player who ended up on it would have Back on 10009, a key an LG remote never sends.
+  // The filter has to hold on `apply` as well as on `choices`, because the shell applies the
+  // *saved* profile id without ever consulting the choices.
+  it('ignores a save that names the Tizen remote — Back must stay on 461', async () => {
+    win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-safe'));
+    const { app } = await boot();
+    expect(app.profiles.profiles.map((p) => p.id)).toContain('tizen-remote-safe');
+    expect(app.input.keyProfile?.id).toBe('webos-remote-safe');
+    // …and Back still leaves the title through the scene flow, not through a dead key.
+    expect(
+      selectableKeyProfiles(app.profiles.profiles, 'keyCode', 'webos').map((p) => p.id),
+    ).toEqual(['webos-remote-safe']);
+    app.stop();
+  });
+
+  it('ignores a saved profile of any other device, and an unknown id', async () => {
+    for (const saved of [
+      'gamepad-standard',
+      'keyboard-default',
+      'keyboard-remote-emulation',
+      'nope',
+    ]) {
+      win = new FakeWindow();
+      win.stored.set('shmup-cup:save.v1', savedProfile(saved));
+      const { app } = await boot();
+      expect(app.input.keyProfile?.id, saved).toBe('webos-remote-safe');
+      app.stop();
+    }
   });
 });
