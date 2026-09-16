@@ -7,14 +7,19 @@
  * 5–20×, in the direction that told the reader a CJK language is impossible when in fact one
  * extra atlas page would hold it — so they are worth a test rather than a careful reader.
  *
- * This file recomputes every one of them from `assets/generated/atlas/main.json`, the committed
- * PNG and the shared budgets, then checks that the **six places that repeat them** still say the
- * same thing, and that the retracted claims have not crept back in.
+ * This file recomputes every one of them from the atlas **the pipeline builds in memory** — the
+ * same `buildAtlas()` the Tizen and webOS build tests use, and the same bytes `pnpm assets` would
+ * write — plus the shared budgets, then checks that the **six places that repeat them** still say
+ * the same thing, and that the retracted claims have not crept back in.
+ *
+ * It deliberately does *not* read `assets/generated/`: that folder is gitignored and CI's `test`
+ * job never runs `pnpm assets`, so a disk-reading version passed locally off a stale artifact and
+ * failed on every clean checkout. `buildAtlas()` is deterministic (~0.6 s) and always present.
  *
  * Nothing here is a budget: the assertions are on the *documentation* agreeing with the *build*.
  * If the atlas legitimately grows, this test fails and the six documents are updated with it.
  */
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { UI_GLYPHS } from '@shmup/core';
@@ -24,14 +29,13 @@ import {
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
 } from '../../apps/tizen/scripts/check-bundle.mjs';
+import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** The committed atlas manifest (what `pnpm assets` wrote). */
-const atlas = JSON.parse(readFileSync(join(repo, 'assets/generated/atlas/main.json'), 'utf8')) as {
-  pages: Array<{ file: string; w: number; h: number }>;
-  frames: Record<string, { p: number; w: number; h: number }>;
-};
+/** The atlas as the pipeline builds it — byte for byte what `pnpm assets` writes. */
+const built = buildAtlas();
+const atlas = built.manifest;
 
 /** Pixels every frame of the atlas occupies, summed — the "occupied area" the docs quote. */
 const OCCUPIED_PIXELS = Object.keys(atlas.frames).reduce((sum, name) => {
@@ -39,8 +43,8 @@ const OCCUPIED_PIXELS = Object.keys(atlas.frames).reduce((sum, name) => {
   return sum + frame.w * frame.h;
 }, 0);
 
-/** Size of the committed atlas PNG, in bytes. */
-const PNG_BYTES = statSync(join(repo, 'assets/generated/atlas/main.png')).size;
+/** Size of the encoded atlas PNG, in bytes (the file `pnpm assets` writes). */
+const PNG_BYTES = built.pages[0].png.length;
 
 /** Glyphs of the whole JIS X 0208 repertoire (levels 1 and 2), as the docs quote it. */
 const JIS_GLYPHS = 6900;
