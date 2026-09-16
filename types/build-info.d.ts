@@ -17,6 +17,14 @@ declare const __SHMUP_DEV__: boolean;
 declare const __SHMUP_BUILD__: string;
 
 /**
+ * Base URL of the render-telemetry log server (M3-02f — `tools/input-probe/server/log-server.mjs`,
+ * `npm run log-server`): the `VITE_REPORT_URL` environment variable in a dev / test build, `''` in
+ * every release build and in every dev build that was not pointed at one. `''` leaves the guided
+ * render capture switched off.
+ */
+declare const __SHMUP_REPORT_URL__: string;
+
+/**
  * The live-reload WebSocket URL of a `tizen:watch` dev build (`ws://<desktop>:<port>`, M2-17 —
  * `apps/tizen/scripts/tizen-watch.mjs` sets `SHMUP_LIVE_RELOAD_URL`); `''` in every other build.
  * Defined by `apps/tizen/vite.config.ts` only — the Tizen entry point reads it.

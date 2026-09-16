@@ -26,6 +26,15 @@
  * ({@link ShmupDebugApi}: the scene id, ticks, switches, counters, a command runner, the game) for
  * tests and the TV's remote inspector — the e2e smoke reads `sceneId` from it.
  *
+ * **Guided render-profile capture (M3-02f).** A build given a log-server URL
+ * ({@link DebugToolsOptions.reportUrl}, the apps' `__SHMUP_REPORT_URL__` from `VITE_REPORT_URL`)
+ * also streams its render profile: the frame hooks hand the raw frame, tick and render times, the
+ * draw calls, the structure rebuilds and the pooled render-target total to the `telemetry` module's
+ * sampler as typed-array writes, and a 3-second timer closes each window into a distribution
+ * (min / median / p95 / max plus the TPF and rAF buckets) with the context of
+ * {@link readRenderContext} and POSTs it. Without such a URL — every release build, and every dev
+ * build that was not pointed at a server — nothing of it runs.
+ *
  * **Save export / import and the device line (M2-17).** `window.__shmupDebug.save` exports the save
  * the game plays with as readable JSON, imports one (parsed like a stored save and written — reload
  * to apply its options) and reports the storage's usage ({@link DebugSaveApi}); the TV app hands
@@ -44,7 +53,8 @@
  * **Public API.** {@link debugToolsFactory}, {@link createDebugTools}, {@link DebugTools},
  * {@link DebugToolsFactory}, {@link DebugToolsHost}, {@link DebugToolsOptions},
  * {@link ShmupDebugApi}, {@link DEBUG_KEYS}, {@link DebugKey}, {@link DEBUG_UNLOCK_SEQUENCE},
- * {@link DEBUG_UNLOCK_WINDOW_MS}, {@link DEBUG_GLOBAL}; M2-17: {@link DebugSaveApi}.
+ * {@link DEBUG_UNLOCK_WINDOW_MS}, {@link DEBUG_GLOBAL}; M2-17: {@link DebugSaveApi}; M3-02f: the
+ * `telemetry` module, reached as {@link DebugTools.telemetry}.
  *
  * @module
  */
@@ -77,6 +87,13 @@ import {
   type SaveImportResult,
   type StorageUsage,
 } from '../storage/index.js';
+import {
+  RENDER_FRAME_SLOT,
+  createRenderTelemetry,
+  type RenderSampleContext,
+  type RenderTelemetry,
+  type RenderTelemetryEnv,
+} from '../telemetry/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -145,6 +162,13 @@ export interface DebugToolsOptions {
    * @returns The line.
    */
   readonly device?: () => string;
+  /**
+   * Base URL of the render-telemetry log server (plan M3-02f — the apps' `__SHMUP_REPORT_URL__`,
+   * baked in from `VITE_REPORT_URL`). Anything that is not an `http(s)://` URL — `''` in every
+   * build that was not pointed at a log server, and in every release build — leaves the guided
+   * capture switched off, and then nothing of it runs at all.
+   */
+  readonly reportUrl?: string;
 }
 
 /** The save export / import of {@link ShmupDebugApi.save} (M2-17). */
@@ -250,6 +274,11 @@ export interface ShmupDebugApi {
    */
   readonly save: DebugSaveApi | null;
   /**
+   * The M3-02f render-profile capture — the session id, the guided checklist and the sender's
+   * status, for the remote inspector (`__shmupDebug.telemetry.checklist.doneCount`).
+   */
+  readonly telemetry: RenderTelemetry;
+  /**
    * Runs a debug command (`DebugCommand` code), unlocked or not.
    *
    * @param command - The command.
@@ -262,6 +291,11 @@ export interface ShmupDebugApi {
 export interface DebugTools {
   /** The core controls. */
   readonly controls: DebugControls;
+  /**
+   * The M3-02f guided render-profile capture. `telemetry.enabled` is `false` — and every one of its
+   * hooks a no-op — unless the build was given a {@link DebugToolsOptions.reportUrl}.
+   */
+  readonly telemetry: RenderTelemetry;
   /** The overlay on the renderer's `DEBUG` layer. */
   readonly overlay: DebugOverlay;
   /** The sim counters, refreshed every frame. */
@@ -319,6 +353,66 @@ export type DebugToolsFactory = (host: DebugToolsHost) => DebugTools;
  */
 export function debugToolsFactory(options: DebugToolsOptions = {}): DebugToolsFactory {
   return (host) => createDebugTools(host, options);
+}
+
+/**
+ * Reads the context of a render-telemetry window (plan M3-02f): where the window was taken, what
+ * the renderer was set to and which assists were on. Called once per sampling window (every ~3 s),
+ * never per frame, so it may read strings and build an object.
+ *
+ * @param host - The shell's game, renderer and scene / World accessors.
+ * @param counters - The sim counters of the last frame.
+ * @param stats - The host-measured numbers of the last frame.
+ * @returns A fresh context object (each window keeps its own).
+ */
+function readRenderContext(
+  host: DebugToolsHost,
+  counters: DebugCounters,
+  stats: DebugOverlayStats,
+): RenderSampleContext {
+  const { game, renderer } = host;
+  const world = host.visibleWorld();
+  const stage = world === null ? null : (world.stage?.stage.id ?? null);
+  const run = game.scenes === null ? null : game.scenes.run;
+  const zoneSpec =
+    run === null || run.campaign === null || run.zone < 0
+      ? null
+      : (run.campaign.zones[run.zone] ?? null);
+  const viewport = renderer.viewport;
+  const assists: string[] = [];
+  if (game.debug.godMode) assists.push('god');
+  if (game.debug.showHitboxes) assists.push('hitboxes');
+  if (game.debug.showGrid) assists.push('grid');
+  if (game.debug.frameAdvance) assists.push('frameAdvance');
+  if (game.debug.slowMo > 1) assists.push('slowMo' + String(game.debug.slowMo));
+  if (game.config.invincible) assists.push('invincible');
+  if (game.config.optionRecovery) assists.push('optionRecovery');
+  if (game.config.slowdown) assists.push('slowdown');
+  const speed = host.save?.options.play.speed ?? 100;
+  if (speed !== 100) assists.push('speed' + String(speed));
+  return {
+    scene: host.sceneId(),
+    stage,
+    zone: zoneSpec === null ? null : zoneSpec.label,
+    zoneName: zoneSpec === null ? null : zoneSpec.name,
+    checkpoint: world === null ? -1 : (world.stage?.checkpoint ?? -1),
+    cameraX: world === null ? 0 : Math.round(world.camera.x),
+    cameraY: world === null ? 0 : Math.round(world.camera.y),
+    crtFilter: renderer.crtFilter,
+    screenPass: renderer.screenPass,
+    aspect: renderer.aspect,
+    scaleMode: renderer.scaleMode,
+    scale: viewport.scale,
+    viewportWidth: viewport.width,
+    viewportHeight: viewport.height,
+    webGLVersion: renderer.webGLVersion,
+    bullets: counters.enemyBullets,
+    enemies: counters.enemies,
+    particles: stats.particles,
+    rank: counters.rank,
+    vsyncLock: game.vsyncLock,
+    assists,
+  };
 }
 
 /**
@@ -405,6 +499,31 @@ export function createDebugTools(
   const times = new Float64Array(7);
   const device = options.device ?? null;
   const state = { unlocked: !sequenceMode, progress: 0, destroyed: false };
+  // M3-02f: the guided render-profile capture. It starts only in a build that was pointed at a log
+  // server (`VITE_REPORT_URL` → `__SHMUP_REPORT_URL__` → `options.reportUrl`); without one
+  // `createRenderTelemetry` returns a disabled object whose hooks do nothing.
+  const telemetryEnv: RenderTelemetryEnv = {
+    buildId,
+    device: device === null ? '' : device(),
+    userAgent: (win as Partial<Window>).navigator?.userAgent ?? '',
+    innerWidth: win.innerWidth ?? 0,
+    innerHeight: win.innerHeight ?? 0,
+    devicePixelRatio: win.devicePixelRatio ?? 1,
+    webGLVersion: renderer.webGLVersion,
+    internalWidth: renderer.width,
+    internalHeight: renderer.height,
+    bootMs: host.bootMs,
+    startedAt: Date.now(),
+  };
+  const telemetry: RenderTelemetry = createRenderTelemetry({
+    reportUrl: options.reportUrl,
+    win,
+    now: host.now,
+    env: telemetryEnv,
+    context: () => readRenderContext(host, counters, stats),
+  });
+  /** The sampler's per-frame inbox — written by the frame hooks, never allocated. */
+  const sampled = telemetry.sampler.frame;
 
   /**
    * Feeds the TV unlock sequence one key.
@@ -558,6 +677,7 @@ export function createDebugTools(
     game,
     renderer: host.renderer,
     save: createSaveApi(host.save ?? null, game),
+    telemetry,
     run(command) {
       return controls.run(command);
     },
@@ -579,7 +699,12 @@ export function createDebugTools(
       if (last > 0 && frameNow > last) {
         const delta = frameNow - last;
         overlay.graph.push(delta);
-        stats.rafHistogram[rafDeltaBucket(delta)]++;
+        const bucket = rafDeltaBucket(delta);
+        stats.rafHistogram[bucket]++;
+        // M3-02f: the raw delta and its bucket go to the sampler as typed-array writes (a
+        // fractional call argument would be boxed on every frame).
+        sampled[RENDER_FRAME_SLOT.frameMs] = delta;
+        sampled[RENDER_FRAME_SLOT.rafBucket] = bucket;
         times[T.frameMs] =
           times[T.frameMs] > 0 ? times[T.frameMs] + (delta - times[T.frameMs]) * SMOOTHING : delta;
         stats.fps = 1000 / times[T.frameMs];
@@ -593,6 +718,8 @@ export function createDebugTools(
       // Ticks per frame (M3-02b): 0 / 1 / 2 / 3-or-more, the on-device check of the vsync lock.
       const slot = ticks < 0 ? 0 : ticks > 3 ? 3 : ticks | 0;
       stats.tickFrames[slot]++;
+      sampled[RENDER_FRAME_SLOT.tickMs] = ms;
+      sampled[RENDER_FRAME_SLOT.ticks] = slot;
     },
     beforeRender() {
       if (device !== null) overlay.setDevice(device());
@@ -613,10 +740,19 @@ export function createDebugTools(
       const ms = host.now() - times[T.renderStart];
       times[T.renderMs] += (ms - times[T.renderMs]) * SMOOTHING;
       stats.renderMs = times[T.renderMs];
+      // M3-02f: the frame's raw figures. `commitFrame` closes it and notes whether a report POST
+      // was outstanding while it ran, so the analyzer can drop a window the sender perturbed.
+      sampled[RENDER_FRAME_SLOT.renderMs] = ms;
+      sampled[RENDER_FRAME_SLOT.drawCalls] = stats.drawCalls;
+      sampled[RENDER_FRAME_SLOT.rebuilds] = stats.structureRebuilds;
+      sampled[RENDER_FRAME_SLOT.renderTargetBytes] = stats.renderTargetBytes;
+      telemetry.commitFrame();
     },
+    telemetry,
     destroy() {
       if (state.destroyed) return;
       state.destroyed = true;
+      telemetry.destroy();
       win.removeEventListener('keydown', onKeyDown, KEY_OPTIONS);
       win.removeEventListener('keyup', onKeyUp, KEY_OPTIONS);
       win.removeEventListener('blur', onBlur);

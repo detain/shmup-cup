@@ -1,7 +1,9 @@
 # Input probe results
 
-Raw logs from on-device probe runs, kept as evidence, and the analyzer that turns them into numbers. The findings
-and what they change are written up in [`docs/dev/input-probe-results.md`](../../../docs/dev/input-probe-results.md).
+Raw logs from on-device runs, kept as evidence, and the analyzers that turn them into numbers. Two kinds of session
+land here, both through `npm run log-server`: the **input probe**'s (`ip-…`) and, since plan step **M3-02f**, the
+game's **render profile** (`rp-…`). The findings and what they change are written up in
+[`docs/dev/input-probe-results.md`](../../../docs/dev/input-probe-results.md) — the render ones in its §11.
 
 (`tools/input-probe/logs/`, where the log server writes, is git-ignored; copy a run here to keep it.)
 
@@ -26,3 +28,22 @@ node results/analyze.mjs results/2026-09-15-m7/ip-mu37lye3-yj1x.jsonl --timeline
 It re-times every key event with `t + delay` (the handler time) because `event.timeStamp` on Tizen 5.5 only moves in
 whole seconds — the probe's own `verdicts` / `stats.keys` in these logs are built on that broken clock and must not
 be quoted. Frame and environment figures come straight from the reports.
+
+## Render-profile analyzer (M3-02f)
+
+```sh
+cd tools/input-probe
+node results/analyze-render.mjs logs/rp-<session>.jsonl             # the §11.1 / §11.2 tables, as Markdown
+node results/analyze-render.mjs logs/rp-<session>.jsonl --windows   # + one line per sampling window
+node results/analyze-render.mjs logs/rp-<session>.jsonl --all       # keep the windows a POST was in flight during
+```
+
+An `rp-…` session is written by the game's own dev build (`@shmup/shell`'s `telemetry` module, built with the same
+`VITE_REPORT_URL`). Each JSONL line is `{kind:'render-profile', session, seq, sentAt, env, checklist, samples,
+droppedSamples}` plus the server's `receivedAt` / `from`; each entry of `samples` is one ~3-second window with
+`[min, median, p95, max]` of the frame, tick and render times and of the draw calls, the `TPF` and `RAF` bucket
+counts, that window's structure rebuilds, the pooled render-target total, the context it was taken in and the
+checklist items it fed (`marks`). `sendInFlightFrames` counts the frames the report POST itself was outstanding
+during — the analyzer drops those windows unless `--all`, because the request runs on the main thread and its cost
+would otherwise be recorded as the renderer's. Recipe:
+[rendering-and-shell.md § Measuring on the TV](../../../docs/dev/rendering-and-shell.md#measuring-on-the-tv).

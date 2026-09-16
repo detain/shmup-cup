@@ -955,10 +955,18 @@ The measurement table of the review's §4, in the order to run it, with enough d
 guessing. The numbers land in
 [input-probe-results.md](input-probe-results.md#11-render-profile-m3-02c) next to the input probe's.
 
+> **Do this with the guided capture** ([below](#6-automated-capture-the-guided-checklist), plan
+> **M3-02f**): the game streams its own render profile to a log server on the desktop, an on-screen
+> checklist tells you where to fly, and an analyzer prints the §11 tables. It records **p95s**, which
+> nobody can read off a moving overlay. Everything from here to §5 is then the recipe the checklist
+> walks you through — and the fallback for when no log server is reachable.
+
 #### 0. Before you start
 
 1. **Build a dev bundle.** `pnpm --filter @shmup/tizen build:dev`. Only a dev build has the debug
    tools — the release bundle folds them away, so the overlay cannot be unlocked on it at all.
+   For the guided capture, start `npm run log-server` in `tools/input-probe/` first and build with
+   `VITE_REPORT_URL=http://<desktop-ip>:8787` set — see §6.
 2. **Install it** on both monitors from the Windows desktop, per
    [install-on-tv.md](../client/install-on-tv.md). Nothing here needs the Tizen CLI on this machine.
 3. **Unlock the tools:** on the remote press **Play/Pause, Ch+, Ch+, Ch+** — all four **within 3
@@ -1048,21 +1056,87 @@ Fill the tables in
 Where a figure is a range over a run, record the range — a single glanced number hides exactly the
 jitter these measurements exist to find.
 
-#### 6. Automated capture — planned, not yet built (M3-02f)
+#### 6. Automated capture: the guided checklist
 
-Reading numbers off a moving overlay is error-prone, and it cannot capture a p95 at all. Plan step
-**M3-02f** makes the game stream its own render profile to a log server on the desktop, the way the
-input probe already does for input:
+Since **M3-02f** the game records all of the above itself. Reading numbers off a moving overlay is
+error-prone and cannot capture a p95 at all; this captures distributions and hands you the tables.
+It reuses the input probe's receiver, so one log server serves both senders.
 
-- `npm run log-server` on the desktop, the game built with `VITE_REPORT_URL=http://<desktop-ip>:8787`;
-- an **on-screen checklist** walks through M1–M8 and ticks each item off when enough samples of the
-  right kind have arrived, so you play where it tells you instead of keeping notes;
-- samples carry **distributions** (min / median / p95 / max, plus the `TPF` and `RAF` buckets) rather
-  than a glanced reading;
-- an analyzer turns the session's JSONL straight into the §11 tables.
+**Run it (Windows desktop, cmd.exe):**
 
-**None of that exists yet** — until M3-02f lands, the manual procedure above is the way, and it stays
-as the fallback afterwards for when no log server is reachable.
+```bat
+cd tools\input-probe
+npm install
+npm run log-server
+```
+
+It prints the lines to build with, e.g. `VITE_REPORT_URL=http://10.0.0.2:8787`. Windows will ask to
+allow Node through the firewall on the **private** network — say yes (the probe's run needed the
+same). Then, in a second window:
+
+```bat
+set VITE_REPORT_URL=http://10.0.0.2:8787
+pnpm --filter @shmup/tizen build:dev
+set TIZEN_PROFILE=shmupcup
+set TV_IP=<monitor ip>
+pnpm --filter @shmup/tizen tizen:package
+pnpm --filter @shmup/tizen tizen:install
+pnpm --filter @shmup/tizen tizen:run
+```
+
+Do it once per monitor; each launch is its own session (`rp-…`) and its own JSONL file. The internet
+privilege the POST needs is already in `apps/tizen/public/config.xml`. On the desktop browser the same
+variable works with `pnpm dev`.
+
+**On the monitor:** unlock the tools (**Play/Pause, Ch+, Ch+, Ch+**) and a small panel appears in the
+top-right corner with the checklist. Play where it tells you; each line ticks itself when enough of the
+right windows have arrived, and a tick never goes back:
+
+| Item | What it asks for | Ticks at |
+|---|---|---|
+| **M1** | Baseline: the title, then a dense scene (key 8 → the boss) | 30 s of each |
+| **M2** | OPTIONS → DISPLAY → CRT **OFF / LIGHT / FULL**, the same practice section each time | 20 s per setting |
+| **M3** | Fly in three different stages, including the Mode-7 one and the heat-haze one | 10 s in each of three |
+| **M4** | A dense pattern now, and the same one again after a checkpoint restart | 5 s of each, the second past the two-minute mark |
+| **M5** | 60 s in one stage (repeat the whole session with `localStorage['shmup-cup:gl'] = '2'` for the A/B) | 60 s in one stage |
+| **M6** | Two zones, each with CRT on and with CRT off | two zones seen |
+| **M7** | Press **Home**, wait 10 s, come back | the return |
+| **M8** | The 240 fps latency video — **manual**, nothing on the device can measure it | never (shown as `[-]`) |
+
+The bottom line of the panel shows the last window (`fps`, `RENDER p95`) and the sender (`sent #N ·
+queued N · fails N`). `queued` climbing and `fails` rising means the monitor cannot reach the
+desktop — check the firewall and the IP.
+
+**What a window carries.** Every ~3 s the capture closes a window and POSTs it: `min / median / p95 /
+max` of the frame, tick and render times and of the draw calls, the `TPF` and `RAF` bucket counts, the
+structure rebuilds **of that window** and the pooled render-target total, plus the context that makes
+the row mean something (build id, device line, scene, stage and zone, camera, CRT setting, aspect,
+scale, GL version, viewport and the assists that were on). It also records
+`sendInFlightFrames` — the frames the POST itself was still outstanding during. That matters: the
+request runs on the main thread, so a window it spans may have recorded the sender as a render cost.
+The analyzer leaves those windows out by default.
+
+**Turn the session into the tables:**
+
+```sh
+cd tools/input-probe
+node results/analyze-render.mjs logs/rp-<session>.jsonl            # the two §11 tables
+node results/analyze-render.mjs logs/rp-<session>.jsonl --windows  # + every window
+node results/analyze-render.mjs logs/rp-<session>.jsonl --all      # keep the perturbed windows
+```
+
+It prints §11.1 and §11.2 as Markdown — paste them into
+[input-probe-results.md](input-probe-results.md#11-render-profile-m3-02c), one run per monitor, and copy
+the JSONL into `tools/input-probe/results/<date>-<hardware>/` as evidence (`logs/` is git-ignored).
+
+**When there is no log server** — no desktop on the network, or a build without `VITE_REPORT_URL` —
+nothing of the capture runs at all (no timer, no panel, no request) and the manual procedure of §1–§5
+above is the way. M8 is manual either way.
+
+**How it stays out of the release bundle.** The capture lives behind the same `__SHMUP_DEV__ ? … :
+null` gate as the rest of the debug tools, and its endpoint comes from `__SHMUP_REPORT_URL__`, which
+`shmupBuildInfo()` defines as `''` for anything but a dev / test build.
+`apps/tizen/test/build/tizen-build.test.ts` asserts `dist/app.js` holds none of it.
 
 ## Extending it
 

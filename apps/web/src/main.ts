@@ -32,7 +32,11 @@ const started: Promise<WebApp> | null = determinism
       contentFiles,
       assets,
       // Dev / test builds only (F1–F8, the overlay); a release build folds this to `null`.
-      debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null,
+      // `__SHMUP_REPORT_URL__` (M3-02f) is `''` unless the build was given VITE_REPORT_URL, and
+      // then the guided render capture streams to that log server.
+      debugTools: __SHMUP_DEV__
+        ? debugToolsFactory({ buildId: __SHMUP_BUILD__, reportUrl: __SHMUP_REPORT_URL__ })
+        : null,
       // The build the replays record (M3-01).
       buildId: __SHMUP_BUILD__,
     });

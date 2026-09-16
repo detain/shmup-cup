@@ -85,7 +85,7 @@ Individual scripts:
 | `npm run icon` | Regenerates `public/icon.png` (dependency-free Node PNG writer) |
 | `npm run package` | Build → check → `tizen package -t wgt -s $TIZEN_PROFILE -- dist` ⇒ `dist/InputProbe.wgt` |
 | `npm run deploy` | `sdb connect $TV_IP` → `tizen install -n InputProbe.wgt -s <ip>:26101 -- dist` → `tizen run -p ShmpCpIPrb.InputProbe -s <ip>:26101` |
-| `npm run log-server` | Optional JSONL log receiver on port 8787 |
+| `npm run log-server` | Optional JSONL log receiver on port 8787 — it takes the probe's payloads (`ip-…` sessions) **and** the game's render telemetry (`rp-…`, plan M3-02f) |
 
 ## Package & deploy — Windows (the desktop next to the monitors)
 
@@ -228,7 +228,9 @@ tools/input-probe/
     tizen.d.ts, vite-env.d.ts, style.css
   test/              Vitest suite (Node environment) + helpers/ (fake browser/Tizen realm, fake XHR/canvas, PNG reader)
   scripts/           package.mjs, deploy.mjs, lib/tizen.mjs, check-compat.mjs, make-icon.mjs
-  server/log-server.mjs
+  server/log-server.mjs          receiver for both senders (ip-… and rp-… sessions)
+  results/analyze.mjs            re-analysis of an input-probe session
+  results/analyze-render.mjs     the game's render profile → the §11 tables (M3-02f)
 ```
 
 ## Tests
@@ -252,4 +254,6 @@ POSIX-only tests of the package/deploy scripts are skipped on Windows):
 - **Scripts** — `check-compat.mjs` against pass/fail fixtures, `make-icon.mjs` reproduces the committed icon,
   `lib/tizen.mjs` (argument parsing, cmd.exe quoting, CLI/sdb discovery incl. a simulated Windows), and
   `package.mjs` / `deploy.mjs` run from a temp copy of the project against fake `tizen`/`sdb` executables.
-- **Log server** — HTTP end-to-end on 127.0.0.1 (JSONL per session, validation, 404/413, CORS, path sanitizing).
+- **Log server** — HTTP end-to-end on 127.0.0.1 (JSONL per session, validation, 404/413, CORS, path sanitizing), for the
+  probe's payloads and for a render-telemetry one (`analyzeRender.test.ts` also drives `results/analyze-render.mjs`
+  over a fixture session).

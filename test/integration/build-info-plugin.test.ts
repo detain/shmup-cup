@@ -131,15 +131,37 @@ describe('integration: buildId', () => {
 });
 
 describe('integration: shmupBuildInfo() Vite plugin', () => {
-  it('defines __SHMUP_DEV__ and __SHMUP_BUILD__ as JSON literals', () => {
+  it('defines __SHMUP_DEV__, __SHMUP_BUILD__ and __SHMUP_REPORT_URL__ as JSON literals', () => {
     process.env[ENV] = 'abc1234';
+    delete process.env['VITE_REPORT_URL'];
     expect(shmupBuildInfo().name).toBe('shmup:build-info');
     expect(configFor({ command: 'build', mode: 'production' }).define).toEqual({
       __SHMUP_DEV__: 'false',
       __SHMUP_BUILD__: '"abc1234"',
+      __SHMUP_REPORT_URL__: '""',
     });
     expect(configFor({ command: 'build', mode: 'test' }).define?.__SHMUP_DEV__).toBe('true');
     expect(configFor({ command: 'serve', mode: 'development' }).define?.__SHMUP_DEV__).toBe('true');
+  });
+
+  it('bakes VITE_REPORT_URL into a dev build only (plan M3-02f)', () => {
+    process.env[ENV] = 'abc1234';
+    process.env['VITE_REPORT_URL'] = 'http://10.0.0.2:8787';
+    try {
+      // A dev / test build streams its render profile to the log server …
+      expect(
+        configFor({ command: 'build', mode: 'development' }).define?.__SHMUP_REPORT_URL__,
+      ).toBe('"http://10.0.0.2:8787"');
+      expect(
+        configFor({ command: 'serve', mode: 'development' }).define?.__SHMUP_REPORT_URL__,
+      ).toBe('"http://10.0.0.2:8787"');
+      // … and a release build never even reads the variable, so the sender folds away with it.
+      expect(configFor({ command: 'build', mode: 'production' }).define?.__SHMUP_REPORT_URL__).toBe(
+        '""',
+      );
+    } finally {
+      delete process.env['VITE_REPORT_URL'];
+    }
   });
 
   it('escapes a build id with quotes into a valid string literal', () => {

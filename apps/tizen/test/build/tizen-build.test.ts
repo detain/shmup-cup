@@ -97,6 +97,17 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(code).not.toContain('__SHMUP_BUILD__');
   });
 
+  it('leaves the render-telemetry sender out of the release bundle (plan M3-02f)', () => {
+    // The guided capture lives behind the same `__SHMUP_DEV__ ? … : null` gate, and its endpoint
+    // comes from `__SHMUP_REPORT_URL__`, which `shmupBuildInfo()` defines as `''` for a release
+    // build — so neither the define, nor the payload kind, nor the checklist reaches app.js.
+    expect(code).not.toContain('__SHMUP_REPORT_URL__');
+    expect(code).not.toContain('render-profile');
+    expect(code).not.toContain('RENDER CAPTURE');
+    expect(code).not.toContain('data-shmup-render-telemetry');
+    expect(code).not.toContain('/report');
+  });
+
   it('leaves the cross-engine determinism check out of the TV bundle (plan M2-18)', () => {
     // Only the web app's dev / test builds install it (`?determinism`); the Tizen app never
     // imports it, and the shell's module is tree-shaken away.

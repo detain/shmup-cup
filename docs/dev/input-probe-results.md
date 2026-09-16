@@ -169,6 +169,22 @@ for the numbers, and the recipe that produces them is
 (the review's §4 table M1–M8). Run it from a `pnpm --filter @shmup/tizen build:dev` bundle with the
 tools unlocked (**Pause, Ch+, Ch+, Ch+**).
 
+**Fill the two tables below by pasting, not by typing.** Since **M3-02f** the game streams its own
+render profile to the input probe's log server (`npm run log-server`, the bundle built with
+`VITE_REPORT_URL=http://<desktop-ip>:8787`), an on-screen checklist walks M1–M8, and
+
+```sh
+cd tools/input-probe
+node results/analyze-render.mjs logs/rp-<session>.jsonl
+```
+
+prints §11.1 and §11.2 as Markdown, one run per monitor. The windows carry **distributions**
+(min / median / p95 / max, plus the `TPF` and `RAF` bucket counts), so a p95 — the figure the review
+actually needs — is recorded rather than glanced at; windows the report POST itself was in flight
+during are excluded from the tables (`--all` keeps them). Copy the raw JSONL into
+`tools/input-probe/results/<date>-<hardware>/` as evidence. Reading the overlay by hand still works
+and stays the fallback when no log server is reachable.
+
 **Which build these expectations describe.** Everything below assumes a build **at or after plan
 step M3-02d** (commit `1cbbf42`), which folded the CRT look and the Mode-7 floor into their draw
 passes. That changed the very figures this table compares against, so §11.3 prints each headless

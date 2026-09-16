@@ -1,18 +1,24 @@
 #!/usr/bin/env node
 /**
- * Optional log receiver for the input probe — zero dependencies.
+ * Optional log receiver for the input probe **and for the game's render telemetry** — zero dependencies.
  *
- * The probe (built with VITE_REPORT_URL=http://<this-pc-ip>:8787) POSTs
- * `{session, seq, sentAt, env, verdicts, stats, newEvents, droppedEvents}` every 3 s as `text/plain` JSON
- * (a CORS "simple request", so no preflight). Each payload is appended as one line to
- * `<LOG_DIR>/<session>.jsonl` and a short summary is printed.
+ * Two senders, one receiver (plan M3-02f). The probe (built with VITE_REPORT_URL=http://<this-pc-ip>:8787)
+ * POSTs `{session, seq, sentAt, env, verdicts, stats, newEvents, droppedEvents}` every 3 s; the game's
+ * dev build (built with the same VITE_REPORT_URL) POSTs `{kind:'render-profile', session, seq, sentAt,
+ * env, checklist, samples, droppedSamples}` every 3 s. Both go out as `text/plain` JSON (a CORS "simple
+ * request", so no preflight), and both are appended as one line to `<LOG_DIR>/<session>.jsonl`, with a
+ * short summary printed. The session id says which is which: `ip-…` for the probe, `rp-…` for a render
+ * profile, so the two never share a file.
+ *
+ * The server stays **payload-agnostic** apart from the summary it prints: {@link validatePayload} only
+ * checks what the server itself relies on, and {@link formatSummary} picks a per-kind formatter.
  *
  * Usage:
  *   node server/log-server.mjs              (or: npm run log-server)
  *   PORT=8787 HOST=0.0.0.0 LOG_DIR=./logs node server/log-server.mjs
  *
  * Endpoints:
- *   POST /report   append a payload
+ *   POST /report   append a payload (either kind)
  *   GET  /         list sessions (plain text)
  *   GET  /health   "ok"
  *
@@ -21,6 +27,8 @@
  * Environment: PORT (default 8787), HOST (default 0.0.0.0 = all interfaces), LOG_DIR (default
  * `tools/input-probe/logs`). Each JSONL line is the payload plus `receivedAt` (ISO time) and `from` (the
  * sender's IP). Bodies above {@link MAX_BODY_BYTES} are rejected with 413; invalid JSON / payloads with 400.
+ *
+ * Analyzers: `results/analyze.mjs` for an `ip-…` session, `results/analyze-render.mjs` for an `rp-…` one.
  *
  * The exported functions are used by `test/logServer.test.ts` (and the end-to-end build test) to run the
  * server in-process on 127.0.0.1.
@@ -62,7 +70,7 @@ export function sanitizeSession(session) {
  *
  * @param {unknown} p - the parsed request body.
  * @returns {string | null} error message, or null when valid (a JSON object with a usable `session`, a
- *   numeric `seq` and, if present, an array `newEvents`).
+ *   numeric `seq` and, if present, an array `newEvents` — the probe — or `samples` — a render profile).
  */
 export function validatePayload(p) {
   if (p === null || typeof p !== 'object' || Array.isArray(p)) return 'payload must be a JSON object';
@@ -70,17 +78,24 @@ export function validatePayload(p) {
   if (sanitizeSession(o.session) === null) return 'missing session';
   if (typeof o.seq !== 'number') return 'missing seq';
   if (o.newEvents !== undefined && !Array.isArray(o.newEvents)) return 'newEvents must be an array';
+  if (o.samples !== undefined && !Array.isArray(o.samples)) return 'samples must be an array';
   return null;
 }
 
+/** `kind` of a render-telemetry payload (plan M3-02f); the probe's payloads carry no `kind`. */
+export const RENDER_PROFILE_KIND = 'render-profile';
+
 /**
- * One-line-per-item console summary of a payload.
+ * One-line-per-item console summary of a payload — the probe's by default, a render profile's when the
+ * payload's `kind` is {@link RENDER_PROFILE_KIND}.
  *
  * @param {Record<string, any>} p - a valid payload
- * @returns {string} a header line (session, seq, event counts), two verdict lines, then the last 12 events
- *   (with a note when earlier ones were omitted).
+ * @returns {string} for the probe: a header line (session, seq, event counts), two verdict lines, then the
+ *   last 12 events (with a note when earlier ones were omitted); for a render profile see
+ *   {@link formatRenderSummary}.
  */
 export function formatSummary(p) {
+  if (p.kind === RENDER_PROFILE_KIND) return formatRenderSummary(p);
   const v = p.verdicts ?? {};
   const events = Array.isArray(p.newEvents) ? p.newEvents : [];
   const lines = [
@@ -123,6 +138,79 @@ function formatEvent(e) {
     );
   }
   return `${t} ${e.type === 'gamepad' ? 'GP' : '· '} ${e.text ?? ''}`;
+}
+
+/**
+ * Formats a min / median / p95 / max distribution from a render sample.
+ *
+ * @param {unknown} d - a `[min, median, p95, max]` tuple from a `samples[].*` field.
+ * @param {number} [digits] - decimals (default 2).
+ * @returns {string} e.g. `0.9/1.2/2.1/4.0`, or `—` when the field is missing or malformed.
+ */
+function fmtDist(d, digits = 2) {
+  if (!Array.isArray(d) || d.length < 4) return '—';
+  return d.map((v) => (typeof v === 'number' ? v.toFixed(digits) : '?')).join('/');
+}
+
+/**
+ * One line per render sample: where it was taken and the window's distributions.
+ *
+ * @param {Record<string, any>} s - one entry of a render payload's `samples`.
+ * @returns {string} e.g.
+ *   `    #7 game/azure-verge crt=off gl=1 · 59.9 fps/3.0 s · RENDER 0.9/1.2/2.1/4.0 · DRAW 12 · REB 178/180 · RT 0 KB`.
+ */
+function formatRenderSample(s) {
+  const c = s.context ?? {};
+  const where = `${c.scene ?? '?'}/${c.zone ?? c.stage ?? '-'}`;
+  const secs = typeof s.durationMs === 'number' ? (s.durationMs / 1000).toFixed(1) : '?';
+  const marks = Array.isArray(s.marks) && s.marks.length > 0 ? ` · marks ${s.marks.join(',')}` : '';
+  const perturbed = s.sendInFlightFrames ? ` · ⚠ ${s.sendInFlightFrames} frames with a send in flight` : '';
+  return (
+    `    #${s.seq ?? '?'} ${where} crt=${c.crtFilter ?? '?'} aspect=${c.aspect ?? '?'} gl=${c.webGLVersion ?? '?'}` +
+    ` · ${fmt1(s.fps)} fps/${secs} s (${s.frames ?? '?'} frames)` +
+    ` · TICK ${fmtDist(s.tickMs)} · RENDER ${fmtDist(s.renderMs)} · FRAME ${fmtDist(s.frameMs, 1)}` +
+    ` · DRAW ${fmtDist(s.drawCalls, 0)} · REB ${s.rebuilds ?? '?'}/${s.frames ?? '?'} · RT ${s.renderTargetKb ?? '?'} KB` +
+    ` · TPF ${Array.isArray(s.tickFrames) ? s.tickFrames.join('/') : '—'}` +
+    marks +
+    perturbed
+  );
+}
+
+/**
+ * Formats an optional number with one decimal.
+ *
+ * @param {unknown} v - value from the payload.
+ * @returns {string} the number, or `—`.
+ */
+function fmt1(v) {
+  return typeof v === 'number' ? v.toFixed(1) : '—';
+}
+
+/**
+ * Console summary of a render-telemetry payload (plan M3-02f): a header line, the guided-capture
+ * checklist's progress and one line per sampling window in the batch (at most the last 8).
+ *
+ * @param {Record<string, any>} p - a valid payload whose `kind` is {@link RENDER_PROFILE_KIND}.
+ * @returns {string} the summary, one item per line.
+ */
+export function formatRenderSummary(p) {
+  const samples = Array.isArray(p.samples) ? p.samples : [];
+  const checklist = Array.isArray(p.checklist) ? p.checklist : [];
+  const done = checklist.filter((i) => i && i.done);
+  const env = p.env ?? {};
+  const lines = [
+    `[${p.session} #${p.seq}] render-profile · ${samples.length} window(s)` +
+      (p.droppedSamples ? ` (${p.droppedSamples} dropped)` : '') +
+      (env.buildId ? ` · build ${env.buildId}` : ''),
+    `  checklist ${done.length}/${checklist.length}` +
+      (done.length > 0 ? ': ' + done.map((i) => i.id).join(' ') : '') +
+      (checklist.length > done.length
+        ? ' — next: ' + (checklist.find((i) => i && !i.done)?.label ?? '?')
+        : ' — done'),
+  ];
+  for (const s of samples.slice(-8)) lines.push(formatRenderSample(s));
+  if (samples.length > 8) lines.splice(2, 0, `    … ${samples.length - 8} earlier windows in the JSONL file`);
+  return lines.join('\n');
 }
 
 /**
@@ -232,9 +320,10 @@ if (isMain) {
   const server = createLogServer({ logDir });
   server.listen(port, host, () => {
     console.log(`input-probe log server listening on http://${host}:${port}  (logs → ${logDir})`);
+    console.log('Receives both the input probe (ip-… sessions) and the game\'s render telemetry (rp-…).');
     const ips = lanAddresses();
     if (ips.length) {
-      console.log('Build the probe with one of:');
+      console.log('Build the probe — or the game\'s Tizen dev bundle — with one of:');
       for (const ip of ips) console.log(`  VITE_REPORT_URL=http://${ip}:${port}`);
     }
   });

@@ -183,8 +183,24 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   `bindWorld(null)` only hides its mesh, so its `Mesh` / `MeshGeometry` / `Shader` / `GlProgram`
   outlived the renderer — and never destroyed the second pass's container or its two side-panel
   sprites. Both are freed now, with a regression test.
+- M3-02f: **the render profile records itself.** A dev / test build given `VITE_REPORT_URL` streams
+  its own render telemetry to the input probe's log server (`tools/input-probe`, `npm run
+  log-server`, which now takes both senders — `ip-…` sessions from the probe, `rp-…` from the game):
+  a new `@shmup/shell` `telemetry` module samples every frame into preallocated typed arrays, closes
+  a window every 3 s into **min / median / p95 / max** of the frame, tick and render times and of
+  the draw calls (plus the `TPF` and rAF bucket counts, the window's structure rebuilds and the
+  pooled render-target total), and POSTs it with the context that makes the row mean something.
+  An on-screen checklist walks the render review's §4 measurement table (M1–M8) and ticks itself, so
+  the owner plays where the game says instead of keeping notes, and
+  `tools/input-probe/results/analyze-render.mjs` turns a session into the tables of
+  `docs/dev/input-probe-results.md` §11. It is built not to perturb what it measures: the frame path
+  allocates nothing (a `Float64Array` inbox instead of fractional call arguments — V8 boxes those),
+  requests go out on a timer rather than a frame boundary, and every window counts the frames a POST
+  was still in flight so a sender-induced spike is excluded rather than believed. Configured by the
+  new `__SHMUP_REPORT_URL__` define, `''` in every release build — the whole sender is proven absent
+  from `dist/app.js`.
 - The Tizen bundle is 386.8 KB gzip of its 512 KB budget (384.1 KB after M3-02c; M3-02d's +2.7 KB
-  is Pixi's mesh pipeline, no longer tree-shaken out).
+  is Pixi's mesh pipeline, no longer tree-shaken out; M3-02f adds nothing — it is dev-build only).
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

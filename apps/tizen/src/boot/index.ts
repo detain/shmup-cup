@@ -167,17 +167,23 @@ export const DEBUG_REMOTE_KEYS: readonly string[] = Object.freeze([
  * @param win - The window (its `tizen` API registers the keys; none outside a TV).
  * @param buildId - The build id (`__SHMUP_BUILD__`).
  * @param canvas - The game canvas, for the device line's `MAX_TEXTURE_SIZE` (default `null`).
+ * @param reportUrl - Base URL of the render-telemetry log server (M3-02f — the app's
+ *   `__SHMUP_REPORT_URL__`, from `VITE_REPORT_URL`); `''` (the default) leaves the guided capture
+ *   off. The internet privilege it needs is already in `public/config.xml`.
  * @returns The factory for {@link TizenAppResources.debugTools}.
  *
  * @example
  * ```ts
- * debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__, canvas) : null
+ * debugTools: __SHMUP_DEV__
+ *   ? tizenDebugTools(window, __SHMUP_BUILD__, canvas, __SHMUP_REPORT_URL__)
+ *   : null
  * ```
  */
 export function tizenDebugTools(
   win: Window,
   buildId: string,
   canvas: HTMLCanvasElement | null = null,
+  reportUrl = '',
 ): DebugToolsFactory {
   /** The overlay's device line (M2-17), filled once the tools are unlocked. */
   const device = { line: '' };
@@ -195,6 +201,7 @@ export function tizenDebugTools(
       }
     },
     device: () => device.line,
+    reportUrl,
   });
   return (host) => {
     renderer = host.renderer;

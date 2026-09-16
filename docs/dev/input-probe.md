@@ -280,6 +280,14 @@ The probe POSTs every 3 s to `<url>/report` with `Content-Type: text/plain;chars
 request*, so no preflight is needed from the widget origin. At most one request is in flight; network errors,
 timeouts (2.5 s) and non-2xx responses re-queue the events (up to 5000; older ones are dropped and counted).
 
+Since plan step **M3-02f** the same receiver also takes **the game's render profile**: a
+`pnpm --filter @shmup/tizen build:dev` bundle built with the same `VITE_REPORT_URL` POSTs
+`{kind:'render-profile', session:'rp-…', seq, sentAt, env, checklist, samples, droppedSamples}` on the same terms,
+and `results/analyze-render.mjs` turns that session into the tables of `input-probe-results.md` §11. The session
+prefix (`ip-` vs `rp-`) keeps the two apart in one log directory, and `formatSummary` picks the matching console
+summary; nothing else in the server knows about either payload. Recipe:
+[rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv).
+
 Payload (`ReportPayload` in `src/report.ts`):
 
 ```jsonc

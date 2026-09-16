@@ -4461,6 +4461,44 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Refs:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) §4 (the measurement
   table) and §7; [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §11 (the tables to fill);
   `docs/dev/input-probe.md`; plan §8.2 (the probe's own protocol, as the model) and §8.4.
+- **As built:**
+  - **Receiver.** The step's second option was taken: `tools/input-probe/server/log-server.mjs` **stays where it
+    is** and gained render-session support rather than being lifted into a new standalone tool. `npm run
+    log-server` now receives both senders — the probe's payloads carry no `kind`, the game's carry
+    `kind: 'render-profile'`, and `formatSummary` picks a per-kind console summary (`formatRenderSummary`, also
+    exported). `validatePayload` gained one lenient rule (`samples must be an array`); everything else about the
+    server is unchanged, and its existing tests pass untouched. Session ids keep the two apart in one log
+    directory: `ip-…` (probe) vs `rp-…` (render). Lifting the server would have meant a second standalone npm
+    project with its own tests for no behaviour the owner can see.
+  - **Sender.** A new shell module, `packages/shell/src/telemetry/`, imported only by `shell/debug` — so it sits
+    behind the existing `__SHMUP_DEV__ ? … : null` gate and costs the release bundle nothing. It is configured by
+    a new **`__SHMUP_REPORT_URL__`** define, which `shmupBuildInfo()` (`vite.shared.ts`) fills from
+    `VITE_REPORT_URL` **in dev / test builds only** and leaves `''` otherwise. `apps/*/src` may not use
+    `import.meta` (Chromium 69 / the classic IIFE bundle), so the probe's `import.meta.env.VITE_REPORT_URL` could
+    not be copied literally — the owner-facing variable name is the same.
+  - **Not perturbing the measurement.** The frame hands its figures over through
+    `RenderSampler.frame`, a `Float64Array` **inbox**, instead of call arguments: V8 boxes a fractional argument
+    passed to a call it does not inline, which would have allocated on every frame. `commitFrame(sendInFlight)`
+    takes one boolean. Windows are closed, payloads built and requests started from a `setInterval`, never on a
+    frame boundary, and every window records `sendInFlightFrames` — the analyzer excludes those windows by
+    default (`--all` keeps them).
+  - **The on-screen checklist is a DOM `<div>`, not an overlay panel.** Drawing it through
+    `@shmup/render-pixi`'s debug overlay would have added draw lists to the very render pass being measured; a
+    fixed-position `<div>` redrawn once per window (every ~3 s) costs the renderer nothing. The shell already owns
+    DOM in dev/boot code (`error-screen`), and none of this reaches a release bundle. The panel can be switched
+    off (`panel: false`) and is skipped when there is no document.
+  - **M8 is in the checklist but marked manual** (`RENDER_MANUAL_CHECKS`): the input-to-photon latency needs a
+    240 fps video and nothing on the device can observe it. It shows as `[-]` and never ticks, so the panel still
+    walks the whole §4 table without pretending.
+  - **Checklist thresholds** are the facts a sample stream can really carry: M1 30 s title + 30 s dense, M2 20 s
+    per CRT setting, M3 three stages × 10 s, M4 5 s dense inside the first two minutes and 5 s after, M5 60 s in
+    one stage (the WebGL A/B is one session per context — the analyzer prints the version this session ran on and
+    the owner repeats it with `?gl=2` / `localStorage['shmup-cup:gl']`), M6 two zones with CRT on and off, M7 a
+    `blur` → `focus` (the M7 monitors deliver no `visibilitychange`; both are listened for).
+  - **Analyzer** is `tools/input-probe/results/analyze-render.mjs` (zero-dependency, exports
+    `readSession` / `aggregate` / `analyzeRenderSession` for its test). A group's figures are folded from the
+    windows' own tuples: min of mins, **median of the windows' p50s and p95s** (not a p95 of p95s — one bad
+    window must not become the answer) and the worst single frame.
 
 ### M3-03 — Reach: localization, more platforms, tracker music
 

@@ -33,7 +33,9 @@ bootTizenApp(canvas, {
   contentFiles,
   assets,
   // Dev / test builds only (Pause, Ch+, Ch+, Ch+ → the overlay); the release bundle folds it away.
-  debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__, canvas) : null,
+  debugTools: __SHMUP_DEV__
+    ? tizenDebugTools(window, __SHMUP_BUILD__, canvas, __SHMUP_REPORT_URL__)
+    : null,
   // The build the replays record (M3-01).
   buildId: __SHMUP_BUILD__,
 }).catch((error: unknown) => {

@@ -310,11 +310,69 @@ With the debug build on **each** monitor:
 
 ## Extra checks for the render-profiling build (plan §8.4)
 
-These measure the drawing, and they are the numbers a later build will be judged against. The
-full recipe — the eight measurements **M1–M8**, in the order to run them, and where to write the
-results down — is
-[`../dev/rendering-and-shell.md`](../dev/rendering-and-shell.md#measuring-on-the-tv); the short
-version, with the debug build on **each** monitor:
+These measure the drawing, and they are the numbers a later build will be judged against. **The
+game can now record them itself** — do it that way; the manual reading below is the fallback for
+when no desktop is reachable. The full recipe is
+[`../dev/rendering-and-shell.md`](../dev/rendering-and-shell.md#measuring-on-the-tv).
+
+### The guided capture (preferred)
+
+The debug build can stream what it draws to a small log server on your desktop, and an on-screen
+checklist tells you where to fly. Nothing is typed down, and it records the **worst 5 %** of frames,
+which nobody can read off a moving panel.
+
+1. **Start the receiver** on the desktop:
+
+   ```bat
+   cd tools\input-probe
+   npm install
+   npm run log-server
+   ```
+
+   It prints an address like `VITE_REPORT_URL=http://10.0.0.2:8787`. Windows asks once to allow Node
+   through the firewall on the **private** network — say yes, or the monitor cannot reach it.
+
+2. **Build the debug build with that address** and install it as usual:
+
+   ```bat
+   set VITE_REPORT_URL=http://10.0.0.2:8787
+   pnpm --filter @shmup/tizen build:dev
+   ```
+
+3. **On the monitor**, open the tools (Play/Pause, Ch▲, Ch▲, Ch▲). A list appears in the **top-right
+   corner**. Play the way each line asks; a line ticks itself when enough has been recorded, and a
+   ticked line never goes back:
+
+   | Line | What to do |
+   |---|---|
+   | **M1** | 30 seconds on the title, then 30 seconds of a busy scene (key **8** jumps to the boss) |
+   | **M2** | OPTIONS → DISPLAY → **CRT OFF / LIGHT / FULL**, 20 seconds of the same piece of stage each |
+   | **M3** | Fly 10 seconds in three different stages — include the Mode-7 one and the water / heat-haze one |
+   | **M4** | A very dense pattern now, and the same one again after a checkpoint restart (key **7**) |
+   | **M5** | A minute in one stage |
+   | **M6** | Two different zones, each with CRT on and with CRT off |
+   | **M7** | Press **Home**, wait ten seconds, come back |
+   | **M8** | The 240 fps video — this one is still yours to film; it shows as `[-]` and never ticks |
+
+   The last line of the list shows how the sending is going (`sent #12 · queued 0 · fails 0`). If
+   `queued` keeps climbing and `fails` rises, the monitor cannot reach the desktop — check the IP and
+   the firewall. Run the whole list on **each** monitor; each launch writes its own file.
+
+4. **Turn it into the results tables** on the desktop:
+
+   ```sh
+   cd tools/input-probe
+   node results/analyze-render.mjs logs/rp-<session>.jsonl
+   ```
+
+   Paste its output into the results document. Use **god mode (key 2)** throughout so a death never
+   cuts a run short, and leave the outlines (3) and slow motion (6) off — both change what is drawn.
+
+Nothing of this runs in a build without that address, and none of it exists in the normal build.
+
+### Reading the panel by hand (fallback)
+
+With the debug build on **each** monitor:
 
 1. **Baseline.** On the title, in zone A and on the boss, note `FPS`, `TICK`, `RENDER`, `DRAW`,
    `REB` and `RT`, and photograph the frame graph and the `RAF` bars. This is the control for
@@ -352,3 +410,6 @@ version, with the debug build on **each** monitor:
 | `RT` jumps by ~16 MB when CRT goes on | Worth reporting with a photo: since the render fix the CRT should take no scratch picture at all. (`RT` counts from the start of the app, not from when you opened the panel, so switching CRT off again never brings it back down.) |
 | The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
 | `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |
+| No list in the top-right corner | The build was made without `VITE_REPORT_URL` (see [the guided capture](#the-guided-capture-preferred)) — it then records nothing at all. Set the variable, build `build:dev` again and reinstall |
+| The list is there but `fails` keeps rising | The monitor cannot reach the desktop: check the address you built with is the desktop's address on the **same** network, that `npm run log-server` is still running, and that Windows allowed Node through the private-network firewall |
+| A line never ticks | Read what it asks for again — each one needs a certain amount of the *right* kind of play (`M2` needs 20 seconds per CRT setting, `M5` a full minute in one stage). `M8` is manual and never ticks |

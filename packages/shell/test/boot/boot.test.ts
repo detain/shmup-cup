@@ -565,6 +565,7 @@ describe('shell/boot debug tools (M1-19)', () => {
         overlay: null as never,
         counters: null as never,
         api: null as never,
+        telemetry: null as never,
         unlocked: true,
         handleKey: () => false,
         beginFrame: (now) => log.push(`begin:${now}:${host.game.state.tick}`),

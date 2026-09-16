@@ -17,8 +17,10 @@
  * ({@link estimateStageMemory}) and the atlas-page residency between zones
  * ({@link createAtlasResidency}). Since M2-18 dev / test builds of the web app can run the
  * cross-engine determinism check instead of the game ({@link installDeterminismCheck} — golden
- * replays played in the page's own engine). The apps stay thin adapters (input, audio, platform,
- * Back key).
+ * replays played in the page's own engine). Since M3-02f a dev build pointed at the input probe's
+ * log server (`VITE_REPORT_URL` → `__SHMUP_REPORT_URL__` → `DebugToolsOptions.reportUrl`) also
+ * streams its render profile there — the guided capture of {@link createRenderTelemetry}. The apps
+ * stay thin adapters (input, audio, platform, Back key).
  *
  * Dependency direction: `apps/* → @shmup/shell → {render-pixi, audio-web, input-web} → core`.
  *
@@ -133,6 +135,42 @@ export {
   type DebugToolsOptions,
   type ShmupDebugApi,
 } from './debug/index.js';
+export {
+  DENSE_BULLETS,
+  DENSE_PATTERN_SECONDS,
+  FRESH_LAUNCH_MS,
+  MAX_QUEUED_SAMPLES,
+  RENDER_CHECK_LABELS,
+  RENDER_CHECK_ORDER,
+  RENDER_FRAME_SLOT,
+  RENDER_FRAME_SLOTS,
+  RENDER_MANUAL_CHECKS,
+  RENDER_PROFILE_KIND,
+  RENDER_REPORT_INTERVAL_MS,
+  RENDER_REQUEST_TIMEOUT_MS,
+  RENDER_TICK_BUCKETS,
+  RENDER_WINDOW_MAX_FRAMES,
+  RenderCheckTally,
+  RenderChecklist,
+  RenderReporter,
+  RenderSampleQueue,
+  RenderSampler,
+  createRenderCheckFacts,
+  createRenderTelemetry,
+  evaluateRenderChecklist,
+  makeRenderSessionId,
+  renderReportEndpoint,
+  type RenderCheckFacts,
+  type RenderCheckId,
+  type RenderCheckItem,
+  type RenderProfilePayload,
+  type RenderReporterStatus,
+  type RenderSample,
+  type RenderSampleContext,
+  type RenderTelemetry,
+  type RenderTelemetryEnv,
+  type RenderTelemetryOptions,
+} from './telemetry/index.js';
 export {
   DISPOSABLE_STORAGE_KEYS,
   STORAGE_PREFIX,

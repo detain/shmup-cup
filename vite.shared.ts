@@ -498,6 +498,10 @@ export function buildId(cwd: string = REPO_ROOT): string {
  *   release build, where the minifier folds `__SHMUP_DEV__ ? … : null` away and the tools are
  *   not bundled.
  * - `__SHMUP_BUILD__` — the {@link buildId} (git SHA).
+ * - `__SHMUP_REPORT_URL__` — the render-telemetry log server (plan M3-02f): the `VITE_REPORT_URL`
+ *   environment variable in a **dev / test build**, `''` everywhere else. The name is the input
+ *   probe's, so one `npm run log-server` and one variable serve both senders. `''` leaves the
+ *   guided capture switched off, and a release build never even reads the variable.
  *
  * @returns The plugin.
  *
@@ -511,10 +515,12 @@ export function shmupBuildInfo(): Plugin {
   return {
     name: 'shmup:build-info',
     config(_config, env) {
+      const reportUrl = isDevBuild(env) ? (process.env.VITE_REPORT_URL ?? '') : '';
       return {
         define: {
           __SHMUP_DEV__: JSON.stringify(isDevBuild(env)),
           __SHMUP_BUILD__: JSON.stringify(buildId()),
+          __SHMUP_REPORT_URL__: JSON.stringify(reportUrl),
         },
       };
     },

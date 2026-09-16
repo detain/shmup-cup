@@ -15,12 +15,75 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   MAX_BODY_BYTES,
+  RENDER_PROFILE_KIND,
   createLogServer,
+  formatRenderSummary,
   formatSummary,
   lanAddresses,
   sanitizeSession,
   validatePayload,
 } from '../server/log-server.mjs';
+
+/**
+ * A render-telemetry sampling window, shaped exactly as `@shmup/shell`'s `RenderSample` (plan M3-02f).
+ *
+ * @param over - What differs from the neutral window.
+ * @returns The window.
+ */
+function renderWindow(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    seq: 1,
+    startMs: 0,
+    durationMs: 3000,
+    frames: 180,
+    measuredFrames: 180,
+    fps: 60,
+    sendInFlightFrames: 0,
+    frameMs: [16, 16.7, 17, 20],
+    tickMs: [0.1, 0.2, 0.3, 0.4],
+    renderMs: [0.9, 1.2, 2.1, 4],
+    drawCalls: [12, 12, 12, 12],
+    rebuilds: 179,
+    renderTargetKb: 0,
+    tickFrames: [0, 180, 0, 0],
+    raf: [0, 0, 180, 0, 0, 0, 0, 0],
+    context: {
+      scene: 'game',
+      stage: 'zone-a',
+      zone: 'A',
+      crtFilter: 'off',
+      aspect: 'normal',
+      webGLVersion: 1,
+      bullets: 120,
+    },
+    marks: ['M2'],
+    ...over,
+  };
+}
+
+/**
+ * A render-telemetry payload the game's dev build would POST.
+ *
+ * @param over - What differs from the neutral payload.
+ * @returns The payload.
+ */
+function renderPayload(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    kind: RENDER_PROFILE_KIND,
+    session: 'rp-test-0001',
+    seq: 1,
+    sentAt: 1_700_000_000_000,
+    env: { buildId: '9524c84', device: 'LS43AM702U', webGLVersion: 1 },
+    checklist: [
+      { id: 'M1', label: 'Baseline', done: true, manual: false },
+      { id: 'M2', label: 'CRT OFF, LIGHT and FULL', done: false, manual: false },
+      { id: 'M8', label: '240 fps video', done: false, manual: true },
+    ],
+    samples: [renderWindow()],
+    droppedSamples: 0,
+    ...over,
+  };
+}
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -60,8 +123,57 @@ describe('validatePayload', () => {
     [{ session: 's' }, 'missing seq'],
     [{ session: 's', seq: '1' }, 'missing seq'],
     [{ session: 's', seq: 1, newEvents: {} }, 'newEvents must be an array'],
+    [{ session: 's', seq: 1, samples: {} }, 'samples must be an array'],
   ])('%j → %s', (p, err) => {
     expect(validatePayload(p)).toBe(err);
+  });
+
+  it('accepts a render-telemetry payload (plan M3-02f)', () => {
+    expect(validatePayload(renderPayload())).toBeNull();
+  });
+});
+
+describe('formatRenderSummary', () => {
+  it('prints the checklist progress and one line per sampling window', () => {
+    const lines = formatSummary(renderPayload()).split('\n');
+    expect(lines[0]).toBe('[rp-test-0001 #1] render-profile · 1 window(s) · build 9524c84');
+    expect(lines[1]).toBe('  checklist 1/3: M1 — next: CRT OFF, LIGHT and FULL');
+    expect(lines[2]).toContain('#1 game/A crt=off aspect=normal gl=1');
+    expect(lines[2]).toContain('60.0 fps/3.0 s (180 frames)');
+    expect(lines[2]).toContain('RENDER 0.90/1.20/2.10/4.00');
+    expect(lines[2]).toContain('DRAW 12/12/12/12');
+    expect(lines[2]).toContain('REB 179/180 · RT 0 KB');
+    expect(lines[2]).toContain('TPF 0/180/0/0');
+    expect(lines[2]).toContain('marks M2');
+    expect(lines[2]).not.toContain('send in flight');
+  });
+
+  it('flags a window a report POST was in flight during', () => {
+    const text = formatSummary(renderPayload({ samples: [renderWindow({ sendInFlightFrames: 9 })] }));
+    expect(text).toContain('9 frames with a send in flight');
+  });
+
+  it('shows only the last 8 windows, counts dropped ones and says when the list is done', () => {
+    const samples = [];
+    for (let i = 0; i < 11; i++) samples.push(renderWindow({ seq: i + 1 }));
+    const lines = formatRenderSummary(
+      renderPayload({
+        samples,
+        droppedSamples: 4,
+        checklist: [{ id: 'M1', label: 'Baseline', done: true, manual: false }],
+      }),
+    ).split('\n');
+    expect(lines[0]).toBe('[rp-test-0001 #1] render-profile · 11 window(s) (4 dropped) · build 9524c84');
+    expect(lines[1]).toBe('  checklist 1/1: M1 — done');
+    expect(lines[2]).toBe('    … 3 earlier windows in the JSONL file');
+    expect(lines).toHaveLength(2 + 1 + 8);
+  });
+
+  it('tolerates a malformed window', () => {
+    const text = formatRenderSummary({ session: 's', seq: 1, samples: [{}] });
+    expect(text).toContain('[s #1] render-profile · 1 window(s)');
+    expect(text).toContain('#? ?/- crt=? aspect=? gl=?');
+    expect(text).toContain('TICK —');
   });
 });
 
@@ -244,6 +356,16 @@ describe('log server (HTTP)', () => {
     });
     expect(status).toBe(413);
     expect(readdirSync(logDir).length).toBe(before);
+  });
+
+  it('stores a render-telemetry payload in its own session file and summarises it', async () => {
+    const res = await post(JSON.stringify(renderPayload()));
+    expect(res.status).toBe(200);
+    const rows = readJsonl('rp-test-0001');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ kind: RENDER_PROFILE_KIND, session: 'rp-test-0001', seq: 1 });
+    expect((rows[0]?.['samples'] as unknown[])[0]).toMatchObject({ renderMs: [0.9, 1.2, 2.1, 4] });
+    expect(logged.some((l) => l.startsWith('[rp-test-0001 #1] render-profile'))).toBe(true);
   });
 
   it('a probe payload built by ReportQueue is accepted as-is', async () => {
