@@ -387,7 +387,8 @@ describe('rebind rebinding (edge): applying overrides', () => {
       releaseDebounce: null,
       bindings: {},
     });
-    expect([socdOnly.socd, socdOnly.releaseDebounceTicks]).toEqual(['lastWins', 2]);
+    // M3-02b: the TV profile no longer debounces (the remote sends no fake keyup/keydown pairs).
+    expect([socdOnly.socd, socdOnly.releaseDebounceTicks]).toEqual(['lastWins', 0]);
     expect(socdOnly.tables).toBe(REMOTE.tables);
     const debounceOnly = customizeInputProfile(REMOTE, {
       socd: null,

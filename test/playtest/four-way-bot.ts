@@ -15,6 +15,13 @@
  * capsule ahead, the lane of the boss's core during a boss fight and the lane of the next enemy
  * ahead (so its shots hit). Once in its lane it steps left / right back to x ≈ 64.
  *
+ * **The remote's limits (M3-02b).** Since the 2026-09-15 input probe the bot's wishes pass through
+ * the `remote-strict` model by default: the remote delivers **one key at a time**, so a PowerUp
+ * press is a 7–16-tick tap with no direction preceded by two empty ticks, and a change of direction
+ * costs one empty tick. Because the tap freezes the ship, the bot waits for a lane that stays clear
+ * for {@link EQUIP_WINDOW_TICKS} before it presses. Pass `{ remote: false }` to fly the old,
+ * hardware-free way.
+ *
  * **Power-ups.** It presses PowerUp (one tick, an edge) when the meter's cursor reaches Speed
  * (up to speed level {@link BOT_MAX_SPEED_LEVEL}), Missile or Option and the slot can be equipped;
  * it never takes Double, Laser, the Force Field or Mega Crash — the plan's "presses PowerUp when
@@ -39,6 +46,11 @@ import {
   type World,
 } from '@shmup/core';
 import type { PlaytestBot } from './harness.js';
+import {
+  REMOTE_PRE_TAP_TICKS,
+  REMOTE_TAP_TICKS,
+  createRemoteStrictModel,
+} from './remote-strict.js';
 
 /** Playfield x the bot keeps its ship at (where the fly-in ends). */
 export const BOT_X = 64;
@@ -57,6 +69,25 @@ export const TERRAIN_AHEAD = 56;
 
 /** Highest speed level the bot equips (a faster 4-way ship overshoots its lanes). */
 export const BOT_MAX_SPEED_LEVEL = 2;
+
+/**
+ * Ticks the bot must see its lane clear for before it starts a PowerUp tap under the remote model
+ * (M3-02b): the two empty ticks the thumb needs plus the tap itself.
+ */
+export const EQUIP_WINDOW_TICKS = REMOTE_PRE_TAP_TICKS + REMOTE_TAP_TICKS;
+
+/**
+ * Ticks the bot waits for a clear lane before it takes the risk anyway (M3-02b): a capsule queue
+ * it never spends is worse than one dangerous tap.
+ */
+export const EQUIP_PATIENCE_TICKS = 150;
+
+/**
+ * How strongly the bot prefers the lane of a boss's core (M3-02b): a remote player cannot
+ * re-acquire a drifting core by flitting lane to lane, so it commits to the core's lane early —
+ * while the lane scan still keeps it out of a lane that is about to be shot at.
+ */
+export const BOSS_CORE_BONUS = 160;
 
 /**
  * Playfield y of a lane's centre.
@@ -277,12 +308,22 @@ function firstSlot(mask: number, from: number, to: number): number {
   return -1;
 }
 
+/** Options of {@link fourWayBot}. */
+export interface FourWayBotOptions {
+  /**
+   * Fly under the Samsung remote's real limits (M3-02b — `remote-strict`): default `true`.
+   * `false` gives the pre-M3-02b bot, which could press a button while moving.
+   */
+  readonly remote?: boolean;
+}
+
 /**
  * Creates a four-way playtest bot (see the module docs). Each bot keeps a little state (its
- * target lane, its last PowerUp press), so use one per run.
+ * target lane, its last PowerUp press, its remote model), so use one per run.
  *
  * @param player - The player slot it flies (default 0 — player 1; the co-op golden replay of
  *   M2-06 flies player 2 with a second bot).
+ * @param options - Whether the remote model applies (default: it does).
  * @returns The bot.
  *
  * @example
@@ -290,12 +331,15 @@ function firstSlot(mask: number, from: number, to: number): number {
  * const run = runStage('zone-a', fourWayBot(), { godMode: true });
  * ```
  */
-export function fourWayBot(player = 0): PlaytestBot {
+export function fourWayBot(player = 0, options: FourWayBotOptions = {}): PlaytestBot {
+  const strict = options.remote !== false;
+  const remote = createRemoteStrictModel();
   const scan = createLaneScan();
   const bonus = new Float64Array(LANES);
   const cost = new Float64Array(LANES);
   let target = -1;
   let pressed = false;
+  let waiting = 0;
 
   /**
    * Whether the cursor sits on a slot the bot wants.
@@ -314,8 +358,22 @@ export function fourWayBot(player = 0): PlaytestBot {
     return false;
   };
 
+  /**
+   * Whether the ship's lane stays free of threats and rock for the next `ticks` ticks, so the bot
+   * can stand still through a button tap (M3-02b).
+   *
+   * @param lane - The lane the ship is in.
+   * @param ticks - Ticks the tap lasts.
+   * @returns `true` while nothing crosses the lane in that window.
+   */
+  const laneClearFor = (lane: number, ticks: number): boolean => {
+    if (scan.wall[lane] !== 0) return false;
+    return firstSlot(scan.centre[lane], 0, Math.ceil(ticks / SLOT_TICKS)) < 0;
+  };
+
   return {
-    name: 'four-way',
+    name: strict ? 'four-way (remote)' : 'four-way',
+    remoteStrict: strict,
     /**
      * One tick's decision (see the module docs): a one-tick PowerUp press when `wantsEquip` says,
      * then — only while the ship is `alive` — the lane scan, a cost per lane (the trip through the
@@ -329,16 +387,11 @@ export function fourWayBot(player = 0): PlaytestBot {
     decide(world) {
       const ship = world.players[player];
       let mask = 0;
-      // PowerUp: one-tick presses (an edge), never two ticks in a row.
-      if (!pressed && ship.state === 'alive' && wantsEquip(world)) {
-        mask |= Action.PowerUp;
-        pressed = true;
-      } else {
-        pressed = false;
-      }
       if (ship.state !== 'alive') {
         target = -1;
-        return mask;
+        pressed = false;
+        // No reset: a tap already under way keeps its measured length in the recorded stream.
+        return strict ? remote.filter(0) : 0;
       }
       const camera = world.camera;
       const sx = ship.x - camera.x;
@@ -346,6 +399,24 @@ export function fourWayBot(player = 0): PlaytestBot {
       scanLanes(world, scan, player);
       const current = laneOf(sy);
       const speed = world.ship.speeds[ship.speedLevel] ?? 1.5;
+      // PowerUp: one-tick presses (an edge), never two ticks in a row. Under the remote model the
+      // press costs a whole tap without a direction (M3-02b), so the bot only starts one while its
+      // lane stays clear for as long as the tap lasts — what a careful remote player does.
+      if (!pressed && wantsEquip(world)) {
+        waiting++;
+        if (
+          !strict ||
+          waiting > EQUIP_PATIENCE_TICKS ||
+          laneClearFor(current, EQUIP_WINDOW_TICKS)
+        ) {
+          mask |= Action.PowerUp;
+          pressed = true;
+          waiting = 0;
+        }
+      } else {
+        pressed = false;
+        waiting = 0;
+      }
 
       // Preferences: capsules ahead, the boss's core, the next enemy ahead (to shoot it).
       bonus.fill(0);
@@ -363,9 +434,9 @@ export function fourWayBot(player = 0): PlaytestBot {
           const part = boss.parts[i];
           if (!part.core || part.destroyed) continue;
           const lane = laneOf(part.y - camera.y);
-          bonus[lane] += 60;
-          if (lane > 0) bonus[lane - 1] += 15;
-          if (lane < LANES - 1) bonus[lane + 1] += 15;
+          bonus[lane] += BOSS_CORE_BONUS;
+          if (lane > 0) bonus[lane - 1] += BOSS_CORE_BONUS / 4;
+          if (lane < LANES - 1) bonus[lane + 1] += BOSS_CORE_BONUS / 4;
         }
       } else {
         let nearest = Number.POSITIVE_INFINITY;
@@ -422,7 +493,29 @@ export function fourWayBot(player = 0): PlaytestBot {
       // Hysteresis: keep the lane already heading for unless the new one is clearly better.
       if (target < 0 || cost[best] < cost[target] - 20) target = best;
 
-      const dy = laneCentre(target) - sy;
+      // In a boss fight the bot lines up on the core's own row inside the target lane instead of
+      // its centre (M3-02b) — but only while it cannot die. A remote player that changes direction
+      // only between key-ups cannot re-acquire a drifting core lane by lane, so the audit runs
+      // (god mode, "does this boss go down at all") need the fine aim; a run that can die dodges
+      // by lanes, and sitting on the core's row is exactly where a boss's aimed fire converges.
+      let goalY = laneCentre(target);
+      if (boss !== null && boss.state === BossState.Fight && world.debugFlags.godMode) {
+        // The core if the encounter has one (a boss), else its first live part (a captain).
+        let fallback = -1;
+        for (let i = 0; i < boss.partCount; i++) {
+          const part = boss.parts[i];
+          if (part.destroyed) continue;
+          const py = part.y - camera.y;
+          if (laneOf(py) !== target) continue;
+          if (part.core) {
+            fallback = py;
+            break;
+          }
+          if (fallback < 0) fallback = py;
+        }
+        if (fallback >= 0) goalY = fallback;
+      }
+      const dy = goalY - sy;
       if (Math.abs(dy) > speed * 0.5) {
         mask |= dy < 0 ? Action.Up : Action.Down;
       } else if (sx < BOT_X - speed) {
@@ -430,7 +523,7 @@ export function fourWayBot(player = 0): PlaytestBot {
       } else if (sx > BOT_X + speed) {
         mask |= Action.Left;
       }
-      return mask;
+      return strict ? remote.filter(mask) : mask;
     },
   };
 }

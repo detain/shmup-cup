@@ -104,6 +104,9 @@ vi.mock('@shmup/audio-web', async (importOriginal) => {
 });
 
 const STEP = 1000 / 60;
+
+/** The remote keys `tizen-remote-safe` registers (M3-02b added Guide and Extra). */
+const REGISTERED_KEYS = ['MediaPlayPause', 'ChannelUp', 'ChannelDown', 'Guide', 'Extra'];
 const { manifest } = buildAtlas();
 const resources: TizenAppResources = {
   contentFiles: readContentFiles(),
@@ -244,10 +247,66 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Boots the app into the fake window. */
-async function boot() {
+/**
+ * A second remote profile, for the tests that switch between two of them. The shipped content has
+ * had only one since M3-02b (the probe showed the remote cannot send diagonals and needs no
+ * debounce, so `tizen-remote-diagonal` was retired).
+ */
+const SECOND_REMOTE_FILE = {
+  path: 'input/zz-test.input-profiles.json',
+  data: {
+    formatVersion: 1,
+    kind: 'input-profiles',
+    profiles: [
+      {
+        id: 'tizen-remote-test',
+        label: 'TEST REMOTE',
+        device: 'remote',
+        context: {
+          game: {
+            byCode: {},
+            byKeyCode: {
+              '13': ['PowerUp'],
+              '37': ['Left'],
+              '38': ['Up'],
+              '39': ['Right'],
+              '40': ['Down'],
+              '10009': ['Pause'],
+            },
+          },
+          menu: {
+            byCode: {},
+            byKeyCode: {
+              '13': ['Confirm'],
+              '37': ['Left'],
+              '38': ['Up'],
+              '39': ['Right'],
+              '40': ['Down'],
+              '10009': ['Back'],
+            },
+          },
+        },
+        releaseDebounceTicks: 0,
+        diagonals: 'combine',
+        socd: 'neutral',
+        singleKey: true,
+        register: ['MediaPlayPause'],
+      },
+    ],
+  },
+};
+
+/**
+ * Boots the app into the fake window.
+ *
+ * @param withSecondProfile - Also load {@link SECOND_REMOTE_FILE} (default `false`).
+ */
+async function boot(withSecondProfile = false) {
   const canvas = {} as HTMLCanvasElement;
-  const app = await bootTizenApp(canvas, resources, win as unknown as Window);
+  const used: TizenAppResources = withSecondProfile
+    ? { ...resources, contentFiles: [...resources.contentFiles, SECOND_REMOTE_FILE] }
+    : resources;
+  const app = await bootTizenApp(canvas, used, win as unknown as Window);
   return { app, canvas };
 }
 
@@ -315,10 +374,12 @@ describe('tizen/boot bootTizenApp wiring', () => {
     const { app } = await boot();
     expect(app.profiles.issues).toEqual([]);
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
-    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(2);
+    // M3-02b: the 2026-09-15 probe found no fake keyup/keydown pairs, and one key at a time.
+    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(0);
+    expect(app.input.keyProfile?.singleKey).toBe(true);
     expect(app.input.gamepadProfile?.id).toBe('gamepad-standard');
-    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
-    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0);
+    expect(win.registeredKeys).toEqual(REGISTERED_KEYS);
   });
 
   it('resolves remote OK to Confirm on the title, to PowerUp in the game context (D15)', async () => {
@@ -339,25 +400,17 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(app.game.state.input?.players[0]?.pressed).toBe(Action.PowerUp);
     win.key('keyup', 13);
     win.frame(2 * STEP);
-    win.frame(3 * STEP);
-    expect(app.game.state.input?.players[0]?.held).toBe(Action.PowerUp); // debounce: 2 polls
-    win.frame(4 * STEP);
+    // M3-02b: no release debounce — the key is up on the next poll.
     expect(app.game.state.input?.players[0]?.held).toBe(0);
   });
 
-  it('applies a saved profile choice during boot and registers its keys', async () => {
+  it('migrates a saved choice of the retired FAST 8-WAY profile (M3-02b)', async () => {
     win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-diagonal'));
     const { app } = await boot();
-    expect(app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    // `resolveUserOptions` maps the retired id onto the one remote profile that is left.
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
     expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0);
-    expect(win.registeredKeys).toEqual([
-      'MediaPlayPause',
-      'ChannelUp',
-      'ChannelDown',
-      'MediaPlayPause',
-      'ChannelUp',
-      'ChannelDown',
-    ]);
+    expect(win.registeredKeys).toEqual(REGISTERED_KEYS);
   });
 
   it('ignores a saved choice that names no remote profile the TV offers', async () => {
@@ -366,7 +419,7 @@ describe('tizen/boot bootTizenApp wiring', () => {
       win.stored.set('shmup-cup:save.v1', savedProfile(saved));
       const { app } = await boot();
       expect(app.input.keyProfile?.id, saved).toBe('tizen-remote-safe');
-      expect(win.registeredKeys, saved).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+      expect(win.registeredKeys, saved).toEqual(REGISTERED_KEYS);
       app.stop();
     }
   });
@@ -491,6 +544,32 @@ describe('tizen/boot bootTizenApp wiring', () => {
     expect(app.game.state.input?.players[0]?.held).toBe(0);
   });
 
+  it('pauses under the Home overlay: blur suspends, focus resumes into the pause menu (M3-02b)', async () => {
+    Object.assign(win, { location: { search: '?scene=flight' } });
+    const { app } = await boot();
+    await flush();
+    win.frame(0);
+    win.frame(STEP);
+    expect(app.game.state.tick).toBe(1);
+
+    // Home on the M7 fires only `blur` — the app keeps running under the overlay.
+    win.dispatchEvent(new Event('blur'));
+    await flush();
+    expect(app.game.state.suspended).toBe(true);
+    expect(app.audio.state).toBe('suspended');
+    win.frame(10_000); // no ticks while suspended …
+    expect(app.game.state.tick).toBe(1);
+
+    win.dispatchEvent(new Event('focus'));
+    await flush();
+    expect(app.game.state.suspended).toBe(false);
+    expect(app.audio.state).toBe('running');
+    // … and no catch-up burst afterwards: the loop was reset with the resume.
+    win.frame(20_000);
+    win.frame(20_000 + STEP);
+    expect(app.game.state.tick).toBe(2);
+  });
+
   it('forwards window resizes to the renderer', async () => {
     await boot();
     win.innerWidth = 1280;
@@ -546,34 +625,38 @@ describe('tizen/boot input profiles (edge cases)', () => {
     win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-safe'));
     const { app } = await boot();
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
-    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+    expect(win.registeredKeys).toEqual(REGISTERED_KEYS);
   });
 
   it('offers the remote profiles in the Options screen', async () => {
     const { app } = await boot();
+    // One remote profile since M3-02b.
     expect(app.game.scenes!.inputProfiles).toEqual([
-      { id: 'tizen-remote-safe', label: 'SAFE 4-WAY (DEFAULT)' },
-      { id: 'tizen-remote-diagonal', label: 'FAST 8-WAY' },
+      { id: 'tizen-remote-safe', label: 'REMOTE (DEFAULT)' },
     ]);
     expect(app.game.scenes!.activeInputProfile).toBe(0);
   });
 
   it('an Options change switches the profile while running, even mid-hold, and registers keys', async () => {
-    const { app } = await boot();
+    const { app } = await boot(true);
+    expect(app.game.scenes!.inputProfiles.map((c) => c.id)).toEqual([
+      'tizen-remote-safe',
+      'tizen-remote-test',
+    ]);
     win.frame(0);
     win.key('keydown', 39);
     win.frame(STEP);
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
     win.frame(1.5 * STEP); // drains the event (no tick yet)
-    expect(app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
-    expect(win.registeredKeys).toHaveLength(6);
+    expect(app.input.keyProfile?.id).toBe('tizen-remote-test');
+    expect(win.registeredKeys).toEqual([...REGISTERED_KEYS, 'MediaPlayPause']);
     win.frame(2 * STEP);
     const p1 = app.game.state.input?.players[0];
     expect(p1?.held).toBe(Action.Right); // same bindings: the held arrow keeps moving
     expect(p1?.pressed).toBe(0);
     win.key('keyup', 39);
     win.frame(3 * STEP);
-    expect(app.game.state.input?.players[0]?.held).toBe(0); // debounce 0 now
+    expect(app.game.state.input?.players[0]?.held).toBe(0); // no debounce
   });
 
   it('without input-profiles content: fallback key list, built-in remote bindings', async () => {
@@ -665,17 +748,17 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
     frames(1);
     expect(app.input.keyProfile).toBe(before);
-    expect(win.registeredKeys).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
+    expect(win.registeredKeys).toEqual(REGISTERED_KEYS);
   });
 
-  it('a saved FAST 8-WAY shows as the active choice and can be switched back', async () => {
-    win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-diagonal'));
-    const { app } = await boot();
+  it('a saved second profile shows as the active choice and can be switched back', async () => {
+    win.stored.set('shmup-cup:save.v1', savedProfile('tizen-remote-test'));
+    const { app } = await boot(true);
     expect(app.game.scenes!.activeInputProfile).toBe(1);
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
     frames(1);
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
-    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(2);
+    expect(app.input.keyProfile?.releaseDebounceTicks).toBe(0);
   });
 
   it('a corrupt save boots the title with defaults and is kept aside', async () => {
@@ -688,7 +771,7 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
   });
 
   it('remote only: change SFX and CONTROLS, Back saves; a relaunch keeps both', async () => {
-    const first = await boot();
+    const first = await boot(true);
     frames(2);
     tap(13); // PRESS OK → menu
     tap(40); // 2 PLAYERS (M2-06)
@@ -706,8 +789,8 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
     tap(13);
     frames(2);
     expect(flow.stack.top?.id).toBe('controls');
-    tap(39); // PROFILE → FAST 8-WAY (applied live)
-    expect(first.app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    tap(39); // PROFILE → TEST REMOTE (applied live)
+    expect(first.app.input.keyProfile?.id).toBe('tizen-remote-test');
     expect(win.stored.has('shmup-cup:save.v1')).toBe(false); // written when a screen closes
     for (let i = 0; i < 2; i++) {
       // Back: the page, then the Options screen — each stores and closes (never an exit here).
@@ -723,15 +806,15 @@ describe('tizen/boot saves and the Options screen (M1-17 edge)', () => {
       options: { audio: { sfx: number }; input: { profileId: string } };
     };
     expect(stored.options.audio.sfx).toBe(8);
-    expect(stored.options.input.profileId).toBe('tizen-remote-diagonal');
+    expect(stored.options.input.profileId).toBe('tizen-remote-test');
     first.app.stop();
 
     // Relaunch on the same storage (Tizen keeps localStorage until uninstall).
     const kept = win.stored;
     win = new FakeWindow();
     for (const [key, value] of kept) win.stored.set(key, value);
-    const second = await boot();
-    expect(second.app.input.keyProfile?.id).toBe('tizen-remote-diagonal');
+    const second = await boot(true);
+    expect(second.app.input.keyProfile?.id).toBe('tizen-remote-test');
     expect(second.app.game.scenes!.save.options.audio.sfx).toBe(8);
     expect(second.app.game.scenes!.activeInputProfile).toBe(1);
   });
@@ -779,15 +862,15 @@ describe('tizen/boot rebinding (M2-16)', () => {
 
   it('a profile switch applies that profile’s rebinding; switching back restores the saved one', async () => {
     win.stored.set('shmup-cup:save.v1', REBOUND);
-    const { app } = await boot();
+    const { app } = await boot(true);
     win.frame(0);
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 1);
     win.frame(STEP);
-    const diagonal = app.input.keyProfile;
-    expect(diagonal?.id).toBe('tizen-remote-diagonal');
+    const other = app.input.keyProfile;
+    expect(other?.id).toBe('tizen-remote-test');
     // No rebinding of its own: OK is PowerUp again — but the player's SOCD still applies.
-    expect(diagonal?.tables.game.keys.byKeyCode[13]).toBe(Action.PowerUp);
-    expect(diagonal?.socd).toBe('lastWins');
+    expect(other?.tables.game.keys.byKeyCode[13]).toBe(Action.PowerUp);
+    expect(other?.socd).toBe('lastWins');
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputProfile, 0, 0, 0);
     win.frame(2 * STEP);
     expect(app.input.keyProfile?.id).toBe('tizen-remote-safe');
@@ -796,14 +879,15 @@ describe('tizen/boot rebinding (M2-16)', () => {
 
   it('re-applies the save on an InputSettings event (the CONTROLS page’s SOCD / DEBOUNCE)', async () => {
     const { app } = await boot();
-    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    // M3-02b: the shipped TV profile no longer debounces.
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0);
     const save = app.game.scenes!.save;
     save.setOptions({
       ...save.options,
       input: { ...save.options.input, releaseDebounce: 5, socd: 'lastWins' },
     });
     // Nothing changes until the event arrives.
-    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0);
     win.frame(0);
     app.game.events.push(SimEventKind.UserOption, UserOptionKind.InputSettings, 0, 0, 0);
     win.frame(STEP);

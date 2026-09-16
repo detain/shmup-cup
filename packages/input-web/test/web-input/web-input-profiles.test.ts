@@ -1,9 +1,15 @@
 /**
  * The input-probe scenarios (input_probe_spec.md questions 1–3, plan M1-05) replayed as fake,
  * time-stamped key event sequences through a `WebInput` running the shipped profiles of
- * `content/input/`, polled at 60 Hz: a clean hold, fake key-up/key-down pairs (debounce 2 vs
- * 0), OK pressed while an arrow is held (arrow kept / dropped), two arrows under each diagonal
- * policy, SOCD, `game` vs `menu` contexts, and gamepad profiles.
+ * `content/input/`, polled at 60 Hz: a clean hold, fake key-up/key-down pairs (a debounce of 2 vs
+ * the shipped 0), OK pressed while an arrow is held, two arrows under each diagonal policy, SOCD,
+ * `game` vs `menu` contexts, and gamepad profiles.
+ *
+ * Since M3-02b the shipped TV profile carries what the probe actually measured on the M7 monitors
+ * on 2026-09-15 (`docs/dev/input-probe-results.md`): `releaseDebounceTicks: 0` (there are no fake
+ * pairs) and `singleKey: true` (a second key is never delivered while one is down). The debounce
+ * and multi-key scenarios therefore run on explicitly re-tuned copies of it — they cover the
+ * mechanics, not the hardware.
  */
 import { readFileSync } from 'node:fs';
 import { Action } from '@shmup/core';
@@ -175,19 +181,25 @@ describe('input-web/web-input probe scenarios (remote, tizen-remote-safe)', () =
       const heldPolls = trace.held.filter((mask) => mask === Action.Right).length;
       expect(presses(trace, Action.Right), style).toBe(1);
       expect(releases(trace, Action.Right), style).toBe(1);
-      // Held from the first poll after the keydown until the debounce ran out after the keyup.
-      expect(heldPolls, style).toBe(Math.floor(1490 / TICK) + 2);
+      // M3-02b: no debounce any more — held from the first poll after the keydown to the keyup.
+      expect(heldPolls, style).toBe(Math.floor(1490 / TICK));
     }
   });
 
   it('fake keyup/keydown pairs 30 ms apart: continuous with debounce 2, a stutter with 0', () => {
+    // The M7's remote sends no such pairs (M3-02b finding 2) — the debounce mechanics still work
+    // for a remote that does, so a profile can be re-tuned for it without a code change.
     const events = hold(RIGHT, 5, 1490, 'fake-pairs', 30);
-    const safe = run(remoteInput(profile('tizen-remote-safe')), events, 1700);
+    const safe = run(
+      remoteInput(profile('tizen-remote-safe', { releaseDebounceTicks: 2 })),
+      events,
+      1700,
+    );
     expect(presses(safe, Action.Right)).toBe(1);
     expect(releases(safe, Action.Right)).toBe(1); // only the real release
 
-    const raw = run(remoteInput(profile('tizen-remote-diagonal')), events, 1700);
-    expect(profile('tizen-remote-diagonal').releaseDebounceTicks).toBe(0);
+    const raw = run(remoteInput(profile('tizen-remote-safe')), events, 1700);
+    expect(profile('tizen-remote-safe').releaseDebounceTicks).toBe(0);
     expect(releases(raw, Action.Right)).toBeGreaterThan(5); // stutter: gaps in the hold
     expect(presses(raw, Action.Right)).toBe(releases(raw, Action.Right));
   });
@@ -200,36 +212,46 @@ describe('input-web/web-input probe scenarios (remote, tizen-remote-safe)', () =
         { t: 200 + offset + 2 * TICK - 0.5, type: 'keydown', keyCode: RIGHT },
         { t: 600, type: 'keyup', keyCode: RIGHT },
       ] satisfies TimedKey[];
-      const trace = run(remoteInput(profile('tizen-remote-safe')), events, 800);
+      const trace = run(
+        remoteInput(profile('tizen-remote-safe', { releaseDebounceTicks: 2 })),
+        events,
+        800,
+      );
       expect(releases(trace, Action.Right), `offset ${offset}`).toBe(1);
     }
   });
 
-  it('OK pressed while an arrow is held (arrow kept): the ship keeps moving, PowerUp fires once', () => {
+  it('OK pressed while an arrow is held is never delivered; the ship keeps moving (M3-02b)', () => {
+    // Finding 1: the remote delivers one key at a time. Even if the browser did hand us the OK
+    // keydown, `singleKey` drops it — the emulation and the playtest bot then match the hardware.
     const events = [
-      ...hold(RIGHT, 5, 1010, 'clean'),
+      ...hold(RIGHT, 5, 1010, 'no-flag'),
       { t: 405, type: 'keydown', keyCode: OK },
       { t: 485, type: 'keyup', keyCode: OK },
     ] satisfies TimedKey[];
     const trace = run(remoteInput(profile('tizen-remote-safe')), events, 1200);
     expect(releases(trace, Action.Right)).toBe(1);
-    expect(presses(trace, Action.PowerUp)).toBe(1);
+    expect(presses(trace, Action.PowerUp)).toBe(0);
     expect(presses(trace, Action.Confirm)).toBe(0); // game context: OK = PowerUp (D15)
     const okPoll = Math.ceil(405 / TICK) - 1;
-    expect(trace.held[okPoll]).toBe(Action.Right | Action.PowerUp);
+    expect(trace.held[okPoll]).toBe(Action.Right);
   });
 
-  it('OK pressed while an arrow is held (arrow dropped): the arrow releases after the debounce', () => {
+  it('OK after the arrow came up presses PowerUp once (the player stops to equip)', () => {
     const events = [
       { t: 5, type: 'keydown', keyCode: RIGHT },
-      { t: 405, type: 'keydown', keyCode: OK },
-      { t: 420, type: 'keyup', keyCode: RIGHT }, // the remote drops the held arrow
-      { t: 485, type: 'keyup', keyCode: OK },
+      { t: 420, type: 'keyup', keyCode: RIGHT },
+      { t: 440, type: 'keydown', keyCode: OK },
+      { t: 600, type: 'keyup', keyCode: OK },
     ] satisfies TimedKey[];
-    const trace = run(remoteInput(profile('tizen-remote-safe')), events, 700);
+    const trace = run(remoteInput(profile('tizen-remote-safe')), events, 800);
     expect(presses(trace, Action.PowerUp)).toBe(1);
     const releasePoll = trace.released.findIndex((mask) => (mask & Action.Right) !== 0);
-    expect(releasePoll).toBe(Math.ceil(420 / TICK) - 1 + 2);
+    expect(releasePoll).toBe(Math.ceil(420 / TICK) - 1);
+    // The arrow and OK never overlap: the equip costs the player its movement.
+    expect(
+      trace.held.some((mask) => (mask & Action.Right) !== 0 && (mask & Action.PowerUp) !== 0),
+    ).toBe(false);
   });
 
   it('a tap shorter than a tick still presses, and counts as held for the debounce window', () => {
@@ -237,7 +259,11 @@ describe('input-web/web-input probe scenarios (remote, tizen-remote-safe)', () =
       { t: 102, type: 'keydown', keyCode: OK },
       { t: 106, type: 'keyup', keyCode: OK }, // both between two polls
     ] satisfies TimedKey[];
-    const trace = run(remoteInput(profile('tizen-remote-safe')), events, 300);
+    const trace = run(
+      remoteInput(profile('tizen-remote-safe', { releaseDebounceTicks: 2 })),
+      events,
+      300,
+    );
     expect(presses(trace, Action.PowerUp)).toBe(1);
     expect(trace.held.filter((mask) => mask === Action.PowerUp)).toHaveLength(2);
   });
@@ -259,7 +285,12 @@ describe('input-web/web-input diagonal policies (two arrows)', () => {
     ['lastWins', Action.Up, Action.Up],
     ['firstWins', Action.Right, Action.Up],
   ])('%s', (diagonals, both, afterRightReleased) => {
-    const trace = run(remoteInput(profile('tizen-remote-diagonal', { diagonals })), events, 700);
+    // A multi-key device: the M7's remote cannot send two arrows at all (`singleKey`).
+    const trace = run(
+      remoteInput(profile('tizen-remote-safe', { diagonals, singleKey: false })),
+      events,
+      700,
+    );
     expect(trace.held[at(55)]).toBe(Action.Right);
     expect(trace.held[at(205)]).toBe(both);
     expect(trace.held[at(405)]).toBe(afterRightReleased);
@@ -268,7 +299,7 @@ describe('input-web/web-input diagonal policies (two arrows)', () => {
 
   it('lastWins brings the first arrow back when the second is released', () => {
     const trace = run(
-      remoteInput(profile('tizen-remote-diagonal', { diagonals: 'lastWins' })),
+      remoteInput(profile('tizen-remote-safe', { diagonals: 'lastWins', singleKey: false })),
       [
         { t: 5, type: 'keydown', keyCode: RIGHT },
         { t: 105, type: 'keydown', keyCode: UP },
@@ -281,14 +312,18 @@ describe('input-web/web-input diagonal policies (two arrows)', () => {
     expect(trace.held[at(255)]).toBe(Action.Right);
   });
 
-  it('keyboard-remote-emulation feels like the remote: the second arrow replaces the first', () => {
+  it('keyboard-remote-emulation feels like the remote: the second arrow never arrives (M3-02b)', () => {
     const input = createWebInput({ keyTarget: null });
     input.setProfile(profile('keyboard-remote-emulation'));
     input.keyboard.handleEvent(key('keydown', 'ArrowRight', RIGHT));
     input.keyboard.handleEvent(key('keydown', 'ArrowDown', DOWN));
     const p1 = input.poll().players[0];
-    expect(p1?.held).toBe(Action.Down);
+    // Before M3-02b this was `lastWins` (Down); the probe showed the second key is simply dropped.
+    expect(p1?.held).toBe(Action.Right);
     expect(p1?.device).toBe('remote');
+    input.keyboard.handleEvent(key('keyup', 'ArrowRight', RIGHT));
+    input.keyboard.handleEvent(key('keydown', 'ArrowDown', DOWN));
+    expect(input.poll().players[0]?.held).toBe(Action.Down);
   });
 });
 
@@ -305,7 +340,11 @@ describe('input-web/web-input SOCD policies (Left + Right)', () => {
     ['neutral', 0],
     ['lastWins', Action.Right],
   ])('%s', (socd, both) => {
-    const trace = run(remoteInput(profile('tizen-remote-diagonal', { socd })), events, 400);
+    const trace = run(
+      remoteInput(profile('tizen-remote-safe', { socd, singleKey: false })),
+      events,
+      400,
+    );
     expect(trace.held[at(55)]).toBe(Action.Left);
     expect(trace.held[at(155)]).toBe(both);
     expect(trace.held[at(255)]).toBe(Action.Left);
@@ -334,7 +373,7 @@ describe('input-web/web-input binding contexts (D15)', () => {
     keyboard.keyboard.handleEvent(key('keydown', 'KeyX', 88));
     expect(keyboard.poll().players[0]?.pressed).toBe(Action.Back);
 
-    const remote = remoteInput(profile('tizen-remote-diagonal'));
+    const remote = remoteInput(profile('tizen-remote-safe'));
     remote.keyboard.handleEvent(key('keydown', '', OK));
     remote.keyboard.handleEvent(key('keyup', '', OK));
     expect(remote.poll().players[0]?.pressed).toBe(Action.PowerUp);

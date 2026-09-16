@@ -518,6 +518,8 @@ export async function bootWebApp(
         audio,
         storage: safeLocalStorage(win),
         visibility: win.document,
+        // M3-02b: a system overlay (or another window) only fires `blur` / `focus`.
+        focus: win,
         displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
         gamepad: hasGamepadApi,
         webgl2: renderer.webGLVersion === 2,

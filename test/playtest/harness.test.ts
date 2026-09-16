@@ -32,11 +32,16 @@ import {
  * @param name - Its name.
  * @returns The bot, with the masks it answered.
  */
-function scripted(masks: readonly number[], name = 'scripted'): PlaytestBot & { said: number[] } {
+function scripted(
+  masks: readonly number[],
+  name = 'scripted',
+  remoteStrict = false,
+): PlaytestBot & { said: number[] } {
   const said: number[] = [];
   return {
     name,
     said,
+    remoteStrict,
     decide() {
       const mask = masks[Math.min(said.length, masks.length - 1)];
       said.push(mask);
@@ -99,7 +104,22 @@ describe('playtest harness: runStage', () => {
     expect(run.godMode).toBe(true);
     const straight = runStage('zone-a', scripted([Action.Down]), { maxTicks: 50 });
     expect(straight.diagonalTicks).toBe(0);
+    expect(straight.remoteViolations, straight.remoteViolation).toBe(0);
     expect(straight.inputs.every((m) => (m & DIRECTIONS) === Action.Down)).toBe(true);
+  });
+
+  it('checks a remote-strict bot against the remote model, and only that bot (M3-02b)', () => {
+    // A direction and a button in one tick: impossible on the single-key remote.
+    const script = [Action.Down | Action.PowerUp];
+    const loose = runStage('zone-a', scripted(script), { maxTicks: 30, godMode: true });
+    expect(loose.remoteViolations).toBe(0);
+    expect(loose.remoteViolation).toBe('');
+    const strict = runStage('zone-a', scripted(script, 'strict', true), {
+      maxTicks: 30,
+      godMode: true,
+    });
+    expect(strict.remoteViolations).toBeGreaterThan(0);
+    expect(strict.remoteViolation).toMatch(/^direction-with-button@/);
   });
 
   it('reports a crash into the floor with one life as a terrain death and game over', () => {
@@ -183,6 +203,8 @@ describe('playtest harness: describeRun', () => {
       pickups: 19,
       equips: [2, 1, 0, 0, 3, 0, 0],
       diagonalTicks: 0,
+      remoteViolations: 0,
+      remoteViolation: '',
       shipX: { min: 62.5, max: 64 },
       inputs: new Uint16Array(0),
       hash: 0,

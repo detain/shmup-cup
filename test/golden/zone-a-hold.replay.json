@@ -67,13 +67,13 @@
   "ticks": 1058,
   "hashInterval": 600,
   "inputs": [
-    "sIDAAQEwJ7KACAEyATADAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsABc=",
+    "sIDAAQEwJ7KACAEyATADAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAsAC2wgMABATAHsYAEATEBMCMALbCAwAEBMCwALbCAwAEBMCwALbCAwAEBMCwALbCAwAEBMCwAEoKACAECAQAZsIDAAQEwLAAtsIDAAQEwLAAX",
     "AKII"
   ],
   "hashes": [
-    2481413704
+    1379277270
   ],
-  "finalHash": 609844309,
+  "finalHash": 3986240027,
   "description": "HALCYON BULWARK with the full loadout, god mode and the hold autofire mode at the fastest rate (M2-16 tests): SHOT and SUB held in bursts",
   "expected": {
     "status": "stageClear",

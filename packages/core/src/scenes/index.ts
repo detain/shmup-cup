@@ -272,7 +272,8 @@
  * **Options pages and the string table (M2-16).** {@link OptionsItem} (sound, then the pages),
  * {@link ControlsItem}, {@link DisplayItem}, {@link GameOptionsItem}, the scenes
  * {@link ControlsScene}, {@link DisplayScene}, {@link GameOptionsScene}, {@link RebindScene},
- * {@link InputTestScene} ({@link INPUT_TEST_EXIT_TICKS}), the host's rebinding side
+ * {@link InputTestScene} ({@link INPUT_TEST_EXIT_TICKS},
+ * {@link INPUT_TEST_EXIT_PRESSES}, {@link INPUT_TEST_EXIT_WINDOW_TICKS}), the host's rebinding side
  * {@link ControlsSetup} / {@link RebindDevice} / {@link RebindDeviceKind} / {@link RebindOutcome}
  * (`SceneFlowHost.controls`); every label the scenes draw comes from the flow's UI string table
  * ({@link SceneFlow.text} — the content's `strings` table over `core/ui` `DEFAULT_UI_TEXT`) and the
@@ -4130,6 +4131,20 @@ export class RebindScene extends SceneBase {
 /** Ticks Pause must be held to leave the input test (1 s). */
 export const INPUT_TEST_EXIT_TICKS = 60;
 
+/**
+ * Pause presses that leave the INPUT TEST (M3-02b).
+ *
+ * @remarks
+ * The Samsung remote sends Back and Play/Pause **only when the button is released** — they can
+ * never be held (`docs/dev/input-probe-results.md` finding 4), so the hold alone made the screen
+ * impossible to leave with the remote. Three presses inside
+ * {@link INPUT_TEST_EXIT_WINDOW_TICKS} leave as well; the hold still works for a keyboard or pad.
+ */
+export const INPUT_TEST_EXIT_PRESSES = 3;
+
+/** Ticks the {@link INPUT_TEST_EXIT_PRESSES} presses must fall into (~1.5 s at 60 Hz). */
+export const INPUT_TEST_EXIT_WINDOW_TICKS = 90;
+
 /** Ticks an action stays lit on the input test after a press (a tap shorter than a frame shows). */
 const INPUT_TEST_FLASH_TICKS = 8;
 
@@ -4146,9 +4161,12 @@ const INPUT_TEST_ACTIONS: readonly ActionName[] = REBINDABLE_ACTIONS.game;
  * @remarks
  * An overlay over the CONTROLS page with the **`'game'` binding context**, so it shows the
  * gameplay table (OK = PowerUp on the remote, X = Sub on the keyboard …). Every key does what it
- * does in a game — so leaving it takes **holding Pause** for {@link INPUT_TEST_EXIT_TICKS} (a bar
- * fills; remote Back / Play-Pause, keyboard Esc / P / Backspace, pad START in the shipped
- * profiles). The screen redraws only when what it shows changes. Never allocates.
+ * does in a game — so leaving it takes **{@link INPUT_TEST_EXIT_PRESSES} Pause presses** inside
+ * {@link INPUT_TEST_EXIT_WINDOW_TICKS}, or **holding Pause** for {@link INPUT_TEST_EXIT_TICKS} (a
+ * bar fills; remote Back / Play-Pause, keyboard Esc / P / Backspace, pad START in the shipped
+ * profiles). The remote cannot hold Back or Play/Pause at all — they arrive only on release
+ * (M3-02b, `docs/dev/input-probe-results.md` finding 4) — so the presses are the remote's way out.
+ * The screen redraws only when what it shows changes. Never allocates.
  */
 export class InputTestScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -4161,6 +4179,10 @@ export class InputTestScene extends SceneBase {
   override readonly inputContext: InputContext = 'game';
   /** Ticks Pause has been held (the exit). */
   holdTicks = 0;
+  /** Pause presses counted towards the three-press exit (M3-02b). */
+  presses = 0;
+  /** Ticks left of the three-press window (0 = no press counted). */
+  pressWindow = 0;
   /** The actions lit now (held, or flashing after a press). */
   lit = 0;
   /** Per action ({@link REBINDABLE_ACTIONS} game order): ticks left of its press flash. */
@@ -4177,6 +4199,8 @@ export class InputTestScene extends SceneBase {
   override enter(): void {
     super.enter();
     this.holdTicks = 0;
+    this.presses = 0;
+    this.pressWindow = 0;
     this.lit = 0;
     this.flash.fill(0);
     this.device = 'none';
@@ -4200,6 +4224,25 @@ export class InputTestScene extends SceneBase {
     if (input.device !== 'none' && input.device !== this.device) {
       this.device = input.device;
       this.uiRevision++;
+    }
+    // Three Pause presses in a row leave too (M3-02b): the remote's Back / Play-Pause arrive only
+    // on release, so they can never be held. The hold stays for a keyboard or pad.
+    if (this.pressWindow > 0) {
+      this.pressWindow--;
+      if (this.pressWindow === 0) {
+        this.presses = 0;
+        this.uiRevision++;
+      }
+    }
+    if ((input.pressed & Action.Pause) !== 0) {
+      this.presses++;
+      this.pressWindow = INPUT_TEST_EXIT_WINDOW_TICKS;
+      this.uiRevision++;
+      if (this.presses >= INPUT_TEST_EXIT_PRESSES) {
+        flow.sfx(SFX_CUES.MenuBack);
+        flow.stack.pop();
+        return;
+      }
     }
     if ((input.held & Action.Pause) !== 0) {
       this.holdTicks++;
@@ -4271,7 +4314,10 @@ export class InputTestScene extends SceneBase {
       );
     }
     list.text(base + 3, CX, p.y + p.h - 26, UI_COLORS.disabled, TextAlign.Center);
-    const bar = Math.floor((160 * this.holdTicks) / INPUT_TEST_EXIT_TICKS);
+    // The bar shows whichever exit is further along: the hold, or the presses counted so far.
+    const held = Math.floor((160 * this.holdTicks) / INPUT_TEST_EXIT_TICKS);
+    const tapped = Math.floor((160 * this.presses) / INPUT_TEST_EXIT_PRESSES);
+    const bar = held > tapped ? held : tapped;
     list.rect(CX - 80, p.y + p.h - 14, 160, 3, UI_COLORS.track);
     if (bar > 0) list.rect(CX - 80, p.y + p.h - 14, bar > 160 ? 160 : bar, 3, UI_COLORS.alert);
   }

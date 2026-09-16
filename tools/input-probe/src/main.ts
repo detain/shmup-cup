@@ -285,7 +285,11 @@ function start(): void {
   function updateUI(now: number): void {
     const snap = snapshot(now);
     updateChecklist(snap);
-    const verdicts = buildVerdicts(snap, keyName);
+    const verdicts = buildVerdicts(
+      snap,
+      keyName,
+      tracker.seenKeys().map((entry) => entry.code),
+    );
     ui.set('log', log.text());
     ui.set('verdicts', verdictLines(verdicts, snap).join('\n'));
     ui.set('checklist', checklistLines(checklist.items()).join('\n'));

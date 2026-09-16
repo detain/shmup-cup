@@ -67,9 +67,11 @@ describe('integration: zones B and C in Direct mode (M2-11)', () => {
       const bot = fourWayBot();
       const items = w.powerups.pool;
       const f = items.fields;
-      const seen = new Set<number>(); // item slots seen alive this tick (to spot new drops)
-      const dropped: string[] = [];
+
+      // Every observed drop, with the plan position it was handed out at.
+      const dropped: Array<{ at: number; name: string }> = [];
       const wrong: string[] = [];
+      const fresh: number[] = [];
       let bossBeaten = false;
       for (let t = 0; t < 30_000 && w.status !== 'stageClear'; t++) {
         const cursor = w.powerups.planCursor;
@@ -78,19 +80,26 @@ describe('integration: zones B and C in Direct mode (M2-11)', () => {
         game.events.clear();
         const now = w.powerups.planCursor;
         if (now < cursor) wrong.push(`tick ${String(w.tick)}: the cursor went back`);
-        const alive = new Set<number>();
+        // The items of this tick: age 0 or 1 (phase 5 ages a fresh drop from 0 to 1, and an item
+        // that spawned after the phase is still 0). Slot identity is useless here — the pool
+        // swap-removes —, so a tick is only matched to the plan when as many new items showed up
+        // as the cursor advanced by; a drop the ship swallowed on its spawn tick is simply not
+        // seen, and shifts nothing.
+        fresh.length = 0;
         for (let i = 0; i < items.count; i++) {
           if ((f.flags[i] & ItemFlag.Dead) !== 0) continue;
           const kind = f.kind[i];
           if (kind !== ItemKind.BlueCapsule && KINDS.indexOf(kind) < 0) {
             wrong.push(`tick ${String(w.tick)}: item kind ${String(kind)}`);
           }
-          alive.add(i);
-          if (seen.has(i) || f.age[i] > 1 || kind === ItemKind.BlueCapsule) continue;
-          dropped.push(DIRECT_ITEMS[KINDS.indexOf(kind)]);
+          if (f.age[i] > 1 || kind === ItemKind.BlueCapsule) continue;
+          fresh.push(kind);
         }
-        seen.clear();
-        for (const i of alive) seen.add(i);
+        // Only a tick that handed out exactly one item is matched: the pool's order says nothing
+        // about which of two drops came first.
+        if (fresh.length === 1 && now - cursor === 1) {
+          dropped.push({ at: cursor, name: DIRECT_ITEMS[KINDS.indexOf(fresh[0])] });
+        }
         if (w.bosses.boss.specIndex === DB.enemyIndex.get(boss) && w.bosses.boss.state >= 4) {
           bossBeaten = true;
         }
@@ -101,10 +110,12 @@ describe('integration: zones B and C in Direct mode (M2-11)', () => {
       // Every drop was the plan's entry at the cursor it was handed out at (the plan cycles).
       const cursor = w.powerups.planCursor;
       expect(cursor).toBeGreaterThanOrEqual(10);
-      expect(dropped).toHaveLength(cursor);
-      expect(dropped).toEqual(dropped.map((_c, k) => plan[k % plan.length]));
+      // Most drops are seen one at a time; the rest shared a tick or were swallowed on their own.
+      expect(dropped.length).toBeGreaterThanOrEqual(10);
+      expect(dropped.map((d) => d.name)).toEqual(dropped.map((d) => plan[d.at % plan.length]));
+      const names = dropped.map((d) => d.name);
       // The zone's own colours: red, green and blue levels, the octagon among the first dozen.
-      for (const colour of ['red', 'green', 'blue', 'octagon']) expect(dropped).toContain(colour);
+      for (const colour of ['red', 'green', 'blue', 'octagon']) expect(names).toContain(colour);
     },
     60_000,
   );

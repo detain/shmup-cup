@@ -140,9 +140,10 @@ manual zone A checks are 19–24 of
 [`docs/client/preview-build.md`](../../docs/client/preview-build.md#on-the-samsung-smart-monitor--tv).
 
 Since M1-17 **OPTIONS** (on the title and in the pause menu) opens the Options screen: MASTER /
-MUSIC / SFX volume sliders and **CONTROLS**, which offers `SAFE 4-WAY (DEFAULT)`
-(`tizen-remote-safe`) and `FAST 8-WAY` (`tizen-remote-diagonal`) — the remote profiles whose menus
-the remote can drive — and switches at once, registering the new profile's keys. The shell reads
+MUSIC / SFX volume sliders and **CONTROLS**, which offers `REMOTE (DEFAULT)`
+(`tizen-remote-safe`) — since M3-02b the one remote profile whose menus the remote can drive; a
+save that still names the retired `tizen-remote-diagonal` resolves to it — and switches at once,
+registering the new profile's keys. The shell reads
 the save from the widget's `localStorage` (`shmup-cup:save.v1`) before the title and applies the
 saved volumes and profile; the save is written when the Options screen closes and when a game
 ends, so quitting with Back → YES (or the TV killing the app) loses nothing, and Tizen deletes it

@@ -62,6 +62,7 @@ import {
 } from '@shmup/core';
 import {
   createDebugOverlay,
+  rafDeltaBucket,
   type DebugOverlay,
   type DebugOverlayStats,
   type PixiRenderer,
@@ -281,8 +282,13 @@ export interface DebugTools {
    * @param frameNow - The rAF timestamp (frame time and FPS).
    */
   beginFrame(frameNow: number): void;
-  /** The frame's ticks ran (`game.frame` returned): measures the tick time. */
-  endTicks(): void;
+  /**
+   * The frame's ticks ran (`game.frame` returned): measures the tick time and counts the frame in
+   * the ticks-per-frame histogram (M3-02b).
+   *
+   * @param ticks - Ticks the frame ran (`game.frame`'s return value; default 1 when unknown).
+   */
+  endTicks(ticks?: number): void;
   /** Rebuilds the overlay (counters, stats, outlines, panel) just before `renderer.render`. */
   beforeRender(): void;
   /** `renderer.render` returned: measures the render time. */
@@ -340,6 +346,12 @@ const KEY_OPTIONS: AddEventListenerOptions = Object.freeze({ capture: true });
 
 /** Weight of the newest sample in the smoothed timings. */
 const SMOOTHING = 0.1;
+
+/**
+ * Keys the tools track as held at once (M3-02b — the remote sends flagless auto-repeats, so a
+ * `keydown` of a key that is already down must not count as a new press).
+ */
+const DEBUG_HELD_KEYS = 8;
 
 /** Slots of the timing scratch array (fractional values stay unboxed there). */
 const T = {
@@ -444,15 +456,81 @@ export function createDebugTools(
   };
 
   /**
+   * Key codes physically down right now (M3-02b): the Samsung remote's auto-repeats are plain
+   * `keydown`s with `repeat === false` (`docs/dev/input-probe-results.md` finding 2), so the
+   * unlock sequence and the toggles must track held keys themselves instead of trusting the flag.
+   * `0` marks a free slot.
+   */
+  const heldKeys = new Int32Array(DEBUG_HELD_KEYS);
+  /** `KeyboardEvent.code` of each tracked slot (TV remote keys have none). */
+  const heldCodes: string[] = [];
+  for (let i = 0; i < DEBUG_HELD_KEYS; i++) heldCodes.push('');
+  /** 1 while the slot tracks a key that is down. */
+  const heldUsed = new Uint8Array(DEBUG_HELD_KEYS);
+
+  /**
+   * Records a keydown and says whether it was a repeat of a key that is already down.
+   *
+   * @param keyCode - Legacy key code.
+   * @param code - `KeyboardEvent.code` (`''` for most remote keys; a browser may report a key
+   *   with `keyCode` 0, so both identify the key).
+   * @returns `true` when the key was already held (an auto-repeat, flagged or not).
+   */
+  const holdKey = (keyCode: number, code: string): boolean => {
+    let free = -1;
+    for (let i = 0; i < DEBUG_HELD_KEYS; i++) {
+      if (heldUsed[i] === 0) {
+        if (free < 0) free = i;
+        continue;
+      }
+      if (heldKeys[i] === keyCode && heldCodes[i] === code) return true;
+    }
+    if (free >= 0) {
+      heldUsed[free] = 1;
+      heldKeys[free] = keyCode;
+      heldCodes[free] = code;
+    }
+    return false;
+  };
+
+  /**
+   * Frees a released key.
+   *
+   * @param keyCode - Legacy key code.
+   * @param code - `KeyboardEvent.code`.
+   */
+  const freeKey = (keyCode: number, code: string): void => {
+    for (let i = 0; i < DEBUG_HELD_KEYS; i++) {
+      if (heldUsed[i] !== 0 && heldKeys[i] === keyCode && heldCodes[i] === code) heldUsed[i] = 0;
+    }
+  };
+
+  /**
    * The window's key listener (capture phase): runs a debug command and prevents the key's
    * default (F5 would reload the page).
    *
    * @param event - The key event.
    */
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (handleKey(event.keyCode, event.code ?? '', event.repeat === true)) event.preventDefault();
+    const code = event.code ?? '';
+    const repeat = holdKey(event.keyCode, code) || event.repeat === true;
+    if (handleKey(event.keyCode, code, repeat)) event.preventDefault();
+  };
+  /**
+   * Frees a released key, so its next `keydown` counts as a fresh press again.
+   *
+   * @param event - The key event.
+   */
+  const onKeyUp = (event: KeyboardEvent): void => {
+    freeKey(event.keyCode, event.code ?? '');
+  };
+  /** The window lost focus: its key-ups never arrive, so nothing may stay held. */
+  const onBlur = (): void => {
+    heldUsed.fill(0);
   };
   win.addEventListener('keydown', onKeyDown, KEY_OPTIONS);
+  win.addEventListener('keyup', onKeyUp, KEY_OPTIONS);
+  win.addEventListener('blur', onBlur);
 
   const api: ShmupDebugApi = {
     get sceneId() {
@@ -495,22 +573,27 @@ export function createDebugTools(
       if (last > 0 && frameNow > last) {
         const delta = frameNow - last;
         overlay.graph.push(delta);
+        stats.rafHistogram[rafDeltaBucket(delta)]++;
         times[T.frameMs] =
           times[T.frameMs] > 0 ? times[T.frameMs] + (delta - times[T.frameMs]) * SMOOTHING : delta;
         stats.fps = 1000 / times[T.frameMs];
       }
       times[T.ticksStart] = host.now();
     },
-    endTicks() {
+    endTicks(ticks = 1) {
       const ms = host.now() - times[T.ticksStart];
       times[T.tickMs] += (ms - times[T.tickMs]) * SMOOTHING;
       stats.tickMs = times[T.tickMs];
+      // Ticks per frame (M3-02b): 0 / 1 / 2 / 3-or-more, the on-device check of the vsync lock.
+      const slot = ticks < 0 ? 0 : ticks > 3 ? 3 : ticks | 0;
+      stats.tickFrames[slot]++;
     },
     beforeRender() {
       if (device !== null) overlay.setDevice(device());
       const world = host.visibleWorld();
       if (world !== null) collectDebugCounters(world, counters);
       stats.drawCalls = renderer.drawCalls;
+      stats.vsyncLock = game.vsyncLock;
       const particles = renderer.particles;
       stats.particles = particles === null ? 0 : particles.liveCount;
       stats.particleCapacity = particles === null ? 0 : particles.capacity;
@@ -526,6 +609,8 @@ export function createDebugTools(
       if (state.destroyed) return;
       state.destroyed = true;
       win.removeEventListener('keydown', onKeyDown, KEY_OPTIONS);
+      win.removeEventListener('keyup', onKeyUp, KEY_OPTIONS);
+      win.removeEventListener('blur', onBlur);
       overlay.destroy();
       const globals = win as unknown as Record<string, unknown>;
       if (globals[DEBUG_GLOBAL] === api) delete globals[DEBUG_GLOBAL];

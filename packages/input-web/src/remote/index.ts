@@ -15,6 +15,10 @@
  *   earliest pressed one, emulating a D-pad ring that cannot hold two arrows (rule 2).
  * - **SOCD** (simultaneous opposing cardinal directions — Left+Right, Up+Down): `neutral`
  *   cancels both, `lastWins` keeps the most recently pressed (shmup_feat.md §4 [P1]).
+ * - **Single key** ({@link InputTuning.singleKey}, M3-02b): the Samsung remote delivers **one key
+ *   at a time** — while a key is down a second key's `keydown` never arrives (measured on both M7
+ *   monitors on 2026-09-15, `docs/dev/input-probe-results.md` finding 1). The key source drops
+ *   such a keydown, so a keyboard emulating the remote behaves like the real thing.
  * - {@link createDirectionOrder} gives polled devices (gamepads) the press order the policies
  *   need; key sources derive it from their event order instead.
  *
@@ -23,9 +27,11 @@
  *
  * **Implements.**
  * - shmup_feat.md §4 — remote-first control design rules 2–3 (4-way, release debounce), SOCD
- * - shmup_tech.md §2.3 — remote key codes; input_probe_spec.md questions 1–3
+ * - shmup_tech.md §2.3, §2.7 — remote key codes and the 2026-09-15 measurements
+ * - docs/dev/input-probe-results.md findings 1–3 (M3-02b); input_probe_spec.md questions 1–3
  *
- * **Public API.** {@link InputTuning}, {@link DEFAULT_INPUT_TUNING},
+ * **Public API.** {@link InputTuning}, {@link DEFAULT_INPUT_TUNING}, {@link REMOTE_REPEAT_DELAY_TICKS},
+ * {@link REMOTE_REPEAT_INTERVAL_TICKS},
  * {@link MAX_RELEASE_DEBOUNCE_TICKS}, {@link DiagonalPolicy}, {@link DIAGONAL_POLICIES},
  * {@link SocdPolicy}, {@link SOCD_POLICIES}, {@link DIRECTION_MASK}, {@link DIRECTION_COUNT},
  * {@link createReleaseDebouncer}, {@link ReleaseDebouncer}, {@link resolveDirections},
@@ -39,7 +45,7 @@ import { Action, defineModule, type ActionMask } from '@shmup/core';
 export const moduleInfo = defineModule({
   name: 'remote',
   status: 'implemented',
-  specRefs: ['shmup_feat.md §4', 'shmup_tech.md §2.3', 'input_probe_spec.md'],
+  specRefs: ['shmup_feat.md §4', 'shmup_tech.md §2.3', 'shmup_tech.md §2.7', 'input_probe_spec.md'],
 });
 
 /**
@@ -84,14 +90,37 @@ export interface InputTuning {
   readonly diagonals: DiagonalPolicy;
   /** Left+Right / Up+Down handling. */
   readonly socd: SocdPolicy;
+  /**
+   * The device delivers **one key at a time** (the Samsung Smart Remote — M3-02b, measured
+   * 2026-09-15): while any key is down, a `keydown` of a different key is dropped and the held
+   * key keeps repeating. `false` (the default) tracks every key.
+   */
+  readonly singleKey: boolean;
 }
 
-/** Tuning used before a profile is applied: no debounce, 8-way, neutral SOCD. */
+/** Tuning used before a profile is applied: no debounce, 8-way, neutral SOCD, every key tracked. */
 export const DEFAULT_INPUT_TUNING: InputTuning = Object.freeze({
   releaseDebounceTicks: 0,
   diagonals: 'combine',
   socd: 'neutral',
+  singleKey: false,
 } as const);
+
+/**
+ * Ticks the Samsung remote waits before the first auto-repeat `keydown` of a held key
+ * (≈ 355 ms — median 356 / 358 ms on the two M7 monitors, 2026-09-15).
+ *
+ * @remarks
+ * Documentation and the playtest bot's remote model use it; nothing in the input pipeline waits
+ * on it (a repeat is just another `keydown` of a key that is already down).
+ */
+export const REMOTE_REPEAT_DELAY_TICKS = 21;
+
+/**
+ * Ticks between the remote's auto-repeat `keydown`s after the first one (≈ 108 ms ≈ 6.5 ticks,
+ * jittery by ± 40 ms; 2026-09-15).
+ */
+export const REMOTE_REPEAT_INTERVAL_TICKS = 6.5;
 
 /** The four direction bits (`Action.Up | Down | Left | Right` = bits 0–3). */
 export const DIRECTION_MASK = Action.Up | Action.Down | Action.Left | Action.Right;

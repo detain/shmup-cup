@@ -190,8 +190,10 @@ describe('playtest four-way bot: decide', () => {
   it('holds nothing while the ship flies in', () => {
     const w = createWorld(resolveGameConfig({ seed: 1 }), shippedContent());
     w.powerups.meters[0].cursor = MeterSlot.Speed;
-    const bot = fourWayBot();
+    // The raw decisions (M3-02b: the remote model is what `fourWayBot()` adds on top).
+    const bot = fourWayBot(0, { remote: false });
     expect(bot.name).toBe('four-way');
+    expect(bot.remoteStrict).toBe(false);
     expect(w.players[0].state).not.toBe('alive');
     expect(bot.decide(w)).toBe(0);
     expect(bot.decide(w)).toBe(0);
@@ -238,7 +240,7 @@ describe('playtest four-way bot: decide', () => {
     const meter = w.powerups.meters[0];
     const ship = w.players[0];
     const loadout = w.weapons.loadouts[0];
-    const bot = fourWayBot();
+    const bot = fourWayBot(0, { remote: false });
     const presses = (slot: number, ticks = 3): boolean[] => {
       meter.cursor = slot;
       const out: boolean[] = [];

@@ -61,7 +61,8 @@ describe('render-pixi/debug device line (M2-17)', () => {
     buildDebugPanel(panel, stats, null, flags, graph);
     expect(backdropHeight(panel.backdrop)).toBe(plain + 10);
     const device = texts(panel.values).find(([text]) => text.startsWith('QN43'));
-    expect(device).toEqual(['QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096', PLAYFIELD_Y + 2 + 50]);
+    // Line 6 since M3-02b (the frame-pacing line comes before it).
+    expect(device).toEqual(['QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096', PLAYFIELD_Y + 2 + 60]);
 
     setDebugPanelDevice(panel, '');
     buildDebugPanel(panel, stats, null, flags, graph);

@@ -182,7 +182,7 @@ describe('frame stats, exit gesture, log, checklist, gamepad, report', () => {
     r.add(2);
     r.add(4);
     expect(r.summary()).toEqual({ count: 2, avg: 3, min: 2, max: 4 });
-    expect(chooseEventTime(990, 1000)).toEqual({ t: 990, delay: 10 });
+    expect(chooseEventTime(990, 1000)).toEqual({ t: 1000, delay: 10 });
     expect(Number.isNaN(chooseEventTime(1.7e12, 1000).delay)).toBe(true);
   });
 

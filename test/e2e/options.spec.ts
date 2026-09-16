@@ -232,14 +232,16 @@ test.describe('options and saves (Tizen build from file://)', () => {
     await tap(page, 'ArrowDown'); // CONTROLS (M2-16: a page)
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'controls');
-    await tap(page, 'ArrowRight'); // PROFILE: SAFE 4-WAY (DEFAULT) → FAST 8-WAY, live
+    // M3-02b: the TV ships one remote profile (`REMOTE (DEFAULT)`), so PROFILE has nowhere to go —
+    // the selector stays where it is and the save keeps `profileId` unset.
+    await tap(page, 'ArrowRight');
     expect(await storedSave(page)).toBeNull(); // written when a screen closes
     await remoteTap(page, 10009); // Back: the page stores and closes
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
     await remoteTap(page, 10009); // Back: the Options screen — never an exit here
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.sfx).toBe(8);
-    expect((await storedSave(page))?.options.input.profileId).toBe('tizen-remote-diagonal');
+    expect((await storedSave(page))?.options.input.profileId).toBeNull();
 
     // Relaunch: the save is read before the title; the next change starts from the saved level.
     await page.reload();
@@ -250,8 +252,8 @@ test.describe('options and saves (Tizen build from file://)', () => {
     await remoteTap(page, 10009);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.sfx).toBe(9);
-    // PROFILE was not touched this time: the saved profile stays.
-    expect((await storedSave(page))?.options.input.profileId).toBe('tizen-remote-diagonal');
+    // PROFILE was not touched this time either.
+    expect((await storedSave(page))?.options.input.profileId).toBeNull();
     expect(errors).toEqual([]);
   });
 });

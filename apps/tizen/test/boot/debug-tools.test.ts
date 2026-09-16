@@ -53,6 +53,9 @@ class FakeWindow extends EventTarget {
    * @returns Whether the default was prevented.
    */
   key(keyCode: number): boolean {
+    // M3-02b: the tools track held keys themselves (the remote's repeats carry no flag), so a
+    // fresh press must let the previous one go first.
+    this.dispatchEvent(Object.assign(new Event('keyup'), { keyCode, code: '' }));
     const event = Object.assign(new Event('keydown', { cancelable: true }), {
       keyCode,
       code: '',

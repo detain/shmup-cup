@@ -143,6 +143,13 @@ export default defineConfig([
           message:
             'import.meta is a syntax error in the classic IIFE script shipped to Tizen; pass values in via config instead.',
         },
+        {
+          // M3-02b: Tizen 5.5 advances KeyboardEvent.timeStamp in whole seconds only
+          // (docs/dev/input-probe-results.md "the probe's own timing verdicts are wrong").
+          selector: "MemberExpression[property.name='timeStamp']",
+          message:
+            'event.timeStamp only advances in whole seconds on Tizen 5.5: measure with the handler clock (performance.now()) or count ticks instead.',
+        },
       ],
     },
   },
@@ -305,6 +312,11 @@ export default defineConfig([
         {
           selector: "CallExpression[callee.name='structuredClone']",
           message: 'structuredClone needs Chrome 98 (Tizen 5.5 = Chrome 69).',
+        },
+        {
+          selector: "MemberExpression[property.name='timeStamp']",
+          message:
+            'event.timeStamp only advances in whole seconds on Tizen 5.5: measure with the handler clock or count ticks instead.',
         },
         {
           selector: 'MetaProperty[meta.name="import"][property.name="meta"]',

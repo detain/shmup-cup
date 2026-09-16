@@ -6,12 +6,12 @@
  * @module summary
  */
 
-import type { ChecklistItem } from './checklist';
+import { LONG_HOLD_MS, type ChecklistItem } from './checklist';
 import type { EnvInfo } from './envInfo';
 import type { FrameSummary, RunningSummary } from './frameStats';
 import { fmtHz, fmtMs, padRight, round1, truncate } from './format';
 import type { KeyStats, SeenKey } from './keyTracker';
-import type { RegisterResult } from './keys';
+import { ARROW_CODES, KeyCode, type RegisterResult } from './keys';
 
 /** Everything measured, at one point in time. */
 export interface ProbeSnapshot {
@@ -31,10 +31,19 @@ export interface ProbeSnapshot {
  * `server/log-server.mjs` (`formatSummary`) and with anyone post-processing the JSONL logs — rename with care.
  */
 export interface Verdicts {
-  /** Question 1 — can two arrows be held at once? */
-  diagonals: 'YES' | 'NO' | 'not tested';
-  /** Question 2 — does an arrow stay held when OK is pressed? */
-  okWhileArrowHeld: 'arrow kept' | 'arrow kept (release blip)' | 'arrow dropped' | 'not tested';
+  /**
+   * Question 1 — can two arrows be held at once? `NO — not delivered` (M3-02b) means the second arrow
+   * produced **no event at all** during a long hold: the hardware is single-key, which is not the same as
+   * "not tested".
+   */
+  diagonals: 'YES' | 'NO' | 'NO — not delivered' | 'not tested';
+  /** Question 2 — does an arrow stay held when OK is pressed? (`NO — not delivered`: see `diagonals`.) */
+  okWhileArrowHeld:
+    | 'arrow kept'
+    | 'arrow kept (release blip)'
+    | 'arrow dropped'
+    | 'NO — not delivered'
+    | 'not tested';
   /** Question 3 — dominant key-repeat style while holding. */
   repeatStyle: 'clean (repeat flag)' | 'keydown without repeat flag' | 'fake keyup/keydown pairs' | 'not observed';
   /** Average press → first repeat (ms). */
@@ -78,10 +87,29 @@ export interface Verdicts {
  * @param keyName - maps a key code to its display name (for `longestHoldKey`).
  * @returns the verdict record (fresh object).
  */
-export function buildVerdicts(s: ProbeSnapshot, keyName: (code: number) => string): Verdicts {
+export function buildVerdicts(
+  s: ProbeSnapshot,
+  keyName: (code: number) => string,
+  seenCodes: readonly number[] = [],
+): Verdicts {
   const k = s.keys;
+  // M3-02b: a single-key remote delivers nothing while a key is down, so an attempt leaves no event to
+  // judge. When a long hold happened, never more than one key was ever down at once and the keys involved
+  // were seen at all, the honest verdict is "not delivered" rather than "not tested".
+  const singleKey = k.maxSimultaneous === 1 && k.longestHoldMs >= LONG_HOLD_MS;
+  const seen = (code: number): boolean => seenCodes.indexOf(code) >= 0;
+  let arrows = 0;
+  for (const code of ARROW_CODES) if (seen(code)) arrows++;
+  const notDelivered = singleKey && arrows >= 2;
   return {
-    diagonals: k.diagonal.verdict === 'yes' ? 'YES' : k.diagonal.verdict === 'no' ? 'NO' : 'not tested',
+    diagonals:
+      k.diagonal.verdict === 'yes'
+        ? 'YES'
+        : k.diagonal.verdict === 'no'
+          ? 'NO'
+          : notDelivered
+            ? 'NO — not delivered'
+            : 'not tested',
     okWhileArrowHeld:
       k.chord.verdict === 'kept'
         ? 'arrow kept'
@@ -89,7 +117,9 @@ export function buildVerdicts(s: ProbeSnapshot, keyName: (code: number) => strin
           ? 'arrow kept (release blip)'
           : k.chord.verdict === 'dropped'
             ? 'arrow dropped'
-            : 'not tested',
+            : singleKey && arrows >= 1 && seen(KeyCode.Enter)
+              ? 'NO — not delivered'
+              : 'not tested',
     repeatStyle:
       k.repeat.style === 'clean'
         ? 'clean (repeat flag)'
@@ -241,7 +271,11 @@ export interface ReportInputs {
 export function buildReportParts(i: ReportInputs): { env: EnvInfo | null; verdicts: Verdicts; stats: unknown } {
   return {
     env: i.env,
-    verdicts: buildVerdicts(i.snapshot, i.keyName),
+    verdicts: buildVerdicts(
+      i.snapshot,
+      i.keyName,
+      i.seen.map((entry) => entry.code),
+    ),
     stats: {
       keys: i.snapshot.keys,
       frames: i.snapshot.frames,

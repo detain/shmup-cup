@@ -144,6 +144,8 @@ export {
   DIFFICULTY_PRESETS,
   HUD_BAR_HEIGHT,
   INPUT_PROFILE_ID_PATTERN,
+  RETIRED_INPUT_PROFILE_IDS,
+  migrateInputProfileId,
   MAX_AUTO_POWER_UP_ORDER,
   MAX_BULLET_SPEED_MUL,
   MAX_CONTINUES,
@@ -213,6 +215,7 @@ export {
 
 export {
   DEFAULT_SNAP_TOLERANCE_MS,
+  VSYNC_DROP_STEPS,
   createFixedStepLoop,
   type FixedStepLoop,
   type FixedStepLoopOptions,
@@ -1315,6 +1318,8 @@ export {
   GameOptionsItem,
   GameOptionsScene,
   INPUT_TEST_EXIT_TICKS,
+  INPUT_TEST_EXIT_PRESSES,
+  INPUT_TEST_EXIT_WINDOW_TICKS,
   InputTestScene,
   RebindScene,
   buildSceneLabels,

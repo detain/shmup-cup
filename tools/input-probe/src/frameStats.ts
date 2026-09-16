@@ -34,6 +34,37 @@ export interface FrameSummary {
   pauses: number;
   /** Total frames measured since the last reset. */
   frames: number;
+  /**
+   * Raw histogram of the stored deltas: one count per {@link FRAME_BUCKET_EDGES_MS} bucket plus a final
+   * overflow bucket (M3-02b — the 2026-09-15 run showed a quarter of the M7's deltas above 20 ms, which no
+   * median or p95 conveys on its own).
+   */
+  histogram: number[];
+}
+
+/**
+ * Upper edges (ms, exclusive) of the rAF-delta histogram; a delta at or above the last edge lands in one
+ * extra bucket, so a histogram has `FRAME_BUCKET_EDGES_MS.length + 1` entries.
+ */
+export const FRAME_BUCKET_EDGES_MS: readonly number[] = [12, 15, 17, 19, 21, 25, 33, 50];
+
+/**
+ * The histogram bucket of one rAF delta.
+ *
+ * @param deltaMs - the delta in ms.
+ * @returns a bucket index `0 … FRAME_BUCKET_EDGES_MS.length`.
+ *
+ * @example
+ * ```ts
+ * frameBucket(16.5); // 3 — a 60 Hz frame
+ * frameBucket(33.4); // 7 — a really dropped frame
+ * ```
+ */
+export function frameBucket(deltaMs: number): number {
+  for (let i = 0; i < FRAME_BUCKET_EDGES_MS.length; i++) {
+    if (deltaMs < (FRAME_BUCKET_EDGES_MS[i] as number)) return i;
+  }
+  return FRAME_BUCKET_EDGES_MS.length;
 }
 
 /**
@@ -133,7 +164,16 @@ export class FrameStats {
    */
   summary(): FrameSummary {
     const n = this.count;
-    const base = { hitches: this.hitches, worstMs: this.worst, pauses: this.pauses, frames: this.frames };
+    const histogram: number[] = [];
+    for (let i = 0; i <= FRAME_BUCKET_EDGES_MS.length; i++) histogram.push(0);
+    for (let i = 0; i < n; i++) histogram[frameBucket(this.ring[i] as number)]++;
+    const base = {
+      hitches: this.hitches,
+      worstMs: this.worst,
+      pauses: this.pauses,
+      frames: this.frames,
+      histogram,
+    };
     if (n === 0) {
       return { samples: 0, medianMs: null, medianHz: null, p95Ms: null, maxMs: null, ...base };
     }
@@ -237,27 +277,32 @@ export class RunningStats {
 }
 
 /**
- * Picks the timestamp to use for a DOM event: its `timeStamp` when it is a plausible high-resolution
- * value on the `performance.now()` clock, otherwise `now`.
+ * Picks the timestamp to use for a DOM event: **always the handler clock**, plus the dispatch delay
+ * against `event.timeStamp` when that value is plausible.
  *
  * @param eventTimeStamp - `event.timeStamp`.
  * @param now - `performance.now()` at handler time.
- * @returns `{ t, delay }` where `delay` is `now - t` (NaN when the event timestamp was unusable).
+ * @returns `{ t, delay }` — `t` is `now`; `delay` is `now - eventTimeStamp` (NaN when the event timestamp
+ *   was unusable).
  *
  * @remarks
- * "Plausible" = finite, positive, at most 5 ms in the future and less than 5 s in the past. Older engines
- * (and some embedded runtimes) report `event.timeStamp` as epoch milliseconds or 0; those fall back to `now`
- * and are excluded from the dispatch-delay statistics.
+ * The 2026-09-15 run on the Smart Monitor M7s showed why (`docs/dev/input-probe-results.md`, "the probe's
+ * own timing verdicts are wrong"): on Tizen 5.5 `event.timeStamp` is on the `performance.now()` clock but
+ * **only advances in whole seconds**, so it passes every plausibility check and quantises every derived
+ * timing — hold lengths, the repeat delay and interval, the bounce / diagonal / chord windows — to 0, 1000,
+ * 2000 ms. Handler time is the only clock the probe can trust, so it is the one it measures with; the
+ * dispatch delay keeps the `timeStamp` comparison as a statistic (and, with a coarse clock, shows up as the
+ * huge spread it is). "Plausible" = finite, positive, at most 5 ms in the future and less than 5 s in the
+ * past — older engines report epoch milliseconds or 0, which are excluded from the statistics.
  *
  * @example
  * ```ts
- * chooseEventTime(1000, 1003);          // { t: 1000, delay: 3 }
+ * chooseEventTime(1000, 1003);          // { t: 1003, delay: 3 }
  * chooseEventTime(1.7e12, 1003);        // { t: 1003, delay: NaN } (epoch timestamp)
  * ```
  */
 export function chooseEventTime(eventTimeStamp: number, now: number): { t: number; delay: number } {
-  if (Number.isFinite(eventTimeStamp) && eventTimeStamp > 0 && eventTimeStamp <= now + 5 && now - eventTimeStamp < 5000) {
-    return { t: eventTimeStamp, delay: now - eventTimeStamp };
-  }
-  return { t: now, delay: NaN };
+  const plausible =
+    Number.isFinite(eventTimeStamp) && eventTimeStamp > 0 && eventTimeStamp <= now + 5 && now - eventTimeStamp < 5000;
+  return { t: now, delay: plausible ? now - eventTimeStamp : NaN };
 }

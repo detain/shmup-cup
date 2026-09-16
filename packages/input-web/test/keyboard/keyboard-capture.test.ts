@@ -98,7 +98,12 @@ describe('input-web/keyboard rebinding capture (M2-16)', () => {
   });
 
   it('ignores a key inside its release debounce (the remote’s fake keyup / keydown pair)', () => {
-    const tuning = { releaseDebounceTicks: 2, diagonals: 'combine', socd: 'neutral' } as const;
+    const tuning = {
+      releaseDebounceTicks: 2,
+      diagonals: 'combine',
+      socd: 'neutral',
+      singleKey: false,
+    } as const;
     const kb = createKeyboardSource(null, DEFAULT_KEY_BINDINGS, tuning);
     kb.handleEvent(key('keydown', '', 13)); // remote OK (no code)
     kb.advance();

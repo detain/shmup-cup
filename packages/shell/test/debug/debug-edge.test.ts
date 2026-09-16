@@ -78,6 +78,9 @@ function tools(options: DebugToolsOptions = {}): DebugTools {
  * @returns Whether the default was prevented.
  */
 function key(keyCode: number, code = '', repeat = false): boolean {
+  // M3-02b: the tools track held keys themselves (the remote's auto-repeats carry no flag), so a
+  // fresh press must first let the previous one go — a repeat keeps the key down.
+  if (!repeat) win.dispatchEvent(Object.assign(new Event('keyup'), { keyCode, code }));
   const event = Object.assign(new Event('keydown', { cancelable: true }), {
     keyCode,
     code,

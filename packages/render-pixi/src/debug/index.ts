@@ -34,7 +34,9 @@
  *
  * **Public API.** {@link createDebugOverlay}, {@link DebugOverlay}, {@link DebugOverlayOptions},
  * {@link DebugOverlayStats}, {@link createDebugOverlayStats}, {@link DebugPanelLists},
- * {@link createDebugPanelLists}, {@link buildDebugPanel}, {@link DebugOutlineLists},
+ * {@link createDebugPanelLists}, {@link buildDebugPanel}, {@link buildRafHistogram},
+ * {@link RAF_BUCKET_EDGES_MS}, {@link RAF_BUCKETS}, {@link rafDeltaBucket},
+ * {@link DebugOutlineLists},
  * {@link createDebugOutlineLists}, {@link buildDebugOutlines}, {@link createFrameGraph},
  * {@link FrameGraph}, {@link OUTLINE_COLORS}, {@link PANEL_COLORS}, {@link FRAME_GRAPH_LENGTH};
  * M2-17: {@link setDebugPanelDevice}, {@link debugDeviceText}, {@link DEBUG_DEVICE_MAX} (the
@@ -208,6 +210,8 @@ export interface DebugPanelLists {
   readonly warn: DrawList;
   /** Longer frame-graph bars. */
   readonly bad: DrawList;
+  /** The rAF-delta histogram's bars (M3-02b). */
+  readonly pacing: DrawList;
 }
 
 /**
@@ -229,7 +233,16 @@ export function setDebugPanelDevice(lists: DebugPanelLists, text: string): void 
 }
 
 /** The panel lists in drawing order. */
-const PANEL_KINDS = ['backdrop', 'good', 'warn', 'bad', 'labels', 'values', 'alerts'] as const;
+const PANEL_KINDS = [
+  'backdrop',
+  'good',
+  'warn',
+  'bad',
+  'pacing',
+  'labels',
+  'values',
+  'alerts',
+] as const;
 
 /** String slots of the labels list. */
 const LABELS = [
@@ -250,10 +263,12 @@ const LABELS = [
   'LAS',
   'ITM',
   '/',
+  'TPF',
+  'RAF',
 ] as const;
 
 /** String slots of the alerts list. */
-const ALERTS = ['GOD', 'HITBOX', 'GRID', 'STEP', 'SLOW'] as const;
+const ALERTS = ['GOD', 'HITBOX', 'GRID', 'STEP', 'SLOW', 'LOCK'] as const;
 
 /**
  * Slot of a label.
@@ -329,6 +344,7 @@ export function createDebugPanelLists(buildId: string): DebugPanelLists {
     good: createDrawList(FRAME_GRAPH_LENGTH, 1),
     warn: createDrawList(FRAME_GRAPH_LENGTH, 1),
     bad: createDrawList(FRAME_GRAPH_LENGTH, 1),
+    pacing: createDrawList(RAF_BUCKETS, 1),
   };
 }
 
@@ -350,6 +366,47 @@ export interface DebugOverlayStats {
   webGLVersion: number;
   /** Launch-to-ready time, ms. */
   bootMs: number;
+  /**
+   * Frames that ran 0, 1, 2 and 3-or-more simulation ticks since boot (M3-02b — the on-device
+   * check of the vsync lock: on a 60 Hz panel everything but slot 1 must stay near zero).
+   */
+  readonly tickFrames: Int32Array;
+  /** rAF deltas per {@link RAF_BUCKET_EDGES_MS} bucket since boot (M3-02b). */
+  readonly rafHistogram: Int32Array;
+  /** Whether the loop's vsync lock is on (`core/loop`). */
+  vsyncLock: boolean;
+}
+
+/**
+ * Upper edges (ms, exclusive) of the rAF-delta histogram's buckets; a delta at or above the last
+ * edge lands in an extra final bucket, so there are `RAF_BUCKET_EDGES_MS.length + 1` of them.
+ *
+ * @remarks
+ * Chosen for the M7 measurements (`docs/dev/input-probe-results.md` finding 8): a 60 Hz frame is
+ * 16.7 ms, the jitter band reaches ~30 ms and a really dropped frame is 33 ms or more.
+ */
+export const RAF_BUCKET_EDGES_MS: readonly number[] = Object.freeze([12, 15, 17, 19, 21, 25, 33]);
+
+/** Number of rAF-delta histogram buckets ({@link RAF_BUCKET_EDGES_MS} plus the overflow one). */
+export const RAF_BUCKETS = RAF_BUCKET_EDGES_MS.length + 1;
+
+/**
+ * The histogram bucket of one rAF delta.
+ *
+ * @param ms - The delta in ms.
+ * @returns A bucket index `0 … RAF_BUCKETS - 1` (a non-finite or negative delta → 0).
+ *
+ * @example
+ * ```ts
+ * rafDeltaBucket(16.5); // → 3 (15 … 17 ms — a 60 Hz frame)
+ * rafDeltaBucket(33.4); // → 7 (a really dropped frame)
+ * ```
+ */
+export function rafDeltaBucket(ms: number): number {
+  for (let i = 0; i < RAF_BUCKET_EDGES_MS.length; i++) {
+    if (ms < RAF_BUCKET_EDGES_MS[i]) return i;
+  }
+  return RAF_BUCKET_EDGES_MS.length;
 }
 
 /**
@@ -367,6 +424,9 @@ export function createDebugOverlayStats(): DebugOverlayStats {
     particleCapacity: 0,
     webGLVersion: 0,
     bootMs: 0,
+    tickFrames: new Int32Array(4),
+    rafHistogram: new Int32Array(RAF_BUCKETS),
+    vsyncLock: false,
   };
 }
 
@@ -435,8 +495,8 @@ const PANEL_X = 2;
 /** Screen y of the panel's first line (2 px into the playfield). */
 const PANEL_Y = PLAYFIELD_Y + 2;
 
-/** Panel lines. */
-const PANEL_LINES = 5;
+/** Panel lines (M3-02b added the frame-pacing line). */
+const PANEL_LINES = 6;
 
 /** Width of the panel's text, in pixels. */
 const PANEL_W = 46 * COL;
@@ -483,15 +543,55 @@ function number(
   list.number(value, PANEL_X + col * COL, PANEL_Y + row * ROW, minDigits, color, align);
 }
 
+/** Height (px) of the tallest rAF-histogram bar. */
+const RAF_BAR_H = 8;
+
+/** Width (px) of one rAF-histogram bar (one pixel of gap included). */
+const RAF_BAR_W = 3;
+
 /**
- * Builds the panel lists: the backdrop, five lines of labels and numbers and the frame graph to
+ * Draws the rAF-delta histogram (M3-02b): one bar per {@link RAF_BUCKETS} bucket, scaled to the
+ * busiest one, green for the 60 Hz buckets and yellow / red for the long ones.
+ *
+ * @remarks
+ * Allocation-free (the list is cleared and refilled). An empty histogram draws nothing.
+ *
+ * @param list - The panel's `pacing` list.
+ * @param buckets - {@link DebugOverlayStats.rafHistogram}.
+ * @param x - Screen x of the first bar.
+ * @param y - Screen y of the bars' baseline (their bottom edge).
+ */
+export function buildRafHistogram(
+  list: DrawList,
+  buckets: ArrayLike<number>,
+  x: number,
+  y: number,
+): void {
+  list.clear();
+  let top = 0;
+  for (let i = 0; i < RAF_BUCKETS; i++) if (buckets[i] > top) top = buckets[i];
+  if (top <= 0) return;
+  for (let i = 0; i < RAF_BUCKETS; i++) {
+    const count = buckets[i];
+    if (count <= 0) continue;
+    // At least one pixel, so a rare bucket is still visible.
+    let h = Math.floor((count * RAF_BAR_H) / top);
+    if (h < 1) h = 1;
+    const colour = i <= 4 ? PANEL_COLORS.good : i <= 6 ? PANEL_COLORS.warn : PANEL_COLORS.bad;
+    list.rect(x + i * RAF_BAR_W, y + RAF_BAR_H - h, RAF_BAR_W - 1, h, colour, 220);
+  }
+}
+
+/**
+ * Builds the panel lists: the backdrop, six lines of labels and numbers and the frame graph to
  * their right. Never allocates (numbers use the `number` command, labels the lists' fixed string
  * slots).
  *
  * @remarks
  * Lines: `FPS · TICK ms · RENDER ms · DRAW`; `BUL · ENM · SHT · PRT` (used / capacity);
  * `RANK · RNG · HASH @tick`; `WEBGL · BOOT ms · LAS · ITM · build id`; the active switches
- * (`GOD`, `HITBOX`, `GRID`, `STEP`, `SLOW n`). Frame-graph bars are 1 px per frame, newest on the
+ * (`GOD`, `HITBOX`, `GRID`, `STEP`, `SLOW n`, `LOCK`); `TPF` — frames that ran 0 / 1 / 2 / 3+
+ * ticks — and the rAF-delta histogram (M3-02b). Frame-graph bars are 1 px per frame, newest on the
  * right, 8 px per 16.7 ms (capped at 40 px), in the `good` (≤ 17.5 ms), `warn` (≤ 34 ms) or `bad`
  * list; two guide lines mark one and two 60 Hz frames.
  *
@@ -607,9 +707,19 @@ export function buildDebugPanel(
   if (flags.slowMo > 1) {
     label(alerts, A('SLOW'), ac, col, 4);
     number(alerts, flags.slowMo, ac, col + 5, 4);
+    col += 7;
   }
-  // Line 5 (M2-17): the device line (model, firmware, display) when the host set one.
-  if (device) label(values, DEVICE, vc, 0, 5);
+  // M3-02b: the loop runs one tick per frame (the vsync lock is on).
+  if (stats.vsyncLock) label(alerts, A('LOCK'), ac, col, 4);
+  // Line 5 (M3-02b): ticks per frame and the rAF-delta histogram — the on-device check of the
+  // vsync lock (`docs/dev/input-probe-results.md` finding 8).
+  label(labels, L('TPF'), lc, 0, 5);
+  const tpf = stats.tickFrames;
+  for (let i = 0; i < 4; i++) number(values, tpf[i] | 0, vc, 4 + i * 7, 5);
+  label(labels, L('RAF'), lc, 32, 5);
+  buildRafHistogram(lists.pacing, stats.rafHistogram, PANEL_X + 36 * COL, PANEL_Y + 5 * ROW);
+  // Line 6 (M2-17): the device line (model, firmware, display) when the host set one.
+  if (device) label(values, DEVICE, vc, 0, 6);
 
   // The frame graph, newest bar on the right.
   const good = lists.good;

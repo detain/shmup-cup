@@ -163,6 +163,62 @@ describe('tizen/platform', () => {
     expect(calls).toEqual(['suspend', 'resume']);
   });
 
+  it('suspends on window blur and resumes on focus (Home is only an overlay — M3-02b)', () => {
+    const doc = fakeDocument();
+    const focus = new EventTarget();
+    const platform = createTizenPlatform({
+      ...services(),
+      tizen: null,
+      visibility: doc,
+      focus,
+    });
+    const calls: string[] = [];
+    platform.lifecycle.onSuspend(() => calls.push('suspend'));
+    platform.lifecycle.onResume(() => calls.push('resume'));
+    // Home on the M7: `blur` alone, no `visibilitychange` at all.
+    focus.dispatchEvent(new Event('blur'));
+    expect(calls).toEqual(['suspend']);
+    focus.dispatchEvent(new Event('focus'));
+    expect(calls).toEqual(['suspend', 'resume']);
+  });
+
+  it('suspends once for a blur + hidden pair and resumes only when both are back', () => {
+    const doc = fakeDocument();
+    const focus = new EventTarget();
+    const platform = createTizenPlatform({
+      ...services(),
+      tizen: null,
+      visibility: doc,
+      focus,
+    });
+    const calls: string[] = [];
+    platform.lifecycle.onSuspend(() => calls.push('suspend'));
+    platform.lifecycle.onResume(() => calls.push('resume'));
+    focus.dispatchEvent(new Event('blur'));
+    doc.set('hidden');
+    expect(calls).toEqual(['suspend']);
+    // Visible again but still unfocused: nothing resumes yet.
+    doc.set('visible');
+    expect(calls).toEqual(['suspend']);
+    focus.dispatchEvent(new Event('focus'));
+    expect(calls).toEqual(['suspend', 'resume']);
+    // Repeats of the same state fire nothing.
+    focus.dispatchEvent(new Event('focus'));
+    doc.set('visible');
+    expect(calls).toEqual(['suspend', 'resume']);
+  });
+
+  it('starts suspended when the app is already hidden', () => {
+    const doc = fakeDocument();
+    doc.set('hidden');
+    const platform = createTizenPlatform({ ...services(), tizen: null, visibility: doc });
+    const calls: string[] = [];
+    platform.lifecycle.onSuspend(() => calls.push('suspend'));
+    platform.lifecycle.onResume(() => calls.push('resume'));
+    doc.set('visible');
+    expect(calls).toEqual(['resume']);
+  });
+
   it('reports Back (10009) presses and ignores repeats', () => {
     const target = new EventTarget();
     let backs = 0;

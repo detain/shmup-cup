@@ -67,20 +67,20 @@
   "ticks": 1815,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA5gSCgAgBAgUAMYKACAECDADDAoGABAEBEgASgoAIAYGABAEAAYKACAGBgAQBAM8BgYAEAQEMACGCgAgBAgUA0wM=",
+    "ACiCgAgBAgEA5gSCgAgBAgUAMYKACAECDADDAoGABAEBEgASgoAIAQABgYAEAQDRAYGABAEBDAAhgoAIAQIFANMD",
     "AJcO"
   ],
   "hashes": [
     3882535190,
-    1880138876,
-    2669620023
+    3293660414,
+    178835552
   ],
-  "finalHash": 1937457537,
+  "finalHash": 3166305228,
   "description": "PEARL GROTTO, zone B's hidden bonus stage, with god mode and the full loadout (M2-11): its carriers' bonus capsules and the 1UP collected to the end",
   "expected": {
     "status": "stageClear",
     "ticks": 1815,
-    "score": 10400,
+    "score": 10350,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": false

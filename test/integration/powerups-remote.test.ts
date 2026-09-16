@@ -2,13 +2,13 @@
  * The power meter under a Samsung remote (plan M1-11, shmup_feat.md §4 rule 4: OK = equip, a rare
  * non-urgent press), across the packages: real `keydown` / `keyup` events go through
  * `@shmup/input-web` with the shipped `tizen-remote-safe` profile (game context: OK 13 =
- * PowerUp, 2-tick release debounce) into a game built from the shipped content.
+ * PowerUp; since M3-02b no release debounce and one key at a time) into a game built from the
+ * shipped content.
  *
- * - One OK press equips the highlighted slot once; holding OK — auto-repeat `keydown`s and the
- *   fake `keyup` / `keydown` pairs some remotes send while a key is held — never equips again;
- *   releasing and pressing again does.
- * - OK pressed while an arrow is held equips and the ship keeps moving (input probe question 2:
- *   the core must not drop the arrow).
+ * - One OK press equips the highlighted slot once; holding OK — the remote's flagless auto-repeat
+ *   `keydown`s — never equips again; releasing and pressing again does.
+ * - OK pressed while an arrow is held is **never delivered** (the 2026-09-15 probe, finding 1):
+ *   the player must let the arrow go first, and the equip costs a moment of movement.
  * - A press on an empty slot is denied (`SFX PowerUpDenied`) and changes nothing.
  * - The recorded session replays into a fresh game with the same meter, loadout and `hashWorld`.
  */
@@ -146,18 +146,18 @@ describe('integration: the power meter under a Samsung remote (tizen-remote-safe
     let totals = s.frame();
     expect(totals.equips).toBe(1);
     expect([ship.speedLevel, meter.cursor]).toEqual([1, -1]);
-    // Keep holding for 60 frames while the cursor sits on Speed again.
+    // Keep holding for 60 frames while the cursor sits on Speed again. The M7's remote repeats a
+    // held key as plain `keydown`s ~21 ticks in and then every ~6.5 — with `repeat === false`
+    // (M3-02b finding 2) — and sends no fake keyup/keydown pairs at all.
     meter.cursor = MeterSlot.Speed;
     for (let i = 1; i <= 60; i++) {
-      if (i % 5 === 0) s.key('keydown', KEY.ok, true); // auto-repeat
-      if (i % 7 === 3) s.key('keyup', KEY.ok); // a fake release …
-      if (i % 7 === 4) s.key('keydown', KEY.ok); // … cancelled one frame later
+      if (i === 21 || (i > 21 && (i - 21) % 7 === 0)) s.key('keydown', KEY.ok);
       const tick = s.frame();
       totals = { equips: totals.equips + tick.equips, denied: totals.denied + tick.denied };
     }
     expect(totals).toEqual({ equips: 1, denied: 0 });
     expect([ship.speedLevel, meter.cursor]).toEqual([1, MeterSlot.Speed]);
-    // Release (past the debounce), press again: equips.
+    // Release, press again: equips.
     s.key('keyup', KEY.ok);
     for (let i = 0; i < 4; i++) s.frame();
     s.key('keydown', KEY.ok);
@@ -166,7 +166,7 @@ describe('integration: the power meter under a Samsung remote (tizen-remote-safe
     expect([ship.speedLevel, meter.cursor]).toEqual([2, -1]);
   });
 
-  it('equips with OK while an arrow is held, and the ship keeps moving', () => {
+  it('never delivers OK while an arrow is held: the player stops to equip (M3-02b)', () => {
     const s = remoteSession();
     const w = s.game.world;
     const ship = w.players[0];
@@ -174,16 +174,22 @@ describe('integration: the power meter under a Samsung remote (tizen-remote-safe
     for (let i = 0; i < 5; i++) s.frame();
     w.powerups.meters[0].cursor = MeterSlot.Missile;
     const y0 = ship.y;
+    // The remote is single-key: the OK keydown is never delivered while the arrow is down.
     s.key('keydown', KEY.ok);
-    expect(s.frame().equips).toBe(1);
+    expect(s.frame().equips).toBe(0);
     expect(w.intents[0].held & Action.Up).toBe(Action.Up);
     expect(ship.y).toBeLessThan(y0);
-    const y1 = ship.y;
+    expect(w.weapons.loadouts[0].missile).toBe(false);
+    // Let the arrow go, then press OK: the ship stands still while it equips.
     s.key('keyup', KEY.ok);
-    for (let i = 0; i < 5; i++) s.frame();
-    expect(ship.y).toBeLessThan(y1);
-    expect(w.weapons.loadouts[0].missile).toBe(true);
     s.key('keyup', KEY.up);
+    for (let i = 0; i < 3; i++) s.frame();
+    const y1 = ship.y;
+    s.key('keydown', KEY.ok);
+    expect(s.frame().equips).toBe(1);
+    expect(w.weapons.loadouts[0].missile).toBe(true);
+    expect(ship.y).toBe(y1);
+    s.key('keyup', KEY.ok);
   });
 
   it('denies OK on an empty meter and replays the session to the same state', () => {
@@ -202,11 +208,17 @@ describe('integration: the power meter under a Samsung remote (tizen-remote-safe
       s.frame();
     }
     expect(w.powerups.meters[0].cursor).toBe(MeterSlot.Double);
+    // One key at a time (M3-02b): the arrow first, then OK once it is up.
     s.key('keydown', KEY.right);
+    for (let i = 0; i < 10; i++) s.frame();
+    s.key('keyup', KEY.right);
+    s.frame();
     s.key('keydown', KEY.ok);
     s.frame();
     s.key('keyup', KEY.ok);
-    for (let i = 0; i < 20; i++) s.frame();
+    for (let i = 0; i < 10; i++) s.frame();
+    s.key('keydown', KEY.right);
+    for (let i = 0; i < 5; i++) s.frame();
     s.key('keyup', KEY.right);
     for (let i = 0; i < 5; i++) s.frame();
     expect(w.weapons.loadouts[0].main).toBe(MainWeapon.Double);

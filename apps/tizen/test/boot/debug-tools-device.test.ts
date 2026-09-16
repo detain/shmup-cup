@@ -67,6 +67,8 @@ class TvWindow extends EventTarget {
    * @param keyCode - Legacy key code.
    */
   key(keyCode: number): void {
+    // M3-02b: the tools track held keys themselves, so a fresh press needs the key-up first.
+    this.dispatchEvent(Object.assign(new Event('keyup'), { keyCode, code: '' }));
     const event = Object.assign(new Event('keydown', { cancelable: true }), {
       keyCode,
       code: '',

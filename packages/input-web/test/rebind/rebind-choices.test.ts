@@ -40,9 +40,9 @@ describe('rebind selectable profiles', () => {
       'keyboard-remote-emulation',
       'keyboard-split', // M2-06: two players on one keyboard
     ]);
+    // M3-02b retired the second TV profile: one remote profile is left.
     expect(selectableKeyProfiles(profiles, 'keyCode').map((p) => p.id)).toEqual([
       'tizen-remote-safe',
-      'tizen-remote-diagonal',
     ]);
   });
 
@@ -92,8 +92,7 @@ describe('rebind selectable profiles', () => {
 
   it('build the CONTROLS entries with the default marked', () => {
     expect(inputProfileChoices(profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID)).toEqual([
-      { id: 'tizen-remote-safe', label: 'SAFE 4-WAY' + DEFAULT_PROFILE_SUFFIX },
-      { id: 'tizen-remote-diagonal', label: 'FAST 8-WAY' },
+      { id: 'tizen-remote-safe', label: 'REMOTE' + DEFAULT_PROFILE_SUFFIX },
     ]);
     expect(inputProfileChoices(profiles, 'code', DEFAULT_KEYBOARD_PROFILE_ID)).toEqual([
       { id: 'keyboard-default', label: 'KEYBOARD (DEFAULT)' },

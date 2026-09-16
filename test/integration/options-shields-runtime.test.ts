@@ -305,20 +305,20 @@ function remoteSession(optionChoice: GameConfig['optionChoice']): {
 }
 
 describe('integration: the Option spread under a Samsung remote (tizen-remote-safe)', () => {
-  it('Ch+ toggles the Formation once per press; repeats and fake gaps never toggle again', () => {
+  it('Ch+ toggles the Formation once per press; the remote’s flagless repeats never toggle again', () => {
     const s = remoteSession('formation');
     const group = s.game.world.weapons.options[0];
     s.key('keydown', KEY.chPlus);
     s.frame();
     expect([group.toggled, group.spreadTicks]).toEqual([true, 1]);
+    // The M7's remote repeats a held key as plain `keydown`s — ~21 ticks in, then every ~6.5,
+    // with `repeat === false` — and sends no fake keyup/keydown pairs (M3-02b finding 2).
     for (let i = 1; i <= 60; i++) {
-      if (i % 5 === 0) s.key('keydown', KEY.chPlus, true); // auto-repeat
-      if (i % 7 === 3) s.key('keyup', KEY.chPlus); // a fake release …
-      if (i % 7 === 4) s.key('keydown', KEY.chPlus); // … cancelled one frame later
+      if (i === 21 || (i > 21 && (i - 21) % 7 === 0)) s.key('keydown', KEY.chPlus);
       s.frame();
     }
     expect([group.toggled, group.spreadTicks]).toEqual([true, OPTION_SPREAD_TICKS]);
-    // Released past the debounce, pressed again: back in.
+    // Released, pressed again: back in.
     s.key('keyup', KEY.chPlus);
     for (let i = 0; i < 4; i++) s.frame();
     s.key('keydown', KEY.chPlus);

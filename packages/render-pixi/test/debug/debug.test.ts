@@ -413,7 +413,8 @@ describe('render-pixi/debug overlay', () => {
     expect(renderer.layers.layers[LayerId.Debug].children).toContain(overlay.container);
     const [outlines, panel] = overlay.container.children;
     expect(outlines.children).toHaveLength(9);
-    expect(panel.children).toHaveLength(7);
+    // M3-02b added the `pacing` list (the rAF-delta histogram).
+    expect(panel.children).toHaveLength(8);
     const w = world();
     const flags = createDebugFlags();
     const counters = createDebugCounters();

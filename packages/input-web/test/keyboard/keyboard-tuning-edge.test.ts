@@ -31,7 +31,7 @@ const tuning = (
   releaseDebounceTicks: number,
   diagonals: InputTuning['diagonals'] = 'combine',
   socd: InputTuning['socd'] = 'neutral',
-): InputTuning => ({ releaseDebounceTicks, diagonals, socd });
+): InputTuning => ({ releaseDebounceTicks, diagonals, socd, singleKey: false });
 
 /**
  * A manually fed source with the remote table.

@@ -67,20 +67,20 @@
   "ticks": 1815,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEA5gSCgAgBAgUAmQGBgAQBAQUAJoKACAECA4GABAEBAwABgoAIAQILAHuCgAgBAgYARoGABAEBEgDFAYGABAEBDAAegoAIAQIFAHaCgAgBAgwA0wI=",
+    "ACiCgAgBAgEA5gSCgAgBAgUAmQGBgAQBAQUAJoKACAECAwABgYAEAQEDAAGCgAgBAgYAAYGABAEAlAGCgAgBAgwAK4GABAEBEgDDAYGABAEBDAAegoAIAQIFAHaCgAgBAgwA0wI=",
     "AJcO"
   ],
   "hashes": [
     2898846059,
-    243721305,
-    859656187
+    2259974636,
+    1757736456
   ],
-  "finalHash": 3071865605,
+  "finalHash": 4251825743,
   "description": "GLIMMER CACHE, zone G's hidden bonus stage, with god mode and the full loadout (M2-13): its carriers' bonus capsules and the 1UP collected to the end, a cube rush and its cube walls",
   "expected": {
     "status": "stageClear",
     "ticks": 1815,
-    "score": 16210,
+    "score": 16150,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": false

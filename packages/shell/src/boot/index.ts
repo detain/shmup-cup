@@ -203,6 +203,8 @@ import type { DebugTools, DebugToolsFactory } from '../debug/index.js';
 import { createBootOverlay, formatIssues, type BootOverlay } from '../error-screen/index.js';
 import {
   INTERPOLATION_MIN_HZ,
+  VSYNC_LOCK_MAX_HZ,
+  VSYNC_LOCK_MIN_HZ,
   createRefreshMonitor,
   startFrameLoop,
   type RefreshMonitor,
@@ -522,6 +524,14 @@ export interface ShellOptions {
    * `'off'` — always / never (the probe still runs; {@link Shell.refresh}).
    */
   readonly interpolation?: 'auto' | 'on' | 'off';
+  /**
+   * Frame pacing (M3-02b — `core/loop`'s vsync lock): `'auto'` (default) — the lock is on while
+   * the refresh probe reads a fixed ~60 Hz display ({@link VSYNC_LOCK_MIN_HZ} …
+   * {@link VSYNC_LOCK_MAX_HZ}), so the M7's rAF jitter stops turning into 0- and 2-tick frames;
+   * `'lock'` / `'free'` — always / never (the probe still runs). Presentation only: the simulation
+   * is untouched, so replays and goldens do not change.
+   */
+  readonly framePacing?: 'auto' | 'lock' | 'free';
   /**
    * Image factory for the atlas pages (default `() => new Image()`).
    *
@@ -1036,6 +1046,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   }
   const interpolationMode = options.interpolation ?? 'auto';
   readyRenderer.setInterpolation(interpolationMode === 'on');
+  const pacingMode = options.framePacing ?? 'auto';
+  game.setVsyncLock(pacingMode === 'lock');
   const refresh = createRefreshMonitor();
   const flowView = flowMode ? createSceneView(game) : null;
   const flight = scene === 'flight' ? createFlightScene(game) : null;
@@ -1193,6 +1205,11 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       const fast = refresh.hz > INTERPOLATION_MIN_HZ;
       if (fast !== readyRenderer.interpolation) readyRenderer.setInterpolation(fast);
     }
+    // Vsync lock (M3-02b): one tick per frame on a fixed ~60 Hz display.
+    if (pacingMode === 'auto' && refresh.ready) {
+      const fixed = refresh.hz >= VSYNC_LOCK_MIN_HZ && refresh.hz <= VSYNC_LOCK_MAX_HZ;
+      if (fixed !== game.vsyncLock) game.setVsyncLock(fixed);
+    }
     const context = game.inputContext;
     if (context !== inputContext) {
       inputContext = context;
@@ -1203,8 +1220,8 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       inputSeats = seats;
       input.setSeats?.(seats);
     }
-    game.frame(now);
-    if (tools !== null) tools.endTicks();
+    const ticks = game.frame(now);
+    if (tools !== null) tools.endTicks(ticks);
     if (flowView !== null) flowView.follow();
     game.events.drain(visit);
     engine.endFrame();

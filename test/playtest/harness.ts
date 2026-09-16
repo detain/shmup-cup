@@ -10,7 +10,9 @@
  * tick; the harness commits them to the input snapshot like an input adapter would, so presses
  * are edges of the held mask (hold `PowerUp` for one tick to press it once). Observers
  * ({@link PlaytestFlags.observe}) run after every tick — the 4-way design rules of
- * `rules.ts` are checked that way.
+ * `rules.ts` are checked that way. A bot that declares {@link PlaytestBot.remoteStrict} also has
+ * its recorded input read back against the Samsung remote's real limits (`remote-strict`, M3-02b);
+ * {@link PlaytestResult.remoteViolations} must be 0.
  *
  * @module
  */
@@ -38,6 +40,7 @@ import {
   type WorldStatus,
 } from '@shmup/core';
 import { readContentFiles } from '../../vite.shared.js';
+import { createRemoteStrictCheck } from './remote-strict.js';
 
 /** Simulation ticks per second (the fixed step). */
 export const TICKS_PER_SECOND = 60;
@@ -52,6 +55,14 @@ export const DIRECTIONS = Action.Up | Action.Down | Action.Left | Action.Right;
 export interface PlaytestBot {
   /** Name shown in reports. */
   readonly name: string;
+  /**
+   * Whether the bot promises to stay inside the Samsung remote's limits (M3-02b —
+   * `remote-strict`): the harness then reads its recorded input back through
+   * {@link createRemoteStrictCheck} and reports every tick the remote could not have produced in
+   * {@link PlaytestResult.remoteViolations}. Absent = not checked (the weaving and fire-button
+   * pilots of the golden replays press keys no remote could send).
+   */
+  readonly remoteStrict?: boolean;
   /**
    * The actions player 1 holds during the coming tick (called once per tick, before it runs).
    *
@@ -129,6 +140,14 @@ export interface PlaytestResult {
   readonly equips: readonly number[];
   /** Ticks on which the bot held two or more directions (a 4-way bot: always 0). */
   readonly diagonalTicks: number;
+  /**
+   * Ticks of the recorded input the Samsung remote could not have produced (M3-02b): 0 for a
+   * {@link PlaytestBot.remoteStrict} bot, and 0 for a bot that does not claim the model (it is
+   * not checked then).
+   */
+  readonly remoteViolations: number;
+  /** The first violation and its tick, for the failure message (`''` when there was none). */
+  readonly remoteViolation: string;
   /** Lowest / highest playfield x of the alive ship. */
   readonly shipX: { readonly min: number; readonly max: number };
   /** The run's input: player 1's held mask per tick (replay with {@link replayStage}). */
@@ -256,6 +275,8 @@ export function runStage(
   const equips = [0, 0, 0, 0, 0, 0, 0];
   let pickups = 0;
   let diagonalTicks = 0;
+  // M3-02b: a bot that claims the remote model has its recorded input read back against it.
+  const remote = bot.remoteStrict === true ? createRemoteStrictCheck() : null;
   let clearTick = -1;
   let fightStart = -1;
   let killTick = -1;
@@ -265,6 +286,7 @@ export function runStage(
   while (ticks < maxTicks) {
     const mask = bot.decide(world) & 0xffff;
     if (directionCount(mask) > 1) diagonalTicks++;
+    remote?.push(mask);
     inputs[ticks] = mask;
     commitPlayerInput(input, mask);
     const wasAlive = ship.state === 'alive';
@@ -297,6 +319,7 @@ export function runStage(
     if (world.status === 'stageClear' && clearTick < 0) clearTick = ticks;
     if (world.status === 'stageClear' || world.status === 'gameOver') break;
   }
+  remote?.end();
   return {
     stageId,
     bot: bot.name,
@@ -313,6 +336,9 @@ export function runStage(
     pickups,
     equips,
     diagonalTicks,
+    remoteViolations: remote === null ? 0 : remote.violations,
+    remoteViolation:
+      remote === null || remote.first === null ? '' : remote.first + '@' + String(remote.firstTick),
     shipX: { min: minX, max: maxX },
     inputs: inputs.slice(0, ticks),
     hash: hashWorld(world),

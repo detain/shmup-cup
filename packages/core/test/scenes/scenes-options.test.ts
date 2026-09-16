@@ -38,10 +38,13 @@ import {
 } from '../../src/scenes/index.js';
 import { addScore } from '../../src/scoring/index.js';
 
-/** The profiles a TV would offer. */
+/**
+ * The profiles a TV would offer. The second id is made up: the shipped content has one remote
+ * profile since M3-02b, and a retired id would be migrated away by `resolveUserOptions`.
+ */
 const PROFILES: readonly InputProfileChoice[] = [
-  { id: 'tizen-remote-safe', label: 'SAFE 4-WAY (DEFAULT)' },
-  { id: 'tizen-remote-diagonal', label: 'FAST 8-WAY' },
+  { id: 'tizen-remote-safe', label: 'REMOTE (DEFAULT)' },
+  { id: 'tizen-remote-test', label: 'TEST REMOTE' },
 ];
 
 /** A headless scene-flow session on a storage, with helpers to drive it. */
@@ -248,12 +251,12 @@ describe('core/scenes options: opening and drawing', () => {
   it('shows the profile in use on the CONTROLS page and disables PROFILE without profiles', () => {
     const s = new Session(createSaveStore(null), 'title', {
       choices: PROFILES,
-      active: 'tizen-remote-diagonal',
+      active: 'tizen-remote-test',
     });
     expect(s.flow.activeInputProfile).toBe(1);
     s.openOptionsFromTitle();
     s.openPage(OptionsItem.Controls);
-    expect(s.flow.controlsPage.profile.label).toBe('FAST 8-WAY');
+    expect(s.flow.controlsPage.profile.label).toBe('TEST REMOTE');
 
     const none = new Session(createSaveStore(null), 'title', null);
     expect(none.flow.inputProfiles).toEqual([]);
@@ -319,7 +322,7 @@ describe('core/scenes options: live changes', () => {
       [UserOptionKind.InputProfile, 1],
       [UserOptionKind.InputProfile, 0],
     ]);
-    expect(s.uiTexts()).toContain('SAFE 4-WAY (DEFAULT)');
+    expect(s.uiTexts()).toContain('REMOTE (DEFAULT)');
   });
 });
 
@@ -369,7 +372,7 @@ describe('core/scenes options: saving', () => {
     s.press(Action.Down);
     s.press(Action.Left); // MUSIC 9
     s.openPage(OptionsItem.Controls);
-    s.press(Action.Right); // PROFILE → FAST 8-WAY
+    s.press(Action.Right); // PROFILE → TEST REMOTE
     s.press(Action.Back); // stores the profile (and writes)
     s.hold(0, 2);
     while (s.flow.options.menu.focus !== OptionsItem.Back) s.press(Action.Down);
@@ -380,7 +383,7 @@ describe('core/scenes options: saving', () => {
     expect(save.options).toEqual({
       ...DEFAULT_USER_OPTIONS,
       audio: { master: 10, music: 9, sfx: 10 },
-      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-diagonal' },
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-test' },
     });
     await settle();
     // The CONTROLS page wrote the save, BACK wrote it again with the volume.

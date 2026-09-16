@@ -435,7 +435,7 @@ export const GOLDEN_SCENARIOS: readonly GoldenScenario[] = Object.freeze([
   {
     name: 'gimmick-range-god',
     description:
-      'GIMMICK RANGE with god mode (M2-07): a brick shot open, moving blocks, suction, a tentacle, the cube rush',
+      'GIMMICK RANGE with god mode (M2-07): the high branch, moving blocks, suction, a tentacle, the cube rush',
     stageId: 'gimmick-range',
     config: { seed: 31 },
     godMode: true,

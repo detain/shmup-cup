@@ -4060,6 +4060,95 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   during an arrow hold and two gamepads at once.
 - **Refs:** [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), `shmup_tech.md` §2.3, §2.5, §2.7;
   `shmup_feat.md` §3, §4; decisions D2, D12–D14, D32; plan §2.2, §8.2.
+- **As built:**
+  - **Profiles.** `tizen-remote-safe` is now labelled `REMOTE`, debounces 0 ticks, carries the new
+    `singleKey: true` knob and registers `Guide` + `Extra` as well. `tizen-remote-diagonal` was
+    removed from the content; `core/config` gained `RETIRED_INPUT_PROFILE_IDS` /
+    `migrateInputProfileId`, which `resolveUserOptions` applies to `options.input.profileId` (a
+    saved binding override keyed by the retired id is left where it is — it is inert and costs
+    bytes to migrate). `keyboard-remote-emulation` also went to `singleKey: true` with debounce 0,
+    dropping its `lastWins` diagonal / SOCD policies (the hardware never delivers the second key,
+    so `lastWins` was unreachable).
+  - **`singleKey`** lives in `InputTuning` (`@shmup/input-web` `remote`) and is honoured by the
+    keyboard source: while any tracked key is physically down, a `keydown` of an untracked key is
+    dropped (a key inside its release-debounce window is already up and does not block). Gamepad
+    profiles must not set it. `remote` also exports the measured `REMOTE_REPEAT_DELAY_TICKS` (21)
+    and `REMOTE_REPEAT_INTERVAL_TICKS` (6.5) for the docs and the bot model.
+  - **Vsync lock** (`core/loop`): the threshold turned out to be **2 whole steps of covered time**
+    (delta + the debt carried from earlier frames), not 1.5–1.75 steps of raw delta as the plan
+    sketched. The M7's jitter reaches a p95 of ~30 ms (1.8 steps) while the short deltas beside it
+    keep the average at 60 Hz, so a raw-delta rule double-ticks on ~5 % of perfectly ordinary
+    frames; the covered-time rule is self-regulating and keeps the tick count on real time. The
+    debt is bounded to ±1 step, `alpha` is 0 while locked, and the locked branch lives in its own
+    small helper so `advance` stays inlinable (a bigger `advance` boxed its fractional argument and
+    blew the M1-06 allocation budget — caught by `core/game`'s guard, and a new guard
+    `test/loop/loop-vsync-alloc.test.ts` pins it).
+  - **Shell option** `framePacing: 'auto' | 'lock' | 'free'` (default `auto`) drives
+    `Game.setVsyncLock` from the refresh probe inside `VSYNC_LOCK_MIN_HZ … VSYNC_LOCK_MAX_HZ`
+    (55–65 Hz). `Game` suspends the lock automatically while frame advance, slow motion or the
+    game-speed assist feed the loop a slowed clock.
+  - **Debug overlay** gained a sixth line: `TPF` with the 0 / 1 / 2 / 3+ ticks-per-frame counters
+    and an eight-bucket rAF-delta histogram (`RAF_BUCKET_EDGES_MS`), plus a `LOCK` alert while the
+    vsync lock is on. The device line moved to line 7. Both counters are also on
+    `window.__shmupDebug.stats` for the on-device check.
+  - **Lifecycle.** `apps/web` `createVisibilityLifecycle` and the Tizen platform's lifecycle take
+    an optional `focus` source (`window`) and are now **edge-triggered**: suspended while hidden or
+    unfocused, resumed only when both are back. A repeat of the same state fires nothing (the old
+    "repeated events fire the callbacks again" contract is gone, and `apps/web`'s tests say so).
+    Electron keeps the same web lifecycle — it renders the web app —, which is the documented
+    policy: an Electron window that loses focus pauses like every other host.
+  - **INPUT TEST** exits on `INPUT_TEST_EXIT_PRESSES` (3) Pause presses inside
+    `INPUT_TEST_EXIT_WINDOW_TICKS` (90) as well as on the 60-tick hold; the string became
+    `PAUSE X3 OR HOLD TO EXIT`. No other held-key gesture or chord was left: the shell's debug
+    unlock is four *taps* (Pause, Ch+, Ch+, Ch+), which release-only keys satisfy.
+  - **`event.repeat`** is no longer trusted by the shell's debug tools: they track held keys
+    themselves (`keydown` / `keyup` / `blur`, keyed by `keyCode` **and** `code` so a key with
+    `keyCode` 0 still works), so the remote's flagless repeats neither advance the unlock sequence
+    nor re-fire a toggle. A repo-wide ESLint rule now forbids `.timeStamp` in runtime sources.
+  - **Playtest.** `test/playtest/remote-strict.ts` holds the model (`createRemoteStrictModel`) and
+    its checker (`createRemoteStrictCheck`); `fourWayBot()` flies under it by default
+    (`{ remote: false }` gives the old bot), `PlaytestBot.remoteStrict` opts a bot into the check
+    and `PlaytestResult.remoteViolations` / `.remoteViolation` report it. Tap length is 10 ticks
+    inside the measured 7–16 band, a release-only action (Pause) is 1 tick, and both need 2 empty
+    ticks first; a direction change costs 1 empty tick.
+  - **No zone content needed re-tuning.** Every zone A–I, all 16 routes, the boss rush, the caravan
+    zones and the practice runs clear under the stricter bot with zero model violations, inside the
+    M1-18 / M2 budgets and with the recovery rule intact. What the stricter model *did* expose was
+    the bot's own play, and three bot changes fixed it (recorded here because they change every
+    golden): it waits for a lane that stays clear for `EQUIP_WINDOW_TICKS` (12) before starting a
+    PowerUp tap — with `EQUIP_PATIENCE_TICKS` (150) as the "take the risk anyway" deadline —, it
+    prefers a boss core's lane much more strongly (`BOSS_CORE_BONUS` 160, was 60) and, **in god
+    mode only**, lines up on the core's exact row instead of the lane centre. The last one is
+    deliberate: the audit runs ask "does this boss go down at all", while a run that can die must
+    keep dodging by lanes — sitting on the core's row is where aimed fire converges, and doing it
+    always cost zones D/F/H their no-god-mode clears.
+  - **One golden expectation changed.** `gimmick-range-god` no longer breaks a destructible brick:
+    under the remote model the 4-way bot flies the high branch without firing into the terrain. The
+    assertion is now `destroyed === 0` and the scenario description says "the high branch"; the
+    brick coverage stays with `gimmick-range-weaver` (≥ 5 broken) and the rollbacks of
+    `gimmick-range-deaths`. Lowering the dev tileset's brick HP was tried first and changed
+    nothing — the bot never aims at it.
+  - **Two tests were fixed rather than re-blessed.** `zones-bc-direct` counted Direct-mode drops by
+    pool slot, which the pool's swap-remove makes unreliable; it now matches a tick that handed out
+    exactly one item against the plan position it was handed out at. The `remote-strict` re-tuning
+    only made the old flaw visible.
+  - **Probe.** `chooseEventTime` now *always* returns handler time and keeps `event.timeStamp` only
+    for the dispatch-delay statistic (the plan's simpler option — detecting coarseness would still
+    leave a clock nothing can be derived from). `FrameSummary` gained a raw `histogram`
+    (`FRAME_BUCKET_EDGES_MS`, `frameBucket`). The verdicts gained `NO — not delivered` for
+    diagonals and OK-while-arrow, inferred from `maxSimultaneous === 1` after a long hold with the
+    keys involved seen — the checklist itself cannot express "tried", because a swallowed key
+    leaves no event to tick it with. The probe was **not** re-run on the monitors (optional).
+  - **Still manual (hardware / account):** the on-device checks of plan §8.4 — the overlay's
+    ticks-per-frame counters while flying on both monitors, Home during play, the INPUT TEST's
+    Back ×3 exit, a 240 fps latency video of the flash box and of the game, and optionally a re-run
+    of the fixed probe with Back / Ch± during an arrow hold and two gamepads at once.
+  - **Left out:** the first-time "OK / Ch± need the arrow released" hint for remote players. The
+    INPUT TEST shows it live (hold an arrow, press OK: nothing lights) and the player docs say it,
+    the one-shot banner machinery would have to learn a per-save "seen" flag for a device-specific
+    string, and the
+    `APP_JS_GZIP_BUDGET` headroom is better spent on M3-03's localization. Recorded here so the
+    decision is visible rather than forgotten.
 
 ### M3-03 — Reach: localization, more platforms, tracker music
 

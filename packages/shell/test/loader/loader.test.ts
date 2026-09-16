@@ -103,14 +103,15 @@ describe('shell/loader loadGameContent', () => {
     const shipped = readContentFiles().filter((file) => file.path.startsWith('input/'));
     const copy: ContentFile = { path: 'input/zz-copy.input-profiles.json', data: shipped[0]?.data };
     const result = loadGameContent([...readContentFiles(), copy]);
-    const ids = ['tizen-remote-safe', 'tizen-remote-diagonal', 'keyboard-default'];
+    const ids = ['tizen-remote-safe', 'keyboard-default', 'keyboard-remote-emulation'];
     expect(result.issues.slice(0, 3)).toEqual(
       ids.map((id, i) => ({
         path: `input/zz-copy.input-profiles.json:profiles[${String(i)}].id`,
         message: `duplicate input profile id "${id}" (first defined in input/remote.input-profiles.json)`,
       })),
     );
-    expect(result.issues).toHaveLength(6); // the six shipped profiles (keyboard-split: M2-06)
+    // The five shipped profiles (M3-02b retired `tizen-remote-diagonal`).
+    expect(result.issues).toHaveLength(5);
   });
 
   it('validates input profiles with the default owner (plan §3.5)', () => {

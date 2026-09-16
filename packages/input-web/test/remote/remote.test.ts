@@ -44,6 +44,7 @@ describe('input-web/remote', () => {
       releaseDebounceTicks: 0,
       diagonals: 'combine',
       socd: 'neutral',
+      singleKey: false,
     });
     expect(DIRECTION_MASK).toBe(Action.Up | Action.Down | Action.Left | Action.Right);
   });

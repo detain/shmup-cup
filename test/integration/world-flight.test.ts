@@ -87,11 +87,13 @@ describe('integration: a remote flies the KESTREL (tizen-remote-safe)', () => {
     ),
   );
 
-  it('moves 1.5 px/tick after the fly-in, rides out fake gaps, stops 2 ticks after release', () => {
+  it('moves 1.5 px/tick after the fly-in, rides out flagless repeats, stops on release', () => {
     expect(issues).toEqual([]);
     const safe = profiles.find((p) => p.id === 'tizen-remote-safe');
     if (safe === undefined) throw new Error('tizen-remote-safe missing');
-    expect(safe.releaseDebounceTicks).toBe(2);
+    // M3-02b: the 2026-09-15 probe found no fake keyup/keydown pairs, so there is no debounce.
+    expect(safe.releaseDebounceTicks).toBe(0);
+    expect(safe.singleKey).toBe(true);
     const keys = new EventTarget();
     const input = createWebInput({ keyTarget: keys, keyDevice: 'remote' });
     input.setProfile(safe);
@@ -136,24 +138,22 @@ describe('integration: a remote flies the KESTREL (tizen-remote-safe)', () => {
     expect(ship.x).toBe(ENTER_END_X);
     expect(ship.device).toBe('remote');
 
-    // Held: 1.5 px per tick, with a fake key-up/key-down pair (one frame apart) every 6 frames.
+    // Held: 1.5 px per tick through the remote's flagless auto-repeats (a plain `keydown` of a key
+    // that is already down, ~21 ticks in and then every ~6.5 — M3-02b finding 2).
     const start = ship.x;
     for (let i = 1; i <= 30; i++) {
-      if (i % 6 === 3) tick(() => press('keyup', KEY.right));
-      else if (i % 6 === 4) tick(() => press('keydown', KEY.right));
+      if (i === 21 || (i > 21 && (i - 21) % 7 === 0)) tick(() => press('keydown', KEY.right));
       else tick();
     }
     expect(ship.x).toBe(start + 30 * 1.5); // never stalled
 
-    // Released: the debounce keeps it held for two more ticks, then the ship stops (no inertia).
+    // Released: the ship stops on the next tick (no debounce, no inertia).
     const released = ship.x;
     tick(() => press('keyup', KEY.right));
-    tick();
-    tick();
     const stopped = ship.x;
     tick();
     tick();
-    expect(stopped).toBe(released + 2 * 1.5);
+    expect(stopped).toBe(released);
     expect(ship.x).toBe(stopped);
 
     // Hold Left long enough to reach the clamp at the left margin.

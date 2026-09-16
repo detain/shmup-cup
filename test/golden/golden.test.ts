@@ -147,7 +147,10 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
     const god = play('gimmick-range-god');
     expect(god.outcome).toMatchObject({ status: 'stageClear', deathTicks: [] });
     expect([god.low, god.fired]).toEqual([false, 0]);
-    expect(god.destroyed).toBeGreaterThanOrEqual(1);
+    // M3-02b: under the remote model the 4-way bot flies the high branch without ever firing into
+    // the terrain. The bricks are covered by the weaver scenario below (≥ 5 broken) and by the
+    // rollbacks of `gimmick-range-deaths`.
+    expect(god.destroyed).toBe(0);
     // The weaving pilot dives through the trigger: the low branch, bricks broken all along.
     const weaver = play('gimmick-range-weaver');
     expect(weaver.outcome).toMatchObject({ status: 'stageClear', deathTicks: [] });

@@ -29,6 +29,7 @@ describe('playtest: zone A with the 4-way bot (M1-18)', () => {
     expect(run.seconds).toBeLessThanOrEqual(6 * 60);
     // A remote player: never two directions at once, parked at x ≈ 64.
     expect(run.diagonalTicks).toBe(0);
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
     expect(run.shipX.min).toBeGreaterThan(BOT_X - 4);
     expect(run.shipX.max).toBeLessThan(BOT_X + 4);
     // OK pressed on the planned slots only (Speed, Missile, Option).
@@ -59,6 +60,7 @@ describe('playtest: zone A with the 4-way bot (M1-18)', () => {
     expect(['stageClear', 'gameOver']).toContain(run.status);
     expect(run.inputs).toHaveLength(run.ticks);
     expect(run.diagonalTicks).toBe(0);
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
     // The recording replays into a fresh session: same deaths, same end state.
     const replay = replayStage('zone-a', run.inputs, {});
     expect(replay.deathTicks).toEqual(run.deaths.map((d) => d.tick));

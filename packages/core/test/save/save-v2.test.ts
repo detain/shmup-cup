@@ -40,7 +40,8 @@ describe('core/save version 2 (M2-16)', () => {
     expect([loaded.status, loaded.fromVersion, loaded.data.version]).toEqual(['migrated', 1, 2]);
     expect(loaded.data.options).toEqual({
       audio: { master: 7, music: 4, sfx: 9 },
-      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-diagonal' },
+      // M3-02b migrated the retired `tizen-remote-diagonal` of the fixture to the TV default.
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-safe' },
       game: DEFAULT_USER_OPTIONS.game,
       display: {
         bulletPalette: 'deuteranopia',

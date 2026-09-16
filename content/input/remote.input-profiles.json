@@ -4,44 +4,7 @@
   "profiles": [
     {
       "id": "tizen-remote-safe",
-      "label": "SAFE 4-WAY",
-      "device": "remote",
-      "context": {
-        "game": {
-          "byCode": {},
-          "byKeyCode": {
-            "13": ["PowerUp"],
-            "37": ["Left"],
-            "38": ["Up"],
-            "39": ["Right"],
-            "40": ["Down"],
-            "427": ["Special"],
-            "428": ["Speed"],
-            "10009": ["Pause"],
-            "10252": ["Pause"]
-          }
-        },
-        "menu": {
-          "byCode": {},
-          "byKeyCode": {
-            "13": ["Confirm"],
-            "37": ["Left"],
-            "38": ["Up"],
-            "39": ["Right"],
-            "40": ["Down"],
-            "10009": ["Back"],
-            "10252": ["Pause"]
-          }
-        }
-      },
-      "releaseDebounceTicks": 2,
-      "diagonals": "combine",
-      "socd": "neutral",
-      "register": ["MediaPlayPause", "ChannelUp", "ChannelDown"]
-    },
-    {
-      "id": "tizen-remote-diagonal",
-      "label": "FAST 8-WAY",
+      "label": "REMOTE",
       "device": "remote",
       "context": {
         "game": {
@@ -74,7 +37,8 @@
       "releaseDebounceTicks": 0,
       "diagonals": "combine",
       "socd": "neutral",
-      "register": ["MediaPlayPause", "ChannelUp", "ChannelDown"]
+      "singleKey": true,
+      "register": ["MediaPlayPause", "ChannelUp", "ChannelDown", "Guide", "Extra"]
     },
     {
       "id": "keyboard-default",
@@ -166,9 +130,10 @@
           "byKeyCode": {}
         }
       },
-      "releaseDebounceTicks": 2,
-      "diagonals": "lastWins",
-      "socd": "lastWins",
+      "releaseDebounceTicks": 0,
+      "diagonals": "combine",
+      "socd": "neutral",
+      "singleKey": true,
       "register": []
     },
     {

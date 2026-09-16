@@ -72,12 +72,30 @@ describe('web/platform', () => {
 
   it('maps visibility changes to suspend/resume', () => {
     const doc = fakeDocument();
-    const lifecycle = createVisibilityLifecycle(doc);
+    const lifecycle = createVisibilityLifecycle(doc, null);
     const calls: string[] = [];
     lifecycle.onSuspend(() => calls.push('suspend'));
     lifecycle.onResume(() => calls.push('resume'));
     doc.set('hidden');
     doc.set('visible');
+    expect(calls).toEqual(['suspend', 'resume']);
+  });
+
+  it('suspends on window blur and resumes on focus, de-duplicated with hidden (M3-02b)', () => {
+    const doc = fakeDocument();
+    const focus = new EventTarget();
+    const lifecycle = createVisibilityLifecycle(doc, focus);
+    const calls: string[] = [];
+    lifecycle.onSuspend(() => calls.push('suspend'));
+    lifecycle.onResume(() => calls.push('resume'));
+    // A system overlay: `blur` alone, no `visibilitychange`.
+    focus.dispatchEvent(new Event('blur'));
+    expect(calls).toEqual(['suspend']);
+    doc.set('hidden'); // the page hides too: still one suspend
+    expect(calls).toEqual(['suspend']);
+    doc.set('visible');
+    expect(calls).toEqual(['suspend']); // still unfocused
+    focus.dispatchEvent(new Event('focus'));
     expect(calls).toEqual(['suspend', 'resume']);
   });
 

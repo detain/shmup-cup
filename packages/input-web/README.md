@@ -43,11 +43,11 @@ const snapshot = input.poll(); // once per simulation tick (via Platform.input)
 ## Input profiles (decisions D13–D15)
 
 The mapping is data: `content/input/remote.input-profiles.json` ships `tizen-remote-safe`
-(TV default: release debounce 2 ticks, diagonals `combine`, registers Play/Pause + Ch±),
-`tizen-remote-diagonal` (debounce 0), `keyboard-default` (web default),
-`keyboard-remote-emulation` (only the remote's keys, arrows `lastWins`), `keyboard-split` (M2-06:
-two players on one keyboard — WASD + F / G vs arrows + K / L, Enter = player 2's START) and
-`gamepad-standard`. Each profile has a **`game`** and a **`menu`** table:
+(TV default; since M3-02b no release debounce and `singleKey` — the measured remote sends no fake
+key-up/key-down pairs and delivers one key at a time —, registers Play/Pause, Ch±, Guide and
+Extra), `keyboard-default` (web default), `keyboard-remote-emulation` (only the remote's keys, with
+its `singleKey` model), `keyboard-split` (M2-06: two players on one keyboard — WASD + F / G vs
+arrows + K / L, Enter = player 2's START) and `gamepad-standard`. Each profile has a **`game`** and a **`menu`** table:
 
 | Action | `keyboard-default` game / menu | `tizen-remote-safe` game / menu | `gamepad-standard` game / menu |
 |---|---|---|---|

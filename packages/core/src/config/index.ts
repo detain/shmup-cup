@@ -55,6 +55,7 @@
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
  * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
+ * {@link RETIRED_INPUT_PROFILE_IDS}, {@link migrateInputProfileId},
  * {@link BULLET_PALETTES}, {@link BulletPalette}, {@link SCALE_MODES}, {@link ScaleMode} (M2-08).
  * M2-16: the autofire mode {@link AutofireMode} / {@link AUTOFIRE_MODES}
  * ({@link GameConfig.autofireMode}) and rates {@link AUTOFIRE_INTERVALS}; the controls options
@@ -1578,6 +1579,36 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
 /** Shape of an input profile id (lower-case kebab, as `content/input/` requires), ≤ 64 characters. */
 export const INPUT_PROFILE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/**
+ * Input profiles that no longer ship, and what a save that names one is migrated to (M3-02b).
+ *
+ * @remarks
+ * `tizen-remote-diagonal` ("FAST 8-WAY") only differed from the TV default by its release
+ * debounce; the 2026-09-15 input probe showed the remote cannot send diagonals at all and needs
+ * no debounce, so the two profiles became one and a save that picked the retired id resolves to
+ * the remaining remote profile (`docs/dev/input-probe-results.md` findings 1–2).
+ */
+export const RETIRED_INPUT_PROFILE_IDS: Readonly<Record<string, string>> = Object.freeze({
+  'tizen-remote-diagonal': 'tizen-remote-safe',
+});
+
+/**
+ * Migrates a saved input profile id (M3-02b): a retired id becomes its replacement, every other
+ * id is returned unchanged.
+ *
+ * @param id - The id as saved.
+ * @returns The id to use.
+ *
+ * @example
+ * ```ts
+ * migrateInputProfileId('tizen-remote-diagonal'); // → 'tizen-remote-safe'
+ * ```
+ */
+export function migrateInputProfileId(id: string): string {
+  const next = RETIRED_INPUT_PROFILE_IDS[id];
+  return next === undefined ? id : next;
+}
+
 /** One entry of the Options screen's CONTROLS selector: a keyboard / remote input profile. */
 export interface InputProfileChoice {
   /** Profile id (`content/input/`). */
@@ -1626,7 +1657,8 @@ function volumeLevel(value: unknown, fallback: number): number {
  * @remarks
  * Volumes: finite numbers are rounded and clamped to `0…`{@link VOLUME_LEVELS}; anything else takes
  * the default. `input.profileId`: a string matching {@link INPUT_PROFILE_ID_PATTERN} of at most 64
- * characters, else `null`. `display.bulletPalette`: one of {@link BULLET_PALETTES}, else
+ * characters, else `null` — a retired id is migrated ({@link migrateInputProfileId}, M3-02b).
+ * `display.bulletPalette`: one of {@link BULLET_PALETTES}, else
  * `standard`; `display.scaleMode`: one of {@link SCALE_MODES}, else `integer` (M2-08);
  * `display.screenShake`, `reduceFlashing`, `showHitbox` and `bossHpBar` (M2-09): booleans, else
  * their defaults (M2-08 — a save written before them resolves without a migration; unknown display
@@ -1669,7 +1701,9 @@ export function resolveUserOptions(value: unknown): UserOptions {
     }),
     input: Object.freeze({
       profileId:
-        typeof id === 'string' && id.length <= 64 && INPUT_PROFILE_ID_PATTERN.test(id) ? id : null,
+        typeof id === 'string' && id.length <= 64 && INPUT_PROFILE_ID_PATTERN.test(id)
+          ? migrateInputProfileId(id)
+          : null,
       autofire: oneOf(input.autofire, AUTOFIRE_MODES),
       autofireInterval: wholeOrNull(input.autofireInterval, 1, 60),
       socd: oneOf(input.socd, SOCD_CHOICES),

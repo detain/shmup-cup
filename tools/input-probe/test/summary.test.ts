@@ -76,6 +76,37 @@ describe('buildVerdicts', () => {
     expect(buildVerdicts(withKeys((k) => (k.chord.verdict = verdict)), keyName).okWhileArrowHeld).toBe(text);
   });
 
+  it('reports "not delivered" when a single-key device swallowed every second key (M3-02b)', () => {
+    // The M7's remote: a long hold, never more than one key down at once, both arrows and OK seen.
+    const snap = withKeys((k) => {
+      k.maxSimultaneous = 1;
+      k.longestHoldMs = 4200;
+    });
+    const seen = [KeyCode.Left, KeyCode.Right, KeyCode.Enter];
+    const v = buildVerdicts(snap, keyName, seen);
+    expect(v.diagonals).toBe('NO — not delivered');
+    expect(v.okWhileArrowHeld).toBe('NO — not delivered');
+    // Without a long hold there is nothing to conclude.
+    const short = withKeys((k) => {
+      k.maxSimultaneous = 1;
+      k.longestHoldMs = 200;
+    });
+    expect(buildVerdicts(short, keyName, seen).diagonals).toBe('not tested');
+    // Two keys down at once: the device is not single-key, so silence really is "not tested".
+    const multi = withKeys((k) => {
+      k.maxSimultaneous = 2;
+      k.longestHoldMs = 4200;
+    });
+    expect(buildVerdicts(multi, keyName, seen).diagonals).toBe('not tested');
+    // A conclusive observation always wins over the inference.
+    const yes = withKeys((k) => {
+      k.maxSimultaneous = 1;
+      k.longestHoldMs = 4200;
+      k.diagonal.verdict = 'yes';
+    });
+    expect(buildVerdicts(yes, keyName, seen).diagonals).toBe('YES');
+  });
+
   it.each([
     ['clean', 'clean (repeat flag)'],
     ['noflag', 'keydown without repeat flag'],

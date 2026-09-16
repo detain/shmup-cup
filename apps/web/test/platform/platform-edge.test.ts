@@ -97,7 +97,7 @@ describe('web/platform createVisibilityLifecycle', () => {
 
   it('calls callbacks in registration order, including late registrations', () => {
     const source = doc();
-    const lifecycle = createVisibilityLifecycle(source);
+    const lifecycle = createVisibilityLifecycle(source, null);
     const calls: string[] = [];
     lifecycle.onSuspend(() => calls.push('s1'));
     source.set('hidden');
@@ -110,11 +110,14 @@ describe('web/platform createVisibilityLifecycle', () => {
 
   it('treats every non-hidden state (e.g. legacy "prerender") as visible', () => {
     const source = doc();
-    const lifecycle = createVisibilityLifecycle(source);
+    const lifecycle = createVisibilityLifecycle(source, null);
     const calls: string[] = [];
     lifecycle.onSuspend(() => calls.push('suspend'));
     lifecycle.onResume(() => calls.push('resume'));
+    source.set('hidden');
     source.set('prerender');
-    expect(calls).toEqual(['resume']);
+    // Edge-triggered since M3-02b: a repeat of the same state fires nothing.
+    source.set('visible');
+    expect(calls).toEqual(['suspend', 'resume']);
   });
 });

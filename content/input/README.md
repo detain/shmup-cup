@@ -1,20 +1,19 @@
 # content/input/ — input profiles
 
 How keys, remote buttons and gamepad buttons turn into game actions, as data (decision
-**D13**): the Samsung remote's quirks are still being measured by the input probe
-(`tools/input-probe`, `input_probe_spec.md`), so its results must change *this file*, not
-code. Validated and compiled by `@shmup/input-web` (`rebind` module, kind `input-profiles`);
-the shell's content owner reports every problem on the boot error screen, and
-`pnpm content:check` checks the shipped file and the example.
+**D13**): the Samsung remote's quirks were measured by the input probe on both Smart Monitor M7s
+on 2026-09-15 (`tools/input-probe`, [`docs/dev/input-probe-results.md`](../../docs/dev/input-probe-results.md)),
+and its results changed *this file*, not code. Validated and compiled by `@shmup/input-web`
+(`rebind` module, kind `input-profiles`); the shell's content owner reports every problem on the
+boot error screen, and `pnpm content:check` checks the shipped file and the example.
 
-`remote.input-profiles.json` ships six profiles:
+`remote.input-profiles.json` ships five profiles:
 
 | Profile | Used | Notes |
 |---|---|---|
-| `tizen-remote-safe` | default on the TV | debounce 2 ticks, diagonals `combine`, registers Play/Pause and Ch± (decision **D14**) |
-| `tizen-remote-diagonal` | after a positive probe result | same bindings, debounce 0 |
+| `tizen-remote-safe` | default on the TV (the only remote profile) | no debounce, `singleKey`, registers Play/Pause, Ch±, Guide and Extra |
 | `keyboard-default` | default on the web | arrows / WASD, Z Shot, X Sub, C / Enter PowerUp, V Special, Shift Speed, P / Esc Pause |
-| `keyboard-remote-emulation` | `?profile=keyboard-remote-emulation` | only the remote's keys: arrows (`lastWins`), Enter = OK, Backspace = Back, P = Play/Pause, PgUp/PgDn = Ch± |
+| `keyboard-remote-emulation` | `?profile=keyboard-remote-emulation` | only the remote's keys, with its `singleKey` model: arrows, Enter = OK, Backspace = Back, P = Play/Pause, PgUp/PgDn = Ch± |
 | `keyboard-split` | Options → CONTROLS (web), `?profile=keyboard-split` | two players on one keyboard (M2-06): player 1 WASD, F = OK / PowerUp, G = Back / Special + Speed, Esc / Q = Pause; player 2 (`split`) arrows, K = OK / PowerUp, L = Back / Special + Speed, Enter = START (join) |
 | `gamepad-standard` | every gamepad | standard mapping: A Shot, B Sub, X PowerUp, Y Special, LB/RB Speed, Start/Select Pause |
 
@@ -32,7 +31,7 @@ has in both tables until it is released.
   "profiles": [
     {
       "id": "tizen-remote-safe",   // lower-case kebab, unique across all files (?profile=<id>)
-      "label": "SAFE 4-WAY",       // shown in the Options screen
+      "label": "REMOTE",           // shown in the Options screen
       "device": "remote",          // "keyboard" | "remote" (key events) | "gamepad" (polled)
       "context": {
         "game": {
@@ -60,9 +59,10 @@ has in both tables until it is released.
           }
         }
       },
-      "releaseDebounceTicks": 2,   // 0–10 polls a released key still counts as held
+      "releaseDebounceTicks": 0,   // 0–10 polls a released key still counts as held
       "diagonals": "combine",      // "combine" | "lastWins" | "firstWins"
       "socd": "neutral",           // Left+Right / Up+Down: "neutral" | "lastWins"
+      "singleKey": true,           // optional: while a key is down, other keydowns are dropped
       "register": ["MediaPlayPause"] // Tizen key names to register (remote profiles only)
     }
   ]
@@ -110,19 +110,32 @@ Actions: `Up`, `Down`, `Left`, `Right`, `Shot`, `Sub`, `PowerUp`, `Special`, `Sp
 - Every `game` table binds `Up`, `Down`, `Left`, `Right` and `Pause`; every `menu` table binds
   the directions, `Confirm` and `Back` — menus must be fully D-pad + OK + Back navigable
   (`shmup_feat.md` §4 rule 8).
-- Gamepad profiles bind `buttons` only and use `releaseDebounceTicks: 0`; key profiles never
-  bind `buttons`.
+- Gamepad profiles bind `buttons` only, use `releaseDebounceTicks: 0` and never set `singleKey`
+  (pads are polled and report every button at once); key profiles never bind `buttons`.
 - Only `remote` profiles list `register` keys, and never the system keys `Exit`, `VolumeUp`,
   `VolumeDown`, `VolumeMute`.
 - Unknown fields, unknown actions, bad key names and duplicate profile ids are errors.
 
 ## Tuning after the input probe (plan §8.2)
 
-- **Diagonals** verdict *YES* and no fake key-up pairs → make `tizen-remote-diagonal` the
-  default (or set `releaseDebounceTicks: 0` in `tizen-remote-safe`).
+The probe **was** run, on both Smart Monitor M7s, on 2026-09-15
+([`docs/dev/input-probe-results.md`](../../docs/dev/input-probe-results.md)); what it measured is
+already in this file (plan step M3-02b):
+
+| Measured | Applied here |
+|---|---|
+| A second key is never delivered while one is held (0 of the attempts, `max keys down at once` = 1) | `"singleKey": true` on `tizen-remote-safe` and `keyboard-remote-emulation`; `tizen-remote-diagonal` retired |
+| No fake key-up/key-down pairs, no bounces; repeats are plain `keydown`s of a held key | `"releaseDebounceTicks": 0` everywhere |
+| Ch rocker pressed = `Guide` (458), screen button = `Extra` (10253), both registrable | added to `register` (no default binding — REBIND can capture them) |
+| The volume keys are registrable, but registering takes volume control away | still never registered (`SYSTEM_REMOTE_KEYS`) |
+| Back (10009), Play/Pause (10252) and Mute (449) arrive only on release | bindings unchanged — the latch turns a same-frame down/up into one press; nothing asks for a *held* Back or Pause any more |
+
+For a different set (or a firmware change), re-run the probe and apply the same recipe:
+
 - **Fake key-up/key-down pairs** measured with gap *g* ms → `releaseDebounceTicks` ≥
   ⌈*g* / 16.7⌉.
-- **Second arrow replaces the first** → `"diagonals": "lastWins"`.
+- **A second key really arrives** → drop `singleKey`; if the second arrow replaces the first,
+  `"diagonals": "lastWins"`.
 - A registrable key that never arrives → drop it from `register`.
 
 See [`example.input-profiles.json`](example.input-profiles.json).

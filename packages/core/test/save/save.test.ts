@@ -101,7 +101,7 @@ describe('core/save round trip', () => {
       audio: { master: 7, music: 3, sfx: 0 },
       // The controls and game options of M2-16 round-trip too.
       input: {
-        profileId: 'tizen-remote-diagonal',
+        profileId: 'tizen-remote-test',
         autofire: 'toggle',
         autofireInterval: 6,
         socd: 'lastWins',
@@ -264,7 +264,8 @@ describe('core/save migrations', () => {
     expect(loaded.fromVersion).toBe(0);
     expect(loaded.data.options).toEqual({
       audio: { master: 8, music: 5, sfx: 10 },
-      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-diagonal' },
+      // M3-02b migrated the retired `tizen-remote-diagonal` of the fixture to the TV default.
+      input: { ...DEFAULT_USER_OPTIONS.input, profileId: 'tizen-remote-safe' },
       game: DEFAULT_USER_OPTIONS.game,
       display: {
         bulletPalette: 'standard',

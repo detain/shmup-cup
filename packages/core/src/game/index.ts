@@ -244,6 +244,22 @@ export interface Game {
    * Does not override a platform suspend.
    */
   resume(): void;
+  /**
+   * Turns the loop's **vsync lock** on or off (M3-02b — `core/loop`
+   * {@link FixedStepLoop.setVsyncLock}): on a fixed ~60 Hz display every frame runs exactly one
+   * tick, so the M7's rAF jitter stops producing 0- and 2-tick frames.
+   *
+   * @remarks
+   * The host asks for it once the refresh probe reads ≈ 60 Hz (`@shmup/shell`). It is suspended
+   * automatically while frame advance, slow motion or the game-speed assist feed the loop a slowed
+   * clock, and restored when they end. Presentation only: it changes no tick's content, so replays
+   * and goldens are unaffected.
+   *
+   * @param on - Whether to lock one tick to one frame.
+   */
+  setVsyncLock(on: boolean): void;
+  /** Whether the vsync lock was asked for (it is suspended while a debug timing mode runs). */
+  readonly vsyncLock: boolean;
 }
 
 /** Options of {@link createGame} beyond the config (not recorded in replays). */
@@ -403,7 +419,7 @@ export function createGame(
   const slowClock = new Float64Array(2);
   const RAW = 0;
   const SLOW = 1;
-  const timing = { mode: 1, slowStarted: false, pendingSteps: 0 };
+  const timing = { mode: 1, slowStarted: false, pendingSteps: 0, vsyncLock: false };
   /** {@link timing}`.mode` while frame advance is on (otherwise the slow-motion factor). */
   const FRAME_ADVANCE_MODE = 0;
   /**
@@ -432,6 +448,8 @@ export function createGame(
       // A switch: forget the accumulated time, so the new mode starts without a burst.
       timing.mode = mode;
       timing.slowStarted = false;
+      // The vsync lock ties ticks to frames; a slowed clock needs the free-running accumulator.
+      loop.setVsyncLock(timing.vsyncLock && mode === 1);
       loop.reset();
     }
     if (mode === FRAME_ADVANCE_MODE) {
@@ -540,6 +558,13 @@ export function createGame(
     resume() {
       state.paused = false;
       loop.reset();
+    },
+    setVsyncLock(on: boolean): void {
+      timing.vsyncLock = on;
+      loop.setVsyncLock(on && timing.mode === 1);
+    },
+    get vsyncLock(): boolean {
+      return timing.vsyncLock;
     },
   };
 

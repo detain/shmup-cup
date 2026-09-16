@@ -10,7 +10,9 @@
  * **Refresh probe (M2-08).** {@link createRefreshMonitor} estimates the display's refresh rate
  * from the recent rAF deltas — the mean of their middle half, so hitches and jitter do not sway it
  * (shmup_feat.md §3 "refresh rate probed at boot"); the
- * shell turns render interpolation on while it reads above {@link INTERPOLATION_MIN_HZ} — more than
+ * shell turns the loop's vsync lock on while it reads a fixed ~60 Hz panel ({@link VSYNC_LOCK_MIN_HZ}
+ * … {@link VSYNC_LOCK_MAX_HZ} — M3-02b), and render interpolation on while it reads above
+ * {@link INTERPOLATION_MIN_HZ} — more than
  * one displayed frame per 60 Hz tick — and off at 60 Hz, where it would only add a tick of lag.
  *
  * **Implements.** shmup_feat.md §3 (rAF-driven fixed step; refresh rate probed from the recent
@@ -19,7 +21,7 @@
  *
  * **Public API.** {@link startFrameLoop}, {@link FrameLoop}, {@link FrameScheduler},
  * {@link createRefreshMonitor}, {@link RefreshMonitor}, {@link REFRESH_SAMPLES},
- * {@link INTERPOLATION_MIN_HZ}.
+ * {@link INTERPOLATION_MIN_HZ}, {@link VSYNC_LOCK_MIN_HZ}, {@link VSYNC_LOCK_MAX_HZ}.
  *
  * @module
  */
@@ -110,6 +112,18 @@ export const REFRESH_SAMPLES = 31;
  * interpolation pays off (75 Hz monitors included; 60 Hz with jitter stays below it).
  */
 export const INTERPOLATION_MIN_HZ = 70;
+
+/**
+ * Lowest refresh rate (Hz) the vsync lock (M3-02b — `core/loop`) is used at: below it the display
+ * is not a 60 Hz panel and the free-running accumulator is right.
+ */
+export const VSYNC_LOCK_MIN_HZ = 55;
+
+/**
+ * Highest refresh rate (Hz) the vsync lock is used at: above it the display shows more than one
+ * frame per 60 Hz tick, so one tick per frame would run the game too fast.
+ */
+export const VSYNC_LOCK_MAX_HZ = 65;
 
 /** Longest rAF delta (ms) the probe counts: longer gaps are hitches or a hidden page. */
 const MAX_SAMPLE_MS = 250;

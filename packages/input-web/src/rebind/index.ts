@@ -5,7 +5,8 @@
  * `content/input/*.input-profiles.json` holds named profiles, each with separate **`game`**
  * and **`menu`** binding tables (decision D15 — keyboard X is Sub in the game but Back in
  * menus, remote OK is PowerUp in the game but Confirm in menus), a release debounce, a
- * diagonal and an SOCD policy (`remote`) and the Tizen keys to register. This module
+ * diagonal and an SOCD policy, the single-key model of the Samsung remote (`remote`) and the
+ * Tizen keys to register. This module
  *
  * - validates profile files with the core schema combinators ({@link parseInputProfiles},
  *   {@link loadInputProfiles}; plan §3.5 — `input-profiles` content is owned here) and
@@ -246,9 +247,10 @@ const PROFILE_SCHEMA = s.object(
     releaseDebounceTicks: s.int({ min: 0, max: MAX_RELEASE_DEBOUNCE_TICKS }),
     diagonals: s.enumOf(DIAGONAL_POLICIES),
     socd: s.enumOf(SOCD_POLICIES),
+    singleKey: s.bool(),
     register: s.array(s.str({ maxLength: 40, pattern: /^[A-Za-z][A-Za-z0-9]*$/ }), { max: 32 }),
   },
-  { optional: ['split'] },
+  { optional: ['split', 'singleKey'] },
 );
 
 /** A whole `input-profiles` file. */
@@ -330,6 +332,8 @@ function compileButtons(own: ProfileBindings): readonly ActionMask[] {
 function compileProfile(profile: ParsedProfile): InputProfile {
   return Object.freeze({
     ...profile,
+    // Optional in the file (M3-02b): absent means the device tracks every key.
+    singleKey: profile.singleKey === true,
     tables: compileContexts(profile.context),
     splitTables: profile.split === undefined ? null : compileContexts(profile.split),
   });
@@ -412,6 +416,13 @@ function checkProfile(profile: ParsedProfile, path: string, issues: ValidationIs
   }
   if (profile.device !== 'remote' && profile.register.length > 0) {
     issues.push({ path: path + '.register', message: 'only remote profiles register keys' });
+  }
+  // The single-key model (M3-02b) describes a key device; gamepads are polled, never event-driven.
+  if (gamepad && profile.singleKey) {
+    issues.push({
+      path: path + '.singleKey',
+      message: 'must be false for a gamepad profile (gamepads are polled, not event-driven)',
+    });
   }
   for (let i = 0; i < profile.register.length; i++) {
     const name = profile.register[i] ?? '';
@@ -694,6 +705,7 @@ export function overrideInputTuning(
     releaseDebounceTicks: ticks,
     diagonals: overrides.diagonals ?? profile.diagonals,
     socd: overrides.socd ?? profile.socd,
+    singleKey: (overrides.singleKey ?? profile.singleKey) && profile.device !== 'gamepad',
   });
 }
 

@@ -108,7 +108,12 @@ describe('input-web/keyboard table swaps and tuning', () => {
 
   it('setTuning applies the debounce on the next advance() and the direction policies at once', () => {
     const kb = createKeyboardSource(null, DEFAULT_KEY_BINDINGS);
-    kb.setTuning({ releaseDebounceTicks: 1, diagonals: 'lastWins', socd: 'neutral' });
+    kb.setTuning({
+      releaseDebounceTicks: 1,
+      diagonals: 'lastWins',
+      socd: 'neutral',
+      singleKey: false,
+    });
     expect(kb.tuning.diagonals).toBe('lastWins');
     kb.handleEvent(key('keydown', 'ArrowRight'));
     kb.handleEvent(key('keydown', 'ArrowUp'));

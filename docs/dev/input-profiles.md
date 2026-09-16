@@ -86,17 +86,36 @@ Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
 
 ## The shipped profiles
 
-| Profile | Label (CONTROLS) | `device` | Used | Debounce | Diagonals / SOCD | `register` |
-|---|---|---|---|---|---|---|
-| `tizen-remote-safe` | `SAFE 4-WAY` | `remote` | TV default (D14) | 2 | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown` |
-| `tizen-remote-diagonal` | `FAST 8-WAY` | `remote` | TV, picked in CONTROLS (or after a positive probe result) | 0 | `combine` / `neutral` | same |
-| `keyboard-default` | `KEYBOARD` | `keyboard` | web default | 0 | `combine` / `neutral` | — |
-| `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 2 | `lastWins` / `lastWins` | — |
-| `keyboard-split` | `SPLIT KEYBOARD` | `keyboard` | web, picked in CONTROLS or `?profile=keyboard-split` — two players on one keyboard (M2-06; its `split` half is player 2's) | 0 | `combine` / `neutral` | — |
-| `gamepad-standard` | `GAMEPAD` | `gamepad` | every pad, both apps (never offered in CONTROLS) | 0 (must be) | `combine` / `neutral` | — |
+| Profile | Label (CONTROLS) | `device` | Used | Debounce | Single key | Diagonals / SOCD | `register` |
+|---|---|---|---|---|---|---|---|
+| `tizen-remote-safe` | `REMOTE` | `remote` | TV default | 0 | yes | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown`, `Guide`, `Extra` |
+| `keyboard-default` | `KEYBOARD` | `keyboard` | web default | 0 | no | `combine` / `neutral` | — |
+| `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 0 | yes | `combine` / `neutral` | — |
+| `keyboard-split` | `SPLIT KEYBOARD` | `keyboard` | web, picked in CONTROLS or `?profile=keyboard-split` — two players on one keyboard (M2-06; its `split` half is player 2's) | 0 | no | `combine` / `neutral` | — |
+| `gamepad-standard` | `GAMEPAD` | `gamepad` | every pad, both apps (never offered in CONTROLS) | 0 (must be) | no (must be) | `combine` / `neutral` | — |
 
 M1-17 renamed the labels for the Options screen (they were `TV REMOTE`, `TV REMOTE 8-WAY`,
 `KEYBOARD AS TV REMOTE`); CONTROLS appends ` (DEFAULT)` to the platform's default.
+
+### What the 2026-09-15 input probe changed (M3-02b)
+
+The probe ran on both Smart Monitor M7s ([input-probe-results.md](input-probe-results.md)) and
+replaced every guess in this table:
+
+- **`tizen-remote-safe` debounces 0 ticks.** The remote sends **no** fake `keyup`/`keydown` pairs
+  and no bounces; its auto-repeats are plain `keydown`s of a key that is already down. Decision
+  D14's window of 2 only cost 33 ms of release latency.
+- **`singleKey: true` on both remote profiles.** While any key is down a second key's `keydown` is
+  never delivered — not another arrow, not OK, not on release. There are no diagonals and no
+  chords on this hardware at all, so a power-up press costs the player its movement.
+- **`tizen-remote-diagonal` (`FAST 8-WAY`) is gone.** It differed from the default only by the
+  debounce, and "8-way" was never possible. A save that named it resolves to `tizen-remote-safe`
+  (`core/config` `migrateInputProfileId`, `RETIRED_INPUT_PROFILE_IDS`), so the label of the one
+  remaining TV profile is simply `REMOTE`.
+- **`Guide` (458) and `Extra` (10253) are registered.** The Ch rocker pressed in and the screen
+  button are ordinary keys with a real down/up; nothing binds them by default, but REBIND can now
+  capture them. The volume keys stay unregistered even though `registerKey` accepts them —
+  registering takes volume control away from the viewer.
 
 | Action | `keyboard-default` game / menu | `tizen-remote-*` game / menu | `gamepad-standard` game / menu |
 |---|---|---|---|
@@ -140,6 +159,8 @@ the files by path (the result never depends on listing order), then per file:
    - a `gamepad` profile binds `buttons` only (both key tables empty, `buttons` present) and
      has `releaseDebounceTicks: 0` (pads are polled, there is nothing to debounce);
    - a key profile never has `buttons`;
+   - a `gamepad` profile never sets `singleKey` (M3-02b — pads are polled, and every standard pad
+     reports all its buttons at once);
    - only `remote` profiles have a non-empty `register`, and never a `SYSTEM_REMOTE_KEYS` name
      (`Exit`, `VolumeUp`, `VolumeDown`, `VolumeMute`).
 3. **Unique ids** across all files — the first definition (in path order) wins; the duplicate
@@ -175,7 +196,7 @@ content is validated and before the game exists:
 | | `apps/web` | `apps/tizen` |
 |---|---|---|
 | Key profile | `?profile=<id>` › saved choice (`options.input.profileId` of the save) › `keyboard-default` | saved choice › `tizen-remote-safe` |
-| Offered in CONTROLS (M1-17) | `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE`, plus a `?profile=` override in use | `SAFE 4-WAY (DEFAULT)`, `FAST 8-WAY` |
+| Offered in CONTROLS (M1-17) | `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE`, plus a `?profile=` override in use | `REMOTE (DEFAULT)` |
 | Gamepad profile | `gamepad-standard` | `gamepad-standard` |
 | Dev overrides | `?debounce=<ticks>` (0–10) on the key profile, via `overrideInputTuning` | none (the widget has no query string) |
 | Key registration | — | the key profile's `register` list (`createTizenPlatform({ registerKeys })`) |
@@ -277,16 +298,36 @@ ticks, exactly like the binding context.
 The whole co-op step — the World's join, per-player continues, the HUD — is in
 [coop.md](coop.md).
 
+## Single key at a time (`InputTuning.singleKey`, M3-02b)
+
+The Samsung Smart Remote delivers **one key at a time**: while a key is physically down, the
+`keydown` of any other key never reaches the page — not on press, not on release — and the held key
+keeps repeating (input-probe finding 1, both monitors, 0 of the attempts delivered). A profile with
+`singleKey: true` makes the key source behave that way whatever the browser sends:
+
+- a `keydown` of a key that is not already tracked is **dropped** while any tracked key is down
+  (a key inside its release-debounce window is already up, so it does not block the next one);
+- the held key keeps its slot, its press order and its actions — nothing stutters;
+- the dropped key's `keyup` is ignored too (it was never tracked).
+
+It is the reason the TV profile keeps `combine` / `neutral`: the diagonal and SOCD policies simply
+never have two directions to resolve. `keyboard-remote-emulation` sets it as well, so a desktop
+keyboard reproduces the remote's real feel (before M3-02b it used `lastWins`, which let the second
+arrow take over — the hardware does not).
+
 ## Release debounce (`remote.createReleaseDebouncer`)
 
-Feat §4 rule 3: some TV remotes send fake `keyup`/`keydown` pairs while a key is held. With a
+Feat §4 rule 3: some TV remotes send fake `keyup`/`keydown` pairs while a key is held. **The
+M7's remote does not** (M3-02b: 0 bounces in 338 measured repeats), so every shipped profile has
+`releaseDebounceTicks: 0` and the mechanism stays for other sets and for the player's DEBOUNCE
+option. With a
 window of *N* ticks, a `keyup` that arrives between polls *k* and *k*+1 keeps the key held
 for polls *k*+1 … *k*+*N* and releases it on poll *k*+*N*+1. A `keydown` for the same key
 inside the window **resumes** it: no new `pressed` edge, no new tap latch, and the key keeps
 its original press order (so a fake pair never makes an arrow "most recent" under `lastWins`).
 
 ```text
- tick         k        k+1      k+2      k+3            (N = 2, tizen-remote-safe)
+ tick         k        k+1      k+2      k+3            (N = 2 — a set that needs it)
  events   ↓down ... ↑up   ↓down                          fake pair ~20 ms apart
  held         ██████████████████████████████████████    continuous — no stutter, one press
  ────────────────────────────────────────────────────
@@ -460,7 +501,8 @@ keys, a key the device cannot hold). The whole feature — tokens, statuses, the
 | Boot error `no loader for content kind "input-profiles"` | Should not happen any more (the shell has a default owner). If it does, a custom `loadGameContent` call bypassed `DEFAULT_CONTENT_OWNERS` |
 | `?profile=foo` does nothing | Unknown id, or a gamepad profile (the key source only takes `keyboard` / `remote`). The console shows the `Shmup Cup: no keyboard or remote input profile` warning; the default is used |
 | A key does nothing in menus but works in the game | It is bound only in the `game` table. Keys of the other context are known (`0`) and prevented, but act only where bound |
-| Releases feel late with a remote profile | Expected: the release debounce delays every release by `releaseDebounceTicks` ticks (2 = 33 ms). Use `?debounce=0` to compare; the probe decides the final value |
+| Releases feel late with a remote profile | The release debounce delays every release by `releaseDebounceTicks` ticks (2 = 33 ms). The shipped profiles use 0 since M3-02b; check the player's DEBOUNCE option and `?debounce=` |
+| A second arrow or OK does nothing while an arrow is held | Expected on a `singleKey` profile (the real remote behaves this way): let the first key go first |
 | Diagonals impossible on the keyboard | `keyboard-remote-emulation` is active (the URL, or KEYBOARD AS REMOTE picked in OPTIONS → CONTROLS and saved) — `lastWins` keeps one arrow |
 | Holding a key through a menu switch "loses" it | By design: a held key keeps only the actions common to both tables until released. Release and press again |
 | A remote key never arrives on the TV | It must be in the active profile's `register` list (and supported by that remote model); Play/Pause and Ch± are registered by default, the colour keys only without a profile |
@@ -494,5 +536,6 @@ keys, a key the device cannot hold). The whole feature — tokens, statuses, the
   policy and debounce (DEBOUNCE — the advanced tuning of the remote), the rebinding capture in
   `WebInput`, the input test; `rebind` → implemented
   ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md)).
-- **On hardware** — run the input probe (plan §8.2) and set `releaseDebounceTicks` /
+- **On hardware** — the probe was run on 2026-09-15 (see the section above); re-run it (plan §8.2)
+  after a firmware change and set `releaseDebounceTicks` /
   `diagonals` / `register` from its verdicts.

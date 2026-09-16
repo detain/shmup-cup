@@ -227,6 +227,14 @@ exists — boot renders **before** the web's first gesture creates the `AudioCon
 `toAudioBuffer(context, sound)` copies them into a mono `AudioBuffer` of their own rate once,
 then drops the array (one copy in memory; the context resamples on playback).
 
+**Measured latency on the target hardware (M3-02b).** The input probe read the M7 monitors'
+`AudioContext` on 2026-09-15: 44,100 Hz with a `baseLatency` of **0.05 s** — three 60 Hz frames
+before a sound the game starts reaches the speakers, on top of whatever the panel adds. That is
+the platform's floor with `latencyHint: 'interactive'` (Chromium 69 offers no shorter hint that
+Tizen honours), so the engine keeps the hint and nothing changed here; a cue that must land on a
+frame has to be started early, not asked for late. The same run confirmed **AudioWorklet** and
+**WebAssembly** are available, which is what M3-03's libopenmpt tracker-music benchmark needs.
+
 **The OGG path (D22).** A `file` is fetched with `loadArrayBuffer` (XHR, `responseType
 'arraybuffer'`, status 0 accepted for `file://` — D25) and decoded by `decodeAudioFile` through
 `new OfflineAudioContext(2, 1, 32000)` (callback form, the only one every engine has): the buffer

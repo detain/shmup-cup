@@ -73,6 +73,7 @@ describe('playtest: the boss rush with the 4-way bot (M3-01)', () => {
     expect(watch.fought).toEqual(RUSH);
     expect(watch.killed).toEqual(RUSH);
     expect(run.diagonalTicks).toBe(0);
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
   }, 60_000);
 
   it('records a run without god mode that replays to the same deaths and final hash', () => {

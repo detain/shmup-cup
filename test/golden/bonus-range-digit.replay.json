@@ -67,7 +67,7 @@
   "ticks": 4367,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgIAkQPAgIACAQDRB4KACAECDwAlgYAEAQEHACOBgAQBAQcAaoGABAEBBwAGgYAEAQEHACSBgAQBAQcAf4GABAEBBwAFgYAEAQEHAAWBgAQBAQcArweCgAgBAicA9Qs=",
+    "ACiCgAgBAgIAkwPAgIACAUAJAMYHgoAIAQIPACWBgAQBAQcAI4GABAEBBwBqgYAEAQEHAAaBgAQBAQcAJIGABAEBBwB/gYAEAQEHAAWBgAQBAQcABYGABAEBBwCvB4KACAECJgC9CoKACAEAuAE=",
     "AI8i"
   ],
   "hashes": [
@@ -75,11 +75,11 @@
     2681509914,
     3269786249,
     2310628451,
-    2514168582,
-    193139214,
-    444581452
+    1028724101,
+    2749492539,
+    3744406559
   ],
-  "finalHash": 2924833873,
+  "finalHash": 1417546368,
   "description": "BONUS RANGE with god mode and no power-ups (M2-10): the turrets survive, the score shows a thousands 0 at the digit window — that entrance opens",
   "expected": {
     "status": "stageClear",

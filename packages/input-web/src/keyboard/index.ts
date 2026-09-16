@@ -16,8 +16,9 @@
  * The active input profile (`rebind`) tunes it: {@link KeyboardSource.setBindings} swaps the
  * binding table (profile or `game`/`menu` context change — a key held across the switch keeps
  * only the actions it has in both tables, so no action appears without a press), and
- * {@link KeyboardSource.setTuning} sets the release debounce, the diagonal policy and SOCD
- * (`remote`). The debounce ages once per poll ({@link KeyboardSource.advance}); the press
+ * {@link KeyboardSource.setTuning} sets the release debounce, the diagonal policy, SOCD and the
+ * **single-key** model (`remote`: while a key is down, a `keydown` of a different key is dropped —
+ * the Samsung remote delivers one key at a time, M3-02b). The debounce ages once per poll ({@link KeyboardSource.advance}); the press
  * order the policies need comes from the event order.
  *
  * **Implements.** shmup_feat.md §4 input requirements (keyboard: `e.code`, ignore
@@ -224,6 +225,19 @@ export function createKeyboardSource(
   };
 
   /**
+   * Whether any tracked key is physically down (a pending release does not count — its key is
+   * already up, so the hardware would deliver the next one).
+   *
+   * @returns `true` while a key is held down.
+   */
+  const anyKeyDown = (): boolean => {
+    for (let i = 0; i < MAX_TRACKED_KEYS; i++) {
+      if (debounce.isHeld(i) && !debounce.isReleasing(i)) return true;
+    }
+    return false;
+  };
+
+  /**
    * Current held mask with the direction policies applied.
    *
    * @returns Held actions.
@@ -284,6 +298,10 @@ export function createKeyboardSource(
         return;
       }
       if (event.repeat) return;
+      // Single-key devices (the Samsung remote — M3-02b finding 1): while any key is down the
+      // hardware never delivers a second key's keydown. Drop it, so the emulation and the
+      // playtest bot's model behave like the real remote.
+      if (currentTuning.singleKey && anyKeyDown()) return;
       const free = freeSlot();
       if (free < 0) return;
       slotCode[free] = event.code;

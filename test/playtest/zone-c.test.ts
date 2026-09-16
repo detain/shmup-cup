@@ -37,6 +37,7 @@ describe('playtest: zone C with the 4-way bot (M2-11)', () => {
     expect([...phases].sort()).toEqual([0, 1, 2]);
     // A remote player: never two directions at once, parked at x ≈ 64.
     expect(run.diagonalTicks).toBe(0);
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
     expect(run.shipX.min).toBeGreaterThan(BOT_X - 4);
     expect(run.shipX.max).toBeLessThan(BOT_X + 4);
     // The 4-way design rules on every tick of the zone and the boss fight.
@@ -57,6 +58,7 @@ describe('playtest: zone C with the 4-way bot (M2-11)', () => {
     console.info('[playtest] ' + describeRun(run) + '\n[playtest] deaths: ' + deaths);
     expect(['stageClear', 'gameOver']).toContain(run.status);
     expect(run.diagonalTicks).toBe(0);
+    expect(run.remoteViolations, run.remoteViolation).toBe(0);
     const replay = replayStage('zone-c', run.inputs, {});
     expect(replay.deathTicks).toEqual(run.deaths.map((d) => d.tick));
     expect(replay.status).toBe(run.status);

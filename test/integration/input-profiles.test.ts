@@ -157,19 +157,17 @@ describe('integration: a remote session under tizen-remote-safe', () => {
     const press = (type: 'keydown' | 'keyup', keyCode: number): void => {
       keys.dispatchEvent(Object.assign(new Event(type), { code: '', keyCode, repeat: false }));
     };
-    // Right held from frame 2 to 40, with a fake keyup/keydown pair every 6 frames (the fake
-    // keydown one frame after the keyup); OK tapped at frame 20.
+    // Right held from frame 2 to 40 through the remote's flagless auto-repeats (a plain `keydown`
+    // of a key that is already down, the first ~21 ticks in and then every ~6.5 — M3-02b finding
+    // 2); a tap of OK at frame 44, once the arrow is up (the remote delivers one key at a time).
     const script = new Map<number, () => void>();
     script.set(2, () => press('keydown', 39));
-    for (let frame = 8; frame < 40; frame += 6) {
-      script.set(frame, () => press('keyup', 39));
-      script.set(frame + 1, () => press('keydown', 39));
-    }
-    script.set(20, () => {
+    for (let frame = 23; frame < 40; frame += 7) script.set(frame, () => press('keydown', 39));
+    script.set(40, () => press('keyup', 39));
+    script.set(44, () => {
       press('keydown', 13);
       press('keyup', 13);
     });
-    script.set(40, () => press('keyup', 39));
     const game = createGame(platform);
     game.frame(0);
     for (let frame = 1; frame <= 50; frame++) {

@@ -109,7 +109,9 @@ describe('input-web/web-input profile application', () => {
     input.keyboard.handleEvent(key('keydown', 'ArrowRight', RIGHT));
     input.keyboard.handleEvent(key('keydown', 'KeyZ', 90)); // Shot — unknown to the emulation
     expect(p1(input).held).toBe(Action.Right | Action.Shot);
-    input.setProfile(profile('keyboard-remote-emulation'));
+    // M3-02b: the emulation no longer debounces, so give this copy the 2-tick window the test
+    // exercises (the mechanics survive the retuning of the shipped profile).
+    input.setProfile(profile('keyboard-remote-emulation', { releaseDebounceTicks: 2 }));
     const after = p1(input);
     expect(after.held).toBe(Action.Right);
     expect(after.pressed).toBe(0);
@@ -131,19 +133,19 @@ describe('input-web/web-input profile application', () => {
   });
 
   it('a profile with a shorter debounce releases pending keys at once', () => {
-    const input = withProfile(profile('tizen-remote-safe'));
+    const input = withProfile(profile('tizen-remote-safe', { releaseDebounceTicks: 2 }));
     input.keyboard.handleEvent(key('keydown', '', RIGHT));
     p1(input);
     input.keyboard.handleEvent(key('keyup', '', RIGHT));
     expect(p1(input).held).toBe(Action.Right); // pending (window 2)
-    input.setProfile(profile('tizen-remote-diagonal')); // window 0
+    input.setProfile(profile('tizen-remote-safe')); // the shipped window: 0 (M3-02b)
     const after = p1(input);
     expect(after.held).toBe(0);
     expect(after.released).toBe(Action.Right);
   });
 
   it('a context switch during a pending release keeps the arrow until the window ends', () => {
-    const input = withProfile(profile('tizen-remote-safe'));
+    const input = withProfile(profile('tizen-remote-safe', { releaseDebounceTicks: 2 }));
     input.keyboard.handleEvent(key('keydown', '', UP));
     p1(input);
     input.keyboard.handleEvent(key('keyup', '', UP));

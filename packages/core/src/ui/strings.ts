@@ -163,7 +163,7 @@ const STATIC_UI_TEXT = {
   actionBack: 'BACK',
   // The input test (M2-16).
   inputTestTitle: 'INPUT TEST',
-  inputTestHint: 'HOLD PAUSE TO EXIT',
+  inputTestHint: 'PAUSE X3 OR HOLD TO EXIT',
   inputTestDevice: 'DEVICE',
   // The stage clear and the zone tally.
   stageClear: 'STAGE CLEAR',

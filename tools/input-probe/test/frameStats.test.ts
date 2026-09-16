@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { FrameStats, HITCH_MS, PAUSE_MS, RunningStats, chooseEventTime, percentileSorted } from '../src/frameStats';
+import { FRAME_BUCKET_EDGES_MS, FrameStats, frameBucket, HITCH_MS, PAUSE_MS, RunningStats, chooseEventTime, percentileSorted } from '../src/frameStats';
 
 describe('FrameStats', () => {
   it('empty summary has nulls and zero counters', () => {
@@ -22,6 +22,7 @@ describe('FrameStats', () => {
       worstMs: 0,
       pauses: 0,
       frames: 0,
+      histogram: [0, 0, 0, 0, 0, 0, 0, 0, 0],
     });
   });
 
@@ -141,14 +142,53 @@ describe('RunningStats', () => {
   });
 });
 
+describe('FrameStats histogram (M3-02b)', () => {
+  it('counts the stored deltas in the raw rAF-delta buckets', () => {
+    const f = new FrameStats(16);
+    // A 60 Hz panel with the M7's jitter: short and long deltas paired, one real drop.
+    for (const d of [16.7, 16.6, 12.1, 21.3, 16.7, 26.0, 33.4, 60.0]) f.push(d);
+    const h = f.summary().histogram;
+    expect(h).toHaveLength(FRAME_BUCKET_EDGES_MS.length + 1);
+    expect(h.reduce((sum, n) => sum + n, 0)).toBe(8);
+    expect(frameBucket(16.7)).toBe(2);
+    expect(frameBucket(33.4)).toBe(7);
+    expect(frameBucket(60)).toBe(FRAME_BUCKET_EDGES_MS.length);
+    expect(h[2]).toBe(3); // 16.7, 16.6, 16.7
+    expect(h[7]).toBe(1); // 33.4 — a really dropped frame
+    expect(h[FRAME_BUCKET_EDGES_MS.length]).toBe(1); // 60 ms
+  });
+
+  it('leaves pauses out (they never enter the ring)', () => {
+    const f = new FrameStats(8);
+    f.push(16.7);
+    f.push(5000); // a pause: counted, not stored
+    const s = f.summary();
+    expect(s.pauses).toBe(1);
+    expect(s.histogram.reduce((sum, n) => sum + n, 0)).toBe(1);
+  });
+});
+
 describe('chooseEventTime', () => {
-  it('uses a plausible high-resolution timeStamp and reports the dispatch delay', () => {
-    expect(chooseEventTime(990, 1000)).toEqual({ t: 990, delay: 10 });
+  // M3-02b: the handler clock is the only one the probe trusts (Tizen 5.5 advances
+  // `event.timeStamp` in whole seconds); `timeStamp` survives only as the dispatch-delay statistic.
+  it('always measures on the handler clock and reports the dispatch delay', () => {
+    expect(chooseEventTime(990, 1000)).toEqual({ t: 1000, delay: 10 });
     expect(chooseEventTime(1000, 1000)).toEqual({ t: 1000, delay: 0 });
   });
 
   it('tolerates a timeStamp slightly ahead of now (≤ 5 ms, clock jitter)', () => {
-    expect(chooseEventTime(1005, 1000)).toEqual({ t: 1005, delay: -5 });
+    expect(chooseEventTime(1005, 1000)).toEqual({ t: 1000, delay: -5 });
+  });
+
+  it('keeps handler time and drops the delay for a whole-second Tizen 5.5 clock', () => {
+    // Tizen 5.5 reports timeStamps that only advance in whole seconds: consecutive events look
+    // 0 or 1000 ms apart however fast they really were.
+    const times = [4000, 4000, 4000, 5000];
+    const handler = [4210.4, 4262.1, 4333.8, 5040.2];
+    const chosen = times.map((stamp, i) => chooseEventTime(stamp, handler[i] as number));
+    expect(chosen.map((c) => c.t)).toEqual(handler);
+    // The delays are the huge, wildly varying values that give the coarse clock away.
+    expect(chosen.map((c) => Math.round(c.delay))).toEqual([210, 262, 334, 40]);
   });
 
   it.each([

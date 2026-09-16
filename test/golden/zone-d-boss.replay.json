@@ -64,22 +64,22 @@
       "blackHole": false
     }
   },
-  "ticks": 1301,
+  "ticks": 1531,
   "hashInterval": 600,
   "inputs": [
-    "ACiCgAgBAgEAiQaBgAQBAQYAkwGCgAgBAgYAgwGCgAgBAgUAuAE=",
-    "AJUK"
+    "ACiCgAgBAgEAjQaBgAQBAQYAyAGBgAQBAQUAeIKACAECBQB4goAIAQIGAPIB",
+    "APsL"
   ],
   "hashes": [
     3214544973,
-    3455205644
+    3288142260
   ],
-  "finalHash": 3317019489,
+  "finalHash": 1872960839,
   "description": "the stage skip into the caves of MAGMA DEEP (M2-12 tests): CINDER BASTION with the full loadout under the Arcade penalty, its core shot through the turning shield arms",
   "expected": {
     "status": "stageClear",
-    "ticks": 1301,
-    "score": 40200,
+    "ticks": 1531,
+    "score": 41160,
     "lives": 4,
     "deathTicks": [],
     "bossDefeated": true

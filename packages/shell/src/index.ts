@@ -87,6 +87,8 @@ export {
 } from './error-screen/index.js';
 export {
   INTERPOLATION_MIN_HZ,
+  VSYNC_LOCK_MIN_HZ,
+  VSYNC_LOCK_MAX_HZ,
   REFRESH_SAMPLES,
   createRefreshMonitor,
   startFrameLoop,

@@ -24,7 +24,9 @@ import { createSaveStore, type SaveStore } from '../../src/save/index.js';
 import {
   ControlsItem,
   GameOptionsItem,
+  INPUT_TEST_EXIT_PRESSES,
   INPUT_TEST_EXIT_TICKS,
+  INPUT_TEST_EXIT_WINDOW_TICKS,
   OptionsItem,
   TitleItem,
   WeaponSelectItem,
@@ -725,7 +727,13 @@ describe('core/scenes input test (M2-16)', () => {
     const test = s.flow.inputTest;
     expect(s.game.inputContext).toBe('game');
     expect(s.uiTexts()).toEqual(
-      expect.arrayContaining(['INPUT TEST', 'HOLD PAUSE TO EXIT', 'SHOT', 'POWER-UP', 'PAUSE']),
+      expect.arrayContaining([
+        'INPUT TEST',
+        'PAUSE X3 OR HOLD TO EXIT',
+        'SHOT',
+        'POWER-UP',
+        'PAUSE',
+      ]),
     );
     s.hold(Action.Shot | Action.Up);
     expect(test.lit & (Action.Shot | Action.Up)).toBe(Action.Shot | Action.Up);
@@ -737,10 +745,44 @@ describe('core/scenes input test (M2-16)', () => {
     // Back / OK do nothing here (the gameplay table); a short Pause does not leave.
     s.press(Action.Pause);
     expect(s.ids[s.ids.length - 1]).toBe('inputTest');
+    s.hold(0, INPUT_TEST_EXIT_WINDOW_TICKS + 2); // the press window runs out
     s.hold(Action.Pause, INPUT_TEST_EXIT_TICKS - 2);
     expect(s.ids[s.ids.length - 1]).toBe('inputTest');
     s.hold(Action.Pause, 2);
     expect(s.ids).toEqual(['title', 'options', 'controls']);
     expect(s.game.inputContext).toBe('menu');
+  });
+
+  it('leaves on three Pause presses inside the window — the remote cannot hold Back (M3-02b)', () => {
+    const s = new Session();
+    s.openOptions();
+    s.openPage(OptionsItem.Controls);
+    s.focus(s.flow.controlsPage.menu, ControlsItem.InputTest);
+    s.press(Action.Confirm);
+    expect(s.ids[s.ids.length - 1]).toBe('inputTest');
+    // Back and Play/Pause arrive as a keydown + keyup together, so each is one tick of Pause.
+    for (let i = 0; i < INPUT_TEST_EXIT_PRESSES - 1; i++) {
+      s.press(Action.Pause);
+      s.hold(0, 4);
+      expect(s.ids[s.ids.length - 1], `press ${String(i + 1)}`).toBe('inputTest');
+    }
+    s.press(Action.Pause);
+    expect(s.ids).toEqual(['title', 'options', 'controls']);
+  });
+
+  it('forgets the presses once the window runs out', () => {
+    const s = new Session();
+    s.openOptions();
+    s.openPage(OptionsItem.Controls);
+    s.focus(s.flow.controlsPage.menu, ControlsItem.InputTest);
+    s.press(Action.Confirm);
+    const test = s.flow.inputTest;
+    s.press(Action.Pause);
+    s.press(Action.Pause);
+    expect(test.presses).toBe(2);
+    s.hold(0, INPUT_TEST_EXIT_WINDOW_TICKS + 2);
+    expect(test.presses).toBe(0);
+    s.press(Action.Pause);
+    expect(s.ids[s.ids.length - 1]).toBe('inputTest');
   });
 });

@@ -21,6 +21,9 @@ import {
   INPUT_PROFILE_STORAGE_KEY,
   KEY_PROFILE_DEVICES,
   REQUIRED_CONTEXT_ACTIONS,
+  RESERVED_BINDING_TOKENS,
+  SYSTEM_REMOTE_KEYS,
+  captureToken,
   chooseInputProfile,
   createInputProfileRegistry,
   loadInputProfileChoice,
@@ -128,11 +131,12 @@ describe('input-web/rebind the shipped profiles (content/input)', () => {
     return profile;
   };
 
-  it('validate without a single issue and contain the six planned profiles', () => {
+  it('validate without a single issue and contain the five planned profiles', () => {
     expect(issues).toEqual([]);
+    // M3-02b retired `tizen-remote-diagonal`: the remote cannot send diagonals at all, and the
+    // two TV profiles differed only in a debounce that is now 0 in both.
     expect(profiles.map((p) => p.id)).toEqual([
       'tizen-remote-safe',
-      'tizen-remote-diagonal',
       'keyboard-default',
       'keyboard-remote-emulation',
       'keyboard-split', // M2-06
@@ -144,15 +148,57 @@ describe('input-web/rebind the shipped profiles (content/input)', () => {
     expect(byId(DEFAULT_GAMEPAD_PROFILE_ID).device).toBe('gamepad');
   });
 
-  it('follow decision D14: the safe remote debounces 2 ticks, combines, registers Play/Pause and Ch±', () => {
+  it('follow the 2026-09-15 measurements: no debounce, one key at a time, Guide / Extra registered', () => {
     const safe = byId('tizen-remote-safe');
-    expect(safe).toMatchObject({ device: 'remote', releaseDebounceTicks: 2, diagonals: 'combine' });
-    expect(safe.register).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown']);
-    expect(byId('tizen-remote-diagonal')).toMatchObject({ releaseDebounceTicks: 0 });
-    expect(byId('keyboard-remote-emulation')).toMatchObject({
-      diagonals: 'lastWins',
-      socd: 'lastWins',
+    // M3-02b: the remote sends no fake keyup/keydown pairs, so the debounce of decision D14 is 0.
+    expect(safe).toMatchObject({
+      device: 'remote',
+      releaseDebounceTicks: 0,
+      diagonals: 'combine',
+      singleKey: true,
     });
+    expect(safe.register).toEqual(['MediaPlayPause', 'ChannelUp', 'ChannelDown', 'Guide', 'Extra']);
+    expect(profiles.map((p) => p.id)).not.toContain('tizen-remote-diagonal');
+    // The keyboard emulation models the single-key remote instead of a `lastWins` D-pad ring.
+    expect(byId('keyboard-remote-emulation')).toMatchObject({
+      singleKey: true,
+      releaseDebounceTicks: 0,
+    });
+    for (const id of ['keyboard-default', 'keyboard-split', 'gamepad-standard']) {
+      expect(byId(id).singleKey, id).toBe(false);
+    }
+  });
+
+  it('lets REBIND capture Guide and Extra, and never registers a volume key (M3-02b)', () => {
+    const remote = byId('tizen-remote-safe');
+    // Registered, so the keys reach the page at all …
+    for (const name of ['Guide', 'Extra']) expect(remote.register).toContain(name);
+    // … nothing binds them by default …
+    for (const keyCode of ['458', '10253']) {
+      expect(remote.context.game.byKeyCode[keyCode]).toBeUndefined();
+      expect(remote.context.menu.byKeyCode[keyCode]).toBeUndefined();
+    }
+    // … and the capture names them the way the profile binds remote keys.
+    for (const keyCode of [458, 10253]) {
+      const token = captureToken(remote, { code: '', keyCode, button: -1 });
+      expect(token).toBe('key:' + String(keyCode));
+      expect(RESERVED_BINDING_TOKENS).not.toContain(token);
+    }
+    // The volume keys are registrable on this hardware but must never be registered.
+    for (const name of ['VolumeUp', 'VolumeDown', 'VolumeMute']) {
+      expect(SYSTEM_REMOTE_KEYS).toContain(name);
+      expect(remote.register).not.toContain(name);
+    }
+    const entry = remoteEntry();
+    entry.register = ['VolumeUp'];
+    const { profiles: rejected, issues: problems } = parseInputProfiles(file(entry));
+    expect(rejected).toEqual([]);
+    expect(problems).toEqual([
+      {
+        path: 'profiles[0].register[0]',
+        message: '"VolumeUp" is a system key and must never be registered',
+      },
+    ]);
   });
 
   it('resolve every action they name, in both contexts', () => {
@@ -401,7 +447,7 @@ describe('input-web/rebind registry, choice, overrides, persistence', () => {
     expect(registry.profiles).toEqual([]);
     const load = registry.load; // passed unbound as a content owner
     expect(load([shipped])).toEqual([]);
-    expect(registry.profiles).toHaveLength(6);
+    expect(registry.profiles).toHaveLength(5);
     expect(registry.get('gamepad-standard')?.device).toBe('gamepad');
     expect(registry.get('nope')).toBeNull();
     expect(load([{ path: 'x.json', data: file() }])).toEqual([
@@ -430,16 +476,19 @@ describe('input-web/rebind registry, choice, overrides, persistence', () => {
   it('overrideInputTuning copies a profile with clamped tuning (never debouncing gamepads)', () => {
     const { profiles } = loadInputProfiles([shipped]);
     const safe = profiles[0];
-    const fast = overrideInputTuning(safe, { releaseDebounceTicks: 0, diagonals: 'lastWins' });
-    expect(fast).toMatchObject({ id: safe.id, releaseDebounceTicks: 0, diagonals: 'lastWins' });
+    const fast = overrideInputTuning(safe, { releaseDebounceTicks: 2, diagonals: 'lastWins' });
+    expect(fast).toMatchObject({ id: safe.id, releaseDebounceTicks: 2, diagonals: 'lastWins' });
     expect(fast.socd).toBe(safe.socd);
     expect(fast.tables).toBe(safe.tables);
-    expect(safe.releaseDebounceTicks).toBe(2);
+    expect(safe.releaseDebounceTicks).toBe(0);
     expect(overrideInputTuning(safe, { releaseDebounceTicks: 99 }).releaseDebounceTicks).toBe(10);
     expect(overrideInputTuning(safe, { releaseDebounceTicks: -1 }).releaseDebounceTicks).toBe(0);
-    expect(overrideInputTuning(safe, {}).releaseDebounceTicks).toBe(2);
+    expect(overrideInputTuning(safe, {}).releaseDebounceTicks).toBe(0);
+    // M3-02b: the single-key model travels with the profile and never applies to a pad.
+    expect(overrideInputTuning(safe, {}).singleKey).toBe(true);
     const pad = profiles.find((p) => p.device === 'gamepad') as InputProfile;
     expect(overrideInputTuning(pad, { releaseDebounceTicks: 3 }).releaseDebounceTicks).toBe(0);
+    expect(overrideInputTuning(pad, { singleKey: true }).singleKey).toBe(false);
   });
 
   it('saves and loads the profile choice through Platform.storage', async () => {

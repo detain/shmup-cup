@@ -397,17 +397,19 @@ describe('web/boot bootWebApp wiring', () => {
     win.location.search = '?profile=keyboard-remote-emulation&debounce=0';
     const { app } = await boot();
     expect(app.input.keyProfile?.id).toBe('keyboard-remote-emulation');
+    // M3-02b: the emulation models the measured single-key remote instead of a `lastWins` ring.
     expect(app.input.keyboard.tuning).toMatchObject({
       releaseDebounceTicks: 0,
-      diagonals: 'lastWins',
-      socd: 'lastWins',
+      diagonals: 'combine',
+      socd: 'neutral',
+      singleKey: true,
     });
     win.frame(0);
     win.key('keydown', 'ArrowRight', 39);
     win.key('keydown', 'ArrowUp', 38);
     win.frame(STEP);
     const p1 = app.game.state.input?.players[0];
-    expect(p1?.held).toBe(Action.Up); // the second arrow replaces the first, like the remote
+    expect(p1?.held).toBe(Action.Right); // the second arrow is never delivered, like the remote
     expect(p1?.device).toBe('remote');
   });
 
@@ -780,7 +782,7 @@ describe('web/boot input profiles (edge cases)', () => {
   it('?profile=tizen-remote-safe lets a desktop keyboard act as the remote (keyCode fallback)', async () => {
     win.location.search = '?scene=flight&profile=tizen-remote-safe';
     const { app } = await boot();
-    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(2);
+    expect(app.input.keyboard.tuning.releaseDebounceTicks).toBe(0); // M3-02b: no fake pairs
     win.frame(0);
     win.key('keydown', 'Enter', 13); // desktop Enter → keyCode 13 = OK = PowerUp in the game
     win.frame(STEP);

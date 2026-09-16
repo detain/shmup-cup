@@ -445,6 +445,8 @@ export async function bootTizenApp(
         audio,
         storage: safeLocalStorage(win),
         visibility: win.document,
+        // M3-02b: Home is only an overlay on the M7 — it fires `blur`, never `visibilitychange`.
+        focus: win,
         displaySize: () => ({ width: win.innerWidth, height: win.innerHeight }),
         gamepad: hasGamepadApi,
         webgl2: renderer.webGLVersion === 2,

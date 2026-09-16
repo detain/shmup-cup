@@ -11,7 +11,8 @@
  * - **Back (10009)** — {@link watchBackKey} reports presses to the host; the scene stack
  *   decides (pause in game, back in menus, exit confirmation on the title — shmup_feat.md
  *   §23). The key → `Action.Back` mapping itself lives in `@shmup/input-web`.
- * - **Lifecycle** — `visibilitychange` (Home / multitasking): hidden → suspend
+ * - **Lifecycle** — `visibilitychange` *and* window `blur` / `focus` (M3-02b — Home is only an
+ *   overlay on the M7): hidden or unfocused → suspend
  *   (game frozen, audio suspended), visible → resume. JS is frozen while hidden, so the
  *   core never trusts the wall clock across a resume.
  * - **Exit** — `tizen.application.getCurrentApplication().exit()`.
@@ -258,24 +259,63 @@ export interface VisibilitySource {
   addEventListener(type: 'visibilitychange', listener: () => void): void;
 }
 
+/** A window-like source of `blur` / `focus` (M3-02b: Home on the M7 fires only these). */
+export interface FocusSource {
+  /**
+   * Registers a focus-change listener (never removed — it lives as long as the app).
+   *
+   * @param type - `'blur'` or `'focus'`.
+   * @param listener - Called when the window loses or regains focus.
+   */
+  addEventListener(type: 'blur' | 'focus', listener: () => void): void;
+}
+
 /**
- * Lifecycle from `visibilitychange` (Tizen multitasking: Home, source switch, …).
+ * Lifecycle from `visibilitychange` **and** the window's focus (Tizen multitasking: source switch,
+ * Home — M3-02b).
  *
  * @remarks
- * `'hidden'` fires the suspend callbacks, any other state the resume callbacks, in
- * registration order. JS is frozen while the app is hidden, so resume handlers must
- * not assume any time passed "normally".
+ * The 2026-09-15 input probe found that Home and a pad's PS button open an **overlay** on the M7
+ * monitors: the app keeps running and only `blur` / `focus` fire, never `visibilitychange`
+ * (`docs/dev/input-probe-results.md` finding 7). Both reasons to be away are tracked; the suspend
+ * callbacks run on the edge into "away" and the resume callbacks on the edge back, in registration
+ * order, so a `blur` + `hidden` pair suspends once and the game resumes only when the app is
+ * visible *and* focused. JS is frozen while the app is really hidden, so resume handlers must not
+ * assume any time passed "normally".
  *
  * @param source - Normally `document`.
+ * @param focus - Normally `window`; `null` for visibility only.
  * @returns Suspend/resume registration.
  */
-function createTvLifecycle(source: VisibilitySource): PlatformLifecycle {
+function createTvLifecycle(source: VisibilitySource, focus: FocusSource | null): PlatformLifecycle {
   const suspend: Array<() => void> = [];
   const resume: Array<() => void> = [];
-  source.addEventListener('visibilitychange', () => {
-    const list = source.visibilityState === 'hidden' ? suspend : resume;
+  // Two independent reasons to be away; the app is active only when neither holds.
+  const away = { hidden: source.visibilityState === 'hidden', blurred: false };
+  let suspended = away.hidden;
+
+  /** Fires the suspend or resume callbacks when the combined state changed. */
+  const settle = (): void => {
+    const next = away.hidden || away.blurred;
+    if (next === suspended) return;
+    suspended = next;
+    const list = next ? suspend : resume;
     for (const callback of list) callback();
+  };
+  source.addEventListener('visibilitychange', () => {
+    away.hidden = source.visibilityState === 'hidden';
+    settle();
   });
+  if (focus !== null) {
+    focus.addEventListener('blur', () => {
+      away.blurred = true;
+      settle();
+    });
+    focus.addEventListener('focus', () => {
+      away.blurred = false;
+      settle();
+    });
+  }
   return {
     onSuspend(callback) {
       suspend.push(callback);
@@ -298,6 +338,12 @@ export interface TizenPlatformOptions {
   readonly storage: StorageLike | null;
   /** Visibility source (`document`). */
   readonly visibility: VisibilitySource;
+  /**
+   * Focus source (`window`) — M3-02b: Home and a pad's PS button only fire `blur` / `focus` on the
+   * M7 monitors, so the game must pause and suspend audio on those too. Omitted or `null`:
+   * visibility only.
+   */
+  readonly focus?: FocusSource | null;
   /**
    * Reads the current display size (1920×1080 CSS px on the M7 monitors).
    *
@@ -354,7 +400,7 @@ export function createTizenPlatform(options: TizenPlatformOptions): Platform {
     input: options.input,
     storage: createTvStorage(options.storage),
     audio: options.audio,
-    lifecycle: createTvLifecycle(options.visibility),
+    lifecycle: createTvLifecycle(options.visibility, options.focus ?? null),
     exit:
       application === undefined
         ? null
