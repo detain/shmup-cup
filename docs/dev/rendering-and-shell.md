@@ -30,6 +30,8 @@ only), §4.10 (no UI framework); plan §3.3 (frame), §3.4 (render contract), §
 owners) and decisions **D20** (HUD bars outside the playfield), **D25** (no `fetch` on the
 TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser host).
 
+> **Thinking of changing the internal resolution?** The frame is 384×216 upscaled by whole numbers (decision D19). What that costs at 768×432, 960×540 or 1080p — fill rate, power-of-two render-target memory, which findings change, and why 960×540 is not an integer multiple — is in [`render-performance-review.md` §7](render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-).
+
 ## The picture at a glance
 
 ```text

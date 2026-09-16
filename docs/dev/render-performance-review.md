@@ -333,3 +333,83 @@ If the owner wants this as work rather than a memo, it splits cleanly into three
 - **WebGL2 on the M7's driver** is available but untried by us. I have no basis to predict whether it is faster, slower or buggier under Chromium 69.
 - **`ParticleContainer`'s real cost/benefit** in v8 with `uvs: true` (which forces per‑frame UV re‑upload for every live particle) — I read the container but not the full `ParticleContainerPipe` upload path. Treat F1(b) as the least‑certain recommendation here.
 - I did **not** run any test, benchmark or build.
+---
+
+## 7. If the internal resolution changes later (960×540, 1080p, …)
+
+The owner's intention after the plan finishes is to try a **960×540** build, and — if that holds 60 fps — perhaps a
+**1920×1080** one. This section records what changes, so the findings above can be read against those targets instead
+of re-derived. Nothing here is scheduled work; it is the "if we do this, then also do that" note.
+
+### 7.1 First, decide which of two very different projects it is
+
+| | **(A) Same world, higher raster** | **(B) Bigger playfield / redrawn art** |
+|---|---|---|
+| What changes | Only the resolution the frame is *rendered* at. The simulation still thinks in 384×216. | `PLAYFIELD_W` / `PLAYFIELD_H` themselves — the world gets wider, or the art gets denser. |
+| Simulation | Untouched. Deterministic hashes, goldens, demos, balance all survive. | **Invalidated.** `PLAYFIELD_W = 384` / `PLAYFIELD_H = 200` (decision D20, `packages/core/src/config/index.ts:736`) are referenced ~160 times across 26 source files, and every `content/**/*.json` carries absolute world-pixel coordinates (camera keys, tilemaps, event positions). Every golden replay, attract demo, playtest budget and balance number is re-based. |
+| Art | Unchanged (existing sprites upscale as today). | Every sprite, tile and font redrawn or regenerated. |
+| Honest size | A render experiment. | A content project on the scale of M1+M2's stage work. |
+
+**(A) is the cheap experiment and the one to run first.** It buys real quality where it counts — the Mode-7 floor, the
+CRT scanlines and any rotation or scaling currently quantise to 216 rows, and those are exactly the things that look
+coarse. It buys *nothing* on sprite crispness, because the sprites are still 384×216 art.
+
+### 7.2 960×540 is not an integer multiple — prefer 768×432 as the first step
+
+384×216 scales by whole numbers to **768×432 (×2)**, **1152×648 (×3)**, **1536×864 (×4)** and **1920×1080 (×5)**.
+**960×540 is ×2.5**, which breaks the integer-scaling rule the whole look rests on (decision D19): existing art would
+be resampled at a half-pixel cadence and shimmer. 960×540 is a perfectly good *display* size (it maps ×2 to a 1080p
+panel), but as an *internal* resolution it only makes sense under (B), with art actually drawn for it.
+
+So: **768×432 for the first "does it still hold 60 fps" test**, 1920×1080 as the stretch target.
+
+### 7.3 Fill-rate and render-target memory — the numbers that decide it
+
+Fill scales with pixel count; Pixi pools every render target rounded **up to the next power of two on each axis**
+(finding F3), which is where the memory goes:
+
+| Internal | Pixels | Fill vs today | Frame RT (POT) | 5 targets (frame + 3 filters + CRT) |
+|---|---|---|---|---|
+| 384×216 (today) | 82,944 | ×1 | 512×256 = 0.5 MB | ~2.6 MB |
+| 768×432 | 331,776 | **×4** | 1024×512 = 2 MB | ~10 MB |
+| 960×540 | 518,400 | **×6.25** | 1024×1024 = 4 MB | ~21 MB |
+| 1920×1080 | 2,073,600 | **×25** | 2048×2048 = 16.8 MB | **~84 MB** |
+
+Against the **<100 MB** stage budget (`shmup_feat.md` §22), 1080p-internal spends most of it on render targets alone.
+**F3 stops being a tidy-up and becomes the gate**: `estimateStageMemory` must be correct *before* anyone trusts a
+1080p experiment, or the first thing it will do is silently blow the budget.
+
+### 7.4 What each finding does at higher resolution
+
+| Finding | At 768×432 / 960×540 | At 1920×1080 |
+|---|---|---|
+| **F1** scene-graph rebuild | Unchanged under (A) — it is CPU work over ~6,400 objects and does not care about pixels. Under (B) it gets **worse**: a wider playfield means more visible tiles, enemies and bullets. | Same. Under (B), fix F1 first. |
+| **F2** CRT as a filter | Worse in proportion to fill; still worth folding into the blit. | The two-pass structure itself becomes the problem: at 1:1 the game renders 2 Mpx into a render target and then blits 2 Mpx to the canvas for no scaling at all. **M3-02d's fix is not enough here — pass 2 should collapse to a direct render when scale is 1**, keeping the render target only when an effect actually needs it. |
+| **F3** memory estimator | Must be fixed first (see §7.3). | Decisive. |
+| **F4** shader compile hitch | Unchanged (one-off, resolution-independent). | Unchanged. |
+| **F5** Pixi allocation on first draw | Unchanged — driven by sprite/quad counts, not pixels. | Unchanged. |
+| **F7** "the 64 px filter margin is free" | **Re-measure.** That verdict rests on pass-1's viewport being 384×216; the margin is clipped to the viewport, so its absolute cost scales with it. | Re-measure; likely no longer negligible. |
+| **F8** WebGL1 default | Worth re-running the A/B: more fill and bigger targets is exactly where a WebGL2 path might diverge. | Same, more so. |
+| **F9** `Texture.WHITE` | Unchanged (a binding, not a fill, concern). | Unchanged. |
+| **F10** render bench | The instrument for the whole experiment — see §7.5. | Same. |
+
+### 7.5 Make M3-02c's bench take the resolution as a parameter
+
+The single cheapest thing that makes this experiment possible later is to build the knob **now**: the render benchmark
+added in **M3-02c** should accept the internal frame size as a parameter and report render-ms p95, draw calls and
+render-target bytes per resolution. Then "does 768×432 hold 60 fps?" is a bench run rather than a build-and-hope, and
+the on-device check is just the overlay's TPF counter (a 4–25× fill increase shows up as 2-tick frames the moment the
+GPU misses vsync).
+
+### 7.6 Hard limits to check before committing to (B)
+
+- **Atlas size.** One 1024×1024 page today (`assets/generated/atlas/main.json`), capped at
+  `ATLAS_PAGE_MAX_SIZE = 2048`. Art at ×2 needs 2048² — exactly the cap, single page still possible. At ×2.5 it needs
+  2560² and at ×5 about 5120²: **multiple pages**, which costs texture binds and batch breaks, and roughly 100 MB of
+  texture memory at ×5. Native 1080p art does not fit the Tizen budgets as they stand.
+- **`DIST_BUDGET`** is 8 MB for the whole widget and the atlas PNG lives inside it.
+- **Hard-coded frame constants** that would have to become parameters: `LAYER_EFFECT_ROWS = 216`
+  (`packages/render-pixi/src/effects/shaders.ts:53`) and the literal `384` in
+  `packages/render-pixi/src/debug/index.ts:837`. The viewport maths is already parameterised
+  (`computeIntegerViewport(displayW, displayH, baseWidth, baseHeight)`), so that part is ready.
+- **Launch time** (≤ 10 s, guarded by M2-18's boot check) and the **512 KB** `APP_JS_GZIP_BUDGET` both still apply.
