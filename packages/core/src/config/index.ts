@@ -1605,8 +1605,11 @@ export const RETIRED_INPUT_PROFILE_IDS: Readonly<Record<string, string>> = Objec
  * ```
  */
 export function migrateInputProfileId(id: string): string {
+  // Own keys only: a plain object literal also answers to `constructor` and friends, and
+  // `constructor` passes INPUT_PROFILE_ID_PATTERN (`Object.hasOwn` is banned for Chromium 69).
+  if (!Object.prototype.hasOwnProperty.call(RETIRED_INPUT_PROFILE_IDS, id)) return id;
   const next = RETIRED_INPUT_PROFILE_IDS[id];
-  return next === undefined ? id : next;
+  return typeof next === 'string' ? next : id;
 }
 
 /** One entry of the Options screen's CONTROLS selector: a keyboard / remote input profile. */

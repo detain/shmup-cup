@@ -1,15 +1,18 @@
 /**
  * Edge cases of the user options in `core/config` (plan M1-17): the `volumeGain` curve at every
  * level and outside the range, `resolveUserOptions` rounding, `-0`, the profile-id limits, input
- * shapes that are not plain objects, and the frozen, independent results.
+ * shapes that are not plain objects, the retired-id migration, and the frozen, independent
+ * results.
  *
- * Regression: a level in `(-0.5, 0]` resolved to `-0` (now 0).
+ * Regression: a level in `(-0.5, 0]` resolved to `-0` (now 0); `migrateInputProfileId` read
+ * through `Object.prototype`, so a save naming `constructor` resolved to a function.
  */
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_USER_OPTIONS,
   INPUT_PROFILE_ID_PATTERN,
   VOLUME_LEVELS,
+  migrateInputProfileId,
   resolveUserOptions,
   volumeGain,
 } from '../../src/config/index.js';
@@ -75,6 +78,31 @@ describe('core/config resolveUserOptions (edge)', () => {
       expect(resolveUserOptions({ input: { profileId: id } }).input.profileId).toBeNull();
     }
     expect(resolveUserOptions({ input: { profileId: 'x9-2' } }).input.profileId).toBe('x9-2');
+  });
+
+  it('migrates a retired profile id and leaves every other id alone', () => {
+    expect(migrateInputProfileId('tizen-remote-diagonal')).toBe('tizen-remote-safe');
+    expect(
+      resolveUserOptions({ input: { profileId: 'tizen-remote-diagonal' } }).input.profileId,
+    ).toBe('tizen-remote-safe');
+    expect(migrateInputProfileId('tizen-remote-safe')).toBe('tizen-remote-safe');
+    expect(migrateInputProfileId('x9-2')).toBe('x9-2');
+  });
+
+  it('does not migrate through Object.prototype', () => {
+    // Regression: RETIRED_INPUT_PROFILE_IDS is an object literal, and 'constructor' passes
+    // INPUT_PROFILE_ID_PATTERN, so an unguarded lookup returned the Object constructor.
+    for (const id of ['constructor', 'hasownproperty', 'tostring', 'valueof', 'proto']) {
+      expect(INPUT_PROFILE_ID_PATTERN.test(id), id).toBe(true);
+      expect(migrateInputProfileId(id), id).toBe(id);
+      const { profileId } = resolveUserOptions({ input: { profileId: id } }).input;
+      expect(typeof profileId, id).toBe('string');
+      expect(profileId, id).toBe(id);
+    }
+    // Keys that the pattern rejects outright still resolve to null, never to a prototype value.
+    for (const id of ['__proto__', 'toString', 'hasOwnProperty']) {
+      expect(resolveUserOptions({ input: { profileId: id } }).input.profileId, id).toBeNull();
+    }
   });
 
   it('reads groups that are not plain objects as missing', () => {
