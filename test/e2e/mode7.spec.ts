@@ -30,13 +30,21 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 
 /**
- * Most WebGL draw calls one frame of the dimension stage may take: the plain frame takes 2 (one
- * batch for the scene, the upscale quad) and since plan **M3-02d** the Mode-7 floor adds one draw
- * call and a batch break — it is a mesh on `BG_MID`, not a filter over a pooled render target
- * (the render review's **F6**) — with room for the stage's own layers on top. Kept at 12 so the
- * budget is the same number M2-08 set: the fold made the frame cheaper, never dearer.
+ * Most WebGL draw calls one frame of the dimension stage may take.
+ *
+ * Until plan **M3-02e** the plain frame took 2 (one batch for the whole scene, the upscale quad),
+ * the Mode-7 floor added one draw call and a batch break — it is a mesh on `BG_MID` since
+ * **M3-02d**, not a filter over a pooled render target (the render review's **F6**) — and the
+ * budget sat at 12 with the stage's own layers on top.
+ *
+ * **M3-02e raised it to 16, deliberately** (`shmup_feat.md` §22, which allows 20–50): the layers
+ * that toggle sprites every frame are now each their own Pixi render group, so one hidden bullet
+ * rebuilds that layer's instruction set instead of the whole ~6,400-object scene's (the review's
+ * **F1**). Every group is a batch boundary, so the scene costs about one draw call per group that
+ * holds something: this stage measures **7** where it measured 3, and the raster range's busiest
+ * frame 10 where it measured 7. 16 keeps the same ~5 calls of headroom the 12 had.
  */
-const DRAW_CALL_BUDGET = 12;
+const DRAW_CALL_BUDGET = 16;
 
 /** The first playfield row the dimension stage's floor covers (its `mode7.horizon`). */
 const FLOOR_TOP = 101;

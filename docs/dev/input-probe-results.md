@@ -225,13 +225,16 @@ be at or after `1cbbf42`, M3-02d — see above).
 
 `RT` is expected to read **0 KB** on these three rows whatever CRT is set to, and about **512 KB**
 on a stage with a layer effect. A reading of ~16,384 KB with CRT on means the bundle predates
-M3-02d.
+M3-02d. `REB` is expected to read **0**, or very near it, since **M3-02e**: a figure that tracks
+the frame count means the bundle predates it, or that something started toggling `visible` on a
+sprite outside the layer render groups. `DRAW` is about 7–10 on these rows since M3-02e (one batch
+boundary per render group), where it was 2–4.
 
 ### 11.2 The measurements — fill these in
 
 | # | What | Result |
 |---|---|---|
-| M1 | RENDER ms with the scene rebuild on vs. patched out (**F1**) | |
+| M1 | RENDER ms with the scene rebuild on vs. patched out (**F1**) — since **M3-02e** the shipped build never rebuilds the whole scene (`REB` should read ≈ 0); what is left to measure on the TV is how much Mali-G51 time that saved, by comparing this build's `RENDER` with the last one's over the same practice section | |
 | M2 | RENDER ms and RT with CRT off / light / full on the same section — after M3-02d all three should read the same, and RT should not move at all (**F2**) | |
 | M3 | Frame-graph spike entering the Mode-7 and raster stages — M3-02d's boot warm-up should have removed it (**F4**) | |
 | M4 | Frame-graph spike on the first very dense pattern of a fresh launch — likewise (**F5**) | |
@@ -257,18 +260,27 @@ pool is topped up after every step), **≥ 489 of 512 point items** (a screen cl
 pool on every tick that freed a slot; the ~20 missing are the items that reached the score during
 the tick that was rendered) and **≥ 489 of 512 particles**.
 
-Two columns per quantity: **before** is M3-02c's run, **after** is the same scenario once M3-02d
-folded the CRT and the Mode-7 floor into their draw passes. **The "after" column is the one to
-compare a TV reading with**; the "before" column is history, kept as the evidence the fold worked.
+One column per step: **M3-02c** is the first run, **M3-02d** the same scenario once that step
+folded the CRT and the Mode-7 floor into their draw passes, **M3-02e** once that step gave the
+high-churn layers their own render groups. **The M3-02e column is the one to compare a TV reading
+with**; the earlier ones are history, kept as the evidence each change did what it claimed.
 
-| Scenario (384×216 internal, the load above) | Draw calls before (M3-02c) | Draw calls after (**M3-02d**) | Pooled targets before (M3-02c) | Pooled targets after (**M3-02d**) | Structure rebuilds |
-|---|---|---|---|---|---|
-| CRT off | 4 | **4** (unchanged) | 0 KB | **0 KB** (unchanged) | 659 / 660 frames |
-| CRT light | 5 | **4** | 2,048 KB | **0 KB** | 659 / 660 |
-| CRT full | 5 | **4** | 2,048 KB | **0 KB** | 659 / 660 |
-| Layer effects (`raster-range`) | 7 | **7** (unchanged — F1 / F7, M3-02e's work) | 512 KB | **512 KB** (unchanged) | 655 / 660 |
-| Mode-7 floor (`dimension`) | 7 | **6** | 512 KB | **0 KB** | 655 / 660 |
-| Layer effects at **768×432** internal | 7 | **7** (unchanged) | 2,048 KB (+1,296 KB frame target) | **the same** | 655 / 660 |
+| Scenario (384×216 internal, the load above) | Draw calls M3-02c → M3-02d → **M3-02e** | Pooled targets M3-02c → **M3-02d / e** | Scene rebuilds M3-02c / d → **M3-02e** |
+|---|---|---|---|
+| CRT off | 4 → 4 → **9** | 0 KB → **0 KB** | 659 / 660 frames → **0 / 660** |
+| CRT light | 5 → 4 → **9** | 2,048 KB → **0 KB** | 659 / 660 → **0 / 660** |
+| CRT full | 5 → 4 → **9** | 2,048 KB → **0 KB** | 659 / 660 → **0 / 660** |
+| Layer effects (`raster-range`) | 7 → 7 → **10** | 512 KB → **512 KB** | 655 / 660 → **0 / 660** |
+| Mode-7 floor (`dimension`) | 7 → 6 → **9** | 512 KB → **0 KB** | 655 / 660 → **0 / 660** |
+| Layer effects at **768×432** internal | 7 → 7 → **10** | 2,048 KB (+1,296 KB frame target) → **the same** | 655 / 660 → **0 / 660** |
+
+The draw calls M3-02e adds are the render groups' batch boundaries, one per group that holds
+something — a deliberate trade against the whole-scene rebuild, well inside `shmup_feat.md` §22's
+20–50, and the reason the two e2e specs' `DRAW_CALL_BUDGET` went 12 → 16. The bench also reports
+`groupRebuilds`, the same flag counted over *every* render group rather than the scene's alone, so
+the last column cannot fall by the churn merely moving out of sight: it reads 659 before the step
+(one group, one rebuild a frame) and about 1,590 after (≈ 2.4 layer groups a frame, each a
+fraction of the scene).
 
 The p95 render time moved 2.4–3.2 ms → 2.5–3.3 ms between the two runs, which is SwiftShader
 noise on a shared machine, not a signal. What is comparable is CRT `full` against CRT `off` **in the same run**: **0.94× and 1.10×**
@@ -279,9 +291,15 @@ are the transferable result — on the TV, CRT `full` stopped costing a 16.8 MB 
 
 Four things it settles without the hardware:
 
-- **F1's mechanism is real, not just plausible.** Essentially *every* frame rebuilds the scene's
-  whole instruction set (655–659 of 660, reproduced run to run). How many milliseconds that is on a
-  Kant-SU2 is M1's job. **Unchanged by M3-02d** — it is M3-02e's work.
+- **F1's mechanism was real, not just plausible — and it is fixed.** Essentially *every* frame
+  rebuilt the scene's whole instruction set (655–659 of 660, reproduced run to run) until
+  **M3-02e** gave each high-churn layer its own render group; the same scenarios now rebuild the
+  scene on **none** of their 660 frames. The bench runs the worst-case frame both ways in one run
+  (`renderGroups: false` restores the old single-group scene), which is M1 done headlessly: under
+  SwiftShader the grouped scene reads **0.92–0.94×** the single-group p95 over three runs. That ratio is the least
+  transferable number on this page — software WebGL charges CPU time for the extra draw calls
+  while making the tree walk cheap on a desktop core, and the Kant-SU2 pays the opposite way
+  round — so M1 on the TV is still worth doing. The **counted** result is what transfers.
 - **F2 was right that `light` is not cheaper than `full`** — and after M3-02d neither is dearer than
   `off`: one draw call, no pooled target, whatever the setting.
 - **F3's power-of-two rounding is real.** A 384×216 filter pass pools a 512×256 target; the same

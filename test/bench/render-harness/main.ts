@@ -169,6 +169,7 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     atlas,
     countDrawCalls: true,
     countStructureRebuilds: true,
+    renderGroups: options.renderGroups !== false,
     // Twice the shipped default (`PARTICLE_CAPACITY` = 256): a worst case, and a gate stricter
     // than reality — see `load.ts`.
     particleCapacity: BENCH_PARTICLE_CAPACITY,
@@ -234,6 +235,7 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
       renderMaxMs: sorted.length === 0 ? 0 : sorted[sorted.length - 1],
       drawCalls: renderer.drawCalls,
       structureRebuilds: renderer.structureRebuilds,
+      groupRebuilds: renderer.groupRebuilds,
       renderTargetBytes: meter.bytes,
       heapDeltaBytes: heapBefore < 0 ? 0 : heapAfter - heapBefore,
       heapMeasured: heapBefore >= 0,

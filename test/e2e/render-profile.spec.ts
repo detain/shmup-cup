@@ -7,8 +7,12 @@
  *
  * - **`REB`** — `PixiRenderer.structureRebuilds`, read before pass 1 because Pixi clears the flag
  *   while rendering. If the read were in the wrong place the figure would sit at 0 for ever, and
- *   no fake would notice. It is also the review's **F1** measured rather than argued: Pixi v8
- *   rebuilds the whole instruction set on very nearly every frame of this game.
+ *   no fake would notice. Until **M3-02e** it was also the review's **F1** measured rather than
+ *   argued — Pixi v8 rebuilt the whole instruction set on very nearly every frame of this game.
+ *   Since M3-02e the high-churn layers are their own render groups, so what rises frame after
+ *   frame is `groupRebuilds` (a layer's instruction set) while `structureRebuilds` (the whole
+ *   scene's) barely moves. That pair is what this spec pins: the counters are alive *and* the
+ *   churn is confined.
  * - **`RT`** — `createRenderTargetMeter` hooked into Pixi's global `TexturePool`. On
  *   `raster-range` a layer effect pools a target for the 384×216 frame, and the review's **F3**
  *   says Pixi rounds that up to 512×256 RGBA8 (512 KB), not 324 KB.
@@ -27,6 +31,7 @@ interface ProfileWindow {
     readonly renderer: {
       readonly webGLVersion: number;
       readonly structureRebuilds: number;
+      readonly groupRebuilds: number;
       readonly layerEffects: { readonly attachedMask: number };
     };
     readonly stats: {
@@ -55,6 +60,8 @@ interface TelemetryWindow {
 interface Profile {
   /** `PixiRenderer.structureRebuilds`. */
   readonly rebuilds: number;
+  /** `PixiRenderer.groupRebuilds` — the same over every render group of the scene (M3-02e). */
+  readonly groupRebuilds: number;
   /** The overlay's mirror of it (what `REB` draws). */
   readonly statsRebuilds: number;
   /** The meter's total (what `RT` draws). */
@@ -84,6 +91,7 @@ async function profile(page: Page): Promise<Profile> {
     const api = (window as unknown as ProfileWindow).__shmupDebug;
     return {
       rebuilds: api.renderer.structureRebuilds,
+      groupRebuilds: api.renderer.groupRebuilds,
       statsRebuilds: api.stats.structureRebuilds,
       renderTargetBytes: api.stats.renderTargetBytes,
       webGLVersion: api.renderer.webGLVersion,
@@ -110,20 +118,19 @@ function collectErrors(page: Page): string[] {
 }
 
 test.describe('render profile (web test build, M3-02c)', () => {
-  test('counts the structure rebuilds Pixi really does, every frame', async ({ page }) => {
+  test('counts the rebuilds Pixi really does, and keeps them off the scene (M3-02e)', async ({
+    page,
+  }) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     const first = await profile(page);
     // Counting is on (dev / test build) and something was drawn.
     expect(first.rebuilds).toBeGreaterThanOrEqual(0);
+    expect(first.groupRebuilds).toBeGreaterThanOrEqual(first.rebuilds);
     expect(first.statsRebuilds).toBe(first.rebuilds);
     expect(first.drawCalls).toBeGreaterThan(0);
 
-    // The review's F1, measured: the count keeps rising as the scene changes, rather than staying
-    // put — which is what a counter reading `structureDidChange` *after* `renderer.render()` would
-    // report, because Pixi clears the flag while rendering. (How *often* a busy frame rebuilds is
-    // the render bench's business: it measured 655–659 of 660.)
     const FRAMES = 60;
     await page.evaluate(
       (frames) =>
@@ -138,8 +145,15 @@ test.describe('render profile (web test build, M3-02c)', () => {
       FRAMES,
     );
     const later = await profile(page);
-    expect(later.rebuilds).toBeGreaterThan(first.rebuilds);
-    // Never more than one per frame, either.
+    // The counters are read in the right place: a counter reading `structureDidChange` *after*
+    // `renderer.render()` would sit at 0 for ever, because Pixi clears the flag while rendering.
+    // The flying scene really does hide and show sprites every frame, so a render group rebuilds.
+    expect(later.groupRebuilds).toBeGreaterThan(first.groupRebuilds);
+    // M3-02e, the review's F1: that churn is confined to the layers' own groups. Before this step
+    // the *scene's* counter rose on very nearly every frame here (the bench measured 655–659 of
+    // 660); now the whole instruction set is thrown away on almost none of them.
+    expect(later.rebuilds - first.rebuilds).toBeLessThan(FRAMES / 4);
+    // And never more than one scene rebuild per frame either.
     expect(later.rebuilds - first.rebuilds).toBeLessThanOrEqual(FRAMES + 4);
     expect(later.statsRebuilds).toBe(later.rebuilds);
     expect(errors).toEqual([]);

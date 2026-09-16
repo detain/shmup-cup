@@ -189,6 +189,7 @@ const HEALTHY: RenderBenchResult = {
   renderMaxMs: 9.4,
   drawCalls: 7,
   structureRebuilds: 659,
+  groupRebuilds: 659,
   renderTargetBytes: 512 * 256 * 4,
   heapDeltaBytes: 485 * 1024,
   heapMeasured: true,

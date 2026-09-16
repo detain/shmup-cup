@@ -35,6 +35,12 @@ export interface RenderBenchOptions {
   readonly frames: number;
   /** Objects leaked per frame — 0 normally; the heap gate's own fixture uses a positive number. */
   readonly leakPerFrame: number;
+  /**
+   * Give the high-churn layers their own Pixi render group (default `true`, the shipped scene —
+   * plan M3-02e). `false` measures the single-render-group scene of before, which is the review's
+   * measurement **M1**: what the whole-scene rebuild costs, against itself, in one run.
+   */
+  readonly renderGroups?: boolean;
 }
 
 /** What one bench scenario measured. */
@@ -51,6 +57,12 @@ export interface RenderBenchResult {
   readonly drawCalls: number;
   /** Frames on which Pixi rebuilt the scene's instruction set (the review's F1). */
   readonly structureRebuilds: number;
+  /**
+   * Render-group rebuilds over those frames, counting every group of the scene (M3-02e). With one
+   * group it equals {@link RenderBenchResult.structureRebuilds}; with the layer groups it says
+   * where the churn the scene root no longer carries actually went.
+   */
+  readonly groupRebuilds: number;
   /** Bytes of pooled render targets Pixi created (the review's F2 / F3). */
   readonly renderTargetBytes: number;
   /** JS heap growth over the measured frames, bytes (the gate the review's F5 needs). */

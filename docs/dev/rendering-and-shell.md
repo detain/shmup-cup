@@ -289,6 +289,31 @@ error screen.
   other sprites. The segment is a round blob, so it is never rotated or scaled — the sync only
   moves sprites and assigns a texture when it changed.
 
+#### Render groups (M3-02e — the review's F1)
+
+In Pixi v8 `sprite.visible = …` sets `structureDidChange` on the sprite's **enclosing render
+group**, and a group carrying that flag has its whole instruction set thrown away and rebuilt: a
+walk over every node under it, a re-pack of every quad it holds and a re-upload of its vertex
+buffer. With one group for the whole scene — which is what the renderer had until M3-02e — a
+single hidden bullet cost all of that over all ~6,400 display objects, on **essentially every
+frame** (the bench measured 655–659 of 660).
+
+So every layer that toggles sprites while the game runs is its own render group
+(`RENDER_GROUP_LAYERS`: `TERRAIN` … `UI`). Pixi does not descend into a child render group while
+collecting a parent's renderables — it emits one instruction for it — so a bullet appearing
+rebuilds the 512-sprite `ENEMY_BULLETS` group and leaves the 1,274-tile terrain grid, the HUD and
+the UI alone, buffers included. `BG_FAR`, `BG_MID` and `DEBUG` stay plain: the parallax bands are
+shown once when they are bound and only their containers move afterwards, the Mode-7 mesh follows
+a camera range, and `DEBUG` is empty in a release build.
+
+The cost is one batch boundary per group: a busy frame went from 4 to 9 draw calls in the bench
+and the e2e budget from 12 to 16 (`shmup_feat.md` §22 allows 20–50). `createPixiRenderer({
+renderGroups: false })` restores the single-group scene — nothing shipped uses it; it is there so
+`pnpm bench` can measure the rebuild against itself in one run (the review's measurement **M1**).
+`renderer.structureRebuilds` counts the frames the *scene's* group was rebuilt on (the overlay's
+`REB`) and `renderer.groupRebuilds` the rebuilds of every group in it, so a fall in the first
+cannot hide as churn that merely moved.
+
 `createDrawListView()` (`ui`) draws a `DrawList` into a quad pool in command order: rects,
 sprites (`Hidden` skips the command, `Flash` swaps to the sibling), `text` and `number` via
 the bitmap font. It skips the whole list when it is the same list at the same `revision`;
@@ -419,9 +444,10 @@ The whole story is on [presentation-polish.md](presentation-polish.md); in brief
 - **Layer effects.** `renderer.layerEffects` (`effects` module, `createLayerEffects`) binds the
   world's `effects` in `bindWorld` and, every frame, attaches one GLSL ES 1.0 filter to a world
   layer while one of its raster effects or palette cycles is in camera range — a per-row offset
-  table in a 1 × 216 RGBA8 texture plus up to 8 colour pairs, one program. A plain frame is 2 WebGL
-  draw calls; each filtered layer adds about 3. `effects.settings.rasterEffects = false` draws every
-  layer plain.
+  table in a 1 × 216 RGBA8 texture plus up to 8 colour pairs, one program. Since M3-02e a plain
+  frame is about 7 WebGL draw calls (roughly one per render group that holds something — see
+  **Render groups** below); each filtered layer adds about 3. `effects.settings.rasterEffects =
+  false` draws every layer plain.
 - **Scale modes.** `computeViewport(mode, …)` (`viewport`) places the frame sprite: `integer`
   (default, `computeIntegerViewport`), `fit`, `stretch` (`scaleX` ≠ `scaleY`);
   `renderer.setScaleMode(mode)` re-places at once and `resize()` keeps the mode.
@@ -816,8 +842,9 @@ renderer-free `?determinism` page — [release-hardening.md](release-hardening.m
   compiles and links in a real WebGL1 context; `?stage=raster-range` boots without errors, and the
   sea (a `wave` effect and a palette cycle) and the checker floor (a `lines` effect) differ from
   the same frame with `rasterEffects` off, the far layer's heat haze runs only inside its camera
-  range (`layerEffects.attachedMask`), a frame stays within 12 WebGL draw calls (the overlay's
-  counter; 2 plain, 5 / 7 with one / two filtered layers); `stretch` fills a display `integer`
+  range (`layerEffects.attachedMask`), a frame stays within 16 WebGL draw calls (the overlay's
+  counter; since M3-02e's render groups 7 with one filtered layer pair and 10 with the haze too,
+  where it was 5 and 7); `stretch` fills a display `integer`
   letterboxes; the hitbox markers' rim colour shows on the ship only while shown. Screenshots with
   the effects on are attached to the report.
 - `display-options.spec.ts` (M2-08) — web keyboard and the Tizen build's remote key codes:
@@ -848,7 +875,7 @@ display objects need no GPU, so atlas, bindings, quad pools, text and the render
 
 Until M3-02c nothing in the repo measured `renderer.render()` (the render review's **F10**):
 `pnpm bench` drove the *simulation* and the only render-cost assertions were the two e2e specs'
-`DRAW_CALL_BUDGET = 12`. There are now two instruments — one headless gate and one on-device
+`DRAW_CALL_BUDGET` (12 then, 16 since M3-02e's render groups). There are now two instruments — one headless gate and one on-device
 readout — and they answer different questions.
 
 ### The headless gate: `pnpm bench` → `test/bench/render.perf.ts`
@@ -922,7 +949,7 @@ that decide whether the game holds 60 fps come from the overlay on the monitors
 | **render-ms p50 / p95 / max** | CPU time inside `renderer.render()`. Under SwiftShader, so it is a *regression* gate (`RENDER_P95_BUDGET_MS`), never a prediction of the Mali-G51 |
 | **draw calls** | Hardware-independent — the strict gate (`DRAW_CALL_BUDGET`; `shmup_feat.md` §22 allows 20–50) |
 | **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 512×256 for a 384×216 pass. Since **M3-02d** the CRT and the Mode-7 floor pool nothing (they are meshes); only `screenPass: 'filter'` still pools one the size of the canvas |
-| **structure rebuilds** | Frames on which Pixi threw the instruction set away and re-walked the scene (review **F1**) |
+| **scene rebuilds**, and **render-group rebuilds** beside them | Frames on which Pixi threw the *scene's* instruction set away and re-walked it (review **F1**), and the same flag counted over every render group of the scene. Since **M3-02e** the first is 0 and the second says where that churn went — a layer group at a time — so the first cannot fall by the work merely moving out of sight |
 | **JS-heap delta over 600 frames** | The gate **F5** needs: the Node allocation guards stop at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation. A deliberately leaky fixture in the same file proves the gate really fails |
 
 The **internal frame size is a scenario parameter** (review §7.5): one scenario runs the
@@ -936,6 +963,16 @@ frames rebuilt the scene's instruction set** — F1's mechanism confirmed agains
 not just against Pixi's source — and CRT `light` costs what CRT `full` costs and pools the same
 target, which is F2's claim exactly.
 
+**The render-group A/B (M3-02e).** One scenario runs the baseline worst-case frame with
+`renderGroups: false`, which builds the pre-M3-02e scene: one render group for all ~6,400 display
+objects. Running both in the same session, against the same load and the same GPU, is the review's
+measurement **M1** done headlessly — and it is the only honest way to show what the change bought,
+because a p95 compared across runs on a shared machine is noise. It reads **0 vs 659 of 660 scene
+rebuilds, 9 vs 4 draw calls, and 0.92–0.94× the p95** (three runs). Treat that last figure with the caution
+this section already asks for: SwiftShader charges CPU time for the extra draw calls while making
+the tree walk cheap on a desktop core, and the M7's Cortex-A55 pays the opposite way round, so the
+counted 659 → 0 is the result that transfers.
+
 ### The on-device readout: the debug overlay
 
 A `build:dev` bundle, the debug tools unlocked (web: F1; TV: **Pause, Ch+, Ch+, Ch+**), and the
@@ -943,7 +980,7 @@ overlay's panel shows the two figures M3-02c added on its sixth line:
 
 | Figure | Meaning |
 |---|---|
-| `REB` | Frames since boot on which Pixi rebuilt the scene's whole instruction set (`PixiRenderer.structureRebuilds`). Near the frame count means every frame pays the full tree walk — the review's **F1** |
+| `REB` | Frames since boot on which Pixi rebuilt the scene's whole instruction set (`PixiRenderer.structureRebuilds`). Since **M3-02e** the high-churn layers are their own render groups, so this should sit at **0** or very near it; a figure that tracks the frame count means every frame pays the full tree walk again — the review's **F1** — because something outside those groups is toggling `visible`. (The bench's companion figure, `groupRebuilds`, is deliberately **not** on the overlay: one number the owner has to read while playing, and it is the one that must stay at 0.) |
 | `RT` | Kilobytes of pooled render targets (`createRenderTargetMeter` over Pixi's `TexturePool`, seeded with what the pool already holds when it starts — M3-02d's warm-up draws every filter before the debug tools exist). Since **M3-02d** the CRT and the Mode-7 floor add nothing to it (review **F2** / **F6**; before the fold, CRT on jumped it by ~16 MB at 1080p); a stage with a layer effect still pools ~512 KB |
 
 Both obey the overlay's own rules: one `DrawList` per colour, and allocation-free per frame (the

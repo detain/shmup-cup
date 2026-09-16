@@ -4404,6 +4404,61 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Acceptance:** M3-02c's render bench shows a measured drop in render p95 on the worst-case frame and the overlay's
   structure-rebuild counter falls; every render-pixi allocation guard still passes; **golden replays unchanged**.
 - **Refs:** `shmup_feat.md` §22, decision D19, `docs/dev/conventions.md` "zero allocation in hot paths"; review F1, F9.
+- **As built:**
+  - **Stopped after approach (1).** Render groups alone took the bench's worst-case frame from
+    **659 of 660 frames rebuilding the whole scene to 0 of 660**, which is the whole of F1. So
+    approach (2) (degenerate quads) and approach (3) (`ParticleContainer`) were **not** done, as
+    the step's own stopping rule says. (2) would also have cost something the review does not
+    mention: Pixi re-uploads a batcher's *whole* attribute buffer whenever any element in it
+    changed, so parking dead slots in the batch would have grown the per-frame upload from the
+    visible quads to all ~6,400. Render groups move that the other way — a group nothing touched
+    re-uploads nothing, which is why the 1,274-tile terrain grid now costs nothing on a frame the
+    camera stays inside one tile.
+  - **The groups are per *layer*, not per binding.** Every layer whose bindings toggle `visible`
+    while the game runs is its own render group (`layers`' new `RENDER_GROUP_LAYERS`: `TERRAIN`,
+    `GROUND_ENEMIES`, `AIR_ENEMIES`, `PLAYER_SHOTS`, `PLAYER`, `HITBOX`, `ITEMS`, `FX`,
+    `ENEMY_BULLETS`, `HUD`, `UI`). That covers the step's list — the terrain grid, the
+    enemy-bullet and point-item bindings, the particle container, the HUD and UI quad pools — and
+    the enemy, shot and player bindings besides, which is what takes the counter to **0** rather
+    than to "less often": several bindings share a layer, so a layer is the coarsest boundary that
+    still confines every binding's churn, and grouping two bindings that sit on one layer
+    separately would have cost a draw call for nothing. `BG_FAR` and `BG_MID` are deliberately
+    left plain (the parallax bands are shown once when bound and only their containers move
+    afterwards; the Mode-7 mesh follows a camera range), and so is `DEBUG` (empty in a release
+    build). So `sprites` and `particles` — the modules this step's row in §2 names — needed **no
+    change at all**; the work is in `layers` and `renderer`.
+  - **`DRAW_CALL_BUDGET` 12 → 16 in both e2e specs, deliberately**, with the arithmetic written
+    into each spec's docblock and the measured figures into `shmup_feat.md` §22's budget line:
+    each group is a batch boundary, so the bench's busy frame went 4 → 9 draw calls and the
+    `raster-range` frame 7 → 10; on the e2e stages, 3 → 7 (`dimension`), 5 → 7 and 7 → 10
+    (`raster-range`). 16 keeps the ~5 calls of headroom the 12 had, and §22 allows 20–50 anyway.
+  - **A second counter, so the first one cannot be gamed.** `PixiRenderer.groupRebuilds` counts
+    the same `structureDidChange` flag over *every* render group of the scene, not just the
+    scene's own, and the bench prints it beside `structureRebuilds`. Before the step both read 659
+    of 660; after, 0 and ≈ 1,590 (about 2.4 layer groups a frame, each a fraction of the scene).
+    It is **not** added to the debug overlay or to M3-02f's telemetry: `REB` stays the one figure
+    the owner reads on the TV, and what it has to say now is "0".
+  - **The bench measures the change against itself.** `createPixiRenderer({ renderGroups: false })`
+    builds the old single-group scene (nothing shipped turns it off), and one bench scenario runs
+    the baseline load that way, in the same session. That is the review's measurement **M1** done
+    headlessly: **0 vs 659 of 660 scene rebuilds, 9 vs 4 draw calls, 0.92–0.94× the p95** (three runs).
+  - **On the p95, honestly.** 0.92–0.94× is a real but small in-run gain, and it is the least
+    transferable number here: SwiftShader charges CPU time for the extra draw calls while making
+    the 6,400-node tree walk cheap on a desktop core, and the M7's Cortex-A55 pays the opposite
+    way round. The step's acceptance asks for a drop and the bench shows one, but the result to
+    believe is the counted 659 → 0. M1 on the monitors is still worth running, and
+    `docs/dev/input-probe-results.md` §11.2 now says what is left of it.
+  - **F9 was done** (it fell out): the five full-screen overlays of pass 1 — backdrop, both
+    flashes, playfield dim, UI dim — take `atlas.textures[atlas.pixelFrame]`, so pass 1 samples one
+    texture. The Mode-7 sprite the finding also named stopped existing in M3-02d. The **side
+    panels keep `Texture.WHITE`**: they are in pass 2, whose only other node samples the frame
+    texture, so the atlas page there would be a binding added rather than one saved.
+  - **One e2e test had to change meaning.** `render-profile.spec.ts`'s first case asserted F1's
+    *bug* — that `structureRebuilds` keeps rising frame after frame. It now asserts the fix:
+    `groupRebuilds` rises (so the counters are still read in the right place — Pixi clears the flag
+    while rendering, and a misplaced read would sit at 0 for ever) while `structureRebuilds` moves
+    on fewer than a quarter of the frames. No other test's expectations moved, no golden replay
+    changed, and the Tizen bundle is unchanged in size (no new Pixi code paths).
 
 ### M3-02f — Render telemetry: guided capture streamed to a log server
 

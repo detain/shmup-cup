@@ -155,6 +155,19 @@ const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'worst-case, CRT off, one render group',
+    what:
+      'review F1 / M1 — the pre-M3-02e scene, where hiding one sprite re-walks all ~6,400 ' +
+      'display objects: the same load as the baseline, measured against it in this same run',
+    options: load({ renderGroups: false }),
+    check: (result) => {
+      // The point of the A/B: without the layer groups the scene is one group, and essentially
+      // every frame rebuilds it.
+      expect(result.groupRebuilds).toBe(result.structureRebuilds);
+      expect(result.structureRebuilds).toBeGreaterThan(result.frames * 0.9);
+    },
+  },
+  {
     id: '768x432 internal (raster-range)',
     what: 'review §7.5 — the layer-effect scenario at ×2 of the shipped internal resolution',
     options: load({ stage: 'raster-range', width: 768, height: 432 }),
@@ -312,7 +325,8 @@ function report(id: string, options: RenderBenchOptions, result: RenderBenchResu
       `max ${result.renderMaxMs.toFixed(2)}), ${result.drawCalls} draw calls, ` +
       `${(result.renderTargetBytes / 1024).toFixed(0)} KB pooled render targets ` +
       `(+ ${((options.width * options.height * 4) / 1024).toFixed(0)} KB frame target), ` +
-      `${result.structureRebuilds}/${result.frames + options.warmupFrames} structure rebuilds, ` +
+      `${result.structureRebuilds}/${result.frames + options.warmupFrames} scene rebuilds ` +
+      `(${result.groupRebuilds} render-group rebuilds), ` +
       `heap ${(result.heapDeltaBytes / 1024).toFixed(0)} KB over ${result.frames} frames ` +
       `[WebGL ${result.webGLVersion}; per-frame minimum load ${result.bullets} bullets, ` +
       `${result.points} points, ${result.particles} particles; ` +
@@ -361,6 +375,32 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
         `full ${(full.renderP95Ms / off.renderP95Ms).toFixed(2)}x of CRT off`,
     );
     expect(full.renderP95Ms).toBeLessThan(off.renderP95Ms * 2);
+  });
+
+  it('the layer render groups stop the whole scene being rebuilt (M3-02e, review F1)', () => {
+    const grouped = results.get('worst-case, CRT off');
+    const single = results.get('worst-case, CRT off, one render group');
+    expect(
+      [grouped, single].every((r) => r !== undefined),
+      'both render-group scenarios must have run',
+    ).toBe(true);
+    if (grouped === undefined || single === undefined) return;
+    // The hardware-independent gate, and the one the review's F1 is about: with one render group
+    // essentially every frame throws the whole instruction set away; with the layer groups the
+    // scene's own group is rebuilt on almost none.
+    expect(single.structureRebuilds).toBeGreaterThan(single.frames * 0.9);
+    expect(grouped.structureRebuilds).toBeLessThan(single.structureRebuilds / 10);
+    // And the churn did not merely vanish from the counter: it moved into the layer groups, each
+    // a fraction of the scene. This is the figure that keeps the one above honest.
+    expect(grouped.groupRebuilds).toBeGreaterThan(0);
+    // Both ran the same load through the same page, so the draw-call cost of the boundaries is
+    // comparable too.
+    console.info(
+      `[bench] render group A/B: ${grouped.structureRebuilds} vs ${single.structureRebuilds} ` +
+        `scene rebuilds, ${grouped.groupRebuilds} vs ${single.groupRebuilds} group rebuilds, ` +
+        `${grouped.drawCalls} vs ${single.drawCalls} draw calls, p95 ` +
+        `${(grouped.renderP95Ms / single.renderP95Ms).toFixed(2)}x of the single-group scene`,
+    );
   });
 
   it('the heap gate fails on a deliberately leaky frame', async () => {

@@ -52,9 +52,17 @@
  * wrapped with a counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (both
  * passes; -1 when not counting). With {@link PixiRendererOptions.countStructureRebuilds} (M3-02c)
  * {@link PixiRenderer.structureRebuilds} counts the frames on which Pixi rebuilt the scene's whole
- * instruction set rather than updating what moved — the overlay's REB figure, the review's F1. The
+ * instruction set rather than updating what moved — the overlay's REB figure, the review's F1 —
+ * and {@link PixiRenderer.groupRebuilds} the same over every render group of the scene (M3-02e),
+ * so the first figure cannot fall merely because the churn moved into a layer group. The
  * debug overlay (`debug` module) adds its own containers to
  * the `DEBUG` layer; the renderer draws that layer like the others.
+ *
+ * **Scene structure (plan M3-02e, the review's F1).** The layers that toggle sprites every frame
+ * are each their own Pixi render group (`layers`' `RENDER_GROUP_LAYERS`), so hiding one bullet
+ * rebuilds that layer's instruction set instead of the whole scene's ~6,400 display objects.
+ * {@link PixiRendererOptions.renderGroups} `= false` restores the single-group scene, for
+ * measuring the difference in one run.
  *
  * **Allocation.** Pixi objects are created in {@link createPixiRenderer} and when a new
  * `WorldView` object is bound ({@link PixiRenderer.bindWorld} — once per world, called
@@ -301,6 +309,16 @@ export interface PixiRendererOptions {
    * (default `false`).
    */
   readonly countStructureRebuilds?: boolean;
+  /**
+   * Give the high-churn layers their own Pixi render group (default `true` — plan M3-02e, the
+   * review's **F1**; see `layers`' {@link RENDER_GROUP_LAYERS}).
+   *
+   * `false` builds the single-render-group scene of before, where hiding one sprite makes Pixi
+   * re-walk and re-pack every one of the ~6,400 display objects. It exists so the cost of that
+   * rebuild can be measured against itself in one run (`pnpm bench`, the review's measurement
+   * **M1**); nothing shipped turns it off.
+   */
+  readonly renderGroups?: boolean;
   /** How the frame fills the display (default `'integer'` — plan M2-08, the scale modes). */
   readonly scaleMode?: ScaleMode;
   /** Draw the ships' hitbox markers (default `false` — the "show hitbox" display option, M2-08). */
@@ -372,6 +390,14 @@ export interface PixiRenderer extends IRenderer {
    * renderer was created without {@link PixiRendererOptions.countStructureRebuilds}.
    */
   readonly structureRebuilds: number;
+  /**
+   * Render-group rebuilds since creation, counting **every** group in the scene — the root's and
+   * each layer group's (plan M3-02e). {@link PixiRenderer.structureRebuilds} says how often the
+   * expensive whole-scene rebuild happened; this says where that churn went instead, so a fall in
+   * the first figure cannot be read as work that merely moved out of sight. -1 without
+   * {@link PixiRendererOptions.countStructureRebuilds}.
+   */
+  readonly groupRebuilds: number;
   /** Current placement of the scaled frame on the canvas. */
   readonly viewport: Viewport;
   /** The scale mode in use (plan M2-08). */
@@ -625,6 +651,35 @@ const resetPass = (
 };
 
 /**
+ * The part of Pixi's `RenderGroup` this module reads. Structural, because Pixi v8 does not export
+ * the class from its public entry point.
+ */
+interface SceneRenderGroup {
+  /** Set when the group's whole instruction set has to be rebuilt on the next render. */
+  readonly structureDidChange: boolean;
+  /** The render groups nested inside this one (the layer groups of M3-02e). */
+  readonly renderGroupChildren: readonly SceneRenderGroup[];
+}
+
+/**
+ * Counts the render groups Pixi is about to rebuild: the given group and every group below it
+ * (plan M3-02e — {@link PixiRenderer.groupRebuilds}).
+ *
+ * @remarks
+ * Called once per frame in dev / test builds only, over the dozen groups of the scene, and it
+ * allocates nothing.
+ *
+ * @param group - A render group (normally the scene's root one).
+ * @returns How many groups in that tree have `structureDidChange` set.
+ */
+const countGroupRebuilds = (group: SceneRenderGroup): number => {
+  let count = group.structureDidChange ? 1 : 0;
+  const children = group.renderGroupChildren;
+  for (let i = 0; i < children.length; i++) count += countGroupRebuilds(children[i]);
+  return count;
+};
+
+/**
  * Creates and initialises the renderer.
  *
  * @remarks
@@ -646,7 +701,8 @@ const resetPass = (
  * - Debug (M1-19): with `countDrawCalls` the context's draw entry points are wrapped with a
  *   counter and {@link PixiRenderer.drawCalls} reports the last frame's calls (else -1); with
  *   `countStructureRebuilds` (M3-02c) {@link PixiRenderer.structureRebuilds} counts the frames
- *   Pixi rebuilt the scene's instruction set on (else -1); the debug
+ *   Pixi rebuilt the *scene's* instruction set on and {@link PixiRenderer.groupRebuilds} the
+ *   rebuilds of every render group in it (both -1 without the option); the debug
  *   overlay (`debug` module) adds its own containers to the `DEBUG` layer.
  * - Game feel (M1-14): with an atlas, a particle pool of `particleCapacity` sprites per blend
  *   mode (seeded with `fxSeed`) and, with a font too, the 16 score popups are created on the
@@ -703,6 +759,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   // M3-02c: frames on which Pixi rebuilt the scene's whole instruction set (the review's F1).
   const countRebuilds = options.countStructureRebuilds === true;
   let structureRebuilds = countRebuilds ? 0 : -1;
+  // M3-02e: the same flag over every render group in the scene, root included — where the churn
+  // the root no longer carries actually went.
+  let groupRebuilds = countRebuilds ? 0 : -1;
 
   // Pass 1 target: the internal frame, sampled nearest-neighbour when upscaled.
   const frameTexture = RenderTexture.create({
@@ -713,9 +772,16 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     scaleMode: 'nearest',
   });
 
+  // The review's **F9** (M3-02e): the full-screen overlays of the low-res pass — the backdrop,
+  // the two flashes and the two dims — draw the atlas' own `ui/pixel` rather than Pixi's global
+  // `Texture.WHITE`, so pass 1 samples a single texture. (`createAtlas` falls back to
+  // `Texture.WHITE` itself when a manifest has no `ui/pixel`, and a renderer built without an
+  // atlas — the dev scenes and most tests — has nothing else to use.)
+  const overlayTexture = atlas !== null ? atlas.textures[atlas.pixelFrame] : Texture.WHITE;
+
   const scene = new Container({ label: 'scene' });
   // Lifted navy, never black (VA panels — shmup_feat.md §18).
-  const background = new Sprite(Texture.WHITE);
+  const background = new Sprite(overlayTexture);
   background.scale.set(width, height);
   background.tint = PALETTE.space;
   scene.addChild(background);
@@ -726,18 +792,18 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     scene.addChild(pattern.root);
   }
 
-  const layers = createLayerStack();
+  const layers = createLayerStack({ renderGroups: options.renderGroups !== false });
   scene.addChild(layers.root);
 
   // Screen flash: last children of the world group (over every world layer, under the HUD) — an
   // ordinary overlay and an additive one (M2-08: the Mega Crash palette flash). Two sprites, so a
   // flash never changes a sprite's blend mode (that rebuilds Pixi's render group).
-  const flash = new Sprite(Texture.WHITE);
+  const flash = new Sprite(overlayTexture);
   flash.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
   flash.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
   flash.visible = false;
   layers.world.addChild(flash);
-  const flashAdd = new Sprite(Texture.WHITE);
+  const flashAdd = new Sprite(overlayTexture);
   flashAdd.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
   flashAdd.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
   flashAdd.blendMode = 'add';
@@ -745,7 +811,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   layers.world.addChild(flashAdd);
 
   // Playfield dim (the boss WARNING): over every world layer, under the flash and the HUD.
-  const playfieldDim = new Sprite(Texture.WHITE);
+  const playfieldDim = new Sprite(overlayTexture);
   playfieldDim.position.set(-OVERLAY_MARGIN, -OVERLAY_MARGIN);
   playfieldDim.scale.set(width + 2 * OVERLAY_MARGIN, height + 2 * OVERLAY_MARGIN);
   playfieldDim.tint = 0x000000;
@@ -756,7 +822,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
 
   // Dim: first child of the UI layer (darkens world + HUD under a menu).
   const uiLayer = layers.layers[LayerId.Ui];
-  const dim = new Sprite(Texture.WHITE);
+  const dim = new Sprite(overlayTexture);
   dim.scale.set(width, height);
   dim.tint = 0x000000;
   dim.visible = false;
@@ -868,6 +934,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
   // The side panels of the `wide` / `classic` aspect modes (M3-02): two rectangles beside the
   // window, tinted with the frame's own backdrop so the picture sits in a lit surround instead of
   // black. They are behind the frame quad in the screen pass.
+  // `Texture.WHITE`, not the atlas pixel of the overlays above: the only other node of pass 2 is
+  // the blit mesh sampling the frame texture, so the atlas page would be an extra binding here,
+  // not one saved (the review's F9 is about pass 1).
   const panelLeftSprite = new Sprite(Texture.WHITE);
   const panelRightSprite = new Sprite(Texture.WHITE);
   for (const panel of [panelLeftSprite, panelRightSprite]) {
@@ -1169,6 +1238,9 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     get structureRebuilds() {
       return structureRebuilds;
     },
+    get groupRebuilds() {
+      return groupRebuilds;
+    },
     setSpriteNames(names) {
       if (atlas === null) return;
       spriteNames = names;
@@ -1319,7 +1391,13 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       if (uiView !== null) uiView.draw(frame.ui);
       drawCounter.calls = 0;
       // Before pass 1: Pixi clears the flag while rendering, so it has to be read now.
-      if (countRebuilds && scene.renderGroup?.structureDidChange === true) structureRebuilds++;
+      if (countRebuilds) {
+        const group = scene.renderGroup;
+        if (group !== null && group !== undefined) {
+          if (group.structureDidChange) structureRebuilds++;
+          groupRebuilds += countGroupRebuilds(group);
+        }
+      }
       renderer.render(resetPass(scenePass, frameTexture, true));
       renderer.render(resetPass(displayPass, undefined, undefined));
       if (countDraws) drawCounter.last = drawCounter.calls;

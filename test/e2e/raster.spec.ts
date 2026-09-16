@@ -24,12 +24,21 @@ import {
 import { freezeSim, stepTo } from './frame-advance.js';
 
 /**
- * Most WebGL draw calls one frame of the raster range may take with its effects on: the plain
- * frame takes 2 (one batch for the scene, the upscale quad), each filtered layer about 3 more
- * (its own render, the filter pass, the batch break) — 5 with the sea and floor, 7 with the haze
- * too — and a stage may filter at most the five effect layers.
+ * Most WebGL draw calls one frame of the raster range may take with its effects on.
+ *
+ * Each filtered layer costs about 3 (its own render, the filter pass, the batch break), and a
+ * stage may filter at most the five effect layers. Until plan **M3-02e** the rest of the frame
+ * was 2 (one batch for the whole scene, the upscale quad), which made 5 with the sea and the
+ * floor and 7 with the heat haze too, against a budget of 12.
+ *
+ * **M3-02e raised it to 16, deliberately** (`shmup_feat.md` §22, which allows 20–50): the layers
+ * that toggle sprites every frame are now each their own Pixi render group, so one hidden bullet
+ * rebuilds that layer's instruction set instead of the whole ~6,400-object scene's (the review's
+ * **F1**). Every group is a batch boundary, so the scene costs about one draw call per group that
+ * holds something: this stage measures **7** with the sea and the floor and **10** with the haze
+ * too, where it measured 5 and 7. 16 keeps the same ~5 calls of headroom the 12 had.
  */
-const DRAW_CALL_BUDGET = 12;
+const DRAW_CALL_BUDGET = 16;
 
 /** `LayerId.BgFar` / `LayerId.BgMid` bits of `layerEffects.attachedMask`. */
 const FAR_BIT = 1;

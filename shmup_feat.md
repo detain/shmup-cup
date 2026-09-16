@@ -703,6 +703,7 @@ Pause and Options are overlays on a scene stack.
 ### Performance / GC
 - **[P0]** Zero per-frame allocations in hot loops (no `map/filter`, closures, spreads, `{x,y}` temporaries, `for…in`). Object pools preallocated. HUD strings rebuilt only on change. Reused vertex buffer.
 - **[P0] Budgets (starting points — validate on the oldest supported TV):** sim ≤ 4 ms/tick, render ≤ 8 ms; ~512 enemy bullets, 64 player shots, 64 enemies/parts, 256 particles; ≤ 20–50 draw calls; 1–2 × 2048² atlases; < 100 MB total memory (Tizen dev installs are capped at 120 MB).
+  - **Draw calls, as built (plan M3-02e).** The layers that toggle sprites every frame are each their own Pixi render group, so hiding one bullet rebuilds that layer's instruction set instead of the whole ~6,400-object scene's (render review **F1**). Each group is a batch boundary, so a frame costs about one draw call per group that holds something: the headless bench measures **9** for the worst-case busy frame and **10** with a filtered layer (4 and 7 before the step), and the two e2e specs' `DRAW_CALL_BUDGET` was raised **12 → 16** to match, deliberately. Still well inside the 20–50 above.
 
 ### Collision
 - **[P0]** Circle-vs-circle for bullets (squared distances), AABB for enemies/terrain, capsule (point-to-segment) for straight lasers, circle chains for bending lasers.

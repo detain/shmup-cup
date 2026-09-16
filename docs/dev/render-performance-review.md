@@ -4,6 +4,17 @@ A code-level review of how the renderer behaves on the M7, written 2026-09-16 ag
 M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds the hardware facts in the real
 [input-probe run](input-probe-results.md) on both monitors.
 
+> **Update (M3-02e).** **F1 and F9 are fixed, and with them every finding this review raised.**
+> The layers that toggle sprites every frame are each their own Pixi render group
+> (`layers/index.ts` `RENDER_GROUP_LAYERS`: `TERRAIN` … `UI`), so hiding one bullet rebuilds that
+> layer's instruction set instead of the whole ~6,400-object scene's, and the full-screen overlays
+> of pass 1 draw the atlas' own `ui/pixel` rather than Pixi's global `Texture.WHITE`. Measured by
+> the bench, over the same worst-case frame: **655–659 of 660 frames rebuilt the scene → 0 of
+> 660**, at the price of 4 → 9 draw calls (one batch boundary per group; `shmup_feat.md` §22
+> allows 20–50, and the two e2e specs' `DRAW_CALL_BUDGET` went 12 → 16 deliberately). The bench
+> now measures the same load twice in one run, with the groups and without
+> (`renderGroups: false`), which is this review's measurement **M1**.
+>
 > **Update (M3-02d).** **F2, F3, F4, F5 and F6 are fixed.** The CRT is the pass-2 blit's own
 > shader and the Mode-7 floor a mesh on `BG_MID`, so neither pools a render target or runs a second
 > full-screen pass (`effects/crt.ts` `createCrtBlit`, `effects/mode7.ts` `createMode7Shader`;
@@ -12,7 +23,7 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 > called by `bootShell` behind the loading screen, draws one throwaway off-screen frame with every
 > program and every pooled sprite in it. Measured by the bench: CRT `light` / `full` went 5 draw
 > calls and 2,048 KB of pooled targets → **4 and 0** (the same as CRT `off`), the Mode-7 stage
-> 7 and 512 KB → **6 and 0**. **F1 and F9 remain** — they are M3-02e's.
+> 7 and 512 KB → **6 and 0**. F1 and F9 were left to M3-02e — see the update above.
 >
 > **Update (M3-02c).** The instrument this report asked for exists: `pnpm bench` →
 > `test/bench/render.perf.ts` measures `renderer.render()` in a real browser (**F10**), the debug
@@ -20,8 +31,8 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 > WebGL2 docblock is corrected and a dev switch A/Bs the version (**F8**). What it already settles
 > without the hardware is in [input-probe-results.md §11.3](input-probe-results.md#113-what-the-headless-bench-already-says):
 > essentially **every** frame rebuilds the scene's instruction set (F1's mechanism, confirmed against
-> a browser), CRT `light` costs what CRT `full` costs (F2), and a 384×216 filter pass really is
-> pooled as 512×256 (F3). The *milliseconds* on the M7 still need §4's table — the recipe is in
+> a browser — M3-02e then fixed it), CRT `light` costs what CRT `full` costs (F2), and a 384×216
+> filter pass really is pooled as 512×256 (F3). The *milliseconds* on the M7 still need §4's table — the recipe is in
 > [rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv).
 >
 > **Nothing here was measured on the hardware.** Every claim is marked *Confirmed* (read from the code and verifiable
@@ -53,7 +64,7 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 
 **Best expected frame‑time payoff, in order:**
 
-1. **Stop the whole ~6 400‑object scene graph being re‑walked and re‑batched every frame.** Every `sprite.visible = …` sets `structureDidChange = true` on the *root* render group (`Container.mjs:1060-1069`), which makes Pixi throw away and rebuild the entire instruction set — full tree walk + re‑pack of every visible quad — instead of taking the cheap "update only what moved" path (`RenderGroupSystem.mjs:92-110`). Our draw path toggles `visible` in every binding, every frame (`sprites/index.ts:311,327,337,388,405,543,565`). Isolating the big sub‑trees into their own render groups (and/or moving the bullet/point/particle pools to `ParticleContainer`) is the single largest CPU lever available. **High / Needs‑measurement (mechanism Confirmed).**
+1. **Stop the whole ~6 400‑object scene graph being re‑walked and re‑batched every frame.** Every `sprite.visible = …` sets `structureDidChange = true` on the *root* render group (`Container.mjs:1060-1069`), which makes Pixi throw away and rebuild the entire instruction set — full tree walk + re‑pack of every visible quad — instead of taking the cheap "update only what moved" path (`RenderGroupSystem.mjs:92-110`). Our draw path toggles `visible` in every binding, every frame (`sprites/index.ts:311,327,337,388,405,543,565`). Isolating the big sub‑trees into their own render groups (and/or moving the bullet/point/particle pools to `ParticleContainer`) is the single largest CPU lever available. **High / Needs‑measurement (mechanism Confirmed).** — **FIXED in M3-02e** by the first of those two: one render group per high‑churn layer, which took the bench's worst‑case frame from 659 scene rebuilds in 660 frames to **0**. `ParticleContainer` was never needed.
 
 2. **The CRT filter is far more expensive than the code comments suggest.** It is attached to the pass‑2 `screen` container (`effects/crt.ts:231`), so at 1920×1080 Pixi allocates a **2048×2048 pooled RGBA render target (16 MB)** — `TexturePool.getOptimalTexture` rounds to next‑pow‑2 (`TexturePool.mjs:51-56`) — renders the upscaled picture into it, then runs a *second* full‑screen pass. `crtResolution(1080) = 1` (`effects/crt.ts:152-155`), so the "capped at 1080p" comment buys nothing on the M7: CRT roughly **triples** the frame's fill‑rate and bandwidth. Folding the CRT into the pass‑2 blit shader makes it nearly free. **High / Confirmed.**
 
@@ -76,7 +87,31 @@ M3-02b). It reads the shipped code and Pixi v8.20.1's own source, and grounds th
 ## 2. Findings
 
 ### F1 — Every frame rebuilds the whole scene's instruction set because the draw path toggles `visible`
-**Impact: High · Mechanism Confirmed · Size Needs‑measurement**
+**Impact: High · Mechanism Confirmed · Size Needs‑measurement · FIXED in M3-02e**
+
+> **What was done (M3-02e).** Option **(a)** below, taken to its conclusion: every layer whose
+> bindings toggle `visible` while the game runs — `TERRAIN`, `GROUND_ENEMIES`, `AIR_ENEMIES`,
+> `PLAYER_SHOTS`, `PLAYER`, `HITBOX`, `ITEMS`, `FX`, `ENEMY_BULLETS`, `HUD`, `UI` — is created as
+> its own render group (`layers/index.ts` `RENDER_GROUP_LAYERS`). `BG_FAR` and `BG_MID` are not:
+> the parallax bands are shown once when they are bound and only their containers move afterwards,
+> so a group there would buy a batch boundary and nothing else. Neither is `DEBUG`, which is empty
+> in a release build.
+>
+> The bench measures it both ways in one run (`createPixiRenderer({ renderGroups: false })` builds
+> the old single-group scene, which is this review's measurement **M1**): over the same worst-case
+> frame, **659 of 660 frames rebuilt the whole scene → 0 of 660**, while `groupRebuilds` — the same
+> flag counted over *every* group of the scene, added so the fall cannot hide as churn that merely
+> moved — shows about 2.4 layer groups rebuilding per frame instead of one 6,400-object one. Draw
+> calls went 4 → 9 and the two e2e specs' `DRAW_CALL_BUDGET` 12 → 16 (`shmup_feat.md` §22 allows
+> 20–50). Options **(b)** `ParticleContainer` and **(c)** degenerate quads were **not** done: (a)
+> was enough, and the step's own rule was to stop as soon as it was.
+>
+> Under SwiftShader, where the bench runs, the change reads as **0.92–0.94×** the p95 of the
+> single-group scene over three runs — a small gain, and the least transferable number here, because software
+> WebGL charges CPU time for the extra draw calls while making the tree walk comparatively cheap
+> on a desktop core. The Kant-SU2's Cortex-A55 pays the opposite way round. The **counted**
+> result — 659 → 0 whole-scene rebuilds, and a terrain grid, HUD and UI whose vertex buffers are
+> no longer re-uploaded every frame — is what transfers; the milliseconds are M1's job on the TV.
 
 **Today.** `SpriteLayerBinding.sync` hides unused slots and shows live ones (`packages/render-pixi/src/sprites/index.ts:311, 327, 337`), `QuadPool.end` hides the tail (`:565`), the particle system hides its tail (`particles/index.ts:952-954`), the terrain grid hides empty cells, and the flash/dim overlays flip `visible` (`renderer/index.ts:1148-1165`). In Pixi v8, `set visible` does:
 
@@ -215,7 +250,17 @@ What WebGL2 would actually buy us in Pixi v8: native VAOs (WebGL1 uses the `OES_
 ---
 
 ### F9 — `Texture.WHITE` in the scene pass adds a second texture binding
-**Impact: Low · Confirmed**
+**Impact: Low · Confirmed · FIXED in M3-02e**
+
+> **What was done (M3-02e).** The five full-screen overlays of pass 1 — the backdrop, the two
+> flashes, the playfield dim and the UI dim — take `atlas.textures[atlas.pixelFrame]` when the
+> renderer has an atlas (`createAtlas` already falls back to `Texture.WHITE` itself when a
+> manifest has no `ui/pixel`, and a renderer built without an atlas has nothing else to use), so
+> pass 1 samples one texture. The Mode-7 sprite this finding also named stopped existing in
+> M3-02d — the floor is a mesh with its own program. The **side panels stay on `Texture.WHITE`**
+> on purpose: they are in pass 2, whose only other node is the blit mesh sampling the frame
+> texture, so the atlas page there would be a binding added rather than one saved. As predicted,
+> no draw call changed.
 
 The background, both flash overlays, the playfield dim, the UI dim and the Mode‑7 sprite all use `Texture.WHITE` (`renderer/index.ts:642-644, 658-674, 683-689`; `effects/mode7.ts:241`), while everything else draws from the atlas page. The atlas already contains `ui/pixel` (`atlas/index.ts:47`, `PIXEL_SPRITE`) and `QuadPool.rect` correctly uses it (`sprites/index.ts:520`). Using `atlas.textures[atlas.pixelFrame]` for those six sprites too would make the whole low‑res pass single‑texture.
 
@@ -403,7 +448,7 @@ Against the **<100 MB** stage budget (`shmup_feat.md` §22), 1080p-internal spen
 
 | Finding | At 768×432 / 960×540 | At 1920×1080 |
 |---|---|---|
-| **F1** scene-graph rebuild | Unchanged under (A) — it is CPU work over ~6,400 objects and does not care about pixels. Under (B) it gets **worse**: a wider playfield means more visible tiles, enemies and bullets. | Same. Under (B), fix F1 first. |
+| **F1** scene-graph rebuild (fixed in M3-02e) | Unchanged under (A) — it is CPU work over ~6,400 objects and does not care about pixels. Under (B) it gets **worse**: a wider playfield means more visible tiles, enemies and bullets, so the per-layer render groups matter more, not less. | Same. |
 | **F2** CRT as a filter | Worse in proportion to fill; still worth folding into the blit. | The two-pass structure itself becomes the problem: at 1:1 the game renders 2 Mpx into a render target and then blits 2 Mpx to the canvas for no scaling at all. **M3-02d's fix is not enough here — pass 2 should collapse to a direct render when scale is 1**, keeping the render target only when an effect actually needs it. |
 | **F3** memory estimator | Must be fixed first (see §7.3). | Decisive. |
 | **F4** shader compile hitch | Unchanged (one-off, resolution-independent). | Unchanged. |

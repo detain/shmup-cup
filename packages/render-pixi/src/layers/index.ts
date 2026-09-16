@@ -6,7 +6,10 @@
  * `BG_FAR, BG_MID, TERRAIN, GROUND_ENEMIES, AIR_ENEMIES, PLAYER_SHOTS, PLAYER, HITBOX, ITEMS,
  * FX, ENEMY_BULLETS, HUD, UI, DEBUG`. Enemy bullets are drawn above explosions and items so
  * they stay readable. The layers up to `ENEMY_BULLETS` sit in a **world** group (the renderer
- * offsets it for screen shake); `HUD`, `UI` and `DEBUG` stay fixed to the screen.
+ * offsets it for screen shake); `HUD`, `UI` and `DEBUG` stay fixed to the screen. Since M3-02e
+ * the layers that toggle sprites every frame are each their own Pixi **render group**
+ * ({@link RENDER_GROUP_LAYERS}), so one hidden bullet no longer rebuilds the whole scene's
+ * instruction set.
  *
  * It also draws the two stage views of the render contract (plan M1-07):
  *
@@ -55,7 +58,8 @@
  * - shmup_feat.md §14 — tilemap terrain and parallax background layers (integer-snapped)
  * - shmup_feat.md §22 — tilemap renderer, parallax manager, no per-frame allocation
  *
- * **Public API.** {@link createLayerStack}, {@link LayerStack}, {@link WORLD_LAYER_COUNT},
+ * **Public API.** {@link createLayerStack}, {@link LayerStack}, {@link LayerStackOptions},
+ * {@link RENDER_GROUP_LAYERS}, {@link WORLD_LAYER_COUNT},
  * {@link createTerrainBinding}, {@link TerrainBinding}, {@link TerrainBindingOptions},
  * {@link createParallaxBinding}, {@link ParallaxBinding}, {@link ParallaxBindingOptions},
  * {@link createLaserBinding}, {@link LaserBinding}, {@link LaserBindingOptions},
@@ -106,6 +110,56 @@ export const moduleInfo = defineModule({
 /** Layers `0 … WORLD_LAYER_COUNT - 1` belong to the world group (moved by screen shake). */
 export const WORLD_LAYER_COUNT: number = LayerId.Hud;
 
+/**
+ * The layers whose container is its own Pixi **render group** (plan M3-02e, review finding F1).
+ *
+ * @remarks
+ * In Pixi v8 `sprite.visible = …` sets `structureDidChange` on the sprite's *enclosing render
+ * group*, and a group with that flag has its whole instruction set thrown away and rebuilt — a
+ * walk over every node under it plus a re-pack (and a re-upload) of every quad it holds. With one
+ * group for the whole scene, one bullet appearing costs a walk over all ~6,400 display objects.
+ *
+ * Pixi does not descend into a child render group while collecting a parent's renderables (it
+ * emits one instruction for it), so a layer that is its own group confines its own churn: a
+ * bullet appearing rebuilds the 512-sprite `ENEMY_BULLETS` group and leaves the 1,274-tile
+ * terrain grid, the HUD and the UI alone — and their vertex buffers are not re-uploaded either.
+ *
+ * These are the layers whose bindings toggle `visible` while the game runs. `BG_FAR` and `BG_MID`
+ * are left out on purpose: the parallax bands are shown once when they are bound and only their
+ * containers move afterwards, and the Mode-7 mesh appears and disappears with a camera range, so
+ * a group there would only buy a batch boundary. `DEBUG` is left out because it is empty in a
+ * release build.
+ *
+ * **Cost.** Each group is a batch boundary, so draw calls rise by roughly the number of groups
+ * that hold something (`shmup_feat.md` §22's budget line and the two e2e specs' `DRAW_CALL_BUDGET`
+ * were raised for it, deliberately).
+ */
+export const RENDER_GROUP_LAYERS: readonly number[] = [
+  LayerId.Terrain,
+  LayerId.GroundEnemies,
+  LayerId.AirEnemies,
+  LayerId.PlayerShots,
+  LayerId.Player,
+  LayerId.Hitbox,
+  LayerId.Items,
+  LayerId.Fx,
+  LayerId.EnemyBullets,
+  LayerId.Hud,
+  LayerId.Ui,
+];
+
+/** Options of {@link createLayerStack}. */
+export interface LayerStackOptions {
+  /**
+   * Give the {@link RENDER_GROUP_LAYERS} layers their own render group (default `true`).
+   *
+   * `false` builds the pre-M3-02e stack — one render group for the whole scene — and exists so
+   * the cost of the rebuild can be measured against itself in one run (the review's measurement
+   * **M1**, "render ms with the scene rebuild on vs. patched out"). Nothing shipped turns it off.
+   */
+  readonly renderGroups?: boolean;
+}
+
 /** The layer containers of one renderer. */
 export interface LayerStack {
   /** Parent of everything; add it to the low-res scene. */
@@ -114,6 +168,8 @@ export interface LayerStack {
   readonly world: Container;
   /** One container per core `LayerId`, indexed by the layer code. */
   readonly layers: readonly Container[];
+  /** Whether {@link RENDER_GROUP_LAYERS} were made render groups (see {@link LayerStackOptions}). */
+  readonly renderGroups: boolean;
 }
 
 /**
@@ -124,6 +180,11 @@ export interface LayerStack {
  * Each container's `label` is the layer name (`'ENEMY_BULLETS'`), which shows up in Pixi
  * devtools. Content is added by the renderer (sprite bindings, draw-list views, overlays).
  *
+ * The {@link RENDER_GROUP_LAYERS} layers are created as their own Pixi render groups (M3-02e),
+ * so a binding that hides a slot rebuilds only its own layer's instruction set instead of the
+ * whole scene's; `renderGroups: false` builds the single-group stack of before.
+ *
+ * @param options - Whether to use render groups (default yes).
  * @returns The stack.
  *
  * @example
@@ -133,18 +194,20 @@ export interface LayerStack {
  * stack.layers[LayerId.EnemyBullets].addChild(bulletBinding.container);
  * ```
  */
-export function createLayerStack(): LayerStack {
+export function createLayerStack(options: LayerStackOptions = {}): LayerStack {
+  const renderGroups = options.renderGroups !== false;
   const root = new Container({ label: 'layers' });
   const world = new Container({ label: 'world' });
   root.addChild(world);
   const layers: Container[] = [];
   for (let id = 0; id < LAYER_COUNT; id++) {
-    const layer = new Container({ label: LAYER_NAMES[id] ?? `layer-${id}` });
+    const isRenderGroup = renderGroups && RENDER_GROUP_LAYERS.indexOf(id) >= 0;
+    const layer = new Container({ label: LAYER_NAMES[id] ?? `layer-${id}`, isRenderGroup });
     layers.push(layer);
     if (id < WORLD_LAYER_COUNT) world.addChild(layer);
     else root.addChild(layer);
   }
-  return { root, world, layers };
+  return { root, world, layers, renderGroups };
 }
 
 /**
