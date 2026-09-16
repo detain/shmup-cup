@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_USER_OPTIONS,
   INPUT_PROFILE_ID_PATTERN,
+  RETIRED_INPUT_PROFILE_IDS,
   VOLUME_LEVELS,
   migrateInputProfileId,
   resolveUserOptions,
@@ -102,6 +103,64 @@ describe('core/config resolveUserOptions (edge)', () => {
     // Keys that the pattern rejects outright still resolve to null, never to a prototype value.
     for (const id of ['__proto__', 'toString', 'hasOwnProperty']) {
       expect(resolveUserOptions({ input: { profileId: id } }).input.profileId, id).toBeNull();
+    }
+  });
+
+  it('holds even when Object.prototype is poisoned at run time', () => {
+    // A page that loads a careless polyfill (or a save whose reader was tricked into one) can put
+    // an enumerable string on Object.prototype under an id the pattern accepts. `hasOwnProperty`
+    // on the table's own keys is what keeps it out of a frozen `UserOptions`.
+    const prototype = Object.prototype as unknown as Record<string, unknown>;
+    const added = ['tizen-remote-safe', 'keyboard-wasd', 'x9-2'];
+    try {
+      for (const id of added) prototype[id] = 'poisoned-remote';
+      for (const id of added) {
+        expect(migrateInputProfileId(id), id).toBe(id);
+        expect(resolveUserOptions({ input: { profileId: id } }).input.profileId, id).toBe(id);
+      }
+      // The real retired id still migrates — the guard did not switch the table off.
+      expect(migrateInputProfileId('tizen-remote-diagonal')).toBe('tizen-remote-safe');
+    } finally {
+      for (const id of added) delete prototype[id];
+    }
+    expect(Object.prototype).not.toHaveProperty('x9-2');
+  });
+
+  it('always resolves a saved profile id to a string or null, never to a function', () => {
+    // The sanitiser's contract: `UserOptions.input.profileId` is `string | null`, whatever a save
+    // file, a hand-edited localStorage entry or a poisoned prototype puts in it.
+    const ids: unknown[] = [
+      'constructor',
+      'valueof',
+      'tostring',
+      'isprototypeof',
+      'propertyisenumerable',
+      'tolocalestring',
+      'tizen-remote-diagonal',
+      'tizen-remote-safe',
+      '__proto__',
+      'toString',
+      42,
+      null,
+      undefined,
+      {},
+      [],
+      () => 'x',
+    ];
+    for (const id of ids) {
+      const resolved = resolveUserOptions({ input: { profileId: id } }).input.profileId;
+      const kind = typeof resolved;
+      expect(kind === 'string' || resolved === null, String(id)).toBe(true);
+    }
+  });
+
+  it('keeps RETIRED_INPUT_PROFILE_IDS frozen, and every target a live profile id', () => {
+    expect(Object.isFrozen(RETIRED_INPUT_PROFILE_IDS)).toBe(true);
+    for (const [from, to] of Object.entries(RETIRED_INPUT_PROFILE_IDS)) {
+      expect(INPUT_PROFILE_ID_PATTERN.test(from), from).toBe(true);
+      expect(INPUT_PROFILE_ID_PATTERN.test(to), to).toBe(true);
+      // A retired id never maps to another retired one (one pass migrates every save).
+      expect(migrateInputProfileId(to), to).toBe(to);
     }
   });
 

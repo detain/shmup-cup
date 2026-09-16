@@ -770,6 +770,74 @@ describe('core/scenes input test (M2-16)', () => {
     expect(s.ids).toEqual(['title', 'options', 'controls']);
   });
 
+  it('restarts the window on every press, so three slow presses still leave (M3-02b)', () => {
+    const s = new Session();
+    s.openOptions();
+    s.openPage(OptionsItem.Controls);
+    s.focus(s.flow.controlsPage.menu, ControlsItem.InputTest);
+    s.press(Action.Confirm);
+    for (let i = 0; i < INPUT_TEST_EXIT_PRESSES - 1; i++) {
+      s.press(Action.Pause);
+      s.hold(0, INPUT_TEST_EXIT_WINDOW_TICKS - 4);
+      expect(s.ids[s.ids.length - 1], `press ${String(i + 1)}`).toBe('inputTest');
+      expect(s.flow.inputTest.presses, `press ${String(i + 1)}`).toBe(i + 1);
+    }
+    s.press(Action.Pause);
+    expect(s.ids).toEqual(['title', 'options', 'controls']);
+  });
+
+  it('counts the presses afresh every time the screen is opened', () => {
+    const s = new Session();
+    s.openOptions();
+    s.openPage(OptionsItem.Controls);
+    s.focus(s.flow.controlsPage.menu, ControlsItem.InputTest);
+    const test = s.flow.inputTest;
+    s.press(Action.Confirm);
+    s.press(Action.Pause);
+    s.press(Action.Pause);
+    expect(test.presses).toBe(2);
+    // Leave the hard way (the hold) and come back: no press is carried over.
+    s.hold(Action.Pause, INPUT_TEST_EXIT_TICKS);
+    expect(s.ids).toEqual(['title', 'options', 'controls']);
+    s.hold(0, 2);
+    s.press(Action.Confirm);
+    expect([test.presses, test.pressWindow, test.holdTicks]).toEqual([0, 0, 0]);
+    // …and it takes the full three again.
+    s.press(Action.Pause);
+    s.press(Action.Pause);
+    expect(s.ids[s.ids.length - 1]).toBe('inputTest');
+    s.press(Action.Pause);
+    expect(s.ids).toEqual(['title', 'options', 'controls']);
+  });
+
+  it('fills the exit bar from whichever exit is further along', () => {
+    const s = new Session();
+    s.openOptions();
+    s.openPage(OptionsItem.Controls);
+    s.focus(s.flow.controlsPage.menu, ControlsItem.InputTest);
+    s.press(Action.Confirm);
+    const test = s.flow.inputTest;
+    const barWidth = (): number => {
+      const ui = s.game.renderFrame().ui;
+      let widest = 0;
+      for (let i = 0; i < ui.count; i++) {
+        // The track is 160 px wide; the fill is the shorter rect drawn on top of it.
+        if (ui.op[i] === DrawOp.Rect && ui.h[i] === 3 && ui.w[i] < 160 && ui.w[i] > widest) {
+          widest = ui.w[i];
+        }
+      }
+      return widest;
+    };
+    expect(barWidth()).toBe(0);
+    s.press(Action.Pause); // 1 of 3 presses: a third of the bar
+    const afterPress = barWidth();
+    expect(afterPress).toBeGreaterThan(0);
+    // A short hold is worth less than that press, so the bar does not shrink.
+    s.hold(Action.Pause, 4);
+    expect(barWidth()).toBeGreaterThanOrEqual(afterPress);
+    expect(test.holdTicks).toBe(4);
+  });
+
   it('forgets the presses once the window runs out', () => {
     const s = new Session();
     s.openOptions();

@@ -52,17 +52,19 @@ export const FRAME_BUCKET_EDGES_MS: readonly number[] = [12, 15, 17, 19, 21, 25,
  * The histogram bucket of one rAF delta.
  *
  * @param deltaMs - the delta in ms.
- * @returns a bucket index `0 … FRAME_BUCKET_EDGES_MS.length`.
+ * @returns a bucket index `0 … FRAME_BUCKET_EDGES_MS.length` (a non-finite or negative delta → 0).
  *
  * @example
  * ```ts
- * frameBucket(16.5); // 3 — a 60 Hz frame
+ * frameBucket(16.5); // 2 — a 60 Hz frame (the 15 … 17 ms bucket)
  * frameBucket(33.4); // 7 — a really dropped frame
  * ```
  */
 export function frameBucket(deltaMs: number): number {
   for (let i = 0; i < FRAME_BUCKET_EDGES_MS.length; i++) {
-    if (deltaMs < (FRAME_BUCKET_EDGES_MS[i] as number)) return i;
+    // Negated `>=` rather than `<`: identical for a real delta, and it sends `NaN` to bucket 0
+    // instead of the "dropped frame" overflow bucket every comparison falls out of.
+    if (!(deltaMs >= (FRAME_BUCKET_EDGES_MS[i] as number))) return i;
   }
   return FRAME_BUCKET_EDGES_MS.length;
 }

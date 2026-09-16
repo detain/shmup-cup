@@ -47,6 +47,7 @@ import {
   type ShellOptions,
 } from '../../src/boot/index.js';
 import type { DebugToolsFactory, DebugToolsHost } from '../../src/debug/index.js';
+import { VSYNC_LOCK_MAX_HZ, VSYNC_LOCK_MIN_HZ } from '../../src/frame-loop/index.js';
 import type { BootOverlay } from '../../src/error-screen/index.js';
 import type { LoadableImage } from '../../src/loader/index.js';
 import { FLIGHT_SPRITES } from '../../src/flight/index.js';
@@ -1670,6 +1671,82 @@ describe('shell/boot display options and render interpolation (M2-08)', () => {
     const off = await boot({ interpolation: 'off' }).promise;
     for (let i = 0; i < 40; i++) win.frame((now += 1000 / 144));
     expect(off.renderer.interpolation).toBe(false);
+  });
+});
+
+describe('shell/boot frame pacing — the vsync lock (M3-02b)', () => {
+  it('locks one tick per frame once the probe reads a fixed ~60 Hz display (auto)', async () => {
+    const shell = await boot().promise;
+    expect(shell.game.vsyncLock).toBe(false); // nothing measured yet
+    let now = 1000;
+    for (let i = 0; i < 40; i++) win.frame((now += 1000 / 60));
+    expect(shell.refresh.hz).toBeGreaterThanOrEqual(VSYNC_LOCK_MIN_HZ);
+    expect(shell.refresh.hz).toBeLessThanOrEqual(VSYNC_LOCK_MAX_HZ);
+    expect(shell.game.vsyncLock).toBe(true);
+    // A 120 Hz display shows more than one frame per tick: the lock comes off again.
+    for (let i = 0; i < 60; i++) win.frame((now += 1000 / 120));
+    expect(shell.game.vsyncLock).toBe(false);
+    // …and a 50 Hz panel is below the band, so the free-running accumulator stays.
+    for (let i = 0; i < 60; i++) win.frame((now += 1000 / 50));
+    expect(shell.refresh.hz).toBeLessThan(VSYNC_LOCK_MIN_HZ);
+    expect(shell.game.vsyncLock).toBe(false);
+    shell.stop();
+  });
+
+  it('runs one tick per frame through the M7’s rAF jitter while locked', async () => {
+    const shell = await boot({ framePacing: 'lock' }).promise;
+    expect(shell.game.vsyncLock).toBe(true);
+    let now = 1000;
+    const before = shell.game.state.tick;
+    win.frame(now); // the first frame only records the clock
+    // A long frame paired with a short one, the measured shape: every frame runs exactly one tick.
+    for (let i = 0; i < 60; i++) win.frame((now += i % 2 === 0 ? 21.3 : 12.1));
+    expect(shell.game.state.tick - before).toBe(60);
+    shell.stop();
+  });
+
+  it("keeps the lock 'lock' or 'free' whatever the display does", async () => {
+    const locked = await boot({ framePacing: 'lock' }).promise;
+    let now = 1000;
+    for (let i = 0; i < 40; i++) win.frame((now += 1000 / 144));
+    expect(locked.refresh.hz).toBeGreaterThan(VSYNC_LOCK_MAX_HZ);
+    expect(locked.game.vsyncLock).toBe(true);
+    locked.stop();
+
+    const free = await boot({ framePacing: 'free' }).promise;
+    for (let i = 0; i < 40; i++) win.frame((now += 1000 / 60));
+    expect(free.refresh.hz).toBeGreaterThanOrEqual(VSYNC_LOCK_MIN_HZ);
+    expect(free.game.vsyncLock).toBe(false);
+    free.stop();
+  });
+
+  it('hands the frame’s tick count to the debug tools (the TPF counters)', async () => {
+    const counts: number[] = [];
+    const shell = await boot({
+      framePacing: 'lock',
+      debugTools: ((_host: DebugToolsHost) => ({
+        controls: null as never,
+        overlay: null as never,
+        counters: null as never,
+        api: null as never,
+        unlocked: true,
+        handleKey: () => false,
+        beginFrame: () => {},
+        endTicks: (ticks?: number) => {
+          counts.push(ticks ?? -1);
+        },
+        beforeRender: () => {},
+        afterRender: () => {},
+        destroy: () => {},
+      })) as unknown as DebugToolsFactory,
+    }).promise;
+    let now = 1000;
+    win.frame(now);
+    for (let i = 0; i < 5; i++) win.frame((now += 1000 / 60));
+    expect(counts.length).toBeGreaterThan(5);
+    expect(counts[0]).toBe(0); // the first frame only records the clock
+    expect(counts.slice(1, 6)).toEqual([1, 1, 1, 1, 1]);
+    shell.stop();
   });
 });
 

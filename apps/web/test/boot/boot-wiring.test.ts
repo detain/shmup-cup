@@ -578,6 +578,41 @@ describe('web/boot bootWebApp wiring', () => {
     expect(app.audio.state).toBe('running');
   });
 
+  it('suspends on window blur and resumes on focus, once for a blur + hidden pair (M3-02b)', async () => {
+    const { app } = await boot();
+    win.key('keydown', 'ArrowRight'); // the gesture that unlocks audio
+    win.key('keyup', 'ArrowRight');
+    await flush();
+    win.frame(0);
+    win.frame(STEP);
+    expect(app.game.state.tick).toBe(1);
+    expect(app.audio.state).toBe('running');
+
+    // A system overlay (the TV's Home bar, a pad's PS button, another window): `blur` only.
+    win.dispatchEvent(new Event('blur'));
+    await flush();
+    expect(app.game.state.suspended).toBe(true);
+    expect(app.audio.state).toBe('suspended');
+    win.frame(10_000);
+    expect(app.game.state.tick).toBe(1); // no ticks while suspended
+
+    // The page hides on top of the blur: still one suspend, and being visible again is not enough.
+    win.setVisibility('hidden');
+    await flush();
+    win.setVisibility('visible');
+    await flush();
+    expect(app.game.state.suspended).toBe(true);
+
+    win.dispatchEvent(new Event('focus'));
+    await flush();
+    expect(app.game.state.suspended).toBe(false);
+    expect(app.audio.state).toBe('running');
+    // No catch-up burst: the loop was reset with the resume.
+    win.frame(20_000);
+    win.frame(20_000 + STEP);
+    expect(app.game.state.tick).toBe(2);
+  });
+
   it('forwards resizes to the renderer', async () => {
     await boot();
     win.innerWidth = 1920;

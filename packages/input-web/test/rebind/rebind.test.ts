@@ -389,6 +389,38 @@ describe('input-web/rebind parseInputProfiles validation', () => {
     ]);
   });
 
+  it('rejects the single-key model on a gamepad profile (M3-02b)', () => {
+    const pad = padEntry();
+    pad['singleKey'] = true;
+    const { issues, profiles: parsed } = parseInputProfiles(file(remoteEntry(), pad));
+    expect(issues).toEqual([
+      {
+        path: 'profiles[1].singleKey',
+        message: 'must be false for a gamepad profile (gamepads are polled, not event-driven)',
+      },
+    ]);
+    // Only the offending profile is dropped; the remote beside it still loads.
+    expect(parsed.map((profile) => profile.device)).toEqual(['remote']);
+    // `false` on a pad, and the field left out entirely, are both fine.
+    const off = padEntry();
+    off['singleKey'] = false;
+    expect(parseInputProfiles(file(remoteEntry(), off)).issues).toEqual([]);
+    expect(parseInputProfiles(file(remoteEntry(), padEntry())).issues).toEqual([]);
+  });
+
+  it('defaults singleKey to false when the file leaves it out, and rejects a non-boolean', () => {
+    const remote = remoteEntry();
+    delete remote['singleKey'];
+    const { profiles: parsed, issues } = parseInputProfiles(file(remote));
+    expect(issues).toEqual([]);
+    expect(parsed[0]?.singleKey).toBe(false);
+    const bad = remoteEntry();
+    bad['singleKey'] = 'yes';
+    expect(parseInputProfiles(file(bad)).issues).toEqual([
+      { path: 'profiles[0].singleKey', message: 'must be a boolean' },
+    ]);
+  });
+
   it('never registers system keys, and only remote profiles register at all', () => {
     const remote = remoteEntry();
     remote['register'] = ['MediaPlayPause', 'Exit', 'VolumeUp'];

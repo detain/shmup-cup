@@ -398,13 +398,15 @@ export const RAF_BUCKETS = RAF_BUCKET_EDGES_MS.length + 1;
  *
  * @example
  * ```ts
- * rafDeltaBucket(16.5); // → 3 (15 … 17 ms — a 60 Hz frame)
+ * rafDeltaBucket(16.5); // → 2 (15 … 17 ms — a 60 Hz frame)
  * rafDeltaBucket(33.4); // → 7 (a really dropped frame)
  * ```
  */
 export function rafDeltaBucket(ms: number): number {
   for (let i = 0; i < RAF_BUCKET_EDGES_MS.length; i++) {
-    if (ms < RAF_BUCKET_EDGES_MS[i]) return i;
+    // Negated `>=` rather than `<`: identical for a real delta, and it sends `NaN` to bucket 0
+    // (as documented) instead of the "dropped frame" overflow bucket every comparison falls out of.
+    if (!(ms >= RAF_BUCKET_EDGES_MS[i])) return i;
   }
   return RAF_BUCKET_EDGES_MS.length;
 }

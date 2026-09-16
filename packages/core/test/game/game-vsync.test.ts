@@ -56,6 +56,91 @@ describe('core/game vsync lock', () => {
     expect(game.state.tick - slowed).toBe(3);
   });
 
+  it('is suspended while frame advance steps, and restored when it ends', () => {
+    const game = createGame(createHeadlessPlatform());
+    game.setVsyncLock(true);
+    let t = 0;
+    game.frame(t);
+    t += STEP;
+    expect(game.frame(t)).toBe(1);
+    game.debug.frameAdvance = true;
+    // Frame advance runs only what was requested, however many frames arrive.
+    for (let i = 0; i < 5; i++) {
+      t += STEP;
+      expect(game.frame(t)).toBe(0);
+    }
+    game.requestStep(3);
+    t += STEP;
+    expect(game.frame(t)).toBe(3);
+    expect(game.vsyncLock).toBe(true); // still asked for
+    game.debug.frameAdvance = false;
+    const stepped = game.state.tick;
+    // Back on the lock: one tick per frame (the first frame after the switch resets the clock).
+    for (let i = 0; i < 4; i++) {
+      t += STEP;
+      game.frame(t);
+    }
+    expect(game.state.tick - stepped).toBe(3);
+  });
+
+  it('keeps the lock off while it was never asked for, whatever the timing mode does', () => {
+    const game = createGame(createHeadlessPlatform());
+    expect(game.vsyncLock).toBe(false);
+    let t = 0;
+    game.frame(t);
+    game.debug.slowMo = 2;
+    for (let i = 0; i < 8; i++) {
+      t += STEP;
+      game.frame(t);
+    }
+    game.debug.slowMo = 1;
+    for (let i = 0; i < 4; i++) {
+      t += STEP;
+      game.frame(t);
+    }
+    expect(game.vsyncLock).toBe(false);
+  });
+
+  it('is idempotent: asking for the lock twice changes nothing', () => {
+    const game = createGame(createHeadlessPlatform());
+    game.setVsyncLock(true);
+    game.setVsyncLock(true);
+    let t = 0;
+    game.frame(t);
+    for (let i = 0; i < 5; i++) {
+      t += STEP;
+      expect(game.frame(t)).toBe(1);
+    }
+    game.setVsyncLock(false);
+    game.setVsyncLock(false);
+    expect(game.vsyncLock).toBe(false);
+    // Unlocked, a 120 Hz clock runs a tick every other frame again.
+    const before = game.state.tick;
+    for (let i = 0; i < 10; i++) {
+      t += STEP / 2;
+      game.frame(t);
+    }
+    expect(game.state.tick - before).toBeLessThan(10);
+  });
+
+  it('changes no tick’s content: the same frames give the same state hash locked or not', () => {
+    // Presentation only (plan M3-02b): replays and goldens must be unaffected.
+    const run = (lock: boolean): number => {
+      const game = createGame(createHeadlessPlatform(), { seed: 12 });
+      game.setVsyncLock(lock);
+      let t = 1000;
+      game.frame(t);
+      // 300 frames of jittery 60 Hz: locked, every frame is one tick; free-running, the ±1 ms
+      // snap makes it one tick per frame too — the deltas are within the tolerance.
+      for (let i = 0; i < 300; i++) {
+        t += i % 2 === 0 ? STEP + 0.6 : STEP - 0.6;
+        game.frame(t);
+      }
+      return game.state.tick;
+    };
+    expect(run(true)).toBe(run(false));
+  });
+
   it('runs nothing while suspended and never bursts on resume', () => {
     const platform = createHeadlessPlatform();
     const game = createGame(platform);

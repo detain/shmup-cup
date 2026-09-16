@@ -8,6 +8,7 @@
  * Type-aware rules are switched off for these virtual files (they are not on disk, so the
  * TypeScript project service cannot load them); every rule checked here is syntactic.
  */
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ESLint } from 'eslint';
@@ -194,6 +195,11 @@ describe('eslint: runtime code is limited to Chromium 69 (Tizen 5.5)', () => {
       'export const a = import.meta.url;',
       'no-restricted-syntax',
     ],
+    [
+      'event.timeStamp (whole seconds on Tizen 5.5 — M3-02b)',
+      'export function f(e: Event): number { return e.timeStamp; }',
+      'no-restricted-syntax',
+    ],
     ['queueMicrotask (Chrome 71)', 'queueMicrotask(() => {});', 'compat/compat'],
     ['String.matchAll (Chrome 73)', "export const a = 'ab'.matchAll(/a/g);", 'compat/compat'],
     ['WeakRef (Chrome 84)', 'export const a = new WeakRef({});', 'compat/compat'],
@@ -206,6 +212,61 @@ describe('eslint: runtime code is limited to Chromium 69 (Tizen 5.5)', () => {
       'no-restricted-syntax',
     );
     expect(await rulesFor(TIZEN, 'queueMicrotask(() => {});')).toContain('compat/compat');
+  });
+
+  it('no shipped runtime source reads .timeStamp at all (M3-02b, fact 9)', () => {
+    // A belt-and-braces scan beside the rule: `apps/web/src` switches `no-restricted-syntax` off
+    // wholesale (it may use `import.meta`), so the lint alone would not catch a `.timeStamp` there
+    // — and apps/web is the code Electron renders. The scan covers every runtime source tree.
+    const roots = [
+      'packages/core/src',
+      'packages/audio-web/src',
+      'packages/input-web/src',
+      'packages/render-pixi/src',
+      'packages/shell/src',
+      'apps/web/src',
+      'apps/tizen/src',
+      'apps/electron/src',
+    ];
+    const offenders: string[] = [];
+    for (const relative of roots) {
+      const root = join(repo, relative);
+      const stack = [root];
+      while (stack.length > 0) {
+        const dir = stack.pop() as string;
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          const path = join(dir, entry.name);
+          if (entry.isDirectory()) stack.push(path);
+          else if (
+            /\.(ts|cts|mts)$/.test(entry.name) &&
+            readFileSync(path, 'utf8').includes('.timeStamp')
+          ) {
+            offenders.push(path.slice(repo.length + 1));
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('forbids .timeStamp in core and in the Tizen app too (M3-02b, fact 9)', async () => {
+    // Tizen 5.5 advances `event.timeStamp` in whole seconds, so anything derived from it — hold
+    // lengths, repeat intervals, bounce windows — is quantised to 0 / 1000 / 2000 ms. Handler time
+    // (`performance.now()`) or a tick count is the only honest clock.
+    const uses = [
+      'export function f(e: Event): number { return e.timeStamp; }',
+      'export function g(e: { timeStamp: number }): number { return e.timeStamp - 1; }',
+      'export const h = (e: Event) => e.timeStamp > 0;',
+    ];
+    for (const code of uses) {
+      expect(await rulesFor(CORE, code), code).toContain('no-restricted-syntax');
+      expect(await rulesFor(RUNTIME, code), code).toContain('no-restricted-syntax');
+      expect(await rulesFor(TIZEN, code), code).toContain('no-restricted-syntax');
+    }
+    // A local named `timeStamp` is not a member read and stays allowed.
+    expect(await rulesFor(RUNTIME, 'export const timeStamp = 1;')).not.toContain(
+      'no-restricted-syntax',
+    );
   });
 
   it('accepts APIs Chrome 69 has, and globalThis (polyfilled in the Tizen bundle)', async () => {

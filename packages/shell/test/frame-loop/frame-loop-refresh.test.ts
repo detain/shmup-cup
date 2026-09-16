@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 import {
   INTERPOLATION_MIN_HZ,
   REFRESH_SAMPLES,
+  VSYNC_LOCK_MAX_HZ,
+  VSYNC_LOCK_MIN_HZ,
   createRefreshMonitor,
 } from '../../src/frame-loop/index.js';
 
@@ -59,6 +61,31 @@ describe('shell/frame-loop refresh monitor', () => {
       expect(monitor.hz).toBeGreaterThan(hz * 0.93);
       expect(monitor.hz).toBeLessThan(hz * 1.07);
       expect(monitor.hz > INTERPOLATION_MIN_HZ).toBe(fast);
+    }
+  });
+
+  it('brackets 60 Hz with the vsync-lock band, below the interpolation threshold (M3-02b)', () => {
+    expect(VSYNC_LOCK_MIN_HZ).toBeLessThan(60);
+    expect(VSYNC_LOCK_MAX_HZ).toBeGreaterThan(60);
+    // Above the band the display shows more than one frame per tick; interpolation takes over
+    // there, and the two rules never both apply to the same reading.
+    expect(VSYNC_LOCK_MAX_HZ).toBeLessThanOrEqual(INTERPOLATION_MIN_HZ);
+  });
+
+  it('reads the M7’s jittery 60 Hz inside the lock band and 120 / 144 Hz outside it', () => {
+    for (const [hz, inBand] of [
+      [50, false],
+      [60, true],
+      [75, false],
+      [120, false],
+      [144, false],
+    ] as const) {
+      const monitor = createRefreshMonitor();
+      // The M7's shape: a quarter of the deltas well over 20 ms, the rest short enough to make up.
+      feed(monitor, 0, 200, 1000 / hz, hz === 60 ? 6.5 : 0.8);
+      const locked =
+        monitor.ready && monitor.hz >= VSYNC_LOCK_MIN_HZ && monitor.hz <= VSYNC_LOCK_MAX_HZ;
+      expect(locked, `${String(hz)} Hz`).toBe(inBand);
     }
   });
 

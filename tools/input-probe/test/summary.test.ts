@@ -107,6 +107,40 @@ describe('buildVerdicts', () => {
     expect(buildVerdicts(yes, keyName, seen).diagonals).toBe('YES');
   });
 
+  it('needs the keys themselves to have been seen before it says "not delivered" (M3-02b)', () => {
+    const single = () =>
+      withKeys((k) => {
+        k.maxSimultaneous = 1;
+        k.longestHoldMs = 4200;
+      });
+    // One arrow only: a diagonal was never even attempted, so "not tested" is the honest answer.
+    expect(buildVerdicts(single(), keyName, [KeyCode.Left]).diagonals).toBe('not tested');
+    expect(buildVerdicts(single(), keyName, []).diagonals).toBe('not tested');
+    // Two arrows: the attempt happened and the second key produced nothing.
+    expect(buildVerdicts(single(), keyName, [KeyCode.Left, KeyCode.Up]).diagonals).toBe('NO — not delivered');
+    // OK-while-arrow needs one arrow and OK; an arrow alone is not enough.
+    expect(buildVerdicts(single(), keyName, [KeyCode.Left]).okWhileArrowHeld).toBe('not tested');
+    expect(buildVerdicts(single(), keyName, [KeyCode.Enter]).okWhileArrowHeld).toBe('not tested');
+    expect(buildVerdicts(single(), keyName, [KeyCode.Left, KeyCode.Enter]).okWhileArrowHeld).toBe('NO — not delivered');
+    // Default: no seen list at all behaves like an empty one (the old two-argument call).
+    expect(buildVerdicts(single(), keyName).diagonals).toBe('not tested');
+  });
+
+  it('keeps a measured chord verdict over the single-key inference', () => {
+    for (const [verdict, text] of [
+      ['kept', 'arrow kept'],
+      ['blip', 'arrow kept (release blip)'],
+      ['dropped', 'arrow dropped'],
+    ] as const) {
+      const snap = withKeys((k) => {
+        k.maxSimultaneous = 1;
+        k.longestHoldMs = 4200;
+        k.chord.verdict = verdict;
+      });
+      expect(buildVerdicts(snap, keyName, [KeyCode.Left, KeyCode.Enter]).okWhileArrowHeld).toBe(text);
+    }
+  });
+
   it.each([
     ['clean', 'clean (repeat flag)'],
     ['noflag', 'keydown without repeat flag'],
@@ -267,6 +301,51 @@ describe('buildReportParts', () => {
     expect(stats['gamepads']).toEqual([{ index: 0 }]);
     expect(stats['keys']).toBe(snap.keys);
     expect(JSON.parse(JSON.stringify(parts))).toMatchObject({ verdicts: { diagonals: 'not tested' } });
+  });
+
+  it('hands the seen keys to the verdicts, so a report says "not delivered" too (M3-02b)', () => {
+    // The same long single-key hold the on-screen panel infers from must reach the JSON report.
+    const tr = new KeyTracker();
+    tr.keyDown(KeyCode.Left, false, 0);
+    tr.keyDown(KeyCode.Up, false, 100); // swallowed on the hardware; the tracker still sees it
+    tr.keyUp(KeyCode.Up, 100);
+    tr.keyUp(KeyCode.Left, 5000);
+    tr.keyDown(KeyCode.Enter, false, 5200);
+    tr.keyUp(KeyCode.Enter, 5300);
+    const snap = snapshotFrom(tr, 6000);
+    snap.keys.maxSimultaneous = 1; // what the M7 reports: never two keys down at once
+    const parts = buildReportParts({
+      env: null,
+      snapshot: snap,
+      keyName,
+      seen: tr.seenKeys(),
+      registered: [],
+      supportedKeys: 0,
+      checklist: new Checklist().items(),
+      gamepads: [],
+    });
+    expect(parts.verdicts.diagonals).toBe('NO — not delivered');
+    expect(parts.verdicts.okWhileArrowHeld).toBe('NO — not delivered');
+  });
+
+  it('carries the raw rAF-delta histogram into the report (M3-02b)', () => {
+    const frames = new FrameStats(16);
+    for (const d of [16.7, 16.7, 21.3, 33.4]) frames.push(d);
+    const parts = buildReportParts({
+      env: null,
+      snapshot: snapshotFrom(new KeyTracker(), 100, frames),
+      keyName,
+      seen: [],
+      registered: [],
+      supportedKeys: 0,
+      checklist: new Checklist().items(),
+      gamepads: [],
+    });
+    const stats = parts.stats as Record<string, unknown>;
+    const summary = stats['frames'] as { histogram: number[] };
+    expect(summary.histogram.reduce((sum, n) => sum + n, 0)).toBe(4);
+    // It survives the JSON round trip the log server reads.
+    expect(JSON.parse(JSON.stringify(parts)).stats.frames.histogram).toEqual(summary.histogram);
   });
 });
 

@@ -158,6 +158,31 @@ describe('FrameStats histogram (M3-02b)', () => {
     expect(h[FRAME_BUCKET_EDGES_MS.length]).toBe(1); // 60 ms
   });
 
+  it('sends a non-finite or negative delta to bucket 0, never to the dropped-frame bucket', () => {
+    // A `<` chain falls out of every comparison for NaN and would have called it a dropped frame.
+    expect(frameBucket(NaN)).toBe(0);
+    expect(frameBucket(-1)).toBe(0);
+    expect(frameBucket(-Infinity)).toBe(0);
+    expect(frameBucket(0)).toBe(0);
+    expect(frameBucket(Infinity)).toBe(FRAME_BUCKET_EDGES_MS.length);
+  });
+
+  it('puts a delta on an edge into the bucket above it', () => {
+    FRAME_BUCKET_EDGES_MS.forEach((edge, i) => {
+      expect(frameBucket((edge as number) - 0.001), `${edge} - e`).toBe(i);
+      expect(frameBucket(edge as number), `${edge}`).toBe(i + 1);
+    });
+  });
+
+  it('counts only the deltas the ring still holds once it has wrapped', () => {
+    const f = new FrameStats(4);
+    for (const d of [40, 40, 40, 40, 16.7, 16.7, 16.7, 16.7]) f.push(d);
+    const s = f.summary();
+    expect(s.frames).toBe(8);
+    expect(s.histogram.reduce((sum, n) => sum + n, 0)).toBe(4);
+    expect(s.histogram[2]).toBe(4);
+  });
+
   it('leaves pauses out (they never enter the ring)', () => {
     const f = new FrameStats(8);
     f.push(16.7);
@@ -189,6 +214,13 @@ describe('chooseEventTime', () => {
     expect(chosen.map((c) => c.t)).toEqual(handler);
     // The delays are the huge, wildly varying values that give the coarse clock away.
     expect(chosen.map((c) => Math.round(c.delay))).toEqual([210, 262, 334, 40]);
+  });
+
+  it('never returns anything but the handler clock, whatever the stamp is', () => {
+    const stamps = [0, -1, NaN, Infinity, -Infinity, 1, 999.5, 1000, 1004.9, 1.7e12, -4000];
+    for (const stamp of stamps) {
+      expect(chooseEventTime(stamp, 1000).t, String(stamp)).toBe(1000);
+    }
   });
 
   it.each([
