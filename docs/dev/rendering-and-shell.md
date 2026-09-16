@@ -1126,7 +1126,18 @@ of a row's windows and reading the percentile off the total gives the percentile
 frames*, which is what `pnpm bench` reports too, so the on-device numbers and §11.3's headless ones
 are the same statistic — the same *statistic*, not a comparable *magnitude*, because the bench runs
 under SwiftShader ([above](#what-this-bench-can-and-cannot-tell-you)): what transfers from it is its
-counted quantities and its in-run ratios, never its milliseconds. The histograms cost the frame path nothing: they are folded out of the
+counted quantities and its in-run ratios, never its milliseconds.
+
+**So what may be compared with what.** A captured row's **counted quantities** — `DRAW`, `REB`, `RT`
+and the heap delta — are the same things counted the same way as the bench's, and may be compared
+with §11.3 directly; a regression in any of them shows up in both places. A captured row's
+**milliseconds** are only ever comparable with *other rows captured on a monitor*: CRT `off` against
+`full` over the same practice section, WebGL 1 against WebGL 2, monitor A against monitor B, this
+build against the last one. Those A/Bs are what the §4 table is made of, and they are exactly the
+comparisons the capture is good at — both sides measured through the same GPU, the same driver and
+the same frame loop.
+
+The histograms cost the frame path nothing: they are folded out of the
 already-recorded per-frame series when the window closes, on the report timer. Steps are 0.05 ms for
 tick and render times, 0.25 ms for frame times and 1 for draw calls; a window whose values are
 unusually spread has its step doubled until it fits 48 buckets, which also bounds a payload's size.

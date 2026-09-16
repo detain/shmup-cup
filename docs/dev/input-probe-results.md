@@ -194,7 +194,11 @@ These are Mali-G51 milliseconds; the bench runs Chromium + SwiftShader on a desk
 transfers from it is its **counted** quantities (draw calls, pooled render-target bytes, structure
 rebuilds, heap delta) and its **in-run ratios**, never its milliseconds — as
 [rendering-and-shell.md § What this bench can and cannot tell you](rendering-and-shell.md#what-this-bench-can-and-cannot-tell-you)
-and §11.3's own preamble say. `min` and `max` are the single best and worst frames of the row. A
+and §11.3's own preamble say. **So: compare a counted figure with §11.3 freely; compare a
+millisecond only with another millisecond measured on a monitor** — CRT `off` against `full` over
+the same practice section, WebGL 1 against WebGL 2, monitor A against monitor B, this build against
+the last. Those are the A/Bs the §4 table is made of, and both sides of each go through the same
+GPU, driver and frame loop. `min` and `max` are the single best and worst frames of the row. A
 figure the analyzer prints with a trailing `~` could not be pooled (a session captured before the
 histograms existed): it is the median of the windows' own percentiles, understates the tail, and is
 not even the same statistic as §11.3's.

@@ -865,6 +865,34 @@ M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-res
     [results](docs/dev/input-probe-results.md#11-render-profile-m3-02c) ·
     [the review behind it](docs/dev/render-performance-review.md)
 
+- **The render profile records itself** (M3-02f) — the measurement table above used to mean reading
+  six figures off a moving overlay and typing them into a document. Now the game captures them.
+  - **A guided capture in the dev build.** Start the input probe's log server on the desktop
+    (`npm run log-server` — one receiver for both senders, the probe's `ip-…` sessions and the
+    game's `rp-…` ones), build with `VITE_REPORT_URL=http://<desktop>:8787`, and an on-screen
+    checklist walks the review's M1–M8 table: each line says where to fly and ticks itself when
+    enough of the right play has been recorded. M8 (the 240 fps latency video) is shown as manual
+    and never ticks, because nothing on the device can observe it.
+  - **It does not perturb what it measures.** The frame path writes into preallocated typed arrays
+    only — the frame hands its numbers over through a `Float64Array` inbox, so no fractional value
+    is ever boxed as a call argument — nothing is sent on a frame boundary, and every window
+    records how many of its frames a POST was still outstanding during, so a spike the sender
+    caused can be excluded rather than recorded as a render cost. The checklist is a plain `<div>`
+    redrawn once every three seconds, so it costs the renderer nothing at all.
+  - **Distributions, not readings.** Each three-second window carries min / median / p95 / max of
+    the frame, tick, render and draw-call series *and* a quantized histogram of each, so
+    `results/analyze-render.mjs` can sum a row's windows and quote a **true pooled p95** instead of
+    a median of the windows' p95s. That is the same statistic `pnpm bench` reports — the same
+    statistic, **not a comparable magnitude**: the bench runs under SwiftShader, so compare counted
+    quantities with it freely and milliseconds only against your own other runs on a monitor.
+  - **Dev builds only**, behind the same gate as the rest of the debug tools; the build-output
+    tests assert none of it reaches a release bundle, and a build without `VITE_REPORT_URL` starts
+    no timer, no listener and no panel.
+  - Docs: [the owner's recipe](docs/client/debug-tools.md#the-guided-capture-preferred) ·
+    [how it works](docs/dev/rendering-and-shell.md#6-automated-capture-the-guided-checklist) ·
+    [the tables it fills](docs/dev/input-probe-results.md#11-render-profile-m3-02c) ·
+    [the log server](docs/dev/input-probe.md)
+
 
 ### Hardware spike
 
@@ -1079,8 +1107,9 @@ transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zo
 extras: the Mode-7 floor and the dimension stage, the CRT pass, the ultra-wide and 4:3 aspect
 modes, authentic slowdown, graze, the death-bomb window, the black-hole bomb, the P2 bosses and the
 final zone's escape sequence) and M3-02b (remote & hardware tuning from the input-probe results) are
-done, and **M3-02c** (render profiling) and **M3-02d** (the CRT and Mode-7 effects folded into
-their draw passes, a corrected memory estimator and a boot warm-up frame) with them; next are
+done, and **M3-02c** (render profiling), **M3-02d** (the CRT and Mode-7 effects folded into
+their draw passes, a corrected memory estimator and a boot warm-up frame) and **M3-02f** (the
+guided render capture the dev build streams to the log server) with them; next are
 M3-02e (the per-frame scene-graph rebuild —
 [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03. Every
 simulation change re-blesses the golden replays in the same

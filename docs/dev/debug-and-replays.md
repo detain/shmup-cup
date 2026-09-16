@@ -30,7 +30,8 @@ in [../client/debug-tools.md](../client/debug-tools.md).
 | Draw-call counter | `@shmup/render-pixi` `renderer` (`countDrawCalls`, `drawCalls`) | presentation |
 | Keys, TV unlock, per-frame timing, `window.__shmupDebug` | `@shmup/shell` `debug` (a module the plan did not name — timing and keys are host work) | the browser host |
 | Remote number keys, the TV's unlock callback | `apps/tizen` `boot` (`tizenDebugTools`, `DEBUG_REMOTE_KEYS`) | the TV app |
-| `__SHMUP_DEV__`, `__SHMUP_BUILD__` | `vite.shared.ts` `shmupBuildInfo()`, `types/build-info.d.ts` | the app builds |
+| `__SHMUP_DEV__`, `__SHMUP_BUILD__`, `__SHMUP_REPORT_URL__` | `vite.shared.ts` `shmupBuildInfo()`, `types/build-info.d.ts` | the app builds |
+| The guided render capture (M3-02f) | `@shmup/shell` `telemetry` (imported only by `shell/debug`), `tools/input-probe/server/log-server.mjs`, `tools/input-probe/results/analyze-render.mjs` | dev / test builds given `VITE_REPORT_URL` |
 | Golden replays | `test/golden/` (`golden.ts`, `golden.test.ts`, `*.replay.json`), `scripts/golden-update.mjs` | `pnpm test`, `pnpm golden:update` |
 | Stress benchmark | `test/bench/` (`stress.perf.ts`, own `vitest.config.ts`; since M2-18 also `zones.perf.ts` and `soak.perf.ts`) | `pnpm bench`, CI |
 | Cross-engine determinism page (M2-18) | `@shmup/shell` `determinism`, `apps/web` `main.ts` (`?determinism`, dev / test builds), `test/e2e/determinism.spec.ts` | `pnpm test:e2e` (Chromium and Firefox) |
@@ -40,13 +41,14 @@ in [../client/debug-tools.md](../client/debug-tools.md).
 ## Release builds and dev / test builds
 
 The debug tools must never reach a player's TV, yet the e2e suite and the on-device checks need
-them. Two Vite defines decide, both from `shmupBuildInfo()` in `vite.shared.ts` (both apps list
+them. Three Vite defines decide, all from `shmupBuildInfo()` in `vite.shared.ts` (both apps list
 the plugin; types in `types/build-info.d.ts`, included by the apps' `tsconfig.json`):
 
 | Define | Value |
 |---|---|
 | `__SHMUP_DEV__` | `true` for the dev server (`pnpm dev`) and for `vite build --mode development` / `--mode test` (`DEV_BUILD_MODES`, `isDevBuild(env)`); `false` for `vite build` (mode `production`) |
 | `__SHMUP_BUILD__` | `buildId()`: the `SHMUP_BUILD_ID` environment variable when set, else the short git SHA of `HEAD` (7 characters, `+` appended when tracked files have uncommitted changes — untracked files do not count), else `'unknown'` |
+| `__SHMUP_REPORT_URL__` (M3-02f) | The `VITE_REPORT_URL` environment variable in a **dev / test** build, `''` in every release build and in a dev build that was not given one. It is the base URL of the input probe's log server, and the whole guided render capture is off while it is `''`. The variable's name is the probe's, so one `npm run log-server` and one setting serve both senders |
 
 | Command | Build | Debug tools |
 |---|---|---|
@@ -62,16 +64,25 @@ Both apps' `main.ts` do the same:
 bootWebApp(canvas, {
   contentFiles,
   assets,
-  debugTools: __SHMUP_DEV__ ? debugToolsFactory({ buildId: __SHMUP_BUILD__ }) : null,
+  debugTools: __SHMUP_DEV__
+    ? debugToolsFactory({ buildId: __SHMUP_BUILD__, reportUrl: __SHMUP_REPORT_URL__ })
+    : null,
 });
 
 // apps/tizen/src/main.ts — the remote unlock, number keys registered on unlock
 bootTizenApp(canvas, {
   contentFiles,
   assets,
-  debugTools: __SHMUP_DEV__ ? tizenDebugTools(window, __SHMUP_BUILD__) : null,
+  debugTools: __SHMUP_DEV__
+    ? tizenDebugTools(window, __SHMUP_BUILD__, canvas, __SHMUP_REPORT_URL__)
+    : null,
 });
 ```
+
+`reportUrl` is the only thing the M3-02f capture needs: anything that is not an `http(s)://` URL
+(`''` included) leaves it switched off — no timer, no listeners, no panel, no request — so a dev
+build behaves exactly as it did before unless it was pointed at a log server. The recipe is
+[rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#6-automated-capture-the-guided-checklist).
 
 The defines are read only by the entry points, so no unit test needs them. The `build:test` and
 `build:dev` bundles are the release code plus the tools (measured at M1-19: release `app.js`

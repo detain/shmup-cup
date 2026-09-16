@@ -12,6 +12,11 @@ monitor, how to open the tools, how to read the panel (on the TV with a line nam
 model and firmware), how to copy a save out for a bug report, and the checklists for the release
 and for the platform-polish build.
 
+The debug build can also **record the drawing measurements for you** and send them to a small
+program on your desktop, with an on-screen list telling you where to fly: see
+[the guided capture](#the-guided-capture-preferred). Reading the panel by hand still works and is
+what to do when no desktop is reachable.
+
 The current build is the **v1.0 release candidate (1.0.0-rc.1)**; its own checklist for the
 monitors — which uses these tools — is in
 [release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors).
@@ -332,12 +337,23 @@ which nobody can read off a moving panel.
    It prints an address like `VITE_REPORT_URL=http://10.0.0.2:8787`. Windows asks once to allow Node
    through the firewall on the **private** network — say yes, or the monitor cannot reach it.
 
-2. **Build the debug build with that address** and install it as usual:
+2. **Build the debug build with that address** and install it, exactly as in
+   [Installing the debug build on the monitor](#installing-the-debug-build-on-the-monitor) — the
+   only new thing is the first line:
 
    ```bat
    set VITE_REPORT_URL=http://10.0.0.2:8787
    pnpm --filter @shmup/tizen build:dev
+   set TIZEN_PROFILE=<your profile>
+   set TV_IP=<the monitor's IP>
+   pnpm --filter @shmup/tizen tizen:package
+   pnpm --filter @shmup/tizen tizen:install
+   pnpm --filter @shmup/tizen tizen:run
    ```
+
+   Repeat the last three lines with the other monitor's `TV_IP`. In a desktop browser the same
+   variable works with `pnpm dev`, which is the quickest way to see that the receiver is reachable
+   at all before you walk to the monitors.
 
 3. **On the monitor**, open the tools (Play/Pause, Ch▲, Ch▲, Ch▲). A list appears in the **top-right
    corner**. Play the way each line asks; a line ticks itself when enough has been recorded, and a
@@ -370,11 +386,27 @@ which nobody can read off a moving panel.
    the desktop benchmark prints — the same *statistic*, not a comparable *magnitude*. These are the
    TV's milliseconds; the benchmark runs under software WebGL, so only its counted quantities (draw
    calls, pooled render-target bytes, structure rebuilds, heap delta) and its in-run ratios carry
-   over to the panel, never its milliseconds. Use **god mode (key 2)**
-   throughout so a death never cuts a run short, and leave the outlines (3) and slow motion (6)
-   off — both change what is drawn.
+   over to the panel, never its milliseconds.
 
-Nothing of this runs in a build without that address, and none of it exists in the normal build.
+   So, when you come to read the tables:
+
+   | Figure | Compare it with |
+   |---|---|
+   | The counted ones — `DRAW`, `REB`, `RT`, the heap | The desktop benchmark's figures freely; they are the same things counted the same way |
+   | The milliseconds — `TICK`, `RENDER`, `FRAME`, `fps` | **Only your own other runs on a monitor**: CRT OFF against FULL on the same section, graphics version 1 against 2, this monitor against the other one, today's build against the last one. Never against the desktop's milliseconds |
+
+   Use **god mode (key 2)** throughout so a death never cuts a run short, and leave the outlines (3)
+   and slow motion (6) off — both change what is drawn.
+
+**If no server is reachable** — no desktop on the monitor's network, the firewall prompt was
+refused, or the build was made without `VITE_REPORT_URL` — nothing of the capture runs at all: no
+list in the corner, no sending, nothing recorded, and the game plays exactly as it otherwise would.
+Read the panel by hand instead ([below](#reading-the-panel-by-hand-fallback)). If the list *is*
+there but `fails` keeps rising, the build knows an address the monitor cannot reach: the rows are
+still ticking off your play, but nothing is being stored, so fix the address or the firewall and
+start the run again. **M8 is manual either way.**
+
+None of this exists in the normal build.
 
 ### Reading the panel by hand (fallback)
 

@@ -48,15 +48,18 @@
  * **Public API.** {@link createRenderTelemetry}, {@link RenderTelemetry},
  * {@link RenderTelemetryOptions}, {@link RenderTelemetryEnv}; the sampler
  * ({@link RenderSampler}, {@link RENDER_FRAME_SLOT}, {@link RENDER_FRAME_SLOTS},
- * {@link RENDER_WINDOW_MAX_FRAMES}, {@link RenderSample}, {@link RenderSampleContext},
- * {@link RenderSampleHistograms}, {@link RENDER_HIST_STEP}, {@link RENDER_HIST_MAX_BUCKETS}); the
+ * {@link RENDER_WINDOW_MAX_FRAMES}, {@link RENDER_TICK_BUCKETS}, {@link RenderSample},
+ * {@link RenderSampleContext}, {@link RenderSampleHistograms}, {@link RENDER_HIST_STEP},
+ * {@link RENDER_HIST_MAX_BUCKETS}); the
  * checklist ({@link RenderChecklist}, {@link RenderCheckTally}, {@link evaluateRenderChecklist},
  * {@link RenderCheckId}, {@link RenderCheckItem}, {@link RenderCheckFacts},
  * {@link RENDER_CHECK_LABELS}, {@link RENDER_CHECK_ORDER}, {@link RENDER_MANUAL_CHECKS},
- * {@link createRenderCheckFacts}); the transport ({@link RenderSampleQueue},
+ * {@link createRenderCheckFacts}, {@link DENSE_PATTERN_SECONDS}, {@link DENSE_BULLETS},
+ * {@link FRESH_LAUNCH_MS}); the transport ({@link RenderSampleQueue},
  * {@link RenderReporter}, {@link RenderReporterStatus}, {@link RenderProfilePayload},
  * {@link renderReportEndpoint}, {@link makeRenderSessionId}, {@link RENDER_PROFILE_KIND},
- * {@link RENDER_REPORT_INTERVAL_MS}, {@link MAX_QUEUED_SAMPLES}).
+ * {@link RENDER_REPORT_INTERVAL_MS}, {@link RENDER_REQUEST_TIMEOUT_MS},
+ * {@link MAX_QUEUED_SAMPLES}).
  *
  * @module
  */

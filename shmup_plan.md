@@ -4553,7 +4553,9 @@ go. Do them on **both** M7 monitors where it says so.
 
 - [x] Package and deploy the probe (cmd.exe): `cd tools\input-probe`, `npm install`, `set TIZEN_PROFILE=<profile>`,
       `set TV_IP=<ip1>,<ip2>`, `npm run package`, `npm run deploy`. Optional log server: `npm run log-server` and build
-      with `VITE_REPORT_URL=http://<desktop-ip>:8787`.
+      with `VITE_REPORT_URL=http://<desktop-ip>:8787`. *(Since **M3-02f** that one receiver also takes the game's
+      render profile — the probe's sessions are `ip-…`, the game's `rp-…`, in the same log directory. The game's
+      dev build is built with the same `VITE_REPORT_URL`; see §8.4.)*
 - [x] Run the protocol in [`docs/client/input-probe.md`](docs/client/input-probe.md) on both monitors: taps; 3-s holds
       of → and ↑; diagonal attempt; OK while holding an arrow; every extra key; 240-fps video of the flash box (~10 OK
       taps) *(open — 30 fps only)*; gamepad(s) *(one DualShock 4)*; Home and return *(monitor B)*.
@@ -4621,6 +4623,31 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
       video was 30 fps).
 - [ ] Optional: re-run the fixed probe (handler-clock timings, the `NO — not delivered` verdicts) and try Back / Ch±
       during an arrow hold, and two gamepads at once.
+
+**M3-02c / M3-02f render profiling (dev build, both monitors)** — the numbers of the review's §4 table (M1–M8) and
+[`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §11. **Do it with the guided capture**
+(M3-02f); reading the overlay by hand is the fallback for when no log server is reachable. Owner's recipe:
+[`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-guided-capture-preferred); how it works:
+[`docs/dev/rendering-and-shell.md`](docs/dev/rendering-and-shell.md#6-automated-capture-the-guided-checklist).
+
+- [ ] Desktop: `cd tools\input-probe && npm run log-server` (allow Node through the **private**-network firewall
+      when Windows asks — the probe's run needed the same), then build with `VITE_REPORT_URL=http://<desktop-ip>:8787`
+      set, package and install on **each** monitor. Each launch is its own `rp-…` session and its own JSONL file.
+- [ ] On each monitor: unlock the tools (Play/Pause, Ch+ ×3), then play the top-right checklist through — M1
+      baseline, M2 CRT off / light / full, M3 three stages, M4 a dense pattern twice, M5 60 s in one stage, M6 two
+      zones with CRT on and off, M7 Home and back. God mode (2) on; outlines (3) and slow motion (6) off. The panel's
+      last line must show `fails 0`; `queued` climbing means the monitor cannot reach the desktop.
+- [ ] **M5's A/B:** repeat the whole session with `localStorage['shmup-cup:gl'] = '2'` so there is one session per
+      WebGL version. **WebGL1 stays the shipped default** — this is a comparison, not a change.
+- [ ] **M8 is manual** and shows as `[-]`: the 240 fps input-to-photon video (still open — the first one was 30 fps).
+- [ ] Desktop: `node results/analyze-render.mjs logs/rp-<session>.jsonl` per session and paste its two tables into
+      `docs/dev/input-probe-results.md` §11, one run per monitor; copy the JSONL into
+      `tools/input-probe/results/<date>-<hardware>/` as evidence (`logs/` is git-ignored).
+- [ ] Reading the tables: compare the **counted** figures (`DRAW`, `REB`, `RT`, heap) with §11.3's `pnpm bench`
+      figures freely — the same things counted the same way. Compare **milliseconds** only against your own other
+      runs on a monitor (CRT off vs full on the same section, WebGL 1 vs 2, monitor A vs B, this build vs the last):
+      the pooled p50 / p95 are the same *statistic* as the bench's but **not a comparable magnitude**, because the
+      bench renders under SwiftShader.
 
 ### 8.5 M2 on-device checks (both monitors)
 

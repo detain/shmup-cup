@@ -216,7 +216,7 @@ function fmt1(v) {
  * Console summary of a render-telemetry payload (plan M3-02f): a header line, the guided-capture
  * checklist's progress and one line per sampling window in the batch (at most the last 8).
  *
- * @param {Record<string, any>} p - a valid payload whose `kind` is {@link RENDER_PROFILE_KIND}.
+ * @param {Record<string, any>} p - a valid payload whose `kind` is `'render-profile'`.
  * @returns {string} the summary, one item per line.
  */
 export function formatRenderSummary(p) {
