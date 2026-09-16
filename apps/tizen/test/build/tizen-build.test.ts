@@ -105,6 +105,7 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(code).not.toContain('render-profile');
     expect(code).not.toContain('RENDER CAPTURE');
     expect(code).not.toContain('data-shmup-render-telemetry');
+    expect(code).not.toContain('sendInFlightFrames');
     expect(code).not.toContain('/report');
   });
 

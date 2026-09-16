@@ -96,14 +96,14 @@ export const RENDER_PROFILE_KIND = 'render-profile';
  */
 export function formatSummary(p) {
   if (p.kind === RENDER_PROFILE_KIND) return formatRenderSummary(p);
-  const v = p.verdicts ?? {};
+  const v = p.verdicts !== null && typeof p.verdicts === 'object' ? p.verdicts : {};
   const events = Array.isArray(p.newEvents) ? p.newEvents : [];
   const lines = [
-    `[${p.session} #${p.seq}] ${events.length} new events` + (p.droppedEvents ? ` (${p.droppedEvents} dropped)` : ''),
-    `  diagonals=${v.diagonals ?? '?'} · OK+arrow=${v.okWhileArrowHeld ?? '?'} · repeat=${v.repeatStyle ?? '?'}` +
-      ` (delay ${fmt(v.repeatDelayMs)} / every ${fmt(v.repeatIntervalMs)} ms) · bounces=${v.bounces ?? '?'}`,
-    `  maxHeld=${v.maxSimultaneous ?? '?'} · longest=${fmt(v.longestHoldMs)} ms · dispatch avg ${fmt(v.dispatchDelayAvgMs)} ms` +
-      ` · frames ${fmt(v.frameMedianMs)} ms (${fmt(v.frameHz)} Hz) p95 ${fmt(v.frameP95Ms)} · hitches ${v.hitches ?? '?'}`,
+    `[${str(p.session)} #${str(p.seq)}] ${events.length} new events` + (p.droppedEvents ? ` (${str(p.droppedEvents)} dropped)` : ''),
+    `  diagonals=${str(v.diagonals ?? '?')} · OK+arrow=${str(v.okWhileArrowHeld ?? '?')} · repeat=${str(v.repeatStyle ?? '?')}` +
+      ` (delay ${fmt(v.repeatDelayMs)} / every ${fmt(v.repeatIntervalMs)} ms) · bounces=${str(v.bounces ?? '?')}`,
+    `  maxHeld=${str(v.maxSimultaneous ?? '?')} · longest=${fmt(v.longestHoldMs)} ms · dispatch avg ${fmt(v.dispatchDelayAvgMs)} ms` +
+      ` · frames ${fmt(v.frameMedianMs)} ms (${fmt(v.frameHz)} Hz) p95 ${fmt(v.frameP95Ms)} · hitches ${str(v.hitches ?? '?')}`,
   ];
   for (const e of events.slice(-12)) lines.push('    ' + formatEvent(e));
   if (events.length > 12) lines.splice(3, 0, `    … ${events.length - 12} earlier events in the JSONL file`);
@@ -121,6 +121,26 @@ function fmt(v) {
 }
 
 /**
+ * Text for any value a payload may carry, without ever throwing.
+ *
+ * @param {unknown} v - the value.
+ * @returns {string} its text, or `?` when it has none (`{"toString": 1}` is valid JSON, and
+ *   interpolating it raises `TypeError: Cannot convert object to primitive value`).
+ *
+ * @remarks
+ * Every formatter reads a payload nobody authenticated, so each interpolation of a *nested* value
+ * goes through this. The `req.on('end')` handler catches a throwing formatter as a last resort, but
+ * then the summary line — the only thing the owner sees while capturing — is lost for that POST.
+ */
+function str(v) {
+  try {
+    return String(v);
+  } catch {
+    return '?';
+  }
+}
+
+/**
  * Compact text for one probe event (a server-side mirror of `formatEvent` in `src/eventLog.ts`; kept
  * separate so the server stays dependency-free and never trusts the payload's shape).
  *
@@ -132,12 +152,12 @@ function formatEvent(e) {
   const t = typeof e.t === 'number' ? e.t.toFixed(1).padStart(9) : '        ?';
   if (e.type === 'down' || e.type === 'up') {
     return (
-      `${t} ${e.type === 'down' ? 'DOWN' : 'UP  '} ${e.name ?? '?'}(${e.code ?? '?'})` +
-      (e.type === 'down' ? ` repeat=${e.repeat ? 1 : 0} ${e.kind ?? ''}` : ` held=${typeof e.heldMs === 'number' ? e.heldMs.toFixed(0) : '?'}ms`) +
+      `${t} ${e.type === 'down' ? 'DOWN' : 'UP  '} ${str(e.name ?? '?')}(${str(e.code ?? '?')})` +
+      (e.type === 'down' ? ` repeat=${e.repeat ? 1 : 0} ${str(e.kind ?? '')}` : ` held=${typeof e.heldMs === 'number' ? e.heldMs.toFixed(0) : '?'}ms`) +
       (typeof e.dt === 'number' ? ` Δ${e.dt.toFixed(1)}` : '')
     );
   }
-  return `${t} ${e.type === 'gamepad' ? 'GP' : '· '} ${e.text ?? ''}`;
+  return `${t} ${e.type === 'gamepad' ? 'GP' : '· '} ${str(e.text ?? '')}`;
 }
 
 /**
@@ -167,16 +187,16 @@ function fmtDist(d, digits = 2) {
 function formatRenderSample(s) {
   if (!s || typeof s !== 'object') return '    ' + String(s);
   const c = (s.context !== null && typeof s.context === 'object' ? s.context : null) ?? {};
-  const where = `${c.scene ?? '?'}/${c.zone ?? c.stage ?? '-'}`;
+  const where = `${str(c.scene ?? '?')}/${str(c.zone ?? c.stage ?? '-')}`;
   const secs = typeof s.durationMs === 'number' ? (s.durationMs / 1000).toFixed(1) : '?';
-  const marks = Array.isArray(s.marks) && s.marks.length > 0 ? ` · marks ${s.marks.join(',')}` : '';
-  const perturbed = s.sendInFlightFrames ? ` · ⚠ ${s.sendInFlightFrames} frames with a send in flight` : '';
+  const marks = Array.isArray(s.marks) && s.marks.length > 0 ? ` · marks ${s.marks.map(str).join(',')}` : '';
+  const perturbed = s.sendInFlightFrames ? ` · ⚠ ${str(s.sendInFlightFrames)} frames with a send in flight` : '';
   return (
-    `    #${s.seq ?? '?'} ${where} crt=${c.crtFilter ?? '?'} aspect=${c.aspect ?? '?'} gl=${c.webGLVersion ?? '?'}` +
-    ` · ${fmt1(s.fps)} fps/${secs} s (${s.frames ?? '?'} frames)` +
+    `    #${str(s.seq ?? '?')} ${where} crt=${str(c.crtFilter ?? '?')} aspect=${str(c.aspect ?? '?')} gl=${str(c.webGLVersion ?? '?')}` +
+    ` · ${fmt1(s.fps)} fps/${secs} s (${str(s.frames ?? '?')} frames)` +
     ` · TICK ${fmtDist(s.tickMs)} · RENDER ${fmtDist(s.renderMs)} · FRAME ${fmtDist(s.frameMs, 1)}` +
-    ` · DRAW ${fmtDist(s.drawCalls, 0)} · REB ${s.rebuilds ?? '?'}/${s.frames ?? '?'} · RT ${s.renderTargetKb ?? '?'} KB` +
-    ` · TPF ${Array.isArray(s.tickFrames) ? s.tickFrames.join('/') : '—'}` +
+    ` · DRAW ${fmtDist(s.drawCalls, 0)} · REB ${str(s.rebuilds ?? '?')}/${str(s.frames ?? '?')} · RT ${str(s.renderTargetKb ?? '?')} KB` +
+    ` · TPF ${Array.isArray(s.tickFrames) ? s.tickFrames.map(str).join('/') : '—'}` +
     marks +
     perturbed
   );
@@ -205,15 +225,15 @@ export function formatRenderSummary(p) {
     (i) => i !== null && typeof i === 'object',
   );
   const done = checklist.filter((i) => i.done);
-  const env = p.env ?? {};
+  const env = p.env !== null && typeof p.env === 'object' ? p.env : {};
   const lines = [
-    `[${p.session} #${p.seq}] render-profile · ${samples.length} window(s)` +
-      (p.droppedSamples ? ` (${p.droppedSamples} dropped)` : '') +
-      (env.buildId ? ` · build ${env.buildId}` : ''),
+    `[${str(p.session)} #${str(p.seq)}] render-profile · ${samples.length} window(s)` +
+      (p.droppedSamples ? ` (${str(p.droppedSamples)} dropped)` : '') +
+      (env.buildId ? ` · build ${str(env.buildId)}` : ''),
     `  checklist ${done.length}/${checklist.length}` +
-      (done.length > 0 ? ': ' + done.map((i) => i.id).join(' ') : '') +
+      (done.length > 0 ? ': ' + done.map((i) => str(i.id)).join(' ') : '') +
       (checklist.length > done.length
-        ? ' — next: ' + (checklist.find((i) => !i.done)?.label ?? '?')
+        ? ' — next: ' + str(checklist.find((i) => !i.done)?.label ?? '?')
         : ' — done'),
   ];
   for (const s of samples.slice(-8)) lines.push(formatRenderSample(s));

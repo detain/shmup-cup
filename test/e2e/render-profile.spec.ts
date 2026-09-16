@@ -38,6 +38,19 @@ interface ProfileWindow {
   };
 }
 
+/** What the M3-02f telemetry check reads from `window.__shmupDebug`. */
+interface TelemetryWindow {
+  readonly __shmupDebug: {
+    readonly telemetry: {
+      readonly enabled: boolean;
+      readonly session: string;
+      readonly status: { readonly endpoint: string | null };
+      readonly sampler: { readonly frames: number };
+      report(): unknown;
+    };
+  };
+}
+
 /** The overlay's render-profile readings. */
 interface Profile {
   /** `PixiRenderer.structureRebuilds`. */
@@ -163,6 +176,47 @@ test.describe('render profile (web test build, M3-02c)', () => {
     expect(two.statsWebGLVersion).toBe(2);
     expect(two.drawCalls).toBeGreaterThan(0);
     expect(two.rebuilds).toBeGreaterThanOrEqual(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('starts no render-telemetry capture in a build with no log server (M3-02f)', async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    await page.goto('./?scene=flight');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    // This is a test build — `__SHMUP_DEV__` is on and the debug tools exist — but it was not
+    // given `VITE_REPORT_URL`, so `createRenderTelemetry` must start nothing at all: no timer, no
+    // listeners, no panel. A dev build the owner is only playing must cost the frame nothing.
+    const capture = await page.evaluate(() => {
+      const api = (window as unknown as TelemetryWindow).__shmupDebug.telemetry;
+      return { enabled: api.enabled, session: api.session, endpoint: api.status.endpoint };
+    });
+    expect(capture.enabled).toBe(false);
+    expect(capture.endpoint).toBeNull();
+    expect(capture.session).toMatch(/^rp-/);
+    // And the guided checklist is not on the page.
+    await expect(page.locator('[data-shmup-render-telemetry]')).toHaveCount(0);
+
+    // The frame hooks still run — `commitFrame` is called on every frame either way — and they are
+    // no-ops: after 30 frames the disabled sampler has recorded nothing to report.
+    await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          let left = 30;
+          const step = (): void => {
+            if (--left <= 0) resolve(undefined);
+            else requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }),
+    );
+    const after = await page.evaluate(() => {
+      const api = (window as unknown as TelemetryWindow).__shmupDebug.telemetry;
+      return { frames: api.sampler.frames, report: api.report() };
+    });
+    expect(after.frames).toBe(0);
+    expect(after.report).toBeNull();
     expect(errors).toEqual([]);
   });
 });

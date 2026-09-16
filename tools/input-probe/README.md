@@ -256,4 +256,8 @@ POSIX-only tests of the package/deploy scripts are skipped on Windows):
   `package.mjs` / `deploy.mjs` run from a temp copy of the project against fake `tizen`/`sdb` executables.
 - **Log server** — HTTP end-to-end on 127.0.0.1 (JSONL per session, validation, 404/413, CORS, path sanitizing), for the
   probe's payloads and for a render-telemetry one (`analyzeRender.test.ts` also drives `results/analyze-render.mjs`
-  over a fixture session).
+  over a fixture session). `logServerFuzz.test.ts` throws seeded junk at both formatters and at a live server — the
+  receiver listens on the LAN and authenticates nobody, and an uncaught throw in the request handler would end the
+  process mid-capture. `analyzeRenderEdge.test.ts` covers the analyzer's edges: an empty session, one that never left
+  the title, one every window of which the sender perturbed, one recorded before the histograms existed, and windows
+  that are not the shape the sender produces.

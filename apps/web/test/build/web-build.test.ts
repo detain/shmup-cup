@@ -74,4 +74,20 @@ describe('web build output', () => {
       expect(code, name).not.toContain('data-shmup-determinism');
     }
   });
+
+  it('leaves the render-telemetry sender out of the release bundle (plan M3-02f)', () => {
+    // The guided capture is imported only by `shell/debug`, behind the same `__SHMUP_DEV__ ? … :
+    // null` gate, and `shmupBuildInfo()` defines `__SHMUP_REPORT_URL__` as `''` for a release
+    // build — so no payload kind, no checklist and no POST endpoint reaches a shipped script. The
+    // Tizen bundle has the same assertion (`apps/tizen/test/build/tizen-build.test.ts`).
+    const scripts = readdirSync(join(outDir, 'assets')).filter((name) => name.endsWith('.js'));
+    for (const name of scripts) {
+      const code = readFileSync(join(outDir, 'assets', name), 'utf8');
+      expect(code, name).not.toContain('__SHMUP_REPORT_URL__');
+      expect(code, name).not.toContain('render-profile');
+      expect(code, name).not.toContain('RENDER CAPTURE');
+      expect(code, name).not.toContain('data-shmup-render-telemetry');
+      expect(code, name).not.toContain('sendInFlightFrames');
+    }
+  });
 });

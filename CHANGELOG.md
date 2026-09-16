@@ -203,7 +203,14 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   requests go out on a timer rather than a frame boundary, and every window counts the frames a POST
   was still in flight so a sender-induced spike is excluded rather than believed. Configured by the
   new `__SHMUP_REPORT_URL__` define, `''` in every release build — the whole sender is proven absent
-  from `dist/app.js`.
+  from `dist/app.js` and from the web build's scripts.
+- Fixed (found by the M3-02f test suite): the log server's console summaries could still be thrown
+  out of by a payload that redefines `toString` — `{"toString": 1}` is valid JSON, and interpolating
+  it raises `TypeError: Cannot convert object to primitive value` — or by a `verdicts` / `env` that
+  is not an object. The request handler's catch kept the receiver alive, but the capture lost the
+  summary line the owner watches while playing. Every nested value a formatter prints now goes
+  through a total `str()`, and a seeded fuzz suite POSTs generated junk at both formatters and at a
+  live server to keep it that way.
 - The Tizen bundle is 386.8 KB gzip of its 512 KB budget (384.1 KB after M3-02c; M3-02d's +2.7 KB
   is Pixi's mesh pipeline, no longer tree-shaken out; M3-02f adds nothing — it is dev-build only).
 

@@ -237,6 +237,17 @@ export function trackLoadFloor(
  * @param sorted - Ascending samples.
  * @param q - Quantile 0…1.
  * @returns The sample (0 for no samples at all).
+ *
+ * @remarks
+ * `floor(q * n)` — the bench's own convention, shared with `test/bench/stress.perf.ts` and
+ * `test/bench/zones.perf.ts`. The on-device telemetry and its analyzers
+ * (`packages/shell/src/telemetry/index.ts`, `tools/input-probe/results/analyze.mjs` and
+ * `analyze-render.mjs`) use `floor(q * (n - 1) + 0.5)` instead: both are nearest-rank rules without
+ * interpolation and they never differ by more than one sample, which
+ * `test/integration/render-telemetry-pipeline.test.ts` pins. They are deliberately **not** unified:
+ * changing this one would move the p95s already published in `docs/dev/input-probe-results.md`
+ * §11.3 and the budgets tuned against them, and the two sets of milliseconds are declared
+ * incomparable anyway (this one runs under SwiftShader).
  */
 export function quantile(sorted: Float64Array, q: number): number {
   if (sorted.length === 0) return 0;
