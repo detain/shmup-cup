@@ -835,6 +835,36 @@ M7's jittery 60 Hz ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-res
     [debug tools](docs/client/debug-tools.md#frame-pacing-tpf-and-the-raf-histogram) ·
     [API reference](docs/dev/api-reference.md)
 
+- **Render profiling: on-device numbers and a render benchmark** (M3-02c) — an instrument, not a
+  fix: it deliberately changes nothing it measures.
+  - **A render benchmark** (`pnpm bench` → `test/bench/render.perf.ts`): until now nothing here
+    measured `renderer.render()` at all. It builds a purpose-made page with Vite (the repo's own
+    content and asset plugins, so the real atlas and the real simulation go in) and drives it in
+    Playwright's Chromium — worst-case frames (512 enemy bullets, a bomber's screen clear filling
+    the point-item pool, the particle pool full) with CRT off / light / full, a filtered layer, the
+    Mode-7 floor, and **the internal frame size as a parameter** (384×216 and 768×432), reporting
+    render-ms p95, draw calls, pooled render-target bytes, structure rebuilds and a JS-heap delta
+    over 600 frames. A deliberately leaky fixture proves the heap gate fails when it should. Its
+    load is asserted as a **per-frame floor**, and its DOM-free core (`render-harness/load.ts`,
+    `gates.ts`, `protocol.ts`) is driven in Node by `pnpm test`, so a bench that would measure an
+    empty scene fails loudly.
+  - **It renders through SwiftShader**, so its milliseconds are a regression gate and never a
+    prediction of the TV's Mali-G51. What transfers is the counted quantities — draw calls, pooled
+    render-target bytes, structure rebuilds, heap delta — and the comparisons between scenarios.
+  - What it already settles, without the hardware: **655–659 of 660 frames rebuild the scene's
+    whole instruction set**, CRT `light` costs exactly what `full` costs and pools the same target,
+    and a 384×216 filter pass really is pooled as 512×256.
+  - **Two figures on the TV**: the debug overlay's seventh line shows `REB` (frames Pixi rebuilt
+    the instruction set on) and `RT` (pooled render-target kilobytes) — both allocation-free, the
+    second measured with one hook on Pixi's `TexturePool` rather than a per-frame scan.
+  - **WebGL1 vs 2**: the probe verified both on Tizen 5.5, so the stale "WebGL2 is unverified"
+    note is gone; `?gl=2` (web) and `localStorage['shmup-cup:gl']` (TV, dev builds only) A/B it.
+    **WebGL1 stays the shipped default.**
+  - Docs: [measuring render performance](docs/dev/rendering-and-shell.md#measuring-render-performance-m3-02c) ·
+    [the overlay's render profile](docs/client/debug-tools.md#render-profile-reb-and-rt) ·
+    [results](docs/dev/input-probe-results.md#11-render-profile-m3-02c) ·
+    [the review behind it](docs/dev/render-performance-review.md)
+
 
 ### Hardware spike
 
@@ -939,7 +969,7 @@ pnpm typecheck        # tsc --noEmit everywhere
 pnpm test             # every package's Vitest tests + repo integration tests, one process, one worker pool (VITEST_MAX_WORKERS=n to throttle)
 pnpm test:e2e         # build web + Tizen test builds, boot both in headless Chromium (plus the determinism spec in headless Firefox), tests in parallel (E2E_WORKERS=n; --project=chromium / firefox for one engine; once: pnpm exec playwright install --with-deps chromium firefox)
 pnpm build            # packages → dist/, apps/web, apps/tizen (one ES2018 IIFE within its size budgets), apps/electron
-pnpm bench            # benchmarks: the stress run, every zone under stress, the 30-minute soak (ms per tick, heap)
+pnpm bench            # benchmarks: the stress run, every zone under stress, the 30-minute soak (ms per tick, heap) and the render bench (worst-case frames through the real renderer in Playwright's Chromium — once: pnpm exec playwright install --with-deps chromium)
 pnpm golden:update    # re-bless the golden replays and the attract demos (only for an intended simulation change)
 pnpm store:assets     # regenerate the TV / desktop icons and the store-listing placeholders (assets/generated/store/)
 pnpm format           # Prettier
@@ -1049,7 +1079,8 @@ transitions & bonus stages), M2-11 (zones B & C), M2-12 (zones D & E), M2-13 (zo
 extras: the Mode-7 floor and the dimension stage, the CRT filter, the ultra-wide and 4:3 aspect
 modes, authentic slowdown, graze, the death-bomb window, the black-hole bomb, the P2 bosses and the
 final zone's escape sequence) and M3-02b (remote & hardware tuning from the input-probe results) are
-done; next are M3-02c … M3-02e (the render-performance work M3-02b exposed —
+done, and **M3-02c** (render profiling) with them; next are M3-02d / M3-02e (the rest of the
+render-performance work M3-02b exposed —
 [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)) and M3-03. Every
 simulation change re-blesses the golden replays in the same
 commit. The per-step status board is [`shmup_progress.md`](shmup_progress.md).

@@ -125,7 +125,30 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
 - M3-02b: `tools/input-probe` `chooseEventTime` always returns handler time (Tizen 5.5 advances
   `event.timeStamp` in whole seconds), `FrameSummary` carries a raw `histogram`
   (`FRAME_BUCKET_EDGES_MS` / `frameBucket`) and the verdicts gained `NO — not delivered`.
-- The Tizen bundle is 383.9 KB gzip of its 512 KB budget.
+- M3-02c: a **render benchmark** — `test/bench/render.perf.ts` with `test/bench/render-harness/`
+  (`main.ts` the page, and the DOM-free `load.ts` / `gates.ts` / `protocol.ts`). It builds the
+  harness with Vite and drives it in Playwright's Chromium: the real renderer over the real
+  simulation and the real atlas under worst-case frames (every measured frame carrying 512 of 512
+  enemy bullets, ≥ 489 of 512 point items and ≥ 489 of 512 particles, asserted as a per-frame
+  floor), CRT off / light / full, a filtered layer, the Mode-7 floor, and the **internal frame size
+  as a parameter** (384×216 and 768×432). It reports render-ms p95, draw calls, pooled
+  render-target bytes, structure rebuilds and a JS-heap delta over 600 frames, and fails on the
+  draw-call, p95 and heap budgets; a deliberately leaky fixture proves the heap gate. It renders
+  through SwiftShader — the counted quantities and the scenario-to-scenario comparisons transfer to
+  the TV, the milliseconds do not. `test/integration/render-bench.test.ts` drives the three
+  DOM-free modules in Node as part of `pnpm test`, and `test/e2e/render-profile.spec.ts` checks the
+  same three figures in a real WebGL context. CI's `build · benchmark` job installs Chromium first.
+- M3-02c: `@shmup/render-pixi` gained `PixiRendererOptions.countStructureRebuilds` /
+  `PixiRenderer.structureRebuilds` (−1 when not counting) and `debug`'s `createRenderTargetMeter` /
+  `RenderTargetMeter` (one hook on Pixi's global `TexturePool.createTexture`, so the total is a
+  property read); `DebugOverlayStats` gained `structureRebuilds` and `renderTargetBytes`. The debug
+  overlay's panel grew a **seventh line** — `REB` and `RT` — and the M2-17 device line moved down
+  with it (`PANEL_LINES` 6 → 7). The shell's debug tools own one meter and stop it on `destroy()`.
+- M3-02c: `@shmup/shell` `boot` gained `webGLVersionFromSearch(search)` and `apps/tizen`
+  `WEBGL_VERSION_KEY` (`localStorage['shmup-cup:gl']`, dev / test builds only) — the review's **F8**
+  A/B switch after the probe verified WebGL 1 *and* 2 on Tizen 5.5. **WebGL1 stays the shipped
+  default** and the renderer's stale "WebGL2 is unverified" docblock is gone.
+- The Tizen bundle is 383.9 KB gzip of its 512 KB budget (384.1 KB after M3-02c).
 
 ## [1.0.0-rc.1] — M2: complete v1.0 (release candidate)
 

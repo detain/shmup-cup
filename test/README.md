@@ -99,6 +99,8 @@ live in each package's own `test/` folder (never next to sources).
 | `e2e/input.spec.ts` (Playwright, `pnpm test:e2e`) | The input profiles in the web build: `keyboard-default` prevents the default of the keys it binds and leaves others alone; `?profile=keyboard-remote-emulation&debounce=2` only knows the remote's keys (arrows, Enter, Backspace, PgUp/PgDn — `KeyZ` passes through); an unknown `?profile=` logs one `Shmup Cup` warning and boots with `keyboard-default`, no errors |
 | `e2e/smoke.spec.ts` (Playwright, `pnpm test:e2e`) | The M1 gameplay smoke (M1-19) on the web build and the Tizen `dist/` via `file://`: title → OK, OK → hold → then ↑ for 2.5 s each → `window.__shmupDebug.sceneId === 'game'`, the World ticked, the ship alive or flying in → no console errors; F1 / F2 on the web (overlay, god mode); on the TV build the tools stay locked until Pause, Ch+, Ch+, Ch+ (key codes 10252 / 427), then show the overlay and answer the number keys |
 | `e2e/debug-tools.spec.ts` (Playwright, `pnpm test:e2e`) | The debug tools (M1-19): web — F4 freezes the World, each F5 runs one tick, `game.requestStep(n)` exactly n, F7 / F8 move the camera to the next checkpoint / just before the WARNING, F3 / F6 cycle, F4 again runs; Tizen from disk — after the unlock 4 freezes and 5 steps one tick; the `frame-advance.ts` helpers (`freezeSim` holds a dev scene, `stepTo` reaches the exact tick) |
+| `integration/render-bench.test.ts` | The render bench's DOM-free core (M3-02c) against the real simulation and the shipped content: `bench/render-harness/load.ts`'s tick order holds 512 enemy bullets and a nearly full point-item pool on **every** measured tick, while topping the bullet pool up before `game.step()` collapses it (a cancelled bullet only *marks* its slot dead — `pools.flushAll()` frees it) and clearing once per half-pool sawtooths the items; `gates.ts`'s `renderBenchViolations` rejects an empty scene, a thin pool, 0 or −1 draw calls, a NaN p95 and a leaked heap, and ignores the heap without a reading |
+| `e2e/render-profile.spec.ts` (Playwright, `pnpm test:e2e`) | The render profile (M3-02c) in a real WebGL context on the web test build: `PixiRenderer.structureRebuilds` rises with the frames rendered, a filtered layer pools a 512 × 256 render target (`createRenderTargetMeter`; the review's F3), and `?gl=2` really obtains a WebGL2 context while the default stays WebGL1 |
 
 Run: `pnpm test:integration` (part of `pnpm test`, which runs every Vitest project — all
 packages + this one — in one process). The playtest's run summaries (`[playtest]
@@ -107,7 +109,9 @@ show with the verbose reporter: `pnpm exec vitest run --project integration test
 --reporter=verbose` — guide: [`docs/dev/zone-a-and-playtest.md`](../docs/dev/zone-a-and-playtest.md). The golden
 replays (`golden/`) run in the same project; re-bless them with `pnpm golden:update` only for an
 intended simulation change (say why in the commit message). The stress benchmark runs with
-`pnpm bench` (its own config in `bench/`). The cross-engine determinism check (M2-18 — the
+`pnpm bench` (its own config in `bench/`); since M3-02c so does the **render** bench
+(`bench/render.perf.ts` + `bench/render-harness/`, Playwright's Chromium — install it once with
+`pnpm exec playwright install --with-deps chromium`). The cross-engine determinism check (M2-18 — the
 golden replays in Chromium and Firefox, `shmup_feat.md` §22) is `e2e/determinism.spec.ts`.
 
 Build-output tests live with the apps they build: `apps/tizen/test/build/` runs the real

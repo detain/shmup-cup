@@ -97,6 +97,7 @@ RANK 2   RNG 1234  HASH 3735928559 @600
 WEBGL 1 BOOT 1234 LAS 2/16 ITM 1/32  9524C84
 GOD HITBOX GRID STEP SLOW 2 LOCK
 TPF 0      3541   2      0     RAF ▁▃█▅▂▁▁▁
+REB 3540      RT     16384 KB
 LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 ```
 
@@ -118,7 +119,9 @@ LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C6
 | line 5 | The tools that are on, and `LOCK` when the game runs one step per frame | in normal play on the monitors: only `LOCK` — see [Frame pacing](#frame-pacing-tpf-and-the-raf-histogram) |
 | `TPF` (line 6) | Frames that ran 0 / 1 / 2 / 3-or-more game steps, counted since the app started | only the second number climbing |
 | `RAF` (line 6) | A bar chart of how long the frames took — [below](#frame-pacing-tpf-and-the-raf-histogram) | most of it in the middle bars |
-| line 7 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
+| `REB` (line 7) | Frames the picture had to be rebuilt from scratch on, counted since the app started — [below](#render-profile-reb-and-rt) | for developers: today it climbs with almost every frame |
+| `RT` (line 7) | Kilobytes of off-screen picture memory the drawing has taken — [below](#render-profile-reb-and-rt) | `0` with CRT off; about **16384 KB** once CRT is on |
+| line 8 (TV only) | The monitor's model, model code, firmware, screen size — [the device line](#the-device-line) | your monitor's model (e.g. `LS43AM702U`), `1920x1080@1` |
 
 On the title (no game on screen) the bullet, enemy, rank and hash fields stay empty; in the pause
 menu they show the paused game's values.
@@ -172,10 +175,31 @@ simpler marker of the ship's hit spot: OPTIONS → DISPLAY → **HITBOX** in eve
 | White squares | Capsules |
 | Faint grid (second press) | The game's collision grid (for developers) |
 
+## Render profile: `REB` and `RT`
+
+The seventh line is for developers: it says how much work the *drawing* is really doing, which is
+the one thing the panel could not show before. Nothing here changes how the game plays — it is
+there so the picture can be made cheaper in a later build without guessing.
+
+- **`REB`** — the number of frames, counted since the app started, on which the drawing library
+  threw the whole picture away and put it back together instead of only moving what moved. Today
+  it climbs with almost every frame, which is exactly the thing that is being looked into. Read it
+  next to the frame count: near-equal means every frame pays for the rebuild.
+- **`RT`** — kilobytes of off-screen picture memory the drawing has taken since the app started.
+  It is **0** while the CRT filter is off and jumps to about **16384 KB** (16 MB) the moment CRT
+  goes to LIGHT or FULL: the filter needs a full-screen scratch picture, and LIGHT costs exactly
+  what FULL costs. It only ever goes up — the memory is kept and reused, never handed back — so
+  compare readings from the same session.
+
+Both numbers are also in the remote inspector, as `__shmupDebug.stats.structureRebuilds` and
+`__shmupDebug.stats.renderTargetBytes`. A developer's view of what they mean, and the full
+measurement recipe for the monitors, is in
+[`../dev/rendering-and-shell.md`](../dev/rendering-and-shell.md#measuring-on-the-tv).
+
 ## The device line
 
-On the TV the panel has a **sixth line** with facts about the monitor, so every photo of the panel
-also says which monitor and firmware it came from:
+On the TV the panel has a **last line** (the eighth) with facts about the monitor, so every photo
+of the panel also says which monitor and firmware it came from:
 
 ```text
 LS43AM702U 20_KANTSU2 FW T-KSU2EUC-1234.5 1920x1080@1 C69 GL1/4096
@@ -254,7 +278,7 @@ anything measured, and the time into the stage for anything that went wrong.
 
 With the debug build on each monitor:
 
-1. **Device line.** Open the tools: the sixth line shows the monitor's model and firmware
+1. **Device line.** Open the tools: the last line shows the monitor's model and firmware
    ([The device line](#the-device-line)).
 2. **Save export.** In the remote inspector, `__shmupDebug.save.export()` prints the save.
 3. **Memory.** With the remote inspector's *Memory* tab (or *Performance monitor → JS heap size*),
@@ -282,6 +306,28 @@ With the debug build on **each** monitor:
 5. **Optional:** re-run the fixed input probe and try **Back / Ch ▲ / Ch ▼ while holding an
    arrow** (it should report *NO — not delivered*) and **two gamepads at once**.
 
+## Extra checks for the render-profiling build (plan §8.4)
+
+These measure the drawing, and they are the numbers a later build will be judged against. The
+full recipe — the eight measurements **M1–M8**, in the order to run them, and where to write the
+results down — is
+[`../dev/rendering-and-shell.md`](../dev/rendering-and-shell.md#measuring-on-the-tv); the short
+version, with the debug build on **each** monitor:
+
+1. **Baseline.** On the title, in zone A and on the boss, note `FPS`, `TICK`, `RENDER`, `DRAW`,
+   `REB` and `RT`, and photograph the frame graph and the `RAF` bars. This is the control for
+   everything below.
+2. **What CRT costs.** OPTIONS → DISPLAY → CRT **OFF / LIGHT / FULL** on the *same* piece of
+   stage, reading `RENDER` and `RT` each time. Expect LIGHT to cost what FULL costs and `RT` to
+   jump by about 16 MB. Watch for a single stutter the first time CRT goes on.
+3. **Entering the special stages.** Fly into the Mode-7 stage and the water / heat-haze stage: a
+   single tall bar in the frame graph at the boundary, once per session, is expected — report it
+   if it is worse than that.
+4. **Graphics version A/B** (needs the remote Web Inspector): `localStorage['shmup-cup:gl'] = '2'`
+   and relaunch, then compare `RENDER` and the `RAF` bars over a minute of the same stage. The
+   panel's `WEBGL` figure shows what the game actually got. **The normal build stays on version 1**
+   — this is only a comparison.
+
 ## Troubleshooting
 
 | Problem | What to do |
@@ -298,5 +344,8 @@ With the debug build on **each** monitor:
 | No device line on the TV (the last line) | It appears a second or two after the tools open; if it never does, the build predates it — build `build:dev` again. A browser never shows it |
 | No `TPF` line, or no `LOCK` | The build predates the remote-and-hardware tuning — build `build:dev` again. `LOCK` is also absent while the freeze, single-step or slow-motion tools run (they need the old timing), and on a display faster than 65 Hz |
 | The `TPF` 0 and 2 counters climb together while flying | The lock is not engaging on this monitor. Report the model, the firmware and a photo of the panel with the `RAF` bars |
+| No `REB` / `RT` line | The build predates the render profiling — build `build:dev` again |
+| `REB` is blank | Only the debug build counts it; a `build:dev` bundle always does, so report it with the build id if the rest of the panel is there |
+| `RT` stays at `0` with CRT on | Worth reporting with a photo: the CRT filter should always take its scratch picture. (`RT` counts from the start of the app, not from when you opened the panel, so switching CRT off again does not bring it back down.) |
 | The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
 | `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |

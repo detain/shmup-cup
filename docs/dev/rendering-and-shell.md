@@ -799,6 +799,11 @@ renderer-free `?determinism` page — [release-hardening.md](release-hardening.m
   Back writes them to `display` in `shmup-cup:save.v1`, and the next boot applies them before the
   first frame (`stretch` fills the 1000×600 canvas, the markers on the ship); without a save the
   frame is letterboxed and no marker shows.
+- `render-profile.spec.ts` (M3-02c) — the three render-profile figures in a real WebGL context on
+  the web test build: `PixiRenderer.structureRebuilds` rises with the frames rendered (the review's
+  **F1** on a real browser), a filtered layer pools a 512 × 256 render target (`createRenderTargetMeter`
+  over Pixi's `TexturePool` — the review's **F3**), and `?gl=2` really obtains a WebGL2 context while
+  the default boot stays on WebGL1 (**F8**).
 - `frame-advance.ts` (M1-19) — `freezeSim(page)` and `stepTo(page, tick)`: specs that compare two
   captures a set number of ticks apart freeze the sim and run exact ticks, because under load the
   frame loop runs 1–4 ticks per rAF frame. Playwright runs every test in parallel on one browser
@@ -830,7 +835,22 @@ npx vitest run --config test/bench/vitest.config.ts render.perf.ts   # only the 
 
 It builds `test/bench/render-harness/` with Vite (the repo's own `shmupContent()` /
 `shmupAssets()` plugins, so the shipped content and the real atlas go in), serves it on an
-ephemeral port and drives it in Playwright's Chromium with SwiftShader. The page puts the **real**
+ephemeral port and drives it in Playwright's Chromium with SwiftShader. The harness is four files,
+and only one of them touches the browser:
+
+| File | What it is |
+|---|---|
+| `main.ts` | The page: builds the renderer, the game and the atlas, runs the measured frames, posts the result on `window.__shmupRenderBench`. Browser plumbing only |
+| `load.ts` | The **scripted worst-case load** — the tick order, the pool top-ups, `WARMUP_TICKS`, the per-frame `LoadFloor`. No DOM, no Pixi |
+| `gates.ts` | The budgets (`DRAW_CALL_BUDGET`, `RENDER_P95_BUDGET_MS`, `HEAP_BUDGET`, `MIN_LIVE_LOAD`) and `renderBenchViolations(result)` |
+| `protocol.ts` | `RenderBenchOptions` / `RenderBenchResult` / `RenderBenchApi` — the wire types the Node driver and the page agree on |
+
+The last three are DOM-free on purpose: `test/integration/render-bench.test.ts` drives them in Node,
+against the real simulation and the shipped content, as part of the ordinary `pnpm test`. That is
+where the load's order is pinned (the wrong orders are asserted to fail, with the gate's own
+message), because the load is the one part of a benchmark that can be wrong **silently**.
+
+The page puts the **real**
 renderer in front of the **real** simulation: `createGame` on the shipped content, a bomber's
 screen clear turning the live bullets into point items on every tick that freed an item slot, the
 bullet pool topped back to 512 *after* each step (a cancelled bullet only frees its slot in the
@@ -842,6 +862,34 @@ The harness reports the **smallest** live count any measured frame carried, and 
 asserts those floors, so a scenario cannot claim a load one frame in six hundred happened to
 reach. Today every measured frame holds 512 of 512 bullets, ≥ 489 of 512 point items (the ~20
 missing are the items that reached the score during that tick) and ≥ 489 of 512 particles.
+
+The bench's particle pool is **512** per blend mode (`BENCH_PARTICLE_CAPACITY` in `load.ts`), twice
+the shipped `PARTICLE_CAPACITY` of 256: a worst case, and a gate stricter than reality cannot be
+beaten by a device that draws fewer sprites. So do not line the bench's `512` up with the debug
+overlay's on-device `PRT n/256` — the overlay is not reporting half the particles, it is reporting
+all of a smaller pool.
+
+#### What this bench can and cannot tell you
+
+It runs in **SwiftShader**, Chromium's software rasteriser, on whatever machine happens to run it —
+a shared CI runner as often as not. That decides what its output is worth:
+
+| Transfers to the M7 | Does **not** transfer |
+|---|---|
+| **Draw calls** — a property of our scene graph and Pixi's batcher, identical on any GL implementation | **Absolute milliseconds.** Software WebGL is one to two orders slower than a Mali-G51 at some things and *faster* at others (no bus, no tiler); a p95 of 2.4 ms here predicts nothing about the TV |
+| **Pooled render-target bytes** — Pixi's power-of-two rounding is the same everywhere, and so is the VRAM it costs | **Fill-rate conclusions.** A tiler's cost model for a second full-screen pass is not SwiftShader's |
+| **Structure rebuilds** — a pure scene-graph property (the review's F1) | **Frame-rate verdicts.** The bench never claims 60 fps; only the overlay on the monitors can |
+| **Heap delta** — JS allocation is V8's, not the GPU's | |
+| **Relative comparisons** between scenarios on one run (CRT off vs light vs full; 384×216 vs 768×432) | Comparisons **across machines or across runs on different machines** |
+
+So: M3-02d and M3-02e are judged against the *counted quantities* and the *relative* comparisons
+this step recorded, and the millisecond columns exist to catch a path that became structurally more
+expensive — `RENDER_P95_BUDGET_MS = 16` is deliberately loose for exactly that reason. The numbers
+that decide whether the game holds 60 fps come from the overlay on the monitors
+([Measuring on the TV](#measuring-on-the-tv)) and land in
+[input-probe-results.md](input-probe-results.md#11-render-profile-m3-02c).
+
+#### What each run prints
 
 | What it reports | Why |
 |---|---|

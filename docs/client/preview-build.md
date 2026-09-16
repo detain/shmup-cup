@@ -202,9 +202,13 @@ For checking it on the monitors
 there is a **debug build** with developer tools — a panel with the frame rate, frame times and
 start-up time, hit-area outlines, invincibility, a freeze with single steps, slow motion and
 jumps to the next checkpoint or the boss — opened on the remote with Play/Pause and then Ch ▲
-three times. It comes with the **M1 release check**, the list to run on both monitors
-([debug-tools.md](debug-tools.md)), and the release candidate adds the **v1.0 checklist**
-([release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors)).
+three times. Its panel now also measures the **drawing** (`REB` and `RT` —
+[debug-tools.md](debug-tools.md#render-profile-reb-and-rt)). It comes with the **M1 release
+check**, the list to run on both monitors ([debug-tools.md](debug-tools.md)), the release
+candidate adds the **v1.0 checklist**
+([release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors)), and the newest
+build adds the **render-profiling checks**
+([debug-tools.md](debug-tools.md#extra-checks-for-the-render-profiling-build-plan-84)).
 
 This page explains how to open the preview on each device, what you should see, how the ship
 and the menus should behave, and what to report if something is wrong. The full button layouts
@@ -943,7 +947,10 @@ the game itself plays differently, but the TV feels different:
   one frame and none on the next. It now runs exactly one step per frame on a 60 Hz screen — the
   picture should look steadier, especially in the fast stretches.
 - Debug builds' panel gained a **TPF** line and a small bar chart of the frame times
-  ([debug-tools.md](debug-tools.md#frame-pacing-tpf-and-the-raf-histogram)).
+  ([debug-tools.md](debug-tools.md#frame-pacing-tpf-and-the-raf-histogram)), and — for the work on
+  making the picture cheaper to draw — a **render profile** line, `REB` and `RT`
+  ([debug-tools.md](debug-tools.md#render-profile-reb-and-rt)). Nothing in the game itself changed
+  with either: they are measurements, and the checks that go with them are in the same page.
 
 Before that, **the v1.0 release candidate (1.0.0-rc.1).** Nothing new to play — the whole
 game was played through by the computer, all 16 runs with both ships, and four unfair spots were

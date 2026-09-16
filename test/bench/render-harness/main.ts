@@ -258,7 +258,10 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
  */
 const meter = createRenderTargetMeter();
 
+/** What the Node driver calls through `window.__shmupRenderBench`. */
 const api: RenderBenchApi = { run };
 
+// The driver waits for the attribute, then evaluates `__shmupRenderBench.run(scenario)` — one
+// scenario per page, because Pixi's `TexturePool` is a global that never gives a texture back.
 (window as unknown as Record<string, unknown>).__shmupRenderBench = api;
 document.body.setAttribute('data-shmup-render-bench', 'ready');
