@@ -925,31 +925,113 @@ meter hooks `TexturePool.createTexture` once, so reading the total is a property
 
 ### Measuring on the TV
 
-The measurement table of the review's §4, in the order to run it. Everything needs
-`pnpm --filter @shmup/tizen build:dev` installed on the set and the tools unlocked with **Pause,
-Ch+, Ch+, Ch+**; the numbers land in
+The measurement table of the review's §4, in the order to run it, with enough detail to follow without
+guessing. The numbers land in
 [input-probe-results.md](input-probe-results.md#11-render-profile-m3-02c) next to the input probe's.
 
-**Baseline first — it is the control for everything else.**
+#### 0. Before you start
 
-1. Title screen idle, then zone A, then the boss. For each: read **FPS**, **TICK ms**,
-   **RENDER ms**, **DRAW**, **REB** and **RT**, and photograph the frame graph and the RAF
-   histogram (buckets 12 / 15 / 17 / 19 / 21 / 25 / 33 ms).
-2. Confirm **TPF** reads overwhelmingly `1` and **LOCK** is showing. If not, M3-02b's vsync lock
-   is not engaging — check the refresh probe lands inside 55–65 Hz.
+1. **Build a dev bundle.** `pnpm --filter @shmup/tizen build:dev`. Only a dev build has the debug
+   tools — the release bundle folds them away, so the overlay cannot be unlocked on it at all.
+2. **Install it** on both monitors from the Windows desktop, per
+   [install-on-tv.md](../client/install-on-tv.md). Nothing here needs the Tizen CLI on this machine.
+3. **Unlock the tools:** on the remote press **Play/Pause, Ch+, Ch+, Ch+** — all four **within 3
+   seconds**. The overlay appears. If nothing happens you were too slow, or it is a release build.
+4. **Debug keys**, once unlocked (the remote's number keys; F1–F8 on a keyboard):
+
+   | Key | Does | Useful here for |
+   |---|---|---|
+   | **1** | Toggle the overlay | Getting a clean photo of the frame graph |
+   | **2** | God mode | **Essential** — lets you fly the same section repeatedly without dying |
+   | **3** | Hitbox outlines | Leave off while measuring; it adds draw work |
+   | **4** / **5** | Frame advance / step | Freezing on a specific frame |
+   | **6** | Slow motion | Leave off while measuring; it changes the tick pacing |
+   | **7** | Next checkpoint | Skipping forward to the section you want |
+   | **8** | Skip to boss | Getting to a dense frame quickly |
+
+#### 1. What "fly the same section" means
+
+Several measurements are A/B comparisons — the same scene rendered twice with one thing changed. A
+fresh game is *not* a repeatable scene: a different route, a different power-up state and a different
+number of bullets on screen change the load far more than the thing you are trying to measure.
+
+**Use PRACTICE instead.** Title screen → **PRACTICE** → pick **ZONE**, **CHECKPOINT** and **LOADOUT**.
+That re-enters the identical section of the identical stage every time. Then:
+
+- Turn **god mode on (key 2)** so a death cannot cut a run short or change the scene.
+- Pick the **same loadout** for every run of a comparison — weapons change the bullet count, which
+  changes the load.
+- Fly the **same stretch** — start at the checkpoint, fly for ~30 seconds, and read the numbers at
+  the same on-screen landmark each time (a particular enemy wave or piece of terrain).
+- **Hold the same inputs.** Firing constantly versus not firing is a large change in sprite count.
+  Simplest repeatable policy: hold fire down the whole time and move as little as possible.
+- Do the runs **back to back**, not on different days — a cold boot has different cache and shader
+  state (that is what M3/M4 measure deliberately).
+
+For the baseline in step 3 the point is coverage rather than repeatability, so a normal game is fine
+there.
+
+#### 2. Reading the overlay
+
+Lines, top to bottom (counting from 1):
+
+| Line | Shows | What it means |
+|---|---|---|
+| 1 | `FPS` `TICK` `RENDER` `DRAW` | Frames a second; simulation ms a tick; **`renderer.render()` ms**; draw calls |
+| 2 | `BUL` … `PRT` | Live bullets and particles — your check that the scene is as loaded as you think |
+| 4 | `WEBGL` | Which context the renderer actually got (1 or 2) |
+| 5 | alerts | `GOD` `HITBOX` `GRID` `STEP` `SLOW` `LOCK` — `LOCK` means M3-02b's vsync lock is engaged |
+| 6 | `TPF` `RAF` | Ticks per frame (0/1/2/3+) and the rAF-delta histogram (buckets 12/15/17/19/21/25/33 ms) |
+| 7 | `REB` `RT` | **Frames that rebuilt the whole scene graph** (review F1) and **pooled render-target bytes** (F2/F3) |
+| 8 | device line | Model, resolution, GPU (M2-17) |
+
+`RENDER`, `REB` and `RT` are the three this exercise is really about.
+
+#### 3. Baseline first — it is the control for everything else
+
+1. Title screen idle, then zone A, then the boss. For each, record `FPS`, `TICK`, `RENDER`, `DRAW`,
+   `REB` and `RT`, and photograph the frame graph and the `RAF` histogram.
+2. Confirm **`TPF` reads overwhelmingly `1`** and the **`LOCK`** alert is showing. If `TPF` shows a
+   real share of 0s and 2s, M3-02b's vsync lock is not engaging — check the refresh probe is landing
+   inside 55–65 Hz. This is worth catching before anything else, because every other number is
+   measured through the frame loop.
 3. Note **boot ms** against the 10 s store budget.
 
-| # | Question | How |
-|---|---|---|
-| **M1** | What does the per-frame scene rebuild (**F1**) cost? | Compare RENDER ms on the title (few sprites, structure nearly static) with a busy boss frame, and watch **REB** against the frame count. Then, as a throwaway experiment, comment out the `visible = false` lines in `SpriteLayerBinding.sync` for one build: the RENDER-ms delta is the rebuild cost. Do not ship that build |
-| **M2** | What does the CRT filter (**F2**) cost? | OPTIONS → DISPLAY → CRT off / light / full on the *same* stage section, reading RENDER ms, FPS and **RT** each time. Expect `light` to cost what `full` costs and **RT** to jump by ~16 MB. Watch for a one-frame stall the first time CRT goes on — that is **F4**'s shader link |
-| **M3** | Mode-7 and layer-effect entry hitches (**F4**) | Play into the Mode-7 stage and the water / heat-haze stage; a single ~30–50 ms bar in the frame graph at the range boundary, once per session, confirms it |
-| **M4** | The batch-growth hitch (**F5**) | Frame graph during the first very dense pattern of a fresh launch, then again after a checkpoint restart. A red bar that appears only the first time is Pixi's buffer doubling |
-| **M5** | WebGL1 vs WebGL2 (**F8**) | Set `localStorage['shmup-cup:gl'] = '2'` from the remote Web Inspector and relaunch (the web build uses `?gl=2`). Compare RENDER ms and the RAF histogram over 60 s of the same stage; the overlay's **WEBGL** figure shows what the context really is. **WebGL1 stays the shipped default** — this is an A/B, not a new default |
-| **M6** | Memory | DevTools over `sdb` → Memory, plus `estimateStageMemory(...)` per zone with CRT on and off, cross-checked against **RT**. The estimator is known to under-count (review **F3**); M3-02d fixes it |
-| **M7** | Does the app stop rendering under the Home overlay? | Press Home mid-game, wait 10 s, come back. The probe recorded rAF continuing at ~56 fps with no `visibilitychange`; confirm M3-02b's `blur` handling now pauses and suspends audio |
-| **M8** | Input-to-photon latency | Still unmeasured: a 240 fps phone video, `build:game-mode` vs the default, per plan §8.4/§8.5 |
+#### 4. The measurement table
 
+| # | Question | How | What a result looks like |
+|---|---|---|---|
+| **M1** | What does the per-frame scene rebuild (**F1**) cost? | Compare `RENDER` on the title (few sprites, structure nearly static) with a busy boss frame, watching `REB` against the frame count. Then, as a throwaway experiment, comment out the `visible = false` lines in `SpriteLayerBinding.sync` for one build: the `RENDER` delta is the rebuild cost. **Do not ship that build** | The headless bench shows 655–659 of every 660 frames rebuilding. This measurement turns that into milliseconds, and it is what decides how far M3-02e has to go |
+| **M2** | What does the CRT filter (**F2**) cost? | Pause → **OPTIONS → DISPLAY → CRT**, Left/Right to switch **OFF / LIGHT / FULL**. Run the same practice section three times, once per setting, reading `RENDER`, `FPS` and `RT` each time | Expect `LIGHT` to cost the same as `FULL` (same program, same passes) and `RT` to jump by ~16 MB when either is on. Also watch for a one-frame stall the *first* time CRT goes on — that is **F4**'s shader link, not the filter's steady cost |
+| **M3** | Mode-7 and layer-effect entry hitches (**F4**) | Play into the Mode-7 stage and the water / heat-haze stage and watch the frame graph at the moment the effect starts | A single ~30–50 ms bar at the range boundary, **once per session**, confirms it. If it happens every time you enter, something else is wrong |
+| **M4** | The batch-growth hitch (**F5**) | Frame graph during the first very dense pattern after a **fresh launch**, then the same pattern again after a checkpoint restart | A red bar that appears only the *first* time is Pixi's attribute buffer doubling. Second time clean = confirmed |
+| **M5** | WebGL1 vs WebGL2 (**F8**) | Set `localStorage['shmup-cup:gl'] = '2'` from the remote Web Inspector and relaunch (on the web build it is `?gl=2`). Compare `RENDER` and the `RAF` histogram over 60 s of the same practice section; the `WEBGL` field shows what the context really is | Probably little difference. **WebGL1 stays the shipped default** — this is an A/B to retire a guess in the code, not a change |
+| **M6** | Memory | DevTools over `sdb` → Memory, plus `estimateStageMemory(...)` per zone with CRT on and off, cross-checked against `RT` | The estimator is known to under-count (review **F3**) and M3-02d fixes it; this is the before-reading |
+| **M7** | Does the app stop rendering under the Home overlay? | Press **Home** mid-game, wait 10 s, come back | The probe recorded rAF continuing at ~56 fps with no `visibilitychange`. Confirm M3-02b's `blur` handling now pauses the game and silences the music, and that you come back to the pause menu |
+| **M8** | Input-to-photon latency | Still unmeasured: a 240 fps phone video, `build:game-mode` versus the default, per plan §8.4/§8.5 | The one number none of this instrumentation can reach |
+
+#### 5. Recording the numbers
+
+Fill the tables in
+[input-probe-results.md §11](input-probe-results.md#11-render-profile-m3-02c), one column per monitor.
+Where a figure is a range over a run, record the range — a single glanced number hides exactly the
+jitter these measurements exist to find.
+
+#### 6. Automated capture — planned, not yet built (M3-02f)
+
+Reading numbers off a moving overlay is error-prone, and it cannot capture a p95 at all. Plan step
+**M3-02f** makes the game stream its own render profile to a log server on the desktop, the way the
+input probe already does for input:
+
+- `npm run log-server` on the desktop, the game built with `VITE_REPORT_URL=http://<desktop-ip>:8787`;
+- an **on-screen checklist** walks through M1–M8 and ticks each item off when enough samples of the
+  right kind have arrived, so you play where it tells you instead of keeping notes;
+- samples carry **distributions** (min / median / p95 / max, plus the `TPF` and `RAF` buckets) rather
+  than a glanced reading;
+- an analyzer turns the session's JSONL straight into the §11 tables.
+
+**None of that exists yet** — until M3-02f lands, the manual procedure above is the way, and it stays
+as the fallback afterwards for when no log server is reachable.
 
 ## Extending it
 
