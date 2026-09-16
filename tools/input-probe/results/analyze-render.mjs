@@ -121,8 +121,10 @@ function percentileOf(counts, total, fraction) {
  * A group of the §11 tables spans many windows and is not homogeneous — the boss row mixes calm approach
  * frames with the pattern that actually costs. Folding the windows' own p95s (taking their median, say)
  * would discard the worse half of the windows and understate the tail, the one direction that matters when
- * the figure is checked against a frame budget and compared with §11.3's bench p95s. Summing the histograms
- * and reading the percentile off the total is the percentile of the group's frames.
+ * the figure is checked against a frame budget — and the one that would stop it being the same statistic as
+ * §11.3's bench p95s (the same statistic, not a comparable magnitude: these are the TV's milliseconds and
+ * the bench runs under SwiftShader). Summing the histograms and reading the percentile off the total is the
+ * percentile of the group's frames.
  *
  * @param {any[]} windows - the group's windows.
  * @param {string} field - `'renderMs'`, `'tickMs'`, `'frameMs'` or `'drawCalls'`.
