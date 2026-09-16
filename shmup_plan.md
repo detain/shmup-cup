@@ -4630,10 +4630,16 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     atlas PNG (134.9 → 136.6 KB, still one 1024² page of the 2048² limit) and 8.6 KB of `app.js`
     gzip (386.9 → 395.5 KB of the 512 KB budget).** No budget was raised, and no separate page or
     lazily-loaded atlas was needed — that machinery would have been for nothing at this size. The
-    number that decided the *subset* is what a real JIS level-1 kanji set would cost: ~6,900 glyphs
-    at 12×12 ≈ 1 M pixels, about 25 of the current atlas and five 2048² pages, past `DIST_BUDGET`.
-    [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md) records that arithmetic and what to
-    do if one ever arrives (subset by use, its own page, re-measure the boot time).
+    number that decided the *subset* is what a real kanji set would cost — a **download-and-boot**
+    number, not a budget overrun. The whole JIS X 0208 set (levels 1 *and* 2) is ~6,900 glyphs ≈
+    **993,600 pixels** at 12×12: about **2.1×** the 479,505 pixels the entire atlas occupies today
+    (one 1024² page, 46 % full, 136.6 KB of PNG) and under a **quarter of one 2048² page**, so it
+    is *one* extra page, and it fits `DIST_BUDGET` comfortably (`apps/tizen/dist` is 1.75 MB of 8
+    MB). A kanji language is feasible; what rules it out here is roughly **doubling the atlas
+    download and boot decode for every player**, including everyone who never picks that language,
+    against the ≤ 10 s launch rule. [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md)
+    records that arithmetic and what to do if one ever arrives (subset by use, its own lazily
+    loaded page, re-measure the boot time).
   - **The charset has one owner.** `UI_GLYPHS` and `assets/source/fonts/pixel6x8.font.json` must
     agree exactly — `test/scripts/assets/font.test.ts` fails in either direction. So anything the
     `strings` loader accepts really can be drawn, and no glyph nothing draws reaches the atlas.

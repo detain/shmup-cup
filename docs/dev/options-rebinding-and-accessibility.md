@@ -441,8 +441,9 @@ input-test screens, the end screens, the hi-score tables, the HUD's words — co
 - **M3-03's languages**: the Spanish and Japanese tables took `app.js` from **386.9 to 395.5 KB
   gzip** (of the 512 KB budget) and the 93 new font glyphs took the atlas page from 134.9 to
   **136.6 KB** — still one 1024² page. No budget was raised; see
-  [asset-pipeline.md](asset-pipeline.md#katakana-and-the-cjk-budget-m3-03) for why a real kanji set
-  would not have fitted.
+  [asset-pipeline.md](asset-pipeline.md#katakana-and-the-cjk-budget-m3-03) for what a real kanji
+  set would cost — ~1.0 M pixels, about twice this atlas's occupied area, so one extra page that
+  fits `DIST_BUDGET` but doubles the atlas download and boot decode for every player.
 
 ## Determinism
 

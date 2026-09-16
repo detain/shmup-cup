@@ -474,8 +474,10 @@ const LATIN_1_GLYPHS = '¡¿ÁÉÍÓÚÑÜ';
  * The CJK subset the Japanese table is written in (M3-03): **katakana only**, the way 1980s
  * arcade hardware wrote Japanese. 84 glyphs — the 46 base kana, the 20 voiced and 5 semi-voiced
  * ones, the 9 small ones, the long-vowel bar, the middle dot and the two ideographic punctuation
- * marks. No kanji and no hiragana ship: a JIS level-1 kanji set would be about 6,900 glyphs, two
- * orders of magnitude more atlas pixels than the whole placeholder sprite set
+ * marks. No kanji and no hiragana ship: the whole JIS X 0208 set (levels 1 *and* 2) is about 6,900
+ * glyphs — ≈ 1.0 M pixels at 12×12, about **twice** the pixels the whole placeholder sprite set
+ * occupies (479,505 on one 1024² page). That is one extra atlas page, which fits inside
+ * `DIST_BUDGET`; what rules it out is doubling the atlas download and boot decode for every player
  * (`docs/dev/asset-pipeline.md`, "Katakana and the CJK budget").
  */
 const KATAKANA_GLYPHS =

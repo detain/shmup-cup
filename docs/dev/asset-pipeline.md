@@ -209,17 +209,33 @@ shape of the decision matters more than the code:
   lazily-loaded atlas would be machinery for nothing at this size, so the katakana live in the main
   atlas and load with it.
 
-The number that made this decision is the one a **real kanji set** would cost. JIS level 1 is about
-6,900 characters; at a legible 12×12 they need roughly 1 M pixels — about **25 of the game's
-current atlas**, five 2048² pages on their own, well past `DIST_BUDGET`. Before shipping one:
+The number that made this decision is the one a **real kanji set** would cost — and it is a
+**download-and-boot** number, not a budget overrun. The whole **JIS X 0208** repertoire (levels 1
+*and* 2, plus the kana and symbols) is about **6,900 characters**; at a legible 12×12 that is
+`6900 × 12 × 12` = **993,600 pixels** (≈ 1.0 M). Measured against this build:
+
+- the game's **whole** atlas occupies **479,505 pixels** — the sum of every frame in
+  `assets/generated/atlas/main.json` — on **one 1024² page** (1,048,576 px, 46 % full) that encodes
+  to **136.6 KB** of PNG. So a kanji set is about **2.1× the pixels the entire sprite set uses**,
+  and about 0.95 of that page on its own;
+- one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
+  **one extra atlas page**, not five;
+- `apps/tizen/dist` is **1.75 MB** of the 8 MB `DIST_BUDGET`, and the page above encodes to 136.6
+  KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
+
+A kanji language is therefore **feasible** — do not read this section as saying it is impossible.
+What rules it out *here* is that an extra page of that size roughly **doubles the atlas download
+and the boot-time decode for every player**, including everyone who never picks that language,
+against the ≤ 10 s launch rule (M2-18) — a real cost to pay for 84 glyphs' worth of menu text.
+Before shipping one:
 
 1. **Subset by use**, not by standard — only the characters the shipped `strings` files actually
    contain (a full UI is a few hundred kanji, not seven thousand);
 2. give that set **its own atlas page**, named so the loader can fetch it per language rather than
    for everyone (`pageUrls` already carries one URL per page, and `loadImages` already loads them
    in parallel — the mechanism exists, it is simply not needed yet);
-3. re-measure `dist/` against `DIST_BUDGET` and the boot time against the ≤ 10 s launch rule before
-   believing it fits.
+3. re-measure `dist/` against `DIST_BUDGET` and — the figure that actually decides it — the **boot
+   time** against the ≤ 10 s launch rule before believing it fits.
 
 ### Hit flash (D30)
 

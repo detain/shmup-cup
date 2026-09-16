@@ -96,8 +96,10 @@ pass over the translations, and the tracker-music CPU benchmark).
   `content/strings/` holds, so adding a table adds a row with no code change, and
   `pnpm content:check` requires a shipped language to answer **every** id. The 93 new glyphs cost
   1.6 KB of atlas and the two tables 8.6 KB of Tizen `app.js` gzip (386.9 → 395.5 KB of 512 KB);
-  no budget was raised. Why a real kanji set would not have fitted, and what to do if one arrives,
-  is in [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md).
+  no budget was raised. What a real kanji set would actually cost — ~6,900 JIS X 0208 glyphs ≈ 1.0
+  M pixels, about twice what the whole atlas occupies, so *one* extra page that fits `DIST_BUDGET`
+  but doubles the atlas download and boot decode for everyone — and what to do if one arrives, is
+  in [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md).
 - **`apps/webos` (M3-03)** — the LG webOS host: the `Platform` adapter (Back 461, the two-reason
   lifecycle, `webOS.platformBack()`), the shared `bootShell`, `public/appinfo.json` with its
   validator, a bundle check that imports the Tizen budgets so there is one source of truth, and the
