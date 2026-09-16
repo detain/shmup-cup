@@ -356,6 +356,72 @@ describe('tizen/boot bootTizenApp wiring', () => {
     one.stop();
   });
 
+  // The override must stay a *dev* switch: the shipped bundle has no debug tools, so neither the
+  // stored key nor a query string may move it off WebGL1 (plan M3-02c, review F8).
+  it('keeps a release build on WebGL1 whatever the overrides say, and prefers ?gl= in a dev build', async () => {
+    /**
+     * Gives the fake window a query string (the TV has none; the Tizen dev server does).
+     *
+     * @param search - The query string.
+     */
+    const setSearch = (search: string): void => {
+      (win as unknown as { location: { search: string } }).location = { search };
+    };
+    /** A dev build's marker is simply that it has debug tools; a stub is enough here. */
+    const devTools = {
+      beginFrame: () => {},
+      endTicks: () => {},
+      beforeRender: () => {},
+      afterRender: () => {},
+      handleKey: () => false,
+      destroy: () => {},
+    } as unknown as ReturnType<NonNullable<TizenAppResources['debugTools']>>;
+    const devResources: TizenAppResources = { ...resources, debugTools: () => devTools };
+
+    /**
+     * Boots into a fresh window with the given override and reports the version asked for.
+     *
+     * @param options - The stored value, the query string and the resources to boot with.
+     * @returns The `preferWebGLVersion` the renderer was created with.
+     */
+    const preferred = async (options: {
+      stored?: string;
+      search?: string;
+      dev?: boolean;
+      throwOnRead?: boolean;
+    }): Promise<unknown> => {
+      win = new FakeWindow();
+      if (options.stored !== undefined) win.stored.set(WEBGL_VERSION_KEY, options.stored);
+      if (options.search !== undefined) setSearch(options.search);
+      if (options.throwOnRead === true) {
+        (win as unknown as { localStorage: { getItem: () => string } }).localStorage = {
+          getItem: () => {
+            throw new Error('storage is not available');
+          },
+        };
+      }
+      const app = await bootTizenApp(
+        {} as HTMLCanvasElement,
+        options.dev === true ? devResources : resources,
+        win as unknown as Window,
+      );
+      const version = fakes.renderer.options?.preferWebGLVersion;
+      app.stop();
+      return version;
+    };
+
+    // Release: neither switch is even looked at.
+    expect(await preferred({ stored: '2', search: '?gl=2' })).toBe(1);
+    // Dev: the query string wins over the stored key (the dev server can say "no, 1 this time").
+    expect(await preferred({ dev: true, stored: '2', search: '?gl=1' })).toBe(1);
+    expect(await preferred({ dev: true, search: '?gl=2' })).toBe(2);
+    // Dev with nothing set, and with junk: the shipped default.
+    expect(await preferred({ dev: true })).toBe(1);
+    expect(await preferred({ dev: true, stored: '2 ', search: '?gl=3' })).toBe(1);
+    // Storage that throws on read (a locked-down TV) must not take the boot down with it.
+    expect(await preferred({ dev: true, throwOnRead: true })).toBe(1);
+  });
+
   it('builds a remote-first Tizen platform and game (keys registered, autofire forced)', async () => {
     const { app } = await boot();
     expect(app.platform.id).toBe('tizen');

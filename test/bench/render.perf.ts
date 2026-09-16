@@ -10,8 +10,9 @@
  * a global that never releases a texture: one page, one pooled-render-target total.
  *
  * **Scenarios** are the worst-case frames the review names: the enemy-bullet pool full (512), the
- * point-item pool full (512 — a bomber's screen clear turns bullets into points, re-run on every
- * tick that freed a slot), the particle pool full, CRT `off` / `light` / `full`, a stage with
+ * point-item pool all but full (a bomber's screen clear turns bullets into points, re-run on every
+ * tick that freed a slot; the measured floor is 489 of 512, the rest reaching the score during the
+ * tick), the particle pool full, CRT `off` / `light` / `full`, a stage with
  * layer effects (`raster-range`) and one with the Mode-7 floor (`dimension`). Each scenario
  * asserts the *minimum* live count over the measured frames, so the stated load is the load every
  * timed frame carried. The **internal frame size is a parameter** (review §7.5):
@@ -40,7 +41,13 @@ import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
 import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
-import type { RenderBenchOptions, RenderBenchResult } from './render-harness/main.js';
+import { HEAP_BUDGET, renderBenchViolations } from './render-harness/gates.js';
+import { WARMUP_TICKS } from './render-harness/load.js';
+import type { RenderBenchOptions, RenderBenchResult } from './render-harness/protocol.js';
+
+// Re-exported so the budgets are still readable from this file, where the docs name them.
+export { DRAW_CALL_BUDGET, MIN_LIVE_LOAD, RENDER_P95_BUDGET_MS } from './render-harness/gates.js';
+export { WARMUP_TICKS } from './render-harness/load.js';
 
 /** The harness sources. */
 const HARNESS_DIR = fileURLToPath(new URL('./render-harness', import.meta.url));
@@ -56,9 +63,6 @@ export const DISPLAY_WIDTH = 960;
 /** See {@link DISPLAY_WIDTH}. */
 export const DISPLAY_HEIGHT = 540;
 
-/** Ticks played before a scenario measures (the camera has to reach the stages' effect ranges). */
-export const WARMUP_TICKS = 260;
-
 /**
  * Frames rendered before the measurement: every GL program the scenario uses links on its first
  * *draw* (review F4) and Pixi's batch buffer doubles up to the busiest frame (review F5), and
@@ -69,26 +73,7 @@ export const WARMUP_FRAMES = 60;
 /** Frames measured per scenario (the heap gate wants a few hundred — review F10). */
 export const BENCH_FRAMES = 600;
 
-/**
- * Most WebGL draw calls a measured frame may take. `shmup_feat.md` §22 allows 20–50; the two e2e
- * specs pin the plain frame at 12. This is the render bench's own ceiling, deliberately above the
- * e2e one because a scenario stacks the busiest frame, a filtered layer or the Mode-7 floor *and*
- * the CRT pass.
- */
-export const DRAW_CALL_BUDGET = 20;
-
-/**
- * Render-ms p95 budget under SwiftShader. Not the TV's 8 ms budget (`shmup_feat.md` §22): software
- * WebGL on a shared CI machine is one to two orders slower, and this exists to catch a *structural*
- * regression — a second full-screen pass appearing, the scene being walked twice — not to predict
- * the Mali-G51.
- */
-export const RENDER_P95_BUDGET_MS = 16;
-
-/** JS-heap growth a scenario may retain over {@link BENCH_FRAMES} frames, bytes. */
-export const HEAP_BUDGET = 1024 * 1024;
-
-/** Objects the leak fixture allocates per frame — enough to blow {@link HEAP_BUDGET} clearly. */
+/** Objects the leak fixture allocates per frame — enough to blow `HEAP_BUDGET` clearly. */
 const LEAK_PER_FRAME = 2000;
 
 /** One measured configuration. */
@@ -133,7 +118,7 @@ function load(overrides: Partial<RenderBenchOptions> = {}): RenderBenchOptions {
 const SCENARIOS: readonly Scenario[] = [
   {
     id: 'worst-case, CRT off',
-    what: 'the baseline busy frame: 512 bullets, 512 point items, the particle pool full',
+    what: 'the baseline busy frame: 512 bullets, the point-item pool and the particle pool full',
     options: load(),
   },
   {
@@ -333,18 +318,12 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
     it(`${scenario.id} — ${scenario.what}`, async () => {
       const result = await runScenario(scenario.options);
       report(scenario.id, scenario.options, result);
-      // The scenario really was under the load it claims.
-      // Each count is the *smallest* the harness saw over the measured frames, so these hold for
-      // every frame that was timed, not just the last one.
-      expect(result.bullets, 'the enemy-bullet pool must be full').toBeGreaterThan(400);
-      expect(result.points, 'the point-item pool must be full').toBeGreaterThan(400);
-      expect(result.particles, 'the particle pool must be full').toBeGreaterThan(400);
+      // The load floors first, then the budgets — `renderBenchViolations` (its own module, unit
+      // tested in `test/integration/render-bench.test.ts`). Each live count is the *smallest* the
+      // harness saw over the measured frames, so the load holds for every frame that was timed,
+      // not just the last one: a scenario that measured an empty scene fails here.
+      expect(renderBenchViolations(result)).toEqual([]);
       scenario.check?.(result);
-      // The gates.
-      expect(result.drawCalls).toBeGreaterThan(0);
-      expect(result.drawCalls).toBeLessThanOrEqual(DRAW_CALL_BUDGET);
-      expect(result.renderP95Ms).toBeLessThan(RENDER_P95_BUDGET_MS);
-      if (result.heapMeasured) expect(result.heapDeltaBytes).toBeLessThan(HEAP_BUDGET);
     }, 300_000);
   }
 

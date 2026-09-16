@@ -517,7 +517,11 @@ export interface RenderTargetMeter {
   readonly bytes: number;
   /** Pooled render targets created since the meter started. */
   readonly count: number;
-  /** Restores the pool's own `createTexture` (idempotent; a later meter may wrap it again). */
+  /**
+   * Stops counting for good and restores the pool's own `createTexture` (idempotent; a later
+   * meter may wrap it again, and then this one gives its hook up only once that meter has
+   * stopped — but it counts nothing either way).
+   */
   stop(): void;
 }
 
@@ -579,6 +583,9 @@ export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): R
   const original = hookable.createTexture;
   let bytes = 0;
   let count = 0;
+  // A stopped meter counts nothing, even when a later meter wrapped this one and `stop()` could
+  // therefore not take the hook back out of the chain (it must never steal the later one's).
+  let stopped = false;
   /**
    * Creates a pooled texture and adds its bytes to the total.
    *
@@ -595,8 +602,10 @@ export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): R
     autoGenerateMipmaps: boolean,
   ): unknown => {
     const texture = original.call(pool, pixelWidth, pixelHeight, antialias, autoGenerateMipmaps);
-    bytes += pixelWidth * pixelHeight * RENDER_TARGET_BYTES_PER_PIXEL;
-    count++;
+    if (!stopped) {
+      bytes += pixelWidth * pixelHeight * RENDER_TARGET_BYTES_PER_PIXEL;
+      count++;
+    }
     return texture;
   };
   hookable.createTexture = metered;
@@ -608,7 +617,10 @@ export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): R
       return count;
     },
     stop() {
-      // Only when nothing else wrapped it in the meantime (never steal another meter's hook).
+      stopped = true;
+      // Only when nothing else wrapped it in the meantime (never steal another meter's hook);
+      // a meter stopped out of order stays in the chain as a pass-through until the later one
+      // goes, and counts nothing meanwhile.
       if (hookable.createTexture === metered) hookable.createTexture = original;
     },
   };

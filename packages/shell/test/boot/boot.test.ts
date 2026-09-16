@@ -337,6 +337,31 @@ describe('shell/boot sceneFromSearch', () => {
     expect(webGLVersionFromSearch('?glossy=2')).toBeNull();
     expect(webGLVersionFromSearch('')).toBeNull();
   });
+
+  // The switch decides which renderer the owner measures on the TV, so a near miss has to read
+  // as "no override" rather than as a silent 2 (or a silent 1).
+  it('takes only an exact gl=1 / gl=2, anywhere in the query', () => {
+    // Position in the query, and neighbours on both sides.
+    expect(webGLVersionFromSearch('?scene=flight&gl=2&loadout=full')).toBe(2);
+    expect(webGLVersionFromSearch('?a=1&b=2&gl=1')).toBe(1);
+    expect(webGLVersionFromSearch('&gl=2')).toBe(2);
+    expect(webGLVersionFromSearch('?gl=2&gl=1')).toBe(2); // the first one wins
+    // Not the parameter: a longer name, a suffix, a value of another parameter.
+    expect(webGLVersionFromSearch('?webgl=2')).toBeNull();
+    expect(webGLVersionFromSearch('?gl2=1')).toBeNull();
+    expect(webGLVersionFromSearch('?scene=gl=2')).toBeNull();
+    expect(webGLVersionFromSearch('?GL=2')).toBeNull();
+    // Not a value: padded, spaced, encoded, or a version that does not exist.
+    expect(webGLVersionFromSearch('?gl=02')).toBeNull();
+    expect(webGLVersionFromSearch('?gl= 2')).toBeNull();
+    expect(webGLVersionFromSearch('?gl=2.0')).toBeNull();
+    expect(webGLVersionFromSearch('?gl=%32')).toBeNull();
+    expect(webGLVersionFromSearch('?gl=true')).toBeNull();
+    expect(webGLVersionFromSearch('?gl=0')).toBeNull();
+    // Junk must not throw: this runs before anything else at boot.
+    expect(webGLVersionFromSearch('?')).toBeNull();
+    expect(webGLVersionFromSearch('?&&=&')).toBeNull();
+  });
 });
 
 describe('shell/boot defaultStageId (M1-18)', () => {
@@ -540,11 +565,15 @@ describe('shell/boot debug tools (M1-19)', () => {
   it('counts draw calls and creates the tools only when the app passes a factory', async () => {
     const plain = await boot().promise;
     expect(fakes.rendererOptions?.countDrawCalls).toBe(false);
+    // M3-02c: the structure-rebuild counter is the same deal — dev / test builds only, so a
+    // release bundle never pays for the flag read.
+    expect(fakes.rendererOptions?.countStructureRebuilds).toBe(false);
     expect(plain.debug).toBeNull();
     plain.stop();
     const tools = recordingTools();
     const shell = await boot({ debugTools: tools.factory }).promise;
     expect(fakes.rendererOptions?.countDrawCalls).toBe(true);
+    expect(fakes.rendererOptions?.countStructureRebuilds).toBe(true);
     expect(tools.hosts).toHaveLength(1);
     const host = tools.hosts[0];
     expect(shell.debug).not.toBeNull();

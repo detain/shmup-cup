@@ -14,22 +14,20 @@
  * `shmupAssets()` plugins), opens the built page in Playwright's Chromium and calls
  * {@link RenderBenchApi.run} through `window.__shmupRenderBench`.
  *
+ * **What is not here.** The scripted load (the tick order, the pool top-ups, the per-frame load
+ * floor) lives in `load.ts`, the wire types in `protocol.ts` and the budgets in `gates.ts` — all
+ * three free of the DOM and of the virtual modules, so `test/integration/render-bench.test.ts`
+ * can pin them headlessly. This file is only the browser plumbing around them.
+ *
  * @module
  */
 import {
-  CancelMode,
   ENGINE_SPRITES,
   KNOWN_SCRIPT_IDS,
-  MAX_ENEMY_BULLETS,
-  MAX_POINT_ITEMS,
-  PLAYFIELD_H,
-  PLAYFIELD_W,
   createGame,
   createHeadlessPlatform,
   loadContent,
   type ContentDb,
-  type CrtFilter,
-  type Game,
 } from '@shmup/core';
 import {
   FX_CONTENT_KIND,
@@ -40,84 +38,20 @@ import {
   type Atlas,
   type AtlasPageImage,
   type FxContent,
-  type PixiRenderer,
 } from '@shmup/render-pixi';
 import assets from 'virtual:shmup-assets';
 import contentFiles from 'virtual:shmup-content';
+import {
+  BENCH_PARTICLE_CAPACITY,
+  Lcg,
+  benchTick,
+  createLoadFloor,
+  quantile,
+  trackLoadFloor,
+} from './load.js';
+import type { RenderBenchApi, RenderBenchOptions, RenderBenchResult } from './protocol.js';
 
-/** What one bench scenario asks for. */
-export interface RenderBenchOptions {
-  /** Stage id to play (`zone-a`, `raster-range` for layer effects, `dimension` for Mode-7). */
-  readonly stage: string;
-  /** Internal frame width (the review's §7.5 knob; 384 is the shipped resolution). */
-  readonly width: number;
-  /** Internal frame height (216 is the shipped resolution). */
-  readonly height: number;
-  /** Canvas width in CSS pixels. */
-  readonly displayWidth: number;
-  /** Canvas height in CSS pixels. */
-  readonly displayHeight: number;
-  /** CRT setting (`off` / `light` / `full`). */
-  readonly crt: CrtFilter;
-  /** Ticks played before the measurement (the camera has to reach the effect ranges). */
-  readonly warmupTicks: number;
-  /** Frames rendered without measuring (shader links, batch growth — the review's F4 / F5). */
-  readonly warmupFrames: number;
-  /** Frames measured. */
-  readonly frames: number;
-  /** Objects leaked per frame — 0 normally; the heap gate's own fixture uses a positive number. */
-  readonly leakPerFrame: number;
-}
-
-/** What one bench scenario measured. */
-export interface RenderBenchResult {
-  /** Frames measured. */
-  readonly frames: number;
-  /** Median `renderer.render()` time, ms. */
-  readonly renderMedianMs: number;
-  /** 95th-percentile `renderer.render()` time, ms. */
-  readonly renderP95Ms: number;
-  /** Longest `renderer.render()`, ms. */
-  readonly renderMaxMs: number;
-  /** WebGL draw calls of the last frame (both passes). */
-  readonly drawCalls: number;
-  /** Frames on which Pixi rebuilt the scene's instruction set (the review's F1). */
-  readonly structureRebuilds: number;
-  /** Bytes of pooled render targets Pixi created (the review's F2 / F3). */
-  readonly renderTargetBytes: number;
-  /** JS heap growth over the measured frames, bytes (the gate the review's F5 needs). */
-  readonly heapDeltaBytes: number;
-  /** Whether the browser reported a usable heap figure at all. */
-  readonly heapMeasured: boolean;
-  /** WebGL version the context really is. */
-  readonly webGLVersion: number;
-  /** Fewest live enemy bullets any measured frame carried. */
-  readonly bullets: number;
-  /** Fewest live point items any measured frame carried. */
-  readonly points: number;
-  /** Fewest live particles any measured frame carried. */
-  readonly particles: number;
-  /** Whether the Mode-7 floor was drawn. */
-  readonly mode7: boolean;
-  /** `LayerId` bits whose layer had an effect filter attached. */
-  readonly layerEffectMask: number;
-  /** Camera x at the end of the run (which stage section the load was measured over). */
-  readonly cameraX: number;
-  /** The World's status at the end of the run (`playing` unless the stage ran out). */
-  readonly worldStatus: string;
-}
-
-/** The API the bench drives from Node. */
-export interface RenderBenchApi {
-  /**
-   * Runs one scenario: a fresh renderer and game, the scripted worst-case load, then the measured
-   * frames.
-   *
-   * @param options - The scenario.
-   * @returns What it measured.
-   */
-  run(options: RenderBenchOptions): Promise<RenderBenchResult>;
-}
+export type { RenderBenchApi, RenderBenchOptions, RenderBenchResult } from './protocol.js';
 
 /** The canvas declared in `index.html`. */
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -176,71 +110,6 @@ async function ensureAssets(): Promise<void> {
   atlas = createAtlas(assets.manifest, images, { onWarning: () => {} });
 }
 
-/** A small deterministic generator — the load must be the same on every run. */
-class Lcg {
-  /** The state. */
-  private state = 0x2545f491;
-
-  /**
-   * The next number in [0, 1).
-   *
-   * @returns The number.
-   */
-  next(): number {
-    this.state = (Math.imul(this.state, 1664525) + 1013904223) >>> 0;
-    return this.state / 4294967296;
-  }
-}
-
-/**
- * Tops the enemy-bullet pool up to its capacity around the camera.
- *
- * @param game - The game.
- * @param random - The generator.
- */
-function fillBullets(game: Game, random: Lcg): void {
-  const world = game.world;
-  const camera = world.camera;
-  const bullets = world.bullets;
-  while (bullets.pool.count < MAX_ENEMY_BULLETS) {
-    if (
-      bullets.spawn(
-        camera.x + PLAYFIELD_W * random.next(),
-        camera.y + PLAYFIELD_H * random.next(),
-        Math.floor(1024 * random.next()),
-        0.25 + random.next(),
-        0,
-      ) < 0
-    ) {
-      break;
-    }
-  }
-}
-
-/**
- * Keeps the particle pool full: bursts of every preset around the camera until no free slot is
- * left (the presets recycle the oldest particle when the pool is full, so this settles).
- *
- * @param renderer - The renderer.
- * @param game - The game.
- * @param random - The generator.
- */
-function fillParticles(renderer: PixiRenderer, game: Game, random: Lcg): void {
-  const particles = renderer.particles;
-  if (particles === null) return;
-  const presets = particles.content.presets.length;
-  if (presets === 0) return;
-  const camera = game.world.camera;
-  for (let i = 0; i < presets * 4 && particles.liveCount < particles.capacity; i++) {
-    particles.emit(
-      i % presets,
-      camera.x + PLAYFIELD_W * random.next(),
-      camera.y + PLAYFIELD_H * random.next(),
-      4,
-    );
-  }
-}
-
 /**
  * Waits for the next animation frame.
  *
@@ -252,17 +121,6 @@ function nextFrame(): Promise<void> {
       resolve();
     });
   });
-}
-
-/**
- * The value at a quantile of ascending samples.
- *
- * @param sorted - Ascending samples.
- * @param q - Quantile 0…1.
- * @returns The sample.
- */
-function quantile(sorted: Float64Array, q: number): number {
-  return sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
 }
 
 /** The JS heap reading Chromium offers (`--enable-precise-memory-info` makes it exact). */
@@ -311,7 +169,9 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     atlas,
     countDrawCalls: true,
     countStructureRebuilds: true,
-    particleCapacity: 512,
+    // Twice the shipped default (`PARTICLE_CAPACITY` = 256): a worst case, and a gate stricter
+    // than reality — see `load.ts`.
+    particleCapacity: BENCH_PARTICLE_CAPACITY,
   });
   try {
     if (fx !== null) renderer.setFxContent(fx);
@@ -329,27 +189,13 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     );
     game.world.debugFlags.godMode = true;
     const random = new Lcg();
-    /**
-     * One simulated tick under the scripted worst-case load, leaving every pool full for the
-     * frame that is rendered next.
-     *
-     * The order is what makes the load real. The bomber's screen clear (M2-02) is how a frame
-     * ever holds 512 point items, and it is re-run on every tick that left a free item slot —
-     * items are credited and freed a few at a time as they reach the score, so clearing only
-     * once per half-pool (as this did before review round 1) let the item pool sawtooth from 512
-     * down to 256 and the measured frames carried barely half the claimed load. But a cancelled
-     * bullet only *marks* its slot dead: `pools.flushAll()` in the step's removal phase frees it,
-     * so the cancel has to come **before** `step()` and the bullet pool has to be topped up
-     * **after** it — topping up first would find 512 dead slots and spawn nothing.
-     */
+    // The scripted load and its order live in `load.ts` — and are pinned headlessly by
+    // `test/integration/render-bench.test.ts`, because getting them wrong measures an empty
+    // scene without saying so (M3-02c review round 1).
+    const particlePool = renderer.particles;
+    /** One simulated tick under the scripted worst-case load. */
     const tick = (): void => {
-      if (game.world.bullets.points.count < MAX_POINT_ITEMS) {
-        game.world.bullets.cancelAll(CancelMode.Points, 0);
-      }
-      game.step();
-      game.events.drain(() => {});
-      fillBullets(game, random);
-      fillParticles(renderer, game, random);
+      benchTick(game, particlePool, random);
     };
     for (let i = 0; i < options.warmupTicks; i++) tick();
     for (let i = 0; i < options.warmupFrames; i++) {
@@ -364,19 +210,14 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
     // The load is reported as the *smallest* live count any measured frame carried, so the
     // scenario's claim ("512 bullets, 512 point items, the particle pool full") is checked
     // against every frame rather than against the last one.
-    let bullets = MAX_ENEMY_BULLETS;
-    let points = MAX_POINT_ITEMS;
-    let particles = renderer.particles?.capacity ?? 0;
+    const floor = createLoadFloor(particlePool?.capacity ?? 0);
     for (let i = 0; i < options.frames; i++) {
       tick();
       const frame = game.renderFrame();
       const start = performance.now();
       renderer.render(frame);
       samples[i] = performance.now() - start;
-      if (world.bullets.pool.count < bullets) bullets = world.bullets.pool.count;
-      if (world.bullets.points.count < points) points = world.bullets.points.count;
-      const live = renderer.particles?.liveCount ?? 0;
-      if (live < particles) particles = live;
+      trackLoadFloor(floor, game, particlePool);
       for (let k = 0; k < options.leakPerFrame; k++) leaked.push({ i, k, pad: `${i}:${k}` });
       await nextFrame();
     }
@@ -397,9 +238,9 @@ async function run(options: RenderBenchOptions): Promise<RenderBenchResult> {
       heapDeltaBytes: heapBefore < 0 ? 0 : heapAfter - heapBefore,
       heapMeasured: heapBefore >= 0,
       webGLVersion: renderer.webGLVersion,
-      bullets,
-      points,
-      particles,
+      bullets: floor.bullets,
+      points: floor.points,
+      particles: floor.particles,
       mode7: renderer.mode7.active,
       layerEffectMask: renderer.layerEffects.attachedMask,
       cameraX: Math.round(world.camera.x),
