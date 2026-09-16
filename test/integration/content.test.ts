@@ -39,30 +39,38 @@ import {
   DEFAULT_SCORING_RULES,
   DEFAULT_UI_TEXT,
   DIFFICULTY_PRESETS,
+  FIXED_UI_TEXT_IDS,
   ENGINE_SPRITES,
   EnemyState,
   KNOWN_SCRIPT_IDS,
   MAX_ENDING_TEXT_LINES,
+  MAX_UI_TEXT_LENGTH,
   MUSIC_CUES,
   PLAYFIELD_H,
   RunFlag,
   SFX_CUE_NAMES,
   TerrainType,
+  UI_LANGUAGES,
   UI_TEXT_IDS,
   WARNING_PULSE_TICKS,
   checkEnemyBehaviors,
   checkWeaponBehaviors,
   createGame,
   createHeadlessPlatform,
+  createSaveStore,
   computeRank,
   createStageRunner,
   creditsLineCount,
+  isUiTextDrawable,
   loadContent,
   powerRank,
   resolveGameConfig,
+  resolveUiText,
   selectCampaignEnding,
   spawnPlayer,
   terrainAt,
+  uiLanguageIds,
+  uiLanguageLabel,
   type BossPartSpec,
   type BossSpec,
   type ContentDb,
@@ -232,6 +240,7 @@ describe('integration: content/ validates', () => {
       'audio/music/zone-i.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
+      'input/webos.input-profiles.json',
     ]);
     expect(ownerIssues(foreign)).toEqual([]);
     expect(db.ships.map((ship) => ship.id)).toContain('kestrel');
@@ -424,6 +433,97 @@ describe('integration: content/ validates', () => {
     const example = loadContent(read(['strings/example.strings.json']));
     expect(example.issues).toEqual([]);
     expect(example.db.uiStrings[0]?.language).toBe('fr');
+  });
+
+  // Plan M3-03's acceptance: "string coverage per language". Every shipped table must answer
+  // every id — a gap would silently fall back to English mid-screen, which reads as a bug.
+  it('ships a complete table for every language the game offers (M3-03)', () => {
+    const { db, issues } = loadContent(shippedFiles);
+    expect(issues).toEqual([]);
+    const languages = uiLanguageIds(db.uiStrings);
+    expect(languages).toEqual(['en', 'es', 'ja']);
+    expect(UI_LANGUAGES.map((language) => language.id)).toEqual(languages);
+    for (const language of languages) {
+      const table = db.uiStrings.find((entry) => entry.language === language);
+      expect(table, language).toBeDefined();
+      expect(Object.keys(table?.strings ?? {}), language).toEqual(UI_TEXT_IDS);
+      const text = resolveUiText(table?.strings);
+      for (const id of UI_TEXT_IDS) {
+        expect(text[id].length, `${language}.${id}`).toBeGreaterThan(0);
+        expect(text[id].length, `${language}.${id}`).toBeLessThanOrEqual(MAX_UI_TEXT_LENGTH);
+        // Every character must be one the bitmap font really carries (M3-03: the font source and
+        // `UI_GLYPHS` are kept equal by test/scripts/assets/font.test.ts).
+        expect(isUiTextDrawable(text[id]), `${language}.${id}: ${text[id]}`).toBe(true);
+        // `{0}` / `{1}` are filled by the scenes: a translation may not lose or invent one.
+        const slots = (template: string): string[] => template.match(/\{[01]\}/g)?.sort() ?? [];
+        expect(slots(text[id]), `${language}.${id}`).toEqual(slots(DEFAULT_UI_TEXT[id]));
+      }
+      // The fixed ids (the HUD's few-pixel codes, the game's name, the symbols) never change.
+      for (const id of FIXED_UI_TEXT_IDS) {
+        expect(text[id], `${language}.${id}`).toBe(DEFAULT_UI_TEXT[id]);
+      }
+    }
+  });
+
+  it('names every language in its own script, drawable by the font (M3-03)', () => {
+    for (const language of UI_LANGUAGES) {
+      expect(isUiTextDrawable(language.label), language.id).toBe(true);
+      expect(uiLanguageLabel(language.id)).toBe(language.label);
+    }
+    expect(uiLanguageLabel('fr')).toBe('FR'); // a table the game does not name is still offered
+  });
+
+  // The whole localization path in one test: the save's choice → the flow's table → the screen.
+  it('shows the language the save chose, and falls back when the content lost it (M3-03)', () => {
+    const { db } = loadContent(shippedFiles);
+    const platform = createHeadlessPlatform();
+    /**
+     * A game whose save asks for a language.
+     *
+     * @param language - The saved `options.display.language`.
+     * @returns Its scene flow.
+     */
+    const flowFor = (language: string) => {
+      const save = createSaveStore(null);
+      save.setOptions({ ...save.options, display: { ...save.options.display, language } });
+      return createGame(platform, {}, db, { scenes: 'title', save }).scenes!;
+    };
+    const en = flowFor('en');
+    expect([en.language, en.text.titleOptions]).toEqual(['en', 'OPTIONS']);
+    const es = flowFor('es');
+    expect(es.language).toBe('es');
+    expect(es.text.titleOptions).toBe(
+      db.uiStrings.find((table) => table.language === 'es')?.strings.titleOptions,
+    );
+    expect(es.text.titleOptions).not.toBe('OPTIONS');
+    const ja = flowFor('ja');
+    expect(ja.language).toBe('ja');
+    expect(isUiTextDrawable(ja.text.titleOptions)).toBe(true);
+    // A fixed id stays English whatever the table says (the HUD cannot grow).
+    for (const flow of [es, ja]) {
+      for (const id of FIXED_UI_TEXT_IDS) expect(flow.text[id], id).toBe(DEFAULT_UI_TEXT[id]);
+      expect(flow.languages).toEqual(['en', 'es', 'ja']);
+    }
+    // A save naming a language the content no longer carries falls back to English, never blank.
+    const gone = flowFor('fr');
+    expect([gone.language, gone.text.titleOptions]).toEqual(['en', 'OPTIONS']);
+  });
+
+  it('refuses a translation that redraws a fixed id or uses a glyph the font lacks (M3-03)', () => {
+    const bad = {
+      path: 'strings/zz.strings.json',
+      data: {
+        formatVersion: 1,
+        kind: 'strings',
+        language: 'zz',
+        strings: { gameTitle: 'ANOTHER GAME', pressOk: 'ДАВАЙ' },
+      },
+    };
+    const { issues } = loadContent([...shippedFiles, bad]);
+    expect(issues.map((issue) => issue.message)).toEqual([
+      '"gameTitle" is the same in every language: it must stay "SHMUP CUP"',
+      'uses a character the bitmap font does not have',
+    ]);
   });
 
   it('ships the difficulty presets of plan M2-01, equal to the built-in table', () => {

@@ -40,7 +40,8 @@ describe('core/data strings (M2-16)', () => {
 
   it('reports unknown ids and glyphs the font lacks, keeping the good entries', () => {
     const { db, issues } = loadContent([
-      file('de', { pressOk: 'OK DRÜCKEN', hi: 'REKORD', bogusId: 'X', 'sfx.Nope': 'Y' }),
+      // `Ü` is in the font since M3-03; `Д` never was.
+      file('de', { pressOk: 'ДАВАЙ', back: 'ZURÜCK', bogusId: 'X', 'sfx.Nope': 'Y' }),
     ]);
     expect(issues).toEqual([
       {
@@ -56,20 +57,41 @@ describe('core/data strings (M2-16)', () => {
         message: 'unknown UI string id "sfx.Nope"',
       },
     ]);
-    expect(db.uiStrings[0].strings).toEqual({ hi: 'REKORD' });
+    expect(db.uiStrings[0].strings).toEqual({ back: 'ZURÜCK' });
+  });
+
+  // M3-03: the HUD draws a handful of ids in a few pixels of a bar it cannot grow, and the
+  // auto-order screen indexes `orderCodes` character by character — they are the same everywhere.
+  it('refuses a translation of a fixed id, and keeps the rest of the table', () => {
+    const { db, issues } = loadContent([
+      file('de', { gameTitle: 'EIN ANDERES SPIEL', meterShortSpeed: 'GE', back: 'ZURÜCK' }),
+    ]);
+    expect(issues).toEqual([
+      {
+        path: 'strings/de.strings.json:strings.gameTitle',
+        message: '"gameTitle" is the same in every language: it must stay "SHMUP CUP"',
+      },
+      {
+        path: 'strings/de.strings.json:strings.meterShortSpeed',
+        message: '"meterShortSpeed" is the same in every language: it must stay "SP"',
+      },
+    ]);
+    expect(db.uiStrings[0].strings).toEqual({ back: 'ZURÜCK' });
+    // Repeating the English text is fine — a table may list every id.
+    expect(loadContent([file('de', { gameTitle: 'SHMUP CUP' })]).issues).toEqual([]);
   });
 
   it('refuses a bad language, empty or long texts, and a second table of a language', () => {
     const bad = loadContent([file('FR', { pressOk: 'X' })]);
     expect(bad.issues.map((i) => i.path)).toEqual(['strings/FR.strings.json:language']);
-    const lengths = loadContent([file('fr', { pressOk: '', hi: 'X'.repeat(49) })]);
+    const lengths = loadContent([file('fr', { pressOk: '', back: 'X'.repeat(49) })]);
     expect(lengths.issues.map((i) => i.path)).toEqual([
       'strings/fr.strings.json:strings.pressOk',
-      'strings/fr.strings.json:strings.hi',
+      'strings/fr.strings.json:strings.back',
     ]);
     const twice = loadContent([
-      file('fr', { hi: 'A' }, 'strings/a.strings.json'),
-      file('fr', { hi: 'B' }, 'strings/b.strings.json'),
+      file('fr', { back: 'A' }, 'strings/a.strings.json'),
+      file('fr', { back: 'B' }, 'strings/b.strings.json'),
     ]);
     expect(twice.issues).toEqual([
       {

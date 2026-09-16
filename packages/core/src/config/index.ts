@@ -117,6 +117,7 @@
  */
 import { ACTION_NAMES, type ActionName } from '../input/index.js';
 import { defineModule } from '../module-info.js';
+import { DEFAULT_LANGUAGE } from '../ui/strings.js';
 
 /** Module descriptor (see {@link defineModule}). */
 export const moduleInfo = defineModule({
@@ -1468,6 +1469,13 @@ export interface DisplayOptions {
   readonly crtFilter: CrtFilter;
   /** How the picture is shaped on the display ({@link ASPECT_MODES}; default `normal`; M3-02). */
   readonly aspect: AspectMode;
+  /**
+   * The UI language (M3-03): a `content/strings/<id>.strings.json` language id, default
+   * {@link DEFAULT_LANGUAGE} (`en`). Presentation only — the simulation never reads it, so a
+   * replay is language-independent. The scene flow resolves the table when it is built, so a
+   * change shows from the next launch (`core/ui` `pickUiStrings`).
+   */
+  readonly language: string;
 }
 
 /**
@@ -1572,12 +1580,19 @@ export const DEFAULT_USER_OPTIONS: UserOptions = Object.freeze({
     bossHpBar: false,
     crtFilter: 'off',
     aspect: 'normal',
+    language: DEFAULT_LANGUAGE,
   }),
   play: DEFAULT_PLAY_OPTIONS,
 });
 
 /** Shape of an input profile id (lower-case kebab, as `content/input/` requires), ≤ 64 characters. */
 export const INPUT_PROFILE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * Shape of a UI language id (M3-03): lower-case ISO 639-1 with an optional region, the same
+ * pattern `content/strings/*.strings.json` files are validated against (`en`, `es`, `ja`, `pt-br`).
+ */
+export const LANGUAGE_ID_PATTERN = /^[a-z]{2}(?:-[a-z]{2})?$/;
 
 /**
  * Input profiles that no longer ship, and what a save that names one is migrated to (M3-02b).
@@ -1737,6 +1752,10 @@ export function resolveUserOptions(value: unknown): UserOptions {
       bossHpBar: typeof display.bossHpBar === 'boolean' ? display.bossHpBar : dd.bossHpBar,
       crtFilter: oneOf(display.crtFilter, CRT_FILTERS) ?? dd.crtFilter,
       aspect: oneOf(display.aspect, ASPECT_MODES) ?? dd.aspect,
+      language:
+        typeof display.language === 'string' && LANGUAGE_ID_PATTERN.test(display.language)
+          ? display.language
+          : dd.language,
     }),
     play: resolvePlayOptions(root.play),
   });

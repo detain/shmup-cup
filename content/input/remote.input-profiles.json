@@ -38,7 +38,8 @@
       "diagonals": "combine",
       "socd": "neutral",
       "singleKey": true,
-      "register": ["MediaPlayPause", "ChannelUp", "ChannelDown", "Guide", "Extra"]
+      "register": ["MediaPlayPause", "ChannelUp", "ChannelDown", "Guide", "Extra"],
+      "hosts": ["tizen"]
     },
     {
       "id": "keyboard-default",

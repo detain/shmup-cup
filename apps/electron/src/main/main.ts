@@ -35,6 +35,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { APP_ENTRY_URL, APP_SCHEME, resolveAppFile } from './app-protocol.js';
 import { isTrustedRendererUrl, registerIpcHandlers } from './ipc-handlers.js';
 import { SAVES_DIRECTORY, createFileStore, type FileStore } from './saves.js';
+import { createAchievementStore, createCloudStore, initSteam } from './steam.js';
 import { createWindowOptions } from './window-options.js';
 import {
   DEFAULT_WINDOW_SCALE,
@@ -182,6 +183,14 @@ function createGameWindow(store: FileStore, state: WindowState): void {
   void gameWindow.loadURL(devUrl ?? APP_ENTRY_URL);
 }
 
+/**
+ * Steamworks (M3-03), or an inert stand-in. `steamworks-ffi-node` is **not** a dependency of this
+ * repo, so `initSteam()` without a loader always reports `available: false` here: a build that
+ * ships the binding passes its own loader (`main/steam.ts`). Created at module scope so the
+ * `will-quit` handler below can release it.
+ */
+const steam = initSteam();
+
 void app.whenReady().then(async () => {
   protocol.handle(APP_SCHEME, (request) => {
     const file = resolveAppFile(rendererDir, request.url);
@@ -189,7 +198,13 @@ void app.whenReady().then(async () => {
     return net.fetch(pathToFileURL(file).toString());
   });
 
-  const store = createFileStore(join(app.getPath('userData'), SAVES_DIRECTORY));
+  // M3-03: the save round-trips through Steam Cloud and awards achievements when {@link steam} is
+  // available; both wrappers are the identity when it is not, which is every build this repo
+  // produces.
+  const store = createAchievementStore(
+    createCloudStore(createFileStore(join(app.getPath('userData'), SAVES_DIRECTORY)), steam.cloud),
+    steam,
+  );
   registerIpcHandlers(ipcMain, {
     store,
     quit: () => {
@@ -212,6 +227,7 @@ app.on('window-all-closed', () => {
 
 // Quit only once the window settings are on disk (the position saved on `close`).
 app.on('will-quit', (event) => {
+  steam.shutdown();
   if (windowWrites.pending === 0) return;
   event.preventDefault();
   void windowWrites.settled.then(() => {

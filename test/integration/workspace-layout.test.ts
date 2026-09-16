@@ -28,6 +28,7 @@ describe('integration: repository skeleton', () => {
         'apps/electron',
         'apps/tizen',
         'apps/web',
+        'apps/webos',
         'packages/audio-web',
         'packages/core',
         'packages/input-web',

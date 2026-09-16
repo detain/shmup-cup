@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shmup Cup</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070f;
+      }
+      #game {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <!-- Dev: served as an ES module by Vite. Build: rewritten to a classic deferred app.js (IIFE). -->
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

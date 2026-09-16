@@ -520,11 +520,12 @@ export async function bootTizenApp(
      * an id it does not offer and the profile already in use.
      */
     inputProfiles: {
-      choices: () => inputProfileChoices(profiles.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID),
+      choices: () =>
+        inputProfileChoices(profiles.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID, null, 'tizen'),
       active: () => input.keyProfile?.id ?? null,
       apply: (id) => {
         // Only a profile the remote can drive the menus with (never lock the player out).
-        const offered = selectableKeyProfiles(profiles.profiles, 'keyCode');
+        const offered = selectableKeyProfiles(profiles.profiles, 'keyCode', 'tizen');
         const chosen = chooseInputProfile(offered, [id], KEY_PROFILE_DEVICES);
         if (chosen === null || chosen === state.keys) return;
         state.apply(chosen);

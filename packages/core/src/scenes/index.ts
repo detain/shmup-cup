@@ -447,10 +447,13 @@ import {
   menuStringSlots,
   menuTick,
   nameEntryTick,
+  pickUiStrings,
   rebindStringSlots,
   rebindTick,
   resolveUiSprites,
   resolveUiText,
+  uiLanguageIds,
+  uiLanguageLabel,
   type Choice,
   type Confirm,
   type Hud,
@@ -1160,8 +1163,10 @@ export const DisplayItem = {
   Crt: 6,
   /** ASPECT: how the picture is shaped on the display — `ASPECT_MODES` (M3-02). */
   Aspect: 7,
+  /** LANGUAGE: the UI language — `core/ui` `uiLanguageIds` (M3-03). */
+  Language: 8,
   /** BACK: store and return to the Options screen. */
-  Back: 8,
+  Back: 9,
 } as const;
 
 /** The CONTROLS page's items (M2-16). */
@@ -1728,6 +1733,15 @@ interface FlowControl {
   readonly text: UiText;
   /** The label lists built from {@link FlowControl.text} (M2-16). */
   readonly labels: SceneLabels;
+  /**
+   * The language ids the game offers (M3-03): `core/ui` `uiLanguageIds` over the content's
+   * `strings` tables — `en` first, then every other table's language.
+   */
+  readonly languages: readonly string[];
+  /** The names to draw for {@link FlowControl.languages} (`core/ui` `uiLanguageLabel`; M3-03). */
+  readonly languageLabels: readonly string[];
+  /** The language the UI is currently shown in — one of {@link FlowControl.languages} (M3-03). */
+  readonly language: string;
   /** The host's rebinding side (M2-16), or `null`. */
   readonly controls: ControlsSetup | null;
   /** The Options screen's CONTROLS page (M2-16). */
@@ -3106,6 +3120,8 @@ export class DisplayScene extends SceneBase {
   readonly crt: Choice;
   /** ASPECT: the picture's shape (`ASPECT_MODES`; M3-02). */
   readonly aspect: Choice;
+  /** LANGUAGE: the UI language, one of {@link FlowControl.languages} (M3-03). */
+  readonly language: Choice;
   /** The menu ({@link DisplayItem} order). */
   readonly menu: ListMenu;
 
@@ -3123,6 +3139,7 @@ export class DisplayScene extends SceneBase {
     this.flashes = createChoice(labels.flash, 0);
     this.crt = createChoice(labels.crt, 0);
     this.aspect = createChoice(labels.aspect, 0);
+    this.language = createChoice(flow.languageLabels.slice(), 0);
     this.menu = createListMenu([
       { label: t.optBullets, choice: this.bullets },
       { label: t.optScale, choice: this.scale },
@@ -3132,13 +3149,14 @@ export class DisplayScene extends SceneBase {
       { label: t.optBossHp, toggle: this.bossHp },
       { label: t.optCrt, choice: this.crt },
       { label: t.optAspect, choice: this.aspect },
+      { label: t.optLanguage, choice: this.language },
       t.back,
     ]);
   }
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
-    return 1 + menuStringSlots(this.menu);
+    return 2 + menuStringSlots(this.menu);
   }
 
   /** Reads the save's display options; focus on BULLETS, locked for 2 ticks. */
@@ -3157,6 +3175,8 @@ export class DisplayScene extends SceneBase {
     this.crt.index = crt >= 0 ? crt : 0;
     const aspect = ASPECT_MODES.indexOf(display.aspect);
     this.aspect.index = aspect >= 0 ? aspect : 0;
+    const language = this.flow.languages.indexOf(display.language);
+    this.language.index = language >= 0 ? language : 0;
     this.menu.focus = DisplayItem.Bullets;
     this.menu.open(MENU_OPEN_LOCK_TICKS);
   }
@@ -3176,6 +3196,7 @@ export class DisplayScene extends SceneBase {
         bossHpBar: this.bossHp.value,
         crtFilter: CRT_FILTERS[this.crt.index] ?? 'off',
         aspect: ASPECT_MODES[this.aspect.index] ?? 'normal',
+        language: flow.languages[this.language.index] ?? DEFAULT_LANGUAGE,
       },
     });
     void save.flush();
@@ -3223,6 +3244,9 @@ export class DisplayScene extends SceneBase {
         case DisplayItem.Aspect:
           flow.userOption(UserOptionKind.Aspect, this.aspect.index);
           break;
+        case DisplayItem.Language:
+          flow.userOption(UserOptionKind.Language, this.language.index);
+          break;
         default:
           break;
       }
@@ -3242,8 +3266,10 @@ export class DisplayScene extends SceneBase {
     const t = this.flow.text;
     drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
     list.setString(base, t.displayTitle);
+    list.setString(base + 1, t.languageHint);
     list.text(base, CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 1, OPTIONS_MENU_LAYOUT, t);
+    drawMenu(list, this.menu, base + 2, OPTIONS_MENU_LAYOUT, t);
+    list.text(base + 1, CX, p.y + p.h - 12, UI_COLORS.disabled, TextAlign.Center);
   }
 }
 
@@ -8668,12 +8694,20 @@ export interface SceneFlow {
    */
   chooseMode(mode: RunMode, zone?: number, loop?: number): void;
   /**
-   * The UI string table the scenes draw with (M2-16): the content's `strings` table of
-   * `core/ui` `DEFAULT_LANGUAGE` over the built-in English one.
+   * The UI string table the scenes draw with (M2-16): the content's `strings` table of the
+   * language the save chose (M3-03 — `core/ui` `pickUiStrings`) over the built-in English one.
    */
   readonly text: UiText;
   /** The label lists built from {@link SceneFlow.text} (M2-16). */
   readonly labels: SceneLabels;
+  /**
+   * The language the UI is shown in (M3-03): the save's `options.display.language` when the
+   * content carries a table for it, else `core/ui` `DEFAULT_LANGUAGE`. The tables are resolved
+   * once, when the flow is built, so a change on the DISPLAY page shows from the next launch.
+   */
+  readonly language: string;
+  /** The language ids the DISPLAY page's LANGUAGE row offers (`core/ui` `uiLanguageIds`; M3-03). */
+  readonly languages: readonly string[];
   /**
    * The demos the attract loop plays, decoded from the content (`ContentDb.demos`, M2-15 — a demo
    * that does not decode is left out).
@@ -8872,12 +8906,14 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
   const events = host.events;
   const menuInput: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'none' };
   const save = host.save ?? createSaveStore(null);
-  // The UI string table (M2-16): the content's table of the shipped language over English.
-  let strings: Readonly<Record<string, string>> | null = null;
-  for (const table of host.content.uiStrings) {
-    if (table.language === DEFAULT_LANGUAGE) strings = table.strings;
-  }
-  const text = resolveUiText(strings);
+  // The UI string table (M2-16): the content's table of the chosen language over English. The
+  // languages on offer are `en` plus every table the content carries (M3-03); a save naming one
+  // the content lost falls back to `en`, so a missing table can never blank the UI.
+  const languages = uiLanguageIds(host.content.uiStrings);
+  const wanted = save.options.display.language;
+  const language = languages.indexOf(wanted) >= 0 ? wanted : DEFAULT_LANGUAGE;
+  const languageLabels = languages.map(uiLanguageLabel);
+  const text = resolveUiText(pickUiStrings(host.content.uiStrings, language));
   const labels = text === DEFAULT_UI_TEXT ? ENGLISH : buildSceneLabels(text);
   // One config per difficulty preset (the difficulty menu): the host's for its own preset.
   const table = host.content.difficulty ?? DEFAULT_DIFFICULTY_TABLE;
@@ -8992,6 +9028,9 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     host,
     text,
     labels,
+    language,
+    languages,
+    languageLabels,
     controls: host.controls ?? null,
     recorder: new RunRecorder(),
     replays: host.replays ?? null,
@@ -9510,6 +9549,8 @@ export function createSceneFlow(host: SceneFlowHost, start: SceneStart = 'boot')
     },
     text,
     labels,
+    language,
+    languages,
     demos,
     run,
     campaign,

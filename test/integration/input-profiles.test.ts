@@ -70,9 +70,13 @@ function pad(pressed: readonly number[]): GamepadLike {
 
 describe('integration: shipped input profiles reach the core', () => {
   it('the content has input profiles and they validate', () => {
-    expect(files.map((file) => file.path)).toEqual(['input/remote.input-profiles.json']);
+    expect(files.map((file) => file.path)).toEqual([
+      'input/remote.input-profiles.json',
+      // M3-03: the LG webOS remote (Back = 461) is a profile of its own, in its own file.
+      'input/webos.input-profiles.json',
+    ]);
     expect(issues).toEqual([]);
-    expect(profiles.length).toBeGreaterThanOrEqual(5);
+    expect(profiles.length).toBeGreaterThanOrEqual(6);
   });
 
   it.each(profiles.filter((p) => p.device !== 'gamepad').map((p) => [p.id, p] as const))(

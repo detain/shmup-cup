@@ -3,6 +3,8 @@
   "ui": "stream",
   "globalDependencies": [
     ".browserslistrc",
+    "apps/tizen/polyfills/**",
+    "apps/tizen/scripts/check-bundle.mjs",
     "assets/source/**",
     "content/**",
     "eslint.config.js",

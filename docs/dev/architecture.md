@@ -32,6 +32,7 @@ extends, continues, the difficulty menu and the continue countdown).
 ┌────────────────────────── host apps (thin, platform-specific) ──────────────────────────┐
 │ apps/web       Vite dev app; also the renderer Electron loads                           │
 │ apps/tizen     Samsung TV .wgt (Chromium 69, one classic IIFE script)                   │
+│ apps/webos     LG TV .ipk (webOS 5+, the same IIFE contract; Back = 461) — M3-03        │
 │ apps/electron  desktop shell: main process + sandboxed preload, loads apps/web's build  │
 └──────┬─────────────────────────────┬───────────────────────────────────┬────────────────┘
        │ create input + audio,       │ bootShell({ content, assets,      │
@@ -759,7 +760,7 @@ plugins in `vite.shared.ts`) has no `moduleInfo`; it is covered by the tests und
 
 | To add… | Do this |
 |---|---|
-| A new host platform (webOS, Android TV) | New `apps/<name>/` implementing `Platform` (copy `apps/tizen/src/platform/` as a start) and a thin `boot` that calls `bootShell()` if it is a browser engine (reuse `@shmup/input-web` / `audio-web`) |
+| A new host platform (Android TV, …) | New `apps/<name>/` implementing `Platform` and a thin `boot` that calls `bootShell()` if it is a browser engine (reuse `@shmup/input-web` / `audio-web`). **`apps/webos` (M3-03) is the worked example** — copy it rather than `apps/tizen`, which carries Samsung-only key registration and `webapis`. A TV with its own Back key also needs an input profile with a `hosts` list ([input-profiles.md](input-profiles.md#the-shipped-profiles)) |
 | Something drawn in the world | A `SpriteBatchView` (an SoA pool or a `createSpriteBatch` mirror) in the `WorldView.batches` list — no renderer change ([rendering-and-shell.md](rendering-and-shell.md#extending-it)) |
 | HUD or menu drawing | The HUD is `core/ui` `buildHud` (add what it depends on to `Hud.update`); menus are `core/ui` widgets drawn by a scene's `drawUi` into the flow's one UI list (`DrawList`: rect, sprite, text slot, number) — [scenes-and-ui.md](scenes-and-ui.md#extending-it) |
 | A saved option, a save field or a statistic | `UserOptions` / `resolveUserOptions` in `core/config`, a `SAVE_MIGRATIONS` step + `sanitizeSave` / `serializeSave` in `core/save` — [saves-and-options.md](saves-and-options.md#extending-it) |

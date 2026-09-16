@@ -86,13 +86,23 @@ Around it: core `input` owns `InputContext` / `INPUT_CONTEXTS`, core `game` the
 
 ## The shipped profiles
 
-| Profile | Label (CONTROLS) | `device` | Used | Debounce | Single key | Diagonals / SOCD | `register` |
-|---|---|---|---|---|---|---|---|
-| `tizen-remote-safe` | `REMOTE` | `remote` | TV default | 0 | yes | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown`, `Guide`, `Extra` |
-| `keyboard-default` | `KEYBOARD` | `keyboard` | web default | 0 | no | `combine` / `neutral` | — |
-| `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 0 | yes | `combine` / `neutral` | — |
-| `keyboard-split` | `SPLIT KEYBOARD` | `keyboard` | web, picked in CONTROLS or `?profile=keyboard-split` — two players on one keyboard (M2-06; its `split` half is player 2's) | 0 | no | `combine` / `neutral` | — |
-| `gamepad-standard` | `GAMEPAD` | `gamepad` | every pad, both apps (never offered in CONTROLS) | 0 (must be) | no (must be) | `combine` / `neutral` | — |
+| Profile | Label (CONTROLS) | `device` | `hosts` | Used | Debounce | Single key | Diagonals / SOCD | `register` |
+|---|---|---|---|---|---|---|---|---|
+| `tizen-remote-safe` | `REMOTE` | `remote` | `tizen` | Samsung TV default | 0 | yes | `combine` / `neutral` | `MediaPlayPause`, `ChannelUp`, `ChannelDown`, `Guide`, `Extra` |
+| `webos-remote-safe` | `REMOTE` | `remote` | `webos` | LG TV default (M3-03) | 0 | no | `combine` / `neutral` | — (webOS registers nothing) |
+| `keyboard-default` | `KEYBOARD` | `keyboard` | any | web default | 0 | no | `combine` / `neutral` | — |
+| `keyboard-remote-emulation` | `KEYBOARD AS REMOTE` | `remote` | any | web, picked in CONTROLS or `?profile=keyboard-remote-emulation` | 0 | yes | `combine` / `neutral` | — |
+| `keyboard-split` | `SPLIT KEYBOARD` | `keyboard` | any | web, picked in CONTROLS or `?profile=keyboard-split` — two players on one keyboard (M2-06; its `split` half is player 2's) | 0 | no | `combine` / `neutral` | — |
+| `gamepad-standard` | `GAMEPAD` | `gamepad` | any | every pad, every app (never offered in CONTROLS) | 0 (must be) | no (must be) | `combine` / `neutral` | — |
+
+**`hosts` (M3-03)** names the `Platform.id`s whose Options screen may offer a profile; an empty
+list (or no field) means every host. It exists because the two TV hosts read the same
+`content/input/` and their remotes disagree about Back — Tizen's is **10009**, webOS' is **461**
+(`shmup_tech.md` §3.3). Without it a Tizen player could pick `webos-remote-safe` in CONTROLS and be
+left with **no Back at all**: a lock-out no rebinding guard catches, because the profile itself
+binds every required action. `selectableKeyProfiles(profiles, keySpace, host)` applies it, and
+`host = null` (the default, for the headless tests and the dev `?profile=` override) filters
+nothing.
 
 M1-17 renamed the labels for the Options screen (they were `TV REMOTE`, `TV REMOTE 8-WAY`,
 `KEYBOARD AS TV REMOTE`); CONTROLS appends ` (DEFAULT)` to the platform's default.
@@ -193,13 +203,13 @@ One key profile (device `keyboard` or `remote`, `KEY_PROFILE_DEVICES`) and one g
 are active at a time. The apps pick them in the platform factory `bootShell` calls after the
 content is validated and before the game exists:
 
-| | `apps/web` | `apps/tizen` |
-|---|---|---|
-| Key profile | `?profile=<id>` › saved choice (`options.input.profileId` of the save) › `keyboard-default` | saved choice › `tizen-remote-safe` |
-| Offered in CONTROLS (M1-17) | `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE`, plus a `?profile=` override in use | `REMOTE (DEFAULT)` |
-| Gamepad profile | `gamepad-standard` | `gamepad-standard` |
-| Dev overrides | `?debounce=<ticks>` (0–10) on the key profile, via `overrideInputTuning` | none (the widget has no query string) |
-| Key registration | — | the key profile's `register` list (`createTizenPlatform({ registerKeys })`) |
+| | `apps/web` | `apps/tizen` | `apps/webos` (M3-03) |
+|---|---|---|---|
+| Key profile | `?profile=<id>` › saved choice (`options.input.profileId` of the save) › `keyboard-default` | saved choice › `tizen-remote-safe` | saved choice › `webos-remote-safe` |
+| Offered in CONTROLS (M1-17) | `KEYBOARD (DEFAULT)`, `KEYBOARD AS REMOTE`, plus a `?profile=` override in use | `REMOTE (DEFAULT)` (host `tizen`) | `REMOTE (DEFAULT)` (host `webos`) |
+| Gamepad profile | `gamepad-standard` | `gamepad-standard` | `gamepad-standard` |
+| Dev overrides | `?debounce=<ticks>` (0–10) on the key profile, via `overrideInputTuning` | none (the widget has no query string) | none |
+| Key registration | — | the key profile's `register` list (`createTizenPlatform({ registerKeys })`) | — (webOS delivers every remote key) |
 
 `chooseInputProfile(profiles, candidates, devices)` returns the first candidate id that names
 a profile of an acceptable device, skipping `null`, unknown ids and wrong devices — so
@@ -482,7 +492,7 @@ keys, a key the device cannot hold). The whole feature — tokens, statuses, the
 | Offer a new profile in CONTROLS | Nothing to do if its menu table binds the six menu actions in the host's key space (`byCode` for the web, `byKeyCode` for the TV) — `selectableKeyProfiles` picks it up; otherwise it stays reachable only through `?profile=` on the web |
 | Make an action rebindable | Append it to `core/ui` `REBINDABLE_ACTIONS[context]` (the rebind screen's rows follow); a new required action goes into `REQUIRED_CONTEXT_ACTIONS` too ([options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#extending-it)) |
 | Another split preset | A `keyboard` profile with a `split` section (same format as `context`; no key in both halves; the required actions in each half) — `checkSplit` validates it, `WebInput` routes it by seats ([coop.md](coop.md#input-routing-shmupinput-web-shmupshell)) |
-| Another host | Implement `ShellInput.setContext` (and, for co-op, the optional `setSeats`) in its adapter; pass a registry's `load` as the `input-profiles` owner if the host needs the profiles, otherwise the shell's default owner still validates them |
+| Another host | Implement `ShellInput.setContext` (and, for co-op, the optional `setSeats`) in its adapter; pass a registry's `load` as the `input-profiles` owner if the host needs the profiles, otherwise the shell's default owner still validates them. If it is a TV with its own Back key, give its profile a `hosts` list and pass the host id to `selectableKeyProfiles` / `inputProfileChoices` — `apps/webos` (M3-03) is the worked example |
 
 ## Tests
 

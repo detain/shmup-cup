@@ -356,6 +356,7 @@ describe('core/scenes options: saving', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      language: 'en',
     });
     s.hold(0, 3);
     s.press(Action.Confirm); // DISPLAY again (the root kept its focus)
@@ -550,6 +551,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
     s.press(Action.Down); // BOSS HP (M2-09), left OFF
     s.press(Action.Down); // CRT (M3-02), left OFF
     s.press(Action.Down); // ASPECT (M3-02), left NORMAL
+    s.press(Action.Down); // LANGUAGE (M3-03), left ENGLISH
     s.press(Action.Down);
     expect(o.menu.focus).toBe(DisplayItem.Back);
     s.press(Action.Confirm);
@@ -562,6 +564,7 @@ describe('core/scenes options: display options (plan M2-08)', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      language: 'en',
     });
     await settle();
     // The next session reads them back into the page.

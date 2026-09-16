@@ -255,7 +255,15 @@ describe('shell/memory sizes of odd inputs', () => {
   });
 
   it('sizes a track with neither song nor file, or a file with a zero loop end, as the fallback', () => {
-    const base = { id: 'x', title: 'X', cue: null, cueId: -1, stages: null, song: null };
+    const base = {
+      id: 'x',
+      title: 'X',
+      cue: null,
+      cueId: -1,
+      stages: null,
+      song: null,
+      module: null,
+    };
     const fallback = FILE_TRACK_FALLBACK_SECONDS * DECODE_SAMPLE_RATE * 2 * 4;
     expect(trackBytes({ ...base, file: null })).toBe(fallback);
     expect(

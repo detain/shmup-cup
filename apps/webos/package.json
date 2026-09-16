@@ -1,0 +1,36 @@
+{
+  "name": "@shmup/webos",
+  "version": "1.0.0-rc.1",
+  "private": true,
+  "description": "LG webOS TV app (.ipk), webOS 5+ / Chromium 68+: one classic IIFE script, remote-first input (Back = 461), webOS lifecycle.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/check-bundle.mjs",
+    "build:test": "vite build --mode test && node scripts/check-bundle.mjs",
+    "build:dev": "vite build --mode development && node scripts/check-bundle.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "clean": "node ../../scripts/clean.mjs dist coverage .turbo",
+    "webos:package": "node scripts/webos-package.mjs",
+    "webos:install": "node scripts/webos-install.mjs",
+    "webos:run": "node scripts/webos-run.mjs"
+  },
+  "dependencies": {
+    "@shmup/audio-web": "workspace:*",
+    "@shmup/core": "workspace:*",
+    "@shmup/input-web": "workspace:*",
+    "@shmup/render-pixi": "workspace:*",
+    "@shmup/shell": "workspace:*"
+  },
+  "devDependencies": {
+    "acorn": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

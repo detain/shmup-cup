@@ -43,6 +43,7 @@ describe('core/config user options', () => {
         // M3-02: the CRT filter and the picture's shape.
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       },
       // M3-01: the assists and feel; M3-02: the mechanic extras.
       play: {
@@ -80,6 +81,7 @@ describe('core/config user options', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      language: 'en',
     });
   });
 
@@ -104,6 +106,7 @@ describe('core/config user options', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      language: 'en',
     });
     // Anything but a boolean takes the default.
     expect(
@@ -144,6 +147,7 @@ describe('core/config user options', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,
     });

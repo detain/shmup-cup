@@ -10,6 +10,10 @@
 | [`desktop-app.md`](desktop-app.md) | The **desktop app** (Windows, macOS, Linux, Steam Deck): starting it, the window and its keys (**F11** / **Alt+Enter** fullscreen, **Ctrl + =** / **-** / **0** window size — remembered with the position), sound from the start and **EXIT**, where the **save files** live (with a backup of each; the one-time fresh start after older desktop builds; starting from scratch), making installers, troubleshooting |
 | [`controls.md`](controls.md) | Default controls for the Samsung Smart Remote (primary), gamepads and keyboard, in the game (Ch ▲ / Special and a held OK spreading FORMATION and ROTATE Options, Ch ▼ / Speed switching the MANTA's speed, OK doing nothing for the MANTA), with **two players** (which controller drives which ship, joining and coming back with START, the **SPLIT KEYBOARD** profile) and in menus (moving through menus, the DIFFICULTY box, the SHIP SELECT box, the WEAPON SELECT screen, the CONTINUE? countdown, the ZONE MAP and the ending, the name entry, the attract loop, the PRACTICE and SOUND TEST boxes, pausing, Back and quitting on the TV); the developer keys of debug builds; the control profiles and choosing one under OPTIONS → CONTROLS, the **CONTROLS page** (AUTOFIRE always / toggle / hold, RATE, SOCD, DEBOUNCE), **rebinding keys and buttons** per device (the capture prompt, taken / swapped keys, what cannot be moved, RESET), the **input test**, **one-button play**, the **desktop app's window keys**, feeling the remote's limits on a desktop keyboard, controls troubleshooting |
 | [`install-on-tv.md`](install-on-tv.md) | One-time Developer Mode + certificate setup, installing / starting / removing development builds (input probe and game preview, and the game's debug build with the developer tools) on the Samsung Smart Monitor M7 (Windows desktop), what happens to saved settings and high scores on update and removal, the **game-mode build** for the latency A/B test, **live reload** while developing (`tizen:watch`), install troubleshooting |
+| [`webos.md`](webos.md) | **LG webOS TVs** (M3-03): what you need, Developer Mode, pairing the TV with `ares-setup-device`, building / packaging / installing / launching the `.ipk`, inspecting it, and the on-device checklist — **nothing here has ever been run**: the project has no LG hardware, account or SDK |
+| [`web-release.md`](web-release.md) | Publishing the **browser build on itch.io** (M3-03): `pnpm itch:package`, what the zip holds, the upload settings, what to check in a browser first — **nothing has been uploaded** |
+| [`steam.md`](steam.md) | **Steam and the Steam Deck** (M3-03): what the desktop build already does (achievements derived from the save, Steam Cloud round-trips), the eleven achievement API names, and the five things only you can do (partner account, app id, achievements in the partner site, the Steamworks binding, Cloud) plus the Deck verification checklist — **nothing has touched Steam** |
+| [`store-submission.md`](store-submission.md) | Submitting to the **Samsung TV Seller Office** (M3-03): the trade-dress review, the Tizen mandatory checklist, the account work, the store assets and their unverified sizes, the ≤ 50-DUID alpha test — **nothing has been submitted** |
 | [`input-probe.md`](input-probe.md) | Tester guide for the **Input Probe** diagnostic app: screen tour, remote controls, the 9-step on-device test protocol, how to read the verdicts, measuring latency with a 240 fps camera, recording results, troubleshooting |
 
 Planned pages, as the game takes shape:
@@ -20,8 +24,10 @@ Planned pages, as the game takes shape:
   [controls.md](controls.md#the-controls-page-autofire-socd-and-the-hiccup-protection), the weapon
   choice in [preview-build.md](preview-build.md#choosing-your-weapons), the M3-01 assists (SPEED,
   INVINCIBLE), OPT RECOVERY and RUMBLE in
-  [extra-modes-and-replays.md](extra-modes-and-replays.md#assists-option-recovery-and-rumble). A
-  page of its own may follow when the language option (M3-03) arrives.
+  [extra-modes-and-replays.md](extra-modes-and-replays.md#assists-option-recovery-and-rumble).
+  M3-03 added **LANGUAGE** to the DISPLAY page (ENGLISH / ESPAÑOL / ニホンゴ, shown from the next
+  launch); the Spanish and Japanese texts are placeholders nobody has proof-read yet
+  ([`content/strings/README.md`](../../content/strings/README.md)).
 - **Troubleshooting** — black screen, input lag (the M7 has no Game Mode for apps),
   audio issues.
 

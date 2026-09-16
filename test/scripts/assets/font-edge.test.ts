@@ -258,16 +258,30 @@ describe('assets/source/fonts/pixel6x8.font.json — design rules', () => {
       expect(seen.get(key), String.fromCodePoint(glyph.code)).toBeUndefined();
       seen.set(key, glyph.code);
     }
-    expect(seen.size).toBe(102);
+    // 102 in M1-03; M3-03 added 9 Latin-1 characters and the 84-glyph katakana subset.
+    expect(seen.size).toBe(195);
   });
 
+  // M3-03: the katakana sit one row lower than the Latin letters — their body is rows 1–7, which
+  // leaves row 0 free for the voicing marks (the classic 5×7 LCD katakana box). So the descender
+  // rule is about the Latin and symbol glyphs only.
   it('uses the descender row only for , _ g j p q y (and ; if it ever needs it)', () => {
     const allowed = new Set([',', ';', '_', 'g', 'j', 'p', 'q', 'y']);
     const users = (font?.glyphs ?? [])
-      .filter((g) => g.rows[7].includes('#'))
+      .filter((g) => g.code < 0x3000 && g.rows[7].includes('#'))
       .map((g) => String.fromCodePoint(g.code));
     for (const ch of users) expect(allowed.has(ch), ch).toBe(true);
     for (const ch of ['g', 'j', 'p', 'q', 'y']) expect(users).toContain(ch);
+  });
+
+  it('keeps every katakana in its 5×7 box, rows 1–7 (M3-03)', () => {
+    const kana = (font?.glyphs ?? []).filter((g) => g.code >= 0x3000);
+    expect(kana.length).toBe(84);
+    for (const glyph of kana) {
+      const ch = String.fromCodePoint(glyph.code);
+      for (const row of glyph.rows) expect(row.charAt(5), ch).toBe('.');
+      expect(glyph.rows.join('').includes('#'), ch).toBe(true);
+    }
   });
 
   it('keeps capitals and digits inside the 5×7 box (rows 0–6)', () => {

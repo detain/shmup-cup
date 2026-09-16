@@ -1,0 +1,17 @@
+{
+  "id": "dev.shmupcup.game",
+  "version": "1.0.0",
+  "vendor": "Shmup Cup",
+  "type": "web",
+  "main": "index.html",
+  "title": "Shmup Cup",
+  "appDescription": "A remote-first horizontal shoot-'em-up.",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "iconColor": "#05070f",
+  "bgColor": "#05070f",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "supportTouchMode": "none",
+  "requiredPermissions": []
+}

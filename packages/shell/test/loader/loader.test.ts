@@ -155,6 +155,7 @@ describe('shell/loader loadGameContent', () => {
       'audio/music/zone-i.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
+      'input/webos.input-profiles.json',
     ]);
   });
 

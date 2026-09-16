@@ -584,6 +584,7 @@ describe('core/save SaveStore (edge)', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       },
     });
     expect(store.options).toEqual({
@@ -600,6 +601,7 @@ describe('core/save SaveStore (edge)', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       },
     });
     expect(before.options.audio.master).toBe(10);

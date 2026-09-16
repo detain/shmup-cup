@@ -276,7 +276,13 @@ import {
 import { bakePath, type PathTable } from './paths.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
 import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
-import { MAX_UI_TEXT_LENGTH, UI_TEXT_IDS } from '../ui/strings.js';
+import {
+  DEFAULT_UI_TEXT,
+  MAX_UI_TEXT_LENGTH,
+  UI_TEXT_IDS,
+  isFixedUiTextId,
+  isUiTextDrawable,
+} from '../ui/strings.js';
 
 export type { TilesetTables } from './tilemap.js';
 export { MAX_PATH_LENGTH, PATH_SAMPLE_STEP, bakePath, type PathTable } from './paths.js';
@@ -2145,9 +2151,6 @@ export interface UiStringsSpec {
   readonly strings: Readonly<Record<string, string>>;
 }
 
-/** The characters a UI string may use: the bitmap font's glyphs (M2-16). */
-const UI_TEXT_GLYPHS = /^[\x20-\x7e←↑→↓●★✕]*$/;
-
 /** Longest recording a demo file may hold: 5 minutes at 60 Hz (M2-15). */
 export const MAX_DEMO_TICKS = 18_000;
 
@@ -3973,7 +3976,8 @@ function collect(
 
 /**
  * Collects a `strings` file (M2-16): every id must be a `core/ui` UI string id, every text drawable
- * by the bitmap font; a second table of the same language is an issue. The file's valid entries
+ * by the bitmap font (`core/ui` `UI_GLYPHS`), and a `FIXED_UI_TEXT_IDS` id must keep its English
+ * text (M3-03 — the HUD's fixed-width codes); a second table of the same language is an issue. The file's valid entries
  * are kept (a bad entry falls back to English when the table is resolved).
  *
  * @param parsed - The validated file.
@@ -4001,8 +4005,14 @@ function collectUiStrings(
     const text = raw[id];
     if (!known.has(id)) {
       issue(issues, at(path, 'strings.' + id), `unknown UI string id "${id}"`);
-    } else if (!UI_TEXT_GLYPHS.test(text)) {
+    } else if (!isUiTextDrawable(text)) {
       issue(issues, at(path, 'strings.' + id), 'uses a character the bitmap font does not have');
+    } else if (isFixedUiTextId(id) && text !== DEFAULT_UI_TEXT[id]) {
+      issue(
+        issues,
+        at(path, 'strings.' + id),
+        `"${id}" is the same in every language: it must stay "${DEFAULT_UI_TEXT[id]}"`,
+      );
     } else {
       strings[id] = text;
     }

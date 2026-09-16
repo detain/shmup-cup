@@ -554,7 +554,16 @@ describe('audio-web/loader loading (edge)', () => {
       createAudioLoader({
         loadFile: () => Promise.resolve(new ArrayBuffer(8)),
         decode: () => Promise.resolve(decoded),
-      }).loadTrack({ id: 'x', title: 'X', cue: null, cueId: -1, stages: null, song: null, file });
+      }).loadTrack({
+        id: 'x',
+        title: 'X',
+        cue: null,
+        cueId: -1,
+        stages: null,
+        song: null,
+        file,
+        module: null,
+      });
     const at48k = await loadTrack(
       { url: 'x.ogg', loopStart: 32000, loopEnd: 96000, sampleRate: 32000 },
       new FakeBuffer(2, 1_000_000, 48000),
@@ -576,7 +585,15 @@ describe('audio-web/loader loading (edge)', () => {
     const loader = createAudioLoader({
       loadFile: (url) => Promise.reject(new AudioLoadError(url, 'status 404')),
     });
-    const def = { id: 'x', title: 'X', cue: null, cueId: -1, stages: null, song: null };
+    const def = {
+      id: 'x',
+      title: 'X',
+      cue: null,
+      cueId: -1,
+      stages: null,
+      song: null,
+      module: null,
+    };
     await expect(loader.loadTrack({ ...def, file: null })).rejects.toThrow(
       'could not load x: track has no song or file',
     );

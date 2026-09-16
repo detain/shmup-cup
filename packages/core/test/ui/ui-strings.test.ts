@@ -188,7 +188,9 @@ describe('core/scenes on a content string table (M2-16)', () => {
             titleOptions: 'REGLAGES',
             optionsTitle: 'REGLAGES',
             optMaster: 'GENERAL',
-            hi: 'RECORD',
+            // `hi` is a FIXED_UI_TEXT_IDS id since M3-03 (the HUD draws it in a few pixels);
+            // `score` is the translatable word next to it.
+            score: 'POINTS',
           },
         },
       },
@@ -213,7 +215,8 @@ describe('core/scenes on a content string table (M2-16)', () => {
       commitPlayerInput(player, 0);
       game.step();
     };
-    expect(texts()).toEqual(expect.arrayContaining(['APPUYEZ SUR OK', 'RECORD']));
+    // The title draws the table's words — and `HI`, a fixed id, in English whatever the table says.
+    expect(texts()).toEqual(expect.arrayContaining(['APPUYEZ SUR OK', 'HI']));
     press(Action.Confirm);
     expect(texts()).toContain('REGLAGES');
     while (flow.title.menu.focus !== 3) press(Action.Down);
@@ -221,6 +224,7 @@ describe('core/scenes on a content string table (M2-16)', () => {
     expect(texts()).toEqual(expect.arrayContaining(['REGLAGES', 'GENERAL', 'MUSIC']));
     // The HUD: its words come from the table too.
     const hud = flow.game.hud;
-    expect(hud.text.hi).toBe('RECORD');
+    expect(hud.text.score).toBe('POINTS');
+    expect(hud.text.hi).toBe('HI'); // fixed in every language
   });
 });

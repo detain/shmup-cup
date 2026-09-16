@@ -6,6 +6,9 @@ dist/
 *.wgt
 # Electron packages (pnpm --filter @shmup/electron package — never in CI)
 apps/electron/release/
+# webOS packages (pnpm --filter @shmup/webos webos:package — never in CI, never yet run)
+apps/webos/release/
+*.ipk
 *.tsbuildinfo
 .vite/
 

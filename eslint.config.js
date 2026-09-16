@@ -23,6 +23,7 @@ const RUNTIME_SOURCES = [
   'packages/*/src/**/*.ts',
   'apps/web/src/**/*.ts',
   'apps/tizen/src/**/*.ts',
+  'apps/webos/src/**/*.ts',
 ];
 
 /** Node-side JS/TS: tool configs and scripts. */
@@ -60,6 +61,7 @@ export default defineConfig([
     '**/.turbo/',
     'assets/generated/',
     'apps/electron/release/',
+    'apps/webos/release/',
     'tools/',
     // Git-ignored agent / editor tooling directories: never ours to lint.
     '.claude/',

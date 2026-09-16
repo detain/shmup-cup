@@ -45,10 +45,13 @@ describe('scripts/store-assets (M2-18)', () => {
     expect(staleIcons()).toEqual([]);
   });
 
-  it('commits the Tizen icon at 512 × 423 and the desktop icon at 512 × 512, opaque and not blank', () => {
+  it('commits the TV, desktop and webOS icons at their sizes, opaque and not blank', () => {
     expect(ICON_TARGETS.map((t) => t.path)).toEqual([
       'apps/tizen/public/icon.png',
       'apps/electron/build/icon.png',
+      // M3-03: `appinfo.json`'s icon (80²) and largeIcon (130²).
+      'apps/webos/public/icon.png',
+      'apps/webos/public/largeIcon.png',
     ]);
     for (const target of ICON_TARGETS) {
       const image = decodePng(readFileSync(new URL(`../../${target.path}`, import.meta.url)));

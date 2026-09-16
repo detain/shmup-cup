@@ -96,7 +96,8 @@ and leaves `byCode` / `byKeyCode` empty:
       "releaseDebounceTicks": 0,   // gamepads are polled: must be 0
       "diagonals": "combine",
       "socd": "neutral",
-      "register": []
+      "register": [],
+      "hosts": []                  // M3-03: the Platform ids that may offer it; [] or absent = all
     }
   ]
 }
@@ -114,6 +115,13 @@ Actions: `Up`, `Down`, `Left`, `Right`, `Shot`, `Sub`, `PowerUp`, `Special`, `Sp
   (pads are polled and report every button at once); key profiles never bind `buttons`.
 - Only `remote` profiles list `register` keys, and never the system keys `Exit`, `VolumeUp`,
   `VolumeDown`, `VolumeMute`.
+- `hosts` (M3-03) names the `Platform.id`s whose Options screen may offer the profile; an empty
+  list (or no field at all) means every host, which is what the keyboard and gamepad profiles use.
+  It exists because the two TV hosts read the same `content/input/`: Tizen's Back is **10009** and
+  webOS' is **461** (`shmup_tech.md` §3.3), so `tizen-remote-safe` lists `["tizen"]` and
+  `webos-remote-safe` lists `["webos"]`. Without it a Tizen player could pick the webOS profile in
+  CONTROLS and be left with no Back at all — a lock-out no rebinding guard catches, because the
+  profile itself binds every required action.
 - Unknown fields, unknown actions, bad key names and duplicate profile ids are errors.
 
 ## Tuning after the input probe (plan §8.2)

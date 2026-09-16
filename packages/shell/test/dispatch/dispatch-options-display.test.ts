@@ -142,6 +142,7 @@ describe('shell/dispatch display option events (M2-08)', () => {
       bossHpBar: false,
       crtFilter: 'full',
       aspect: 'wide',
+      language: 'en',
     });
     expect(calls).toEqual([
       ['palette', 'deuteranopia'],

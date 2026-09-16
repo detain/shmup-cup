@@ -1088,7 +1088,8 @@ pnpm workspace (`packages/*`, `apps/*`) + Turborepo. Full annotated tree:
 | [`packages/shell`](packages/shell/README.md) | `@shmup/shell` — shared browser host of web + Tizen: boot / loading (content, atlas, sounds and the stage's music), boot error screen, event dispatch (game-feel events → renderer, sound events → audio engine), frame loop, the scene flow's view (the default), the rebind screen's host side, the free-flight scene, the fx gallery, the dev builds' debug tools |
 | [`apps/web`](apps/web/README.md) | Vite browser dev target (also Electron's renderer) |
 | [`apps/tizen`](apps/tizen/README.md) | Samsung Tizen `.wgt` (Chromium 69 classic IIFE build, config.xml, CLI scripts) |
-| [`apps/electron`](apps/electron/README.md) | Electron desktop shell |
+| [`apps/webos`](apps/webos/README.md) | LG webOS `.ipk` (webOS 5+, Back = 461, `appinfo.json`) — M3-03; **never run on hardware** |
+| [`apps/electron`](apps/electron/README.md) | Electron desktop shell (with the optional Steamworks layer — M3-03; **never run against Steam**) |
 | [`content/`](content/README.md) | Game data: player ships, stages, terrain tilesets, enemies, movement paths, weapons, bullet patterns (`patterns/`), the difficulty presets and scoring values (`rules/`), input profiles, particle presets, sound effects and music, the campaign, the attract demos, the UI string tables (`strings/`) (JSON, `formatVersion` 1) |
 | `types/` | Ambient declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) and the build-info defines (`__SHMUP_DEV__`, `__SHMUP_BUILD__`) |
 | [`assets/`](assets/README.md) | Art/audio sources (`source/`: sprite pixel maps, fonts) and pipeline output (`generated/`: atlas pages + manifest, ignored) |

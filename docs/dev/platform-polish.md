@@ -378,6 +378,69 @@ unloaded yet**; the mechanism is tested on a synthetic three-page atlas and star
 real art adds pages (≤ 2048² each). Music was already one set resident (M1-15 / M2-10); the SFX
 bank is pre-rendered once.
 
+## The LG webOS host (`apps/webos`, M3-03)
+
+A fourth host, next to `web`, `tizen` and `electron`: the same game, the same `@shmup/shell` boot,
+a different manifest and a different Back key (`shmup_tech.md` §3.3 — "LG webOS: same model,
+`.ipk`, new adapter ≈ 1 day").
+
+> **Nothing in `apps/webos` has run on a device.** No LG TV, no developer account, no SDK: every
+> line is verified against fakes, `ares-package` / `ares-install` / `ares-launch` have never been
+> executed, and the on-device checks are plan §8.7. Read
+> [`docs/client/webos.md`](../client/webos.md) before touching a real set.
+
+| | `@shmup/tizen` | `@shmup/webos` |
+|---|---|---|
+| Manifest | `public/config.xml` | `public/appinfo.json` (validated by `scripts/appinfo.mjs`) |
+| Package | `.wgt`, `tizen package` | `.ipk`, `ares-package` |
+| `Platform.id` | `tizen` | `webos` (already in the core's `PlatformId` union since M1) |
+| Back | **10009** | **461** |
+| Play/Pause | 10252 | 415, 19 |
+| Key registration | `tizen.tvinputdevice.registerKeyBatch` | none — webOS delivers every remote key |
+| Exit | `application.getCurrentApplication().exit()` | `webOS.platformBack()`, else `window.close()` |
+| Profile | `tizen-remote-safe` | `webos-remote-safe` |
+| Device line | `webapis.productinfo` | none (nothing verifiable from here) |
+
+Three things are worth knowing beyond the table:
+
+- **The engine floor is shared.** webOS 5 runs Chromium 68, one release *older* than Tizen 5.5's
+  69, so the webOS build uses the same `chrome69` + `es2018` target, the same `.browserslistrc` and
+  the **same** `globalThis` polyfill — read straight out of `apps/tizen/polyfills/`, so the two
+  cannot drift. webOS 4 (Chromium 53) is not a target.
+- **The budgets are shared too.** `apps/webos/scripts/check-bundle.mjs` imports
+  `APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE` and `DIST_BUDGET` from the Tizen check, so there is
+  one source of truth; it adds its own file-set and `appinfo.json` rules.
+- **A profile now names its hosts.** Both TVs read the same `content/input/`, and their Back keys
+  disagree — so an `input-profiles` entry carries `hosts` (M3-03): `["tizen"]`, `["webos"]`, or
+  empty for "any host", which is what the keyboard and gamepad profiles use.
+  `selectableKeyProfiles(profiles, keySpace, host)` applies it. Without it a Tizen player could
+  pick the webOS profile in CONTROLS and lose Back entirely — a lock-out no rebinding guard
+  catches, because the profile itself binds every required action.
+
+## Electron: Steamworks (`main/steam.ts`, M3-03)
+
+> **Nothing here has touched Steam.** No partner account, no app id, and `steamworks-ffi-node` is
+> deliberately **not** a dependency — `initSteam()` without a loader reports `available: false`,
+> which is what every build this repo produces does. See
+> [`docs/client/steam.md`](../client/steam.md) for the owner's side.
+
+The design decision worth recording: **achievements are derived from the save document**, not from
+new game events. The main process already owns the save file, so `createAchievementStore` wraps the
+`FileStore` and, after each write of `save.v1`, parses it and unlocks whatever
+`achievementsFor(save)` returns. That keeps `@shmup/core`, the scene flow and the IPC surface
+completely unchanged, and it makes the whole rule set a pure function of a `SaveData` — eleven
+rules, each two lines, each with a test. An assisted run (`HiScoreEntry.assisted`: god mode, the
+speed or invincibility assist, a secret code) never earns one, the same rule the hi-score tables
+use for their asterisk.
+
+Steam Cloud is the second wrapper, `createCloudStore`: a write goes **to disk first** and is then
+mirrored to the cloud; a read that finds nothing locally restores the cloud copy and writes it
+back. Local disk stays the source of truth, so a Steam outage or a full quota cannot lose a save —
+it is reported through `onIssue` and the game carries on. The two wrappers compose in that order
+(`createAchievementStore(createCloudStore(createFileStore(dir), steam.cloud), steam)`), so the save
+reaches disk and the cloud before anything is derived from it, and both are the identity when Steam
+is absent.
+
 ## Running it
 
 ```sh
@@ -435,6 +498,22 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - Shell (`packages/shell/test/`): `storage/*.test.ts` (budget, quota retry, unavailable, usage),
   `memory/*.test.ts` (every campaign zone under budget, song bounds, the residency on a three-page
   atlas), `debug/debug-save.test.ts`, `debug/debug-device-alloc.test.ts`.
+- webOS (`apps/webos/test/`, M3-03 — every one against fakes): `platform/platform.test.ts` (Back on
+  **461** and not on 10009, auto-repeat, the two-reason lifecycle, exit through `platformBack` with
+  the `close` fallback, the capabilities), `boot/boot-wiring.test.ts` (the real `@shmup/shell` on a
+  fake window: `webos-remote-safe` applied, CONTROLS offering **only** the webOS remote, Back → the
+  exit confirmation → `platformBack`, audio unlocked without a gesture, suspend / resume, rAF →
+  ticks → render, a clean stop), `scripts/appinfo.test.ts`, `scripts/check-bundle.test.ts` (fixture
+  folders; the budgets really are the Tizen ones), `scripts/webos-cli.test.ts` (the command lines
+  the `ares-*` wrappers would build — they are never run), `build/vite-config.test.ts`,
+  `build/webos-build.test.ts` (a **real** Vite build into a temp folder, then the bundle check, the
+  file set, a valid `appinfo.json`, byte-identical atlas pages, ES2018 with the polyfill first, a
+  classic script tag, and no debug code — the closest anything here gets to packaging).
+- Steam (`apps/electron/test/main/steam.test.ts`, M3-03 — every one against a fake binding): the
+  app id and its placeholder, an inert service with no loader / a `null` loader / a throwing
+  loader, idempotent unlocks, unknown ids, a binding that throws, shutdown, the eleven achievement
+  rules (including "an assisted run never counts"), Steam Cloud round-trips and restores, a refused
+  write, and achievements unlocked from a real save write through a real `FileStore`.
 - render-pixi `debug/debug-device.test.ts` (the slot, the cut, the allocation guard); core
   `save/save-replace.test.ts`; web `platform/platform-electron.test.ts`.
 - Browser: `test/e2e/platform-polish.spec.ts` — the web build's save export / import and the quota
@@ -477,5 +556,6 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
   together, so the library (≤ 500,150 bytes) never crowds `save.v1` and its corrupt copy out of the
   1 MiB budget; an oversize slot left by an older build is cleared on load
   ([extra-modes-and-replays.md](extra-modes-and-replays.md#the-replay-library-createreplaylibrary-replaylibrary)).
-- **M3-03** — Steamworks (`main/steam.ts`: achievements, Steam Cloud sync of the same save files) and
-  the Steam Deck verification; the webOS adapter reuses `createWebStorage`.
+- **M3-03** (done) — the **LG webOS host** and **Steamworks**, both below. The webOS adapter does
+  reuse `createWebStorage` as planned; the Steam layer wraps the same `FileStore` this page
+  describes. Neither has run on real hardware or against a real Steam client.

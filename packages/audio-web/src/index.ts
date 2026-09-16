@@ -108,6 +108,23 @@ export {
   type XhrLike,
 } from './loader/index.js';
 export {
+  NO_TRACKER,
+  TIZEN_APP_JS_GZIP_BUDGET,
+  TRACKER_MODULE_EXTENSIONS,
+  TRACKER_WORKLET_GZIP_BYTES,
+  chooseMusicPath,
+  detectAudioCapabilities,
+  isTrackerModuleUrl,
+  trackerFitsBundle,
+  type AudioCapabilities,
+  type AudioCapabilityScope,
+  type MusicPath,
+  type MusicPathSource,
+  type TrackerAvailability,
+  type TrackerBackend,
+  type TrackerHandle,
+} from './tracker/index.js';
+export {
   DEFAULT_DUCK_LEVEL,
   DEFAULT_PAN_WIDTH,
   createAudioEngine,

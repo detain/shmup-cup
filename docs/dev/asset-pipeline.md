@@ -165,8 +165,13 @@ A PNG under `assets/source/sprites/` targets the sprite named by its path:
 ### Bitmap fonts (`*.font.json`)
 
 `assets/source/fonts/pixel6x8.font.json` is the original 6×8 font: ASCII 32–126 plus
-`← ↑ → ↓ ● ✕ ★` (102 glyphs), 5×7 letters with a spacing column and a descender row,
-`lineHeight` 10, `advance` 6.
+`← ↑ → ↓ ● ✕ ★`, 5×7 letters with a spacing column and a descender row, `lineHeight` 10,
+`advance` 6. **M3-03** added 93 glyphs for the localization — the Latin-1 capitals Spanish needs
+(`Á É Í Ó Ú Ñ Ü ¿ ¡`) and the katakana subset Japanese is written in — so the font is **195
+glyphs** today. The charset is declared once, in `@shmup/core` `UI_GLYPHS`, and
+`test/scripts/assets/font.test.ts` asserts the font source holds exactly those code points: a
+`strings` entry the loader accepts can always be drawn, and a glyph nothing draws never reaches the
+atlas.
 
 ```json
 {
@@ -183,6 +188,38 @@ Each glyph is keyed by exactly one character and drawn in white (`#` = ink), so 
 renderer can tint text any colour. The font becomes the sprite `font/<name>` with one frame
 per glyph in code-point order (anchor `[0, 0]`); its metrics go into the manifest's `fonts`
 section with glyphs keyed by **decimal code point**.
+
+#### Katakana and the CJK budget (M3-03)
+
+Localization into a CJK language is the one place where a bitmap font can wreck a build, so the
+shape of the decision matters more than the code:
+
+- **The subset is katakana only** — the 46 base kana, the 20 voiced and 5 semi-voiced ones, the 9
+  small ones, the long-vowel bar, the middle dot and the two punctuation marks: **84 glyphs**. No
+  kanji, no hiragana. That is how 1980s arcade hardware wrote Japanese, and it is legible for menu
+  text.
+- **They fit the existing 6×8 cell.** The kana body is drawn in columns 0–4 and **rows 1–7** — the
+  classic 5×7 LCD katakana box — which leaves **row 0** free for the voicing marks, so `ガ` is `カ`
+  with `..#.#.` on top and `パ` is `ハ` with `....#.`. Those 25 glyphs are derived from their base,
+  not drawn twice, and `font.test.ts` asserts they stay equal below row 0. Latin letters keep rows
+  0–6, so kana sit one pixel lower — which is what a CJK face does anyway.
+- **Nothing is loaded separately.** The 93 new glyphs cost **1.6 KB of atlas PNG** (134.9 → 136.6
+  KB) and the atlas is still **one 1024² page** of the 2048² limit; the two translations cost
+  **8.6 KB of `app.js` gzip** (386.9 → 395.5 KB of the 512 KB budget). A separate page or a
+  lazily-loaded atlas would be machinery for nothing at this size, so the katakana live in the main
+  atlas and load with it.
+
+The number that made this decision is the one a **real kanji set** would cost. JIS level 1 is about
+6,900 characters; at a legible 12×12 they need roughly 1 M pixels — about **25 of the game's
+current atlas**, five 2048² pages on their own, well past `DIST_BUDGET`. Before shipping one:
+
+1. **Subset by use**, not by standard — only the characters the shipped `strings` files actually
+   contain (a full UI is a few hundred kanji, not seven thousand);
+2. give that set **its own atlas page**, named so the loader can fetch it per language rather than
+   for everyone (`pageUrls` already carries one URL per page, and `loadImages` already loads them
+   in parallel — the mechanism exists, it is simply not needed yet);
+3. re-measure `dist/` against `DIST_BUDGET` and the boot time against the ≤ 10 s launch rule before
+   believing it fits.
 
 ### Hit flash (D30)
 
@@ -397,6 +434,15 @@ Add a key to `glyphs` in `pixel6x8.font.json` (exactly one character, `cellHeigh
 `cellWidth` `#`/`.` characters), or a new `<name>.font.json` — it becomes `font/<name>` and
 `manifest.fonts[<name>]`.
 
+Since M3-03 the charset has a **second owner**: `UI_GLYPHS` in `packages/core/src/ui/strings.ts`,
+which is what `core/data` validates every `strings` file against. The two must be changed in the
+**same commit** — `test/scripts/assets/font.test.ts` fails the moment they disagree, in either
+direction (a glyph in the font that nothing declares, or a declared character the font cannot
+draw). A new language therefore is: its glyphs in the font source, its code points in `UI_GLYPHS`,
+its table in `content/strings/`, and `pnpm assets`. See
+[`content/strings/README.md`](../../content/strings/README.md) and, for a CJK language,
+[Katakana and the CJK budget](#katakana-and-the-cjk-budget-m3-03) above.
+
 ### Changing the manifest format
 
 Bump `MANIFEST_FORMAT_VERSION` in `manifest.mjs`, update the typedefs there and the
@@ -420,7 +466,7 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/png.test.ts`, `png-edge.test.ts` | Encode → `pngjs` decode round trip equals the source pixels; chunk layout, CRC, filter choice per row; decoding indexed, 1–2-bit, 16-bit and Adam7 PNGs |
 | `test/scripts/assets/packer.test.ts`, `packer-edge.test.ts` | No overlaps (border + padding included), power-of-two pages ≤ 2048², determinism under reordering, spilling onto more pages, option validation, tie-breaks, a seeded fuzz |
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
-| `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | ASCII 32–126 + the specials, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
+| `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | The charset equals core's `UI_GLYPHS` exactly (M3-03), the katakana layout and the derived voiced kana, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
 | `test/scripts/assets/coop.test.ts` | M2-06: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the exact red / blue swap, `makeP2Sprite`, every ship's and the stock icon's variant in the atlas |
 | `test/scripts/assets/palettes-names.test.ts` | M2-02: the pipeline's palettes are exactly core's `BULLET_PALETTES` other than `standard`, in core order; every family has a body colour and a core mark in every palette; one `<standard sprite>@<palette>` per standard sprite and palette; two runs draw the same pixels |
 | `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles, M2-08: the sea only in `SEA_RAMP`, the floor's strips …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
@@ -444,6 +490,8 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `pngjs` has no types in the editor | Deliberate — it is loaded untyped (no `@types/pngjs` dependency); only `png.mjs` and the hash in `pipeline.mjs` touch it |
 | TypeScript cannot see a new export of a `scripts/assets/*.mjs` module | The Node-side TS reads the JSDoc types through `allowJs` in `tsconfig.tooling.json` (no `checkJs`): give the export a JSDoc `@param` / `@returns` type |
 | A colour-blind palette shows the placeholder bullet next to real art | The `@<palette>` variants are sprites of their own — override them too (above) |
+| `covers exactly the charset core declares` fails | The font source and `UI_GLYPHS` (`packages/core/src/ui/strings.ts`) disagree — add the glyph, or remove the code point, in the same commit (M3-03) |
+| A translation is rejected with `uses a character the bitmap font does not have` | Its text uses a character outside `UI_GLYPHS`. Either it is a typo (a full-width digit, a curly quote, `ヴ`) or the font really needs the glyph — see "Adding glyphs or a font" |
 | A real-art PNG seems ignored | Its path must be a valid sprite name (lower-case kebab segments) — otherwise it is reported as an issue, not skipped silently. Check that the sidecar has the same base name |
 
 ## Next steps that build on this page

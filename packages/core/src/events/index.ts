@@ -217,6 +217,12 @@ export const UserOptionKind = {
    * (the host re-places the frame and its side panels on the display).
    */
   Aspect: 12,
+  /**
+   * LANGUAGE (M3-03): `param` = index of the chosen language in the flow's language choices
+   * (`core/ui` `uiLanguageIds`). The table is resolved when the scene flow is built, so the choice
+   * is stored and shows from the next launch; the host only has to persist it.
+   */
+  Language: 13,
 } as const;
 
 /** A {@link UserOptionKind} code. */

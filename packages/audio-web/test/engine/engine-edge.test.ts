@@ -301,6 +301,7 @@ describe('audio-web/engine (edge)', () => {
     const real = createAudioLoader();
     const failing: AudioLoader = {
       sampleRate: real.sampleRate,
+      musicPath: (track) => real.musicPath(track),
       loadSfx: (content, onProgress) => real.loadSfx(content, onProgress),
       loadTrack: (track) =>
         track.id === 'boss'

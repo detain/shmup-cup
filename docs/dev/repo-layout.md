@@ -75,7 +75,7 @@ shmup-cup/
 │   │   └── src/ web-audio ✔ synth ✔ (deterministic PCM: ZzFX-style SFX, chip songs with sample-exact loops) sfx ✔ (voice manager) music ✔ (loop, fades, ducking) loader ✔ (sfx / music kinds, OGG path) engine ✔
 │   ├── input-web/          @shmup/input-web — keyboard/remote + Gamepad API → InputSnapshot
 │   │   └── src/ keymap ✔ keyboard ✔ (+ KeyCapture — M2-16) gamepad ✔ web-input ✔ (player seats — M2-06; the rebinding capture beginCapture — M2-16) remote ✔ (debounce, diagonal/SOCD policies) rebind ✔ (input profiles, game/menu tables, the split keyboard, profile choice; M2-16: rebinding — customizeInputProfile, rebindAction with conflict detection, resetBindings, captureToken, key labels); M3-01: gamepad rumble — rumblePad, WebInput.rumble
-│   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen (decision D34)
+│   └── shell/              @shmup/shell — shared browser host of apps/web + apps/tizen + apps/webos (decision D34)
 │       └── src/ boot ✔ loader ✔ dispatch ✔ (+ connectFxEvents, connectAudioEvents, connectOptionEvents / applyAudioOptions — M1-17, applyDisplayOptions — M2-08) error-screen ✔ frame-loop ✔ (+ the refresh probe that switches render interpolation — M2-08) scene-view ✔ (default scene: the scene flow, M1-16) flight ✔ (?scene=flight: free flight) showcase ✔ fx-gallery ✔ (?scene=fx-gallery) debug ✔ (dev / test builds: F1–F8, the TV's Pause + Ch+ ×3 unlock, per-frame timing, window.__shmupDebug — M1-19) controls ✔ (the rebind screen's host side createShellControls — M2-16) storage ✔ (the hosts' localStorage adapter with quota checks, the debug save export / import — M2-17) memory ✔ (the TV memory estimator, atlas-page residency between zones — M2-17) determinism ✔ (the cross-engine determinism check: golden replays in the page's engine, the web app's `?determinism` — M2-18) telemetry ✔ (dev builds with VITE_REPORT_URL: the guided render-profile capture streamed to the input probe's log server — M3-02f); M3-01: the replay library loaded before the title (Shell.replays), SHARE / buildId passed to the flow, connectRumbleEvents
 │
 ├── apps/                   deployable hosts (thin adapters around the packages)
@@ -87,10 +87,15 @@ shmup-cup/
 │   │   ├── scripts/        check-bundle.mjs (one classic ES2018 script + size budgets + a valid config.xml) · tizen-package/install/run.mjs (env-driven, Windows-friendly) · config-xml.mjs (the config.xml variants: game mode, gamepad check — M2-17) · tizen-watch.mjs (the live-reload dev server — M2-17)
 │   │   ├── vite.config.ts  target chrome69+es2018, IIFE, no code splitting, classic <script defer>
 │   │   └── src/ main.ts · boot ✔ (Back exits only before the game runs — then the scene flow's exit confirmation; tizenDebugTools in dev / test builds) platform ✔ (keys, Back 10009, visibility, exit) · device-info ✔ (model / firmware via webapis.productinfo → the debug overlay — M2-17) · live-reload ✔ (dev-only WebSocket reload, `tizen:watch` — M2-17)
+│   ├── webos/              @shmup/webos — LG webOS TV .ipk (webOS 5+, Chromium 68) — M3-03; NEVER RUN ON HARDWARE
+│   │   ├── public/         appinfo.json (dev.shmupcup.game, type web, Back owned by the app), icon.png (80²) + largeIcon.png (130², `pnpm store:assets`) → copied to dist/
+│   │   ├── scripts/        check-bundle.mjs (the Tizen check's budgets + appinfo rules) · appinfo.mjs (the manifest validator that stands in for ares-package) · webos-package/install/run.mjs (ares-* wrappers — written, never executed)
+│   │   ├── vite.config.ts  the Tizen build's contract (chrome69+es2018, IIFE, classic <script defer>, the shared globalThis polyfill)
+│   │   └── src/ main.ts · boot ✔ (the shared shell; `webos-remote-safe`) platform ✔ (Back 461, visibility + focus, exit via webOS.platformBack)
 │   └── electron/           @shmup/electron — desktop shell; compiles in CI, binary never downloaded there
 │       ├── scripts/        copy-renderer.mjs (apps/web/dist → dist/renderer)
 │       ├── electron-builder.json  packaging config (`pnpm --filter @shmup/electron package` — never in CI; output release/, ignored) — M2-17; build/icon.png (512 × 512, drawn by `pnpm store:assets` — M2-18)
-│       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts ✔ file saves, atomic + backup + quota · ipc-handlers.ts ✔ · window-state.ts ✔ fullscreen / scale / position — M2-17 · steam.ts placeholder) · preload/preload.cts (+ storage) · shared/ipc.ts
+│       └── src/ main/ (main.ts, app-protocol.ts, window-options.ts ✔ · saves.ts ✔ file saves, atomic + backup + quota · ipc-handlers.ts ✔ · window-state.ts ✔ fullscreen / scale / position — M2-17 · steam.ts ✔ Steamworks: achievements derived from the save, Steam Cloud — M3-03, never run against Steam) · preload/preload.cts (+ storage) · shared/ipc.ts
 │
 ├── content/                game DATA (JSON, formatVersion 1, validated at load by core/data ✔)
 │   ├── player/             ✔ one file per ship: speed levels, hitboxes, margins, timers, power-up model; kestrel (meter), manta (Direct mode, M2-05) (+ README, example)
@@ -127,11 +132,11 @@ API declared.
 ## Dependency direction
 
 ```text
-apps/web ──┐
-apps/tizen ├─► shell ──► render-pixi ─┐
-           │    └──────────────────────┤
-           ├─► audio-web ──────────────┼─► core
-           └─► input-web ──────────────┘
+apps/web ───┐
+apps/tizen  ├─► shell ──► render-pixi ─┐
+apps/webos  │    └──────────────────────┤
+            ├─► audio-web ──────────────┼─► core
+            └─► input-web ──────────────┘
 apps/electron ─► (loads apps/web build; no package imports)
 ```
 

@@ -12,11 +12,23 @@
  * A leaf module: `core/data` validates `strings` files against {@link UI_TEXT_IDS} without a cycle.
  *
  * **Implements.** shmup_feat.md §21 accessibility / [P2] localization "JSON string tables + bitmap
- * font atlases" (the table infrastructure — plan M2-16; the language choice is M3).
+ * font atlases" (the table infrastructure — plan M2-16; the language choice and the CJK glyphs —
+ * plan M3-03).
+ *
+ * **M3-03 — the language choice.** {@link UI_LANGUAGES} names the languages the game ships
+ * (`en`, `es`, `ja`); {@link uiLanguageIds} lists what the loaded content actually offers and
+ * {@link pickUiStrings} picks one table for {@link resolveUiText}. {@link UI_GLYPHS} is the
+ * font's whole charset — printable ASCII, the UI symbols, the Latin-1 letters Spanish needs and
+ * the katakana subset Japanese is written in — and {@link isUiTextDrawable} is the check
+ * `core/data` runs over every `strings` file. {@link FIXED_UI_TEXT_IDS} are the ids no
+ * translation may change (the fixed-width HUD codes, the game's name, the pure symbols).
  *
  * **Public API.** Re-exported by `core/ui`: {@link UiText}, {@link UiTextId},
  * {@link DEFAULT_UI_TEXT}, {@link UI_TEXT_IDS}, {@link MAX_UI_TEXT_LENGTH},
- * {@link DEFAULT_LANGUAGE}, {@link resolveUiText}, {@link formatUiText}.
+ * {@link DEFAULT_LANGUAGE}, {@link resolveUiText}, {@link formatUiText}, {@link UI_GLYPHS},
+ * {@link isUiTextDrawable}, {@link UI_LANGUAGES}, {@link UiLanguage}, {@link uiLanguageLabel},
+ * {@link uiLanguageIds}, {@link pickUiStrings}, {@link UiStringTableLike},
+ * {@link FIXED_UI_TEXT_IDS}, {@link isFixedUiTextId}.
  *
  * @module
  */
@@ -390,6 +402,9 @@ const STATIC_UI_TEXT = {
   blackHoleHint: 'BLACK HOLE: THE DIRECT SHIP ONLY',
   hudBombs: 'BOMB',
   escapeClear: 'ESCAPE COMPLETE',
+  // M3-03: the DISPLAY page's LANGUAGE row.
+  optLanguage: 'LANGUAGE',
+  languageHint: 'LANGUAGE: FROM THE NEXT LAUNCH',
 } as const;
 
 /** Id of a UI label with a fixed id (a key of the built-in table). */
@@ -432,8 +447,185 @@ export const UI_TEXT_IDS: readonly string[] = Object.freeze(Object.keys(DEFAULT_
 /** Longest text a `strings` entry may have (the widest screen line of the bitmap font is 64). */
 export const MAX_UI_TEXT_LENGTH = 48;
 
-/** The language the shipped game shows (M3 adds the choice). */
+/** The language the game falls back to: the built-in {@link DEFAULT_UI_TEXT} (M2-16). */
 export const DEFAULT_LANGUAGE = 'en';
+
+/**
+ * Printable ASCII (space … `~`) — the glyphs every language uses.
+ *
+ * @remarks
+ * Written out rather than generated so {@link UI_GLYPHS} is one literal a reader (and the font
+ * test) can compare with `assets/source/fonts/pixel6x8.font.json`.
+ */
+const ASCII_GLYPHS =
+  ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`' +
+  'abcdefghijklmnopqrstuvwxyz{|}~';
+
+/** The symbols the UI draws: the four arrows, the meter dot, the star and the cross (M2-16). */
+const SYMBOL_GLYPHS = '←↑→↓●★✕';
+
+/**
+ * The Latin-1 letters and punctuation the Spanish table needs (M3-03). Upper case only — every
+ * label the UI draws is upper case.
+ */
+const LATIN_1_GLYPHS = '¡¿ÁÉÍÓÚÑÜ';
+
+/**
+ * The CJK subset the Japanese table is written in (M3-03): **katakana only**, the way 1980s
+ * arcade hardware wrote Japanese. 84 glyphs — the 46 base kana, the 20 voiced and 5 semi-voiced
+ * ones, the 9 small ones, the long-vowel bar, the middle dot and the two ideographic punctuation
+ * marks. No kanji and no hiragana ship: a JIS level-1 kanji set would be about 6,900 glyphs, two
+ * orders of magnitude more atlas pixels than the whole placeholder sprite set
+ * (`docs/dev/asset-pipeline.md`, "Katakana and the CJK budget").
+ */
+const KATAKANA_GLYPHS =
+  '、。' +
+  'ァアィイゥウェエォオ' +
+  'カガキギクグケゲコゴ' +
+  'サザシジスズセゼソゾ' +
+  'タダチヂッツヅテデトド' +
+  'ナニヌネノ' +
+  'ハバパヒビピフブプヘベペホボポ' +
+  'マミムメモ' +
+  'ャヤュユョヨ' +
+  'ラリルレロ' +
+  'ワヲン' +
+  '・ー';
+
+/**
+ * Every character the bitmap font draws, in code-point order within each block (M3-03): printable
+ * ASCII, the UI symbols, the Latin-1 letters Spanish needs and the katakana subset Japanese is
+ * written in.
+ *
+ * @remarks
+ * This is the single source of truth for the font's charset: `core/data` refuses a `strings` entry
+ * with any other character, and `test/scripts/assets/font.test.ts` asserts the font source holds
+ * exactly these code points. Adding a language means adding its glyphs here **and** to
+ * `assets/source/fonts/pixel6x8.font.json` in the same commit.
+ */
+export const UI_GLYPHS: string = ASCII_GLYPHS + SYMBOL_GLYPHS + LATIN_1_GLYPHS + KATAKANA_GLYPHS;
+
+/** {@link UI_GLYPHS} as a lookup (built once — {@link isUiTextDrawable} is a load-time check). */
+const GLYPH_SET: ReadonlySet<string> = new Set(UI_GLYPHS.split(''));
+
+/**
+ * Whether the bitmap font can draw every character of a text (M3-03).
+ *
+ * @param text - Any string.
+ * @returns `true` when every character is one of {@link UI_GLYPHS} (an empty string is drawable).
+ *
+ * @remarks
+ * A load-time check (`core/data` runs it over every `strings` file); it walks the string, so never
+ * call it per frame.
+ *
+ * @example
+ * ```ts
+ * isUiTextDrawable('ステージ'); // → true
+ * isUiTextDrawable('ステージ１'); // → false (full-width digits are not in the font)
+ * ```
+ */
+export function isUiTextDrawable(text: string): boolean {
+  for (let i = 0; i < text.length; i++) {
+    if (!GLYPH_SET.has(text.charAt(i))) return false;
+  }
+  return true;
+}
+
+/** A language the game can show its UI in (M3-03). */
+export interface UiLanguage {
+  /** Lower-case ISO 639-1 id, optionally with a region (`en`, `es`, `ja`, `pt-br`). */
+  readonly id: string;
+  /**
+   * The language's own name, in its own script and drawable with {@link UI_GLYPHS} — so the
+   * LANGUAGE row reads the same whichever language is currently shown.
+   */
+  readonly label: string;
+}
+
+/**
+ * The languages the shipped game names (M3-03). A `content/strings/<id>.strings.json` file for
+ * another id still loads and is still offered; it is simply labelled by its upper-cased id.
+ */
+export const UI_LANGUAGES: readonly UiLanguage[] = Object.freeze([
+  Object.freeze({ id: 'en', label: 'ENGLISH' }),
+  Object.freeze({ id: 'es', label: 'ESPAÑOL' }),
+  Object.freeze({ id: 'ja', label: 'ニホンゴ' }),
+]);
+
+/**
+ * The name to draw for a language id (M3-03).
+ *
+ * @param id - A language id (a `ContentDb.uiStrings` entry's `language`).
+ * @returns The {@link UI_LANGUAGES} label, or the id upper-cased when the game does not name it.
+ *
+ * @example
+ * ```ts
+ * uiLanguageLabel('ja'); // → 'ニホンゴ'
+ * uiLanguageLabel('fr'); // → 'FR'
+ * ```
+ */
+export function uiLanguageLabel(id: string): string {
+  for (let i = 0; i < UI_LANGUAGES.length; i++) {
+    if (UI_LANGUAGES[i].id === id) return UI_LANGUAGES[i].label;
+  }
+  return id.toUpperCase();
+}
+
+/**
+ * Ids whose text is the same in every language (M3-03): the game's own name, the fixed-width HUD
+ * and power-meter codes, and the pure symbols. A translation that gives one of them a different
+ * text is a `core/data` issue — the HUD draws them in a few pixels of a bar it cannot grow, and
+ * `orderCodes` is indexed character by character by the auto-order screen.
+ */
+export const FIXED_UI_TEXT_IDS: readonly string[] = Object.freeze([
+  'gameTitle',
+  'hi',
+  'p1',
+  'p2',
+  'emptyName',
+  'assistedMark',
+  'orderCodes',
+  'hudShortShot',
+  'hudShortSub',
+  'hudShortArm',
+  'hudShortSpeed',
+  'meterShortSpeed',
+  'meterShortMissile',
+  'meterShortDouble',
+  'meterShortLaser',
+  'meterShortOption',
+  'meterShortShield',
+  'meterShortMega',
+  'meterShortSpread',
+  'meterShortTwoWay',
+  'meterShortTorpedo',
+  'meterShortTail',
+  'meterShortVertical',
+  'meterShortFreeWay',
+  'meterShortRipple',
+  'meterShortCyclone',
+  'meterShortTwin',
+  'meterShortControl',
+  'meterShortUpper',
+  'meterShortSmallSpread',
+  'meterShortHawk',
+  'meterShortTwoWayBack',
+  'meterShortBackDouble',
+  'meterShortSpreadGun',
+]);
+
+/** {@link FIXED_UI_TEXT_IDS} as a lookup. */
+const FIXED_IDS: ReadonlySet<string> = new Set(FIXED_UI_TEXT_IDS);
+
+/**
+ * Whether an id's text is the same in every language ({@link FIXED_UI_TEXT_IDS}) — M3-03.
+ *
+ * @param id - A UI string id.
+ * @returns `true` when a translation may not change it.
+ */
+export function isFixedUiTextId(id: string): boolean {
+  return FIXED_IDS.has(id);
+}
 
 /**
  * Resolves a UI string table: the given entries over {@link DEFAULT_UI_TEXT} — a missing, empty or
@@ -442,6 +634,8 @@ export const DEFAULT_LANGUAGE = 'en';
  * @param table - A content table (a `ContentDb.uiStrings` entry's `strings`), or `null` /
  *   `undefined`.
  * @returns A frozen table with every id ({@link DEFAULT_UI_TEXT} itself when nothing differs).
+ *
+ * A {@link FIXED_UI_TEXT_IDS} id keeps its English text whatever the table says (M3-03).
  *
  * @example
  * ```ts
@@ -457,11 +651,79 @@ export function resolveUiText(table: Readonly<Record<string, unknown>> | null | 
   for (const id of UI_TEXT_IDS) {
     const value = Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined;
     const own = DEFAULT_UI_TEXT[id];
-    const text = typeof value === 'string' && value !== '' ? value : own;
+    const text = typeof value === 'string' && value !== '' && !FIXED_IDS.has(id) ? value : own;
     if (text !== own) changed = true;
     out[id] = text;
   }
   return changed ? (Object.freeze(out) as UiText) : DEFAULT_UI_TEXT;
+}
+
+/** One language's table, as `ContentDb.uiStrings` carries it (structural — no `core/data` import). */
+export interface UiStringTableLike {
+  /** The table's language id. */
+  readonly language: string;
+  /** Id → text. */
+  readonly strings: Readonly<Record<string, string>>;
+}
+
+/**
+ * The languages the game can offer (M3-03): {@link DEFAULT_LANGUAGE} first — it is built in and
+ * always available — then every other language the content carries a table for, in
+ * {@link UI_LANGUAGES} order and then alphabetically.
+ *
+ * @param tables - The content's tables (`ContentDb.uiStrings`).
+ * @returns A new array of language ids, never empty. A cold path (the Options screen builds its
+ *   LANGUAGE row from it once).
+ *
+ * @example
+ * ```ts
+ * uiLanguageIds(db.uiStrings); // → ['en', 'es', 'ja']
+ * ```
+ */
+export function uiLanguageIds(tables: readonly UiStringTableLike[]): string[] {
+  const rest: string[] = [];
+  for (let i = 0; i < tables.length; i++) {
+    const id = tables[i].language;
+    if (id !== DEFAULT_LANGUAGE && rest.indexOf(id) < 0) rest.push(id);
+  }
+  /**
+   * Sort key of a language: its {@link UI_LANGUAGES} position, or the list's length for one the
+   * game does not name (those follow, alphabetically).
+   *
+   * @param id - A language id.
+   * @returns The key.
+   */
+  const rank = (id: string): number => {
+    for (let i = 0; i < UI_LANGUAGES.length; i++) if (UI_LANGUAGES[i].id === id) return i;
+    return UI_LANGUAGES.length;
+  };
+  rest.sort((a, b) => rank(a) - rank(b) || (a < b ? -1 : a > b ? 1 : 0));
+  return [DEFAULT_LANGUAGE, ...rest];
+}
+
+/**
+ * The table of a language, for {@link resolveUiText} (M3-03).
+ *
+ * @param tables - The content's tables (`ContentDb.uiStrings`).
+ * @param language - The language id the player chose.
+ * @returns That language's entries, the {@link DEFAULT_LANGUAGE} table's when it has none, or
+ *   `null` when the content carries neither (the built-in English table is then used as it is).
+ *
+ * @example
+ * ```ts
+ * const text = resolveUiText(pickUiStrings(db.uiStrings, save.options.display.language));
+ * ```
+ */
+export function pickUiStrings(
+  tables: readonly UiStringTableLike[],
+  language: string,
+): Readonly<Record<string, string>> | null {
+  let fallback: Readonly<Record<string, string>> | null = null;
+  for (let i = 0; i < tables.length; i++) {
+    if (tables[i].language === language) return tables[i].strings;
+    if (tables[i].language === DEFAULT_LANGUAGE) fallback = tables[i].strings;
+  }
+  return fallback;
 }
 
 /**

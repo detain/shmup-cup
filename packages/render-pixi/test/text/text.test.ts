@@ -3,7 +3,7 @@
  * layout of text and numbers into a recording glyph sink (alignment per line, new lines,
  * spaces, unknown characters, zero padding, negatives), and the real pipeline font.
  */
-import { TextAlign } from '@shmup/core';
+import { TextAlign, UI_GLYPHS } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
@@ -182,5 +182,36 @@ describe('render-pixi/text with the real pipeline font', () => {
       expect(font.glyphFrame(symbol.charCodeAt(0))).toBeGreaterThan(-1);
     expect(font.measure('SHMUP CUP')).toBe(54);
     expect(font.lineHeight).toBe(10);
+  });
+
+  // M3-03: the localization's end-to-end gate. `core/ui` `UI_GLYPHS` is what the `strings` loader
+  // accepts; if a character of it did not reach the atlas, the renderer would silently draw a `?`
+  // and a whole language would look broken on the TV with nothing failing anywhere else.
+  it('draws every character core declares (UI_GLYPHS) — no silent "?" fallback', () => {
+    const { manifest } = buildAtlas();
+    const font = createBitmapFont(createAtlas(manifest, pageImages(manifest)));
+    const question = font.glyphFrame('?'.charCodeAt(0));
+    expect(question).toBeGreaterThan(-1);
+    for (const character of UI_GLYPHS) {
+      const code = character.charCodeAt(0);
+      const frame = font.glyphFrame(code);
+      expect(frame, `U+${code.toString(16).toUpperCase()} ${character}`).toBeGreaterThan(-1);
+      // Only `?` itself may be the `?` frame: anything else falling back would look identical.
+      if (character !== '?') {
+        expect(frame, `U+${code.toString(16).toUpperCase()} ${character}`).not.toBe(question);
+      }
+    }
+    // A character outside the charset has no frame at all, so the loop above has teeth.
+    expect(font.glyphFrame('Д'.charCodeAt(0))).toBe(-1);
+  });
+
+  it('lays katakana and accented capitals out on the same 6-px grid as ASCII (M3-03)', () => {
+    const { manifest } = buildAtlas();
+    const font = createBitmapFont(createAtlas(manifest, pageImages(manifest)));
+    // Every glyph keeps advance 6, whatever its block — a translated menu row is as wide as its
+    // character count, which is what `content/strings/README.md` promises translators.
+    expect(font.measure('ステージ')).toBe(24);
+    expect(font.measure('ESPAÑOL')).toBe(42);
+    expect(font.measure('ガギグゲゴ')).toBe(30);
   });
 });

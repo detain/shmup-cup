@@ -90,6 +90,9 @@ a chip `song` (rendered to 22,050 Hz mono at load) or a recorded `file` (OGG Vor
   "title": "AZURE VERGE",          // display name (sound test, credits)
   "cue": "Stage",                  // optional: the MUSIC_CUES name it plays for
   "stages": ["zone-a"],            // optional: only for these stage ids (default: every stage)
+  // M3-03: "module": "audio/music/zone-a.xm" may sit alongside the song or file — a tracker
+  // module a build with a tracker backend plays instead. It never replaces them, so a device or
+  // build without the tracker path is never silent (`audio-web/tracker` `chooseMusicPath`).
   "song": {                        // or: "file": "audio/music/zone-a.ogg", "loopStart": 204800, "loopEnd": 1638400
     "speed": 6,                    // ticks (1/60 s) per row: 6 → 0.1 s, 4 rows a beat = 150 BPM
     "volume": 0.4,                 // optional: master gain (default 0.4)

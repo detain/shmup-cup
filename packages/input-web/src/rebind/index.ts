@@ -61,7 +61,8 @@
  * {@link InputProfileRegistry}, {@link createInputProfileRegistry}, {@link chooseInputProfile},
  * {@link overrideInputTuning}, {@link selectableKeyProfiles}, {@link KeySpace},
  * {@link inputProfileChoices}, {@link DEFAULT_PROFILE_SUFFIX}, {@link DEFAULT_KEYBOARD_PROFILE_ID},
- * {@link DEFAULT_REMOTE_PROFILE_ID}, {@link DEFAULT_GAMEPAD_PROFILE_ID},
+ * {@link DEFAULT_REMOTE_PROFILE_ID}, {@link DEFAULT_WEBOS_PROFILE_ID},
+ * {@link DEFAULT_GAMEPAD_PROFILE_ID},
  * {@link INPUT_PROFILE_STORAGE_KEY}, {@link loadInputProfileChoice},
  * {@link saveInputProfileChoice}; M2-16: {@link InputCustomization}, {@link customizeInputProfile},
  * {@link applyBindingOverride}, {@link actionTokens}, {@link rebindAction}, {@link RebindResult},
@@ -134,6 +135,14 @@ export const DEFAULT_KEYBOARD_PROFILE_ID = 'keyboard-default';
 /** Profile id used on the TV when nothing else is chosen (decision D14). */
 export const DEFAULT_REMOTE_PROFILE_ID = 'tizen-remote-safe';
 
+/**
+ * Id of the profile the **LG webOS** app starts with (plan M3-03,
+ * `content/input/webos.input-profiles.json`). A separate profile rather than a second label on the
+ * Tizen one: webOS' Back is **461** where Tizen's is 10009 (shmup_tech.md §3.3), its Play/Pause is
+ * 415 / 19, and it registers no keys at all (there is no `tvinputdevice` equivalent).
+ */
+export const DEFAULT_WEBOS_PROFILE_ID = 'webos-remote-safe';
+
 /** Profile id used for gamepads (standard mapping). */
 export const DEFAULT_GAMEPAD_PROFILE_ID = 'gamepad-standard';
 
@@ -199,6 +208,17 @@ export interface InputProfile extends InputTuning {
    * {@link SYSTEM_REMOTE_KEYS}).
    */
   readonly register: readonly string[];
+  /**
+   * The `Platform.id`s whose Options screen may offer this profile (M3-03) — **empty means every
+   * host**, which is what the keyboard and gamepad profiles use.
+   *
+   * @remarks
+   * The two TV hosts read the same `content/input/`, and their remotes disagree about Back (Tizen
+   * 10009, webOS 461 — shmup_tech.md §3.3). Without this a Tizen player could pick the webOS
+   * profile in CONTROLS and be left with no Back at all, which no rebinding guard catches because
+   * the profile itself is complete. {@link selectableKeyProfiles} applies it.
+   */
+  readonly hosts: readonly string[];
   /** The compiled tables per context. */
   readonly tables: Readonly<Record<InputContext, ContextTables>>;
   /**
@@ -249,8 +269,9 @@ const PROFILE_SCHEMA = s.object(
     socd: s.enumOf(SOCD_POLICIES),
     singleKey: s.bool(),
     register: s.array(s.str({ maxLength: 40, pattern: /^[A-Za-z][A-Za-z0-9]*$/ }), { max: 32 }),
+    hosts: s.array(s.str({ maxLength: 16, pattern: /^[a-z]+$/ }), { max: 8 }),
   },
-  { optional: ['split', 'singleKey'] },
+  { optional: ['split', 'singleKey', 'hosts'] },
 );
 
 /** A whole `input-profiles` file. */
@@ -334,6 +355,8 @@ function compileProfile(profile: ParsedProfile): InputProfile {
     ...profile,
     // Optional in the file (M3-02b): absent means the device tracks every key.
     singleKey: profile.singleKey === true,
+    // Optional in the file (M3-03): absent means every host may offer the profile.
+    hosts: Object.freeze(profile.hosts ?? []),
     tables: compileContexts(profile.context),
     splitTables: profile.split === undefined ? null : compileContexts(profile.split),
   });
@@ -724,26 +747,33 @@ export type KeySpace = 'code' | 'keyCode';
  *
  * @remarks
  * On the web (`'code'`) that is `keyboard-default` and `keyboard-remote-emulation`; on the TV
- * (`'keyCode'`) the `tizen-remote-*` profiles. Gamepad profiles are never offered (every pad uses
- * `gamepad-standard`; M2-16 made the pads rebindable instead). Order: as in `profiles`.
+ * (`'keyCode'`) the remote profiles of that TV (M3-03 — a profile's {@link InputProfile.hosts}
+ * keeps webOS' `461` Back out of the Tizen list and Tizen's `10009` out of webOS'). Gamepad
+ * profiles are never offered (every pad uses `gamepad-standard`; M2-16 made the pads rebindable
+ * instead). Order: as in `profiles`.
  *
  * @param profiles - Every profile (the registry's).
  * @param keySpace - How the host's keys arrive.
+ * @param host - The host's `Platform.id` (`'tizen'`, `'webos'`, `'web'`, …). `null` (the default)
+ *   applies no host filter — every profile that binds the menu is offered, which is what the
+ *   headless tests and the dev `?profile=` override want.
  * @returns The selectable profiles (a new array; the profiles themselves are shared).
  *
  * @example
  * ```ts
- * selectableKeyProfiles(registry.profiles, 'keyCode').map((p) => p.id);
- * // → ['tizen-remote-safe', 'tizen-remote-diagonal']
+ * selectableKeyProfiles(registry.profiles, 'keyCode', 'tizen').map((p) => p.id);
+ * // → ['tizen-remote-safe']
  * ```
  */
 export function selectableKeyProfiles(
   profiles: readonly InputProfile[],
   keySpace: KeySpace,
+  host: string | null = null,
 ): InputProfile[] {
   const out: InputProfile[] = [];
   for (const profile of profiles) {
     if (KEY_PROFILE_DEVICES.indexOf(profile.device) < 0) continue;
+    if (host !== null && profile.hosts.length > 0 && profile.hosts.indexOf(host) < 0) continue;
     const menu = profile.context.menu;
     const table = keySpace === 'code' ? menu.byCode : menu.byKeyCode;
     let bound = 0;
@@ -769,12 +799,14 @@ export const DEFAULT_PROFILE_SUFFIX = ' (DEFAULT)';
  * @param defaultId - The platform's default profile id.
  * @param extra - A profile to offer even when it is not selectable (e.g. a `?profile=` dev
  *   override in use), appended when missing; `null` for none.
+ * @param host - The host's `Platform.id`, passed on to {@link selectableKeyProfiles} (M3-03);
+ *   `null` (the default) applies no host filter.
  * @returns The choices (a new array of new objects, in {@link selectableKeyProfiles} order, then
  *   `extra`).
  *
  * @example
  * ```ts
- * inputProfileChoices(registry.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID);
+ * inputProfileChoices(registry.profiles, 'keyCode', DEFAULT_REMOTE_PROFILE_ID, null, 'tizen');
  * // → [{ id: 'tizen-remote-safe', label: 'REMOTE (DEFAULT)' }]   (M3-02b: the one TV profile)
  * ```
  */
@@ -783,8 +815,9 @@ export function inputProfileChoices(
   keySpace: KeySpace,
   defaultId: string,
   extra: InputProfile | null = null,
+  host: string | null = null,
 ): InputProfileChoice[] {
-  const list = selectableKeyProfiles(profiles, keySpace);
+  const list = selectableKeyProfiles(profiles, keySpace, host);
   if (extra !== null && list.indexOf(extra) < 0) list.push(extra);
   return list.map((profile) => ({
     id: profile.id,

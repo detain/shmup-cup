@@ -12,7 +12,9 @@
  * - **`music`** (`content/audio/music/*.music.json`, {@link loadMusicContent}): one track per
  *   file — `id`, `title`, the `MUSIC_CUES` name it answers (`cue`, optionally only for some
  *   `stages`) and either a chip `song` (rendered by `synth`) or an OGG `file` with sample-exact
- *   `loopStart` / `loopEnd`. {@link resolveMusicCues} picks, per cue, the track of a stage.
+ *   `loopStart` / `loopEnd`, plus — since M3-03 — an optional tracker `module` a build with a
+ *   tracker backend may play instead ({@link AudioLoader.musicPath}; `audio-web/tracker`).
+ *   {@link resolveMusicCues} picks, per cue, the track of a stage.
  *   {@link AudioLoader.loadTrack} prepares one track — the engine calls it for a stage's music
  *   set during the stage-intro / loading phase.
  *
@@ -41,10 +43,18 @@
  * {@link AudioLoader}, {@link AudioLoaderOptions}, {@link PreparedSound}, {@link PreparedTrack},
  * {@link toAudioBuffer}, {@link loadArrayBuffer}, {@link XhrLike}, {@link decodeAudioFile},
  * {@link DecodeContextLike}, {@link DECODE_SAMPLE_RATE}, {@link AudioLoadError},
- * {@link LoadProgress}.
+ * {@link LoadProgress}; M3-03: {@link AudioLoader.musicPath} and {@link MusicTrackDef.module}.
  *
  * @module
  */
+import {
+  NO_TRACKER,
+  TRACKER_MODULE_EXTENSIONS,
+  chooseMusicPath,
+  isTrackerModuleUrl,
+  type MusicPath,
+  type TrackerAvailability,
+} from '../tracker/index.js';
 import {
   CONTENT_FORMAT_VERSION,
   MUSIC_CUES,
@@ -198,6 +208,12 @@ const CUE_NAME = /^[A-Z][A-Za-z0-9]*$/;
 
 /** A relative asset URL (`audio/sfx/boom.ogg`) — no scheme, no `..`, no leading `/`. */
 const RELATIVE_URL = /^(?!\/)(?!.*\.\.)[A-Za-z0-9_./-]+\.(?:ogg|mp3|m4a|wav)$/;
+
+/**
+ * A relative path, any extension (M3-03's `module`): the **extension** is checked separately so a
+ * wrong one gets a message naming the formats, not a regular expression.
+ */
+const RELATIVE_PATH = /^(?!\/)(?!.*\.\.)[A-Za-z0-9_./-]+$/;
 
 /** A kebab-case id (`zone-a`). */
 const KEBAB_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -396,6 +412,12 @@ export interface MusicTrackDef {
   readonly song: Song | null;
   /** The recorded track, or `null` for a song. */
   readonly file: MusicFileDef | null;
+  /**
+   * A tracker module (MOD / XM / IT / S3M) a build with a tracker backend may play instead
+   * (M3-03 — `audio-web/tracker`), or `null`. It is an **addition**, never a replacement: a track
+   * always keeps its song or file, so a device or build without the tracker path is never silent.
+   */
+  readonly module: string | null;
 }
 
 /** The validated music library. */
@@ -496,11 +518,15 @@ const MUSIC_FILE_SCHEMA = s.object(
     stages: s.array(s.str({ maxLength: 48, pattern: KEBAB_ID }), { min: 1, max: 32 }),
     song: SONG_SCHEMA,
     file: s.str({ maxLength: 160, pattern: RELATIVE_URL }),
+    // M3-03: the optional tracker module, alongside the song or file — never instead of it.
+    module: s.str({ maxLength: 160, pattern: RELATIVE_PATH }),
     loopStart: s.int({ min: 0 }),
     loopEnd: s.int({ min: 1 }),
     sampleRate: s.int({ min: 8000, max: 96000 }),
   },
-  { optional: ['cue', 'stages', 'song', 'file', 'loopStart', 'loopEnd', 'sampleRate'] },
+  {
+    optional: ['cue', 'stages', 'song', 'file', 'module', 'loopStart', 'loopEnd', 'sampleRate'],
+  },
 );
 
 /**
@@ -632,6 +658,14 @@ export function loadMusicContent(files: readonly ContentFile[]): MusicContentRes
     if ((parsed.song === undefined) === (parsed.file === undefined)) {
       report('', 'needs exactly one of "song" or "file"');
     }
+    // M3-03: a tracker module is an upgrade a build may play, not a source of its own — the song
+    // or file above stays the fallback, so no device is ever left silent by it.
+    if (parsed.module !== undefined && !isTrackerModuleUrl(parsed.module)) {
+      report(
+        'module',
+        `"${parsed.module}" is not a tracker module (${TRACKER_MODULE_EXTENSIONS.join(', ')})`,
+      );
+    }
     const hasLoopStart = parsed.loopStart !== undefined;
     const hasLoopEnd = parsed.loopEnd !== undefined;
     if (parsed.song !== undefined) {
@@ -680,6 +714,7 @@ export function loadMusicContent(files: readonly ContentFile[]): MusicContentRes
                 loopEnd: parsed.loopEnd ?? -1,
                 sampleRate: parsed.sampleRate ?? DECODE_SAMPLE_RATE,
               }),
+        module: parsed.module ?? null,
       }),
     );
   }
@@ -930,6 +965,12 @@ export interface AudioLoaderOptions {
    * @returns The decoded buffer.
    */
   readonly decode?: (data: ArrayBuffer, url: string) => Promise<AudioBufferLike>;
+  /**
+   * What the device and the build can do about tracker music (M3-03 — `audio-web/tracker`).
+   * Default {@link NO_TRACKER}: no backend ships, so {@link AudioLoader.musicPath} never answers
+   * `'tracker'`.
+   */
+  readonly tracker?: TrackerAvailability;
 }
 
 /** Renders and decodes audio content. */
@@ -961,6 +1002,20 @@ export interface AudioLoader {
    *   not pass {@link loadMusicContent}.
    */
   loadTrack(track: MusicTrackDef): Promise<PreparedTrack>;
+  /**
+   * The path this device and build would play a track through (M3-03 — `audio-web/tracker`
+   * `chooseMusicPath`).
+   *
+   * @remarks
+   * {@link AudioLoader.loadTrack} always prepares the track's **song or file**, whatever this
+   * answers: the tracker path is an upgrade a host may take, never a reason for silence. It is
+   * `'tracker'` only when the track carries a module, the device has AudioWorklet and WebAssembly,
+   * and the build passed a {@link TrackerBackend} — which no shipped build does.
+   *
+   * @param track - The track.
+   * @returns The path.
+   */
+  musicPath(track: MusicTrackDef): MusicPath;
 }
 
 /**
@@ -1013,8 +1068,15 @@ export function createAudioLoader(options: AudioLoaderOptions = {}): AudioLoader
   const loadDecoded = async (url: string): Promise<AudioBufferLike> =>
     decode(await loadFile(url), url);
 
+  const tracker = options.tracker ?? NO_TRACKER;
   return {
     sampleRate,
+    musicPath(track) {
+      return chooseMusicPath(
+        { song: track.song !== null, file: track.file !== null, module: track.module !== null },
+        tracker,
+      );
+    },
     async loadSfx(content, onProgress) {
       const out: Array<PreparedSound | null> = content.cues.map(() => null);
       const total = content.cues.filter((cue) => cue !== null).length;

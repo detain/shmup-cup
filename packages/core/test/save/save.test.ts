@@ -126,6 +126,7 @@ describe('core/save round trip', () => {
         bossHpBar: false,
         crtFilter: 'full',
         aspect: 'wide',
+        language: 'en',
       },
       // The assists and feel of M3-01 round-trip too.
       play: {
@@ -164,6 +165,7 @@ describe('core/save round trip', () => {
       bossHpBar: false,
       crtFilter: 'full',
       aspect: 'wide',
+      language: 'en',
     });
   });
 
@@ -187,6 +189,7 @@ describe('core/save round trip', () => {
       bossHpBar: false,
       crtFilter: 'off',
       aspect: 'normal',
+      language: 'en',
     });
   });
 
@@ -227,6 +230,7 @@ describe('core/save round trip', () => {
           bossHpBar: false,
           crtFilter: 'off',
           aspect: 'normal',
+          language: 'en',
         },
         // M3-01: the assists and feel; M3-02: the mechanic extras.
         play: {
@@ -276,6 +280,7 @@ describe('core/save migrations', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,
     });
@@ -406,6 +411,7 @@ describe('core/save sanitising', () => {
         bossHpBar: false,
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       },
       play: DEFAULT_USER_OPTIONS.play,
     });

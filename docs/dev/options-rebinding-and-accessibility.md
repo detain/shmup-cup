@@ -388,7 +388,7 @@ document's `version` drives the migrations). Version 2 adds the controls fields 
 Every word the canvas UI draws — the title's mode select, menus, the Options pages, the rebind and
 input-test screens, the end screens, the hi-score tables, the HUD's words — comes from a table by id:
 
-- `DEFAULT_UI_TEXT` (290 ids: the fixed ones of `STATIC_UI_TEXT` plus one `sfx.<CueName>` per
+- `DEFAULT_UI_TEXT` (365 ids today — the fixed ones of `STATIC_UI_TEXT` plus one `sfx.<CueName>` per
   `SFX_CUES` cue, generated from `SFX_CUE_NAMES`), `UI_TEXT_IDS`, `MAX_UI_TEXT_LENGTH` (48),
   `DEFAULT_LANGUAGE` (`'en'`), `resolveUiText(table)` (a content table over English — missing, empty
   or non-string entries keep English, unknown ids are ignored; `DEFAULT_UI_TEXT` itself when nothing
@@ -396,8 +396,9 @@ input-test screens, the end screens, the hi-score tables, the HUD's words — co
   string). A leaf module: `core/data` validates against `UI_TEXT_IDS` without an import cycle.
 - **Content**: `content/strings/<language>.strings.json` (kind `strings`, `UiStringsSpec { language,
   strings }`, `ContentDb.uiStrings` in path order). The loader checks the header, a language id
-  (`en`, `pt-br`), known ids only, 1–48 characters of the bitmap font's glyphs (printable ASCII and
-  `← ↑ → ↓ ● ★ ✕`), one table per language. `en.strings.json` is the shipped table and **must equal
+  (`en`, `pt-br`), known ids only, 1–48 characters of the bitmap font's glyphs (`core/ui`
+  `UI_GLYPHS` — since M3-03 that is printable ASCII, `← ↑ → ↓ ● ★ ✕`, the Latin-1 capitals and the
+  katakana subset), one table per language. `en.strings.json` is the shipped table and **must equal
   the built-in one** (`pnpm content:check` — `test/integration/content.test.ts`).
 - **The flow** resolves the content's `en` table once (`SceneFlow.text`) and builds its label lists
   from it (`SceneFlow.labels`, `SceneLabels`, `buildSceneLabels(text)`); every scene draws from them.
@@ -409,7 +410,26 @@ input-test screens, the end screens, the hi-score tables, the HUD's words — co
   upper-case string literal outside the table and fails on one. Content text (zone and boss names,
   the story, the endings, the credits, weapon and profile labels) lives with its content; the
   shell's DOM loading / error screens (before the game exists) are not in the table.
-- Picking another language is M3 (`DEFAULT_LANGUAGE` is fixed today).
+- **Picking a language (M3-03).** `OPTIONS → DISPLAY → LANGUAGE` offers what the content actually
+  carries: `uiLanguageIds(db.uiStrings)` puts `en` first (it is built in, so it is always there)
+  and then every other table, named in its own script by `uiLanguageLabel` / `UI_LANGUAGES`
+  (`ENGLISH`, `ESPAÑOL`, `ニホンゴ`) — adding a `content/strings/<id>.strings.json` adds a row with
+  no code change. The choice is presentation only, so it lives in the save's
+  `options.display.language` and **never** in `GameConfig`: a replay is language-independent, and
+  the golden replays did not move. `createSceneFlow` resolves the table once
+  (`pickUiStrings(tables, language)` → `resolveUiText`), which is why the row's hint reads
+  `LANGUAGE: FROM THE NEXT LAUNCH` — the scenes build their menus and the HUD when the flow is
+  built, so switching live would leave half the screens on the old table.
+- **Ids no translation may change (M3-03).** `FIXED_UI_TEXT_IDS`: the game's name, `HI`, `1P` /
+  `2P`, `---`, `*`, `SMDLO?!` and the two-character HUD and power-meter codes. The HUD draws them
+  in a few pixels of a bar it cannot grow, and the auto-order screen indexes `orderCodes` character
+  by character. `resolveUiText` forces them back to English and `core/data` reports a table that
+  changes one.
+- **Coverage per language.** `pnpm content:check` requires a shipped language to answer **every**
+  id — a gap would fall back to English mid-screen, which reads as a bug rather than a fallback.
+  The Spanish and Japanese tables are **agent-written placeholders** that no native speaker has
+  reviewed; replacing them is an edit of two JSON files
+  ([`content/strings/README.md`](../../content/strings/README.md)).
 
 ## Budgets
 
@@ -418,6 +438,11 @@ input-test screens, the end screens, the hi-score tables, the HUD's words — co
 - **Tizen `app.js`**: ≈ 359 KB gzip after the step (the two string tables ≈ 6 KB, the pages and the
   rebinding ≈ 9 KB) — `APP_JS_GZIP_BUDGET` raised **350 → 384 KB** (`apps/tizen/scripts/
   check-bundle.mjs`); the boot-time check of M2-18 still guards the launch.
+- **M3-03's languages**: the Spanish and Japanese tables took `app.js` from **386.9 to 395.5 KB
+  gzip** (of the 512 KB budget) and the 93 new font glyphs took the atlas page from 134.9 to
+  **136.6 KB** — still one 1024² page. No budget was raised; see
+  [asset-pipeline.md](asset-pipeline.md#katakana-and-the-cjk-budget-m3-03) for why a real kanji set
+  would not have fitted.
 
 ## Determinism
 
@@ -497,7 +522,8 @@ In a browser the save is `localStorage["shmup-cup:save.v1"]`; in a dev / test bu
 | `packages/input-web/test/keyboard/keyboard-capture.test.ts`, `web-input/web-input-capture.test.ts` | The keyboard's catch (new keys only — repeats, held and debouncing keys ignored), key and button captures, Escape / Back cancelling, a key during a button capture |
 | `packages/shell/test/controls/controls.test.ts`, `-edge.test.ts`, `boot/boot.test.ts` | A real `WebInput` capture → bind → save → applied; devices following a profile switch; rejects; reset; boot wiring (`customize` at boot and on `InputSettings`, controls only with a capable adapter and app) |
 | `apps/*/test/boot/boot-wiring.test.ts` | The apps' `customize` / `rebindable`: the saved rebinding, SOCD and debounce applied to the key and pad profiles at boot (J shoots on the web), a profile switch applying that profile's own rebinding, `InputSettings` re-applying the save, a lock-out save keeping the content's table (TV), the web's `?debounce=` winning |
-| `test/integration/content.test.ts` | `en.strings.json` equals `DEFAULT_UI_TEXT` |
+| `test/integration/content.test.ts` | `en.strings.json` equals `DEFAULT_UI_TEXT`; **M3-03**: every shipped language answers every id, within the length limit, with the `{0}` / `{1}` slots kept, drawable by the font and with the fixed ids left in English; every `UI_LANGUAGES` label is drawable; a table that redraws a fixed id or uses a glyph the font lacks is rejected |
+| `test/scripts/assets/font.test.ts` | **M3-03**: the font source's code points equal `core/ui` `UI_GLYPHS` exactly, and the katakana keep their 5×7 box with the voicing marks on row 0 |
 | `test/golden/golden-autofire.test.ts` (+ `zone-a-manta-toggle`, `zone-a-hold`) | The autofire modes as golden replays |
 | `test/e2e/rebind.spec.ts`, `test/e2e/game-options.spec.ts` (+ the updated `options`, `display-options`, `bullet-palette` specs) | Web: SHOT → J saved, shown in the input test and applied after a reload; a v1 save booting, LIVES 5 and ONE BUTTON reaching the save (v2) and the next game; Escape cancelling, RESET, SOCD / DEBOUNCE saved. Tizen from disk: POWER-UP ↔ CH− swap kept across a relaunch; LIVES 1 with the remote |
 

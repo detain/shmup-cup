@@ -2,6 +2,7 @@
 node_modules/
 dist/
 apps/electron/release/
+apps/webos/release/
 coverage/
 .turbo/
 assets/generated/

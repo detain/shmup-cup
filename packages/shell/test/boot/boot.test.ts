@@ -706,6 +706,7 @@ describe('shell/boot failures (boot error screen)', () => {
       'audio/music/zone-i.music.json',
       'fx/particles.fx.json',
       'input/remote.input-profiles.json',
+      'input/webos.input-profiles.json',
       'locale/fr.locale.json',
     ]);
   });
@@ -918,7 +919,11 @@ describe('shell/boot input profiles and binding contexts (M1-05)', () => {
       ],
     }).promise;
     // The default owner would have reported the missing `profiles`; the app's owner accepted it.
-    expect(seen).toEqual(['input/remote.input-profiles.json', 'input/zz.input-profiles.json']);
+    expect(seen).toEqual([
+      'input/remote.input-profiles.json',
+      'input/webos.input-profiles.json',
+      'input/zz.input-profiles.json',
+    ]);
     expect(shell.content.issues).toEqual([]);
   });
 });
@@ -1113,6 +1118,7 @@ describe('shell/boot audio (M1-15)', () => {
     const { promise, shown } = boot({
       audioLoader: {
         sampleRate: 22050,
+        musicPath: () => 'song',
         loadSfx: () => Promise.reject(new Error('could not load audio/sfx/boom.ogg: status 404')),
         loadTrack: () => Promise.reject(new Error('unused')),
       },

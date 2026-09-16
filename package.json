@@ -36,6 +36,7 @@
     "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",
     "assets": "node scripts/generate-assets.mjs",
     "store:assets": "node scripts/store-assets.mjs",
+    "itch:package": "node scripts/itch-package.mjs",
     "trig:tables": "node scripts/gen-trig-tables.mjs",
     "audio:preview": "node scripts/audio-preview.mjs"
   },

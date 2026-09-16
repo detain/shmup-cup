@@ -366,6 +366,47 @@ the boot prepares `zone-a`'s set — AZURE VERGE, BULWARK ASSAULT, the jingles �
 stage music from START; in a browser the title theme, like a stage theme, starts with the first
 key press or click.
 
+## The tracker path (M3-03)
+
+`shmup_tech.md` §4.3 left one music question open: chip songs and OGG are what the game ships
+(decision D22), but **live tracker playback** — a MOD / XM / IT module rendered by libopenmpt
+compiled to WebAssembly inside an AudioWorklet (`chiptune3`) — would give tiny files, sample-exact
+loops and the authentic sound, *if* the TV can afford it. The 2026-09-15 input probe settled the
+support question: the M7 monitors have **WebAssembly and AudioWorklet**
+([input-probe-results.md](input-probe-results.md) §9), 44.1 kHz output at 50 ms base latency and
+four Cortex-A55 cores. What was left was size and CPU.
+
+**The size answer is arithmetic, and it is no.** `chiptune3` 0.8.9's worklet is **≈ 518 KB
+gzipped** on its own — more than the whole Tizen `app.js` budget of **512 KB**. `audio-web/tracker`
+states that in code (`TRACKER_WORKLET_GZIP_BYTES`, `TIZEN_APP_JS_GZIP_BUDGET`,
+`trackerFitsBundle()` → `false`), so the player could never be inlined into the widget: a tracker
+build would have to load it as a separate file, the way the OGG path already loads audio over XHR
+(decision D25). **The CPU answer is not measured**, and cannot be from here — it needs the library
+and a monitor. It is on the owner's list (plan §8.9).
+
+So what ships is the **seam**, not the player:
+
+| Piece | What it does |
+|---|---|
+| `detectAudioCapabilities(scope)` | Reads `AudioWorkletNode` and `WebAssembly` off a scope (injected, so tests need no browser) |
+| `TrackerBackend` / `TrackerHandle` | The port a build plugs libopenmpt into: `load(url)` → `start` / `stop` / `setVolume` |
+| `TrackerAvailability`, `NO_TRACKER` | The device's capabilities plus the build's backend. **Every shipped build passes `NO_TRACKER`** — `chiptune3` is not a dependency of this repo |
+| `chooseMusicPath(source, availability)` | `tracker` → `file` → `song` → `none`, where `tracker` needs a module in the content, both capabilities **and** a backend |
+| `MusicTrackDef.module` | An optional `.mod` / `.xm` / `.it` / `.s3m` URL on a track, **alongside** its song or file |
+| `AudioLoader.musicPath(track)` | What this device and build would play the track through |
+
+The content rule is the important one: a `module` is an **addition, never a replacement**. A track
+still carries exactly one of `song` or `file`, and `loadTrack` always prepares it — so turning the
+tracker path on cannot leave a device silent, and turning it off again costs nothing. No shipped
+track carries a module today, so `musicPath` answers `'song'` for all of them and the audio engine
+runs exactly as it did in M2.
+
+**To try it on a device** (the owner's step): add `chiptune3` to a build of `apps/tizen`, implement
+`TrackerBackend` over it, pass `{ caps: detectAudioCapabilities(), backend }` as the loader's
+`tracker` option, add `"module"` to a track, and compare the overlay's TICK / RENDER figures and
+the guided capture (M3-02f) against the same section with the chip song. The number that decides it
+is CPU per frame on a Cortex-A55, not the file size.
+
 ## Zero allocation and the hot-path rules
 
 Handling an event allocates nothing unless a sound actually starts — one
@@ -486,4 +527,6 @@ song's loop points and render time. Options: `--out DIR`, `--only NAME` (one cue
   as the one extra track), `SimEventKind.SoundTest` and the shell's `connectSoundTest`; the attract
   demo is silent (its sounds and music are not forwarded) and the title theme plays through the
   hi-score tables and the story ([front-end-and-attract.md](front-end-and-attract.md)).
-- **M3-03** — tracker music.
+- **M3-03** (done) — the tracker path's seam and its measurement; see
+  [The tracker path (M3-03)](#the-tracker-path-m3-03) above. Nothing about the shipped audio
+  changed: every track still plays its chip song.

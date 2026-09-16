@@ -266,6 +266,7 @@ test.describe('display options through the Options screen (web build)', () => {
         // M3-02: the DISPLAY page's new rows, left at their defaults here.
         crtFilter: 'off',
         aspect: 'normal',
+        language: 'en',
       });
 
     // The next boot (free flight on the raster range) starts with them.

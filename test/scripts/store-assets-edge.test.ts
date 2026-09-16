@@ -147,11 +147,12 @@ describe('scripts/store-assets — staleIcons compares pixels (M2-18 tests)', ()
     const root = temp('shmup-store-size-');
     const icons = renderIcons();
     for (const { path, image } of icons) put(root, path, encodePng(image));
+    // Overwrite one target with an icon of a different shape: only that one is stale.
     const last = icons[icons.length - 1];
+    const target = ICON_TARGETS[ICON_TARGETS.length - 1];
+    expect([target.width, target.height]).not.toEqual([512, 423]);
     put(root, last.path, encodePng(renderIcon(512, 423)));
-    expect(staleIcons(root)).toEqual(
-      ICON_TARGETS.filter((t) => t.width !== 512 || t.height !== 423).map((t) => t.path),
-    );
+    expect(staleIcons(root)).toEqual([last.path]);
   });
 });
 

@@ -16,12 +16,12 @@
  *   drives the migrations): `{ version, options: { audio: { master, music, sfx }, input: {
  *   profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
  *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar, crtFilter,
- *   aspect }, game: {
+ *   aspect, language }, game: {
  *   difficulty, lives, deathPenalty, autoPowerUp, pickupMagnet, oneButton } }, hiScores: {
  *   [modeKey]: HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers, stagesCleared } }`. The
  *   display fields needed no migration: a version-1 save written before `bulletPalette` (M2-02),
- *   the M2-08 fields, `bossHpBar` (M2-09) or `crtFilter` / `aspect` (M3-02) resolves the missing
- *   ones to their defaults
+ *   the M2-08 fields, `bossHpBar` (M2-09), `crtFilter` / `aspect` (M3-02) or `language` (M3-03)
+ *   resolves the missing ones to their defaults
  *   (`standard`, `integer`, shake on, normal flashing, no hitbox marker, no boss HP bar —
  *   `core/config` `resolveUserOptions`). **Version 2** (M2-16) added the controls options (autofire
  *   mode and rate, SOCD, the release debounce, the rebinding — `input.*`) and the game options
@@ -679,6 +679,8 @@ export function serializeSave(data: SaveData): string {
         // M3-02: the CRT filter and the picture's shape.
         crtFilter: display.crtFilter,
         aspect: display.aspect,
+        // M3-03: the UI language (a save written before it resolves to `en`).
+        language: display.language,
       },
       // M3-01: the assists and feel (a save written before resolves them to their defaults).
       play:

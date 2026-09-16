@@ -6,9 +6,26 @@ versions before 1.0 may change anything between minor releases. Development foll
 
 ## [Unreleased]
 
-The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01, M3-02, M3-02b …).
+The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 … M3-03), which is
+now **complete**. What remains needs an account or a device nobody here has: plan §8.7 (an LG
+webOS set), §8.8 (Steam and a Steam Deck) and §8.9 (the Seller Office, itch.io, a native-speaker
+pass over the translations, and the tracker-music CPU benchmark).
 
 ### Game
+
+- **The game speaks three languages** (M3-03): **ENGLISH**, **ESPAÑOL** and **ニホンゴ**, chosen
+  under OPTIONS → DISPLAY → **LANGUAGE** and shown from the next launch. The Japanese text is
+  **katakana only**, the way 1980s arcade hardware wrote Japanese, and the bitmap font grew from 102
+  to 195 glyphs to draw it (plus the accented capitals Spanish needs). A few things stay the same in
+  every language on purpose: the game's name, `HI`, `1P` / `2P` and the two-character HUD and power
+  meter codes, which the HUD draws in a few pixels it cannot grow.
+  **The Spanish and Japanese texts are placeholders** — written by the build agent, not proof-read
+  by anyone who speaks the language, exactly like the placeholder art and music. Correcting them is
+  an edit of two files in `content/strings/`.
+- **The game runs on LG webOS TVs too** (M3-03): a fourth host, `apps/webos`, with the same game,
+  its own `appinfo.json` and the webOS Back key (461 instead of Samsung's 10009). **It has never run
+  on a real LG set** — the project has no LG hardware, developer account or SDK — so treat the first
+  run as untested; the recipe and the checklist are in [`docs/client/webos.md`](docs/client/webos.md).
 
 - **EXTRA menu** on the title (M3-01), between SOUND TEST and EXIT: **BOSS RUSH** (the nine zone
   bosses A–I in a row — a new `boss-rush` stage), **CARAVAN** (one zone from its start against a
@@ -71,6 +88,40 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
 
 ### For developers
 
+- **Localization (M3-03).** `core/ui/strings.ts` gained `UI_GLYPHS` (the font's whole charset,
+  declared once and kept equal to `assets/source/fonts/pixel6x8.font.json` by a test),
+  `isUiTextDrawable`, `UI_LANGUAGES` / `uiLanguageLabel` / `uiLanguageIds` / `pickUiStrings` and
+  `FIXED_UI_TEXT_IDS`; `UserOptions.display.language` + `UserOptionKind.Language` carry the choice
+  (presentation only — no replay records it, no golden moved). The menu lists whatever
+  `content/strings/` holds, so adding a table adds a row with no code change, and
+  `pnpm content:check` requires a shipped language to answer **every** id. The 93 new glyphs cost
+  1.6 KB of atlas and the two tables 8.6 KB of Tizen `app.js` gzip (386.9 → 395.5 KB of 512 KB);
+  no budget was raised. Why a real kanji set would not have fitted, and what to do if one arrives,
+  is in [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md).
+- **`apps/webos` (M3-03)** — the LG webOS host: the `Platform` adapter (Back 461, the two-reason
+  lifecycle, `webOS.platformBack()`), the shared `bootShell`, `public/appinfo.json` with its
+  validator, a bundle check that imports the Tizen budgets so there is one source of truth, and the
+  `ares-*` wrappers (**written, never executed**). An `input-profiles` entry gained a `hosts` list
+  so each TV's remote profile stays out of the other's CONTROLS menu — without it a Tizen player
+  could pick the webOS profile and lose Back entirely.
+- **Steamworks (M3-03)** — `apps/electron/src/main/steam.ts` is implemented: `initSteam`, eleven
+  achievements **derived from the save document** (so no game code knows about Steam), Steam Cloud
+  wrapped around the existing file store (disk first, cloud second, restore on a fresh machine).
+  `steamworks-ffi-node` is **not** a dependency: `initSteam` takes a `load` callback a Steam build
+  supplies, and every test drives a fake. Nothing here has run against a real Steam client.
+- **The tracker-music path (M3-03)** — new `audio-web/tracker`: capability detection, the
+  `TrackerBackend` port, and `chooseMusicPath` (`tracker` → `file` → `song` → `none`). A track may
+  carry an optional `module` **alongside** its song or file, never instead of it, so turning the
+  path on can never silence a device. No backend ships: libopenmpt's worklet is ≈ 518 KB gzipped
+  against a 512 KB bundle budget, which `trackerFitsBundle()` states in code.
+- **`pnpm itch:package` (M3-03)** archives the browser build for itch.io with a zero-dependency ZIP
+  writer (`index.html` at the root, no source maps, byte-identical for the same build). Never run
+  against a real build here.
+- **New docs**: [`docs/dev/real-assets.md`](docs/dev/real-assets.md) (Aseprite / Furnace hand-off),
+  [`docs/client/webos.md`](docs/client/webos.md), [`docs/client/steam.md`](docs/client/steam.md),
+  [`docs/client/web-release.md`](docs/client/web-release.md) and
+  [`docs/client/store-submission.md`](docs/client/store-submission.md) — each says in its first
+  paragraph that nothing in it has been run.
 - `GameConfig` gained `loop`, `timeLimit`, `invincible` and `optionRecovery`; `startingLives` goes
   up to 9. Stages may carry a `remix` and `minLoop` / `maxLoop` on any event; weapons an `extra`
   flag; the `rules` file's `scoring` section `repeatKills` / `repeatPercent`.

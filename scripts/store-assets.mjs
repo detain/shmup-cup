@@ -6,8 +6,10 @@
  * backdrops, the bosses) and the bitmap font — so no image is drawn by hand (plan §1.5):
  *
  * - **Icons (committed)** — {@link ICON_TARGETS}: the Tizen widget / Seller Office icon
- *   `apps/tizen/public/icon.png` (512 × 423, copied into the widget by Vite) and the desktop app's
- *   icon `apps/electron/build/icon.png` (512 × 512, electron-builder's `build/` resources). A test
+ *   `apps/tizen/public/icon.png` (512 × 423, copied into the widget by Vite), the desktop app's
+ *   icon `apps/electron/build/icon.png` (512 × 512, electron-builder's `build/` resources) and the
+ *   LG webOS app's `apps/webos/public/icon.png` (80 × 80) and `largeIcon.png` (130 × 130, M3-03,
+ *   the sizes `appinfo.json` names). A test
  *   (`test/scripts/store-assets.test.ts`) renders them again and compares the pixels, so a change
  *   to the art or to this script shows up as a failing test until the files are regenerated.
  * - **Store-listing placeholders (generated, ignored)** — `assets/generated/store/`: the icon,
@@ -52,6 +54,11 @@ const FRAME_H = 216;
 export const ICON_TARGETS = Object.freeze([
   Object.freeze({ path: 'apps/tizen/public/icon.png', width: 512, height: 423 }),
   Object.freeze({ path: 'apps/electron/build/icon.png', width: 512, height: 512 }),
+  // M3-03, the LG webOS app: `appinfo.json`'s `icon` (80 x 80) and `largeIcon` (130 x 130) — the
+  // sizes LG's web-app contract asks for. They are committed like the other two and copied into
+  // `dist/` by Vite's `public/` handling.
+  Object.freeze({ path: 'apps/webos/public/icon.png', width: 80, height: 80 }),
+  Object.freeze({ path: 'apps/webos/public/largeIcon.png', width: 130, height: 130 }),
 ]);
 
 /** The placeholder screenshots: the zone backdrop, the boss hull, the ship, the caption. */

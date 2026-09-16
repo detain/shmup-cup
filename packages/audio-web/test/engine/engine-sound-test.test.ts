@@ -63,6 +63,7 @@ function countingLoader(): AudioLoader & { tracks: string[] } {
   return {
     tracks,
     sampleRate: real.sampleRate,
+    musicPath: (track) => real.musicPath(track),
     loadSfx: (content, onProgress) => real.loadSfx(content, onProgress),
     loadTrack: (track: MusicTrackDef) => {
       tracks.push(track.id);

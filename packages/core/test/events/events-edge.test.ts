@@ -293,6 +293,8 @@ describe('core/events — cue registries', () => {
       // M3-02.
       CrtFilter: 11,
       Aspect: 12,
+      // M3-03.
+      Language: 13,
     });
     expect(FX_CUES).toEqual({
       ExplosionSmall: 0,

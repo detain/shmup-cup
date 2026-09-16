@@ -192,7 +192,15 @@ describe('shell/memory', () => {
   });
 
   it('sizes a recorded track from its loop end, or a 180 s stereo fallback', () => {
-    const base = { id: 'x', title: 'X', cue: null, cueId: -1, stages: null, song: null };
+    const base = {
+      id: 'x',
+      title: 'X',
+      cue: null,
+      cueId: -1,
+      stages: null,
+      song: null,
+      module: null,
+    };
     const known = {
       ...base,
       file: { url: 'a.ogg', loopStart: 0, loopEnd: 64000, sampleRate: 32000 },

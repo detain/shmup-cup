@@ -340,6 +340,8 @@
     "blackHoleHint": "BLACK HOLE: THE DIRECT SHIP ONLY",
     "hudBombs": "BOMB",
     "escapeClear": "ESCAPE COMPLETE",
+    "optLanguage": "LANGUAGE",
+    "languageHint": "LANGUAGE: FROM THE NEXT LAUNCH",
     "sfx.PlayerShot": "PLAYER SHOT",
     "sfx.PlayerMissile": "PLAYER MISSILE",
     "sfx.LaserHum": "LASER HUM",

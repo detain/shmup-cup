@@ -3,10 +3,15 @@
  *
  * Acceptance (M1-03): the original 6×8 pixel font covers ASCII 32–126 plus
  * `← ↑ → ↓ ● ✕ ★`; glyph frames go into the atlas, metrics into the manifest.
+ * M3-03 added the Latin-1 capitals Spanish needs and the katakana subset Japanese is written in:
+ * the charset is now declared once, in `@shmup/core` `UI_GLYPHS`, and this file asserts the font
+ * source holds **exactly** those code points — so a `strings` entry the loader accepts can always
+ * be drawn, and a glyph nothing draws never reaches the atlas.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { UI_GLYPHS } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   ASCII_PRINTABLE,
@@ -43,10 +48,41 @@ describe('assets/source/fonts/pixel6x8.font.json', () => {
     expect(font?.name).toBe('pixel');
   });
 
-  it('covers ASCII 32–126 and the arrows, dot, cross and star — nothing else', () => {
-    expect(font?.glyphs.map((g) => g.code)).toEqual(
-      [...ASCII_PRINTABLE, ...SPECIALS].sort((a, b) => a - b),
+  it('covers exactly the charset core declares (UI_GLYPHS) — no more, no less', () => {
+    const declared = [...new Set(UI_GLYPHS.split('').map((ch) => ch.codePointAt(0) ?? 0))].sort(
+      (a, b) => a - b,
     );
+    expect(font?.glyphs.map((g) => g.code)).toEqual(declared);
+    // The M1-03 set is still in there, and M3-03's blocks are on top of it.
+    for (const code of [...ASCII_PRINTABLE, ...SPECIALS]) expect(declared).toContain(code);
+    expect(declared).toContain(0x00d1); // Ñ — Spanish (M3-03)
+    expect(declared).toContain(0x30a2); // ア — katakana (M3-03)
+    expect(declared).not.toContain(0x30f4); // ヴ — not in the subset
+    expect(declared).not.toContain(0x3042); // あ — no hiragana ships
+  });
+
+  it('draws katakana in rows 1–7 with row 0 free for the voicing marks (M3-03)', () => {
+    /**
+     * A glyph's rows by character.
+     *
+     * @param ch - The character.
+     * @returns Its eight rows.
+     */
+    const rows = (ch: string): string[] => {
+      const code = ch.codePointAt(0) ?? 0;
+      return font?.glyphs.find((g) => g.code === code)?.rows ?? [];
+    };
+    // A base kana leaves the mark row empty; its voiced form is the same glyph plus two ticks.
+    expect(rows('カ')[0]).toBe('......');
+    expect(rows('ガ').slice(1)).toEqual(rows('カ').slice(1));
+    expect(rows('ガ')[0]).toBe('..#.#.');
+    // The semi-voiced mark is one dot, so ハ / バ / パ stay apart.
+    expect(rows('パ').slice(1)).toEqual(rows('ハ').slice(1));
+    expect(rows('パ')[0]).toBe('....#.');
+    expect(rows('バ')[0]).toBe('..#.#.');
+    // A small kana really is smaller than its full-size counterpart.
+    const inked = (ch: string): number => rows(ch).join('').split('#').length - 1;
+    expect(inked('ャ')).toBeLessThan(inked('ヤ'));
   });
 
   it('uses 6×8 cells, advance 6 and a 10-px line', () => {

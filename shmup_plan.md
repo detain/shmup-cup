@@ -4,7 +4,10 @@
 > **M3-01, M3-02 and M3-02b done** (the last of those tuned the game to the 2026-09-15 input-probe run), then
 > **M3-02c … M3-02e** (the render-performance work in
 > [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)), **M3-02f** (guided
-> render telemetry) and M3-03 — 42 of 45 steps. Progress, the resume point and open risks are in
+> render telemetry) and **M3-03** (localization, the LG webOS host, Steamworks, the tracker seam,
+> the itch.io packaging) — **45 of 45 steps: the plan is complete.** What is left is the
+> account- and hardware-only work of §8.4 … §8.9, which no agent can do. Progress, the resume point
+> and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
 > ([`shmup_feat.md`](shmup_feat.md)) into an ordered sequence of agent-sized build steps on top of the
@@ -246,7 +249,7 @@ its owner by `kind`. Every validator reports `ValidationIssue { path, message }`
 |---|---|---|
 | **M1 — Playable vertical slice** | Zone A with boss is playable start → boss → stage clear with the remote-first scheme in `pnpm dev`, and `pnpm --filter @shmup/tizen build` produces a checked `.wgt`-ready `dist/`; title/pause/game over/stage clear; HUD; audio; saves; debug tools; golden replays | M1-01 … M1-19 |
 | **M2 — Complete v1.0** | All P1 features: rank/difficulty, full meter arsenal, Direct mode + ship select, co-op, 9-zone map with 16 routes, advanced stage & boss systems, front-end screens, options/rebinding/accessibility, Electron + TV polish, release candidate | M2-01 … M2-18 |
-| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) and the render-performance work it exposed (M3-02c … M3-02e) | M3-01 … M3-03 (incl. M3-02b … M3-02f) |
+| **M3 — Post-launch backlog** | P2 features grouped coarsely, plus the hardware tuning from the input probe (M3-02b) and the render-performance work it exposed (M3-02c … M3-02e). **Complete** — what remains needs an account or a device (§8.7 … §8.9) | M3-01 … M3-03 (incl. M3-02b … M3-02f) |
 
 | Id | Title | Fills (placeholder → implemented) |
 |---|---|---|
@@ -4577,6 +4580,140 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   path; real-asset hand-off guide (Aseprite / Furnace → pipeline) and store submission (Seller Office, alpha test).
 - **Acceptance:** adapter tests with fakes, string coverage per language, audio path selection tests.
 - **Refs:** `shmup_feat.md` §21 (localization), §23 (webOS, Electron/Steam, web); `shmup_tech.md` §3.3, §4.3, §4.8.
+- **Manual (account- and hardware-only):** §8.7 (webOS on a real LG set), §8.8 (Steam and the Steam
+  Deck), §8.9 (the store and the public web release, and the placeholder translations). **Every one
+  of those needs an account or a device this project does not have.** The code, the adapters with
+  fakes, the scripts and the docs are done; nothing below them has been packaged, signed, deployed,
+  submitted or run against a store.
+- **As built:**
+  - **What is real and what is waiting.** Read this list as two halves. *Done and tested here:* the
+    localization (two more languages, the font's new glyphs, the LANGUAGE option), the `apps/webos`
+    host, the Steamworks layer in `apps/electron`, the tracker path's seam and its size argument,
+    the itch.io packaging script, and the docs. *Written but never run:* `webos-package` /
+    `webos-install` / `webos-run`, `itch:package` against a real build, and every line of
+    `main/steam.ts` against a real Steam client. *Not started, because it cannot be:* a Seller
+    Office submission, a Steam app id, a webOS device, a Steam Deck. The client pages
+    [`docs/client/webos.md`](docs/client/webos.md),
+    [`docs/client/steam.md`](docs/client/steam.md),
+    [`docs/client/store-submission.md`](docs/client/store-submission.md) and
+    [`docs/client/web-release.md`](docs/client/web-release.md) each say so in their first
+    paragraph, and so do the module docblocks and `apps/webos/README.md`.
+  - **Localization.** Two more languages ship: **`es`** (Spanish) and **`ja`** (Japanese, written in
+    **katakana only**, the way 1980s arcade hardware wrote it). Both tables answer **all 365 ids**;
+    `pnpm content:check` requires that of a shipped language, because a gap would fall back to
+    English mid-screen and read as a bug. `core/ui/strings.ts` gained `UI_GLYPHS` (the font's whole
+    charset, declared once), `isUiTextDrawable`, `UI_LANGUAGES` / `uiLanguageLabel` /
+    `uiLanguageIds` / `pickUiStrings`, and `FIXED_UI_TEXT_IDS` — the ids no translation may change
+    (the game's name, `HI`, `1P`/`2P`, `---`, `*`, `SMDLO?!` and the two-character HUD and
+    power-meter codes, which the HUD draws in a few pixels of a bar it cannot grow and the
+    auto-order screen indexes character by character). `core/data` validates against those instead
+    of its own regex, and reports a table that redraws a fixed id.
+  - **The language choice is on DISPLAY, not GAME** — the plan's ref (`shmup_feat.md` §21) lists it
+    under "Game", but that page is the **sim-affecting** group whose values a replay header records.
+    The language is presentation only, so it is `UserOptions.display.language` with
+    `UserOptionKind.Language` (13) and a DISPLAY row; no golden replay moved.
+  - **…and it shows from the next launch.** `createSceneFlow` resolves the table once and the
+    scenes build their menus and the HUD when they are constructed, so switching live would leave
+    half the screens on the old table. The row carries the hint `LANGUAGE: FROM THE NEXT LAUNCH`.
+    Making it live would mean a `relabel()` pass over every scene — real work, not a stub, and out
+    of this step's scope.
+  - **The offered languages come from the content**, not from a constant: `uiLanguageIds` lists
+    `en` (built in, always there) plus every `strings` table loaded. Adding
+    `content/strings/<id>.strings.json` adds a menu row with no code change; `UI_LANGUAGES` only
+    supplies the name to draw (`ENGLISH`, `ESPAÑOL`, `ニホンゴ`), and an unnamed language shows as
+    its upper-cased id.
+  - **CJK, measured.** The font gained **93 glyphs** (102 → 195): 84 katakana — the 46 base kana,
+    20 voiced, 5 semi-voiced, 9 small, `ー ・ 、 。` — and 9 Latin-1 capitals for Spanish. The kana
+    body sits in columns 0–4 and **rows 1–7** (the classic 5×7 LCD katakana box), which leaves row 0
+    for the voicing marks, so `ガ` is `カ` plus `..#.#.` and `パ` is `ハ` plus `....#.` — those 25
+    are derived from their base, and a test asserts they stay equal below row 0. **Cost: 1.6 KB of
+    atlas PNG (134.9 → 136.6 KB, still one 1024² page of the 2048² limit) and 8.6 KB of `app.js`
+    gzip (386.9 → 395.5 KB of the 512 KB budget).** No budget was raised, and no separate page or
+    lazily-loaded atlas was needed — that machinery would have been for nothing at this size. The
+    number that decided the *subset* is what a real JIS level-1 kanji set would cost: ~6,900 glyphs
+    at 12×12 ≈ 1 M pixels, about 25 of the current atlas and five 2048² pages, past `DIST_BUDGET`.
+    [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md) records that arithmetic and what to
+    do if one ever arrives (subset by use, its own page, re-measure the boot time).
+  - **The charset has one owner.** `UI_GLYPHS` and `assets/source/fonts/pixel6x8.font.json` must
+    agree exactly — `test/scripts/assets/font.test.ts` fails in either direction. So anything the
+    `strings` loader accepts really can be drawn, and no glyph nothing draws reaches the atlas.
+  - **The translations are placeholders, like the art.** They were written by a build agent and no
+    native speaker has reviewed them. That is stated in `content/strings/README.md`,
+    [`docs/dev/real-assets.md`](docs/dev/real-assets.md) and the client docs, and the fix is an edit
+    of two JSON files. The katakana glyphs are placeholder pixel art for the same reason.
+  - **`apps/webos`** (new workspace app, `@shmup/webos`): `src/platform` (Back = **461**, the
+    two-reason lifecycle, exit through `webOS.platformBack()` with a `window.close()` fallback,
+    `createWebStorage`), `src/boot` (the shared `bootShell`, `webos-remote-safe`), `public/appinfo.json`
+    with `scripts/appinfo.mjs` as its validator (what stands in for the `ares-package` nobody can
+    run), `scripts/check-bundle.mjs` (its own file-set and manifest rules; the **budgets are imported
+    from the Tizen check**, so there is one source of truth), the `ares-*` wrappers, icons from
+    `pnpm store:assets`, and 37 tests against fakes. The engine floor is shared with Tizen —
+    webOS 5 is Chromium **68**, one release older than Tizen 5.5's 69, so the same `chrome69` +
+    `es2018` target and the **same** `globalThis` polyfill file cover both. webOS 4 (Chromium 53)
+    is not a target.
+  - **A profile now names its hosts.** Both TVs read the same `content/input/`, and their Back keys
+    disagree. An `input-profiles` entry gained an optional `hosts` list (`Platform.id`s; empty =
+    every host) and `selectableKeyProfiles(profiles, keySpace, host)` applies it, so `tizen-remote-safe`
+    is `["tizen"]` and `webos-remote-safe` is `["webos"]`. Without it a Tizen player could pick the
+    webOS profile in CONTROLS and lose Back entirely — a lock-out no rebinding guard catches,
+    because the profile itself binds every required action. Found while writing the webOS boot test,
+    which now asserts both the filtered and the unfiltered list.
+  - **Steamworks** (`apps/electron/src/main/steam.ts`, placeholder → implemented): `initSteam`,
+    `SteamService`, `STEAM_ACHIEVEMENTS` (11 rules), `achievementsFor`, `createCloudStore`,
+    `createAchievementStore`, `steamAppId`. The design decision worth recording is that
+    **achievements are derived from the save document**, not from new game events: the main process
+    already owns the save file, so a wrapper around `FileStore` parses what was just written and
+    unlocks what it earned. `@shmup/core`, the scene flow and the IPC surface are unchanged, and the
+    whole rule set is a pure function of a `SaveData`. An assisted run never earns one (the
+    hi-score tables' own rule). Steam Cloud is the second wrapper: disk first, then the cloud; a
+    read that finds nothing locally restores the cloud copy. Both are the identity without Steam.
+  - **`steamworks-ffi-node` is deliberately NOT a dependency.** The step names it, but adding a
+    native FFI binding that CI would download for a feature nobody can test would be the wrong
+    trade — and the plan's rule is that only dependencies the step names *may* be added, not that
+    they must be. `initSteam` takes a `load` callback instead (`(appId) => require('steamworks-ffi-node').init(appId)`),
+    so a Steam build supplies it in one line and every test here drives a fake. `PLACEHOLDER_STEAM_APP_ID`
+    is Valve's public Spacewar id **480** — a placeholder, not an allocation.
+  - **Tracker music: the seam ships, the player does not.** New `audio-web/tracker`:
+    `detectAudioCapabilities` (AudioWorklet + WebAssembly off an injected scope), the
+    `TrackerBackend` / `TrackerHandle` port, `TrackerAvailability` / `NO_TRACKER`, and
+    `chooseMusicPath(source, availability)` — `tracker` → `file` → `song` → `none`, where `tracker`
+    needs a module in the content, both capabilities **and** a backend. `MusicTrackDef` gained an
+    optional `module` (`.mod` / `.xm` / `.it` / `.s3m`) that sits **alongside** a track's song or
+    file, never instead of it, so `loadTrack` always prepares something playable and turning the
+    path on cannot silence a device. `AudioLoader.musicPath(track)` answers what a host would use.
+  - **The benchmark is arithmetic, and it says no — for the bundle.** `chiptune3` 0.8.9's libopenmpt
+    worklet is **≈ 518 KB gzipped**, larger than the whole Tizen `app.js` budget of **512 KB**;
+    `trackerFitsBundle()` states that in code and returns `false`. So it could never be inlined —
+    a tracker build must load it as a separate file (the OGG path's XHR precedent, D25). The **CPU**
+    half of the benchmark cannot be done from here: it needs the library (a dependency this step may
+    add but should not, above) and a monitor. It is §8.9. The 2026-09-15 probe already settled
+    support: both AudioWorklet and WebAssembly are present on the M7s.
+  - **Public web / itch.io.** No new build mode was needed: `apps/web` has been relocatable since
+    M1-04 (`base: './'`, relative asset URLs, `new Image()` instead of `fetch`), which is exactly
+    what itch.io's HTML5 hosting wants. `scripts/itch-package.mjs` (`pnpm itch:package`) archives
+    `apps/web/dist` with `index.html` at the root and the source maps left out, using a
+    zero-dependency ZIP writer (deflate + CRC from `node:zlib`, fixed timestamps, so the archive is
+    byte-identical for the same build). **Never run against a real build here**; its tests pack
+    temp fixtures and read the archive back through its central directory.
+  - **Real-asset hand-off:** [`docs/dev/real-assets.md`](docs/dev/real-assets.md) — Aseprite →
+    `assets/source/sprites/` (a PNG overrides the pixel map of the same name; the `@flash`, `@p2`
+    and colour-blind variants are derived for you), Furnace / OpenMPT → OGG with sample-exact loop
+    points (and keeping the `.xm` alongside it for a future tracker build), sfxr → the SFX bank, the
+    placeholder translations and the font, plus the checklist a hand-off batch must pass.
+  - **Store submission** is [`docs/client/store-submission.md`](docs/client/store-submission.md):
+    the trade-dress review, the Tizen mandatory checklist, the account work, and the warning that
+    `scripts/store-assets.mjs`' image sizes were never verified against the Seller Office. Nothing
+    was packaged or submitted.
+  - **Tests.** core `ui/ui-strings`, `data/data-strings` (the fixed-id rule), the DISPLAY page's
+    tenth row and its layout; `test/integration/content.test.ts` (coverage per language, the glyph
+    and template checks, the `UI_LANGUAGES` labels, a rejected table); `test/scripts/assets/font*`
+    (the charset equals `UI_GLYPHS`, the katakana layout, the derived voiced kana);
+    `apps/webos/test/**` (platform, boot wiring through the real shell, `appinfo`, the bundle check,
+    the `ares-*` command lines, the Vite config); `apps/electron/test/main/steam.test.ts`;
+    `packages/audio-web/test/tracker/*` (the path selection the step's acceptance names, and the
+    loader's `module` field); `test/scripts/itch-package.test.ts`.
+  - **No golden replay moved**, and none was re-blessed: nothing in this step touches the
+    simulation.
 
 ---
 
@@ -4731,6 +4868,81 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 - [ ] Trade-dress review of title, logo and key art (no Konami/Taito names, text or look-alikes).
 - [ ] TV Seller Office account (Public Seller = US only), alpha test with ≤ 50 DUIDs (M70A is in the 2020 group).
 
+### 8.7 LG webOS on a real set (M3-03)
+
+> **`apps/webos` has never run on hardware.** No LG TV, no LG developer account, no webOS SDK: it
+> was written from LG's published web-app contract and is verified only by unit tests with fakes.
+> `ares-package`, `ares-install` and `ares-launch` have never been executed. The recipe is
+> [`docs/client/webos.md`](docs/client/webos.md); treat the first run as untested code, not as a
+> regression.
+
+- [ ] Developer Mode installed on the TV (Content Store) and the TV paired with
+      `ares-setup-device` + `ares-novacom --getkey`.
+- [ ] `pnpm --filter @shmup/webos build` → `webos:package` → `webos:install` → `webos:run` works at
+      all. **Anything that fails here is new work** — write down the exact error.
+- [ ] Launch to the title in ≤ 10 s; 1920 × 1080, crisp at ×5.
+- [ ] **Back = 461** in a game → pause; on the pause menu → resume; in a menu → back; on the title →
+      exit confirmation, and **YES really closes the app**. The browser history never moves.
+- [ ] Every arrow moves the ship while held; OK equips; zone A is clearable with four directions
+      only (the Magic Remote pointer is not used).
+- [ ] Play/Pause (415 or 19) pauses.
+- [ ] Home over a running game: pauses, music silent, **no catch-up burst** on return. **Report
+      which event the TV fires** — `visibilitychange`, `blur`, or both — so the adapter can say so
+      instead of tracking both defensively.
+- [ ] OPTIONS → CONTROLS offers **exactly one** profile, `REMOTE (DEFAULT)`. The Tizen one must not
+      appear: it would bind Back to 10009 and lock the player out.
+- [ ] Options and hi-scores survive a relaunch and an update install; uninstalling removes them.
+- [ ] A gamepad works after one button press.
+- [ ] 15 minutes: no visible hitches, memory < 100 MB in `ares-inspect`.
+- [ ] Results into [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), the way the
+      Samsung run is written up.
+
+### 8.8 Steam and the Steam Deck (M3-03)
+
+> **Nothing has touched Steam.** No partner account, no app id; `steamworks-ffi-node` is not a
+> dependency, so `main/steam.ts` has never initialised a real client, unlocked a real achievement or
+> written a real cloud file. Details and the code's seams:
+> [`docs/client/steam.md`](docs/client/steam.md).
+
+- [ ] A Steam partner account and a **real app id** (the code falls back to Valve's Spacewar test id
+      480 — a placeholder, and shipping with it would publish the game under Valve's test app).
+- [ ] The 11 achievements created in the partner site with **exactly** the `STEAM_ACHIEVEMENTS` API
+      names (`FIRST_LAUNCH` … `ARCADE_DIFFICULTY`), with display names and icons, published live.
+- [ ] A Steam build that supplies the binding: `initSteam({ appId, load: (id) => require('steamworks-ffi-node').init(id) })`.
+- [ ] Steam Cloud enabled with a quota for `save.v1.json` and `window.json`.
+- [ ] Upload through SteamPipe (`pnpm --filter @shmup/electron package` builds the Linux / Windows
+      artefacts; neither the packaging nor the upload has been run here).
+- [ ] **Steam Deck:** the Linux build launches in Game Mode *and* Desktop Mode; the pad drives every
+      menu and the game; 1280 × 800 checked against the SCALE and ASPECT options (it is not 16:9);
+      60 Hz and 40 Hz both look right; suspend / resume pauses without a catch-up burst; battery and
+      heat over 30 minutes; a save syncs between the Deck and a desktop; the 6-px HUD text is
+      readable at 7 inches. Then submit for **Deck Verified**.
+
+### 8.9 The public release and the placeholders (M3-03)
+
+- [ ] **Seller Office**: §8.6 above, plus
+      [`docs/client/store-submission.md`](docs/client/store-submission.md). Check the store-asset
+      **sizes** against the Seller Office's current requirements before uploading — those in
+      `scripts/store-assets.mjs` could not be verified from here and are an assumption.
+- [ ] **itch.io**: an account, then `pnpm --filter @shmup/web build && pnpm itch:package` and the
+      upload ([`docs/client/web-release.md`](docs/client/web-release.md)). **`pnpm itch:package`
+      has never been run against a real build here.**
+- [ ] **A native-speaker pass over the translations.** `content/strings/es.strings.json` and
+      `ja.strings.json` were written by a build agent and nobody has read them. It is an edit of two
+      JSON files; `pnpm content:check` enforces the rules
+      ([`content/strings/README.md`](content/strings/README.md)).
+- [ ] **A pixel-font artist over the katakana.** The 84 kana and the 9 accented capitals were drawn
+      by an agent at 5×7 and are placeholder art like everything else
+      ([`docs/dev/real-assets.md`](docs/dev/real-assets.md)).
+- [ ] **The tracker-music CPU benchmark**, the half that arithmetic could not answer: add `chiptune3`
+      to a dev build of `apps/tizen`, implement `TrackerBackend` over it, give a track a `module`,
+      and compare TICK / RENDER on the monitors against the same section with the chip song (the
+      M3-02f guided capture is the tool). The size half is already settled: the player is ≈ 518 KB
+      gzip against a 512 KB bundle budget, so it can only ever be a separately loaded file.
+- [ ] **Real art and music** whenever they exist — the hand-off is
+      [`docs/dev/real-assets.md`](docs/dev/real-assets.md), and every replacement keeps the name of
+      what it replaces.
+
 ---
 
 ## 9. Feature coverage map
@@ -4753,13 +4965,13 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 | §16 Modes | M1-16 | M2-05, M2-06, M2-15 | M3-01 |
 | §17 Screens, HUD, UI kit | M1-16, M1-17 | M2-10, M2-15, M2-16 | — |
 | §18 Visuals | M1-03, M1-04, M1-14 | M2-08 | M3-02 |
-| §19 Audio | M1-15 | M2-11 … M2-14 (tracks) | M3-03 |
+| §19 Audio | M1-15 | M2-11 … M2-14 (tracks) | M3-03 (the tracker path's seam; the CPU benchmark is §8.9) |
 | §20 Game feel | M1-14 | M2-08 | — |
-| §21 Options, saves, replays, accessibility | M1-17 | M1-19, M2-15, M2-16 | M3-01, M3-03 |
+| §21 Options, saves, replays, accessibility | M1-17 | M1-19, M2-15, M2-16 | M3-01, M3-03 (localization: `es` + `ja`, the LANGUAGE option) |
 | §22 Engine | M1-01 … M1-09, M1-19 | M2-18 | M3-02 |
-| §23 Platform | M1-04, M1-16, M1-17 | M2-17 | M3-03 |
+| §23 Platform | M1-04, M1-16, M1-17 | M2-17 | M3-03 (webOS, Steamworks, itch.io — the devices and accounts are §8.7 … §8.9) |
 | §24 Dev tooling | M1-19 | M2-07 (Tiled), M2-17 (live reload), M2-18 | — |
-| §25 Assets | M1-03 (+ every content step) | M2-11 … M2-14 | M3-03 (real assets) |
+| §25 Assets | M1-03 (+ every content step) | M2-11 … M2-14 | M3-03 (the hand-off guide — the real assets themselves are §8.9) |
 
 ---
 
