@@ -169,6 +169,20 @@ The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01,
   new `potBytes(w, h)` (next power of two on each axis) and exported `FILTER_TARGETS`;
   `estimateMemory` gained `frame`, `filterTargets`, `crtFilter` and `crtAsFilter` inputs, and
   `estimateStageMemory` passes them through.
+- M3-02d: the estimator's per-zone figures moved with the correction — zones A–G ≈ 67.0 MiB, H ≈
+  74.0, I ≈ 74.7, of which 25.05 MiB is render targets (was 24.7 MiB modelled flat). The legacy
+  `crtAsFilter` term is deliberately conservative — it ignores `crtResolution`'s cap and charges
+  the whole display for a pillarboxed picture — and the shipped blit path is charged nothing at any
+  setting; both are pinned by tests so nobody "fixes" them.
+- M3-02d: **a new hardware dependency.** Pixi's `MeshGeometry` forces `Uint32Array` indices, so
+  both new meshes — and therefore every frame's second pass — rely on WebGL1's
+  `OES_element_index_uint`. Pixi requests it with the context and it is effectively universal (the
+  M7's Mali-G51 has it), but on a context without it the symptom is a black picture rather than a
+  picture without effects. Asserted in Node and in a real WebGL1 context by the tests.
+- Fixed (found by M3-02d's tests): `PixiRenderer.destroy()` never destroyed the Mode-7 floor —
+  `bindWorld(null)` only hides its mesh, so its `Mesh` / `MeshGeometry` / `Shader` / `GlProgram`
+  outlived the renderer — and never destroyed the second pass's container or its two side-panel
+  sprites. Both are freed now, with a regression test.
 - The Tizen bundle is 386.8 KB gzip of its 512 KB budget (384.1 KB after M3-02c; M3-02d's +2.7 KB
   is Pixi's mesh pipeline, no longer tree-shaken out).
 

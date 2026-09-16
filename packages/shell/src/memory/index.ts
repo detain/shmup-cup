@@ -13,7 +13,9 @@
  *   exists), the render targets (the 384×216 frame, the layer-effect filter passes **rounded up
  *   to a power of two on each axis** as Pixi's `TexturePool` really allocates them
  *   ({@link potBytes}), the CRT filter's display-sized target when the renderer's
- *   `screenPass: 'filter'` escape hatch is on, and the canvas's front / back / depth-stencil
+ *   `screenPass: 'filter'` escape hatch is on — the **shipped** CRT is charged nothing at any
+ *   setting, because since M3-02d it is the pass-2 blit's own shader and pools no target — and
+ *   the canvas's front / back / depth-stencil
  *   buffers at the display size) and a JS heap baseline. Chip songs
  *   are sized from their rows ({@link songFrameBound}) without rendering them; recorded tracks
  *   from their loop end, or {@link FILE_TRACK_FALLBACK_SECONDS} of stereo when it is unknown.
@@ -216,6 +218,15 @@ export interface MemoryInputs {
    * `screenPass: 'filter'` escape hatch), which pools a display-sized render target — 16.8 MB at
    * 1920 × 1080. Default `false`: since plan **M3-02d** the shipped path folds the CRT into the
    * pass-2 blit, so it costs no render target at all (the render review's **F2** / **F3**).
+   *
+   * @remarks
+   * That legacy term is **deliberately conservative, and meant to stay that way**: it charges
+   * `potBytes(display)` flat, ignoring `render-pixi` `crtResolution`'s `CRT_MAX_HEIGHT` cap (which
+   * keeps that pass at 1080 rows, so a 4K display is charged four times the target the capped pass
+   * would really pool) — and charging the whole display even when
+   * an aspect mode pillarboxes the picture into part of it. The estimator exists to defend a
+   * budget, so over-charging a path nothing ships on is the safe direction; do not "fix" it into
+   * an exact model. `memory-edge.test.ts` pins both behaviours on purpose.
    */
   readonly crtAsFilter?: boolean;
   /** JS heap baseline (default {@link HEAP_BASELINE_BYTES}). */
@@ -251,6 +262,12 @@ export interface MemoryEstimate {
 
 /**
  * Adds up what stays resident.
+ *
+ * @remarks
+ * The shipped renderer's CRT costs **nothing** here at any setting — since plan M3-02d it is the
+ * pass-2 blit's own shader (the review's **F2**), so there is no target to charge. Only
+ * `crtAsFilter` (the `screenPass: 'filter'` escape hatch) adds one, and that term is conservative
+ * by design: see {@link MemoryInputs.crtAsFilter}.
  *
  * @param inputs - Pages, audio bytes, display, heap baseline, budget.
  * @returns The estimate.

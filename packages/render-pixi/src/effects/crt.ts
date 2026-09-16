@@ -27,6 +27,10 @@
  * only writes numbers, and switching the setting writes three uniforms (the filter path copies
  * Pixi's filter list instead).
  *
+ * **Hardware.** The blit is a `Mesh`, and Pixi's `MeshGeometry` forces `Uint32Array` indices, so
+ * the shipped pass-2 needs WebGL1's `OES_element_index_uint` (Pixi requests it; universal in
+ * practice — see `./shaders.ts` {@link EFFECT_MESH_VERTEX}).
+ *
  * @module
  */
 import { CRT_MAX_HEIGHT, type CrtFilter as CrtSetting } from '@shmup/core';

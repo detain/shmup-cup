@@ -94,6 +94,11 @@
  * mid-gameplay (**F4** / **F5**). `screenPass: 'filter'` restores the pre-M3-02d sprite + filter
  * pass-2 as an escape hatch.
  *
+ * **Teardown.** `destroy()` frees the scene *and* the two things that hang off the renderer rather
+ * than off it: the Mode-7 floor (`bindWorld(null)` only hides its mesh, so the mesh, geometry and
+ * GL program would outlive the renderer) and the second pass's own container with the CRT pass's
+ * frame quad and the two side-panel sprites. Both were leaking until M3-02d's tests caught them.
+ *
  * @module
  */
 import {

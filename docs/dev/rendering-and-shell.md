@@ -355,6 +355,19 @@ one throwaway frame into an off-screen target with every filter attached and eve
 visible, then puts everything back; `bootShell` calls it once, after `bindWorld` and while the
 loading screen is still up. Nothing is ever presented and no effect state or tick moves.
 
+**What the mesh path costs elsewhere (M3-02d).** Two things came with it. (1) A **hardware
+dependency**: Pixi's `MeshGeometry` builds its index buffer as a `Uint32Array`, so both effect
+meshes need WebGL1's `OES_element_index_uint`. Pixi requests the extension with the context and
+anything of the M7's generation has it (Mali-G51 does), but it is on the path *every* frame takes
+now — a context without it draws a black picture, not a picture without a CRT look, which is why
+[Gotchas](#gotchas) and the on-device checks both name it. `crt-blit.test.ts` /
+`mode7-mesh.test.ts` pin the index type in Node and `test/e2e/mode7.spec.ts` asserts a real WebGL1
+context offers it. (2) **Teardown**: the floor's mesh and the pass-2 container are the renderer's
+own, not the scene's — `bindWorld(null)` only hides the floor — so `destroy()` frees
+`mode7`, `crt` and the `screen` container explicitly. Both were leaking (`Mesh` / `MeshGeometry` /
+`Shader` / `GlProgram` and the two side-panel sprites) until M3-02d's tests caught it; a
+regression test in `renderer-wiring.test.ts` fails without the calls.
+
 **Allocation budget.** Pixi objects are created in `createPixiRenderer` and in `bindWorld()`
 (which also creates the parallax sprites and the terrain grid, below the batches, the laser
 sprites and the bending laser segments above them, and validates every band's layer before
@@ -908,7 +921,7 @@ that decide whether the game holds 60 fps come from the overlay on the monitors
 |---|---|
 | **render-ms p50 / p95 / max** | CPU time inside `renderer.render()`. Under SwiftShader, so it is a *regression* gate (`RENDER_P95_BUDGET_MS`), never a prediction of the Mali-G51 |
 | **draw calls** | Hardware-independent — the strict gate (`DRAW_CALL_BUDGET`; `shmup_feat.md` §22 allows 20–50) |
-| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 512×256 for a 384×216 pass, and the CRT filter one the size of the canvas |
+| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 512×256 for a 384×216 pass. Since **M3-02d** the CRT and the Mode-7 floor pool nothing (they are meshes); only `screenPass: 'filter'` still pools one the size of the canvas |
 | **structure rebuilds** | Frames on which Pixi threw the instruction set away and re-walked the scene (review **F1**) |
 | **JS-heap delta over 600 frames** | The gate **F5** needs: the Node allocation guards stop at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation. A deliberately leaky fixture in the same file proves the gate really fails |
 
@@ -950,7 +963,12 @@ guessing. The numbers land in
    [install-on-tv.md](../client/install-on-tv.md). Nothing here needs the Tizen CLI on this machine.
 3. **Unlock the tools:** on the remote press **Play/Pause, Ch+, Ch+, Ch+** — all four **within 3
    seconds**. The overlay appears. If nothing happens you were too slow, or it is a release build.
-4. **Debug keys**, once unlocked (the remote's number keys; F1–F8 on a keyboard):
+4. **On a set you have not measured before**, open the remote Web Inspector once and check
+   `gl.getExtension('OES_element_index_uint')` is not `null`. Since M3-02d pass 2 and the Mode-7
+   floor are Pixi meshes and `MeshGeometry` forces 32-bit indices, so a context without that
+   extension shows a black picture rather than a picture without effects. The M7's Mali-G51 has it;
+   this is a five-second check that rules out the one new hardware dependency.
+5. **Debug keys**, once unlocked (the remote's number keys; F1–F8 on a keyboard):
 
    | Key | Does | Useful here for |
    |---|---|---|
@@ -1139,7 +1157,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | A raster effect / palette cycle never shows | The camera x is outside the effect's `[from, to)`, `renderer.effects.settings.rasterEffects` is off, or a scene's own `WorldView` dropped `effects` (the flight scene and the scene view pass it through) — [presentation-polish.md](presentation-polish.md#gotchas) |
 | The frame is stretched, or has no black border on a PC | The saved SCALE option is `fit` / `stretch`; OPTIONS → DISPLAY → SCALE → INTEGER restores the letterbox (`renderer.scaleMode`) |
 | The picture sits in a window with dim panels beside it | The saved ASPECT option is `wide` / `classic` (M3-02): the frame is placed in a 64:27 or 4:3 window and the leftover width is drawn as side panels (`renderer.panels`, `PANEL_ALPHA`). OPTIONS → DISPLAY → ASPECT → NORMAL fills the display again |
-| Scanlines over everything | The saved CRT option is `light` / `full` (M3-02, `renderer.crtFilter`); it is one filter over the upscaled second pass, computed at at most 1080 rows |
+| Scanlines over everything | The saved CRT option is `light` / `full` (M3-02, `renderer.crtFilter`). Since M3-02d it is the pass-2 blit's own shader, not a filter: OPTIONS → DISPLAY → CRT → OFF writes `uScan` / `uMask` / `uVignette` back to 0 (only the `screenPass: 'filter'` escape hatch still runs a capped second pass) |
+| A black picture on an older set, with the game plainly running (sound, `data-shmup-scene` moving) | Since M3-02d both full-screen effects are Pixi meshes, and `MeshGeometry` builds `Uint32Array` indices, so pass 2 needs WebGL1's **`OES_element_index_uint`**. Pixi requests it and every GPU of the M7's generation has it, but it is now on the path every frame takes. Check `gl.getExtension('OES_element_index_uint')` in the Web Inspector; if it really is `null`, `screenPass: 'filter'` (and the Mode-7 stage left alone) is the only path that avoids a mesh |
 | The Mode-7 floor never appears | The stage has no `mode7` section, the camera is outside its `[from, to)`, the atlas has no such sprite (`Mode7Floor.bind` got `null`) or the scene's `WorldView` dropped `effects` — [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#mode-7-floor) |
 | The overlay's `REB` figure equals the frame count | Expected today: Pixi rebuilds the scene's instruction set whenever any `visible` changed, and the draw path toggles `visible` every frame (review **F1**). M3-02e is the step that has to move it |
 | The overlay's `RT` figure jumps by ~16 MB when CRT goes on | It should not any more: M3-02d made the CRT the pass-2 blit's own shader, so it pools nothing (review **F2**). If it does, the build predates M3-02d — or it was created with `screenPass: 'filter'`, which restores the old 2048×2048 pooled target on purpose |

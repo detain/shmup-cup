@@ -331,14 +331,32 @@ The TV caps dev-installed apps at 120 MB; the budget is **< 100 MB** (`MEMORY_BU
 the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
 (`trackBytes`: chip songs from their rows — `songFrameBound`, `renderSong`'s length without
 rendering —, recorded tracks up to their loop end, else `FILE_TRACK_FALLBACK_SECONDS` of stereo),
-the render targets (the 384×216 frame, two filter passes, three canvas buffers at 1080p) and a
+the render targets and a
 **24 MiB heap baseline** (`HEAP_BASELINE_BYTES` — an assumption, not a measurement: the §8.5
 on-device check compares it with DevTools' heap). `withinBudget` also needs the atlas within
 `TEXTURE_BUDGET_BYTES` (32 MiB) and the audio within `AUDIO_BUDGET_BYTES` (32 MiB).
 `estimateStageMemory({ content, manifest, sfx, music, stageIndex })` estimates one stage: its pages
 (`stagePages`) and its music set (`stageMusicTracks`: the title theme plus every cue the stage can
-ask for). Today every campaign zone passes: A–G ≈ 66.7 MiB, H ≈ 73.6, I ≈ 74.3 (4 MiB atlas + 4 MiB
-image, 0.8 MiB SFX, 9–17 MiB music, 24.7 MiB targets, 24 MiB heap).
+ask for). Today every campaign zone passes: A–G ≈ 67.0 MiB, H ≈ 74.0, I ≈ 74.7 (4 MiB atlas + 4 MiB
+image, 0.8 MiB SFX, 9–17 MiB music, 25.05 MiB targets, 24 MiB heap).
+
+**The render-target term, corrected by M3-02d** (the render review's **F3** — it used to model
+`frame × (1 + FILTER_TARGETS)` flat and miss the CRT's target entirely):
+
+| Term | Bytes at the defaults | Why |
+|---|---|---|
+| The 384×216 frame | `384 × 216 × 4` = 331,776 | Created directly by `RenderTexture.create`, so it is **exactly** its own size |
+| `filterTargets` (default `FILTER_TARGETS` = 2) filter passes | `potBytes(384, 216) × 2` = 1,048,576 | Pooled by Pixi's `TexturePool`, which rounds each axis up to a power of two: a 384×216 pass is really a 512×256 texture. `FILTER_TARGETS` is the **nesting depth** (one texture per size class, handed back when a filter pops), not the number of filtered layers |
+| The canvas | `1920 × 1080 × 4 × 3` = 24,883,200 | Front, back and depth / stencil |
+| The CRT | **0** | Since M3-02d it is the pass-2 blit's own shader and pools nothing, at any setting |
+
+The one exception is `crtAsFilter: true` — the renderer's `screenPass: 'filter'` escape hatch —
+which adds `potBytes(display)` (16.8 MiB at 1080p). **That term is deliberately conservative and
+should stay that way:** it ignores `crtResolution`'s `CRT_MAX_HEIGHT` cap (so a 4K display is
+charged four times the target the capped pass would really pool) and it charges the whole display
+even when an aspect mode pillarboxes the picture into part of it. The estimator exists to defend a
+budget, so over-charging a path nothing ships on is the safe direction; `memory-edge.test.ts` pins
+both behaviours on purpose so that nobody "fixes" them into an exact model.
 
 **Atlas unloading between zones.** At boot (load time, once):
 

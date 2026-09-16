@@ -22,6 +22,15 @@
  * (load time); a frame only writes numbers, and entering or leaving the floor's range flips one
  * `visible` flag.
  *
+ * **Hardware.** Pixi's `MeshGeometry` forces `Uint32Array` indices, so the floor needs WebGL1's
+ * `OES_element_index_uint` (Pixi requests it; universal in practice — see `./shaders.ts`
+ * {@link EFFECT_MESH_VERTEX}).
+ *
+ * **Teardown.** The mesh, its geometry and its GL program belong to the floor, not to the scene:
+ * `bind(null)` only hides them for the next world, so the renderer's `destroy()` calls
+ * {@link Mode7Floor.destroy} explicitly (it did not before M3-02d's test pass, and the floor
+ * leaked).
+ *
  * @module
  */
 import {

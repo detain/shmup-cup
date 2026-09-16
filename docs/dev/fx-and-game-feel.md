@@ -194,8 +194,9 @@ simulated ticks with `step(ticks)`; the renderer reads `shakeX`, `shakeY`, `flas
 - `clear()` stops everything and resets the limiter; `settings` is the object passed at creation
   (copied from `PixiRendererOptions.effects` / `ShellOptions.effects`, defaults
   `DEFAULT_EFFECT_SETTINGS`: shake on, normal flashing, CRT off — `settings.crt` is a leftover the
-  CRT filter of M3-02 does not read: that filter is the renderer's own second-pass one, switched
-  with `PixiRenderer.setCrtFilter` from the saved DISPLAY option —,
+  CRT of M3-02 does not read: the look belongs to the renderer's second pass (a Pixi filter then,
+  the blit mesh's own shader since M3-02d), switched with `PixiRenderer.setCrtFilter` from the
+  saved DISPLAY option —,
   layer effects on — `rasterEffects`, M2-08). Since M2-08 the shell writes `screenShake` and
   `reduceFlashing` from the player's saved display options at boot (`applyDisplayOptions`) and
   from the Options screen's SHAKE and FLASHES rows live (`connectOptionEvents`); an explicit

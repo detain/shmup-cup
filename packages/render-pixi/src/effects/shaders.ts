@@ -189,6 +189,15 @@ void main(void)
  *
  * `uRound` reproduces Pixi's own pixel snapping (the renderer is created with `roundPixels`), so
  * the blit lands on exactly the pixels a `Sprite` would have covered.
+ *
+ * **It brings a hardware dependency with it.** A mesh needs a `MeshGeometry`, and Pixi builds that
+ * geometry's index buffer as a `Uint32Array` whatever the quad's four vertices would need — so
+ * both effect meshes rely on WebGL1's **`OES_element_index_uint`**. Pixi requests the extension
+ * when it creates the context and it is effectively universal on anything of the M7's generation
+ * (Mali-G51 has it), but since M3-02d it is on the path *every* frame takes rather than only a
+ * stage with an effect: a context without it would draw a black picture, not a picture without a
+ * CRT look. `crt-blit.test.ts` / `mode7-mesh.test.ts` pin the index type and
+ * `test/e2e/mode7.spec.ts` asserts a real WebGL1 context offers the extension.
  */
 export const EFFECT_MESH_VERTEX = `attribute vec2 aPosition;
 attribute vec2 aUV;

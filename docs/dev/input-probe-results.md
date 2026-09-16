@@ -169,6 +169,15 @@ for the numbers, and the recipe that produces them is
 (the review's §4 table M1–M8). Run it from a `pnpm --filter @shmup/tizen build:dev` bundle with the
 tools unlocked (**Pause, Ch+, Ch+, Ch+**).
 
+**Which build these expectations describe.** Everything below assumes a build **at or after plan
+step M3-02d** (commit `1cbbf42`), which folded the CRT look and the Mode-7 floor into their draw
+passes. That changed the very figures this table compares against, so §11.3 prints each headless
+measurement **twice**: `M3-02c` — what the bench read before the fold, kept because it is the
+evidence the fold worked — and `M3-02d` — what it reads now and what an on-device reading should
+be compared with. Nothing in §11.1 / §11.2 has ever been measured on the hardware, so those tables
+have no "before" to keep: they are to be filled in against the **M3-02d** column. If you are
+measuring an older bundle, say so in the table — the CRT and Mode-7 rows will not match.
+
 ### 11.1 Baseline — fill this in
 
 | Where | FPS | TICK ms | RENDER ms | DRAW | REB / frames | RT KB | TPF 0/1/2/3+ | LOCK |
@@ -177,20 +186,31 @@ tools unlocked (**Pause, Ch+, Ch+, Ch+**).
 | Zone A, mid-stage | | | | | | | | |
 | Zone A, boss | | | | | | | | |
 
-Boot ms (`data-shmup-boot-ms`): ____ (budget 10 s).
+Boot ms (`data-shmup-boot-ms`): ____ (budget 10 s). Bundle measured (git short SHA): ____ (it must
+be at or after `1cbbf42`, M3-02d — see above).
+
+`RT` is expected to read **0 KB** on these three rows whatever CRT is set to, and about **512 KB**
+on a stage with a layer effect. A reading of ~16,384 KB with CRT on means the bundle predates
+M3-02d.
 
 ### 11.2 The measurements — fill these in
 
 | # | What | Result |
 |---|---|---|
 | M1 | RENDER ms with the scene rebuild on vs. patched out (**F1**) | |
-| M2 | RENDER ms and RT with CRT off / light / full on the same section (**F2**) | |
-| M3 | Frame-graph spike entering the Mode-7 and raster stages (**F4**) | |
-| M4 | Frame-graph spike on the first very dense pattern of a fresh launch (**F5**) | |
+| M2 | RENDER ms and RT with CRT off / light / full on the same section — after M3-02d all three should read the same, and RT should not move at all (**F2**) | |
+| M3 | Frame-graph spike entering the Mode-7 and raster stages — M3-02d's boot warm-up should have removed it (**F4**) | |
+| M4 | Frame-graph spike on the first very dense pattern of a fresh launch — likewise (**F5**) | |
 | M5 | WebGL1 vs WebGL2 over 60 s of the same stage (**F8**) | |
-| M6 | `estimateStageMemory` per zone vs. RT, CRT on and off (**F3**) | |
+| M6 | `estimateStageMemory` per zone vs. RT, CRT on and off (**F3**) — the estimator now says 67.0 MiB for zones A–G, 74.0 for H and 74.7 for I, of which 25.05 MiB is render targets | |
 | M7 | Does the app stop rendering under the Home overlay? | |
 | M8 | Input-to-photon latency, 240 fps video (§10 above) | |
+
+One thing to check once, from the remote Web Inspector on the first launch of a new set:
+`gl.getExtension('OES_element_index_uint')` must not be `null`. Since M3-02d both full-screen
+effects are Pixi meshes, and `MeshGeometry` forces 32-bit indices, so a WebGL1 context without that
+extension draws a black picture rather than a picture without effects. The Mali-G51 has it; an
+older panel is the case worth ruling out.
 
 ### 11.3 What the headless bench already says
 
@@ -203,19 +223,21 @@ pool is topped up after every step), **≥ 489 of 512 point items** (a screen cl
 pool on every tick that freed a slot; the ~20 missing are the items that reached the score during
 the tick that was rendered) and **≥ 489 of 512 particles**.
 
-| Scenario (384×216 internal, the load above) | Draw calls | Pooled render targets | Structure rebuilds |
-|---|---|---|---|
-| CRT off | 4 → **4** | 0 KB → **0 KB** | 659 / 660 frames |
-| CRT light | 5 → **4** | 2,048 KB → **0 KB** | 659 / 660 |
-| CRT full | 5 → **4** | 2,048 KB → **0 KB** | 659 / 660 |
-| Layer effects (`raster-range`) | 7 | 512 KB | 655 / 660 |
-| Mode-7 floor (`dimension`) | 7 → **6** | 512 KB → **0 KB** | 655 / 660 |
-| Layer effects at **768×432** internal | 7 | 2,048 KB (+1,296 KB frame target) | 655 / 660 |
+Two columns per quantity: **before** is M3-02c's run, **after** is the same scenario once M3-02d
+folded the CRT and the Mode-7 floor into their draw passes. **The "after" column is the one to
+compare a TV reading with**; the "before" column is history, kept as the evidence the fold worked.
 
-The first number in each cell is M3-02c's measurement, the bold one the same scenario after
-**M3-02d** folded the CRT and the Mode-7 floor into their draw passes. p95 render time moved
-2.4–3.2 ms → 2.5–3.3 ms between runs, which is SwiftShader noise on a shared machine, not a
-signal. What is comparable is CRT `full` against CRT `off` **in the same run**: **0.94× and 1.10×**
+| Scenario (384×216 internal, the load above) | Draw calls before (M3-02c) | Draw calls after (**M3-02d**) | Pooled targets before (M3-02c) | Pooled targets after (**M3-02d**) | Structure rebuilds |
+|---|---|---|---|---|---|
+| CRT off | 4 | **4** (unchanged) | 0 KB | **0 KB** (unchanged) | 659 / 660 frames |
+| CRT light | 5 | **4** | 2,048 KB | **0 KB** | 659 / 660 |
+| CRT full | 5 | **4** | 2,048 KB | **0 KB** | 659 / 660 |
+| Layer effects (`raster-range`) | 7 | **7** (unchanged — F1 / F7, M3-02e's work) | 512 KB | **512 KB** (unchanged) | 655 / 660 |
+| Mode-7 floor (`dimension`) | 7 | **6** | 512 KB | **0 KB** | 655 / 660 |
+| Layer effects at **768×432** internal | 7 | **7** (unchanged) | 2,048 KB (+1,296 KB frame target) | **the same** | 655 / 660 |
+
+The p95 render time moved 2.4–3.2 ms → 2.5–3.3 ms between the two runs, which is SwiftShader
+noise on a shared machine, not a signal. What is comparable is CRT `full` against CRT `off` **in the same run**: **0.94× and 1.10×**
 over three runs, inside the step's "within ~10 %", where before the fold it was 1.12× (`pnpm bench`
 prints the ratio and asserts it). The **counted** quantities
 are the transferable result — on the TV, CRT `full` stopped costing a 16.8 MB pooled target

@@ -276,8 +276,11 @@ visible on a TV at all ([render-performance-review.md](render-performance-review
 - **`RT`** — kilobytes of pooled render targets Pixi has created (`createRenderTargetMeter`, which
   hooks `TexturePool.createTexture` once so reading the total is a property read). Pixi rounds a
   target **up to the next power of two on each axis**, so a 384×216 filter pass costs a 512×256
-  target and the CRT filter at 1080p costs a 2048×2048 one — 16.8 MB, which is the review's **F2**
-  arriving on screen the moment the player switches CRT on.
+  target. The CRT used to add a 2048×2048 one at 1080p — 16.8 MB the moment the player switched
+  CRT on, the review's **F2** — but since **M3-02d** it is the pass-2 blit's own shader and pools
+  nothing, so `RT` no longer moves with the CRT setting at all. The meter is also **seeded** with
+  what the pool already holds when it starts, because the boot warm-up frame draws every filter
+  before the debug tools exist.
 
 The eighth line (M2-17, only when the host set one — the TV) is the **device line**:
 `DebugOverlay.setDevice(text)` → `setDebugPanelDevice`, the text made drawable by

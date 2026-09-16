@@ -100,7 +100,9 @@ letter and no high-score table. Add `&skip=boss` to start at its first boss.
 On the Smart Monitor M7, after installing a build (see [install-on-tv.md](install-on-tv.md)):
 
 - **OPTIONS → DISPLAY → CRT**: LIGHT, then FULL. The picture should darken in fine lines without
-  the game stuttering; leave it on FULL for a stage and watch the frame pacing.
+  the game stuttering; leave it on FULL for a stage and watch the frame pacing. FULL should feel
+  exactly like OFF — it is drawn in the same pass — and there should be no hitch the first time you
+  switch it on either.
 - **OPTIONS → DISPLAY → ASPECT**: ULTRA-WIDE and CLASSIC 4:3 should both show the picture in a
   window with dim blue panels beside it, never a stretched or cut picture.
 - **OPTIONS → EXTRAS**: turn all four on, start a new game with the MANTA and check that bombs
@@ -119,6 +121,7 @@ On the Smart Monitor M7, after installing a build (see [install-on-tv.md](instal
 | The black hole does not appear at all | BLACK HOLE only works with the MANTA (`DIRECT` power-up mode). Check SHIP SELECT |
 | The screen slows down in the same places every time | That is SLOWDOWN working as intended; turn it off in OPTIONS → EXTRAS |
 | Scanlines look too heavy or too dark | Use LIGHT instead of FULL, or OFF; on very small windows the lines are thicker because they follow the screen's pixels |
+| The game runs (you hear it) but the screen is black — on an old TV or an old browser | Worth reporting with the model. The picture is put on screen through a drawing feature (32-bit index buffers, `OES_element_index_uint`) that every set of the Smart Monitor's generation supports; a much older one that lacks it shows nothing rather than a picture without the CRT look |
 | The picture is smaller with ULTRA-WIDE on a normal TV | Expected: on a 16:9 screen the ultra-wide window is shorter than the screen. NORMAL fills the screen |
 | Side panels look like a bug | They are the intended surround (a dimmed backdrop). NORMAL turns them off |
 | You lost a ship although DEATH BOMB is on | You had no bomb left, or the window (a few frames) closed before the press |

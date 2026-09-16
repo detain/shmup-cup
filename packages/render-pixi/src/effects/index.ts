@@ -86,6 +86,22 @@
  *   no second full-screen pass (review **F2**); the old filter ({@link createCrtFilter},
  *   {@link crtResolution}) stays behind the renderer's `screenPass: 'filter'` escape hatch.
  *
+ * Mode-7 and CRT names: {@link createMode7Floor}, {@link Mode7Floor}, {@link Mode7FloorOptions},
+ * {@link createMode7Shader}, {@link Mode7Shader}, {@link MODE7_MAX_SCALE},
+ * {@link MODE7_ANGLE_UNITS}, {@link MODE7_VERTEX}, {@link MODE7_FRAGMENT},
+ * {@link createCrtPass}, {@link CrtPass}, {@link CrtPassOptions}, {@link ScreenPassMode},
+ * {@link createCrtBlit}, {@link CrtBlitHandle}, {@link createCrtFilter}, {@link CrtFilterHandle},
+ * {@link crtResolution}, {@link CrtLook}, {@link CRT_LOOKS}, {@link CRT_MIN_PITCH},
+ * {@link CRT_VERTEX}, {@link CRT_FRAGMENT}, {@link CRT_LIGHT_SCAN}, {@link CRT_FULL_SCAN},
+ * {@link CRT_FULL_MASK}, {@link CRT_FULL_VIGNETTE}.
+ *
+ * **A hardware dependency the mesh path added (M3-02d).** Pixi's `MeshGeometry` builds its index
+ * buffer as a `Uint32Array`, so both meshes need WebGL1's **`OES_element_index_uint`**. Pixi
+ * requests the extension itself and it is effectively universal (the M7's Mali-G51 has it), but it
+ * is now on the path every frame takes: on a set that lacks it the picture would be black rather
+ * than merely un-CRT'd. The tests assert it — in Node against the geometry, and in a real WebGL1
+ * context in `test/e2e/mode7.spec.ts`.
+ *
  * @module
  */
 import {

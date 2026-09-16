@@ -314,7 +314,7 @@ backend) is simply left alone.
   hole **or** a death-bomb window) and every open vortex. Older recordings therefore hash exactly as
   they did — `packages/core/test/debug/debug-extras-hash.test.ts` pins that term by term.
 - A boss's pull field is hashed only while one is open, for the same reason.
-- Mode 7, the CRT filter and the aspect modes never touch the simulation.
+- Mode 7, the CRT pass and the aspect modes never touch the simulation.
 - The goldens and attract demos were re-blessed with `pnpm golden:update` **only** because every
   replay header gained the four new `GameConfig` fields, which changes each state hash. No
   `expected` status, score or tick count moved in any golden or demo — that is the evidence the
@@ -420,6 +420,17 @@ ship): SHIP SELECT → MANTA, then pick up the stage's yellow items and press `S
   drives from the saved DISPLAY option (`applyDisplayOptions` at boot, `connectOptionEvents` live).
 - **The CRT filter must never brighten.** Keep the shader multiplicative, or the flash limiter of
   `shmup_feat.md` §21 no longer bounds what reaches the screen.
+- **Both meshes need `OES_element_index_uint`.** Pixi's `MeshGeometry` builds its index buffer as a
+  `Uint32Array` however few vertices a quad has, so since M3-02d every frame's pass 2 — and the
+  Mode-7 floor — depends on that WebGL1 extension. Pixi requests it with the context and the M7's
+  Mali-G51 has it, but on a set that lacks it the symptom is a **black picture**, not a picture
+  without effects. `crt-blit.test.ts` / `mode7-mesh.test.ts` pin the index type and
+  `test/e2e/mode7.spec.ts` asserts a real WebGL1 context offers the extension.
+- **The floor and the pass-2 container are the renderer's to free.** `bindWorld(null)` only hides
+  the floor's mesh, so `PixiRenderer.destroy()` calls `mode7.destroy()`, `crt.destroy()` and
+  `screen.destroy({ children: true })` explicitly; without them the `Mesh` / `MeshGeometry` /
+  `Shader` / `GlProgram` and the two side-panel sprites outlive the renderer (found by M3-02d's
+  tests, with a regression test in `renderer-wiring.test.ts`).
 - **Aspect modes do not widen the playfield.** D19 fixes 384×216; `wide` gives a wide *cabinet*, not
   more visible stage. Anything else would change the simulation.
 - **Re-blessing.** Any change to the four `GameConfig` fields' defaults, or to the header, re-blesses
