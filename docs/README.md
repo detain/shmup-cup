@@ -80,12 +80,12 @@ Design and research documents live at the repository root:
 
 | File | Contents |
 |---|---|
-| [`../shmup_feat.md`](../shmup_feat.md) | Feature & functionality catalog (P0/P1/P2) |
-| [`../shmup_tech.md`](../shmup_tech.md) | Platform constraints, library research, recommended stack |
-| [`../input_probe_spec.md`](../input_probe_spec.md) | Spec of the Tizen input-probe spike (`tools/input-probe/`) |
-| [`../shmup_plan.md`](../shmup_plan.md) | Implementation plan: decisions, milestones M1–M3, ordered build steps, manual on-device checklist |
+| [`../shmup_feat.md`](old/shmup_feat.md) | Feature & functionality catalog (P0/P1/P2) |
+| [`../shmup_tech.md`](old/shmup_tech.md) | Platform constraints, library research, recommended stack |
+| [`../input_probe_spec.md`](dev/input_probe_spec.md) | Spec of the Tizen input-probe spike (`tools/input-probe/`) |
+| [`../shmup_plan.md`](old/shmup_plan.md) | Implementation plan: decisions, milestones M1–M3, ordered build steps, manual on-device checklist |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Release notes per version (0.1.0 = milestone M1) |
-| [`../shmup_progress.md`](../shmup_progress.md) | Execution progress: one row per plan step (status, review rounds, tests, commits, as-built notes) |
+| [`../shmup_progress.md`](old/shmup_progress.md) | Execution progress: one row per plan step (status, review rounds, tests, commits, as-built notes) |
 | [`../content/README.md`](../content/README.md) | Content formats for authors (player ships, weapons, enemies, movement paths, stages, tilesets, input profiles, particle presets, sound effects and music, the campaign, the attract demos, the UI string tables — M2-16), one README per folder |
 | [`../assets/README.md`](../assets/README.md) | Art sources and the placeholder pipeline for artists: pixel-map format, real-art overrides by name, art rules (original work, native resolution, VA-friendly palette) |
 

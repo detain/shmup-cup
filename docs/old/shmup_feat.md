@@ -110,7 +110,7 @@ These are the forks in the road where we must pick one approach (or support both
     ±1 step and reset on resume. The free-running accumulator stays for every other refresh rate and for
     slow motion, frame advance and the game-speed assist. Presentation only — the same inputs still produce
     the same ticks, so replays and goldens are unaffected. See
-    [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md).
+    [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md).
 - **[P0] Pause on `visibilitychange` / blur;** reset accumulator on resume (required for Tizen certification).
   - **Measured 2026-09-15 (M3-02b):** on the M7, **Home is an overlay** — the app keeps running and only
     the window's `blur` / `focus` fire, never `visibilitychange`. Both hosts' lifecycles therefore track
@@ -183,7 +183,7 @@ These are the forks in the road where we must pick one approach (or support both
 7. **2-player co-op** on remotes: only one remote per display ⇒ P2 uses a gamepad (or a second paired remote **[?]**).
 8. **Menus:** fully D-pad + OK + Back navigable; no mouse, no text entry (name entry = D-pad letter picker).
 
-- **[P0] Input probe app (first spike):** a tiny `.wgt` that logs keyCode/`code`/`repeat`/timestamps for keydown/keyup, shows which keys are held simultaneously, measures repeat delay/interval, tests `registerKey` for Ch±/Play/Vol, and shows Gamepad API state. **Run on both M7 monitors on 2026-09-15** — results in [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), applied by plan step M3-02b. (It measures with the handler clock: Tizen 5.5's `event.timeStamp` only advances in whole seconds.)
+- **[P0] Input probe app (first spike):** a tiny `.wgt` that logs keyCode/`code`/`repeat`/timestamps for keydown/keyup, shows which keys are held simultaneously, measures repeat delay/interval, tests `registerKey` for Ch±/Play/Vol, and shows Gamepad API state. **Run on both M7 monitors on 2026-09-15** — results in [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md), applied by plan step M3-02b. (It measures with the handler clock: Tizen 5.5's `event.timeStamp` only advances in whole seconds.)
 - **[P1] Gamepad & keyboard play** (full 8-way, manual fire buttons, rebinding). Our M7 displays accept Bluetooth *and* USB gamepads, keyboards and mice.
 - **[P0] Autofire:** hold-to-fire, toggle mode, configurable rate; rate stored in replay header.
 - **[P1] Rebinding** per device (keyboard / each gamepad / remote), conflict detection, reset to defaults, persistence.

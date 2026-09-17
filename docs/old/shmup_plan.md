@@ -4,7 +4,7 @@
 > 2026-09-10, last step 2026-09-16). **M1** and **M2** are done (`1.0.0-rc.1`), and so is all of **M3**:
 > M3-01, M3-02 and M3-02b (which tuned the game to the 2026-09-15 input-probe run), M3-02c … M3-02e
 > (the render-performance work in
-> [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md)), M3-02f (guided
+> [`docs/dev/render-performance-review.md`](../dev/render-performance-review.md)), M3-02f (guided
 > render telemetry) and M3-03 (localization, the LG webOS host, Steamworks, the tracker seam, the
 > itch.io packaging).
 >
@@ -13,7 +13,7 @@
 > monitors, never run on an LG set, never spoken to Steam — and the art, the music and the Spanish and
 > Japanese strings are placeholders made by the build, not by an artist, a composer or a native speaker.
 > Every one of those actions needs an account, a device or a human, and all of them are listed, grouped
-> by what each blocks, in **[`docs/client/outstanding-work.md`](docs/client/outstanding-work.md)**
+> by what each blocks, in **[`docs/client/outstanding-work.md`](../client/outstanding-work.md)**
 > (details stay in §8.2 and §8.4 … §8.9 below). Progress, the resume point and open risks are in
 > [`shmup_progress.md`](shmup_progress.md); to continue, run [`shmup_prompt.md`](shmup_prompt.md) in a new session.
 > Turns the feature catalog
@@ -21,8 +21,8 @@
 > monorepo skeleton and the input probe that already exist.
 >
 > Companion docs: [`shmup_feat.md`](shmup_feat.md) (what), [`shmup_tech.md`](shmup_tech.md) (stack & Tizen facts),
-> [`input_probe_spec.md`](input_probe_spec.md) (the hardware spike), [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)
-> (where code lives), [`docs/dev/architecture.md`](docs/dev/architecture.md), [`docs/dev/conventions.md`](docs/dev/conventions.md).
+> [`input_probe_spec.md`](../dev/input_probe_spec.md) (the hardware spike), [`docs/dev/repo-layout.md`](../dev/repo-layout.md)
+> (where code lives), [`docs/dev/architecture.md`](../dev/architecture.md), [`docs/dev/conventions.md`](../dev/conventions.md).
 
 ## Table of contents
 
@@ -47,13 +47,13 @@
   Vitest 5, Vite 8, CI): `packages/core`, `packages/render-pixi`, `packages/audio-web`, `packages/input-web`,
   `apps/web`, `apps/tizen`, `apps/electron`, `content/`, `assets/`, `scripts/`, `test/`, `docs/`.
   Every planned system is a placeholder module `src/<module>/index.ts` with its intended API declared,
-  a `moduleInfo` descriptor and a smoke test (see [`docs/dev/repo-layout.md`](docs/dev/repo-layout.md)).
+  a `moduleInfo` descriptor and a smoke test (see [`docs/dev/repo-layout.md`](../dev/repo-layout.md)).
 - **Implemented today:** core `platform`, `input`, `config`, `loop`, `game`, `presentation`; input-web `keymap`,
   `keyboard`, `gamepad`, `web-input`; audio-web `web-audio`; render-pixi `renderer`, `viewport`, `test-pattern`,
   `palette`; the apps' `boot`, `platform`, `frame-loop`; the Tizen Chromium-69 IIFE build + `check-bundle.mjs`.
 - **Input probe** (`tools/input-probe/`) — built and tested, **waiting to be run on the M7 monitors**. Its results
   feed the remote profile data introduced in M1-05 (no code change needed when they arrive). *Update 2026-09-15:* it
-  ran on both monitors ([`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)); some findings do need
+  ran on both monitors ([`docs/dev/input-probe-results.md`](../dev/input-probe-results.md)); some findings do need
   code (Home is only a `blur`, rAF jitter, release-only Back / Pause) — plan step **M3-02b**.
 
 ### 1.2 Per-step pipeline (automatic — do not add separate test/doc steps)
@@ -83,7 +83,7 @@ TSDoc on the exports it adds (the DOCS agent completes it).
    green or were **intentionally re-blessed** (`pnpm golden:update`) with the reason stated in the commit message.
 4. Modules the step fills in have `moduleInfo.status` updated (`partial`/`implemented`), their docblock *Public API*
    section updated, and their exports added to the package's `src/index.ts`.
-5. Rules from [`docs/dev/conventions.md`](docs/dev/conventions.md) hold: `@shmup/core` stays pure and deterministic;
+5. Rules from [`docs/dev/conventions.md`](../dev/conventions.md) hold: `@shmup/core` stays pure and deterministic;
    **zero allocations in per-tick and per-frame paths**; Chromium-69-safe APIs only in shipped code; no UI
    framework; original names/art/music only.
 6. Nothing requires the Tizen CLI, `sdb`, signing, real hardware, or human-made art/music. Placeholder assets are
@@ -115,7 +115,7 @@ TSDoc on the exports it adds (the DOCS agent completes it).
   generator / synth parameters) under `assets/source/` or `content/audio/`, never as a hand-drawn binary.
 - **New content folders** get a `README.md` and an `example.*.json` format sample (enforced by
   `test/integration/workspace-layout.test.ts`); new modules follow the module checklist in
-  [`docs/dev/conventions.md`](docs/dev/conventions.md) (docblock sections, `moduleInfo`, `test/<module>/`).
+  [`docs/dev/conventions.md`](../dev/conventions.md) (docblock sections, `moduleInfo`, `test/<module>/`).
 
 ---
 
@@ -167,7 +167,7 @@ simulation lives in `GameConfig` or content data, so changing it later is a data
 
 ### 2.2 Hardware-dependent assumptions (verified later, by the user)
 
-| Assumption | Default in code | Where it changes | Measured on the M7s (2026-09-15, [results](docs/dev/input-probe-results.md)) |
+| Assumption | Default in code | Where it changes | Measured on the M7s (2026-09-15, [results](../dev/input-probe-results.md)) |
 |---|---|---|---|
 | Remote cannot hold two arrows; OK may drop a held arrow | 4-way-dodgeable design, `combine` policy, no chords needed | `content/input/remote-profiles.json` | **Confirmed, stricter:** a second arrow **or OK** during a hold is never delivered; the held arrow continues → M3-02b (bot model, docs) |
 | Remote may send fake keyup/keydown pairs while held | `releaseDebounceTicks: 2` | same file | **No fake pairs**; repeats are flagless keydowns (≈ 355 ms, then ≈ 108 ms) → debounce 0 in M3-02b |
@@ -3957,7 +3957,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 
 - **Goal:** make the game fit how the M7 monitors and the Smart Remote *actually* behave — measured by the input
   probe on both monitors on 2026-09-15 — and tune the game around it. **Depends on:** M3-02.
-- **Source of truth:** [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) (numbers, per-finding
+- **Source of truth:** [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md) (numbers, per-finding
   meaning), raw logs and the analyzer in `tools/input-probe/results/2026-09-15-m7/`, `shmup_tech.md` §2.7. Every
   timing below is on the handler clock (`t + delay`), **not** the probe's verdicts (see finding "probe clock").
 - **Measured facts this step designs for:**
@@ -4074,7 +4074,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   was silent; the INPUT TEST exits with Back ×3; a **240 fps** video of the probe's flash box and of the game (the
   latency figure is still open — the first video was 30 fps); optionally re-run the fixed probe and try Back / Ch±
   during an arrow hold and two gamepads at once.
-- **Refs:** [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), `shmup_tech.md` §2.3, §2.5, §2.7;
+- **Refs:** [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md), `shmup_tech.md` §2.3, §2.5, §2.7;
   `shmup_feat.md` §3, §4; decisions D2, D12–D14, D32; plan §2.2, §8.2.
 - **As built:**
   - **Profiles.** `tizen-remote-safe` is now labelled `REMOTE`, debounces 0 ticks, carries the new
@@ -4170,10 +4170,10 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 
 - **Goal:** find out, in milliseconds, where the M7's frame time actually goes, and gain a headless gate that stops the
   render path regressing. **Depends on:** M3-02b.
-- **Source of truth:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) — findings
+- **Source of truth:** [`docs/dev/render-performance-review.md`](../dev/render-performance-review.md) — findings
   **F10** (no render-side benchmark exists), **F8** (the WebGL1 justification is stale), and the harness that settles
   the open magnitudes behind **F1**, **F2**, **F4** and **F5**. Hardware facts:
-  [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §8–§9.
+  [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md) §8–§9.
 - **Why it comes first:** F1's *mechanism* is certain but its *size* is not, and no one should rewrite the frame path
   on a guess. This step makes both the headless and the on-device numbers available. It does **not** block M3-02d or
   M3-02e: those are gated by this step's headless bench, and the owner's device run confirms them afterwards.
@@ -4190,7 +4190,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     render-target bytes per resolution. This is one parameter now and a retrofit later: the owner intends to try a
     higher internal resolution once the plan is done, and this turns "does 768x432 still hold 60 fps?" into a bench
     run rather than build-and-hope. See
-    [`docs/dev/render-performance-review.md` §7](docs/dev/render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-).
+    [`docs/dev/render-performance-review.md` §7](../dev/render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-).
   - **A browser-side JS-heap delta** over ~600 frames that fails on growth. This is the gate F5 is currently invisible
     to: the allocation guards run in Node against fake atlases, so they stop at the `renderer.render()` boundary and
     cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation.
@@ -4198,7 +4198,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     5.5 is unverified — the probe verified WebGL 1 *and* 2 on both monitors, `MAX_TEXTURE_SIZE` 8192), and add a dev
     switch (`?gl=2` or a debug-tools toggle) so the owner can A/B the renderer on device. **Keep WebGL1 as the shipped
     default** — the project also targets older sets, and there is no evidence yet that 2 is better.
-  - **Docs:** a "measuring on the TV" recipe in [`docs/dev/rendering-and-shell.md`](docs/dev/rendering-and-shell.md)
+  - **Docs:** a "measuring on the TV" recipe in [`docs/dev/rendering-and-shell.md`](../dev/rendering-and-shell.md)
     (the review's §4 table M1–M8), and a place in `docs/dev/input-probe-results.md` for the numbers to land.
 - **Acceptance:** `pnpm bench` prints render p95 and draw calls per scenario and fails on budget; the heap-delta gate
   fails on a deliberately leaky fixture; the overlay shows both new figures and the allocation guards stay green; the
@@ -4283,7 +4283,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
   free ~17 MB of VRAM at 1080p, and stop shader compiles and buffer growth happening mid-gameplay.
   **Depends on:** M3-02c (its headless render bench is the before/after gate; the owner's device numbers confirm it
   afterwards and are not a precondition).
-- **Source of truth:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) findings
+- **Source of truth:** [`docs/dev/render-performance-review.md`](../dev/render-performance-review.md) findings
   **F2**, **F6**, **F3**, **F4**, **F5**.
 - **Scope:**
   - **F2 — CRT.** It is attached as a filter to the pass-2 `screen` container, so at 1920x1080 Pixi pools a
@@ -4391,7 +4391,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 
 - **Goal:** stop one hidden bullet costing a walk over the whole ~6,400-object scene.
   **Depends on:** M3-02d (and M3-02c's bench, which decides how far this has to go).
-- **Source of truth:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) findings
+- **Source of truth:** [`docs/dev/render-performance-review.md`](../dev/render-performance-review.md) findings
   **F1** and **F9**.
 - **The mechanism** (certain; the magnitude is what M3-02c measures): in Pixi v8 every `sprite.visible = ...` sets
   `structureDidChange` on the *root* render group, and the renderer then throws away and rebuilds the entire
@@ -4523,8 +4523,8 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
 - **Manual (owner):** run `npm run log-server` on the desktop, build with `VITE_REPORT_URL=http://<desktop-ip>:8787`,
   install on both monitors, and play the checklist through. Windows will prompt to allow Node through the firewall on
   the private network — the probe's run needed the same.
-- **Refs:** [`docs/dev/render-performance-review.md`](docs/dev/render-performance-review.md) §4 (the measurement
-  table) and §7; [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §11 (the tables to fill);
+- **Refs:** [`docs/dev/render-performance-review.md`](../dev/render-performance-review.md) §4 (the measurement
+  table) and §7; [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md) §11 (the tables to fill);
   `docs/dev/input-probe.md`; plan §8.2 (the probe's own protocol, as the model) and §8.4.
 - **As built:**
   - **Receiver.** The step's second option was taken: `tools/input-probe/server/log-server.mjs` **stays where it
@@ -4600,10 +4600,10 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     `webos-install` / `webos-run`, `itch:package` against a real build, and every line of
     `main/steam.ts` against a real Steam client. *Not started, because it cannot be:* a Seller
     Office submission, a Steam app id, a webOS device, a Steam Deck. The client pages
-    [`docs/client/webos.md`](docs/client/webos.md),
-    [`docs/client/steam.md`](docs/client/steam.md),
-    [`docs/client/store-submission.md`](docs/client/store-submission.md) and
-    [`docs/client/web-release.md`](docs/client/web-release.md) each say so in their first
+    [`docs/client/webos.md`](../client/webos.md),
+    [`docs/client/steam.md`](../client/steam.md),
+    [`docs/client/store-submission.md`](../client/store-submission.md) and
+    [`docs/client/web-release.md`](../client/web-release.md) each say so in their first
     paragraph, and so do the module docblocks and `apps/webos/README.md`.
   - **Localization.** Two more languages ship: **`es`** (Spanish) and **`ja`** (Japanese, written in
     **katakana only**, the way 1980s arcade hardware wrote it). Both tables answer **all 365 ids**;
@@ -4645,7 +4645,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     the 8,192 KB budget — the build check's own figure, re-measured 2026-09-16). A kanji language
     is feasible; what rules it out here is roughly **doubling the atlas
     download and boot decode for every player**, including everyone who never picks that language,
-    against the ≤ 10 s launch rule. [`docs/dev/asset-pipeline.md`](docs/dev/asset-pipeline.md)
+    against the ≤ 10 s launch rule. [`docs/dev/asset-pipeline.md`](../dev/asset-pipeline.md)
     records that arithmetic and what to do if one ever arrives (subset by use, its own lazily
     loaded page, re-measure the boot time).
   - **The charset has one owner.** `UI_GLYPHS` and `assets/source/fonts/pixel6x8.font.json` must
@@ -4653,7 +4653,7 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     `strings` loader accepts really can be drawn, and no glyph nothing draws reaches the atlas.
   - **The translations are placeholders, like the art.** They were written by a build agent and no
     native speaker has reviewed them. That is stated in `content/strings/README.md`,
-    [`docs/dev/real-assets.md`](docs/dev/real-assets.md) and the client docs, and the fix is an edit
+    [`docs/dev/real-assets.md`](../dev/real-assets.md) and the client docs, and the fix is an edit
     of two JSON files. The katakana glyphs are placeholder pixel art for the same reason.
   - **`apps/webos`** (new workspace app, `@shmup/webos`): `src/platform` (Back = **461**, the
     two-reason lifecycle, exit through `webOS.platformBack()` with a `window.close()` fallback,
@@ -4709,12 +4709,12 @@ Coarse steps; each will be split into agent-sized sub-steps (same format as M1/M
     zero-dependency ZIP writer (deflate + CRC from `node:zlib`, fixed timestamps, so the archive is
     byte-identical for the same build). **Never run against a real build here**; its tests pack
     temp fixtures and read the archive back through its central directory.
-  - **Real-asset hand-off:** [`docs/dev/real-assets.md`](docs/dev/real-assets.md) — Aseprite →
+  - **Real-asset hand-off:** [`docs/dev/real-assets.md`](../dev/real-assets.md) — Aseprite →
     `assets/source/sprites/` (a PNG overrides the pixel map of the same name; the `@flash`, `@p2`
     and colour-blind variants are derived for you), Furnace / OpenMPT → OGG with sample-exact loop
     points (and keeping the `.xm` alongside it for a future tracker build), sfxr → the SFX bank, the
     placeholder translations and the font, plus the checklist a hand-off batch must pass.
-  - **Store submission** is [`docs/client/store-submission.md`](docs/client/store-submission.md):
+  - **Store submission** is [`docs/client/store-submission.md`](../client/store-submission.md):
     the trade-dress review, the Tizen mandatory checklist, the account work, and the warning that
     `scripts/store-assets.mjs`' image sizes were never verified against the Seller Office. Nothing
     was packaged or submitted.
@@ -4737,7 +4737,7 @@ Agents cannot touch the monitors, the Tizen CLI or the certificate. These checks
 go. Do them on **both** M7 monitors where it says so.
 
 > **All of §8's open items are also collected in one actionable list:**
-> [`docs/client/outstanding-work.md`](docs/client/outstanding-work.md) — the same work grouped by
+> [`docs/client/outstanding-work.md`](../client/outstanding-work.md) — the same work grouped by
 > what it blocks (a Samsung release · one other platform each · polish that blocks nothing), with a
 > link back to the recipe for each. This section stays the reference; that page is where to start.
 
@@ -4749,12 +4749,12 @@ go. Do them on **both** M7 monitors where it says so.
       certificate listing **both monitors' DUIDs**. Note the profile name (`TIZEN_PROFILE`).
 - [ ] Each monitor: Apps → `12345` (Color/Number pad or SmartThings virtual remote) → Developer Mode ON → host IP = the
       desktop's IP → restart the monitor. Turn **Auto Source Switch+** off.
-- [ ] Details: [`docs/client/install-on-tv.md`](docs/client/install-on-tv.md).
+- [ ] Details: [`docs/client/install-on-tv.md`](../client/install-on-tv.md).
 
 ### 8.2 Input probe protocol (do this first — it tunes the controls)
 
 > **Done 2026-09-15** on both monitors, with the log server — results in
-> [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), raw logs in `tools/input-probe/results/`.
+> [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md), raw logs in `tools/input-probe/results/`.
 > The probe's on-screen timing verdicts were wrong on Tizen 5.5 (whole-second `event.timeStamp`); the write-up
 > re-times the logs, and **M3-02b fixed the probe** — `chooseEventTime` always returns handler time now, so a new run
 > shows right verdicts (and `NO — not delivered` where the hardware swallows a key). The results were applied
@@ -4767,7 +4767,7 @@ go. Do them on **both** M7 monitors where it says so.
       with `VITE_REPORT_URL=http://<desktop-ip>:8787`. *(Since **M3-02f** that one receiver also takes the game's
       render profile — the probe's sessions are `ip-…`, the game's `rp-…`, in the same log directory. The game's
       dev build is built with the same `VITE_REPORT_URL`; see §8.4.)*
-- [x] Run the protocol in [`docs/client/input-probe.md`](docs/client/input-probe.md) on both monitors: taps; 3-s holds
+- [x] Run the protocol in [`docs/client/input-probe.md`](../client/input-probe.md) on both monitors: taps; 3-s holds
       of → and ↑; diagonal attempt; OK while holding an arrow; every extra key; 240-fps video of the flash box (~10 OK
       taps) *(open — 30 fps only)*; gamepad(s) *(one DualShock 4)*; Home and return *(monitor B)*.
 - [x] Record the verdicts in `shmup_tech.md` §2.7, then apply them to `content/input/remote-profiles.json` *(the
@@ -4802,7 +4802,7 @@ pnpm --filter @shmup/tizen tizen:run
 ```
 
 Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools remote inspector (see
-[`docs/dev/build-test-deploy.md`](docs/dev/build-test-deploy.md)).
+[`docs/dev/build-test-deploy.md`](../dev/build-test-deploy.md)).
 
 ### 8.4 M1 on-device checks (both monitors)
 
@@ -4836,10 +4836,10 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
       during an arrow hold, and two gamepads at once.
 
 **M3-02c / M3-02f render profiling (dev build, both monitors)** — the numbers of the review's §4 table (M1–M8) and
-[`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) §11. **Do it with the guided capture**
+[`docs/dev/input-probe-results.md`](../dev/input-probe-results.md) §11. **Do it with the guided capture**
 (M3-02f); reading the overlay by hand is the fallback for when no log server is reachable. Owner's recipe:
-[`docs/client/debug-tools.md`](docs/client/debug-tools.md#the-guided-capture-preferred); how it works:
-[`docs/dev/rendering-and-shell.md`](docs/dev/rendering-and-shell.md#6-automated-capture-the-guided-checklist).
+[`docs/client/debug-tools.md`](../client/debug-tools.md#the-guided-capture-preferred); how it works:
+[`docs/dev/rendering-and-shell.md`](../dev/rendering-and-shell.md#6-automated-capture-the-guided-checklist).
 
 - [ ] Desktop: `cd tools\input-probe && npm run log-server` (allow Node through the **private**-network firewall
       when Windows asks — the probe's run needed the same), then build with `VITE_REPORT_URL=http://<desktop-ip>:8787`
@@ -4892,7 +4892,7 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 > **`apps/webos` has never run on hardware.** No LG TV, no LG developer account, no webOS SDK: it
 > was written from LG's published web-app contract and is verified only by unit tests with fakes.
 > `ares-package`, `ares-install` and `ares-launch` have never been executed. The recipe is
-> [`docs/client/webos.md`](docs/client/webos.md); treat the first run as untested code, not as a
+> [`docs/client/webos.md`](../client/webos.md); treat the first run as untested code, not as a
 > regression.
 
 - [ ] Developer Mode installed on the TV (Content Store) and the TV paired with
@@ -4913,7 +4913,7 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 - [ ] Options and hi-scores survive a relaunch and an update install; uninstalling removes them.
 - [ ] A gamepad works after one button press.
 - [ ] 15 minutes: no visible hitches, memory < 100 MB in `ares-inspect`.
-- [ ] Results into [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md), the way the
+- [ ] Results into [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md), the way the
       Samsung run is written up.
 
 ### 8.8 Steam and the Steam Deck (M3-03)
@@ -4921,7 +4921,7 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 > **Nothing has touched Steam.** No partner account, no app id; `steamworks-ffi-node` is not a
 > dependency, so `main/steam.ts` has never initialised a real client, unlocked a real achievement or
 > written a real cloud file. Details and the code's seams:
-> [`docs/client/steam.md`](docs/client/steam.md).
+> [`docs/client/steam.md`](../client/steam.md).
 
 - [ ] A Steam partner account and a **real app id** (the code falls back to Valve's Spacewar test id
       480 — a placeholder, and shipping with it would publish the game under Valve's test app).
@@ -4940,26 +4940,26 @@ Repeat install/run with the second monitor's `TV_IP`. Debug with Chrome DevTools
 ### 8.9 The public release and the placeholders (M3-03)
 
 - [ ] **Seller Office**: §8.6 above, plus
-      [`docs/client/store-submission.md`](docs/client/store-submission.md). Check the store-asset
+      [`docs/client/store-submission.md`](../client/store-submission.md). Check the store-asset
       **sizes** against the Seller Office's current requirements before uploading — those in
       `scripts/store-assets.mjs` could not be verified from here and are an assumption.
 - [ ] **itch.io**: an account, then `pnpm --filter @shmup/web build && pnpm itch:package` and the
-      upload ([`docs/client/web-release.md`](docs/client/web-release.md)). **`pnpm itch:package`
+      upload ([`docs/client/web-release.md`](../client/web-release.md)). **`pnpm itch:package`
       has never been run against a real build here.**
 - [ ] **A native-speaker pass over the translations.** `content/strings/es.strings.json` and
       `ja.strings.json` were written by a build agent and nobody has read them. It is an edit of two
       JSON files; `pnpm content:check` enforces the rules
-      ([`content/strings/README.md`](content/strings/README.md)).
+      ([`content/strings/README.md`](../../content/strings/README.md)).
 - [ ] **A pixel-font artist over the katakana.** The 84 kana and the 9 accented capitals were drawn
       by an agent at 5×7 and are placeholder art like everything else
-      ([`docs/dev/real-assets.md`](docs/dev/real-assets.md)).
+      ([`docs/dev/real-assets.md`](../dev/real-assets.md)).
 - [ ] **The tracker-music CPU benchmark**, the half that arithmetic could not answer: add `chiptune3`
       to a dev build of `apps/tizen`, implement `TrackerBackend` over it, give a track a `module`,
       and compare TICK / RENDER on the monitors against the same section with the chip song (the
       M3-02f guided capture is the tool). The size half is already settled: the player is ≈ 518 KB
       gzip against a 512 KB bundle budget, so it can only ever be a separately loaded file.
 - [ ] **Real art and music** whenever they exist — the hand-off is
-      [`docs/dev/real-assets.md`](docs/dev/real-assets.md), and every replacement keeps the name of
+      [`docs/dev/real-assets.md`](../dev/real-assets.md), and every replacement keeps the name of
       what it replaces.
 
 ---

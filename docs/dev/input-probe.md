@@ -5,7 +5,7 @@ M7 (M70A, Tizen 5.5 / Chromium 69) and its Smart Remote, gamepads and display ac
 `shmup_tech.md` §2.7 and decide the remote control scheme in `shmup_feat.md` §4 (and therefore how
 `@shmup/input-web` debounces keys).
 
-- Spec: [`input_probe_spec.md`](../../input_probe_spec.md)
+- Spec: [`input_probe_spec.md`](input_probe_spec.md)
 - Operator's README (build / package / deploy commands for Windows and Linux): [`tools/input-probe/README.md`](../../tools/input-probe/README.md)
 - Tester guide (screen, protocol, reading the verdicts): [`docs/client/input-probe.md`](../client/input-probe.md)
 

@@ -2,7 +2,7 @@
 
 > **The code is finished. The product is not.**
 >
-> All 45 steps of [`shmup_plan.md`](../../shmup_plan.md) are built, reviewed, tested and
+> All 45 steps of [`shmup_plan.md`](../old/shmup_plan.md) are built, reviewed, tested and
 > documented. Everything still open needs something no agent in this repository has: **a monitor or
 > a TV in your hands, a developer or store account, or a human with an eye or an ear** (a native
 > speaker, a pixel artist, a musician). Nothing below is blocked on code; a few items will *produce*
@@ -41,11 +41,11 @@ on a monitor.**
 Everything else on this page can wait behind this one. Set up per
 [`install-on-tv.md`](install-on-tv.md), then work the two checklists:
 
-- **M1 checks** — plan [§8.4](../../shmup_plan.md#84-m1-on-device-checks-both-monitors): launch
+- **M1 checks** — plan [§8.4](../old/shmup_plan.md#84-m1-on-device-checks-both-monitors): launch
   ≤ 10 s, a crisp ×5 picture, zone A cleared with the remote alone, Back / Home / exit behaviour,
   audio, saves across a relaunch and an update install, 15 minutes without a hitch, gamepad and
   keyboard. Guide: [`debug-tools.md`](debug-tools.md#the-m1-release-check).
-- **M2 / v1.0 checks** — plan [§8.5](../../shmup_plan.md#85-m2-on-device-checks-both-monitors):
+- **M2 / v1.0 checks** — plan [§8.5](../old/shmup_plan.md#85-m2-on-device-checks-both-monitors):
   co-op, three routes to both endings, the attract loop, rebinding, the 30-minute soak, the update
   and uninstall save rules, live reload. Guide:
   [`release-candidate.md`](release-candidate.md#the-v10-checklist-both-monitors).

@@ -145,7 +145,7 @@ things are involved, and confusing them is the trap:
   checked by anything; WebGL1 is the baseline for a different reason (the Mali driver), and
   CSS in `index.html` is a hand-review item.
 - **Nothing at runtime.** No webOS device has ever run this code
-  ([plan §8.7](../../shmup_plan.md#87-lg-webos-on-a-real-set-m3-03)), so "inside the floor"
+  ([plan §8.7](../old/shmup_plan.md#87-lg-webos-on-a-real-set-m3-03)), so "inside the floor"
   is a static claim about APIs, not a report from hardware.
 
 The safest habit is the simplest one: **write for Chromium 68**, and treat the lint's 69 as

@@ -33,13 +33,28 @@ const modules = projects.flatMap((project) =>
 );
 
 /**
+ * Where each design document a `specRefs` entry may cite lives today.
+ *
+ * @remarks
+ * `moduleInfo.specRefs` cites the documents by their bare names (`'shmup_feat.md §22'`) — a
+ * citation vocabulary hundreds of source files share — but the documents themselves have moved
+ * out of the repository root (`docs/old/` for the four research documents, `docs/dev/` for the
+ * input-probe spec). This map is the one place that has to know, so a later move is one edit.
+ */
+const SPEC_FILES: Record<string, string> = {
+  'shmup_feat.md': 'docs/old/shmup_feat.md',
+  'shmup_tech.md': 'docs/old/shmup_tech.md',
+  'input_probe_spec.md': 'docs/dev/input_probe_spec.md',
+};
+
+/**
  * Numbered section headings (`## 3.`, `### 2.3`) of a design document.
  *
- * @param file - Document name in the repo root.
+ * @param file - The document's name as `specRefs` cites it (a key of {@link SPEC_FILES}).
  */
 function sections(file: string): Set<string> {
   const found = new Set<string>();
-  for (const match of readFileSync(join(repo, file), 'utf8').matchAll(
+  for (const match of readFileSync(join(repo, SPEC_FILES[file] ?? file), 'utf8').matchAll(
     /^#{2,4} (\d+(?:\.\d+)?)[.\s]/gm,
   )) {
     if (match[1] !== undefined) found.add(match[1]);
@@ -105,7 +120,8 @@ describe('integration: module skeleton across all packages and apps', () => {
         if (match === null) {
           if (ref !== 'input_probe_spec.md')
             broken.push(`${project}/${dir}: unrecognised "${ref}"`);
-          else if (!existsSync(join(repo, ref))) broken.push(`${project}/${dir}: missing ${ref}`);
+          else if (!existsSync(join(repo, SPEC_FILES[ref] ?? ref)))
+            broken.push(`${project}/${dir}: missing ${ref}`);
           continue;
         }
         const [, doc = '', section = ''] = match;

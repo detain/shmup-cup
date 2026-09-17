@@ -2,7 +2,7 @@
 
 A throwaway diagnostic Tizen web app (`.wgt`) that measures how the **Samsung Smart Monitor M7 (M70A, Tizen 5.5)**
 and its **Smart Remote** (plus gamepads) actually behave, before we design Shmup Cup's controls.
-Spec: [`../../input_probe_spec.md`](../../input_probe_spec.md). Results go into `shmup_tech.md` §2.7 and drive the
+Spec: [`../../input_probe_spec.md`](../../docs/dev/input_probe_spec.md). Results go into `shmup_tech.md` §2.7 and drive the
 remote control scheme in `shmup_feat.md` §4.
 
 This is a **standalone npm project** — it is not part of the pnpm workspace at the repo root. Always run `npm`

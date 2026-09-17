@@ -65,12 +65,15 @@ function read(path: string): string {
   return readFileSync(join(repo, path), 'utf8');
 }
 
-/** The six places the figures appear (round 1's fix touched all of them). */
+/**
+ * The six places the figures appear (round 1's fix touched all of them). The two research
+ * documents live under `docs/old/` since they were moved out of the repository root.
+ */
 const SOURCES = [
   'docs/dev/asset-pipeline.md',
   'packages/core/src/ui/strings.ts',
-  'shmup_plan.md',
-  'shmup_progress.md',
+  'docs/old/shmup_plan.md',
+  'docs/old/shmup_progress.md',
   'CHANGELOG.md',
   'docs/dev/options-rebinding-and-accessibility.md',
 ];
@@ -167,10 +170,10 @@ describe('integration: the six places that repeat the figures agree (M3-03)', ()
     expect(pipeline).toContain('136.6');
     // `core/ui` and the plan repeat the two that matter most: the area and the ratio.
     expect(read('packages/core/src/ui/strings.ts')).toContain('479,505');
-    const plan = read('shmup_plan.md');
+    const plan = read('docs/old/shmup_plan.md');
     expect(plan).toContain('993,600');
     expect(plan).toContain('479,505');
-    expect(read('shmup_progress.md')).toContain('479,505');
+    expect(read('docs/old/shmup_progress.md')).toContain('479,505');
   });
 
   it('says a kanji language is feasible, and says why it is not shipped', () => {
@@ -181,7 +184,7 @@ describe('integration: the six places that repeat the figures agree (M3-03)', ()
     for (const path of [
       'docs/dev/asset-pipeline.md',
       'packages/core/src/ui/strings.ts',
-      'shmup_plan.md',
+      'docs/old/shmup_plan.md',
       'CHANGELOG.md',
       'docs/dev/options-rebinding-and-accessibility.md',
     ]) {

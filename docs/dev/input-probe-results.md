@@ -1,8 +1,8 @@
 # Input probe results — Samsung Smart Monitor M7 (2026-09-15)
 
 What the [input probe](input-probe.md) measured on both test monitors, what it means for the game, and where each
-finding is applied. The game changes are plan step **M3-02b** in [`shmup_plan.md`](../../shmup_plan.md#m3-02b--remote--hardware-tuning-from-the-input-probe-results);
-the hardware facts are summarised in [`shmup_tech.md`](../../shmup_tech.md) §2.7.
+finding is applied. The game changes are plan step **M3-02b** in [`shmup_plan.md`](../old/shmup_plan.md#m3-02b--remote--hardware-tuning-from-the-input-probe-results);
+the hardware facts are summarised in [`shmup_tech.md`](../old/shmup_tech.md) §2.7.
 
 - **Raw data:** [`tools/input-probe/results/2026-09-15-m7/`](../../tools/input-probe/results/2026-09-15-m7/)
   (the log server's JSONL, one file per monitor, plus the analyzer's reports).

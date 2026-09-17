@@ -9,7 +9,7 @@
 > and [`shmup_progress.md`](shmup_progress.md)). Later decisions that override this snapshot live in the plan's
 > "As built" notes — for example, dev machines need **Node 24.15+**, not Node 22. The **input probe ran on both M7
 > monitors on 2026-09-15**: its measurements are in §2.2, §2.3, §2.5, §2.7 and §6 (marked *measured* / *verified*;
-> full write-up [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md)) and are applied by plan step
+> full write-up [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md)) and are applied by plan step
 > M3-02b. The remaining **[UNVERIFIED]** items wait on the on-device checks (plan §8).
 
 ---
@@ -82,7 +82,7 @@ Build rules:
 - **Held keys repeat as `keydown` with `event.repeat === false`** (verified): first repeat ≈ 355 ms after the press, then every ≈ 108 ms (± 40 ms). Filtering on `event.repeat` does not work on Tizen — ignore a keydown of a key that is already down. No fake keyup/keydown pairs.
 - **Back, Play/Pause and Mute are sent only on release** (keydown + keyup together) — they can never be held.
 - **`event.timeStamp` only advances in whole seconds** on Tizen 5.5 — time input with `performance.now()` in the handler.
-- **The remote is our PRIMARY controller (decided)** — see `shmup_feat.md` §4 "Remote-first control design". Channel ± (427/428), the Ch rocker's press (Guide 458), the screen button (Extra 10253) and Play/Pause (10252) are registrable; **volume keys are registrable too** (not system-reserved) but registering them takes volume control away, so the game never does. Full key map and numbers: §2.7 and [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md).
+- **The remote is our PRIMARY controller (decided)** — see `shmup_feat.md` §4 "Remote-first control design". Channel ± (427/428), the Ch rocker's press (Guide 458), the screen button (Extra 10253) and Play/Pause (10252) are registrable; **volume keys are registrable too** (not system-reserved) but registering them takes volume control away, so the game never does. Full key map and numbers: §2.7 and [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md).
 - **Gamepads:** all Samsung TVs since 2016 support the W3C Gamepad API (up to 4 pads, rumble via `vibrationActuator`). A pad is invisible until its first button press. Not available in the emulator.
 - Metadata `http://samsung.com/tv/metadata/use.game.mode` (2022+) may switch the panel into low-latency Game Mode **[UNVERIFIED for non-streaming games — test]**.
 
@@ -144,7 +144,7 @@ Build rules:
   Never ask for a held Back / Pause or a chord; the release debounce is unnecessary (`releaseDebounceTicks` 0).
 - **Home = `blur`, not `visibilitychange`** — pause on both.
 
-**First thing to run on the device:** read `navigator.userAgent`, `sdb capability` (`platform_version`), `innerWidth`/`innerHeight`/`devicePixelRatio`, WebGL1/2 + `MAX_TEXTURE_SIZE` — the input-probe app reports all of these. **Done on 2026-09-15** (both monitors): results, raw logs and the analyzer in [`docs/dev/input-probe-results.md`](docs/dev/input-probe-results.md) and [`tools/input-probe/results/`](tools/input-probe/results/README.md); the game-side changes are plan step **M3-02b**.
+**First thing to run on the device:** read `navigator.userAgent`, `sdb capability` (`platform_version`), `innerWidth`/`innerHeight`/`devicePixelRatio`, WebGL1/2 + `MAX_TEXTURE_SIZE` — the input-probe app reports all of these. **Done on 2026-09-15** (both monitors): results, raw logs and the analyzer in [`docs/dev/input-probe-results.md`](../dev/input-probe-results.md) and [`tools/input-probe/results/`](../../tools/input-probe/results/README.md); the game-side changes are plan step **M3-02b**.
 
 Sources: [Samsung CA product page](https://www.samsung.com/ca/monitors/high-resolution/smart-m7-43-inch-smart-tv-apps-ls43am702unxza/) · [Laptop Mag review (Tizen 5.5)](https://www.laptopmag.com/reviews/samsung-43am70a-smart-monitor) · [Samsung US 2020–2021 gaming models (M70A listed as 2020)](https://www.samsung.com/us/tvs/gaming-hub/2020-2021-tvs/) · [RTINGS S43BM70](https://www.rtings.com/monitor/reviews/samsung/smart-monitor-m7-s43bm70) · [Samsung Gamepad guide](https://developer.samsung.com/smarttv/develop/guides/user-interaction/gamepad.html) · [Seller Office distribution](https://developer.samsung.com/tv-seller-office/guides/applications/distributing-application.html) · M50A/M70A user manual BN81-20136D-04 (Samsung support).
 

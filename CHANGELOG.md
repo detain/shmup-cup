@@ -2,7 +2,7 @@
 
 All notable changes to Shmup Cup. The project follows [Semantic Versioning](https://semver.org/);
 versions before 1.0 may change anything between minor releases. Development follows the step plan in
-[`shmup_plan.md`](shmup_plan.md); progress is tracked in [`shmup_progress.md`](shmup_progress.md).
+[`shmup_plan.md`](docs/old/shmup_plan.md); progress is tracked in [`shmup_progress.md`](docs/old/shmup_progress.md).
 
 ## [Unreleased]
 
