@@ -1,6 +1,6 @@
 # Shmup Cup
 
-TypeScript 2D horizontal shoot-'em-up for **Samsung Tizen 5.5 TVs** (Chromium 69), plus browser and Electron. pnpm 12 workspace + Turborepo, version `1.0.0-rc.1`. Work is plan-driven: steps live in `shmup_plan.md`, status in `shmup_progress.md`, feature catalog in `shmup_feat.md`, platform research in `shmup_tech.md`.
+TypeScript 2D horizontal shoot-'em-up for **Samsung Tizen 5.5 TVs** (Chromium 69), plus LG webOS 5+ TVs, browser and Electron. pnpm 12 workspace + Turborepo, version `1.0.0-rc.1`. Work is plan-driven: steps live in `docs/old/shmup_plan.md`, status in `docs/old/shmup_progress.md`, feature catalog in `docs/old/shmup_feat.md`, platform research in `docs/old/shmup_tech.md`.
 
 ## Commands
 
@@ -26,19 +26,21 @@ Platform builds and release helpers:
 ```bash
 pnpm --filter @shmup/tizen build       # TV .wgt bundle, then apps/tizen/scripts/check-bundle.mjs size budgets
 pnpm --filter @shmup/tizen build:dev   # TV debug build (debug tools behind Pause, Ch+ x3)
+pnpm --filter @shmup/webos build       # LG webOS bundle, then apps/webos/scripts/check-bundle.mjs (Tizen budgets + appinfo.json)
 pnpm --filter @shmup/electron package  # desktop installers into apps/electron/release/ (never in CI)
 pnpm store:assets        # scripts/store-assets.mjs -> TV/desktop icons + store-listing placeholders
+pnpm itch:package        # scripts/itch-package.mjs -> the web build as one itch.io ZIP (never run here)
 pnpm clean               # scripts/clean.mjs: dist/ coverage/ .turbo/ everywhere
 ```
 
 ## Layout
 
 - **Sim (pure)** `packages/core/src/` — `world/index.ts` `player/index.ts` `enemies/index.ts` `bullets/index.ts` `bosses/index.ts` `blackhole/index.ts` `powerups/index.ts` `stage/index.ts` `scenes/index.ts` `scenes/run.ts` `scoring/index.ts` `save/index.ts` `config/index.ts` `events/index.ts` `debug/index.ts` `behaviors/index.ts` `data/index.ts` `data/campaign.ts` `replay/demo.ts` `ui/strings.ts`; barrel `packages/core/src/index.ts`.
-- **Presentation** `packages/render-pixi/src/index.ts` + `packages/render-pixi/src/effects/` (PixiJS v8; `mode7.ts`, `crt.ts`, `shaders.ts`) · `packages/audio-web/src/` · `packages/input-web/src/index.ts` · `packages/shell/src/index.ts` + `packages/shell/src/loader/index.ts` (shared browser host).
-- **Apps** `apps/web/src/main.ts` · `apps/tizen/src/main.ts` (`apps/tizen/public/config.xml`, `apps/tizen/scripts/check-bundle.mjs`, `apps/tizen/vite.config.ts`) · `apps/electron/` (`electron-builder.json`, `apps/electron/build/icon.png`).
-- **Data** `content/` — `stages/` `enemies/` `weapons/` `patterns/` `paths/` `tilesets/` `campaign/` `rules/` `strings/` `demos/` `audio/` `input/` `player/` `fx/`.
+- **Presentation** `packages/render-pixi/src/index.ts` + `packages/render-pixi/src/effects/` (PixiJS v8; `mode7.ts`, `crt.ts`, `shaders.ts`) · `packages/audio-web/src/` (incl. `packages/audio-web/src/tracker/index.ts`) · `packages/input-web/src/index.ts` · `packages/shell/src/index.ts` + `packages/shell/src/loader/index.ts` (shared browser host).
+- **Apps** `apps/web/src/main.ts` · `apps/tizen/src/main.ts` (`apps/tizen/public/config.xml`, `apps/tizen/scripts/check-bundle.mjs`, `apps/tizen/vite.config.ts`) · `apps/webos/src/main.ts` (`apps/webos/public/appinfo.json`, `apps/webos/scripts/check-bundle.mjs`, `apps/webos/vite.config.ts`) · `apps/electron/` (`electron-builder.json`, `apps/electron/build/icon.png`, `apps/electron/src/main/steam.ts`).
+- **Data** `content/` — `stages/` `enemies/` `weapons/` `patterns/` `paths/` `tilesets/` `campaign/` `rules/` `strings/` (`en`, `es`, `ja`) `demos/` `audio/` `input/` `player/` `fx/`.
 - **Tests** `test/integration/` `test/golden/` `test/playtest/` `test/e2e/` `test/bench/` `test/scripts/` plus `packages/*/test/`.
-- **Tooling** `scripts/assets/procedural/*.mjs`, `scripts/content/tiled-import.mjs`, `scripts/store-assets.mjs`, `tools/input-probe/`.
+- **Tooling** `scripts/assets/procedural/*.mjs`, `scripts/content/tiled-import.mjs`, `scripts/store-assets.mjs`, `scripts/itch-package.mjs`, `tools/input-probe/`.
 - **Ambient types** `types/` — declarations for the Vite virtual modules (`virtual:shmup-content`, `virtual:shmup-assets`) plus `types/build-info.d.ts` for the build-info defines `__SHMUP_DEV__`, `__SHMUP_BUILD__`, `__SHMUP_LIVE_RELOAD__`; `turbo.json` lists `types/**` in `globalDependencies`, so touching it re-runs typecheck everywhere.
 - **Config** `pnpm-workspace.yaml` (version catalog) · `turbo.json` · `vitest.config.ts` · `vitest.shared.ts` · `vite.shared.ts` · `tsconfig.base.json` · `eslint.config.js` · `.github/workflows/ci.yml`.
 
@@ -46,7 +48,7 @@ pnpm clean               # scripts/clean.mjs: dist/ coverage/ .turbo/ everywhere
 
 - `@shmup/core` is platform-agnostic and deterministic: no DOM/Node globals, no `Math.random`/`Date.now`, no `Math.sin`-family or `**`. Enforced in `eslint.config.js` (which ignores `.claude/`, `.caliber/`, `.playwright-mcp/`).
 - Zero allocation in per-tick / per-frame paths; guards use `packages/core/test/helpers/alloc.ts`.
-- Shipped code must run on Chromium 69; the Tizen bundle is one classic ES2018 IIFE.
+- Shipped code must run on Chromium 69 — and, since `apps/webos` targets webOS 5, really on Chromium **68** (`test/integration/tv-engine-floor.test.ts`); both TV bundles are one classic ES2018 IIFE.
 - Original names, art and music only; placeholder art is generated by committed scripts.
 - Commit style: imperative subject, `docs:` / `build(tizen):` prefixes as in `git log`; push to `master`.
 
@@ -55,11 +57,11 @@ pnpm clean               # scripts/clean.mjs: dist/ coverage/ .turbo/ everywhere
 @./docs/dev/conventions.md
 @./docs/dev/repo-layout.md
 
-See also `docs/dev/architecture.md`, `docs/dev/api-reference.md`, `docs/dev/build-test-deploy.md`, `docs/dev/content-data.md`, `docs/dev/debug-and-replays.md`, and player-facing `docs/client/`.
+See also `docs/dev/architecture.md`, `docs/dev/api-reference.md`, `docs/dev/build-test-deploy.md`, `docs/dev/content-data.md`, `docs/dev/debug-and-replays.md`, `docs/dev/input_probe_spec.md`, and player-facing `docs/client/`.
 
 ## MCP
 
-A `searxng` MCP server is configured for web search when researching Tizen/Pixi APIs; prefer `docs/dev/*.md` and `shmup_tech.md` first.
+A `searxng` MCP server is configured for web search when researching Tizen/Pixi APIs; prefer `docs/dev/*.md` and `docs/old/shmup_tech.md` first.
 
 <!-- caliber:managed:pre-commit -->
 ## Before Committing
