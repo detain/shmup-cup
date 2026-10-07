@@ -1,0 +1,64 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/40-boss-deaths",
+  "file": "bullet-to-gold",
+  "source": "bullet-to-gold.md",
+  "entries": [
+    {
+      "id": "death-bullets-to-points-v1",
+      "slug": "death-bullets-to-points",
+      "title": "the whole screen turns to treasure",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen arcade miracle moment: in the instant after the boss dies, hundreds of glowing hot-pink and red enemy bullets hanging across the entire frame flash white one after another in a fast spreading wave from center outward, each one transmuting mid-air into a spinning sparkling gold point sprite that trails a brief glitter tail, the frozen bullet lattice dissolving into a drifting constellation of falling treasure, small gold capsules tumbling down through it catching light, the tiny blue dart fighter at left surges forward through the golden rain with its cyan canopy glowing brighter, deep navy background now warm-flecked like a jewelry box, soft bloom, CRT scanline glow, joyful abundance, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, coins with numbers, gold bars, explosions",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.2,
+        "steps": 40,
+        "seed": 24004
+      },
+      "sourceImage": null,
+      "notes": "The white-flash wave traveling center-outward is the sync point for the death jingle — if the transmutation happens all at once instead of as a wave, strengthen \"one after another in a fast spreading wave\". Keep explosions out of frame; this beat is serenity after violence."
+    },
+    {
+      "id": "death-gold-rain-closeup-v2",
+      "slug": "death-gold-rain-closeup",
+      "title": "slow drift through the point stream",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "i2v",
+      "positive": "Camera drifts slowly forward through a gentle rain of spinning golden pixel point sprites with glittering tails, a few hot-pink bullets mid-flash white as they convert, warm sparkles bokeh-past the lens, the silhouetted fighter gliding right through the stream below, calm floating motion, seamless loop, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "512x512",
+        "num_frames": 121,
+        "fps": 24,
+        "duration": "~5s",
+        "guidance": 3,
+        "steps": 30,
+        "seed": 24005
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/40-bosses/gold-transmutation-v1-flux.2-dev.png",
+        "glob": "40-bosses/gold-transmutation*"
+      },
+      "notes": "Square 1:1 native for feed posts; forward drift through uniform sparkle fall wraps cleanly for a short seamless reward loop on results screens."
+    }
+  ]
+}

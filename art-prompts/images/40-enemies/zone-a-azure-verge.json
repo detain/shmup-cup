@@ -1,0 +1,207 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/40-enemies",
+  "file": "zone-a-azure-verge",
+  "source": "zone-a-azure-verge.md",
+  "entries": [
+    {
+      "id": "skeet-vane-swarm-v1",
+      "slug": "skeet-vane-swarm",
+      "title": "SKEET pods and VANE bladed fliers, encounter concept",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A horizontal shoot-'em-up encounter over the rim of a blue planet: a cluster of SKEET pods drifts in from the right — small armored seed-shaped drone pods with a single magenta eye-slit and stubby fin pairs, matte gunmetal shells with rust-violet panel seams — escorted by VANE bladed fliers, crescent-mirror wingblades spinning around a compact steel chassis, each throwing a thin colored glint as it rotates. Below them the planet's limb curves across the frame, green-teal terrain shelves and ice caps under a thin atmosphere haze, deep navy space above lifting from near-black blue to midnight blue with sparse pixel stars. The two prototype fighters, a sleek steel-blue dart with a bold blue hull stripe, cyan canopy and orange engine glow, enter from the left edge trailing bright cyan tracer fire. Enemy bullets are pink and red orbs with bright cores and dark rims. Lifted deep-navy background, never pure black. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, pure black background, human figures, ten wings, morphed silhouettes",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15111
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15111
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 15111
+        }
+      },
+      "notes": "flux.2-dev holds two distinct enemy species in one scene without merging them. Color reference: terrain #8ad0a8, stripe #3858f0, canopy #38c8e8, glow #f89830, bullets #ff5aa0/#ff3a3a. Watch that vane blades stay crescent, not full circles."
+    },
+    {
+      "id": "skeet-vane-swarm-v2",
+      "slug": "skeet-vane-swarm",
+      "title": "SKEET pods and VANE bladed fliers, encounter concept",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Close-quarters ambush in the upper atmosphere of a blue planet: three SKEET pods — armored seed-shaped drones with matte gunmetal hulls, rust-violet panel seams and a single glowing magenta eye-slit — crack open mid-flight, hatches folding like petals as they release fan spreads of small pink bullet-orbs with bright cores and dark rims. Two VANE bladed fliers slice through the foreground, steel chassis wreathed by spinning crescent-mirror wingblades catching rim-light, motion implied by doubled blade ghosts. Behind the formation the planet rim glows with a soft cyan atmosphere line, green-teal continent shapes and white cloud swirls floating in a deep navy starfield that lifts from midnight blue to a lighter dusty blue. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, colors saturated but limited, background never pure black.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, extra eyes, blobby organic bodies",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 15112
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15112
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15112
+        }
+      },
+      "notes": "Ultra-wide 1536x640 reads like an in-game frame strip, good for website zone sections. sd3.5 handles the bullet-orb repetition well. Keep pods seed-shaped, not round balls."
+    },
+    {
+      "id": "skeet-vane-swarm-v3",
+      "slug": "skeet-vane-swarm",
+      "title": "SKEET pods and VANE bladed fliers, encounter concept",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square vertical poster crop. A heroic low-angle study of a VANE bladed flier: a compact gunmetal drone chassis wrapped by three spinning crescent-mirror wingblades, each blade a polished steel scythe with a lilac glint edge, hovering against a vast soft-focus backdrop of a blue planet's limb — green-teal terrain, white storm swirls, and a thin glowing cyan atmospheric arc cutting the corner of the frame. A single SKEET pod, an armored seed-shaped drone with a magenta eye-slit and rust-violet seams, rides the shadow at the edge of the composition. Sparse pixel stars dot the deep navy gradient sky, lifted never black. The mood is clean, cold and mechanical — an patrol arriving in orbit. Bold flat color shapes, limited palette, ultra-detailed large-format illustration with pixel-art texture accents.",
+      "negative": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, four blades, insect wings, feathers",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15113
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15113
+        }
+      },
+      "notes": "Vertical poster crop for social/print. flux.1-dev gives the cleanest hard-edged blade shapes. Color reference: blade glint #c8a0ff accent, atmosphere #38c8e8, planet #8ad0a8."
+    },
+    {
+      "id": "azure-verge-sprite-sheet-v1",
+      "slug": "azure-verge-sprite-sheet",
+      "title": "In-game enemy sprite sheet: skeet, vane, tender",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean grid on a flat deep navy background color reference hex 0c1a3c, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: two frames of a large TENDER carrier drone, a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus two frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left.",
+      "negative": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15121
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15121
+        }
+      },
+      "notes": "Grid layout on a single flat navy field so sprites can be color-keyed out later. Color reference: navy bg #0c1a3c, eye-slit magenta #ff5aa0 family, tender lights green #40d070. Expect to hand-clean cell alignment; regenerate variations before giving up."
+    },
+    {
+      "id": "azure-verge-sprite-sheet-v2",
+      "slug": "azure-verge-sprite-sheet",
+      "title": "In-game enemy sprite sheet: skeet, vane, tender",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "Retro 16-bit pixel art sprite atlas for a horizontal arcade shoot-'em-up, all sprites drawn at the same chunky resolution with bold near-black navy outlines on a flat dark blue drafting sheet, color reference hex 05070f background, evenly spaced grid, no text and no annotations. Content: a family of mechanical sky-patrol drones — seed-pod fighters with single magenta visor slits and folding petal hatches in four open/close stages; crescent-bladed interceptor discs whose three mirrored scythe wings are caught at four rotation angles; and one bulky flat carrier drone with green port lights and a bellied hangar bay, drawn broadside and three-quarter. Each species gets a small color-swatch bullet orb beside it: a pink sphere and a red sphere, both with bright cores and darker rims, to fix the palette. Limited saturated palette of gunmetal greys, rust-violet seams, magenta, green and steel blue. Crisp pixel clusters, no anti-aliasing, no soft shading — dithered highlights only.",
+      "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, background scenery, stars, planets, pure black background, overlapping sprites, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15122
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15122
+        }
+      },
+      "notes": "Square atlas suits a texture-page mockup. sd3.5 at guidance 5.5 keeps grid regularity. The bullet swatches double as palette anchors so extractions stay consistent."
+    },
+    {
+      "id": "azure-verge-sprite-sheet-v3",
+      "slug": "azure-verge-sprite-sheet",
+      "title": "In-game enemy sprite sheet: skeet, vane, tender",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Pixel art sprite sheet, SNES 16-bit arcade game style, flat solid deep-navy sheet background, generous even margins between sprites, absolutely no text, numbers or labels. Three enemy types of a planetary-orbit swarm, all facing left in side view: 1) SKEET — an egg-shaped armored drone pod, gunmetal plate shell, rust-violet joints, glowing pink eye-slit, shown in idle, hatch-open firing, and destroyed-fragments frames; 2) VANE — a small steel core ringed by three spinning crescent blades with polished lilac edges, shown at four rotational phases so the blades form a blur-star silhouette; 3) TENDER — a wide, low carrier with a clipped delta silhouette, rows of tiny green lights, an open ventral bay where mini skeet pods are queued nose-down, in closed-bay and open-bay frames. Bold dark outlines around every sprite, saturated limited palette, chunky readable forms that stay clear at small size, classic cartridge-era crispness with light dithering on metal.",
+      "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, watermark, pure black background, overlapping sprites, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15123
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15123
+        }
+      },
+      "notes": "Landscape strip: one species per third of the canvas, easiest layout for extraction. flux.1-dev is the steadiest at \"absolutely no text\" sheets. Color reference: shell gunmetal, seams rust-violet, lights #40d070, eye #ff5aa0."
+    }
+  ]
+}

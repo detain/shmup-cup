@@ -1,0 +1,43 @@
+# 50 — Zone I: Abyssal Throne (stage backgrounds)
+# Black-blue deep water, bioluminescent specks, rock spires, swaying weed.
+# Seed slots: wallpaper 16901, vertical poster 16902.
+
+## abyssal-throne-wallpaper — Wide wallpaper: hadal trench city of spires dusted with blue biolume
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The floor of an abyssal ocean trench rendered as a flooded night city: a horizontal panorama of colossal black rock spires of every height, thin needles beside stubby towers beside one or two broken stumps, all silhouetted in near-black-blue stone with hard dark outlines and faint sediment banding on their lit sides. Between the spires the water is a gradient of ink-blue fading to nothing at the top and bottom of frame, full of drifting marine snow — tiny pale flecks suspended mid-descent. Every spire is dusted with bioluminescence: constellations of cold cyan pinpricks crawling along ridge lines and crowning the tips like live beacons, with soft teal smears where a bloom clings in a shelf. Foreground left and right, tall ribbon-weed fronds sway in a shared diagonal current, each frond a flat banded green-black blade with a thin cyan glow-line down its seam. In the middle distance a vast shelf hangs over the trench edge, its underside studded with lantern-light like a inverted starfield, one long stream of glowing sediment pouring off it in a luminous silt waterfall that dims as it falls. No sunlight exists here; all light belongs to the living. Palette of black-blues and deep teal with committed cyan-cyan biolume accents, lifted deep-navy base, never pure black. No foreground characters, no text, no letters, no user interface elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 50 | 30 |
+| seed | 16901 | 16901 | 16901 | 16901 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, sunlight rays, surface of water, turquoise tropical sea, coral reef colors, fish, sharks, bubbles everywhere, pure black background, watermark, text, blurry, green glowing fog, frame border, letterboxing`
+
+**Notes:** Color reference: biolume ramp #16485a shadow-bloom to #6ad8e0 beacon, water on navy #05070f–#0c1a3c. "All light belongs to the living" is the tonal key — sd3.5 wants to inject god-rays underwater; the negative blocks it. The inverted-lantern shelf with its silt waterfall is the landmark that makes this a THRONE approach, not generic deep sea. flux.2 handles the spire skyline rhythm cleanly.
+
+## abyssal-throne-poster-vertical — Vertical poster: descending into the throne trench, spire cliffs and a single distant glow
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, deep-sea atmosphere, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A slow vertical descent into the heart of an abyssal trench: two towering cliff walls of black basalt close in from the left and right edges of the frame, their faces columnar-jointed and crusted at the rims with fields of tiny cyan biolume dots like wet cinders, a few pale tube worms nodding from crevices. The gap between the cliffs narrows toward the bottom of the image in a clean throat of ink-blue water; the entire water column here is a curtain of drifting marine snow and rising bubble-trails falling out of the black at the top of the frame, each bubble lit briefly by the glow below. Far down at the bottom of the throat, the trench floor is just barely suggested by the largest single light source in the image: a low, wide, patient teal-cyan glow spreading across the base of the cliffs — not quite revealing what casts it, its edges dissolving into darkness — surrounded by a slow aurora of suspended spore-light that stains the nearest rock. Above, the surface the diver fell from is gone; there is only more dark downward. The composition is funnel, snow, and one unbearable beautiful light at the bottom. Black-blues, teal-cyan biolume, a touch of bone-white tube worm, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 896x1152 | 896x1152 | 896x1152 | 896x1152 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 45 | 40 | 30 |
+| seed | 16902 | 16902 | 16902 | 16902 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, diver, sea monster visible, creature silhouette in the light, sunlight, water surface, tropical fish, pure black background, watermark, text, blurry, glow in the middle of frame, bright bottom, frame border, letterboxing`
+
+**Notes:** Color reference: cliff rims #16485a crusting to #6ad8e0, floor glow centered low-third, water navy-to-black-blue but never pure #000000. The glow must stay at the BOTTOM of the frame — both models default to centering their brightest element; if it drifts mid-frame, the composition loses its gravity, so regenerate rather than crop. Never let anything resolve inside the glow; the unshown throne is scarier.

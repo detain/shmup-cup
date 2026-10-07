@@ -1,0 +1,207 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/40-enemies",
+  "file": "zone-c-dune-expanse",
+  "source": "zone-c-dune-expanse.md",
+  "entries": [
+    {
+      "id": "dune-worm-dust-devil-v1",
+      "slug": "dune-worm-dust-devil",
+      "title": "DUNE WORM and DUST DEVIL, encounter concept",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Beneath twin suns — a huge pale cream disc low on the horizon and a smaller orange disc riding above it — an endless sea of layered dune silhouettes in sand-gold and burnt amber. A DUNE WORM erupts from the crest at center: a segmented mechanical boring-worm of brass ring-plates, a drill-bit maw of spiral teeth, and a geyser of sand fountaining around its emergence hole. To the right a DUST DEVIL twists upward, a whirling column of rust-colored vapor and grit with visible horizontal shear bands and a hollow dark core, pebbles orbiting its funnel. The KESTREL fighter, a sleek steel-blue dart with bold blue hull stripe, cyan canopy and orange engine glow, arcs between the two threats, tracers streaking. Heat haze wobbles the horizon in thin raster lines. Sky gradient from pale gold at the horizon to deep warm navy above, lifted and never pure black, sparse first stars. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, one single sun, organic snake scales, tornado debris house",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15311
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15311
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 15311
+        }
+      },
+      "notes": "flux.2-dev keeps the twin-sun geometry exact (big pale + small orange) where sd3.5 sometimes merges them. Color reference: big sun #fce8b8, small sun #f89858, dunes sand-gold to amber, worm brass plating."
+    },
+    {
+      "id": "dune-worm-dust-devil-v2",
+      "slug": "dune-worm-dust-devil",
+      "title": "DUNE WORM and DUST DEVIL, encounter concept",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-wide panoramic arcade framing. A three-lane ambush across a twin-sunned desert: on the left the sand boils as a DUNE WORM, a long brass ring-plated boring machine with a spiral drill-maw, breaches in a curtain of golden grit; in the middle a chain of DUST DEVILS marches toward the viewer, hollow twisting funnels of rust vapor with dark cores and orbiting pebbles, each wobbling its own shear band; on the right the MANTA fighter, flat ray-wings of pale mint and green canopy lit from behind by the big cream sun, slides under the first devil trailing amber thruster ribbons and a fan of green shots. Dune ridges step across the frame in flat silhouette bands from sand-stone light to shadowed umber, heat haze breaking the horizon into shimmering raster lines. Warm sky lifting to deep navy at the top edge, never black, thin stars appearing. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "negative": "photorealistic, 3d, text, watermark, blurry, pure black, sandcastle, cactus, realistic dust storm",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 15312
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15312
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15312
+        }
+      },
+      "notes": "The 1536x640 strip turns the three threats into readable lanes — ideal site banner. sd3.5 grades the dune silhouette bands crisply. Watch that devils stay hollow-cored funnels, not solid cones."
+    },
+    {
+      "id": "dune-worm-dust-devil-v3",
+      "slug": "dune-worm-dust-devil",
+      "title": "DUNE WORM and DUST DEVIL, encounter concept",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square vertical poster crop, subtle CRT scanline glow. A vertical hunt across a dune column at high noon under twin suns: at the top the great pale cream sun and its small orange companion hang in a bleached gold sky that deepens to warm navy at the corners; through the middle a DUST DEVIL rakes down the frame, a twisted translucent funnel of rust vapor and orbiting grit with a visible hollow core; at the bottom the dune face explodes as a DUNE WORM rears its drill-toothed brass head upward, chasing the fighter that dives along the funnel from above — the KESTREL, steel-blue dart, blue stripe, cyan canopy, orange trail, drawn small against the worm's maw for brutal scale contrast. Sand sheets fall in flat stepped bands of light and umber with crisp pixel edges, heat haze rippling each ridge line. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, saturated but limited palette.",
+      "negative": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, three suns, organic snake, pyramids",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15313
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15313
+        }
+      },
+      "notes": "Vertical chase composition: worm below, devil through, suns above — maximum depth in a poster crop. flux.1-dev renders the translucent funnel bands cleanly without muddying the ship. Color reference: worm brass with dark seam rivets, grit #f89858 tints."
+    },
+    {
+      "id": "dune-expanse-sprite-sheet-v1",
+      "slug": "dune-expanse-sprite-sheet",
+      "title": "In-game enemy sprite sheet: dune worm, dust devil, husk crawler",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean even grid on a flat deep warm-navy background color reference hex 0c1a3c, no gradients, no scenery, no text, no labels, no UI. Row one: DUNE WORM segments and head — four frames of a brass ring-plated boring worm head with a spiral drill maw, rising from a sand collar, mouth closed, mouth revving, mouth fired-open with a pink orb, and a dented damaged frame; beside them two loose body-ring segments for stacking the worm's length. Row two: DUST DEVILS — four frames of a twisting rust-colored vapor funnel with a hollow dark core and orbiting pebble specks, each frame rotating the shear bands a quarter turn so the spiral advances upward. Row three: HUSK CRAWLERS — four frames of a beetle-shaped walker drone, overlapping charcoal carapace plates, six stubby legs in a walk cycle, a dim red eye-bar under the shell lip, one frame with the shell flipped open showing a vulnerable violet core. Chunky crisp pixels, dithered brass highlights, side view facing left.",
+      "negative": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, real insects, feathers, pure black background, overlapping sprites, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15321
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15321
+        }
+      },
+      "notes": "Walk-cycle leg frames and quarter-turn devil frames are the hard part — regenerate before accepting smeared rotations. Color reference: brass worm #e8a030-family plating, devil rust #f89858 vapor, husk carapace charcoal with #ff3a3a eye-bar."
+    },
+    {
+      "id": "dune-expanse-sprite-sheet-v2",
+      "slug": "dune-expanse-sprite-sheet",
+      "title": "In-game enemy sprite sheet: dune worm, dust devil, husk crawler",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "Retro 16-bit pixel art sprite atlas for a desert level of a horizontal arcade shoot-'em-up, flat solid dark blue-navy sheet background, generous even margins, absolutely no text, numbers or annotations. Content, all facing left: a mechanical boring-worm drawn as separable parts — a ring-plated brass head with a spiral drill jaw in four rev states, plain body rings for extending its length, and a tail plug — plus a little sand-burst effect sprite in two expand frames; a family of DUST DEVIL funnels, four translucent rust-vapor whirls whose internal shear bands and hollow dark cores step through a spin cycle, tiny pebbles caught at orbiting positions; squat armoured HUSK CRAWLER beetles, slate carapace built from overlapping plates over six chunky legs, four-frame walk cycle, plus one belly-open frame revealing a glowing violet weak-point core. Bold near-black outlines throughout, sand-gold, rust, brass and slate palette with violet and red accents, chunky readable pixels, dithering only on metal, no anti-aliasing, nothing else on the sheet.",
+      "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, sand dunes background, cactus, real beetle, pure black background, overlapping sprites, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15322
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15322
+        }
+      },
+      "notes": "Modular worm parts make this sheet directly usable for a segment-builder mockup. sd3.5 at 5.5 holds the grid; flux.1-dev if it produces cleaner leg silhouettes at the cost of layout. Color reference: sand-burst #fce8b8, core violet #b84cff family."
+    },
+    {
+      "id": "dune-expanse-sprite-sheet-v3",
+      "slug": "dune-expanse-sprite-sheet",
+      "title": "In-game enemy sprite sheet: dune worm, dust devil, husk crawler",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep warm-navy sheet, one enemy family per horizontal band, thick even margins, no text, no frame lines, no labels. Band one — DUNE WORM: an armored drill-worm of segmented brass rings with a conical spiral-tooth maw, shown as head frames rising at increasing angles, plus stackable plain ring segments and a two-frame sand splash puff. Band two — DUST DEVIL: a hollow twisted funnel of rust-colored spinning vapor with orbiting dark pebbles, four rotational frames where the spiral bands climb one quarter-turn each, silhouette wobbling slightly wider between frames. Band three — HUSK CRAWLER: an armored walker drone shaped like a broad beetle, overlapping slate shell plates, six stubby pixel legs in a clean four-step walk cycle, a dim red eye-bar glowing under the shell rim, and one flipped frame with the belly hatch open around a small bright violet core. Bold dark outlines around every sprite, saturated desert palette of brass, rust, sand-gold and slate, chunky cartridge-era readability, dithered highlights on metal only.",
+      "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, bloom, real desert photo, watermark, pure black background, overlapping sprites, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15323
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15323
+        }
+      },
+      "notes": "Landscape three-band layout; easiest to eyeball cycle continuity across the wide strip. flux.1-dev for crisp leg separation. Color reference: eye-bar #ff3a3a, belly core #8a48e8, brass rings warm #e8a030 family."
+    }
+  ]
+}

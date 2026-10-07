@@ -1,0 +1,133 @@
+# 40 — Zone I: Abyssal Throne enemies
+# Black-blue deep water, bioluminescent specks, rock spires, swaying weed.
+# Seed slots: concept 15911-15913, sprite sheet 15921-15923.
+
+## gulper-depth-mine — the lantern-dark hunt
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/3 of 3
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. In the lightless deep of a black-blue water trench, the only illumination bioluminescent: a field of tiny glowing specks drifting from dark teal into pale cyan like an inverted star map, rock spires rising in silhouette on both sides, tall weed swaying slow left-to-right across the whole frame. Centered, a GULPER drifts right toward the viewer's ship — a huge-headed deep-sea fish, its mouth a cavernous hinged cage of pale bone ridges taking up half its body, slack-jawed and yawning wide, tiny vicious eyes above the gape, a frayed bioluminescent lure filament dangling from its crown burning pale cyan, its body tapering back into eel-quiet charcoal. Around and below it, a quiet minefield: three DEPTH MINES rest on and hover above the weed — black rounded hulls studded with short contact spikes, each with a single slow-pulsing cyan eye-light, one trailing a loose anchor chain into the dark, one drifting free with a barnacle-crusted flank. From the left edge the MANTA glides in, flat ray-wing pale mint hull dimmed by the depth, green canopy the brightest thing in the water, amber twin thrusters throwing short warm cones that catch the drifting specks — and directly ahead of its path one mine's pulse has just skipped to a faster beat. No explosions yet, pure dread of held pressure. Deep-navy gloom, never pure black. No text, no UI elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 15911 | 15911 | 15911 | 15911 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, mines with red lights, coral reef`
+
+**Notes:** Color reference: biolume specks ramp #16485a→#6ad8e0, lure filament #6ad8e0, mine eye-cyan pulse #6ad8e0, gulper body near-black green-charcoal with pale bone jaw. Everything lit by point sources — the negative bans the sunlit-water default these models love. The accelerating mine pulse in the manta's lane is the whole story of the frame; if the mines read as inert scenery, add "one mine's eye-light mid-brighten, brighter than the others".
+
+---
+
+## gulper-depth-mine — ultrawide ambush corridor
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 2/3 of 3
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. An ultrawide trench corridor of the abyssal plain, camera in profile: the floor is a thick swaying carpet of dark weed, the walls are towering rock spires that pinch the corridor narrow in the middle distance, and through the pinch streams a slow current you can feel, drawn as faint cyan particle streaks. On the right side of the frame a GULPER pack hunts the corridor mouth — two large-headed fish with cavernous pale-bone jaws, one already angled for a strike with its lure filament flaring brighter, a third gulper only suggested by its lure-glow behind a spire, still invisible. Along the weed line, six DEPTH MINES sit half-buried like spiked black fruit, eye-lights out of phase with each other so the trench floor twinkles in a rolling wave of slow cyan pulses; one mine has torn its anchor free and is rising quietly through the current streaks. Entering from the left, small against the whole corridor, the KESTREL threads between two spires, steel-blue dart hull, bold blue stripe, cyan canopy reading as a second artificial light in the dark, orange engine glow streaming backwards into the current. The composition is a throat, and the ship has just entered it. Deep-navy pressure dark at the frame edges, never pure black. No text, no UI elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 45 | 30 |
+| seed | 15912 | 15912 | 15912 | 15912 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, mines with red lights, equal blinking mine lights, single gulper`
+
+**Notes:** Color reference: current streaks #6ad8e0 at low alpha, gulper lure flare #6ad8e0 to white-hot core, mine out-of-phase pulses teal-to-cyan, kestral stripe #3858f0. The out-of-phase mine lights are the zone signature — the rolling twinkle reads as movement even in a still image. The third gulper as glow-only is a deliberate hidden-object detail; drop it if the model starts drawing disembodied lures too large.
+
+---
+
+## gulper-depth-mine — vertical ascent through the spire field
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 3/3 of 3
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A vertical column of abyssal water, camera looking up along a rock spire that runs the full height of the frame like a black lighthouse, weed ribboning down its flanks. Coiled around the spire, a GULPER has mistaken the structure for a mate or a bone — its huge hinged head is pressed against the rock at the top third, pale bone jaw-ridges half-clamped on empty stone, jaw-light spilling down the spire's face, its charcoal body wound two full turns around the tower with the tail drifting free at the bottom of the frame, lure filament brushing the rock and scattering bright cyan sparks where it touches. Below it, clinging to the spire's midsection in the shadow of the gulper's coils, a cluster of five DEPTH MINES that have drifted in and anchored themselves to the rock — spiked black hulls with slow eye-lights blinking at their own lazy rhythm, one of them cracked open on the rock showing an inner glow hotter than its eyes. In the bottom corner the MANTA climbs along the spire's edge, pale mint ray-wings tucked for the narrow lane, green canopy tilted up reading the coils, amber twin thrusters dimmed to short cautious cones, threading between the anchored mines and the wounded coil-gap. Everything above the gulper fades to pressure-dark deep-navy, never pure black. No text, no UI elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 896x1152 | 896x1152 | 896x1152 | 896x1152 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 45 | 40 | 30 |
+| seed | 15913 | 15913 | 15913 | 15913 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, horizontal composition, gulper swimming in open water`
+
+**Notes:** Color reference: jaw-light on rock = broad cyan wash #6ad8e0 fading fast, cracked-mine inner glow a hotter white-cyan, manta mint #c8e0d0. Coil-wrap on a vertical spire is a hard pose for any model — the "two full turns, tail free at bottom" wording keeps it geometric; if the body melts into the rock, push guidance to 6.0 on sd3.5 before changing the text.
+
+---
+
+## abyssal-throne-sprite-sheet — in-game pixel sprites: gulper, depth mine, lure filament
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 1/3 of 3
+
+```text
+SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.5 | 3.5 | 3.5 | 4.0 |
+| steps | 34 | 40 | 40 | 30 |
+| seed | 15921 | 15921 | 15921 | 15921 |
+
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion`
+
+**Notes:** Color reference: lure and eye-light #6ad8e0, specks #16485a at dim state, gulper body charcoal-green near-black, jaw bone pale gray-green. The isolated speck and filament sprites in row three are for parallax compositing — if the model insists on fusing them into the mines, drop that row's wording and regenerate a dedicated effects sheet later.
+
+---
+
+## abyssal-throne-sprite-sheet — square grid sheet, pressure-set
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/3 of 3
+
+```text
+SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. A tidy grid: left column stacked with GULPER head states — jaw wide open showing the pale ridged cage, jaw three-quarters closed, jaw shut with lure filament arcing forward lit cyan, and a wounded head with cracked jaw-ridge and a dark limp filament; center column holds DEPTH MINES in two sizes with matched pulse frames — large mine at dark-eye and bright-eye, small mine at dark-eye and bright-eye — one mine with its anchor chain coiled, one free-drifting mine tilted at a slow-roll angle, and the exploded remains as a ring of loose spikes with a fading cyan glow at the center; right column is the environment kit — a weed tuft at two sway angles, a rock-spire shoulder chunk, a lone drifting biolume speck at three brightness steps, and a four-speck cluster for background scatter. Cool interior glow on every lit body, everything inside its cell, pixel-perfect spacing, no merged outlines.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1024x1024 | 1024x1024 | 1024x1024 | 1024x1024 |
+| guidance | 5.5 | 3.5 | 3.5 | 4.0 |
+| steps | 34 | 45 | 40 | 30 |
+| seed | 15922 | 15922 | 15922 | 15922 |
+
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, warm orange lighting, red mine lights, pure black background, perspective distortion`
+
+**Notes:** Color reference: bright-eye pulse #6ad8e0, spike-ring remains #16485a fading, weed tufts dark green-black silhouettes. The mine-scale pair (large/small at the same pulse) gives an immediate size-language test for the sheet; check the small mine's spikes survive dithering — at true game scale they tend to vanish.
+
+---
+
+## abyssal-throne-sprite-sheet — wide filmstrip: mine drift-pulse and gulper strike run
+**Models:** flux.1-dev, sd3.5-large
+**Variation:** 3/3 of 3
+
+```text
+SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, eight frames of a DEPTH MINE facing left: anchored still with the chain out and eye-light dark, chain parting one link at a time across three frames, the free mine beginning a slow upward drift with a slight roll, the eye-light crossing from dark to dim to bright over the final frames, and a last frame where the mine hangs at the top of its drift with the eye burning steady cyan — identical hull and spike layout every frame, only chain, altitude, roll and eye state changing. Lower strip, five frames of a GULPER strike run: cruising with the jaw half-open and lure filament dim, the filament flaring bright as the head recoils slightly, the full lunge with the jaw cage thrown maximum wide and body stretched, a bite-close frame with jaw shut and a few cyan lure-sparks still scattering, and the settle-back to cruising pose matching the first frame exactly for a seamless loop. All cool internal cyan glow, hard readable silhouettes at game scale.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 15923 | 15923 | 15923 | 15923 |
+
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, warm orange lighting, red mine lights, pure black background, perspective distortion`
+
+**Notes:** Color reference: filament flare #6ad8e0 to white-hot core, bite-sparks scattering cyan, chain links gunmetal with dark rust. The "settle-back matching the first frame exactly" clause makes the lower strip a usable loop; verify frame one and frame five silhouettes line up before slicing, and treat the chain-parting sequence above as a bonus strip if the roll drift muddies.

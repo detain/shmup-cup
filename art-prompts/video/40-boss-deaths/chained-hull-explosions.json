@@ -1,0 +1,90 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/40-boss-deaths",
+  "file": "chained-hull-explosions",
+  "source": "chained-hull-explosions.md",
+  "entries": [
+    {
+      "id": "death-chain-walkdown-v1",
+      "slug": "death-chain-walkdown",
+      "title": "explosions marching the full spine",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen boss death sequence: the dead mechanical sea-creature fortress-ship drifts broadside across the frame as a chain of explosions begins at its bow and walks the entire hull, each blast a blooming square-pixel fireball of pale yellow core, then orange, then red, popping one after another in a quick marching rhythm that travels left to right along its full length, armor plates buckling and flipping off ahead of the front, thick black smoke columns unfurling behind the chain, violet energy seams shorting with white crackles between blasts, the tiny dart fighter riding low at frame left with its engine flaring as shockwaves ripple past, the final blast at the stern larger than the rest with a full-screen white flash that holds a beat, deep navy starfield backdrop, bold outlines, CRT scanline glow, triumphant destructive rhythm, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, realistic smoke, single explosion, smoke-only mush",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 24001
+      },
+      "sourceImage": null,
+      "notes": "The marching rhythm is the whole joke — \"one after another in a quick marching rhythm that travels\" is the phrase to protect across seeds. End on the big stern flash for a clean cut point into the gold-points beat."
+    },
+    {
+      "id": "death-chain-vertical-v2",
+      "slug": "death-chain-vertical",
+      "title": "stern-to-bow climb up a tilting hull",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "A giant wrecked steel sea-creature hull in bold-outlined 16-bit pixel art tilts diagonally across the frame while explosions pop up along it in rapid sequence from the low stern to the high bow, each fireball stepping visibly higher, plates shedding outward, the ship lurching and sliding downward as the chain reaches the top and detonates the core in a bright flash, camera static, fast climbing rhythm, single continuous shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic fire, smoke-only mush",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 97,
+        "fps": 24,
+        "duration": "~4s",
+        "guidance": 3.4,
+        "steps": 40,
+        "seed": 24002
+      },
+      "sourceImage": null,
+      "notes": "Diagonal walk-ups feel more dramatic than horizontal in short clips; the added ship-sink motion gives an ending pose. Draft at 30 steps, hero at 45 if the stepping stutters."
+    },
+    {
+      "id": "death-chain-from-still-v3",
+      "slug": "death-chain-from-still",
+      "title": "animate the blessed dying-boss frame",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "The shattered boss hull begins to die: shield plate fragments drift outward as a chain of orange-white fireballs detonates in quick succession walking from one end of the broken hull to the other, buckling plates popping off ahead of the blast line, violet seams arcing and failing one by one, smoke columns unfurling and shearing sideways with the ship's drift, the whole structure starting a slow tilt downward as the chain completes and a final white flash swallows the silhouette, camera tracks steadily right alongside it, continuous single take.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut, smoke-only mush",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4,
+        "steps": 35,
+        "seed": 24003
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/30-bosses/iron-sovereign-death-v1-flux.2-dev.png",
+        "glob": "30-bosses/iron-sovereign*"
+      },
+      "notes": "Pair with IS-08 (rotating shield plates make the \"plates shed first\" beat free) or any shattered-captain still. Motion-only prompting keeps the hull design intact; the tilt at the end hands off to debris-field ambience."
+    }
+  ]
+}

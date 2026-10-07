@@ -1,0 +1,61 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/30-boss-intros",
+  "file": "squal-steed-storm",
+  "source": "squal-steed-storm.md",
+  "entries": [
+    {
+      "id": "steed-storm-rear-v1",
+      "slug": "steed-storm-rear",
+      "title": "rearing out of the thunderhead wall",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen boss intro inside a churning violet-black storm: rain slashes diagonally across the frame as the screen dips dark and a red warning light throbs twice, then a vast mechanical seahorse of segmented steel plates and taut cables rears upward out of a solid wall of thunderhead clouds, water cascading off its ridged crest in sheets, forked lightning striking along its spine and branching through the cable rigging in blue-white veins, its long snout lifting to the sky and a row of pink glow-lamps blinking awake along its belly plates, wind bending the rain steeper, the tiny steel-blue fighter tumbling briefly in the gust before stabilizing with flaring thrusters, camera dollies backward as it rises to hold the whole arched body in frame, deep storm navy palette with bright bolt highlights, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic horse, flesh, calm clear sky",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 23009
+      },
+      "sourceImage": null,
+      "notes": "The dolly-back against the rear is the scale beat — if the camera stays put, the seahorse reads whale-sized instead of storm-sized. Lightning \"branching through cables\" gives Wan a concrete conductive path instead of random bolts."
+    },
+    {
+      "id": "steed-rigging-arc-v2",
+      "slug": "steed-rigging-arc",
+      "title": "static low angle, spine lightning builds",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Low-angle pixel-art shot of a giant armored seahorse silhouette against rolling storm clouds, lightning repeatedly arcs down its spined back and along hanging cables with growing intensity, rain streaks slant continuously past, its belly lamps pulse pink in rhythm with each strike, camera static tilting slightly up, building electrical tension, single continuous shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, organic animal",
+      "settings": {
+        "resolution": "960x544",
+        "num_frames": 121,
+        "fps": 30,
+        "duration": "~4s",
+        "guidance": 3.4,
+        "steps": 40,
+        "seed": 23010
+      },
+      "sourceImage": null,
+      "notes": "Cheap LTX draft for charge-rhythm exploration; the repeated arcs with growing intensity are near-loopable if you cut before the brightest strike — useful as an under-menu storm loop."
+    }
+  ]
+}

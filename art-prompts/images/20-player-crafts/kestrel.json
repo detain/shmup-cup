@@ -1,0 +1,267 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/20-player-crafts",
+  "file": "kestrel",
+  "source": "kestrel.md",
+  "entries": [
+    {
+      "id": "kestrel-showroom-v1",
+      "slug": "kestrel-showroom",
+      "title": "studio concept plate",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Video game spacecraft concept art showroom plate, a single sleek horizontal-space fighter called the KESTREL floating at three-quarter side view in the center of a studio void, dart-shaped steel-blue hull with a bold bright blue fuselage stripe running the full length, a glowing cyan bubble canopy, twin air intakes with thin navy panel lines, a hot orange engine afterglow pouring from the rear vent nozzle and fading to smoke wisps, hard-edged armor plating with two-pixel-style heavy navy outlines, crisp specular highlights along the upper spine, background a flat deep-navy gradient with a faint grid floor line like a design-table, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.",
+      "negative": "text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 11001
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11001
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11001
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 11001
+        }
+      },
+      "notes": "Stripe #3858f0, canopy #38c8e8, glow #f89830, outline #1b2a4a. flux.1-dev keeps the studio plate clean."
+    },
+    {
+      "id": "kestrel-showroom-v2",
+      "slug": "kestrel-showroom",
+      "title": "blueprint glow draft",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "Stylized engineering blueprint artwork of a retro arcade fighter, the KESTREL dart-shaped ship drawn in exact profile facing right, the drafting lines rendered as thin luminous cyan vector strokes over a deep navy blueprint field with a faint square grid, the hull outline emphasized with a heavier glowing stroke while interior panel breaks, wing rib structure and engine chamber are shown in fine hairlines, a soft warm orange fill glow marks the engine exhaust zone and a small cyan fill marks the canopy position, drifting pixel stars in the far background corners, subtle scanline texture, no text, no numbers, no measurement labels, mood of a secret prototype document recovered before the Iron Tide invasion, clean geometric line art with pixel-art texture accents, widescreen composition.",
+      "negative": "text, letters, numbers, measurement labels, photorealistic, 3d render, watermark, blurry, crumpled paper, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 11002
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11002
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11002
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 11002
+        }
+      },
+      "notes": "Wide banner ideal for the codex/website craft page. Guard: models love inventing tiny numbers on blueprints — check and re-roll."
+    },
+    {
+      "id": "kestrel-showroom-v3",
+      "slug": "kestrel-showroom",
+      "title": "hangar bay reveal at dusk",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Cinematic arcade concept scene, the KESTREL steel-blue dart fighter resting on a maintenance cradle inside an open hangar carved into an asteroid at the edge of a blue planet's orbit, warm work-lamps in amber glow raking across the hull stripe and throwing the long shadow of the delta silhouette onto the deck plate, the cyan canopy dim and dark like polished glass, the engine cowlings open with tiny gantry arms around them, through the hangar mouth a vast deep-navy starfield with the glowing teal rim of the Azure Verge planet rising, a couple of maintenance drone spheres hover near the tail, atmosphere of quiet preparation before the sortie against the Iron Tide, saturated limited palette, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, no text.",
+      "negative": "text, watermark, photorealistic, 3d render, humans, crew members, modern hangar, fighter jet, pure black background, cluttered foreground",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 34,
+          "seed": 11004
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11004
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 11004
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 11004
+        }
+      },
+      "notes": "Story beat for the website \"before the first sortie\" section. No humans in frame keeps it asset-safe."
+    },
+    {
+      "id": "kestrel-hero34-v1",
+      "slug": "kestrel-hero34",
+      "title": "battle-worn dramatic render",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Dramatic large-format arcade key art, the KESTREL prototype fighter seen from a low three-quarter front angle charging toward the viewer slightly banked, steel-blue dart hull with a bold blue stripe scorched by thin black scrape marks, glowing cyan canopy reflecting a wall of pink and violet bullet lights approaching from off-screen right, hot orange afterburner blazing out of the engines with a long trail bending behind, small chip marks in the navy outline of the nose armor, background a deep-navy starfield torn by a teal nebula ribbon and the dark silhouette of a distant fortress-ship hull, rim lighting in cyan from the bullet storm and warm orange from the exhaust, ultra-detailed, clean vector shapes with pixel-art texture accents, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling energy, no text.",
+      "negative": "photorealistic, 3d render, text, watermark, visible pilot, modern jet, motion blur smear, pure black background, desaturated",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 11003
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11003
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 11003
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 11003
+        }
+      },
+      "notes": "Hero shot for site masthead. Damage is cosmetic only — keep the silhouette instantly readable."
+    },
+    {
+      "id": "kestrel-hero34-v2",
+      "slug": "kestrel-hero34",
+      "title": "firing pose muzzle flash",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "Dynamic arcade fighter concept render, the KESTREL dart ship in a side-on firing pose gliding left to right across the frame, twin nose cannons erupting with sharp white-orange muzzle flash stars and a stream of bright cyan-fronted laser lances racing ahead of the craft, steel-blue hull with bold blue stripe lit along its top edge by a distant sun, glowing cyan canopy, orange engine glow stretching into a thin speed trail, a few pink enemy bullet sparks bursting against an invisible deflection shield just ahead of the nose, deep navy space background with sparse stars and a faint violet dust cloud, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering turned ultra-detailed large-format key art, clean vector shapes with pixel-art texture accents, subtle CRT scanline glow, no text.",
+      "negative": "photorealistic, 3d render, text, watermark, modern weapons, missiles, visible pilot, pure black background, motion blur smear",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 11005
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11005
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11005
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 11005
+        }
+      },
+      "notes": "Wide action strip for feature lists; laser lances match the in-game cyan shot color."
+    },
+    {
+      "id": "kestrel-hero34-v3",
+      "slug": "kestrel-hero34",
+      "title": "silhouette poster against the tide",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "flux.2-dev"
+      ],
+      "positive": "Minimal dramatic arcade poster illustration, the pure black-navy silhouette of a sleek dart-shaped fighter with a long thin exhaust spike, the KESTREL, tiny at the lower left corner of a vast canvas, facing right toward an enormous oppressive silhouette wall that fills the entire right half of the frame, the layered jagged profile of a mechanical fortress-ship armada barely readable in near-darkness, between the two a single swirling stream of glowing pink bullets arcing like a comet tail, background a smooth vertical gradient from deep navy to a lighter cold blue at the horizon line near the bottom, one pale gold half-sun low behind the lone fighter, enormous negative space, quiet dread, bold dark outlines, saturated limited palette, ultra-clean vector shapes with faint pixel-art texture accents, subtle scanline glow, no text.",
+      "negative": "text, watermark, photorealistic, 3d render, detailed ships, cluttered composition, pure black background, rainbow palette, blurry",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 11006
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11006
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 11006
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 11006
+        }
+      },
+      "notes": "Print/Wallpaper poster. flux models nail the minimal-gradient mood; keep armada detail below readability."
+    }
+  ]
+}

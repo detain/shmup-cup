@@ -1,0 +1,142 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/60-promo",
+  "file": "zone-montage-a",
+  "source": "zone-montage-a.md",
+  "entries": [
+    {
+      "id": "zone-azure-verge-orbit-v1",
+      "slug": "zone-azure-verge-orbit",
+      "title": "slow arc-pan along the planet rim",
+      "variation": {
+        "n": 1,
+        "of": 5,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Widescreen retro 16-bit pixel-art orbital vista: the camera begins a slow arcing pan rightward along the glowing blue rim of a planet in deep space, the thin atmospheric band burning from navy to cyan at the limb, layered starfields at three parallax depths sliding behind, a lone steel-blue dart fighter with an orange engine trail crossing the pan from left to right in the near layer while a distant flight of bold-outlined mechanical sea drones drifts silhouetted against the planet glow, cold majestic scale with a single warm thread of motion, crisp saturated pixels, faint CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4,
+        "steps": 35,
+        "seed": 26001
+      },
+      "sourceImage": null,
+      "notes": "Zone 1 opener for the montage; the arc-pan against a static planet is cheap drama. Loopable if you drop the fighter phrase — the rim itself never changes."
+    },
+    {
+      "id": "zone-brine-nebula-gassea-v2",
+      "slug": "zone-brine-nebula-gassea",
+      "title": "glide over undulating raster wave clouds",
+      "variation": {
+        "n": 2,
+        "of": 5,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Camera glides low and steady forward over an ocean of teal luminous gas clouds rolling in slow wavy bands, mist sheets peeling upward off the wave crests, a small manta-shaped craft surfing the ridgeline rightward leaving twin amber ribbons, deeper violet vapor layers drifting slowly below, dreamy undersea-nebula light, pixel-art arcade look, continuous forward motion, no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic clouds",
+      "settings": {
+        "resolution": "960x544",
+        "num_frames": 121,
+        "fps": 30,
+        "duration": "~4s",
+        "guidance": 3.2,
+        "steps": 35,
+        "seed": 26002
+      },
+      "sourceImage": null,
+      "notes": "Zone 2's wobbling raster-wave gimmick sold as geography rather than UI. Uniform gas roll plus steady glide = one of the two strongest seamless-loop candidates in this file."
+    },
+    {
+      "id": "zone-dune-expanse-twinsuns-v3",
+      "slug": "zone-dune-expanse-twinsuns",
+      "title": "wide lateral pan, heat haze, worm eruption",
+      "variation": {
+        "n": 3,
+        "of": 5,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen desert vista at high noon under twin suns: the camera pans right across an endless dune expanse rippling with visible heat haze, two round suns — one amber one pale gold — hanging stacked low in a washed violet sky, long double shadows from jagged rock fins, then a colossal segmented sand worm of bold-outlined plated segments erupts diagonally from a dune crest ahead of the pan, throwing a towering fan of backlit sand grains that scatter through the sun glow, a tiny blue fighter banking sharply away from the eruption column, sparkling cascade of falling grit settling as the pan continues past, harsh beautiful menace, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic worm, one sun, night",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 26003
+      },
+      "sourceImage": null,
+      "notes": "The eruption timed into a moving pan is the montage's jump-scare beat — the worm must enter after the pan has already settled. Two-sun counts are unreliable; verify the \"stacked\" placement across seeds."
+    },
+    {
+      "id": "zone-magma-deep-cone-v4",
+      "slug": "zone-magma-deep-cone",
+      "title": "push in on an erupting lava cone",
+      "variation": {
+        "n": 4,
+        "of": 5,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "The camera pushes slowly in toward a erupting magma cone in a vast lava cavern, fountains of bright orange pixel lava cycling up and falling in glowing arcs, the lava lake below heaving and pulsing with rising heat blobs that burst into sparks, long shadow of a passing fighter sliding across the molten surface, embers streaming upward past the lens, rock ceiling glistening with reflected firelight, building intensity as the next eruption loads and fires, continuous single take, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4,
+        "steps": 35,
+        "seed": 26004
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/60-promo/magma-deep-v1-flux.2-dev.png",
+        "glob": "60-promo/magma*"
+      },
+      "notes": "Zone 4: the load-fire cycle of the cone gives the push-in a rhythm. The moving ship-shadow adds the scale cue without spending motion budget on the sprite."
+    },
+    {
+      "id": "zone-tempest-ridge-timelapse-v5",
+      "slug": "zone-tempest-ridge-timelapse",
+      "title": "storm timelapse over jagged snow ridges",
+      "variation": {
+        "n": 5,
+        "of": 5,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art timelapse over a jagged snow ridge in a permanent storm: dark violet-black thunderheads roll and churn leftward fast across the sky in accelerated drift, slanting rain streaking diagonally across the whole frame, bolts flashing inside the cloud volumes and momentarily lighting the ridge teeth in hard blue-white, snow blasting off the peaks in horizontal veils where the gusts hit, a tiny fighter silhouette tracing steadily rightward along the ridge line far below, the storm swallowing it as the clouds descend, cold violent grandeur, bold outlines, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, calm sky, sunshine, realistic clouds",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.2,
+        "steps": 40,
+        "seed": 26005
+      },
+      "sourceImage": null,
+      "notes": "Accelerated cloud roll = instant timelapse grammar; Wan holds this well. The swallowed fighter at the end is a nice \"the zone itself is the boss\" transition into SQUALL STEED's intro clip."
+    }
+  ]
+}

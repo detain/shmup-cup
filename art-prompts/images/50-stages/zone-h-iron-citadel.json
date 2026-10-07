@@ -1,0 +1,95 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/50-stages",
+  "file": "zone-h-iron-citadel",
+  "source": "zone-h-iron-citadel.md",
+  "entries": [
+    {
+      "id": "iron-citadel-wallpaper-v1",
+      "slug": "iron-citadel-wallpaper",
+      "title": "Wide wallpaper: cathedral hall inside a riveted steel fortress lit by amber lamps",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The interior of a colossal fortress-ship seen as a side-scrolling hall: every surface is heavy riveted steel — colossal plate walls with regular rows of rivet heads, seam welds, and blast doors wide as houses, all drawn in flat gunmetal planes banded with dark outlines. An entire infrastructure of industry crowds the hall: parallel pipes of three different diameters run horizontally at ceiling height with regular flange rings, bundle into elbows and dive into the walls; walkway gratings and cantilevered gantries cross at two levels with sturdy vertical stanchions; overhead, a travelling crane rail disappears into shadow. The light comes from long rows of amber running lamps mounted along the gantries and floor edges, each lamp a small warm disc throwing a conical pool of orange light onto the plating and linking with the next into a receding chain of glow down the length of the hall; between the pools the steel falls to deep blue-black shadow. In the far background a giant pressure hatch dominates the end wall, a circle of concentric locking rings with a single amber viewport winking at its center. Steam bleeds from two valve wheels in slow white ribbons catching the lamp light. Palette of gunmetal greys and dark steel blues with committed warm amber lighting, lifted deep-navy shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+      "negative": "photorealistic, 3d render, rusted scrapyard, post-apocalyptic debris, cyan blue lighting, green lighting, human workers, pure black background, watermark, text, blurry, cluttered random pipes, melted perspective, frame border, letterboxing",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 16801
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 16801
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 16801
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 16801
+        }
+      },
+      "notes": "Color reference: lamp ramp #6a4418 deep shade to #e8a030 hot pool, steel plates ~#4a5468 on navy #0c1a3c. The lamp-chain perspective is the composition engine — flux.2 keeps the receding discs evenly spaced; sd3.5 can smear them, bump guidance to 5.0. \"Regular rows,\" \"three diameters,\" \"two levels\" deliberately bound the pipe clutter that this genre overflows with."
+    },
+    {
+      "id": "iron-citadel-poster-vertical-v2",
+      "slug": "iron-citadel-poster-vertical",
+      "title": "Vertical poster: interior riser shaft with gantry floors stacked to a distant amber ceiling lamp",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Inside a vertical riser shaft at the core of a riveted steel fortress, viewed straight up from the deck: concentric square gallery floors stack one above another into extreme foreshortening, each level a grating walkway with heavy I-beam edges, knee-braces and a chain-link safety rail, all rendered in flat gunmetal with thick near-black outlines. Massive riveted columns climb through every corner of the shaft, bolted sleeve joints recurring level by level like ruler marks. Bundles of pipe ride the walls between the galleries, bound at intervals with clamps, and every few floors a valve wheel or junction box interrupts them. The light source is a single enormous amber ceiling lamp rig far at the top of the shaft — a squat crown of industrial bulbs — pouring a warm conical glow downward so that the upper galleries burn gold at their edges, the middle floors fall into strong top-lit contrast with long giraffe shadows of the railings thrown across the gratings, and the lowest visible deck near the camera damps into deep blue-steel dusk where only the column joint-plates still catch stray light. A thin wisp of steam drifts diagonally up through the cone, lit from above. The geometric ladder of receding squares pulls the eye helplessly upward toward the lamp. Palette of gunmetal greys and steel blues with one committed amber light, lifted deep-navy shadow, never pure black. No text, no letters, no user interface elements.",
+      "negative": "photorealistic, 3d render, skyscraper exterior, glass office floors, elevator interior, blue neon light, human figures, pure black background, watermark, text, blurry, warped non-square galleries, vanishing point off-center, frame border, letterboxing",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 16802
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 16802
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 16802
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 16802
+        }
+      },
+      "notes": "Color reference: lamp #e8a030 crown, gradients to #6a4418 in the low dusk, gratings #3c465c. Straight-up architecture with square concentric galleries is a hard perspective ask — keep \"concentric square\" and \"vanishing point centered\" in mind when checking flux.1 output; it occasionally tilts the stack. The recurring bolted sleeve joints doubling as ruler marks give scale for free."
+    }
+  ]
+}

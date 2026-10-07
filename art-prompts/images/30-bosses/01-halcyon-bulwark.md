@@ -1,0 +1,61 @@
+# 30 — Boss 01: HALCYON BULWARK (HB-01)
+
+Armored plate fortress-ship with wing-tip emitter pods. Zone A encounter: orbit over
+the blue planet rim, green-teal terrain far below, starfield. Seed slots 121xx.
+
+## hb01-reveal — full silhouette reveal over the planet rim
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/3 of 3
+
+```text
+Colossal arcade boss reveal key art, the HALCYON BULWARK, a fortress-sized enemy warship built like a floating castle of layered gunmetal armor plates riveted over a deep blue-black chassis, its hull shaped as a broad hexagonal bastion with two enormous swept armor wings ending in glowing emitter pods that pulse with pink-violet energy, rows of small amber porthole lights and dark turret nubs bristling along its flanks, it slides into frame from the right occupying half the canvas while a tiny steel-blue dart fighter with a cyan canopy and orange engine trail holds its ground at the lower left for scale, behind them the curved glowing rim of a blue planet with patches of green-teal terrain and a band of thin cyan atmosphere, scattered stars and drifting pink bullet sparks, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, widescreen side-scrolling composition, no text.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 34 | 45 | 45 | 36 |
+| seed | 12101 | 12101 | 12101 | 12101 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, organic creature, sea animal, castle towers with flags, modern warship, pure black background, cute style`
+**Notes:** First Iron Tide contact. Emitter glow anchors #b84cff/#ff5aa0; planet rim from zone A (#8ad0a8 terrain).
+
+## hb01-weakpoint — wing-tip emitter core close-up
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 2/3 of 3
+
+```text
+Extreme close-up arcade boss weak point study, filling the frame with one enormous wing-tip emitter pod of the HALCYON BULWARK warship, a layered steel funnel of concentric armor petals partly bloomed open to expose a searing violet-pink energy core with a bright white center suspended in magnetic rings, arcs of pink lightning crawling along heat-blued metal, molten orange seams glowing between the plate layers, fragments of the dark blue-black fortress hull falling away at the edges of frame with tiny bolts and torn cable ends visible, radial glow washing the surrounding void navy into violet, one or two pink bullets bursting at the rim of the exposure, hyper-detailed mechanical texture rendered in a saturated 16-bit inspired language with bold dark outlines and pixel-cluster shading accents, dramatic macro composition, subtle CRT scanline glow, no text.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1024x1024 | 1024x1024 | 1024x1024 | 1024x1024 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 45 | 36 |
+| seed | 12102 | 12102 | 12102 | 12102 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, human faces, eyes, organic tissue, gore, blurry, pure black background`
+**Notes:** Square crop for strategy guide "how to kill it" cards. Core white-hot center, arms violet #b84cff.
+
+## hb01-warning — silhouette under the alert flash
+**Models:** flux.1-dev, sd3.5-large
+**Variation:** 3/3 of 3
+
+```text
+Boss alarm moment in arcade style, the screen-edge darkness closing in as a siren of red light sweeps horizontally across deep navy space, the HALCYON BULWARK reduced to a massive pure silhouette blocking the glow of the blue planet behind it, only its geometry readable, broad bastion hull, swept wing spars, and two emitter points igniting like cruel pink stars at the wing tips, beneath the silhouette a tiny dart-shaped fighter with a single thin orange exhaust line drifting low at the bottom left, the whole image lit by alternating bands of dark red and black siren light, a subtle flash-frame strobe feel with duplicated faint ghost edges on the silhouette, ominous and graphic, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, high-contrast dramatic composition, subtle CRT scanline glow, no text, no letters.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 12103 | 12103 | 12103 | 12103 |
+
+**Negative:** (sd3.5/qwen only) `text, warning banner, letters, symbols, photorealistic, 3d render, watermark, detailed ship visible, pure black background, rainbow palette`
+**Notes:** WARNING text itself lives in 70-key-moments — this variant stays pure silhouette so the UI can overlay it.

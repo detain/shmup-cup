@@ -1,0 +1,43 @@
+# 50 — High-Speed Dimension (stage backgrounds)
+# Neon-violet Mode-7 checker floor rushing to a horizon, fog beyond.
+# Seed slots: wallpaper 17001, vertical poster 17002.
+
+## high-speed-dimension-wallpaper — Wide wallpaper: Mode-7 checker plain at extreme speed, violet horizon, light trails
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. An impossible neon dimension seen as a runaway Mode-7 plane: a vast checkerboard floor of deep violet and dark indigo squares rushing toward the camera at ludicrous speed, the tiles near the bottom edge stretched into long horizontal motion smears while the tiles receding up the frame compress into a tight barcode of alternating color that melts into the horizon line. The horizon sits high, a hard glowing band of pale lilac light above which the sky is not a sky but a fog — a gradient wall of deep violet-black cloud with a faint grid of scanlines drifting through it, as if the dimension itself were a failing screen. Down the center of the plain runs a bright canyon of reflected light, the checker seam compressed into a liquid silver-lilac ribbon that stabs from the horizon to the camera. At intervals, monolithic tilted slabs of the same checker material lean out of the fog at the edges of the plain, catching rim-light on their near corners, and short parallel streaks of cyan-white light zip across the tiles like data packets skimming the surface. The whole image vibrates with forward velocity; the pixel grid of the checker is crisp at the bottom and disintegrates into pure speed lines toward the sides. Palette locked to electric violets and indigos with lilac horizon and one cyan accent, over a lifted deep-navy base, never pure black. No characters, no text, no letters, no user interface elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 50 | 30 |
+| seed | 17001 | 17001 | 17001 | 17001 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, race track, cars, asphalt road, sunset orange, blue sky with clouds, stars visible, pure black background, watermark, text, blurry low-res mush, curved horizon of a planet, checkers melting into stripes mid-frame, frame border, letterboxing`
+
+**Notes:** Color reference: floor #6a4ab0 / #3a2a6a, horizon #9a7ad8, fog #20124a, data-streak cyan ~#38c8e8. This is the zone's fake-3D Mode-7 gaffe rendered honestly as art — the "crisp bottom, speed-line sides" gradient of detail is what sells velocity without motion blur slop. sd3.5 at guidance 5.0 keeps the checker squares square near the camera; at 4.5 it starts wobble-perspective. No ships: this plain IS the character.
+
+## high-speed-dimension-poster-vertical — Vertical poster: tunnel of light from inside the Mode-7 plane, horizon line overhead
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The high-speed dimension folded into a vertical drop: the bottom two-thirds of the frame is a checkerboard plane of violet and indigo squares flying straight down toward the viewer, tiles streaking into long vertical light-rails along the left and right edges of the image while a clean central lane of compressed seam-light runs bottom to top like an exposed filament. Halfway up, the plane curls over itself — a slow wave in the floor of the dimension — and beyond that wave, at the top of the frame, the horizon band burns across horizontally: a hard ribbon of pale lilac with a thin white core, the only stable line in the picture, its light spilling downward and rimming every tile edge above it in silver. Between the curl and the horizon floats the fog, a deep violet-black veil with drifting scanline striations, half-swallowing a procession of enormous tilted checker monoliths that hang inverted above the horizon like a reflected fleet. Rivulets of cyan-white data-light run upward along the lane toward the horizon against the downward rush of the tiles, crossing the image in a double-exposure of conflicting speeds. The composition is one lunging vertical vector: from tumbling floor at the feet, up the filament, into the patient light at the top. Electric violets, indigo shadows, lilac horizon, cyan accents, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 896x1152 | 896x1152 | 896x1152 | 896x1152 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 45 | 40 | 30 |
+| seed | 17002 | 17002 | 17002 | 17002 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, race track perspective, cars, sky and clouds, sun, stars, pure black background, watermark, text, blurry, horizontal composition, bent checker lines, rainbow colors, frame border, letterboxing`
+
+**Notes:** Color reference: tiles #6a4ab0/#3a2a6a, horizon ribbon #9a7ad8 with white core, fog #20124a. The "floor curls over with an inverted fleet beyond the horizon" is deliberately surreal — the dimension ignores up/down; flux.1 usually nails the curl but muddies the horizon line, so check that the ribbon stays razor straight. Strong as a set-piece loading screen.

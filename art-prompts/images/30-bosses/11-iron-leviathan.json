@@ -1,0 +1,138 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/30-bosses",
+  "file": "11-iron-leviathan",
+  "source": "11-iron-leviathan.md",
+  "entries": [
+    {
+      "id": "ilv-reveal-v1",
+      "slug": "ilv-reveal",
+      "title": "full raid ship sliding into view broadside",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron leviathan raid ship gliding in broadside across a deep-navy star field, a long slender raider hull like a mechanical eel crossed with a battleship, a hardened prow ram shaped as a clenched beak of riveted steel, and flanking gun batteries running the whole body in a row of synchronized turrets that track left in unison. The hull plating is dark gunmetal with a rust-red waterline stripe and amber running lights, vents trailing thin smoke in the slipstream. Small escort pods peel off its flanks. Deep-navy background from near-black blue to midnight blue, never pure black, scattered pale stars, pink-hot muzzle glints from the batteries. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+      "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, fat tub hull, wings, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 13101
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13101
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 13101
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 13101
+        }
+      },
+      "notes": "The 1536x640 ultrawide is the definitive format for a long-body raider — color reference: gunmetal, rust-red stripe, amber lights."
+    },
+    {
+      "id": "ilv-weakpoint-v2",
+      "slug": "ilv-weakpoint",
+      "title": "prow ram joint and reactor spine seam",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the head of an iron leviathan raid ship filling the frame at a three-quarter angle, showing its two vulnerabilities — the pivot collar where the riveted steel beak-ram joins the neck, gapped to reveal screaming white-hot hydraulic light, and along the crest the reactor spine seam where overlapping plates fail to meet, bleeding amber glow and drifting sparks. The beak surface is scarred gunmetal with a rust-red stripe, small sensor eyes like drilled portholes glinting pink. Deep-navy star-field background, bold dark outlines, saturated limited palette, subtle CRT scanline glow.",
+      "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, soft organic flesh, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 13102
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13102
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 13102
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 13102
+        }
+      },
+      "notes": "Ram collar + spine seam read as a two-phase damage story for raid documentation."
+    },
+    {
+      "id": "ilv-warning-v3",
+      "slug": "ilv-warning",
+      "title": "raid shadow crossing the playfield before arrival",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a playfield over deep-navy space where an enormous shadow slides across the star field from right to left, long, narrow and eel-straight, occluding stars section by section as it passes. Only the shadow is visible plus a single racing line of amber running lights igniting along its length and one pink-hot glow at the beak-prow entering from the edge. A tiny steel-blue player dart with cyan canopy and orange engine flare holds position center-left beneath the darkness. Composition: the diagonal of shadow dominates, the ship small and defiant. Deep-navy palette, never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame.",
+      "negative": "text, letters, watermark, photorealistic, 3d render, blurry, fat rounded shadow, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 13103
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13103
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13103
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 13103
+        }
+      },
+      "notes": "The length of the shadow band tells the raid story without showing the ship — flux.1-dev keeps the occultation clean."
+    }
+  ]
+}

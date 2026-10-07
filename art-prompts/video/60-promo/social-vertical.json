@@ -1,0 +1,90 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/60-promo",
+  "file": "social-vertical",
+  "source": "social-vertical.md",
+  "entries": [
+    {
+      "id": "social-logo-drop-vertical-v1",
+      "slug": "social-logo-drop-vertical",
+      "title": "wordmark slams in, bullet rain behind",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Vertical 9:16 retro 16-bit pixel-art social clip: a heavy blocky arcade wordmark drops fast from the top of the frame and slams into the center with a screen-wide impact flash, bold yellow-to-red fire-gradient letters ringing with a white outline, a shockwave of square pixel sparks radiating outward and upward, behind it an endless slow rain of hot-pink and violet glowing bullets falls past through deep navy darkness, the letters bounce once and settle with an ember pulse, slight camera kick on impact then lock, punchy arcade title energy, CRT scanline glow, single continuous shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, horizontal framing bars",
+      "settings": {
+        "resolution": "720x1280",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 26011
+      },
+      "sourceImage": null,
+      "notes": "Text again — this is the lottery version; the safe production route is wan2.2-i2v from the logo still with the drop re-timed in an editor. Bullet rain behind a locked logo is the perfect silent-loop feed plate."
+    },
+    {
+      "id": "social-kestrel-flyby-vertical-v2",
+      "slug": "social-kestrel-flyby-vertical",
+      "title": "ship crosses frame, camera whips after it",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Vertical pixel-art arcade shot: a small steel-blue dart fighter streaks into frame from the left and rockets across to the upper right, its orange engine trail drawing a long curved ribbon behind it, pink bullet sparks popping along its path, the camera snaps in a quick whip-pan tracking the ship then settles as it exits, distant blue planet rim drifting below, punchy speed blur on background layers only, single continuous take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, ship moving vertically",
+      "settings": {
+        "resolution": "576x1024",
+        "num_frames": 97,
+        "fps": 30,
+        "duration": "~3.2s",
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 26012
+      },
+      "sourceImage": null,
+      "notes": "Diagonal cross-frame travel suits 9:16 far better than horizontal scroll does. The whip-pan settle loop-cuts cleanly back to the entry frame — natural three-second feed loop."
+    },
+    {
+      "id": "social-bullethell-beauty-frame-v3",
+      "slug": "social-bullethell-beauty-frame",
+      "title": "square slow drift through a held pattern",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "The camera drifts almost imperceptibly forward through a frozen-lattice bullet-hell composition made alive: rows of hot-pink, red and violet glowing pixel bullets creep and rotate on their pattern paths with metronome slowness, tiny gold point sprites sparkle and cycle through their spin somewhere in the mid-ground, the blue planet rim haze shimmers along the bottom, the lone fighter makes one small crisp dodge between two converging streams, everything else holds its lethal geometry, hypnotic dangerous beauty, seamless loop, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "512x512",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 3.8,
+        "steps": 30,
+        "seed": 26013
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/60-promo/bullethell-beauty-frame-v1-flux.2-dev.png",
+        "glob": "60-promo/bullethell*"
+      },
+      "notes": "The \"pattern as wallpaper\" shot — bullet-hell screenshots are already compositions, i2v just breathes on them. Metronome-slow pattern motion plus micro-dodge loops beautifully as a square profile video or store-page tile."
+    }
+  ]
+}

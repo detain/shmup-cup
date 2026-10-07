@@ -1,0 +1,61 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/40-boss-deaths",
+  "file": "mega-crash-shockwave",
+  "source": "mega-crash-shockwave.md",
+  "entries": [
+    {
+      "id": "megacrash-white-ring-v1",
+      "slug": "megacrash-white-ring",
+      "title": "the pure expanding ring",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "A pinpoint of white light at frame center blooms into a perfectly round expanding shockwave ring racing outward across a deep navy pixel-art starfield, the ring's edge bright white with a thin violet inner glow, star pixels and loose debris ahead of it pushed aside and scattering as it passes, the whole frame washing to soft white at the end, camera static, one single accelerating expansion, no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, multiple rings, explosion fireball, smoke",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 97,
+        "fps": 30,
+        "duration": "~3.2s",
+        "guidance": 3.2,
+        "steps": 35,
+        "seed": 24006
+      },
+      "sourceImage": null,
+      "notes": "Geometrically simple motion — LTX almost never fumbles a single expanding circle. The wash-to-white final frame is the universal transition card: reuse it as the outgoing cut between every major beat in trailers."
+    },
+    {
+      "id": "megacrash-field-shove-v2",
+      "slug": "megacrash-field-shove",
+      "title": "ring rolls through the wreckage and the player",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen aftermath frame: a colossal white shockwave front advances from the right side of the screen across the whole playfield like a wall of light, its leading edge crackling with violet filaments, tumbling armor plates and gold point sprites swept ahead of it skittering leftward, the small mint-green manta craft caught in the wash lifting its nose and riding the wave forward with all thrusters blazing amber, trailing ribbons of distorted starfield behind the front, deep navy space bending at the wave boundary, the frame brightening as the wall reaches the camera and bloom swallows the edges, bold-outlined debris, CRT scanline glow, overwhelming clean force, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fire, organic smoke",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.2,
+        "steps": 40,
+        "seed": 24007
+      },
+      "sourceImage": null,
+      "notes": "Side-sweeping wall instead of a ring keeps the side-scroller grammar — pairs as the direct continuation of the chain-death clips. Gold points riding ahead of the wave stitches the two death files together in an edit."
+    }
+  ]
+}

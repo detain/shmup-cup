@@ -1,0 +1,90 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/20-gameplay",
+  "file": "zone-transition-parallax",
+  "source": "zone-transition-parallax.md",
+  "entries": [
+    {
+      "id": "transition-brine-raster-v1",
+      "slug": "transition-brine-raster",
+      "title": "gliding into the teal gas-sea with wobbling wave walls",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Widescreen 2D side-scrolling retro 16-bit pixel-art transition: the steel-blue dart fighter cruises right through layered parallax space as the deep navy gives way ahead to a glowing teal gas-sea, vast wobbling raster wave bands of luminous cyan mist undulate vertically in slow rolling motion across the mid-ground, bright green-yellow vapor currents drift past the foreground at speed while distant wave layers crawl, the fighter's orange trail bends in the cross-currents, pink spark particles fleck the mist, camera tracks right at steady cruise speed, dreamy undersea-nebula atmosphere with bold saturated color bands, faint CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4,
+        "steps": 35,
+        "seed": 22009
+      },
+      "sourceImage": null,
+      "notes": "Brine Nebula identity shot. The undulating raster bands are the zone's gimmick — keep them vertical-wave, if the model turns them horizontal the still pairing below is more reliable."
+    },
+    {
+      "id": "transition-magma-cave-exit-v2",
+      "slug": "transition-magma-cave-exit",
+      "title": "bursting out of a lava tunnel into open fire",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Fast side-scrolling pixel-art run: the blue dart fighter shoots rightward out of a dark rock tunnel mouth into a vast lava cavern, foreground stalactite silhouettes whip past quickly, orange lava lakes glow and pulse below, erupting cones pop with fountain sprays in the mid-ground, heat shimmer ripples the air, camera tracks right accelerating slightly, strong speed contrast between near and far layers, continuous single shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, first-person camera, vertical scrolling, HUD",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 121,
+        "fps": 30,
+        "duration": "~4s",
+        "guidance": 3.4,
+        "steps": 40,
+        "seed": 22010
+      },
+      "sourceImage": null,
+      "notes": "Tunnel-to-open reveal is LTX's strongest transition grammar — the near-layer whip-past sells speed. Magma Deep beat; loop the cavern half by trimming the tunnel exit frame."
+    },
+    {
+      "id": "transition-storm-front-v3",
+      "slug": "transition-storm-front",
+      "title": "entering the slanting rain of Tempest Ridge",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "The pale-mint manta craft banks gently as it flies into a rolling wall of dark storm clouds, rain begins to slant diagonally across the frame streaking past the lens, jagged snow ridge tops scroll slowly below in the mid-layer, intermittent violet lightning flashes illuminate the cloud volumes from inside, wind smears the mist layers into faster leftward drift, the twin amber thruster ribbons bend sideways in gusts, camera tracks right steadily through the front, continuous single take, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4,
+        "steps": 35,
+        "seed": 22011
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/20-gameplay/tempest-rain-entry-v1-flux.2-dev.png",
+        "glob": "20-gameplay/tempest*"
+      },
+      "notes": "Rain streak direction and lightning timing carry this one; the still guarantees cloud volume reads. Lightning flashes make it unsuitable for a loop but perfect as a one-shot act opener."
+    }
+  ]
+}

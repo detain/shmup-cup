@@ -1,0 +1,51 @@
+# Key Moments — Dawn Flight Home
+
+The exhale shots: one ship, a half-risen pale-gold sun, a fortress burning behind or a
+distant light ahead. Minimal motion, maximum feeling. These loop well as credits backdrops.
+
+## dawn-silhouette-home — half-sun, one ship, engines at idle
+**Model:** wan2.2-i2v
+**Mode:** i2v
+**Variation:** 1/2
+
+```text
+The lone steel-blue fighter cruises slowly rightward across the face of a vast pale-gold rising half-sun, its silhouette trimmed in warm light, engine trail thin and steady rather than blazing, high thin cloud bands drifting slowly leftward at three different parallax speeds, the dark sea below throwing a long shimmering gold road, small glints of settled debris still twinkling far behind at frame's left, the ship holding an unhurried level glide as the sun brightens almost imperceptibly, camera static wide then a very gentle drift right with the ship, serene earned-peace mood, continuous single take, no cuts.
+```
+
+**Settings:**
+| param | value |
+|---|---|
+| resolution | 1280x720 |
+| num_frames | 81 |
+| fps | 16 |
+| duration | ~5s |
+| guidance | 3.8 |
+| steps | 35 |
+| seed | 25008 |
+
+**Negative:** `worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut`
+**Source image:** `art-prompts/images/50-key-moments/dawn-flight-v1-flux.2-dev.png` (glob `50-key-moments/dawn-flight*`)
+**Notes:** Guided low (3.8) on purpose — this clip should feel like a painting breathing, not performing. Cloud parallax plus sun-brighten is all the motion needed; excellent credits-roll plate and near-loopable if you avoid the brightening phrase.
+
+## dawn-burned-fortress — fly past the smoldering wreck at first light
+**Model:** ltx-video
+**Mode:** t2v
+**Variation:** 2/2
+
+```text
+Side-scrolling pixel-art aftermath: the tiny blue fighter flies steadily rightward past the silhouette of a colossal burning mechanical fortress-ship, slow orange fire flickers across its broken hull plates, thick smoke columns lean and drift leftward in the morning wind, embers float up and past the camera, a pale gold sunrise glows along the bottom edge backlighting everything, camera trucks right at the ship's pace keeping the wreck sliding behind, quiet victory melancholy, single continuous shot.
+```
+
+**Settings:**
+| param | value |
+|---|---|
+| resolution | 768x512 |
+| num_frames | 121 |
+| fps | 24 |
+| duration | ~5s |
+| guidance | 3.2 |
+| steps | 35 |
+| seed | 25009 |
+
+**Negative:** `worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, explosions, collapsing, realistic fire`
+**Notes:** Embers-up-plus-smoke-lean is the pair that keeps a static-ish scene alive; the matched truck-right gives travel without events. Loopable after a trim — pick in/out frames where an ember column matches.

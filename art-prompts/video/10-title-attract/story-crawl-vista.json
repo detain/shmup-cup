@@ -1,0 +1,64 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/10-title-attract",
+  "file": "story-crawl-vista",
+  "source": "story-crawl-vista.md",
+  "entries": [
+    {
+      "id": "story-crawl-iron-horizon-v1",
+      "slug": "story-crawl-iron-horizon",
+      "title": "forward glide toward the fortress-ship armada",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Epic widescreen retro 16-bit pixel-art establishing shot: the camera glides slowly and steadily forward through deep-navy space dotted with parallax star layers, ahead a vast dark horizon of the iron tide emerges from the black — silhouettes of enormous mechanical sea-creature fortress-ships, riveted plate armor catching cold blue rim light, a few glowing violet porthole strips and pink energy seams, low orange thruster glows smoldering along their hulls, teal gas wisps drifting across the foreground, ominous but stately pacing, quiet dramatic cosmic dread, continuous single shot with no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, explosions, small cramped composition",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 21007
+      },
+      "sourceImage": null,
+      "notes": "Forward dolly against a static armada reads as \"approaching menace\" — ideal crawl bed; keep story text overlaid in the upper third where the model leaves navy negative space. If the fortress-ships morph into noise, halve motion strength or use the i2v pairing."
+    },
+    {
+      "id": "story-crawl-planet-rim-v2",
+      "slug": "story-crawl-planet-rim",
+      "title": "lateral drift along a sunrise planet edge",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "i2v",
+      "positive": "The camera trucks slowly right along the glowing rim of a deep-blue planet, the thin atmospheric band shimmers and shifts warmth from navy to pale gold at the leading edge, star pixels parallax steadily leftward in two layers, a single tiny fighter silhouette holds position mid-frame with a faint orange engine trail, all motion slow, even and endless, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "960x544",
+        "num_frames": 121,
+        "fps": 30,
+        "duration": "~4s",
+        "guidance": 3.2,
+        "steps": 35,
+        "seed": 21008
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/10-title/story-vista-planet-rim-v1-flux.2-dev.png",
+        "glob": "10-title/story-vista*"
+      },
+      "notes": "LTX's lateral truck on a mostly-static still is its sweet spot — near-zero morph risk, and the uniform drift makes this seamlessly loopable for a crawl background."
+    }
+  ]
+}

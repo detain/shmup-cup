@@ -1,0 +1,138 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/30-bosses",
+  "file": "13-grasping-bloom",
+  "source": "13-grasping-bloom.md",
+  "entries": [
+    {
+      "id": "glb-reveal-v1",
+      "slug": "glb-reveal",
+      "title": "full bloom open over a vine-anchor field",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: a grasping bloom anchored at the right edge to a thicket of riveted steel vines, its heavy metal petals peeled wide around a pulsing suction center. The petals are armored scoops — dark green-blue plate with brass hinge-ribs and pink warning paint on the inner faces — and each one flexes on visible piston fingers. The flower's throat is a soft violet funnel with spiral muscle-folds that glow inward, and loose debris, spent bullets and dust motes stream toward it along curved suction paths. Cool teal ambient light from the left, sickly magenta bioluminescence from the throat. Deep-navy background never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+      "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, soft plant flesh, healthy garden, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 13301
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13301
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13301
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 13301
+        }
+      },
+      "notes": "The suction is drawn by debris motion lines curving into the throat — flux.2-dev keeps the spiral fold geometry coherent."
+    },
+    {
+      "id": "glb-weakpoint-v2",
+      "slug": "glb-weakpoint",
+      "title": "the pistil core inside the throat",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: straight into the open throat of a mechanical flower, concentric spiral folds of violet-lit metal receding toward the center where the pistil hangs — a brass spindle wrapped in a cage of bent needle-filaments, its glass bulb core sloshing with luminous green fluid and cracking with each intake pulse. Fine hairs of static discharge leap between the filaments and the throat wall. The whole frame has a pull-into-depth feeling, radial composition, dark plate rims at the edges. Deep-navy shadow palette, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro crop.",
+      "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic wet interior, teeth, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 13302
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13302
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 13302
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 13302
+        }
+      },
+      "notes": "Radial depth composition doubles as a poster; the green fluid bulb is the shot-aim dot reference."
+    },
+    {
+      "id": "glb-warning-v3",
+      "slug": "glb-warning",
+      "title": "petals unfurling from a closed fist",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: at the right margin of a deep-navy playfield a huge steel bud stands shut like a clenched fist of overlapping dark plates, and the warning is the unfurling beginning — outer petals prying apart one hinge at a time, each opening cracking out a blade of magenta throat-light that slashes across the star field, and the first faint stream of dust and bullet debris starting to curve toward the emerging gap. The tiny steel-blue player dart with cyan canopy at left drifts almost imperceptibly rightward, engine flare straining against the invisible pull. Cold starlight versus the growing warm wound of pink light. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame.",
+      "negative": "text, letters, watermark, photorealistic, 3d render, blurry, fully open flower, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 13303
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13303
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 13303
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 13303
+        }
+      },
+      "notes": "The dread beat is the first slit of light plus the drifting debris — flux.1-dev is great at the single-prying-petal moment."
+    }
+  ]
+}

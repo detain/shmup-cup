@@ -1,0 +1,123 @@
+# 70 — Key Moments: Boss & Battle Beats
+# The dramatic grammar of the game: WARNING intro, boss death, escape run.
+# Seed slots: warning 20011-12, boss-death 20021-22, escape-run 20031-32.
+
+## warning-flash — The boss-intro WARNING screen: darkened field, strobing warning text, siren light
+**Models:** qwen-image, flux.2-dev
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade shoot-'er-up screen, subtle CRT scanline glow; the most feared frame in the game. A side-scrolling starfield battlefield has gone wrong: the entire scene is dimmed to near-silhouette — the small steel-blue dart fighter with cyan canopy low on the left, its engines reduced to two thin orange slivers; the dense pink and violet bullet streams frozen mid-pattern as faint glowing rails; ahead on the right, the impossible shape of an arriving fortress-ship boss, a mountain of angular armored plating rendered almost entirely in black-blue shadow with only its rim-lights and gun-port glints separating it from the dark. Slamming through all of it, dead center of the frame, the single word "WARNING!!" in enormous blocky arcade letterforms, the letters a hot warning-red with a bright white-gold inner edge and a thick dark navy outline, glowing hard enough to cast red light onto the shadowed hull plates around it. The word sits inside a band of darker screen-wide dim-out, like the game itself pulled a dark curtain to make the text legible, and thin red siren stripes pulse in from both screen edges within that band. Every glint on the boss hull leans toward the text as if the machine is reading its own introduction. Deep navy world, one committed red-white typographic event, lifted shadows, never pure black outside the silhouettes. The text in the image must read exactly "WARNING!!" and nothing else — no other words, letters or numbers anywhere in the scene.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 34 | 40 | 45 | 36 |
+| seed | 20011 | 20011 | 20011 | 20011 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, lowercase letters, script font, misspelled text, extra words, subtitles, score numbers, watermark, blurry, letters floating in 3d perspective, warning triangle icon only, bright undimmed background`
+
+**Notes:** Exact string: "WARNING!!" — qwen-image for reliable type; flux.2-dev as the alt with softer edge glow. Color ref: text red ~#e04828 with #fff080 inner edge, navy outline #1b2a4a. Boss silhouette should read as hull mass, not species — this frame must work for every boss.
+
+## warning-flash-minimal — WARNING beat, abstract: text over pure threat-silhouette only
+**Models:** qwen-image, sd3.5-large
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, limited saturated palette, widescreen arcade title-card composition, subtle CRT scanline glow. Stripped-back boss alarm card: across the full width of the frame, a single black-blue silhouette of a colossal mechanical sea-creature fortress — part fish, part battleship — rising from the bottom edge, drawn only as a hard rim-lit outline in cold navy with no interior detail, its eye a single small distant red disc and its spine-crest notched against the starfield. Above and across the creature's back, burning in the empty sky, the word "WARNING!!" in huge straight-on blocky arcade capitals, warning-red faces with white-hot inner bevels and heavy dark outlines, the letters slightly overexposed so their glow bleeds into the stars. The upper field is deep lifted navy with two faint diagonal siren bands of dull red light sweeping past, and a scattering of ordinary stars that double as CRT dust. No ship, no bullets, no explosion — just the approaching mass and the announcement, the two-element composition of dread. Absolutely nothing else written anywhere; the text in the image reads exactly "WARNING!!". Thick outlines, committed red-on-navy palette, never pure black in the background.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 32 | 40 | 45 | 36 |
+| seed | 20012 | 20012 | 20012 | 20012 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, detailed boss interior, player ship, bullets, explosions, multiple words, misspelled text, small text, watermark, blurry, text tilted in perspective, neon pink lettering`
+
+**Notes:** The 1536x640 crop makes this a natural loading-banner or video thumbnail. Exact string "WARNING!!" again — qwen-image first. Two siren bands only; more stripes turn the sky to barber-pole noise. This variant is also the safe pick for the docs site alarm iconography.
+
+## boss-death-gold-rain — Boss death: chained explosions down the hull while every bullet turns to gold
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; the reward frame, maximum catharsis. A giant mechanical sea-creature fortress-ship is dying across the full width of the sky: a chain of its own explosions is marching along its hull from right to left, each blast a stage of the classic arcade ramp — white-gold ignition dot, blooming amber fireball with outlined flame petals, shredding rust-ember smoke — five of them staggered along the spine so the death visibly travels. The armored plates along the blast line are peeling upward in slow sheets, revealing dark ribcage girders and sparking conduits inside. And the entire bullet storm the boss fired has, this instant, been converted: where seconds ago hostile pink, red and violet orbs filled the mid-field, the air is now a drifting galaxy of tiny sparkling gold point-items, thousands of them, each a chip of warm light with a single bright facet, falling and tumbling like inverted rain over the whole battlefield. Far below on the left, a small steel-blue fighter with cyan canopy and twin orange engine streaks is already flying into the gold downpour, canopy lit yellow from above. Deep navy space, fire oranges and dying ambers up top, a river of gold across the middle, lifted shadows, never pure black. No text, no letters, no score UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 50 | 30 |
+| seed | 20021 | 20021 | 20021 | 20021 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, coin pile, treasure chest, money, fireworks display, ship intact, single explosion, text, HUD, score numbers, watermark, blurry, gold dots arranged in grid, purple explosions`
+
+**Notes:** Explosion ramp #fff080→#f8b030→#f06820→#c83018; point-items are the game's gold capsicles-shrunk ~#f8c860. The three-story frame: chain marching, hull peeling, bullets transmuted — if any leg drops the image stops telling the death story, so check all three before accepting. flux.2 scatters the gold field with better randomness; sd3.5 grids it. Kestrel stripe #3858f0, canopy #38c8e8, glow #f89830.
+
+## boss-death-final-blows — Close-quarter final seconds of a boss kill, cockpit-eye view
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; last-hit moment, extreme scale contrast. Tight horizontal framing on the killing zone: the exposed wound-core of a fortress-ship boss fills the right two-thirds of the image, a cavern of dark internal girders and torn armor flaps around a cracked spherical reactor that is losing the argument — its light now a stuttering white-gold overflow spilling through new cracks, throwing hard rim-light across every girder and rivet in its cave. Between the core's pulses, the surrounding organ-metal walls show the damage history: blast-scoured plates with peeled paint-ribbons, one snapped hydraulic arm still spraying an arc of dark fluid that catches the reactor light, scattered small fires in the amber ramp. Advancing into the frame from the far left edge, impossibly small against the core cavern, a steel-blue dart fighter in hard profile, cyan canopy blazing with reflected reactor-gold, twin orange engine streaks pulled long, its own thin bullets streaking right-to-left as bright parallel lines into the wound. The last hostile bullets in the air near the ship are mid-transformation, back half still pink-red orb, front half already gold point-spark. Everything lit from the dying center: hot gold on metal edges, deep blues in the unlit masses, lifted navy shadow, never pure black. No text, no letters, no UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 20022 | 20022 | 20022 | 20022 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, human pilot, cockpit interior view, organic gore, heart organ, laser sword, text, watermark, blurry, ship on the right side, core dark and dead, blue explosions`
+
+**Notes:** Core overflow white-gold ~#fff080 with amber machinery #e8a030; the half-pink/half-gold bullet is the signature detail — ask for it and check it, flux.1 tends to finish the conversion everywhere or nowhere. Composition is one rule: ship enters from the LEFT edge only, scale read depends on it. This is the book-end to the boss weakpoint macro shots.
+
+## escape-run — The 90-second: corridor collapsing behind a sprinting fighter
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; the escape sequence, pure forward momentum. A steel-blue dart fighter with cyan canopy and screaming orange engine flares rips across the bottom third of the frame from left to right at maximum speed, motion-streaked, skimming the floor of a collapsing canyon corridor. Behind it, filling the entire left end of the image, the world is already gone: a rolling furnace-wall of brown-grey dust, shattered rock and internal orange detonation light chasing the ship, its leading face boiling, giant slabs torn from the canyon walls tumbling inside it, a fan of heat distortion stretching ahead of the front. The corridor itself is failing in ordered sequence so the chase reads as speed increasing: near the blast, both walls already sheared away; mid-frame, ceiling slabs tilting down through the flight path with cracks webbed ahead of them; around the ship, the corridor momentarily intact but floor plates bucking up in a fresh crack-line that races alongside the fighter like a zipper. The exit is not visible; what's visible is more corridor, endless and doomed, bending gently right toward a thin slice of open deep-navy sky at the far edge. Debris streams past the ship in both directions, its bullets now short desperate tracers pointing forward. Earth golds and rusts, furnace oranges, dust smoke, one bright blue ship with an orange prayer, lifted deep-navy shadows, never pure black. No text, no letters, no timer UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 50 | 30 |
+| seed | 20031 | 20031 | 20031 | 20031 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, city streets, cars, tunnel of glass, sci-fi neon corridor, ship destroyed, blast ahead of ship, ship facing left, text, timer numbers, HUD countdown, watermark, blurry`
+
+**Notes:** Strata golds ~#f0c890, blast furnace #e87a1c/#c83018, ship stripe #3858f0. The vector discipline is everything: ship fleeing RIGHT, wall coming from the LEFT; if either flips, the image reads as an ambush, not an escape, so regenerate. "Ordered sequence of failure down the corridor" sells ramping speed without motion blur. No timer in frame — the game owns that UI.
+
+## escape-run-clutch — Escape beat: last-ten-seconds squeeze through a closing stone throat
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; the photo-finish frame of a collapsing world. Deep inside a shrinking stone throat: two canyon walls of banded sand-stone and buried fortress plating lean toward each other from top and bottom of frame, the gap between them narrowing rightward to a slot of bright open night-sky just wide enough for one fighter — and the slot is closing, a fresh fracture running through the upper lip of rock like a slowly falling eyelid. The steel-blue dart fighter is exactly at that pinch point, wings level, canopy cyan flare, engine trails blown to long orange ribbons by afterburner, its nose already through the gap while its rear hull is still brushing falling grit. Behind it, the whole left half of the frame is the pursuing collapse pressed close: an overrunning boil of dust and ember-lit debris, one enormous slab mid-slam where the two canyon walls have already kissed, sending a piston-blast of orange sparks shooting out of the gap ahead of the ship — the fighter is flying inside its own door-slam. The lit-through sky beyond the slot is calm deep navy with indifferent stars, the visual rest-note at the end of violence. Warm dust light against cold escape light, thick outlines on every falling rock, lifted deep-navy palette, never pure black. No text, no letters, no UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 20032 | 20032 | 20032 | 20032 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, ship sideways, ship behind the wall, exit missing, exit on the left, explosion engulfing ship, open desert canyon, calm scene, text, watermark, blurry, lava floor`
+
+**Notes:** The spark-piston ahead of the ship is the hero detail — collapse mechanics literally opening the door one frame before it shuts. Rock strata ~#f0c890 over plating grey; keep the far sky pure calm navy so the right side of the frame breathes against the boiling left. flux.1 makes a gorgeous closing-lid; verify the ship is THROUGH the gap, not beside it.

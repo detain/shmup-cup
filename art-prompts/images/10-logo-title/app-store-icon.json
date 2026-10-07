@@ -1,0 +1,181 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/10-logo-title",
+  "file": "app-store-icon",
+  "source": "app-store-icon.md",
+  "entries": [
+    {
+      "id": "app-icon-v1",
+      "slug": "app-icon",
+      "title": "kestrel dart in a rounded navy tile",
+      "variation": {
+        "n": 1,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.1-dev",
+        "qwen-image"
+      ],
+      "positive": "Mobile app icon design, square with softly rounded corners, a single sleek steel-blue dart-shaped retro fighter jet seen from the side banking slightly toward the viewer with a bold blue fuselage stripe, a glowing cyan bubble canopy and a bright orange engine afterglow trailing to the lower left, heavy dark navy outline around the whole craft, centered in the tile, background a clean radial wash from deep midnight navy at the edges to a slightly lighter blue-black at the center with a few tiny star specks, flat saturated 16-bit game art shading with crisp pixel-cluster texture accents, bold minimal shapes readable at very small sizes, no text anywhere, no border.",
+      "negative": "text, letters, watermark, photorealistic, 3d render, blurry, modern fighter jet, visible pilot, pure black background, cluttered details, drop shadow outside tile",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10021
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10021
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10021
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10021
+        }
+      },
+      "notes": "The default store icon. Stripe #3858f0, canopy #38c8e8, glow #f89830, outline #1b2a4a."
+    },
+    {
+      "id": "app-icon-v2",
+      "slug": "app-icon",
+      "title": "bullet-hell ring with capsule core",
+      "variation": {
+        "n": 2,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.2-dev",
+        "flux.1-dev"
+      ],
+      "positive": "Square game store icon with rounded corners, viewed head on, a perfect circular ring of evenly spaced glowing round bullets in pink, crimson and violet each bullet drawn with a bright white core and a dark rim, the ring encloses a single glossy golden power capsule pill standing vertical at the exact center with a white specular highlight and a thin navy outline, the capsule emits a soft warm halo, background flat deep navy with a faint darker navy checker texture, bold dark outlines, ultra-saturated limited palette, crisp 16-bit arcade vector shapes with pixel texture accents, instantly readable at thumbnail size, no text.",
+      "negative": "text, watermark, photorealistic, 3d render, blurry, irregular bullet ring, messy arrangement, pure black background, rainbow colors",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10022
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10022
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10022
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10022
+        }
+      },
+      "notes": "Abstract alternative icon. Bullet anchors #ff5aa0/#ff3a3a/#b84cff; symmetry is the make-or-break — re-roll if ring wobbles."
+    },
+    {
+      "id": "app-icon-v3",
+      "slug": "app-icon",
+      "title": "\"C\" cup emblem monogram",
+      "variation": {
+        "n": 3,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "qwen-image",
+        "flux.2-dev"
+      ],
+      "positive": "Esports-style app icon, square rounded tile, a single massive block letter \"C\" occupying most of the frame, the letter filled with a vertical gradient from pale yellow through tangerine orange to flame red, thick dark navy outline and a hard inner shadow line, a small steel-blue retro dart fighter flying through the open gap of the C leaving a thin orange trail, three tiny pink glowing bullets orbiting the letter like satellites, background deep navy with a subtle radial teal glow behind the letterform, faint scanline texture, bold flat 16-bit arcade vector design with pixel-art texture accents, high contrast and readable at favicon size, no other text or numbers.",
+      "negative": "garbled letters, extra letters, misspelled text, photorealistic, 3d render, watermark, blurry, serif font, script font, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10023
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10023
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10023
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10023
+        }
+      },
+      "notes": "qwen renders the single glyph most reliably. Logo gradient anchors #f8f070→#f8a030→#e04828."
+    },
+    {
+      "id": "app-icon-v4",
+      "slug": "app-icon",
+      "title": "manta ray glyph icon",
+      "variation": {
+        "n": 4,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Minimal flat app icon, square with rounded corners, the top-down silhouette of a wide flat manta-ray shaped starfighter drawn as a clean symmetrical geometric glyph, pale mint green body with a small bright green oval canopy at the center and two short amber thruster wedges at the rear tail, a single bold near-black green outline around the whole shape, the glyph centered with generous margin, background a solid deep indigo-navy with two faint horizontal darker bands like scanlines, absolutely flat vector shapes, saturated limited palette, 16-bit arcade design language, instantly readable at tiny sizes, no text, no stars, no gradients on the ship.",
+      "negative": "text, letters, photorealistic, 3d render, realistic manta ray, animal creature, visible eye of a fish, blurry, gradient shading, pure black background, watermark",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10024
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10024
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10024
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10024
+        }
+      },
+      "notes": "Deliberately flat — flux.1-dev holds single-color fills best. Manta anchors: body #c8e0d0, canopy #40d070, outline near-black green."
+    }
+  ]
+}

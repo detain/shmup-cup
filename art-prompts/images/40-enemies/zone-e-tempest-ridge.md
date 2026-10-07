@@ -1,0 +1,117 @@
+# 40 — Zone E: Tempest Ridge enemies
+# Storm cloud deck, saw-tooth snow ridges and slanting rain: thunderheads and steed foals.
+# Seed slots: concept 15511-15513, sprite sheet 15521-15523.
+
+## thunderhead-steed-foal — Zone E enemies: a thunderhead storm cell calving a homing steed foal above the cloud deck
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/3 of 3
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Above a roiling sea of storm clouds under a lifted deep-navy sky crossed with slanting cold rain, jagged saw-tooth snow ridges pierce the cloud floor in the far distance. Center-right, a THUNDERHEAD — a hostile storm cell of the IRON TIDE: a dense round-anvil cloud mass in slate and charcoal grays with a single glowing lilac eye at its heart, arcs of violet-white electricity crawling along its underbelly like cable-work, its rim boiling outward. From that boiling rim, mid-calving, comes a STEED FOAL — a small homing seahorse of riveted steel plates and tense cables, curled tail, arched neck, a warm amber lamp-light behind its faceplate, static sparks jumping between its fins — still trailing a wisp of cloud-stuff from its birth. Lower left, a sleek steel-blue dart fighter with a bold blue hull stripe, cyan canopy and bright orange engine glow dives between the pair, thrusters flaring, leaving a white vapor line in the rain, while pink and red round shots with bright cores and dark rims string out of the thunderhead toward it. One violet lightning fork connects cloud to ridge behind them, orange-white explosion bloom dotting a spur of rock.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 15511 | 15511 | 15511 | 15511 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, sunny sky, calm clouds, wings on the seahorse`
+**Notes:** The calving moment ties the foals to their boss parent (a vast seahorse that rides the storm) with a single image — the cloud-stuff trail is the storytelling detail. Lightning lilac ~#b84cff family; keep rain as diagonal light-gray strokes, not blur.
+
+## thunderhead-steed-foal — Zone E enemies: patrol line of thunderheads on the horizon with foals sweeping down at the fighter
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 2/3 of 3
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A long horizon of the Tempest Ridge: an endless deck of roiling slate storm clouds under a deep-navy sky streaked with slanting rain, saw-tooth snow mountains lining the far edge like broken teeth, everything cold and wind-driven. Along the upper third, a patrol line of five THUNDERHEADS — round-anvil storm cells of the machine swarm, charcoal-gray with boiling rims, each nursing one glowing lilac eye and crawling violet arcs along its belly — spaced like watchtowers across the width of the frame. From the nearest two, three STEED FOALS peel off in pursuit: small homed seahorses of riveted steel plates and taut cables, curled tails streaming, amber faceplate lamps burning, static crackling between stiff dorsal fins, dropping in wide S-curves toward the lower left. There, a lone sleek steel-blue dart fighter with bold blue hull stripe and cyan canopy runs flat along the cloud tops, orange engine flare stretched, skimming a ridge spike, a fan of pink and violet shots with bright cores chasing it from above. One foal is caught mid-barrel-roll, a second frames the fighter's wingtip with its snout; a distant orange-white detonation winks inside the cloud deck between the watchtower cells.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 45 | 30 |
+| seed | 15512 | 15512 | 15512 | 15512 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, sunny sky`
+**Notes:** Panoramic = Zone E's identity as a ridge-line gauntlet; the five-cell patrol reads as airspace control. Count guard: keep the thunderheads clearly round-anvil shaped and the foals clearly seahorse-shaped, or the frame muddles. Exactly one fighter.
+
+## thunderhead-steed-foal — Zone E enemies: portrait descent into a thunderhead's mouth as foals silhouette in the lit cloud dome
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 3/3 of 3
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition looking straight up into a storm, subtle CRT scanline glow. From the top of the frame, a colossal THUNDERHEAD fills the sky like a dome: an anvil of boiling charcoal and slate cloud, its underside lit from within by pulsing lilac light, a single huge glowing eye at its center staring down, violet lightning forks radiating from it along the cloud floor like cracks in ice. Falling diagonally through that lit dome, five STEED FOAL silhouettes — small seahorse shapes of plates and cables, curled tails, tiny amber face-lamps glowing — arranged in a descending hunting spiral, each backlit into near-black with a hard violet rim. At the very bottom of the frame, tiny against the storm, a steel-blue dart fighter with cyan canopy and orange engine trail climbs straight up into it, vapor cones snapping off its wings in the updraft, slanting rain rendered as long pale strokes over the whole image, saw-tooth snow ridge tips just visible at the lower corners where the cloud deck drops away. Deep-navy unlit cloud masses frame the edges, never pure black, one distant orange-white flash of a struck ridge.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 896x1152 | 896x1152 | 896x1152 | 896x1152 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 45 | 40 | 30 |
+| seed | 15513 | 15513 | 15513 | 15513 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, tentacles, whale shape`
+**Notes:** Vertical ascent poster — the swarm's airspace as a cathedral of storm. The eye-lit dome doubling as boss foreshadowing is intentional; keep the eye small enough (a third of the dome at most) that the thunderhead still reads as an enemy class, not the boss.
+
+## tempest-ridge-sprite-sheet — In-game pixel sprite sheet: thunderhead states, steed foal frames, bolt drone set on flat navy
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 1/3 of 3
+
+```text
+SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a THUNDERHEAD storm cell in five states: a small boiling charcoal cloud puff with a barely open lilac eye, the same cell swelling to full anvil shape, eye blazing wide, belly arcs of violet-white electricity branching out, and a collapsing dissipating puff with two fading sparks. Middle band — a STEED FOAL, a small riveted steel-plate seahorse with curled tail and amber face-lamp, in six swim frames: tail coiled, tail uncoiling mid-thrust, fins braced with static ticks, a banking lean, a nose-down stoop, and a level glide, all facing left. Bottom band — BOLT DRONES and shared effects: a round-bodied one-prop drone spitting a short violet arc between two prong tips in three firing states, single arc-bolt pixels, pink and lilac round shots with bright cores and dark rims, three diagonal rain-stroke overlays, and a four-frame tiny orange-white explosion. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.5 | 3.5 | 3.5 | 4.0 |
+| steps | 34 | 40 | 40 | 30 |
+| seed | 15521 | 15521 | 15521 | 15521 |
+
+**Negative:** (sd3.5/qwen only) `text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, pure black background, perspective distortion`
+**Notes:** Zone E's full roster in one sheet — the thunderhead's five growth states map to its spawn/charge cycle, the bolt drone band covers its arc attacks. Lightning lilac ~#b84cff; foal lamp warm amber to contrast the cold deck.
+
+## tempest-ridge-sprite-sheet — Square pixel sprite sheet: foal hunting formation set, thunderhead eye close-ups, weather effect pixels on flat navy
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/3 of 3
+
+```text
+SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — a STEED FOAL hunting kit: four foals flying in a tight diagonal echelon (all riveted steel plates, curled tails, amber face-lamps, static ticks between fins), then the same formation breaking apart into two pairs, then one lone foal with its lamp flaring hot. Second row — THUNDERHEAD face plates: five close-up cloud sprites of just the boiling charcoal rim and the glowing lilac eye — eye shut, eye cracking, half-open, wide staring, and squinting as it aims — each with a different arc pattern crawling below it. Third row — weather and projectiles: diagonal pale rain-stroke tiles in two lengths, wind-swirl puffs, single violet arc-bolts with forked tips, pink and red bright-core round shots with dark rims, pairs and three-shot fans. Fourth row — effects: tiny orange-white explosion in four growth frames, a dissolving cloud-stuff birth wisp, a static-spark cluster, and a scorch-free white vapor-cone snippet for supersonic passes. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1024x1024 | 1024x1024 | 1024x1024 | 1024x1024 |
+| guidance | 5.5 | 3.5 | 3.5 | 4.0 |
+| steps | 34 | 45 | 40 | 30 |
+| seed | 15522 | 15522 | 15522 | 15522 |
+
+**Negative:** (sd3.5/qwen only) `text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion`
+**Notes:** The formation sprites are the differentiator — echelon vs broken pairs vs lone foal lets an artist block the homing-squad behavior visually. Eye close-up row doubles as an off-screen threat indicator. Rain tiles are additive-blend safe if extraction keeps them on separate cells.
+
+## tempest-ridge-sprite-sheet — Wide strip pixel sprite sheet: thunderhead swelling filmstrip with foal pursuit row and bolt arcs on flat navy
+**Models:** flux.1-dev, sd3.5-large
+**Variation:** 3/3 of 3
+
+```text
+SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Main band — an eight-frame THUNDERHEAD life cycle evenly spaced left to right, same round-anvil cloud silhouette every frame, only the state changing: dark puff, puff with a lilac pinprick eye, swelling anvil, eye opening, full storm cell with belly arcs, arcs at maximum spread across the underside, eye squinting as it discharges one heavy bolt, cell deflating to puff. Second band — a STEED FOAL pursuit strip in six frames: a plated seahorse with curled tail and amber lamp uncoiling from rest to a hard left-facing stoop, static ticks multiplying along its fins, ending with two smaller twin foals splitting off the same pose. Bottom sparse row — shared pixels: violet forked arc-bolts in short and long variants, pink and red bright-core round shots, two diagonal rain strokes, and a one-frame white flash square for lightning strike moments. Large readable clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 15523 | 15523 | 15523 | 15523 |
+
+**Negative:** (sd3.5/qwen only) `text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cloud each frame, pure black background, perspective distortion`
+**Notes:** Filmstrip continuity rule again — "same silhouette every frame, only the state changing" is the load-bearing clause; check it first when triaging. Flux.1-dev leads. The white flash square is the single most reused asset across the zone (lightning telegraphs, foal birth).

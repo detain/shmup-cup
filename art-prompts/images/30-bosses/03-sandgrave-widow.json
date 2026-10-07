@@ -1,0 +1,138 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/30-bosses",
+  "file": "03-sandgrave-widow",
+  "source": "03-sandgrave-widow.md",
+  "entries": [
+    {
+      "id": "sw03-reveal-v1",
+      "slug": "sw03-reveal",
+      "title": "descent on silk lines at twin-sun dusk",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Cinematic arcade boss descent, the SANDGRAVE WIDOW, a colossal mechanical spider fortress lowering itself from the high sky on multiple gleaming silk cables that catch the light like harp strings, its bulbous abdomen a patchwork of sand-dark bronze armor plates with a cracked glass window revealing a churning violet furnace inside, eight long jointed legs each built from segmented struts with hydraulic pistons kicking up puffs of sand as they touch, front limbs ending in huge curved hydraulic fangs dripping fine steel-thread, a spinneret cannon cluster under the head humming with pink charge light, the vast spider hanging above a sea of dark dune silhouettes while a big pale cream sun and a smaller orange sun sink low behind it rim-lighting the silk lines, heat haze shimmer along the horizon, a tiny steel-blue fighter with an orange exhaust streak banking at the bottom left, deep navy shadows, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text.",
+      "negative": "photorealistic, 3d render, text, watermark, real spider, fur, insect eyes cluster, gore, bugs crawling, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 34,
+          "seed": 12301
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 12301
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 50,
+          "seed": 12301
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 12301
+        }
+      },
+      "notes": "Twin suns: big pale #fce8b8, small #f89858. Legs must read as construction-machinery struts, never as hairy limbs."
+    },
+    {
+      "id": "sw03-weakpoint-v2",
+      "slug": "sw03-weakpoint",
+      "title": "spinneret cannon jam close-up",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "Vicious mechanical close-up study, the underside head cluster of the SANDGRAVE WIDOW filling the frame, two massive crossed hydraulic fangs held open like a portcullis revealing between them the spinneret cannon, a ring of six rotating nozzles extruding a braided steel silk cord that glows white-hot at the twist and loads pink bullet spheres into a chamber drum visible behind, bronze armor plates around the cluster scoured by sandblast, small violet charge lamps blinking in a rhythm pattern, thin silk threads crossing the foreground slightly out of focus glinting like razor wire, forced perspective looking up along the fang lines, bold dark outlines, saturated limited palette of bronze, violet and hot pink, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text.",
+      "negative": "organic spider anatomy, real fangs, fur, insect compound eyes, photorealistic, 3d render, text, watermark, slime, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 12302
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 12302
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 12302
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 12302
+        }
+      },
+      "notes": "The chamber drum is the destroyable core — pink #ff5aa0 bullets queued in a visible ring."
+    },
+    {
+      "id": "sw03-warning-v3",
+      "slug": "sw03-warning",
+      "title": "shadow legs across the dune sea",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Apocalyptic minimal arcade poster, under a darkening twin-sunset sky the entire dune sea is thrown into shadow by the SANDGRAVE WIDOW seen only as a black silhouette hanging high in the upper frame, round abdomen and eight splayed legs cut out perfectly against the dying orange and cream light, silk lines drawn as straight dark needles from the corners of the sky down to her body, her eight eye-lamps lit as a tight cluster of pink coals too small to count, across the dunes below long leg-shadows race toward the tiny running silhouette of a dart-shaped fighter leaving a thin blue contrail of engine light at the bottom center, the whole palette reduced to orange, cream, deep navy and one pink accent, dread through negative space, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text.",
+      "negative": "text, letters, photorealistic, 3d render, real spider detail, hairy legs, multiple suns flare artifacts, pure black background, cluttered horizon, watermark",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 12303
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 12303
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 12303
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 12303
+        }
+      },
+      "notes": "Vertical poster. Chasing-shadows composition = the warning beat without any UI text."
+    }
+  ]
+}

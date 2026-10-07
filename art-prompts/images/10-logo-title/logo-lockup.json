@@ -1,0 +1,181 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/10-logo-title",
+  "file": "logo-lockup",
+  "source": "logo-lockup.md",
+  "entries": [
+    {
+      "id": "logo-lockup-v1",
+      "slug": "logo-lockup",
+      "title": "classic wordmark on deep-navy arcade plate",
+      "variation": {
+        "n": 1,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "qwen-image",
+        "flux.2-dev"
+      ],
+      "positive": "Arcade game logo lockup rendering the exact text \"SHMUP CUP\" in heavy chunky block capital letters, the letterforms filled with a warm vertical gradient starting pale buttery yellow at the top, melting through tangerine orange in the middle and ending flame red at the bottom, each letter wrapped in a thick dark-navy outline with a hard offset navy drop shadow, a thin cream-white highlight stripe along the upper edge of every letter, the wordmark centered on a deep-navy arcade background scattered with tiny pixel stars, a faint cyan horizontal glow line behind the text, subtle CRT scanline texture across the whole image, clean vector shapes with pixel-art texture accents, saturated limited palette, no other words anywhere.",
+      "negative": "garbled text, misspelled letters, extra letters, missing letters, warped typography, letter overlap, photorealistic, 3d render, watermark, signature, blurry, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10001
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10001
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10001
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10001
+        }
+      },
+      "notes": "Gradient reference #f8f070→#f8a030→#e04828, outline #1b2a4a, shadow #0a0f26, highlight #fffff0. qwen-image for the letterforms; check the \"W\" spacing."
+    },
+    {
+      "id": "logo-lockup-v2",
+      "slug": "logo-lockup",
+      "title": "wordmark over planet-rim sunrise",
+      "variation": {
+        "n": 2,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "qwen-image",
+        "flux.2-dev"
+      ],
+      "positive": "Video game title logo rendering the exact words \"SHMUP CUP\" in bold rounded slab capital letters with a warm vertical color gradient from pale yellow at the crown through orange into deep red at the base, a heavy navy blue outline around every glyph and a duplicated hard shadow offset to the lower right, a bright cream specular gleam on the top edges, the logo floating large across the upper half of the frame above the curved glowing rim of a blue planet at orbit dawn, thin atmosphere band of cyan light along the planet edge, scattered pixel-perfect stars in the deep navy void, subtle scanline glow, retro arcade key art with clean vector shapes and pixel-art texture accents, no other text.",
+      "negative": "garbled text, misspelled letters, extra letters, missing letters, warped typography, photorealistic, 3d render, watermark, blurry, pure black background, lens flare abuse",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10002
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10002
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10002
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10002
+        }
+      },
+      "notes": "Ties the logo to Zone A's Azure Verge orbit look (planet rim #8ad0a8 terrain hints under cyan atmosphere)."
+    },
+    {
+      "id": "logo-lockup-v3",
+      "slug": "logo-lockup",
+      "title": "wordmark slammed between exploding bullets",
+      "variation": {
+        "n": 3,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Retro arcade logo poster rendering the exact text \"SHMUP CUP\" in massive block letters that fill the center of the frame, the letters tilted slightly upward to the right for kinetic energy, filled with a hot gradient of pale yellow, tangerine and flame red, thick navy outlines, hard drop shadow, surrounding the wordmark a burst of glowing round enemy bullets in pink, crimson and violet each with a bright white core and a dark rim, frozen mid-scatter with orange-white explosion puffs blooming behind them, deep navy background never pure black, faint CRT scanline glow, widescreen side-scrolling arcade composition, SNES-era 16-bit pixel art inspired concept rendering with bold dark outlines and a saturated limited palette, no other text or letters.",
+      "negative": "garbled text, misspelled letters, extra letters, warped typography, photorealistic, 3d render, watermark, cluttered composition, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10003
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10003
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10003
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10003
+        }
+      },
+      "notes": "Ultra-wide banner crop; if qwen is used instead of the recommended pair it also renders this text well at 1152x896."
+    },
+    {
+      "id": "logo-lockup-v4",
+      "slug": "logo-lockup",
+      "title": "gold-foil trophy emblem wordmark",
+      "variation": {
+        "n": 4,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "qwen-image",
+        "flux.2-dev"
+      ],
+      "positive": "Prestigious arcade championship badge rendering the exact phrase \"SHMUP CUP\" in polished golden block letters with a warm gradient from light champagne gold through amber to deep bronze, navy blue outline, gleaming white edge highlights, the wordmark set inside a circular trophy emblem made of crossed golden wings, laurel leaves rendered as simple pixel-art shapes, a small five-point starburst at each side, deep midnight navy background with a subtle violet-to-teal glow vignette that never reaches pure black, thin scanline texture, clean vector shapes with pixel-art texture accents, saturated limited palette, centered symmetrical composition, no other text.",
+      "negative": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, tarnished metal, dull gold",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10004
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10004
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10004
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10004
+        }
+      },
+      "notes": "Square format for avatar/achievement use. \"CUP\" trophy metaphor stays pixel-simple; watch laurel detail noise on sd3.5."
+    }
+  ]
+}

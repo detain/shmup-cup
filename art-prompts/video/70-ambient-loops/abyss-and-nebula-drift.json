@@ -1,0 +1,119 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/70-ambient-loops",
+  "file": "abyss-and-nebula-drift",
+  "source": "abyss-and-nebula-drift.md",
+  "entries": [
+    {
+      "id": "loop-starfield-parallax-v1",
+      "slug": "loop-starfield-parallax",
+      "title": "three-layer drift, calm and endless",
+      "variation": {
+        "n": 1,
+        "of": 4,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Deep navy pixel-art starfield drifting quietly: near bright star pixels slide steadily left, mid-layer stars crawl slower, a faint far dust band barely moves, a soft blue planet glow sits fixed along the bottom edge with a thin shimmering haze line, nothing else happens, perfectly even tempo like a conveyor, no flashes, no cuts, seamless loop of ambient drift.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom, shooting stars",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 121,
+        "fps": 24,
+        "duration": "~5s",
+        "guidance": 3,
+        "steps": 30,
+        "seed": 27001
+      },
+      "sourceImage": null,
+      "notes": "The safest loop on the internet, basically. The fixed planet glow gives a hero section a floor to put type above. `shooting stars` in the negative is load-bearing — one streak and the tile is ruined."
+    },
+    {
+      "id": "loop-starfield-ship-v2",
+      "slug": "loop-starfield-ship",
+      "title": "same drift with one patient patrol craft",
+      "variation": {
+        "n": 2,
+        "of": 4,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "The tiny steel-blue fighter holds its station at right-center frame, only its engine trail streaming and undulating softly behind it, star layers drifting steadily left at three slow parallax speeds, the planet rim haze pulsing almost invisibly, canopy glow breathing on a long even rhythm, camera completely static, no events, endless patient ambience, seamless loop, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut, new subjects entering mid-loop",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 3.5,
+        "steps": 30,
+        "seed": 27002
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/70-ambient/starfield-patrol-v1-flux.2-dev.png",
+        "glob": "70-ambient/starfield*"
+      },
+      "notes": "Ship-in-frame makes it a hero background with identity instead of wallpaper. Undulating trail plus breathing canopy provide life without positional change — the loop seam hides in the trail phase."
+    },
+    {
+      "id": "loop-nebula-gasflow-v3",
+      "slug": "loop-nebula-gasflow",
+      "title": "teal vapor rolling over a violet deep",
+      "variation": {
+        "n": 3,
+        "of": 4,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Slow luminous teal and violet gas flowing steadily leftward across a deep navy void like time-lapse clouds underwater, soft wave folds folding over each other in an even rolling rhythm, fine sparkles of pixel dust carried within the current, brightness swelling and easing gently as the gas thickens and thins, everything continuous and unhurried, no flashes, no cuts, seamless loop of drifting nebula ambience.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic clouds, storm, lightning, scene change, cut, new subjects entering mid-loop",
+      "settings": {
+        "resolution": "960x544",
+        "num_frames": 121,
+        "fps": 30,
+        "duration": "~4s",
+        "guidance": 3,
+        "steps": 35,
+        "seed": 27003
+      },
+      "sourceImage": null,
+      "notes": "Brine Nebula color language for the site's about/press sections. The swell-and-ease brightness cycle is roughly one loop long, which makes the cross-dissolve seam invisible on this family."
+    },
+    {
+      "id": "loop-abyss-particles-v4",
+      "slug": "loop-abyss-particles",
+      "title": "bioluminescent specks rising in black water",
+      "variation": {
+        "n": 4,
+        "of": 4,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "Cold deep-water ambience: clouds of tiny bioluminescent teal, violet and pink pixel specks rise and drift slowly upward through near-black navy water with gentle sideways current wobble, faint long shadows of unseen structures sliding far in the background, occasional single specks brightening and dimming on their own slow cycle, the darkness itself breathing almost imperceptibly, camera static, no events, no creatures entering, endless abyssal calm, seamless loop, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut, new subjects entering mid-loop",
+      "settings": {
+        "resolution": "832x480",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 3.5,
+        "steps": 30,
+        "seed": 27004
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/70-ambient/abyss-particles-v1-flux.2-dev.png",
+        "glob": "70-ambient/abyss-particles*"
+      },
+      "notes": "Abyssal Throne mood for dark-mode UI beds. \"No creatures entering\" matters — Wan wants to send something past. Rising-particle fields tile perfectly since every frame looks like every other."
+    }
+  ]
+}

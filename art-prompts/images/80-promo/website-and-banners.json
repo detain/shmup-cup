@@ -1,0 +1,267 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/80-promo",
+  "file": "website-and-banners",
+  "source": "website-and-banners.md",
+  "entries": [
+    {
+      "id": "website-hero-v1",
+      "slug": "website-hero",
+      "title": "Homepage hero: fighter vs ark silhouette across a full bullet-sky",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; flagship key art for a game homepage, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. The entire promise of the game in one horizontal sweep: on the far left, a steel-blue dart fighter with a bold blue hull stripe, cyan canopy and long orange engine ribbons flies hard right, trailing a tight fan of bright player-bullets, tiny against what fills the other two-thirds of the frame — the approaching broadside of a colossal mechanical fish-shaped fortress-ship, its riveted jaw-plates open like a harbor chain, throat-glow building deep inside as a dark red furnace light, rows of turret-pods and armor seams marching up out of frame top and bottom so the beast reads bigger than the canvas. Between them, the sky is a lattice: three crossing arcades of enemy fire — pink bead-streams, red orb fans and violet spiral wrecks, each bullet a bright core with a dark rim — and threaded single-handedly through the gaps, the fighter's thin counter-fire. Far background: a blue planet rim curving along the bottom edge studded with tiny dark fortress spires, stars above, one distant second manta-shaped wing silhouette climbing into the boss's shadow for scale. Everything saturated, outlined, legible at thumbnail size yet rewarding at full width. Deep-navy space, committed cyan-orange hero colors against the enemy's rust-violet mass, lifted shadows, never pure black. No text, no letters, no logo, no UI — leave the upper-left sky clean and quiet for headline type to be overlaid later.",
+      "negative": "photorealistic, 3d render, text, logo, watermark, UI, health bars, title lettering, blurry, vertical composition, ship on the right, boss smaller than ship, cluttered upper left corner, dark unreadable silhouette",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 21011
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 21011
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 21011
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 21011
+        }
+      },
+      "notes": "Ship #3858f0/#38c8e8/#f89830; boss throat furnace ~#c83018; bullets #ff5aa0/#ff3a3a/#b84cff. The \"clean upper-left sky\" clause is the web-dev contract — check the quiet corner survived, else the headline has nowhere to live. flux.2 keeps the boss cropped beyond frame (bigger-than-canvas read); sd3.5 tends to shrink it fully inside — regenerate if scale contrast drops."
+    },
+    {
+      "id": "website-hero-duo-v2",
+      "slug": "website-hero-duo",
+      "title": "Hero alt: both fighters in crossfire, boss eye framing the shot",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade ensemble composition, subtle CRT scanline glow; homepage banner key art, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. A two-protagonist ambush seen from the side: left of center, a sleek steel-blue dart fighter with cyan canopy pours orange afterburner upward; right of center and crossing its path, a flat ray-winged manta fighter in pale mint with a green canopy and twin amber thrusters rolls under the first ship's exhaust, the two contrails weaving one lazy over-under knot — cooperative choreography frozen mid-decision. Framing the whole pair from the far edges of the image: the head of a deep-water leviathan boss, cropped so we see only its right half — a mountain of charcoal armor plates top-right with a single molten amber sensor-eye the size of both ships combined, its pupil a violet slit catching their engine light, and from the lower-left its counterpart jaw-ridge rising with barnacle-cluster turrets, so the ships fly inside the outline of something that is entirely around them and has not yet decided to close its mouth. Between the two hull-walls, a curtain of pink and violet bead-bullets falls in two slow waterfalls that the ships have a hand's-width of clean lane between. Background: black-blue abyssal water with drifting biolume specks in teal, rock spire shadows below, faint shafts of impossible light from above. Cool abyss palette punctuated by the four hero colors — blue, cyan, mint, amber — the only warm-blooded things in the picture. Lifted deep-navy base, never pure black. No text, no letters, no UI, keep the very center band calm for overlaid headline copy.",
+      "negative": "photorealistic, 3d render, text, logo, UI, watermark, blurry, single ship only, ships same color, boss fully visible, warm sunset palette, cluttered center band, vertical layout",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 34,
+          "seed": 21012
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 21012
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 21012
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 21012
+        }
+      },
+      "notes": "Manta #c8e0d0/#40d070, amber thrusters; eye amber #e8a030 with #b84cff slit. Contrail-knot is the co-op selling point; both models occasionally separate the weave — regenerate rather than PS. Center-calm contract for hero copy overlay."
+    },
+    {
+      "id": "steam-capsule-v1",
+      "slug": "steam-capsule",
+      "title": "Store capsule: title-safe vertical crop, fighter screaming past burning hull",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "qwen-image",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, near-square arcade poster composition, subtle CRT scanline glow; store capsule artwork built to stay readable at small size, ultra-detailed with clean vector shapes. Centered and enormous, filling the right two-thirds of a square frame: the forward third of a mechanical sea-creature battleship's head — a flared iron jaw lined with dark turret barnacles, one great round sensor eye glowing hot violet at the top third of the image, armor plates stepping back into deep rust-shadow. Slicing diagonally across the lower-left foreground, nose toward the upper-right corner of the frame and enormous in perspective, the polished steel-blue nose-cone and swept wingroot of a fighter — cyan canopy edge catching the boss's eye-light, a single orange engine flare blown long behind it off-frame — the two machines on an unavoidable collision course frozen one frame before it. Between them, sparse pink bright-core bullets float like angry fireflies, few enough to read individually even at capsule size. Above the jaw-line, across the very top of the frame, straight-on blocky arcade capitals hold the game's name in a warm vertical gradient from pale yellow through orange into red, thick dark navy outlines, white top-highlight, generous drop shadow: the words \"SHMUP CUP\". Background a clean lifted deep-navy starfield with the faintest violet nebula breath, everything else kept empty so the title, the eye, and the nose-cone do all the selling. Never pure black. The text in the image must read exactly \"SHMUP CUP\" and nothing else.",
+      "negative": "photorealistic, 3d render, extra text, taglines, ratings, misspelled logo, garbled letters, blurry, low contrast, busy background, whole boss visible, dark muddy colors, watermark, letters not straight-on",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 21021
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 21021
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 21021
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4.5,
+          "steps": 40,
+          "seed": 21021
+        }
+      },
+      "notes": "Exact string: \"SHMUP CUP\" in the canonical lockup (#f8f070→#f8a030→#e04828, outline #1b2a4a, shadow #0a0f26, highlight #fffff0). Square generation, then Steam crops — safe-zone rule: the title band and fighter nose must survive a center 16:9 crop, so keep both within the middle 80% of the frame height. qwen-image for the lettering; flux.2-dev if you want a grittier jaw and will overlay the logo in post instead."
+    },
+    {
+      "id": "steam-capsule-no-text-v2",
+      "slug": "steam-capsule-no-text",
+      "title": "Capsule alt: wordless two-shapes composition for text-over workflow",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square arcade graphic composition, subtle CRT scanline glow; wordless store capsule artwork designed for overlaid logo type, ultra-detailed clean vector shapes with pixel-art texture accents. An instant-read duel pictogram rendered with maximum craft: on the left edge of the square, a small perfect steel-blue dart fighter in profile — bold blue stripe, cyan canopy bead, orange engine flare stretched straight back off-frame — its whole silhouette crisp against open space. On the right edge, its answer: the frontal hemisphere of a mechanical fish-battleship's open mouth, drawn in concentric rings of dark armor — outer lip of rust-violet plates, mid-ring of barnacle turrets with tiny magenta lights, and at the dead center of that ring a blinding pink-white core of charge-up light, the whole mouth a target reticle that is also a gun that is also a face. Between the two, exactly three pink bright-cored bullets travel left-to-right in a slight arc, the only things connecting the halves, evenly spaced like an ellipsis. The background is the calmest lifted deep-navy in the game, one hand of faint violet nebula behind the mouth so it seems to breathe, sparse cold stars behind the fighter so it seems alone. Composition is pure grammar — small bright thing, three dots, huge hungry thing — legible at forty pixels square and gorgeous at full size. Never pure black. Absolutely no text, no letters, no logo, no UI anywhere: the entire upper center third is deliberately quiet negative space waiting for type to be placed by a human designer.",
+      "negative": "photorealistic, 3d render, text, letters, numbers, logo, watermark, blurry, busy background, many bullets, explosions, vertical layout, fighter front view, mouth without center glow, pure black",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 21022
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 21022
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 21022
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 21022
+        }
+      },
+      "notes": "The three-bullet ellipsis is the signature device — count them; both models like to multiply or drop. Concentric mouth-as-reticle reads instantly at 120px capsule size, which is the actual storefront. Keep the top-third empty for the logo overlay pass; if a model fills it with stars, guidance up or crop later."
+    },
+    {
+      "id": "wide-banner-21x9-v1",
+      "slug": "wide-banner-21x9",
+      "title": "Panorama banner: the Verge's nine worlds as one scrolling horizon",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, extreme widescreen 21:9 side-scrolling panorama, subtle CRT scanline glow; marketing banner art, ultra-detailed large-format background with clean vector shapes and pixel-art texture accents. One continuous horizontal world-strip that secretly contains nine: reading left to right, a planet-rim of blue sky over green-teal highland terrain with drifting star dust; dissolving through a wobbling teal-violet gas sea where a stone reef-arch sinks into sand-gold fog; into a twin-sunned desert of long dune shadows, a big pale cream sun and small orange one stacked in heat haze; hard-cut by an erupting ridge of black peaks over a molten lake glowing under its own smoke; rising into a saw-tooth snow range beneath a roiling storm deck lit by one violet bolt; melting downward into the walls of a living green-cell vault, tissue ridges breathing in the dark; refracting into a corridor of violet crystal facets with cubes suspended mid-stack; clanging shut as the riveted amber corridor of a steel fortress interior, pipe rows converging; and finally sinking, right at the frame's edge, into a black-blue abyss of rock spires dusted with cold cyan lights. At the exact center, small, flying right through all of it on one straight line, a steel-blue dart fighter with a cyan canopy and a single long orange contrail that visibly passes through every biome — the same ship, the same horizon, nine deaths of palette. The contrail is the only line in the image allowed to be perfectly straight. Deep-navy unifier in every shadow, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 36,
+          "seed": 21031
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 21031
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 50,
+          "seed": 21031
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 21031
+        }
+      },
+      "notes": "Each zone's anchor hue follows the 00-style-kernel table. Nine distinct biomes in one strip is a stress test — flux.2 merges adjacent palettes most gracefully; expect sd3.5 to merge the storm/snow and vault/crystal boundaries into mush and accept 7-8 readable zones if it fights. Straight contrail = the \"one run\" promise; if it bends, regenerate. Best use: Steam header, YouTube channel art, press-kit width."
+    },
+    {
+      "id": "wide-banner-21x9-warning-v2",
+      "slug": "wide-banner-21x9-warning",
+      "title": "Panorama alt: single biome mid-collision, ark rising and fleet of bullets",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, extreme widescreen 21:9 composition, subtle CRT scanline glow; event-banner key art, the largest thing in the game doing the largest thing, ultra-detailed large-format art with pixel-art texture accents. Across an abyssal horizon at the bottom of the world, the ARK arrives: a whale-bodied fortress-ship of thirteen segmented hull-plates surfaces along the entire width of the frame — the panorama is so wide that its head, its mid-body rows of barnacle turrets and its enormous tail fluke are all visible at once in a single gentle arc, water and violet light cascading off every segment in long outlined sheets, the fluke still raised above the surface on the far right dripping luminous teal. Along its back, a hundred running lights flare amber in sequence, and from its blow-port a single vertical pillar of spray and rose-gold dawn light punches clean through the top of the frame. In the lower third, dwarfed but central, two fighters fly the same heading side by side — a steel-blue dart and a pale mint manta, canopy cyan against green, engine trails orange against amber — weaving through a full wall of the ark's defensive fire: hundreds of pink, red and violet bright-core bullets in three stacked arcades that fill every inch of sky between the ships and the creature, a solid lattice of almost-hitting. The water below mirrors the ark's lights in long broken ribbons. Scale is the product: horizon-to-horizon monster, two specks, one impossible wall of color. Palette of black-blue water with teal biolume, amber spine-light, and the whole bullet-hell spectrum in between, lifted deep-navy sky, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, real whale, water spout fountain, single ship missing, one fighter only, calm empty water, text, watermark, blurry, ark underwater, ark in the sky, vertical composition",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 21032
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 21032
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 21032
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 21032
+        }
+      },
+      "notes": "The 21:9 crop is literally why this ark exists — thirteen segments finally fit in one read. Biolume #16485a→#6ad8e0, spine amber #e8a030, bullet ramp per kernel. Watch for the fluke merging into a normal whale tail: it must read as segmented armor-plate on a hinge. Strongest banner for a boss-rush mode reveal; the two-ship pairing quietly sells co-op without stating it."
+    }
+  ]
+}

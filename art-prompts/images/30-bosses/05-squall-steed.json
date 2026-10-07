@@ -1,0 +1,138 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/30-bosses",
+  "file": "05-squall-steed",
+  "source": "05-squall-steed.md",
+  "entries": [
+    {
+      "id": "ss05-reveal-v1",
+      "slug": "ss05-reveal",
+      "title": "cresting the cloud deck",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Majestic storm boss reveal in widescreen arcade key art, the SQUALL STEED, a fortress-sized mechanical seahorse rearing up out of a roiling grey-violet cloud deck, its long snouted head plated in cold steel-blue with a mane of loose tensioned cables streaming sideways in the gale, segmented neck rings creaking open as its chest armor falls away on heavy hinges exposing a swirling captive thunderhead glowing white-blue inside the ribcage cage, coronet spikes along the back lifting sheets of rain, a curled counterbalance tail vanishing into cloud below, saw-tooth snow ridges of a mountain range cutting the lower background under slanting silver rain streaks, a tiny steel-blue dart fighter with orange exhaust climbing the updraft at the left edge for scale, lightning forking between the mane cables, deep navy storm shadows never pure black, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format art with pixel texture accents, subtle CRT scanline glow, no text.",
+      "negative": "photorealistic, 3d render, text, watermark, real seahorse, organic creature, cute pony, ocean water splash, modern helicopter, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 34,
+          "seed": 12501
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 12501
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 50,
+          "seed": 12501
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 12501
+        }
+      },
+      "notes": "Chest thunderhead is both silhouette signature and core. Keep the snout mechanical, cables for the mane."
+    },
+    {
+      "id": "ss05-weakpoint-v2",
+      "slug": "ss05-weakpoint",
+      "title": "the caged thunderhead heart",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "Dramatic boss core close-up, deep inside the opened chest cavity of the SQUALL STEED, a compact furious thunderhead storm cell suspended in a rotating cage of eight curved steel ribs, the mini-cloud churning white-blue with repeated internal lightning flashes that strobe the surrounding rib surfaces between silver highlight and sapphire shadow, arcs jumping from the cage to two anchor rods above like tesla terminals, droplets of frozen rain glittering in the air inside the cavity, beyond the cage the dark tunnel of the steed's throat fading to navy, at the very edges of frame the blurred tips of pink enemy bullets arriving from off-screen and evaporating in the discharge heat, awe and danger, centered composition with strong radial energy, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, pixel-cluster shading accents, subtle CRT scanline glow, no text.",
+      "negative": "photorealistic weather, 3d render, text, watermark, human figure in cloud, face in cloud, anatomy organs, gore, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 34,
+          "seed": 12502
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 12502
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 45,
+          "seed": 12502
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 12502
+        }
+      },
+      "notes": "Ribs opening/closing is the phase tell — capture the mid-open state. Storm glow cool to contrast pink bullets."
+    },
+    {
+      "id": "ss05-warning-v3",
+      "slug": "ss05-warning",
+      "title": "lightning-flash silhouette",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters.",
+      "negative": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 12503
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 12503
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 12503
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 12503
+        }
+      },
+      "notes": "The flash-frame IS the warning beat. Wide crop for loading screens; keep bolt branches out of the silhouette core."
+    }
+  ]
+}

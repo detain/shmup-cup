@@ -1,0 +1,90 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/20-gameplay",
+  "file": "manta-blackhole-vortex",
+  "source": "manta-blackhole-vortex.md",
+  "entries": [
+    {
+      "id": "manta-vortex-drain-v1",
+      "slug": "manta-vortex-drain",
+      "title": "bomb detonates, bullets spiral into the drain",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Widescreen 2D side-scrolling retro 16-bit pixel-art arcade shooter moment: a flat ray-winged manta-shaped craft with a pale-mint hull, green glowing canopy and twin amber thrusters holds the left of frame as a violent violet-blue three-armed spiral vortex tears open at center-right, hundreds of hot-pink and red glowing enemy bullets curve inward and stream into it like water down a drain, shredded pixel debris corkscrews after them, the vortex arms rotate faster and brighter, the whole navy starfield bends slightly toward its core, then a blinding white lightning discharge bursts outward and sweeps the screen clean, bold-outlined sprites, orange-white flash at the edges, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD, realistic smoke",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 22004
+      },
+      "sourceImage": null,
+      "notes": "The signature super-weapon shot — worth the hero budget. Wan handles the inward spiral stream well; the final white discharge may bloom too far, dial guidance to 4.0 if the frame whites out early."
+    },
+    {
+      "id": "manta-vortex-slowmo-v2",
+      "slug": "manta-vortex-slowmo",
+      "title": "slow-motion vortex bloom, camera drifts closer",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "t2v",
+      "positive": "Slow-motion pixel-art energy vortex: a violet three-armed spiral spins steadily at frame center pulling glowing pink bullets inward along curving streams, the mint-green manta craft glides slowly past its edge leaving twin amber thruster ribbons, camera drifts gently closer without shaking, deep navy background stars wheel slowly around the drain, one clean continuous shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, first-person camera, HUD",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 121,
+        "fps": 24,
+        "duration": "~5s",
+        "guidance": 3.2,
+        "steps": 35,
+        "seed": 22005
+      },
+      "sourceImage": null,
+      "notes": "The spin is uniform enough to loop the moment *before* discharge — cut this variant just as the arms reach full speed and it works as a menu/upgrade-screen animation."
+    },
+    {
+      "id": "manta-vortex-from-still-v3",
+      "slug": "manta-vortex-from-still",
+      "title": "animate the blessed bomb frame into the discharge",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": null
+      },
+      "model": "wan2.2-i2v",
+      "modelGroup": "wan22",
+      "mode": "i2v",
+      "positive": "The torn-open violet spiral spins faster, streams of pink glowing bullets curve inward from every edge and vanish down the drain core, debris corkscrews behind them, the manta craft's amber thrusters flare as it banks slightly away, light bends toward the center, then a white lightning sheet discharges outward across the whole frame clearing it, camera static, single continuous take.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.2,
+        "steps": 35,
+        "seed": 22006
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/20-gameplay/manta-blackhole-bomb-v1-flux.2-dev.png",
+        "glob": "20-gameplay/manta-blackhole*"
+      },
+      "notes": "The still fixes the three-arm geometry that pure t2v occasionally twists into four or two arms. Prompt only carries acceleration + discharge; if the lightning never fires, raise guidance to 4.5 and rerun the same seed."
+    }
+  ]
+}

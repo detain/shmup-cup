@@ -1,0 +1,64 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/30-boss-intros",
+  "file": "abyss-ark-sailing",
+  "source": "abyss-ark-sailing.md",
+  "entries": [
+    {
+      "id": "ark-sailing-away-v1",
+      "slug": "ark-sailing-away",
+      "title": "the fluke turns and the horizon starts moving",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen boss intro in abyssal indigo water-light: the frame darkens to near-black navy with two deep red warning pulses, then the camera widens to reveal the ABYSS ARK — a continent-sized mechanical whale flagship of overlapping barnacled steel plates and long violet glow-seams — executing a slow majestic turn at the right of frame, its colossal tail fluke sweeping up and shedding curtains of dark water, bioluminescent specks dragging off its edges like a comet tail, rows of amber running lights flicking on along its back as it angles away toward the distant dark, the tiny manta craft silhouetted small at left chasing its wake, current lines and drifting particulate beginning to flow past faster, stately inexorable menace, bold outlines, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic whale, fast motion, aggressive charging",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.2,
+        "steps": 40,
+        "seed": 23011
+      },
+      "sourceImage": null,
+      "notes": "Restraint is the point — an escaping boss is scarier than an attacking one. If the turn comes off as an attack swoop, strengthen \"slow majestic turn ... angles away\" and drop guidance to 4.0. This clip's last frame is the seed still for the escape-chase i2v beats."
+    },
+    {
+      "id": "ark-wake-drift-v2",
+      "slug": "ark-wake-drift",
+      "title": "tail-flick wake, camera lingers behind",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "i2v",
+      "positive": "The giant mechanical whale's tail fluke drops slowly once, pushing a rolling wake of dark water and glittering bioluminescent specks toward the camera, the hull silhouette slides steadily rightward into the deep, particulate streams past in the current, faint violet seams pulse along its flank, camera holds static then pans slightly right following the retreat, continuous slow departure, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 121,
+        "fps": 24,
+        "duration": "~5s",
+        "guidance": 3,
+        "steps": 35,
+        "seed": 23012
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/30-bosses/abyss-ark-v1-flux.2-dev.png",
+        "glob": "30-bosses/abyss-ark*"
+      },
+      "notes": "The follow-pan-left-behind sells \"we have to chase that\" in one gesture. Wake particles streaming toward camera loop acceptably for an ambient pre-fight menu bed."
+    }
+  ]
+}

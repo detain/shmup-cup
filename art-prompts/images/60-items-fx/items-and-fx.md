@@ -1,0 +1,245 @@
+# 60 — Items & FX
+# Pickups and effects: capsules, color orbs, shield gems, force field,
+# black hole bomb, mega crash, explosions.
+# Seed slots: entry NNN = 18<NN>1/2 (capsules 18011, orbs 18021, gems 18031,
+# force field 18041, black hole 18051, mega crash 18061, explosions 18071).
+
+## power-capsules — Glossy weapon power capsules, four tints, pickup sheet
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/4 of 4
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. A pickup showcase sheet: four glossy power capsules arranged in a shallow diagonal row on a flat lifted deep-navy background, floating with a slight hover shadow beneath each. Every capsule is the same friendly factory shape — a short fat pill with a polished metal cap ring at each end and a wide glass barrel in the middle — differing only in tint: one signal red, one electric blue, one gold, one vivid green. Inside each glass barrel the energy is suspended as a swirling luminous core that matches but outshines the shell, with one bright specular dot on the upper-left of every capsule proving the gloss. Each capsule wears a thick near-black outline and a thin white top highlight arc, chrome end-caps rendered with two crisp bands of reflection. A faint same-colored glow halo bleeds a few pixels around each capsule, stronger at the core window. Under the row, a few tiny gold point-sparks drift, hinting at what the capsules become when collected. Limited saturated palette, crisp edges, arcade jewel-bright finish, never pure black. No text, no letters, no UI, no labels on the capsules.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 18011 | 18011 | 18011 | 18011 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background`
+
+**Notes:** Capsule tints map to weapon colors red/blue/gold/green in the item system; chrome caps stay neutral so tints read instantly at sprite scale. flux.2 renders the four identical silhouettes with correct tint separation; sd3.5 sometimes invents a fifth capsule — count-check and regenerate.
+
+## power-capsules-in-flight — Capsules drifting through live gameplay bullet-fall
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/4 of 4
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; gameplay moment illustration. In the thick of a horizontal shoot-'er-up, three power capsules have just popped from a destroyed enemy at the right side of the screen and are drifting leftward through a lattice of hostile fire: a red capsule leading, gold and blue trailing slightly behind, each retaining its glossy pill silhouette, chrome end-caps and inner glowing core, each trailing a short comet-line of its own color to show its drift vector. The bullets around them are classic arcade threats — bright-cored pink, red and violet orbs with dark rims — arranged in curved streams that part around the capsules' path, so the eye reads a safe lane through the fire. At the far left edge, the nose and cyan canopy of a small steel-blue fighter just enter frame, angling up toward the nearest capsule, its orange engine flare streaking behind. The deep-navy space background carries sparse star dust and a faint violet nebula veil. The capsules are lit slightly brighter than everything except bullet cores — they are the prize in the picture. Hover-glow halos, thick dark outlines, saturated arcade palette, lifted deep-navy background, never pure black. No text, no letters, no score UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 18012 | 18012 | 18012 | 18012 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, explosions destroying capsules, capsules on ground, text, HUD, health bars, watermark, blurry, capsules glowing white, bullets passing through capsules, vertical shooter layout, pure black background`
+
+**Notes:** Kestrel color reference: hull stripe #3858f0, canopy #38c8e8, glow #f89830; bullet cores #ff5aa0/#ff3a3a/#b84cff. The "streams part around the capsules' path" clause is what keeps the scene readable as opportunity rather than chaos. flux.1 occasionally erases a trailing capsule — verify all three present.
+
+## direct-color-orbs — The ten direct-color orbs, two rows of five on navy
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 3/4 of 4
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. A reference sheet of ten direct color orbs arranged in two tidy rows of five on a flat lifted deep-navy field, each orb a perfect glass sphere the same size, floating with a soft matching glow and a tiny dark hover-shadow. Each sphere is transparent-shell over a solid luminous bead at its dead center, with one crisp white specular dot upper-left and a thin rim-light lower-right, giving all ten the same optical construction. The ten core colors, left to right, top row: crimson red, flame orange, sun gold, leaf green, mint teal; bottom row: sky blue, deep blue, royal violet, magenta pink, pearl white. The shells are colorless so only the centers carry hue; thick near-black outlines bind each sphere. Between the rows, a few loose sparks and micro-droplets of the same glass suggest the orbs are minted from liquid light. The arrangement is grid-perfect, jewel-storefront clean, made so a design team can read all ten tints side by side. Saturated limited palette, glossy arcade finish, never pure black. No text, no letters, no labels, no numbers under the orbs.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.5 | 3.5 | 4.0 | 4.0 |
+| steps | 34 | 40 | 50 | 30 |
+| seed | 18021 | 18021 | 18021 | 18021 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, marbles on table, glass beads string, pearls necklace, text labels, numbers, watermark, blurry, orbs overlapping, wrong count, muddy translucent colors, rainbow gradient orbs, pure black background`
+
+**Notes:** These are the direct-select weapon colors; the sheet is intentionally palette-documentation. Counting is the risk: both models drift to 9 or 11 spheres — guidance 5.5 for sd3.5 holds the grid; verify count before accepting. Keep rims dark-outlined so white and pearl orbs don't vanish on glow bloom.
+
+## color-orb-cluster — Burst moment: color orbs scattering from a shattered container
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 4/4 of 4
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; dramatic gameplay moment illustration. The instant a rare container breaks open in flight: at the center of a dark navy field, a split glass shell detonates outward into a fan of ten direct color orbs — red, orange, gold, green, teal, sky blue, deep blue, violet, magenta and pearl — each orb a small glass sphere with a bright solid core and white specular dot, all ten radiating away from the break point along distinct trajectories. Every orb trails a thin comet-line of its own hue, so the full image reads as a blooming flower of pure color opening toward the edges of the screen. Around the burst hang the debris of the container: two halves of a chrome-rimmed glass capsule curling apart, a scatter of tiny droplets of liquid light, and one lingering ring of pale shockwave vapor at the original container size. On the left of frame, a tiny steel-blue fighter with cyan canopy banks into the display, engines bright, silhouetted against the color bloom as if the explosion of spectrum was summoned for it. Star dust and faint nebula behind, everything outlined in thick dark linework, colors at maximum arcade saturation, lifted deep-navy background, never pure black. No text, no letters, no UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 45 | 30 |
+| seed | 18022 | 18022 | 18022 | 18022 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, paint splatter, confetti, fireworks, prism light rays, text, HUD, watermark, blurry, orbs static in a grid, single color burst, pure black background`
+
+**Notes:** This is the website-able version of the orb family — the ten-hue bloom doubles as a portfolio shot for the weapon system. Kestrel reference: stripe #3858f0, canopy #38c8e8. flux.2 keeps each comet-line a distinct hue; sd3.5 may blend crossing trails into rainbow mud — lower steps if that happens.
+
+## shield-gems — Faceted orange-gold shield gems at three charge states
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. Three shield gems floating in a horizontal row on a flat lifted deep-navy field, the same faceted teardrop-cut jewel rendered at three charge states so the row reads as a progression. The gem shape: a pointed-bottom, round-shouldered teardrop built from broad flat facets with hard dark edges, like a low-poly pixel-art jewel, each facet a different value of warm orange-gold. Left gem, spent: dull amber-bronze facets, no inner light, a thin cold rim, almost matte. Middle gem, charged: clean orange-gold with a single hot facet at the heart and a soft outer glow just kissing the outline. Right gem, overcharged: blazing pale gold at the core with light leaking out between the facet seams like a furnace behind a grille, a bright halo bleeding beyond the outline and two or three tiny sparks lifting off the shoulders. All three wear a thick near-black outline and a crisp white highlight slash on the upper-left facet. Hover shadows beneath, subtle. Warm palette against cold navy, arcade-jewel finish, never pure black. No text, no letters, no UI, no setting symbols on the gems.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 18031 | 18031 | 18031 | 18031 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, emerald, diamond, sapphire, blue gem, heart shape, ring setting, jewelry chain, text, watermark, blurry, gems melting, rounded blob shape, pure black background`
+
+**Notes:** Gem family reference: orange-gold ramp ~#f8b030 core to #e87a1c facets, spent bronze ~#6a4418. The three-state row is documentation for the shield meter; flux.2 holds identical silhouettes across states better than sd3.5, which may resize the bright gem. Keep every facet edge dark-outlined so the spent gem doesn't dissolve into the background.
+
+## force-field-shimmer — Ellipse force field around a fighter, fresh to failing wear states
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side view, subtle CRT scanline glow; gameplay effect concept art showing one object in three states across the frame, left to right. A sleek steel-blue dart fighter with a cyan canopy and orange engine glow is wrapped in a protective force field, shown three times in three condition states. Left, fresh field: a clean translucent ellipse of cyan light sized to enclose the whole craft, drawn as overlapping fine contour rings with a soft shimmer gradient, a gentle blue halo, the ship crisply visible inside. Center, worn field: the ellipse has shifted toward violet, its contour rings cracked with dark fissure lines, two or three chunks of the shimmer flickering out to transparency, small impact ripples frozen where enemy fire recently struck. Right, failing field: the ellipse is almost broken — a sparse violet shell with wide gaps, angry pink-white static arcing between the broken rim sections, sparks peeling off into the air, the ship inside clearly exposed from the side. Each state is hit by one pink-cored enemy bullet with a dark rim so the reader can compare cause and effect: the fresh field absorbs it in a bright ring, the worn field in a dull ripple, the failing field lets it pass through the gap. Flat lifted deep-navy background with sparse star dust, thick dark outlines on ship and field rims, cyan-to-violet palette progression, never pure black. No text, no letters, no UI bars.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 34 | 40 | 50 | 30 |
+| seed | 18041 | 18041 | 18041 | 18041 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, soap bubble, glass egg, round circle not ellipse, bubbles cluster, text, HUD, shield icon, watermark, blurry, ship destroyed, all three states different ships, pure black background`
+
+**Notes:** Field wear ramp: fresh cyan ~#38c8e8 to failing violet ~#8a48e8 with pink arc #ff5aa0. Ship reference: stripe #3858f0, canopy #38c8e8, glow #f89830. The hardest ask is ship-identity consistency across the triptych — flux.2 usually re-renders the same silhouette three times cleanly; sd3.5 may vary the craft, in which case treat each state as its own sheet. The bullet in each state is the storytelling element; do not drop it.
+
+## black-hole-bomb-armed — The black hole bomb vortex mid-suction, bullets streaming in
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; signature weapon effect concept art, ultra-detailed. Dead center of a dark navy battlefield, an artificial black hole hangs open: a perfect absolute-dark core ringed by a blazing thin lilac rim of light, and wrapped around the core three great spiral arms of swirling energy — one bright violet, one deep indigo-blue, one steel blue — winding clockwise into the center like a galactic pinwheel, the arms built from hundreds of streaked pixel-light filaments that accelerate and thin as they spiral inward. The suction is visible: a wide scatter of enemy bullets — pink, red and violet bright-cored orbs with dark rims — is caught at the edges of the field, each orb stretched into a short cometary streak aimed exactly at the core, hundreds of tiny pink trails curving into the vortex like iron filings finding a magnet. Light itself bends near the rim: the star field behind the bomb smears into a faint circular halo, and a thin accretion flicker crackles just outside the lilac ring. The whole composition is radial — every line in the image points to the dark center — yet the outer corners of the frame stay calm, dotted with undisturbed stars, so the viewer reads the event horizon's radius. Deep blues and violets with a confetti of captured pink, lifted deep-navy background, the core itself the only near-black element by design. No text, no letters, no UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1024x1024 | 1024x1024 | 1024x1024 | 1024x1024 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 18051 | 18051 | 18051 | 18051 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms, pure black background`
+
+**Notes:** Bomb reference: arms #b060f0 / #6040d0 / #3060b0, rim #d8b0ff, core #080410 (the core is the one sanctioned near-black). Square format because the vortex is radial and doubles as an icon source. "Exactly three arms" needs the negative's arm-count guard — models love two or five. The stretched bullet-streams are the game-feel payload: this weapon eats the screen's bullet hell, so the pink comets must outnumber the calm stars.
+
+## black-hole-bomb-discharge — Detonation: the vortex collapses into a white lightning discharge
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; climactic weapon effect concept art, ultra-detailed. One frame after the collapse: the three-armed violet black hole is gone, and in its place the sky is conducting. From a single small hard white point at dead center, a dozen thick lightning trunks explode radially — jagged, angular, dark-outlined bolts of pure white with pale blue-violet forks splitting off each trunk like frozen river deltas, reaching in every direction almost to the frame edges. Between the main trunks, a fine web of short purple sparks drifts and secondary micro-arcs crawl along the ends of the biggest forks. Around the discharge, the ghost of the implosion remains: a broken ring of lilac vapor where the event horizon was, shattering outward into arcs of fading violet smoke, plus a scatter of the bomb's swallowed bullets being coughed back out as tiny harmless sparks caught mid-air between the bolts. A faint overexposed circle of light bleaches the very center of the image, so the eye starts at white and rides each trunk outward. The rest of the field is deep navy with shaken star dust. Palette of white-hot lightning over violet ghost-smoke on navy, arcade-electric, lifted deep-navy background, no pure black outside the far corners. No text, no letters, no UI, no characters.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 18052 | 18052 | 18052 | 18052 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, storm clouds, lightning striking ground, Tesla coil, lightning bug shape, fractal blue plasma photo, text, watermark, blurry, rounded smooth bolts, single central beam, pure black background`
+
+**Notes:** Discharge whites with violet forks ~#b84cff over ghost ring #d8b0ff on navy. Angular dark-outlined bolts are the brief — model priors pull toward soft plasma, so "jagged, angular, dark-outlined" plus the "rounded smooth bolts" negative carry the look. The lilac vapor ring is what ties this frame to the previous one; if it vanishes, the pair stops telling a story.
+
+## mega-crash — The MEGA CRASH: full-screen white shockwave disc
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; screen-clearing ultimate ability concept art, ultra-detailed. A horizontal shoot-'er-up battlefield at the moment of total erasure: a titanic ring of white light is expanding across the whole frame from a point low on the left, rendered as a perfect arc of searing white with a razor-thin gold leading edge, its curve sweeping from the top of the screen to the bottom and dominating the composition. Inside the swept region on the left, reality has already been reset — clean deep-navy emptiness, every enemy and bullet gone, only faint dissipating pixel-dust drifting. Outside the arc to the right, the battle still exists in terror: dense streams of pink, red and violet enemy bullets, the angular prow of an armored swarm ship, all rendered normally but lit on their left-facing edges by the merciless white of the advancing ring, every surface rimmed in blown-out highlight. Along the arc itself, captured bullets are mid-transmutation, frozen as white silhouette cutouts on the light line, moments from deletion. The wave front throws radial speed-lines ahead of it and a subtle chromatic shimmer where the white meets the dark. Massive scale, arcade-commitment, the brightest object in the game rendered like an honest cataclysm, lifted deep-navy universe, never pure black. No text, no letters, no UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 50 | 30 |
+| seed | 18061 | 18061 | 18061 | 18061 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, nuclear mushroom, solar flare photo, supernova, explosion fireball orange, circular lens flare, text, HUD, watermark, blurry, wave covering entire screen, enemies in front half, pure black background`
+
+**Notes:** Crash reference: disc white with gold leading edge ~#fff080, clean-wake navy #05070f–#0c1a3c. The storytelling trick is the tri-zone frame — already-cleared left, arc itself, still-alive right — so keep the wave mid-sweep, never fullscreen. flux.2 holds the razor arc edge; sd3.5 may bloom it into a blob, drop guidance if the gold edge disappears.
+
+## mega-crash-origin — The launch instant: shockwave just born around the player ship
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; dramatic power-moment illustration, ultra-detailed. The heartbeat before the MEGA CRASH consumes the screen: on the left third of a dark navy battlefield, a lone steel-blue dart fighter with cyan canopy and orange engines hangs in profile, unharmed and tiny — and from its exact position a newborn shell of white light is inflating outward, small enough that the ship is fully inside it, its surface a blistering white dome with thin gold crackle-rings running around it like pressure bands, brightening the air for one body-length in every direction. The shell is perfectly spherical in this early instant, its inner face beading with tiny white sparks, its outer face already starting to shed a halo of pale violet mist. Around and beyond it the hostile world is mid-reflex: nearest enemy bullets near the shell have stopped, caught against the pressure, glowing hotter at their rims; a few frames further out the bullet streams still flow normally in pink, red and violet; an angular swarm hull at the right edge of frame has just begun to tilt toward the light. The ship inside the bubble has its canopy lit white on the near side, silhouette heroic, one bright point of absolute calm at the center of the biggest decision in the game. Deep blues, blinding white-gold bubble, arcade-outline everything, lifted deep-navy background, never pure black. No text, no letters, no UI.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 18062 | 18062 | 18062 | 18062 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, bubble underwater, soap foam, explosion fire, ship destroyed, ship missing, text, HUD, watermark, blurry, wave already fullscreen, shockwave off-center from ship, pure black background`
+
+**Notes:** Kestrel reference stripe #3858f0, canopy #38c8e8, glow #f89830; shell gold crackle ~#f8b030. Centering rule that matters: the sphere must be exactly concentric with the ship or the moment loses meaning — flux.1 sometimes offsets the bubble and it reads as a shield, not a detonation origin. Pairs with the sweep shot as a diptych for the ability page.
+
+## explosion-ramp — The arcade explosion ramp: four frames of one blast, gold to ember
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; classic arcade destruction effect, four-panel sprite-sheet progression on a flat lifted deep-navy background, arranged as a single horizontal row of four equal frames, left to right, each frame the same explosion at a later moment, same position within its frame. Frame one, ignition: a small tight sphere of pale lemon-gold white heat with a crisp dark outline, a few short radial spike lines, absolutely bright, no smoke. Frame two, bloom: the fireball now three times wider, a hot cream core wrapped in rolling petals of amber and tangerine flame, each petal a flat outlined lobe, dark smoke puffs beginning to crown the top, short spark arms thrown out to the sides. Frame three, breakdown: the core has cooled to burnt orange, the petal lobes shredding into separated clouds of rust-red and brown-grey smoke that keep the memory of the sphere's shape, ember sparks streaming outward on straight vectors, the dark outline now wrapping many lobes instead of one. Frame four, death: a wide slow cloud of dark ember-grey smoke veined with the last dim red cracks of internal light, edges dissolving into the navy, a handful of lone orange embers drifting clear of the cloud, one or two gold point-sparks winking at the outer margin. The four frames share scale markers implicitly — same center, growing radius — and read unmistakably as one blast played forward. Palette strictly the explosion ramp: cream-yellow to amber to rust orange to deep ember red over smoke grey, on deep-navy, never pure black. No text, no labels, no numbers on the frames.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 32 | 40 | 50 | 30 |
+| seed | 18071 | 18071 | 18071 | 18071 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, fire explosion stock photo, mushroom cloud, cartoon smiley, text, numbers, arrows, frames merging, different explosions each frame, pure black background, watermark, blurry`
+
+**Notes:** Explosion ramp reference: #fff080 → #f8b030 → #f06820 → #c83018, smoke over navy #0c1a3c. This is the game's canonical death effect as a four-frame storyboard — the phrase "same explosion at a later moment, same position" is the continuity anchor; flux.2 is the reliable author here, sd3.5 often makes four unrelated blasts (hence the negative). Usable directly as an FX bible plate.
+
+## explosion-kill-chain — Multi-explosion kill burst down an enemy line
+**Models:** sd3.5-large, flux.1-dev
+**Variation:** 2/2 of 2
+
+```text
+SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; peak satisfaction gameplay moment, ultra-detailed. A machine-gun of destruction marching left to right along a dense formation of angular mechanical swarm drones: three of the drones have just been hit and are dying in staggered sequence, forming a diagonal chain of explosions across the formation. The nearest kill, left, is already in its smoke-frame — a rust-and-ember cloud with one gold spark winking out; the middle kill is at full bloom, a screaming amber fireball with outlined flame petals and spark arms flung into its neighbors; the far kill, right, is at ignition, a tiny perfect dot of white-gold heat just punched through the drone's chassis, its outline still intact around it. Because the blasts are staggered in phase, the whole image carries a rhythm — a wave of destruction visibly traveling down the line faster than the drones can fall. Fragments of chassis, thick-outlined ring-bolts and shards of plating arc outward from the middle blast on clean ballistic curves, while one un-hit drone at the far right is already banking away, its magenta eye-slit bright with alarm. Behind it all, the deep navy field carries a faint pink haze of leftover bullet light. The explosion ramp colors — cream core, orange bloom, ember death — dominate, lifted deep-navy background, never pure black. No text, no letters, no score popups.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1536x640 | 1536x640 | 1536x640 | 1536x640 |
+| guidance | 4.5 | 3.5 | 3.5 | 4.0 |
+| steps | 36 | 40 | 45 | 30 |
+| seed | 18072 | 18072 | 18072 | 18072 |
+
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d render, explosion all same phase, three identical fireballs, mushroom shapes, nuclear, text, HUD, score numbers, watermark, blurry, drones missing, vertical formation, pure black background`
+
+**Notes:** The three explosion phases must be visually distinct at a glance — ignition tiny-white, bloom amber-petal, smoke ember-grey; that phase-lock is the whole "chain traveling down the line" read, and models will homogenize the three if you drop the per-blast phase clauses. Swarm drone language matches the Iron Tide sheet: gunmetal angular chassis, magenta optics. Great promo-frame-adjacent image; use it when selling game-feel.

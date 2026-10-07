@@ -1,0 +1,267 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/40-enemies",
+  "file": "zone-g-prism-labyrinth",
+  "source": "zone-g-prism-labyrinth.md",
+  "entries": [
+    {
+      "id": "halo-crystal-option-hunter-v1",
+      "slug": "halo-crystal-option-hunter",
+      "title": "faceted ring-crystals and the violet thief frigate",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside a luminous crystal labyrinth corridor: a HALO CRYSTAL hovers mid-approach — a large faceted violet gem the size of a fighter, and around it a slowly rotating ring of six smaller matching crystals, each edge catching pale lilac light, the whole assembly glinting with hard white star-flecks. Behind it, cutting through the corridor at a predatory angle, the OPTION HUNTER: an armored deep-violet frigate with a wedge prow, blunt hull plates, and a grappling array of four open magnetic claws flexing on its flanks — it is hunting the little shimmering drone-orbs that fly escort, one claw already closing around a captured orb and dragging it into a violet launch bay on its belly. The walls are dense triangle-facet crystal, violet with lilac rim-light, breaking the scene into a thousand colored reflections; a stack of larger crystal cubes leans in from the ceiling, mid-tumble. The KESTREL streaks left in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy and orange engine glow, trailing a thin cyan laser bolt, one escort drone already peeled away toward the hunter's claws. The enemy fires a slow rotating fan of pink laser needles that bend around the crystal walls and split into twin threads off the facets. Deep-navy shadow pockets, never pure black. No text, no UI elements.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, extra suns, single flat crystal wall with no facets, eight or more ring crystals",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15711
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15711
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 15711
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15711
+        }
+      },
+      "notes": "Color reference: crystal violet #8a48e8 with lilac edges #c8a0ff, pink laser needles #ff5aa0, hunter hull a desaturated armored violet distinct from the gemstone glow. Flux.2 first for keeping the halo ring, the claw array and the fleeing drone as three legible systems. The hunter must read as SHIP, the halo as GEOMETRY — do not let the models merge them."
+    },
+    {
+      "id": "halo-crystal-option-hunter-v2",
+      "slug": "halo-crystal-option-hunter",
+      "title": "the prism ambush, ultrawide corridor shot",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. A long ultrawide frame of a crystal corridor caught mid-ambush: on the right, the OPTION HUNTER prow-first out of a side gallery, deep-violet armored frigate, wedge prow, four magnetic grapple-claws spread wide, its belly launch bay glowing violet as it ejects the two captured escort drones it just stole — the drones spinning free with flickering damage sparks. Spanning the center of the corridor, a full rotating fan of pink laser needles fired from the halo crystals, the fan bent and multiplied by reflections: the triangle-facet violet walls throw a dozen ghost-fans of light back into the space so the room itself seems to be shooting. On the left, the MANTA glides through the chaos with nerve of steel, its pale mint ray-wing hull picking up violet sheen along every plate edge, green canopy dim, amber twin thrusters short and calm — the manta's wide flat silhouette is a mirror of the crystal facets, both sharp, both cold. A HALO CRYSTAL drifts directly between them, ring of six lilac-edged satellites turning, hard white glints strobing off each facet. Stacking crystal cubes tumble down from the upper right, mid-collapse. Deep-navy shadow in the corridor's far ends, never pure black. No text, no UI elements.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, single laser color, warm orange corridor",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 15712
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15712
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15712
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15712
+        }
+      },
+      "notes": "Color reference: hunter armor violet #6a3ab0-ish under crystal light, bay glow #8a48e8, gem edges #c8a0ff, laser fan #ff5aa0. Ultrawide sells the corridor depth and the reflection trick; the doubled ghost-fans are the zone's identity — ask for them explicitly. The MANTA-on-the-left placement keeps the reading direction of the ambush."
+    },
+    {
+      "id": "halo-crystal-option-hunter-v3",
+      "slug": "halo-crystal-option-hunter",
+      "title": "vertical shaft of falling prisms",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A deep vertical shaft inside the crystal labyrinth, camera pulled back to show the full terrible height: from the top of the frame the OPTION HUNTER descends bow-first like a violet guillotine blade, grapple-claws folded tight for the dive, launch bay dark; below it a constellation of HALO CRYSTALS hangs in the shaft at staggered heights, each a big faceted violet gem with its turning ring of six lilac satellites, their combined glow lighting the walls in bands of purple and pale violet; from the bottom edge the KESTREL rises in diagonal flight, steel-blue dart shape with a bold blue stripe, cyan canopy and a bright orange engine flare, blue bullets climbing in a tight zipper toward the nearest halo, whose ring crystals are flickering apart as it charges a radial burst of pink needles. Between the two forces a slow cloud of GLINT MOTES drifts — thousands of tiny crystal sparks, each throwing its own miniature star-glitter — turning the whole shaft into a shimmering veil that both sides shoot through. The triangle-facet walls of the shaft repeat the light down its length like a broken periscope. Deep-navy at the shaft's far top and bottom, never pure black. No text, no UI elements.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, horizontal composition, single floating crystal",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15713
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15713
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15713
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15713
+        }
+      },
+      "notes": "Color reference: shaft banded #8a48e8 into #c8a0ff, mote glitter white-lilac, kestral stripe #3858f0. Vertical dive composition — thief above, prey below — gives the encounter a natural menace gradient; the mote veil in the middle third is what keeps the frame Prism-Labyrinth rather than generic purple cave."
+    },
+    {
+      "id": "prism-labyrinth-sprite-sheet-v1",
+      "slug": "prism-labyrinth-sprite-sheet",
+      "title": "in-game pixel sprites: halo crystal, option hunter, glint mote",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the OPTION HUNTER in three scales — the full armored deep-violet frigate with wedge prow, four open magnetic grapple-claws on its flanks and a violet glowing belly launch bay, then a medium view where one claw is closed around a captured drone-orb, then a close-up of the launch bay mouth alone, violet light spilling out; row two is a HALO CRYSTAL shown through one full rotation in eight frames — a big faceted violet gem with lilac edge-glints and a ring of six smaller satellite crystals turning around it, the ring's position stepping smoothly frame by frame while the central gem keeps an identical silhouette; row three is the GLINT MOTE in five frames — a fist-sized crystal spark whose edge-lights strobe bright-lilac to dim and whose tiny satellite flecks orbit, plus one frame of the mote bursting into a harmless star-puff. Every sprite crisp, readable at game scale, consistent lighting from above.",
+      "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, organic coral shapes, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15721
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15721
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15721
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15721
+        }
+      },
+      "notes": "Color reference: gem #8a48e8, edge-lights #c8a0ff, hunter armor deep violet with gunmetal plate. The eight-frame ring rotation is the extraction prize of this sheet — insist the central gem never morphs; if it drifts, reroll with guidance up to 6.0 rather than editing."
+    },
+    {
+      "id": "prism-labyrinth-sprite-sheet-v2",
+      "slug": "prism-labyrinth-sprite-sheet",
+      "title": "square grid sheet, compact sprite set",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the OPTION HUNTER frigate in profile facing left, armored deep-violet hull, wedge prow, four magnetic grapple-claws drawn open and closed in two consecutive cells, and a smaller escort-stolen drone orb in a cell beside its open belly bay; center column stacked with HALO CRYSTAL states — idle ring of six lilac satellites aligned, charging where all six satellites glow bright and the central gem dims, firing where the gem flashes white and the ring blurs slightly, and shattered as a hollow outer ring with the central gem gone; right column a 4x4 mini-grid of GLINT MOTES, sixteen tiny crystal spark sprites in smooth strobe sequence, each throwing a one-pixel star-glint, plus the single burst-puff frame at the corner. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.",
+      "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, organic coral shapes, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15722
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15722
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15722
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15722
+        }
+      },
+      "notes": "Color reference: charging satellites at #c8a0ff brightness, firing flash #fffff0, hunter bay #8a48e8. The sixteen-frame mote strobe is deliberately over-specified — it tests whether the model can hold a repeating micro-pattern grid; this sheet style historically comes out best on sd3.5."
+    },
+    {
+      "id": "prism-labyrinth-sprite-sheet-v3",
+      "slug": "prism-labyrinth-sprite-sheet",
+      "title": "wide filmstrip: hunter attack sequence and halo volley",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with clear margin between them. Upper strip, six frames of the OPTION HUNTER attack run facing left: prow entering frame, claws flexing open, a captured escort drone orb yanked from the left toward the belly bay, claw closing on it, the drone's replacement bay-eject flash violet, and the hunter banking out with the stolen orb tucked in the launch mouth — identical frigate design in every frame, only the claw and bay state changing. Lower strip, five frames of a HALO CRYSTAL volley: the central faceted violet gem ringed by six lilac satellites, charging as the satellites brighten one by one like a clock sweeping past six positions, then a single release frame where the gem flashes white and six pink needle-lasers leave the ring pointing outward, then a cool-down frame with the satellites dim and one needle still in-frame. Crystal facet shading consistent in both strips, light from above, hard silhouettes readable at game scale.",
+      "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15723
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15723
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15723
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15723
+        }
+      },
+      "notes": "Color reference: stolen orb #c8a0ff glow, eject flash #8a48e8, needles #ff5aa0. Continuity clause (\"identical frigate design in every frame, only the claw and bay state changing\") is what makes filmstrips extractable; check the sixth frame's silhouette first, it's the usual drift point."
+    }
+  ]
+}

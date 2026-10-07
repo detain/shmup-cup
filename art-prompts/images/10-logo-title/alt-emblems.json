@@ -1,0 +1,181 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/10-logo-title",
+  "file": "alt-emblems",
+  "source": "alt-emblems.md",
+  "entries": [
+    {
+      "id": "alt-emblem-v1",
+      "slug": "alt-emblem",
+      "title": "squadron patch with crossed trails",
+      "variation": {
+        "n": 1,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Military squadron patch emblem design rendered as flat retro arcade vector art, a circular badge with a thick navy border ring, inside the ring two tiny stylized fighters crossed in an X at the center, a steel-blue dart with cyan canopy crossing over a pale-mint manta-wing craft with a green canopy, behind them two orange engine trails cross diagonally filling the badge like ribbon, above the crossed ships a single golden capsule star, the navy ring decorated with small evenly spaced gold rivet dots, deep-navy field inside the badge, no text anywhere, bold dark outlines, saturated limited palette of blue, mint, orange, gold and navy, crisp 16-bit pixel-art-inspired shapes with clean vector edges, centered symmetrical composition.",
+      "negative": "text, letters, numbers, photorealistic, 3d render, embroidery fabric texture, watermark, blurry, asymmetric, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10031
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10031
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10031
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10031
+        }
+      },
+      "notes": "Keep it vector-flat; sd3.5 likes adding cloth texture here — fight it with guidance ≤5 plus the fabric negative."
+    },
+    {
+      "id": "alt-emblem-v2",
+      "slug": "alt-emblem",
+      "title": "iron tide faction sigil",
+      "variation": {
+        "n": 2,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.2-dev",
+        "flux.1-dev"
+      ],
+      "positive": "Menacing faction sigil emblem, flat arcade vector design, a front-facing stylized mechanical fish skull formed from clean geometric armor plates, jagged jaw segments opening into a dark circular void at the center, three thin antennae-like gun barrels rising from the crown, the whole plate skeleton in gunmetal blue-grey with a near-black navy outline, lit from inside the open throat by a sinister pink-red glow, arranged on a vertical banner-shaped shield of deep violet-navy with a subtle wave raster pattern of thin teal lines across it, tiny rivet details, no text, limited saturated palette, bold silhouettes, SNES-era 16-bit concept art mood with pixel texture accents, ominous and regal, centered composition.",
+      "negative": "text, letters, photorealistic, 3d render, gore, real fish, blood, watermark, blurry, cute cartoon, googly eyes, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10032
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10032
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10032
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10032
+        }
+      },
+      "notes": "Galvanic Maw-derived enemy faction crest; glow anchor #ff3a3a throat, hull gunmetal over #0c1a3c."
+    },
+    {
+      "id": "alt-emblem-v3",
+      "slug": "alt-emblem",
+      "title": "black hole bomb crest",
+      "variation": {
+        "n": 3,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "Powerful relic emblem on a square navy plaque, a three-armed spiral vortex rendered as three smooth curved blades of light in violet, indigo-blue and steel-blue swirling clockwise into a perfectly circular pitch-dark core, the rim of the vortex edged with a thin lilac glow, small pink and gold bullet sparks caught spiraling inward along the arms, set against a flat deep-navy background plate with a thin golden border, faint radial scratch lines suggesting implosion, bold dark outlines, saturated limited palette, clean vector shapes with crisp pixel-art texture accents, SNES arcade item iconography, perfectly centered, no text.",
+      "negative": "text, photorealistic, 3d render, real galaxy, astronomy photo, nebula photo, watermark, blurry, four arms, two arms, pure black background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10033
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10033
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10033
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 10033
+        }
+      },
+      "notes": "Exactly three arms matters — arms #b060f0/#6040d0/#3060b0, rim #d8b0ff, core #080410 (the only allowed near-black is the core disc)."
+    },
+    {
+      "id": "alt-emblem-v4",
+      "slug": "alt-emblem",
+      "title": "champion crest with ribbon name",
+      "variation": {
+        "n": 4,
+        "of": 4,
+        "total": 4
+      },
+      "models": [
+        "qwen-image",
+        "flux.2-dev"
+      ],
+      "positive": "Ceremonial arcade champion crest illustration, at its heart a golden trophy-shaped shield bearing a tiny steel-blue dart fighter emblem in relief, flanked by two spread mechanical wings made of layered gunmetal armor feathers with amber rivet lights, below the shield a curved golden ribbon banner displaying the exact words \"SHMUP CUP\" in clean navy block capitals, small pink and violet gem bullets set like decorative studs along the wing joints, deep midnight navy background with a soft upward spotlight of pale gold, subtle scanline shimmer, saturated limited palette, bold dark outlines, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel-art texture accents, symmetrical heraldic composition, no text other than the ribbon.",
+      "negative": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, organic bird wings",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 10034
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 10034
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 10034
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 36,
+          "seed": 10034
+        }
+      },
+      "notes": "For victory screens and leaderboard badges. If the ribbon text smudges on flux.2-dev, fall back to qwen-image at the same seed."
+    }
+  ]
+}

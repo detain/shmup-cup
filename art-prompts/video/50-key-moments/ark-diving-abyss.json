@@ -1,0 +1,64 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "video",
+  "category": "video/50-key-moments",
+  "file": "ark-diving-abyss",
+  "source": "ark-diving-abyss.md",
+  "entries": [
+    {
+      "id": "ark-dive-descent-v1",
+      "slug": "ark-dive-descent",
+      "title": "the flagship sinks tier by tier",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": null
+      },
+      "model": "wan2.2-t2v",
+      "modelGroup": "wan22",
+      "mode": "t2v",
+      "positive": "Retro 16-bit pixel-art widescreen coda: the continent-sized mechanical whale flagship angles its barnacled steel snout down into black water and begins an immense slow dive, its broad back and dorsal plate city sliding under the surface in a creeping avalanche of displaced swell, rows of violet glow-seams and amber running lights winking out one tier at a time from top down as the depth takes them, bioluminescent specks swirling up off its hull like inverse snow, the last lit porthole row vanishing below leaving only a widening circular disturbance on the glassy dark sea, faint red embers of its wake still glowing deep under, tiny silhouette fighter unmoving at frame left watching it go, camera static and wide, cold ominous finality, deep navy palette draining to black at the edges, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fast sinking, explosion, organic whale",
+      "settings": {
+        "resolution": "1280x720",
+        "num_frames": 81,
+        "fps": 16,
+        "duration": "~5s",
+        "guidance": 4.2,
+        "steps": 40,
+        "seed": 25006
+      },
+      "sourceImage": null,
+      "notes": "Lights-out-by-tier is the countdown that makes the dive feel finite and deliberate — protect that phrase across seeds. The static watching fighter supplies the \"we let it go\" emotion; if it drifts, lock the composition with the ark-dive still as i2v source."
+    },
+    {
+      "id": "ark-dive-tail-only-v2",
+      "slug": "ark-dive-tail-only",
+      "title": "last sign: the fluke, then darkness",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": null
+      },
+      "model": "ltx-video",
+      "modelGroup": "ltxvideo",
+      "mode": "i2v",
+      "positive": "A colossal mechanical tail fluke rises slowly out of the black water backlit by fading violet seams below, hangs a beat against the dark sky, then slips silently under with a soft sheet of falling water, the glow beneath dimming to nothing, surface ripples spreading outward and calming, camera static, one slow farewell motion, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "settings": {
+        "resolution": "768x512",
+        "num_frames": 121,
+        "fps": 24,
+        "duration": "~5s",
+        "guidance": 3,
+        "steps": 35,
+        "seed": 25007
+      },
+      "sourceImage": {
+        "declared": "art-prompts/images/50-key-moments/ark-dive-tail-v1-flux.2-dev.png",
+        "glob": "50-key-moments/ark-dive*"
+      },
+      "notes": "Whale-tail-sinks is universally readable — this is the true post-credits shot. The \"hangs a beat\" pause is where the music should stop; slow single gesture keeps morph risk near zero."
+    }
+  ]
+}

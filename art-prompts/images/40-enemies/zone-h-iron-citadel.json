@@ -1,0 +1,267 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/40-enemies",
+  "file": "zone-h-iron-citadel",
+  "source": "zone-h-iron-citadel.md",
+  "entries": [
+    {
+      "id": "sentinel-walker-trench-eel-v1",
+      "slug": "sentinel-walker-trench-eel",
+      "title": "the girder patrol and the floor-strike eel",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside the machine-gut of a riveted steel fortress: layered girders overhead, fat pipes sweating condensation, and a gallery of amber running lights that fades from dark rust-amber near the floor to bright furnace-amber overhead. In the middle distance a SENTINEL WALKER strides left along a girder catwalk — a squat twin-legged guard machine, heavy barrel torso bristling with rivets, two thick reverse-jointed legs with clawed feet clamped on the beam, a single red sensor eye sweeping a thin amber searchlight cone across the pipes, shoulder-mounted short cannons tracking. Below it, erupting out of an open maintenance trench in the deck plating, a TRENCH EEL — a long segmented steel serpent with ring-plate segments, a blunt snout lined with filing-tooth ridges, violet core-light leaking between its joints, its body thrown into a hard S-curve as it whips up toward the KESTREL. The KESTREL is banking between two pipe stacks in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy, orange engine glow flaring as it cuts thrust, blue bullets sparking harmlessly off the walker's riveted chest plate. Deep-navy shadow behind the girder layers, never pure black. No text, no UI elements.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, four-legged walker, eel coming from the ceiling, open space background",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15811
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15811
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 15811
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15811
+        }
+      },
+      "notes": "Color reference: amber light ramp #6a4418→#e8a030, eel joint-glow violet #b84cff, walker eye red #ff3a3a, steel body gunmetal with warm rust tinting. The warm-only lighting is what separates Citadel from every other metal zone — the negative explicitly bans blue-green key light. Flux.2 first: two creatures plus architecture plus ship is four-subject traffic."
+    },
+    {
+      "id": "sentinel-walker-trench-eel-v2",
+      "slug": "sentinel-walker-trench-eel",
+      "title": "Citadel full-dimension sweep",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. An ultrawide cross-section of an Iron Citadel hall, the whole depth of the fortress on one band: at the far right a second SENTINEL WALKER steps through a gateway of overlapping armored doors, red eye already locked left; across the ceiling a dense forest of pipes and hanging cable chains, amber running lights dotted along a maintenance rail in receding perspective; along the deck a full network of open trenches runs parallel to the scroll, and in three of them TRENCH EELS are visible in different states — one deep and only a glow-line under the plate, one mid-rise with snout and first coils clear of the deck, one at full arc spitting a cluster of violet ring-sparks; a Gyre-like shadow of rotating ring-gun silhouettes guards the hall's far end. In the left foreground the MANTA sails through the gauntlet, its pale mint ray-wing hull washed orange by the amber lamps along every plate edge, green canopy low, amber twin thrusters steady, trailing two gold shield-glint ellipses behind it like discarded rings. A sentry cannon flash kicks off a girder above the manta's left wingtip. Deep-navy in the hall's ceiling void, never pure black. No text, no UI elements.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, single eel, empty ceiling",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 15812
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15812
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15812
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15812
+        }
+      },
+      "notes": "Color reference: eel glow-line #b84cff under #0c1a3c plate shadow, lamps #e8a030 on rails, manta mint #c8e0d0 going peach under amber. The three-state eel row (hidden / rising / firing) doubles as a visual tutorial for the mechanic — keep the left-to-right order, it's the zone's reading order. Vertical slice layout makes this the strongest of the three for a website band."
+    },
+    {
+      "id": "sentinel-walker-trench-eel-v3",
+      "slug": "sentinel-walker-trench-eel",
+      "title": "vertical shaft: the walker's stairwell",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A tall interior stairwell shaft of the Iron Citadel, camera looking up the diagonal: a zig-zag of riveted steel switchback catwalks climbs the frame from bottom-left to top-right, each landing lit by a single furnace-amber lamp, the walls a dense weave of vertical pipes with pressure gauges glowing amber. On the second landing a SENTINEL WALKER has planted both clawed feet on the grating and leaned its barrel torso into the shaft mouth, red eye cone sweeping down, twin short cannons firing amber tracers diagonally down-frame. In the pipe forest along the shaft's right edge, a TRENCH EEL is threading between the pipes instead of the floor — segmented steel body weaving in and out of the plumbing, joints leaking violet light, snout rearing toward the stairwell's lower landings as if it hunts by vibration. From the bottom edge the KESTREL climbs in a lazy diagonal, steel-blue dart hull, bold blue stripe, cyan canopy and orange engine glow, blue bullets arcing up at the walker while the manta-shadow of eel-coils passes behind it. The shaft's top fades into girder-dark and deep-navy, never pure black. No text, no UI elements.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, horizontal composition, straight ladder, eel on the floor",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15813
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15813
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15813
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15813
+        }
+      },
+      "notes": "Color reference: lamp pools #e8a030, tracer streaks amber-to-orange, eel seam-glow #b84cff against gunmetal. The eel hunting in the pipework rather than the trench is this poster's one deliberate rule-break — it shows the mechanic has a vertical variant; keep the weave of its body through at least three pipes so the occlusion is unmistakable."
+    },
+    {
+      "id": "iron-citadel-sprite-sheet-v1",
+      "slug": "iron-citadel-sprite-sheet",
+      "title": "in-game pixel sprites: sentinel walker, trench eel, gyre ring-gun",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in eight frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale.",
+      "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15821
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15821
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15821
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15821
+        }
+      },
+      "notes": "Color reference: rivet highlights #e8a030, eel ring-sparks #b84cff, walker eye #ff3a3a. Three separate continuity problems in one sheet (stride cycle, rise cycle, rotation) — if any row drifts, split that row out and regenerate alone at 1024x1024 with the same seed family."
+    },
+    {
+      "id": "iron-citadel-sprite-sheet-v2",
+      "slug": "iron-citadel-sprite-sheet",
+      "title": "square grid sheet, garrison set",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the SENTINEL WALKER in three cells — full profile facing left on idle stance with eye-light off, walking stance with the red eye-lamp on, and a firing pose where both shoulder cannons kick back with tiny amber muzzle flares; center column stacked with GYRE ring-gun states — the bare ring with four dark muzzles, one-muzzle-flash frame, two-muzzle alternating flash, and the ring shown with its center hub exposed for a damaged phase, small gold sparks at one broken spoke; right column holds the TRENCH EEL broken into two parts for segmented animation — a snout-and-head sprite, then a single reusable ring-plate body segment shown at three rotations, then the tail tip — plus one deck-hatch sprite, an open rectangle of grating with violet glow seeping up its edges. Pixel-perfect spacing, everything inside its cell, amber top-light consistent, no dropped outlines.",
+      "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, blue-green lighting, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15822
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15822
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15822
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15822
+        }
+      },
+      "notes": "Color reference: hub-expose gold sparks #f8b030, hatch glow #b84cff, muzzle flares #f89830. The modular eel column (head + reusable segment + tail) is the piece an artist would actually reuse for length variants — ask for segment rotations to be described (left-curve, straight, right-curve) if the model plays it coy."
+    },
+    {
+      "id": "iron-citadel-sprite-sheet-v3",
+      "slug": "iron-citadel-sprite-sheet",
+      "title": "wide filmstrip: trench eel breach and gyre volley",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, seven frames of a TRENCH EEL breach facing left: a flat deck-line with a thin violet glow seam, deck seam widening, blunt tooth-ridged snout clearing the lip, first three ring-plates out in an S-curve, half the body reared, full arc with mouth open spitting one violet ring-spark, and the settle-back frame with only the snout and a closing hatch glow remaining — same eel design in every frame, only the body height and mouth state changing. Lower strip, six frames of a GYRE ring-gun volley: the gun-metal ring with four rim muzzles rotating clockwise, muzzle number one flashing amber, two, three, four in consecutive frames with one small orange projectile leaving the fired muzzle each time, and a sixth frame where the ring spins free with all muzzles dark and a thin smoke wisp off the hub. Consistent amber top-light, hard readable silhouettes at game scale.",
+      "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, blue-green lighting, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15823
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15823
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15823
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15823
+        }
+      },
+      "notes": "Color reference: eel glow seam and sparks #b84cff, muzzle flashes #e8a030, projectiles #f06820. The numbered-muzzle clause (\"one, two, three, four in consecutive frames\") is the load-bearing trick of this entry — without it the rotation and the firing order blur into noise and the strip can't be sliced."
+    }
+  ]
+}

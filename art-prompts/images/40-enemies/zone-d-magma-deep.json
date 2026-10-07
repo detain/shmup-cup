@@ -1,0 +1,267 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/40-enemies",
+  "file": "zone-d-magma-deep",
+  "source": "zone-d-magma-deep.md",
+  "entries": [
+    {
+      "id": "ember-wisp-magma-cone-v1",
+      "slug": "ember-wisp-magma-cone",
+      "title": "Zone D enemies: flailing ember wisps and an erupting magma cone turret in a lava shaft",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A volcanic shaft in a invaded star system's molten depths: the background is an erupting cave of cooling black basalt crossed with glowing lava cracks, a lava lake at the shaft floor burning through a gradient from dark ember red to bright tangerine, falling droplets of lava trailing gold sparks, heat ripple warping the upper rock. Mid-field, two hostile mechanical-organic swarm creatures converge on a tiny sleek steel-blue dart fighter with a bold blue hull stripe, cyan canopy and bright orange engine glow in the lower left: EMBER WISPS — fist-sized feral flames with a single molten gold core each, wisp bodies of layered orange and red flame tongues, sparking tails smearing behind their erratic darting paths, no faces, just hungry light; and a MAGMA CONE — a squat volcanic turret of stacked blackened rock plates veined with lava, its crater mouth cracked wide mid-eruption belching a fan of pink and red molten shot with bright cores and dark rims. Deep-navy-black shadow pockets (never pure black) against the furnace light, orange-white explosion bloom in a side tunnel.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, volumetric fog, lens flare",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15411
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15411
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 15411
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15411
+        }
+      },
+      "notes": "Heat-light from below is the mood anchor — the shot reads as an ambush inside the furnace. Lava ramp color reference: #8a2c0a→#e87a1c; brick wall accents #b0704a; bullets #ff3a3a/#ff5aa0. Wisps should stay small: at most a tenth of the ship's size each, so scale contrast sells the swarm menace."
+    },
+    {
+      "id": "ember-wisp-magma-cone-v2",
+      "slug": "ember-wisp-magma-cone",
+      "title": "Zone D enemies: wisp stream pouring from a cone crater as the fighter threads the cave road",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.2-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A horizontal magma cave road inside a fortress-world's burning depths, the frame stretched wide like a scroll of danger: ceiling of jagged basalt drips with cooling slag, floor is a slow lava river glowing from dark ember red to tangerine, brick-like rock strata bands in rust brown breaking up the walls. On the left edge a sleek steel-blue dart fighter with cyan canopy streaks in, orange engine flare stretched long, banking between columns of stone. The right two-thirds belong to the IRON TIDE: a row of three MAGMA CONES of graduated size mounted along the cave floor like a gun battery, craters tilted up, each spewing a rising column of flame that breaks into a stream of EMBER WISPS — darting molten-gold hearts wrapped in ragged orange flame tongues with sparking tails — flowing left toward the fighter like a released swarm. Pink and red round shots with bright cores dot the columns, one cone mid-reload with its rock plates glowing cherry at the seams, a small orange-white blast chipping the ceiling where a wisp detonated. Deep-navy pockets in the far tunnels, never pure black.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, lens flare",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 15412
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15412
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15412
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15412
+        }
+      },
+      "notes": "The panoramic band suits Zone D's scroll rhythm — cones read as terrain artillery, wisps as the mobile threat pouring off them. Keep exactly one fighter (anti-duplication guard in negative). Slag drip + strata bands give the wide frame vertical texture without stealing the lane."
+    },
+    {
+      "id": "ember-wisp-magma-cone-v3",
+      "slug": "ember-wisp-magma-cone",
+      "title": "Zone D enemies: portrait descent, a cone's eruption column full of wisps rising past the camera",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition looking down a lava chimney, subtle CRT scanline glow. A deep vertical shaft in a molten fortress-world: walls of stacked black basalt plates veined with lava light from dark ember red to tangerine narrow toward a bright crater lake at the bottom of the frame, falling lava droplets arcing like slow gold fireflies. Dominating the lower third, a giant MAGMA CONE seen from above and behind, its terraced rock body ringed with glowing seams, crater aimed at the shaft mouth, mid-burp — a thick column of heat and pink-red molten shot climbing the whole height of the image. Riding that column upward, a dozen EMBER WISPS scatter like sparks from a firework: small feral flames with molten-gold cores, ragged orange-red tongues, long sparking tails, some drifting out toward the camera past the rock ledges. Far above at the top edge, a tiny steel-blue dart fighter with cyan canopy and orange engine glow crosses the shaft mouth in silhouette, unawares, framed by two dark navy jaws of stone. The whole scene lit from below by the eruption, hard orange rim-light on every rock edge, deep navy shadow wells in the wall cracks.",
+      "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, whale shape, tentacles",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15413
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15413
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15413
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15413
+        }
+      },
+      "notes": "Vertical chimney = Zone D's shaft set-pieces turned into a poster. The wisps riding the eruption column foreshadow the boss CINDER BASTION's arena without depicting it — keep the cone clearly smaller than a boss, a turret, not a fortress. Up-lighting gives the dramatic rim contrast."
+    },
+    {
+      "id": "magma-deep-sprite-sheet-v1",
+      "slug": "magma-deep-sprite-sheet",
+      "title": "In-game pixel sprite sheet: magma cone eruptions, ember wisp flames, lava droplet effects on flat navy",
+      "variation": {
+        "n": 1,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a squat volcanic MAGMA CONE turret in five states: sealed cone of stacked black basalt plates with cold gray seams, first crack glowing cherry, crater opening with tangerine light, full eruption with a short orange flame cap, and a spent cone puffing gray smoke. Middle band — an EMBER WISP in six frames: a small feral flame, molten-gold round core with ragged orange-red tongues and a thin sparking tail, the flame body licking and bending differently each frame, plus two tiny variants of half and quarter size. Bottom band — projectile and effect pixels: round bullets with bright cores and dark rims in pink and red, a fan of three molten shot, single falling lava droplets with gold spark trails, and four small orange-to-red explosion puffs in growth order from spark to bloom. Chunky readable silhouettes, saturated limited palette, deep-navy backgrounds lifted from black, every sprite facing left, crisp pixel-grid edges.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15421
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15421
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15421
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15421
+        }
+      },
+      "notes": "State-band layout (sealed→eruption→spent) is directly usable for a cone's charge cycle; the wisp band doubles as generic fire effects. Keep dithering to two tones per material so extraction stays clean."
+    },
+    {
+      "id": "magma-deep-sprite-sheet-v2",
+      "slug": "magma-deep-sprite-sheet",
+      "title": "Square pixel sprite sheet: cone battery sizes, wisp swarm set, molten shot and slag effects on flat navy",
+      "variation": {
+        "n": 2,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — three MAGMA CONE turrets in ascending size (small sentry cone, standard cone, heavy cone with an extra rock terrace), each a stack of black basalt plates with glowing lava seams, craters facing left, plus one heavy cone with its plates burst open and cherry-hot. Second row — a swarm set of EMBER WISPS: five flame bodies of irregular silhouette around molten-gold cores, two wisp pairs mid-fission stretching apart, and one wisp burning out to a gray ash puff with a last gold spark. Third row — molten projectiles in left-facing flight: single round shots with bright cores and dark rims in red and pink, pairs, a three-shot fan, and a slow lobbed glob of lava with a dripping gold tail. Fourth row — environmental pixels: stalactite slag tips with glow beads, a cracked basalt plate tile, a lava-surface patch of the dark-ember-to-tangerine ramp, two falling droplet sprites, and a small crater-scorch ground decal. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1024x1024",
+          "guidance": 5.5,
+          "steps": 34,
+          "seed": 15422
+        },
+        "flux.1-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 15422
+        },
+        "flux.2-dev": {
+          "resolution": "1024x1024",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15422
+        },
+        "qwen-image": {
+          "resolution": "1024x1024",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15422
+        }
+      },
+      "notes": "This sheet covers the full Zone D roster in one square — size gradation (sentry/standard/heavy) is the useful trick here, it maps straight to spawn tables. Lava ramp reference #8a2c0a→#e87a1c; shots #ff3a3a/#ff5aa0."
+    },
+    {
+      "id": "magma-deep-sprite-sheet-v3",
+      "slug": "magma-deep-sprite-sheet",
+      "title": "Wide strip pixel sprite sheet: cone eruption sequence filmstrip with wisp and slag rows on flat navy",
+      "variation": {
+        "n": 3,
+        "of": 3,
+        "total": 3
+      },
+      "models": [
+        "flux.1-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. The main band is an eight-frame eruption cycle of one MAGMA CONE turret, evenly spaced left to right: dormant basalt stack, seam-glow widening, crater lid lifting, first tangerine flare, full column of orange flame and pink-red molten shot, column thinning to smoke and sparks, cooling to dark crust with cherry cracks, back to dormant — the same cone silhouette every frame, only the state changing. Below it a shorter band of six EMBER WISP flame bodies orbiting their molten-gold cores in different lick patterns, each with a one-to-three pixel sparking tail. Bottom band a sparse row of shared effects: pink and red bright-core round shots, a lobbed lava glob with dripping tail, two falling droplets with gold trails, a gray ash puff, and a single small orange-white explosion bloom in three growth frames. Large readable pixel clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cone each frame, pure black background, perspective distortion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 15423
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15423
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 15423
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 15423
+        }
+      },
+      "notes": "The continuity guard (\"same cone silhouette every frame\") matters more than usual here — an animation strip is only usable if the base shape locks. Flux.1-dev leads on clean sequential illustration; verify frame-to-frame consistency before extracting."
+    }
+  ]
+}

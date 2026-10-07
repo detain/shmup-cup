@@ -1,0 +1,439 @@
+{
+  "schema": "shmup-art-prompt-library@1",
+  "kind": "image",
+  "category": "images/70-key-moments",
+  "file": "endings",
+  "source": "endings.md",
+  "entries": [
+    {
+      "id": "ending-citadel-falls-silent-v1",
+      "slug": "ending-citadel-falls-silent",
+      "title": "Dawn flight home under a pale-gold half-sun, fortress quiet behind",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. The war is over and the sky has forgiven everyone: a lone steel-blue dart fighter with a cyan canopy and unhurried orange engine glow flies leftward across the lower third of an enormous dawn, tiny in the frame, whole and homebound. Above and behind it, filling the upper right horizon, a half-sun the color of pale gold sits sliced cleanly by the planet's rim, pouring a broad lane of soft amber light across layered cloud strata — each cloud bank a flat outlined shelf of rose-grey and warm cream, their undersides gilded. Far below the cloud deck, barely visible through the haze, sprawls the silhouette of the conquered fortress range: long dead ridges of angular black-blue hull-mass, gun masts drooping, no lights, no flak, nothing moving — citadels turned into mountains, silent enough to hear. The fighter trails one thin contrail ribbon that unspools back toward that ruin and forward toward the light. The mood is the exhale after the last bullet: wide, warm, mercifully empty. Palette of pale gold, cream, rose-grey dawn light over lifted deep-navy shadow in the earth below, never pure black. No text, no letters, no UI, no other ships.",
+      "negative": "photorealistic, 3d render, full round sun, sunset orange sky, explosions, smoke columns, enemy ships, fleet, text, watermark, blurry, ship facing right, multiple contrails",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 20041
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20041
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 20041
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20041
+        }
+      },
+      "notes": "Half-sun pale gold ~#fce8b8, dawn creams ~#f8f070 diluted; ship reference stripe #3858f0, canopy #38c8e8. The half-sun sliced by the rim is the ending's signature — models default to full discs, so verify the horizon cuts it. Dead fortress ridges must have ZERO lights: any glow reads as surviving threat and breaks the \"silent.\""
+    },
+    {
+      "id": "ending-citadel-falls-silent-close-v2",
+      "slug": "ending-citadel-falls-silent-close",
+      "title": "Low glide over still water at first light, fortress reflection dissolving",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, intimate scale, ultra-detailed large-format art with pixel-art texture accents. Seconds from landing: a battered steel-blue dart fighter — one engine flare dimmer than the other, canopy cracked in a fine star, hull stripe scorched along its flank — skims just meters above a vast wind-stilled sea at first light, its underside mirrored almost perfectly in the dark water. The sky is a gradient wall of pale gold breaking through low rose cloud, the sun a thin new half-arc resting on the far horizon rim, and that gold lays one long trembling road of light across the water straight toward the ship. Behind, on the far horizon, the great fortress of the enemy is dying honestly: a low silhouette of broken citadel spires wreathed in slow columnless haze, its mass already half-sunk into the morning, and in the water its reflection is coming apart — the mirrored towers broken into soft drifting bands of dark ripple, as if the sea were erasing the memory faster than the eye can hold it. Spray stirs in two tiny fans at the wingtips where the hull kisses the air above the water. Everything in this frame is quiet and slightly bruised and entirely alive. Palette of pale gold dawn over deep teal-navy water with rose cloud rims, lifted deep-navy shadows, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, ocean waves, storm, night time, ship sinking, crash into water, fire on ship, text, watermark, blurry, perfect undamaged ship, sun high in sky",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 20042
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20042
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20042
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20042
+        }
+      },
+      "notes": "Water teal-navy #0c1a3c-family under gold road-light ~#fce8b8. Damage details (starred canopy, uneven engines, scorched stripe) are the earned look — flux.1 will sand them down to showroom condition unless the opening clause insists. The dissolving fortress-reflection is the poetic core; if the model mirrors it too cleanly, add \"reflection visibly rippling apart.\""
+    },
+    {
+      "id": "ending-citadel-falls-v1",
+      "slug": "ending-citadel-falls",
+      "title": "The fortress burning behind a fighter flying hard toward camera",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, maximum inferno, ultra-detailed large-format art with pixel-art texture accents. The citadel falls and the whole sky knows it: filling the entire right two-thirds of the frame, a continent-sized enemy fortress-ship is coming down in fire along its full length — a chain of a hundred simultaneous breaches erupting from its spine in the classic arcade ramp, cream-white cores going to amber petals going to rust smoke, the explosions linking into a single luminous fault line that walks across the hull. Its armor layers peel back like bark from a burning tree, revealing dark girders bending inward as the superstructure begins its slow collapse toward the planet's cloud deck below; towers of ember smoke lean sideways in the slipstream of its fall. In the left third of the frame, small and dead-level with the camera, a steel-blue dart fighter flies directly toward the viewer away from the blaze, canopy catching the firelight so its cyan glass burns turquoise-gold at the edges, twin orange engines stretched thin and bright, wings steady. The contrast is the story: one ship, perfectly composed, outrunning an ending it authored. Firelight does all the grading — the left air is smoky gold, the right horizon eaten. Palette of explosion cream-to-rust over deep navy smoke-shadow with embers floating across the entire frame, lifted deep-navy base, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, nuclear mushroom cloud, city skyline burning, buildings, forest fire, ship chasing the viewer, ship on the right, dark unreadable hull, text, watermark, blurry, single small explosion",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 20051
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20051
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 20051
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20051
+        }
+      },
+      "notes": "Explosion ramp #fff080→#f8b030→#f06820→#c83018 runs the full breach-chain. Head-on fighter composition is rare and strong — \"flying directly toward the viewer\" must survive generation or the shot becomes another side-scroller; flux.2 handles the foreshortened dart. Fortress must read as SHIP-mass with towers, not a city: negative bans buildings deliberately."
+    },
+    {
+      "id": "ending-citadel-falls-debris-v2",
+      "slug": "ending-citadel-falls-debris",
+      "title": "Through the falling gate: ship threading collapsing hull with fire behind",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, claustrophobic scale, ultra-detailed large-format art with pixel-art texture accents. Flying out through the guts of the burning citadel: a corridor of collapsing fortress interior fills the frame — a great gate-ring of riveted armor, forty meters of it, swinging shut on one bent hinge as the wall behind it caves, and a flat-flying steel-blue dart fighter is threading the closing gap at the exact last second, wingtip sparks spraying from both edges where its hull grazes the metal jaws. Everything behind the ship is an avalanche of the citadel's death: sheet after sheet of floor and wall peeling free in the orange back-light, furnace wind blowing ribbons of flame and black smoke forward through the gate ahead of the intruder, a rain of bolt-clusters and shattered grating tumbling end over end. Beyond the gate, in the top-left corner of the frame, there is a slice of outside — cold pre-dawn navy with a single calm star — impossibly small against all that gold violence. The ship's cyan canopy and blue stripe are the only cool colors allowed inside the hot half of the image, so the eye threads with it toward the gap. Firelight rims every falling plate. Palette of furnace ambers and ember reds inside, a wedge of deep navy-blue outside, thick dark outlines, lifted shadows, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, sci-fi airlock clean corridor, laser gate, ship already outside, gap fully open, explosion engulfing ship, human figures, text, watermark, blurry, blue fire, green lighting",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 20052
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20052
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20052
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20052
+        }
+      },
+      "notes": "Gate amber light ramp #6a4418→#e8a030 with fire #f06820; outside-slice navy #05070f. The tiny calm star in the escape-slice is the whole emotional trick — hold the line on \"top-left corner\" or the composition loses its exit. flux.1 renders hanging hinge-mass well but may fully open the jaws; regenerate if the gap isn't grazing the wingtips."
+    },
+    {
+      "id": "ending-deep-is-still-v1",
+      "slug": "ending-deep-is-still",
+      "title": "Rising through black water, breaking the surface into sunrise",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical-feel composition inside a widescreen frame, subtle CRT scanline glow; ending scene painted at hi-resolution, sacred quiet, ultra-detailed large-format art with pixel-art texture accents. The boundary of worlds, seen from just under it: the bottom two-thirds of the frame are black water — deep, still, absolute — fading from midnight teal at the top of the depths to the faintest blue-black at the very bottom, crossed only by one long column of rising silver bubbles that trails off-frame below, the flight path of the ship that climbed all the way out of the abyss. The top one-third is air at first light, and the two worlds meet along a trembling silver ceiling: from beneath, the surface is a hammered mirror arched open in the center where a battered manta-shaped fighter — pale mint ray-wings, a green canopy now dark, twin thrusters guttering a last lazy halo of bubbles — has just punched through and is hanging at the apex of its break, shedding curtains of glowing water off every wing edge, each falling droplet catching the sunrise like a dropped bead of lamp-glass. Beyond and above, the real sky: a thin band of deep navy at the frame's upper corners melting into a huge, unhurried sunrise of pale gold and rose along the open sea-horizon, the sun itself just topping the line, its light laying a road of shimmer straight under the risen ship. Nothing hostile exists in this image. The palette is teal-black depths against gold-rose dawn, lifted navy shadows, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, underwater photo, sharks, whales, sea creatures, stormy sea, big waves, ship underwater, bubbles everywhere, sunset orange heavy, text, watermark, blurry, daytime blue sky",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 4.5,
+          "steps": 34,
+          "seed": 20061
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20061
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 50,
+          "seed": 20061
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20061
+        }
+      },
+      "notes": "Manta reference: hull pale mint #c8e0d0, canopy green #40d070, thrusters amber — here dimmed, engine-lights almost out; depths teal #16485a fading to navy-black. Half-submerged ship at the surface is the hard ask — models want the ship either flying or sunk, so \"hanging at the apex of its break, shedding curtains of water\" is load-bearing. Bubble column entering from below sells the nine-thousand-meter climb without showing it."
+    },
+    {
+      "id": "ending-deep-is-still-surface-v2",
+      "slug": "ending-deep-is-still-surface",
+      "title": "Already out: the manta idling on a gold-ribbed sea, abyss silent below",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, post-storm stillness, ultra-detailed large-format art with pixel-art texture accents. A split-frame world: the upper half is an ocean laid flat under a sunrise so pale it is almost a color idea — long thin rose-gold cloud bars strung across a cream-to-navy sky, the small half-sun just risen, everything lit gently. On the water sits a flat ray-winged manta fighter, pale mint hull scuffed and steaming faintly where black water beads off it, canopy open with the cockpit a small square of shadow, twin engine rings dark, riding the swell exactly level as though the sea were a parking pad at the end of the universe; around it, the last rings of its surfacing spread outward in two slow concentric outlines, and a scatter of silver droplets still hangs airborne at the waterline, frozen mid-fall, each one holding a pinpoint of sunrise. The lower half of the frame is the water seen from just at its surface, and down there: a deepening wall from teal to true midnight, faintly, far below, the suggestion of what the ship escaped — the dimest hint of a vast sunken angular shadow, a drowned citadel outline, unlit, still, smaller than it should be, dissolving into the blue-black. Light belongs entirely to the top world now. Palette of cream, pale gold and rose above, committed teal-to-midnight blues below, thick dark outlines at the waterline seam, lifted deep-navy depths, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, rough seas, whitecap waves, boat ship vessel, sea monsters visible, submarine, coral reef, birds flock, sunset fire sky, text, watermark, blurry, ship flying, canopy closed bright",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 20062
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20062
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20062
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20062
+        }
+      },
+      "notes": "Cloud-bars rose ~#f0c8d0 over cream #fce8b8; depth wall #16485a to near-navy-black; drowned shadow must be ambiguous — if it resolves into readable geometry it stops being a memory and starts being a sequel hook. The open dark canopy is the \"resting\" tell. Flux.1's soft-light bias actually helps the \"color idea\" sunrise; keep guidance 3.5."
+    },
+    {
+      "id": "ending-flagship-slips-away-v1",
+      "slug": "ending-flagship-slips-away",
+      "title": "The abyss ark diving free, silhouette retreating into the dark",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, dread preserved, ultra-detailed large-format art with pixel-texture accents. The one that got away, and the one who watched it go: in the far middle-right of the frame, a colossal whale-bodied fortress-ark is diving — thirteen segments of armored hull-plate arcing downward into a black ocean trench, the great tail fluke still above the surface mid-stroke, each plate-seam and porthole-row of the beast lit in its own faint ring of cold bioluminescent teal, a lantern-procession of the ship's own silhouette marking its descent into the deep. The water it displaces climbs the frame in slow carved walls and collapsing shelves of foam, all back-lit by the last light; the sky it leaves is a bruised pre-dawn of deep navy and ash-rose, the surface unbroken everywhere except along the diving creature's fading wake-line. In the bottom-left foreground, tiny and level on the swells, a single steel-blue dart fighter hangs with one engine idling, canopy glinting a thin cyan edge, visibly not pursuing — the two lights of the ark winking out one segment at a time as the last honest view of the IRON TIDE slips beneath and away. The composition gives the dark half its victory: more than a third of the frame is the black water the ark is entering, and it closes over the ship with quiet relish. Palette of ash-navy dawn, teal biolume accents, foam greys, lifted deep-navy shadows, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, whale animal, harpoon, explosion, fire, sunken galleon, submarine periscope, fleet of ships, ship fully submerged, ship surfaced, text, watermark, blurry, bright daylight, green ocean tropical",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1536x640",
+          "guidance": 4.5,
+          "steps": 36,
+          "seed": 20071
+        },
+        "flux.1-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20071
+        },
+        "flux.2-dev": {
+          "resolution": "1536x640",
+          "guidance": 3.5,
+          "steps": 50,
+          "seed": 20071
+        },
+        "qwen-image": {
+          "resolution": "1536x640",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20071
+        }
+      },
+      "notes": "Biolume porthole teal ~#6ad8e0 dimming to #16485a as it descends; ark plate silhouette echoes the AA-09 bestiary. This is a bad-ending key art: no fire, no loss, just scale refusing to die — resist any model urge to add explosions or a chase. Foreground fighter is one engine idling, low left, facing the ark; his stillness is the meaning."
+    },
+    {
+      "id": "ending-flagship-slips-away-wake-v2",
+      "slug": "ending-flagship-slips-away-wake",
+      "title": "Surface aftermath: unbroken swallows and one fading ring of teal in the deep",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, limited saturated palette, widescreen arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, minimal and enormous, ultra-detailed large-format art with pixel-texture accents. Almost nothing, said at maximum scale: a totally flat, empty post-storm ocean under a low slate-and-cream cloud ceiling at grey dawn, the horizon dead straight and splitting the frame exactly in two, sea-line rimmed in pale silver. On the water's face there is no ship above it — until you look down. Beneath the surface, the water itself is holding the shape of what just passed: a faint, vast, slow-fading silhouette of an ark diving at a shallow angle into the depths, suggested only by a broad smudge of deeper blue, a scattering of silver bubbles trailing off its tail end toward nothing, and along the length of its descending back a single diminishing line of cold teal porthole-glow — a string of lamps going out one by one from front to back as the deep claims the last of them. The highest, last-glowing lamp is still a small hard star under the water, the deepest is already invisible. The upper half of the frame, the whole empty world of air and cloud, does not react to this at all. Nothing else exists in the image: no land, no birds, no foreground fighter. The painting is the difference between a surface that looks peaceful and a depth that knows. Palette of slate blue, pearl grey, dawn cream, and one thinning thread of teal light under the water, lifted deep-navy shadows, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, whale visible, ship on surface, boats, island, birds, sun rays, storm, big waves, glowing monster clear, neon water, text, watermark, blurry, cluttered composition, horizon off-center",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 20072
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20072
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20072
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20072
+        }
+      },
+      "notes": "Underwater glow thread ~#6ad8e0→#16485a; cloud cream ~#f0e0c8 over slate. The hardest spec is the invisibility gradient — the ark must be *suggested* under the surface, never drawn. If either model paints the silhouette at full opacity, swap to \"readable only as displaced darkness and bubbles.\" Dead-straight, dead-center horizon is the frame's spine; regenerate tilted ones. A very strong poster candidate as-is."
+    },
+    {
+      "id": "ending-throne-is-broken-v1",
+      "slug": "ending-throne-is-broken",
+      "title": "Battered fighter climbing toward distant light out of the abyss trench",
+      "variation": {
+        "n": 1,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "flux.2-dev",
+        "sd3.5-large"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical-climb composition in widescreen frame, subtle CRT scanline glow; ending scene painted at hi-resolution, wounded ascent, ultra-detailed large-format art with pixel-texture accents. Out of the throne trench, one slow climb at a time: a badly hurt steel-blue dart fighter angles upward across the frame from the lower left, its hull stripe burned away in a ragged band, one wingtip chipped, canopy cracked into a frost of fine fractures, cyan glass dim; the main engine lives as a single stretched flare of orange, the second sputters into a broken amber ribbon, and through the worst gash in its flank a faint interior light blinks once, mechanically, like a pulse that refuses to stop. Below and behind, the broken throne itself fills the bottom right of the frame — a shattered crown of black-blue reef-crystal and drowned fortress-mass, one enormous cracked ring of violet crystal split and tilted in the water where the seat of the deep tyrant used to be, its edges shedding a last slow rain of lilac shards into the trench; the biolume constellations that dusted the cliffs are going dark section by section from the bottom up, the abyss switching itself off now that its ruler is gone. Above: distance. The ceiling of the trench is far, far away, and through the gap in the spires a column of pale gold light comes down at an angle like something remembered from a different game — thin, physical, impossibly clean, illuminating drifting marine snow in a single lit stairway that ends exactly where the ship is pointing. The climb is not over in this frame; it is being refused to end. Palette of abyssal blues and violets dying out below, warm gold shaft above, one orange heart of engine fire in between, lifted deep-navy base, never pure black. No text, no letters, no UI.",
+      "negative": "photorealistic, 3d render, space scene, planets, sun visible, surface of water, ship intact, explosion, fire trail behind ship, sea creatures, text, watermark, blurry, golden light at bottom, dark at top, diagonal wrong way",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "1152x896",
+          "guidance": 4.5,
+          "steps": 34,
+          "seed": 20081
+        },
+        "flux.1-dev": {
+          "resolution": "1152x896",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20081
+        },
+        "flux.2-dev": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 50,
+          "seed": 20081
+        },
+        "qwen-image": {
+          "resolution": "1152x896",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20081
+        }
+      },
+      "notes": "Broken crown-violet #8a48e8/#c8a0ff fading; biolume #16485a→#6ad8e0 extinguishing bottom-up; light shaft pale gold ~#fce8b8. Geometry must read: ship lower-left nose-up toward the shaft which enters upper-right-ish; if the shaft and ship don't point at each other, the entire \"climb\" premise dies. The one-blinking-flank-light is the survivor motif — flux.2 renders the damage vocabulary best here."
+    },
+    {
+      "id": "ending-throne-is-broken-near-v2",
+      "slug": "ending-throne-is-broken-near",
+      "title": "Close on the cockpit: cracked canopy, dark trench falling away below",
+      "variation": {
+        "n": 2,
+        "of": 2,
+        "total": 2
+      },
+      "models": [
+        "sd3.5-large",
+        "flux.1-dev"
+      ],
+      "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, tight three-quarter composition, subtle CRT scanline glow; ending scene painted at hi-resolution, portrait of the survivor, ultra-detailed large-format art with pixel-texture accents. A close, angled three-quarter view of the wounded dart fighter filling most of the frame as it climbs away from camera: the cracked canopy is the hero — a thick cyan shell with one white spider-fracture at its center, a few hairline cracks branching to the rim, the glass fogged where pressure heat met cold water, and deep inside that green-lit cockpit nothing is visible but a small warm reflection of the gold shaft far above, held in the shattered glass like a promise kept on the wrong side of a window. The hull tells the last ninety seconds honestly: the bold blue stripe peeled back to bare steel along one flank, dent rows dithered in classic pixel shading, one wingtip missing a clean crescent bite, canopy rail bent, and along the seam of the belly, the dark violet residue of abyssal fluid steaming off in thin ribbons as the metal remembers heat. The twin engines burn unequal — the near one a solid orange lance, the far one stuttering to amber embers in a dotted trail. Below the climbing ship, out of focus and falling away, the broken throne trench is only a smear of extinguishing blue lights and one jagged dark crown-shape in the murk; above the ship, the frame's top edge begins to brighten, gold leaking into the corner as if the next panel of the comic is already morning. The mood: not victorious — relieved, furious, and still flying. Palette of steel blues and canopy cyans against warm gold leak and the retreating violet dark below, lifted deep-navy base, never pure black. No text, no letters, no UI, no visible pilot figure.",
+      "negative": "photorealistic, 3d render, human pilot portrait, cockpit interior view, face in canopy, alien creature, ship diving, trench above ship, explosion, pristine undamaged hull, text, watermark, blurry, portrait of a person",
+      "settings": {
+        "sd3.5-large": {
+          "resolution": "896x1152",
+          "guidance": 5,
+          "steps": 32,
+          "seed": 20082
+        },
+        "flux.1-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 45,
+          "seed": 20082
+        },
+        "flux.2-dev": {
+          "resolution": "896x1152",
+          "guidance": 3.5,
+          "steps": 40,
+          "seed": 20082
+        },
+        "qwen-image": {
+          "resolution": "896x1152",
+          "guidance": 4,
+          "steps": 30,
+          "seed": 20082
+        }
+      },
+      "notes": "Canopy cyan #38c8e8 fogged, stripe loss exposing steel ~#8a9ab8, throne residue violet #8a48e8 steaming. The no-pilot rule matters: the player IS the reflection of light in the cracked glass. Vertical format turns the climb into the frame direction itself — best ending-image for phone wallpaper. Flux.1's close-up metal scratches carry the damage story; if it over-pristines, add \"battle damage is the subject, not incidental.\""
+    }
+  ]
+}

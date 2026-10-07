@@ -1,0 +1,61 @@
+# 30 — Boss 08: IRON SOVEREIGN (IS-08)
+
+A slab of hull with turning shield plates and a red core. Zone H: riveted steel
+fortress interior, amber running lights, pipes and girders. Seed slots 128xx.
+
+## is08-reveal — the slab turns to face
+**Models:** flux.2-dev, sd3.5-large
+**Variation:** 1/3 of 3
+
+```text
+Industrial dread boss reveal inside a cavernous riveted steel fortress hall, the IRON SOVEREIGN detached from the wall and rotating into view, a colossal rectangular slab of battleship hull plating taller than the frame, its face a grid of dark gunmetal panels sweat-beaded with oil, around its edges a ring of heavy shield plates pivoting on thick brass hinges like an iris of roof doors, half of them swung open to reveal the red furnace core glowing in the slab's chest, a deep arterial red light spilling between the plates and painting the girder forest amber where it crosses the running lights, steam jets coughing from relief valves along the top edge, chains of black soot stained down the plating, the floor grating vibrating with motion-blur, a pale mint manta-shaped fighter with green canopy skids into frame bottom-left under the slab's shadow for scale, the Sovereign trailing one lazy arc of pink bullets from an under-mounted gun, mood of patient machinery waking up, bold dark outlines, saturated limited palette of steel grey, brass amber and arterial red, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 34 | 45 | 50 | 36 |
+| seed | 12801 | 12801 | 12801 | 12801 |
+
+**Negative:** (sd3.5/qwen only) `creature flesh, tentacles, elegant armor, knight, photorealistic, 3d render, text, watermark, blue core, pure black background`
+**Notes:** Amber light ramp #6a4418→#e8a030 on the hall, red core the only hot accent. The slab is RECTANGULAR — reject any model that rounds it into a torso.
+
+## is08-weakpoint — core behind the iris plates
+**Models:** sd3.5-large, flux.2-dev
+**Variation:** 2/3 of 3
+
+```text
+Brutal engineering close-up on the exposed heart of the IRON SOVEREIGN, camera pressed almost against the pivoting shield plates, two massive roof-door panels caught mid-rotation framing top and bottom of the shot with their rivet rows and scuffed brass edges, between them the red furnace core suspended in a cage of cooling pipes, the core a swollen lantern of arterial red with a darker blood-orange ring pulsing at its equator, thick cables braided around its mount flexing as the whole assembly shudders, droplets of oil frozen mid-spatter caught in the red light, behind the core a lattice of girders throwing long hard shadows, one bright pink bullet with a dark rim passing through the gap like a needle, a cyan-white spark shower erupting where a girder edge has chafed a conduit, shallow depth forced into pixel discipline with crisp outlines on every plane, bold dark outlines, saturated limited palette of gunmetal, brass and red, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1024x1024 | 1024x1024 | 1024x1024 | 1024x1024 |
+| guidance | 5.0 | 3.5 | 4.0 | 4.0 |
+| steps | 34 | 45 | 45 | 36 |
+| seed | 12802 | 12802 | 12802 | 12802 |
+
+**Negative:** (sd3.5/qwen only) `reactor sci-fi clean white, human figure, organic heart, photorealistic, 3d render, text, watermark, green glow, soft blur, pure black background`
+**Notes:** Core red #e04828-family, ring darker orange. Timing-the-gap is the gameplay read: plates open just enough for one bullet lane.
+
+## is08-warning — silhouette in the girder dark
+**Models:** flux.1-dev, sd3.5-large
+**Variation:** 3/3 of 3
+
+```text
+Blackout alarm composition deep in the iron citadel, the hall's amber running lights failing one row at a time from far to near until the only glow left is a single horizontal seam of arterial red bleeding out from between closed shield plates, and around that seam the IRON SOVEREIGN resolves as a dead-flat rectangular silhouette floating in the dark, its outline picked out only where the red backlight grazes the bottom edge and the hinge bumps, the ring of plates closed like a shut eye, steam columns along its top rendered as three dim violet-grey ghosts, girders of the hall crossing the foreground in black layers so the viewer peeks at the boss through structure, the floor grating reflecting one long smeared stripe of red, a tiny pale-mint manta silhouette hovering low center with twin amber thrusters the only warm specks under the slab, held-breath stillness before the siren, bold dark outlines, saturated limited palette of near-navy shadow, steel and one red seam, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.
+```
+
+**Settings:**
+| param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
+|---|---|---|---|---|
+| resolution | 1152x896 | 1152x896 | 1152x896 | 1152x896 |
+| guidance | 5.0 | 3.5 | 3.5 | 4.0 |
+| steps | 32 | 40 | 40 | 30 |
+| seed | 12803 | 12803 | 12803 | 12803 |
+
+**Negative:** (sd3.5/qwen only) `text, banner, letters, photorealistic, 3d render, watermark, fully lit boss, explosions, many lights, pure black background`
+**Notes:** Background must stay lifted navy, never pure black — read 00-style-kernel.md night rule. The red seam IS the warning icon for this boss.
