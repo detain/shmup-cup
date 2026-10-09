@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:49:24.672Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, organic wet interior, teeth, pure black background",
+  "negative_sent": "photorealistic, 3d render, text artifacts, watermark, blurry, organic wet interior, teeth, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "13-grasping-bloom",
+    "slug": "glb-weakpoint",
+    "variantNum": 2,
+    "id": "glb-weakpoint-v2",
+    "title": "the pistil core inside the throat",
+    "positive": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: straight into the open throat of a mechanical flower, concentric spiral folds of violet-lit metal receding toward the center where the pistil hangs — a brass spindle wrapped in a cage of bent needle-filaments, its glass bulb core sloshing with luminous green fluid and cracking with each intake pulse. Fine hairs of static discharge leap between the filaments and the throat wall. The whole frame has a pull-into-depth feeling, radial composition, dark plate rims at the edges. Deep-navy shadow palette, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro crop.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic wet interior, teeth, pure black background",
+    "negativeScoped": true,
+    "notes": "Radial depth composition doubles as a poster; the green fluid bulb is the shot-aim dot reference.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 13302,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 13302,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "glb-weakpoint-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "535fb83e-fc10-4add-a597-ae08f9209480",
+      "created": 1791539360,
+      "count": 1,
+      "revised_prompt": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: straight into the open throat of a mechanical flower, concentric spiral folds of violet-lit metal receding toward the center where the pistil hangs — a brass spindle wrapped in a cage of bent needle-filaments, its glass bulb core sloshing with luminous green fluid and cracking with each intake pulse. Fine hairs of static discharge leap between the filaments and the throat wall. The whole frame has a pull-into-depth feeling, radial composition, dark plate rims at the edges. Deep-navy shadow palette, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro crop.",
+      "inference_time_s": 14.140069712884724,
+      "peak_memory_mb": 25698
+    },
+    "format": "jpg"
+  }
+}

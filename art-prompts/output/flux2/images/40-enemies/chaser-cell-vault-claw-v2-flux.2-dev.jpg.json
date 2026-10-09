@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:28:03.589Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, duplicate fighter, extra player ships, bubbles underwater",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-f-cell-vault",
+    "slug": "chaser-cell-vault-claw",
+    "variantNum": 2,
+    "id": "chaser-cell-vault-claw-v2",
+    "title": "Zone F enemies: a drift of chaser cells filling the vault chamber while a claw hauls a tender through the wall",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A vast organ-hall of the Cell Vault stretched across a panoramic frame: opposite walls of breathing green cell-mesh in a moss-to-jade ramp, ceiling ribbed with fleshy folds dripping slow amber beads, floor a soft membrane plain dimpled where things have landed. The hall is filling with CHASER CELLS — dozens of translucent green membrane spheres with hot pale nuclei, drifting in a slow convection current like an incoming tide, several caught mid-division as pinched dumbbells with spindles of filament strung between two nuclei, each pair already angling toward the same side of frame. In the right third, a VAULT CLAW — an eight-link bone-plated tentacle hook sheathed in green tissue — is hauled fully out of its wall socket, its joints leaking fluid beads, dragging a damaged mechanical TENDER drone through the torn membrane: the wide flat-bellied carrier sparkles with green coolant, belly hatch popped, and a stream of small pink-core shots spilling from it like escaping seed. At the far left edge a lone steel-blue dart fighter with cyan canopy and orange engine glow banks out of frame, the entire drift turning with it. Deep-navy shadow wells swallow the hall's ends, never pure black; one violet spore-glow pulses at each torn socket.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, duplicate fighter, extra player ships, bubbles underwater",
+    "negativeScoped": true,
+    "notes": "The \"incoming tide\" version of the chase — scale horror instead of moment horror. The claw hauling a tender shows the vault's immune logic (it recaptures its own machines). Keep cells clearly spherical with visible nuclei; if the model starts making amoeba blobs, raise CFG slightly on sd3.5.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15612,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15612,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "chaser-cell-vault-claw-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "e1dd78cf-edf4-4b0a-9de0-64e1e2c2a4ee",
+      "created": 1791538079,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A vast organ-hall of the Cell Vault stretched across a panoramic frame: opposite walls of breathing green cell-mesh in a moss-to-jade ramp, ceiling ribbed with fleshy folds dripping slow amber beads, floor a soft membrane plain dimpled where things have landed. The hall is filling with CHASER CELLS — dozens of translucent green membrane spheres with hot pale nuclei, drifting in a slow convection current like an incoming tide, several caught mid-division as pinched dumbbells with spindles of filament strung between two nuclei, each pair already angling toward the same side of frame. In the right third, a VAULT CLAW — an eight-link bone-plated tentacle hook sheathed in green tissue — is hauled fully out of its wall socket, its joints leaking fluid beads, dragging a damaged mechanical TENDER drone through the torn membrane: the wide flat-bellied carrier sparkles with green coolant, belly hatch popped, and a stream of small pink-core shots spilling from it like escaping seed. At the far left edge a lone steel-blue dart fighter with cyan canopy and orange engine glow banks out of frame, the entire drift turning with it. Deep-navy shadow wells swallow the hall's ends, never pure black; one violet spore-glow pulses at each torn socket.",
+      "inference_time_s": 31.482038439018652,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

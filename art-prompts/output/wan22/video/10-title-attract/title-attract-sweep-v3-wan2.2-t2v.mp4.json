@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T11:05:01.858Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, scene change, cut, sudden zoom",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, scene change, cut, sudden zoom",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/10-title-attract",
+    "fileStem": "title-ambient-loop",
+    "slug": "title-attract-sweep",
+    "variantNum": 3,
+    "id": "title-attract-sweep-v3",
+    "title": "camera slowly slides across the attract vista",
+    "positive": "A widescreen retro 16-bit pixel-art space vista drifts past in a slow continuous rightward camera slide: layers of deep-navy starfield parallax at three speeds, distant teal nebula wisps, a small blue dart fighter and a pale-mint manta-shaped craft silhouetted at opposite thirds of frame holding steady formation with thin glowing engine trails, a planet rim arcing along the bottom edge, bold-outlined sprites saturated against the dark, faint CRT scanline glow over everything, quiet dramatic arcade attract-mode mood, motion slow uniform and endless, no cuts.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, scene change, cut, sudden zoom",
+    "notes": "The only full t2v two-ship hero shot here — both crafts in one frame is the identity shot of the game, worth several seed pulls. Ship shapes may soften; if silhouettes drift, rebuild as i2v from a two-ship still.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.2,
+    "steps": 35,
+    "seed": 21006,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-attract-sweep-v3-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "69507a54-a054-484b-ba6e-1b7e7f614ff0",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "A widescreen retro 16-bit pixel-art space vista drifts past in a slow continuous rightward camera slide: layers of deep-navy starfield parallax at three speeds, distant teal nebula wisps, a small blue dart fighter and a pale-mint manta-shaped craft silhouetted at opposite thirds of frame holding steady formation with thin glowing engine trails, a planet rim arcing along the bottom edge, bold-outlined sprites saturated against the dark, faint CRT scanline glow over everything, quiet dramatic arcade attract-mode mood, motion slow uniform and endless, no cuts.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 21006,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, scene change, cut, sudden zoom",
+          "guidance_scale": 4.2,
+          "num_inference_steps": 35
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 838.7228247029707
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

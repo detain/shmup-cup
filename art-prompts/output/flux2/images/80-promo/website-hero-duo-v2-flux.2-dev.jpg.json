@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:40:02.879Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, logo, UI, watermark, blurry, single ship only, ships same color, boss fully visible, warm sunset palette, cluttered center band, vertical layout",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/80-promo",
+    "fileStem": "website-and-banners",
+    "slug": "website-hero-duo",
+    "variantNum": 2,
+    "id": "website-hero-duo-v2",
+    "title": "Hero alt: both fighters in crossfire, boss eye framing the shot",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade ensemble composition, subtle CRT scanline glow; homepage banner key art, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. A two-protagonist ambush seen from the side: left of center, a sleek steel-blue dart fighter with cyan canopy pours orange afterburner upward; right of center and crossing its path, a flat ray-winged manta fighter in pale mint with a green canopy and twin amber thrusters rolls under the first ship's exhaust, the two contrails weaving one lazy over-under knot — cooperative choreography frozen mid-decision. Framing the whole pair from the far edges of the image: the head of a deep-water leviathan boss, cropped so we see only its right half — a mountain of charcoal armor plates top-right with a single molten amber sensor-eye the size of both ships combined, its pupil a violet slit catching their engine light, and from the lower-left its counterpart jaw-ridge rising with barnacle-cluster turrets, so the ships fly inside the outline of something that is entirely around them and has not yet decided to close its mouth. Between the two hull-walls, a curtain of pink and violet bead-bullets falls in two slow waterfalls that the ships have a hand's-width of clean lane between. Background: black-blue abyssal water with drifting biolume specks in teal, rock spire shadows below, faint shafts of impossible light from above. Cool abyss palette punctuated by the four hero colors — blue, cyan, mint, amber — the only warm-blooded things in the picture. Lifted deep-navy base, never pure black. No text, no letters, no UI, keep the very center band calm for overlaid headline copy.",
+    "negative": "photorealistic, 3d render, text, logo, UI, watermark, blurry, single ship only, ships same color, boss fully visible, warm sunset palette, cluttered center band, vertical layout",
+    "negativeScoped": true,
+    "notes": "Manta #c8e0d0/#40d070, amber thrusters; eye amber #e8a030 with #b84cff slit. Contrail-knot is the co-op selling point; both models occasionally separate the weave — regenerate rather than PS. Center-calm contract for hero copy overlay.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 21012,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 21012,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "website-hero-duo-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ffc12812-dbe5-45bc-bcf1-3d7a28dbb18f",
+      "created": 1791538798,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade ensemble composition, subtle CRT scanline glow; homepage banner key art, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. A two-protagonist ambush seen from the side: left of center, a sleek steel-blue dart fighter with cyan canopy pours orange afterburner upward; right of center and crossing its path, a flat ray-winged manta fighter in pale mint with a green canopy and twin amber thrusters rolls under the first ship's exhaust, the two contrails weaving one lazy over-under knot — cooperative choreography frozen mid-decision. Framing the whole pair from the far edges of the image: the head of a deep-water leviathan boss, cropped so we see only its right half — a mountain of charcoal armor plates top-right with a single molten amber sensor-eye the size of both ships combined, its pupil a violet slit catching their engine light, and from the lower-left its counterpart jaw-ridge rising with barnacle-cluster turrets, so the ships fly inside the outline of something that is entirely around them and has not yet decided to close its mouth. Between the two hull-walls, a curtain of pink and violet bead-bullets falls in two slow waterfalls that the ships have a hand's-width of clean lane between. Background: black-blue abyssal water with drifting biolume specks in teal, rock spire shadows below, faint shafts of impossible light from above. Cool abyss palette punctuated by the four hero colors — blue, cyan, mint, amber — the only warm-blooded things in the picture. Lifted deep-navy base, never pure black. No text, no letters, no UI, keep the very center band calm for overlaid headline copy.",
+      "inference_time_s": 31.603280855109915,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

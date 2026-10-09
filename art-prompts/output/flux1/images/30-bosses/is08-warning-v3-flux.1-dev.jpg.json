@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:56:29.952Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic, 3d render, watermark, fully lit boss, explosions, many lights, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "08-iron-sovereign",
+    "slug": "is08-warning",
+    "variantNum": 3,
+    "id": "is08-warning-v3",
+    "title": "silhouette in the girder dark",
+    "positive": "Blackout alarm composition deep in the iron citadel, the hall's amber running lights failing one row at a time from far to near until the only glow left is a single horizontal seam of arterial red bleeding out from between closed shield plates, and around that seam the IRON SOVEREIGN resolves as a dead-flat rectangular silhouette floating in the dark, its outline picked out only where the red backlight grazes the bottom edge and the hinge bumps, the ring of plates closed like a shut eye, steam columns along its top rendered as three dim violet-grey ghosts, girders of the hall crossing the foreground in black layers so the viewer peeks at the boss through structure, the floor grating reflecting one long smeared stripe of red, a tiny pale-mint manta silhouette hovering low center with twin amber thrusters the only warm specks under the slab, held-breath stillness before the siren, bold dark outlines, saturated limited palette of near-navy shadow, steel and one red seam, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic, 3d render, watermark, fully lit boss, explosions, many lights, pure black background",
+    "negativeScoped": true,
+    "notes": "Background must stay lifted navy, never pure black — read 00-style-kernel.md night rule. The red seam IS the warning icon for this boss.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12803,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12803,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "is08-warning-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "fbdf5edc-deaa-48ac-93a4-20286b3ba40b",
+      "created": 1791536185,
+      "count": 1,
+      "revised_prompt": "Blackout alarm composition deep in the iron citadel, the hall's amber running lights failing one row at a time from far to near until the only glow left is a single horizontal seam of arterial red bleeding out from between closed shield plates, and around that seam the IRON SOVEREIGN resolves as a dead-flat rectangular silhouette floating in the dark, its outline picked out only where the red backlight grazes the bottom edge and the hinge bumps, the ring of plates closed like a shut eye, steam columns along its top rendered as three dim violet-grey ghosts, girders of the hall crossing the foreground in black layers so the viewer peeks at the boss through structure, the floor grating reflecting one long smeared stripe of red, a tiny pale-mint manta silhouette hovering low center with twin amber thrusters the only warm specks under the slab, held-breath stillness before the siren, bold dark outlines, saturated limited palette of near-navy shadow, steel and one red seam, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 13.187757655978203,
+      "peak_memory_mb": 36724
+    },
+    "format": "jpg"
+  }
+}

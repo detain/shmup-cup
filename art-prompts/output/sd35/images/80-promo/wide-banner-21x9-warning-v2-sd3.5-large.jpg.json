@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:04:03.369Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, real whale, water spout fountain, single ship missing, one fighter only, calm empty water, text, watermark, blurry, ark underwater, ark in the sky, vertical composition",
+  "negative_sent": "photorealistic, 3d render, real whale, water spout fountain, single ship missing, one fighter only, calm empty water, text, watermark, blurry, ark underwater, ark in the sky, vertical composition",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/80-promo",
+    "fileStem": "website-and-banners",
+    "slug": "wide-banner-21x9-warning",
+    "variantNum": 2,
+    "id": "wide-banner-21x9-warning-v2",
+    "title": "Panorama alt: single biome mid-collision, ark rising and fleet of bullets",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, extreme widescreen 21:9 composition, subtle CRT scanline glow; event-banner key art, the largest thing in the game doing the largest thing, ultra-detailed large-format art with pixel-art texture accents. Across an abyssal horizon at the bottom of the world, the ARK arrives: a whale-bodied fortress-ship of thirteen segmented hull-plates surfaces along the entire width of the frame — the panorama is so wide that its head, its mid-body rows of barnacle turrets and its enormous tail fluke are all visible at once in a single gentle arc, water and violet light cascading off every segment in long outlined sheets, the fluke still raised above the surface on the far right dripping luminous teal. Along its back, a hundred running lights flare amber in sequence, and from its blow-port a single vertical pillar of spray and rose-gold dawn light punches clean through the top of the frame. In the lower third, dwarfed but central, two fighters fly the same heading side by side — a steel-blue dart and a pale mint manta, canopy cyan against green, engine trails orange against amber — weaving through a full wall of the ark's defensive fire: hundreds of pink, red and violet bright-core bullets in three stacked arcades that fill every inch of sky between the ships and the creature, a solid lattice of almost-hitting. The water below mirrors the ark's lights in long broken ribbons. Scale is the product: horizon-to-horizon monster, two specks, one impossible wall of color. Palette of black-blue water with teal biolume, amber spine-light, and the whole bullet-hell spectrum in between, lifted deep-navy sky, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, real whale, water spout fountain, single ship missing, one fighter only, calm empty water, text, watermark, blurry, ark underwater, ark in the sky, vertical composition",
+    "negativeScoped": true,
+    "notes": "The 21:9 crop is literally why this ark exists — thirteen segments finally fit in one read. Biolume #16485a→#6ad8e0, spine amber #e8a030, bullet ramp per kernel. Watch for the fluke merging into a normal whale tail: it must read as segmented armor-plate on a hinge. Strongest banner for a boss-rush mode reveal; the two-ship pairing quietly sells co-op without stating it.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 21032,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 21032,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "wide-banner-21x9-warning-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "aed80d83-2e44-4807-9f93-7772b3bec08d",
+      "created": 1791540238,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, extreme widescreen 21:9 composition, subtle CRT scanline glow; event-banner key art, the largest thing in the game doing the largest thing, ultra-detailed large-format art with pixel-art texture accents. Across an abyssal horizon at the bottom of the world, the ARK arrives: a whale-bodied fortress-ship of thirteen segmented hull-plates surfaces along the entire width of the frame — the panorama is so wide that its head, its mid-body rows of barnacle turrets and its enormous tail fluke are all visible at once in a single gentle arc, water and violet light cascading off every segment in long outlined sheets, the fluke still raised above the surface on the far right dripping luminous teal. Along its back, a hundred running lights flare amber in sequence, and from its blow-port a single vertical pillar of spray and rose-gold dawn light punches clean through the top of the frame. In the lower third, dwarfed but central, two fighters fly the same heading side by side — a steel-blue dart and a pale mint manta, canopy cyan against green, engine trails orange against amber — weaving through a full wall of the ark's defensive fire: hundreds of pink, red and violet bright-core bullets in three stacked arcades that fill every inch of sky between the ships and the creature, a solid lattice of almost-hitting. The water below mirrors the ark's lights in long broken ribbons. Scale is the product: horizon-to-horizon monster, two specks, one impossible wall of color. Palette of black-blue water with teal biolume, amber spine-light, and the whole bullet-hell spectrum in between, lifted deep-navy sky, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 14.283287753118202,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

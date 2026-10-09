@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:58:41.965Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d, gradients, smooth shading, text, watermark, sand dunes background, cactus, real beetle, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-c-dune-expanse",
+    "slug": "dune-expanse-sprite-sheet",
+    "variantNum": 2,
+    "id": "dune-expanse-sprite-sheet-v2",
+    "title": "In-game enemy sprite sheet: dune worm, dust devil, husk crawler",
+    "positive": "Retro 16-bit pixel art sprite atlas for a desert level of a horizontal arcade shoot-'em-up, flat solid dark blue-navy sheet background, generous even margins, absolutely no text, numbers or annotations. Content, all facing left: a mechanical boring-worm drawn as separable parts — a ring-plated brass head with a spiral drill jaw in four rev states, plain body rings for extending its length, and a tail plug — plus a little sand-burst effect sprite in two expand frames; a family of DUST DEVIL funnels, four translucent rust-vapor whirls whose internal shear bands and hollow dark cores step through a spin cycle, tiny pebbles caught at orbiting positions; squat armoured HUSK CRAWLER beetles, slate carapace built from overlapping plates over six chunky legs, four-frame walk cycle, plus one belly-open frame revealing a glowing violet weak-point core. Bold near-black outlines throughout, sand-gold, rust, brass and slate palette with violet and red accents, chunky readable pixels, dithering only on metal, no anti-aliasing, nothing else on the sheet.",
+    "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, sand dunes background, cactus, real beetle, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Modular worm parts make this sheet directly usable for a segment-builder mockup. sd3.5 at 5.5 holds the grid; flux.1-dev if it produces cleaner leg silhouettes at the cost of layout. Color reference: sand-burst #fce8b8, core violet #b84cff family.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15322,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15322,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "dune-expanse-sprite-sheet-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "abe966df-1ba7-409d-af4f-67d01641f11b",
+      "created": 1791536317,
+      "count": 1,
+      "revised_prompt": "Retro 16-bit pixel art sprite atlas for a desert level of a horizontal arcade shoot-'em-up, flat solid dark blue-navy sheet background, generous even margins, absolutely no text, numbers or annotations. Content, all facing left: a mechanical boring-worm drawn as separable parts — a ring-plated brass head with a spiral drill jaw in four rev states, plain body rings for extending its length, and a tail plug — plus a little sand-burst effect sprite in two expand frames; a family of DUST DEVIL funnels, four translucent rust-vapor whirls whose internal shear bands and hollow dark cores step through a spin cycle, tiny pebbles caught at orbiting positions; squat armoured HUSK CRAWLER beetles, slate carapace built from overlapping plates over six chunky legs, four-frame walk cycle, plus one belly-open frame revealing a glowing violet weak-point core. Bold near-black outlines throughout, sand-gold, rust, brass and slate palette with violet and red accents, chunky readable pixels, dithering only on metal, no anti-aliasing, nothing else on the sheet.",
+      "inference_time_s": 15.069368151947856,
+      "peak_memory_mb": 36782
+    },
+    "format": "jpg"
+  }
+}

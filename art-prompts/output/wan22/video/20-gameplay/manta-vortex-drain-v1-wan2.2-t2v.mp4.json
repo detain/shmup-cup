@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T11:59:36.896Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD, realistic smoke",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD, realistic smoke",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/20-gameplay",
+    "fileStem": "manta-blackhole-vortex",
+    "slug": "manta-vortex-drain",
+    "variantNum": 1,
+    "id": "manta-vortex-drain-v1",
+    "title": "bomb detonates, bullets spiral into the drain",
+    "positive": "Widescreen 2D side-scrolling retro 16-bit pixel-art arcade shooter moment: a flat ray-winged manta-shaped craft with a pale-mint hull, green glowing canopy and twin amber thrusters holds the left of frame as a violent violet-blue three-armed spiral vortex tears open at center-right, hundreds of hot-pink and red glowing enemy bullets curve inward and stream into it like water down a drain, shredded pixel debris corkscrews after them, the vortex arms rotate faster and brighter, the whole navy starfield bends slightly toward its core, then a blinding white lightning discharge bursts outward and sweeps the screen clean, bold-outlined sprites, orange-white flash at the edges, CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD, realistic smoke",
+    "notes": "The signature super-weapon shot — worth the hero budget. Wan handles the inward spiral stream well; the final white discharge may bloom too far, dial guidance to 4.0 if the frame whites out early.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 22004,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "manta-vortex-drain-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "1711a759-5fb3-494b-9da9-1af311562105",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art arcade shooter moment: a flat ray-winged manta-shaped craft with a pale-mint hull, green glowing canopy and twin amber thrusters holds the left of frame as a violent violet-blue three-armed spiral vortex tears open at center-right, hundreds of hot-pink and red glowing enemy bullets curve inward and stream into it like water down a drain, shredded pixel debris corkscrews after them, the vortex arms rotate faster and brighter, the whole navy starfield bends slightly toward its core, then a blinding white lightning discharge bursts outward and sweeps the screen clean, bold-outlined sprites, orange-white flash at the edges, CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 22004,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD, realistic smoke",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 956.8606127339881
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

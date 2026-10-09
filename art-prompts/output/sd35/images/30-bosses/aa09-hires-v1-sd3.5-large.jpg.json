@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:51:04.242Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, organic whale skin, fins like a shark, player character, pure black background",
+  "negative_sent": "photorealistic, 3d render, text artifacts, watermark, blurry, organic whale skin, fins like a shark, player character, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "hi-res",
+    "slug": "aa09-hires",
+    "variantNum": 1,
+    "id": "aa09-hires-v1",
+    "title": "Abyss Ark thirteen-section flagship documentation plate",
+    "positive": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete hull of Abyss Ark AA-09, the Iron Tide flagship, a whale-bodied fortress battleship shown full-length broadside and fully readable from blowhole tower to tail fluke — thirteen articulated hull sections of riveted blue-black steel visible as distinct segments from snout through body to the great horizontal tail fluke plates, turret batteries rising in staggered rows along the back line like a city skyline, a ring of warm amber portholes glowing along the flank, barnacle-plates of armor crusted low on the belly, and the eye of the ark a single lit watch-window near the prow. The tail fluke drifts a wake of pale bioluminescent specks. Deep black-blue water-space behind never pure black, ramping from dark teal to midnight, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic whale skin, fins like a shark, player character, pure black background",
+    "negativeScoped": true,
+    "notes": "The flagship deserves the most steps — 13 named segments + skyline turrets is the densest prompt in the set; biolume ramp #16485a→#6ad8e0 in the wake.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 14091,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 40,
+        "seed": 14091,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "aa09-hires-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "88e383a1-7962-45cf-921f-9cc276a675b6",
+      "created": 1791539459,
+      "count": 1,
+      "revised_prompt": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete hull of Abyss Ark AA-09, the Iron Tide flagship, a whale-bodied fortress battleship shown full-length broadside and fully readable from blowhole tower to tail fluke — thirteen articulated hull sections of riveted blue-black steel visible as distinct segments from snout through body to the great horizontal tail fluke plates, turret batteries rising in staggered rows along the back line like a city skyline, a ring of warm amber portholes glowing along the flank, barnacle-plates of armor crusted low on the belly, and the eye of the ark a single lit watch-window near the prow. The tail fluke drifts a wake of pale bioluminescent specks. Deep black-blue water-space behind never pure black, ramping from dark teal to midnight, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 15.786429247120395,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

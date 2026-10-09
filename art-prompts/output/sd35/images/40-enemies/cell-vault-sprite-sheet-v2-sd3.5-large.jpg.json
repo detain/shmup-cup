@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:55:13.530Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, red blood, pure black background, perspective distortion",
+  "negative_sent": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, red blood, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-f-cell-vault",
+    "slug": "cell-vault-sprite-sheet",
+    "variantNum": 2,
+    "id": "cell-vault-sprite-sheet-v2",
+    "title": "Square pixel sprite sheet: cell family sizes and damage states, claw grab poses, polyp spore patterns on flat navy",
+    "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — CHASER CELLS at four sizes (grandmother sphere twice the fighter, adult, daughter, seed bead), then the same adult cell in three damage states: membrane dimpled, nucleus cracked leaking pale light, ruptured into a sagging husk with a popping-spark outline. Second row — a single VAULT CLAW in five grab poses: idle curl, reaching forward, hooked-in, hauling upward, and shattered at the third link with tissue fraying and two bone fragments falling. Third row — POLYP TURRET batteries: a wall-bud polyp, a twin polyp sharing one base, and four discharged spore patterns — a straight shot line, a slow three-spore arc, a five-spore fan, and a lingering violet cloud wisp. Fourth row — shared effect pixels: pink and magenta bright-core round shots with dark rims, green fluid droplet beads with short tails, a small membrane tear decal, a synchronized pulse ring, and two floating amber pore-lights. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+    "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, red blood, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Size laddering (grandmother → seed bead) covers the chaser's spawn variety without redrawing; the polyp spore-pattern row is straight pattern-DSL reference for pattern authors. This is the most \"system sheet\" of the nine zone sheets — lean into that in triage.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15622,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15622,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "cell-vault-sprite-sheet-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "3be8cb30-f360-4456-b90f-0d06096e69fc",
+      "created": 1791539708,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — CHASER CELLS at four sizes (grandmother sphere twice the fighter, adult, daughter, seed bead), then the same adult cell in three damage states: membrane dimpled, nucleus cracked leaking pale light, ruptured into a sagging husk with a popping-spark outline. Second row — a single VAULT CLAW in five grab poses: idle curl, reaching forward, hooked-in, hauling upward, and shattered at the third link with tissue fraying and two bone fragments falling. Third row — POLYP TURRET batteries: a wall-bud polyp, a twin polyp sharing one base, and four discharged spore patterns — a straight shot line, a slow three-spore arc, a five-spore fan, and a lingering violet cloud wisp. Fourth row — shared effect pixels: pink and magenta bright-core round shots with dark rims, green fluid droplet beads with short tails, a small membrane tear decal, a synchronized pulse ring, and two floating amber pore-lights. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "inference_time_s": 14.061184474034235,
+      "peak_memory_mb": 25690
+    },
+    "format": "jpg"
+  }
+}

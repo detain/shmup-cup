@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:00:38.324Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, emerald, diamond, sapphire, blue gem, heart shape, ring setting, jewelry chain, text, watermark, blurry, gems melting, rounded blob shape, pure black background",
+  "negative_sent": "photorealistic, 3d render, emerald, diamond, sapphire, blue gem, heart shape, ring setting, jewelry chain, text, watermark, blurry, gems melting, rounded blob shape, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "shield-gems",
+    "variantNum": 1,
+    "id": "shield-gems-v1",
+    "title": "Faceted orange-gold shield gems at three charge states",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. Three shield gems floating in a horizontal row on a flat lifted deep-navy field, the same faceted teardrop-cut jewel rendered at three charge states so the row reads as a progression. The gem shape: a pointed-bottom, round-shouldered teardrop built from broad flat facets with hard dark edges, like a low-poly pixel-art jewel, each facet a different value of warm orange-gold. Left gem, spent: dull amber-bronze facets, no inner light, a thin cold rim, almost matte. Middle gem, charged: clean orange-gold with a single hot facet at the heart and a soft outer glow just kissing the outline. Right gem, overcharged: blazing pale gold at the core with light leaking out between the facet seams like a furnace behind a grille, a bright halo bleeding beyond the outline and two or three tiny sparks lifting off the shoulders. All three wear a thick near-black outline and a crisp white highlight slash on the upper-left facet. Hover shadows beneath, subtle. Warm palette against cold navy, arcade-jewel finish, never pure black. No text, no letters, no UI, no setting symbols on the gems.",
+    "negative": "photorealistic, 3d render, emerald, diamond, sapphire, blue gem, heart shape, ring setting, jewelry chain, text, watermark, blurry, gems melting, rounded blob shape, pure black background",
+    "negativeScoped": true,
+    "notes": "Gem family reference: orange-gold ramp ~#f8b030 core to #e87a1c facets, spent bronze ~#6a4418. The three-state row is documentation for the shield meter; flux.2 holds identical silhouettes across states better than sd3.5, which may resize the bright gem. Keep every facet edge dark-outlined so the spent gem doesn't dissolve into the background.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 18031,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18031,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "shield-gems-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "820fbdc8-de36-40fb-948d-1c86f24b4107",
+      "created": 1791540033,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. Three shield gems floating in a horizontal row on a flat lifted deep-navy field, the same faceted teardrop-cut jewel rendered at three charge states so the row reads as a progression. The gem shape: a pointed-bottom, round-shouldered teardrop built from broad flat facets with hard dark edges, like a low-poly pixel-art jewel, each facet a different value of warm orange-gold. Left gem, spent: dull amber-bronze facets, no inner light, a thin cold rim, almost matte. Middle gem, charged: clean orange-gold with a single hot facet at the heart and a soft outer glow just kissing the outline. Right gem, overcharged: blazing pale gold at the core with light leaking out between the facet seams like a furnace behind a grille, a bright halo bleeding beyond the outline and two or three tiny sparks lifting off the shoulders. All three wear a thick near-black outline and a crisp white highlight slash on the upper-left facet. Hover shadows beneath, subtle. Warm palette against cold navy, arcade-jewel finish, never pure black. No text, no letters, no UI, no setting symbols on the gems.",
+      "inference_time_s": 13.556188905844465,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

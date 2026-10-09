@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:52:12.950Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, submarine cable, wreckage",
+  "negative_sent": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, submarine cable, wreckage",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brood-urchin-reef",
+    "variantNum": 3,
+    "id": "brood-urchin-reef-v3",
+    "title": "BROOD BUBBLE and URCHIN reef turret, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square vertical poster crop, subtle CRT scanline glow. A towering reef column fills a vertical shaft of teal-violet light: stacked URCHIN reef turrets line it like fortified sentries, charcoal barnacle-domes with fanned purple spines and single magenta lenses, their aim-lines converging up the composition. Near the top a swollen BROOD BUBBLE clings to the rock, half-transparent and wobbling, a small mechanical fish curled inside its shimmering membrane, backlit so the film glows pale aqua at the rim. At the very bottom edge, tiny against the reef, the flat winged silhouette of the MANTA fighter climbs into the shaft, twin amber thrusters painting the stone warm, green canopy a bright seed of light. The sea of nebula gas darkens with depth into lifted navy, dusted with glowing plankton and drifting wave rasters. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, atmosphere thick but readable.",
+    "negative": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, submarine cable, wreckage",
+    "negativeScoped": true,
+    "notes": "Vertical \"descent shaft\" composition sells the nebula's depth. flux.1-dev keeps the stacked turret silhouettes crisp. Color reference: aqua rim glow #6ad8e0 family, spine purple #b84cff, thrusters amber #f89830.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15213,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15213,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brood-urchin-reef-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "9ebf1c9e-ca65-4790-a9a6-d35c67e347cd",
+      "created": 1791539528,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square vertical poster crop, subtle CRT scanline glow. A towering reef column fills a vertical shaft of teal-violet light: stacked URCHIN reef turrets line it like fortified sentries, charcoal barnacle-domes with fanned purple spines and single magenta lenses, their aim-lines converging up the composition. Near the top a swollen BROOD BUBBLE clings to the rock, half-transparent and wobbling, a small mechanical fish curled inside its shimmering membrane, backlit so the film glows pale aqua at the rim. At the very bottom edge, tiny against the reef, the flat winged silhouette of the MANTA fighter climbs into the shaft, twin amber thrusters painting the stone warm, green canopy a bright seed of light. The sea of nebula gas darkens with depth into lifted navy, dusted with glowing plankton and drifting wave rasters. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, atmosphere thick but readable.",
+      "inference_time_s": 13.494858524994925,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:42:27.006Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, photorealistic, 3d render, real galaxy, astronomy photo, nebula photo, watermark, blurry, four arms, two arms, pure black background",
+  "negative_sent": "text, photorealistic, 3d render, real galaxy, astronomy photo, nebula photo, watermark, blurry, four arms, two arms, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "alt-emblems",
+    "slug": "alt-emblem",
+    "variantNum": 3,
+    "id": "alt-emblem-v3",
+    "title": "black hole bomb crest",
+    "positive": "Powerful relic emblem on a square navy plaque, a three-armed spiral vortex rendered as three smooth curved blades of light in violet, indigo-blue and steel-blue swirling clockwise into a perfectly circular pitch-dark core, the rim of the vortex edged with a thin lilac glow, small pink and gold bullet sparks caught spiraling inward along the arms, set against a flat deep-navy background plate with a thin golden border, faint radial scratch lines suggesting implosion, bold dark outlines, saturated limited palette, clean vector shapes with crisp pixel-art texture accents, SNES arcade item iconography, perfectly centered, no text.",
+    "negative": "text, photorealistic, 3d render, real galaxy, astronomy photo, nebula photo, watermark, blurry, four arms, two arms, pure black background",
+    "negativeScoped": true,
+    "notes": "Exactly three arms matters — arms #b060f0/#6040d0/#3060b0, rim #d8b0ff, core #080410 (the only allowed near-black is the core disc).",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10033,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 10033,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "alt-emblem-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "52be41e6-614c-4c79-82fd-feb6558379ea",
+      "created": 1791538942,
+      "count": 1,
+      "revised_prompt": "Powerful relic emblem on a square navy plaque, a three-armed spiral vortex rendered as three smooth curved blades of light in violet, indigo-blue and steel-blue swirling clockwise into a perfectly circular pitch-dark core, the rim of the vortex edged with a thin lilac glow, small pink and gold bullet sparks caught spiraling inward along the arms, set against a flat deep-navy background plate with a thin golden border, faint radial scratch lines suggesting implosion, bold dark outlines, saturated limited palette, clean vector shapes with crisp pixel-art texture accents, SNES arcade item iconography, perfectly centered, no text.",
+      "inference_time_s": 13.036100628785789,
+      "peak_memory_mb": 26352
+    },
+    "format": "jpg"
+  }
+}

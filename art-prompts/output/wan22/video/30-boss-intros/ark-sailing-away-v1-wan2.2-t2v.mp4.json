@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T12:29:41.722Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic whale, fast motion, aggressive charging",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic whale, fast motion, aggressive charging",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/30-boss-intros",
+    "fileStem": "abyss-ark-sailing",
+    "slug": "ark-sailing-away",
+    "variantNum": 1,
+    "id": "ark-sailing-away-v1",
+    "title": "the fluke turns and the horizon starts moving",
+    "positive": "Retro 16-bit pixel-art widescreen boss intro in abyssal indigo water-light: the frame darkens to near-black navy with two deep red warning pulses, then the camera widens to reveal the ABYSS ARK — a continent-sized mechanical whale flagship of overlapping barnacled steel plates and long violet glow-seams — executing a slow majestic turn at the right of frame, its colossal tail fluke sweeping up and shedding curtains of dark water, bioluminescent specks dragging off its edges like a comet tail, rows of amber running lights flicking on along its back as it angles away toward the distant dark, the tiny manta craft silhouetted small at left chasing its wake, current lines and drifting particulate beginning to flow past faster, stately inexorable menace, bold outlines, CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic whale, fast motion, aggressive charging",
+    "notes": "Restraint is the point — an escaping boss is scarier than an attacking one. If the turn comes off as an attack swoop, strengthen \"slow majestic turn ... angles away\" and drop guidance to 4.0. This clip's last frame is the seed still for the escape-chase i2v beats.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.2,
+    "steps": 40,
+    "seed": 23011,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ark-sailing-away-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "8bda81a7-0d08-4e21-ac0e-a2e6141a817e",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art widescreen boss intro in abyssal indigo water-light: the frame darkens to near-black navy with two deep red warning pulses, then the camera widens to reveal the ABYSS ARK — a continent-sized mechanical whale flagship of overlapping barnacled steel plates and long violet glow-seams — executing a slow majestic turn at the right of frame, its colossal tail fluke sweeping up and shedding curtains of dark water, bioluminescent specks dragging off its edges like a comet tail, rows of amber running lights flicking on along its back as it angles away toward the distant dark, the tiny manta craft silhouetted small at left chasing its wake, current lines and drifting particulate beginning to flow past faster, stately inexorable menace, bold outlines, CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 23011,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic whale, fast motion, aggressive charging",
+          "guidance_scale": 4.2,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.1548597959336
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

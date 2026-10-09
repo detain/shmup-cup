@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:07:01.749Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, photorealistic, 3d render, watermark, gore, pure black background, blurry",
+  "negative_sent": "garbled text, misspelled letters, extra letters, photorealistic, 3d render, watermark, gore, pure black background, blurry",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "title-screen-hero",
+    "slug": "title-screen",
+    "variantNum": 4,
+    "id": "title-screen-v4",
+    "title": "molten final-zone title",
+    "positive": "Dark dramatic arcade title illustration where the exact letters \"SHMUP CUP\" stand at the center in scorched block capitals, the gradient of their fill running from sickly pale yellow through ember orange to blood red, edged with a near-black navy outline and lit from beneath by lava glow, the letters rest on a cracked basalt platform above a glowing magma lake with rivers of orange fire snaking into darkness, a lone tiny steel-blue fighter with a cyan canopy hovers at the lower left casting a thin orange exhaust gleam onto the rock, on the right a colossal armored silhouette with a single glowing lure-light rises out of the magma haze almost invisible, floating ember sparks and one curving stream of violet bullets, atmosphere of heat haze and falling ash, saturated limited palette, deep shadows that stay navy rather than pure black, SNES-era 16-bit inspired concept rendering with bold dark outlines, subtle CRT scanline glow, widescreen 16:9 composition, no text other than the title.",
+    "negative": "garbled text, misspelled letters, extra letters, photorealistic, 3d render, watermark, gore, pure black background, blurry",
+    "negativeScoped": true,
+    "notes": "Zone D + Zone I fusion mood (lava ramp #8a2c0a→#e87a1c, Hollow King lure tease). Higher steps help flux resolve the lure light.",
+    "models": [
+      "flux2",
+      "qwenvl"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "qwen-image"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 10014,
+        "defaulted": false
+      },
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 36,
+        "seed": 10014,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-screen-v4-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "051d8da3-6063-444f-95c3-19e72408beac",
+      "created": 1791540417,
+      "count": 1,
+      "revised_prompt": "Dark dramatic arcade title illustration where the exact letters \"SHMUP CUP\" stand at the center in scorched block capitals, the gradient of their fill running from sickly pale yellow through ember orange to blood red, edged with a near-black navy outline and lit from beneath by lava glow, the letters rest on a cracked basalt platform above a glowing magma lake with rivers of orange fire snaking into darkness, a lone tiny steel-blue fighter with a cyan canopy hovers at the lower left casting a thin orange exhaust gleam onto the rock, on the right a colossal armored silhouette with a single glowing lure-light rises out of the magma haze almost invisible, floating ember sparks and one curving stream of violet bullets, atmosphere of heat haze and falling ash, saturated limited palette, deep shadows that stay navy rather than pure black, SNES-era 16-bit inspired concept rendering with bold dark outlines, subtle CRT scanline glow, widescreen 16:9 composition, no text other than the title.",
+      "inference_time_s": 17.20362637215294,
+      "peak_memory_mb": 35436
+    },
+    "format": "jpg"
+  }
+}

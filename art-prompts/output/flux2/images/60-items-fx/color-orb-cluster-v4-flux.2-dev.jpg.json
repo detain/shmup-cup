@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:34:06.979Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, paint splatter, confetti, fireworks, prism light rays, text, HUD, watermark, blurry, orbs static in a grid, single color burst, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "color-orb-cluster",
+    "variantNum": 4,
+    "id": "color-orb-cluster-v4",
+    "title": "Burst moment: color orbs scattering from a shattered container",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; dramatic gameplay moment illustration. The instant a rare container breaks open in flight: at the center of a dark navy field, a split glass shell detonates outward into a fan of ten direct color orbs — red, orange, gold, green, teal, sky blue, deep blue, violet, magenta and pearl — each orb a small glass sphere with a bright solid core and white specular dot, all ten radiating away from the break point along distinct trajectories. Every orb trails a thin comet-line of its own hue, so the full image reads as a blooming flower of pure color opening toward the edges of the screen. Around the burst hang the debris of the container: two halves of a chrome-rimmed glass capsule curling apart, a scatter of tiny droplets of liquid light, and one lingering ring of pale shockwave vapor at the original container size. On the left of frame, a tiny steel-blue fighter with cyan canopy banks into the display, engines bright, silhouetted against the color bloom as if the explosion of spectrum was summoned for it. Star dust and faint nebula behind, everything outlined in thick dark linework, colors at maximum arcade saturation, lifted deep-navy background, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, paint splatter, confetti, fireworks, prism light rays, text, HUD, watermark, blurry, orbs static in a grid, single color burst, pure black background",
+    "negativeScoped": true,
+    "notes": "This is the website-able version of the orb family — the ten-hue bloom doubles as a portfolio shot for the weapon system. Kestrel reference: stripe #3858f0, canopy #38c8e8. flux.2 keeps each comet-line a distinct hue; sd3.5 may blend crossing trails into rainbow mud — lower steps if that happens.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 18022,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 18022,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "color-orb-cluster-v4-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "d188cb35-6e05-4604-ac1e-fda4a9bca69f",
+      "created": 1791538442,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; dramatic gameplay moment illustration. The instant a rare container breaks open in flight: at the center of a dark navy field, a split glass shell detonates outward into a fan of ten direct color orbs — red, orange, gold, green, teal, sky blue, deep blue, violet, magenta and pearl — each orb a small glass sphere with a bright solid core and white specular dot, all ten radiating away from the break point along distinct trajectories. Every orb trails a thin comet-line of its own hue, so the full image reads as a blooming flower of pure color opening toward the edges of the screen. Around the burst hang the debris of the container: two halves of a chrome-rimmed glass capsule curling apart, a scatter of tiny droplets of liquid light, and one lingering ring of pale shockwave vapor at the original container size. On the left of frame, a tiny steel-blue fighter with cyan canopy banks into the display, engines bright, silhouetted against the color bloom as if the explosion of spectrum was summoned for it. Star dust and faint nebula behind, everything outlined in thick dark linework, colors at maximum arcade saturation, lifted deep-navy background, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 31.585092537803575,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

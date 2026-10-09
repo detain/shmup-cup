@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:01:20.813Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, explosion all same phase, three identical fireballs, mushroom shapes, nuclear, text, HUD, score numbers, watermark, blurry, drones missing, vertical formation, pure black background",
+  "negative_sent": "photorealistic, 3d render, explosion all same phase, three identical fireballs, mushroom shapes, nuclear, text, HUD, score numbers, watermark, blurry, drones missing, vertical formation, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "explosion-kill-chain",
+    "variantNum": 2,
+    "id": "explosion-kill-chain-v2",
+    "title": "Multi-explosion kill burst down an enemy line",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; peak satisfaction gameplay moment, ultra-detailed. A machine-gun of destruction marching left to right along a dense formation of angular mechanical swarm drones: three of the drones have just been hit and are dying in staggered sequence, forming a diagonal chain of explosions across the formation. The nearest kill, left, is already in its smoke-frame — a rust-and-ember cloud with one gold spark winking out; the middle kill is at full bloom, a screaming amber fireball with outlined flame petals and spark arms flung into its neighbors; the far kill, right, is at ignition, a tiny perfect dot of white-gold heat just punched through the drone's chassis, its outline still intact around it. Because the blasts are staggered in phase, the whole image carries a rhythm — a wave of destruction visibly traveling down the line faster than the drones can fall. Fragments of chassis, thick-outlined ring-bolts and shards of plating arc outward from the middle blast on clean ballistic curves, while one un-hit drone at the far right is already banking away, its magenta eye-slit bright with alarm. Behind it all, the deep navy field carries a faint pink haze of leftover bullet light. The explosion ramp colors — cream core, orange bloom, ember death — dominate, lifted deep-navy background, never pure black. No text, no letters, no score popups.",
+    "negative": "photorealistic, 3d render, explosion all same phase, three identical fireballs, mushroom shapes, nuclear, text, HUD, score numbers, watermark, blurry, drones missing, vertical formation, pure black background",
+    "negativeScoped": true,
+    "notes": "The three explosion phases must be visually distinct at a glance — ignition tiny-white, bloom amber-petal, smoke ember-grey; that phase-lock is the whole \"chain traveling down the line\" read, and models will homogenize the three if you drop the per-blast phase clauses. Swarm drone language matches the Iron Tide sheet: gunmetal angular chassis, magenta optics. Great promo-frame-adjacent image; use it when selling game-feel.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 18072,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 18072,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "explosion-kill-chain-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "29f2e48d-8bdb-48ed-b73d-13dfe514916d",
+      "created": 1791540076,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; peak satisfaction gameplay moment, ultra-detailed. A machine-gun of destruction marching left to right along a dense formation of angular mechanical swarm drones: three of the drones have just been hit and are dying in staggered sequence, forming a diagonal chain of explosions across the formation. The nearest kill, left, is already in its smoke-frame — a rust-and-ember cloud with one gold spark winking out; the middle kill is at full bloom, a screaming amber fireball with outlined flame petals and spark arms flung into its neighbors; the far kill, right, is at ignition, a tiny perfect dot of white-gold heat just punched through the drone's chassis, its outline still intact around it. Because the blasts are staggered in phase, the whole image carries a rhythm — a wave of destruction visibly traveling down the line faster than the drones can fall. Fragments of chassis, thick-outlined ring-bolts and shards of plating arc outward from the middle blast on clean ballistic curves, while one un-hit drone at the far right is already banking away, its magenta eye-slit bright with alarm. Behind it all, the deep navy field carries a faint pink haze of leftover bullet light. The explosion ramp colors — cream core, orange bloom, ember death — dominate, lifted deep-navy background, never pure black. No text, no letters, no score popups.",
+      "inference_time_s": 14.369769877986982,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

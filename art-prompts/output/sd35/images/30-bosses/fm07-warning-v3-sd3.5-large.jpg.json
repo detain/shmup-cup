@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:47:31.690Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic, 3d render, watermark, explosions, bright full scene, many colors, pure black background",
+  "negative_sent": "text, banner, letters, photorealistic, 3d render, watermark, explosions, bright full scene, many colors, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "07-facet-monarch",
+    "slug": "fm07-warning",
+    "variantNum": 3,
+    "id": "fm07-warning-v3",
+    "title": "prismatic darkening",
+    "positive": "Ominous boss alarm beat in the prism labyrinth, the ambient glint of the crystal corridor suddenly going dark facet by facet from the far end toward the viewer as light is drained toward something forming, in the gathering dim the FACET MONARCH shows only as a flat black-violet silhouette, an open crown of seven separated wedge shapes orbiting a bare pinprick of pink light, each silhouette segment edged with one thin lilac rim line so the geometry reads like a diagram of a coming disaster, the corridor floor a mirror of dark violet planes throwing the broken crown reflection forward at the viewer, stray motes of light sliding sideways and disappearing into the pinprick core, a single tiny fighter silhouette with a cyan canopy dot parked low right, still, waiting, cold violet-and-shadow palette with exactly one bright point, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic, 3d render, watermark, explosions, bright full scene, many colors, pure black background",
+    "negativeScoped": true,
+    "notes": "The anti-reveal: light drains instead of firing up. Keep lilac rims (#c8a0ff) on every silhouette edge or the shape dies in the dark.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12703,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12703,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "fm07-warning-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "5c01ecd8-5316-4275-8db1-c2b1c293b4cd",
+      "created": 1791539247,
+      "count": 1,
+      "revised_prompt": "Ominous boss alarm beat in the prism labyrinth, the ambient glint of the crystal corridor suddenly going dark facet by facet from the far end toward the viewer as light is drained toward something forming, in the gathering dim the FACET MONARCH shows only as a flat black-violet silhouette, an open crown of seven separated wedge shapes orbiting a bare pinprick of pink light, each silhouette segment edged with one thin lilac rim line so the geometry reads like a diagram of a coming disaster, the corridor floor a mirror of dark violet planes throwing the broken crown reflection forward at the viewer, stray motes of light sliding sideways and disappearing into the pinprick core, a single tiny fighter silhouette with a cyan canopy dot parked low right, still, waiting, cold violet-and-shadow palette with exactly one bright point, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 13.512237850110978,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

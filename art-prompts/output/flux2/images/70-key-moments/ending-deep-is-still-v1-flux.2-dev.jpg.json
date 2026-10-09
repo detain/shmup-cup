@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:37:47.577Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, underwater photo, sharks, whales, sea creatures, stormy sea, big waves, ship underwater, bubbles everywhere, sunset orange heavy, text, watermark, blurry, daytime blue sky",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-deep-is-still",
+    "variantNum": 1,
+    "id": "ending-deep-is-still-v1",
+    "title": "Rising through black water, breaking the surface into sunrise",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical-feel composition inside a widescreen frame, subtle CRT scanline glow; ending scene painted at hi-resolution, sacred quiet, ultra-detailed large-format art with pixel-art texture accents. The boundary of worlds, seen from just under it: the bottom two-thirds of the frame are black water — deep, still, absolute — fading from midnight teal at the top of the depths to the faintest blue-black at the very bottom, crossed only by one long column of rising silver bubbles that trails off-frame below, the flight path of the ship that climbed all the way out of the abyss. The top one-third is air at first light, and the two worlds meet along a trembling silver ceiling: from beneath, the surface is a hammered mirror arched open in the center where a battered manta-shaped fighter — pale mint ray-wings, a green canopy now dark, twin thrusters guttering a last lazy halo of bubbles — has just punched through and is hanging at the apex of its break, shedding curtains of glowing water off every wing edge, each falling droplet catching the sunrise like a dropped bead of lamp-glass. Beyond and above, the real sky: a thin band of deep navy at the frame's upper corners melting into a huge, unhurried sunrise of pale gold and rose along the open sea-horizon, the sun itself just topping the line, its light laying a road of shimmer straight under the risen ship. Nothing hostile exists in this image. The palette is teal-black depths against gold-rose dawn, lifted navy shadows, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, underwater photo, sharks, whales, sea creatures, stormy sea, big waves, ship underwater, bubbles everywhere, sunset orange heavy, text, watermark, blurry, daytime blue sky",
+    "negativeScoped": true,
+    "notes": "Manta reference: hull pale mint #c8e0d0, canopy green #40d070, thrusters amber — here dimmed, engine-lights almost out; depths teal #16485a fading to navy-black. Half-submerged ship at the surface is the hard ask — models want the ship either flying or sunk, so \"hanging at the apex of its break, shedding curtains of water\" is load-bearing. Bubble column entering from below sells the nine-thousand-meter climb without showing it.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 20061,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4.5,
+        "steps": 34,
+        "seed": 20061,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-deep-is-still-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "3d7bcd73-e8f0-4c0c-b695-2a30ef4e4bc1",
+      "created": 1791538662,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical-feel composition inside a widescreen frame, subtle CRT scanline glow; ending scene painted at hi-resolution, sacred quiet, ultra-detailed large-format art with pixel-art texture accents. The boundary of worlds, seen from just under it: the bottom two-thirds of the frame are black water — deep, still, absolute — fading from midnight teal at the top of the depths to the faintest blue-black at the very bottom, crossed only by one long column of rising silver bubbles that trails off-frame below, the flight path of the ship that climbed all the way out of the abyss. The top one-third is air at first light, and the two worlds meet along a trembling silver ceiling: from beneath, the surface is a hammered mirror arched open in the center where a battered manta-shaped fighter — pale mint ray-wings, a green canopy now dark, twin thrusters guttering a last lazy halo of bubbles — has just punched through and is hanging at the apex of its break, shedding curtains of glowing water off every wing edge, each falling droplet catching the sunrise like a dropped bead of lamp-glass. Beyond and above, the real sky: a thin band of deep navy at the frame's upper corners melting into a huge, unhurried sunrise of pale gold and rose along the open sea-horizon, the sun itself just topping the line, its light laying a road of shimmer straight under the risen ship. Nothing hostile exists in this image. The palette is teal-black depths against gold-rose dawn, lifted navy shadows, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 37.27605136297643,
+      "peak_memory_mb": 39968
+    },
+    "format": "jpg"
+  }
+}

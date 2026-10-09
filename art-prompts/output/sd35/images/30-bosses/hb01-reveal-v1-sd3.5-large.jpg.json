@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:45:11.697Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, organic creature, sea animal, castle towers with flags, modern warship, pure black background, cute style",
+  "negative_sent": "photorealistic, 3d render, text, watermark, organic creature, sea animal, castle towers with flags, modern warship, pure black background, cute style",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "01-halcyon-bulwark",
+    "slug": "hb01-reveal",
+    "variantNum": 1,
+    "id": "hb01-reveal-v1",
+    "title": "full silhouette reveal over the planet rim",
+    "positive": "Colossal arcade boss reveal key art, the HALCYON BULWARK, a fortress-sized enemy warship built like a floating castle of layered gunmetal armor plates riveted over a deep blue-black chassis, its hull shaped as a broad hexagonal bastion with two enormous swept armor wings ending in glowing emitter pods that pulse with pink-violet energy, rows of small amber porthole lights and dark turret nubs bristling along its flanks, it slides into frame from the right occupying half the canvas while a tiny steel-blue dart fighter with a cyan canopy and orange engine trail holds its ground at the lower left for scale, behind them the curved glowing rim of a blue planet with patches of green-teal terrain and a band of thin cyan atmosphere, scattered stars and drifting pink bullet sparks, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, widescreen side-scrolling composition, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, organic creature, sea animal, castle towers with flags, modern warship, pure black background, cute style",
+    "negativeScoped": true,
+    "notes": "First Iron Tide contact. Emitter glow anchors #b84cff/#ff5aa0; planet rim from zone A (#8ad0a8 terrain).",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12101,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hb01-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "8c109e27-66d5-4391-a8a4-fc772bd0cacd",
+      "created": 1791539107,
+      "count": 1,
+      "revised_prompt": "Colossal arcade boss reveal key art, the HALCYON BULWARK, a fortress-sized enemy warship built like a floating castle of layered gunmetal armor plates riveted over a deep blue-black chassis, its hull shaped as a broad hexagonal bastion with two enormous swept armor wings ending in glowing emitter pods that pulse with pink-violet energy, rows of small amber porthole lights and dark turret nubs bristling along its flanks, it slides into frame from the right occupying half the canvas while a tiny steel-blue dart fighter with a cyan canopy and orange engine trail holds its ground at the lower left for scale, behind them the curved glowing rim of a blue planet with patches of green-teal terrain and a band of thin cyan atmosphere, scattered stars and drifting pink bullet sparks, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, widescreen side-scrolling composition, no text.",
+      "inference_time_s": 14.287735669175163,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

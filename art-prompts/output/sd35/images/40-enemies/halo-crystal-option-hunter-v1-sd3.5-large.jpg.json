@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:55:27.133Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, extra suns, single flat crystal wall with no facets, eight or more ring crystals",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, extra suns, single flat crystal wall with no facets, eight or more ring crystals",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-g-prism-labyrinth",
+    "slug": "halo-crystal-option-hunter",
+    "variantNum": 1,
+    "id": "halo-crystal-option-hunter-v1",
+    "title": "faceted ring-crystals and the violet thief frigate",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside a luminous crystal labyrinth corridor: a HALO CRYSTAL hovers mid-approach — a large faceted violet gem the size of a fighter, and around it a slowly rotating ring of six smaller matching crystals, each edge catching pale lilac light, the whole assembly glinting with hard white star-flecks. Behind it, cutting through the corridor at a predatory angle, the OPTION HUNTER: an armored deep-violet frigate with a wedge prow, blunt hull plates, and a grappling array of four open magnetic claws flexing on its flanks — it is hunting the little shimmering drone-orbs that fly escort, one claw already closing around a captured orb and dragging it into a violet launch bay on its belly. The walls are dense triangle-facet crystal, violet with lilac rim-light, breaking the scene into a thousand colored reflections; a stack of larger crystal cubes leans in from the ceiling, mid-tumble. The KESTREL streaks left in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy and orange engine glow, trailing a thin cyan laser bolt, one escort drone already peeled away toward the hunter's claws. The enemy fires a slow rotating fan of pink laser needles that bend around the crystal walls and split into twin threads off the facets. Deep-navy shadow pockets, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, extra suns, single flat crystal wall with no facets, eight or more ring crystals",
+    "negativeScoped": true,
+    "notes": "Color reference: crystal violet #8a48e8 with lilac edges #c8a0ff, pink laser needles #ff5aa0, hunter hull a desaturated armored violet distinct from the gemstone glow. Flux.2 first for keeping the halo ring, the claw array and the fleeing drone as three legible systems. The hunter must read as SHIP, the halo as GEOMETRY — do not let the models merge them.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15711,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15711,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "halo-crystal-option-hunter-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "e74ea1c1-2838-4a3c-ab66-a0c49154d04a",
+      "created": 1791539722,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside a luminous crystal labyrinth corridor: a HALO CRYSTAL hovers mid-approach — a large faceted violet gem the size of a fighter, and around it a slowly rotating ring of six smaller matching crystals, each edge catching pale lilac light, the whole assembly glinting with hard white star-flecks. Behind it, cutting through the corridor at a predatory angle, the OPTION HUNTER: an armored deep-violet frigate with a wedge prow, blunt hull plates, and a grappling array of four open magnetic claws flexing on its flanks — it is hunting the little shimmering drone-orbs that fly escort, one claw already closing around a captured orb and dragging it into a violet launch bay on its belly. The walls are dense triangle-facet crystal, violet with lilac rim-light, breaking the scene into a thousand colored reflections; a stack of larger crystal cubes leans in from the ceiling, mid-tumble. The KESTREL streaks left in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy and orange engine glow, trailing a thin cyan laser bolt, one escort drone already peeled away toward the hunter's claws. The enemy fires a slow rotating fan of pink laser needles that bend around the crystal walls and split into twin threads off the facets. Deep-navy shadow pockets, never pure black. No text, no UI elements.",
+      "inference_time_s": 13.50747352000326,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

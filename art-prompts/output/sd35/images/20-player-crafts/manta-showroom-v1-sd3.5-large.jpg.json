@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:44:04.341Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, annotations, labels, real manta ray, sea creature, visible eye of a fish, photorealistic, 3d render, watermark, visible pilot, pure black background",
+  "negative_sent": "text, annotations, labels, real manta ray, sea creature, visible eye of a fish, photorealistic, 3d render, watermark, visible pilot, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "manta",
+    "slug": "manta-showroom",
+    "variantNum": 1,
+    "id": "manta-showroom-v1",
+    "title": "studio concept plate",
+    "positive": "Video game spacecraft concept art showroom plate, a single wide flat fighter called the MANTA seen from slightly above at three-quarter angle, its hull shaped like a manta ray with broad swept ray-wings and a thin trailing tail spine, pale mint green body panels with darker green under-shading, a small bright green glowing canopy set forward of center, two amber thruster nozzles embedded in the wing roots glowing softly, every edge drawn with a heavy near-black green outline, subtle hex texture on the wing skins, floating centered on a flat deep-navy studio background with a faint design-table grid line, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.",
+    "negative": "text, annotations, labels, real manta ray, sea creature, visible eye of a fish, photorealistic, 3d render, watermark, visible pilot, pure black background",
+    "negativeScoped": true,
+    "notes": "Body #c8e0d0, canopy #40d070, outline near-black green. The ray-shape must read as engineered plating, not an animal.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11101,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "manta-showroom-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1129adab-e4f9-4742-afd8-29f9894adbbb",
+      "created": 1791539039,
+      "count": 1,
+      "revised_prompt": "Video game spacecraft concept art showroom plate, a single wide flat fighter called the MANTA seen from slightly above at three-quarter angle, its hull shaped like a manta ray with broad swept ray-wings and a thin trailing tail spine, pale mint green body panels with darker green under-shading, a small bright green glowing canopy set forward of center, two amber thruster nozzles embedded in the wing roots glowing softly, every edge drawn with a heavy near-black green outline, subtle hex texture on the wing skins, floating centered on a flat deep-navy studio background with a faint design-table grid line, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.",
+      "inference_time_s": 13.533744580112398,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

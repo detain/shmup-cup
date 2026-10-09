@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:03:01.964Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, space scene, planets, sun visible, surface of water, ship intact, explosion, fire trail behind ship, sea creatures, text, watermark, blurry, golden light at bottom, dark at top, diagonal wrong way",
+  "negative_sent": "photorealistic, 3d render, space scene, planets, sun visible, surface of water, ship intact, explosion, fire trail behind ship, sea creatures, text, watermark, blurry, golden light at bottom, dark at top, diagonal wrong way",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-throne-is-broken",
+    "variantNum": 1,
+    "id": "ending-throne-is-broken-v1",
+    "title": "Battered fighter climbing toward distant light out of the abyss trench",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical-climb composition in widescreen frame, subtle CRT scanline glow; ending scene painted at hi-resolution, wounded ascent, ultra-detailed large-format art with pixel-texture accents. Out of the throne trench, one slow climb at a time: a badly hurt steel-blue dart fighter angles upward across the frame from the lower left, its hull stripe burned away in a ragged band, one wingtip chipped, canopy cracked into a frost of fine fractures, cyan glass dim; the main engine lives as a single stretched flare of orange, the second sputters into a broken amber ribbon, and through the worst gash in its flank a faint interior light blinks once, mechanically, like a pulse that refuses to stop. Below and behind, the broken throne itself fills the bottom right of the frame — a shattered crown of black-blue reef-crystal and drowned fortress-mass, one enormous cracked ring of violet crystal split and tilted in the water where the seat of the deep tyrant used to be, its edges shedding a last slow rain of lilac shards into the trench; the biolume constellations that dusted the cliffs are going dark section by section from the bottom up, the abyss switching itself off now that its ruler is gone. Above: distance. The ceiling of the trench is far, far away, and through the gap in the spires a column of pale gold light comes down at an angle like something remembered from a different game — thin, physical, impossibly clean, illuminating drifting marine snow in a single lit stairway that ends exactly where the ship is pointing. The climb is not over in this frame; it is being refused to end. Palette of abyssal blues and violets dying out below, warm gold shaft above, one orange heart of engine fire in between, lifted deep-navy base, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, space scene, planets, sun visible, surface of water, ship intact, explosion, fire trail behind ship, sea creatures, text, watermark, blurry, golden light at bottom, dark at top, diagonal wrong way",
+    "negativeScoped": true,
+    "notes": "Broken crown-violet #8a48e8/#c8a0ff fading; biolume #16485a→#6ad8e0 extinguishing bottom-up; light shaft pale gold ~#fce8b8. Geometry must read: ship lower-left nose-up toward the shaft which enters upper-right-ish; if the shaft and ship don't point at each other, the entire \"climb\" premise dies. The one-blinking-flank-light is the survivor motif — flux.2 renders the damage vocabulary best here.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 20081,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4.5,
+        "steps": 34,
+        "seed": 20081,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-throne-is-broken-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "7a98980d-8229-4b88-8618-62524a5a58b3",
+      "created": 1791540177,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical-climb composition in widescreen frame, subtle CRT scanline glow; ending scene painted at hi-resolution, wounded ascent, ultra-detailed large-format art with pixel-texture accents. Out of the throne trench, one slow climb at a time: a badly hurt steel-blue dart fighter angles upward across the frame from the lower left, its hull stripe burned away in a ragged band, one wingtip chipped, canopy cracked into a frost of fine fractures, cyan glass dim; the main engine lives as a single stretched flare of orange, the second sputters into a broken amber ribbon, and through the worst gash in its flank a faint interior light blinks once, mechanically, like a pulse that refuses to stop. Below and behind, the broken throne itself fills the bottom right of the frame — a shattered crown of black-blue reef-crystal and drowned fortress-mass, one enormous cracked ring of violet crystal split and tilted in the water where the seat of the deep tyrant used to be, its edges shedding a last slow rain of lilac shards into the trench; the biolume constellations that dusted the cliffs are going dark section by section from the bottom up, the abyss switching itself off now that its ruler is gone. Above: distance. The ceiling of the trench is far, far away, and through the gap in the spires a column of pale gold light comes down at an angle like something remembered from a different game — thin, physical, impossibly clean, illuminating drifting marine snow in a single lit stairway that ends exactly where the ship is pointing. The climb is not over in this frame; it is being refused to end. Palette of abyssal blues and violets dying out below, warm gold shaft above, one orange heart of engine fire in between, lifted deep-navy base, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 14.35966503387317,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

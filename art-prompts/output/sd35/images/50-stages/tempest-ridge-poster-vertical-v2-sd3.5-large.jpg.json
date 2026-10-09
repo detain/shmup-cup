@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:58:58.222Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, horizontal panorama, wide angle ground view, green forest, desert, pure black background, watermark, text, blurry, lightning bolts with no cloud connection, straight vertical rain, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, horizontal panorama, wide angle ground view, green forest, desert, pure black background, watermark, text, blurry, lightning bolts with no cloud connection, straight vertical rain, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-e-tempest-ridge",
+    "slug": "tempest-ridge-poster-vertical",
+    "variantNum": 2,
+    "id": "tempest-ridge-poster-vertical-v2",
+    "title": "Vertical poster: looking up a storm chasm between two jagged peaks, lightning bridging them",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Viewed from deep inside a mountain chasm, looking up: two colossal saw-tooth rock-and-ice walls flank the frame on the left and right, their serrated crest lines stabbing toward each other from opposite sides, dark navy stone on the inner faces and cold white ice catching the light above. Between them the chasm fills with a vertical traffic of storm — slabs of cloud stacked one above another into the distance, each outlined in shadow, the gaps narrowing toward a churning anvil ceiling far overhead. A dozen bolts of violet lightning bridge the two walls at different heights, zigzag ladders of lilac light illuminating successive ledges, small waterfalls of meltwater on the rocks, and horizontal rain sheets driven across the gap. At the very bottom of the frame the chasm floor disappears into a luminous mist of crushed cloud, faintly lilac from all the electrical light above it. The composition draws the eye upward through the storm layers toward the biggest bolt striking dead center at the top. Storm blues, ice whites, heavy navy shadows and committed violet lightning accents, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, horizontal panorama, wide angle ground view, green forest, desert, pure black background, watermark, text, blurry, lightning bolts with no cloud connection, straight vertical rain, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: bolt violet #b84cff with pink-white cores, mist lit ~#9a7ad8, walls navy #0c1a3c under ice #c8e0f0. Vertical chasm framing doubles the \"storm layers\" reading; flux.1 loves this but softens the serrated crests — the \"serrated crest lines stabbing toward each other\" clause keeps them aggressive. This is the strongest zone poster for a phone wallpaper.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 16502,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 16502,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "tempest-ridge-poster-vertical-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "585d0d69-f0c0-4bec-96ad-367625ee714e",
+      "created": 1791539933,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Viewed from deep inside a mountain chasm, looking up: two colossal saw-tooth rock-and-ice walls flank the frame on the left and right, their serrated crest lines stabbing toward each other from opposite sides, dark navy stone on the inner faces and cold white ice catching the light above. Between them the chasm fills with a vertical traffic of storm — slabs of cloud stacked one above another into the distance, each outlined in shadow, the gaps narrowing toward a churning anvil ceiling far overhead. A dozen bolts of violet lightning bridge the two walls at different heights, zigzag ladders of lilac light illuminating successive ledges, small waterfalls of meltwater on the rocks, and horizontal rain sheets driven across the gap. At the very bottom of the frame the chasm floor disappears into a luminous mist of crushed cloud, faintly lilac from all the electrical light above it. The composition draws the eye upward through the storm layers toward the biggest bolt striking dead center at the top. Storm blues, ice whites, heavy navy shadows and committed violet lightning accents, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.",
+      "inference_time_s": 13.549433943117037,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

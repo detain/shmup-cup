@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-10-09T11:43:35.355Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_sent": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/10-title-attract",
+    "fileStem": "title-ambient-loop",
+    "slug": "title-ship-idle",
+    "variantNum": 2,
+    "id": "title-ship-idle-v2",
+    "title": "hero craft hovering over the Azure Verge rim",
+    "positive": "The steel-blue dart fighter hovers almost motionless at right-center frame, its engine exhaling a steady streaming orange trail that flares and throbles softly, the cyan canopy glow pulses on a slow breathing rhythm, starfield behind drifts steadily left in two parallax speeds, the blue planet rim haze shimmers faintly, camera static, everything moves slowly and continuously, no cuts, calm arcade title-screen ambience.",
+    "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+    "notes": "Engine trail + canopy pulse give life without committing the ship to travel, which is exactly what a title screen needs. Watch the thruster for frame-skip flicker; drop guidance to 3.5 if the hull warbles.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-i2v",
+    "videoMode": "i2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 35,
+    "seed": 21005,
+    "sourceImage": {
+      "declared": "art-prompts/images/10-title/title-screen-hero-v1-flux.2-dev.png",
+      "glob": "10-title/title-screen*"
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-ship-idle-v2-wan2.2-i2v.mp4",
+  "media_format": null,
+  "status": "failed",
+  "error": "HTTP 400 from http://skynet2.interserver.net:30001/v1/videos: {\"detail\":\"input_reference is not supported for T2V models.\"}",
+  "response_meta": null
+}

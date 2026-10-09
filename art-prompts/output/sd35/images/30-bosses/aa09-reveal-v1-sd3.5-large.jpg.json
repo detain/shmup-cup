@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:48:01.237Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "real whale, water spout, friendly, cartoon smile, sunlight surface, dry dock, photorealistic, 3d render, text, watermark, pure black background",
+  "negative_sent": "real whale, water spout, friendly, cartoon smile, sunlight surface, dry dock, photorealistic, 3d render, text, watermark, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "09-abyss-ark",
+    "slug": "aa09-reveal",
+    "variantNum": 1,
+    "id": "aa09-reveal-v1",
+    "title": "the flagship turns in the trench",
+    "positive": "Awe-scale boss reveal in an abyssal trench, the ABYSS ARK turning broadside out of the dark water like a moving island, a fortress-ship built as a colossal mechanical whale, its body clearly segmented into thirteen riveted hull sections from blunt plated snout to a vast rising tail fluke edged in torn coral, each section a different weathered slab of deep-steel armor with barnacle clusters and weeping seam rust, a forest of turret towers bristling along its spine rail with barrels tracking, the flank scarred with old battle gouges filled with slow-drifting bioluminescent plankton so the wounds glow pale cyan, beneath the jaw a hangar grate exuding a column of rising bubbles, the water graded from teal glow near the Ark to blue-black in the far depths, silt pouring off its fins in sheets, a lone steel-blue dart fighter with cyan canopy and orange engine glow hovering at the bottom-left corner of frame the size of a gnat against its eye, the eye itself a warm amber porthole ring of lamps, reverent and terrifying, bold dark outlines, saturated limited palette of deep blue, teal and rust, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.",
+    "negative": "real whale, water spout, friendly, cartoon smile, sunlight surface, dry dock, photorealistic, 3d render, text, watermark, pure black background",
+    "negativeScoped": true,
+    "notes": "Biolume ramp #16485a→#6ad8e0. If the model fuses sections, ask again — the 13-segment read is the signature. Turret count should feel absurd, not precise.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 12901,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 12901,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "aa09-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "7975a4e3-4957-4e58-890f-fe0f925c9337",
+      "created": 1791539276,
+      "count": 1,
+      "revised_prompt": "Awe-scale boss reveal in an abyssal trench, the ABYSS ARK turning broadside out of the dark water like a moving island, a fortress-ship built as a colossal mechanical whale, its body clearly segmented into thirteen riveted hull sections from blunt plated snout to a vast rising tail fluke edged in torn coral, each section a different weathered slab of deep-steel armor with barnacle clusters and weeping seam rust, a forest of turret towers bristling along its spine rail with barrels tracking, the flank scarred with old battle gouges filled with slow-drifting bioluminescent plankton so the wounds glow pale cyan, beneath the jaw a hangar grate exuding a column of rising bubbles, the water graded from teal glow near the Ark to blue-black in the far depths, silt pouring off its fins in sheets, a lone steel-blue dart fighter with cyan canopy and orange engine glow hovering at the bottom-left corner of frame the size of a gnat against its eye, the eye itself a warm amber porthole ring of lamps, reverent and terrifying, bold dark outlines, saturated limited palette of deep blue, teal and rust, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.",
+      "inference_time_s": 15.074214725987986,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

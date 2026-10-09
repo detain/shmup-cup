@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:52:40.925Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, one single sun, organic snake scales, tornado debris house",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, one single sun, organic snake scales, tornado debris house",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-c-dune-expanse",
+    "slug": "dune-worm-dust-devil",
+    "variantNum": 1,
+    "id": "dune-worm-dust-devil-v1",
+    "title": "DUNE WORM and DUST DEVIL, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Beneath twin suns — a huge pale cream disc low on the horizon and a smaller orange disc riding above it — an endless sea of layered dune silhouettes in sand-gold and burnt amber. A DUNE WORM erupts from the crest at center: a segmented mechanical boring-worm of brass ring-plates, a drill-bit maw of spiral teeth, and a geyser of sand fountaining around its emergence hole. To the right a DUST DEVIL twists upward, a whirling column of rust-colored vapor and grit with visible horizontal shear bands and a hollow dark core, pebbles orbiting its funnel. The KESTREL fighter, a sleek steel-blue dart with bold blue hull stripe, cyan canopy and orange engine glow, arcs between the two threats, tracers streaking. Heat haze wobbles the horizon in thin raster lines. Sky gradient from pale gold at the horizon to deep warm navy above, lifted and never pure black, sparse first stars. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, one single sun, organic snake scales, tornado debris house",
+    "negativeScoped": true,
+    "notes": "flux.2-dev keeps the twin-sun geometry exact (big pale + small orange) where sd3.5 sometimes merges them. Color reference: big sun #fce8b8, small sun #f89858, dunes sand-gold to amber, worm brass plating.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15311,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15311,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "dune-worm-dust-devil-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "83a7a01d-4044-4a81-80aa-2fdf24ea8fcc",
+      "created": 1791539556,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Beneath twin suns — a huge pale cream disc low on the horizon and a smaller orange disc riding above it — an endless sea of layered dune silhouettes in sand-gold and burnt amber. A DUNE WORM erupts from the crest at center: a segmented mechanical boring-worm of brass ring-plates, a drill-bit maw of spiral teeth, and a geyser of sand fountaining around its emergence hole. To the right a DUST DEVIL twists upward, a whirling column of rust-colored vapor and grit with visible horizontal shear bands and a hollow dark core, pebbles orbiting its funnel. The KESTREL fighter, a sleek steel-blue dart with bold blue hull stripe, cyan canopy and orange engine glow, arcs between the two threats, tracers streaking. Heat haze wobbles the horizon in thin raster lines. Sky gradient from pale gold at the horizon to deep warm navy above, lifted and never pure black, sparse first stars. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 13.496704109944403,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

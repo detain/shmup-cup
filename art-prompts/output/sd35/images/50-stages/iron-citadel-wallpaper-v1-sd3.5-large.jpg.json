@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:59:42.206Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, rusted scrapyard, post-apocalyptic debris, cyan blue lighting, green lighting, human workers, pure black background, watermark, text, blurry, cluttered random pipes, melted perspective, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, rusted scrapyard, post-apocalyptic debris, cyan blue lighting, green lighting, human workers, pure black background, watermark, text, blurry, cluttered random pipes, melted perspective, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-h-iron-citadel",
+    "slug": "iron-citadel-wallpaper",
+    "variantNum": 1,
+    "id": "iron-citadel-wallpaper-v1",
+    "title": "Wide wallpaper: cathedral hall inside a riveted steel fortress lit by amber lamps",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The interior of a colossal fortress-ship seen as a side-scrolling hall: every surface is heavy riveted steel — colossal plate walls with regular rows of rivet heads, seam welds, and blast doors wide as houses, all drawn in flat gunmetal planes banded with dark outlines. An entire infrastructure of industry crowds the hall: parallel pipes of three different diameters run horizontally at ceiling height with regular flange rings, bundle into elbows and dive into the walls; walkway gratings and cantilevered gantries cross at two levels with sturdy vertical stanchions; overhead, a travelling crane rail disappears into shadow. The light comes from long rows of amber running lamps mounted along the gantries and floor edges, each lamp a small warm disc throwing a conical pool of orange light onto the plating and linking with the next into a receding chain of glow down the length of the hall; between the pools the steel falls to deep blue-black shadow. In the far background a giant pressure hatch dominates the end wall, a circle of concentric locking rings with a single amber viewport winking at its center. Steam bleeds from two valve wheels in slow white ribbons catching the lamp light. Palette of gunmetal greys and dark steel blues with committed warm amber lighting, lifted deep-navy shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, rusted scrapyard, post-apocalyptic debris, cyan blue lighting, green lighting, human workers, pure black background, watermark, text, blurry, cluttered random pipes, melted perspective, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: lamp ramp #6a4418 deep shade to #e8a030 hot pool, steel plates ~#4a5468 on navy #0c1a3c. The lamp-chain perspective is the composition engine — flux.2 keeps the receding discs evenly spaced; sd3.5 can smear them, bump guidance to 5.0. \"Regular rows,\" \"three diameters,\" \"two levels\" deliberately bound the pipe clutter that this genre overflows with.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16801,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16801,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "iron-citadel-wallpaper-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "435a2a20-ca32-41c0-869d-7fb038214c5d",
+      "created": 1791539977,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The interior of a colossal fortress-ship seen as a side-scrolling hall: every surface is heavy riveted steel — colossal plate walls with regular rows of rivet heads, seam welds, and blast doors wide as houses, all drawn in flat gunmetal planes banded with dark outlines. An entire infrastructure of industry crowds the hall: parallel pipes of three different diameters run horizontally at ceiling height with regular flange rings, bundle into elbows and dive into the walls; walkway gratings and cantilevered gantries cross at two levels with sturdy vertical stanchions; overhead, a travelling crane rail disappears into shadow. The light comes from long rows of amber running lamps mounted along the gantries and floor edges, each lamp a small warm disc throwing a conical pool of orange light onto the plating and linking with the next into a receding chain of glow down the length of the hall; between the pools the steel falls to deep blue-black shadow. In the far background a giant pressure hatch dominates the end wall, a circle of concentric locking rings with a single amber viewport winking at its center. Steam bleeds from two valve wheels in slow white ribbons catching the lamp light. Palette of gunmetal greys and dark steel blues with committed warm amber lighting, lifted deep-navy shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.350835642078891,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

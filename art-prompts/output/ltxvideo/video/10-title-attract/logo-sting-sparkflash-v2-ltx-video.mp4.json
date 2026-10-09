@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:29:57.157Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, warped typography, gibberish text",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, warped typography, gibberish text",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/10-title-attract",
+    "fileStem": "logo-sting",
+    "slug": "logo-sting-sparkflash",
+    "variantNum": 2,
+    "id": "logo-sting-sparkflash-v2",
+    "title": "quick spark burst revealing the logo plate",
+    "positive": "A horizontal flash of orange sparks races across the frame and ignites a pixel-art arcade title plate in glowing yellow-to-red gradient letters, sparks scatter outward, the glow pulses once, camera snaps a quick punch-in then holds steady, deep navy starfield behind, CRT scanline shimmer, single continuous shot.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, warped typography, gibberish text",
+    "notes": "LTX handles the spark sweep motion well; for legible letters rely on the plate reading as a glowing wordmark shape and overlay the real logo type in post. Cheap draft — iterate seeds fast.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 768,
+      "h": 512
+    },
+    "numFrames": 97,
+    "fps": 24,
+    "durationNote": "~4s",
+    "guidance": 3.2,
+    "steps": 35,
+    "seed": 21002,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 768,
+    "h": 512
+  },
+  "size_sent": {
+    "w": 768,
+    "h": 512
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "768x512",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "logo-sting-sparkflash-v2-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "a1e1e850-4412-427c-ba9c-60cb1ce3934b",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "A horizontal flash of orange sparks races across the frame and ignites a pixel-art arcade title plate in glowing yellow-to-red gradient letters, sparks scatter outward, the glow pulses once, camera snaps a quick punch-in then holds steady, deep navy starfield behind, CRT scanline shimmer, single continuous shot.",
+          "size": "768x512",
+          "num_frames": 97,
+          "fps": 24,
+          "seed": 21002,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, warped typography, gibberish text",
+          "guidance_scale": 3.2,
+          "num_inference_steps": 35,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 18.057400848949328
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

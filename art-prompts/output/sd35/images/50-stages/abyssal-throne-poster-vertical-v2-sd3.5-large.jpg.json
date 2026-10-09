@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:59:55.874Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, diver, sea monster visible, creature silhouette in the light, sunlight, water surface, tropical fish, pure black background, watermark, text, blurry, glow in the middle of frame, bright bottom, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, diver, sea monster visible, creature silhouette in the light, sunlight, water surface, tropical fish, pure black background, watermark, text, blurry, glow in the middle of frame, bright bottom, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "abyssal-throne-poster-vertical",
+    "variantNum": 2,
+    "id": "abyssal-throne-poster-vertical-v2",
+    "title": "Vertical poster: descending into the throne trench, spire cliffs and a single distant glow",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, deep-sea atmosphere, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A slow vertical descent into the heart of an abyssal trench: two towering cliff walls of black basalt close in from the left and right edges of the frame, their faces columnar-jointed and crusted at the rims with fields of tiny cyan biolume dots like wet cinders, a few pale tube worms nodding from crevices. The gap between the cliffs narrows toward the bottom of the image in a clean throat of ink-blue water; the entire water column here is a curtain of drifting marine snow and rising bubble-trails falling out of the black at the top of the frame, each bubble lit briefly by the glow below. Far down at the bottom of the throat, the trench floor is just barely suggested by the largest single light source in the image: a low, wide, patient teal-cyan glow spreading across the base of the cliffs — not quite revealing what casts it, its edges dissolving into darkness — surrounded by a slow aurora of suspended spore-light that stains the nearest rock. Above, the surface the diver fell from is gone; there is only more dark downward. The composition is funnel, snow, and one unbearable beautiful light at the bottom. Black-blues, teal-cyan biolume, a touch of bone-white tube worm, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, diver, sea monster visible, creature silhouette in the light, sunlight, water surface, tropical fish, pure black background, watermark, text, blurry, glow in the middle of frame, bright bottom, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: cliff rims #16485a crusting to #6ad8e0, floor glow centered low-third, water navy-to-black-blue but never pure #000000. The glow must stay at the BOTTOM of the frame — both models default to centering their brightest element; if it drifts mid-frame, the composition loses its gravity, so regenerate rather than crop. Never let anything resolve inside the glow; the unshown throne is scarier.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 16902,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 16902,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "abyssal-throne-poster-vertical-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "9563884f-f499-4ae2-b67c-56c443a05bf8",
+      "created": 1791539991,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, deep-sea atmosphere, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A slow vertical descent into the heart of an abyssal trench: two towering cliff walls of black basalt close in from the left and right edges of the frame, their faces columnar-jointed and crusted at the rims with fields of tiny cyan biolume dots like wet cinders, a few pale tube worms nodding from crevices. The gap between the cliffs narrows toward the bottom of the image in a clean throat of ink-blue water; the entire water column here is a curtain of drifting marine snow and rising bubble-trails falling out of the black at the top of the frame, each bubble lit briefly by the glow below. Far down at the bottom of the throat, the trench floor is just barely suggested by the largest single light source in the image: a low, wide, patient teal-cyan glow spreading across the base of the cliffs — not quite revealing what casts it, its edges dissolving into darkness — surrounded by a slow aurora of suspended spore-light that stains the nearest rock. Above, the surface the diver fell from is gone; there is only more dark downward. The composition is funnel, snow, and one unbearable beautiful light at the bottom. Black-blues, teal-cyan biolume, a touch of bone-white tube worm, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.",
+      "inference_time_s": 13.580904284026474,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

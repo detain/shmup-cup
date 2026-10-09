@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:00:10.271Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, explosions destroying capsules, capsules on ground, text, HUD, health bars, watermark, blurry, capsules glowing white, bullets passing through capsules, vertical shooter layout, pure black background",
+  "negative_sent": "photorealistic, 3d render, explosions destroying capsules, capsules on ground, text, HUD, health bars, watermark, blurry, capsules glowing white, bullets passing through capsules, vertical shooter layout, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "power-capsules-in-flight",
+    "variantNum": 2,
+    "id": "power-capsules-in-flight-v2",
+    "title": "Capsules drifting through live gameplay bullet-fall",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; gameplay moment illustration. In the thick of a horizontal shoot-'er-up, three power capsules have just popped from a destroyed enemy at the right side of the screen and are drifting leftward through a lattice of hostile fire: a red capsule leading, gold and blue trailing slightly behind, each retaining its glossy pill silhouette, chrome end-caps and inner glowing core, each trailing a short comet-line of its own color to show its drift vector. The bullets around them are classic arcade threats — bright-cored pink, red and violet orbs with dark rims — arranged in curved streams that part around the capsules' path, so the eye reads a safe lane through the fire. At the far left edge, the nose and cyan canopy of a small steel-blue fighter just enter frame, angling up toward the nearest capsule, its orange engine flare streaking behind. The deep-navy space background carries sparse star dust and a faint violet nebula veil. The capsules are lit slightly brighter than everything except bullet cores — they are the prize in the picture. Hover-glow halos, thick dark outlines, saturated arcade palette, lifted deep-navy background, never pure black. No text, no letters, no score UI.",
+    "negative": "photorealistic, 3d render, explosions destroying capsules, capsules on ground, text, HUD, health bars, watermark, blurry, capsules glowing white, bullets passing through capsules, vertical shooter layout, pure black background",
+    "negativeScoped": true,
+    "notes": "Kestrel color reference: hull stripe #3858f0, canopy #38c8e8, glow #f89830; bullet cores #ff5aa0/#ff3a3a/#b84cff. The \"streams part around the capsules' path\" clause is what keeps the scene readable as opportunity rather than chaos. flux.1 occasionally erases a trailing capsule — verify all three present.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18012,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 18012,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "power-capsules-in-flight-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "21e9decf-ac7e-4635-8210-fb6b833d364c",
+      "created": 1791540005,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; gameplay moment illustration. In the thick of a horizontal shoot-'er-up, three power capsules have just popped from a destroyed enemy at the right side of the screen and are drifting leftward through a lattice of hostile fire: a red capsule leading, gold and blue trailing slightly behind, each retaining its glossy pill silhouette, chrome end-caps and inner glowing core, each trailing a short comet-line of its own color to show its drift vector. The bullets around them are classic arcade threats — bright-cored pink, red and violet orbs with dark rims — arranged in curved streams that part around the capsules' path, so the eye reads a safe lane through the fire. At the far left edge, the nose and cyan canopy of a small steel-blue fighter just enter frame, angling up toward the nearest capsule, its orange engine flare streaking behind. The deep-navy space background carries sparse star dust and a faint violet nebula veil. The capsules are lit slightly brighter than everything except bullet cores — they are the prize in the picture. Hover-glow halos, thick dark outlines, saturated arcade palette, lifted deep-navy background, never pure black. No text, no letters, no score UI.",
+      "inference_time_s": 13.563064760994166,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

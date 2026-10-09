@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:56:15.586Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "05-squall-steed",
+    "slug": "ss05-warning",
+    "variantNum": 3,
+    "id": "ss05-warning-v3",
+    "title": "lightning-flash silhouette",
+    "positive": "Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+    "negativeScoped": true,
+    "notes": "The flash-frame IS the warning beat. Wide crop for loading screens; keep bolt branches out of the silhouette core.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12503,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12503,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ss05-warning-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c56f470b-8c6e-4d00-a327-2ddd9a25fb9a",
+      "created": 1791536171,
+      "count": 1,
+      "revised_prompt": "Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 12.394646801054478,
+      "peak_memory_mb": 36516
+    },
+    "format": "jpg"
+  }
+}

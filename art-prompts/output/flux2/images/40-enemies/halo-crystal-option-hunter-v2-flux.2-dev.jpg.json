@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:28:40.962Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, single laser color, warm orange corridor",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-g-prism-labyrinth",
+    "slug": "halo-crystal-option-hunter",
+    "variantNum": 2,
+    "id": "halo-crystal-option-hunter-v2",
+    "title": "the prism ambush, ultrawide corridor shot",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. A long ultrawide frame of a crystal corridor caught mid-ambush: on the right, the OPTION HUNTER prow-first out of a side gallery, deep-violet armored frigate, wedge prow, four magnetic grapple-claws spread wide, its belly launch bay glowing violet as it ejects the two captured escort drones it just stole — the drones spinning free with flickering damage sparks. Spanning the center of the corridor, a full rotating fan of pink laser needles fired from the halo crystals, the fan bent and multiplied by reflections: the triangle-facet violet walls throw a dozen ghost-fans of light back into the space so the room itself seems to be shooting. On the left, the MANTA glides through the chaos with nerve of steel, its pale mint ray-wing hull picking up violet sheen along every plate edge, green canopy dim, amber twin thrusters short and calm — the manta's wide flat silhouette is a mirror of the crystal facets, both sharp, both cold. A HALO CRYSTAL drifts directly between them, ring of six lilac-edged satellites turning, hard white glints strobing off each facet. Stacking crystal cubes tumble down from the upper right, mid-collapse. Deep-navy shadow in the corridor's far ends, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, single laser color, warm orange corridor",
+    "negativeScoped": true,
+    "notes": "Color reference: hunter armor violet #6a3ab0-ish under crystal light, bay glow #8a48e8, gem edges #c8a0ff, laser fan #ff5aa0. Ultrawide sells the corridor depth and the reflection trick; the doubled ghost-fans are the zone's identity — ask for them explicitly. The MANTA-on-the-left placement keeps the reading direction of the ambush.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15712,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15712,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "halo-crystal-option-hunter-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "d88aa766-5bc7-41a3-b895-75c894abcf4c",
+      "created": 1791538116,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. A long ultrawide frame of a crystal corridor caught mid-ambush: on the right, the OPTION HUNTER prow-first out of a side gallery, deep-violet armored frigate, wedge prow, four magnetic grapple-claws spread wide, its belly launch bay glowing violet as it ejects the two captured escort drones it just stole — the drones spinning free with flickering damage sparks. Spanning the center of the corridor, a full rotating fan of pink laser needles fired from the halo crystals, the fan bent and multiplied by reflections: the triangle-facet violet walls throw a dozen ghost-fans of light back into the space so the room itself seems to be shooting. On the left, the MANTA glides through the chaos with nerve of steel, its pale mint ray-wing hull picking up violet sheen along every plate edge, green canopy dim, amber twin thrusters short and calm — the manta's wide flat silhouette is a mirror of the crystal facets, both sharp, both cold. A HALO CRYSTAL drifts directly between them, ring of six lilac-edged satellites turning, hard white glints strobing off each facet. Stacking crystal cubes tumble down from the upper right, mid-collapse. Deep-navy shadow in the corridor's far ends, never pure black. No text, no UI elements.",
+      "inference_time_s": 31.440152707975358,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

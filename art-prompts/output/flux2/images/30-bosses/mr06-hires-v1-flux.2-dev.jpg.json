@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:23:30.211Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, human face, many eyes, wet organic gloss, player character, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "hi-res",
+    "slug": "mr06-hires",
+    "variantNum": 1,
+    "id": "mr06-hires-v1",
+    "title": "Mantle Regent tentacle-crown documentation plate",
+    "positive": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete being of Mantle Regent MR-06, a squid-like vault-grown tyrant of the Iron Tide, shown full-frontal-broadside hybrid and fully readable — a heavy bulbous mantle-helmet of living dark green-plate fused with steel ribs, crowned by two long hood-fins that ripple like torn banners, and below it a single great pale eye the width of a turret, pupil a vertical violet slit. Eight tentacles curl forward and upward around the eye in a protective arch, each lined with suction rings that glow soft green, two feeding tendrils hanging straight with hooked tips. The fleshy vault wall behind pulses with dim cell-light. Pink-red bullet lights nestle in the tentacle roots. Deep-navy shadow palette never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, human face, many eyes, wet organic gloss, player character, pure black background",
+    "negativeScoped": true,
+    "notes": "\"Eight tentacles arching, two feeding tendrils hanging\" gives the leg-accounting models need; the single eye is the composition anchor — keep it lit brightest.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 14061,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 14061,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "mr06-hires-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "2b98b101-ce84-4bc2-aa5c-90b29621c600",
+      "created": 1791537805,
+      "count": 1,
+      "revised_prompt": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete being of Mantle Regent MR-06, a squid-like vault-grown tyrant of the Iron Tide, shown full-frontal-broadside hybrid and fully readable — a heavy bulbous mantle-helmet of living dark green-plate fused with steel ribs, crowned by two long hood-fins that ripple like torn banners, and below it a single great pale eye the width of a turret, pupil a vertical violet slit. Eight tentacles curl forward and upward around the eye in a protective arch, each lined with suction rings that glow soft green, two feeding tendrils hanging straight with hooked tips. The fleshy vault wall behind pulses with dim cell-light. Pink-red bullet lights nestle in the tentacle roots. Deep-navy shadow palette never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 35.01329557411373,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

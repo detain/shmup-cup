@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:56:27.029Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion",
+  "negative_sent": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-h-iron-citadel",
+    "slug": "iron-citadel-sprite-sheet",
+    "variantNum": 1,
+    "id": "iron-citadel-sprite-sheet-v1",
+    "title": "in-game pixel sprites: sentinel walker, trench eel, gyre ring-gun",
+    "positive": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in eight frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: rivet highlights #e8a030, eel ring-sparks #b84cff, walker eye #ff3a3a. Three separate continuity problems in one sheet (stride cycle, rise cycle, rotation) — if any row drifts, split that row out and regenerate alone at 1024x1024 with the same seed family.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15821,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15821,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "iron-citadel-sprite-sheet-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1512d169-36e6-4135-a8b2-faafd6d9e41f",
+      "created": 1791539782,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in eight frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale.",
+      "inference_time_s": 14.348879911005497,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

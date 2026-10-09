@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:43:49.966Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, visible pilot, modern jet, motion blur smear, pure black background, desaturated",
+  "negative_sent": "photorealistic, 3d render, text, watermark, visible pilot, modern jet, motion blur smear, pure black background, desaturated",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "kestrel",
+    "slug": "kestrel-hero34",
+    "variantNum": 1,
+    "id": "kestrel-hero34-v1",
+    "title": "battle-worn dramatic render",
+    "positive": "Dramatic large-format arcade key art, the KESTREL prototype fighter seen from a low three-quarter front angle charging toward the viewer slightly banked, steel-blue dart hull with a bold blue stripe scorched by thin black scrape marks, glowing cyan canopy reflecting a wall of pink and violet bullet lights approaching from off-screen right, hot orange afterburner blazing out of the engines with a long trail bending behind, small chip marks in the navy outline of the nose armor, background a deep-navy starfield torn by a teal nebula ribbon and the dark silhouette of a distant fortress-ship hull, rim lighting in cyan from the bullet storm and warm orange from the exhaust, ultra-detailed, clean vector shapes with pixel-art texture accents, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling energy, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, visible pilot, modern jet, motion blur smear, pure black background, desaturated",
+    "negativeScoped": true,
+    "notes": "Hero shot for site masthead. Damage is cosmetic only — keep the silhouette instantly readable.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 11003,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11003,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-hero34-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "126d3e84-d44e-4bdf-84c5-a5f4f9ea9fd9",
+      "created": 1791539025,
+      "count": 1,
+      "revised_prompt": "Dramatic large-format arcade key art, the KESTREL prototype fighter seen from a low three-quarter front angle charging toward the viewer slightly banked, steel-blue dart hull with a bold blue stripe scorched by thin black scrape marks, glowing cyan canopy reflecting a wall of pink and violet bullet lights approaching from off-screen right, hot orange afterburner blazing out of the engines with a long trail bending behind, small chip marks in the navy outline of the nose armor, background a deep-navy starfield torn by a teal nebula ribbon and the dark silhouette of a distant fortress-ship hull, rim lighting in cyan from the bullet storm and warm orange from the exhaust, ultra-detailed, clean vector shapes with pixel-art texture accents, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling energy, no text.",
+      "inference_time_s": 13.544606036972255,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:14:32.322Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, real fish anatomy, slimy skin, blood, underwater photo, cartoon googly eyes, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "02-galvanic-maw",
+    "slug": "gm02-reveal",
+    "variantNum": 1,
+    "id": "gm02-reveal-v1",
+    "title": "playfield-sized fish glides through the nebula sea",
+    "positive": "Overwhelming scale arcade boss reveal, the GALVANIC MAW, a mechanical fish the size of the entire screen drifting in from the right through a teal-violet gas sea, its long plated body built from overlapping gunmetal scales each outlined in near-black navy, fin rays rendered as tensioned cable spars with translucent violet membranes, a blunt armored snout, and an electric eel tail arcing across the top of the composition crackling with pink discharge beads, its jaw beginning to fall open somewhere deep in the frame revealing the first rim of a dark throat glow, a tiny steel-blue dart fighter with cyan canopy and orange exhaust flying at the bottom left completely dwarfed, floating reef sandstone arches and wobbling wave raster lines of light bending through the gas, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette of teal, violet and gunmetal, ultra-detailed large-format key art with clean vector shapes and pixel texture accents, subtle CRT scanline glow, widescreen composition, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, real fish anatomy, slimy skin, blood, underwater photo, cartoon googly eyes, pure black background",
+    "negativeScoped": true,
+    "notes": "Zone B wash: teal-violet gas, sandstone #f0c890 fragments. The \"scales\" must read as riveted plates.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12201,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12201,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "gm02-reveal-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "fe878600-50f3-4514-b102-b768251bf54c",
+      "created": 1791537267,
+      "count": 1,
+      "revised_prompt": "Overwhelming scale arcade boss reveal, the GALVANIC MAW, a mechanical fish the size of the entire screen drifting in from the right through a teal-violet gas sea, its long plated body built from overlapping gunmetal scales each outlined in near-black navy, fin rays rendered as tensioned cable spars with translucent violet membranes, a blunt armored snout, and an electric eel tail arcing across the top of the composition crackling with pink discharge beads, its jaw beginning to fall open somewhere deep in the frame revealing the first rim of a dark throat glow, a tiny steel-blue dart fighter with cyan canopy and orange exhaust flying at the bottom left completely dwarfed, floating reef sandstone arches and wobbling wave raster lines of light bending through the gas, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette of teal, violet and gunmetal, ultra-detailed large-format key art with clean vector shapes and pixel texture accents, subtle CRT scanline glow, widescreen composition, no text.",
+      "inference_time_s": 33.52624672697857,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

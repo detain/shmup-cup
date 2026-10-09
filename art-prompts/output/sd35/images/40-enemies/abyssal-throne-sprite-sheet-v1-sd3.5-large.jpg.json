@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:57:08.858Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion",
+  "negative_sent": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "abyssal-throne-sprite-sheet",
+    "variantNum": 1,
+    "id": "abyssal-throne-sprite-sheet-v1",
+    "title": "in-game pixel sprites: gulper, depth mine, lure filament",
+    "positive": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: lure and eye-light #6ad8e0, specks #16485a at dim state, gulper body charcoal-green near-black, jaw bone pale gray-green. The isolated speck and filament sprites in row three are for parallax compositing — if the model insists on fusing them into the mines, drop that row's wording and regenerate a dedicated effects sheet later.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15921,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15921,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "abyssal-throne-sprite-sheet-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "82883252-fe8c-499c-8e6c-cc463f53b567",
+      "created": 1791539824,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale.",
+      "inference_time_s": 14.349828703096136,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

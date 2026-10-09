@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:31:11.732Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, oversaturated neon, spaceship cockpit, human figures, frame border, letterboxing",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-a-azure-verge",
+    "slug": "azure-verge-wallpaper",
+    "variantNum": 1,
+    "id": "azure-verge-wallpaper-v1",
+    "title": "wide orbital battlefield wallpaper",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A vast horizontal stage backdrop seen high above a planet: the lower third of the frame is the curved rim of a blue world, deep ocean blue fading into a glowing thin atmosphere line, and across that rim roll continents of fresh green-teal terrain — forest canopies, terraced plateaus, silver rivers catching light. Above the horizon sits the black-blue of near-space, densely scattered with small hard stars in white and pale blue, never pure black. Drifting between the stars and the planet rim are thin veils of cyan haze. Composition reads left-to-right like a scrollable game plane: repeating terrain bands, distant cloud shelves stacked in parallax layers, one enormous Iron Tide fortress-ship silhouette hanging at the far right edge, tiny against the planet, its underlights a pinprick of red. Mood: blue, patient, and about to be invaded. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, oversaturated neon, spaceship cockpit, human figures, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Parallax bands (stars / cloud shelves / terrain rim) make this crop-friendly for menu backplates. Color reference: terrain #8ad0a8, atmosphere cyan, base navy #05070f–#0c1a3c. If the fortress silhouette distracts, regenerate with it removed for a pure environment plate.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16101,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "azure-verge-wallpaper-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "296ff03b-ba37-40a0-8815-fca04356c2f0",
+      "created": 1791538267,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A vast horizontal stage backdrop seen high above a planet: the lower third of the frame is the curved rim of a blue world, deep ocean blue fading into a glowing thin atmosphere line, and across that rim roll continents of fresh green-teal terrain — forest canopies, terraced plateaus, silver rivers catching light. Above the horizon sits the black-blue of near-space, densely scattered with small hard stars in white and pale blue, never pure black. Drifting between the stars and the planet rim are thin veils of cyan haze. Composition reads left-to-right like a scrollable game plane: repeating terrain bands, distant cloud shelves stacked in parallax layers, one enormous Iron Tide fortress-ship silhouette hanging at the far right edge, tiny against the planet, its underlights a pinprick of red. Mood: blue, patient, and about to be invaded. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 34.87813775311224,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

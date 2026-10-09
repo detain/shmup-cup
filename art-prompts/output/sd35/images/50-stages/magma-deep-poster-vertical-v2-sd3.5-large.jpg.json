@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:58:43.856Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, logo, UI elements, horizontal composition, daylight, green plants, water waterfall, people, blurry, pure black background, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, text, watermark, logo, UI elements, horizontal composition, daylight, green plants, water waterfall, people, blurry, pure black background, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-d-magma-deep",
+    "slug": "magma-deep-poster-vertical",
+    "variantNum": 2,
+    "id": "magma-deep-poster-vertical-v2",
+    "title": "vertical cave-shaft descent poster",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents, tall vertical composition looking straight down a magmatic cave shaft. The shaft is a rough oval throat of stacked black basalt shelves and warm terracotta brick strata, narrowing toward the bottom of the frame where a lava lake glows like a fallen sun — a light source so strong that every ledge overhead is rimmed in tangerine and the air itself gradients from smoky amber near the lake to deep maroon dark at the top. Magma drips in slow bright threads from the ceiling shelves, splashing onto ledges below. Stuck across the shaft at mid-height, a broken elevator gantry hangs by one cable, its warning lamp still swinging and throwing a slow arc of red light across the rock. Far down, small against the glow, a steel-blue dart fighter with a cyan canopy dives along the lit wall, orange afterglow trailing, headed for the lake. Mood: descending into heat with no way back up. No text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, horizontal composition, daylight, green plants, water waterfall, people, blurry, pure black background, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Single strong bottom light makes this crop well as a loading screen. Color reference: lava #8a2c0a→#e87a1c core near #fff080, brick #b0704a, ship #3858f0/#38c8e8/#f89830. Flux.1-dev renders the drip-threads crisply; sd3.5 tends to fuse them into blobs — check the ceiling band.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 16402,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 16402,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "magma-deep-poster-vertical-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "222053a1-0719-4c13-b1d2-3097b9ea9e45",
+      "created": 1791539919,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents, tall vertical composition looking straight down a magmatic cave shaft. The shaft is a rough oval throat of stacked black basalt shelves and warm terracotta brick strata, narrowing toward the bottom of the frame where a lava lake glows like a fallen sun — a light source so strong that every ledge overhead is rimmed in tangerine and the air itself gradients from smoky amber near the lake to deep maroon dark at the top. Magma drips in slow bright threads from the ceiling shelves, splashing onto ledges below. Stuck across the shaft at mid-height, a broken elevator gantry hangs by one cable, its warning lamp still swinging and throwing a slow arc of red light across the rock. Far down, small against the glow, a steel-blue dart fighter with a cyan canopy dives along the lit wall, orange afterglow trailing, headed for the lake. Mood: descending into heat with no way back up. No text, no letters, no user interface elements.",
+      "inference_time_s": 13.56550495699048,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:06:00.007Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, organic bird wings",
+  "negative_sent": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, organic bird wings",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "alt-emblems",
+    "slug": "alt-emblem",
+    "variantNum": 4,
+    "id": "alt-emblem-v4",
+    "title": "champion crest with ribbon name",
+    "positive": "Ceremonial arcade champion crest illustration, at its heart a golden trophy-shaped shield bearing a tiny steel-blue dart fighter emblem in relief, flanked by two spread mechanical wings made of layered gunmetal armor feathers with amber rivet lights, below the shield a curved golden ribbon banner displaying the exact words \"SHMUP CUP\" in clean navy block capitals, small pink and violet gem bullets set like decorative studs along the wing joints, deep midnight navy background with a soft upward spotlight of pale gold, subtle scanline shimmer, saturated limited palette, bold dark outlines, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel-art texture accents, symmetrical heraldic composition, no text other than the ribbon.",
+    "negative": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, organic bird wings",
+    "negativeScoped": true,
+    "notes": "For victory screens and leaderboard badges. If the ribbon text smudges on flux.2-dev, fall back to qwen-image at the same seed.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 36,
+        "seed": 10034,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 10034,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "alt-emblem-v4-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0b24de27-77b9-4258-996a-18f1b330c938",
+      "created": 1791540355,
+      "count": 1,
+      "revised_prompt": "Ceremonial arcade champion crest illustration, at its heart a golden trophy-shaped shield bearing a tiny steel-blue dart fighter emblem in relief, flanked by two spread mechanical wings made of layered gunmetal armor feathers with amber rivet lights, below the shield a curved golden ribbon banner displaying the exact words \"SHMUP CUP\" in clean navy block capitals, small pink and violet gem bullets set like decorative studs along the wing joints, deep midnight navy background with a soft upward spotlight of pale gold, subtle scanline shimmer, saturated limited palette, bold dark outlines, SNES-era 16-bit inspired concept rendering with clean vector shapes and pixel-art texture accents, symmetrical heraldic composition, no text other than the ribbon.",
+      "inference_time_s": 39.53395223687403,
+      "peak_memory_mb": 35438
+    },
+    "format": "jpg"
+  }
+}

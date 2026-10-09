@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:33:42.472Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, camera turning, camera lifting, obstacles, scene change, cut",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, camera turning, camera lifting, obstacles, scene change, cut",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/70-ambient-loops",
+    "fileStem": "checkerboard-rush",
+    "slug": "loop-checkerboard-rush",
+    "variantNum": 1,
+    "id": "loop-checkerboard-rush-v1",
+    "title": "even-velocity grid sprint, static horizon",
+    "positive": "Pixel-art synth dimension rushing forward: an infinite neon-violet and dark checkerboard floor glides steadily toward the viewer in perfect even perspective, floor seam light-trails of magenta and cyan streaming toward a fixed hard horizon, stacked horizontal glow bands at the horizon pulsing on one slow even cycle, no ships, no obstacles, pure constant velocity hypnotic forward travel, no cuts, seamless loop of retro speed ambience.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, camera turning, camera lifting, obstacles, scene change, cut",
+    "notes": "`camera turning / lifting` in the negative is critical — any horizon shift breaks the tile. Pulse cycle at the horizon should complete once or twice per clip so the cross-dissolve lands in phase; nudge num_frames to 120 multiples of the pulse if needed.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 960,
+      "h": 544
+    },
+    "numFrames": 121,
+    "fps": 30,
+    "durationNote": "~4s",
+    "guidance": 3,
+    "steps": 35,
+    "seed": 27005,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 960,
+    "h": 544
+  },
+  "size_sent": {
+    "w": 960,
+    "h": 544
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "960x544",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "loop-checkerboard-rush-v1-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "5a26b36d-75c4-4a90-b812-7c456780f68a",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "Pixel-art synth dimension rushing forward: an infinite neon-violet and dark checkerboard floor glides steadily toward the viewer in perfect even perspective, floor seam light-trails of magenta and cyan streaming toward a fixed hard horizon, stacked horizontal glow bands at the horizon pulsing on one slow even cycle, no ships, no obstacles, pure constant velocity hypnotic forward travel, no cuts, seamless loop of retro speed ambience.",
+          "size": "960x544",
+          "num_frames": 121,
+          "fps": 30,
+          "seed": 27005,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, camera turning, camera lifting, obstacles, scene change, cut",
+          "guidance_scale": 3,
+          "num_inference_steps": 35,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 26.362412085058168
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:39:31.079Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, fireworks, confetti, crowd, extra text, credits list, copyright symbols, dates, numbers, garbled letters, misspelled words, tilted logo, 3d extruded letters, watermark, blurry, sunset orange overdone",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "warning-gameover",
+    "slug": "victory-credits-card",
+    "variantNum": 1,
+    "id": "victory-credits-card-v1",
+    "title": "ESCAPE COMPLETE: dawn end-card with logo mark and one ship",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade end-card composition, subtle CRT scanline glow; the credits roll's final frame, painted as a quiet victory card. Across the lower sky of a pale dawn — thin rose cloud bars over a cream-gold horizon band, the half-sun just clear of a distant planet rim — a single steel-blue dart fighter flies level and unhurried toward the left edge of the frame, engine glow a relaxed warm orange, contrail thin and straight, the war entirely behind it. The upper two-thirds of the sky is left deliberately open and clean, and there, centered in the dawn, sits the game's name in huge warm block capitals with a vertical gradient from pale yellow through orange into red, each letter bound in a thick dark navy outline with a soft drop shadow and a single white highlight along its top edge: the words \"SHMUP CUP\". Below the title, floating in the same golden light in smaller straight-on capitals of pale ivory with navy outlines, the single line \"THANK YOU FOR PLAYING\". Nothing else is written anywhere: no credits list, no dates, no numbers, no logos. The card should feel like the last page of a picture book that happened to be about lasers: warm, plain-spoken, complete. Palette of dawn cream and rose over lifted deep-navy, the red-gold title the warmest anchor, never pure black. The text in the image must read exactly \"SHMUP CUP\" and exactly \"THANK YOU FOR PLAYING\", and nothing else.",
+    "negative": "photorealistic, 3d render, fireworks, confetti, crowd, extra text, credits list, copyright symbols, dates, numbers, garbled letters, misspelled words, tilted logo, 3d extruded letters, watermark, blurry, sunset orange overdone",
+    "negativeScoped": true,
+    "notes": "Exact strings: \"SHMUP CUP\" and \"THANK YOU FOR PLAYING\". Title gradient #f8f070→#f8a030→#e04828, outline #1b2a4a, shadow #0a0f26, top highlight #fffff0 — the canonical lockup. Two-line text is qwen's comfort zone; flux.2-dev alt will likely fumble the second line, so verify spelling before blessing. This doubles as the itch.io completion card and the Steam news-banner for patch notes about the ending.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 20101,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 20101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "victory-credits-card-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0d995f58-52a2-4460-b719-1cd657726c67",
+      "created": 1791538766,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade end-card composition, subtle CRT scanline glow; the credits roll's final frame, painted as a quiet victory card. Across the lower sky of a pale dawn — thin rose cloud bars over a cream-gold horizon band, the half-sun just clear of a distant planet rim — a single steel-blue dart fighter flies level and unhurried toward the left edge of the frame, engine glow a relaxed warm orange, contrail thin and straight, the war entirely behind it. The upper two-thirds of the sky is left deliberately open and clean, and there, centered in the dawn, sits the game's name in huge warm block capitals with a vertical gradient from pale yellow through orange into red, each letter bound in a thick dark navy outline with a soft drop shadow and a single white highlight along its top edge: the words \"SHMUP CUP\". Below the title, floating in the same golden light in smaller straight-on capitals of pale ivory with navy outlines, the single line \"THANK YOU FOR PLAYING\". Nothing else is written anywhere: no credits list, no dates, no numbers, no logos. The card should feel like the last page of a picture book that happened to be about lasers: warm, plain-spoken, complete. Palette of dawn cream and rose over lifted deep-navy, the red-gold title the warmest anchor, never pure black. The text in the image must read exactly \"SHMUP CUP\" and exactly \"THANK YOU FOR PLAYING\", and nothing else.",
+      "inference_time_s": 31.573489137925208,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:09:51.817Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, visible pilots, laser beams grid, messy overlapping bullets merging into noise, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "combat-and-p2",
+    "slug": "combat-duo",
+    "variantNum": 2,
+    "id": "combat-duo-v2",
+    "title": "boss crossfire pocket",
+    "positive": "Close-quarters arcade bullet-hell moment rendered as large-format concept art, both player fighters inside the glowing ribcage of a spiral bullet pattern, concentric rings of pink and violet bullets with white-hot cores rotating around a massive dark crystalline boss segment at the right, the KESTREL steel-blue dart rolling to slip through a gap between ring arms, cyan canopy flare and a long orange trail bending with the roll, the MANTA sliding flat beneath another ring using its wide ray-wings for lift, green canopy lit from below by bullet glow, amber thrusters pulsing, tiny gold shrapnel points scattering, background deep navy with radial light bloom and drifting glass-like shards, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired rendering with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, visible pilots, laser beams grid, messy overlapping bullets merging into noise, pure black background",
+    "negativeScoped": true,
+    "notes": "Bullet rings must stay individually readable — drop guidance to 4.5 on sd3.5 if the lattice fuses.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 11202,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 11202,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "combat-duo-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "d2922881-b126-4efb-9e4d-64c604ff9a07",
+      "created": 1791536987,
+      "count": 1,
+      "revised_prompt": "Close-quarters arcade bullet-hell moment rendered as large-format concept art, both player fighters inside the glowing ribcage of a spiral bullet pattern, concentric rings of pink and violet bullets with white-hot cores rotating around a massive dark crystalline boss segment at the right, the KESTREL steel-blue dart rolling to slip through a gap between ring arms, cyan canopy flare and a long orange trail bending with the roll, the MANTA sliding flat beneath another ring using its wide ray-wings for lift, green canopy lit from below by bullet glow, amber thrusters pulsing, tiny gold shrapnel points scattering, background deep navy with radial light bloom and drifting glass-like shards, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired rendering with clean vector shapes and pixel texture accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 33.67530166404322,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

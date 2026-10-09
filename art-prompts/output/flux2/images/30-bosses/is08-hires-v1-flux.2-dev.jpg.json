@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:24:05.397Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, rounded ship body, organic, player character, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "hi-res",
+    "slug": "is08-hires",
+    "variantNum": 1,
+    "id": "is08-hires-v1",
+    "title": "Iron Sovereign shield-plate rotation documentation plate",
+    "positive": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete hull of Iron Sovereign IS-08, an Iron Tide sovereign-slab, shown broadside and fully readable — a monolithic rectangular fortress of riveted dark steel like a wall torn from a citadel, dead-center a round furnace aperture blazing red, and around that aperture six great shield plates on turntables caught mid-rotation at staggered angles, some overlapping, some slid open so the red core peeks through the gaps in asymmetric arcs. Amber running-light strips in a channel along top and bottom edges, cast warm ramp light across the plate rivets. Faint heat shimmer around the aperture. Deep-navy interior-space background never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, rounded ship body, organic, player character, pure black background",
+    "negativeScoped": true,
+    "notes": "Staggered plate angles are the whole lesson of this frame — the player must see both the defense and its timing gap; amber ramp #6a4418→#e8a030.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 14081,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 14081,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "is08-hires-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "efaa1da2-afc0-41e5-8519-73a15849fc7d",
+      "created": 1791537840,
+      "count": 1,
+      "revised_prompt": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete hull of Iron Sovereign IS-08, an Iron Tide sovereign-slab, shown broadside and fully readable — a monolithic rectangular fortress of riveted dark steel like a wall torn from a citadel, dead-center a round furnace aperture blazing red, and around that aperture six great shield plates on turntables caught mid-rotation at staggered angles, some overlapping, some slid open so the red core peeks through the gaps in asymmetric arcs. Amber running-light strips in a channel along top and bottom edges, cast warm ramp light across the plate rivets. Faint heat shimmer around the aperture. Deep-navy interior-space background never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 34.98835884290747,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

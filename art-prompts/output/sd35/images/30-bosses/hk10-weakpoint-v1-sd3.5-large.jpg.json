@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:48:28.416Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry focus, pure black background, multiple equal subjects",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry focus, pure black background, multiple equal subjects",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "10-hollow-king",
+    "slug": "hk10-weakpoint",
+    "variantNum": 1,
+    "id": "hk10-weakpoint-v1",
+    "title": "close-up: the lure and the palate seam",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, macro close-up study for a game manual. Extreme detail view of THE HOLLOW KING's weak points: upper left, the lure organ itself — a translucent biological bulb of pale green light wrapped in black iron filigree, a cracked filament socket leaking slow sparks, tiny fish-silhouettes circling the glow like moths; lower right, the palate seam where the anglerfish's armored roof-of-mouth plating meets the skull, plates misaligned, raw pink-gold energy pulsing in the gap, coolant boiling into bubbles that rise through dark water. Between them, out of focus, the blurred cathedral of closed teeth. Deep blue-black water background lifted from #05070f toward #0c1a3c, never pure black; the ghost-green lure light and molten-gold seam light are the only saturation. Composition square and graphic, two focal details arranged diagonally, subtle CRT scanline glow. No text, no letters.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry focus, pure black background, multiple equal subjects",
+    "negativeScoped": true,
+    "notes": "Color reference: lure ~#a8e8c0, seam energy ~#f8c860. SD3.5 handles the split-focus macro cleanly; keep both details small in frame or the model will merge them — if it does, ask for only the lure.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13002,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 13002,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hk10-weakpoint-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "029fb8bb-7253-4f7d-ae15-9276cabcd9f6",
+      "created": 1791539303,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, macro close-up study for a game manual. Extreme detail view of THE HOLLOW KING's weak points: upper left, the lure organ itself — a translucent biological bulb of pale green light wrapped in black iron filigree, a cracked filament socket leaking slow sparks, tiny fish-silhouettes circling the glow like moths; lower right, the palate seam where the anglerfish's armored roof-of-mouth plating meets the skull, plates misaligned, raw pink-gold energy pulsing in the gap, coolant boiling into bubbles that rise through dark water. Between them, out of focus, the blurred cathedral of closed teeth. Deep blue-black water background lifted from #05070f toward #0c1a3c, never pure black; the ghost-green lure light and molten-gold seam light are the only saturation. Composition square and graphic, two focal details arranged diagonally, subtle CRT scanline glow. No text, no letters.",
+      "inference_time_s": 13.27070226892829,
+      "peak_memory_mb": 25690
+    },
+    "format": "jpg"
+  }
+}

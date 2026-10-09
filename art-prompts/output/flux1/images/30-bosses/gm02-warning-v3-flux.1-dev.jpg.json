@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:55:48.702Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic, 3d render, watermark, detailed hull visible, rainbow palette, pure black background, blurry",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "02-galvanic-maw",
+    "slug": "gm02-warning",
+    "variantNum": 3,
+    "id": "gm02-warning-v3",
+    "title": "silhouette in the storm raster",
+    "positive": "Approaching dread arcade scene, a siren wash of dark red light pulsing across deep violet-teal cloud sea while the GALVANIC MAW appears only as an enormous elongated silhouette swimming through the mid-distance, its fish-shaped outline pure dark navy against the glowing gas, the single brightest detail the wide-open jaw ring shining like a violet pupil at the front of the shadow, electric arcs between its fin spars sketching the body's length in pale pink zigzags, below at the bottom-left corner the tiny warm point of an orange engine glow where the player fighter holds position, wave raster bands bending around the silhouette like heat above water, extreme contrast, graphic and minimal, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling composition, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic, 3d render, watermark, detailed hull visible, rainbow palette, pure black background, blurry",
+    "negativeScoped": true,
+    "notes": "Ultra-wide alarm banner for the site's bosses strip. The violet \"pupil\" jaw is the compositional hook.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12203,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12203,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "gm02-warning-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "52aa7869-ae6c-4b45-b75e-c051c9276cf5",
+      "created": 1791536144,
+      "count": 1,
+      "revised_prompt": "Approaching dread arcade scene, a siren wash of dark red light pulsing across deep violet-teal cloud sea while the GALVANIC MAW appears only as an enormous elongated silhouette swimming through the mid-distance, its fish-shaped outline pure dark navy against the glowing gas, the single brightest detail the wide-open jaw ring shining like a violet pupil at the front of the shadow, electric arcs between its fin spars sketching the body's length in pale pink zigzags, below at the bottom-left corner the tiny warm point of an orange engine glow where the player fighter holds position, wave raster bands bending around the silhouette like heat above water, extreme contrast, graphic and minimal, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling composition, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 12.385613193036988,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

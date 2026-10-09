@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:46:50.947Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "real squid, suckers slimy, blood, gore, teeth, human face in eye, photorealistic, 3d render, text, watermark, pure black background, disgust focus",
+  "negative_sent": "real squid, suckers slimy, blood, gore, teeth, human face in eye, photorealistic, 3d render, text, watermark, pure black background, disgust focus",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "06-mantle-regent",
+    "slug": "mr06-reveal",
+    "variantNum": 1,
+    "id": "mr06-reveal-v1",
+    "title": "enthroned in the living vault",
+    "positive": "Body-horror-adjacent arcade boss reveal inside a cathedral of living tissue, the MANTLE REGENT, a tyrant built like a colossal mechanical squid fused with the vault itself, eight thick tentacles plated in segments of dark chitin-green armor rising from a bulbous mantle hooded in veined tissue the color of deep moss, the tentacle tips curling inward in a slow crown gesture around a single enormous glass eye set in its chest, the eye bright amber with a horizontal navy pupil reflecting two tiny fleeing fighter silhouettes, the surrounding chamber walls breathe, fields of pulsing green cells shifting from dark forest green to lighter mint with each pulse, wet pores venting pale vapor strands, the floor a rippled membrane with the Regent's lower body sunk into it like a root, cold rim lighting from the cell-glow plus one warm key from the great eye, deep shadow pools staying green-navy rather than black, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, subtle CRT scanline glow, no text.",
+    "negative": "real squid, suckers slimy, blood, gore, teeth, human face in eye, photorealistic, 3d render, text, watermark, pure black background, disgust focus",
+    "negativeScoped": true,
+    "notes": "Cell-wall ramp #2a4434→#385a44. Keep the horror tasteful-arcade: geometry and glow, not slime.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 12601,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12601,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "mr06-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "48a1f93c-b320-402e-b3fe-ef9031211963",
+      "created": 1791539206,
+      "count": 1,
+      "revised_prompt": "Body-horror-adjacent arcade boss reveal inside a cathedral of living tissue, the MANTLE REGENT, a tyrant built like a colossal mechanical squid fused with the vault itself, eight thick tentacles plated in segments of dark chitin-green armor rising from a bulbous mantle hooded in veined tissue the color of deep moss, the tentacle tips curling inward in a slow crown gesture around a single enormous glass eye set in its chest, the eye bright amber with a horizontal navy pupil reflecting two tiny fleeing fighter silhouettes, the surrounding chamber walls breathe, fields of pulsing green cells shifting from dark forest green to lighter mint with each pulse, wet pores venting pale vapor strands, the floor a rippled membrane with the Regent's lower body sunk into it like a root, cold rim lighting from the cell-glow plus one warm key from the great eye, deep shadow pools staying green-navy rather than black, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 14.366151313995942,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

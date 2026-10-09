@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:03:44.941Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, ship sideways, ship behind the wall, exit missing, exit on the left, explosion engulfing ship, open desert canyon, calm scene, text, watermark, blurry, lava floor",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "boss-moments",
+    "slug": "escape-run-clutch",
+    "variantNum": 2,
+    "id": "escape-run-clutch-v2",
+    "title": "Escape beat: last-ten-seconds squeeze through a closing stone throat",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; the photo-finish frame of a collapsing world. Deep inside a shrinking stone throat: two canyon walls of banded sand-stone and buried fortress plating lean toward each other from top and bottom of frame, the gap between them narrowing rightward to a slot of bright open night-sky just wide enough for one fighter — and the slot is closing, a fresh fracture running through the upper lip of rock like a slowly falling eyelid. The steel-blue dart fighter is exactly at that pinch point, wings level, canopy cyan flare, engine trails blown to long orange ribbons by afterburner, its nose already through the gap while its rear hull is still brushing falling grit. Behind it, the whole left half of the frame is the pursuing collapse pressed close: an overrunning boil of dust and ember-lit debris, one enormous slab mid-slam where the two canyon walls have already kissed, sending a piston-blast of orange sparks shooting out of the gap ahead of the ship — the fighter is flying inside its own door-slam. The lit-through sky beyond the slot is calm deep navy with indifferent stars, the visual rest-note at the end of violence. Warm dust light against cold escape light, thick outlines on every falling rock, lifted deep-navy palette, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, ship sideways, ship behind the wall, exit missing, exit on the left, explosion engulfing ship, open desert canyon, calm scene, text, watermark, blurry, lava floor",
+    "negativeScoped": true,
+    "notes": "The spark-piston ahead of the ship is the hero detail — collapse mechanics literally opening the door one frame before it shuts. Rock strata ~#f0c890 over plating grey; keep the far sky pure calm navy so the right side of the frame breathes against the boiling left. flux.1 makes a gorgeous closing-lid; verify the ship is THROUGH the gap, not beside it.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20032,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 20032,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "escape-run-clutch-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1eb8d070-fc0a-47fc-94cd-134882ac08bc",
+      "created": 1791536620,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; the photo-finish frame of a collapsing world. Deep inside a shrinking stone throat: two canyon walls of banded sand-stone and buried fortress plating lean toward each other from top and bottom of frame, the gap between them narrowing rightward to a slot of bright open night-sky just wide enough for one fighter — and the slot is closing, a fresh fracture running through the upper lip of rock like a slowly falling eyelid. The steel-blue dart fighter is exactly at that pinch point, wings level, canopy cyan flare, engine trails blown to long orange ribbons by afterburner, its nose already through the gap while its rear hull is still brushing falling grit. Behind it, the whole left half of the frame is the pursuing collapse pressed close: an overrunning boil of dust and ember-lit debris, one enormous slab mid-slam where the two canyon walls have already kissed, sending a piston-blast of orange sparks shooting out of the gap ahead of the ship — the fighter is flying inside its own door-slam. The lit-through sky beyond the slot is calm deep navy with indifferent stars, the visual rest-note at the end of violence. Warm dust light against cold escape light, thick outlines on every falling rock, lifted deep-navy palette, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 13.226584322052076,
+      "peak_memory_mb": 36724
+    },
+    "format": "jpg"
+  }
+}

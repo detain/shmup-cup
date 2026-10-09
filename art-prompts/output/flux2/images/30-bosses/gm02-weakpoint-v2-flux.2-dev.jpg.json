@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:14:42.095Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "organic throat, tongue, teeth enamel, blood, gore, real fish, photorealistic, 3d render, text, watermark, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "02-galvanic-maw",
+    "slug": "gm02-weakpoint",
+    "variantNum": 2,
+    "id": "gm02-weakpoint-v2",
+    "title": "inside the open throat core",
+    "positive": "Terrifying first-person boss weak point composition, looking straight into the gaping open mechanical jaw of the GALVANIC MAW filling the entire frame, two curved rows of rectangular steel fang segments like breakwater teeth framing a dark circular throat, deep inside the throat a pulsing violet-black energy core hangs in a cage of rotating magnetic rings trailing pink electric filaments, the inner jaw walls lined with amber running lights diminishing into the darkness creating strong depth perspective, small captured bullet sparks spiraling toward the core like debris falling into a drain, warm rim light on the fang edges against cold violet depths, claustrophobic centered symmetrical framing, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering at ultra-detailed large-format quality, clean vector shapes with pixel-cluster texture accents, subtle CRT scanline glow, no text.",
+    "negative": "organic throat, tongue, teeth enamel, blood, gore, real fish, photorealistic, 3d render, text, watermark, pure black background",
+    "negativeScoped": true,
+    "notes": "The drain-spiral of bullets foreshadows the Black Hole Bomb mechanic. Fangs = steel blocks, not animal teeth.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12202,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12202,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "gm02-weakpoint-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "4712ca5d-4914-4338-99e6-0dafcc35da1b",
+      "created": 1791537277,
+      "count": 1,
+      "revised_prompt": "Terrifying first-person boss weak point composition, looking straight into the gaping open mechanical jaw of the GALVANIC MAW filling the entire frame, two curved rows of rectangular steel fang segments like breakwater teeth framing a dark circular throat, deep inside the throat a pulsing violet-black energy core hangs in a cage of rotating magnetic rings trailing pink electric filaments, the inner jaw walls lined with amber running lights diminishing into the darkness creating strong depth perspective, small captured bullet sparks spiraling toward the core like debris falling into a drain, warm rim light on the fang edges against cold violet depths, claustrophobic centered symmetrical framing, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering at ultra-detailed large-format quality, clean vector shapes with pixel-cluster texture accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 34.07300373981707,
+      "peak_memory_mb": 40034
+    },
+    "format": "jpg"
+  }
+}

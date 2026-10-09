@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:32:45.620Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic flesh, gore",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic flesh, gore",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-b",
+    "slug": "zone-cell-vault-pulse",
+    "variantNum": 1,
+    "id": "zone-cell-vault-pulse-v1",
+    "title": "living walls breathing around the corridor",
+    "positive": "Organic pixel-art corridor with living walls that slowly pulse and ripple like breathing tissue, veins of pink bioluminescent light traveling along the walls in looping circuits, the passage widening and narrowing rhythmically as the camera drifts steadily forward through it, soft wet gloss highlights sliding on the curved surfaces, hypnotic even tempo, single continuous shot, no cuts.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic flesh, gore",
+    "notes": "Zone 6's pulsing-walls gimmick as pure atmosphere. Forward drift through a repeating vein pattern is a strong seamless-loop candidate — match loop points on the pulse beat.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 768,
+      "h": 512
+    },
+    "numFrames": 121,
+    "fps": 24,
+    "durationNote": "~5s",
+    "guidance": 3,
+    "steps": 35,
+    "seed": 26006,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 768,
+    "h": 512
+  },
+  "size_sent": {
+    "w": 768,
+    "h": 512
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "768x512",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-cell-vault-pulse-v1-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "553c52a5-17d0-488c-b428-d1a79c98bff2",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "Organic pixel-art corridor with living walls that slowly pulse and ripple like breathing tissue, veins of pink bioluminescent light traveling along the walls in looping circuits, the passage widening and narrowing rhythmically as the camera drifts steadily forward through it, soft wet gloss highlights sliding on the curved surfaces, hypnotic even tempo, single continuous shot, no cuts.",
+          "size": "768x512",
+          "num_frames": 121,
+          "fps": 24,
+          "seed": 26006,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic flesh, gore",
+          "guidance_scale": 3,
+          "num_inference_steps": 35,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 20.627571566961706
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

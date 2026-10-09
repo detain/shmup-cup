@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:00:24.679Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, marbles on table, glass beads string, pearls necklace, text labels, numbers, watermark, blurry, orbs overlapping, wrong count, muddy translucent colors, rainbow gradient orbs, pure black background",
+  "negative_sent": "photorealistic, 3d render, marbles on table, glass beads string, pearls necklace, text labels, numbers, watermark, blurry, orbs overlapping, wrong count, muddy translucent colors, rainbow gradient orbs, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "direct-color-orbs",
+    "variantNum": 3,
+    "id": "direct-color-orbs-v3",
+    "title": "The ten direct-color orbs, two rows of five on navy",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. A reference sheet of ten direct color orbs arranged in two tidy rows of five on a flat lifted deep-navy field, each orb a perfect glass sphere the same size, floating with a soft matching glow and a tiny dark hover-shadow. Each sphere is transparent-shell over a solid luminous bead at its dead center, with one crisp white specular dot upper-left and a thin rim-light lower-right, giving all ten the same optical construction. The ten core colors, left to right, top row: crimson red, flame orange, sun gold, leaf green, mint teal; bottom row: sky blue, deep blue, royal violet, magenta pink, pearl white. The shells are colorless so only the centers carry hue; thick near-black outlines bind each sphere. Between the rows, a few loose sparks and micro-droplets of the same glass suggest the orbs are minted from liquid light. The arrangement is grid-perfect, jewel-storefront clean, made so a design team can read all ten tints side by side. Saturated limited palette, glossy arcade finish, never pure black. No text, no letters, no labels, no numbers under the orbs.",
+    "negative": "photorealistic, 3d render, marbles on table, glass beads string, pearls necklace, text labels, numbers, watermark, blurry, orbs overlapping, wrong count, muddy translucent colors, rainbow gradient orbs, pure black background",
+    "negativeScoped": true,
+    "notes": "These are the direct-select weapon colors; the sheet is intentionally palette-documentation. Counting is the risk: both models drift to 9 or 11 spheres — guidance 5.5 for sd3.5 holds the grid; verify count before accepting. Keep rims dark-outlined so white and pearl orbs don't vanish on glow bloom.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 18021,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 18021,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "direct-color-orbs-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0c9560c6-50e1-43d6-aada-3ae3cab8d67a",
+      "created": 1791540020,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. A reference sheet of ten direct color orbs arranged in two tidy rows of five on a flat lifted deep-navy field, each orb a perfect glass sphere the same size, floating with a soft matching glow and a tiny dark hover-shadow. Each sphere is transparent-shell over a solid luminous bead at its dead center, with one crisp white specular dot upper-left and a thin rim-light lower-right, giving all ten the same optical construction. The ten core colors, left to right, top row: crimson red, flame orange, sun gold, leaf green, mint teal; bottom row: sky blue, deep blue, royal violet, magenta pink, pearl white. The shells are colorless so only the centers carry hue; thick near-black outlines bind each sphere. Between the rows, a few loose sparks and micro-droplets of the same glass suggest the orbs are minted from liquid light. The arrangement is grid-perfect, jewel-storefront clean, made so a design team can read all ten tints side by side. Saturated limited palette, glossy arcade finish, never pure black. No text, no letters, no labels, no numbers under the orbs.",
+      "inference_time_s": 14.336274771019816,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

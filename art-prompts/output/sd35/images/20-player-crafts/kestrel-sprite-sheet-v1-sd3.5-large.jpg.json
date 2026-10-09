@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:44:43.721Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "overlapping sprites, drop shadows, background gradient, perspective distortion, anti-aliasing, photo background, text, labels, inconsistent ship sizes, different ships, blurry, photorealistic, 3d render, watermark, pure black background",
+  "negative_sent": "overlapping sprites, drop shadows, background gradient, perspective distortion, anti-aliasing, photo background, text, labels, inconsistent ship sizes, different ships, blurry, photorealistic, 3d render, watermark, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "sprite-sheets",
+    "slug": "kestrel-sprite-sheet",
+    "variantNum": 1,
+    "id": "kestrel-sprite-sheet-v1",
+    "title": "in-game pose grid",
+    "positive": "Retro 16-bit video game sprite sheet, a neat grid of eight poses of the same small steel-blue dart-shaped fighter with a blue fuselage stripe, cyan canopy and orange engine glow, arranged in two rows of four on a completely flat deep-navy background, the poses being level flight, slight nose-up tilt, slight nose-down tilt, left bank showing foreshortened wing, right bank mirror, damage flicker pose rendered with thin dark scuff marks, engine-boost pose with a longer two-tone orange exhaust streak, and a launch pose with a white flash ring at the rear, every sprite drawn in crisp pixel clusters with 2-pixel near-black navy outlines, flat saturated fills with simple three-step shading ramps, consistent scale and orientation across the grid, no anti-aliasing, no drop shadows, no background gradients or stars, generous empty navy margin between sprites, arcade sprite art.",
+    "negative": "overlapping sprites, drop shadows, background gradient, perspective distortion, anti-aliasing, photo background, text, labels, inconsistent ship sizes, different ships, blurry, photorealistic, 3d render, watermark, pure black background",
+    "negativeScoped": true,
+    "notes": "For sheet extraction, generate at 1152x896 then downscale; expect to hand-clean grid spacing. Stripe #3858f0, canopy #38c8e8.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11301,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11301,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-sprite-sheet-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "a98d22dd-23c6-4eae-888c-c1aa116ab6a0",
+      "created": 1791539079,
+      "count": 1,
+      "revised_prompt": "Retro 16-bit video game sprite sheet, a neat grid of eight poses of the same small steel-blue dart-shaped fighter with a blue fuselage stripe, cyan canopy and orange engine glow, arranged in two rows of four on a completely flat deep-navy background, the poses being level flight, slight nose-up tilt, slight nose-down tilt, left bank showing foreshortened wing, right bank mirror, damage flicker pose rendered with thin dark scuff marks, engine-boost pose with a longer two-tone orange exhaust streak, and a launch pose with a white flash ring at the rear, every sprite drawn in crisp pixel clusters with 2-pixel near-black navy outlines, flat saturated fills with simple three-step shading ramps, consistent scale and orientation across the grid, no anti-aliasing, no drop shadows, no background gradients or stars, generous empty navy margin between sprites, arcade sprite art.",
+      "inference_time_s": 13.504544540075585,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

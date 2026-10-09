@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:20:36.065Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, single color core, plain flesh, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "12-ember-frost-twins",
+    "slug": "eft-weakpoint",
+    "variantNum": 2,
+    "id": "eft-weakpoint-v2",
+    "title": "the shared yoke core between jaws",
+    "positive": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the shared yoke between a fire serpent head and an ice serpent head, camera straight down the neck junction where both coils meet a single armored drum. The drum's brass hatch stands open from heat-warped hinges, and inside spins a bicolored core — its upper half molten orange with floating ember beads, lower half crystalline blue shedding frost motes — the two halves separated by a visible seam of white steam lightning. Soot and rime creep outward along both neck rings. Deep-navy backdrop, bold dark outlines, saturated limited palette, subtle CRT scanline glow, tight square macro composition.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, single color core, plain flesh, pure black background",
+    "negativeScoped": true,
+    "notes": "The half-molten, half-frozen core seam is the aiming point — steam lightning at the boundary gives sd3.5-large a high-contrast subject.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 13202,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 13202,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "eft-weakpoint-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "2abde58b-58fb-475f-ad85-51526238d6f8",
+      "created": 1791537631,
+      "count": 1,
+      "revised_prompt": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: the shared yoke between a fire serpent head and an ice serpent head, camera straight down the neck junction where both coils meet a single armored drum. The drum's brass hatch stands open from heat-warped hinges, and inside spins a bicolored core — its upper half molten orange with floating ember beads, lower half crystalline blue shedding frost motes — the two halves separated by a visible seam of white steam lightning. Soot and rime creep outward along both neck rings. Deep-navy backdrop, bold dark outlines, saturated limited palette, subtle CRT scanline glow, tight square macro composition.",
+      "inference_time_s": 34.020940164802596,
+      "peak_memory_mb": 40034
+    },
+    "format": "jpg"
+  }
+}

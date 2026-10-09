@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:02:01.394Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, mine elevator, ladder, well, sky clouds visible, open wide exit, exit fully closed, pure black background, watermark, text, blurry, horizontal composition, viewer at ground level, frame border, letterboxing",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "escape-corridor",
+    "slug": "escape-corridor-poster-vertical",
+    "variantNum": 2,
+    "id": "escape-corridor-poster-vertical-v2",
+    "title": "Vertical poster: looking up a collapsing shaft toward a closing rectangle of light",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The escape rendered as a vertical ascent: looking straight up inside a colossal rectangular shaft that was clearly once a corridor, its four walls of banded rock and buried fortress plating now peeling inward — great shelves of stone and steel curling off the walls and falling toward the viewer, shrinking in the distance as they drop, motion-smeared at their edges. At the very top of the shaft, the exit is a small bright rectangle of pale gold daylight, visibly narrower than it should be, framed by two slabs of the fortress that are sliding together like closing jaws; a few thin fingers of light pierce down the shaft from the gap, each one lit with floating dust. Below the closing exit, the dark of the shaft is not empty: a broad glow of furnace orange and brown smoke is rising up from the bottom of the frame — the collapse has a head here, its light staining the lowest falling debris from beneath, silhouette-ing every tumbling slab in the lower third against the fire. So the image is trapped between two squeezes: fire rising from below, daylight shutting above, and a central lane of still-open shaft where the falling rock and rising smoke refuse to meet. Palette of earth golds, fortress-plate greys, furnace orange below and pale gold above, lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, mine elevator, ladder, well, sky clouds visible, open wide exit, exit fully closed, pure black background, watermark, text, blurry, horizontal composition, viewer at ground level, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: exit gold ~#f8f070, jaws plating grey with amber rivets, rising fire #e87a1c→#c83018 glow. The pincer story — exit closing up, fire climbing up — is the entire 90-second timer translated to one frame; check both models preserve the SMALL exit and the DARK bottom glow simultaneously (sd3.5 likes to blow out the top rectangle, killing the claustrophobia).",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 17102,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 17102,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "escape-corridor-poster-vertical-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b9bcef72-5df4-422b-a337-2671e9eef4bf",
+      "created": 1791536516,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The escape rendered as a vertical ascent: looking straight up inside a colossal rectangular shaft that was clearly once a corridor, its four walls of banded rock and buried fortress plating now peeling inward — great shelves of stone and steel curling off the walls and falling toward the viewer, shrinking in the distance as they drop, motion-smeared at their edges. At the very top of the shaft, the exit is a small bright rectangle of pale gold daylight, visibly narrower than it should be, framed by two slabs of the fortress that are sliding together like closing jaws; a few thin fingers of light pierce down the shaft from the gap, each one lit with floating dust. Below the closing exit, the dark of the shaft is not empty: a broad glow of furnace orange and brown smoke is rising up from the bottom of the frame — the collapse has a head here, its light staining the lowest falling debris from beneath, silhouette-ing every tumbling slab in the lower third against the fire. So the image is trapped between two squeezes: fire rising from below, daylight shutting above, and a central lane of still-open shaft where the falling rock and rising smoke refuse to meet. Palette of earth golds, fortress-plate greys, furnace orange below and pale gold above, lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.843357015866786,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

@@ -11,17 +11,16 @@
  * PROMPT LIBRARY FORMAT (shmup-cup/art-prompts — verified on disk 2026-10-07)
  * ---------------------------------------------------------------------------
  * Layout (RECURSIVE two roots, skip README.md + 00-*.md anywhere):
- *   images/<NN-dir>/*.md   44 files, 184 entries  (10-logo-title, 20-player-crafts,
+ *   images/<NN-dir>/*.md   48 files, 206 entries  (10-logo-title, 20-player-crafts,
  *                            30-bosses, 40-enemies, 50-stages, 60-items-fx,
- *                            70-key-moments)  — images/README.md promises an
- *                            80-promo/ dir that does not exist yet (library
- *                            gap, not a parser bug).
+ *                            70-key-moments, 80-promo — counts move with the
+ *                            live library; --list prints the current census.)
  *   video/<NN-dir>/*.md    26 files,  68 entries  (10-title-attract …
  *                            70-ambient-loops)
  * Entry = `## <slug> — <title>` heading, then bold-field lines, ONE ```text
  * fence (the positive prompt paragraph), and a `**Settings:**` pipe table.
  *
- * IMAGE entry schema (uniform 184/184):
+ * IMAGE entry schema (uniform across image entries):
  *   **Models:** flux.1-dev, flux.2-dev, sd3.5-large, qwen-image (10 combos)
  *   **Variation:** N/M of K            (id = <slug>-v<N>; "2/3 of 2"
  *                                       mismatches tolerated, warn on N>K)
@@ -56,6 +55,41 @@
  * death-gold-rain-closeup, ark-dive-tail-only). LTX i2v DOES exist in this
  * library — those 8 route to the ltxvideo group and get the same source-still
  * flow as the 17 wan2.2-i2v entries.
+ *
+ * ---------------------------------------------------------------------------
+ * LIBRARY FORMAT v4 (owner conversion pass, 2026-10-07) — THREE PER-FILE SOURCES
+ * ---------------------------------------------------------------------------
+ * Reality on disk: the conversion landed as JSON SIDECARS, one per category
+ * .md: images/<dir>/<stem>.json and video/<dir>/<stem>.json with
+ *   {schema:"shmup-art-prompt-library@1", kind:"image"|"video", category,
+ *    file, source:"<stem>.md", entries:[…]}
+ * Image entry: {id, slug, title, variation:{n,of,total}, models:[names],
+ *   positive, negative, settings:{<model-name>:{resolution,guidance,steps,
+ *   seed}}, notes}. Video entry: {…, model, modelGroup, mode, settings:
+ *   {resolution,num_frames,fps,duration,guidance,steps,seed}, sourceImage:
+ *   {declared,glob}|null}. The .md stays the human-authored source (legacy or
+ *   labeled-fence shape — both parse).
+ *
+ * LOAD PRECEDENCE (per file):
+ *   1) <stem>.json sidecar — parsed, schema-checked, becomes the block set.
+ *      Unparseable JSON (caught mid-write) → LOUD warn naming the file, fall
+ *      back to the .md. .md newer than .json → warn (stale sidecar) but JSON
+ *      still wins; delete the .json to force .md parsing.
+ *   2) .md with a LABELED fence — if the first non-blank fence line matches
+ *      /^POSITIVE\s*:/i, the fence is parsed as fields (hosting-hero style):
+ *      known KEY: lines start a field (case-insensitive), every other line
+ *      (incl. prose like "Mood: …") folds into the current field. FIELD_KEYS
+ *      below is the single data-driven list; unknown ALL-CAPS keys ride
+ *      block.meta (sidecar) with one warning; mixed-case unknown tokens are
+ *      prose, not keys. labeled NEGATIVE supersedes a **Negative:** bold line
+ *      (differ → prefer labeled + warn once).
+ *      Field precedence INSIDE an entry: fence field > **Settings:** table
+ *      column > README default — each time a lower tier feeds the final value
+ *      while a higher tier exists-but-differs… precisely: a fence override
+ *      that replaces a present table value warns once per entry+param.
+ *   3) legacy .md parsing (fence = whole positive, **Negative:** = negative).
+ * Decided PER ENTRY in the .md paths, PER FILE between json and md. Downstream
+ * (routing, sizes, i2v, payloads) is identical for all three provenances.
  *
  * ---------------------------------------------------------------------------
  * MODEL ROUTING (owner law)
@@ -126,8 +160,8 @@
  * ---------------------------------------------------------------------------
  *   node generate.mjs --list
  *   node generate.mjs --model sd35 --dry-run --filter dir=30-bosses
- *   node generate.mjs --model flux1 --filter id=vulcan-bomber-v1   # smoke one image
- *   node generate.mjs --model wan22 --filter id=ark-breach-impact-v1  # smoke one t2v
+ *   node generate.mjs --model flux1 --filter id=skeet-vane-swarm-v3   # smoke one image
+ *   node generate.mjs --model wan22 --filter id=kestrel-weave-azurerverge-v1  # smoke one t2v
  *   node generate.mjs --model ltxvideo --filter model=ltxvideo     # every ltx entry incl. i2v
  *   node generate.mjs --model wan22 --all --i2v-strict             # force every video entry, fail on missing stills
  *   node generate.mjs --model sd35 --port 30002 --served-model stabilityai/sd-3.5-large
@@ -135,6 +169,8 @@
  */
 
 import { promises as fs } from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -239,6 +275,21 @@ const NEAR_MISS_RE = /^##(?!#)\s/;
 const SIZE_RE = /^(\d+)\s*[xX]\s*(\d+)$/;
 const DASH_VALUE_RE = /^(—|-|auto|none|tbd)\.?$/i;
 
+// Single data-driven grammar for LABELED fences (owner conversion format).
+// Add a future label = add it here (upper-case canonical spelling).
+const FIELD_KEYS = [
+  "POSITIVE", "NEGATIVE", "MODELS", "MODEL", "MODE", "VARIATION",
+  "SIZE", "RESOLUTION", "ASPECT", "STYLE", "BACKGROUND",
+  "GUIDANCE", "STEPS", "SEED", "NUM_FRAMES", "FPS", "DURATION",
+  "SOURCE_IMAGE", "NOTES",
+];
+const FIELD_KEYS_RE = new RegExp(`^(${FIELD_KEYS.join("|")})\\s*:\\s*(.*)$`, "i");
+const FIELD_SET = new Set(FIELD_KEYS);
+// Unknown keys inside a fence count as fields ONLY when the token is pure
+// upper-case snake — so prose continuations like "Mood: serene" never split.
+const ANY_KEY_RE = /^([A-Z][A-Z0-9_]*)\s*:\s*(.*)$/;
+const LIBRARY_JSON_SCHEMA = "shmup-art-prompt-library@1";
+
 /** Collapse soft-wrapped lines into one whitespace-normalized string. */
 function collapse(lines) {
   return lines.join(" ").replace(/\s+/g, " ").trim();
@@ -277,12 +328,95 @@ function extractFence(bodyLines) {
   if (end === -1) return null;
   return {
     text: collapse(bodyLines.slice(start + 1, end)),
+    lines: bodyLines.slice(start + 1, end),
     consumed: new Set(range(start, end)),
   };
 }
 
 function* range(a, b) {
   for (let i = a; i <= b; i++) yield i;
+}
+
+/** True when the fence opens with a POSITIVE: label (conversion format). */
+function isLabeledFence(fenceLines) {
+  const first = fenceLines.find((l) => l.trim() !== "");
+  return first !== undefined && /^POSITIVE\s*:/i.test(first.trim());
+}
+
+/**
+ * Parse a labeled fence into {fields:Map canonical-key→value, extras:Map}.
+ * Known FIELD_KEYS match case-insensitively; unknown pure-upper-case snake
+ * tokens become extras (sidecar metadata, warned once); anything else is a
+ * continuation line folded into the current field (soft-wrap tolerant).
+ */
+function parseLabeledFence(fenceLines, label, warnings) {
+  const fields = new Map();
+  const extras = new Map();
+  let cur = null; // {name, known}
+  const push = (target, name, chunk) => {
+    const prev = target.get(name);
+    target.set(name, prev ? `${prev} ${chunk}`.replace(/\s+/g, " ") : chunk.replace(/\s+/g, " ").trim());
+  };
+  for (const line of fenceLines) {
+    const known = FIELD_KEYS_RE.exec(line);
+    if (known) {
+      const name = known[1].toUpperCase();
+      cur = { name, known: true };
+      push(fields, name, known[2]);
+      continue;
+    }
+    const anyKey = ANY_KEY_RE.exec(line.trim());
+    if (anyKey) {
+      warnings.push(`${label}: unknown fence key "${anyKey[1]}:" — recorded in block.meta (sidecar only)`);
+      cur = { name: anyKey[1], known: false };
+      push(extras, anyKey[1], anyKey[2]);
+      continue;
+    }
+    if (cur === null) {
+      if (line.trim()) push(extras, "_preamble", line);
+      continue;
+    }
+    if (/^\s*\*\*/.test(line)) { // a bold field line ends the current field —
+      cur = null;                 // it is structure, never a fold continuation
+      continue;
+    }
+    push(cur.known ? fields : extras, cur.name, line);
+  }
+  for (const [k, v] of fields) fields.set(k, v.trim());
+  for (const [k, v] of extras) extras.set(k, v.trim());
+  return { fields, extras };
+}
+
+/** Numeric/size fence overrides: parsed values or null, warned on garbage. */
+function fenceOverrides(fields, label, warnings) {
+  const num = (key) => {
+    if (!fields.has(key)) return null;
+    const n = numCell(fields.get(key));
+    if (n === undefined) {
+      warnings.push(`${label}: fence ${key} "${fields.get(key)}" unparseable — ignored, table/defaults apply`);
+      return null;
+    }
+    return n;
+  };
+  let size = null;
+  const sizeRaw = fields.get("SIZE") ?? fields.get("RESOLUTION");
+  if (sizeRaw !== undefined) {
+    size = parseWH(sizeRaw, `${label} fence ${fields.get("SIZE") !== undefined ? "SIZE" : "RESOLUTION"}`, warnings);
+    if (!size) warnings.push(`${label}: fence size unusable — table/defaults apply`);
+  }
+  return { size, guidance: num("GUIDANCE"), steps: num("STEPS"), seed: num("SEED") };
+}
+
+/** SOURCE_IMAGE fence value: backticks give [declared, glob], else plain path. */
+function parseSourceImageValue(value) {
+  const spans = [...String(value).matchAll(/`([^`]+)`/g)].map((m) => m[1].trim());
+  if (spans.length) return { declared: spans[0], glob: spans[1] ?? null };
+  const plain = String(value).trim();
+  return plain ? { declared: plain, glob: null } : null;
+}
+
+function splitModelNames(value) {
+  return String(value ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 /** Value after `**Label:**` on its line (continuation lines until next **). */
@@ -375,8 +509,25 @@ function parseImageFile(text, category, fileStem, warnings) {
     }
     const skip = fence.consumed;
 
-    const modelsRaw = boldField(sec.body, "Models", skip);
-    const names = (modelsRaw ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    // --- format decision PER ENTRY: labeled fence vs legacy fence ---------
+    const labeled = isLabeledFence(fence.lines);
+    const L = labeled ? parseLabeledFence(fence.lines, label, warnings) : null;
+    const F = L ? L.fields : null;
+    const overridden = new Set(); // entry+param pairs that replaced a table value
+    const noteOverride = (param, tableVal, fenceVal) => {
+      if (fenceVal === null || fenceVal === undefined) return;
+      if (tableVal === null || tableVal === undefined) return;
+      const differ = typeof tableVal === "object"
+        ? `${tableVal.w}x${tableVal.h}` !== `${fenceVal.w}x${fenceVal.h}`
+        : tableVal !== fenceVal;
+      if (differ && !overridden.has(param)) {
+        overridden.add(param);
+        warnings.push(`${label}: fence ${param} overrides Settings column (${JSON.stringify(tableVal)} → ${JSON.stringify(fenceVal)})`);
+      }
+    };
+
+    const modelsRaw = F?.get("MODELS") ?? F?.get("MODEL") ?? boldField(sec.body, "Models", skip);
+    const names = splitModelNames(modelsRaw);
     const models = [];
     for (const nm of names) {
       const g = MODEL_NAME_TO_GROUP[nm.toLowerCase()];
@@ -384,64 +535,89 @@ function parseImageFile(text, category, fileStem, warnings) {
       else if (!models.includes(g)) models.push(g);
     }
     if (!models.length) {
-      warnings.push(`${label}: no routable **Models:** line — entry skipped`);
+      warnings.push(`${label}: no routable **Models:**/MODELS line — entry skipped`);
       continue;
     }
 
-    const variation = parseVariation(boldField(sec.body, "Variation", skip), label, warnings);
+    const variation = parseVariation(F?.get("VARIATION") ?? boldField(sec.body, "Variation", skip), label, warnings);
 
     const table = parseSettingsTable(sec.body);
-    if (!table) {
+    if (!table && !F) {
       warnings.push(`${label}: no **Settings:** table — entry skipped`);
       continue;
     }
-    const columns = table.header.slice(1); // drop "param"
+    const columns = table ? table.header.slice(1) : []; // drop "param"
     const byParam = {};
-    for (const cells of table.rows) {
+    for (const cells of (table?.rows ?? [])) {
       const param = (cells[0] ?? "").trim();
       if (!param) continue;
       byParam[param] = cells.slice(1);
     }
 
-    const negLine = boldField(sec.body, "Negative", skip);
-    const negative = backtickOrText(negLine) ?? "";
-    const notes = boldField(sec.body, "Notes", skip) ?? null;
+    let negLine = boldField(sec.body, "Negative", skip);
+    let negative = backtickOrText(negLine) ?? "";
+    if (F?.has("NEGATIVE")) {
+      const labeledNeg = F.get("NEGATIVE").replace(/^`|`$/g, "");
+      if (negative && negative !== labeledNeg) {
+        warnings.push(`${label}: labeled NEGATIVE supersedes **Negative:** bold line (differ) — bold line ignored`);
+      }
+      negative = labeledNeg;
+      negLine = null; // qualifier moot: labeled value is authoritative
+    }
+    const notes = F?.get("NOTES") ?? boldField(sec.body, "Notes", skip) ?? null;
+    const positive = F ? (F.get("POSITIVE") ?? "") : fence.text;
+    if (!positive) {
+      warnings.push(`${label}: labeled fence has no POSITIVE value — entry skipped`);
+      continue;
+    }
 
-    const fallbackSize = parseWH((byParam.resolution ?? [])[0], `${fileLabel} ${sec.slug} (fallback resolution)`, warnings);
+    const ov = F ? fenceOverrides(F, label, warnings) : { size: null, guidance: null, steps: null, seed: null };
+
+    const fallbackSize = (table ? parseWH((byParam.resolution ?? [])[0], `${fileLabel} ${sec.slug} (fallback resolution)`, warnings) : null)
+      ?? ov.size;
 
     const perModel = {};
     for (const g of models) {
       const spelling = Object.keys(MODEL_NAME_TO_GROUP).find((k) => MODEL_NAME_TO_GROUP[k] === g);
-      let col = columns.findIndex((c) => c.toLowerCase() === String(spelling).toLowerCase());
-      // image groups never map to video spellings; sd3.5-large is the only
-      // column name for sd35 etc. — if missing, README defaults + warn.
+      const col = columns.findIndex((c) => c.toLowerCase() === String(spelling).toLowerCase());
       const defaults = README_DEFAULTS[g] ?? null;
-      if (col === -1) {
-        if (!defaults) {
-          warnings.push(`${label}: no Settings column for "${spelling}" and no README default — model params unavailable`);
-          continue;
-        }
-        warnings.push(`${label}: Settings column for "${spelling}" missing — README defaults guidance=${defaults.guidance} steps=${defaults.steps} (resolution fallback ${fallbackSize ? `${fallbackSize.w}x${fallbackSize.h}` : "none"})`);
-        perModel[g] = { size: fallbackSize, guidance: defaults.guidance, steps: defaults.steps, seed: null, defaulted: true };
-        continue;
-      }
       const cell = (p) => {
         const row = byParam[p];
-        return row ? row[col] : undefined;
+        return col === -1 || !row ? undefined : row[col];
       };
-      const size = parseWH(cell("resolution"), `${label} resolution[${spelling}]`, warnings) ?? fallbackSize;
-      const guidance = numCell(cell("guidance"));
-      const steps = numCell(cell("steps"));
-      const seed = numCell(cell("seed"));
-      const bad = (name, v) => v === undefined && warnings.push(`${label}: settings ${name} for ${spelling} unparseable ("${cell(name)}") — ${defaults?.[name] ?? "README default"} applied`);
-      bad("guidance", guidance); bad("steps", steps); bad("seed", seed);
-      perModel[g] = {
-        size,
-        guidance: guidance ?? defaults?.guidance ?? null,
-        steps: steps ?? defaults?.steps ?? null,
-        seed: seed ?? null,
-        defaulted: false,
-      };
+      // Tier 2 (Settings-table column) — parsed first, bad cells warned.
+      let size = null;
+      let guidance = null;
+      let steps = null;
+      let seed = null;
+      if (col !== -1) {
+        if (cell("resolution") !== undefined) size = parseWH(cell("resolution"), `${label} resolution[${spelling}]`, warnings);
+        const gRaw = numCell(cell("guidance"));
+        const sRaw = numCell(cell("steps"));
+        const seedRaw = numCell(cell("seed"));
+        const bad = (name, v) => v === undefined && warnings.push(`${label}: settings ${name} for ${spelling} unparseable ("${cell(name)}") — ${defaults?.[name] ?? "README default"} applied`);
+        bad("guidance", gRaw); bad("steps", sRaw); bad("seed", seedRaw);
+        guidance = gRaw ?? null; steps = sRaw ?? null; seed = seedRaw ?? null;
+      }
+      size ??= fallbackSize;
+      // Tier 1 (fence) — wins over the table; warn once per param when it
+      // replaces a present value.
+      if (ov.size) { noteOverride("SIZE", size, ov.size); size = ov.size; }
+      if (ov.guidance !== null) { noteOverride("GUIDANCE", guidance, ov.guidance); guidance = ov.guidance; }
+      if (ov.steps !== null) { noteOverride("STEPS", steps, ov.steps); steps = ov.steps; }
+      if (ov.seed !== null) { noteOverride("SEED", seed, ov.seed); seed = ov.seed; }
+      if (col === -1) {
+        const hasFence = ov.size || ov.guidance !== null || ov.steps !== null || ov.seed !== null;
+        if (!defaults && !hasFence) {
+          warnings.push(`${label}: no Settings column for "${spelling}", no fence values and no README default — model params unavailable`);
+          continue;
+        }
+        warnings.push(`${label}: Settings column for "${spelling}" missing — ${hasFence ? "fence + README defaults" : "README defaults"} guidance=${guidance ?? defaults?.guidance} steps=${steps ?? defaults?.steps} (resolution fallback ${size ? `${size.w}x${size.h}` : "none"})`);
+      }
+      // Tier 3 (README defaults) fills anything still missing.
+      guidance = guidance ?? defaults?.guidance ?? null;
+      steps = steps ?? defaults?.steps ?? null;
+      perModel[g] = { size, guidance, steps, seed, defaulted: col === -1 };
     }
     if (!Object.keys(perModel).some((g) => models.includes(g))) {
       warnings.push(`${label}: no per-model settings survived — entry skipped`);
@@ -456,13 +632,15 @@ function parseImageFile(text, category, fileStem, warnings) {
       variantNum: variation.n,
       id: `${sec.slug}-v${variation.n}`,
       title: sec.title,
-      positive: fence.text,
+      positive,
       negative,
-      negativeScoped: /\(sd3\.5\/qwen only\)/i.test(negLine ?? ""),
+      negativeScoped: labeled ? Boolean(negative) : /\(sd3\.5\/qwen only\)/i.test(negLine ?? ""),
       notes,
       models,
       modelsRaw: names,
       perModel,
+      meta: L && L.extras.size ? Object.fromEntries(L.extras) : null,
+      format: labeled ? "md-labeled" : "md-legacy",
       suggestedN: null, // shmup library carries no "generate N" hints
       aspect: null,
       style: null,
@@ -487,62 +665,117 @@ function parseVideoFile(text, category, fileStem, warnings) {
     }
     const skip = fence.consumed;
 
-    const modelRaw = (boldField(sec.body, "Model", skip) ?? "").trim();
+    // --- format decision PER ENTRY: labeled fence vs legacy fence ---------
+    const labeled = isLabeledFence(fence.lines);
+    const L = labeled ? parseLabeledFence(fence.lines, label, warnings) : null;
+    const F = L ? L.fields : null;
+
+    const modelRaw = (F?.get("MODEL") ?? F?.get("MODELS") ?? boldField(sec.body, "Model", skip) ?? "").trim();
     const modelGroup = MODEL_NAME_TO_GROUP[modelRaw.toLowerCase()] ?? null;
     if (!modelGroup) {
-      warnings.push(`${label}: **Model:** "${modelRaw}" unknown — entry skipped`);
+      warnings.push(`${label}: **Model:**/"${modelRaw}" unknown — entry skipped`);
       continue;
     }
-    const mode = (boldField(sec.body, "Mode", skip) ?? "t2v").trim().toLowerCase();
+    let mode = (F?.get("MODE") ?? boldField(sec.body, "Mode", skip) ?? "t2v").trim().toLowerCase();
+    if (F?.has("SOURCE_IMAGE") && mode === "t2v") {
+      warnings.push(`${label}: fence SOURCE_IMAGE present with MODE t2v — mode promoted to i2v`);
+      mode = "i2v";
+    }
     if (mode !== "t2v" && mode !== "i2v") {
       warnings.push(`${label}: **Mode:** "${mode}" unexpected — assuming t2v`);
     }
 
-    const variation = parseVariation(boldField(sec.body, "Variation", skip), label, warnings);
+    const variation = parseVariation(F?.get("VARIATION") ?? boldField(sec.body, "Variation", skip), label, warnings);
 
     const table = parseSettingsTable(sec.body);
-    if (!table) {
+    if (!table && !F) {
       warnings.push(`${label}: no **Settings:** table — entry skipped`);
       continue;
     }
     const byParam = {};
-    for (const cells of table.rows) {
+    for (const cells of (table?.rows ?? [])) {
       const param = (cells[0] ?? "").trim();
       if (param) byParam[param] = (cells[1] ?? "").trim();
     }
+    const fired = new Set();
+    const override = (paramName, tableVal, fenceVal) => {
+      if (fenceVal === null || fenceVal === undefined) return fenceVal ?? tableVal;
+      const differ = typeof tableVal === "object" && tableVal !== null
+        ? `${tableVal.w}x${tableVal.h}` !== `${fenceVal.w}x${fenceVal.h}`
+        : tableVal !== null && tableVal !== undefined && tableVal !== fenceVal;
+      if (differ && !fired.has(paramName)) {
+        fired.add(paramName);
+        const show = (v) => v && typeof v === "object" ? `${v.w}x${v.h}` : JSON.stringify(v);
+        warnings.push(`${label}: fence ${paramName} overrides Settings table (${show(tableVal)} → ${show(fenceVal)})`);
+      }
+      return fenceVal ?? tableVal;
+    };
 
-    const size = parseWH(byParam.resolution, `${label} resolution`, warnings);
+    const ov = F ? fenceOverrides(F, label, warnings) : { size: null, guidance: null, steps: null, seed: null };
+
+    let size = parseWH(byParam.resolution, `${label} resolution`, table ? warnings : []);
+    size = override("SIZE", size, ov.size);
     if (!size) {
       warnings.push(`${label}: unusable resolution — entry skipped`);
       continue;
     }
-    const numFramesRaw = numCell(byParam.num_frames);
-    const fpsRaw = numCell(byParam.fps);
-    const numFrames = Number.isInteger(numFramesRaw) ? numFramesRaw : null;
-    const fps = Number.isFinite(fpsRaw) ? fpsRaw : null;
-    if (numFrames === null) warnings.push(`${label}: num_frames unusable ("${byParam.num_frames}") — --video-seconds override required`);
+    const numFramesRaw = numCell(F?.get("NUM_FRAMES") ?? byParam.num_frames);
+    const fpsRaw = numCell(F?.get("FPS") ?? byParam.fps);
+    if (F?.has("NUM_FRAMES") && numFramesRaw === undefined) {
+      warnings.push(`${label}: fence NUM_FRAMES "${F.get("NUM_FRAMES")}" unparseable — table value applies`);
+    }
+    if (F?.has("FPS") && fpsRaw === undefined) {
+      warnings.push(`${label}: fence FPS "${F.get("FPS")}" unparseable — table value applies`);
+    }
+    const tableNumFrames = Number.isInteger(numCell(byParam.num_frames)) ? numCell(byParam.num_frames) : null;
+    const tableFps = Number.isFinite(numCell(byParam.fps)) ? numCell(byParam.fps) : null;
+    if (F?.has("NUM_FRAMES")) override("NUM_FRAMES", tableNumFrames, Number.isInteger(numFramesRaw) ? numFramesRaw : null);
+    if (F?.has("FPS")) override("FPS", tableFps, Number.isFinite(fpsRaw) ? fpsRaw : null);
+    const numFrames = F?.has("NUM_FRAMES") && Number.isInteger(numFramesRaw) ? numFramesRaw : tableNumFrames;
+    const fps = F?.has("FPS") && Number.isFinite(fpsRaw) ? fpsRaw : tableFps;
+    if (numFrames === null) warnings.push(`${label}: num_frames unusable — --video-seconds override required`);
     const step = GROUPS[modelGroup].frameStep;
     if (numFrames !== null && (numFrames - 1) % step !== 0) {
       warnings.push(`${label}: num_frames ${numFrames} violates ${step}n+1 law for ${modelRaw} — kept verbatim, server may resample`);
     }
-    const guidance = numCell(byParam.guidance) ?? null;
-    const steps = numCell(byParam.steps) ?? null;
-    const seed = numCell(byParam.seed) ?? null;
-    const durationNote = byParam.duration ?? null;
+    let guidance = numCell(byParam.guidance) ?? null;
+    let steps = numCell(byParam.steps) ?? null;
+    let seed = numCell(byParam.seed) ?? null;
+    guidance = override("GUIDANCE", guidance, ov.guidance);
+    steps = override("STEPS", steps, ov.steps);
+    seed = override("SEED", seed, ov.seed);
+    const durationNote = F?.get("DURATION") ?? byParam.duration ?? null;
 
-    const negLine = boldField(sec.body, "Negative", skip);
-    const negative = backtickOrText(negLine) ?? "";
-    const notes = boldField(sec.body, "Notes", skip) ?? null;
+    let negLine = boldField(sec.body, "Negative", skip);
+    let negative = backtickOrText(negLine) ?? "";
+    if (F?.has("NEGATIVE")) {
+      const labeledNeg = F.get("NEGATIVE").replace(/^`|`$/g, "");
+      if (negative && negative !== labeledNeg) {
+        warnings.push(`${label}: labeled NEGATIVE supersedes **Negative:** bold line (differ) — bold line ignored`);
+      }
+      negative = labeledNeg;
+      negLine = null;
+    }
+    const notes = F?.get("NOTES") ?? boldField(sec.body, "Notes", skip) ?? null;
+    const positive = F ? (F.get("POSITIVE") ?? "") : fence.text;
+    if (!positive) {
+      warnings.push(`${label}: labeled fence has no POSITIVE value — entry skipped`);
+      continue;
+    }
 
-    // **Source image:** `art-prompts/images/<cat>/<file>.png` (glob `<cat>/<slug>*`)
+    // **Source image:** `…png` (glob `…`)  — bold line OR fence SOURCE_IMAGE
     let sourceImage = null;
     if (mode === "i2v") {
-      const srcLine = boldField(sec.body, "Source image", skip);
-      if (!srcLine) {
-        warnings.push(`${label}: Mode i2v without **Source image:** line — will never resolve a still`);
+      if (F?.has("SOURCE_IMAGE")) {
+        sourceImage = parseSourceImageValue(F.get("SOURCE_IMAGE"));
       } else {
-        const spans = [...srcLine.matchAll(/`([^`]+)`/g)].map((m) => m[1].trim());
-        sourceImage = { declared: spans[0] ?? null, glob: spans[1] ?? null };
+        const srcLine = boldField(sec.body, "Source image", skip);
+        if (!srcLine) {
+          warnings.push(`${label}: Mode i2v without source image (bold line or SOURCE_IMAGE) — will never resolve a still`);
+        } else {
+          const spans = [...srcLine.matchAll(/`([^`]+)`/g)].map((m) => m[1].trim());
+          sourceImage = { declared: spans[0] ?? null, glob: spans[1] ?? null };
+        }
       }
     }
 
@@ -554,7 +787,7 @@ function parseVideoFile(text, category, fileStem, warnings) {
       variantNum: variation.n,
       id: `${sec.slug}-v${variation.n}`,
       title: sec.title,
-      positive: fence.text,
+      positive,
       negative,
       notes,
       modelGroup,
@@ -568,6 +801,8 @@ function parseVideoFile(text, category, fileStem, warnings) {
       steps,
       seed,
       sourceImage,
+      meta: L && L.extras.size ? Object.fromEntries(L.extras) : null,
+      format: labeled ? "md-labeled" : "md-legacy",
       suggestedN: null,
       aspect: null,
       style: null,
@@ -578,11 +813,200 @@ function parseVideoFile(text, category, fileStem, warnings) {
   return out;
 }
 
+// --- JSON sidecars (owner conversion format v4) ------------------------------
+
+const JSON_ENTRY_KEYS_IMAGE = new Set(["id", "slug", "title", "variation", "models", "positive", "negative", "settings", "notes"]);
+const JSON_ENTRY_KEYS_VIDEO = new Set(["id", "slug", "title", "variation", "model", "modelGroup", "mode", "positive", "negative", "settings", "sourceImage", "notes"]);
+
+function jsonMetaExtras(entry, known) {
+  const extras = Object.fromEntries(Object.entries(entry).filter(([k]) => !known.has(k)));
+  return Object.keys(extras).length ? extras : null;
+}
+
+function numOr(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = numCell(value);
+    if (n !== undefined && n !== null) return n;
+  }
+  return null;
+}
+
+function variationFromJson(e, label, warnings) {
+  const n = Number.isInteger(e.variation?.n) && e.variation.n > 0 ? e.variation.n : 1;
+  if (!Number.isInteger(e.variation?.n)) warnings.push(`${label}: variation.n missing/not integer — assuming v${n}`);
+  return n;
+}
+
+/** Image entries from a shmup-art-prompt-library@1 sidecar. */
+function blocksFromImageJson(doc, category, fileStem, warnings) {
+  const out = [];
+  for (const e of doc.entries ?? []) {
+    const label = `${category}/${fileStem}.json «${e.slug ?? "?"}»`;
+    const positive = typeof e.positive === "string" ? e.positive.replace(/\s+/g, " ").trim() : "";
+    if (!positive) {
+      warnings.push(`${label}: entry without positive prompt — skipped`);
+      continue;
+    }
+    const names = (Array.isArray(e.models) ? e.models : typeof e.model === "string" ? [e.model] : []).map(String);
+    const models = [];
+    for (const nm of names) {
+      const g = MODEL_NAME_TO_GROUP[nm.trim().toLowerCase()];
+      if (!g) warnings.push(`${label}: unknown model name "${nm}" — ignored for routing`);
+      else if (!models.includes(g)) models.push(g);
+    }
+    if (!models.length) {
+      warnings.push(`${label}: no routable models — entry skipped`);
+      continue;
+    }
+    const settings = e.settings && typeof e.settings === "object" ? e.settings : {};
+    const firstSize = Object.values(settings)
+      .map((s) => (s && typeof s === "object" ? parseWH(s.resolution, `${label} settings resolution`, []) : null))
+      .find((s) => s) ?? null;
+    const perModel = {};
+    for (const g of models) {
+      const spelling = Object.keys(MODEL_NAME_TO_GROUP).find((k) => MODEL_NAME_TO_GROUP[k] === g);
+      const s = settings[spelling] ?? null;
+      const defaults = README_DEFAULTS[g] ?? null;
+      if (!s) {
+        warnings.push(`${label}: JSON settings missing for "${spelling}" — README defaults guidance=${defaults?.guidance ?? "none"} steps=${defaults?.steps ?? "none"}`);
+        if (!defaults && !firstSize) continue;
+        perModel[g] = { size: firstSize, guidance: defaults?.guidance ?? null, steps: defaults?.steps ?? null, seed: null, defaulted: true };
+        continue;
+      }
+      const size = parseWH(s.resolution, `${label} resolution[${spelling}]`, warnings) ?? firstSize;
+      perModel[g] = {
+        size,
+        guidance: numOr(s.guidance) ?? defaults?.guidance ?? null,
+        steps: numOr(s.steps) ?? defaults?.steps ?? null,
+        seed: numOr(s.seed),
+        defaulted: false,
+      };
+    }
+    if (!Object.keys(perModel).length) {
+      warnings.push(`${label}: no per-model settings survived — entry skipped`);
+      continue;
+    }
+    const n = variationFromJson(e, label, warnings);
+    const negative = typeof e.negative === "string" ? e.negative.replace(/\s+/g, " ").trim() : "";
+    out.push({
+      kind: "image",
+      category,
+      fileStem,
+      slug: String(e.slug ?? path.basename(String(e.id ?? "entry"), ".json")),
+      variantNum: n,
+      id: e.id ?? `${e.slug}-v${n}`,
+      title: e.title ?? "",
+      positive,
+      negative,
+      negativeScoped: Boolean(negative), // sidecar negatives follow the sd3.5/qwen-only law
+      notes: e.notes ?? null,
+      models,
+      modelsRaw: names,
+      perModel,
+      meta: jsonMetaExtras(e, JSON_ENTRY_KEYS_IMAGE),
+      format: "json",
+      suggestedN: null,
+      aspect: null,
+      style: null,
+      background: null,
+      source: "shmup-images-json",
+    });
+  }
+  return out;
+}
+
+/** Video entries from a shmup-art-prompt-library@1 sidecar. */
+function blocksFromVideoJson(doc, category, fileStem, warnings) {
+  const out = [];
+  for (const e of doc.entries ?? []) {
+    const label = `${category}/${fileStem}.json «${e.slug ?? "?"}»`;
+    const positive = typeof e.positive === "string" ? e.positive.replace(/\s+/g, " ").trim() : "";
+    if (!positive) {
+      warnings.push(`${label}: entry without positive prompt — skipped`);
+      continue;
+    }
+    const modelRaw = String(e.model ?? "").trim();
+    const mapped = MODEL_NAME_TO_GROUP[modelRaw.toLowerCase()] ?? null;
+    if (!mapped) {
+      warnings.push(`${label}: model "${modelRaw}" unknown — entry skipped`);
+      continue;
+    }
+    if (e.modelGroup && e.modelGroup !== mapped) {
+      warnings.push(`${label}: JSON modelGroup "${e.modelGroup}" disagrees with model mapping "${mapped}" — mapping wins`);
+    }
+    const modelGroup = mapped;
+    let mode = String(e.mode ?? "t2v").trim().toLowerCase();
+    if (e.sourceImage && mode === "t2v") {
+      warnings.push(`${label}: sourceImage present with mode t2v — mode promoted to i2v`);
+      mode = "i2v";
+    }
+    if (mode !== "t2v" && mode !== "i2v") {
+      warnings.push(`${label}: mode "${mode}" unexpected — assuming t2v`);
+    }
+    const s = e.settings && typeof e.settings === "object" ? e.settings : {};
+    const size = parseWH(s.resolution, `${label} resolution`, warnings);
+    if (!size) {
+      warnings.push(`${label}: unusable resolution — entry skipped`);
+      continue;
+    }
+    const numFrames = Number.isInteger(numOr(s.num_frames)) ? numOr(s.num_frames) : null;
+    const fps = Number.isFinite(numOr(s.fps)) ? numOr(s.fps) : null;
+    if (numFrames === null) warnings.push(`${label}: num_frames unusable — --video-seconds override required`);
+    const step = GROUPS[modelGroup].frameStep;
+    if (numFrames !== null && (numFrames - 1) % step !== 0) {
+      warnings.push(`${label}: num_frames ${numFrames} violates ${step}n+1 law for ${modelRaw} — kept verbatim, server may resample`);
+    }
+    let sourceImage = null;
+    if (mode === "i2v") {
+      if (e.sourceImage && typeof e.sourceImage === "object") {
+        sourceImage = { declared: e.sourceImage.declared ?? null, glob: e.sourceImage.glob ?? null };
+      } else if (typeof e.sourceImage === "string") {
+        sourceImage = parseSourceImageValue(e.sourceImage);
+      }
+      if (!sourceImage) warnings.push(`${label}: mode i2v without sourceImage — will never resolve a still`);
+    }
+    const n = variationFromJson(e, label, warnings);
+    out.push({
+      kind: "video",
+      category,
+      fileStem,
+      slug: String(e.slug ?? String(e.id ?? "entry").replace(/-v\d+$/, "")),
+      variantNum: n,
+      id: e.id ?? `${e.slug}-v${n}`,
+      title: e.title ?? "",
+      positive,
+      negative: typeof e.negative === "string" ? e.negative.replace(/\s+/g, " ").trim() : "",
+      notes: e.notes ?? null,
+      modelGroup,
+      modelRaw,
+      videoMode: mode,
+      size,
+      numFrames,
+      fps,
+      durationNote: typeof s.duration === "string" ? s.duration : null,
+      guidance: numOr(s.guidance),
+      steps: numOr(s.steps),
+      seed: numOr(s.seed),
+      sourceImage,
+      meta: jsonMetaExtras(e, JSON_ENTRY_KEYS_VIDEO),
+      format: "json",
+      suggestedN: null,
+      aspect: null,
+      style: null,
+      background: null,
+      source: "shmup-video-json",
+    });
+  }
+  return out;
+}
+
 /** Load the whole shmup library: images/<dir>/*.md + video/<dir>/*.md. */
 async function loadShmupLibrary(rootDir) {
   const warnings = [];
   const blocks = [];
   let filesParsed = 0;
+  const sources = { json: 0, mdLabeled: 0, mdLegacy: 0 };
 
   for (const root of ["images", "video"]) {
     const rootDirAbs = path.join(rootDir, root);
@@ -605,17 +1029,49 @@ async function loadShmupLibrary(rootDir) {
       for (const name of entries) {
         const fileStem = name.replace(/\.md$/, "");
         const category = `${root}/${sub}`;
+        const mdPath = path.join(dirAbs, name);
         let text;
         try {
-          text = await fs.readFile(path.join(dirAbs, name), "utf8");
+          text = await fs.readFile(mdPath, "utf8");
         } catch (err) {
           warnings.push(`${category}/${name}: unreadable (${err.message}) — skipped`);
           continue;
         }
         filesParsed++;
-        const parsed = root === "images"
-          ? parseImageFile(text, category, fileStem, warnings)
-          : parseVideoFile(text, category, fileStem, warnings);
+
+        // 1) JSON sidecar wins when present + schema-valid + parseable.
+        let fromJson = null;
+        try {
+          const rawJson = await fs.readFile(path.join(dirAbs, `${fileStem}.json`), "utf8");
+          const doc = JSON.parse(rawJson);
+          if (doc?.schema !== LIBRARY_JSON_SCHEMA) {
+            warnings.push(`${category}/${fileStem}.json: schema "${doc?.schema ?? "?"}" ≠ ${LIBRARY_JSON_SCHEMA} — sidecar ignored, .md parsed`);
+          } else if (doc?.kind !== (root === "images" ? "image" : "video")) {
+            warnings.push(`${category}/${fileStem}.json: kind "${doc?.kind}" ≠ ${root} — sidecar ignored, .md parsed`);
+          } else {
+            fromJson = (root === "images" ? blocksFromImageJson : blocksFromVideoJson)(doc, category, fileStem, warnings);
+            const [stMd, stJson] = await Promise.all([fs.stat(mdPath), fs.stat(path.join(dirAbs, `${fileStem}.json`))]);
+            if (stMd.mtimeMs > stJson.mtimeMs + 2000) {
+              warnings.push(`${category}/${name}: .md is newer than its .json sidecar (converter not re-run?) — sidecar wins; delete it to parse the .md`);
+            }
+          }
+        } catch (err) {
+          if (err.code !== "ENOENT") {
+            warnings.push(`${category}/${fileStem}.json: unparseable JSON (${err.message}) — possibly mid-write, falling back to .md`);
+          }
+        }
+
+        // 2) .md fallback (labeled-fence-aware per entry).
+        let parsed;
+        if (fromJson) {
+          parsed = fromJson;
+          sources.json += parsed.length;
+        } else {
+          parsed = root === "images"
+            ? parseImageFile(text, category, fileStem, warnings)
+            : parseVideoFile(text, category, fileStem, warnings);
+          for (const b of parsed) sources[b.format === "md-labeled" ? "mdLabeled" : "mdLegacy"]++;
+        }
         if (!parsed.length) warnings.push(`${category}/${name}: no entries parsed`);
         blocks.push(...parsed);
       }
@@ -630,7 +1086,7 @@ async function loadShmupLibrary(rootDir) {
     if (seen.has(key)) warnings.push(`duplicate id ${key} (files ${seen.get(key)} + ${b.fileStem})`);
     else seen.set(key, b.fileStem);
   }
-  return { blocks, warnings, filesParsed };
+  return { blocks, warnings, filesParsed, sources };
 }
 
 // ---------------------------------------------------------------------------
@@ -662,11 +1118,62 @@ function resolveImageSize(block, group, opts) {
   return { sent: { w: Math.max(256, w), h: Math.max(256, h) }, original, method };
 }
 
+// ---------------------------------------------------------------------------
+// Wan2.2 trained-size buckets (feature 2026-10-08)
+//
+// Wan2.2 is trained on exactly four resolutions — the server logs
+// "Unsupported resolution: 1216x704 ... Supported: 1280x720, 720x1280,
+// 832x480, 480x832" for anything else. We snap the (already ÷16-validated)
+// wan22 size to the nearest trained bucket so every payload is
+// bucket-native. LTX paths are NOT touched — that server honors its ÷32
+// sizes fine.
+//
+// Deterministic nearest-neighbor rule:
+//   1. Orientation first: W/H >= 1.0 → landscape pair {1280x720, 832x480};
+//      < 1.0 → portrait {720x1280, 480x832}. Square (ratio exactly 1.0)
+//      takes the landscape side.
+//   2. Within the pair, pick by log-aspect distance |ln(req) − ln(bucket)|.
+//   3. If the two distances are within WAN_SNAP_TIE_EPS of each other,
+//      pixel AREA decides (smaller |ln(area_req/area_bucket)| wins). The
+//      epsilon is deliberate: it pulls near-16:9 off-bucket sizes (e.g.
+//      1216x704 in the sibling hosting library — 99 of its 120 wan
+//      entries; aspect 1.727, only 0.025 log-aspect from BOTH landscape
+//      buckets) to HD 1280x720 instead of the aspect-marginally-closer
+//      832x480, and lands square 1024x1024 on 1280x720 (area 0.129 vs
+//      0.964) while 512x512 falls to 832x480 (0.420 vs 1.253) — the same
+//      determinism both repos pin in tests. Exact ties resolve to the HD
+//      bucket (pair order).
+// Opt out entirely with --no-wan-snap (verbatim pass-through restored).
+// ---------------------------------------------------------------------------
+const WAN_BUCKETS = Object.freeze([
+  { label: "1280x720", w: 1280, h: 720 },
+  { label: "720x1280", w: 720, h: 1280 },
+  { label: "832x480", w: 832, h: 480 },
+  { label: "480x832", w: 480, h: 832 },
+]);
+const WAN_SNAP_TIE_EPS = 0.05;
+
+/** Nearest trained wan bucket for a size. Pure; returns a WAN_BUCKETS entry. */
+function snapToWanBucket(w, h) {
+  const landscape = w / h >= 1;
+  const pair = landscape ? [WAN_BUCKETS[0], WAN_BUCKETS[2]] : [WAN_BUCKETS[1], WAN_BUCKETS[3]];
+  const lnReq = Math.log(w / h);
+  const dAspect = pair.map((b) => Math.abs(lnReq - Math.log(b.w / b.h)));
+  if (Math.abs(dAspect[0] - dAspect[1]) >= WAN_SNAP_TIE_EPS) {
+    return dAspect[0] <= dAspect[1] ? pair[0] : pair[1];
+  }
+  const lnArea = Math.log(w * h);
+  const dArea = pair.map((b) => Math.abs(lnArea - Math.log(b.w * b.h)));
+  return dArea[0] <= dArea[1] ? pair[0] : pair[1];
+}
+
 /**
  * Videos: table resolution verbatim; validated against the MODEL FAMILY grid
  * (Wan ÷16, LTX ÷32) — warn + snap once on violation. (Owner brief said ÷32
  * flat; corrected 2026-10-07: the library ships 39 legal Wan entries at
  * 1280x720 where 720 % 32 = 16 — blind ÷32 would degrade them all to 704.)
+ * wan22 tasks then snap to the four TRAINED buckets (see WAN_BUCKETS above)
+ * unless --no-wan-snap. Returns {sent, original, method, size_snapped?}.
  */
 function resolveVideoSize(block, group, opts, warnings) {
   const original = { ...block.size };
@@ -686,6 +1193,15 @@ function resolveVideoSize(block, group, opts, warnings) {
     w = snapDiv(w * scale, d);
     h = snapDiv(h * scale, d);
     method = "max-pixels-scale";
+  }
+  // Wan2.2 bucket snap — applied AFTER the ÷16 validation of the REQUESTED
+  // size; on the rare --max-pixels + wan22 combo the bucket wins and the
+  // scale method is superseded (never co-occurs in the real library).
+  if (group.key === "wan22" && !opts.noWanSnap) {
+    const b = snapToWanBucket(w, h);
+    if (b.w !== w || b.h !== h) {
+      return { sent: { w: b.w, h: b.h }, original, method: `wan-bucket-snap(${b.label})`, size_snapped: true };
+    }
   }
   return { sent: { w, h }, original, method };
 }
@@ -817,6 +1333,23 @@ function resolveNegative(block, group, opts) {
 }
 
 /**
+ * LTX-Video text-encoder budget (feature 2026-10-08). The LTX-Video server
+ * caps prompt tokens at 128 ("max seq length 128" errors on long prompts);
+ * the diffusers pipeline honors `max_sequence_length` via diffusers_kwargs.
+ * SCOPE GATE: ONLY the ltxvideo group (exact model Lightricks/LTX-Video) —
+ * NEVER wan22. --ltx-max-seq 0 omits diffusers_kwargs entirely (pre-change
+ * wire shape). Merge-not-clobber is defensive: as of 2026-10-08 NO code
+ * path sets diffusers_kwargs anywhere (grep-verified zero), so the spread
+ * only future-proofs the shape.
+ */
+function attachLtxKwargs(payload, group, opts) {
+  if (group.kind === "video" && group.key === "ltxvideo" && opts.ltxMaxSeq > 0) {
+    payload.diffusers_kwargs = { ...(payload.diffusers_kwargs ?? {}), max_sequence_length: opts.ltxMaxSeq };
+  }
+  return payload;
+}
+
+/**
  * Build the wire payload for one task. Pure: block + params + group + opts.
  * `params` = per-model/override-resolved {size, guidance, steps, seedBase}.
  */
@@ -859,7 +1392,7 @@ function buildPayload(block, group, params, opts) {
   if (guidance !== null && guidance !== undefined) payload.guidance_scale = guidance;
   if (steps !== null && steps !== undefined) payload.num_inference_steps = steps;
   if (params.referenceFile) payload.reference_url = referencePreview(params.referenceFile); // i2v (video_api.py:707-721)
-  return { path: "/v1/videos", payload, perSeed };
+  return { path: "/v1/videos", payload: attachLtxKwargs(payload, group, opts), perSeed };
 }
 
 // ---------------------------------------------------------------------------
@@ -893,6 +1426,13 @@ const USAGE = `usage: node generate.mjs [options]
   --negative-mode <m>   field (default) | append | drop
                          field: images sd35/qwenvl only (library law);
                          videos ALWAYS (both models honor negatives)
+  --no-wan-snap         wan22: send the table resolution VERBATIM (default:
+                         snap to the nearest of the four trained Wan2.2
+                         buckets 1280x720/720x1280/832x480/480x832)
+  --ltx-max-seq <N>     ltxvideo group only: diffusers_kwargs
+                         max_sequence_length sent to the text encoder
+                         (default 256; 0 = omit diffusers_kwargs entirely —
+                         pre-fix wire shape). Never applied to wan22.
   --base-url <url>      full endpoint override; wins over --port and the
                          default http://${HOST}:${DEFAULT_PORT}
   --port <n>            use http://${HOST}:<n> on the default host
@@ -902,7 +1442,7 @@ const USAGE = `usage: node generate.mjs [options]
                          (alias --model-id; skips the /v1/models probe)
   --api-key <k>         Bearer token (or env SKYNET_API_KEY)
   --timeout <ms>        per-task wall clock incl. retries/polling (default 600000)
-  --retries <n>         retries on 5xx/429/network (default 2, exp backoff)
+   --retries <n>         retries on 5xx/429/network (default 4, exp backoff)
   --max-pixels <n>      explicit ceiling; image groups also carry a 2MP
                          default safety ceiling (table sizes pass untouched)
   --video-seconds <s>   override duration; re-derives + re-snaps num_frames
@@ -910,6 +1450,10 @@ const USAGE = `usage: node generate.mjs [options]
   --video-fps <n>       override the table fps (re-snaps frames likewise)
   --force               regenerate even if output files exist
   --prompts-dir <dir>   prompt library root (default: this script's directory)
+  --repair              maintenance pass over --out tree (no network): relabel
+                        files whose extension contradicts magic bytes, pair
+                        sidecars, plan manifest updates. DRY BY DEFAULT.
+  --apply               with --repair: perform renames/deletes/rewrites
   --help                show this help`;
 
 function fail(message) {
@@ -923,8 +1467,10 @@ function parseArgs(argv) {
     parallel: 2, n: 1, autoN: false, seed: null, steps: null, guidance: null,
     negativeMode: "field", baseUrl: null, port: null, modelId: null,
     all: false, i2vStrict: false,
-    apiKey: process.env.SKYNET_API_KEY ?? null, timeout: 600_000, retries: 2,
+    apiKey: process.env.SKYNET_API_KEY ?? null, timeout: 2400_000, retries: 4,
     maxPixels: null, videoSeconds: null, videoFps: null, force: false,
+    noWanSnap: false, ltxMaxSeq: 256,
+    repair: false, apply: false,
     promptsDir: SCRIPT_DIR, help: false,
   };
 
@@ -932,7 +1478,7 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (!arg.startsWith("--")) fail(`unexpected positional argument "${arg}"`);
     const name = arg.slice(2);
-    const takesValue = !["list", "dry-run", "auto-n", "force", "help", "all", "i2v-strict"].includes(name);
+    const takesValue = !["list", "dry-run", "auto-n", "force", "help", "all", "i2v-strict", "no-wan-snap", "repair", "apply"].includes(name);
 
     let value = null;
     if (takesValue) {
@@ -949,6 +1495,15 @@ function parseArgs(argv) {
       case "dry-run": opts.dryRun = true; break;
       case "auto-n": opts.autoN = true; break;
       case "force": opts.force = true; break;
+      case "no-wan-snap": opts.noWanSnap = true; break;
+      case "ltx-max-seq": {
+        const v = Number(value);
+        if (!Number.isInteger(v) || v < 0) fail(`--ltx-max-seq needs an integer >= 0 (got "${value}")`);
+        opts.ltxMaxSeq = v;
+        break;
+      }
+      case "repair": opts.repair = true; break;
+      case "apply": opts.apply = true; break;
       case "help": opts.help = true; break;
       case "all": opts.all = true; break;
       case "i2v-strict": opts.i2vStrict = true; break;
@@ -1082,6 +1637,9 @@ async function planTasks(blocks, group, opts) {
       continue;
     }
     const size = resolveVideoSize(block, group, opts, warnings);
+    if (size.size_snapped === true) {
+      console.error(`  [size-snap] ${size.original.w}x${size.original.h} -> ${size.sent.w}x${size.sent.h} (wan22 bucket)`);
+    }
     const tableSeconds = block.numFrames && block.fps ? block.numFrames / block.fps : null;
     const effFps = opts.videoFps ?? block.fps ?? 25;
     const effSeconds = opts.videoSeconds ?? tableSeconds ?? 5;
@@ -1170,18 +1728,142 @@ class HttpError extends Error {
   }
 }
 
+/**
+ * POST safety law: generation requests cost GPU time. A POST may only be
+ * re-sent when it provably never reached the server (connection-phase
+ * failures). Timeouts, aborts, and mid-flight resets leave the server-side
+ * state UNKNOWN — re-sending risks duplicate paid work, so we fail loud
+ * and let the human verify before retrying.
+ */
+const PRE_CONNECT_CODES = new Set(["ECONNREFUSED", "EAI_AGAIN", "ENOTFOUND", "ENETUNREACH", "EHOSTUNREACH"]);
+
+function isProvablyNotDelivered(err) {
+  if (err?.name === "TimeoutError" || err?.name === "AbortError") return false;
+  return PRE_CONNECT_CODES.has(err?.cause?.code ?? err?.code ?? "");
+}
+
+/**
+ * Wall-clock transport replacing global fetch (bug fix 2026-10-07).
+ *
+ * Why: undici-backed `fetch()` enforces a hardcoded ~300s headersTimeout
+ * while waiting for response headers. SGLang's synchronous
+ * /v1/images/generations holds the response open for the whole generation
+ * (flux2 images routinely exceed 5 minutes under --parallel), so fetch()
+ * killed healthy connections at ~5 min; the caller saw
+ * "TypeError: fetch failed" — delivery state unknown under the M2 law —
+ * and marked the task FAILED even though the server finished the image.
+ *
+ * Contract with the M2 law (a POST may only be re-sent when provably
+ * not delivered):
+ *  - The ONLY timer is the caller's wall deadline. When it fires the
+ *    request bytes were already written, so we reject with
+ *    name "TimeoutError" → isProvablyNotDelivered() stays false →
+ *    no POST retry. Exactly the classification AbortSignal.timeout gave,
+ *    just at the right duration.
+ *  - Connection-phase socket errors (ECONNREFUSED, ENOTFOUND, EAI_AGAIN,
+ *    ENETUNREACH, EHOSTUNREACH) propagate with `.code` intact — all of
+ *    them can only occur before the request is flushed, so POSTs still
+ *    retry on them and GETs still retry on them.
+ *  - Mid-flight breaks after flush (ECONNRESET, EPIPE, aborted response)
+ *    carry no PRE_CONNECT code → POST = unknown → no retry; GET retries.
+ *    Same semantics as the old fetch path.
+ *
+ * Redirect policy: GET follows up to 3 Location hops (fetch did this;
+ * keeps /v1/models behavior); POST never auto-follows — re-issuing a
+ * generation POST at a redirect target would double-spend GPU.
+ *
+ * The body is fully buffered (what res.arrayBuffer() did anyway; video
+ * downloads of tens of MB are fine). No size cap is imposed. Resolved
+ * object exposes exactly the accessors callers use: ok, status,
+ * headers.get("location"), text(), json(), arrayBuffer().
+ */
+const MAX_GET_REDIRECTS = 3;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+function wallDeadlineError(url) {
+  const err = new Error(`wall-clock deadline reached during request to ${url}`);
+  err.name = "TimeoutError"; // M2: POST delivery state unknown → never retried
+  return err;
+}
+
+function requestOnce(url, init, deadlineMs) {
+  return new Promise((resolve, reject) => {
+    let target;
+    try { target = new URL(url); } catch { reject(new TypeError(`invalid URL: ${url}`)); return; }
+    if (target.protocol !== "http:" && target.protocol !== "https:") {
+      reject(new TypeError(`unsupported protocol ${target.protocol} in ${url}`));
+      return;
+    }
+    const remainingMs = deadlineMs - Date.now();
+    if (remainingMs <= 0) { reject(wallDeadlineError(url)); return; }
+    const transport = target.protocol === "https:" ? https : http;
+    let deadlineTimer = null; // armed right after req exists; handlers guard for null
+    const clearDeadline = () => { if (deadlineTimer) clearTimeout(deadlineTimer); };
+    const req = transport.request(
+      target,
+      { method: init.method ?? "GET", headers: { ...(init.headers ?? {}) } },
+      (incoming) => {
+        const chunks = [];
+        incoming.on("data", (chunk) => chunks.push(chunk));
+        incoming.on("aborted", () => {
+          clearDeadline();
+          reject(new Error(`connection aborted mid-response from ${url}`));
+        });
+        incoming.on("error", (err) => {
+          clearDeadline();
+          reject(err);
+        });
+        incoming.on("end", () => {
+          clearDeadline();
+          const body = Buffer.concat(chunks);
+          const status = incoming.statusCode ?? 0;
+          const location = typeof incoming.headers.location === "string" ? incoming.headers.location : null;
+          resolve({
+            ok: status >= 200 && status < 300,
+            status,
+            headers: { get: (name) => (name.toLowerCase() === "location" ? location : null) },
+            text: async () => body.toString("utf8"),
+            json: async () => JSON.parse(body.toString("utf8")),
+            arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+          });
+        });
+      }
+    );
+    // Single absolute wall timer — no per-header-read timeout exists here.
+    deadlineTimer = setTimeout(() => req.destroy(wallDeadlineError(url)), remainingMs);
+    req.on("error", (err) => {
+      clearDeadline();
+      reject(err);
+    });
+    req.end(init.body ?? undefined);
+  });
+}
+
+async function rawRequest(url, init, deadlineMs, redirectsLeft = MAX_GET_REDIRECTS) {
+  const res = await requestOnce(url, init, deadlineMs);
+  const isGet = (init.method ?? "GET").toUpperCase() === "GET";
+  if (!isGet || !REDIRECT_STATUSES.has(res.status) || redirectsLeft <= 0) return res;
+  const location = res.headers.get("location");
+  if (!location) return res;
+  return rawRequest(new URL(location, url).href, init, deadlineMs, redirectsLeft - 1);
+}
+
 async function fetchWithRetry(url, init, opts, deadline) {
+  const isPost = (init.method ?? "GET").toUpperCase() === "POST";
   let attempt = 0;
   for (;;) {
     if (Date.now() > deadline) throw new Error(`timeout after ${opts.timeout}ms: ${url}`);
     try {
-      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(Math.max(1000, deadline - Date.now())) });
+      const res = await rawRequest(url, init, deadline);
       if (res.ok || res.status === 404 || (!res.ok && res.status < 500 && res.status !== 429)) return res;
       if (attempt >= opts.retries) {
         throw new HttpError(res.status, await safeText(res), url);
       }
     } catch (err) {
       if (err instanceof HttpError) throw err;
+      if (isPost && !isProvablyNotDelivered(err)) {
+        throw new Error(`POST ${url} failed with delivery state unknown (${err.name}: ${err.message}) — NOT retrying to avoid duplicate GPU work; check the server/manifest before re-running this task`);
+      }
       if (attempt >= opts.retries) throw err; // network error, retries exhausted
     }
     const backoff = 2000 * 2 ** attempt;
@@ -1321,6 +2003,39 @@ async function detectModelId(baseUrl, group, opts) {
 }
 
 // ---------------------------------------------------------------------------
+// Media format sniffing (bug fix 2026-10-07, PART A)
+//
+// Why: the planner names image outputs ".png" before the response exists,
+// but SGLang pipelines return whichever container the scheduler encodes —
+// FLUX/SD3.5 commonly emit JPEG bytes under a .png name. File extensions
+// lie; magic bytes don't. At save time we sniff the buffer and write under
+// the detected extension, recording the truth in sidecar + manifest.
+// ---------------------------------------------------------------------------
+
+const DETECTABLE_EXTS = new Set(["png", "jpg", "jpeg", "webp", "gif", "mp4"]);
+
+/** JPEG FFD8FF, PNG 89504E47, GIF 474946, WEBP RIFF....WEBP, MP4 ftyp@4. */
+function detectImageFormat(buffer) {
+  const b = buffer;
+  if (!Buffer.isBuffer(b)) throw new TypeError("detectImageFormat expects a Buffer");
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpg";
+  if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "png";
+  if (b.length >= 3 && b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "gif";
+  if (b.length >= 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP") return "webp";
+  if (b.length >= 12 && b.subarray(4, 8).toString("latin1") === "ftyp") return "mp4";
+  return "bin";
+}
+
+/** Replace a media file's extension with the detected one (".png" → ".jpg"). */
+function withExtension(file, ext) {
+  const cur = path.extname(file).replace(/^\./, "").toLowerCase();
+  if (cur === ext) return file;
+  const jpegAlias = ext === "jpg" && cur === "jpeg" ? "jpeg" : ext;
+  if (jpegAlias === cur) return file;
+  return `${file.slice(0, file.length - path.extname(file).length)}.${ext}`;
+}
+
+// ---------------------------------------------------------------------------
 // Execution: images (sync) and videos (async job + poll)
 // ---------------------------------------------------------------------------
 
@@ -1340,9 +2055,17 @@ async function runImageTask(baseUrl, task, opts, deadline) {
       const abs = item.url.startsWith("http") ? item.url : `${baseUrl}${item.url}`;
       bytes = await getBinary(abs, opts, deadline);
     } else throw new Error(`image data[${i}] had neither b64_json nor url`);
-    await fs.mkdir(path.dirname(task.files[i]), { recursive: true });
-    await fs.writeFile(task.files[i], bytes);
-    written.push(task.files[i]);
+    const detected = detectImageFormat(bytes);
+    let file = task.files[i];
+    if (detected === "bin") {
+      console.error(`    warn: ${path.basename(file)}: unrecognized magic bytes — keeping planned name`);
+    } else {
+      file = withExtension(file, detected); // derive name from CONTENT, not plan
+    }
+    meta.format = detected;
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await writeFileAtomic(file, bytes);
+    written.push({ file, format: detected });
   }
   return { meta, written };
 }
@@ -1409,9 +2132,17 @@ async function runVideoTask(baseUrl, task, opts, deadline) {
   for (let i = 0; i < task.n; i++) {
     const { meta: jobMeta, bytes } = await runVideoJob(baseUrl, task, i, opts, deadline);
     meta.jobs.push(jobMeta);
-    await fs.mkdir(path.dirname(task.files[i]), { recursive: true });
-    await fs.writeFile(task.files[i], bytes);
-    written.push(task.files[i]);
+    const detected = detectImageFormat(bytes);
+    let file = task.files[i];
+    if (detected !== "mp4") {
+      // Video keeps its .mp4 name (players/pollers assume it); the mismatch
+      // is surfaced, not silently relabelled — PART A law.
+      console.error(`    warn: ${path.basename(file)}: expected mp4 magic, detected "${detected}" — keeping .mp4`);
+    }
+    meta.format = detected;
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await writeFileAtomic(file, bytes);
+    written.push({ file, format: detected });
   }
   return { meta, written };
 }
@@ -1425,31 +2156,74 @@ async function appendManifest(manifestPath, row) {
   await fs.appendFile(manifestPath, `${JSON.stringify(row)}\n`, "utf8");
 }
 
-async function writeSidecar(mediaFile, task, group, opts, meta, ok, errorText) {
+async function writeSidecar(mediaFile, task, group, opts, meta, ok, errorText, format = null) {
   const sidecar = {
     generated_at: new Date().toISOString(),
     model_group: opts.model,
     served_model: group.model,
     endpoint: `${group.baseUrl}${task.apiPath}`,
     negative_mode: opts.negativeMode,
+    // Negative evidence trail (PART B, 2026-10-07): what the library defined
+    // vs what the wire payload actually carried. `negative_defined` set +
+    // `negative_sent` null + group supportsNegative=false is the BY-DESIGN
+    // FLUX case (guidance-distilled pipeline ignores negative_prompt).
+    negative_defined: task.block.negative || null,
+    negative_sent: task.payload?.negative_prompt ?? null,
+    negative_scoped: task.block.negativeScoped ?? null, // metadata only (m15: never gates sending)
+    // LTX-Video encoder budget actually sent (feature 2026-10-08); null for
+    // every other group / --ltx-max-seq 0.
+    diffusers_kwargs: task.payload?.diffusers_kwargs ?? null,
     block: task.block,
     size_original: task.size.original,
     size_sent: task.size.sent,
     size_method: task.size.method,
+    // Wan2.2 bucket-snap evidence (feature 2026-10-08): the library asked
+    // for requested_size; size_snapped true means the wire size is a
+    // trained bucket the library did NOT state (see size_method).
+    requested_size: `${task.size.original.w}x${task.size.original.h}`,
+    size_snapped: task.size.size_snapped === true,
     requested_n: task.n,
     media_file: path.basename(mediaFile),
+    media_format: format ?? meta?.format ?? null,
     status: ok ? "ok" : "failed",
     error: errorText ?? null,
     response_meta: meta ?? null,
   };
-  await fs.writeFile(`${mediaFile}.json`, JSON.stringify(sidecar, null, 2), "utf8");
+  await writeFileAtomic(`${mediaFile}.json`, JSON.stringify(sidecar, null, 2), "utf8");
 }
 
-async function allExist(files) {
+async function existsOne(p) {
+  try { await fs.access(p); return true; } catch { return false; }
+}
+
+/**
+ * Skip-existing check aware of content-derived names (PART A): a task
+ * planned as ".png" also counts as done when a repaired/regenerated
+ * sibling with the same stem but true image extension exists — so relabel
+ * passes never cause paid re-generation.
+ */
+async function resolveExistingVariants(files) {
+  const resolved = [];
   for (const f of files) {
-    try { await fs.access(f); } catch { return false; }
+    if (await existsOne(f)) { resolved.push(f); continue; }
+    const stem = f.slice(0, f.length - path.extname(f).length);
+    let hit = null;
+    for (const e of ["png", "jpg", "jpeg", "webp", "gif"]) {
+      const cand = `${stem}.${e}`;
+      if (cand !== f && (await existsOne(cand))) { hit = cand; break; }
+    }
+    if (!hit) return null;
+    resolved.push(hit);
   }
-  return files.length > 0;
+  return resolved.length ? resolved : null;
+}
+
+/** Atomic media write: a killed process must never leave a truncated file
+ *  that skip-existing would later accept as complete. */
+async function writeFileAtomic(file, data) {
+  const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
+  await fs.writeFile(tmp, data);
+  await fs.rename(tmp, file);
 }
 
 async function runPool(tasks, worker, parallel) {
@@ -1471,7 +2245,7 @@ async function runPool(tasks, worker, parallel) {
 // ---------------------------------------------------------------------------
 
 async function cmdList(opts) {
-  const { blocks, warnings, filesParsed } = await loadShmupLibrary(opts.promptsDir);
+  const { blocks, warnings, filesParsed, sources } = await loadShmupLibrary(opts.promptsDir);
   const images = blocks.filter((b) => b.kind === "image");
   const videos = blocks.filter((b) => b.kind === "video");
   const outRoot = opts.out ? path.resolve(opts.out) : path.resolve(SCRIPT_DIR, "output");
@@ -1497,6 +2271,7 @@ async function cmdList(opts) {
     if (await resolveSourceStill(b, outRoot)) resolvable++;
   }
   console.log(`totals: ${filesParsed} files parsed · ${images.length} image entries · ${videos.length} video entries (t2v ${videos.length - i2vEntries.length} / i2v ${i2vEntries.length}; ${resolvable} i2v source stills RESOLVABLE under ${path.relative(process.cwd(), outRoot) || "."}) · ${warnings.length} warnings`);
+  console.log(`sources: json sidecars ${sources.json} · labeled-md ${sources.mdLabeled} · legacy-md ${sources.mdLegacy}`);
 
   const modelCensus = {};
   for (const b of images) for (const g of b.models) modelCensus[g] = (modelCensus[g] ?? 0) + 1;
@@ -1544,7 +2319,12 @@ async function cmdRun(tasks, group, opts) {
   const baseUrl = group.baseUrl;
   const manifestPath = path.join(opts.out, opts.model, "manifest.jsonl");
 
-  if (!opts.modelId) group.model = await detectModelId(baseUrl, group, opts);
+  if (!opts.modelId) {
+    group.model = await detectModelId(baseUrl, group, opts);
+    // Adoption must reach the wire: payloads were built during planning with
+    // the configured id — re-stamp them with the resolved/served id.
+    for (const t of tasks) t.payload.model = group.model;
+  }
 
   let sent = 0, saved = 0, failed = 0, skipped = 0, skippedI2v = 0;
   const failures = [];
@@ -1557,6 +2337,9 @@ async function cmdRun(tasks, group, opts) {
       category: task.block.category, file: task.block.fileStem,
       variant: task.block.variantNum, model: group.model, kind: group.kind,
       n: task.n, size_original: task.size.original, size_sent: task.size.sent,
+      requested_size: `${task.size.original.w}x${task.size.original.h}`,
+      size_snapped: task.size.size_snapped === true,
+      diffusers_kwargs: task.payload?.diffusers_kwargs ?? null,
       files: task.files.map((f) => path.relative(opts.out, f)),
     };
     if (task.block.kind === "video") {
@@ -1580,9 +2363,11 @@ async function cmdRun(tasks, group, opts) {
       return;
     }
 
-    if (!opts.force && (await allExist(task.files))) {
+    const existing = opts.force ? null : await resolveExistingVariants(task.files);
+    if (existing) {
       skipped++;
       row.status = "skipped-existing";
+      row.files = existing.map((f) => path.relative(opts.out, f)); // actual on-disk names
       await appendManifest(manifestPath, row);
       return;
     }
@@ -1597,9 +2382,12 @@ async function cmdRun(tasks, group, opts) {
       const { meta, written } = group.kind === "image"
         ? await runImageTask(baseUrl, task, opts, deadline)
         : await runVideoTask(baseUrl, task, opts, deadline);
-      for (const f of written) await writeSidecar(f, task, group, opts, meta, true, null);
+      for (const w of written) await writeSidecar(w.file, task, group, opts, meta, true, null, w.format);
       saved++;
       row.status = "ok";
+      row.files = written.map((w) => path.relative(opts.out, w.file)); // truth: actual names written
+      row.format = written[0]?.format ?? null;
+      row.negative_sent = task.payload?.negative_prompt ?? null;
       row.wall_ms = Date.now() - taskStart;
       row.response_meta = meta;
       await appendManifest(manifestPath, row);
@@ -1636,12 +2424,254 @@ async function cmdRun(tasks, group, opts) {
 }
 
 // ---------------------------------------------------------------------------
+// Repair mode (PART C) — offline maintenance of the --out tree. NO network.
+//
+// Conventions it repairs to:
+//   - media file extension == magic-byte truth (detectImageFormat)
+//   - sidecar at `<media>.json` naming the SAME basename as the media file
+//   - manifest.jsonl `files` entries pointing at names that exist
+// Victim deletion (C2) requires POSITIVE evidence that a supported negative
+// was NOT sent: a new-format sidecar with negative_sent:null while the block
+// defines one, or a legacy video sidecar whose job payloads lack
+// negative_prompt. Legacy IMAGE sidecars without payload evidence are NEVER
+// deleted (conservative law — "unknown" is not "guilty").
+// ---------------------------------------------------------------------------
+
+const LIVE_WINDOW_MS = 5 * 60 * 1000; // fresher writes belong to the LIVE sweep — hands off
+
+function isLiveFresh(statMs) {
+  return Date.now() - statMs < LIVE_WINDOW_MS;
+}
+
+function groupSupportsNegative(groupName) {
+  const g = GROUPS[groupName];
+  if (!g) return null; // unknown group dir — classify, never act
+  if (g.kind === "video") return true; // manifest law: both tracks honor negative_prompt
+  return Boolean(g.supportsNegative);
+}
+
+/** Recursively collect media files (extension in DETECTABLE_EXTS) under dir. */
+async function collectMediaFiles(dir, acc) {
+  let entries;
+  try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return acc; }
+  for (const e of entries) {
+    if (e.name.startsWith(".")) continue;
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) { await collectMediaFiles(full, acc); continue; }
+    const ext = path.extname(e.name).replace(/^\./, "").toLowerCase();
+    if (!DETECTABLE_EXTS.has(ext)) continue;
+    if (/\.tmp-/.test(e.name)) continue; // mid-write atomics are not outputs
+    acc.push(full);
+  }
+  return acc;
+}
+
+async function readMagicHead(file, bytes = 16) {
+  let fh;
+  try {
+    fh = await fs.open(file, "r");
+    const buf = Buffer.alloc(bytes);
+    const { bytesRead } = await fh.read(buf, 0, bytes, 0);
+    return buf.subarray(0, bytesRead);
+  } catch {
+    return Buffer.alloc(0);
+  } finally {
+    await fh?.close();
+  }
+}
+
+function sameImageExt(a, b) {
+  const n = (x) => (x === "jpeg" ? "jpg" : x);
+  return n(a) === n(b);
+}
+
+/** Was this output's negative governed? Returns {verdict, reason}. */
+function classifyNegativeEvidence(sidecar, groupName) {
+  const supports = groupSupportsNegative(groupName);
+  if (supports === null) return { verdict: "unknown-group", reason: `group "${groupName}" not in GROUPS` };
+  const defined = sidecar?.block?.negative || null;
+  if (!defined) return { verdict: "no-negative-in-library", reason: "entry defines no negative" };
+  if (!supports) return { verdict: "kept-by-design", reason: `${groupName}: pipeline ignores negative_prompt (FLUX law)` };
+  if (sidecar?.status !== "ok") return { verdict: "not-ok-status", reason: `status=${sidecar?.status}` };
+  if (sidecar.negative_mode === "append") return { verdict: "kept-by-design", reason: "negative folded into positive (append mode)" };
+  if (sidecar.negative_mode === "drop") return { verdict: "kept-by-design", reason: "user --negative-mode drop" };
+  if ("negative_sent" in sidecar) {
+    return sidecar.negative_sent
+      ? { verdict: "sent", reason: "negative_sent recorded" }
+      : { verdict: "victim", reason: "field mode + group supports but negative_sent null (explicit record)" };
+  }
+  // Legacy video sidecars embed each job payload — positive evidence possible.
+  const jobs = sidecar?.response_meta?.jobs;
+  if (Array.isArray(jobs) && jobs.length) {
+    const anySent = jobs.some((j) => j?.payload && "negative_prompt" in j.payload);
+    return anySent
+      ? { verdict: "sent", reason: "job payloads carry negative_prompt" }
+      : { verdict: "victim", reason: "legacy video sidecar: no job payload carries negative_prompt" };
+  }
+  // Legacy image sidecar: no payload evidence exists → conservative keep.
+  return { verdict: "unknown-record-kept", reason: "legacy sidecar without negative evidence" };
+}
+
+async function readSidecar(mediaFile) {
+  try {
+    return JSON.parse(await fs.readFile(`${mediaFile}.json`, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+async function cmdRepair(opts) {
+  const out = opts.out;
+  let dirents;
+  try {
+    dirents = await fs.readdir(out, { withFileTypes: true });
+  } catch (err) {
+    fail(`--repair: output tree "${out}" unreadable: ${err.message}`);
+  }
+  const groupDirs = dirents.filter((d) => d.isDirectory() && !d.name.startsWith(".")).map((d) => d.name);
+  if (!groupDirs.length) {
+    console.log(`repair: no group dirs under ${out} — nothing to do.`);
+    return;
+  }
+  console.log(`repair ${opts.apply ? "--apply (MUTATING)" : "(dry-run, no changes)"} — root ${out}`);
+
+  const manifestRewrites = []; // {path, lines} — collected during planning
+
+  const totals = { media: 0, relabels: 0, victims: 0, keptByDesign: 0, mtimeSkipped: 0, unknownKept: 0, noSidecar: 0, sentOk: 0, manifestRewrites: 0, manifestSkipped: 0, videoWarnings: 0 };
+  const relabelPlan = []; // {group, from, to}
+  const victimPlan = []; // {group, file, reason}
+
+  for (const g of groupDirs) {
+    const media = [];
+    await collectMediaFiles(path.join(out, g), media);
+    const actions = []; // relabels in THIS group (for manifest patching)
+    for (const file of media) {
+      totals.media++;
+      const st = await fs.stat(file);
+      if (isLiveFresh(st.mtimeMs)) { totals.mtimeSkipped++; continue; }
+      const ext = path.extname(file).replace(/^\./, "").toLowerCase();
+      const detected = detectImageFormat(await readMagicHead(file));
+      const sidecar = await readSidecar(file);
+      if (!sidecar) totals.noSidecar++;
+
+      // C1 — extension vs magic truth
+      if (ext === "mp4" || detected === "mp4") {
+        if (detected !== "mp4" && ext === "mp4") {
+          totals.videoWarnings++;
+          console.error(`  warn[${g}]: ${path.relative(out, file)} — mp4 name holds "${detected}" bytes (kept, video names stay .mp4)`);
+        }
+      } else if (detected === "bin") {
+        totals.unknownKept++;
+        console.error(`  warn[${g}]: ${path.relative(out, file)} — unrecognized magic (kept unchanged)`);
+      } else if (!sameImageExt(ext, detected)) {
+        const to = withExtension(file, detected);
+        let clash = false;
+        try { await fs.access(to); clash = true; } catch { /* free */ }
+        if (clash) {
+          totals.unknownKept++;
+          console.error(`  warn[${g}]: ${path.relative(out, file)} — relabel target ${path.basename(to)} already exists, skipped`);
+          continue;
+        }
+        totals.relabels++;
+        actions.push({ from: file, to });
+        relabelPlan.push({ group: g, from: file, to });
+      }
+
+      // C2 — missing-negative victims (delete so the next run regenerates)
+      if (sidecar) {
+        const { verdict, reason } = classifyNegativeEvidence(sidecar, g);
+        if (verdict === "victim") { totals.victims++; victimPlan.push({ group: g, file, reason }); }
+        else if (verdict === "kept-by-design") totals.keptByDesign++;
+        else if (verdict === "unknown-record-kept") totals.unknownKept++;
+        else if (verdict === "sent") totals.sentOk++;
+      }
+    }
+
+    // Manifest patch plan for this group (file relabels only; rows are history)
+    const manifestPath = path.join(out, g, "manifest.jsonl");
+    if (actions.length) {
+      let mstat = null;
+      try { mstat = await fs.stat(manifestPath); } catch { /* no manifest */ }
+      if (mstat && isLiveFresh(mstat.mtimeMs)) {
+        totals.manifestSkipped++;
+        console.error(`  warn[${g}]: manifest.jsonl written <5min ago (LIVE sweep?) — rewrite SKIPPED; relabels apply, rows will be stale`);
+      } else if (mstat) {
+        const raw = await fs.readFile(manifestPath, "utf8");
+        const lines = raw.split("\n");
+        const byOld = new Map(actions.map((a) => [path.relative(out, a.from).split(path.sep).join("/"), path.relative(out, a.to).split(path.sep).join("/")]));
+        let touched = false;
+        const patched = lines.map((line) => {
+          if (!line.trim()) return line;
+          let row;
+          try { row = JSON.parse(line); } catch { return line; }
+          if (!Array.isArray(row.files)) return line;
+          const nextFiles = row.files.map((f) => byOld.get(f) ?? f);
+          if (nextFiles.some((f, i) => f !== row.files[i])) {
+            touched = true;
+            return JSON.stringify({ ...row, files: nextFiles });
+          }
+          return line;
+        });
+        if (touched) {
+          totals.manifestRewrites++;
+          manifestRewrites.push({ path: manifestPath, lines: patched });
+        }
+      }
+    }
+    // per-group report
+    const gRel = actions.length;
+    const gVict = victimPlan.filter((v) => v.group === g).length;
+    console.log(`  ${g.padEnd(8)} media=${media.length} relabel=${gRel} victims=${gVict}`);
+  }
+
+  console.log(`\nrelabels (${relabelPlan.length}):`);
+  for (const r of relabelPlan.slice(0, 400)) console.log(`  ${path.relative(out, r.from)} -> ${path.basename(r.to)}`);
+  if (relabelPlan.length > 400) console.log(`  … +${relabelPlan.length - 400} more`);
+  console.log(`\nvictims (${victimPlan.length}):`);
+  for (const v of victimPlan.slice(0, 200)) console.log(`  ${v.group}/${path.basename(v.file)}  [${v.reason}]`);
+  console.log(`\ntotals: ${JSON.stringify(totals, null, 0)}`);
+
+  if (!opts.apply) {
+    console.log(`\ndry-run complete — nothing mutated. Re-run with --apply to execute.`);
+    return;
+  }
+
+  // Apply: sidecars first (derive .json rename), then media rename, then victims, then manifests.
+  for (const r of relabelPlan) {
+    const scOld = `${r.from}.json`;
+    const scNew = `${r.to}.json`;
+    try {
+      const sc = JSON.parse(await fs.readFile(scOld, "utf8"));
+      sc.media_file = path.basename(r.to);
+      sc.media_format = detectImageFormat(await readMagicHead(r.from));
+      await writeFileAtomic(scNew, JSON.stringify(sc, null, 2), "utf8");
+      await fs.unlink(scOld);
+    } catch { /* sidecar absent/unparseable — media rename still proceeds */ }
+    await fs.rename(r.from, r.to);
+  }
+  for (const v of victimPlan) {
+    await fs.unlink(v.file);
+    try { await fs.unlink(`${v.file}.json`); } catch { /* sidecar may be absent */ }
+  }
+  for (const m of manifestRewrites) {
+    await writeFileAtomic(m.path, `${m.lines.join("\n")}`, "utf8");
+  }
+  console.log(`\napplied: ${relabelPlan.length} relabels, ${victimPlan.length} victim deletions, ${manifestRewrites.length} manifest rewrites.`);
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) { console.log(USAGE); return; }
+  if (opts.apply && !opts.repair) fail("--apply only operates together with --repair");
+  if (opts.repair) {
+    // Repair is strictly offline: no endpoint resolution, no probes, no POSTs.
+    opts.out = opts.out === null ? path.resolve(SCRIPT_DIR, "output") : path.resolve(opts.out);
+    return cmdRepair(opts);
+  }
 
   const group = { ...GROUPS[opts.model], key: opts.model };
   group.baseUrl = resolveBaseUrl(opts);
@@ -1677,7 +2707,11 @@ async function main() {
   return cmdRun(tasks, group, opts);
 }
 
-main().catch((err) => {
-  console.error(`fatal: ${err.stack ?? err.message}`);
-  process.exit(1);
-});
+// CLI guard: importing this module (tests/tooling) must NOT execute main —
+// an accidental default-args run spends real GPU money against the live server.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(`fatal: ${err.stack ?? err.message}`);
+    process.exit(1);
+  });
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:42:27.878Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, numbers, photorealistic, 3d render, embroidery fabric texture, watermark, blurry, asymmetric, pure black background",
+  "negative_sent": "text, letters, numbers, photorealistic, 3d render, embroidery fabric texture, watermark, blurry, asymmetric, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "alt-emblems",
+    "slug": "alt-emblem",
+    "variantNum": 1,
+    "id": "alt-emblem-v1",
+    "title": "squadron patch with crossed trails",
+    "positive": "Military squadron patch emblem design rendered as flat retro arcade vector art, a circular badge with a thick navy border ring, inside the ring two tiny stylized fighters crossed in an X at the center, a steel-blue dart with cyan canopy crossing over a pale-mint manta-wing craft with a green canopy, behind them two orange engine trails cross diagonally filling the badge like ribbon, above the crossed ships a single golden capsule star, the navy ring decorated with small evenly spaced gold rivet dots, deep-navy field inside the badge, no text anywhere, bold dark outlines, saturated limited palette of blue, mint, orange, gold and navy, crisp 16-bit pixel-art-inspired shapes with clean vector edges, centered symmetrical composition.",
+    "negative": "text, letters, numbers, photorealistic, 3d render, embroidery fabric texture, watermark, blurry, asymmetric, pure black background",
+    "negativeScoped": true,
+    "notes": "Keep it vector-flat; sd3.5 likes adding cloth texture here — fight it with guidance ≤5 plus the fabric negative.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10031,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 10031,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "alt-emblem-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b3efadfa-da75-46d8-bcd6-2a86fa92367c",
+      "created": 1791538943,
+      "count": 1,
+      "revised_prompt": "Military squadron patch emblem design rendered as flat retro arcade vector art, a circular badge with a thick navy border ring, inside the ring two tiny stylized fighters crossed in an X at the center, a steel-blue dart with cyan canopy crossing over a pale-mint manta-wing craft with a green canopy, behind them two orange engine trails cross diagonally filling the badge like ribbon, above the crossed ships a single golden capsule star, the navy ring decorated with small evenly spaced gold rivet dots, deep-navy field inside the badge, no text anywhere, bold dark outlines, saturated limited palette of blue, mint, orange, gold and navy, crisp 16-bit pixel-art-inspired shapes with clean vector edges, centered symmetrical composition.",
+      "inference_time_s": 14.13309927820228,
+      "peak_memory_mb": 25648
+    },
+    "format": "jpg"
+  }
+}

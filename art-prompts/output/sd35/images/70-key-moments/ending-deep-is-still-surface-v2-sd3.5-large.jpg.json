@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:02:39.505Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, rough seas, whitecap waves, boat ship vessel, sea monsters visible, submarine, coral reef, birds flock, sunset fire sky, text, watermark, blurry, ship flying, canopy closed bright",
+  "negative_sent": "photorealistic, 3d render, rough seas, whitecap waves, boat ship vessel, sea monsters visible, submarine, coral reef, birds flock, sunset fire sky, text, watermark, blurry, ship flying, canopy closed bright",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-deep-is-still-surface",
+    "variantNum": 2,
+    "id": "ending-deep-is-still-surface-v2",
+    "title": "Already out: the manta idling on a gold-ribbed sea, abyss silent below",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, post-storm stillness, ultra-detailed large-format art with pixel-art texture accents. A split-frame world: the upper half is an ocean laid flat under a sunrise so pale it is almost a color idea — long thin rose-gold cloud bars strung across a cream-to-navy sky, the small half-sun just risen, everything lit gently. On the water sits a flat ray-winged manta fighter, pale mint hull scuffed and steaming faintly where black water beads off it, canopy open with the cockpit a small square of shadow, twin engine rings dark, riding the swell exactly level as though the sea were a parking pad at the end of the universe; around it, the last rings of its surfacing spread outward in two slow concentric outlines, and a scatter of silver droplets still hangs airborne at the waterline, frozen mid-fall, each one holding a pinpoint of sunrise. The lower half of the frame is the water seen from just at its surface, and down there: a deepening wall from teal to true midnight, faintly, far below, the suggestion of what the ship escaped — the dimest hint of a vast sunken angular shadow, a drowned citadel outline, unlit, still, smaller than it should be, dissolving into the blue-black. Light belongs entirely to the top world now. Palette of cream, pale gold and rose above, committed teal-to-midnight blues below, thick dark outlines at the waterline seam, lifted deep-navy depths, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, rough seas, whitecap waves, boat ship vessel, sea monsters visible, submarine, coral reef, birds flock, sunset fire sky, text, watermark, blurry, ship flying, canopy closed bright",
+    "negativeScoped": true,
+    "notes": "Cloud-bars rose ~#f0c8d0 over cream #fce8b8; depth wall #16485a to near-navy-black; drowned shadow must be ambiguous — if it resolves into readable geometry it stops being a memory and starts being a sequel hook. The open dark canopy is the \"resting\" tell. Flux.1's soft-light bias actually helps the \"color idea\" sunrise; keep guidance 3.5.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20062,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 20062,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-deep-is-still-surface-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0c3e6a1b-5c33-476d-9e8e-6f42cc5bf999",
+      "created": 1791540154,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, post-storm stillness, ultra-detailed large-format art with pixel-art texture accents. A split-frame world: the upper half is an ocean laid flat under a sunrise so pale it is almost a color idea — long thin rose-gold cloud bars strung across a cream-to-navy sky, the small half-sun just risen, everything lit gently. On the water sits a flat ray-winged manta fighter, pale mint hull scuffed and steaming faintly where black water beads off it, canopy open with the cockpit a small square of shadow, twin engine rings dark, riding the swell exactly level as though the sea were a parking pad at the end of the universe; around it, the last rings of its surfacing spread outward in two slow concentric outlines, and a scatter of silver droplets still hangs airborne at the waterline, frozen mid-fall, each one holding a pinpoint of sunrise. The lower half of the frame is the water seen from just at its surface, and down there: a deepening wall from teal to true midnight, faintly, far below, the suggestion of what the ship escaped — the dimest hint of a vast sunken angular shadow, a drowned citadel outline, unlit, still, smaller than it should be, dissolving into the blue-black. Light belongs entirely to the top world now. Palette of cream, pale gold and rose above, committed teal-to-midnight blues below, thick dark outlines at the waterline seam, lifted deep-navy depths, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 12.805759194074199,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

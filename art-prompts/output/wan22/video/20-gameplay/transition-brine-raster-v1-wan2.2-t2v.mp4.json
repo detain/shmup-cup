@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T12:13:39.007Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/20-gameplay",
+    "fileStem": "zone-transition-parallax",
+    "slug": "transition-brine-raster",
+    "variantNum": 1,
+    "id": "transition-brine-raster-v1",
+    "title": "gliding into the teal gas-sea with wobbling wave walls",
+    "positive": "Widescreen 2D side-scrolling retro 16-bit pixel-art transition: the steel-blue dart fighter cruises right through layered parallax space as the deep navy gives way ahead to a glowing teal gas-sea, vast wobbling raster wave bands of luminous cyan mist undulate vertically in slow rolling motion across the mid-ground, bright green-yellow vapor currents drift past the foreground at speed while distant wave layers crawl, the fighter's orange trail bends in the cross-currents, pink spark particles fleck the mist, camera tracks right at steady cruise speed, dreamy undersea-nebula atmosphere with bold saturated color bands, faint CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD",
+    "notes": "Brine Nebula identity shot. The undulating raster bands are the zone's gimmick — keep them vertical-wave, if the model turns them horizontal the still pairing below is more reliable.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 35,
+    "seed": 22009,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "transition-brine-raster-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "ac048629-9c7d-450b-96f8-1624deef5a07",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art transition: the steel-blue dart fighter cruises right through layered parallax space as the deep navy gives way ahead to a glowing teal gas-sea, vast wobbling raster wave bands of luminous cyan mist undulate vertically in slow rolling motion across the mid-ground, bright green-yellow vapor currents drift past the foreground at speed while distant wave layers crawl, the fighter's orange trail bends in the cross-currents, pink spark particles fleck the mist, camera tracks right at steady cruise speed, dreamy undersea-nebula atmosphere with bold saturated color bands, faint CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 22009,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD",
+          "guidance_scale": 4,
+          "num_inference_steps": 35
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 838.2748563978821
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

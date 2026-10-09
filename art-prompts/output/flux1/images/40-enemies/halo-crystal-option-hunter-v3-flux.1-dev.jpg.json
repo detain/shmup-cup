@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:00:29.343Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, horizontal composition, single floating crystal",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-g-prism-labyrinth",
+    "slug": "halo-crystal-option-hunter",
+    "variantNum": 3,
+    "id": "halo-crystal-option-hunter-v3",
+    "title": "vertical shaft of falling prisms",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A deep vertical shaft inside the crystal labyrinth, camera pulled back to show the full terrible height: from the top of the frame the OPTION HUNTER descends bow-first like a violet guillotine blade, grapple-claws folded tight for the dive, launch bay dark; below it a constellation of HALO CRYSTALS hangs in the shaft at staggered heights, each a big faceted violet gem with its turning ring of six lilac satellites, their combined glow lighting the walls in bands of purple and pale violet; from the bottom edge the KESTREL rises in diagonal flight, steel-blue dart shape with a bold blue stripe, cyan canopy and a bright orange engine flare, blue bullets climbing in a tight zipper toward the nearest halo, whose ring crystals are flickering apart as it charges a radial burst of pink needles. Between the two forces a slow cloud of GLINT MOTES drifts — thousands of tiny crystal sparks, each throwing its own miniature star-glitter — turning the whole shaft into a shimmering veil that both sides shoot through. The triangle-facet walls of the shaft repeat the light down its length like a broken periscope. Deep-navy at the shaft's far top and bottom, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, organic coral, human figures, horizontal composition, single floating crystal",
+    "negativeScoped": true,
+    "notes": "Color reference: shaft banded #8a48e8 into #c8a0ff, mote glitter white-lilac, kestral stripe #3858f0. Vertical dive composition — thief above, prey below — gives the encounter a natural menace gradient; the mote veil in the middle third is what keeps the frame Prism-Labyrinth rather than generic purple cave.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15713,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15713,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "halo-crystal-option-hunter-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "6949bed7-3788-4011-9ab2-d0224cc3cd1b",
+      "created": 1791536424,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A deep vertical shaft inside the crystal labyrinth, camera pulled back to show the full terrible height: from the top of the frame the OPTION HUNTER descends bow-first like a violet guillotine blade, grapple-claws folded tight for the dive, launch bay dark; below it a constellation of HALO CRYSTALS hangs in the shaft at staggered heights, each a big faceted violet gem with its turning ring of six lilac satellites, their combined glow lighting the walls in bands of purple and pale violet; from the bottom edge the KESTREL rises in diagonal flight, steel-blue dart shape with a bold blue stripe, cyan canopy and a bright orange engine flare, blue bullets climbing in a tight zipper toward the nearest halo, whose ring crystals are flickering apart as it charges a radial burst of pink needles. Between the two forces a slow cloud of GLINT MOTES drifts — thousands of tiny crystal sparks, each throwing its own miniature star-glitter — turning the whole shaft into a shimmering veil that both sides shoot through. The triangle-facet walls of the shaft repeat the light down its length like a broken periscope. Deep-navy at the shaft's far top and bottom, never pure black. No text, no UI elements.",
+      "inference_time_s": 14.86866187886335,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

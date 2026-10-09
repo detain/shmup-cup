@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:57:18.261Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, warm orange lighting, red mine lights, pure black background, perspective distortion",
+  "negative_sent": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, warm orange lighting, red mine lights, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "abyssal-throne-sprite-sheet",
+    "variantNum": 2,
+    "id": "abyssal-throne-sprite-sheet-v2",
+    "title": "square grid sheet, pressure-set",
+    "positive": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. A tidy grid: left column stacked with GULPER head states — jaw wide open showing the pale ridged cage, jaw three-quarters closed, jaw shut with lure filament arcing forward lit cyan, and a wounded head with cracked jaw-ridge and a dark limp filament; center column holds DEPTH MINES in two sizes with matched pulse frames — large mine at dark-eye and bright-eye, small mine at dark-eye and bright-eye — one mine with its anchor chain coiled, one free-drifting mine tilted at a slow-roll angle, and the exploded remains as a ring of loose spikes with a fading cyan glow at the center; right column is the environment kit — a weed tuft at two sway angles, a rock-spire shoulder chunk, a lone drifting biolume speck at three brightness steps, and a four-speck cluster for background scatter. Cool interior glow on every lit body, everything inside its cell, pixel-perfect spacing, no merged outlines.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, warm orange lighting, red mine lights, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: bright-eye pulse #6ad8e0, spike-ring remains #16485a fading, weed tufts dark green-black silhouettes. The mine-scale pair (large/small at the same pulse) gives an immediate size-language test for the sheet; check the small mine's spikes survive dithering — at true game scale they tend to vanish.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15922,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15922,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "abyssal-throne-sprite-sheet-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "26b03995-cc1e-4358-b108-b5c60f4f3083",
+      "created": 1791539833,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. A tidy grid: left column stacked with GULPER head states — jaw wide open showing the pale ridged cage, jaw three-quarters closed, jaw shut with lure filament arcing forward lit cyan, and a wounded head with cracked jaw-ridge and a dark limp filament; center column holds DEPTH MINES in two sizes with matched pulse frames — large mine at dark-eye and bright-eye, small mine at dark-eye and bright-eye — one mine with its anchor chain coiled, one free-drifting mine tilted at a slow-roll angle, and the exploded remains as a ring of loose spikes with a fading cyan glow at the center; right column is the environment kit — a weed tuft at two sway angles, a rock-spire shoulder chunk, a lone drifting biolume speck at three brightness steps, and a four-speck cluster for background scatter. Cool interior glow on every lit body, everything inside its cell, pixel-perfect spacing, no merged outlines.",
+      "inference_time_s": 14.05783863994293,
+      "peak_memory_mb": 25690
+    },
+    "format": "jpg"
+  }
+}

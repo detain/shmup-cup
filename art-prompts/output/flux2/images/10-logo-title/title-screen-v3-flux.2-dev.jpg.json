@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:09:06.941Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, pure black background, horizontal composition",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "title-screen-hero",
+    "slug": "title-screen",
+    "variantNum": 3,
+    "id": "title-screen-v3",
+    "title": "vertical handheld/TV title poster",
+    "positive": "Vertical arcade poster title artwork, the exact text \"SHMUP CUP\" stacked in two lines of heavy gradient block letters, pale yellow fading to flame red with dark navy outlines, anchored at the top of the composition, a steel-blue dart fighter with a cyan canopy and long orange exhaust plume dives diagonally from the upper left toward the center, a vast mechanical whale-shaped battleship fills the bottom of the frame seen from below like a floating city of gun turrets and glowing portholes in amber, streams of pink and violet bullets arc between the two, background a gradient of deep navy space into a teal-and-violet nebula near the bottom, tiny gold star points, SNES-era 16-bit pixel art inspired concept rendering with bold dark outlines and a saturated limited palette, subtle CRT scanline glow, dramatic diagonal composition, no other text.",
+    "negative": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, pure black background, horizontal composition",
+    "negativeScoped": true,
+    "notes": "Portrait crop for phone/TV splash use. Abyss Ark silhouette reference; whale-ship hint only.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10013,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10013,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-screen-v3-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ee960a42-7229-45af-a489-d52b11e270eb",
+      "created": 1791536942,
+      "count": 1,
+      "revised_prompt": "Vertical arcade poster title artwork, the exact text \"SHMUP CUP\" stacked in two lines of heavy gradient block letters, pale yellow fading to flame red with dark navy outlines, anchored at the top of the composition, a steel-blue dart fighter with a cyan canopy and long orange exhaust plume dives diagonally from the upper left toward the center, a vast mechanical whale-shaped battleship fills the bottom of the frame seen from below like a floating city of gun turrets and glowing portholes in amber, streams of pink and violet bullets arc between the two, background a gradient of deep navy space into a teal-and-violet nebula near the bottom, tiny gold star points, SNES-era 16-bit pixel art inspired concept rendering with bold dark outlines and a saturated limited palette, subtle CRT scanline glow, dramatic diagonal composition, no other text.",
+      "inference_time_s": 29.858382278122008,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

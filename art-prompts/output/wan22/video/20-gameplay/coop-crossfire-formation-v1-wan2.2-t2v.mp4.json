@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T11:20:59.349Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, single ship only, first-person camera, vertical scrolling, HUD",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, single ship only, first-person camera, vertical scrolling, HUD",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/20-gameplay",
+    "fileStem": "coop-two-ship",
+    "slug": "coop-crossfire-formation",
+    "variantNum": 1,
+    "id": "coop-crossfire-formation-v1",
+    "title": "both crafts trading lanes through bullet rain",
+    "positive": "Widescreen 2D side-scrolling retro 16-bit pixel-art co-op arcade shooter: two small fighter crafts hold the left half of frame in loose vertical formation — a steel-blue dart-shaped fighter with cyan canopy glow and orange engine trail above, a flat pale-mint ray-winged manta craft with green canopy and twin amber thrusters below — as they smoothly trade lanes through a rain of hot-pink and red glowing bullets sweeping in from the right, both noses spitting continuous cyan and green pixel tracers leftward, bold-outlined mechanical sea drone enemies burst into chained orange-white explosions on the right edge, gold capsule pickups tumble and glitter among the debris, deep navy starfield with a blue planet rim parallaxes steadily, camera tracks right at constant speed keeping both ships upright and readable, saturated arcade colors, faint CRT scanlines, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, single ship only, first-person camera, vertical scrolling, HUD",
+    "notes": "Two distinct ship silhouettes in one generated frame is the hardest ask — expect merges; the \"above/below\" lane split helps. Gold capsules drifting through add the reward-fantasy cue for marketing.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 22007,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "coop-crossfire-formation-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "431d419e-cfda-4f0d-b66c-719feb0e0fee",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art co-op arcade shooter: two small fighter crafts hold the left half of frame in loose vertical formation — a steel-blue dart-shaped fighter with cyan canopy glow and orange engine trail above, a flat pale-mint ray-winged manta craft with green canopy and twin amber thrusters below — as they smoothly trade lanes through a rain of hot-pink and red glowing bullets sweeping in from the right, both noses spitting continuous cyan and green pixel tracers leftward, bold-outlined mechanical sea drone enemies burst into chained orange-white explosions on the right edge, gold capsule pickups tumble and glitter among the debris, deep navy starfield with a blue planet rim parallaxes steadily, camera tracks right at constant speed keeping both ships upright and readable, saturated arcade colors, faint CRT scanlines, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 22007,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, single ship only, first-person camera, vertical scrolling, HUD",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.9810566629749
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

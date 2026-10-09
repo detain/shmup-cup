@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:37:43.366Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, nuclear mushroom cloud, city skyline burning, buildings, forest fire, ship chasing the viewer, ship on the right, dark unreadable hull, text, watermark, blurry, single small explosion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-citadel-falls",
+    "variantNum": 1,
+    "id": "ending-citadel-falls-v1",
+    "title": "The fortress burning behind a fighter flying hard toward camera",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, maximum inferno, ultra-detailed large-format art with pixel-art texture accents. The citadel falls and the whole sky knows it: filling the entire right two-thirds of the frame, a continent-sized enemy fortress-ship is coming down in fire along its full length — a chain of a hundred simultaneous breaches erupting from its spine in the classic arcade ramp, cream-white cores going to amber petals going to rust smoke, the explosions linking into a single luminous fault line that walks across the hull. Its armor layers peel back like bark from a burning tree, revealing dark girders bending inward as the superstructure begins its slow collapse toward the planet's cloud deck below; towers of ember smoke lean sideways in the slipstream of its fall. In the left third of the frame, small and dead-level with the camera, a steel-blue dart fighter flies directly toward the viewer away from the blaze, canopy catching the firelight so its cyan glass burns turquoise-gold at the edges, twin orange engines stretched thin and bright, wings steady. The contrast is the story: one ship, perfectly composed, outrunning an ending it authored. Firelight does all the grading — the left air is smoky gold, the right horizon eaten. Palette of explosion cream-to-rust over deep navy smoke-shadow with embers floating across the entire frame, lifted deep-navy base, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, nuclear mushroom cloud, city skyline burning, buildings, forest fire, ship chasing the viewer, ship on the right, dark unreadable hull, text, watermark, blurry, single small explosion",
+    "negativeScoped": true,
+    "notes": "Explosion ramp #fff080→#f8b030→#f06820→#c83018 runs the full breach-chain. Head-on fighter composition is rare and strong — \"flying directly toward the viewer\" must survive generation or the shot becomes another side-scroller; flux.2 handles the foreshortened dart. Fortress must read as SHIP-mass with towers, not a city: negative bans buildings deliberately.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 20051,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 20051,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-citadel-falls-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "adecae38-0a12-47e4-af80-4b4c746a5762",
+      "created": 1791538658,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, maximum inferno, ultra-detailed large-format art with pixel-art texture accents. The citadel falls and the whole sky knows it: filling the entire right two-thirds of the frame, a continent-sized enemy fortress-ship is coming down in fire along its full length — a chain of a hundred simultaneous breaches erupting from its spine in the classic arcade ramp, cream-white cores going to amber petals going to rust smoke, the explosions linking into a single luminous fault line that walks across the hull. Its armor layers peel back like bark from a burning tree, revealing dark girders bending inward as the superstructure begins its slow collapse toward the planet's cloud deck below; towers of ember smoke lean sideways in the slipstream of its fall. In the left third of the frame, small and dead-level with the camera, a steel-blue dart fighter flies directly toward the viewer away from the blaze, canopy catching the firelight so its cyan glass burns turquoise-gold at the edges, twin orange engines stretched thin and bright, wings steady. The contrast is the story: one ship, perfectly composed, outrunning an ending it authored. Firelight does all the grading — the left air is smoky gold, the right horizon eaten. Palette of explosion cream-to-rust over deep navy smoke-shadow with embers floating across the entire frame, lifted deep-navy base, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 34.835379084106535,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

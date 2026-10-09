@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:35:24.521Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "black-hole-bomb-armed",
+    "variantNum": 1,
+    "id": "black-hole-bomb-armed-v1",
+    "title": "The black hole bomb vortex mid-suction, bullets streaming in",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; signature weapon effect concept art, ultra-detailed. Dead center of a dark navy battlefield, an artificial black hole hangs open: a perfect absolute-dark core ringed by a blazing thin lilac rim of light, and wrapped around the core three great spiral arms of swirling energy — one bright violet, one deep indigo-blue, one steel blue — winding clockwise into the center like a galactic pinwheel, the arms built from hundreds of streaked pixel-light filaments that accelerate and thin as they spiral inward. The suction is visible: a wide scatter of enemy bullets — pink, red and violet bright-cored orbs with dark rims — is caught at the edges of the field, each orb stretched into a short cometary streak aimed exactly at the core, hundreds of tiny pink trails curving into the vortex like iron filings finding a magnet. Light itself bends near the rim: the star field behind the bomb smears into a faint circular halo, and a thin accretion flicker crackles just outside the lilac ring. The whole composition is radial — every line in the image points to the dark center — yet the outer corners of the frame stay calm, dotted with undisturbed stars, so the viewer reads the event horizon's radius. Deep blues and violets with a confetti of captured pink, lifted deep-navy background, the core itself the only near-black element by design. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, NASA black hole, accretion disk orange, real galaxy photo, spiral arms with stars inside, wormhole tunnel, lightning ball, text, watermark, blurry, vortex spinning counterclockwise, more than three arms, fewer than three arms, pure black background",
+    "negativeScoped": true,
+    "notes": "Bomb reference: arms #b060f0 / #6040d0 / #3060b0, rim #d8b0ff, core #080410 (the core is the one sanctioned near-black). Square format because the vortex is radial and doubles as an icon source. \"Exactly three arms\" needs the negative's arm-count guard — models love two or five. The stretched bullet-streams are the game-feel payload: this weapon eats the screen's bullet hell, so the pink comets must outnumber the calm stars.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 18051,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18051,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "black-hole-bomb-armed-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "90849b3f-3238-4a94-bd1c-647c19592864",
+      "created": 1791538519,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; signature weapon effect concept art, ultra-detailed. Dead center of a dark navy battlefield, an artificial black hole hangs open: a perfect absolute-dark core ringed by a blazing thin lilac rim of light, and wrapped around the core three great spiral arms of swirling energy — one bright violet, one deep indigo-blue, one steel blue — winding clockwise into the center like a galactic pinwheel, the arms built from hundreds of streaked pixel-light filaments that accelerate and thin as they spiral inward. The suction is visible: a wide scatter of enemy bullets — pink, red and violet bright-cored orbs with dark rims — is caught at the edges of the field, each orb stretched into a short cometary streak aimed exactly at the core, hundreds of tiny pink trails curving into the vortex like iron filings finding a magnet. Light itself bends near the rim: the star field behind the bomb smears into a faint circular halo, and a thin accretion flicker crackles just outside the lilac ring. The whole composition is radial — every line in the image points to the dark center — yet the outer corners of the frame stay calm, dotted with undisturbed stars, so the viewer reads the event horizon's radius. Deep blues and violets with a confetti of captured pink, lifted deep-navy background, the core itself the only near-black element by design. No text, no letters, no UI.",
+      "inference_time_s": 37.601228741928935,
+      "peak_memory_mb": 40032
+    },
+    "format": "jpg"
+  }
+}

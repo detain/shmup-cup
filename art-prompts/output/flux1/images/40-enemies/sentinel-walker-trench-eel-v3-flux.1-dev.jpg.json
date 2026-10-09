@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:01:00.030Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, horizontal composition, straight ladder, eel on the floor",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-h-iron-citadel",
+    "slug": "sentinel-walker-trench-eel",
+    "variantNum": 3,
+    "id": "sentinel-walker-trench-eel-v3",
+    "title": "vertical shaft: the walker's stairwell",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A tall interior stairwell shaft of the Iron Citadel, camera looking up the diagonal: a zig-zag of riveted steel switchback catwalks climbs the frame from bottom-left to top-right, each landing lit by a single furnace-amber lamp, the walls a dense weave of vertical pipes with pressure gauges glowing amber. On the second landing a SENTINEL WALKER has planted both clawed feet on the grating and leaned its barrel torso into the shaft mouth, red eye cone sweeping down, twin short cannons firing amber tracers diagonally down-frame. In the pipe forest along the shaft's right edge, a TRENCH EEL is threading between the pipes instead of the floor — segmented steel body weaving in and out of the plumbing, joints leaking violet light, snout rearing toward the stairwell's lower landings as if it hunts by vibration. From the bottom edge the KESTREL climbs in a lazy diagonal, steel-blue dart hull, bold blue stripe, cyan canopy and orange engine glow, blue bullets arcing up at the walker while the manta-shadow of eel-coils passes behind it. The shaft's top fades into girder-dark and deep-navy, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, horizontal composition, straight ladder, eel on the floor",
+    "negativeScoped": true,
+    "notes": "Color reference: lamp pools #e8a030, tracer streaks amber-to-orange, eel seam-glow #b84cff against gunmetal. The eel hunting in the pipework rather than the trench is this poster's one deliberate rule-break — it shows the mechanic has a vertical variant; keep the weave of its body through at least three pipes so the occlusion is unmistakable.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15813,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15813,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "sentinel-walker-trench-eel-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "3f9a4ea7-4906-47f5-9ac1-83637a5f876f",
+      "created": 1791536455,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A tall interior stairwell shaft of the Iron Citadel, camera looking up the diagonal: a zig-zag of riveted steel switchback catwalks climbs the frame from bottom-left to top-right, each landing lit by a single furnace-amber lamp, the walls a dense weave of vertical pipes with pressure gauges glowing amber. On the second landing a SENTINEL WALKER has planted both clawed feet on the grating and leaned its barrel torso into the shaft mouth, red eye cone sweeping down, twin short cannons firing amber tracers diagonally down-frame. In the pipe forest along the shaft's right edge, a TRENCH EEL is threading between the pipes instead of the floor — segmented steel body weaving in and out of the plumbing, joints leaking violet light, snout rearing toward the stairwell's lower landings as if it hunts by vibration. From the bottom edge the KESTREL climbs in a lazy diagonal, steel-blue dart hull, bold blue stripe, cyan canopy and orange engine glow, blue bullets arcing up at the walker while the manta-shadow of eel-coils passes behind it. The shaft's top fades into girder-dark and deep-navy, never pure black. No text, no UI elements.",
+      "inference_time_s": 14.860123623162508,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

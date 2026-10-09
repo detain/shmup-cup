@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:43:09.175Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, annotations, labels, modern fighter jet, visible pilot, photorealistic, 3d render, watermark, blue stripe, pure black background",
+  "negative_sent": "text, annotations, labels, modern fighter jet, visible pilot, photorealistic, 3d render, watermark, blue stripe, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "combat-and-p2",
+    "slug": "p2-palette-swap",
+    "variantNum": 1,
+    "id": "p2-palette-swap-v1",
+    "title": "kestrel crimson channel plate",
+    "positive": "Video game spacecraft concept plate, the second-player variant of the KESTREL dart fighter rendered as a clean three-quarter side view floating centered on a flat deep-navy studio background, identical sleek dart geometry and heavy navy outline as the prototype but with its color channels swapped for player two, the fuselage stripe now a bold red-orange band running the full length, the bubble canopy glowing warm gold instead of cyan, the engine afterglow burning cool electric blue instead of orange, subtle red under-glow reflecting on the steel-blue hull panels, crisp specular highlights on the spine, no text, no annotations, bold dark outlines, saturated limited palette, ultra-detailed concept rendering with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow.",
+    "negative": "text, annotations, labels, modern fighter jet, visible pilot, photorealistic, 3d render, watermark, blue stripe, pure black background",
+    "negativeScoped": true,
+    "notes": "P2 swap: stripe → red-orange, canopy → gold, glow → blue. Verify none of the P1 colors leak back in.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11211,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11211,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "p2-palette-swap-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0840492c-7a49-4c51-bfde-abbc7de5f541",
+      "created": 1791538984,
+      "count": 1,
+      "revised_prompt": "Video game spacecraft concept plate, the second-player variant of the KESTREL dart fighter rendered as a clean three-quarter side view floating centered on a flat deep-navy studio background, identical sleek dart geometry and heavy navy outline as the prototype but with its color channels swapped for player two, the fuselage stripe now a bold red-orange band running the full length, the bubble canopy glowing warm gold instead of cyan, the engine afterglow burning cool electric blue instead of orange, subtle red under-glow reflecting on the steel-blue hull panels, crisp specular highlights on the spine, no text, no annotations, bold dark outlines, saturated limited palette, ultra-detailed concept rendering with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow.",
+      "inference_time_s": 13.490980932954699,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

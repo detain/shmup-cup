@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:54:31.968Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+  "negative_sent": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-e-tempest-ridge",
+    "slug": "tempest-ridge-sprite-sheet",
+    "variantNum": 2,
+    "id": "tempest-ridge-sprite-sheet-v2",
+    "title": "Square pixel sprite sheet: foal hunting formation set, thunderhead eye close-ups, weather effect pixels on flat navy",
+    "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — a STEED FOAL hunting kit: four foals flying in a tight diagonal echelon (all riveted steel plates, curled tails, amber face-lamps, static ticks between fins), then the same formation breaking apart into two pairs, then one lone foal with its lamp flaring hot. Second row — THUNDERHEAD face plates: five close-up cloud sprites of just the boiling charcoal rim and the glowing lilac eye — eye shut, eye cracking, half-open, wide staring, and squinting as it aims — each with a different arc pattern crawling below it. Third row — weather and projectiles: diagonal pale rain-stroke tiles in two lengths, wind-swirl puffs, single violet arc-bolts with forked tips, pink and red bright-core round shots with dark rims, pairs and three-shot fans. Fourth row — effects: tiny orange-white explosion in four growth frames, a dissolving cloud-stuff birth wisp, a static-spark cluster, and a scorch-free white vapor-cone snippet for supersonic passes. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+    "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "The formation sprites are the differentiator — echelon vs broken pairs vs lone foal lets an artist block the homing-squad behavior visually. Eye close-up row doubles as an off-screen threat indicator. Rain tiles are additive-blend safe if extraction keeps them on separate cells.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15522,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15522,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "tempest-ridge-sprite-sheet-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "8361589b-024b-4731-8772-89356b1e4050",
+      "created": 1791539667,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — a STEED FOAL hunting kit: four foals flying in a tight diagonal echelon (all riveted steel plates, curled tails, amber face-lamps, static ticks between fins), then the same formation breaking apart into two pairs, then one lone foal with its lamp flaring hot. Second row — THUNDERHEAD face plates: five close-up cloud sprites of just the boiling charcoal rim and the glowing lilac eye — eye shut, eye cracking, half-open, wide staring, and squinting as it aims — each with a different arc pattern crawling below it. Third row — weather and projectiles: diagonal pale rain-stroke tiles in two lengths, wind-swirl puffs, single violet arc-bolts with forked tips, pink and red bright-core round shots with dark rims, pairs and three-shot fans. Fourth row — effects: tiny orange-white explosion in four growth frames, a dissolving cloud-stuff birth wisp, a static-spark cluster, and a scorch-free white vapor-cone snippet for supersonic passes. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "inference_time_s": 14.044068483868614,
+      "peak_memory_mb": 25690
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:02:47.511Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, whale animal, harpoon, explosion, fire, sunken galleon, submarine periscope, fleet of ships, ship fully submerged, ship surfaced, text, watermark, blurry, bright daylight, green ocean tropical",
+  "negative_sent": "photorealistic, 3d render, whale animal, harpoon, explosion, fire, sunken galleon, submarine periscope, fleet of ships, ship fully submerged, ship surfaced, text, watermark, blurry, bright daylight, green ocean tropical",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-flagship-slips-away",
+    "variantNum": 1,
+    "id": "ending-flagship-slips-away-v1",
+    "title": "The abyss ark diving free, silhouette retreating into the dark",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, dread preserved, ultra-detailed large-format art with pixel-texture accents. The one that got away, and the one who watched it go: in the far middle-right of the frame, a colossal whale-bodied fortress-ark is diving — thirteen segments of armored hull-plate arcing downward into a black ocean trench, the great tail fluke still above the surface mid-stroke, each plate-seam and porthole-row of the beast lit in its own faint ring of cold bioluminescent teal, a lantern-procession of the ship's own silhouette marking its descent into the deep. The water it displaces climbs the frame in slow carved walls and collapsing shelves of foam, all back-lit by the last light; the sky it leaves is a bruised pre-dawn of deep navy and ash-rose, the surface unbroken everywhere except along the diving creature's fading wake-line. In the bottom-left foreground, tiny and level on the swells, a single steel-blue dart fighter hangs with one engine idling, canopy glinting a thin cyan edge, visibly not pursuing — the two lights of the ark winking out one segment at a time as the last honest view of the IRON TIDE slips beneath and away. The composition gives the dark half its victory: more than a third of the frame is the black water the ark is entering, and it closes over the ship with quiet relish. Palette of ash-navy dawn, teal biolume accents, foam greys, lifted deep-navy shadows, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, whale animal, harpoon, explosion, fire, sunken galleon, submarine periscope, fleet of ships, ship fully submerged, ship surfaced, text, watermark, blurry, bright daylight, green ocean tropical",
+    "negativeScoped": true,
+    "notes": "Biolume porthole teal ~#6ad8e0 dimming to #16485a as it descends; ark plate silhouette echoes the AA-09 bestiary. This is a bad-ending key art: no fire, no loss, just scale refusing to die — resist any model urge to add explosions or a chase. Foreground fighter is one engine idling, low left, facing the ark; his stillness is the meaning.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 20071,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 20071,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-flagship-slips-away-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "788512e6-33fd-4d54-a0ec-b01f0a3b3829",
+      "created": 1791540162,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, dread preserved, ultra-detailed large-format art with pixel-texture accents. The one that got away, and the one who watched it go: in the far middle-right of the frame, a colossal whale-bodied fortress-ark is diving — thirteen segments of armored hull-plate arcing downward into a black ocean trench, the great tail fluke still above the surface mid-stroke, each plate-seam and porthole-row of the beast lit in its own faint ring of cold bioluminescent teal, a lantern-procession of the ship's own silhouette marking its descent into the deep. The water it displaces climbs the frame in slow carved walls and collapsing shelves of foam, all back-lit by the last light; the sky it leaves is a bruised pre-dawn of deep navy and ash-rose, the surface unbroken everywhere except along the diving creature's fading wake-line. In the bottom-left foreground, tiny and level on the swells, a single steel-blue dart fighter hangs with one engine idling, canopy glinting a thin cyan edge, visibly not pursuing — the two lights of the ark winking out one segment at a time as the last honest view of the IRON TIDE slips beneath and away. The composition gives the dark half its victory: more than a third of the frame is the black water the ark is entering, and it closes over the ship with quiet relish. Palette of ash-navy dawn, teal biolume accents, foam greys, lifted deep-navy shadows, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 14.368256289046258,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

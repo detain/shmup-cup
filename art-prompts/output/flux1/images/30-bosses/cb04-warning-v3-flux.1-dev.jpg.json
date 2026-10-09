@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:56:02.108Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic, 3d render, watermark, detailed hull visible, lens flare abuse, pure black background, smoke clouds gray",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "04-cinder-bastion",
+    "slug": "cb04-warning",
+    "variantNum": 3,
+    "id": "cb04-warning-v3",
+    "title": "eruption backlit warning silhouette",
+    "positive": "Ominous alarm staging in a cave system, every running light in the magma cavern dying to black for one heartbeat except a rising wall of lava glow behind which the CINDER BASTION stands revealed as a flat black silhouette, battleship profile with its crown of four raised armored arms spread like a candelabra around the burning core dot in its chest, sparks and slow ember flakes drifting between silhouette and glow, the lower half of the frame thrown into a deep sapphire shadow with the small curved highlight of a fighter cockpit, cyan, barely visible bottom-left corner, a single red siren band sweeping across the upper darkness, composition ruled by backlight, graphic hard edges, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic, 3d render, watermark, detailed hull visible, lens flare abuse, pure black background, smoke clouds gray",
+    "negativeScoped": true,
+    "notes": "Candelabra-arm silhouette is the readable icon. Wide banner for the \"bosses\" carousel.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12403,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12403,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "cb04-warning-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "87d99004-5929-40d5-848c-f516657dc05b",
+      "created": 1791536157,
+      "count": 1,
+      "revised_prompt": "Ominous alarm staging in a cave system, every running light in the magma cavern dying to black for one heartbeat except a rising wall of lava glow behind which the CINDER BASTION stands revealed as a flat black silhouette, battleship profile with its crown of four raised armored arms spread like a candelabra around the burning core dot in its chest, sparks and slow ember flakes drifting between silhouette and glow, the lower half of the frame thrown into a deep sapphire shadow with the small curved highlight of a fighter cockpit, cyan, barely visible bottom-left corner, a single red siren band sweeping across the upper darkness, composition ruled by backlight, graphic hard edges, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 12.405604031868279,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

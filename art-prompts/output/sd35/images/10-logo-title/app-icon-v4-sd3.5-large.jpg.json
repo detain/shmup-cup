@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:42:41.298Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, photorealistic, 3d render, realistic manta ray, animal creature, visible eye of a fish, blurry, gradient shading, pure black background, watermark",
+  "negative_sent": "text, letters, photorealistic, 3d render, realistic manta ray, animal creature, visible eye of a fish, blurry, gradient shading, pure black background, watermark",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "app-store-icon",
+    "slug": "app-icon",
+    "variantNum": 4,
+    "id": "app-icon-v4",
+    "title": "manta ray glyph icon",
+    "positive": "Minimal flat app icon, square with rounded corners, the top-down silhouette of a wide flat manta-ray shaped starfighter drawn as a clean symmetrical geometric glyph, pale mint green body with a small bright green oval canopy at the center and two short amber thruster wedges at the rear tail, a single bold near-black green outline around the whole shape, the glyph centered with generous margin, background a solid deep indigo-navy with two faint horizontal darker bands like scanlines, absolutely flat vector shapes, saturated limited palette, 16-bit arcade design language, instantly readable at tiny sizes, no text, no stars, no gradients on the ship.",
+    "negative": "text, letters, photorealistic, 3d render, realistic manta ray, animal creature, visible eye of a fish, blurry, gradient shading, pure black background, watermark",
+    "negativeScoped": true,
+    "notes": "Deliberately flat — flux.1-dev holds single-color fills best. Manta anchors: body #c8e0d0, canopy #40d070, outline near-black green.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10024,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 10024,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "app-icon-v4-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c176f329-ce8f-40ad-94f1-74f965d90397",
+      "created": 1791538956,
+      "count": 1,
+      "revised_prompt": "Minimal flat app icon, square with rounded corners, the top-down silhouette of a wide flat manta-ray shaped starfighter drawn as a clean symmetrical geometric glyph, pale mint green body with a small bright green oval canopy at the center and two short amber thruster wedges at the rear tail, a single bold near-black green outline around the whole shape, the glyph centered with generous margin, background a solid deep indigo-navy with two faint horizontal darker bands like scanlines, absolutely flat vector shapes, saturated limited palette, 16-bit arcade design language, instantly readable at tiny sizes, no text, no stars, no gradients on the ship.",
+      "inference_time_s": 13.113843064988032,
+      "peak_memory_mb": 25696
+    },
+    "format": "jpg"
+  }
+}

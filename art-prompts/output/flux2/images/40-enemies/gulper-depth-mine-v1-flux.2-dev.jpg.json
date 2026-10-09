@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:30:01.591Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, mines with red lights, coral reef",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "gulper-depth-mine",
+    "variantNum": 1,
+    "id": "gulper-depth-mine-v1",
+    "title": "the lantern-dark hunt",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. In the lightless deep of a black-blue water trench, the only illumination bioluminescent: a field of tiny glowing specks drifting from dark teal into pale cyan like an inverted star map, rock spires rising in silhouette on both sides, tall weed swaying slow left-to-right across the whole frame. Centered, a GULPER drifts right toward the viewer's ship — a huge-headed deep-sea fish, its mouth a cavernous hinged cage of pale bone ridges taking up half its body, slack-jawed and yawning wide, tiny vicious eyes above the gape, a frayed bioluminescent lure filament dangling from its crown burning pale cyan, its body tapering back into eel-quiet charcoal. Around and below it, a quiet minefield: three DEPTH MINES rest on and hover above the weed — black rounded hulls studded with short contact spikes, each with a single slow-pulsing cyan eye-light, one trailing a loose anchor chain into the dark, one drifting free with a barnacle-crusted flank. From the left edge the MANTA glides in, flat ray-wing pale mint hull dimmed by the depth, green canopy the brightest thing in the water, amber twin thrusters throwing short warm cones that catch the drifting specks — and directly ahead of its path one mine's pulse has just skipped to a faster beat. No explosions yet, pure dread of held pressure. Deep-navy gloom, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, mines with red lights, coral reef",
+    "negativeScoped": true,
+    "notes": "Color reference: biolume specks ramp #16485a→#6ad8e0, lure filament #6ad8e0, mine eye-cyan pulse #6ad8e0, gulper body near-black green-charcoal with pale bone jaw. Everything lit by point sources — the negative bans the sunlit-water default these models love. The accelerating mine pulse in the manta's lane is the whole story of the frame; if the mines read as inert scenery, add \"one mine's eye-light mid-brighten, brighter than the others\".",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15911,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15911,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "gulper-depth-mine-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "d64a4dca-0fed-4df5-bcbf-e6ecfd7690cf",
+      "created": 1791538197,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. In the lightless deep of a black-blue water trench, the only illumination bioluminescent: a field of tiny glowing specks drifting from dark teal into pale cyan like an inverted star map, rock spires rising in silhouette on both sides, tall weed swaying slow left-to-right across the whole frame. Centered, a GULPER drifts right toward the viewer's ship — a huge-headed deep-sea fish, its mouth a cavernous hinged cage of pale bone ridges taking up half its body, slack-jawed and yawning wide, tiny vicious eyes above the gape, a frayed bioluminescent lure filament dangling from its crown burning pale cyan, its body tapering back into eel-quiet charcoal. Around and below it, a quiet minefield: three DEPTH MINES rest on and hover above the weed — black rounded hulls studded with short contact spikes, each with a single slow-pulsing cyan eye-light, one trailing a loose anchor chain into the dark, one drifting free with a barnacle-crusted flank. From the left edge the MANTA glides in, flat ray-wing pale mint hull dimmed by the depth, green canopy the brightest thing in the water, amber twin thrusters throwing short warm cones that catch the drifting specks — and directly ahead of its path one mine's pulse has just skipped to a faster beat. No explosions yet, pure dread of held pressure. Deep-navy gloom, never pure black. No text, no UI elements.",
+      "inference_time_s": 37.253352735890076,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

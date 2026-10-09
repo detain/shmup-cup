@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:59:10.069Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cone each frame, pure black background, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-d-magma-deep",
+    "slug": "magma-deep-sprite-sheet",
+    "variantNum": 3,
+    "id": "magma-deep-sprite-sheet-v3",
+    "title": "Wide strip pixel sprite sheet: cone eruption sequence filmstrip with wisp and slag rows on flat navy",
+    "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. The main band is an eight-frame eruption cycle of one MAGMA CONE turret, evenly spaced left to right: dormant basalt stack, seam-glow widening, crater lid lifting, first tangerine flare, full column of orange flame and pink-red molten shot, column thinning to smoke and sparks, cooling to dark crust with cherry cracks, back to dormant — the same cone silhouette every frame, only the state changing. Below it a shorter band of six EMBER WISP flame bodies orbiting their molten-gold cores in different lick patterns, each with a one-to-three pixel sparking tail. Bottom band a sparse row of shared effects: pink and red bright-core round shots, a lobbed lava glob with dripping tail, two falling droplets with gold trails, a gray ash puff, and a single small orange-white explosion bloom in three growth frames. Large readable pixel clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+    "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cone each frame, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "The continuity guard (\"same cone silhouette every frame\") matters more than usual here — an animation strip is only usable if the base shape locks. Flux.1-dev leads on clean sequential illustration; verify frame-to-frame consistency before extracting.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15423,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15423,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "magma-deep-sprite-sheet-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "6b3ff710-7472-4f56-b83c-7dc62245bfa8",
+      "created": 1791536345,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. The main band is an eight-frame eruption cycle of one MAGMA CONE turret, evenly spaced left to right: dormant basalt stack, seam-glow widening, crater lid lifting, first tangerine flare, full column of orange flame and pink-red molten shot, column thinning to smoke and sparks, cooling to dark crust with cherry cracks, back to dormant — the same cone silhouette every frame, only the state changing. Below it a shorter band of six EMBER WISP flame bodies orbiting their molten-gold cores in different lick patterns, each with a one-to-three pixel sparking tail. Bottom band a sparse row of shared effects: pink and red bright-core round shots, a lobbed lava glob with dripping tail, two falling droplets with gold trails, a gray ash puff, and a single small orange-white explosion bloom in three growth frames. Large readable pixel clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+      "inference_time_s": 12.473656837828457,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

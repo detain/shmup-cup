@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:36:33.285Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, lowercase letters, script font, misspelled text, extra words, subtitles, score numbers, watermark, blurry, letters floating in 3d perspective, warning triangle icon only, bright undimmed background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "boss-moments",
+    "slug": "warning-flash",
+    "variantNum": 1,
+    "id": "warning-flash-v1",
+    "title": "The boss-intro WARNING screen: darkened field, strobing warning text, siren light",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade shoot-'er-up screen, subtle CRT scanline glow; the most feared frame in the game. A side-scrolling starfield battlefield has gone wrong: the entire scene is dimmed to near-silhouette — the small steel-blue dart fighter with cyan canopy low on the left, its engines reduced to two thin orange slivers; the dense pink and violet bullet streams frozen mid-pattern as faint glowing rails; ahead on the right, the impossible shape of an arriving fortress-ship boss, a mountain of angular armored plating rendered almost entirely in black-blue shadow with only its rim-lights and gun-port glints separating it from the dark. Slamming through all of it, dead center of the frame, the single word \"WARNING!!\" in enormous blocky arcade letterforms, the letters a hot warning-red with a bright white-gold inner edge and a thick dark navy outline, glowing hard enough to cast red light onto the shadowed hull plates around it. The word sits inside a band of darker screen-wide dim-out, like the game itself pulled a dark curtain to make the text legible, and thin red siren stripes pulse in from both screen edges within that band. Every glint on the boss hull leans toward the text as if the machine is reading its own introduction. Deep navy world, one committed red-white typographic event, lifted shadows, never pure black outside the silhouettes. The text in the image must read exactly \"WARNING!!\" and nothing else — no other words, letters or numbers anywhere in the scene.",
+    "negative": "photorealistic, 3d render, lowercase letters, script font, misspelled text, extra words, subtitles, score numbers, watermark, blurry, letters floating in 3d perspective, warning triangle icon only, bright undimmed background",
+    "negativeScoped": true,
+    "notes": "Exact string: \"WARNING!!\" — qwen-image for reliable type; flux.2-dev as the alt with softer edge glow. Color ref: text red ~#e04828 with #fff080 inner edge, navy outline #1b2a4a. Boss silhouette should read as hull mass, not species — this frame must work for every boss.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 36,
+        "seed": 20011,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 20011,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "warning-flash-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "bb3ef8c2-5f78-4e0f-9acc-e179f6c43692",
+      "created": 1791538588,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade shoot-'er-up screen, subtle CRT scanline glow; the most feared frame in the game. A side-scrolling starfield battlefield has gone wrong: the entire scene is dimmed to near-silhouette — the small steel-blue dart fighter with cyan canopy low on the left, its engines reduced to two thin orange slivers; the dense pink and violet bullet streams frozen mid-pattern as faint glowing rails; ahead on the right, the impossible shape of an arriving fortress-ship boss, a mountain of angular armored plating rendered almost entirely in black-blue shadow with only its rim-lights and gun-port glints separating it from the dark. Slamming through all of it, dead center of the frame, the single word \"WARNING!!\" in enormous blocky arcade letterforms, the letters a hot warning-red with a bright white-gold inner edge and a thick dark navy outline, glowing hard enough to cast red light onto the shadowed hull plates around it. The word sits inside a band of darker screen-wide dim-out, like the game itself pulled a dark curtain to make the text legible, and thin red siren stripes pulse in from both screen edges within that band. Every glint on the boss hull leans toward the text as if the machine is reading its own introduction. Deep navy world, one committed red-white typographic event, lifted shadows, never pure black outside the silhouettes. The text in the image must read exactly \"WARNING!!\" and nothing else — no other words, letters or numbers anywhere in the scene.",
+      "inference_time_s": 33.499209359055385,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

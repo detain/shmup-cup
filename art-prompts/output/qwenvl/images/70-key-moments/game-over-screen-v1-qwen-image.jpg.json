@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:07:34.344Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, fireball explosion, ship burning, debris field, pilot ejecting, lowercase letters, script font, misspelled text, extra words, numbers, score digits, continue countdown, watermark, blurry, letters in perspective, green skull imagery",
+  "negative_sent": "photorealistic, 3d render, fireball explosion, ship burning, debris field, pilot ejecting, lowercase letters, script font, misspelled text, extra words, numbers, score digits, continue countdown, watermark, blurry, letters in perspective, green skull imagery",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "warning-gameover",
+    "slug": "game-over-screen",
+    "variantNum": 1,
+    "id": "game-over-screen-v1",
+    "title": "GAME OVER card: frozen bullet storm around a drifting wreck",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; game-over screen artwork. The moment the run dies, painted as a still portrait of a stopped heart: centered in the dark field, the wreck of a steel-blue dart fighter drifts in slow profile, engines out, one wingtip feathered with a last curl of ember-grey smoke, canopy glass cracked and dark, hull stripe scorched along its whole flank, and from a new gash in the belly a short ribbon of pale atmosphere vapor bleeds sideways into the void — the only motion in the image. Around the wreck hangs the unfinished war: the bullet storm frozen mid-screen in curved streams of pink, red and violet bright-cored orbs with dark rims, dozens of them still traveling toward a target that no longer answers, some already passing through the drift-line of the dead ship as if nothing happened. Behind it all, far off, the unimpressed silhouette of the boss hull that did it — a low mountain of armored plating with one red eye-slit glowing calmly at the right edge of the frame. Dead center, straight-on in enormous blocky arcade capitals, the words \"GAME OVER\" — warning-red faces with white-gold inner bevels and a heavy dark navy outline, slightly over-bright so their glow falls onto the drifting wreck beneath the letters. Deep navy void with sparse cold star dust, thick outlines everywhere, the red of the text the loudest thing in the picture, lifted deep-navy base, never pure black. The text in the image must read exactly \"GAME OVER\" and nothing else.",
+    "negative": "photorealistic, 3d render, fireball explosion, ship burning, debris field, pilot ejecting, lowercase letters, script font, misspelled text, extra words, numbers, score digits, continue countdown, watermark, blurry, letters in perspective, green skull imagery",
+    "negativeScoped": true,
+    "notes": "Exact string: \"GAME OVER\". Text red ~#e04828 with #fff080 bevel, outline #1b2a4a; ship stripe #3858f0, canopy #38c8e8. qwen-image is the type-safe pick; flux.2-dev yields softer glow-bleed but may double the O's. The frozen-storm-around-wreck stillness is the emotional device — check bullets aren't exploding, just indifferent.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 36,
+        "seed": 20091,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 20091,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "game-over-screen-v1-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ecda8a3d-96e9-4e52-b254-0a57bdae1ec8",
+      "created": 1791540449,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; game-over screen artwork. The moment the run dies, painted as a still portrait of a stopped heart: centered in the dark field, the wreck of a steel-blue dart fighter drifts in slow profile, engines out, one wingtip feathered with a last curl of ember-grey smoke, canopy glass cracked and dark, hull stripe scorched along its whole flank, and from a new gash in the belly a short ribbon of pale atmosphere vapor bleeds sideways into the void — the only motion in the image. Around the wreck hangs the unfinished war: the bullet storm frozen mid-screen in curved streams of pink, red and violet bright-cored orbs with dark rims, dozens of them still traveling toward a target that no longer answers, some already passing through the drift-line of the dead ship as if nothing happened. Behind it all, far off, the unimpressed silhouette of the boss hull that did it — a low mountain of armored plating with one red eye-slit glowing calmly at the right edge of the frame. Dead center, straight-on in enormous blocky arcade capitals, the words \"GAME OVER\" — warning-red faces with white-gold inner bevels and a heavy dark navy outline, slightly over-bright so their glow falls onto the drifting wreck beneath the letters. Deep navy void with sparse cold star dust, thick outlines everywhere, the red of the text the loudest thing in the picture, lifted deep-navy base, never pure black. The text in the image must read exactly \"GAME OVER\" and nothing else.",
+      "inference_time_s": 17.494004779029638,
+      "peak_memory_mb": 35436
+    },
+    "format": "jpg"
+  }
+}

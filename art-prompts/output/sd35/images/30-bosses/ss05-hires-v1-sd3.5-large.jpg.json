@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:50:34.001Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, horse with legs, organic animal, closed chest, player character, pure black background",
+  "negative_sent": "photorealistic, 3d render, text artifacts, watermark, blurry, horse with legs, organic animal, closed chest, player character, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "hi-res",
+    "slug": "ss05-hires",
+    "variantNum": 1,
+    "id": "ss05-hires-v1",
+    "title": "Squall Steed storm-mounted documentation plate",
+    "positive": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete machine of Squall Steed SS-05, a vast plate-and-cable seahorse fortress-ship of the Iron Tide, shown full-body broadside and fully readable while riding a horizontal river of storm cloud — the seahorse silhouette explicit: arched neck plating, helmet-crown snout, coiled cable tail uncurling behind trailing lightning, dorsal sail of taut canvas-steel rippling. Its chest stands open, three great breastplate doors hinged outward around a white-blue electrical heart that flashes with each thunderclap. Slanting rain streaks the whole frame, saw-tooth cloud ridges below, violet ambient light with pink bullet-glints along the mane rods. Deep-navy sky never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, horse with legs, organic animal, closed chest, player character, pure black background",
+    "negativeScoped": true,
+    "notes": "Naming the seahorse anatomy parts (arched neck, coiled tail, dorsal sail) stops models from drawing a land horse; open chest doors are the weak-point read.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 14051,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 14051,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ss05-hires-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "49527d7d-66a1-440f-a918-d9bf0100a5db",
+      "created": 1791539429,
+      "count": 1,
+      "revised_prompt": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete machine of Squall Steed SS-05, a vast plate-and-cable seahorse fortress-ship of the Iron Tide, shown full-body broadside and fully readable while riding a horizontal river of storm cloud — the seahorse silhouette explicit: arched neck plating, helmet-crown snout, coiled cable tail uncurling behind trailing lightning, dorsal sail of taut canvas-steel rippling. Its chest stands open, three great breastplate doors hinged outward around a white-blue electrical heart that flashes with each thunderclap. Slanting rain streaks the whole frame, saw-tooth cloud ridges below, violet ambient light with pink bullet-glints along the mane rods. Deep-navy sky never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 14.295188918942586,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

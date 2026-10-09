@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:46:49.325Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+  "negative_sent": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "05-squall-steed",
+    "slug": "ss05-warning",
+    "variantNum": 3,
+    "id": "ss05-warning-v3",
+    "title": "lightning-flash silhouette",
+    "positive": "Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic photo, 3d render, watermark, detailed armor visible, pure black background, rainbow palette, blurry",
+    "negativeScoped": true,
+    "notes": "The flash-frame IS the warning beat. Wide crop for loading screens; keep bolt branches out of the silhouette core.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12503,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12503,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ss05-warning-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "2951a483-d41e-4989-a471-251420f16972",
+      "created": 1791539204,
+      "count": 1,
+      "revised_prompt": "Single-frame lightning reveal, a black storm sky torn by one colossal white-violet lightning bolt that for one instant prints the SQUALL STEED as a pure silhouette rearing across the entire width of the frame, seahorse profile unmistakable, snout, coronet spikes, cable mane spikes and curled tail cut in razor edges against the branching flash, rain rendered as thousands of slanted silver lines, the silhouette holds almost no internal detail, only two cold blue eye slits and the glowing chest cage reading through the dark shape like lanterns, bottom-left corner a pinprick orange engine streak of a fighter falling through the frame, high-contrast monochrome storm palette of black-navy, silver and violet with exactly two warm accents, graphic power, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, widescreen arcade composition, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 12.829842475941405,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

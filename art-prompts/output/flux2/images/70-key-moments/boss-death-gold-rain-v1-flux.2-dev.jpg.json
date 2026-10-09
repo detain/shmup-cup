@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:36:34.903Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, coin pile, treasure chest, money, fireworks display, ship intact, single explosion, text, HUD, score numbers, watermark, blurry, gold dots arranged in grid, purple explosions",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "boss-moments",
+    "slug": "boss-death-gold-rain",
+    "variantNum": 1,
+    "id": "boss-death-gold-rain-v1",
+    "title": "Boss death: chained explosions down the hull while every bullet turns to gold",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; the reward frame, maximum catharsis. A giant mechanical sea-creature fortress-ship is dying across the full width of the sky: a chain of its own explosions is marching along its hull from right to left, each blast a stage of the classic arcade ramp — white-gold ignition dot, blooming amber fireball with outlined flame petals, shredding rust-ember smoke — five of them staggered along the spine so the death visibly travels. The armored plates along the blast line are peeling upward in slow sheets, revealing dark ribcage girders and sparking conduits inside. And the entire bullet storm the boss fired has, this instant, been converted: where seconds ago hostile pink, red and violet orbs filled the mid-field, the air is now a drifting galaxy of tiny sparkling gold point-items, thousands of them, each a chip of warm light with a single bright facet, falling and tumbling like inverted rain over the whole battlefield. Far below on the left, a small steel-blue fighter with cyan canopy and twin orange engine streaks is already flying into the gold downpour, canopy lit yellow from above. Deep navy space, fire oranges and dying ambers up top, a river of gold across the middle, lifted shadows, never pure black. No text, no letters, no score UI.",
+    "negative": "photorealistic, 3d render, coin pile, treasure chest, money, fireworks display, ship intact, single explosion, text, HUD, score numbers, watermark, blurry, gold dots arranged in grid, purple explosions",
+    "negativeScoped": true,
+    "notes": "Explosion ramp #fff080→#f8b030→#f06820→#c83018; point-items are the game's gold capsicles-shrunk ~#f8c860. The three-story frame: chain marching, hull peeling, bullets transmuted — if any leg drops the image stops telling the death story, so check all three before accepting. flux.2 scatters the gold field with better randomness; sd3.5 grids it. Kestrel stripe #3858f0, canopy #38c8e8, glow #f89830.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 20021,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 20021,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "boss-death-gold-rain-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "426676b2-a460-4e59-b710-ed6bc824ad4b",
+      "created": 1791538590,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 arcade composition, subtle CRT scanline glow; the reward frame, maximum catharsis. A giant mechanical sea-creature fortress-ship is dying across the full width of the sky: a chain of its own explosions is marching along its hull from right to left, each blast a stage of the classic arcade ramp — white-gold ignition dot, blooming amber fireball with outlined flame petals, shredding rust-ember smoke — five of them staggered along the spine so the death visibly travels. The armored plates along the blast line are peeling upward in slow sheets, revealing dark ribcage girders and sparking conduits inside. And the entire bullet storm the boss fired has, this instant, been converted: where seconds ago hostile pink, red and violet orbs filled the mid-field, the air is now a drifting galaxy of tiny sparkling gold point-items, thousands of them, each a chip of warm light with a single bright facet, falling and tumbling like inverted rain over the whole battlefield. Far below on the left, a small steel-blue fighter with cyan canopy and twin orange engine streaks is already flying into the gold downpour, canopy lit yellow from above. Deep navy space, fire oranges and dying ambers up top, a river of gold across the middle, lifted shadows, never pure black. No text, no letters, no score UI.",
+      "inference_time_s": 35.01442197198048,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

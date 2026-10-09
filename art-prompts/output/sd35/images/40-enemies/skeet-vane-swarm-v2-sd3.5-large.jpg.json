@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:51:19.541Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, extra eyes, blobby organic bodies",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, extra eyes, blobby organic bodies",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-a-azure-verge",
+    "slug": "skeet-vane-swarm",
+    "variantNum": 2,
+    "id": "skeet-vane-swarm-v2",
+    "title": "SKEET pods and VANE bladed fliers, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Close-quarters ambush in the upper atmosphere of a blue planet: three SKEET pods — armored seed-shaped drones with matte gunmetal hulls, rust-violet panel seams and a single glowing magenta eye-slit — crack open mid-flight, hatches folding like petals as they release fan spreads of small pink bullet-orbs with bright cores and dark rims. Two VANE bladed fliers slice through the foreground, steel chassis wreathed by spinning crescent-mirror wingblades catching rim-light, motion implied by doubled blade ghosts. Behind the formation the planet rim glows with a soft cyan atmosphere line, green-teal continent shapes and white cloud swirls floating in a deep navy starfield that lifts from midnight blue to a lighter dusty blue. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, colors saturated but limited, background never pure black.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, extra eyes, blobby organic bodies",
+    "negativeScoped": true,
+    "notes": "Ultra-wide 1536x640 reads like an in-game frame strip, good for website zone sections. sd3.5 handles the bullet-orb repetition well. Keep pods seed-shaped, not round balls.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15112,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15112,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "skeet-vane-swarm-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "8099f101-07bc-4d9f-88c4-c0013789ba69",
+      "created": 1791539474,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Close-quarters ambush in the upper atmosphere of a blue planet: three SKEET pods — armored seed-shaped drones with matte gunmetal hulls, rust-violet panel seams and a single glowing magenta eye-slit — crack open mid-flight, hatches folding like petals as they release fan spreads of small pink bullet-orbs with bright cores and dark rims. Two VANE bladed fliers slice through the foreground, steel chassis wreathed by spinning crescent-mirror wingblades catching rim-light, motion implied by doubled blade ghosts. Behind the formation the planet rim glows with a soft cyan atmosphere line, green-teal continent shapes and white cloud swirls floating in a deep navy starfield that lifts from midnight blue to a lighter dusty blue. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, colors saturated but limited, background never pure black.",
+      "inference_time_s": 14.369798440020531,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

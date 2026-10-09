@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:48:14.828Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic, 3d render, watermark, full body visible, bright scene, explosions, submarine crew, pure black background",
+  "negative_sent": "text, banner, letters, photorealistic, 3d render, watermark, full body visible, bright scene, explosions, submarine crew, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "09-abyss-ark",
+    "slug": "aa09-warning",
+    "variantNum": 3,
+    "id": "aa09-warning-v3",
+    "title": "engine glow in the deep dark",
+    "positive": "Predator-dark alarm frame at the bottom of the Abyssal Throne trench, the water gone almost black-blue with only drifting marine snow and a few cold cyan specks of plankton, and out of that dark the ABYSS ARK announces itself in fragments before it exists, two long rows of amber porthole lamps emerging one by one along an unseen hull curve like a runway lighting a runway in the void, the faint blue-white ghost of a tail fluke silhouette sweeping across the top of frame between the dimmest stars of weed-glow, a deep subsonic shiver rendered as soft ripple distortion warping the plankton into concentric bands, from the unlit bulk one single turret silhouette drops its barrel with a rim of cold highlight, bottom right a tiny cyan canopy dot of the player fighter utterly still in the path of the lamps, dread of scale and patience rather than violence, no fire no explosion only light arriving, bold dark outlines, saturated limited palette of abyssal blue-black, cyan specks and amber lamp dots, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic, 3d render, watermark, full body visible, bright scene, explosions, submarine crew, pure black background",
+    "negativeScoped": true,
+    "notes": "Lamps-on-hull-in-dark is the campaign's most iconic warning beat — anchor to #e8a030 amber dots, keep water lifted #0c1a3c-blue not black.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12903,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12903,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "aa09-warning-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "4a4f7888-9929-4161-9995-2f2ddf962d7c",
+      "created": 1791539290,
+      "count": 1,
+      "revised_prompt": "Predator-dark alarm frame at the bottom of the Abyssal Throne trench, the water gone almost black-blue with only drifting marine snow and a few cold cyan specks of plankton, and out of that dark the ABYSS ARK announces itself in fragments before it exists, two long rows of amber porthole lamps emerging one by one along an unseen hull curve like a runway lighting a runway in the void, the faint blue-white ghost of a tail fluke silhouette sweeping across the top of frame between the dimmest stars of weed-glow, a deep subsonic shiver rendered as soft ripple distortion warping the plankton into concentric bands, from the unlit bulk one single turret silhouette drops its barrel with a rim of cold highlight, bottom right a tiny cyan canopy dot of the player fighter utterly still in the path of the lamps, dread of scale and patience rather than violence, no fire no explosion only light arriving, bold dark outlines, saturated limited palette of abyssal blue-black, cyan specks and amber lamp dots, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 13.502018603961915,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

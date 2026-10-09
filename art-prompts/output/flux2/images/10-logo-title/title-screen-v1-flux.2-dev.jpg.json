@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:08:36.878Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, missing letters, subtitles, menu text, photorealistic, 3d render, watermark, blurry, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "title-screen-hero",
+    "slug": "title-screen",
+    "variantNum": 1,
+    "id": "title-screen-v1",
+    "title": "classic arcade attract title",
+    "positive": "Complete retro arcade title screen illustration rendering the exact game title \"SHMUP CUP\" in large warm-gradient block letters, pale yellow melting into tangerine and flame red with a thick navy outline and hard drop shadow, positioned across the upper third, below it a sleek steel-blue dart-shaped fighter jet with a bold blue fuselage stripe, glowing cyan bubble canopy and hot orange engine afterglow streaks left to right across the lower third leaving a thin contrail, behind the tiny defiant ship on the right side of the frame rises a colossal mechanical fish-shaped fortress silhouette half-swallowed by shadow with rows of dim amber lights, deep navy starfield background that never falls to pure black with a faint teal nebula wash, scattered pink and violet glowing bullets with bright cores drifting in from the right edge, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition, no other text besides the title.",
+    "negative": "garbled text, misspelled letters, extra letters, missing letters, subtitles, menu text, photorealistic, 3d render, watermark, blurry, pure black background",
+    "negativeScoped": true,
+    "notes": "Only the title should render as text — negatives guard against invented menu strings. Title anchor #f8f070→#f8a030→#e04828.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10011,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10011,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-screen-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "bb556a22-f8df-4fe8-a546-3c02f19fe3ba",
+      "created": 1791536912,
+      "count": 1,
+      "revised_prompt": "Complete retro arcade title screen illustration rendering the exact game title \"SHMUP CUP\" in large warm-gradient block letters, pale yellow melting into tangerine and flame red with a thick navy outline and hard drop shadow, positioned across the upper third, below it a sleek steel-blue dart-shaped fighter jet with a bold blue fuselage stripe, glowing cyan bubble canopy and hot orange engine afterglow streaks left to right across the lower third leaving a thin contrail, behind the tiny defiant ship on the right side of the frame rises a colossal mechanical fish-shaped fortress silhouette half-swallowed by shadow with rows of dim amber lights, deep navy starfield background that never falls to pure black with a faint teal nebula wash, scattered pink and violet glowing bullets with bright cores drifting in from the right edge, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition, no other text besides the title.",
+      "inference_time_s": 29.837922607082874,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:05:34.673Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, watermark, photorealistic, 3d render, blurry, modern fighter jet, visible pilot, pure black background, cluttered details, drop shadow outside tile",
+  "negative_sent": "text, letters, watermark, photorealistic, 3d render, blurry, modern fighter jet, visible pilot, pure black background, cluttered details, drop shadow outside tile",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "app-store-icon",
+    "slug": "app-icon",
+    "variantNum": 1,
+    "id": "app-icon-v1",
+    "title": "kestrel dart in a rounded navy tile",
+    "positive": "Mobile app icon design, square with softly rounded corners, a single sleek steel-blue dart-shaped retro fighter jet seen from the side banking slightly toward the viewer with a bold blue fuselage stripe, a glowing cyan bubble canopy and a bright orange engine afterglow trailing to the lower left, heavy dark navy outline around the whole craft, centered in the tile, background a clean radial wash from deep midnight navy at the edges to a slightly lighter blue-black at the center with a few tiny star specks, flat saturated 16-bit game art shading with crisp pixel-cluster texture accents, bold minimal shapes readable at very small sizes, no text anywhere, no border.",
+    "negative": "text, letters, watermark, photorealistic, 3d render, blurry, modern fighter jet, visible pilot, pure black background, cluttered details, drop shadow outside tile",
+    "negativeScoped": true,
+    "notes": "The default store icon. Stripe #3858f0, canopy #38c8e8, glow #f89830, outline #1b2a4a.",
+    "models": [
+      "flux1",
+      "qwenvl"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "qwen-image"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10021,
+        "defaulted": false
+      },
+      "qwenvl": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10021,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "app-icon-v1-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "676c19c1-bbd4-438e-8a75-6dc22c8ba906",
+      "created": 1791540330,
+      "count": 1,
+      "revised_prompt": "Mobile app icon design, square with softly rounded corners, a single sleek steel-blue dart-shaped retro fighter jet seen from the side banking slightly toward the viewer with a bold blue fuselage stripe, a glowing cyan bubble canopy and a bright orange engine afterglow trailing to the lower left, heavy dark navy outline around the whole craft, centered in the tile, background a clean radial wash from deep midnight navy at the edges to a slightly lighter blue-black at the center with a few tiny star specks, flat saturated 16-bit game art shading with crisp pixel-cluster texture accents, bold minimal shapes readable at very small sizes, no text anywhere, no border.",
+      "inference_time_s": 14.134579285047948,
+      "peak_memory_mb": 35578
+    },
+    "format": "jpg"
+  }
+}

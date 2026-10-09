@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:55:49.328Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, warning banner, letters, symbols, photorealistic, 3d render, watermark, detailed ship visible, pure black background, rainbow palette",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "01-halcyon-bulwark",
+    "slug": "hb01-warning",
+    "variantNum": 3,
+    "id": "hb01-warning-v3",
+    "title": "silhouette under the alert flash",
+    "positive": "Boss alarm moment in arcade style, the screen-edge darkness closing in as a siren of red light sweeps horizontally across deep navy space, the HALCYON BULWARK reduced to a massive pure silhouette blocking the glow of the blue planet behind it, only its geometry readable, broad bastion hull, swept wing spars, and two emitter points igniting like cruel pink stars at the wing tips, beneath the silhouette a tiny dart-shaped fighter with a single thin orange exhaust line drifting low at the bottom left, the whole image lit by alternating bands of dark red and black siren light, a subtle flash-frame strobe feel with duplicated faint ghost edges on the silhouette, ominous and graphic, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, high-contrast dramatic composition, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, warning banner, letters, symbols, photorealistic, 3d render, watermark, detailed ship visible, pure black background, rainbow palette",
+    "negativeScoped": true,
+    "notes": "WARNING text itself lives in 70-key-moments — this variant stays pure silhouette so the UI can overlay it.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12103,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12103,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hb01-warning-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "df72a368-e865-4d28-a373-101aa6ed0e1b",
+      "created": 1791536144,
+      "count": 1,
+      "revised_prompt": "Boss alarm moment in arcade style, the screen-edge darkness closing in as a siren of red light sweeps horizontally across deep navy space, the HALCYON BULWARK reduced to a massive pure silhouette blocking the glow of the blue planet behind it, only its geometry readable, broad bastion hull, swept wing spars, and two emitter points igniting like cruel pink stars at the wing tips, beneath the silhouette a tiny dart-shaped fighter with a single thin orange exhaust line drifting low at the bottom left, the whole image lit by alternating bands of dark red and black siren light, a subtle flash-frame strobe feel with duplicated faint ghost edges on the silhouette, ominous and graphic, bold dark outlines, saturated limited palette, SNES-era 16-bit inspired concept rendering, high-contrast dramatic composition, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 13.0981515198946,
+      "peak_memory_mb": 36716
+    },
+    "format": "jpg"
+  }
+}

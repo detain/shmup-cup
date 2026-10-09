@@ -45,7 +45,10 @@
 #     v2 — plain HTTP, port 30001, fronts whichever one model is loaded;
 #     the flux2dev launcher is what natively binds 30001, so the owner is
 #     either running flux2dev there or proxying 30001 to the live model).
-#     Readiness detection logs which mode fired:
+#     Readiness GATE (2026-10-07 warmup fix): primary = GET /health
+#     must return 200 (SGLang answers 503 until warmup completes) — no
+#     POST before that. The /v1/models modes below then run as
+#     secondary confirmation of the served id. Modes logged:
 #       (1) served-id match      — /v1/models discriminates models and
 #                                  lists the expected served id; or
 #       (2) newly-loaded-model heuristic — the listing CHANGED versus the
@@ -73,6 +76,9 @@
 # group (shmup routing law) — the sweep needs no per-group filters; an image
 # group sweeps every image entry naming it, wan22 gets both wan2.2-t2v and
 # wan2.2-i2v, ltxvideo gets ltx-video entries incl. its 8 i2v ones.
+# LIBRARY SOURCE: since the 2026-10-07 conversion generate.mjs prefers the
+# <stem>.json sidecars (schema shmup-art-prompt-library@1) over the .md files —
+# re-run the converter after editing .md, or delete sidecars to parse .md.
 # --filter k=v (k in category,dir,file,id,model) passes straight through.
 #
 # Deps: bash 4+, ssh, curl, node (generate.mjs + JSON probing), coreutils.
@@ -106,6 +112,7 @@ OUT_ROOT="${OUT_ROOT:-$SCRIPT_DIR_ABS/output}" # generate.mjs appends <group>/ i
 PROMPT_DIR="${PROMPT_DIR:-$SCRIPT_DIR_ABS}"
 REMOTE_SCRIPT_DIR="${REMOTE_SCRIPT_DIR:-/root}"
 PROBE_URL="${PROBE_URL:-http://skynet2.interserver.net:30001}" # /v1/models polled here (owner v2 default: plain HTTP :30001, same origin generate.mjs defaults to)
+HEALTH_URL="${HEALTH_URL:-$PROBE_URL/health}"                  # readiness primary gate (503 warmup -> 200 ready); env-overridable
 START_WAIT="${START_WAIT:-900}"                                # seconds
 EXPECT_MODEL_ID="${EXPECT_MODEL_ID:-1}"                        # 0 = accept HTTP 200 alone (single-model proxy that hides ids)
 GENERATE_BASE_URL="${GENERATE_BASE_URL:-}"                     # empty = generate.mjs default (same :30001 origin); set only for direct-port boxes
@@ -252,16 +259,41 @@ launch_model() { # sets LAUNCH_PID ; args: $1 group
   log "$g" "remote pid $LAUNCH_PID"
 }
 
-wait_ready() { # $1 group — poll /v1/models; abort early if remote pid died
-  local g="$1" served waited=0 probe="$PROBE_URL/v1/models"
+health_code() { # GET /health status code; "000" when unreachable
+  local c
+  c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${HEALTH_URL:-$PROBE_URL/health}" 2>/dev/null || true)
+  printf '%s' "${c:-000}"
+}
+
+wait_ready() { # $1 group — PRIMARY gate: GET /health 200 (warmup fix 2026-10-07);
+  #   secondary: /v1/models served-id / listing-change; abort if remote pid died
+  local g="$1" served waited=0 probe="$PROBE_URL/v1/models" health="${HEALTH_URL:-$PROBE_URL/health}" health_ok=0
   served="$(group_field "$g" 3)"
   local id_expect="ready via served-id match or listing-change heuristic"
   [ "$EXPECT_MODEL_ID" = 0 ] && id_expect="HTTP 200 suffices (EXPECT_MODEL_ID=0)"
-  log "$g" "wait: $probe — $id_expect ($START_WAIT s budget)"
+  log "$g" "wait: $health (200 required) then $probe — $id_expect ($START_WAIT s budget)"
   while [ "$waited" -lt "$START_WAIT" ]; do
     if [ "$DRY_RUN" = 1 ]; then
-      printf '[dry-run] curl -sf --max-time 5 %s | grep -q "%s"  # then generate\n' "$probe" "$served" >&2
+      printf '[dry-run] GET %s == 200; then curl -sf --max-time 5 %s | grep -q "%s"  # then generate\n' "$health" "$probe" "$served" >&2
       return 0
+    fi
+    # PRIMARY GATE: /health holds 503 until warmup completes — never POST before 200.
+    if [ "$health_ok" = 0 ]; then
+      hcode="$(health_code)"
+      if [ "$hcode" = 200 ]; then
+        health_ok=1
+        log "$g" "health 200 — confirming served id via $probe"
+      else
+        log "$g" "warmup: $health answered ${hcode} — still loading"
+        if ! ssh -o BatchMode=yes -o ConnectTimeout=10 "$SSH_HOST" "kill -0 '$LAUNCH_PID'" 2>/dev/null; then
+          log "$g" "remote pid $LAUNCH_PID died during startup — log tail:"
+          ssh -o BatchMode=yes "$SSH_HOST" "tail -n 40 '$REMOTE_LOG' 2>/dev/null" >&2 || true
+          return 1
+        fi
+        sleep 10
+        waited=$((waited + 10))
+        continue
+      fi
     fi
     if body=$(curl -sf --max-time 5 "$probe" 2>/dev/null) && [ -n "$body" ]; then
       norm=$(printf '%s' "$body" | tr -d ' \n')
@@ -335,21 +367,22 @@ stop_model() { # $1 group — targeted: process group first, script-path pkill l
     "kill -TERM -'$LAUNCH_PID' 2>/dev/null; sleep 3; kill -KILL -'$LAUNCH_PID' 2>/dev/null; pkill -f '$REMOTE_SCRIPT_DIR/$script' 2>/dev/null; true" || true
 }
 
-manifest_tally() { # $1 group -> "ok=N failed=N skipped=N"
+manifest_tally() { # $1 group -> "ok=N failed=N existing=N i2vskip=N"
   local mf="$OUT_ROOT/$1/manifest.jsonl"
   [ -f "$mf" ] || {
-    echo "ok=0 failed=0 skipped=0"
+    echo "ok=0 failed=0 existing=0 i2vskip=0"
     return
   }
   node -e '
     const fs = require("fs");
     const lines = fs.readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean);
-    let ok = 0, failed = 0, skipped = 0;
+    let ok = 0, failed = 0, existing = 0, i2vskip = 0;
     for (const l of lines) { try { const r = JSON.parse(l);
-      if (r.status === "ok") ok++; else if (r.status === "failed") failed++; else skipped++;
+      if (r.status === "ok") ok++; else if (r.status === "failed") failed++;
+      else if (r.status === "skipped-existing") existing++; else i2vskip++;
     } catch {} }
-    console.log(`ok=${ok} failed=${failed} skipped=${skipped}`);
-  ' "$mf" 2>/dev/null || echo "ok=? failed=? skipped=?"
+    console.log(`ok=${ok} failed=${failed} existing=${existing} i2vskip=${i2vskip}`);
+  ' "$mf" 2>/dev/null || echo "ok=? failed=? existing=? i2vskip=?"
 }
 
 # --- main loop -----------------------------------------------------------------
@@ -415,11 +448,23 @@ for g in "${TYPES[@]}"; do
   fi
   stop_model "$g"
   CURRENT_PID=""
-  [ "$DRY_RUN" = 1 ] || {
-    mkdir -p "$OUT_ROOT/$g"
-    date -Is >"$marker"
-  }
-  RESULTS+=("$g|done|$(manifest_tally "$g")")
+  tally=$(manifest_tally "$g")
+  case "$tally" in
+  *i2vskip=0*)
+    [ "$DRY_RUN" = 1 ] || {
+      mkdir -p "$OUT_ROOT/$g"
+      date -Is >"$marker"
+    }
+    RESULTS+=("$g|done|$tally")
+    ;;
+  *)
+    # Every remaining video task was i2v-skipped for a missing source
+    # still: the group is NOT complete, so no .sweep-complete marker —
+    # --resume will re-attempt it after the image groups have run.
+    log "$g" "incomplete: i2v entries skipped for missing source stills — marker NOT written; finish image groups then re-run with --resume"
+    RESULTS+=("$g|partial-i2v|$tally")
+    ;;
+  esac
 done
 
 log sweep "==== summary ===="

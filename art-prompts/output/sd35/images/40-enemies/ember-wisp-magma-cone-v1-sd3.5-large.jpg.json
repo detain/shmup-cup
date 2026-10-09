@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:53:22.461Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, volumetric fog, lens flare",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, volumetric fog, lens flare",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-d-magma-deep",
+    "slug": "ember-wisp-magma-cone",
+    "variantNum": 1,
+    "id": "ember-wisp-magma-cone-v1",
+    "title": "Zone D enemies: flailing ember wisps and an erupting magma cone turret in a lava shaft",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A volcanic shaft in a invaded star system's molten depths: the background is an erupting cave of cooling black basalt crossed with glowing lava cracks, a lava lake at the shaft floor burning through a gradient from dark ember red to bright tangerine, falling droplets of lava trailing gold sparks, heat ripple warping the upper rock. Mid-field, two hostile mechanical-organic swarm creatures converge on a tiny sleek steel-blue dart fighter with a bold blue hull stripe, cyan canopy and bright orange engine glow in the lower left: EMBER WISPS — fist-sized feral flames with a single molten gold core each, wisp bodies of layered orange and red flame tongues, sparking tails smearing behind their erratic darting paths, no faces, just hungry light; and a MAGMA CONE — a squat volcanic turret of stacked blackened rock plates veined with lava, its crater mouth cracked wide mid-eruption belching a fan of pink and red molten shot with bright cores and dark rims. Deep-navy-black shadow pockets (never pure black) against the furnace light, orange-white explosion bloom in a side tunnel.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, volumetric fog, lens flare",
+    "negativeScoped": true,
+    "notes": "Heat-light from below is the mood anchor — the shot reads as an ambush inside the furnace. Lava ramp color reference: #8a2c0a→#e87a1c; brick wall accents #b0704a; bullets #ff3a3a/#ff5aa0. Wisps should stay small: at most a tenth of the ship's size each, so scale contrast sells the swarm menace.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15411,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15411,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ember-wisp-magma-cone-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "d8f8696c-d0ff-4424-ba4d-3083263bf96b",
+      "created": 1791539597,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A volcanic shaft in a invaded star system's molten depths: the background is an erupting cave of cooling black basalt crossed with glowing lava cracks, a lava lake at the shaft floor burning through a gradient from dark ember red to bright tangerine, falling droplets of lava trailing gold sparks, heat ripple warping the upper rock. Mid-field, two hostile mechanical-organic swarm creatures converge on a tiny sleek steel-blue dart fighter with a bold blue hull stripe, cyan canopy and bright orange engine glow in the lower left: EMBER WISPS — fist-sized feral flames with a single molten gold core each, wisp bodies of layered orange and red flame tongues, sparking tails smearing behind their erratic darting paths, no faces, just hungry light; and a MAGMA CONE — a squat volcanic turret of stacked blackened rock plates veined with lava, its crater mouth cracked wide mid-eruption belching a fan of pink and red molten shot with bright cores and dark rims. Deep-navy-black shadow pockets (never pure black) against the furnace light, orange-white explosion bloom in a side tunnel.",
+      "inference_time_s": 13.506430035922676,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

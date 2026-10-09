@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:19:59.432Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, fat tub hull, wings, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "11-iron-leviathan",
+    "slug": "ilv-reveal",
+    "variantNum": 1,
+    "id": "ilv-reveal-v1",
+    "title": "full raid ship sliding into view broadside",
+    "positive": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron leviathan raid ship gliding in broadside across a deep-navy star field, a long slender raider hull like a mechanical eel crossed with a battleship, a hardened prow ram shaped as a clenched beak of riveted steel, and flanking gun batteries running the whole body in a row of synchronized turrets that track left in unison. The hull plating is dark gunmetal with a rust-red waterline stripe and amber running lights, vents trailing thin smoke in the slipstream. Small escort pods peel off its flanks. Deep-navy background from near-black blue to midnight blue, never pure black, scattered pale stars, pink-hot muzzle glints from the batteries. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, fat tub hull, wings, pure black background",
+    "negativeScoped": true,
+    "notes": "The 1536x640 ultrawide is the definitive format for a long-body raider — color reference: gunmetal, rust-red stripe, amber lights.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 13101,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ilv-reveal-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "a5bf1f9b-8464-46cc-99bd-5d0d3b7f9d65",
+      "created": 1791537594,
+      "count": 1,
+      "revised_prompt": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron leviathan raid ship gliding in broadside across a deep-navy star field, a long slender raider hull like a mechanical eel crossed with a battleship, a hardened prow ram shaped as a clenched beak of riveted steel, and flanking gun batteries running the whole body in a row of synchronized turrets that track left in unison. The hull plating is dark gunmetal with a rust-red waterline stripe and amber running lights, vents trailing thin smoke in the slipstream. Small escort pods peel off its flanks. Deep-navy background from near-black blue to midnight blue, never pure black, scattered pale stars, pink-hot muzzle glints from the batteries. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+      "inference_time_s": 31.506180677795783,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

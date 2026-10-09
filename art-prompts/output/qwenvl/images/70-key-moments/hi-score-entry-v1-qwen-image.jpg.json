@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:07:54.120Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic photo, 3d render, modern UI, keyboard, mouse cursor, browser window, long names, readable extra words, numbers scores, slot machine, casino, misspelled text, garbled letters, watermark, blurry, more than two text strings",
+  "negative_sent": "photorealistic photo, 3d render, modern UI, keyboard, mouse cursor, browser window, long names, readable extra words, numbers scores, slot machine, casino, misspelled text, garbled letters, watermark, blurry, more than two text strings",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "warning-gameover",
+    "slug": "hi-score-entry",
+    "variantNum": 1,
+    "id": "hi-score-entry-v1",
+    "title": "Neon cabinet glow: ranking row with three-letter slot lit",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, centered arcade screen composition, heavy subtle CRT scanline glow; the hi-score entry moment as pure cabinet poetry. The screen is a dark navy marquee board under glass: across the top, the words \"HIGH SCORE\" in bright gold blocky arcade capitals with orange under-glow, and below it a short list of ranked entries drawn as neat pixel letter-rows — the top row freshly earned and burning brighter than the rest: the three letters \"AAA\" boxed in two blinking selection brackets of cyan light, each letter a chunky outlined tile glowing warm gold as if just stamped. The lower rows dim in steps of respect, receding lilac-grey placeholder letter-triplets fading toward the bottom like names already half-forgotten, each row underlined with a thin pixel rule of deep violet. From off-screen, the cabinet's own neon spills across the glass: a horizontal bleed of magenta and cyan reflection streaking the panel diagonally, dust specks catching it, the faint curve and bow of a CRT at the frame edges, and one blurry thumbprint at the lower right corner of the tube — proof a human hand just left. The whole image smells like carpet cleaner, ozone and victory: saturated arcade colors, thick outlines on every glyph, lifted deep-navy board, never pure black. The text in the image reads exactly \"HIGH SCORE\" at the top and \"AAA\" in the lit row, nothing else spelled anywhere.",
+    "negative": "photorealistic photo, 3d render, modern UI, keyboard, mouse cursor, browser window, long names, readable extra words, numbers scores, slot machine, casino, misspelled text, garbled letters, watermark, blurry, more than two text strings",
+    "negativeScoped": true,
+    "notes": "Exact strings: \"HIGH SCORE\" (top) and \"AAA\" (bracketed row) — both qwen-readable; gold caps ~#f8f070→#f8a030 with #1b2a4a outlines, brackets cyan #38c8e8. The thumbprint + neon glass-reflection are the \"cabinet vibe\" carriers; without them it's just a scoreboard. Dimmed placeholder rows will garble at lower guidance — 4.5 on qwen keeps the lit row crisp while letting the rest stay soft, which is fine and even desirable.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 20111,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 20111,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hi-score-entry-v1-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "113d643b-472b-484c-af84-6b51edd44c95",
+      "created": 1791540469,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, centered arcade screen composition, heavy subtle CRT scanline glow; the hi-score entry moment as pure cabinet poetry. The screen is a dark navy marquee board under glass: across the top, the words \"HIGH SCORE\" in bright gold blocky arcade capitals with orange under-glow, and below it a short list of ranked entries drawn as neat pixel letter-rows — the top row freshly earned and burning brighter than the rest: the three letters \"AAA\" boxed in two blinking selection brackets of cyan light, each letter a chunky outlined tile glowing warm gold as if just stamped. The lower rows dim in steps of respect, receding lilac-grey placeholder letter-triplets fading toward the bottom like names already half-forgotten, each row underlined with a thin pixel rule of deep violet. From off-screen, the cabinet's own neon spills across the glass: a horizontal bleed of magenta and cyan reflection streaking the panel diagonally, dust specks catching it, the faint curve and bow of a CRT at the frame edges, and one blurry thumbprint at the lower right corner of the tube — proof a human hand just left. The whole image smells like carpet cleaner, ozone and victory: saturated arcade colors, thick outlines on every glyph, lifted deep-navy board, never pure black. The text in the image reads exactly \"HIGH SCORE\" at the top and \"AAA\" in the lit row, nothing else spelled anywhere.",
+      "inference_time_s": 19.543565679807216,
+      "peak_memory_mb": 35436
+    },
+    "format": "jpg"
+  }
+}

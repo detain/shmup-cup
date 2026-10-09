@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:47:33.523Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "creature flesh, tentacles, elegant armor, knight, photorealistic, 3d render, text, watermark, blue core, pure black background",
+  "negative_sent": "creature flesh, tentacles, elegant armor, knight, photorealistic, 3d render, text, watermark, blue core, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "08-iron-sovereign",
+    "slug": "is08-reveal",
+    "variantNum": 1,
+    "id": "is08-reveal-v1",
+    "title": "the slab turns to face",
+    "positive": "Industrial dread boss reveal inside a cavernous riveted steel fortress hall, the IRON SOVEREIGN detached from the wall and rotating into view, a colossal rectangular slab of battleship hull plating taller than the frame, its face a grid of dark gunmetal panels sweat-beaded with oil, around its edges a ring of heavy shield plates pivoting on thick brass hinges like an iris of roof doors, half of them swung open to reveal the red furnace core glowing in the slab's chest, a deep arterial red light spilling between the plates and painting the girder forest amber where it crosses the running lights, steam jets coughing from relief valves along the top edge, chains of black soot stained down the plating, the floor grating vibrating with motion-blur, a pale mint manta-shaped fighter with green canopy skids into frame bottom-left under the slab's shadow for scale, the Sovereign trailing one lazy arc of pink bullets from an under-mounted gun, mood of patient machinery waking up, bold dark outlines, saturated limited palette of steel grey, brass amber and arterial red, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.",
+    "negative": "creature flesh, tentacles, elegant armor, knight, photorealistic, 3d render, text, watermark, blue core, pure black background",
+    "negativeScoped": true,
+    "notes": "Amber light ramp #6a4418→#e8a030 on the hall, red core the only hot accent. The slab is RECTANGULAR — reject any model that rounds it into a torso.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 12801,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12801,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "is08-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "158cf9b6-88ce-4a1a-8653-dde8b8af4b3f",
+      "created": 1791539248,
+      "count": 1,
+      "revised_prompt": "Industrial dread boss reveal inside a cavernous riveted steel fortress hall, the IRON SOVEREIGN detached from the wall and rotating into view, a colossal rectangular slab of battleship hull plating taller than the frame, its face a grid of dark gunmetal panels sweat-beaded with oil, around its edges a ring of heavy shield plates pivoting on thick brass hinges like an iris of roof doors, half of them swung open to reveal the red furnace core glowing in the slab's chest, a deep arterial red light spilling between the plates and painting the girder forest amber where it crosses the running lights, steam jets coughing from relief valves along the top edge, chains of black soot stained down the plating, the floor grating vibrating with motion-blur, a pale mint manta-shaped fighter with green canopy skids into frame bottom-left under the slab's shadow for scale, the Sovereign trailing one lazy arc of pink bullets from an under-mounted gun, mood of patient machinery waking up, bold dark outlines, saturated limited palette of steel grey, brass amber and arterial red, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.",
+      "inference_time_s": 14.370367733994499,
+      "peak_memory_mb": 24850
+    },
+    "format": "jpg"
+  }
+}

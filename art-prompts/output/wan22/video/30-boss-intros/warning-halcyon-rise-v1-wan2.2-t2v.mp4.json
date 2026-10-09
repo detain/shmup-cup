@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T13:01:43.562Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, small cramped composition, first-person camera",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, small cramped composition, first-person camera",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/30-boss-intros",
+    "fileStem": "halcyon-bulwark-shield",
+    "slug": "warning-halcyon-rise",
+    "variantNum": 1,
+    "id": "warning-halcyon-rise-v1",
+    "title": "red siren flash as the plate-armored fortress surfaces",
+    "positive": "Widescreen retro 16-bit pixel-art arcade boss warning: the deep-navy frame suddenly darkens, then heavy red warning energy floods in from the edges pulsing twice like a two-tone siren rhythm, bold blocky danger light strobing over riveted shadow, as the red wash peaks an enormous mechanical sea-creature fortress-ship of thick plate armor rises slowly from the bottom of frame shedding waterfalls of pixel spray, rows of violet porthole lights igniting along its hull one by one, its shield plates interlocking with a dull amber gleam, the tiny steel-blue dart fighter silhouetted at left holds its ground with a flaring orange engine trail, camera pulls back slightly to reveal the scale, explosions of rim light, CRT scanlines, ominous and grand, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, small cramped composition, first-person camera",
+    "notes": "The two-pulse siren flash plus rise is exactly five seconds of warning drama — the pacing is baked into \"pulsing twice\". If the red flood eats the reveal, lower guidance to 4.0 so the darkening stays brief.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 23001,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "warning-halcyon-rise-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "da084629-1c8e-41a9-ad1a-6aaee22d198a",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen retro 16-bit pixel-art arcade boss warning: the deep-navy frame suddenly darkens, then heavy red warning energy floods in from the edges pulsing twice like a two-tone siren rhythm, bold blocky danger light strobing over riveted shadow, as the red wash peaks an enormous mechanical sea-creature fortress-ship of thick plate armor rises slowly from the bottom of frame shedding waterfalls of pixel spray, rows of violet porthole lights igniting along its hull one by one, its shield plates interlocking with a dull amber gleam, the tiny steel-blue dart fighter silhouetted at left holds its ground with a flaring orange engine trail, camera pulls back slightly to reveal the scale, explosions of rim light, CRT scanlines, ominous and grand, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 23001,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, small cramped composition, first-person camera",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.8537219259888
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

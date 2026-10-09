@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:16:20.782Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, real seahorse, organic creature, cute pony, ocean water splash, modern helicopter, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "05-squall-steed",
+    "slug": "ss05-reveal",
+    "variantNum": 1,
+    "id": "ss05-reveal-v1",
+    "title": "cresting the cloud deck",
+    "positive": "Majestic storm boss reveal in widescreen arcade key art, the SQUALL STEED, a fortress-sized mechanical seahorse rearing up out of a roiling grey-violet cloud deck, its long snouted head plated in cold steel-blue with a mane of loose tensioned cables streaming sideways in the gale, segmented neck rings creaking open as its chest armor falls away on heavy hinges exposing a swirling captive thunderhead glowing white-blue inside the ribcage cage, coronet spikes along the back lifting sheets of rain, a curled counterbalance tail vanishing into cloud below, saw-tooth snow ridges of a mountain range cutting the lower background under slanting silver rain streaks, a tiny steel-blue dart fighter with orange exhaust climbing the updraft at the left edge for scale, lightning forking between the mane cables, deep navy storm shadows never pure black, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format art with pixel texture accents, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, real seahorse, organic creature, cute pony, ocean water splash, modern helicopter, pure black background",
+    "negativeScoped": true,
+    "notes": "Chest thunderhead is both silhouette signature and core. Keep the snout mechanical, cables for the mane.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 12501,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12501,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ss05-reveal-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "a459ed36-214b-4b9c-8b46-b2b46cb979dc",
+      "created": 1791537376,
+      "count": 1,
+      "revised_prompt": "Majestic storm boss reveal in widescreen arcade key art, the SQUALL STEED, a fortress-sized mechanical seahorse rearing up out of a roiling grey-violet cloud deck, its long snouted head plated in cold steel-blue with a mane of loose tensioned cables streaming sideways in the gale, segmented neck rings creaking open as its chest armor falls away on heavy hinges exposing a swirling captive thunderhead glowing white-blue inside the ribcage cage, coronet spikes along the back lifting sheets of rain, a curled counterbalance tail vanishing into cloud below, saw-tooth snow ridges of a mountain range cutting the lower background under slanting silver rain streaks, a tiny steel-blue dart fighter with orange exhaust climbing the updraft at the left edge for scale, lightning forking between the mane cables, deep navy storm shadows never pure black, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format art with pixel texture accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 37.17177697503939,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

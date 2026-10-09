@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T10:25:44.469Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, photorealistic",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, photorealistic",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/10-title-attract",
+    "fileStem": "logo-sting",
+    "slug": "logo-sting-ignite",
+    "variantNum": 1,
+    "id": "logo-sting-ignite-v1",
+    "title": "wordmark igniting letter-by-letter in fire gradient",
+    "positive": "Retro 16-bit pixel-art arcade logo animation: a chunky blocky wordmark ignites letter by letter from left to right, each glyph flaring up in a gradient of bright yellow at the core through hot orange to deep red at the edges, bold white outline flashing on each ignition with a burst of small square pixel sparks that drift upward and fade, soft bloom glow pulsing around the finished letters, subtle CRT scanline texture shimmering across the frame, deep navy-black space background with a few slow drifting star pixels, the camera holds nearly static with a very slight slow push-in, ending on one final bright flare pulse that settles into a steady ember glow.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, photorealistic",
+    "notes": "Wan 2.2 is the only one of the two models with a chance of holding legible letterforms; expect 1-in-5 usable. If typography warbles, cut to the i2v path below. Single continuous shot, no loop.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 21001,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "logo-sting-ignite-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "337b4975-79b3-4546-88c6-e42bb1bfb4a8",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art arcade logo animation: a chunky blocky wordmark ignites letter by letter from left to right, each glyph flaring up in a gradient of bright yellow at the core through hot orange to deep red at the edges, bold white outline flashing on each ignition with a burst of small square pixel sparks that drift upward and fade, soft bloom glow pulsing around the finished letters, subtle CRT scanline texture shimmering across the frame, deep navy-black space background with a few slow drifting star pixels, the camera holds nearly static with a very slight slow push-in, ending on one final bright flare pulse that settles into a steady ember glow.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 21001,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, photorealistic",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 956.0625838239212
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

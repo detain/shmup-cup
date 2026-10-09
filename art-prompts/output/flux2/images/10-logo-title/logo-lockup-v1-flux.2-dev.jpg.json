@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:07:38.668Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, missing letters, warped typography, letter overlap, photorealistic, 3d render, watermark, signature, blurry, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "logo-lockup",
+    "slug": "logo-lockup",
+    "variantNum": 1,
+    "id": "logo-lockup-v1",
+    "title": "classic wordmark on deep-navy arcade plate",
+    "positive": "Arcade game logo lockup rendering the exact text \"SHMUP CUP\" in heavy chunky block capital letters, the letterforms filled with a warm vertical gradient starting pale buttery yellow at the top, melting through tangerine orange in the middle and ending flame red at the bottom, each letter wrapped in a thick dark-navy outline with a hard offset navy drop shadow, a thin cream-white highlight stripe along the upper edge of every letter, the wordmark centered on a deep-navy arcade background scattered with tiny pixel stars, a faint cyan horizontal glow line behind the text, subtle CRT scanline texture across the whole image, clean vector shapes with pixel-art texture accents, saturated limited palette, no other words anywhere.",
+    "negative": "garbled text, misspelled letters, extra letters, missing letters, warped typography, letter overlap, photorealistic, 3d render, watermark, signature, blurry, pure black background",
+    "negativeScoped": true,
+    "notes": "Gradient reference #f8f070→#f8a030→#e04828, outline #1b2a4a, shadow #0a0f26, highlight #fffff0. qwen-image for the letterforms; check the \"W\" spacing.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10001,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10001,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "logo-lockup-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "64f38a92-ac65-4d36-940c-cf1b7c700c38",
+      "created": 1791536854,
+      "count": 1,
+      "revised_prompt": "Arcade game logo lockup rendering the exact text \"SHMUP CUP\" in heavy chunky block capital letters, the letterforms filled with a warm vertical gradient starting pale buttery yellow at the top, melting through tangerine orange in the middle and ending flame red at the bottom, each letter wrapped in a thick dark-navy outline with a hard offset navy drop shadow, a thin cream-white highlight stripe along the upper edge of every letter, the wordmark centered on a deep-navy arcade background scattered with tiny pixel stars, a faint cyan horizontal glow line behind the text, subtle CRT scanline texture across the whole image, clean vector shapes with pixel-art texture accents, saturated limited palette, no other words anywhere.",
+      "inference_time_s": 29.654339656000957,
+      "peak_memory_mb": 39964
+    },
+    "format": "jpg"
+  }
+}

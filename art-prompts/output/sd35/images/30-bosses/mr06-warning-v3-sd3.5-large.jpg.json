@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:47:04.614Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, banner, letters, photorealistic, 3d render, watermark, detailed body visible, tentacles human anatomy, pure black background, purple haze",
+  "negative_sent": "text, banner, letters, photorealistic, 3d render, watermark, detailed body visible, tentacles human anatomy, pure black background, purple haze",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "06-mantle-regent",
+    "slug": "mr06-warning",
+    "variantNum": 3,
+    "id": "mr06-warning-v3",
+    "title": "tentacle crown silhouette",
+    "positive": "Slow-dread boss alarm composition, deep inside the breathing vault the lights dim cell by cell from the edges of the frame inward until the only illumination is the green pulse of the wall itself and one rising amber glow, against it the MANTLE REGENT appears as a flat silhouette, a domed mantle hood with eight long tentacles peeled back and arched overhead in a perfect crown circle, the single great eye burning like an amber lantern at the center of the crown, the tentacle silhouette edges rimmed in thin mint light so the geometry stays readable in the dark, wet vapor strands drifting across the glow, the vault floor membrane rippling outward from a submerged shape, bottom left corner of the frame a tiny cyan canopy glint of the player fighter going still, quiet then violent mood, bold dark outlines, saturated limited palette of green, mint and amber on near-navy, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+    "negative": "text, banner, letters, photorealistic, 3d render, watermark, detailed body visible, tentacles human anatomy, pure black background, purple haze",
+    "negativeScoped": true,
+    "notes": "The tentacle crown is the icon to echo later in the hollow-king poster series. Keep silhouette edges mint-rimmed.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 12603,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12603,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "mr06-warning-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c5cd2fe6-edc4-4cd1-a6b4-4edab7dde4df",
+      "created": 1791539220,
+      "count": 1,
+      "revised_prompt": "Slow-dread boss alarm composition, deep inside the breathing vault the lights dim cell by cell from the edges of the frame inward until the only illumination is the green pulse of the wall itself and one rising amber glow, against it the MANTLE REGENT appears as a flat silhouette, a domed mantle hood with eight long tentacles peeled back and arched overhead in a perfect crown circle, the single great eye burning like an amber lantern at the center of the crown, the tentacle silhouette edges rimmed in thin mint light so the geometry stays readable in the dark, wet vapor strands drifting across the glow, the vault floor membrane rippling outward from a submerged shape, bottom left corner of the frame a tiny cyan canopy glint of the player fighter going still, quiet then violent mood, bold dark outlines, saturated limited palette of green, mint and amber on near-navy, SNES-era 16-bit inspired concept rendering, widescreen side-scrolling arcade framing, subtle CRT scanline glow, no text, no letters.",
+      "inference_time_s": 13.57904421701096,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

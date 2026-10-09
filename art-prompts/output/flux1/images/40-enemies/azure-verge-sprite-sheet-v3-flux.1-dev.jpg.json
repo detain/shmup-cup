@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:57:38.144Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, watermark, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-a-azure-verge",
+    "slug": "azure-verge-sprite-sheet",
+    "variantNum": 3,
+    "id": "azure-verge-sprite-sheet-v3",
+    "title": "In-game enemy sprite sheet: skeet, vane, tender",
+    "positive": "Pixel art sprite sheet, SNES 16-bit arcade game style, flat solid deep-navy sheet background, generous even margins between sprites, absolutely no text, numbers or labels. Three enemy types of a planetary-orbit swarm, all facing left in side view: 1) SKEET — an egg-shaped armored drone pod, gunmetal plate shell, rust-violet joints, glowing pink eye-slit, shown in idle, hatch-open firing, and destroyed-fragments frames; 2) VANE — a small steel core ringed by three spinning crescent blades with polished lilac edges, shown at four rotational phases so the blades form a blur-star silhouette; 3) TENDER — a wide, low carrier with a clipped delta silhouette, rows of tiny green lights, an open ventral bay where mini skeet pods are queued nose-down, in closed-bay and open-bay frames. Bold dark outlines around every sprite, saturated limited palette, chunky readable forms that stay clear at small size, classic cartridge-era crispness with light dithering on metal.",
+    "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, watermark, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Landscape strip: one species per third of the canvas, easiest layout for extraction. flux.1-dev is the steadiest at \"absolutely no text\" sheets. Color reference: shell gunmetal, seams rust-violet, lights #40d070, eye #ff5aa0.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15123,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15123,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "azure-verge-sprite-sheet-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b26941d8-4935-4a8a-8489-9c71114c0d9e",
+      "created": 1791536253,
+      "count": 1,
+      "revised_prompt": "Pixel art sprite sheet, SNES 16-bit arcade game style, flat solid deep-navy sheet background, generous even margins between sprites, absolutely no text, numbers or labels. Three enemy types of a planetary-orbit swarm, all facing left in side view: 1) SKEET — an egg-shaped armored drone pod, gunmetal plate shell, rust-violet joints, glowing pink eye-slit, shown in idle, hatch-open firing, and destroyed-fragments frames; 2) VANE — a small steel core ringed by three spinning crescent blades with polished lilac edges, shown at four rotational phases so the blades form a blur-star silhouette; 3) TENDER — a wide, low carrier with a clipped delta silhouette, rows of tiny green lights, an open ventral bay where mini skeet pods are queued nose-down, in closed-bay and open-bay frames. Bold dark outlines around every sprite, saturated limited palette, chunky readable forms that stay clear at small size, classic cartridge-era crispness with light dithering on metal.",
+      "inference_time_s": 12.505203463835642,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

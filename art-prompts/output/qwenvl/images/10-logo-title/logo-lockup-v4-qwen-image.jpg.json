@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:06:29.462Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, tarnished metal, dull gold",
+  "negative_sent": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, tarnished metal, dull gold",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "logo-lockup",
+    "slug": "logo-lockup",
+    "variantNum": 4,
+    "id": "logo-lockup-v4",
+    "title": "gold-foil trophy emblem wordmark",
+    "positive": "Prestigious arcade championship badge rendering the exact phrase \"SHMUP CUP\" in polished golden block letters with a warm gradient from light champagne gold through amber to deep bronze, navy blue outline, gleaming white edge highlights, the wordmark set inside a circular trophy emblem made of crossed golden wings, laurel leaves rendered as simple pixel-art shapes, a small five-point starburst at each side, deep midnight navy background with a subtle violet-to-teal glow vignette that never reaches pure black, thin scanline texture, clean vector shapes with pixel-art texture accents, saturated limited palette, centered symmetrical composition, no other text.",
+    "negative": "garbled text, misspelled letters, extra letters, missing letters, photorealistic, 3d render, watermark, signature, blurry, pure black background, tarnished metal, dull gold",
+    "negativeScoped": true,
+    "notes": "Square format for avatar/achievement use. \"CUP\" trophy metaphor stays pixel-simple; watch laurel detail noise on sd3.5.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10004,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10004,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "logo-lockup-v4-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "11cc5ae3-e195-4b5f-8f99-902f91fd1ad9",
+      "created": 1791540384,
+      "count": 1,
+      "revised_prompt": "Prestigious arcade championship badge rendering the exact phrase \"SHMUP CUP\" in polished golden block letters with a warm gradient from light champagne gold through amber to deep bronze, navy blue outline, gleaming white edge highlights, the wordmark set inside a circular trophy emblem made of crossed golden wings, laurel leaves rendered as simple pixel-art shapes, a small five-point starburst at each side, deep midnight navy background with a subtle violet-to-teal glow vignette that never reaches pure black, thin scanline texture, clean vector shapes with pixel-art texture accents, saturated limited palette, centered symmetrical composition, no other text.",
+      "inference_time_s": 14.349656675942242,
+      "peak_memory_mb": 35438
+    },
+    "format": "jpg"
+  }
+}

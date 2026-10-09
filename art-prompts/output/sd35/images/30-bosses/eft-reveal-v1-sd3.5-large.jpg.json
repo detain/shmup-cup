@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:48:56.542Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, single head, matching colors, pure black background",
+  "negative_sent": "photorealistic, 3d render, text artifacts, watermark, blurry, single head, matching colors, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "12-ember-frost-twins",
+    "slug": "eft-reveal",
+    "variantNum": 1,
+    "id": "eft-reveal-v1",
+    "title": "both heads rearing, fire above ice below",
+    "positive": "Horizontal shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: twin serpent heads rearing from one shared riveted steel yoke at the right edge of a deep-navy battlefield — the upper head is ember, a plated drake exhaling ribbons of orange-white fire with cooling-lava cracks glowing along its snout, the lower head is frost, its pale blue-white plating rimed with ice, breath a cone of sparkling vapor that frosts the yoke where it passes. Between them the yoke turns on a brass ring, steam where the two breaths meet. The contrast is the composition: warm ramp from pale yellow through orange to deep red above, cold ramp from near-white through sky blue to violet-ice below, both outlined in heavy near-black navy. Sparse stars, one steel-blue player dart with cyan canopy dwarfed at the left margin. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade frame.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, single head, matching colors, pure black background",
+    "negativeScoped": true,
+    "notes": "Fire reference ramp #fff080→#f8b030→#f06820→#c83018; ice keep #9adcf0 to #4060d0 — the split warmth/cold is the whole read, flux.2-dev holds both palettes cleanly.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 13201,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13201,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "eft-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0f03d8a0-9f4f-436e-8522-205c9d2c6a9b",
+      "created": 1791539331,
+      "count": 1,
+      "revised_prompt": "Horizontal shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: twin serpent heads rearing from one shared riveted steel yoke at the right edge of a deep-navy battlefield — the upper head is ember, a plated drake exhaling ribbons of orange-white fire with cooling-lava cracks glowing along its snout, the lower head is frost, its pale blue-white plating rimed with ice, breath a cone of sparkling vapor that frosts the yoke where it passes. Between them the yoke turns on a brass ring, steam where the two breaths meet. The contrast is the composition: warm ramp from pale yellow through orange to deep red above, cold ramp from near-white through sky blue to violet-ice below, both outlined in heavy near-black navy. Sparse stars, one steel-blue player dart with cyan canopy dwarfed at the left margin. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade frame.",
+      "inference_time_s": 13.579887761035934,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

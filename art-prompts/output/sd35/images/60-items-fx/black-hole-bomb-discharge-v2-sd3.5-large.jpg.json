@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:00:52.109Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, storm clouds, lightning striking ground, Tesla coil, lightning bug shape, fractal blue plasma photo, text, watermark, blurry, rounded smooth bolts, single central beam, pure black background",
+  "negative_sent": "photorealistic, 3d render, storm clouds, lightning striking ground, Tesla coil, lightning bug shape, fractal blue plasma photo, text, watermark, blurry, rounded smooth bolts, single central beam, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "black-hole-bomb-discharge",
+    "variantNum": 2,
+    "id": "black-hole-bomb-discharge-v2",
+    "title": "Detonation: the vortex collapses into a white lightning discharge",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; climactic weapon effect concept art, ultra-detailed. One frame after the collapse: the three-armed violet black hole is gone, and in its place the sky is conducting. From a single small hard white point at dead center, a dozen thick lightning trunks explode radially — jagged, angular, dark-outlined bolts of pure white with pale blue-violet forks splitting off each trunk like frozen river deltas, reaching in every direction almost to the frame edges. Between the main trunks, a fine web of short purple sparks drifts and secondary micro-arcs crawl along the ends of the biggest forks. Around the discharge, the ghost of the implosion remains: a broken ring of lilac vapor where the event horizon was, shattering outward into arcs of fading violet smoke, plus a scatter of the bomb's swallowed bullets being coughed back out as tiny harmless sparks caught mid-air between the bolts. A faint overexposed circle of light bleaches the very center of the image, so the eye starts at white and rides each trunk outward. The rest of the field is deep navy with shaken star dust. Palette of white-hot lightning over violet ghost-smoke on navy, arcade-electric, lifted deep-navy background, no pure black outside the far corners. No text, no letters, no UI, no characters.",
+    "negative": "photorealistic, 3d render, storm clouds, lightning striking ground, Tesla coil, lightning bug shape, fractal blue plasma photo, text, watermark, blurry, rounded smooth bolts, single central beam, pure black background",
+    "negativeScoped": true,
+    "notes": "Discharge whites with violet forks ~#b84cff over ghost ring #d8b0ff on navy. Angular dark-outlined bolts are the brief — model priors pull toward soft plasma, so \"jagged, angular, dark-outlined\" plus the \"rounded smooth bolts\" negative carry the look. The lilac vapor ring is what ties this frame to the previous one; if it vanishes, the pair stops telling a story.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18052,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 18052,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "black-hole-bomb-discharge-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "95903ff7-ba0b-42f1-9aa3-7e489b176ace",
+      "created": 1791540047,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; climactic weapon effect concept art, ultra-detailed. One frame after the collapse: the three-armed violet black hole is gone, and in its place the sky is conducting. From a single small hard white point at dead center, a dozen thick lightning trunks explode radially — jagged, angular, dark-outlined bolts of pure white with pale blue-violet forks splitting off each trunk like frozen river deltas, reaching in every direction almost to the frame edges. Between the main trunks, a fine web of short purple sparks drifts and secondary micro-arcs crawl along the ends of the biggest forks. Around the discharge, the ghost of the implosion remains: a broken ring of lilac vapor where the event horizon was, shattering outward into arcs of fading violet smoke, plus a scatter of the bomb's swallowed bullets being coughed back out as tiny harmless sparks caught mid-air between the bolts. A faint overexposed circle of light bleaches the very center of the image, so the eye starts at white and rides each trunk outward. The rest of the field is deep navy with shaken star dust. Palette of white-hot lightning over violet ghost-smoke on navy, arcade-electric, lifted deep-navy background, no pure black outside the far corners. No text, no letters, no UI, no characters.",
+      "inference_time_s": 13.586930246092379,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

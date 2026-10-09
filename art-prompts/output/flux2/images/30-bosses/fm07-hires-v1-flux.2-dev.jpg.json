@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:23:49.998Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, crown on a head, organic, player character, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "hi-res",
+    "slug": "fm07-hires",
+    "variantNum": 1,
+    "id": "fm07-hires-v1",
+    "title": "Facet Monarch orbiting-crown documentation plate",
+    "positive": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete construct of Facet Monarch FM-07, an Iron Tide crystal sovereign, shown fully readable in open formation — a lone floating core of dark steel and violet light at center, ringed by a slow orbiting crown of seven huge crystal segments, each a faceted prism shard of deep violet with lilac edge-glints, angled at different rotations along the orbit so the ring's spin is obvious in stillness. Inner facets catch and throw pink, red and purple light-beams that cross between shards. The core shows a bright white pinpoint weak-spot where all beams converge. Prism-corridor haze of triangle facets glinting behind. Deep-navy palette never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, crown on a head, organic, player character, pure black background",
+    "negativeScoped": true,
+    "notes": "\"Open formation\" + segment count prevents the crown fusing into a hat; violet #8a48e8 with #c8a0ff edge rims.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 14071,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 14071,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "fm07-hires-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "a6331cbb-b171-49be-87b7-f8379213f3dc",
+      "created": 1791537825,
+      "count": 1,
+      "revised_prompt": "Boss bestiary documentation art, ultrawide horizontal arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete construct of Facet Monarch FM-07, an Iron Tide crystal sovereign, shown fully readable in open formation — a lone floating core of dark steel and violet light at center, ringed by a slow orbiting crown of seven huge crystal segments, each a faceted prism shard of deep violet with lilac edge-glints, angled at different rotations along the orbit so the ring's spin is obvious in stillness. Inner facets catch and throw pink, red and purple light-beams that cross between shards. The core shows a bright white pinpoint weak-spot where all beams converge. Prism-corridor haze of triangle facets glinting behind. Deep-navy palette never pure black, no foreground characters, no text, no letters, no UI. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 34.87681387900375,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

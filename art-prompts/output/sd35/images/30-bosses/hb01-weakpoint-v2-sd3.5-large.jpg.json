@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:45:12.707Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, human faces, eyes, organic tissue, gore, blurry, pure black background",
+  "negative_sent": "photorealistic, 3d render, text, watermark, human faces, eyes, organic tissue, gore, blurry, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "01-halcyon-bulwark",
+    "slug": "hb01-weakpoint",
+    "variantNum": 2,
+    "id": "hb01-weakpoint-v2",
+    "title": "wing-tip emitter core close-up",
+    "positive": "Extreme close-up arcade boss weak point study, filling the frame with one enormous wing-tip emitter pod of the HALCYON BULWARK warship, a layered steel funnel of concentric armor petals partly bloomed open to expose a searing violet-pink energy core with a bright white center suspended in magnetic rings, arcs of pink lightning crawling along heat-blued metal, molten orange seams glowing between the plate layers, fragments of the dark blue-black fortress hull falling away at the edges of frame with tiny bolts and torn cable ends visible, radial glow washing the surrounding void navy into violet, one or two pink bullets bursting at the rim of the exposure, hyper-detailed mechanical texture rendered in a saturated 16-bit inspired language with bold dark outlines and pixel-cluster shading accents, dramatic macro composition, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, human faces, eyes, organic tissue, gore, blurry, pure black background",
+    "negativeScoped": true,
+    "notes": "Square crop for strategy guide \"how to kill it\" cards. Core white-hot center, arms violet #b84cff.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 12102,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 12102,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hb01-weakpoint-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "22d44ddf-6b2f-40aa-b3b9-9f427cb7d90e",
+      "created": 1791539108,
+      "count": 1,
+      "revised_prompt": "Extreme close-up arcade boss weak point study, filling the frame with one enormous wing-tip emitter pod of the HALCYON BULWARK warship, a layered steel funnel of concentric armor petals partly bloomed open to expose a searing violet-pink energy core with a bright white center suspended in magnetic rings, arcs of pink lightning crawling along heat-blued metal, molten orange seams glowing between the plate layers, fragments of the dark blue-black fortress hull falling away at the edges of frame with tiny bolts and torn cable ends visible, radial glow washing the surrounding void navy into violet, one or two pink bullets bursting at the rim of the exposure, hyper-detailed mechanical texture rendered in a saturated 16-bit inspired language with bold dark outlines and pixel-cluster shading accents, dramatic macro composition, subtle CRT scanline glow, no text.",
+      "inference_time_s": 13.318840440129861,
+      "peak_memory_mb": 25696
+    },
+    "format": "jpg"
+  }
+}

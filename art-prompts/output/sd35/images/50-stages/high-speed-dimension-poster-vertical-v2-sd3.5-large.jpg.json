@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:57:49.084Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, race track perspective, cars, sky and clouds, sun, stars, pure black background, watermark, text, blurry, horizontal composition, bent checker lines, rainbow colors, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, race track perspective, cars, sky and clouds, sun, stars, pure black background, watermark, text, blurry, horizontal composition, bent checker lines, rainbow colors, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "high-speed-dimension",
+    "slug": "high-speed-dimension-poster-vertical",
+    "variantNum": 2,
+    "id": "high-speed-dimension-poster-vertical-v2",
+    "title": "Vertical poster: tunnel of light from inside the Mode-7 plane, horizon line overhead",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The high-speed dimension folded into a vertical drop: the bottom two-thirds of the frame is a checkerboard plane of violet and indigo squares flying straight down toward the viewer, tiles streaking into long vertical light-rails along the left and right edges of the image while a clean central lane of compressed seam-light runs bottom to top like an exposed filament. Halfway up, the plane curls over itself — a slow wave in the floor of the dimension — and beyond that wave, at the top of the frame, the horizon band burns across horizontally: a hard ribbon of pale lilac with a thin white core, the only stable line in the picture, its light spilling downward and rimming every tile edge above it in silver. Between the curl and the horizon floats the fog, a deep violet-black veil with drifting scanline striations, half-swallowing a procession of enormous tilted checker monoliths that hang inverted above the horizon like a reflected fleet. Rivulets of cyan-white data-light run upward along the lane toward the horizon against the downward rush of the tiles, crossing the image in a double-exposure of conflicting speeds. The composition is one lunging vertical vector: from tumbling floor at the feet, up the filament, into the patient light at the top. Electric violets, indigo shadows, lilac horizon, cyan accents, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, race track perspective, cars, sky and clouds, sun, stars, pure black background, watermark, text, blurry, horizontal composition, bent checker lines, rainbow colors, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: tiles #6a4ab0/#3a2a6a, horizon ribbon #9a7ad8 with white core, fog #20124a. The \"floor curls over with an inverted fleet beyond the horizon\" is deliberately surreal — the dimension ignores up/down; flux.1 usually nails the curl but muddies the horizon line, so check that the ribbon stays razor straight. Strong as a set-piece loading screen.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 17002,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 17002,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "high-speed-dimension-poster-vertical-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ef4b0a2b-390f-4917-ba0f-aa169b4791c4",
+      "created": 1791539864,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The high-speed dimension folded into a vertical drop: the bottom two-thirds of the frame is a checkerboard plane of violet and indigo squares flying straight down toward the viewer, tiles streaking into long vertical light-rails along the left and right edges of the image while a clean central lane of compressed seam-light runs bottom to top like an exposed filament. Halfway up, the plane curls over itself — a slow wave in the floor of the dimension — and beyond that wave, at the top of the frame, the horizon band burns across horizontally: a hard ribbon of pale lilac with a thin white core, the only stable line in the picture, its light spilling downward and rimming every tile edge above it in silver. Between the curl and the horizon floats the fog, a deep violet-black veil with drifting scanline striations, half-swallowing a procession of enormous tilted checker monoliths that hang inverted above the horizon like a reflected fleet. Rivulets of cyan-white data-light run upward along the lane toward the horizon against the downward rush of the tiles, crossing the image in a double-exposure of conflicting speeds. The composition is one lunging vertical vector: from tumbling floor at the feet, up the filament, into the patient light at the top. Electric violets, indigo shadows, lilac horizon, cyan accents, lifted deep-navy base, never pure black. No text, no letters, no user interface elements.",
+      "inference_time_s": 13.554320686031133,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:59:13.372Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, red gore, blood, human organs, medical anatomy, teeth, eyes staring, insect swarm, pure black background, watermark, text, blurry, slimy specular highlights, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, red gore, blood, human organs, medical anatomy, teeth, eyes staring, insect swarm, pure black background, watermark, text, blurry, slimy specular highlights, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-f-cell-vault",
+    "slug": "cell-vault-wallpaper",
+    "variantNum": 1,
+    "id": "cell-vault-wallpaper-v1",
+    "title": "Wide wallpaper: interior of a living fortress, undulating green cell-tissue walls",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The interior of a colossal living fortress grown rather than built: the entire wide hall is lined with walls of enormous translucent green cells, each one a rounded blob the size of a room with a pale glowing nucleus suspended at its center, thousands of them packed in a honeycomb that ripples with a slow peristaltic wave frozen mid-contraction. Between the cell rows run thick fleshy folds and ridges of darker organic tissue, outlined in near-black green, with clusters of breathing pores that flare open in ragged star shapes, each exhaling a faint spore-mist glow. Long membrane strands stretch ceiling to floor like gutted cables, strung with pulsing nodes of sickly yellow-green light that trace circulation paths through the tissue. In the deep background the hall narrows into a sphincter-like archway of concentric muscle rings, half-contracted, lit from within by a wet amber-green radiance. A raised dais of hardened callus plate sits mid-floor, ringed by shadow. The palette is a committed swamp of muted forest greens and pale nucleus glows with warm amber veins, laid over lifted deep-navy-black shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, red gore, blood, human organs, medical anatomy, teeth, eyes staring, insect swarm, pure black background, watermark, text, blurry, slimy specular highlights, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: cell walls #2a4434 to #385a44, nucleus glow pale ~#c8e0b0, amber veins ~#e8a030 accents. The \"grown not built\" + \"muted forest greens\" framing keeps the vault uncanny-alive without tipping into gore — the negative list is the important half of this prompt for sd3.5, which drifts toward wet-red anatomy when it hears \"fleshy.\" flux.2 renders the peristaltic ripple pattern beautifully.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16601,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16601,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "cell-vault-wallpaper-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b1f22fbe-e52e-4080-889f-778e4799c109",
+      "created": 1791539948,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The interior of a colossal living fortress grown rather than built: the entire wide hall is lined with walls of enormous translucent green cells, each one a rounded blob the size of a room with a pale glowing nucleus suspended at its center, thousands of them packed in a honeycomb that ripples with a slow peristaltic wave frozen mid-contraction. Between the cell rows run thick fleshy folds and ridges of darker organic tissue, outlined in near-black green, with clusters of breathing pores that flare open in ragged star shapes, each exhaling a faint spore-mist glow. Long membrane strands stretch ceiling to floor like gutted cables, strung with pulsing nodes of sickly yellow-green light that trace circulation paths through the tissue. In the deep background the hall narrows into a sphincter-like archway of concentric muscle rings, half-contracted, lit from within by a wet amber-green radiance. A raised dais of hardened callus plate sits mid-floor, ringed by shadow. The palette is a committed swamp of muted forest greens and pale nucleus glows with warm amber veins, laid over lifted deep-navy-black shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.323307828977704,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

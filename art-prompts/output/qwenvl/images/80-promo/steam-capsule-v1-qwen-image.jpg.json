@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:08:13.998Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, extra text, taglines, ratings, misspelled logo, garbled letters, blurry, low contrast, busy background, whole boss visible, dark muddy colors, watermark, letters not straight-on",
+  "negative_sent": "photorealistic, 3d render, extra text, taglines, ratings, misspelled logo, garbled letters, blurry, low contrast, busy background, whole boss visible, dark muddy colors, watermark, letters not straight-on",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/80-promo",
+    "fileStem": "website-and-banners",
+    "slug": "steam-capsule",
+    "variantNum": 1,
+    "id": "steam-capsule-v1",
+    "title": "Store capsule: title-safe vertical crop, fighter screaming past burning hull",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, near-square arcade poster composition, subtle CRT scanline glow; store capsule artwork built to stay readable at small size, ultra-detailed with clean vector shapes. Centered and enormous, filling the right two-thirds of a square frame: the forward third of a mechanical sea-creature battleship's head — a flared iron jaw lined with dark turret barnacles, one great round sensor eye glowing hot violet at the top third of the image, armor plates stepping back into deep rust-shadow. Slicing diagonally across the lower-left foreground, nose toward the upper-right corner of the frame and enormous in perspective, the polished steel-blue nose-cone and swept wingroot of a fighter — cyan canopy edge catching the boss's eye-light, a single orange engine flare blown long behind it off-frame — the two machines on an unavoidable collision course frozen one frame before it. Between them, sparse pink bright-core bullets float like angry fireflies, few enough to read individually even at capsule size. Above the jaw-line, across the very top of the frame, straight-on blocky arcade capitals hold the game's name in a warm vertical gradient from pale yellow through orange into red, thick dark navy outlines, white top-highlight, generous drop shadow: the words \"SHMUP CUP\". Background a clean lifted deep-navy starfield with the faintest violet nebula breath, everything else kept empty so the title, the eye, and the nose-cone do all the selling. Never pure black. The text in the image must read exactly \"SHMUP CUP\" and nothing else.",
+    "negative": "photorealistic, 3d render, extra text, taglines, ratings, misspelled logo, garbled letters, blurry, low contrast, busy background, whole boss visible, dark muddy colors, watermark, letters not straight-on",
+    "negativeScoped": true,
+    "notes": "Exact string: \"SHMUP CUP\" in the canonical lockup (#f8f070→#f8a030→#e04828, outline #1b2a4a, shadow #0a0f26, highlight #fffff0). Square generation, then Steam crops — safe-zone rule: the title band and fighter nose must survive a center 16:9 crop, so keep both within the middle 80% of the frame height. qwen-image for the lettering; flux.2-dev if you want a grittier jaw and will overlay the logo in post instead.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 21021,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 21021,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "steam-capsule-v1-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "660af2a6-7f11-4ad7-a41f-54c1716e3944",
+      "created": 1791540489,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, near-square arcade poster composition, subtle CRT scanline glow; store capsule artwork built to stay readable at small size, ultra-detailed with clean vector shapes. Centered and enormous, filling the right two-thirds of a square frame: the forward third of a mechanical sea-creature battleship's head — a flared iron jaw lined with dark turret barnacles, one great round sensor eye glowing hot violet at the top third of the image, armor plates stepping back into deep rust-shadow. Slicing diagonally across the lower-left foreground, nose toward the upper-right corner of the frame and enormous in perspective, the polished steel-blue nose-cone and swept wingroot of a fighter — cyan canopy edge catching the boss's eye-light, a single orange engine flare blown long behind it off-frame — the two machines on an unavoidable collision course frozen one frame before it. Between them, sparse pink bright-core bullets float like angry fireflies, few enough to read individually even at capsule size. Above the jaw-line, across the very top of the frame, straight-on blocky arcade capitals hold the game's name in a warm vertical gradient from pale yellow through orange into red, thick dark navy outlines, white top-highlight, generous drop shadow: the words \"SHMUP CUP\". Background a clean lifted deep-navy starfield with the faintest violet nebula breath, everything else kept empty so the title, the eye, and the nose-cone do all the selling. Never pure black. The text in the image must read exactly \"SHMUP CUP\" and nothing else.",
+      "inference_time_s": 19.638824637047946,
+      "peak_memory_mb": 35454
+    },
+    "format": "jpg"
+  }
+}

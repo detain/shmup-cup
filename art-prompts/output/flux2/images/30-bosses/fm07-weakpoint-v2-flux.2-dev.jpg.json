@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:17:33.420Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "soft focus, dreamy haze, gemstone jewelry photo, photorealistic, 3d render, text, watermark, green tones, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "07-facet-monarch",
+    "slug": "fm07-weakpoint",
+    "variantNum": 2,
+    "id": "fm07-weakpoint-v2",
+    "title": "the core between segments",
+    "positive": "Dazzling macro weak-point shot inside the rotating crown of the FACET MONARCH, camera threaded between two enormous violet crystal segments whose polished walls fill the left and right of the frame like canyon cliffs, straight ahead the exposed heart core floating untethered, a fist-sized knot of screaming white-pink light wrapped in slow-spinning rings of lilac fracture energy, hairline cracks pulsing outward from the core into the nearest segment and lighting them from within like struck flint, tiny pink and purple bullets with bright cores and dark rims orbiting the core defensively in lazy spiral lanes, one gold capsule grazing past the frame edge, refractions splitting the core light into clean pink and violet beams across the crystal canyon walls, composition funneled by hard perspective lines directly at the glowing center, bold dark outlines, saturated limited palette of violet, lilac and incandescent pink, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.",
+    "negative": "soft focus, dreamy haze, gemstone jewelry photo, photorealistic, 3d render, text, watermark, green tones, pure black background",
+    "negativeScoped": true,
+    "notes": "Only warm color is the pink-white core; everything else stays violet-lilac. Weak point is CENTER — frame it with converging edges.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12702,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12702,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "fm07-weakpoint-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "19091071-dde4-4384-b37e-a29747375926",
+      "created": 1791537448,
+      "count": 1,
+      "revised_prompt": "Dazzling macro weak-point shot inside the rotating crown of the FACET MONARCH, camera threaded between two enormous violet crystal segments whose polished walls fill the left and right of the frame like canyon cliffs, straight ahead the exposed heart core floating untethered, a fist-sized knot of screaming white-pink light wrapped in slow-spinning rings of lilac fracture energy, hairline cracks pulsing outward from the core into the nearest segment and lighting them from within like struck flint, tiny pink and purple bullets with bright cores and dark rims orbiting the core defensively in lazy spiral lanes, one gold capsule grazing past the frame edge, refractions splitting the core light into clean pink and violet beams across the crystal canyon walls, composition funneled by hard perspective lines directly at the glowing center, bold dark outlines, saturated limited palette of violet, lilac and incandescent pink, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.",
+      "inference_time_s": 34.080596779007465,
+      "peak_memory_mb": 40034
+    },
+    "format": "jpg"
+  }
+}

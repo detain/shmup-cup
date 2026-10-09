@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:03:31.323Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, bubble underwater, soap foam, explosion fire, ship destroyed, ship missing, text, HUD, watermark, blurry, wave already fullscreen, shockwave off-center from ship, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "mega-crash-origin",
+    "variantNum": 2,
+    "id": "mega-crash-origin-v2",
+    "title": "The launch instant: shockwave just born around the player ship",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; dramatic power-moment illustration, ultra-detailed. The heartbeat before the MEGA CRASH consumes the screen: on the left third of a dark navy battlefield, a lone steel-blue dart fighter with cyan canopy and orange engines hangs in profile, unharmed and tiny — and from its exact position a newborn shell of white light is inflating outward, small enough that the ship is fully inside it, its surface a blistering white dome with thin gold crackle-rings running around it like pressure bands, brightening the air for one body-length in every direction. The shell is perfectly spherical in this early instant, its inner face beading with tiny white sparks, its outer face already starting to shed a halo of pale violet mist. Around and beyond it the hostile world is mid-reflex: nearest enemy bullets near the shell have stopped, caught against the pressure, glowing hotter at their rims; a few frames further out the bullet streams still flow normally in pink, red and violet; an angular swarm hull at the right edge of frame has just begun to tilt toward the light. The ship inside the bubble has its canopy lit white on the near side, silhouette heroic, one bright point of absolute calm at the center of the biggest decision in the game. Deep blues, blinding white-gold bubble, arcade-outline everything, lifted deep-navy background, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, bubble underwater, soap foam, explosion fire, ship destroyed, ship missing, text, HUD, watermark, blurry, wave already fullscreen, shockwave off-center from ship, pure black background",
+    "negativeScoped": true,
+    "notes": "Kestrel reference stripe #3858f0, canopy #38c8e8, glow #f89830; shell gold crackle ~#f8b030. Centering rule that matters: the sphere must be exactly concentric with the ship or the moment loses meaning — flux.1 sometimes offsets the bubble and it reads as a shield, not a detonation origin. Pairs with the sweep shot as a diptych for the ability page.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18062,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 18062,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "mega-crash-origin-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "fa18903b-d541-4151-ae33-4a68f0d2d2dd",
+      "created": 1791536606,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; dramatic power-moment illustration, ultra-detailed. The heartbeat before the MEGA CRASH consumes the screen: on the left third of a dark navy battlefield, a lone steel-blue dart fighter with cyan canopy and orange engines hangs in profile, unharmed and tiny — and from its exact position a newborn shell of white light is inflating outward, small enough that the ship is fully inside it, its surface a blistering white dome with thin gold crackle-rings running around it like pressure bands, brightening the air for one body-length in every direction. The shell is perfectly spherical in this early instant, its inner face beading with tiny white sparks, its outer face already starting to shed a halo of pale violet mist. Around and beyond it the hostile world is mid-reflex: nearest enemy bullets near the shell have stopped, caught against the pressure, glowing hotter at their rims; a few frames further out the bullet streams still flow normally in pink, red and violet; an angular swarm hull at the right edge of frame has just begun to tilt toward the light. The ship inside the bubble has its canopy lit white on the near side, silhouette heroic, one bright point of absolute calm at the center of the biggest decision in the game. Deep blues, blinding white-gold bubble, arcade-outline everything, lifted deep-navy background, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 13.191239894833416,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

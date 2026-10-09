@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:48:01.624Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "flesh, blood, organs, human crew, clean sci-fi, photorealistic, 3d render, text, watermark, green haze, pure black background",
+  "negative_sent": "flesh, blood, organs, human crew, clean sci-fi, photorealistic, 3d render, text, watermark, green haze, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "09-abyss-ark",
+    "slug": "aa09-weakpoint",
+    "variantNum": 2,
+    "id": "aa09-weakpoint-v2",
+    "title": "seam between sections nine and ten",
+    "positive": "Damage-control macro view on the flank of the ABYSS ARK, camera tight on the overflowing seam between two of its thirteen hull sections where the armor has peeled apart like torn tin, inside the wound a nest of pulsing machinery exposed, a bundle of glass conduit veins carrying rushing cyan luminal fluid, a shuddering violet power knot arcing between broken coupling rings, and at the center of the mess a small unprotected gyro-core spinning out of alignment throwing stuttering highlights, the surrounding plate edges ragged, studded with rivets and dripping silt, bursts of fine white bubbles jetting sideways from the pressure leak, one bright pink enemy bullet with a dark rim curving past in the foreground blurred to a comet streak while a cyan-white player shot lands dead center on the gyro-core in a starburst of gold sparks, scattered glowing gold point motes drifting up from the impact like struck flint rising, hard chiaroscuro lit only by the wound's own glow, bold dark outlines, saturated limited palette of deep blue, cyan and violet with gold impact accents, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.",
+    "negative": "flesh, blood, organs, human crew, clean sci-fi, photorealistic, 3d render, text, watermark, green haze, pure black background",
+    "negativeScoped": true,
+    "notes": "The wound reads as MACHINE anatomy (fluid, arcs, gyro) not body horror. Gold point sparks foreshadow the bullet-to-points death mechanic.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12902,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12902,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "aa09-weakpoint-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "6c07f45d-ff73-4d0e-8fbf-a48a7809c20e",
+      "created": 1791539277,
+      "count": 1,
+      "revised_prompt": "Damage-control macro view on the flank of the ABYSS ARK, camera tight on the overflowing seam between two of its thirteen hull sections where the armor has peeled apart like torn tin, inside the wound a nest of pulsing machinery exposed, a bundle of glass conduit veins carrying rushing cyan luminal fluid, a shuddering violet power knot arcing between broken coupling rings, and at the center of the mess a small unprotected gyro-core spinning out of alignment throwing stuttering highlights, the surrounding plate edges ragged, studded with rivets and dripping silt, bursts of fine white bubbles jetting sideways from the pressure leak, one bright pink enemy bullet with a dark rim curving past in the foreground blurred to a comet streak while a cyan-white player shot lands dead center on the gyro-core in a starburst of gold sparks, scattered glowing gold point motes drifting up from the impact like struck flint rising, hard chiaroscuro lit only by the wound's own glow, bold dark outlines, saturated limited palette of deep blue, cyan and violet with gold impact accents, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.",
+      "inference_time_s": 14.132001732010394,
+      "peak_memory_mb": 25698
+    },
+    "format": "jpg"
+  }
+}

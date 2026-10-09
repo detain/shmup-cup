@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:08:13.808Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, military insignia real-world, eagles, flags, swords, extra text, letters on ships, serial numbers, watermark, blurry, ships flying, cluttered hangar, dark unreadable emblem",
+  "negative_sent": "photorealistic, 3d render, military insignia real-world, eagles, flags, swords, extra text, letters on ships, serial numbers, watermark, blurry, ships flying, cluttered hangar, dark unreadable emblem",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "warning-gameover",
+    "slug": "victory-credits-card-emblem",
+    "variantNum": 2,
+    "id": "victory-credits-card-emblem-v2",
+    "title": "End-card alt: emblem-only lockup, ships at rest below the mark",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, centered heraldic composition, subtle CRT scanline glow; the end of the campaign rendered as a unit plaque. Deep in the center of a lifted deep-navy field sits a simple armored emblem: a flat shield-roundel of dark steel blue ringed in a gold band, and across its face a single stylized dart fighter silhouette in warm gradient lettering-free relief, engine flare rendered as a small gold comet-tail — an insignia, not a scene. Below the roundel, parked in respectful symmetry, both prototype fighters rest nose-in toward the emblem on a wide plain of matte deck-plate: on the left a steel-blue dart with cyan canopy and twin cool vents, on the right a pale mint manta-shaped craft with green canopy and dark ringed engines, wings level, paint scuffed, both clearly retired. Above the emblem the darkness is open and star-dusted, one thin dawn-gold light band crossing the very top of the frame like a hangar door cracking open at sunrise, its light just enough to rim every silhouette in warm firelight-gold. Across the bottom third, straight-on in clean ivory block capitals with heavy navy outlines and a soft warm drop-shadow: the words \"SHMUP CUP\". Nothing else is written, numbered or spelled anywhere in the image. The mood is a monument photographed at 6 a.m.: proud, quiet, a little tired. Palette of navy, steel blues, pale mint and committed dawn-gold accents, never pure black. The text in the image must read exactly \"SHMUP CUP\" and nothing else.",
+    "negative": "photorealistic, 3d render, military insignia real-world, eagles, flags, swords, extra text, letters on ships, serial numbers, watermark, blurry, ships flying, cluttered hangar, dark unreadable emblem",
+    "negativeScoped": true,
+    "notes": "Exact string: \"SHMUP CUP\" (single line, bottom third). Roundel band gold ~#f8a030, deck-plate and field navy #05070f–#0c1a3c, dawn band #fce8b8. Real-world heraldry ban matters — the emblem must read game-unit, not national. Vertical format for the credits loop; sd3.5's symmetrical two-ship parking is better than flux's, qwen carries the type.",
+    "models": [
+      "qwenvl",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 4.5,
+        "steps": 40,
+        "seed": 20102,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20102,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "victory-credits-card-emblem-v2-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "23e071a7-7951-493c-b418-eac3b8693ad8",
+      "created": 1791540489,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, centered heraldic composition, subtle CRT scanline glow; the end of the campaign rendered as a unit plaque. Deep in the center of a lifted deep-navy field sits a simple armored emblem: a flat shield-roundel of dark steel blue ringed in a gold band, and across its face a single stylized dart fighter silhouette in warm gradient lettering-free relief, engine flare rendered as a small gold comet-tail — an insignia, not a scene. Below the roundel, parked in respectful symmetry, both prototype fighters rest nose-in toward the emblem on a wide plain of matte deck-plate: on the left a steel-blue dart with cyan canopy and twin cool vents, on the right a pale mint manta-shaped craft with green canopy and dark ringed engines, wings level, paint scuffed, both clearly retired. Above the emblem the darkness is open and star-dusted, one thin dawn-gold light band crossing the very top of the frame like a hangar door cracking open at sunrise, its light just enough to rim every silhouette in warm firelight-gold. Across the bottom third, straight-on in clean ivory block capitals with heavy navy outlines and a soft warm drop-shadow: the words \"SHMUP CUP\". Nothing else is written, numbered or spelled anywhere in the image. The mood is a monument photographed at 6 a.m.: proud, quiet, a little tired. Palette of navy, steel blues, pale mint and committed dawn-gold accents, never pure black. The text in the image must read exactly \"SHMUP CUP\" and nothing else.",
+      "inference_time_s": 19.459454228868708,
+      "peak_memory_mb": 35434
+    },
+    "format": "jpg"
+  }
+}

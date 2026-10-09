@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:29:55.731Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, mines with red lights, equal blinking mine lights, single gulper",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "gulper-depth-mine",
+    "variantNum": 2,
+    "id": "gulper-depth-mine-v2",
+    "title": "ultrawide ambush corridor",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. An ultrawide trench corridor of the abyssal plain, camera in profile: the floor is a thick swaying carpet of dark weed, the walls are towering rock spires that pinch the corridor narrow in the middle distance, and through the pinch streams a slow current you can feel, drawn as faint cyan particle streaks. On the right side of the frame a GULPER pack hunts the corridor mouth — two large-headed fish with cavernous pale-bone jaws, one already angled for a strike with its lure filament flaring brighter, a third gulper only suggested by its lure-glow behind a spire, still invisible. Along the weed line, six DEPTH MINES sit half-buried like spiked black fruit, eye-lights out of phase with each other so the trench floor twinkles in a rolling wave of slow cyan pulses; one mine has torn its anchor free and is rising quietly through the current streaks. Entering from the left, small against the whole corridor, the KESTREL threads between two spires, steel-blue dart hull, bold blue stripe, cyan canopy reading as a second artificial light in the dark, orange engine glow streaming backwards into the current. The composition is a throat, and the ship has just entered it. Deep-navy pressure dark at the frame edges, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, mines with red lights, equal blinking mine lights, single gulper",
+    "negativeScoped": true,
+    "notes": "Color reference: current streaks #6ad8e0 at low alpha, gulper lure flare #6ad8e0 to white-hot core, mine out-of-phase pulses teal-to-cyan, kestral stripe #3858f0. The out-of-phase mine lights are the zone signature — the rolling twinkle reads as movement even in a still image. The third gulper as glow-only is a deliberate hidden-object detail; drop it if the model starts drawing disembodied lures too large.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15912,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15912,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "gulper-depth-mine-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "8021c496-3c68-4d75-916c-261fef2e9149",
+      "created": 1791538191,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-wide side-scrolling arcade composition, subtle CRT scanline glow. An ultrawide trench corridor of the abyssal plain, camera in profile: the floor is a thick swaying carpet of dark weed, the walls are towering rock spires that pinch the corridor narrow in the middle distance, and through the pinch streams a slow current you can feel, drawn as faint cyan particle streaks. On the right side of the frame a GULPER pack hunts the corridor mouth — two large-headed fish with cavernous pale-bone jaws, one already angled for a strike with its lure filament flaring brighter, a third gulper only suggested by its lure-glow behind a spire, still invisible. Along the weed line, six DEPTH MINES sit half-buried like spiked black fruit, eye-lights out of phase with each other so the trench floor twinkles in a rolling wave of slow cyan pulses; one mine has torn its anchor free and is rising quietly through the current streaks. Entering from the left, small against the whole corridor, the KESTREL threads between two spires, steel-blue dart hull, bold blue stripe, cyan canopy reading as a second artificial light in the dark, orange engine glow streaming backwards into the current. The composition is a throat, and the ship has just entered it. Deep-navy pressure dark at the frame edges, never pure black. No text, no UI elements.",
+      "inference_time_s": 31.39739368809387,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

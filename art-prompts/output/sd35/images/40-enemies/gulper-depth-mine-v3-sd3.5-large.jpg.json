@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:57:03.888Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, horizontal composition, gulper swimming in open water",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, horizontal composition, gulper swimming in open water",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "gulper-depth-mine",
+    "variantNum": 3,
+    "id": "gulper-depth-mine-v3",
+    "title": "vertical ascent through the spire field",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A vertical column of abyssal water, camera looking up along a rock spire that runs the full height of the frame like a black lighthouse, weed ribboning down its flanks. Coiled around the spire, a GULPER has mistaken the structure for a mate or a bone — its huge hinged head is pressed against the rock at the top third, pale bone jaw-ridges half-clamped on empty stone, jaw-light spilling down the spire's face, its charcoal body wound two full turns around the tower with the tail drifting free at the bottom of the frame, lure filament brushing the rock and scattering bright cyan sparks where it touches. Below it, clinging to the spire's midsection in the shadow of the gulper's coils, a cluster of five DEPTH MINES that have drifted in and anchored themselves to the rock — spiked black hulls with slow eye-lights blinking at their own lazy rhythm, one of them cracked open on the rock showing an inner glow hotter than its eyes. In the bottom corner the MANTA climbs along the spire's edge, pale mint ray-wings tucked for the narrow lane, green canopy tilted up reading the coils, amber twin thrusters dimmed to short cautious cones, threading between the anchored mines and the wounded coil-gap. Everything above the gulper fades to pressure-dark deep-navy, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, sunlight from above, bright open water, warm color cast, human figures, scuba divers, cartoon fish, friendly expression, horizontal composition, gulper swimming in open water",
+    "negativeScoped": true,
+    "notes": "Color reference: jaw-light on rock = broad cyan wash #6ad8e0 fading fast, cracked-mine inner glow a hotter white-cyan, manta mint #c8e0d0. Coil-wrap on a vertical spire is a hard pose for any model — the \"two full turns, tail free at bottom\" wording keeps it geometric; if the body melts into the rock, push guidance to 6.0 on sd3.5 before changing the text.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15913,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15913,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "gulper-depth-mine-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "bc05f151-f616-4d4a-a188-452e0adcf6e7",
+      "created": 1791539819,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition, subtle CRT scanline glow. A vertical column of abyssal water, camera looking up along a rock spire that runs the full height of the frame like a black lighthouse, weed ribboning down its flanks. Coiled around the spire, a GULPER has mistaken the structure for a mate or a bone — its huge hinged head is pressed against the rock at the top third, pale bone jaw-ridges half-clamped on empty stone, jaw-light spilling down the spire's face, its charcoal body wound two full turns around the tower with the tail drifting free at the bottom of the frame, lure filament brushing the rock and scattering bright cyan sparks where it touches. Below it, clinging to the spire's midsection in the shadow of the gulper's coils, a cluster of five DEPTH MINES that have drifted in and anchored themselves to the rock — spiked black hulls with slow eye-lights blinking at their own lazy rhythm, one of them cracked open on the rock showing an inner glow hotter than its eyes. In the bottom corner the MANTA climbs along the spire's edge, pale mint ray-wings tucked for the narrow lane, green canopy tilted up reading the coils, amber twin thrusters dimmed to short cautious cones, threading between the anchored mines and the wounded coil-gap. Everything above the gulper fades to pressure-dark deep-navy, never pure black. No text, no UI elements.",
+      "inference_time_s": 13.50622000102885,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:07:08.819Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, watermark, photorealistic, 3d render, blurry, irregular bullet ring, messy arrangement, pure black background, rainbow colors",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "app-store-icon",
+    "slug": "app-icon",
+    "variantNum": 2,
+    "id": "app-icon-v2",
+    "title": "bullet-hell ring with capsule core",
+    "positive": "Square game store icon with rounded corners, viewed head on, a perfect circular ring of evenly spaced glowing round bullets in pink, crimson and violet each bullet drawn with a bright white core and a dark rim, the ring encloses a single glossy golden power capsule pill standing vertical at the exact center with a white specular highlight and a thin navy outline, the capsule emits a soft warm halo, background flat deep navy with a faint darker navy checker texture, bold dark outlines, ultra-saturated limited palette, crisp 16-bit arcade vector shapes with pixel texture accents, instantly readable at thumbnail size, no text.",
+    "negative": "text, watermark, photorealistic, 3d render, blurry, irregular bullet ring, messy arrangement, pure black background, rainbow colors",
+    "negativeScoped": true,
+    "notes": "Abstract alternative icon. Bullet anchors #ff5aa0/#ff3a3a/#b84cff; symmetry is the make-or-break — re-roll if ring wobbles.",
+    "models": [
+      "flux2",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10022,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10022,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "app-icon-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "04d25524-818e-4f2a-ac63-8bef708e661e",
+      "created": 1791536824,
+      "count": 1,
+      "revised_prompt": "Square game store icon with rounded corners, viewed head on, a perfect circular ring of evenly spaced glowing round bullets in pink, crimson and violet each bullet drawn with a bright white core and a dark rim, the ring encloses a single glossy golden power capsule pill standing vertical at the exact center with a white specular highlight and a thin navy outline, the capsule emits a soft warm halo, background flat deep navy with a faint darker navy checker texture, bold dark outlines, ultra-saturated limited palette, crisp 16-bit arcade vector shapes with pixel texture accents, instantly readable at thumbnail size, no text.",
+      "inference_time_s": 30.7030256211292,
+      "peak_memory_mb": 40084
+    },
+    "format": "jpg"
+  }
+}

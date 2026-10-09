@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:21:29.723Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, human hand, flesh, five fingers, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "14-iron-talon",
+    "slug": "itl-reveal",
+    "variantNum": 1,
+    "id": "itl-reveal-v1",
+    "title": "the claw descending through the cloud deck",
+    "positive": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron talon descending from a roiling grey-violet cloud deck at the top of the frame — a sky fortress's grabbing hand, three colossal articulated fingers of riveted dark steel with brass knuckle-drums and hydraulic tendons hissing steam along their backsheets. The finger-pads glow hot pink where grip-amps charge, and a rotating winch-housing palm plate shows a hazard-striped inner face. Below the claw, cloud-turbulence fingers drag streaks of mist downward. A tiny steel-blue player dart with cyan canopy and orange engine flare dodges at the lower left between falling rivet-sized debris. Deep-navy playfield below never pure black, teal cloud highlights. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, human hand, flesh, five fingers, pure black background",
+    "negativeScoped": true,
+    "notes": "Exactly three fingers — models drift to five; sd3.5-large with the negative \"five fingers\" is the reliable fallback. Palm/winch read as the body.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 13401,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13401,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "itl-reveal-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "35606d88-e007-46e0-86ef-d240545a2c99",
+      "created": 1791537685,
+      "count": 1,
+      "revised_prompt": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: an iron talon descending from a roiling grey-violet cloud deck at the top of the frame — a sky fortress's grabbing hand, three colossal articulated fingers of riveted dark steel with brass knuckle-drums and hydraulic tendons hissing steam along their backsheets. The finger-pads glow hot pink where grip-amps charge, and a rotating winch-housing palm plate shows a hazard-striped inner face. Below the claw, cloud-turbulence fingers drag streaks of mist downward. A tiny steel-blue player dart with cyan canopy and orange engine flare dodges at the lower left between falling rivet-sized debris. Deep-navy playfield below never pure black, teal cloud highlights. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+      "inference_time_s": 29.899982831906527,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

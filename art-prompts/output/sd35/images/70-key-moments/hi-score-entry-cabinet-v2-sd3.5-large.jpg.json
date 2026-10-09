@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:03:21.043Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, modern RGB gaming setup, PC monitors, vr headsets, people, children, crowd, bright full room, text on side art, letters on marquee, watermark, blurry, all screens lit, clean carpet",
+  "negative_sent": "photorealistic, 3d render, modern RGB gaming setup, PC monitors, vr headsets, people, children, crowd, bright full room, text on side art, letters on marquee, watermark, blurry, all screens lit, clean carpet",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "warning-gameover",
+    "slug": "hi-score-entry-cabinet",
+    "variantNum": 2,
+    "id": "hi-score-entry-cabinet-v2",
+    "title": "The cabinet itself in a dark arcade row, screen mid-name-entry",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, three-quarter room composition, subtle CRT scanline glow; environmental portrait, ultra-detailed large-format art with pixel-art texture accents. One arcade cabinet stands awake at the end of a long dark row of sleeping machines, painted in a warm, lonely three-quarter view: a tall upright cabinet in gunmetal and deep navy with thick dark outlines, its side-art panel hand-lettered in a huge diagonal stripe of flame gradient — yellow cooling through orange into red — with a small stylized dart-fighter decal racing across it. The CRT is the only lit screen for twenty meters: it glows the moment after a perfect run, showing a simple pixel scoreboard — a gold header bar, a row of three fat letters \"AAA\" boxed in blinking cyan brackets, the rest of the table softly unreadable — and the tube's light falls out of the cabinet into the room as a physical volume of blue-gold haze, catching floating dust, raking across the faded carpet with its constellations of cigarette burns, glinting the metal coin-door and the scarred red ball-top of the joystick. Every neighboring cabinet is dark glass and mirrored shadow, their screens showing only this one lit screen back to itself down the row. The mood is 1 a.m., last token, best run, nobody watching but the machines. Palette of arcade navy and carpet rust with the one warm CRT bloom, lifted deep-navy room, never pure black. No readable text anywhere except the three bracketed letters \"AAA\" on the lit screen, no logos spelled, no signage.",
+    "negative": "photorealistic, 3d render, modern RGB gaming setup, PC monitors, vr headsets, people, children, crowd, bright full room, text on side art, letters on marquee, watermark, blurry, all screens lit, clean carpet",
+    "negativeScoped": true,
+    "notes": "Side-art flame ramp #f8f070→#f8a030→#e04828 matches the logo gradient; CRT bloom cyan-gold. Only \"AAA\" is legible — everything else on the screen reads as pure pattern, which qwen often over-eagerly spells; flux.2 is the safer author here for the room, hence the swap. Carpet burn-marks and dust-in-light-beam are the nostalgia pixels; if flux.2 sanitizes the room, bump guidance and reroll.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 20112,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 20112,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hi-score-entry-cabinet-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c2a76d25-33aa-4b1e-af29-e130a3a3deba",
+      "created": 1791540196,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, three-quarter room composition, subtle CRT scanline glow; environmental portrait, ultra-detailed large-format art with pixel-art texture accents. One arcade cabinet stands awake at the end of a long dark row of sleeping machines, painted in a warm, lonely three-quarter view: a tall upright cabinet in gunmetal and deep navy with thick dark outlines, its side-art panel hand-lettered in a huge diagonal stripe of flame gradient — yellow cooling through orange into red — with a small stylized dart-fighter decal racing across it. The CRT is the only lit screen for twenty meters: it glows the moment after a perfect run, showing a simple pixel scoreboard — a gold header bar, a row of three fat letters \"AAA\" boxed in blinking cyan brackets, the rest of the table softly unreadable — and the tube's light falls out of the cabinet into the room as a physical volume of blue-gold haze, catching floating dust, raking across the faded carpet with its constellations of cigarette burns, glinting the metal coin-door and the scarred red ball-top of the joystick. Every neighboring cabinet is dark glass and mirrored shadow, their screens showing only this one lit screen back to itself down the row. The mood is 1 a.m., last token, best run, nobody watching but the machines. Palette of arcade navy and carpet rust with the one warm CRT bloom, lifted deep-navy room, never pure black. No readable text anywhere except the three bracketed letters \"AAA\" on the lit screen, no logos spelled, no signage.",
+      "inference_time_s": 14.28751830291003,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

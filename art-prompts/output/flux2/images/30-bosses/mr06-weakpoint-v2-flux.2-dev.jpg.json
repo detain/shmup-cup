@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:16:59.136Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "human eye, eyelashes, blood vessels red, gore, wound, real animal eye photo, photorealistic, 3d render, text, watermark, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "06-mantle-regent",
+    "slug": "mr06-weakpoint",
+    "variantNum": 2,
+    "id": "mr06-weakpoint-v2",
+    "title": "the great eye opens",
+    "positive": "Uncomfortable intimacy boss weak point shot, extreme close-focusing the single great eye of the MANTLE REGENT as it unseals, a wide amber iris with fine dark radial fibers filling most of the frame, the horizontal navy slit pupil dilating while a lid of armored chitin plates lifts in overlapping segments, wet glass highlight catching the green pulse-light of the surrounding cell walls, hairline cracks of violet energy glowing in the sclera ring, tiny barbed sensor cilia ringing the socket flexing outward, one blurred pink bullet mid-flight arcing toward the cornea at the frame edge like a coming sin, reflections inside the pupil show a fragment of living-wall corridor and the distant glint of a cyan canopy, texture of polished biological glass rendered with clean vector discipline, bold dark outlines, saturated green-amber palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.",
+    "negative": "human eye, eyelashes, blood vessels red, gore, wound, real animal eye photo, photorealistic, 3d render, text, watermark, pure black background",
+    "negativeScoped": true,
+    "notes": "Iris amber is the only warm color allowed; everything else moss-green. Eye = weak point AND attack source.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12602,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12602,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "mr06-weakpoint-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "abddecfb-db2f-4d70-afae-0348a8e2cbe8",
+      "created": 1791537414,
+      "count": 1,
+      "revised_prompt": "Uncomfortable intimacy boss weak point shot, extreme close-focusing the single great eye of the MANTLE REGENT as it unseals, a wide amber iris with fine dark radial fibers filling most of the frame, the horizontal navy slit pupil dilating while a lid of armored chitin plates lifts in overlapping segments, wet glass highlight catching the green pulse-light of the surrounding cell walls, hairline cracks of violet energy glowing in the sclera ring, tiny barbed sensor cilia ringing the socket flexing outward, one blurred pink bullet mid-flight arcing toward the cornea at the frame edge like a coming sin, reflections inside the pupil show a fragment of living-wall corridor and the distant glint of a cyan canopy, texture of polished biological glass rendered with clean vector discipline, bold dark outlines, saturated green-amber palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, subtle CRT scanline glow, no text.",
+      "inference_time_s": 34.05637828516774,
+      "peak_memory_mb": 40034
+    },
+    "format": "jpg"
+  }
+}

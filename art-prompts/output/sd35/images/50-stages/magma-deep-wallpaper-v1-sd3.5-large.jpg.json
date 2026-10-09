@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:58:44.585Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, logo, UI elements, blue sky, snow, ocean, people, castle, pure black background, blurry, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, text, watermark, logo, UI elements, blue sky, snow, ocean, people, castle, pure black background, blurry, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-d-magma-deep",
+    "slug": "magma-deep-wallpaper",
+    "variantNum": 1,
+    "id": "magma-deep-wallpaper-v1",
+    "title": "erupting peaks and lava-lake wallpaper",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A volcanic interior laid out horizontally: the far wall of a colossal magma cavern with a ceiling lost in orange smog, jagged erupting peaks throwing fountains of bright lava in long parabolas against a smoky amber sky. Below the peaks, a lava lake crosses the bottom third of the frame, its surface a gradient ramp from dark cooled crust umber to glowing tangerine to molten yellow-white at the vents, broken by drifting rafts of black basalt. Columns of heat light the whole scene from underneath, so every rock silhouette is rimmed orange on its belly. In the middle distance, a bridge of crude brick — warm terracotta masonry — spans a chasm, and tiny industrial gantries cling to the cavern wall strung with dull red warning lamps. Ash motes drift through shafts of orange haze. Mood: the planet's furnace room, industrially occupied. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, blue sky, snow, ocean, people, castle, pure black background, blurry, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Lava must read as a ramp, not a uniform orange — negative \"blue sky\" prevents the vents going cold. Color reference: crust #8a2c0a → glow #e87a1c, brick #b0704a. The gantries are the Iron Tide's foothold; the Cinder Bastion boss arena uses the same brick language.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16401,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16401,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "magma-deep-wallpaper-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "efbc4107-d244-4ccc-8614-69b3d8794246",
+      "created": 1791539919,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A volcanic interior laid out horizontally: the far wall of a colossal magma cavern with a ceiling lost in orange smog, jagged erupting peaks throwing fountains of bright lava in long parabolas against a smoky amber sky. Below the peaks, a lava lake crosses the bottom third of the frame, its surface a gradient ramp from dark cooled crust umber to glowing tangerine to molten yellow-white at the vents, broken by drifting rafts of black basalt. Columns of heat light the whole scene from underneath, so every rock silhouette is rimmed orange on its belly. In the middle distance, a bridge of crude brick — warm terracotta masonry — spans a chasm, and tiny industrial gantries cling to the cavern wall strung with dull red warning lamps. Ash motes drift through shafts of orange haze. Mood: the planet's furnace room, industrially occupied. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.312284999061376,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

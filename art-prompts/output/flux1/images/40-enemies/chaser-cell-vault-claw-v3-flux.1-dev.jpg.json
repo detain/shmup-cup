@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:59:58.635Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, duplicate fighter, tentacle monster face, teeth in the wall",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-f-cell-vault",
+    "slug": "chaser-cell-vault-claw",
+    "variantNum": 3,
+    "id": "chaser-cell-vault-claw-v3",
+    "title": "Zone F enemies: portrait throat of the vault, cells raining down past a claw arch as the fighter climbs",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition looking up the throat of a living structure, subtle CRT scanline glow. The frame is the inside of a great vertical gullet of the Cell Vault: circular walls of pulsing green cell-mesh in a moss-to-jade ramp narrowing upward, ringed with fleshy valve folds that stand half-open, pores shining amber down the whole height, the far top a pinprick of pale light. Raining down through the throat in a slow spiral, a swarm of CHASER CELLS: translucent membrane spheres with hot pale nuclei, dozens of them, many pinched mid-mitosis into dumbbells trailing spindle filaments that whip like sparks of pale thread, the closest ones large and soft-edged at the frame borders, the distant ones a scatter of green beads. Crossing the lower third, a VAULT CLAW anchored in the right wall has hooked the throat like an archer's brace — eight bone-plated segments sheathed in green tissue, each joint beading fluid, the massive curved tip pointing up the swarm's column. At the bottom of the frame, tiny, a steel-blue dart fighter with bold blue stripe, cyan canopy and a bright orange engine trail climbs straight into it, vapor snapping off its wings, pink and magenta shots with bright cores falling around it like ember-rain. Deep-navy pools ring the throat wall, never pure black; the valve folds pulse with one synchronized violet glow.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, duplicate fighter, tentacle monster face, teeth in the wall",
+    "negativeScoped": true,
+    "notes": "Ascent-poster version of the descent the player actually fights (Zone F runs horizontally, but the vault's vertical gullets are its signature architecture). The claw-as-brace gives the spiral a fulcrum. Watch that wall folds don't read as a monstrous mouth — ban teeth in the negative.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15613,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15613,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "chaser-cell-vault-claw-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1c9784bb-15d4-4d21-9143-d462fac7c5f1",
+      "created": 1791536394,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition looking up the throat of a living structure, subtle CRT scanline glow. The frame is the inside of a great vertical gullet of the Cell Vault: circular walls of pulsing green cell-mesh in a moss-to-jade ramp narrowing upward, ringed with fleshy valve folds that stand half-open, pores shining amber down the whole height, the far top a pinprick of pale light. Raining down through the throat in a slow spiral, a swarm of CHASER CELLS: translucent membrane spheres with hot pale nuclei, dozens of them, many pinched mid-mitosis into dumbbells trailing spindle filaments that whip like sparks of pale thread, the closest ones large and soft-edged at the frame borders, the distant ones a scatter of green beads. Crossing the lower third, a VAULT CLAW anchored in the right wall has hooked the throat like an archer's brace — eight bone-plated segments sheathed in green tissue, each joint beading fluid, the massive curved tip pointing up the swarm's column. At the bottom of the frame, tiny, a steel-blue dart fighter with bold blue stripe, cyan canopy and a bright orange engine trail climbs straight into it, vapor snapping off its wings, pink and magenta shots with bright cores falling around it like ember-rain. Deep-navy pools ring the throat wall, never pure black; the valve folds pulse with one synchronized violet glow.",
+      "inference_time_s": 14.87327714683488,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

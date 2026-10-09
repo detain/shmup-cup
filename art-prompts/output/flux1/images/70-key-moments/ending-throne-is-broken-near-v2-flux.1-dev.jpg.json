@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:04:26.580Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, human pilot portrait, cockpit interior view, face in canopy, alien creature, ship diving, trench above ship, explosion, pristine undamaged hull, text, watermark, blurry, portrait of a person",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-throne-is-broken-near",
+    "variantNum": 2,
+    "id": "ending-throne-is-broken-near-v2",
+    "title": "Close on the cockpit: cracked canopy, dark trench falling away below",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, tight three-quarter composition, subtle CRT scanline glow; ending scene painted at hi-resolution, portrait of the survivor, ultra-detailed large-format art with pixel-texture accents. A close, angled three-quarter view of the wounded dart fighter filling most of the frame as it climbs away from camera: the cracked canopy is the hero — a thick cyan shell with one white spider-fracture at its center, a few hairline cracks branching to the rim, the glass fogged where pressure heat met cold water, and deep inside that green-lit cockpit nothing is visible but a small warm reflection of the gold shaft far above, held in the shattered glass like a promise kept on the wrong side of a window. The hull tells the last ninety seconds honestly: the bold blue stripe peeled back to bare steel along one flank, dent rows dithered in classic pixel shading, one wingtip missing a clean crescent bite, canopy rail bent, and along the seam of the belly, the dark violet residue of abyssal fluid steaming off in thin ribbons as the metal remembers heat. The twin engines burn unequal — the near one a solid orange lance, the far one stuttering to amber embers in a dotted trail. Below the climbing ship, out of focus and falling away, the broken throne trench is only a smear of extinguishing blue lights and one jagged dark crown-shape in the murk; above the ship, the frame's top edge begins to brighten, gold leaking into the corner as if the next panel of the comic is already morning. The mood: not victorious — relieved, furious, and still flying. Palette of steel blues and canopy cyans against warm gold leak and the retreating violet dark below, lifted deep-navy base, never pure black. No text, no letters, no UI, no visible pilot figure.",
+    "negative": "photorealistic, 3d render, human pilot portrait, cockpit interior view, face in canopy, alien creature, ship diving, trench above ship, explosion, pristine undamaged hull, text, watermark, blurry, portrait of a person",
+    "negativeScoped": true,
+    "notes": "Canopy cyan #38c8e8 fogged, stripe loss exposing steel ~#8a9ab8, throne residue violet #8a48e8 steaming. The no-pilot rule matters: the player IS the reflection of light in the cracked glass. Vertical format turns the climb into the frame direction itself — best ending-image for phone wallpaper. Flux.1's close-up metal scratches carry the damage story; if it over-pristines, add \"battle damage is the subject, not incidental.\"",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20082,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 20082,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-throne-is-broken-near-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "577b26ba-f488-40ab-952d-8b9cdf93738c",
+      "created": 1791536662,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, tight three-quarter composition, subtle CRT scanline glow; ending scene painted at hi-resolution, portrait of the survivor, ultra-detailed large-format art with pixel-texture accents. A close, angled three-quarter view of the wounded dart fighter filling most of the frame as it climbs away from camera: the cracked canopy is the hero — a thick cyan shell with one white spider-fracture at its center, a few hairline cracks branching to the rim, the glass fogged where pressure heat met cold water, and deep inside that green-lit cockpit nothing is visible but a small warm reflection of the gold shaft far above, held in the shattered glass like a promise kept on the wrong side of a window. The hull tells the last ninety seconds honestly: the bold blue stripe peeled back to bare steel along one flank, dent rows dithered in classic pixel shading, one wingtip missing a clean crescent bite, canopy rail bent, and along the seam of the belly, the dark violet residue of abyssal fluid steaming off in thin ribbons as the metal remembers heat. The twin engines burn unequal — the near one a solid orange lance, the far one stuttering to amber embers in a dotted trail. Below the climbing ship, out of focus and falling away, the broken throne trench is only a smear of extinguishing blue lights and one jagged dark crown-shape in the murk; above the ship, the frame's top edge begins to brighten, gold leaking into the corner as if the next panel of the comic is already morning. The mood: not victorious — relieved, furious, and still flying. Palette of steel blues and canopy cyans against warm gold leak and the retreating violet dark below, lifted deep-navy base, never pure black. No text, no letters, no UI, no visible pilot figure.",
+      "inference_time_s": 14.867777131963521,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

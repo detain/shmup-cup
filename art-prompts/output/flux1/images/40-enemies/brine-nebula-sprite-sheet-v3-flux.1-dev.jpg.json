@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:58:08.618Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, realistic water, watermark, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brine-nebula-sprite-sheet",
+    "variantNum": 3,
+    "id": "brine-nebula-sprite-sheet-v3",
+    "title": "In-game enemy sprite sheet: froth, brood, urchin, maw rocket",
+    "positive": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep-navy sheet background, one species per horizontal band, thick even margins, no text, no numbers, no frame borders. Species facing left in side view: FROTH — soft pink-white foam bubbles with a dark rim and a bright core, four growth-and-split frames ending as two smaller bubbles; BROOD — a translucent violet jelly sphere with a curled dark mechanical fish inside, intact / cracked / hatched frames where the shell peels like a broken lantern; URCHIN — a reef-mounted charcoal barnacle turret, scale-plated dome, fan of purple crystal spines, single glowing magenta lens, three aim frames sweeping the lens from horizontal to vertical plus one shattered-shell frame; MAW ROCKET — a steel torpedo with a hinged open fish-jaw nose showing a dark throat, short fins, twin flame frames at the tail. Bold dark outlines on every sprite, limited saturated palette, chunky pixel clusters, light dithering on metal only, classic cartridge-era readability at small scale.",
+    "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, realistic water, watermark, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Landscape band layout, best for website sprite-strip displays. flux.1-dev again the steadiest \"no-text\" producer. Color reference: jellies toward #8a48e8 translucency, rocket throat #080410-ish dark core, flame #f89830.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15223,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15223,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brine-nebula-sprite-sheet-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "04d84b0c-aaf9-4589-b8aa-1be2c9087a0d",
+      "created": 1791536284,
+      "count": 1,
+      "revised_prompt": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep-navy sheet background, one species per horizontal band, thick even margins, no text, no numbers, no frame borders. Species facing left in side view: FROTH — soft pink-white foam bubbles with a dark rim and a bright core, four growth-and-split frames ending as two smaller bubbles; BROOD — a translucent violet jelly sphere with a curled dark mechanical fish inside, intact / cracked / hatched frames where the shell peels like a broken lantern; URCHIN — a reef-mounted charcoal barnacle turret, scale-plated dome, fan of purple crystal spines, single glowing magenta lens, three aim frames sweeping the lens from horizontal to vertical plus one shattered-shell frame; MAW ROCKET — a steel torpedo with a hinged open fish-jaw nose showing a dark throat, short fins, twin flame frames at the tail. Bold dark outlines on every sprite, limited saturated palette, chunky pixel clusters, light dithering on metal only, classic cartridge-era readability at small scale.",
+      "inference_time_s": 12.471872423077002,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

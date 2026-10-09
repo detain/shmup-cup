@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:56:44.390Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, letters, watermark, pure black background, blurry, bright cheerful colors",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "10-hollow-king",
+    "slug": "hk10-warning",
+    "variantNum": 1,
+    "id": "hk10-warning-v1",
+    "title": "silhouette: the jaws closing over the screen",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade key moment. The instant the final attack begins: seen from inside the closing maw of THE HOLLOW KING, the screen itself becoming the mouth. Enormous jaws of riveted steel teeth sweep in from the left edge and the top and bottom of the frame, the gap of visible dark water narrowing to a sliver; in the far distance of the narrowing gap, a tiny steel-blue fighter dart with a bold blue hull stripe and cyan canopy glows with a desperate orange engine flare, centered and doomed-looking. Above the sliver of water, suspended in the black like a malevolent star, the single pale-green lure lamp burns. The palette drains to almost monochrome deep navy #05070f–#0c1a3c with bone-white teeth, one green light, one orange flame — pink and violet bullet glints caught between the teeth. Widescreen 16:9 side-scrolling composition, overwhelming scale, subtle CRT scanline glow. No text, no letters.",
+    "negative": "photorealistic, 3d render, text, letters, watermark, pure black background, blurry, bright cheerful colors",
+    "negativeScoped": true,
+    "notes": "Color reference: ship stripe #3858f0, canopy #38c8e8, engine #f89830, lure #a8e8c0. This doubles as the final WARNING-screen art bed — leave it textless and overlay the flashing WARNING!! in-engine. Watch that the jaw frame keeps an asymmetric opening; symmetric mouths read as a cartoon yawn.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 13003,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13003,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hk10-warning-v1-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "d6b14227-3462-481a-bcff-e3994e79961d",
+      "created": 1791536199,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade key moment. The instant the final attack begins: seen from inside the closing maw of THE HOLLOW KING, the screen itself becoming the mouth. Enormous jaws of riveted steel teeth sweep in from the left edge and the top and bottom of the frame, the gap of visible dark water narrowing to a sliver; in the far distance of the narrowing gap, a tiny steel-blue fighter dart with a bold blue hull stripe and cyan canopy glows with a desperate orange engine flare, centered and doomed-looking. Above the sliver of water, suspended in the black like a malevolent star, the single pale-green lure lamp burns. The palette drains to almost monochrome deep navy #05070f–#0c1a3c with bone-white teeth, one green light, one orange flame — pink and violet bullet glints caught between the teeth. Widescreen 16:9 side-scrolling composition, overwhelming scale, subtle CRT scanline glow. No text, no letters.",
+      "inference_time_s": 14.059480449883267,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

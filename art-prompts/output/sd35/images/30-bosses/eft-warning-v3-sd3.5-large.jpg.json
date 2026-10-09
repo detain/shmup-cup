@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:49:10.213Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, watermark, photorealistic, 3d render, blurry, uniform temperature, pure black background",
+  "negative_sent": "text, letters, watermark, photorealistic, 3d render, blurry, uniform temperature, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "12-ember-frost-twins",
+    "slug": "eft-warning",
+    "variantNum": 3,
+    "id": "eft-warning-v3",
+    "title": "temperature war paint: half the stars go red",
+    "positive": "Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a deep-navy playfield splitting into thermal halves before the boss arrives — the upper air shimmers with descending ribbons of ember-orange heat distortion while frost crystals grow upward across the lower air in pale blue needles, the two fronts converging on a diagonal seam of swirling steam across the middle. At the right margin two dark head silhouettes press into frame, jaws slightly open, one breath of fire and one breath of vapor just beginning. A tiny steel-blue player dart with cyan canopy threads the seam center, engine flare orange against the cold. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame.",
+    "negative": "text, letters, watermark, photorealistic, 3d render, blurry, uniform temperature, pure black background",
+    "negativeScoped": true,
+    "notes": "The warning is expressed as weather, not text — flux.1-dev renders the opposing distortion effects with very clean separation.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 13203,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13203,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "eft-warning-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "6ae9d96a-474d-4ef0-a54a-365b72330738",
+      "created": 1791539345,
+      "count": 1,
+      "revised_prompt": "Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a deep-navy playfield splitting into thermal halves before the boss arrives — the upper air shimmers with descending ribbons of ember-orange heat distortion while frost crystals grow upward across the lower air in pale blue needles, the two fronts converging on a diagonal seam of swirling steam across the middle. At the right margin two dark head silhouettes press into frame, jaws slightly open, one breath of fire and one breath of vapor just beginning. A tiny steel-blue player dart with cyan canopy threads the seam center, engine flare orange against the cold. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame.",
+      "inference_time_s": 13.583503530127928,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

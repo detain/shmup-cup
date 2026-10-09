@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:30:52.228Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, first-person camera, vertical scrolling, HUD",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, first-person camera, vertical scrolling, HUD",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/20-gameplay",
+    "fileStem": "zone-transition-parallax",
+    "slug": "transition-magma-cave-exit",
+    "variantNum": 2,
+    "id": "transition-magma-cave-exit-v2",
+    "title": "bursting out of a lava tunnel into open fire",
+    "positive": "Fast side-scrolling pixel-art run: the blue dart fighter shoots rightward out of a dark rock tunnel mouth into a vast lava cavern, foreground stalactite silhouettes whip past quickly, orange lava lakes glow and pulse below, erupting cones pop with fountain sprays in the mid-ground, heat shimmer ripples the air, camera tracks right accelerating slightly, strong speed contrast between near and far layers, continuous single shot.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, first-person camera, vertical scrolling, HUD",
+    "notes": "Tunnel-to-open reveal is LTX's strongest transition grammar — the near-layer whip-past sells speed. Magma Deep beat; loop the cavern half by trimming the tunnel exit frame.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 768,
+      "h": 512
+    },
+    "numFrames": 121,
+    "fps": 30,
+    "durationNote": "~4s",
+    "guidance": 3.4,
+    "steps": 40,
+    "seed": 22010,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 768,
+    "h": 512
+  },
+  "size_sent": {
+    "w": 768,
+    "h": 512
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "768x512",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "transition-magma-cave-exit-v2-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "b80c3b0c-dd8f-4b15-bd53-bc19f6cc9133",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "Fast side-scrolling pixel-art run: the blue dart fighter shoots rightward out of a dark rock tunnel mouth into a vast lava cavern, foreground stalactite silhouettes whip past quickly, orange lava lakes glow and pulse below, erupting cones pop with fountain sprays in the mid-ground, heat shimmer ripples the air, camera tracks right accelerating slightly, strong speed contrast between near and far layers, continuous single shot.",
+          "size": "768x512",
+          "num_frames": 121,
+          "fps": 30,
+          "seed": 22010,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, first-person camera, vertical scrolling, HUD",
+          "guidance_scale": 3.4,
+          "num_inference_steps": 40,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 22.963341957889497
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

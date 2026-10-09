@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:02:47.320Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, red gore, blood, tongue, throat anatomy, teeth, human figure, pure black background, watermark, text, blurry, straight untwisted tunnel, rings identical, frame border, letterboxing",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-f-cell-vault",
+    "slug": "cell-vault-poster-vertical",
+    "variantNum": 2,
+    "id": "cell-vault-poster-vertical-v2",
+    "title": "Vertical poster: descending throat of the living vault, muscle rings stacked into darkness",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Staring straight down the interior of a vertical organic shaft, the throat of a living fortress: a deep stack of concentric muscle rings, each ring a thick petal-like collar of green tissue with a dark seam where it meets the next, the rings alternating slightly rotated so the shaft reads as a twisted tube disappearing into black-green depths far below. Embedded in each collar, rows of closed pore-valves wait in neat arcs, and fine capillary networks of pale yellow-green light pulse along the inner rims, brighter in the upper rings and dimming ring by ring as the shaft descends. Between the collars hang membranes of stretched tissue, translucent enough to reveal the shadow of further rings behind them, giving the whole throat a layered X-ray depth. From the top of the frame a warm amber biolume drips downward like light poured from a bowl, catching the wet ridges of the first collars in hard pixel-art highlights. Near the bottom, in the darkest visible ring, a single new pair of pore-lights is opening, an amber eye of glow waking in the deep. Committed muted greens, pale nucleus glow, amber accents, lifted deep-navy shadow, never pure black. No text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, red gore, blood, tongue, throat anatomy, teeth, human figure, pure black background, watermark, text, blurry, straight untwisted tunnel, rings identical, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: collars #2a4434–#385a44 with rim pulse #c8e0b0, waking glow ~#e8a030. The rotated-ring twist is what sells depth in a straight-down tube; flux.1 flattens it if you drop the \"alternating slightly rotated\" clause. The single waking pore-light at the bottom is the composition anchor — it reads as the vault noticing you.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 16602,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 16602,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "cell-vault-poster-vertical-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "49944720-7575-4a41-9d19-ae9b40f40ba9",
+      "created": 1791536562,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; vertical composition, tall poster framing, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. Staring straight down the interior of a vertical organic shaft, the throat of a living fortress: a deep stack of concentric muscle rings, each ring a thick petal-like collar of green tissue with a dark seam where it meets the next, the rings alternating slightly rotated so the shaft reads as a twisted tube disappearing into black-green depths far below. Embedded in each collar, rows of closed pore-valves wait in neat arcs, and fine capillary networks of pale yellow-green light pulse along the inner rims, brighter in the upper rings and dimming ring by ring as the shaft descends. Between the collars hang membranes of stretched tissue, translucent enough to reveal the shadow of further rings behind them, giving the whole throat a layered X-ray depth. From the top of the frame a warm amber biolume drips downward like light poured from a bowl, catching the wet ridges of the first collars in hard pixel-art highlights. Near the bottom, in the darkest visible ring, a single new pair of pore-lights is opening, an amber eye of glow waking in the deep. Committed muted greens, pale nucleus glow, amber accents, lifted deep-navy shadow, never pure black. No text, no letters, no user interface elements.",
+      "inference_time_s": 14.918550108093768,
+      "peak_memory_mb": 36724
+    },
+    "format": "jpg"
+  }
+}

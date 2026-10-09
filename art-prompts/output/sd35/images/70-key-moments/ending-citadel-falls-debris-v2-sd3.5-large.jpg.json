@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:02:26.615Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, sci-fi airlock clean corridor, laser gate, ship already outside, gap fully open, explosion engulfing ship, human figures, text, watermark, blurry, blue fire, green lighting",
+  "negative_sent": "photorealistic, 3d render, sci-fi airlock clean corridor, laser gate, ship already outside, gap fully open, explosion engulfing ship, human figures, text, watermark, blurry, blue fire, green lighting",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-citadel-falls-debris",
+    "variantNum": 2,
+    "id": "ending-citadel-falls-debris-v2",
+    "title": "Through the falling gate: ship threading collapsing hull with fire behind",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, claustrophobic scale, ultra-detailed large-format art with pixel-art texture accents. Flying out through the guts of the burning citadel: a corridor of collapsing fortress interior fills the frame — a great gate-ring of riveted armor, forty meters of it, swinging shut on one bent hinge as the wall behind it caves, and a flat-flying steel-blue dart fighter is threading the closing gap at the exact last second, wingtip sparks spraying from both edges where its hull grazes the metal jaws. Everything behind the ship is an avalanche of the citadel's death: sheet after sheet of floor and wall peeling free in the orange back-light, furnace wind blowing ribbons of flame and black smoke forward through the gate ahead of the intruder, a rain of bolt-clusters and shattered grating tumbling end over end. Beyond the gate, in the top-left corner of the frame, there is a slice of outside — cold pre-dawn navy with a single calm star — impossibly small against all that gold violence. The ship's cyan canopy and blue stripe are the only cool colors allowed inside the hot half of the image, so the eye threads with it toward the gap. Firelight rims every falling plate. Palette of furnace ambers and ember reds inside, a wedge of deep navy-blue outside, thick dark outlines, lifted shadows, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, sci-fi airlock clean corridor, laser gate, ship already outside, gap fully open, explosion engulfing ship, human figures, text, watermark, blurry, blue fire, green lighting",
+    "negativeScoped": true,
+    "notes": "Gate amber light ramp #6a4418→#e8a030 with fire #f06820; outside-slice navy #05070f. The tiny calm star in the escape-slice is the whole emotional trick — hold the line on \"top-left corner\" or the composition loses its exit. flux.1 renders hanging hinge-mass well but may fully open the jaws; regenerate if the gap isn't grazing the wingtips.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20052,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 20052,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-citadel-falls-debris-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "a640e8a6-01b8-4b9e-9bcf-3ba73200a36c",
+      "created": 1791540142,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, claustrophobic scale, ultra-detailed large-format art with pixel-art texture accents. Flying out through the guts of the burning citadel: a corridor of collapsing fortress interior fills the frame — a great gate-ring of riveted armor, forty meters of it, swinging shut on one bent hinge as the wall behind it caves, and a flat-flying steel-blue dart fighter is threading the closing gap at the exact last second, wingtip sparks spraying from both edges where its hull grazes the metal jaws. Everything behind the ship is an avalanche of the citadel's death: sheet after sheet of floor and wall peeling free in the orange back-light, furnace wind blowing ribbons of flame and black smoke forward through the gate ahead of the intruder, a rain of bolt-clusters and shattered grating tumbling end over end. Beyond the gate, in the top-left corner of the frame, there is a slice of outside — cold pre-dawn navy with a single calm star — impossibly small against all that gold violence. The ship's cyan canopy and blue stripe are the only cool colors allowed inside the hot half of the image, so the eye threads with it toward the gap. Firelight rims every falling plate. Palette of furnace ambers and ember reds inside, a wedge of deep navy-blue outside, thick dark outlines, lifted shadows, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 13.509312927024439,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

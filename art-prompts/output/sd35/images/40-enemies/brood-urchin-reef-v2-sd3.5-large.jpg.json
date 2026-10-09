@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:52:01.396Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d, text, watermark, blurry, pure black, realistic fish, cartoon characters, human divers",
+  "negative_sent": "photorealistic, 3d, text, watermark, blurry, pure black, realistic fish, cartoon characters, human divers",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brood-urchin-reef",
+    "variantNum": 2,
+    "id": "brood-urchin-reef-v2",
+    "title": "BROOD BUBBLE and URCHIN reef turret, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen arcade side-scroller framing. A moment of hazard and harvest in a deep reef corridor: an ruptured BROOD BUBBLE splits down the middle in a slow burst of pink droplets, its mechanical fry spilling out and twitching to life, tiny dark spines unfurling; on the right wall a line of URCHIN reef turrets — barnacle-domes of charcoal plate with purple spine fans and glowing magenta aiming lenses — pivots to track the steel-blue KESTREL dart screaming past at the bottom of the frame, blue hull stripe blazing, cyan canopy catching the reef light, orange engine glow strobing along the tunnel. Wobbling wave rasters of teal gas roll across the corridor like heat-shimmer underwater, sand-stone arches carved with ancient pore-tunnels rise above, and a distant violet nebula heart pulses behind the reef. Lifted deep-navy shadows that never reach pure black, gold point-sparkles drifting where the brood burst caught light. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d, text, watermark, blurry, pure black, realistic fish, cartoon characters, human divers",
+    "negativeScoped": true,
+    "notes": "Panoramic crop for website zone banners; the rupture action reads best wide. sd3.5 handles the droplet spray cleanly. Keep fry mechanical — dark spines, not organic scales.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15212,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15212,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brood-urchin-reef-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "df3d882f-c612-402e-b180-e3c65fdcf68b",
+      "created": 1791539516,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen arcade side-scroller framing. A moment of hazard and harvest in a deep reef corridor: an ruptured BROOD BUBBLE splits down the middle in a slow burst of pink droplets, its mechanical fry spilling out and twitching to life, tiny dark spines unfurling; on the right wall a line of URCHIN reef turrets — barnacle-domes of charcoal plate with purple spine fans and glowing magenta aiming lenses — pivots to track the steel-blue KESTREL dart screaming past at the bottom of the frame, blue hull stripe blazing, cyan canopy catching the reef light, orange engine glow strobing along the tunnel. Wobbling wave rasters of teal gas roll across the corridor like heat-shimmer underwater, sand-stone arches carved with ancient pore-tunnels rise above, and a distant violet nebula heart pulses behind the reef. Lifted deep-navy shadows that never reach pure black, gold point-sparkles drifting where the brood burst caught light. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 14.36444342485629,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

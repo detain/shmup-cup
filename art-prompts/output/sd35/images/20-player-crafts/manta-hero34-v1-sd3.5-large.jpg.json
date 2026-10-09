@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:44:30.131Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, visible pilot, real animal, motion blur smear, pure black background, desaturated",
+  "negative_sent": "photorealistic, 3d render, text, watermark, visible pilot, real animal, motion blur smear, pure black background, desaturated",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "manta",
+    "slug": "manta-hero34",
+    "variantNum": 1,
+    "id": "manta-hero34-v1",
+    "title": "banking sweep render",
+    "positive": "Large-format arcade key art of the MANTA fighter in a dramatic banking pose, one ray-wing sweeping toward the viewer and the other receding, showing the flat pale-mint upper plating with its dark green seam lines and the shadowed underbelly with twin amber thruster bells blazing, the small green canopy catching a streak of pink light from an off-screen bullet storm, the whole craft outlined in heavy near-black green strokes, behind it a wide arc of trailing golden point-sparkles like a comet wake curving across deep navy space, a broken skeet drone tumbling in the middle distance trailing orange embers, rim light of cold violet from behind, ultra-detailed, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling composition, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, visible pilot, real animal, motion blur smear, pure black background, desaturated",
+    "negativeScoped": true,
+    "notes": "Manta's money shot. Perspective foreshortening on ray-wings is hard — flux.2-dev first.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 11103,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11103,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "manta-hero34-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b6240bfc-483f-4a57-859f-254d3cd97370",
+      "created": 1791539065,
+      "count": 1,
+      "revised_prompt": "Large-format arcade key art of the MANTA fighter in a dramatic banking pose, one ray-wing sweeping toward the viewer and the other receding, showing the flat pale-mint upper plating with its dark green seam lines and the shadowed underbelly with twin amber thruster bells blazing, the small green canopy catching a streak of pink light from an off-screen bullet storm, the whole craft outlined in heavy near-black green strokes, behind it a wide arc of trailing golden point-sparkles like a comet wake curving across deep navy space, a broken skeet drone tumbling in the middle distance trailing orange embers, rim light of cold violet from behind, ultra-detailed, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling composition, no text.",
+      "inference_time_s": 13.518577529815957,
+      "peak_memory_mb": 24844
+    },
+    "format": "jpg"
+  }
+}

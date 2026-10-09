@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:46:08.487Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, modern warship, aircraft carrier planes, skulls, fire human figures, pure black background, smooth plastic",
+  "negative_sent": "photorealistic, 3d render, text, watermark, modern warship, aircraft carrier planes, skulls, fire human figures, pure black background, smooth plastic",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "04-cinder-bastion",
+    "slug": "cb04-reveal",
+    "variantNum": 1,
+    "id": "cb04-reveal-v1",
+    "title": "fortress in the magma shaft",
+    "positive": "Infernal arcade boss reveal inside a vast vertical magma shaft, the CINDER BASTION, a battleship-length fortress sunk upright into the flowing lava lake like a driven nail, its hull a scorched charcoal-and-rust rampart studded with dark gun ports, across the deck four colossal articulated armored arms rotate slowly around an exposed molten core raised on a cradle, each arm built of heavy rectangular plates linked by glowing seam-hinges dripping fused slag, the central core an open crucible of white-yellow fire bleeding up through orange to deep ember red at the edges, geysers of lava throwing arc-lit spray against cave brick walls of warm clay color, drifting ember motes and heat shimmer, a tiny steel-blue dart fighter with cyan canopy and orange exhaust weaving along the left shaft wall for scale, deep navy-black shadow above the glow line, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with pixel texture accents, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, modern warship, aircraft carrier planes, skulls, fire human figures, pure black background, smooth plastic",
+    "negativeScoped": true,
+    "notes": "Lava ramp #8a2c0a→#e87a1c with #fff080 core start; brick walls #b07047-family clay. Arms revolve — imply motion with seam drips.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12401,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12401,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "cb04-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ae8caccf-76d8-44c2-83b3-b2f51fede929",
+      "created": 1791539163,
+      "count": 1,
+      "revised_prompt": "Infernal arcade boss reveal inside a vast vertical magma shaft, the CINDER BASTION, a battleship-length fortress sunk upright into the flowing lava lake like a driven nail, its hull a scorched charcoal-and-rust rampart studded with dark gun ports, across the deck four colossal articulated armored arms rotate slowly around an exposed molten core raised on a cradle, each arm built of heavy rectangular plates linked by glowing seam-hinges dripping fused slag, the central core an open crucible of white-yellow fire bleeding up through orange to deep ember red at the edges, geysers of lava throwing arc-lit spray against cave brick walls of warm clay color, drifting ember motes and heat shimmer, a tiny steel-blue dart fighter with cyan canopy and orange exhaust weaving along the left shaft wall for scale, deep navy-black shadow above the glow line, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art with pixel texture accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 14.346650590887293,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

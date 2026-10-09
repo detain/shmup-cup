@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:01:19.260Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, fire explosion stock photo, mushroom cloud, cartoon smiley, text, numbers, arrows, frames merging, different explosions each frame, pure black background, watermark, blurry",
+  "negative_sent": "photorealistic, 3d render, fire explosion stock photo, mushroom cloud, cartoon smiley, text, numbers, arrows, frames merging, different explosions each frame, pure black background, watermark, blurry",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "explosion-ramp",
+    "variantNum": 1,
+    "id": "explosion-ramp-v1",
+    "title": "The arcade explosion ramp: four frames of one blast, gold to ember",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; classic arcade destruction effect, four-panel sprite-sheet progression on a flat lifted deep-navy background, arranged as a single horizontal row of four equal frames, left to right, each frame the same explosion at a later moment, same position within its frame. Frame one, ignition: a small tight sphere of pale lemon-gold white heat with a crisp dark outline, a few short radial spike lines, absolutely bright, no smoke. Frame two, bloom: the fireball now three times wider, a hot cream core wrapped in rolling petals of amber and tangerine flame, each petal a flat outlined lobe, dark smoke puffs beginning to crown the top, short spark arms thrown out to the sides. Frame three, breakdown: the core has cooled to burnt orange, the petal lobes shredding into separated clouds of rust-red and brown-grey smoke that keep the memory of the sphere's shape, ember sparks streaming outward on straight vectors, the dark outline now wrapping many lobes instead of one. Frame four, death: a wide slow cloud of dark ember-grey smoke veined with the last dim red cracks of internal light, edges dissolving into the navy, a handful of lone orange embers drifting clear of the cloud, one or two gold point-sparks winking at the outer margin. The four frames share scale markers implicitly — same center, growing radius — and read unmistakably as one blast played forward. Palette strictly the explosion ramp: cream-yellow to amber to rust orange to deep ember red over smoke grey, on deep-navy, never pure black. No text, no labels, no numbers on the frames.",
+    "negative": "photorealistic, 3d render, fire explosion stock photo, mushroom cloud, cartoon smiley, text, numbers, arrows, frames merging, different explosions each frame, pure black background, watermark, blurry",
+    "negativeScoped": true,
+    "notes": "Explosion ramp reference: #fff080 → #f8b030 → #f06820 → #c83018, smoke over navy #0c1a3c. This is the game's canonical death effect as a four-frame storyboard — the phrase \"same explosion at a later moment, same position\" is the continuity anchor; flux.2 is the reliable author here, sd3.5 often makes four unrelated blasts (hence the negative). Usable directly as an FX bible plate.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 18071,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18071,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "explosion-ramp-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "13da4406-d09b-4c3d-aff8-5200cc4d2b22",
+      "created": 1791540074,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; classic arcade destruction effect, four-panel sprite-sheet progression on a flat lifted deep-navy background, arranged as a single horizontal row of four equal frames, left to right, each frame the same explosion at a later moment, same position within its frame. Frame one, ignition: a small tight sphere of pale lemon-gold white heat with a crisp dark outline, a few short radial spike lines, absolutely bright, no smoke. Frame two, bloom: the fireball now three times wider, a hot cream core wrapped in rolling petals of amber and tangerine flame, each petal a flat outlined lobe, dark smoke puffs beginning to crown the top, short spark arms thrown out to the sides. Frame three, breakdown: the core has cooled to burnt orange, the petal lobes shredding into separated clouds of rust-red and brown-grey smoke that keep the memory of the sphere's shape, ember sparks streaming outward on straight vectors, the dark outline now wrapping many lobes instead of one. Frame four, death: a wide slow cloud of dark ember-grey smoke veined with the last dim red cracks of internal light, edges dissolving into the navy, a handful of lone orange embers drifting clear of the cloud, one or two gold point-sparks winking at the outer margin. The four frames share scale markers implicitly — same center, growing radius — and read unmistakably as one blast played forward. Palette strictly the explosion ramp: cream-yellow to amber to rust orange to deep ember red over smoke grey, on deep-navy, never pure black. No text, no labels, no numbers on the frames.",
+      "inference_time_s": 12.829142787028104,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:06:44.316Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, photorealistic, 3d render, watermark, modern fighter jets, visible cockpit pilots, pure black background, cluttered composition",
+  "negative_sent": "garbled text, misspelled letters, extra letters, photorealistic, 3d render, watermark, modern fighter jets, visible cockpit pilots, pure black background, cluttered composition",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "title-screen-hero",
+    "slug": "title-screen",
+    "variantNum": 2,
+    "id": "title-screen-v2",
+    "title": "twin fighters under fortress shadow",
+    "positive": "Cooperative arcade title screen artwork with the exact words \"SHMUP CUP\" written across the top in chunky gradient block capitals, golden yellow through orange to red, heavy navy outlines and offset shadows, beneath the logo two prototype fighters fly in formation from the left: a sleek steel-blue dart fighter with cyan canopy glow and an orange engine trail, and behind it a flat pale-mint manta-shaped ray-wing fighter with a green glowing canopy and twin amber thrusters, above and behind them on the right an enormous riveted steel fortress-ship looms like a dark mountain studded with amber running lights and rotating turret rings, tiny pink, crimson and violet bullet sparks glint against its hull, deep blue-black space with a distant teal gas cloud, SNES-era 16-bit inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling arcade composition, no text other than the title.",
+    "negative": "garbled text, misspelled letters, extra letters, photorealistic, 3d render, watermark, modern fighter jets, visible cockpit pilots, pure black background, cluttered composition",
+    "negativeScoped": true,
+    "notes": "The definitive co-op hero image; flux.2-dev keeps both hull silhouettes cleanly separated.",
+    "models": [
+      "flux2",
+      "qwenvl"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "qwen-image"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 10012,
+        "defaulted": false
+      },
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10012,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-screen-v2-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "cfa53c9d-29c8-4e57-93ea-364688e6ad72",
+      "created": 1791540399,
+      "count": 1,
+      "revised_prompt": "Cooperative arcade title screen artwork with the exact words \"SHMUP CUP\" written across the top in chunky gradient block capitals, golden yellow through orange to red, heavy navy outlines and offset shadows, beneath the logo two prototype fighters fly in formation from the left: a sleek steel-blue dart fighter with cyan canopy glow and an orange engine trail, and behind it a flat pale-mint manta-shaped ray-wing fighter with a green glowing canopy and twin amber thrusters, above and behind them on the right an enormous riveted steel fortress-ship looms like a dark mountain studded with amber running lights and rotating turret rings, tiny pink, crimson and violet bullet sparks glint against its hull, deep blue-black space with a distant teal gas cloud, SNES-era 16-bit inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen side-scrolling arcade composition, no text other than the title.",
+      "inference_time_s": 14.366387538146228,
+      "peak_memory_mb": 35436
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:25:39.793Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, sea creatures with eyes, cartoon smile, bubbles everywhere",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brood-urchin-reef",
+    "variantNum": 1,
+    "id": "brood-urchin-reef-v1",
+    "title": "BROOD BUBBLE and URCHIN reef turret, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Inside a coral-reef tunnel at the heart of a teal-and-violet nebula sea: a BROOD BUBBLE floats center-frame — a translucent wobbling sphere of membranous jelly with a tiny mechanical fish curled asleep inside, its dark spine visible through the shimmering film — while along the sand-stone reef walls a row of URCHIN reef turrets bristle: squat barnacle-domes armored in overlapping charcoal plates, each crowned with a fan of purple spines and a single rotating magenta lens. The MANTA fighter, a flat ray-winged hull of pale mint with a green canopy and amber twin thrusters, banks through the gap on the left, its wake scattering glowing plankton motes. Fired urchin shots leave curling pink trails; the tunnel mouth ahead glows with pale aqua light. Background is a lifted deep-navy to teal gradient, never pure black, layered with drifting wave-like gas rasters. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, sea creatures with eyes, cartoon smile, bubbles everywhere",
+    "negativeScoped": true,
+    "notes": "flux.2-dev renders the see-through brood film with the curled fish inside far more reliably than sd3.5. Color reference: nebula teal-violet, sand-stone #f0c890, mint hull #c8e0d0, canopy #40d070, urchin lens #ff5aa0.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15211,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15211,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brood-urchin-reef-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c4385de5-4ecd-47a6-9ee0-105e4b9cc792",
+      "created": 1791537935,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Inside a coral-reef tunnel at the heart of a teal-and-violet nebula sea: a BROOD BUBBLE floats center-frame — a translucent wobbling sphere of membranous jelly with a tiny mechanical fish curled asleep inside, its dark spine visible through the shimmering film — while along the sand-stone reef walls a row of URCHIN reef turrets bristle: squat barnacle-domes armored in overlapping charcoal plates, each crowned with a fan of purple spines and a single rotating magenta lens. The MANTA fighter, a flat ray-winged hull of pale mint with a green canopy and amber twin thrusters, banks through the gap on the left, its wake scattering glowing plankton motes. Fired urchin shots leave curling pink trails; the tunnel mouth ahead glows with pale aqua light. Background is a lifted deep-navy to teal gradient, never pure black, layered with drifting wave-like gas rasters. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 37.17237072484568,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

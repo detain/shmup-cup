@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:57:32.647Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, earthquake city, buildings, modern structures, volcano lava flow, explosion mushroom cloud nuclear, fire spreading forward past debris, pure black background, watermark, text, blurry, safe corridor fully intact, calm scene, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, earthquake city, buildings, modern structures, volcano lava flow, explosion mushroom cloud nuclear, fire spreading forward past debris, pure black background, watermark, text, blurry, safe corridor fully intact, calm scene, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "escape-corridor",
+    "slug": "escape-corridor-wallpaper",
+    "variantNum": 1,
+    "id": "escape-corridor-wallpaper-v1",
+    "title": "Wide wallpaper: canyon corridor mid-collapse, dust-and-fire wall devouring the far end",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A side view down a long terrain corridor in the act of self-destruction: the canyon walls are cross-sections of mixed geology — banded strata of sand-stone cream, dark basalt seams and veins of pale mineral — and along their entire visible length the rock is failing, enormous slabs tilting out of the walls mid-fall, some already snapped and toppling end over end into the corridor floor. At the far left of the frame the collapse has a face: a rolling wall of dust, debris and dull furnace-orange light devouring the corridor from that end, its leading edge a cauliflower of brown-grey cloud lit from within by chain detonations, chunks of rock silhouetted inside it, a surge of orange sparks and ash outrunning the cloud in a fan-shaped blast wave. The near two-thirds of the corridor behind the collapse is still intact but already doomed — the floor tiles of rock are beginning to crack in lightning patterns, fissures branching forward of the wave, thin jets of steam stabbing from new seams. The corridor ceiling on the right side remains solid, giving the composition a safe lane that narrows brutally toward the destruction. Debris streams diagonally away from the blast face, all particles obeying the same vector. Palette of the game's earth golds and rusts torn by furnace orange and brown-grey dust, over a lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, earthquake city, buildings, modern structures, volcano lava flow, explosion mushroom cloud nuclear, fire spreading forward past debris, pure black background, watermark, text, blurry, safe corridor fully intact, calm scene, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: strata cream ~#f0c890, basalt seams navy, blast interior furnace orange echoing the explosion ramp #f8b030→#f06820→#c83018. Composition rule that must survive generation: destruction at the FAR end, safe-but-cracking lane at the NEAR end — if the models center the blast, the image loses its \"run\" reading, regenerate. A stray non-English character slipped into drafting (\"拱\"); verified removed from the final prompt above. flux.2 renders the tilting slab field with excellent depth layering.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 17101,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 17101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "escape-corridor-wallpaper-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "3a72787a-5d31-43e4-afe6-08120d54bf92",
+      "created": 1791539848,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A side view down a long terrain corridor in the act of self-destruction: the canyon walls are cross-sections of mixed geology — banded strata of sand-stone cream, dark basalt seams and veins of pale mineral — and along their entire visible length the rock is failing, enormous slabs tilting out of the walls mid-fall, some already snapped and toppling end over end into the corridor floor. At the far left of the frame the collapse has a face: a rolling wall of dust, debris and dull furnace-orange light devouring the corridor from that end, its leading edge a cauliflower of brown-grey cloud lit from within by chain detonations, chunks of rock silhouetted inside it, a surge of orange sparks and ash outrunning the cloud in a fan-shaped blast wave. The near two-thirds of the corridor behind the collapse is still intact but already doomed — the floor tiles of rock are beginning to crack in lightning patterns, fissures branching forward of the wave, thin jets of steam stabbing from new seams. The corridor ceiling on the right side remains solid, giving the composition a safe lane that narrows brutally toward the destruction. Debris streams diagonally away from the blast face, all particles obeying the same vector. Palette of the game's earth golds and rusts torn by furnace orange and brown-grey dust, over a lifted deep-navy shadow, never pure black. No characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.304469105787575,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

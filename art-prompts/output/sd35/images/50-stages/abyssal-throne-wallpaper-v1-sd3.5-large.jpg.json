@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:59:56.621Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, sunlight rays, surface of water, turquoise tropical sea, coral reef colors, fish, sharks, bubbles everywhere, pure black background, watermark, text, blurry, green glowing fog, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, sunlight rays, surface of water, turquoise tropical sea, coral reef colors, fish, sharks, bubbles everywhere, pure black background, watermark, text, blurry, green glowing fog, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "abyssal-throne-wallpaper",
+    "variantNum": 1,
+    "id": "abyssal-throne-wallpaper-v1",
+    "title": "Wide wallpaper: hadal trench city of spires dusted with blue biolume",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The floor of an abyssal ocean trench rendered as a flooded night city: a horizontal panorama of colossal black rock spires of every height, thin needles beside stubby towers beside one or two broken stumps, all silhouetted in near-black-blue stone with hard dark outlines and faint sediment banding on their lit sides. Between the spires the water is a gradient of ink-blue fading to nothing at the top and bottom of frame, full of drifting marine snow — tiny pale flecks suspended mid-descent. Every spire is dusted with bioluminescence: constellations of cold cyan pinpricks crawling along ridge lines and crowning the tips like live beacons, with soft teal smears where a bloom clings in a shelf. Foreground left and right, tall ribbon-weed fronds sway in a shared diagonal current, each frond a flat banded green-black blade with a thin cyan glow-line down its seam. In the middle distance a vast shelf hangs over the trench edge, its underside studded with lantern-light like a inverted starfield, one long stream of glowing sediment pouring off it in a luminous silt waterfall that dims as it falls. No sunlight exists here; all light belongs to the living. Palette of black-blues and deep teal with committed cyan-cyan biolume accents, lifted deep-navy base, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, sunlight rays, surface of water, turquoise tropical sea, coral reef colors, fish, sharks, bubbles everywhere, pure black background, watermark, text, blurry, green glowing fog, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: biolume ramp #16485a shadow-bloom to #6ad8e0 beacon, water on navy #05070f–#0c1a3c. \"All light belongs to the living\" is the tonal key — sd3.5 wants to inject god-rays underwater; the negative blocks it. The inverted-lantern shelf with its silt waterfall is the landmark that makes this a THRONE approach, not generic deep sea. flux.2 handles the spire skyline rhythm cleanly.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16901,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16901,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "abyssal-throne-wallpaper-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1f2ab59f-94e1-4a56-bbe1-6525a3abdc4b",
+      "created": 1791539992,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. The floor of an abyssal ocean trench rendered as a flooded night city: a horizontal panorama of colossal black rock spires of every height, thin needles beside stubby towers beside one or two broken stumps, all silhouetted in near-black-blue stone with hard dark outlines and faint sediment banding on their lit sides. Between the spires the water is a gradient of ink-blue fading to nothing at the top and bottom of frame, full of drifting marine snow — tiny pale flecks suspended mid-descent. Every spire is dusted with bioluminescence: constellations of cold cyan pinpricks crawling along ridge lines and crowning the tips like live beacons, with soft teal smears where a bloom clings in a shelf. Foreground left and right, tall ribbon-weed fronds sway in a shared diagonal current, each frond a flat banded green-black blade with a thin cyan glow-line down its seam. In the middle distance a vast shelf hangs over the trench edge, its underside studded with lantern-light like a inverted starfield, one long stream of glowing sediment pouring off it in a luminous silt waterfall that dims as it falls. No sunlight exists here; all light belongs to the living. Palette of black-blues and deep teal with committed cyan-cyan biolume accents, lifted deep-navy base, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.341898728860542,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

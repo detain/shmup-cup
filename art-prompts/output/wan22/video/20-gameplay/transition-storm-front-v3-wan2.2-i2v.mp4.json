@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-10-09T11:59:36.913Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_sent": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/20-gameplay",
+    "fileStem": "zone-transition-parallax",
+    "slug": "transition-storm-front",
+    "variantNum": 3,
+    "id": "transition-storm-front-v3",
+    "title": "entering the slanting rain of Tempest Ridge",
+    "positive": "The pale-mint manta craft banks gently as it flies into a rolling wall of dark storm clouds, rain begins to slant diagonally across the frame streaking past the lens, jagged snow ridge tops scroll slowly below in the mid-layer, intermittent violet lightning flashes illuminate the cloud volumes from inside, wind smears the mist layers into faster leftward drift, the twin amber thruster ribbons bend sideways in gusts, camera tracks right steadily through the front, continuous single take, no cuts.",
+    "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+    "notes": "Rain streak direction and lightning timing carry this one; the still guarantees cloud volume reads. Lightning flashes make it unsuitable for a loop but perfect as a one-shot act opener.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-i2v",
+    "videoMode": "i2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 35,
+    "seed": 22011,
+    "sourceImage": {
+      "declared": "art-prompts/images/20-gameplay/tempest-rain-entry-v1-flux.2-dev.png",
+      "glob": "20-gameplay/tempest*"
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "transition-storm-front-v3-wan2.2-i2v.mp4",
+  "media_format": null,
+  "status": "failed",
+  "error": "HTTP 400 from http://skynet2.interserver.net:30001/v1/videos: {\"detail\":\"input_reference is not supported for T2V models.\"}",
+  "response_meta": null
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:54:45.558Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, exposed muscle, mechanical gears, wings on the cell",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, exposed muscle, mechanical gears, wings on the cell",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-f-cell-vault",
+    "slug": "chaser-cell-vault-claw",
+    "variantNum": 1,
+    "id": "chaser-cell-vault-claw-v1",
+    "title": "Zone F enemies: a chaser cell mid-mitosis while vault claws uncoil from the living wall",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Inside the Cell Vault, a corridor grown rather than built: walls of pulsing green cells in a deep moss-to-jade ramp, fleshy folds ribbing the ceiling, pores blinking slow amber light, the whole organism breathing. Two threats dominate the mid-field. A CHASER CELL — a fist-tight sphere of translucent green membrane with a brighter dividing nucleus glowing inside — caught at the ugliest half-second of MITOSIS: the sphere waist-pinched into a dumbbell, two nuclei pulling apart on a spindle of pale filaments, the stretched membrane bridging them, about to become two hunters that will each remember where the player ran. Behind and below it, a VAULT CLAW erupting from the living wall: an eight-link tentacle hook of segmented bone-white plates wrapped in green tissue, each joint sparking a bead of fluid, the great curved talisman tip raking the air in a grab-arc that trails the fighter's last position. Lower left, a sleek steel-blue dart fighter with bold blue hull stripe and cyan canopy skims away hard, orange engine flare smearing along the membrane floor, pink and magenta round shots with bright cores and dark rims leaking from the pores around it, one purple spore-burst blooming where a claw-tip struck rock. Deep-navy shadow wells in the tissue folds, never pure black.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, red gore, exposed muscle, mechanical gears, wings on the cell",
+    "negativeScoped": true,
+    "notes": "The mitosis pinch is the hero beat — it explains the chaser's split mechanic in one silhouette. Keep the vault green ramp (color reference #2a4434→#385a44) clearly plant-flesh, not blood: negatives ban gore deliberately. Claw reads as bone-plated tendril, eight links if the model can count, otherwise \"clearly multi-segmented.\"",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15611,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15611,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "chaser-cell-vault-claw-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "cfa6de4f-a9ee-4d3e-980f-56cf5fe0b939",
+      "created": 1791539680,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. Inside the Cell Vault, a corridor grown rather than built: walls of pulsing green cells in a deep moss-to-jade ramp, fleshy folds ribbing the ceiling, pores blinking slow amber light, the whole organism breathing. Two threats dominate the mid-field. A CHASER CELL — a fist-tight sphere of translucent green membrane with a brighter dividing nucleus glowing inside — caught at the ugliest half-second of MITOSIS: the sphere waist-pinched into a dumbbell, two nuclei pulling apart on a spindle of pale filaments, the stretched membrane bridging them, about to become two hunters that will each remember where the player ran. Behind and below it, a VAULT CLAW erupting from the living wall: an eight-link tentacle hook of segmented bone-white plates wrapped in green tissue, each joint sparking a bead of fluid, the great curved talisman tip raking the air in a grab-arc that trails the fighter's last position. Lower left, a sleek steel-blue dart fighter with bold blue hull stripe and cyan canopy skims away hard, orange engine flare smearing along the membrane floor, pink and magenta round shots with bright cores and dark rims leaking from the pores around it, one purple spore-burst blooming where a claw-tip struck rock. Deep-navy shadow wells in the tissue folds, never pure black.",
+      "inference_time_s": 13.502318355021998,
+      "peak_memory_mb": 24844
+    },
+    "format": "jpg"
+  }
+}

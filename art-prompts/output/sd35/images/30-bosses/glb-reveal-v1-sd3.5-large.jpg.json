@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:49:22.899Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, soft plant flesh, healthy garden, pure black background",
+  "negative_sent": "photorealistic, 3d render, text artifacts, watermark, blurry, soft plant flesh, healthy garden, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "13-grasping-bloom",
+    "slug": "glb-reveal",
+    "variantNum": 1,
+    "id": "glb-reveal-v1",
+    "title": "full bloom open over a vine-anchor field",
+    "positive": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: a grasping bloom anchored at the right edge to a thicket of riveted steel vines, its heavy metal petals peeled wide around a pulsing suction center. The petals are armored scoops — dark green-blue plate with brass hinge-ribs and pink warning paint on the inner faces — and each one flexes on visible piston fingers. The flower's throat is a soft violet funnel with spiral muscle-folds that glow inward, and loose debris, spent bullets and dust motes stream toward it along curved suction paths. Cool teal ambient light from the left, sickly magenta bioluminescence from the throat. Deep-navy background never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, soft plant flesh, healthy garden, pure black background",
+    "negativeScoped": true,
+    "notes": "The suction is drawn by debris motion lines curving into the throat — flux.2-dev keeps the spiral fold geometry coherent.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 13301,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13301,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "glb-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "333cd5d8-8fb2-4606-ab2a-a9085bd4b74f",
+      "created": 1791539358,
+      "count": 1,
+      "revised_prompt": "Horizontal arcade shoot-up boss reveal, ultra-detailed 16-bit-inspired concept art: a grasping bloom anchored at the right edge to a thicket of riveted steel vines, its heavy metal petals peeled wide around a pulsing suction center. The petals are armored scoops — dark green-blue plate with brass hinge-ribs and pink warning paint on the inner faces — and each one flexes on visible piston fingers. The flower's throat is a soft violet funnel with spiral muscle-folds that glow inward, and loose debris, spent bullets and dust motes stream toward it along curved suction paths. Cool teal ambient light from the left, sickly magenta bioluminescence from the throat. Deep-navy background never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 side-scrolling arcade composition.",
+      "inference_time_s": 13.504559102002531,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

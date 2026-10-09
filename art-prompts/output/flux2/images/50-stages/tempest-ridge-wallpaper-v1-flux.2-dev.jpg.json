@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:32:21.927Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, sunny, calm sky, summer, green vegetation, pure black background, watermark, text, blurry, rain going upward, inconsistent rain direction, warm orange lighting, frame border, letterboxing",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-e-tempest-ridge",
+    "slug": "tempest-ridge-wallpaper",
+    "variantNum": 1,
+    "id": "tempest-ridge-wallpaper-v1",
+    "title": "Wide wallpaper: churning cloud deck under saw-tooth snow peaks with slanting rain",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A brutal mountain ridge storm seen side-on: the lower third of the image is a roiling deck of storm cloud, layered slabs of slate blue and cold lilac grey rolled over each other with heavy dark outlines, their tops shredded into horizontal streaks by wind. Rising out of the cloud sea, a serrated chain of snow peaks — sharp saw-tooth silhouettes in pale ice-blue with hard white windward facets and deep navy lee shadows, snow streaming off every summit in long thin ribbons bent sideways by the gale. A curtain of slanting rain crosses the whole scene on one consistent diagonal, rendered as thousands of fine pale needles catching intermittent light. From the biggest anvil cloud overhead, a single branching bolt of violet lightning strikes ridge to cloud, its lilac glow rimming every cloud slab it passes. Far above, torn holes in the storm show a cold dark sky with faint stars, contrasting the chaos below. Palette of storm blues, lilac greys, ice whites and one violent violet accent, over a lifted deep-navy base, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, sunny, calm sky, summer, green vegetation, pure black background, watermark, text, blurry, rain going upward, inconsistent rain direction, warm orange lighting, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: cloud slabs slate-to-lilac around #4a5a8a–#b84cff accents, bolt violet #b84cff, ice whites on navy #05070f–#0c1a3c. The single consistent rain diagonal is the whole illusion of wind — sd3.5 occasionally flips streak direction in patches; raise to guidance 5.0 if that happens. One bolt only; multiples turn it into wallpaper noise.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16501,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16501,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "tempest-ridge-wallpaper-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ad144081-2e65-4e24-b597-9e1d42252ef2",
+      "created": 1791538337,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A brutal mountain ridge storm seen side-on: the lower third of the image is a roiling deck of storm cloud, layered slabs of slate blue and cold lilac grey rolled over each other with heavy dark outlines, their tops shredded into horizontal streaks by wind. Rising out of the cloud sea, a serrated chain of snow peaks — sharp saw-tooth silhouettes in pale ice-blue with hard white windward facets and deep navy lee shadows, snow streaming off every summit in long thin ribbons bent sideways by the gale. A curtain of slanting rain crosses the whole scene on one consistent diagonal, rendered as thousands of fine pale needles catching intermittent light. From the biggest anvil cloud overhead, a single branching bolt of violet lightning strikes ridge to cloud, its lilac glow rimming every cloud slab it passes. Far above, torn holes in the storm show a cold dark sky with faint stars, contrasting the chaos below. Palette of storm blues, lilac greys, ice whites and one violent violet accent, over a lifted deep-navy base, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 34.87669171602465,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

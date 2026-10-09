@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:54:07.013Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, sunny sky",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, sunny sky",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-e-tempest-ridge",
+    "slug": "thunderhead-steed-foal",
+    "variantNum": 2,
+    "id": "thunderhead-steed-foal-v2",
+    "title": "Zone E enemies: patrol line of thunderheads on the horizon with foals sweeping down at the fighter",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A long horizon of the Tempest Ridge: an endless deck of roiling slate storm clouds under a deep-navy sky streaked with slanting rain, saw-tooth snow mountains lining the far edge like broken teeth, everything cold and wind-driven. Along the upper third, a patrol line of five THUNDERHEADS — round-anvil storm cells of the machine swarm, charcoal-gray with boiling rims, each nursing one glowing lilac eye and crawling violet arcs along its belly — spaced like watchtowers across the width of the frame. From the nearest two, three STEED FOALS peel off in pursuit: small homed seahorses of riveted steel plates and taut cables, curled tails streaming, amber faceplate lamps burning, static crackling between stiff dorsal fins, dropping in wide S-curves toward the lower left. There, a lone sleek steel-blue dart fighter with bold blue hull stripe and cyan canopy runs flat along the cloud tops, orange engine flare stretched, skimming a ridge spike, a fan of pink and violet shots with bright cores chasing it from above. One foal is caught mid-barrel-roll, a second frames the fighter's wingtip with its snout; a distant orange-white detonation winks inside the cloud deck between the watchtower cells.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, sunny sky",
+    "negativeScoped": true,
+    "notes": "Panoramic = Zone E's identity as a ridge-line gauntlet; the five-cell patrol reads as airspace control. Count guard: keep the thunderheads clearly round-anvil shaped and the foals clearly seahorse-shaped, or the frame muddles. Exactly one fighter.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15512,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15512,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "thunderhead-steed-foal-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "a003c525-df22-425d-9857-13c767565a3e",
+      "created": 1791539642,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A long horizon of the Tempest Ridge: an endless deck of roiling slate storm clouds under a deep-navy sky streaked with slanting rain, saw-tooth snow mountains lining the far edge like broken teeth, everything cold and wind-driven. Along the upper third, a patrol line of five THUNDERHEADS — round-anvil storm cells of the machine swarm, charcoal-gray with boiling rims, each nursing one glowing lilac eye and crawling violet arcs along its belly — spaced like watchtowers across the width of the frame. From the nearest two, three STEED FOALS peel off in pursuit: small homed seahorses of riveted steel plates and taut cables, curled tails streaming, amber faceplate lamps burning, static crackling between stiff dorsal fins, dropping in wide S-curves toward the lower left. There, a lone sleek steel-blue dart fighter with bold blue hull stripe and cyan canopy runs flat along the cloud tops, orange engine flare stretched, skimming a ridge spike, a fan of pink and violet shots with bright cores chasing it from above. One foal is caught mid-barrel-roll, a second frames the fighter's wingtip with its snout; a distant orange-white detonation winks inside the cloud deck between the watchtower cells.",
+      "inference_time_s": 14.376252552028745,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

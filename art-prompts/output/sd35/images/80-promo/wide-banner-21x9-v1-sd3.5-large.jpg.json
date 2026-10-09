@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:03:56.716Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
+  "negative_sent": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/80-promo",
+    "fileStem": "website-and-banners",
+    "slug": "wide-banner-21x9",
+    "variantNum": 1,
+    "id": "wide-banner-21x9-v1",
+    "title": "Panorama banner: the Verge's nine worlds as one scrolling horizon",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, extreme widescreen 21:9 side-scrolling panorama, subtle CRT scanline glow; marketing banner art, ultra-detailed large-format background with clean vector shapes and pixel-art texture accents. One continuous horizontal world-strip that secretly contains nine: reading left to right, a planet-rim of blue sky over green-teal highland terrain with drifting star dust; dissolving through a wobbling teal-violet gas sea where a stone reef-arch sinks into sand-gold fog; into a twin-sunned desert of long dune shadows, a big pale cream sun and small orange one stacked in heat haze; hard-cut by an erupting ridge of black peaks over a molten lake glowing under its own smoke; rising into a saw-tooth snow range beneath a roiling storm deck lit by one violet bolt; melting downward into the walls of a living green-cell vault, tissue ridges breathing in the dark; refracting into a corridor of violet crystal facets with cubes suspended mid-stack; clanging shut as the riveted amber corridor of a steel fortress interior, pipe rows converging; and finally sinking, right at the frame's edge, into a black-blue abyss of rock spires dusted with cold cyan lights. At the exact center, small, flying right through all of it on one straight line, a steel-blue dart fighter with a cyan canopy and a single long orange contrail that visibly passes through every biome — the same ship, the same horizon, nine deaths of palette. The contrail is the only line in the image allowed to be perfectly straight. Deep-navy unifier in every shadow, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
+    "negativeScoped": true,
+    "notes": "Each zone's anchor hue follows the 00-style-kernel table. Nine distinct biomes in one strip is a stress test — flux.2 merges adjacent palettes most gracefully; expect sd3.5 to merge the storm/snow and vault/crystal boundaries into mush and accept 7-8 readable zones if it fights. Straight contrail = the \"one run\" promise; if it bends, regenerate. Best use: Steam header, YouTube channel art, press-kit width.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 21031,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 21031,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "wide-banner-21x9-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "2a221761-549d-4682-9625-72aa74bd0d5f",
+      "created": 1791540232,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, extreme widescreen 21:9 side-scrolling panorama, subtle CRT scanline glow; marketing banner art, ultra-detailed large-format background with clean vector shapes and pixel-art texture accents. One continuous horizontal world-strip that secretly contains nine: reading left to right, a planet-rim of blue sky over green-teal highland terrain with drifting star dust; dissolving through a wobbling teal-violet gas sea where a stone reef-arch sinks into sand-gold fog; into a twin-sunned desert of long dune shadows, a big pale cream sun and small orange one stacked in heat haze; hard-cut by an erupting ridge of black peaks over a molten lake glowing under its own smoke; rising into a saw-tooth snow range beneath a roiling storm deck lit by one violet bolt; melting downward into the walls of a living green-cell vault, tissue ridges breathing in the dark; refracting into a corridor of violet crystal facets with cubes suspended mid-stack; clanging shut as the riveted amber corridor of a steel fortress interior, pipe rows converging; and finally sinking, right at the frame's edge, into a black-blue abyss of rock spires dusted with cold cyan lights. At the exact center, small, flying right through all of it on one straight line, a steel-blue dart fighter with a cyan canopy and a single long orange contrail that visibly passes through every biome — the same ship, the same horizon, nine deaths of palette. The contrail is the only line in the image allowed to be perfectly straight. Deep-navy unifier in every shadow, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 14.366378644946963,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

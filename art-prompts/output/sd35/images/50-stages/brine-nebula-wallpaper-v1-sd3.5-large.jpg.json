@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:58:15.816Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, real ocean, boats, horizon sunset, blurry, frame border, letterboxing",
+  "negative_sent": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, real ocean, boats, horizon sunset, blurry, frame border, letterboxing",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brine-nebula-wallpaper",
+    "variantNum": 1,
+    "id": "brine-nebula-wallpaper-v1",
+    "title": "wide gas-sea wave-raster wallpaper",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. An oceanic nebula stretched horizontally across the entire frame: rolling gas seas in teal and deep violet that read like water, with every wave crest drawn as a wobbling horizontal raster line, a classic side-scroller water shimmer. Mid-frame a great reef wall rises from the vapor sea — coral-shaped mineral towers in sand-stone tan and pale rose, hollowed with glowing turquoise windows, draped in ribbon weed that streams sideways as if in current. Above, the gas sea meets a ceiling of bruised violet clouds lit from within by slow pink lightning blooms. A shoal of tiny silhouetted mechanical fish drones crosses the far background in perfect formation, riding the current. The whole scene is wet-light: soft cyan highlights on every edge, dark green-teal shadows, a feel of breathing underwater without being underwater. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, real ocean, boats, horizon sunset, blurry, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "The \"wobbling raster line\" phrasing is the load-bearing trick for the zone's signature water shimmer; if SD3.5 renders real waves, strengthen it to \"each wave band is a flat dithered stripe with a sinusoidal wobble\". Color reference: gas sea teal-violet, reef sand-stone #f0c890, lightning pink #ff5aa0.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16201,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16201,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brine-nebula-wallpaper-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "12506666-1562-40df-8ac5-c285a3f4d661",
+      "created": 1791539891,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. An oceanic nebula stretched horizontally across the entire frame: rolling gas seas in teal and deep violet that read like water, with every wave crest drawn as a wobbling horizontal raster line, a classic side-scroller water shimmer. Mid-frame a great reef wall rises from the vapor sea — coral-shaped mineral towers in sand-stone tan and pale rose, hollowed with glowing turquoise windows, draped in ribbon weed that streams sideways as if in current. Above, the gas sea meets a ceiling of bruised violet clouds lit from within by slow pink lightning blooms. A shoal of tiny silhouetted mechanical fish drones crosses the far background in perfect formation, riding the current. The whole scene is wet-light: soft cyan highlights on every edge, dark green-teal shadows, a feel of breathing underwater without being underwater. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 14.304593302076682,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

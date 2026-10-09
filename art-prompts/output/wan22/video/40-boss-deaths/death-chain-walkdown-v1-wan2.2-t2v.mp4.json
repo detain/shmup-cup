@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T14:21:45.207Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, realistic smoke, single explosion, smoke-only mush",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, realistic smoke, single explosion, smoke-only mush",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/40-boss-deaths",
+    "fileStem": "chained-hull-explosions",
+    "slug": "death-chain-walkdown",
+    "variantNum": 1,
+    "id": "death-chain-walkdown-v1",
+    "title": "explosions marching the full spine",
+    "positive": "Retro 16-bit pixel-art widescreen boss death sequence: the dead mechanical sea-creature fortress-ship drifts broadside across the frame as a chain of explosions begins at its bow and walks the entire hull, each blast a blooming square-pixel fireball of pale yellow core, then orange, then red, popping one after another in a quick marching rhythm that travels left to right along its full length, armor plates buckling and flipping off ahead of the front, thick black smoke columns unfurling behind the chain, violet energy seams shorting with white crackles between blasts, the tiny dart fighter riding low at frame left with its engine flaring as shockwaves ripple past, the final blast at the stern larger than the rest with a full-screen white flash that holds a beat, deep navy starfield backdrop, bold outlines, CRT scanline glow, triumphant destructive rhythm, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, realistic smoke, single explosion, smoke-only mush",
+    "notes": "The marching rhythm is the whole joke — \"one after another in a quick marching rhythm that travels\" is the phrase to protect across seeds. End on the big stern flash for a clean cut point into the gold-points beat.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 24001,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "death-chain-walkdown-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "b5ff850c-b7ab-4b67-b0ed-0bce4df30a09",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art widescreen boss death sequence: the dead mechanical sea-creature fortress-ship drifts broadside across the frame as a chain of explosions begins at its bow and walks the entire hull, each blast a blooming square-pixel fireball of pale yellow core, then orange, then red, popping one after another in a quick marching rhythm that travels left to right along its full length, armor plates buckling and flipping off ahead of the front, thick black smoke columns unfurling behind the chain, violet energy seams shorting with white crackles between blasts, the tiny dart fighter riding low at frame left with its engine flaring as shockwaves ripple past, the final blast at the stern larger than the rest with a full-screen white flash that holds a beat, deep navy starfield backdrop, bold outlines, CRT scanline glow, triumphant destructive rhythm, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 24001,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, realistic smoke, single explosion, smoke-only mush",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.464845656883
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

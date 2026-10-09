@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:03:49.004Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, letters, numbers, logo, watermark, blurry, busy background, many bullets, explosions, vertical layout, fighter front view, mouth without center glow, pure black",
+  "negative_sent": "photorealistic, 3d render, text, letters, numbers, logo, watermark, blurry, busy background, many bullets, explosions, vertical layout, fighter front view, mouth without center glow, pure black",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/80-promo",
+    "fileStem": "website-and-banners",
+    "slug": "steam-capsule-no-text",
+    "variantNum": 2,
+    "id": "steam-capsule-no-text-v2",
+    "title": "Capsule alt: wordless two-shapes composition for text-over workflow",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square arcade graphic composition, subtle CRT scanline glow; wordless store capsule artwork designed for overlaid logo type, ultra-detailed clean vector shapes with pixel-art texture accents. An instant-read duel pictogram rendered with maximum craft: on the left edge of the square, a small perfect steel-blue dart fighter in profile — bold blue stripe, cyan canopy bead, orange engine flare stretched straight back off-frame — its whole silhouette crisp against open space. On the right edge, its answer: the frontal hemisphere of a mechanical fish-battleship's open mouth, drawn in concentric rings of dark armor — outer lip of rust-violet plates, mid-ring of barnacle turrets with tiny magenta lights, and at the dead center of that ring a blinding pink-white core of charge-up light, the whole mouth a target reticle that is also a gun that is also a face. Between the two, exactly three pink bright-cored bullets travel left-to-right in a slight arc, the only things connecting the halves, evenly spaced like an ellipsis. The background is the calmest lifted deep-navy in the game, one hand of faint violet nebula behind the mouth so it seems to breathe, sparse cold stars behind the fighter so it seems alone. Composition is pure grammar — small bright thing, three dots, huge hungry thing — legible at forty pixels square and gorgeous at full size. Never pure black. Absolutely no text, no letters, no logo, no UI anywhere: the entire upper center third is deliberately quiet negative space waiting for type to be placed by a human designer.",
+    "negative": "photorealistic, 3d render, text, letters, numbers, logo, watermark, blurry, busy background, many bullets, explosions, vertical layout, fighter front view, mouth without center glow, pure black",
+    "negativeScoped": true,
+    "notes": "The three-bullet ellipsis is the signature device — count them; both models like to multiply or drop. Concentric mouth-as-reticle reads instantly at 120px capsule size, which is the actual storefront. Keep the top-third empty for the logo overlay pass; if a model fills it with stars, guidance up or crop later.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 21022,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 21022,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "steam-capsule-no-text-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "61baad5d-6b83-4ce0-a67b-308080755e7d",
+      "created": 1791540224,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square arcade graphic composition, subtle CRT scanline glow; wordless store capsule artwork designed for overlaid logo type, ultra-detailed clean vector shapes with pixel-art texture accents. An instant-read duel pictogram rendered with maximum craft: on the left edge of the square, a small perfect steel-blue dart fighter in profile — bold blue stripe, cyan canopy bead, orange engine flare stretched straight back off-frame — its whole silhouette crisp against open space. On the right edge, its answer: the frontal hemisphere of a mechanical fish-battleship's open mouth, drawn in concentric rings of dark armor — outer lip of rust-violet plates, mid-ring of barnacle turrets with tiny magenta lights, and at the dead center of that ring a blinding pink-white core of charge-up light, the whole mouth a target reticle that is also a gun that is also a face. Between the two, exactly three pink bright-cored bullets travel left-to-right in a slight arc, the only things connecting the halves, evenly spaced like an ellipsis. The background is the calmest lifted deep-navy in the game, one hand of faint violet nebula behind the mouth so it seems to breathe, sparse cold stars behind the fighter so it seems alone. Composition is pure grammar — small bright thing, three dots, huge hungry thing — legible at forty pixels square and gorgeous at full size. Never pure black. Absolutely no text, no letters, no logo, no UI anywhere: the entire upper center third is deliberately quiet negative space waiting for type to be placed by a human designer.",
+      "inference_time_s": 13.261194769991562,
+      "peak_memory_mb": 25690
+    },
+    "format": "jpg"
+  }
+}

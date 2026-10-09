@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T12:45:40.751Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic fish, slimy textures, bright open throat, small cramped composition",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic fish, slimy textures, bright open throat, small cramped composition",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/30-boss-intros",
+    "fileStem": "galvanic-maw-jaw",
+    "slug": "warning-galvanic-jawopen",
+    "variantNum": 1,
+    "id": "warning-galvanic-jawopen-v1",
+    "title": "tilt up the steel flank into the opening maw",
+    "positive": "Retro 16-bit pixel-art arcade boss intro in widescreen: the frame darkens and a red warning band sweeps vertically once with siren-pulse lighting, then the camera tilts up along an endless scaled steel flank to reveal a mechanical fish the size of the entire playfield, its riveted jaw cracking open in slow heavy segments, exposing a dark electrified throat where arcs of violet lightning crawl and branch along wet-looking metal ribs, pin-point pink glow nodes blink awake deep in the gullet like a charging weapon, the tiny dart fighter at the bottom-left edge of frame flicks its cyan canopy light against the gloom, static spitting blue-white into the open mouth, sea-deep navy surroundings, bold outlines, CRT scanline glow, awe and dread, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic fish, slimy textures, bright open throat, small cramped composition",
+    "notes": "The tilt-up along the flank is the scale reveal — if Wan flattens the camera path, recut as a static wide. Prompt drift wants to light the throat like a tunnel; the `bright open throat` negative fights that.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 23002,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "warning-galvanic-jawopen-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "0f06fb66-1488-4456-bb89-cc5f881239d1",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art arcade boss intro in widescreen: the frame darkens and a red warning band sweeps vertically once with siren-pulse lighting, then the camera tilts up along an endless scaled steel flank to reveal a mechanical fish the size of the entire playfield, its riveted jaw cracking open in slow heavy segments, exposing a dark electrified throat where arcs of violet lightning crawl and branch along wet-looking metal ribs, pin-point pink glow nodes blink awake deep in the gullet like a charging weapon, the tiny dart fighter at the bottom-left edge of frame flicks its cyan canopy light against the gloom, static spitting blue-white into the open mouth, sea-deep navy surroundings, bold outlines, CRT scanline glow, awe and dread, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 23002,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic fish, slimy textures, bright open throat, small cramped composition",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 958.1428883390035
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

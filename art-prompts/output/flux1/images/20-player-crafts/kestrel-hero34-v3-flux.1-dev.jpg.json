@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:55:08.997Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, watermark, photorealistic, 3d render, detailed ships, cluttered composition, pure black background, rainbow palette, blurry",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "kestrel",
+    "slug": "kestrel-hero34",
+    "variantNum": 3,
+    "id": "kestrel-hero34-v3",
+    "title": "silhouette poster against the tide",
+    "positive": "Minimal dramatic arcade poster illustration, the pure black-navy silhouette of a sleek dart-shaped fighter with a long thin exhaust spike, the KESTREL, tiny at the lower left corner of a vast canvas, facing right toward an enormous oppressive silhouette wall that fills the entire right half of the frame, the layered jagged profile of a mechanical fortress-ship armada barely readable in near-darkness, between the two a single swirling stream of glowing pink bullets arcing like a comet tail, background a smooth vertical gradient from deep navy to a lighter cold blue at the horizon line near the bottom, one pale gold half-sun low behind the lone fighter, enormous negative space, quiet dread, bold dark outlines, saturated limited palette, ultra-clean vector shapes with faint pixel-art texture accents, subtle scanline glow, no text.",
+    "negative": "text, watermark, photorealistic, 3d render, detailed ships, cluttered composition, pure black background, rainbow palette, blurry",
+    "negativeScoped": true,
+    "notes": "Print/Wallpaper poster. flux models nail the minimal-gradient mood; keep armada detail below readability.",
+    "models": [
+      "flux1",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11006,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11006,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-hero34-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "7cb0996d-1a14-4ae2-a1d1-53ea47d714f6",
+      "created": 1791536104,
+      "count": 1,
+      "revised_prompt": "Minimal dramatic arcade poster illustration, the pure black-navy silhouette of a sleek dart-shaped fighter with a long thin exhaust spike, the KESTREL, tiny at the lower left corner of a vast canvas, facing right toward an enormous oppressive silhouette wall that fills the entire right half of the frame, the layered jagged profile of a mechanical fortress-ship armada barely readable in near-darkness, between the two a single swirling stream of glowing pink bullets arcing like a comet tail, background a smooth vertical gradient from deep navy to a lighter cold blue at the horizon line near the bottom, one pale gold half-sun low behind the lone fighter, enormous negative space, quiet dread, bold dark outlines, saturated limited palette, ultra-clean vector shapes with faint pixel-art texture accents, subtle scanline glow, no text.",
+      "inference_time_s": 13.046887494158,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

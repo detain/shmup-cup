@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:34:44.538Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, soap bubble, glass egg, round circle not ellipse, bubbles cluster, text, HUD, shield icon, watermark, blurry, ship destroyed, all three states different ships, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "force-field-shimmer",
+    "variantNum": 2,
+    "id": "force-field-shimmer-v2",
+    "title": "Ellipse force field around a fighter, fresh to failing wear states",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side view, subtle CRT scanline glow; gameplay effect concept art showing one object in three states across the frame, left to right. A sleek steel-blue dart fighter with a cyan canopy and orange engine glow is wrapped in a protective force field, shown three times in three condition states. Left, fresh field: a clean translucent ellipse of cyan light sized to enclose the whole craft, drawn as overlapping fine contour rings with a soft shimmer gradient, a gentle blue halo, the ship crisply visible inside. Center, worn field: the ellipse has shifted toward violet, its contour rings cracked with dark fissure lines, two or three chunks of the shimmer flickering out to transparency, small impact ripples frozen where enemy fire recently struck. Right, failing field: the ellipse is almost broken — a sparse violet shell with wide gaps, angry pink-white static arcing between the broken rim sections, sparks peeling off into the air, the ship inside clearly exposed from the side. Each state is hit by one pink-cored enemy bullet with a dark rim so the reader can compare cause and effect: the fresh field absorbs it in a bright ring, the worn field in a dull ripple, the failing field lets it pass through the gap. Flat lifted deep-navy background with sparse star dust, thick dark outlines on ship and field rims, cyan-to-violet palette progression, never pure black. No text, no letters, no UI bars.",
+    "negative": "photorealistic, 3d render, soap bubble, glass egg, round circle not ellipse, bubbles cluster, text, HUD, shield icon, watermark, blurry, ship destroyed, all three states different ships, pure black background",
+    "negativeScoped": true,
+    "notes": "Field wear ramp: fresh cyan ~#38c8e8 to failing violet ~#8a48e8 with pink arc #ff5aa0. Ship reference: stripe #3858f0, canopy #38c8e8, glow #f89830. The hardest ask is ship-identity consistency across the triptych — flux.2 usually re-renders the same silhouette three times cleanly; sd3.5 may vary the craft, in which case treat each state as its own sheet. The bullet in each state is the storytelling element; do not drop it.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 18041,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 18041,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "force-field-shimmer-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "9c49da74-cc68-4fc1-8fa6-7eacc5fda171",
+      "created": 1791538479,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side view, subtle CRT scanline glow; gameplay effect concept art showing one object in three states across the frame, left to right. A sleek steel-blue dart fighter with a cyan canopy and orange engine glow is wrapped in a protective force field, shown three times in three condition states. Left, fresh field: a clean translucent ellipse of cyan light sized to enclose the whole craft, drawn as overlapping fine contour rings with a soft shimmer gradient, a gentle blue halo, the ship crisply visible inside. Center, worn field: the ellipse has shifted toward violet, its contour rings cracked with dark fissure lines, two or three chunks of the shimmer flickering out to transparency, small impact ripples frozen where enemy fire recently struck. Right, failing field: the ellipse is almost broken — a sparse violet shell with wide gaps, angry pink-white static arcing between the broken rim sections, sparks peeling off into the air, the ship inside clearly exposed from the side. Each state is hit by one pink-cored enemy bullet with a dark rim so the reader can compare cause and effect: the fresh field absorbs it in a bright ring, the worn field in a dull ripple, the failing field lets it pass through the gap. Flat lifted deep-navy background with sparse star dust, thick dark outlines on ship and field rims, cyan-to-violet palette progression, never pure black. No text, no letters, no UI bars.",
+      "inference_time_s": 34.95491424109787,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

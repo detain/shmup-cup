@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:40:04.569Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, logo, watermark, UI, health bars, title lettering, blurry, vertical composition, ship on the right, boss smaller than ship, cluttered upper left corner, dark unreadable silhouette",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/80-promo",
+    "fileStem": "website-and-banners",
+    "slug": "website-hero",
+    "variantNum": 1,
+    "id": "website-hero-v1",
+    "title": "Homepage hero: fighter vs ark silhouette across a full bullet-sky",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; flagship key art for a game homepage, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. The entire promise of the game in one horizontal sweep: on the far left, a steel-blue dart fighter with a bold blue hull stripe, cyan canopy and long orange engine ribbons flies hard right, trailing a tight fan of bright player-bullets, tiny against what fills the other two-thirds of the frame — the approaching broadside of a colossal mechanical fish-shaped fortress-ship, its riveted jaw-plates open like a harbor chain, throat-glow building deep inside as a dark red furnace light, rows of turret-pods and armor seams marching up out of frame top and bottom so the beast reads bigger than the canvas. Between them, the sky is a lattice: three crossing arcades of enemy fire — pink bead-streams, red orb fans and violet spiral wrecks, each bullet a bright core with a dark rim — and threaded single-handedly through the gaps, the fighter's thin counter-fire. Far background: a blue planet rim curving along the bottom edge studded with tiny dark fortress spires, stars above, one distant second manta-shaped wing silhouette climbing into the boss's shadow for scale. Everything saturated, outlined, legible at thumbnail size yet rewarding at full width. Deep-navy space, committed cyan-orange hero colors against the enemy's rust-violet mass, lifted shadows, never pure black. No text, no letters, no logo, no UI — leave the upper-left sky clean and quiet for headline type to be overlaid later.",
+    "negative": "photorealistic, 3d render, text, logo, watermark, UI, health bars, title lettering, blurry, vertical composition, ship on the right, boss smaller than ship, cluttered upper left corner, dark unreadable silhouette",
+    "negativeScoped": true,
+    "notes": "Ship #3858f0/#38c8e8/#f89830; boss throat furnace ~#c83018; bullets #ff5aa0/#ff3a3a/#b84cff. The \"clean upper-left sky\" clause is the web-dev contract — check the quiet corner survived, else the headline has nowhere to live. flux.2 keeps the boss cropped beyond frame (bigger-than-canvas read); sd3.5 tends to shrink it fully inside — regenerate if scale contrast drops.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 21011,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 21011,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "website-hero-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "f32a0ac9-c734-499a-b9e2-946c6233a338",
+      "created": 1791538799,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; flagship key art for a game homepage, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. The entire promise of the game in one horizontal sweep: on the far left, a steel-blue dart fighter with a bold blue hull stripe, cyan canopy and long orange engine ribbons flies hard right, trailing a tight fan of bright player-bullets, tiny against what fills the other two-thirds of the frame — the approaching broadside of a colossal mechanical fish-shaped fortress-ship, its riveted jaw-plates open like a harbor chain, throat-glow building deep inside as a dark red furnace light, rows of turret-pods and armor seams marching up out of frame top and bottom so the beast reads bigger than the canvas. Between them, the sky is a lattice: three crossing arcades of enemy fire — pink bead-streams, red orb fans and violet spiral wrecks, each bullet a bright core with a dark rim — and threaded single-handedly through the gaps, the fighter's thin counter-fire. Far background: a blue planet rim curving along the bottom edge studded with tiny dark fortress spires, stars above, one distant second manta-shaped wing silhouette climbing into the boss's shadow for scale. Everything saturated, outlined, legible at thumbnail size yet rewarding at full width. Deep-navy space, committed cyan-orange hero colors against the enemy's rust-violet mass, lifted shadows, never pure black. No text, no letters, no logo, no UI — leave the upper-left sky clean and quiet for headline type to be overlaid later.",
+      "inference_time_s": 34.87683714390732,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

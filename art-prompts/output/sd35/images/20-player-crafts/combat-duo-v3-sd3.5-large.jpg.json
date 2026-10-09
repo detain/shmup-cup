@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:43:09.184Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, explosions fireballs everywhere, visible pilots, destroyed hull debris chaos, pure black background",
+  "negative_sent": "photorealistic, 3d render, text, watermark, explosions fireballs everywhere, visible pilots, destroyed hull debris chaos, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "combat-and-p2",
+    "slug": "combat-duo",
+    "variantNum": 3,
+    "id": "combat-duo-v3",
+    "title": "retreat cover each other",
+    "positive": "Emotional arcade key art of a fighting retreat, the damaged KESTREL limping screen-left with its orange engine glow flickering and stuttering, thin black smoke ribbon trailing, cyan canopy cracked but lit, while the MANTA swings its flat pale-mint ray-wings around behind it in a defensive arc, thrusters burning hot amber, placing its own hull between the wounded partner and a pursuing wall of crimson bullets with dark rims that fills the right edge of the frame like a blood-red tide, a single force-field ellipse shimmer of cyan light blooming off the MANTA's wings where a glancing shot hits, deep navy void with a cold teal rim of a distant planet below, rim lighting sculpting both silhouettes, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format composition, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, explosions fireballs everywhere, visible pilots, destroyed hull debris chaos, pure black background",
+    "negativeScoped": true,
+    "notes": "Wide cinematic for the story page. Story: the Verge is blue and patient — protect the pair, not the spectacle.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 11203,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 11203,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "combat-duo-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c41a863c-112c-4251-ab45-df587cbc1517",
+      "created": 1791538984,
+      "count": 1,
+      "revised_prompt": "Emotional arcade key art of a fighting retreat, the damaged KESTREL limping screen-left with its orange engine glow flickering and stuttering, thin black smoke ribbon trailing, cyan canopy cracked but lit, while the MANTA swings its flat pale-mint ray-wings around behind it in a defensive arc, thrusters burning hot amber, placing its own hull between the wounded partner and a pursuing wall of crimson bullets with dark rims that fills the right edge of the frame like a blood-red tide, a single force-field ellipse shimmer of cyan light blooming off the MANTA's wings where a glancing shot hits, deep navy void with a cold teal rim of a distant planet below, rim lighting sculpting both silhouettes, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format composition, subtle CRT scanline glow, no text.",
+      "inference_time_s": 13.507679578848183,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

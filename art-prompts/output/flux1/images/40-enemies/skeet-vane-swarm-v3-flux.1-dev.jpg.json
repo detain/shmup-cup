@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:57:25.074Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, four blades, insect wings, feathers",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-a-azure-verge",
+    "slug": "skeet-vane-swarm",
+    "variantNum": 3,
+    "id": "skeet-vane-swarm-v3",
+    "title": "SKEET pods and VANE bladed fliers, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square vertical poster crop. A heroic low-angle study of a VANE bladed flier: a compact gunmetal drone chassis wrapped by three spinning crescent-mirror wingblades, each blade a polished steel scythe with a lilac glint edge, hovering against a vast soft-focus backdrop of a blue planet's limb — green-teal terrain, white storm swirls, and a thin glowing cyan atmospheric arc cutting the corner of the frame. A single SKEET pod, an armored seed-shaped drone with a magenta eye-slit and rust-violet seams, rides the shadow at the edge of the composition. Sparse pixel stars dot the deep navy gradient sky, lifted never black. The mood is clean, cold and mechanical — an patrol arriving in orbit. Bold flat color shapes, limited palette, ultra-detailed large-format illustration with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, four blades, insect wings, feathers",
+    "negativeScoped": true,
+    "notes": "Vertical poster crop for social/print. flux.1-dev gives the cleanest hard-edged blade shapes. Color reference: blade glint #c8a0ff accent, atmosphere #38c8e8, planet #8ad0a8.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15113,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15113,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "skeet-vane-swarm-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "37428731-1b96-4b1c-8443-c567591bad83",
+      "created": 1791536240,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square vertical poster crop. A heroic low-angle study of a VANE bladed flier: a compact gunmetal drone chassis wrapped by three spinning crescent-mirror wingblades, each blade a polished steel scythe with a lilac glint edge, hovering against a vast soft-focus backdrop of a blue planet's limb — green-teal terrain, white storm swirls, and a thin glowing cyan atmospheric arc cutting the corner of the frame. A single SKEET pod, an armored seed-shaped drone with a magenta eye-slit and rust-violet seams, rides the shadow at the edge of the composition. Sparse pixel stars dot the deep navy gradient sky, lifted never black. The mood is clean, cold and mechanical — an patrol arriving in orbit. Bold flat color shapes, limited palette, ultra-detailed large-format illustration with pixel-art texture accents.",
+      "inference_time_s": 14.855150149902329,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

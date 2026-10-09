@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:52:43.254Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d, text, watermark, blurry, pure black, sandcastle, cactus, realistic dust storm",
+  "negative_sent": "photorealistic, 3d, text, watermark, blurry, pure black, sandcastle, cactus, realistic dust storm",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-c-dune-expanse",
+    "slug": "dune-worm-dust-devil",
+    "variantNum": 2,
+    "id": "dune-worm-dust-devil-v2",
+    "title": "DUNE WORM and DUST DEVIL, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-wide panoramic arcade framing. A three-lane ambush across a twin-sunned desert: on the left the sand boils as a DUNE WORM, a long brass ring-plated boring machine with a spiral drill-maw, breaches in a curtain of golden grit; in the middle a chain of DUST DEVILS marches toward the viewer, hollow twisting funnels of rust vapor with dark cores and orbiting pebbles, each wobbling its own shear band; on the right the MANTA fighter, flat ray-wings of pale mint and green canopy lit from behind by the big cream sun, slides under the first devil trailing amber thruster ribbons and a fan of green shots. Dune ridges step across the frame in flat silhouette bands from sand-stone light to shadowed umber, heat haze breaking the horizon into shimmering raster lines. Warm sky lifting to deep navy at the top edge, never black, thin stars appearing. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d, text, watermark, blurry, pure black, sandcastle, cactus, realistic dust storm",
+    "negativeScoped": true,
+    "notes": "The 1536x640 strip turns the three threats into readable lanes — ideal site banner. sd3.5 grades the dune silhouette bands crisply. Watch that devils stay hollow-cored funnels, not solid cones.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15312,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15312,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "dune-worm-dust-devil-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "7ddf1a43-6544-4ae4-82f0-c609ebbea3d8",
+      "created": 1791539558,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow, ultra-wide panoramic arcade framing. A three-lane ambush across a twin-sunned desert: on the left the sand boils as a DUNE WORM, a long brass ring-plated boring machine with a spiral drill-maw, breaches in a curtain of golden grit; in the middle a chain of DUST DEVILS marches toward the viewer, hollow twisting funnels of rust vapor with dark cores and orbiting pebbles, each wobbling its own shear band; on the right the MANTA fighter, flat ray-wings of pale mint and green canopy lit from behind by the big cream sun, slides under the first devil trailing amber thruster ribbons and a fan of green shots. Dune ridges step across the frame in flat silhouette bands from sand-stone light to shadowed umber, heat haze breaking the horizon into shimmering raster lines. Warm sky lifting to deep navy at the top edge, never black, thin stars appearing. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 14.35862067900598,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

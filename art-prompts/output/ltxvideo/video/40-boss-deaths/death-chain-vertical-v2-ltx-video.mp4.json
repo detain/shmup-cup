@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:31:12.254Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic fire, smoke-only mush",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic fire, smoke-only mush",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/40-boss-deaths",
+    "fileStem": "chained-hull-explosions",
+    "slug": "death-chain-vertical",
+    "variantNum": 2,
+    "id": "death-chain-vertical-v2",
+    "title": "stern-to-bow climb up a tilting hull",
+    "positive": "A giant wrecked steel sea-creature hull in bold-outlined 16-bit pixel art tilts diagonally across the frame while explosions pop up along it in rapid sequence from the low stern to the high bow, each fireball stepping visibly higher, plates shedding outward, the ship lurching and sliding downward as the chain reaches the top and detonates the core in a bright flash, camera static, fast climbing rhythm, single continuous shot.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic fire, smoke-only mush",
+    "notes": "Diagonal walk-ups feel more dramatic than horizontal in short clips; the added ship-sink motion gives an ending pose. Draft at 30 steps, hero at 45 if the stepping stutters.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 768,
+      "h": 512
+    },
+    "numFrames": 97,
+    "fps": 24,
+    "durationNote": "~4s",
+    "guidance": 3.4,
+    "steps": 40,
+    "seed": 24002,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 768,
+    "h": 512
+  },
+  "size_sent": {
+    "w": 768,
+    "h": 512
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "768x512",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "death-chain-vertical-v2-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "ff10e59a-bd46-4c61-a84a-e1441596ec66",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "A giant wrecked steel sea-creature hull in bold-outlined 16-bit pixel art tilts diagonally across the frame while explosions pop up along it in rapid sequence from the low stern to the high bow, each fireball stepping visibly higher, plates shedding outward, the ship lurching and sliding downward as the chain reaches the top and detonates the core in a bright flash, camera static, fast climbing rhythm, single continuous shot.",
+          "size": "768x512",
+          "num_frames": 97,
+          "fps": 24,
+          "seed": 24002,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic fire, smoke-only mush",
+          "guidance_scale": 3.4,
+          "num_inference_steps": 40,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 18.961237038951367
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

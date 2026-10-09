@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:32:56.983Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, round pebbles, gravel, ice texture, snow, pure black background, watermark, text, blurry, muddy colors, soft gradients everywhere, single giant crystal only, frame border, letterboxing",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-g-prism-labyrinth",
+    "slug": "prism-labyrinth-wallpaper",
+    "variantNum": 1,
+    "id": "prism-labyrinth-wallpaper-v1",
+    "title": "Wide crystal-corridor wallpaper: faceted violet maze with glinting walls and floating cubes",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A vast subterranean crystal labyrinth: an enormous horizontal corridor whose walls, ceiling and floor are built of giant triangular facets of deep violet crystal, every facet a different flat angle, each catching a hard sliver of lilac light so the whole surface glitters like cut gemstone. Clusters of taller crystal prisms rise from the floor like organ pipes, their edges glowing pale lilac, their cores holding a slow internal violet pulse. In the mid-distance, enormous cubes of crystal stack and un-stack themselves in mid-air, drifting apart and clicking together in a frozen moment of rearrangement, casting sharp rhomboid shadows. The corridor floor is a mosaic of polished facet-plates reflecting the prism clusters upside-down. Beams of refracted light cross the hall diagonally, splitting into thin pink and cyan fans where they pass through a floating shard. Deep in the far background the tunnel narrows into a dark amethyst throat studded with single bright glints, suggesting the maze continues forever. Palette of deep violets with lilac highlight edges, glints of pale gold, everything laid over a lifted deep-navy shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, round pebbles, gravel, ice texture, snow, pure black background, watermark, text, blurry, muddy colors, soft gradients everywhere, single giant crystal only, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Color reference: crystal #8a48e8, edge glints #c8a0ff, floor-plate navy #0c1a3c. The stacking cubes are the zone's remix gimmick made visible — flux.2 holds their geometry, while sd3.5 sometimes melts touching cubes; keep guidance at 4.5 so facets stay hard-edged. Avoid ice/snow reading: facets must be angular crystal, not frost.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16701,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16701,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "prism-labyrinth-wallpaper-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "cc2b8f2e-ab33-4486-ad55-a6727e2e5b2d",
+      "created": 1791538372,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. A vast subterranean crystal labyrinth: an enormous horizontal corridor whose walls, ceiling and floor are built of giant triangular facets of deep violet crystal, every facet a different flat angle, each catching a hard sliver of lilac light so the whole surface glitters like cut gemstone. Clusters of taller crystal prisms rise from the floor like organ pipes, their edges glowing pale lilac, their cores holding a slow internal violet pulse. In the mid-distance, enormous cubes of crystal stack and un-stack themselves in mid-air, drifting apart and clicking together in a frozen moment of rearrangement, casting sharp rhomboid shadows. The corridor floor is a mosaic of polished facet-plates reflecting the prism clusters upside-down. Beams of refracted light cross the hall diagonally, splitting into thin pink and cyan fans where they pass through a floating shard. Deep in the far background the tunnel narrows into a dark amethyst throat studded with single bright glints, suggesting the maze continues forever. Palette of deep violets with lilac highlight edges, glints of pale gold, everything laid over a lifted deep-navy shadow, never pure black. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 34.85896689305082,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

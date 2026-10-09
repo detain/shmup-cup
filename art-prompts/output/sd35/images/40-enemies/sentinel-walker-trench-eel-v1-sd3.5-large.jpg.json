@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:56:08.691Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, four-legged walker, eel coming from the ceiling, open space background",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, four-legged walker, eel coming from the ceiling, open space background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-h-iron-citadel",
+    "slug": "sentinel-walker-trench-eel",
+    "variantNum": 1,
+    "id": "sentinel-walker-trench-eel-v1",
+    "title": "the girder patrol and the floor-strike eel",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside the machine-gut of a riveted steel fortress: layered girders overhead, fat pipes sweating condensation, and a gallery of amber running lights that fades from dark rust-amber near the floor to bright furnace-amber overhead. In the middle distance a SENTINEL WALKER strides left along a girder catwalk — a squat twin-legged guard machine, heavy barrel torso bristling with rivets, two thick reverse-jointed legs with clawed feet clamped on the beam, a single red sensor eye sweeping a thin amber searchlight cone across the pipes, shoulder-mounted short cannons tracking. Below it, erupting out of an open maintenance trench in the deck plating, a TRENCH EEL — a long segmented steel serpent with ring-plate segments, a blunt snout lined with filing-tooth ridges, violet core-light leaking between its joints, its body thrown into a hard S-curve as it whips up toward the KESTREL. The KESTREL is banking between two pipe stacks in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy, orange engine glow flaring as it cuts thrust, blue bullets sparking harmlessly off the walker's riveted chest plate. Deep-navy shadow behind the girder layers, never pure black. No text, no UI elements.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, soft pastel palette, blue-green lighting, organic flesh, human figures, four-legged walker, eel coming from the ceiling, open space background",
+    "negativeScoped": true,
+    "notes": "Color reference: amber light ramp #6a4418→#e8a030, eel joint-glow violet #b84cff, walker eye red #ff3a3a, steel body gunmetal with warm rust tinting. The warm-only lighting is what separates Citadel from every other metal zone — the negative explicitly bans blue-green key light. Flux.2 first: two creatures plus architecture plus ship is four-subject traffic.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15811,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15811,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "sentinel-walker-trench-eel-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "0df01c29-59a9-4f87-816b-1378f7589bcd",
+      "created": 1791539764,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade side-scrolling composition, subtle CRT scanline glow. Inside the machine-gut of a riveted steel fortress: layered girders overhead, fat pipes sweating condensation, and a gallery of amber running lights that fades from dark rust-amber near the floor to bright furnace-amber overhead. In the middle distance a SENTINEL WALKER strides left along a girder catwalk — a squat twin-legged guard machine, heavy barrel torso bristling with rivets, two thick reverse-jointed legs with clawed feet clamped on the beam, a single red sensor eye sweeping a thin amber searchlight cone across the pipes, shoulder-mounted short cannons tracking. Below it, erupting out of an open maintenance trench in the deck plating, a TRENCH EEL — a long segmented steel serpent with ring-plate segments, a blunt snout lined with filing-tooth ridges, violet core-light leaking between its joints, its body thrown into a hard S-curve as it whips up toward the KESTREL. The KESTREL is banking between two pipe stacks in the foreground, steel-blue dart hull with a bold blue stripe, cyan canopy, orange engine glow flaring as it cuts thrust, blue bullets sparking harmlessly off the walker's riveted chest plate. Deep-navy shadow behind the girder layers, never pure black. No text, no UI elements.",
+      "inference_time_s": 13.517610460985452,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

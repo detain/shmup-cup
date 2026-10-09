@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:19:27.754Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, pure black background, blurry, vibrant rainbow palette, cute, chibi",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "10-hollow-king",
+    "slug": "hk10-reveal",
+    "variantNum": 1,
+    "id": "hk10-reveal-v1",
+    "title": "full reveal: the throne of teeth inside the ark",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format with clean vector shapes and pixel-art texture accents. The final boss of a horizontal arcade shoot-em-up revealed inside the hollowed hull-cathedral of a dead mechanical whale battleship: THE HOLLOW KING, an abyssal anglerfish fortress the size of a cathedral nave. Its body is fused machine and pale blind fish — slack, vast jaws rimmed with rows of riveted steel teeth each as long as a fighter craft, palate plated with dented armor and weeping amber coolant. From a crane-like spine of segmented black iron rises its single lure: a swollen biological lamp glowing pale ghost-green, the one light source, swinging on a cable-taut filament and throwing long tooth-shadows across the ribcage walls. Behind it, the ark's interior vanishes into a black-blue dark so complete the player's own ship-light would be swallowed; a few stray enemy bullets drift like plankton, pink and violet with bright cores and dark rims. Deep-water blues and bone-whites only, palette lifted from #05070f to #0c1a3c, never pure black; the lure's glow is the entire color story. Widescreen 16:9 side-scrolling arcade composition, boss filling the right two thirds and brooding, subtle CRT scanline glow. No text, no letters.",
+    "negative": "photorealistic, 3d render, text, watermark, pure black background, blurry, vibrant rainbow palette, cute, chibi",
+    "negativeScoped": true,
+    "notes": "Color reference: lure glow pale green ~#a8e8c0 over bone hull #c8d0c8, darks #05070f–#0c1a3c. The restraint of one light source is what makes this the scariest frame in the game — if the model brightens the whole cave, raise guidance or add \"chiaroscuro, 90 percent of frame in shadow\".",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 13001,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13001,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hk10-reveal-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "3476d187-990b-456f-8633-e6482c90e22d",
+      "created": 1791537563,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format with clean vector shapes and pixel-art texture accents. The final boss of a horizontal arcade shoot-em-up revealed inside the hollowed hull-cathedral of a dead mechanical whale battleship: THE HOLLOW KING, an abyssal anglerfish fortress the size of a cathedral nave. Its body is fused machine and pale blind fish — slack, vast jaws rimmed with rows of riveted steel teeth each as long as a fighter craft, palate plated with dented armor and weeping amber coolant. From a crane-like spine of segmented black iron rises its single lure: a swollen biological lamp glowing pale ghost-green, the one light source, swinging on a cable-taut filament and throwing long tooth-shadows across the ribcage walls. Behind it, the ark's interior vanishes into a black-blue dark so complete the player's own ship-light would be swallowed; a few stray enemy bullets drift like plankton, pink and violet with bright cores and dark rims. Deep-water blues and bone-whites only, palette lifted from #05070f to #0c1a3c, never pure black; the lure's glow is the entire color story. Widescreen 16:9 side-scrolling arcade composition, boss filling the right two thirds and brooding, subtle CRT scanline glow. No text, no letters.",
+      "inference_time_s": 37.24430355592631,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

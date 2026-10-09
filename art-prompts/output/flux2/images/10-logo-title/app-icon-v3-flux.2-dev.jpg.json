@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:07:10.055Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled letters, extra letters, misspelled text, photorealistic, 3d render, watermark, blurry, serif font, script font, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "app-store-icon",
+    "slug": "app-icon",
+    "variantNum": 3,
+    "id": "app-icon-v3",
+    "title": "\"C\" cup emblem monogram",
+    "positive": "Esports-style app icon, square rounded tile, a single massive block letter \"C\" occupying most of the frame, the letter filled with a vertical gradient from pale yellow through tangerine orange to flame red, thick dark navy outline and a hard inner shadow line, a small steel-blue retro dart fighter flying through the open gap of the C leaving a thin orange trail, three tiny pink glowing bullets orbiting the letter like satellites, background deep navy with a subtle radial teal glow behind the letterform, faint scanline texture, bold flat 16-bit arcade vector design with pixel-art texture accents, high contrast and readable at favicon size, no other text or numbers.",
+    "negative": "garbled letters, extra letters, misspelled text, photorealistic, 3d render, watermark, blurry, serif font, script font, pure black background",
+    "negativeScoped": true,
+    "notes": "qwen renders the single glyph most reliably. Logo gradient anchors #f8f070→#f8a030→#e04828.",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10023,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10023,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "app-icon-v3-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "273525e4-e811-4777-ba08-20e7e7701b00",
+      "created": 1791536825,
+      "count": 1,
+      "revised_prompt": "Esports-style app icon, square rounded tile, a single massive block letter \"C\" occupying most of the frame, the letter filled with a vertical gradient from pale yellow through tangerine orange to flame red, thick dark navy outline and a hard inner shadow line, a small steel-blue retro dart fighter flying through the open gap of the C leaving a thin orange trail, three tiny pink glowing bullets orbiting the letter like satellites, background deep navy with a subtle radial teal glow behind the letterform, faint scanline texture, bold flat 16-bit arcade vector design with pixel-art texture accents, high contrast and readable at favicon size, no other text or numbers.",
+      "inference_time_s": 29.877744965953752,
+      "peak_memory_mb": 40010
+    },
+    "format": "jpg"
+  }
+}

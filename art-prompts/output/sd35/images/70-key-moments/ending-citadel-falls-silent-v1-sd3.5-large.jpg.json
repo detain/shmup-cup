@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:02:04.179Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, full round sun, sunset orange sky, explosions, smoke columns, enemy ships, fleet, text, watermark, blurry, ship facing right, multiple contrails",
+  "negative_sent": "photorealistic, 3d render, full round sun, sunset orange sky, explosions, smoke columns, enemy ships, fleet, text, watermark, blurry, ship facing right, multiple contrails",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "endings",
+    "slug": "ending-citadel-falls-silent",
+    "variantNum": 1,
+    "id": "ending-citadel-falls-silent-v1",
+    "title": "Dawn flight home under a pale-gold half-sun, fortress quiet behind",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. The war is over and the sky has forgiven everyone: a lone steel-blue dart fighter with a cyan canopy and unhurried orange engine glow flies leftward across the lower third of an enormous dawn, tiny in the frame, whole and homebound. Above and behind it, filling the upper right horizon, a half-sun the color of pale gold sits sliced cleanly by the planet's rim, pouring a broad lane of soft amber light across layered cloud strata — each cloud bank a flat outlined shelf of rose-grey and warm cream, their undersides gilded. Far below the cloud deck, barely visible through the haze, sprawls the silhouette of the conquered fortress range: long dead ridges of angular black-blue hull-mass, gun masts drooping, no lights, no flak, nothing moving — citadels turned into mountains, silent enough to hear. The fighter trails one thin contrail ribbon that unspools back toward that ruin and forward toward the light. The mood is the exhale after the last bullet: wide, warm, mercifully empty. Palette of pale gold, cream, rose-grey dawn light over lifted deep-navy shadow in the earth below, never pure black. No text, no letters, no UI, no other ships.",
+    "negative": "photorealistic, 3d render, full round sun, sunset orange sky, explosions, smoke columns, enemy ships, fleet, text, watermark, blurry, ship facing right, multiple contrails",
+    "negativeScoped": true,
+    "notes": "Half-sun pale gold ~#fce8b8, dawn creams ~#f8f070 diluted; ship reference stripe #3858f0, canopy #38c8e8. The half-sun sliced by the rim is the ending's signature — models default to full discs, so verify the horizon cuts it. Dead fortress ridges must have ZERO lights: any glow reads as surviving threat and breaks the \"silent.\"",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 20041,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 20041,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ending-citadel-falls-silent-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "f5e81644-680e-43b7-9414-5f46f23991b7",
+      "created": 1791540119,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; ending scene painted at hi-resolution, ultra-detailed large-format art with clean vector shapes and pixel-art texture accents. The war is over and the sky has forgiven everyone: a lone steel-blue dart fighter with a cyan canopy and unhurried orange engine glow flies leftward across the lower third of an enormous dawn, tiny in the frame, whole and homebound. Above and behind it, filling the upper right horizon, a half-sun the color of pale gold sits sliced cleanly by the planet's rim, pouring a broad lane of soft amber light across layered cloud strata — each cloud bank a flat outlined shelf of rose-grey and warm cream, their undersides gilded. Far below the cloud deck, barely visible through the haze, sprawls the silhouette of the conquered fortress range: long dead ridges of angular black-blue hull-mass, gun masts drooping, no lights, no flak, nothing moving — citadels turned into mountains, silent enough to hear. The fighter trails one thin contrail ribbon that unspools back toward that ruin and forward toward the light. The mood is the exhale after the last bullet: wide, warm, mercifully empty. Palette of pale gold, cream, rose-grey dawn light over lifted deep-navy shadow in the earth below, never pure black. No text, no letters, no UI, no other ships.",
+      "inference_time_s": 14.37193394987844,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:58:39.363Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, bloom, real desert photo, watermark, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-c-dune-expanse",
+    "slug": "dune-expanse-sprite-sheet",
+    "variantNum": 3,
+    "id": "dune-expanse-sprite-sheet-v3",
+    "title": "In-game enemy sprite sheet: dune worm, dust devil, husk crawler",
+    "positive": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep warm-navy sheet, one enemy family per horizontal band, thick even margins, no text, no frame lines, no labels. Band one — DUNE WORM: an armored drill-worm of segmented brass rings with a conical spiral-tooth maw, shown as head frames rising at increasing angles, plus stackable plain ring segments and a two-frame sand splash puff. Band two — DUST DEVIL: a hollow twisted funnel of rust-colored spinning vapor with orbiting dark pebbles, four rotational frames where the spiral bands climb one quarter-turn each, silhouette wobbling slightly wider between frames. Band three — HUSK CRAWLER: an armored walker drone shaped like a broad beetle, overlapping slate shell plates, six stubby pixel legs in a clean four-step walk cycle, a dim red eye-bar glowing under the shell rim, and one flipped frame with the belly hatch open around a small bright violet core. Bold dark outlines around every sprite, saturated desert palette of brass, rust, sand-gold and slate, chunky cartridge-era readability, dithered highlights on metal only.",
+    "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, bloom, real desert photo, watermark, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Landscape three-band layout; easiest to eyeball cycle continuity across the wide strip. flux.1-dev for crisp leg separation. Color reference: eye-bar #ff3a3a, belly core #8a48e8, brass rings warm #e8a030 family.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15323,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15323,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "dune-expanse-sprite-sheet-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "e8fecb1e-e370-49b4-8b4e-91524155d4dd",
+      "created": 1791536314,
+      "count": 1,
+      "revised_prompt": "Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep warm-navy sheet, one enemy family per horizontal band, thick even margins, no text, no frame lines, no labels. Band one — DUNE WORM: an armored drill-worm of segmented brass rings with a conical spiral-tooth maw, shown as head frames rising at increasing angles, plus stackable plain ring segments and a two-frame sand splash puff. Band two — DUST DEVIL: a hollow twisted funnel of rust-colored spinning vapor with orbiting dark pebbles, four rotational frames where the spiral bands climb one quarter-turn each, silhouette wobbling slightly wider between frames. Band three — HUSK CRAWLER: an armored walker drone shaped like a broad beetle, overlapping slate shell plates, six stubby pixel legs in a clean four-step walk cycle, a dim red eye-bar glowing under the shell rim, and one flipped frame with the belly hatch open around a small bright violet core. Bold dark outlines around every sprite, saturated desert palette of brass, rust, sand-gold and slate, chunky cartridge-era readability, dithered highlights on metal only.",
+      "inference_time_s": 12.479621555889025,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

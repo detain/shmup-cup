@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:55:58.147Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion",
+  "negative_sent": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-g-prism-labyrinth",
+    "slug": "prism-labyrinth-sprite-sheet",
+    "variantNum": 3,
+    "id": "prism-labyrinth-sprite-sheet-v3",
+    "title": "wide filmstrip: hunter attack sequence and halo volley",
+    "positive": "SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with clear margin between them. Upper strip, six frames of the OPTION HUNTER attack run facing left: prow entering frame, claws flexing open, a captured escort drone orb yanked from the left toward the belly bay, claw closing on it, the drone's replacement bay-eject flash violet, and the hunter banking out with the stolen orb tucked in the launch mouth — identical frigate design in every frame, only the claw and bay state changing. Lower strip, five frames of a HALO CRYSTAL volley: the central faceted violet gem ringed by six lilac satellites, charging as the satellites brighten one by one like a clock sweeping past six positions, then a single release frame where the gem flashes white and six pink needle-lasers leave the ring pointing outward, then a cool-down frame with the satellites dim and one needle still in-frame. Crystal facet shading consistent in both strips, light from above, hard silhouettes readable at game scale.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: stolen orb #c8a0ff glow, eject flash #8a48e8, needles #ff5aa0. Continuity clause (\"identical frigate design in every frame, only the claw and bay state changing\") is what makes filmstrips extractable; check the sixth frame's silhouette first, it's the usual drift point.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15723,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15723,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "prism-labyrinth-sprite-sheet-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "3d92be02-7eed-4c48-b522-e028a381ac17",
+      "created": 1791539753,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with clear margin between them. Upper strip, six frames of the OPTION HUNTER attack run facing left: prow entering frame, claws flexing open, a captured escort drone orb yanked from the left toward the belly bay, claw closing on it, the drone's replacement bay-eject flash violet, and the hunter banking out with the stolen orb tucked in the launch mouth — identical frigate design in every frame, only the claw and bay state changing. Lower strip, five frames of a HALO CRYSTAL volley: the central faceted violet gem ringed by six lilac satellites, charging as the satellites brighten one by one like a clock sweeping past six positions, then a single release frame where the gem flashes white and six pink needle-lasers leave the ring pointing outward, then a cool-down frame with the satellites dim and one needle still in-frame. Crystal facet shading consistent in both strips, light from above, hard silhouettes readable at game scale.",
+      "inference_time_s": 12.872105472022668,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

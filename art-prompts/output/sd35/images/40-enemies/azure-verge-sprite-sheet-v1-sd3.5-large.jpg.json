@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:51:33.992Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-a-azure-verge",
+    "slug": "azure-verge-sprite-sheet",
+    "variantNum": 1,
+    "id": "azure-verge-sprite-sheet-v1",
+    "title": "In-game enemy sprite sheet: skeet, vane, tender",
+    "positive": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean grid on a flat deep navy background color reference hex 0c1a3c, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: two frames of a large TENDER carrier drone, a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus two frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left.",
+    "negative": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Grid layout on a single flat navy field so sprites can be color-keyed out later. Color reference: navy bg #0c1a3c, eye-slit magenta #ff5aa0 family, tender lights green #40d070. Expect to hand-clean cell alignment; regenerate variations before giving up.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15121,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15121,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "azure-verge-sprite-sheet-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "5a5433fb-6568-4acd-b4fb-58ab34837a27",
+      "created": 1791539489,
+      "count": 1,
+      "revised_prompt": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean grid on a flat deep navy background color reference hex 0c1a3c, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: two frames of a large TENDER carrier drone, a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus two frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left.",
+      "inference_time_s": 14.364984876010567,
+      "peak_memory_mb": 24848
+    },
+    "format": "jpg"
+  }
+}

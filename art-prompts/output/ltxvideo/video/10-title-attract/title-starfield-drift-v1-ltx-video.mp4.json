@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:29:55.180Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/10-title-attract",
+    "fileStem": "title-ambient-loop",
+    "slug": "title-starfield-drift",
+    "variantNum": 1,
+    "id": "title-starfield-drift-v1",
+    "title": "multi-layer parallax starfield over a planet rim",
+    "positive": "Deep navy space scrolls quietly: near star pixels slide steadily left while distant stars crawl, a soft blue planet rim glows along the bottom edge of frame with a thin atmospheric haze band, occasional faint cyan glints ripple across the haze, all motion slow, uniform and continuous, camera perfectly static, no cuts, single ambient shot.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom",
+    "notes": "Lowest-risk background loop. Drift direction is leftward so it matches an attract screen where ships fly right. Cross-fade tail into head for a perfect web/title loop.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 768,
+      "h": 512
+    },
+    "numFrames": 121,
+    "fps": 30,
+    "durationNote": "~4s",
+    "guidance": 3,
+    "steps": 30,
+    "seed": 21004,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 768,
+    "h": 512
+  },
+  "size_sent": {
+    "w": 768,
+    "h": 512
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "768x512",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "title-starfield-drift-v1-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "075052e9-1c2f-4c93-bf54-ea818ede46b4",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "Deep navy space scrolls quietly: near star pixels slide steadily left while distant stars crawl, a soft blue planet rim glows along the bottom edge of frame with a thin atmospheric haze band, occasional faint cyan glints ripple across the haze, all motion slow, uniform and continuous, camera perfectly static, no cuts, single ambient shot.",
+          "size": "768x512",
+          "num_frames": 121,
+          "fps": 30,
+          "seed": 21004,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom",
+          "guidance_scale": 3,
+          "num_inference_steps": 30,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 18.51371051510796
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

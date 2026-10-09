@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:26:49.998Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, lens flare",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-d-magma-deep",
+    "slug": "ember-wisp-magma-cone",
+    "variantNum": 2,
+    "id": "ember-wisp-magma-cone-v2",
+    "title": "Zone D enemies: wisp stream pouring from a cone crater as the fighter threads the cave road",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A horizontal magma cave road inside a fortress-world's burning depths, the frame stretched wide like a scroll of danger: ceiling of jagged basalt drips with cooling slag, floor is a slow lava river glowing from dark ember red to tangerine, brick-like rock strata bands in rust brown breaking up the walls. On the left edge a sleek steel-blue dart fighter with cyan canopy streaks in, orange engine flare stretched long, banking between columns of stone. The right two-thirds belong to the IRON TIDE: a row of three MAGMA CONES of graduated size mounted along the cave floor like a gun battery, craters tilted up, each spewing a rising column of flame that breaks into a stream of EMBER WISPS — darting molten-gold hearts wrapped in ragged orange flame tongues with sparking tails — flowing left toward the fighter like a released swarm. Pink and red round shots with bright cores dot the columns, one cone mid-reload with its rock plates glowing cherry at the seams, a small orange-white blast chipping the ceiling where a wisp detonated. Deep-navy pockets in the far tunnels, never pure black.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, extra player ships, lens flare",
+    "negativeScoped": true,
+    "notes": "The panoramic band suits Zone D's scroll rhythm — cones read as terrain artillery, wisps as the mobile threat pouring off them. Keep exactly one fighter (anti-duplication guard in negative). Slag drip + strata bands give the wide frame vertical texture without stealing the lane.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 15412,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15412,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ember-wisp-magma-cone-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "37203338-2f69-4654-9625-0a896216def4",
+      "created": 1791538005,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultrawide panoramic arcade composition, subtle CRT scanline glow. A horizontal magma cave road inside a fortress-world's burning depths, the frame stretched wide like a scroll of danger: ceiling of jagged basalt drips with cooling slag, floor is a slow lava river glowing from dark ember red to tangerine, brick-like rock strata bands in rust brown breaking up the walls. On the left edge a sleek steel-blue dart fighter with cyan canopy streaks in, orange engine flare stretched long, banking between columns of stone. The right two-thirds belong to the IRON TIDE: a row of three MAGMA CONES of graduated size mounted along the cave floor like a gun battery, craters tilted up, each spewing a rising column of flame that breaks into a stream of EMBER WISPS — darting molten-gold hearts wrapped in ragged orange flame tongues with sparking tails — flowing left toward the fighter like a released swarm. Pink and red round shots with bright cores dot the columns, one cone mid-reload with its rock plates glowing cherry at the seams, a small orange-white blast chipping the ceiling where a wisp detonated. Deep-navy pockets in the far tunnels, never pure black.",
+      "inference_time_s": 31.591768962796777,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

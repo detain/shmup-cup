@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:43:35.671Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, numbers, measurement labels, photorealistic, 3d render, watermark, blurry, crumpled paper, pure black background",
+  "negative_sent": "text, letters, numbers, measurement labels, photorealistic, 3d render, watermark, blurry, crumpled paper, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "kestrel",
+    "slug": "kestrel-showroom",
+    "variantNum": 2,
+    "id": "kestrel-showroom-v2",
+    "title": "blueprint glow draft",
+    "positive": "Stylized engineering blueprint artwork of a retro arcade fighter, the KESTREL dart-shaped ship drawn in exact profile facing right, the drafting lines rendered as thin luminous cyan vector strokes over a deep navy blueprint field with a faint square grid, the hull outline emphasized with a heavier glowing stroke while interior panel breaks, wing rib structure and engine chamber are shown in fine hairlines, a soft warm orange fill glow marks the engine exhaust zone and a small cyan fill marks the canopy position, drifting pixel stars in the far background corners, subtle scanline texture, no text, no numbers, no measurement labels, mood of a secret prototype document recovered before the Iron Tide invasion, clean geometric line art with pixel-art texture accents, widescreen composition.",
+    "negative": "text, letters, numbers, measurement labels, photorealistic, 3d render, watermark, blurry, crumpled paper, pure black background",
+    "negativeScoped": true,
+    "notes": "Wide banner ideal for the codex/website craft page. Guard: models love inventing tiny numbers on blueprints — check and re-roll.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11002,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11002,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-showroom-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "162b3067-0811-4e76-b155-a1b0881fcc5c",
+      "created": 1791539011,
+      "count": 1,
+      "revised_prompt": "Stylized engineering blueprint artwork of a retro arcade fighter, the KESTREL dart-shaped ship drawn in exact profile facing right, the drafting lines rendered as thin luminous cyan vector strokes over a deep navy blueprint field with a faint square grid, the hull outline emphasized with a heavier glowing stroke while interior panel breaks, wing rib structure and engine chamber are shown in fine hairlines, a soft warm orange fill glow marks the engine exhaust zone and a small cyan fill marks the canopy position, drifting pixel stars in the far background corners, subtle scanline texture, no text, no numbers, no measurement labels, mood of a secret prototype document recovered before the Iron Tide invasion, clean geometric line art with pixel-art texture accents, widescreen composition.",
+      "inference_time_s": 12.83709217980504,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

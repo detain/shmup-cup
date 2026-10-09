@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:32:12.327Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, slow motion, static camera",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, slow motion, static camera",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/50-key-moments",
+    "fileStem": "escape-citadel-collapse",
+    "slug": "escape-ramp-speed",
+    "variantNum": 2,
+    "id": "escape-ramp-speed-v2",
+    "title": "the corridor bends, speed steps up again",
+    "positive": "Fast pixel-art side-scroll chase: the fighter rocketing rightward banks hard through a bending steel corridor, wall lights smearing into continuous amber streaks, a detonation bursts through the hall behind it throwing a rolling fireball into pursuit, debris chunks tumble past the camera leftward at speed, the ship's trail whips through the turn and stretches longer, acceleration kick at the end of the bend, single continuous shot.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, slow motion, static camera",
+    "notes": "The bank-through-bend is the speed-step-up visual — pair its exit frame with beat 3's entry. LTX speed smears read great at 30 fps; keep steps high or streaks go muddy.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 960,
+      "h": 544
+    },
+    "numFrames": 97,
+    "fps": 30,
+    "durationNote": "~3.2s",
+    "guidance": 3.5,
+    "steps": 40,
+    "seed": 25002,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 960,
+    "h": 544
+  },
+  "size_sent": {
+    "w": 960,
+    "h": 544
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "960x544",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "escape-ramp-speed-v2-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "3655c8fd-be4a-4b04-981a-db5dd3dcdf70",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "Fast pixel-art side-scroll chase: the fighter rocketing rightward banks hard through a bending steel corridor, wall lights smearing into continuous amber streaks, a detonation bursts through the hall behind it throwing a rolling fireball into pursuit, debris chunks tumble past the camera leftward at speed, the ship's trail whips through the turn and stretches longer, acceleration kick at the end of the bend, single continuous shot.",
+          "size": "960x544",
+          "num_frames": 97,
+          "fps": 30,
+          "seed": 25002,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, slow motion, static camera",
+          "guidance_scale": 3.5,
+          "num_inference_steps": 40,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 23.98236496001482
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

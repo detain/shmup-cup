@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:09:40.688Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, visible pilots, modern jets, same colored ships, pure black background, chaotic clutter",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "combat-and-p2",
+    "slug": "combat-duo",
+    "variantNum": 1,
+    "id": "combat-duo-v1",
+    "title": "wingmen in a bullet storm",
+    "positive": "Epic co-op arcade battle scene, two prototype fighters flying echelon formation left to right across a widescreen side-scrolling battlefield, in front the steel-blue KESTREL dart with a bold blue fuselage stripe, glowing cyan canopy and streaming orange engine afterglow, tucking behind and below it the flat pale-mint MANTA ray-wing fighter with green canopy glow and twin amber thrusters, both craft weaving through a slow glittering lattice of pink, crimson and violet round bullets with bright cores and dark rims fired from a hulking mechanical fish fortress silhouette pressing in from the right edge, golden point-sparkles spraying where a grazed drone bursts in orange-white flame, deep navy space washed with teal nebula light, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, visible pilots, modern jets, same colored ships, pure black background, chaotic clutter",
+    "negativeScoped": true,
+    "notes": "The co-op money shot. Keep ships clearly separated in depth; flux.2-dev handles two distinct silhouettes best.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 11201,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 11201,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "combat-duo-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "16144c73-84c6-4765-8d02-d5d85f8ec87b",
+      "created": 1791536976,
+      "count": 1,
+      "revised_prompt": "Epic co-op arcade battle scene, two prototype fighters flying echelon formation left to right across a widescreen side-scrolling battlefield, in front the steel-blue KESTREL dart with a bold blue fuselage stripe, glowing cyan canopy and streaming orange engine afterglow, tucking behind and below it the flat pale-mint MANTA ray-wing fighter with green canopy glow and twin amber thrusters, both craft weaving through a slow glittering lattice of pink, crimson and violet round bullets with bright cores and dark rims fired from a hulking mechanical fish fortress silhouette pressing in from the right edge, golden point-sparkles spraying where a grazed drone bursts in orange-white flame, deep navy space washed with teal nebula light, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text.",
+      "inference_time_s": 33.54306874680333,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

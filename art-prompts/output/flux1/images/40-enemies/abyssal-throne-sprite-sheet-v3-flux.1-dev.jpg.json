@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:01:43.568Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, warm orange lighting, red mine lights, pure black background, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-i-abyssal-throne",
+    "slug": "abyssal-throne-sprite-sheet",
+    "variantNum": 3,
+    "id": "abyssal-throne-sprite-sheet-v3",
+    "title": "wide filmstrip: mine drift-pulse and gulper strike run",
+    "positive": "SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, eight frames of a DEPTH MINE facing left: anchored still with the chain out and eye-light dark, chain parting one link at a time across three frames, the free mine beginning a slow upward drift with a slight roll, the eye-light crossing from dark to dim to bright over the final frames, and a last frame where the mine hangs at the top of its drift with the eye burning steady cyan — identical hull and spike layout every frame, only chain, altitude, roll and eye state changing. Lower strip, five frames of a GULPER strike run: cruising with the jaw half-open and lure filament dim, the filament flaring bright as the head recoils slightly, the full lunge with the jaw cage thrown maximum wide and body stretched, a bite-close frame with jaw shut and a few cyan lure-sparks still scattering, and the settle-back to cruising pose matching the first frame exactly for a seamless loop. All cool internal cyan glow, hard readable silhouettes at game scale.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, warm orange lighting, red mine lights, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: filament flare #6ad8e0 to white-hot core, bite-sparks scattering cyan, chain links gunmetal with dark rust. The \"settle-back matching the first frame exactly\" clause makes the lower strip a usable loop; verify frame one and frame five silhouettes line up before slicing, and treat the chain-parting sequence above as a bonus strip if the roll drift muddies.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15923,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15923,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "abyssal-throne-sprite-sheet-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "647b8ffe-d613-48a9-a835-94eb318f44e3",
+      "created": 1791536498,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, eight frames of a DEPTH MINE facing left: anchored still with the chain out and eye-light dark, chain parting one link at a time across three frames, the free mine beginning a slow upward drift with a slight roll, the eye-light crossing from dark to dim to bright over the final frames, and a last frame where the mine hangs at the top of its drift with the eye burning steady cyan — identical hull and spike layout every frame, only chain, altitude, roll and eye state changing. Lower strip, five frames of a GULPER strike run: cruising with the jaw half-open and lure filament dim, the filament flaring bright as the head recoils slightly, the full lunge with the jaw cage thrown maximum wide and body stretched, a bite-close frame with jaw shut and a few cyan lure-sparks still scattering, and the settle-back to cruising pose matching the first frame exactly for a seamless loop. All cool internal cyan glow, hard readable silhouettes at game scale.",
+      "inference_time_s": 12.472018911968917,
+      "peak_memory_mb": 36518
+    },
+    "format": "jpg"
+  }
+}

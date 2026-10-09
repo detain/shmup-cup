@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:58:11.232Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d, gradients, smooth shading, text, watermark, coral background, water caustics, fish eyes, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brine-nebula-sprite-sheet",
+    "variantNum": 2,
+    "id": "brine-nebula-sprite-sheet-v2",
+    "title": "In-game enemy sprite sheet: froth, brood, urchin, maw rocket",
+    "positive": "Retro 16-bit pixel art sprite atlas for a horizontal shoot-'em-up's underwater-reef level, flat solid dark blue-navy sheet, generous margins, evenly spaced, absolutely no text and no annotations. Subject family: bubble-swarm hazards and reef gunners — wobbling foam spheres in four pinch-apart split frames with a pink-white sheen and a darker rim; a jelly brood pod drawn three ways with a curled mechanical fish-fry visible through the membrane in charcoal and violet; an armored barnacle turret dome of overlapping slate plates with a purple spine crown and a rotating magenta eye-lens, drawn aimed and base-only without its spines for a destroyed state; and an open-jawed fish-head missile with a finned steel body and small orange nozzle flare in two flicker frames. Bold near-black outlines, saturated limited palette of teal, violet, slate, pink and orange, chunky readable small-size forms, dithered highlights only, no anti-aliasing, no scenery behind any sprite.",
+    "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, coral background, water caustics, fish eyes, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Square texture-page format including a destroyed urchin state. sd3.5 keeps the split-frame sequence legible; check the froth pinches read as one object dividing, not two unrelated balls.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15222,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15222,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brine-nebula-sprite-sheet-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "10297aa8-1c35-4a38-aa16-bce68f16555b",
+      "created": 1791536286,
+      "count": 1,
+      "revised_prompt": "Retro 16-bit pixel art sprite atlas for a horizontal shoot-'em-up's underwater-reef level, flat solid dark blue-navy sheet, generous margins, evenly spaced, absolutely no text and no annotations. Subject family: bubble-swarm hazards and reef gunners — wobbling foam spheres in four pinch-apart split frames with a pink-white sheen and a darker rim; a jelly brood pod drawn three ways with a curled mechanical fish-fry visible through the membrane in charcoal and violet; an armored barnacle turret dome of overlapping slate plates with a purple spine crown and a rotating magenta eye-lens, drawn aimed and base-only without its spines for a destroyed state; and an open-jawed fish-head missile with a finned steel body and small orange nozzle flare in two flicker frames. Bold near-black outlines, saturated limited palette of teal, violet, slate, pink and orange, chunky readable small-size forms, dithered highlights only, no anti-aliasing, no scenery behind any sprite.",
+      "inference_time_s": 15.078086657915264,
+      "peak_memory_mb": 36782
+    },
+    "format": "jpg"
+  }
+}

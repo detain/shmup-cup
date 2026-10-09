@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:46:36.492Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic weather, 3d render, text, watermark, human figure in cloud, face in cloud, anatomy organs, gore, pure black background",
+  "negative_sent": "photorealistic weather, 3d render, text, watermark, human figure in cloud, face in cloud, anatomy organs, gore, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "05-squall-steed",
+    "slug": "ss05-weakpoint",
+    "variantNum": 2,
+    "id": "ss05-weakpoint-v2",
+    "title": "the caged thunderhead heart",
+    "positive": "Dramatic boss core close-up, deep inside the opened chest cavity of the SQUALL STEED, a compact furious thunderhead storm cell suspended in a rotating cage of eight curved steel ribs, the mini-cloud churning white-blue with repeated internal lightning flashes that strobe the surrounding rib surfaces between silver highlight and sapphire shadow, arcs jumping from the cage to two anchor rods above like tesla terminals, droplets of frozen rain glittering in the air inside the cavity, beyond the cage the dark tunnel of the steed's throat fading to navy, at the very edges of frame the blurred tips of pink enemy bullets arriving from off-screen and evaporating in the discharge heat, awe and danger, centered composition with strong radial energy, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, pixel-cluster shading accents, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic weather, 3d render, text, watermark, human figure in cloud, face in cloud, anatomy organs, gore, pure black background",
+    "negativeScoped": true,
+    "notes": "Ribs opening/closing is the phase tell — capture the mid-open state. Storm glow cool to contrast pink bullets.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12502,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 12502,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ss05-weakpoint-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "e4e20c4c-1a17-4e98-b85a-4ab1e884f580",
+      "created": 1791539191,
+      "count": 1,
+      "revised_prompt": "Dramatic boss core close-up, deep inside the opened chest cavity of the SQUALL STEED, a compact furious thunderhead storm cell suspended in a rotating cage of eight curved steel ribs, the mini-cloud churning white-blue with repeated internal lightning flashes that strobe the surrounding rib surfaces between silver highlight and sapphire shadow, arcs jumping from the cage to two anchor rods above like tesla terminals, droplets of frozen rain glittering in the air inside the cavity, beyond the cage the dark tunnel of the steed's throat fading to navy, at the very edges of frame the blurred tips of pink enemy bullets arriving from off-screen and evaporating in the discharge heat, awe and danger, centered composition with strong radial energy, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering at ultra-detailed quality, pixel-cluster shading accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 14.129944829968736,
+      "peak_memory_mb": 25696
+    },
+    "format": "jpg"
+  }
+}

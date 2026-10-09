@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:00:10.252Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background",
+  "negative_sent": "photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "power-capsules",
+    "variantNum": 1,
+    "id": "power-capsules-v1",
+    "title": "Glossy weapon power capsules, four tints, pickup sheet",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. A pickup showcase sheet: four glossy power capsules arranged in a shallow diagonal row on a flat lifted deep-navy background, floating with a slight hover shadow beneath each. Every capsule is the same friendly factory shape — a short fat pill with a polished metal cap ring at each end and a wide glass barrel in the middle — differing only in tint: one signal red, one electric blue, one gold, one vivid green. Inside each glass barrel the energy is suspended as a swirling luminous core that matches but outshines the shell, with one bright specular dot on the upper-left of every capsule proving the gloss. Each capsule wears a thick near-black outline and a thin white top highlight arc, chrome end-caps rendered with two crisp bands of reflection. A faint same-colored glow halo bleeds a few pixels around each capsule, stronger at the core window. Under the row, a few tiny gold point-sparks drift, hinting at what the capsules become when collected. Limited saturated palette, crisp edges, arcade jewel-bright finish, never pure black. No text, no letters, no UI, no labels on the capsules.",
+    "negative": "photorealistic, 3d render, medicine, pharmaceutical, pill bottle, hologram text, letters on capsule, numbers, watermark, blurry, dull matte finish, more than four capsules, melted shapes, pure black background",
+    "negativeScoped": true,
+    "notes": "Capsule tints map to weapon colors red/blue/gold/green in the item system; chrome caps stay neutral so tints read instantly at sprite scale. flux.2 renders the four identical silhouettes with correct tint separation; sd3.5 sometimes invents a fifth capsule — count-check and regenerate.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 18011,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 18011,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "power-capsules-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b85c9276-5c57-4112-9046-faab623cbb00",
+      "created": 1791540005,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, subtle CRT scanline glow; ultra-detailed game item concept art, clean vector shapes with pixel-art texture accents. A pickup showcase sheet: four glossy power capsules arranged in a shallow diagonal row on a flat lifted deep-navy background, floating with a slight hover shadow beneath each. Every capsule is the same friendly factory shape — a short fat pill with a polished metal cap ring at each end and a wide glass barrel in the middle — differing only in tint: one signal red, one electric blue, one gold, one vivid green. Inside each glass barrel the energy is suspended as a swirling luminous core that matches but outshines the shell, with one bright specular dot on the upper-left of every capsule proving the gloss. Each capsule wears a thick near-black outline and a thin white top highlight arc, chrome end-caps rendered with two crisp bands of reflection. A faint same-colored glow halo bleeds a few pixels around each capsule, stronger at the core window. Under the row, a few tiny gold point-sparks drift, hinting at what the capsules become when collected. Limited saturated palette, crisp edges, arcade jewel-bright finish, never pure black. No text, no letters, no UI, no labels on the capsules.",
+      "inference_time_s": 13.552218195050955,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

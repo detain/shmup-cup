@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:21:44.581Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, intact clean joint, flesh, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "14-iron-talon",
+    "slug": "itl-weakpoint",
+    "variantNum": 2,
+    "id": "itl-weakpoint-v2",
+    "title": "knuckle actuator drum and tendon cables",
+    "positive": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: extreme three-quarter view of the middle knuckle of a giant steel claw, the joint housing blown half-open from combat — the brass actuator drum exposed and spinning loose, throwing arcs of white electricity, bundle-cables of tendon hydraulics severed and whipping, each one spouting a ribbon of amber fluid that ignites in orange puffs. Between the cracked knuckle plates a spherical gyro-core glows red-hot, the single aiming point of the frame. Steam, sparks and flapping metal shreds radiate outward. Deep-navy background, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro composition.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, intact clean joint, flesh, pure black background",
+    "negativeScoped": true,
+    "notes": "Broken machinery beats intact machinery for weak-point readability; the red gyro-core anchors the shot line for documentation crops.",
+    "models": [
+      "sd35",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 13402,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 13402,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "itl-weakpoint-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "9c959e54-a1c7-49a3-8a9d-bf95768f9001",
+      "created": 1791537700,
+      "count": 1,
+      "revised_prompt": "Macro boss weak-point detail for a horizontal shoot-up, ultra-detailed pixel-inspired concept art: extreme three-quarter view of the middle knuckle of a giant steel claw, the joint housing blown half-open from combat — the brass actuator drum exposed and spinning loose, throwing arcs of white electricity, bundle-cables of tendon hydraulics severed and whipping, each one spouting a ribbon of amber fluid that ignites in orange puffs. Between the cracked knuckle plates a spherical gyro-core glows red-hot, the single aiming point of the frame. Steam, sparks and flapping metal shreds radiate outward. Deep-navy background, bold dark outlines, saturated limited palette, subtle CRT scanline glow, square macro composition.",
+      "inference_time_s": 34.06153567391448,
+      "peak_memory_mb": 40034
+    },
+    "format": "jpg"
+  }
+}

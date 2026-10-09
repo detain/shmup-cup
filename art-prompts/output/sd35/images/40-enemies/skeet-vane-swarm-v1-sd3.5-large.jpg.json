@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:51:17.831Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, pure black background, human figures, ten wings, morphed silhouettes",
+  "negative_sent": "photorealistic, 3d render, text artifacts, watermark, blurry, pure black background, human figures, ten wings, morphed silhouettes",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-a-azure-verge",
+    "slug": "skeet-vane-swarm",
+    "variantNum": 1,
+    "id": "skeet-vane-swarm-v1",
+    "title": "SKEET pods and VANE bladed fliers, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A horizontal shoot-'em-up encounter over the rim of a blue planet: a cluster of SKEET pods drifts in from the right — small armored seed-shaped drone pods with a single magenta eye-slit and stubby fin pairs, matte gunmetal shells with rust-violet panel seams — escorted by VANE bladed fliers, crescent-mirror wingblades spinning around a compact steel chassis, each throwing a thin colored glint as it rotates. Below them the planet's limb curves across the frame, green-teal terrain shelves and ice caps under a thin atmosphere haze, deep navy space above lifting from near-black blue to midnight blue with sparse pixel stars. The two prototype fighters, a sleek steel-blue dart with a bold blue hull stripe, cyan canopy and orange engine glow, enter from the left edge trailing bright cyan tracer fire. Enemy bullets are pink and red orbs with bright cores and dark rims. Lifted deep-navy background, never pure black. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, pure black background, human figures, ten wings, morphed silhouettes",
+    "negativeScoped": true,
+    "notes": "flux.2-dev holds two distinct enemy species in one scene without merging them. Color reference: terrain #8ad0a8, stripe #3858f0, canopy #38c8e8, glow #f89830, bullets #ff5aa0/#ff3a3a. Watch that vane blades stay crescent, not full circles.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 15111,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15111,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "skeet-vane-swarm-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "f25e37ee-0bb8-42bf-a5a4-02ded86d4a88",
+      "created": 1791539473,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow. A horizontal shoot-'em-up encounter over the rim of a blue planet: a cluster of SKEET pods drifts in from the right — small armored seed-shaped drone pods with a single magenta eye-slit and stubby fin pairs, matte gunmetal shells with rust-violet panel seams — escorted by VANE bladed fliers, crescent-mirror wingblades spinning around a compact steel chassis, each throwing a thin colored glint as it rotates. Below them the planet's limb curves across the frame, green-teal terrain shelves and ice caps under a thin atmosphere haze, deep navy space above lifting from near-black blue to midnight blue with sparse pixel stars. The two prototype fighters, a sleek steel-blue dart with a bold blue hull stripe, cyan canopy and orange engine glow, enter from the left edge trailing bright cyan tracer fire. Enemy bullets are pink and red orbs with bright cores and dark rims. Lifted deep-navy background, never pure black. Ultra-detailed, large-format, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 13.498797818087041,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

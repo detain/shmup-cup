@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:43:36.334Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background",
+  "negative_sent": "text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "kestrel",
+    "slug": "kestrel-showroom",
+    "variantNum": 1,
+    "id": "kestrel-showroom-v1",
+    "title": "studio concept plate",
+    "positive": "Video game spacecraft concept art showroom plate, a single sleek horizontal-space fighter called the KESTREL floating at three-quarter side view in the center of a studio void, dart-shaped steel-blue hull with a bold bright blue fuselage stripe running the full length, a glowing cyan bubble canopy, twin air intakes with thin navy panel lines, a hot orange engine afterglow pouring from the rear vent nozzle and fading to smoke wisps, hard-edged armor plating with two-pixel-style heavy navy outlines, crisp specular highlights along the upper spine, background a flat deep-navy gradient with a faint grid floor line like a design-table, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.",
+    "negative": "text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background",
+    "negativeScoped": true,
+    "notes": "Stripe #3858f0, canopy #38c8e8, glow #f89830, outline #1b2a4a. flux.1-dev keeps the studio plate clean.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 11001,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11001,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-showroom-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c870330a-7037-49ac-8e7d-2e9d9e9c5e77",
+      "created": 1791539011,
+      "count": 1,
+      "revised_prompt": "Video game spacecraft concept art showroom plate, a single sleek horizontal-space fighter called the KESTREL floating at three-quarter side view in the center of a studio void, dart-shaped steel-blue hull with a bold bright blue fuselage stripe running the full length, a glowing cyan bubble canopy, twin air intakes with thin navy panel lines, a hot orange engine afterglow pouring from the rear vent nozzle and fading to smoke wisps, hard-edged armor plating with two-pixel-style heavy navy outlines, crisp specular highlights along the upper spine, background a flat deep-navy gradient with a faint grid floor line like a design-table, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.",
+      "inference_time_s": 13.500743464101106,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

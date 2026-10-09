@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:00:44.786Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, organic coral shapes, pure black background, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-g-prism-labyrinth",
+    "slug": "prism-labyrinth-sprite-sheet",
+    "variantNum": 2,
+    "id": "prism-labyrinth-sprite-sheet-v2",
+    "title": "square grid sheet, compact sprite set",
+    "positive": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the OPTION HUNTER frigate in profile facing left, armored deep-violet hull, wedge prow, four magnetic grapple-claws drawn open and closed in two consecutive cells, and a smaller escort-stolen drone orb in a cell beside its open belly bay; center column stacked with HALO CRYSTAL states — idle ring of six lilac satellites aligned, charging where all six satellites glow bright and the central gem dims, firing where the gem flashes white and the ring blurs slightly, and shattered as a hollow outer ring with the central gem gone; right column a 4x4 mini-grid of GLINT MOTES, sixteen tiny crystal spark sprites in smooth strobe sequence, each throwing a one-pixel star-glint, plus the single burst-puff frame at the corner. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, organic coral shapes, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: charging satellites at #c8a0ff brightness, firing flash #fffff0, hunter bay #8a48e8. The sixteen-frame mote strobe is deliberately over-specified — it tests whether the model can hold a repeating micro-pattern grid; this sheet style historically comes out best on sd3.5.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15722,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15722,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "prism-labyrinth-sprite-sheet-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "74b2fcdd-6fa7-483e-9d3c-89578802ef50",
+      "created": 1791536440,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the OPTION HUNTER frigate in profile facing left, armored deep-violet hull, wedge prow, four magnetic grapple-claws drawn open and closed in two consecutive cells, and a smaller escort-stolen drone orb in a cell beside its open belly bay; center column stacked with HALO CRYSTAL states — idle ring of six lilac satellites aligned, charging where all six satellites glow bright and the central gem dims, firing where the gem flashes white and the ring blurs slightly, and shattered as a hollow outer ring with the central gem gone; right column a 4x4 mini-grid of GLINT MOTES, sixteen tiny crystal spark sprites in smooth strobe sequence, each throwing a one-pixel star-glint, plus the single burst-puff frame at the corner. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.",
+      "inference_time_s": 15.055252346908674,
+      "peak_memory_mb": 36782
+    },
+    "format": "jpg"
+  }
+}

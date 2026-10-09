@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:01:06.360Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, nuclear mushroom, solar flare photo, supernova, explosion fireball orange, circular lens flare, text, HUD, watermark, blurry, wave covering entire screen, enemies in front half, pure black background",
+  "negative_sent": "photorealistic, 3d render, nuclear mushroom, solar flare photo, supernova, explosion fireball orange, circular lens flare, text, HUD, watermark, blurry, wave covering entire screen, enemies in front half, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/60-items-fx",
+    "fileStem": "items-and-fx",
+    "slug": "mega-crash",
+    "variantNum": 1,
+    "id": "mega-crash-v1",
+    "title": "The MEGA CRASH: full-screen white shockwave disc",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; screen-clearing ultimate ability concept art, ultra-detailed. A horizontal shoot-'er-up battlefield at the moment of total erasure: a titanic ring of white light is expanding across the whole frame from a point low on the left, rendered as a perfect arc of searing white with a razor-thin gold leading edge, its curve sweeping from the top of the screen to the bottom and dominating the composition. Inside the swept region on the left, reality has already been reset — clean deep-navy emptiness, every enemy and bullet gone, only faint dissipating pixel-dust drifting. Outside the arc to the right, the battle still exists in terror: dense streams of pink, red and violet enemy bullets, the angular prow of an armored swarm ship, all rendered normally but lit on their left-facing edges by the merciless white of the advancing ring, every surface rimmed in blown-out highlight. Along the arc itself, captured bullets are mid-transmutation, frozen as white silhouette cutouts on the light line, moments from deletion. The wave front throws radial speed-lines ahead of it and a subtle chromatic shimmer where the white meets the dark. Massive scale, arcade-commitment, the brightest object in the game rendered like an honest cataclysm, lifted deep-navy universe, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, nuclear mushroom, solar flare photo, supernova, explosion fireball orange, circular lens flare, text, HUD, watermark, blurry, wave covering entire screen, enemies in front half, pure black background",
+    "negativeScoped": true,
+    "notes": "Crash reference: disc white with gold leading edge ~#fff080, clean-wake navy #05070f–#0c1a3c. The storytelling trick is the tri-zone frame — already-cleared left, arc itself, still-alive right — so keep the wave mid-sweep, never fullscreen. flux.2 holds the razor arc edge; sd3.5 may bloom it into a blob, drop guidance if the gold edge disappears.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 18061,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 18061,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "mega-crash-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "ff21b9e7-0e8b-4848-9fbc-4f0df37d97cc",
+      "created": 1791540061,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; screen-clearing ultimate ability concept art, ultra-detailed. A horizontal shoot-'er-up battlefield at the moment of total erasure: a titanic ring of white light is expanding across the whole frame from a point low on the left, rendered as a perfect arc of searing white with a razor-thin gold leading edge, its curve sweeping from the top of the screen to the bottom and dominating the composition. Inside the swept region on the left, reality has already been reset — clean deep-navy emptiness, every enemy and bullet gone, only faint dissipating pixel-dust drifting. Outside the arc to the right, the battle still exists in terror: dense streams of pink, red and violet enemy bullets, the angular prow of an armored swarm ship, all rendered normally but lit on their left-facing edges by the merciless white of the advancing ring, every surface rimmed in blown-out highlight. Along the arc itself, captured bullets are mid-transmutation, frozen as white silhouette cutouts on the light line, moments from deletion. The wave front throws radial speed-lines ahead of it and a subtle chromatic shimmer where the white meets the dark. Massive scale, arcade-commitment, the brightest object in the game rendered like an honest cataclysm, lifted deep-navy universe, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 14.328805016120896,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

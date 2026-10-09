@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:10:57.507Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, watermark, photorealistic, 3d render, humans, crew members, modern hangar, fighter jet, pure black background, cluttered foreground",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "kestrel",
+    "slug": "kestrel-showroom",
+    "variantNum": 3,
+    "id": "kestrel-showroom-v3",
+    "title": "hangar bay reveal at dusk",
+    "positive": "Cinematic arcade concept scene, the KESTREL steel-blue dart fighter resting on a maintenance cradle inside an open hangar carved into an asteroid at the edge of a blue planet's orbit, warm work-lamps in amber glow raking across the hull stripe and throwing the long shadow of the delta silhouette onto the deck plate, the cyan canopy dim and dark like polished glass, the engine cowlings open with tiny gantry arms around them, through the hangar mouth a vast deep-navy starfield with the glowing teal rim of the Azure Verge planet rising, a couple of maintenance drone spheres hover near the tail, atmosphere of quiet preparation before the sortie against the Iron Tide, saturated limited palette, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, no text.",
+    "negative": "text, watermark, photorealistic, 3d render, humans, crew members, modern hangar, fighter jet, pure black background, cluttered foreground",
+    "negativeScoped": true,
+    "notes": "Story beat for the website \"before the first sortie\" section. No humans in frame keeps it asset-safe.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 11004,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 11004,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-showroom-v3-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "5ba1017e-c02e-40cf-be92-977d15d3c158",
+      "created": 1791537052,
+      "count": 1,
+      "revised_prompt": "Cinematic arcade concept scene, the KESTREL steel-blue dart fighter resting on a maintenance cradle inside an open hangar carved into an asteroid at the edge of a blue planet's orbit, warm work-lamps in amber glow raking across the hull stripe and throwing the long shadow of the delta silhouette onto the deck plate, the cyan canopy dim and dark like polished glass, the engine cowlings open with tiny gantry arms around them, through the hangar mouth a vast deep-navy starfield with the glowing teal rim of the Azure Verge planet rising, a couple of maintenance drone spheres hover near the tail, atmosphere of quiet preparation before the sortie against the Iron Tide, saturated limited palette, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow, no text.",
+      "inference_time_s": 33.67152704810724,
+      "peak_memory_mb": 39968
+    },
+    "format": "jpg"
+  }
+}

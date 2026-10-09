@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:52:15.848Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, realistic fish, pure black background, overlapping sprites, perspective distortion",
+  "negative_sent": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, realistic fish, pure black background, overlapping sprites, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-b-brine-nebula",
+    "slug": "brine-nebula-sprite-sheet",
+    "variantNum": 1,
+    "id": "brine-nebula-sprite-sheet-v1",
+    "title": "In-game enemy sprite sheet: froth, brood, urchin, maw rocket",
+    "positive": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean even grid on a flat deep teal-navy background color reference hex 0c1a3c, no gradients, no scenery, no text, no labels, no UI. Row one: FROTH splitting bubble enemies — four frames of a wobbling translucent pink-white foam sphere growing a seam, pinching in the middle, and separating into two smaller froth spheres. Row two: BROOD BUBBLES — three frames of a larger membranous jelly sphere containing a curled dark mechanical fish, shown intact, cracking, and emptied with the film peeling away. Row three: URCHIN reef turrets — two frames of a squat charcoal barnacle dome plated in overlapping scales, crowned with a fan of purple spines and a single magenta lens, lens aimed left then aimed down-right, plus one damaged frame with broken spines. Row four: MAW ROCKET missiles — two frames of a small fish-head torpedo with an open metal jaw nose and a stubby fin tail, flame nozzle flickering between two states. Chunky crisp pixels, dithered metal highlights, side view facing left.",
+    "negative": "gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, realistic fish, pure black background, overlapping sprites, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Four-species atlas for the reef zone; rows are separated by scale class so extraction stays simple. Color reference: froth pink-white #ff5aa0 rim family, urchin spine #b84cff, lens #ff3a3a.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15221,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 15221,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "brine-nebula-sprite-sheet-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "07c2e755-a7da-4733-8650-28f88f8410dc",
+      "created": 1791539531,
+      "count": 1,
+      "revised_prompt": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean even grid on a flat deep teal-navy background color reference hex 0c1a3c, no gradients, no scenery, no text, no labels, no UI. Row one: FROTH splitting bubble enemies — four frames of a wobbling translucent pink-white foam sphere growing a seam, pinching in the middle, and separating into two smaller froth spheres. Row two: BROOD BUBBLES — three frames of a larger membranous jelly sphere containing a curled dark mechanical fish, shown intact, cracking, and emptied with the film peeling away. Row three: URCHIN reef turrets — two frames of a squat charcoal barnacle dome plated in overlapping scales, crowned with a fan of purple spines and a single magenta lens, lens aimed left then aimed down-right, plus one damaged frame with broken spines. Row four: MAW ROCKET missiles — two frames of a small fish-head torpedo with an open metal jaw nose and a stubby fin tail, flame nozzle flickering between two states. Chunky crisp pixels, dithered metal highlights, side view facing left.",
+      "inference_time_s": 14.366722870850936,
+      "peak_memory_mb": 24850
+    },
+    "format": "jpg"
+  }
+}

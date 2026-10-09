@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:01:32.183Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, detailed boss interior, player ship, bullets, explosions, multiple words, misspelled text, small text, watermark, blurry, text tilted in perspective, neon pink lettering",
+  "negative_sent": "photorealistic, 3d render, detailed boss interior, player ship, bullets, explosions, multiple words, misspelled text, small text, watermark, blurry, text tilted in perspective, neon pink lettering",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "boss-moments",
+    "slug": "warning-flash-minimal",
+    "variantNum": 2,
+    "id": "warning-flash-minimal-v2",
+    "title": "WARNING beat, abstract: text over pure threat-silhouette only",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, limited saturated palette, widescreen arcade title-card composition, subtle CRT scanline glow. Stripped-back boss alarm card: across the full width of the frame, a single black-blue silhouette of a colossal mechanical sea-creature fortress — part fish, part battleship — rising from the bottom edge, drawn only as a hard rim-lit outline in cold navy with no interior detail, its eye a single small distant red disc and its spine-crest notched against the starfield. Above and across the creature's back, burning in the empty sky, the word \"WARNING!!\" in huge straight-on blocky arcade capitals, warning-red faces with white-hot inner bevels and heavy dark outlines, the letters slightly overexposed so their glow bleeds into the stars. The upper field is deep lifted navy with two faint diagonal siren bands of dull red light sweeping past, and a scattering of ordinary stars that double as CRT dust. No ship, no bullets, no explosion — just the approaching mass and the announcement, the two-element composition of dread. Absolutely nothing else written anywhere; the text in the image reads exactly \"WARNING!!\". Thick outlines, committed red-on-navy palette, never pure black in the background.",
+    "negative": "photorealistic, 3d render, detailed boss interior, player ship, bullets, explosions, multiple words, misspelled text, small text, watermark, blurry, text tilted in perspective, neon pink lettering",
+    "negativeScoped": true,
+    "notes": "The 1536x640 crop makes this a natural loading-banner or video thumbnail. Exact string \"WARNING!!\" again — qwen-image first. Two siren bands only; more stripes turn the sky to barber-pole noise. This variant is also the safe pick for the docs site alarm iconography.",
+    "models": [
+      "qwenvl",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 36,
+        "seed": 20012,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20012,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "warning-flash-minimal-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "cb519d1a-9485-47b5-9b73-8255df7c55f6",
+      "created": 1791540087,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, limited saturated palette, widescreen arcade title-card composition, subtle CRT scanline glow. Stripped-back boss alarm card: across the full width of the frame, a single black-blue silhouette of a colossal mechanical sea-creature fortress — part fish, part battleship — rising from the bottom edge, drawn only as a hard rim-lit outline in cold navy with no interior detail, its eye a single small distant red disc and its spine-crest notched against the starfield. Above and across the creature's back, burning in the empty sky, the word \"WARNING!!\" in huge straight-on blocky arcade capitals, warning-red faces with white-hot inner bevels and heavy dark outlines, the letters slightly overexposed so their glow bleeds into the stars. The upper field is deep lifted navy with two faint diagonal siren bands of dull red light sweeping past, and a scattering of ordinary stars that double as CRT dust. No ship, no bullets, no explosion — just the approaching mass and the announcement, the two-element composition of dread. Absolutely nothing else written anywhere; the text in the image reads exactly \"WARNING!!\". Thick outlines, committed red-on-navy palette, never pure black in the background.",
+      "inference_time_s": 12.840934428852051,
+      "peak_memory_mb": 23048
+    },
+    "format": "jpg"
+  }
+}

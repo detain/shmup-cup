@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:03:44.909Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, human pilot, cockpit interior view, organic gore, heart organ, laser sword, text, watermark, blurry, ship on the right side, core dark and dead, blue explosions",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "boss-moments",
+    "slug": "boss-death-final-blows",
+    "variantNum": 2,
+    "id": "boss-death-final-blows-v2",
+    "title": "Close-quarter final seconds of a boss kill, cockpit-eye view",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; last-hit moment, extreme scale contrast. Tight horizontal framing on the killing zone: the exposed wound-core of a fortress-ship boss fills the right two-thirds of the image, a cavern of dark internal girders and torn armor flaps around a cracked spherical reactor that is losing the argument — its light now a stuttering white-gold overflow spilling through new cracks, throwing hard rim-light across every girder and rivet in its cave. Between the core's pulses, the surrounding organ-metal walls show the damage history: blast-scoured plates with peeled paint-ribbons, one snapped hydraulic arm still spraying an arc of dark fluid that catches the reactor light, scattered small fires in the amber ramp. Advancing into the frame from the far left edge, impossibly small against the core cavern, a steel-blue dart fighter in hard profile, cyan canopy blazing with reflected reactor-gold, twin orange engine streaks pulled long, its own thin bullets streaking right-to-left as bright parallel lines into the wound. The last hostile bullets in the air near the ship are mid-transformation, back half still pink-red orb, front half already gold point-spark. Everything lit from the dying center: hot gold on metal edges, deep blues in the unlit masses, lifted navy shadow, never pure black. No text, no letters, no UI.",
+    "negative": "photorealistic, 3d render, human pilot, cockpit interior view, organic gore, heart organ, laser sword, text, watermark, blurry, ship on the right side, core dark and dead, blue explosions",
+    "negativeScoped": true,
+    "notes": "Core overflow white-gold ~#fff080 with amber machinery #e8a030; the half-pink/half-gold bullet is the signature detail — ask for it and check it, flux.1 tends to finish the conversion everywhere or nowhere. Composition is one rule: ship enters from the LEFT edge only, scale read depends on it. This is the book-end to the boss weakpoint macro shots.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20022,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 20022,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "boss-death-final-blows-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "b7b76759-948b-4ef6-80df-3bd4dc86f515",
+      "created": 1791536620,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen arcade composition, subtle CRT scanline glow; last-hit moment, extreme scale contrast. Tight horizontal framing on the killing zone: the exposed wound-core of a fortress-ship boss fills the right two-thirds of the image, a cavern of dark internal girders and torn armor flaps around a cracked spherical reactor that is losing the argument — its light now a stuttering white-gold overflow spilling through new cracks, throwing hard rim-light across every girder and rivet in its cave. Between the core's pulses, the surrounding organ-metal walls show the damage history: blast-scoured plates with peeled paint-ribbons, one snapped hydraulic arm still spraying an arc of dark fluid that catches the reactor light, scattered small fires in the amber ramp. Advancing into the frame from the far left edge, impossibly small against the core cavern, a steel-blue dart fighter in hard profile, cyan canopy blazing with reflected reactor-gold, twin orange engine streaks pulled long, its own thin bullets streaking right-to-left as bright parallel lines into the wound. The last hostile bullets in the air near the ship are mid-transformation, back half still pink-red orb, front half already gold point-spark. Everything lit from the dying center: hot gold on metal edges, deep blues in the unlit masses, lifted navy shadow, never pure black. No text, no letters, no UI.",
+      "inference_time_s": 13.200199571903795,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:13:24.867Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "overlapping sprites, uneven sprite sizes, shadows on background, gradient background, cell borders, labels, numbers, perspective skew, blurry, text, photorealistic, 3d render, watermark, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "sprite-sheets",
+    "slug": "kestrel-sprite-sheet",
+    "variantNum": 2,
+    "id": "kestrel-sprite-sheet-v2",
+    "title": "hi-res master sheet",
+    "positive": "High-resolution master sprite sheet for a horizontal arcade shooter, twelve large clean renderings of the KESTREL steel-blue dart fighter with bold blue stripe, cyan canopy and orange afterglow laid out on a wide flat deep-navy canvas in a tidy 4-by-3 grid with equal gutters, top row four progressively hotter exhaust states from idle ember to full burn trail, second row the hull from exact side, three-quarter low, three-quarter high and true rear views, third row damage tiers from light scuffs to smoking armor cracks to a critical state with flickering shield sparks, all cells using identical lighting direction from above, bold dark outlines, flat saturated arcade fills with subtle pixel-cluster texture accents on the highlights only, precise consistent scale between cells, no shadows cast on the background, no text, no numbers, no borders around cells, documentation quality.",
+    "negative": "overlapping sprites, uneven sprite sizes, shadows on background, gradient background, cell borders, labels, numbers, perspective skew, blurry, text, photorealistic, 3d render, watermark, pure black background",
+    "negativeScoped": true,
+    "notes": "1536x640 favors a 4x3 sheet. Use for website documentation and as the master reference for the pixel team.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 11311,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 11311,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "kestrel-sprite-sheet-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c2f8fd04-b9bb-48c6-9519-4bafe15789c3",
+      "created": 1791537200,
+      "count": 1,
+      "revised_prompt": "High-resolution master sprite sheet for a horizontal arcade shooter, twelve large clean renderings of the KESTREL steel-blue dart fighter with bold blue stripe, cyan canopy and orange afterglow laid out on a wide flat deep-navy canvas in a tidy 4-by-3 grid with equal gutters, top row four progressively hotter exhaust states from idle ember to full burn trail, second row the hull from exact side, three-quarter low, three-quarter high and true rear views, third row damage tiers from light scuffs to smoking armor cracks to a critical state with flickering shield sparks, all cells using identical lighting direction from above, bold dark outlines, flat saturated arcade fills with subtle pixel-cluster texture accents on the highlights only, precise consistent scale between cells, no shadows cast on the background, no text, no numbers, no borders around cells, documentation quality.",
+      "inference_time_s": 34.85466159088537,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

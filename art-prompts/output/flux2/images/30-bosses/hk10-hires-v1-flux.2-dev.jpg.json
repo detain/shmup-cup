@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:24:42.888Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text artifacts, watermark, blurry, organic fish gloss, wide horizontal framing, player character, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "hi-res",
+    "slug": "hk10-hires",
+    "variantNum": 1,
+    "id": "hk10-hires-v1",
+    "title": "Hollow King vertical lure-cathedral documentation plate",
+    "positive": "Boss bestiary documentation art, vertical arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete being of The Hollow King HK-10, final Iron Tide sovereign, shown full-body in a tall frame inside the flooded dark of the ark — an abyssal anglerfish fortress: a cathedral-vast round body of black-blue plate with a lantern-ribcage whose bones glow pale green between them, a high arched jaw-lintel lined with recurved bone teeth, and from the crown a single long lure-antenna curving down in front of the face, its lantern bulb the only bright light in the picture, a pale green star with a halo. Tattered membrane fins hang like rotting banners. Silt motes and one thin beam of searchlight fall through the black-blue water. No foreground characters, no text, no letters, no UI. Deep-navy palette from near-black blue upward, never pure black. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+    "negative": "photorealistic, 3d render, text artifacts, watermark, blurry, organic fish gloss, wide horizontal framing, player character, pure black background",
+    "negativeScoped": true,
+    "notes": "Deliberately the only vertical in the set — the Hollow King is screen-filling and top-down in feel; the lone lantern-bulb light source keeps the composition legible at poster scale.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 14101,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 36,
+        "seed": 14101,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "hk10-hires-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "35db8e53-5365-470d-a7ea-d5cdf0d2444a",
+      "created": 1791537878,
+      "count": 1,
+      "revised_prompt": "Boss bestiary documentation art, vertical arcade shoot-up plate, ultra-detailed large-format 16-bit-inspired concept rendering: the complete being of The Hollow King HK-10, final Iron Tide sovereign, shown full-body in a tall frame inside the flooded dark of the ark — an abyssal anglerfish fortress: a cathedral-vast round body of black-blue plate with a lantern-ribcage whose bones glow pale green between them, a high arched jaw-lintel lined with recurved bone teeth, and from the crown a single long lure-antenna curving down in front of the face, its lantern bulb the only bright light in the picture, a pale green star with a halo. Tattered membrane fins hang like rotting banners. Silt motes and one thin beam of searchlight fall through the black-blue water. No foreground characters, no text, no letters, no UI. Deep-navy palette from near-black blue upward, never pure black. Bold dark outlines, saturated limited palette, subtle CRT scanline glow, clean vector shapes with pixel-art texture accents.",
+      "inference_time_s": 37.290710211033,
+      "peak_memory_mb": 39968
+    },
+    "format": "jpg"
+  }
+}

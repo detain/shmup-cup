@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:15:09.675Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, real spider, fur, insect eyes cluster, gore, bugs crawling, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "03-sandgrave-widow",
+    "slug": "sw03-reveal",
+    "variantNum": 1,
+    "id": "sw03-reveal-v1",
+    "title": "descent on silk lines at twin-sun dusk",
+    "positive": "Cinematic arcade boss descent, the SANDGRAVE WIDOW, a colossal mechanical spider fortress lowering itself from the high sky on multiple gleaming silk cables that catch the light like harp strings, its bulbous abdomen a patchwork of sand-dark bronze armor plates with a cracked glass window revealing a churning violet furnace inside, eight long jointed legs each built from segmented struts with hydraulic pistons kicking up puffs of sand as they touch, front limbs ending in huge curved hydraulic fangs dripping fine steel-thread, a spinneret cannon cluster under the head humming with pink charge light, the vast spider hanging above a sea of dark dune silhouettes while a big pale cream sun and a smaller orange sun sink low behind it rim-lighting the silk lines, heat haze shimmer along the horizon, a tiny steel-blue fighter with an orange exhaust streak banking at the bottom left, deep navy shadows, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text.",
+    "negative": "photorealistic, 3d render, text, watermark, real spider, fur, insect eyes cluster, gore, bugs crawling, pure black background",
+    "negativeScoped": true,
+    "notes": "Twin suns: big pale #fce8b8, small #f89858. Legs must read as construction-machinery struts, never as hairy limbs.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 12301,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12301,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "sw03-reveal-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "5c00e76b-a554-4ec6-b0aa-e6220377b425",
+      "created": 1791537305,
+      "count": 1,
+      "revised_prompt": "Cinematic arcade boss descent, the SANDGRAVE WIDOW, a colossal mechanical spider fortress lowering itself from the high sky on multiple gleaming silk cables that catch the light like harp strings, its bulbous abdomen a patchwork of sand-dark bronze armor plates with a cracked glass window revealing a churning violet furnace inside, eight long jointed legs each built from segmented struts with hydraulic pistons kicking up puffs of sand as they touch, front limbs ending in huge curved hydraulic fangs dripping fine steel-thread, a spinneret cannon cluster under the head humming with pink charge light, the vast spider hanging above a sea of dark dune silhouettes while a big pale cream sun and a smaller orange sun sink low behind it rim-lighting the silk lines, heat haze shimmer along the horizon, a tiny steel-blue fighter with an orange exhaust streak banking at the bottom left, deep navy shadows, SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, ultra-detailed large-format key art, subtle CRT scanline glow, no text.",
+      "inference_time_s": 37.14881683699787,
+      "peak_memory_mb": 39966
+    },
+    "format": "jpg"
+  }
+}

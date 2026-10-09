@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:54:17.609Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, tentacles, whale shape",
+  "negative_sent": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, tentacles, whale shape",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-e-tempest-ridge",
+    "slug": "thunderhead-steed-foal",
+    "variantNum": 3,
+    "id": "thunderhead-steed-foal-v3",
+    "title": "Zone E enemies: portrait descent into a thunderhead's mouth as foals silhouette in the lit cloud dome",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition looking straight up into a storm, subtle CRT scanline glow. From the top of the frame, a colossal THUNDERHEAD fills the sky like a dome: an anvil of boiling charcoal and slate cloud, its underside lit from within by pulsing lilac light, a single huge glowing eye at its center staring down, violet lightning forks radiating from it along the cloud floor like cracks in ice. Falling diagonally through that lit dome, five STEED FOAL silhouettes — small seahorse shapes of plates and cables, curled tails, tiny amber face-lamps glowing — arranged in a descending hunting spiral, each backlit into near-black with a hard violet rim. At the very bottom of the frame, tiny against the storm, a steel-blue dart fighter with cyan canopy and orange engine trail climbs straight up into it, vapor cones snapping off its wings in the updraft, slanting rain rendered as long pale strokes over the whole image, saw-tooth snow ridge tips just visible at the lower corners where the cloud deck drops away. Deep-navy unlit cloud masses frame the edges, never pure black, one distant orange-white flash of a struck ridge.",
+    "negative": "photorealistic, 3d render, text, watermark, blurry, pure black background, human figures, cartoon mascot, soft pastel palette, duplicate fighter, tentacles, whale shape",
+    "negativeScoped": true,
+    "notes": "Vertical ascent poster — the swarm's airspace as a cathedral of storm. The eye-lit dome doubling as boss foreshadowing is intentional; keep the eye small enough (a third of the dome at most) that the thunderhead still reads as an enemy class, not the boss.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15513,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15513,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "thunderhead-steed-foal-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "c5fce858-9c7b-487c-b296-4a8e40230271",
+      "created": 1791539653,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, vertical poster composition looking straight up into a storm, subtle CRT scanline glow. From the top of the frame, a colossal THUNDERHEAD fills the sky like a dome: an anvil of boiling charcoal and slate cloud, its underside lit from within by pulsing lilac light, a single huge glowing eye at its center staring down, violet lightning forks radiating from it along the cloud floor like cracks in ice. Falling diagonally through that lit dome, five STEED FOAL silhouettes — small seahorse shapes of plates and cables, curled tails, tiny amber face-lamps glowing — arranged in a descending hunting spiral, each backlit into near-black with a hard violet rim. At the very bottom of the frame, tiny against the storm, a steel-blue dart fighter with cyan canopy and orange engine trail climbs straight up into it, vapor cones snapping off its wings in the updraft, slanting rain rendered as long pale strokes over the whole image, saw-tooth snow ridge tips just visible at the lower corners where the cloud deck drops away. Deep-navy unlit cloud masses frame the edges, never pure black, one distant orange-white flash of a struck ridge.",
+      "inference_time_s": 13.505768454866484,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

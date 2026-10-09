@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:06:29.682Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, missing letters, warped typography, photorealistic, 3d render, watermark, blurry, pure black background, lens flare abuse",
+  "negative_sent": "garbled text, misspelled letters, extra letters, missing letters, warped typography, photorealistic, 3d render, watermark, blurry, pure black background, lens flare abuse",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "logo-lockup",
+    "slug": "logo-lockup",
+    "variantNum": 2,
+    "id": "logo-lockup-v2",
+    "title": "wordmark over planet-rim sunrise",
+    "positive": "Video game title logo rendering the exact words \"SHMUP CUP\" in bold rounded slab capital letters with a warm vertical color gradient from pale yellow at the crown through orange into deep red at the base, a heavy navy blue outline around every glyph and a duplicated hard shadow offset to the lower right, a bright cream specular gleam on the top edges, the logo floating large across the upper half of the frame above the curved glowing rim of a blue planet at orbit dawn, thin atmosphere band of cyan light along the planet edge, scattered pixel-perfect stars in the deep navy void, subtle scanline glow, retro arcade key art with clean vector shapes and pixel-art texture accents, no other text.",
+    "negative": "garbled text, misspelled letters, extra letters, missing letters, warped typography, photorealistic, 3d render, watermark, blurry, pure black background, lens flare abuse",
+    "negativeScoped": true,
+    "notes": "Ties the logo to Zone A's Azure Verge orbit look (planet rim #8ad0a8 terrain hints under cyan atmosphere).",
+    "models": [
+      "qwenvl",
+      "flux2"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "flux.2-dev"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 30,
+        "seed": 10002,
+        "defaulted": false
+      },
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10002,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "logo-lockup-v2-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "420ef61a-6468-413c-a0a4-71663e8fa09a",
+      "created": 1791540385,
+      "count": 1,
+      "revised_prompt": "Video game title logo rendering the exact words \"SHMUP CUP\" in bold rounded slab capital letters with a warm vertical color gradient from pale yellow at the crown through orange into deep red at the base, a heavy navy blue outline around every glyph and a duplicated hard shadow offset to the lower right, a bright cream specular gleam on the top edges, the logo floating large across the upper half of the frame above the curved glowing rim of a blue planet at orbit dawn, thin atmosphere band of cyan light along the planet edge, scattered pixel-perfect stars in the deep navy void, subtle scanline glow, retro arcade key art with clean vector shapes and pixel-art texture accents, no other text.",
+      "inference_time_s": 14.587048165965825,
+      "peak_memory_mb": 35440
+    },
+    "format": "jpg"
+  }
+}

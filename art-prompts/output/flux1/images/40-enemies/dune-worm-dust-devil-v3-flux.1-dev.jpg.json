@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:58:26.506Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, three suns, organic snake, pyramids",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-c-dune-expanse",
+    "slug": "dune-worm-dust-devil",
+    "variantNum": 3,
+    "id": "dune-worm-dust-devil-v3",
+    "title": "DUNE WORM and DUST DEVIL, encounter concept",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square vertical poster crop, subtle CRT scanline glow. A vertical hunt across a dune column at high noon under twin suns: at the top the great pale cream sun and its small orange companion hang in a bleached gold sky that deepens to warm navy at the corners; through the middle a DUST DEVIL rakes down the frame, a twisted translucent funnel of rust vapor and orbiting grit with a visible hollow core; at the bottom the dune face explodes as a DUNE WORM rears its drill-toothed brass head upward, chasing the fighter that dives along the funnel from above — the KESTREL, steel-blue dart, blue stripe, cyan canopy, orange trail, drawn small against the worm's maw for brutal scale contrast. Sand sheets fall in flat stepped bands of light and umber with crisp pixel edges, heat haze rippling each ridge line. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, saturated but limited palette.",
+    "negative": "photorealistic, 3d render, text, logo, watermark, blurry, pure black, three suns, organic snake, pyramids",
+    "negativeScoped": true,
+    "notes": "Vertical chase composition: worm below, devil through, suns above — maximum depth in a poster crop. flux.1-dev renders the translucent funnel bands cleanly without muddying the ship. Color reference: worm brass with dark seam rivets, grit #f89858 tints.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 15313,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15313,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "dune-worm-dust-devil-v3-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "97e24124-68e1-4c8e-b193-9c6a507f70c3",
+      "created": 1791536301,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, square vertical poster crop, subtle CRT scanline glow. A vertical hunt across a dune column at high noon under twin suns: at the top the great pale cream sun and its small orange companion hang in a bleached gold sky that deepens to warm navy at the corners; through the middle a DUST DEVIL rakes down the frame, a twisted translucent funnel of rust vapor and orbiting grit with a visible hollow core; at the bottom the dune face explodes as a DUNE WORM rears its drill-toothed brass head upward, chasing the fighter that dives along the funnel from above — the KESTREL, steel-blue dart, blue stripe, cyan canopy, orange trail, drawn small against the worm's maw for brutal scale contrast. Sand sheets fall in flat stepped bands of light and umber with crisp pixel edges, heat haze rippling each ridge line. Clean vector shapes with pixel-art texture accents, ultra-detailed, large-format, saturated but limited palette.",
+      "inference_time_s": 14.8917502888944,
+      "peak_memory_mb": 36722
+    },
+    "format": "jpg"
+  }
+}

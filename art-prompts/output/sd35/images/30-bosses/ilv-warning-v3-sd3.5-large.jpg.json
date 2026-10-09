@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:48:54.910Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, watermark, photorealistic, 3d render, blurry, fat rounded shadow, pure black background",
+  "negative_sent": "text, letters, watermark, photorealistic, 3d render, blurry, fat rounded shadow, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "11-iron-leviathan",
+    "slug": "ilv-warning",
+    "variantNum": 3,
+    "id": "ilv-warning-v3",
+    "title": "raid shadow crossing the playfield before arrival",
+    "positive": "Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a playfield over deep-navy space where an enormous shadow slides across the star field from right to left, long, narrow and eel-straight, occluding stars section by section as it passes. Only the shadow is visible plus a single racing line of amber running lights igniting along its length and one pink-hot glow at the beak-prow entering from the edge. A tiny steel-blue player dart with cyan canopy and orange engine flare holds position center-left beneath the darkness. Composition: the diagonal of shadow dominates, the ship small and defiant. Deep-navy palette, never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame.",
+    "negative": "text, letters, watermark, photorealistic, 3d render, blurry, fat rounded shadow, pure black background",
+    "negativeScoped": true,
+    "notes": "The length of the shadow band tells the raid story without showing the ship — flux.1-dev keeps the occultation clean.",
+    "models": [
+      "flux1",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.1-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux1": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 13103,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 13103,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ilv-warning-v3-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "da7501e2-f666-4c4b-b074-a988be4a2438",
+      "created": 1791539330,
+      "count": 1,
+      "revised_prompt": "Horizontal shoot-up warning frame, ultra-detailed 16-bit-inspired concept art, no text and no letters: a playfield over deep-navy space where an enormous shadow slides across the star field from right to left, long, narrow and eel-straight, occluding stars section by section as it passes. Only the shadow is visible plus a single racing line of amber running lights igniting along its length and one pink-hot glow at the beak-prow entering from the edge. A tiny steel-blue player dart with cyan canopy and orange engine flare holds position center-left beneath the darkness. Composition: the diagonal of shadow dominates, the ship small and defiant. Deep-navy palette, never pure black, bold dark outlines, saturated limited palette, subtle CRT scanline glow, widescreen 16:9 arcade frame.",
+      "inference_time_s": 13.515386909013614,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

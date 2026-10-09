@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:07:34.112Z",
+  "model_group": "qwenvl",
+  "served_model": "Qwen/Qwen-Image",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, player ship visible, explosions, fleet, crowded scene, misspelled text, extra words, high score table, numbers, watermark, blurry, rainbow lettering, tilted text, 3d extruded letters",
+  "negative_sent": "photorealistic, 3d render, player ship visible, explosions, fleet, crowded scene, misspelled text, extra words, high score table, numbers, watermark, blurry, rainbow lettering, tilted text, 3d extruded letters",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "warning-gameover",
+    "slug": "game-over-screen-quiet",
+    "variantNum": 2,
+    "id": "game-over-screen-quiet-v2",
+    "title": "GAME OVER alt: empty player berth, ships dark, CRT room glow",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, centered arcade-canvas composition, subtle CRT scanline glow over the whole image; a quieter, sadder screen card. The starfield has stopped scrolling: a plain, empty expanse of lifted deep-navy with a light dusting of cold stars fills the frame, no ship, no bullets, no boss — the battlefield after everyone has gone home except the scoreboard. Across the exact center, the single phrase \"GAME OVER\" set in huge straight-on pixel-arcade block capitals, red-orange faces cooling to dark ember at their bottom rows, a thin white highlight along every top edge, thick navy outlines and a soft drop-shadow rectangle behind the words like an old sign left lit in an empty hall. Beneath the text, drifting very slowly through the lower third and slightly out of focus, one last enemy stray — a tiny seed-shaped gunmetal drone pod with a dimming magenta eye-slit — passes with no interest in anyone, the war's full autopilot continuing for one more second. Upper corners carry the faintest violet nebula breath; everything else is held-back dark and held-back color so the words are the only event. The CRT scanline texture is stronger here, the image slightly bowged like a tube warming down, pixels honest. Palette: navy field, ember-red letterforms, one lilac eye, never pure black. The text in the image must read exactly \"GAME OVER\" and nothing else.",
+    "negative": "photorealistic, 3d render, player ship visible, explosions, fleet, crowded scene, misspelled text, extra words, high score table, numbers, watermark, blurry, rainbow lettering, tilted text, 3d extruded letters",
+    "negativeScoped": true,
+    "notes": "The 1536x640 crop doubles as a stream-ends / death-card banner. Letter ramp: face ~#e04828 cooling to dark ember #6a2418, top highlight #fffff0. The lone indifferent skeet pod is the whole joke — the Verge doesn't even notice you left; if the model multiplies the pods, regenerate. Strong scanlines wanted here per the \"tube warming down\" clause.",
+    "models": [
+      "qwenvl",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "qwen-image",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "qwenvl": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 36,
+        "seed": 20092,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 20092,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "game-over-screen-quiet-v2-qwen-image.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "7960a000-32fe-4b3b-90e1-174bcdd25921",
+      "created": 1791540449,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, centered arcade-canvas composition, subtle CRT scanline glow over the whole image; a quieter, sadder screen card. The starfield has stopped scrolling: a plain, empty expanse of lifted deep-navy with a light dusting of cold stars fills the frame, no ship, no bullets, no boss — the battlefield after everyone has gone home except the scoreboard. Across the exact center, the single phrase \"GAME OVER\" set in huge straight-on pixel-arcade block capitals, red-orange faces cooling to dark ember at their bottom rows, a thin white highlight along every top edge, thick navy outlines and a soft drop-shadow rectangle behind the words like an old sign left lit in an empty hall. Beneath the text, drifting very slowly through the lower third and slightly out of focus, one last enemy stray — a tiny seed-shaped gunmetal drone pod with a dimming magenta eye-slit — passes with no interest in anyone, the war's full autopilot continuing for one more second. Upper corners carry the faintest violet nebula breath; everything else is held-back dark and held-back color so the words are the only event. The CRT scanline texture is stronger here, the image slightly bowged like a tube warming down, pixels honest. Palette: navy field, ember-red letterforms, one lilac eye, never pure black. The text in the image must read exactly \"GAME OVER\" and nothing else.",
+      "inference_time_s": 16.003554144874215,
+      "peak_memory_mb": 35454
+    },
+    "format": "jpg"
+  }
+}

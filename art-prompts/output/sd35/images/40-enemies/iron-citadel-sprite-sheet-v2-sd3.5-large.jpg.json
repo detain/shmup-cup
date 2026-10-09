@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:56:36.671Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, blue-green lighting, pure black background, perspective distortion",
+  "negative_sent": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, blue-green lighting, pure black background, perspective distortion",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-h-iron-citadel",
+    "slug": "iron-citadel-sprite-sheet",
+    "variantNum": 2,
+    "id": "iron-citadel-sprite-sheet-v2",
+    "title": "square grid sheet, garrison set",
+    "positive": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the SENTINEL WALKER in three cells — full profile facing left on idle stance with eye-light off, walking stance with the red eye-lamp on, and a firing pose where both shoulder cannons kick back with tiny amber muzzle flares; center column stacked with GYRE ring-gun states — the bare ring with four dark muzzles, one-muzzle-flash frame, two-muzzle alternating flash, and the ring shown with its center hub exposed for a damaged phase, small gold sparks at one broken spoke; right column holds the TRENCH EEL broken into two parts for segmented animation — a snout-and-head sprite, then a single reusable ring-plate body segment shown at three rotations, then the tail tip — plus one deck-hatch sprite, an open rectangle of grating with violet glow seeping up its edges. Pixel-perfect spacing, everything inside its cell, amber top-light consistent, no dropped outlines.",
+    "negative": "text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, blue-green lighting, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "Color reference: hub-expose gold sparks #f8b030, hatch glow #b84cff, muzzle flares #f89830. The modular eel column (head + reusable segment + tail) is the piece an artist would actually reuse for length variants — ask for segment rotations to be described (left-curve, straight, right-curve) if the model plays it coy.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15822,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15822,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "iron-citadel-sprite-sheet-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "41473e3e-4f1d-4718-b621-891d7ac810ea",
+      "created": 1791539792,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the SENTINEL WALKER in three cells — full profile facing left on idle stance with eye-light off, walking stance with the red eye-lamp on, and a firing pose where both shoulder cannons kick back with tiny amber muzzle flares; center column stacked with GYRE ring-gun states — the bare ring with four dark muzzles, one-muzzle-flash frame, two-muzzle alternating flash, and the ring shown with its center hub exposed for a damaged phase, small gold sparks at one broken spoke; right column holds the TRENCH EEL broken into two parts for segmented animation — a snout-and-head sprite, then a single reusable ring-plate body segment shown at three rotations, then the tail tip — plus one deck-hatch sprite, an open rectangle of grating with violet glow seeping up its edges. Pixel-perfect spacing, everything inside its cell, amber top-light consistent, no dropped outlines.",
+      "inference_time_s": 14.058733750833198,
+      "peak_memory_mb": 25690
+    },
+    "format": "jpg"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:31:46.850Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, text, watermark, logo, UI elements, three suns, purple sky, snow, cactus, people, camels, blurry, pure black background, frame border, letterboxing",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/50-stages",
+    "fileStem": "zone-c-dune-expanse",
+    "slug": "dune-expanse-wallpaper",
+    "variantNum": 1,
+    "id": "dune-expanse-wallpaper-v1",
+    "title": "twin-sunset dune sea wallpaper",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. An endless desert under two suns, laid out as stacked horizontal dune silhouettes receding to a far horizon: the nearest dune band is deep burnt umber, each band behind it lighter and hotter — rust, then burnt orange, then a pale cream sky. The great sun, a wide pale-cream disc, sits low center-right, visibly flat-bottomed where the heat haze bends it; a second, much smaller orange sun rides just above the horizon to its left, twin shadows falling from both. Rippling vertical shimmer columns distort every dune edge; a slow dust devil spirals in the middle distance, a thin rust-colored funnel carrying orbiting pebbles. High in the cream sky, the dark negative-space silhouettes of buried fortress-ships bulge beneath the sand like waiting whales, cracking the dune crust into long fault lines. Mood: beautiful, oven-hot, and hiding something enormous. No foreground characters, no text, no letters, no user interface elements.",
+    "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, three suns, purple sky, snow, cactus, people, camels, blurry, pure black background, frame border, letterboxing",
+    "negativeScoped": true,
+    "notes": "Negative explicitly guards \"three suns\" — models love adding a third. Color reference: big sun pale cream #fce8b8, small sun orange #f89858, dune bands umber→rust→cream. The buried-whale bulges foreshadow Sandgrave Widow and Dune Worms without showing them.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 16301,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 16301,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "dune-expanse-wallpaper-v1-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "f8228df3-f057-47cb-adfc-5adb0d35466b",
+      "created": 1791538302,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen side-scrolling arcade composition, subtle CRT scanline glow, ultra-detailed large-format background art with clean vector shapes and pixel-art texture accents. An endless desert under two suns, laid out as stacked horizontal dune silhouettes receding to a far horizon: the nearest dune band is deep burnt umber, each band behind it lighter and hotter — rust, then burnt orange, then a pale cream sky. The great sun, a wide pale-cream disc, sits low center-right, visibly flat-bottomed where the heat haze bends it; a second, much smaller orange sun rides just above the horizon to its left, twin shadows falling from both. Rippling vertical shimmer columns distort every dune edge; a slow dust devil spirals in the middle distance, a thin rust-colored funnel carrying orbiting pebbles. High in the cream sky, the dark negative-space silhouettes of buried fortress-ships bulge beneath the sand like waiting whales, cracking the dune crust into long fault lines. Mood: beautiful, oven-hot, and hiding something enormous. No foreground characters, no text, no letters, no user interface elements.",
+      "inference_time_s": 34.91940181213431,
+      "peak_memory_mb": 39762
+    },
+    "format": "jpg"
+  }
+}

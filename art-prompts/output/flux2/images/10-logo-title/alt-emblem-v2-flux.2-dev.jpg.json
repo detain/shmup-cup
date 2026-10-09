@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:06:37.918Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, letters, photorealistic, 3d render, gore, real fish, blood, watermark, blurry, cute cartoon, googly eyes, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "alt-emblems",
+    "slug": "alt-emblem",
+    "variantNum": 2,
+    "id": "alt-emblem-v2",
+    "title": "iron tide faction sigil",
+    "positive": "Menacing faction sigil emblem, flat arcade vector design, a front-facing stylized mechanical fish skull formed from clean geometric armor plates, jagged jaw segments opening into a dark circular void at the center, three thin antennae-like gun barrels rising from the crown, the whole plate skeleton in gunmetal blue-grey with a near-black navy outline, lit from inside the open throat by a sinister pink-red glow, arranged on a vertical banner-shaped shield of deep violet-navy with a subtle wave raster pattern of thin teal lines across it, tiny rivet details, no text, limited saturated palette, bold silhouettes, SNES-era 16-bit concept art mood with pixel texture accents, ominous and regal, centered composition.",
+    "negative": "text, letters, photorealistic, 3d render, gore, real fish, blood, watermark, blurry, cute cartoon, googly eyes, pure black background",
+    "negativeScoped": true,
+    "notes": "Galvanic Maw-derived enemy faction crest; glow anchor #ff3a3a throat, hull gunmetal over #0c1a3c.",
+    "models": [
+      "flux2",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10032,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 896,
+          "h": 1152
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10032,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_sent": {
+    "w": 896,
+    "h": 1152
+  },
+  "size_method": "snap16",
+  "requested_size": "896x1152",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "alt-emblem-v2-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "751af270-9c00-4919-86f9-7af26161a844",
+      "created": 1791536793,
+      "count": 1,
+      "revised_prompt": "Menacing faction sigil emblem, flat arcade vector design, a front-facing stylized mechanical fish skull formed from clean geometric armor plates, jagged jaw segments opening into a dark circular void at the center, three thin antennae-like gun barrels rising from the crown, the whole plate skeleton in gunmetal blue-grey with a near-black navy outline, lit from inside the open throat by a sinister pink-red glow, arranged on a vertical banner-shaped shield of deep violet-navy with a subtle wave raster pattern of thin teal lines across it, tiny rivet details, no text, limited saturated palette, bold silhouettes, SNES-era 16-bit concept art mood with pixel texture accents, ominous and regal, centered composition.",
+      "inference_time_s": 31.826204302022234,
+      "peak_memory_mb": 40344
+    },
+    "format": "jpg"
+  }
+}

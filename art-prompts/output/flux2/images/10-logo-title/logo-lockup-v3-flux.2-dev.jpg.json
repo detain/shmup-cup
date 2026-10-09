@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:08:06.826Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "garbled text, misspelled letters, extra letters, warped typography, photorealistic, 3d render, watermark, cluttered composition, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/10-logo-title",
+    "fileStem": "logo-lockup",
+    "slug": "logo-lockup",
+    "variantNum": 3,
+    "id": "logo-lockup-v3",
+    "title": "wordmark slammed between exploding bullets",
+    "positive": "Retro arcade logo poster rendering the exact text \"SHMUP CUP\" in massive block letters that fill the center of the frame, the letters tilted slightly upward to the right for kinetic energy, filled with a hot gradient of pale yellow, tangerine and flame red, thick navy outlines, hard drop shadow, surrounding the wordmark a burst of glowing round enemy bullets in pink, crimson and violet each with a bright white core and a dark rim, frozen mid-scatter with orange-white explosion puffs blooming behind them, deep navy background never pure black, faint CRT scanline glow, widescreen side-scrolling arcade composition, SNES-era 16-bit pixel art inspired concept rendering with bold dark outlines and a saturated limited palette, no other text or letters.",
+    "negative": "garbled text, misspelled letters, extra letters, warped typography, photorealistic, 3d render, watermark, cluttered composition, pure black background",
+    "negativeScoped": true,
+    "notes": "Ultra-wide banner crop; if qwen is used instead of the recommended pair it also renders this text well at 1152x896.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 40,
+        "seed": 10003,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 10003,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "logo-lockup-v3-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "179bebd5-db65-4826-8de3-74599bc03a37",
+      "created": 1791536882,
+      "count": 1,
+      "revised_prompt": "Retro arcade logo poster rendering the exact text \"SHMUP CUP\" in massive block letters that fill the center of the frame, the letters tilted slightly upward to the right for kinetic energy, filled with a hot gradient of pale yellow, tangerine and flame red, thick navy outlines, hard drop shadow, surrounding the wordmark a burst of glowing round enemy bullets in pink, crimson and violet each with a bright white core and a dark rim, frozen mid-scatter with orange-white explosion puffs blooming behind them, deep navy background never pure black, faint CRT scanline glow, widescreen side-scrolling arcade composition, SNES-era 16-bit pixel art inspired concept rendering with bold dark outlines and a saturated limited palette, no other text or letters.",
+      "inference_time_s": 27.970261255977675,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}

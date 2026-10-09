@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T14:05:42.003Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, coins with numbers, gold bars, explosions",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, coins with numbers, gold bars, explosions",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/40-boss-deaths",
+    "fileStem": "bullet-to-gold",
+    "slug": "death-bullets-to-points",
+    "variantNum": 1,
+    "id": "death-bullets-to-points-v1",
+    "title": "the whole screen turns to treasure",
+    "positive": "Retro 16-bit pixel-art widescreen arcade miracle moment: in the instant after the boss dies, hundreds of glowing hot-pink and red enemy bullets hanging across the entire frame flash white one after another in a fast spreading wave from center outward, each one transmuting mid-air into a spinning sparkling gold point sprite that trails a brief glitter tail, the frozen bullet lattice dissolving into a drifting constellation of falling treasure, small gold capsules tumbling down through it catching light, the tiny blue dart fighter at left surges forward through the golden rain with its cyan canopy glowing brighter, deep navy background now warm-flecked like a jewelry box, soft bloom, CRT scanline glow, joyful abundance, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, coins with numbers, gold bars, explosions",
+    "notes": "The white-flash wave traveling center-outward is the sync point for the death jingle — if the transmutation happens all at once instead of as a wave, strengthen \"one after another in a fast spreading wave\". Keep explosions out of frame; this beat is serenity after violence.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.2,
+    "steps": 40,
+    "seed": 24004,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "death-bullets-to-points-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "8a04f624-dd59-4355-9d3f-f97fac20e6de",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art widescreen arcade miracle moment: in the instant after the boss dies, hundreds of glowing hot-pink and red enemy bullets hanging across the entire frame flash white one after another in a fast spreading wave from center outward, each one transmuting mid-air into a spinning sparkling gold point sprite that trails a brief glitter tail, the frozen bullet lattice dissolving into a drifting constellation of falling treasure, small gold capsules tumbling down through it catching light, the tiny blue dart fighter at left surges forward through the golden rain with its cyan canopy glowing brighter, deep navy background now warm-flecked like a jewelry box, soft bloom, CRT scanline glow, joyful abundance, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 24004,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, coins with numbers, gold bars, explosions",
+          "guidance_scale": 4.2,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 958.6846767158713
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

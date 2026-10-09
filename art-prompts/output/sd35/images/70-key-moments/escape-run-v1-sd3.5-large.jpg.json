@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:01:49.724Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "photorealistic, 3d render, city streets, cars, tunnel of glass, sci-fi neon corridor, ship destroyed, blast ahead of ship, ship facing left, text, timer numbers, HUD countdown, watermark, blurry",
+  "negative_sent": "photorealistic, 3d render, city streets, cars, tunnel of glass, sci-fi neon corridor, ship destroyed, blast ahead of ship, ship facing left, text, timer numbers, HUD countdown, watermark, blurry",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/70-key-moments",
+    "fileStem": "boss-moments",
+    "slug": "escape-run",
+    "variantNum": 1,
+    "id": "escape-run-v1",
+    "title": "The 90-second: corridor collapsing behind a sprinting fighter",
+    "positive": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; the escape sequence, pure forward momentum. A steel-blue dart fighter with cyan canopy and screaming orange engine flares rips across the bottom third of the frame from left to right at maximum speed, motion-streaked, skimming the floor of a collapsing canyon corridor. Behind it, filling the entire left end of the image, the world is already gone: a rolling furnace-wall of brown-grey dust, shattered rock and internal orange detonation light chasing the ship, its leading face boiling, giant slabs torn from the canyon walls tumbling inside it, a fan of heat distortion stretching ahead of the front. The corridor itself is failing in ordered sequence so the chase reads as speed increasing: near the blast, both walls already sheared away; mid-frame, ceiling slabs tilting down through the flight path with cracks webbed ahead of them; around the ship, the corridor momentarily intact but floor plates bucking up in a fresh crack-line that races alongside the fighter like a zipper. The exit is not visible; what's visible is more corridor, endless and doomed, bending gently right toward a thin slice of open deep-navy sky at the far edge. Debris streams past the ship in both directions, its bullets now short desperate tracers pointing forward. Earth golds and rusts, furnace oranges, dust smoke, one bright blue ship with an orange prayer, lifted deep-navy shadows, never pure black. No text, no letters, no timer UI.",
+    "negative": "photorealistic, 3d render, city streets, cars, tunnel of glass, sci-fi neon corridor, ship destroyed, blast ahead of ship, ship facing left, text, timer numbers, HUD countdown, watermark, blurry",
+    "negativeScoped": true,
+    "notes": "Strata golds ~#f0c890, blast furnace #e87a1c/#c83018, ship stripe #3858f0. The vector discipline is everything: ship fleeing RIGHT, wall coming from the LEFT; if either flips, the image reads as an ambush, not an escape, so regenerate. \"Ordered sequence of failure down the corridor\" sells ramping speed without motion blur. No timer in frame — the game owns that UI.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 3.5,
+        "steps": 50,
+        "seed": 20031,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4.5,
+        "steps": 36,
+        "seed": 20031,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "escape-run-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1fb9f83e-1023-4da0-aba8-ad1311cde91b",
+      "created": 1791540105,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, saturated limited palette, widescreen 16:9 side-scrolling arcade composition, subtle CRT scanline glow; the escape sequence, pure forward momentum. A steel-blue dart fighter with cyan canopy and screaming orange engine flares rips across the bottom third of the frame from left to right at maximum speed, motion-streaked, skimming the floor of a collapsing canyon corridor. Behind it, filling the entire left end of the image, the world is already gone: a rolling furnace-wall of brown-grey dust, shattered rock and internal orange detonation light chasing the ship, its leading face boiling, giant slabs torn from the canyon walls tumbling inside it, a fan of heat distortion stretching ahead of the front. The corridor itself is failing in ordered sequence so the chase reads as speed increasing: near the blast, both walls already sheared away; mid-frame, ceiling slabs tilting down through the flight path with cracks webbed ahead of them; around the ship, the corridor momentarily intact but floor plates bucking up in a fresh crack-line that races alongside the fighter like a zipper. The exit is not visible; what's visible is more corridor, endless and doomed, bending gently right toward a thin slice of open deep-navy sky at the far edge. Debris streams past the ship in both directions, its bullets now short desperate tracers pointing forward. Earth golds and rusts, furnace oranges, dust smoke, one bright blue ship with an orange prayer, lifted deep-navy shadows, never pure black. No text, no letters, no timer UI.",
+      "inference_time_s": 14.382523269858211,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

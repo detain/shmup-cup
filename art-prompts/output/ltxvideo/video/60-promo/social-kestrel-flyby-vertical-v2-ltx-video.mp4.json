@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T10:32:20.570Z",
+  "model_group": "ltxvideo",
+  "served_model": "Lightricks/LTX-Video",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, ship moving vertically",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, ship moving vertically",
+  "negative_scoped": null,
+  "diffusers_kwargs": {
+    "max_sequence_length": 256
+  },
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "social-vertical",
+    "slug": "social-kestrel-flyby-vertical",
+    "variantNum": 2,
+    "id": "social-kestrel-flyby-vertical-v2",
+    "title": "ship crosses frame, camera whips after it",
+    "positive": "Vertical pixel-art arcade shot: a small steel-blue dart fighter streaks into frame from the left and rockets across to the upper right, its orange engine trail drawing a long curved ribbon behind it, pink bullet sparks popping along its path, the camera snaps in a quick whip-pan tracking the ship then settles as it exits, distant blue planet rim drifting below, punchy speed blur on background layers only, single continuous take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, ship moving vertically",
+    "notes": "Diagonal cross-frame travel suits 9:16 far better than horizontal scroll does. The whip-pan settle loop-cuts cleanly back to the entry frame — natural three-second feed loop.",
+    "modelGroup": "ltxvideo",
+    "modelRaw": "ltx-video",
+    "videoMode": "t2v",
+    "size": {
+      "w": 576,
+      "h": 1024
+    },
+    "numFrames": 97,
+    "fps": 30,
+    "durationNote": "~3.2s",
+    "guidance": 3.5,
+    "steps": 40,
+    "seed": 26012,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 576,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 576,
+    "h": 1024
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "576x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "social-kestrel-flyby-vertical-v2-ltx-video.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "b0a012a1-b2da-4eef-bbf1-251f019affcc",
+        "payload": {
+          "model": "Lightricks/LTX-Video",
+          "prompt": "Vertical pixel-art arcade shot: a small steel-blue dart fighter streaks into frame from the left and rockets across to the upper right, its orange engine trail drawing a long curved ribbon behind it, pink bullet sparks popping along its path, the camera snaps in a quick whip-pan tracking the ship then settles as it exits, distant blue planet rim drifting below, punchy speed blur on background layers only, single continuous take.",
+          "size": "576x1024",
+          "num_frames": 97,
+          "fps": 30,
+          "seed": 26012,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, ship moving vertically",
+          "guidance_scale": 3.5,
+          "num_inference_steps": 40,
+          "diffusers_kwargs": {
+            "max_sequence_length": 256
+          }
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 26.372835566056892
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

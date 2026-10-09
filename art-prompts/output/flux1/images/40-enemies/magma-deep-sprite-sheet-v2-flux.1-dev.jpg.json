@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T08:59:12.670Z",
+  "model_group": "flux1",
+  "served_model": "black-forest-labs/FLUX.1-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/40-enemies",
+    "fileStem": "zone-d-magma-deep",
+    "slug": "magma-deep-sprite-sheet",
+    "variantNum": 2,
+    "id": "magma-deep-sprite-sheet-v2",
+    "title": "Square pixel sprite sheet: cone battery sizes, wisp swarm set, molten shot and slag effects on flat navy",
+    "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — three MAGMA CONE turrets in ascending size (small sentry cone, standard cone, heavy cone with an extra rock terrace), each a stack of black basalt plates with glowing lava seams, craters facing left, plus one heavy cone with its plates burst open and cherry-hot. Second row — a swarm set of EMBER WISPS: five flame bodies of irregular silhouette around molten-gold cores, two wisp pairs mid-fission stretching apart, and one wisp burning out to a gray ash puff with a last gold spark. Third row — molten projectiles in left-facing flight: single round shots with bright cores and dark rims in red and pink, pairs, a three-shot fan, and a slow lobbed glob of lava with a dripping gold tail. Fourth row — environmental pixels: stalactite slag tips with glow beads, a cracked basalt plate tile, a lava-surface patch of the dark-ember-to-tangerine ramp, two falling droplet sprites, and a small crater-scorch ground decal. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+    "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+    "negativeScoped": true,
+    "notes": "This sheet covers the full Zone D roster in one square — size gradation (sentry/standard/heavy) is the useful trick here, it maps straight to spawn tables. Lava ramp reference #8a2c0a→#e87a1c; shots #ff3a3a/#ff5aa0.",
+    "models": [
+      "sd35",
+      "flux1"
+    ],
+    "modelsRaw": [
+      "sd3.5-large",
+      "flux.1-dev"
+    ],
+    "perModel": {
+      "sd35": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 5.5,
+        "steps": 34,
+        "seed": 15422,
+        "defaulted": false
+      },
+      "flux1": {
+        "size": {
+          "w": 1024,
+          "h": 1024
+        },
+        "guidance": 3.5,
+        "steps": 45,
+        "seed": 15422,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_sent": {
+    "w": 1024,
+    "h": 1024
+  },
+  "size_method": "snap16",
+  "requested_size": "1024x1024",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "magma-deep-sprite-sheet-v2-flux.1-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "1be6e75f-16ca-4d46-a19e-e50f805b20a9",
+      "created": 1791536348,
+      "count": 1,
+      "revised_prompt": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — three MAGMA CONE turrets in ascending size (small sentry cone, standard cone, heavy cone with an extra rock terrace), each a stack of black basalt plates with glowing lava seams, craters facing left, plus one heavy cone with its plates burst open and cherry-hot. Second row — a swarm set of EMBER WISPS: five flame bodies of irregular silhouette around molten-gold cores, two wisp pairs mid-fission stretching apart, and one wisp burning out to a gray ash puff with a last gold spark. Third row — molten projectiles in left-facing flight: single round shots with bright cores and dark rims in red and pink, pairs, a three-shot fan, and a slow lobbed glob of lava with a dripping gold tail. Fourth row — environmental pixels: stalactite slag tips with glow beads, a cracked basalt plate tile, a lava-surface patch of the dark-ember-to-tangerine ramp, two falling droplet sprites, and a small crater-scorch ground decal. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "inference_time_s": 15.063960728934035,
+      "peak_memory_mb": 36782
+    },
+    "format": "jpg"
+  }
+}

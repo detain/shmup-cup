@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:47:18.091Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "organic boss, tentacles, metal gears, photorealistic, 3d render, text, watermark, rainbow palette, muddy colors, pure black background",
+  "negative_sent": "organic boss, tentacles, metal gears, photorealistic, 3d render, text, watermark, rainbow palette, muddy colors, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/30-bosses",
+    "fileStem": "07-facet-monarch",
+    "slug": "fm07-reveal",
+    "variantNum": 1,
+    "id": "fm07-reveal-v1",
+    "title": "the crown assembles",
+    "positive": "Geometric majesty boss reveal inside a cathedral-sized crystal corridor, the FACET MONARCH arriving as a slow-motion assembly, seven huge wedge-shaped crystal segments of deep violet with glowing lilac edges sliding through the air from off-frame to close into a floating crown ring, and at the exact center of the ring igniting a single small blinding core of white-pink light that throws sharp triangular caustics across every surface, the corridor walls faceted like the inside of a geode, mirror planes angling the crown's reflection into an endless multiplied halo, loose shard motes drifting upward as if gravity reversed, the light ramp cool violet to pale lilac with one hot pink-white heart, at the bottom edge of the frame a tiny steel-blue dart fighter with cyan canopy banks into the corridor mouth, dwarfed and deliberate, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.",
+    "negative": "organic boss, tentacles, metal gears, photorealistic, 3d render, text, watermark, rainbow palette, muddy colors, pure black background",
+    "negativeScoped": true,
+    "notes": "Crystal violet #8a48e8 with edge lilac #c8a0ff, core hot pink-white. The crown must read as seven discrete segments — count them if the model merges facets.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 12701,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1152,
+          "h": 896
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 12701,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_sent": {
+    "w": 1152,
+    "h": 896
+  },
+  "size_method": "snap16",
+  "requested_size": "1152x896",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "fm07-reveal-v1-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "4426dd96-badb-4a03-8eff-58a7691ad353",
+      "created": 1791539233,
+      "count": 1,
+      "revised_prompt": "Geometric majesty boss reveal inside a cathedral-sized crystal corridor, the FACET MONARCH arriving as a slow-motion assembly, seven huge wedge-shaped crystal segments of deep violet with glowing lilac edges sliding through the air from off-frame to close into a floating crown ring, and at the exact center of the ring igniting a single small blinding core of white-pink light that throws sharp triangular caustics across every surface, the corridor walls faceted like the inside of a geode, mirror planes angling the crown's reflection into an endless multiplied halo, loose shard motes drifting upward as if gravity reversed, the light ramp cool violet to pale lilac with one hot pink-white heart, at the bottom edge of the frame a tiny steel-blue dart fighter with cyan canopy banks into the corridor mouth, dwarfed and deliberate, bold dark outlines, saturated limited palette, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed large-format key art with pixel texture accents, widescreen side-scrolling arcade composition, subtle CRT scanline glow, no text.",
+      "inference_time_s": 14.29737213999033,
+      "peak_memory_mb": 24842
+    },
+    "format": "jpg"
+  }
+}

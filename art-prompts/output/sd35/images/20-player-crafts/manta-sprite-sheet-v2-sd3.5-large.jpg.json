@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:44:59.072Z",
+  "model_group": "sd35",
+  "served_model": "stabilityai/stable-diffusion-3.5-large",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "overlapping sprites, uneven sizes, shadows, gradient background, cell borders, labels, numbers, animal anatomy, motion blur, text, photorealistic, 3d render, watermark, pure black background",
+  "negative_sent": "overlapping sprites, uneven sizes, shadows, gradient background, cell borders, labels, numbers, animal anatomy, motion blur, text, photorealistic, 3d render, watermark, pure black background",
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "sprite-sheets",
+    "slug": "manta-sprite-sheet",
+    "variantNum": 2,
+    "id": "manta-sprite-sheet-v2",
+    "title": "hi-res master sheet",
+    "positive": "High-resolution master sprite sheet for a horizontal arcade shooter, twelve large renderings of the MANTA flat ray-winged fighter in pale mint with a green canopy and amber twin thrusters laid out on a wide flat deep-navy canvas in a tidy 4-by-3 grid with equal gutters, top row the hull from exact side, front-on with wings spread wide, rear-on showing both nozzles, and a top-down plan view showing the full ray silhouette, middle row four banking sequences from neutral to hard left roll with the wing geometry compressing correctly, bottom row damage tiers from clean plating to scuffed edges to cracked wingtips venting amber sparks to a critical smoking state, identical top-lighting in every cell, bold dark outlines, flat saturated arcade shading with pixel-cluster texture accents on highlights only, precise uniform scale, no cast shadows, no text, no numbers, no cell borders, documentation quality.",
+    "negative": "overlapping sprites, uneven sizes, shadows, gradient background, cell borders, labels, numbers, animal anatomy, motion blur, text, photorealistic, 3d render, watermark, pure black background",
+    "negativeScoped": true,
+    "notes": "The plan-view cell is the reference the pixel team needs most — verify it reads as a manta immediately.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 50,
+        "seed": 11312,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 34,
+        "seed": 11312,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "manta-sprite-sheet-v2-sd3.5-large.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "24a35193-5a14-40f1-a4f3-3be30b244948",
+      "created": 1791539094,
+      "count": 1,
+      "revised_prompt": "High-resolution master sprite sheet for a horizontal arcade shooter, twelve large renderings of the MANTA flat ray-winged fighter in pale mint with a green canopy and amber twin thrusters laid out on a wide flat deep-navy canvas in a tidy 4-by-3 grid with equal gutters, top row the hull from exact side, front-on with wings spread wide, rear-on showing both nozzles, and a top-down plan view showing the full ray silhouette, middle row four banking sequences from neutral to hard left roll with the wing geometry compressing correctly, bottom row damage tiers from clean plating to scuffed edges to cracked wingtips venting amber sparks to a critical smoking state, identical top-lighting in every cell, bold dark outlines, flat saturated arcade shading with pixel-cluster texture accents on highlights only, precise uniform scale, no cast shadows, no text, no numbers, no cell borders, documentation quality.",
+      "inference_time_s": 13.5970989249181,
+      "peak_memory_mb": 23054
+    },
+    "format": "jpg"
+  }
+}

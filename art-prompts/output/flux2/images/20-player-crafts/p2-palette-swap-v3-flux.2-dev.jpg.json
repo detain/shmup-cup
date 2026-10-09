@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-10-09T09:10:23.630Z",
+  "model_group": "flux2",
+  "served_model": "black-forest-labs/FLUX.2-dev",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/images/generations",
+  "negative_mode": "field",
+  "negative_defined": "text, ui boxes, frames, portraits, numbers, photorealistic, 3d render, watermark, ships overlapping, inconsistent silhouettes, pure black background",
+  "negative_sent": null,
+  "negative_scoped": true,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "image",
+    "category": "images/20-player-crafts",
+    "fileStem": "combat-and-p2",
+    "slug": "p2-palette-swap",
+    "variantNum": 3,
+    "id": "p2-palette-swap-v3",
+    "title": "all four heroes line-up",
+    "positive": "Retro arcade select-screen style line-up artwork of four fighters arranged in a horizontal row across the frame facing right on a flat deep-navy presentation field with faint colored floor glows under each craft, from left to right, player one KESTREL with blue stripe, cyan canopy and orange engine glow, player two KESTREL in the same dart shape with red-orange stripe, gold canopy and blue engine glow, player one MANTA with pale-mint ray-wings, green canopy and amber thrusters, player two MANTA warmed to pale gold-mint with an amber-gold canopy and red-orange thrusters, all four drawn with heavy dark outlines and saturated flat arcade shading, tiny star specks above, mood of a two-player roster ready to launch, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed clean vector shapes with pixel-art texture accents, subtle CRT scanline glow, no text, no portraits, no boxes.",
+    "negative": "text, ui boxes, frames, portraits, numbers, photorealistic, 3d render, watermark, ships overlapping, inconsistent silhouettes, pure black background",
+    "negativeScoped": true,
+    "notes": "Four-ship coherence is tough — flux.2-dev first, check each pair shares geometry exactly. Banner crop for the co-op feature page.",
+    "models": [
+      "flux2",
+      "sd35"
+    ],
+    "modelsRaw": [
+      "flux.2-dev",
+      "sd3.5-large"
+    ],
+    "perModel": {
+      "flux2": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 4,
+        "steps": 45,
+        "seed": 11213,
+        "defaulted": false
+      },
+      "sd35": {
+        "size": {
+          "w": 1536,
+          "h": 640
+        },
+        "guidance": 5,
+        "steps": 32,
+        "seed": 11213,
+        "defaulted": false
+      }
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-images-json"
+  },
+  "size_original": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_sent": {
+    "w": 1536,
+    "h": 640
+  },
+  "size_method": "snap16",
+  "requested_size": "1536x640",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "p2-palette-swap-v3-flux.2-dev.jpg",
+  "media_format": "jpg",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "request_n": 1,
+    "response": {
+      "id": "f67a02e8-bb02-4b66-83ad-692cf81b75d0",
+      "created": 1791537019,
+      "count": 1,
+      "revised_prompt": "Retro arcade select-screen style line-up artwork of four fighters arranged in a horizontal row across the frame facing right on a flat deep-navy presentation field with faint colored floor glows under each craft, from left to right, player one KESTREL with blue stripe, cyan canopy and orange engine glow, player two KESTREL in the same dart shape with red-orange stripe, gold canopy and blue engine glow, player one MANTA with pale-mint ray-wings, green canopy and amber thrusters, player two MANTA warmed to pale gold-mint with an amber-gold canopy and red-orange thrusters, all four drawn with heavy dark outlines and saturated flat arcade shading, tiny star specks above, mood of a two-player roster ready to launch, bold dark outlines, SNES-era 16-bit pixel art inspired concept rendering, ultra-detailed clean vector shapes with pixel-art texture accents, subtle CRT scanline glow, no text, no portraits, no boxes.",
+      "inference_time_s": 31.62582535087131,
+      "peak_memory_mb": 39760
+    },
+    "format": "jpg"
+  }
+}
