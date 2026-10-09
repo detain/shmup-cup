@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T16:19:04.645Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic worm, one sun, night",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic worm, one sun, night",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-a",
+    "slug": "zone-dune-expanse-twinsuns",
+    "variantNum": 3,
+    "id": "zone-dune-expanse-twinsuns-v3",
+    "title": "wide lateral pan, heat haze, worm eruption",
+    "positive": "Retro 16-bit pixel-art widescreen desert vista at high noon under twin suns: the camera pans right across an endless dune expanse rippling with visible heat haze, two round suns — one amber one pale gold — hanging stacked low in a washed violet sky, long double shadows from jagged rock fins, then a colossal segmented sand worm of bold-outlined plated segments erupts diagonally from a dune crest ahead of the pan, throwing a towering fan of backlit sand grains that scatter through the sun glow, a tiny blue fighter banking sharply away from the eruption column, sparkling cascade of falling grit settling as the pan continues past, harsh beautiful menace, CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic worm, one sun, night",
+    "notes": "The eruption timed into a moving pan is the montage's jump-scare beat — the worm must enter after the pan has already settled. Two-sun counts are unreliable; verify the \"stacked\" placement across seeds.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 26003,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-dune-expanse-twinsuns-v3-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "2886c288-e8c1-4a9a-bb92-231afd9d2afd",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art widescreen desert vista at high noon under twin suns: the camera pans right across an endless dune expanse rippling with visible heat haze, two round suns — one amber one pale gold — hanging stacked low in a washed violet sky, long double shadows from jagged rock fins, then a colossal segmented sand worm of bold-outlined plated segments erupts diagonally from a dune crest ahead of the pan, throwing a towering fan of backlit sand grains that scatter through the sun glow, a tiny blue fighter banking sharply away from the eruption column, sparkling cascade of falling grit settling as the pan continues past, harsh beautiful menace, CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 26003,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic worm, one sun, night",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 955.6895530309994
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

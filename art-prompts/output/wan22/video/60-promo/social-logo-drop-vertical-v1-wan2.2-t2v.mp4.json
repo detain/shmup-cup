@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T15:49:05.726Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, horizontal framing bars",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, horizontal framing bars",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "social-vertical",
+    "slug": "social-logo-drop-vertical",
+    "variantNum": 1,
+    "id": "social-logo-drop-vertical-v1",
+    "title": "wordmark slams in, bullet rain behind",
+    "positive": "Vertical 9:16 retro 16-bit pixel-art social clip: a heavy blocky arcade wordmark drops fast from the top of the frame and slams into the center with a screen-wide impact flash, bold yellow-to-red fire-gradient letters ringing with a white outline, a shockwave of square pixel sparks radiating outward and upward, behind it an endless slow rain of hot-pink and violet glowing bullets falls past through deep navy darkness, the letters bounce once and settle with an ember pulse, slight camera kick on impact then lock, punchy arcade title energy, CRT scanline glow, single continuous shot.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, horizontal framing bars",
+    "notes": "Text again — this is the lottery version; the safe production route is wan2.2-i2v from the logo still with the drop re-timed in an editor. Bullet rain behind a locked logo is the perfect silent-loop feed plate.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 720,
+      "h": 1280
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 26011,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 720,
+    "h": 1280
+  },
+  "size_sent": {
+    "w": 720,
+    "h": 1280
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "720x1280",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "social-logo-drop-vertical-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "9a465587-c813-4018-9ad3-7d3d64b11a04",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Vertical 9:16 retro 16-bit pixel-art social clip: a heavy blocky arcade wordmark drops fast from the top of the frame and slams into the center with a screen-wide impact flash, bold yellow-to-red fire-gradient letters ringing with a white outline, a shockwave of square pixel sparks radiating outward and upward, behind it an endless slow rain of hot-pink and violet glowing bullets falls past through deep navy darkness, the letters bounce once and settle with an ember pulse, slight camera kick on impact then lock, punchy arcade title energy, CRT scanline glow, single continuous shot.",
+          "size": "720x1280",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 26011,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, horizontal framing bars",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 956.7243842228781
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T16:35:05.018Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, calm sky, sunshine, realistic clouds",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, calm sky, sunshine, realistic clouds",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-a",
+    "slug": "zone-tempest-ridge-timelapse",
+    "variantNum": 5,
+    "id": "zone-tempest-ridge-timelapse-v5",
+    "title": "storm timelapse over jagged snow ridges",
+    "positive": "Retro 16-bit pixel-art timelapse over a jagged snow ridge in a permanent storm: dark violet-black thunderheads roll and churn leftward fast across the sky in accelerated drift, slanting rain streaking diagonally across the whole frame, bolts flashing inside the cloud volumes and momentarily lighting the ridge teeth in hard blue-white, snow blasting off the peaks in horizontal veils where the gusts hit, a tiny fighter silhouette tracing steadily rightward along the ridge line far below, the storm swallowing it as the clouds descend, cold violent grandeur, bold outlines, CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, calm sky, sunshine, realistic clouds",
+    "notes": "Accelerated cloud roll = instant timelapse grammar; Wan holds this well. The swallowed fighter at the end is a nice \"the zone itself is the boss\" transition into SQUALL STEED's intro clip.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.2,
+    "steps": 40,
+    "seed": 26005,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-tempest-ridge-timelapse-v5-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "678976e6-b7d1-49da-8612-08c075d410c8",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art timelapse over a jagged snow ridge in a permanent storm: dark violet-black thunderheads roll and churn leftward fast across the sky in accelerated drift, slanting rain streaking diagonally across the whole frame, bolts flashing inside the cloud volumes and momentarily lighting the ridge teeth in hard blue-white, snow blasting off the peaks in horizontal veils where the gusts hit, a tiny fighter silhouette tracing steadily rightward along the ridge line far below, the storm swallowing it as the clouds descend, cold violent grandeur, bold outlines, CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 26005,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, calm sky, sunshine, realistic clouds",
+          "guidance_scale": 4.2,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 956.7312594389077
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

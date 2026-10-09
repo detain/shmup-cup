@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T14:53:41.828Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fast sinking, explosion, organic whale",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fast sinking, explosion, organic whale",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/50-key-moments",
+    "fileStem": "ark-diving-abyss",
+    "slug": "ark-dive-descent",
+    "variantNum": 1,
+    "id": "ark-dive-descent-v1",
+    "title": "the flagship sinks tier by tier",
+    "positive": "Retro 16-bit pixel-art widescreen coda: the continent-sized mechanical whale flagship angles its barnacled steel snout down into black water and begins an immense slow dive, its broad back and dorsal plate city sliding under the surface in a creeping avalanche of displaced swell, rows of violet glow-seams and amber running lights winking out one tier at a time from top down as the depth takes them, bioluminescent specks swirling up off its hull like inverse snow, the last lit porthole row vanishing below leaving only a widening circular disturbance on the glassy dark sea, faint red embers of its wake still glowing deep under, tiny silhouette fighter unmoving at frame left watching it go, camera static and wide, cold ominous finality, deep navy palette draining to black at the edges, CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fast sinking, explosion, organic whale",
+    "notes": "Lights-out-by-tier is the countdown that makes the dive feel finite and deliberate — protect that phrase across seeds. The static watching fighter supplies the \"we let it go\" emotion; if it drifts, lock the composition with the ark-dive still as i2v source.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.2,
+    "steps": 40,
+    "seed": 25006,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "ark-dive-descent-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "ce8231e4-fa47-4fac-a7a5-c2dc2210a5a8",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Retro 16-bit pixel-art widescreen coda: the continent-sized mechanical whale flagship angles its barnacled steel snout down into black water and begins an immense slow dive, its broad back and dorsal plate city sliding under the surface in a creeping avalanche of displaced swell, rows of violet glow-seams and amber running lights winking out one tier at a time from top down as the depth takes them, bioluminescent specks swirling up off its hull like inverse snow, the last lit porthole row vanishing below leaving only a widening circular disturbance on the glassy dark sea, faint red embers of its wake still glowing deep under, tiny silhouette fighter unmoving at frame left watching it go, camera static and wide, cold ominous finality, deep navy palette draining to black at the edges, CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 25006,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fast sinking, explosion, organic whale",
+          "guidance_scale": 4.2,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.1454213720281
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

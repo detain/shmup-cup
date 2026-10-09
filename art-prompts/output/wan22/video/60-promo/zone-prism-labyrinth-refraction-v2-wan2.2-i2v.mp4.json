@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-10-09T16:19:04.658Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_sent": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-b",
+    "slug": "zone-prism-labyrinth-refraction",
+    "variantNum": 2,
+    "id": "zone-prism-labyrinth-refraction-v2",
+    "title": "rotating crystal light through cube stacks",
+    "positive": "Light begins to move: long rainbow refraction streaks sweep slowly across the faceted crystal corridor walls, glinting into bright star-flares where beams meet the edges, the floating cube stacks rotate a quarter-turn in a staggered cascade down the hall, each face catching a different spectral color, sparkles drift like glitter in still air, camera tracks gently forward through the labyrinth as the refraction builds to a shimmering peak then settles, jeweled cold beauty, continuous single take, no cuts.",
+    "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+    "notes": "Zone 7: the quarter-turn cascade of the cubes is the gimmick reference (stacking-cube hazard) — i2v keeps their geometry locked while the light does the show.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-i2v",
+    "videoMode": "i2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 35,
+    "seed": 26007,
+    "sourceImage": {
+      "declared": "art-prompts/images/60-promo/prism-labyrinth-v1-flux.2-dev.png",
+      "glob": "60-promo/prism*"
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-prism-labyrinth-refraction-v2-wan2.2-i2v.mp4",
+  "media_format": null,
+  "status": "failed",
+  "error": "HTTP 400 from http://skynet2.interserver.net:30001/v1/videos: {\"detail\":\"input_reference is not supported for T2V models.\"}",
+  "response_meta": null
+}

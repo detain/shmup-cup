@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T16:03:07.110Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-a",
+    "slug": "zone-azure-verge-orbit",
+    "variantNum": 1,
+    "id": "zone-azure-verge-orbit-v1",
+    "title": "slow arc-pan along the planet rim",
+    "positive": "Widescreen retro 16-bit pixel-art orbital vista: the camera begins a slow arcing pan rightward along the glowing blue rim of a planet in deep space, the thin atmospheric band burning from navy to cyan at the limb, layered starfields at three parallax depths sliding behind, a lone steel-blue dart fighter with an orange engine trail crossing the pan from left to right in the near layer while a distant flight of bold-outlined mechanical sea drones drifts silhouetted against the planet glow, cold majestic scale with a single warm thread of motion, crisp saturated pixels, faint CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera",
+    "notes": "Zone 1 opener for the montage; the arc-pan against a static planet is cheap drama. Loopable if you drop the fighter phrase — the rim itself never changes.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 35,
+    "seed": 26001,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-azure-verge-orbit-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "e2a70b0f-d283-4dd8-b76e-78261f240532",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen retro 16-bit pixel-art orbital vista: the camera begins a slow arcing pan rightward along the glowing blue rim of a planet in deep space, the thin atmospheric band burning from navy to cyan at the limb, layered starfields at three parallax depths sliding behind, a lone steel-blue dart fighter with an orange engine trail crossing the pan from left to right in the near layer while a distant flight of bold-outlined mechanical sea drones drifts silhouetted against the planet glow, cold majestic scale with a single warm thread of motion, crisp saturated pixels, faint CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 26001,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera",
+          "guidance_scale": 4,
+          "num_inference_steps": 35
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 838.1357823789585
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

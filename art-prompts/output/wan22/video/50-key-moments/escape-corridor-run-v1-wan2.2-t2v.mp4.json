@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T15:33:05.567Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, slow motion, camera leading the ship, first-person camera, static camera",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, slow motion, camera leading the ship, first-person camera, static camera",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/50-key-moments",
+    "fileStem": "escape-citadel-collapse",
+    "slug": "escape-corridor-run",
+    "variantNum": 1,
+    "id": "escape-corridor-run-v1",
+    "title": "steady right-rush through riveted halls",
+    "positive": "Widescreen retro 16-bit pixel-art escape run: the steel-blue dart fighter screams rightward through a vast riveted steel corridor of the collapsing citadel, chasing amber warning lights streaking along the walls whipping past at speed, behind it a rolling wall of orange-white fireballs detonates section after section of the hall, floor plates buckling upward into the blast, ceiling girders tumbling end over end ahead of the flame front, the fighter weaving through gaps in falling debris with crisp short dodges, its engine trail stretched long and thin, spark showers bursting where the fire licks the walls, the camera tracks alongside at matching speed with motion-blur only on the background layers so the sprite stays sharp, escalating pace, arcade tension, deep-shadow steel palette with hot orange highlights, CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, slow motion, camera leading the ship, first-person camera, static camera",
+    "notes": "\"Camera tracks alongside\" not \"camera ahead\" — leading the ship kills escape-shot tension. The fire wall must stay behind: `camera leading the ship` in the negative is deliberate.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4.5,
+    "steps": 40,
+    "seed": 25001,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "escape-corridor-run-v1-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "2e5b96fc-14f2-4679-86d7-443d620f5c37",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen retro 16-bit pixel-art escape run: the steel-blue dart fighter screams rightward through a vast riveted steel corridor of the collapsing citadel, chasing amber warning lights streaking along the walls whipping past at speed, behind it a rolling wall of orange-white fireballs detonates section after section of the hall, floor plates buckling upward into the blast, ceiling girders tumbling end over end ahead of the flame front, the fighter weaving through gaps in falling debris with crisp short dodges, its engine trail stretched long and thin, spark showers bursting where the fire licks the walls, the camera tracks alongside at matching speed with motion-blur only on the background layers so the sprite stays sharp, escalating pace, arcade tension, deep-shadow steel palette with hot orange highlights, CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 25001,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, slow motion, camera leading the ship, first-person camera, static camera",
+          "guidance_scale": 4.5,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.2715748869814
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

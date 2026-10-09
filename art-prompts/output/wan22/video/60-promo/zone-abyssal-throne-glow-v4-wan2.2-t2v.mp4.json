@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-09T16:51:01.493Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, bright scene, clear water",
+  "negative_sent": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, bright scene, clear water",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-b",
+    "slug": "zone-abyssal-throne-glow",
+    "variantNum": 4,
+    "id": "zone-abyssal-throne-glow-v4",
+    "title": "descending past bioluminescent spires",
+    "positive": "Widescreen retro 16-bit pixel-art descent into a lightless abyss: the camera sinks slowly downward past towering black spires furred with glowing bioluminescent filaments in teal, violet and faint pink, clouds of luminous plankton specks swirling in the current and parting around the lens, a lone angler-lure gold light blinking somewhere far below in the deep dark, long ghostly shadows of enormous unseen shapes sliding across the spires and gone, suffocating quiet beauty, bold thin outlines against near-black navy, faint CRT scanline glow, continuous single take.",
+    "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, bright scene, clear water",
+    "notes": "Zone 9 mood-setter; the unseen-shape shadows foreshadow the HOLLOW KING. Slow descent past vertical spires is very stable — a strong candidate for the final-act menu background too.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-t2v",
+    "videoMode": "t2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 40,
+    "seed": 26009,
+    "sourceImage": null,
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-abyssal-throne-glow-v4-wan2.2-t2v.mp4",
+  "media_format": "mp4",
+  "status": "ok",
+  "error": null,
+  "response_meta": {
+    "jobs": [
+      {
+        "job_id": "6ef89ea3-cf74-4fda-be7c-f50b07d62677",
+        "payload": {
+          "model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+          "prompt": "Widescreen retro 16-bit pixel-art descent into a lightless abyss: the camera sinks slowly downward past towering black spires furred with glowing bioluminescent filaments in teal, violet and faint pink, clouds of luminous plankton specks swirling in the current and parting around the lens, a lone angler-lure gold light blinking somewhere far below in the deep dark, long ghostly shadows of enormous unseen shapes sliding across the spires and gone, suffocating quiet beauty, bold thin outlines against near-black navy, faint CRT scanline glow, continuous single take.",
+          "size": "1280x720",
+          "num_frames": 81,
+          "fps": 16,
+          "seed": 26009,
+          "negative_prompt": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, bright scene, clear water",
+          "guidance_scale": 4,
+          "num_inference_steps": 40
+        },
+        "final_status": {
+          "status": "completed",
+          "progress": 100,
+          "inference_time_s": 957.3611331197899
+        }
+      }
+    ],
+    "format": "mp4"
+  }
+}

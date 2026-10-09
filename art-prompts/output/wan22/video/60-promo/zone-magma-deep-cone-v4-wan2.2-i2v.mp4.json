@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-10-09T16:03:07.121Z",
+  "model_group": "wan22",
+  "served_model": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "endpoint": "http://skynet2.interserver.net:30001/v1/videos",
+  "negative_mode": "field",
+  "negative_defined": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_sent": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+  "negative_scoped": null,
+  "diffusers_kwargs": null,
+  "block": {
+    "kind": "video",
+    "category": "video/60-promo",
+    "fileStem": "zone-montage-a",
+    "slug": "zone-magma-deep-cone",
+    "variantNum": 4,
+    "id": "zone-magma-deep-cone-v4",
+    "title": "push in on an erupting lava cone",
+    "positive": "The camera pushes slowly in toward a erupting magma cone in a vast lava cavern, fountains of bright orange pixel lava cycling up and falling in glowing arcs, the lava lake below heaving and pulsing with rising heat blobs that burst into sparks, long shadow of a passing fighter sliding across the molten surface, embers streaming upward past the lens, rock ceiling glistening with reflected firelight, building intensity as the next eruption loads and fires, continuous single take, no cuts.",
+    "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+    "notes": "Zone 4: the load-fire cycle of the cone gives the push-in a rhythm. The moving ship-shadow adds the scale cue without spending motion budget on the sprite.",
+    "modelGroup": "wan22",
+    "modelRaw": "wan2.2-i2v",
+    "videoMode": "i2v",
+    "size": {
+      "w": 1280,
+      "h": 720
+    },
+    "numFrames": 81,
+    "fps": 16,
+    "durationNote": "~5s",
+    "guidance": 4,
+    "steps": 35,
+    "seed": 26004,
+    "sourceImage": {
+      "declared": "art-prompts/images/60-promo/magma-deep-v1-flux.2-dev.png",
+      "glob": "60-promo/magma*"
+    },
+    "meta": null,
+    "format": "json",
+    "suggestedN": null,
+    "aspect": null,
+    "style": null,
+    "background": null,
+    "source": "shmup-video-json"
+  },
+  "size_original": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_sent": {
+    "w": 1280,
+    "h": 720
+  },
+  "size_method": "table-verbatim",
+  "requested_size": "1280x720",
+  "size_snapped": false,
+  "requested_n": 1,
+  "media_file": "zone-magma-deep-cone-v4-wan2.2-i2v.mp4",
+  "media_format": null,
+  "status": "failed",
+  "error": "HTTP 400 from http://skynet2.interserver.net:30001/v1/videos: {\"detail\":\"input_reference is not supported for T2V models.\"}",
+  "response_meta": null
+}
