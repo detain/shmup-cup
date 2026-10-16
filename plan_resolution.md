@@ -938,6 +938,10 @@ then re-blessed with the reason.
 | **R5-09** | I — ABYSSAL THRONE | depth mines, the ABYSS ARK raid, THE HOLLOW KING | a longer descent and the ark approach |
 | **R5-10** | The rest | bonus stages (`brine-grotto`, `glimmer-cache`, `bonus-vault`), boss rush, the loop remixes, the caravan, the escape sequence, the high-speed dimension (Mode-7), the test and dev ranges | ported art and layouts; the escape and the dimension get the new layers |
 
+**Engine capacity check (inside R5-01, revisited per zone):** a bigger screen and longer levels may want more
+than 64 enemy slots (`enemies/index.ts:259`) or 256 particles (`particles/index.ts:83`). Raise a pool only with
+the allocation guards and the bench showing it fits.
+
 Each step below means **the zone template above + its row in this table**. **Depends on:** R3-01 … R3-06 and
 R4-01 … R4-03 for every zone step, and the previous zone step (one zone at a time keeps golden churn local).
 
@@ -983,10 +987,6 @@ R4-01 … R4-03 for every zone step, and the previous zone step (one zone at a t
   uses the new bosses. The test and dev ranges (`test-range`, `weapon-range`, `gimmick-range`, `raster-range`, …)
   get ported art only.
 - **After R5-10:** tag **`v2.0.0-beta.1`**.
-
-**Engine capacity check (inside R5-01, revisited per zone):** a bigger screen and longer levels may want more
-than 64 enemy slots (`enemies/index.ts:259`) or 256 particles (`particles/index.ts:83`). Raise a pool only with
-the allocation guards and the bench showing it fits.
 
 ---
 
