@@ -63,6 +63,8 @@ export default defineConfig([
     'apps/electron/release/',
     'apps/webos/release/',
     'tools/',
+    // The AI art prompt library: a standalone Node script outside the workspace, like tools/.
+    'art-prompts/',
     // Git-ignored agent / editor tooling directories: never ours to lint.
     '.claude/',
     '.caliber/',

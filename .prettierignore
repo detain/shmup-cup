@@ -17,6 +17,10 @@ assets/source/
 # Standalone tool projects own their formatting
 tools/
 
+# The AI art prompt library and its generator: standalone tooling outside the workspace, and the
+# output/ sidecars are machine-written JSON
+art-prompts/
+
 # Markdown keeps its hand-made layout (Prettier would re-pad every table, causing noisy
 # diffs and merge conflicts between docs authors)
 *.md
