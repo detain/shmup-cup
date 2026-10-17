@@ -68,7 +68,8 @@
  * {@link applyBindingOverride}, {@link actionTokens}, {@link rebindAction}, {@link RebindResult},
  * {@link resetBindings}, {@link findBindingConflicts}, {@link BindingConflict},
  * {@link captureToken}, {@link CapturedInput}, {@link bindingTokenLabel},
- * {@link bindingKeysLabel}, {@link RESERVED_BINDING_TOKENS}.
+ * {@link bindingKeysLabel}, {@link RESERVED_BINDING_TOKENS}; R1-03: the file schema
+ * {@link INPUT_PROFILES_FILE_SCHEMA}, whose numbers carry their units (for content tools).
  *
  * @module
  */
@@ -264,7 +265,7 @@ const PROFILE_SCHEMA = s.object(
     device: s.enumOf(INPUT_PROFILE_DEVICES),
     context: s.object({ game: BINDINGS_SCHEMA, menu: BINDINGS_SCHEMA }),
     split: s.object({ game: BINDINGS_SCHEMA, menu: BINDINGS_SCHEMA }),
-    releaseDebounceTicks: s.int({ min: 0, max: MAX_RELEASE_DEBOUNCE_TICKS }),
+    releaseDebounceTicks: s.int({ min: 0, max: MAX_RELEASE_DEBOUNCE_TICKS, unit: 'ticks' }),
     diagonals: s.enumOf(DIAGONAL_POLICIES),
     socd: s.enumOf(SOCD_POLICIES),
     singleKey: s.bool(),
@@ -274,9 +275,21 @@ const PROFILE_SCHEMA = s.object(
   { optional: ['split', 'singleKey', 'hosts'] },
 );
 
-/** A whole `input-profiles` file. */
-const FILE_SCHEMA = s.object({
-  formatVersion: s.int({ min: CONTENT_FORMAT_VERSION, max: CONTENT_FORMAT_VERSION }),
+/**
+ * The schema of a whole `input-profiles` file (`content/input/*.input-profiles.json`) — what
+ * {@link loadInputProfiles} validates each file with before its cross-checks.
+ *
+ * @remarks
+ * Exported for tools that walk content with its schema (plan_resolution.md R1-03: the unit
+ * coverage test, `scripts/content/rescale.mjs`). Its only numbers are the format version and the
+ * release debounce (`ticks`), so a port leaves the file as it is. The game itself never needs it.
+ */
+export const INPUT_PROFILES_FILE_SCHEMA = s.object({
+  formatVersion: s.int({
+    min: CONTENT_FORMAT_VERSION,
+    max: CONTENT_FORMAT_VERSION,
+    unit: 'version',
+  }),
   kind: s.enumOf([INPUT_PROFILES_KIND] as const),
   profiles: s.array(PROFILE_SCHEMA, { min: 1 }),
 });
@@ -527,7 +540,7 @@ function collectFile(
   issues: ValidationIssue[],
 ): void {
   const local: ValidationIssue[] = [];
-  const parsed = FILE_SCHEMA.parse(data, '', local);
+  const parsed = INPUT_PROFILES_FILE_SCHEMA.parse(data, '', local);
   if (parsed !== undefined) {
     for (let i = 0; i < parsed.profiles.length; i++) {
       const entry = parsed.profiles[i] as ParsedProfile;

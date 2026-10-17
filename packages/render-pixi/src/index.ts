@@ -133,6 +133,7 @@ export { createDrawListView, type DrawListView, type DrawListViewOptions } from 
 export {
   EMPTY_FX_CONTENT,
   FX_CONTENT_KIND,
+  FX_FILE_SCHEMA,
   MAX_PARTICLE_STEP,
   MAX_TRIGGERS_PER_CUE,
   PARTICLE_CAPACITY,

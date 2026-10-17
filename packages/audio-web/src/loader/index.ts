@@ -43,7 +43,9 @@
  * {@link AudioLoader}, {@link AudioLoaderOptions}, {@link PreparedSound}, {@link PreparedTrack},
  * {@link toAudioBuffer}, {@link loadArrayBuffer}, {@link XhrLike}, {@link decodeAudioFile},
  * {@link DecodeContextLike}, {@link DECODE_SAMPLE_RATE}, {@link AudioLoadError},
- * {@link LoadProgress}; M3-03: {@link AudioLoader.musicPath} and {@link MusicTrackDef.module}.
+ * {@link LoadProgress}; M3-03: {@link AudioLoader.musicPath} and {@link MusicTrackDef.module};
+ * R1-03: the file schemas {@link SFX_FILE_SCHEMA} and {@link MUSIC_FILE_SCHEMA}, whose numbers
+ * carry their units (for content tools).
  *
  * @module
  */
@@ -218,29 +220,38 @@ const RELATIVE_PATH = /^(?!\/)(?!.*\.\.)[A-Za-z0-9_./-]+$/;
 /** A kebab-case id (`zone-a`). */
 const KEBAB_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** The synth parameter set. */
+/**
+ * The synth parameter set.
+ *
+ * @remarks
+ * Units (plan_resolution.md R1-03, owner decision O1): every audio number keeps its value in a
+ * port — `hz` (frequencies, rates, and the Hz-per-second `slide`), `seconds` (envelope times, the
+ * pitch jump's time, `repeat`), `samples` (`bitCrush`), `ratio` (gains, depths, the duty cycle)
+ * and `seed`.
+ */
 const SFX_PARAMS_SCHEMA = s.object(
   {
     shape: s.enumOf(SFX_SHAPES),
-    volume: s.num({ min: 0, max: 1 }),
-    frequency: s.num({ min: 0, max: 20000 }),
-    randomness: s.num({ min: 0, max: 1 }),
-    attack: s.num({ min: 0, max: 5 }),
-    decay: s.num({ min: 0, max: 5 }),
-    sustain: s.num({ min: 0, max: 10 }),
-    sustainVolume: s.num({ min: 0, max: 1 }),
-    release: s.num({ min: 0, max: 10 }),
-    slide: s.num({ min: -100000, max: 100000 }),
-    pitchJump: s.num({ min: -20000, max: 20000 }),
-    pitchJumpTime: s.num({ min: 0, max: 10 }),
-    repeat: s.num({ min: 0, max: 10 }),
-    modulation: s.num({ min: 0, max: 1000 }),
-    modulationDepth: s.num({ min: 0, max: 1 }),
-    bitCrush: s.int({ min: 0, max: 64 }),
-    tremolo: s.num({ min: 0, max: 1 }),
-    tremoloRate: s.num({ min: 0, max: 100 }),
-    duty: s.num({ min: 0.05, max: 0.95 }),
-    seed: s.int({ min: 0, max: 0xffffffff }),
+    volume: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    frequency: s.num({ min: 0, max: 20000, unit: 'hz' }),
+    randomness: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    attack: s.num({ min: 0, max: 5, unit: 'seconds' }),
+    decay: s.num({ min: 0, max: 5, unit: 'seconds' }),
+    sustain: s.num({ min: 0, max: 10, unit: 'seconds' }),
+    sustainVolume: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    release: s.num({ min: 0, max: 10, unit: 'seconds' }),
+    // Hz per second: an audio rate, unchanged by a port like every `hz` value.
+    slide: s.num({ min: -100000, max: 100000, unit: 'hz' }),
+    pitchJump: s.num({ min: -20000, max: 20000, unit: 'hz' }),
+    pitchJumpTime: s.num({ min: 0, max: 10, unit: 'seconds' }),
+    repeat: s.num({ min: 0, max: 10, unit: 'seconds' }),
+    modulation: s.num({ min: 0, max: 1000, unit: 'hz' }),
+    modulationDepth: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    bitCrush: s.int({ min: 0, max: 64, unit: 'samples' }),
+    tremolo: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    tremoloRate: s.num({ min: 0, max: 100, unit: 'hz' }),
+    duty: s.num({ min: 0.05, max: 0.95, unit: 'ratio' }),
+    seed: s.int({ min: 0, max: 0xffffffff, unit: 'seed' }),
   },
   {
     optional: [
@@ -272,8 +283,8 @@ const SFX_PARAMS_SCHEMA = s.object(
 const SFX_CUE_SCHEMA = s.object(
   {
     priority: s.enumOf(SFX_PRIORITY_NAMES),
-    maxInstances: s.int({ min: 1, max: 8 }),
-    volume: s.num({ min: 0, max: 1 }),
+    maxInstances: s.int({ min: 1, max: 8, unit: 'count' }),
+    volume: s.num({ min: 0, max: 1, unit: 'ratio' }),
     bus: s.enumOf(['sfx', 'ui'] as const),
     pan: s.bool(),
     params: SFX_PARAMS_SCHEMA,
@@ -282,9 +293,21 @@ const SFX_CUE_SCHEMA = s.object(
   { optional: ['volume', 'bus', 'pan', 'params', 'file'] },
 );
 
-/** A whole `sfx` file. */
-const SFX_FILE_SCHEMA = s.object({
-  formatVersion: s.int({ min: CONTENT_FORMAT_VERSION, max: CONTENT_FORMAT_VERSION }),
+/**
+ * The schema of a whole `sfx` file (`content/audio/*.sfx.json`) — what {@link loadSfxContent}
+ * validates each file with before its cross-checks.
+ *
+ * @remarks
+ * Exported for tools that walk content with its schema (plan_resolution.md R1-03: the unit
+ * coverage test, `scripts/content/rescale.mjs`); every number carries its unit in the schema's
+ * `meta` (owner decision O1: audio units are never rescaled). The game itself never needs it.
+ */
+export const SFX_FILE_SCHEMA = s.object({
+  formatVersion: s.int({
+    min: CONTENT_FORMAT_VERSION,
+    max: CONTENT_FORMAT_VERSION,
+    unit: 'version',
+  }),
   kind: s.enumOf([SFX_CONTENT_KIND] as const),
   cues: s.record(SFX_CUE_SCHEMA, CUE_NAME),
 });
@@ -442,26 +465,34 @@ export const EMPTY_MUSIC_CONTENT: MusicContent = Object.freeze({
   trackIndex: new Map<string, number>(),
 });
 
-/** A song instrument. */
+/**
+ * A song instrument.
+ *
+ * @remarks
+ * Units (owner decision O1 — never rescaled): `ratio` gains and the sustain *level*, `seconds`
+ * envelope times and the vibrato's delay, `semitones` (the vibrato's depth, the arpeggio's offsets
+ * and the semitones-per-second `sweep`), `hz` (the vibrato's rate) and `ticks` (60 a second).
+ */
 const INSTRUMENT_SCHEMA = s.object(
   {
     wave: s.enumOf(CHIP_WAVES),
-    volume: s.num({ min: 0, max: 1 }),
-    attack: s.num({ min: 0, max: 5 }),
-    decay: s.num({ min: 0, max: 5 }),
-    sustain: s.num({ min: 0, max: 1 }),
-    release: s.num({ min: 0, max: 5 }),
+    volume: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    attack: s.num({ min: 0, max: 5, unit: 'seconds' }),
+    decay: s.num({ min: 0, max: 5, unit: 'seconds' }),
+    sustain: s.num({ min: 0, max: 1, unit: 'ratio' }),
+    release: s.num({ min: 0, max: 5, unit: 'seconds' }),
     vibrato: s.object(
       {
-        depth: s.num({ min: 0, max: 2 }),
-        rate: s.num({ min: 0, max: 30 }),
-        delay: s.num({ min: 0, max: 5 }),
+        depth: s.num({ min: 0, max: 2, unit: 'semitones' }),
+        rate: s.num({ min: 0, max: 30, unit: 'hz' }),
+        delay: s.num({ min: 0, max: 5, unit: 'seconds' }),
       },
       { optional: ['delay'] },
     ),
-    arpeggio: s.array(s.int({ min: -24, max: 24 }), { min: 1, max: 8 }),
-    arpeggioTicks: s.int({ min: 1, max: 16 }),
-    sweep: s.num({ min: -480, max: 480 }),
+    arpeggio: s.array(s.int({ min: -24, max: 24, unit: 'semitones' }), { min: 1, max: 8 }),
+    arpeggioTicks: s.int({ min: 1, max: 16, unit: 'ticks' }),
+    // Semitones per second, unchanged by a port like every audio value.
+    sweep: s.num({ min: -480, max: 480, unit: 'semitones' }),
   },
   {
     optional: [
@@ -481,14 +512,15 @@ const INSTRUMENT_SCHEMA = s.object(
 /** A song. */
 const SONG_SCHEMA = s.object(
   {
-    speed: s.int({ min: 1, max: 32 }),
-    volume: s.num({ min: 0, max: 1 }),
+    // Ticks (1/60 s) per row.
+    speed: s.int({ min: 1, max: 32, unit: 'ticks' }),
+    volume: s.num({ min: 0, max: 1, unit: 'ratio' }),
     instruments: s.record(INSTRUMENT_SCHEMA, KEBAB_ID),
     channels: s.array(
       s.object(
         {
           instrument: s.str({ maxLength: 32, pattern: KEBAB_ID }),
-          volume: s.num({ min: 0, max: 1 }),
+          volume: s.num({ min: 0, max: 1, unit: 'ratio' }),
         },
         { optional: ['volume'] },
       ),
@@ -496,21 +528,33 @@ const SONG_SCHEMA = s.object(
     ),
     patterns: s.record(
       s.object({
-        rows: s.int({ min: 1, max: 256 }),
+        rows: s.int({ min: 1, max: 256, unit: 'count' }),
         tracks: s.array(s.str({ minLength: 0, maxLength: 4096 }), { min: 1, max: 6 }),
       }),
       KEBAB_ID,
     ),
     order: s.array(s.str({ maxLength: 32, pattern: KEBAB_ID }), { min: 1, max: 256 }),
-    loopFromOrder: s.nullable(s.int({ min: 0, max: 255 })),
+    loopFromOrder: s.nullable(s.int({ min: 0, max: 255, unit: 'index' })),
   },
   { optional: ['volume', 'loopFromOrder'] },
 );
 
-/** A whole `music` file. */
-const MUSIC_FILE_SCHEMA = s.object(
+/**
+ * The schema of a whole `music` file (`content/audio/music/*.music.json`) — what
+ * {@link loadMusicContent} validates each file with before its cross-checks.
+ *
+ * @remarks
+ * Exported for tools that walk content with its schema (plan_resolution.md R1-03: the unit
+ * coverage test, `scripts/content/rescale.mjs`); every number carries its unit in the schema's
+ * `meta` (owner decision O1: audio units are never rescaled). The game itself never needs it.
+ */
+export const MUSIC_FILE_SCHEMA = s.object(
   {
-    formatVersion: s.int({ min: CONTENT_FORMAT_VERSION, max: CONTENT_FORMAT_VERSION }),
+    formatVersion: s.int({
+      min: CONTENT_FORMAT_VERSION,
+      max: CONTENT_FORMAT_VERSION,
+      unit: 'version',
+    }),
     kind: s.enumOf([MUSIC_CONTENT_KIND] as const),
     id: s.str({ maxLength: 32, pattern: KEBAB_ID }),
     title: s.str({ maxLength: 40 }),
@@ -520,9 +564,9 @@ const MUSIC_FILE_SCHEMA = s.object(
     file: s.str({ maxLength: 160, pattern: RELATIVE_URL }),
     // M3-03: the optional tracker module, alongside the song or file — never instead of it.
     module: s.str({ maxLength: 160, pattern: RELATIVE_PATH }),
-    loopStart: s.int({ min: 0 }),
-    loopEnd: s.int({ min: 1 }),
-    sampleRate: s.int({ min: 8000, max: 96000 }),
+    loopStart: s.int({ min: 0, unit: 'samples' }),
+    loopEnd: s.int({ min: 1, unit: 'samples' }),
+    sampleRate: s.int({ min: 8000, max: 96000, unit: 'hz' }),
   },
   {
     optional: ['cue', 'stages', 'song', 'file', 'module', 'loopStart', 'loopEnd', 'sampleRate'],

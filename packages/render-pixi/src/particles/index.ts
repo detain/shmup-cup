@@ -48,7 +48,8 @@
  * {@link ParticlePresetDef}, {@link FxTriggerEvent}, {@link FxTriggerDef}, {@link FxContent},
  * {@link EMPTY_FX_CONTENT}, {@link FxContentResult}, {@link parseFxContent},
  * {@link loadFxContent}, {@link fxSpriteNames}, {@link ParticleSystem},
- * {@link ParticleSystemOptions}, {@link createParticleSystem}.
+ * {@link ParticleSystemOptions}, {@link createParticleSystem}; R1-03: the file schema
+ * {@link FX_FILE_SCHEMA}, whose numbers carry their units (for content tools).
  *
  * @module
  */
@@ -195,42 +196,61 @@ const SPRITE_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/;
  */
 const range = (value: ReturnType<typeof s.num>) => s.object({ min: value, max: value });
 
-/** One preset entry. */
+/**
+ * One preset entry.
+ *
+ * @remarks
+ * Units (plan_resolution.md R1-03): particles live in world pixels (decision D26), so `speed`
+ * (`px-per-tick`), `gravity` (`px-per-tick2`) and `radius` (`world-px`) are ×1.5 in the v2 port;
+ * frame indices, counts, angles (degrees here), the drag ratio and the tick ranges never change.
+ */
 const PRESET_SCHEMA = s.object(
   {
     id: s.str({ maxLength: 48, pattern: PRESET_ID }),
     sprite: s.str({ maxLength: 96, pattern: SPRITE_NAME }),
-    frames: s.array(s.int({ min: 0, max: 255 }), { min: 1, max: 32 }),
-    count: s.int({ min: 1, max: MAX_BURST }),
-    speed: range(s.num({ min: 0, max: 16 })),
-    direction: s.num({ min: -360, max: 360 }),
-    spread: s.num({ min: 0, max: 360 }),
-    gravity: s.num({ min: -1, max: 1 }),
-    drag: s.num({ min: 0, max: 0.5 }),
-    lifetime: range(s.int({ min: 1, max: 600 })),
-    delay: range(s.int({ min: 0, max: 120 })),
-    radius: s.num({ min: 0, max: 64 }),
+    frames: s.array(s.int({ min: 0, max: 255, unit: 'index' }), { min: 1, max: 32 }),
+    count: s.int({ min: 1, max: MAX_BURST, unit: 'count' }),
+    speed: range(s.num({ min: 0, max: 16, unit: 'px-per-tick' })),
+    direction: s.num({ min: -360, max: 360, unit: 'angle' }),
+    spread: s.num({ min: 0, max: 360, unit: 'angle' }),
+    gravity: s.num({ min: -1, max: 1, unit: 'px-per-tick2' }),
+    drag: s.num({ min: 0, max: 0.5, unit: 'ratio' }),
+    lifetime: range(s.int({ min: 1, max: 600, unit: 'ticks' })),
+    delay: range(s.int({ min: 0, max: 120, unit: 'ticks' })),
+    radius: s.num({ min: 0, max: 64, unit: 'world-px' }),
     blend: s.enumOf(['add', 'normal'] as const),
   },
   { optional: ['frames', 'direction', 'spread', 'gravity', 'drag', 'delay', 'radius', 'blend'] },
 );
 
-/** One trigger entry. */
+/** One trigger entry (its `dx` / `dy` are offsets from the event's world position: `rel-px`). */
 const TRIGGER_SCHEMA = s.object(
   {
     event: s.enumOf(['fx', 'sfx'] as const),
     cue: s.str({ maxLength: 40, pattern: /^[A-Za-z][A-Za-z0-9]*$/ }),
     preset: s.str({ maxLength: 48, pattern: PRESET_ID }),
-    dx: s.num({ min: -64, max: 64 }),
-    dy: s.num({ min: -64, max: 64 }),
+    dx: s.num({ min: -64, max: 64, unit: 'rel-px' }),
+    dy: s.num({ min: -64, max: 64, unit: 'rel-px' }),
   },
   { optional: ['dx', 'dy'] },
 );
 
-/** A whole `fx` file. */
-const FILE_SCHEMA = s.object(
+/**
+ * The schema of a whole `fx` file (`content/fx/*.fx.json`) — what {@link loadFxContent} validates
+ * each file with before its cross-checks.
+ *
+ * @remarks
+ * Exported for tools that walk content with its schema (plan_resolution.md R1-03: the unit
+ * coverage test, `scripts/content/rescale.mjs`); every number carries its unit in the schema's
+ * `meta`. The game itself never needs it.
+ */
+export const FX_FILE_SCHEMA = s.object(
   {
-    formatVersion: s.int({ min: CONTENT_FORMAT_VERSION, max: CONTENT_FORMAT_VERSION }),
+    formatVersion: s.int({
+      min: CONTENT_FORMAT_VERSION,
+      max: CONTENT_FORMAT_VERSION,
+      unit: 'version',
+    }),
     kind: s.enumOf([FX_CONTENT_KIND] as const),
     presets: s.array(PRESET_SCHEMA, { max: 64 }),
     triggers: s.array(TRIGGER_SCHEMA, { max: 128 }),
@@ -282,7 +302,7 @@ function collectFile(
   issues: ValidationIssue[],
 ): void {
   const local: ValidationIssue[] = [];
-  const parsed = FILE_SCHEMA.parse(data, '', local);
+  const parsed = FX_FILE_SCHEMA.parse(data, '', local);
   for (const issue of local) issues.push({ path: at(file, issue.path), message: issue.message });
   if (parsed === undefined) return;
   parsed.presets.forEach((preset, i) => {
