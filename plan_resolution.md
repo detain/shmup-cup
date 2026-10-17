@@ -1322,10 +1322,10 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
 | R3-01 | Art bible v2 and the prompt library update | in progress |
-| R3-02 | The ingest tool, with provenance | not started |
+| R3-02 | The ingest tool, with provenance | in progress |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
-| R3-05 | AI art provenance and licences | not started |
+| R3-05 | AI art provenance and licences | in progress |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
 | R4-02 | Enemy bullets, lasers, items | not started |
