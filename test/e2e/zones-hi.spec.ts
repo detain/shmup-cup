@@ -20,7 +20,8 @@
  *   bundle;
  * - no console errors or atlas warnings anywhere.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -28,6 +29,16 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { ABYSS_RAMP } from '../../scripts/assets/procedural/abyss.mjs';
 import { CITADEL_RAMP } from '../../scripts/assets/procedural/citadel.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import {
+  FRAME_CX,
+  FRAME_H,
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -74,19 +85,19 @@ interface Area {
 }
 
 /** The right half of the playfield, below the HUD bar. */
-const RIGHT_HALF: Area = { x0: 192, y0: 8, x1: 384, y1: 208 };
+const RIGHT_HALF: Area = { x0: FRAME_CX, y0: PLAYFIELD_Y, x1: FRAME_W, y1: HUD_BOTTOM_Y };
 
 /** The whole playfield below the HUD bar. */
-const PLAYFIELD: Area = { x0: 0, y0: 8, x1: 384, y1: 216 };
+const PLAYFIELD: Area = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: FRAME_H };
 
 /** The top of the playfield below the HUD bar (the far bands). */
-const SKY: Area = { x0: 0, y0: 8, x1: 384, y1: 100 };
+const SKY: Area = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 100 };
 
 /** The ending's sprite scene (above its epilogue panel). */
-const SCENE: Area = { x0: 0, y0: 0, x1: 384, y1: 122 };
+const SCENE: Area = { x0: 0, y0: 0, x1: FRAME_W, y1: 122 };
 
 /**
- * The frame's pixels (every third screenshot pixel).
+ * The frame's pixels (the centre sample of each one's screenshot block).
  *
  * @param page - The page.
  * @returns A function reading frame pixel (x, y) as RGB.
@@ -95,10 +106,8 @@ async function frame(page: Page): Promise<(x: number, y: number) => Rgb | null> 
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   return (fx, fy) => {
-    const sx = fx * 3 + 1;
-    const sy = fy * 3 + 1;
-    if (sx >= width || sy >= height) return null;
-    const i = (sy * width + sx) * 4;
+    if (sx(fx) >= width || sy(fy) >= height) return null;
+    const i = pixelIndex(width, fx, fy);
     return [data[i], data[i + 1], data[i + 2]];
   };
 }
@@ -140,16 +149,16 @@ interface Found {
 async function find(page: Page, colours: readonly Rgb[], area: Area): Promise<Found> {
   const at = await frame(page);
   let n = 0;
-  let sx = 0;
+  let sumX = 0;
   for (let fy = area.y0; fy < area.y1; fy++) {
     for (let fx = area.x0; fx < area.x1; fx++) {
       if (which(at(fx, fy), colours) >= 0) {
         n++;
-        sx += fx;
+        sumX += fx;
       }
     }
   }
-  return { count: n, meanX: n === 0 ? Number.NaN : sx / n };
+  return { count: n, meanX: n === 0 ? Number.NaN : sumX / n };
 }
 
 /**

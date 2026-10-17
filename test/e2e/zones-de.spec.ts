@@ -18,7 +18,8 @@
  *   content and art are in the one-script bundle and draw;
  * - no console errors or atlas warnings anywhere.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -26,6 +27,15 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { MAGMA_RAMP } from '../../scripts/assets/procedural/magma.mjs';
 import { STORM_RAMP } from '../../scripts/assets/procedural/tempest.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import {
+  FRAME_CX,
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -68,7 +78,7 @@ interface Area {
 }
 
 /** The right half of the playfield, below the HUD bar. */
-const RIGHT_HALF: Area = { x0: 192, y0: 8, x1: 384, y1: 208 };
+const RIGHT_HALF: Area = { x0: FRAME_CX, y0: PLAYFIELD_Y, x1: FRAME_W, y1: HUD_BOTTOM_Y };
 
 /**
  * Counts the frame pixels of an area within 2 of any of the colours.
@@ -84,10 +94,8 @@ async function countColours(page: Page, colours: readonly Rgb[], area: Area): Pr
   let n = 0;
   for (let fy = area.y0; fy < area.y1; fy++) {
     for (let fx = area.x0; fx < area.x1; fx++) {
-      const sx = fx * 3 + 1;
-      const sy = fy * 3 + 1;
-      if (sx >= width || sy >= height) continue;
-      const i = (sy * width + sx) * 4;
+      if (sx(fx) >= width || sy(fy) >= height) continue;
+      const i = pixelIndex(width, fx, fy);
       for (const [r, g, b] of colours) {
         if (
           Math.abs(data[i] - r) <= 2 &&
@@ -257,7 +265,7 @@ function startBoss(page: Page, id: string): Promise<boolean> {
 }
 
 /** The bottom band of the playfield (the lower quarter). */
-const BOTTOM: Area = { x0: 0, y0: 158, x1: 384, y1: 208 };
+const BOTTOM: Area = { x0: 0, y0: 158, x1: FRAME_W, y1: HUD_BOTTOM_Y };
 
 test.describe('zones D and E (web build)', () => {
   test('MAGMA DEEP: the volcano peaks, the lava lake rising into view with the dive, then CINDER BASTION', async ({
@@ -271,9 +279,9 @@ test.describe('zones D and E (web build)', () => {
     expect(surface.stage).toBe('zone-d');
     expect(surface.cameraY).toBe(0);
     // The peaks band (y 128 on) low in the view; the lava lake (y 256) still out of sight.
-    expect(await countColours(page, PEAKS, { x0: 0, y0: 136, x1: 384, y1: 200 })).toBeGreaterThan(
-      4000,
-    );
+    expect(
+      await countColours(page, PEAKS, { x0: 0, y0: 136, x1: FRAME_W, y1: 200 }),
+    ).toBeGreaterThan(4000);
     expect(await countColours(page, LAVA, BOTTOM)).toBe(0);
     expect(await countColours(page, BASTION_PLATE, RIGHT_HALF)).toBe(0);
     // Past the dive: the camera 200 px down, the lava lake (factor 0.5) risen 100 px into view,
@@ -309,14 +317,14 @@ test.describe('zones D and E (web build)', () => {
     expect((await bossNow(page)).stage).toBe('zone-e');
     // Two rows of clouds (y 0–96) in their ramp colours, before and after a few cycle steps (the
     // rain in front of them blends only its streaks).
-    const sky = { x0: 0, y0: 8, x1: 384, y1: 100 };
+    const sky = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 100 };
     expect(await countColours(page, CLOUDS, sky)).toBeGreaterThan(15000);
     await stepTo(page, start + 30);
     expect(await countColours(page, CLOUDS, sky)).toBeGreaterThan(15000);
     // The mountain band (y 152 on).
-    expect(await countColours(page, RIDGE, { x0: 0, y0: 160, x1: 384, y1: 208 })).toBeGreaterThan(
-      2000,
-    );
+    expect(
+      await countColours(page, RIDGE, { x0: 0, y0: 160, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+    ).toBeGreaterThan(2000);
     expect(await countColours(page, STEED_PLATE, RIGHT_HALF)).toBe(0);
     // The end of the stage: the WARNING (x 9,300), then the boss.
     await jumpTo(page, 9200);

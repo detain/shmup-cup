@@ -16,13 +16,23 @@
  *   in the one-script bundle and draw;
  * - no console errors or atlas warnings anywhere.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { BRINE_RAMP } from '../../scripts/assets/procedural/brine.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import {
+  FRAME_CX,
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -63,7 +73,7 @@ interface Area {
 }
 
 /** The right half of the playfield, below the HUD bar. */
-const RIGHT_HALF: Area = { x0: 192, y0: 8, x1: 384, y1: 208 };
+const RIGHT_HALF: Area = { x0: FRAME_CX, y0: PLAYFIELD_Y, x1: FRAME_W, y1: HUD_BOTTOM_Y };
 
 /**
  * Counts the frame pixels of an area within 2 of any of the colours.
@@ -79,10 +89,8 @@ async function countColours(page: Page, colours: readonly Rgb[], area: Area): Pr
   let n = 0;
   for (let fy = area.y0; fy < area.y1; fy++) {
     for (let fx = area.x0; fx < area.x1; fx++) {
-      const sx = fx * 3 + 1;
-      const sy = fy * 3 + 1;
-      if (sx >= width || sy >= height) continue;
-      const i = (sy * width + sx) * 4;
+      if (sx(fx) >= width || sy(fy) >= height) continue;
+      const i = pixelIndex(width, fx, fy);
       for (const [r, g, b] of colours) {
         if (
           Math.abs(data[i] - r) <= 2 &&
@@ -228,7 +236,7 @@ test.describe('zones B and C (web build)', () => {
     const start = await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-b');
     // The sea band (y 152 on) in its ramp colours, before and after a few cycle steps.
-    const sea = { x0: 0, y0: 156, x1: 384, y1: 196 };
+    const sea = { x0: 0, y0: 156, x1: FRAME_W, y1: 196 };
     expect(await countColours(page, SEA, sea)).toBeGreaterThan(6000);
     await stepTo(page, start + 25);
     expect(await countColours(page, SEA, sea)).toBeGreaterThan(6000);
@@ -255,9 +263,9 @@ test.describe('zones B and C (web build)', () => {
     await open(page, './?scene=flight&stage=zone-c');
     await stepTo(page, 60);
     expect((await bossNow(page)).stage).toBe('zone-c');
-    expect(await countColours(page, RIDGE, { x0: 0, y0: 136, x1: 384, y1: 208 })).toBeGreaterThan(
-      4000,
-    );
+    expect(
+      await countColours(page, RIDGE, { x0: 0, y0: 136, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+    ).toBeGreaterThan(4000);
     expect(await countColours(page, [WIDOW_CHITIN], RIGHT_HALF)).toBe(0);
     await jumpTo(page, 9000); // the WARNING is at 9,100
     const fight = await stepUntilFight(page, 40);
@@ -274,7 +282,7 @@ test.describe('zones B and C (web build)', () => {
     await open(page, './?scene=flight&stage=brine-grotto');
     await stepTo(page, 120);
     expect((await bossNow(page)).stage).toBe('brine-grotto');
-    const view = { x0: 0, y0: 8, x1: 384, y1: 208 };
+    const view = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: HUD_BOTTOM_Y };
     expect(await countColours(page, [REEF_RIM], view)).toBeGreaterThan(300);
     expect(await countColours(page, SEA, view)).toBeGreaterThan(4000);
     expect(errors).toEqual([]);

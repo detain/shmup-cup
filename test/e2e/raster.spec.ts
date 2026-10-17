@@ -12,8 +12,9 @@
  * - the display options reach the canvas: the `stretch` scale mode fills a display the integer
  *   mode letterboxes, and the hitbox markers appear on the ship only while shown.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1);
- * the sim is frozen and stepped exact ticks (`./frame-advance.ts`).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)); the sim is frozen and stepped exact ticks
+ * (`./frame-advance.ts`).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
@@ -22,6 +23,7 @@ import {
   LAYER_EFFECT_VERTEX,
 } from '../../packages/render-pixi/src/effects/shaders.js';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /**
  * Most WebGL draw calls one frame of the raster range may take with its effects on.
@@ -78,7 +80,7 @@ async function capture(
 }
 
 /**
- * Counts the frame pixels of a row band that differ between two ×3 captures.
+ * Counts the frame pixels of a row band that differ between two captures at the capture scale.
  *
  * @param a - First capture.
  * @param b - Second capture.
@@ -93,9 +95,9 @@ function diffRows(
   bottom: number,
 ): number {
   let count = 0;
-  for (let fy = top; fy < bottom && fy * 3 + 1 < a.height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < a.width; fx++) {
-      const i = ((fy * 3 + 1) * a.width + fx * 3 + 1) * 4;
+  for (let fy = top; fy < bottom && sy(fy) < a.height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < a.width; fx++) {
+      const i = pixelIndex(a.width, fx, fy);
       if (
         a.data[i] !== b.data[i] ||
         a.data[i + 1] !== b.data[i + 1] ||
@@ -240,8 +242,8 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
     const off = await capture(page);
     expect((await rendererState(page)).mask).toBe(0);
     expect(diffRows(on.image, off.image, 120, 160)).toBeGreaterThan(1000);
-    expect(diffRows(on.image, off.image, 164, 208)).toBeGreaterThan(1000);
-    expect(diffRows(on.image, off.image, 8, 100)).toBe(0);
+    expect(diffRows(on.image, off.image, 164, HUD_BOTTOM_Y)).toBeGreaterThan(1000);
+    expect(diffRows(on.image, off.image, PLAYFIELD_Y, 100)).toBe(0);
     await setEffects(page, true);
     expect(errors).toEqual([]);
   });

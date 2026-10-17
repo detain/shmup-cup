@@ -15,8 +15,9 @@
  *   makes a cabinet window, `normal` fills the display again.
  *
  * Screenshots of the floor, the CRT settings and the aspect modes are attached to the report.
- * They are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1); the
- * sim is frozen and stepped exact ticks (`./frame-advance.ts`).
+ * They are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel
+ * (x, y) is screenshot pixel (sx(x), sy(y)); the sim is frozen and stepped exact ticks
+ * (`./frame-advance.ts`).
  */
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -28,6 +29,7 @@ import {
 } from '../../packages/render-pixi/src/effects/shaders.js';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_H, FRAME_W, PLAYFIELD_Y, VIEWPORT, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /**
  * Most WebGL draw calls one frame of the dimension stage may take.
@@ -51,6 +53,15 @@ const FLOOR_TOP = 101;
 
 /** The row after the last one it covers (`mode7.bottom`). */
 const FLOOR_BOTTOM = 200;
+
+/** Width of the `classic` aspect's 4:3 window on the e2e display (864 at today's 1152×648). */
+const CLASSIC_WINDOW = Math.floor((VIEWPORT.height * 4) / 3);
+
+/** Each side panel the `classic` window leaves on the e2e display (144 today). */
+const CLASSIC_PANEL = (VIEWPORT.width - CLASSIC_WINDOW) >> 1;
+
+/** The e2e display's middle column (576 today) and middle row (324). */
+const DISPLAY_MID = { x: VIEWPORT.width >> 1, y: VIEWPORT.height >> 1 } as const;
 
 /** A decoded screenshot. */
 interface Shot {
@@ -119,7 +130,7 @@ async function settle(page: Page): Promise<void> {
 }
 
 /**
- * Counts the frame pixels of a row band that differ between two ×3 captures.
+ * Counts the frame pixels of a row band that differ between two captures at the capture scale.
  *
  * @param a - First capture.
  * @param b - Second capture.
@@ -129,9 +140,9 @@ async function settle(page: Page): Promise<void> {
  */
 function diffRows(a: Shot, b: Shot, top: number, bottom: number): number {
   let count = 0;
-  for (let fy = top; fy < bottom && fy * 3 + 1 < a.height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < a.width; fx++) {
-      const i = ((fy * 3 + 1) * a.width + fx * 3 + 1) * 4;
+  for (let fy = top; fy < bottom && sy(fy) < a.height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < a.width; fx++) {
+      const i = pixelIndex(a.width, fx, fy);
       if (
         a.data[i] !== b.data[i] ||
         a.data[i + 1] !== b.data[i + 1] ||
@@ -215,23 +226,23 @@ interface BlockCheck {
  * @returns The finding.
  */
 function checkBlocks(image: Shot, place: Placement): BlockCheck {
-  const sx = place.scaleX;
-  const sy = place.scaleY;
-  const columns = place.width / sx;
-  const rows = place.height / sy;
+  const bx = place.scaleX;
+  const by = place.scaleY;
+  const columns = place.width / bx;
+  const rows = place.height / by;
   const out: BlockCheck = { blocks: 0, broken: 0, firstBroken: null, varied: 0 };
   for (let fy = 0; fy < rows; fy++) {
     for (let fx = 0; fx < columns; fx++) {
-      const x0 = place.x + fx * sx;
-      const y0 = place.y + fy * sy;
+      const x0 = place.x + fx * bx;
+      const y0 = place.y + fy * by;
       const base = pixelAt(image, x0, y0);
       out.blocks++;
       if (fx > 0) {
-        const left = pixelAt(image, x0 - sx, y0);
+        const left = pixelAt(image, x0 - bx, y0);
         if (left[0] !== base[0] || left[1] !== base[1] || left[2] !== base[2]) out.varied++;
       }
-      for (let dy = 0; dy < sy; dy++) {
-        for (let dx = 0; dx < sx; dx++) {
+      for (let dy = 0; dy < by; dy++) {
+        for (let dx = 0; dx < bx; dx++) {
           if (dx === 0 && dy === 0) continue;
           const here = pixelAt(image, x0 + dx, y0 + dy);
           if (here[0] !== base[0] || here[1] !== base[1] || here[2] !== base[2]) {
@@ -458,8 +469,8 @@ test.describe('the pseudo-3D dimension stage (web build, ?stage=dimension)', () 
     const off = await capture(page);
     await testInfo.attach('dimension-no-floor', { body: off.png, contentType: 'image/png' });
     const floorRows = diffRows(on.image, off.image, FLOOR_TOP, FLOOR_BOTTOM);
-    // A grid over most of the ground band (the floor is 384 × 99 frame pixels there).
-    expect(floorRows).toBeGreaterThan(384 * 20);
+    // A grid over most of the ground band (the floor is the frame's width × 99 rows there).
+    expect(floorRows).toBeGreaterThan(FRAME_W * 20);
     expect(diffRows(on.image, off.image, 0, FLOOR_TOP - 2)).toBe(0);
     expect(errors).toEqual([]);
   });
@@ -505,7 +516,7 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
     await stepTo(page, tick);
     await settle(page);
     const back = await capture(page);
-    expect(diffRows(plain.image, back.image, 0, 216)).toBe(0);
+    expect(diffRows(plain.image, back.image, 0, FRAME_H)).toBe(0);
     expect(errors).toEqual([]);
   });
 
@@ -520,11 +531,12 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
     const normal = await rendererState(page);
     expect(normal.aspect).toBe('normal');
     expect(normal.panels).toEqual([0, 0]);
-    // ×3 with no letterbox: the frame fills the 1152×648 display, so its left column is the stage.
+    // At the capture scale with no letterbox the frame fills the display (1152×648 today), so its
+    // left column is the stage.
     const filled = await capture(page);
     const shots: Record<string, Shot> = { normal: filled.image };
     for (const [mode, panels] of [
-      ['classic', [144, 144]],
+      ['classic', [CLASSIC_PANEL, CLASSIC_PANEL]],
       ['wide', [0, 0]],
     ] as Array<[string, number[]]>) {
       await page.evaluate((value) => {
@@ -541,14 +553,16 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
         contentType: 'image/png',
       });
       shots[mode] = shot.image;
-      expect([shot.image.width, shot.image.height]).toEqual([1152, 648]);
+      expect([shot.image.width, shot.image.height]).toEqual([VIEWPORT.width, VIEWPORT.height]);
     }
-    // `classic`: the picture is 768 wide (×2 of 384) inside the 864-wide window, so the display's
-    // left edge is the panel, not the stage, and the window's own middle row still shows the game.
-    expect(pixelAt(shots.classic, 2, 324)).not.toEqual(pixelAt(shots.normal, 2, 324));
-    expect(pixelAt(shots.classic, 576, 324)).not.toEqual(pixelAt(shots.classic, 2, 324));
+    // `classic`: the picture is 768 wide (×2 of 384) inside the 864-wide window today, so the
+    // display's left edge is the panel, not the stage, and the window's own middle row still shows
+    // the game.
+    const { x: midX, y: midY } = DISPLAY_MID;
+    expect(pixelAt(shots.classic, 2, midY)).not.toEqual(pixelAt(shots.normal, 2, midY));
+    expect(pixelAt(shots.classic, midX, midY)).not.toEqual(pixelAt(shots.classic, 2, midY));
     // `wide` keeps the full width and letterboxes instead, so its own top edge went black.
-    expect(pixelAt(shots.wide, 576, 4)).not.toEqual(pixelAt(shots.normal, 576, 4));
+    expect(pixelAt(shots.wide, midX, 4)).not.toEqual(pixelAt(shots.normal, midX, 4));
     // Back to `normal`: the frame fills the display again, pixel for pixel.
     await page.evaluate(() => {
       (window as unknown as DebugWindow).__shmupDebug.renderer.setAspect('normal');
@@ -557,7 +571,7 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
     await settle(page);
     expect((await rendererState(page)).panels).toEqual([0, 0]);
     const back = await capture(page);
-    expect(diffRows(filled.image, back.image, 0, 216)).toBe(0);
+    expect(diffRows(filled.image, back.image, 0, FRAME_H)).toBe(0);
     expect(errors).toEqual([]);
   });
 });
@@ -590,15 +604,15 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
       expect(place.scaleY).toBe(place.scale);
       expect(place.scale).toBe(Math.round(place.scale));
       expect(place.scale).toBeGreaterThanOrEqual(2);
-      expect(place.width).toBe(384 * place.scale);
-      expect(place.height).toBe(216 * place.scale);
+      expect(place.width).toBe(FRAME_W * place.scale);
+      expect(place.height).toBe(FRAME_H * place.scale);
       // The picture's own origin is a whole display pixel too.
       expect(place.x).toBe(Math.round(place.x));
       expect(place.y).toBe(Math.round(place.y));
       const shot = await capture(page);
       await testInfo.attach(`blit-blocks-${mode}`, { body: shot.png, contentType: 'image/png' });
       const blocks = checkBlocks(shot.image, place);
-      expect(blocks.blocks).toBe(384 * 216);
+      expect(blocks.blocks).toBe(FRAME_W * FRAME_H);
       expect(blocks.firstBroken).toBeNull();
       expect(blocks.broken).toBe(0);
       // …and the check could have failed: thousands of frame pixels differ from the one left of
@@ -633,7 +647,7 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
       await settle(page);
       const place = await placementOf(page);
       // Both modes really do box the picture, or the test below would assert nothing.
-      expect(place.width * place.height).toBeLessThan(1152 * 648);
+      expect(place.width * place.height).toBeLessThan(VIEWPORT.width * VIEWPORT.height);
       const plain = await capture(page);
       await page.evaluate(() => {
         (window as unknown as DebugWindow).__shmupDebug.renderer.setCrtFilter('full');
@@ -730,8 +744,9 @@ test.describe('the Mode-7 floor is aligned to the frame (plan M3-02d)', () => {
     const off = await capture(page);
     const rows = changedRows(on.image, off.image, place);
     expect(rows.length).toBeGreaterThan(80);
-    expect(rows[0]).toBe(108);
-    expect(rows[rows.length - 1]).toBe(207);
+    // The horizon (100) and the bottom (200) are the stage's own numbers, the offset the frame's.
+    expect(rows[0]).toBe(PLAYFIELD_Y + 100);
+    expect(rows[rows.length - 1]).toBe(PLAYFIELD_Y + 200 - 1);
     expect(errors).toEqual([]);
   });
 });

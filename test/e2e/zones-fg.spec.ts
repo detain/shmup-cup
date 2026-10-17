@@ -17,7 +17,8 @@
  *   content and art are in the one-script bundle and draw;
  * - no console errors or atlas warnings anywhere.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -25,6 +26,15 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { PRISM_RAMP } from '../../scripts/assets/procedural/prism.mjs';
 import { VAULT_RAMP } from '../../scripts/assets/procedural/vault.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import {
+  FRAME_CX,
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -67,13 +77,13 @@ interface Area {
 }
 
 /** The right half of the playfield, below the HUD bar. */
-const RIGHT_HALF: Area = { x0: 192, y0: 8, x1: 384, y1: 208 };
+const RIGHT_HALF: Area = { x0: FRAME_CX, y0: PLAYFIELD_Y, x1: FRAME_W, y1: HUD_BOTTOM_Y };
 
 /** The top of the playfield below the HUD bar (the far bands, above most terrain). */
-const SKY: Area = { x0: 0, y0: 8, x1: 384, y1: 100 };
+const SKY: Area = { x0: 0, y0: PLAYFIELD_Y, x1: FRAME_W, y1: 100 };
 
 /**
- * The frame's pixels (every third screenshot pixel).
+ * The frame's pixels (the centre sample of each one's screenshot block).
  *
  * @param page - The page.
  * @returns A function reading frame pixel (x, y) as RGB.
@@ -82,10 +92,8 @@ async function frame(page: Page): Promise<(x: number, y: number) => Rgb | null> 
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   return (fx, fy) => {
-    const sx = fx * 3 + 1;
-    const sy = fy * 3 + 1;
-    if (sx >= width || sy >= height) return null;
-    const i = (sy * width + sx) * 4;
+    if (sx(fx) >= width || sy(fy) >= height) return null;
+    const i = pixelIndex(width, fx, fy);
     return [data[i], data[i + 1], data[i + 2]];
   };
 }
@@ -314,9 +322,9 @@ test.describe('zones F and G (web build)', () => {
     expect(later.filter((k) => k >= 0).length).toBeGreaterThan(20000);
     expect(stepped(wall, later)).toBeGreaterThan(1000);
     // The folds band (y 152 on).
-    expect(await countColours(page, FOLDS, { x0: 0, y0: 152, x1: 384, y1: 208 })).toBeGreaterThan(
-      3000,
-    );
+    expect(
+      await countColours(page, FOLDS, { x0: 0, y0: 152, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+    ).toBeGreaterThan(3000);
     expect(await countColours(page, REGENT_SKIN, RIGHT_HALF)).toBe(0);
     // The end of the stage: the WARNING (x 9,100), then the boss.
     await jumpTo(page, 9000);
@@ -349,9 +357,9 @@ test.describe('zones F and G (web build)', () => {
     const later = await rampMap(page, FACETS, SKY);
     expect(later.filter((k) => k >= 0).length).toBeGreaterThan(20000);
     expect(stepped(facets, later)).toBeGreaterThan(1000);
-    expect(await countColours(page, SPIRES, { x0: 0, y0: 144, x1: 384, y1: 208 })).toBeGreaterThan(
-      3000,
-    );
+    expect(
+      await countColours(page, SPIRES, { x0: 0, y0: 144, x1: FRAME_W, y1: HUD_BOTTOM_Y }),
+    ).toBeGreaterThan(3000);
     expect(await countColours(page, MONARCH_FACE, RIGHT_HALF)).toBe(0);
     // The end of the stage: the WARNING (x 9,300), then the boss.
     await jumpTo(page, 9200);
