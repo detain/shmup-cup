@@ -14,8 +14,9 @@
  * **Implements.** shmup_feat.md §14 (stage data format is JSON validated by a schema),
  * §22 (data-driven content).
  *
- * **Public API.** {@link Schema}, {@link Infer}, {@link ValidationIssue}, {@link RefSite},
- * {@link ContentRefKind} and the combinator namespace {@link s}.
+ * **Public API.** {@link Schema}, {@link SchemaMeta} (and its variants), {@link Infer},
+ * {@link ValidationIssue}, {@link RefSite}, {@link ContentRefKind}, {@link RangeOptions} and the
+ * combinator namespace {@link s}.
  *
  * @remarks
  * String ids that point at other content (`"sprite": "ships/kestrel"`) are declared with
@@ -23,8 +24,14 @@
  * resolves every site in a second pass and writes the numeric index into a sibling field
  * named `<field>Id` (convention 1.5: *string ids become numeric indices at load*).
  *
+ * Every schema also carries read-only {@link SchemaMeta} — what it accepts, its children and,
+ * for a number, its unit (`s.num({ unit: 'px-per-tick' })`, plan_resolution.md R1-03) — so a tool
+ * can walk a content file with its schema (`data/units`: the unit coverage test and
+ * `scripts/content/rescale.mjs`, the ×1.5 port of R2-02). Parsing never reads it.
+ *
  * @module
  */
+import type { NumberUnit } from './units.js';
 
 /** A validation problem found while loading content. */
 export interface ValidationIssue {
@@ -91,6 +98,15 @@ export interface Schema<T> {
   /** Non-null when this schema is (or wraps) a {@link s.ref} content reference. */
   readonly refKind: ContentRefKind | null;
   /**
+   * What the schema accepts, for tools that walk content with its schema (`data/units`). Every
+   * combinator of {@link s} sets it; a hand-made schema is built with {@link s.custom}.
+   *
+   * @remarks
+   * Optional only until every hand-made schema of core uses {@link s.custom} (R1-03's sweep); a
+   * walker treats a schema without it like an {@link OpaqueMeta | opaque} one.
+   */
+  readonly meta?: SchemaMeta;
+  /**
    * Validates one value.
    *
    * @param value - The parsed JSON value to check.
@@ -101,6 +117,169 @@ export interface Schema<T> {
    */
   parse(value: unknown, path: string, issues: ValidationIssue[], refs?: RefSite[]): T | undefined;
 }
+
+/** The validator function of a {@link Schema} (see {@link Schema.parse}). */
+export type SchemaParse<T> = (
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+  refs?: RefSite[],
+) => T | undefined;
+
+/** {@link SchemaMeta} of {@link s.int} and {@link s.num}. */
+export interface NumberMeta {
+  /** Discriminant. */
+  readonly kind: 'number';
+  /** `true` for {@link s.int}. */
+  readonly integer: boolean;
+  /** What the number means (`data/units` {@link NumberUnit}); `undefined` = not declared. */
+  readonly unit: NumberUnit | undefined;
+  /** Smallest accepted value (inclusive), if bounded. */
+  readonly min: number | undefined;
+  /** Largest accepted value (inclusive), if bounded. */
+  readonly max: number | undefined;
+}
+
+/** {@link SchemaMeta} of {@link s.str}. */
+export interface StringMeta {
+  /** Discriminant. */
+  readonly kind: 'string';
+}
+
+/** {@link SchemaMeta} of {@link s.bool}. */
+export interface BooleanMeta {
+  /** Discriminant. */
+  readonly kind: 'boolean';
+}
+
+/** {@link SchemaMeta} of {@link s.enumOf}. */
+export interface EnumMeta {
+  /** Discriminant. */
+  readonly kind: 'enum';
+  /** The accepted literals. */
+  readonly values: readonly string[];
+}
+
+/** {@link SchemaMeta} of {@link s.ref} (the schema's {@link Schema.refKind} says what it names). */
+export interface RefMeta {
+  /** Discriminant. */
+  readonly kind: 'ref';
+}
+
+/** {@link SchemaMeta} of {@link s.array}. */
+export interface ArrayMeta {
+  /** Discriminant. */
+  readonly kind: 'array';
+  /** Schema of every item. */
+  readonly item: Schema<unknown>;
+  /** Smallest accepted item count, if bounded. */
+  readonly min: number | undefined;
+  /** Largest accepted item count, if bounded. */
+  readonly max: number | undefined;
+}
+
+/** {@link SchemaMeta} of {@link s.object}. */
+export interface ObjectMeta {
+  /** Discriminant. */
+  readonly kind: 'object';
+  /** Field name → schema (the object passed to {@link s.object}; never modify it). */
+  readonly shape: Readonly<ObjectShape>;
+  /** The fields that may be missing. */
+  readonly optional: readonly string[];
+}
+
+/** {@link SchemaMeta} of {@link s.record}. */
+export interface RecordMeta {
+  /** Discriminant. */
+  readonly kind: 'record';
+  /** Schema of every entry. */
+  readonly value: Schema<unknown>;
+}
+
+/** {@link SchemaMeta} of {@link s.nullable}. */
+export interface NullableMeta {
+  /** Discriminant. */
+  readonly kind: 'nullable';
+  /** Schema of the non-null case. */
+  readonly inner: Schema<unknown>;
+}
+
+/** {@link SchemaMeta} of {@link s.oneOf}. */
+export interface UnionMeta {
+  /** Discriminant. */
+  readonly kind: 'union';
+  /** The discriminating field. */
+  readonly tag: string;
+  /** Tag value → variant schema. */
+  readonly variants: Readonly<Record<string, Schema<unknown>>>;
+}
+
+/**
+ * {@link SchemaMeta} of an expression (a {@link s.custom} schema — the bullet-pattern DSL's): a
+ * finite number or an expression string whose result has {@link ExprMeta.unit}.
+ */
+export interface ExprMeta {
+  /** Discriminant. */
+  readonly kind: 'expr';
+  /** What the expression's value means; `undefined` = not declared. */
+  readonly unit: NumberUnit | undefined;
+}
+
+/**
+ * {@link SchemaMeta} of a value that may take one of several shapes (a {@link s.custom} schema —
+ * the DSL's speed: an expression or a typed speed object): the first option that parses a value
+ * describes it.
+ */
+export interface AnyOfMeta {
+  /** Discriminant. */
+  readonly kind: 'anyOf';
+  /** The shapes, in the order they are tried. */
+  readonly options: readonly Schema<unknown>[];
+}
+
+/**
+ * {@link SchemaMeta} of a schema defined later (a {@link s.custom} schema — nested DSL node
+ * lists).
+ */
+export interface LazyMeta {
+  /** Discriminant. */
+  readonly kind: 'lazy';
+  /**
+   * The schema it stands for.
+   *
+   * @returns The target schema (the same object every call).
+   */
+  target(): Schema<unknown>;
+}
+
+/**
+ * {@link SchemaMeta} of a value a walker does not look into (a {@link s.custom} schema — a demo's
+ * recorded game config, validated when it is played).
+ */
+export interface OpaqueMeta {
+  /** Discriminant. */
+  readonly kind: 'opaque';
+}
+
+/**
+ * What a {@link Schema} accepts, read by tools that walk content with its schema (`data/units`).
+ * Every variant is frozen; the schemas it names are the ones the parser uses.
+ */
+export type SchemaMeta =
+  | NumberMeta
+  | StringMeta
+  | BooleanMeta
+  | EnumMeta
+  | RefMeta
+  | ArrayMeta
+  | ObjectMeta
+  | RecordMeta
+  | NullableMeta
+  | UnionMeta
+  | ExprMeta
+  | AnyOfMeta
+  | LazyMeta
+  | OpaqueMeta;
 
 /** The value type a {@link Schema} produces, e.g. `Infer<typeof ENEMY_SCHEMA>`. */
 export type Infer<S> = S extends Schema<infer T> ? T : never;
@@ -116,12 +295,18 @@ export type ObjectValue<S extends ObjectShape, O extends keyof S> = Simplify<
   { [K in Exclude<keyof S, O>]: Infer<S[K]> } & { [K in O]?: Infer<S[K]> }
 >;
 
-/** Bounds shared by {@link s.int} and {@link s.num}. */
+/** Bounds and unit shared by {@link s.int} and {@link s.num}. */
 export interface RangeOptions {
   /** Smallest accepted value (inclusive). */
   readonly min?: number;
   /** Largest accepted value (inclusive). */
   readonly max?: number;
+  /**
+   * What the number means (`data/units` {@link NumberUnit}: `world-x`, `px-per-tick`, `ticks` …)
+   * — the rule by which `scripts/content/rescale.mjs` ports it. Only {@link SchemaMeta} keeps it;
+   * parsing ignores it. Every number of every content kind declares one (a coverage test checks).
+   */
+  readonly unit?: NumberUnit;
 }
 
 /** Options of {@link s.str}. */
@@ -152,6 +337,9 @@ export interface ObjectOptions<O> {
 const hasOwn = (target: object, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(target, key);
 
+/** The {@link ObjectMeta.optional} list of an object without optional fields. */
+const NO_KEYS: readonly string[] = Object.freeze([]);
+
 /**
  * JSON path of a property.
  *
@@ -179,22 +367,43 @@ function fail(issues: ValidationIssue[], path: string, message: string): undefin
  * Builds a {@link Schema} from a parse function.
  *
  * @param typeName - Short name of the accepted value kind.
+ * @param meta - What it accepts (frozen here).
  * @param parse - The validator.
  * @param refKind - Reference kind when the schema is a {@link s.ref}.
  * @returns The frozen schema.
  */
 function define<T>(
   typeName: string,
-  parse: (
-    value: unknown,
-    path: string,
-    issues: ValidationIssue[],
-    refs?: RefSite[],
-  ) => T | undefined,
+  meta: SchemaMeta,
+  parse: SchemaParse<T>,
   refKind: ContentRefKind | null = null,
 ): Schema<T> {
-  return Object.freeze({ typeName, refKind, parse });
+  return Object.freeze({ typeName, refKind, meta: Object.freeze(meta), parse });
 }
+
+/** The {@link SchemaMeta} of every {@link s.str}. */
+const STRING_META: StringMeta = Object.freeze({ kind: 'string' });
+
+/** The {@link SchemaMeta} of every {@link s.bool}. */
+const BOOLEAN_META: BooleanMeta = Object.freeze({ kind: 'boolean' });
+
+/** The {@link SchemaMeta} of every {@link s.ref}. */
+const REF_META: RefMeta = Object.freeze({ kind: 'ref' });
+
+/**
+ * The {@link NumberMeta} of a number schema.
+ *
+ * @param integer - Whether it is an {@link s.int}.
+ * @param options - Its bounds and unit.
+ * @returns The (unfrozen) metadata.
+ */
+const numberMeta = (integer: boolean, options: RangeOptions): NumberMeta => ({
+  kind: 'number',
+  integer,
+  unit: options.unit,
+  min: options.min,
+  max: options.max,
+});
 
 /**
  * Human-readable bound description appended to a number message.
@@ -235,17 +444,18 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 /**
  * An integer, optionally bounded.
  *
- * @param options - Inclusive bounds.
+ * @param options - Inclusive bounds, and the unit tools read from {@link SchemaMeta}.
  * @returns The schema.
  *
  * @example
  * ```ts
  * s.int({ min: 1 }).parse(0, 'hp', issues); // → undefined, issues: [{ path: 'hp', … }]
+ * s.int({ min: 0, max: 600, unit: 'ticks' }); // a duration the ×1.5 port leaves alone
  * ```
  */
 function int(options: RangeOptions = {}): Schema<number> {
   const message = 'must be an integer' + rangeSuffix(options);
-  return define('integer', (value, path, issues) => {
+  return define('integer', numberMeta(true, options), (value, path, issues) => {
     if (typeof value !== 'number' || !Number.isInteger(value)) return fail(issues, path, message);
     if (options.min !== undefined && value < options.min) return fail(issues, path, message);
     if (options.max !== undefined && value > options.max) return fail(issues, path, message);
@@ -256,12 +466,12 @@ function int(options: RangeOptions = {}): Schema<number> {
 /**
  * A finite number, optionally bounded.
  *
- * @param options - Inclusive bounds.
+ * @param options - Inclusive bounds, and the unit tools read from {@link SchemaMeta}.
  * @returns The schema.
  */
 function num(options: RangeOptions = {}): Schema<number> {
   const message = 'must be a finite number' + rangeSuffix(options);
-  return define('number', (value, path, issues) => {
+  return define('number', numberMeta(false, options), (value, path, issues) => {
     if (typeof value !== 'number' || !Number.isFinite(value)) return fail(issues, path, message);
     if (options.min !== undefined && value < options.min) return fail(issues, path, message);
     if (options.max !== undefined && value > options.max) return fail(issues, path, message);
@@ -283,7 +493,7 @@ function str(options: StringOptions = {}): Schema<string> {
       ? 'must be a non-empty string'
       : 'must be a string of length' + rangeSuffix({ min: minLength, max: maxLength });
   const message = pattern === undefined ? lengths : lengths + ' matching ' + String(pattern);
-  return define('string', (value, path, issues) => {
+  return define('string', STRING_META, (value, path, issues) => {
     if (typeof value !== 'string' || value.length < minLength) return fail(issues, path, message);
     if (maxLength !== undefined && value.length > maxLength) return fail(issues, path, message);
     if (pattern !== undefined && !matches(pattern, value)) return fail(issues, path, message);
@@ -297,7 +507,7 @@ function str(options: StringOptions = {}): Schema<string> {
  * @returns The schema.
  */
 function bool(): Schema<boolean> {
-  return define('boolean', (value, path, issues) =>
+  return define('boolean', BOOLEAN_META, (value, path, issues) =>
     typeof value === 'boolean' ? value : fail(issues, path, 'must be a boolean'),
   );
 }
@@ -315,7 +525,8 @@ function bool(): Schema<boolean> {
  */
 function enumOf<V extends string>(values: readonly V[]): Schema<V> {
   const message = 'must be one of: ' + values.join(', ');
-  return define('enum', (value, path, issues) =>
+  const meta: EnumMeta = { kind: 'enum', values };
+  return define('enum', meta, (value, path, issues) =>
     typeof value === 'string' && (values as readonly string[]).indexOf(value) >= 0
       ? (value as V)
       : fail(issues, path, message),
@@ -340,7 +551,8 @@ function array<T>(item: Schema<T>, options: ArrayOptions = {}): Schema<T[]> {
     throw new TypeError('s.array(s.ref()) is unsupported: wrap the reference in an object');
   }
   const { min, max } = options;
-  return define('array', (value, path, issues, refs) => {
+  const meta: ArrayMeta = { kind: 'array', item, min, max };
+  return define('array', meta, (value, path, issues, refs) => {
     if (!Array.isArray(value)) return fail(issues, path, 'must be an array');
     if (min !== undefined && value.length < min) {
       fail(issues, path, 'must have at least ' + String(min) + ' items');
@@ -386,8 +598,10 @@ function object<S extends ObjectShape, O extends keyof S = never>(
   options: ObjectOptions<O> = {},
 ): Schema<ObjectValue<S, NoInfer<O>>> {
   const keys = Object.keys(shape);
-  const optional = new Set<string>((options.optional ?? []) as readonly string[]);
-  return define('object', (value, path, issues, refs) => {
+  const optionalKeys = (options.optional ?? NO_KEYS) as readonly string[];
+  const optional = new Set<string>(optionalKeys);
+  const meta: ObjectMeta = { kind: 'object', shape, optional: optionalKeys };
+  return define('object', meta, (value, path, issues, refs) => {
     if (!isPlainObject(value)) return fail(issues, path, 'must be an object');
     const out: Record<string, unknown> = {};
     let ok = true;
@@ -452,7 +666,8 @@ function record<T>(value: Schema<T>, keyPattern?: RegExp): Schema<Record<string,
     keyPattern === undefined
       ? 'is not a valid key'
       : 'is not a valid key (must match ' + String(keyPattern) + ')';
-  return define('record', (input, path, issues, refs) => {
+  const meta: RecordMeta = { kind: 'record', value };
+  return define('record', meta, (input, path, issues, refs) => {
     if (!isPlainObject(input)) return fail(issues, path, 'must be an object');
     const out: Record<string, T> = {};
     let ok = true;
@@ -485,6 +700,7 @@ function record<T>(value: Schema<T>, keyPattern?: RegExp): Schema<Record<string,
 function nullable<T>(inner: Schema<T>): Schema<T | null> {
   return define<T | null>(
     inner.typeName + ' or null',
+    { kind: 'nullable', inner },
     (value, path, issues, refs) => (value === null ? null : inner.parse(value, path, issues, refs)),
     inner.refKind,
   );
@@ -500,6 +716,7 @@ function ref(kind: ContentRefKind): Schema<string> {
   const message = 'must be a non-empty ' + kind + ' id';
   return define<string>(
     kind + ' ref',
+    REF_META,
     (value, path, issues) =>
       typeof value === 'string' && value.length > 0 ? value : fail(issues, path, message),
     kind,
@@ -528,7 +745,8 @@ function oneOf<V extends Record<string, Schema<unknown>>>(
 ): Schema<Infer<V[keyof V]>> {
   const tags = Object.keys(variants);
   const message = tagField + ' must be one of: ' + tags.join(', ');
-  return define('union', (value, path, issues, refs) => {
+  const meta: UnionMeta = { kind: 'union', tag: tagField, variants };
+  return define('union', meta, (value, path, issues, refs) => {
     if (!isPlainObject(value)) return fail(issues, path, 'must be an object');
     const tag = value[tagField];
     if (typeof tag !== 'string' || !hasOwn(variants, tag)) {
@@ -540,13 +758,42 @@ function oneOf<V extends Record<string, Schema<unknown>>>(
 }
 
 /**
+ * A hand-made schema: a parse function of its own, with the {@link SchemaMeta} that tells a
+ * walker what it accepts (the bullet-pattern DSL's expressions, speeds and nested node lists, a
+ * demo's opaque game config).
+ *
+ * @param typeName - Short name of the accepted value kind, for messages and debugging.
+ * @param parse - The validator (same contract as {@link Schema.parse}: never throws, appends
+ *   every problem to `issues`, returns `undefined` on failure).
+ * @param meta - What it accepts — usually an {@link ExprMeta}, {@link AnyOfMeta},
+ *   {@link LazyMeta} or {@link OpaqueMeta}; frozen here.
+ * @returns The frozen schema (never a reference: its {@link Schema.refKind} is `null`).
+ *
+ * @example
+ * ```ts
+ * const anyObject = s.custom<object>(
+ *   'object',
+ *   (value, path, issues) => {
+ *     if (typeof value === 'object' && value !== null) return value;
+ *     issues.push({ path, message: 'must be an object' });
+ *     return undefined;
+ *   },
+ *   { kind: 'opaque' },
+ * );
+ * ```
+ */
+function custom<T>(typeName: string, parse: SchemaParse<T>, meta: SchemaMeta): Schema<T> {
+  return define(typeName, meta, parse);
+}
+
+/**
  * The schema combinators (decision D28: in-house, no runtime dependency).
  *
  * @remarks
  * | Combinator | Accepts | Failure message |
  * |---|---|---|
- * | `int({min,max})` | an integer in bounds | `must be an integer in 1..5` |
- * | `num({min,max})` | a finite number in bounds | `must be a finite number >= 0` |
+ * | `int({min,max,unit})` | an integer in bounds | `must be an integer in 1..5` |
+ * | `num({min,max,unit})` | a finite number in bounds | `must be a finite number >= 0` |
  * | `str(options)` | a string, non-empty by default | `must be a non-empty string` |
  * | `bool()` | `true` / `false` | `must be a boolean` |
  * | `enumOf(values)` | one of the literals | `must be one of: a, b` |
@@ -556,10 +803,12 @@ function oneOf<V extends Record<string, Schema<unknown>>>(
  * | `nullable(inner)` | `null` or `inner` | (the inner message) |
  * | `ref(kind)` | a non-empty id string; the loader resolves it | `must be a non-empty enemy id` |
  * | `oneOf(tag,variants)` | the variant named by the tag field | `type must be one of: …` |
+ * | `custom(typeName,parse,meta)` | whatever `parse` accepts | (its own) |
  *
  * Every schema is frozen and keeps no state between calls (pattern `lastIndex` is reset),
  * so one instance can be shared by any number of parents. Build schemas once at module
- * load, never per call.
+ * load, never per call. Each carries its {@link SchemaMeta} (`schema.meta`) for walkers; a
+ * number's `unit` (`data/units` {@link NumberUnit}) lives only there.
  *
  * @example
  * ```ts
@@ -580,4 +829,5 @@ export const s = Object.freeze({
   nullable,
   ref,
   oneOf,
+  custom,
 });

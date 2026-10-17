@@ -463,6 +463,43 @@ export {
   type StageMode7,
 } from './data/index.js';
 
+// R1-03: the schemas' metadata and the content units (tooling — no game code imports units.ts).
+export {
+  type AnyOfMeta,
+  type ArrayMeta,
+  type BooleanMeta,
+  type EnumMeta,
+  type ExprMeta,
+  type LazyMeta,
+  type NullableMeta,
+  type NumberMeta,
+  type ObjectMeta,
+  type OpaqueMeta,
+  type RangeOptions,
+  type RecordMeta,
+  type RefMeta,
+  type SchemaMeta,
+  type SchemaParse,
+  type StringMeta,
+  type UnionMeta,
+} from './data/schema.js';
+export {
+  NUMBER_UNITS,
+  UNIT_RULES,
+  edgeAnchor,
+  listNumberFields,
+  rescaleNumber,
+  walkNumbers,
+  type EdgeAnchor,
+  type NumberField,
+  type NumberFieldList,
+  type NumberLeaf,
+  type NumberUnit,
+  type RescaleOptions,
+  type UnitRule,
+  type WalkSkip,
+} from './data/units.js';
+
 export {
   COLLISION_MASKS,
   CollisionLayer,
