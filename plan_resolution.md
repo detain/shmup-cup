@@ -1894,7 +1894,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
-| R3-05 | AI art provenance and licences | in progress (part 1 done; part 2, the origin report, running) |
+| R3-05 | AI art provenance and licences | done (owner parts pending) — 2026-10-17 (part 2, the origin report `scripts/art-origins.mjs`: `fa72c78`, `f9d3f69`; As built with the wave-3 docs) |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
 | R4-02 | Enemy bullets, lasers, items | not started |
