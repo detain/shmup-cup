@@ -475,6 +475,7 @@ export {
   type NullableMeta,
   type NumberMeta,
   type ObjectMeta,
+  type ObjectOptions,
   type OpaqueMeta,
   type RangeOptions,
   type RecordMeta,
@@ -499,6 +500,30 @@ export {
   type RescaleOptions,
   type UnitRule,
   type WalkSkip,
+  // The R1-03 review: the ports that take more than one value (field pairs, the backdrop) and
+  // the top-edge listing.
+  pairRole,
+  rescaleBackdrop,
+  rescaleBoxY,
+  rescaleWorldSum,
+  topEdgeSide,
+  type BackdropBand,
+  type BackdropRow,
+  type BandPlacement,
+  type BoxYPair,
+  type FieldPair,
+  type LeafPair,
+  type PairRole,
+  type PairSite,
+  type PortedBackdrop,
+  type PortedBand,
+  type PortedBox,
+  type PortedRow,
+  type PortedWorldSum,
+  type RowPlacement,
+  type TopEdgeSide,
+  type WorldSumCondition,
+  type WorldSumPair,
 } from './data/units.js';
 export { BEHAVIOR_PARAM_UNITS } from './behaviors/units.js';
 

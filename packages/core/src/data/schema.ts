@@ -31,7 +31,7 @@
  *
  * @module
  */
-import type { NumberUnit } from './units.js';
+import type { FieldPair, NumberUnit } from './units.js';
 
 /** A validation problem found while loading content. */
 export interface ValidationIssue {
@@ -182,6 +182,11 @@ export interface ObjectMeta {
   readonly shape: Readonly<ObjectShape>;
   /** The fields that may be missing. */
   readonly optional: readonly string[];
+  /**
+   * Fields that port together (`data/units` {@link FieldPair}: a block's `x` + `screenX`, a box's
+   * `y` + `h`); absent when the object declares none.
+   */
+  readonly pairs?: readonly FieldPair[];
 }
 
 /** {@link SchemaMeta} of {@link s.record}. */
@@ -327,6 +332,11 @@ export interface ArrayOptions {
 export interface ObjectOptions<O> {
   /** Keys that may be missing from the JSON. */
   readonly optional?: readonly O[];
+  /**
+   * Fields whose values port together in a ×k content port (`data/units` {@link FieldPair}) —
+   * metadata for tools only ({@link ObjectMeta.pairs}); parsing never reads it.
+   */
+  readonly pairs?: readonly FieldPair[];
 }
 
 /** `Object.prototype.hasOwnProperty` (Chromium 69 has no `Object.hasOwn`). */
@@ -574,7 +584,7 @@ function array<T>(item: Schema<T>, options: ArrayOptions = {}): Schema<T[]> {
  * typos, and silently ignoring them hides content bugs).
  *
  * @param shape - Field name → schema.
- * @param options - Which fields may be missing.
+ * @param options - Which fields may be missing, and which port together (`pairs`, tools only).
  * @returns The schema.
  *
  * @remarks
@@ -596,7 +606,15 @@ function object<S extends ObjectShape, O extends keyof S = never>(
   const keys = Object.keys(shape);
   const optionalKeys = (options.optional ?? NO_KEYS) as readonly string[];
   const optional = new Set<string>(optionalKeys);
-  const meta: ObjectMeta = { kind: 'object', shape, optional: optionalKeys };
+  const meta: ObjectMeta =
+    options.pairs === undefined
+      ? { kind: 'object', shape, optional: optionalKeys }
+      : {
+          kind: 'object',
+          shape,
+          optional: optionalKeys,
+          pairs: Object.freeze(options.pairs.slice()),
+        };
   return define('object', meta, (value, path, issues, refs) => {
     if (!isPlainObject(value)) return fail(issues, path, 'must be an object');
     const out: Record<string, unknown> = {};

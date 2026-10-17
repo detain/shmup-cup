@@ -280,6 +280,7 @@ import {
 import { bakePath, type PathTable } from './paths.js';
 import { s, type RefSite, type Schema, type ValidationIssue } from './schema.js';
 import { buildTilesetTables, expandTilemap, type TilesetTables } from './tilemap.js';
+import type { BoxYPair, WorldSumPair } from './units.js';
 import {
   DEFAULT_UI_TEXT,
   MAX_UI_TEXT_LENGTH,
@@ -2745,6 +2746,40 @@ const WORLD_X = s.num({ min: -4096, max: 1001000, unit: 'world-x' });
 /** A world y of a trigger region or a block, in pixels (same bounds as {@link WORLD_X}). */
 const WORLD_Y = s.num({ min: -4096, max: 1001000, unit: 'world-y' });
 
+/**
+ * A moving block's world left edge is `x + screenX` (`stage/systems` `MovingBlockSystem`): terrain,
+ * which the tiles and regions around it line up with — so a ×k port moves the sum ×k and only
+ * the column the block appears at is frame-anchored (`data/units` `rescaleWorldSum`; tooling
+ * metadata, never read by the parser).
+ */
+const BLOCK_WORLD_X: WorldSumPair = Object.freeze({
+  rule: 'world-sum',
+  camera: 'x',
+  screen: 'screenX',
+  screenPastEnd: DEFAULT_BLOCK_SCREEN_X - PLAYFIELD_W,
+  when: 'always',
+});
+
+/**
+ * A ground enemy's spot on the terrain is `x + screenX` (it is anchored in the world and snaps to
+ * the surface there — `core/enemies`), so for an event whose enemy has a `ground` anchor the pair
+ * ports like a block's; a flying enemy rides the camera and its `x` / `screenX` port alone. The
+ * default column is `core/enemies` `DEFAULT_SPAWN_SCREEN_X`, `PLAYFIELD_W + 16` (a test pins it).
+ */
+const GROUND_SPAWN_WORLD_X: WorldSumPair = Object.freeze({
+  rule: 'world-sum',
+  camera: 'x',
+  screen: 'screenX',
+  screenPastEnd: 16,
+  when: 'ground-enemy',
+});
+
+/**
+ * A box's top edge and height port as its two edges: one hanging from the top edge grows by the
+ * pad instead of moving down (`data/units` `rescaleBoxY`; tooling metadata).
+ */
+const BOX_Y: BoxYPair = Object.freeze({ rule: 'box-y', top: 'y', height: 'h' });
+
 /** One entry of `events` in a `stage` file (every variant may name a `branch` — M2-07). */
 const STAGE_EVENT_SCHEMA: Schema<
   Omit<StageEvent, 'enemyId' | 'cueId' | 'flagId' | 'pathId' | 'tileId' | 'stageId'>
@@ -2761,7 +2796,10 @@ const STAGE_EVENT_SCHEMA: Schema<
       minLoop: LOOP_NUMBER,
       maxLoop: LOOP_NUMBER,
     },
-    { optional: ['y', 'screenX', 'path', 'branch', 'minLoop', 'maxLoop'] },
+    {
+      optional: ['y', 'screenX', 'path', 'branch', 'minLoop', 'maxLoop'],
+      pairs: [GROUND_SPAWN_WORLD_X],
+    },
   ),
   formation: s.object(
     {
@@ -2779,7 +2817,10 @@ const STAGE_EVENT_SCHEMA: Schema<
       minLoop: LOOP_NUMBER,
       maxLoop: LOOP_NUMBER,
     },
-    { optional: ['y', 'screenX', 'path', 'drop', 'bonus', 'branch', 'minLoop', 'maxLoop'] },
+    {
+      optional: ['y', 'screenX', 'path', 'drop', 'bonus', 'branch', 'minLoop', 'maxLoop'],
+      pairs: [GROUND_SPAWN_WORLD_X],
+    },
   ),
   warning: s.object(
     { x: EVENT_X, type: s.enumOf(['warning'] as const), enemy: s.ref('enemy'), branch: STAGE_NAME },
@@ -2823,12 +2864,15 @@ const STAGE_EVENT_SCHEMA: Schema<
       type: s.enumOf(['trigger'] as const),
       flag: STAGE_NAME,
       value: s.bool(),
-      region: s.object({
-        x: WORLD_X,
-        y: WORLD_Y,
-        w: s.num({ min: 1, max: 65536, unit: 'world-px' }),
-        h: s.num({ min: 1, max: 65536, unit: 'world-px' }),
-      }),
+      region: s.object(
+        {
+          x: WORLD_X,
+          y: WORLD_Y,
+          w: s.num({ min: 1, max: 65536, unit: 'world-px' }),
+          h: s.num({ min: 1, max: 65536, unit: 'world-px' }),
+        },
+        { pairs: [BOX_Y] },
+      ),
       until: EVENT_X,
       branch: STAGE_NAME,
     },
@@ -2851,7 +2895,10 @@ const STAGE_EVENT_SCHEMA: Schema<
       phase: s.int({ min: 0, max: 1023, unit: 'angle' }),
       branch: STAGE_NAME,
     },
-    { optional: ['screenX', 'tile', 'vx', 'vy', 'dx', 'dy', 'period', 'phase', 'branch'] },
+    {
+      optional: ['screenX', 'tile', 'vx', 'vy', 'dx', 'dy', 'period', 'phase', 'branch'],
+      pairs: [BLOCK_WORLD_X, BOX_Y],
+    },
   ),
   bonus: s.object(
     {
@@ -2859,12 +2906,15 @@ const STAGE_EVENT_SCHEMA: Schema<
       type: s.enumOf(['bonus'] as const),
       stage: s.ref('stage'),
       entrance: s.enumOf(BONUS_ENTRANCES),
-      region: s.object({
-        x: WORLD_X,
-        y: WORLD_Y,
-        w: s.num({ min: 1, max: 65536, unit: 'world-px' }),
-        h: s.num({ min: 1, max: 65536, unit: 'world-px' }),
-      }),
+      region: s.object(
+        {
+          x: WORLD_X,
+          y: WORLD_Y,
+          w: s.num({ min: 1, max: 65536, unit: 'world-px' }),
+          h: s.num({ min: 1, max: 65536, unit: 'world-px' }),
+        },
+        { pairs: [BOX_Y] },
+      ),
       until: EVENT_X,
       digit: s.int({ min: 0, max: 9, unit: 'index' }),
       place: s.int({ min: 10, max: 100000, unit: 'score' }),
@@ -3027,7 +3077,7 @@ const STAGE_FILE_SCHEMA = s.object(
           x: EVENT_X,
           speed: SPEED,
           ramp: TICKS,
-          yTo: s.num({ min: 0, max: 4096, unit: 'screen-y' }),
+          yTo: s.num({ min: 0, max: 4096, unit: 'rel-px' }),
           yTicks: TICKS,
           yOver: s.int({ min: 1, max: 1000000, unit: 'world-px' }),
           lock: s.bool(),
@@ -3043,7 +3093,7 @@ const STAGE_FILE_SCHEMA = s.object(
         layer: s.enumOf(['far', 'mid'] as const),
         sprite: s.ref('sprite'),
         factor: s.num({ min: 0, max: 4, unit: 'ratio' }),
-        y: s.num({ min: -512, max: 512, unit: 'world-y' }),
+        y: s.num({ min: -512, max: 512, unit: 'band-y' }),
         spacing: s.int({ min: 8, max: 1024, unit: 'world-px' }),
       }),
       { max: 8 },

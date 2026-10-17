@@ -131,6 +131,26 @@ describe('core/data schema metadata', () => {
     expect(metaOf(s.oneOf('type', variants))).toEqual({ kind: 'union', tag: 'type', variants });
   });
 
+  it('records the pairs an object declares, frozen, without changing what it parses', () => {
+    const pairs = [{ rule: 'box-y', top: 'y', height: 'h' } as const];
+    const shape = { y: s.num({ unit: 'world-y' }), h: s.num({ unit: 'world-px' }) };
+    const box = s.object(shape, { pairs });
+    const meta = metaOf(box);
+    if (meta.kind !== 'object') throw new Error('object');
+    expect(meta.pairs).toEqual(pairs);
+    expect(meta.pairs).not.toBe(pairs);
+    expect(Object.isFrozen(meta.pairs)).toBe(true);
+    // An object without pairs has no `pairs` key at all.
+    expect('pairs' in metaOf(s.object(shape))).toBe(false);
+    const plain = s.object(shape);
+    for (const value of [{ y: 0, h: 24 }, { y: 'top', h: 24 }, { y: 1 }]) {
+      const issuesA = collector();
+      const issuesB = collector();
+      expect(box.parse(value, 'b', issuesA)).toEqual(plain.parse(value, 'b', issuesB));
+      expect(issuesA).toEqual(issuesB);
+    }
+  });
+
   it('keeps a nullable reference a reference', () => {
     const schema = s.nullable(s.ref('sprite'));
     expect(schema.refKind).toBe('sprite');
@@ -198,6 +218,8 @@ describe('core/data units', () => {
       'count',
       'score',
       'ratio',
+      // The R1-03 review: a parallax band's row, placed with the stage's backdrop.
+      'band-y',
       // O1: audio
       'hz',
       'seconds',
@@ -227,6 +249,7 @@ describe('core/data units', () => {
       'world-y': ['world-y'],
       'edge-x': ['screen-x'],
       'edge-y': ['screen-y'],
+      band: ['band-y'],
       'tile-rows': ['tile-rows'],
       resample: ['tile-px'],
       keep: [
@@ -267,8 +290,11 @@ describe('core/data units', () => {
     // The boss's default x 296 = right edge − 88 → W − 132; its y 100 = the playfield's centre.
     expect(rescaleNumber('screen-x', 296, V2)).toBe(508);
     expect(rescaleNumber('screen-y', 100, V2)).toBe(168);
-    // The Mode-7 floor's bottom 200 = the bottom edge; zone D's camera yTo 200 = one playfield.
+    // The Mode-7 floor's bottom 200 = the bottom edge.
     expect(rescaleNumber('screen-y', 200, V2)).toBe(336);
+    // A band row alone snaps like a screen-y row (rescaleBackdrop places a stage's bands).
+    expect(rescaleNumber('band-y', 0, V2)).toBe(0);
+    expect(rescaleNumber('band-y', 152, V2)).toBe(264);
     expect(rescaleNumber('screen-x', -16, V2)).toBe(-24);
     // Absolute y: 1.5·y + 36, continuous at the bottom edge; above the top edge only ×1.5.
     expect(rescaleNumber('world-y', 0, V2)).toBe(36);

@@ -204,8 +204,9 @@ describe('scripts/content/rescale: the shipped content', () => {
     expect(result.geometry.padRows).toBe(3);
     // The spawns above the top edge are listed for R2-02's hand fixes.
     expect(result.aboveTop.some((entry) => entry.note.startsWith('spawn'))).toBe(true);
-    // The two-playfield zone D map and its one-playfield pan disagree (an owner question).
-    expect(result.views.map((entry) => entry.file)).toContain('stages/zone-d.stage.json');
+    // The camera's yTo is ×k (rel-px): zone D's and gimmick-range's pans to the bottom of their
+    // maps reach exactly the bottom of the maps with the three pad rows (R1-03 review).
+    expect(result.views).toEqual([]);
   });
 });
 
@@ -258,7 +259,6 @@ describe('scripts/content/rescale: the fixtures', () => {
       'stages/edges.stage.json:events[2].y',
       'stages/mini.stage.json:events[1].y',
       'enemies/edges.enemies.json:enemies[0].mover.y',
-      'stages/edges.stage.json:parallax[0].y',
     ]);
     expect(listed(result.rounded)).toEqual([
       'enemies/edges.enemies.json:enemies[1].boss.parts[0].hurtbox.hw',
@@ -281,7 +281,9 @@ describe('scripts/content/rescale: the fixtures', () => {
       'stages/edges.stage.json:raster[0].bottom',
       'stages/edges.stage.json:mode7.bottom',
     ]);
-    expect(listed(result.views)).toEqual(['stages/edges.stage.json:tilemap.rowsTall']);
+    // edges' pan to its map's bottom (yTo 200 + 200 = 50 rows of 8) ports ×k to 300, exactly the
+    // bottom of the 53-row map: nothing to see past.
+    expect(listed(result.views)).toEqual([]);
     expect(listed(result.expressions)).toEqual([
       'patterns/mini.patterns.json:actions[0].body[0].body[0].speed',
       'patterns/mini.patterns.json:actions[1].body[0].speed',
@@ -293,7 +295,14 @@ describe('scripts/content/rescale: the fixtures', () => {
         'ceiling(s) move down by the pad',
     ]);
     const moved = new Set(result.moved.map((entry) => entry.unit));
-    expect([...moved].sort()).toEqual(['screen-x', 'screen-y', 'tile-px', 'tile-rows', 'world-y']);
+    expect([...moved].sort()).toEqual([
+      'band-y',
+      'screen-x',
+      'screen-y',
+      'tile-px',
+      'tile-rows',
+      'world-y',
+    ]);
   });
 
   it('is the identity at factor 1', async () => {
@@ -413,7 +422,7 @@ describe('scripts/content/rescale: the command line', () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('0 unclassified, 0 errors');
     expect(result.stdout).toContain('dry run: nothing written.');
-    expect(result.stdout).toContain('on or above the top edge (4):');
+    expect(result.stdout).toContain('on or above the top edge (3):');
     expect(result.stdout).toContain('[screen-x] 400 → 664 — edge-x: snapped to the end');
   }, 60_000);
 

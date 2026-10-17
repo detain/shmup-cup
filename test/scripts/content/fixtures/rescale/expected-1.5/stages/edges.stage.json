@@ -7,7 +7,7 @@
   "length": 2400,
   "camera": [
     { "x": 0, "speed": 1.5 },
-    { "x": 900, "speed": 1.5, "yTo": 336, "yTicks": 120 }
+    { "x": 900, "speed": 1.5, "yTo": 300, "yTicks": 120 }
   ],
   "checkpoints": [{ "x": 0 }],
   "parallax": [
