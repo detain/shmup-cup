@@ -7,7 +7,7 @@
 > **State on 2026-10-16:** 0 of 37 steps done. Already done outside the steps: the `v1.x` branch (from tag
 > `v1.0.0`), CI on pushes to both branches, `art-prompts/` excluded from Prettier and ESLint, `CLAUDE.md` describing
 > v2, R3-01's prompt-library half, the art round's tooling (`art-prompts/v2/server.sh`, the runbook
-> `docs/dev/art-generation-server.md`), and one board issue per step (#47–#82 plus R0-04's, synced by
+> `docs/dev/art-generation-server.md`), and one board issue per step (#47–#82, plus #83 for R0-04; synced by
 > `.claude/plan_board_v2.py`).
 
 ---

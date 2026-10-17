@@ -16,7 +16,7 @@ TypeScript 2D horizontal shoot-'em-up for **Samsung Tizen 5.5 TVs** (Chromium 69
   - all art redone much more detailed (AI-assisted through `art-prompts/`, then cleaned into pixel art) and every level expanded.
 - **Today the code still runs at 384×216.** Milestone R1 derives every frame-dependent number from a few constants (`FRAME_W`, `FRAME_H`, `HUD_BAR_HEIGHT`, `TILE_SIZE`, the font metrics) with the goldens **unchanged**. R2-01 flips them; until then, don't add new literal `384` / `216` / `200` / `208` frame numbers.
 - **Frame ≠ world:** 640×360 is ×5/3 of the old frame, but the world is only ×1.5. Values anchored to a screen edge ("one playfield", "just past the right edge", the screen centre) are re-derived from the new frame, never multiplied by 1.5 (`plan_resolution.md` §2.6).
-- **Step workflow:** steps are `### R<n>-<nn> — <Title>` sections of `plan_resolution.md`. After a step, set its row in §17 and resync the board with `python3 .claude/plan_board_v2.py` (GitHub milestones R0–R6, issues #47–#82, label `v2`).
+- **Step workflow:** steps are `### R<n>-<nn> — <Title>` sections of `plan_resolution.md`. After a step, set its row in §17 and resync the board with `python3 .claude/plan_board_v2.py` (GitHub milestones R0–R6, issues #47–#83 — #83 is R0-04, label `v2`).
 - **Benchmarks don't block:** the TV benchmarks (384×216 / 640×360 / 960×540, R0-02/R0-03) never block a step; they set budgets.
 - **Art round (R0-04):** tooling in `art-prompts/v2/` (`manifest.json`, `gen-candidate.mjs`, `server.sh`), runbook `docs/dev/art-generation-server.md`. **Never stop SGLang on skynet2 by name or GPU — the main LLM runs there too; use `server.sh stop`.**
 
