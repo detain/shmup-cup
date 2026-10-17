@@ -102,15 +102,40 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     (`docs/dev/art-provenance.md`).
 - **The owner picked all 33 video sets** (no comments, no regenerations) and said to go on with the FLUX work
   (2026-10-17; the licence question in `docs/dev/art-provenance.md` is settled before anything ships).
-- **FLUX.2-dev session (running since 2026-10-17 16:40, paused once, resumed 2026-10-18):** 199 followups from the
+- **FLUX.2-dev session (running since 2026-10-17 16:40, paused once, resumed the same day):** 199 followups from the
   winners, rebuilt from the current picks (`candidates/round2/worklist.json`; agents A = bosses 66, B = crafts, logos
   and enemies 60, C = fx, items, endings, stages and tiles 73 with `fx/black-hole/armed-scene` first), plus agent D's
   slot-a regenerations of `enemy/halo-crystal` and `tiles/azure-verge`. Followups land at
   `candidates/<winner slot>/<followup id>.png`; the patched picker shows each next to its winner.
-- **Still to do after FLUX.2:** FLUX.1-dev slot c of `tiles/azure-verge`; LTX-2.5 for `video/blackhole-bomb-slowmo`
-  from the armed-scene followup (slots a and b); after the owner re-picks halo-crystal and azure-verge, their four
-  followups (frames, zone roster sheet, zone encounter; tileset) in a short FLUX.2 session; then the owner reviews
-  round 2 on the picker, and winners go to `winners/<id>/`.
+- **FLUX.2 results so far** (agent C still running, 54 of 73 done on 2026-10-17 18:00):
+  - **D** (slot-a regenerations): `enemy/halo-crystal` ok, exactly six satellites on a hexagon, clean key, first try;
+    `tiles/azure-verge` ok, 0 % key-like pixels, a front-on fern ledge on teal stone, third try (try 1 was a framed block
+    on white, try 2 had white gaps between the leaf tips). Round-1 slot-a files archived to `candidates/history/2026-10-17/a/`.
+    The round-1 slot-a azure swatch was 0 % key-like too: the green the owner flagged was in another slot's winner.
+  - **A** (66 boss followups): 47 ok, 19 weak, 0 failed (127 runs). Parts sheets are weak 12 of 14 (the whole boss in
+    every cell, a 4×4 or 3×3 grid, gutter lines; only `boss/mantle-regent/parts` is clean).
+  - **B** (60 craft, logo and enemy followups): 48 ok, 12 weak, 0 failed (113 runs). Animation sheets barely animate
+    (cells nearly the same pose): the KESTREL and MANTA in-game sheets, Option frames, several enemies.
+    **`enemy/sentinel-walker/zone-encounter` is mirrored in all three tries — flip it horizontally.**
+  - **C** so far: `fx/black-hole/armed-scene` weak (three spiral arms and pink orbs streaming at the core, but about ten
+    bullets drawn as small red canisters and the trails read as outward).
+  - Per-job tables: the agents' `results` files in the orchestrator's scratchpad (`flux2-r2-A/`, `-B/`, `-C/`, `-D/`).
+- **Prompt lessons from FLUX.2 (edit mode):**
+  - In scene followups the small player craft is drawn from behind, pointing up or facing left, or as a generic jet.
+    Adding the KESTREL winner as a second `--edit-from` reference fixed it in 16 of 17 scenes.
+  - Words are drawn literally: "spent bullets" → brass casings, "canopy" → umbrella or hang-glider, "lantern core" → a
+    camping lantern, "heart core" → an anatomical heart, "bullet like a needle" → an orb on a needle.
+  - Bullets drift to pills, cylinders or canisters; "lone round glowing orb" fixes most.
+  - Multi-cell sheets: FLUX.2 redraws the whole subject per cell, changes the grid and adds gutter lines; frames of an
+    animation stay nearly identical.
+- **Still to do, in order (one model at a time, `server.sh stop` + `verify` after each):**
+  1. While FLUX.2 is still loaded: one retry of `fx/black-hole/armed-scene` (round orbs, streaming inward) — it is the
+     LTX source.
+  2. FLUX.1-dev: slot c of `tiles/azure-verge`.
+  3. LTX-2.5: `video/blackhole-bomb-slowmo` from the armed-scene still (slots a and b) — the fifth image-to-video clip.
+  4. The owner reviews round 2 on the picker and re-picks halo-crystal and azure-verge; then a short FLUX.2 session for
+     their four held followups (frames, zone roster sheet, zone encounter; tileset).
+  5. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
 
 ## Round 2 — after the owner says picking is done
 
