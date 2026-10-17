@@ -122,7 +122,16 @@
  *
  * @module
  */
-import { FRAME_CX, FRAME_CY, GLYPH_H, GLYPH_W, LINE_H } from '../config/index.js';
+import {
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_W,
+  GLYPH_H,
+  GLYPH_W,
+  HUD_BAR_HEIGHT,
+  HUD_BOTTOM_Y,
+  LINE_H,
+} from '../config/index.js';
 import type { ContentDb } from '../data/index.js';
 import { SFX_CUES } from '../events/index.js';
 import {
@@ -1906,65 +1915,159 @@ export const HUD_COLORS = Object.freeze({
   bossFill: 0xf85858,
 });
 
-/** Pixel positions of the HUD (frame coordinates, 384×216). */
+// The HUD's geometry (plan_resolution.md R1-01): the bars' rows and every edge- or centre-anchored
+// x derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the text
+// extents from the font's cell (GLYPH_W), and each run of labels and pips starts after the one
+// before it — so the HUD stays laid out when the frame or the font changes. The numbers in
+// parentheses are the values at 384×216 with the 6×8 font. The HUD art's own sizes (the 40-px
+// `hud/meter-slot` box, the 8-px life icons 10 px apart, the pips' sizes and steps, the rows inside
+// a bar) stay pixel literals: they are the art's, not the frame's (R4-03 redraws the HUD for 12-px
+// bars).
+
+/** Gap in pixels between a HUD label and the number or bar after it. */
+const HUD_LABEL_GAP = 4;
+
+/** Digits of a top-bar score. */
+const HUD_DIGITS = 8;
+
+/** From a two-glyph top-bar label (`1P`, `HI`, `2P`) to its number: the label and the gap (16). */
+const HUD_SCORE_DX = 2 * GLYPH_W + HUD_LABEL_GAP;
+
+/** Width of the hi-score display: `HI`, the gap and the {@link HUD_DIGITS} digits (64). */
+const HUD_HI_W = HUD_SCORE_DX + HUD_DIGITS * GLYPH_W;
+
+/** From the caravan clock's `TIME` label to its seconds: four glyph cells (24 — M3-01). */
+const HUD_CLOCK_DX = 4 * GLYPH_W;
+
+/**
+ * Width of the boss HP bar's frame in the top HUD bar (M2-09); the fill is 2 px narrower. As wide
+ * as the hi-score display it replaces (64).
+ */
+export const BOSS_HP_BAR_WIDTH = HUD_HI_W;
+
+/** From the boss HP bar's `BOSS` label to its frame: four glyph cells and the gap (28 — M2-09). */
+const HUD_BOSS_BAR_DX = 4 * GLYPH_W + HUD_LABEL_GAP;
+
+/**
+ * The boss HP bar's `BOSS` label x: the label, the gap and the bar centred 2 px right of the
+ * frame's centre (148).
+ */
+const HUD_BOSS_X = FRAME_CX - ((HUD_BOSS_BAR_DX + BOSS_HP_BAR_WIDTH) >> 1) + 2;
+
+/** Direct mode (M2-05): from the `SHOT` label to its first pip — four glyph cells and 2 px (26). */
+const HUD_SHOT_PIPS_DX = 4 * GLYPH_W + 2;
+
+/** Direct mode: from a three-glyph tier label (`SUB`, `ARM`, `SPD`) to its first pip (20). */
+const HUD_TIER_PIPS_DX = 3 * GLYPH_W + 2;
+
+/** Co-op Direct mode (M2-06): from a two-glyph label (`SH`, `SB`, `AR`, `SP`) to its pips (13). */
+const HUD_COOP_PIPS_DX = 2 * GLYPH_W + 1;
+
+/**
+ * The first meter slot x — after the five stock icons (58). Direct mode's `SHOT` label starts there
+ * too.
+ */
+const HUD_METER_X = 58;
+
+/** Direct mode: the `SUB` label x — after `SHOT`'s 8 pips 5 px apart and 6 px (130). */
+const HUD_SUB_X = HUD_METER_X + HUD_SHOT_PIPS_DX + 8 * 5 + 6;
+
+/** Direct mode: the `ARM` label x — after `SUB`'s 8 pips 5 px apart and 6 px (196). */
+const HUD_ARM_X = HUD_SUB_X + HUD_TIER_PIPS_DX + 8 * 5 + 6;
+
+/** Direct mode: the `SPD` label x — after `ARM`'s 5 pips 6 px apart and 6 px (252). */
+const HUD_SPEED_X = HUD_ARM_X + HUD_TIER_PIPS_DX + 5 * 6 + 6;
+
+/** Direct mode: the main-shot family's label x — after `SPD`'s 5 pips 6 px apart and 4 px (306). */
+const HUD_FAMILY_X = HUD_SPEED_X + HUD_TIER_PIPS_DX + 5 * 6 + 4;
+
+/** Co-op: the stock icon x in a half. */
+const HUD_COOP_STOCK_X = 2;
+
+/**
+ * Co-op: the first compact meter slot x in a half — after the stock icon, its count's digit (10 px
+ * after the icon) and the gap (22). Co-op Direct mode's `SH` starts there too.
+ */
+const HUD_COOP_METER_X = HUD_COOP_STOCK_X + 10 + GLYPH_W + HUD_LABEL_GAP;
+
+/** Co-op: compact meter slot width — a two-glyph label and 4 px a side (20). */
+const HUD_COOP_SLOT_W = 2 * GLYPH_W + 8;
+
+/** Co-op Direct mode: the `SB` label x — after `SH`'s 8 pips 4 px apart and 1 px (68). */
+const HUD_COOP_SUB_X = HUD_COOP_METER_X + HUD_COOP_PIPS_DX + 8 * 4 + 1;
+
+/** Co-op Direct mode: the `AR` label x — after `SB`'s 8 pips 4 px apart and 1 px (114). */
+const HUD_COOP_ARM_X = HUD_COOP_SUB_X + HUD_COOP_PIPS_DX + 8 * 4 + 1;
+
+/** Co-op Direct mode: the `SP` label x — after `AR`'s 5 pips 4 px apart and 1 px (148). */
+const HUD_COOP_SPEED_X = HUD_COOP_ARM_X + HUD_COOP_PIPS_DX + 5 * 4 + 1;
+
+/**
+ * Pixel positions of the HUD in frame coordinates — derived from the frame and the font's metrics
+ * (R1-01); the numbers in parentheses are the values at 384×216 with the 6×8 font.
+ */
 export const HUD_LAYOUT = Object.freeze({
   /** Top bar row. */
   topY: 0,
-  /** Bottom bar row (the playfield ends at 208). */
-  bottomY: 208,
-  /** `1P` label x; its score follows at `+16`. */
+  /** Bottom bar row: the row under the playfield (`HUD_BOTTOM_Y`, 208). */
+  bottomY: HUD_BOTTOM_Y,
+  /** `1P` label x; its score follows a two-glyph label and 4 px later (`+16`). */
   p1X: 8,
-  /** `HI` label x; the hi-score follows at `+16`. */
-  hiX: 156,
-  /** `2P` label x; its score (or dashes) follows at `+16`. */
-  p2X: 292,
+  /** `HI` label x: the hi-score display centred 4 px left of the frame's centre (156). */
+  hiX: FRAME_CX - (HUD_HI_W >> 1) - 4,
+  /**
+   * `2P` label x: room for the label, the gap and an 11-glyph `PRESS START` (the widest thing its
+   * slot shows) 10 px from the right edge (292); its score (or dashes) follows at `+16`.
+   */
+  p2X: FRAME_W - 10 - HUD_SCORE_DX - 11 * GLYPH_W,
   /** Score digits. */
-  digits: 8,
+  digits: HUD_DIGITS,
   /** First stock icon x (icons are 10 px apart). */
   stockX: 4,
   /** Most stock icons drawn; more show one icon and the count. */
   stockIcons: 5,
   /** First meter slot x (slots are 40 px wide). */
-  meterX: 58,
-  /** Meter slot width. */
+  meterX: HUD_METER_X,
+  /** Meter slot width (the `hud/meter-slot` art's). */
   slotW: 40,
-  /** First Force Field pip x (pips are 7 px apart). */
-  shieldX: 344,
+  /** First Force Field pip x: 5 pips 7 px apart ending 7 px from the right edge (344). */
+  shieldX: FRAME_W - 40,
   /** Direct mode (M2-05): `SHOT` label x; its pips (5 px apart) start 26 px later. */
-  shotX: 58,
+  shotX: HUD_METER_X,
   /** Direct mode: `SUB` label x; its pips start 20 px later. */
-  subX: 130,
+  subX: HUD_SUB_X,
   /** Direct mode: `ARM` label x; its pips (6 px apart) start 20 px later. */
-  armX: 196,
+  armX: HUD_ARM_X,
   /** Direct mode: `SPD` label x; its pips (6 px apart) start 20 px later. */
-  speedX: 252,
+  speedX: HUD_SPEED_X,
   /** Direct mode: the main-shot family's label x. */
-  familyX: 306,
-  /** The boss HP bar's `BOSS` label x (M2-09; the bar replaces the hi-score while shown). */
-  bossX: 148,
-  /** The boss HP bar's frame x; the frame is {@link BOSS_HP_BAR_WIDTH} wide, 4 px tall. */
-  bossBarX: 176,
+  familyX: HUD_FAMILY_X,
+  /** The boss HP bar's `BOSS` label x (M2-09; the bar replaces the hi-score while shown — 148). */
+  bossX: HUD_BOSS_X,
+  /** The boss HP bar's frame x (176); the frame is {@link BOSS_HP_BAR_WIDTH} wide, 4 px tall. */
+  bossBarX: HUD_BOSS_X + HUD_BOSS_BAR_DX,
   /**
-   * Co-op (M2-06): width of each player's half of the bottom bar while both play (player 1 from
-   * x 0, player 2 from x 192); the offsets below are relative to the half's left edge.
+   * Co-op (M2-06): width of each player's half of the bottom bar while both play — half the frame
+   * (player 1 from x 0, player 2 from x 192); the offsets below are relative to the half's left
+   * edge.
    */
-  halfW: 192,
+  halfW: FRAME_W / 2,
   /** Co-op: the stock icon x; the count follows 10 px later. */
-  coopStockX: 2,
+  coopStockX: HUD_COOP_STOCK_X,
   /** Co-op: the first compact meter slot x (slots are {@link HUD_LAYOUT}.coopSlotW wide). */
-  coopMeterX: 22,
+  coopMeterX: HUD_COOP_METER_X,
   /** Co-op: compact meter slot width (a box with the slot's two-letter label). */
-  coopSlotW: 20,
-  /** Co-op: the first shield pip x (pips are 5 px apart). */
-  coopShieldX: 164,
+  coopSlotW: HUD_COOP_SLOT_W,
+  /** Co-op: the first shield pip x, after the seven slots and 2 px (164; pips are 5 px apart). */
+  coopShieldX: HUD_COOP_METER_X + METER_SLOT_COUNT * HUD_COOP_SLOT_W + 2,
   /** Co-op Direct mode: `SH` (shot) label x; its pips (4 px apart) start 13 px later. */
-  coopShotX: 22,
+  coopShotX: HUD_COOP_METER_X,
   /** Co-op Direct mode: `SB` (sub-weapon) label x. */
-  coopSubX: 68,
+  coopSubX: HUD_COOP_SUB_X,
   /** Co-op Direct mode: `AR` (Arm) label x. */
-  coopArmX: 114,
+  coopArmX: HUD_COOP_ARM_X,
   /** Co-op Direct mode: `SP` (speed) label x. */
-  coopSpeedX: 148,
+  coopSpeedX: HUD_COOP_SPEED_X,
 });
 
 /**
@@ -2130,9 +2233,6 @@ export const HUD_STRING_COUNT = 24;
  */
 export const HUD_COMMAND_COUNT = 100;
 
-/** Width of the boss HP bar's frame in the top HUD bar (M2-09); the fill is 2 px narrower. */
-export const BOSS_HP_BAR_WIDTH = 64;
-
 /**
  * The boss HP bar as the HUD reads it (M2-09 — `core/bosses` `BossHpBar`, the World's
  * `bosses.hpBar`).
@@ -2247,7 +2347,8 @@ export function hudPlayerState(world: World, slot: number): HudPlayerState {
  *
  * @remarks
  * Side effect: clears the scores' `displayDirty` and the board's `hiScoreDirty` flags (it has
- * drawn them). Layout ({@link HUD_LAYOUT}): top bar `1P` at x 8, `HI` at 156, `2P` at 292, each
+ * drawn them). Layout ({@link HUD_LAYOUT}, derived from the frame and the font — the numbers here
+ * are the values at 384×216 with the 6×8 font): top bar `1P` at x 8, `HI` at 156, `2P` at 292, each
  * followed 16 px later by an 8-digit number (`------` while player 2 is out of a one-player game);
  * bottom bar: up to 5 stock icons 10 px apart from x 4 (more: one icon and the count), the seven
  * 40-px meter slots from x 58 — `hud/meter-slot` frame 1 on the "on" half of the
@@ -2305,8 +2406,8 @@ export function buildHud(
   list.setString(S.hi, text.hi);
   list.setString(S.p2, text.p2);
   list.setString(S.dashes, '------');
-  list.rect(0, L.topY, 384, 8, HUD_COLORS.bar);
-  list.rect(0, L.bottomY, 384, 8, HUD_COLORS.bar);
+  list.rect(0, L.topY, FRAME_W, HUD_BAR_HEIGHT, HUD_COLORS.bar);
+  list.rect(0, L.bottomY, FRAME_W, HUD_BAR_HEIGHT, HUD_COLORS.bar);
   const board = world.scoring.board;
   const players = world.players;
   const blinkOn = ((world.tick / HUD_PROMPT_BLINK_TICKS) & 1) === 0;
@@ -2323,7 +2424,7 @@ export function buildHud(
     if (fill > 0) list.rect(L.bossBarX + 1, L.topY + 3, fill, 2, HUD_COLORS.bossFill);
   } else {
     list.text(S.hi, L.hiX, L.topY, HUD_COLORS.hi);
-    list.number(board.hiScore, L.hiX + 16, L.topY, L.digits, HUD_COLORS.number);
+    list.number(board.hiScore, L.hiX + HUD_SCORE_DX, L.topY, L.digits, HUD_COLORS.number);
   }
   if (world.timeLeft >= 0) {
     // The caravan's clock (M3-01) in player 2's place: whole seconds left, red for the last ten.
@@ -2332,7 +2433,7 @@ export function buildHud(
     list.text(S.time, L.p2X, L.topY, HUD_COLORS.p2);
     list.number(
       seconds,
-      L.p2X + 24,
+      L.p2X + HUD_CLOCK_DX,
       L.topY,
       0,
       seconds <= 10 ? HUD_COLORS.bossLabel : HUD_COLORS.number,
@@ -2446,11 +2547,11 @@ function topScore(
   if (state === HudPlayerState.Join) {
     // Written only when a co-op HUD needs it (a one-player HUD list may have 4 string slots).
     list.setString(S.pressStart, text.pressStart);
-    if (blinkOn) list.text(S.pressStart, x + 16, L.topY, HUD_COLORS.prompt);
+    if (blinkOn) list.text(S.pressStart, x + HUD_SCORE_DX, L.topY, HUD_COLORS.prompt);
   } else if (state === HudPlayerState.Absent) {
-    list.text(S.dashes, x + 16, L.topY, HUD_COLORS.inactive);
+    list.text(S.dashes, x + HUD_SCORE_DX, L.topY, HUD_COLORS.inactive);
   } else {
-    list.number(score, x + 16, L.topY, L.digits, HUD_COLORS.number);
+    list.number(score, x + HUD_SCORE_DX, L.topY, L.digits, HUD_COLORS.number);
   }
 }
 
@@ -2614,22 +2715,24 @@ function buildDirectPips(world: World, list: DrawList, text: UiText): void {
   list.text(S.shot, L.shotX, y, HUD_COLORS.pipLabel);
   const shotTop = directMaxLevel(family);
   const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
-  drawPips(list, L.shotX + 26, 5, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
+  drawPips(list, L.shotX + HUD_SHOT_PIPS_DX, 5, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
   list.text(S.sub, L.subX, y, HUD_COLORS.pipLabel);
   const subTop = directMaxLevel(world.weapons.subFamily);
-  drawPips(list, L.subX + 20, 5, subTop, loadout.sub, HUD_COLORS.subPip, HUD_COLORS.pipOff);
+  const subPipsX = L.subX + HUD_TIER_PIPS_DX;
+  drawPips(list, subPipsX, 5, subTop, loadout.sub, HUD_COLORS.subPip, HUD_COLORS.pipOff);
   list.text(S.arm, L.armX, y, HUD_COLORS.pipLabel);
   const shield = ship.shield;
   if (shieldActive(shield) && shield.kind === ShieldKind.Arm && shield.tier >= 1) {
     const tier = shield.tier > HUD_ARM_COLORS.length ? HUD_ARM_COLORS.length : shield.tier;
     const max = shield.maxHits > 5 ? 5 : shield.maxHits;
-    drawPips(list, L.armX + 20, 6, max, shield.hits, HUD_ARM_COLORS[tier - 1], HUD_COLORS.pipOff);
+    const on = HUD_ARM_COLORS[tier - 1];
+    drawPips(list, L.armX + HUD_TIER_PIPS_DX, 6, max, shield.hits, on, HUD_COLORS.pipOff);
   }
   list.text(S.speed, L.speedX, y, HUD_COLORS.pipLabel);
   const speeds = world.ship.speeds.length > 5 ? 5 : world.ship.speeds.length;
   drawPips(
     list,
-    L.speedX + 20,
+    L.speedX + HUD_TIER_PIPS_DX,
     6,
     speeds,
     ship.speedLevel + 1,
@@ -2674,12 +2777,21 @@ function coopDirectPips(
   const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
   list.text(S.shortShot, ox + L.coopShotX, y, HUD_COLORS.pipLabel);
   const shotTop = directMaxLevel(family);
-  drawPips(list, ox + L.coopShotX + 13, 4, shotTop, loadout.shot, color, HUD_COLORS.pipOff, 3);
+  drawPips(
+    list,
+    ox + L.coopShotX + HUD_COOP_PIPS_DX,
+    4,
+    shotTop,
+    loadout.shot,
+    color,
+    HUD_COLORS.pipOff,
+    3,
+  );
   list.text(S.shortSub, ox + L.coopSubX, y, HUD_COLORS.pipLabel);
   const subTop = directMaxLevel(world.weapons.subFamily);
   drawPips(
     list,
-    ox + L.coopSubX + 13,
+    ox + L.coopSubX + HUD_COOP_PIPS_DX,
     4,
     subTop,
     loadout.sub,
@@ -2693,12 +2805,30 @@ function coopDirectPips(
     const tier = shield.tier > HUD_ARM_COLORS.length ? HUD_ARM_COLORS.length : shield.tier;
     const max = shield.maxHits > 5 ? 5 : shield.maxHits;
     const on = HUD_ARM_COLORS[tier - 1];
-    drawPips(list, ox + L.coopArmX + 13, 4, max, shield.hits, on, HUD_COLORS.pipOff, 3);
+    drawPips(
+      list,
+      ox + L.coopArmX + HUD_COOP_PIPS_DX,
+      4,
+      max,
+      shield.hits,
+      on,
+      HUD_COLORS.pipOff,
+      3,
+    );
   }
   list.text(S.shortSpeed, ox + L.coopSpeedX, y, HUD_COLORS.pipLabel);
   const speeds = world.ship.speeds.length > 5 ? 5 : world.ship.speeds.length;
   const lit = ship.speedLevel + 1;
-  drawPips(list, ox + L.coopSpeedX + 13, 4, speeds, lit, HUD_COLORS.speedPip, HUD_COLORS.pipOff, 3);
+  drawPips(
+    list,
+    ox + L.coopSpeedX + HUD_COOP_PIPS_DX,
+    4,
+    speeds,
+    lit,
+    HUD_COLORS.speedPip,
+    HUD_COLORS.pipOff,
+    3,
+  );
 }
 
 /** Values the HUD compares per player (M2-06: both players' power and state). */
