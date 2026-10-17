@@ -107,7 +107,7 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
   and enemies 60, C = fx, items, endings, stages and tiles 73 with `fx/black-hole/armed-scene` first), plus agent D's
   slot-a regenerations of `enemy/halo-crystal` and `tiles/azure-verge`. Followups land at
   `candidates/<winner slot>/<followup id>.png`; the patched picker shows each next to its winner.
-- **FLUX.2 results so far** (agent C still running, 54 of 73 done on 2026-10-17 18:00):
+- **FLUX.2 results** (all four agents done on 2026-10-17; 199 followups + 2 regenerations, 0 failed):
   - **D** (slot-a regenerations): `enemy/halo-crystal` ok, exactly six satellites on a hexagon, clean key, first try;
     `tiles/azure-verge` ok, 0 % key-like pixels, a front-on fern ledge on teal stone, third try (try 1 was a framed block
     on white, try 2 had white gaps between the leaf tips). Round-1 slot-a files archived to `candidates/history/2026-10-17/a/`.
@@ -117,8 +117,18 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
   - **B** (60 craft, logo and enemy followups): 48 ok, 12 weak, 0 failed (113 runs). Animation sheets barely animate
     (cells nearly the same pose): the KESTREL and MANTA in-game sheets, Option frames, several enemies.
     **`enemy/sentinel-walker/zone-encounter` is mirrored in all three tries — flip it horizontally.**
-  - **C** so far: `fx/black-hole/armed-scene` weak (three spiral arms and pink orbs streaming at the core, but about ten
-    bullets drawn as small red canisters and the trails read as outward).
+  - **C** (73 fx, item, ending, stage and tile followups): 47 ok, 26 weak, 0 failed (174 runs, about 5 h of GPU time
+    shared with A, B and D).
+    - `fx/black-hole/armed-scene` weak (three spiral arms and pink orbs streaming at the core, but about ten bullets
+      drawn as small red canisters and the trails read as outward) — one more try follows, it is the LTX source.
+    - Endings' second panels, posters, most layers and the store capsule: ok. The DUNE poster's fighter faces left in
+      all three tries — flip it horizontally.
+    - Weak, to paint out at cleanup: orbs drawn into four backdrop layers (BRINE near; DUNE far; TEMPEST mid and near).
+    - Tilesets: asked for a 4×5 grid of 20; only DUNE and CELL VAULT came out with 20 (others 16, 22, 24 or 30), and
+      DUNE and PRISM have 3D blocks.
+    - The darker DUNE / TEMPEST / BRINE far layers meet the median ≤ 64 / p95 ≤ 140 budget but crush 36–45 % of the
+      pixels below luma 16 (lift the darks at ingest); the TEMPEST mid-far ridge ignored the darker request (113 / 225).
+    - Animation sheets again barely move (black-hole spin frames); the special-capsules sheet kept its reference's 4×4.
   - Per-job tables: the agents' `results` files in the orchestrator's scratchpad (`flux2-r2-A/`, `-B/`, `-C/`, `-D/`).
 - **Prompt lessons from FLUX.2 (edit mode):**
   - In scene followups the small player craft is drawn from behind, pointing up or facing left, or as a generic jet.
@@ -128,6 +138,10 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
   - Bullets drift to pills, cylinders or canisters; "lone round glowing orb" fixes most.
   - Multi-cell sheets: FLUX.2 redraws the whole subject per cell, changes the grid and adds gutter lines; frames of an
     animation stay nearly identical.
+  - A closing sentence about the enemy bullets ("round glowing orbs …") in a backdrop layer's prompt makes FLUX.2 draw
+    orbs into the backdrop: leave it out of layer prompts.
+  - Layers copy the reference scene or come out as a filled strip in a box; "a skyline against the key" or "separate
+    pieces" fixes most. Grid counts in tileset prompts are not kept.
 - **Still to do, in order (one model at a time, `server.sh stop` + `verify` after each):**
   1. While FLUX.2 is still loaded: one retry of `fx/black-hole/armed-scene` (round orbs, streaming inward) — it is the
      LTX source.
