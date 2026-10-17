@@ -1,6 +1,6 @@
 {
   "id": "dev.shmupcup.game",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "vendor": "Shmup Cup",
   "type": "web",
   "main": "index.html",

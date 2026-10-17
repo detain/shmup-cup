@@ -315,23 +315,34 @@ describe('tooling: test concurrency', () => {
   });
 });
 
-describe('tooling: the release version (M2-18)', () => {
-  /** The release candidate of v1.0 (plan M2-18). */
-  const RELEASE = '1.0.0-rc.1';
+describe('tooling: the release version (M2-18; the v1.x maintenance line)', () => {
+  /**
+   * The v1.x line's development version: the next fix release after v1.0.0, which carries a
+   * `-dev` pre-release tag until it is cut as 1.0.1 (tag `v1.0.1`).
+   */
+  const VERSION = '1.0.1-dev';
+  /** The last release made from this line (tag `v1.0.0`, 2026-10-16). */
+  const LAST_RELEASE = '1.0.0';
 
-  it('gives the root and every workspace project the same release version', () => {
-    expect(root.version).toBe(RELEASE);
-    expect(semver.valid(root.version)).toBe(RELEASE);
-    expect(semver.prerelease(root.version ?? '')).toEqual(['rc', 1]);
+  it('gives the root and every workspace project the same version', () => {
+    expect(root.version).toBe(VERSION);
+    expect(semver.valid(root.version)).toBe(VERSION);
+    expect(semver.prerelease(root.version ?? '')).toEqual(['dev']);
+    expect(semver.gt(VERSION, LAST_RELEASE)).toBe(true);
     for (const project of projects) {
       expect(readJson<{ version: string }>(`${project}/package.json`).version, project).toBe(
-        RELEASE,
+        VERSION,
       );
     }
   });
 
-  it('has a CHANGELOG section for it', () => {
-    expect(read('CHANGELOG.md')).toContain(`## [${RELEASE}]`);
+  it('has a CHANGELOG section for the last release, below an [Unreleased] one', () => {
+    const changelog = read('CHANGELOG.md');
+    const unreleased = changelog.indexOf('\n## [Unreleased]\n');
+    const last = changelog.indexOf(`\n## [${LAST_RELEASE}] — 2026-10-16\n`);
+    expect(unreleased).toBeGreaterThan(-1);
+    expect(last).toBeGreaterThan(unreleased);
+    expect(changelog).toContain(`## [1.0.0-rc.1]`);
   });
 
   it('offers pnpm store:assets for the icons and the store-listing placeholders', () => {

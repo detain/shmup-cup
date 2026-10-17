@@ -8,6 +8,10 @@
   in TypeScript, at 60 frames a second, on a TV remote.
 </p>
 
+> **This is the `v1.x` branch** — the maintenance line of the released v1 game (384×216), for
+> fixes only. v2, the 640×360 remaster with all-new art and longer levels, is developed on
+> [`master`](https://github.com/detain/shmup-cup/tree/master).
+
 ---
 
 Shmup Cup is a side-scrolling shooter in the spirit of the 16-bit arcade classics: a fixed
@@ -252,8 +256,16 @@ the [World and its tick](docs/dev/sim-world.md), [stages](docs/dev/stage-runtime
 
 ## Status
 
-Version **1.0.0-rc.1** — a feature-complete release candidate. Everything described on this page is
-implemented, tested and playable from the title screen to the credits.
+Version **1.0.0**, released on 2026-10-16 (tag
+[`v1.0.0`](https://github.com/detain/shmup-cup/releases/tag/v1.0.0)). Everything described on this
+page is implemented, tested and playable from the title screen to the credits.
+
+**This branch, `v1.x`, is the v1 maintenance line** (version `1.0.1-dev`, releases `1.0.1`,
+`1.0.2`, … tagged `v1.0.N`). It takes bug fixes, fixes from the first hardware runs,
+store-submission changes and translation corrections — never resolution, art, level or balance
+changes. Those belong to **v2**, the 640×360 remaster, which is developed on
+[`master`](https://github.com/detain/shmup-cup/tree/master); a fix that applies to both lines lands
+here first.
 
 What is *not* done is everything that needs hardware, an account or a person: the game has never
 been installed on the Samsung monitors it was written for, never run on an LG set, never spoken to

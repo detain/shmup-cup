@@ -29,7 +29,7 @@ describe('tizen/public/config.xml consistency', () => {
     expect(APP_ID.startsWith(`${attr('tizen:application', 'package') ?? '?'}.`)).toBe(true);
   });
 
-  it('carries the release version of the package manifests (1.0.0-rc.1 = the M2 release candidate)', () => {
+  it('carries the numeric core of the package manifests’ version (1.0.1-dev → 1.0.1)', () => {
     const pkg = JSON.parse(
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as { version: string };

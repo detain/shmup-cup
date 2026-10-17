@@ -47,9 +47,13 @@ describe('tizen config.xml validator edges', () => {
     expect(problems(XML.replace(' xmlns:tizen="http://tizen.org/ns/widgets"', ''))).toMatch(
       /xmlns:tizen/,
     );
-    expect(problems(XML.replace('version="1.0.0"', 'version="1.0"'))).toMatch(
-      /major\.minor\.patch/,
+    // Whatever the release, a two-part widget version is refused.
+    const twoPart = XML.replace(
+      /(<widget\b[^>]*\bversion=")[^"]*"/,
+      (_all, head: string) => `${head}1.0"`,
     );
+    expect(twoPart).not.toBe(XML);
+    expect(problems(twoPart)).toMatch(/major\.minor\.patch/);
   });
 
   it('checks the application id, its package prefix and the required version', () => {

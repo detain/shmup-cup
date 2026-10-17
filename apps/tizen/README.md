@@ -14,8 +14,8 @@ pnpm --filter @shmup/tizen tizen:watch     # M2-17: dev build + live reload to t
 pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
-The package version is **1.0.0-rc.1** (M2-18, the v1.0 release candidate); the widget version in
-`public/config.xml` is **1.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget
+The package version is **1.0.1-dev** (the `v1.x` maintenance line after the v1.0.0 release); the
+widget version in `public/config.xml` is **1.0.1** — Tizen accepts `major.minor.patch` numbers only, so the widget
 takes the numeric core of the package's version, kept in step by a test
 (`test/config-xml/config-xml-consistency.test.ts`). Never write a pre-release tag into
 `config.xml`.
@@ -92,7 +92,7 @@ developer guide: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-repl
   keys registered once, only on the unlock);
 - `test/build/tizen-build.test.ts` also asserts that the release bundle holds no debug code, and
   `test/config-xml/` that `config.xml`'s version is the package's numeric core (M1-19; since
-  M2-18 `1.0.0` for `1.0.0-rc.1`); since M2-18 the build test also asserts that the release
+  M2-18 `1.0.0` for `1.0.0-rc.1`, on `v1.x` `1.0.1` for `1.0.1-dev`); since M2-18 the build test also asserts that the release
   bundle holds no cross-engine determinism check (`__shmupDeterminism`).
 
 `pnpm test:e2e` (repo root) builds `build:test` and opens `dist/index.html` via `file://` in

@@ -6,6 +6,26 @@ versions before 1.0 may change anything between minor releases. Development foll
 
 ## [Unreleased]
 
+The **v1.x maintenance line** — the 384×216 game of v1.0.0, maintained on the `v1.x` branch for
+fixes only: bug fixes, fixes from the first hardware runs, store-submission changes and translation
+corrections. Resolution, art, level and balance changes never land here; v2, the 640×360 remaster,
+is developed on `master`. The next release from this line is **1.0.1** (tag `v1.0.1`).
+
+### For developers
+
+- The version is **`1.0.1-dev`** in every `package.json` (root, `packages/*`, `apps/*`); the Tizen
+  widget's `config.xml`, the webOS `appinfo.json` and the store listing (`scripts/store-assets.mjs`)
+  take its numeric core, **`1.0.1`**, since both TVs accept `major.minor.patch` only.
+- CI runs on pushes to `v1.x` as well as `master`.
+- `art-prompts/` (the AI art prompt library, standalone tooling like `tools/`) is kept out of
+  Prettier and ESLint.
+
+## [1.0.0] — 2026-10-16
+
+**Shmup Cup 1.0.0**, tagged `v1.0.0` with a GitHub release on 2026-10-16. The tag's package
+manifests still say `1.0.0-rc.1` (the Tizen widget and the webOS app say `1.0.0`) and its CHANGELOG
+called this section "[Unreleased]"; this heading records what the tag shipped.
+
 The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 … M3-03), which is
 now **complete**, and with it the whole plan: **45 of 45 steps**. What remains needs an account, a
 device or a human nobody here has: plan §8.7 (an LG webOS set), §8.8 (Steam and a Steam Deck) and
@@ -915,6 +935,7 @@ widget bundle (`pnpm --filter @shmup/tizen build` → a checked `dist/` ready to
   [`debug-and-replays.md`](docs/dev/debug-and-replays.md) for the M1-19 tooling, and the
   [API reference](docs/dev/api-reference.md).
 
-[Unreleased]: https://github.com/detain/shmup-cup/commits/master
+[Unreleased]: https://github.com/detain/shmup-cup/compare/v1.0.0...v1.x
+[1.0.0]: https://github.com/detain/shmup-cup/releases/tag/v1.0.0
 [1.0.0-rc.1]: https://github.com/detain/shmup-cup/tree/master
 [0.1.0]: https://github.com/detain/shmup-cup/tree/master
