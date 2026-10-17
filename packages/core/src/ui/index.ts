@@ -122,6 +122,7 @@
  *
  * @module
  */
+import { FRAME_CX, FRAME_CY, GLYPH_H, GLYPH_W, LINE_H } from '../config/index.js';
 import type { ContentDb } from '../data/index.js';
 import { SFX_CUES } from '../events/index.js';
 import {
@@ -1166,8 +1167,28 @@ export const UI_COLORS = Object.freeze({
 /** The cursor glyph drawn left of the focused item (`→` is in the pixel font). */
 const CURSOR = '→';
 
-/** Width in pixels of a slider's bar. */
-const SLIDER_BAR_W = 50;
+// The UI kit's text-relative sizes (plan_resolution.md R1-01) derive from the bitmap font's metrics
+// (`core/config` GLYPH_W / GLYPH_H / LINE_H), so they grow with the font; the numbers in
+// parentheses are their values at the 6×8 font. Gaps, paddings and bar thicknesses stay pixel
+// literals.
+
+/**
+ * Width in pixels of a slider's bar: eight glyph cells and 2 px (50), so it grows with the text of
+ * the value column it sits in.
+ */
+const SLIDER_BAR_W = 8 * GLYPH_W + 2;
+
+/** Default row pitch of {@link drawMenu} (and the rebind panel): a line of text and 2 px (12). */
+const MENU_LINE_H = LINE_H + 2;
+
+/** Default distance from a menu label's x back to the cursor glyph: the glyph and 4 px (10). */
+const MENU_CURSOR_DX = GLYPH_W + 4;
+
+/**
+ * Default distance from a menu label's x to its value column (a slider, `ON` / `OFF`, a choice's
+ * label): room for a 13-glyph label and 2 px (80).
+ */
+const MENU_VALUE_DX = 13 * GLYPH_W + 2;
 
 /**
  * Draws a framed box: a translucent fill and a 1-px border.
@@ -1204,13 +1225,16 @@ export interface MenuLayout {
   readonly x: number;
   /** Top of the first item. */
   readonly y: number;
-  /** Row pitch (default 12). */
+  /** Row pitch (default a font line and 2 px: `LINE_H + 2`, 12). */
   readonly lineHeight?: number;
   /** {@link TextAlign} of the labels (default Left). */
   readonly align?: number;
-  /** X of the cursor glyph (default `x - 10`). */
+  /** X of the cursor glyph (default a glyph cell and 4 px left of the label: `x − GLYPH_W − 4`). */
   readonly cursorX?: number;
-  /** X of a slider's bar / a toggle's `ON` / `OFF` / a choice's label (default `x + 80`). */
+  /**
+   * X of a slider's bar / a toggle's `ON` / `OFF` / a choice's label (default 13 glyph cells and
+   * 2 px right of `x`: `x + 80` at the 6-px cell).
+   */
   readonly valueX?: number;
 }
 
@@ -1258,10 +1282,10 @@ export function drawMenu(
 ): number {
   const items = menu.items;
   const n = items.length;
-  const lineHeight = layout.lineHeight ?? 12;
+  const lineHeight = layout.lineHeight ?? MENU_LINE_H;
   const align = layout.align ?? TextAlign.Left;
-  const cursorX = layout.cursorX ?? layout.x - 10;
-  const valueX = layout.valueX ?? layout.x + 80;
+  const cursorX = layout.cursorX ?? layout.x - MENU_CURSOR_DX;
+  const valueX = layout.valueX ?? layout.x + MENU_VALUE_DX;
   const onSlot = stringBase + n;
   const offSlot = onSlot + 1;
   const cursorSlot = onSlot + 2;
@@ -1303,6 +1327,12 @@ export function drawMenu(
 export const CONFIRM_STRING_SLOTS = 4;
 
 /**
+ * Distance from a YES / NO choice's centre back to {@link drawConfirm}'s cursor glyph: three glyph
+ * cells (18) — half a three-letter word, a gap and the cursor.
+ */
+const CONFIRM_CURSOR_DX = 3 * GLYPH_W;
+
+/**
  * Draws a YES / NO prompt centred at a point: a panel, the question (up to two lines) and the two
  * choices, the focused one highlighted with the cursor.
  *
@@ -1339,13 +1369,28 @@ export function drawConfirm(
   const noX = Math.round(cx + 32);
   const row = y + h - 16;
   const yes = confirm.focus === ConfirmChoice.Yes;
-  list.text(stringBase + 3, (yes ? yesX : noX) - 18, row, UI_COLORS.focus);
+  list.text(stringBase + 3, (yes ? yesX : noX) - CONFIRM_CURSOR_DX, row, UI_COLORS.focus);
   list.text(stringBase + 1, yesX, row, yes ? UI_COLORS.focus : UI_COLORS.text, TextAlign.Center);
   list.text(stringBase + 2, noX, row, yes ? UI_COLORS.text : UI_COLORS.focus, TextAlign.Center);
 }
 
-/** Pitch in pixels between two letters of {@link drawNameEntry}. */
-const NAME_CELL_PITCH = 16;
+/** Pitch in pixels between two letters of {@link drawNameEntry}: a glyph cell and 10 px (16). */
+const NAME_CELL_PITCH = GLYPH_W + 10;
+
+/** Width of a letter's underline in {@link drawNameEntry}: a glyph cell and 2 px a side (10). */
+const NAME_LINE_W = GLYPH_W + 4;
+
+/** Width of `END`'s underline in {@link drawNameEntry}: three glyph cells and 2 px (20). */
+const NAME_END_LINE_W = 3 * GLYPH_W + 2;
+
+/** Rows from the letters' top to their underline: a glyph and 2 px (10). */
+const NAME_LINE_DY = GLYPH_H + 2;
+
+/** Rows from the letters' top up to the `↑` above the cursor: a glyph and 3 px (11). */
+const NAME_UP_DY = GLYPH_H + 3;
+
+/** Rows from the letters' top down to the `↓` below the cursor: a glyph and 5 px (13). */
+const NAME_DOWN_DY = GLYPH_H + 5;
 
 /**
  * Draws a name entry centred at a point: one cell per letter (the letter, or `_` while empty,
@@ -1385,7 +1430,7 @@ export function drawNameEntry(
   list.setString(blankSlot, '_');
   const left = Math.round(cx - ((n + 2) * NAME_CELL_PITCH) / 2);
   for (let i = 0; i < n; i++) {
-    const x = left + i * NAME_CELL_PITCH + NAME_CELL_PITCH / 2;
+    const x = left + i * NAME_CELL_PITCH + (NAME_CELL_PITCH >> 1);
     const focused = entry.cursor === i && !entry.done;
     const color = focused && !blinkOff ? UI_COLORS.focus : UI_COLORS.text;
     const letter = entry.letter(i);
@@ -1395,10 +1440,16 @@ export function drawNameEntry(
     } else {
       list.text(blankSlot, x, y, UI_COLORS.disabled, TextAlign.Center);
     }
-    list.rect(x - 5, y + 10, 10, 1, focused ? UI_COLORS.focus : UI_COLORS.border);
+    list.rect(
+      x - (NAME_LINE_W >> 1),
+      y + NAME_LINE_DY,
+      NAME_LINE_W,
+      1,
+      focused ? UI_COLORS.focus : UI_COLORS.border,
+    );
     if (focused && !blinkOff) {
-      list.text(upSlot, x, y - 11, UI_COLORS.focus, TextAlign.Center);
-      list.text(downSlot, x, y + 13, UI_COLORS.focus, TextAlign.Center);
+      list.text(upSlot, x, y - NAME_UP_DY, UI_COLORS.focus, TextAlign.Center);
+      list.text(downSlot, x, y + NAME_DOWN_DY, UI_COLORS.focus, TextAlign.Center);
     }
   }
   const endX = left + n * NAME_CELL_PITCH + NAME_CELL_PITCH;
@@ -1410,7 +1461,9 @@ export function drawNameEntry(
     onEnd && !blinkOff ? UI_COLORS.focus : onEnd ? UI_COLORS.text : UI_COLORS.disabled,
     TextAlign.Center,
   );
-  if (onEnd) list.rect(endX - 10, y + 10, 20, 1, UI_COLORS.focus);
+  if (onEnd) {
+    list.rect(endX - (NAME_END_LINE_W >> 1), y + NAME_LINE_DY, NAME_END_LINE_W, 1, UI_COLORS.focus);
+  }
 }
 
 // ------------------------------------------------------------------------------ rebind (M2-16)
@@ -1735,6 +1788,12 @@ export function rebindStringSlots(panel: RebindPanel): number {
 }
 
 /**
+ * The rebind prompt's capture box (the prompt, the hint and the countdown bar), centred on the
+ * frame (R1-01: at 72, 84 in the 384×216 frame).
+ */
+const CAPTURE_PANEL = Object.freeze({ x: FRAME_CX - 120, y: FRAME_CY - 24, w: 240, h: 48 });
+
+/**
  * Draws a rebind widget: the context's rows ({@link drawMenu}) with each action's keys at the
  * layout's value column, the message line below them and — while capturing — the prompt in a box
  * over the rows with its hint and a bar draining over {@link REBIND_CAPTURE_TICKS}.
@@ -1760,8 +1819,8 @@ export function drawRebindPanel(
 ): void {
   const menu = panel.menu;
   const bottom = drawMenu(list, menu, stringBase, layout, text);
-  const lineHeight = layout.lineHeight ?? 12;
-  const valueX = layout.valueX ?? layout.x + 80;
+  const lineHeight = layout.lineHeight ?? MENU_LINE_H;
+  const valueX = layout.valueX ?? layout.x + MENU_VALUE_DX;
   const keys = panel.keys[panel.contextChoice.index] ?? panel.keys[0];
   const keyBase = stringBase + panel.menuSlots;
   for (let i = 0; i < keys.length; i++) {
@@ -1778,18 +1837,19 @@ export function drawRebindPanel(
   const messageSlot = keyBase + panel.maxRows;
   if (panel.message !== '') {
     list.setString(messageSlot, panel.message);
-    list.text(messageSlot, 192, bottom + 4, UI_COLORS.focus, TextAlign.Center);
+    list.text(messageSlot, FRAME_CX, bottom + 4, UI_COLORS.focus, TextAlign.Center);
   }
   if (!panel.capturing) return;
-  const x = 72;
-  const y = 84;
-  const w = 240;
-  const h = 48;
+  const p = CAPTURE_PANEL;
+  const x = p.x;
+  const y = p.y;
+  const w = p.w;
+  const h = p.h;
   drawPanel(list, x, y, w, h, UI_COLORS.panel, UI_COLORS.focus, 255);
   list.setString(messageSlot + 1, panel.prompt);
   list.setString(messageSlot + 2, hint);
-  list.text(messageSlot + 1, 192, y + 8, UI_COLORS.focus, TextAlign.Center);
-  list.text(messageSlot + 2, 192, y + 22, UI_COLORS.disabled, TextAlign.Center);
+  list.text(messageSlot + 1, FRAME_CX, y + 8, UI_COLORS.focus, TextAlign.Center);
+  list.text(messageSlot + 2, FRAME_CX, y + 22, UI_COLORS.disabled, TextAlign.Center);
   const left = REBIND_CAPTURE_TICKS - panel.captureTicks;
   const bar = left > 0 ? Math.floor(((w - 40) * left) / REBIND_CAPTURE_TICKS) : 0;
   list.rect(x + 20, y + h - 10, w - 40, 3, UI_COLORS.track);
