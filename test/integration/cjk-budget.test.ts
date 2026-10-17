@@ -16,8 +16,16 @@
  * job never runs `pnpm assets`, so a disk-reading version passed locally off a stale artifact and
  * failed on every clean checkout. `buildAtlas()` is deterministic (~0.6 s) and always present.
  *
- * Nothing here is a budget: the assertions are on the *documentation* agreeing with the *build*.
- * If the atlas legitimately grows, this test fails and the six documents are updated with it.
+ * **Since R1-05 the shipped atlas is split into zone pages** (`common` + one group per campaign
+ * zone, `assets/source/atlas-groups.json`). The arithmetic is about *how much art* there is, so
+ * it is measured on the same art packed as **one page** — `buildAtlas({ ungrouped: true })`, the
+ * layout M3-03 measured, byte for byte (also the TV bench's model). The occupied area is the
+ * same in both. The shipped split is held to a **budget**, not a page count: every page within
+ * the packer's limit, and every page's PNG bytes summed under {@link ATLAS_PNG_BYTES_CAP}.
+ *
+ * Otherwise nothing here is a budget: the assertions are on the *documentation* agreeing with the
+ * *build*. If the art legitimately grows, this test fails and the six documents are updated with
+ * it.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -33,18 +41,38 @@ import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** The atlas as the pipeline builds it — byte for byte what `pnpm assets` writes. */
-const built = buildAtlas();
+/** The atlas as the pipeline builds it — byte for byte what `pnpm assets` writes (zone-split). */
+const shipped = buildAtlas();
+
+/** The same art on one page (no groups): the atlas the M3-03 arithmetic is measured against. */
+const built = buildAtlas({ ungrouped: true });
 const atlas = built.manifest;
 
-/** Pixels every frame of the atlas occupies, summed — the "occupied area" the docs quote. */
-const OCCUPIED_PIXELS = Object.keys(atlas.frames).reduce((sum, name) => {
-  const frame = atlas.frames[name];
-  return sum + frame.w * frame.h;
-}, 0);
+/**
+ * Pixels every frame of an atlas occupies, summed — the "occupied area" the docs quote.
+ *
+ * @param manifest - The atlas manifest.
+ * @param manifest.frames - Its frames.
+ * @returns The area in pixels.
+ */
+const occupied = (manifest: { frames: Record<string, { w: number; h: number }> }): number =>
+  Object.keys(manifest.frames).reduce((sum, name) => {
+    const frame = manifest.frames[name];
+    return sum + frame.w * frame.h;
+  }, 0);
 
-/** Size of the encoded atlas PNG, in bytes (the file `pnpm assets` writes). */
+/** Pixels every frame of the atlas occupies, summed — the "occupied area" the docs quote. */
+const OCCUPIED_PIXELS = occupied(atlas);
+
+/** Size of the encoded one-page atlas PNG, in bytes. */
 const PNG_BYTES = built.pages[0].png.length;
+
+/**
+ * Cap on the shipped atlas's PNG bytes, every page summed (R1-05): the placeholder art takes
+ * ≈ 120 KB split into zone pages (PNG-8 where a page fits a palette). A regression guard for the
+ * encoder and the split; detailed art replaces it with its measured budget (plan R3-04).
+ */
+const ATLAS_PNG_BYTES_CAP = 256 * 1024;
 
 /** Glyphs of the whole JIS X 0208 repertoire (levels 1 and 2), as the docs quote it. */
 const JIS_GLYPHS = 6900;
@@ -78,12 +106,30 @@ const SOURCES = [
   'docs/dev/options-rebinding-and-accessibility.md',
 ];
 
+describe('integration: the shipped atlas stays inside its budget (R1-05)', () => {
+  it('keeps every page inside the packer’s limit and its PNG bytes under the cap', () => {
+    expect(shipped.manifest.pages.length).toBeGreaterThanOrEqual(1);
+    expect(ATLAS_PAGE_MAX_SIZE).toBe(2048);
+    for (const page of shipped.manifest.pages) {
+      expect(page.w, page.file).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
+      expect(page.h, page.file).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
+    }
+    const bytes = shipped.pages.reduce((sum, page) => sum + page.png.length, 0);
+    expect(bytes).toBeLessThan(ATLAS_PNG_BYTES_CAP);
+    expect(ATLAS_PNG_BYTES_CAP).toBeLessThan(DIST_BUDGET);
+  });
+
+  it('holds the same art as the one-page atlas: the split moves frames, never adds any', () => {
+    expect(occupied(shipped.manifest)).toBe(OCCUPIED_PIXELS);
+    expect(Object.keys(shipped.manifest.frames).sort()).toEqual(Object.keys(atlas.frames).sort());
+  });
+});
+
 describe('integration: the atlas the CJK arithmetic is measured against (M3-03)', () => {
-  it('is one 1024² page inside the packer’s limit', () => {
+  it('is one 1024² page inside the packer’s limit when packed without groups', () => {
     expect(atlas.pages).toHaveLength(1);
     expect([atlas.pages[0].w, atlas.pages[0].h]).toEqual([1024, 1024]);
     expect(atlas.pages[0].w).toBeLessThanOrEqual(ATLAS_PAGE_MAX_SIZE);
-    expect(ATLAS_PAGE_MAX_SIZE).toBe(2048);
   });
 
   it('occupies 479,505 pixels — 46 % of its page — and encodes to 136.6 KB', () => {
@@ -113,7 +159,6 @@ describe('integration: what a real kanji set would cost (M3-03)', () => {
     const bytesPerPixel = PNG_BYTES / OCCUPIED_PIXELS;
     const extraPageBytes = JIS_PIXELS * bytesPerPixel;
     expect(extraPageBytes).toBeLessThan(DIST_BUDGET / 4);
-    expect(DIST_BUDGET).toBe(8 * 1024 * 1024);
     // But it does roughly double what every player downloads and decodes at boot — which is the
     // claim the documents make, and the one that decides it.
     expect(JIS_PIXELS / OCCUPIED_PIXELS).toBeGreaterThan(1.5);

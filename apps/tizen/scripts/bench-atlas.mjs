@@ -3,13 +3,20 @@
  *
  * The bench (`apps/tizen/src/bench`) draws a synthetic scene at 384×216, 640×360 and 960×540 with
  * a density factor `s` = 1, 1.5 and 2.25 — sprites, tiles and font ×s — so the larger frames cost
- * what a denser scene would, not just a bigger empty target. Its art is **the real atlas**
- * (`assets/generated/atlas/`, `pnpm assets`), upscaled ×s with nearest-neighbour **at bench-build
+ * what a denser scene would, not just a bigger empty target. Its art is **the real atlas's art**,
+ * packed **without groups** ({@link benchSourceAtlas}: `buildAtlas({ ungrouped: true })` of the
+ * asset pipeline — every sprite on one page), upscaled ×s with nearest-neighbour **at bench-build
  * time, into the bench's own output** (`dist-bench/assets/atlas/bench-x<s>-<page>.png`). Nothing is
  * ever added to the game's atlas: a new sprite there would shift every sprite id, and with them
  * every golden replay.
  *
- * - **s = 1** is the shipped page and manifest byte for byte (only the page file is renamed).
+ * - **Why ungrouped (R1-05).** The game's atlas is split into a `common` page and one small page
+ *   per zone since R1-05, so the zone residency can unload other zones' art. The bench keeps
+ *   modelling the art as one atlas: its scene draws every kind of sprite at once, its page model
+ *   below reads the pages' area, and R0-02's runs and R0-03's must stay comparable. The ungrouped
+ *   build is the game's one-page atlas of before R1-05, byte for byte.
+ * - **s = 1** is that one-page atlas, page and manifest byte for byte (only the page file is
+ *   renamed).
  * - **s > 1**: every frame is scaled to `round(w·s) × round(h·s)` (at least 1 px; anchors and the
  *   bitmap font's metrics scaled the same way), then re-packed with the pipeline's own packer
  *   (`scripts/assets/packer.mjs` — power-of-two pages ≤ 2048², the same 1-px extrusion and padding)
@@ -26,9 +33,14 @@
  * (`content/fx/*.fx.json`, examples excluded) so the bench needs no game content at all; it exposes
  * both through the virtual module {@link BENCH_MODULE_ID}.
  *
+ * The pages are encoded like the game's atlas pages: lossless PNG-8 where a page has at most 256
+ * colours, else RGBA (`encodePng(…, { indexed: 'auto' })`, decision W3-3 — today's art has more,
+ * so every bench page is RGBA).
+ *
  * **Public API.** {@link BENCH_DENSITIES}, {@link BENCH_MODULE_ID}, {@link BENCH_ATLAS_DIR},
  * {@link densityLabel}, {@link benchPageFile}, {@link scaledSize}, {@link benchPageCount},
- * {@link scaleAtlas}, {@link buildBenchAtlases}, {@link readFxFiles}, {@link shmupRenderBench}.
+ * {@link benchSourceAtlas}, {@link scaleAtlas}, {@link buildBenchAtlases}, {@link readFxFiles},
+ * {@link shmupRenderBench}.
  *
  * @module
  */
@@ -38,7 +50,7 @@ import { fileURLToPath } from 'node:url';
 import { createImage } from '../../../scripts/assets/image.mjs';
 import { MAX_PAGE_SIZE, packRects } from '../../../scripts/assets/packer.mjs';
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
-import { generateAssets } from '../../../scripts/assets/pipeline.mjs';
+import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 
 /** The density factors of the bench's three frame sizes (384×216, 640×360, 960×540). */
 export const BENCH_DENSITIES = Object.freeze([1, 1.5, 2.25]);
@@ -70,7 +82,7 @@ const FX_DIR = fileURLToPath(new URL('../../../content/fx/', import.meta.url));
  *
  * @typedef {object} BenchManifest
  * @property {number} formatVersion - Format version.
- * @property {{ file: string, w: number, h: number }[]} pages - Pages.
+ * @property {{ file: string, w: number, h: number, group?: string }[]} pages - Pages.
  * @property {Record<string, BenchFrame>} frames - Frames by name.
  * @property {Record<string, unknown>} sprites - Sprites by name (unchanged by scaling).
  * @property {Record<string, unknown>} animations - Animations (unchanged).
@@ -139,10 +151,31 @@ export function scaledSize(px, density) {
 }
 
 /**
+ * The atlas the bench scales: the shipped art packed without groups — every sprite on one page,
+ * the game's atlas of before R1-05 byte for byte (see the module docs). Built in memory by the
+ * asset pipeline (`buildAtlas({ ungrouped: true })`, ~0.6 s), so it never reads
+ * `assets/generated/` (git-ignored; CI's test job never runs `pnpm assets`).
+ *
+ * @returns {{ manifest: BenchManifest, pngs: Buffer[] }} The manifest and every page's PNG bytes,
+ *   in page order.
+ * @throws {Error} When an asset source is invalid (the pipeline's `AssetSourceError`).
+ *
+ * @example
+ * const { manifest, pngs } = benchSourceAtlas(); // manifest.pages → [{ file: 'main.png', … }]
+ */
+export function benchSourceAtlas() {
+  const { manifest, pages } = buildAtlas({ ungrouped: true });
+  return {
+    manifest: /** @type {BenchManifest} */ (/** @type {unknown} */ (manifest)),
+    pngs: pages.map((page) => page.png),
+  };
+}
+
+/**
  * How many pages a density's atlas gets: the real pages' area ×s² over one `maxSize²` page,
  * rounded up (see the module docs).
  *
- * @param {BenchManifest} manifest - The shipped manifest.
+ * @param {BenchManifest} manifest - The bench's source manifest ({@link benchSourceAtlas}).
  * @param {number} density - The factor.
  * @param {number} [maxSize] - Largest page edge (default 2048).
  * @returns {number} At least 1.
@@ -307,16 +340,16 @@ export function scaleAtlas(manifest, pages, density, options = {}) {
 }
 
 /**
- * Builds every density's atlas from the shipped one.
+ * Builds every density's atlas from the bench's source atlas.
  *
- * @param {BenchManifest} manifest - The shipped manifest.
- * @param {Buffer[]} pngs - The shipped page files, in manifest order.
+ * @param {BenchManifest} manifest - The source manifest ({@link benchSourceAtlas}).
+ * @param {Buffer[]} pngs - Its page files, in manifest order.
  * @param {readonly number[]} [densities] - The factors (default {@link BENCH_DENSITIES}).
- * @returns {BenchAtlas[]} One atlas per density; density 1 keeps the shipped page bytes.
+ * @returns {BenchAtlas[]} One atlas per density; density 1 keeps the source page bytes.
  *
  * @example
- * const atlases = buildBenchAtlases(manifest, [readFileSync('main.png')]);
- * atlases.map((a) => a.manifest.pages.length); // → [1, 1, 2]
+ * const { manifest, pngs } = benchSourceAtlas();
+ * buildBenchAtlases(manifest, pngs).map((a) => a.manifest.pages.length); // → [1, 1, 2]
  */
 export function buildBenchAtlases(manifest, pngs, densities = BENCH_DENSITIES) {
   /** @type {Image[] | null} */
@@ -342,7 +375,7 @@ export function buildBenchAtlases(manifest, pngs, densities = BENCH_DENSITIES) {
       label: densityLabel(density),
       manifest: scaled.manifest,
       pageUrls: scaled.manifest.pages.map((page) => `${BENCH_ATLAS_DIR}/${page.file}`),
-      png: scaled.pages.map((image) => encodePng(image)),
+      png: scaled.pages.map((image) => encodePng(image, { indexed: 'auto' })),
     };
   });
 }
@@ -367,7 +400,8 @@ export function readFxFiles(dir = FX_DIR) {
 
 /**
  * Vite plugin of the bench builds (`vite.bench.config.ts` of `apps/tizen` and `apps/webos`):
- * builds the density atlases from the (cached) asset pipeline output, emits their pages into
+ * builds the density atlases from {@link benchSourceAtlas} (the shipped art, ungrouped, built in
+ * memory once per Vite run), emits their pages into
  * {@link BENCH_ATLAS_DIR}, serves them from memory on the dev server, and provides
  * {@link BENCH_MODULE_ID}: `export const atlases = [{ density, label, manifest, pageUrls }, …];
  * export const fx = [{ path, data }, …];`.
@@ -392,10 +426,8 @@ export function shmupRenderBench() {
    */
   const ensure = () => {
     if (atlases !== null) return atlases;
-    const generated = generateAssets();
-    const manifest = /** @type {BenchManifest} */ (generated.manifest);
-    const pngs = manifest.pages.map((page) => readFileSync(join(generated.atlasDir, page.file)));
-    atlases = buildBenchAtlases(manifest, pngs);
+    const source = benchSourceAtlas();
+    atlases = buildBenchAtlases(source.manifest, source.pngs);
     return atlases;
   };
 

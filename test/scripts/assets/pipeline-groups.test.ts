@@ -386,6 +386,29 @@ describe('scripts/assets/pipeline — without a groups file', () => {
   });
 });
 
+describe('scripts/assets/pipeline — ungrouped builds (the TV bench, the CJK figures)', () => {
+  it('ignores the groups file and the zone directories: one common group', () => {
+    const { manifest, pages } = buildAtlas({ sourceDir: groupedDir, ungrouped: true });
+    const plainOne = buildAtlas({ sourceDir: plainDir, ungrouped: true });
+    expect(new Set(manifest.pages.map((page) => page.group))).toEqual(new Set(['common']));
+    // The groups file changes nothing then: byte for byte the same atlas without it.
+    expect(manifest).toEqual(plainOne.manifest);
+    pages.forEach((page, i) =>
+      expect(page.png.equals(plainOne.pages[i].png), page.file).toBe(true),
+    );
+    for (const sprite of collectSprites({ sourceDir: groupedDir, ungrouped: true }).sprites) {
+      expect(sprite.group, sprite.name).toBe('common');
+    }
+  });
+
+  it('never reads the groups file, so a broken one is no issue there', () => {
+    const dir = copySources('ungrouped-broken');
+    put(join(dir, ATLAS_GROUPS_FILE), '{ broken');
+    expect(collectSprites({ sourceDir: dir, ungrouped: true }).issues).toEqual([]);
+    expect(collectSprites({ sourceDir: dir }).issues).toHaveLength(1);
+  });
+});
+
 describe('scripts/assets/pipeline — groups file issues', () => {
   it('reports a name the atlas lacks (renamed or removed sprite)', () => {
     const dir = copySources('stale');

@@ -1,8 +1,13 @@
 /**
- * `scripts/bench-atlas.mjs` (plan R0-02): the TV render bench's density atlases — the real atlas
- * upscaled ×s with nearest-neighbour into the bench's own output, never into the game's atlas: the
- * scaling of pixels, extrusion, anchors and font metrics on a tiny fixture, the page model
- * (1, 1, 2 pages for today's atlas) and the shipped density 1 kept byte for byte.
+ * `scripts/bench-atlas.mjs` (plan R0-02): the TV render bench's density atlases — the real atlas's
+ * art upscaled ×s with nearest-neighbour into the bench's own output, never into the game's atlas:
+ * the scaling of pixels, extrusion, anchors and font metrics on a tiny fixture, the page model
+ * (1, 1, 2 pages for today's art) and density 1 kept byte for byte.
+ *
+ * Since R1-05 the game's atlas is split into zone pages; the bench is built from the **ungrouped
+ * re-pack** of the same art (`benchSourceAtlas`, one page — the game's atlas before the split), so
+ * its page counts and R0-02's runs stay comparable. Checked here: the source holds every shipped
+ * frame with the same pixels, in one page.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -11,6 +16,7 @@ import {
   BENCH_MODULE_ID,
   benchPageCount,
   benchPageFile,
+  benchSourceAtlas,
   buildBenchAtlases,
   densityLabel,
   readFxFiles,
@@ -18,12 +24,13 @@ import {
   scaledSize,
   shmupRenderBench,
 } from '../../scripts/bench-atlas.mjs';
+import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { decodePng } from '../../../../scripts/assets/png.mjs';
 import { shippedAtlas } from '../bench/shipped-atlas.js';
 
-/** The shipped atlas, built in memory (`assets/generated/` is not there in CI). */
+/** The bench's source atlas (the shipped art, ungrouped), built in memory. */
 const shipped = shippedAtlas();
-const shippedManifest = shipped.manifest as unknown as Parameters<typeof scaleAtlas>[0];
+const shippedManifest = shipped.manifest;
 const shippedPng = shipped.pngs[0];
 
 /**
@@ -172,7 +179,7 @@ describe('bench-atlas on the shipped atlas', () => {
     }
   });
 
-  it('keeps density 1 as the shipped page, byte for byte', () => {
+  it('keeps density 1 as the ungrouped one-page atlas, byte for byte', () => {
     expect(Buffer.compare(atlases[0].png[0], shippedPng)).toBe(0);
     expect(atlases[0].manifest.frames).toEqual(shippedManifest.frames);
     expect(atlases[0].manifest.pages[0].file).toBe('bench-x1-0.png');
@@ -196,6 +203,43 @@ describe('bench-atlas on the shipped atlas', () => {
     }
     const pagesUsed = new Set(Object.values(atlases[2].manifest.frames).map((frame) => frame.p));
     expect([...pagesUsed].sort()).toEqual([0, 1]);
+  });
+});
+
+describe('bench-atlas source: the ungrouped re-pack of the zone-split game atlas (R1-05)', () => {
+  const game = buildAtlas();
+
+  it('is one page while the game ships common + zone pages', () => {
+    expect(shippedManifest.pages).toHaveLength(1);
+    expect(shipped.pngs).toHaveLength(1);
+    expect(game.manifest.pages.length).toBeGreaterThan(1);
+    expect(game.manifest.pages[0].group).toBe('common');
+  });
+
+  it('holds every frame of the game atlas, pixel for pixel, with the same sizes and anchors', () => {
+    const page = decodePng(shippedPng);
+    const gamePages = game.pages.map((p) => p.image);
+    expect(Object.keys(shippedManifest.frames).sort()).toEqual(
+      Object.keys(game.manifest.frames).sort(),
+    );
+    for (const [name, f] of Object.entries(game.manifest.frames)) {
+      const b = shippedManifest.frames[name];
+      expect([b.w, b.h, b.ax, b.ay], name).toEqual([f.w, f.h, f.ax, f.ay]);
+      const source = gamePages[f.p];
+      for (let y = 0; y < f.h; y++) {
+        const at = ((f.y + y) * source.width + f.x) * 4;
+        const bt = ((b.y + y) * page.width + b.x) * 4;
+        const row = Buffer.from(source.data.subarray(at, at + f.w * 4));
+        expect(row.equals(Buffer.from(page.data.subarray(bt, bt + f.w * 4))), name).toBe(true);
+      }
+    }
+    expect(shippedManifest.sprites).toEqual(game.manifest.sprites);
+    expect(shippedManifest.fonts).toEqual(game.manifest.fonts);
+  });
+
+  it('is built fresh by benchSourceAtlas() with the same bytes', () => {
+    const again = benchSourceAtlas();
+    expect(Buffer.compare(again.pngs[0], shippedPng)).toBe(0);
   });
 });
 

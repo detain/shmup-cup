@@ -189,7 +189,8 @@ describe('integration: a real Vite build through shmupAssets()', () => {
       manifest: typeof manifest;
       pageUrls: string[];
     };
-    expect(assets.pageUrls).toEqual(['assets/atlas/main.png']);
+    // main.png = common, then the zone pages (R1-05).
+    expect(assets.pageUrls).toEqual(manifest.pages.map((p) => `assets/atlas/${p.file}`));
     expect(assets.manifest.sprites['ships/kestrel']).toEqual(manifest.sprites['ships/kestrel']);
   }, 60_000);
 });

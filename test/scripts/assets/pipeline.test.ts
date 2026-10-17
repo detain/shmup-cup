@@ -38,6 +38,7 @@ import {
   buildAtlas,
   computeInputHash,
   generateAssets,
+  pageFileName,
 } from '../../../scripts/assets/pipeline.mjs';
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
@@ -86,9 +87,13 @@ function snapshot(dir: string): Map<string, Buffer> {
 }
 
 describe('scripts/assets/pipeline — buildAtlas', () => {
-  it('describes one page within 2048² and every sprite/frame consistently', () => {
+  it('describes its pages within 2048² and every sprite/frame consistently', () => {
     expect(manifest.formatVersion).toBe(MANIFEST_FORMAT_VERSION);
-    expect(manifest.pages.map((page) => page.file)).toEqual(['main.png']);
+    // main.png = common, then the zone pages (R1-05: assets/source/atlas-groups.json).
+    expect(manifest.pages.map((page) => page.file)).toEqual(
+      manifest.pages.map((_, i) => pageFileName(i)),
+    );
+    expect(manifest.pages[0].group).toBe('common');
     for (const page of manifest.pages) {
       expect(page.w).toBeLessThanOrEqual(2048);
       expect(page.h).toBeLessThanOrEqual(2048);
@@ -131,9 +136,9 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
   });
 
   it('extrudes each frame by one pixel (edges repeated, corners included)', () => {
-    const page = atlas.pages[0].image;
     for (const name of ['ui/pixel#0', 'tiles/terrain-a#0', 'bg/stars-far#0']) {
       const f = manifest.frames[name];
+      const page = atlas.pages[f.p].image;
       for (let x = -1; x <= f.w; x++) {
         const sx = Math.min(Math.max(x, 0), f.w - 1);
         expect(getPixel(page, f.x + x, f.y - 1)).toEqual(getPixel(page, f.x + sx, f.y));
@@ -149,7 +154,6 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
   it('adds a white @flash silhouette sibling for every hitFlash sprite (D30)', () => {
     const withFlash = Object.entries(manifest.sprites).filter(([, s]) => s.flash !== null);
     expect(withFlash.length).toBeGreaterThanOrEqual(10);
-    const page = atlas.pages[0].image;
     for (const [name, sprite] of withFlash) {
       expect(sprite.flash).toBe(`${name}@flash`);
       const flash = manifest.sprites[`${name}@flash`];
@@ -159,6 +163,9 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
         const a = manifest.frames[frame];
         const b = manifest.frames[flash.frames[i]];
         expect([b.w, b.h, b.ax, b.ay]).toEqual([a.w, a.h, a.ax, a.ay]);
+        // A sibling packs with its sprite's group, so both sit on the same page (R1-05).
+        expect(b.p, flash.frames[i]).toBe(a.p);
+        const page = atlas.pages[a.p].image;
         for (let y = 0; y < a.h; y++) {
           for (let x = 0; x < a.w; x++) {
             const src = getPixel(page, a.x + x, a.y + y);
@@ -248,7 +255,7 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
   it('makes ui/pixel a single opaque white pixel and uses 8×8 tiles', () => {
     const f = manifest.frames['ui/pixel#0'];
     expect([f.w, f.h, f.ax, f.ay]).toEqual([1, 1, 0, 0]);
-    expect(getPixel(atlas.pages[0].image, f.x, f.y)).toEqual([255, 255, 255, 255]);
+    expect(getPixel(atlas.pages[f.p].image, f.x, f.y)).toEqual([255, 255, 255, 255]);
     for (const frame of manifest.sprites['tiles/terrain-a'].frames) {
       expect([manifest.frames[frame].w, manifest.frames[frame].h]).toEqual([8, 8]);
     }
@@ -311,7 +318,7 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     writeFileSync(join(src, 'sprites', 'ui', 'pixel.png'), encodePng(red));
     const overridden = buildAtlas({ sourceDir: src });
     const f = overridden.manifest.frames['ui/pixel#0'];
-    expect(getPixel(overridden.pages[0].image, f.x, f.y)).toEqual([255, 0, 0, 255]);
+    expect(getPixel(overridden.pages[f.p].image, f.x, f.y)).toEqual([255, 0, 0, 255]);
   });
 });
 
@@ -380,14 +387,18 @@ describe('scripts/assets/pipeline — generateAssets (disk, cache)', () => {
     const first = generateAssets({ outDir: out1, force: true });
     generateAssets({ outDir: out2, force: true });
     expect(first.cached).toBe(false);
-    expect(first.files).toEqual(['atlas/main.png', 'atlas/main.json']);
+    const pageFiles = manifest.pages.map((page) => `atlas/${page.file}`);
+    expect(first.files).toEqual([...pageFiles, 'atlas/main.json']);
     const a = snapshot(out1);
     const b = snapshot(out2);
-    expect([...a.keys()].sort()).toEqual([CACHE_FILE, 'atlas/main.json', 'atlas/main.png'].sort());
+    expect([...a.keys()].sort()).toEqual([CACHE_FILE, 'atlas/main.json', ...pageFiles].sort());
     for (const [file, bytes] of a)
       expect(Buffer.compare(bytes, b.get(file) ?? Buffer.alloc(0)), file).toBe(0);
     expect(JSON.parse(a.get('atlas/main.json')?.toString() ?? '')).toEqual(manifest);
-    expect(Buffer.compare(a.get('atlas/main.png') ?? Buffer.alloc(0), atlas.pages[0].png)).toBe(0);
+    atlas.pages.forEach((page) => {
+      const written = a.get(`atlas/${page.file}`) ?? Buffer.alloc(0);
+      expect(Buffer.compare(written, page.png), page.file).toBe(0);
+    });
   });
 
   it('skips unchanged inputs, and rebuilds when an output is missing or edited', () => {
@@ -416,14 +427,15 @@ describe('scripts/assets/pipeline — generateAssets (disk, cache)', () => {
     const out = join(tmp, 'changing-out');
     const before = generateAssets({ sourceDir: src, outDir: out });
     mkdirSync(join(out, 'atlas'), { recursive: true });
-    writeFileSync(join(out, 'atlas', 'main-3.png'), 'stale page');
+    const stale = pageFileName(before.manifest.pages.length + 2); // past the last real page
+    writeFileSync(join(out, 'atlas', stale), 'stale page');
     writeFileSync(join(out, 'atlas', 'notes.txt'), 'kept');
     const file = join(src, 'sprites', 'items', 'bonus.sprite.json');
     writeFileSync(file, readFileSync(file, 'utf8').replace('#f8d030', '#f8d040'));
     const after = generateAssets({ sourceDir: src, outDir: out });
     expect(after.cached).toBe(false);
     expect(after.inputHash).not.toBe(before.inputHash);
-    expect(existsSync(join(out, 'atlas', 'main-3.png'))).toBe(false);
+    expect(existsSync(join(out, 'atlas', stale))).toBe(false);
     expect(existsSync(join(out, 'atlas', 'notes.txt'))).toBe(true);
   });
 

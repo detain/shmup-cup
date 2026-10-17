@@ -15,3 +15,27 @@ third-party material.
 Pixel-art JSON here is hand-laid (one row per line) and excluded from Prettier
 (`.prettierignore`); the pipeline validates it and reports every problem as
 `<file>:<json path> message`.
+
+## `atlas-groups.json` — which sprites pack onto a zone's own atlas pages (R1-05)
+
+The atlas is packed **by group**: `common` (page 0, `main.png` — ships, shots, bullets, items,
+fx, the font, UI, HUD, and every sprite more than one zone draws) and one group per campaign zone
+(`zone-a` … `zone-i`: its enemies, boss, backdrops and tiles), each on its own pages, so the
+runtime can unload the other zones' pages. The groups file (format `shmup-atlas-groups@1`) lists
+each zone's sprites by **base name** — `@flash`, `@p2` and the colour-blind palettes follow their
+sprite. A sprite it does not list goes to the zone of a `zone-<id>` directory in its name
+(`enemies/zone-d/bat`), else to `common`; a font always goes to `common`.
+
+The file is **derived from the content, never edited by hand**: a sprite exactly one campaign zone
+names (its stage, enemies, children, bosses, tileset and linked bonus stage) belongs to that
+zone, except the sprites the engine draws everywhere. After a content change that moves a sprite
+between zones, re-derive it and rebuild the atlas:
+
+```sh
+SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts
+pnpm assets
+```
+
+`test/integration/atlas-groups.test.ts` fails while the committed file differs from the
+derivation. Sprite names, their order and frame names never depend on the grouping (only page
+positions do), so a re-derivation changes no golden replay.

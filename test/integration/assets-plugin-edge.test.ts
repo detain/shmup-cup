@@ -158,7 +158,7 @@ describe('integration: shmupAssets() hooks (edge)', () => {
     expect(hook(plugin, 'load', '\0' + ASSETS_INLINE_MODULE_ID)).toBe(inline);
     expect(inline.split('\n')).toEqual([
       `export const manifest = ${JSON.stringify(reference.manifest)};`,
-      `export const pageUrls = ${JSON.stringify([`${ATLAS_URL_DIR}/main.png`])};`,
+      `export const pageUrls = ${JSON.stringify(reference.manifest.pages.map((p) => `${ATLAS_URL_DIR}/${p.file}`))};`,
       'export default { manifest, pageUrls };',
       '',
     ]);
@@ -211,7 +211,7 @@ describe('integration: shmupAssets() dev middleware (edge)', () => {
         'main.png.tmp',
         'sub/main.png',
         'main.txt',
-        'main-7.png',
+        `main-${reference.manifest.pages.length + 7}.png`, // no such page
         '%2e%2e%2f.asset-cache.json',
         '..%2F..%2Fpackage.json',
         '%E0%A4%A.png',
@@ -457,18 +457,16 @@ describe('integration: shmupAssets() builds (edge)', () => {
       .filter((f) => f.type === 'asset')
       .map((f) => f.fileName)
       .sort();
-    expect(assets).toEqual([
-      `${ATLAS_URL_DIR}/main-1.png`,
-      `${ATLAS_URL_DIR}/main.json`,
-      `${ATLAS_URL_DIR}/main.png`,
-    ]);
+    // The backdrop is common: common takes two pages, then the zone pages follow (R1-05).
+    const count = reference.manifest.pages.length + 1;
+    const urls = Array.from({ length: count }, (_, i) =>
+      i === 0 ? `${ATLAS_URL_DIR}/main.png` : `${ATLAS_URL_DIR}/main-${i}.png`,
+    );
+    expect(assets).toEqual([...urls, `${ATLAS_URL_DIR}/main.json`].sort());
     const chunk = files.find((f) => f.type === 'chunk');
     const realm = createContext({});
     runInContext(chunk?.type === 'chunk' ? chunk.code : '', realm);
-    expect(runInContext('globalThis.urls', realm)).toEqual([
-      `${ATLAS_URL_DIR}/main.png`,
-      `${ATLAS_URL_DIR}/main-1.png`,
-    ]);
+    expect(runInContext('globalThis.urls', realm)).toEqual(urls);
     for (const f of files) {
       if (f.type !== 'asset') continue;
       const onDisk = readFileSync(

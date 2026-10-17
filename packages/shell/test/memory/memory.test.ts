@@ -262,15 +262,25 @@ describe('shell/memory zone sprite sets and atlas pages', () => {
     if (bossSprite >= 0) expect(sets.byStage[zoneA]?.has(bossSprite)).toBe(true);
   });
 
-  it('marks the one placeholder page as needed by every stage, so nothing is unloaded', () => {
+  it('needs the global pages plus its own for each zone, and unloads iff there are several', () => {
+    // The shipped atlas (zone-split since R1-05): each zone needs the global pages and the pages
+    // of its own sprites; pages unload between zones only when the atlas has more than one.
     const needs = atlasPageNeeds(manifest, db.sprites.names, sets);
-    expect(manifest.pages).toHaveLength(1);
-    expect(needs.global).toEqual([true]);
-    for (let s = 0; s < db.stages.length; s++) expect(stagePages(needs, s)).toEqual([0]);
+    const global = manifest.pages.flatMap((_, p) => (needs.global[p] ? [p] : []));
+    expect(global.length).toBeGreaterThan(0);
+    for (const stageIndex of zoneStages) {
+      const own = manifest.pages.flatMap((_, p) =>
+        !needs.global[p] && needs.stages[p].has(stageIndex) ? [p] : [],
+      );
+      expect(stagePages(needs, stageIndex)).toEqual([...global, ...own].sort((a, b) => a - b));
+    }
     const unloaded: number[] = [];
-    const residency = createAtlasResidency([{ unload: () => unloaded.push(0) }], needs);
-    for (const stageIndex of zoneStages) expect(residency.prepare(stageIndex)).toBe(0);
-    expect(unloaded).toEqual([]);
+    const pages = manifest.pages.map((_, p) => ({ unload: () => unloaded.push(p) }));
+    const residency = createAtlasResidency(pages, needs);
+    let total = 0;
+    for (const stageIndex of zoneStages) total += residency.prepare(stageIndex);
+    expect(total > 0).toBe(manifest.pages.length > 1);
+    expect(unloaded).toHaveLength(total);
   });
 
   it('unloads the pages of other zones between zones on a multi-page atlas', () => {

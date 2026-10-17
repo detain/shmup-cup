@@ -54,6 +54,9 @@ afterAll(() => {
 
 const reference = buildAtlas();
 
+/** The shipped atlas's page files in the output folder (`atlas/main.png`, `atlas/main-1.png`…). */
+const referencePageFiles = reference.manifest.pages.map((page) => `atlas/${page.file}`);
+
 /**
  * Copies the real asset sources into a scratch folder.
  *
@@ -202,7 +205,8 @@ describe('scripts/assets/pipeline — collectSprites (edge)', () => {
     const { manifest, pages } = buildAtlas({ sourceDir: src });
     const frame = manifest.frames['enemies/drifter#0'];
     const flash = manifest.frames['enemies/drifter@flash#0'];
-    const page = pages[0].image;
+    expect(flash.p).toBe(frame.p); // the sibling packs with its sprite's group (R1-05)
+    const page = pages[frame.p].image;
     expect(getPixel(page, frame.x, frame.y)).toEqual([10, 200, 30, 90]);
     expect(getPixel(page, flash.x, flash.y)).toEqual([255, 255, 255, 90]);
     expect(getPixel(page, flash.x + 1, flash.y)).toEqual([0, 0, 0, 0]);
@@ -278,7 +282,7 @@ describe('scripts/assets/pipeline — page limits', () => {
       );
       expect(decodePng(page.png), page.file).toEqual(page.image);
     }
-    // Today's one shipped page has 1,537 colours: it stays RGBA, byte for byte.
+    // The shipped common page (main.png) has far more than 256 colours: it stays RGBA.
     expect(indexedPalette(reference.pages[0].image)).toBeNull();
     expect(Buffer.compare(reference.pages[0].png, encodePng(reference.pages[0].image))).toBe(0);
   });
@@ -362,7 +366,7 @@ describe('scripts/assets/pipeline — generateAssets cache (edge)', () => {
     for (const [file, digest] of Object.entries(cache.outputs)) {
       expect(sha256(readFileSync(join(out, file)))).toBe(digest);
     }
-    expect(files(out)).toEqual([CACHE_FILE, 'atlas/main.json', 'atlas/main.png']);
+    expect(files(out)).toEqual([CACHE_FILE, 'atlas/main.json', ...referencePageFiles].sort());
     const hit = generateAssets({ outDir: out });
     expect(hit).toMatchObject({ cached: true, inputHash: result.inputHash, files: result.files });
     expect(hit.manifest).toEqual(result.manifest);
@@ -450,16 +454,18 @@ describe('scripts/assets/pipeline — generateAssets cache (edge)', () => {
   it('removes only stale main-<n>.png pages, never other files in the atlas folder', () => {
     const out = join(tmp, 'stale');
     const keep = ['main-x.png', 'other.png', 'main-1.png.bak', 'main.json.old', 'notes.txt'];
-    for (const name of [...keep, 'main-1.png', 'main-02.png', 'main-17.png']) {
+    const past = pageFileName(reference.manifest.pages.length + 7); // past the last real page
+    for (const name of [...keep, 'main-1.png', 'main-02.png', past]) {
       put(join(out, 'atlas', name), 'old');
     }
     generateAssets({ outDir: out });
-    expect(files(join(out, 'atlas'))).toEqual(['main.json', 'main.png', ...keep].sort());
+    const pages = reference.manifest.pages.map((page) => page.file);
+    expect(files(join(out, 'atlas'))).toEqual(['main.json', ...pages, ...keep].sort());
   });
 });
 
 describe('scripts/assets/pipeline — multi-page output on disk', () => {
-  it('writes every page, then removes the extra page once the atlas fits one page again', () => {
+  it('writes every page, then removes the extra page once common fits one page again', () => {
     const src = copySources('multi-page');
     const out = join(tmp, 'multi-page-out');
     const big = join(src, 'sprites', 'bg', 'backdrop.png');
@@ -468,14 +474,23 @@ describe('scripts/assets/pipeline — multi-page output on disk', () => {
     put(big, encodePng(art));
 
     const twoPages = generateAssets({ sourceDir: src, outDir: out });
-    expect(twoPages.manifest.pages.map((p) => p.file)).toEqual(['main.png', 'main-1.png']);
+    // The backdrop is common: common spills onto a second page, the zone pages follow (R1-05).
+    const groups = twoPages.manifest.pages.map((p) => p.group);
+    expect(groups.slice(0, 2)).toEqual(['common', 'common']);
+    expect(groups.slice(2)).toEqual(reference.manifest.pages.slice(1).map((p) => p.group));
+    expect(twoPages.manifest.pages.map((p) => p.file)).toEqual(
+      groups.map((_, i) => pageFileName(i)),
+    );
     expect(twoPages.manifest.pages[0]).toEqual({
       file: 'main.png',
       w: 2048,
       h: 2048,
       group: 'common',
     });
-    expect(twoPages.files).toEqual(['atlas/main.png', 'atlas/main-1.png', 'atlas/main.json']);
+    expect(twoPages.files).toEqual([
+      ...twoPages.manifest.pages.map((p) => `atlas/${p.file}`),
+      'atlas/main.json',
+    ]);
     const backdrop = twoPages.manifest.frames['bg/backdrop#0'];
     expect(backdrop).toMatchObject({ p: 0, w: 2000, h: 2000 });
     const page1 = decodePng(readFileSync(join(out, 'atlas', 'main-1.png')));
@@ -491,7 +506,9 @@ describe('scripts/assets/pipeline — multi-page output on disk', () => {
     const onePage = generateAssets({ sourceDir: src, outDir: out });
     expect(onePage.cached).toBe(false);
     expect(onePage.manifest).toEqual(reference.manifest);
-    expect(files(join(out, 'atlas'))).toEqual(['main.json', 'main.png']);
+    const pages = reference.manifest.pages.map((page) => page.file);
+    expect(files(join(out, 'atlas'))).toEqual(['main.json', ...pages].sort());
+    expect(existsSync(join(out, 'atlas', pageFileName(pages.length)))).toBe(false); // the extra one
   }, 60_000);
 });
 
@@ -511,10 +528,13 @@ describe('scripts/assets/pipeline — concurrent runs', () => {
         }),
     );
     expect(await Promise.all(runs)).toEqual([0, 0, 0]);
-    expect(files(out)).toEqual([CACHE_FILE, 'atlas/main.json', 'atlas/main.png']); // no *.tmp
-    expect(
-      Buffer.compare(readFileSync(join(out, 'atlas', 'main.png')), reference.pages[0].png),
-    ).toBe(0);
+    // No *.tmp left behind.
+    expect(files(out)).toEqual([CACHE_FILE, 'atlas/main.json', ...referencePageFiles].sort());
+    for (const page of reference.pages) {
+      expect(Buffer.compare(readFileSync(join(out, 'atlas', page.file)), page.png), page.file).toBe(
+        0,
+      );
+    }
     expect(generateAssets({ outDir: out }).cached).toBe(true);
   }, 60_000);
 });

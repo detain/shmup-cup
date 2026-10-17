@@ -37,8 +37,9 @@ describe('scripts/generate-assets.mjs — CLI', () => {
   it('generates the atlas pages and manifest into --out', () => {
     const result = run('--out', out);
     expect(result.status).toBe(0);
+    // main.png = common, then the zone pages with their groups (R1-05).
     expect(result.stdout).toMatch(
-      /assets generated → .*: main\.png \d+×\d+; \d+ sprites, \d+ frames, 1 font/,
+      /assets generated → .*: main\.png \d+×\d+ common(, main-\d+\.png \d+×\d+ zone-[a-z]+)*; \d+ sprites, \d+ frames, 1 font/,
     );
     expect(result.stderr).toBe('');
     expect(existsSync(join(out, 'atlas', 'main.png'))).toBe(true);

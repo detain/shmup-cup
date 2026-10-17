@@ -302,9 +302,12 @@ export function resolveAtlasGroup(name, table) {
  * resolveAtlasGroup} over `atlas-groups.json`, R1-05: a listed name the atlas lacks, a
  * listed font and an empty `common` group are issues). Never throws for bad sources:
  * everything is reported in `issues`, and the caller decides ({@link buildAtlas} throws
- * {@link AssetSourceError}).
+ * {@link AssetSourceError}). With `ungrouped`, every sprite is `common` and the groups file
+ * is not read at all.
  *
- * @param {{ sourceDir?: string }} [options] - Source root (default `assets/source/`).
+ * @param {{ sourceDir?: string, ungrouped?: boolean }} [options] - Source root (default
+ *   `assets/source/`); `ungrouped: true` puts every sprite in `common` (the one-group
+ *   layout of the atlas before R1-05 — the TV bench's model and the M3-03 CJK figures).
  * @returns {{ sprites: SpriteDef[], fonts: Record<string, FontMetrics>, issues: AssetIssue[] }}
  *   Sprites sorted by name (anchors and `group` resolved), font metrics by font name, and
  *   problems.
@@ -374,8 +377,12 @@ export function collectSprites(options = {}) {
   }
 
   // Atlas groups (R1-05): every name the file lists must be a sprite of this atlas, and
-  // never a font (the font is drawn in every zone).
-  const atlasGroups = loadAtlasGroups(sourceDir);
+  // never a font (the font is drawn in every zone). Ungrouped: everything is common.
+  const ungrouped = options.ungrouped === true;
+  /** @type {AtlasGroups} */
+  const atlasGroups = ungrouped
+    ? { present: false, file: ATLAS_GROUPS_FILE, table: new Map(), issues: [] }
+    : loadAtlasGroups(sourceDir);
   issues.push(...atlasGroups.issues);
   const fontSprites = new Set(Object.values(fonts).map((metrics) => metrics.sprite));
   for (const [name, group] of atlasGroups.table) {
@@ -401,9 +408,10 @@ export function collectSprites(options = {}) {
           Math.floor(sprite.frames[0].width / 2),
           Math.floor(sprite.frames[0].height / 2),
         ]),
-      group: fontSprites.has(sprite.name)
-        ? COMMON_GROUP
-        : resolveAtlasGroup(sprite.name, atlasGroups.table),
+      group:
+        ungrouped || fontSprites.has(sprite.name)
+          ? COMMON_GROUP
+          : resolveAtlasGroup(sprite.name, atlasGroups.table),
     }))
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   if (sprites.length > 0 && !sprites.some((sprite) => sprite.group === COMMON_GROUP)) {
@@ -454,8 +462,10 @@ export const pageFileName = (index) =>
  * `group` in the manifest. Sprite and frame names never depend on the grouping, and
  * without a groups file (and no `zone-<id>` directories) the layout is the one-group one.
  *
- * @param {{ sourceDir?: string, maxPageSize?: number }} [options] - Source root and
- *   page-size limit (power of two, default 2048).
+ * @param {{ sourceDir?: string, maxPageSize?: number, ungrouped?: boolean }} [options] -
+ *   Source root, page-size limit (power of two, default 2048), and `ungrouped: true` to pack
+ *   every sprite as `common` — the one-group layout of the atlas before R1-05, byte for byte
+ *   (the TV bench's model, `apps/tizen/scripts/bench-atlas.mjs`; the CJK figures).
  * @returns {{ manifest: AtlasManifest, pages: { file: string, image: Image, png: Buffer }[],
  *   sprites: SpriteDef[] }} The manifest, the pages (pixels + PNG bytes) and the sprites.
  * @throws {AssetSourceError} When any source file is invalid, or a frame is too large for
