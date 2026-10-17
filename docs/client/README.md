@@ -226,7 +226,14 @@ fullscreen and **Ctrl + =** / **Ctrl + -** / **Ctrl + 0** for the window size �
 the settings and high scores, which it keeps in small files with a backup of each
 ([desktop-app.md](desktop-app.md)).
 
-This is version **1.0.0-rc.1**, the **release candidate of version 1.0** ([release-candidate.md](release-candidate.md)): version 0.1.0, the end of the first milestone, plus all eighteen steps of the second
+**Version 2 is in development.** The project's main line is version **2.0.0-alpha.0** — v2, the
+remaster at 640×360 with more detailed art and longer zones, built step by step
+([plan_resolution.md](../../plan_resolution.md)); a TV build of it says **2.0.0** in the monitor's
+app details. Until those steps land, the game is still **v1** as these pages describe it. v1 is
+released as version **1.0.0** (the `v1.0.0` tag) and kept on the **`v1.x`** branch, which only
+gets fixes — build from there for the released game.
+
+Before its release, v1 was version **1.0.0-rc.1**, the **release candidate of version 1.0** ([release-candidate.md](release-candidate.md)): version 0.1.0, the end of the first milestone, plus all eighteen steps of the second
 (difficulties, extra ships and continues; colour-blind bullet colours and points for bullets
 cancelled by a destroyed boss or a Mega Crash; the weapon types and the WEAPON SELECT screen; the
 Option types, the pod shields and REDUCE, the Option Hunter and the blue capsule; the second ship,

@@ -315,14 +315,17 @@ describe('tooling: test concurrency', () => {
   });
 });
 
-describe('tooling: the release version (M2-18)', () => {
-  /** The release candidate of v1.0 (plan M2-18). */
-  const RELEASE = '1.0.0-rc.1';
+describe('tooling: the release version (M2-18, R0-01)', () => {
+  /**
+   * v2 in development on `master` (plan_resolution.md §3.2, step R0-01): the first pre-release of
+   * 2.0.0. v1 is released as 1.0.0 and maintained on the `v1.x` branch.
+   */
+  const RELEASE = '2.0.0-alpha.0';
 
   it('gives the root and every workspace project the same release version', () => {
     expect(root.version).toBe(RELEASE);
     expect(semver.valid(root.version)).toBe(RELEASE);
-    expect(semver.prerelease(root.version ?? '')).toEqual(['rc', 1]);
+    expect(semver.prerelease(root.version ?? '')).toEqual(['alpha', 0]);
     for (const project of projects) {
       expect(readJson<{ version: string }>(`${project}/package.json`).version, project).toBe(
         RELEASE,
@@ -330,8 +333,16 @@ describe('tooling: the release version (M2-18)', () => {
     }
   });
 
-  it('has a CHANGELOG section for it', () => {
-    expect(read('CHANGELOG.md')).toContain(`## [${RELEASE}]`);
+  it('has a CHANGELOG section for it, above the released v1', () => {
+    // A development version has no section of its own: its changes collect under
+    // "[Unreleased] — v2", the first section, until a 2.0.0 pre-release is tagged (R0-01).
+    const changelog = read('CHANGELOG.md');
+    const unreleased = `## [Unreleased] — v${semver.major(RELEASE)}`;
+    const released = '## [1.0.0] — 2026-10-16';
+    expect(changelog).toContain(unreleased);
+    expect(changelog.indexOf(unreleased)).toBe(changelog.indexOf('\n## ') + 1);
+    expect(changelog.indexOf(released)).toBeGreaterThan(changelog.indexOf(unreleased));
+    expect(changelog.indexOf('## [1.0.0-rc.1]')).toBeGreaterThan(changelog.indexOf(released));
   });
 
   it('offers pnpm store:assets for the icons and the store-listing placeholders', () => {

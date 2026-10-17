@@ -4,7 +4,21 @@ All notable changes to Shmup Cup. The project follows [Semantic Versioning](http
 versions before 1.0 may change anything between minor releases. Development follows the step plan in
 [`shmup_plan.md`](docs/old/shmup_plan.md); progress is tracked in [`shmup_progress.md`](docs/old/shmup_progress.md).
 
-## [Unreleased]
+## [Unreleased] — v2
+
+Version **2.0.0-alpha.0**: v2, the **640×360 remaster**, in development on `master`, step by step
+in [`plan_resolution.md`](plan_resolution.md). v1 is released as **1.0.0** (below) and maintained
+on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `master` by merging
+`v1.x` until plan step R2-01, by `git cherry-pick -x` after it
+([build-test-deploy.md](docs/dev/build-test-deploy.md#release-lines)).
+
+### Project
+
+- **Version lines** (R0-01): every package manifest says `2.0.0-alpha.0`; the TV manifests, which
+  take numbers only, say `2.0.0` (the Tizen `config.xml`, the webOS `appinfo.json`), so v2 installs
+  as an update of the same apps. CI runs on every push to `master` and to `v1.x`.
+
+## [1.0.0] — 2026-10-16
 
 The changes after the v1.0 release candidate — milestone M3 (plan steps M3-01 … M3-03), which is
 now **complete**, and with it the whole plan: **45 of 45 steps**. What remains needs an account, a
@@ -916,5 +930,6 @@ widget bundle (`pnpm --filter @shmup/tizen build` → a checked `dist/` ready to
   [API reference](docs/dev/api-reference.md).
 
 [Unreleased]: https://github.com/detain/shmup-cup/commits/master
+[1.0.0]: https://github.com/detain/shmup-cup/releases/tag/v1.0.0
 [1.0.0-rc.1]: https://github.com/detain/shmup-cup/tree/master
 [0.1.0]: https://github.com/detain/shmup-cup/tree/master

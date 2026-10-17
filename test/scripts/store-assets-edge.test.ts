@@ -177,9 +177,9 @@ describe('scripts/store-assets — the listing agrees with the repository (M2-18
   it('names the widget’s config.xml version', () => {
     const xml = readFileSync(join(repo, 'apps', 'tizen', 'public', 'config.xml'), 'utf8');
     const version = /<widget\b[^>]*\bversion="([^"]+)"/.exec(xml)?.[1];
-    expect(version).toBe('1.0.0');
+    expect(version).toBe('2.0.0');
     expect(STORE_LISTING.version).toBe(version);
-    // The numeric core of the release candidate's semver.
+    // The numeric core of the manifests' semver (2.0.0-alpha.0 → 2.0.0, R0-01).
     const root = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8')) as {
       version: string;
     };

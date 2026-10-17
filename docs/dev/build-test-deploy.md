@@ -544,6 +544,36 @@ Do not turn on Vitest's `fsModuleCache`: with it render-pixi's `sprites-interpol
 measured over its budget one run in four (the cached module code tiers up differently; measured
 with render-pixi's earlier probe, not retried since).
 
+## Release lines
+
+Two lines are built, tested and released independently (plan_resolution.md §3.2, §3.3):
+
+| | `v1.x` | `master` |
+|---|---|---|
+| What it is | v1, released as tag `v1.0.0` (2026-10-16) | v2, the 640×360 remaster ([plan_resolution.md](../../plan_resolution.md)) |
+| Resolution | 384×216, forever | 384×216 until plan step R2-01, then 640×360 |
+| Versions | `1.0.1`, `1.0.2`, … (tags `v1.0.N`) | `2.0.0-alpha.N` → `2.0.0-beta.N` → `2.0.0`; today `2.0.0-alpha.0` |
+| What goes in | bug fixes, fixes from the first hardware runs, store-submission changes, translation corrections | everything in the v2 plan |
+| What never goes in | resolution, art, level or balance changes | — |
+| Releases | GitHub releases from tags on `v1.x` | GitHub releases from tags on `master` |
+
+Every `package.json` (the root, `packages/*`, `apps/*`) carries the line's semver version, and
+`tooling-config.test.ts` checks that they agree. The TV manifests take numbers only, so the Tizen
+`config.xml` widget version and the webOS `appinfo.json` version are its numeric core (`2.0.0` for
+`2.0.0-alpha.0`; `config-xml-consistency.test.ts`, `appinfo.test.ts`). v2 ships as an update of
+the same apps — the same Tizen id `ShmpCupGam.ShmupCup`, webOS id `dev.shmupcup.game` and desktop
+app — so its TV version must stay above v1's. CI runs on every push to either branch.
+
+How a fix moves between the lines:
+
+- A fix that applies to both lines lands on **`v1.x` first**.
+- **Until R2-01 lands**, merge `v1.x` into `master` (`git merge v1.x`) whenever it moves — the trees
+  are still nearly identical.
+- **From R2-01 on**, content, art and frame constants differ everywhere: cherry-pick code fixes
+  with `git cherry-pick -x <sha>` and port content fixes by hand. Never merge `v1.x` into `master`
+  again.
+- A v2-only change never goes back to `v1.x`.
+
 ## CI
 
 `.github/workflows/ci.yml` on every push to `master` and every pull request, as parallel jobs

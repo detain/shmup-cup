@@ -252,8 +252,12 @@ the [World and its tick](docs/dev/sim-world.md), [stages](docs/dev/stage-runtime
 
 ## Status
 
-Version **1.0.0-rc.1** — a feature-complete release candidate. Everything described on this page is
-implemented, tested and playable from the title screen to the credits.
+Version **2.0.0-alpha.0** on `master`: **v2, the 640×360 remaster, is in development** — more
+detailed art and longer zones, step by step in [`plan_resolution.md`](plan_resolution.md). **v1**,
+the 384×216 game this page describes, is released as
+[`v1.0.0`](https://github.com/detain/shmup-cup/releases/tag/v1.0.0) and maintained on the
+[`v1.x`](https://github.com/detain/shmup-cup/tree/v1.x) branch (fixes only). Everything described on
+this page is implemented, tested and playable from the title screen to the credits.
 
 What is *not* done is everything that needs hardware, an account or a person: the game has never
 been installed on the Samsung monitors it was written for, never run on an LG set, never spoken to

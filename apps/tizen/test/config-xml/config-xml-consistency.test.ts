@@ -29,7 +29,7 @@ describe('tizen/public/config.xml consistency', () => {
     expect(APP_ID.startsWith(`${attr('tizen:application', 'package') ?? '?'}.`)).toBe(true);
   });
 
-  it('carries the release version of the package manifests (1.0.0-rc.1 = the M2 release candidate)', () => {
+  it('carries the release version of the package manifests (2.0.0-alpha.0 = 2.0.0 on the TV)', () => {
     const pkg = JSON.parse(
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as { version: string };
@@ -37,8 +37,9 @@ describe('tizen/public/config.xml consistency', () => {
       readFileSync(new URL('../../../../package.json', import.meta.url), 'utf8'),
     ) as { version: string };
     expect(pkg.version).toBe(root.version);
-    // Semantic versioning in the manifests (a pre-release such as -rc.1 allowed); the widget takes
-    // the numeric core only — Tizen accepts major.minor.patch and nothing else (M2-18).
+    // Semantic versioning in the manifests (a pre-release such as -alpha.0 allowed); the widget takes
+    // the numeric core only — Tizen accepts major.minor.patch and nothing else (M2-18). v2 installs
+    // as an update of the same app, so the widget's 2.0.0 is above v1's 1.0.0 (R0-01).
     const semver = /^(\d+\.\d+\.\d+)(?:-[0-9A-Za-z.]+)?$/.exec(pkg.version);
     expect(semver).not.toBeNull();
     expect(attr('widget', 'version')).toBe(semver?.[1]);
