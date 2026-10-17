@@ -173,6 +173,14 @@ export {
   type RenderTelemetry,
   type RenderTelemetryEnv,
   type RenderTelemetryOptions,
+  RENDER_BENCH_KIND,
+  buildRenderBenchPayload,
+  makeRenderBenchSessionId,
+  sendRenderBench,
+  type RenderBenchEnv,
+  type RenderBenchLoad,
+  type RenderBenchPayload,
+  type RenderBenchRecord,
 } from './telemetry/index.js';
 export {
   DISPOSABLE_STORAGE_KEYS,

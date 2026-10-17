@@ -59,7 +59,18 @@
  * {@link RenderReporter}, {@link RenderReporterStatus}, {@link RenderProfilePayload},
  * {@link renderReportEndpoint}, {@link makeRenderSessionId}, {@link RENDER_PROFILE_KIND},
  * {@link RENDER_REPORT_INTERVAL_MS}, {@link RENDER_REQUEST_TIMEOUT_MS},
- * {@link MAX_QUEUED_SAMPLES}).
+ * {@link MAX_QUEUED_SAMPLES}); the TV render bench's wire format (plan R0-02 — see below:
+ * {@link RENDER_BENCH_KIND}, {@link RenderBenchEnv}, {@link RenderBenchRecord},
+ * {@link RenderBenchPayload}, {@link makeRenderBenchSessionId}, {@link buildRenderBenchPayload},
+ * {@link sendRenderBench}).
+ *
+ * **The TV render bench (plan R0-02).** The bench widget (`apps/tizen/src/bench`, its own app id)
+ * measures a density-scaled synthetic scene at 384×216, 640×360 and 960×540, one scenario per page
+ * load, and POSTs each scenario's {@link RenderBenchRecord} to the same log server as a
+ * `render-bench` payload ({@link RenderBenchPayload});
+ * `tools/input-probe/results/analyze-bench.mjs` turns the session into the relative tables of
+ * `docs/dev/input-probe-results.md` §12. The bench is a separate bundle, so none of this reaches the
+ * game's `app.js` either.
  *
  * @module
  */
@@ -1499,4 +1510,275 @@ export function createRenderTelemetry(options: RenderTelemetryOptions): RenderTe
       panel?.remove();
     },
   };
+}
+
+// ------------------------------------------------------------------ the TV render bench (R0-02)
+
+/**
+ * The `kind` field of a TV render-bench payload (plan R0-02) — how the log server picks its
+ * `render-bench` formatter.
+ */
+export const RENDER_BENCH_KIND = 'render-bench';
+
+/** Session-level facts of one bench run, repeated by every payload of the run. */
+export interface RenderBenchEnv {
+  /** The build id (`__SHMUP_BUILD__`) of the bench bundle. */
+  buildId: string;
+  /** Which host ran it: `'tizen'`, `'webos'` or `'browser'`. */
+  host: string;
+  /** `navigator.userAgent`, or `''` when unavailable. */
+  userAgent: string;
+  /** CSS pixels of the window (the display the frame is upscaled to). */
+  innerWidth: number;
+  /** CSS pixels of the window. */
+  innerHeight: number;
+  /** `window.devicePixelRatio`. */
+  devicePixelRatio: number;
+  /** The WebGL version the run asked for (1, or 2 with `localStorage['shmup-cup:gl'] = '2'`). */
+  webGLVersion: number;
+  /** Scenarios in the run's matrix. */
+  scenarios: number;
+  /** Wall-clock start of the run (ms since epoch). */
+  startedAt: number;
+}
+
+/** The live pool counts a bench scenario carried (the floor over its measured frames). */
+export interface RenderBenchLoad {
+  /** Enemy bullets. */
+  bullets: number;
+  /** Point items. */
+  points: number;
+  /** Enemies. */
+  enemies: number;
+  /** Particles (the renderer's pool). */
+  particles: number;
+  /** Terrain tile sprites in view. */
+  tiles: number;
+}
+
+/**
+ * What one bench scenario measured (plan R0-02) — the row the analyzer and the on-screen table
+ * are built from.
+ *
+ * @remarks
+ * Every millisecond series is a `[min, p50, p95, max]` tuple (the telemetry's nearest-rank rule,
+ * `floor(q · (n − 1) + 0.5)`, rounded to 3 decimals). **The milliseconds only mean something
+ * relative to the same session's 384×216 row** — the M7's rAF shows a p95 of ~30 ms with nothing
+ * running at all — which is why `analyze-bench.mjs` prints ratios and percentage points, not
+ * absolute budgets. The counted figures (draw calls, bytes, pages) are hardware-independent, and
+ * they are what the headless `pnpm bench` gates.
+ */
+export interface RenderBenchRecord {
+  /** Scenario id, e.g. `'640x360-busy'`. */
+  scenario: string;
+  /** Position of the scenario in the run's matrix (0-based). */
+  index: number;
+  /** Internal frame size id, e.g. `'640x360'`. */
+  size: string;
+  /** Internal frame width in pixels. */
+  width: number;
+  /** Internal frame height in pixels. */
+  height: number;
+  /** The scene's density factor `s` (1, 1.5 or 2.25): sprites, tiles and speeds are ×s. */
+  density: number;
+  /** Variant id: `busy`, `filter`, `mode7`, `crt-light`, `crt-full` or `worst`. */
+  variant: string;
+  /** CRT setting of the scenario (`off` / `light` / `full`). */
+  crt: string;
+  /** Whether a filtered layer (a raster effect) was on. */
+  filter: boolean;
+  /** Whether the Mode-7 floor was drawn. */
+  mode7: boolean;
+  /** The WebGL version the renderer really got. */
+  webGLVersion: number;
+  /** Canvas width in CSS pixels. */
+  displayWidth: number;
+  /** Canvas height in CSS pixels. */
+  displayHeight: number;
+  /** Viewport scale of the internal frame on the display. */
+  scale: number;
+  /** Durations of the three phases asked for, ms: `[warm-up, free-running, gl.finish()-synced]`. */
+  phaseMs: number[];
+  /** Frames measured free-running (the render, frame and tick figures). */
+  frames: number;
+  /** Frames measured in the synced pass. */
+  syncedFrames: number;
+  /** CPU ms of the timed render (`renderer.render()` plus the parallax / terrain sync). */
+  renderMs: number[];
+  /** The same render followed by `gl.finish()` — what the frame really costs the GPU too. */
+  syncedMs: number[];
+  /** rAF deltas of the free-running pass, ms. */
+  frameMs: number[];
+  /** rAF-delta histogram of the free-running pass (`RAF_BUCKET_EDGES_MS` buckets). */
+  raf: number[];
+  /** Free-running frames that ran 0 / 1 / 2 / 3-or-more fixed ticks (the vsync-locked loop). */
+  tickFrames: number[];
+  /** Share (0 … 1) of the free-running frames that needed two ticks or more. */
+  twoTickShare: number;
+  /** WebGL draw calls of the last measured frame (both passes). */
+  drawCalls: number;
+  /** Frames on which Pixi rebuilt the scene's whole instruction set (-1 = not counted). */
+  rebuilds: number;
+  /** Bytes of render targets Pixi pooled (filters; the frame target is separate). */
+  renderTargetBytes: number;
+  /** Bytes of the internal frame's own render target (`width · height · 4`). */
+  frameTargetBytes: number;
+  /** Bytes of the atlas pages as uploaded (`Σ w · h · 4`). */
+  textureBytes: number;
+  /** Atlas pages the scenario's density uses. */
+  atlasPages: number;
+  /** Whether the browser reported a JS heap (`performance.memory`) at all. */
+  heapMeasured: boolean;
+  /** Used JS heap when the free-running pass started, bytes (0 when not measured). */
+  heapStartBytes: number;
+  /** Used JS heap when the synced pass ended, bytes (0 when not measured). */
+  heapEndBytes: number;
+  /** `heapEndBytes − heapStartBytes` (coarse on the TV: no `gc()` there). */
+  heapDeltaBytes: number;
+  /** Fewest live sprites of each pool any measured frame carried. */
+  load: RenderBenchLoad;
+  /** Wall-clock end of the scenario (ms since epoch). */
+  endedAt: number;
+}
+
+/**
+ * Payload a bench run POSTs to the log server as `text/plain` JSON — after every scenario (one
+ * record) and once more at the end of the run with every record the server has not acknowledged.
+ */
+export interface RenderBenchPayload {
+  /** Always {@link RENDER_BENCH_KIND}. */
+  kind: string;
+  /** Session id ({@link makeRenderBenchSessionId}), one per run of the matrix. */
+  session: string;
+  /** Monotonic sequence number per session, starting at 1. */
+  seq: number;
+  /** Wall-clock send time (ms since epoch). */
+  sentAt: number;
+  /** Session-level facts. */
+  env: RenderBenchEnv;
+  /** The records this payload carries (the analyzer keeps the latest one per scenario). */
+  results: RenderBenchRecord[];
+  /** Whether the run's matrix is complete. */
+  done: boolean;
+}
+
+/**
+ * Creates a bench session id, e.g. `rb-lx2k3a-7f3k` — the `rb-` prefix keeps a bench run's JSONL
+ * apart from the probe's `ip-…` and the render profile's `rp-…` in the same log directory.
+ *
+ * @param nowMs - Wall-clock time (`Date.now()`).
+ * @param random - A number in [0, 1) (`Math.random()`).
+ * @returns The session id.
+ *
+ * @example
+ * ```ts
+ * makeRenderBenchSessionId(1_700_000_000_000, 0.5); // → 'rb-…-i000'
+ * ```
+ */
+export function makeRenderBenchSessionId(nowMs: number, random: number): string {
+  return 'rb-' + makeRenderSessionId(nowMs, random).slice(3);
+}
+
+/**
+ * Builds one bench payload.
+ *
+ * @param session - Session id.
+ * @param seq - Sequence number (1-based).
+ * @param sentAt - Wall-clock send time.
+ * @param env - Session-level facts.
+ * @param results - The records to carry.
+ * @param done - Whether the matrix is complete.
+ * @returns The payload ({@link RENDER_BENCH_KIND}).
+ */
+export function buildRenderBenchPayload(
+  session: string,
+  seq: number,
+  sentAt: number,
+  env: RenderBenchEnv,
+  results: RenderBenchRecord[],
+  done: boolean,
+): RenderBenchPayload {
+  return { kind: RENDER_BENCH_KIND, session, seq, sentAt, env, results, done };
+}
+
+/**
+ * POSTs a bench payload to the log server and reports the outcome exactly once.
+ *
+ * @remarks
+ * The same transport as {@link RenderReporter}: `XMLHttpRequest` with a
+ * {@link RENDER_REQUEST_TIMEOUT_MS} timeout and `Content-Type: text/plain` (a CORS "simple
+ * request", no preflight). The bench waits for `onDone` before it reloads the page for the next
+ * scenario, so a slow or dead server costs at most the timeout. Never throws: a request that cannot
+ * be built, opened or sent reports through `onDone` at once and returns `false`.
+ *
+ * @param endpoint - POST URL ({@link renderReportEndpoint}), or `null` when no log server is
+ *   configured — nothing is sent and `onDone(false, 'off')` runs at once.
+ * @param payload - The payload.
+ * @param createRequest - Makes the request object (injected so tests need no DOM).
+ * @param onDone - Called exactly once: `ok` for a 2xx answer, else `false` and the reason.
+ * @returns Whether a request went out.
+ *
+ * @example
+ * ```ts
+ * sendRenderBench(renderReportEndpoint(__SHMUP_REPORT_URL__), payload, () => new XMLHttpRequest(),
+ *   (ok) => { if (ok) markSent(); location.reload(); });
+ * ```
+ */
+export function sendRenderBench(
+  endpoint: string | null,
+  payload: RenderBenchPayload,
+  createRequest: () => XMLHttpRequest,
+  onDone: (ok: boolean, error: string | null) => void,
+): boolean {
+  let finished = false;
+  /**
+   * Reports the outcome the first time only (a timeout followed by a late `onerror` must not
+   * report twice).
+   *
+   * @param ok - Whether the server accepted the payload.
+   * @param error - The reason it did not, or `null`.
+   */
+  const finish = (ok: boolean, error: string | null): void => {
+    if (finished) return;
+    finished = true;
+    onDone(ok, error);
+  };
+  if (endpoint === null) {
+    finish(false, 'off');
+    return false;
+  }
+  let body: string;
+  try {
+    body = JSON.stringify(payload);
+  } catch (error) {
+    finish(false, 'serialize: ' + String(error));
+    return false;
+  }
+  let xhr: XMLHttpRequest;
+  try {
+    xhr = createRequest();
+    xhr.open('POST', endpoint, true);
+    xhr.timeout = RENDER_REQUEST_TIMEOUT_MS;
+    xhr.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+  } catch (error) {
+    finish(false, 'open: ' + String(error));
+    return false;
+  }
+  xhr.onload = (): void => {
+    const ok = xhr.status >= 200 && xhr.status < 300;
+    finish(ok, ok ? null : 'HTTP ' + xhr.status);
+  };
+  xhr.onerror = (): void => {
+    finish(false, 'network error');
+  };
+  xhr.ontimeout = (): void => {
+    finish(false, 'timeout');
+  };
+  try {
+    xhr.send(body);
+  } catch (error) {
+    finish(false, String(error));
+    return false;
+  }
+  return true;
 }
