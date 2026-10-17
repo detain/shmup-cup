@@ -13,8 +13,9 @@
  *   (`test/scripts/store-assets.test.ts`) renders them again and compares the pixels, so a change
  *   to the art or to this script shows up as a failing test until the files are regenerated.
  * - **Store-listing placeholders (generated, ignored)** — `assets/generated/store/`: the icon,
- *   {@link SCREENSHOTS} placeholder screenshots at 1920 × 1080 (the game's 384 × 216 frame × 5,
- *   each captioned `PLACEHOLDER`) and `listing.json` ({@link STORE_LISTING}: the name, the texts,
+ *   {@link SCREENSHOTS} placeholder screenshots at 1920 × 1080 (the game's frame — `FRAME_W` ×
+ *   `FRAME_H` of `scripts/frame.mjs`, 384 × 216 today — at {@link SCREENSHOT_SCALE}, each
+ *   captioned `PLACEHOLDER`) and `listing.json` ({@link STORE_LISTING}: the name, the texts,
  *   the category, the image list with its sizes). They stand in until real screenshots are taken
  *   on the monitors; check the sizes against the Seller Office's current requirements before a
  *   submission (the manual checklist, plan §8.6).
@@ -35,6 +36,7 @@ import { fileURLToPath } from 'node:url';
 import { createImage, imagesEqual } from './assets/image.mjs';
 import { REPO_ROOT, collectSprites } from './assets/pipeline.mjs';
 import { decodePng, encodePng } from './assets/png.mjs';
+import { FRAME_H, FRAME_W, HUD_BAR_HEIGHT, HUD_BOTTOM_Y } from './frame.mjs';
 
 /** @typedef {import('./assets/image.mjs').Image} Image */
 /** @typedef {import('./assets/image.mjs').Rgba} Rgba */
@@ -42,10 +44,11 @@ import { decodePng, encodePng } from './assets/png.mjs';
 /** Where `pnpm store:assets` writes the store-listing placeholders. */
 export const STORE_DIR = join(REPO_ROOT, 'assets', 'generated', 'store');
 
-/** Width of the game's internal frame (decision D19), px. */
-const FRAME_W = 384;
-/** Height of the game's internal frame (decision D19), px. */
-const FRAME_H = 216;
+/**
+ * Whole-number scale of a placeholder screenshot: the largest that fits the frame into the
+ * stores' 1920 × 1080 (× 5 at 384 × 216, × 3 at 640 × 360 — both fill it exactly).
+ */
+const SCREENSHOT_SCALE = Math.min(Math.floor(1920 / FRAME_W), Math.floor(1080 / FRAME_H));
 
 /**
  * The committed icons: repository path, size. The Tizen icon's 512 × 423 is the aspect the widget
@@ -128,14 +131,14 @@ const WHITE = /** @type {Rgba} */ ([0xff, 0xff, 0xff, 0xff]);
 /**
  * The sprites and fonts of the placeholder art, collected once per process.
  *
- * @type {{ frames: Map<string, Image[]>, font: { glyphs: Record<string, { frame: string, advance: number }>, cellHeight: number } } | null}
+ * @type {{ frames: Map<string, Image[]>, font: { glyphs: Record<string, { frame: string, advance: number }>, cellWidth: number, cellHeight: number } } | null}
  */
 let art = null;
 
 /**
  * The placeholder art: every sprite's frames by name and the bitmap font's metrics.
  *
- * @returns {{ frames: Map<string, Image[]>, font: { glyphs: Record<string, { frame: string, advance: number }>, cellHeight: number } }}
+ * @returns {{ frames: Map<string, Image[]>, font: { glyphs: Record<string, { frame: string, advance: number }>, cellWidth: number, cellHeight: number } }}
  *   The art.
  * @throws {Error} When the sources have issues or the font is missing.
  */
@@ -213,13 +216,13 @@ function draw(target, source, x, y, scale, tint = null) {
 /**
  * The width of a text in the bitmap font at scale 1.
  *
- * @param {string} text - The text (characters the font lacks advance by 6).
+ * @param {string} text - The text (characters the font lacks advance by its cell width).
  * @returns {number} Pixels.
  */
 function textWidth(text) {
-  const { glyphs } = loadArt().font;
+  const { glyphs, cellWidth } = loadArt().font;
   let width = 0;
-  for (const char of text) width += glyphs[String(char.codePointAt(0))]?.advance ?? 6;
+  for (const char of text) width += glyphs[String(char.codePointAt(0))]?.advance ?? cellWidth;
   return width;
 }
 
@@ -234,7 +237,7 @@ function textWidth(text) {
  * @param {Rgba} color - Ink colour.
  */
 function drawText(target, text, x, y, scale, color) {
-  const { glyphs } = loadArt().font;
+  const { glyphs, cellWidth } = loadArt().font;
   const frames = loadArt().frames.get('font/pixel') ?? [];
   let pen = x;
   for (const char of text) {
@@ -243,7 +246,7 @@ function drawText(target, text, x, y, scale, color) {
       const index = Number(glyph.frame.slice(glyph.frame.indexOf('#') + 1));
       draw(target, frames[index], pen, y, scale, color);
     }
-    pen += (glyph?.advance ?? 6) * scale;
+    pen += (glyph?.advance ?? cellWidth) * scale;
   }
 }
 
@@ -309,8 +312,9 @@ export function renderIcon(width, height) {
 }
 
 /**
- * Renders one placeholder screenshot: a 384 × 216 scene (the zone's backdrop band, its boss's
- * hull, the ship, the caption `PLACEHOLDER` and the zone's name) scaled × 5 to 1920 × 1080.
+ * Renders one placeholder screenshot: a scene the size of the game's frame (the zone's backdrop
+ * band, its boss's hull, the ship, the caption `PLACEHOLDER` and the zone's name) scaled by
+ * {@link SCREENSHOT_SCALE} — 384 × 216 × 5 = 1920 × 1080 today.
  *
  * @param {number} index - Index into {@link SCREENSHOTS}.
  * @returns {Image} The screenshot.
@@ -323,9 +327,9 @@ export function renderScreenshot(index) {
   const frame = createImage(FRAME_W, FRAME_H);
   backdrop(frame, 1);
   const band = sprite(shot.backdrop);
-  tile(frame, shot.backdrop, FRAME_H - 8 - band.height, 1);
-  fill(frame, 0, 0, FRAME_W, 8, NAVY_LIGHT);
-  fill(frame, 0, FRAME_H - 8, FRAME_W, 8, NAVY_LIGHT);
+  tile(frame, shot.backdrop, HUD_BOTTOM_Y - band.height, 1);
+  fill(frame, 0, 0, FRAME_W, HUD_BAR_HEIGHT, NAVY_LIGHT);
+  fill(frame, 0, HUD_BOTTOM_Y, FRAME_W, HUD_BAR_HEIGHT, NAVY_LIGHT);
   const boss = sprite(shot.boss);
   draw(frame, boss, FRAME_W - boss.width - 24, Math.floor((FRAME_H - boss.height) / 2), 1);
   const ship = sprite(shot.ship);
@@ -333,8 +337,8 @@ export function renderScreenshot(index) {
   const caption = 'PLACEHOLDER';
   drawText(frame, caption, Math.floor((FRAME_W - textWidth(caption) * 2) / 2), 24, 2, CAPTION);
   drawText(frame, shot.zone, Math.floor((FRAME_W - textWidth(shot.zone)) / 2), 44, 1, WHITE);
-  const out = createImage(FRAME_W * 5, FRAME_H * 5);
-  draw(out, frame, 0, 0, 5);
+  const out = createImage(FRAME_W * SCREENSHOT_SCALE, FRAME_H * SCREENSHOT_SCALE);
+  draw(out, frame, 0, 0, SCREENSHOT_SCALE);
   return out;
 }
 

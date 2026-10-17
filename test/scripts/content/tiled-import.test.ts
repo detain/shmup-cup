@@ -13,6 +13,7 @@ import { StageEventCode, createStageRunner, loadContent } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   SPAWN_LEAD,
+  TILED_TILE_SIZE,
   TiledImportError,
   VIEW_WIDTH,
   cameraYAt,
@@ -56,8 +57,8 @@ function map(layers: unknown[], extra: Record<string, unknown> = {}): Record<str
     infinite: false,
     width: 60,
     height: 2,
-    tilewidth: 8,
-    tileheight: 8,
+    tilewidth: TILED_TILE_SIZE,
+    tileheight: TILED_TILE_SIZE,
     tilesets: [{ firstgid: 1 }],
     layers,
     ...extra,
@@ -203,7 +204,7 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
     ]);
     // No camera object: a key at 0 with the default speed; the length is the map minus a screen.
     expect(stage.camera).toEqual([{ x: 0, speed: 1 }]);
-    expect(stage.length).toBe(60 * 8 - VIEW_WIDTH);
+    expect(stage.length).toBe(60 * TILED_TILE_SIZE - VIEW_WIDTH);
     expect(stage.tilemap).toBeNull();
   });
 

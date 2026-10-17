@@ -6,9 +6,10 @@
  *   compression name in the error;
  * - `cameraYAt`: keys without `yTo` leaving a diagonal pan running, `yOver: 0` as a jump, x before
  *   the first key;
- * - map header rules: not an object, bad sizes, a bad `length` property, the id / name defaults and
- *   overrides, a map without tilesets, the `terrain` layer chosen over the first tile layer, no tile
- *   layer, odd `layers` / `objects`;
+ * - map header rules: the frame constants it uses equal `@shmup/core`'s (R1-02), not an object,
+ *   bad sizes, a bad `length` property, the id / name defaults and overrides, a map without
+ *   tilesets, the `terrain` layer chosen over the first tile layer, no tile layer, odd `layers` /
+ *   `objects`;
  * - object rules: every marker event with its fields, formations with all their fields, camera keys
  *   and checkpoints sorted, triggers (`armX`, rounding, the arming x), blocks near the start and at
  *   exactly 400 px, branches, the `type` class fallback, polylines (rounding, `-0`, a polyline that
@@ -22,6 +23,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_SPAWN_SCREEN_X, PLAYFIELD_W, TILE_SIZE } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   SPAWN_LEAD,
@@ -57,8 +59,8 @@ function map(layers: unknown, extra: Record<string, unknown> = {}): Record<strin
     infinite: false,
     width: 60,
     height: 2,
-    tilewidth: 8,
-    tileheight: 8,
+    tilewidth: TILED_TILE_SIZE,
+    tileheight: TILED_TILE_SIZE,
     tilesets: [{ firstgid: 1 }],
     layers,
     ...extra,
@@ -168,6 +170,12 @@ describe('tiled-import edges — helpers', () => {
 });
 
 describe('tiled-import edges — the map header', () => {
+  it('takes its tile size, view width and spawn lead from the game’s frame (R1-02)', () => {
+    expect(TILED_TILE_SIZE).toBe(TILE_SIZE);
+    expect(VIEW_WIDTH).toBe(PLAYFIELD_W);
+    expect(SPAWN_LEAD).toBe(DEFAULT_SPAWN_SCREEN_X);
+  });
+
   it('refuses non-maps and bad sizes', () => {
     expect(() => convertTiledMap(null as never)).toThrow('not a Tiled map');
     expect(() => convertTiledMap('map' as never)).toThrow('not a Tiled map');
@@ -180,8 +188,10 @@ describe('tiled-import edges — the map header', () => {
     expect(() => convertTiledMap(map([], { properties: props({ length: 0 }) }))).toThrow(
       'stage length 0',
     );
-    // Exactly one screen plus a tile: the shortest map (length 8).
-    expect(convertTiledMap(map([], { width: VIEW_WIDTH / 8 + 1 })).stage.length).toBe(8);
+    // Exactly one screen plus a tile: the shortest map (length one tile).
+    expect(convertTiledMap(map([], { width: VIEW_WIDTH / TILED_TILE_SIZE + 1 })).stage.length).toBe(
+      TILED_TILE_SIZE,
+    );
   });
 
   it('names the stage: option > property > "imported"; the name from the id', () => {

@@ -6,12 +6,13 @@
  * validates it like a hand-written stage, so the importer only translates — it does not check the
  * game rules.
  *
- * **The map.** Orthogonal, not infinite, 8 × 8 px tiles (`TILE_SIZE`). Its custom properties
- * (all optional) fill the stage header: `id` (default: the file name), `name` (default: the id in
- * upper case), `tileset` (the **content** tileset id, default `terrain-a`), `musicStage` /
- * `musicBoss` (music cue names, default `Stage` / `Boss`), `length` (default: the map width in
- * pixels minus one screen, 384) and `speed` (the scroll speed of the camera key the importer adds
- * at x 0 when the map has none, default 1).
+ * **The map.** Orthogonal, not infinite, square tiles of the game's tile size
+ * ({@link TILED_TILE_SIZE}, 8 px today). Its custom properties (all optional) fill the stage
+ * header: `id` (default: the file name), `name` (default: the id in upper case), `tileset` (the
+ * **content** tileset id, default `terrain-a`), `musicStage` / `musicBoss` (music cue names,
+ * default `Stage` / `Boss`), `length` (default: the map width in pixels minus one screen,
+ * {@link VIEW_WIDTH}) and `speed` (the scroll speed of the camera key the importer adds at x 0
+ * when the map has none, default 1).
  *
  * **Tile layer → RLE rows.** The tile layer named `terrain` (else the first tile layer) becomes
  * `tilemap.rle`: one string per map row (`rowsTall` = the map height), runs written `<count>*<id>`,
@@ -25,11 +26,12 @@
  * types map to JSON: `int` / `float` → numbers, `bool` → booleans, `string` → strings):
  *
  * - `spawn`, `formation` — the object's position is the enemy's spawn point in the world: the
- *   event fires at `x = max(0, round(obj.x) − 400)` (so the enemy appears 16 px past the right
- *   edge, the default `screenX`), `screenX` is written only when it is not 400 (an object nearer
- *   the start than 400 px); the enemy id is the `enemy` property or the object's name. A spawn
- *   takes `path` and `branch`; a formation also `count`, `interval`, `drop` and `bonus`. A
- *   stage's spawn `y` is **relative to the camera** (playfield pixels), so the importer writes
+ *   event fires at `x = max(0, round(obj.x) − SPAWN_LEAD)` ({@link SPAWN_LEAD}, 400 today: the
+ *   enemy appears 16 px past the right edge, the default `screenX`), `screenX` is written only
+ *   when it is not `SPAWN_LEAD` (an object nearer the start than that); the enemy id is the
+ *   `enemy` property or the object's name. A spawn takes `path` and `branch`; a formation also
+ *   `count`, `interval`, `drop` and `bonus`. A stage's spawn `y` is **relative to the camera**
+ *   (playfield pixels), so the importer writes
  *   `y = round(obj.y − cameraY)`, where `cameraY` is the camera y the imported camera keys give
  *   when the event fires ({@link cameraYAt}: `yTo` of the keys before the event's x, a diagonal
  *   `yOver` pan interpolated). A timed pan (`yTicks`) counts as finished at its key; a spawn that
@@ -41,11 +43,11 @@
  *   `yOver`, `lock`, `hold`.
  * - `checkpoint` — a checkpoint at `round(obj.x)`.
  * - `trigger` (a rectangle) — a region trigger over the rectangle (`region` = its `x`, `y`,
- *   `width`, `height`), armed when the region enters the view (`x = max(0, left − 384)`, or the
- *   `armX` property); `flag`, `value`, `until`, `branch`.
+ *   `width`, `height`), armed when the region enters the view (`x = max(0, left − VIEW_WIDTH)`,
+ *   or the `armX` property); `flag`, `value`, `until`, `branch`.
  * - `block` (a rectangle) — a moving block appearing 16 px past the right edge (`x = max(0,
- *   left − 400)`, `screenX = left − x` when not 400), `y` = its top, `w` / `h` = its size; `tile`,
- *   `vx`, `vy`, `dx`, `dy`, `period`, `phase`, `branch`.
+ *   left − SPAWN_LEAD)`, `screenX = left − x` when not `SPAWN_LEAD`), `y` = its top, `w` / `h` =
+ *   its size; `tile`, `vx`, `vy`, `dx`, `dy`, `period`, `phase`, `branch`.
  * - `branch` — declares an in-stage branch: id = the object's name, `flag`, `value`.
  * - any object with a **polyline** — a movement path (`content/paths/`): id = the object's name,
  *   points relative to its first point (rounded to 1/100 px).
@@ -68,18 +70,22 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PLAYFIELD_W, SPAWN_LEAD as FRAME_SPAWN_LEAD, TILE_SIZE } from '../frame.mjs';
 
 /** Repository root (this file lives in `scripts/content/`). */
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Tile edge the game uses (`@shmup/core` `TILE_SIZE`); the map's tiles must match it. */
-export const TILED_TILE_SIZE = 8;
+export const TILED_TILE_SIZE = TILE_SIZE;
 
 /** The playfield width (`@shmup/core` `PLAYFIELD_W`): a stage map is its length plus this. */
-export const VIEW_WIDTH = 384;
+export const VIEW_WIDTH = PLAYFIELD_W;
 
-/** How far ahead of the camera a spawn appears by default (`DEFAULT_SPAWN_SCREEN_X`, 400). */
-export const SPAWN_LEAD = 400;
+/**
+ * How far ahead of the camera a spawn appears by default (`@shmup/core` `DEFAULT_SPAWN_SCREEN_X`:
+ * 16 px past the right edge, 400 today).
+ */
+export const SPAWN_LEAD = FRAME_SPAWN_LEAD;
 
 /** Tiled's flip / rotation bits in a gid. */
 const FLIP_BITS = 0xe0000000;

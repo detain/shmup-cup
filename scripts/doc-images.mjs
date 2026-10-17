@@ -36,6 +36,7 @@ import { join } from 'node:path';
 import { collectSprites, REPO_ROOT } from './assets/pipeline.mjs';
 import { createImage, getPixel, setPixel } from './assets/image.mjs';
 import { encodePng } from './assets/png.mjs';
+import { FRAME_W } from './frame.mjs';
 
 /** @typedef {import('./assets/image.mjs').Image} Image */
 /** @typedef {import('./assets/image.mjs').Rgba} Rgba */
@@ -256,7 +257,8 @@ function loosePlate(content, scale, pad) {
  * The sprites and fonts of `assets/source/`, by name.
  *
  * @returns {{ frames: Map<string, Image[]>, glyphs: Map<number, { image: Image, advance: number }>,
- *   lineHeight: number }} Frames by sprite name and the pixel font's glyphs by code point.
+ *   lineHeight: number, cellWidth: number }} Frames by sprite name, the pixel font's glyphs by
+ *   code point, its line height and its cell width.
  * @throws {Error} When a sprite source is invalid (every issue is listed).
  */
 function loadArt() {
@@ -277,19 +279,22 @@ function loadArt() {
     const index = Number(glyph.frame.slice(glyph.frame.indexOf('#') + 1));
     glyphs.set(Number(code), { image: fontFrames[index], advance: glyph.advance });
   }
-  return { frames, glyphs, lineHeight: metrics.lineHeight };
+  return { frames, glyphs, lineHeight: metrics.lineHeight, cellWidth: metrics.cellWidth };
 }
 
 /**
  * Width of `text` in the pixel font.
  *
- * @param {Map<number, { image: Image, advance: number }>} glyphs - The font.
+ * @param {{ glyphs: Map<number, { image: Image, advance: number }>, cellWidth: number }} font - The
+ *   font's glyphs by code point and its cell width (the advance of a code point it lacks).
  * @param {string} text - The text.
  * @returns {number} Width in source pixels.
  */
-function textWidth(glyphs, text) {
+function textWidth(font, text) {
   let width = 0;
-  for (const ch of text) width += glyphs.get(ch.codePointAt(0) ?? 32)?.advance ?? 6;
+  for (const ch of text) {
+    width += font.glyphs.get(ch.codePointAt(0) ?? 32)?.advance ?? font.cellWidth;
+  }
   return width;
 }
 
@@ -297,17 +302,18 @@ function textWidth(glyphs, text) {
  * Draws text in the game's own pixel font, tinted (the glyphs are white).
  *
  * @param {Image} target - Target image.
- * @param {Map<number, { image: Image, advance: number }>} glyphs - The font.
+ * @param {{ glyphs: Map<number, { image: Image, advance: number }>, cellWidth: number }} font - The
+ *   font (see {@link textWidth}).
  * @param {string} text - The text (unknown code points are skipped).
  * @param {number} x - Left column, or the centre when `center` is true.
  * @param {number} y - Top row.
  * @param {Rgba} rgba - Ink colour.
  * @param {boolean} [center] - Centre the text on `x` (default false).
  */
-function drawText(target, glyphs, text, x, y, rgba, center = false) {
-  let px = center ? x - Math.floor(textWidth(glyphs, text) / 2) : x;
+function drawText(target, font, text, x, y, rgba, center = false) {
+  let px = center ? x - Math.floor(textWidth(font, text) / 2) : x;
   for (const ch of text) {
-    const glyph = glyphs.get(ch.codePointAt(0) ?? 32);
+    const glyph = font.glyphs.get(ch.codePointAt(0) ?? 32);
     if (glyph === undefined) continue;
     for (let gy = 0; gy < glyph.image.height; gy++) {
       for (let gx = 0; gx < glyph.image.width; gx++) {
@@ -345,12 +351,13 @@ function tileBand(target, tile, y, height, offset) {
  * The logo banner of the README: the game's own `ui/logo` sprite over its own parallax star
  * bands and zone A's planet rim, with the pixel font's tagline under it.
  *
- * @param {{ frames: Map<string, Image[]>, glyphs: Map<number, { image: Image, advance: number }> }} art
- *   The loaded art.
- * @returns {Image} The banner (1152×432).
+ * @param {{ frames: Map<string, Image[]>, glyphs: Map<number, { image: Image, advance: number }>,
+ *   cellWidth: number }} art The loaded art.
+ * @returns {Image} The banner: one frame wide ({@link FRAME_W}) and 144 rows tall, magnified × 3
+ *   (1152×432 at today's 384-wide frame).
  */
 function buildLogoBanner(art) {
-  const width = 384;
+  const width = FRAME_W;
   const height = 144;
   const canvas = createImage(width, height);
   fillRect(canvas, 0, 0, width, height, SPACE);
@@ -367,8 +374,8 @@ function buildLogoBanner(art) {
     draw(canvas, logo, Math.floor((width - logo.width) / 2), 34);
   }
   shadeBand(canvas, 66, 42, 0.6);
-  drawText(canvas, art.glyphs, 'THE IRON TIDE HAS RISEN', width / 2, 76, TITLE_INK, true);
-  drawText(canvas, art.glyphs, 'NINE ZONES - TWO SHIPS - ONE CUP', width / 2, 90, TEXT_INK, true);
+  drawText(canvas, art, 'THE IRON TIDE HAS RISEN', width / 2, 76, TITLE_INK, true);
+  drawText(canvas, art, 'NINE ZONES - TWO SHIPS - ONE CUP', width / 2, 90, TEXT_INK, true);
   const kestrel = art.frames.get('ships/kestrel')?.[1];
   const thruster = art.frames.get('ships/kestrel-thruster')?.[0];
   const orb = art.frames.get('options/orb')?.[0];

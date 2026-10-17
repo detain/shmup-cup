@@ -6,8 +6,9 @@
  * — the title screen, the menus a run passes through, one action shot of every zone, the boss
  * WARNING and a boss fight. Nothing here is a mock-up: the page is the web app's test build
  * (`build:test`, so `window.__shmupDebug` exists), the sim is frozen with the debug tools' frame
- * advance and stepped to an exact tick, and the canvas is screenshotted at ×3 (1152×648). The
- * same tick always draws the same picture, so a re-run only changes a file when the game changed.
+ * advance and stepped to an exact tick, and the canvas is screenshotted at the e2e capture scale
+ * (`scripts/frame.mjs` `CAPTURE_SCALE`: ×3, 1152×648, at today's 384×216 frame). The same tick
+ * always draws the same picture, so a re-run only changes a file when the game changed.
  *
  * Prerequisite: `pnpm turbo run build:test --filter=@shmup/web` (the script says so and exits 1
  * when `apps/web/dist/` is missing). Playwright's Chromium must be installed
@@ -30,6 +31,7 @@ import { extname, join, normalize } from 'node:path';
 // not in this Node process — hence the browser globals above.
 import { chromium } from '@playwright/test';
 import { decodePng } from './assets/png.mjs';
+import { CAPTURE_SCALE, FRAME_H, FRAME_W } from './frame.mjs';
 
 /** Repository root (this file lives in `scripts/`). */
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
@@ -40,8 +42,11 @@ const WEB_DIST = join(REPO_ROOT, 'apps', 'web', 'dist');
 /** Where the screenshots are written. */
 export const SCREEN_DIR = join(REPO_ROOT, 'docs', 'images', 'screens');
 
-/** Canvas scale of a capture: the playfield is 384×216, the viewport 1152×648. */
-const SCALE = 3;
+/**
+ * Canvas scale of a capture — the e2e viewport's ({@link CAPTURE_SCALE}): the frame at ×3 today,
+ * a 1152×648 viewport.
+ */
+const SCALE = CAPTURE_SCALE;
 
 /** Media types the static server needs. */
 const MIME = {
@@ -236,7 +241,7 @@ function litPixels(png, rows) {
  */
 async function capture(browser, base, shot) {
   const context = await browser.newContext({
-    viewport: { width: 384 * SCALE, height: 216 * SCALE },
+    viewport: { width: FRAME_W * SCALE, height: FRAME_H * SCALE },
   });
   const page = await context.newPage();
   try {
