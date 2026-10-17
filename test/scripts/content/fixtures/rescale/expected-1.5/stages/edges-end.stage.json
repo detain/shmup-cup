@@ -46,7 +46,7 @@
       "type": "heightfield",
       "segments": [
         { "from": 0, "to": 1837, "floor": { "base": 36, "amp": 12, "period": 192, "seed": 5 } },
-        { "from": 1848, "to": 1864, "floor": { "base": 36, "amp": 12, "period": 192, "seed": 6 } }
+        { "from": 1840, "to": 1864, "floor": { "base": 36, "amp": 12, "period": 192, "seed": 6 } }
       ]
     }
   },

@@ -22,8 +22,12 @@
  *   `--art-scale` the atlas' terrain tiles contradict is refused (exit 2) unless forced.
  *
  * The fixtures carry the geometry they were written for (`fixtures/rescale/geometry.json`), and
- * the shipped content's runs use the same fixed v1 → v2 numbers, so these tests do not depend on
- * core's frame constants (which R2-01 flips).
+ * the shipped content's runs use the same fixed v1 → v2 numbers, so the ported values do not
+ * depend on core's frame constants (which R2-01 flips). What does is the out-of-bounds listing:
+ * the tool checks each ported value against today's schema bounds, and core derives some of those
+ * from its frame (`PLAYFIELD_W + 64`, `PLAYFIELD_H`, …). The fixture test that pins that listing
+ * reads the bounds from core's schemas rather than pinning them, so it holds on both frames: seven
+ * values out of bounds at the fixtures' 384 × 200, none at R2-01's 640 × 336.
  */
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
@@ -199,6 +203,29 @@ function loadFixture(root: string) {
   const fx = loadFxContent(ofKind('fx'));
   const sfx = audio.loadSfxContent(ofKind('sfx'));
   return { db: loaded.db, fx: fx.content, issues: [...loaded.issues, ...fx.issues, ...sfx.issues] };
+}
+
+/**
+ * Today's schema bounds of one number of a v1 fixture file. Core derives some of them from its
+ * frame (`PLAYFIELD_W + 64`, `PLAYFIELD_H`, …), so they change when R2-01 flips it.
+ *
+ * @param path - The file, below `fixtures/rescale/v1/`.
+ * @param field - The number's JSON path in it.
+ * @returns Its field's `[min, max]` (each `undefined` when unbounded).
+ * @throws {Error} When the file has no such number.
+ */
+function schemaBounds(path: string, field: string): [number | undefined, number | undefined] {
+  const data = JSON.parse(readFileSync(join(v1Root, path), 'utf8')) as { kind: string };
+  const schema = MODULES.schemas[data.kind];
+  const found: [number | undefined, number | undefined][] = [];
+  if (schema !== undefined) {
+    core.walkNumbers(schema, data, (leaf) => {
+      if (leaf.path === field) found.push([leaf.min, leaf.max]);
+    });
+  }
+  const bounds = found[0];
+  if (bounds === undefined) throw new Error(`${path} has no number at ${field}`);
+  return bounds;
 }
 
 /**
@@ -420,15 +447,31 @@ describe('scripts/content/rescale: the fixtures', () => {
     // The second raster's top and bottom do not scale ×k together: its bands are spread.
     expect(result.rounded[result.rounded.length - 1]?.to).toEqual([42, 42, 42]);
     expect(result.rounded[result.rounded.length - 1]?.note).toMatch(/do not scale ×k together/);
-    expect(listed(result.outOfBounds)).toEqual([
-      'enemies/edges.enemies.json:enemies[0].mover.x',
-      'enemies/edges.enemies.json:enemies[2].boss.x',
-      'stages/edges.stage.json:events[0].screenX',
-      'stages/edges.stage.json:events[7].screenX',
-      'stages/edges.stage.json:raster[0].top',
-      'stages/edges.stage.json:raster[0].bottom',
-      'stages/edges.stage.json:mode7.bottom',
-    ]);
+    // The values the port puts outside their fields' schema bounds. Core derives those bounds from
+    // its frame (`PLAYFIELD_W + 64`, `PLAYFIELD_H`, …), so which of these seven are listed is read
+    // from core's schemas, not pinned: all seven at the fixtures' 384 × 200 frame, none once R2-01
+    // flips core to 640 × 336 (each fits the wider bounds).
+    const candidates: [string, string, number][] = [
+      ['enemies/edges.enemies.json', 'enemies[0].mover.x', 514],
+      ['enemies/edges.enemies.json', 'enemies[2].boss.x', 508],
+      ['stages/edges.stage.json', 'events[0].screenX', 664],
+      ['stages/edges.stage.json', 'events[7].screenX', 664],
+      ['stages/edges.stage.json', 'raster[0].top', 264],
+      ['stages/edges.stage.json', 'raster[0].bottom', 336],
+      ['stages/edges.stage.json', 'mode7.bottom', 336],
+    ];
+    const outside = candidates.filter(([path, field, to]) => {
+      const [min, max] = schemaBounds(path, field);
+      return (min !== undefined && to < min) || (max !== undefined && to > max);
+    });
+    expect(result.outOfBounds.map((entry) => [entry.file, entry.path, entry.to])).toEqual(outside);
+    if (
+      core.PLAYFIELD_W === GEOMETRY.frame.playfieldW &&
+      core.PLAYFIELD_H === GEOMETRY.frame.playfieldH
+    ) {
+      // Core at the fixtures' own frame: the hand-checked seven, every one of them.
+      expect(outside).toEqual(candidates);
+    }
     expect(result.views).toEqual([]);
     // The field pairs: a moving block now created earlier, a ground enemy before the checkpoint
     // it followed, a branch-gated one now read while its flag's trigger is armed, one before a
@@ -500,16 +543,16 @@ describe('scripts/content/rescale: the fixtures', () => {
     // old playfield's width = 1184 (148 columns) and ports to 1200 + 640 = 1840 (154 columns of
     // 12 px, the last one starting at 1836 and ending at 1848). A segment ending on the end (edges,
     // at 1984) ends on the new end; one ending 4 px short of it but in the last column keeps that
-    // ×1.5 (1834), kept in the new last column (1837); one ending past it keeps its 16 px ×1.5; one
-    // starting past the last column stays past the new last column; a region reaching the end
-    // still reaches it (its w takes the difference), one past it stays past it; an RLE row tiled
-    // in the last column repeats its last cell to 154 columns (a row ending in an empty cell, or
-    // shorter, stays).
+    // ×1.5 (1834), kept in the new last column (1837); a segment the map never shows (from on the
+    // end, to 16 px past it) starts on the new end and keeps its 16 px ×1.5, so it starts in the
+    // new last column and still draws nothing; a region reaching the end still reaches it (its w
+    // takes the difference), one past it stays past it; an RLE row tiled in the last column
+    // repeats its last cell to 154 columns (a row ending in an empty cell, or shorter, stays).
     const line = (entry: { file: string; path: string; from: unknown; to: unknown }): string =>
       `${entry.file}:${entry.path} ${JSON.stringify(entry.from)} → ${JSON.stringify(entry.to)}`;
     expect(result.moved.filter((entry) => entry.note.startsWith('map end')).map(line)).toEqual([
       'stages/edges-end.stage.json:tilemap.generator.segments[0].to 1180 → 1837',
-      'stages/edges-end.stage.json:tilemap.generator.segments[1].from 1184 → 1848',
+      'stages/edges-end.stage.json:tilemap.generator.segments[1].from 1184 → 1840',
       'stages/edges-end.stage.json:tilemap.generator.segments[1].to 1200 → 1864',
       'stages/edges-end.stage.json:events[0].region.w 184 → 340',
       'stages/edges-end.stage.json:events[1].region.x 1200 → 1864',

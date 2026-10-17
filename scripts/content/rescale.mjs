@@ -54,9 +54,11 @@
  * - the **map's right end** — `length` plus one playfield, where the view ends at the last camera
  *   position — is frame-anchored: it ports to `length′ + toWidth`, and an x at or past it keeps its
  *   distance past it ×k (`portMapEnd`): a heightfield segment that reaches the map's last column
- *   ends at the new map's end, a region reaching the end still reaches it, and an RLE row tiled in
+ *   ends at the new map's end, one that starts at or past the end (the map never shows it) starts
+ *   as far past the new one, a region reaching the end still reaches it, and an RLE row tiled in
  *   the last column repeats its last cell to the new map's width (`extendRleRow`); each is listed
- *   as moved.
+ *   as moved. A segment that would no longer start before it ends, and an RLE row core's syntax
+ *   refuses, are errors.
  *
  * **What it reads.** Every content file (`readContentFiles` of `vite.shared.ts`, plus the
  * `example.*.json` samples unless `--no-examples`), each with its kind's file schema: core's
@@ -1228,6 +1230,26 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
     }
   }
 
+  // A heightfield segment must still start before it ends (the loader refuses `to ≤ from`). The
+  // map-end rule keeps `to′ − from′ = k · (to − from)` past the end; a short segment rounded at a
+  // factor below 1, or an end that a narrower `--to-width` pulls in under a segment ×k, may not.
+  const generator =
+    tilemap !== null && isObject(tilemap['generator']) ? tilemap['generator'] : null;
+  const segments =
+    generator !== null && Array.isArray(generator['segments']) ? generator['segments'] : [];
+  segments.forEach((segment, i) => {
+    const from = final(segment, 'from');
+    const to = final(segment, 'to');
+    if (from === undefined || to === undefined || from < to || !isObject(segment)) return;
+    plan.errors.push({
+      file: file.path,
+      message:
+        `tilemap.generator.segments[${String(i)}]: from ${String(segment['from'])} → ` +
+        `${String(from)} and to ${String(segment['to'])} → ${String(to)} no longer start before ` +
+        'they end (the loader refuses to ≤ from) — fix the segment by hand',
+    });
+  });
+
   // 4. Tileset masks.
   for (const [mask, where] of masks) {
     const old = /** @type {number[]} */ (mask);
@@ -1313,7 +1335,15 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
   if (rle !== null && mapEnd !== null) {
     rows = rle.map((row, r) => {
       const path = `tilemap.rle[${String(r)}]`;
-      const width = rleWidth(row);
+      const { width, error } = rleCells(row);
+      if (error !== null) {
+        // Core's decoder refuses it: the tool cannot tell whether it reaches the map's end.
+        plan.errors.push({
+          file: file.path,
+          message: `${path}: ${error} — the loader refuses the row, so it cannot be ported`,
+        });
+        return row;
+      }
       if (width > mapEnd.cols || width > mapEnd.newCols) {
         // Longer than the old map (the loader refuses it: not the geometry the content was
         // written for), or than the new one (a narrower port).
@@ -1353,10 +1383,6 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
   if (tilemap !== null && geometry.padRows > 0) {
     const topRow = rows !== null && rows.length > 0 ? rows[0] : null;
     const filled = topRow !== null && rleHasTiles(topRow);
-    const segments =
-      isObject(tilemap['generator']) && Array.isArray(tilemap['generator']['segments'])
-        ? tilemap['generator']['segments']
-        : [];
     const ceilings = segments.filter(
       (segment) => isObject(segment) && segment['ceiling'] !== undefined,
     ).length;
@@ -1720,9 +1746,11 @@ function portBackdrop(file, pending, geometry, modules, art, overrides, plan) {
  * - A heightfield segment's `to` that reaches the map's last column (the generator clamps a
  *   segment to the map and ramps it down to the map's edge) ports by that rule, kept in the new
  *   map's last column (off the tile grid the end lies inside the last column, and a `to` there
- *   may be short of it): a segment ending on the end ends on the new one. A `from` past the map's
- *   last column (a segment the map never shows) keeps its distance past the column grid's end ×k,
- *   so it stays past the new map's last column.
+ *   may be short of it): a segment ending on the end ends on the new one. A `from` at or past the
+ *   end ports by the same rule (`to′ − from′ = k · (to − from)`, so the segment still starts
+ *   before it ends): it starts in the map's last column or past it, where the generator draws
+ *   nothing (a one-column segment has height 0 at both its boundaries — core `boundaryHeights`),
+ *   and the new end lies in the new map's last column, so it still draws nothing.
  * - A region (a trigger's or a bonus entrance's) whose right edge `x + w` is at or past the end:
  *   the right edge ports by the rule and `w` takes the difference (an `x` past the end too).
  *
@@ -1826,20 +1854,19 @@ function portMapEnd(data, pending, geometry, modules, overrides) {
             : `map end: ends ${beyond(toX)}`,
       );
     }
-    // A `from` past the map's last column (a segment the map never shows) stays past the new
-    // map's: its distance past the column grid's end ×k (the new map's end is inside its last
-    // column, so an x just past it would still be drawn).
+    // A `from` at or past the end (a segment the map never shows: it starts in the map's last
+    // column or past it, and a one-column segment draws nothing) keeps its distance past the end
+    // ×k, as its `to` does — the segment keeps `to′ − from′ = k · (to − from)`, and it starts in the
+    // new map's last column or past it (the new end lies in that column), so it still draws
+    // nothing.
     const from = leafOf(segment, 'from');
     const fromX = from === undefined ? Number.NaN : Number(from.leaf.value);
-    const grid = mapEnd.cols * geometry.tileSize;
-    if (from !== undefined && fromX >= grid) {
-      const newGrid = mapEnd.newCols * geometry.toTileSize;
+    if (from !== undefined && fromX >= end) {
       set(
         from,
-        newGrid + factor * (fromX - grid),
-        `map end: starts ${String(fromX - grid)} px past the map's last tile column, which ` +
-          `ends at ${String(grid)} (→ ${String(newGrid)}): a segment the map never shows stays ` +
-          "past the new map's",
+        past(fromX),
+        (fromX === end ? `map end: starts on ${ends}` : `map end: starts ${beyond(fromX)}`) +
+          ' — a segment the map never shows stays one',
       );
     }
   }
@@ -1871,60 +1898,76 @@ function portMapEnd(data, pending, geometry, modules, overrides) {
 }
 
 /**
- * The cells of an RLE row (`core/data/tilemap` row syntax: `<id>` / `<count>*<id>`, comma
- * separated, spaces ignored).
+ * An RLE row as core reads it ({@link rleCells}).
  *
- * @param {string} row - The row (valid syntax).
- * @returns {{ width: number, last: number }} Its width in tiles and its last cell's tile id (0
- *   for an empty row).
+ * @typedef {object} RleCells
+ * @property {number} width - Its width in tiles.
+ * @property {number} last - Its last cell's tile id (0 for an empty row).
+ * @property {number} count - Its last token's run length (0 for an empty row).
+ * @property {string | null} error - Why core's decoder refuses the row (its message), or `null`.
  */
-function rleCells(row) {
-  const compact = row.replace(/\s+/g, '');
-  let width = 0;
-  let last = 0;
-  if (compact === '') return { width, last };
-  for (const token of compact.split(',')) {
-    const match = /^(?:([0-9]+)\*)?([0-9]+)$/.exec(token);
-    if (match === null) continue;
-    width += match[1] === undefined ? 1 : Number(match[1]);
-    last = Number(match[2]);
-  }
-  return { width, last };
-}
 
 /**
- * The width of an RLE row in tiles.
+ * Reads an RLE row by core's rules (`core/data/tilemap` `decodeRleRow`): every whitespace
+ * character is dropped — inside a token too (`2 * 1` is `2*1`) — and what is left is comma
+ * separated `<id>` / `<count>*<id>` tokens, each count at least 1.
  *
  * @param {string} row - The row.
- * @returns {number} Its width.
+ * @returns {RleCells} Its width, last cell and last run, or the first token core refuses.
  */
-const rleWidth = (row) => rleCells(row).width;
+function rleCells(row) {
+  const cells = { width: 0, last: 0, count: 0, error: /** @type {string | null} */ (null) };
+  const compact = row.replace(/\s+/g, '');
+  if (compact === '') return cells;
+  const tokens = compact.split(',');
+  for (let t = 0; t < tokens.length; t++) {
+    const match = /^(?:([0-9]+)\*)?([0-9]+)$/.exec(tokens[t] ?? '');
+    if (match === null) {
+      cells.error = `token ${String(t + 1)} "${String(tokens[t])}" is not <id> or <count>*<id>`;
+      return cells;
+    }
+    const count = match[1] === undefined ? 1 : Number(match[1]);
+    if (count < 1) {
+      cells.error = `token ${String(t + 1)} has a zero run length`;
+      return cells;
+    }
+    cells.width += count;
+    cells.count = count;
+    cells.last = Number(match[2]);
+  }
+  return cells;
+}
 
 /**
  * Extends an RLE row that is tiled in the map's last column to the new map's width with copies of
  * that cell — the row reaches the map's right end, which is frame-anchored ({@link portMapEnd}).
- * The row's last token takes the extra cells (`2*1` → `8*1`, `1` → `7*1`); every other character
- * stays.
+ * The row's last token is rebuilt from its parsed run and tile id with the extra cells
+ * (`2*1` → `8*1`, `1` → `7*1`, `2 * 1` → `8*1`), keeping the whitespace around it; every other
+ * character stays.
  *
  * @param {string} row - The row as written.
  * @param {number} cols - The map's columns as written.
  * @param {number} newCols - The new map's columns.
  * @returns {string} The extended row, or `row` itself when it is shorter than the map, ends in an
  *   empty cell or the new map is no wider.
+ * @throws {Error} When core's decoder refuses the row (a token that is not `<id>` or
+ *   `<count>*<id>`, a zero run): the tool cannot tell where it ends.
  * @example
  * ```js
  * extendRleRow('146*0, 2*1', 148, 154); // '146*0, 8*1'
+ * extendRleRow('146*0, 2 * 1', 148, 154); // '146*0, 8*1'
  * ```
  */
 export function extendRleRow(row, cols, newCols) {
-  const { width, last } = rleCells(row);
+  const { width, last, count, error } = rleCells(row);
+  if (error !== null) throw new Error(`not an RLE row core reads: ${error}`);
   if (width !== cols || last === 0 || newCols <= cols) return row;
-  const match = /([0-9]+\*)?([0-9]+)(\s*)$/.exec(row);
-  if (match === null) return row;
-  const count = match[1] === undefined ? 1 : Number(match[1].slice(0, -1));
-  return (
-    row.slice(0, match.index) + `${String(count + newCols - cols)}*${match[2]}` + (match[3] ?? '')
-  );
+  // Commas are not whitespace, so the last token is everything after the row's last comma.
+  const cut = row.lastIndexOf(',') + 1;
+  const token = row.slice(cut);
+  const lead = /^\s*/.exec(token)?.[0] ?? '';
+  const trail = /\s*$/.exec(token)?.[0] ?? '';
+  return row.slice(0, cut) + lead + `${String(count + newCols - cols)}*${String(last)}` + trail;
 }
 
 /**

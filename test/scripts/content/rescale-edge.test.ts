@@ -9,7 +9,10 @@
  * of triggers, flags and camera stops, the re-sort's index map, and a band that touched two
  * anchors. Review round 3: a given `--art-scale` the tiles contradict is refused too unless
  * `--force-art-scale`, and the map's right end (`length` + one playfield) ports as a frame-anchored
- * end — heightfield segments, regions and RLE rows that reach it reach the new one.
+ * end — heightfield segments, regions and RLE rows that reach it reach the new one. Review round 4:
+ * an RLE row's last token is rebuilt by core's row syntax (`2 * 1` → `8*1`) and a row core cannot
+ * read is an error; a segment the map never shows ports its `from` from the view's end like its
+ * `to` (so it stays short and unshown), and one that would end before it starts is an error.
  */
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -1129,6 +1132,27 @@ describe('rescale: the map’s right end (review round 3)', () => {
     expect(extendRleRow('147*0, 1', 148, 154)).toBe('147*0, 7*1');
     expect(extendRleRow('147*0,3  ', 148, 150)).toBe('147*0,3*3  ');
     expect(extendRleRow('148*12', 148, 154)).toBe('154*12');
+    // Core drops every whitespace character, inside a token too (review round 4): the last token
+    // is rebuilt from its run and tile id, and the whitespace around it stays.
+    for (const [row, extended] of [
+      ['146*0, 2 * 1', '146*0, 8*1'],
+      ['146*0, 2* 1', '146*0, 8*1'],
+      ['146*0, 2 *1', '146*0, 8*1'],
+      ['146*0,\t2\t*\t1\n', '146*0,\t8*1\n'],
+      [' 146*0 , 2*1 ', ' 146*0 , 8*1 '],
+      ['146*0,2*1 ', '146*0,8*1 '],
+      ['147*0, 1 ', '147*0, 7*1 '],
+      ['138*0, 1 0*1', '138*0, 16*1'],
+      ['146*0, 2*1 2', '146*0, 8*12'],
+      ['14 8*3', '154*3'],
+      ['146 * 0 ,0 2*0 1', '146 * 0 ,8*1'],
+    ] as const) {
+      expect(extendRleRow(row, 148, 154), row).toBe(extended);
+    }
+    // A row core's decoder refuses cannot be extended: an error, never written as it is.
+    for (const row of ['146*0, 2*1,', '146*0, 2*1*1', '146*0, x', '148*0, 0*1']) {
+      expect(() => extendRleRow(row, 148, 154), row).toThrow(/^not an RLE row core reads: token /);
+    }
     // Not tiled in the last column, shorter than the map, or no wider map: as it is.
     for (const [row, cols, newCols] of [
       ['100*0, 2*1, 46*0', 148, 154],
@@ -1195,8 +1219,10 @@ describe('rescale: the map’s right end (review round 3)', () => {
             [0, lastColumn], // ends before the last column: ×k
             [0, lastColumn + 1], // ends in the last column, 3 px short of the end: 4.5 short
             [0, end + 1], // 1 px past the end: 1.5 px past the new one (rounded)
-            [lastColumn + 6, grid], // starts in the last column: ×k; ends past the end
-            [grid, grid + 20], // starts past the last column: stays past the new one
+            // Never shown: it starts past the end, in the last column (review round 4): it keeps
+            // its 2 px past the end ×k, so it starts past the new end too, not at ×k's 3585
+            [lastColumn + 6, 2600],
+            [grid, grid + 20], // starts past the last column: as far past the new end, ×k
           ]),
         ),
       ],
@@ -1212,8 +1238,8 @@ describe('rescale: the map’s right end (review round 3)', () => {
       [0, lastColumn * 1.5],
       [0, Math.round(newEnd - 4.5)],
       [0, Math.round(newEnd + 1.5)],
-      [(lastColumn + 6) * 1.5, newEnd + 1.5 * (grid - end)],
-      [newGrid, newEnd + 1.5 * (grid + 20 - end)],
+      [newEnd + 1.5 * (lastColumn + 6 - end), newEnd + 1.5 * (2600 - end)],
+      [newEnd + 1.5 * (grid - end), newEnd + 1.5 * (grid + 20 - end)],
     ]);
     // The new map (the generator clamps a segment to it) shows the segments that reached the old
     // map's last column up to its own last column, and still none of the one that started past.
@@ -1227,8 +1253,16 @@ describe('rescale: the map’s right end (review round 3)', () => {
       true,
       true,
     ]);
-    expect(Math.floor((segments[4]?.from ?? 0) / size)).toBe(newCols);
-    expect(plan.moved.filter((entry) => entry.note.startsWith('map end')).length).toBe(5);
+    // The two never-shown segments start in the new map's last column or past it, where the
+    // generator draws nothing (a one-column segment is 0 high at both its boundaries). The
+    // review's case: from 2390 → 3649, past the new view's end at 3646 (×k's 3585 drew 6 columns
+    // inside the last view).
+    expect(segments.slice(3).map((segment) => Math.floor(segment.from / size))).toEqual([
+      newCols,
+      newCols,
+    ]);
+    expect([end, newEnd, segments[3]?.from]).toEqual([2388, 3646, 3649]);
+    expect(plan.moved.filter((entry) => entry.note.startsWith('map end')).length).toBe(6);
     expect(plan.rounded.map((entry) => entry.path)).toEqual([
       'tilemap.generator.segments[1].to',
       'tilemap.generator.segments[2].to',
@@ -1333,6 +1367,90 @@ describe('rescale: the map’s right end (review round 3)', () => {
     );
     expect(cut.errors.map((error) => error.message)).toEqual([
       `tilemap.rle[0]: ${String(cols)} tiles, longer than the new map (${String(cols - 8)} columns)`,
+    ]);
+  });
+
+  it('keeps a never-shown segment short and never shown, and refuses one it cannot (round 4)', () => {
+    // On the tile grid (length 800: the map ends at 1184, the edge of its 148th column; ported at
+    // 1840, 4 px into the new map's last column) a segment that starts on or past the end keeps
+    // its distance past the end ×k at both ends: from 1184 → 1840, not the column grid's 1848,
+    // which put it after its own to (1846).
+    const plan = planRescale(
+      [
+        mapStage(
+          800,
+          heightfield([
+            [0, 1000],
+            [1184, 1188],
+            [1184, 1189],
+            [1200, 1203],
+          ]),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.errors).toEqual([]);
+    const ported = JSON.parse(plan.changed[0]?.text ?? '{}') as {
+      tilemap: { generator: { segments: { from: number; to: number }[] } };
+    };
+    expect(ported.tilemap.generator.segments.map((segment) => [segment.from, segment.to])).toEqual([
+      [0, 1500],
+      [1840, 1846],
+      [1840, 1848],
+      [1864, 1869],
+    ]);
+    // A port that pulls the end in under a segment ×k (factor 1 onto a playfield 64 px narrower)
+    // would make it end before it starts: an error, so the port is refused.
+    const length = 2000;
+    const end = length + FRAME.playfieldW;
+    const narrower = rescaleGeometry(
+      {
+        factor: 1,
+        topPad: 0,
+        fromWidth: null,
+        fromHeight: null,
+        tileSize: null,
+        toWidth: FRAME.playfieldW - 64,
+      },
+      FRAME,
+    );
+    const refused = planRescale(
+      [mapStage(length, heightfield([[end - 10, end]]))],
+      narrower,
+      MODULES,
+    );
+    expect(refused.errors.map((error) => error.message)).toEqual([
+      `tilemap.generator.segments[0]: from ${String(end - 10)} → ${String(end - 10)} and to ` +
+        `${String(end)} → ${String(end - 64)} no longer start before they end (the loader ` +
+        'refuses to ≤ from) — fix the segment by hand',
+    ]);
+  });
+
+  it('extends an RLE row with spaces in its last token, and refuses a row core cannot read', () => {
+    // Review round 4: `2 * 1` is `2*1` to core — the row and its three padded copies end in `8*1`,
+    // a token core reads (`2 * 7*1` is not one).
+    const plan = planRescale([mapStage(800, { rle: rows('146*0, 2 * 1') })], V2, MODULES);
+    expect(plan.errors).toEqual([]);
+    const ported = JSON.parse(plan.changed[0]?.text ?? '{}') as { tilemap: { rle: string[] } };
+    expect(ported.tilemap.rle.slice(0, 5)).toEqual([
+      '146*0, 8*1',
+      '146*0, 8*1',
+      '146*0, 8*1',
+      '146*0, 8*1',
+      '',
+    ]);
+    expect(plan.moved.map((entry) => [entry.path, entry.from, entry.to])).toContainEqual([
+      'tilemap.rle[0]',
+      '146*0, 2 * 1',
+      '146*0, 8*1',
+    ]);
+    // A row core's decoder refuses: the tool cannot tell whether it reaches the end, so it is an
+    // error (the loader refuses it too) — never written as it is.
+    const bad = planRescale([mapStage(800, { rle: rows('146*0, 2*1,') })], V2, MODULES);
+    expect(bad.errors.map((error) => error.message)).toEqual([
+      'tilemap.rle[0]: token 3 "" is not <id> or <count>*<id> — the loader refuses the row, so it ' +
+        'cannot be ported',
     ]);
   });
 });
