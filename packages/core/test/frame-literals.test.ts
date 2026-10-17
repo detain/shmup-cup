@@ -11,11 +11,13 @@
  *
  * The frame numbers are the v1 frame's `384` (`FRAME_W`), `216` (`FRAME_H`), `200`
  * (`PLAYFIELD_H`), `208` (`HUD_BOTTOM_Y`) — the four the plan names — and its centre, `192`
- * (`FRAME_CX`, the scenes' old `CX`) and `108` (`FRAME_CY`), plus whatever those six constants
- * are *now*: once R2-01 sets 640×360, a new literal `640` or `360` is caught too, and the v1
- * numbers stay banned. `100` (`PLAYFIELD_CY`) is left out on purpose — percentages, tick counts
- * and scores use it everywhere, and its two frame uses (`DEFAULT_BOSS_Y`, `CREDITS_STOP_Y`)
- * already derive from the constants.
+ * (`FRAME_CX`, the scenes' old `CX`) and `108` (`FRAME_CY`), plus whatever `FRAME_W`, `FRAME_H`,
+ * `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now*: once R2-01 sets 640×360, a new literal `640`,
+ * `360`, `336` or `348` is caught too, and the v1 numbers stay banned. The new centre (`320`,
+ * `180`) is not added: `180` is three seconds of ticks and half a turn (six timers today would
+ * trip it), and `320` only one v1 boss-box edge. `100` (`PLAYFIELD_CY`) is left out for the same
+ * reason — percentages, tick counts and scores use it everywhere, and its two frame uses
+ * (`DEFAULT_BOSS_Y`, `CREDITS_STOP_Y`) already derive from the constants.
  *
  * An entry is matched by file, **symbol path** (the names of the declarations around the
  * literal, outermost first: `OPTIONS_PANEL.h`, `bossSuction.pullRadius`) and value, never by line
@@ -28,23 +30,18 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { FRAME_CX, FRAME_CY, FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_H } from '../src/index.js';
+import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_H } from '../src/index.js';
 
 const srcDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
 /** The v1 (384×216) frame numbers: width, height, playfield height, bottom HUD bar, centre. */
 const V1_FRAME_NUMBERS: readonly number[] = [384, 216, 200, 208, 192, 108];
 
+/** The current frame's numbers (the same as v1's until R2-01). */
+const CURRENT_FRAME_NUMBERS: readonly number[] = [FRAME_W, FRAME_H, PLAYFIELD_H, HUD_BOTTOM_Y];
+
 /** Every number the scan rejects: the v1 frame's and the current frame's. */
-const FRAME_NUMBERS: ReadonlySet<number> = new Set([
-  ...V1_FRAME_NUMBERS,
-  FRAME_W,
-  FRAME_H,
-  PLAYFIELD_H,
-  HUD_BOTTOM_Y,
-  FRAME_CX,
-  FRAME_CY,
-]);
+const FRAME_NUMBERS: ReadonlySet<number> = new Set([...V1_FRAME_NUMBERS, ...CURRENT_FRAME_NUMBERS]);
 
 /** One literal of a frame number in core's source. */
 interface FrameLiteral {
@@ -333,7 +330,7 @@ describe('core: no literal frame numbers (plan R1-01)', () => {
     expect([...FRAME_NUMBERS].slice(0, V1_FRAME_NUMBERS.length)).toEqual([
       384, 216, 200, 208, 192, 108,
     ]);
-    for (const value of [FRAME_W, FRAME_H, PLAYFIELD_H, HUD_BOTTOM_Y, FRAME_CX, FRAME_CY]) {
+    for (const value of [FRAME_W, FRAME_H, PLAYFIELD_H, HUD_BOTTOM_Y]) {
       expect(FRAME_NUMBERS.has(value)).toBe(true);
     }
   });
