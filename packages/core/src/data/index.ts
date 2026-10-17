@@ -136,7 +136,8 @@
  *   {@link DEFAULT_BLOCK_SCREEN_X}, {@link DEFAULT_BLOCK_PERIOD}, {@link BallisticLandName},
  *   {@link BALLISTIC_LANDS}), {@link TilesetSpec} ({@link TileSpec}, {@link TileType},
  *   {@link TILE_TYPES}, {@link TileAnchor}, {@link TILE_ANCHORS}, {@link TilesetTables}; the tile
- *   edge `TILE_SIZE` moved to `core/config` in R1-01 with the other frame constants).
+ *   edge `TILE_SIZE` moved to `core/config` in R1-01 with the other frame constants; R1-04
+ *   {@link MIN_TILE_SIZE} / {@link MAX_TILE_SIZE}, the two tile edges a tileset may declare).
  * - Everything re-exported from {@link ./schema.js | data/schema}: the combinators `s`,
  *   `Schema`, `Infer`, `ObjectShape`, `ObjectValue`, `RefSite`, `ContentRefKind`,
  *   `ValidationIssue`.
@@ -1502,13 +1503,19 @@ export interface HeightfieldSpec {
 
 /** A stage's terrain block: where its tiles come from. */
 export interface StageTilemapSpec {
-  /** Tile edge in pixels (8). */
+  /**
+   * Tile edge in pixels: its tileset's {@link TilesetSpec.tileSize} — {@link MIN_TILE_SIZE} or
+   * {@link MAX_TILE_SIZE}; the shipped stages use `TILE_SIZE` (R1-04).
+   */
   readonly tileSize: number;
   /** Tileset id (`content/tilesets/`). */
   readonly tileset: string;
   /** Resolved {@link ContentDb.tilesets} index of {@link StageTilemapSpec.tileset}. */
   readonly tilesetId: number;
-  /** Map height in tiles (`PLAYFIELD_H / TILE_SIZE` rows fill the playfield: 25 today). */
+  /**
+   * Map height in tiles (`PLAYFIELD_H / tileSize` rows fill the playfield: 25 in v1's 200 / 8, 28
+   * in v2's 336 / 12).
+   */
   readonly rowsTall: number;
   /** Explicit run-length encoded rows, top to bottom (`"40*0, 3*2"`), applied last. */
   readonly rle?: readonly string[];
@@ -1986,6 +1993,22 @@ export interface StageSpec {
   readonly terrain: StageTerrain | null;
 }
 
+/**
+ * Smallest tile edge, in pixels, a tileset or a stage tilemap may declare: v1's 8-px tiles (R1-04).
+ *
+ * @remarks
+ * The loader accepts exactly the two sizes {@link MIN_TILE_SIZE} and {@link MAX_TILE_SIZE} (8 and
+ * 12 — v1's tile and v2's), so a 12-px test tileset loads while the shipped content is still at
+ * `TILE_SIZE`; `test/integration/tile-size.test.ts` holds the shipped content to `TILE_SIZE`.
+ */
+export const MIN_TILE_SIZE = 8;
+
+/**
+ * Largest tile edge, in pixels, a tileset or a stage tilemap may declare: v2's 12-px tiles (R1-04,
+ * plan_resolution.md §2.7). See {@link MIN_TILE_SIZE}.
+ */
+export const MAX_TILE_SIZE = 12;
+
 /** Collision type of a tile (shmup_feat.md §14): the index is the `TerrainType` code. */
 export type TileType = 'empty' | 'solid' | 'hazard';
 
@@ -2035,7 +2058,10 @@ export interface TilesetSpec {
   readonly sprite: string;
   /** Resolved {@link ContentDb.sprites} index of {@link TilesetSpec.sprite}. */
   readonly spriteId: number;
-  /** Tile edge in pixels (8). */
+  /**
+   * Tile edge in pixels: {@link MIN_TILE_SIZE} or {@link MAX_TILE_SIZE} (8 or 12, R1-04); the
+   * shipped tilesets use `TILE_SIZE`. Every mask has this many columns.
+   */
   readonly tileSize: number;
   /** The tiles (at most 255). */
   readonly tiles: readonly TileSpec[];
@@ -2842,10 +2868,16 @@ const HEIGHTFIELD_PROFILE_SCHEMA = s.object({
   seed: s.int({ min: 0, max: 0xffffffff }),
 });
 
+/**
+ * A tile edge in pixels: {@link MIN_TILE_SIZE} … {@link MAX_TILE_SIZE}; the checkers then accept
+ * only those two sizes (a tileset in {@link checkTileset}, a tilemap by equalling its tileset's).
+ */
+const TILE_SIZE_FIELD = s.int({ min: MIN_TILE_SIZE, max: MAX_TILE_SIZE });
+
 /** A `stage.tilemap` block. */
 const TILEMAP_SCHEMA: Schema<Omit<StageTilemapSpec, 'tilesetId'>> = s.object(
   {
-    tileSize: s.int({ min: TILE_SIZE, max: TILE_SIZE }),
+    tileSize: TILE_SIZE_FIELD,
     tileset: s.ref('tileset'),
     rowsTall: s.int({ min: 1, max: 255 }),
     rle: s.array(s.str({ minLength: 0, maxLength: 100000 }), { max: 255 }),
@@ -3024,7 +3056,7 @@ const TILESET_FILE_SCHEMA = s.object({
   kind: s.enumOf(['tileset'] as const),
   id: s.str(),
   sprite: s.ref('sprite'),
-  tileSize: s.int({ min: TILE_SIZE, max: TILE_SIZE }),
+  tileSize: TILE_SIZE_FIELD,
   tiles: s.array(TILE_SCHEMA, { min: 1, max: 255 }),
 });
 
@@ -5302,7 +5334,8 @@ function nearColor(value: number, a: readonly number[], b: readonly number[]): n
 /**
  * The checks a tileset needs beyond its schema: unique tile names, masks of `tileSize` columns
  * with heights in `0 … tileSize`; since M2-07 `hp` only on colliding tiles and `regen` only with
- * `hp`.
+ * `hp`; since R1-04 a `tileSize` of {@link MIN_TILE_SIZE} or {@link MAX_TILE_SIZE} (8 or 12 —
+ * the schema's range admits the sizes between, this rejects them).
  *
  * @param tileset - The parsed tileset.
  * @param file - Repo-relative file path.
@@ -5316,6 +5349,13 @@ function checkTileset(
 ): boolean {
   let ok = true;
   const size = tileset.tileSize;
+  if (size !== MIN_TILE_SIZE && size !== MAX_TILE_SIZE) {
+    ok = issue(
+      issues,
+      at(file, 'tileSize'),
+      'must be ' + String(MIN_TILE_SIZE) + ' or ' + String(MAX_TILE_SIZE),
+    );
+  }
   const names = new Set<string>();
   for (let i = 0; i < tileset.tiles.length; i++) {
     const tile = tileset.tiles[i];

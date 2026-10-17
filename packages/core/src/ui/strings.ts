@@ -444,7 +444,12 @@ export const DEFAULT_UI_TEXT: UiText = (() => {
 /** Every id of {@link DEFAULT_UI_TEXT} (the fixed ones, then the `sfx.` ones), in table order. */
 export const UI_TEXT_IDS: readonly string[] = Object.freeze(Object.keys(DEFAULT_UI_TEXT));
 
-/** Longest text a `strings` entry may have (the widest screen line of the bitmap font is 64). */
+/**
+ * Longest text a `strings` entry may have, in characters (it stays a character count: a text of
+ * `n` characters is `n · GLYPH_W` pixels wide, and the widest screen line holds
+ * `FRAME_W / GLYPH_W` characters — 64 today; `test/integration/tile-size.test.ts` keeps
+ * `MAX_UI_TEXT_LENGTH · GLYPH_W <= FRAME_W`).
+ */
 export const MAX_UI_TEXT_LENGTH = 48;
 
 /** The language the game falls back to: the built-in {@link DEFAULT_UI_TEXT} (M2-16). */

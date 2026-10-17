@@ -19,7 +19,8 @@
  * (zone map, run state, zone tally, endings hook, practice), bonus stages and the fly-out with
  * M2-10; `blackhole` (the black-hole bomb — the Direct ship's signature special — and the
  * death-bomb window) with M3-02; the frame constants (`FRAME_W` / `FRAME_H` and the values derived
- * from them, `TILE_SIZE` — now from `config` —, the font metrics) with v2's R1-01.
+ * from them, `TILE_SIZE` — now from `config` —, the font metrics) with v2's R1-01; the tile-size
+ * range `MIN_TILE_SIZE` / `MAX_TILE_SIZE` with R1-04.
  *
  * @packageDocumentation
  */
@@ -1515,3 +1516,9 @@ export {
   type RunMode,
   type RunReplayMeta,
 } from './scenes/index.js';
+
+// ------------------------------------------------------------------------------ R1-04
+// v2 (the 640×360 remaster): tile size as data — the two tile edges a tileset or a stage tilemap
+// may declare (v1's 8 and v2's 12; shipped content uses `TILE_SIZE`).
+
+export { MAX_TILE_SIZE, MIN_TILE_SIZE } from './data/index.js';

@@ -578,7 +578,7 @@ describe('core/data loadContent — per-kind schemas', () => {
       { path: 's.json:parallax[0].layer', message: 'must be one of: far, mid' },
       { path: 's.json:parallax[0].factor', message: 'must be a finite number in 0..4' },
       { path: 's.json:parallax[0].spacing', message: 'must be an integer in 8..1024' },
-      { path: 's.json:tilemap.tileSize', message: 'must be an integer in 8..8' },
+      { path: 's.json:tilemap.tileSize', message: 'must be an integer in 8..12' },
       // References of an invalid file are still resolved (one load reports everything).
       { path: 's.json:tilemap.tileset', message: 'unknown tileset id "t"' },
     ]);
