@@ -1,0 +1,57 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "fx/fixture-glow",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": null,
+  "ingestedAt": "2026-10-17",
+  "author": null,
+  "sources": [
+    {
+      "path": "sources/glow.png",
+      "sha256": "03ef62e5d59d1a5630094c6ab162467692e1d4363f95973efc0b6b67239a2fad",
+      "format": "png",
+      "width": 48,
+      "height": 48,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": null,
+      "seed": 1,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "sprites/fx/fixture-glow.recipe.json",
+    "sha256": "66dea940360ac166012497a867ca9fe47fcb2d620f68873f106f85f89c84b25b"
+  },
+  "edit": null,
+  "output": {
+    "png": "fixture-glow.png",
+    "sha256": "bd50936b0f228ccbf684049f6ad7688cf702861a94ae0d3cadbefc6b045f9472",
+    "sidecar": "fixture-glow.json",
+    "sidecarSha256": "045d8ff6b05c45d9f412f7a8d73677fb68ded943862b401e4e2c07fe79568220",
+    "frames": 1,
+    "frameWidth": 12,
+    "frameHeight": 12,
+    "colors": 32,
+    "alpha": "additive"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture: a black-keyed additive glow."
+}

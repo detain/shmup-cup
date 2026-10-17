@@ -1,0 +1,14 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "backdrops/fixture-far",
+  "category": "backdrop",
+  "layer": "far",
+  "frame": { "width": 64, "height": 36 },
+  "sources": [
+    { "image": "sources/far.png", "provenance": { "model": "flux1", "seed": 99, "sidecar": false } }
+  ],
+  "key": { "mode": "none" },
+  "cycles": [{ "stage": "fixture", "layer": "far" }],
+  "palette": { "max": 12 },
+  "notes": "Synthetic fixture: an opaque far layer over the lighting budget, quantised to its stage's cycle ramp exactly, a near miss pushed away."
+}

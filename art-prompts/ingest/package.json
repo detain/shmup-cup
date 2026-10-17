@@ -1,0 +1,25 @@
+{
+  "name": "shmup-ingest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shmup Cup's art ingest tool (plan step R3-02): a generated image + a recipe -> a clean, deterministic sprite PNG with its frame sidecar and a provenance record. Standalone, outside the pnpm workspace.",
+  "license": "MPL-2.0",
+  "type": "module",
+  "bin": {
+    "shmup-ingest": "./ingest.mjs"
+  },
+  "engines": {
+    "node": "^24.15.0 || >=26.0.0"
+  },
+  "scripts": {
+    "ingest": "node ingest.mjs",
+    "check": "node ingest.mjs --check",
+    "fixtures": "node test/fixtures/make-fixtures.mjs",
+    "syntax": "node --check ingest.mjs && node --check lib/deflate.mjs && node --check lib/codec.mjs && node --check lib/image.mjs && node --check lib/key.mjs && node --check lib/scale.mjs && node --check lib/quantise.mjs && node --check lib/finish.mjs && node --check lib/report.mjs && node --check lib/recipe.mjs && node --check lib/provenance.mjs && node --check lib/pipeline.mjs && node --check test/fixtures/make-fixtures.mjs",
+    "test": "npm run syntax && node --test \"test/**/*.test.mjs\""
+  },
+  "dependencies": {
+    "jpeg-js": "0.4.4",
+    "pngjs": "7.0.0"
+  }
+}

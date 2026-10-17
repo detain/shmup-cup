@@ -1,0 +1,39 @@
+{
+  "frames": [
+    {
+      "filename": "backdrops/fixture-far 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 36
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "fixture-far.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 64,
+      "h": 36
+    },
+    "scale": "1",
+    "frameTags": [],
+    "slices": []
+  }
+}

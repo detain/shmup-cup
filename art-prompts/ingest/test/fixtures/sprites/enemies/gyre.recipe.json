@@ -1,0 +1,19 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/gyre",
+  "category": "enemy",
+  "frame": { "width": 24, "height": 24 },
+  "sources": [
+    {
+      "image": "sources/gyre.jpg",
+      "provenance": {
+        "model": "qwenedit",
+        "seed": 7,
+        "prompt": { "file": "art-prompts/images/20-enemies/fixture.json", "entry": "gyre-v1" }
+      }
+    }
+  ],
+  "holes": "auto",
+  "provenance": { "use": "reference" },
+  "notes": "Synthetic fixture: a JPEG with enclosed holes between the spokes (holes: auto); provenance stated in the recipe, no sidecar."
+}

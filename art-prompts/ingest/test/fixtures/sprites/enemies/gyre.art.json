@@ -1,0 +1,62 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/gyre",
+  "origin": "ai-assisted",
+  "use": "reference",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": null,
+  "ingestedAt": "2026-10-17",
+  "author": null,
+  "sources": [
+    {
+      "path": "sources/gyre.jpg",
+      "sha256": "e12140ed290713fafbe349773d802b147d6e8b407ae7abad0dc20638d396d3ca",
+      "format": "jpeg",
+      "width": 96,
+      "height": 96,
+      "model": "Qwen/Qwen-Image-Edit-2511",
+      "modelKey": "qwenedit",
+      "weights": {
+        "repo": "Qwen/Qwen-Image-Edit-2511",
+        "revision": null,
+        "transformer": null
+      },
+      "licence": "apache-2.0",
+      "prompt": {
+        "file": "art-prompts/images/20-enemies/fixture.json",
+        "entry": "gyre-v1",
+        "text": null,
+        "negative": null
+      },
+      "seed": 7,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "sprites/enemies/gyre.recipe.json",
+    "sha256": "b03000b54a65ea026453b5ab05c13bdd8936f2f23daaf73e6c8289eb0392b95f"
+  },
+  "edit": null,
+  "output": {
+    "png": "gyre.png",
+    "sha256": "f1611437a6d6f17231e1df960245976d6027714257be71d6c551935e11fc97bb",
+    "sidecar": "gyre.json",
+    "sidecarSha256": "ffb47a64480f49c4089181d3466e5761dabb471d57748d0ce3dfdf0e3175113a",
+    "frames": 1,
+    "frameWidth": 24,
+    "frameHeight": 24,
+    "colors": 15,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture: a JPEG with enclosed holes between the spokes (holes: auto); provenance stated in the recipe, no sidecar."
+}

@@ -1,0 +1,7 @@
+{
+  "schema": "shmup-palette@1",
+  "name": "fixture-zone",
+  "notes": "Synthetic fixture palette for the ingest tool's tests.",
+  "colors": ["#140c20", "#2a2440", "#6a5a8a", "#9a8ab8", "#3cf102", "#28222e"],
+  "outline": "#140c20"
+}

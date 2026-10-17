@@ -1,0 +1,53 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "bosses/fringe-hull",
+  "origin": "hand",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": null,
+  "ingestedAt": "2026-10-17",
+  "author": "make-fixtures.mjs",
+  "sources": [
+    {
+      "path": "sources/fringe.png",
+      "sha256": "adbf3d10d7e02145f0968670d591c65b7e2a3bd027bb06508786e8faf7ed3fc5",
+      "format": "png",
+      "width": 80,
+      "height": 48,
+      "model": null,
+      "modelKey": null,
+      "weights": null,
+      "licence": null,
+      "prompt": null,
+      "seed": null,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "sprites/bosses/fringe-hull.recipe.json",
+    "sha256": "b32348ee07172b07d5640c75be9822c5f8b2d7bddd18b1fa6933ccec8e3caba7"
+  },
+  "edit": null,
+  "output": {
+    "png": "fringe-hull.png",
+    "sha256": "5968676f4a7fd0beaa1190542d70fe9b1fa2d5a134d1f2c57dcb4218e85b2f0c",
+    "sidecar": "fringe-hull.json",
+    "sidecarSha256": "246a35b09eaa66387a8ca7bd7191e73b44689d7802e1f8c19c1391b5f3da1541",
+    "frames": 1,
+    "frameWidth": 20,
+    "frameHeight": 12,
+    "colors": 5,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture: a green fringe the despill removes, a key-green window the flood fill must keep, a named palette, a hand-drawn origin."
+}

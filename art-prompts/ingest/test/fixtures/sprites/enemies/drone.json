@@ -1,0 +1,138 @@
+{
+  "frames": [
+    {
+      "filename": "enemies/drone 0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/drone 1",
+      "frame": {
+        "x": 16,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/drone 2",
+      "frame": {
+        "x": 32,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    },
+    {
+      "filename": "enemies/drone 3",
+      "frame": {
+        "x": 48,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 12
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 12
+      },
+      "duration": 100
+    }
+  ],
+  "meta": {
+    "app": "shmup-ingest",
+    "version": "1.0.0",
+    "image": "drone.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 64,
+      "h": 12
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "blink",
+        "from": 1,
+        "to": 2,
+        "direction": "pingpong"
+      }
+    ],
+    "slices": [
+      {
+        "name": "anchor",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
+              "w": 16,
+              "h": 12
+            },
+            "pivot": {
+              "x": 8,
+              "y": 6
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

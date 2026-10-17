@@ -1,0 +1,22 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "enemies/drone",
+  "category": "enemy",
+  "frame": { "width": 16, "height": 12 },
+  "frameCount": 4,
+  "sources": [
+    {
+      "image": "sources/drone-sheet.png",
+      "grid": { "cellWidth": 64, "cellHeight": 48, "columns": 2, "rows": 2 }
+    }
+  ],
+  "cleanup": { "minIsland": 40 },
+  "palette": { "max": 8 },
+  "anchor": [8, 6],
+  "animations": {
+    "idle": { "from": 0, "to": 3 },
+    "blink": { "from": 1, "to": 2, "direction": "pingpong" }
+  },
+  "provenance": { "reviewed": { "on": "2026-10-17", "by": "the ingest tool's test suite" } },
+  "notes": "Synthetic fixture: a PNG sheet on the yellowish key, sliced by a 2 x 2 grid, provenance from its candidate sidecar, a hand-edit layer drone.edit.png."
+}

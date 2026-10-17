@@ -1,0 +1,57 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "backdrops/fixture-far",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "none",
+  "handCleaned": false,
+  "reviewed": null,
+  "ingestedAt": "2026-10-17",
+  "author": null,
+  "sources": [
+    {
+      "path": "sources/far.png",
+      "sha256": "5aa60a5ad69644a89e85c025b2604cb1c52e4c7808771dcf1d47696d248dd449",
+      "format": "png",
+      "width": 192,
+      "height": 108,
+      "model": "black-forest-labs/FLUX.1-dev",
+      "modelKey": "flux1",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.1-dev",
+        "revision": null,
+        "transformer": null
+      },
+      "licence": "flux1-dev-nc-1.1.1",
+      "prompt": null,
+      "seed": 99,
+      "size": null,
+      "steps": null,
+      "guidance": null,
+      "generatedAt": null,
+      "reference": [],
+      "generator": null
+    }
+  ],
+  "recipe": {
+    "path": "sprites/backdrops/fixture-far.recipe.json",
+    "sha256": "cbdf754a9ba1f36dacb2526819593d7a582850f11ce0afd234e1709ac21a5b9b"
+  },
+  "edit": null,
+  "output": {
+    "png": "fixture-far.png",
+    "sha256": "b92bf1fcf74f7674ea87cf34dd5c0d429408fbe6b538dc557b9167f96fef404c",
+    "sidecar": "fixture-far.json",
+    "sidecarSha256": "7c3102b64d64b58af7d717290c2689c5ca12009bad1d89c6891dbbbf7b339743",
+    "frames": 1,
+    "frameWidth": 64,
+    "frameHeight": 36,
+    "colors": 9,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture: an opaque far layer over the lighting budget, quantised to its stage's cycle ramp exactly, a near miss pushed away."
+}

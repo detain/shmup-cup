@@ -1,0 +1,74 @@
+{
+  "schema": "shmup-ingest-models@1",
+  "notes": "The generation models of the art round, by the group keys of art-prompts/generate.mjs and art-prompts/v2/gen-candidate.mjs: the served repository, the weights, the licence id and the verdicts of docs/dev/art-provenance.md section 2 (R3-05, licences read 2026-10-17). The ingest tool copies `id`, `weights` and `licence` into every .art.json source it writes; the origin report joins a record's licence ids with the verdicts here. When a verdict changes, change it here and in art-provenance.md together.",
+  "models": {
+    "flux1": {
+      "id": "black-forest-labs/FLUX.1-dev",
+      "kind": "image",
+      "weights": { "repo": "black-forest-labs/FLUX.1-dev", "revision": null, "transformer": null },
+      "licence": "flux1-dev-nc-1.1.1",
+      "verdict": { "pixels": "hold", "reference": "hold" },
+      "conditions": "hold until Black Forest Labs confirms in writing or a commercial licence covers it (art-provenance.md section 8, decision 1)"
+    },
+    "flux2": {
+      "id": "black-forest-labs/FLUX.2-dev",
+      "kind": "image",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "verdict": { "pixels": "hold", "reference": "hold" },
+      "conditions": "hold until Black Forest Labs confirms in writing or a commercial licence covers it (art-provenance.md section 8, decision 1)"
+    },
+    "sd35": {
+      "id": "stabilityai/stable-diffusion-3.5-large",
+      "kind": "image",
+      "weights": { "repo": "stabilityai/stable-diffusion-3.5-large", "revision": null, "transformer": null },
+      "licence": "stability-community-2024-07-05",
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "only after the Stability AI registration, while the licensee group earns under USD 1 M a year (art-provenance.md section 6, rule 2)"
+    },
+    "qwenvl": {
+      "id": "Qwen/Qwen-Image",
+      "kind": "image",
+      "weights": { "repo": "Qwen/Qwen-Image", "revision": null, "transformer": null },
+      "licence": "apache-2.0",
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "after the content review (art-provenance.md section 6, rule 3)"
+    },
+    "qwenedit": {
+      "id": "Qwen/Qwen-Image-Edit-2511",
+      "kind": "image",
+      "weights": { "repo": "Qwen/Qwen-Image-Edit-2511", "revision": null, "transformer": null },
+      "licence": "apache-2.0",
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "after the content review; an edit of a FLUX image inherits the FLUX hold (art-provenance.md section 8, decision 1)"
+    },
+    "wan22": {
+      "id": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+      "kind": "video",
+      "weights": { "repo": "Wan-AI/Wan2.2-T2V-A14B-Diffusers", "revision": null, "transformer": null },
+      "licence": "apache-2.0",
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "after the content review (art-provenance.md section 6, rule 3)"
+    },
+    "ltx25": {
+      "id": "Lightricks/LTX-2.5-Diffusers",
+      "kind": "video",
+      "weights": { "repo": "Lightricks/LTX-2.5-Diffusers", "revision": null, "transformer": null },
+      "licence": "ltx-2.x-community-2026-08-11",
+      "verdict": { "pixels": "ship", "reference": "ship" },
+      "conditions": "every clip disclaimed as machine generated where it is shown, embedded provenance kept, licensee group under USD 10 M a year (art-provenance.md section 6, rule 4)"
+    },
+    "ltxvideo": {
+      "id": "Lightricks/LTX-Video",
+      "kind": "video",
+      "weights": { "repo": "Lightricks/LTX-Video", "revision": null, "transformer": null },
+      "licence": "ltxv-open-weights-0.x",
+      "verdict": { "pixels": "hold", "reference": "hold" },
+      "conditions": "hold until the checkpoint, and so its licence version, is known (art-provenance.md section 2)"
+    }
+  }
+}

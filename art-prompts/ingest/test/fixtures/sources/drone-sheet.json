@@ -1,0 +1,19 @@
+{
+  "id": "enemy/drone",
+  "slot": "a",
+  "prompt": "SYNTHETIC FIXTURE — drawn by art-prompts/ingest/test/fixtures/make-fixtures.mjs, never generated",
+  "negative": "",
+  "model": "flux2",
+  "seed": 4242,
+  "width": 128,
+  "height": 96,
+  "steps": 40,
+  "guidance": 3.5,
+  "generatedAt": "2026-10-16T00:00:00.000Z",
+  "label": "drone sheet (synthetic test fixture)",
+  "source": "images/20-enemies/fixture.json#drone-v1",
+  "file": "art-prompts/ingest/test/fixtures/sources/drone-sheet.png",
+  "format": "png",
+  "servedModel": "black-forest-labs/FLUX.2-dev",
+  "mode": "generate"
+}

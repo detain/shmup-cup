@@ -1,0 +1,77 @@
+{
+  "schema": "shmup-art-provenance@1",
+  "sprite": "enemies/drone",
+  "origin": "ai-assisted",
+  "use": "pixels",
+  "cleanup": "light",
+  "handCleaned": true,
+  "reviewed": {
+    "on": "2026-10-17",
+    "by": "the ingest tool's test suite"
+  },
+  "ingestedAt": "2026-10-17",
+  "author": null,
+  "sources": [
+    {
+      "path": "sources/drone-sheet.png",
+      "sha256": "949b075d9e1d30df4d2e5cb82b3eb4e183aee1d9d13b6f32bdeeaf37db4842d1",
+      "format": "png",
+      "width": 128,
+      "height": 96,
+      "model": "black-forest-labs/FLUX.2-dev",
+      "modelKey": "flux2",
+      "weights": {
+        "repo": "black-forest-labs/FLUX.2-dev",
+        "revision": null,
+        "transformer": "lmsys/flux2-dev-modelopt-fp8-sglang-transformer"
+      },
+      "licence": "flux-nc-2.1",
+      "prompt": {
+        "file": "art-prompts/images/20-enemies/fixture.json",
+        "entry": "drone-v1",
+        "text": "SYNTHETIC FIXTURE — drawn by art-prompts/ingest/test/fixtures/make-fixtures.mjs, never generated",
+        "negative": ""
+      },
+      "seed": 4242,
+      "size": "128x96",
+      "steps": 40,
+      "guidance": 3.5,
+      "generatedAt": "2026-10-16T00:00:00.000Z",
+      "reference": [],
+      "generator": {
+        "sidecar": "sources/drone-sheet.json",
+        "sidecarSha256": "f4166d5ec5c5de8acff8d4eb24d3064c927f4b4d1eacb9684ff95e1f2e68a83d",
+        "id": "enemy/drone",
+        "slot": "a",
+        "mode": "generate",
+        "instruction": null
+      }
+    }
+  ],
+  "recipe": {
+    "path": "sprites/enemies/drone.recipe.json",
+    "sha256": "e06a655da875f51501a91f6b840b2648a59857155ba6fec3e40ffe41b9a9132f"
+  },
+  "edit": {
+    "path": "sprites/enemies/drone.edit.png",
+    "sha256": "b0f07b2f41141d8f41c85924605d6b8c1522d46b31c4bc95c8572c8062ee33fa",
+    "painted": 1,
+    "erased": 1
+  },
+  "output": {
+    "png": "drone.png",
+    "sha256": "f88b491f7b9e09a8b8c2668b0aa8fd2041d9a3925e71f2bfc1dea513f6a8c6be",
+    "sidecar": "drone.json",
+    "sidecarSha256": "168e3e80dbbe2de115a96bccd2057ec85bbf761ebba07956289f0cbcddbd78a1",
+    "frames": 4,
+    "frameWidth": 16,
+    "frameHeight": 12,
+    "colors": 6,
+    "alpha": "binary"
+  },
+  "tool": {
+    "name": "shmup-ingest",
+    "version": "1.0.0"
+  },
+  "notes": "Synthetic fixture: a PNG sheet on the yellowish key, sliced by a 2 x 2 grid, provenance from its candidate sidecar, a hand-edit layer drone.edit.png."
+}

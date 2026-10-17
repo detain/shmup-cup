@@ -1,0 +1,4 @@
+{
+  "notes": "Synthetic fixture: only the palette-cycle ramp the ingest tool reserves (bible §4.4). Not a real stage.",
+  "cycles": [{ "layer": "far", "colors": ["#203850", "#28486a", "#305a84"], "ticks": 8 }]
+}

@@ -1,0 +1,9 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "fx/fixture-glow",
+  "category": "glow",
+  "alpha": "additive",
+  "frame": { "width": 12, "height": 12 },
+  "sources": [{ "image": "sources/glow.png", "provenance": { "model": "flux2", "seed": 1 } }],
+  "notes": "Synthetic fixture: a black-keyed additive glow."
+}

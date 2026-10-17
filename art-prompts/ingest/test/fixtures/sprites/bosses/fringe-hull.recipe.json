@@ -1,0 +1,12 @@
+{
+  "format": "shmup-ingest-recipe@1",
+  "name": "bosses/fringe-hull",
+  "category": "boss-part",
+  "frame": { "width": 20, "height": 12 },
+  "sources": [{ "image": "sources/fringe.png", "crop": [0, 0, 80, 48] }],
+  "despill": 2,
+  "palette": { "name": "fixture-zone" },
+  "outline": false,
+  "provenance": { "model": "none", "author": "make-fixtures.mjs" },
+  "notes": "Synthetic fixture: a green fringe the despill removes, a key-green window the flood fill must keep, a named palette, a hand-drawn origin."
+}
