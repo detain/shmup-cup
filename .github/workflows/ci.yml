@@ -208,3 +208,30 @@ jobs:
 
       - name: Typecheck, test, build, Chromium 69 compat check
         run: npm run verify
+
+  ingest:
+    # art-prompts/ingest (R3-02) is a standalone npm project too: its own tests, then every committed
+    # recipe re-run in memory — the PNG, sidecar and provenance record on disk must match byte for byte.
+    name: art ingest · test · recipes up to date
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: art-prompts/ingest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: art-prompts/ingest/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Syntax check and tests (synthetic fixtures)
+        run: npm test
+
+      - name: Committed recipes are up to date (assets/source/sprites, art-prompts/v2/ingested)
+        run: node ingest.mjs --check
