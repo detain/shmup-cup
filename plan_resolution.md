@@ -1,7 +1,7 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
 > **Status:** drafted 2026-10-16; 2026-10-17 — **8 of 37 steps done** (R0-01, R0-02, R1-01, R1-02, R1-03, R1-04,
-> R3-01, R3-02 — owner parts pending for R0-01, R0-02, R3-01 and R3-02), 2 in progress (R0-04, R3-05). The `v1.x`
+> R3-01, R3-02 — owner parts pending for R0-01, R0-02, R3-01 and R3-02), 3 in progress (R0-04, R1-05, R3-05). The `v1.x`
 > maintenance branch exists (created from the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything
 > below happens on `master`, which from now on is the **v2** line.
 >
@@ -1885,7 +1885,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
-| R1-05 | Atlas paging and memory ready for detailed art | not started |
+| R1-05 | Atlas paging and memory ready for detailed art | in progress |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | not started |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
@@ -1894,7 +1894,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
-| R3-05 | AI art provenance and licences | in progress (part 1 done; part 2, the origin report, can start — R3-02 is done) |
+| R3-05 | AI art provenance and licences | in progress (part 1 done; part 2, the origin report, running) |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
 | R4-02 | Enemy bullets, lasers, items | not started |
