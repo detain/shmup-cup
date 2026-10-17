@@ -7,7 +7,9 @@
  * (raster-range's `lines` bands follow the ×1.5 art), the art scale measured from the atlas'
  * terrain tiles (a run that forgets `--art-scale` after R2-01 is refused), the timeline crossings
  * of triggers, flags and camera stops, the re-sort's index map, and a band that touched two
- * anchors.
+ * anchors. Review round 3: a given `--art-scale` the tiles contradict is refused too unless
+ * `--force-art-scale`, and the map's right end (`length` + one playfield) ports as a frame-anchored
+ * end — heightfield segments, regions and RLE rows that reach it reach the new one.
  */
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -24,6 +26,7 @@ import {
   formatRescaleReport,
   jsonSpans,
   loadArt,
+  extendRleRow,
   measureArtScale,
   modulesFrom,
   parseRescaleArgs,
@@ -152,6 +155,7 @@ describe('rescale: arguments', () => {
       'atlas.json',
       '--art-scale',
       '1.5',
+      '--force-art-scale',
       '--json',
       '--quiet',
     ]);
@@ -165,6 +169,7 @@ describe('rescale: arguments', () => {
       tileSize: 4,
       toWidth: 30,
       artScale: 1.5,
+      forceArtScale: true,
       json: true,
       quiet: true,
     });
@@ -174,6 +179,7 @@ describe('rescale: arguments', () => {
       topPad: 0,
       dryRun: false,
       artScale: null,
+      forceArtScale: false,
     });
   });
 
@@ -187,6 +193,7 @@ describe('rescale: arguments', () => {
       [['--factor', '1', '--root'], /--root needs a directory/],
       [['--factor', '1', '--atlas'], /--atlas needs a file/],
       [['--factor', '1', '--art-scale', '0'], /--art-scale must be > 0/],
+      [['--factor', '1', '--force-art-scale'], /--force-art-scale needs --art-scale S/],
       [['--factor', '1', '--wat'], /unknown option --wat/],
     ];
     for (const [argv, message] of cases) {
@@ -952,23 +959,71 @@ describe('rescale: the art scale (review round 2)', () => {
     expect(error).toBeInstanceOf(RescaleError);
     expect((error as RescaleError).exitCode).toBe(2);
     expect((error as RescaleError).message).toBe(
-      "the atlas' terrain tiles are 12 px but the content's tilesets say 8 px: the art is drawn " +
+      "the atlas' terrain tiles are 12 px against the content's tilesets' 8 px: the art is drawn " +
         "at ×1.5 the content's pixels, so the bands' art heights need --art-scale 1.5 (or --atlas " +
         "with an atlas drawn at the content's pixels)",
     );
-    expect(() =>
-      resolveArtScale(null, measureArtScale(mixedFiles, atlas({ 'tiles/a': 8, 'tiles/b': 12 }))),
-    ).toThrow(/do not agree on one scale/);
-    // Given: used, and a disagreement with the tiles is noted in the report.
+    const mixed = measureArtScale(mixedFiles, atlas({ 'tiles/a': 8, 'tiles/b': 12 }));
+    expect(() => resolveArtScale(null, mixed)).toThrow(/do not agree on one scale/);
+    // Given: used when the tiles agree with it.
     expect(resolveArtScale(1.5, measureArtScale(files, atlas({ 'tiles/a': 12 })))).toEqual({
       scale: 1.5,
       measured: 1.5,
       note: null,
     });
-    expect(resolveArtScale(1, measureArtScale(files, atlas({ 'tiles/a': 12 }))).note).toBe(
-      "--art-scale 1 given, but the atlas' terrain tiles measure ×1.5: the bands' art heights " +
-        'use ×1',
+  });
+
+  it('refuses a given --art-scale the tiles contradict, unless forced (review round 3)', () => {
+    const files = [tileset('tiles/a', 8)];
+    /**
+     * The error a call throws.
+     *
+     * @param call - The call.
+     * @returns What it threw.
+     */
+    const thrown = (call: () => unknown): RescaleError => {
+      try {
+        call();
+      } catch (caught) {
+        return caught as RescaleError;
+      }
+      throw new Error('it did not throw');
+    };
+    // R2-02's documented `--art-scale 1.5` against an atlas still drawn at ×1: refused, exit 2.
+    const x1 = measureArtScale(files, atlas({ 'tiles/a': 8 }));
+    const refused = thrown(() => resolveArtScale(1.5, x1));
+    expect(refused).toBeInstanceOf(RescaleError);
+    expect(refused.exitCode).toBe(2);
+    expect(refused.message).toBe(
+      "--art-scale 1.5 contradicts the atlas — the atlas' terrain tiles are 8 px against the " +
+        "content's tilesets' 8 px: the art is drawn at ×1 the content's pixels. Pass the scale the " +
+        'tiles measure (leave --art-scale out while it is 1), or add --force-art-scale if the ' +
+        'parallax bands really are drawn at ×1.5 while the tiles are not',
     );
+    // The other way round, and against tiles that disagree among themselves.
+    const x15 = measureArtScale(files, atlas({ 'tiles/a': 12 }));
+    expect(thrown(() => resolveArtScale(1, x15)).message).toMatch(/^--art-scale 1 contradicts/);
+    const mixed = measureArtScale(mixedFiles, atlas({ 'tiles/a': 8, 'tiles/b': 12 }));
+    expect(thrown(() => resolveArtScale(1.5, mixed)).message).toMatch(/do not agree on one scale/);
+    // Forced: used, with a note in the report.
+    expect(resolveArtScale(1.5, x1, true)).toEqual({
+      scale: 1.5,
+      measured: 1,
+      note:
+        "--art-scale 1.5 forced: the atlas' terrain tiles measure ×1, the bands' art heights use " +
+        '×1.5',
+    });
+    expect(resolveArtScale(1.5, mixed, true).note).toMatch(/measure no single scale/);
+    // Forcing what the tiles already say changes nothing.
+    expect(resolveArtScale(1.5, x15, true)).toEqual({ scale: 1.5, measured: 1.5, note: null });
+    // Nothing to measure (no tileset's sprite in the atlas): a given scale is used, unchecked.
+    expect(resolveArtScale(1.5, measureArtScale(files, atlas({})))).toEqual({
+      scale: 1.5,
+      measured: null,
+      note:
+        "--art-scale 1.5 given, but the atlas holds none of the tilesets' sprites: the scale is " +
+        'not checked',
+    });
   });
 
   it('refuses the whole run, and reads the heights at the given scale', async () => {
@@ -1008,9 +1063,12 @@ describe('rescale: the art scale (review round 2)', () => {
     expect(given.errors).toEqual([]);
     const art = await loadArt({ atlas: path, artScale: 1.5 });
     expect([art.height('bg/a'), art.frame?.('tiles/a')]).toEqual([64, { w: size, h: size }]);
-    const noted = await rescaleContent({ ...options, artScale: 1 }, MODULES);
-    expect(formatRescaleReport(noted, true)).toContain(
-      "note: --art-scale 1 given, but the atlas' terrain tiles measure ×1.5",
+    await expect(rescaleContent({ ...options, artScale: 1 }, MODULES)).rejects.toThrow(
+      /^--art-scale 1 contradicts the atlas/,
+    );
+    const forced = await rescaleContent({ ...options, artScale: 1, forceArtScale: true }, MODULES);
+    expect(formatRescaleReport(forced, true)).toContain(
+      "note: --art-scale 1 forced: the atlas' terrain tiles measure ×1.5",
     );
   });
 });
@@ -1062,5 +1120,258 @@ describe('rescale: a band that touched two anchors (review round 2)', () => {
           'or the layout by hand',
       ],
     ]);
+  });
+});
+
+describe('rescale: the map’s right end (review round 3)', () => {
+  it('extends an RLE row tiled in the map’s last column, by its last token', () => {
+    expect(extendRleRow('146*0, 2*1', 148, 154)).toBe('146*0, 8*1');
+    expect(extendRleRow('147*0, 1', 148, 154)).toBe('147*0, 7*1');
+    expect(extendRleRow('147*0,3  ', 148, 150)).toBe('147*0,3*3  ');
+    expect(extendRleRow('148*12', 148, 154)).toBe('154*12');
+    // Not tiled in the last column, shorter than the map, or no wider map: as it is.
+    for (const [row, cols, newCols] of [
+      ['100*0, 2*1, 46*0', 148, 154],
+      ['40*1', 148, 154],
+      ['', 148, 154],
+      ['148*3', 148, 148],
+      ['148*3', 148, 140],
+    ] as const) {
+      expect(extendRleRow(row, cols, newCols), row).toBe(row);
+    }
+  });
+
+  /** One RLE map of 25 rows (8 px each, the fixtures' playfield height) with a given first row. */
+  const rows = (first: string): string[] => [first, ...Array<string>(24).fill('')];
+
+  /**
+   * A stage with a tilemap.
+   *
+   * @param length - Its length.
+   * @param tilemap - What its tilemap holds besides the size, tileset and rows.
+   * @param events - Its events (before the `end`).
+   * @returns The stage file.
+   */
+  const mapStage = (length: number, tilemap: Record<string, unknown>, events: unknown[] = []) =>
+    file(
+      'stages/s.stage.json',
+      stage(events, {
+        length,
+        tilemap: { tileSize: FRAME.tileSize, tileset: 'terrain-a', rowsTall: 25, ...tilemap },
+      }),
+    );
+
+  /**
+   * A heightfield of floor segments.
+   *
+   * @param segments - Each segment's `[from, to]`.
+   * @returns The generator.
+   */
+  const heightfield = (segments: [number, number][]) => ({
+    generator: {
+      type: 'heightfield',
+      segments: segments.map(([from, to]) => ({
+        from,
+        to,
+        floor: { base: 16, amp: 4, period: 64, seed: 1 },
+      })),
+    },
+  });
+
+  it('works on tile columns: the last one reaches the end, even off the tile grid', () => {
+    // length 2004: the map ends at 2004 + the playfield, inside its last 8-px column; ported it
+    // ends at 3006 + 640 = 3646, inside the new map's last 12-px column (which ends at 3648).
+    const length = 2004;
+    const end = length + FRAME.playfieldW;
+    const grid = Math.ceil(end / FRAME.tileSize) * FRAME.tileSize;
+    const newEnd = length * 1.5 + GEOMETRY.port.toWidth;
+    const newGrid = Math.ceil(newEnd / GEOMETRY.port.toTileSize) * GEOMETRY.port.toTileSize;
+    const lastColumn = grid - FRAME.tileSize;
+    const plan = planRescale(
+      [
+        mapStage(
+          length,
+          heightfield([
+            [0, lastColumn], // ends before the last column: ×k
+            [0, lastColumn + 1], // ends in the last column, 3 px short of the end: 4.5 short
+            [0, end + 1], // 1 px past the end: 1.5 px past the new one (rounded)
+            [lastColumn + 6, grid], // starts in the last column: ×k; ends past the end
+            [grid, grid + 20], // starts past the last column: stays past the new one
+          ]),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.errors).toEqual([]);
+    expect(plan.unclassified).toEqual([]);
+    const ported = JSON.parse(plan.changed[0]?.text ?? '{}') as {
+      tilemap: { generator: { segments: { from: number; to: number }[] } };
+    };
+    expect(ported.tilemap.generator.segments.map((segment) => [segment.from, segment.to])).toEqual([
+      [0, lastColumn * 1.5],
+      [0, Math.round(newEnd - 4.5)],
+      [0, Math.round(newEnd + 1.5)],
+      [(lastColumn + 6) * 1.5, newEnd + 1.5 * (grid - end)],
+      [newGrid, newEnd + 1.5 * (grid + 20 - end)],
+    ]);
+    // The new map (the generator clamps a segment to it) shows the segments that reached the old
+    // map's last column up to its own last column, and still none of the one that started past.
+    const size = GEOMETRY.port.toTileSize;
+    const newCols = newGrid / size;
+    const segments = ported.tilemap.generator.segments;
+    expect(segments.map((segment) => Math.ceil(segment.to / size) >= newCols)).toEqual([
+      false,
+      true,
+      true,
+      true,
+      true,
+    ]);
+    expect(Math.floor((segments[4]?.from ?? 0) / size)).toBe(newCols);
+    expect(plan.moved.filter((entry) => entry.note.startsWith('map end')).length).toBe(5);
+    expect(plan.rounded.map((entry) => entry.path)).toEqual([
+      'tilemap.generator.segments[1].to',
+      'tilemap.generator.segments[2].to',
+    ]);
+  });
+
+  it('lets a region reaching the end reach the new one', () => {
+    const length = 2000;
+    const end = length + FRAME.playfieldW;
+    const newEnd = length * 1.5 + GEOMETRY.port.toWidth;
+    const region = (x: number, w: number) => ({
+      x: 100,
+      type: 'bonus',
+      stage: 's',
+      entrance: 'ground',
+      region: { x, y: 40, w, h: 40 },
+    });
+    const plan = planRescale(
+      [
+        mapStage(length, { rle: rows('') }, [
+          region(end - 100, 99), // stops 1 px short of the end: ×k
+          region(end - 100, 100), // its right edge on the end
+          region(end + 10, 10), // wholly past it
+        ]),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.errors).toEqual([]);
+    const ported = JSON.parse(plan.changed[0]?.text ?? '{}') as {
+      events: { region?: { x: number; w: number } }[];
+    };
+    expect(ported.events.slice(0, 3).map((event) => event.region)).toMatchObject([
+      { x: (end - 100) * 1.5, w: 99 * 1.5 },
+      { x: (end - 100) * 1.5, w: newEnd - (end - 100) * 1.5 },
+      { x: newEnd + 15, w: 15 },
+    ]);
+  });
+
+  it('extends the RLE rows without a top pad, and refuses rows longer than either map', () => {
+    const length = 2000;
+    const cols = (length + FRAME.playfieldW) / FRAME.tileSize;
+    const newCols = Math.ceil((length * 1.5 + GEOMETRY.port.toWidth) / GEOMETRY.port.toTileSize);
+    // ×1.5 with no pad onto the 640-wide playfield: the row is extended, no row is inserted.
+    const noPad = rescaleGeometry(
+      {
+        factor: GEOMETRY.port.factor,
+        topPad: 0,
+        fromWidth: null,
+        fromHeight: null,
+        tileSize: null,
+        toWidth: GEOMETRY.port.toWidth,
+      },
+      FRAME,
+    );
+    const extended = planRescale(
+      [mapStage(length, { rle: rows(`${String(cols - 1)}*0, 1`) })],
+      noPad,
+      MODULES,
+    );
+    expect(extended.errors).toEqual([]);
+    expect(extended.tilemaps).toEqual([]);
+    const ported = JSON.parse(extended.changed[0]?.text ?? '{}') as {
+      tilemap: { rle: string[]; rowsTall: number };
+    };
+    expect(ported.tilemap.rowsTall).toBe(25);
+    expect(ported.tilemap.rle).toEqual(
+      rows(`${String(cols - 1)}*0, ${String(newCols - cols + 1)}*1`),
+    );
+    // At factor 1 onto the same playfield nothing moves.
+    const same = rescaleGeometry(
+      { factor: 1, topPad: 0, fromWidth: null, fromHeight: null, tileSize: null, toWidth: null },
+      FRAME,
+    );
+    const identity = planRescale(
+      [
+        mapStage(length, {
+          rle: rows(`${String(cols)}*1`),
+          ...heightfield([[0, cols * FRAME.tileSize]]),
+        }),
+      ],
+      same,
+      MODULES,
+    );
+    expect([identity.errors, identity.changes, identity.moved]).toEqual([[], 0, []]);
+    // A row longer than the map (not the geometry the content was written for) and one longer
+    // than a narrower new map are errors: the port is refused.
+    const long = planRescale(
+      [mapStage(length, { rle: rows(`${String(cols + 1)}*1`) })],
+      same,
+      MODULES,
+    );
+    expect(long.errors.map((error) => error.message)).toEqual([
+      `tilemap.rle[0]: ${String(cols + 1)} tiles, longer than the map (${String(cols)} columns at ` +
+        `--from-width ${String(FRAME.playfieldW)})`,
+    ]);
+    const narrower = rescaleGeometry({ ...same, toWidth: FRAME.playfieldW - 64 }, FRAME);
+    const cut = planRescale(
+      [mapStage(length, { rle: rows(`${String(cols)}*1`) })],
+      narrower,
+      MODULES,
+    );
+    expect(cut.errors.map((error) => error.message)).toEqual([
+      `tilemap.rle[0]: ${String(cols)} tiles, longer than the new map (${String(cols - 8)} columns)`,
+    ]);
+  });
+});
+
+describe('rescale: the map’s right end at its last column (review round 3)', () => {
+  it('keeps a segment that ends short of the end in the new map’s last column', () => {
+    // On the tile grid (length 2000: the map ends on its 298th column's edge) a segment ending
+    // 7 px short of the end, in the last column, would come out 10.5 px short of the new end —
+    // which, 3640, lies 4 px into the new map's last column: it is kept in that column.
+    const length = 2000;
+    const end = length + FRAME.playfieldW;
+    const size = GEOMETRY.port.toTileSize;
+    const lastColumn = (Math.ceil((length * 1.5 + GEOMETRY.port.toWidth) / size) - 1) * size;
+    const plan = planRescale(
+      [
+        file(
+          'stages/s.stage.json',
+          stage([], {
+            length,
+            tilemap: {
+              tileSize: FRAME.tileSize,
+              tileset: 'terrain-a',
+              rowsTall: 25,
+              generator: {
+                type: 'heightfield',
+                segments: [
+                  { from: 0, to: end - 7, floor: { base: 16, amp: 4, period: 64, seed: 1 } },
+                ],
+              },
+            },
+          }),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.errors).toEqual([]);
+    const entry = plan.moved.find((item) => item.path === 'tilemap.generator.segments[0].to');
+    expect([entry?.from, entry?.to]).toEqual([end - 7, lastColumn + 1]);
+    expect(entry?.note).toMatch(/^map end: ends 7 px short of the map's right end .* last column$/);
   });
 });

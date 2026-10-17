@@ -1,0 +1,65 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "edges-end",
+  "name": "EDGES END",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 800,
+  "camera": [{ "x": 0, "speed": 1 }],
+  "checkpoints": [{ "x": 0 }],
+  "parallax": [],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "rle": [
+      "146*0, 2*1",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "147*0, 1",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "100*0, 2*1, 46*0",
+      "",
+      "",
+      "",
+      "40*1"
+    ],
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        { "from": 0, "to": 1180, "floor": { "base": 24, "amp": 8, "period": 128, "seed": 5 } },
+        { "from": 1184, "to": 1200, "floor": { "base": 24, "amp": 8, "period": 128, "seed": 6 } }
+      ]
+    }
+  },
+  "events": [
+    {
+      "x": 100,
+      "type": "trigger",
+      "flag": "edge",
+      "region": { "x": 1000, "y": 40, "w": 184, "h": 40 }
+    },
+    {
+      "x": 200,
+      "type": "trigger",
+      "flag": "far",
+      "region": { "x": 1200, "y": 40, "w": 50, "h": 40 }
+    },
+    { "x": 800, "type": "end" }
+  ]
+}

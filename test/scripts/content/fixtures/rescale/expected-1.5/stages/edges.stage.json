@@ -57,7 +57,7 @@
     "generator": {
       "type": "heightfield",
       "segments": [
-        { "from": 0, "to": 2976, "floor": { "base": 60, "amp": 24, "period": 384, "seed": 9 } }
+        { "from": 0, "to": 3040, "floor": { "base": 60, "amp": 24, "period": 384, "seed": 9 } }
       ]
     }
   },

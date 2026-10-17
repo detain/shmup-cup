@@ -15,10 +15,15 @@
  *   arguments;
  * - review round 2: the shipped port lists gimmick-range's falling rock, whose branch is now read
  *   while the trigger that decides it is still armed, and gives each re-sorted timeline's old →
- *   new indices.
+ *   new indices;
+ * - review round 3: the map's right end (`length` + one playfield) is frame-anchored — the three
+ *   shipped heightfield segments that end on it end on the new one (zone-d 9984 → 15040, not
+ *   ×1.5's 14976), and the fixtures' segments, regions and RLE rows that reach it do too; an
+ *   `--art-scale` the atlas' terrain tiles contradict is refused (exit 2) unless forced.
  *
- * The fixtures carry the geometry they were written for (`fixtures/rescale/geometry.json`), so
- * these tests do not depend on core's frame constants (which R2-01 flips).
+ * The fixtures carry the geometry they were written for (`fixtures/rescale/geometry.json`), and
+ * the shipped content's runs use the same fixed v1 → v2 numbers, so these tests do not depend on
+ * core's frame constants (which R2-01 flips).
  */
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
@@ -26,14 +31,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as core from '@shmup/core';
-import {
-  KNOWN_SCRIPT_IDS,
-  PLAYFIELD_H,
-  PLAYFIELD_W,
-  loadContent,
-  type ContentFile,
-  type StageTerrain,
-} from '@shmup/core';
+import { KNOWN_SCRIPT_IDS, loadContent, type ContentFile, type StageTerrain } from '@shmup/core';
 import * as audio from '@shmup/audio-web';
 import * as input from '@shmup/input-web';
 import { FX_FILE_SCHEMA, loadFxContent } from '@shmup/render-pixi';
@@ -45,6 +43,7 @@ import {
   rescaleContent,
   type RescaleModules,
   type RescaleOptions,
+  type RescaleResult,
 } from '../../../scripts/content/rescale.mjs';
 import { readContentFiles } from '../../../vite.shared.js';
 
@@ -77,13 +76,6 @@ const MODULES: RescaleModules = modulesFrom(
 
 /** The same, with the fixtures' frame as the default geometry. */
 const FIXTURE_MODULES: RescaleModules = { ...MODULES, frame: GEOMETRY.frame };
-
-/** The tile size the shipped content is drawn at (its tilesets'). */
-const SHIPPED_TILE_SIZE = (
-  JSON.parse(readFileSync(join(repo, 'content', 'tilesets', 'terrain-a.tileset.json'), 'utf8')) as {
-    tileSize: number;
-  }
-).tileSize;
 
 /**
  * The atlas art's scale against the shipped content's pixels, as the tool measures it from the
@@ -128,24 +120,37 @@ function options(overrides: Partial<RescaleOptions>): RescaleOptions {
 }
 
 /**
- * The shipped content's own geometry, given explicitly (so the runs hold in every window of the
- * R2 switch, whatever core's constants say).
+ * A dry run of the shipped content from the geometry it was written for — v1's playfield and tile
+ * size, the fixed numbers of `fixtures/rescale/geometry.json`, never core's frame constants, so
+ * the runs stay valid after R2-01 flips those (until R2-02 ports the content itself).
  *
- * @param factor - k.
- * @param topPad - The pad.
+ * @param port - `identity`: ×1 onto the same playfield; `v2`: the real port (the geometry's
+ *   factor, top pad and v2 playfield width — R2-02's flags).
  * @returns The options for a dry run of `content/`.
  */
-function shipped(factor: number, topPad: number): RescaleOptions {
+function shipped(port: 'identity' | 'v2'): RescaleOptions {
+  const v2 = port === 'v2';
   return options({
-    factor,
-    topPad,
-    fromWidth: PLAYFIELD_W,
-    fromHeight: PLAYFIELD_H,
-    tileSize: SHIPPED_TILE_SIZE,
-    toWidth: PLAYFIELD_W,
+    factor: v2 ? GEOMETRY.port.factor : 1,
+    topPad: v2 ? GEOMETRY.port.topPad : 0,
+    fromWidth: GEOMETRY.frame.playfieldW,
+    fromHeight: GEOMETRY.frame.playfieldH,
+    tileSize: GEOMETRY.frame.tileSize,
+    toWidth: v2 ? GEOMETRY.port.toWidth : GEOMETRY.frame.playfieldW,
     artScale: shippedArtScale,
   });
 }
+
+/** The v2 dry run of the shipped content, run once and shared by the tests that read it. */
+let shippedV2: Promise<RescaleResult> | undefined;
+
+/**
+ * The v2 dry run of the shipped content ({@link shipped}).
+ *
+ * @returns Its result — resolves once the run is done (the first call starts it).
+ */
+const shippedPort = (): Promise<RescaleResult> =>
+  (shippedV2 ??= rescaleContent(shipped('v2'), MODULES));
 
 /**
  * Every file below a directory.
@@ -209,7 +214,7 @@ const cell = (terrain: StageTerrain, col: number, row: number): number =>
 
 describe('scripts/content/rescale: the shipped content', () => {
   it('is the identity at factor 1: no value changes, nothing unclassified', async () => {
-    const result = await rescaleContent(shipped(1, 0), MODULES);
+    const result = await rescaleContent(shipped('identity'), MODULES);
     expect(result.errors).toEqual([]);
     expect(result.unclassified).toEqual([]);
     expect(result.changes).toBe(0);
@@ -221,14 +226,20 @@ describe('scripts/content/rescale: the shipped content', () => {
     expect(result.skipped.every((path) => path.startsWith('demos/'))).toBe(true);
   });
 
-  it('classifies every value of a ×1.5 / 36-px port (owner decision O6), writing nothing', async () => {
-    const result = await rescaleContent(shipped(1.5, 36), MODULES);
+  it('classifies every value of the ×1.5 / 36-px port (owner decision O6), writing nothing', async () => {
+    // v1's playfield onto v2's 640-wide one (geometry.json), as R2-02 runs it.
+    const result = await shippedPort();
     expect(result.errors).toEqual([]);
     expect(result.unclassified).toEqual([]);
     expect(result.refused).toBe(false);
     expect(result.written).toEqual([]);
     expect(result.changes).toBeGreaterThan(3000);
-    expect(result.geometry.padRows).toBe(3);
+    expect(result.geometry).toMatchObject({
+      toWidth: GEOMETRY.port.toWidth,
+      toHeight: GEOMETRY.port.toHeight,
+      toTileSize: GEOMETRY.port.toTileSize,
+      padRows: 3,
+    });
     // The spawns above the top edge are listed for R2-02's hand fixes.
     expect(result.aboveTop.some((entry) => entry.note.startsWith('spawn'))).toBe(true);
     // The camera's yTo ports ×k, so no map is seen past; the field pairs moved some events
@@ -241,21 +252,9 @@ describe('scripts/content/rescale: the shipped content', () => {
   it('lists what the real v1 → v2 port must fix by hand (review round 2)', async () => {
     // The geometry this content was written for and v2's playfield (the fixtures' geometry.json:
     // R2-02's real run passes the same numbers as flags).
-    const result = await rescaleContent(
-      options({
-        factor: GEOMETRY.port.factor,
-        topPad: GEOMETRY.port.topPad,
-        fromWidth: GEOMETRY.frame.playfieldW,
-        fromHeight: GEOMETRY.frame.playfieldH,
-        tileSize: GEOMETRY.frame.tileSize,
-        toWidth: GEOMETRY.port.toWidth,
-        artScale: shippedArtScale,
-      }),
-      MODULES,
-    );
+    const result = await shippedPort();
     expect(result.errors).toEqual([]);
     expect(result.unclassified).toEqual([]);
-    expect(result.geometry.toHeight).toBe(GEOMETRY.port.toHeight);
     // gimmick-range's falling rock (branch "high" on "took-low") fired after the trigger
     // events[8] disarmed at 1540; ported it fires at 2276, while the trigger is armed up to 2310
     // — listed (R2-02 gives the trigger an until below 2276 by hand).
@@ -299,6 +298,49 @@ describe('scripts/content/rescale: the shipped content', () => {
     // No backdrop band of the shipped content touches two anchors.
     expect(result.backdrop.filter((entry) => entry.note.includes('two anchors'))).toEqual([]);
   });
+
+  it('ends the segments that reach the map’s right end on the new one (review round 3)', async () => {
+    const result = await shippedPort();
+    // The map is `length` + one playfield wide (core stageMapWidth): three stages end their last
+    // heightfield segment exactly there. That end is frame-anchored, so it ports to
+    // length × 1.5 + the new playfield's width — not × 1.5, which would leave the last 64 px of
+    // the last view without terrain.
+    const ends = result.moved.filter((entry) => entry.note.startsWith('map end'));
+    const end = (length: number): number => length * GEOMETRY.port.factor + GEOMETRY.port.toWidth;
+    const segment = (file: string, index: number, length: number) => [
+      `stages/${file}.stage.json`,
+      `tilemap.generator.segments[${String(index)}].to`,
+      length + GEOMETRY.frame.playfieldW,
+      end(length),
+    ];
+    expect(ends.map((entry) => [entry.file, entry.path, entry.from, entry.to])).toEqual([
+      segment('gimmick-range', 2, 3200),
+      segment('weapon-range', 0, 2400),
+      segment('zone-d', 3, 9600),
+    ]);
+    expect(ends.map((entry) => entry.to)).toEqual([5440, 4240, 15040]);
+    for (const entry of ends) {
+      expect(entry.note, entry.file).toMatch(
+        /^map end: ends on the map's right end .* 64 px short$/,
+      );
+    }
+    // No shipped RLE row is tiled in its map's last column (bonus-vault's rows span the map but
+    // end in empty cells), and no region reaches the map's end.
+    expect(result.moved.filter((entry) => entry.field === 'tilemap.rle[]')).toEqual([]);
+    expect(ends.filter((entry) => entry.path.includes('region'))).toEqual([]);
+  });
+
+  it('refuses an --art-scale the atlas contradicts, unless forced (review round 3)', async () => {
+    // README's R2-02 command passes --art-scale 1.5: against today's atlas (terrain tiles at the
+    // content's 8 px, ×1) that would place every parallax band from heights 1.5 times too small.
+    // Whatever the atlas measures, a scale it contradicts is refused (exit 2).
+    const contradicting = shippedArtScale === 1 ? GEOMETRY.port.factor : 1;
+    const run = rescaleContent({ ...shipped('v2'), artScale: contradicting }, MODULES);
+    await expect(run).rejects.toMatchObject({ name: 'RescaleError', exitCode: 2 });
+    await expect(run).rejects.toThrow(
+      new RegExp(`^--art-scale ${String(contradicting)} contradicts the atlas .*--force-art-scale`),
+    );
+  }, 60_000);
 });
 
 describe('scripts/content/rescale: the fixtures', () => {
@@ -327,6 +369,7 @@ describe('scripts/content/rescale: the fixtures', () => {
       'fx/mini.fx.json',
       'paths/mini.paths.json',
       'patterns/mini.patterns.json',
+      'stages/edges-end.stage.json',
       'stages/edges.stage.json',
       'stages/mini.stage.json',
       'tilesets/terrain-a.tileset.json',
@@ -448,9 +491,31 @@ describe('scripts/content/rescale: the fixtures', () => {
     ]);
     expect(result.masks).toEqual([]);
     expect(result.tilemaps.map((entry) => entry.note)).toEqual([
+      '3 rows at the top, copies of the top RLE row "146*0, 8*1" (it has tiles)',
       '3 rows at the top',
       '3 rows at the top, copies of the top RLE row "10*0, 4*1" (it has tiles); 1 heightfield ' +
         'ceiling(s) move down by the pad',
+    ]);
+    // The map's right end (review round 3): edges-end is 800 long, so its map ends at 800 + the
+    // old playfield's width = 1184 (148 columns) and ports to 1200 + 640 = 1840 (154 columns of
+    // 12 px, the last one starting at 1836 and ending at 1848). A segment ending on the end (edges,
+    // at 1984) ends on the new end; one ending 4 px short of it but in the last column keeps that
+    // ×1.5 (1834), kept in the new last column (1837); one ending past it keeps its 16 px ×1.5; one
+    // starting past the last column stays past the new last column; a region reaching the end
+    // still reaches it (its w takes the difference), one past it stays past it; an RLE row tiled
+    // in the last column repeats its last cell to 154 columns (a row ending in an empty cell, or
+    // shorter, stays).
+    const line = (entry: { file: string; path: string; from: unknown; to: unknown }): string =>
+      `${entry.file}:${entry.path} ${JSON.stringify(entry.from)} → ${JSON.stringify(entry.to)}`;
+    expect(result.moved.filter((entry) => entry.note.startsWith('map end')).map(line)).toEqual([
+      'stages/edges-end.stage.json:tilemap.generator.segments[0].to 1180 → 1837',
+      'stages/edges-end.stage.json:tilemap.generator.segments[1].from 1184 → 1848',
+      'stages/edges-end.stage.json:tilemap.generator.segments[1].to 1200 → 1864',
+      'stages/edges-end.stage.json:events[0].region.w 184 → 340',
+      'stages/edges-end.stage.json:events[1].region.x 1200 → 1864',
+      'stages/edges-end.stage.json:tilemap.rle[0] "146*0, 2*1" → "146*0, 8*1"',
+      'stages/edges-end.stage.json:tilemap.rle[10] "147*0, 1" → "147*0, 7*1"',
+      'stages/edges.stage.json:tilemap.generator.segments[0].to 1984 → 3040',
     ]);
     const moved = new Set(result.moved.map((entry) => entry.unit));
     expect([...moved].sort()).toEqual([
@@ -613,5 +678,43 @@ describe('scripts/content/rescale: the command line', () => {
     const unknown = run(['--factor', '1.5', '--bogus']);
     expect(unknown.status).toBe(2);
     expect(unknown.stderr).toContain('unknown option --bogus');
+    const unforced = run(['--factor', '1.5', '--force-art-scale']);
+    expect(unforced.status).toBe(2);
+    expect(unforced.stderr).toContain('--force-art-scale needs --art-scale S');
   });
+
+  it('refuses an --art-scale the atlas contradicts with exit code 2, unless forced', () => {
+    // The fixtures' atlas draws the terrain tiles at the content's 8 px (×1): README's R2-02 flag
+    // `--art-scale 1.5` is refused against it, and goes through only with --force-art-scale.
+    const flags = [
+      '--factor',
+      String(GEOMETRY.port.factor),
+      '--top-pad',
+      String(GEOMETRY.port.topPad),
+      '--root',
+      v1Root,
+      '--dry-run',
+      '--quiet',
+      '--atlas',
+      atlas,
+      ...geometry(GEOMETRY.port.toWidth),
+      '--art-scale',
+      String(GEOMETRY.port.factor),
+    ];
+    const refused = run(flags);
+    expect(refused.status).toBe(2);
+    expect(refused.stdout).toBe('');
+    expect(refused.stderr).toContain(
+      "rescale: --art-scale 1.5 contradicts the atlas — the atlas' terrain tiles are 8 px against the " +
+        "content's tilesets' 8 px: the art is drawn at ×1 the content's pixels.",
+    );
+    expect(refused.stderr).toContain('--force-art-scale');
+    const forced = run([...flags, '--force-art-scale']);
+    expect(forced.stderr).toBe('');
+    expect(forced.status).toBe(0);
+    expect(forced.stdout).toContain(
+      "note: --art-scale 1.5 forced: the atlas' terrain tiles measure ×1, the bands' art heights " +
+        'use ×1.5',
+    );
+  }, 60_000);
 });

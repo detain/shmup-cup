@@ -2971,6 +2971,10 @@ const TILEMAP_SCHEMA: Schema<Omit<StageTilemapSpec, 'tilesetId'>> = s.object(
       segments: s.array(
         s.object(
           {
+            // World x's, except where they meet the map's right end (`length` plus one
+            // playfield — frame-anchored, §2.6): a `to` in the map's last column reaches that end,
+            // and the rescale tool ports it to the new map's end (`scripts/content/rescale.mjs`
+            // portMapEnd), as it does a `from` past the last column and a region reaching the end.
             from: s.int({ min: 0, max: 1000000, unit: 'world-x' }),
             to: s.int({ min: 1, max: 1001000, unit: 'world-x' }),
             floor: HEIGHTFIELD_FLOOR_SCHEMA,

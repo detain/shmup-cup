@@ -93,6 +93,14 @@ A new numeric field needs a unit, and a new behaviour tunable a row in `BEHAVIOR
   bottom edge, the top edge and the Mode-7 horizon, the horizon and the bottom edge) keeps the
   first and is listed with the strip that opens at the other — the art is ×k, the span between
   them is not.
+- **The map's right end** — a stage's map is `length` plus one playfield wide (where the view ends
+  at the last camera position), so its right end is frame-anchored: it ports to `length′` + the
+  new playfield's width, and an x at or past it keeps its distance past it ×k (×k alone would
+  leave the last 64 px of the last view without terrain). A heightfield segment that reaches the
+  map's last column ends on the new map's end (zone D's 9984 → 15040, not 14976), one that starts
+  past the last column stays past the new one, a trigger or bonus region reaching the end still
+  reaches it (its `w` takes the difference), and an RLE row tiled in the map's last column repeats
+  its last cell to the new map's width. Each is listed as moved.
 
 Because a world sum moves an event against the camera, the tool also re-sorts each stage's
 `events` and `remix` by the ported `x` (ties keep their order — the loader wants them sorted) and
@@ -121,9 +129,13 @@ bounds, approximated masks, the timeline and backdrop items above, the padded ti
 tilemap the camera would see past. The bands' art heights come from the atlas the pipeline
 builds in memory from `assets/source/` (or `--atlas <main.json>`), divided by `--art-scale` so
 they stay in this content's pixels: pass `--art-scale 1.5` once R2-01's interim ×1.5 art is in
-the pipeline. The tool measures that scale from the atlas' terrain tiles against the tilesets'
-`tileSize` and refuses to run without `--art-scale` when they say anything but ×1; a given
-`--art-scale` the tiles disagree with is noted in the report.
+the pipeline. The tool never guesses that scale: it measures it from the atlas' terrain tiles
+against the tilesets' `tileSize`, refuses to run without `--art-scale` when they say anything but
+×1, and **refuses a given `--art-scale` they contradict** (exit 2) — so the command below fails
+safely against an atlas still drawn at ×1. Only `--force-art-scale` overrides the tiles, for an
+atlas whose parallax bands are drawn at another scale than its tiles (the one split the
+measurement cannot see: use `--art-scale 1.5` only once both the 12-px tiles and the ×1.5 bands
+are in the atlas).
 `--factor 1 --dry-run` reports zero changes on this folder; `--factor 1.5 --top-pad 36
 --dry-run` zero unclassified values. The real ×1.5 run is R2-02's: after R2-01 flips the frame,
 pass the geometry this content was written for — `--from-width 384 --from-height 200

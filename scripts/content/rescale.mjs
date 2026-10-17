@@ -50,7 +50,13 @@
  *   layout from the bands' art heights (`rescaleBackdrop`; heights from the atlas — built in memory
  *   from `assets/source/`, or `--atlas`), the raster bands then spread over the placed rows by
  *   their rounded boundaries; the report lists free placements, seams and a band that touched two
- *   anchors (the top edge, the bottom edge, a Mode-7 row) and keeps one.
+ *   anchors (the top edge, the bottom edge, a Mode-7 row) and keeps one;
+ * - the **map's right end** — `length` plus one playfield, where the view ends at the last camera
+ *   position — is frame-anchored: it ports to `length′ + toWidth`, and an x at or past it keeps its
+ *   distance past it ×k (`portMapEnd`): a heightfield segment that reaches the map's last column
+ *   ends at the new map's end, a region reaching the end still reaches it, and an RLE row tiled in
+ *   the last column repeats its last cell to the new map's width (`extendRleRow`); each is listed
+ *   as moved.
  *
  * **What it reads.** Every content file (`readContentFiles` of `vite.shared.ts`, plus the
  * `example.*.json` samples unless `--no-examples`), each with its kind's file schema: core's
@@ -81,17 +87,19 @@
  * `content/`), `--no-examples`, `--from-width W`, `--from-height H`, `--tile-size T`,
  * `--to-width W`, `--atlas FILE` (an atlas manifest for the bands' art heights), `--art-scale S`
  * (the atlas art's scale against the content's pixels: 1.5 once R2-01's interim upscale is in the
- * pipeline — the tool measures it from the atlas' terrain tiles against the content's tilesets and
- * refuses to guess: without `--art-scale` it runs only while they agree at ×1), `--json` (the
- * result as JSON), `--quiet` (the summary only). Exit code 0 = done (or nothing to do), 1 =
- * refused (unclassified values or errors), 2 = bad arguments (an art scale the atlas contradicts
- * and no `--art-scale` included).
+ * pipeline), `--force-art-scale` (use `--art-scale` although the atlas contradicts it), `--json`
+ * (the result as JSON), `--quiet` (the summary only). The tool measures the art scale from the
+ * atlas' terrain tiles against the content's tilesets and never guesses ({@link resolveArtScale}):
+ * without `--art-scale` it runs only while they measure ×1, and a given `--art-scale` must be what
+ * they measure unless `--force-art-scale` says the bands are drawn at another scale than the tiles.
+ * Exit code 0 = done (or nothing to do), 1 = refused (unclassified values or errors), 2 = bad
+ * arguments (an art scale the atlas contradicts included).
  *
  * **Public API.** {@link parseRescaleArgs}, {@link loadRescaleModules}, {@link rescaleGeometry},
  * {@link planRescale}, {@link rescaleContent}, {@link formatRescaleReport}, {@link jsonSpans},
  * {@link replaceJsonValues}, {@link permuteJsonArrays}, {@link scaleExpression},
- * {@link spreadBands}, {@link modulesFrom}, {@link loadArt}, {@link measureArtScale},
- * {@link resolveArtScale}, {@link RescaleError}, {@link SKIPPED_DIRS}.
+ * {@link spreadBands}, {@link extendRleRow}, {@link modulesFrom}, {@link loadArt},
+ * {@link measureArtScale}, {@link resolveArtScale}, {@link RescaleError}, {@link SKIPPED_DIRS}.
  *
  * @module
  */
@@ -153,6 +161,8 @@ export class RescaleError extends Error {
  * @property {number | null} artScale - The atlas art's scale against the content's pixels
  *   (`null` = not given: 1, and the tool refuses when the atlas' terrain tiles say otherwise —
  *   {@link resolveArtScale}; 1.5 once R2-01's interim upscale is in the pipeline).
+ * @property {boolean} [forceArtScale] - Use `artScale` even when the atlas' terrain tiles measure
+ *   another scale (the parallax bands drawn at another scale than the tiles); `false` when absent.
  * @property {boolean} json - Print the result as JSON.
  * @property {boolean} quiet - Print the summary only.
  */
@@ -162,7 +172,8 @@ export class RescaleError extends Error {
  *
  * @param {readonly string[]} argv - Arguments after the script name.
  * @returns {RescaleOptions} The options.
- * @throws {RescaleError} On an unknown option, a missing or bad value, or no `--factor`.
+ * @throws {RescaleError} On an unknown option, a missing or bad value, no `--factor`, or
+ *   `--force-art-scale` without `--art-scale`.
  */
 export function parseRescaleArgs(argv) {
   /** @type {RescaleOptions} */
@@ -178,6 +189,7 @@ export function parseRescaleArgs(argv) {
     toWidth: null,
     atlas: null,
     artScale: null,
+    forceArtScale: false,
     json: false,
     quiet: false,
   };
@@ -235,6 +247,9 @@ export function parseRescaleArgs(argv) {
       case '--art-scale':
         options.artScale = numberAt(i++, true);
         break;
+      case '--force-art-scale':
+        options.forceArtScale = true;
+        break;
       case '--dry-run':
         options.dryRun = true;
         break;
@@ -252,6 +267,9 @@ export function parseRescaleArgs(argv) {
     }
   }
   if (Number.isNaN(options.factor)) throw new RescaleError('--factor K is required');
+  if (options.forceArtScale === true && options.artScale === null) {
+    throw new RescaleError('--force-art-scale needs --art-scale S');
+  }
   return options;
 }
 
@@ -956,9 +974,10 @@ export function planRescale(files, geometry, modules, art = NO_ART) {
  *
  * @remarks
  * Four phases: the walk classifies every number (expression strings, tileset masks and raster
- * bands are handled on their own); the groups — field pairs and the stage's backdrop — work out
- * the values of fields that port together; every number is then finished the same way (rounded,
- * listed, written back); and a stage's timeline is checked and re-sorted.
+ * bands are handled on their own); the groups — field pairs, the stage's backdrop and its map end
+ * — work out the values of fields that port together; every number is then finished the same way
+ * (rounded, listed, written back), the RLE rows with the tilemap; and a stage's timeline is
+ * checked and re-sorted.
  */
 function portFile(file, data, schema, geometry, modules, art, context, plan) {
   const { factor } = geometry;
@@ -1111,6 +1130,7 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
   const unplaced = stage
     ? portBackdrop(file, pending, geometry, modules, art, overrides, plan)
     : new Set();
+  const mapEnd = stage ? portMapEnd(data, pending, geometry, modules, overrides) : null;
 
   // 3. Every number: rounded, listed, written back.
   /** @type {Map<unknown, Map<string | number, number>>} */
@@ -1284,10 +1304,54 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
     });
   }
 
-  // 5. Tilemap rows: explicit RLE rows gain copies of their top row.
+  // 5. Tilemap rows: an explicit RLE row tiled in the map's last column reaches the new map's
+  // right end, and with a top pad the rows gain copies of their (so extended) top row.
+  const rawRle = tilemap !== null && Array.isArray(tilemap['rle']) ? tilemap['rle'] : null;
+  const rle = rawRle === null ? null : /** @type {string[]} */ (rawRle);
+  let rows = rle;
+  let extendedRows = 0;
+  if (rle !== null && mapEnd !== null) {
+    rows = rle.map((row, r) => {
+      const path = `tilemap.rle[${String(r)}]`;
+      const width = rleWidth(row);
+      if (width > mapEnd.cols || width > mapEnd.newCols) {
+        // Longer than the old map (the loader refuses it: not the geometry the content was
+        // written for), or than the new one (a narrower port).
+        plan.errors.push({
+          file: file.path,
+          message:
+            `${path}: ${String(width)} tiles, longer than the ` +
+            (width > mapEnd.cols
+              ? `map (${String(mapEnd.cols)} columns at --from-width ` +
+                `${String(geometry.fromWidth)})`
+              : `new map (${String(mapEnd.newCols)} columns)`),
+        });
+        return row;
+      }
+      const extended = extendRleRow(row, mapEnd.cols, mapEnd.newCols);
+      if (extended === row) return row;
+      changes++;
+      extendedRows++;
+      plan.moved.push({
+        file: file.path,
+        path,
+        field: 'tilemap.rle[]',
+        unit: 'world-x',
+        from: row,
+        to: extended,
+        note:
+          "map end: tiled in the map's last column, so it reaches the map's right end — its last " +
+          `cell repeats from the map's ${String(mapEnd.cols)} columns to the new map's ` +
+          String(mapEnd.newCols),
+      });
+      return extended;
+    });
+  }
+  if (rows !== null && extendedRows > 0 && geometry.padRows === 0) {
+    replacements.push({ keys: ['tilemap', 'rle'], value: rows });
+  }
   if (tilemap !== null && geometry.padRows > 0) {
-    const rle = Array.isArray(tilemap['rle']) ? /** @type {string[]} */ (tilemap['rle']) : null;
-    const topRow = rle !== null && rle.length > 0 ? rle[0] : null;
+    const topRow = rows !== null && rows.length > 0 ? rows[0] : null;
     const filled = topRow !== null && rleHasTiles(topRow);
     const segments =
       isObject(tilemap['generator']) && Array.isArray(tilemap['generator']['segments'])
@@ -1296,10 +1360,10 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
     const ceilings = segments.filter(
       (segment) => isObject(segment) && segment['ceiling'] !== undefined,
     ).length;
-    if (rle !== null && topRow !== null) {
+    if (rows !== null && topRow !== null) {
       const next = [];
       for (let r = 0; r < geometry.padRows; r++) next.push(topRow);
-      replacements.push({ keys: ['tilemap', 'rle'], value: next.concat(rle) });
+      replacements.push({ keys: ['tilemap', 'rle'], value: next.concat(rows) });
       changes++;
     }
     plan.tilemaps.push({
@@ -1632,6 +1696,235 @@ function portBackdrop(file, pending, geometry, modules, art, overrides, plan) {
     });
   }
   return unplaced;
+}
+
+/**
+ * A stage's map end, as written and as ported ({@link portMapEnd}).
+ *
+ * @typedef {object} MapEnd
+ * @property {number} end - The map's right end as written: `length + fromWidth`, where the view
+ *   ends at the last camera position.
+ * @property {number} newEnd - Ported: `length′ + toWidth` (`length′` as the port writes it).
+ * @property {number} cols - The map's columns as written (core `stageMapWidth`:
+ *   `ceil(end / tileSize)`).
+ * @property {number} newCols - The new map's columns (`ceil(newEnd / toTileSize)`).
+ */
+
+/**
+ * Ports the x's a stage anchors to its **map's right end** — `length` plus one playfield, where the
+ * view ends at the last camera position (the map is that wide: core `stageMapWidth`). That end is
+ * frame-anchored (§2.6): it ports to `length′ + toWidth`, not ×k (×k would leave
+ * `toWidth − k · fromWidth` px of the last view with no terrain — 64 px in v2). An x at or past it
+ * keeps its distance past it ×k: `x′ = length′ + toWidth + k · (x − length − fromWidth)`.
+ *
+ * - A heightfield segment's `to` that reaches the map's last column (the generator clamps a
+ *   segment to the map and ramps it down to the map's edge) ports by that rule, kept in the new
+ *   map's last column (off the tile grid the end lies inside the last column, and a `to` there
+ *   may be short of it): a segment ending on the end ends on the new one. A `from` past the map's
+ *   last column (a segment the map never shows) keeps its distance past the column grid's end ×k,
+ *   so it stays past the new map's last column.
+ * - A region (a trigger's or a bonus entrance's) whose right edge `x + w` is at or past the end:
+ *   the right edge ports by the rule and `w` takes the difference (an `x` past the end too).
+ *
+ * At factor 1 onto the same playfield every one of these is the identity. Everything else on the
+ * timeline is a camera position, which stops at `length` (×k); RLE rows are handled with the
+ * tilemap ({@link extendRleRow}).
+ *
+ * @param {Record<string, unknown>} data - The stage's JSON.
+ * @param {readonly PendingLeaf[]} pending - Its numbers.
+ * @param {RescaleGeometry} geometry - The port's geometry.
+ * @param {RescaleModules} modules - The packages.
+ * @param {Map<import('@shmup/core').NumberLeaf, Override>} overrides - Receives the values that
+ *   differ from ×k.
+ * @returns {MapEnd | null} The map end (`null` without a `length`).
+ */
+function portMapEnd(data, pending, geometry, modules, overrides) {
+  const lengthItem = pending.find(
+    (item) => item.leaf.container === data && item.leaf.key === 'length',
+  );
+  if (lengthItem === undefined) return null;
+  const { factor, fromWidth, toWidth } = geometry;
+  const length = Number(lengthItem.leaf.value);
+  const exactLength = cleanFraction(modules.rescaleNumber(lengthItem.unit, length, geometry));
+  const newLength = lengthItem.leaf.integer ? Math.round(exactLength) : exactLength;
+  const end = length + fromWidth;
+  const newEnd = newLength + toWidth;
+  const mapEnd = {
+    end,
+    newEnd,
+    cols: Math.ceil(end / geometry.tileSize),
+    newCols: Math.ceil(newEnd / geometry.toTileSize),
+  };
+  /**
+   * An x anchored to the map's right end, ported.
+   *
+   * @param {number} x - The x as written (at or past `end`, or in the map's last column).
+   * @returns {number} Its distance to the end ×k, from the new end.
+   */
+  const past = (x) => newEnd + factor * (x - end);
+  /**
+   * The ×k value of a leaf (what its unit alone would make of it).
+   *
+   * @param {PendingLeaf} item - The leaf.
+   * @returns {number} Its value ×k.
+   */
+  const scaled = (item) =>
+    cleanFraction(modules.rescaleNumber(item.unit, Number(item.leaf.value), geometry));
+  /**
+   * Sets an override unless it is what the unit alone makes of the value.
+   *
+   * @param {PendingLeaf} item - The leaf.
+   * @param {number} exact - Its ported value.
+   * @param {string} how - Why.
+   */
+  const set = (item, exact, how) => {
+    if (cleanFraction(exact) !== scaled(item)) overrides.set(item.leaf, { exact, how });
+  };
+  /**
+   * The pending leaf of a field of an object.
+   *
+   * @param {unknown} holder - The object.
+   * @param {string} key - The field.
+   * @returns {PendingLeaf | undefined} Its leaf.
+   */
+  const leafOf = (holder, key) =>
+    pending.find((item) => item.leaf.container === holder && item.leaf.key === key);
+  const ends =
+    `the map's right end (length + ${String(fromWidth)} = ${String(end)} → ` +
+    `length′ + ${String(toWidth)} = ${String(newEnd)})`;
+  /**
+   * How far past the map's right end an x lies, for a note.
+   *
+   * @param {number} x - The x as written (≥ `end`).
+   * @returns {string} `"<n> px past <the end>, ×k past the new one"`.
+   */
+  const beyond = (x) => `${String(x - end)} px past ${ends}, ×k past the new one`;
+  // Heightfield segments: a `to` in the map's last column reaches the end (the generator clamps a
+  // segment to the map and ramps it down to its edge).
+  const tilemap = isObject(data['tilemap']) ? data['tilemap'] : null;
+  const generator =
+    tilemap !== null && isObject(tilemap['generator']) ? tilemap['generator'] : null;
+  const segments =
+    generator !== null && Array.isArray(generator['segments']) ? generator['segments'] : [];
+  for (const segment of segments) {
+    const to = leafOf(segment, 'to');
+    const toX = to === undefined ? Number.NaN : Number(to.leaf.value);
+    if (to !== undefined && Math.ceil(toX / geometry.tileSize) >= mapEnd.cols) {
+      // Off the tile grid the end lies inside the last column, and a `to` short of it in that
+      // column still reaches it: such a `to` keeps its distance ×k too, but stays in the new last
+      // column.
+      const lastColumn = (mapEnd.newCols - 1) * geometry.toTileSize;
+      const short = cleanFraction(newEnd - factor * toX);
+      set(
+        to,
+        Math.max(past(toX), lastColumn + 1),
+        toX < end
+          ? `map end: ends ${String(end - toX)} px short of ${ends} but in the map's last ` +
+              "column, which reaches it — kept in the new map's last column"
+          : toX === end
+            ? `map end: ends on ${ends} — ×k would end it ${String(short)} px short`
+            : `map end: ends ${beyond(toX)}`,
+      );
+    }
+    // A `from` past the map's last column (a segment the map never shows) stays past the new
+    // map's: its distance past the column grid's end ×k (the new map's end is inside its last
+    // column, so an x just past it would still be drawn).
+    const from = leafOf(segment, 'from');
+    const fromX = from === undefined ? Number.NaN : Number(from.leaf.value);
+    const grid = mapEnd.cols * geometry.tileSize;
+    if (from !== undefined && fromX >= grid) {
+      const newGrid = mapEnd.newCols * geometry.toTileSize;
+      set(
+        from,
+        newGrid + factor * (fromX - grid),
+        `map end: starts ${String(fromX - grid)} px past the map's last tile column, which ` +
+          `ends at ${String(grid)} (→ ${String(newGrid)}): a segment the map never shows stays ` +
+          "past the new map's",
+      );
+    }
+  }
+  // Regions (a trigger's, a bonus entrance's) whose right edge reaches the map's right end.
+  for (const name of ['events', 'remix']) {
+    const list = data[name];
+    if (!Array.isArray(list)) continue;
+    for (const event of list) {
+      const region = isObject(event) ? event['region'] : undefined;
+      if (!isObject(region)) continue;
+      const xItem = leafOf(region, 'x');
+      const wItem = leafOf(region, 'w');
+      if (xItem === undefined || wItem === undefined) continue;
+      const x = Number(xItem.leaf.value);
+      const right = x + Number(wItem.leaf.value);
+      if (right < end) continue;
+      const newX = x >= end ? past(x) : scaled(xItem);
+      if (x >= end) set(xItem, newX, `map end: ${beyond(x)}`);
+      set(
+        wItem,
+        past(right) - newX,
+        right === end
+          ? `map end: its right edge is on ${ends} and stays on it`
+          : `map end: its right edge is ${beyond(right)}`,
+      );
+    }
+  }
+  return mapEnd;
+}
+
+/**
+ * The cells of an RLE row (`core/data/tilemap` row syntax: `<id>` / `<count>*<id>`, comma
+ * separated, spaces ignored).
+ *
+ * @param {string} row - The row (valid syntax).
+ * @returns {{ width: number, last: number }} Its width in tiles and its last cell's tile id (0
+ *   for an empty row).
+ */
+function rleCells(row) {
+  const compact = row.replace(/\s+/g, '');
+  let width = 0;
+  let last = 0;
+  if (compact === '') return { width, last };
+  for (const token of compact.split(',')) {
+    const match = /^(?:([0-9]+)\*)?([0-9]+)$/.exec(token);
+    if (match === null) continue;
+    width += match[1] === undefined ? 1 : Number(match[1]);
+    last = Number(match[2]);
+  }
+  return { width, last };
+}
+
+/**
+ * The width of an RLE row in tiles.
+ *
+ * @param {string} row - The row.
+ * @returns {number} Its width.
+ */
+const rleWidth = (row) => rleCells(row).width;
+
+/**
+ * Extends an RLE row that is tiled in the map's last column to the new map's width with copies of
+ * that cell — the row reaches the map's right end, which is frame-anchored ({@link portMapEnd}).
+ * The row's last token takes the extra cells (`2*1` → `8*1`, `1` → `7*1`); every other character
+ * stays.
+ *
+ * @param {string} row - The row as written.
+ * @param {number} cols - The map's columns as written.
+ * @param {number} newCols - The new map's columns.
+ * @returns {string} The extended row, or `row` itself when it is shorter than the map, ends in an
+ *   empty cell or the new map is no wider.
+ * @example
+ * ```js
+ * extendRleRow('146*0, 2*1', 148, 154); // '146*0, 8*1'
+ * ```
+ */
+export function extendRleRow(row, cols, newCols) {
+  const { width, last } = rleCells(row);
+  if (width !== cols || last === 0 || newCols <= cols) return row;
+  const match = /([0-9]+\*)?([0-9]+)(\s*)$/.exec(row);
+  if (match === null) return row;
+  const count = match[1] === undefined ? 1 : Number(match[1].slice(0, -1));
+  return (
+    row.slice(0, match.index) + `${String(count + newCols - cols)}*${match[2]}` + (match[3] ?? '')
+  );
 }
 
 /**
@@ -2140,48 +2433,82 @@ export function measureArtScale(files, art) {
 }
 
 /**
- * Settles the art scale of a port: `--art-scale` if given, else 1 — refused when the atlas'
- * terrain tiles say the art is drawn at another scale (a run after R2-01's interim ×1.5 art that
- * forgot the flag would place every band from heights 1.5 times too tall).
+ * Settles the art scale of a port from `--art-scale` and what the atlas' terrain tiles measure —
+ * never a guess: without `--art-scale` it is 1 while the tiles measure ×1, and a given scale must
+ * be the one the tiles measure. Both ways round the port would place every parallax band from
+ * heights at the wrong scale (a run after R2-01's interim ×1.5 art that forgets the flag; a run
+ * passing `--art-scale 1.5` — R2-02's documented command — against an atlas still drawn at ×1),
+ * so both are refused. `--force-art-scale` lets a given scale override the tiles, for an atlas
+ * whose bands are drawn at another scale than its tiles (which the measurement cannot see).
  *
  * @param {number | null} given - `--art-scale` (`null` = not given).
  * @param {ReturnType<typeof measureArtScale>} measured - What the atlas' tiles say.
+ * @param {boolean} [force] - `--force-art-scale`: use `given` whatever the tiles say.
  * @returns {{ scale: number, measured: number | null, note: string | null }} The scale to use,
- *   the measured one, and a note for the report when a given scale disagrees with the atlas.
- * @throws {RescaleError} When no scale is given and the tiles measure another scale than 1, or
- *   disagree among themselves (exit code 2).
+ *   the measured one, and a note for the report when the scale is not checked against the tiles
+ *   (no tile to measure, or forced past them).
+ * @throws {RescaleError} When no scale is given and the tiles measure another scale than 1, when a
+ *   given scale is not the one the tiles measure and `force` is not set, or when the tiles
+ *   disagree among themselves and nothing forces a scale (exit code 2).
+ * @example
+ * ```js
+ * resolveArtScale(1.5, measureArtScale(files, art)); // throws on today's ×1 atlas
+ * resolveArtScale(1.5, measureArtScale(files, art), true); // 1.5, with a note
+ * ```
  */
-export function resolveArtScale(given, measured) {
+export function resolveArtScale(given, measured, force = false) {
   const sizes = (/** @type {'w' | 'h'} */ key) =>
     [...new Set(measured.tiles.map((tile) => tile[key]))].sort((a, b) => a - b).join(' / ');
   const content = [...new Set(measured.tiles.map((tile) => tile.tileSize))]
     .sort((a, b) => a - b)
     .join(' / ');
+  const tiles =
+    measured.scale === null
+      ? `the atlas' terrain tiles (${sizes('w')} px wide, ${sizes('h')} px tall) do not agree on ` +
+        `one scale against the content's tilesets (${content} px)`
+      : `the atlas' terrain tiles are ${sizes('h')} px against the content's tilesets' ${content} ` +
+        `px: the art is drawn at ×${String(measured.scale)} the content's pixels`;
   if (given === null) {
     if (measured.tiles.length > 0 && measured.scale === null) {
       throw new RescaleError(
-        `the atlas' terrain tiles (${sizes('w')} px wide, ${sizes('h')} px tall) do not agree on ` +
-          `one scale against the content's tilesets (${content} px): pass --art-scale S, the ` +
-          `scale of the parallax bands' art against the content's pixels`,
+        `${tiles}: pass --art-scale S with --force-art-scale, S the scale of the parallax ` +
+          "bands' art against the content's pixels",
       );
     }
     if (measured.scale !== null && measured.scale !== 1) {
       const scale = String(measured.scale);
       throw new RescaleError(
-        `the atlas' terrain tiles are ${sizes('h')} px but the content's tilesets say ${content} ` +
-          `px: the art is drawn at ×${scale} the content's pixels, so the bands' art heights need ` +
-          `--art-scale ${scale} (or --atlas with an atlas drawn at the content's pixels)`,
+        `${tiles}, so the bands' art heights need --art-scale ${scale} (or --atlas with an atlas ` +
+          "drawn at the content's pixels)",
       );
     }
     return { scale: 1, measured: measured.scale, note: null };
   }
-  const note =
-    measured.scale !== given && measured.tiles.length > 0
-      ? `--art-scale ${String(given)} given, but the atlas' terrain tiles measure ` +
-        `${measured.scale === null ? 'no single scale' : `×${String(measured.scale)}`}: the ` +
-        `bands' art heights use ×${String(given)}`
-      : null;
-  return { scale: given, measured: measured.scale, note };
+  if (measured.tiles.length === 0) {
+    return {
+      scale: given,
+      measured: null,
+      note:
+        `--art-scale ${String(given)} given, but the atlas holds none of the tilesets' sprites: ` +
+        'the scale is not checked',
+    };
+  }
+  if (measured.scale === given) return { scale: given, measured: measured.scale, note: null };
+  if (!force) {
+    throw new RescaleError(
+      `--art-scale ${String(given)} contradicts the atlas — ${tiles}. Pass the scale the tiles ` +
+        'measure (leave --art-scale out while it is 1), or add --force-art-scale if the ' +
+        `parallax bands really are drawn at ×${String(given)} while the tiles are not`,
+    );
+  }
+  return {
+    scale: given,
+    measured: measured.scale,
+    note:
+      `--art-scale ${String(given)} forced: the atlas' terrain tiles measure ` +
+      `${measured.scale === null ? 'no single scale' : `×${String(measured.scale)}`}, the ` +
+      `bands' art heights use ×${String(given)}`,
+  };
 }
 
 /**
@@ -2200,7 +2527,7 @@ export function resolveArtScale(given, measured) {
  * @returns {Promise<RescaleResult>} The plan, with the files written (none on a dry run or a
  *   refusal) — resolves once every file is formatted and written.
  * @throws {RescaleError} When the geometry is impossible, or the atlas contradicts the art scale
- *   ({@link resolveArtScale}).
+ *   — given or not — and `forceArtScale` is not set ({@link resolveArtScale}).
  */
 export async function rescaleContent(options, modules) {
   const geometry = rescaleGeometry(options, modules.frame);
@@ -2211,7 +2538,11 @@ export async function rescaleContent(options, modules) {
     text: readFileSync(join(options.root, path), 'utf8'),
   }));
   const art = await loadArt(options);
-  const artScale = resolveArtScale(options.artScale, measureArtScale(files, art));
+  const artScale = resolveArtScale(
+    options.artScale,
+    measureArtScale(files, art),
+    options.forceArtScale === true,
+  );
   const plan = planRescale(files, geometry, modules, art);
   const prettier = await import('prettier');
   const config = (await prettier.resolveConfig(join(REPO_ROOT, 'package.json'))) ?? {};
