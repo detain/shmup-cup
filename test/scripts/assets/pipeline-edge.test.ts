@@ -469,7 +469,12 @@ describe('scripts/assets/pipeline — multi-page output on disk', () => {
 
     const twoPages = generateAssets({ sourceDir: src, outDir: out });
     expect(twoPages.manifest.pages.map((p) => p.file)).toEqual(['main.png', 'main-1.png']);
-    expect(twoPages.manifest.pages[0]).toEqual({ file: 'main.png', w: 2048, h: 2048 });
+    expect(twoPages.manifest.pages[0]).toEqual({
+      file: 'main.png',
+      w: 2048,
+      h: 2048,
+      group: 'common',
+    });
     expect(twoPages.files).toEqual(['atlas/main.png', 'atlas/main-1.png', 'atlas/main.json']);
     const backdrop = twoPages.manifest.frames['bg/backdrop#0'];
     expect(backdrop).toMatchObject({ p: 0, w: 2000, h: 2000 });

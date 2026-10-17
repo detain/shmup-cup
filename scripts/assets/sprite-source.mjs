@@ -74,6 +74,8 @@ import { decodePng } from './png.mjs';
  * @property {Image[]} frames - The frames, in index order (at least one).
  * @property {Record<string, number[]>} animations - Named frame-index sequences.
  * @property {string} origin - Where it came from (source file path or `procedural:<module>`).
+ * @property {string} [group] - Atlas group (`common`, `zone-a`, …), set by the pipeline's
+ *   `collectSprites` (R1-05); sources never set it.
  */
 
 /**

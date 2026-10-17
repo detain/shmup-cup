@@ -5,8 +5,9 @@
  *
  * ```json
  * {
- *   "formatVersion": 1,
- *   "pages": [{ "file": "main.png", "w": 512, "h": 512 }],
+ *   "formatVersion": 2,
+ *   "pages": [{ "file": "main.png", "w": 512, "h": 512, "group": "common" },
+ *     { "file": "main-1.png", "w": 256, "h": 256, "group": "zone-a" }],
  *   "frames": { "ships/kestrel#0": { "p": 0, "x": 1, "y": 1, "w": 16, "h": 9, "ax": 8, "ay": 4 } },
  *   "sprites": { "ships/kestrel": { "frames": ["ships/kestrel#0", "…"], "flash": null } },
  *   "animations": { "ships/kestrel": { "level": [0], "up": [1], "down": [2] } },
@@ -15,6 +16,12 @@
  * }
  * ```
  *
+ * - **Pages** (format 2, R1-05) each hold one **group**: `common` (page 0, always
+ *   `main.png` — the art every zone draws) or one zone's own art (`zone-a`, …), so the
+ *   runtime can keep only `common` + the current zone's pages on the GPU. Which sprite
+ *   goes to which group: `assets/source/atlas-groups.json`, else a `zone-<id>` directory
+ *   in the sprite's name, else `common` (`scripts/assets/pipeline.mjs`). Format 1 had no
+ *   `group` (one implicit group).
  * - **Frame names** are `<sprite>#<index>`; `ax`/`ay` is the sprite's anchor in frame
  *   pixels. A sprite's frames are listed in index order in `sprites[name].frames`.
  * - **Hit flash** (D30): a sprite with `hitFlash` has `flash: "<name>@flash"`, a sibling
@@ -43,6 +50,8 @@
  * @property {string} file - File name (`main.png`, `main-1.png`, …).
  * @property {number} w - Width in pixels (power of two ≤ 2048).
  * @property {number} h - Height in pixels (power of two ≤ 2048).
+ * @property {string} group - The atlas group of every frame on it (`common` for page 0,
+ *   else one zone's group such as `zone-a`; format 2).
  */
 
 /**
@@ -78,8 +87,11 @@
  * @property {Record<string, FontMetrics>} fonts - Bitmap fonts by name.
  */
 
-/** Current manifest format. */
-export const MANIFEST_FORMAT_VERSION = 1;
+/**
+ * Current manifest format: 2 since R1-05 (`pages[i].group`; page 0 = `main.png` =
+ * `common`). Format 1 had no groups.
+ */
+export const MANIFEST_FORMAT_VERSION = 2;
 
 /**
  * Name of frame `index` of a sprite.

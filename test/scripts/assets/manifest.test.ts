@@ -19,8 +19,8 @@ const { manifest } = buildAtlas();
 
 /** A tiny manifest with every section. */
 const TINY: AtlasManifest = {
-  formatVersion: 1,
-  pages: [{ file: 'main.png', w: 64, h: 64 }],
+  formatVersion: 2,
+  pages: [{ file: 'main.png', w: 64, h: 64, group: 'common' }],
   frames: {
     'a#0': { p: 0, x: 1, y: 1, w: 2, h: 2, ax: 1, ay: 1 },
     'a#1': { p: 0, x: 5, y: 1, w: 2, h: 2, ax: 1, ay: 1 },
@@ -35,9 +35,9 @@ describe('scripts/assets/manifest — formatManifest', () => {
     expect(formatManifest(TINY)).toBe(
       [
         '{',
-        '  "formatVersion": 1,',
+        '  "formatVersion": 2,',
         '  "pages": [',
-        '    {"file":"main.png","w":64,"h":64}',
+        '    {"file":"main.png","w":64,"h":64,"group":"common"}',
         '  ],',
         '  "frames": {',
         '    "a#0": {"p":0,"x":1,"y":1,"w":2,"h":2,"ax":1,"ay":1},',
@@ -135,7 +135,7 @@ describe('the atlas manifest buildAtlas() produces — self-consistency', () => 
       'fonts',
     ]);
     expect(manifest.formatVersion).toBe(MANIFEST_FORMAT_VERSION);
-    expect(MANIFEST_FORMAT_VERSION).toBe(1);
+    expect(MANIFEST_FORMAT_VERSION).toBe(2); // R1-05: pages[i].group
   });
 
   it('lists each frame under exactly one sprite, in index order', () => {
@@ -230,5 +230,14 @@ describe('the atlas manifest buildAtlas() produces — self-consistency', () => 
         expect(side).toBeLessThanOrEqual(2048);
       }
     });
+  });
+
+  it('gives every page a group, page 0 is common, and a group never sits between two others', () => {
+    expect(manifest.pages[0].group).toBe('common');
+    const order = manifest.pages.map((page) => page.group);
+    for (const page of manifest.pages) expect(page.group).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    // Pages come group by group: a group's pages are consecutive.
+    const runs = order.filter((group, i) => i === 0 || group !== order[i - 1]);
+    expect(new Set(runs).size).toBe(runs.length);
   });
 });

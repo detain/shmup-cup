@@ -18,13 +18,21 @@
  * atomic writes (parallel builds may run it concurrently) and removal of stale pages.
  * Output is deterministic: two runs over the same inputs are byte-identical.
  *
+ * **Atlas groups (R1-05).** Each sprite belongs to a group — `common` (page 0,
+ * `main.png`), or a zone's own pages — from the committed `assets/source/atlas-groups.json`
+ * (derived from content by `test/integration/atlas-groups.test.ts`), else a `zone-<id>`
+ * directory in its name; the packer never mixes two groups on a page, so the runtime can
+ * unload other zones' pages. A page of at most 256 colours is written as lossless PNG-8.
+ *
  * **Public API.** {@link generateAssets} (disk, cached — `pnpm assets`, the Vite plugin),
  * {@link buildAtlas} (in memory), {@link collectSprites}, {@link computeInputHash},
- * {@link AssetSourceError}, {@link pageFileName}, the path constants ({@link PIPELINE_DIR},
- * {@link REPO_ROOT}, {@link DEFAULT_SOURCE_DIR}, {@link DEFAULT_OUT_DIR}, {@link ATLAS_DIR},
- * {@link ATLAS_NAME}, {@link CACHE_FILE}) and the layout constants ({@link ATLAS_PADDING},
- * {@link ATLAS_EXTRUDE}); typedef {@link GenerateResult}. Guide:
- * `docs/dev/asset-pipeline.md`.
+ * {@link loadAtlasGroups}, {@link resolveAtlasGroup}, {@link AssetSourceError},
+ * {@link pageFileName}, the path constants ({@link PIPELINE_DIR}, {@link REPO_ROOT},
+ * {@link DEFAULT_SOURCE_DIR}, {@link DEFAULT_OUT_DIR}, {@link ATLAS_DIR},
+ * {@link ATLAS_NAME}, {@link CACHE_FILE}, {@link ATLAS_GROUPS_FILE}), the groups constants
+ * ({@link ATLAS_GROUPS_FORMAT}, {@link COMMON_GROUP}) and the layout constants
+ * ({@link ATLAS_PADDING}, {@link ATLAS_EXTRUDE}); typedefs {@link GenerateResult},
+ * {@link AtlasGroups}. Guide: `docs/dev/asset-pipeline.md`.
  *
  * @module
  */
@@ -80,6 +88,29 @@ export const ATLAS_NAME = 'main';
 
 /** Cache file (in the output directory) recording the input hash and output hashes. */
 export const CACHE_FILE = '.asset-cache.json';
+
+/**
+ * The atlas groups file, at the root of the source folder (R1-05): which sprites pack
+ * onto a zone's own pages. Optional — without it every sprite outside a `zone-<id>`
+ * directory is `common`.
+ */
+export const ATLAS_GROUPS_FILE = 'atlas-groups.json';
+
+/** The `format` string the atlas groups file must carry. */
+export const ATLAS_GROUPS_FORMAT = 'shmup-atlas-groups@1';
+
+/**
+ * The group of every sprite no rule assigns elsewhere — the art every zone draws (ships,
+ * shots, bullets, items, fx, the font, UI, HUD). Its pages come first: page 0 is always
+ * `main.png` = `common`.
+ */
+export const COMMON_GROUP = 'common';
+
+/** A group name: lower-case kebab segments (`common`, `zone-a`). */
+const GROUP_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** A directory segment of a sprite name that puts the sprite in that zone's group. */
+const ZONE_SEGMENT = /^zone-[a-z0-9]+$/;
 
 /** Bump to invalidate every cache when the output format changes without a code change. */
 const CACHE_VERSION = 1;
@@ -139,20 +170,144 @@ function displayPath(path) {
 }
 
 /**
+ * The parsed atlas groups file.
+ *
+ * @typedef {object} AtlasGroups
+ * @property {boolean} present - Whether the file exists.
+ * @property {string} file - Its display path (for issues).
+ * @property {Map<string, string>} table - Base sprite name → group, in file order.
+ * @property {AssetIssue[]} issues - Problems with the file itself (format, names, repeats);
+ *   whether the names exist is checked by {@link collectSprites}.
+ */
+
+/**
+ * Reads `assets/source/atlas-groups.json` (format `shmup-atlas-groups@1`).
+ *
+ * @remarks
+ * Shape: `{ "format": "shmup-atlas-groups@1", "comment"?: string, "groups": { "<group>":
+ * ["<sprite>", …] } }`. Group names are lower-case kebab; a sprite is listed by its base
+ * name (no `@` — its `@flash`, `@p2` and palette siblings follow it) in at most one group.
+ * A missing file is not an issue: the table is empty. Never throws.
+ *
+ * @param {string} [sourceDir] - Source root (default `assets/source/`).
+ * @returns {AtlasGroups} The table and the file's issues.
+ *
+ * @example
+ * loadAtlasGroups().table.get('enemies/ember-wisp'); // → 'zone-d'
+ */
+export function loadAtlasGroups(sourceDir = DEFAULT_SOURCE_DIR) {
+  const path = join(sourceDir, ATLAS_GROUPS_FILE);
+  const file = displayPath(path);
+  /** @type {Map<string, string>} */
+  const table = new Map();
+  /** @type {AssetIssue[]} */
+  const issues = [];
+  if (!existsSync(path)) return { present: false, file, table, issues };
+  /** @type {unknown} */
+  let data;
+  try {
+    data = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (error) {
+    issues.push({ path: `${file}:`, message: `is not valid JSON (${String(error)})` });
+    return { present: true, file, table, issues };
+  }
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    issues.push({ path: `${file}:`, message: 'must be a JSON object' });
+    return { present: true, file, table, issues };
+  }
+  const record = /** @type {Record<string, unknown>} */ (data);
+  if (record.format !== ATLAS_GROUPS_FORMAT) {
+    issues.push({ path: `${file}:format`, message: `must be "${ATLAS_GROUPS_FORMAT}"` });
+  }
+  if (record.comment !== undefined && typeof record.comment !== 'string') {
+    issues.push({ path: `${file}:comment`, message: 'must be a string' });
+  }
+  for (const key of Object.keys(record)) {
+    if (key !== 'format' && key !== 'comment' && key !== 'groups') {
+      issues.push({ path: `${file}:${key}`, message: 'is not a known field' });
+    }
+  }
+  const groups = record.groups;
+  if (typeof groups !== 'object' || groups === null || Array.isArray(groups)) {
+    issues.push({ path: `${file}:groups`, message: 'must be an object of group → names' });
+    return { present: true, file, table, issues };
+  }
+  for (const [group, names] of Object.entries(groups)) {
+    if (!GROUP_NAME.test(group)) {
+      issues.push({ path: `${file}:groups.${group}`, message: 'is not a lower-case kebab name' });
+      continue;
+    }
+    if (!Array.isArray(names)) {
+      issues.push({ path: `${file}:groups.${group}`, message: 'must be an array of names' });
+      continue;
+    }
+    names.forEach((name, i) => {
+      const at = `${file}:groups.${group}[${i}]`;
+      if (typeof name !== 'string' || name === '') {
+        issues.push({ path: at, message: 'must be a sprite name' });
+      } else if (name.includes('@')) {
+        issues.push({
+          path: at,
+          message: `"${name}" is a sibling sprite — list its base, the siblings follow it`,
+        });
+      } else if (table.has(name)) {
+        issues.push({ path: at, message: `"${name}" is already in group "${table.get(name)}"` });
+      } else {
+        table.set(name, group);
+      }
+    });
+  }
+  return { present: true, file, table, issues };
+}
+
+/**
+ * The atlas group of a sprite (R1-05).
+ *
+ * @remarks
+ * In order: the groups file's entry for the base name (the part before `@`, so `@flash`,
+ * `@p2` and palette siblings follow their sprite); a `zone-<id>` directory segment in the
+ * name (`enemies/zone-d/bat` → `zone-d`, for future art); otherwise {@link COMMON_GROUP}.
+ * Fonts are not special here — {@link collectSprites} refuses a groups file that lists
+ * one, and a font sprite (`font/<name>`) has no zone directory.
+ *
+ * @param {string} name - Sprite name.
+ * @param {ReadonlyMap<string, string>} table - Base name → group (from
+ *   {@link loadAtlasGroups}).
+ * @returns {string} The group.
+ *
+ * @example
+ * resolveAtlasGroup('enemies/drifter@flash', new Map([['enemies/drifter', 'zone-a']]));
+ * // → 'zone-a'
+ */
+export function resolveAtlasGroup(name, table) {
+  const at = name.indexOf('@');
+  const base = at < 0 ? name : name.slice(0, at);
+  const listed = table.get(base);
+  if (listed !== undefined) return listed;
+  const dirs = base.split('/').slice(0, -1);
+  for (const dir of dirs) if (ZONE_SEGMENT.test(dir)) return dir;
+  return COMMON_GROUP;
+}
+
+/**
  * Collects every sprite and font from the sources and generators, applies PNG overrides,
- * adds hit-flash silhouettes and resolves default anchors.
+ * adds hit-flash silhouettes, resolves default anchors and assigns each sprite its atlas
+ * group.
  *
  * @remarks
  * Order of work: pixel maps and procedural sprites (a name defined twice is an issue) →
  * PNG overrides by name → font sprites (`font/<name>`) → `<name>@flash` siblings for
  * `hitFlash` sprites → `<name>@p2` palette swaps of the ships and the stock icon (M2-06,
- * `coop.mjs`) → default anchors (centre of frame 0). Never throws for bad sources:
+ * `coop.mjs`) → default anchors (centre of frame 0) → atlas groups ({@link
+ * resolveAtlasGroup} over `atlas-groups.json`, R1-05: a listed name the atlas lacks, a
+ * listed font and an empty `common` group are issues). Never throws for bad sources:
  * everything is reported in `issues`, and the caller decides ({@link buildAtlas} throws
  * {@link AssetSourceError}).
  *
  * @param {{ sourceDir?: string }} [options] - Source root (default `assets/source/`).
  * @returns {{ sprites: SpriteDef[], fonts: Record<string, FontMetrics>, issues: AssetIssue[] }}
- *   Sprites sorted by name (anchors resolved), font metrics by font name, and problems.
+ *   Sprites sorted by name (anchors and `group` resolved), font metrics by font name, and
+ *   problems.
  */
 export function collectSprites(options = {}) {
   const sourceDir = options.sourceDir ?? DEFAULT_SOURCE_DIR;
@@ -218,19 +373,45 @@ export function collectSprites(options = {}) {
     }
   }
 
+  // Atlas groups (R1-05): every name the file lists must be a sprite of this atlas, and
+  // never a font (the font is drawn in every zone).
+  const atlasGroups = loadAtlasGroups(sourceDir);
+  issues.push(...atlasGroups.issues);
+  const fontSprites = new Set(Object.values(fonts).map((metrics) => metrics.sprite));
+  for (const [name, group] of atlasGroups.table) {
+    if (fontSprites.has(name)) {
+      issues.push({
+        path: `${atlasGroups.file}:groups.${group}`,
+        message: `"${name}" is a font sprite — fonts always pack into "${COMMON_GROUP}"`,
+      });
+    } else if (!byName.has(name)) {
+      issues.push({
+        path: `${atlasGroups.file}:groups.${group}`,
+        message: `"${name}" is not a sprite of the atlas (renamed or removed?)`,
+      });
+    }
+  }
+
   const sprites = [...byName.values()]
-    .map((sprite) =>
-      sprite.anchor !== null
-        ? sprite
-        : {
-            ...sprite,
-            anchor: /** @type {[number, number]} */ ([
-              Math.floor(sprite.frames[0].width / 2),
-              Math.floor(sprite.frames[0].height / 2),
-            ]),
-          },
-    )
+    .map((sprite) => ({
+      ...sprite,
+      anchor:
+        sprite.anchor ??
+        /** @type {[number, number]} */ ([
+          Math.floor(sprite.frames[0].width / 2),
+          Math.floor(sprite.frames[0].height / 2),
+        ]),
+      group: fontSprites.has(sprite.name)
+        ? COMMON_GROUP
+        : resolveAtlasGroup(sprite.name, atlasGroups.table),
+    }))
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  if (sprites.length > 0 && !sprites.some((sprite) => sprite.group === COMMON_GROUP)) {
+    issues.push({
+      path: `${atlasGroups.file}:groups`,
+      message: `leaves the "${COMMON_GROUP}" group empty — page 0 (main.png) must hold it`,
+    });
+  }
   return { sprites, fonts, issues };
 }
 
@@ -266,6 +447,12 @@ export const pageFileName = (index) =>
 
 /**
  * Builds the atlas in memory.
+ *
+ * @remarks
+ * Every atlas group packs onto its own pages (R1-05): `common` first — page 0 is
+ * `main.png` = `common` — then the other groups by name, each page recorded with its
+ * `group` in the manifest. Sprite and frame names never depend on the grouping, and
+ * without a groups file (and no `zone-<id>` directories) the layout is the one-group one.
  *
  * @param {{ sourceDir?: string, maxPageSize?: number }} [options] - Source root and
  *   page-size limit (power of two, default 2048).
@@ -307,17 +494,20 @@ export function buildAtlas(options = {}) {
   }
   if (oversized.length > 0) throw new AssetSourceError(oversized);
 
+  // Each group packs onto its own pages, `common` first (page 0 = main.png) — R1-05.
   const items = sprites.flatMap((sprite) =>
     sprite.frames.map((frame, i) => ({
       name: frameName(sprite.name, i),
       w: frame.width,
       h: frame.height,
+      group: sprite.group ?? COMMON_GROUP,
     })),
   );
   const packing = packRects(items, {
     maxSize: maxPageSize,
     padding: ATLAS_PADDING,
     extrude: ATLAS_EXTRUDE,
+    groupOrder: [COMMON_GROUP],
   });
   const pageImages = packing.pages.map((page) => createImage(page.w, page.h));
 
@@ -372,7 +562,12 @@ export function buildAtlas(options = {}) {
   /** @type {AtlasManifest} */
   const manifest = {
     formatVersion: MANIFEST_FORMAT_VERSION,
-    pages: pages.map((page) => ({ file: page.file, w: page.image.width, h: page.image.height })),
+    pages: pages.map((page, index) => ({
+      file: page.file,
+      w: page.image.width,
+      h: page.image.height,
+      group: /** @type {string} */ (packing.pages[index].group),
+    })),
     frames,
     sprites: spriteTable,
     animations,
@@ -428,14 +623,21 @@ const CODE_HASH = (() => {
  *
  * @param {string} [sourceDir] - Source root (default `assets/source/`).
  * @returns {string} Hex SHA-256 of the loaded pipeline code (see {@link CODE_HASH}: the
- *   scripts as loaded by this process, the zlib and pngjs versions) and of the sprite and
- *   font sources as they are on disk now.
+ *   scripts as loaded by this process, the zlib and pngjs versions), of the sprite and
+ *   font sources and of the atlas groups file ({@link ATLAS_GROUPS_FILE}, R1-05) as they
+ *   are on disk now.
  */
 export function computeInputHash(sourceDir = DEFAULT_SOURCE_DIR) {
   const hash = createHash('sha256');
   hash.update(`shmup-assets cache ${CACHE_VERSION}\0code ${CODE_HASH}\0`);
   hashTree(hash, 'sprites', join(sourceDir, 'sprites'), true);
   hashTree(hash, 'fonts', join(sourceDir, 'fonts'), true);
+  const groupsFile = join(sourceDir, ATLAS_GROUPS_FILE);
+  if (existsSync(groupsFile)) {
+    const bytes = readFileSync(groupsFile);
+    hash.update(`groups/${ATLAS_GROUPS_FILE}\0${bytes.length}\0`);
+    hash.update(bytes);
+  }
   return hash.digest('hex');
 }
 
@@ -553,7 +755,10 @@ export function generateAssets(options = {}) {
   );
   const frameCount = Object.keys(manifest.frames).length;
   const spriteCount = Object.keys(manifest.sprites).length;
-  const pageList = manifest.pages.map((page) => `${page.file} ${page.w}×${page.h}`).join(', ');
+  const grouped = manifest.pages.some((page) => page.group !== COMMON_GROUP);
+  const pageList = manifest.pages
+    .map((page) => `${page.file} ${page.w}×${page.h}${grouped ? ` ${page.group}` : ''}`)
+    .join(', ');
   log(
     `assets generated → ${displayPath(atlasDir)}/: ${pageList}; ${spriteCount} sprites, ` +
       `${frameCount} frames, ${Object.keys(manifest.fonts).length} font(s)`,

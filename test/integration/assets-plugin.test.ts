@@ -53,7 +53,7 @@ describe('integration: shmupAssets() virtual module', () => {
     expect(exported.pageUrls).toEqual([`${ATLAS_URL_DIR}/main.png`]);
     for (const url of exported.pageUrls) expect(url.startsWith('/')).toBe(false);
     expect(readFileSync(join(outDir, 'atlas', 'main.json'), 'utf8')).toContain(
-      '"formatVersion": 1',
+      '"formatVersion": 2',
     );
   });
 });
@@ -118,7 +118,7 @@ describe('integration: shmupAssets() dev server', () => {
         0,
       );
       const json = await fetch(`${base}${ATLAS_URL_DIR}/main.json?t=1`);
-      expect(((await json.json()) as typeof manifest).formatVersion).toBe(1);
+      expect(((await json.json()) as typeof manifest).formatVersion).toBe(2);
       const traversal = await fetch(`${base}${ATLAS_URL_DIR}/..%2F.asset-cache.json`);
       expect(traversal.headers.get('content-type')).not.toBe('application/json');
     } finally {

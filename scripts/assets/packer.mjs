@@ -12,8 +12,16 @@
  * every decision uses integer comparisons with a fixed tie-break, so the same input list
  * always yields the same layout, independent of input order.
  *
+ * **Groups (R1-05).** An item may name a `group`; each group is packed on its own pages
+ * with the same algorithm, so no page mixes two groups (the atlas puts each zone's art on
+ * its own pages, which the zone residency can then unload). Pages come group by group:
+ * first the items without a group, then the groups of `groupOrder` in that order, then
+ * every other group by name. A group with no items makes no page. Without groups — or with
+ * every item in one group — the layout is exactly the ungrouped one; only the `group`
+ * field is added to the pages and placements of grouped items.
+ *
  * **Public API.** {@link packRects}, {@link MAX_PAGE_SIZE}; typedefs {@link PackItem},
- * {@link PackOptions}, {@link Placement}, {@link PackResult}.
+ * {@link PackOptions}, {@link Placement}, {@link PackPage}, {@link PackResult}.
  *
  * @module
  */
@@ -25,6 +33,8 @@
  * @property {string} name - Unique id.
  * @property {number} w - Width in pixels (integer ≥ 1).
  * @property {number} h - Height in pixels (integer ≥ 1).
+ * @property {string} [group] - Group whose pages it goes on (a non-empty string); items
+ *   without one share the ungrouped pages.
  */
 
 /**
@@ -35,6 +45,9 @@
  * @property {number} [minSize] - Smallest page side tried (power of two; default 64).
  * @property {number} [padding] - Transparent pixels between cells (default 1).
  * @property {number} [extrude] - Edge-extrusion border around each frame (default 1).
+ * @property {readonly string[]} [groupOrder] - Groups whose pages come first, in this
+ *   order (after the ungrouped pages); the other groups follow by name. Names without
+ *   items are skipped.
  */
 
 /**
@@ -47,13 +60,24 @@
  * @property {number} y - Top row of the frame on the page.
  * @property {number} w - Frame width.
  * @property {number} h - Frame height.
+ * @property {string} [group] - The item's group (only for an item that has one).
+ */
+
+/**
+ * One page of the packing.
+ *
+ * @typedef {object} PackPage
+ * @property {number} w - Width (power of two ≤ maxSize).
+ * @property {number} h - Height (power of two ≤ maxSize).
+ * @property {string} [group] - The group every item on it belongs to (only for a page of
+ *   grouped items).
  */
 
 /**
  * The packing: page sizes and one placement per item.
  *
  * @typedef {object} PackResult
- * @property {{ w: number, h: number }[]} pages - Page sizes (powers of two ≤ maxSize).
+ * @property {PackPage[]} pages - Pages, group by group.
  * @property {Placement[]} placements - One per input item, in input order.
  */
 
@@ -188,26 +212,39 @@ const isPowerOfTwo = (n) => Number.isInteger(n) && n >= 1 && (n & (n - 1)) === 0
 /**
  * Packs rectangles into as few, as small power-of-two pages as possible.
  *
- * @param {readonly PackItem[]} items - Rectangles with unique names.
- * @param {PackOptions} [options] - Page limits, padding, extrusion.
- * @returns {PackResult} Page sizes and placements (input order).
- * @throws {RangeError} When a name repeats, a size is not a positive integer, an option is
- *   invalid, or an item cannot fit on a `maxSize²` page even alone.
+ * @param {readonly PackItem[]} items - Rectangles with unique names (optionally grouped).
+ * @param {PackOptions} [options] - Page limits, padding, extrusion, group order.
+ * @returns {PackResult} Pages (group by group) and placements (input order).
+ * @throws {RangeError} When a name repeats, a size is not a positive integer, a group is
+ *   not a non-empty string, an option is invalid (`groupOrder` repeating a name included),
+ *   or an item cannot fit on a `maxSize²` page even alone.
  *
  * @example
  * packRects([{ name: 'a', w: 16, h: 16 }, { name: 'b', w: 8, h: 8 }]);
  * // → { pages: [{ w: 64, h: 64 }], placements: [{ name: 'a', p: 0, x: 1, y: 1, … }, …] }
+ * packRects([{ name: 'a', w: 8, h: 8, group: 'zone-a' }, { name: 'b', w: 8, h: 8,
+ *   group: 'common' }], { groupOrder: ['common'] });
+ * // → pages [{ w: 64, h: 64, group: 'common' }, { w: 64, h: 64, group: 'zone-a' }]
  */
 export function packRects(items, options = {}) {
   const maxSize = options.maxSize ?? MAX_PAGE_SIZE;
   const minSize = Math.min(options.minSize ?? 64, maxSize);
   const padding = options.padding ?? 1;
   const extrude = options.extrude ?? 1;
+  const groupOrder = options.groupOrder ?? [];
   if (!isPowerOfTwo(maxSize) || !isPowerOfTwo(minSize)) {
     throw new RangeError('maxSize and minSize must be powers of two');
   }
   if (!Number.isInteger(padding) || padding < 0 || !Number.isInteger(extrude) || extrude < 0) {
     throw new RangeError('padding and extrude must be integers ≥ 0');
+  }
+  /** @type {Map<string, number>} Rank of each `groupOrder` name. */
+  const rank = new Map();
+  for (const group of groupOrder) {
+    if (typeof group !== 'string' || group === '' || rank.has(group)) {
+      throw new RangeError(`groupOrder must list distinct non-empty names (${String(group)})`);
+    }
+    rank.set(group, rank.size);
   }
   const seen = new Set();
   const cells = items.map((item, index) => {
@@ -216,6 +253,11 @@ export function packRects(items, options = {}) {
     if (!Number.isInteger(item.w) || !Number.isInteger(item.h) || item.w < 1 || item.h < 1) {
       throw new RangeError(`item "${item.name}" has an invalid size ${item.w}×${item.h}`);
     }
+    if (item.group !== undefined && (typeof item.group !== 'string' || item.group === '')) {
+      throw new RangeError(
+        `item "${item.name}" has an invalid group ${JSON.stringify(item.group)}`,
+      );
+    }
     const cw = item.w + 2 * extrude + padding;
     const ch = item.h + 2 * extrude + padding;
     if (cw - padding > maxSize || ch - padding > maxSize) {
@@ -223,16 +265,38 @@ export function packRects(items, options = {}) {
         `item "${item.name}" (${item.w}×${item.h} + border) does not fit a ${maxSize}² page`,
       );
     }
-    return { index, name: item.name, cw, ch };
+    return { index, name: item.name, cw, ch, group: item.group };
   });
-  cells.sort(
-    (a, b) =>
-      Math.max(b.cw, b.ch) - Math.max(a.cw, a.ch) ||
-      b.cw * b.ch - a.cw * a.ch ||
-      b.ch - a.ch ||
-      b.cw - a.cw ||
-      (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
-  );
+
+  // One partition per group; `undefined` holds the ungrouped items.
+  /** @type {Map<string | undefined, typeof cells>} */
+  const partitions = new Map();
+  for (const cell of cells) {
+    const list = partitions.get(cell.group);
+    if (list === undefined) partitions.set(cell.group, [cell]);
+    else list.push(cell);
+  }
+  /**
+   * Tier of a partition in the page order: ungrouped, then `groupOrder`, then the rest.
+   *
+   * @param {string | undefined} group - Partition key.
+   * @returns {number} 0, 1 or 2.
+   */
+  const tier = (group) => (group === undefined ? 0 : rank.has(group) ? 1 : 2);
+  // Sorted as `{ group }` wrappers: `Array#sort` moves bare `undefined` entries to the end
+  // without ever calling the comparator.
+  const groups = [...partitions.keys()]
+    .map((group) => ({ group }))
+    .sort(({ group: a }, { group: b }) => {
+      const ta = tier(a);
+      const tb = tier(b);
+      if (ta !== tb) return ta - tb;
+      const na = a ?? '';
+      const nb = b ?? '';
+      if (ta === 1) return (rank.get(na) ?? 0) - (rank.get(nb) ?? 0);
+      return na < nb ? -1 : na > nb ? 1 : 0;
+    })
+    .map(({ group }) => group);
 
   /** @type {{ w: number, h: number }[]} */
   const sizes = [];
@@ -272,45 +336,63 @@ export function packRects(items, options = {}) {
     return { placed, rest };
   };
 
-  /** @type {{ w: number, h: number }[]} */
+  /** @type {PackPage[]} */
   const pages = [];
   /** @type {Placement[]} */
   const placements = new Array(items.length);
-  let remaining = cells;
-  while (remaining.length > 0) {
-    let page = null;
-    let area = 0;
-    let widest = 0;
-    let tallest = 0;
-    for (const cell of remaining) {
-      area += (cell.cw - padding) * (cell.ch - padding);
-      widest = Math.max(widest, cell.cw - padding);
-      tallest = Math.max(tallest, cell.ch - padding);
-    }
-    for (const size of sizes) {
-      // Cheap rejections before a full packing attempt.
-      if (size.w * size.h < area || size.w < widest || size.h < tallest) continue;
-      const attempt = packPage(remaining, size.w, size.h, true);
-      if (attempt.rest.length === 0) {
-        page = { size, ...attempt };
-        break;
+  for (const group of groups) {
+    const list = /** @type {typeof cells} */ (partitions.get(group));
+    list.sort(
+      (a, b) =>
+        Math.max(b.cw, b.ch) - Math.max(a.cw, a.ch) ||
+        b.cw * b.ch - a.cw * a.ch ||
+        b.ch - a.ch ||
+        b.cw - a.cw ||
+        (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
+    );
+    let remaining = list;
+    while (remaining.length > 0) {
+      let page = null;
+      let area = 0;
+      let widest = 0;
+      let tallest = 0;
+      for (const cell of remaining) {
+        area += (cell.cw - padding) * (cell.ch - padding);
+        widest = Math.max(widest, cell.cw - padding);
+        tallest = Math.max(tallest, cell.ch - padding);
       }
+      for (const size of sizes) {
+        // Cheap rejections before a full packing attempt.
+        if (size.w * size.h < area || size.w < widest || size.h < tallest) continue;
+        const attempt = packPage(remaining, size.w, size.h, true);
+        if (attempt.rest.length === 0) {
+          page = { size, ...attempt };
+          break;
+        }
+      }
+      if (page === null)
+        page = { size: { w: maxSize, h: maxSize }, ...packPage(remaining, maxSize, maxSize) };
+      const p = pages.length;
+      pages.push(
+        group === undefined
+          ? { w: page.size.w, h: page.size.h }
+          : { w: page.size.w, h: page.size.h, group },
+      );
+      for (const [index, rect] of page.placed) {
+        /** @type {Placement} */
+        const placement = {
+          name: items[index].name,
+          p,
+          x: rect.x + extrude,
+          y: rect.y + extrude,
+          w: items[index].w,
+          h: items[index].h,
+        };
+        if (group !== undefined) placement.group = group;
+        placements[index] = placement;
+      }
+      remaining = page.rest;
     }
-    if (page === null)
-      page = { size: { w: maxSize, h: maxSize }, ...packPage(remaining, maxSize, maxSize) };
-    const p = pages.length;
-    pages.push({ w: page.size.w, h: page.size.h });
-    for (const [index, rect] of page.placed) {
-      placements[index] = {
-        name: items[index].name,
-        p,
-        x: rect.x + extrude,
-        y: rect.y + extrude,
-        w: items[index].w,
-        h: items[index].h,
-      };
-    }
-    remaining = page.rest;
   }
   return { pages, placements };
 }
