@@ -92,4 +92,25 @@ continues).
   (`createDemoPlayback`) with every hash, and `pnpm golden:update` re-records them with the golden
   replays.
 
+## The v1 baseline (R2-02)
+
+`v1-baseline.ts` (the scenarios, the meter, the file format), `v1-baseline-suite.ts` and the three
+`v1-baseline*.test.ts` files record what every shipped stage does at **384×216** — not a hash, but
+the numbers plan_resolution.md **R2-02** compares the ×1.5 port against: the tick of each timeline
+event, camera key and checkpoint, every enemy's spawn, first on-screen tick and landing, the
+bosses' WARNING / intro / fight / death, the run's length. 37 scenarios (every zone on loops 1 and 2,
+the bonus stages, the dev ranges, the boss rush, the escape, the dimension), flown like the playtest
+(the 4-way bot under the remote model, god mode), are committed as
+[`test/fixtures/v1-baseline/<id>.baseline.json`](../fixtures/v1-baseline/README.md), which says how
+each field maps to the 640×360 game.
+
+- **Until R2-01** the tests re-run every scenario and require the committed file **byte for byte**
+  (the scenarios that are a golden's run also end on that golden's tick count and hash). So an
+  **intended** simulation change before R2-01 re-records the baseline in the same commit as
+  `pnpm golden:update`, with the reason:
+  `SHMUP_V1_BASELINE_UPDATE=1 pnpm exec vitest run --project integration test/golden/v1-baseline`.
+  `pnpm golden:update` does not do it.
+- **From R2-01 on** (`FRAME_W` 640) the files are the frozen v1 record: the re-runs are skipped
+  and re-recording is refused. R2-02's comparison test reads them.
+
 Guide (replay format, re-blessing, gotchas): [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-replays.md#golden-replays-testgolden).

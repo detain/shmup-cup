@@ -30,7 +30,7 @@ H's pistons are moving blocks of their `solid` tile.
   "kind": "tileset",
   "id": "terrain-a",                 // unique; stages refer to it in tilemap.tileset
   "sprite": "tiles/terrain-a",       // atlas sprite whose frames draw the tiles
-  "tileSize": 8,                     // pixels (8 in M1)
+  "tileSize": 8,                     // pixels: core's TILE_SIZE (8 until R2-01, 12 in v2)
   "tiles": [                         // tile id = position + 1 (id 0 is the empty cell)
     {
       "name": "floor",               // unique in the tileset
@@ -44,6 +44,11 @@ H's pistons are moving blocks of their `solid` tile.
 }
 ```
 
+- **Tile size.** The loader accepts `8` or `12` (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`, R1-04 — any
+  other value is an issue), and a stage's tilemap must use its tileset's size. Shipped tilesets
+  use `TILE_SIZE` — `test/integration/tile-size.test.ts` holds them to it — so the 12-px sets
+  arrive with v2's port (R2-02: masks resampled by `terrain.mjs` `resampleMask`, the art drawn at
+  12 px by `renderTerrainTiles`).
 - **Collision types.** `solid` rock blocks shots and crawlers and kills the ship; `hazard`
   tiles kill without being rock (spikes, lava) and win over `solid` when a box touches both;
   `empty` tiles are decoration (drawn, never collide).

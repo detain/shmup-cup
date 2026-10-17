@@ -290,8 +290,10 @@ behaviour takes over. Boss behaviours (`core/behaviors`): `boss.hover` (tracks t
 height, aimed spreads from the `gun` parts, opens / closes `whenOpen` parts — `trackSpeed`,
 `margin`, `fireTicks`, `bulletSpeed`, `ways`, `spread`, `openTicks`, `closedTicks`) and
 `boss.lanes` (lane lasers from the guns in turn and aimed spreads — `trackSpeed`, `margin`,
-`laserTicks`, `laserLength`, `laserWidth`, `telegraph`, `active`, `fireTicks`, `bulletSpeed`,
-`ways`, `spread`).
+`laserTicks`, `laserLength` (default `PLAYFIELD_W`, one screen width), `laserWidth`, `telegraph`,
+`active`, `fireTicks`, `bulletSpeed`, `ways`, `spread`). Without `x` / `y` a boss's home is
+`DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` — 88 px left of the playfield's right edge on its middle row
+(`PLAYFIELD_W − 88`, `PLAYFIELD_CY`: 296, 100 today).
 
 **The WARNING** shows the game's own text built from `displayName` and `code`
 (`WARNING!!` / `GIANT HOSTILE "TRIAL WARDEN"` / `CLOSING IN - CODE TW-00`) while the siren
@@ -320,7 +322,7 @@ dev stages `captain-range`, `raid-range`, `twin-range` and the boss rush `gauntl
         "code": "CP-03",
         "displayName": "ORBIT WARDEN",
         "role": "captain",               // a mid-boss: a "boss" event, rides the scroll, no stage clear
-        "x": 332, "y": 100,
+        "x": 332, "y": 100,              // = cx + rx of captain.circler's orbit: no jump at its start
         "parts": [
           { "name": "hub", "hp": 30, "radius": 8, "spin": 6, "core": true, "gun": true,
             "sprite": "bosses/core" },  // a circle hurtbox; spins 6 binary units (of 1024) a tick

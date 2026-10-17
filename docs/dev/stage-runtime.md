@@ -93,18 +93,21 @@ per stage; that the named stage is of type `bonus` is checked after the referenc
    are per stage and change when a name is added — never persist them.
 3. **Terrain expansion (third pass).** Once tileset ids are resolved, every stage with a
    tilemap gets `stage.terrain = { tileSize, cols, rows, tiles, tilesetId }`: a row-major
-   `Uint8Array` of tile ids (0 = empty), `cols = ceil((length + 384) / 8)` (the camera's right
-   edge reaches `length + PLAYFIELD_W`), `rows = rowsTall` (25 = the 200-px playfield). The same
+   `Uint8Array` of tile ids (0 = empty), `cols = ceil((length + PLAYFIELD_W) / tileSize)` (the
+   camera's right edge reaches `length + PLAYFIELD_W`; `stageMapWidth`), `rows = rowsTall`
+   (`PLAYFIELD_H / TILE_SIZE` rows fill the playfield: 25 today). The same
    pass resolves each `block` event's `tile` name (default `solid`) into `tileId` (M2-07).
 
 ### Tilesets (`content/tilesets/`, kind `tileset`)
 
 One tileset per file: `id`, `sprite` (the atlas sprite whose frames draw the tiles),
-`tileSize` (fixed at `TILE_SIZE` = 8 in M1) and up to 255 `tiles`. **Tile id = position in
+`tileSize` (`TILE_SIZE` = 8 — fixed in M1; `core/config`'s since R1-01; since R1-04 the loader
+accepts 8 or 12, `MIN_TILE_SIZE` / `MAX_TILE_SIZE`, and `test/integration/tile-size.test.ts` holds
+shipped content to `TILE_SIZE`) and up to 255 `tiles`. **Tile id = position in
 `tiles` + 1**; id 0 is the empty cell. Each tile has a unique `name`, a `type` (`solid`,
 `hazard`, or `empty` = drawn but never colliding), the `frame` of the sprite that draws it, an
 `anchor` (`floor` = heights grow up from the bottom edge, `ceiling` = down from the top edge)
-and a `mask` of 8 column heights (0 … 8). At load, `buildTilesetTables` turns them into
+and a `mask` of `tileSize` column heights (0 … `tileSize`; 8 today). At load, `buildTilesetTables` turns them into
 per-id typed arrays — `type` (`TerrainType` code), `anchor` (`TerrainAnchor` code), `mask`
 (`[id * tileSize + column]`), `frame` (`-1` for id 0) and `byName` — which the queries and the
 renderer read. Since M2-07 a colliding tile may also have `hp` (destructible, 1–255), `regen`

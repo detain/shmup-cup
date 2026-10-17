@@ -309,26 +309,28 @@ both state that outputs belong to the user (SD3.5 IV(c)(iii); LTX §5 "claims no
 ## 5. What every shipped AI-assisted asset records
 
 The ingest tool (R3-02) writes `<path>.art.json` next to each real-art PNG under
-`assets/source/sprites/`. The plan names its base fields — "model, prompt file and entry, seed,
-source file SHA-256, recipe hash, date, hand-cleaned: yes/no". R3-05 needs a few more, so that a
-record alone answers "may this ship?". The names below are the contract the origin report (section
-9) reads; if R3-02 names a field differently, this table follows R3-02.
+`assets/source/sprites/` (staged in `art-prompts/v2/ingested/` until R2-01). The plan names its base
+fields — "model, prompt file and entry, seed, source file SHA-256, recipe hash, date, hand-cleaned:
+yes/no". R3-05 needs a few more, so that a record alone answers "may this ship?". R3-02 built the
+record (`shmup-art-provenance@1`) on this table; the last column gives each field's name **as
+built** — the names the origin report (section 9) reads. The full schema:
+[real-assets.md](real-assets.md#the-provenance-record-nameartjson-shmup-art-provenance1).
 
-| Field | What | Why |
-|---|---|---|
-| `origin` | `ai-assisted` \| `hand` \| `procedural` | the origin report's three classes (hand-drawn overrides without AI carry a record too, or a `LICENSES.md` entry, as R3-02's test demands) |
-| `model` | the served model id, e.g. `black-forest-labs/FLUX.2-dev` | the licence row of section 2 |
-| `weights` | repo + revision of the weights, and any override (the FP8 transformer) | licences are per repo and per checkpoint (LTX-Video) |
-| `licence` | an id of section 2: `flux-nc-2.1`, `flux1-dev-nc-1.1.1`, `stability-community-2024-07-05`, `apache-2.0`, `ltx-2.x-community-2026-08-11`, `ltxv-open-weights-0.x` | the report cross-checks it against `model`; a new id needs a new row here first |
-| `prompt` | prompt file + entry id (e.g. `images/30-bosses/07-facet-monarch.json#fm07-…`), and the positive / negative text as sent | the name check (section 7) can read it; a prompt edited after generation is still known |
-| `seed`, `size`, `steps`, `guidance` | generation settings | reproducibility |
-| `source` | path and **SHA-256** of the generated file | ties the PNG to one exact output |
-| `reference` | for an edit or an image-to-video clip: the SHA-256 of the input image and its own record | an edit of a FLUX image inherits FLUX's question, whatever model edits it |
-| `generatedAt`, `ingestedAt` | ISO dates | licences change over time; the version in force on the date matters |
-| `reviewed` | date and who reviewed the output for unlawful or infringing content (look-alikes, logos, text) | FLUX §2(e)(i)(B); the trade-dress review |
-| `use` | `pixels` \| `reference` | section 2's two columns |
-| `cleanup` | `none` (ingest only: key, downscale, quantise, outline) \| `light` (hand-edit layer touches up edges and details) \| `heavy` (most of the sprite repainted) \| `redrawn` (hand-drawn; the AI image was only a reference) | what cleanup changes (section 4); R3-02's `hand-cleaned: yes/no` is `cleanup ≠ none` |
-| `recipe` | the recipe's hash | R3-02's determinism |
+| Field | What | Why | As built |
+|---|---|---|---|
+| `origin` | `ai-assisted` \| `hand` \| `procedural` | the origin report's three classes (hand-drawn overrides without AI carry a record too, or a `LICENSES.md` entry, as R3-02's test demands) | `origin`: `ai-assisted` \| `hand` only — `procedural` is derived (a sprite with no override PNG), never recorded. A source or an edit reference that names a model makes the sprite `ai-assisted`, so a hand redraw of an AI image is too |
+| `model` | the served model id, e.g. `black-forest-labs/FLUX.2-dev` | the licence row of section 2 | **per source** (a sprite can be cut from several images): `sources[].model` (the served id, `null` for a hand-made source) and `sources[].modelKey` (the `models.json` group: `flux1`, `flux2`, `sd35`, `qwenvl`, `qwenedit`, `wan22`, `ltx25`, `ltxvideo`) |
+| `weights` | repo + revision of the weights, and any override (the FP8 transformer) | licences are per repo and per checkpoint (LTX-Video) | `sources[].weights`, from `models.json` |
+| `licence` | an id of section 2: `flux-nc-2.1`, `flux1-dev-nc-1.1.1`, `stability-community-2024-07-05`, `apache-2.0`, `ltx-2.x-community-2026-08-11`, `ltxv-open-weights-0.x` | the report cross-checks it against `model`; a new id needs a new row here first | `sources[].licence`, from `models.json` (`LICENCE_IDS` in `art-prompts/ingest/lib/provenance.mjs`). The ship / hold **verdicts** are not in the record: they are policy, kept in `models.json` per licence id — change one there and here together |
+| `prompt` | prompt file + entry id (e.g. `images/30-bosses/07-facet-monarch.json#fm07-…`), and the positive / negative text as sent | the name check (section 7) can read it; a prompt edited after generation is still known | `sources[].prompt` `{ file, entry, text, negative }` |
+| `seed`, `size`, `steps`, `guidance` | generation settings | reproducibility | per source, as named |
+| `source` | path and **SHA-256** of the generated file | ties the PNG to one exact output | `sources[]` `path`, `sha256`, `format`, `width`, `height`; `generator` names the candidate sidecar it was read from |
+| `reference` | for an edit or an image-to-video clip: the SHA-256 of the input image and its own record | an edit of a FLUX image inherits FLUX's question, whatever model edits it | `sources[].reference[]`, one per input image: `path` (always a **committed** file — a git-ignored candidate is mapped to its copy under `art-prompts/v2/winners/`), `from` (the `editFrom` entry it stands for, or `null`), `sha256`, `sidecar`, `sidecarSha256`, and from that sidecar the `model`, `modelKey`, `weights` and `licence` that made it, plus its own nested `reference` list (an edit of an edit) |
+| `generatedAt`, `ingestedAt` | ISO dates | licences change over time; the version in force on the date matters | `sources[].generatedAt`; `ingestedAt` (`YYYY-MM-DD`, the plan's "date") at the top |
+| `reviewed` | date and who reviewed the output for unlawful or infringing content (look-alikes, logos, text) | FLUX §2(e)(i)(B); the trade-dress review | `reviewed` `{ on, by }`, or `null` until reviewed |
+| `use` | `pixels` \| `reference` | section 2's two columns | `use` |
+| `cleanup` | `none` (ingest only: key, downscale, quantise, outline) \| `light` (hand-edit layer touches up edges and details) \| `heavy` (most of the sprite repainted) \| `redrawn` (hand-drawn; the AI image was only a reference) | what cleanup changes (section 4); R3-02's `hand-cleaned: yes/no` is `cleanup ≠ none` | `cleanup`, and `handCleaned` = `cleanup ≠ none` |
+| `recipe` | the recipe's hash | R3-02's determinism | `recipe` `{ path, sha256 }`; also `edit` (the hand-edit layer's hash and painted / erased counts), `output` (the PNG's and sidecar's hashes, frames, colours, alpha), `tool`, `author`, `notes`, `sprite` |
 
 Video clips (trailer, attract, store) get the same record next to the edited clip, plus where the
 machine-generated disclaimer is shown (LTX).
@@ -430,8 +432,8 @@ is exact, so a pinned hit that disappears fails too, and its row is removed then
 ## 9. Part 2: the origin report
 
 R3-05's second half — "a script that lists every shipped sprite by origin (procedural /
-hand-drawn / AI-assisted + model)", run in CI, that "lists no sprite without provenance" — waits for
-R3-02's provenance schema. It needs from R3-02:
+hand-drawn / AI-assisted + model)", run in CI, that "lists no sprite without provenance" — waited for
+R3-02's provenance schema. It needed from R3-02 (each delivered — see below):
 
 - the **`.art.json` schema** with the fields of section 5 (at least `origin`, `model`, `licence`,
   `source` SHA-256, `use`, `cleanup`, `reviewed`), and a **validator** the report can import rather
@@ -448,3 +450,22 @@ R3-02's provenance schema. It needs from R3-02:
 
 The report then runs as a Vitest test (so CI needs no `ci.yml` change), prints the table by origin
 and model, and fails on a sprite without provenance or with a licence this page marks **hold**.
+
+**What R3-02 delivered (2026-10-17)** — the ingest tool, [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest):
+
+| Need | Where |
+|---|---|
+| The schema and a validator to import | `art-prompts/ingest/lib/provenance.mjs`, dependency-free: `validateRecord`, `checkProvenanceTree`, `loadModels`, and the closed lists `LICENCE_IDS`, `VERDICTS`, `ORIGINS`, `USES`, `CLEANUPS` (section 5's last column names the fields). `test/scripts/assets/provenance.test.ts` already imports it |
+| The override list, and "procedural" derived | `loadSpriteSources(dir).overrides` of `scripts/assets/sprite-source.mjs` lists the override PNGs; every other sprite name of `collectSprites()` is a pixel map or a generator |
+| The `LICENSES.md` format | a Markdown file in the PNG's folder or any folder above it (up to `sprites/`) naming the PNG by its relative path or its sprite name in backticks, with author and licence |
+| The staging folder | `art-prompts/v2/ingested/` is checked like `assets/source/sprites/` by the tool, `provenance.test.ts` and CI's `ingest` job |
+| Licence ids ↔ models | `art-prompts/ingest/models.json`: each model group's served id, weights, licence id and per-use verdict (`flux1`, `flux2` and `ltxvideo` are **hold** today) |
+
+For the report: walk each source's **nested** `reference` lists when flagging a `flux-*` licence —
+an edit made with another model from a FLUX image still carries it. Until the report exists the
+hold gate is the staging rule (nothing ingested reaches `assets/source/` before R2-01); the tool
+itself does not refuse a hold source. Open for this step: whether `use: "reference"` with
+`cleanup: "none"` — the AI image's pixels shipped while claiming a reference use — should be
+rejected (the tool accepts it today). Since `4873623` the art round's `gen-candidate.mjs` records
+each edit input's `editFromSha256`, so ingest can later match a winner copy byte for byte (today it
+matches it by its sidecar's `file` and `generatedAt`).

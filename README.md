@@ -166,6 +166,7 @@ Building for a device:
 pnpm --filter @shmup/tizen build      # Samsung .wgt + size-budget check
 pnpm --filter @shmup/webos build      # LG webOS .ipk
 pnpm --filter @shmup/electron package # desktop installers
+pnpm bench:tv                         # the TV render bench widget (v2 plan R0-02), beside the game
 ```
 
 Installing on a TV, step by step: **[install-on-tv.md](docs/client/install-on-tv.md)** ·
@@ -219,7 +220,8 @@ A pnpm workspace (`packages/*`, `apps/*`) driven by Turborepo. Full annotated tr
 | [`scripts/`](scripts/README.md) | The asset pipeline, the doc-image generators, the Tiled importer and the rest of the tooling |
 | [`test/`](test/README.md) | Integration tests, golden replays, the playtest bot, benchmarks and the Playwright suite |
 | [`docs/`](docs/README.md) | Player docs (`client/`) and developer docs (`dev/`) |
-| [`tools/input-probe`](tools/input-probe/README.md) | A standalone diagnostic app for measuring a real TV's remote and display |
+| [`tools/input-probe`](tools/input-probe/README.md) | A standalone diagnostic app for measuring a real TV's remote and display; its log server also collects the render profile and the TV render bench |
+| [`art-prompts/`](art-prompts/) | The AI art prompt library and the v2 art round (standalone); [`art-prompts/ingest/`](art-prompts/ingest/README.md) turns a generated image into a sprite source with its provenance (v2 plan R3-02) |
 
 ---
 

@@ -286,8 +286,8 @@ See [coop.md](coop.md).
    are non-zero (D4), so an 8-way pad never out-dodges the 4-way remote. No inertia: the ship
    stops the tick the input stops. `moving` records whether there was movement input (the
    D26 Option trail of M1-10 records only then).
-4. **Clamp** to `[camera.x + left, camera.x + 384 − right] × [camera.y + top, camera.y + 200 −
-   bottom]` — the ship can never reach the HUD bars.
+4. **Clamp** to `[camera.x + left, camera.x + PLAYFIELD_W − right] × [camera.y + top, camera.y +
+   PLAYFIELD_H − bottom]` (384 / 200 today) — the ship can never reach the HUD bars.
 5. **Bank** one step per tick towards `moveY × bankFrames`; `playerBankFrame(bank,
    bankFrames)` maps it to the sprite frame (0 level, `1…N` up, `N+1…2N` down — the
    `ships/kestrel` frame order).

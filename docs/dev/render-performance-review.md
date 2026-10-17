@@ -471,6 +471,14 @@ render-target bytes per resolution. Then "does 768×432 hold 60 fps?" is a bench
 the on-device check is just the overlay's TPF counter (a 4–25× fill increase shows up as 2-tick frames the moment the
 GPU misses vsync).
 
+> **Update (v2, 2026-10-17).** The owner chose project **(B)** at **640×360** with a ×1.5 world
+> ([plan_resolution.md](../../plan_resolution.md), which supersedes this section's 768×432 suggestion), and the
+> instrument exists: plan step **R0-02** built the **TV render bench** — a widget of its own (`pnpm bench:tv`) that
+> draws a density-scaled synthetic scene at 384×216, 640×360 and 960×540 on the M7 and reports render and synced
+> milliseconds, frame pacing, draw calls and render-target bytes relative to the same session's 384×216; its scenes
+> also run headlessly in `pnpm bench` (counts only, on a 1280×720 display). Its first run on the monitors is plan
+> R0-03 ([rendering-and-shell.md](rendering-and-shell.md#the-tv-render-bench-r0-02)).
+
 ### 7.6 Hard limits to check before committing to (B)
 
 - **Atlas size.** One 1024×1024 page today (`assets/generated/atlas/main.json`), capped at

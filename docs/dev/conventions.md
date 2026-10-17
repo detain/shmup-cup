@@ -71,6 +71,69 @@ tests — the "Enforced by" column says where, so a red check points you here.
 active (one ESLint instance, warmed up in `beforeAll` since M2-05 — its first lint timed out
 under the full `pnpm test` load).
 
+## Frame numbers: the literal scan and the fingerprint
+
+v2 changes the internal frame from 384×216 to 640×360 by changing a few constants
+([plan_resolution.md](../../plan_resolution.md) R1-01, R2-01). So since R1-01 every
+frame-dependent number in `@shmup/core` **derives** from the constants of `core/config`:
+`FRAME_W` / `FRAME_H` (384 / 216), `FRAME_CX` / `FRAME_CY` (the centre), `HUD_BAR_HEIGHT` (8),
+`PLAYFIELD_Y` / `PLAYFIELD_W` / `PLAYFIELD_H` / `PLAYFIELD_CY`, `HUD_BOTTOM_Y` (208), `TILE_SIZE`
+(8) and the font metrics `GLYPH_W` / `GLYPH_H` / `LINE_H` (6 / 8 / 10, pinned to the font file by
+`packages/core/test/config/frame-constants.test.ts`).
+
+| Rule | Enforced by |
+|---|---|
+| No literal frame number in `packages/core/src`: write `FRAME_W`, `PLAYFIELD_W + 16`, `FRAME_CX - 120`, `n * GLYPH_W` — never `384`, `400`, `72` | `packages/core/test/frame-literals.test.ts` |
+| **Frame ≠ world** (plan §2.6): only values anchored to the frame derive from it — an edge, the centre, "one playfield", a text width. World values (radii, margins, speeds, a boss's distance from the edge) stay literal; R2-02 scales them ×1.5 | review |
+| Panel widths and heights sized by their 6×8 text stay literal (allow-listed); their position derives from the centre or an edge | the scan's allow-list; [scenes-and-ui.md](scenes-and-ui.md) |
+| Core's presentation output does not move unless a step means it to | `test/integration/presentation-fingerprint.test.ts` |
+
+**The literal scan** (`frame-literals.test.ts`) parses every `packages/core/src/**/*.ts` file with
+the TypeScript compiler — comments and docblocks are never read, numbers inside strings and
+template literals are — and fails on any literal of a frame number: the v1 frame's `384`, `216`,
+`200` (`PLAYFIELD_H`), `208` (`HUD_BOTTOM_Y`) and its centre `192` / `108`, plus whatever `FRAME_W`,
+`FRAME_H`, `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now* (from R2-01: `640`, `360`, `336`, `348`).
+`100` and the new centre `320` / `180` are not banned — ticks, percentages and scores use them.
+
+A literal that is a frame number but does not mean the frame goes on the allow-list `ALLOWED` in
+that file, one entry per symbol:
+
+```ts
+{
+  file: 'scenes/index.ts',          // relative to packages/core/src/
+  symbol: 'ZONE_TALLY_PANEL.w',     // the declarations around it, outermost first, '.'-joined
+  value: 200,
+  count: 1,                         // how many literals of `value` the symbol holds (default 1)
+  reason: "a content-sized panel: sized by the zone tally's rows of 6×8 text",
+}
+```
+
+The failure message names the file, symbol path, value and line of each unlisted literal, so the
+entry can be written from it. Entries never match on line numbers; the test fails on an entry whose
+symbol now holds more literals than `count` (a frame number crept in beside an allowed one), fewer,
+or none — the list cannot rot. Add an entry only for a count, an angle, a character cap, a world
+distance, a text-sized panel or generated data, with the reason; anything that does mean the frame
+derives from the constants. R2-01's flip will need four new entries (the 360-tick ending timers
+and the angle `640` — plan R1-01's As built). R1-02 extends the rule to the other packages, apps and
+scripts.
+
+**The presentation fingerprint** (`test/integration/presentation-fingerprint.test.ts`): the golden
+replays hash only the simulation, so a change that moves a menu, the HUD, the zone card or the
+WARNING band passes them. This test plays fixed, scripted walks through every scene of the scene
+flow on the shipped content — **119 segments over 12 walks**, and a 13th test that checks the walks
+showed every `SceneId` — and folds every frame core hands a renderer into four FNV-1a hashes per
+segment: `ui`, `hud`, `world`, `screen` (a text command contributes its string, never its slot).
+It was pinned on the v1.0.0 code (`333721b`; the co-op walks on `4dfca16`) and covers core's output
+only, not render-pixi or the shell.
+
+- **Through R1 it stays green without an edit.** A red segment names the walk, the segment and the
+  kind of output that moved: a moved pixel (or a moved sim value — then the goldens fail too).
+- **Re-pinning** is for a step that changes what is drawn on purpose — R2-01's flip, an art or
+  layout step, a change of the shipped content (strings, stages, the campaign): run
+  `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
+  test/integration/presentation-fingerprint.test.ts`, paste the printed tables over `PINNED`, and
+  say in the commit message why the output changed. Never re-pin to quiet an unexplained change.
+
 ## Chromium 68 / 69 rules (the TV engine floor)
 
 Shipped runtime code (`packages/*/src`, `apps/web/src`, `apps/tizen/src`,
@@ -450,6 +513,8 @@ Only original names, art and music — never Konami or Taito names or assets
 | Content refers to other content, sprites, scripts and cues by string id declared with `s.ref(kind)`; systems read the resolved `<field>Id`, never the string | review; [content-data.md](content-data.md) |
 | A bare array or record of references is not allowed — wrap each id in an object | `s.array` / `s.record` throw a `TypeError` at construction |
 | Placeholder art is source data, never a hand-drawn binary: a `*.sprite.json` pixel map under `assets/source/sprites/` or a seeded generator in `scripts/assets/procedural/` (plan §1.5). PNGs there are real-art overrides only | review; [asset-pipeline.md](asset-pipeline.md) |
+| A real-art PNG override (v2) comes from the ingest tool with its `<name>.art.json` provenance record, or is hand-drawn with a record of `"origin": "hand"` or a `LICENSES.md` entry; `ingest.mjs --check` re-creates every committed output byte for byte | `test/scripts/assets/provenance.test.ts`; CI's `ingest` job — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
+| Every shipped tileset and stage tilemap uses `TILE_SIZE` (8 until R2-01, 12 after R2-02's port); the loader accepts 8 or 12 (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`) so test fixtures can use either | `test/integration/tile-size.test.ts`; `core/data` `checkTileset` |
 | A sprite's name is its path below `assets/source/sprites/` (lower-case kebab segments, `/`-separated) and the file's `name` field repeats it | `scripts/assets/sprite-source.mjs` (source issue) |
 | Every sprite name the shipped content uses exists in the atlas | `pnpm content:check` (`findMissingSprites`) |
 | Every bullet, laser beam and bending laser sprite has a `<sprite>@<palette>` variant for each colour-blind palette (`BULLET_PALETTES` other than `standard`), frame for frame — a real-art override of one needs its variants too (M2-02) | `pnpm content:check` |

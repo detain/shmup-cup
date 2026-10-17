@@ -46,7 +46,7 @@ the plugin; types in `types/build-info.d.ts`, included by the apps' `tsconfig.js
 
 | Define | Value |
 |---|---|
-| `__SHMUP_DEV__` | `true` for the dev server (`pnpm dev`) and for `vite build --mode development` / `--mode test` (`DEV_BUILD_MODES`, `isDevBuild(env)`); `false` for `vite build` (mode `production`) |
+| `__SHMUP_DEV__` | `true` for the dev server (`pnpm dev`) and for `vite build --mode development` / `--mode test` / — since R0-02 — `--mode bench` (the TV render bench widget, `build:bench`) (`DEV_BUILD_MODES`, `isDevBuild(env)`); `false` for `vite build` (mode `production`) |
 | `__SHMUP_BUILD__` | `buildId()`: the `SHMUP_BUILD_ID` environment variable when set, else the short git SHA of `HEAD` (7 characters, `+` appended when tracked files have uncommitted changes — untracked files do not count), else `'unknown'` |
 | `__SHMUP_REPORT_URL__` (M3-02f) | The `VITE_REPORT_URL` environment variable in a **dev / test** build, `''` in every release build and in a dev build that was not given one. It is the base URL of the input probe's log server, and the whole guided render capture is off while it is `''`. The variable's name is the probe's, so one `npm run log-server` and one setting serve both senders |
 
@@ -662,6 +662,15 @@ a co-op run player 2's score, lives, death ticks and continues).
   through `createDemoPlayback` and `playReplay` with every hash, and `pnpm golden:update` re-records
   them with the goldens — so a simulation change re-blesses both in one commit
   ([front-end-and-attract.md](front-end-and-attract.md#demos-are-content-contentdemos-kind-replay)).
+- **The v1 baseline (v2, for plan R2-02)** lives in the same folder but is not a replay:
+  `v1-baseline*.test.ts` re-runs every shipped stage at 384×216 against the numbers committed in
+  `test/fixtures/v1-baseline/`, byte for byte, until R2-01 flips the frame. `pnpm golden:update`
+  does **not** re-record it: an intended simulation change before R2-01 also runs
+  `SHMUP_V1_BASELINE_UPDATE=1 pnpm exec vitest run --project integration test/golden/v1-baseline`
+  in the same commit ([test/golden/README.md](../../test/golden/README.md#the-v1-baseline-r2-02)).
+- **The presentation fingerprint (v2, R1-01)** is the goldens' counterpart for what core *draws*:
+  `test/integration/presentation-fingerprint.test.ts`, re-pinned only on purpose with
+  `SHMUP_FINGERPRINT_PRINT=1` ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
 
 ## The stress benchmark (`pnpm bench`)
 

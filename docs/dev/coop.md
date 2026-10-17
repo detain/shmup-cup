@@ -192,14 +192,18 @@ agree for both slots over every combination.
 
 - **Top bar.** A `Join` slot shows a blinking `PRESS START` (`HUD_COLORS.prompt`, half period
   `HUD_PROMPT_BLINK_TICKS` 32) where its score would be, instead of `------`.
-- **Bottom bar.** While **both** ships are active it splits into two `HUD_LAYOUT.halfW` (192 px)
-  halves, player 1 left, player 2 right. Each half: the stock icon (`hud/life`, player 2
-  `hud/life@p2`) and the count as a number, then the seven meter slots as 20-px boxes
-  (`coopSlotW`) with two-letter labels (`METER_SHORT_LABELS`, in `METER_LABEL_FRAMES` order —
+- **Bottom bar.** While **both** ships are active it splits into two `HUD_LAYOUT.halfW` halves
+  (`FRAME_W / 2` since R1-01 — 192 px today), player 1 left, player 2 right. Each half (offsets
+  from its left edge): the stock icon (`hud/life`, player 2 `hud/life@p2`) at x 2 and the count as
+  a number, then from x 22 the seven meter slots as 20-px boxes (`coopSlotW` = `2 · GLYPH_W + 8`)
+  with two-letter labels (`METER_SHORT_LABELS`, in `METER_LABEL_FRAMES` order —
   `SP MS DB LS OP ? !`, and the Types B–D names `SB 2W TP TL VT FW RP CY TW`) and the shield pips
-  from x 164 — or in Direct mode `SH` / `SB` / `AR` / `SP` with 3×4 pips 4 px apart. An out
-  player's half shows `PRESS START` (blinking, `Continue`) or `GAME OVER` (`Out`). With one ship
-  active the one-player bar is drawn exactly as before.
+  from x 164 (after the seven slots and 2 px) — or in Direct mode `SH` / `SB` / `AR` / `SP` (x 22
+  / 68 / 114 / 148, each run starting after the one before it) with 3×4 pips 4 px apart, 13 px
+  (`2 · GLYPH_W + 1`) after their label. An out player's half shows `PRESS START` (blinking,
+  `Continue`) or `GAME OVER` (`Out`). With one ship active the one-player bar is drawn exactly as
+  before. The layout is derived from the frame and the font metrics, unchanged at 384×216
+  ([scenes-and-ui.md](scenes-and-ui.md#the-hud)).
 - **Budgets.** `HUD_STRING_COUNT` 9 → **22** (`pressStart` 9, `gameOver` 10, `shortShot` …
   `shortSpeed` 11–14, `meterShort` 15–21), `HUD_COMMAND_COUNT` 64 → **96** (the co-op Direct-mode
   HUD with every pip). The co-op strings are written **only when drawn**, so a one-player HUD list

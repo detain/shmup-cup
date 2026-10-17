@@ -304,8 +304,8 @@ allocation per wake). Defaults in brackets; the zone content overrides many of t
 
 A laser emitter. Every [`laserTicks` 150] ticks (rank-scaled; the first after [`firstTicks` 40])
 while it may fire it projects a telegraphed straight laser from its centre, heading [`heading` 512 =
-left], [`laserLength` 384] long and [`laserWidth` 6] wide: [`telegraph` 50] warning ticks, the grow,
-[`active` 40] beam ticks, the fade. The beam is **attached** to the emitter — on a floor or ceiling
+left], [`laserLength` `PLAYFIELD_W` — one screen width, 384 today] long and [`laserWidth` 6]
+wide: [`telegraph` 50] warning ticks, the grow, [`active` 40] beam ticks, the fade. The beam is **attached** to the emitter — on a floor or ceiling
 emitter it scrolls with the terrain — and vanishes with it. A ground emitter stands still (`MoverKind.None`),
 an air one keeps its spec's `mover`. One wake per beam; `laserTicks` and `firstTicks` below 1 are one
 tick, `heading` is masked to `[0, 1024)`.
@@ -331,7 +331,7 @@ IRON SOVEREIGN's script: tracking [`trackSpeed` 0.3, `margin` 48]; every part at
 (the wheel's hub) turns at [`spin` 0 = still] units a tick (rounded), reversing every
 [`reverseTicks` 0 = never]; with [`laserTicks` 0 = never] ≥ 1 the standing guns fire **attached**
 lane lasers to the left **in turn** ([`firstLaser` 60], then every `laserTicks`, rank-scaled;
-[`laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50]), skipping a destroyed gun; with
+[`laserLength` `PLAYFIELD_W` (384), `laserWidth` 8, `telegraph` 45, `active` 50]), skipping a destroyed gun; with
 [`ways` 0 = none] ≥ 1 aimed `ways`-ways of red ovals from every standing core every [`fireTicks` 110]
 [`spread` 40, `bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 rings of round purple bullets every
 [`ringTicks` 160] at [`ringSpeed` 1], each turned half a gap; with [`launchTicks` 0 = never] ≥ 1 up
@@ -429,8 +429,8 @@ M2-14 fills it in.
 | Field | Meaning | Limits |
 |---|---|---|
 | `endings[].scene` | The sprite scene of the ending screen: `ENDING_SCENES` — `none` (the card alone, the default), `citadel`, `abyss` | an enum |
-| `endings[].text` | The epilogue, line by line (default none) | ≤ `MAX_ENDING_TEXT_LINES` 8 lines of ≤ `MAX_ENDING_LINE_LENGTH` 40 characters |
-| `credits` | The credits scroll after every ending (`CampaignCreditsSection`: a `title` and its `lines`; default none — no scroll) | ≤ `MAX_CREDITS_SECTIONS` 24 sections of ≤ `MAX_CREDITS_LINES` 16 lines, every line and title ≤ `MAX_CREDITS_LINE_LENGTH` 60 characters |
+| `endings[].text` | The epilogue, line by line (default none) | ≤ `MAX_ENDING_TEXT_LINES` 8 lines of ≤ `MAX_ENDING_LINE_LENGTH` 40 characters (since R1-01 ⌊(`FRAME_W` − 144) / `GLYPH_W`⌋ — the glyph cells that fit the text panel) |
+| `credits` | The credits scroll after every ending (`CampaignCreditsSection`: a `title` and its `lines`; default none — no scroll) | ≤ `MAX_CREDITS_SECTIONS` 24 sections of ≤ `MAX_CREDITS_LINES` 16 lines, every line and title ≤ `MAX_CREDITS_LINE_LENGTH` 60 characters (since R1-01 ⌊(`FRAME_W` − 24) / `GLYPH_W`⌋ — centred on the frame, 12 px clear a side) |
 
 `completeCampaign` fills the defaults (`scene` `'none'`, `text` `[]`, `credits` `[]`, a section's
 `lines` `[]`); `creditsLineCount(credits)` counts the scroll's rows (per section its title, its lines
@@ -476,8 +476,10 @@ the zone was cleared) and `RunState.endingFlags`. It has two phases:
      horizon, above the surface in the deep.
 
    The epilogue's lines appear one every `ENDING_LINE_TICKS` (90) in a panel under the scene
-   (centred on the screen when the scene is `none`). OK (after `ENDING_LOCK_TICKS`, 60) shows every
-   line at once; OK again — or `ENDING_STORY_HOLD_TICKS` (240) after the last line — moves on.
+   (`ENDING_TEXT_PANEL`, `FRAME_W − 80` wide at y 124 — its top follows the scene, which is laid
+   out from the top-left, until R4-05 redraws it; centred on `FRAME_CY` when the scene is `none`).
+   OK (after `ENDING_LOCK_TICKS`, 60) shows every line at once; OK again — or
+   `ENDING_STORY_HOLD_TICKS` (240) after the last line — moves on.
 2. **Result** — the M2-10 card: `ENDING`, the ending's name, the route's labels, the score(s), a line
    per run flag, `THANK YOU FOR PLAYING`, then after the lock `OK: CREDITS` (or `OK: TITLE` for a
    campaign without credits). OK or `ENDING_TIMEOUT_TICKS` (1,200 — now counted from the card) opens
@@ -490,11 +492,12 @@ and names are the content's strings, the route line is built on `enter`.
 
 ### The credits (`CreditsScene`, id `credits`)
 
-The campaign's `credits` scroll up from just below the screen (row y 216): a section's title in the
-title colour, its lines in the text colour, a blank row after each section, `CREDITS_ROW_HEIGHT` (11)
-px a row, **1 px every `CREDITS_SCROLL_TICKS` (2) ticks** (30 px a second). When the last row has
-come up to the middle of the screen (y 100 — `scrollEnd`) the scroll stops for `CREDITS_HOLD_TICKS`
-(240), then the title. OK or Back after `CREDITS_LOCK_TICKS` (60) skip to the title. The rows are
+The campaign's `credits` scroll up from just below the screen (row y 216 — `FRAME_H` since R1-01): a
+section's title in the title colour, its lines in the text colour, a blank row after each section,
+`CREDITS_ROW_HEIGHT` (11 — `LINE_H + 1`) px a row, **1 px every `CREDITS_SCROLL_TICKS` (2)
+ticks** (30 px a second). When the last row has come up to the middle of the screen (y 100 —
+`scrollEnd`; its glyphs end on the centre row, `FRAME_CY − GLYPH_H`) the scroll stops for
+`CREDITS_HOLD_TICKS` (240), then the title. OK or Back after `CREDITS_LOCK_TICKS` (60) skip to the title. The rows are
 flattened once, when the flow is built; only the rows on screen are drawn, each through one of
 `CREDITS_STRING_SLOTS` (24) string slots taken by row number — a long list costs no more than a short
 one. The shipped credits (12 sections, 68 rows, ≈ 33 s with the hold): the game, **the zones**, **the

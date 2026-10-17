@@ -288,6 +288,15 @@ prefix (`ip-` vs `rp-`) keeps the two apart in one log directory, and `formatSum
 summary; nothing else in the server knows about either payload. Recipe:
 [rendering-and-shell.md § Measuring on the TV](rendering-and-shell.md#measuring-on-the-tv).
 
+Since v2's plan step **R0-02** there is a **third sender**: the TV render bench widget (`pnpm bench:tv`, built with
+the same `VITE_REPORT_URL`) POSTs `{kind:'render-bench', session:'rb-…', seq, sentAt, env, results, done}` after each
+scenario and once more at the end of the run (`@shmup/shell` `sendRenderBench`; the bench waits for the answer before
+it reloads for the next scenario). The server's `render-bench` formatter prints one line per scenario, and
+`results/analyze-bench.mjs <session>.jsonl [<other>.jsonl]` groups the latest record per scenario by internal size,
+prints each relative to the same session's 384×216 rows, applies the verdict rules of `plan_resolution.md` §13 and,
+given two sessions, compares WebGL 1 with WebGL 2 (`test/logServerBench.test.ts`, `test/analyzeBench.test.ts`, fixture
+`test/fixtures/bench-session.jsonl`). Recipe: [build-test-deploy.md § The TV render bench](build-test-deploy.md#the-tv-render-bench-r0-02).
+
 Payload (`ReportPayload` in `src/report.ts`):
 
 ```jsonc

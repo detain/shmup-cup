@@ -7,9 +7,10 @@ hundreds of generated and hand-drawn images still look like **one game**. Plan s
 - the prompt library's style kernel,
   [`art-prompts/images/00-style-kernel.md`](../../art-prompts/images/00-style-kernel.md) (K3 and the
   v2 targets table);
-- the ingest tool of R3-02 and the variant rules of R3-03;
-- [real-assets.md](real-assets.md) (handing art to the pipeline — v1 wording until R3-02 rewrites
-  it), [asset-pipeline.md](asset-pipeline.md) (the atlas) and
+- the ingest tool of R3-02 (`art-prompts/ingest/`, which implements §8) and the variant rules of
+  R3-03;
+- [real-assets.md](real-assets.md) (handing art to the pipeline, the ingest tool's recipe and
+  provenance record — rewritten for v2 by R3-02), [asset-pipeline.md](asset-pipeline.md) (the atlas) and
   [presentation-polish.md](presentation-polish.md) (palette cycling and raster effects).
 
 **Which document wins.** The v2 numbers of `plan_resolution.md` §2.7 win over this bible (frame,

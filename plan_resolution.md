@@ -1,6 +1,7 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
-> **Status:** drafted 2026-10-16; 2026-10-17 — **2 of 37 steps done** (R0-01, R3-01; owner parts pending), 5 in progress. The `v1.x` maintenance branch exists (created from
+> **Status:** drafted 2026-10-16; 2026-10-17 — **6 of 37 steps done** (R0-01, R0-02, R1-01, R1-04, R3-01, R3-02 — owner
+> parts pending for R0-01, R0-02, R3-01 and R3-02), 4 in progress. The `v1.x` maintenance branch exists (created from
 > the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything below happens on `master`, which from
 > now on is the **v2** line.
 >
@@ -52,6 +53,29 @@
 | **R-D8** | **`v1.x` branch stays at 384×216**; `master` is v2 | v1.x gets fixes only. v2 ships as an update of the same app ids, so saves carry over. See §3. |
 | **R-D9** | **TV benchmarks at 384×216, 640×360 and 960×540 inform but never block** | R0-02 builds a benchmark that runs on the M7. Whatever it measures, R1 onward proceeds; the numbers set budgets and pick mitigations. See §13. |
 | **R-D10** | 60 Hz fixed tick, determinism, the Chromium 68 floor, zero allocation per tick/frame, remote-first input: **unchanged** | All v1 non-negotiables (CLAUDE.md, `conventions.md`) still hold. |
+
+### Decisions made while the plan runs
+
+Smaller decisions taken during execution, so the steps that rely on them can cite them. **O1–O10** are the
+wave-2 scout's recommendations for R1-02 … R1-04, put to the owner as the defaults and adopted on 2026-10-17
+without objection; **W1-D1 … W1-D3** are the orchestrator's wave-1 decisions (named D1–D3 in its notes — not v1's
+design decisions D1 …).
+
+| ID | Decision | Applies to |
+|---|---|---|
+| **O1** | Audio fields get their own units — `hz`, `seconds`, `semitones`, `samples` — all never rescaled | R1-03, R2-02 |
+| **O2** | More units: `seed`, `version`, `index` (never rescaled); `texels` (Mode-7 `height` / `fogDepth`) and `tile-px` (mask entries) follow the art (×1.5 / resampled). Camera **`yTo`** was first to be re-derived from the frame ("one playfield", §2.6); **revised the same day after R1-03's review: `yTo` is `rel-px`, ×k with no pad** — with the 3 pad rows the deepest camera position ports exactly (`12·(rows + 3) − 336 = 1.5·(8·rows − 200)`), the floor stays on the bottom edge and it agrees with the raid camera offsets; zone D's 50-row map becomes 53 rows (not 56) and its `yTo` 200 → 300 (gimmick-range's 72 → 108). This replaces §2.6's "zone-d `yTo 200` = one playfield" and R2-02's hand fix of zone D's `yTo` | R1-03, R2-02 |
+| **O3** | `screen-x` / `screen-y` values snap to the nearest of start, centre or end of the frame and keep their distance ×k — which reproduces §2.6 (400 → `W + 24`, boss 296 → `W − 132`, boss y 100 → 168, Mode-7 bottom 200 → 336); the tool lists every value it moves | R1-03, R2-02 |
+| **O4** | Integer fields that turn fractional at ×1.5 (`spacing`, `wrap`, `yOver`, raster `bands`) are rounded and each one listed; the schema is never relaxed | R1-03, R2-02 |
+| **O5** | Behaviour tunables' units live in a separate `BEHAVIOR_PARAM_UNITS` table (`behaviors/units.ts`), not in 45 `defineBehavior` signatures | R1-03 |
+| **O6** | R1-03's acceptance also requires `rescale --factor 1.5 --top-pad 36 --dry-run` to report zero unclassified values | R1-03 |
+| **O7** | R1-04's 12-px tile and 9×12 font checks run in Node; the browser check moves to R2-01 (the font) and R2-03 (12-px terrain) | R1-04, R2-01, R2-03 |
+| **O8** | Frame mirrors outside the workspace graph (Electron's window state, `scripts/frame.mjs`) are pinned by tests; no new dependency, no lockfile change | R1-02 |
+| **O9** | e2e and doc screenshots capture at `floor(1280 / FRAME_W)` × the frame — 1152×648 now, 1280×720 in v2 (pending the owner's optional wish for 1080p) | R1-02, R2-03, R4-05 |
+| **O10** | The tile-size schema range is the set {8, 12} (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`) | R1-04 |
+| **W1-D1** | The owner approved one `v1.x` commit (versions → `1.0.1-dev` …) by its own agent, then `git merge -s ours` of `v1.x` into `master`; a second owner-approved `v1.x` docs commit went the same way (§3.3, R0-01's As built) | R0-01 |
+| **W1-D2** | R0-01's builder may edit the version lines of `CHANGELOG.md`, `README.md` and `docs/client/README.md` its tests need and add "Release lines" to `build-test-deploy.md` — nothing else in those files | R0-01 |
+| **W1-D3** | R3-02 builds and tests the ingest tool on fixtures only; the real ingest of the round-2 winners is deferred (after the FLUX decision) | R3-02 |
 
 ---
 
@@ -397,8 +421,62 @@ follow R2.
   - the log server stores and summarises a `render-bench` session;
   - the analyzer prints a relative table from a recorded fixture session;
   - the on-screen results table is unit-tested against a fake result.
-- **Manual (owner):** none in this step (the run is R0-03).
+- **Manual (owner):** none in this step itself — the run is **R0-03**. Its recipe, from the Windows desktop (also
+  in `apps/tizen/README.md` and [build-test-deploy.md](docs/dev/build-test-deploy.md#the-tv-render-bench-r0-02)):
+  1. `npm run log-server` in `tools/input-probe/`;
+  2. `$env:VITE_REPORT_URL="http://<desktop-ip>:8787"; pnpm bench:tv` (both bench widgets + their bundle checks);
+  3. `$env:TIZEN_PROFILE="…"; pnpm bench:tv:package` → `apps/tizen/dist-bench/ShmupCupBench.wgt`, then
+     `$env:TV_IP="…"; pnpm bench:tv:install` and `pnpm --filter @shmup/tizen bench:run`;
+  4. on each monitor press **Enter** (~10 minutes), photograph the table, then set
+     `localStorage['shmup-cup:gl'] = '2'` (Web Inspector) and run it again on WebGL 2;
+  5. the logs land in `tools/input-probe/logs/rb-*.jsonl`: commit them to `results/<date>-m7-bench/` and run
+     `node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl`.
+
+  The webOS stub is build-only: `pnpm --filter @shmup/webos bench:package` / `bench:install` are written, never run.
 - **Refs:** `docs/dev/render-performance-review.md` §7 and F10; plan M3-02c, M3-02f; `docs/dev/input-probe.md`.
+- **As built** (`ee7ef61`, `8d58a22`, `406cfd2`, `fe58bfd`, `436c0c6`; review fixes `1811cf7`, `332e581`; review
+  round 3 clean, CI run 39047425890 green):
+  - **The widget** is a second build of `apps/tizen`: its own entry (`bench/index.html` → `apps/tizen/src/bench/`),
+    app id `ShmpCupBnc.RenderBench` (the game's `config.xml` with the ids rewritten — `config-xml.mjs`
+    `benchConfigXml`), output `dist-bench/`, built by `vite.bench.config.ts` in the new dev-build mode `bench`
+    (`DEV_BUILD_MODES` = `development`, `test`, `bench`). It lives under `apps/tizen/src`, so the Chromium 68 scan
+    covers it. The webOS stub builds the same page with its own appinfo id (`dev.shmupcup.renderbench`); the code
+    tells the host apart at runtime (Back 10009 / 461, browser keys). The game's `dist/` of both TV builds is byte
+    for byte what it was before R0-02.
+  - **The bundle check** takes a folder (`check-bundle.mjs dist-bench`) and has a **rule 9**: a widget with the
+    bench's app id must be the bench (its `app.js` holds the bench marker), and the game must not hold it.
+    `tizen-env.mjs` reads `TIZEN_DIST_DIR` / `TIZEN_APP_ID` (webOS: `WEBOS_DIST_DIR`, `WEBOS_RELEASE_DIR`,
+    `WEBOS_APP_ID`), which `tizen-bench.mjs` / `webos-bench.mjs` set for the bench.
+  - **Turborepo:** a `build:bench` task (`dist-bench/**`, env `VITE_REPORT_URL`, `SHMUP_BUILD_ID`), and its own
+    **`@shmup/webos#build:bench`** entry whose inputs add the `apps/tizen` files the stub bundles (`bench/**`,
+    `src/**`, `scripts/**`, `vite.config.ts`, `tsconfig.json`, `package.json`) — review round 1 found the generic
+    task's cache key missed them, so a bench edit could restore a stale webOS stub (`1811cf7`). **A change to the
+    generic `build:bench` must be repeated in that entry.**
+  - **Page count:** today's frames ×2.25 fill only 2.4 Mpx and fit one 2048² page, so the bench applies the scope's
+    own model, `ceil(s² · page area / 2048²)` → 1 / 1 / 2 pages (frames split in source order, each group packed by
+    the pipeline's packer — `scripts/bench-atlas.mjs`). Density 1 is the shipped page byte for byte; 960×540's
+    second page comes from the model, not from real overflow.
+  - **The scene:** the parallax and terrain bindings are created by the bench at the scenario's width (the
+    renderer's own covered only 384×216 then; R1-02 derives them). Beyond the scope: the busy frame also carries the
+    ship, 4 Options and 32 shots, and a sixth variant, `worst`, turns everything on at once — 18 scenarios. The
+    Mode-7 variant passes the floor tile's own atlas page to `createMode7Shader` (the page-0 bug R1-02 fixes).
+    `apps/tizen/src/bench/matrix.ts` `BENCH_SIZES` keeps literal 384×216 on purpose (the v1 baseline stays after
+    R2-01): R1-02's repo-wide scan must allow-list it.
+  - **The TV phases:** the scope's 20 s of measurement is 14 s free-running plus 6 s with `gl.finish()` after every
+    render. WebGL 2 only with `localStorage['shmup-cup:gl'] = '2'` (in a browser also `?gl=2`).
+  - **Results:** the on-screen table in the bitmap font (`results.ts`, unit-tested against fake records), one
+    `render-bench` POST per scenario through `@shmup/shell`'s new `sendRenderBench` (sessions `rb-…`), and the
+    stored state. The log server gained a `render-bench` formatter; `tools/input-probe/results/analyze-bench.mjs`
+    prints each scenario relative to the same session's 384×216 rows, applies §13's rules and compares a WebGL 1
+    with a WebGL 2 session (fixture `tools/input-probe/test/fixtures/bench-session.jsonl`).
+  - **Headless:** `pnpm bench` builds the widget as `bench:tv` does and opens all 18 scenarios on a **1280×720**
+    display (`render.perf.ts` `DISPLAY_WIDTH/HEIGHT`, was 960×540), gating **counts only** (`tvBenchViolations`:
+    the load, draw calls 11–16, pooled render targets, pages 1 / 1 / 2, the heap); headless phases need at least
+    20 frames (`minFrames` — SwiftShader stalls under load). `test/integration/tv-render-bench.test.ts` (part of
+    `pnpm test`) covers the gate, the driver's wiring and records → log server → analyzer.
+  - **CI fix:** four `apps/tizen` bench tests read the git-ignored atlas, so master's three test shards were red from
+    `ee7ef61` on (found by R1-01's step review); they now build it in memory with the pipeline (`332e581`).
+  - The bench's `app.js` is ≈ 235 KB gzipped (it inlines three manifests).
 
 ### R0-03 — Run the benchmark on the M7s and record the results (owner; non-blocking)
 
@@ -593,6 +671,73 @@ moved.
   that sets `FRAME_W/H` to 640×360 compiles and boots, and its title, menus and HUD lay out sensibly (content not
   yet ported).
 - **Refs:** Appendix A.1.
+- **Manual (owner):** none.
+- **As built** (16 commits in six lanes, T0–T5, 2026-10-17; step review round 1 clean — its one finding was R0-02's red CI,
+  fixed by `332e581`):
+  - **The constants** (`48465fb`, `packages/core/src/config/index.ts`, exported from `@shmup/core`): `FRAME_W` 384,
+    `FRAME_H` 216, `FRAME_CX` / `FRAME_CY` (the centre, beyond the scope's list — the scenes' old `CX = 192`),
+    `HUD_BAR_HEIGHT` 8, `PLAYFIELD_Y`, `PLAYFIELD_W`, `PLAYFIELD_H` 200, `PLAYFIELD_CY` 100, `HUD_BOTTOM_Y` 208,
+    `TILE_SIZE` 8 (moved from `core/data`, same barrel name) and the font metrics `GLYPH_W` 6, `GLYPH_H` 8, `LINE_H`
+    10 — plain module constants, every one a whole number. `frame-constants.test.ts` pins their values and
+    relations, the font metrics against `pixel6x8.font.json`, and `DEFAULT_GAME_CONFIG.internalWidth/Height`
+    reading `FRAME_W` / `FRAME_H`.
+  - **The presentation fingerprint first** (`319b7dc`, beyond the scope): the goldens hash only the simulation, so
+    `test/integration/presentation-fingerprint.test.ts` hashes what core hands a renderer (UI, HUD, World view,
+    screen effects) along scripted walks through every scene — **119 segments over 12 walks**, pinned on the v1.0.0
+    code (`333721b`) before any change. Review round 1 of that lane found the co-op end screens, the co-op shield
+    pips and the Direct co-op HUD never drawn; two co-op walks pinned on pre-change `4dfca16` were added
+    (`f529135`). It stayed green, unedited, through every R1-01 commit. Re-pinning:
+    [conventions.md](docs/dev/conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint).
+  - **Scenes** (`ee262f6`, `7a7935d`, `849b860`): menus and panels anchored to `FRAME_CX` / `FRAME_CY` and the
+    edges; centred dialogs take their y from `FRAME_CY` too (beyond the scope); panel widths and heights stay
+    literal — they are sized by their 6×8 text, so R2-01 / R4-03 scale them for the 9×12 font; `SCENE_EXIT_X =
+    FRAME_W + 36`. The story crawl and the ending epilogue panel stay **top-anchored** on purpose (their vignettes are
+    top-left art that R4-05 redraws). The co-op paths were checked by hand against v1 (46 checks).
+  - **UI** (`8861c5d`, `1b3dd47`, `0e26d30`): `HUD_LAYOUT` and the UI kit's sizes from the frame and the font
+    (`SLIDER_BAR_W = 8 · GLYPH_W + 2`, `NAME_CELL_PITCH`, `BOSS_HP_BAR_WIDTH` = the hi-score's width, player 2's x
+    leaving room for an 11-glyph `PRESS START`), the campaign's line caps from `FRAME_W / GLYPH_W`; the co-op HUD
+    checked against v1 in 25 variants; `ui-hud-layout.test.ts` writes the layout's relations in the constants.
+  - **Systems** (`6d13a91`, `01ff63f`, `4dfca16`): `laserLength` defaults → `PLAYFIELD_W`, `BOSS_REST_X =
+    PLAYFIELD_W + 40`, the spawn and cull edges, the point items' score targets (`POINT_ITEM_TARGETS` — its x margin
+    40 may follow `HUD_LAYOUT` in R4-03); `behaviors-frame-defaults.test.ts`, `bosses-warning-width.test.ts`.
+  - **Data bounds** (`6a6000e`): the schema bounds from the playfield; `DEFAULT_BOSS_X = PLAYFIELD_W − 88`,
+    `DEFAULT_BOSS_Y = PLAYFIELD_CY`, `DEFAULT_BLOCK_SCREEN_X = PLAYFIELD_W + 16`; `frame-bounds.test.ts`.
+  - **The scan** (`e21bdc6`, `dca4613`): `packages/core/test/frame-literals.test.ts` parses `packages/core/src` with
+    the TypeScript compiler (comments never read; numbers inside strings and templates checked) and fails on the
+    v1 frame's `384`, `216`, `200`, `208` **and its centre `192` / `108`**, plus whatever `FRAME_W`, `FRAME_H`,
+    `PLAYFIELD_H` and `HUD_BOTTOM_Y` are now (so `640`, `360`, `336`, `348` once R2-01 flips them) — beyond the
+    scope's four. `100` and the new centre `320` / `180` are left out (ticks, percentages, scores). **18 allow-list
+    entries**, keyed by file, symbol path and value with a count and a reason: the constants' own definitions,
+    counts (`UI_COMMANDS`, `SHOT_BATCH_CAPACITY`), a character cap, angles (135° = 384 binary units), the generated
+    `ATAN_TABLE`, `bossSuction.pullRadius` 200 (a world radius), text-sized panels — `WEAPON_PANEL.h` /
+    `ORDER_PANEL.h` 192 marked "R2-01 decides" —, a text column and `INVASION_BLASTS` (R4-05 art).
+  - **Acceptance:** goldens and demos unchanged; the v1 baseline green (the review also ran it on pre-R1-01 core:
+    equal, so R1-01 moved nothing in the simulation); `pnpm test` green after `332e581`; the scan passes.
+  - **The 640×360 experiment** (local, never pushed — `FRAME_W/H` 640×360, `HUD_BAR_HEIGHT` and `TILE_SIZE` 12): core,
+    render-pixi and shell type-check; the shipped content does not load as-is (the tile-size locks — expected before
+    R2-02), but with tile sizes patched in memory all 13 fingerprint walks run and nothing throws; no UI or HUD
+    command leaves the frame that does not already at 384×216; the hi-score table, Options pages, ending card, EXTRA
+    menu and co-op game over centre on (320, 180); the HUD bars are 640×12 at y 0 and 348, the co-op halves split at
+    320. A browser boot meant nothing before R1-02 (render-pixi still defaulted to 384). What it showed for later:
+    - **R2-01:** the scan will ask for four entries at the flip — the 360-tick timers `EndingScene.drawCitadel.sink`
+      ×2 and `StoryScene.drawDawn.rise`, and the angle `640` in `DIRECTION_HEADINGS`; `packages/core/test/index.test.ts`
+      pins `internalWidth` 384; `bossWidow.maxX` 320 equals the new centre by chance.
+    - **R4-03:** HUD text is 8 px tall in 12-px bars; the one-player meter slots and the Direct HUD stay packed into
+      x 58–338 (the right half of the bottom bar empty); the weapon select's left panel stays 184 px wide (29 % of
+      the frame); the meter-slot sprite becomes 60 px at ×1.5 against a 40-px slot; es "TIEMPO" overlaps the
+      caravan clock and "¿SALIR DE SHMUP CUP?" (180 px at a 9-px font) outgrows the 176-px confirm panel.
+    - **R4-05:** the story crawl (`STORY_WINDOW_TOP` 132 / `BOTTOM` 206, `STORY_PANEL.y` 128) and the epilogue panel
+      (`ENDING_TEXT_PANEL.y` 124) float mid-screen with ~150 px empty below; the vignettes sit top-left; the ending
+      card stretches to 560 px.
+    - **Already so at 384×216:** the ship select leaves the title's EXTRA / EXIT visible below its panel; the caravan
+      clock reads `TIME179` with no gap.
+  - **For R2-02 — code view points no rescale tool sees** (behaviour tunables' defaults; decide frame-anchored or
+    world per §2.6, [enemies-and-behaviors.md](docs/dev/enemies-and-behaviors.md)): `orbiter.loop` waypoint
+    (256, 100) — test-range only; `cube.pincer` `meetX` 176; `captain.ram` `ramX` 40 and `captain.crab`'s box
+    250–340 × 40–160 (both in the boss rush); `boss.widow`'s box 250–320 × 56–144 (zone C uses the defaults);
+    `rear.swoop` `turnX` 280; `boss.walker` `frontX` 96 / `backX` 280; `boss.steed` stays consistent only if its
+    `rx` 8 becomes 12; and `captain.circler`'s **content** home (x 332 = `cx + rx`) needs a hand fix after the port,
+    because `cx` follows the frame and `rx` is world (530 ≠ 498 by ×1.5 ≠ 562 right-edge-anchored).
 
 ### R1-02 — Frame constants in presentation, hosts, scripts and tests
 
@@ -680,6 +825,35 @@ moved.
 - **Acceptance:** a test stage at tile size 12 and a test font at 9×12 load, render (Node) and collide
   correctly; goldens unchanged at 8 / 6×8. The browser check is deferred (owner decision O7, 2026-10-17): the
   9×12 font in R2-01's e2e, 12-px terrain in R2-03's e2e.
+- **Manual (owner):** none.
+- **As built** (`48c8822`, `11f3df6`; review round 1's one finding was this section's text, fixed by `2285fed`;
+  round 2 clean):
+  - **Tile size (R1-04a):** both schema locks accept `MIN_TILE_SIZE` 8 … `MAX_TILE_SIZE` 12 (exported from
+    `@shmup/core`), and `checkTileset` then allows only the set {8, 12} ("must be 8 or 12" — owner decision O10); a
+    stage's tilemap must still equal its tileset's size, a check that can now fire. New
+    `test/integration/tile-size.test.ts`: every shipped tileset and stage (examples included) uses `TILE_SIZE`, and
+    `MAX_UI_TEXT_LENGTH · GLYPH_W ≤ FRAME_W`; `packages/core/test/data/tile-size-range.test.ts` covers the range,
+    the set, and a 12-px tileset with its stage, masks and moving blocks.
+  - **Terrain at any size (R1-04b):** `scripts/assets/procedural/terrain.mjs` exports `renderTerrainTiles(size,
+    name)` (any even size ≥ 4), `lineMask` / `lineMaskEnds` and `resampleMask(mask, from, to)` — straight edges
+    between half-tile heights move exactly (every shipped mask is one, so a resampled 8-px mask equals the opaque
+    pixels of the 12-px tile), anything else nearest-neighbour; `RangeError` on a bad size or mask. `generate()`
+    still draws at `TILE_SIZE`, its 8-px output pinned by a hash taken on the old code. Collision, the stage runtime
+    and render-pixi's terrain layer are proven at 12 in Node (`collision-tile-size`, `stage-tile12`,
+    `layers-stage-tile12`); `stage-terrain.test.ts` also checks 12-px art against its masks and a 12-px heightfield.
+  - **`terrain.mjs` keeps its own `TILE_SIZE` = 8**, pinned to core's by `test/scripts/assets/terrain-size.test.ts`,
+    instead of importing it: the pipeline's input hash and turbo's `//#assets` inputs cover only `scripts/assets/**`,
+    so an import could leave a stale cached atlas after the flip. **R2-01 flips that copy too** (its scope says so);
+    the pin fails until it does.
+  - **Font:** no source change was needed — `font.mjs` and render-pixi's text module already read the cell, the
+    advance and the line height from the font file. `font-cell-size.test.ts` builds a 9×12 font in the test (a ×1.5
+    nearest-neighbour upscale of `pixel6x8` with exactly the `UI_GLYPHS` code points), packs it from a temporary copy
+    of the sources and lays text out at advance 9 and a 15-px line; render-pixi's `text-cell-size.test.ts` lays
+    out, measures and aligns text with a 9×12 fixture font.
+  - **Between R2-01 and R2-02 `tile-size.test.ts` is red** (`TILE_SIZE` is 12, the shipped tilesets still 8) —
+    expected; R2-02's port turns it green, never a relaxed test.
+  - Kept on purpose: the `+ 200` probe and `findFloor(…, 100, 100)` in `stage-terrain.test.ts` (changing them would
+    change what that test checks). Stale tile comments were fixed (`ui/strings.ts`' "widest line is 64" among them).
 
 ### R1-05 — Atlas paging and memory ready for detailed art
 
@@ -761,6 +935,12 @@ moved.
     - `four-way-bot.ts:56-68`: `BOT_X` 64 → 96, `LANE_HEIGHT` 16 → 24, `TERRAIN_AHEAD` 56 → 84;
     - `remote-strict.ts` counts ticks and is unaffected.
   - **The Tiled importer** at 12-px tiles and a 640 view.
+  - **What it is compared with — the v1 baseline** (`2bcabe2`): `test/golden/v1-baseline*.ts` recorded every
+    shipped stage at 384×216 into `test/fixtures/v1-baseline/` (37 scenarios: event, camera and checkpoint ticks,
+    every enemy's spawn, first on-screen tick and landing, the bosses' timings); until R2-01 they re-run byte for
+    byte, after it they are the frozen v1 record (re-runs skipped, re-recording refused). Until then an intended
+    simulation change re-records them too (`SHMUP_V1_BASELINE_UPDATE=1 …`, [test/golden/README.md](test/golden/README.md)),
+    next to `pnpm golden:update`. The behaviour defaults no tool sees are listed in R1-01's As built.
 - **Acceptance:**
   - `pnpm content:check` is green, including the 4-way rules at their new values;
   - the playtest bot clears every zone, bonus stage and the boss rush in god mode within its budgets;
@@ -964,6 +1144,62 @@ are fixed by k = 1.5. Detail comes from:
 - **Acceptance:** fixtures (a JPEG and a PNG sheet) ingest into the expected PNGs; a recipe re-run is
   byte-identical; the pipeline picks up the override and the atlas test passes; provenance is validated by a test
   (every override PNG has a `.art.json` or a `LICENSES.md` entry).
+- **Manual (owner):**
+  - **ingest the round-2 winners** once they are committed under `art-prompts/v2/winners/`, after the FLUX licence
+    decision (R3-05, `art-provenance.md` §8 decision 1 — every FLUX model is `hold` in `models.json` today);
+  - the R3-01 ingest proof, one sample sheet per category;
+  - hand cleanup in each sprite's `<name>.edit.png`, and the content review recorded in its recipe's
+    `provenance.reviewed`.
+- **As built** (`7791ab2`, `bb3c965`, `911ed98`, `65b6a10`; review fix `2365a64`; review round 2 clean; CI's
+  `ingest` job green). Built and tested **on synthetic fixtures only**; the real ingest of the winners is deferred
+  (orchestrator decision W1-D3, §1):
+  - **The loader** (`scripts/assets/sprite-source.mjs`) skips `*.recipe.json`, `*.art.json` and `*.edit.png`
+    (`INGEST_SUFFIXES`), and a PNG sidecar's slice pivot now **wins** over a code-defined anchor (the fallback). Inert
+    today — there is no override PNG, and the atlas bytes are unchanged.
+  - **`art-prompts/ingest/`** — `ingest.mjs [--check] [--out] [--root] [--palettes] [--models] [--date] [--report]
+    [--strict] [-q] [recipe|dir…]`; its own `package.json`, npm lockfile and `node:test` suite (178 tests); **two**
+    pure-JS dependencies, `pngjs@7.0.0` and `jpeg-js@0.4.4` (no single package decodes both; no background-removal
+    model); `pnpm-lock.yaml` unchanged. It implements bible §8: per-region key sampled from the border plus a
+    4-connected flood fill, `holes: "auto"` or seeds, opening and islands, edge despill, the black key for
+    translucent / additive art; an exact area downscale (never up), pixel snap, binary alpha at half coverage; a
+    median-cut, named or explicit palette within the category's colour cap — a fixed palette larger than the cap is
+    reduced deterministically (review round 1); every non-cycle colour ≥ 3/255 from every `content/stages` cycle
+    ramp, cycle art exact; Bayer dither only where §3.7 allows; the outline; the hand-edit layer merged last
+    (`#ff00ff` erases; `cleanup: "none"` with an edit layer that changes pixels is an error); the report (colours,
+    the backdrop lighting budget, ramp near-misses, mixels).
+  - **Determinism:** PNGs without ancillary chunks, compressed by the tool's own pure-JS DEFLATE (no dependence on
+    Node's zlib), written indexed when they fit 256 colours; re-runs are byte-identical and `--check` verifies it
+    (CI). Text files are hashed with CRLF read as LF, so a Windows checkout gives the same records (instead of a
+    `.gitattributes` rule).
+  - **The record** (`<name>.art.json`, `shmup-art-provenance@1`) follows `art-provenance.md` §5: `origin`
+    `ai-assisted | hand`; `ingestedAt` is the scope's "date"; `handCleaned` = `cleanup ≠ none`; model, weights and
+    licence **per source** (a sprite can be cut from several images); the ship / hold verdicts stay out of the
+    records, as policy in `art-prompts/ingest/models.json`, joined by licence id. Review round 1 made the record the
+    same on every checkout and every claim checked: an edit's input images are recorded from **committed** copies
+    only (`candidates/<slot>/<id>.png` → `winners/<id>/winner.png`, or the recipe's `provenance.reference`), followed
+    recursively; a missing image, sidecar or model is an error, never `null`; "unknown model" is an error, never
+    `hand` (`"none"` says hand-made); paths that leave the repository are rejected, in recipes and in
+    `validateRecord`.
+  - **Output** is written next to its recipe, whose `name` must match that location, so the move from the staging
+    folder `art-prompts/v2/ingested/` to `assets/source/sprites/` at R2-01 is a folder move. The tool reads the
+    staging folder only when it exists; nothing was created under `art-prompts/v2/`. Named palettes live in
+    `art-prompts/ingest/palettes/` (none yet — R5).
+  - **Tests:** `test/scripts/assets/provenance.test.ts` (part of `pnpm test`) builds an atlas from an ingested
+    sprite (its sidecar anchor beats the code anchor) and fails on an override PNG without a valid record or a
+    `LICENSES.md` entry, a record without a PNG, a PNG changed after ingest, or a recipe never ingested. CI's new
+    `ingest` job runs the tool's `npm test` and `ingest.mjs --check`.
+  - **Docs:** `docs/dev/real-assets.md` rewritten for v2 (it no longer claims a sidecar-less strip is sliced or that
+    the colour-blind variants derive from the art).
+  - **Follow-ups:** `gen-candidate.mjs` records each edit reference's `editFromSha256` since `4873623`, so ingest can
+    later check a winner copy byte for byte (today: by its sidecar's `file` and `generatedAt`). For **R3-03**: `@p2`
+    cannot be an override PNG (`@` is not valid in a sprite name) — it needs a recipe field read by `coop.mjs`; tile
+    "mask from art" / "art clipped to mask" is not in ingest (it guarantees binary alpha and closed tile edges); a
+    cycle-art pixel 2/255 off its ramp is pushed out and stops cycling, which real lava art may need a stronger rule
+    for. For **R3-05**: import `art-prompts/ingest/lib/provenance.mjs` (`validateRecord`, `checkProvenanceTree`,
+    `loadModels`, `LICENCE_IDS`, `VERDICTS`, `ORIGINS`, `USES`, `CLEANUPS`), walk the nested references when flagging
+    `flux-*`, take the override list from `loadSpriteSources(dir).overrides`; the hold gate is the origin report's
+    (until it exists, the staging rule keeps FLUX records out of `assets/source/`); `use: "reference"` with
+    `cleanup: "none"` is accepted — R3-05 may forbid it.
 
 ### R3-03 — Variants, palettes and tiles from real art
 
@@ -1440,20 +1676,20 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | One board issue per step on the GitHub project | **done** (2026-10-16) |
 | — | R3-01's prompt-library update done early | **done** (2026-10-16) |
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
-| R0-02 | The TV render benchmark (`bench:tv`) | in progress |
+| R0-02 | The TV render benchmark (`bench:tv`) | done (owner parts pending) — 2026-10-17 |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 running (FLUX.2 followups, two regenerations); see `art-prompts/v2/STATUS.md` |
-| R1-01 | Frame constants in core | in progress |
+| R1-01 | Frame constants in core | done — 2026-10-17 |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | in progress |
 | R1-03 | Units in the content schemas, and the rescale tool | in progress |
-| R1-04 | Tile size and font metrics are data | in progress |
+| R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | not started |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | not started |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
 | R3-01 | Art bible v2 and the prompt library update | done (owner parts pending) — 2026-10-17 |
-| R3-02 | The ingest tool, with provenance | in progress |
+| R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
 | R3-05 | AI art provenance and licences | in progress (part 1 done; the origin report waits for R3-02) |

@@ -297,7 +297,7 @@ orange 1UP).
   "tilemap": {                     // or null for an open-space stage
     "tileSize": 8,
     "tileset": "terrain-a",        // content/tilesets/
-    "rowsTall": 25,                // 25 rows = the 200-px playfield
+    "rowsTall": 25,                // 25 rows = the 200-px playfield (PLAYFIELD_H / tileSize)
     "generator": {                 // procedural terrain, expanded at load
       "type": "heightfield",
       "segments": [
@@ -325,7 +325,7 @@ orange 1UP).
   "mode7": {                       // optional (M3-02): the pseudo-3D floor under the horizon
     "sprite": "bg/dimension-floor", // the tile the shader repeats (frame 0, wraps on both axes)
     "horizon": 100,                // playfield row of the horizon (rows above stay sky)
-    "bottom": 200,                 // last row the plane covers (> horizon, ≤ 200)
+    "bottom": 200,                 // last row the plane covers (> horizon, ≤ PLAYFIELD_H: 200)
     "height": 34,                  // camera height above the plane in texels
     "scroll": 0.09,                // texels forward per pixel of camera x (default 0.08)
     "sway": 0.05,                  // texels sideways per pixel of camera y (default 0)
@@ -363,7 +363,7 @@ linearly over `ramp` ticks (at once without `ramp`); `yTo` pans the camera verti
 over `yTicks` ticks, at once without them — `yTicks` needs `yTo`); `lock: true` stops the camera
 exactly at `x` until the boss releases it, then it scrolls on at `speed`. A `warning` event
 brakes the camera to such a lock by itself (over one second), wherever it is. The camera never
-scrolls past `length`; the terrain map is `length + 384` pixels wide. A key applies one tick
+scrolls past `length`; the terrain map is `length + PLAYFIELD_W` (384 today) pixels wide. A key applies one tick
 after the camera reaches it, events on that tick itself: a key and a `speed` event at the same
 `x` leave the key's speed — except at `x` 0, where the camera starts: the first tick applies the
 first key and then fires the events at 0, so a `speed` event at 0 overrides it.
@@ -385,13 +385,13 @@ tick, in file order.
 | `end` | — | the stage is cleared |
 | `trigger` | `flag`, `region` `{ x, y, w, h }` (world pixels), optional `value` (default `true`), `until` (camera x; default `region.x + region.w`) | M2-07: from its `x` until the camera passes `until`, the first living ship whose centre enters the region sets / clears the flag (once) |
 | `bonus` | `stage` (a `bonus` stage), `entrance` (`gap` / `ground` / `digit`), `region` (gap), `digit` + optional `place` (digit), optional `until` | M2-10: a hidden bonus-stage entrance (see above); at most 8 per stage |
-| `block` | `y` (world, top edge), `w`, `h` (multiples of 8, ≤ 64 tiles), optional `screenX` (default 400: left edge = `x + screenX`), `tile` (tileset tile name, default `solid`), `vx`, `vy` (drift px/tick), `dx`, `dy` (swing px), `period` (ticks, default 120), `phase` | M2-07: a moving block of that tile — terrain for the ship, shots, bullets and crawlers; needs a tilemap |
+| `block` | `y` (world, top edge), `w`, `h` (whole tiles — multiples of 8 today, ≤ 64 tiles), optional `screenX` (default `PLAYFIELD_W + 16` — 400 today: left edge = `x + screenX`), `tile` (tileset tile name, default `solid`), `vx`, `vy` (drift px/tick), `dx`, `dy` (swing px), `period` (ticks, default 120), `phase` | M2-07: a moving block of that tile — terrain for the ship, shots, bullets and crawlers; needs a tilemap |
 
 Every event may also name a **`branch`** (M2-07): it then fires only while that branch is taken.
 
-**Spawn points** are in playfield pixels relative to the camera: `screenX` defaults to 400
-(16 px beyond the right edge; negative = behind the player), `y` to the middle of the
-playfield. Flying enemies ride the camera scroll; ground enemies (`"ground"` in their enemy
+**Spawn points** are in playfield pixels relative to the camera: `screenX` defaults to
+`PLAYFIELD_W + 16` — 400 today — (16 px beyond the right edge; negative = behind the player), `y`
+to the middle of the playfield. Flying enemies ride the camera scroll; ground enemies (`"ground"` in their enemy
 definition) stand on the floor below — or hang from the ceiling above — their spawn point.
 `path` names a curve in `content/paths/` for path movers and path-following behaviours. An
 enemy that leaves the view by 32 px after having been on screen is gone (it *escaped*: its
@@ -420,7 +420,7 @@ the renderer applies them through one GLSL ES 1.0 filter per affected layer, and
 the layer's effects is on screen. Both are optional lists (at most 8 entries each).
 
 - **`raster`** — a per-scanline horizontal offset of one layer (`far`, `mid` or `terrain`) on the
-  playfield rows `top … bottom − 1` (0 = the row under the top HUD bar, ≤ 200), while the camera x
+  playfield rows `top … bottom − 1` (0 = the row under the top HUD bar, ≤ `PLAYFIELD_H` — 200 today), while the camera x
   is in `[from, to)` (defaults: the whole stage):
   - `wave` — wavy water: `amplitude` px (≤ 32) along a sine of `wavelength` rows, drifting once
     every `period` ticks (default 120; 0 = still);

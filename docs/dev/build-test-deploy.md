@@ -45,7 +45,9 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test:integration` | Only the repo-level `test/` project |
 | `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web`, `@shmup/tizen` and `@shmup/webos` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) with two projects: `chromium` runs every spec in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the two TV builds' `dist/index.html` via `file://` (`webos.spec.ts` is the only place the LG bundle is ever executed, M3-03) — and `firefox` runs only the cross-engine determinism spec (`determinism.spec.ts`, M2-18) in headless Firefox; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`); `--project=chromium` / `--project=firefox` runs one engine only. Needs both browsers once per machine: `pnpm exec playwright install --with-deps chromium firefox` (Chromium alone is enough for `--project=chromium`). See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
 | `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them — since M2-15 also the attract demos of `test/golden/demos.ts` into `content/demos/*.replay.json`). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
-| `pnpm bench` | The benchmarks (`test/bench/*.perf.ts`, own Vitest config, `--expose-gc`, one file at a time): the stress benchmark — 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth — and since M2-18 the per-zone stress benches (`zones.perf.ts`: every campaign zone start → clear with the bot under the same load, median < 1.0 ms/tick, < 1 MB retained) and the 30-minute headless soak (`soak.perf.ts`: the scene flow through runs, endings, credits and the name entry, heap flat within 1 MB), and since M3-02c the **render** bench (`render.perf.ts` + `render-harness/`: worst-case frames — every measured frame carrying 512 of 512 enemy bullets, ≥ 489 of 512 point items and ≥ 489 of 512 particles (asserted as a per-frame *floor*, not a last-frame reading), CRT off / light / full, a filtered layer, the Mode-7 floor, and the same load at a 768×432 internal frame — through the real renderer in Playwright's Chromium; it prints render-ms p95, draw calls, pooled render-target bytes, structure rebuilds and a JS-heap delta, and fails on the draw-call, p95 and heap budgets. It renders through **SwiftShader**, so its milliseconds are a regression gate, never a prediction of the TV — what transfers is the counted quantities and the comparisons between scenarios). Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench), [release-hardening.md](release-hardening.md#benchmarks-every-zone-and-the-soak) and [rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c) |
+| `pnpm bench` | The benchmarks (`test/bench/*.perf.ts`, own Vitest config, `--expose-gc`, one file at a time): the stress benchmark — 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth — and since M2-18 the per-zone stress benches (`zones.perf.ts`: every campaign zone start → clear with the bot under the same load, median < 1.0 ms/tick, < 1 MB retained) and the 30-minute headless soak (`soak.perf.ts`: the scene flow through runs, endings, credits and the name entry, heap flat within 1 MB), and since M3-02c the **render** bench (`render.perf.ts` + `render-harness/`: worst-case frames — every measured frame carrying 512 of 512 enemy bullets, ≥ 489 of 512 point items and ≥ 489 of 512 particles (asserted as a per-frame *floor*, not a last-frame reading), CRT off / light / full, a filtered layer, the Mode-7 floor, and the same load at a 768×432 internal frame — through the real renderer in Playwright's Chromium; it prints render-ms p95, draw calls, pooled render-target bytes, structure rebuilds and a JS-heap delta, and fails on the draw-call, p95 and heap budgets. It renders through **SwiftShader**, so its milliseconds are a regression gate, never a prediction of the TV — what transfers is the counted quantities and the comparisons between scenarios). Since R0-02 the render bench also builds the TV render bench widget and opens its 18 scenarios headlessly, gating counts only, and every scenario renders to a **1280×720** display (a whole multiple of 640×360; it was 960×540) — [The TV render bench](#the-tv-render-bench-r0-02). Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench), [release-hardening.md](release-hardening.md#benchmarks-every-zone-and-the-soak) and [rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c) |
+| `pnpm bench:tv` | R0-02: `turbo run build:bench` for `@shmup/tizen` and `@shmup/webos` — the **TV render bench** widgets into `apps/tizen/dist-bench/` and `apps/webos/dist-bench/`, each followed by its bundle check (`check-bundle.mjs dist-bench`). Set `VITE_REPORT_URL` to stream the results to the input probe's log server — [The TV render bench](#the-tv-render-bench-r0-02) |
+| `pnpm bench:tv:package` / `pnpm bench:tv:install` | R0-02: `pnpm --filter @shmup/tizen bench:package` / `bench:install` — `apps/tizen/scripts/tizen-bench.mjs` runs the Tizen CLI wrappers on `dist-bench/` under the bench's app id, so it installs next to the game. **Never run in CI or here** — the owner runs them from the Windows desktop (plan R0-03) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (research docs at the root are ignored) |
 | `pnpm clean` | Removes `dist/`, `coverage/`, `.turbo/` everywhere (never `node_modules`) |
 | `pnpm assets` | Placeholder asset pipeline (`scripts/generate-assets.mjs`): sprite pixel maps, procedural generators, PNG overrides and fonts → `assets/generated/atlas/main.png` + `main.json`; skipped when inputs are unchanged; `--force` rebuilds, `--out DIR` / `--source DIR` redirect, `--quiet` silences; exit 1 lists invalid sources. Also runs before every `build` / `dev` (Turborepo `//#assets`) and inside Vite builds (`shmupAssets()`). See [asset-pipeline.md](asset-pipeline.md#running-it) |
@@ -61,8 +63,10 @@ Per project: `pnpm --filter <name> <script>`, e.g. `pnpm --filter @shmup/core te
 --mode test` — what `pnpm test:e2e` builds) and `build:dev` (`--mode development` — the on-device
 debug build): both are the release code plus the debug tools (`__SHMUP_DEV__` true — M1-19,
 [debug-and-replays.md](debug-and-replays.md#release-builds-and-dev--test-builds)); plain `build`
-never contains them. Extra arguments go to the tool:
-`pnpm --filter @shmup/core test loop` runs only test files whose path contains `loop`.
+never contains them. Since R0-02 `apps/tizen` and `apps/webos` also have `build:bench` (`vite build
+--config vite.bench.config.ts --mode bench` → `dist-bench/` + the bundle check — what `pnpm bench:tv`
+runs) and `apps/tizen` has `dev:bench` (the bench page in a desktop browser). Extra arguments go to the
+tool: `pnpm --filter @shmup/core test loop` runs only test files whose path contains `loop`.
 
 ## Turborepo
 
@@ -71,6 +75,13 @@ never contains them. Extra arguments go to the tool:
 - `build` depends on `^build` (dependencies first) and on the root task `//#assets`, and
   caches `dist/**`; so do `build:test` and `build:dev` (M1-19 — the apps' test and debug
   builds; the packages have no such script, so `^build` builds them normally).
+- `build:bench` (R0-02, the TV render bench) has the same dependencies, caches `dist-bench/**`
+  and keys on the `VITE_REPORT_URL` and `SHMUP_BUILD_ID` variables. The webOS stub bundles the
+  bench's sources from `apps/tizen`, which turbo would not hash for `@shmup/webos` (it does not
+  depend on `@shmup/tizen`), so it has **its own entry, `@shmup/webos#build:bench`**, whose
+  `inputs` add `apps/tizen/bench/**`, `src/**`, `scripts/**`, `vite.config.ts`, `tsconfig.json`
+  and `package.json` — without them a bench edit replayed a stale webOS stub. **Any change to the
+  generic `build:bench` (dependencies, env, outputs) must be repeated in that entry.**
 - `//#assets` runs `pnpm assets` (inputs `assets/source/**`, `scripts/assets/**`,
   `scripts/generate-assets.mjs`; outputs `assets/generated/**`). `dev` and the `test:e2e`
   entry depend on it too (that turbo task stays unused: the root `pnpm test:e2e` script
@@ -106,6 +117,7 @@ A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo ru
 | repo root | `assets/generated/atlas/main.png` (+ `main-1.png` …), `main.json`, `assets/generated/.asset-cache.json` | `pnpm assets` / `//#assets`; git-ignored. The app builds copy the pages and inline the manifest |
 | `apps/webos` | `apps/webos/dist/`: `index.html`, `app.js`, `appinfo.json`, `icon.png`, `largeIcon.png`, `assets/atlas/main.png` | M3-03: the Tizen contract below, for webOS 5+ (Chromium 68 — one release older, so the same target and polyfill cover both). `scripts/check-bundle.mjs` imports the Tizen budgets. Packaging writes an `.ipk` into `release/`; **nothing here has been packaged or run on a device** |
 | `apps/electron` | `dist/main/*.js`, `dist/preload/preload.cjs`, `dist/renderer/` (copy of `apps/web/dist`) | Needs `@shmup/web` built first (Turborepo does it) |
+| `apps/tizen`, `apps/webos` (bench) | `dist-bench/`: `index.html`, `app.js`, `config.xml` / `appinfo.json`, icons, `assets/atlas/` (the atlas upscaled ×1 / ×1.5 / ×2.25) | R0-02: the TV render bench widget, never the game; git- and Prettier-ignored; `pnpm clean` removes it. `bench:tv:package` writes `ShmupCupBench.wgt` there |
 
 ## The Tizen build contract (Chromium 69)
 
@@ -271,6 +283,62 @@ restarts the app in debug mode; run it again after every install. Useful there:
 and the heap size for the §8.5 memory check (compare with the estimator's 24 MiB
 `HEAP_BASELINE_BYTES`, [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)).
 
+## The TV render bench (R0-02)
+
+A second widget built from `apps/tizen`, **next to** the game: it measures what a frame costs on the
+M7 at 384×216, 640×360 and 960×540 with a density-scaled synthetic scene (the real atlas upscaled
+×1 / ×1.5 / ×2.25, five parallax layers, ~35 % terrain, 64 enemies, 512 bullets, 512 point items,
+512 particles, the HUD bars), six variants per size — 18 scenarios, one per page load
+([plan_resolution.md](../../plan_resolution.md) R0-02, §13). Its results **never block** the plan.
+
+| | Game | Bench |
+|---|---|---|
+| Entry | `apps/tizen/index.html` → `src/main.ts` | `apps/tizen/bench/index.html` → `src/bench/` |
+| Build | `build` (`vite.config.ts`) | `build:bench` (`vite.bench.config.ts`, mode `bench` — a dev-build mode, `DEV_BUILD_MODES`) |
+| Output | `dist/` | `dist-bench/` |
+| Tizen app id | `ShmpCupGam.ShmupCup` | `ShmpCupBnc.RenderBench` (`config-xml.mjs` `benchConfigXml` rewrites the game's `config.xml`) |
+| webOS id | `dev.shmupcup.game` | `dev.shmupcup.renderbench` (the same page, built by `apps/webos/vite.bench.config.ts`) |
+
+Both follow the Tizen build contract (one classic ES2018 IIFE, the `globalThis` banner, a classic
+script tag) and pass the same bundle check, run on the folder (`check-bundle.mjs dist-bench`); its
+**rule 9** keeps them apart — a widget with the bench's app id must hold the bench marker in its
+`app.js`, the game must not. The CLI wrappers take `TIZEN_DIST_DIR` / `TIZEN_APP_ID` (webOS:
+`WEBOS_DIST_DIR`, `WEBOS_RELEASE_DIR`, `WEBOS_APP_ID`), which `apps/tizen/scripts/tizen-bench.mjs`
+and `apps/webos/scripts/webos-bench.mjs` set for the bench in their own process (cmd.exe has no
+`VAR=value cmd`).
+
+**The run on the monitors (plan R0-03, the owner's — never here):**
+
+```powershell
+# 1. on the desktop: the log server
+cd tools/input-probe; npm run log-server
+# 2. from the repository root: build both widgets with the server's address baked in
+$env:VITE_REPORT_URL = "http://<desktop-ip>:8787"; pnpm bench:tv
+# 3. package and install next to the game, then launch
+$env:TIZEN_PROFILE = "shmupcup"; pnpm bench:tv:package     # apps/tizen/dist-bench/ShmupCupBench.wgt
+$env:TV_IP = "192.168.1.50"; pnpm bench:tv:install
+pnpm --filter @shmup/tizen bench:run
+```
+
+4. On each monitor press **Enter** — about 10 minutes: per scenario 10 s warm-up, 14 s free-running
+   and 6 s with `gl.finish()` after every render, the page reloading in between. **Red** re-runs the
+   current scenario, **Back** exits. Photograph the results table it draws at the end.
+5. Run it again on WebGL 2: `localStorage['shmup-cup:gl'] = '2'` in the Web Inspector
+   ([above](#the-remote-web-inspector-devtools-on-the-tv); the app id is `ShmpCupBnc.RenderBench`).
+6. Each scenario was POSTed as a `render-bench` payload; the sessions are
+   `tools/input-probe/logs/rb-*.jsonl`. Commit them to `tools/input-probe/results/<date>-m7-bench/` and
+   print the tables with `node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl` — every scenario
+   relative to the same session's 384×216 rows, §13's verdicts, and WebGL 1 against WebGL 2. They go
+   into `input-probe-results.md` §12 (plan R0-03).
+
+The results also stay in the widget's `localStorage` until the next run, so a crash loses nothing.
+`pnpm --filter @shmup/tizen dev:bench` serves the page in a desktop browser (`?scenario=<id>` runs
+one scenario, `?warmup=` / `?measure=` / `?sync=` shorten the phases, `?gl=2`). The webOS stub is
+build-only: `pnpm --filter @shmup/webos bench:package` / `bench:install` are written, never run.
+Details: [`apps/tizen/README.md`](../../apps/tizen/README.md),
+[input-probe.md](input-probe.md) (the log server and the analyzer),
+[rendering-and-shell.md](rendering-and-shell.md#the-tv-render-bench-r0-02) (what is measured).
+
 ## Electron
 
 ```sh
@@ -356,7 +424,25 @@ electron-builder cannot read `catalog:` — bump it with the catalog. Details:
   `pnpm test`: `test/bench/render-harness/load.ts` (the scripted load and its tick order),
   `gates.ts` (the budgets and `renderBenchViolations`) and `protocol.ts` (the wire types) are
   driven against the real simulation by `test/integration/render-bench.test.ts`, so a bench that
-  would measure an empty scene fails in the ordinary suite.
+  would measure an empty scene fails in the ordinary suite. So, since R0-02, is the TV bench's:
+  `test/integration/tv-render-bench.test.ts` checks its gate (`tvBenchViolations`), the headless
+  driver's wiring and the records → log server → analyzer chain, and `apps/tizen/test/bench/` the
+  widget's matrix, scene, sampler, results table and state — those build the atlas in memory with the
+  pipeline, because CI's test shards run without `pnpm assets`.
+- **v2's frame guards** (plan R1-01 — [conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)):
+  `packages/core/test/frame-literals.test.ts` fails on a literal frame number in `packages/core/src`
+  outside its allow-list, and `test/integration/presentation-fingerprint.test.ts` hashes core's
+  presentation output along 12 scripted walks (119 segments) — it stays green without an edit until
+  a step changes what is drawn on purpose, which re-pins it with `SHMUP_FINGERPRINT_PRINT=1` and
+  says why in the commit. `test/integration/tile-size.test.ts` (R1-04) holds the shipped tilesets
+  and stages to `TILE_SIZE`.
+- **The v1 baseline** (for R2-02, `test/golden/v1-baseline*.test.ts`): every shipped stage's ticks,
+  spawns and boss timings at 384×216 in `test/fixtures/v1-baseline/`, re-run byte for byte until
+  R2-01 flips the frame — [test/golden/README.md](../../test/golden/README.md#the-v1-baseline-r2-02).
+- **The ingest tool** (`art-prompts/ingest/`, R3-02) is a standalone npm project with its own
+  `node:test` suite (`cd art-prompts/ingest && npm ci && npm test`), outside `pnpm test`; its CI job
+  also runs `node ingest.mjs --check`. In `pnpm test`, `test/scripts/assets/provenance.test.ts`
+  checks every real-art override's provenance ([real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest)).
 - Repo-level integration tests (`test/`) cover cross-package behaviour, lint-rule
   enforcement and skeleton invariants, plus the root Node scripts (`test/scripts/`,
   including every asset-pipeline module) and the Vite plugins, some of which start a real
@@ -603,6 +689,7 @@ Turborepo telemetry off.
 | `e2e 1/5` … `5/5` | `pnpm exec playwright install --with-deps chromium`, then `pnpm test:e2e --project=chromium --shard=<i>/5`: each shard builds its own test builds and runs a fifth of the Chromium tests (one retry on CI) |
 | `e2e · headless Firefox` (`e2e-firefox`, M2-18) | `pnpm exec playwright install --with-deps firefox`, then `pnpm test:e2e --project=firefox`: the cross-engine determinism spec — every golden replay and attract demo in SpiderMonkey against the web build's `?determinism` page ([release-hardening.md](release-hardening.md)) |
 | `input probe` | `tools/input-probe` with npm |
+| `art ingest · test · recipes up to date` (`ingest`, R3-02) | `art-prompts/ingest` with npm (its own lockfile and cache key): `npm ci`, `npm test` (syntax check + the `node:test` suite on synthetic fixtures), then `node ingest.mjs --check` — every committed recipe under `assets/source/sprites/` and `art-prompts/v2/ingested/` re-run in memory: the PNG and its sidecar on disk must match byte for byte, the provenance record apart from its date ([real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest)) |
 
 The matrices do not fail fast, so every shard reports. A newer push to the same branch cancels
 the running workflow (`concurrency`). Commit `pnpm-lock.yaml` whenever dependencies change, or
@@ -646,6 +733,9 @@ the frozen install fails.
 | `pnpm bench`: `render.perf.ts` fails on draw calls | A render change added a batch break or a pass. Deliberate? Record the new number in `shmup_feat.md` §22 and raise `DRAW_CALL_BUDGET` there and in the two e2e specs — never silently |
 | `pnpm bench`: `render.perf.ts` fails on the heap delta | Something allocates inside `renderer.render()` — ours or Pixi's (the Node allocation guards cannot see past that boundary). The leak fixture in the same file shows what a real leak looks like |
 | `pnpm bench`: `soak.perf.ts` fails on the heap | The scene flow keeps something per run or per screen (a list that grows, a closure per transition). The soak already leaves V8's code spaces out (`dataHeapBytes`); print its per-minute samples — a leak keeps climbing, JIT warm-up levels off in the second run |
+| `frame-literals.test.ts` fails: `… (line N): a frame number — derive it from config` | A literal `384` / `216` / `200` / `208` / `192` / `108` (or the current frame's size) reached `packages/core/src`. Derive it from the `core/config` constants; if it does not mean the frame (a count, an angle, a world distance, a text-sized panel), add an allow-list entry with the reason — [conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint). `the allow-list expects N literal(s)` means an entry went stale: fix its `count` or remove it |
+| `presentation-fingerprint.test.ts` fails on a segment | Something core draws moved (a menu, the HUD, a band, a sprite batch) — the entry names the walk, the segment and which of `ui` / `hud` / `world` / `screen` changed. Unintended: find it. Intended (a layout or art step, R2-01's flip, a content change): re-pin with `SHMUP_FINGERPRINT_PRINT=1` and say why in the commit |
+| `pnpm bench:tv` builds the Tizen bench but replays an old webOS stub | Something changed what the stub bundles from `apps/tizen` that `@shmup/webos#build:bench`'s `inputs` in `turbo.json` do not list — add it there (and keep that entry in step with the generic `build:bench`); `pnpm turbo run build:bench --force` rebuilds meanwhile |
 | `pnpm test`: `store-assets.test.ts` says an icon is out of date | The logo, a ship sprite or `scripts/store-assets.mjs` changed: run `pnpm store:assets` and commit `apps/tizen/public/icon.png` and `apps/electron/build/icon.png` |
 | `pnpm test:e2e`: a `determinism.spec.ts` test fails in one browser only | A determinism bug in the core — an engine-dependent `Math` call, a sort without a tie-break: the failure names the first differing hash; see [release-hardening.md](release-hardening.md#cross-engine-determinism-in-the-browser) |
 | Tizen build fails with `app.js is … gzipped, over the … budget` (or an atlas page / `dist/` budget) | The bundle grew past a plan budget (`check-bundle.mjs` rule 8). Find what grew (a new dependency, inlined data); raising a budget is a plan decision, not a fix |

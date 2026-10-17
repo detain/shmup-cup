@@ -206,7 +206,7 @@ in with its own intro, in another slot (`enterPartner`); the two slots point at 
 - **Turns** (`alternate` ticks, needs a partner). At the fight's start the leader arms its turn
   clock (`turnTicks`) and the follower **withdraws** at once. At every turn the fighting one
   withdraws and the resting one comes forward: an eased move over `BOSS_TURN_TICKS` (60) to
-  `BOSS_REST_X` (the playfield's right edge + 40 — mostly off screen) or back home. While resting
+  `BOSS_REST_X` (the playfield's right edge + 40, `PLAYFIELD_W + 40` — mostly off screen) or back home. While resting
   it is drawn from **`bosses.backBatch`** (`LayerId.GroundEnemies`, behind the air layer), is not
   in the grid, cannot be hit or touched, and its script and phase clock wait (`runScript` skips a
   resting or turning slot; `phaseTicks` stands still — its time-limit clock does not). The motion
@@ -279,13 +279,16 @@ the blast).
 most `width`, 0 when hidden or empty — any hit point left shows at least 1 px, full only at full
 strength. `buildHud(world, list, sprites, bossHp)` draws, while `bossHp` and `hpBar.visible`,
 `BOSS` (red `0xf85858`, string slot 22) at x 148 and a 4-px frame `BOSS_HP_BAR_WIDTH` (64) wide at
-x 176 with a 2-px red fill of `bossHpBarFill(bar, 62)` **in place of the hi-score** (`HI` and its
-number return when the bar goes). `HUD_STRING_COUNT` is 23, `HUD_COMMAND_COUNT` 100. `Hud` has
+x 176 (since R1-01 derived from the frame and the font: `BOSS`, the gap and the bar centred 2 px
+right of `FRAME_CX`, the bar as wide as the hi-score display it replaces —
+[scenes-and-ui.md](scenes-and-ui.md#the-hud)) with a 2-px red fill of `bossHpBarFill(bar, 62)`
+**in place of the hi-score** (`HI` and its number return when the bar goes). `HUD_STRING_COUNT` is 23, `HUD_COMMAND_COUNT` 100. `Hud` has
 `showBossHp` and rebuilds only when the fill's pixel count (or the option) changes.
 
 **The option.** `UserOptions.display.bossHpBar` (default **off** — neither source game had one;
 save format 1, no migration: an older save resolves it to `false`), the Options row **BOSS HP**
-(`OptionsItem.BossHp` 9 — **BACK is 10**, the panel 288 × 192 at y 12 for eleven rows), a toggle
+(`OptionsItem.BossHp` 9 — **BACK is 10**, the panel 288 × 192 at y 12 — `FRAME_CY − 96` since
+R1-01 — for eleven rows), a toggle
 that pushes `UserOptionKind.BossHpBar` (9, 1 / 0) live. No host applies that event: the scene
 flow copies the **saved** value into `game.hud.showBossHp` on every displayed frame, so the HUD
 follows it once the Options screen closes. Details:
@@ -345,7 +348,7 @@ standing part:
 |---|---|---|
 | `captain.ram` | `waves` 3, `waveTicks` 36, `ways` 5, `spread` 40, `bulletSpeed` 1.5, `ramTicks` 45, `ramX` 40, `returnTicks` 70, `restTicks` 50 | Wave shooter + ram: `waves` fans of red bullets `waveTicks` apart (rank-scaled), then a `moveTo` to view x `ramX` at the nearest player's row (clamped 24 px inside; a straight, telegraphed horizontal dash — dodge up or down), 10 ticks there, home in `returnTicks`, rest |
 | `captain.launcher` | `trackSpeed` 0.4, `margin` 40, `launchTicks` 100, `count` 2, `fireTicks` 70, `bulletSpeed` 1.25, `ways` 3, `spread` 48 | Splitting launcher: tracks the player's height; every `launchTicks` up to `count` guns in turn launch the boss's `minion` (`api.launch` — a regular enemy with its own script, BROOD LAUNCHER's is the `bubble.split` bubble); every `fireTicks` aimed pink 3-ways |
-| `captain.circler` | `cx` 192, `cy` 100, `rx` 140, `ry` 64, `speed` 3, `fireTicks` 60, `bulletSpeed` 1.25, `ring` 8 | Screen-crossing circler: `api.orbit` round view point (`cx`, `cy`) — start at `cx + rx`, `cy` (its home) for no jump; purple rings, each turned half a gap from the last |
+| `captain.circler` | `cx` `PLAYFIELD_W / 2` (192), `cy` `PLAYFIELD_CY` (100) — the playfield's centre (R1-01), `rx` 140, `ry` 64, `speed` 3, `fireTicks` 60, `bulletSpeed` 1.25, `ring` 8 | Screen-crossing circler: `api.orbit` round view point (`cx`, `cy`) — start at `cx + rx`, `cy` (its home) for no jump; purple rings, each turned half a gap from the last |
 | `captain.crab` | `stepTicks` 70, `minX` 250, `maxX` 340, `minY` 40, `maxY` 160, `ringTicks` 90, `ring` 12, `bulletSpeed` 1.1, `turn` 16 | Ring-firing crab: sidesteps to a random whole-pixel point of its box (gameplay RNG, in 60 % of the step); red oval rings turned `turn` units further each time, so the gaps sweep round |
 | `boss.raid` | `fireTicks` 50, `bulletSpeed` 1.5, `ways` 1, `spread` 32, `aimStep` 0 | A raid's turrets: every volley each standing gun that may fire (on screen) turns to the nearest player (`aimPart`) and fires a pink `ways`-way along its new heading |
 

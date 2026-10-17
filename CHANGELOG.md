@@ -25,6 +25,43 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
   take nothing into `master`'s tree
   ([build-test-deploy.md](docs/dev/build-test-deploy.md#release-lines)).
 
+### Engine and tooling
+
+Nothing here changes what the game shows or does: the golden replays, the attract demos and the
+new presentation fingerprint are unchanged.
+
+- **The frame is a handful of constants** (R1-01): `@shmup/core` exports `FRAME_W` / `FRAME_H`
+  (384 / 216), `FRAME_CX` / `FRAME_CY`, `HUD_BAR_HEIGHT`, `PLAYFIELD_Y` / `PLAYFIELD_W` /
+  `PLAYFIELD_H` / `PLAYFIELD_CY`, `HUD_BOTTOM_Y`, `TILE_SIZE` (moved from `core/data`) and the font
+  metrics `GLYPH_W` / `GLYPH_H` / `LINE_H`, and every frame-dependent number in core — the HUD and
+  the UI kit, the scenes' panels and bands, behaviour defaults such as `laserLength`, spawn and cull
+  edges, the point items' score targets, the content schema's bounds, the campaign's line caps —
+  derives from them, so R2-01's switch to 640×360 is a change of those constants
+  ([conventions.md](docs/dev/conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
+- **8- or 12-px tiles, any font cell** (R1-04): the tileset and tilemap schemas accept 8 or 12
+  (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`; shipped content uses `TILE_SIZE`), the terrain generator
+  draws any even tile size and resamples collision masks between sizes (`renderTerrainTiles`,
+  `resampleMask`), and collision, the stage runtime, the terrain layer and the text renderer are
+  proven at 12-px tiles and a 9×12 font.
+- **The TV render bench** (R0-02, `pnpm bench:tv`): a second widget beside the game
+  (`ShmpCupBnc.RenderBench`, `apps/tizen/dist-bench/`; a build-only webOS stub too) that measures a
+  v2-shaped synthetic scene at 384×216, 640×360 and 960×540 — 18 scenarios, render CPU time,
+  `gl.finish()`-synced time, frame pacing, draw calls, render-target and texture bytes, the heap —
+  and reports by an on-screen table, POSTs to the input probe's log server (`render-bench`
+  sessions, `@shmup/shell` `sendRenderBench`) and `localStorage`;
+  `tools/input-probe/results/analyze-bench.mjs` prints each size relative to the same session's
+  384×216 and applies the plan's verdict rules. **Never run on a TV yet** — that is plan R0-03, the
+  owner's ([build-test-deploy.md](docs/dev/build-test-deploy.md#the-tv-render-bench-r0-02)).
+- **The AI art ingest tool** (R3-02, `art-prompts/ingest/`): one command from a generated image to
+  a game-ready sprite source — key removal sampled from each region's border with hole and despill
+  handling, an exact area downscale, quantising to a palette within the art bible's colour caps and
+  away from the palette-cycle ramps, the outline, a hand-edit layer that survives re-ingesting —
+  with a byte-identical PNG on every machine and a `.art.json` provenance record per sprite (model,
+  weights, licence, prompt, seed, source hashes, edit references back to committed files). Built and
+  tested on synthetic fixtures; the real winners wait for the FLUX licence decision. The asset
+  pipeline ignores the tool's files, and a real-art PNG's sidecar pivot now wins over a code
+  anchor ([real-assets.md](docs/dev/real-assets.md#the-ingest-tool-art-promptsingest)).
+
 ### Documentation
 
 - **The v2 art bible** (R3-01, [`art-bible-v2.md`](docs/dev/art-bible-v2.md)): the style the owner
@@ -41,6 +78,13 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
   them. [`store-submission.md`](docs/client/store-submission.md#ai-content-disclosure-every-store)
   gains each store's AI-content disclosure, and `test/integration/art-prompt-names.test.ts` checks
   the prompt library for game, studio, character and artist names.
+- **Handing real art to the pipeline, for v2** (R3-02): [`real-assets.md`](docs/dev/real-assets.md)
+  rewritten for the 640×360 remaster and the ingest tool — the recipe, the record, the step-by-step
+  of ingesting a winner — and corrected where it was wrong (a sidecar-less strip is one frame; the
+  colour-blind variants are redrawn, not derived).
+- **Decisions made while the plan runs** ([plan_resolution.md](plan_resolution.md) §1): the
+  owner's O1–O10 (content units, the screen-anchored snap rule, camera `yTo` ported ×1.5, tile sizes
+  8 and 12 …) and the orchestrator's wave-1 decisions, so later steps can cite them.
 
 ### Testing
 
@@ -48,6 +92,21 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
   at 384×216 — event and camera ticks, every enemy's spawn, entry and first on-screen tick, the
   fastest bullet, the bosses' timings — in `test/fixtures/v1-baseline/` (37 scenarios), so the ×1.5
   port can be compared with v1; the files are re-checked byte for byte until R2-01 flips the frame.
+- **The presentation fingerprint** (R1-01): `test/integration/presentation-fingerprint.test.ts`
+  hashes everything core hands the renderer along scripted walks through every scene — 119
+  segments over 12 walks, pinned on the v1.0.0 code — because the golden replays hash only the
+  simulation and would let a moved menu or HUD pass.
+- **No literal frame numbers in core** (R1-01): `packages/core/test/frame-literals.test.ts` parses
+  core's sources and fails on `384`, `216`, `200`, `208`, `192` or `108` (and on the current frame's
+  size once it changes) outside an allow-list of counts, angles and text-sized panels, each with its
+  reason. `test/integration/tile-size.test.ts` (R1-04) holds shipped tilesets and stages to
+  `TILE_SIZE`.
+- **The TV bench, headless** (R0-02): `pnpm bench` also opens the bench widget's 18 scenarios in
+  Chromium and gates their counts (draw calls, render targets, atlas pages 1 / 1 / 2, the heap); every
+  render-bench scenario now draws to a 1280×720 display, a whole multiple of 640×360.
+- **Provenance in `pnpm test`** (R3-02): `test/scripts/assets/provenance.test.ts` fails on a
+  real-art override without a valid record or a `LICENSES.md` entry; CI's new `ingest` job runs
+  the tool's own tests and checks every committed recipe is up to date.
 
 ## [1.0.0] — 2026-10-16
 

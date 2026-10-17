@@ -151,7 +151,8 @@ by id (`path` → `pathId`, `-1` = none).
 ### Stage events
 
 `spawn` and `formation` events (M1-07's timeline) gained `screenX` (spawn x in playfield
-pixels, default 400 = `DEFAULT_SPAWN_SCREEN_X`, 16 px past the right edge; negative = behind
+pixels, default `DEFAULT_SPAWN_SCREEN_X` = `PLAYFIELD_W + 16` — 400 today —, 16 px past the right
+edge; negative = behind
 the player) next to `y` (default: mid-playfield) and a real `path` reference; `formation` also
 gained `drop` (default `'capsule'`, `null` = nothing) and `bonus` (points, default 0). All
 members of a formation spawn at the same view point. Since M1-13 `spawn` / `formation` events
@@ -464,9 +465,9 @@ speeds are px/tick and intervals ticks, both Normal values scaled by the rank):
 | `worm.burst` | sand worm (M2-11, floor) | a `formation` is one worm: the leader (member 0 or a lone spawn) waits on a `Ballistic` mover until a player is within [`trigger` 128] px horizontally (0 = at once), then bursts out at ([`vx` −0.8], −[`up` 3.4]) with [`gravity` 0.075], ≤ [`maxFall` 4], passing through the terrain (`BallisticLand.Pass`); the other members `Follow` its track (a dead leader's ghost keeps recording); never fires |
 | `rear.swoop` | rear attacker / jumper (M2-12, zone E's `squall-jumper`) | spawned behind the view (a negative `screenX`): one `Waypoint` mover along its spawn row to view x [`turnX` 280] at [`speed` 1.6] (0 → 1), a hold of [`hold` 18] ticks (below 1 → 1), then away to the left at [`leaveSpeed` 1.4]; the script wakes once, `⌈|turnX − x| / speed⌉ + (hold >> 1) + 1` ticks in — the distance either way —, faces the nearest player and fires an aimed [`ways` 1]-way (floored; 0 = none) of pink needles [`spread` 40, `bulletSpeed` 1.3] |
 | `cell.chase` | chasing cell (M2-13, zone F's `chaser-cell`; MANTLE REGENT's minion and the mitosis cell's child) | drifts in along its row to the left at [`speed` 1.1] (≤ 0 → 1) for [`enterTicks` 50], then a `Homing` mover on the nearest living player at `speed`, turning ≤ [`turnRate` 6] units a tick (floored, < 0 → 0), for [`chaseTicks` 150], then `Homing` with turn rate 0 — straight on with its heading kept; one thrown out of a dividing cell (a `Straight` mover already set by `bubble.split`) flies out for [`scatterTicks` 24] instead of drifting in; tick counts below 1 are one tick; three wakes, never fires |
-| `emitter.laser` | laser emitter (M2-14, zone H's `laser-emitter`; floor / ceiling) | every [`laserTicks` 150] ticks (rank-scaled; the first after [`firstTicks` 40]) while it may fire, a telegraphed straight laser heading [`heading` 512 = left], [`laserLength` 384] × [`laserWidth` 6], [`telegraph` 50] warning ticks and [`active` 40] beam ticks, **attached** to the emitter (it scrolls with the terrain and dies with it); a ground emitter stands still, an air one keeps its spec's `mover`; one wake per beam |
+| `emitter.laser` | laser emitter (M2-14, zone H's `laser-emitter`; floor / ceiling) | every [`laserTicks` 150] ticks (rank-scaled; the first after [`firstTicks` 40]) while it may fire, a telegraphed straight laser heading [`heading` 512 = left], [`laserLength` `PLAYFIELD_W` — 384 today] × [`laserWidth` 6], [`telegraph` 50] warning ticks and [`active` 40] beam ticks, **attached** to the emitter (it scrolls with the terrain and dies with it); a ground emitter stands still, an air one keeps its spec's `mover`; one wake per beam |
 | `mine.burst` | depth mine (M2-14, zone I's `depth-mine`) | a `Sine` drift left [`speed` 0.5, `amp` 10, `period` 140]; `sleepUntilNear` [`trigger` 64] (0 = never arms), then it stops, flashes [`fuse` 36] ticks and bursts into a ring of [`ring` 8] round red bullets at [`bulletSpeed` 1], destroying itself with no score and no drop — two wakes in its life |
-| `hunter.option` | Option Hunter (M2-04; its spec's `optionHunter` brings the rules) | [`variant` 0] rear / 1 front / 2 dive: for [`lineUpTicks` 90] re-aims a `Waypoint` mover every 6 ticks at its line-up point — view x [`lineX` 48] (front: `384 − lineX`) on the nearest player's row, or view y [`lineY` 24] over its column, 12 px inside the playfield — at [`speed` 2]; the last aim holds [`windup` 24] and charges at [`chargeSpeed` 4.5] until it leaves the view; never fires. The shipped hunters are in `content/enemies/option-hunters.enemies.json`, flown by the `hunter-range` dev stage ([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)) |
+| `hunter.option` | Option Hunter (M2-04; its spec's `optionHunter` brings the rules) | [`variant` 0] rear / 1 front / 2 dive: for [`lineUpTicks` 90] re-aims a `Waypoint` mover every 6 ticks at its line-up point — view x [`lineX` 48] (front: `PLAYFIELD_W − lineX`) on the nearest player's row, or view y [`lineY` 24] over its column, 12 px inside the playfield — at [`speed` 2]; the last aim holds [`windup` 24] and charges at [`chargeSpeed` 4.5] until it leaves the view; never fires. The shipped hunters are in `content/enemies/option-hunters.enemies.json`, flown by the `hunter-range` dev stage ([options-shields-hunter.md](options-shields-hunter.md#the-option-hunter-coreenemies-corebehaviors)) |
 
 Writing one:
 
@@ -512,6 +513,38 @@ cell has no `Straight` mover yet, so it drifts in from where it was launched; IR
 drones (`sovereign-drone`, `cell.chase`) from its emitters, the ABYSS ARK its hooks (`ark-hook`,
 `rocket.homing`) from its on-screen turrets and THE HOLLOW KING its spawn (`king-spawn`,
 `cell.chase`) from its lure (M2-14).
+
+### Frame-anchored or world? (R1-01, for R2-02)
+
+v2's R1-01 derived the behaviour defaults that mean the frame (plan_resolution.md §2.6), with every
+value unchanged at 384×216: the seven `laserLength` defaults (`emitter.laser`, `boss.lanes`,
+`boss.bulwark`, `boss.widow`, `boss.bastion`, `boss.facet`, `boss.sovereign`) are one screen
+width, `PLAYFIELD_W`; `captain.circler`'s ellipse centre (`cx`, `cy`) is the playfield's centre,
+`PLAYFIELD_W / 2` and `PLAYFIELD_CY` (192, 100); `boss.steed`'s is a boss's default home,
+`core/data` `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` (`PLAYFIELD_W − 88`, `PLAYFIELD_CY` — 296, 100); the
+Option Hunter's front line-up is `PLAYFIELD_W − lineX`. `packages/core/test/behaviors/behaviors-frame-defaults.test.ts`
+pins them. Margins, radii (`boss.suction`'s `pullRadius` 200 is a world radius) and speeds stay
+literal — R2-02's ×1.5 port scales them.
+
+**What the rescale tool will not see.** These are code defaults, not content, so R2-02's
+`rescale` run never touches them; each is a view point (playfield pixels) that is neither
+edge-anchored nor derived, and R2-02 decides by hand whether it is frame-anchored or world (×1.5):
+
+| Behaviour | Default | Used by |
+|---|---|---|
+| `orbiter.loop` | waypoint `x` 256, `y` 100 (without a path) | `test-range` only |
+| `cube.pincer` | `meetX` 176 | the Direct-mode pincer waves |
+| `captain.ram` | `ramX` 40 | the captains, also in the boss rush |
+| `captain.crab` | box `minX` 250 – `maxX` 340 × `minY` 40 – `maxY` 160 | the captains, also in the boss rush |
+| `boss.widow` | box `minX` 250 – `maxX` 320 × `minY` 56 – `maxY` 144 | zone C overrides `minX` / `maxX` (270 / 316) and **uses the default `minY` / `maxY`** |
+| `rear.swoop` | `turnX` 280 | zone E's rear attackers |
+| `boss.walker` | `frontX` 96, `backX` 280 | its pacing columns |
+| `boss.steed` | `rx` 8 (the bob's x radius; `ry` 40) | zone E's SQUALL STEED, whose content home x 304 is `DEFAULT_BOSS_X + rx`: the port moves the home to 520 (88 + 8 from the right edge, ×1.5) and `DEFAULT_BOSS_X` to 508, so `rx` must become 12 too, or the orbit starts with a jump |
+
+**`captain.circler`'s content home needs a hand fix after R2-02:** `content/enemies/advanced-bosses.enemies.json`
+puts `captain-circler` at x 332 = `cx + rx` (192 + 140), so its orbit starts without a jump. After
+the port `cx` follows the frame (320) while `rx` is a world radius (210), so the home must become
+530 — neither 332 × 1.5 (498) nor the right-edge rule (640 − 52 × 1.5 = 562) gives it.
 
 ## The `test-range` roster
 
@@ -662,6 +695,7 @@ code):
 | `test/integration/content.test.ts` | The shipped content validates with `KNOWN_SCRIPT_IDS` and `checkEnemyBehaviors`; an unknown script id is an issue |
 | `test/e2e/enemies.spec.ts` | In Chromium: the first drifter formation appears inside the playfield (never in the HUD bars) and flies left; no console errors or unknown-sprite warnings |
 | `packages/core/test/enemies/enemies-hunter*.test.ts`, `data/enemies-hunter-data-edge.test.ts`, `test/e2e/option-hunter.spec.ts` | M2-04: the Option Hunter (appearance only with Options, the variants, the steal and chain cut, carry, free, escape, expiry), the blue capsule's `clearOnScreen`, `optionHunter` / `blueCapsule` in the loader, the steal / carry / free allocation guard; in Chromium a hunter stealing and Mega Crash freeing ([options-shields-hunter.md](options-shields-hunter.md#tests)) |
+| `packages/core/test/behaviors/behaviors-frame-defaults.test.ts`, `data/frame-bounds.test.ts` | R1-01: every `laserLength` default = `PLAYFIELD_W`, the circler's and the steed's ellipse centres; the content loader's frame-anchored defaults (the boss home, the block entry) and bounds (ship margins, waypoints, spawn points) at their limits and one past them, in terms of the constants |
 | `packages/core/test/behaviors/behaviors-cube*.test.ts` | M2-05: `cube.pincer` — the odd members' mirror, the meeting points on each half, the leave, a formation of six dropping at its last kill ([direct-mode.md](direct-mode.md#tests)) |
 
 ## Gotchas

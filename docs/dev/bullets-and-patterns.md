@@ -313,7 +313,9 @@ twinkle frames) on `LayerId.Items`:
 1. it starts where the bullet was with **half its velocity** and drifts for
    `POINT_ITEM_HOVER_TICKS` (12) ticks, slowing (× 0.85 per tick), riding the camera;
 2. then it flies towards the credited player's score in the top HUD bar (`POINT_ITEM_TARGETS`:
-   `[40, −4]` / `[344, −4]` in playfield coordinates, above the playfield), faster every tick
+   `[40, −4]` / `[344, −4]` in playfield coordinates, above the playfield — since R1-01 anchored to the
+   frame: 40 px in from the bar's left and right edges on its middle row, `[40, −HUD_BAR_HEIGHT / 2]`
+   / `[PLAYFIELD_W − 40, −HUD_BAR_HEIGHT / 2]`, the 40 a literal margin), faster every tick
    (`POINT_ITEM_ACCEL` 0.35 px/tick², at most `POINT_ITEM_MAX_SPEED` 9);
 3. when it arrives — or after `POINT_ITEM_LIFETIME` (180) ticks at the latest — it adds
    `ContentDb.scoring.bulletCancel` points (`content/rules/scoring.rules.json`, 10; the value is
@@ -355,9 +357,9 @@ Behaviours use the enemy `ScriptApi` (`core/enemies`), which wraps every primiti
 enemy's centre and **enforces the §11 fire rule itself**: while `canFire()` is false — off
 screen, fewer than `settleTicks` after its first on-screen tick, a ghost leader, or no longer
 `Live` — it fires nothing and returns `-1` / `0`. `spiral` still returns the advanced angle, so
-a spiral keeps turning while its enemy may not fire. `laser(angle = AIM, length = 384, width,
-telegraph, grow, active, fade)` fires a laser **attached** to the enemy. Bullets outlive the
-enemy that fired them.
+a spiral keeps turning while its enemy may not fire. `laser(angle = AIM, length = PLAYFIELD_W,
+width, telegraph, grow, active, fade)` (one screen width — 384 today) fires a laser **attached** to
+the enemy. Bullets outlive the enemy that fired them.
 
 ### The roster fires
 

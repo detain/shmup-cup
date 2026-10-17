@@ -167,7 +167,9 @@ const game = createGame(platform, { seed }, db);
    M2-07 the `yOver` / `hold` rules, branches, triggers and block sizes) and their flag names —
    of `flag` and `trigger` events and of `branches` — are numbered (`flagNames`, `flagId`;
    events naming a branch get `branchId`); tilesets get their lookup `tables` (since M2-07 with
-   `hp`, `regen`, `score`). Since M2-08 `checkStageEffects` also checks and completes a stage's
+   `hp`, `regen`, `score`). Since R1-04 a tileset's `tileSize` is 8 or 12 (`MIN_TILE_SIZE` /
+   `MAX_TILE_SIZE` — "must be 8 or 12"), and a stage's tilemap must use its tileset's size; shipped
+   content uses `TILE_SIZE` (`test/integration/tile-size.test.ts`). Since M2-08 `checkStageEffects` also checks and completes a stage's
    `raster` effects and palette `cycles` (ranges, the fields each raster kind needs, `bands`,
    distinct and not-too-close cycle colours per layer, ≤ 8 per layer; defaults filled, colours
    resolved to `rgb`); since M2-09 `checkStageRush` fills `type` (`normal`) and the rush entries'

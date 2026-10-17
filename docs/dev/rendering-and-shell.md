@@ -975,6 +975,45 @@ this section already asks for: SwiftShader charges CPU time for the extra draw c
 the tree walk cheap on a desktop core, and the M7's Cortex-A55 pays the opposite way round, so the
 counted 659 → 0 is the result that transfers.
 
+Since **R0-02** every scenario renders to a **1280×720** display (`DISPLAY_WIDTH` / `DISPLAY_HEIGHT`
+in `render.perf.ts`; it was 960×540, which v2's 640×360 frame does not divide), and the file has a
+second suite: the TV render bench's scenes, below.
+
+### The TV render bench (R0-02)
+
+The M3-02c harness is an ES-module page driven by Playwright and never built for Tizen, and at any
+size other than 384×216 it priced filter targets, not a denser scene. So v2's resolution question
+(plan_resolution.md R0-02, §13) has its own instrument: **a second Tizen widget**,
+`ShmpCupBnc.RenderBench`, built from `apps/tizen` (`pnpm bench:tv` → `apps/tizen/dist-bench/`; a
+build-only webOS stub too). How to build, package and run it on the monitors:
+[build-test-deploy.md](build-test-deploy.md#the-tv-render-bench-r0-02).
+
+- **What it draws** (`apps/tizen/src/bench/scene.ts`): no simulation — a synthetic scene through
+  the real renderer's bindings at each internal size with a **density** `s`: 384×216 at `s` = 1,
+  640×360 at 1.5 (the v2 game), 960×540 at 2.25 (v2's field of view at 1.5× its density). The atlas
+  is upscaled ×`s` at build time (`scripts/bench-atlas.mjs`; pages 1 / 1 / 2 by the plan's area
+  model), and the load is v2's layer stack: five parallax layers (two full-frame, three partial with
+  alpha), ~35 % terrain at `8·s`-px tiles, decor, 64 enemies, 512 bullets, 512 point items, 512
+  particles, the ship with four Options and 32 shots, the HUD bars. Six variants per size — busy, a
+  filtered layer, Mode-7, CRT light, CRT full, all at once — make 18 scenarios.
+- **What it measures** (`stats.ts`, allocation-free): `renderer.render()` CPU ms (p50 / p95), the
+  same with `gl.finish()` after each render (the synced pass — WebGL is asynchronous, so fill cost
+  otherwise only shows as late frames), the rAF-delta buckets of the M7 (12 / 15 / 17 / 19 / 21 / 25
+  / 33 ms) and the share of two-tick frames, draw calls, render-target, frame-target and texture
+  bytes, atlas pages and the coarse JS heap. One scenario per page load (Pixi's `TexturePool` never
+  shrinks): 10 s warm-up, 14 s free-running, 6 s synced, then `location.reload()`.
+- **Where the numbers go:** an on-screen table in the bitmap font after the run, a `render-bench`
+  payload per scenario POSTed with `@shmup/shell`'s `sendRenderBench` to the input probe's log
+  server ([input-probe.md](input-probe.md)), and `localStorage`. `tools/input-probe/results/analyze-bench.mjs`
+  prints every scenario **relative to the same session's 384×216** (the M7's rAF shows a p95 near
+  30 ms with nothing running, so absolute times mislead), applies §13's verdict rules and compares a
+  WebGL 1 with a WebGL 2 session.
+- **Headless:** `pnpm bench` builds the widget exactly as `bench:tv` does and opens each scenario
+  with `?scenario=<id>` on the 1280×720 display, gating **counts only** — `tvBenchViolations` in
+  `render-harness/gates.ts`: the full load on every frame, draw calls within `DRAW_CALL_BUDGET`, no
+  pooled render target without a filtered layer and exactly the frame's power-of-two target with
+  one, the density's atlas pages, the heap. Its milliseconds are SwiftShader's and are only printed.
+
 ### The on-device readout: the debug overlay
 
 A `build:dev` bundle, the debug tools unlocked (web: F1; TV: **Pause, Ch+, Ch+, Ch+**), and the

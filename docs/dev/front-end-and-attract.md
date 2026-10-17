@@ -197,13 +197,17 @@ allocation-free apart from its spawns' coroutines, D29).
 The story is **campaign content**: `campaign.story`, up to `MAX_STORY_PAGES` (8) pages
 (`CampaignStoryPage { scene, lines }`), each naming a sprite scene of `STORY_SCENES` — `none`,
 `dawn`, `invasion`, `launch` (default `none`) — and 0–`MAX_STORY_LINES` (6) lines of ≤
-`MAX_STORY_LINE_LENGTH` (40) characters. `completeCampaign` defaults the fields. The shipped story
+`MAX_STORY_LINE_LENGTH` (40) characters — since R1-01 the glyph cells that fit the story panel,
+⌊(`FRAME_W` − 144) / `GLYPH_W`⌋ ([scenes-and-ui.md](scenes-and-ui.md#laying-screens-out-from-the-frame-r1-01)).
+`completeCampaign` defaults the fields. The shipped story
 is three pages of original text (the Verge worlds, the Iron Tide, KESTREL and MANTA — see
 `content/campaign/main.campaign.json`).
 
 `StoryScene` flattens the pages into rows once, when the flow is built (every page's lines, then a
 blank row). The rows rise 1 px every `STORY_SCROLL_TICKS` (4 — 15 px a second), `STORY_ROW_HEIGHT`
-(11) px apart, through a panel at the bottom of the screen (rows between y 132 and 206); only the
+(11 — `LINE_H + 1` since R1-01) px apart, through a panel at the bottom of the screen (rows between
+y 132 and 206, `STORY_PANEL` `FRAME_W − 80` wide at x 40 — its rows stay top-anchored on purpose
+under the sprite scenes until R4-05 redraws them); only the
 rows inside it are drawn, through `STORY_STRING_SLOTS` (10) slots **taken by row number** — the
 credits' trick from M2-14, so any story length fits a fixed budget. A page's scene takes over
 when its first row has crawled **half-way up** the panel (`STORY_PAGE_LEAD`), so the picture
