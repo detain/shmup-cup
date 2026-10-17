@@ -173,7 +173,12 @@ export function parseRunState(text: string | null): BenchRunState | null {
     cursor,
     seq: Math.max(0, Math.floor(o.seq)),
     webGLVersion: o.webGLVersion === 2 ? 2 : 1,
-    timing: { warmupMs: timing.warmupMs, measureMs: timing.measureMs, syncMs: timing.syncMs },
+    timing: {
+      warmupMs: timing.warmupMs,
+      measureMs: timing.measureMs,
+      syncMs: timing.syncMs,
+      minFrames: isNumber(timing.minFrames) ? timing.minFrames : 0,
+    },
     records,
     sent: (o.sent as unknown[]).filter(isNumber),
     lastError: typeof o.lastError === 'string' ? o.lastError : null,

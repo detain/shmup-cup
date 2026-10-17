@@ -109,6 +109,11 @@ export interface BenchTiming {
   readonly measureMs: number;
   /** Measured with `gl.finish()` after every render (the synced GPU figure), ms. */
   readonly syncMs: number;
+  /**
+   * Fewest frames each measured phase records before it may end, whatever the clock says (0 on the
+   * TV, where the phases are timed; headless, SwiftShader can stall for a second under load).
+   */
+  readonly minFrames: number;
 }
 
 /**
@@ -119,6 +124,7 @@ export const TV_BENCH_TIMING: BenchTiming = Object.freeze({
   warmupMs: 10_000,
   measureMs: 14_000,
   syncMs: 6_000,
+  minFrames: 0,
 });
 
 /**
@@ -129,6 +135,7 @@ export const HEADLESS_BENCH_TIMING: BenchTiming = Object.freeze({
   warmupMs: 500,
   measureMs: 1_500,
   syncMs: 500,
+  minFrames: 20,
 });
 
 /**
@@ -162,8 +169,8 @@ export function searchParam(search: string, name: string): string | null {
 }
 
 /**
- * The phase timing a query string asks for: `?warmup=<ms>&measure=<ms>&sync=<ms>`, each falling
- * back to `base` when absent or not a whole number of milliseconds ≥ 0 (`measure` ≥ 1).
+ * The phase timing a query string asks for: `?warmup=<ms>&measure=<ms>&sync=<ms>&frames=<n>`, each
+ * falling back to `base` when absent or not a whole number ≥ 0 (`measure` ≥ 1).
  *
  * @param search - `location.search`.
  * @param base - Defaults.
@@ -188,5 +195,6 @@ export function timingFromSearch(search: string, base: BenchTiming): BenchTiming
     warmupMs: read('warmup', base.warmupMs, 0),
     measureMs: read('measure', base.measureMs, 1),
     syncMs: read('sync', base.syncMs, 0),
+    minFrames: read('frames', base.minFrames, 0),
   };
 }

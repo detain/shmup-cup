@@ -399,7 +399,7 @@ function measureScenario(
       // Phase state in typed arrays (fractional times stay unboxed): phase, phase start, last
       // rAF time, heap at the start, draw calls, fewest particles, fewest tiles.
       const times = new Float64Array(3);
-      const counts = new Int32Array(5);
+      const counts = new Int32Array(6);
       const PHASE = 0;
       const DRAWS = 1;
       const PARTICLES = 2;
@@ -407,6 +407,8 @@ function measureScenario(
       // Frames still to settle before a phase records: the first frame after the forced garbage
       // collection of the headless run (a `gc()` can stall a second) starts the phase's clock.
       const SETTLE = 4;
+      // Frames the current measured phase has recorded (see `BenchTiming.minFrames`).
+      const RECORDED = 5;
       const START = 0;
       const LAST = 1;
       const HEAP = 2;
@@ -441,16 +443,22 @@ function measureScenario(
             const elapsed = clock.now() - t0;
             if (phase === 1) sampler.free(elapsed, delta, ticks);
             else if (phase === 2) sampler.synced(elapsed);
+            if (phase > 0) counts[RECORDED]++;
             if (phase > 0) {
               const live = particles === null ? 0 : particles.liveCount;
               if (live < counts[PARTICLES]) counts[PARTICLES] = live;
               const tiles = scene.visibleTiles();
               if (tiles < counts[TILES]) counts[TILES] = tiles;
             }
-            if (!settling && now - times[START] >= durations[phase]) {
+            if (
+              !settling &&
+              now - times[START] >= durations[phase] &&
+              (phase === 0 || counts[RECORDED] >= timing.minFrames)
+            ) {
               if (phase === 1) counts[DRAWS] = renderer.drawCalls;
               const next = phase + 1;
               counts[PHASE] = next;
+              counts[RECORDED] = 0;
               times[START] = now;
               if (next === 1) {
                 collect(win);
@@ -734,7 +742,7 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
         if (state === null) return;
         const next = recordResult(state, record);
         save(next);
-        post([record], !next.running, reload);
+        post([record], next.cursor >= BENCH_SCENARIOS.length, reload);
       },
       (error: unknown) => {
         if (state !== null) save(stopRun(state, String(error)));
@@ -817,7 +825,7 @@ function showResults(
   const unsent = state === null ? [] : unsentRecords(state);
   draw(unsent.length > 0 && endpoint !== null ? `sending ${unsent.length} result(s)...` : '');
   if (state !== null && unsent.length > 0 && endpoint !== null) {
-    post(unsent, !state.running, () => {
+    post(unsent, state.cursor >= BENCH_SCENARIOS.length, () => {
       const after = getState();
       const left = after === null ? 0 : unsentRecords(after).length;
       draw(left === 0 ? 'all results acknowledged' : `${left} result(s) not acknowledged`);

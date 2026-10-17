@@ -142,7 +142,7 @@ describe('bench page (TV mode)', () => {
     const state = page.state();
     expect(state).toMatchObject({ running: true, cursor: 0, webGLVersion: 2 });
     expect(state?.session).toMatch(/^rb-/);
-    expect(state?.timing).toEqual({ warmupMs: 0, measureMs: 100, syncMs: 0 });
+    expect(state?.timing).toEqual({ warmupMs: 0, measureMs: 100, syncMs: 0, minFrames: 0 });
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
 

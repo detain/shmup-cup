@@ -78,7 +78,12 @@ describe('bench matrix (plan R0-02, §13)', () => {
   });
 
   it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — about 10 minutes', () => {
-    expect(TV_BENCH_TIMING).toEqual({ warmupMs: 10_000, measureMs: 14_000, syncMs: 6_000 });
+    expect(TV_BENCH_TIMING).toEqual({
+      warmupMs: 10_000,
+      measureMs: 14_000,
+      syncMs: 6_000,
+      minFrames: 0,
+    });
     const perScenario =
       TV_BENCH_TIMING.warmupMs + TV_BENCH_TIMING.measureMs + TV_BENCH_TIMING.syncMs;
     expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(9);
@@ -96,16 +101,20 @@ describe('bench query string', () => {
     expect(searchParam('?x=%E0%A4%A', 'x')).toBeNull();
   });
 
-  it('overrides the phase timing with whole milliseconds only', () => {
-    expect(timingFromSearch('?warmup=0&measure=500&sync=250', TV_BENCH_TIMING)).toEqual({
+  it('overrides the phase timing with whole milliseconds and frames only', () => {
+    expect(timingFromSearch('?warmup=0&measure=500&sync=250&frames=12', TV_BENCH_TIMING)).toEqual({
       warmupMs: 0,
       measureMs: 500,
       syncMs: 250,
+      minFrames: 12,
     });
-    expect(timingFromSearch('?warmup=-1&measure=0&sync=1.5', TV_BENCH_TIMING)).toEqual(
+    expect(timingFromSearch('?warmup=-1&measure=0&sync=1.5&frames=x', TV_BENCH_TIMING)).toEqual(
       TV_BENCH_TIMING,
     );
     expect(timingFromSearch('', HEADLESS_BENCH_TIMING)).toEqual(HEADLESS_BENCH_TIMING);
+    // Headless, a measured phase records at least 20 frames however long SwiftShader stalls.
+    expect(HEADLESS_BENCH_TIMING.minFrames).toBe(20);
+    expect(TV_BENCH_TIMING.minFrames).toBe(0);
   });
 
   it('asks for WebGL 2 from ?gl=2 or the stored override, else 1', () => {
