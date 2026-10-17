@@ -12,6 +12,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { FRAME_H, FRAME_W } from '../../../../scripts/frame.mjs';
 import {
   APPINFO_ID_PATTERN,
   APPINFO_KEYS,
@@ -111,11 +112,15 @@ describe('webos appinfo — the id and the version (M3-03)', () => {
 
 describe('webos appinfo — the fields the game depends on (M3-03)', () => {
   it('lets resolution be absent, but only ever 1920x1080', () => {
+    // The message names the frame from scripts/frame.mjs (the scripts' mirror of core's, R1-02):
+    // "384x216 x5" today, "640x360 x3" after R2-01.
+    const scale = 1080 / FRAME_H;
+    expect(Number.isInteger(scale) && FRAME_W * scale === 1920).toBe(true);
     expect(withField({ resolution: undefined })).toEqual([]);
     expect(withField({ resolution: '1920x1080' })).toEqual([]);
     for (const resolution of ['1280x720', '3840x2160', '1920X1080', 1920]) {
       expect(withField({ resolution }), String(resolution)).toContain(
-        'appinfo.json: "resolution" must be "1920x1080" (the game renders 384x216 x5)',
+        `appinfo.json: "resolution" must be "1920x1080" (the game renders ${FRAME_W}x${FRAME_H} x${scale})`,
       );
     }
   });

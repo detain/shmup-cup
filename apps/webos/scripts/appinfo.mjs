@@ -13,6 +13,7 @@
  *
  * @module
  */
+import { FRAME_H, FRAME_W } from '../../../scripts/frame.mjs';
 
 /** Keys `appinfo.json` may carry (LG's web-app manifest; anything else is rejected as a typo). */
 export const APPINFO_KEYS = Object.freeze([
@@ -119,7 +120,9 @@ export function validateAppInfo(text) {
   if (json.type !== 'web') problems.push('appinfo.json: "type" must be "web"');
   if (json.main !== 'index.html') problems.push('appinfo.json: "main" must be "index.html"');
   if (json.resolution !== undefined && json.resolution !== '1920x1080') {
-    problems.push('appinfo.json: "resolution" must be "1920x1080" (the game renders 384x216 x5)');
+    problems.push(
+      `appinfo.json: "resolution" must be "1920x1080" (the game renders ${FRAME_W}x${FRAME_H} x${1080 / FRAME_H})`,
+    );
   }
   // The scene flow owns Back (title -> exit confirmation): webOS must not pop history behind us.
   if (json.disableBackHistoryAPI !== true) {

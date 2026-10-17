@@ -11,7 +11,9 @@
  *
  * - every other package's `src/` (`render-pixi`, `shell`, `audio-web`, `input-web` — and any
  *   package added later),
- * - every app's `src/` (`web`, `tizen`, `webos`, `electron`), and
+ * - every app's `src/` (`web`, `tizen`, `webos`, `electron`),
+ * - every app's `scripts/` where it has one (`tizen`, `webos`, `electron`: the bundle checks, the
+ *   manifests' validators, packaging and bench helpers — `.mjs`, parsed as JavaScript), and
  * - every root script under `scripts/` (`.mjs`, parsed as JavaScript),
  *
  * and fails on any numeric literal — or whole number inside a string or template literal — that
@@ -24,10 +26,10 @@
  * goes on {@link ALLOWED}, one entry per file, **symbol path** and value with the reason — never a
  * line number. The test fails when a symbol holds more literals than its entry's `count` (a frame
  * number crept in beside an allowed one), fewer, or none (a stale entry), so the list cannot rot.
- * Anything that does mean the frame derives from `@shmup/core`'s constants — or, in a root script,
- * from `scripts/frame.mjs`, the scripts' pinned mirror of them.
+ * Anything that does mean the frame derives from `@shmup/core`'s constants — or, in a Node script
+ * (root or an app's), from `scripts/frame.mjs`, the scripts' pinned mirror of them.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FRAME_H, FRAME_W } from '@shmup/core';
@@ -59,7 +61,8 @@ function kindOf(name: string): ts.ScriptKind | null {
 
 /**
  * The trees the scan reads: every package's `src/` but core's (its own scan covers it), every
- * app's `src/`, and `scripts/`.
+ * app's `src/` and — where it has one — `scripts/` (its build checks, packaging and bench
+ * helpers), and the root `scripts/`.
  *
  * @returns Repo-relative folders, sorted.
  */
@@ -69,6 +72,9 @@ function scannedTrees(): string[] {
     for (const entry of readdirSync(join(repo, parent), { withFileTypes: true })) {
       if (!entry.isDirectory() || (parent === 'packages' && entry.name === 'core')) continue;
       trees.push(`${parent}/${entry.name}/src`);
+      if (parent === 'apps' && existsSync(join(repo, parent, entry.name, 'scripts'))) {
+        trees.push(`${parent}/${entry.name}/scripts`);
+      }
     }
   }
   trees.push('scripts');
@@ -77,7 +83,7 @@ function scannedTrees(): string[] {
 
 /**
  * Every frame-number literal outside core that may stay, and why. Add an entry only for a literal
- * that does not mean the frame; a literal that does derives from core's constants (or, in a root
+ * that does not mean the frame; a literal that does derives from core's constants (or, in a Node
  * script, from `scripts/frame.mjs`).
  */
 const ALLOWED: readonly AllowedFrameLiteral[] = [
@@ -157,6 +163,12 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     value: 200,
     reason: "an HTTP status: the screenshot script's static server answers 200 OK",
   },
+  {
+    file: 'apps/tizen/scripts/tizen-watch.mjs',
+    symbol: 'createLiveReloadServer.server',
+    value: 200,
+    reason: "an HTTP status: the live-reload dev server answers 200 OK with the build's file",
+  },
   // A key code.
   {
     file: 'packages/input-web/src/rebind/index.ts',
@@ -229,7 +241,7 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
     scanFrameLiterals(file, readFileSync(join(repo, file), 'utf8'), kindOf(file) as ts.ScriptKind),
   );
 
-  it('scans every other package, every app and the root scripts (and finds some)', () => {
+  it('scans every other package, every app with its scripts, and the root scripts', () => {
     expect(trees).toEqual(
       expect.arrayContaining([
         'packages/render-pixi/src',
@@ -240,6 +252,9 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
         'apps/tizen/src',
         'apps/webos/src',
         'apps/electron/src',
+        'apps/tizen/scripts',
+        'apps/webos/scripts',
+        'apps/electron/scripts',
         'scripts',
       ]),
     );
@@ -250,6 +265,8 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
       'packages/shell/src/boot/index.ts',
       'apps/electron/src/main/window-state.ts',
       'apps/electron/src/preload/preload.cts',
+      'apps/tizen/scripts/check-bundle.mjs',
+      'apps/webos/scripts/appinfo.mjs',
       'scripts/frame.mjs',
       'scripts/content/rescale.mjs',
       'scripts/assets/procedural/terrain.mjs',
@@ -262,7 +279,7 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
     const problems = frameLiteralProblems(
       hits,
       ALLOWED,
-      "derive it from @shmup/core's constants (in scripts/: from scripts/frame.mjs)",
+      "derive it from @shmup/core's constants (in a Node script: from scripts/frame.mjs)",
     );
     expect(problems).toEqual([]);
   });
