@@ -130,11 +130,15 @@
  * SINGLE-MODEL proxy entry point fronting whichever one model is loaded.
  * Precedence: --base-url > --port (http://HOST:<port>) > the default above.
  * Payload model id precedence: --served-model > single-model auto-adopt (one
- * /v1/models entry ⇒ adopt) > group default id. Remote launchers bind their
- * own ports 30000-30006 (REFERENCE ONLY): flux1dev :30000, flux2dev :30001,
- * sd35 :30002, qwenimage :30003, ltx25 :30004 (no group here), wan22 :30005,
- * ltxvideo :30006. Shared https:443 origins stay informational-only; direct
- * origins auto-adopt only a lone DIFFUSION-marked entry.
+ * /v1/models entry ⇒ adopt) > group default id. EVERY image/video launcher
+ * (/root/run_sglang_images_<name>-1.sh on skynet2) binds :30001 on GPUs 2,3,
+ * one model at a time — so every group maps to :30001. PORT 30000 IS THE MAIN
+ * LLM (GPUs 0,1; nginx :80/:443 on the skynet2 host proxy to it too): an origin
+ * on port 30000, or skynet2 on :80/:443, is REFUSED with an error before any
+ * request (assertImageOrigin). Start / stop the image server only through
+ * v2/server.sh (docs/dev/art-generation-server.md). Shared https:443 origins
+ * on other hosts stay informational-only; direct origins auto-adopt only a
+ * lone DIFFUSION-marked entry.
  * LIVE PROBE (2026-10-07, from the build machine): :30001 /v1/models refused
  * (nothing bound yet); https origin serves only "Qwen/Qwen3.8-Flash-Next-FP8"
  * (plain LLM — never auto-adopted on direct origins). The user's box is the
@@ -172,7 +176,7 @@
  *   node generate.mjs --model wan22 --filter id=kestrel-weave-azurerverge-v1  # smoke one t2v
  *   node generate.mjs --model ltxvideo --filter model=ltxvideo     # every ltx entry incl. i2v
  *   node generate.mjs --model wan22 --all --i2v-strict             # force every video entry, fail on missing stills
- *   node generate.mjs --model sd35 --port 30002 --served-model stabilityai/sd-3.5-large
+ *   node generate.mjs --model sd35 --port 30001 --served-model stabilityai/stable-diffusion-3.5-large
  *   SKYNET_API_KEY=*** node generate.mjs --model qwenvl --seed 1234
  */
 
@@ -189,6 +193,10 @@ import { fileURLToPath } from "node:url";
 const HOST = "skynet2.interserver.net";
 const DEFAULT_PORT = 30001;
 const DEFAULT_BASE_URL = `http://${HOST}:${DEFAULT_PORT}`;
+/** The main LLM's port on skynet2 — never an image/video origin (refused). */
+const LLM_PORT = 30000;
+/** Names of the skynet2 host, whose nginx :80/:443 also front the LLM. */
+const SKYNET_HOSTS = new Set([HOST, "skynet2", "173.225.108.102"]);
 
 // ---------------------------------------------------------------------------
 // Model groups (the six this library names; ltx25 exists on the fleet but no
@@ -202,11 +210,13 @@ const DEFAULT_BASE_URL = `http://${HOST}:${DEFAULT_PORT}`;
  * always sent in field mode.
  * maxPixels: safety ceiling only — shmup table values are model-legal
  * verbatim; an explicit --max-pixels trims.
- * port: REFERENCE ONLY (launcher bind port); the default transport ignores it.
+ * port: the launcher's bind port — :30001 for every group (the launchers are
+ * pinned to GPUs 2,3 and :30001 and run one at a time); REFERENCE ONLY, the
+ * transport uses DEFAULT_BASE_URL / --port / --base-url.
  */
 const GROUPS = {
   flux1: {
-    kind: "image", port: 30000,
+    kind: "image", port: 30001,
     model: "black-forest-labs/FLUX.1-dev",
     supportsNegative: false, maxPixels: 2_097_152,
   },
@@ -216,22 +226,22 @@ const GROUPS = {
     supportsNegative: false, maxPixels: 2_097_152,
   },
   sd35: {
-    kind: "image", port: 30002,
+    kind: "image", port: 30001,
     model: "stabilityai/stable-diffusion-3.5-large",
     supportsNegative: true, maxPixels: 2_097_152,
   },
   qwenvl: {
-    kind: "image", port: 30003,
+    kind: "image", port: 30001,
     model: "Qwen/Qwen-Image",
     supportsNegative: true, maxPixels: 2_097_152,
   },
   wan22: {
-    kind: "video", port: 30005,
+    kind: "video", port: 30001,
     model: "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
     supportsNegative: true, maxPixels: 1_280 * 720, frameStep: 4, divisor: 16,
   },
   ltxvideo: {
-    kind: "video", port: 30006,
+    kind: "video", port: 30001,
     model: "Lightricks/LTX-Video",
     supportsNegative: true, maxPixels: 1_280 * 720, frameStep: 8, divisor: 32,
   },
@@ -1445,7 +1455,8 @@ const USAGE = `usage: node generate.mjs [options]
   --base-url <url>      full endpoint override; wins over --port and the
                          default http://${HOST}:${DEFAULT_PORT}
   --port <n>            use http://${HOST}:<n> on the default host
-                         (reference launcher ports: 30000-30006)
+                         (every image/video launcher binds 30001; port
+                         ${LLM_PORT} is the LLM and is refused)
   --served-model <id>   payload model id, independent of --model group;
                          always beats single-model auto-adopt
                          (alias --model-id; skips the /v1/models probe)
@@ -1923,12 +1934,32 @@ async function getJson(url, opts, deadline) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Throws when baseUrl would reach the main LLM instead of an image/video
+ * server: any origin on port 30000 (the LLM's), or the skynet2 host on
+ * :80/:443 (its nginx proxies to :30000). Image and video models are always
+ * on :30001 (docs/dev/art-generation-server.md).
+ */
+function assertImageOrigin(baseUrl) {
+  let u;
+  try { u = new URL(baseUrl); } catch { return baseUrl; }
+  const port = u.port === "" ? (u.protocol === "https:" ? 443 : 80) : Number(u.port);
+  if (port === LLM_PORT) {
+    throw new Error(`refusing ${baseUrl}: port ${LLM_PORT} is the main LLM on skynet2, not an image/video server — image and video models are served on :${DEFAULT_PORT} (art-prompts/v2/server.sh status)`);
+  }
+  if (SKYNET_HOSTS.has(u.hostname) && (port === 80 || port === 443)) {
+    throw new Error(`refusing ${baseUrl}: skynet2's nginx on :${port} proxies to the LLM on :${LLM_PORT} — use http://${HOST}:${DEFAULT_PORT}`);
+  }
+  return baseUrl;
+}
+
+/**
  * Endpoint precedence: --base-url > --port (http on the default host) >
  * http://skynet2.interserver.net:30001 (single-model proxy default).
+ * Throws for an LLM origin (assertImageOrigin).
  */
 function resolveBaseUrl(opts) {
-  if (opts.baseUrl) return opts.baseUrl;
-  if (opts.port !== null) return `http://${HOST}:${opts.port}`;
+  if (opts.baseUrl) return assertImageOrigin(opts.baseUrl);
+  if (opts.port !== null) return assertImageOrigin(`http://${HOST}:${opts.port}`);
   return DEFAULT_BASE_URL;
 }
 
@@ -2707,7 +2738,11 @@ async function main() {
   }
 
   const group = { ...GROUPS[opts.model], key: opts.model };
-  group.baseUrl = resolveBaseUrl(opts);
+  try {
+    group.baseUrl = resolveBaseUrl(opts);
+  } catch (err) {
+    fail(err.message);
+  }
   if (opts.modelId) group.model = opts.modelId; // --served-model: honored by dry-run and real runs alike
 
   if (opts.out === null) opts.out = path.resolve(SCRIPT_DIR, "output");
@@ -2744,7 +2779,7 @@ async function main() {
 // copying it (importing never runs main — see the CLI guard below).
 export {
   GROUPS, GROUP_ALIASES, IMAGE_GROUPS, IMAGE_FORMATS, MODEL_NAME_TO_GROUP, README_DEFAULTS,
-  HOST, DEFAULT_PORT, DEFAULT_BASE_URL, HttpError, resolveBaseUrl, probeModels, httpHeaders,
+  HOST, DEFAULT_PORT, DEFAULT_BASE_URL, LLM_PORT, HttpError, resolveBaseUrl, assertImageOrigin, probeModels, httpHeaders,
   fetchWithRetry, postJson, getBinary, safeText, detectImageFormat, formatExt,
   writeFileAtomic, appendNegative, snap16, resolveExistingVariants, readSidecar,
 };

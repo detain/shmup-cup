@@ -2,12 +2,14 @@
 # =============================================================================
 # sweep-models.sh — overnight model sweep for the shmup-cup art-prompts library.
 #
-# Loop per model type: START the SGLang server on the remote box over SSH →
-# wait until it answers → GENERATE everything for that kind with generate.mjs
-# (outputs land in output/<group>/ — the per-model subdir is native to
-# generate.mjs, so there is nothing to "move") → STOP the server
-# (process-group kill of the recorded pid, targeted pkill fallback) → file a
+# Loop per model type: START the SGLang server on the remote box through
+# v2/server.sh (preflight: cards 2,3 and :30001 free, disk) → wait until it
+# answers → GENERATE everything for that kind with generate.mjs (outputs land
+# in output/<group>/ — the per-model subdir is native to generate.mjs, so there
+# is nothing to "move") → STOP the server with `server.sh stop <group> --pgid`
+# (the safe recipe: never by name or GPU, never the LLM's group) → file a
 # .sweep-complete marker so --resume can continue an interrupted sweep.
+# Runbook: docs/dev/art-generation-server.md.
 #
 # SWEEP ORDER LAW: ALL_GROUPS runs ALL FOUR IMAGE GROUPS BEFORE the video
 # groups on purpose — 25 video entries are i2v and pull their source still
@@ -20,31 +22,29 @@
 # --dry-run only (dry-run performs ZERO ssh and ZERO writes).
 #
 # -----------------------------------------------------------------------------
-# WHAT THE REMOTE LAUNCHERS REVEAL (fetched read-only 2026-10-07, ssh cat):
+# WHAT THE REMOTE LAUNCHERS REVEAL (re-checked read-only 2026-10-16):
 #   /root/run_sglang_images_{flux1dev,flux2dev,stablediffusion35large,
 #                          qwenimage,ltx25,ltxvideo,wan22}-1.sh
 #   Each is a bare foreground command (no nohup, no pidfile, no docker,
 #   no stop logic), e.g.:
-#     CUDA_VISIBLE_DEVICES=0,1 sglang serve --model-path <ID> \
-#       [--tp-size 2 | --ulysses-degree 2 | --enable-cfg-parallel] \
-#       --port 3000N --host 0.0.0.0
+#     CUDA_VISIBLE_DEVICES=2,3 sglang serve --model-path <ID> … \
+#       --host 0.0.0.0 --port 30001
 #   Consequences designed into this script:
 #   * SERVED MODEL ID = the --model-path string exactly (see registry).
-#     Note ltx25 serves "Lightricks/LTX-2.5" (NO "-Diffusers" suffix).
-#   * All seven scripts pin CUDA_VISIBLE_DEVICES=0,1 with --num-gpus 2 →
-#     they CANNOT run concurrently (GPU memory). One type at a time is
-#     mandatory; stopping is targeted (recorded process-group + script-path
-#     pkill), never a broad `pkill -f sglang` that could hit a co-resident
-#     model.
-#   * No stop path exists remotely → we launch under `nohup setsid` so the
-#     recorded pid is the session/process-group leader and `kill -TERM -PID`
-#     reaps sglang's whole tree.
-#   * Launchers bind 0.0.0.0:30000-30006, but the owner's chosen client
-#     entry point is the SINGLE constant origin
-#     http://skynet2.interserver.net:30001 (same default as generate.mjs
-#     v2 — plain HTTP, port 30001, fronts whichever one model is loaded;
-#     the flux2dev launcher is what natively binds 30001, so the owner is
-#     either running flux2dev there or proxying 30001 to the live model).
+#   * All seven scripts pin CUDA_VISIBLE_DEVICES=2,3 and --port 30001 → they
+#     CANNOT run concurrently. One type at a time is mandatory. The main LLM
+#     runs on GPUs 0,1 and PORT 30000 — never a target, never a probe origin
+#     (an URL on :30000, or skynet2 on :80/:443 — nginx to the LLM — is
+#     refused below).
+#   * Start and stop go through v2/server.sh, the only tool allowed to touch
+#     skynet2's processes: `start` launches under `nohup setsid` (the printed
+#     pgid is the launcher's own group) after a preflight; `stop --pgid`
+#     signals that group only after checking it is not the LLM's and that it
+#     runs the expected script / --model-path. Never pkill / killall.
+#   * The first start of each model downloads its weights (FLUX.2-dev: about
+#     195 GB) — START_WAIT defaults to 3 hours for that reason.
+#   * Client entry point: http://skynet2.interserver.net:30001 (same default as
+#     generate.mjs — plain HTTP, the one model loaded on cards 2,3).
 #     Readiness GATE (2026-10-07 warmup fix): primary = GET /health
 #     must return 200 (SGLang answers 503 until warmup completes) — no
 #     POST before that. The /v1/models modes below then run as
@@ -59,8 +59,8 @@
 #     --start-probe-url (or PROBE_URL env) overrides where we poll; for a
 #     box with direct port routing point PROBE_URL/GENERATE_BASE_URL at
 #     http://skynet2.interserver.net:3000N equivalents.
-#   * flux2's script adds --transformer-path lmsys/flux2-dev-modelopt-nvfp4-
-#     sglang-transformer; does not change the served id.
+#   * flux2's script adds --transformer-weights-path lmsys/flux2-dev-modelopt-
+#     fp8-sglang-transformer; does not change the served id.
 #
 # -----------------------------------------------------------------------------
 # USAGE (run from art-prompts/, or anywhere — paths anchor to this script)
@@ -89,12 +89,12 @@ set -euo pipefail
 group_field() { # $1=group $2=field index (1 script, 2 kind, 3 served-id, 4 label, 5 port)
   local row
   case "$1" in
-  flux1) row="run_sglang_images_flux1dev-1.sh|image|black-forest-labs/FLUX.1-dev|FLUX.1-dev|30000" ;;
-  flux2) row="run_sglang_images_flux2dev-1.sh|image|black-forest-labs/FLUX.2-dev|FLUX.2-dev (nvfp4 transformer)|30001" ;;
-  sd35) row="run_sglang_images_stablediffusion35large-1.sh|image|stabilityai/stable-diffusion-3.5-large|Stable Diffusion 3.5 large|30002" ;;
-  qwenvl) row="run_sglang_images_qwenimage-1.sh|image|Qwen/Qwen-Image|Qwen-Image|30003" ;;
-  wan22) row="run_sglang_images_wan22-1.sh|video|Wan-AI/Wan2.2-T2V-A14B-Diffusers|Wan 2.2 T2V A14B (video + i2v stills)|30005" ;;
-  ltxvideo) row="run_sglang_images_ltxvideo-1.sh|video|Lightricks/LTX-Video|LTX-Video (video incl. 8 i2v entries)|30006" ;;
+  flux1) row="run_sglang_images_flux1dev-1.sh|image|black-forest-labs/FLUX.1-dev|FLUX.1-dev|30001" ;;
+  flux2) row="run_sglang_images_flux2dev-1.sh|image|black-forest-labs/FLUX.2-dev|FLUX.2-dev (fp8 transformer)|30001" ;;
+  sd35) row="run_sglang_images_stablediffusion35large-1.sh|image|stabilityai/stable-diffusion-3.5-large|Stable Diffusion 3.5 large|30001" ;;
+  qwenvl) row="run_sglang_images_qwenimage-1.sh|image|Qwen/Qwen-Image|Qwen-Image|30001" ;;
+  wan22) row="run_sglang_images_wan22-1.sh|video|Wan-AI/Wan2.2-T2V-A14B-Diffusers|Wan 2.2 T2V A14B (text-to-video; no I2V weights)|30001" ;;
+  ltxvideo) row="run_sglang_images_ltxvideo-1.sh|video|Lightricks/LTX-Video|LTX-Video (video incl. 8 i2v entries)|30001" ;;
   *) return 1 ;;
   esac
   echo "$row" | cut -d'|' -f"$2"
@@ -113,7 +113,7 @@ PROMPT_DIR="${PROMPT_DIR:-$SCRIPT_DIR_ABS}"
 REMOTE_SCRIPT_DIR="${REMOTE_SCRIPT_DIR:-/root}"
 PROBE_URL="${PROBE_URL:-http://skynet2.interserver.net:30001}" # /v1/models polled here (owner v2 default: plain HTTP :30001, same origin generate.mjs defaults to)
 HEALTH_URL="${HEALTH_URL:-$PROBE_URL/health}"                  # readiness primary gate (503 warmup -> 200 ready); env-overridable
-START_WAIT="${START_WAIT:-900}"                                # seconds
+START_WAIT="${START_WAIT:-10800}"                              # seconds — a first start downloads the weights
 EXPECT_MODEL_ID="${EXPECT_MODEL_ID:-1}"                        # 0 = accept HTTP 200 alone (single-model proxy that hides ids)
 GENERATE_BASE_URL="${GENERATE_BASE_URL:-}"                     # empty = generate.mjs default (same :30001 origin); set only for direct-port boxes
 PARALLEL=2
@@ -128,6 +128,8 @@ FILTERS=() # raw "k=v" specs, passed through to generate.mjs
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GENERATOR="$SCRIPT_DIR/generate.mjs"
+SERVER_SH="$SCRIPT_DIR/v2/server.sh" # the only tool that starts / stops models on skynet2
+LLM_PORT=30000                       # the main LLM — never an image/video origin
 
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log() { printf '[%s] [%s] %s\n' "$(ts)" "${1:-sweep}" "$2" >&2; }
@@ -221,6 +223,26 @@ for g in "${ONLY[@]:-}" "${SKIP[@]:-}"; do
   group_field "$g" 1 >/dev/null 2>&1 || die sweep "unknown group \"$g\" (valid: ${ALL_GROUPS[*]})"
 done
 
+# Refuse any probe / generation origin that would reach the main LLM: port 30000,
+# or the skynet2 host on :80 / :443 (its nginx proxies to :30000).
+refuse_llm_url() { # $1 variable name, $2 URL
+  local hp host port
+  [ -n "$2" ] || return 0
+  hp=${2#*://}
+  hp=${hp%%/*}
+  host=${hp%%:*}
+  port=${hp##*:}
+  [ "$port" = "$hp" ] && case "$2" in https://*) port=443 ;; *) port=80 ;; esac
+  [ "$port" = "$LLM_PORT" ] && die sweep "$1=$2: port $LLM_PORT is the main LLM on skynet2, not an image/video server (models are on :30001)"
+  case "$host" in skynet2 | skynet2.interserver.net | 173.225.108.102)
+    if [ "$port" = 80 ] || [ "$port" = 443 ]; then die sweep "$1=$2: skynet2's nginx on :$port proxies to the LLM on :$LLM_PORT — use http://skynet2.interserver.net:30001"; fi ;;
+  esac
+  return 0
+}
+refuse_llm_url PROBE_URL "$PROBE_URL"
+refuse_llm_url HEALTH_URL "${HEALTH_URL:-}"
+refuse_llm_url GENERATE_BASE_URL "$GENERATE_BASE_URL"
+
 # --- ctrl-C: stop a started-but-unstopped remote model ----------------------
 CURRENT_PID=""
 CURRENT_GROUP=""
@@ -228,35 +250,38 @@ PRE_SNORM="" # normalized /v1/models body captured before launch (readiness mode
 on_interrupt() {
   echo
   log "${CURRENT_GROUP:-sweep}" "interrupted — best-effort stop of remote pid ${CURRENT_PID:-none}"
-  if [ -n "$CURRENT_PID" ] && [ "$DRY_RUN" = 0 ]; then
-    ssh -o BatchMode=yes -o ConnectTimeout=10 "$SSH_HOST" "kill -TERM -\"$CURRENT_PID\" 2>/dev/null; sleep 2; kill -KILL -\"$CURRENT_PID\" 2>/dev/null; true" || true
+  if [ -n "$CURRENT_PID" ] && [ "$DRY_RUN" = 0 ] && [ "$KEEP_RUNNING" = 0 ]; then
+    SERVER_SH_HOST="$SSH_HOST" bash "$SERVER_SH" stop "$CURRENT_GROUP" --pgid "$CURRENT_PID" || true
   fi
   exit 130
 }
 trap on_interrupt INT TERM
 
 # --- per-type phases ----------------------------------------------------------
-launch_model() { # sets LAUNCH_PID ; args: $1 group
-  local g="$1" script log_path
-  script="$(group_field "$g" 1)"
-  log_path="$REMOTE_SCRIPT_DIR/sglang_${g}_$(date +%s).log"
-  log "$g" "start: $REMOTE_SCRIPT_DIR/$script (log $log_path, survives ssh)"
+launch_model() { # sets LAUNCH_PID (the launcher's process group) ; args: $1 group
+  local g="$1" out
+  log "$g" "start: server.sh start $g ($REMOTE_SCRIPT_DIR/$(group_field "$g" 1), preflight first)"
   if [ "$DRY_RUN" = 1 ]; then
-    printf '[dry-run] ssh %s "nohup setsid bash %s/%s >%s 2>&1 </dev/null & echo \$!"\n' \
-      "$SSH_HOST" "$REMOTE_SCRIPT_DIR" "$script" "$log_path" >&2
-    LAUNCH_PID="<remote-pid>"
+    printf '[dry-run] SERVER_SH_HOST=%s bash %s start %s\n' "$SSH_HOST" "$SERVER_SH" "$g" >&2
+    LAUNCH_PID="<remote-pgid>"
     return 0
   fi
-  # setsid makes bash the session leader (no job control in non-interactive
-  # ssh, so setsid execs and $! stays exact); nohup+redirect+& survives ssh exit.
-  LAUNCH_PID=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$SSH_HOST" \
-    "nohup setsid bash '$REMOTE_SCRIPT_DIR/$script' >'$log_path' 2>&1 </dev/null & echo \$!") || return 1
-  REMOTE_LOG="$log_path"
-  [ -n "$LAUNCH_PID" ] || {
-    log "$g" "start failed: no pid returned"
+  # server.sh refuses (exit 3) while cards 2,3 or :30001 are busy; on success it
+  # prints PGID=<n> (nohup setsid: the launcher leads its own process group) and
+  # LOG=<path> (a timestamped log in /root/).
+  out=$(SERVER_SH_HOST="$SSH_HOST" SERVER_SH_REMOTE_DIR="$REMOTE_SCRIPT_DIR" bash "$SERVER_SH" start "$g" 2>&1) || {
+    printf '%s\n' "$out" >&2
+    log "$g" "start failed or refused (see above)"
     return 1
   }
-  log "$g" "remote pid $LAUNCH_PID"
+  printf '%s\n' "$out" >&2
+  LAUNCH_PID=$(printf '%s\n' "$out" | sed -n 's/^PGID=//p' | tail -n 1)
+  REMOTE_LOG=$(printf '%s\n' "$out" | sed -n 's/^started .*, log //p' | tail -n 1)
+  [ -n "$LAUNCH_PID" ] || {
+    log "$g" "start failed: no pgid returned"
+    return 1
+  }
+  log "$g" "remote process group $LAUNCH_PID"
 }
 
 health_code() { # GET /health status code; "000" when unreachable
@@ -349,22 +374,22 @@ generate_all() { # $1 group
   node "$GENERATOR" "${args[@]}" || return 1
 }
 
-stop_model() { # $1 group — targeted: process group first, script-path pkill last
-  local g="$1" script
-  script="$(group_field "$g" 1)"
+stop_model() { # $1 group — server.sh's safe stop of the group we started, then verify
+  local g="$1"
   if [ "$KEEP_RUNNING" = 1 ]; then
-    log "$g" "keep-running: leaving pid $LAUNCH_PID up"
+    log "$g" "keep-running: leaving process group $LAUNCH_PID up"
     return 0
   fi
-  log "$g" "stop: kill -TERM -$LAUNCH_PID (process group) then script-path guard"
+  log "$g" "stop: server.sh stop $g --pgid $LAUNCH_PID (INT → TERM group → KILL group, never the LLM's group)"
   [ "$DRY_RUN" = 1 ] && {
-    printf '[dry-run] ssh %s "kill -TERM -%s; sleep 3; kill -KILL -%s 2>/dev/null; pkill -f \"%s/%s\" || true"\n' "$SSH_HOST" "$LAUNCH_PID" "$LAUNCH_PID" "$REMOTE_SCRIPT_DIR" "$script" >&2
+    printf '[dry-run] SERVER_SH_HOST=%s bash %s stop %s --pgid %s\n' "$SSH_HOST" "$SERVER_SH" "$g" "$LAUNCH_PID" >&2
     return 0
   }
-  # -N targets the recorded session's whole tree; pkill matches only THIS
-  # script's absolute path — co-resident models (other ports) are untouchable.
-  ssh -o BatchMode=yes "$SSH_HOST" \
-    "kill -TERM -'$LAUNCH_PID' 2>/dev/null; sleep 3; kill -KILL -'$LAUNCH_PID' 2>/dev/null; pkill -f '$REMOTE_SCRIPT_DIR/$script' 2>/dev/null; true" || true
+  # server.sh refuses anything that is not this group or that looks like the
+  # LLM, reports survivors, and verifies (LLM healthy, :30001 empty, cards freed).
+  # A failed stop aborts the sweep: the next start would be refused anyway.
+  SERVER_SH_HOST="$SSH_HOST" SERVER_SH_REMOTE_DIR="$REMOTE_SCRIPT_DIR" bash "$SERVER_SH" stop "$g" --pgid "$LAUNCH_PID" >&2 ||
+    die "$g" "server.sh stop $g --pgid $LAUNCH_PID failed — check 'bash $SERVER_SH status' before anything else"
 }
 
 manifest_tally() { # $1 group -> "ok=N failed=N existing=N i2vskip=N"
@@ -431,6 +456,7 @@ for g in "${TYPES[@]}"; do
     [ "$FAIL_FAST" = 1 ] && die "$g" "start failed (fail-fast)"
     continue
   fi
+  [ "$DRY_RUN" = 1 ] || CURRENT_PID="$LAUNCH_PID" # ctrl-C now stops this group
   if ! wait_ready "$g"; then
     stop_model "$g"
     RESULTS+=("$g|not-ready|")
