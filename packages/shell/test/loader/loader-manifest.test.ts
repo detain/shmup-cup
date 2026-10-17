@@ -7,7 +7,6 @@
  * folder; and `loadImagesTimed` awaits `decode()` where an image has it (a rejection still counts)
  * and times every page.
  */
-import { readFileSync } from 'node:fs';
 import type { XhrLike } from '@shmup/audio-web';
 import { describe, expect, it } from 'vitest';
 import { formatManifest } from '../../../../scripts/assets/manifest.mjs';
@@ -366,11 +365,13 @@ describe('shell/loader loadImagesTimed (R1-05)', () => {
 });
 
 describe('shell/loader — the shipped manifest is what the pipeline writes', () => {
-  it('assets/generated/atlas/main.json parses and digests like the pipeline output', () => {
-    const onDisk = readFileSync(
-      new URL('../../../../assets/generated/atlas/main.json', import.meta.url),
-    );
-    expect(parseAtlasManifest(onDisk.toString('utf8'), URL_)).toEqual(manifest);
-    expect(manifestDigest(new Uint8Array(onDisk))).toBe(manifestDigest(MANIFEST_BYTES));
+  // Built in memory (`buildAtlas()` + `formatManifest`, the pipeline's own serialiser): CI's test
+  // jobs never run `pnpm assets`, so nothing here may read `assets/generated/` from disk.
+  it('the pipeline’s main.json text parses back to its manifest and digests stably', () => {
+    const text = formatManifest(buildAtlas().manifest);
+    expect(parseAtlasManifest(text, URL_)).toEqual(manifest);
+    expect(manifestDigest(new TextEncoder().encode(text))).toBe(manifestDigest(MANIFEST_BYTES));
+    expect(manifest.formatVersion).toBe(2);
+    expect(manifest.pages[0]).toMatchObject({ file: 'main.png', group: 'common' });
   });
 });
