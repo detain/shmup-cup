@@ -533,8 +533,10 @@ line of the script to relax.
 
 [`test/scripts/art-origins.test.ts`](../../test/scripts/art-origins.test.ts):
 
-- the shipped tree has no finding, and every sprite the atlas packs is classified exactly once,
-  consistently with the pipeline's origins;
+- the shipped tree has no failure and no shipped finding, and every sprite the atlas packs is
+  classified exactly once, consistently with the pipeline's origins. A staged warning is allowed
+  there and never fails CI: an unreviewed sprite staged next to the shipped tree still gives exit 0
+  with `--check`, 0 failures and 1 warning;
 - the ingest tool's five fixture outputs, added as overrides to a temporary copy of
   `assets/source/`: `fixture-far` (FLUX.1-dev), `drone` and `fixture-glow` (FLUX.2-dev) hold,
   the unreviewed AI records fail rule 4, `gyre` (`reference` + `none`) fails rule 5, the hand-made

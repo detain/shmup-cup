@@ -4,8 +4,10 @@
  * The plan's acceptance: "the origin report runs in CI and lists no sprite without provenance;
  * the licence table is filled for every model that produced shipped art". So this file
  *
- * - runs the report over the **shipped tree** (`assets/source/`): no finding, and every sprite the
- *   atlas packs is classified exactly once, consistently with the pipeline's own origins;
+ * - runs the report over the **shipped tree** (`assets/source/`): no failure and no shipped
+ *   finding, and every sprite the atlas packs is classified exactly once, consistently with the
+ *   pipeline's own origins. A **staged warning** (rules 3–5 in `art-prompts/v2/ingested/`) is
+ *   allowed there and never fails CI — a test stages an unreviewed sprite to prove it;
  * - adds the ingest tool's **five fixture outputs** to a temporary copy of `assets/source/` as
  *   override PNGs: the FLUX ones are on hold (rule 3), the unreviewed AI records fail (rule 4),
  *   `gyre` — `use: "reference"` with `cleanup: "none"` — fails rule 5, the hand-made `fringe-hull`
@@ -193,17 +195,57 @@ function cli(...args: string[]): { status: number | null; stdout: string; stderr
   return { status: run.status, stdout: run.stdout, stderr: run.stderr };
 }
 
+/**
+ * What CI demands of the repository's own trees: nothing fails, in either tree (a staged PNG
+ * without provenance, a model not in the table or a candidates path fails — rules 1, 2, 6), no
+ * shipped sprite has a finding, and every shipped sprite is traced. A **staged warning** (rules
+ * 3–5: a hold, a missing review, a light reference) is allowed — art may wait in the staging folder
+ * for its review or for the FLUX decision (`art-provenance.md` §9.3), so R3-02's real ingest does
+ * not turn CI red.
+ *
+ * @param report - A report over the shipped `assets/source/`, with any staging folder.
+ */
+function expectRepositoryPasses(report: OriginReport): void {
+  expect(report.failures).toBe(0);
+  expect(report.findings.filter((f) => f.tree === 'shipped' || f.severity === 'failure')).toEqual(
+    [],
+  );
+  expect(report.sprites.every((r) => r.status === 'ok' && r.origin !== 'unknown')).toBe(true);
+}
+
+/** The last line of a report that passes `--check`: no failure, any number of staged warnings. */
+const PASSING_SUMMARY = /\n0 failures, \d+ warnings?\n$/;
+
 describe('R3-05 — the origin report on the shipped tree', () => {
   const report = buildOriginReport();
 
-  it('lists no sprite without provenance: no failure and no warning', () => {
-    expect(report.findings).toEqual([]);
-    expect([report.failures, report.warnings]).toEqual([0, 0]);
+  it('lists no sprite without provenance: no failure and no shipped finding', () => {
+    expectRepositoryPasses(report);
     expect(report.sourceDir).toBe('assets/source');
     expect(report.stagingDir).toBe('art-prompts/v2/ingested');
     expect(report.modelsFile).toBe('art-prompts/ingest/models.json');
     expect(DEFAULT_STAGING_DIR).toBe(join(repo, 'art-prompts', 'v2', 'ingested'));
-    expect(report.sprites.every((r) => r.status === 'ok' && r.origin !== 'unknown')).toBe(true);
+  });
+
+  it('still passes with a staged warning: an unreviewed sprite waiting in the staging folder', () => {
+    const staging = join(tmp, 'staging-unreviewed');
+    writeOverride(staging, 'bosses/maw-hull', (r, s) => {
+      madeBy(s, 'qwenvl');
+      r.reviewed = null;
+    });
+    const staged = buildOriginReport({ stagingDir: staging });
+    expect([staged.failures, staged.warnings]).toEqual([0, 1]);
+    expect(verdicts(staged)).toEqual(['staged bosses/maw-hull rule 4 warning']);
+    expectRepositoryPasses(staged);
+    expect(staged.sprites).toEqual(report.sprites);
+    const text = formatOriginReport(staged);
+    expect(text).toMatch(PASSING_SUMMARY);
+    expect(text.endsWith('\n0 failures, 1 warning\n')).toBe(true);
+    const run = cli('--check', '--staging', staging);
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('WARN [staged, rule 4] bosses/maw-hull: ');
+    expect(run.stdout).toMatch(PASSING_SUMMARY);
+    expect(run.stderr).toBe('');
   });
 
   it('classifies every sprite the atlas packs exactly once', () => {
@@ -256,7 +298,7 @@ describe('R3-05 — the origin report on the shipped tree', () => {
     expect(text).toContain('Shipped sprites by origin and kind:');
     expect(text).toMatch(/\n {2}origin +generator +pixel-map +font +flash +p2 +total\n/);
     expect(text).toContain('Shipped sprites by served model (as a source or an edit reference):');
-    expect(text.endsWith('0 failures, 0 warnings\n')).toBe(true);
+    expect(text).toMatch(PASSING_SUMMARY);
     const listed = formatOriginReport(report, { list: true }).split('\n');
     for (const r of report.sprites) {
       expect(listed.some((line) => line.startsWith(`  ${r.name} `))).toBe(true);
@@ -627,7 +669,7 @@ describe('R3-05 — the command line', () => {
     const run = cli('--check');
     expect(run.status).toBe(0);
     expect(run.stdout).toContain('Shipped sprites by origin and kind:');
-    expect(run.stdout.endsWith('0 failures, 0 warnings\n')).toBe(true);
+    expect(run.stdout).toMatch(PASSING_SUMMARY);
   });
 
   it('--json prints the whole report, --list one row per sprite', () => {
