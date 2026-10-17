@@ -15,8 +15,9 @@
  * tick), the particle pool full, CRT `off` / `light` / `full`, a stage with
  * layer effects (`raster-range`) and one with the Mode-7 floor (`dimension`). Each scenario
  * asserts the *minimum* live count over the measured frames, so the stated load is the load every
- * timed frame carried. The **internal frame size is a parameter** (review §7.5):
- * the last scenario runs the same load at 768×432 (×2 of the shipped 384×216 — the first integer
+ * timed frame carried. The **internal frame size is a parameter** (review §7.5): the scenarios
+ * run at the shipped frame (`FRAME_W` × `FRAME_H` from `@shmup/core` — 384×216 today, 640×360
+ * after R2-01), and the last one runs the same load at ×2 of it (768×432 today — the first integer
  * step the owner would try), so "what would a higher internal resolution cost?" is a bench run.
  *
  * **What the numbers mean.** Draw calls are hardware-independent and are the strict gate. Render
@@ -44,6 +45,7 @@ import { createReadStream, existsSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AddressInfo } from 'node:net';
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
@@ -52,6 +54,7 @@ import { BENCH_SCENARIOS, BENCH_SIZES } from '../../apps/tizen/src/bench/matrix.
 import type { RenderBenchRecord } from '../../packages/shell/src/telemetry/index.js';
 import {
   HEAP_BUDGET,
+  nextPowerOfTwo,
   renderBenchViolations,
   renderGroupViolations,
   tvBenchViolations,
@@ -123,8 +126,8 @@ interface Scenario {
 function load(overrides: Partial<RenderBenchOptions> = {}): RenderBenchOptions {
   return {
     stage: 'zone-a',
-    width: 384,
-    height: 216,
+    width: FRAME_W,
+    height: FRAME_H,
     displayWidth: DISPLAY_WIDTH,
     displayHeight: DISPLAY_HEIGHT,
     crt: 'off',
@@ -190,15 +193,19 @@ const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
-    id: '768x432 internal (raster-range)',
+    // `768x432 internal (raster-range)` at the 384×216 frame.
+    id: `${2 * FRAME_W}x${2 * FRAME_H} internal (raster-range)`,
     what: 'review §7.5 — the layer-effect scenario at ×2 of the shipped internal resolution',
-    options: load({ stage: 'raster-range', width: 768, height: 432 }),
+    options: load({ stage: 'raster-range', width: 2 * FRAME_W, height: 2 * FRAME_H }),
     check: (result) => {
       expect(result.layerEffectMask, 'a layer effect must be attached').toBeGreaterThan(0);
       // The knob's whole point: a filter pass is pooled at the *internal* frame size, rounded up
       // to the next power of two on each axis (review F3) — 512x256 at 384x216, 1024x512 at
-      // 768x432. Four times the bytes, four times the fill.
-      expect(result.renderTargetBytes).toBeGreaterThanOrEqual(1024 * 512 * 4);
+      // 768x432 (and 1024x512 / 2048x1024 at 640x360 / 1280x720). Four times the bytes, four
+      // times the fill.
+      expect(result.renderTargetBytes).toBeGreaterThanOrEqual(
+        nextPowerOfTwo(2 * FRAME_W) * nextPowerOfTwo(2 * FRAME_H) * 4,
+      );
     },
   },
 ];

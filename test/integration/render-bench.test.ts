@@ -602,10 +602,12 @@ describe('render bench: the halves stay wired to the tested code', () => {
 
   it('keeps the two things only a browser run can check: the resolution knob and the leak gate', () => {
     const perf = benchSource('render.perf.ts');
-    // The review's §7.5 knob — the same load at ×2 of the shipped internal frame, with the
-    // pooled target expected to grow to the next power of two on each axis (1024×512).
-    expect(perf).toContain('width: 768, height: 432');
-    expect(perf).toContain('1024 * 512 * 4');
+    // The review's §7.5 knob — the same load at ×2 of the shipped internal frame (core's
+    // FRAME_W × FRAME_H, the scenarios' default), with the pooled target expected to grow to the
+    // next power of two on each axis (1024×512 at 768×432).
+    expect(perf).toContain('width: FRAME_W,\n    height: FRAME_H,');
+    expect(perf).toContain('width: 2 * FRAME_W, height: 2 * FRAME_H');
+    expect(perf).toContain('nextPowerOfTwo(2 * FRAME_W) * nextPowerOfTwo(2 * FRAME_H) * 4');
     // The heap gate's own proof: a fixture that leaks must blow the budget the scenarios pass.
     expect(perf).toContain('leakPerFrame: LEAK_PER_FRAME');
     expect(perf).toContain('expect(result.heapDeltaBytes).toBeGreaterThan(HEAP_BUDGET)');

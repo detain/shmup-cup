@@ -17,9 +17,9 @@ import type { CrtFilter } from '@shmup/core';
 export interface RenderBenchOptions {
   /** Stage id to play (`zone-a`, `raster-range` for layer effects, `dimension` for Mode-7). */
   readonly stage: string;
-  /** Internal frame width (the review's §7.5 knob; 384 is the shipped resolution). */
+  /** Internal frame width (the review's §7.5 knob; core's `FRAME_W` is the shipped resolution). */
   readonly width: number;
-  /** Internal frame height (216 is the shipped resolution). */
+  /** Internal frame height (core's `FRAME_H` is the shipped resolution). */
   readonly height: number;
   /** Canvas width in CSS pixels. */
   readonly displayWidth: number;
