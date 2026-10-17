@@ -31,8 +31,14 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
 import { BossHit, BossState } from '../../src/bosses/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
-import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
+import {
+  DEFAULT_BOSS_X,
+  DEFAULT_BOSS_Y,
+  loadContent,
+  type ContentDb,
+  type ContentFile,
+} from '../../src/data/index.js';
 import { EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
@@ -416,7 +422,7 @@ describe('core/behaviors — zones D and E, edge cases (M2-12)', () => {
       reverseTicks: 0,
       laserTicks: 120,
       firstLaser: 60,
-      laserLength: 384,
+      laserLength: PLAYFIELD_W,
       laserWidth: 8,
       telegraph: 45,
       active: 50,
@@ -429,8 +435,8 @@ describe('core/behaviors — zones D and E, edge cases (M2-12)', () => {
       ringSpeed: 1,
     });
     expect(DEFAULT_BOSS_BEHAVIORS.get('boss.steed')?.params).toEqual({
-      cx: 296,
-      cy: 100,
+      cx: DEFAULT_BOSS_X,
+      cy: DEFAULT_BOSS_Y,
       rx: 8,
       ry: 40,
       bobSpeed: 3,

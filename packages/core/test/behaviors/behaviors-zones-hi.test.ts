@@ -19,7 +19,7 @@ import {
 } from '../../src/behaviors/index.js';
 import { BossHit, BossState } from '../../src/bosses/index.js';
 import { LaserPhase } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -150,7 +150,7 @@ describe('core/behaviors — zones H and I (M2-14)', () => {
       firstTicks: 40,
       laserTicks: 150,
       heading: 512,
-      laserLength: 384,
+      laserLength: PLAYFIELD_W,
       laserWidth: 6,
       telegraph: 50,
       active: 40,

@@ -41,9 +41,9 @@
  * - `hunter.option` (M2-04) — the **Option Hunter**'s three variants: [`variant` 0] from behind
  *   along the player's row, 1 from ahead along it, 2 diving down the player's column. For
  *   [`lineUpTicks` 90] ticks it flies (at [`speed` 2]) to its line-up point — view x [`lineX` 48]
- *   (variant 1: `384 − lineX`) on the player's row, or view y [`lineY` 24] over the player's column
- *   —, re-aimed every 6 ticks, then holds [`windup` 24] ticks and charges through at
- *   [`chargeSpeed` 4.5]. The stealing, its armour, its harmless body and its alarm come with its
+ *   (variant 1: `PLAYFIELD_W − lineX`) on the player's row, or view y [`lineY` 24] over the
+ *   player's column —, re-aimed every 6 ticks, then holds [`windup` 24] ticks and charges through
+ *   at [`chargeSpeed` 4.5]. The stealing, its armour, its harmless body and its alarm come with its
  *   spec's `optionHunter` flag (`core/enemies`); it only spawns while some ship has an Option.
  *
  * - `cube.pincer` (M2-05) — a Direct-mode item carrier cube of a six-cube pincer wave
@@ -91,7 +91,7 @@
  * **Zones H and I (M2-14)** — IRON CITADEL's laser emitters and ABYSSAL THRONE's depth mines:
  *
  * - `emitter.laser` — every [`laserTicks` 150] (the first after [`firstTicks` 40]) a telegraphed
- *   straight laser, [`heading` 512 = left], attached to the emitter ([`laserLength` 384,
+ *   straight laser, [`heading` 512 = left], attached to the emitter ([`laserLength` `PLAYFIELD_W`,
  *   `laserWidth` 6, `telegraph` 50, `active` 40]); a ground emitter stands still.
  * - `mine.burst` — drifts on a sine [`speed` 0.5, `amp` 10, `period` 140]; a living player within
  *   [`trigger` 64] px arms it: it stops, flashes for [`fuse` 36] ticks and bursts into a ring of
@@ -113,16 +113,16 @@
  *   `openTicks` after every [`closedTicks` 120] closed.
  * - `boss.lanes` — tracks like `boss.hover` [`trackSpeed` 0 = holds still]; every [`laserTicks`
  *   150] ticks the next gun in turn fires a telegraphed horizontal laser to the left in its lane
- *   (not attached, [`laserLength` 384], [`laserWidth` 6], [`telegraph` 50] warning ticks,
+ *   (not attached, [`laserLength` `PLAYFIELD_W`], [`laserWidth` 6], [`telegraph` 50] warning ticks,
  *   [`active` 45] beam ticks), and every [`fireTicks` 90] ticks each gun an aimed [`ways` 3]-way
  *   of purple needles [`spread` 40] at [`bulletSpeed` 1.25].
  * - `boss.bulwark` — HALCYON BULWARK (HB-01, zone A, M1-18), a core battleship: tracks the nearest
  *   player's height slowly [`trackSpeed` 0.35, `margin` 40]; every [`laserTicks` 110] ticks
  *   (rank-scaled) the next gun in turn — the top and the bottom emitter, so the lanes alternate —
  *   fires a telegraphed horizontal laser to the left that stays **attached** to its emitter (the
- *   lane moves with the boss: [`laserLength` 384], [`laserWidth` 8], [`telegraph` 45] warning
- *   ticks, [`active` 50] beam ticks); with [`ways` 0 = never] ≥ 1 every [`fireTicks` 120] ticks
- *   (rank-scaled) each gun also fires an aimed `ways`-way of purple needles [`spread` 40] at
+ *   lane moves with the boss: [`laserLength` `PLAYFIELD_W`], [`laserWidth` 8], [`telegraph` 45]
+ *   warning ticks, [`active` 50] beam ticks); with [`ways` 0 = never] ≥ 1 every [`fireTicks` 120]
+ *   ticks (rank-scaled) each gun also fires an aimed `ways`-way of purple needles [`spread` 40] at
  *   [`bulletSpeed` 1.5]. The first lane comes [`firstLaser` 60] ticks into the phase. Lanes never
  *   come from the core: it sits between them, so the player who holds the core's lane is only
  *   threatened when the boss's slow tracking sweeps a lane across, and every lane is dodged by
@@ -141,9 +141,10 @@
  *   boss's `minion` (a splitting enemy — `bubble.split`); every [`fireTicks` 70] ticks each gun an
  *   aimed [`ways` 3]-way [`spread` 48] at [`bulletSpeed` 1.25].
  * - `captain.circler` — screen-crossing circler: from its home it circles an ellipse round view
- *   point [`cx` 192, `cy` 100] with radii [`rx` 140, `ry` 64] at [`speed` 3] binary units a tick
- *   (it should start at `cx + rx`, `cy` — its home); every [`fireTicks` 60] ticks a ring of
- *   [`ring` 8] bullets [`bulletSpeed` 1.25], each turned half a gap from the last.
+ *   point [`cx` `PLAYFIELD_W / 2`, `cy` `PLAYFIELD_CY` — the playfield's centre] with radii [`rx`
+ *   140, `ry` 64] at [`speed` 3] binary units a tick (it should start at `cx + rx`, `cy` — its
+ *   home); every [`fireTicks` 60] ticks a ring of [`ring` 8] bullets [`bulletSpeed` 1.25], each
+ *   turned half a gap from the last.
  * - `captain.crab` — ring-firing crab: every [`stepTicks` 70] ticks it sidesteps to a random point
  *   of the box [`minX` 250 … `maxX` 340, `minY` 40 … `maxY` 160] (gameplay RNG, in 60 % of the
  *   step); every [`ringTicks` 90] ticks each gun fires a ring of [`ring` 12] bullets
@@ -168,7 +169,7 @@
  *   [`ways` 3]-ways of ovals [`spread` 40, `bulletSpeed` 1.3] every [`fireTicks` 80]; every
  *   [`launchTicks` 160] up to [`count` 1] guns in turn launch the `minion` (spider drones); with
  *   [`laserTicks` 0 = never] ≥ 1 the guns in turn spin silk lines — detached horizontal lasers
- *   [`laserLength` 384, `laserWidth` 6, `telegraph` 50, `active` 40].
+ *   [`laserLength` `PLAYFIELD_W`, `laserWidth` 6, `telegraph` 50, `active` 40].
  *
  * **Zone bosses (M2-12)**:
  *
@@ -176,16 +177,16 @@
  *   every part attached to a core (the arms' pivot) turns at [`spin` 4] units a tick, reversing
  *   every [`reverseTicks` 0 = never]; it tracks like `boss.bulwark` [`trackSpeed` 0.35, `margin`
  *   44], its guns fire attached lane lasers in turn every [`laserTicks` 120] (the first after
- *   [`firstLaser` 60]; [`laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50]), and the
- *   cores add aimed [`ways` 0 = none]-ways of ovals [`spread` 40, `bulletSpeed` 1.3] every
+ *   [`firstLaser` 60]; [`laserLength` `PLAYFIELD_W`, `laserWidth` 8, `telegraph` 45, `active` 50]),
+ *   and the cores add aimed [`ways` 0 = none]-ways of ovals [`spread` 40, `bulletSpeed` 1.3] every
  *   [`fireTicks` 100] and rings of [`ring` 0 = none] at [`ringSpeed` 1] every [`ringTicks` 150].
- * - `boss.steed` — SQUALL STEED (zone E), the seahorse: bobs on the ellipse [`cx` 296, `cy` 100,
- *   `rx` 8, `ry` 40] at [`bobSpeed` 3] units a tick; its `whenOpen` chest opens for
- *   [`openTicks` 110] after every [`closedTicks` 150] and, while open, each core launches the
- *   `minion` (homing minis) every [`launchTicks` 45], at most [`minis` 2] per opening; the guns
- *   (the snout) fire aimed [`ways` 3]-ways [`spread` 44, `bulletSpeed` 1.3] every [`fireTicks`
- *   80] and, with [`ring` 0 = none] ≥ 1, a ring at [`ringSpeed` 1] as the chest shuts; [`gape` 0]
- *   moves the chest's lids apart while it is open.
+ * - `boss.steed` — SQUALL STEED (zone E), the seahorse: bobs on the ellipse [`cx` `DEFAULT_BOSS_X`,
+ *   `cy` `DEFAULT_BOSS_Y` — a boss's default home, `rx` 8, `ry` 40] at [`bobSpeed` 3] units a tick;
+ *   its `whenOpen` chest opens for [`openTicks` 110] after every [`closedTicks` 150] and, while
+ *   open, each core launches the `minion` (homing minis) every [`launchTicks` 45], at most [`minis`
+ *   2] per opening; the guns (the snout) fire aimed [`ways` 3]-ways [`spread` 44, `bulletSpeed`
+ *   1.3] every [`fireTicks` 80] and, with [`ring` 0 = none] ≥ 1, a ring at [`ringSpeed` 1] as the
+ *   chest shuts; [`gape` 0] moves the chest's lids apart while it is open.
  *
  * **Zone bosses (M2-13)** — both curl **arms**: chains of circle-hit parts attached to another
  * part, pointing left; every segment turns by the same amount, so an arm curls like a tentacle,
@@ -202,18 +203,18 @@
  *   50]; its arms wave at [`wave` 1] unit a tick, [`waveTicks` 40] from straight to a turn point;
  *   the tips fire aimed [`ways` 1]-ways of needles [`spread` 32, `bulletSpeed` 1.25] every
  *   [`fireTicks` 90]; the cores a [`ring` 0 = none] at [`ringSpeed` 1] every [`ringTicks` 150] and,
- *   every [`laserTicks` 0 = never], a detached lane laser [`laserLength` 384, `laserWidth` 6,
- *   `telegraph` 50, `active` 40].
+ *   every [`laserTicks` 0 = never], a detached lane laser [`laserLength` `PLAYFIELD_W`,
+ *   `laserWidth` 6, `telegraph` 50, `active` 40].
  *
  * **Zone bosses (M2-14)** — the finales:
  *
  * - `boss.sovereign` — IRON SOVEREIGN (zone H), the multi-phase finale: tracking [`trackSpeed`
  *   0.3, `margin` 48], a shield wheel on its core turning at [`spin` 0] (reversing every
  *   [`reverseTicks` 0 = never]), attached lanes from its guns in turn [`laserTicks` 0 = never,
- *   `firstLaser` 60, `laserLength` 384, `laserWidth` 8, `telegraph` 45, `active` 50], aimed
- *   [`ways` 0 = none]-ways from the cores [`fireTicks` 110, `spread` 40, `bulletSpeed` 1.3], rings
- *   [`ring` 0 = none, `ringTicks` 160, `ringSpeed` 1], [`count` 1] minions from the guns every
- *   [`launchTicks` 0 = never] and a rotating [`spiral` 0 = none]-arm spiral from the cores
+ *   `firstLaser` 60, `laserLength` `PLAYFIELD_W`, `laserWidth` 8, `telegraph` 45, `active` 50],
+ *   aimed [`ways` 0 = none]-ways from the cores [`fireTicks` 110, `spread` 40, `bulletSpeed` 1.3],
+ *   rings [`ring` 0 = none, `ringTicks` 160, `ringSpeed` 1], [`count` 1] minions from the guns
+ *   every [`launchTicks` 0 = never] and a rotating [`spiral` 0 = none]-arm spiral from the cores
  *   [`spiralTicks` 8, `spiralStep` 24, `spiralSpeed` 1.1] — each phase switches on its own set.
  * - `boss.ark` — ABYSS ARK (zone I), the whale-class raid: every [`fireTicks` 60] each on-screen
  *   gun (the turret rows) aims and fires a [`ways` 1]-way [`spread` 32, `bulletSpeed` 1.3,
@@ -280,8 +281,14 @@
 import { BulletKind, LASER_FADE_TICKS, LASER_GROW_TICKS } from '../bullets/index.js';
 import { WEAPON_SCRIPT_IDS } from '../weapons/index.js';
 import type { BossBehavior, BossBehaviorLookup, BossPart, BossScriptApi } from '../bosses/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
-import { MAX_BOSS_PARTS, type ContentDb, type ValidationIssue } from '../data/index.js';
+import { PLAYFIELD_CY, PLAYFIELD_H, PLAYFIELD_W } from '../config/index.js';
+import {
+  DEFAULT_BOSS_X,
+  DEFAULT_BOSS_Y,
+  MAX_BOSS_PARTS,
+  type ContentDb,
+  type ValidationIssue,
+} from '../data/index.js';
 import type { EnemyBehavior, EnemyBehaviorLookup, ScriptApi } from '../enemies/index.js';
 import { EnemyFlag } from '../enemies/index.js';
 import { defineModule } from '../module-info.js';
@@ -631,7 +638,8 @@ const HUNTER_EDGE = 12;
  * `optionHunter`). Three variants (tunables in the module docs):
  *
  * - [`variant` 0] **rear** — lines up at view x [`lineX` 48] on the player's row, charges right;
- * - `variant` 1 **front** — lines up at view x `384 − lineX` on the player's row, charges left;
+ * - `variant` 1 **front** — lines up at view x `PLAYFIELD_W − lineX` on the player's row, charges
+ *   left;
  * - `variant` 2 **dive** — lines up at view y [`lineY` 24] above the player's column, dives down.
  *
  * @remarks
@@ -1097,10 +1105,10 @@ const cellChase = defineBehavior(
  * `emitter.laser` (M2-14) — a **laser emitter** (zone H, shmup_feat.md §14 "fortress: laser
  * emitters"): every [`laserTicks` 150] ticks (rank-scaled; the first [`firstTicks` 40] ticks after
  * it starts) while it may fire it projects a telegraphed straight laser from its centre, heading
- * [`heading` 512 = left] binary units, [`laserLength` 384] long and [`laserWidth` 6] wide:
- * [`telegraph` 50] warning ticks, the grow, [`active` 40] beam ticks, the fade. The beam stays
- * **attached** to the emitter — on a floor or ceiling emitter it scrolls with the terrain — and
- * vanishes with it. A ground emitter stands still; an air one moves with its spec's `mover`.
+ * [`heading` 512 = left] binary units, [`laserLength` `PLAYFIELD_W`] long and [`laserWidth` 6]
+ * wide: [`telegraph` 50] warning ticks, the grow, [`active` 40] beam ticks, the fade. The beam
+ * stays **attached** to the emitter — on a floor or ceiling emitter it scrolls with the terrain —
+ * and vanishes with it. A ground emitter stands still; an air one moves with its spec's `mover`.
  *
  * @remarks
  * One wake per beam; every timer is a whole number. Leftward lanes along the emitter's row are
@@ -1120,7 +1128,7 @@ const emitterLaser = defineBehavior(
     firstTicks: 40,
     laserTicks: 150,
     heading: ANGLE_UNITS / 2,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 6,
     telegraph: 50,
     active: 40,
@@ -1381,7 +1389,7 @@ const bossLanes = defineBossBehavior(
     trackSpeed: 0,
     margin: 32,
     laserTicks: 150,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 6,
     telegraph: 50,
     active: 45,
@@ -1455,7 +1463,7 @@ const bossBulwark = defineBossBehavior(
     margin: 40,
     laserTicks: 110,
     firstLaser: 60,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 8,
     telegraph: 45,
     active: 50,
@@ -1703,8 +1711,8 @@ const captainLauncher = defineBossBehavior(
 const captainCircler = defineBossBehavior(
   'captain.circler',
   {
-    cx: 192,
-    cy: 100,
+    cx: PLAYFIELD_W / 2,
+    cy: PLAYFIELD_CY,
     rx: 140,
     ry: 64,
     speed: 3,
@@ -1997,7 +2005,7 @@ const bossMaw = defineBossBehavior(
  * — in turn launch the boss's `minion` (the spider drones); and with [`laserTicks` 0 = never] ≥ 1,
  * every `laserTicks` ticks (rank-scaled) the next standing gun in turn spins a silk line: a
  * telegraphed horizontal laser to the left in its lane, left where it was fired ([`laserLength`
- * 384], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
+ * `PLAYFIELD_W`], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
  *
  * @remarks
  * One lane at a time, each dodged by moving up or down (4-way): the next silk line waits at least a
@@ -2021,7 +2029,7 @@ const bossWidow = defineBossBehavior(
     launchTicks: 160,
     count: 1,
     laserTicks: 0,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 6,
     telegraph: 50,
     active: 40,
@@ -2121,14 +2129,13 @@ function spinHubs(api: BossScriptApi, speed: number): void {
  * tick (rounded to whole units; its armoured arm segments sweep in front of the core and clink the
  * shots that meet them), reversing every [`reverseTicks` 0 = never] ticks. It tracks the nearest
  * player's height at [`trackSpeed` 0.35] px/tick, [`margin` 44] px inside the playfield; every
- * [`laserTicks` 120] ticks
- * (rank-scaled; the first after [`firstLaser` 60]) the next standing gun — the emitters — fires a
- * telegraphed lane laser to the left that stays **attached** to it ([`laserLength` 384],
- * [`laserWidth` 8], [`telegraph` 45], [`active` 50]); with [`ways` 0 = none] ≥ 1 every [`fireTicks`
- * 100] ticks each standing core spits an aimed `ways`-way of red ovals [`spread` 40] at
- * [`bulletSpeed` 1.3] through its arms; with [`ring` 0 = none] ≥ 1 every [`ringTicks` 150] ticks
- * each core fires a ring of `ring` round purple bullets at [`ringSpeed` 1], each turned half a gap
- * from the last.
+ * [`laserTicks` 120] ticks (rank-scaled; the first after [`firstLaser` 60]) the next standing gun —
+ * the emitters — fires a telegraphed lane laser to the left that stays **attached** to it
+ * ([`laserLength` `PLAYFIELD_W`], [`laserWidth` 8], [`telegraph` 45], [`active` 50]); with [`ways`
+ * 0 = none] ≥ 1 every [`fireTicks` 100] ticks each standing core spits an aimed `ways`-way of red
+ * ovals [`spread` 40] at [`bulletSpeed` 1.3] through its arms; with [`ring` 0 = none] ≥ 1 every
+ * [`ringTicks` 150] ticks each core fires a ring of `ring` round purple bullets at [`ringSpeed` 1],
+ * each turned half a gap from the last.
  *
  * @remarks
  * One script per phase, sleeping until the soonest of its four timers (every timer a whole number,
@@ -2146,7 +2153,7 @@ const bossBastion = defineBossBehavior(
     reverseTicks: 0,
     laserTicks: 120,
     firstLaser: 60,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 8,
     telegraph: 45,
     active: 50,
@@ -2227,17 +2234,17 @@ const STEED_FIRST_LAUNCH = 10;
 /**
  * `boss.steed` (M2-12) — SQUALL STEED (SS-05, zone E), the **seahorse** archetype (shmup_feat.md
  * §13 "opens chest to launch homing minis"): it bobs on a tall, narrow ellipse round view point
- * [`cx` 296, `cy` 100] with radii [`rx` 8, `ry` 40] at [`bobSpeed` 3] binary units a tick (it
- * should start at `cx + rx`, `cy` — its home); its `whenOpen` chest — the core — stays shut for
- * [`closedTicks` 150] and opens for [`openTicks` 110] in turn (shots clink off it while shut).
- * While the chest is open each standing core launches the boss's `minion` — the homing minis
- * (`rocket.homing`) — every [`launchTicks` 45] ticks (rank-scaled, the first 10 ticks after it
- * opens), at most [`minis` 2] per opening (0 = none). Every [`fireTicks` 80] ticks (rank-scaled)
- * each standing gun — the snout — fires an aimed [`ways` 3]-way of pink ovals [`spread` 44] at
- * [`bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 each gun also fires a ring of `ring` round red
- * bullets at [`ringSpeed` 1] every time the chest shuts, each turned half a gap from the last. With
- * [`gape` 0 = still] > 0 the parts attached to the chest (its lids) move `gape` px apart while it
- * is open (from their rest offsets, like `boss.maw`'s jaws).
+ * [`cx` `DEFAULT_BOSS_X`, `cy` `DEFAULT_BOSS_Y` — a boss's default home] with radii [`rx` 8, `ry`
+ * 40] at [`bobSpeed` 3] binary units a tick (it should start at `cx + rx`, `cy` — its home); its
+ * `whenOpen` chest — the core — stays shut for [`closedTicks` 150] and opens for [`openTicks` 110]
+ * in turn (shots clink off it while shut). While the chest is open each standing core launches the
+ * boss's `minion` — the homing minis (`rocket.homing`) — every [`launchTicks` 45] ticks
+ * (rank-scaled, the first 10 ticks after it opens), at most [`minis` 2] per opening (0 = none).
+ * Every [`fireTicks` 80] ticks (rank-scaled) each standing gun — the snout — fires an aimed [`ways`
+ * 3]-way of pink ovals [`spread` 44] at [`bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 each gun
+ * also fires a ring of `ring` round red bullets at [`ringSpeed` 1] every time the chest shuts, each
+ * turned half a gap from the last. With [`gape` 0 = still] > 0 the parts attached to the chest (its
+ * lids) move `gape` px apart while it is open (from their rest offsets, like `boss.maw`'s jaws).
  *
  * @remarks
  * One script per phase, sleeping until the soonest of its three timers (the chest, the launches,
@@ -2249,8 +2256,8 @@ const STEED_FIRST_LAUNCH = 10;
 const bossSteed = defineBossBehavior(
   'boss.steed',
   {
-    cx: 296,
-    cy: 100,
+    cx: DEFAULT_BOSS_X,
+    cy: DEFAULT_BOSS_Y,
     rx: 8,
     ry: 40,
     bobSpeed: 3,
@@ -2569,7 +2576,7 @@ const bossSquid = defineBossBehavior(
  * bullets at [`ringSpeed` 1] (each turned half a gap from the last — an armoured core fires too);
  * with [`laserTicks` 0 = never] ≥ 1 every `laserTicks` (rank-scaled) each standing core fires a
  * telegraphed horizontal laser to the left in its lane, left where it was fired ([`laserLength`
- * 384], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
+ * `PLAYFIELD_W`], [`laserWidth` 6], [`telegraph` 50] warning ticks, [`active` 40] beam ticks).
  *
  * @remarks
  * One script per phase, sleeping until the soonest of its four timers (the wave's turn points, the
@@ -2603,7 +2610,7 @@ const bossFacet = defineBossBehavior(
     ringTicks: 150,
     ringSpeed: 1,
     laserTicks: 0,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 6,
     telegraph: 50,
     active: 40,
@@ -2685,15 +2692,15 @@ const bossFacet = defineBossBehavior(
  * units a tick (rounded), reversing every [`reverseTicks` 0 = never]; with [`laserTicks` 0 =
  * never] ≥ 1 its standing guns (the emitters) fire telegraphed lane lasers to the left in turn,
  * **attached** to them ([`firstLaser` 60] ticks into the phase, then every `laserTicks`,
- * rank-scaled; [`laserLength` 384], [`laserWidth` 8], [`telegraph` 45], [`active` 50]); with
- * [`ways` 0 = none] ≥ 1 every [`fireTicks` 110] ticks each standing core spits an aimed `ways`-way
- * of red ovals [`spread` 40] at [`bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 every [`ringTicks`
- * 160] each core fires a ring of round purple bullets at [`ringSpeed` 1], each turned half a gap
- * from the last; with [`launchTicks` 0 = never] ≥ 1 up to [`count` 1] standing guns in turn launch
- * the boss's `minion` (drones from the hatches); and with [`spiral` 0 = none] ≥ 1 every
+ * rank-scaled; [`laserLength` `PLAYFIELD_W`], [`laserWidth` 8], [`telegraph` 45], [`active` 50]);
+ * with [`ways` 0 = none] ≥ 1 every [`fireTicks` 110] ticks each standing core spits an aimed
+ * `ways`-way of red ovals [`spread` 40] at [`bulletSpeed` 1.3]; with [`ring` 0 = none] ≥ 1 every
+ * [`ringTicks` 160] each core fires a ring of round purple bullets at [`ringSpeed` 1], each turned
+ * half a gap from the last; with [`launchTicks` 0 = never] ≥ 1 up to [`count` 1] standing guns in
+ * turn launch the boss's `minion` (drones from the hatches); and with [`spiral` 0 = none] ≥ 1 every
  * [`spiralTicks` 8] ticks each core fires `spiral` evenly spaced purple ovals at [`spiralSpeed`
- * 1.1], the pattern turned [`spiralStep` 24] units further each time — a rotating spiral whose
- * arms are dodged by moving with the turn.
+ * 1.1], the pattern turned [`spiralStep` 24] units further each time — a rotating spiral whose arms
+ * are dodged by moving with the turn.
  *
  * @remarks
  * One script per phase, sleeping until the soonest of its five timers (every timer a whole number,
@@ -2721,7 +2728,7 @@ const bossSovereign = defineBossBehavior(
     reverseTicks: 0,
     laserTicks: 0,
     firstLaser: 60,
-    laserLength: 384,
+    laserLength: PLAYFIELD_W,
     laserWidth: 8,
     telegraph: 45,
     active: 50,

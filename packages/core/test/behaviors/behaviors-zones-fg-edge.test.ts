@@ -36,7 +36,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
 import { BossHit, BossState, type BossPart } from '../../src/bosses/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
-import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -603,7 +603,7 @@ describe('core/behaviors — zones F and G, edge cases (M2-13)', () => {
       ringTicks: 150,
       ringSpeed: 1,
       laserTicks: 0,
-      laserLength: 384,
+      laserLength: PLAYFIELD_W,
       laserWidth: 6,
       telegraph: 50,
       active: 40,

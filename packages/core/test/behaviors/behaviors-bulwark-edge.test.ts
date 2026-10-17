@@ -23,7 +23,12 @@ import {
   LASER_GROW_TICKS,
   LaserPhase,
 } from '../../src/bullets/index.js';
-import { PLAYFIELD_H, resolveGameConfig, type DifficultyPreset } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type DifficultyPreset,
+} from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { ANGLE_UNITS } from '../../src/math/index.js';
@@ -152,7 +157,7 @@ describe('core/behaviors boss.bulwark — edge cases (M1-18)', () => {
       margin: 40,
       laserTicks: 110,
       firstLaser: 60,
-      laserLength: 384,
+      laserLength: PLAYFIELD_W,
       laserWidth: 8,
       telegraph: 45,
       active: 50,

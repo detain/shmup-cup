@@ -34,7 +34,7 @@ import {
   LASER_GROW_TICKS,
   LaserPhase,
 } from '../../src/bullets/index.js';
-import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { DropKind, EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -455,7 +455,7 @@ describe('core/behaviors — zones B and C, edge cases (M2-11)', () => {
       launchTicks: 160,
       count: 1,
       laserTicks: 0,
-      laserLength: 384,
+      laserLength: PLAYFIELD_W,
       laserWidth: 6,
       telegraph: 50,
       active: 40,
