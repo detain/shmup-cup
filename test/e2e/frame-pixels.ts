@@ -12,7 +12,10 @@
  * re-exported from `scripts/frame.mjs` (the scripts' mirror of `@shmup/core`, pinned by
  * `test/scripts/frame.test.ts`), so a spec imports everything it needs from this one module. They
  * are the **frame**: positions that come from content (an area of a stage's art, a camera y, a
- * Mode-7 horizon) are not derived from them (plan §2.6, R2-03).
+ * Mode-7 horizon) are not derived from them (plan §2.6, R2-03). The boss HP bar's place in the top
+ * HUD bar ({@link BOSS_BAR_X} and its neighbours) is derived here too, the way `core/ui` derives
+ * it, because the specs cannot import `@shmup/core`; `test/scripts/frame.test.ts` pins it to
+ * core's `HUD_LAYOUT`.
  *
  * @example
  * ```ts
@@ -26,7 +29,7 @@
  *
  * @module
  */
-import { CAPTURE_SCALE, FRAME_H, FRAME_W } from '../../scripts/frame.mjs';
+import { CAPTURE_SCALE, FRAME_CX, FRAME_H, FRAME_W, GLYPH_W } from '../../scripts/frame.mjs';
 
 export {
   FRAME_CX,
@@ -87,3 +90,35 @@ export function sy(fy: number): number {
 export function pixelIndex(width: number, fx: number, fy: number): number {
   return (sy(fy) * width + sx(fx)) * 4;
 }
+
+// The boss HP bar's place in the top HUD bar (`advanced-bosses.spec.ts`), derived the way
+// `core/ui` derives it (R1-01): from the frame's centre and the font's cell, so it follows the
+// frame and the font at R2-01 / R4-03. The 4-px label gap and the 2-px nudge right are the HUD's
+// own pixel literals there. `test/scripts/frame.test.ts` pins every value to core.
+
+/** Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP`). */
+const HUD_LABEL_GAP = 4;
+
+/**
+ * Width of the boss HP bar's frame (`core/ui` `BOSS_HP_BAR_WIDTH` = `HUD_HI_W`: `HI`, the gap and
+ * eight digits — 64 today).
+ */
+export const BOSS_BAR_W: number = 2 * GLYPH_W + HUD_LABEL_GAP + 8 * GLYPH_W;
+
+/** From the `BOSS` label to the bar's frame (`core/ui` `HUD_BOSS_BAR_DX` — 28 today). */
+const BOSS_BAR_DX = 4 * GLYPH_W + HUD_LABEL_GAP;
+
+/** Width of the `BOSS` label: four glyph cells (`core/ui` `hudBoss`). */
+export const BOSS_LABEL_W: number = 4 * GLYPH_W;
+
+/**
+ * The `BOSS` label's x: the label, the gap and the bar centred 2 px right of the frame's centre
+ * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 148 today).
+ */
+export const BOSS_LABEL_X: number = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1) + 2;
+
+/** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 176 today). */
+export const BOSS_BAR_X: number = BOSS_LABEL_X + BOSS_BAR_DX;
+
+/** The bar fill's row: `HUD_LAYOUT.topY + 3`, counted from the frame's top edge. */
+export const BOSS_FILL_Y = 3;

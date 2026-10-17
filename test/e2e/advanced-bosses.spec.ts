@@ -23,9 +23,12 @@ import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import {
-  FRAME_CX,
+  BOSS_BAR_W,
+  BOSS_BAR_X,
+  BOSS_FILL_Y,
+  BOSS_LABEL_W,
+  BOSS_LABEL_X,
   FRAME_W,
-  GLYPH_W,
   HUD_BAR_HEIGHT,
   HUD_BOTTOM_Y,
   PLAYFIELD_Y,
@@ -45,28 +48,6 @@ const STEEL = [0x46, 0x50, 0x6a] as const;
 const BAR_RED = [0xf8, 0x58, 0x58] as const;
 /** The save's `localStorage` key (the web adapter prefixes `core/save`'s `save.v1`). */
 const SAVE_KEY = 'shmup-cup:save.v1';
-
-// The boss HP bar's place in the top HUD bar, derived the way `core/ui` derives it (R1-01): from
-// the frame's centre and the font's cell, so it follows the frame and the font at R2-01. The
-// 4-px label gap and the 2-px nudge right are the HUD's own pixel literals there.
-/** Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP`). */
-const HUD_LABEL_GAP = 4;
-/**
- * Width of the bar's frame (`core/ui` `BOSS_HP_BAR_WIDTH` = `HUD_HI_W`: `HI`, the gap and eight
- * digits — 64 today).
- */
-const BOSS_BAR_W = 2 * GLYPH_W + HUD_LABEL_GAP + 8 * GLYPH_W;
-/** From the `BOSS` label to the bar's frame (`core/ui` `HUD_BOSS_BAR_DX` — 28 today). */
-const BOSS_BAR_DX = 4 * GLYPH_W + HUD_LABEL_GAP;
-/**
- * The `BOSS` label's x: the label, the gap and the bar centred 2 px right of the frame's centre
- * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 148 today); the label is four glyph cells wide.
- */
-const BOSS_LABEL_X = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1) + 2;
-/** The bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 176 today). */
-const BOSS_BAR_X = BOSS_LABEL_X + BOSS_BAR_DX;
-/** The fill's row: `HUD_LAYOUT.topY + 3`, counted from the frame's top edge. */
-const BOSS_FILL_Y = 3;
 
 /** `window` with the parts of the test build's debug API the spec reads. */
 interface DebugWindow {
@@ -364,7 +345,7 @@ test.describe('advanced bosses (web build)', () => {
     // `BOSS` in red where `HI` was.
     let label = 0;
     for (let fy = 0; fy < HUD_BAR_HEIGHT; fy++) {
-      for (let fx = BOSS_LABEL_X; fx < BOSS_LABEL_X + 4 * GLYPH_W; fx++) if (is(fx, fy)) label++;
+      for (let fx = BOSS_LABEL_X; fx < BOSS_LABEL_X + BOSS_LABEL_W; fx++) if (is(fx, fy)) label++;
     }
     expect(label).toBeGreaterThan(10);
     expect(errors).toEqual([]);

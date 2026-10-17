@@ -3,12 +3,25 @@
  * equals `@shmup/core`'s, export for export, so a change of the frame in core (R2-01) cannot leave
  * the tools, the e2e viewport or the docs' captures behind; the capture scale follows decision O9
  * (`floor(1280 / FRAME_W)`); and the e2e helper `test/e2e/frame-pixels.ts` maps frame pixels to
- * the centres of their screenshot blocks.
+ * the centres of their screenshot blocks, and places the boss HP bar `advanced-bosses.spec.ts`
+ * reads where `core/ui`'s `HUD_LAYOUT` draws it (R1-02d — the specs cannot import core, so they
+ * repeat its formula and this test keeps the copy from drifting).
  */
 import * as core from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import * as frame from '../../scripts/frame.mjs';
-import { SCALE, VIEWPORT, pixelIndex, sx, sy } from '../e2e/frame-pixels.js';
+import {
+  BOSS_BAR_W,
+  BOSS_BAR_X,
+  BOSS_FILL_Y,
+  BOSS_LABEL_W,
+  BOSS_LABEL_X,
+  SCALE,
+  VIEWPORT,
+  pixelIndex,
+  sx,
+  sy,
+} from '../e2e/frame-pixels.js';
 
 /** Mirror export → the `@shmup/core` export it must equal. */
 const MIRRORED = {
@@ -88,5 +101,29 @@ describe('test/e2e/frame-pixels.ts', () => {
   it.runIf(core.FRAME_W === 384)('is the specs’ old ×3 mapping at the 384×216 frame', () => {
     expect(VIEWPORT).toEqual({ width: 1152, height: 648 });
     for (const f of [0, 8, 100, 207, 383]) expect(sx(f)).toBe(3 * f + 1);
+  });
+});
+
+describe('test/e2e/frame-pixels.ts: the boss HP bar of advanced-bosses.spec.ts', () => {
+  it('places the BOSS label and the bar where core/ui draws them', () => {
+    expect(BOSS_LABEL_X).toBe(core.HUD_LAYOUT.bossX);
+    expect(BOSS_BAR_X).toBe(core.HUD_LAYOUT.bossBarX);
+    expect(BOSS_BAR_W).toBe(core.BOSS_HP_BAR_WIDTH);
+  });
+
+  it('reads the fill row and the label cells core/ui draws', () => {
+    // buildHud draws the fill as `rect(bossBarX + 1, topY + 3, fill, 2)` and the label as
+    // `text(hudBoss, bossX, topY)`.
+    expect(BOSS_FILL_Y).toBe(core.HUD_LAYOUT.topY + 3);
+    expect(BOSS_LABEL_W).toBe(core.DEFAULT_UI_TEXT.hudBoss.length * core.GLYPH_W);
+    // The label ends before the bar starts, and both stay inside the top HUD bar and the frame.
+    expect(BOSS_LABEL_X + BOSS_LABEL_W).toBeLessThanOrEqual(BOSS_BAR_X);
+    expect(BOSS_FILL_Y + 2).toBeLessThanOrEqual(core.HUD_BAR_HEIGHT);
+    expect(BOSS_BAR_X + BOSS_BAR_W).toBeLessThanOrEqual(core.FRAME_W);
+  });
+
+  // The values the spec read before R1-02 (the bar moves with the frame and the font at R2-01).
+  it.runIf(core.FRAME_W === 384 && core.GLYPH_W === 6)('is x 148 / 176, 64 wide at 384×216', () => {
+    expect([BOSS_LABEL_X, BOSS_BAR_X, BOSS_BAR_W, BOSS_FILL_Y]).toEqual([148, 176, 64, 3]);
   });
 });
