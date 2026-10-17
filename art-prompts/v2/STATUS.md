@@ -89,6 +89,19 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
   its place while the landscape scrolls by in parallax layers" keeps the still's layout. ~6–11 s per clip.
 - Wan2.2 render times (server): 1280×720 81 frames ≈ 958 s at 40 steps / 838 s at 35; 832×480 ≈ 204 s at 35 steps.
 
+## Round 2 — progress
+
+- **Regenerations the owner asked for** (`enemy/halo-crystal`: 8 satellites, the design says 6; `tiles/azure-verge`:
+  grass too close to the key green). Old files are in `candidates/history/2026-10-17/`; both sets' winners were
+  cleared so the owner picks again.
+  - Qwen-Image slot b of halo-crystal: weak — six satellites, but in two columns of three, with a small shadow.
+    Qwen drifts back to 8 whenever it draws a round ring.
+  - SD3.5 slot b of azure-verge: weak — no key-like pixels (round 1 had 5.5 %), but an isometric view, little
+    vegetation and a dark frame. SD3.5 turns the word "moss" lime whatever the colour words say.
+  - Slot a (FLUX.2) of both and slot c (FLUX.1) of azure-verge wait for the owner's FLUX licence decision
+    (`docs/dev/art-provenance.md`).
+- **The FLUX.2 followups (203)** wait for the same decision. Job lists: `candidates/round2/`.
+
 ## Round 2 — after the owner says picking is done
 
 Read `data/choices.json`:
