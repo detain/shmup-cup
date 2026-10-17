@@ -308,8 +308,10 @@ export type EndingFlag = (typeof EndingFlag)[keyof typeof EndingFlag];
 
 /**
  * The WARNING text (decision D10): the game's own paraphrase, never the arcade original's words.
- * `{name}` and `{code}` are the boss's `displayName` and `code`; lines split at `\n` (each fits
- * the 384-px playfield in the 6-px font).
+ * `{name}` and `{code}` are the boss's `displayName` and `code`; lines split at `\n`. Each line
+ * fits the playfield in the bitmap font — at most `PLAYFIELD_W / GLYPH_W` characters: the content
+ * schema caps `displayName` at 24 characters and `code` at 8, so the longest line, `GIANT HOSTILE
+ * "{name}"`, is 40 characters (`packages/core/test/bosses/bosses-warning-width.test.ts`).
  */
 export const WARNING_TEMPLATE = 'WARNING!!\nGIANT HOSTILE "{name}"\nCLOSING IN - CODE {code}';
 
@@ -1015,7 +1017,7 @@ export interface BossScriptApi {
    *
    * @param index - Part index.
    * @param angle - Direction (default `AIM_AT_TARGET`).
-   * @param length - Length in pixels (default 384).
+   * @param length - Length in pixels (default {@link PLAYFIELD_W}: one screen width).
    * @param width - Width (default `LASER_WIDTH`).
    * @param telegraph - Warning ticks (default `LASER_TELEGRAPH_TICKS`).
    * @param grow - Grow ticks (default `LASER_GROW_TICKS`).

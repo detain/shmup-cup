@@ -724,7 +724,8 @@ export const DEFAULT_DRAW_LIST_STRINGS = 32;
  * string into a slot with {@link DrawList.setString} when it changes (a menu opens, a
  * label is edited) and the per-frame `text` command only carries the slot number. Numbers
  * (scores, lives) use the `number` command, so HUD updates never build strings.
- * Coordinates are integer screen pixels of the 384×216 frame (stored as `Int16`, rounded).
+ * Coordinates are integer screen pixels of the `FRAME_W` × `FRAME_H` frame (`core/config`;
+ * stored as `Int16`, rounded).
  * {@link DrawList.revision} changes on every mutation, so a renderer can skip redrawing a
  * list that nobody touched.
  */
@@ -866,7 +867,7 @@ const MAX_NUMBER_DIGITS = 20;
  * hud.setString(0, '1P'); // once
  * // every frame (or when the score changes):
  * hud.clear();
- * hud.rect(0, 0, 384, 8, 0x10173a);
+ * hud.rect(0, 0, FRAME_W, HUD_BAR_HEIGHT, 0x10173a);
  * hud.text(0, 4, 0);
  * hud.number(score, 20, 0, 8);
  * ```
@@ -1055,8 +1056,8 @@ export interface RenderFrame {
 }
 
 /**
- * A renderer back-end. Draws the game at the internal resolution (384×216) and
- * presents it integer-scaled with nearest-neighbour filtering.
+ * A renderer back-end. Draws the game at the internal resolution (`FRAME_W` × `FRAME_H`,
+ * `core/config`) and presents it integer-scaled with nearest-neighbour filtering.
  */
 export interface IRenderer {
   /** Internal (virtual) width in pixels. */

@@ -1406,7 +1406,7 @@ export function createStageRunner(
  *
  * @example
  * ```ts
- * stageMapWidth(4800, 8); // → 648 (test-range: (4800 + 384) / 8)
+ * stageMapWidth(4800, TILE_SIZE); // test-range: ⌈(4800 + PLAYFIELD_W) / TILE_SIZE⌉ columns
  * ```
  */
 export function stageMapWidth(length: number, tileSize: number): number {

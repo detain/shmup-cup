@@ -757,7 +757,7 @@ export interface ScriptApi {
    * beam (the only phase with a hitbox), fade. Detached when the enemy is removed.
    *
    * @param angle - Direction (default `AIM_AT_TARGET`).
-   * @param length - Length in pixels (default 384).
+   * @param length - Length in pixels (default {@link PLAYFIELD_W}: one screen width).
    * @param width - Width (default `LASER_WIDTH`).
    * @param telegraph - Warning ticks (default `LASER_TELEGRAPH_TICKS`).
    * @param grow - Grow ticks (default `LASER_GROW_TICKS`).
