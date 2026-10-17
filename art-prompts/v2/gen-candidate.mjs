@@ -32,7 +32,15 @@
  * (multi-reference) and the Qwen-Image-Edit family (group qwenedit below, served id
  * Qwen/Qwen-Image-Edit-2511 by default; --served-model picks 2509 or the original).
  * The output size defaults to the first reference's PNG size. Edits never overwrite:
- * they land at <id>.edit-<k>.png (next free k) unless --out says otherwise.
+ * they land at candidates/<slot>/<id>/edit-<k>.png (next free k — a dot-free path, so
+ * the picker's img.php can serve it as id "<id>/edit-<k>") unless --out says otherwise.
+ * --instruction-file reads the instruction from a file (long texts with quotes).
+ *
+ * ROUND 2 BOOKKEEPING: --meta key=value (repeatable) is stored in the sidecar's "meta"
+ * object (job id, kind, parent id, the choice's updatedAt …). --archive replaces an
+ * existing output: after a successful generation the old file and its sidecar are moved
+ * to candidates/history/<YYYY-MM-DD>/<path below candidates>/ (never deleted), then the
+ * new one is written. Image sidecars also record the PNG's real size as outputSize.
  *
  * VIDEO MODE (manifest items with "kind":"video", ids video/<subject>):
  *   node art-prompts/v2/gen-candidate.mjs --id video/logo-sting --slot a
@@ -146,8 +154,12 @@ const USAGE = `usage: node art-prompts/v2/gen-candidate.mjs --id <item or follow
   --out <path>            output file (default art-prompts/v2/candidates/<slot>/<id>.png,
                           .mp4 for videos); the sidecar is written next to it as <name>.json
   --force                 overwrite an existing output
+  --archive               replace an existing output, moving the old file + sidecar to
+                          candidates/history/<date>/… first (after a successful generation)
+  --meta <key=value>      extra sidecar field under "meta" (repeatable; round-2 bookkeeping)
   --edit-from <png>       image edit mode: reference image (repeatable) → /v1/images/edits
   --instruction <text>    image edit mode: what to change (required with --edit-from)
+  --instruction-file <p>  the same, read from a file
   --base-url <url> | --port <n>   server origin (default generate.mjs's :30001 proxy)
   --served-model <id>     payload model id (skips nothing: the /v1/models check still runs)
   --any-model             accept whatever model the server lists (recorded in the sidecar)
@@ -181,12 +193,13 @@ function parseArgs(argv) {
     id: null, slot: null, prompt: null, promptFile: null, negative: null, model: null,
     seed: null, width: null, height: null, steps: null, guidance: null, format: 'png',
     formatGiven: false, negativeMode: 'field', out: null, force: false, editFrom: [], instruction: null,
+    instructionFile: null, archive: false, meta: {},
     baseUrl: null, port: null, modelId: null, anyModel: false,
     apiKey: process.env.SKYNET_API_KEY ?? null, timeout: null, retries: null,
     manifest: path.join(SCRIPT_DIR, 'manifest.json'), dryRun: false, list: false, help: false,
     frames: null, fps: null, seconds: null, source: null, job: null, poll: 10, noWanSnap: false,
   };
-  const flags = new Set(['force', 'any-model', 'dry-run', 'list', 'help', 'no-wan-snap']);
+  const flags = new Set(['force', 'archive', 'any-model', 'dry-run', 'list', 'help', 'no-wan-snap']);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (!arg.startsWith('--')) fail(`unexpected argument "${arg}"`);
@@ -228,6 +241,14 @@ function parseArgs(argv) {
       case 'force': o.force = true; break;
       case 'edit-from': o.editFrom.push(path.resolve(v)); break;
       case 'instruction': o.instruction = v; break;
+      case 'instruction-file': o.instructionFile = v; break;
+      case 'archive': o.archive = true; break;
+      case 'meta': {
+        const eq = v.indexOf('=');
+        if (eq < 1 || !/^[A-Za-z][A-Za-z0-9_.-]*$/.test(v.slice(0, eq))) fail(`--meta expects key=value, got "${v}"`);
+        o.meta[v.slice(0, eq)] = v.slice(eq + 1);
+        break;
+      }
       case 'base-url': o.baseUrl = v.replace(/\/+$/, ''); break;
       case 'port': o.port = int(); break;
       case 'served-model': o.modelId = v; break;
@@ -311,6 +332,33 @@ async function exists(p) {
   try { await fs.access(p); return true; } catch { return false; }
 }
 
+/** Where --archive moves an existing output: candidates/history/<date>/<path below candidates>. */
+function historyPath(file) {
+  const cand = path.join(SCRIPT_DIR, 'candidates');
+  const rel = path.relative(cand, file);
+  const below = rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? rel : path.basename(file);
+  return path.join(cand, 'history', new Date().toISOString().slice(0, 10), below);
+}
+
+/** --archive: moves `file` and its .json sidecar into history (next free -<n> suffix); returns the new path or null. */
+async function archiveExisting(file) {
+  if (!(await exists(file))) return null;
+  const ext = path.extname(file);
+  let dest = historyPath(file);
+  for (let n = 2; (await exists(dest)) || (await exists(`${dest.slice(0, -ext.length)}.json`)); n++) {
+    dest = `${historyPath(file).slice(0, -ext.length)}-${n}${ext}`;
+  }
+  await fs.mkdir(path.dirname(dest), { recursive: true });
+  await fs.rename(file, dest);
+  const side = `${file.slice(0, -ext.length)}.json`;
+  if (await exists(side)) await fs.rename(side, `${dest.slice(0, -ext.length)}.json`);
+  console.error(`archived ${path.relative(REPO_DIR, file)} → ${path.relative(REPO_DIR, dest)}`);
+  return dest;
+}
+
+/** The --meta fields for a sidecar (omitted when none were given). */
+const metaField = (o) => (Object.keys(o.meta).length ? { meta: o.meta } : {});
+
 /** Which model id to put in the payload, after checking what the server has loaded. */
 async function checkServedModel(baseUrl, group, groupKey, o) {
   const wanted = o.modelId ?? group.model;
@@ -372,6 +420,12 @@ async function main() {
   if (o.retries === null) o.retries = 2;
 
   if (!IMAGE_FORMATS.includes(o.format)) fail(`--format must be ${IMAGE_FORMATS.join('|')}`);
+  if (o.instructionFile !== null) {
+    if (o.instruction !== null) fail('pass --instruction or --instruction-file, not both');
+    o.instruction = (await fs.readFile(o.instructionFile, 'utf8').catch(() => fail(`--instruction-file ${o.instructionFile}: unreadable`))).trim();
+    if (!o.instruction) fail(`--instruction-file ${o.instructionFile} is empty`);
+  }
+  if (o.archive && o.force) fail('pass --archive or --force, not both (--archive keeps the old file in history)');
   const editing = o.editFrom.length > 0;
   if (editing && !o.instruction) fail('--edit-from needs --instruction');
   if (!editing && o.instruction) fail('--instruction needs --edit-from');
@@ -428,11 +482,11 @@ async function main() {
     const base = path.join(SCRIPT_DIR, 'candidates', o.slot, ...o.id.split('/'));
     if (editing) {
       let k = 1;
-      while (await exists(`${base}.edit-${k}.${ext}`) || await exists(`${base}.edit-${k}.json`)) k++;
-      out = `${base}.edit-${k}.${ext}`;
+      while (await exists(path.join(base, `edit-${k}.${ext}`)) || await exists(path.join(base, `edit-${k}.json`))) k++;
+      out = path.join(base, `edit-${k}.${ext}`);
     } else out = `${base}.${ext}`;
   }
-  if (!o.force && !o.dryRun && (await exists(out))) fail(`${path.relative(REPO_DIR, out)} exists — pass --force to replace it`, 4);
+  if (!o.force && !o.archive && !o.dryRun && (await exists(out))) fail(`${path.relative(REPO_DIR, out)} exists — pass --archive (keeps it in history) or --force to replace it`, 4);
 
   const baseUrl = resolveBaseUrl(o);
   const endpoint = editing ? '/v1/images/edits' : '/v1/images/generations';
@@ -446,6 +500,8 @@ async function main() {
   if (o.dryRun) {
     console.log(`dry-run ${o.slot} ${o.id} ${groupKey} ${width}x${height} seed ${seed} steps ${steps} guidance ${guidance} → ${path.relative(REPO_DIR, out)}`);
     console.log(`POST ${baseUrl}${endpoint}${editing ? ` (multipart, ${refs.length} reference image(s): ${refs.map((r) => path.relative(REPO_DIR, r.file)).join(', ')})` : ''}`);
+    if (o.archive && (await exists(out))) console.log(`archive: ${path.relative(REPO_DIR, out)} (+ sidecar) → ${path.relative(REPO_DIR, historyPath(out))} after a successful generation`);
+    if (Object.keys(o.meta).length) console.log(`meta: ${JSON.stringify(o.meta)}`);
     console.log(JSON.stringify(payload, null, 2));
     return;
   }
@@ -497,8 +553,13 @@ async function main() {
     file = `${out.slice(0, out.length - path.extname(out).length)}.${format}`;
   }
   const seconds = Math.round((Date.now() - started) / 100) / 10;
+  const archived = o.archive ? await archiveExisting(file) : null;
   await fs.mkdir(path.dirname(file), { recursive: true });
   await writeFileAtomic(file, resp.bytes);
+  const real = pngSize(resp.bytes);
+  if (real && (real.w !== width || real.h !== height)) {
+    console.error(`warning: ${o.id}: asked ${width}x${height}, the server returned ${real.w}x${real.h}`);
+  }
   const sidecar = {
     id: o.id, slot: o.slot, prompt, negative, model: groupKey, seed, width, height, steps, guidance,
     generatedAt: new Date().toISOString(), seconds,
@@ -507,6 +568,9 @@ async function main() {
     servedModel: payload.model, endpoint: `${baseUrl}${endpoint}`, negativeSent,
     mode: editing ? 'edit' : 'generate',
     ...(editing ? { editFrom: refs.map((r) => path.relative(REPO_DIR, r.file)), instruction: o.instruction } : {}),
+    ...(real ? { outputSize: `${real.w}x${real.h}` } : {}),
+    ...(archived ? { replaced: path.relative(REPO_DIR, archived) } : {}),
+    ...metaField(o),
   };
   const sidecarPath = `${file.slice(0, file.length - path.extname(file).length)}.json`;
   await writeFileAtomic(sidecarPath, `${JSON.stringify(sidecar, null, 2)}\n`);
@@ -621,7 +685,8 @@ async function checkVideoModel(baseUrl, group, groupKey, o, mode) {
 }
 
 async function runVideo(o, item) {
-  if (o.editFrom.length || o.instruction) fail(`${item.id} is a video: --edit-from / --instruction are for images (image-to-video takes --source <png>)`);
+  if (o.editFrom.length || o.instruction || o.instructionFile) fail(`${item.id} is a video: --edit-from / --instruction are for images (image-to-video takes --source <png>)`);
+  if (o.archive && o.force) fail('pass --archive or --force, not both (--archive keeps the old file in history)');
   if (o.formatGiven && o.format !== 'mp4') fail(`${item.id} is a video: --format does not apply (the server returns mp4)`);
   if (o.slot === 'c') fail(`${item.id} is a video: videos have slots a and b only`);
   if (o.timeout === null) o.timeout = VIDEO_TIMEOUT_MS;
@@ -683,7 +748,7 @@ async function runVideo(o, item) {
   }
 
   const out = o.out ?? `${path.join(SCRIPT_DIR, 'candidates', o.slot, ...item.id.split('/'))}.mp4`;
-  if (!o.force && !o.dryRun && (await exists(out))) fail(`${path.relative(REPO_DIR, out)} exists — pass --force to replace it`, 4);
+  if (!o.force && !o.archive && !o.dryRun && (await exists(out))) fail(`${path.relative(REPO_DIR, out)} exists — pass --archive (keeps it in history) or --force to replace it`, 4);
 
   const baseUrl = resolveBaseUrl(o);
   const payload = {
@@ -748,6 +813,7 @@ async function runVideo(o, item) {
   const format = detectImageFormat(job.bytes);
   if (format !== 'mp4') console.error(`warning: ${item.id}: expected mp4 bytes, detected "${format}" — kept as .mp4`);
   const generationSeconds = Math.round((Date.now() - started) / 100) / 10;
+  const archived = o.archive ? await archiveExisting(out) : null;
   await fs.mkdir(path.dirname(out), { recursive: true });
   await writeFileAtomic(out, job.bytes);
   const sidecar = {
@@ -761,6 +827,8 @@ async function runVideo(o, item) {
     ...(ref ? { sourceImage: path.relative(REPO_DIR, ref.file), sourceSize: ref.size ? `${ref.size.w}x${ref.size.h}` : null } : {}),
     ...(item.waitsFor ? { waitsFor: item.waitsFor } : {}),
     ...(groupKey !== item[SLOT_FIELD[o.slot]] ? { slotModel: item[SLOT_FIELD[o.slot]] ?? null } : {}),
+    ...(archived ? { replaced: path.relative(REPO_DIR, archived) } : {}),
+    ...metaField(o),
   };
   await writeFileAtomic(`${out.slice(0, out.length - path.extname(out).length)}.json`, `${JSON.stringify(sidecar, null, 2)}\n`);
   console.log(`ok ${o.slot} ${item.id} ${groupKey} ${mode} ${width}x${height} ${frames}f@${fps} (${seconds}s clip) seed ${seed} ${generationSeconds}s → ${path.relative(REPO_DIR, out)}`);
