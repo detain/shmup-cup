@@ -17,7 +17,7 @@ import {
   cancelAllBullets,
   fireBendingLaser,
 } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { HUD_BAR_HEIGHT, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB, loadContent, type ContentDb } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -254,11 +254,11 @@ describe('core/bullets cancel into points (M2-02)', () => {
     const f = w.bullets.points.fields;
     expect(f.player[0]).toBe(1);
     const [tx, ty] = POINT_ITEM_TARGETS[1];
-    // Heading for (344, −4): right and up.
+    // Heading for player 2's score, 40 px in from the right edge of the top bar: right and up.
     expect(f.vx[0]).toBeGreaterThan(0);
     expect(f.vy[0]).toBeLessThan(0);
-    expect(tx).toBe(344);
-    expect(ty).toBeLessThan(0);
+    expect(tx).toBe(PLAYFIELD_W - 40);
+    expect(ty).toBe(-HUD_BAR_HEIGHT / 2);
   });
 
   it('draws the items on ITEMS with the twinkle frames (hidden without the engine sprite)', () => {

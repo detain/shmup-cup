@@ -113,7 +113,7 @@
  * @module
  */
 import { TerrainType, terrainAt, type TerrainMap } from '../collision/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W, type GameConfig } from '../config/index.js';
+import { HUD_BAR_HEIGHT, PLAYFIELD_H, PLAYFIELD_W, type GameConfig } from '../config/index.js';
 import type { ContentDb, PlayerShipSpec } from '../data/index.js';
 import type { DebugFlags } from '../debug/index.js';
 import { FX_CUES, SimEventKind, type EventQueue } from '../events/index.js';
@@ -383,11 +383,12 @@ export const POINT_ITEM_LIFETIME = 180;
 
 /**
  * Where point items fly, per player slot: the player's score in the top HUD bar, in playfield
- * coordinates (the bar is above the playfield, so `y` is negative).
+ * coordinates — 40 px in from the bar's left edge (player 1) or its right edge (player 2), on the
+ * bar's middle row (the bar is above the playfield, so `y` is `-HUD_BAR_HEIGHT / 2`, negative).
  */
 export const POINT_ITEM_TARGETS: readonly (readonly [number, number])[] = Object.freeze([
-  Object.freeze([40, -4] as const),
-  Object.freeze([344, -4] as const),
+  Object.freeze([40, -HUD_BAR_HEIGHT / 2] as const),
+  Object.freeze([PLAYFIELD_W - 40, -HUD_BAR_HEIGHT / 2] as const),
 ]);
 
 /** Laser phases, in order. */
