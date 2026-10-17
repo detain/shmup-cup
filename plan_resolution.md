@@ -1311,7 +1311,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R0-01 | Maintenance branch, version lines and CI | not started |
 | R0-02 | The TV render benchmark (`bench:tv`) | not started |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
-| R0-04 | The early art round: generate, pick, follow up | waiting on owner |
+| R0-04 | The early art round: generate, pick, follow up | in progress — round 1 images done (211), videos generating; see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | not started |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | not started |
 | R1-03 | Units in the content schemas, and the rescale tool | not started |

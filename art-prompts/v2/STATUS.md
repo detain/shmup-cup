@@ -1,0 +1,81 @@
+# Art round status (plan step R0-04)
+
+Live status of the early AI art round. The spec is in `plan_resolution.md` R0-04, the runbook in
+`docs/dev/art-generation-server.md`, and the driver section in `prompt_resolution.md`'s "Art round".
+Last updated 2026-10-16 22:35 EDT.
+
+## Server layout (skynet2)
+
+- **LLM:** GPUs 0,1, port **30000**, started by the owner with `/root/run_sglang_qwenflashnext9b.sh`.
+  **Never touch it.**
+- **Image/video models:** GPUs 2,3, port **30001**, one at a time, from `/root/run_sglang_images_<name>-1.sh`.
+- **Only ever use `art-prompts/v2/server.sh`** (`status | start <name> | wait <name> | stop <name> |
+  verify`). Never stop SGLang by name or by GPU — `pkill -f sglang` and the like kill the LLM.
+- After every stop: `server.sh verify` must say `VERIFY OK`, meaning the LLM is healthy and was not
+  restarted, :30001 is empty and GPUs 2,3 are freed.
+- Weights now on disk: FLUX.2-dev, Qwen-Image, SD3.5-large, FLUX.1-dev, Wan2.2-T2V-A14B. LTX-2.5 will
+  download on first start (~163 GiB; it fits). The LTX-Video fallback (~237 GiB) would **not** fit
+  without deleting something.
+
+## Round 1 — two (or three) candidates per subject
+
+Picker: <http://mystage.interserver.net/shmup-cup/> (files in `/home/sites/mystage/public_html/shmup-cup/`,
+choices in its `data/choices.json`). The owner picks there.
+
+| Session | Model | What | Status |
+|---|---|---|---|
+| 1 | FLUX.2-dev | slot a for 84 subjects + slot b for the 7 text items | **done** (91/91) |
+| 2 | Qwen-Image | slot b for 75 subjects + slot a for the 7 text items | **done** (82/82) |
+| 3 | SD3.5-large | slot b for the 9 terrain swatches | **done** (9/9) |
+| 4 | FLUX.1-dev | slot c for 29 sets (stage scenes, swatches, non-text key moments and promo) | **done** (29/29) |
+| 5 | Wan2.2-T2V-A14B | video slot a for the 29 text-to-video clips | **running** (started 22:12) |
+| 6 | LTX-2.5 (fallback LTX-Video) | video slot b for the same 29 clips | next |
+
+Images: 211 candidates. Video: 29 text-to-video clips × 2 slots. Five image-to-video clips wait for
+round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet2, so LTX-2.5 does them):
+
+- `video/dawn-flight-home` ← `moment/ending-citadel-falls-silent`;
+- `video/blackhole-bomb-slowmo` ← `fx/black-hole/armed-scene` (a round-2 followup still);
+- `video/zone-magma-deep-cone` ← `stage/magma-deep`;
+- `video/zone-prism-labyrinth-refraction` ← `stage/prism-labyrinth`;
+- `video/zone-neon-dimension-rush` ← `stage/high-speed-dimension`.
+
+**Known weak or failed candidates** (the best try was kept; the other slot usually covers it):
+
+- Qwen slot b:
+  - failed: `item/power-capsule` (draws cans or pills), `boss/squall-steed` (ground strip),
+    `enemy/dune-worm`, `enemy/ember-wisp` (ground strips, croppable), `enemy/option-hunter` (beam
+    spills onto the key);
+  - weak: `fx/mega-crash`.
+- SD3.5 slot b, weak: `tiles/azure-verge`, `tiles/brine-nebula`, `tiles/dune-expanse`, `tiles/cell-vault`.
+- FLUX.1 slot c:
+  - failed: `moment/ending-citadel-falls`, `moment/ending-flagship-slips-away`, `promo/wide-banner`;
+  - `stage/brine-nebula` has letterbox bars to crop;
+  - six swatches darken at the right and bottom edges (crop about 24 px).
+- Counts the models would not respect: `enemy/halo-crystal` (8 satellites, not 6), `enemy/vane`
+  (4 blades, not 3), `enemy/gyre` (8 spokes, not 4).
+- Alternatives kept in the session scratchpad, outside the repo: a facet-monarch orbit version and an
+  iron-citadel scene with stray text.
+
+**Prompting lessons for later sessions:**
+- Key green comes out as a slightly yellowish green, not pure #00FF00; ingest needs tolerance.
+- Qwen adds shadows, ground strips and frames.
+- FLUX.1 adds letterbox bars at 1536×640.
+- Metaphors get drawn literally (chains, lanterns, stairways, hearts, sails).
+- Say where the ship's nose and engines are so it faces right.
+- Bullets must be described as round glowing orbs.
+
+## Round 2 — after the owner says picking is done
+
+Read `data/choices.json`:
+
+1. **Followups** (203 in the manifest): generate with FLUX.2-dev, using the winner as reference
+   (`gen-candidate.mjs --edit-from <winner.png>`).
+2. **Comments:** apply each one as a FLUX.2 edit of the winner, written as a new file.
+3. **`regenerate: true`:** new candidates in both slots with the round-1 slot models and a new idea.
+4. **The five image-to-video clips:** LTX-2.5 from their winning stills (`--source`).
+5. The owner picks again where needed. Winners and their followups are then copied to
+   `art-prompts/v2/winners/<id>/` and committed (decide on Git LFS first if they get large).
+   Candidates stay git-ignored.
+
+One model session at a time; stop and verify after each.
