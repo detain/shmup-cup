@@ -1,6 +1,6 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
-> **Status:** drafted 2026-10-16 — **0 of 36 steps done.** The `v1.x` maintenance branch exists (created from
+> **Status:** drafted 2026-10-16 — **0 of 37 steps done.** The `v1.x` maintenance branch exists (created from
 > the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything below happens on `master`, which from
 > now on is the **v2** line.
 >
@@ -271,7 +271,7 @@ vertical port exact, but spends 17 % of the screen on HUD (v1: 7 %) on a TV wher
 
 | Milestone | Steps | Outcome | Golden replays |
 |---|---|---|---|
-| **R0** Branches, versions, TV benchmark | R0-01 … R0-03 | `v1.x` maintained with CI; a benchmark `.wgt` that measures 384×216 / 640×360 / 960×540 on the M7 (results non-blocking) | unchanged |
+| **R0** Branches, versions, TV benchmark | R0-01 … R0-04 | `v1.x` maintained with CI; a benchmark `.wgt` that measures 384×216 / 640×360 / 960×540 on the M7 (results non-blocking); the early AI art round — two candidates per subject, the owner's picks, followups from the winners (non-blocking) | unchanged |
 | **R1** Resolution-independent engine | R1-01 … R1-05 | every frame-dependent number derives from a handful of constants; content schemas know which numbers are world pixels; atlas paging and memory ready for detailed art. **Still 384×216, pixel-identical.** | **unchanged** (the safety net) |
 | **R2** The switch | R2-01 … R2-04 | the game runs at 640×360 with every zone ported ×1.5, interim upscaled art, playtest bot green, saves and replays versioned. Tag `v2.0.0-alpha.1` | re-blessed |
 | **R3** Art pipeline | R3-01 … R3-06 | art bible v2; the AI-to-sprite ingest tool with provenance; variants, palettes and tiles from real art; zone-grouped atlas pages within memory; stage art features (decor, painted backdrops, more parallax) | unchanged (R3-06 may add new stage fields) |
@@ -279,8 +279,10 @@ vertical port exact, but spends 17 % of the screen on HUD (v1: 7 %) on a TV wher
 | **R5** Zone remasters | R5-01 … R5-10 | each zone's tileset, backdrops, enemies and boss redrawn and its level expanded to ~4.5–5.5 min, plus bonus stages, boss rush, loops and the escape. Tag `v2.0.0-beta.1` after R5-10 | re-blessed per zone |
 | **R6** Balance, performance, release | R6-01 … R6-03 | difficulty and scoring retuned, on-device performance confirmed, docs and store assets refreshed, **v2.0.0** | final re-bless |
 
-Dependencies: R0 ∥ R1 → R2 → R3 → R4 ∥ R5 (R5 zone steps need R3 and R4-01 … R4-03) → R6. **R0-02/R0-03 block
-nothing.**
+Dependencies: R0 ∥ R1 → R2 → R3 → R4 ∥ R5 (R5 zone steps need R3 and R4-01 … R4-03) → R6. **R0-02, R0-03 and R0-04
+block nothing.** Two R3 steps do not wait for R2: **R3-01**'s prompt-library half is done (`b938d5a`) and its art bible
+half depends on nothing; **R3-02** depends only on R3-01, and its output is staged until R2-01. R3-03 … R3-06 still
+follow R2.
 
 ---
 
@@ -393,6 +395,78 @@ nothing.**
     this plan.
 - **Acceptance:** §12 exists with numbers from both monitors; §13's decision table has been applied and its
   outcome written down; nothing else in the plan waits for it.
+
+### R0-04 — The early art round: generate, pick, follow up
+
+- **Goal:** two AI candidates for every basic subject of `art-prompts/v2/manifest.json` (91 subjects, 203
+  followups), the owner's pick of each, then the winners' followups and edits — so R3 … R5 start from a chosen visual
+  direction, not from a blank page. **It never blocks anything:** no step waits for its images, and nothing it makes
+  ships before R3-02's ingest and R3-05's licence check.
+- **Depends on:** — (the owner's server switch, below). **Blocks:** nothing.
+- **Builds on:** R3-01's prompt-library half (`b938d5a`: the K3 kernel with the flat green key, PNG output, the
+  manifest, `art-prompts/v2/gen-candidate.mjs`); the picker page `http://mystage.interserver.net/shmup-cup/` (files in
+  `/home/sites/mystage/public_html/shmup-cup/`, outside this repo).
+- **Scope:**
+  - *(Tooling done 2026-10-16: `art-prompts/v2/server.sh` with its offline tests `server.test.sh`; the port-30000
+    refusal in `generate.mjs`, `gen-candidate.mjs` and `sweep-models.sh`; the runbook
+    `docs/dev/art-generation-server.md`; the driver's `ART_ROUND` setting in `prompt_resolution.md`.)*
+  - **The server switch (owner, before anything runs).** The main LLM moves to GPUs 0,1 with
+    `/root/run_sglang_qwenflashnext9b.sh` (port 30000 assumed — the LLM's port owner and process group are re-detected
+    at run time, never hard-coded). Cards 2,3 then run **one image/video model at a time** with the unchanged
+    `/root/run_sglang_images_<name>-1.sh` scripts (pinned to GPUs 2,3, port 30001). Each model server is started with
+    `server.sh start` and **stopped with `server.sh stop` when its batch is done, without ever touching the LLM**;
+    `server.sh verify` runs after every stop.
+  - **Round 1 — two candidates per basic subject.**
+    - Every manifest item gets two candidates, slot `a` and slot `b`, made by **two independent agents writing into
+      different dirs** (`art-prompts/v2/candidates/a/…`, `…/b/…`). Neither agent ever reads the other slot's
+      outputs.
+    - A subject with several images (poses, angles, scenes) gets **one representative image** this round — the
+      manifest item itself, the same subject in both slots; its other images are the item's followups (round 2).
+    - Slot a uses the item's `model` (FLUX.2-dev for 84 items), slot b its `modelB` (Qwen-Image for 75; the 7 text
+      items are reversed, Qwen-Image in a and FLUX.2-dev in b; SD3.5 Large is slot b of the 9 terrain swatches).
+    - The slots therefore run in separate server sessions, one model at a time: **FLUX.2-dev** (slot a's FLUX items,
+      plus slot b's 7 text items by a separate slot-b agent), then **Qwen-Image** (slot b's Qwen items, plus slot a's
+      7 text items by a separate slot-a agent), then **SD3.5 Large** (the 9 swatches).
+    - Per session about **4 concurrent generation agents**, one per category or group of categories. Each composes
+      its own take on the item's prompt, runs `gen-candidate.mjs`, **looks at every PNG with the Read tool**, and
+      retries at most twice when it shows the wrong subject, no key background where one is required, stray text or
+      a broken composition. Candidates and their JSON sidecars stay git-ignored.
+  - **The owner picks** on the picker page. It saves every 10 s and has no login. The choices land in
+    `data/choices.json` there: `{"schema":"shmup-art-choices@1","items":{"<id>":{"winner":"a"|"b"|null,
+    "comment":"…","regenerate":bool,"updatedAt":"…"}}}`. A winner and `regenerate` exclude each other. A comment on a
+    winner means "update the chosen image using this text as guidance"; on a regenerate it is the guidance for the
+    new idea. Agents only read that file — the page owns it.
+  - **Round 2, driven from `choices.json`:**
+    - **(a) Followups:** for each winner, the item's followups are generated following the winner's design — with
+      **FLUX.2-dev and the winner as reference image(s)** (`gen-candidate.mjs --edit-from`), even when the winner
+      came from Qwen-Image.
+    - **(b) Comments:** each comment is applied as an edit of the winner — FLUX.2-dev's edit route, or Qwen-Image-Edit
+      only if its weights and a launcher exist (today: cache stubs only, no launcher) — written as a **new file, never
+      overwriting** the winner.
+    - **(c) Regenerate:** both candidates of every item flagged `regenerate` are made again with a new idea, with the
+      round-1 slot models; the old pair is moved to `candidates/history/`, never deleted.
+    - **(d)** The owner picks again where needed, and the loop repeats until every item is decided. A ledger
+      (`art-prompts/v2/candidates/ledger.json`, git-ignored) records which choice (`updatedAt`) each item's work was
+      made for, so a re-run acts only on new or changed choices.
+    - **(e)** Winners and their followups (with their sidecars) are copied to a tracked
+      `art-prompts/v2/winners/<id>/…` and committed; candidates stay git-ignored. The ingest into the game happens
+      later (R3-02, staged until R2-01).
+  - **Video is not part of this round.** Later: LTX-Video / LTX-2.5 image-to-video from winning stills. On skynet2
+    today Wan2.2 is text-to-video only — its I2V weights (`Wan2.2-I2V-A14B`, `TI2V-5B`) are missing, so a reference
+    image would be ignored or rejected.
+- **Acceptance:**
+  - every manifest item has an `a` and a `b` candidate PNG with its sidecar, or a recorded failure after two retries;
+  - every item in `choices.json` is decided (a winner and no pending regenerate), and every winner has its followups
+    and its comment edits;
+  - `art-prompts/v2/winners/<id>/` holds each winner, its edits and followups with their sidecars, committed;
+  - `server.sh verify` passed after every model session, and the LLM's launcher kept its pid and start time through
+    the whole round.
+- **Manual (owner):** the server switch; picking on the page after round 1 and after each round 2; fixing
+  `run_sglang_images_qwenimage-1.sh`'s duplicated `--text-encoder-cpu-offload`; deciding whether committed winners
+  go into Git LFS if they turn out large; the licence reading of R3-05 before any of this art ships.
+- **Refs:** [`docs/dev/art-generation-server.md`](docs/dev/art-generation-server.md); `prompt_resolution.md` "Art
+  round"; `art-prompts/v2/manifest.json`, `art-prompts/v2/gen-candidate.mjs`, `art-prompts/v2/server.sh`;
+  `art-prompts/images/00-style-kernel.md`; R3-01, R3-02, R3-05.
 
 ---
 
@@ -674,7 +748,9 @@ are fixed by k = 1.5. Detail comes from:
 
 - **Goal:** one document every human, model and agent follows, so hundreds of generated images still look like
   one game.
-- **Depends on:** R2-01.
+- **Depends on:** —. **The prompt-library half is done** (`b938d5a`, 2026-10-16: the K3 kernel and v2 targets table,
+  the green key, PNG output, the picks manifest and `gen-candidate.mjs`). **The art bible half depends on nothing**
+  and may run any time; it should take in what R0-04's picks show.
 - **Scope:**
   - **`docs/dev/art-bible-v2.md`:**
     - **target sizes and frame counts per category** (ships, Options, shields, shots, enemy bullets, lasers,
@@ -687,7 +763,7 @@ are fixed by k = 1.5. Detail comes from:
     - **enemy bullets are always the brightest, highest-contrast thing on screen**;
     - no scaled or rotated pixel art at runtime (heading frames as today);
     - **no "mixels"** — every sprite is drawn at the native 640×360 density.
-  - **The prompt library:**
+  - **The prompt library** *(done, `b938d5a`)*:
     - `art-prompts/images/00-style-kernel.md` K3 rewritten for in-game sprites, with target pixel sizes, frame
       counts, a pose list per frame and a sheet grid layout so the ingest tool can slice it;
     - sprite-sheet prompts' frame counts made to match the game (prompts ask 4–8, the game uses mostly 2 today
@@ -706,14 +782,18 @@ are fixed by k = 1.5. Detail comes from:
     | Ship, enemy bullets, lasers, items, capsules, font, HUD icons, tiles' collision silhouettes | **hand-pixelled / procedural**, AI as reference only |
 - **Acceptance:** the bible exists, every category has a size and frame table, the prompt library validates
   (`shmup-art-prompt-library@1`) with the new kernel, and a sample sheet per category has been generated and
-  ingested as a proof (owner run).
-- **Manual (owner):** the generation runs on the GPU server (`art-prompts/generate.mjs`).
+  ingested as a proof (owner run — R0-04's round supplies the generated samples).
+- **Manual (owner):** the generation runs on the GPU server, through R0-04's art round and `art-prompts/v2/server.sh`
+  (runbook: `docs/dev/art-generation-server.md`).
 
 ### R3-02 — The ingest tool: AI output → clean sprite source, with provenance
 
 - **Goal:** turning a generated image into a game-ready PNG is one repeatable command, not an afternoon in an
   image editor.
-- **Depends on:** R3-01.
+- **Depends on:** R3-01 only — it does not wait for R2. **Until R2-01 lands its output is staged:** ingested sprites
+  and their provenance go to a staging folder (`art-prompts/v2/ingested/`), not to `assets/source/sprites/`, so the
+  384×216 atlas and the goldens do not change; they move into `assets/source/sprites/` with R2-01 or the first R4
+  step after it. Before R2-01 the acceptance below runs on the fixtures and the staged output.
 - **Scope:**
   - **`art-prompts/ingest/`**, a standalone tool outside the workspace (like `tools/*`; its own `package.json`,
     so its image dependencies — a JPEG/PNG decoder, optionally a background-removal model — stay out of the
@@ -750,7 +830,7 @@ are fixed by k = 1.5. Detail comes from:
 ### R3-03 — Variants, palettes and tiles from real art
 
 - **Goal:** the systems built for generated placeholder art keep working with real, full-colour art.
-- **Depends on:** R3-02.
+- **Depends on:** R3-02, R2-01 (it rewrites the bullet variants at the new sizes).
 - **Scope:**
   - **`@flash`** (white silhouette) already derives from any art: keep it.
   - **`@p2`** today swaps red and blue channels (`coop.mjs:25-83`), which is unpredictable on full-colour art.
@@ -773,7 +853,7 @@ are fixed by k = 1.5. Detail comes from:
 ### R3-04 — Atlas pages and memory with detailed art
 
 - **Goal:** prove the memory and size budgets with art of the density R4/R5 will produce, before producing it.
-- **Depends on:** R3-02, R1-05; uses R0-03's numbers if they exist.
+- **Depends on:** R3-02, R1-05, R2-01; uses R0-03's numbers if they exist.
 - **Scope:**
   - **A stand-in set of detailed art per zone at the bible's sizes:** 4–6 full-width backdrop layers, a
     12-px tileset with variants, the zone's enemies, a boss at full size.
@@ -1062,7 +1142,11 @@ outcome below maps to an action, not a stop.
 | **The M7 cannot hold 60 fps at 640×360 with detailed art** | low–medium (+25 % fill estimate; CPU follows object counts) | §13's actions; the TV profile; the headless bench gates catch regressions early |
 | **AI art looks inconsistent** across hundreds of generations | high without rules | the art bible, fixed palettes and quantisation in ingest, one kernel per category, per-zone palettes, hand cleanup as the last pass |
 | **AI art is poor at small sizes** (a 24×14 ship, 16-px bullets) | certain | those categories are hand-pixelled from the start (R3-01) |
-| **Model licences** restrict commercial use of outputs | medium | R3-05 checks every model's terms before art ships; regenerate with a permissive model if one does not allow it |
+| **Model licences** restrict commercial use of outputs | medium | R3-05 checks every model's terms before art ships; regenerate with a permissive model if one does not allow it. For R0-04's models: **Qwen-Image is Apache 2.0**; the **FLUX.1-dev / FLUX.2-dev weights are under a non-commercial licence** — read its clause on outputs before any FLUX-made winner ships, else redraw it with Qwen-Image or by hand, using the winner as a design reference only; SD3.5 Large has its own Stability AI licence to read too. Every sidecar records the model that made the image |
+| **Killing the main LLM by accident** while stopping an image model on skynet2 (both run SGLang; renamed children; the stock stop tools — `pkill -f sglang`, `sglang killall`, `killall_sglang.sh` — match by name) | low with the tooling, severe if it happens | only `art-prompts/v2/server.sh stop`: the target is the :30001 listener with the expected `--model-path`, the LLM's process group is refused, every check repeats before each signal, `verify` runs after every stop; `generate.mjs`, `gen-candidate.mjs` and `sweep-models.sh` refuse port 30000 ([runbook](docs/dev/art-generation-server.md)) |
+| **First-start weight downloads** — each model's first start downloads its whole repo (FLUX.2-dev's took ~195 GB on 2026-10-16; 348 GB were left; six models are still uncached) | certain, once per model | `server.sh status` shows free disk and each model's cache; `start` needs ≥ 150 GB free; `wait` allows 3 h; one model at a time |
+| **Style drift between the two slots** — FLUX.2-dev and Qwen-Image read the same prompt differently, so winners mixing both models look like two games | high | one kernel for both slots; every followup and edit made by FLUX.2-dev with the winner as reference; the art bible (R3-01), palette quantisation in ingest (R3-02) and hand cleanup unify the result |
+| **Repository growth** from committed winner PNGs (≈ 300 images of 1–3 MB) | medium | candidates stay git-ignored; only winners and followups are committed; the owner decides on Git LFS if the total gets large |
 | **Texture memory** with detailed art (one 2048² page = 32 MiB with its image) | high | zone-grouped pages, residency, `keepPageImages` off, PNG-8, budgets set by R3-04 before R4/R5 produce art |
 | **Bundle budget** (512 KB gzip, ~403 KB used) | medium | the atlas manifest moves out of `app.js` (R1-05); new code stays lean |
 | **Mechanical port misplaces frame-anchored values** | medium | units on every schema field (R1-03), a tool that refuses unclassified values, the first-visible-tick comparison test (R2-02) |
@@ -1184,6 +1268,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R0-01 | Maintenance branch, version lines and CI | not started |
 | R0-02 | The TV render benchmark (`bench:tv`) | not started |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
+| R0-04 | The early art round: generate, pick, follow up | waiting on owner |
 | R1-01 | Frame constants in core | not started |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | not started |
 | R1-03 | Units in the content schemas, and the rescale tool | not started |

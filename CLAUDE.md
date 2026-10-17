@@ -18,6 +18,7 @@ TypeScript 2D horizontal shoot-'em-up for **Samsung Tizen 5.5 TVs** (Chromium 69
 - **Frame ≠ world:** 640×360 is ×5/3 of the old frame, but the world is only ×1.5. Values anchored to a screen edge ("one playfield", "just past the right edge", the screen centre) are re-derived from the new frame, never multiplied by 1.5 (`plan_resolution.md` §2.6).
 - **Step workflow:** steps are `### R<n>-<nn> — <Title>` sections of `plan_resolution.md`. After a step, set its row in §17 and resync the board with `python3 .claude/plan_board_v2.py` (GitHub milestones R0–R6, issues #47–#82, label `v2`).
 - **Benchmarks don't block:** the TV benchmarks (384×216 / 640×360 / 960×540, R0-02/R0-03) never block a step; they set budgets.
+- **Art round (R0-04):** tooling in `art-prompts/v2/` (`manifest.json`, `gen-candidate.mjs`, `server.sh`), runbook `docs/dev/art-generation-server.md`. **Never stop SGLang on skynet2 by name or GPU — the main LLM runs there too; use `server.sh stop`.**
 
 ## Commands
 

@@ -4,9 +4,11 @@
 > settings** below if you want to limit the run, then paste everything below the line. It is safe to paste again
 > later: it resumes from the Progress table (§17) of [`plan_resolution.md`](plan_resolution.md).
 >
-> **State on 2026-10-16:** 0 of 36 steps done. Already done outside the steps: the `v1.x` branch (from tag
+> **State on 2026-10-16:** 0 of 37 steps done. Already done outside the steps: the `v1.x` branch (from tag
 > `v1.0.0`), CI on pushes to both branches, `art-prompts/` excluded from Prettier and ESLint, `CLAUDE.md` describing
-> v2, and one board issue per step (#47–#82, synced by `.claude/plan_board_v2.py`).
+> v2, R3-01's prompt-library half, the art round's tooling (`art-prompts/v2/server.sh`, the runbook
+> `docs/dev/art-generation-server.md`), and one board issue per step (#47–#82 plus R0-04's, synced by
+> `.claude/plan_board_v2.py`).
 
 ---
 
@@ -21,11 +23,17 @@ blank (rule 5 below).
 ## Run settings (edit before pasting)
 
 - **SCOPE:** `all remaining steps`, meaning every step in `plan_resolution.md` whose §17 status is not `done…`,
-  in dependency order. Alternatives: `milestone R1`, a range like `R1-01..R1-03`, or a single step id.
+  in dependency order. Alternatives: `milestone R1`, a range like `R1-01..R1-03`, a single step id, or `none` (no
+  plan steps — with an `ART_ROUND`, only the art round runs).
 - **MAX_PARALLEL_LANES:** `4` — the most file-changing agents running at the same time.
 - **PAUSE_BETWEEN_MILESTONES:** `no` — if `yes`, stop after each milestone (R0 … R6), report, and wait for me.
 - **AI_GENERATION:** `step prompts only`. Agents may run `art-prompts/generate.mjs` for the specific prompts their
-  step needs if the GPU server answers, but never a full sweep. Set it to `no` to leave all generation to me.
+  step needs if a model is already served on :30001 (`bash art-prompts/v2/server.sh status`), but never a full sweep,
+  and they never start or stop a model. Set it to `no` to leave all generation to me. (The art round has its own
+  setting, below.)
+- **ART_ROUND:** `off` (default) | `round 1` | `round 2` — runs R0-04's early art round (see "The art round" below).
+  `SCOPE: none` with an `ART_ROUND` runs **only** the art round. With a SCOPE of steps as well, the art round runs
+  alongside the waves.
 - **FULL_SUITE:** `end of run` — see rule 2 and "End of the run".
 
 ## The owner's general instructions (follow them exactly)
@@ -89,6 +97,9 @@ blank (rule 5 below).
 - Only the dependencies a step names may be added. TypeScript stays at 6.0.x.
 - **Never** package, sign, deploy or touch hardware: no Tizen CLI or `sdb` here. Such scripts may be written, never
   run.
+- **The GPU server skynet2** is touched only through `art-prompts/v2/server.sh`, and only by the orchestrator during
+  the art round. Never stop SGLang there by name or GPU (`pkill`, `killall`, `sglang killall`) — the main LLM runs
+  there too.
 - Golden replays change only on purpose, with the reason in the commit message. **An unintended golden change is a
   bug.** Planned exception: between R2-01 and R2-03 the goldens are stale by design, and R2-03 re-blesses them.
 
@@ -128,7 +139,9 @@ blank (rule 5 below).
 ## The wave loop
 
 A **wave** is every step in SCOPE whose dependencies are all `done…`. R0-02 and R0-03 depend on nothing that
-blocks, and **nothing waits for R0-02/R0-03** (§13). For example, the first wave can be R0-01 + R0-02 + R1-01.
+blocks, and **nothing waits for R0-02/R0-03** (§13). For example, the first wave can be R0-01 + R0-02 + R1-01. **R0-04
+is never built in a wave:** its tooling is done, and it runs only through `ART_ROUND` (below). R3-01 (the art bible
+half) and R3-02 depend on nothing in R2, so they can join early waves.
 
 ### 1. Scout (read-only, all in parallel)
 
@@ -251,6 +264,138 @@ Its changes get one review loop.
    rounds, findings fixed or declined, test counts, As-built deviations, everything waiting on me grouped by step,
    the CI run URL, and the next manual actions (the TV benchmark run, AI generation and cleanup, M7 play sessions).
 
+## The art round (`ART_ROUND`)
+
+Plan step **R0-04**. It makes two candidates per basic art subject, the owner picks, then the winners get their
+followups and edits. Read first: plan R0-04; **`docs/dev/art-generation-server.md` in full** (the server, `server.sh`,
+the hazards, the round-1 session table and the round-2 commands); `art-prompts/images/00-style-kernel.md`;
+`node art-prompts/v2/gen-candidate.mjs --help` and `--list`.
+
+### Preconditions — stop and ask me if one fails
+
+1. **I have said the server is switched:** in this session, or with `ART_ROUND` set in the Run settings. Do not infer
+   it from the server's state alone.
+2. `bash art-prompts/v2/server.sh status` shows the LLM on GPUs 0,1 only (:30000, health 200) and cards 2,3 free,
+   with :30001 empty. The one exception: the model your first session needs is already up and healthy — then skip its
+   `start`, and still `stop` it at the end of the session.
+3. For round 2: `/home/sites/mystage/public_html/shmup-cup/data/choices.json` is readable and has the
+   `shmup-art-choices@1` schema.
+
+With `SCOPE: none`, the preflight is only its steps 1 and 6: no install, no CI. Set R0-04 to `in progress` in §17 when
+the round starts.
+
+### How a model session runs
+
+**You run `server.sh` yourself** — never an agent — and only one model session at a time:
+
+1. `server.sh status` → `server.sh start <name> --dry-run` → `server.sh start <name>` → `server.sh wait <name>`. A
+   first start downloads the model's weights, so the wait can take hours: run it as a background command and wait for
+   `READY`. Spawn no generation agent before it.
+2. Spawn **about 4 generation agents** at once, each with one category or a group of categories (the runbook's §6
+   table; regroup with `gen-candidate.mjs --list` if the manifest changed). Slot-a and slot-b work never share an
+   agent. Generation agents run **in the main working tree, without a worktree**: the picker page reads
+   `/home/sites/shmup-cup/art-prompts/v2/candidates/`, and they only write git-ignored files there. They do not count
+   toward MAX_PARALLEL_LANES.
+3. When every agent has reported (rule 5: resume a blank one with `continue`), check that every (item, slot) of the
+   session has a PNG and its sidecar. Re-run one agent for the gaps, at most once.
+4. `server.sh stop <name> --dry-run`, then check that the plan names the image server's process group, not the LLM's.
+   Then `server.sh stop <name>`, which must end with `VERIFY OK`. **If `stop` refuses or `verify` fails: stop the
+   round, kill nothing by any other means, and report to me.**
+5. Then the next model.
+
+### Round 1
+
+Sessions in this order (the runbook's table):
+
+1. `flux2dev` — slot a's FLUX items (4 agents) plus slot b's 7 text items (1 more agent);
+2. `qwenimage` — slot b's Qwen items (4 agents) plus slot a's 7 text items (1 more agent);
+3. `stablediffusion35large` — slot b's 9 terrain swatches (1 agent).
+
+A subject with several images gets only its manifest item (the representative image) this round. Its followups wait
+for round 2.
+
+**At the end of round 1:**
+- Report the counts per slot (made / weak / failed), the failures, and the last `VERIFY OK`.
+- Set R0-04 to `waiting on owner` in §17 and run `plan_board_v2.py`.
+- Tell me: **"Pick at http://mystage.interserver.net/shmup-cup/, then run the driver with `ART_ROUND: round 2`."**
+- Then **stop** the art round. Nothing more happens until I have picked.
+
+### Round 2
+
+1. **Work list.** Read `choices.json` — never write it; the page owns it. Read the ledger
+   `art-prompts/v2/candidates/ledger.json` (`shmup-art-ledger@1`; create it if missing; you are its only writer). An
+   item needs work when its choice's `updatedAt` is newer than the ledger's:
+   - a **winner** needs its followups, plus an edit when it has a comment;
+   - **regenerate** needs both slots again, with the comment as the guidance for the new idea.
+   List items without a choice for me, and skip them.
+2. **Sessions:**
+   - `flux2dev`: comment edits first; then the followups of every winner (references: the winner, plus its newest edit
+     if it has one); then the regenerations whose slot model is FLUX.2-dev;
+   - `qwenimage`: the Qwen-Image regenerations;
+   - `stablediffusion35large`: the swatch regenerations.
+   Skip a session with no work. Use the exact commands of the runbook's §6: edits to `<item id>/edit-<k>.png`,
+   followups to their own ids, the old pair moved to `candidates/history/` before a regeneration.
+3. **Ledger.** After each session, record per item the choice's `updatedAt` it was done for and the files made.
+4. **Winners commit.** An item is complete when:
+   - it has a winner and no pending regenerate;
+   - its followups exist for the current choice;
+   - its current comment's edit exists.
+   Copy every complete item to `art-prompts/v2/winners/<item id>/` (`winner.png` / `.json`, `edit-<k>.*`,
+   `<followup suffix>.*`, `choice.json` — the runbook's layout). Check `du -sh art-prompts/v2/winners` first: if this
+   commit would add more than ~200 MB, ask me (Git LFS?) before committing. Stage those paths explicitly and commit
+   with `feat(R0-04): add the art round's winners for <n> subjects` and the Co-Authored-By line; then
+   `git fetch origin && git rebase origin/master && git push origin HEAD:master`. Candidates are never committed. A
+   later change to an item (a new comment, a new winner) is re-copied and committed the same way.
+5. **End of round 2:**
+   - report the review links (`http://mystage.interserver.net/shmup-cup/img.php?slot=<s>&id=<followup id>` and
+     `…&id=<item id>/edit-<k>`), the regenerated pairs, the items still undecided, and the winners commit;
+   - tell me to pick again where needed and to re-run with `ART_ROUND: round 2`;
+   - once every item has a winner with nothing left to do, set R0-04 to `done` in §17 and run `plan_board_v2.py`.
+
+Video is not part of this round.
+
+### Generation agent brief — put this at the top of every generation agent's prompt
+
+```text
+You are a generation agent for Shmup Cup v2's early art round (plan step R0-04): round {1 | 2}, slot {a | b},
+session model {flux2dev | qwenimage | stablediffusion35large}, task {candidates | followups | edits | regenerate}.
+Your items: {ID LIST}.
+
+Read first: plan_resolution.md "### R0-04"; docs/dev/art-generation-server.md §6; art-prompts/images/00-style-kernel.md
+(the kernels K1–K5, the v2 targets table, the key-background rules, the negative-prompt library); each item's entry in
+art-prompts/v2/manifest.json (round 2 also: its choices.json entry and the winner's sidecar).
+
+Independence: you are slot {SLOT}. Never open, list or read anything under art-prompts/v2/candidates/{OTHER SLOT}/,
+nor another agent's prompt files. Each prompt is your own take on the item: keep its subject, the kernel paragraph and
+the key-background / no-text clauses; vary the composition, the detail and the wording.
+
+Generating: one image per call — node art-prompts/v2/gen-candidate.mjs --id <id> --slot {SLOT} --prompt-file <a file
+in your scratchpad> (round 2: the runbook's exact commands). In round 1 do not pass --model: the manifest picks it.
+Never pass --port, --base-url or --any-model. Never run generate.mjs, sweep-models.sh or server.sh, and never ssh. If
+gen-candidate exits 3 (the server serves another model), stop and report. After 3 server failures in a row
+(connection refused, 5xx after its own retries, timeouts), stop and report: the orchestrator owns the server.
+
+Checking: look at EVERY PNG you make with the Read tool. Retry at most twice — a new --seed, and --force on your own
+round-1 file; an edit gets the next edit-<k> — when it shows:
+  - the wrong subject;
+  - no flat green key where the item needs one (sprite subjects, tiles and FX on green; glow FX on black; scenes and
+    key art keep their navy);
+  - stray text or letters (text items: anything but their exact words);
+  - a broken composition (a cut-off subject, several subjects where one is wanted, the wrong facing — player crafts
+    face right, enemies and bosses face left).
+After the second retry, keep the best attempt and report it as weak.
+
+Files: gen-candidate writes <name>.json next to each PNG — never edit or delete a sidecar. Edits never overwrite.
+Candidates are git-ignored: stage nothing, commit nothing, push nothing. Write nothing outside
+art-prompts/v2/candidates/{SLOT}/ (round-2 regenerations: also candidates/history/) and your scratchpad.
+
+Context: if you are almost at the end of your task, do not bother with context compression — it is quicker to finish
+the task and respond.
+
+Your final message must not be blank. Report per item: id, slot, file(s), attempts, verdict (ok | weak | failed) and a
+one-line note; then failures and anything the orchestrator must know.
+```
+
 ## Agent brief — put this at the top of every agent prompt (fill in the braces)
 
 ```text
@@ -307,6 +452,8 @@ Your final message must not be blank: it is the report in the format below.
 - **Reviewer:** `findings[]` (`severity` blocker | major, `file`, `line`, `title`, `detail`, `suggestedFix`) — an
   **empty array** when nothing is must-fix — plus `checksRun[]` and `summary`.
 - **Docs:** `filesChanged[]`, `section17Rows[]`, `commits[]`.
+- **Generation (art round):** `items[]` (`id`, `slot`, `files[]`, `attempts`, `verdict` ok | weak | failed, `note`),
+  `failures[]`, `serverTrouble[]`.
 
 ## Reporting to me
 
@@ -321,4 +468,5 @@ question about AI art — ask, and keep the other lanes running meanwhile.
 
 ## Start now
 
-Do the preflight, then scout the first wave.
+Do the preflight, then scout the first wave — or, with `SCOPE: none` and an `ART_ROUND`, check the art round's
+preconditions and start its first model session.
