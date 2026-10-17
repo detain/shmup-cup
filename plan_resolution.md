@@ -1308,11 +1308,11 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | CI runs on pushes to `v1.x` (`ci.yml` on both branches) | **done** (2026-10-16) |
 | — | One board issue per step on the GitHub project | **done** (2026-10-16) |
 | — | R3-01's prompt-library update done early | **done** (2026-10-16) |
-| R0-01 | Maintenance branch, version lines and CI | not started |
-| R0-02 | The TV render benchmark (`bench:tv`) | not started |
+| R0-01 | Maintenance branch, version lines and CI | in progress |
+| R0-02 | The TV render benchmark (`bench:tv`) | in progress |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 images done (211), videos generating; see `art-prompts/v2/STATUS.md` |
-| R1-01 | Frame constants in core | not started |
+| R1-01 | Frame constants in core | in progress |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | not started |
 | R1-03 | Units in the content schemas, and the rescale tool | not started |
 | R1-04 | Tile size and font metrics are data | not started |
@@ -1321,7 +1321,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
-| R3-01 | Art bible v2 and the prompt library update | not started |
+| R3-01 | Art bible v2 and the prompt library update | in progress |
 | R3-02 | The ingest tool, with provenance | not started |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
