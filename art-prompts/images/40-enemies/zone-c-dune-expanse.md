@@ -1,6 +1,8 @@
 # 40 — Zone C: Dune Expanse enemies
 # Twin suns, dune silhouettes, heat haze.
 # Seed slots: concept 15311-15313, sprite sheet 15321-15323.
+# v2 (R3-01): sprite sheets sit on the K3 key background (flat pure green #00FF00) with
+# 4–6 frames per animation (see 00-style-kernel.md); encounter concepts keep their navy scenes.
 
 ## dune-worm-dust-devil — DUNE WORM and DUST DEVIL, encounter concept
 **Models:** flux.2-dev, sd3.5-large
@@ -64,7 +66,7 @@ SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, satura
 **Variation:** 1/3 of 3
 
 ```text
-16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean even grid on a flat deep warm-navy background color reference hex 0c1a3c, no gradients, no scenery, no text, no labels, no UI. Row one: DUNE WORM segments and head — four frames of a brass ring-plated boring worm head with a spiral drill maw, rising from a sand collar, mouth closed, mouth revving, mouth fired-open with a pink orb, and a dented damaged frame; beside them two loose body-ring segments for stacking the worm's length. Row two: DUST DEVILS — four frames of a twisting rust-colored vapor funnel with a hollow dark core and orbiting pebble specks, each frame rotating the shear bands a quarter turn so the spiral advances upward. Row three: HUSK CRAWLERS — four frames of a beetle-shaped walker drone, overlapping charcoal carapace plates, six stubby legs in a walk cycle, a dim red eye-bar under the shell lip, one frame with the shell flipped open showing a vulnerable violet core. Chunky crisp pixels, dithered brass highlights, side view facing left.
+16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean even grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no scenery, no text, no labels, no UI. Row one: DUNE WORM segments and head — four frames of a brass ring-plated boring worm head with a spiral drill maw, rising from a sand collar, mouth closed, mouth revving, mouth fired-open with a pink orb, and a dented damaged frame; beside them two loose body-ring segments for stacking the worm's length. Row two: DUST DEVILS — four frames of a twisting rust-colored vapor funnel with a hollow dark core and orbiting pebble specks, each frame rotating the shear bands a quarter turn so the spiral advances upward. Row three: HUSK CRAWLERS — four frames of a beetle-shaped walker drone, overlapping charcoal carapace plates, six stubby legs in a walk cycle, a dim red eye-bar under the shell lip, one frame with the shell flipped open showing a vulnerable violet core. Chunky crisp pixels, dithered brass highlights, side view facing left.
 ```
 
 **Settings:**
@@ -75,15 +77,15 @@ SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, satura
 | steps | 34 | 40 | — | — |
 | seed | 15321 | 15321 | — | — |
 
-**Negative:** (sd3.5/qwen only) `gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, real insects, feathers, pure black background, overlapping sprites, perspective distortion`
-**Notes:** Walk-cycle leg frames and quarter-turn devil frames are the hard part — regenerate before accepting smeared rotations. Color reference: brass worm #e8a030-family plating, devil rust #f89858 vapor, husk carapace charcoal with #ff3a3a eye-bar.
+**Negative:** (sd3.5/qwen only) `gradient background, text, numbers, labels, photorealistic, 3d render, watermark, soft blur, anti-aliased, real insects, feathers, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** Walk-cycle leg frames and quarter-turn devil frames are the hard part — regenerate before accepting smeared rotations. Color reference: brass worm #e8a030-family plating, devil rust #f89858 vapor, husk carapace charcoal with #ff3a3a eye-bar. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ## dune-expanse-sprite-sheet — In-game enemy sprite sheet: dune worm, dust devil, husk crawler
 **Models:** sd3.5-large, flux.1-dev
 **Variation:** 2/3 of 3
 
 ```text
-Retro 16-bit pixel art sprite atlas for a desert level of a horizontal arcade shoot-'em-up, flat solid dark blue-navy sheet background, generous even margins, absolutely no text, numbers or annotations. Content, all facing left: a mechanical boring-worm drawn as separable parts — a ring-plated brass head with a spiral drill jaw in four rev states, plain body rings for extending its length, and a tail plug — plus a little sand-burst effect sprite in two expand frames; a family of DUST DEVIL funnels, four translucent rust-vapor whirls whose internal shear bands and hollow dark cores step through a spin cycle, tiny pebbles caught at orbiting positions; squat armoured HUSK CRAWLER beetles, slate carapace built from overlapping plates over six chunky legs, four-frame walk cycle, plus one belly-open frame revealing a glowing violet weak-point core. Bold near-black outlines throughout, sand-gold, rust, brass and slate palette with violet and red accents, chunky readable pixels, dithering only on metal, no anti-aliasing, nothing else on the sheet.
+Retro 16-bit pixel art sprite atlas for a desert level of a horizontal arcade shoot-'em-up, flat solid pure bright green chroma-key sheet background, generous even margins, absolutely no text, numbers or annotations. Content, all facing left: a mechanical boring-worm drawn as separable parts — a ring-plated brass head with a spiral drill jaw in four rev states, plain body rings for extending its length, and a tail plug — plus a little sand-burst effect sprite in four expand frames; a family of DUST DEVIL funnels, four translucent rust-vapor whirls whose internal shear bands and hollow dark cores step through a spin cycle, tiny pebbles caught at orbiting positions; squat armoured HUSK CRAWLER beetles, slate carapace built from overlapping plates over six chunky legs, four-frame walk cycle, plus one belly-open frame revealing a glowing violet weak-point core. Crisp 1-pixel near-black outlines throughout, sand-gold, rust, brass and slate palette with violet and red accents, chunky readable pixels, dithering only on metal, no anti-aliasing, nothing else on the sheet.
 ```
 
 **Settings:**
@@ -94,15 +96,15 @@ Retro 16-bit pixel art sprite atlas for a desert level of a horizontal arcade sh
 | steps | 34 | 45 | — | — |
 | seed | 15322 | 15322 | — | — |
 
-**Negative:** (sd3.5/qwen only) `photorealistic, 3d, gradients, smooth shading, text, watermark, sand dunes background, cactus, real beetle, pure black background, overlapping sprites, perspective distortion`
-**Notes:** Modular worm parts make this sheet directly usable for a segment-builder mockup. sd3.5 at 5.5 holds the grid; flux.1-dev if it produces cleaner leg silhouettes at the cost of layout. Color reference: sand-burst #fce8b8, core violet #b84cff family.
+**Negative:** (sd3.5/qwen only) `photorealistic, 3d, gradients, smooth shading, text, watermark, sand dunes background, cactus, real beetle, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** Modular worm parts make this sheet directly usable for a segment-builder mockup. sd3.5 at 5.5 holds the grid; flux.1-dev if it produces cleaner leg silhouettes at the cost of layout. Color reference: sand-burst #fce8b8, core violet #b84cff family. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ## dune-expanse-sprite-sheet — In-game enemy sprite sheet: dune worm, dust devil, husk crawler
 **Models:** flux.1-dev, sd3.5-large
 **Variation:** 3/3 of 3
 
 ```text
-Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep warm-navy sheet, one enemy family per horizontal band, thick even margins, no text, no frame lines, no labels. Band one — DUNE WORM: an armored drill-worm of segmented brass rings with a conical spiral-tooth maw, shown as head frames rising at increasing angles, plus stackable plain ring segments and a two-frame sand splash puff. Band two — DUST DEVIL: a hollow twisted funnel of rust-colored spinning vapor with orbiting dark pebbles, four rotational frames where the spiral bands climb one quarter-turn each, silhouette wobbling slightly wider between frames. Band three — HUSK CRAWLER: an armored walker drone shaped like a broad beetle, overlapping slate shell plates, six stubby pixel legs in a clean four-step walk cycle, a dim red eye-bar glowing under the shell rim, and one flipped frame with the belly hatch open around a small bright violet core. Bold dark outlines around every sprite, saturated desert palette of brass, rust, sand-gold and slate, chunky cartridge-era readability, dithered highlights on metal only.
+Pixel art sprite sheet, SNES 16-bit arcade style, flat solid pure bright green chroma-key sheet, one enemy family per horizontal band, thick even margins, no text, no frame lines, no labels. Band one — DUNE WORM: an armored drill-worm of segmented brass rings with a conical spiral-tooth maw, shown as four head frames rising at increasing angles, plus stackable plain ring segments and a four-frame sand splash puff. Band two — DUST DEVIL: a hollow twisted funnel of rust-colored spinning vapor with orbiting dark pebbles, four rotational frames where the spiral bands climb one quarter-turn each, silhouette wobbling slightly wider between frames. Band three — HUSK CRAWLER: an armored walker drone shaped like a broad beetle, overlapping slate shell plates, six stubby pixel legs in a clean four-step walk cycle, a dim red eye-bar glowing under the shell rim, and one flipped frame with the belly hatch open around a small bright violet core. Crisp 1-pixel near-black navy outlines around every sprite, saturated desert palette of brass, rust, sand-gold and slate, chunky cartridge-era readability, dithered highlights on metal only.
 ```
 
 **Settings:**
@@ -113,5 +115,5 @@ Pixel art sprite sheet, SNES 16-bit arcade style, flat solid deep warm-navy shee
 | steps | 32 | 40 | — | — |
 | seed | 15323 | 15323 | — | — |
 
-**Negative:** (sd3.5/qwen only) `text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, bloom, real desert photo, watermark, pure black background, overlapping sprites, perspective distortion`
-**Notes:** Landscape three-band layout; easiest to eyeball cycle continuity across the wide strip. flux.1-dev for crisp leg separation. Color reference: eye-bar #ff3a3a, belly core #8a48e8, brass rings warm #e8a030 family.
+**Negative:** (sd3.5/qwen only) `text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, bloom, real desert photo, watermark, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** Landscape three-band layout; easiest to eyeball cycle continuity across the wide strip. flux.1-dev for crisp leg separation. Color reference: eye-bar #ff3a3a, belly core #8a48e8, brass rings warm #e8a030 family. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.

@@ -9,7 +9,7 @@ Seed slots: showroom 11101-11104, hero34 11103/11105/11106.
 **Variation:** 1/3 of 3
 
 ```text
-Video game spacecraft concept art showroom plate, a single wide flat fighter called the MANTA seen from slightly above at three-quarter angle, its hull shaped like a manta ray with broad swept ray-wings and a thin trailing tail spine, pale mint green body panels with darker green under-shading, a small bright green glowing canopy set forward of center, two amber thruster nozzles embedded in the wing roots glowing softly, every edge drawn with a heavy near-black green outline, subtle hex texture on the wing skins, floating centered on a flat deep-navy studio background with a faint design-table grid line, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.
+Video game spacecraft concept art showroom plate, a single wide flat fighter called the MANTA seen from slightly above at three-quarter angle, its hull shaped like a manta ray with broad swept ray-wings and a thin trailing tail spine, pale mint green body panels with darker green under-shading, a small bright green glowing canopy set forward of center, two amber thruster nozzles embedded in the wing roots glowing softly, every edge drawn with a heavy near-black green outline, subtle hex texture on the wing skins, floating centered on a perfectly flat solid pure bright green chroma-key background with no grid line, no gradient and no cast shadow, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette.
 ```
 
 **Settings:**
@@ -20,8 +20,8 @@ Video game spacecraft concept art showroom plate, a single wide flat fighter cal
 | steps | 32 | 40 | 40 | 30 |
 | seed | 11101 | 11101 | 11101 | 11101 |
 
-**Negative:** (sd3.5/qwen only) `text, annotations, labels, real manta ray, sea creature, visible eye of a fish, photorealistic, 3d render, watermark, visible pilot, pure black background`
-**Notes:** Body #c8e0d0, canopy #40d070, outline near-black green. The ray-shape must read as engineered plating, not an animal.
+**Negative:** (sd3.5/qwen only) `text, annotations, labels, real manta ray, sea creature, visible eye of a fish, photorealistic, 3d render, watermark, visible pilot, pure black background, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** Body #c8e0d0, canopy #40d070, outline near-black green. The ray-shape must read as engineered plating, not an animal. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ## manta-showroom — plan-view technical draft
 **Models:** sd3.5-large, flux.2-dev

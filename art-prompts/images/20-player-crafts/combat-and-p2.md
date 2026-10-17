@@ -65,7 +65,7 @@ Emotional arcade key art of a fighting retreat, the damaged KESTREL limping scre
 **Variation:** 1/3 of 3
 
 ```text
-Video game spacecraft concept plate, the second-player variant of the KESTREL dart fighter rendered as a clean three-quarter side view floating centered on a flat deep-navy studio background, identical sleek dart geometry and heavy navy outline as the prototype but with its color channels swapped for player two, the fuselage stripe now a bold red-orange band running the full length, the bubble canopy glowing warm gold instead of cyan, the engine afterglow burning cool electric blue instead of orange, subtle red under-glow reflecting on the steel-blue hull panels, crisp specular highlights on the spine, no text, no annotations, bold dark outlines, saturated limited palette, ultra-detailed concept rendering with clean vector shapes and pixel-art texture accents, subtle CRT scanline glow.
+Video game spacecraft concept plate, the second-player variant of the KESTREL dart fighter rendered as a clean three-quarter side view floating centered on a perfectly flat solid pure bright green chroma-key background, identical sleek dart geometry and heavy navy outline as the prototype but with its color channels swapped for player two, the fuselage stripe now a bold red-orange band running the full length, the bubble canopy glowing warm gold instead of cyan, the engine afterglow burning cool electric blue instead of orange, subtle red under-glow reflecting on the steel-blue hull panels, crisp specular highlights on the spine, no text, no annotations, bold dark outlines, saturated limited palette, ultra-detailed concept rendering with clean vector shapes and pixel-art texture accents.
 ```
 
 **Settings:**
@@ -76,15 +76,15 @@ Video game spacecraft concept plate, the second-player variant of the KESTREL da
 | steps | 32 | 40 | 40 | 30 |
 | seed | 11211 | 11211 | 11211 | 11211 |
 
-**Negative:** (sd3.5/qwen only) `text, annotations, labels, modern fighter jet, visible pilot, photorealistic, 3d render, watermark, blue stripe, pure black background`
-**Notes:** P2 swap: stripe → red-orange, canopy → gold, glow → blue. Verify none of the P1 colors leak back in.
+**Negative:** (sd3.5/qwen only) `text, annotations, labels, modern fighter jet, visible pilot, photorealistic, 3d render, watermark, blue stripe, pure black background, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** P2 swap: stripe → red-orange, canopy → gold, glow → blue. Verify none of the P1 colors leak back in. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ## p2-palette-swap — manta ember channel plate
 **Models:** flux.1-dev, sd3.5-large
 **Variation:** 2/3 of 3
 
 ```text
-Video game spacecraft concept plate, the second-player variant of the MANTA flat ray-winged fighter shown from slightly above at three-quarter angle, centered on a flat deep-navy studio background, its wide manta geometry outlined in heavy near-black green strokes unchanged but the palette re-tuned for player two, the pale mint body panels warmed toward a pale gold-mint sheen, the canopy glowing hot amber-gold instead of green, the twin thrusters burning bright red-orange instead of amber, a thin red-orange racing line painted along each wing spine, faint red under-glow between the wings, no text, no annotations, bold dark outlines, saturated limited palette, crisp vector shapes with pixel-art texture accents, ultra-detailed 16-bit inspired concept rendering, subtle scanline glow.
+Video game spacecraft concept plate, the second-player variant of the MANTA flat ray-winged fighter shown from slightly above at three-quarter angle, centered on a perfectly flat solid pure bright green chroma-key background, its wide manta geometry outlined in heavy near-black green strokes unchanged but the palette re-tuned for player two, the pale mint body panels warmed toward a pale gold-mint sheen, the canopy glowing hot amber-gold instead of green, the twin thrusters burning bright red-orange instead of amber, a thin red-orange racing line painted along each wing spine, faint red under-glow between the wings, no text, no annotations, bold dark outlines, saturated limited palette, crisp vector shapes with pixel-art texture accents, ultra-detailed 16-bit inspired concept rendering.
 ```
 
 **Settings:**
@@ -95,8 +95,8 @@ Video game spacecraft concept plate, the second-player variant of the MANTA flat
 | steps | 32 | 40 | 40 | 30 |
 | seed | 11212 | 11212 | 11212 | 11212 |
 
-**Negative:** (sd3.5/qwen only) `text, annotations, real manta ray, sea creature, photorealistic, 3d render, watermark, green canopy, pure black background`
-**Notes:** Manta P2 keeps the silhouette 100% intact — only channel accents move. Compare against manta-showroom v1 at the same seed offset.
+**Negative:** (sd3.5/qwen only) `text, annotations, real manta ray, sea creature, photorealistic, 3d render, watermark, green canopy, pure black background, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** Manta P2 keeps the silhouette 100% intact — only channel accents move. Compare against manta-showroom v1 at the same seed offset. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ## p2-palette-swap — all four heroes line-up
 **Models:** flux.2-dev, sd3.5-large

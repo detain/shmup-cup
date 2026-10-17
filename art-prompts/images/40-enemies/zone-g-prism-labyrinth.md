@@ -1,6 +1,8 @@
 # 40 — Zone G: Prism Labyrinth enemies
 # Crystal corridors, triangle-facet walls glinting, stacking cubes; violet crystal with lilac edges.
 # Seed slots: concept 15711-15713, sprite sheet 15721-15723.
+# v2 (R3-01): sprite sheets sit on the K3 key background (flat pure green #00FF00) with
+# 4–6 frames per animation (see 00-style-kernel.md); encounter concepts keep their navy scenes.
 
 ## halo-crystal-option-hunter — faceted ring-crystals and the violet thief frigate
 **Models:** flux.2-dev, sd3.5-large
@@ -73,7 +75,7 @@ SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, satura
 **Variation:** 1/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the OPTION HUNTER in three scales — the full armored deep-violet frigate with wedge prow, four open magnetic grapple-claws on its flanks and a violet glowing belly launch bay, then a medium view where one claw is closed around a captured drone-orb, then a close-up of the launch bay mouth alone, violet light spilling out; row two is a HALO CRYSTAL shown through one full rotation in eight frames — a big faceted violet gem with lilac edge-glints and a ring of six smaller satellite crystals turning around it, the ring's position stepping smoothly frame by frame while the central gem keeps an identical silhouette; row three is the GLINT MOTE in five frames — a fist-sized crystal spark whose edge-lights strobe bright-lilac to dim and whose tiny satellite flecks orbit, plus one frame of the mote bursting into a harmless star-puff. Every sprite crisp, readable at game scale, consistent lighting from above.
+SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the OPTION HUNTER in three scales — the full armored deep-violet frigate with wedge prow, four open magnetic grapple-claws on its flanks and a violet glowing belly launch bay, then a medium view where one claw is closed around a captured drone-orb, then a close-up of the launch bay mouth alone, violet light spilling out; row two is a HALO CRYSTAL shown through one full rotation in six frames — a big faceted violet gem with lilac edge-glints and a ring of six smaller satellite crystals turning around it, the ring's position stepping smoothly frame by frame while the central gem keeps an identical silhouette; row three is the GLINT MOTE in five frames — a fist-sized crystal spark whose edge-lights strobe bright-lilac to dim and whose tiny satellite flecks orbit, plus one frame of the mote bursting into a harmless star-puff. Every sprite crisp, readable at game scale, consistent lighting from above.
 ```
 
 **Settings:**
@@ -84,9 +86,9 @@ SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat dee
 | steps | 34 | 40 | 40 | 30 |
 | seed | 15721 | 15721 | 15721 | 15721 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, organic coral shapes, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, organic coral shapes, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: gem #8a48e8, edge-lights #c8a0ff, hunter armor deep violet with gunmetal plate. The eight-frame ring rotation is the extraction prize of this sheet — insist the central gem never morphs; if it drifts, reroll with guidance up to 6.0 rather than editing.
+**Notes:** Color reference: gem #8a48e8, edge-lights #c8a0ff, hunter armor deep violet with gunmetal plate. The six-frame ring rotation is the extraction prize of this sheet — insist the central gem never morphs; if it drifts, reroll with guidance up to 6.0 rather than editing. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ---
 
@@ -95,7 +97,7 @@ SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat dee
 **Variation:** 2/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the OPTION HUNTER frigate in profile facing left, armored deep-violet hull, wedge prow, four magnetic grapple-claws drawn open and closed in two consecutive cells, and a smaller escort-stolen drone orb in a cell beside its open belly bay; center column stacked with HALO CRYSTAL states — idle ring of six lilac satellites aligned, charging where all six satellites glow bright and the central gem dims, firing where the gem flashes white and the ring blurs slightly, and shattered as a hollow outer ring with the central gem gone; right column a 4x4 mini-grid of GLINT MOTES, sixteen tiny crystal spark sprites in smooth strobe sequence, each throwing a one-pixel star-glint, plus the single burst-puff frame at the corner. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.
+SNES-era 16-bit pixel art sprite sheet on a perfectly flat solid pure bright green chroma-key background, square layout, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered metal and crystal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the OPTION HUNTER frigate in profile facing left, armored deep-violet hull, wedge prow, four magnetic grapple-claws drawn open and closed in two consecutive cells, and a smaller escort-stolen drone orb in a cell beside its open belly bay; center column stacked with HALO CRYSTAL states — idle ring of six lilac satellites aligned, charging where all six satellites glow bright and the central gem dims, firing where the gem flashes white and the ring blurs slightly, and shattered as a hollow outer ring with the central gem gone; right column a 2x3 mini-grid of GLINT MOTES, six tiny crystal spark sprites in smooth strobe sequence, each throwing a one-pixel star-glint, plus the single burst-puff frame at the corner. Pixel-perfect spacing, all bodies fully inside their cells, same light direction across every sprite.
 ```
 
 **Settings:**
@@ -106,9 +108,9 @@ SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square la
 | steps | 34 | 45 | 40 | 30 |
 | seed | 15722 | 15722 | 15722 | 15722 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, organic coral shapes, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, organic coral shapes, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: charging satellites at #c8a0ff brightness, firing flash #fffff0, hunter bay #8a48e8. The sixteen-frame mote strobe is deliberately over-specified — it tests whether the model can hold a repeating micro-pattern grid; this sheet style historically comes out best on sd3.5.
+**Notes:** Color reference: charging satellites at #c8a0ff brightness, firing flash #fffff0, hunter bay #8a48e8. The six-frame mote strobe tests whether the model can hold a repeating micro-pattern grid; this sheet style historically comes out best on sd3.5. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ---
 
@@ -117,7 +119,7 @@ SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square la
 **Variation:** 3/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with clear margin between them. Upper strip, six frames of the OPTION HUNTER attack run facing left: prow entering frame, claws flexing open, a captured escort drone orb yanked from the left toward the belly bay, claw closing on it, the drone's replacement bay-eject flash violet, and the hunter banking out with the stolen orb tucked in the launch mouth — identical frigate design in every frame, only the claw and bay state changing. Lower strip, five frames of a HALO CRYSTAL volley: the central faceted violet gem ringed by six lilac satellites, charging as the satellites brighten one by one like a clock sweeping past six positions, then a single release frame where the gem flashes white and six pink needle-lasers leave the ring pointing outward, then a cool-down frame with the satellites dim and one needle still in-frame. Crystal facet shading consistent in both strips, light from above, hard silhouettes readable at game scale.
+SNES-era 16-bit pixel art sprite filmstrip on a perfectly flat solid pure bright green chroma-key background, wide horizontal sheet, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with clear margin between them. Upper strip, six frames of the OPTION HUNTER attack run facing left: prow entering frame, claws flexing open, a captured escort drone orb yanked from the left toward the belly bay, claw closing on it, the drone's replacement bay-eject flash violet, and the hunter banking out with the stolen orb tucked in the launch mouth — identical frigate design in every frame, only the claw and bay state changing. Lower strip, five frames of a HALO CRYSTAL volley: the central faceted violet gem ringed by six lilac satellites, charging as the satellites brighten one by one like a clock sweeping past six positions, then a single release frame where the gem flashes white and six pink needle-lasers leave the ring pointing outward, then a cool-down frame with the satellites dim and one needle still in-frame. Crystal facet shading consistent in both strips, light from above, hard silhouettes readable at game scale.
 ```
 
 **Settings:**
@@ -128,6 +130,6 @@ SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide 
 | steps | 32 | 40 | 40 | 30 |
 | seed | 15723 | 15723 | 15723 | 15723 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra ships, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: stolen orb #c8a0ff glow, eject flash #8a48e8, needles #ff5aa0. Continuity clause ("identical frigate design in every frame, only the claw and bay state changing") is what makes filmstrips extractable; check the sixth frame's silhouette first, it's the usual drift point.
+**Notes:** Color reference: stolen orb #c8a0ff glow, eject flash #8a48e8, needles #ff5aa0. Continuity clause ("identical frigate design in every frame, only the claw and bay state changing") is what makes filmstrips extractable; check the sixth frame's silhouette first, it's the usual drift point. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.

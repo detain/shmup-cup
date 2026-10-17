@@ -25,6 +25,9 @@ coverage/
 test-results/
 playwright-report/
 
+# v2 art candidates (art-prompts/v2/gen-candidate.mjs): picked on the picks page, not committed
+art-prompts/v2/candidates/
+
 # Claude Code local state (agent worktrees, settings)
 .claude/
 

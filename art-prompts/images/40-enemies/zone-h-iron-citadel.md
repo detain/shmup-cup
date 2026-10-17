@@ -1,6 +1,8 @@
 # 40 — Zone H: Iron Citadel enemies
 # Riveted steel fortress interior, amber running lights, pipes and girders.
 # Seed slots: concept 15811-15813, sprite sheet 15821-15823.
+# v2 (R3-01): sprite sheets sit on the K3 key background (flat pure green #00FF00) with
+# 4–6 frames per animation (see 00-style-kernel.md); encounter concepts keep their navy scenes.
 
 ## sentinel-walker-trench-eel — the girder patrol and the floor-strike eel
 **Models:** flux.2-dev, sd3.5-large
@@ -73,7 +75,7 @@ SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, satura
 **Variation:** 1/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in eight frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale.
+SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the SENTINEL WALKER's walk cycle in six frames — squat twin-legged guard machine, heavy riveted barrel torso, reverse-jointed legs with clawed feet, single red sensor eye — legs alternating through a full stride with the torso bobbing slightly, silhouette identical in every frame; row two is the TRENCH EEL in five states — a blunt snout with tooth-ridges breaching a flat deck-line, two rising poses showing more ring-plate coils, a full rearing arc, and a firing pose with a violet ring-spark leaving the mouth; row three is the GYRE rotating ring-gun in six frames of one rotation — a circular gun-metal ring studded with four small muzzles around its rim, spinning about its center so the muzzle positions step smoothly around the circle while the ring's outer edge never changes. All rivets catch the same amber top-light, bodies crisp and readable at game scale.
 ```
 
 **Settings:**
@@ -84,9 +86,9 @@ SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat dee
 | steps | 34 | 40 | 40 | 30 |
 | seed | 15821 | 15821 | 15821 | 15821 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, blue-green lighting, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: rivet highlights #e8a030, eel ring-sparks #b84cff, walker eye #ff3a3a. Three separate continuity problems in one sheet (stride cycle, rise cycle, rotation) — if any row drifts, split that row out and regenerate alone at 1024x1024 with the same seed family.
+**Notes:** Color reference: rivet highlights #e8a030, eel ring-sparks #b84cff, walker eye #ff3a3a. Three separate continuity problems in one sheet (stride cycle, rise cycle, rotation) — if any row drifts, split that row out and regenerate alone at 1024x1024 with the same seed family. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ---
 
@@ -95,7 +97,7 @@ SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat dee
 **Variation:** 2/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered metal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the SENTINEL WALKER in three cells — full profile facing left on idle stance with eye-light off, walking stance with the red eye-lamp on, and a firing pose where both shoulder cannons kick back with tiny amber muzzle flares; center column stacked with GYRE ring-gun states — the bare ring with four dark muzzles, one-muzzle-flash frame, two-muzzle alternating flash, and the ring shown with its center hub exposed for a damaged phase, small gold sparks at one broken spoke; right column holds the TRENCH EEL broken into two parts for segmented animation — a snout-and-head sprite, then a single reusable ring-plate body segment shown at three rotations, then the tail tip — plus one deck-hatch sprite, an open rectangle of grating with violet glow seeping up its edges. Pixel-perfect spacing, everything inside its cell, amber top-light consistent, no dropped outlines.
+SNES-era 16-bit pixel art sprite sheet on a perfectly flat solid pure bright green chroma-key background, square layout, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered metal shading, no scene, no text, no labels, no UI. A tidy grid: left column holds the SENTINEL WALKER in three cells — full profile facing left on idle stance with eye-light off, walking stance with the red eye-lamp on, and a firing pose where both shoulder cannons kick back with tiny amber muzzle flares; center column stacked with GYRE ring-gun states — the bare ring with four dark muzzles, one-muzzle-flash frame, two-muzzle alternating flash, and the ring shown with its center hub exposed for a damaged phase, small gold sparks at one broken spoke; right column holds the TRENCH EEL broken into two parts for segmented animation — a snout-and-head sprite, then a single reusable ring-plate body segment shown at three rotations, then the tail tip — plus one deck-hatch sprite, an open rectangle of grating with violet glow seeping up its edges. Pixel-perfect spacing, everything inside its cell, amber top-light consistent, no dropped outlines.
 ```
 
 **Settings:**
@@ -106,9 +108,9 @@ SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square la
 | steps | 34 | 45 | 40 | 30 |
 | seed | 15822 | 15822 | 15822 | 15822 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, blue-green lighting, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, blue-green lighting, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: hub-expose gold sparks #f8b030, hatch glow #b84cff, muzzle flares #f89830. The modular eel column (head + reusable segment + tail) is the piece an artist would actually reuse for length variants — ask for segment rotations to be described (left-curve, straight, right-curve) if the model plays it coy.
+**Notes:** Color reference: hub-expose gold sparks #f8b030, hatch glow #b84cff, muzzle flares #f89830. The modular eel column (head + reusable segment + tail) is the piece an artist would actually reuse for length variants — ask for segment rotations to be described (left-curve, straight, right-curve) if the model plays it coy. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ---
 
@@ -117,7 +119,7 @@ SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square la
 **Variation:** 3/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, seven frames of a TRENCH EEL breach facing left: a flat deck-line with a thin violet glow seam, deck seam widening, blunt tooth-ridged snout clearing the lip, first three ring-plates out in an S-curve, half the body reared, full arc with mouth open spitting one violet ring-spark, and the settle-back frame with only the snout and a closing hatch glow remaining — same eel design in every frame, only the body height and mouth state changing. Lower strip, six frames of a GYRE ring-gun volley: the gun-metal ring with four rim muzzles rotating clockwise, muzzle number one flashing amber, two, three, four in consecutive frames with one small orange projectile leaving the fired muzzle each time, and a sixth frame where the ring spins free with all muzzles dark and a thin smoke wisp off the hub. Consistent amber top-light, hard readable silhouettes at game scale.
+SNES-era 16-bit pixel art sprite filmstrip on a perfectly flat solid pure bright green chroma-key background, wide horizontal sheet, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, six frames of a TRENCH EEL breach facing left: a flat deck-line with its thin violet glow seam widening, blunt tooth-ridged snout clearing the lip, first three ring-plates out in an S-curve, half the body reared, full arc with mouth open spitting one violet ring-spark, and the settle-back frame with only the snout and a closing hatch glow remaining — same eel design in every frame, only the body height and mouth state changing. Lower strip, six frames of a GYRE ring-gun volley: the gun-metal ring with four rim muzzles rotating clockwise, muzzle number one flashing amber, two, three, four in consecutive frames with one small orange projectile leaving the fired muzzle each time, and a sixth frame where the ring spins free with all muzzles dark and a thin smoke wisp off the hub. Consistent amber top-light, hard readable silhouettes at game scale.
 ```
 
 **Settings:**
@@ -128,6 +130,6 @@ SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide 
 | steps | 32 | 40 | 40 | 30 |
 | seed | 15823 | 15823 | 15823 | 15823 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, blue-green lighting, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, blue-green lighting, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: eel glow seam and sparks #b84cff, muzzle flashes #e8a030, projectiles #f06820. The numbered-muzzle clause ("one, two, three, four in consecutive frames") is the load-bearing trick of this entry — without it the rotation and the firing order blur into noise and the strip can't be sliced.
+**Notes:** Color reference: eel glow seam and sparks #b84cff, muzzle flashes #e8a030, projectiles #f06820. The numbered-muzzle clause ("one, two, three, four in consecutive frames") is the load-bearing trick of this entry — without it the rotation and the firing order blur into noise and the strip can't be sliced. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.

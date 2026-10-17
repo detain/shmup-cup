@@ -1,6 +1,8 @@
 # 40 — Zone I: Abyssal Throne enemies
 # Black-blue deep water, bioluminescent specks, rock spires, swaying weed.
 # Seed slots: concept 15911-15913, sprite sheet 15921-15923.
+# v2 (R3-01): sprite sheets sit on the K3 key background (flat pure green #00FF00) with
+# 4–6 frames per animation (see 00-style-kernel.md); encounter concepts keep their navy scenes.
 
 ## gulper-depth-mine — the lantern-dark hunt
 **Models:** flux.2-dev, sd3.5-large
@@ -73,7 +75,7 @@ SNES-era 16-bit pixel art inspired concept rendering, bold dark outlines, satura
 **Variation:** 1/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat deep-navy background, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale.
+SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, perfectly flat solid pure bright green chroma-key background, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Arranged in three clean rows facing left: row one is the GULPER in six frames — huge-headed deep-sea fish with a cavernous pale-bone hinged jaw and tiny vicious eyes, drawn through a slow swim: mouth fully agape, jaw halfway closing, jaw shut, then the strike loop where the head lunges slightly larger with the lure filament flaring pale cyan, and a damaged state with the lure filament dark and frayed; row two is the DEPTH MINE in five frames — a rounded black hull studded with short contact spikes, single eye-light in the center shown dark, dim, bright, dim, bright in a pulse sequence, plus one frame with its anchor chain extended downward and one with the chain severed and floating; row three is small effect sprites — the lure filament on its own at three glow states, a single drifting bioluminescent speck bright and dim, and a tiny cluster of four specks for the background field. All lighting cool cyan from within each body, crisp at game scale.
 ```
 
 **Settings:**
@@ -84,9 +86,9 @@ SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat dee
 | steps | 34 | 40 | 40 | 30 |
 | seed | 15921 | 15921 | 15921 | 15921 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged sprites, overlapping rows, warm orange lighting, red mine lights, friendly fish face, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: lure and eye-light #6ad8e0, specks #16485a at dim state, gulper body charcoal-green near-black, jaw bone pale gray-green. The isolated speck and filament sprites in row three are for parallax compositing — if the model insists on fusing them into the mines, drop that row's wording and regenerate a dedicated effects sheet later.
+**Notes:** Color reference: lure and eye-light #6ad8e0, specks #16485a at dim state, gulper body charcoal-green near-black, jaw bone pale gray-green. The isolated speck and filament sprites in row three are for parallax compositing — if the model insists on fusing them into the mines, drop that row's wording and regenerate a dedicated effects sheet later. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ---
 
@@ -95,7 +97,7 @@ SNES-era 16-bit pixel art sprite sheet for a retro arcade shoot-'em-up, flat dee
 **Variation:** 2/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square layout, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. A tidy grid: left column stacked with GULPER head states — jaw wide open showing the pale ridged cage, jaw three-quarters closed, jaw shut with lure filament arcing forward lit cyan, and a wounded head with cracked jaw-ridge and a dark limp filament; center column holds DEPTH MINES in two sizes with matched pulse frames — large mine at dark-eye and bright-eye, small mine at dark-eye and bright-eye — one mine with its anchor chain coiled, one free-drifting mine tilted at a slow-roll angle, and the exploded remains as a ring of loose spikes with a fading cyan glow at the center; right column is the environment kit — a weed tuft at two sway angles, a rock-spire shoulder chunk, a lone drifting biolume speck at three brightness steps, and a four-speck cluster for background scatter. Cool interior glow on every lit body, everything inside its cell, pixel-perfect spacing, no merged outlines.
+SNES-era 16-bit pixel art sprite sheet on a perfectly flat solid pure bright green chroma-key background, square layout, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. A tidy grid: left column stacked with GULPER head states — jaw wide open showing the pale ridged cage, jaw three-quarters closed, jaw shut with lure filament arcing forward lit cyan, and a wounded head with cracked jaw-ridge and a dark limp filament; center column holds DEPTH MINES in two sizes with matched pulse frames — large mine at dark-eye and bright-eye, small mine at dark-eye and bright-eye — one mine with its anchor chain coiled, one free-drifting mine tilted at a slow-roll angle, and the exploded remains as a ring of loose spikes with a fading cyan glow at the center; right column is the environment kit — a weed tuft at two sway angles, a rock-spire shoulder chunk, a lone drifting biolume speck at three brightness steps, and a four-speck cluster for background scatter. Cool interior glow on every lit body, everything inside its cell, pixel-perfect spacing, no merged outlines.
 ```
 
 **Settings:**
@@ -106,9 +108,9 @@ SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square la
 | steps | 34 | 45 | 40 | 30 |
 | seed | 15922 | 15922 | 15922 | 15922 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, warm orange lighting, red mine lights, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, environment, gradient background, blurry, inconsistent character design, merged sprites, overlapping grid cells, missing outlines, warm orange lighting, red mine lights, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: bright-eye pulse #6ad8e0, spike-ring remains #16485a fading, weed tufts dark green-black silhouettes. The mine-scale pair (large/small at the same pulse) gives an immediate size-language test for the sheet; check the small mine's spikes survive dithering — at true game scale they tend to vanish.
+**Notes:** Color reference: bright-eye pulse #6ad8e0, spike-ring remains #16485a fading, weed tufts dark green-black silhouettes. The mine-scale pair (large/small at the same pulse) gives an immediate size-language test for the sheet; check the small mine's spikes survive dithering — at true game scale they tend to vanish. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ---
 
@@ -117,7 +119,7 @@ SNES-era 16-bit pixel art sprite sheet on a flat deep-navy background, square la
 **Variation:** 3/3 of 3
 
 ```text
-SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide horizontal sheet, bold dark navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, eight frames of a DEPTH MINE facing left: anchored still with the chain out and eye-light dark, chain parting one link at a time across three frames, the free mine beginning a slow upward drift with a slight roll, the eye-light crossing from dark to dim to bright over the final frames, and a last frame where the mine hangs at the top of its drift with the eye burning steady cyan — identical hull and spike layout every frame, only chain, altitude, roll and eye state changing. Lower strip, five frames of a GULPER strike run: cruising with the jaw half-open and lure filament dim, the filament flaring bright as the head recoils slightly, the full lunge with the jaw cage thrown maximum wide and body stretched, a bite-close frame with jaw shut and a few cyan lure-sparks still scattering, and the settle-back to cruising pose matching the first frame exactly for a seamless loop. All cool internal cyan glow, hard readable silhouettes at game scale.
+SNES-era 16-bit pixel art sprite filmstrip on a perfectly flat solid pure bright green chroma-key background, wide horizontal sheet, crisp 1-pixel near-black navy outlines, saturated limited palette, dithered shading, no scene, no text, no labels, no UI. Two horizontal filmstrips stacked with a clean margin. Upper strip, six frames of a DEPTH MINE facing left: anchored still with the chain out and eye-light dark, chain parting one link at a time across two frames, the free mine beginning a slow upward drift with a slight roll, the eye-light crossing from dark to dim to bright over the final frames, and a last frame where the mine hangs at the top of its drift with the eye burning steady cyan — identical hull and spike layout every frame, only chain, altitude, roll and eye state changing. Lower strip, five frames of a GULPER strike run: cruising with the jaw half-open and lure filament dim, the filament flaring bright as the head recoils slightly, the full lunge with the jaw cage thrown maximum wide and body stretched, a bite-close frame with jaw shut and a few cyan lure-sparks still scattering, and the settle-back to cruising pose matching the first frame exactly for a seamless loop. All cool internal cyan glow, hard readable silhouettes at game scale.
 ```
 
 **Settings:**
@@ -128,6 +130,6 @@ SNES-era 16-bit pixel art sprite filmstrip on a flat deep-navy background, wide 
 | steps | 32 | 40 | 40 | 30 |
 | seed | 15923 | 15923 | 15923 | 15923 |
 
-**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, warm orange lighting, red mine lights, pure black background, perspective distortion`
+**Negative:** (sd3.5/qwen only) `text, labels, numbers, watermark, photorealistic, 3d render, scene background, gradient background, blurry, inconsistent character design, silhouette changing between frames, merged frames, extra enemies, warm orange lighting, red mine lights, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow`
 
-**Notes:** Color reference: filament flare #6ad8e0 to white-hot core, bite-sparks scattering cyan, chain links gunmetal with dark rust. The "settle-back matching the first frame exactly" clause makes the lower strip a usable loop; verify frame one and frame five silhouettes line up before slicing, and treat the chain-parting sequence above as a bonus strip if the roll drift muddies.
+**Notes:** Color reference: filament flare #6ad8e0 to white-hot core, bite-sparks scattering cyan, chain links gunmetal with dark rust. The "settle-back matching the first frame exactly" clause makes the lower strip a usable loop; verify frame one and frame five silhouettes line up before slicing, and treat the chain-parting sequence above as a bonus strip if the roll drift muddies. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.

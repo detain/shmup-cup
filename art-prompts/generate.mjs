@@ -145,6 +145,14 @@
  * ---------------------------------------------------------------------------
  *   <out>/<group>/images/<NN-dir>/<slug>-v<N>-<model-short>.png
  *       model-short ∈ sd3.5-large | flux.1-dev | flux.2-dev | qwen-image
+ *       PNG BY DEFAULT (R3-01, 2026-10-16): image payloads carry
+ *       output_format (OpenAI image API field; SGLang's image_api.py honours
+ *       png|jpeg|webp and otherwise encodes JPEG unless background=transparent).
+ *       --format jpeg|webp restores the old container. The magic-byte sniff
+ *       still names the file by its real bytes, and skip-existing only accepts
+ *       a sibling of ANOTHER container when its sidecar shows it was requested
+ *       in the current format — so the pre-2026-10-16 .jpg outputs never block
+ *       a PNG run.
  *   <out>/<group>/video/<NN-dir>/<slug>-v<N>-<model>.mp4
  *       model ∈ ltx-video | wan2.2-t2v | wan2.2-i2v
  *       — the workflow's "-s<seed>" suffix is DELIBERATELY OMITTED: it would
@@ -1366,6 +1374,7 @@ function buildPayload(block, group, params, opts) {
       size: sizeStr,
       n: params.n,
       response_format: "b64_json",
+      output_format: opts.format ?? "png",
     };
     if (negative !== null) payload.negative_prompt = negative;
     if (perSeed.every((s) => s !== null)) payload.seed = params.n === 1 ? perSeed[0] : perSeed;
@@ -1448,6 +1457,8 @@ const USAGE = `usage: node generate.mjs [options]
   --video-seconds <s>   override duration; re-derives + re-snaps num_frames
                          to the family law (wan 4n+1 / ltx 8n+1)
   --video-fps <n>       override the table fps (re-snaps frames likewise)
+  --format <f>          image container to request and save: png (default) |
+                         jpeg | webp — sent as output_format
   --force               regenerate even if output files exist
   --prompts-dir <dir>   prompt library root (default: this script's directory)
   --repair              maintenance pass over --out tree (no network): relabel
@@ -1469,7 +1480,7 @@ function parseArgs(argv) {
     all: false, i2vStrict: false,
     apiKey: process.env.SKYNET_API_KEY ?? null, timeout: 2400_000, retries: 4,
     maxPixels: null, videoSeconds: null, videoFps: null, force: false,
-    noWanSnap: false, ltxMaxSeq: 256,
+    noWanSnap: false, ltxMaxSeq: 256, format: "png",
     repair: false, apply: false,
     promptsDir: SCRIPT_DIR, help: false,
   };
@@ -1536,6 +1547,12 @@ function parseArgs(argv) {
           case "max-pixels": opts.maxPixels = assertInt(name, value); break;
           case "video-seconds": opts.videoSeconds = assertNumeric(name, value); break;
           case "video-fps": opts.videoFps = assertNumeric(name, value); break;
+          case "format": {
+            const f = value.toLowerCase() === "jpg" ? "jpeg" : value.toLowerCase();
+            if (!IMAGE_FORMATS.includes(f)) fail(`--format must be ${IMAGE_FORMATS.join("|")} (got "${value}")`);
+            opts.format = f;
+            break;
+          }
           case "out": opts.out = value; break;
           case "base-url": {
             try { new URL(value); } catch { fail(`--base-url is not a valid URL: "${value}"`); }
@@ -1682,7 +1699,7 @@ function mkTask(index, block, size, params, files, referenceFile, group, opts, n
 
 function imageFiles(block, group, opts, n) {
   const stem = `${block.slug}-v${block.variantNum}-${IMAGE_MODEL_SHORT[group.key] ?? block.modelsRaw.join("+")}`;
-  return fileList(opts.out, group.key, block.category, stem, n, "png");
+  return fileList(opts.out, group.key, block.category, stem, n, formatExt(opts.format));
 }
 
 function videoFiles(block, group, opts, n) {
@@ -2014,6 +2031,14 @@ async function detectModelId(baseUrl, group, opts) {
 
 const DETECTABLE_EXTS = new Set(["png", "jpg", "jpeg", "webp", "gif", "mp4"]);
 
+/** Image containers the OpenAI-shaped API accepts as output_format. */
+const IMAGE_FORMATS = ["png", "jpeg", "webp"];
+
+/** File extension for an output_format value ("jpeg" → "jpg"). */
+function formatExt(format) {
+  return format === "jpeg" ? "jpg" : (format ?? "png");
+}
+
 /** JPEG FFD8FF, PNG 89504E47, GIF 474946, WEBP RIFF....WEBP, MP4 ftyp@4. */
 function detectImageFormat(buffer) {
   const b = buffer;
@@ -2183,6 +2208,7 @@ async function writeSidecar(mediaFile, task, group, opts, meta, ok, errorText, f
     requested_size: `${task.size.original.w}x${task.size.original.h}`,
     size_snapped: task.size.size_snapped === true,
     requested_n: task.n,
+    requested_format: task.payload?.output_format ?? null,
     media_file: path.basename(mediaFile),
     media_format: format ?? meta?.format ?? null,
     status: ok ? "ok" : "failed",
@@ -2202,7 +2228,7 @@ async function existsOne(p) {
  * sibling with the same stem but true image extension exists — so relabel
  * passes never cause paid re-generation.
  */
-async function resolveExistingVariants(files) {
+async function resolveExistingVariants(files, requestedFormat = null) {
   const resolved = [];
   for (const f of files) {
     if (await existsOne(f)) { resolved.push(f); continue; }
@@ -2210,7 +2236,13 @@ async function resolveExistingVariants(files) {
     let hit = null;
     for (const e of ["png", "jpg", "jpeg", "webp", "gif"]) {
       const cand = `${stem}.${e}`;
-      if (cand !== f && (await existsOne(cand))) { hit = cand; break; }
+      if (cand === f || !(await existsOne(cand))) continue;
+      // A sibling in another container only counts as "done" when it answered
+      // a request for the CURRENT format (the server ignored output_format);
+      // older outputs from another --format are regenerated, not skipped.
+      if (requestedFormat !== null && (await readSidecar(cand))?.requested_format !== requestedFormat) continue;
+      hit = cand;
+      break;
     }
     if (!hit) return null;
     resolved.push(hit);
@@ -2363,7 +2395,7 @@ async function cmdRun(tasks, group, opts) {
       return;
     }
 
-    const existing = opts.force ? null : await resolveExistingVariants(task.files);
+    const existing = opts.force ? null : await resolveExistingVariants(task.files, group.kind === "image" ? task.payload.output_format : null);
     if (existing) {
       skipped++;
       row.status = "skipped-existing";
@@ -2387,6 +2419,7 @@ async function cmdRun(tasks, group, opts) {
       row.status = "ok";
       row.files = written.map((w) => path.relative(opts.out, w.file)); // truth: actual names written
       row.format = written[0]?.format ?? null;
+      if (group.kind === "image") row.requested_format = task.payload.output_format;
       row.negative_sent = task.payload?.negative_prompt ?? null;
       row.wall_ms = Date.now() - taskStart;
       row.response_meta = meta;
@@ -2706,6 +2739,15 @@ async function main() {
   if (opts.dryRun) return cmdDryRun(tasks, group, opts);
   return cmdRun(tasks, group, opts);
 }
+
+// Reused by v2/gen-candidate.mjs, which imports the transport instead of
+// copying it (importing never runs main — see the CLI guard below).
+export {
+  GROUPS, GROUP_ALIASES, IMAGE_GROUPS, IMAGE_FORMATS, MODEL_NAME_TO_GROUP, README_DEFAULTS,
+  HOST, DEFAULT_PORT, DEFAULT_BASE_URL, HttpError, resolveBaseUrl, probeModels, httpHeaders,
+  fetchWithRetry, postJson, getBinary, safeText, detectImageFormat, formatExt,
+  writeFileAtomic, appendNegative, snap16, resolveExistingVariants, readSidecar,
+};
 
 // CLI guard: importing this module (tests/tooling) must NOT execute main —
 // an accidental default-args run spends real GPU money against the live server.

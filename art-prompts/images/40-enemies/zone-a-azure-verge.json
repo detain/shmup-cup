@@ -123,8 +123,8 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "16-bit SNES-era video game sprite sheet, pixel art style, bold dark navy outlines, saturated limited palette, laid out in a clean grid on a flat deep navy background color reference hex 0c1a3c, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: two frames of a large TENDER carrier drone, a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus two frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left.",
-      "negative": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion",
+      "positive": "16-bit SNES-era video game sprite sheet, pixel art style, crisp 1-pixel near-black navy outlines, saturated limited palette, laid out in a clean grid on a perfectly flat solid pure bright green chroma-key background, no gradients, no shadows under sprites, no text, no labels, no UI. Row one: four animation frames of a SKEET pod, a small seed-shaped armored drone, matte gunmetal shell with rust-violet panel seams and a single magenta eye-slit, shown with hatches closed, hatches cracking, hatches fully open releasing a pink bullet orb with bright core and dark rim, and damaged with one fin sheared. Row two: four frames of a VANE bladed flier, a steel chassis with three crescent-mirror wingblades rotating in 90-degree steps, blades showing a lilac glint edge. Row three: four frames of a large TENDER carrier drone (bay closed, bay opening, bay open, bay closing), a wide flat-bellied gunmetal mothership pod with green running lights and an open underside bay door revealing glow of stored skeet pods inside, plus four frames of a small released escort drone. Crisp chunky pixels, consistent scale per row, side-view arcade shoot-'em-up orientation facing left.",
+      "negative": "gradient background, text, labels, numbers, photorealistic, 3d render, watermark, blur, anti-aliased smooth edges, dropped shadows, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1152x896",
@@ -139,7 +139,7 @@
           "seed": 15121
         }
       },
-      "notes": "Grid layout on a single flat navy field so sprites can be color-keyed out later. Color reference: navy bg #0c1a3c, eye-slit magenta #ff5aa0 family, tender lights green #40d070. Expect to hand-clean cell alignment; regenerate variations before giving up."
+      "notes": "Grid layout on a single flat navy field so sprites can be color-keyed out later. Color reference: navy bg #0c1a3c, eye-slit magenta #ff5aa0 family, tender lights green #40d070. Expect to hand-clean cell alignment; regenerate variations before giving up. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "azure-verge-sprite-sheet-v2",
@@ -154,8 +154,8 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "Retro 16-bit pixel art sprite atlas for a horizontal arcade shoot-'em-up, all sprites drawn at the same chunky resolution with bold near-black navy outlines on a flat dark blue drafting sheet, color reference hex 05070f background, evenly spaced grid, no text and no annotations. Content: a family of mechanical sky-patrol drones — seed-pod fighters with single magenta visor slits and folding petal hatches in four open/close stages; crescent-bladed interceptor discs whose three mirrored scythe wings are caught at four rotation angles; and one bulky flat carrier drone with green port lights and a bellied hangar bay, drawn broadside and three-quarter. Each species gets a small color-swatch bullet orb beside it: a pink sphere and a red sphere, both with bright cores and darker rims, to fix the palette. Limited saturated palette of gunmetal greys, rust-violet seams, magenta, green and steel blue. Crisp pixel clusters, no anti-aliasing, no soft shading — dithered highlights only.",
-      "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, background scenery, stars, planets, pure black background, overlapping sprites, perspective distortion",
+      "positive": "Retro 16-bit pixel art sprite atlas for a horizontal arcade shoot-'em-up, all sprites drawn at the same chunky resolution with crisp 1-pixel near-black navy outlines on a perfectly flat solid pure bright green chroma-key background, evenly spaced grid, no text and no annotations. Content: a family of mechanical sky-patrol drones — seed-pod fighters with single magenta visor slits and folding petal hatches in four open/close stages; crescent-bladed interceptor discs whose three mirrored scythe wings are caught at four rotation angles; and one bulky flat carrier drone with green port lights and a bellied hangar bay, drawn broadside and three-quarter. Each species gets a small color-swatch bullet orb beside it: a pink sphere and a red sphere, both with bright cores and darker rims, to fix the palette. Limited saturated palette of gunmetal greys, rust-violet seams, magenta, green and steel blue. Crisp pixel clusters, no anti-aliasing, no soft shading — dithered highlights only.",
+      "negative": "photorealistic, 3d, gradients, smooth shading, text, watermark, background scenery, stars, planets, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1024x1024",
@@ -170,7 +170,7 @@
           "seed": 15122
         }
       },
-      "notes": "Square atlas suits a texture-page mockup. sd3.5 at guidance 5.5 keeps grid regularity. The bullet swatches double as palette anchors so extractions stay consistent."
+      "notes": "Square atlas suits a texture-page mockup. sd3.5 at guidance 5.5 keeps grid regularity. The bullet swatches double as palette anchors so extractions stay consistent. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "azure-verge-sprite-sheet-v3",
@@ -185,8 +185,8 @@
         "flux.1-dev",
         "sd3.5-large"
       ],
-      "positive": "Pixel art sprite sheet, SNES 16-bit arcade game style, flat solid deep-navy sheet background, generous even margins between sprites, absolutely no text, numbers or labels. Three enemy types of a planetary-orbit swarm, all facing left in side view: 1) SKEET — an egg-shaped armored drone pod, gunmetal plate shell, rust-violet joints, glowing pink eye-slit, shown in idle, hatch-open firing, and destroyed-fragments frames; 2) VANE — a small steel core ringed by three spinning crescent blades with polished lilac edges, shown at four rotational phases so the blades form a blur-star silhouette; 3) TENDER — a wide, low carrier with a clipped delta silhouette, rows of tiny green lights, an open ventral bay where mini skeet pods are queued nose-down, in closed-bay and open-bay frames. Bold dark outlines around every sprite, saturated limited palette, chunky readable forms that stay clear at small size, classic cartridge-era crispness with light dithering on metal.",
-      "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, watermark, pure black background, overlapping sprites, perspective distortion",
+      "positive": "Pixel art sprite sheet, SNES 16-bit arcade game style, flat solid pure bright green chroma-key sheet background, generous even margins between sprites, absolutely no text, numbers or labels. Three enemy types of a planetary-orbit swarm, all facing left in side view: 1) SKEET — an egg-shaped armored drone pod, gunmetal plate shell, rust-violet joints, glowing pink eye-slit, shown in four frames: idle, hatch opening, hatch-open firing, and destroyed fragments; 2) VANE — a small steel core ringed by three spinning crescent blades with polished lilac edges, shown at four rotational phases so the blades form a blur-star silhouette; 3) TENDER — a wide, low carrier with a clipped delta silhouette, rows of tiny green lights, an open ventral bay where mini skeet pods are queued nose-down, in four frames from closed bay to open bay. Crisp 1-pixel near-black navy outlines around every sprite, saturated limited palette, chunky readable forms that stay clear at small size, classic cartridge-era crispness with light dithering on metal.",
+      "negative": "text, labels, UI, gradient background, photorealistic, 3d render, blurry, anti-aliasing, glow bloom, watermark, pure black background, overlapping sprites, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1536x640",
@@ -201,7 +201,7 @@
           "seed": 15123
         }
       },
-      "notes": "Landscape strip: one species per third of the canvas, easiest layout for extraction. flux.1-dev is the steadiest at \"absolutely no text\" sheets. Color reference: shell gunmetal, seams rust-violet, lights #40d070, eye #ff5aa0."
+      "notes": "Landscape strip: one species per third of the canvas, easiest layout for extraction. flux.1-dev is the steadiest at \"absolutely no text\" sheets. Color reference: shell gunmetal, seams rust-violet, lights #40d070, eye #ff5aa0. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     }
   ]
 }

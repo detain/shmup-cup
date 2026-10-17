@@ -37,6 +37,9 @@ Examples: `30-bosses/hb01-reveal-v1-sd3.5-large.png`,
 The `<slug>` and `v<variation>` come straight from each entry header; `<model>` is the
 short id (`sd3.5-large`, `flux.1-dev`, `flux.2-dev`, `qwen-image`).
 
+`generate.mjs` asks the server for **PNG** (`output_format: png`) since R3-01 — JPEG has no
+alpha and its artefacts blur pixel edges; `--format jpeg` restores the old output.
+
 ## Base settings per model
 
 | param | sd3.5-large | flux.1-dev | flux.2-dev | qwen-image |
@@ -76,6 +79,11 @@ edit the prompt mid-batch.
 > orange-white explosion ramp, widescreen side-scrolling arcade composition, subtle CRT
 > scanline glow. For large-format art add: ultra-detailed, clean vector shapes with
 > pixel-art texture accents.
+
+In-game sprite subjects (crafts, enemies, boss plates, item and FX sheets) use the **K3 v2**
+kernel instead: a 1-px dark outline, a flat pure-green key background (`#00FF00`) and the
+v2 (640×360) sizes and frame counts — see `00-style-kernel.md`. Scenes, backdrops, logos and
+promo art keep the deep-navy atmosphere.
 
 Prompts in this library embed an adapted version of that kernel plus the game's exact
 canonical subjects (KESTREL, MANTA, the IRON TIDE, zones A–I). Colors are written in

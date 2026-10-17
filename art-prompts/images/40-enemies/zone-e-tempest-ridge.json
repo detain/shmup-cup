@@ -137,7 +137,7 @@
     {
       "id": "tempest-ridge-sprite-sheet-v1",
       "slug": "tempest-ridge-sprite-sheet",
-      "title": "In-game pixel sprite sheet: thunderhead states, steed foal frames, bolt drone set on flat navy",
+      "title": "In-game pixel sprite sheet: thunderhead states, steed foal frames, bolt drone set on key green",
       "variation": {
         "n": 1,
         "of": 3,
@@ -147,8 +147,8 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a THUNDERHEAD storm cell in five states: a small boiling charcoal cloud puff with a barely open lilac eye, the same cell swelling to full anvil shape, eye blazing wide, belly arcs of violet-white electricity branching out, and a collapsing dissipating puff with two fading sparks. Middle band — a STEED FOAL, a small riveted steel-plate seahorse with curled tail and amber face-lamp, in six swim frames: tail coiled, tail uncoiling mid-thrust, fins braced with static ticks, a banking lean, a nose-down stoop, and a level glide, all facing left. Bottom band — BOLT DRONES and shared effects: a round-bodied one-prop drone spitting a short violet arc between two prong tips in three firing states, single arc-bolt pixels, pink and lilac round shots with bright cores and dark rims, three diagonal rain-stroke overlays, and a four-frame tiny orange-white explosion. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
-      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, pure black background, perspective distortion",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — a THUNDERHEAD storm cell in five states: a small boiling charcoal cloud puff with a barely open lilac eye, the same cell swelling to full anvil shape, eye blazing wide, belly arcs of violet-white electricity branching out, and a collapsing dissipating puff with two fading sparks. Middle band — a STEED FOAL, a small riveted steel-plate seahorse with curled tail and amber face-lamp, in six swim frames: tail coiled, tail uncoiling mid-thrust, fins braced with static ticks, a banking lean, a nose-down stoop, and a level glide, all facing left. Bottom band — BOLT DRONES and shared effects: a round-bodied one-prop drone spitting a short violet arc between two prong tips in four firing states, single arc-bolt pixels, pink and lilac round shots with bright cores and dark rims, three diagonal rain-stroke overlays, and a four-frame tiny orange-white explosion. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1152x896",
@@ -175,12 +175,12 @@
           "seed": 15521
         }
       },
-      "notes": "Zone E's full roster in one sheet — the thunderhead's five growth states map to its spawn/charge cycle, the bolt drone band covers its arc attacks. Lightning lilac ~#b84cff; foal lamp warm amber to contrast the cold deck."
+      "notes": "Zone E's full roster in one sheet — the thunderhead's five growth states map to its spawn/charge cycle, the bolt drone band covers its arc attacks. Lightning lilac ~#b84cff; foal lamp warm amber to contrast the cold deck. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "tempest-ridge-sprite-sheet-v2",
       "slug": "tempest-ridge-sprite-sheet",
-      "title": "Square pixel sprite sheet: foal hunting formation set, thunderhead eye close-ups, weather effect pixels on flat navy",
+      "title": "Square pixel sprite sheet: foal hunting formation set, thunderhead eye close-ups, weather effect pixels on key green",
       "variation": {
         "n": 2,
         "of": 3,
@@ -190,8 +190,8 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — a STEED FOAL hunting kit: four foals flying in a tight diagonal echelon (all riveted steel plates, curled tails, amber face-lamps, static ticks between fins), then the same formation breaking apart into two pairs, then one lone foal with its lamp flaring hot. Second row — THUNDERHEAD face plates: five close-up cloud sprites of just the boiling charcoal rim and the glowing lilac eye — eye shut, eye cracking, half-open, wide staring, and squinting as it aims — each with a different arc pattern crawling below it. Third row — weather and projectiles: diagonal pale rain-stroke tiles in two lengths, wind-swirl puffs, single violet arc-bolts with forked tips, pink and red bright-core round shots with dark rims, pairs and three-shot fans. Fourth row — effects: tiny orange-white explosion in four growth frames, a dissolving cloud-stuff birth wisp, a static-spark cluster, and a scorch-free white vapor-cone snippet for supersonic passes. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
-      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat solid pure bright green chroma-key background, no scenery, no text, no labels, no UI. Top row — a STEED FOAL hunting kit: four foals flying in a tight diagonal echelon (all riveted steel plates, curled tails, amber face-lamps, static ticks between fins), then the same formation breaking apart into two pairs, then one lone foal with its lamp flaring hot. Second row — THUNDERHEAD face plates: five close-up cloud sprites of just the boiling charcoal rim and the glowing lilac eye — eye shut, eye cracking, half-open, wide staring, and squinting as it aims — each with a different arc pattern crawling below it. Third row — weather and projectiles: diagonal pale rain-stroke tiles in two lengths, wind-swirl puffs, single violet arc-bolts with forked tips, pink and red bright-core round shots with dark rims, pairs and three-shot fans. Fourth row — effects: tiny orange-white explosion in four growth frames, a dissolving cloud-stuff birth wisp, a static-spark cluster, and a scorch-free white vapor-cone snippet for supersonic passes. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1024x1024",
@@ -218,12 +218,12 @@
           "seed": 15522
         }
       },
-      "notes": "The formation sprites are the differentiator — echelon vs broken pairs vs lone foal lets an artist block the homing-squad behavior visually. Eye close-up row doubles as an off-screen threat indicator. Rain tiles are additive-blend safe if extraction keeps them on separate cells."
+      "notes": "The formation sprites are the differentiator — echelon vs broken pairs vs lone foal lets an artist block the homing-squad behavior visually. Eye close-up row doubles as an off-screen threat indicator. Rain tiles are additive-blend safe if extraction keeps them on separate cells. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "tempest-ridge-sprite-sheet-v3",
       "slug": "tempest-ridge-sprite-sheet",
-      "title": "Wide strip pixel sprite sheet: thunderhead swelling filmstrip with foal pursuit row and bolt arcs on flat navy",
+      "title": "Wide strip pixel sprite sheet: thunderhead swelling filmstrip with foal pursuit row and bolt arcs on key green",
       "variation": {
         "n": 3,
         "of": 3,
@@ -233,8 +233,8 @@
         "flux.1-dev",
         "sd3.5-large"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Main band — an eight-frame THUNDERHEAD life cycle evenly spaced left to right, same round-anvil cloud silhouette every frame, only the state changing: dark puff, puff with a lilac pinprick eye, swelling anvil, eye opening, full storm cell with belly arcs, arcs at maximum spread across the underside, eye squinting as it discharges one heavy bolt, cell deflating to puff. Second band — a STEED FOAL pursuit strip in six frames: a plated seahorse with curled tail and amber lamp uncoiling from rest to a hard left-facing stoop, static ticks multiplying along its fins, ending with two smaller twin foals splitting off the same pose. Bottom sparse row — shared pixels: violet forked arc-bolts in short and long variants, pink and red bright-core round shots, two diagonal rain strokes, and a one-frame white flash square for lightning strike moments. Large readable clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
-      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cloud each frame, pure black background, perspective distortion",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Main band — a six-frame THUNDERHEAD life cycle evenly spaced left to right, same round-anvil cloud silhouette every frame, only the state changing: dark puff, puff with a lilac pinprick eye, swelling anvil with the eye opening, full storm cell with belly arcs at maximum spread across the underside, eye squinting as it discharges one heavy bolt, cell deflating to puff. Second band — a STEED FOAL pursuit strip in six frames: a plated seahorse with curled tail and amber lamp uncoiling from rest to a hard left-facing stoop, static ticks multiplying along its fins, ending with two smaller twin foals splitting off the same pose. Bottom sparse row — shared pixels: violet forked arc-bolts in short and long variants, pink and red bright-core round shots, two diagonal rain strokes, and a one-frame white flash square for lightning strike moments. Large readable clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cloud each frame, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1536x640",
@@ -261,7 +261,7 @@
           "seed": 15523
         }
       },
-      "notes": "Filmstrip continuity rule again — \"same silhouette every frame, only the state changing\" is the load-bearing clause; check it first when triaging. Flux.1-dev leads. The white flash square is the single most reused asset across the zone (lightning telegraphs, foal birth)."
+      "notes": "Filmstrip continuity rule again — \"same silhouette every frame, only the state changing\" is the load-bearing clause; check it first when triaging. Flux.1-dev leads. The white flash square is the single most reused asset across the zone (lightning telegraphs, foal birth). v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     }
   ]
 }

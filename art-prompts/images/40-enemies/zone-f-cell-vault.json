@@ -137,7 +137,7 @@
     {
       "id": "cell-vault-sprite-sheet-v1",
       "slug": "cell-vault-sprite-sheet",
-      "title": "In-game pixel sprite sheet: chaser cell mitosis cycle, vault claw link states, polyp turret set on flat navy",
+      "title": "In-game pixel sprite sheet: chaser cell mitosis cycle, vault claw link states, polyp turret set on key green",
       "variation": {
         "n": 1,
         "of": 3,
@@ -147,8 +147,8 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — the CHASER CELL mitosis cycle in seven frames: a round translucent green membrane sphere with a pale nucleus, nucleus stretching, sphere waisting into a dumbbell, filament spindle bridge at full stretch, the pinch snapping to two touching daughters, the pair separating, and two independent cells facing left. Middle band — a VAULT CLAW in five states: fully sheathed socket bump in green tissue, first bone-white link emerging, half-extended four-link arc, full eight-link extended hook with joints beaded, and the recoil snap with a spray of fluid dots. Bottom band — POLYP TURRETS and shared effects: a fleshy green wall-polyp in three firing states (closed bud, blooming mouth, discharged puff), floating violet spore pixels, pink and magenta round shots with bright cores and dark rims, and a small green rupture-burst effect in two frames. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
-      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, red blood, pure black background, perspective distortion",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a clean sprite sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Organized in horizontal bands: top band — the CHASER CELL mitosis cycle in six frames: a round translucent green membrane sphere with a pale nucleus, nucleus stretching, sphere waisting into a dumbbell, filament spindle bridge at full stretch, the pinch snapping to two touching daughters, and the pair separating into two independent cells facing left. Middle band — a VAULT CLAW in five states: fully sheathed socket bump in green tissue, first bone-white link emerging, half-extended four-link arc, full eight-link extended hook with joints beaded, and the recoil snap with a spray of fluid dots. Bottom band — POLYP TURRETS and shared effects: a fleshy green wall-polyp in four firing states (closed bud, swelling bud, blooming mouth, discharged puff), floating violet spore pixels, pink and magenta round shots with bright cores and dark rims, and a small green rupture-burst effect in two frames. Chunky readable arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, flat background replaced, fused sprites, overlapping sprites, red blood, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1152x896",
@@ -175,12 +175,12 @@
           "seed": 15621
         }
       },
-      "notes": "The seven-frame mitosis band is the crown jewel — it's the only enemy in the game whose sprite sheet doubles as a tutorial. Vault greens #2a4434→#385a44; spores stay violet so they never read as blood."
+      "notes": "The six-frame mitosis band is the crown jewel — it's the only enemy in the game whose sprite sheet doubles as a tutorial. Vault greens #2a4434→#385a44; spores stay violet so they never read as blood. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "cell-vault-sprite-sheet-v2",
       "slug": "cell-vault-sprite-sheet",
-      "title": "Square pixel sprite sheet: cell family sizes and damage states, claw grab poses, polyp spore patterns on flat navy",
+      "title": "Square pixel sprite sheet: cell family sizes and damage states, claw grab poses, polyp spore patterns on key green",
       "variation": {
         "n": 2,
         "of": 3,
@@ -190,8 +190,8 @@
         "sd3.5-large",
         "flux.1-dev"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat deep-navy background, no scenery, no text, no labels, no UI. Top row — CHASER CELLS at four sizes (grandmother sphere twice the fighter, adult, daughter, seed bead), then the same adult cell in three damage states: membrane dimpled, nucleus cracked leaking pale light, ruptured into a sagging husk with a popping-spark outline. Second row — a single VAULT CLAW in five grab poses: idle curl, reaching forward, hooked-in, hauling upward, and shattered at the third link with tissue fraying and two bone fragments falling. Third row — POLYP TURRET batteries: a wall-bud polyp, a twin polyp sharing one base, and four discharged spore patterns — a straight shot line, a slow three-spore arc, a five-spore fan, and a lingering violet cloud wisp. Fourth row — shared effect pixels: pink and magenta bright-core round shots with dark rims, green fluid droplet beads with short tails, a small membrane tear decal, a synchronized pulse ring, and two floating amber pore-lights. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
-      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, red blood, pure black background, perspective distortion",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a square sprite sheet grid on a completely flat solid pure bright green chroma-key background, no scenery, no text, no labels, no UI. Top row — CHASER CELLS at four sizes (grandmother sphere twice the fighter, adult, daughter, seed bead), then the same adult cell in three damage states: membrane dimpled, nucleus cracked leaking pale light, ruptured into a sagging husk with a popping-spark outline. Second row — a single VAULT CLAW in five grab poses: idle curl, reaching forward, hooked-in, hauling upward, and shattered at the third link with tissue fraying and two bone fragments falling. Third row — POLYP TURRET batteries: a wall-bud polyp, a twin polyp sharing one base, and four discharged spore patterns — a straight shot line, a slow three-spore arc, a five-spore fan, and a lingering violet cloud wisp. Fourth row — shared effect pixels: pink and magenta bright-core round shots with dark rims, green fluid droplet beads with short tails, a small membrane tear decal, a synchronized pulse ring, and two floating amber pore-lights. Chunky arcade silhouettes, saturated limited palette, crisp pixel-grid edges, every sprite facing left.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, overlapping sprites, human figures, red blood, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1024x1024",
@@ -218,12 +218,12 @@
           "seed": 15622
         }
       },
-      "notes": "Size laddering (grandmother → seed bead) covers the chaser's spawn variety without redrawing; the polyp spore-pattern row is straight pattern-DSL reference for pattern authors. This is the most \"system sheet\" of the nine zone sheets — lean into that in triage."
+      "notes": "Size laddering (grandmother → seed bead) covers the chaser's spawn variety without redrawing; the polyp spore-pattern row is straight pattern-DSL reference for pattern authors. This is the most \"system sheet\" of the nine zone sheets — lean into that in triage. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     },
     {
       "id": "cell-vault-sprite-sheet-v3",
       "slug": "cell-vault-sprite-sheet",
-      "title": "Wide strip pixel sprite sheet: mitosis filmstrip with claw extension row and spore effects on flat navy",
+      "title": "Wide strip pixel sprite sheet: mitosis filmstrip with claw extension row and spore effects on key green",
       "variation": {
         "n": 3,
         "of": 3,
@@ -233,8 +233,8 @@
         "flux.1-dev",
         "sd3.5-large"
       ],
-      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with bold dark navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat deep-navy background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Main band — the eight-frame CHASER CELL division cycle evenly spaced left to right, always the same round membrane silhouette and pale nucleus color, only the state changing: rest, nucleus elongating, membrane waisting, dumbbell with filament bridge, pinch to two touching daughters, daughters drifting apart, pair each pulsing once, and the two settled independents facing left. Second band — a VAULT CLAW extension strip in six frames: socket bump bulging, one bone-white link out, four links arcing, full eight-link hook raised, tip snapped shut on nothing with motion notches, and retraction to the socket puffing fluid beads. Bottom sparse row — vault effects: closed and blooming POLYP TURRET buds, violet spore pixels with faint trails, pink and magenta bright-core round shots with dark rims, a single green fluid droplet on a short tail, and a two-frame membrane rupture burst. Large readable clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
-      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cell each frame, human anatomy, pure black background, perspective distortion",
+      "positive": "SNES-era 16-bit pixel art, flat colored pixel sprites with crisp 1-pixel near-black navy outlines and simple two-tone dithered shading, arranged as a wide horizontal filmstrip sheet on a completely flat solid pure bright green chroma-key background, no scenery, no glow bleeding into the background, no text, no labels, no UI. Main band — the six-frame CHASER CELL division cycle evenly spaced left to right, always the same round membrane silhouette and pale nucleus color, only the state changing: rest, nucleus elongating, membrane waisting into a dumbbell with a filament bridge, pinch to two touching daughters, daughters drifting apart each pulsing once, and the two settled independents facing left. Second band — a VAULT CLAW extension strip in six frames: socket bump bulging, one bone-white link out, four links arcing, full eight-link hook raised, tip snapped shut on nothing with motion notches, and retraction to the socket puffing fluid beads. Bottom sparse row — vault effects: closed and blooming POLYP TURRET buds, violet spore pixels with faint trails, pink and magenta bright-core round shots with dark rims, a single green fluid droplet on a short tail, and a two-frame membrane rupture burst. Large readable clusters, saturated limited palette, every sprite facing left, crisp pixel-grid edges.",
+      "negative": "text, labels, letters, numbers, watermark, photograph, 3d render, smooth gradients, anti-aliased, glow on background, scenery, fused sprites, inconsistent character design, different cell each frame, human anatomy, pure black background, perspective distortion, green tint on the subject, green spill, background scenery, cast shadow",
       "settings": {
         "sd3.5-large": {
           "resolution": "1536x640",
@@ -261,7 +261,7 @@
           "seed": 15623
         }
       },
-      "notes": "Continuity clause again (\"same round membrane silhouette, only the state changing\"). The \"human anatomy\" negative guards against the mitosis strip drifting into biology-textbook style — keep it arcade-cell, not microscope-cell."
+      "notes": "Continuity clause again (\"same round membrane silhouette, only the state changing\"). The \"human anatomy\" negative guards against the mitosis strip drifting into biology-textbook style — keep it arcade-cell, not microscope-cell. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets."
     }
   ]
 }

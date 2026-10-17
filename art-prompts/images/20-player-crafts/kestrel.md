@@ -9,7 +9,7 @@ Seed slots: showroom 11001-11004, hero34 11003/11005/11006.
 **Variation:** 1/3 of 3
 
 ```text
-Video game spacecraft concept art showroom plate, a single sleek horizontal-space fighter called the KESTREL floating at three-quarter side view in the center of a studio void, dart-shaped steel-blue hull with a bold bright blue fuselage stripe running the full length, a glowing cyan bubble canopy, twin air intakes with thin navy panel lines, a hot orange engine afterglow pouring from the rear vent nozzle and fading to smoke wisps, hard-edged armor plating with two-pixel-style heavy navy outlines, crisp specular highlights along the upper spine, background a flat deep-navy gradient with a faint grid floor line like a design-table, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette, subtle CRT scanline glow.
+Video game spacecraft concept art showroom plate, a single sleek horizontal-space fighter called the KESTREL floating at three-quarter side view in the center of a studio void, dart-shaped steel-blue hull with a bold bright blue fuselage stripe running the full length, a glowing cyan bubble canopy, twin air intakes with thin navy panel lines, a hot orange engine afterglow pouring from the rear vent nozzle and fading to smoke wisps, hard-edged armor plating with two-pixel-style heavy navy outlines, crisp specular highlights along the upper spine, isolated on a perfectly flat solid pure bright green chroma-key background with no floor line, no gradient and no cast shadow, no text, no annotations, ultra-detailed large-format concept rendering, clean vector shapes with pixel-art texture accents, saturated limited palette.
 ```
 
 **Settings:**
@@ -20,8 +20,8 @@ Video game spacecraft concept art showroom plate, a single sleek horizontal-spac
 | steps | 32 | 40 | 40 | 30 |
 | seed | 11001 | 11001 | 11001 | 11001 |
 
-**Negative:** (sd3.5/qwen only) `text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background`
-**Notes:** Stripe #3858f0, canopy #38c8e8, glow #f89830, outline #1b2a4a. flux.1-dev keeps the studio plate clean.
+**Negative:** (sd3.5/qwen only) `text, annotations, arrows, labels, modern fighter jet, f22, f16, visible human pilot, photorealistic, 3d render, watermark, blurry, pure black background, green tint on the subject, green spill, background scenery, cast shadow`
+**Notes:** Stripe #3858f0, canopy #38c8e8, glow #f89830, outline #1b2a4a. flux.1-dev keeps the studio plate clean. v2 (R3-01): K3 key background #00FF00 — the ingest keys it by flood fill from the border, so greens inside the outline survive; frame counts follow the kernel's v2 targets.
 
 ## kestrel-showroom — blueprint glow draft
 **Models:** sd3.5-large, flux.2-dev

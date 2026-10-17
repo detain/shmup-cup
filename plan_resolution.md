@@ -1180,6 +1180,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | `v1.x` branch created from `v1.0.0` and pushed | **done** (2026-10-16) |
 | — | CI runs on pushes to `v1.x` (`ci.yml` on both branches) | **done** (2026-10-16) |
 | — | One board issue per step on the GitHub project | **done** (2026-10-16) |
+| — | R3-01's prompt-library update done early | **done** (2026-10-16) |
 | R0-01 | Maintenance branch, version lines and CI | not started |
 | R0-02 | The TV render benchmark (`bench:tv`) | not started |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
