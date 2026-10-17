@@ -73,6 +73,7 @@
  *
  * @module
  */
+import { FRAME_W, GLYPH_W } from '../config/index.js';
 import type { ValidationIssue } from './schema.js';
 
 /**
@@ -122,8 +123,27 @@ export type EndingSceneName = (typeof ENDING_SCENES)[number];
 /** Most epilogue lines one ending may have (M2-14). */
 export const MAX_ENDING_TEXT_LINES = 8;
 
-/** Most characters of one epilogue line (40 × 6-px glyphs fit the ending panel). */
-export const MAX_ENDING_LINE_LENGTH = 40;
+// The line caps below are text widths on the screen (plan_resolution.md R1-01): glyph cells
+// (`core/config` GLYPH_W) that fit the frame (FRAME_W) less the margins of what the lines are drawn
+// in, so they follow the frame and the font. The numbers in parentheses are the values at 384 px
+// with the 6-px cell.
+
+/**
+ * Inset of the ending's and the story's text panels from each side of the frame (`core/scenes`
+ * draws both 40 px in from the edges).
+ */
+const TEXT_PANEL_INSET = 40;
+
+/** Room kept between a text panel's side and its longest line (centred). */
+const TEXT_PANEL_PADDING = 32;
+
+/** Glyph cells of the longest line a text panel holds (40). */
+const TEXT_PANEL_LINE_LENGTH = Math.floor(
+  (FRAME_W - 2 * (TEXT_PANEL_INSET + TEXT_PANEL_PADDING)) / GLYPH_W,
+);
+
+/** Most characters of one epilogue line — what fits the ending's text panel (40). */
+export const MAX_ENDING_LINE_LENGTH = TEXT_PANEL_LINE_LENGTH;
 
 /** Most sections of the credits (M2-14). */
 export const MAX_CREDITS_SECTIONS = 24;
@@ -131,8 +151,11 @@ export const MAX_CREDITS_SECTIONS = 24;
 /** Most lines of one credits section. */
 export const MAX_CREDITS_LINES = 16;
 
-/** Most characters of a credits line or title (60 × 6-px glyphs fit the 384-px frame). */
-export const MAX_CREDITS_LINE_LENGTH = 60;
+/**
+ * Most characters of a credits line or title — the glyph cells that fit the frame, 12 px kept clear
+ * on each side (60).
+ */
+export const MAX_CREDITS_LINE_LENGTH = Math.floor((FRAME_W - 2 * 12) / GLYPH_W);
 
 /**
  * The sprite scenes a page of the attract loop's story crawl can play over (M2-15, `core/scenes`
@@ -153,8 +176,8 @@ export const MAX_STORY_PAGES = 8;
 /** Most lines of one story page. */
 export const MAX_STORY_LINES = 6;
 
-/** Most characters of a story line (40 × 6-px glyphs fit the story panel). */
-export const MAX_STORY_LINE_LENGTH = 40;
+/** Most characters of a story line — what fits the story's text panel (40). */
+export const MAX_STORY_LINE_LENGTH = TEXT_PANEL_LINE_LENGTH;
 
 /** One page of the attract loop's story crawl (M2-15): a sprite scene and the lines over it. */
 export interface CampaignStoryPage {
