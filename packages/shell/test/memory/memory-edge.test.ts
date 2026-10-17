@@ -298,14 +298,22 @@ describe('shell/memory estimate edges', () => {
       estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0, budget: base.total - 1 })
         .withinBudget,
     ).toBe(false);
-    // 2048 × 1024 × 4 × 2 (texture + image) = 16 MiB; two such pages: exactly the 32 MiB share.
-    const pages = [
-      { w: 2048, h: 1024 },
-      { w: 2048, h: 1024 },
-    ];
-    const atShare = estimateMemory({ atlasPages: pages, sfxBytes: 0, musicBytes: 0 });
+    // One 2048-wide page tall enough that texture + image (× 4 B × 2) is exactly the atlas share
+    // (derived from the frame since R1-05: 26 MiB at 384×216 → 1664 rows, 23 MiB at 640×360 →
+    // 1472), and one row more is over it.
+    const rows = TEXTURE_BUDGET_BYTES / (2048 * 4 * 2);
+    expect(Number.isInteger(rows)).toBe(true);
+    const atShare = estimateMemory({
+      atlasPages: [{ w: 2048, h: rows }],
+      sfxBytes: 0,
+      musicBytes: 0,
+    });
     expect(atShare.textures + atShare.images).toBe(TEXTURE_BUDGET_BYTES);
     expect(atShare.withinBudget).toBe(true);
+    expect(
+      estimateMemory({ atlasPages: [{ w: 2048, h: rows + 1 }], sfxBytes: 0, musicBytes: 0 })
+        .withinBudget,
+    ).toBe(false);
     expect(
       estimateMemory({ atlasPages: [], sfxBytes: 1, musicBytes: AUDIO_BUDGET_BYTES - 1 })
         .withinBudget,

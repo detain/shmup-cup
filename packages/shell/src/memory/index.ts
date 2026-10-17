@@ -6,8 +6,11 @@
  * {@link MEMORY_BUDGET_BYTES}):
  *
  * - **Estimator** ({@link estimateMemory}, {@link estimateStageMemory}). What one zone keeps
- *   resident, from the data alone: the atlas pages it needs (GPU texture + the decoded image the
- *   page was uploaded from), the audio (the whole SFX bank — pre-rendered at boot — and the zone's
+ *   resident, from the data alone: the atlas pages it needs on the GPU, the decoded images the
+ *   pages were uploaded from — **every** page's, since the runtime keeps them all (policy "all",
+ *   plan R1-05 / W3-2: the shell loads every page at boot and Pixi keeps each image as the
+ *   texture's resource, to re-upload it) —, the audio (the whole SFX bank — pre-rendered at boot —
+ *   and the zone's
  *   music set: the title theme plus every cue the stage can ask for, `stageMusicCues`; mono
  *   32-bit float buffers, one copy — `audio-web` `toAudioBuffer` drops the PCM once the buffer
  *   exists), the render targets (the 384×216 frame, the layer-effect filter passes **rounded up
@@ -19,13 +22,23 @@
  *   buffers at the display size) and a JS heap baseline. Chip songs
  *   are sized from their rows ({@link songFrameBound}) without rendering them; recorded tracks
  *   from their loop end, or {@link FILE_TRACK_FALLBACK_SECONDS} of stereo when it is unknown.
+ * - **Budgets** (plan R1-05, W3-5). Out of {@link MEMORY_BUDGET_BYTES}: the heap baseline
+ *   ({@link HEAP_BASELINE_BYTES}, 24 MiB), the audio ({@link AUDIO_BUDGET_BYTES}, 24 MiB — the
+ *   worst zone today needs ≈ 17.8 MiB) and the fixed render targets at 1080p
+ *   ({@link fixedTargetBytes} of the frame, {@link DEFAULT_DISPLAY} and {@link FILTER_TARGETS});
+ *   the atlas gets the rest, floored to whole MiB — {@link TEXTURE_BUDGET_BYTES}, derived from
+ *   core's `FRAME_W` × `FRAME_H` by {@link textureBudgetFor}: 26 MiB at 384×216, 23 MiB at
+ *   640×360 (it drops by itself at R2-01's flip).
  * - **Residency** ({@link stageSpriteSets}, {@link atlasPageNeeds}, {@link createAtlasResidency}).
  *   Which sprites a campaign zone uses is found by walking its stage spec and everything it names
  *   (enemies — children, bosses, inner / double bosses, minions —, tilesets and linked stages such
  *   as a bonus stage): every `sprite…Id` reached. A sprite no campaign zone names (ships, shots,
  *   bullets, items, particles, the UI, dev ranges' enemies) is **global**. An atlas page is needed
  *   by a zone when it holds a global sprite, a font glyph, a frame of no sprite, or one of the
- *   zone's own sprites (their `@flash` / `@p2` / palette siblings included). Between zones — on the
+ *   zone's own sprites (their `@flash` / `@p2` / palette siblings included). The engine's, the UI
+ *   kit's and the scene view's sprites (`ENGINE_SPRITES`, `UI_SPRITES`, {@link SCENE_VIEW_SPRITES})
+ *   are global even when a zone names one (R1-05): the renderer draws them in every zone, and the
+ *   packer keeps them in the `common` group. Between zones — on the
  *   scene flow's `PrepareStage` event, while the next stage loads ({@link connectAtlasResidency}) —
  *   the pages the next zone does not need are unloaded from the GPU (Pixi `TextureSource.unload`);
  *   a needed page that was unloaded is uploaded again when it is first drawn, during the loading /
@@ -45,7 +58,8 @@
  * {@link StageMemoryInputs}, {@link MemoryEstimate}, {@link pageBytes}, {@link sfxBankBytes},
  * {@link songFrameBound}, {@link trackBytes}, {@link stageMusicTracks},
  * {@link stageSpriteSets}, {@link StageSpriteSets}, {@link atlasPageNeeds}, {@link AtlasPageNeeds},
- * {@link potBytes}, {@link FILTER_TARGETS},
+ * {@link potBytes}, {@link FILTER_TARGETS}, {@link fixedTargetBytes}, {@link textureBudgetFor},
+ * {@link DEFAULT_DISPLAY}, {@link ImagePolicy},
  * {@link stagePages}, {@link createAtlasResidency}, {@link AtlasResidency}, {@link AtlasPageLike},
  * {@link connectAtlasResidency}, {@link MEMORY_BUDGET_BYTES}, {@link TEXTURE_BUDGET_BYTES},
  * {@link AUDIO_BUDGET_BYTES}, {@link HEAP_BASELINE_BYTES}, {@link FILE_TRACK_FALLBACK_SECONDS},
@@ -67,16 +81,19 @@ import {
   type Song,
 } from '@shmup/audio-web';
 import {
+  ENGINE_SPRITES,
   FRAME_H,
   FRAME_W,
   MUSIC_CUES,
   SimEventKind,
+  UI_SPRITES,
   defineModule,
   type ContentDb,
   type CrtFilter,
 } from '@shmup/core';
 import type { AtlasManifest } from '@shmup/render-pixi';
 import type { EventDispatcher } from '../dispatch/index.js';
+import { SCENE_VIEW_SPRITES } from '../scene-view/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -91,11 +108,11 @@ export const MIB = 1024 * 1024;
 /** The whole app's budget on the TV: < 100 MB (shmup_tech.md §2.5; the dev install cap: 120 MB). */
 export const MEMORY_BUDGET_BYTES = 100 * MIB;
 
-/** Share of the budget the atlas may take (GPU pages + their decoded images): 32 MiB. */
-export const TEXTURE_BUDGET_BYTES = 32 * MIB;
-
-/** Share of the budget the audio may take (SFX bank + one zone's music set): 32 MiB. */
-export const AUDIO_BUDGET_BYTES = 32 * MIB;
+/**
+ * Share of the budget the audio may take (SFX bank + one zone's music set): 24 MiB (plan R1-05,
+ * W3-5 — 32 MiB until then; the worst zone today needs ≈ 17.8 MiB).
+ */
+export const AUDIO_BUDGET_BYTES = 24 * MIB;
 
 /**
  * JS heap and engine baseline the estimate adds: the bundle's code, the inlined content once
@@ -128,6 +145,12 @@ export const FILTER_TARGETS = 2;
 /** Buffers of the canvas at the display size: front, back and depth / stencil. */
 const CANVAS_BUFFERS = 3;
 
+/** The display the estimate assumes when none is given: 1080p (the M7s, the LG sets). */
+export const DEFAULT_DISPLAY: { readonly width: number; readonly height: number } = Object.freeze({
+  width: 1920,
+  height: 1080,
+});
+
 /** Width of the internal frame the renderer draws into (core's `FRAME_W` — decision D19). */
 const FRAME_WIDTH = FRAME_W;
 
@@ -157,6 +180,71 @@ export function potBytes(w: number, h: number): number {
   while (ph < h) ph *= 2;
   return pw * ph * 4;
 }
+
+/** A size in pixels (a frame, a display). */
+interface Size {
+  /** Width in pixels. */
+  readonly width: number;
+  /** Height in pixels. */
+  readonly height: number;
+}
+
+/**
+ * Bytes of the render targets that do not depend on the content: the internal frame's target
+ * (created directly, so exactly its size), `filters` pooled filter passes at the frame size
+ * (power-of-two rounded — {@link potBytes}) and the canvas's front / back / depth-stencil buffers
+ * at the display size. The CRT's legacy filter target is not in it (see
+ * {@link MemoryInputs.crtAsFilter}).
+ *
+ * @param frame - The internal frame.
+ * @param display - The canvas's drawing buffer.
+ * @param filters - Filter passes live at once.
+ * @returns Bytes.
+ *
+ * @example
+ * ```ts
+ * fixedTargetBytes({ width: FRAME_W, height: FRAME_H }, DEFAULT_DISPLAY, FILTER_TARGETS);
+ * // → 26 263 552 at 384×216 (331 776 + 2 × 524 288 + 24 883 200); 29 999 104 at 640×360
+ * ```
+ */
+export function fixedTargetBytes(frame: Size, display: Size, filters: number): number {
+  return (
+    frame.width * frame.height * 4 +
+    potBytes(frame.width, frame.height) * filters +
+    display.width * display.height * 4 * CANVAS_BUFFERS
+  );
+}
+
+/**
+ * The atlas's share of the budget for an internal frame (plan R1-05, W3-5): what is left of
+ * {@link MEMORY_BUDGET_BYTES} after the heap baseline, the audio share and the fixed render targets
+ * at 1080p ({@link fixedTargetBytes} with {@link DEFAULT_DISPLAY} and {@link FILTER_TARGETS}),
+ * floored to whole MiB.
+ *
+ * @param frame - The internal frame.
+ * @returns Bytes (a multiple of {@link MIB}).
+ *
+ * @example
+ * ```ts
+ * textureBudgetFor({ width: FRAME_W, height: FRAME_H }) / MIB; // → 26 at 384×216, 23 at 640×360
+ * ```
+ */
+export function textureBudgetFor(frame: Size): number {
+  const left =
+    MEMORY_BUDGET_BYTES -
+    HEAP_BASELINE_BYTES -
+    AUDIO_BUDGET_BYTES -
+    fixedTargetBytes(frame, DEFAULT_DISPLAY, FILTER_TARGETS);
+  return Math.floor(left / MIB) * MIB;
+}
+
+/**
+ * Share of the budget the atlas may take (GPU pages + their decoded images):
+ * {@link textureBudgetFor} the current frame — 26 MiB at 384×216, **23 MiB at 640×360** (it was a
+ * flat 32 MiB until plan R1-05). Derived from core's `FRAME_W` / `FRAME_H`, so R2-01's flip lowers
+ * it with no edit here.
+ */
+export const TEXTURE_BUDGET_BYTES = textureBudgetFor({ width: FRAME_W, height: FRAME_H });
 
 /** A page size. */
 interface PageSize {
@@ -190,11 +278,18 @@ export interface MemoryInputs {
    * Pixi keeps the `HTMLImageElement` to re-upload after a context loss).
    */
   readonly keepPageImages?: boolean;
+  /**
+   * The pages whose decoded images stay in memory (R1-05; default `atlasPages`). The shell loads
+   * every page at boot and keeps every image — even of a page another zone needs, whose GPU copy
+   * was unloaded — so a whole-atlas estimate passes every page here ({@link estimateStageMemory}
+   * does). Ignored when `keepPageImages` is `false`.
+   */
+  readonly imagePages?: readonly PageSize[];
   /** Bytes of the SFX bank's buffers. */
   readonly sfxBytes: number;
   /** Bytes of the resident music set's buffers. */
   readonly musicBytes: number;
-  /** The display (canvas drawing buffer) size in pixels (default 1920×1080). */
+  /** The display (canvas drawing buffer) size in pixels (default {@link DEFAULT_DISPLAY}). */
   readonly display?: {
     /** Width in pixels. */
     readonly width: number;
@@ -256,7 +351,8 @@ export interface MemoryEstimate {
   /** The budget. */
   readonly budget: number;
   /**
-   * `total ≤ budget`, the atlas within {@link TEXTURE_BUDGET_BYTES} and the audio within
+   * `total ≤ budget`, the atlas within its share for the estimate's frame ({@link textureBudgetFor}
+   * — {@link TEXTURE_BUDGET_BYTES} at the default frame) and the audio within
    * {@link AUDIO_BUDGET_BYTES}.
    */
   readonly withinBudget: boolean;
@@ -283,8 +379,11 @@ export interface MemoryEstimate {
 export function estimateMemory(inputs: MemoryInputs): MemoryEstimate {
   let textures = 0;
   for (const page of inputs.atlasPages) textures += pageBytes(page);
-  const images = inputs.keepPageImages === false ? 0 : textures;
-  const display = inputs.display ?? { width: 1920, height: 1080 };
+  let images = 0;
+  if (inputs.keepPageImages !== false) {
+    for (const page of inputs.imagePages ?? inputs.atlasPages) images += pageBytes(page);
+  }
+  const display = inputs.display ?? DEFAULT_DISPLAY;
   const frame = inputs.frame ?? { width: FRAME_WIDTH, height: FRAME_HEIGHT };
   // The frame target is created directly (`RenderTexture.create`), so it is exactly its own
   // size; only the *pooled* filter passes are rounded up to a power of two on each axis.
@@ -293,11 +392,7 @@ export function estimateMemory(inputs: MemoryInputs): MemoryEstimate {
     inputs.crtAsFilter === true && (inputs.crtFilter ?? 'off') !== 'off'
       ? potBytes(display.width, display.height)
       : 0;
-  const targets =
-    frame.width * frame.height * 4 +
-    potBytes(frame.width, frame.height) * filterCount +
-    crtTarget +
-    display.width * display.height * 4 * CANVAS_BUFFERS;
+  const targets = fixedTargetBytes(frame, display, filterCount) + crtTarget;
   const heap = inputs.heapBytes ?? HEAP_BASELINE_BYTES;
   const budget = inputs.budget ?? MEMORY_BUDGET_BYTES;
   const total = textures + images + inputs.sfxBytes + inputs.musicBytes + targets + heap;
@@ -312,7 +407,7 @@ export function estimateMemory(inputs: MemoryInputs): MemoryEstimate {
     budget,
     withinBudget:
       total <= budget &&
-      textures + images <= TEXTURE_BUDGET_BYTES &&
+      textures + images <= textureBudgetFor(frame) &&
       inputs.sfxBytes + inputs.musicBytes <= AUDIO_BUDGET_BYTES,
   });
 }
@@ -475,7 +570,8 @@ function walkStage(content: ContentDb, stageIndex: number): Set<number> {
  *
  * @remarks
  * Load time (walks the specs once). Without a campaign every stage is "outside" and every sprite
- * global.
+ * global. The sets follow the data only: an engine, UI or scene-view sprite a zone names is in that
+ * zone's set here, and {@link atlasPageNeeds} makes it global.
  *
  * @param content - The content.
  * @returns Per-stage sets and the global set.
@@ -495,6 +591,16 @@ export function stageSpriteSets(content: ContentDb): StageSpriteSets {
   return { byStage, global };
 }
 
+/**
+ * Sprites every zone draws whatever the data says (R1-05): the engine's and the UI kit's
+ * (`ENGINE_SPRITES`, which holds `UI_SPRITES`) and the scene view's starfield.
+ */
+const ALWAYS_GLOBAL_SPRITES: ReadonlySet<string> = new Set([
+  ...ENGINE_SPRITES,
+  ...UI_SPRITES,
+  ...SCENE_VIEW_SPRITES,
+]);
+
 /** Which atlas pages each campaign zone needs. */
 export interface AtlasPageNeeds {
   /** Per page: whether every stage needs it (global sprites, font glyphs, loose frames). */
@@ -510,8 +616,11 @@ export interface AtlasPageNeeds {
  *
  * @remarks
  * A content sprite `name` covers every manifest sprite `name` and `name@…` (hit flash, player 2,
- * colour-blind palettes). Manifest sprites no content sprite covers (engine sprites, the UI), font
- * glyphs and frames of no sprite make their pages global. Load time.
+ * colour-blind palettes). Manifest sprites no content sprite covers (the scene view's starfield),
+ * font glyphs and frames of no sprite make their pages global — and so do the engine's, the UI
+ * kit's and the scene view's own sprites (`ENGINE_SPRITES`, `UI_SPRITES`,
+ * {@link SCENE_VIEW_SPRITES}) even when a zone names one (R1-05): the renderer draws them in every
+ * zone. Load time.
  *
  * @param manifest - The atlas manifest.
  * @param spriteNames - `content.sprites.names`.
@@ -533,7 +642,7 @@ export function atlasPageNeeds(
   /** Owners of each content sprite name: `null` = global, else the stages naming it. */
   const owners = new Map<string, number[] | null>();
   for (let id = 0; id < spriteNames.length; id++) {
-    if (sets.global.has(id)) {
+    if (sets.global.has(id) || ALWAYS_GLOBAL_SPRITES.has(spriteNames[id])) {
       owners.set(spriteNames[id], null);
       continue;
     }
@@ -697,6 +806,14 @@ export function connectAtlasResidency(
   });
 }
 
+/**
+ * Which decoded page images an estimate charges (plan R1-05): `all` — every page's (what the
+ * runtime does, W3-2: all pages load at boot and Pixi keeps each image); `resident` — only the
+ * stage's own pages' (the lazy policy R3-04 may build, B3b: other zones' pages hold nothing);
+ * `none` — no image at all (`keepPageImages: false`).
+ */
+export type ImagePolicy = 'all' | 'resident' | 'none';
+
 /** What {@link estimateStageMemory} reads. */
 export interface StageMemoryInputs {
   /** The content. */
@@ -711,8 +828,10 @@ export interface StageMemoryInputs {
   readonly stageIndex: number;
   /** Page needs (default: computed from the content). */
   readonly needs?: AtlasPageNeeds;
-  /** Display size (default 1920×1080). */
+  /** Display size (default {@link DEFAULT_DISPLAY}). */
   readonly display?: MemoryInputs['display'];
+  /** Which decoded page images are charged (default `all` — the runtime's policy, W3-2). */
+  readonly imagePolicy?: ImagePolicy;
   /** The internal frame size (default core's `FRAME_W` × `FRAME_H`). */
   readonly frame?: MemoryInputs['frame'];
   /** The CRT setting (default `off`). */
@@ -724,8 +843,10 @@ export interface StageMemoryInputs {
 }
 
 /**
- * Estimates what playing one stage keeps resident: its atlas pages ({@link stagePages}), the SFX
- * bank and its music set ({@link stageMusicTracks}), the render targets and the heap baseline.
+ * Estimates what playing one stage keeps resident: its atlas pages on the GPU
+ * ({@link stagePages}), the decoded images of every page (policy `all` — what the runtime keeps,
+ * R1-05; see {@link ImagePolicy}), the SFX bank and its music set ({@link stageMusicTracks}), the
+ * render targets and the heap baseline.
  *
  * @param inputs - Content, manifest, audio content, stage.
  * @returns The estimate.
@@ -742,6 +863,7 @@ export function estimateStageMemory(inputs: StageMemoryInputs): MemoryEstimate {
   const needs =
     inputs.needs ?? atlasPageNeeds(manifest, content.sprites.names, stageSpriteSets(content));
   const pages = stagePages(needs, stageIndex).map((p) => manifest.pages[p]);
+  const policy = inputs.imagePolicy ?? 'all';
   const stage = content.stages[stageIndex];
   let musicBytes = 0;
   if (stage !== undefined) {
@@ -751,6 +873,8 @@ export function estimateStageMemory(inputs: StageMemoryInputs): MemoryEstimate {
   }
   return estimateMemory({
     atlasPages: pages,
+    keepPageImages: policy !== 'none',
+    imagePages: policy === 'all' ? manifest.pages : pages,
     sfxBytes: sfxBankBytes(inputs.sfx, rate),
     musicBytes,
     display: inputs.display,

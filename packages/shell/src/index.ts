@@ -225,6 +225,7 @@ export {
 } from './determinism/index.js';
 export {
   AUDIO_BUDGET_BYTES,
+  DEFAULT_DISPLAY,
   FILE_TRACK_FALLBACK_SECONDS,
   FILTER_TARGETS,
   HEAP_BASELINE_BYTES,
@@ -236,6 +237,7 @@ export {
   createAtlasResidency,
   estimateMemory,
   estimateStageMemory,
+  fixedTargetBytes,
   pageBytes,
   potBytes,
   sfxBankBytes,
@@ -243,10 +245,12 @@ export {
   stageMusicTracks,
   stagePages,
   stageSpriteSets,
+  textureBudgetFor,
   trackBytes,
   type AtlasPageLike,
   type AtlasPageNeeds,
   type AtlasResidency,
+  type ImagePolicy,
   type MemoryEstimate,
   type MemoryInputs,
   type StageMemoryInputs,
