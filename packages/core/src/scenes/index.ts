@@ -341,6 +341,7 @@ import {
   FRAME_H,
   FRAME_W,
   GLYPH_H,
+  GLYPH_W,
   LINE_H,
   PLAYFIELD_W,
   arsenalMatches,
@@ -1678,14 +1679,20 @@ const PROMPT_BLINK_TICKS = 32;
 /** Fade length of the scene music changes, in ticks. */
 const MUSIC_FADE_TICKS = 30;
 
-/** Screen row of the WARNING band's top edge (the playfield's middle). */
-const WARNING_BAND_Y = 76;
-
 /** Height of the WARNING band. */
 const WARNING_BAND_H = 48;
 
-/** Screen row of the zone title card's top edge (above the ship's fly-in row). */
-const ZONE_CARD_Y = 36;
+/**
+ * Screen row of the WARNING band's top edge: the band is centred 8 px above the frame's centre
+ * row (the playfield's middle), `FRAME_CY − 8 − WARNING_BAND_H / 2`.
+ */
+const WARNING_BAND_Y = FRAME_CY - 8 - (WARNING_BAND_H >> 1);
+
+/**
+ * Screen row of the zone title card's top edge: the 32-px card ends 40 px above the ship's fly-in
+ * row (the playfield's middle, the frame's centre row), `FRAME_CY − 72`.
+ */
+const ZONE_CARD_Y = FRAME_CY - 72;
 
 /**
  * String slots of the UI list (M2-10: 224 — the zone map, the zone tally and the ending; M2-14:
@@ -1698,32 +1705,41 @@ const UI_STRINGS = 512;
 /** Commands of the UI list (M2-10: 384 — the zone map's graph). */
 const UI_COMMANDS = 384;
 
-/** Where the title menu is drawn (a constant: redrawing allocates nothing). */
+/**
+ * Where the title menu is drawn: from just below the frame's centre row (a constant: redrawing
+ * allocates nothing).
+ */
 const TITLE_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX,
-  y: 118,
+  y: FRAME_CY + 10,
   align: TextAlign.Center,
   cursorX: FRAME_CX - 40,
 });
 
-/** Where the pause menu is drawn. */
+/** The pause menu's panel: left, top, width, height (on the frame's centre, a little high). */
+const PAUSE_PANEL = Object.freeze({ x: FRAME_CX - 76, y: FRAME_CY - 48, w: 152, h: 84 });
+
+/** Where the pause menu is drawn (inside its panel). */
 const PAUSE_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX,
-  y: 86,
+  y: PAUSE_PANEL.y + 26,
   align: TextAlign.Center,
   cursorX: FRAME_CX - 60,
 });
 
-/** The Options screen's panel: left, top, width, height (taller since M2-09: eleven rows). */
-const OPTIONS_PANEL = Object.freeze({ x: 48, y: 12, w: 288, h: 192 });
+/**
+ * The Options screen's panel: left, top, width, height (taller since M2-09: eleven rows), centred
+ * on the frame — the Options pages, the rebind screen and the input test share it.
+ */
+const OPTIONS_PANEL = Object.freeze({ x: FRAME_CX - 144, y: FRAME_CY - 96, w: 288, h: 192 });
 
-/** Where the Options menu is drawn (labels left, values from x 150). */
+/** Where the Options menu is drawn (labels left, values 102 px right of the panel's left edge). */
 const OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
-  x: 72,
-  y: 38,
-  lineHeight: 14,
-  cursorX: 62,
-  valueX: 150,
+  x: OPTIONS_PANEL.x + 24,
+  y: OPTIONS_PANEL.y + 26,
+  lineHeight: LINE_H + 4,
+  cursorX: OPTIONS_PANEL.x + 14,
+  valueX: OPTIONS_PANEL.x + 102,
 });
 
 /**
@@ -2203,6 +2219,9 @@ abstract class SceneBase implements Scene {
   abstract drawUi(list: DrawList): void;
 }
 
+/** The boot screen's progress bar: left, top, width, height (centred; its label 14 px above). */
+const BOOT_BAR = Object.freeze({ x: FRAME_CX - 80, y: FRAME_CY + 2, w: 160, h: 6 });
+
 /**
  * The boot screen: a progress bar until the host finishes loading.
  *
@@ -2239,10 +2258,11 @@ export class BootScene extends SceneBase {
    */
   drawUi(list: DrawList): void {
     list.setString(this.stringBase, this.label);
-    list.text(this.stringBase, FRAME_CX, 96, UI_COLORS.text, TextAlign.Center);
-    list.rect(FRAME_CX - 80, 110, 160, 6, UI_COLORS.track);
-    const w = Math.round(160 * (this.progress < 0 ? 0 : this.progress > 1 ? 1 : this.progress));
-    if (w > 0) list.rect(FRAME_CX - 80, 110, w, 6, UI_COLORS.title);
+    const b = BOOT_BAR;
+    list.text(this.stringBase, FRAME_CX, b.y - 14, UI_COLORS.text, TextAlign.Center);
+    list.rect(b.x, b.y, b.w, b.h, UI_COLORS.track);
+    const w = Math.round(b.w * (this.progress < 0 ? 0 : this.progress > 1 ? 1 : this.progress));
+    if (w > 0) list.rect(b.x, b.y, w, b.h, UI_COLORS.title);
   }
 }
 
@@ -2443,23 +2463,25 @@ export class TitleScene extends SceneBase {
     list.setString(base, t.gameTitle);
     list.setString(base + 1, t.pressOk);
     list.setString(base + 2, t.hi);
-    if (logo >= 0) list.sprite(logo, 0, FRAME_CX, 64);
-    else list.text(base, FRAME_CX, 60, UI_COLORS.focus, TextAlign.Center);
+    // Centred on the frame (the logo above the centre row, the prompt and the menu below it); the
+    // session hi-score sits 20 px above the bottom edge.
+    if (logo >= 0) list.sprite(logo, 0, FRAME_CX, FRAME_CY - 44);
+    else list.text(base, FRAME_CX, FRAME_CY - 48, UI_COLORS.focus, TextAlign.Center);
     if (this.phase === TitlePhase.Prompt) {
       if (Math.floor(this.ticks / PROMPT_BLINK_TICKS) % 2 === 0) {
-        list.text(base + 1, FRAME_CX, 136, UI_COLORS.text, TextAlign.Center);
+        list.text(base + 1, FRAME_CX, FRAME_CY + 28, UI_COLORS.text, TextAlign.Center);
       }
     } else {
       drawMenu(list, this.menu, base + 3, TITLE_MENU_LAYOUT, t);
     }
-    list.text(base + 2, FRAME_CX - 40, 196, UI_COLORS.focus);
-    list.number(this.flow.hiScore, FRAME_CX - 24, 196, 8, UI_COLORS.text);
+    list.text(base + 2, FRAME_CX - 40, FRAME_H - 20, UI_COLORS.focus);
+    list.number(this.flow.hiScore, FRAME_CX - 24, FRAME_H - 20, 8, UI_COLORS.text);
     if (this.secretTicks > 0) {
       list.setString(base + 3 + menuStringSlots(this.menu), this.secretMessage);
       list.text(
         base + 3 + menuStringSlots(this.menu),
         FRAME_CX,
-        96,
+        FRAME_CY - 12,
         UI_COLORS.alert,
         TextAlign.Center,
       );
@@ -2935,9 +2957,10 @@ export class PauseScene extends SceneBase {
    */
   drawUi(list: DrawList): void {
     const base = this.stringBase;
-    drawPanel(list, FRAME_CX - 76, 60, 152, 84);
+    const p = PAUSE_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h);
     list.setString(base, this.flow.text.pauseTitle);
-    list.text(base, FRAME_CX, 68, UI_COLORS.title, TextAlign.Center);
+    list.text(base, FRAME_CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
     drawMenu(list, this.menu, base + 1, PAUSE_MENU_LAYOUT, this.flow.text);
   }
 }
@@ -3785,11 +3808,11 @@ export class GameOptionsScene extends SceneBase {
 
 /** Where the GAME page's rows go (M3-01: ten rows — a little tighter than the other pages). */
 const GAME_OPTIONS_MENU_LAYOUT: MenuLayout = Object.freeze({
-  x: 72,
-  y: 34,
-  lineHeight: 13,
-  cursorX: 62,
-  valueX: 150,
+  x: OPTIONS_PANEL.x + 24,
+  y: OPTIONS_PANEL.y + 22,
+  lineHeight: LINE_H + 3,
+  cursorX: OPTIONS_PANEL.x + 14,
+  valueX: OPTIONS_PANEL.x + 102,
 });
 
 /**
@@ -3918,13 +3941,13 @@ export class ExtrasScene extends SceneBase {
   }
 }
 
-/** Where the rebind screen's rows go (labels left, keys from x 150). */
+/** Where the rebind screen's rows go (labels left, keys 102 px right of the panel's left edge). */
 const REBIND_MENU_LAYOUT: MenuLayout = Object.freeze({
-  x: 72,
-  y: 30,
-  lineHeight: 11,
-  cursorX: 62,
-  valueX: 150,
+  x: OPTIONS_PANEL.x + 24,
+  y: OPTIONS_PANEL.y + 18,
+  lineHeight: LINE_H + 1,
+  cursorX: OPTIONS_PANEL.x + 14,
+  valueX: OPTIONS_PANEL.x + 102,
 });
 
 /**
@@ -4365,6 +4388,15 @@ export class InputTestScene extends SceneBase {
 /** Stage-clear phases. */
 const ClearPhase = { Tally: 0, Continued: 1 } as const;
 
+/** The stage-clear panel: left, top, width, height (on the frame's centre, a little high). */
+const CLEAR_PANEL = Object.freeze({ x: FRAME_CX - 88, y: FRAME_CY - 44, w: 176, h: 72 });
+
+/**
+ * The zone result tally's panel (M2-10): left, top, width, height — 12 px taller in a co-op game
+ * (player 2's score row).
+ */
+const ZONE_TALLY_PANEL = Object.freeze({ x: FRAME_CX - 100, y: FRAME_CY - 64, w: 200, h: 112 });
+
 /** Where the stage-clear screen goes after its tally (M2-10). */
 /**
  * The stage a run's current final zone escapes through (M3-02 — `CampaignZoneSpec.escape`), or
@@ -4561,7 +4593,8 @@ export class StageClearScene extends SceneBase {
     const base = this.stringBase;
     const world = this.flow.game.world;
     const t = this.flow.text;
-    drawPanel(list, FRAME_CX - 88, 64, 176, 72);
+    const p = CLEAR_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h);
     list.setString(base, t.stageClear);
     list.setString(base + 1, t.score);
     list.setString(base + 2, t.hi);
@@ -4570,23 +4603,23 @@ export class StageClearScene extends SceneBase {
     list.setString(base + 5, t.p2);
     if (this.phase === ClearPhase.Tally) {
       const scores = world.scoring.board.scores;
-      list.text(base, FRAME_CX, 74, UI_COLORS.focus, TextAlign.Center);
+      list.text(base, FRAME_CX, p.y + 10, UI_COLORS.focus, TextAlign.Center);
       if (world.players.length > 1 && world.players[1].active && scores.length > 1) {
         // Co-op (M2-06): both players' scores.
-        list.text(base + 4, FRAME_CX - 64, 90, UI_COLORS.title);
-        list.number(scores[0].score, FRAME_CX + 64, 90, 8, UI_COLORS.text, 2);
-        list.text(base + 5, FRAME_CX - 64, 102, UI_COLORS.title);
-        list.number(scores[1].score, FRAME_CX + 64, 102, 8, UI_COLORS.text, 2);
-        list.text(base + 2, FRAME_CX - 64, 116, UI_COLORS.focus);
-        list.number(world.scoring.board.hiScore, FRAME_CX + 64, 116, 8, UI_COLORS.text, 2);
+        list.text(base + 4, FRAME_CX - 64, p.y + 26, UI_COLORS.title);
+        list.number(scores[0].score, FRAME_CX + 64, p.y + 26, 8, UI_COLORS.text, 2);
+        list.text(base + 5, FRAME_CX - 64, p.y + 38, UI_COLORS.title);
+        list.number(scores[1].score, FRAME_CX + 64, p.y + 38, 8, UI_COLORS.text, 2);
+        list.text(base + 2, FRAME_CX - 64, p.y + 52, UI_COLORS.focus);
+        list.number(world.scoring.board.hiScore, FRAME_CX + 64, p.y + 52, 8, UI_COLORS.text, 2);
         return;
       }
-      list.text(base + 1, FRAME_CX - 64, 96, UI_COLORS.title);
-      list.number(scores[0].score, FRAME_CX + 64, 96, 8, UI_COLORS.text, 2);
-      list.text(base + 2, FRAME_CX - 64, 110, UI_COLORS.focus);
-      list.number(world.scoring.board.hiScore, FRAME_CX + 64, 110, 8, UI_COLORS.text, 2);
+      list.text(base + 1, FRAME_CX - 64, p.y + 32, UI_COLORS.title);
+      list.number(scores[0].score, FRAME_CX + 64, p.y + 32, 8, UI_COLORS.text, 2);
+      list.text(base + 2, FRAME_CX - 64, p.y + 46, UI_COLORS.focus);
+      list.number(world.scoring.board.hiScore, FRAME_CX + 64, p.y + 46, 8, UI_COLORS.text, 2);
     } else {
-      list.text(base + 3, FRAME_CX, 96, UI_COLORS.focus, TextAlign.Center);
+      list.text(base + 3, FRAME_CX, p.y + 32, UI_COLORS.focus, TextAlign.Center);
     }
   }
 
@@ -4603,7 +4636,8 @@ export class StageClearScene extends SceneBase {
     const coop = world.players.length > 1 && world.players[1].active && scores.length > 1;
     const left = FRAME_CX - 92;
     const right = FRAME_CX + 92;
-    drawPanel(list, FRAME_CX - 100, 44, 200, coop ? 124 : 112);
+    const p = ZONE_TALLY_PANEL;
+    drawPanel(list, p.x, p.y, p.w, coop ? p.h + 12 : p.h);
     const t = this.flow.text;
     list.setString(base, this.title);
     list.setString(base + 1, this.zoneName);
@@ -4613,9 +4647,9 @@ export class StageClearScene extends SceneBase {
     list.setString(base + 5, '%');
     list.setString(base + 6, t.killBonus);
     list.setString(base + 7, result.bossSeconds >= 0 ? t.timeBonus : t.noBossTime);
-    list.text(base, FRAME_CX, 52, UI_COLORS.focus, TextAlign.Center);
-    list.text(base + 1, FRAME_CX, 64, UI_COLORS.title, TextAlign.Center);
-    let y = 82;
+    list.text(base, FRAME_CX, p.y + 8, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, FRAME_CX, p.y + 20, UI_COLORS.title, TextAlign.Center);
+    let y = p.y + 38;
     list.text(base + 2, left, y, UI_COLORS.title);
     list.number(scores[0].score, right, y, 8, UI_COLORS.text, TextAlign.Right);
     if (coop) {
@@ -4625,7 +4659,8 @@ export class StageClearScene extends SceneBase {
     }
     y += 18;
     list.text(base + 4, left, y, UI_COLORS.text);
-    list.number(result.killPercent, right - 8, y, 0, UI_COLORS.text, TextAlign.Right);
+    // The kill rate ends 2 px before its `%` (one glyph, right-aligned at `right`).
+    list.number(result.killPercent, right - GLYPH_W - 2, y, 0, UI_COLORS.text, TextAlign.Right);
     list.text(base + 5, right, y, UI_COLORS.text, TextAlign.Right);
     y += 12;
     list.text(base + 6, left, y, UI_COLORS.text);
@@ -4635,6 +4670,12 @@ export class StageClearScene extends SceneBase {
     list.number(result.timeBonus, right, y, 0, UI_COLORS.focus, TextAlign.Right);
   }
 }
+
+/**
+ * The game-over panel: left, top, width, height (on the frame's centre, a little high) — 12 px
+ * taller in a co-op game (player 2's score row).
+ */
+const GAME_OVER_PANEL = Object.freeze({ x: FRAME_CX - 72, y: FRAME_CY - 28, w: 144, h: 44 });
 
 /**
  * Game over: OK (after a short lock) or 10 s → the name entry (a new hi-score — M2-15) or the
@@ -4700,25 +4741,28 @@ export class GameOverScene extends SceneBase {
     const scores = world.scoring.board.scores;
     const coop = world.players.length > 1 && world.players[1].active && scores.length > 1;
     const t = this.flow.text;
-    drawPanel(list, FRAME_CX - 72, 80, 144, coop ? 56 : 44, UI_COLORS.panel, UI_COLORS.alert);
+    const p = GAME_OVER_PANEL;
+    drawPanel(list, p.x, p.y, p.w, coop ? p.h + 12 : p.h, UI_COLORS.panel, UI_COLORS.alert);
     list.setString(base, t.gameOver);
     list.setString(base + 1, t.score);
     list.setString(base + 2, t.newHiScore);
     list.setString(base + 3, t.p1);
     list.setString(base + 4, t.p2);
-    list.text(base, FRAME_CX, 88, UI_COLORS.alert, TextAlign.Center);
+    list.text(base, FRAME_CX, p.y + 8, UI_COLORS.alert, TextAlign.Center);
     if (coop) {
-      // Co-op (M2-06): both players' final scores.
-      if (this.rank === 0) list.text(base + 2, FRAME_CX, 142, UI_COLORS.focus, TextAlign.Center);
-      list.text(base + 3, FRAME_CX - 56, 104, UI_COLORS.title);
-      list.number(scores[0].score, FRAME_CX + 56, 104, 8, UI_COLORS.text, 2);
-      list.text(base + 4, FRAME_CX - 56, 116, UI_COLORS.title);
-      list.number(scores[1].score, FRAME_CX + 56, 116, 8, UI_COLORS.text, 2);
+      // Co-op (M2-06): both players' final scores (`NEW HI-SCORE` 6 px under the panel).
+      if (this.rank === 0) {
+        list.text(base + 2, FRAME_CX, p.y + 62, UI_COLORS.focus, TextAlign.Center);
+      }
+      list.text(base + 3, FRAME_CX - 56, p.y + 24, UI_COLORS.title);
+      list.number(scores[0].score, FRAME_CX + 56, p.y + 24, 8, UI_COLORS.text, 2);
+      list.text(base + 4, FRAME_CX - 56, p.y + 36, UI_COLORS.title);
+      list.number(scores[1].score, FRAME_CX + 56, p.y + 36, 8, UI_COLORS.text, 2);
       return;
     }
-    if (this.rank === 0) list.text(base + 2, FRAME_CX, 130, UI_COLORS.focus, TextAlign.Center);
-    list.text(base + 1, FRAME_CX - 56, 106, UI_COLORS.title);
-    list.number(scores[0].score, FRAME_CX + 56, 106, 8, UI_COLORS.text, 2);
+    if (this.rank === 0) list.text(base + 2, FRAME_CX, p.y + 50, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, FRAME_CX - 56, p.y + 26, UI_COLORS.title);
+    list.number(scores[0].score, FRAME_CX + 56, p.y + 26, 8, UI_COLORS.text, 2);
   }
 }
 
@@ -4804,16 +4848,16 @@ export class ConfirmDialog extends SceneBase {
   }
 }
 
+/** The difficulty menu's panel: left, top, width, height (centred on the frame, a little low). */
+const DIFFICULTY_PANEL = Object.freeze({ x: FRAME_CX - 88, y: FRAME_CY - 52, w: 176, h: 112 });
+
 /** Where the difficulty menu is drawn (inside its panel). */
 const DIFFICULTY_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX,
-  y: 78,
+  y: DIFFICULTY_PANEL.y + 22,
   align: TextAlign.Center,
   cursorX: FRAME_CX - 44,
 });
-
-/** The difficulty menu's panel: left, top, width, height. */
-const DIFFICULTY_PANEL = Object.freeze({ x: FRAME_CX - 88, y: 56, w: 176, h: 112 });
 
 /**
  * The difficulty menu under START (shmup_feat.md §16 "difficulty select", plan M2-01): EASY /
@@ -4921,6 +4965,9 @@ export class DifficultyScene extends SceneBase {
   }
 }
 
+/** The continue countdown's panel: left, top, width, height (on the frame's centre, higher). */
+const CONTINUE_PANEL = Object.freeze({ x: FRAME_CX - 80, y: FRAME_CY - 48, w: 160, h: 96 });
+
 /**
  * The continue countdown (shmup_feat.md §10 continues, §17 "continue countdown"; plan M2-01,
  * polished in M2-15).
@@ -5021,7 +5068,8 @@ export class ContinueScene extends SceneBase {
     const base = this.stringBase;
     const world = this.flow.game.world;
     const scores = world.scoring.board.scores;
-    drawPanel(list, FRAME_CX - 80, 60, 160, 96, UI_COLORS.panel, UI_COLORS.alert);
+    const p = CONTINUE_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.alert);
     const t = this.flow.text;
     list.setString(base, t.continueTitle);
     list.setString(base + 1, t.credits);
@@ -5030,41 +5078,50 @@ export class ContinueScene extends SceneBase {
     list.setString(base + 4, t.pressOk);
     list.setString(base + 5, t.score);
     list.setString(base + 6, t.giveUp);
-    list.text(base, FRAME_CX, 68, UI_COLORS.focus, TextAlign.Center);
+    list.text(base, FRAME_CX, p.y + 8, UI_COLORS.focus, TextAlign.Center);
     // The seconds (M2-15 polish): the last three flash red / yellow, a bar drains under them.
     const seconds = this.seconds;
     const flash = seconds < 3 && ((this.ticks >> 3) & 1) === 1;
     list.number(
       seconds,
       FRAME_CX,
-      82,
+      p.y + 22,
       0,
       flash ? UI_COLORS.focus : UI_COLORS.alert,
       TextAlign.Center,
     );
     const left = CONTINUE_COUNTDOWN_TICKS - this.ticks;
     const bar = left > 0 ? Math.floor((120 * left) / CONTINUE_COUNTDOWN_TICKS) : 0;
-    list.rect(FRAME_CX - 60, 94, 120, 3, UI_COLORS.track);
+    list.rect(FRAME_CX - 60, p.y + 34, 120, 3, UI_COLORS.track);
     if (bar > 0)
-      list.rect(FRAME_CX - 60, 94, bar, 3, seconds < 3 ? UI_COLORS.alert : UI_COLORS.title);
+      list.rect(FRAME_CX - 60, p.y + 34, bar, 3, seconds < 3 ? UI_COLORS.alert : UI_COLORS.title);
     const coop = world.config.coop && world.players.length > 1 && world.players[1].active;
     if (coop) {
       // Co-op (M2-06): each player's own continues.
-      list.text(base + 2, FRAME_CX - 64, 106, UI_COLORS.title);
-      list.number(continuesLeft(world, 0), FRAME_CX - 16, 106, 0, UI_COLORS.text, TextAlign.Right);
-      list.text(base + 3, FRAME_CX + 16, 106, UI_COLORS.title);
-      list.number(continuesLeft(world, 1), FRAME_CX + 64, 106, 0, UI_COLORS.text, TextAlign.Right);
+      const y = p.y + 46;
+      list.text(base + 2, FRAME_CX - 64, y, UI_COLORS.title);
+      list.number(continuesLeft(world, 0), FRAME_CX - 16, y, 0, UI_COLORS.text, TextAlign.Right);
+      list.text(base + 3, FRAME_CX + 16, y, UI_COLORS.title);
+      list.number(continuesLeft(world, 1), FRAME_CX + 64, y, 0, UI_COLORS.text, TextAlign.Right);
     } else {
-      list.text(base + 5, FRAME_CX - 64, 104, UI_COLORS.title);
-      list.number(scores[0].score, FRAME_CX + 64, 104, 8, UI_COLORS.text, TextAlign.Right);
-      list.text(base + 1, FRAME_CX - 64, 116, UI_COLORS.title);
-      list.number(continuesLeft(world, 0), FRAME_CX + 64, 116, 0, UI_COLORS.text, TextAlign.Right);
+      const y = p.y + 44;
+      list.text(base + 5, FRAME_CX - 64, y, UI_COLORS.title);
+      list.number(scores[0].score, FRAME_CX + 64, y, 8, UI_COLORS.text, TextAlign.Right);
+      list.text(base + 1, FRAME_CX - 64, y + 12, UI_COLORS.title);
+      list.number(
+        continuesLeft(world, 0),
+        FRAME_CX + 64,
+        y + 12,
+        0,
+        UI_COLORS.text,
+        TextAlign.Right,
+      );
     }
     if (this.ticks > CONTINUE_LOCK_TICKS) {
       if (Math.floor(this.ticks / PROMPT_BLINK_TICKS) % 2 === 0) {
-        list.text(base + 4, FRAME_CX, 130, UI_COLORS.focus, TextAlign.Center);
+        list.text(base + 4, FRAME_CX, p.y + 70, UI_COLORS.focus, TextAlign.Center);
       }
-      list.text(base + 6, FRAME_CX, 142, UI_COLORS.disabled, TextAlign.Center);
+      list.text(base + 6, FRAME_CX, p.y + 82, UI_COLORS.disabled, TextAlign.Center);
     }
   }
 }
@@ -5082,14 +5139,14 @@ export const SHIP_MODE_LABELS: readonly string[] = ENGLISH.shipModes;
  */
 export const SHIP_MODE_HINTS: readonly (readonly string[])[] = ENGLISH.shipHints;
 
-/** The ship select's panel: left, top, width, height. */
-const SHIP_PANEL = Object.freeze({ x: FRAME_CX - 104, y: 44, w: 208, h: 136 });
+/** The ship select's panel: left, top, width, height (centred on the frame, a little low). */
+const SHIP_PANEL = Object.freeze({ x: FRAME_CX - 104, y: FRAME_CY - 64, w: 208, h: 136 });
 
 /** Where the ship select's menu is drawn (the ship names, left column). */
 const SHIP_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX - 80,
-  y: 70,
-  lineHeight: 14,
+  y: SHIP_PANEL.y + 26,
+  lineHeight: LINE_H + 4,
   cursorX: FRAME_CX - 92,
 });
 
@@ -5207,9 +5264,10 @@ export class ShipSelectScene extends SceneBase {
     drawMenu(list, this.menu, base + 6, SHIP_MENU_LAYOUT, t);
     if (ship.spriteId >= 0) list.sprite(ship.spriteId, 0, FRAME_CX + 52, SHIP_MENU_LAYOUT.y + 10);
     list.text(base + 1, FRAME_CX, p.y + 72, UI_COLORS.focus, TextAlign.Center);
+    // The three hint lines, one line advance apart.
     list.text(base + 2, FRAME_CX, p.y + 88, UI_COLORS.text, TextAlign.Center);
-    list.text(base + 3, FRAME_CX, p.y + 98, UI_COLORS.text, TextAlign.Center);
-    list.text(base + 4, FRAME_CX, p.y + 108, UI_COLORS.text, TextAlign.Center);
+    list.text(base + 3, FRAME_CX, p.y + 88 + LINE_H, UI_COLORS.text, TextAlign.Center);
+    list.text(base + 4, FRAME_CX, p.y + 88 + 2 * LINE_H, UI_COLORS.text, TextAlign.Center);
     list.text(base + 5, FRAME_CX, p.y + p.h - 14, UI_COLORS.disabled, TextAlign.Center);
   }
 }
@@ -6926,6 +6984,9 @@ class PracticeChoice {
   loadout: StartingLoadout = 'default';
 }
 
+/** The name entry's panel: left, top, width, height (on the frame's centre). */
+const NAME_ENTRY_PANEL = Object.freeze({ x: FRAME_CX - 112, y: FRAME_CY - 80, w: 224, h: 164 });
+
 /**
  * The name entry after a game whose score entered a hi-score table (shmup_feat.md §17 "name entry
  * (3 letters) → hi-score table → attract"; plan M2-15).
@@ -7031,7 +7092,8 @@ export class NameEntryScene extends SceneBase {
     const item = flow.pendingNames[this.current < 0 ? 0 : this.current];
     const score = item.row === null ? 0 : item.row.score;
     const t = flow.text;
-    drawPanel(list, FRAME_CX - 112, 28, 224, 164, UI_COLORS.panel, UI_COLORS.focus, 255);
+    const p = NAME_ENTRY_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.focus, 255);
     list.setString(base, t.newHiScoreBang);
     list.setString(base + 1, item.player === 0 ? t.p1 : t.p2);
     list.setString(base + 2, t.score);
@@ -7040,20 +7102,26 @@ export class NameEntryScene extends SceneBase {
     list.setString(base + 5, t.enterName);
     list.setString(base + 6, t.nameHint);
     list.setString(base + 7, t.time);
-    list.text(base, FRAME_CX, 38, UI_COLORS.focus, TextAlign.Center);
-    list.text(base + 1, FRAME_CX - 96, 60, UI_COLORS.title);
-    list.text(base + 2, FRAME_CX - 72, 60, UI_COLORS.text);
-    list.number(score, FRAME_CX + 96, 60, 8, UI_COLORS.text, TextAlign.Right);
-    list.text(base + 3, FRAME_CX - 72, 74, UI_COLORS.text);
-    list.text(base + 4, FRAME_CX + 96, 74, UI_COLORS.focus, TextAlign.Right);
-    list.text(base + 5, FRAME_CX, 98, UI_COLORS.title, TextAlign.Center);
+    list.text(base, FRAME_CX, p.y + 10, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, FRAME_CX - 96, p.y + 32, UI_COLORS.title);
+    list.text(base + 2, FRAME_CX - 72, p.y + 32, UI_COLORS.text);
+    list.number(score, FRAME_CX + 96, p.y + 32, 8, UI_COLORS.text, TextAlign.Right);
+    list.text(base + 3, FRAME_CX - 72, p.y + 46, UI_COLORS.text);
+    list.text(base + 4, FRAME_CX + 96, p.y + 46, UI_COLORS.focus, TextAlign.Right);
+    list.text(base + 5, FRAME_CX, p.y + 70, UI_COLORS.title, TextAlign.Center);
     const blinkOff = ((this.ticks >> 4) & 1) === 1;
-    drawNameEntry(list, this.entry, base + 8, FRAME_CX, 126, blinkOff, t);
-    list.text(base + 6, FRAME_CX, 158, UI_COLORS.disabled, TextAlign.Center);
-    list.text(base + 7, FRAME_CX - 20, 176, UI_COLORS.text);
-    list.number(this.seconds, FRAME_CX + 20, 176, 2, UI_COLORS.text, TextAlign.Right);
+    drawNameEntry(list, this.entry, base + 8, FRAME_CX, p.y + 98, blinkOff, t);
+    list.text(base + 6, FRAME_CX, p.y + 130, UI_COLORS.disabled, TextAlign.Center);
+    list.text(base + 7, FRAME_CX - 20, p.y + 148, UI_COLORS.text);
+    list.number(this.seconds, FRAME_CX + 20, p.y + 148, 2, UI_COLORS.text, TextAlign.Right);
   }
 }
+
+/**
+ * The hi-score table's panel: left, top, width, height (on the frame's centre; its rows start
+ * 54 px below its top, 14 px apart).
+ */
+const HI_SCORE_PANEL = Object.freeze({ x: FRAME_CX - 124, y: FRAME_CY - 100, w: 248, h: 200 });
 
 /** Hi-score screen modes. */
 const HiScoreScreen = {
@@ -7201,20 +7269,22 @@ export class HiScoreScene extends SceneBase {
     list.setString(base + 4, t.score);
     list.setString(base + 5, t.zone);
     list.setString(base + 6, t.emptyName);
-    drawPanel(list, FRAME_CX - 124, 8, 248, 200, UI_COLORS.panel, UI_COLORS.border, 232);
-    list.text(base, FRAME_CX, 16, UI_COLORS.focus, TextAlign.Center);
-    list.text(base + 1, FRAME_CX, 30, UI_COLORS.title, TextAlign.Center);
+    const p = HI_SCORE_PANEL;
+    drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 232);
+    list.text(base, FRAME_CX, p.y + 8, UI_COLORS.focus, TextAlign.Center);
+    list.text(base + 1, FRAME_CX, p.y + 22, UI_COLORS.title, TextAlign.Center);
     const rankX = FRAME_CX - 108;
     const nameX = FRAME_CX - 60;
     const scoreX = FRAME_CX + 60;
     const zoneX = FRAME_CX + 100;
-    list.text(base + 2, rankX, 48, UI_COLORS.disabled);
-    list.text(base + 3, nameX, 48, UI_COLORS.disabled);
-    list.text(base + 4, scoreX, 48, UI_COLORS.disabled, TextAlign.Right);
-    list.text(base + 5, zoneX, 48, UI_COLORS.disabled, TextAlign.Center);
+    const head = p.y + 40;
+    list.text(base + 2, rankX, head, UI_COLORS.disabled);
+    list.text(base + 3, nameX, head, UI_COLORS.disabled);
+    list.text(base + 4, scoreX, head, UI_COLORS.disabled, TextAlign.Right);
+    list.text(base + 5, zoneX, head, UI_COLORS.disabled, TextAlign.Center);
     const blinkOff = ((this.ticks >> 4) & 1) === 1;
     for (let i = 0; i < HI_SCORE_TABLE_SIZE; i++) {
-      const y = 62 + i * 14;
+      const y = p.y + 54 + i * 14;
       const row = i < rows.length ? rows[i] : null;
       const lit = row !== null && this.mode === HiScoreScreen.Result && flow.isNewRow(row);
       const color = lit ? (blinkOff ? UI_COLORS.text : UI_COLORS.focus) : UI_COLORS.text;
@@ -7632,14 +7702,14 @@ export class StoryScene extends SceneBase {
   }
 }
 
-/** The practice select's panel: left, top, width, height. */
-const PRACTICE_PANEL = Object.freeze({ x: FRAME_CX - 120, y: 52, w: 240, h: 116 });
+/** The practice select's panel: left, top, width, height (on the frame's centre, a little high). */
+const PRACTICE_PANEL = Object.freeze({ x: FRAME_CX - 120, y: FRAME_CY - 56, w: 240, h: 116 });
 
 /** Where the practice select's menu is drawn (labels left, values from `valueX`). */
 const PRACTICE_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX - 104,
-  y: 74,
-  lineHeight: 14,
+  y: PRACTICE_PANEL.y + 22,
+  lineHeight: LINE_H + 4,
   cursorX: FRAME_CX - 114,
   valueX: FRAME_CX - 28,
 });
@@ -7818,8 +7888,8 @@ export class PracticeScene extends SceneBase {
   }
 }
 
-/** The sound test's panel: left, top, width, height. */
-const SOUND_TEST_PANEL = Object.freeze({ x: FRAME_CX - 128, y: 52, w: 256, h: 112 });
+/** The sound test's panel: left, top, width, height (on the frame's centre, a little high). */
+const SOUND_TEST_PANEL = Object.freeze({ x: FRAME_CX - 128, y: FRAME_CY - 56, w: 256, h: 112 });
 
 /**
  * The x the sound test plays a cue at: the playfield's centre, so a positional cue (the `sfx` bus
@@ -7830,8 +7900,8 @@ const SOUND_TEST_SFX_X = PLAYFIELD_W / 2;
 /** Where the sound test's menu is drawn. */
 const SOUND_TEST_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX - 112,
-  y: 74,
-  lineHeight: 14,
+  y: SOUND_TEST_PANEL.y + 22,
+  lineHeight: LINE_H + 4,
   cursorX: FRAME_CX - 122,
   valueX: FRAME_CX - 64,
 });
@@ -7969,14 +8039,14 @@ export class SoundTestScene extends SceneBase {
   }
 }
 
-/** The EXTRA menu's panel: left, top, width, height (M3-01). */
-const EXTRA_PANEL = Object.freeze({ x: FRAME_CX - 132, y: 44, w: 264, h: 128 });
+/** The EXTRA menu's panel: left, top, width, height (M3-01; on the frame's centre). */
+const EXTRA_PANEL = Object.freeze({ x: FRAME_CX - 132, y: FRAME_CY - 64, w: 264, h: 128 });
 
 /** Where the EXTRA menu's rows go (M3-01). */
 const EXTRA_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX - 116,
-  y: 68,
-  lineHeight: 14,
+  y: EXTRA_PANEL.y + 24,
+  lineHeight: LINE_H + 4,
   cursorX: FRAME_CX - 126,
   valueX: FRAME_CX - 32,
 });
@@ -8170,25 +8240,36 @@ export const ReplayActionItem = {
   Back: 4,
 } as const;
 
-/** The replay browser's panel (M3-01). */
-const REPLAYS_PANEL = Object.freeze({ x: FRAME_CX - 164, y: 24, w: 328, h: 168 });
+/** The replay browser's panel (M3-01; on the frame's centre). */
+const REPLAYS_PANEL = Object.freeze({ x: FRAME_CX - 164, y: FRAME_CY - 84, w: 328, h: 168 });
+
+/**
+ * Height of one slot row of the replay browser: two lines — the row's label, and its description
+ * one glyph and a pixel below.
+ */
+const REPLAY_ROW_H = 2 * LINE_H;
 
 /** Where the replay browser's slot rows go (M3-01). */
 const REPLAYS_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX - 148,
-  y: 52,
-  lineHeight: 20,
+  y: REPLAYS_PANEL.y + 28,
+  lineHeight: REPLAY_ROW_H,
   cursorX: FRAME_CX - 158,
 });
 
 /** The replay browser's action panel, over the rows' right half (M3-01). */
-const REPLAY_ACTIONS_PANEL = Object.freeze({ x: FRAME_CX + 60, y: 50, w: 88, h: 84 });
+const REPLAY_ACTIONS_PANEL = Object.freeze({
+  x: FRAME_CX + 60,
+  y: REPLAYS_PANEL.y + 26,
+  w: 88,
+  h: 84,
+});
 
 /** Where the replay browser's action rows go (M3-01). */
 const REPLAY_ACTIONS_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX + 104,
-  y: 58,
-  lineHeight: 14,
+  y: REPLAY_ACTIONS_PANEL.y + 8,
+  lineHeight: LINE_H + 4,
   align: TextAlign.Center,
   cursorX: FRAME_CX + 66,
 });
@@ -8402,7 +8483,8 @@ export class ReplaysScene extends SceneBase {
     list.text(base, FRAME_CX, p.y + 8, UI_COLORS.title, TextAlign.Center);
     drawMenu(list, this.menu, base + 4 + REPLAY_SLOTS, REPLAYS_MENU_LAYOUT, t);
     for (let i = 0; i < REPLAY_SLOTS; i++) {
-      const y = REPLAYS_MENU_LAYOUT.y + i * 20 + 9;
+      const row = REPLAYS_MENU_LAYOUT.y + i * REPLAY_ROW_H;
+      const y = row + GLYPH_H + 1;
       const summary = library === null ? null : library.summaries[i];
       list.setString(base + 4 + i, this.rows[i]);
       list.text(
@@ -8412,8 +8494,8 @@ export class ReplaysScene extends SceneBase {
         summary === null ? UI_COLORS.disabled : UI_COLORS.text,
       );
       if (summary === null || summary === undefined) continue;
-      list.number(summary.score, p.x + p.w - 28, y - 9, 8, UI_COLORS.text, TextAlign.Right);
-      if (summary.assisted) list.text(base + 2, p.x + p.w - 22, y - 9, UI_COLORS.alert);
+      list.number(summary.score, p.x + p.w - 28, row, 8, UI_COLORS.text, TextAlign.Right);
+      if (summary.assisted) list.text(base + 2, p.x + p.w - 22, row, UI_COLORS.alert);
     }
     if (this.choosing) {
       const a = REPLAY_ACTIONS_PANEL;
@@ -8631,11 +8713,12 @@ export class ReplayScene extends SceneBase {
     const playback = this.playback;
     const desync = playback !== null && !playback.report.ok;
     list.setString(base + 2, desync ? t.replayDesync : t.replayEnd);
-    drawPanel(list, FRAME_CX - 80, 96, 160, 24);
+    // The end message: a panel on the frame's centre.
+    drawPanel(list, FRAME_CX - 80, FRAME_CY - 12, 160, 24);
     list.text(
       base + 2,
       FRAME_CX,
-      104,
+      FRAME_CY - 4,
       desync ? UI_COLORS.alert : UI_COLORS.focus,
       TextAlign.Center,
     );
