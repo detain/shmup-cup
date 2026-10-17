@@ -96,7 +96,8 @@
  * - The database: {@link ContentDb}, {@link StringTable}, {@link EMPTY_CONTENT_DB}.
  * - File format: {@link CONTENT_FORMAT_VERSION}, {@link CONTENT_KINDS} / {@link ContentKind},
  *   {@link ContentFileHeader}, {@link CONTENT_MIGRATIONS} ({@link ContentMigration},
- *   {@link ContentMigrationTable}).
+ *   {@link ContentMigrationTable}); {@link CONTENT_FILE_SCHEMAS}, every kind's file schema — each
+ *   number with its unit (R1-03, `data/units`).
  * - Per-kind spec types: {@link PlayerShipSpec} ({@link BoxSpec}, {@link MarginSpec},
  *   {@link P2_SPRITE_SUFFIX} — M2-06),
  *   {@link WeaponSpec} ({@link WeaponSlot}, {@link WEAPON_SLOTS}), {@link WeaponPresetSpec},
@@ -2250,18 +2251,25 @@ export interface LoadContentResult {
  * version to {@link CONTENT_FORMAT_VERSION}.
  */
 const HEADER_SHAPE = {
-  formatVersion: s.int({ min: CONTENT_FORMAT_VERSION, max: CONTENT_FORMAT_VERSION }),
+  formatVersion: s.int({
+    min: CONTENT_FORMAT_VERSION,
+    max: CONTENT_FORMAT_VERSION,
+    unit: 'version',
+  }),
 } as const;
 
 /** Half-extent box with integer pixels. */
-const BOX_SCHEMA = s.object({ hw: s.int({ min: 1, max: 512 }), hh: s.int({ min: 1, max: 512 }) });
+const BOX_SCHEMA = s.object({
+  hw: s.int({ min: 1, max: 512, unit: 'world-px' }),
+  hh: s.int({ min: 1, max: 512, unit: 'world-px' }),
+});
 
 /** Playfield margins in whole pixels: each at most half the playfield on its axis. */
 const MARGIN_SCHEMA = s.object({
-  left: s.int({ min: 0, max: PLAYFIELD_W / 2 }),
-  right: s.int({ min: 0, max: PLAYFIELD_W / 2 }),
-  top: s.int({ min: 0, max: PLAYFIELD_H / 2 }),
-  bottom: s.int({ min: 0, max: PLAYFIELD_H / 2 }),
+  left: s.int({ min: 0, max: PLAYFIELD_W / 2, unit: 'world-px' }),
+  right: s.int({ min: 0, max: PLAYFIELD_W / 2, unit: 'world-px' }),
+  top: s.int({ min: 0, max: PLAYFIELD_H / 2, unit: 'world-px' }),
+  bottom: s.int({ min: 0, max: PLAYFIELD_H / 2, unit: 'world-px' }),
 });
 
 /** One entry of `ships` in a `player` file. */
@@ -2275,16 +2283,16 @@ const SHIP_SCHEMA: Schema<
     id: s.str(),
     name: s.str(),
     sprite: s.ref('sprite'),
-    speeds: s.array(s.num({ min: 0.1, max: 16 }), { min: 1, max: 16 }),
-    hurtRadius: s.num({ min: 0.25, max: 16 }),
+    speeds: s.array(s.num({ min: 0.1, max: 16, unit: 'px-per-tick' }), { min: 1, max: 16 }),
+    hurtRadius: s.num({ min: 0.25, max: 16, unit: 'world-px' }),
     terrainBox: BOX_SCHEMA,
     pickupBox: BOX_SCHEMA,
     margins: MARGIN_SCHEMA,
-    enterTicks: s.int({ min: 0, max: 600 }),
-    respawnInvulnTicks: s.int({ min: 0, max: 600 }),
-    bankFrames: s.int({ min: 0, max: 8 }),
+    enterTicks: s.int({ min: 0, max: 600, unit: 'ticks' }),
+    respawnInvulnTicks: s.int({ min: 0, max: 600, unit: 'ticks' }),
+    bankFrames: s.int({ min: 0, max: 8, unit: 'count' }),
     mode: s.enumOf(POWER_UP_MODES),
-    startSpeedLevel: s.int({ min: 0, max: 15 }),
+    startSpeedLevel: s.int({ min: 0, max: 15, unit: 'index' }),
   },
   { optional: ['mode', 'startSpeedLevel'] },
 );
@@ -2303,14 +2311,14 @@ const WEAPON_SCHEMA: Schema<Omit<WeaponSpec, 'behaviorId' | 'spriteId' | 'sfxId'
     name: s.str({ maxLength: 16, pattern: /^[A-Z0-9 .-]+$/ }),
     slot: s.enumOf(WEAPON_SLOTS),
     behavior: s.ref('script'),
-    damage: s.int({ min: 0, max: 9999 }),
-    speed: s.num({ min: 0, max: 64 }),
-    cap: s.int({ min: 1, max: 64 }),
+    damage: s.int({ min: 0, max: 9999, unit: 'count' }),
+    speed: s.num({ min: 0, max: 64, unit: 'px-per-tick' }),
+    cap: s.int({ min: 1, max: 64, unit: 'count' }),
     pierce: s.bool(),
     sprite: s.ref('sprite'),
-    refireTicks: s.int({ min: 1, max: 600 }),
+    refireTicks: s.int({ min: 1, max: 600, unit: 'ticks' }),
     sfx: s.nullable(s.ref('sfx')),
-    params: s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/),
+    params: s.record(s.num({ unit: 'param' }), /^[a-zA-Z][a-zA-Z0-9]*$/),
     extra: s.bool(),
   },
   { optional: ['name', 'refireTicks', 'sfx', 'params', 'extra'] },
@@ -2334,9 +2342,9 @@ const WEAPON_PRESET_SCHEMA: Schema<
 const WEAPON_EMITTER_SCHEMA: Schema<Omit<WeaponEmitterSpec, 'weaponId'>> = s.object(
   {
     weapon: s.ref('weapon'),
-    angle: s.int({ min: -1024, max: 1024 }),
-    ox: s.num({ min: -64, max: 64 }),
-    oy: s.num({ min: -64, max: 64 }),
+    angle: s.int({ min: -1024, max: 1024, unit: 'angle' }),
+    ox: s.num({ min: -64, max: 64, unit: 'rel-px' }),
+    oy: s.num({ min: -64, max: 64, unit: 'rel-px' }),
   },
   { optional: ['angle', 'ox', 'oy'] },
 );
@@ -2345,8 +2353,8 @@ const WEAPON_EMITTER_SCHEMA: Schema<Omit<WeaponEmitterSpec, 'weaponId'>> = s.obj
 const WEAPON_LEVEL_SCHEMA = s.object(
   {
     shots: s.array(WEAPON_EMITTER_SCHEMA, { min: 1, max: MAX_LEVEL_SHOTS }),
-    refireTicks: s.int({ min: 1, max: 600 }),
-    volleys: s.int({ min: 1, max: 16 }),
+    refireTicks: s.int({ min: 1, max: 600, unit: 'ticks' }),
+    volleys: s.int({ min: 1, max: 16, unit: 'count' }),
   },
   { optional: ['refireTicks', 'volleys'] },
 );
@@ -2376,10 +2384,10 @@ const WEAPONS_FILE_SCHEMA = s.object(
 );
 
 /** A velocity component in pixels per tick. */
-const VELOCITY = s.num({ min: -16, max: 16 });
+const VELOCITY = s.num({ min: -16, max: 16, unit: 'px-per-tick' });
 
 /** A positive speed in pixels per tick. */
-const MOVER_SPEED = s.num({ min: 0, max: 16 });
+const MOVER_SPEED = s.num({ min: 0, max: 16, unit: 'px-per-tick' });
 
 /** An enemy's starting mover. */
 const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
@@ -2388,9 +2396,9 @@ const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
     {
       type: s.enumOf(['sine'] as const),
       vx: VELOCITY,
-      amp: s.num({ min: 0, max: 256 }),
-      period: s.int({ min: 1, max: 36000 }),
-      phase: s.int({ min: 0, max: 1023 }),
+      amp: s.num({ min: 0, max: 256, unit: 'rel-px' }),
+      period: s.int({ min: 1, max: 36000, unit: 'ticks' }),
+      phase: s.int({ min: 0, max: 1023, unit: 'angle' }),
     },
     { optional: ['phase'] },
   ),
@@ -2401,10 +2409,10 @@ const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
   // The view's playfield plus 64 px (a world margin) on every side.
   waypoint: s.object({
     type: s.enumOf(['waypoint'] as const),
-    x: s.num({ min: -64, max: PLAYFIELD_W + 64 }),
-    y: s.num({ min: -64, max: PLAYFIELD_H + 64 }),
-    speed: s.num({ min: 0.01, max: 16 }),
-    hold: s.int({ min: 0, max: 36000 }),
+    x: s.num({ min: -64, max: PLAYFIELD_W + 64, unit: 'screen-x' }),
+    y: s.num({ min: -64, max: PLAYFIELD_H + 64, unit: 'world-y' }),
+    speed: s.num({ min: 0.01, max: 16, unit: 'px-per-tick' }),
+    hold: s.int({ min: 0, max: 36000, unit: 'ticks' }),
     leaveVx: VELOCITY,
     leaveVy: VELOCITY,
   }),
@@ -2413,21 +2421,21 @@ const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
   homing: s.object({
     type: s.enumOf(['homing'] as const),
     speed: MOVER_SPEED,
-    turnRate: s.int({ min: 0, max: 512 }),
+    turnRate: s.int({ min: 0, max: 512, unit: 'angle' }),
   }),
   aimedDash: s.object({
     type: s.enumOf(['aimedDash'] as const),
     speed: MOVER_SPEED,
-    windup: s.int({ min: 0, max: 36000 }),
+    windup: s.int({ min: 0, max: 36000, unit: 'ticks' }),
   }),
   ballistic: s.object(
     {
       type: s.enumOf(['ballistic'] as const),
       vx: VELOCITY,
       vy: VELOCITY,
-      gravity: s.num({ min: -1, max: 1 }),
-      maxFall: s.num({ min: 0, max: 16 }),
-      trigger: s.num({ min: 0, max: 1024 }),
+      gravity: s.num({ min: -1, max: 1, unit: 'px-per-tick2' }),
+      maxFall: s.num({ min: 0, max: 16, unit: 'px-per-tick' }),
+      trigger: s.num({ min: 0, max: 1024, unit: 'world-px' }),
       land: s.enumOf(BALLISTIC_LANDS),
     },
     { optional: ['gravity', 'maxFall', 'trigger', 'land'] },
@@ -2439,26 +2447,26 @@ const PART_NAME = s.str({ maxLength: 32, pattern: /^[a-z][a-z0-9-]*$/ });
 
 /** A sprite animation (`frames` frames, `ticks` ticks each). */
 const ANIM_SCHEMA = s.object({
-  frames: s.int({ min: 1, max: 64 }),
-  ticks: s.int({ min: 1, max: 600 }),
+  frames: s.int({ min: 1, max: 64, unit: 'count' }),
+  ticks: s.int({ min: 1, max: 600, unit: 'ticks' }),
 });
 
 /** Behaviour tunables by name. */
-const PARAMS_SCHEMA = s.record(s.num(), /^[a-zA-Z][a-zA-Z0-9]*$/);
+const PARAMS_SCHEMA = s.record(s.num({ unit: 'param' }), /^[a-zA-Z][a-zA-Z0-9]*$/);
 
 /** One entry of `boss.parts` (optional fields get their defaults at load). */
 const BOSS_PART_SCHEMA = s.object(
   {
     name: PART_NAME,
     parent: PART_NAME,
-    x: s.num({ min: -512, max: 512 }),
-    y: s.num({ min: -512, max: 512 }),
-    hp: s.int({ min: 1, max: 100000 }),
+    x: s.num({ min: -512, max: 512, unit: 'rel-px' }),
+    y: s.num({ min: -512, max: 512, unit: 'rel-px' }),
+    hp: s.int({ min: 1, max: 100000, unit: 'count' }),
     hurtbox: BOX_SCHEMA,
-    radius: s.num({ min: 1, max: 128 }),
-    angle: s.int({ min: -1023, max: 1023 }),
-    spin: s.num({ min: -32, max: 32 }),
-    turn: s.int({ min: 2, max: MAX_TURN_FRAMES }),
+    radius: s.num({ min: 1, max: 128, unit: 'world-px' }),
+    angle: s.int({ min: -1023, max: 1023, unit: 'angle' }),
+    spin: s.num({ min: -32, max: 32, unit: 'angle' }),
+    turn: s.int({ min: 2, max: MAX_TURN_FRAMES, unit: 'count' }),
     vulnerable: s.enumOf(BOSS_VULNERABILITIES),
     requires: s.array(PART_NAME, { min: 1, max: MAX_BOSS_PARTS }),
     core: s.bool(),
@@ -2466,7 +2474,7 @@ const BOSS_PART_SCHEMA = s.object(
     open: s.bool(),
     sprite: s.ref('sprite'),
     anim: ANIM_SCHEMA,
-    score: s.int({ min: 0, max: 1000000 }),
+    score: s.int({ min: 0, max: 1000000, unit: 'score' }),
     explosion: s.enumOf(ENEMY_EXPLOSIONS),
   },
   {
@@ -2496,10 +2504,10 @@ const BOSS_PART_SCHEMA = s.object(
 /** One segment of `boss.raid.segments` (M2-09). */
 const RAID_SEGMENT_SCHEMA = s.object(
   {
-    x: s.num({ min: -2048, max: 2048 }),
-    y: s.num({ min: -2048, max: 2048 }),
-    ticks: s.int({ min: 0, max: 3600 }),
-    hold: s.int({ min: 0, max: 36000 }),
+    x: s.num({ min: -2048, max: 2048, unit: 'rel-px' }),
+    y: s.num({ min: -2048, max: 2048, unit: 'rel-px' }),
+    ticks: s.int({ min: 0, max: 3600, unit: 'ticks' }),
+    hold: s.int({ min: 0, max: 36000, unit: 'ticks' }),
   },
   { optional: ['ticks', 'hold'] },
 );
@@ -2511,10 +2519,10 @@ const BOSS_PHASE_SCHEMA = s.object(
     params: PARAMS_SCHEMA,
     until: s.object(
       {
-        hpBelow: s.int({ min: 1, max: 1600000 }),
+        hpBelow: s.int({ min: 1, max: 1600000, unit: 'count' }),
         partsDestroyed: s.array(PART_NAME, { min: 1, max: MAX_BOSS_PARTS }),
-        count: s.int({ min: 1, max: MAX_BOSS_PARTS }),
-        ticks: s.int({ min: 1, max: 36000 }),
+        count: s.int({ min: 1, max: MAX_BOSS_PARTS, unit: 'count' }),
+        ticks: s.int({ min: 1, max: 36000, unit: 'ticks' }),
       },
       { optional: ['hpBelow', 'partsDestroyed', 'count', 'ticks'] },
     ),
@@ -2527,14 +2535,14 @@ const BOSS_SCHEMA = s.object(
   {
     code: s.str({ maxLength: 8, pattern: /^[A-Z0-9][A-Z0-9-]*$/ }),
     displayName: s.str({ maxLength: 24, pattern: /^[A-Z0-9][A-Z0-9 .'-]*$/ }),
-    introTicks: s.int({ min: 0, max: 600 }),
-    score: s.int({ min: 0, max: 10000000 }),
-    x: s.num({ min: 0, max: PLAYFIELD_W }),
-    y: s.num({ min: 0, max: PLAYFIELD_H }),
+    introTicks: s.int({ min: 0, max: 600, unit: 'ticks' }),
+    score: s.int({ min: 0, max: 10000000, unit: 'score' }),
+    x: s.num({ min: 0, max: PLAYFIELD_W, unit: 'screen-x' }),
+    y: s.num({ min: 0, max: PLAYFIELD_H, unit: 'screen-y' }),
     parts: s.array(BOSS_PART_SCHEMA, { min: 1, max: MAX_BOSS_PARTS }),
     phases: s.array(BOSS_PHASE_SCHEMA, { min: 1, max: MAX_BOSS_PHASES }),
     role: s.enumOf(BOSS_ROLES),
-    timeLimit: s.int({ min: 60, max: 36000 }),
+    timeLimit: s.int({ min: 60, max: 36000, unit: 'ticks' }),
     raid: s.object(
       {
         segments: s.array(RAID_SEGMENT_SCHEMA, { min: 1, max: MAX_RAID_SEGMENTS }),
@@ -2543,12 +2551,12 @@ const BOSS_SCHEMA = s.object(
       { optional: ['loop'] },
     ),
     partner: s.ref('enemy'),
-    alternate: s.int({ min: 1, max: 3600 }),
+    alternate: s.int({ min: 1, max: 3600, unit: 'ticks' }),
     enrage: s.object(
       {
-        fireRate: s.num({ min: 0.1, max: 1 }),
-        speed: s.num({ min: 1, max: 4 }),
-        phase: s.int({ min: 0, max: MAX_BOSS_PHASES - 1 }),
+        fireRate: s.num({ min: 0.1, max: 1, unit: 'ratio' }),
+        speed: s.num({ min: 1, max: 4, unit: 'ratio' }),
+        phase: s.int({ min: 0, max: MAX_BOSS_PHASES - 1, unit: 'index' }),
       },
       { optional: ['fireRate', 'speed', 'phase'] },
     ),
@@ -2612,8 +2620,8 @@ const BOSS_OMITTED = Object.freeze([
 const ENEMY_SCHEMA = s.object(
   {
     id: s.str(),
-    hp: s.int({ min: 1, max: 100000 }),
-    score: s.int({ min: 0, max: 1000000 }),
+    hp: s.int({ min: 1, max: 100000, unit: 'count' }),
+    score: s.int({ min: 0, max: 1000000, unit: 'score' }),
     hurtbox: BOX_SCHEMA,
     script: s.ref('script'),
     sprite: s.ref('sprite'),
@@ -2622,21 +2630,24 @@ const ENEMY_SCHEMA = s.object(
     mover: s.nullable(MOVER_SCHEMA),
     drop: s.nullable(s.enumOf(ENEMY_DROPS)),
     ground: s.nullable(s.enumOf(ENEMY_GROUNDS)),
-    settleTicks: s.int({ min: 0, max: 36000 }),
+    settleTicks: s.int({ min: 0, max: 36000, unit: 'ticks' }),
     explosion: s.enumOf(ENEMY_EXPLOSIONS),
     megaCrashImmune: s.bool(),
     optionHunter: s.bool(),
     child: s.nullable(s.ref('enemy')),
     pattern: s.nullable(s.ref('pattern')),
     rank: s.object(
-      { fireRate: s.num({ min: 0, max: 8 }), bulletSpeed: s.num({ min: 0, max: 8 }) },
+      {
+        fireRate: s.num({ min: 0, max: 8, unit: 'ratio' }),
+        bulletSpeed: s.num({ min: 0, max: 8, unit: 'ratio' }),
+      },
       { optional: ['fireRate', 'bulletSpeed'] },
     ),
     revenge: s.object(
       {
-        minRank: s.int({ min: 0, max: 31 }),
+        minRank: s.int({ min: 0, max: 31, unit: 'count' }),
         pattern: s.enumOf(REVENGE_PATTERNS),
-        speed: s.num({ min: 0.25, max: 4 }),
+        speed: s.num({ min: 0.25, max: 4, unit: 'px-per-tick' }),
       },
       { optional: ['speed'] },
     ),
@@ -2676,7 +2687,7 @@ const ENEMIES_FILE_SCHEMA = s.object({
 });
 
 /** A path control-point coordinate in pixels. */
-const PATH_COORD = s.num({ min: -4096, max: 4096 });
+const PATH_COORD = s.num({ min: -4096, max: 4096, unit: 'rel-px' });
 
 /**
  * The shape of one path control point, built by adding the keys to an empty object instead of
@@ -2708,28 +2719,31 @@ const PATHS_FILE_SCHEMA = s.object({
 });
 
 /** Camera-X of a timeline entry. */
-const EVENT_X = s.num({ min: 0, max: 1000000 });
+const EVENT_X = s.num({ min: 0, max: 1000000, unit: 'world-x' });
 
 /** Scroll speed in pixels per tick. */
-const SPEED = s.num({ min: 0, max: 16 });
+const SPEED = s.num({ min: 0, max: 16, unit: 'px-per-tick' });
 
 /** A ramp or pan length in ticks. */
-const TICKS = s.int({ min: 0, max: 36000 });
+const TICKS = s.int({ min: 0, max: 36000, unit: 'ticks' });
 
 /** Spawn y in playfield pixels: from 64 px above the playfield to 120 px below it. */
-const SPAWN_Y = s.num({ min: -64, max: PLAYFIELD_H + 120 });
+const SPAWN_Y = s.num({ min: -64, max: PLAYFIELD_H + 120, unit: 'world-y' });
 
 /** Spawn x in playfield pixels: up to 128 px beyond either edge of the view. */
-const SPAWN_SCREEN_X = s.num({ min: -128, max: PLAYFIELD_W + 128 });
+const SPAWN_SCREEN_X = s.num({ min: -128, max: PLAYFIELD_W + 128, unit: 'screen-x' });
 
 /** A loop number of a remixed event (M3-01 — `minLoop` / `maxLoop`). */
-const LOOP_NUMBER = s.int({ min: 1, max: MAX_LOOP });
+const LOOP_NUMBER = s.int({ min: 1, max: MAX_LOOP, unit: 'count' });
 
 /** A stage flag or branch name (lower-case kebab). */
 const STAGE_NAME = s.str({ maxLength: 64, pattern: /^[a-z][a-z0-9-]*$/ });
 
-/** A world coordinate of a trigger region or a block, in pixels. */
-const WORLD_COORD = s.num({ min: -4096, max: 1001000 });
+/** A world x of a trigger region, in pixels. */
+const WORLD_X = s.num({ min: -4096, max: 1001000, unit: 'world-x' });
+
+/** A world y of a trigger region or a block, in pixels (same bounds as {@link WORLD_X}). */
+const WORLD_Y = s.num({ min: -4096, max: 1001000, unit: 'world-y' });
 
 /** One entry of `events` in a `stage` file (every variant may name a `branch` — M2-07). */
 const STAGE_EVENT_SCHEMA: Schema<
@@ -2754,13 +2768,13 @@ const STAGE_EVENT_SCHEMA: Schema<
       x: EVENT_X,
       type: s.enumOf(['formation'] as const),
       enemy: s.ref('enemy'),
-      count: s.int({ min: 1, max: 64 }),
-      interval: s.int({ min: 1, max: 600 }),
+      count: s.int({ min: 1, max: 64, unit: 'count' }),
+      interval: s.int({ min: 1, max: 600, unit: 'ticks' }),
       y: SPAWN_Y,
       screenX: SPAWN_SCREEN_X,
       path: s.ref('path'),
       drop: s.nullable(s.enumOf(ENEMY_DROPS)),
-      bonus: s.int({ min: 0, max: 1000000 }),
+      bonus: s.int({ min: 0, max: 1000000, unit: 'score' }),
       branch: STAGE_NAME,
       minLoop: LOOP_NUMBER,
       maxLoop: LOOP_NUMBER,
@@ -2810,10 +2824,10 @@ const STAGE_EVENT_SCHEMA: Schema<
       flag: STAGE_NAME,
       value: s.bool(),
       region: s.object({
-        x: WORLD_COORD,
-        y: WORLD_COORD,
-        w: s.num({ min: 1, max: 65536 }),
-        h: s.num({ min: 1, max: 65536 }),
+        x: WORLD_X,
+        y: WORLD_Y,
+        w: s.num({ min: 1, max: 65536, unit: 'world-px' }),
+        h: s.num({ min: 1, max: 65536, unit: 'world-px' }),
       }),
       until: EVENT_X,
       branch: STAGE_NAME,
@@ -2824,17 +2838,17 @@ const STAGE_EVENT_SCHEMA: Schema<
     {
       x: EVENT_X,
       type: s.enumOf(['block'] as const),
-      screenX: s.num({ min: -1024, max: 4096 }),
-      y: WORLD_COORD,
-      w: s.int({ min: 1, max: 1024 }),
-      h: s.int({ min: 1, max: 1024 }),
+      screenX: s.num({ min: -1024, max: 4096, unit: 'screen-x' }),
+      y: WORLD_Y,
+      w: s.int({ min: 1, max: 1024, unit: 'world-px' }),
+      h: s.int({ min: 1, max: 1024, unit: 'world-px' }),
       tile: s.str({ maxLength: 64 }),
       vx: VELOCITY,
       vy: VELOCITY,
-      dx: s.num({ min: -1024, max: 1024 }),
-      dy: s.num({ min: -1024, max: 1024 }),
-      period: s.int({ min: 1, max: 36000 }),
-      phase: s.int({ min: 0, max: 1023 }),
+      dx: s.num({ min: -1024, max: 1024, unit: 'rel-px' }),
+      dy: s.num({ min: -1024, max: 1024, unit: 'rel-px' }),
+      period: s.int({ min: 1, max: 36000, unit: 'ticks' }),
+      phase: s.int({ min: 0, max: 1023, unit: 'angle' }),
       branch: STAGE_NAME,
     },
     { optional: ['screenX', 'tile', 'vx', 'vy', 'dx', 'dy', 'period', 'phase', 'branch'] },
@@ -2846,50 +2860,71 @@ const STAGE_EVENT_SCHEMA: Schema<
       stage: s.ref('stage'),
       entrance: s.enumOf(BONUS_ENTRANCES),
       region: s.object({
-        x: WORLD_COORD,
-        y: WORLD_COORD,
-        w: s.num({ min: 1, max: 65536 }),
-        h: s.num({ min: 1, max: 65536 }),
+        x: WORLD_X,
+        y: WORLD_Y,
+        w: s.num({ min: 1, max: 65536, unit: 'world-px' }),
+        h: s.num({ min: 1, max: 65536, unit: 'world-px' }),
       }),
       until: EVENT_X,
-      digit: s.int({ min: 0, max: 9 }),
-      place: s.int({ min: 10, max: 100000 }),
+      digit: s.int({ min: 0, max: 9, unit: 'index' }),
+      place: s.int({ min: 10, max: 100000, unit: 'score' }),
       branch: STAGE_NAME,
     },
     { optional: ['region', 'until', 'digit', 'place', 'branch'] },
   ),
 });
 
-/** One wave profile of a heightfield segment. */
-const HEIGHTFIELD_PROFILE_SCHEMA = s.object({
-  base: s.num({ min: 0, max: 2048 }),
-  amp: s.num({ min: 0, max: 1024 }),
-  period: s.num({ min: 16, max: 65536 }),
-  seed: s.int({ min: 0, max: 0xffffffff }),
-});
+/**
+ * One wave profile of a heightfield segment, its `base` measured from the map's bottom (a floor)
+ * or top (a ceiling).
+ *
+ * @param base - The schema of `base`: the floor's and the ceiling's differ only in their unit.
+ * @returns The profile schema.
+ */
+const heightfieldProfile = (base: Schema<number>) =>
+  s.object({
+    base,
+    amp: s.num({ min: 0, max: 1024, unit: 'rel-px' }),
+    period: s.num({ min: 16, max: 65536, unit: 'world-px' }),
+    seed: s.int({ min: 0, max: 0xffffffff, unit: 'seed' }),
+  });
+
+/**
+ * A floor's wave profile: its `base` is a height above the map's bottom, so the ×1.5 port only
+ * scales it (the floor stays on the bottom edge — plan §2.6).
+ */
+const HEIGHTFIELD_FLOOR_SCHEMA = heightfieldProfile(s.num({ min: 0, max: 2048, unit: 'rel-px' }));
+
+/**
+ * A ceiling's wave profile: its `base` is a depth below the map's top, an absolute y — the port
+ * adds the rows it inserts at the top (a ceiling that touches the top edge gets thicker, §2.6).
+ */
+const HEIGHTFIELD_CEILING_SCHEMA = heightfieldProfile(
+  s.num({ min: 0, max: 2048, unit: 'world-y' }),
+);
 
 /**
  * A tile edge in pixels: {@link MIN_TILE_SIZE} … {@link MAX_TILE_SIZE}; the checkers then accept
  * only those two sizes (a tileset in {@link checkTileset}, a tilemap by equalling its tileset's).
  */
-const TILE_SIZE_FIELD = s.int({ min: MIN_TILE_SIZE, max: MAX_TILE_SIZE });
+const TILE_SIZE_FIELD = s.int({ min: MIN_TILE_SIZE, max: MAX_TILE_SIZE, unit: 'tile-px' });
 
 /** A `stage.tilemap` block. */
 const TILEMAP_SCHEMA: Schema<Omit<StageTilemapSpec, 'tilesetId'>> = s.object(
   {
     tileSize: TILE_SIZE_FIELD,
     tileset: s.ref('tileset'),
-    rowsTall: s.int({ min: 1, max: 255 }),
+    rowsTall: s.int({ min: 1, max: 255, unit: 'tile-rows' }),
     rle: s.array(s.str({ minLength: 0, maxLength: 100000 }), { max: 255 }),
     generator: s.object({
       type: s.enumOf(['heightfield'] as const),
       segments: s.array(
         s.object(
           {
-            from: s.int({ min: 0, max: 1000000 }),
-            to: s.int({ min: 1, max: 1001000 }),
-            floor: HEIGHTFIELD_PROFILE_SCHEMA,
-            ceiling: HEIGHTFIELD_PROFILE_SCHEMA,
+            from: s.int({ min: 0, max: 1000000, unit: 'world-x' }),
+            to: s.int({ min: 1, max: 1001000, unit: 'world-x' }),
+            floor: HEIGHTFIELD_FLOOR_SCHEMA,
+            ceiling: HEIGHTFIELD_CEILING_SCHEMA,
           },
           { optional: ['floor', 'ceiling'] },
         ),
@@ -2905,15 +2940,18 @@ const RASTER_EFFECT_SCHEMA = s.object(
   {
     layer: s.enumOf(STAGE_RASTER_LAYERS),
     kind: s.enumOf(STAGE_RASTER_KINDS),
-    top: s.int({ min: 0, max: PLAYFIELD_H - 1 }),
-    bottom: s.int({ min: 1, max: PLAYFIELD_H }),
-    amplitude: s.num({ min: 0, max: 32 }),
-    wavelength: s.num({ min: 2, max: 1024 }),
-    period: s.int({ min: 0, max: 36000 }),
-    factorTop: s.num({ min: -4, max: 4 }),
-    factorBottom: s.num({ min: -4, max: 4 }),
-    bands: s.array(s.int({ min: 1, max: PLAYFIELD_H }), { min: 1, max: MAX_RASTER_BANDS }),
-    wrap: s.int({ min: 0, max: 1024 }),
+    top: s.int({ min: 0, max: PLAYFIELD_H - 1, unit: 'screen-y' }),
+    bottom: s.int({ min: 1, max: PLAYFIELD_H, unit: 'screen-y' }),
+    amplitude: s.num({ min: 0, max: 32, unit: 'world-px' }),
+    wavelength: s.num({ min: 2, max: 1024, unit: 'world-px' }),
+    period: s.int({ min: 0, max: 36000, unit: 'ticks' }),
+    factorTop: s.num({ min: -4, max: 4, unit: 'ratio' }),
+    factorBottom: s.num({ min: -4, max: 4, unit: 'ratio' }),
+    bands: s.array(s.int({ min: 1, max: PLAYFIELD_H, unit: 'world-px' }), {
+      min: 1,
+      max: MAX_RASTER_BANDS,
+    }),
+    wrap: s.int({ min: 0, max: 1024, unit: 'world-px' }),
     from: EVENT_X,
     to: EVENT_X,
   },
@@ -2940,7 +2978,7 @@ const COLOR_CYCLE_SCHEMA = s.object(
   {
     layer: s.enumOf(STAGE_CYCLE_LAYERS),
     colors: s.array(HEX_COLOR, { min: 2, max: MAX_CYCLE_COLORS_PER_LAYER }),
-    ticks: s.int({ min: 1, max: 600 }),
+    ticks: s.int({ min: 1, max: 600, unit: 'ticks' }),
     from: EVENT_X,
     to: EVENT_X,
   },
@@ -2951,15 +2989,15 @@ const COLOR_CYCLE_SCHEMA = s.object(
 const MODE7_SCHEMA = s.object(
   {
     sprite: s.ref('sprite'),
-    horizon: s.int({ min: 0, max: PLAYFIELD_H - 2 }),
-    bottom: s.int({ min: 1, max: PLAYFIELD_H }),
-    height: s.num({ min: 1, max: 4096 }),
-    scroll: s.num({ min: -64, max: 64 }),
-    sway: s.num({ min: -64, max: 64 }),
-    turn: s.int({ min: 0, max: 1023 }),
+    horizon: s.int({ min: 0, max: PLAYFIELD_H - 2, unit: 'screen-y' }),
+    bottom: s.int({ min: 1, max: PLAYFIELD_H, unit: 'screen-y' }),
+    height: s.num({ min: 1, max: 4096, unit: 'texels' }),
+    scroll: s.num({ min: -64, max: 64, unit: 'ratio' }),
+    sway: s.num({ min: -64, max: 64, unit: 'ratio' }),
+    turn: s.int({ min: 0, max: 1023, unit: 'angle' }),
     fog: HEX_COLOR,
-    fogDepth: s.num({ min: 1, max: 100000 }),
-    alpha: s.num({ min: 0, max: 1 }),
+    fogDepth: s.num({ min: 1, max: 100000, unit: 'texels' }),
+    alpha: s.num({ min: 0, max: 1, unit: 'ratio' }),
     from: EVENT_X,
     to: EVENT_X,
   },
@@ -2982,18 +3020,18 @@ const STAGE_FILE_SCHEMA = s.object(
       },
       { optional: ['ending', 'credits'] },
     ),
-    length: s.int({ min: 1, max: 1000000 }),
+    length: s.int({ min: 1, max: 1000000, unit: 'world-px' }),
     camera: s.array(
       s.object(
         {
           x: EVENT_X,
           speed: SPEED,
           ramp: TICKS,
-          yTo: s.num({ min: 0, max: 4096 }),
+          yTo: s.num({ min: 0, max: 4096, unit: 'screen-y' }),
           yTicks: TICKS,
-          yOver: s.int({ min: 1, max: 1000000 }),
+          yOver: s.int({ min: 1, max: 1000000, unit: 'world-px' }),
           lock: s.bool(),
-          hold: s.int({ min: 1, max: 36000 }),
+          hold: s.int({ min: 1, max: 36000, unit: 'ticks' }),
         },
         { optional: ['ramp', 'yTo', 'yTicks', 'yOver', 'lock', 'hold'] },
       ),
@@ -3004,9 +3042,9 @@ const STAGE_FILE_SCHEMA = s.object(
       s.object({
         layer: s.enumOf(['far', 'mid'] as const),
         sprite: s.ref('sprite'),
-        factor: s.num({ min: 0, max: 4 }),
-        y: s.num({ min: -512, max: 512 }),
-        spacing: s.int({ min: 8, max: 1024 }),
+        factor: s.num({ min: 0, max: 4, unit: 'ratio' }),
+        y: s.num({ min: -512, max: 512, unit: 'world-y' }),
+        spacing: s.int({ min: 8, max: 1024, unit: 'world-px' }),
       }),
       { max: 8 },
     ),
@@ -3023,7 +3061,11 @@ const STAGE_FILE_SCHEMA = s.object(
     type: s.enumOf(STAGE_TYPES),
     rush: s.array(
       s.object(
-        { enemy: s.ref('enemy'), delay: s.int({ min: 0, max: 3600 }), warning: s.bool() },
+        {
+          enemy: s.ref('enemy'),
+          delay: s.int({ min: 0, max: 3600, unit: 'ticks' }),
+          warning: s.bool(),
+        },
         { optional: ['delay', 'warning'] },
       ),
       { min: 1, max: MAX_RUSH_BOSSES },
@@ -3040,12 +3082,12 @@ const TILE_SCHEMA: Schema<TileSpec> = s.object(
   {
     name: s.str({ maxLength: 64 }),
     type: s.enumOf(TILE_TYPES),
-    frame: s.int({ min: 0, max: 1023 }),
+    frame: s.int({ min: 0, max: 1023, unit: 'index' }),
     anchor: s.enumOf(TILE_ANCHORS),
-    mask: s.array(s.int({ min: 0, max: 64 }), { min: 1, max: 64 }),
-    hp: s.int({ min: 1, max: 255 }),
-    regen: s.int({ min: 1, max: 36000 }),
-    score: s.int({ min: 0, max: 65535 }),
+    mask: s.array(s.int({ min: 0, max: 64, unit: 'tile-px' }), { min: 1, max: 64 }),
+    hp: s.int({ min: 1, max: 255, unit: 'count' }),
+    regen: s.int({ min: 1, max: 36000, unit: 'ticks' }),
+    score: s.int({ min: 0, max: 65535, unit: 'score' }),
   },
   { optional: ['hp', 'regen', 'score'] },
 );
@@ -3061,18 +3103,18 @@ const TILESET_FILE_SCHEMA = s.object({
 });
 
 /** A score threshold of the difficulty presets (whole points, 0 = none). */
-const EXTEND_SCORE = s.int({ min: 0, max: MAX_EXTEND_SCORE });
+const EXTEND_SCORE = s.int({ min: 0, max: MAX_EXTEND_SCORE, unit: 'score' });
 
 /** One difficulty preset of a `rules` file ({@link DifficultyRules}). */
 const DIFFICULTY_RULES_SCHEMA = s.object({
-  rankBase: s.int({ min: 0, max: 31 }),
-  rankGrowth: s.num({ min: 0, max: MAX_RANK_GROWTH }),
-  lives: s.int({ min: 1, max: 5 }),
+  rankBase: s.int({ min: 0, max: 31, unit: 'count' }),
+  rankGrowth: s.num({ min: 0, max: MAX_RANK_GROWTH, unit: 'ratio' }),
+  lives: s.int({ min: 1, max: 5, unit: 'count' }),
   extends: s.object({ first: EXTEND_SCORE, every: EXTEND_SCORE }),
-  continues: s.int({ min: 0, max: MAX_CONTINUES }),
+  continues: s.int({ min: 0, max: MAX_CONTINUES, unit: 'count' }),
   deathPenalty: s.enumOf(DEATH_PENALTY_PRESETS),
-  aimDirections: s.int({ min: 4, max: 1024 }),
-  bulletSpeedMul: s.num({ min: MIN_BULLET_SPEED_MUL, max: MAX_BULLET_SPEED_MUL }),
+  aimDirections: s.int({ min: 4, max: 1024, unit: 'count' }),
+  bulletSpeedMul: s.num({ min: MIN_BULLET_SPEED_MUL, max: MAX_BULLET_SPEED_MUL, unit: 'ratio' }),
 });
 
 /** The `difficulty` section of a `rules` file: one row per preset, all four required. */
@@ -3086,10 +3128,10 @@ const DIFFICULTY_TABLE_SCHEMA = s.object({
 /** The `scoring` section of a `rules` file (plan M2-02, `core/scoring` {@link ScoringRules}). */
 const SCORING_RULES_SCHEMA = s.object(
   {
-    bulletCancel: s.int({ min: 0, max: MAX_BULLET_CANCEL_POINTS }),
-    repeatKills: s.int({ min: 0, max: MAX_REPEAT_KILLS }),
-    repeatPercent: s.int({ min: 0, max: 100 }),
-    graze: s.int({ min: 0, max: MAX_GRAZE_POINTS }),
+    bulletCancel: s.int({ min: 0, max: MAX_BULLET_CANCEL_POINTS, unit: 'score' }),
+    repeatKills: s.int({ min: 0, max: MAX_REPEAT_KILLS, unit: 'count' }),
+    repeatPercent: s.int({ min: 0, max: 100, unit: 'ratio' }),
+    graze: s.int({ min: 0, max: MAX_GRAZE_POINTS, unit: 'score' }),
   },
   { optional: ['repeatKills', 'repeatPercent', 'graze'] },
 );
@@ -3181,22 +3223,23 @@ const CAMPAIGN_FILE_SCHEMA = s.object(
 
 /**
  * A JSON object of any shape (a demo's recorded `GameConfig`: `core/replay` `decodeReplay`
- * validates it field by field when the demo is played).
+ * validates it field by field when the demo is played). Opaque to the unit walkers: demos are
+ * re-recorded, never rescaled (`data/units`, R1-03).
  */
-const JSON_OBJECT_SCHEMA: Schema<Readonly<Record<string, unknown>>> = Object.freeze({
-  typeName: 'object',
-  refKind: null,
-  parse(value: unknown, path: string, issues: ValidationIssue[]) {
+const JSON_OBJECT_SCHEMA: Schema<Readonly<Record<string, unknown>>> = s.custom(
+  'object',
+  (value: unknown, path: string, issues: ValidationIssue[]) => {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       return value as Readonly<Record<string, unknown>>;
     }
     issues.push({ path, message: 'must be an object' });
     return undefined;
   },
-});
+  { kind: 'opaque' },
+);
 
 /** An unsigned 32-bit integer (a state hash, a seed). */
-const U32_SCHEMA = s.int({ min: 0, max: 0xffffffff });
+const U32_SCHEMA = s.int({ min: 0, max: 0xffffffff, unit: 'seed' });
 
 /**
  * A `content/demos/*.replay.json` file (M2-15): a `core/replay` document (`encodeReplay`'s
@@ -3213,21 +3256,21 @@ const DEMO_FILE_SCHEMA = s.object(
     description: s.str({ maxLength: 200 }),
     header: s.object(
       {
-        formatVersion: s.int({ min: 1 }),
+        formatVersion: s.int({ min: 1, unit: 'version' }),
         buildId: s.str({ minLength: 0, maxLength: 64 }),
         seed: U32_SCHEMA,
         stageId: s.nullable(s.str({ maxLength: 64 })),
-        checkpoint: s.int({ min: -1 }),
+        checkpoint: s.int({ min: -1, unit: 'index' }),
         loadout: s.str({ maxLength: 16 }),
         assisted: s.bool(),
         // M3-01: the assist flags (`core/replay` `ReplayHeader.assists`; older demos have none).
-        assists: s.int({ min: 0, max: 255 }),
+        assists: s.int({ min: 0, max: 255, unit: 'seed' }),
         config: JSON_OBJECT_SCHEMA,
       },
       { optional: ['assists'] },
     ),
-    ticks: s.int({ min: 1, max: MAX_DEMO_TICKS }),
-    hashInterval: s.int({ min: 1 }),
+    ticks: s.int({ min: 1, max: MAX_DEMO_TICKS, unit: 'ticks' }),
+    hashInterval: s.int({ min: 1, unit: 'ticks' }),
     inputs: s.array(s.str({ minLength: 0 }), { min: MAX_PLAYERS, max: MAX_PLAYERS }),
     hashes: s.array(U32_SCHEMA),
     finalHash: U32_SCHEMA,
@@ -3245,6 +3288,31 @@ const STRINGS_FILE_SCHEMA = s.object({
     /^[A-Za-z][A-Za-z0-9.]*$/,
   ),
 });
+
+/**
+ * The schema of every content kind core owns (R1-03): what {@link loadContent} validates a file
+ * body with, once migration has raised it to {@link CONTENT_FORMAT_VERSION} — for tools that walk
+ * content with its schema (`data/units`: the unit coverage test, `scripts/content/rescale.mjs`).
+ *
+ * @remarks
+ * Every number of every kind has a unit (`schema.meta`); the one opaque value is a demo's recorded
+ * game config (`header.config`), which `core/replay` validates when the demo is played. The kinds
+ * other packages own (`sfx`, `music`, `input-profiles`, `fx`) export their own file schemas.
+ */
+export const CONTENT_FILE_SCHEMAS: Readonly<Record<ContentKind, Schema<Record<string, unknown>>>> =
+  Object.freeze({
+    player: PLAYER_FILE_SCHEMA,
+    weapons: WEAPONS_FILE_SCHEMA,
+    enemies: ENEMIES_FILE_SCHEMA,
+    paths: PATHS_FILE_SCHEMA,
+    stage: STAGE_FILE_SCHEMA,
+    tileset: TILESET_FILE_SCHEMA,
+    rules: RULES_FILE_SCHEMA,
+    patterns: PATTERNS_FILE_SCHEMA,
+    campaign: CAMPAIGN_FILE_SCHEMA,
+    replay: DEMO_FILE_SCHEMA,
+    strings: STRINGS_FILE_SCHEMA,
+  });
 
 /** Mutable working copy of a {@link ContentDb} while a load runs. */
 interface DbBuilder {
@@ -3766,30 +3834,7 @@ function parseFile(
   issues: ValidationIssue[],
   refs: RefSite[],
 ): Record<string, unknown> | undefined {
-  switch (kind) {
-    case 'player':
-      return PLAYER_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'weapons':
-      return WEAPONS_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'enemies':
-      return ENEMIES_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'paths':
-      return PATHS_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'stage':
-      return STAGE_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'tileset':
-      return TILESET_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'rules':
-      return RULES_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'patterns':
-      return PATTERNS_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'campaign':
-      return CAMPAIGN_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'replay':
-      return DEMO_FILE_SCHEMA.parse(data, '', issues, refs);
-    case 'strings':
-      return STRINGS_FILE_SCHEMA.parse(data, '', issues, refs);
-  }
+  return CONTENT_FILE_SCHEMAS[kind].parse(data, '', issues, refs);
 }
 
 /**

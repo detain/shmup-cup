@@ -28,16 +28,12 @@ import {
 const collector = (): ValidationIssue[] => [];
 
 /**
- * A schema's metadata (fails the test when it has none).
+ * A schema's metadata.
  *
  * @param schema - The schema.
  * @returns Its metadata.
  */
-function metaOf(schema: Schema<unknown>): SchemaMeta {
-  const meta = schema.meta;
-  if (meta === undefined) throw new Error(`${schema.typeName} has no metadata`);
-  return meta;
-}
+const metaOf = (schema: Schema<unknown>): SchemaMeta => schema.meta;
 
 /** The v1 → v2 port (plan §2.6 / §2.7). */
 const V2: RescaleOptions = {
@@ -365,11 +361,12 @@ describe('core/data units: the walkers', () => {
     expect(opaque).toEqual(['config']);
   });
 
-  it('reports a schema without metadata as opaque', () => {
-    const bare: Schema<number> = { typeName: 'bare', refKind: null, parse: () => 1 };
-    expect(listNumberFields(s.object({ a: bare })).opaque).toEqual(['a']);
-    expect(walkNumbers(s.object({ a: bare }), { a: 1 }, () => undefined)).toEqual([
-      { path: 'a', reason: 'opaque' },
+  it('reports every opaque value it meets, item by item', () => {
+    const list = s.array(OPAQUE);
+    expect(listNumberFields(list).opaque).toEqual(['[]']);
+    expect(walkNumbers(list, [{}, {}], () => undefined)).toEqual([
+      { path: '[0]', reason: 'opaque' },
+      { path: '[1]', reason: 'opaque' },
     ]);
   });
 

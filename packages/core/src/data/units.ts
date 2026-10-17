@@ -273,7 +273,7 @@ export interface NumberFieldList {
   readonly fields: readonly NumberField[];
   /**
    * The pattern paths of the schemas a walker cannot look into: an opaque `s.custom` (a demo's
-   * game config) or a schema without metadata.
+   * game config).
    */
   readonly opaque: readonly string[];
 }
@@ -315,10 +315,6 @@ export function listNumberFields(schema: Schema<unknown>): NumberFieldList {
   const visit = (node: Schema<unknown>, path: string): void => {
     if (stack.indexOf(node) >= 0) return;
     const meta = node.meta;
-    if (meta === undefined) {
-      opaque.push(path);
-      return;
-    }
     stack.push(node);
     switch (meta.kind) {
       case 'number':
@@ -422,7 +418,7 @@ export interface WalkSkip {
   /** Its JSON path. */
   readonly path: string;
   /**
-   * Why: `opaque` (an opaque schema or one without metadata), `mismatch` (the value does not have
+   * Why: `opaque` (an opaque `s.custom` schema), `mismatch` (the value does not have
    * the schema's shape — validate the document first) or `variant` (a union tag, or no any-of
    * shape, that matches).
    */
@@ -487,10 +483,6 @@ export function walkNumbers(
     key: string | number,
   ): void => {
     const meta = node.meta;
-    if (meta === undefined) {
-      skipped.push({ path, reason: 'opaque' });
-      return;
-    }
     switch (meta.kind) {
       case 'number':
       case 'expr': {

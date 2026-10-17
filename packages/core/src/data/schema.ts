@@ -100,12 +100,8 @@ export interface Schema<T> {
   /**
    * What the schema accepts, for tools that walk content with its schema (`data/units`). Every
    * combinator of {@link s} sets it; a hand-made schema is built with {@link s.custom}.
-   *
-   * @remarks
-   * Optional only until every hand-made schema of core uses {@link s.custom} (R1-03's sweep); a
-   * walker treats a schema without it like an {@link OpaqueMeta | opaque} one.
    */
-  readonly meta?: SchemaMeta;
+  readonly meta: SchemaMeta;
   /**
    * Validates one value.
    *

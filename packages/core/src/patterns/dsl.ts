@@ -73,6 +73,7 @@
  */
 import { BULLET_KIND_NAMES } from '../bullets/kinds.js';
 import { s, type Schema, type ValidationIssue } from '../data/schema.js';
+import type { NumberUnit } from '../data/units.js';
 import { ANGLE_MASK, ANGLE_QUARTER } from '../math/index.js';
 import { SIN_TABLE_Q16, TRIG_SCALE } from '../math/trig-table.js';
 
@@ -368,55 +369,81 @@ export const EMPTY_PATTERN_BANK: PatternBank = Object.freeze({
 
 // ------------------------------------------------------------------------------ schema
 
-/** An expression: a finite number, or a string of at most 256 characters. */
-const EXPR: Schema<PatternExpr> = Object.freeze({
-  typeName: 'expression',
-  refKind: null,
-  parse(value: unknown, path: string, issues: ValidationIssue[]): PatternExpr | undefined {
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string' && value.length > 0 && value.length <= 256) {
-      const error = syntaxError(value);
-      if (error === null) return value;
-      issues.push({ path, message: 'bad expression "' + value + '": ' + error });
-      return undefined;
-    }
-    issues.push({ path, message: 'must be a finite number or an expression string' });
+/**
+ * Validates an expression: a finite number, or a string of at most 256 characters that parses.
+ *
+ * @param value - The JSON value.
+ * @param path - Its JSON path.
+ * @param issues - Collector.
+ * @returns The expression, or `undefined` when it is invalid.
+ */
+function validateExpr(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+): PatternExpr | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.length > 0 && value.length <= 256) {
+    const error = syntaxError(value);
+    if (error === null) return value;
+    issues.push({ path, message: 'bad expression "' + value + '": ' + error });
     return undefined;
-  },
-});
+  }
+  issues.push({ path, message: 'must be a finite number or an expression string' });
+  return undefined;
+}
 
-/** A direction object. */
+/**
+ * An expression whose value has a unit (R1-03, `data/units`): every expression field parses the
+ * same way and differs only in what its number means.
+ *
+ * @param unit - What the value means (`ticks`, `angle`, `px-per-tick` …); `inherit` for a
+ *   reference's `$1` … `$9`, whose unit is that of the field the referenced action uses it in.
+ * @returns The schema.
+ */
+const expr = (unit: NumberUnit): Schema<PatternExpr> =>
+  s.custom('expression', validateExpr, { kind: 'expr', unit });
+
+/** A duration or a `term`, in ticks. */
+const TICKS_EXPR = expr('ticks');
+
+/** A speed in px/tick (a `sequence` change is px/tick per tick — both port ×k). */
+const SPEED_EXPR = expr('px-per-tick');
+
+/** A direction object (its value an angle; a `sequence` value is a turn per tick). */
 const DIRECTION = s.object(
-  { type: s.enumOf(DIRECTION_TYPES), value: EXPR },
+  { type: s.enumOf(DIRECTION_TYPES), value: expr('angle') },
   { optional: ['type', 'value'] },
 );
 
 /** A typed speed object. */
-const SPEED_OBJECT = s.object({ type: s.enumOf(SPEED_TYPES), value: EXPR }, { optional: ['type'] });
+const SPEED_OBJECT = s.object(
+  { type: s.enumOf(SPEED_TYPES), value: SPEED_EXPR },
+  { optional: ['type'] },
+);
 
 /** A speed: an expression or a typed speed object. */
-const SPEED: Schema<PatternSpeed> = Object.freeze({
-  typeName: 'speed',
-  refKind: null,
-  parse(value: unknown, path: string, issues: ValidationIssue[]): PatternSpeed | undefined {
+const SPEED: Schema<PatternSpeed> = s.custom(
+  'speed',
+  (value: unknown, path: string, issues: ValidationIssue[]): PatternSpeed | undefined => {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       return SPEED_OBJECT.parse(value, path, issues);
     }
-    return EXPR.parse(value, path, issues);
+    return SPEED_EXPR.parse(value, path, issues);
   },
-});
+  { kind: 'anyOf', options: [SPEED_EXPR, SPEED_OBJECT] },
+);
 
 /** `params` of a reference (at most 9: `$1` … `$9`). */
-const PARAMS = s.array(EXPR, { max: MAX_PATTERN_PARAMS });
+const PARAMS = s.array(expr('inherit'), { max: MAX_PATTERN_PARAMS });
 
 /** The node list, lazily (nodes nest). */
-const NODE_LIST: Schema<PatternNode[]> = Object.freeze({
-  typeName: 'array',
-  refKind: null,
-  parse(value: unknown, path: string, issues: ValidationIssue[]): PatternNode[] | undefined {
-    return NODES.parse(value, path, issues);
-  },
-});
+const NODE_LIST: Schema<PatternNode[]> = s.custom(
+  'array',
+  (value: unknown, path: string, issues: ValidationIssue[]): PatternNode[] | undefined =>
+    NODES.parse(value, path, issues),
+  { kind: 'lazy', target: () => NODES },
+);
 
 /** An id (lower-case, dots and dashes). */
 const PATTERN_ID = s.str({ maxLength: 64, pattern: /^[a-z0-9][a-z0-9.-]*$/ });
@@ -441,20 +468,26 @@ const NODE = s.oneOf('op', {
     { optional: ['direction', 'speed', 'bullet', 'bulletRef', 'params'] },
   ),
   wait: s.object(
-    { op: s.enumOf(['wait'] as const), ticks: EXPR, ranked: s.bool() },
+    { op: s.enumOf(['wait'] as const), ticks: TICKS_EXPR, ranked: s.bool() },
     { optional: ['ranked'] },
   ),
-  repeat: s.object({ op: s.enumOf(['repeat'] as const), times: EXPR, body: NODE_LIST }),
+  repeat: s.object({ op: s.enumOf(['repeat'] as const), times: expr('count'), body: NODE_LIST }),
   changeSpeed: s.object(
-    { op: s.enumOf(['changeSpeed'] as const), speed: SPEED, term: EXPR },
+    { op: s.enumOf(['changeSpeed'] as const), speed: SPEED, term: TICKS_EXPR },
     { optional: ['term'] },
   ),
   changeDirection: s.object(
-    { op: s.enumOf(['changeDirection'] as const), direction: DIRECTION, term: EXPR },
+    { op: s.enumOf(['changeDirection'] as const), direction: DIRECTION, term: TICKS_EXPR },
     { optional: ['term'] },
   ),
   accel: s.object(
-    { op: s.enumOf(['accel'] as const), accel: EXPR, min: EXPR, max: EXPR, term: EXPR },
+    {
+      op: s.enumOf(['accel'] as const),
+      accel: expr('px-per-tick2'),
+      min: SPEED_EXPR,
+      max: SPEED_EXPR,
+      term: TICKS_EXPR,
+    },
     { optional: ['min', 'max', 'term'] },
   ),
   vanish: s.object({ op: s.enumOf(['vanish'] as const) }),
@@ -473,7 +506,7 @@ const NODES = s.array(NODE, { max: 256 });
  */
 export const PATTERNS_FILE_SCHEMA = s.object(
   {
-    formatVersion: s.int({ min: 1, max: 1 }),
+    formatVersion: s.int({ min: 1, max: 1, unit: 'version' }),
     kind: s.enumOf(['patterns'] as const),
     actions: s.array(s.object({ id: PATTERN_ID, body: NODE_LIST }), { max: 1024 }),
     bullets: s.array(
