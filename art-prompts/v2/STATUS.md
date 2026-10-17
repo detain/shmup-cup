@@ -2,7 +2,7 @@
 
 Live status of the early AI art round. The spec is in `plan_resolution.md` R0-04, the runbook in
 `docs/dev/art-generation-server.md`, and the driver section in `prompt_resolution.md`'s "Art round".
-Last updated 2026-10-17 10:50 EDT.
+Last updated 2026-10-18 12:45 EDT.
 
 ## Server layout (skynet2)
 
@@ -100,7 +100,17 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     vegetation and a dark frame. SD3.5 turns the word "moss" lime whatever the colour words say.
   - Slot a (FLUX.2) of both and slot c (FLUX.1) of azure-verge wait for the owner's FLUX licence decision
     (`docs/dev/art-provenance.md`).
-- **The FLUX.2 followups (203)** wait for the same decision. Job lists: `candidates/round2/`.
+- **The owner picked all 33 video sets** (no comments, no regenerations) and said to go on with the FLUX work
+  (2026-10-17; the licence question in `docs/dev/art-provenance.md` is settled before anything ships).
+- **FLUX.2-dev session (running since 2026-10-17 16:40, paused once, resumed 2026-10-18):** 199 followups from the
+  winners, rebuilt from the current picks (`candidates/round2/worklist.json`; agents A = bosses 66, B = crafts, logos
+  and enemies 60, C = fx, items, endings, stages and tiles 73 with `fx/black-hole/armed-scene` first), plus agent D's
+  slot-a regenerations of `enemy/halo-crystal` and `tiles/azure-verge`. Followups land at
+  `candidates/<winner slot>/<followup id>.png`; the patched picker shows each next to its winner.
+- **Still to do after FLUX.2:** FLUX.1-dev slot c of `tiles/azure-verge`; LTX-2.5 for `video/blackhole-bomb-slowmo`
+  from the armed-scene followup (slots a and b); after the owner re-picks halo-crystal and azure-verge, their four
+  followups (frames, zone roster sheet, zone encounter; tileset) in a short FLUX.2 session; then the owner reviews
+  round 2 on the picker, and winners go to `winners/<id>/`.
 
 ## Round 2 — after the owner says picking is done
 
