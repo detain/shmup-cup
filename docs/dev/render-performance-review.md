@@ -477,7 +477,10 @@ GPU misses vsync).
 > draws a density-scaled synthetic scene at 384×216, 640×360 and 960×540 on the M7 and reports render and synced
 > milliseconds, frame pacing, draw calls and render-target bytes relative to the same session's 384×216; its scenes
 > also run headlessly in `pnpm bench` (counts only, on a 1280×720 display). Its first run on the monitors is plan
-> R0-03 ([rendering-and-shell.md](rendering-and-shell.md#the-tv-render-bench-r0-02)).
+> R0-03 ([rendering-and-shell.md](rendering-and-shell.md#the-tv-render-bench-r0-02)). And the knob this section asked
+> for is relative since R1-02: M3-02c's ×2 scenario is `2·FRAME_W` × `2·FRAME_H` of the shipped frame — 768×432 today,
+> 1280×720 (an 8 MiB pooled filter target) once R2-01 flips the frame
+> ([rendering-and-shell.md](rendering-and-shell.md#what-each-run-prints)).
 
 ### 7.6 Hard limits to check before committing to (B)
 

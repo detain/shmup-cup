@@ -287,16 +287,17 @@ const turret = TURRET.parse(json, 'turrets[0]', issues); // Turret | undefined
 
 | Combinator | Accepts |
 |---|---|
-| `s.int({ min, max })` / `s.num({ min, max })` | integer / finite number, inclusive bounds |
+| `s.int({ min, max, unit })` / `s.num({ min, max, unit })` | integer / finite number, inclusive bounds; `unit` (R1-03) says what it means — [below](#units-and-the-rescale-tool-r1-03) |
 | `s.str({ minLength, maxLength, pattern })` | string; **non-empty by default** (`minLength: 0` allows `""`) |
 | `s.bool()` | `true` / `false` |
 | `s.enumOf(values)` | one of the string literals (pass `as const` for a literal union type) |
 | `s.array(item, { min, max })` | array; every item is checked even after one fails |
-| `s.object(shape, { optional })` | exactly the declared fields: missing required fields and **unknown fields** are issues |
+| `s.object(shape, { optional, pairs })` | exactly the declared fields: missing required fields and **unknown fields** are issues; `pairs` (R1-03) names fields that port together — metadata only |
 | `s.record(value, keyPattern?)` | string-keyed map of one value type (weapon `params`, palettes, tunables); `""` and `__proto__` keys are rejected |
 | `s.nullable(inner)` | `null` or `inner` |
 | `s.ref(kind)` | non-empty id string, resolved by `loadContent` |
 | `s.oneOf(tagField, variants)` | discriminated union — each variant declares the tag itself (`type: s.enumOf(['spawn'] as const)`) |
+| `s.custom(typeName, parse, meta)` | R1-03: whatever `parse` accepts — a hand-made schema (the pattern DSL's expressions, speeds and node lists, a demo's recorded config) with the `SchemaMeta` tools read |
 
 Rules the combinators follow:
 
@@ -308,9 +309,135 @@ Rules the combinators follow:
   indices in. Wrap each reference in an object (`[{ "enemy": "drifter" }]`).
 - Schemas are frozen and keep no state between calls (a `g`/`y` pattern's `lastIndex` is
   reset), so share instances freely; build them once at module load.
+- Every schema carries a frozen `meta` (`SchemaMeta`, R1-03): what it accepts, by `kind` — a
+  number's bounds and unit, an object's shape, optional keys and pairs, an array's item, a union's
+  variants. Parsing never reads it; tools walk content with it (below).
 - `s.object`'s return type uses `NoInfer` on the optional-key parameter, so annotating the
   const with its spec type works: `const WEAPON: Schema<Omit<WeaponSpec, 'spriteId' | …>> =
   s.object(…)`. Omit the `…Id` fields — the loader adds them after parsing.
+
+## Units and the rescale tool (R1-03)
+
+v2 ports every content file from the 384×216 frame to 640×360 with a ×1.5 world (plan
+[R1-03 / R2-02](../../plan_resolution.md), §2.6). The frame grows ×5/3 but the world only ×3/2, so
+one factor cannot port a number: it depends on what the number **means**. So every number of every
+content kind declares a unit, and a tool ports the content by those units. The unit table for content
+authors — every unit, examples, its rule — is in [`content/README.md`](../../content/README.md#units);
+signatures are in [api-reference.md](api-reference.md#data--content-schemas-and-loader) (*Content
+units*). This section is the how and why.
+
+**Where the units live.**
+
+- **Core's kinds** — `packages/core/src/data/index.ts`: every `s.num` / `s.int` names a unit,
+  `NumberUnit` in `data/units.ts` (`world-x`, `rel-px`, `px-per-tick`, `screen-y`, `ticks` … 26 in all).
+  A field whose meaning depends on a sibling uses its own constant (`WORLD_X` / `WORLD_Y` for regions
+  and blocks; the heightfield's floor `base` is `rel-px`, measured from the floor, its ceiling `base`
+  `world-y`). `CONTENT_FILE_SCHEMAS` maps each core kind to its file schema — `loadContent` parses with
+  it, the tools walk with it.
+- **The other packages' kinds** export their file schemas with units: `SFX_FILE_SCHEMA` /
+  `MUSIC_FILE_SCHEMA` (`@shmup/audio-web` — the audio units `hz`, `seconds`, `semitones`, `samples`,
+  owner decision O1), `INPUT_PROFILES_FILE_SCHEMA` (`@shmup/input-web`), `FX_FILE_SCHEMA`
+  (`@shmup/render-pixi`).
+- **Behaviour tunables** (`params` of an enemy, a boss phase, a weapon) are `s.num({ unit: 'param' })`:
+  the unit depends on the behaviour, so it is looked up in `packages/core/src/behaviors/units.ts`
+  `BEHAVIOR_PARAM_UNITS[behaviour][name]` (owner decision O5) — common names share a unit (`…Ticks`,
+  `…Speed`), and a behaviour that means something else by a name overrides it (`captain.circler.speed`
+  is an angle).
+- **Pattern parameters** (`$1` … `$9` of an `actionRef` / `fire`) are `inherit`: they take the unit of
+  the field the action uses them in.
+- Nothing the game runs imports `data/units.ts` or `behaviors/units.ts` (a test enforces it), so the
+  TV bundle carries only the unit strings inside the schemas.
+
+**Values that port together.** Some numbers mean something only with a sibling, and porting each by its
+own rule would pull apart what lines up in v1. An object declares them with `s.object(shape, { pairs })`
+(`FieldPair`):
+
+- a **world sum** (`rule: 'world-sum'`) — a moving block's `x` + `screenX` is its world left edge, so the
+  sum ports ×k and only the column snaps (`rescaleWorldSum`: 400 → 664, `x′ = 1.5·(x + screenX) −
+  screenX′`). A ground enemy's spawn carries the same pair with `when: 'ground-enemy'`, applied only when
+  the event's enemy has a `ground` anchor (owner decision O11): it keeps its terrain spot and appears
+  64 px of camera travel earlier than ×k. An absent `screenX` stands for `fromWidth + screenPastEnd` —
+  the block pair reads it from `DEFAULT_BLOCK_SCREEN_X`, which is why R2-02 runs the tool before it
+  changes that constant;
+- a **box** (`rule: 'box-y'`) — the `y` + `h` of a block, a trigger region or a bonus region port as two
+  edges (`rescaleBoxY`), so a box hanging from the top edge grows by the pad instead of moving down.
+
+**The backdrop.** A stage's parallax bands are art that stacks from the top edge or stands on the bottom
+edge, and its raster rows bound that art. No one-value rule keeps them aligned (`screen-y` splits stacked
+bands, `world-y` leaves a strip above every top band, ×k lifts every bottom band), so `parallax[].y` has
+the unit `band-y` and `rescaleBackdrop(bands, rows, options)` places a stage's bands, raster rows and Mode-7
+rows together from the bands' art heights (frame 0 of each band's sprite): a band on the top edge stays on
+it, one on the bottom edge stays on it, one ending on the Mode-7 horizon sits on it, touching bands stay
+touching, a free band goes by the nearer edge; a raster row on — or within a tile of — a band edge follows
+it, the rest snap. It reports `seams` (bands that touched and no longer do) and `conflicts` (an anchor a
+band touched and could not keep — `BackdropConflict`). Alone, a `band-y` falls back to the `screen-y` snap.
+
+**The walkers.** `listNumberFields(schema)` lists every numeric field of a schema as a pattern path
+(`events[]<type=spawn>.y`) with its unit and pair — the coverage tests read it. `walkNumbers(schema,
+document, visit)` visits every number of a validated document with its JSON path, field, unit, the object
+holding it, its parents and its pair — the tool's walk. `rescaleNumber(unit, value, options)` ports one
+value; `edgeAnchor` and `topEdgeSide` name what the tool lists.
+
+**The tool** — `node scripts/content/rescale.mjs --factor K [--top-pad P] [--dry-run]`
+([build-test-deploy.md](build-test-deploy.md#root-scripts) has every option):
+
+1. reads every content file and every `example.*.json` sample (`--no-examples` leaves them out; `demos/`
+   is skipped — recordings are re-recorded, never rescaled) and requires each to validate;
+2. walks each with its kind's file schema (core and the four packages loaded through Vite's
+   `ssrLoadModule`) and ports every number by its unit, pairs and backdrops together, tilemaps padded
+   with copies of their top row, tileset masks resampled (`terrain.mjs` `resampleMask`);
+3. ports **the map's right end** by its own rule: a map is `length + PLAYFIELD_W` wide, so the end ports to
+   `length′ + toWidth` and an x at or past it keeps its distance past it ×k. A heightfield segment reaching
+   the map's last column ends at the new end (zone D's 9984 → 15040, not 14976); one that starts at or past
+   the end, or in the last column short of it — a segment the map never shows — stays never shown; a region
+   reaching the end still does; an RLE row tiled in its last column repeats its last cell to the new width
+   (`extendRleRow`). This rule lives only in the tool (it needs the stage's `length` and tile grid);
+4. re-sorts each stage's `events` / `remix` by the ported `x` (a world-sum event fires earlier than ×k;
+   ties keep their order) and reports **the re-sort's index map** — `from` (old indices) → `to` (new) for
+   every item that moved. **Every other listing names an item by its index as written**, before the sort;
+5. rounds integer fields (owner decision O4) — raster `bands` at their **boundaries**, `round(cum ·
+   span / sum)`, so they still add up to `bottom − top` and land where a nearest-neighbour upscale puts the
+   art's edges (`ceil(1.5·s)` at ×1.5);
+6. replaces only the changed numbers in the source text and formats the file with Prettier, so a port's
+   diff is the values alone — unless a value is unclassified or a file has an error: then it **refuses to
+   write** (exit 1). `--dry-run` never writes.
+
+Its report lists what a port must look at by hand: every value moved by a rule other than ×k (the snaps,
+the pairs, the backdrop, the map end), every value on or above the top edge, every rounded integer, every
+value outside today's schema bounds, approximated masks, padded tilemaps, views that would pass their map,
+rewritten expressions, the backdrop's free placements, seams and conflicts, and **the timeline crossings**:
+an event the pairs moved that now fires on the other side of a checkpoint, a camera stop (`lock` / `hold`),
+a `flag` event or a region trigger's armed window (`x` … `until`, by default the region's right end), a
+ground enemy leaving or joining a `ground` bonus window, a moving block whose drift runs ahead. A
+branch-gated event that now fires while its flag's trigger can still set it is spelled out with the `until`
+that restores v1's order — the tool does not fix it, because no port keeps both the spawn column and the
+trigger's window.
+
+**The geometry and the art scale.** The content was written for `--from-width` × `--from-height` with
+`--tile-size` tiles (default: core's frame, i.e. today's), and the new playfield is `fromHeight × k +
+topPad` tall and `--to-width` wide (default: today's aspect with the HUD scaled ×k — 640 for 1.5 / 36).
+The bands' art heights come from the atlas (built in memory from `assets/source/`, or `--atlas`), divided
+by `--art-scale`. The tool never guesses that scale: it measures it from the atlas' terrain tiles against
+the tilesets' `tileSize`, refuses to run without `--art-scale` when they say anything but ×1, and refuses a
+given `--art-scale` they contradict (exit 2). `--force-art-scale` overrides the tiles for an atlas whose
+bands are drawn at another scale than its tiles — the one split it cannot see, so pass `--art-scale 1.5`
+only once both the 12-px tiles and the ×1.5 bands are in the atlas. The real ×1.5 run is R2-02's, after
+R2-01 flipped core: `--factor 1.5 --top-pad 36 --from-width 384 --from-height 200 --tile-size 8 --to-width
+640 --art-scale 1.5`.
+
+**Adding a numeric field or a tunable:** give the field a `unit` (or build an `s.custom` with its meta), a
+new tunable a row in `BEHAVIOR_PARAM_UNITS`; if the value only makes sense with a sibling, declare the pair.
+Run `--factor 1 --dry-run` (zero changes) and `--factor 1.5 --top-pad 36 --dry-run` (zero unclassified).
+
+**The guards:** `test/integration/content-units.test.ts` (every number of every kind, shipped and examples,
+has a unit; every tunable resolves), `packages/core/test/data/content-file-units.test.ts` and
+`behaviors/behavior-param-units.test.ts` (core's side in detail), `test/integration/content-db-fingerprint.test.ts`
+(everything the loaders produce from the shipped content and the examples, hashed — a schema change that
+moves a parsed value fails; re-pin on purpose with `SHMUP_FINGERPRINT_PRINT=1`),
+`packages/core/test/data/schema-meta.test.ts` / `units-pairs.test.ts`, and the tool's
+`test/scripts/content/rescale.test.ts` / `rescale-edge.test.ts` (the fixtures in `fixtures/rescale/` with
+their expected ×1.5 output and a round trip through the loaders, the shipped content at factor 1 and at the
+real v1 → v2 geometry, the command line; they do not depend on core's frame, so they hold through R2-01).
 
 ## Extending it
 
@@ -319,7 +446,9 @@ Rules the combinators follow:
 1. Add the field to the spec interface in `packages/core/src/data/index.ts` (with TSDoc,
    units and the spec section).
 2. Add it to the schema const (list it in `optional` if old files may lack it — otherwise
-   every existing file needs it in the same commit).
+   every existing file needs it in the same commit). A number takes a `unit` (R1-03 —
+   [above](#units-and-the-rescale-tool-r1-03)); a new behaviour tunable needs a row in
+   `BEHAVIOR_PARAM_UNITS`.
 3. Update the folder's README format sample (JSONC; `pnpm content:check` validates it) and
    the `example.*.json`.
 4. Tests in `packages/core/test/data/`: accept, each failure message, and the resolved id
@@ -383,6 +512,7 @@ replay a `dist/` with stale inlined content (see
 pnpm content:check                          # validate content/ (shipped set + example set)
 pnpm --filter @shmup/core test data         # schema + loader unit tests only
 pnpm test:integration                       # includes content:check and the plugin tests
+node scripts/content/rescale.mjs --factor 1.5 --top-pad 36 --dry-run   # R1-03: what a ×1.5 port would change
 ```
 
 `pnpm content:check` runs `test/integration/content.test.ts`. It checks that:
@@ -425,6 +555,10 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 | `test/integration/content-plugin.test.ts`, `content-plugin-edge.test.ts` | The generated module evaluates to `readContentFiles()`, is byte-stable, honours custom roots, skips examples, names the file in JSON errors; dev-server watcher behaviour (including a sibling `content-old/` folder that must *not* trigger a reload); a real Vite IIFE build whose inlined content `loadContent()` accepts |
 | `test/integration/content-wiring.test.ts` | `turbo.json` hashes `content/**` and `types/**`; both apps use the plugin and type the module; `content:check` targets the content test; a headless game runs on the shipped content |
 | `test/integration/workspace-layout.test.ts` | Every content folder has a `README.md` and an `example.*.json`; every JSON in it has `formatVersion` 1 and a string `kind` |
+| `test/integration/content-units.test.ts`, `packages/core/test/data/content-file-units.test.ts`, `packages/core/test/behaviors/behavior-param-units.test.ts` | R1-03: every numeric field of every kind's file schema has a known unit, every number of every shipped file and example is reached by the walk and has one (a demo's recorded config is the one opaque value), every tunable the content sets resolves through `BEHAVIOR_PARAM_UNITS`, whose names equal the behaviours' tunables |
+| `packages/core/test/data/schema-meta.test.ts`, `units-pairs.test.ts` | R1-03: the schemas' metadata and `s.custom`; the unit rules, the O3 snap, the world-sum and box pairs (the bonus-range / zone-b gap entrances on the shipped files), `rescaleBackdrop` (stacks, bottom bands, the Mode-7 horizon, seams, conflicts) |
+| `test/integration/content-db-fingerprint.test.ts` | R1-03: every `ContentDb` field and the foreign loaders' output for the shipped content and the examples, hashed and pinned — a schema change that moves a parsed value fails (re-pin on purpose: `SHMUP_FINGERPRINT_PRINT=1`) |
+| `test/scripts/content/rescale.test.ts`, `rescale-edge.test.ts` (+ `fixtures/rescale/`) | R1-03: the tool — `v1/` ports to exactly `expected-1.5/` and loads, the shipped content at factor 1 (no change) and at the v1 → v2 geometry (zero unclassified, the listed crossings, the map-end segments), the art-scale guard, the timeline re-sort and its index map, the map-end rules over swept geometries, RLE rows by core's syntax, the command line and its exit codes |
 
 ## Gotchas
 
@@ -441,6 +575,10 @@ A failure prints the issue list (`path` + `message`) in the Vitest diff.
 | Every action of a `patterns` file is "unknown pattern action id" | The file failed its schema (a bad expression is a schema issue) and contributed nothing — fix its first issue ([pattern-dsl.md](pattern-dsl.md#gotchas)) |
 | Sprite/script indices changed after adding a file | Expected: interned names are numbered in sorted order. Never persist these indices (replays record input, not ids) |
 | `pnpm content:check` fails on a README | The JSONC format sample in that README no longer matches the schema — update the sample with the schema |
+| `content-units.test.ts` fails with a field in `missing` (or `unknown`) | A new `s.num` / `s.int` lacks `unit` (or names one that is not a `NumberUnit`), or a hand-made schema is not an `s.custom` with its meta — [units](#units-and-the-rescale-tool-r1-03) |
+| A tunable has no unit (`behavior-param-units.test.ts`) | A behaviour gained a tunable: add it to `BEHAVIOR_PARAM_UNITS` in `packages/core/src/behaviors/units.ts` |
+| `rescale.mjs` lists an event with "both branches can play" | A world-sum event (a block, a ground enemy) moved inside a trigger's armed window: give the trigger an `until` below the event's ported `x` (the message names it) or move the event — by hand, after looking |
+| `rescale.mjs` refuses: `--art-scale … contradicts the atlas` (exit 2) | The atlas' terrain tiles measure another scale than `--art-scale` (or than ×1 when it is absent): pass the scale the art is drawn at; `--force-art-scale` only for bands drawn at another scale than the tiles |
 | `unknown script id "…"` only in the shell / `content:check`, not in a unit test | Script ids are checked only when `knownScripts` is passed; tests that call `loadContent(files)` alone intern any name |
 | Enemy bullets are invisible in a headless test's view (their slots are `Hidden`) | The test called `loadContent(files)` without `extraSprites: ENGINE_SPRITES`, so the bullet sprites have no ids; the shell's `loadGameContent` passes them by default |
 | A new `{ x, y }`-shaped schema makes hot code allocate | Build the shape object by adding keys (`PATH_POINT_SHAPE`), never as an `{ x: …, y: … }` literal — V8 shares hidden classes between literals ([enemies-and-behaviors.md](enemies-and-behaviors.md#zero-allocation-and-the-hot-path-rules)) |

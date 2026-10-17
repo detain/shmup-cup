@@ -81,12 +81,24 @@ frame-dependent number in `@shmup/core` **derives** from the constants of `core/
 (8) and the font metrics `GLYPH_W` / `GLYPH_H` / `LINE_H` (6 / 8 / 10, pinned to the font file by
 `packages/core/test/config/frame-constants.test.ts`).
 
+Since R1-02 the same holds outside core: the other packages and the apps import the constants from
+`@shmup/core`, and code that cannot — Electron's main process, the Node scripts — reads a **pinned
+mirror** (owner decision O8): `apps/electron/src/main/window-state.ts` `FRAME_WIDTH` /
+`FRAME_HEIGHT` (pinned by `apps/electron/test/main/window-frame.test.ts`) and
+[`scripts/frame.mjs`](../../scripts/frame.mjs) — the frame constants plus `SPAWN_LEAD` and
+`CAPTURE_SCALE` — for the root scripts, the apps' scripts, the browser specs and the Playwright
+config (pinned export by export by `test/scripts/frame.test.ts`). A mirror's test fails when core
+flips alone, so R2-01 changes them together.
+
 | Rule | Enforced by |
 |---|---|
 | No literal frame number in `packages/core/src`: write `FRAME_W`, `PLAYFIELD_W + 16`, `FRAME_CX - 120`, `n * GLYPH_W` — never `384`, `400`, `72` | `packages/core/test/frame-literals.test.ts` |
+| No literal frame number in the other packages' `src/`, the apps' `src/` and `scripts/`, or the root `scripts/`: import the constants from `@shmup/core` (in a Node script: from `scripts/frame.mjs`) | `test/integration/frame-literals-repo.test.ts` |
 | **Frame ≠ world** (plan §2.6): only values anchored to the frame derive from it — an edge, the centre, "one playfield", a text width. World values (radii, margins, speeds, a boss's distance from the edge) stay literal; R2-02 scales them ×1.5 | review |
 | Panel widths and heights sized by their 6×8 text stay literal (allow-listed); their position derives from the centre or an edge | the scan's allow-list; [scenes-and-ui.md](scenes-and-ui.md) |
+| A browser spec samples a screenshot through `test/e2e/frame-pixels.ts` (`sx`, `sy`, `pixelIndex`, `VIEWPORT`) — never `3x + 1`; rows that come from content (a stage's bands, a Mode-7 horizon) stay literal | review |
 | Core's presentation output does not move unless a step means it to | `test/integration/presentation-fingerprint.test.ts` |
+| The shell's own scenes (flight, showcase, fx-gallery) do not move either | `packages/shell/test/frame-fingerprint.test.ts` |
 
 **The literal scan** (`frame-literals.test.ts`) parses every `packages/core/src/**/*.ts` file with
 the TypeScript compiler — comments and docblocks are never read, numbers inside strings and
@@ -114,8 +126,27 @@ symbol now holds more literals than `count` (a frame number crept in beside an a
 or none — the list cannot rot. Add an entry only for a count, an angle, a character cap, a world
 distance, a text-sized panel or generated data, with the reason; anything that does mean the frame
 derives from the constants. R2-01's flip will need four new entries (the 360-tick ending timers
-and the angle `640` — plan R1-01's As built). R1-02 extends the rule to the other packages, apps and
-scripts.
+and the angle `640` — plan R1-01's As built).
+
+**The repo-wide scan** (`test/integration/frame-literals-repo.test.ts`, R1-02) does the same for
+everything else, with the same scanner — the shared test helper
+`packages/core/test/helpers/frame-literal-scan.ts` (`scanFrameLiterals`, `listSourceFiles`,
+`frameLiteralProblems`, `FRAME_NUMBERS`), which other packages import by relative path like the
+allocation guard. It parses every package's `src/` but core's, every app's `src/` and — where it
+has one — `scripts/` (the bundle checks, the manifest validators, packaging and bench helpers), and
+the root `scripts/`; `.mjs` files are parsed as JavaScript. The trees are read from disk, so a new
+package or app is scanned without editing the test. Its own `ALLOWED` list (22 entries today) has the
+same shape, with `file` relative to the repository root, and holds HTTP statuses, alphas, colour
+channels, a key code, a brightness sum, the TV bench's 384×216 baseline row — and the four **mirror
+definitions**, whose entries say `value: FRAME_W` / `value: FRAME_H` rather than a number, so they
+follow the flip as long as the mirror flips with core. Its failure message ends `derive it from
+@shmup/core's constants (in a Node script: from scripts/frame.mjs)`.
+
+**Not scanned:** `test/` (specs and tests may hold literal sizes — but specs should sample through
+`frame-pixels.ts`), the `vite*.config.ts` files and `vite.shared.ts`, `apps/*/index.html`,
+`apps/tizen/bench/`, `apps/tizen/polyfills/` and `tools/` (standalone, with bench data and HTTP codes
+of its own). Like core's scan it reads literals only: a computed `128 * 3`, a BigInt or a regular
+expression passes.
 
 **The presentation fingerprint** (`test/integration/presentation-fingerprint.test.ts`): the golden
 replays hash only the simulation, so a change that moves a menu, the HUD, the zone card or the
@@ -512,6 +543,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Shipped content and the examples validate with zero issues; files are named `<folder>/<name>.<kind>.json`; README samples still match the schema | `pnpm content:check` (`test/integration/content.test.ts`) |
 | Content refers to other content, sprites, scripts and cues by string id declared with `s.ref(kind)`; systems read the resolved `<field>Id`, never the string | review; [content-data.md](content-data.md) |
 | A bare array or record of references is not allowed — wrap each id in an object | `s.array` / `s.record` throw a `TypeError` at construction |
+| Every number of every content kind declares a **unit** (`s.num({ …, unit })` / `s.int(…)`, `core/data/units` `NumberUnit`), every behaviour tunable has a row in `core/behaviors/units.ts` `BEHAVIOR_PARAM_UNITS`, and a hand-made schema is an `s.custom` with its `meta` — so `scripts/content/rescale.mjs` can port the content (R1-03) | `test/integration/content-units.test.ts`, `packages/core/test/data/content-file-units.test.ts`, `behavior-param-units.test.ts`; [content-data.md](content-data.md#units-and-the-rescale-tool-r1-03) |
 | Placeholder art is source data, never a hand-drawn binary: a `*.sprite.json` pixel map under `assets/source/sprites/` or a seeded generator in `scripts/assets/procedural/` (plan §1.5). PNGs there are real-art overrides only | review; [asset-pipeline.md](asset-pipeline.md) |
 | A real-art PNG override (v2) comes from the ingest tool with its `<name>.art.json` provenance record, or is hand-drawn with a record of `"origin": "hand"` or a `LICENSES.md` entry; `ingest.mjs --check` re-creates every committed output byte for byte | `test/scripts/assets/provenance.test.ts`; CI's `ingest` job — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
 | Every shipped tileset and stage tilemap uses `TILE_SIZE` (8 until R2-01, 12 after R2-02's port); the loader accepts 8 or 12 (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`) so test fixtures can use either | `test/integration/tile-size.test.ts`; `core/data` `checkTileset` |

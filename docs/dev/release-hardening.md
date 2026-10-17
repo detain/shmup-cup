@@ -162,7 +162,8 @@ whole-pixel copies and integer scaling only:
   Office icon) and `apps/electron/build/icon.png` (512 × 512 — `electron-builder.json` now names it
   for Windows, Linux and macOS);
 - **generated, ignored**: `assets/generated/store/` — `icon-512x423.png`, four 1920 × 1080
-  placeholder screenshots (the 384 × 216 frame × 5, captioned `PLACEHOLDER` and a zone name) and
+  placeholder screenshots (the frame at `min(⌊1920 / FRAME_W⌋, ⌊1080 / FRAME_H⌋)` — 384 × 216 × 5 today,
+  640 × 360 × 3 after R2-01, from `scripts/frame.mjs` since R1-02 —, captioned `PLACEHOLDER` and a zone name) and
   `listing.json` (name, short and long description, keywords, category, age-rating note, the image
   list with sizes; `placeholder: true`). Check the sizes against the Seller Office's current
   requirements before a submission.

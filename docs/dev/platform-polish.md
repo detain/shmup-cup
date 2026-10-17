@@ -147,9 +147,14 @@ shell's fixed 60 Hz step with its accumulator and the render interpolation that 
 `window.json` (`WINDOW_STATE_KEY`, through the same `FileStore`) holds `WindowState { version: 1,
 fullscreen, scale, x, y }`:
 
-- **Scale.** The window's **content** is `384 × scale` by `216 × scale` (`windowContentSize`,
-  `useContentSize: true`) — ×1 … ×`MAX_WINDOW_SCALE` (10), default `DEFAULT_WINDOW_SCALE` (3,
-  1152×648) — so the game's INTEGER scale mode fills it without borders. `fitWindowScale(scale,
+- **Scale.** The window's **content** is `FRAME_WIDTH × scale` by `FRAME_HEIGHT × scale`
+  (`windowContentSize`, `useContentSize: true`) — ×1 … ×`MAX_WINDOW_SCALE`, default
+  `DEFAULT_WINDOW_SCALE` — so the game's INTEGER scale mode fills it without borders. Since R1-02
+  `FRAME_WIDTH` / `FRAME_HEIGHT` are the main process's mirror of core's `FRAME_W` / `FRAME_H` (384 /
+  216; it cannot import core — owner decision O8), pinned to core by `test/main/window-frame.test.ts`,
+  and the scales derive from them: `floor(1280 / FRAME_WIDTH)` = 3 (1152×648) and
+  `floor(3840 / FRAME_WIDTH)` = 10 today, 2 (1280×720) and 6 at 640×360 (R2-01 bumps `window.json`'s
+  version and re-fits saved scales). `fitWindowScale(scale,
   workArea)` lowers a scale that does not fit the screen's work area (at least ×1; a fraction rounds
   down, `NaN` counts as ×1).
 - **Fullscreen.** Remembered from `enter-full-screen` / `leave-full-screen`;
@@ -163,7 +168,7 @@ fullscreen, scale, x, y }`:
 **Shortcuts** (`windowShortcut(input, mac)`, read from `webContents`' `before-input-event` in the
 main process, the default prevented so the game never sees them): **F11** or **Alt+Enter** toggle
 fullscreen; **Ctrl+=** / **Ctrl++** and **Ctrl+-** step the scale (fitted to the work area of the
-screen the window is on; ignored in fullscreen), **Ctrl+0** resets it to ×3 — Cmd instead of Ctrl
+screen the window is on; ignored in fullscreen), **Ctrl+0** resets it to `DEFAULT_WINDOW_SCALE` (×3 today) — Cmd instead of Ctrl
 on macOS. Only a first key-down counts. None of these keys is a game or menu binding.
 
 **When it is saved.** Fullscreen and scale changes are written at once (best effort). The

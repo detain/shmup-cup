@@ -1,9 +1,9 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
-> **Status:** drafted 2026-10-16; 2026-10-17 — **6 of 37 steps done** (R0-01, R0-02, R1-01, R1-04, R3-01, R3-02 — owner
-> parts pending for R0-01, R0-02, R3-01 and R3-02), 4 in progress. The `v1.x` maintenance branch exists (created from
-> the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything below happens on `master`, which from
-> now on is the **v2** line.
+> **Status:** drafted 2026-10-16; 2026-10-17 — **8 of 37 steps done** (R0-01, R0-02, R1-01, R1-02, R1-03, R1-04,
+> R3-01, R3-02 — owner parts pending for R0-01, R0-02, R3-01 and R3-02), 2 in progress (R0-04, R3-05). The `v1.x`
+> maintenance branch exists (created from the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything
+> below happens on `master`, which from now on is the **v2** line.
 >
 > **What v2 is:** the same game re-based on a **640×360** internal frame (from 384×216). Every world-pixel
 > quantity is scaled **×1.5**, **all art is redone and made much more detailed** (AI-assisted, then cleaned into
@@ -58,14 +58,15 @@
 
 Smaller decisions taken during execution, so the steps that rely on them can cite them. **O1–O10** are the
 wave-2 scout's recommendations for R1-02 … R1-04, put to the owner as the defaults and adopted on 2026-10-17
-without objection; **W1-D1 … W1-D3** are the orchestrator's wave-1 decisions (named D1–D3 in its notes — not v1's
-design decisions D1 …).
+without objection; **O11** came out of R1-03's review and is built as the default while the owner confirms it;
+**W1-D1 … W1-D3** are the orchestrator's wave-1 decisions (named D1–D3 in its notes — not v1's design decisions
+D1 …).
 
 | ID | Decision | Applies to |
 |---|---|---|
 | **O1** | Audio fields get their own units — `hz`, `seconds`, `semitones`, `samples` — all never rescaled | R1-03, R2-02 |
 | **O2** | More units: `seed`, `version`, `index` (never rescaled); `texels` (Mode-7 `height` / `fogDepth`) and `tile-px` (mask entries) follow the art (×1.5 / resampled). Camera **`yTo`** was first to be re-derived from the frame ("one playfield", §2.6); **revised the same day after R1-03's review: `yTo` is `rel-px`, ×k with no pad** — with the 3 pad rows the deepest camera position ports exactly (`12·(rows + 3) − 336 = 1.5·(8·rows − 200)`), the floor stays on the bottom edge and it agrees with the raid camera offsets; zone D's 50-row map becomes 53 rows (not 56) and its `yTo` 200 → 300 (gimmick-range's 72 → 108). This replaces §2.6's "zone-d `yTo 200` = one playfield" and R2-02's hand fix of zone D's `yTo` | R1-03, R2-02 |
-| **O3** | `screen-x` / `screen-y` values snap to the nearest of start, centre or end of the frame and keep their distance ×k — which reproduces §2.6 (400 → `W + 24`, boss 296 → `W − 132`, boss y 100 → 168, Mode-7 bottom 200 → 336); the tool lists every value it moves | R1-03, R2-02 |
+| **O3** | `screen-x` / `screen-y` values snap to the nearest of start, centre or end of the frame and keep their distance ×k — which reproduces §2.6 (400 → `W + 24`, boss 296 → `W − 132`, boss y 100 → 168, Mode-7 bottom 200 → 336); the tool lists every value it moves. **Since R1-03's review O3 no longer covers parallax band rows:** `parallax[].y` has its own unit `band-y` and is placed with the stage's whole backdrop from the bands' art heights (`rescaleBackdrop` — stacks stay closed, bottom bands stay on the bottom edge), raster rows follow the band edges they bound, and a lone `band-y` falls back to the snap. A block's (and a ground enemy's) `screenX` still snaps, but ports together with its event's `x` (a world sum — R1-03's As built) | R1-03, R2-02 |
 | **O4** | Integer fields that turn fractional at ×1.5 (`spacing`, `wrap`, `yOver`, raster `bands`) are rounded and each one listed; the schema is never relaxed | R1-03, R2-02 |
 | **O5** | Behaviour tunables' units live in a separate `BEHAVIOR_PARAM_UNITS` table (`behaviors/units.ts`), not in 45 `defineBehavior` signatures | R1-03 |
 | **O6** | R1-03's acceptance also requires `rescale --factor 1.5 --top-pad 36 --dry-run` to report zero unclassified values | R1-03 |
@@ -73,6 +74,7 @@ design decisions D1 …).
 | **O8** | Frame mirrors outside the workspace graph (Electron's window state, `scripts/frame.mjs`) are pinned by tests; no new dependency, no lockfile change | R1-02 |
 | **O9** | e2e and doc screenshots capture at `floor(1280 / FRAME_W)` × the frame — 1152×648 now, 1280×720 in v2 (pending the owner's optional wish for 1080p) | R1-02, R2-03, R4-05 |
 | **O10** | The tile-size schema range is the set {8, 12} (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`) | R1-04 |
+| **O11** | **Ground-enemy spawns keep their terrain spot:** a `spawn` / `formation` event whose enemy has a `ground` anchor ports its `x` and `screenX` as one world x (`x + screenX` ×k, only the column snaps — the `ground-enemy` world-sum pair of `core/data`), so the enemy stands on the same terrain and appears 64 px of camera travel earlier than ×k, like the terrain under it; R2-02's first-visible-tick comparison exempts these spawns. The alternative was to **keep their timing** (`x` ×k alone), which would put 114 of the 146 shipped ground spawns on another terrain height. **Default adopted (R1-03, `277c709`), pending the owner's confirmation**; overturning it is the pair's one-line condition plus a re-run of the tool | R1-03, R2-02 |
 | **W1-D1** | The owner approved one `v1.x` commit (versions → `1.0.1-dev` …) by its own agent, then `git merge -s ours` of `v1.x` into `master`; a second owner-approved `v1.x` docs commit went the same way (§3.3, R0-01's As built) | R0-01 |
 | **W1-D2** | R0-01's builder may edit the version lines of `CHANGELOG.md`, `README.md` and `docs/client/README.md` its tests need and add "Release lines" to `build-test-deploy.md` — nothing else in those files | R0-01 |
 | **W1-D3** | R3-02 builds and tests the ingest tool on fixtures only; the real ingest of the round-2 winners is deferred (after the FLUX decision) | R3-02 |
@@ -157,7 +159,7 @@ apart:
 | Kind of value | Rule | Examples |
 |---|---|---|
 | **World** (positions in the level, lengths, speeds, radii, accelerations) | ×1.5 | stage `length`, camera keys and speeds, event x, checkpoints, hurtboxes, bullet speeds, path points, fx speeds |
-| **Frame- or edge-anchored** (defined by "the right edge", "one playfield", "the screen centre") | **re-derive from the new frame**, never ×1.5 | spawn x 400 = right edge + 16 → `PLAYFIELD_W + 24`; `laserLength 384` = one screen width → `PLAYFIELD_W`; `rowsTall 25` → 28 (camera `yTo` is **not** here: it is `rel-px`, ×1.5, decision O2); raster `top`/`bottom`; Mode-7 `horizon 100` / `bottom 200`; `DEFAULT_BOSS_Y 100` (centre); `CX = 192` |
+| **Frame- or edge-anchored** (defined by "the right edge", "one playfield", "the screen centre") | **re-derive from the new frame**, never ×1.5 | spawn x 400 = right edge + 16 → `PLAYFIELD_W + 24`; `laserLength 384` = one screen width → `PLAYFIELD_W`; `rowsTall 25` → 28 (camera `yTo` is **not** here: it is `rel-px`, ×1.5, decision O2); raster `top`/`bottom`; Mode-7 `horizon 100` / `bottom 200`; `DEFAULT_BOSS_Y 100` (centre); `CX = 192`; **the map's right end** — a map is `length + PLAYFIELD_W` wide, so a heightfield segment, region or RLE row that reaches it ends at `length′ + 640` (zone D's segment `to 9984` → 15040, not ×1.5 = 14976 — R1-03) |
 | **Time, angle, count, score** | unchanged | telegraph ticks, `OPTION_SPACING` (ticks), timers, aim directions, pool sizes, point values |
 
 **The vertical fit.** World y × 1.5 fills 300 px of the new 336-px playfield, so 36 px (3 tile rows) are left
@@ -775,6 +777,62 @@ moved.
       the viewport tests).
 - **Acceptance:** goldens unchanged; `pnpm test`, `pnpm test:e2e` and `pnpm bench` green; a repo-wide scan test
   (like R1-01's) over `packages/*/src`, `apps/*/src` and `scripts/`.
+- **Refs:** Appendix A.1, A.2; owner decisions O8 (pinned mirrors), O9 (the capture scale).
+- **Manual (owner):** none.
+- **As built** (14 commits in four lanes, a–d, plus the orchestrator's `64f106f`, 2026-10-17; review round 1 (a–c)
+  found two majors, fixed by `ac4de59`; round 2 clean; round 3 (d) two minors, fixed by `6a4f5af` / `10c9811`; round
+  4 clean):
+  - **render-pixi** (`5ec7ac5`): the renderer, the layer effects and the Mode-7 floor default to `FRAME_W` / `FRAME_H`,
+    `LAYER_EFFECT_ROWS = FRAME_H`; the debug overlay's `COL` / `ROW` are `GLYPH_W` / `LINE_H` and its `384`s
+    `PLAYFIELD_W`. The scope's other lines (popup clamps, the terrain view, `offsetY`, audio-web's pan width) were
+    already derived — checked only. **The Mode-7 page bug is fixed:** `Mode7Floor.bind(view, tile, page?)` passes the
+    tile's own atlas page and the new `Mode7Shader.setPage(page)` swaps the shader's texture at bind time only (a new
+    required member — `dimension-runtime.test.ts`'s fake gained it); `mode7-pages.test.ts` over a two-page atlas fails
+    on the old code.
+  - **shell and Electron** (`6007ad9`, `31d99ae`): a shell fingerprint first — `packages/shell/test/frame-fingerprint.test.ts`
+    hashes five walks through flight, showcase and fx-gallery, pinned on the unchanged code (re-pin only on purpose,
+    `SHMUP_FINGERPRINT_PRINT=1`); then the scenes' bars from `HUD_BOTTOM_Y` / `HUD_BAR_HEIGHT`, their labels from
+    `FRAME_W` / `FRAME_CX`, the flight WARNING band at `FRAME_CY − 8 − H/2`, the memory estimator's defaults, and the
+    boot passes `width: FRAME_W, height: FRAME_H`; telemetry already reported the renderer's own size
+    (`renderer.width` / `height`). Electron's main process cannot import core, so `window-state.ts`
+    keeps a mirror `FRAME_WIDTH` / `FRAME_HEIGHT` (O8) pinned by `window-frame.test.ts`; the default window scale is
+    `floor(1280 / FRAME_WIDTH)` and the largest `floor(3840 / FRAME_WIDTH)` — 3 / 10 now, 2 / 6 at 640×360 (§2.7).
+  - **Scripts and browser tests** (`2771f2d`, `72491f5`, `8c6792d`, `8a043bb`): `scripts/frame.mjs` is the Node scripts'
+    plain-JS mirror of core's frame constants plus `SPAWN_LEAD` (`PLAYFIELD_W + 16`) and `CAPTURE_SCALE`
+    (`floor(1280 / FRAME_W)`, O9), pinned export by export by `test/scripts/frame.test.ts`. `tiled-import.mjs`,
+    `store-assets.mjs` (screenshot scale `min(⌊1920 / FRAME_W⌋, ⌊1080 / FRAME_H⌋)`, so the store shots stay 1920×1080
+    after the flip instead of growing to 3200 px), `doc-screenshots.mjs`, `doc-images.mjs` and the Playwright viewport
+    read it; `test/e2e/frame-pixels.ts` (`VIEWPORT`, `SCALE`, `sx`, `sy`, `pixelIndex`, the constants) replaces the
+    specs' `3x + 1`, and 30 specs take their frame numbers from it. The store placeholders and doc images came out
+    byte-identical. Review round 1 found HUD rows, the boss bar's x and screen-centred boxes still literal in `lives`,
+    `advanced-bosses` and `fx-gallery` and in `doc-screenshots.mjs`' title blink band (`ac4de59`; the fx-gallery box
+    moved 4 px to centre on the burst, flight's top scan grew to `HUD_BOTTOM_Y`). Rows that come from content (the
+    zone specs' bands and skies, Mode-7 rows) stay literal for R2-03.
+  - **The repo-wide scan** (`8540fc8`, `308d6e0`, `6a4f5af`): R1-01's scanner moved into the shared test helper
+    `packages/core/test/helpers/frame-literal-scan.ts` (core's own scan uses it — the same 18 entries and identical
+    hits). `test/integration/frame-literals-repo.test.ts` parses every other package's `src/`, every app's `src/` **and
+    `scripts/`** and the root `scripts/` — 148 files today, the trees read from disk so a new package or app joins by
+    itself — and bans the same numbers. **It found no real frame literal outside core** (a–c had derived them all), so
+    its allow-list holds **22 entries (23 literals)**, keyed by file, symbol path and value with a reason: the four
+    mirror definitions (whose entries read `value: FRAME_W` / `FRAME_H`, so they follow the flip), the TV bench's
+    384×216 row (×4), five HTTP 200s, the Backquote keyCode 192, six alphas, two colour channels and a brightness sum.
+    `apps/*/scripts` was beyond the acceptance's list; review round 3 added it after finding "the game renders 384x216
+    x5" in `apps/webos/scripts/appinfo.mjs`, which now derives that message from `scripts/frame.mjs`. **Not scanned:**
+    `test/`, the `vite*.config.ts` files and `vite.shared.ts`, `apps/*/index.html`, `apps/tizen/bench/`,
+    `apps/tizen/polyfills/` and `tools/` (review round 3 found them clean, `tools/`' bench data and HTTP codes aside).
+  - **The boss-bar pin** (`859632f`, `10c9811`): specs cannot import core, so `frame-pixels.ts` derives the boss HP bar's
+    place the way `core/ui` does — `BOSS_LABEL_X`, `BOSS_LABEL_W`, `BOSS_BAR_X`, `BOSS_BAR_W`, `BOSS_FILL_Y` (148, 24, 176,
+    64, 3 today) from `FRAME_CX` and `GLYPH_W` — and `test/scripts/frame.test.ts` checks each against what core's real
+    `buildHud` draws for a frame with the bar up, and against `HUD_LAYOUT`; a 1-px move in core fails it.
+  - **The render bench's ×2 scenario** (`e9e5af7`): `render.perf.ts` defaults to `FRAME_W` × `FRAME_H`, and its "knob" is
+    `2·FRAME_W` × `2·FRAME_H` — still `768x432 internal (raster-range)` today, 1280×720 after the flip — with the
+    pooled-target floor `nextPowerOfTwo(2·FRAME_W) · nextPowerOfTwo(2·FRAME_H) · 4` (2 MiB today, 8 MiB then).
+  - **Build:** the webOS appinfo check imports `scripts/frame.mjs`, so `turbo.json`'s `globalDependencies` lists it
+    (`64f106f`; master CI 39056150718 had failed `tv-engine-floor`'s cache-key test until then).
+  - **Acceptance:** goldens, demos, the v1 baseline and the presentation, shell and content-DB fingerprints unchanged;
+    Tizen `app.js` 397.1 KB gzip; master CI 39066101927 (at `3943f8a`) green — test shards, every e2e shard and the
+    build + benchmark job.
+  - Notes for later steps are in R2-01 and R2-03.
 
 ### R1-03 — Units in the content schemas, and the rescale tool
 
@@ -804,6 +862,96 @@ moved.
 - **Acceptance:** the unit test covers every kind; `rescale --factor 1 --dry-run` reports zero changes on the
   shipped content; the README of `content/` documents the units.
 - **Refs:** Appendix B; `docs/dev/content-data.md`.
+- **Manual (owner):** none to do. O11 (ground spawns keep their terrain spot) is built as the default and waits for
+  the owner's confirmation; it blocks nothing.
+- **As built** (14 commits — lanes R1-03a–b and R1-03c–d, then five fixer rounds — 2026-10-17; six review rounds —
+  1: two majors, 2: one major and four minors, 3: one major and two minors, 4: three minors, 5: one minor, 6: **zero
+  findings**):
+  - **The content-DB fingerprint first** (`75c227c`): `test/integration/content-db-fingerprint.test.ts` hashes every
+    `ContentDb` field and the sfx, music, input-profile and fx loaders' output for the shipped content and the
+    examples, pinned on the unchanged loader. It stayed green unedited through every R1-03 commit: no parsed value
+    moved.
+  - **Schema metadata and the units** (`14dcd2a`, `c9ea100`, `7fdca2d`, `160d68f`): every schema carries a frozen `meta`
+    (`SchemaMeta`, required; the parser never reads it), `s.int` / `s.num` take a `unit`, and `s.custom(typeName,
+    parse, meta)` builds the hand-made schemas (the pattern DSL's expressions, speeds and node lists; a demo's opaque
+    recorded config). `core/data/units.ts` has **26 units** — the scope's 14 plus `band-y`, `texels`, `tile-px`, the audio
+    units of O1, O2's `seed` / `version` / `index`, and two looked up: `param` (O5's `BEHAVIOR_PARAM_UNITS`, all 65
+    behaviours) and `inherit` (a pattern's `$1`…`$9`) — each with a rule (`UNIT_RULES`, `rescaleNumber`, O3's
+    `edgeAnchor`), and the walkers `listNumberFields` / `walkNumbers`. All 150 `s.num` / `s.int` of `core/data` have one;
+    `WORLD_COORD` split into `WORLD_X` / `WORLD_Y`, the heightfield profile into a floor (`base` `rel-px`) and a
+    ceiling (`base` `world-y`). Core exports `CONTENT_FILE_SCHEMAS` (`loadContent` parses with it) and the other
+    packages their file schemas (`SFX_FILE_SCHEMA`, `MUSIC_FILE_SCHEMA`, `INPUT_PROFILES_FILE_SCHEMA`, `FX_FILE_SCHEMA`).
+    Classifications worth knowing: a waypoint's x is `screen-x` and its y `world-y` (like a spawn's); boss x / y are
+    `screen-x` / `screen-y`; Mode-7 `scroll` / `sway` are `ratio`; five tunables differ from their names
+    (`captain.circler.speed`, `boss.steed.bobSpeed`, `captain.crab.turn` are angles, `volcano.lob.spread` a speed,
+    `direct.bolt.turn` a switch). The units modules are tooling only — a test keeps game code from importing them —
+    so `app.js` grew by the unit strings alone (+0.7 KB gzip, 397.1 KB of 512).
+  - **The tool** (`2cb59e9`, `fda9138`, `007feef`): `scripts/content/rescale.mjs` reads every content file and the
+    `example.*.json` samples with its kind's file schema (the packages through Vite's `ssrLoadModule`), skips
+    `content/demos/` (recordings are re-recorded), applies each unit's rule, replaces only the changed numbers in the
+    source text and formats with Prettier, rounds and lists integers (O4), and refuses to write while anything is
+    unclassified or invalid. `content/README.md` documents the units, the pairs and the tool.
+  - **Deviations from the scope, each with its reason:**
+    - **Field pairs** (review round 1; `277c709`, wired by `007feef`): a moving block's `x + screenX` is its world left
+      edge, so the two port as a **world sum** — `x′ = 1.5·(x + screenX) − screenX′`, only the column snaps
+      (400 → 664). Ported alone, the bonus-range and zone-b gap entrances' bricks drifted 64 px off their regions.
+      Ground-enemy spawns carry the same pair (O11). A box's `y` + `h` (blocks, trigger and bonus regions) ports by its
+      edges, so a box hanging from the top edge grows by the pad (0 + 24 → 0 + 72) instead of moving down.
+    - **`band-y` and `rescaleBackdrop` instead of `screen-y` for `parallax[].y`** (round 1 asked for `screen-y`; tried,
+      it opened 18-px gaps in 21 stages' tile stacks and lifted spires off the bottom edge, while `world-y` leaves a
+      36-px empty strip above every top band and ×k alone lifts every bottom band): the bands are placed as one
+      layout with the raster and Mode-7 rows from their art heights — top-edge bands ×k, bottom-edge bands stay on the
+      edge, a band ending on the Mode-7 horizon sits on it, touching bands stay touching, a free band goes by the
+      nearer edge — and raster rows follow the band edge they bound. Every stage of the review's table stays aligned,
+      with no gap on any shipped stage. A band that touched two anchors keeps one and is listed (`BackdropConflict`,
+      `a9aab9e`; none ships).
+    - **Camera `yTo` is `rel-px`** (O2, revised): zone D 200 → 300, gimmick-range 72 → 108; no view passes its map.
+    - **Pattern parameters are kept** (`$1`…`$9`, unit `inherit`): the fields that use them are ported where they are,
+      a scaled expression string becoming `(…) * 1.5`, so each use is ported once however the action combines it
+      (two rewrites, both in `example.patterns.json`).
+    - **The `example.*.json` samples are ported too** — they are a validated content set of their own. The README
+      format samples are not (R2-02).
+    - **Timeline crossings are listed, not fixed** (round 2, `74d092a`): a world-sum event fires 64 px of camera travel
+      earlier than ×k, so the tool re-sorts each stage's `events` / `remix` by the ported x (five stages, nine swaps)
+      and reports each array's old → new index map, and lists every moved event that now fires on the other side of
+      a checkpoint, a camera stop, a `flag` event or a trigger's armed window, every ground enemy that leaves or joins
+      a `ground` bonus window and every moving block whose drift runs ahead. On shipped content that is gimmick-range's
+      falling rock (`events[10]`, branch `high`), which now fires while trigger `events[8]` can still set its flag,
+      so both branches could play, and zone-g `events[15]`, which leaves its bonus window. No automatic port keeps both
+      the spawn column and the trigger's window, so R2-02 decides by hand; the tool names the `until` that restores
+      v1's order.
+    - **The map's right end is frame-anchored** (round 3, `32f2ef8`; refined by `5c8af86`, `3943f8a`): a map is
+      `length + PLAYFIELD_W` wide, so its end ports to `length′ + toWidth`. A heightfield segment reaching the map's
+      last column ends at the new end (zone D 9984 → 15040, gimmick-range 3584 → 5440, weapon-range 2784 → 4240 —
+      ×k left the last 64 px of the last view without terrain); a segment the map never shows stays never shown; a
+      region reaching the end still reaches it; an RLE row tiled in its last column repeats its last cell
+      (`extendRleRow`, the token rebuilt by core's row syntax). A segment that would end before it starts and an RLE
+      row core cannot read are errors. The rule lives in the tool only: no new unit, core unchanged.
+    - **A strict `--art-scale`, with `--force-art-scale`** (rounds 2–3): the bands' heights come from the atlas (built
+      in memory from `assets/source/`, or `--atlas`). The tool measures the art scale from the terrain tiles against
+      the tilesets, refuses to run without `--art-scale` when they measure anything but ×1, and refuses a given
+      `--art-scale` they contradict (exit 2). `--force-art-scale` is for an atlas whose bands are drawn at another
+      scale than its tiles — the one split the measurement cannot see.
+    - **Raster `bands` round at their boundaries** (round 2): raster-range's `[2,2,3,3,4,5,6,7,8,8]` →
+      `[3,3,5,4,6,8,9,10,12,12]`, boundaries at `ceil(1.5·s)`, where a nearest-neighbour ×1.5 upscale puts the art's
+      edges.
+    - **The geometry defaults to core's frame** (today's): after R2-01 the real run passes the v1 numbers as flags.
+  - **Dry runs** (O6): `--factor 1 --dry-run` — 126 files (10 skipped), 10,623 values, **0 changes**.
+    `--factor 1.5 --top-pad 36 --dry-run` — 4,035 changes in 77 files, **0 unclassified, 0 errors**; it lists 1,194
+    values moved by a rule other than ×k, 7 on or above the top edge (hunter-range's −24 spawn, the six hanging bricks
+    and gap regions), 195 rounded integers, 66 values outside today's bounds, 21 timeline items, 11 backdrop
+    placements (no seam, no conflict), 18 padded tilemaps, no view past its map and 2 expressions. Two real runs into
+    copies of `content/` came out byte-identical.
+  - **Tests:** `test/scripts/content/rescale.test.ts` and `rescale-edge.test.ts` (61 — the fixtures in
+    `fixtures/rescale/` with their expected ×1.5 output and a round trip through the loaders, the shipped content at
+    factor 1 and at the real 384×200 → 640 geometry; all pass with core flipped to 640×360 and 12-px tiles),
+    `content-units.test.ts`, `content-file-units.test.ts`, `behavior-param-units.test.ts`, `schema-meta.test.ts`,
+    `units-pairs.test.ts`. The reviews also swept 343,440 ported heightfield segments over 15 geometries, fuzzed 5,456
+    RLE rows against core's decoder and checked every listing against independent scans.
+  - **Acceptance:** met — every kind's numbers have units, factor 1 is the identity on the shipped content and
+    `content/README.md` documents the units; goldens, demos, the v1 baseline and both fingerprints unchanged; master
+    CI 39066101927 green.
+  - Notes for R2-01 and R2-02 are in those steps.
 
 ### R1-04 — Tile size and font metrics are data
 
@@ -911,6 +1059,24 @@ moved.
     `REPLAY_FORMAT_VERSION` and `RUN_REPLAY_FORMAT_VERSION` → 2, plus the header's frame size checked, so v1
     replays are refused with a clear message (a string id in `DEFAULT_UI_TEXT` and the three string tables).
   - **Hosts:** Electron `window.json` version bump and re-fit; CRT pitch re-checked at ×3 / ×2.
+  - **Notes from R1-02 and R1-03** (their As built and reviews):
+    - **The interim upscaler is plain nearest-neighbour**, source row `floor(d / 1.5)`: the rescale tool rounds raster
+      `bands` to `ceil(1.5·s)`, which is where that sampling puts the art's edges (pixel-centre sampling would land the
+      `.5` boundaries 1 px higher). **The terrain tiles must come out at 12 px** (`terrain.mjs`), next to the ×1.5
+      bands: R2-02's `--art-scale` guard measures the tiles and takes them for the bands.
+    - **The frame-literal scans at the flip** (they then ban 640 / 360 / 336 / 348): allow-list or rework render-pixi
+      particles' 360° ×5 (angles), the shell's boot-overlay window fallback (`createBootOverlay.fit` 640 × 360),
+      `BENCH_SIZES`' 640×360 row ×4 (bench data, like its 384 row) and `terrain.mjs`' colour `'#336a64'` (or teach the
+      scanner to skip `#rrggbb`); in core, `EndingScene.drawCitadel.sink` 360 ×2, `StoryScene.drawDawn.rise` 360 and
+      the angle 640 in `DIRECTION_HEADINGS` (R1-01). The Electron and `scripts/frame.mjs` mirrors flip with core —
+      their pins fail otherwise, and their allow-list entries follow `FRAME_W` / `FRAME_H`; `frame.test.ts`'s
+      384-only boss-bar case switches itself off.
+    - **Literal, and read by no scan:** `apps/webos/test/boot/boot-wiring.test.ts:28-31`'s fake renderer
+      (384×216 ×5); `packages/render-pixi/package.json`'s description; the docblocks of the shell telemetry's
+      `internalWidth` / `internalHeight` ("384 / 216 by default"); `mode7.spec.ts`'s `place.scale >= 2`, which the
+      `classic` window breaks at 640×360 in a 1280×720 viewport (×1).
+    - **The render bench's ×2 scenario becomes 1280×720** (×1 on its 1280×720 display) with an 8 MiB pooled filter
+      target (2048×1024): re-read its heap and p95 gates on that run.
 - **Acceptance:** boots in web, Tizen and webOS builds; title, menus and HUD lay out correctly at 640×360 (e2e
   screenshots analysed at the new viewport), with text drawn in the 9×12 interim font (R1-04's deferred browser
   check); a v1 save loads, keeps its options and archives its scores; a v1 replay is refused. Goldens are expected
@@ -941,12 +1107,42 @@ moved.
     byte, after it they are the frozen v1 record (re-runs skipped, re-recording refused). Until then an intended
     simulation change re-records them too (`SHMUP_V1_BASELINE_UPDATE=1 …`, [test/golden/README.md](test/golden/README.md)),
     next to `pnpm golden:update`. The behaviour defaults no tool sees are listed in R1-01's As built.
+  - **Notes from R1-03** (its As built and reviews):
+    - **Run the tool first** — before `DEFAULT_BLOCK_SCREEN_X` / `DEFAULT_SPAWN_SCREEN_X` become `PLAYFIELD_W + 24` (the
+      block pair reads its old default column from the constant) and before `DEFAULT_BONUS_WINDOW` is scaled (the
+      timeline check reads core's value ×k). The real run, after R2-01: `node scripts/content/rescale.mjs --factor 1.5
+      --top-pad 36 --from-width 384 --from-height 200 --tile-size 8 --to-width 640 --art-scale 1.5` — with
+      `--art-scale 1.5` only once the 12-px tiles **and** the ×1.5 bands are both in the atlas (the tool refuses an art
+      scale the tiles contradict; leave the flag out on any other atlas).
+    - **Hand fixes it lists:** gimmick-range — give trigger `events[8]` (`took-low`) an `until` ≤ 2275, below the
+      falling rock's ported 2276 (a ship within ~34 px of the left edge can then no longer set the flag in that
+      stretch), or move the rock; zone-g `events[15]` leaves `events[14]`'s `ground` bonus window (3446 against 3450 —
+      the pair moves ground spawns 64 px earlier while the window's `x` / `until` stay ×k); the 66 values outside
+      today's bounds (frame-derived bounds widen with R2-01; fixed ones such as boss `parts[].x` ±512 — IRON
+      LEVIATHAN's 384 → 576 — need a deliberate bound change); the 7 values on or above the top edge.
+    - **Comparing with the v1 baseline:** pair events through the re-sort's index map (gimmick-range 9↔10, zone-c
+      8↔9, zone-d 42↔43, zone-g 14↔15, zone-h 15↔16, 19↔20, 28↔29, 32↔33, 62↔63) — every other listing names indices
+      as written; ground-enemy spawns appear 64 px of camera travel earlier at the same terrain spot, so the
+      first-visible-tick check exempts them (O11).
+    - **To look at by hand:** rows near the centre snap to 168 and sit 18 px above where the +36-pad mapping puts
+      world content (a raid's camera pans 18 px down at its start; boss y 150 / 136 → 243 / 222, while an explicit
+      spawn `y: 100` → 186); `screen-x` ranges whose ends snap to different anchors stretch (`boss.widow` 270 / 316 →
+      437 / 538, `boss.walker` 110 / 300 → 197 / 514); heightfield ceilings get only part of the pad over the ~6
+      columns at a segment's ends (zone A's 3440–6400 segment — visual only); zone H's top pistons (57 ± 33) no longer
+      reach above the top edge; O4 rounds odd hurtbox half-extents up 0.5 px (194 entries — the ships' terrain and
+      pickup boxes 1 px larger: R2-04 should know).
+    - **By hand, not by the tool:** the format samples in `content/*/README.md`; retire or re-aim the real-geometry
+      tests of `rescale.test.ts` and the two round-5 tests of `rescale-edge.test.ts` that read the shipped
+      `terrain-a` tileset — they assume 8-px tiles.
+    - **Code defaults with world units** that were missing from Appendix B are in it now: `DEFAULT_BONUS_WINDOW`,
+      `DEFAULT_MODE7_FOG_DEPTH`, `DEFAULT_REVENGE_SPEED`, `DEFAULT_PATTERN_SPEED`.
 - **Acceptance:**
   - `pnpm content:check` is green, including the 4-way rules at their new values;
   - the playtest bot clears every zone, bonus stage and the boss rush in god mode within its budgets;
   - every zone's camera travel time is within ±2 % of v1;
   - nothing spawns visibly on screen that spawned off screen in v1 (a test compares first-visible ticks of every
-    spawn between a v1 and a v2 run of each zone, ±1 tick);
+    spawn between a v1 and a v2 run of each zone, ±1 tick; ground-enemy spawns are exempt from the tick comparison —
+    they keep their terrain spot and come 64 px of camera travel earlier, O11);
   - every enemy that enters from above the screen reaches the same place as in v1 (×1.5 + 36 px, within 2 px):
     the §2.6 top-edge fix-ups are complete.
 
@@ -958,7 +1154,9 @@ moved.
   - **Re-bless** the 62 golden replays (`pnpm golden:update`) and **re-record** the 9 attract demos
     (`content/demos/`), with the reason in the commit;
   - e2e at 1280×720 with the R1-02 helper; the 12 specs that count exact placeholder colours re-pointed at the
-    interim art;
+    interim art; the spec rows R1-02 left literal because they come from content (the zone specs' bands, skies and
+    ridges, `mode7.spec`'s floor rows, `raster.spec`'s bands, `zone-a.spec`'s `fy < 160`, `zones-hi.spec`'s ending
+    panel row, and the layouts of `doc-images.mjs` / `store-assets.mjs`) re-measured on the ported content;
   - the headless render bench's 640×360 scenario becomes the default;
   - `pnpm docs:images`, `pnpm docs:screens` and `pnpm store:assets` regenerated (store screenshots 1920×1080 =
     640×360 × 3);
@@ -1653,7 +1851,11 @@ webOS 80² / 130²).
 | `ENTER_START_X`, `ENTER_END_X`, `LEAVE_MAX_SPEED` | player | −24, 64, 8 | −36, 96, 12 |
 | `BOSS_ENTRY_MARGIN` / `BOSS_FIRE_MARGIN` | bosses | 8 | 12 |
 | `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y` | data | 296 / 100 | frame-anchored: right edge − 132 / playfield centre (168) |
-| `DEFAULT_SPAWN_SCREEN_X`, `DEFAULT_BLOCK_SCREEN_X` | enemies / data | `W + 16`, 400 | frame-anchored: `PLAYFIELD_W + 24` |
+| `DEFAULT_SPAWN_SCREEN_X`, `DEFAULT_BLOCK_SCREEN_X` | enemies / data | `W + 16`, 400 | frame-anchored: `PLAYFIELD_W + 24`. A block's `x` and `screenX` port **together** (R1-03: `x + screenX` is its world left edge, ×1.5; `x′ = 1.5·(x + screenX) − screenX′`), and so do a ground enemy's (O11). Change these defaults only **after** R2-02's rescale run: the block pair reads its old default column from `DEFAULT_BLOCK_SCREEN_X` |
+| the map's right end (`length + PLAYFIELD_W`, `stageMapWidth`) | stage | `length + 384` | frame-anchored: `length′ + 640` — not a constant, but a heightfield segment, region or RLE row reaching it ports to it (the rescale tool's map-end rule, R1-03) |
+| `DEFAULT_BONUS_WINDOW` (a `ground` entrance's window) | data | 600 | 900 — scale it after the rescale run (its timeline check reads core's value ×k) |
+| `DEFAULT_MODE7_FOG_DEPTH` (texels) | data | 96 | 144 |
+| `DEFAULT_REVENGE_SPEED`, `DEFAULT_PATTERN_SPEED` | data / patterns | 1.25, 1 | 1.875, 1.5 |
 | `TILE_SIZE` | data → config | 8 | 12 |
 | `HUD_BAR_HEIGHT` | config | 8 | 12 |
 
@@ -1680,8 +1882,8 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 running (FLUX.2 followups, two regenerations); see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | done — 2026-10-17 |
-| R1-02 | Frame constants in presentation, hosts, scripts and tests | in progress |
-| R1-03 | Units in the content schemas, and the rescale tool | in progress |
+| R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
+| R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | not started |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | not started |

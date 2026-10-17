@@ -30,7 +30,7 @@ only), §4.10 (no UI framework); plan §3.3 (frame), §3.4 (render contract), §
 owners) and decisions **D20** (HUD bars outside the playfield), **D25** (no `fetch` on the
 TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser host).
 
-> **Thinking of changing the internal resolution?** The frame is 384×216 upscaled by whole numbers (decision D19). What that costs at 768×432, 960×540 or 1080p — fill rate, power-of-two render-target memory, which findings change, and why 960×540 is not an integer multiple — is in [`render-performance-review.md` §7](render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-).
+> **Thinking of changing the internal resolution?** The frame is 384×216 upscaled by whole numbers (decision D19). What that costs at 768×432, 960×540 or 1080p — fill rate, power-of-two render-target memory, which findings change, and why 960×540 is not an integer multiple — is in [`render-performance-review.md` §7](render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-). v2 does change it, to 640×360 ([plan_resolution.md](../../plan_resolution.md)): since R1-02 the renderer's defaults, the layer effects, the Mode-7 floor, the debug overlay, the shell's own scenes, the memory estimator and the hosts take the frame from `@shmup/core`'s constants (`FRAME_W`, `FRAME_H`, `HUD_BAR_HEIGHT`, `GLYPH_W` …), and `test/integration/frame-literals-repo.test.ts` keeps literal frame numbers out ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
 
 ## The picture at a glance
 
@@ -704,8 +704,11 @@ pnpm test:e2e --project=chromium                             # one engine only (
 
 `test:e2e` runs `turbo run build:test` for `@shmup/web` and `@shmup/tizen` (since M1-19 the
 **test builds** — release code plus the debug tools, so `window.__shmupDebug` exists), then
-`playwright test --config test/e2e/playwright.config.ts`: headless Chromium, 1152×648 viewport
-(×3, so frame pixel `(x, y)` is screenshot pixel `(3x + 1, 3y + 1)`), the web build served by
+`playwright test --config test/e2e/playwright.config.ts`: headless Chromium, the viewport `VIEWPORT` of
+`test/e2e/frame-pixels.ts` — the frame at `CAPTURE_SCALE` (`floor(1280 / FRAME_W)`, `scripts/frame.mjs`):
+1152×648 today (×3, so frame pixel `(x, y)` is screenshot pixel `(3x + 1, 3y + 1)`), 1280×720 after
+R2-01 (×2) — and since R1-02 every spec samples through its `sx` / `sy` / `pixelIndex` instead of
+writing `3x + 1`, the web build served by
 `vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`. That is the
 `chromium` project, which runs every spec; since M2-18 a `firefox` project runs only the
 cross-engine determinism spec (`determinism.spec.ts`, headless Firefox against the web build's
@@ -933,7 +936,7 @@ a shared CI runner as often as not. That decides what its output is worth:
 | **Pooled render-target bytes** — Pixi's power-of-two rounding is the same everywhere, and so is the VRAM it costs | **Fill-rate conclusions.** A tiler's cost model for a second full-screen pass is not SwiftShader's |
 | **Structure rebuilds** — a pure scene-graph property (the review's F1) | **Frame-rate verdicts.** The bench never claims 60 fps; only the overlay on the monitors can |
 | **Heap delta** — JS allocation is V8's, not the GPU's | |
-| **Relative comparisons** between scenarios on one run (CRT off vs light vs full; 384×216 vs 768×432) | Comparisons **across machines or across runs on different machines** |
+| **Relative comparisons** between scenarios on one run (CRT off vs light vs full; the shipped frame vs ×2 of it — 384×216 vs 768×432 today) | Comparisons **across machines or across runs on different machines** |
 
 So: M3-02d and M3-02e are judged against the *counted quantities* and the *relative* comparisons
 this step recorded, and the millisecond columns exist to catch a path that became structurally more
@@ -953,8 +956,11 @@ that decide whether the game holds 60 fps come from the overlay on the monitors
 | **JS-heap delta over 600 frames** | The gate **F5** needs: the Node allocation guards stop at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation. A deliberately leaky fixture in the same file proves the gate really fails |
 
 The **internal frame size is a scenario parameter** (review §7.5): one scenario runs the
-layer-effect load at 768×432 — ×2 of the shipped 384×216, the first integer step — so "what would
-a higher internal resolution cost?" is a bench run rather than a build-and-hope. What it shows
+layer-effect load at ×2 of the shipped frame — since R1-02 `2·FRAME_W` × `2·FRAME_H`, so 768×432
+today (the first integer step of 384×216) and 1280×720 after R2-01, when its pooled filter target
+grows to 2048×1024 (8 MiB, the floor `render.perf.ts` asserts) — so "what would a higher internal
+resolution cost?" is a bench run rather than a build-and-hope; the other scenarios default to
+`FRAME_W` × `FRAME_H`. What it shows
 today: the pooled filter target goes 512 KB → 2,048 KB and the frame render texture 324 KB →
 1,296 KB, exactly the ×4 of §7.3's table.
 
@@ -1302,6 +1308,8 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/palette/palette-bullets.test.ts`, `renderer/renderer-wiring.test.ts` | M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable` (variants in place of their sprites, the rest kept); the renderer binding the bending laser view after the lasers and `setBulletPalette` swapping the sprite tables to a palette's variants and back |
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
+| `packages/render-pixi/test/effects/mode7-pages.test.ts` | R1-02: the Mode-7 floor samples the atlas page its tile lives on — the real shader over a two-page atlas, `Mode7Floor.bind(view, tile, page)` → `Mode7Shader.setPage` at bind time only (no frame touches it, a same-page bind does nothing); fails on the old page-0 code |
+| `packages/shell/test/frame-fingerprint.test.ts` | R1-02: the shell's own scenes (flight, showcase, fx-gallery) hashed along five scripted walks, pinned on the code before R1-02 derived their frame numbers — green unedited unless a step changes what they draw (re-pin with `SHMUP_FINGERPRINT_PRINT=1`) |
 | `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
 | `packages/shell/test/` | The save at boot (M1-17: volumes on a fake audio, the app's profile callbacks, corrupt / unreadable / v0 saves, a failing storage, the Options screen end to end, `blur`, boot timing and `data-shmup-boot-ms`), `connectOptionEvents` / `applyAudioOptions` (`dispatch-options*.test.ts`; `dispatch-options-palette.test.ts` — M2-02: every palette by its index, bad indices and no callback ignored, disconnect), the saved palette applied at boot (`boot.test.ts`); the scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
 | `packages/render-pixi/test/debug/`, `renderer/renderer-draw-calls.test.ts` | The debug overlay (M1-19): panel lines and values, frame graph, every outline kind, one colour per list, no dropped commands with every pool full, allocation-free `update`; the draw-call counter ([debug-and-replays.md](debug-and-replays.md#tests)) |

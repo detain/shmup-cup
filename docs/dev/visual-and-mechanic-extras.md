@@ -45,7 +45,7 @@ generators).
  presentation only (never hashed, never simulated)
    content stage `mode7` ─► StageMode7 ─► createStageEffectsView ─► WorldView.effects.mode7
                                                                       │  (Mode7View)
-   PixiRenderer.bindWorld ─► Mode7Floor.bind(view, atlas tile rect) ───┘
+   PixiRenderer.bindWorld ─► Mode7Floor.bind(view, tile rect, page) ───┘
    every frame ─► Mode7Floor.sync(camera) ─► MODE7_* filter on a full-frame sprite (BG_MID)
    UserOptions.display.crtFilter ─► UserOptionKind.CrtFilter ─► DisplayTarget.setCrtFilter
                                   ─► PixiRenderer.setCrtFilter ─► CrtPass over the upscaled pass
@@ -84,7 +84,10 @@ geometry:
 Mode-7 program bound to it. For every output row the fragment shader turns the row's
 distance below `horizon` into the plane's depth `height / (row − horizon)`, walks the plane's origin
 along the plane's **turned axes** and samples the floor tile straight out of the atlas with `fract`
-— no separate floor texture, no per-row draw call. Distance fades the colour into `fog` over
+— no separate floor texture, no per-row draw call. It samples **the page the tile lives on**: since
+R1-02 the renderer passes that page to `Mode7Floor.bind(view, tile, page)`, which hands it to
+`Mode7Shader.setPage` at bind time only (the shader used to keep page 0 — harmless with one atlas page,
+wrong once R3-04 adds more). Distance fades the colour into `fog` over
 `fogDepth` texels; rows above the horizon (or past `bottom`) stay transparent.
 
 **No trigonometry in the shader.** The host passes the axes (`uRight`, `uForward`) already turned,
@@ -391,6 +394,7 @@ ship): SHIP SELECT → MANTA, then pick up the stage's yellow items and press `S
 | `core/test/bosses/bosses-pull.test.ts`, `bosses-pull-alloc.test.ts`, `core/test/behaviors/behaviors-p2-bosses.test.ts` | The pull field (including the slot-reuse regression) and the three P2 boss scripts |
 | `core/test/scoring/scoring-graze.test.ts` | The graze value from the content's scoring rules |
 | `core/test/stage/stage-mode7.test.ts`, `render-pixi/test/effects/mode7.test.ts`, `mode7-edge.test.ts` | The stage section and its view, the filter's uniforms and the floor's binding / rebinding |
+| `render-pixi/test/effects/mode7-pages.test.ts` | R1-02: the floor binds its tile's own atlas page (a two-page atlas; never per frame, nothing on a same-page bind) |
 | `render-pixi/test/effects/crt.test.ts`, `shaders.test.ts` | The CRT looks, the resolution cap, the pitch, and a GLSL ES 1.0 syntax check of both new programs (plus a real WebGL1 compile + link in Chromium) |
 | `render-pixi/test/viewport/viewport-aspect.test.ts`, `renderer/renderer-wiring.test.ts` | The aspect windows and panels, and the renderer's wiring of all three |
 | `core/test/scenes/scenes-extras-page.test.ts`, `scenes-escape.test.ts`, `core/test/data/campaign-escape.test.ts` | The EXTRAS page, the DISPLAY page's new rows, the escape sequence in the loader and through the flow |

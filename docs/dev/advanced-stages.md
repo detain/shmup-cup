@@ -96,7 +96,7 @@ flags join the stage's `flagNames` with those of `flag` and `trigger` events (st
 | `type` | Fields | Checks |
 |---|---|---|
 | `trigger` (`StageTriggerEvent`) | `flag` (→ `flagId`), `region: StageRegion { x, y, w, h }` (world px), `value?` (default `true`), `until?` (camera x; default `region.x + region.w`) | ≤ `MAX_STAGE_TRIGGERS` (32) per stage; `until` not before the event's `x` |
-| `block` (`StageBlockEvent`) | `y` (world, top edge), `w`, `h` (px, whole tiles), `screenX?` (default `DEFAULT_BLOCK_SCREEN_X` = `PLAYFIELD_W + 16`, 400 today — 16 px past the view's right edge, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`; the left edge is world x `x + screenX`), `tile?` (a tile **name**, default `solid` → `tileId`, resolved in the terrain pass), `vx?`, `vy?` (drift px/tick), `dx?`, `dy?` (swing px), `period?` (ticks, default `DEFAULT_BLOCK_PERIOD` 120), `phase?` (binary units) | on the tile grid, at most `MAX_BLOCK_CELLS` (64) tiles; the stage needs a tilemap; the tile must exist |
+| `block` (`StageBlockEvent`) | `y` (world, top edge), `w`, `h` (px, whole tiles), `screenX?` (default `DEFAULT_BLOCK_SCREEN_X` = `PLAYFIELD_W + 16`, 400 today — 16 px past the view's right edge, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`; the left edge is world x `x + screenX`, so the ×1.5 port moves `x` and `screenX` together — a world-sum pair, [content-data.md](content-data.md#units-and-the-rescale-tool-r1-03)), `tile?` (a tile **name**, default `solid` → `tileId`, resolved in the terrain pass), `vx?`, `vy?` (drift px/tick), `dx?`, `dy?` (swing px), `period?` (ticks, default `DEFAULT_BLOCK_PERIOD` 120), `phase?` (binary units) | on the tile grid, at most `MAX_BLOCK_CELLS` (64) tiles; the stage needs a tilemap; the tile must exist |
 
 **The `ballistic` mover** (`EnemyMoverSpec`): `{ type: 'ballistic', vx, vy, gravity?, maxFall?,
 trigger?, land? }` — `land` is a `BallisticLandName` (`'pass' | 'stop' | 'shatter'`, default
@@ -363,7 +363,7 @@ every shipped stage.
 ## Importing a Tiled map (`pnpm content:tiled`)
 
 `scripts/content/tiled-import.mjs` converts a Tiled JSON map (`.tmj`: orthogonal, not infinite,
-8 × 8 px tiles) into stage content. The output is ordinary content — `loadContent` validates it
+`TILED_TILE_SIZE` tiles — 8 × 8 px today) into stage content. The output is ordinary content — `loadContent` validates it
 like a hand-written stage; the importer only translates.
 
 ```sh
@@ -375,9 +375,9 @@ pnpm format && pnpm content:check                    # house style, then validat
 
 | Tiled | Stage JSON |
 |---|---|
-| Map properties `id`, `name`, `tileset` (content id, default `terrain-a`), `musicStage` / `musicBoss`, `length` (default map width − 384), `speed` (the key added at x 0 when none) | The header |
+| Map properties `id`, `name`, `tileset` (content id, default `terrain-a`), `musicStage` / `musicBoss`, `length` (default map width − `VIEW_WIDTH`, the playfield width — 384 today), `speed` (the key added at x 0 when none) | The header |
 | The tile layer `terrain` (else the first) — array or CSV data | `tilemap.rle`, one row per map row; gid → content tile id `gid − firstgid + 1` (the Tiled tileset lists its tiles in the content tileset's order); flipped / rotated tiles and compressed / base64 layers are errors |
-| Objects by class (`class`, or `type` before Tiled 1.9) with custom properties as fields | `spawn` / `formation` at `x = max(0, obj.x − 400)` (`screenX` when nearer the start), `y` made **camera-relative**; `warning`, `boss`, `music`, `speed`, `flag`, `end` at `obj.x`; `camera` keys; `checkpoint`s; `trigger` rectangles (armed when the region enters the view, or at `armX`); `block` rectangles (appearing 16 px past the right edge); `branch` declarations |
+| Objects by class (`class`, or `type` before Tiled 1.9) with custom properties as fields | `spawn` / `formation` at `x = max(0, obj.x − SPAWN_LEAD)` (`PLAYFIELD_W + 16` — 400 today; `screenX` when nearer the start), `y` made **camera-relative**; `warning`, `boss`, `music`, `speed`, `flag`, `end` at `obj.x`; `camera` keys; `checkpoint`s; `trigger` rectangles (armed when the region enters the view, or at `armX`); `block` rectangles (appearing 16 px past the right edge); `branch` declarations |
 | Any object with a polyline | A `paths` entry (id = the object's name, points relative to the first, rounded to 1/100 px) |
 
 Unknown classes are errors (a typo never drops an enemy silently). Events are sorted by `x`, ties
@@ -392,6 +392,12 @@ warnings }` is what the tests call; the committed fixture `test/scripts/content/
 must convert to exactly `tiled-sample.stage.json` / `.paths.json`, and a test runs the real
 `StageRunner` on the imported stage and checks every spawn lands within 1 px of its object's world
 y.
+
+`TILED_TILE_SIZE`, `VIEW_WIDTH` and `SPAWN_LEAD` come from `scripts/frame.mjs` since R1-02 — the
+scripts' pinned copy of core's `TILE_SIZE`, `PLAYFIELD_W` and `PLAYFIELD_W + 16` — so after R2-01's
+flip the importer expects 12-px tiles and a 640-px view by itself; the 16-px spawn lead is a world
+margin, which R2-02 scales with `DEFAULT_SPAWN_SCREEN_X` (plan R2-02: "the Tiled importer at 12-px
+tiles and a 640 view").
 
 ## Using it headlessly
 

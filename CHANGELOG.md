@@ -38,6 +38,23 @@ new presentation fingerprint are unchanged.
   edges, the point items' score targets, the content schema's bounds, the campaign's line caps —
   derives from them, so R2-01's switch to 640×360 is a change of those constants
   ([conventions.md](docs/dev/conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
+- **The rest of the code takes the frame from core too** (R1-02): render-pixi's defaults, the layer
+  effects, the Mode-7 floor and the debug overlay, the shell's own scenes, the memory estimator and
+  the boot, Electron's window sizes (default ×3 / largest ×10 today, ×2 / ×6 at 640×360), the scripts
+  (`scripts/frame.mjs`, a pinned copy of core's constants for code that cannot import it — the Tiled
+  importer, the store and doc pictures, the webOS manifest check) and the browser tests (the viewport
+  and every pixel sample through `test/e2e/frame-pixels.ts`). The store screenshots stay 1920×1080
+  after the switch. **Fixed:** the Mode-7 floor sampled atlas page 0 whatever page its tile was on —
+  harmless with today's one page, wrong as soon as the atlas has more.
+- **Every content number has a unit, and a tool ports the content by them** (R1-03): every number of
+  every content kind says what it means — a world x, a relative offset, a speed, a row anchored to the
+  screen's edge, ticks, an angle … (26 units; behaviour tunables through `BEHAVIOR_PARAM_UNITS`) — and
+  `node scripts/content/rescale.mjs --factor 1.5 --top-pad 36` ports `content/` to v2's ×1.5 world by
+  them: world values ×1.5, absolute y plus the 36-px pad, edge-anchored values kept at their distance
+  from the new edge, blocks and ground enemies kept on their terrain, the parallax backdrop placed as one
+  layout, the map's right end following the new view, everything it cannot do alone listed for a person
+  to check. It changes nothing at factor 1 and classifies every shipped value at ×1.5; the real run is
+  plan step R2-02's ([content-data.md](docs/dev/content-data.md#units-and-the-rescale-tool-r1-03)).
 - **8- or 12-px tiles, any font cell** (R1-04): the tileset and tilemap schemas accept 8 or 12
   (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`; shipped content uses `TILE_SIZE`), the terrain generator
   draws any even tile size and resamples collision masks between sizes (`renderTerrainTiles`,
@@ -84,7 +101,8 @@ new presentation fingerprint are unchanged.
   colour-blind variants are redrawn, not derived).
 - **Decisions made while the plan runs** ([plan_resolution.md](plan_resolution.md) §1): the
   owner's O1–O10 (content units, the screen-anchored snap rule, camera `yTo` ported ×1.5, tile sizes
-  8 and 12 …) and the orchestrator's wave-1 decisions, so later steps can cite them.
+  8 and 12 …), O11 (ground enemies keep their terrain spot in the port — built as the default, the
+  owner's confirmation pending) and the orchestrator's wave-1 decisions, so later steps can cite them.
 
 ### Testing
 
@@ -101,6 +119,17 @@ new presentation fingerprint are unchanged.
   size once it changes) outside an allow-list of counts, angles and text-sized panels, each with its
   reason. `test/integration/tile-size.test.ts` (R1-04) holds shipped tilesets and stages to
   `TILE_SIZE`.
+- **No literal frame numbers anywhere else either** (R1-02): `test/integration/frame-literals-repo.test.ts`
+  scans the other packages, the apps' sources and scripts and the root scripts with the same scanner
+  (now a shared test helper); `test/scripts/frame.test.ts` and Electron's `window-frame.test.ts` pin the
+  two copies of the constants to core, and the first also pins the e2e specs' boss-bar position to what
+  core's HUD really draws. A fingerprint of the shell's own scenes (`packages/shell/test/frame-fingerprint.test.ts`)
+  joins core's.
+- **Content units and the port** (R1-03): `test/integration/content-units.test.ts` fails on a number
+  without a unit in any content kind; `test/integration/content-db-fingerprint.test.ts` hashes
+  everything the loaders produce from the shipped content, pinned before the schemas changed — it stayed
+  unedited, so no loaded value moved; `test/scripts/content/rescale*.test.ts` cover the tool on
+  fixtures with known ×1.5 output, on the shipped content and from the command line.
 - **The TV bench, headless** (R0-02): `pnpm bench` also opens the bench widget's 18 scenarios in
   Chromium and gates their counts (draw calls, render targets, atlas pages 1 / 1 / 2, the heap); every
   render-bench scenario now draws to a 1280×720 display, a whole multiple of 640×360.

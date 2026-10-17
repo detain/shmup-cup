@@ -92,7 +92,7 @@ P = H′ − k·H = 36 (§2.6):
 | every tick (`spawnTick`, `visibleTick`, `turnTick`, event / key / checkpoint ticks, `warnings`, boss ticks) | **equal** | first-visible ±1 tick (acceptance); camera keys and `warnings` are the camera travel time: ±2 % |
 | `camera.movingTicks`, `holdTicks` | equal (±2 %) | speeds and lengths are both ×k |
 | event `x`, key `x`, checkpoint `x`, `camera.length`, `startX` | ×k | world x |
-| key camera y | by the port's own rule | §2.6: a one-playfield pan (zone D's `yTo 200`) is frame-anchored → 336; compare with the value the rescale tool wrote |
+| key camera y | k·y | camera `yTo` is `rel-px` (owner decision O2, revised): zone D's `yTo 200` → 300, the bottom of its 53-row map; compare with the value the rescale tool wrote |
 | enemy x (`x0`, `visibleX`, `turnX`) with `R` in `entry` | W′ + k·(x − W) | the spawn is right-edge anchored (`W + 16` → `W′ + 24`) and the enemy keeps that offset all its life |
 | enemy x otherwise | k·x | |
 | enemy y with `T` in `entry`: `y0`, `visibleY` | k·y | above the top edge stays above it (the §2.6 discontinuity) |
@@ -110,9 +110,15 @@ Caveats:
   enemies, chains that steer by the ship) and boss fights depend on the bot; compare those loosely.
 - **Children** take their parent's mapping: an `I` child of an enemy that came in from the right
   carries the parent's x offset.
-- **Ground enemies spawned beyond the right edge** stand W′ − k·W = 64 px further along the ×1.5
-  terrain than in v1 (their spawn x is edge-anchored, the terrain is world): where the surface
-  height changes within 64 px, check their y against the ported terrain under them.
+- **Ground enemies keep their terrain spot** (owner decision O11, the rescale tool's world-sum pair):
+  their event's `x` + `screenX` is a world x ported ×k with only the column snapped, so they stand on
+  the same ×1.5 terrain as in v1 but spawn and come into view 64 px of camera travel **earlier** (the
+  view is W′ − k·W = 64 px wider than ×k): their ticks are not equal — compare their world position
+  instead, and leave them out of the first-visible ±1-tick check.
+- **Event indices** — the port re-sorts a stage's `events` by the ported x where a ground spawn or a
+  block moved ahead of its neighbour (gimmick-range 9↔10, zone-c 8↔9, zone-d 42↔43, zone-g 14↔15,
+  zone-h 15↔16, 19↔20, 28↔29, 32↔33, 62↔63): match `event` and the `events` rows through the tool's
+  reported index map.
 
 ## Re-recording
 
