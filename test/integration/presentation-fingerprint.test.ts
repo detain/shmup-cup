@@ -24,9 +24,16 @@
  * with the hitbox markers, both bonus stages, the zone tallies, the map, both escapes, the
  * citadel's and the abyss's ending stories and cards, the credits); the EXTRA modes (the Extra Edit
  * types, BOSS RUSH, CARAVAN's clock and TIME UP, ARCADE's LOOP 2 card); the es and ja string
- * tables; bare gameplay.
+ * tables; bare gameplay; co-op beyond the HUD halves (added in R1-01·T0's review round 1 and
+ * pinned on `4dfca16`, whose core output is still v1.0.0's): on a single stage the co-op Force
+ * Field pips, player 2 out (`PRESS START`, then `GAME OVER` in its half), the co-op STAGE CLEAR,
+ * its name entry and the co-op GAME OVER, then a Direct-mode co-op game with FULL POWER's gold Arm;
+ * a co-op campaign run through the zone tallies (player 2's row), the escape and the abyss ending
+ * a boss escaped (the flagship sailing off, the result card's 2P row, both ships).
  * The last test checks that the walks showed every `SceneId`. Stage clears and game overs are
- * forced (`World.status`, `World.timeLeft`, `World.bonus.entered`) to keep the walks short.
+ * forced (`World.status`, `World.timeLeft`, `World.bonus.entered`) to keep the walks short, and so
+ * are player 2's last life (`lives`, then `selfDestruct` for that ship alone), its used continues
+ * (`PlayerScore.continues`) and the escaped boss (`World.endingFlags`).
  *
  * **How it hashes.** Every displayed frame (one `Game.renderFrame()` per tick) is folded into four
  * FNV-1a hashes per segment: `ui`, `hud`, `world` and `screen`. A draw list contributes its drawn
@@ -52,9 +59,12 @@ import {
   ControlsItem,
   DisplayItem,
   ENDING_LOCK_TICKS,
+  EndingFlag,
   ExtraItem,
   GameOptionsItem,
+  HudPlayerState,
   OptionsItem,
+  PLAYER_DEAD_TICKS,
   PauseItem,
   RebindStatus,
   ReplayActionItem,
@@ -69,6 +79,8 @@ import {
   createMemoryStorage,
   createReplayLibrary,
   createSaveStore,
+  hudPlayerState,
+  selfDestruct,
   type ActionMask,
   type ActionName,
   type ContentDb,
@@ -1321,6 +1333,136 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
     expect(w.table).toEqual(PINNED.bare);
   });
 
+  it('co-op on a single stage: shield pips, a player out, STAGE CLEAR, GAME OVER, Direct', () => {
+    const table: Record<string, string> = {};
+    // A meter game: the co-op Force Field pips, player 2 out (PRESS START, then GAME OVER in its
+    // half), the co-op STAGE CLEAR and its name entries, then the co-op game over.
+    const w = new Walk(db, { start: 'title', config: { stage: 'zone-b' } });
+    w.hold(0, 2);
+    w.title(TitleItem.TwoPlayers);
+    w.launch();
+    w.begin('coopSingle.join');
+    w.press(Action.Shot, Action.Pause);
+    w.hold(Action.Shot, 40, Action.Shot | Action.Up);
+    expect(hudPlayerState(w.game.world, 1)).toBe(HudPlayerState.Playing);
+    w.begin('coopSingle.shield');
+    w.press(Action.Pause);
+    w.at('pause');
+    w.hold(0, 2);
+    for (const direction of SECRET_CODES[SecretCode.FullPower]) w.press(direction);
+    w.at('game');
+    w.hold(Action.Shot, 80, Action.Shot | Action.Down);
+    expect(w.game.world.players[1].shield.hits).toBeGreaterThan(0);
+    // Player 2 on its last life is destroyed (the pause menu's self-destruct, for one ship).
+    w.begin('coopSingle.p2Continue');
+    w.game.world.players[1].lives = 1;
+    let hit = false;
+    for (let i = 0; i < 300 && !hit; i++) {
+      hit = selfDestruct(w.game.world, 1);
+      if (!hit) w.hold(Action.Shot);
+    }
+    expect(hit).toBe(true);
+    w.hold(Action.Shot, PLAYER_DEAD_TICKS + 60);
+    expect(hudPlayerState(w.game.world, 1)).toBe(HudPlayerState.Continue);
+    // Its continues used up: GAME OVER in its half while player 1 plays on.
+    w.begin('coopSingle.p2Out');
+    const scores = w.game.world.scoring.board.scores;
+    scores[1].continues = w.game.world.config.continues;
+    w.hold(Action.Shot, 40);
+    expect(hudPlayerState(w.game.world, 1)).toBe(HudPlayerState.Out);
+    w.begin('coopSingle.stageClear');
+    w.clear(5_000);
+    for (let i = 0; i < 1000 && w.top !== 'nameEntry'; i++) w.hold(0);
+    w.begin('coopSingle.nameEntry');
+    w.name();
+    w.hold(0, 40);
+    w.press(Action.Confirm);
+    w.hold(0, 2);
+    w.at('title');
+    w.end();
+    for (const id of w.seen) SEEN.add(id);
+    Object.assign(table, w.table);
+    // The co-op game over (a new best: NEW HI-SCORE).
+    const g = new Walk(db, { start: 'title', config: { stage: 'zone-b' } });
+    g.hold(0, 2);
+    g.title(TitleItem.TwoPlayers);
+    g.launch();
+    g.press(Action.Shot, Action.Pause);
+    g.hold(Action.Shot, 40, Action.Shot);
+    g.begin('coopSingle.gameOver');
+    addScore(g.game.world, 0, 90_000);
+    addScore(g.game.world, 1, 30_000);
+    g.game.world.status = 'gameOver';
+    g.hold(0, 30);
+    g.at('continue');
+    g.hold(0, 40);
+    g.press(Action.Back);
+    g.at('gameOver');
+    g.hold(0, 100);
+    g.end();
+    for (const id of g.seen) SEEN.add(id);
+    Object.assign(table, g.table);
+    // A Direct-mode co-op game: the compact tier pips, with FULL POWER's gold Arm.
+    const d = new Walk(db, { start: 'title' });
+    d.hold(0, 2);
+    d.title(TitleItem.TwoPlayers);
+    d.launch(1);
+    d.begin('coopSingle.direct');
+    d.press(Action.Shot, Action.Pause);
+    d.hold(Action.Shot, 60, Action.Shot | Action.Up);
+    d.hold(Action.Shot | Action.Speed, 2, Action.Shot | Action.Speed);
+    d.hold(Action.Shot, 40, Action.Shot);
+    d.begin('coopSingle.directFull');
+    d.press(Action.Pause);
+    d.at('pause');
+    d.hold(0, 2);
+    for (const direction of SECRET_CODES[SecretCode.FullPower]) d.press(direction);
+    d.at('game');
+    d.hold(Action.Shot, 60, Action.Shot | Action.Down);
+    expect(d.game.world.players[1].shield.tier).toBeGreaterThan(0);
+    d.end();
+    for (const id of d.seen) SEEN.add(id);
+    Object.assign(table, d.table);
+    print('coopSingle', table);
+    expect(table).toEqual(PINNED.coopSingle);
+  });
+
+  it('a co-op campaign run: the zone tallies, the escape and the abyss ending a boss escaped', () => {
+    const w = new Walk(db, { start: 'title' });
+    w.game.debug.godMode = true;
+    w.hold(0, 2);
+    w.title(TitleItem.TwoPlayers);
+    w.launch();
+    w.begin('coopRun.zoneA');
+    w.press(Action.Shot, Action.Pause);
+    w.hold(Action.Shot, 40, Action.Shot);
+    zoneClear(w, 'coopRun.clearA');
+    for (const zone of ['C', 'E', 'G', 'I']) {
+      toZone(w, `coopRun.map.${zone}`, `zone-${zone.toLowerCase()}`);
+      w.hold(Action.Shot, 40, Action.Shot);
+      expect(hudPlayerState(w.game.world, 1)).toBe(HudPlayerState.Playing);
+      // Zone I's boss got away (as its time limit running out records it).
+      if (zone === 'I') w.game.world.endingFlags |= EndingFlag.BossEscaped;
+      zoneClear(w, `coopRun.clear${zone}`);
+    }
+    w.at('game');
+    w.begin('coopRun.escape');
+    w.hold(Action.Shot | Action.Down, 100, Action.Shot | Action.Up);
+    zoneClear(w, 'coopRun.escapeClear');
+    w.at('ending');
+    expect(w.flow.run.ending?.id).toBe('throne-escape');
+    w.begin('coopRun.ending.story');
+    for (let i = 0; i < 6000 && w.flow.ending.phase === 0; i++) w.hold(0);
+    expect(w.flow.ending.phase).toBe(1); // the result card
+    w.begin('coopRun.ending.card');
+    w.hold(0, ENDING_LOCK_TICKS + 20);
+    w.at('ending');
+    w.end();
+    for (const id of w.seen) SEEN.add(id);
+    print('coopRun', w.table);
+    expect(w.table).toEqual(PINNED.coopRun);
+  });
+
   it('the walks show every scene of the flow', (ctx) => {
     // Only meaningful after every walk above ran (not under a `-t` filter).
     if (SEEN.size === 0) ctx.skip();
@@ -1522,5 +1664,32 @@ const PINNED: Record<string, Record<string, string>> = {
   },
   bare: {
     bare: '4d3bfc25 4d3bfc25 98218125 0e5dbbc5',
+  },
+  coopSingle: {
+    'coopSingle.join': 'cb6f9fa1 f182d345 975808f6 0d596b05',
+    'coopSingle.shield': '2f111c51 b7efccc9 248a1dc9 44e06d65',
+    'coopSingle.p2Continue': '1f320f34 346a2f55 2ba0c0b4 4c5faf25',
+    'coopSingle.p2Out': '68e4b4f5 29319925 6fe37a04 72a5a2c5',
+    'coopSingle.stageClear': '3ad2372b ee4033ec 69a6ee69 3d4db705',
+    'coopSingle.nameEntry': '93ee3385 25d9e681 f9f4e9bf 4207f105',
+    'coopSingle.gameOver': '3a1e7035 b9c71905 5281f42a ed25983a',
+    'coopSingle.direct': '2c8bc895 e090a595 644ff326 7af1aac5',
+    'coopSingle.directFull': '181a6a11 93ee4f69 852b7b30 3185fae5',
+  },
+  coopRun: {
+    'coopRun.zoneA': 'b4231e71 f182d345 23f4c820 0d596b05',
+    'coopRun.clearA': 'fc698b3a 83d7785e 87f58488 11568378',
+    'coopRun.map.C': '1e8c803f b28b89fa 8e1a1d7c 55ec2b65',
+    'coopRun.clearC': '89a1bed7 f235a5b1 526ee744 11568378',
+    'coopRun.map.E': '4a8d3e15 bdf8fdda 256a6aca 55ec2b65',
+    'coopRun.clearE': 'b6ad835e df13f9f7 0152e33b 11568378',
+    'coopRun.map.G': '3328378c 6ca3daa0 ba295edb 55ec2b65',
+    'coopRun.clearG': '4b2e2b94 8a0005e3 a8c69373 11568378',
+    'coopRun.map.I': '1d3fbd24 0082ba4a 69add993 55ec2b65',
+    'coopRun.clearI': '5eac9c85 f427f7dc b9a687b7 11568378',
+    'coopRun.escape': '60b2cdf5 8223370d 70df8896 94848a45',
+    'coopRun.escapeClear': 'e91fbda6 c1a23986 1532286b 11568378',
+    'coopRun.ending.story': 'd8bf0065 76a7d22c 9a7cfa7a 5b18fda5',
+    'coopRun.ending.card': 'c301e5cc 9c557965 30678e9e 2873a7c5',
   },
 };
