@@ -677,8 +677,9 @@ moved.
     - `UI_GLYPHS` equality (`ui/strings.ts:508`) unchanged;
     - `MAX_UI_TEXT_LENGTH` (48) stays a character count, but every caller that turned characters into pixels uses
       the metrics.
-- **Acceptance:** a test stage at tile size 12 and a test font at 9×12 load, render (Node + e2e) and collide
-  correctly; goldens unchanged at 8 / 6×8.
+- **Acceptance:** a test stage at tile size 12 and a test font at 9×12 load, render (Node) and collide
+  correctly; goldens unchanged at 8 / 6×8. The browser check is deferred (owner decision O7, 2026-10-17): the
+  9×12 font in R2-01's e2e, 12-px terrain in R2-03's e2e.
 
 ### R1-05 — Atlas paging and memory ready for detailed art
 
@@ -735,8 +736,9 @@ moved.
     replays are refused with a clear message (a string id in `DEFAULT_UI_TEXT` and the three string tables).
   - **Hosts:** Electron `window.json` version bump and re-fit; CRT pitch re-checked at ×3 / ×2.
 - **Acceptance:** boots in web, Tizen and webOS builds; title, menus and HUD lay out correctly at 640×360 (e2e
-  screenshots analysed at the new viewport); a v1 save loads, keeps its options and archives its scores; a v1
-  replay is refused. Goldens are expected to fail here and are re-blessed in R2-03.
+  screenshots analysed at the new viewport), with text drawn in the 9×12 interim font (R1-04's deferred browser
+  check); a v1 save loads, keeps its options and archives its scores; a v1 replay is refused. Goldens are expected
+  to fail here and are re-blessed in R2-03.
 
 ### R2-02 — Port all content ×1.5
 
@@ -780,7 +782,8 @@ moved.
     640×360 × 3);
   - `docs/dev/*.md` that quote 384×216 (about 15 files, most in `api-reference.md` and
     `render-performance-review.md`) updated, with D19/D20 marked superseded by R-D1/R-D3.
-- **Acceptance:** the full definition-of-done suite is green on `master`.
+- **Acceptance:** the full definition-of-done suite is green on `master`, including an e2e run in which a stage
+  with 12-px terrain renders (R1-04's deferred browser check).
 
 ### R2-04 — First retune at the new scale
 
