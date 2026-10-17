@@ -29,7 +29,7 @@ choices in its `data/choices.json`). The owner picks there.
 | 3 | SD3.5-large | slot b for the 9 terrain swatches | **done** (9/9) |
 | 4 | FLUX.1-dev | slot c for 29 sets (stage scenes, swatches, non-text key moments and promo) | **done** (29/29) |
 | 5 | Wan2.2-T2V-A14B | video slot a for the 29 text-to-video clips | **done** (29: 27 ok, 2 failed but kept) |
-| 6 | LTX-2.5 (`TI2V`) | video slot b for the same 29 clips, plus 4 of the 5 image-to-video clips | **running** (started 10:45) |
+| 6 | LTX-2.5 (`TI2V`) | video slot b for the same 29 clips, plus 4 of the 5 image-to-video clips (slots a and b) | **done** (29 + 8 takes, all ok; ~10 s a clip) |
 
 Images: 211 candidates. Video: 29 text-to-video clips × 2 slots. Five image-to-video clips wait for
 round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet2, so LTX-2.5 does them):
@@ -50,6 +50,10 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     wing), `zone-iron-citadel-chase` (forward dolly, not a side view), `zone-abyssal-throne-glow` (upward tilt, not a
     descent), `manta-blackhole-vortex` (craft not a flat ray), `hollow-king-lure` (cel-shaded, not pixel art);
   - the other takes are kept in the session scratchpad (`wan-a-1/`, `wan-a-2/`).
+- LTX-2.5 slot b (videos): all ok after extra takes (clips cost ~10 s, so up to 5 takes were used on the weak ones);
+  still soft: `coop-two-ship` (cartoon, manta not tiny), `kestrel-bullet-weave` (threads a gap, no dodge),
+  `breaking-surface-sunrise` (ship larger than asked); `halcyon-bulwark-shield`, `galvanic-maw-jaw`,
+  `squall-steed-storm` open with a few junk frames to trim. Parked takes: scratchpad `ltx-b-1/`, `ltx-b-2/`.
 
 - Qwen slot b:
   - failed: `item/power-capsule` (draws cans or pills), `boss/squall-steed` (ground strip),
@@ -76,6 +80,13 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
 - Video models draw a "small" ship huge and cartoonish unless told "tiny sprite, a small fraction of the frame",
   point it left unless told "nose pointing right, flame trailing left", and add pilots unless the negative says
   "human pilot, people".
+- LTX-2.5 (distilled, 8 steps, guidance 1): the negative prompt has little effect, so say everything in the positive
+  prompt; open with "a retro 16-bit video game scene drawn in chunky pixel art with visible square pixels" or it looks
+  3D; text-to-video often opens with 1–6 junk frames (trim ~0.25 s at ingest); keep a wordmark present and unlit from
+  frame 0 ("the letters never move; only their light changes"); describe start and end states for a move; a small
+  ship needs "a wide establishing shot … far away, only a few pixels tall" at the END of the prompt; "no cockpit, no
+  canopy, no pilot" (a glass bubble becomes a seated figure); image-to-video defaults to a push-in — "the ship holds
+  its place while the landscape scrolls by in parallax layers" keeps the still's layout. ~6–11 s per clip.
 - Wan2.2 render times (server): 1280×720 81 frames ≈ 958 s at 40 steps / 838 s at 35; 832×480 ≈ 204 s at 35 steps.
 
 ## Round 2 — after the owner says picking is done
