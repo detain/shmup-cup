@@ -1880,7 +1880,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
 | R0-02 | The TV render benchmark (`bench:tv`) | done (owner parts pending) — 2026-10-17 |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
-| R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2: FLUX.2 followups A/B/D done, C running, then FLUX.1 azure-verge slot c and the LTX black-hole clip; see `art-prompts/v2/STATUS.md` |
+| R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 generated (199 FLUX.2 followups, the halo-crystal / azure-verge regenerations, the fifth image-to-video clip) and waiting for the owner's review on the picker; see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | done — 2026-10-17 |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |

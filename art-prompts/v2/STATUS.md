@@ -129,6 +129,25 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     - The darker DUNE / TEMPEST / BRINE far layers meet the median ≤ 64 / p95 ≤ 140 budget but crush 36–45 % of the
       pixels below luma 16 (lift the darks at ingest); the TEMPEST mid-far ridge ignored the darker request (113 / 225).
     - Animation sheets again barely move (black-hole spin frames); the special-capsules sheet kept its reference's 4×4.
+  - **Armed-scene retry** (the LTX source, 3 more tries): kept a new take without tails (seed 23051), ok — about 20
+    round pink orbs on three smooth spiral bands, no canisters, no text. Tails always read as outward motion, so the
+    still carries none and the clip adds the motion. C's take and the other tries are parked in the orchestrator's
+    scratchpad (`flux2-r2-armed/tries/`).
+- **FLUX.1-dev, slot c of `tiles/azure-verge`** (2026-10-17, 3 takes, all kept in `candidates/history/2026-10-17/c/`):
+  take 3 (seed 4417263) is weak but usable — 0 % key-like pixels, front-on teal-turquoise ferns over horizontal
+  green-teal strata, no text; a dark 6–10 px band on the left, right and bottom edges (crop it). Take 1 had a
+  watermark-like word, take 2 two bright-green clumps.
+- **LTX-2.5, `video/blackhole-bomb-slowmo`** (image-to-video from the armed-scene still, 736×736, 5 s):
+  - slot a ok on the first take — the orbs slide inward along the arms, shrink and vanish into the core, the spiral
+    turns, the camera holds still;
+  - slot b weak after 3 takes (the lightning-roll idea) — the white-blue arc ring grows outward but the orbs survive
+    it. A parked take (`ltx-r2-blackhole/takes/b2/` in the orchestrator's scratchpad) tells the story better (the orbs
+    pop into sparkles) but drifts outward first — it can be swapped in if the owner prefers.
+- **Image-to-video lessons (LTX-2.5):** "static locked camera, no zoom" at the start and the end stops the push-in;
+  one continuous motion works first time, two events in a row get squeezed together; a cause is drawn but its effect
+  on other objects is often dropped ("every orb it touches pops"); state the final frames or the picture fades; "one
+  complete circle, centred on the core, grows outward like a ripple on water" gives a true expanding ring; measuring
+  the orbs' distance from the centre over the frames catches drift that a contact sheet hides.
   - Per-job tables: the agents' `results` files in the orchestrator's scratchpad (`flux2-r2-A/`, `-B/`, `-C/`, `-D/`).
 - **Prompt lessons from FLUX.2 (edit mode):**
   - In scene followups the small player craft is drawn from behind, pointing up or facing left, or as a generic jet.
@@ -142,14 +161,13 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     orbs into the backdrop: leave it out of layer prompts.
   - Layers copy the reference scene or come out as a filled strip in a box; "a skyline against the key" or "separate
     pieces" fixes most. Grid counts in tileset prompts are not kept.
-- **Still to do, in order (one model at a time, `server.sh stop` + `verify` after each):**
-  1. While FLUX.2 is still loaded: one retry of `fx/black-hole/armed-scene` (round orbs, streaming inward) — it is the
-     LTX source.
-  2. FLUX.1-dev: slot c of `tiles/azure-verge`.
-  3. LTX-2.5: `video/blackhole-bomb-slowmo` from the armed-scene still (slots a and b) — the fifth image-to-video clip.
-  4. The owner reviews round 2 on the picker and re-picks halo-crystal and azure-verge; then a short FLUX.2 session for
-     their four held followups (frames, zone roster sheet, zone encounter; tileset).
-  5. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
+- **All round-2 generation is done** (2026-10-17 19:15; skynet2's cards 2 and 3 are empty, VERIFY OK). Still to do:
+  1. The owner reviews round 2 on the picker (followups appear next to their winners: accept, comment or
+     regenerate), flips `enemy/sentinel-walker/zone-encounter` and the DUNE poster horizontally, and re-picks
+     `enemy/halo-crystal` and `tiles/azure-verge` (new candidates in every slot).
+  2. A short FLUX.2 session for the four held followups of those two (halo frames, zone roster sheet, zone
+     encounter; azure tileset), plus whatever comments and regenerations the owner asks for.
+  3. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
 
 ## Round 2 — after the owner says picking is done
 
