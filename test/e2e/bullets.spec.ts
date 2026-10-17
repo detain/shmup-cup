@@ -4,11 +4,13 @@
  * scrolled in and settled. Their bullets — the engine's own sprites, interned by the shell's
  * loader and packed into the atlas — must show up in the playfield (never in the HUD bars) in
  * the readability palette's body colours, and move between two screenshots, with no console
- * errors and no "unknown sprite" warning from the atlas. Screenshots are ×3 (viewport
- * 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * errors and no "unknown sprite" warning from the atlas. Screenshots are at the e2e capture scale
+ * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** Body colours of the bullet readability palette (`scripts/assets/procedural/bullets.mjs`). */
 const BULLET_COLOURS = [
@@ -45,7 +47,7 @@ interface BulletPixels {
   readonly playfield: number;
   /** In the HUD bars. */
   readonly hud: number;
-  /** `x + 384 · y` of every playfield pixel found. */
+  /** `x + FRAME_W · y` of every playfield pixel found. */
   readonly positions: ReadonlySet<number>;
 }
 
@@ -61,9 +63,9 @@ async function bulletPixels(page: Page): Promise<BulletPixels> {
   let playfield = 0;
   let hud = 0;
   const positions = new Set<number>();
-  for (let fy = 0; fy < 216 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = 0; fy < FRAME_H && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       const bullet = BULLET_COLOURS.some(
         ([r, g, b]) =>
           Math.abs(data[i] - r) <= 3 &&
@@ -71,11 +73,11 @@ async function bulletPixels(page: Page): Promise<BulletPixels> {
           Math.abs(data[i + 2] - b) <= 3,
       );
       if (!bullet) continue;
-      if (fy < 8 || fy >= 208) {
+      if (fy < PLAYFIELD_Y || fy >= HUD_BOTTOM_Y) {
         hud++;
       } else {
         playfield++;
-        positions.add(fx + 384 * fy);
+        positions.add(fx + FRAME_W * fy);
       }
     }
   }

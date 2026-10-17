@@ -4,12 +4,13 @@
  * an engine sprite, drawn over the ship from the `LayerId.Player` batch — must show its fresh
  * cyan ring around the ship, with no console errors and no "unknown sprite" warning from the
  * atlas. The default web boot and the Tizen build opened from disk (which ignores
- * `?loadout=full`) never show it. Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is
- * screenshot pixel (3x + 1, 3y + 1).
+ * `?loadout=full`) never show it. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3
+ * today, viewport 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -80,9 +81,9 @@ async function findColours(
     minY: Infinity,
     maxY: -Infinity,
   }));
-  for (let fy = 0; fy < 216 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = 0; fy < FRAME_H && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       colours.forEach(([r, g, b], k) => {
         if (
           Math.abs(data[i] - r) > 3 ||
@@ -92,7 +93,7 @@ async function findColours(
           return;
         }
         const found = out[k];
-        if (fy < 8 || fy >= 208) {
+        if (fy < PLAYFIELD_Y || fy >= HUD_BOTTOM_Y) {
           found.hud++;
           return;
         }

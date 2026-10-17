@@ -4,18 +4,31 @@
  * the flight scene then draws the WARNING band (its red edge rows across the whole width) for
  * three seconds; once it is gone the TRIAL WARDEN flies in from the right and stays in the right
  * part of the playfield (its hull-block colour there) — all without console errors or atlas
- * warnings. Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel
- * (3x + 1, 3y + 1).
+ * warnings. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport
+ * 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import {
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** The WARNING band's edge colour (0xf85858, the flight scene's WARNING_BAND rows). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
 /** `bosses/hull-block` palette `m` (#3a4a68). */
 const HULL = [0x3a, 0x4a, 0x68] as const;
-/** Screen row of the band's top edge (the flight scene's `WARNING_BAND_Y`). */
-const BAND_Y = 76;
+/**
+ * Screen row of the band's top edge (the flight scene's `WARNING_BAND_Y`, like the game scene's:
+ * the 48-row band centred 8 px above the frame's centre row — 76 at 384×216).
+ */
+const BAND_Y = FRAME_CY - 8 - 24;
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -57,17 +70,17 @@ async function capture(page: Page): Promise<BossCapture> {
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   const is = (fx: number, fy: number, [r, g, b]: readonly [number, number, number]): boolean => {
-    if (fx * 3 + 1 >= width || fy * 3 + 1 >= height) return false;
-    const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+    if (sx(fx) >= width || sy(fy) >= height) return false;
+    const i = pixelIndex(width, fx, fy);
     return (
       Math.abs(data[i] - r) <= 3 && Math.abs(data[i + 1] - g) <= 3 && Math.abs(data[i + 2] - b) <= 3
     );
   };
   let band = 0;
-  for (let fx = 0; fx < 384; fx++) if (is(fx, BAND_Y, WARNING_RED)) band++;
+  for (let fx = 0; fx < FRAME_W; fx++) if (is(fx, BAND_Y, WARNING_RED)) band++;
   let hull = 0;
-  for (let fy = 8; fy < 208; fy++) {
-    for (let fx = 192; fx < 384; fx++) if (is(fx, fy, HULL)) hull++;
+  for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y; fy++) {
+    for (let fx = FRAME_CX; fx < FRAME_W; fx++) if (is(fx, fy, HULL)) hull++;
   }
   return { band, hull };
 }

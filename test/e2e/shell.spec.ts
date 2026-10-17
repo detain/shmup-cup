@@ -4,18 +4,40 @@
  *
  * - a failing atlas page request ends on the **boot error screen** (overlay canvas, state
  *   `error`, the failure logged) instead of a black screen;
- * - a window that is not a multiple of 384×216 gets the largest integer scale, centred on the
- *   letterbox colour; resizing the window re-fits the frame (×2 → ×5);
+ * - a window that is not a multiple of the frame gets the largest integer scale, centred on the
+ *   letterbox colour; resizing the window re-fits the frame (×2 → ×5 at today's 384×216);
  * - the frame loop runs: captures a few frames apart differ.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_H, FRAME_W, VIEWPORT } from './frame-pixels.js';
 
 /** Letterbox colour around the scaled frame (render-pixi `PALETTE.letterbox`). */
 const LETTERBOX = [0x05, 0x07, 0x0f] as const;
 
-/** HUD bar fill of the free-flight scene (0x1d2a5c) — frame rows 0–7 and 208–215. */
+/**
+ * HUD bar fill of the free-flight scene (0x1d2a5c) — frame rows `0 … HUD_BAR_HEIGHT − 1` and
+ * `HUD_BOTTOM_Y … FRAME_H − 1`.
+ */
 const HUD_BAR = [0x1d, 0x2a, 0x5c] as const;
+
+/** The window of the integer-scaling test: a whole multiple of the frame on neither axis. */
+const ODD_WINDOW = { width: 1000, height: 600 } as const;
+
+/** The largest integer scale of the frame in {@link ODD_WINDOW} (×2 at 384×216). */
+const ODD_SCALE = Math.min(
+  Math.floor(ODD_WINDOW.width / FRAME_W),
+  Math.floor(ODD_WINDOW.height / FRAME_H),
+);
+
+/** Size of the scaled frame in {@link ODD_WINDOW} (768×432 at 384×216). */
+const ODD_PICTURE = { width: FRAME_W * ODD_SCALE, height: FRAME_H * ODD_SCALE } as const;
+
+/** Top-left corner of the centred picture in {@link ODD_WINDOW} ((116, 84) at 384×216). */
+const ODD_ORIGIN = {
+  x: (ODD_WINDOW.width - ODD_PICTURE.width) >> 1,
+  y: (ODD_WINDOW.height - ODD_PICTURE.height) >> 1,
+} as const;
 
 /** Boot screen background (`BOOT_SCREEN_COLORS.background`). */
 const BOOT_BACKGROUND = [0x10, 0x17, 0x3a] as const;
@@ -125,7 +147,7 @@ test.describe('boot error screen (web build)', () => {
     const overlay = page.locator('canvas[data-shmup-overlay="boot"]');
     await expect(overlay).toHaveCount(1);
     const shot = await shoot(page, 'canvas[data-shmup-overlay="boot"]');
-    expect([shot.width, shot.height]).toEqual([1152, 648]);
+    expect([shot.width, shot.height]).toEqual([VIEWPORT.width, VIEWPORT.height]);
     expect(rgb(shot, 2, 2)).toEqual([...BOOT_BACKGROUND]);
     expect(contains(shot, BOOT_TITLE, 8)).toBe(true);
     expect(logged.some((text) => text.includes('Shmup Cup failed to start'))).toBe(true);
@@ -133,30 +155,33 @@ test.describe('boot error screen (web build)', () => {
 });
 
 test.describe('integer scaling (web build)', () => {
-  test.use({ viewport: { width: 1000, height: 600 } });
+  test.use({ viewport: { width: ODD_WINDOW.width, height: ODD_WINDOW.height } });
 
   test('an off-multiple window gets the largest integer scale, centred on the letterbox', async ({
     page,
   }) => {
     await openRunning(page);
     const shot = await shoot(page, '#game');
-    expect([shot.width, shot.height]).toEqual([1000, 600]);
-    // ×2 → 768×432 at (116, 84).
+    expect([shot.width, shot.height]).toEqual([ODD_WINDOW.width, ODD_WINDOW.height]);
+    // ×2 → 768×432 at (116, 84) today: the letterbox just outside each edge of the picture.
+    const { x: left, y: top } = ODD_ORIGIN;
+    const right = left + ODD_PICTURE.width;
+    const bottom = top + ODD_PICTURE.height;
     for (const [x, y] of [
       [2, 2],
-      [115, 300],
-      [500, 83],
-      [884, 300],
-      [500, 516],
+      [left - 1, 300],
+      [500, top - 1],
+      [right, 300],
+      [500, bottom],
       [997, 597],
     ]) {
       expect(rgb(shot, x, y), `letterbox at ${x},${y}`).toEqual([...LETTERBOX]);
     }
-    expect(rgb(shot, 117, 85)).toEqual([...HUD_BAR]); // frame (0, 0)
-    expect(rgb(shot, 116 + 767, 84 + 431)).toEqual([...HUD_BAR]); // frame (383, 215)
+    expect(rgb(shot, left + 1, top + 1)).toEqual([...HUD_BAR]); // frame (0, 0)
+    expect(rgb(shot, right - 1, bottom - 1)).toEqual([...HUD_BAR]); // the frame's last pixel
   });
 
-  test('resizing the window re-fits the frame (×2 → ×5, no letterbox at 1920×1080)', async ({
+  test('resizing the window re-fits the frame (×2 → ×5 today, no letterbox at 1920×1080)', async ({
     page,
   }) => {
     await openRunning(page);

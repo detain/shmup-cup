@@ -3,12 +3,14 @@
  * web build and on the Tizen build opened from disk shows its station label and, within its
  * first stations, the explosion presets — warm fireball pixels (additively blended) in the middle
  * of the playfield — so the gallery screenshot is not blank; no console errors, no atlas
- * warnings. The screenshot is attached to the test report. Screenshots are ×3 (viewport
- * 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * warnings. The screenshot is attached to the test report. Screenshots are at the e2e capture scale
+ * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_H, FRAME_W, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -62,14 +64,14 @@ async function capture(page: Page): Promise<GalleryCapture> {
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   const at = (fx: number, fy: number): [number, number, number] => {
-    const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+    const i = pixelIndex(width, fx, fy);
     return [data[i], data[i + 1], data[i + 2]];
   };
   let warm = 0;
   let label = 0;
   const colours = new Set<number>();
-  for (let fy = 0; fy < 216 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
+  for (let fy = 0; fy < FRAME_H && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
       const [r, g, b] = at(fx, fy);
       colours.add((r << 16) | (g << 8) | b);
       if (fx >= 128 && fx < 256 && fy >= 40 && fy < 168 && r >= 200 && r - b >= 100) warm++;

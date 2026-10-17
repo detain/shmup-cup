@@ -3,11 +3,13 @@
  * unattended KESTREL is shot down again and again — the HUD's stock icons (`hud/life`, `lives − 1`
  * of them in the bottom bar) go 2 → 1 → 0, the ship disappears while it explodes and flies back
  * in, and once the last ship is out `GAME OVER` (red) replaces the stage title in the top bar —
- * all without console errors or atlas warnings. Screenshots are ×3 (viewport 1152×648): frame
- * pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * all without console errors or atlas warnings. Screenshots are at the e2e capture scale
+ * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_W, HUD_BOTTOM_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** KESTREL hull colour (`ships/kestrel` and `hud/life` palette `h`, #c8d0e0). */
 const HULL = [0xc8, 0xd0, 0xe0] as const;
@@ -56,8 +58,8 @@ async function captureLives(page: Page): Promise<LifeCapture> {
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   const is = (fx: number, fy: number, [r, g, b]: readonly [number, number, number]): boolean => {
-    if (fx * 3 + 1 >= width || fy * 3 + 1 >= height) return false;
-    const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+    if (sx(fx) >= width || sy(fy) >= height) return false;
+    const i = pixelIndex(width, fx, fy);
     return (
       Math.abs(data[i] - r) <= 3 && Math.abs(data[i + 1] - g) <= 3 && Math.abs(data[i + 2] - b) <= 3
     );
@@ -72,8 +74,8 @@ async function captureLives(page: Page): Promise<LifeCapture> {
   }
   let gameOver = 0;
   let ship = 0;
-  for (let fy = 0; fy < 208; fy++) {
-    for (let fx = 0; fx < 384; fx++) {
+  for (let fy = 0; fy < HUD_BOTTOM_Y; fy++) {
+    for (let fx = 0; fx < FRAME_W; fx++) {
       if (fy < 8 && is(fx, fy, GAME_OVER_RED)) gameOver++;
       else if (fy >= 8 && is(fx, fy, HULL)) ship++;
     }

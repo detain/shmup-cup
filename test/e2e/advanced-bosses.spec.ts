@@ -15,12 +15,14 @@
  *   twins fly in, the resting one is drawn on the layer behind (`bosses.backBatch`), and at the
  *   pair's turn they swap — without console errors.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -181,8 +183,8 @@ async function colourAt(
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   return (fx, fy) => {
-    if (fx * 3 + 1 >= width || fy * 3 + 1 >= height) return false;
-    const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+    if (sx(fx) >= width || sy(fy) >= height) return false;
+    const i = pixelIndex(width, fx, fy);
     return (
       Math.abs(data[i] - rgb[0]) <= 3 &&
       Math.abs(data[i + 1] - rgb[1]) <= 3 &&
@@ -201,15 +203,15 @@ async function steel(page: Page): Promise<{ columns: number; top: number }> {
   const is = await colourAt(page, STEEL);
   let columns = 0;
   let top = -1;
-  for (let fx = 0; fx < 384; fx++) {
-    for (let fy = 8; fy < 208; fy++) {
+  for (let fx = 0; fx < FRAME_W; fx++) {
+    for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y; fy++) {
       if (!is(fx, fy)) continue;
       columns++;
       break;
     }
   }
-  for (let fy = 8; fy < 208 && top < 0; fy++) {
-    for (let fx = 0; fx < 384; fx++) {
+  for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y && top < 0; fy++) {
+    for (let fx = 0; fx < FRAME_W; fx++) {
       if (!is(fx, fy)) continue;
       top = fy;
       break;

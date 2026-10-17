@@ -10,10 +10,12 @@
  * - ShiftLeft (the keyboard's Speed) toggles the speed level;
  * - no console errors and no "unknown sprite" warning from the atlas.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** An RGB colour. */
 type Rgb = readonly [number, number, number];
@@ -146,9 +148,9 @@ async function countColours(page: Page, colours: readonly Rgb[]): Promise<number
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   const counts = colours.map(() => 0);
-  for (let fy = 8; fy < 208 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       colours.forEach(([r, g, b], k) => {
         if (
           Math.abs(data[i] - r) <= 3 &&

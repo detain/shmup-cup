@@ -6,12 +6,14 @@
  * breaking the pillar's cells in the sim takes them off the screen on the next frame (the terrain
  * binding follows the change log, no scroll needed) and the checkpoint rollback draws them again
  * (a reset of the log redraws the grid).
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1);
- * the sim is frozen and stepped exact ticks (`./frame-advance.ts`).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)); the sim is frozen and stepped exact ticks
+ * (`./frame-advance.ts`).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** Face colour of the placeholder `brick` tile (`scripts/assets/procedural/terrain.mjs`). */
 const BRICK = [0xb0, 0x70, 0x4a] as const;
@@ -44,9 +46,9 @@ async function countColour(page: Page, rgb: readonly [number, number, number]): 
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   let count = 0;
-  for (let fy = 8; fy < 208 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       if (
         Math.abs(data[i] - rgb[0]) <= 2 &&
         Math.abs(data[i + 1] - rgb[1]) <= 2 &&

@@ -5,11 +5,13 @@
  * dev override) draws the Options (`options/orb`, an engine sprite) and laser beams, with no
  * console errors and no "unknown sprite" warning from the atlas. The Tizen build opened from disk
  * autofires too without any key (remote rule 1) and ignores the web-only `?loadout=full`.
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -55,7 +57,7 @@ interface ColourPixels {
   readonly hud: number;
   /** Smallest frame x (Infinity when none). */
   readonly minX: number;
-  /** `x + 384 · y` of every playfield pixel found. */
+  /** `x + FRAME_W · y` of every playfield pixel found. */
   readonly positions: ReadonlySet<number>;
 }
 
@@ -78,9 +80,9 @@ async function findColours(
     minX: Infinity,
     positions: new Set<number>(),
   }));
-  for (let fy = 0; fy < 216 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = 0; fy < FRAME_H && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       colours.forEach(([r, g, b], k) => {
         if (
           Math.abs(data[i] - r) > 3 ||
@@ -90,13 +92,13 @@ async function findColours(
           return;
         }
         const found = out[k];
-        if (fy < 8 || fy >= 208) {
+        if (fy < PLAYFIELD_Y || fy >= HUD_BOTTOM_Y) {
           found.hud++;
           return;
         }
         found.count++;
         found.minX = Math.min(found.minX, fx);
-        found.positions.add(fx + 384 * fy);
+        found.positions.add(fx + FRAME_W * fy);
       });
     }
   }

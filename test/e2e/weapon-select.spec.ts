@@ -12,11 +12,13 @@
  *   type and the SHIELD `?` (M2-04), NORMAL on `!` and an Auto Power-Up order (the ORDER editor overlay, closed with Back), and START plays them;
  * - no console errors in either.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel x is screenshot pixel 3x + 1.
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel x is screenshot pixel sx(x).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { SCALE } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -220,7 +222,7 @@ async function countColour(
       Math.abs(data[i + 2] - rgb[2]) <= 2
     ) {
       all++;
-      if ((i / 4) % width >= fromX * 3) right++;
+      if ((i / 4) % width >= fromX * SCALE) right++;
     }
   }
   return [all, right];

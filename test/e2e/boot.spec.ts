@@ -5,12 +5,13 @@
  * loads, the canvas shows a real picture (not a uniform colour) and nothing is logged as an
  * error. By default both builds show the scene flow's title (plan M1-16: the `ui/logo` sprite,
  * no ship, no HUD bars — `data-shmup-scene="title"`); `?scene=flight` still boots free flight. The
- * pixel checks read the canvas at ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel
- * (3x + 1, 3y + 1).
+ * pixel checks read the canvas at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport
+ * 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { VIEWPORT, pixelIndex } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -83,7 +84,7 @@ interface Capture {
   /** Standard deviation of the luma. */
   readonly lumaDeviation: number;
   /**
-   * Colour of a frame pixel (384×216 coordinates).
+   * Colour of a frame pixel (frame coordinates).
    *
    * @param x - Frame x.
    * @param y - Frame y.
@@ -128,7 +129,7 @@ async function capture(page: Page): Promise<Capture> {
     colors: colors.size,
     lumaDeviation: Math.sqrt(Math.max(0, sumSq / pixels - mean * mean)),
     frameRgb(x, y) {
-      const i = ((y * 3 + 1) * width + (x * 3 + 1)) * 4;
+      const i = pixelIndex(width, x, y);
       return [data[i], data[i + 1], data[i + 2]];
     },
     contains(rgb, tolerance = 2) {
@@ -167,8 +168,8 @@ function imageWidth(page: Page, url: string): Promise<number> {
 }
 
 /**
- * The checks every boot must pass: running, a non-uniform ×3 picture, the atlas reachable
- * at its relative URL, and no errors.
+ * The checks every boot must pass: running, a non-uniform picture at the capture scale, the atlas
+ * reachable at its relative URL, and no errors.
  *
  * @param page - The page after navigation.
  * @param errors - Its error log.
@@ -177,7 +178,7 @@ function imageWidth(page: Page, url: string): Promise<number> {
 async function expectHealthyBoot(page: Page, errors: string[]): Promise<Capture> {
   await waitForRunning(page);
   const shot = await capture(page);
-  expect([shot.width, shot.height]).toEqual([1152, 648]);
+  expect([shot.width, shot.height]).toEqual([VIEWPORT.width, VIEWPORT.height]);
   expect(shot.colors).toBeGreaterThan(8);
   expect(shot.lumaDeviation).toBeGreaterThan(8);
   expect(await imageWidth(page, 'assets/atlas/main.png')).toBeGreaterThan(0);

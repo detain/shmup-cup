@@ -10,7 +10,8 @@
  *   toggles its speed in the game;
  * - no console errors in either.
  *
- * Screenshots are ×3 (viewport 1152×648): frame pixel x is screenshot pixel 3x + 1.
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel x is screenshot pixel sx(x).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';

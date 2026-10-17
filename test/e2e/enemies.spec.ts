@@ -3,8 +3,8 @@
  * dev stage's timeline, whose first event is a formation of `drifter` popcorn. The drifters'
  * placeholder colours (used by no other sprite) must show up inside the playfield — never in
  * the HUD bars — and the formation must fly left across the screen, with no console errors
- * while the timeline spawns. Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is
- * screenshot pixel (3x + 1, 3y + 1).
+ * while the timeline spawns. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today,
+ * viewport 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  *
  * The sim runs under frame advance (`./frame-advance.ts`, the test builds' `window.__shmupDebug`),
  * in exact tick counts, so the captures do not depend on how fast the machine is.
@@ -12,6 +12,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** Colours of the `enemies/drifter` placeholder sprite (rim, shell, core). */
 const DRIFTER_COLOURS = [
@@ -35,9 +36,9 @@ async function drifterPixels(
   let playfield = 0;
   let hud = 0;
   let left = -1;
-  for (let fy = 0; fy < 216 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = 0; fy < FRAME_H && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       const drifter = DRIFTER_COLOURS.some(
         ([r, g, b]) =>
           Math.abs(data[i] - r) <= 2 &&
@@ -45,7 +46,7 @@ async function drifterPixels(
           Math.abs(data[i + 2] - b) <= 2,
       );
       if (!drifter) continue;
-      if (fy < 8 || fy >= 208) {
+      if (fy < PLAYFIELD_Y || fy >= HUD_BOTTOM_Y) {
         hud++;
       } else {
         playfield++;

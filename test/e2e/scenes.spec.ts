@@ -9,11 +9,13 @@
  * Back on the title: in the browser (no `platform.exit`) it only backs out of the menu to
  * `PRESS OK`; in the Tizen build with a fake `window.tizen` it opens the exit confirmation, NO keeps
  * the app running and only YES calls `tizen.application.getCurrentApplication().exit()`.
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_H, FRAME_W, pixelIndex } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -79,7 +81,7 @@ function count(shot: Shot, rgb: readonly [number, number, number]): number {
  * @returns RGB.
  */
 function frameRgb(shot: Shot, x: number, y: number): [number, number, number] {
-  const i = ((y * 3 + 1) * shot.width + (x * 3 + 1)) * 4;
+  const i = pixelIndex(shot.width, x, y);
   return [shot.data[i], shot.data[i + 1], shot.data[i + 2]];
 }
 
@@ -185,7 +187,7 @@ test.describe('scene flow (web build)', () => {
     expect(count(game, KESTREL_HULL)).toBeGreaterThan(0);
     expect(count(game, LOGO_RED)).toBe(0);
     expect(frameRgb(game, 0, 0)).toEqual([...HUD_BAR]);
-    expect(frameRgb(game, 383, 215)).toEqual([...HUD_BAR]);
+    expect(frameRgb(game, FRAME_W - 1, FRAME_H - 1)).toEqual([...HUD_BAR]);
     // Pause: the menu over the dimmed game.
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');

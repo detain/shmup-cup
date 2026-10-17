@@ -4,11 +4,13 @@
  * between captures) — while it stays put without input; holding a direction long enough stops
  * the ship at the playfield margin (the clamp), never over the HUD bars; the same works in the
  * Tizen build opened from disk (remote key codes through the `tizen-remote-safe` profile).
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { HUD_BOTTOM_Y, PLAYFIELD_Y, SCALE } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -41,23 +43,24 @@ function waitFrames(page: Page, frames: number): Promise<void> {
 }
 
 /**
- * Screenshots the canvas and returns the centre (in 384×216 frame pixels) of the pixels in the
- * playfield rows that have the KESTREL's hull colour.
+ * Screenshots the canvas and returns the centre (in frame pixels) of the pixels in the playfield
+ * rows that have the KESTREL's hull colour.
  *
  * @param page - The page.
  * @returns The centroid and the matching pixel count.
  */
 async function shipCentre(
   page: Page,
-  rows: readonly [number, number] = [8, 208],
+  rows: readonly [number, number] = [PLAYFIELD_Y, HUD_BOTTOM_Y],
 ): Promise<{ x: number; y: number; pixels: number }> {
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   let sumX = 0;
   let sumY = 0;
   let pixels = 0;
-  // Playfield = frame rows 8 … 207 (the HUD bars are outside it); `rows` can widen the scan.
-  for (let y = rows[0] * 3; y < Math.min(height, rows[1] * 3); y++) {
+  // Playfield = frame rows PLAYFIELD_Y … HUD_BOTTOM_Y − 1 (the HUD bars are outside it); `rows`
+  // can widen the scan.
+  for (let y = rows[0] * SCALE; y < Math.min(height, rows[1] * SCALE); y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
       if (
@@ -71,7 +74,7 @@ async function shipCentre(
       }
     }
   }
-  return { x: sumX / pixels / 3, y: sumY / pixels / 3, pixels };
+  return { x: sumX / pixels / SCALE, y: sumY / pixels / SCALE, pixels };
 }
 
 /**
@@ -151,10 +154,11 @@ test.describe('free flight (web build)', () => {
     await hold(page, 'ArrowUp', 30);
     const stillTop = await shipCentre(page, [0, 200]);
     expect(Math.abs(stillTop.y - top.y)).toBeLessThan(0.5); // pinned
-    // Screen y of the ship centre = PLAYFIELD_Y 8 + margin 6 = 14; no hull pixel in the HUD bar.
-    expect(top.y).toBeGreaterThan(8);
-    expect(top.y).toBeLessThan(20);
-    const inHud = await shipCentre(page, [0, 8]);
+    // Screen y of the ship centre = PLAYFIELD_Y + margin 6 (14 today); no hull pixel in the HUD
+    // bar.
+    expect(top.y).toBeGreaterThan(PLAYFIELD_Y);
+    expect(top.y).toBeLessThan(PLAYFIELD_Y + 12);
+    const inHud = await shipCentre(page, [0, PLAYFIELD_Y]);
     expect(inHud.pixels).toBe(0);
 
     expect(errors).toEqual([]);

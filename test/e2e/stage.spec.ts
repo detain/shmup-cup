@@ -3,8 +3,9 @@
  * the dev stage — its generated terrain is visible (the placeholder tileset's surface and rock
  * colours inside the playfield, never in the HUD bars) and it scrolls: the terrain pixels move
  * left between two screenshots while the ship stays where it is on screen; an unknown stage id
- * warns and boots free flight without terrain. Screenshots are ×3
- * (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * warns and boots free flight without terrain. Screenshots are at the e2e capture scale
+ * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (sx(x), sy(y)).
  *
  * The scroll check does not depend on how fast the machine is: `pnpm test:e2e` runs the test
  * builds, whose `window.__shmupDebug` (plan M1-19) lets the spec freeze the sim with frame advance
@@ -14,6 +15,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** Colours of the `tiles/terrain-a` placeholder art (surface rim, subsurface, rock tones). */
 const TERRAIN_COLOURS = [
@@ -50,8 +52,8 @@ function waitFrames(page: Page, frames: number): Promise<void> {
  * Samples the canvas at frame-pixel resolution and summarises the terrain-coloured pixels.
  *
  * @param page - The page.
- * @returns Terrain pixels in the playfield (rows 8 … 207) and in the HUD bars, and per frame
- *   column the number of terrain pixels (the floor's height profile).
+ * @returns Terrain pixels in the playfield (rows `PLAYFIELD_Y` … `HUD_BOTTOM_Y − 1`) and in the HUD
+ *   bars, and per frame column the number of terrain pixels (the floor's height profile).
  */
 async function terrainPixels(
   page: Page,
@@ -60,10 +62,10 @@ async function terrainPixels(
   const { width, height, data } = decodePng(new Uint8Array(png));
   let playfield = 0;
   let hud = 0;
-  const profile = new Array<number>(384).fill(0);
-  for (let fy = 0; fy < 216 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  const profile = new Array<number>(FRAME_W).fill(0);
+  for (let fy = 0; fy < FRAME_H && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       const terrain = TERRAIN_COLOURS.some(
         ([r, g, b]) =>
           Math.abs(data[i] - r) <= 2 &&
@@ -71,7 +73,7 @@ async function terrainPixels(
           Math.abs(data[i + 2] - b) <= 2,
       );
       if (!terrain) continue;
-      if (fy < 8 || fy >= 208) {
+      if (fy < PLAYFIELD_Y || fy >= HUD_BOTTOM_Y) {
         hud++;
       } else {
         playfield++;
@@ -95,7 +97,7 @@ function leftShift(before: number[], after: number[]): { shift: number; error: n
   for (let s = 0; s <= 250; s++) {
     let sum = 0;
     let n = 0;
-    for (let x = s; x < 384; x++) {
+    for (let x = s; x < FRAME_W; x++) {
       if (before[x] === 0 && after[x - s] === 0) continue;
       sum += Math.abs(before[x] - after[x - s]);
       n++;

@@ -14,16 +14,33 @@
  *   scene's) barely moves. That pair is what this spec pins: the counters are alive *and* the
  *   churn is confined.
  * - **`RT`** — `createRenderTargetMeter` hooked into Pixi's global `TexturePool`. On
- *   `raster-range` a layer effect pools a target for the 384×216 frame, and the review's **F3**
- *   says Pixi rounds that up to 512×256 RGBA8 (512 KB), not 324 KB.
+ *   `raster-range` a layer effect pools a target for the frame (384×216 today), and the review's
+ *   **F3** says Pixi rounds that up to the next power of two on each axis — 512×256 RGBA8
+ *   (512 KB), not 324 KB.
  * - **`?gl=2`** — F8's A/B switch: WebGL1 is the shipped default and the query parameter really
  *   does get a WebGL2 context, with the overlay reporting what was obtained.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { FRAME_H, FRAME_W } from './frame-pixels.js';
 
-/** Bytes of the render target Pixi pools for a 384×216 filter pass (review F3: 512×256 RGBA8). */
-const FRAME_FILTER_TARGET_BYTES = 512 * 256 * 4;
+/**
+ * The smallest power of two at or above a size.
+ *
+ * @param size - A positive whole number.
+ * @returns The power of two.
+ */
+function nextPowerOfTwo(size: number): number {
+  let power = 1;
+  while (power < size) power *= 2;
+  return power;
+}
+
+/**
+ * Bytes of the render target Pixi pools for a filter pass over the frame (review F3: each axis
+ * rounded up to a power of two, RGBA8 — 512×256 for today's 384×216, 1024×512 at 640×360).
+ */
+const FRAME_FILTER_TARGET_BYTES = nextPowerOfTwo(FRAME_W) * nextPowerOfTwo(FRAME_H) * 4;
 
 /** What this spec reads from `window.__shmupDebug`. */
 interface ProfileWindow {
@@ -168,7 +185,7 @@ test.describe('render profile (web test build, M3-02c)', () => {
     const state = await profile(page);
     // The sea is filtered at this camera x (the raster spec pins the mask itself) …
     expect(state.layerEffectMask).toBeGreaterThan(0);
-    // … and the pass is pooled at the next power of two on each axis: 512×256, not 384×216.
+    // … and the pass is pooled at the next power of two on each axis (512×256, not 384×216).
     expect(state.renderTargetBytes).toBeGreaterThanOrEqual(FRAME_FILTER_TARGET_BYTES);
     expect(errors).toEqual([]);
   });

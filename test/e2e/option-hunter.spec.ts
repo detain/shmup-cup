@@ -5,11 +5,13 @@
  * later) must take them — drawn as its violet grabber (`enemies/option-hunter`) with the grey
  * stolen Options (`options/stolen`) in tow —, and a Mega Crash must free them as grey items that
  * drift on screen and give an Option back when flown into. No console errors and no "unknown
- * sprite" warning from the atlas (the new engine sprites are in the atlas). Screenshots are ×3
- * (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * sprite" warning from the atlas (the new engine sprites are in the atlas). Screenshots are at the
+ * e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is
+ * screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** The Option Hunter's violet body (`enemies/option-hunter` palette `p`, #8a3ad8) — unique. */
 const HUNTER_VIOLET = [0x8a, 0x3a, 0xd8] as const;
@@ -134,9 +136,9 @@ async function countColours(
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   const counts = colours.map(() => 0);
-  for (let fy = 8; fy < 208 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       colours.forEach(([r, g, b], k) => {
         if (
           Math.abs(data[i] - r) <= 3 &&

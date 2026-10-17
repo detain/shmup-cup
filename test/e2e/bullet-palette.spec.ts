@@ -6,10 +6,12 @@
  * pipeline's `<sprite>@deuteranopia` variants — their body colours on screen, the standard
  * palette's gone — with no console error and no "unknown sprite" warning from the atlas; without a
  * save the standard palette shows none of the deuteranopia colours (the control).
- * Screenshots are ×3 (viewport 1152×648): frame pixel (x, y) is screenshot pixel (3x + 1, 3y + 1).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -100,9 +102,9 @@ async function paletteCount(page: Page): Promise<PaletteCount> {
     Math.abs(data[i] - r) <= 3 && Math.abs(data[i + 1] - g) <= 3 && Math.abs(data[i + 2] - b) <= 3;
   let standard = 0;
   let deuteranopia = 0;
-  for (let fy = 8; fy < 208 && fy * 3 + 1 < height; fy++) {
-    for (let fx = 0; fx < 384 && fx * 3 + 1 < width; fx++) {
-      const i = ((fy * 3 + 1) * width + fx * 3 + 1) * 4;
+  for (let fy = PLAYFIELD_Y; fy < HUD_BOTTOM_Y && sy(fy) < height; fy++) {
+    for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
+      const i = pixelIndex(width, fx, fy);
       if (STANDARD.some((c) => near(i, c))) standard++;
       if (DEUTERANOPIA.some((c) => near(i, c))) deuteranopia++;
     }
