@@ -532,6 +532,32 @@ describe('core/data units: the backdrop', () => {
       [264, 336],
     ]);
     expect(result.seams).toEqual([[0, 1]]);
+    expect(rescaleBackdrop([{ y: 0, height: 152 }], [], V2).conflicts).toEqual([]);
+  });
+
+  it('reports a band that touched two anchors and keeps only one (review round 2)', () => {
+    // A full-height band: it stays on the top edge, its art ×k ends 36 px above the bottom edge.
+    const full = rescaleBackdrop([{ y: 0, height: 200 }], [], V2);
+    expect(full.bands).toEqual([{ y: 0, placement: 'top' }]);
+    expect(full.conflicts).toEqual([{ band: 0, anchor: 'bottom', edge: 'bottom', gap: 36 }]);
+    expect(full.seams).toEqual([]);
+    // A sky from the top edge down to the Mode-7 horizon: 0–150, the horizon snaps to 168.
+    const horizon: BackdropRow[] = [
+      { y: 100, kind: 'anchor' },
+      { y: 200, kind: 'anchor' },
+    ];
+    const sky = rescaleBackdrop([{ y: 0, height: 100 }], horizon, V2);
+    expect(sky.bands).toEqual([{ y: 0, placement: 'top' }]);
+    expect(sky.rows.map((row) => row.y)).toEqual([168, 336]);
+    expect(sky.conflicts).toEqual([{ band: 0, anchor: 0, edge: 'bottom', gap: 18 }]);
+    // A floor band from the horizon to the bottom edge stays on the bottom edge: its top starts
+    // 18 px under the horizon (it touched the Mode-7 bottom row too, and keeps it).
+    const floor = rescaleBackdrop([{ y: 100, height: 100 }], horizon, V2);
+    expect(floor.bands).toEqual([{ y: 186, placement: 'bottom' }]);
+    expect(floor.conflicts).toEqual([{ band: 0, anchor: 0, edge: 'top', gap: 18 }]);
+    // A band on one anchor keeps it: nothing to report.
+    expect(rescaleBackdrop([{ y: 52, height: 48 }], horizon, V2).conflicts).toEqual([]);
+    expect(rescaleBackdrop([{ y: 152, height: 48 }], horizon, V2).conflicts).toEqual([]);
   });
 
   it('is the identity at factor 1 on the same playfield', () => {
@@ -555,6 +581,9 @@ describe('core/data units: the backdrop', () => {
     expect(out.bands.map((band) => band.y)).toEqual(bands.map((band) => band.y));
     expect(out.rows.map((row) => row.y)).toEqual(rows.map((row) => row.y));
     expect(out.seams).toEqual([]);
+    expect(out.conflicts).toEqual([]);
+    const twoAnchors = rescaleBackdrop([{ y: 0, height: 200 }], rows, SAME);
+    expect(twoAnchors.conflicts).toEqual([]);
   });
 });
 

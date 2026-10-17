@@ -408,12 +408,20 @@ export interface PortedWorldSum {
  *
  * @remarks
  * Read both fields as written before writing either back. Because the event fires `lead` px of
- * camera travel earlier than ×k, the rescale tool also: re-sorts the stage's timeline (the loader
- * wants events sorted by `x`; ties keep their file order); lists an event that moves before a
- * checkpoint it followed, or out of a `ground` bonus entrance's window it was in (the entrance
- * counts the ground enemies that appear while it is armed); and lists a block that moves (`vx`,
- * `vy`, `dx`, `dy`) — its drift and swing run `lead / speed` ticks ahead of v1 at the same camera
- * position. A `ground-enemy` pair applies only when the event's enemy has a `ground` anchor.
+ * camera travel earlier than ×k while everything else on the timeline stays ×k, it can change
+ * places with what it followed, so the rescale tool also: re-sorts the stage's timeline (the
+ * loader wants events sorted by `x`; ties keep their file order) and reports each array's old →
+ * new indices; lists an event that now fires on the other side of a checkpoint, of a `flag` event,
+ * of a camera stop (a `lock` or `hold` key), or of a region trigger's arming or disarming (its
+ * `until`, by default the region's right end) — an event whose `branch` reads that trigger's flag
+ * and that fired after the trigger disarmed in v1 may now fire while a ship can still set the
+ * flag, so both branches can play (gimmick-range's falling rock: R2-02 gives the trigger an
+ * `until` before it by hand — no automatic fix keeps both the spawn column and the trigger's
+ * window); lists a ground enemy that leaves or joins a `ground` bonus entrance's window (the
+ * entrance counts the ground enemies that appear while it is armed); and lists a block that moves
+ * (`vx`, `vy`, `dx`, `dy`) — its drift and swing run `lead / speed` ticks ahead of v1 at the same
+ * camera position. A `ground-enemy` pair applies only when the event's enemy has a `ground`
+ * anchor.
  *
  * @example
  * ```ts
@@ -529,6 +537,30 @@ export interface PortedRow {
   readonly placement: RowPlacement;
 }
 
+/**
+ * A band that touched two anchors as written and keeps only one once ported
+ * ({@link PortedBackdrop.conflicts}): its art is ×k, but the span between the anchors is not —
+ * a full-height band (top edge to bottom edge: ×k plus the pad), a sky from the top edge down to
+ * the Mode-7 horizon (×k against the horizon's snap), a floor band from the horizon to the bottom
+ * edge.
+ */
+export interface BackdropConflict {
+  /** The band's index. */
+  readonly band: number;
+  /**
+   * The anchor it no longer touches: the playfield's `bottom` edge, or the index (in `rows`) of
+   * the Mode-7 row.
+   */
+  readonly anchor: 'bottom' | number;
+  /** Which of the band's edges was on that anchor as written. */
+  readonly edge: 'top' | 'bottom';
+  /**
+   * The strip the port opens between that edge and the anchor, in new pixels (negative: the band
+   * now reaches past the anchor by that much).
+   */
+  readonly gap: number;
+}
+
 /** What {@link rescaleBackdrop} gives. */
 export interface PortedBackdrop {
   /** The bands, in input order. */
@@ -540,6 +572,11 @@ export interface PortedBackdrop {
    * ended exactly where a bottom band began: the pad opens a gap there (the tool lists it).
    */
   readonly seams: readonly (readonly [number, number])[];
+  /**
+   * Anchors a band touched as written but no longer does — the bottom edge or a Mode-7 row it
+   * could not keep because another anchor placed it first (the tool lists them).
+   */
+  readonly conflicts: readonly BackdropConflict[];
 }
 
 /**
@@ -564,6 +601,13 @@ export interface PortedBackdrop {
  * 3. touching a band already placed (a stack, a band on a band) → kept touching it, repeatedly;
  * 4. anything still free → by the playfield edge it is nearer to (top: ×k; bottom: + the shift),
  *    then step 3 again.
+ *
+ * A band can keep only one anchor: one that touched two as written — the top edge and the bottom
+ * edge (a full-height band), the top edge and a Mode-7 row, a Mode-7 row and the bottom edge — is
+ * placed by the first step that names it (the top edge before the bottom edge before a row), and
+ * every other anchor it touched is reported in `conflicts` with the strip that opens (a 200-row
+ * band from the top edge ends 36 px above the new bottom edge). Two bands that met but no longer
+ * meet are reported in `seams`.
  *
  * A raster row on a band edge (in v1 — of any layer: a far haze may end where a mid band begins)
  * lands on that edge's port; one within a tile (`tileSize`) of a band edge, and nearer it than any
@@ -677,7 +721,29 @@ export function rescaleBackdrop(
       if (at[i] + upper.height * factor !== at[j]) seams.push([i, j]);
     }
   }
-  return { bands: ported, rows: portedRows, seams };
+  // Anchors a band touched as written but could not keep (it keeps one: the step that placed it).
+  const conflicts: BackdropConflict[] = [];
+  for (let i = 0; i < n; i++) {
+    const band = bands[i];
+    const top = at[i];
+    const bottom = top + band.height * factor;
+    if (band.y + band.height === from && bottom !== to) {
+      conflicts.push({ band: i, anchor: 'bottom', edge: 'bottom', gap: to - bottom });
+    }
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r];
+      // A Mode-7 row on the bottom edge is that edge (checked above).
+      if (row.kind !== 'anchor' || row.y === from) continue;
+      const snapped = snapToEdge(row.y, from, to, factor);
+      if (band.y + band.height === row.y && bottom !== snapped) {
+        conflicts.push({ band: i, anchor: r, edge: 'bottom', gap: snapped - bottom });
+      }
+      if (band.y === row.y && top !== snapped) {
+        conflicts.push({ band: i, anchor: r, edge: 'top', gap: top - snapped });
+      }
+    }
+  }
+  return { bands: ported, rows: portedRows, seams, conflicts };
 }
 
 /**

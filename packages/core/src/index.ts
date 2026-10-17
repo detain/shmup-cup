@@ -508,6 +508,7 @@ export {
   rescaleWorldSum,
   topEdgeSide,
   type BackdropBand,
+  type BackdropConflict,
   type BackdropRow,
   type BandPlacement,
   type BoxYPair,
