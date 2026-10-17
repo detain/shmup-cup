@@ -4,13 +4,16 @@
  *
  * {@link shmupContent} turns `content/` into the virtual module `virtual:shmup-content`
  * so the Tizen bundle can ship game data inside its single classic script (decision D25).
- * {@link shmupAssets} runs the placeholder asset pipeline, inlines the atlas manifest as
- * `virtual:shmup-assets` and ships the atlas pages next to the bundle.
+ * {@link shmupAssets} runs the placeholder asset pipeline and ships the atlas pages **and
+ * the manifest** (`assets/atlas/main.json`) next to the bundle; `virtual:shmup-assets` tells the
+ * shell where to fetch the manifest and its digest (plan R1-05 — the manifest no longer rides in
+ * `app.js`), `virtual:shmup-assets-inline` still inlines it (the render bench, the TV fallback).
  *
  * **Public API.** Resolve conditions: {@link SOURCE_CONDITION}, {@link clientConditions},
  * {@link serverConditions}. Content: {@link shmupContent}, {@link readContentFiles},
  * {@link CONTENT_MODULE_ID}, {@link ContentFileRecord}, {@link ShmupContentOptions}.
- * Assets: {@link shmupAssets}, {@link ASSETS_MODULE_ID}, {@link ATLAS_URL_DIR},
+ * Assets: {@link shmupAssets}, {@link ASSETS_MODULE_ID}, {@link ASSETS_INLINE_MODULE_ID},
+ * {@link ATLAS_URL_DIR}, {@link ATLAS_MANIFEST_URL}, {@link manifestDigest},
  * {@link ShmupAssetsOptions}. Build info (M1-19): {@link shmupBuildInfo}, {@link isDevBuild},
  * {@link DEV_BUILD_MODES}, {@link buildId}.
  *
@@ -28,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 import { defaultClientConditions, defaultServerConditions, normalizePath, type Plugin } from 'vite';
 import {
   ATLAS_DIR,
+  ATLAS_NAME,
   DEFAULT_OUT_DIR,
   DEFAULT_SOURCE_DIR,
   PIPELINE_DIR,
@@ -214,7 +218,9 @@ export function shmupContent(options: ShmupContentOptions = {}): Plugin {
 }
 
 /**
- * Module id the {@link shmupAssets} plugin serves; `types/virtual-modules.d.ts` declares it.
+ * Module id the {@link shmupAssets} plugin serves for the apps (plan R1-05): where the atlas
+ * manifest is fetched from (`manifestUrl`), the folder of its pages (`atlasDir`) and the digest of
+ * the shipped manifest (`manifestDigest`); `types/virtual-modules.d.ts` declares it.
  */
 export const ASSETS_MODULE_ID = 'virtual:shmup-assets';
 
@@ -222,11 +228,51 @@ export const ASSETS_MODULE_ID = 'virtual:shmup-assets';
 const RESOLVED_ASSETS_MODULE_ID = '\0' + ASSETS_MODULE_ID;
 
 /**
+ * Module id of the **inlined** atlas manifest (`{ manifest, pageUrls }` — what
+ * `virtual:shmup-assets` served until R1-05): the render bench harness reads it, and it is the TV
+ * apps' fallback should `file://` XHR of the manifest ever fail on a set (W3-7 — one import line
+ * per app). `types/virtual-modules.d.ts` declares it.
+ */
+export const ASSETS_INLINE_MODULE_ID = 'virtual:shmup-assets-inline';
+
+/** Rollup's convention for a virtual module's resolved id. */
+const RESOLVED_ASSETS_INLINE_MODULE_ID = '\0' + ASSETS_INLINE_MODULE_ID;
+
+/**
  * Where atlas pages live relative to the page that loads the game (`dist/assets/atlas/`
  * in builds, served from `assets/generated/atlas/` by the dev server). Relative, so the
  * build works from `file://` (Tizen) and `app://` (Electron).
  */
 export const ATLAS_URL_DIR = 'assets/atlas';
+
+/**
+ * Where the atlas manifest lives relative to the page (`dist/assets/atlas/main.json` — the
+ * pipeline's own file, byte for byte), fetched by the shell at boot (plan R1-05).
+ */
+export const ATLAS_MANIFEST_URL = `${ATLAS_URL_DIR}/${ATLAS_NAME}.json`;
+
+/**
+ * The digest the shell checks a fetched manifest against: 32-bit FNV-1a over the file's bytes, as
+ * 8 lower-case hex digits. `@shmup/shell`'s `manifestDigest` computes the same value in the page
+ * (`test/integration/assets-plugin.test.ts` pins that the two agree) — a cached `main.json` of
+ * another build fails the boot with a clear error instead of drawing the wrong frames.
+ *
+ * @param bytes - The manifest file's bytes.
+ * @returns The digest, e.g. `"811c9dc5"` for no bytes.
+ *
+ * @example
+ * ```ts
+ * manifestDigest(readFileSync('assets/generated/atlas/main.json')); // → e.g. "3fa0c1d2"
+ * ```
+ */
+export function manifestDigest(bytes: Uint8Array): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < bytes.length; i++) {
+    hash ^= bytes[i];
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 /** Options of {@link shmupAssets}. */
 export interface ShmupAssetsOptions {
@@ -246,13 +292,22 @@ const ATLAS_FILE_PATTERN = /^[a-z0-9-]+\.(png|json)$/;
  * - **Every command:** on `buildStart` it runs `generateAssets()` (input-hash cached, so
  *   an unchanged tree costs one hash) — a fresh checkout builds without a prior
  *   `pnpm assets`.
- * - **`virtual:shmup-assets`:** `export const manifest = {…}` (the atlas manifest,
- *   **inlined** — no `fetch()` on the TV), `export const pageUrls = ['assets/atlas/main.png',
- *   …]` (relative, one per manifest page) and a default export `{ manifest, pageUrls }`.
- * - **Build:** every atlas page is emitted into `dist/assets/atlas/` with `emitFile`
- *   (fixed names, no hash — the manifest refers to them by name).
+ * - **`virtual:shmup-assets`** (the apps — plan R1-05): `export const manifestUrl =
+ *   'assets/atlas/main.json'`, `export const atlasDir = 'assets/atlas'` (both relative),
+ *   `export const manifestDigest = '…'` ({@link manifestDigest} of the manifest file) and a
+ *   default export of the three. The shell fetches the manifest with `XMLHttpRequest` (status 0
+ *   is success on `file://` — `fetch()` fails there, decision D25), so the ~200 KB of frame data
+ *   no longer rides in the TV's `app.js`.
+ * - **`virtual:shmup-assets-inline`:** what the apps imported until R1-05 — `export const
+ *   manifest = {…}` (the atlas manifest, **inlined**), `export const pageUrls =
+ *   ['assets/atlas/main.png', …]` (relative, one per manifest page) and a default export
+ *   `{ manifest, pageUrls }`: the render bench harness, and the TV fallback (W3-7).
+ * - **Build:** every atlas page and the manifest are emitted into `dist/assets/atlas/` with
+ *   `emitFile` (fixed names, no hash — the manifest refers to the pages by name), the manifest
+ *   as the pipeline's on-disk bytes so one digest holds for the build and the dev server.
  * - **Dev server:** a middleware serves `<base>assets/atlas/*` from the output directory,
- *   and edits under the asset sources regenerate the atlas and full-reload the page.
+ *   and edits under the asset sources regenerate the atlas, invalidate both virtual modules and
+ *   full-reload the page.
  *   Invalid sources are reported in the terminal; the last good atlas stays in use.
  *   Edits under `scripts/assets/` are **not** regenerated in-process (the loaded pipeline
  *   code is the old code): Vite restarts the server for them (they are config
@@ -285,6 +340,15 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
     result = generateAssets({ sourceDir, outDir });
     return result;
   };
+  /**
+   * The manifest file as the pipeline wrote it (the bytes the build ships and the dev server
+   * serves — their digest is what the shell checks).
+   *
+   * @param generated - The pipeline result.
+   * @returns The bytes of `<atlasDir>/main.json`.
+   */
+  const manifestBytes = (generated: GenerateResult): Buffer =>
+    readFileSync(join(generated.atlasDir, `${ATLAS_NAME}.json`));
 
   return {
     name: 'shmup:assets',
@@ -297,12 +361,14 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
       command = config.command;
     },
     /**
-     * Generates the atlas (cached) and, in builds, emits its pages into `assets/atlas/`.
+     * Generates the atlas (cached) and, in builds, emits its pages and its manifest into
+     * `assets/atlas/`.
      *
      * @remarks
      * Runs for the dev server too, so a fresh checkout serves an atlas without a prior
-     * `pnpm assets`. Pages are emitted under fixed names (no content hash): the inlined
-     * manifest refers to them by file name.
+     * `pnpm assets`. Pages are emitted under fixed names (no content hash): the manifest
+     * refers to them by file name. The manifest is emitted as the pipeline's own bytes
+     * (`main.json`), so its digest in `virtual:shmup-assets` matches the shipped file.
      *
      * @throws AssetSourceError when an asset source is invalid; Vite reports it as a build
      *   (or dev-server start-up) error.
@@ -317,25 +383,42 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
           source: readFileSync(join(generated.atlasDir, page.file)),
         });
       }
+      this.emitFile({
+        type: 'asset',
+        fileName: ATLAS_MANIFEST_URL,
+        source: manifestBytes(generated),
+      });
     },
     /**
-     * Claims the virtual module id.
+     * Claims the two virtual module ids.
      *
      * @param id - The import specifier being resolved.
-     * @returns The `\0`-prefixed resolved id for {@link ASSETS_MODULE_ID}, else `null`.
+     * @returns The `\0`-prefixed resolved id for {@link ASSETS_MODULE_ID} or
+     *   {@link ASSETS_INLINE_MODULE_ID}, else `null`.
      */
     resolveId(id) {
-      return id === ASSETS_MODULE_ID ? RESOLVED_ASSETS_MODULE_ID : null;
+      if (id === ASSETS_MODULE_ID) return RESOLVED_ASSETS_MODULE_ID;
+      return id === ASSETS_INLINE_MODULE_ID ? RESOLVED_ASSETS_INLINE_MODULE_ID : null;
     },
     /**
-     * Generates the virtual module's source.
+     * Generates a virtual module's source.
      *
      * @param id - The resolved module id.
-     * @returns The module with the inlined manifest and relative page URLs, or `null` for
-     *   any other module.
+     * @returns `virtual:shmup-assets`: the manifest's URL, the pages' folder and the manifest's
+     *   digest; `virtual:shmup-assets-inline`: the inlined manifest and relative page URLs;
+     *   `null` for any other module.
      */
     load(id) {
-      if (id !== RESOLVED_ASSETS_MODULE_ID) return null;
+      if (id === RESOLVED_ASSETS_MODULE_ID) {
+        const digest = manifestDigest(manifestBytes(result ?? generate()));
+        return (
+          `export const manifestUrl = ${JSON.stringify(ATLAS_MANIFEST_URL)};\n` +
+          `export const atlasDir = ${JSON.stringify(ATLAS_URL_DIR)};\n` +
+          `export const manifestDigest = ${JSON.stringify(digest)};\n` +
+          'export default { manifestUrl, atlasDir, manifestDigest };\n'
+        );
+      }
+      if (id !== RESOLVED_ASSETS_INLINE_MODULE_ID) return null;
       const { manifest } = result ?? generate();
       const pageUrls = manifest.pages.map((page) => `${ATLAS_URL_DIR}/${page.file}`);
       return (
@@ -417,8 +500,11 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
           server.config.logger.error(`[shmup:assets] ${(error as Error).message}`);
           return;
         }
-        const module = server.moduleGraph.getModuleById(RESOLVED_ASSETS_MODULE_ID);
-        if (module !== undefined) server.moduleGraph.invalidateModule(module);
+        // Both modules change: the inlined manifest, and the digest of the fetched one.
+        for (const resolved of [RESOLVED_ASSETS_MODULE_ID, RESOLVED_ASSETS_INLINE_MODULE_ID]) {
+          const module = server.moduleGraph.getModuleById(resolved);
+          if (module !== undefined) server.moduleGraph.invalidateModule(module);
+        }
         server.ws.send({ type: 'full-reload' });
       };
       server.watcher.on('add', onChange);

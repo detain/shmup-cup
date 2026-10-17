@@ -39,7 +39,9 @@ import {
   type AtlasPageImage,
   type FxContent,
 } from '@shmup/render-pixi';
-import assets from 'virtual:shmup-assets';
+// The inlined manifest (plan R1-05: the apps fetch `assets/atlas/main.json` through the shell's
+// boot; the bench builds its atlas itself and never runs that path, so it keeps the inline module).
+import assets from 'virtual:shmup-assets-inline';
 import contentFiles from 'virtual:shmup-content';
 import {
   BENCH_PARTICLE_CAPACITY,

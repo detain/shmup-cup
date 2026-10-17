@@ -18,6 +18,9 @@
  *  9. The game and the TV render bench's stub never mix (plan R0-02): an `appinfo.json` with the
  *     bench's id (`appinfo.mjs` `BENCH_APPINFO_ID`) needs the bench's `app.js` (it holds the Tizen
  *     check's `TV_BENCH_MARKER`), and any other app must not hold it.
+ * 10. The atlas manifest ships as `dist/assets/atlas/main.json`, matches its pages and is not
+ *     inlined into `app.js` (plan R1-05) — the Tizen check's `checkAtlasManifest`, imported like
+ *     the budgets; the bench is exempt.
  *
  * Exits non-zero with a readable report on failure. Checks `apps/webos/dist` by default, or the
  * folder given as the first argument (`build:bench` checks `dist-bench`). The checks are also
@@ -38,6 +41,7 @@ import {
   DIST_BUDGET,
   POLYFILL_BANNER,
   TV_BENCH_MARKER,
+  checkAtlasManifest,
   pngSize,
 } from '../../tizen/scripts/check-bundle.mjs';
 import { BENCH_APPINFO_ID, validateAppInfo } from './appinfo.mjs';
@@ -193,13 +197,15 @@ export function checkWebosBundle(distDir) {
   }
 
   // 9. the game and the TV render bench never mix.
-  if (code !== '' && files.indexOf('appinfo.json') >= 0) {
-    let id = '';
+  let id = '';
+  if (files.indexOf('appinfo.json') >= 0) {
     try {
       id = String(JSON.parse(readFileSync(join(distDir, 'appinfo.json'), 'utf8')).id);
     } catch {
       // Reported by rule 5.
     }
+  }
+  if (code !== '' && files.indexOf('appinfo.json') >= 0) {
     const marked = code.includes(TV_BENCH_MARKER);
     if (id === BENCH_APPINFO_ID && !marked) {
       problems.push(
@@ -211,6 +217,9 @@ export function checkWebosBundle(distDir) {
       );
     }
   }
+
+  // 10. the atlas manifest ships next to the pages, not inlined into app.js (not the bench).
+  if (id !== BENCH_APPINFO_ID) problems.push(...checkAtlasManifest(distDir, files, code));
 
   return { problems, files, code, gzipBytes, distBytes };
 }

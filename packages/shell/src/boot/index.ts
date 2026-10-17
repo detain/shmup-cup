@@ -3,15 +3,19 @@
  *
  * **Responsibility.** The one boot path of the web app and the TV app (decision D34). The
  * apps create their input / audio adapters and their `Platform`, import the inlined
- * `virtual:shmup-content` and `virtual:shmup-assets` modules and hand everything to
- * {@link bootShell}, which:
+ * `virtual:shmup-content` module and `virtual:shmup-assets` (where the atlas manifest is — plan
+ * R1-05) and hand everything to {@link bootShell}, which:
  *
  * 1. shows a progress bar on a plain 2D overlay canvas (`error-screen`);
  * 2. validates the content — core kinds plus the owners of foreign kinds (`loader`; the input
  *    profiles by default); any issue stops the boot on the **boot error screen** listing every
  *    `path: message`;
- * 3. loads the atlas pages with `new Image()` from their relative URLs (no `fetch` — D25) and
- *    builds the atlas (`@shmup/render-pixi` `createAtlas`);
+ * 3. fetches the atlas manifest (`assets/atlas/main.json`, plan R1-05) with `XMLHttpRequest` —
+ *    `fetch()` fails on `file://` (D25), XHR works there with status 0 — and checks its digest and
+ *    format version (`loader` `loadAtlasManifest`; an inlined manifest — `virtual:shmup-assets-inline`
+ *    — skips this), loads the atlas pages with `new Image()` from their relative URLs (decoded with
+ *    `decode()` where the engine has it, each page timed — {@link Shell.atlasTiming}) and builds
+ *    the atlas (`@shmup/render-pixi` `createAtlas`);
  * 4. creates the renderer (WebGL1 first) and, through the app's factory, the platform; **reads
  *    the save** (`core/save` `loadSave`, M1-17) and applies its volumes and input profile; then
  *    creates the core game with the validated content and the save;
@@ -128,7 +132,8 @@
  *
  * **Public API.** {@link bootShell}, {@link Shell}, {@link ShellOptions}, {@link ShellAssets},
  * {@link ShellInput}, {@link ShellInputProfiles}, {@link ShellScene}, {@link SHELL_SCENES},
- * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming},
+ * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming}, {@link AtlasTiming},
+ * {@link AtlasPageTiming}, {@link ShellInlineAssets}, {@link ShellManifestAssets},
  * {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE},
  * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}; M3-02c: {@link webGLVersionFromSearch} (the
  * `?gl=` dev switch). Debug tools: the `debug` module.
@@ -149,6 +154,7 @@ import {
   type AudioLoader,
   type MusicContent,
   type SfxContent,
+  type XhrLike,
 } from '@shmup/audio-web';
 import {
   DEFAULT_GAME_CONFIG,
@@ -217,9 +223,13 @@ import {
 } from '../frame-loop/index.js';
 import {
   AssetLoadError,
+  AtlasManifestError,
+  atlasPageUrls,
+  loadAtlasManifest,
   loadGameContent,
-  loadImages,
+  loadImagesTimed,
   type ContentOwners,
+  type ImageTiming,
   type LoadableImage,
 } from '../loader/index.js';
 import { createFlightScene, type FlightScene } from '../flight/index.js';
@@ -275,6 +285,33 @@ export interface BootTiming {
   readonly readyMs: number;
   /** `readyMs − startMs`: the time spent in `bootShell` (content, atlas, renderer, save, audio). */
   readonly bootMs: number;
+}
+
+/** One atlas page's load at boot (see {@link AtlasTiming}). */
+export interface AtlasPageTiming {
+  /** The page's file (`main.png`, …). */
+  readonly file: string;
+  /** From the request to `onload`, in ms (the fetch, and any decoding before it). */
+  readonly loadMs: number;
+  /** `HTMLImageElement.decode()` after `onload`, in ms (0 where the engine has none). */
+  readonly decodeMs: number;
+}
+
+/**
+ * How long the atlas took to load at boot (plan R1-05, owner decision W3-6: the M7's decode
+ * figures for R3-04's zone-load budget). Measured with the window's high-resolution clock
+ * (`performance.now()` — never {@link ShellOptions.now}, so a boot-clock fake stays exact); all
+ * zero where the window has none.
+ */
+export interface AtlasTiming {
+  /** Where the manifest came from: `fetched` (`assets/atlas/main.json`) or `inline`. */
+  readonly manifest: 'fetched' | 'inline';
+  /** The manifest's request, digest check and parse, in ms (0 when inlined). */
+  readonly manifestMs: number;
+  /** Bytes of the fetched manifest (0 when inlined). */
+  readonly manifestBytes: number;
+  /** Every page, in page order. */
+  readonly pages: readonly AtlasPageTiming[];
 }
 
 /**
@@ -435,12 +472,46 @@ export function defaultStageId(files: readonly ContentFile[]): string | null {
   return null;
 }
 
-/** The inlined `virtual:shmup-assets` module (manifest + relative page URLs). */
-export interface ShellAssets {
+/**
+ * An inlined atlas manifest with its relative page URLs: `virtual:shmup-assets-inline` (what
+ * `virtual:shmup-assets` was until plan R1-05 — the TV fallback, W3-7) or a test's own.
+ */
+export interface ShellInlineAssets {
   /** The atlas manifest. */
   readonly manifest: AtlasManifest;
   /** Relative URL of each atlas page, same order as `manifest.pages`. */
   readonly pageUrls: readonly string[];
+}
+
+/**
+ * Where to fetch the atlas manifest (plan R1-05): `virtual:shmup-assets`, what the apps pass.
+ */
+export interface ShellManifestAssets {
+  /** The manifest's URL, relative to the page (`assets/atlas/main.json`). */
+  readonly manifestUrl: string;
+  /** The folder of the pages, relative to the page (`assets/atlas`). */
+  readonly atlasDir: string;
+  /**
+   * The digest the build recorded (`vite.shared.ts` `manifestDigest`); a fetched manifest with
+   * another digest fails the boot. Omitted: not checked.
+   */
+  readonly manifestDigest?: string;
+}
+
+/**
+ * The atlas the shell boots with: where to fetch its manifest (`virtual:shmup-assets` — the apps,
+ * since plan R1-05) or the manifest itself, inlined (`virtual:shmup-assets-inline`).
+ */
+export type ShellAssets = ShellInlineAssets | ShellManifestAssets;
+
+/**
+ * Whether the assets carry their manifest inline.
+ *
+ * @param assets - The assets.
+ * @returns `true` for {@link ShellInlineAssets}.
+ */
+function isInlineAssets(assets: ShellAssets): assets is ShellInlineAssets {
+  return (assets as Partial<ShellInlineAssets>).manifest !== undefined;
 }
 
 /** The input adapter the shell drives (`@shmup/input-web`'s `WebInput` satisfies it). */
@@ -497,8 +568,18 @@ export interface ShellOptions {
   readonly win: Window;
   /** Content files (`virtual:shmup-content`). */
   readonly contentFiles: readonly ContentFile[];
-  /** Atlas manifest and page URLs (`virtual:shmup-assets`). */
+  /**
+   * The atlas: where to fetch its manifest (`virtual:shmup-assets`, plan R1-05) or the manifest
+   * and page URLs inlined (`virtual:shmup-assets-inline`).
+   */
   readonly assets: ShellAssets;
+  /**
+   * Request factory for the atlas manifest (default `() => new XMLHttpRequest()` — XHR, since
+   * `fetch()` fails on `file://`, D25). Tests pass fakes.
+   *
+   * @returns A fresh request.
+   */
+  readonly createRequest?: () => XhrLike;
   /** Input adapter (also the platform's input). The shell destroys it on `stop()`. */
   readonly input: ShellInput;
   /**
@@ -647,6 +728,8 @@ export interface Shell {
   readonly save: SaveStore;
   /** How long boot took (for the debug overlay, M1-19). */
   readonly bootTiming: BootTiming;
+  /** How long the atlas manifest and pages took at boot (plan R1-05 — {@link AtlasTiming}). */
+  readonly atlasTiming: AtlasTiming;
   /** The refresh-rate probe the frame loop feeds (M2-08: it switches render interpolation). */
   readonly refresh: RefreshMonitor;
   /**
@@ -733,6 +816,18 @@ function markState(canvas: HTMLCanvasElement, state: 'loading' | 'running' | 'er
 function describe(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
   return String(error);
+}
+
+/**
+ * The window's high-resolution clock, the one the atlas timings use ({@link AtlasTiming}).
+ *
+ * @param win - The window.
+ * @returns `performance.now` of the window, or `undefined` when it has none (test fakes).
+ */
+function windowClock(win: Window): (() => number) | undefined {
+  const perf = (win as Partial<Window>).performance;
+  if (perf !== undefined && typeof perf.now === 'function') return () => perf.now();
+  return undefined;
 }
 
 /**
@@ -838,8 +933,10 @@ function createCalibrationFrame(first: RenderFrame): CalibrationFrame {
  *
  * @param options - Canvas, window, content, assets, adapters and the platform factory.
  * @returns A promise of the running {@link Shell}.
- * @throws Rejects with {@link ShellBootError} when content is invalid, an atlas page cannot
- *   be loaded or does not match the manifest, WebGL is unavailable, creating the platform
+ * @throws Rejects with {@link ShellBootError} when content is invalid, the atlas manifest cannot
+ *   be fetched or read (`ATLAS MANIFEST FAILED TO LOAD`) or belongs to another build or format
+ *   (`ATLAS DOES NOT MATCH ITS MANIFEST`), an atlas page cannot be loaded or does not match the
+ *   manifest, WebGL is unavailable, creating the platform
  *   or game fails (including an `options.inputProfiles` callback throwing at boot — `SHMUP CUP
  *   FAILED TO START`), or a recorded sound or track cannot be loaded (`AUDIO FAILED TO LOAD`). A
  *   corrupt, unreadable or unreachable save never rejects: the game starts with the defaults.
@@ -937,21 +1034,76 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     );
   }
 
-  // 3. Atlas pages.
+  // 3. The atlas: its manifest — fetched with XHR since R1-05 (`virtual:shmup-assets`), or
+  // inlined —, then its pages. Timed with the window's clock (W3-6: the M7's decode figures).
+  const atlasClock = windowClock(win);
+  const assets = options.assets;
+  let manifest: AtlasManifest;
+  let pageUrls: readonly string[];
+  let manifestMs = 0;
+  let manifestBytes = 0;
+  if (isInlineAssets(assets)) {
+    manifest = assets.manifest;
+    pageUrls = assets.pageUrls;
+  } else {
+    const fetchStart = atlasClock === undefined ? 0 : atlasClock();
+    try {
+      const loaded = await loadAtlasManifest(
+        assets.manifestUrl,
+        assets.manifestDigest,
+        options.createRequest,
+      );
+      manifest = loaded.manifest;
+      manifestBytes = loaded.bytes;
+    } catch (error) {
+      // Another build's manifest, or a format this shell cannot read, does not match the atlas.
+      const mismatch =
+        error instanceof AtlasManifestError &&
+        (error.failure === 'digest' || error.failure === 'version');
+      const title = mismatch
+        ? 'ATLAS DOES NOT MATCH ITS MANIFEST'
+        : 'ATLAS MANIFEST FAILED TO LOAD';
+      throw fail(title, [describe(error)], [], error);
+    }
+    manifestMs = (atlasClock === undefined ? 0 : atlasClock()) - fetchStart;
+    pageUrls = atlasPageUrls(assets.atlasDir, manifest);
+  }
   let images: Array<LoadableImage & AtlasPageImage>;
+  let pageTimings: readonly ImageTiming[];
   try {
-    images = await loadImages(options.assets.pageUrls, createImage, (loaded, total) => {
-      overlay?.showProgress(total === 0 ? 1 : loaded / total, 'LOADING');
-    });
+    const loaded = await loadImagesTimed(
+      pageUrls,
+      createImage,
+      (count, total) => {
+        overlay?.showProgress(total === 0 ? 1 : count / total, 'LOADING');
+      },
+      atlasClock,
+    );
+    images = loaded.images;
+    pageTimings = loaded.timings;
   } catch (error) {
     const url = error instanceof AssetLoadError ? error.url : '?';
     throw fail('ATLAS PAGE FAILED TO LOAD', [`${url}: ${describe(error)}`], [], error);
   }
   try {
-    atlas = createAtlas(options.assets.manifest, images);
+    atlas = createAtlas(manifest, images);
   } catch (error) {
     throw fail('ATLAS DOES NOT MATCH ITS MANIFEST', [describe(error)], [], error);
   }
+  const atlasTiming: AtlasTiming = Object.freeze({
+    manifest: isInlineAssets(assets) ? 'inline' : 'fetched',
+    manifestMs,
+    manifestBytes,
+    pages: Object.freeze(
+      manifest.pages.map((page, p) =>
+        Object.freeze({
+          file: page.file,
+          loadMs: pageTimings[p]?.loadMs ?? 0,
+          decodeMs: pageTimings[p]?.decodeMs ?? 0,
+        }),
+      ),
+    ),
+  });
 
   // 4. Renderer, platform, game.
   try {
@@ -1115,7 +1267,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   // Atlas-page residency (M2-17): which pages each campaign zone needs (load time).
   const atlasResidency = createAtlasResidency(
     readyAtlas.pages,
-    atlasPageNeeds(options.assets.manifest, content.db.sprites.names, stageSpriteSets(content.db)),
+    atlasPageNeeds(manifest, content.db.sprites.names, stageSpriteSets(content.db)),
   );
   const events = createEventDispatcher();
   // The game's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
@@ -1333,6 +1485,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     loadedSave,
     save,
     bootTiming,
+    atlasTiming,
     refresh,
     atlasResidency,
     replays,

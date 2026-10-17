@@ -4,7 +4,16 @@
  * passes and one byte more fails; only pages directly in `assets/atlas/` count; `pngSize` reads a
  * PNG through a view into a larger buffer and rejects truncated or signature-less bytes.
  */
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -53,6 +62,21 @@ function put(name: string, contents: string | Uint8Array): void {
 }
 
 /**
+ * Writes `assets/atlas/main.json` listing every PNG directly in `assets/atlas/` with its pixel size
+ * (rule 10, plan R1-05: the manifest ships next to the pages and must match them).
+ */
+function syncManifest(): void {
+  const atlas = join(dir, 'assets', 'atlas');
+  const files = existsSync(atlas) ? readdirSync(atlas).filter((f) => f.endsWith('.png')) : [];
+  const pages = files.sort().map((file) => {
+    const size = pngSize(readFileSync(join(atlas, file)));
+    return { file, w: size?.width ?? 0, h: size?.height ?? 0 };
+  });
+  const manifest = { formatVersion: 1, pages, frames: {}, sprites: {}, animations: {}, fonts: {} };
+  put('assets/atlas/main.json', JSON.stringify(manifest));
+}
+
+/**
  * Bytes the fixture folder takes now.
  *
  * @returns The total of every file's size.
@@ -68,6 +92,7 @@ beforeEach(() => {
   put('config.xml', CONFIG_XML);
   put('icon.png', 'png');
   put('assets/atlas/main.png', png(256, 256));
+  syncManifest();
 });
 
 afterEach(() => {
@@ -78,9 +103,11 @@ describe('tizen/scripts/check-bundle budgets — boundaries', () => {
   it('accepts a page of exactly the maximum edge and rejects one pixel more on either edge', () => {
     const max = ATLAS_PAGE_MAX_SIZE;
     put('assets/atlas/main.png', png(max, max));
+    syncManifest();
     expect(checkTizenBundle(dir).problems).toEqual([]);
     put('assets/atlas/wide.png', png(max + 1, 1));
     put('assets/atlas/tall.png', png(1, max + 1));
+    syncManifest();
     expect(checkTizenBundle(dir).problems).toEqual([
       `atlas page assets/atlas/tall.png is 1×${max + 1}, over the ${max}² budget`,
       `atlas page assets/atlas/wide.png is ${max + 1}×1, over the ${max}² budget`,

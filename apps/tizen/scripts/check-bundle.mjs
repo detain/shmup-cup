@@ -22,6 +22,12 @@
  *  9. The game and the TV render bench never mix (plan R0-02): a widget whose `config.xml` carries
  *     the bench's app id (`config-xml.mjs` `BENCH_APP_ID`) must be the bench — its `app.js` holds
  *     {@link TV_BENCH_MARKER} — and any other widget (the game) must not hold it.
+ * 10. The atlas manifest ships next to its pages, not inside `app.js` (plan R1-05 — the shell
+ *     fetches it with XHR at boot): `dist/assets/atlas/main.json` exists and parses, lists every
+ *     page with its real pixel size and every atlas PNG is listed; and `app.js` names at most
+ *     {@link MAX_INLINED_FRAME_NAMES} of its frames — the inlined manifest named every one
+ *     (~1,400), so more means the manifest was inlined by accident ({@link checkAtlasManifest};
+ *     the bench widget, which inlines its own density atlases, is exempt).
  *
  * Exits non-zero with a readable report on failure. Checks `apps/tizen/dist` by default, or the
  * folder given as the first argument (`node scripts/check-bundle.mjs dist-bench` — `build:bench`).
@@ -30,7 +36,8 @@
  *
  * **Public API.** {@link checkTizenBundle}, {@link WIDGET_FILES}, {@link POLYFILL_BANNER},
  * {@link APP_JS_GZIP_BUDGET}, {@link ATLAS_PAGE_MAX_SIZE}, {@link DIST_BUDGET}, {@link pngSize},
- * {@link TV_BENCH_MARKER}, {@link applicationIdOf}.
+ * {@link TV_BENCH_MARKER}, {@link applicationIdOf}, {@link checkAtlasManifest},
+ * {@link ATLAS_MANIFEST_FILE}, {@link ATLAS_MANIFEST_VERSIONS}, {@link MAX_INLINED_FRAME_NAMES}.
  *
  * @module
  */
@@ -74,6 +81,19 @@ export const ATLAS_PAGE_MAX_SIZE = 2048;
 /** Most bytes the whole `dist/` may take (8 MB — the packaged widget). */
 export const DIST_BUDGET = 8 * 1024 * 1024;
 
+/** Where the atlas manifest ships, relative to `dist/` (rule 10 — plan R1-05). */
+export const ATLAS_MANIFEST_FILE = 'assets/atlas/main.json';
+
+/** Manifest format versions the shell reads (`@shmup/shell` `ATLAS_MANIFEST_VERSIONS`). */
+export const ATLAS_MANIFEST_VERSIONS = [1, 2];
+
+/**
+ * Most atlas frame names `app.js` may contain (rule 10). The shipped code names none today; the
+ * inlined manifest named every frame (~1,400), so a handful leaves room for a hard-coded reference
+ * while still catching an accidental inline.
+ */
+export const MAX_INLINED_FRAME_NAMES = 8;
+
 /**
  * The body attribute only the TV render bench sets (`apps/tizen/src/bench` `TV_BENCH_MARKER`, plan
  * R0-02) — rule 9 reads it to tell the bench's `app.js` from the game's.
@@ -110,6 +130,98 @@ export function pngSize(bytes) {
   if (type !== 'IHDR') return null;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
+/**
+ * Rule 10 (plan R1-05): the atlas manifest ships as {@link ATLAS_MANIFEST_FILE} and matches the
+ * pages next to it, and `app.js` does not carry it inlined.
+ *
+ * @remarks
+ * Shared with the webOS check (one source of truth, like the budgets). Problems, in order: a
+ * missing or unparsable manifest (nothing else is checked then), an unknown format version, each
+ * listed page that is missing or whose PNG size differs from the manifest's (a PNG that is not
+ * one is rule 8's), each atlas PNG the manifest does not list (a stale page), and an `app.js`
+ * naming more than {@link MAX_INLINED_FRAME_NAMES} distinct frames of the manifest. Switching an
+ * app to the inline fallback (`virtual:shmup-assets-inline`, W3-7) needs this rule relaxed in the
+ * same change.
+ *
+ * @param {string} distDir - The build output folder.
+ * @param {readonly string[]} files - Its files, relative and `/`-separated.
+ * @param {string} code - The contents of `app.js` (`''` when missing).
+ * @returns {string[]} The problems (empty when the manifest is in order).
+ */
+export function checkAtlasManifest(distDir, files, code) {
+  if (!files.includes(ATLAS_MANIFEST_FILE)) {
+    return [`${ATLAS_MANIFEST_FILE} is missing (the shell fetches the atlas manifest at boot)`];
+  }
+  /** @type {unknown} */
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(join(distDir, ATLAS_MANIFEST_FILE), 'utf8'));
+  } catch (error) {
+    return [`${ATLAS_MANIFEST_FILE} is not valid JSON: ${/** @type {Error} */ (error).message}`];
+  }
+  const record =
+    manifest !== null && typeof manifest === 'object'
+      ? /** @type {Record<string, unknown>} */ (manifest)
+      : {};
+  const pages = Array.isArray(record.pages) ? record.pages : [];
+  if (pages.length === 0) return [`${ATLAS_MANIFEST_FILE} lists no atlas pages`];
+  /** @type {string[]} */
+  const problems = [];
+  if (!ATLAS_MANIFEST_VERSIONS.includes(/** @type {number} */ (record.formatVersion))) {
+    problems.push(
+      `${ATLAS_MANIFEST_FILE} has format version ${String(record.formatVersion)}, ` +
+        `the shell reads ${ATLAS_MANIFEST_VERSIONS.join(' or ')}`,
+    );
+  }
+  const listed = new Set();
+  pages.forEach((/** @type {unknown} */ entry, /** @type {number} */ index) => {
+    const page =
+      entry !== null && typeof entry === 'object'
+        ? /** @type {{ file?: unknown, w?: unknown, h?: unknown }} */ (entry)
+        : {};
+    if (typeof page.file !== 'string') {
+      problems.push(`${ATLAS_MANIFEST_FILE} page ${index} has no file name`);
+      return;
+    }
+    const path = `assets/atlas/${page.file}`;
+    listed.add(path);
+    if (!files.includes(path)) {
+      problems.push(`${ATLAS_MANIFEST_FILE} lists ${path}, which is missing`);
+      return;
+    }
+    const size = pngSize(readFileSync(join(distDir, path)));
+    if (size !== null && (size.width !== page.w || size.height !== page.h)) {
+      problems.push(
+        `${path} is ${size.width}×${size.height}, but ${ATLAS_MANIFEST_FILE} says ` +
+          `${String(page.w)}×${String(page.h)}`,
+      );
+    }
+  });
+  for (const file of files) {
+    if (/^assets\/atlas\/[^/]+\.png$/.test(file) && !listed.has(file)) {
+      problems.push(`${file} is not listed in ${ATLAS_MANIFEST_FILE} (a stale page?)`);
+    }
+  }
+  const frames =
+    record.frames !== null && typeof record.frames === 'object'
+      ? /** @type {Record<string, unknown>} */ (record.frames)
+      : {};
+  const named = new Set();
+  // A frame name is a run of name characters ending in `#<index>`; the lookbehind starts a match
+  // only at the start of a run, so a long run without `#` costs one pass, not a quadratic one.
+  for (const match of code.match(/(?<![a-z0-9@/-])[a-z0-9@/-]+#\d+/g) ?? []) {
+    if (Object.prototype.hasOwnProperty.call(frames, match)) named.add(match);
+  }
+  if (named.size > MAX_INLINED_FRAME_NAMES) {
+    const sample = [...named].slice(0, 3).join(', ');
+    problems.push(
+      `app.js names ${named.size} atlas frames (${sample}, …) — the atlas manifest was inlined; ` +
+        `the apps import virtual:shmup-assets and fetch ${ATLAS_MANIFEST_FILE}`,
+    );
+  }
+  return problems;
 }
 
 /**
@@ -221,10 +333,10 @@ export function checkTizenBundle(distDir) {
   if (configXml !== null) {
     for (const problem of validateConfigXml(configXml)) problems.push(`config.xml: ${problem}`);
   }
+  const bench = configXml !== null && applicationIdOf(configXml) === BENCH_APP_ID;
 
   // 9. The game and the TV render bench never mix.
   if (configXml !== null && code !== '') {
-    const bench = applicationIdOf(configXml) === BENCH_APP_ID;
     const marked = code.includes(TV_BENCH_MARKER);
     if (bench && !marked) {
       problems.push(
@@ -272,6 +384,10 @@ export function checkTizenBundle(distDir) {
   if (distBytes > DIST_BUDGET) {
     problems.push(`dist/ holds ${kb(distBytes)}, over the ${kb(DIST_BUDGET)} budget`);
   }
+
+  // 10. The atlas manifest ships next to the pages, not inlined into app.js (the game only — the
+  // bench inlines its own density atlases).
+  if (!bench) problems.push(...checkAtlasManifest(distDir, files, code));
 
   return { problems, files, code, gzipBytes, distBytes };
 }

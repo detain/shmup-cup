@@ -1,8 +1,10 @@
 /**
  * Tizen entry point. Bundled into the single classic IIFE `app.js` — so no
- * `import.meta`, no top-level `await`, nothing newer than Chrome 69 at runtime. The content
- * and the atlas manifest are inlined into the bundle (`virtual:shmup-content`,
- * `virtual:shmup-assets` — decision D25); the atlas pages load from `assets/atlas/`. Dev / test
+ * `import.meta`, no top-level `await`, nothing newer than Chrome 69 at runtime. The content is
+ * inlined into the bundle (`virtual:shmup-content` — decision D25); the atlas manifest and pages
+ * load from `assets/atlas/` (`virtual:shmup-assets` names `main.json` and its digest — plan R1-05:
+ * the shell reads it with `XMLHttpRequest`, which works from `file://`; should a set ever refuse
+ * that, importing `virtual:shmup-assets-inline` here instead inlines it again — W3-7). Dev / test
  * builds (`__SHMUP_DEV__`) add the debug tools behind the remote's Pause, Ch+, Ch+, Ch+ (plan M1-19)
  * and, when built by `tizen:watch` (`__SHMUP_LIVE_RELOAD__`), the live reload (M2-17).
  *

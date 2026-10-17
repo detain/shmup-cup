@@ -92,6 +92,17 @@ describe('webos bench stub (R0-02)', () => {
     ]);
 
     put('appinfo.json', APPINFO);
+    // The game ships its atlas manifest next to the pages (rule 10, plan R1-05).
+    const pages = [{ file: 'bench-x1-0.png', w: 1, h: 1 }];
+    const manifest = {
+      formatVersion: 1,
+      pages,
+      frames: {},
+      sprites: {},
+      animations: {},
+      fonts: {},
+    };
+    put('assets/atlas/main.json', JSON.stringify(manifest));
     expect(checkWebosBundle(dir).problems).toEqual([]);
     put('app.js', benchApp);
     expect(checkWebosBundle(dir).problems).toEqual([

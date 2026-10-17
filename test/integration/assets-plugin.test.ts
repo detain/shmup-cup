@@ -1,9 +1,11 @@
 /**
  * The `shmupAssets()` Vite plugin and how the asset pipeline is wired into the repo:
- * `virtual:shmup-assets` inlines the manifest with relative page URLs (decision D25), a
- * real IIFE build emits the atlas pages into `assets/atlas/`, the dev server serves them
- * and regenerates on source edits, both apps use the plugin, and Turborepo runs
- * `//#assets` before `build` / `dev` with the right inputs and outputs.
+ * `virtual:shmup-assets` names the manifest the shell fetches (`assets/atlas/main.json`, its
+ * folder and its digest — plan R1-05), `virtual:shmup-assets-inline` inlines the manifest with
+ * relative page URLs (decision D25 — the render bench, the TV fallback), a real IIFE build emits
+ * the atlas pages and the manifest into `assets/atlas/` (and no longer carries the manifest in
+ * the script), the dev server serves them and regenerates on source edits, both apps use the
+ * plugin, and Turborepo runs `//#assets` before `build` / `dev` with the right inputs and outputs.
  */
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,8 +14,19 @@ import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
 import { build, createLogger, createServer, type Rollup } from 'vite';
 import { afterAll, describe, expect, it } from 'vitest';
+import { formatManifest } from '../../scripts/assets/manifest.mjs';
 import { DEFAULT_SOURCE_DIR, PIPELINE_DIR, buildAtlas } from '../../scripts/assets/pipeline.mjs';
-import { ASSETS_MODULE_ID, ATLAS_URL_DIR, shmupAssets } from '../../vite.shared.js';
+import {
+  ASSETS_INLINE_MODULE_ID,
+  ASSETS_MODULE_ID,
+  ATLAS_MANIFEST_URL,
+  ATLAS_URL_DIR,
+  manifestDigest,
+  shmupAssets,
+} from '../../vite.shared.js';
+// A relative source import, as render-telemetry-pipeline.test.ts does: the root package does not
+// depend on `@shmup/shell`, and one function is no reason to add it.
+import { manifestDigest as shellManifestDigest } from '../../packages/shell/src/loader/index.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tmp = mkdtempSync(join(tmpdir(), 'shmup-assets-plugin-'));
@@ -32,61 +45,146 @@ type Plugin = ReturnType<typeof shmupAssets>;
 const hook = (plugin: Plugin, name: 'resolveId' | 'load', id: string): unknown =>
   (plugin[name] as (this: void, id: string) => unknown).call(undefined, id);
 
-describe('integration: shmupAssets() virtual module', () => {
+/**
+ * Evaluates a virtual module's source and returns its default export.
+ *
+ * @param code - The module text (`export const …` lines and an `export default`).
+ * @returns The default export.
+ */
+function evaluateModule(code: string): unknown {
+  const realm = createContext({});
+  return runInContext(
+    `(() => { ${code.replace(/export const /g, 'const ').replace('export default', 'return')} })()`,
+    realm,
+  );
+}
+
+describe('integration: shmupAssets() virtual modules', () => {
   const outDir = join(tmp, 'generated');
   const plugin = shmupAssets({ outDir });
 
-  it('claims only its own virtual id', () => {
+  it('claims only its own two virtual ids', () => {
     expect(hook(plugin, 'resolveId', ASSETS_MODULE_ID)).toBe('\0' + ASSETS_MODULE_ID);
+    expect(hook(plugin, 'resolveId', ASSETS_INLINE_MODULE_ID)).toBe('\0' + ASSETS_INLINE_MODULE_ID);
+    expect(ASSETS_INLINE_MODULE_ID).toBe('virtual:shmup-assets-inline');
     expect(hook(plugin, 'resolveId', 'virtual:shmup-content')).toBeNull();
     expect(hook(plugin, 'load', 'other')).toBeNull();
   });
 
-  it('inlines the manifest and relative page URLs (generating the atlas on demand)', () => {
-    const code = hook(plugin, 'load', '\0' + ASSETS_MODULE_ID) as string;
-    const realm = createContext({});
-    const exported = runInContext(
-      `(() => { ${code.replace(/export const /g, 'const ').replace('export default', 'return')} })()`,
-      realm,
+  it('names the manifest to fetch, its folder and its digest (generating the atlas on demand)', () => {
+    const exported = evaluateModule(hook(plugin, 'load', '\0' + ASSETS_MODULE_ID) as string) as {
+      manifestUrl: string;
+      atlasDir: string;
+      manifestDigest: string;
+    };
+    const onDisk = readFileSync(join(outDir, 'atlas', 'main.json'));
+    expect(exported).toEqual({
+      manifestUrl: 'assets/atlas/main.json',
+      atlasDir: ATLAS_URL_DIR,
+      manifestDigest: manifestDigest(onDisk),
+    });
+    expect(ATLAS_MANIFEST_URL).toBe(exported.manifestUrl);
+    expect(exported.manifestDigest).toMatch(/^[0-9a-f]{8}$/);
+    // The page computes the same digest from the same bytes (`@shmup/shell` `manifestDigest`).
+    expect(shellManifestDigest(new Uint8Array(onDisk))).toBe(exported.manifestDigest);
+    expect(onDisk.toString('utf8')).toBe(formatManifest(manifest));
+    expect(onDisk.toString('utf8')).toContain('"formatVersion": 2');
+    for (const url of [exported.manifestUrl, exported.atlasDir]) {
+      expect(url.startsWith('/')).toBe(false);
+    }
+  });
+
+  it('virtual:shmup-assets-inline inlines the manifest and relative page URLs', () => {
+    const exported = evaluateModule(
+      hook(plugin, 'load', '\0' + ASSETS_INLINE_MODULE_ID) as string,
     ) as { manifest: typeof manifest; pageUrls: string[] };
     expect(exported.manifest).toEqual(manifest);
-    expect(exported.pageUrls).toEqual([`${ATLAS_URL_DIR}/main.png`]);
-    for (const url of exported.pageUrls) expect(url.startsWith('/')).toBe(false);
-    expect(readFileSync(join(outDir, 'atlas', 'main.json'), 'utf8')).toContain(
-      '"formatVersion": 2',
+    expect(exported.pageUrls).toEqual(
+      manifest.pages.map((page) => `${ATLAS_URL_DIR}/${page.file}`),
     );
+    expect(exported.pageUrls[0]).toBe(`${ATLAS_URL_DIR}/main.png`);
+    for (const url of exported.pageUrls) expect(url.startsWith('/')).toBe(false);
+  });
+
+  it('digests bytes with 32-bit FNV-1a, the same in the plugin and in the page', () => {
+    const cases = [new Uint8Array(0), new TextEncoder().encode('a'), new Uint8Array([0, 255, 7])];
+    expect(manifestDigest(cases[0])).toBe('811c9dc5');
+    expect(manifestDigest(cases[1])).toBe('e40c292c');
+    for (const bytes of cases) expect(shellManifestDigest(bytes)).toBe(manifestDigest(bytes));
   });
 });
 
 describe('integration: a real Vite build through shmupAssets()', () => {
-  it('emits the pages into assets/atlas/ and the IIFE bundle carries the manifest', async () => {
+  it('emits the pages and the manifest into assets/atlas/; the IIFE bundle carries only its URL', async () => {
     const entry = join(tmp, 'entry.js');
     writeFileSync(
       entry,
       "import assets from 'virtual:shmup-assets';\nglobalThis.__assets = assets;\n",
     );
+    const generated = join(tmp, 'generated-build');
     const output = (await build({
       root: tmp,
       logLevel: 'silent',
       configFile: false,
-      plugins: [shmupAssets({ outDir: join(tmp, 'generated-build') })],
+      plugins: [shmupAssets({ outDir: generated })],
       build: {
         write: false,
         lib: { entry, formats: ['iife'], name: 'app', fileName: () => 'app.js' },
       },
     })) as Rollup.RollupOutput[];
     const files = output[0].output;
-    const page = files.find((f) => f.fileName === `${ATLAS_URL_DIR}/main.png`);
-    expect(page?.type).toBe('asset');
-    if (page?.type === 'asset') {
-      expect(
-        Buffer.compare(Buffer.from(page.source as Uint8Array), buildAtlas().pages[0].png),
-      ).toBe(0);
+    const atlas = buildAtlas();
+    // Every page, byte for byte.
+    for (const [index, built] of atlas.pages.entries()) {
+      const page = files.find(
+        (f) => f.fileName === `${ATLAS_URL_DIR}/${manifest.pages[index].file}`,
+      );
+      expect(page?.type).toBe('asset');
+      if (page?.type === 'asset') {
+        expect(Buffer.compare(Buffer.from(page.source as Uint8Array), built.png)).toBe(0);
+      }
     }
+    // The manifest, as the pipeline wrote it (so the recorded digest matches the shipped file).
+    const json = files.find((f) => f.fileName === ATLAS_MANIFEST_URL);
+    expect(json?.type).toBe('asset');
+    const shipped = Buffer.from(json?.type === 'asset' ? (json.source as Uint8Array) : []);
+    expect(Buffer.compare(shipped, readFileSync(join(generated, 'atlas', 'main.json')))).toBe(0);
+    expect(shipped.toString('utf8')).toBe(formatManifest(atlas.manifest));
     const chunk = files.find((f) => f.type === 'chunk');
     expect(chunk?.type).toBe('chunk');
+    const code = chunk?.type === 'chunk' ? chunk.code : '';
     const realm = createContext({});
-    if (chunk?.type === 'chunk') runInContext(chunk.code, realm);
+    runInContext(code, realm);
+    const assets = runInContext('globalThis.__assets', realm) as Record<string, string>;
+    expect(assets).toEqual({
+      manifestUrl: ATLAS_MANIFEST_URL,
+      atlasDir: ATLAS_URL_DIR,
+      manifestDigest: manifestDigest(shipped),
+    });
+    // No frame data in the script: the ~200 KB manifest left app.js (plan R1-05).
+    expect(code).not.toContain('ships/kestrel#0');
+    expect(code.length).toBeLessThan(2048);
+  }, 60_000);
+
+  it('virtual:shmup-assets-inline still carries the whole manifest in the bundle', async () => {
+    const entry = join(tmp, 'entry-inline.js');
+    writeFileSync(
+      entry,
+      "import assets from 'virtual:shmup-assets-inline';\nglobalThis.__assets = assets;\n",
+    );
+    const output = (await build({
+      root: tmp,
+      logLevel: 'silent',
+      configFile: false,
+      plugins: [shmupAssets({ outDir: join(tmp, 'generated-build-inline') })],
+      build: {
+        write: false,
+        lib: { entry, formats: ['iife'], name: 'app', fileName: () => 'app.js' },
+      },
+    })) as Rollup.RollupOutput[];
+    const chunk = output[0].output.find((f) => f.type === 'chunk');
+    const realm = createContext({});
+    runInContext(chunk?.type === 'chunk' ? chunk.code : '', realm);
     const assets = runInContext('globalThis.__assets', realm) as {
       manifest: typeof manifest;
       pageUrls: string[];
@@ -117,8 +215,11 @@ describe('integration: shmupAssets() dev server', () => {
       expect(Buffer.compare(Buffer.from(await png.arrayBuffer()), buildAtlas().pages[0].png)).toBe(
         0,
       );
+      // The manifest the shell fetches in dev: the pipeline's bytes, so the module's digest holds.
       const json = await fetch(`${base}${ATLAS_URL_DIR}/main.json?t=1`);
-      expect(((await json.json()) as typeof manifest).formatVersion).toBe(2);
+      const served = Buffer.from(await json.arrayBuffer());
+      expect(Buffer.compare(served, readFileSync(join(outDir, 'atlas', 'main.json')))).toBe(0);
+      expect((JSON.parse(served.toString('utf8')) as typeof manifest).formatVersion).toBe(2);
       const traversal = await fetch(`${base}${ATLAS_URL_DIR}/..%2F.asset-cache.json`);
       expect(traversal.headers.get('content-type')).not.toBe('application/json');
     } finally {
@@ -184,9 +285,20 @@ describe('integration: asset pipeline wiring', () => {
     },
   );
 
-  it('declares virtual:shmup-assets for the apps', () => {
-    expect(text('types/virtual-modules.d.ts')).toContain("declare module 'virtual:shmup-assets'");
+  it('declares virtual:shmup-assets for the apps and virtual:shmup-assets-inline', () => {
+    const types = text('types/virtual-modules.d.ts');
+    expect(types).toContain("declare module 'virtual:shmup-assets' {");
+    expect(types).toContain("declare module 'virtual:shmup-assets-inline' {");
   });
+
+  it.each([['apps/web'], ['apps/tizen'], ['apps/webos']])(
+    '%s imports the fetched manifest (virtual:shmup-assets), not the inlined one',
+    (app) => {
+      const main = text(`${app}/src/main.ts`);
+      expect(main).toContain("import assets from 'virtual:shmup-assets';");
+      expect(main).not.toMatch(/from 'virtual:shmup-assets-inline'/);
+    },
+  );
 
   it('runs //#assets before build and dev, with sources as inputs and generated/ as outputs', () => {
     const turbo = JSON.parse(text('turbo.json')) as {

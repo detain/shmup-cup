@@ -3,9 +3,10 @@
  *
  * **Responsibility.** Creates the TV-specific adapters — remote-first input
  * (`keyDevice: 'remote'`), Web Audio and the Tizen {@link createTizenPlatform | platform
- * adapter} (key registration, lifecycle, exit) — and hands them with the inlined content and
- * atlas to the shared boot sequence of `@shmup/shell` (`bootShell`: loading bar, content
- * validation and boot error screen, atlas pages from relative `file://` URLs, renderer, game,
+ * adapter} (key registration, lifecycle, exit) — and hands them with the inlined content and the
+ * atlas's location to the shared boot sequence of `@shmup/shell` (`bootShell`: loading bar, content
+ * validation and boot error screen, the atlas manifest and pages from relative `file://` URLs,
+ * renderer, game,
  * event dispatch and the rAF frame loop). The game runs with `remoteMode: true` and forced
  * autofire; audio needs no gesture on TV, so it is unlocked immediately and the shell's audio
  * engine (M1-15) plays from boot. The app runs the shell's default scene, the core **scene flow**

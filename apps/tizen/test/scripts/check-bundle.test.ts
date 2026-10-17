@@ -2,7 +2,16 @@
  * Unit tests for scripts/check-bundle.mjs: every rule must reject a bundle that would
  * break on Tizen 5.5 (Chromium 69), using small fixture folders instead of a real build.
  */
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -56,6 +65,21 @@ function put(name: string, contents: string | Uint8Array): void {
   writeFileSync(file, contents);
 }
 
+/**
+ * Writes `assets/atlas/main.json` listing every PNG directly in `assets/atlas/` with its pixel size
+ * (rule 10, plan R1-05: the manifest ships next to the pages and must match them).
+ */
+function syncManifest(): void {
+  const atlas = join(dir, 'assets', 'atlas');
+  const files = existsSync(atlas) ? readdirSync(atlas).filter((f) => f.endsWith('.png')) : [];
+  const pages = files.sort().map((file) => {
+    const size = pngSize(readFileSync(join(atlas, file)));
+    return { file, w: size?.width ?? 0, h: size?.height ?? 0 };
+  });
+  const manifest = { formatVersion: 1, pages, frames: {}, sprites: {}, animations: {}, fonts: {} };
+  put('assets/atlas/main.json', JSON.stringify(manifest));
+}
+
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'shmup-check-bundle-'));
   put('index.html', GOOD_HTML);
@@ -63,6 +87,7 @@ beforeEach(() => {
   put('config.xml', CONFIG_XML);
   put('icon.png', 'png');
   put('assets/atlas/main.png', PAGE);
+  syncManifest();
 });
 
 afterEach(() => {
@@ -76,6 +101,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     expect(result.problems).toEqual([]);
     expect(result.files.sort()).toEqual([
       'app.js',
+      'assets/atlas/main.json',
       'assets/atlas/main.png',
       'config.xml',
       'icon.png',
@@ -86,11 +112,13 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
 
   it('accepts non-script assets under dist/assets/ (atlas pages) next to the one script', () => {
     put('assets/atlas/main-1.png', PAGE);
+    syncManifest();
     const result = checkTizenBundle(dir);
     expect(result.problems).toEqual([]);
     expect(result.files.sort()).toEqual([
       'app.js',
       'assets/atlas/main-1.png',
+      'assets/atlas/main.json',
       'assets/atlas/main.png',
       'config.xml',
       'icon.png',
@@ -117,7 +145,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
 
   it('allows the atlas manifest and any number of pages under dist/assets/atlas/', () => {
     for (let i = 0; i < 4; i++) put(`assets/atlas/main${i === 0 ? '' : `-${i}`}.png`, PAGE);
-    put('assets/atlas/main.json', '{}');
+    syncManifest();
     expect(checkTizenBundle(dir).problems).toEqual([]);
   });
 
@@ -230,10 +258,11 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
 
   it('reports a bundle without any atlas page (rule 7: the shell cannot boot without it)', () => {
     unlinkSync(join(dir, 'assets', 'atlas', 'main.png'));
-    put('assets/atlas/main.json', '{}');
     put('assets/other/main.png', 'png');
     expect(checkTizenBundle(dir).problems).toEqual([
       'no atlas page in dist/assets/atlas/ (the game cannot boot without it)',
+      // Rule 10 (R1-05): the manifest still lists it.
+      'assets/atlas/main.json lists assets/atlas/main.png, which is missing',
     ]);
   });
 
@@ -261,6 +290,7 @@ describe('tizen/scripts/check-bundle checkTizenBundle', () => {
     put('assets/atlas/main-1.png', png(4096, 2048));
     put('assets/atlas/main-2.png', 'png');
     put('assets/atlas/main-3.png', png(2048, 2048));
+    syncManifest();
     expect(checkTizenBundle(dir).problems).toEqual([
       'atlas page assets/atlas/main-1.png is 4096×2048, over the 2048² budget',
       'atlas page assets/atlas/main-2.png is not a PNG',

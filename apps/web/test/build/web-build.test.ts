@@ -58,8 +58,16 @@ describe('web build output', () => {
     expect(html).toContain('<canvas id="game"></canvas>');
   });
 
-  it('ships the atlas pages under assets/atlas/ with fixed names (shmupAssets())', () => {
+  it('ships the atlas pages and the manifest under assets/atlas/ with fixed names (shmupAssets())', () => {
     expect(readdirSync(join(outDir, 'assets', 'atlas'))).toContain('main.png');
+    // R1-05: the manifest the shell fetches (Electron's renderer copies this folder too).
+    const manifest = JSON.parse(
+      readFileSync(join(outDir, 'assets', 'atlas', 'main.json'), 'utf8'),
+    ) as { pages: Array<{ file: string }> };
+    expect(manifest.pages[0].file).toBe('main.png');
+    for (const page of manifest.pages) {
+      expect(readdirSync(join(outDir, 'assets', 'atlas'))).toContain(page.file);
+    }
     const png = readFileSync(join(outDir, 'assets', 'atlas', 'main.png'));
     expect([...png.subarray(1, 4)].map((c) => String.fromCharCode(c)).join('')).toBe('PNG');
   });

@@ -4,7 +4,7 @@
  * **Responsibility.** Creates the browser-specific adapters — keyboard + gamepad input
  * (`@shmup/input-web`), Web Audio (`@shmup/audio-web`) and the web
  * {@link createWebPlatform | platform adapter} (localStorage, page visibility) — and hands them
- * with the inlined content and atlas to the shared boot sequence of `@shmup/shell`
+ * with the inlined content and the atlas's location to the shared boot sequence of `@shmup/shell`
  * (`bootShell`: loading bar, content validation and boot error screen, atlas, renderer, game,
  * event dispatch and the rAF frame loop). Keyboard-first (`remoteMode: false`); audio is
  * unlocked by the first key or pointer gesture (autoplay policy — gamepad buttons do not count

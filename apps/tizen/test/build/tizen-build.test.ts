@@ -13,6 +13,7 @@ import { parse } from 'acorn';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { POLYFILL_BANNER, TV_BENCH_MARKER, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import { formatManifest } from '../../../../scripts/assets/manifest.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 
 const appDir = fileURLToPath(new URL('../../', import.meta.url));
@@ -51,11 +52,21 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(checkTizenBundle(outDir).problems).toEqual([]);
   });
 
-  it('contains exactly the widget files plus the atlas pages: one script, index.html, config.xml, icon.png, assets/atlas/*.png', () => {
+  it('contains exactly the widget files plus the atlas: one script, index.html, config.xml, icon.png, assets/atlas/*.png and main.json', () => {
     const pages = manifest.pages.map((page) => `assets/atlas/${page.file}`);
     expect(checkTizenBundle(outDir).files.sort()).toEqual(
-      ['app.js', 'config.xml', 'icon.png', 'index.html', ...pages].sort(),
+      ['app.js', 'config.xml', 'icon.png', 'index.html', 'assets/atlas/main.json', ...pages].sort(),
     );
+  });
+
+  it('ships the atlas manifest as the pipeline wrote it, and app.js no longer carries it (R1-05)', () => {
+    const shipped = readFileSync(join(outDir, 'assets', 'atlas', 'main.json'), 'utf8');
+    expect(shipped).toBe(formatManifest(manifest));
+    // Not one frame name of the manifest is left in the script (rule 10 allows a handful).
+    const frames = Object.keys(manifest.frames);
+    expect(frames.length).toBeGreaterThan(1000);
+    expect(frames.filter((name) => code.includes(name))).toEqual([]);
+    expect(code).toContain('assets/atlas/main.json');
   });
 
   it('ships the atlas pages byte-identical to the pipeline output (shmupAssets(), D25)', () => {

@@ -59,9 +59,16 @@ describe('webos build output (vite build → dist/) — M3-03', () => {
     expect(result.gzipBytes).toBeGreaterThan(0);
   });
 
-  it('contains exactly the app files plus the atlas pages', () => {
+  it('contains exactly the app files plus the atlas pages and its manifest (R1-05)', () => {
     const pages = manifest.pages.map((page) => `assets/atlas/${page.file}`);
-    expect(checkWebosBundle(outDir).files.sort()).toEqual([...WEBOS_APP_FILES, ...pages].sort());
+    expect(checkWebosBundle(outDir).files.sort()).toEqual(
+      [...WEBOS_APP_FILES, 'assets/atlas/main.json', ...pages].sort(),
+    );
+    const shipped = JSON.parse(
+      readFileSync(join(outDir, 'assets', 'atlas', 'main.json'), 'utf8'),
+    ) as unknown;
+    expect(shipped).toEqual(manifest);
+    expect(code).not.toContain(Object.keys(manifest.frames)[0]);
   });
 
   it('copies a valid appinfo.json out of public/', () => {

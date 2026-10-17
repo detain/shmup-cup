@@ -4,9 +4,9 @@
  * (a source edit invalidates the virtual module, regenerates and reloads; invalid sources
  * keep the last good atlas and log instead of reloading; add / unlink; sibling folders and
  * non-code pipeline files are ignored; pipeline scripts that are config dependencies stay
- * silent because Vite restarts for them); build failures and multi-page emission; and the
- * premise of the review-round-1 fix — the real app configs list every pipeline module as
- * a config dependency, so editing one restarts the dev server.
+ * silent because Vite restarts for them); build failures and multi-page emission (every page and
+ * the manifest — plan R1-05); and the premise of the review-round-1 fix — the real app configs
+ * list every pipeline module as a config dependency, so editing one restarts the dev server.
  *
  * Regression (M1-03 test pass): a malformed percent-encoded URL under `assets/atlas/`
  * threw a URIError inside the middleware and the dev server answered 500 instead of 404.
@@ -40,7 +40,14 @@ import { createImage } from '../../scripts/assets/image.mjs';
 import type { AtlasManifest } from '../../scripts/assets/manifest.mjs';
 import { DEFAULT_SOURCE_DIR, PIPELINE_DIR, buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import { encodePng } from '../../scripts/assets/png.mjs';
-import { ASSETS_MODULE_ID, ATLAS_URL_DIR, shmupAssets } from '../../vite.shared.js';
+import {
+  ASSETS_INLINE_MODULE_ID,
+  ASSETS_MODULE_ID,
+  ATLAS_MANIFEST_URL,
+  ATLAS_URL_DIR,
+  manifestDigest,
+  shmupAssets,
+} from '../../vite.shared.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tmp = mkdtempSync(join(tmpdir(), 'shmup-assets-plugin-edge-'));
@@ -117,24 +124,39 @@ function recordingLogger() {
 describe('integration: shmupAssets() hooks (edge)', () => {
   const plugin = shmupAssets({ outDir: join(tmp, 'hooks-out') });
 
-  it('claims nothing but the exact virtual id', () => {
+  it('claims nothing but the exact virtual ids', () => {
     for (const id of [
       'virtual:shmup-assets?raw',
       '\0virtual:shmup-assets',
       'virtual:shmup-asset',
       './virtual:shmup-assets',
+      'virtual:shmup-assets-inline?raw',
+      '\0virtual:shmup-assets-inline',
+      'virtual:shmup-assets-inlined',
+      'virtual:shmup-assets/inline',
     ]) {
       expect(hook(plugin, 'resolveId', id), id).toBeNull();
     }
     expect(hook(plugin, 'load', '\0virtual:shmup-content')).toBeNull();
     expect(hook(plugin, 'load', ASSETS_MODULE_ID)).toBeNull(); // unresolved id
+    expect(hook(plugin, 'load', ASSETS_INLINE_MODULE_ID)).toBeNull(); // unresolved id
   });
 
-  it('serves the same module text on every load (manifest generated once)', () => {
+  it('serves the same module texts on every load (manifest generated once)', () => {
     const first = hook(plugin, 'load', '\0' + ASSETS_MODULE_ID) as string;
     const second = hook(plugin, 'load', '\0' + ASSETS_MODULE_ID) as string;
     expect(second).toBe(first);
+    const onDisk = readFileSync(join(tmp, 'hooks-out', 'atlas', 'main.json'));
     expect(first.split('\n')).toEqual([
+      `export const manifestUrl = ${JSON.stringify(ATLAS_MANIFEST_URL)};`,
+      `export const atlasDir = ${JSON.stringify(ATLAS_URL_DIR)};`,
+      `export const manifestDigest = ${JSON.stringify(manifestDigest(onDisk))};`,
+      'export default { manifestUrl, atlasDir, manifestDigest };',
+      '',
+    ]);
+    const inline = hook(plugin, 'load', '\0' + ASSETS_INLINE_MODULE_ID) as string;
+    expect(hook(plugin, 'load', '\0' + ASSETS_INLINE_MODULE_ID)).toBe(inline);
+    expect(inline.split('\n')).toEqual([
       `export const manifest = ${JSON.stringify(reference.manifest)};`,
       `export const pageUrls = ${JSON.stringify([`${ATLAS_URL_DIR}/main.png`])};`,
       'export default { manifest, pageUrls };',
@@ -207,14 +229,17 @@ describe('integration: shmupAssets() dev middleware (edge)', () => {
 });
 
 describe('integration: shmupAssets() dev watcher (edge)', () => {
-  it('regenerates, invalidates the virtual module and reloads after a source edit', async () => {
+  it('regenerates, invalidates both virtual modules and reloads after a source edit', async () => {
     const sourceDir = copySources('watch-edit');
     const outDir = join(tmp, 'watch-edit-out');
     const { server } = await startServer({ plugins: [shmupAssets({ sourceDir, outDir })] });
     try {
       const send = vi.fn();
       server.ws.send = send as typeof server.ws.send;
-      const before = (await server.ssrLoadModule(ASSETS_MODULE_ID)) as {
+      const digestBefore = (
+        (await server.ssrLoadModule(ASSETS_MODULE_ID)) as { manifestDigest: string }
+      ).manifestDigest;
+      const before = (await server.ssrLoadModule(ASSETS_INLINE_MODULE_ID)) as {
         manifest: AtlasManifest;
         pageUrls: string[];
       };
@@ -227,12 +252,19 @@ describe('integration: shmupAssets() dev watcher (edge)', () => {
       writeFileSync(file, JSON.stringify(json));
       server.watcher.emit('change', file);
       expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
-      const after = (await server.ssrLoadModule(ASSETS_MODULE_ID)) as { manifest: AtlasManifest };
+      const after = (await server.ssrLoadModule(ASSETS_INLINE_MODULE_ID)) as {
+        manifest: AtlasManifest;
+      };
       expect(after.manifest.sprites['items/bonus'].frames).toHaveLength(json.frames.length);
-      const onDisk = JSON.parse(
-        readFileSync(join(outDir, 'atlas', 'main.json'), 'utf8'),
-      ) as AtlasManifest;
+      const bytes = readFileSync(join(outDir, 'atlas', 'main.json'));
+      const onDisk = JSON.parse(bytes.toString('utf8')) as AtlasManifest;
       expect(onDisk).toEqual(after.manifest);
+      // The fetched manifest's module follows too: its digest is the new file's.
+      const digestAfter = (
+        (await server.ssrLoadModule(ASSETS_MODULE_ID)) as { manifestDigest: string }
+      ).manifestDigest;
+      expect(digestAfter).toBe(manifestDigest(bytes));
+      expect(digestAfter).not.toBe(digestBefore);
     } finally {
       await server.close();
     }
@@ -259,7 +291,9 @@ describe('integration: shmupAssets() dev watcher (edge)', () => {
       expect(errors[0]).toContain('items/bonus.sprite.json:palette');
       expect(errors[0]).toContain('items/bonus.sprite.json:frames');
       expect(Buffer.compare(readFileSync(join(outDir, 'atlas', 'main.png')), good)).toBe(0);
-      const served = (await server.ssrLoadModule(ASSETS_MODULE_ID)) as { manifest: AtlasManifest };
+      const served = (await server.ssrLoadModule(ASSETS_INLINE_MODULE_ID)) as {
+        manifest: AtlasManifest;
+      };
       expect(served.manifest).toEqual(reference.manifest);
     } finally {
       await server.close();
@@ -398,7 +432,7 @@ describe('integration: shmupAssets() builds (edge)', () => {
     expect(existsSync(join(tmp, 'build-invalid-out'))).toBe(false);
   }, 60_000);
 
-  it('emits one fixed-name asset per atlas page and lists them all in pageUrls', async () => {
+  it('emits one fixed-name asset per atlas page plus the manifest, and lists every page', async () => {
     const sourceDir = copySources('build-pages');
     const art = createImage(2000, 2000);
     mkdirSync(join(sourceDir, 'sprites', 'bg'), { recursive: true });
@@ -406,7 +440,7 @@ describe('integration: shmupAssets() builds (edge)', () => {
     const entry = join(tmp, 'entry-pages.js');
     writeFileSync(
       entry,
-      "import { pageUrls } from 'virtual:shmup-assets';\nglobalThis.urls = pageUrls;\n",
+      "import { pageUrls } from 'virtual:shmup-assets-inline';\nglobalThis.urls = pageUrls;\n",
     );
     const output = (await build({
       root: tmp,
@@ -423,7 +457,11 @@ describe('integration: shmupAssets() builds (edge)', () => {
       .filter((f) => f.type === 'asset')
       .map((f) => f.fileName)
       .sort();
-    expect(assets).toEqual([`${ATLAS_URL_DIR}/main-1.png`, `${ATLAS_URL_DIR}/main.png`]);
+    expect(assets).toEqual([
+      `${ATLAS_URL_DIR}/main-1.png`,
+      `${ATLAS_URL_DIR}/main.json`,
+      `${ATLAS_URL_DIR}/main.png`,
+    ]);
     const chunk = files.find((f) => f.type === 'chunk');
     const realm = createContext({});
     runInContext(chunk?.type === 'chunk' ? chunk.code : '', realm);

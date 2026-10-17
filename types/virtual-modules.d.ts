@@ -36,20 +36,23 @@ declare module 'virtual:shmup-content' {
 }
 
 /**
- * The texture-atlas manifest and page URLs produced by the asset pipeline
- * (`pnpm assets`, `scripts/assets/`) and served by the `shmupAssets()` plugin.
+ * Where the texture-atlas manifest is fetched from, and its digest (plan R1-05): what the apps
+ * import. The asset pipeline (`pnpm assets`, `scripts/assets/`) writes the manifest and the
+ * pages; the `shmupAssets()` plugin ships them in `assets/atlas/` and serves this module.
  *
  * @remarks
- * The manifest is **inlined** into the bundle (decision D25 — no `fetch()` on the TV);
- * the pages are separate PNGs next to it, loaded with `new Image()` from the relative
- * `pageUrls` (`assets/atlas/main.png`, …). Format: `scripts/assets/manifest.mjs`.
+ * Until R1-05 the manifest was **inlined** into `app.js` (decision D25 — no `fetch()` on the TV);
+ * it now ships as `assets/atlas/main.json` and the shell loads it with `XMLHttpRequest`, which
+ * works from `file://` (status 0), checks `manifestDigest` and then loads the pages from
+ * `atlasDir`. The inlined form is still served as `virtual:shmup-assets-inline` (the render bench,
+ * and the TV fallback — W3-7). Format: `scripts/assets/manifest.mjs`.
  *
  * @example
  * ```ts
- * import { manifest, pageUrls } from 'virtual:shmup-assets';
+ * import assets from 'virtual:shmup-assets';
  *
- * const kestrel = manifest.sprites['ships/kestrel']; // → { frames: [...], flash: null }
- * const frame = manifest.frames[kestrel.frames[0]]; // → { p, x, y, w, h, ax, ay }
+ * // assets → { manifestUrl: 'assets/atlas/main.json', atlasDir: 'assets/atlas', manifestDigest }
+ * await bootShell({ …, assets });
  * ```
  */
 declare module 'virtual:shmup-assets' {
@@ -61,6 +64,11 @@ declare module 'virtual:shmup-assets' {
     readonly w: number;
     /** Height in pixels (power of two ≤ 2048). */
     readonly h: number;
+    /**
+     * The page's group (manifest format 2, plan R1-05): `common` — page 0, `main.png` — or a zone
+     * (`zone-a` …). Absent in format 1.
+     */
+    readonly group?: string;
   }
   /** Where one frame sits in the atlas. */
   export interface AtlasFrame {
@@ -108,7 +116,7 @@ declare module 'virtual:shmup-assets' {
   }
   /** The whole manifest (`assets/generated/atlas/main.json`). */
   export interface AtlasManifest {
-    /** Manifest format version (1). */
+    /** Manifest format version: 1, or 2 since R1-05 (pages carry their `group`). */
     readonly formatVersion: number;
     /** Atlas pages. */
     readonly pages: readonly AtlasPage[];
@@ -123,6 +131,41 @@ declare module 'virtual:shmup-assets' {
     /** Bitmap fonts by name (`pixel`). */
     readonly fonts: { readonly [font: string]: AtlasFont };
   }
+  /** The manifest's URL, relative to the page (`assets/atlas/main.json`). */
+  export const manifestUrl: string;
+  /** The folder of the atlas pages, relative to the page (`assets/atlas`). */
+  export const atlasDir: string;
+  /** 32-bit FNV-1a of the shipped manifest's bytes, 8 hex digits (`vite.shared.ts`). */
+  export const manifestDigest: string;
+  /** All three, as one object (what the apps hand to `bootShell`). */
+  const assets: {
+    readonly manifestUrl: string;
+    readonly atlasDir: string;
+    readonly manifestDigest: string;
+  };
+  export default assets;
+}
+
+/**
+ * The texture-atlas manifest **inlined** at build time, and the page URLs — what
+ * `virtual:shmup-assets` served until plan R1-05.
+ *
+ * @remarks
+ * Read by the render bench harness (`test/bench/render-harness/main.ts`), and the TV apps'
+ * fallback should `file://` XHR of the manifest ever fail on a set (W3-7: switch the app's one
+ * import line to this module). The pages are separate PNGs next to the bundle, loaded with
+ * `new Image()` from the relative `pageUrls` (`assets/atlas/main.png`, …).
+ *
+ * @example
+ * ```ts
+ * import { manifest, pageUrls } from 'virtual:shmup-assets-inline';
+ *
+ * const kestrel = manifest.sprites['ships/kestrel']; // → { frames: [...], flash: null }
+ * const frame = manifest.frames[kestrel.frames[0]]; // → { p, x, y, w, h, ax, ay }
+ * ```
+ */
+declare module 'virtual:shmup-assets-inline' {
+  import type { AtlasManifest } from 'virtual:shmup-assets';
   /** The atlas manifest, inlined at build time. */
   export const manifest: AtlasManifest;
   /** Relative URL of each page, same order as `manifest.pages`. */

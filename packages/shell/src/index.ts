@@ -2,8 +2,8 @@
  * `@shmup/shell` — the shared browser host of `apps/web` and `apps/tizen` (decision D34).
  *
  * One boot path for the browser and the TV: {@link bootShell} validates the inlined content,
- * loads the atlas pages with `new Image()` (no `fetch` on `file://` — D25) behind a progress
- * bar, shows the boot error screen when anything is wrong, creates the renderer, platform and
+ * fetches the atlas manifest with `XMLHttpRequest` (plan R1-05 — `fetch` fails on `file://`, D25)
+ * and loads the atlas pages with `new Image()` behind a progress bar, shows the boot error screen when anything is wrong, creates the renderer, platform and
  * game — running the core's scene flow (title, game, pause …) drawn through `scene-view` — and
  * runs the rAF frame loop that ticks the game, drains its events to registered handlers and
  * renders. It also reads the save before the title (volumes, input profile, hi-scores — M1-17).
@@ -37,9 +37,13 @@ export {
   defaultStageId,
   sceneFromSearch,
   webGLVersionFromSearch,
+  type AtlasPageTiming,
+  type AtlasTiming,
   type BootTiming,
   type Shell,
   type ShellAssets,
+  type ShellInlineAssets,
+  type ShellManifestAssets,
   type ShellInput,
   type ShellInputProfiles,
   type ShellOptions,
@@ -52,15 +56,25 @@ export {
   type ShellRebindProfiles,
 } from './controls/index.js';
 export {
+  ATLAS_MANIFEST_VERSIONS,
   AssetLoadError,
+  AtlasManifestError,
   DEFAULT_CONTENT_OWNERS,
+  atlasPageUrls,
+  loadAtlasManifest,
   loadGameContent,
   loadImages,
+  loadImagesTimed,
+  manifestDigest,
+  parseAtlasManifest,
+  type AtlasManifestFailure,
   type ContentOwner,
   type ContentOwners,
   type ImageFactory,
+  type ImageTiming,
   type LoadGameContentOptions,
   type LoadableImage,
+  type LoadedAtlasManifest,
 } from './loader/index.js';
 export {
   applyAudioOptions,

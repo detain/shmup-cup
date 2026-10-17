@@ -2,8 +2,9 @@
  * # atlas — texture atlases and sprite frames
  *
  * **Responsibility.** Turns the sprite atlas produced by the M1-03 asset pipeline
- * (`scripts/assets/`, `pnpm assets`) into Pixi textures: the manifest arrives inlined through
- * `virtual:shmup-assets` (format: `scripts/assets/manifest.mjs`), the pages are images the host
+ * (`scripts/assets/`, `pnpm assets`) into Pixi textures: the manifest is the host's to load (the
+ * shell fetches `assets/atlas/main.json` since plan R1-05; `virtual:shmup-assets-inline` still
+ * inlines it — format: `scripts/assets/manifest.mjs`), the pages are images the host
  * loaded from the relative `pageUrls` (decision D25 — `new Image()`, no `fetch`). Each page
  * becomes **one** `TextureSource` with nearest-neighbour sampling, and every frame a `Texture`
  * over it, so all sprites of a page batch into one draw call.
@@ -58,6 +59,12 @@ export interface AtlasPageInfo {
   readonly w: number;
   /** Height in pixels (power of two ≤ 2048). */
   readonly h: number;
+  /**
+   * The page's group (manifest format 2, plan R1-05): `common` — page 0, `main.png` — or a zone
+   * (`zone-a` …), packed on pages of its own so a zone's pages can leave the GPU between zones.
+   * Absent in format 1. The atlas itself never reads it.
+   */
+  readonly group?: string;
 }
 
 /** Where one frame sits in the atlas. */
@@ -109,11 +116,12 @@ export interface AtlasFontInfo {
 }
 
 /**
- * The atlas manifest (`assets/generated/atlas/main.json`, inlined as `virtual:shmup-assets`).
+ * The atlas manifest (`assets/generated/atlas/main.json` — fetched by the shell since plan R1-05,
+ * inlined as `virtual:shmup-assets-inline`).
  * Structurally identical to the ambient type in `types/virtual-modules.d.ts`.
  */
 export interface AtlasManifest {
-  /** Manifest format version (1). */
+  /** Manifest format version: 1, or 2 since R1-05 (pages carry their `group`). */
   readonly formatVersion: number;
   /** Atlas pages. */
   readonly pages: readonly AtlasPageInfo[];
@@ -251,7 +259,7 @@ function imageSize(image: AtlasPageImage): [number, number] {
  *
  * @example
  * ```ts
- * import assets from 'virtual:shmup-assets';
+ * import assets from 'virtual:shmup-assets-inline';
  * const images = await loadImages(assets.pageUrls); // host code, `new Image()`
  * const atlas = createAtlas(assets.manifest, images);
  * const table = atlas.resolveSpriteTable(game.content.sprites.names);

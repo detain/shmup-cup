@@ -1,6 +1,7 @@
 /**
- * Browser entry point: boots the game into `#game` with the inlined content and atlas
- * (`virtual:shmup-content`, `virtual:shmup-assets`) — plus the debug tools in dev / test builds
+ * Browser entry point: boots the game into `#game` with the inlined content
+ * (`virtual:shmup-content`) and the atlas — `virtual:shmup-assets` names the manifest the shell
+ * fetches, `assets/atlas/main.json` (plan R1-05) — plus the debug tools in dev / test builds
  * (`__SHMUP_DEV__`, plan M1-19) — and keeps HMR clean by stopping the previous instance when this
  * module is replaced. In dev / test builds `?determinism` (plan M2-18) installs the cross-engine
  * determinism check (`window.__shmupDeterminism`) instead of booting the game; a release build

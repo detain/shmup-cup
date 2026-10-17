@@ -61,7 +61,7 @@ describe('tizen/scripts/check-bundle rule 9 (the game and the TV render bench ne
     expect(applicationIdOf('<tizen:application package="P"/>')).toBeNull();
   });
 
-  it('accepts the bench app.js under the bench app id', () => {
+  it('accepts the bench app.js under the bench app id (no atlas manifest needed — rule 10)', () => {
     put('config.xml', benchConfigXml(GAME_XML));
     put('app.js', BENCH_APP);
     expect(checkTizenBundle(dir).problems).toEqual([]);
@@ -77,6 +77,17 @@ describe('tizen/scripts/check-bundle rule 9 (the game and the TV render bench ne
 
   it('rejects the bench inside the game’s widget', () => {
     put('config.xml', GAME_XML);
+    // The game ships its atlas manifest next to the pages (rule 10, plan R1-05).
+    const pages = [{ file: 'bench-x1-0.png', w: 512, h: 512 }];
+    const manifest = {
+      formatVersion: 1,
+      pages,
+      frames: {},
+      sprites: {},
+      animations: {},
+      fonts: {},
+    };
+    put('assets/atlas/main.json', JSON.stringify(manifest));
     put('app.js', BENCH_APP);
     expect(checkTizenBundle(dir).problems).toEqual([
       'app.js contains the TV render bench (R0-02) — the bench must never ship in the game',
