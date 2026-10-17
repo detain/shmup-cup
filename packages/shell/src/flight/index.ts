@@ -44,6 +44,10 @@
  * @module
  */
 import {
+  FRAME_CY,
+  FRAME_W,
+  HUD_BAR_HEIGHT,
+  HUD_BOTTOM_Y,
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
@@ -122,11 +126,23 @@ const HUD_BAR_COLOR = 0x1d2a5c;
 /** String slots of the HUD draw list. */
 const STRING = { p1: 0, title: 1, hint: 2, hi: 3, gameOver: 4 } as const;
 
-/** Screen row of the WARNING band's top edge (the playfield's middle, below the 8-px HUD bar). */
-const WARNING_BAND_Y = 76;
-
 /** Height of the WARNING band (three lines of the 10-px font plus margins). */
 const WARNING_BAND_H = 48;
+
+/**
+ * Screen row of the WARNING band's top edge: the band is centred 8 px above the frame's centre
+ * row (the playfield's middle), `FRAME_CY − 8 − WARNING_BAND_H / 2` — as the scene flow's.
+ */
+const WARNING_BAND_Y = FRAME_CY - 8 - (WARNING_BAND_H >> 1);
+
+/** Left edge of the HUD's `HI` label: 84 px in from the frame's right edge. */
+const HI_LABEL_X = FRAME_W - 84;
+
+/** Left edge of the HUD's hi-score digits: 68 px in from the frame's right edge. */
+const HI_SCORE_X = FRAME_W - 68;
+
+/** Row of the stock ships: one pixel into the bottom HUD bar. */
+const LIVES_Y = HUD_BOTTOM_Y + 1;
 
 /**
  * Creates the free-flight scene for a game.
@@ -217,8 +233,8 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
    */
   const buildHud = (lives: number, over: boolean): void => {
     hud.clear();
-    hud.rect(0, 0, PLAYFIELD_W, 8, HUD_BAR_COLOR);
-    hud.rect(0, 208, PLAYFIELD_W, 8, HUD_BAR_COLOR);
+    hud.rect(0, 0, PLAYFIELD_W, HUD_BAR_HEIGHT, HUD_BAR_COLOR);
+    hud.rect(0, HUD_BOTTOM_Y, PLAYFIELD_W, HUD_BAR_HEIGHT, HUD_BAR_COLOR);
     hud.text(STRING.p1, 4, 0, 0x38c8e8);
     hud.number(p1Score.score, 20, 0, 8);
     hud.text(
@@ -228,10 +244,12 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
       over ? 0xf85858 : 0xf8d030,
       TextAlign.Center,
     );
-    hud.text(STRING.hi, 300, 0, 0xf8d030);
-    hud.number(scoring.hiScore, 316, 0, 8);
-    for (let i = 0; i < lives - 1 && i < 8; i++) hud.sprite(base + OWN.life, 0, 4 + i * 10, 209);
-    hud.text(STRING.hint, PLAYFIELD_W / 2, 208, 0x8890b0, TextAlign.Center);
+    hud.text(STRING.hi, HI_LABEL_X, 0, 0xf8d030);
+    hud.number(scoring.hiScore, HI_SCORE_X, 0, 8);
+    for (let i = 0; i < lives - 1 && i < 8; i++) {
+      hud.sprite(base + OWN.life, 0, 4 + i * 10, LIVES_Y);
+    }
+    hud.text(STRING.hint, PLAYFIELD_W / 2, HUD_BOTTOM_Y, 0x8890b0, TextAlign.Center);
     p1Score.displayDirty = false;
     scoring.hiScoreDirty = false;
   };

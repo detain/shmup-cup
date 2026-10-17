@@ -6,7 +6,10 @@
 import { describe, expect, it } from 'vitest';
 import { isStorageKey } from '../../src/shared/ipc.js';
 import {
+  DEFAULT_WINDOW_SCALE,
   DEFAULT_WINDOW_STATE,
+  FRAME_HEIGHT,
+  FRAME_WIDTH,
   MAX_WINDOW_SCALE,
   WINDOW_MOVE_SAVE_MS,
   WINDOW_STATE_KEY,
@@ -53,9 +56,9 @@ describe('electron/main/window-state edges', () => {
     expect(parseWindowState('{"x":0,"y":0}')).toMatchObject({ x: 0, y: 0 });
     expect(parseWindowState('{"scale":1}').scale).toBe(1);
     expect(parseWindowState(`{"scale":${MAX_WINDOW_SCALE}}`).scale).toBe(MAX_WINDOW_SCALE);
-    expect(parseWindowState('{"scale":-3}').scale).toBe(3);
-    expect(parseWindowState('{"scale":"4"}').scale).toBe(3);
-    expect(parseWindowState('{"scale":null}').scale).toBe(3);
+    expect(parseWindowState('{"scale":-3}').scale).toBe(DEFAULT_WINDOW_SCALE);
+    expect(parseWindowState('{"scale":"4"}').scale).toBe(DEFAULT_WINDOW_SCALE);
+    expect(parseWindowState('{"scale":null}').scale).toBe(DEFAULT_WINDOW_SCALE);
     expect(parseWindowState('{"x":"10","y":"20"}')).toMatchObject({ x: null, y: null });
     expect(parseWindowState('{"x":null,"y":20}')).toMatchObject({ x: null, y: null });
     expect(parseWindowState('{"fullscreen":1}').fullscreen).toBe(false);
@@ -68,7 +71,8 @@ describe('electron/main/window-state edges', () => {
   });
 
   it('sizes the content from the scale up to 4K', () => {
-    expect(windowContentSize(1)).toEqual({ width: 384, height: 216 });
+    expect(windowContentSize(1)).toEqual({ width: FRAME_WIDTH, height: FRAME_HEIGHT });
+    // The largest scale is 4K for the 384×216 frame (×10) and the 640×360 one (×6) alike.
     expect(windowContentSize(MAX_WINDOW_SCALE)).toEqual({ width: 3840, height: 2160 });
   });
 

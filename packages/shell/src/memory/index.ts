@@ -67,6 +67,8 @@ import {
   type Song,
 } from '@shmup/audio-web';
 import {
+  FRAME_H,
+  FRAME_W,
   MUSIC_CUES,
   SimEventKind,
   defineModule,
@@ -126,11 +128,11 @@ export const FILTER_TARGETS = 2;
 /** Buffers of the canvas at the display size: front, back and depth / stencil. */
 const CANVAS_BUFFERS = 3;
 
-/** Width of the internal frame the renderer draws into (decision D19). */
-const FRAME_WIDTH = 384;
+/** Width of the internal frame the renderer draws into (core's `FRAME_W` — decision D19). */
+const FRAME_WIDTH = FRAME_W;
 
-/** Height of the internal frame. */
-const FRAME_HEIGHT = 216;
+/** Height of the internal frame (core's `FRAME_H`). */
+const FRAME_HEIGHT = FRAME_H;
 
 /**
  * Bytes a **pooled** RGBA render target of `w × h` really takes: Pixi's `TexturePool` rounds each
@@ -199,7 +201,7 @@ export interface MemoryInputs {
     /** Height in pixels. */
     readonly height: number;
   };
-  /** The internal frame the renderer draws into (default 384 × 216 — decision D19). */
+  /** The internal frame the renderer draws into (default core's `FRAME_W` × `FRAME_H` — D19). */
   readonly frame?: {
     /** Width in pixels. */
     readonly width: number;
@@ -711,7 +713,7 @@ export interface StageMemoryInputs {
   readonly needs?: AtlasPageNeeds;
   /** Display size (default 1920×1080). */
   readonly display?: MemoryInputs['display'];
-  /** The internal frame size (default 384×216). */
+  /** The internal frame size (default core's `FRAME_W` × `FRAME_H`). */
   readonly frame?: MemoryInputs['frame'];
   /** The CRT setting (default `off`). */
   readonly crtFilter?: CrtFilter;

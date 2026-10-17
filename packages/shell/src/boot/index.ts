@@ -152,6 +152,8 @@ import {
 } from '@shmup/audio-web';
 import {
   DEFAULT_GAME_CONFIG,
+  FRAME_H,
+  FRAME_W,
   MUSIC_CUES,
   createGame,
   createReplayLibrary,
@@ -957,6 +959,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       canvas,
       displayWidth: win.innerWidth,
       displayHeight: win.innerHeight,
+      // The internal frame, passed explicitly from core's constants (R1-02).
+      width: FRAME_W,
+      height: FRAME_H,
       preferWebGLVersion: options.preferWebGLVersion ?? 1,
       atlas,
       testPattern: scene === 'calibration',

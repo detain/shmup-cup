@@ -3,6 +3,7 @@
  * never grant the renderer Node access.
  */
 import { readFileSync } from 'node:fs';
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { createWindowOptions } from '../../src/main/window-options.js';
 
@@ -10,13 +11,14 @@ const options = createWindowOptions({ preloadPath: '/p/preload.cjs', fullscreen:
 const webIndex = readFileSync(new URL('../../../web/index.html', import.meta.url), 'utf8');
 
 describe('electron/main/window-options consistency', () => {
-  it('opens at an integer multiple of 384x216 and never smaller than one frame', () => {
+  it("opens at an integer multiple of the game's frame and never smaller than one frame", () => {
+    // Core's FRAME_W × FRAME_H (384×216 today): the window's mirror must follow it (R1-02).
     const width = options.width ?? 0;
     const height = options.height ?? 0;
-    expect(width % 384).toBe(0);
-    expect(height % 216).toBe(0);
-    expect(width / 384).toBe(height / 216);
-    expect([options.minWidth, options.minHeight]).toEqual([384, 216]);
+    expect(width % FRAME_W).toBe(0);
+    expect(height % FRAME_H).toBe(0);
+    expect(width / FRAME_W).toBe(height / FRAME_H);
+    expect([options.minWidth, options.minHeight]).toEqual([FRAME_W, FRAME_H]);
   });
 
   it('uses the same letterbox colour as the web page to avoid a flash on load', () => {

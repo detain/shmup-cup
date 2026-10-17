@@ -5,24 +5,26 @@
  * stored as `window.json` next to the saves, through the same `FileStore`), and the keyboard
  * shortcuts that change them:
  *
- * - **Scale.** The window's content is an exact multiple of the 384×216 frame
- *   ({@link windowContentSize}: ×1 … ×{@link MAX_WINDOW_SCALE}; default ×3 = 1152×648), so the
- *   game's integer scale mode fills it crisply. {@link fitWindowScale} lowers a saved scale that
- *   no longer fits the screen's work area.
+ * - **Scale.** The window's content is an exact multiple of the game's frame
+ *   ({@link FRAME_WIDTH} × {@link FRAME_HEIGHT}; {@link windowContentSize}: ×1 …
+ *   ×{@link MAX_WINDOW_SCALE}; default ×{@link DEFAULT_WINDOW_SCALE} — ×3 = 1152×648 at 384×216),
+ *   so the game's integer scale mode fills it crisply. {@link fitWindowScale} lowers a saved scale
+ *   that no longer fits the screen's work area.
  * - **Fullscreen.** Remembered; `SHMUP_FULLSCREEN=1` still forces it for one launch.
  * - **Position.** The window's last top-left corner, kept only while it lies on a screen
  *   ({@link isOnScreen}) — else the window is centred. `main.ts` saves it
  *   {@link WINDOW_MOVE_SAVE_MS} after the window's last `move` event and when it closes.
  * - **Shortcuts** ({@link windowShortcut}, read in the main process from the window's
  *   `before-input-event`): **F11** or **Alt+Enter** toggle fullscreen; **Ctrl+=** / **Ctrl++**
- *   and **Ctrl+-** step the window scale up / down, **Ctrl+0** resets it to ×3 (Cmd on macOS).
+ *   and **Ctrl+-** step the window scale up / down, **Ctrl+0** resets it to the default scale (Cmd
+ *   on macOS).
  *   None of these keys is a game or menu binding.
  *
  * {@link parseWindowState} is defensive like the save parser: a missing, corrupt or foreign file
  * gives the defaults, field by field.
  *
  * **Implements.** shmup_feat.md §23 Electron-specific — fullscreen BrowserWindow, window / scale
- * settings; shmup_feat.md §3 (integer scaling of the 384×216 frame).
+ * settings; shmup_feat.md §3 (integer scaling of the game's frame).
  *
  * **Public API.** {@link WindowState}, {@link DEFAULT_WINDOW_STATE}, {@link parseWindowState},
  * {@link serializeWindowState}, {@link windowContentSize}, {@link fitWindowScale},
@@ -36,17 +38,28 @@
 /** Storage key of the window settings (`window.json` in the saves folder). */
 export const WINDOW_STATE_KEY = 'window';
 
-/** Width of the game's frame (decision D19). */
+/**
+ * Width of the game's frame (decision D19): a **mirror** of `@shmup/core`'s `FRAME_W`.
+ *
+ * @remarks
+ * The main process is compiled and packaged without the workspace packages, so it cannot import
+ * core (plan R1-02, owner decision O8); `test/main/window-frame.test.ts` pins this mirror and
+ * {@link FRAME_HEIGHT} to core's constants, so R2-01's flip to 640×360 fails there until both
+ * are changed together. Everything else here derives from the two.
+ */
 export const FRAME_WIDTH = 384;
 
-/** Height of the game's frame. */
+/** Height of the game's frame: a mirror of `@shmup/core`'s `FRAME_H` (see {@link FRAME_WIDTH}). */
 export const FRAME_HEIGHT = 216;
 
-/** The window scale of a first launch (1152×648). */
-export const DEFAULT_WINDOW_SCALE = 3;
+/**
+ * The window scale of a first launch: the largest whose content is at most 1280 px wide — ×3 =
+ * 1152×648 at 384×216, ×2 = 1280×720 at 640×360 (plan §2.7).
+ */
+export const DEFAULT_WINDOW_SCALE = Math.floor(1280 / FRAME_WIDTH);
 
-/** The largest window scale (×10 = 3840×2160). */
-export const MAX_WINDOW_SCALE = 10;
+/** The largest window scale: the frame at most 3840 px wide, 4K — ×10 at 384×216, ×6 at 640×360. */
+export const MAX_WINDOW_SCALE = Math.floor(3840 / FRAME_WIDTH);
 
 /**
  * How long the window must stand still after a `move` event before its position is saved (a drag
@@ -166,7 +179,7 @@ export function serializeWindowState(state: WindowState): string {
  * The window's content size at a scale.
  *
  * @param scale - The scale.
- * @returns `384 × scale` by `216 × scale` (a new object).
+ * @returns `FRAME_WIDTH × scale` by `FRAME_HEIGHT × scale` (a new object).
  *
  * @example
  * ```ts

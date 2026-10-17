@@ -8,7 +8,7 @@
  */
 import { MAX_SONG_TAIL_SECONDS, SYNTH_SAMPLE_RATE, DECODE_SAMPLE_RATE } from '@shmup/audio-web';
 import type { MusicContent, SfxContent, Song } from '@shmup/audio-web';
-import { SimEventKind, createEventQueue, type ContentDb } from '@shmup/core';
+import { FRAME_H, FRAME_W, SimEventKind, createEventQueue, type ContentDb } from '@shmup/core';
 import type { AtlasManifest } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { createEventDispatcher } from '../../src/dispatch/index.js';
@@ -315,8 +315,13 @@ describe('shell/memory estimate edges', () => {
 
   it('counts the 1080p canvas buffers, and a 4K display costs four times as much', () => {
     const hd = estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0 });
-    // The frame target is exact (created directly), the two filter passes are pooled at 512 × 256.
-    const frame = 384 * 216 * 4 + 512 * 256 * 4 * 2;
+    // The frame target is exact (created directly), the two filter passes are pooled at the next
+    // powers of two (512 × 256 for the 384×216 frame).
+    let pw = 1;
+    while (pw < FRAME_W) pw *= 2;
+    let ph = 1;
+    while (ph < FRAME_H) ph *= 2;
+    const frame = FRAME_W * FRAME_H * 4 + pw * ph * 4 * 2;
     expect(hd.targets).toBe(frame + 1920 * 1080 * 4 * 3);
     const uhd = estimateMemory({
       atlasPages: [],

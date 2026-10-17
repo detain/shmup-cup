@@ -26,6 +26,10 @@
  * @module
  */
 import {
+  FRAME_CX,
+  FRAME_W,
+  HUD_BAR_HEIGHT,
+  HUD_BOTTOM_Y,
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
@@ -133,6 +137,24 @@ const STRING = { title: 0, subtitle: 1, hint: 2, p1: 3, hi: 4, p2: 5 } as const;
 /** Binary-angle mask (1024 units per turn). */
 const ANGLE_MASK = 1023;
 
+/** Left edge of the HUD's `HI` label: 42 px left of the frame's centre column. */
+const HI_LABEL_X = FRAME_CX - 42;
+
+/** Left edge of the HUD's hi-score digits: 26 px left of the frame's centre column. */
+const HI_SCORE_X = FRAME_CX - 26;
+
+/** Left edge of the HUD's `2P` label: 84 px in from the frame's right edge. */
+const P2_LABEL_X = FRAME_W - 84;
+
+/** Left edge of player 2's score digits: 68 px in from the frame's right edge. */
+const P2_SCORE_X = FRAME_W - 68;
+
+/** Row of the stock ships and the meter labels: one pixel into the bottom HUD bar. */
+const BAR_INNER_Y = HUD_BOTTOM_Y + 1;
+
+/** Row of the UI's hint line: 14 px above the bottom HUD bar. */
+const HINT_Y = HUD_BOTTOM_Y - 14;
+
 /**
  * Where the ship is on a given tick (a slow figure-eight over the left half).
  *
@@ -189,7 +211,7 @@ export function createShowcase(options: ShowcaseOptions = {}): Showcase {
   // The UI never changes: build it once (the renderer then skips redrawing it).
   ui.text(STRING.title, PLAYFIELD_W / 2, 36, 0xf8d030, TextAlign.Center);
   ui.text(STRING.subtitle, PLAYFIELD_W / 2, 48, 0x38c8e8, TextAlign.Center);
-  ui.text(STRING.hint, PLAYFIELD_W / 2, 194, 0x8890b0, TextAlign.Center);
+  ui.text(STRING.hint, PLAYFIELD_W / 2, HINT_Y, 0x8890b0, TextAlign.Center);
 
   const screen: ScreenView = { shakeX: 0, shakeY: 0, flash: 0, dim: 0 };
   const frame: {
@@ -234,21 +256,21 @@ export function createShowcase(options: ShowcaseOptions = {}): Showcase {
    */
   const buildHud = (list: DrawList, tick: number): void => {
     list.clear();
-    list.rect(0, 0, PLAYFIELD_W, 8, 0x1d2a5c);
-    list.rect(0, 208, PLAYFIELD_W, 8, 0x1d2a5c);
+    list.rect(0, 0, PLAYFIELD_W, HUD_BAR_HEIGHT, 0x1d2a5c);
+    list.rect(0, HUD_BOTTOM_Y, PLAYFIELD_W, HUD_BAR_HEIGHT, 0x1d2a5c);
     list.text(STRING.p1, 4, 0, 0x38c8e8);
     list.number(tick * 10, 20, 0, 8);
-    list.text(STRING.hi, 150, 0, 0xf8d030);
-    list.number(50000, 166, 0, 8);
-    list.text(STRING.p2, 300, 0, 0x8890b0);
-    list.number(0, 316, 0, 8, 0x8890b0);
-    for (let i = 0; i < 3; i++) list.sprite(SPRITE.life, 0, 4 + i * 10, 209);
+    list.text(STRING.hi, HI_LABEL_X, 0, 0xf8d030);
+    list.number(50000, HI_SCORE_X, 0, 8);
+    list.text(STRING.p2, P2_LABEL_X, 0, 0x8890b0);
+    list.number(0, P2_SCORE_X, 0, 8, 0x8890b0);
+    for (let i = 0; i < 3; i++) list.sprite(SPRITE.life, 0, 4 + i * 10, BAR_INNER_Y);
     const highlighted = (tick >> 5) % METER_SLOTS;
     const blink = ((tick >> 3) & 1) === 0;
     for (let i = 0; i < METER_SLOTS; i++) {
       const slotFrame = i === highlighted && blink ? 1 : i === METER_SLOTS - 1 ? 2 : 0;
-      list.sprite(SPRITE.meterSlot, slotFrame, 96 + i * 40, 208);
-      list.sprite(SPRITE.meterLabels, i, 98 + i * 40, 209);
+      list.sprite(SPRITE.meterSlot, slotFrame, 96 + i * 40, HUD_BOTTOM_Y);
+      list.sprite(SPRITE.meterLabels, i, 98 + i * 40, BAR_INNER_Y);
     }
   };
 

@@ -4,7 +4,14 @@
  * tick (never skipped by a multi-tick frame, frozen while the tick stands still), the station
  * label swapped only on a change, the screen effects it starts, and no allocation per frame.
  */
-import { LayerId, createDrawList, type RenderFrame, type ScreenView } from '@shmup/core';
+import {
+  LayerId,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  createDrawList,
+  type RenderFrame,
+  type ScreenView,
+} from '@shmup/core';
 import {
   createScreenEffects,
   type FxContent,
@@ -44,6 +51,11 @@ function fakeFx() {
   return { calls, particles, popups, effects: createScreenEffects() };
 }
 
+/** Where the gallery bursts: the playfield's centre (192, 100 at 384×216). */
+const CX = PLAYFIELD_W / 2;
+/** Vertical centre of the playfield. */
+const CY = PLAYFIELD_H / 2;
+
 /** A game frame at a tick. */
 function source(tick: number): RenderFrame & { tick: number } {
   const screen: ScreenView = { shakeX: 0, shakeY: 0, flash: 0, dim: 0 };
@@ -73,12 +85,12 @@ describe('shell/fx-gallery', () => {
       gallery.update(source(tick));
     }
     expect(fx.calls).toEqual([
-      ['emit', 0, 192, 100, 1],
-      ['emit', 0, 192, 100, 1],
-      ['emit', 0, 192, 100, 1],
-      ['emit', 1, 192, 100, 1],
-      ['emit', 1, 192, 100, 1],
-      ['emit', 1, 192, 100, 1],
+      ['emit', 0, CX, CY, 1],
+      ['emit', 0, CX, CY, 1],
+      ['emit', 0, CX, CY, 1],
+      ['emit', 1, CX, CY, 1],
+      ['emit', 1, CX, CY, 1],
+      ['emit', 1, CX, CY, 1],
     ]);
     expect(gallery.station).toBe(1);
     // A paused game (the same tick) fires nothing.
@@ -123,7 +135,7 @@ describe('shell/fx-gallery', () => {
     // It wraps around to the first preset.
     fx.calls.length = 0;
     gallery.update(source(gallery.stations.length * FX_GALLERY_STATION_TICKS));
-    expect(fx.calls).toEqual([['emit', 0, 192, 100, 1]]);
+    expect(fx.calls).toEqual([['emit', 0, CX, CY, 1]]);
   });
 
   it('works without particles or popups (a renderer with no atlas)', () => {

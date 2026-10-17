@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWindowOptions } from '../../src/main/window-options.js';
+import { DEFAULT_WINDOW_SCALE, FRAME_HEIGHT, FRAME_WIDTH } from '../../src/main/window-state.js';
 
 describe('electron/main/window-options', () => {
   it('locks down the renderer and keeps the game loop unthrottled', () => {
@@ -11,8 +12,8 @@ describe('electron/main/window-options', () => {
       nodeIntegration: false,
       backgroundThrottling: false,
     });
-    expect(options.width).toBe(384 * 3);
-    expect(options.height).toBe(216 * 3);
+    expect(options.width).toBe(FRAME_WIDTH * DEFAULT_WINDOW_SCALE);
+    expect(options.height).toBe(FRAME_HEIGHT * DEFAULT_WINDOW_SCALE);
     expect(options.fullscreen).toBe(false);
   });
 

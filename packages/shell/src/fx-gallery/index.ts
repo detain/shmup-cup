@@ -31,6 +31,8 @@
 import {
   FlashKind,
   FLASH_KIND_TICKS,
+  HUD_BAR_HEIGHT,
+  HUD_BOTTOM_Y,
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
@@ -187,10 +189,10 @@ export function createFxGallery(fx: FxTargets, options: FxGalleryOptions = {}): 
   const hud = createDrawList(8, 2);
   hud.setString(0, 'FX GALLERY');
   hud.setString(1, '?SCENE=FX-GALLERY');
-  hud.rect(0, 0, PLAYFIELD_W, 8, BAR_COLOR);
-  hud.rect(0, 208, PLAYFIELD_W, 8, BAR_COLOR);
+  hud.rect(0, 0, PLAYFIELD_W, HUD_BAR_HEIGHT, BAR_COLOR);
+  hud.rect(0, HUD_BOTTOM_Y, PLAYFIELD_W, HUD_BAR_HEIGHT, BAR_COLOR);
   hud.text(0, PLAYFIELD_W / 2, 0, 0xf8d030, TextAlign.Center);
-  hud.text(1, PLAYFIELD_W / 2, 208, 0x8890b0, TextAlign.Center);
+  hud.text(1, PLAYFIELD_W / 2, HUD_BOTTOM_Y, 0x8890b0, TextAlign.Center);
   const ui = createDrawList(4, 1);
 
   const frame: {

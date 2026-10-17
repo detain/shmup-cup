@@ -1,8 +1,9 @@
 /**
  * The desktop window's remembered settings and shortcuts (plan M2-17, `main/window-state.ts`):
- * defensive parsing, integer scales of the 384×216 frame that fit the screen, positions kept only
+ * defensive parsing, integer scales of the game's frame that fit the screen, positions kept only
  * on a screen, and the F11 / Alt+Enter / Ctrl+= / Ctrl+- / Ctrl+0 shortcuts.
  */
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_WINDOW_SCALE,
@@ -29,16 +30,20 @@ const key = (key: string, extra: Partial<ShortcutInput> = {}): ShortcutInput => 
 });
 
 describe('electron/main/window-state', () => {
-  it('starts windowed at ×3 (1152×648), centred', () => {
+  it('starts windowed at the default scale (×3 = 1152×648 at 384×216), centred', () => {
     expect(DEFAULT_WINDOW_STATE).toEqual({
       version: 1,
       fullscreen: false,
-      scale: 3,
+      scale: DEFAULT_WINDOW_SCALE,
       x: null,
       y: null,
     });
-    expect(windowContentSize(DEFAULT_WINDOW_SCALE)).toEqual({ width: 1152, height: 648 });
-    expect([FRAME_WIDTH, FRAME_HEIGHT]).toEqual([384, 216]);
+    expect(windowContentSize(DEFAULT_WINDOW_SCALE)).toEqual({
+      width: FRAME_W * DEFAULT_WINDOW_SCALE,
+      height: FRAME_H * DEFAULT_WINDOW_SCALE,
+    });
+    // The main process's mirror of core's frame (`window-frame.test.ts` pins it in detail).
+    expect([FRAME_WIDTH, FRAME_HEIGHT]).toEqual([FRAME_W, FRAME_H]);
   });
 
   it('round-trips the settings through their stored text', () => {
@@ -51,9 +56,9 @@ describe('electron/main/window-state', () => {
     expect(parseWindowState('{oops')).toBe(DEFAULT_WINDOW_STATE);
     expect(parseWindowState('[1,2]')).toBe(DEFAULT_WINDOW_STATE);
     expect(parseWindowState('"x"')).toBe(DEFAULT_WINDOW_STATE);
-    expect(parseWindowState('{"scale":0}').scale).toBe(3);
-    expect(parseWindowState(`{"scale":${MAX_WINDOW_SCALE + 1}}`).scale).toBe(3);
-    expect(parseWindowState('{"scale":2.5}').scale).toBe(3);
+    expect(parseWindowState('{"scale":0}').scale).toBe(DEFAULT_WINDOW_SCALE);
+    expect(parseWindowState(`{"scale":${MAX_WINDOW_SCALE + 1}}`).scale).toBe(DEFAULT_WINDOW_SCALE);
+    expect(parseWindowState('{"scale":2.5}').scale).toBe(DEFAULT_WINDOW_SCALE);
     expect(parseWindowState('{"fullscreen":"yes"}').fullscreen).toBe(false);
     // A position needs both whole coordinates.
     expect(parseWindowState('{"x":10}')).toMatchObject({ x: null, y: null });

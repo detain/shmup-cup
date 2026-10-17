@@ -6,7 +6,7 @@
  * synth renders, the zones' sprite sets and page needs, and the residency that unloads the pages
  * the next zone does not need.
  */
-import { MUSIC_CUES, SimEventKind, createEventQueue } from '@shmup/core';
+import { FRAME_H, FRAME_W, MUSIC_CUES, SimEventKind, createEventQueue } from '@shmup/core';
 import {
   SYNTH_SAMPLE_RATE,
   loadMusicContent,
@@ -51,6 +51,18 @@ const manifest = buildAtlas().manifest as unknown as AtlasManifest;
 
 /** The campaign zones' stage indices. */
 const zoneStages = (db.campaign?.zones ?? []).map((zone) => zone.stageId);
+
+/**
+ * The next power of two at or above a size, worked out here rather than by the module under test.
+ *
+ * @param n - A positive size in pixels.
+ * @returns The power of two.
+ */
+const pow2 = (n: number): number => {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+};
 
 describe('shell/memory', () => {
   it('describes itself', () => {
@@ -108,19 +120,23 @@ describe('shell/memory', () => {
   });
 
   it('counts the render targets as Pixi really pools them, CRT on and off (M3-02d, review F3)', () => {
-    // Hand-computed, in bytes:
+    // Hand-computed, in bytes, for the 384×216 frame:
     //   frame target   384 × 216 × 4                       =        331 776  (created directly)
     //   2 filter passes  nextPow2(384, 216) = 512 × 256 × 4 = 2 ×  524 288
     //   canvas buffers 1920 × 1080 × 4 × 3                  =     24 883 200
-    const FRAME = 331_776;
-    const FILTER_PASS = 512 * 256 * 4;
+    // The default frame's figures derive from core's FRAME_W / FRAME_H (R1-02), so they follow
+    // R2-01's flip; the explicit 384 × 216 sizes below pin the arithmetic itself.
+    const FRAME = FRAME_W * FRAME_H * 4;
+    const FILTER_PASS = pow2(FRAME_W) * pow2(FRAME_H) * 4;
     const CANVAS = 1920 * 1080 * 4 * 3;
-    expect(potBytes(384, 216)).toBe(FILTER_PASS);
-    expect(FILTER_PASS).toBe(524_288);
+    expect(384 * 216 * 4).toBe(331_776);
+    expect(potBytes(384, 216)).toBe(512 * 256 * 4);
+    expect(potBytes(384, 216)).toBe(524_288);
+    expect(potBytes(FRAME_W, FRAME_H)).toBe(FILTER_PASS);
     expect(potBytes(1920, 1080)).toBe(2048 * 2048 * 4);
     expect(potBytes(768, 432)).toBe(1024 * 512 * 4);
     expect(potBytes(0, 216)).toBe(0);
-    expect(potBytes(512, 256)).toBe(FILTER_PASS);
+    expect(potBytes(512, 256)).toBe(512 * 256 * 4);
     const off = estimateMemory({ atlasPages: [], sfxBytes: 0, musicBytes: 0, crtFilter: 'off' });
     expect(off.targets).toBe(FRAME + FILTER_TARGETS * FILTER_PASS + CANVAS);
     expect(FILTER_TARGETS).toBe(2);

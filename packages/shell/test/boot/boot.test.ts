@@ -9,6 +9,8 @@ import {
   Action,
   CaptureStatus,
   ExtraItem,
+  FRAME_H,
+  FRAME_W,
   MUSIC_CUES,
   REPLAY_SLOTS,
   SAVE_CORRUPT_KEY,
@@ -84,8 +86,8 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
       fakes.rendererOptions = options;
       if (fakes.rendererFails) return Promise.reject(new Error('WebGL unavailable'));
       return Promise.resolve({
-        width: 384,
-        height: 216,
+        width: FRAME_W,
+        height: FRAME_H,
         webGLVersion: 1,
         effects: real.createScreenEffects(),
         particles: {
@@ -413,6 +415,9 @@ describe('shell/boot bootShell', () => {
     expect(fakes.rendererOptions).toMatchObject({
       displayWidth: 1920,
       displayHeight: 1080,
+      // The internal frame comes from core's constants, passed explicitly (R1-02).
+      width: FRAME_W,
+      height: FRAME_H,
       preferWebGLVersion: 1,
       testPattern: false,
       atlas: shell.atlas,
