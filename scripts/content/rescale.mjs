@@ -54,11 +54,12 @@
  * - the **map's right end** — `length` plus one playfield, where the view ends at the last camera
  *   position — is frame-anchored: it ports to `length′ + toWidth`, and an x at or past it keeps its
  *   distance past it ×k (`portMapEnd`): a heightfield segment that reaches the map's last column
- *   ends at the new map's end, one that starts at or past the end (the map never shows it) starts
- *   as far past the new one, a region reaching the end still reaches it, and an RLE row tiled in
- *   the last column repeats its last cell to the new map's width (`extendRleRow`); each is listed
- *   as moved. A segment that would no longer start before it ends, and an RLE row core's syntax
- *   refuses, are errors.
+ *   ends at the new map's end, one that starts at or past the end starts as far past the new one
+ *   and one that starts in the last column short of the end stays in the new last column (the map
+ *   never shows either, and still does not), a region reaching the end still reaches it, and an
+ *   RLE row tiled in the last column repeats its last cell to the new map's width
+ *   (`extendRleRow`); each is listed as moved. A segment that would no longer start before it
+ *   ends, and an RLE row core's syntax refuses, are errors.
  *
  * **What it reads.** Every content file (`readContentFiles` of `vite.shared.ts`, plus the
  * `example.*.json` samples unless `--no-examples`), each with its kind's file schema: core's
@@ -1746,11 +1747,15 @@ function portBackdrop(file, pending, geometry, modules, art, overrides, plan) {
  * - A heightfield segment's `to` that reaches the map's last column (the generator clamps a
  *   segment to the map and ramps it down to the map's edge) ports by that rule, kept in the new
  *   map's last column (off the tile grid the end lies inside the last column, and a `to` there
- *   may be short of it): a segment ending on the end ends on the new one. A `from` at or past the
- *   end ports by the same rule (`to′ − from′ = k · (to − from)`, so the segment still starts
- *   before it ends): it starts in the map's last column or past it, where the generator draws
- *   nothing (a one-column segment has height 0 at both its boundaries — core `boundaryHeights`),
- *   and the new end lies in the new map's last column, so it still draws nothing.
+ *   may be short of it): a segment ending on the end ends on the new one. A segment that starts
+ *   in the map's last column or past it is one the map never shows (the generator clamps it to
+ *   the map, and a one-column segment has height 0 at both its boundaries — core
+ *   `boundaryHeights`), and it stays one: a `from` at or past the end ports by the same rule
+ *   (`to′ − from′ = k · (to − from)`, so the segment still starts before it ends), which starts it
+ *   in the new map's last column or past it (the new end lies in that column); a `from` in the
+ *   last column but short of the end ports ×k, kept in the new map's last column (×k alone would
+ *   start it 5 or 6 columns before that one in v2, the end moving 64 px more than ×k, and draw a
+ *   bump in the last view).
  * - A region (a trigger's or a bonus entrance's) whose right edge `x + w` is at or past the end:
  *   the right edge ports by the rule and `w` takes the difference (an `x` past the end too).
  *
@@ -1834,6 +1839,8 @@ function portMapEnd(data, pending, geometry, modules, overrides) {
     tilemap !== null && isObject(tilemap['generator']) ? tilemap['generator'] : null;
   const segments =
     generator !== null && Array.isArray(generator['segments']) ? generator['segments'] : [];
+  // Where the new map's last tile column starts.
+  const lastColumn = (mapEnd.newCols - 1) * geometry.toTileSize;
   for (const segment of segments) {
     const to = leafOf(segment, 'to');
     const toX = to === undefined ? Number.NaN : Number(to.leaf.value);
@@ -1841,7 +1848,6 @@ function portMapEnd(data, pending, geometry, modules, overrides) {
       // Off the tile grid the end lies inside the last column, and a `to` short of it in that
       // column still reaches it: such a `to` keeps its distance ×k too, but stays in the new last
       // column.
-      const lastColumn = (mapEnd.newCols - 1) * geometry.toTileSize;
       const short = cleanFraction(newEnd - factor * toX);
       set(
         to,
@@ -1854,11 +1860,13 @@ function portMapEnd(data, pending, geometry, modules, overrides) {
             : `map end: ends ${beyond(toX)}`,
       );
     }
-    // A `from` at or past the end (a segment the map never shows: it starts in the map's last
-    // column or past it, and a one-column segment draws nothing) keeps its distance past the end
-    // ×k, as its `to` does — the segment keeps `to′ − from′ = k · (to − from)`, and it starts in the
-    // new map's last column or past it (the new end lies in that column), so it still draws
-    // nothing.
+    // A segment that starts in the map's last column or past it is one the map never shows (the
+    // generator clamps it to the map, and a one-column segment draws nothing), and it stays one.
+    // A `from` at or past the end keeps its distance past the end ×k, as its `to` does — the
+    // segment keeps `to′ − from′ = k · (to − from)`, and it starts in the new map's last column or
+    // past it (the new end lies in that column). A `from` in the last column but short of the end
+    // (its `to` reaches the end, so it is ported above) ports ×k, kept in the new map's last column
+    // — ×k alone would start it columns before that one, the end moving more than ×k.
     const from = leafOf(segment, 'from');
     const fromX = from === undefined ? Number.NaN : Number(from.leaf.value);
     if (from !== undefined && fromX >= end) {
@@ -1867,6 +1875,13 @@ function portMapEnd(data, pending, geometry, modules, overrides) {
         past(fromX),
         (fromX === end ? `map end: starts on ${ends}` : `map end: starts ${beyond(fromX)}`) +
           ' — a segment the map never shows stays one',
+      );
+    } else if (from !== undefined && Math.floor(fromX / geometry.tileSize) >= mapEnd.cols - 1) {
+      set(
+        from,
+        Math.max(scaled(from), lastColumn),
+        `map end: starts ${String(end - fromX)} px short of ${ends} but in the map's last ` +
+          "column — kept in the new map's last column: a segment the map never shows stays one",
       );
     }
   }

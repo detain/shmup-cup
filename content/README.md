@@ -97,12 +97,14 @@ A new numeric field needs a unit, and a new behaviour tunable a row in `BEHAVIOR
   at the last camera position), so its right end is frame-anchored: it ports to `length′` + the
   new playfield's width, and an x at or past it keeps its distance past it ×k (×k alone would
   leave the last 64 px of the last view without terrain). A heightfield segment that reaches the
-  map's last column ends on the new map's end (zone D's 9984 → 15040, not 14976), one that starts
-  at or past the end (the map never shows it) starts as far past the new end ×k, a trigger or
-  bonus region reaching the end still reaches it (its `w` takes the difference), and an RLE row
-  tiled in the map's last column repeats its last cell to the new map's width (its last token is
-  rebuilt by core's row syntax, spaces and all). Each is listed as moved. A segment that would no
-  longer start before it ends, and an RLE row core cannot read, are errors: the port is refused.
+  map's last column ends on the new map's end (zone D's 9984 → 15040, not 14976); one that starts
+  at or past the end starts as far past the new end ×k, and one that starts in the map's last
+  column short of the end stays in the new map's last column (the map never shows either — a
+  one-column segment draws nothing — and still does not); a trigger or bonus region reaching the
+  end still reaches it (its `w` takes the difference), and an RLE row tiled in the map's last
+  column repeats its last cell to the new map's width (its last token is rebuilt by core's row
+  syntax, spaces and all). Each is listed as moved. A segment that would no longer start before it
+  ends, and an RLE row core cannot read, are errors: the port is refused.
 
 Because a world sum moves an event against the camera, the tool also re-sorts each stage's
 `events` and `remix` by the ported `x` (ties keep their order — the loader wants them sorted) and
