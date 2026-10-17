@@ -9,6 +9,7 @@
     "content/**",
     "eslint.config.js",
     "scripts/assets/**",
+    "scripts/frame.mjs",
     "tsconfig.base.json",
     "tsconfig.tooling.json",
     "types/**",
