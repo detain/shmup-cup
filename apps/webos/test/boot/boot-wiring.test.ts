@@ -40,6 +40,11 @@ const fakes = vi.hoisted(() => {
     warmUp() {
       renderer.warmUps++;
     },
+    // R1-05: the atlas residency uploads the boot stage's pages eagerly.
+    uploads: 0,
+    uploadTextureSource() {
+      renderer.uploads++;
+    },
     resize(w: number, h: number) {
       renderer.sizes.push([w, h]);
     },

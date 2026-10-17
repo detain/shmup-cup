@@ -54,6 +54,7 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         setSpriteNames: () => {},
         bindWorld: () => {},
         warmUp: () => {},
+        uploadTextureSource: () => {},
         render: (_frame: RenderFrame) => {},
         resize: () => {},
         destroy: () => {

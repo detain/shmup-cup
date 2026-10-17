@@ -67,6 +67,8 @@ const fakes = vi.hoisted(() => ({
   sizes: [] as Array<[number, number]>,
   /** Boot warm-up frames the renderer was asked for (M3-02d). */
   warmUps: 0,
+  /** Texture sources the renderer was asked to upload, in order (R1-05 — the atlas residency). */
+  uploads: [] as unknown[],
   destroyed: 0,
   /** The fx content handed to the renderer. */
   fxContent: null as RenderPixi.FxContent | null,
@@ -119,6 +121,7 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         warmUp: () => {
           fakes.warmUps++;
         },
+        uploadTextureSource: (source: unknown) => fakes.uploads.push(source),
         render: (frame: RenderFrame) =>
           fakes.frames.push({
             tick: frame.tick,
@@ -236,6 +239,7 @@ beforeEach(() => {
   fakes.frames.length = 0;
   fakes.sizes.length = 0;
   fakes.warmUps = 0;
+  fakes.uploads.length = 0;
   fakes.destroyed = 0;
   fakes.fxContent = null;
   fakes.fxCalls.length = 0;

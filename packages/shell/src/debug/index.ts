@@ -63,7 +63,7 @@
  * {@link DebugToolsFactory}, {@link DebugToolsHost}, {@link DebugToolsOptions},
  * {@link ShmupDebugApi}, {@link DEBUG_KEYS}, {@link DebugKey}, {@link DEBUG_UNLOCK_SEQUENCE},
  * {@link DEBUG_UNLOCK_WINDOW_MS}, {@link DEBUG_GLOBAL}; M2-17: {@link DebugSaveApi}; M3-02f: the
- * `telemetry` module, reached as {@link DebugTools.telemetry}.
+ * `telemetry` module, reached as {@link DebugTools.telemetry}; R1-05: {@link DebugAtlasApi}.
  *
  * @module
  */
@@ -103,6 +103,7 @@ import {
   type RenderTelemetry,
   type RenderTelemetryEnv,
 } from '../telemetry/index.js';
+import type { AtlasResidency } from '../memory/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -235,6 +236,35 @@ export interface DebugToolsHost {
    * @returns The World whose outlines to draw.
    */
   readonly visibleWorld: () => World | null;
+  /**
+   * The atlas pages' residency (plan R1-05 — `__shmupDebug.atlas`), or `null` / absent without
+   * one.
+   */
+  readonly atlas?: AtlasResidency | null;
+}
+
+/**
+ * The atlas residency as `window.__shmupDebug.atlas` shows it (plan R1-05): which pages are on
+ * the GPU, and a way to prepare a stage as a stage change would — for the browser tests and the
+ * TV's remote inspector.
+ */
+export interface DebugAtlasApi {
+  /** Per page: whether it is on the GPU (or will be on its next draw). */
+  readonly resident: readonly boolean[];
+  /** Pages unloaded so far. */
+  readonly unloads: number;
+  /** Pages uploaded so far. */
+  readonly uploads: number;
+  /** How long the last stage change that moved a page took, in ms. */
+  readonly lastPrepareMs: number;
+  /**
+   * Prepares a stage as a stage change would: unloads the pages it does not need and uploads the
+   * ones it does.
+   *
+   * @param stageId - The stage id (`'zone-c'`).
+   * @returns Pages unloaded, or -1 for an id the content lacks (nothing changes then).
+   */
+  prepare(stageId: string): number;
 }
 
 /**
@@ -287,6 +317,8 @@ export interface ShmupDebugApi {
    * status, for the remote inspector (`__shmupDebug.telemetry.checklist.doneCount`).
    */
   readonly telemetry: RenderTelemetry;
+  /** The atlas pages' residency (plan R1-05), or `null` without one. */
+  readonly atlas: DebugAtlasApi | null;
   /**
    * Runs a debug command (`DebugCommand` code), unlocked or not.
    *
@@ -439,6 +471,35 @@ function createSaveApi(save: SaveStore | null, game: Game): DebugSaveApi | null 
     usage: () => {
       const storage = game.platform.storage as PlatformStorage & Partial<QuotaStorage>;
       return typeof storage.usage === 'function' ? storage.usage() : null;
+    },
+  };
+}
+
+/**
+ * The atlas part of the debug API (R1-05).
+ *
+ * @param residency - The residency, or `null`.
+ * @param game - The game (its content maps stage ids to indices).
+ * @returns The API, or `null` without a residency.
+ */
+function createAtlasApi(residency: AtlasResidency | null, game: Game): DebugAtlasApi | null {
+  if (residency === null) return null;
+  return {
+    get resident() {
+      return residency.resident;
+    },
+    get unloads() {
+      return residency.unloads;
+    },
+    get uploads() {
+      return residency.uploads;
+    },
+    get lastPrepareMs() {
+      return residency.lastPrepareMs;
+    },
+    prepare(stageId) {
+      const index = game.content.stageIndex.get(stageId);
+      return index === undefined ? -1 : residency.prepare(index);
     },
   };
 }
@@ -690,6 +751,7 @@ export function createDebugTools(
     renderer: host.renderer,
     save: createSaveApi(host.save ?? null, game),
     telemetry,
+    atlas: createAtlasApi(host.atlas ?? null, game),
     run(command) {
       return controls.run(command);
     },

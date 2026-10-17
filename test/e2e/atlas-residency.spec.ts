@@ -14,10 +14,23 @@
  * - the Tizen build boots from `file://` with the manifest outside `app.js` — the XHR path the TVs
  *   take (desktop Chromium with `--allow-file-access-from-files`, as the Tizen runtime serves the
  *   widget's own files; the real set is the owner's check, W3-7).
+ *
+ * **The residency.** The shipped atlas is split into a `common` page and one page per zone
+ * (`pages[].group` in `main.json`); a zone keeps `common` plus its own pages on the GPU, uploaded
+ * eagerly at the stage change. The canvas says which (`data-shmup-atlas-pages`) and how long the
+ * last atlas load took (`data-shmup-atlas-load-ms`). Checked here:
+ *
+ * - `?stage=zone-b` boots with exactly the `common` and `zone-b` pages resident — fewer than all;
+ * - a stage change (`__shmupDebug.atlas.prepare('zone-c')`) swaps zone B's page for zone C's, in
+ *   real WebGL, and the game keeps drawing without an error;
+ * - the attract demo, which never emits `PrepareStage`, still brings its zone's pages: the shell's
+ *   World-change trigger (W3-9), stepped in exact ticks under frame advance;
+ * - the Tizen build from `file://` marks its resident pages (`common` + zone A, its start zone).
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { freezeSim } from './frame-advance.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -31,6 +44,78 @@ const TIZEN_APP = fileURLToPath(new URL('../../apps/tizen/dist/app.js', import.m
 const TIZEN_MANIFEST = fileURLToPath(
   new URL('../../apps/tizen/dist/assets/atlas/main.json', import.meta.url),
 );
+
+/** The web build's shipped manifest (what `vite preview` serves). */
+const WEB_MANIFEST = fileURLToPath(
+  new URL('../../apps/web/dist/assets/atlas/main.json', import.meta.url),
+);
+
+/** Ticks the title waits without input before the attract demo (core `TITLE_ATTRACT_TICKS`). */
+const TITLE_ATTRACT_TICKS = 720;
+
+/** What the residency tests read from `window.__shmupDebug`. */
+interface DebugWindow {
+  __shmupDebug: {
+    tick: number;
+    game: {
+      requestStep(count: number): void;
+      scenes: {
+        title: { idle: number };
+        demo: { demo: { replay: { header: { stageId: string | null } } } | null };
+      };
+    };
+    atlas: {
+      resident: readonly boolean[];
+      unloads: number;
+      uploads: number;
+      prepare(stageId: string): number;
+    } | null;
+  };
+}
+
+/**
+ * The pages of the `common` group and of one zone in a shipped manifest — what the residency
+ * must keep for that zone (the acceptance of R1-05).
+ *
+ * @param file - The manifest file.
+ * @param zone - The zone's group (`zone-b`).
+ * @returns The page indices, ascending, and the page count.
+ */
+function zonePages(file: string, zone: string): { pages: number[]; total: number } {
+  const manifest = JSON.parse(readFileSync(file, 'utf8')) as {
+    pages: ReadonlyArray<{ group?: string }>;
+  };
+  const pages = manifest.pages.flatMap((page, p) =>
+    page.group === 'common' || page.group === zone ? [p] : [],
+  );
+  return { pages, total: manifest.pages.length };
+}
+
+/**
+ * Runs exact game ticks under frame advance, then waits two frames.
+ *
+ * @param page - The page (frozen with `freezeSim`).
+ * @param ticks - Ticks to run.
+ */
+async function runTicks(page: Page, ticks: number): Promise<void> {
+  const target = await page.evaluate((count) => {
+    const api = (window as unknown as DebugWindow).__shmupDebug;
+    const goal = api.tick + count;
+    api.game.requestStep(count);
+    return goal;
+  }, ticks);
+  await page.waitForFunction(
+    (goal) => (window as unknown as DebugWindow).__shmupDebug.tick >= goal,
+    target,
+    { timeout: 30_000 },
+  );
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }),
+  );
+}
 
 /** Every URL a page requested, and its console output. */
 interface PageLog {
@@ -126,5 +211,104 @@ test.describe('atlas manifest delivery (R1-05)', () => {
       log.requests.indexOf(requested(log, '/assets/atlas/main.png')[0]),
     );
     expect(log.console.filter((line) => line.startsWith('error'))).toEqual([]);
+  });
+});
+
+test.describe('atlas residency (R1-05)', () => {
+  test('?stage=zone-b keeps common + zone B on the GPU; a stage change swaps in zone C', async ({
+    page,
+  }) => {
+    const log = watch(page);
+    await page.goto('./?stage=zone-b');
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    const zoneB = zonePages(WEB_MANIFEST, 'zone-b');
+    expect(zoneB.pages.length).toBeGreaterThan(0);
+    expect(zoneB.pages.length).toBeLessThan(zoneB.total);
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneB.pages.join(','));
+    expect(Number(await canvas.getAttribute('data-shmup-atlas-load-ms'))).toBeGreaterThanOrEqual(0);
+    // A stage change, in real WebGL: zone B's own pages leave, zone C's go up.
+    const result = await page.evaluate(() => {
+      const atlas = (window as unknown as DebugWindow).__shmupDebug.atlas;
+      if (atlas === null) return null;
+      const unloaded = atlas.prepare('zone-c');
+      return { unloaded, unloads: atlas.unloads, resident: [...atlas.resident] };
+    });
+    const zoneC = zonePages(WEB_MANIFEST, 'zone-c');
+    expect(result).not.toBeNull();
+    expect(result?.unloaded).toBeGreaterThan(0);
+    expect(result?.unloads).toBeGreaterThan(0);
+    expect(result?.resident.flatMap((on, p) => (on ? [p] : []))).toEqual(zoneC.pages);
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneC.pages.join(','));
+    // The game keeps drawing.
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          let frames = 0;
+          const next = (): void => {
+            frames++;
+            if (frames >= 10) resolve();
+            else requestAnimationFrame(next);
+          };
+          requestAnimationFrame(next);
+        }),
+    );
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    expect(
+      log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
+    ).toEqual([]);
+  });
+
+  test('the attract demo brings its zone’s pages, though it never emits PrepareStage (W3-9)', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const log = watch(page);
+    // Boot on zone C, so the first demo (another zone) has to swap pages.
+    await page.goto('./?stage=zone-c');
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await expect(canvas).toHaveAttribute(
+      'data-shmup-atlas-pages',
+      zonePages(WEB_MANIFEST, 'zone-c').pages.join(','),
+    );
+    await freezeSim(page);
+    const idle = await page.evaluate(
+      () => (window as unknown as DebugWindow).__shmupDebug.game.scenes.title.idle,
+    );
+    await runTicks(page, TITLE_ATTRACT_TICKS - idle);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'demo');
+    await runTicks(page, 2);
+    const stage = await page.evaluate(
+      () =>
+        (window as unknown as DebugWindow).__shmupDebug.game.scenes.demo.demo?.replay.header
+          .stageId ?? null,
+    );
+    expect(stage).not.toBeNull();
+    expect(stage).not.toBe('zone-c');
+    await expect(canvas).toHaveAttribute(
+      'data-shmup-atlas-pages',
+      zonePages(WEB_MANIFEST, stage ?? '').pages.join(','),
+    );
+    const unloads = await page.evaluate(
+      () => (window as unknown as DebugWindow).__shmupDebug.atlas?.unloads ?? 0,
+    );
+    expect(unloads).toBeGreaterThan(0);
+    expect(
+      log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
+    ).toEqual([]);
+  });
+
+  test('the Tizen build from file:// marks its resident pages: common + zone A', async ({
+    page,
+  }) => {
+    await page.goto(TIZEN_INDEX);
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    const zoneA = zonePages(TIZEN_MANIFEST, 'zone-a');
+    expect(zoneA.pages.length).toBeLessThan(zoneA.total);
+    await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneA.pages.join(','));
+    expect(Number(await canvas.getAttribute('data-shmup-atlas-load-ms'))).toBeGreaterThanOrEqual(0);
   });
 });

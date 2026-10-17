@@ -85,7 +85,7 @@
  * `scaleMode`, `showHitbox`, `interpolation`, `createLayerEffectFilter`,
  * M2-08; `aspect`, `createCrtFilter` and `createMode7Shader`, M3-02; `screenPass`,
  * `createCrtBlit` and {@link PixiRenderer.warmUp}, M3-02d;
- * {@link PixiRendererOptions.renderGroups}, M3-02e).
+ * {@link PixiRendererOptions.renderGroups}, M3-02e; {@link PixiRenderer.uploadTextureSource}, R1-05).
  *
  * **The extras of M3-02.** The renderer owns three presentation-only additions, each idle until
  * asked for: the **Mode-7 floor** (`effects` {@link createMode7Floor} — a full-frame mesh at the
@@ -141,6 +141,7 @@ import {
   Texture,
   WebGLRenderer,
   type RenderOptions,
+  type TextureSource,
 } from 'pixi.js';
 import type { Atlas } from '../atlas/index.js';
 import {
@@ -460,6 +461,21 @@ export interface PixiRenderer extends IRenderer {
    * again is allowed (it is idempotent in effect, not a no-op) but pointless.
    */
   warmUp(): void;
+  /**
+   * Uploads a texture source to the GPU **now** (plan R1-05): the atlas residency's eager upload at
+   * a zone change (`@shmup/shell` `createAtlasResidency`), so an atlas page the next zone needs is
+   * on the GPU before the zone starts instead of uploading on its first draw mid-play.
+   *
+   * @remarks
+   * Cold path — boot, a stage change, a new World; never per frame. Pixi's
+   * `renderer.texture.initSource`: it binds the source (texture unit 0), which uploads it when it
+   * has no GPU copy — after `TextureSource.unload()`, or never drawn — and costs only the bind when
+   * it has one. The source keeps Pixi's defaults otherwise (`autoGarbageCollect` stays off, so the
+   * GPU copy stays until the residency unloads it).
+   *
+   * @param source - The texture source (an atlas page — `Atlas.pages[i]`).
+   */
+  uploadTextureSource(source: TextureSource): void;
   /** The bound world's Mode-7 floor (plan M3-02; idle without one). */
   readonly mode7: Mode7Floor;
   /** Whether the ships' hitbox markers are drawn (plan M2-08). */
@@ -1049,6 +1065,15 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     drawCounter.last = calls;
   };
 
+  /**
+   * Uploads a texture source now (see {@link PixiRenderer.uploadTextureSource}). A cold path.
+   *
+   * @param source - The source.
+   */
+  const uploadTextureSource = (source: TextureSource): void => {
+    renderer.texture.initSource(source);
+  };
+
   let boundWorld: WorldView | null = null;
   let bindings: SpriteLayerBinding[] = [];
   let terrain: TerrainBinding | null = null;
@@ -1209,6 +1234,7 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     screenPass,
     mode7,
     warmUp,
+    uploadTextureSource,
     get showHitbox() {
       return showHitbox;
     },

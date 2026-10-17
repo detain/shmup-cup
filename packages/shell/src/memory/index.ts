@@ -39,14 +39,19 @@
  *   kit's and the scene view's sprites (`ENGINE_SPRITES`, `UI_SPRITES`, {@link SCENE_VIEW_SPRITES})
  *   are global even when a zone names one (R1-05): the renderer draws them in every zone, and the
  *   packer keeps them in the `common` group. Between zones — on the
- *   scene flow's `PrepareStage` event, while the next stage loads ({@link connectAtlasResidency}) —
- *   the pages the next zone does not need are unloaded from the GPU (Pixi `TextureSource.unload`);
- *   a needed page that was unloaded is uploaded again when it is first drawn, during the loading /
- *   fly-in. A stage outside the campaign (the dev ranges, the weapon select's preview) needs every
- *   page. Today's placeholder atlas is **one** 1024² page (4 MiB) that every zone needs, so nothing
- *   is ever unloaded; the residency starts to matter once real art adds pages (≤ 2048² each).
+ *   scene flow's `PrepareStage` event, while the next stage loads ({@link connectAtlasResidency}),
+ *   and — since R1-05 — whenever the shell shows a new World ({@link prepareShownWorld}: the attract
+ *   demo never emits `PrepareStage`) — the pages the next zone does not need are unloaded from the
+ *   GPU (Pixi `TextureSource.unload`) and, with the residency's `upload` option, every needed page
+ *   without a GPU copy is uploaded there and then (the renderer's `uploadTextureSource`), so none
+ *   uploads on its first draw mid-play. A stage outside the campaign (the dev ranges, the weapon
+ *   select's preview) needs every page. Since R1-05 the shipped atlas is split into a `common`
+ *   page and one page per zone (`assets/source/atlas-groups.json`), so a zone keeps
+ *   `common` plus its own page on the GPU; the decoded images of every page stay in memory
+ *   (policy "all", W3-2 — dropping them needs a re-fetch after a WebGL context loss).
  *
- * Nothing here runs per frame: the walk runs once at boot, `prepare` once per stage change.
+ * Nothing here runs per frame: the walk runs once at boot, `prepare` once per stage change or new
+ * World.
  *
  * **Implements.**
  * - shmup_tech.md §2.5 — memory budget < 100 MB (120 MB dev cap); §2.2 — atlases ≤ 2048²; §2.4 —
@@ -60,8 +65,11 @@
  * {@link stageSpriteSets}, {@link StageSpriteSets}, {@link atlasPageNeeds}, {@link AtlasPageNeeds},
  * {@link potBytes}, {@link FILTER_TARGETS}, {@link fixedTargetBytes}, {@link textureBudgetFor},
  * {@link DEFAULT_DISPLAY}, {@link ImagePolicy},
- * {@link stagePages}, {@link createAtlasResidency}, {@link AtlasResidency}, {@link AtlasPageLike},
- * {@link connectAtlasResidency}, {@link MEMORY_BUDGET_BYTES}, {@link TEXTURE_BUDGET_BYTES},
+ * {@link stagePages}, {@link createAtlasResidency}, {@link AtlasResidency},
+ * {@link AtlasResidencyOptions}, {@link AtlasPageLike}, {@link connectAtlasResidency},
+ * {@link prepareShownWorld}, {@link worldOfView}, {@link stageIndexOfWorld},
+ * {@link ResidencyGameLike}, {@link ResidencyWorldLike}, {@link MEMORY_BUDGET_BYTES},
+ * {@link TEXTURE_BUDGET_BYTES},
  * {@link AUDIO_BUDGET_BYTES}, {@link HEAP_BASELINE_BYTES}, {@link FILE_TRACK_FALLBACK_SECONDS},
  * {@link MIB}.
  *
@@ -716,65 +724,271 @@ export interface AtlasPageLike {
   unload(): void;
 }
 
-/** Unloads the atlas pages a zone does not need (see the module docs). */
+/** Options of {@link createAtlasResidency} (plan R1-05). */
+export interface AtlasResidencyOptions {
+  /**
+   * Uploads page `page` to the GPU now — the shell passes the renderer's `uploadTextureSource`.
+   * With it, {@link AtlasResidency.prepare} uploads every needed page that has no GPU copy, at the
+   * stage change, so no page uploads on its first draw mid-play. Omitted: a needed page uploads on
+   * its first draw (the M2-17 behaviour). A throwing upload is skipped (Pixi uploads the page on
+   * its first draw instead) and retried by the next prepare.
+   *
+   * @param page - The page index.
+   */
+  readonly upload?: (page: number) => void;
+  /**
+   * Called after the first prepare and after every prepare that unloaded or uploaded a page (the
+   * shell writes `data-shmup-atlas-pages` / `data-shmup-atlas-load-ms` from it).
+   *
+   * @param resident - The pages now resident, ascending (a new array).
+   * @param unloads - Pages unloaded so far.
+   * @param ms - How long the prepare took (0 without {@link AtlasResidencyOptions.now}).
+   */
+  readonly onChange?: (resident: readonly number[], unloads: number, ms: number) => void;
+  /**
+   * The clock a prepare is timed with (the shell passes `performance.now`). Omitted: 0 ms.
+   *
+   * @returns Milliseconds.
+   */
+  readonly now?: () => number;
+}
+
+/** Keeps on the GPU the atlas pages the stage about to play needs (see the module docs). */
 export interface AtlasResidency {
   /** Per page: whether it is (or will be, on its next draw) on the GPU. */
   readonly resident: readonly boolean[];
   /** Pages unloaded so far. */
   readonly unloads: number;
+  /** Pages uploaded by prepares so far (always 0 without {@link AtlasResidencyOptions.upload}). */
+  readonly uploads: number;
+  /** How long the last prepare that changed something took, in ms (0 before any, or untimed). */
+  readonly lastPrepareMs: number;
   /**
-   * Prepares the next stage: unloads every resident page it does not need and marks the needed
-   * ones resident (an unloaded one uploads on its next draw).
+   * Prepares the next stage: unloads every resident page it does not need, marks the needed ones
+   * resident and — with {@link AtlasResidencyOptions.upload} — uploads every needed page that has
+   * no GPU copy (unloads first, so the old zone's memory is free before the new one's is taken).
+   * Without `upload`, an unloaded page uploads on its next draw. Idempotent: preparing the stage
+   * already prepared (or one needing the same pages) unloads and uploads nothing.
    *
-   * @param stageIndex - The stage about to play (`content.stages` index), -1 = none.
+   * @remarks
+   * Cold path — a `PrepareStage` event, a new World, boot; it may allocate.
+   *
+   * @param stageIndex - The stage about to play (`content.stages` index), -1 = none (every page).
    * @returns Pages unloaded by this call.
    */
   prepare(stageIndex: number): number;
 }
 
 /**
- * Creates the residency over the renderer's atlas pages (every page starts resident).
+ * Creates the residency over the renderer's atlas pages (every page starts resident; none is known
+ * to be on the GPU, so the first prepare with `upload` uploads — or, for a page Pixi already
+ * uploaded, just binds — every needed page).
  *
  * @param pages - The atlas's texture sources (`Atlas.pages`).
  * @param needs - {@link atlasPageNeeds} of the same atlas.
+ * @param options - Eager upload, change callback and clock (R1-05; all optional).
  * @returns The residency.
  * @throws {RangeError} When the page counts differ.
  *
  * @example
  * ```ts
- * const residency = createAtlasResidency(atlas.pages, atlasPageNeeds(manifest, names, sets));
+ * const residency = createAtlasResidency(atlas.pages, atlasPageNeeds(manifest, names, sets), {
+ *   upload: (p) => renderer.uploadTextureSource(atlas.pages[p]),
+ * });
  * residency.prepare(content.stageIndex.get('zone-b') ?? -1);
  * ```
  */
 export function createAtlasResidency(
   pages: readonly AtlasPageLike[],
   needs: AtlasPageNeeds,
+  options: AtlasResidencyOptions = {},
 ): AtlasResidency {
   if (pages.length !== needs.global.length) {
     throw new RangeError(`residency: ${pages.length} pages but needs for ${needs.global.length}`);
   }
+  const { upload, onChange, now } = options;
   const resident = pages.map(() => true);
-  const state = { unloads: 0 };
+  /** Per page: uploaded by a prepare and not unloaded since. */
+  const onGpu = pages.map(() => false);
+  const state = { unloads: 0, uploads: 0, lastPrepareMs: 0, prepared: false };
   return {
     resident,
     get unloads() {
       return state.unloads;
     },
+    get uploads() {
+      return state.uploads;
+    },
+    get lastPrepareMs() {
+      return state.lastPrepareMs;
+    },
     prepare(stageIndex) {
+      const startMs = now === undefined ? 0 : now();
       const needed = stagePages(needs, stageIndex);
-      let count = 0;
+      let unloaded = 0;
       for (let p = 0; p < pages.length; p++) {
         const need = needed.indexOf(p) >= 0;
         if (!need && resident[p]) {
           pages[p].unload();
-          count++;
+          onGpu[p] = false;
+          unloaded++;
         }
         resident[p] = need;
       }
-      state.unloads += count;
-      return count;
+      let uploaded = 0;
+      if (upload !== undefined) {
+        for (const p of needed) {
+          if (onGpu[p]) continue;
+          try {
+            upload(p);
+          } catch (_error) {
+            // Pixi uploads the page on its first draw instead; the next prepare tries again.
+            continue;
+          }
+          onGpu[p] = true;
+          uploaded++;
+        }
+      }
+      state.unloads += unloaded;
+      state.uploads += uploaded;
+      if (unloaded > 0 || uploaded > 0 || !state.prepared) {
+        state.prepared = true;
+        state.lastPrepareMs = (now === undefined ? 0 : now()) - startMs;
+        onChange?.(needed, state.unloads, state.lastPrepareMs);
+      }
+      return unloaded;
     },
   };
+}
+
+/**
+ * A World as the shell's residency trigger reads it: its view (to find it behind a frame) and its
+ * stage's id (`World` satisfies it).
+ */
+export interface ResidencyWorldLike {
+  /** The World's view (`World.view`). */
+  readonly view: unknown;
+  /** Its stage runner, `null` in open space. */
+  readonly stage: {
+    /** The stage spec. */
+    readonly stage: {
+      /** The stage id. */
+      readonly id: string;
+    };
+  } | null;
+}
+
+/**
+ * What the residency trigger reads of the game (`Game` satisfies it): its World and, in the scene
+ * flow, the scene stack.
+ */
+export interface ResidencyGameLike {
+  /** The game scene's World (`Game.world`). */
+  readonly world: ResidencyWorldLike;
+  /** The scene flow, `null` for bare gameplay. */
+  readonly scenes: {
+    /** The scene stack. */
+    readonly stack: {
+      /** Scenes on the stack. */
+      readonly depth: number;
+      /**
+       * The scene at a depth.
+       *
+       * @param index - 0 = the bottom.
+       * @returns The scene, or `null`.
+       */
+      sceneAt(index: number): unknown;
+    };
+  } | null;
+}
+
+/**
+ * The World a frame shows when it plays a stage (plan R1-05, W3-9): the game's own, or one a scene
+ * of the flow plays itself under its `world` field — the attract demo's, a replay's — found on the
+ * scene stack by its view.
+ *
+ * @remarks
+ * Cold: the shell calls it when the shown World changes, never per frame. Scenes are read by that
+ * field name (duck typing — no core change, W3-9). Anything else is `null` — notably the weapon
+ * select's live preview (its `preview` World flies the dev `weapon-range`, whose sprites are all in
+ * the `common` group; placing it would put every page on the GPU for a menu).
+ *
+ * @param game - The game.
+ * @param view - The frame's World view (`RenderFrame.world`).
+ * @returns The World, or `null`.
+ *
+ * @example
+ * ```ts
+ * const world = worldOfView(game, game.renderFrame().world); // → the demo's World during the demo
+ * ```
+ */
+export function worldOfView(game: ResidencyGameLike, view: unknown): ResidencyWorldLike | null {
+  if (view === null || view === undefined) return null;
+  if (game.world.view === view) return game.world;
+  const stack = game.scenes?.stack;
+  if (stack === undefined) return null;
+  for (let i = stack.depth - 1; i >= 0; i--) {
+    const scene = stack.sceneAt(i);
+    if (scene === null || typeof scene !== 'object') continue;
+    const candidate = (scene as { readonly world?: unknown }).world;
+    if (
+      candidate !== null &&
+      typeof candidate === 'object' &&
+      (candidate as Partial<ResidencyWorldLike>).view === view
+    ) {
+      return candidate as ResidencyWorldLike;
+    }
+  }
+  return null;
+}
+
+/**
+ * The `content.stages` index of a World's stage.
+ *
+ * @param content - The content.
+ * @param world - The World, or `null`.
+ * @returns The index, or -1 (no World, open space or a stage the content lacks — every page).
+ *
+ * @example
+ * ```ts
+ * residency.prepare(stageIndexOfWorld(content, game.world));
+ * ```
+ */
+export function stageIndexOfWorld(content: ContentDb, world: ResidencyWorldLike | null): number {
+  if (world === null || world.stage === null) return -1;
+  return content.stageIndex.get(world.stage.stage.id) ?? -1;
+}
+
+/**
+ * Prepares the residency for the World a frame shows (plan R1-05, W3-9): the shell's trigger for a
+ * **new World** — the attract demo (which never emits `PrepareStage`), a replay, a game start the
+ * flow did not announce. A World {@link worldOfView} cannot place (the weapon select's preview)
+ * leaves the residency as it is: its sprites are `common`, and a page it might draw that is off
+ * the GPU would upload on its first draw, as before R1-05.
+ *
+ * @remarks
+ * Cold: once per World change (`SceneView.worldChanges`), never per frame. Preparing the stage a
+ * `PrepareStage` event already prepared is a no-op.
+ *
+ * @param residency - The residency.
+ * @param content - The content.
+ * @param game - The game.
+ * @param view - The frame's World view.
+ * @returns Pages unloaded.
+ *
+ * @example
+ * ```ts
+ * if (flowView.worldChanges !== shown) prepareShownWorld(residency, content.db, game, frame.world);
+ * ```
+ */
+export function prepareShownWorld(
+  residency: AtlasResidency,
+  content: ContentDb,
+  game: ResidencyGameLike,
+  view: unknown,
+): number {
+  const world = worldOfView(game, view);
+  return world === null ? 0 : residency.prepare(stageIndexOfWorld(content, world));
 }
 
 /**

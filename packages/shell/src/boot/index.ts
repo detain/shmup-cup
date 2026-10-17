@@ -92,9 +92,16 @@
  *
  * **Memory (M2-17).** Once the atlas and the content are ready the shell works out which atlas
  * pages each campaign zone needs (`memory` module) and, in the scene flow, unloads from the GPU the
- * pages the next zone does not need on its `PrepareStage` event ({@link Shell.atlasResidency}; with
- * today's single placeholder page nothing is unloaded). The debug tools get the save store (the
- * save export / import of `window.__shmupDebug.save`).
+ * pages the next zone does not need on its `PrepareStage` event ({@link Shell.atlasResidency}).
+ * Since R1-05 the atlas is split into a `common` page and one page per zone, and the residency also
+ * **uploads** the needed pages there and then (`renderer.uploadTextureSource`) — at boot for the
+ * boot stage, behind the loading screen before the warm-up frame, then at every `PrepareStage` and
+ * whenever the scene flow shows a new World (`prepareShownWorld`: the attract demo, a replay — W3-9)
+ * —, so no page uploads on its first draw mid-play. The canvas carries the resident pages
+ * ({@link ATLAS_PAGES_ATTRIBUTE}) and the last atlas load time ({@link ATLAS_LOAD_MS_ATTRIBUTE}: the
+ * boot's manifest + pages + upload, then each stage change's unload + upload). The debug tools get
+ * the save store (the save export / import of `window.__shmupDebug.save`) and the residency
+ * (`__shmupDebug.atlas`).
  *
  * **Replays and rumble (M3-01).** Right after the save the shell creates and loads the replay
  * library (`core/replay` `createReplayLibrary` over `platform.storage` — keys `replay.last`,
@@ -135,6 +142,7 @@
  * {@link sceneFromSearch}, {@link ShellBootError}, {@link BootTiming}, {@link AtlasTiming},
  * {@link AtlasPageTiming}, {@link ShellInlineAssets}, {@link ShellManifestAssets},
  * {@link BOOT_STATE_ATTRIBUTE}, {@link SCENE_ATTRIBUTE}, {@link BOOT_MS_ATTRIBUTE},
+ * {@link ATLAS_PAGES_ATTRIBUTE}, {@link ATLAS_LOAD_MS_ATTRIBUTE},
  * {@link DEFAULT_STAGE_ID}, {@link defaultStageId}; M3-02c: {@link webGLVersionFromSearch} (the
  * `?gl=` dev switch). Debug tools: the `debug` module.
  *
@@ -240,6 +248,8 @@ import {
   atlasPageNeeds,
   connectAtlasResidency,
   createAtlasResidency,
+  prepareShownWorld,
+  stageIndexOfWorld,
   stageSpriteSets,
   type AtlasResidency,
 } from '../memory/index.js';
@@ -277,6 +287,21 @@ export const SCENE_ATTRIBUTE = 'data-shmup-scene';
  */
 export const BOOT_MS_ATTRIBUTE = 'data-shmup-boot-ms';
 
+/**
+ * Attribute on the game canvas listing the atlas pages resident on the GPU, as ascending page
+ * indices joined by commas (`"0,2"`) — plan R1-05, for the browser tests and the TV's remote
+ * inspector. Written at boot and after every stage change that unloaded or uploaded a page.
+ */
+export const ATLAS_PAGES_ATTRIBUTE = 'data-shmup-atlas-pages';
+
+/**
+ * Attribute on the game canvas holding the last atlas load time in whole milliseconds (plan R1-05,
+ * owner decision W3-6 — the M7's zone-load figure): after boot, the manifest's fetch plus the pages'
+ * load and decode plus the boot stage's uploads ({@link AtlasTiming.totalMs}); after a stage change
+ * that unloaded or uploaded a page, that change's time. Measured with `performance.now()`.
+ */
+export const ATLAS_LOAD_MS_ATTRIBUTE = 'data-shmup-atlas-load-ms';
+
 /** How long boot took (see {@link Shell.bootTiming}). All values in milliseconds of `now()`. */
 export interface BootTiming {
   /** Clock reading when `bootShell` was called (with `performance.now()`: ms since page start). */
@@ -295,6 +320,11 @@ export interface AtlasPageTiming {
   readonly loadMs: number;
   /** `HTMLImageElement.decode()` after `onload`, in ms (0 where the engine has none). */
   readonly decodeMs: number;
+  /**
+   * The GPU upload at boot (`renderer.uploadTextureSource`), in ms — 0 for a page the boot stage
+   * does not need (it uploads at the stage change that needs it).
+   */
+  readonly uploadMs: number;
 }
 
 /**
@@ -310,8 +340,15 @@ export interface AtlasTiming {
   readonly manifestMs: number;
   /** Bytes of the fetched manifest (0 when inlined). */
   readonly manifestBytes: number;
+  /** From the first page request until the last page was decoded, in ms (they load in parallel). */
+  readonly pagesMs: number;
   /** Every page, in page order. */
   readonly pages: readonly AtlasPageTiming[];
+  /**
+   * `manifestMs + pagesMs +` every boot upload: the atlas's share of the boot, in ms (the canvas's
+   * {@link ATLAS_LOAD_MS_ATTRIBUTE} after boot).
+   */
+  readonly totalMs: number;
 }
 
 /**
@@ -1070,6 +1107,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   }
   let images: Array<LoadableImage & AtlasPageImage>;
   let pageTimings: readonly ImageTiming[];
+  const pagesStart = atlasClock === undefined ? 0 : atlasClock();
   try {
     const loaded = await loadImagesTimed(
       pageUrls,
@@ -1085,25 +1123,12 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
     const url = error instanceof AssetLoadError ? error.url : '?';
     throw fail('ATLAS PAGE FAILED TO LOAD', [`${url}: ${describe(error)}`], [], error);
   }
+  const pagesMs = (atlasClock === undefined ? 0 : atlasClock()) - pagesStart;
   try {
     atlas = createAtlas(manifest, images);
   } catch (error) {
     throw fail('ATLAS DOES NOT MATCH ITS MANIFEST', [describe(error)], [], error);
   }
-  const atlasTiming: AtlasTiming = Object.freeze({
-    manifest: isInlineAssets(assets) ? 'inline' : 'fetched',
-    manifestMs,
-    manifestBytes,
-    pages: Object.freeze(
-      manifest.pages.map((page, p) =>
-        Object.freeze({
-          file: page.file,
-          loadMs: pageTimings[p]?.loadMs ?? 0,
-          decodeMs: pageTimings[p]?.decodeMs ?? 0,
-        }),
-      ),
-    ),
-  });
 
   // 4. Renderer, platform, game.
   try {
@@ -1258,17 +1283,57 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
   } else {
     readyRenderer.setSpriteNames(content.db.sprites.names);
   }
+  // Atlas-page residency (M2-17): which pages each campaign zone needs (load time). Since R1-05 it
+  // uploads the needed pages eagerly (timed) and marks the canvas with what is resident.
+  const uploadMs: number[] = manifest.pages.map(() => 0);
+  const atlasResidency = createAtlasResidency(
+    readyAtlas.pages,
+    atlasPageNeeds(manifest, content.db.sprites.names, stageSpriteSets(content.db)),
+    {
+      upload: (p) => {
+        const uploadStart = atlasClock === undefined ? 0 : atlasClock();
+        readyRenderer.uploadTextureSource(readyAtlas.pages[p]);
+        uploadMs[p] += (atlasClock === undefined ? 0 : atlasClock()) - uploadStart;
+      },
+      onChange: (resident, _unloads, ms) => {
+        markCanvas(canvas, ATLAS_PAGES_ATTRIBUTE, resident.join(','));
+        markCanvas(canvas, ATLAS_LOAD_MS_ATTRIBUTE, String(Math.round(ms)));
+      },
+      now: atlasClock,
+    },
+  );
+  // The boot stage's pages go up now, behind the loading screen and before the warm-up frame draws
+  // them (the scene flow and free flight play `game.world`'s stage; the other dev scenes draw from
+  // any page, so they keep every page).
+  atlasResidency.prepare(
+    flowMode || flight !== null ? stageIndexOfWorld(content.db, game.world) : -1,
+  );
+  let bootUploadMs = 0;
+  for (let p = 0; p < uploadMs.length; p++) bootUploadMs += uploadMs[p];
+  const atlasTiming: AtlasTiming = Object.freeze({
+    manifest: isInlineAssets(assets) ? 'inline' : 'fetched',
+    manifestMs,
+    manifestBytes,
+    pagesMs,
+    pages: Object.freeze(
+      manifest.pages.map((page, p) =>
+        Object.freeze({
+          file: page.file,
+          loadMs: pageTimings[p]?.loadMs ?? 0,
+          decodeMs: pageTimings[p]?.decodeMs ?? 0,
+          uploadMs: uploadMs[p],
+        }),
+      ),
+    ),
+    totalMs: manifestMs + pagesMs + bootUploadMs,
+  });
+  markCanvas(canvas, ATLAS_LOAD_MS_ATTRIBUTE, String(Math.round(atlasTiming.totalMs)));
   // The boot warm-up frame (plan M3-02d, the render review's F4 / F5): with the world bound and
   // the loading screen still up, the renderer draws one throwaway frame off-screen with every GL
   // program and every pooled sprite in it, so no shader links and no batch buffer grows once the
   // game is running. Never presented; the effect state and the tick are untouched.
   readyRenderer.warmUp();
   const calibration = createCalibrationFrame(game.renderFrame());
-  // Atlas-page residency (M2-17): which pages each campaign zone needs (load time).
-  const atlasResidency = createAtlasResidency(
-    readyAtlas.pages,
-    atlasPageNeeds(manifest, content.db.sprites.names, stageSpriteSets(content.db)),
-  );
   const events = createEventDispatcher();
   // The game's events feed the particles, shake, flash, dim and popups (plan M1-14) and the
   // audio engine (M1-15) — in the scene flow and free flight: the other scenes do not show the
@@ -1434,6 +1499,9 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
         shownWorlds = flowView.worldChanges;
         readyRenderer.particles?.clear();
         readyRenderer.popups?.clear();
+        // Its stage's atlas pages, uploaded before its first frame (R1-05, W3-9 — the attract demo
+        // never emits PrepareStage). Cold: once per World; a stage already prepared is a no-op.
+        prepareShownWorld(atlasResidency, content.db, game, frame.world);
       }
       markScene();
       worldShown = frame.world !== null;
@@ -1464,6 +1532,7 @@ export async function bootShell(options: ShellOptions): Promise<Shell> {
       save,
       sceneId: () => (flow === null ? scene : (flow.stack.top?.id ?? '')),
       visibleWorld: () => (worldShown ? game.world : null),
+      atlas: atlasResidency,
     });
   }
 

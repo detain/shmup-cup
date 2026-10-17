@@ -64,6 +64,7 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         warmUp: () => {
           fakes.warmUps++;
         },
+        uploadTextureSource: () => {},
         render: (frame: RenderFrame) => fakes.renders.push({ tick: frame.tick }),
         resize: () => {},
         destroy: () => {
