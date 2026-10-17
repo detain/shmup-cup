@@ -473,7 +473,7 @@ describe('core/data units: tooling only', () => {
     expect(core.walkNumbers).toBe(walkNumbers);
   });
 
-  it('is imported at runtime by nothing but the package entry (so app bundles drop it)', () => {
+  it('data/units and behaviors/units are imported at runtime by the package entry only', () => {
     const src = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'src');
     /**
      * Every `.ts` file below a directory.
@@ -496,9 +496,13 @@ describe('core/data units: tooling only', () => {
         const target = match[3] ?? '';
         if (!/(^|\/)units\.js$/.test(target) || match[2] !== undefined) continue;
         const resolved = relative(src, join(dirname(file), target));
-        if (resolved === join('data', 'units.js')) importers.push(relative(src, file));
+        importers.push(resolved + ' <- ' + relative(src, file));
       }
     }
-    expect(importers).toEqual(['index.ts']);
+    // So an app bundle, which uses neither, drops both.
+    expect(importers.sort()).toEqual([
+      join('behaviors', 'units.js') + ' <- index.ts',
+      join('data', 'units.js') + ' <- index.ts',
+    ]);
   });
 });

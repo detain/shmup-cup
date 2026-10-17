@@ -500,6 +500,7 @@ export {
   type UnitRule,
   type WalkSkip,
 } from './data/units.js';
+export { BEHAVIOR_PARAM_UNITS } from './behaviors/units.js';
 
 export {
   COLLISION_MASKS,
