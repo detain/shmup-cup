@@ -232,6 +232,7 @@ import {
   MAX_LOOP,
   MAX_RANK_GROWTH,
   MIN_BULLET_SPEED_MUL,
+  PLAYFIELD_CY,
   PLAYFIELD_H,
   PLAYFIELD_W,
   TILE_SIZE,
@@ -969,11 +970,14 @@ export const BOSS_VULNERABILITIES = Object.freeze([
   'never',
 ] as const);
 
-/** Default home position of a boss (playfield pixels, where its intro ends). */
-export const DEFAULT_BOSS_X = 296;
+/**
+ * Default home position of a boss (playfield pixels, where its intro ends): 88 px left of the
+ * right edge (296 today; the 88 is a world distance — plan_resolution.md §2.6).
+ */
+export const DEFAULT_BOSS_X = PLAYFIELD_W - 88;
 
-/** Default home row of a boss (the playfield's middle). */
-export const DEFAULT_BOSS_Y = 100;
+/** Default home row of a boss (the playfield's middle, `PLAYFIELD_CY`). */
+export const DEFAULT_BOSS_Y = PLAYFIELD_CY;
 
 /** Default length of a boss's invulnerable intro (the fly-in), in ticks. */
 export const DEFAULT_BOSS_INTRO_TICKS = 120;
@@ -1338,9 +1342,9 @@ export interface StageRasterEffect {
   readonly layer: StageRasterLayerName;
   /** Effect kind. */
   readonly kind: StageRasterKindName;
-  /** First playfield row affected (0 … 199). */
+  /** First playfield row affected (0 … `PLAYFIELD_H` − 1). */
   readonly top: number;
-  /** Row after the last affected (`top < bottom ≤ 200`). */
+  /** Row after the last affected (`top < bottom ≤ PLAYFIELD_H`). */
   readonly bottom: number;
   /** Peak offset in pixels (`wave`, `haze`; 0 in `lines`). */
   readonly amplitude: number;
@@ -1504,7 +1508,7 @@ export interface StageTilemapSpec {
   readonly tileset: string;
   /** Resolved {@link ContentDb.tilesets} index of {@link StageTilemapSpec.tileset}. */
   readonly tilesetId: number;
-  /** Map height in tiles (25 = the 200-px playfield). */
+  /** Map height in tiles (`PLAYFIELD_H / TILE_SIZE` rows fill the playfield: 25 today). */
   readonly rowsTall: number;
   /** Explicit run-length encoded rows, top to bottom (`"40*0, 3*2"`), applied last. */
   readonly rle?: readonly string[];
@@ -1588,7 +1592,10 @@ export interface StageSpawnEvent extends StageEventBase {
    * ground enemies snap to the floor / ceiling below / above it.
    */
   readonly y?: number;
-  /** Spawn x in playfield pixels (default 400: just beyond the right edge; negative = behind). */
+  /**
+   * Spawn x in playfield pixels (default `PLAYFIELD_W + 16`: just beyond the right edge;
+   * negative = behind).
+   */
   readonly screenX?: number;
   /** Movement path id (`content/paths/`) for `path` movers and path-following behaviours. */
   readonly path?: string;
@@ -1739,7 +1746,7 @@ export interface StageBlockEvent extends StageEventBase {
   readonly x: number;
   /** Discriminator. */
   readonly type: 'block';
-  /** Left edge relative to the event's `x` (default 400: just past the view's right edge). */
+  /** Left edge relative to the event's `x` (default {@link DEFAULT_BLOCK_SCREEN_X}). */
   readonly screenX?: number;
   /** Top edge in world pixels. */
   readonly y: number;
@@ -1863,8 +1870,11 @@ export const MAX_STAGE_BRANCHES = 32;
 /** Most tiles (cells) one moving block may cover. */
 export const MAX_BLOCK_CELLS = 64;
 
-/** Default {@link StageBlockEvent.screenX}: the block appears just past the view's right edge. */
-export const DEFAULT_BLOCK_SCREEN_X = 400;
+/**
+ * Default {@link StageBlockEvent.screenX}: the block appears just past the view's right edge
+ * (`PLAYFIELD_W + 16`, like `core/enemies` `DEFAULT_SPAWN_SCREEN_X`).
+ */
+export const DEFAULT_BLOCK_SCREEN_X = PLAYFIELD_W + 16;
 
 /** Default swing period of a moving block, in ticks. */
 export const DEFAULT_BLOCK_PERIOD = 120;
@@ -2220,12 +2230,12 @@ const HEADER_SHAPE = {
 /** Half-extent box with integer pixels. */
 const BOX_SCHEMA = s.object({ hw: s.int({ min: 1, max: 512 }), hh: s.int({ min: 1, max: 512 }) });
 
-/** Playfield margins in whole pixels. */
+/** Playfield margins in whole pixels: each at most half the playfield on its axis. */
 const MARGIN_SCHEMA = s.object({
-  left: s.int({ min: 0, max: 192 }),
-  right: s.int({ min: 0, max: 192 }),
-  top: s.int({ min: 0, max: 100 }),
-  bottom: s.int({ min: 0, max: 100 }),
+  left: s.int({ min: 0, max: PLAYFIELD_W / 2 }),
+  right: s.int({ min: 0, max: PLAYFIELD_W / 2 }),
+  top: s.int({ min: 0, max: PLAYFIELD_H / 2 }),
+  bottom: s.int({ min: 0, max: PLAYFIELD_H / 2 }),
 });
 
 /** One entry of `ships` in a `player` file. */
@@ -2362,10 +2372,11 @@ const MOVER_SCHEMA: Schema<Omit<EnemyMoverSpec, 'pathId'>> = s.oneOf('type', {
     { type: s.enumOf(['path'] as const), path: s.ref('path'), speed: MOVER_SPEED },
     { optional: ['path'] },
   ),
+  // The view's playfield plus 64 px (a world margin) on every side.
   waypoint: s.object({
     type: s.enumOf(['waypoint'] as const),
-    x: s.num({ min: -64, max: 448 }),
-    y: s.num({ min: -64, max: 264 }),
+    x: s.num({ min: -64, max: PLAYFIELD_W + 64 }),
+    y: s.num({ min: -64, max: PLAYFIELD_H + 64 }),
     speed: s.num({ min: 0.01, max: 16 }),
     hold: s.int({ min: 0, max: 36000 }),
     leaveVx: VELOCITY,
@@ -2679,11 +2690,11 @@ const SPEED = s.num({ min: 0, max: 16 });
 /** A ramp or pan length in ticks. */
 const TICKS = s.int({ min: 0, max: 36000 });
 
-/** Spawn y in playfield pixels. */
-const SPAWN_Y = s.num({ min: -64, max: 320 });
+/** Spawn y in playfield pixels: from 64 px above the playfield to 120 px below it. */
+const SPAWN_Y = s.num({ min: -64, max: PLAYFIELD_H + 120 });
 
-/** Spawn x in playfield pixels. */
-const SPAWN_SCREEN_X = s.num({ min: -128, max: 512 });
+/** Spawn x in playfield pixels: up to 128 px beyond either edge of the view. */
+const SPAWN_SCREEN_X = s.num({ min: -128, max: PLAYFIELD_W + 128 });
 
 /** A loop number of a remixed event (M3-01 — `minLoop` / `maxLoop`). */
 const LOOP_NUMBER = s.int({ min: 1, max: MAX_LOOP });
