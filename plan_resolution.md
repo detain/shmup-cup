@@ -1439,9 +1439,9 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 images done (211), videos generating; see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | in progress |
-| R1-02 | Frame constants in presentation, hosts, scripts and tests | not started |
-| R1-03 | Units in the content schemas, and the rescale tool | not started |
-| R1-04 | Tile size and font metrics are data | not started |
+| R1-02 | Frame constants in presentation, hosts, scripts and tests | in progress |
+| R1-03 | Units in the content schemas, and the rescale tool | in progress |
+| R1-04 | Tile size and font metrics are data | in progress |
 | R1-05 | Atlas paging and memory ready for detailed art | not started |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | not started |
 | R2-02 | Port all content ×1.5 | not started |
