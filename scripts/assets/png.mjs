@@ -8,12 +8,24 @@
  * timestamps, no gamma), so the same pixels always give the same bytes on the same
  * zlib version.
  *
+ * **Indexed PNG-8 (R1-05, opt-in).** With `{ indexed: 'auto' }` an image of at most 256
+ * distinct RGBA values is written as colour type 3 instead: `PLTE` + `tRNS` + 8-bit
+ * indices, filter None on every row (the PNG spec's advice for palette images). It is
+ * lossless — the palette holds the exact RGBA values, and the RGB of a fully transparent
+ * pixel is kept, never normalised — and deterministic: the palette is ordered by
+ * (alpha < 255 first, so `tRNS` stays short; then the packed `0xRRGGBBAA` value
+ * ascending), independent of where the colours sit in the image. An image with more
+ * colours falls back to RGBA. Only the atlas pipeline opts in (decision W3-3): the
+ * documentation pictures and store icons keep their RGBA bytes (`docs:images --check`,
+ * `store:assets --check`).
+ *
  * Decoding is only needed for *real art* sources that override code-defined frames
  * (`assets/source/sprites/**\/*.png`); it goes through `pngjs`, which handles every
  * colour type, bit depth and interlacing mode.
  *
- * **Public API.** {@link encodePng}, {@link decodePng}, {@link crc32},
- * {@link PNG_SIGNATURE}.
+ * **Public API.** {@link encodePng}, {@link indexedPalette}, {@link decodePng},
+ * {@link crc32}, {@link PNG_SIGNATURE}, {@link MAX_PALETTE_SIZE}; typedef
+ * {@link EncodePngOptions}.
  *
  * @module
  */
@@ -129,17 +141,75 @@ function filterScanlines(image) {
   return out;
 }
 
+/** Most colours an indexed (colour type 3, 8-bit) PNG can hold. */
+export const MAX_PALETTE_SIZE = 256;
+
 /**
- * Encodes an RGBA image as a PNG file.
+ * Options of {@link encodePng}.
  *
- * @param {Image} image - The pixels (straight alpha).
- * @returns {Buffer} The PNG bytes; deterministic for the same pixels and zlib version.
- * @throws {RangeError} When `image.data` does not hold `width * height * 4` bytes.
+ * @typedef {object} EncodePngOptions
+ * @property {'never' | 'auto'} [indexed] - `'never'` (the default) always writes 8-bit
+ *   RGBA; `'auto'` writes an indexed PNG-8 (`PLTE` + `tRNS`) when the image has at most
+ *   {@link MAX_PALETTE_SIZE} distinct RGBA values, else RGBA. Both are lossless.
+ */
+
+/**
+ * Packs the pixel at byte offset `i` of RGBA data into an unsigned `0xRRGGBBAA` value.
+ *
+ * @param {Uint8Array} data - RGBA bytes.
+ * @param {number} i - Byte offset of the pixel.
+ * @returns {number} The packed value (unsigned 32-bit).
+ */
+const packRgba = (data, i) =>
+  ((data[i] << 24) | (data[i + 1] << 16) | (data[i + 2] << 8) | data[i + 3]) >>> 0;
+
+/**
+ * Sort key of a palette entry: entries with alpha < 255 come first.
+ *
+ * @param {number} value - Packed `0xRRGGBBAA` entry.
+ * @returns {number} 0 for a translucent or transparent entry, 1 for an opaque one.
+ */
+const opaqueKey = (value) => ((value & 0xff) === 0xff ? 1 : 0);
+
+/**
+ * The palette an indexed PNG of `image` would use, or `null` when the image has more
+ * than `max` distinct RGBA values.
+ *
+ * @remarks
+ * Exact values: two pixels share an entry only when all four channels are equal, so a
+ * fully transparent pixel keeps its RGB (lossless). Order: every entry with alpha < 255
+ * first (the `tRNS` chunk then covers only those), then the opaque ones; each part by the
+ * packed `0xRRGGBBAA` value, ascending — deterministic and independent of the layout.
+ * The scan stops at the first colour past `max`, so a many-coloured page costs little.
+ *
+ * @param {Image} image - The pixels.
+ * @param {number} [max] - Largest palette accepted (default {@link MAX_PALETTE_SIZE}).
+ * @returns {number[] | null} Packed `0xRRGGBBAA` entries (unsigned), or `null`.
  *
  * @example
- * writeFileSync('out.png', encodePng(createImage(8, 8)));
+ * indexedPalette(createImage(4, 4)); // → [0] (one entry: transparent black)
  */
-export function encodePng(image) {
+export function indexedPalette(image, max = MAX_PALETTE_SIZE) {
+  const { data } = image;
+  /** @type {Set<number>} */
+  const seen = new Set();
+  for (let i = 0; i < data.length; i += 4) {
+    seen.add(packRgba(data, i));
+    if (seen.size > max) return null;
+  }
+  return [...seen].sort((a, b) => opaqueKey(a) - opaqueKey(b) || a - b);
+}
+
+/**
+ * Checks the image's buffer and builds its `IHDR` payload (8-bit samples, deflate,
+ * adaptive filtering, no interlace).
+ *
+ * @param {Image} image - The pixels.
+ * @param {number} colourType - PNG colour type (6 truecolour with alpha, 3 indexed).
+ * @returns {Buffer} The 13-byte `IHDR` payload.
+ * @throws {RangeError} When `image.data` does not hold `width * height * 4` bytes.
+ */
+function headerOf(image, colourType) {
   if (image.data.length !== image.width * image.height * 4) {
     throw new RangeError(
       `image data holds ${image.data.length} bytes, expected ${image.width * image.height * 4}`,
@@ -149,10 +219,82 @@ export function encodePng(image) {
   header.writeUInt32BE(image.width, 0);
   header.writeUInt32BE(image.height, 4);
   header[8] = 8; // bit depth
-  header[9] = 6; // colour type: truecolour with alpha
+  header[9] = colourType;
   header[10] = 0; // compression: deflate
   header[11] = 0; // filter method: adaptive
   header[12] = 0; // interlace: none
+  return header;
+}
+
+/**
+ * Encodes an image as an indexed PNG-8 with the given palette.
+ *
+ * @param {Image} image - The pixels; every value must be in `palette`.
+ * @param {number[]} palette - Packed `0xRRGGBBAA` entries from {@link indexedPalette}.
+ * @returns {Buffer} The PNG bytes: `IHDR`, `PLTE`, `tRNS` (only when an entry has alpha
+ *   < 255), one `IDAT` (filter None on every row), `IEND`.
+ */
+function encodeIndexed(image, palette) {
+  const { width, height, data } = image;
+  /** @type {Map<number, number>} */
+  const index = new Map();
+  const plte = new Uint8Array(palette.length * 3);
+  let translucent = 0;
+  palette.forEach((value, i) => {
+    index.set(value, i);
+    plte[i * 3] = value >>> 24;
+    plte[i * 3 + 1] = (value >>> 16) & 0xff;
+    plte[i * 3 + 2] = (value >>> 8) & 0xff;
+    if ((value & 0xff) !== 0xff) translucent = i + 1;
+  });
+  const rows = new Uint8Array((width + 1) * height); // each row: filter byte 0, indices
+  for (let y = 0; y < height; y++) {
+    const to = y * (width + 1) + 1;
+    const from = y * width * 4;
+    for (let x = 0; x < width; x++) {
+      rows[to + x] = /** @type {number} */ (index.get(packRgba(data, from + x * 4)));
+    }
+  }
+  const parts = [
+    Buffer.from(PNG_SIGNATURE),
+    chunk('IHDR', headerOf(image, 3)),
+    chunk('PLTE', plte),
+  ];
+  if (translucent > 0) {
+    const alpha = new Uint8Array(translucent);
+    for (let i = 0; i < translucent; i++) alpha[i] = palette[i] & 0xff;
+    parts.push(chunk('tRNS', alpha));
+  }
+  parts.push(chunk('IDAT', deflateSync(rows, { level: 9 })), chunk('IEND', new Uint8Array(0)));
+  return Buffer.concat(parts);
+}
+
+/**
+ * Encodes an RGBA image as a PNG file.
+ *
+ * @param {Image} image - The pixels (straight alpha).
+ * @param {EncodePngOptions} [options] - `indexed: 'auto'` writes PNG-8 when the image has
+ *   at most 256 colours (default `'never'`: always RGBA, byte-identical to the encoder
+ *   before R1-05).
+ * @returns {Buffer} The PNG bytes; deterministic for the same pixels, options and zlib
+ *   version.
+ * @throws {RangeError} When `image.data` does not hold `width * height * 4` bytes, or
+ *   `options.indexed` is neither `'never'` nor `'auto'`.
+ *
+ * @example
+ * writeFileSync('out.png', encodePng(createImage(8, 8)));
+ * writeFileSync('page.png', encodePng(page, { indexed: 'auto' })); // PNG-8 when it fits
+ */
+export function encodePng(image, options = {}) {
+  const indexed = options.indexed ?? 'never';
+  if (indexed !== 'never' && indexed !== 'auto') {
+    throw new RangeError(`indexed must be 'never' or 'auto', not ${JSON.stringify(indexed)}`);
+  }
+  const header = headerOf(image, 6); // colour type 6: truecolour with alpha
+  if (indexed === 'auto') {
+    const palette = indexedPalette(image);
+    if (palette !== null) return encodeIndexed(image, palette);
+  }
   const compressed = deflateSync(filterScanlines(image), { level: 9 });
   return Buffer.concat([
     Buffer.from(PNG_SIGNATURE),

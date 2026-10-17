@@ -42,7 +42,7 @@ import {
   generateAssets,
   pageFileName,
 } from '../../../scripts/assets/pipeline.mjs';
-import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
+import { decodePng, encodePng, indexedPalette } from '../../../scripts/assets/png.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const tmp = mkdtempSync(join(tmpdir(), 'shmup-pipeline-edge-'));
@@ -262,6 +262,25 @@ describe('scripts/assets/pipeline — page limits', () => {
 
   it('rejects a page limit that is not a power of two', () => {
     expect(() => buildAtlas({ maxPageSize: 1000 })).toThrow(RangeError);
+  });
+
+  it('writes a page of at most 256 colours as lossless PNG-8 and the others as RGBA (R1-05)', () => {
+    // At 512² the shipped sprites spread over three pages; the last holds ≤ 256 colours.
+    const { pages } = buildAtlas({ maxPageSize: 512 });
+    const types = pages.map((page) => page.png[25]); // IHDR colour type
+    expect(types).toContain(3);
+    expect(types).toContain(6);
+    for (const page of pages) {
+      const fits = indexedPalette(page.image) !== null;
+      expect(page.png[25], page.file).toBe(fits ? 3 : 6);
+      expect(Buffer.compare(page.png, encodePng(page.image, { indexed: 'auto' })), page.file).toBe(
+        0,
+      );
+      expect(decodePng(page.png), page.file).toEqual(page.image);
+    }
+    // Today's one shipped page has 1,537 colours: it stays RGBA, byte for byte.
+    expect(indexedPalette(reference.pages[0].image)).toBeNull();
+    expect(Buffer.compare(reference.pages[0].png, encodePng(reference.pages[0].image))).toBe(0);
   });
 
   it('names pages main.png, main-1.png, main-2.png, …', () => {

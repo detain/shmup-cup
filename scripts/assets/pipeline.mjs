@@ -363,10 +363,11 @@ export function buildAtlas(options = {}) {
   const fonts = {};
   for (const name of Object.keys(collected.fonts).sort()) fonts[name] = collected.fonts[name];
 
+  // A page of at most 256 colours is written as lossless PNG-8 (R1-05, decision W3-3).
   const pages = pageImages.map((image, index) => ({
     file: pageFileName(index),
     image,
-    png: encodePng(image),
+    png: encodePng(image, { indexed: 'auto' }),
   }));
   /** @type {AtlasManifest} */
   const manifest = {
