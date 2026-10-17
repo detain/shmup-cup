@@ -1,0 +1,114 @@
+{
+  "formatVersion": 1,
+  "id": "dimension",
+  "stage": "dimension",
+  "description": "the high-speed dimension, 100 s of it, full loadout",
+  "config": { "seed": 1, "loadout": "full" },
+  "golden": null,
+  "startX": 0,
+  "frame": {
+    "width": 384,
+    "height": 216,
+    "hudBar": 8,
+    "playfieldWidth": 384,
+    "playfieldHeight": 200,
+    "tileSize": 8
+  },
+  "run": {
+    "bot": "four-way (remote)",
+    "status": "playing",
+    "maxTicks": 6000,
+    "ticks": 6000,
+    "clearTicks": -1,
+    "godMode": true,
+    "hash": 1129680036
+  },
+  "camera": {
+    "length": 6400,
+    "endTick": -1,
+    "movingTicks": 1511,
+    "lockedTicks": 4489,
+    "holdTicks": 0,
+    "keys": [
+      [0, 0, 0],
+      [800, 429, 0],
+      [3600, 1159, 0],
+      [5200, -1, 0]
+    ],
+    "checkpoints": [
+      [0, 0],
+      [1800, 709],
+      [3600, 1159]
+    ]
+  },
+  "maxBulletSpeed": 1.7024,
+  "warnings": [1451],
+  "eventColumns": ["type", "x", "tick"],
+  "events": [
+    ["spawn", 240, 149],
+    ["spawn", 240, 149],
+    ["spawn", 520, 289],
+    ["spawn", 760, 409],
+    ["spawn", 1000, 505],
+    ["spawn", 1000, 505],
+    ["spawn", 1300, 584],
+    ["spawn", 1600, 659],
+    ["boss", 1900, 734],
+    ["spawn", 3800, 1207],
+    ["spawn", 4100, 1271],
+    ["boss", 4400, 1331],
+    ["warning", 5000, 1451],
+    ["end", 6200, -1]
+  ],
+  "skippedEvents": [],
+  "specColumns": ["id", "hw", "hh", "anchor"],
+  "specs": [["dim-pylon", 6, 19, 0]],
+  "enemyColumns": [
+    "event",
+    "member",
+    "spec",
+    "spawnTick",
+    "x0",
+    "y0",
+    "entry",
+    "visibleTick",
+    "visibleX",
+    "visibleY",
+    "turnTick",
+    "turnX",
+    "turnY",
+    "endTick",
+    "fate"
+  ],
+  "enemies": [
+    [0, -1, 0, 149, 400, 40, "R", -1, 0, 0, -1, 0, 0, 748, "e"],
+    [1, -1, 0, 149, 400, 168, "R", -1, 0, 0, -1, 0, 0, 748, "e"],
+    [2, -1, 0, 289, 400, 28, "R", -1, 0, 0, -1, 0, 0, 888, "e"],
+    [3, -1, 0, 409, 400, 180, "R", -1, 0, 0, -1, 0, 0, 1008, "e"],
+    [4, -1, 0, 505, 400, 40, "R", -1, 0, 0, -1, 0, 0, 1034, "k"],
+    [5, -1, 0, 505, 400, 168, "R", -1, 0, 0, -1, 0, 0, 1104, "e"],
+    [6, -1, 0, 584, 400, 30, "R", -1, 0, 0, -1, 0, 0, 1067, "k"],
+    [7, -1, 0, 659, 400, 176, "R", -1, 0, 0, -1, 0, 0, 1258, "e"],
+    [9, -1, 0, 1207, 400, 36, "R", -1, 0, 0, -1, 0, 0, 1365, "k"],
+    [10, -1, 0, 1271, 400, 172, "R", -1, 0, 0, -1, 0, 0, 1636, "k"]
+  ],
+  "bossColumns": [
+    "id",
+    "role",
+    "warningTick",
+    "introTick",
+    "introX",
+    "introY",
+    "fightTick",
+    "fightX",
+    "fightY",
+    "dyingTick",
+    "escapeTick",
+    "endTick"
+  ],
+  "bosses": [
+    ["shadow-strider", 1, -1, 734, 406, 120, 814, 319.96, 120, -1, 3214, 3304],
+    ["iron-talon", 1, -1, 1331, 421, 100, 1401, 320, 100.6, -1, -1, -1],
+    ["grasping-bloom", 0, 1451, 1631, 412, 100, 1751, 300, 100.3, -1, -1, -1]
+  ]
+}

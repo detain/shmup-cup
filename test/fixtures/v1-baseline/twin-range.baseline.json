@@ -1,0 +1,88 @@
+{
+  "formatVersion": 1,
+  "id": "twin-range",
+  "stage": "twin-range",
+  "description": "the double-boss range, full loadout",
+  "config": { "seed": 53, "loadout": "full" },
+  "golden": "twin-range-god",
+  "startX": 0,
+  "frame": {
+    "width": 384,
+    "height": 216,
+    "hudBar": 8,
+    "playfieldWidth": 384,
+    "playfieldHeight": 200,
+    "tileSize": 8
+  },
+  "run": {
+    "bot": "four-way (remote)",
+    "status": "stageClear",
+    "maxTicks": 36000,
+    "ticks": 2890,
+    "clearTicks": 2890,
+    "godMode": true,
+    "hash": 2913615870
+  },
+  "camera": {
+    "length": 1800,
+    "endTick": -1,
+    "movingTicks": 475,
+    "lockedTicks": 2415,
+    "holdTicks": 0,
+    "keys": [[0, 0, 0]],
+    "checkpoints": [[0, 0]]
+  },
+  "maxBulletSpeed": 1.52,
+  "warnings": [414],
+  "eventColumns": ["type", "x", "tick"],
+  "events": [
+    ["spawn", 40, 54],
+    ["spawn", 120, 134],
+    ["spawn", 200, 214],
+    ["warning", 400, 414],
+    ["end", 1800, -1]
+  ],
+  "skippedEvents": [],
+  "specColumns": ["id", "hw", "hh", "anchor"],
+  "specs": [["carrier", 6, 4, 0]],
+  "enemyColumns": [
+    "event",
+    "member",
+    "spec",
+    "spawnTick",
+    "x0",
+    "y0",
+    "entry",
+    "visibleTick",
+    "visibleX",
+    "visibleY",
+    "turnTick",
+    "turnX",
+    "turnY",
+    "endTick",
+    "fate"
+  ],
+  "enemies": [
+    [0, -1, 0, 54, 400, 70, "R", 67, 389.5, 70, -1, 0, 0, 638, "e"],
+    [1, -1, 0, 134, 400, 130, "R", 147, 389.5, 130, -1, 0, 0, 541, "k"],
+    [2, -1, 0, 214, 400, 100, "R", -1, 0, 0, -1, 0, 0, 222, "k"]
+  ],
+  "bossColumns": [
+    "id",
+    "role",
+    "warningTick",
+    "introTick",
+    "introX",
+    "introY",
+    "fightTick",
+    "fightX",
+    "fightY",
+    "dyingTick",
+    "escapeTick",
+    "endTick"
+  ],
+  "bosses": [
+    ["twin-ember", 0, 414, 594, 413, 64, 744, 292, 64, 2019, -1, 2204],
+    ["twin-frost", 0, -1, 594, 413, 136, 744, 292.07, 136, 2704, -1, 2889]
+  ]
+}

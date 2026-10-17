@@ -1,0 +1,88 @@
+{
+  "formatVersion": 1,
+  "id": "gauntlet-range",
+  "stage": "gauntlet-range",
+  "description": "the first boss-rush range, full loadout",
+  "config": { "seed": 1, "loadout": "full" },
+  "golden": null,
+  "startX": 0,
+  "frame": {
+    "width": 384,
+    "height": 216,
+    "hudBar": 8,
+    "playfieldWidth": 384,
+    "playfieldHeight": 200,
+    "tileSize": 8
+  },
+  "run": {
+    "bot": "four-way (remote)",
+    "status": "stageClear",
+    "maxTicks": 36000,
+    "ticks": 4173,
+    "clearTicks": 4173,
+    "godMode": true,
+    "hash": 2498049425
+  },
+  "camera": {
+    "length": 3600,
+    "endTick": -1,
+    "movingTicks": 1184,
+    "lockedTicks": 2989,
+    "holdTicks": 0,
+    "keys": [[0, 0, 0]],
+    "checkpoints": [[0, 0]]
+  },
+  "maxBulletSpeed": 1.824,
+  "warnings": [360, 1715],
+  "eventColumns": ["type", "x", "tick"],
+  "events": [
+    ["spawn", 40, 54],
+    ["spawn", 120, 134],
+    ["spawn", 200, 214]
+  ],
+  "skippedEvents": [],
+  "specColumns": ["id", "hw", "hh", "anchor"],
+  "specs": [["carrier", 6, 4, 0]],
+  "enemyColumns": [
+    "event",
+    "member",
+    "spec",
+    "spawnTick",
+    "x0",
+    "y0",
+    "entry",
+    "visibleTick",
+    "visibleX",
+    "visibleY",
+    "turnTick",
+    "turnX",
+    "turnY",
+    "endTick",
+    "fate"
+  ],
+  "enemies": [
+    [0, -1, 0, 54, 400, 70, "R", 67, 389.5, 70, -1, 0, 0, 638, "e"],
+    [1, -1, 0, 134, 400, 130, "R", 147, 389.5, 130, -1, 0, 0, 541, "k"],
+    [2, -1, 0, 214, 400, 100, "R", -1, 0, 0, -1, 0, 0, 222, "k"]
+  ],
+  "bossColumns": [
+    "id",
+    "role",
+    "warningTick",
+    "introTick",
+    "introX",
+    "introY",
+    "fightTick",
+    "fightX",
+    "fightY",
+    "dyingTick",
+    "escapeTick",
+    "endTick"
+  ],
+  "bosses": [
+    ["test-boss", 0, 360, 540, 422, 100, 660, 300, 100.5, 825, -1, 1010],
+    ["raid-heart", 0, -1, 1130, 420, 100, 1220, 296, 100.6, 1410, -1, 1595],
+    ["twin-ember", 0, 1715, 1895, 413, 64, 2045, 292, 64, 3302, -1, 3487],
+    ["twin-frost", 0, -1, 1895, 413, 136, 2045, 292.07, 136, 3987, -1, 4172]
+  ]
+}

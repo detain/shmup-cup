@@ -1,0 +1,103 @@
+{
+  "formatVersion": 1,
+  "id": "bonus-range",
+  "stage": "bonus-range",
+  "description": "the bonus-entrance range, full loadout",
+  "config": { "seed": 62, "loadout": "full" },
+  "golden": "bonus-range-god",
+  "startX": 0,
+  "frame": {
+    "width": 384,
+    "height": 216,
+    "hudBar": 8,
+    "playfieldWidth": 384,
+    "playfieldHeight": 200,
+    "tileSize": 8
+  },
+  "run": {
+    "bot": "four-way (remote)",
+    "status": "stageClear",
+    "maxTicks": 36000,
+    "ticks": 3255,
+    "clearTicks": 3255,
+    "godMode": true,
+    "hash": 1075145922
+  },
+  "camera": {
+    "length": 2800,
+    "endTick": -1,
+    "movingTicks": 2532,
+    "lockedTicks": 723,
+    "holdTicks": 0,
+    "keys": [
+      [0, 0, 0],
+      [2200, 2214, 0]
+    ],
+    "checkpoints": [
+      [0, 0],
+      [1000, 1014]
+    ]
+  },
+  "maxBulletSpeed": 1.824,
+  "warnings": [2471],
+  "eventColumns": ["type", "x", "tick"],
+  "events": [
+    ["spawn", 100, 114],
+    ["block", 400, 414],
+    ["block", 400, 414],
+    ["bonus", 420, 434],
+    ["bonus", 1000, 1014],
+    ["spawn", 1100, 1114],
+    ["spawn", 1250, 1264],
+    ["spawn", 1400, 1414],
+    ["spawn", 1600, 1614],
+    ["bonus", 2000, 2014],
+    ["warning", 2400, 2471],
+    ["end", 2800, -1]
+  ],
+  "skippedEvents": [],
+  "specColumns": ["id", "hw", "hh", "anchor"],
+  "specs": [
+    ["tender", 6, 4, 0],
+    ["picket", 5, 4, 1]
+  ],
+  "enemyColumns": [
+    "event",
+    "member",
+    "spec",
+    "spawnTick",
+    "x0",
+    "y0",
+    "entry",
+    "visibleTick",
+    "visibleX",
+    "visibleY",
+    "turnTick",
+    "turnX",
+    "turnY",
+    "endTick",
+    "fate"
+  ],
+  "enemies": [
+    [0, -1, 0, 114, 400, 100, "R", -1, 0, 0, -1, 0, 0, 114, "k"],
+    [5, -1, 1, 1114, 400, 178, "R", 1125, 389, 178, -1, 0, 0, 1150, "k"],
+    [6, -1, 1, 1264, 400, 164, "R", 1275, 389, 164, -1, 0, 0, 1287, "k"],
+    [7, -1, 1, 1414, 400, 172, "R", 1425, 389, 172, -1, 0, 0, 1442, "k"],
+    [8, -1, 0, 1614, 400, 80, "R", 1628, 389.5, 80, -1, 0, 0, 2239, "e"]
+  ],
+  "bossColumns": [
+    "id",
+    "role",
+    "warningTick",
+    "introTick",
+    "introX",
+    "introY",
+    "fightTick",
+    "fightX",
+    "fightY",
+    "dyingTick",
+    "escapeTick",
+    "endTick"
+  ],
+  "bosses": [["halcyon-bulwark", 0, 2471, 2651, 424, 100, 2801, 300, 100.35, 3069, -1, 3254]]
+}

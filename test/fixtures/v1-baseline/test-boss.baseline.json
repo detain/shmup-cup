@@ -1,0 +1,83 @@
+{
+  "formatVersion": 1,
+  "id": "test-boss",
+  "stage": "test-boss",
+  "description": "the M1 boss range",
+  "config": { "seed": 1 },
+  "golden": null,
+  "startX": 0,
+  "frame": {
+    "width": 384,
+    "height": 216,
+    "hudBar": 8,
+    "playfieldWidth": 384,
+    "playfieldHeight": 200,
+    "tileSize": 8
+  },
+  "run": {
+    "bot": "four-way (remote)",
+    "status": "stageClear",
+    "maxTicks": 36000,
+    "ticks": 1411,
+    "clearTicks": 1411,
+    "godMode": true,
+    "hash": 2866073015
+  },
+  "camera": {
+    "length": 1200,
+    "endTick": -1,
+    "movingTicks": 375,
+    "lockedTicks": 1036,
+    "holdTicks": 0,
+    "keys": [[0, 0, 0]],
+    "checkpoints": [[0, 0]]
+  },
+  "maxBulletSpeed": 1.5,
+  "warnings": [314],
+  "eventColumns": ["type", "x", "tick"],
+  "events": [
+    ["spawn", 40, 54],
+    ["spawn", 120, 134],
+    ["warning", 300, 314],
+    ["end", 1200, -1]
+  ],
+  "skippedEvents": [],
+  "specColumns": ["id", "hw", "hh", "anchor"],
+  "specs": [["carrier", 6, 4, 0]],
+  "enemyColumns": [
+    "event",
+    "member",
+    "spec",
+    "spawnTick",
+    "x0",
+    "y0",
+    "entry",
+    "visibleTick",
+    "visibleX",
+    "visibleY",
+    "turnTick",
+    "turnX",
+    "turnY",
+    "endTick",
+    "fate"
+  ],
+  "enemies": [
+    [0, -1, 0, 54, 400, 70, "R", 67, 389.5, 70, -1, 0, 0, 638, "e"],
+    [1, -1, 0, 134, 400, 130, "R", 147, 389.5, 130, -1, 0, 0, 718, "e"]
+  ],
+  "bossColumns": [
+    "id",
+    "role",
+    "warningTick",
+    "introTick",
+    "introX",
+    "introY",
+    "fightTick",
+    "fightX",
+    "fightY",
+    "dyingTick",
+    "escapeTick",
+    "endTick"
+  ],
+  "bosses": [["test-boss", 0, 314, 494, 422, 100, 614, 300, 100.5, 1225, -1, 1410]]
+}

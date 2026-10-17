@@ -1,0 +1,79 @@
+{
+  "formatVersion": 1,
+  "id": "escape",
+  "stage": "escape",
+  "description": "the final zone`s escape run",
+  "config": { "seed": 1 },
+  "golden": null,
+  "startX": 0,
+  "frame": {
+    "width": 384,
+    "height": 216,
+    "hudBar": 8,
+    "playfieldWidth": 384,
+    "playfieldHeight": 200,
+    "tileSize": 8
+  },
+  "run": {
+    "bot": "four-way (remote)",
+    "status": "stageClear",
+    "maxTicks": 36000,
+    "ticks": 1033,
+    "clearTicks": 1033,
+    "godMode": true,
+    "hash": 2308010701
+  },
+  "camera": {
+    "length": 4200,
+    "endTick": -1,
+    "movingTicks": 1033,
+    "lockedTicks": 0,
+    "holdTicks": 0,
+    "keys": [
+      [0, 0, 0],
+      [1200, 414, 0],
+      [3000, 834, 0]
+    ],
+    "checkpoints": [[0, 0]]
+  },
+  "maxBulletSpeed": 0,
+  "warnings": [],
+  "eventColumns": ["type", "x", "tick"],
+  "events": [["end", 4100, 1032]],
+  "skippedEvents": [],
+  "specColumns": ["id", "hw", "hh", "anchor"],
+  "specs": [],
+  "enemyColumns": [
+    "event",
+    "member",
+    "spec",
+    "spawnTick",
+    "x0",
+    "y0",
+    "entry",
+    "visibleTick",
+    "visibleX",
+    "visibleY",
+    "turnTick",
+    "turnX",
+    "turnY",
+    "endTick",
+    "fate"
+  ],
+  "enemies": [],
+  "bossColumns": [
+    "id",
+    "role",
+    "warningTick",
+    "introTick",
+    "introX",
+    "introY",
+    "fightTick",
+    "fightX",
+    "fightY",
+    "dyingTick",
+    "escapeTick",
+    "endTick"
+  ],
+  "bosses": []
+}
