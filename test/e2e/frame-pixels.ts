@@ -93,8 +93,10 @@ export function pixelIndex(width: number, fx: number, fy: number): number {
 
 // The boss HP bar's place in the top HUD bar (`advanced-bosses.spec.ts`), derived the way
 // `core/ui` derives it (R1-01): from the frame's centre and the font's cell, so it follows the
-// frame and the font at R2-01 / R4-03. The 4-px label gap and the 2-px nudge right are the HUD's
-// own pixel literals there. `test/scripts/frame.test.ts` pins every value to core.
+// frame and the font at R2-01 / R4-03. The 4-px label gap, the 2-px nudge right and the fill's
+// 3-px drop are the HUD's own pixel literals there. `test/scripts/frame.test.ts` checks every
+// exported value against what core's `buildHud` really draws for a frame with the bar up — the
+// label's x and width, the bar frame's x and width, the fill's top row — and against `HUD_LAYOUT`.
 
 /** Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP`). */
 const HUD_LABEL_GAP = 4;
@@ -120,5 +122,8 @@ export const BOSS_LABEL_X: number = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1)
 /** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 176 today). */
 export const BOSS_BAR_X: number = BOSS_LABEL_X + BOSS_BAR_DX;
 
-/** The bar fill's row: `HUD_LAYOUT.topY + 3`, counted from the frame's top edge. */
+/**
+ * The bar fill's top row, counted from the frame's top edge: `buildHud` draws the 2-px fill at
+ * `HUD_LAYOUT.topY + 3` (3 today).
+ */
 export const BOSS_FILL_Y = 3;
