@@ -8,6 +8,10 @@
 > render telemetry) and M3-03 (localization, the LG webOS host, Steamworks, the tracker seam, the
 > itch.io packaging).
 >
+> **Released (note of 2026-10-17):** v1 shipped as **1.0.0** on 2026-10-16 (tag `v1.0.0`). It is
+> maintained on the `v1.x` branch — version `1.0.1-dev`, fixes only — and v2, the 640×360 remaster,
+> is planned and built on `master` (its `plan_resolution.md`).
+>
 > **The code is finished; the product is not.** Nothing here has been packaged for a store, submitted,
 > uploaded or run on the hardware it targets — the game itself has never been installed on the Samsung
 > monitors, never run on an LG set, never spoken to Steam — and the art, the music and the Spanish and

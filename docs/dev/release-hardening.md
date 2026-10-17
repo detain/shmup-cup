@@ -16,7 +16,7 @@ player-facing side (what changed, where the version shows, the owner's v1.0 chec
 | 30-minute soak through the scene flow, heap flat | `test/bench/soak.perf.ts` | `pnpm bench` |
 | Boot to title < 3 s; Tizen certification self-checks | `test/e2e/release-check.spec.ts` | `pnpm test:e2e` |
 | Icons and store-listing placeholders | `scripts/store-assets.mjs` (`pnpm store:assets`), `test/scripts/store-assets.test.ts` | `pnpm test` checks the committed icons |
-| Version `1.0.0-rc.1` everywhere, `1.0.0` in `config.xml` | the manifests, `apps/tizen/public/config.xml`, `CHANGELOG.md` | `tooling-config.test.ts`, `config-xml-consistency.test.ts` |
+| Version `1.0.0-rc.1` everywhere, `1.0.0` in `config.xml` — on `v1.x` since the 1.0.0 release `1.0.1-dev`, and `1.0.1` in `config.xml`, `appinfo.json` and the store listing ([The version](#the-version)) | the manifests, `apps/tizen/public/config.xml`, `apps/webos/public/appinfo.json`, `scripts/store-assets.mjs`, `CHANGELOG.md` | `tooling-config.test.ts`, `config-xml-consistency.test.ts`, `appinfo.test.ts`, `store-assets-edge.test.ts` |
 
 ## The route runs (16 routes × both ships)
 
@@ -182,6 +182,19 @@ the icons.
 - `CHANGELOG.md` has the `[1.0.0-rc.1]` section (M2) above `[0.1.0]` (M1) and an empty
   `[Unreleased]` for what follows. Tag the release on the step's final commit (`v1.0.0-rc.1`) once
   the review, test and docs rounds are through — the M1 release was tagged the same way.
+
+**Since the release (note of 2026-10-17).** The candidate was never tagged: the first tag is
+**`v1.0.0`** (a GitHub release, 2026-10-16), the candidate plus milestone M3. That tag's manifests
+still say `1.0.0-rc.1` (`config.xml` and the webOS `appinfo.json` `1.0.0`) and its CHANGELOG still
+calls M3's section `[Unreleased]`. On the `v1.x` branch, v1's maintenance line (fixes only; v2 is
+developed on `master`):
+
+- every `package.json` says **`1.0.1-dev`** (`tooling-config.test.ts` — "the release version
+  (M2-18; the v1.x maintenance line)");
+- `config.xml`, `appinfo.json` and the store listing (`scripts/store-assets.mjs`) say **`1.0.1`**,
+  the numeric core (`config-xml-consistency.test.ts`, `appinfo.test.ts`, `store-assets-edge.test.ts`);
+- `CHANGELOG.md` names the tagged section `[1.0.0] — 2026-10-16`, under a new `[Unreleased]` for
+  the line; the next release is tagged `v1.0.1`.
 
 ## What stays manual
 

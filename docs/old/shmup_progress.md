@@ -7,6 +7,10 @@
 
 ## Current state — the plan is complete (2026-09-16)
 
+- **Released (note of 2026-10-17):** v1 shipped as **1.0.0** on 2026-10-16 (tag `v1.0.0`, a GitHub
+  release). Since then the `v1.x` branch is its maintenance line — version `1.0.1-dev` (the TV
+  manifests `1.0.1`), fixes only — and v2, the 640×360 remaster, is planned and built on `master`.
+  The rest of this section is the state of 2026-09-16.
 - M1 (playable vertical slice) and M2 (complete v1.0) are finished; `package.json` is at
   **`1.0.0-rc.1`**. M3-01, M3-02, **M3-02b** (remote & hardware tuning from the 2026-09-15 input-probe run),
   **M3-02c** (render profiling: the overlay's `REB` / `RT` figures and the Playwright render bench),

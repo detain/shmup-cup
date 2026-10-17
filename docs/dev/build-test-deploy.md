@@ -546,7 +546,7 @@ with render-pixi's earlier probe, not retried since).
 
 ## CI
 
-`.github/workflows/ci.yml` on every push to `master` and every pull request, as parallel jobs
+`.github/workflows/ci.yml` on every push to `master` or `v1.x` and every pull request, as parallel jobs
 on GitHub's 4-vCPU runners — the run takes as long as its slowest job. Each job installs on its
 own: `pnpm/action-setup` (version from `packageManager`) → `actions/setup-node` (`.nvmrc`, pnpm
 cache) → `pnpm install --frozen-lockfile`, with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is

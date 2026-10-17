@@ -7,6 +7,14 @@ sound test and the full Options screen. Nothing new was added to play in this bu
 whole game was **checked from end to end by the computer**, and the few unfair spots those checks
 found were fixed (below).
 
+> **Update, 2026-10-17: released.** This candidate, with the milestone-M3 work that followed it,
+> was released as **Shmup Cup 1.0.0** on 2026-10-16 (tag `v1.0.0`; M3 is now the `[1.0.0]`
+> section of [`CHANGELOG.md`](../../CHANGELOG.md)). The checklist for the monitors below was still
+> open when it was tagged, and still is ([what is left](outstanding-work.md)). Builds of the `v1.x`
+> branch since then are the **1.0.1-dev** maintenance line: the same 384 × 216 game, fixes only;
+> v2, the 640 × 360 remaster, is developed on `master`. The rest of this page is the candidate's
+> record as it was written.
+
 "Release candidate" means: if the checks on the monitors (the checklist at the end of this page)
 find nothing serious, this is what version 1.0 will be.
 
@@ -30,6 +38,11 @@ the monitors: [install-on-tv.md](install-on-tv.md). The desktop app:
 | The debug build's panel (fourth line) | The **build id** — the exact code the build was made from. Quote it in every report |
 
 A later release candidate keeps the TV's **1.0.0**, so tell builds apart by the build id.
+
+**Since the release (2026-10-16):** a build of the `v1.0.0` tag shows exactly the above — its
+manifests were never bumped from 1.0.0-rc.1. A build of the `v1.x` branch since then shows
+**1.0.1** on the monitor and **1.0.1-dev** in the desktop app, its installers and the project's
+files.
 
 ## What changed for players
 
@@ -144,6 +157,7 @@ submission — they could not be confirmed when the placeholders were made.
 | Problem | What to do |
 |---|---|
 | The monitor shows version **1.0.0**, not 1.0.0-rc.1 | Expected — the TV takes numbers only. Use the build id (debug build panel) to tell builds apart |
+| A build of the `v1.x` branch shows **1.0.1** (the monitor) or **1.0.1-dev** (everywhere else) | Expected — the maintenance line after the 1.0.0 release |
 | The Apps panel still shows the old icon after installing | The panel may keep the old picture for a while; restart the monitor. If it persists, report it with a photo |
 | A MANTA wave makes a clink sound and keeps flying | Expected since this build — waves pass through armour now |
 | The MANTA still cannot hurt a boss | Please report it with the zone, the SHOT style and level (the pips) and a short video — the computer's runs beat every boss with both ships |

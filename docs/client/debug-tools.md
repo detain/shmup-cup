@@ -17,9 +17,10 @@ program on your desktop, with an on-screen list telling you where to fly: see
 [the guided capture](#the-guided-capture-preferred). Reading the panel by hand still works and is
 what to do when no desktop is reachable.
 
-The current build is the **v1.0 release candidate (1.0.0-rc.1)**; its own checklist for the
-monitors — which uses these tools — is in
-[release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors).
+The current build is version **1.0.0**, released on 2026-10-16 (builds of the `v1.x` maintenance
+branch since then are **1.0.1-dev**, shown as **1.0.1** on the monitor). The v1.0 checklist for
+the monitors — written for its release candidate, 1.0.0-rc.1, still open, and using these tools —
+is in [release-candidate.md](release-candidate.md#the-v10-checklist-both-monitors).
 
 ## Which build has the tools
 
