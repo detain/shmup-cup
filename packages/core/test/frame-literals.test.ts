@@ -9,72 +9,43 @@
  * a frame number, unless an entry of {@link ALLOWED} names it, with the reason it is not the
  * frame.
  *
- * The frame numbers are the v1 frame's `384` (`FRAME_W`), `216` (`FRAME_H`), `200`
- * (`PLAYFIELD_H`), `208` (`HUD_BOTTOM_Y`) — the four the plan names — and its centre, `192`
- * (`FRAME_CX`, the scenes' old `CX`) and `108` (`FRAME_CY`), plus whatever `FRAME_W`, `FRAME_H`,
- * `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now*: once R2-01 sets 640×360, a new literal `640`,
- * `360`, `336` or `348` is caught too, and the v1 numbers stay banned. The new centre (`320`,
- * `180`) is not added: `180` is three seconds of ticks and half a turn (six timers today would
- * trip it), and `320` only one v1 boss-box edge. `100` (`PLAYFIELD_CY`) is left out for the same
- * reason — percentages, tick counts and scores use it everywhere, and its two frame uses
- * (`DEFAULT_BOSS_Y`, `CREDITS_STOP_Y`) already derive from the constants.
+ * The frame numbers are the v1 frame's `384`, `216`, `200`, `208` and its centre `192` / `108`,
+ * plus whatever `FRAME_W`, `FRAME_H`, `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now* (`640`, `360`,
+ * `336`, `348` once R2-01 flips them); the helper's docblock says why `100` and the new centre
+ * `320` / `180` are not among them.
  *
- * An entry is matched by file, **symbol path** (the names of the declarations around the
- * literal, outermost first: `OPTIONS_PANEL.h`, `bossSuction.pullRadius`) and value, never by line
- * number, so edits elsewhere in a file do not break it. Each entry states how many literals it
- * covers; the test fails when a symbol holds more (a new frame number crept in beside an allowed
- * one) or fewer — down to none — so the list cannot rot.
+ * The scanner itself — and the list of frame numbers it bans, the symbol paths, the stale-entry
+ * check — lives in `helpers/frame-literal-scan.ts`, shared with the repo-wide scan
+ * `test/integration/frame-literals-repo.test.ts` (R1-02). An entry is matched by file, **symbol
+ * path** (the names of the declarations around the literal, outermost first: `OPTIONS_PANEL.h`,
+ * `bossSuction.pullRadius`) and value, never by line number, so edits elsewhere in a file do not
+ * break it. Each entry states how many literals it covers; the test fails when a symbol holds
+ * more (a new frame number crept in beside an allowed one) or fewer — down to none — so the list
+ * cannot rot.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_H } from '../src/index.js';
+import {
+  type AllowedFrameLiteral,
+  FRAME_NUMBERS,
+  V1_FRAME_NUMBERS,
+  frameLiteralKey as keyOf,
+  frameLiteralProblems,
+  listSourceFiles,
+  scanFrameLiterals as scan,
+} from './helpers/frame-literal-scan.js';
 
 const srcDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
-
-/** The v1 (384×216) frame numbers: width, height, playfield height, bottom HUD bar, centre. */
-const V1_FRAME_NUMBERS: readonly number[] = [384, 216, 200, 208, 192, 108];
-
-/** The current frame's numbers (the same as v1's until R2-01). */
-const CURRENT_FRAME_NUMBERS: readonly number[] = [FRAME_W, FRAME_H, PLAYFIELD_H, HUD_BOTTOM_Y];
-
-/** Every number the scan rejects: the v1 frame's and the current frame's. */
-const FRAME_NUMBERS: ReadonlySet<number> = new Set([...V1_FRAME_NUMBERS, ...CURRENT_FRAME_NUMBERS]);
-
-/** One literal of a frame number in core's source. */
-interface FrameLiteral {
-  /** File, relative to `packages/core/src/`. */
-  readonly file: string;
-  /** The names of the declarations around it, outermost first, `.`-joined. */
-  readonly symbol: string;
-  /** Its value. */
-  readonly value: number;
-  /** 1-based line (for the failure message only — entries never match on it). */
-  readonly line: number;
-}
-
-/** A frame-number literal that is allowed, and why. */
-interface Allowed {
-  /** File, relative to `packages/core/src/`. */
-  readonly file: string;
-  /** Symbol path of the literal (see {@link FrameLiteral.symbol}). */
-  readonly symbol: string;
-  /** Its value. */
-  readonly value: number;
-  /** How many literals of `value` the symbol holds (default 1). */
-  readonly count?: number;
-  /** Why it is not the frame. */
-  readonly reason: string;
-}
 
 /**
  * Every frame-number literal core may keep. Add an entry only for a literal that does not mean
  * the frame (a count, an angle, a character cap, a world distance, a content-sized panel …);
  * a literal that does mean it derives from the `config` constants instead.
  */
-const ALLOWED: readonly Allowed[] = [
+const ALLOWED: readonly AllowedFrameLiteral[] = [
   // The frame itself: the only place its size is written down.
   {
     file: 'config/index.ts',
@@ -194,126 +165,12 @@ const ALLOWED: readonly Allowed[] = [
 ];
 
 /**
- * The name a declaration adds to a literal's symbol path.
- *
- * @param node - An ancestor of the literal.
- * @returns Its name, or `null` when it is not a named declaration.
- */
-function nameOf(node: ts.Node): string | null {
-  if (ts.isConstructorDeclaration(node)) return 'constructor';
-  if (
-    ts.isVariableDeclaration(node) ||
-    ts.isPropertyAssignment(node) ||
-    ts.isPropertyDeclaration(node) ||
-    ts.isPropertySignature(node) ||
-    ts.isMethodDeclaration(node) ||
-    ts.isFunctionDeclaration(node) ||
-    ts.isClassDeclaration(node) ||
-    ts.isGetAccessorDeclaration(node) ||
-    ts.isSetAccessorDeclaration(node) ||
-    ts.isEnumDeclaration(node) ||
-    ts.isEnumMember(node) ||
-    ts.isInterfaceDeclaration(node) ||
-    ts.isTypeAliasDeclaration(node) ||
-    ts.isParameter(node)
-  ) {
-    const name = node.name;
-    if (name === undefined) return null;
-    if (
-      ts.isIdentifier(name) ||
-      ts.isStringLiteral(name) ||
-      ts.isNumericLiteral(name) ||
-      ts.isPrivateIdentifier(name)
-    ) {
-      return name.text;
-    }
-  }
-  return null;
-}
-
-/**
- * The symbol path of a node: the names of the declarations around it, outermost first.
- *
- * @param node - A literal.
- * @returns The `.`-joined path, or `(top level)`.
- */
-function symbolOf(node: ts.Node): string {
-  const names: string[] = [];
-  for (let n = node.parent; n !== undefined; n = n.parent) {
-    const name = nameOf(n);
-    if (name !== null) names.push(name);
-  }
-  return names.length === 0 ? '(top level)' : names.reverse().join('.');
-}
-
-/** Literal kinds whose text is read for whole numbers. */
-const TEXT_KINDS: ReadonlySet<ts.SyntaxKind> = new Set([
-  ts.SyntaxKind.StringLiteral,
-  ts.SyntaxKind.NoSubstitutionTemplateLiteral,
-  ts.SyntaxKind.TemplateHead,
-  ts.SyntaxKind.TemplateMiddle,
-  ts.SyntaxKind.TemplateTail,
-]);
-
-/**
- * Every frame-number literal of a source text. Comments are never part of the syntax tree, so
- * a docblock that names a frame number is not a hit.
- *
- * @param file - The name reported for the hits.
- * @param text - TypeScript source.
- * @returns Its hits, in source order.
- */
-function scan(file: string, text: string): FrameLiteral[] {
-  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
-  const hits: FrameLiteral[] = [];
-  const add = (node: ts.Node, value: number): void => {
-    const line = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
-    hits.push({ file, symbol: symbolOf(node), value, line });
-  };
-  const visit = (node: ts.Node): void => {
-    if (ts.isNumericLiteral(node)) {
-      const value = Number(node.text);
-      if (FRAME_NUMBERS.has(value)) add(node, value);
-    } else if (TEXT_KINDS.has(node.kind)) {
-      for (const digits of (node as ts.LiteralLikeNode).text.match(/(?<![\d.])\d+(?![\d.])/g) ??
-        []) {
-        const value = Number(digits);
-        if (FRAME_NUMBERS.has(value)) add(node, value);
-      }
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(source);
-  return hits;
-}
-
-/**
  * Every `.ts` file under core's `src/`.
  *
  * @returns Paths relative to `src/`, sorted.
  */
 function coreSources(): string[] {
-  const out: string[] = [];
-  const stack = [srcDir];
-  while (stack.length > 0) {
-    const dir = stack.pop() as string;
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) stack.push(path);
-      else if (entry.name.endsWith('.ts')) out.push(path.slice(srcDir.length + 1));
-    }
-  }
-  return out.sort();
-}
-
-/**
- * The key an entry and a hit share.
- *
- * @param x - A hit or an entry.
- * @returns `file › symbol = value`.
- */
-function keyOf(x: { file: string; symbol: string; value: number }): string {
-  return `${x.file} › ${x.symbol} = ${x.value}`;
+  return listSourceFiles(srcDir, (name) => name.endsWith('.ts'));
 }
 
 describe('core: no literal frame numbers (plan R1-01)', () => {
@@ -336,30 +193,7 @@ describe('core: no literal frame numbers (plan R1-01)', () => {
   });
 
   it('has no frame number outside the allow-list, and every entry still matches', () => {
-    const found = new Map<string, FrameLiteral[]>();
-    for (const hit of hits) {
-      const key = keyOf(hit);
-      const list = found.get(key);
-      if (list === undefined) found.set(key, [hit]);
-      else list.push(hit);
-    }
-    const problems: string[] = [];
-    const allowed = new Set<string>();
-    for (const entry of ALLOWED) {
-      const key = keyOf(entry);
-      allowed.add(key);
-      const count = entry.count ?? 1;
-      const got = found.get(key)?.length ?? 0;
-      if (got !== count) {
-        problems.push(`${key}: the allow-list expects ${count} literal(s), the source has ${got}`);
-      }
-    }
-    for (const [key, list] of found) {
-      if (allowed.has(key)) continue;
-      for (const hit of list) {
-        problems.push(`${key} (line ${hit.line}): a frame number — derive it from config`);
-      }
-    }
+    const problems = frameLiteralProblems(hits, ALLOWED, 'derive it from config');
     expect(problems).toEqual([]);
   });
 
