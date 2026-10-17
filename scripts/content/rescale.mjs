@@ -10,7 +10,8 @@
  * - **absolute y** (`world-y`) is ×k plus the top pad — except **above the top edge** (y < 0),
  *   where it is ×k only so that what entered from above still does; the tool lists every such
  *   value, the spawns first (an enemy that spawned above and moved in now arrives `topPad` px
- *   higher — R2-02 fixes each one by hand);
+ *   higher — R2-02 fixes each one by hand), and every value exactly on the top edge (y = 0 moves
+ *   `topPad` px down; something hanging from the top edge may need to grow by the pad instead);
  * - **edge-anchored** values (`screen-x`, `screen-y`) snap to the nearest of the playfield axis's
  *   start, centre and end and keep their distance to it ×k (owner decision O3: a spawn 16 px past
  *   the right edge stays 24 px past the new one);
@@ -671,7 +672,8 @@ function keysOf(leaf) {
  * @property {RescaleEntry[]} unclassified - Values without a rule (the tool refuses to write).
  * @property {{ file: string, message: string }[]} errors - Files that cannot be ported.
  * @property {RescaleEntry[]} moved - Values moved by a rule other than ×k.
- * @property {RescaleEntry[]} aboveTop - Values above the top edge (`world-y` < 0), spawns first.
+ * @property {RescaleEntry[]} aboveTop - Values on or above the top edge (`world-y` ≤ 0), spawns
+ *   first.
  * @property {RescaleEntry[]} rounded - Integer fields rounded (owner decision O4).
  * @property {RescaleEntry[]} outOfBounds - Ported values outside today's schema bounds.
  * @property {RescaleEntry[]} masks - Tileset masks resampled only approximately.
@@ -804,6 +806,8 @@ function portFile(file, data, schema, geometry, modules, plan) {
    *   effect: Record<string, unknown>, unit: import('@shmup/core').NumberUnit }>}
    */
   const bands = new Map();
+  /** @type {number[]} */
+  const cameraYs = [];
   /**
    * Records an entry of the report.
    *
@@ -916,7 +920,7 @@ function portFile(file, data, schema, geometry, modules, plan) {
       }
       return;
     }
-    if (rule === 'world-y' && value < 0 && geometry.topPad !== 0) {
+    if (rule === 'world-y' && value <= 0 && geometry.topPad !== 0) {
       const holder = leaf.container;
       const type = isObject(holder) ? holder['type'] : undefined;
       const spawn = type === 'spawn' || type === 'formation';
@@ -927,9 +931,13 @@ function portFile(file, data, schema, geometry, modules, plan) {
         leaf,
         unit,
         ported,
-        spawn
-          ? `spawn above the top edge${enemy === '' ? '' : ` (${enemy})`}: ×k only — it now arrives ${String(geometry.topPad)} px higher than v1's ×k + pad`
-          : 'above the top edge: ×k only',
+        value === 0
+          ? `on the top edge: ×k + pad moves it ${String(geometry.topPad)} px down — what hangs ` +
+              'from the top edge may need to grow by the pad instead'
+          : spawn
+            ? `spawn above the top edge${enemy === '' ? '' : ` (${enemy})`}: ×k only — it now ` +
+              `arrives ${String(geometry.topPad)} px higher than v1's ×k + pad`
+            : 'above the top edge: ×k only',
       );
     }
     const exact = rule === 'keep' ? value : modules.rescaleNumber(unit, value, geometry);
@@ -938,6 +946,8 @@ function portFile(file, data, schema, geometry, modules, plan) {
       ported = Math.round(ported);
       note(plan.rounded, leaf, unit, ported, `${String(exact)} rounded`);
     }
+    // The camera's y keys, ported by whatever their unit is, for the view check below.
+    if (leaf.field === 'camera[].yTo') cameraYs.push(ported);
     if (Object.is(ported, value)) return;
     replacements.push({ keys: keysOf(leaf), value: ported });
     changes++;
@@ -1084,14 +1094,8 @@ function portFile(file, data, schema, geometry, modules, plan) {
   }
   // Tilemaps the view would see past: the camera's lowest y plus the playfield's height.
   if (tilemap !== null && data['kind'] === 'stage') {
-    const camera = Array.isArray(data['camera']) ? data['camera'] : [];
     let lowest = 0;
-    for (const key of camera) {
-      if (isObject(key) && typeof key['yTo'] === 'number') {
-        const unit = /** @type {import('@shmup/core').NumberUnit} */ ('screen-y');
-        lowest = Math.max(lowest, modules.rescaleNumber(unit, key['yTo'], geometry));
-      }
-    }
+    for (const y of cameraYs) lowest = Math.max(lowest, y);
     const height = (Number(tilemap['rowsTall']) + geometry.padRows) * geometry.toTileSize;
     if (lowest + geometry.toHeight > height) {
       plan.views.push({
@@ -1103,8 +1107,8 @@ function portFile(file, data, schema, geometry, modules, plan) {
         to: Number(tilemap['rowsTall']) + geometry.padRows,
         note:
           `the camera's lowest yTo (${String(lowest)}) + the playfield (${String(geometry.toHeight)}) ` +
-          `sees past the map's bottom (${String(height)} px): the snapped yTo (owner decision ` +
-          'O2) and the padded rows disagree — fix the pan or the rows by hand (an owner question)',
+          `sees past the map's bottom (${String(height)} px): the ported pan and the padded rows ` +
+          'disagree — fix one of them by hand',
       });
     }
   }
@@ -1288,7 +1292,7 @@ export function formatRescaleReport(result, quiet = false) {
     for (const error of result.errors) lines.push(`  ${error.file}: ${error.message}`);
   }
   section(lines, 'unclassified', result.unclassified);
-  section(lines, 'above the top edge', result.aboveTop);
+  section(lines, 'on or above the top edge', result.aboveTop);
   section(lines, 'moved by a rule other than ×k', result.moved);
   section(lines, 'rounded integers', result.rounded);
   section(lines, "outside today's schema bounds", result.outOfBounds);

@@ -29,11 +29,63 @@ weapons and stages do not need engine changes (design pillar 4, `shmup_feat.md` 
   `packages/core/src/behaviors`) and is referenced by string id (`"script": "drifter.sine"`).
   Data only tunes it.
 - **Units:** pixels in the 384×216 internal resolution; time in **ticks** (60 per second);
-  stage positions in camera-X pixels; speeds in pixels per tick.
+  stage positions in camera-X pixels; speeds in pixels per tick. Every number's unit is
+  declared in its schema — see [Units](#units) below.
 - **Original content only.** Names, art and music are ours — never Konami / Taito names or
   assets (see `shmup_feat.md` §26).
 - Files named `example.*.json` are format samples used by tests; they are not part of the
   shipped game.
+
+## Units
+
+Every number in a content file has a **unit**, declared on its schema field
+(`s.num({ min, max, unit })` / `s.int(…)`, `NumberUnit` in `packages/core/src/data/units.ts`;
+the other packages' kinds in their exported `SFX_FILE_SCHEMA`, `MUSIC_FILE_SCHEMA`,
+`INPUT_PROFILES_FILE_SCHEMA` and `FX_FILE_SCHEMA`). The loader never reads it; tools do:
+`test/integration/content-units.test.ts` fails on a number without one, and
+`scripts/content/rescale.mjs` ports the content to a new world scale by it
+(`plan_resolution.md` R1-03 and §2.6 — the frame grows ×5/3 in v2, the world only ×1.5).
+
+| Unit | Means | Examples | In a ×k port (v2: k = 1.5, top pad 36 px) |
+|---|---|---|---|
+| `world-px` | a world length | radii, hurtbox `hw` / `hh`, stage `length`, wave `period`, parallax `spacing` | ×k |
+| `world-x` | an absolute x in the level | event `x`, checkpoints, camera keys, heightfield `from` / `to` | ×k |
+| `world-y` | an absolute y | spawn `y`, region / block `y`, a heightfield **ceiling**'s `base` | ×k + the pad; **above the top edge** (y < 0) ×k only, so it stays above — listed, like every y on the top edge (0) |
+| `rel-px` | a relative offset | path points, boss part `x` / `y`, shot offsets, fx `dx` / `dy`, a **floor**'s `base`, `amp` | ×k |
+| `px-per-tick` | a speed | camera `speed`, mover and shot speeds, pattern speeds, fx `speed` | ×k |
+| `px-per-tick2` | an acceleration | `gravity`, a pattern's `accel` | ×k |
+| `texels` | a distance in the Mode-7 floor's art | `mode7.height`, `mode7.fogDepth` | ×k |
+| `screen-x`, `screen-y` | a column / row anchored to an edge or the centre of the playfield | spawn `screenX`, boss `x` / `y`, raster `top` / `bottom`, Mode-7 `horizon` / `bottom`, camera `yTo` | snapped to the nearest of start, centre and end, distance ×k: a spawn at 400 (16 px past the right edge) → 664 (24 px past the new one), a boss at 296 → 508, a row 100 → 168 |
+| `tile-rows` | a tilemap's height in rows | `tilemap.rowsTall` | + the pad's rows (25 → 28); RLE maps gain copies of their top row at the top |
+| `tile-px` | a tile size or a mask entry | `tileSize`, tileset `mask` | sizes ×k (8 → 12); masks resampled to the new size |
+| `ticks` | a duration or interval | timers, `ramp`, `interval`, `lifetime` | unchanged |
+| `angle` | a binary angle (1024 a turn; degrees in `fx`) or a turn rate | `phase`, `turnRate`, pattern directions | unchanged |
+| `count` | a count | `hp`, `count`, `lives`, `volleys`, a rank | unchanged |
+| `score` | points | `score`, `bonus`, extends | unchanged |
+| `ratio` | a dimensionless factor | parallax `factor`, rank multipliers, volumes, `drag`, `alpha` | unchanged |
+| `hz`, `seconds`, `semitones`, `samples` | audio (`sfx`, `music`) | `frequency`, envelope times, `arpeggio`, `loopStart` | unchanged |
+| `seed`, `version`, `index` | an RNG seed, `formatVersion`, a frame / digit / order index | heightfield `seed`, fx `frames` | unchanged |
+| `param` | a behaviour tunable | the `params` of an enemy, a boss phase, a weapon | looked up: `BEHAVIOR_PARAM_UNITS[behaviour][name]` (`packages/core/src/behaviors/units.ts`), then that unit's rule |
+| `inherit` | a pattern reference's `$1` … `$9` | `actionRef` / `fire` `params` | unchanged: a parameter takes its unit where the action uses it, and those uses are ported (a scaled expression string becomes `(…) * k`) |
+
+A new numeric field needs a unit, and a new behaviour tunable a row in `BEHAVIOR_PARAM_UNITS`
+(`packages/core/test/behaviors/behavior-param-units.test.ts` checks it).
+
+**The rescale tool.** `node scripts/content/rescale.mjs --factor K [--top-pad P] [--dry-run]`
+walks every file here (and the `example.*.json` samples; `demos/` is skipped — recordings are
+re-recorded, never rescaled) with its schema and applies the rules above. It rewrites only the
+numbers it changes, then formats the file with Prettier, so a port's diff is the values alone.
+Integer fields are rounded and listed; raster `bands` are spread so they still add up to
+`bottom − top`. It **refuses to write** while any value is unclassified or a file is invalid,
+and its report lists everything a port must look at by hand: every value moved by a rule other
+than ×k, every value on or above the top edge (spawns first — an enemy that spawned above the
+screen and moved in now arrives 36 px higher; a value exactly on the top edge moves 36 px down,
+so what hangs from it may need to grow instead), every rounded integer, values outside today's schema
+bounds, approximated masks, the padded tilemaps and any tilemap the camera would see past.
+`--factor 1 --dry-run` reports zero changes on this folder; `--factor 1.5 --top-pad 36
+--dry-run` zero unclassified values. The real ×1.5 run is R2-02's: after R2-01 flips the frame,
+pass the geometry this content was written for — `--from-width 384 --from-height 200
+--tile-size 8 --to-width 640` (the tool refuses a tile size that does not match).
 
 ## Versioning and loading
 

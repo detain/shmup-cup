@@ -457,6 +457,23 @@ describe('rescale: what it lists', () => {
     ]);
   });
 
+  it('lists every y on or above the top edge: above stays above, on the edge moves down', () => {
+    const plan = planRescale(
+      [
+        file('x/a.json', { kind: 'fake-y', y: -20 }),
+        file('x/b.json', { kind: 'fake-y', y: 0 }),
+        file('x/c.json', { kind: 'fake-y', y: 1 }),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.aboveTop.map((entry) => [entry.file, entry.to])).toEqual([
+      ['x/a.json', -30],
+      ['x/b.json', GEOMETRY.port.topPad],
+    ]);
+    expect(plan.aboveTop[1]?.note).toMatch(/^on the top edge: ×k \+ pad moves it 36 px down/);
+  });
+
   it('adds no pad without --top-pad: y is only ×k and nothing is above the top edge', () => {
     const noPad = rescaleGeometry(
       { factor: 1.5, topPad: 0, fromWidth: null, fromHeight: null, tileSize: null, toWidth: null },

@@ -413,7 +413,7 @@ describe('scripts/content/rescale: the command line', () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('0 unclassified, 0 errors');
     expect(result.stdout).toContain('dry run: nothing written.');
-    expect(result.stdout).toContain('above the top edge (4):');
+    expect(result.stdout).toContain('on or above the top edge (4):');
     expect(result.stdout).toContain('[screen-x] 400 → 664 — edge-x: snapped to the end');
   }, 60_000);
 
