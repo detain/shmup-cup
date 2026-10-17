@@ -559,7 +559,8 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       return record?.atlasPages ?? -1;
     });
     expect(pages).toEqual([1, 1, 2]);
-    // The same field of view at every size: the scene is ×s, the frame ×s too.
+    // Each size renders its whole own frame. 640×360 and 960×540 show the same field of view (the
+    // frame and s both ×1.5); 384×216 at s = 1 shows less, since its frame is ×3/5 but s only ×2/3.
     for (const size of BENCH_SIZES) {
       expect(records.get(`${size.id}-busy`)?.frameTargetBytes).toBe(size.width * size.height * 4);
     }

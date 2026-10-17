@@ -8,7 +8,8 @@
  * 32 shots, 512 point items, 512 enemy bullets, the renderer's 512-particle pool kept full, and the
  * two HUD bars (`8·s` px tall) with a label, a score and lives. Everything is drawn from the
  * density's own atlas (the real atlas ×s, `scripts/bench-atlas.mjs`), so sprite sizes follow `s`;
- * positions and speeds are ×s too, so every frame size shows the same field of view.
+ * positions and speeds are ×s too. 640×360 and 960×540 therefore show the same field of view, and
+ * 384×216 at s = 1 shows less: v1's narrower view (frame ≠ world, plan §2.6).
  *
  * It hands the renderer a real `WorldView` (the batches go through the renderer's own bindings —
  * the CPU path the game takes) and, for the backdrops and the terrain, its own `ParallaxView` and

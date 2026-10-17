@@ -13,8 +13,8 @@
  * one target correct for two engines. The scan is the same shape as the `.timeStamp` scan in
  * `eslint-rules.test.ts` — a belt beside the braces, for a rule no config can express.
  */
-import { readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
@@ -98,6 +98,118 @@ function sourcesOf(relative: string): string[] {
  */
 function read(path: string): string {
   return readFileSync(join(repo, path), 'utf8');
+}
+
+/** A task entry of `turbo.json`, as far as these checks read it. */
+interface TurboTask {
+  /** Tasks that run first. */
+  readonly dependsOn?: readonly string[];
+  /** Environment variables in the cache key. */
+  readonly env?: readonly string[];
+  /** Files in the cache key; absent = the package's own files (`$TURBO_DEFAULT$`). */
+  readonly inputs?: readonly string[];
+  /** Files the cache restores. */
+  readonly outputs?: readonly string[];
+}
+
+/** The parts of `turbo.json` these checks read. */
+interface TurboConfig {
+  /** Repo files in every task's cache key. */
+  readonly globalDependencies: readonly string[];
+  /** Task entries by name (`build:bench`, `@shmup/webos#build:bench`, …). */
+  readonly tasks: Readonly<Record<string, TurboTask>>;
+}
+
+/**
+ * How a script names another repo file: static, side-effect and dynamic imports at the start of a
+ * line (so a docblock that quotes one is not a reference) and `new URL('…', import.meta.url)`.
+ */
+const SCRIPT_REFERENCES = [
+  /^\s*(?:import|export)\b[^;]*?\bfrom\s+['"](\.{1,2}\/[^'"]+)['"]/gm,
+  /^\s*import\s+['"](\.{1,2}\/[^'"]+)['"]/gm,
+  /\bimport\(\s*['"](\.{1,2}\/[^'"]+)['"]\s*\)/g,
+  /\bnew URL\(\s*['"](\.{1,2}\/?[^'"]*)['"]\s*,\s*import\.meta\.url\s*\)/g,
+] as const;
+
+/** How an HTML page (a Vite root's `index.html`) names a repo file: its scripts. */
+const PAGE_REFERENCES = [/<script\b[^>]*\bsrc=["'](\.{1,2}\/[^"']+)["']/g] as const;
+
+/**
+ * Every repo file and folder a build reaches from its entry files, following relative references
+ * only — workspace packages come in through turbo's `^build` dependencies, not through files.
+ *
+ * @param entries - Repo-relative entry files (a Vite config, a bundle check).
+ * @returns Repo-relative paths, sorted; a folder (a Vite root, a content directory) ends in `/`.
+ * @throws Error when a reference resolves to nothing or leaves the repo.
+ *
+ * @remarks
+ * A `.js` specifier that does not exist resolves to its `.ts` source (NodeNext imports), and a
+ * folder with an `index.html` (a Vite root) is followed into that page.
+ */
+function reachedFiles(entries: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const queue = [...entries];
+  while (queue.length > 0) {
+    const file = queue.pop() as string;
+    if (seen.has(file)) continue;
+    seen.add(file);
+    if (!/\.(m?[jt]s|html)$/.test(file)) continue;
+    const source = read(file);
+    for (const pattern of file.endsWith('.html') ? PAGE_REFERENCES : SCRIPT_REFERENCES) {
+      for (const match of source.matchAll(pattern)) {
+        let target = posix.normalize(posix.join(posix.dirname(file), match[1]));
+        if (target.startsWith('..')) throw new Error(`${file}: ${match[1]} leaves the repo`);
+        if (!existsSync(join(repo, target)) && target.endsWith('.js')) {
+          target = `${target.slice(0, -3)}.ts`;
+        }
+        if (!existsSync(join(repo, target))) throw new Error(`${file}: ${match[1]} not found`);
+        if (statSync(join(repo, target)).isDirectory()) {
+          const folder = `${target.replace(/\/$/, '')}/`;
+          seen.add(folder);
+          if (existsSync(join(repo, folder, 'index.html'))) queue.push(`${folder}index.html`);
+        } else {
+          queue.push(target);
+        }
+      }
+    }
+  }
+  return [...seen].sort();
+}
+
+/**
+ * Whether a `turbo.json` glob matches a repo path. Only the two forms the config uses are
+ * understood — `dir/**` and an exact file — so a new form fails the test instead of passing it.
+ *
+ * @param glob - Repo-relative glob.
+ * @param path - Repo-relative path (a folder ends in `/`).
+ * @returns Whether the glob covers the path.
+ * @throws Error for any other glob syntax.
+ */
+function globCovers(glob: string, path: string): boolean {
+  if (glob.endsWith('/**')) return path.startsWith(glob.slice(0, -2));
+  if (/[*?[\]{}!]/.test(glob)) throw new Error(`unsupported glob in turbo.json: ${glob}`);
+  return path === glob;
+}
+
+/**
+ * Whether a change to a repo path changes a package task's cache key.
+ *
+ * @param turbo - The parsed `turbo.json`.
+ * @param task - The task entry that applies to the package.
+ * @param appDir - The package's folder, repo-relative (`apps/webos`).
+ * @param path - Repo-relative path.
+ * @returns Whether the global dependencies or the task's inputs cover the path.
+ */
+function inCacheKey(turbo: TurboConfig, task: TurboTask, appDir: string, path: string): boolean {
+  if (turbo.globalDependencies.some((glob) => globCovers(glob, path))) return true;
+  const inputs = task.inputs ?? ['$TURBO_DEFAULT$'];
+  return inputs.some((input) => {
+    if (input === '$TURBO_DEFAULT$') return path.startsWith(`${appDir}/`);
+    const glob = input.startsWith('$TURBO_ROOT$/')
+      ? input.slice('$TURBO_ROOT$/'.length)
+      : posix.join(appDir, input);
+    return globCovers(glob, path);
+  });
 }
 
 describe('integration: shipped code stays inside Chromium 68 (webOS 5) — M3-03', () => {
@@ -189,6 +301,61 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
         }
       ).scripts;
       expect(scripts['build:bench'], app).toContain('node scripts/check-bundle.mjs dist-bench');
+    }
+  });
+
+  it('key each bench build’s turbo cache on every file it reads, in its own app or not (R0-02)', () => {
+    // The webOS stub bundles the Tizen app's bench page, sources, atlas script and Vite helpers,
+    // and turbo hashes only a package's own files plus `globalDependencies` — so without its own
+    // inputs `pnpm bench:tv` rebuilt the Tizen bench after an edit and restored a stale webOS one.
+    const turbo = JSON.parse(read('turbo.json')) as TurboConfig;
+    const generic = turbo.tasks['build:bench'];
+    const webos = turbo.tasks['@shmup/webos#build:bench'];
+    expect(webos, '@shmup/webos#build:bench').toBeDefined();
+    // A root `<package>#<task>` entry replaces the generic task rather than extending it, so the
+    // webOS one repeats everything but its inputs, and keeps the package's own files in the key.
+    expect({ ...webos, inputs: undefined }).toEqual({ ...generic, inputs: undefined });
+    expect(webos?.inputs).toContain('$TURBO_DEFAULT$');
+    // The tasks' own inputs, not `globalDependencies`: an edit to the bench re-keys the two bench
+    // builds only, never every task in the repo.
+    expect(turbo.globalDependencies.filter((glob) => glob.includes('bench'))).toEqual([]);
+    // `$TURBO_ROOT$` needs turbo 2.5 or newer.
+    const [major = 0, minor = 0] = (
+      JSON.parse(read('node_modules/turbo/package.json')) as { version: string }
+    ).version
+      .split('.')
+      .map(Number);
+    expect(major > 2 || (major === 2 && minor >= 5), 'turbo >= 2.5').toBe(true);
+
+    let webosReached: string[] = [];
+    for (const app of ['tizen', 'webos']) {
+      const task = turbo.tasks[`@shmup/${app}#build:bench`] ?? generic;
+      // What `build:bench` runs: the bench's Vite config, then the app's bundle check.
+      const reached = reachedFiles([
+        `apps/${app}/vite.bench.config.ts`,
+        `apps/${app}/scripts/check-bundle.mjs`,
+      ]);
+      expect(
+        reached.filter((path) => !inCacheKey(turbo, task, `apps/${app}`, path)),
+        `files the ${app} bench build reads but turbo does not hash`,
+      ).toEqual([]);
+      if (app === 'webos') webosReached = reached;
+    }
+    // Not vacuous: the webOS walk really leaves its app, and the generic task alone would miss it.
+    const fromTizen = [
+      'apps/tizen/bench/',
+      'apps/tizen/bench/index.html',
+      'apps/tizen/bench/entry.js',
+      'apps/tizen/src/bench/main.ts',
+      'apps/tizen/src/platform/index.ts',
+      'apps/tizen/scripts/bench-atlas.mjs',
+      'apps/tizen/scripts/config-xml.mjs',
+      'apps/tizen/scripts/tizen-env.mjs',
+      'apps/tizen/vite.config.ts',
+    ];
+    expect(webosReached).toEqual(expect.arrayContaining(fromTizen));
+    for (const path of fromTizen) {
+      expect(inCacheKey(turbo, generic, 'apps/webos', path), path).toBe(false);
     }
   });
 
