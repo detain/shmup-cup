@@ -25,14 +25,33 @@ declare module 'virtual:shmup-render-bench' {
     /** The parsed JSON document. */
     readonly data: unknown;
   }
+  /**
+   * One page of the `decode` scenario (plan R1-05 B4, `scripts/bench-decode.mjs`): fetched,
+   * decoded and uploaded on the TV, never drawn.
+   */
+  export interface BenchDecodePageModule {
+    /** `rgba-2048`, `png8-2048`, `common` or `zone-a`. */
+    readonly id: string;
+    /** What it stands for. */
+    readonly what: string;
+    /** Pixels. */
+    readonly width: number;
+    /** Pixels. */
+    readonly height: number;
+    /** URL relative to the page (`assets/atlas/decode-rgba-2048.png`, …). */
+    readonly url: string;
+  }
   /** The atlases, in density order. */
   export const atlases: readonly BenchAtlasModule[];
   /** The particle presets. */
   export const fx: readonly BenchFxFile[];
-  /** Both. */
+  /** The decode scenario's pages, in the order it measures them. */
+  export const decode: readonly BenchDecodePageModule[];
+  /** All three. */
   const bench: {
     readonly atlases: readonly BenchAtlasModule[];
     readonly fx: readonly BenchFxFile[];
+    readonly decode: readonly BenchDecodePageModule[];
   };
   export default bench;
 }

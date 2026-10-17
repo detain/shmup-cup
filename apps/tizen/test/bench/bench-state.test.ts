@@ -1,21 +1,27 @@
 /**
  * The TV render bench's persisted run state and its sampler (plan R0-02): one scenario per page
  * load, the cursor and the records in `localStorage` between reloads, the Red re-run, the
- * acknowledged records — and the per-frame statistics the records are folded from.
+ * acknowledged records — and the per-frame statistics the records are folded from. Since R1-05 B4
+ * a run ends with the decode scenario, whose record the state keeps beside the render records.
  */
 import type { RenderBenchRecord } from '@shmup/shell';
 import { describe, expect, it } from 'vitest';
 import {
+  BENCH_RUN_LENGTH,
   BENCH_SCENARIOS,
   BENCH_STATE_KEY,
+  DECODE_SCENARIO_INDEX,
   BENCH_STATE_VERSION,
   BenchSampler,
   BenchSeries,
   TV_BENCH_TIMING,
   createRunState,
+  decodeUnsent,
+  isDecodeRecord,
   markSent,
   nextSeq,
   parseRunState,
+  recordDecode,
   recordResult,
   rerunScenario,
   roundTo,
@@ -24,7 +30,7 @@ import {
   summarizeSeries,
   unsentRecords,
 } from '../../src/bench/index.js';
-import { recordFor } from './fake-record.js';
+import { fakeDecode, recordFor } from './fake-record.js';
 
 /**
  * A complete record for scenario `index`.
@@ -47,6 +53,7 @@ describe('bench run state', () => {
       seq: 0,
       webGLVersion: 2,
       records: [],
+      decode: null,
       sent: [],
       lastError: null,
     });
@@ -72,22 +79,28 @@ describe('bench run state', () => {
         sent: ['x', 1],
       }),
     );
-    expect(messy?.cursor).toBe(BENCH_SCENARIOS.length);
+    expect(messy?.cursor).toBe(BENCH_RUN_LENGTH);
     expect(messy?.running).toBe(false);
     expect(messy?.records).toEqual([rec(1)]);
     expect(messy?.sent).toEqual([1]);
   });
 
-  it('works through the matrix one record at a time and stops at its end', () => {
+  it('works through the matrix one record at a time, then the decode scenario, and stops', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) {
       expect(state.running).toBe(true);
       expect(state.cursor).toBe(i);
       state = recordResult(state, rec(i));
     }
-    expect(state.running).toBe(false);
-    expect(state.cursor).toBe(BENCH_SCENARIOS.length);
+    // The decode scenario follows the matrix (plan R1-05 B4).
+    expect(state.running).toBe(true);
+    expect(state.cursor).toBe(DECODE_SCENARIO_INDEX);
     expect(state.records.map((r) => r.index)).toEqual(BENCH_SCENARIOS.map((s) => s.index));
+    state = recordDecode(state, fakeDecode());
+    expect(state.running).toBe(false);
+    expect(state.cursor).toBe(BENCH_RUN_LENGTH);
+    expect(state.decode).toEqual(fakeDecode());
+    expect(state.records).toHaveLength(BENCH_SCENARIOS.length);
   });
 
   it('re-runs the current scenario during a run (Red) and carries on afterwards', () => {
@@ -99,8 +112,12 @@ describe('bench run state', () => {
   });
 
   it('re-runs only the last scenario from the results page, replacing its record', () => {
+    // A run stored by a bench from before the decode scenario: stopped after the matrix.
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
+    const { decode: _decode, ...old } = { ...state, running: false };
+    state = parseRunState(JSON.stringify(old)) ?? state;
+    expect([state.running, state.cursor, state.decode]).toEqual([false, 18, null]);
     state = markSent(state, [17]);
     state = rerunScenario(state);
     expect([state.running, state.single, state.cursor]).toEqual([true, true, 17]);
@@ -110,6 +127,21 @@ describe('bench run state', () => {
     expect(state.records[17].frames).toBe(7);
     // The new record is not acknowledged yet.
     expect(unsentRecords(state).map((r) => r.index)).toContain(17);
+  });
+
+  it('re-runs the decode scenario from the results page after a whole run', () => {
+    let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
+    for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
+    state = markSent(recordDecode(state, fakeDecode()), [DECODE_SCENARIO_INDEX]);
+    expect(decodeUnsent(state)).toBe(false);
+    state = rerunScenario(state);
+    expect([state.running, state.single, state.cursor]).toEqual([true, true, 18]);
+    state = recordDecode(state, fakeDecode({ repetitions: 3 }));
+    expect([state.running, state.single, state.cursor]).toEqual([false, false, 19]);
+    expect(state.decode?.repetitions).toBe(3);
+    // The new decode record is not acknowledged yet; the render records are untouched.
+    expect(decodeUnsent(state)).toBe(true);
+    expect(state.records).toHaveLength(18);
   });
 
   it('stops where it is on Back or an error, keeping the results so far', () => {
@@ -122,6 +154,33 @@ describe('bench run state', () => {
     expect([again.cursor, again.single, again.lastError]).toEqual([0, true, null]);
   });
 
+  it('keeps the decode record through storage and drops one it could not show', () => {
+    let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
+    state = recordDecode(recordResult(state, rec(0)), fakeDecode());
+    expect(parseRunState(serializeRunState(state))).toEqual(state);
+    const text = (decode: unknown): string => JSON.stringify({ ...state, decode });
+    expect(parseRunState(text(null))?.decode).toBeNull();
+    expect(parseRunState(text({ scenario: 'decode' }))?.decode).toBeNull();
+    const badPage = { ...fakeDecode().pages[0], decodeMs: [1, 2] };
+    expect(parseRunState(text(fakeDecode({ pages: [badPage] })))?.decode).toBeNull();
+    // A state from before the decode scenario has no field at all.
+    const { decode: _decode, ...old } = state;
+    expect(parseRunState(JSON.stringify(old))?.decode).toBeNull();
+  });
+
+  it('tells a decode record the results page can draw', () => {
+    expect(isDecodeRecord(fakeDecode())).toBe(true);
+    expect(isDecodeRecord(fakeDecode({ pages: [] }))).toBe(true);
+    const unmeasured = { ...fakeDecode().pages[0], bitmapMs: null, bitmapUploadMs: null };
+    expect(isDecodeRecord(fakeDecode({ pages: [unmeasured], error: 'Error: x' }))).toBe(true);
+    expect(isDecodeRecord(null)).toBe(false);
+    expect(isDecodeRecord({ ...fakeDecode(), pages: 'x' })).toBe(false);
+    expect(isDecodeRecord({ ...fakeDecode(), error: 3 })).toBe(false);
+    expect(isDecodeRecord(fakeDecode({ pages: [null as never] }))).toBe(false);
+    const noBytes = { ...fakeDecode().pages[1], bytes: 'many' as unknown as number };
+    expect(isDecodeRecord(fakeDecode({ pages: [noBytes] }))).toBe(false);
+  });
+
   it('numbers payloads and remembers which records the log server acknowledged', () => {
     let state = createRunState('rb-x', 5, 1, TV_BENCH_TIMING);
     state = recordResult(recordResult(state, rec(0)), rec(1));
@@ -131,6 +190,13 @@ describe('bench run state', () => {
     expect(state.sent).toEqual([1]);
     expect(unsentRecords(state).map((r) => r.index)).toEqual([0]);
     state = markSent(state, [0]);
+    expect(unsentRecords(state)).toEqual([]);
+    // The decode record is acknowledged under its own index.
+    expect(decodeUnsent(state)).toBe(false);
+    state = recordDecode(state, fakeDecode());
+    expect(decodeUnsent(state)).toBe(true);
+    state = markSent(state, [DECODE_SCENARIO_INDEX]);
+    expect(decodeUnsent(state)).toBe(false);
     expect(unsentRecords(state)).toEqual([]);
   });
 });

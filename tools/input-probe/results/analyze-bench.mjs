@@ -17,6 +17,12 @@
  * the server had not acknowledged, so the **latest record per scenario and WebGL version wins** (a **Red**
  * re-run on the TV replaces its scenario's row the same way).
  *
+ * Since plan R1-05 (B4) a run ends with a **decode scenario**, whose `DecodeBenchRecord` rides in a payload's
+ * optional `decode` field: per atlas page (a synthetic 2048² RGBA page, a 2048² PNG-8 page, the shipped `common`
+ * and zone A pages) the median / p95 of the XHR fetch, the `HTMLImageElement` decode, the upload through the
+ * renderer (with `gl.finish()`) and the `createImageBitmap` alternative. It is printed as its own table with
+ * plan R3-04's zone-load estimate (≤ 2 s); sessions recorded before B4 simply have no such table.
+ *
  * Usage (from tools/input-probe/):
  *   node results/analyze-bench.mjs logs/rb-<session>.jsonl [more sessions …] [--records]
  *
@@ -67,11 +73,18 @@ export const TWO_TICK_TV_PROFILE_POINTS = 10;
 /** §13: WebGL 2's synced render must be at least this much lower to count as "clearly better". */
 export const WEBGL2_GAIN = 0.1;
 
+/** Plan R3-04: a zone change (or a lazy zone load) must take at most this long on the M7, ms. */
+export const ZONE_LOAD_TARGET_MS = 2000;
+
+/** Plan R3-04's page target per zone: `common` ≤ 1 page, the zone's own ≤ 2 pages. */
+export const ZONE_PAGES = { common: 1, zone: 2 };
+
 /**
  * Reads a session's payloads and keeps the latest record per scenario and WebGL version.
  *
  * @param {string} file - Path to the `<session>.jsonl` the log server wrote.
- * @returns {{payloads: any[], records: any[]}} the payloads in arrival order, and the records in matrix order.
+ * @returns {{payloads: any[], records: any[], decode: any | null}} the payloads in arrival order, the records in
+ *   matrix order, and the latest decode record (plan R1-05 B4), or null when the session has none.
  */
 export function readBenchSession(file) {
   const payloads = readFileSync(file, 'utf8')
@@ -91,7 +104,13 @@ export function readBenchSession(file) {
   const records = [...latest.values()].sort(
     (a, b) => (a.index ?? 0) - (b.index ?? 0) || (a.webGLVersion ?? 0) - (b.webGLVersion ?? 0),
   );
-  return { payloads, records };
+  let decode = null;
+  for (const p of payloads) {
+    const d = p.decode;
+    if (d === null || typeof d !== 'object' || !Array.isArray(d.pages)) continue;
+    if (decode === null || (d.endedAt ?? 0) >= (decode.endedAt ?? 0)) decode = d;
+  }
+  return { payloads, records, decode };
 }
 
 /**
@@ -232,6 +251,96 @@ function sizeTable(rows, records) {
 }
 
 /**
+ * The median (p50) of a `[min, p50, p95, max]` tuple.
+ *
+ * @param {unknown} d - the tuple.
+ * @returns {number | null} the median, or null when the tuple is missing.
+ */
+function median(d) {
+  return Array.isArray(d) && d.length >= 4 && typeof d[1] === 'number' && Number.isFinite(d[1]) ? d[1] : null;
+}
+
+/**
+ * Plan R3-04's zone-load estimate from a decode record: `common` (the RGBA 2048² page) plus two zone pages (the
+ * PNG-8 2048² page), each at its median — loaded cold (fetch + decode + upload: a lazy zone load, B3b) and
+ * uploaded only (today's policy "all": the images are decoded at boot and the zone change uploads them).
+ *
+ * @param {any} decode - the decode record.
+ * @returns {{lazyMs: number, eagerMs: number, perMpxMs: number | null} | null} the two estimates and the PNG-8
+ *   page's decode ms per megapixel, or null when the record lacks either 2048² page's figures.
+ */
+export function decodeZoneEstimate(decode) {
+  const pages = decode !== null && typeof decode === 'object' && Array.isArray(decode.pages) ? decode.pages : [];
+  const rgba = pages.find((p) => p !== null && typeof p === 'object' && p.id === 'rgba-2048');
+  const png8 = pages.find((p) => p !== null && typeof p === 'object' && p.id === 'png8-2048');
+  if (rgba === undefined || png8 === undefined) return null;
+  const totals = [median(rgba.totalMs), median(png8.totalMs)];
+  const uploads = [median(rgba.uploadSyncedMs), median(png8.uploadSyncedMs)];
+  if (totals.some((v) => v === null) || uploads.some((v) => v === null)) return null;
+  const decodeMs = median(png8.decodeMs);
+  const mpx = (png8.width * png8.height) / 1e6;
+  return {
+    lazyMs: ZONE_PAGES.common * totals[0] + ZONE_PAGES.zone * totals[1],
+    eagerMs: ZONE_PAGES.common * uploads[0] + ZONE_PAGES.zone * uploads[1],
+    perMpxMs: decodeMs === null || !(mpx > 0) ? null : decodeMs / mpx,
+  };
+}
+
+/**
+ * The decode scenario's section (plan R1-05 B4): one row per page and R3-04's zone-load estimate.
+ *
+ * @param {any} decode - the decode record.
+ * @returns {string[]} the lines.
+ */
+export function decodeSection(decode) {
+  const pages = Array.isArray(decode.pages) ? decode.pages : [];
+  const out = [
+    '## Decode and upload — file to GPU (plan R1-05 B4, for R3-04)',
+    '',
+    `${pages.length} page(s), ${decode.repetitions ?? '?'} repetition(s) each, WebGL ${decode.webGLVersion ?? '?'};` +
+      ` \`HTMLImageElement.decode()\` ${decode.imageDecode === true ? 'yes' : 'no'},` +
+      ` \`createImageBitmap\` ${decode.imageBitmap === true ? 'yes' : 'no'}. Fetch = XHR (\`file://\` on the TV),` +
+      ' decode = an image on a blob URL (`onload` + `decode()`), upload = the renderer’s `uploadTextureSource`' +
+      ' then `gl.finish()`; every texture is released between repetitions. "First" is the first (coldest)' +
+      ' repetition’s file → GPU total.',
+    '',
+    '| Page | Size | Encoding | File KB | Fetch p50 / p95 | Decode p50 / p95 | Upload CPU p50 / p95 | Upload + finish p50 / p95 | File → GPU p50 / p95 | First | Bitmap decode p50 / p95 | Bitmap upload p50 / p95 |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|',
+  ];
+  for (const p of pages) {
+    if (p === null || typeof p !== 'object') continue;
+    out.push(
+      `| ${p.id ?? '?'} | ${p.width ?? '?'}×${p.height ?? '?'} | ${p.encoding ?? '?'} | ${num((p.bytes ?? 0) / 1024, 0)} |` +
+        ` ${pair(p.fetchMs)} | ${pair(p.decodeMs)} | ${pair(p.uploadMs)} | ${pair(p.uploadSyncedMs)} |` +
+        ` ${pair(p.totalMs)} | ${p.totalMs ? num(p.firstTotalMs) : '—'} | ${pair(p.bitmapMs)} | ${pair(p.bitmapUploadMs)} |`,
+    );
+  }
+  for (const p of pages) {
+    if (p !== null && typeof p === 'object' && typeof p.error === 'string') out.push('', `- **${p.id}:** ${p.error}`);
+  }
+  if (typeof decode.error === 'string') out.push('', `**The decode scenario stopped:** ${decode.error}`);
+  const estimate = decodeZoneEstimate(decode);
+  out.push('');
+  if (estimate === null) {
+    out.push('No zone-load estimate: the 2048² pages were not both measured.');
+  } else {
+    const verdict = (ms) =>
+      ms <= ZONE_LOAD_TARGET_MS ? `within R3-04’s ${ZONE_LOAD_TARGET_MS} ms` : `**over** R3-04’s ${ZONE_LOAD_TARGET_MS} ms`;
+    out.push(
+      `R3-04 zone-load estimate (\`common\` = ${ZONE_PAGES.common} RGBA 2048² page + ${ZONE_PAGES.zone} PNG-8 2048² zone` +
+        ' pages, medians):',
+      '',
+      `- **cold load** (fetch + decode + upload — a lazy zone load, B3b): **${num(estimate.lazyMs, 0)} ms**, ${verdict(estimate.lazyMs)};`,
+      `- **zone change today** (policy "all": decoded at boot, uploaded at the change): **${num(estimate.eagerMs, 0)} ms**,` +
+        ` ${verdict(estimate.eagerMs)};`,
+      `- PNG-8 decode ≈ ${estimate.perMpxMs === null ? '—' : num(estimate.perMpxMs, 1)} ms per megapixel — scale it to the` +
+        ' real pages’ size.',
+    );
+  }
+  return out;
+}
+
+/**
  * The report of one session.
  *
  * @param {string} file - path to the `<session>.jsonl`.
@@ -239,7 +348,7 @@ function sizeTable(rows, records) {
  * @returns {string} the Markdown report.
  */
 export function analyzeBenchSession(file, options = {}) {
-  const { payloads, records } = readBenchSession(file);
+  const { payloads, records, decode } = readBenchSession(file);
   if (payloads.length === 0) return 'no payloads in ' + file;
   const last = payloads[payloads.length - 1];
   const env = last.env ?? {};
@@ -304,11 +413,16 @@ export function analyzeBenchSession(file, options = {}) {
       }
     }
   }
+  if (decode !== null) {
+    out.push('');
+    for (const line of decodeSection(decode)) out.push(line);
+  }
   if (options.withRecords === true) {
     out.push('');
     out.push('## Records');
     out.push('');
     for (const r of records) out.push('    ' + JSON.stringify(r));
+    if (decode !== null) out.push('    ' + JSON.stringify(decode));
   }
   return out.join('\n');
 }

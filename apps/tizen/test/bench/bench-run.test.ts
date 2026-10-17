@@ -3,8 +3,9 @@
  * in Node, so these drive the paths around the measurement: the results page (its plain-text
  * fallback when no renderer can be made), the remote's Enter / Red / Back against the stored run
  * state, a scenario that fails and stops the run instead of reloading forever, and the headless
- * mode's published outcome. The measurement itself runs in a browser: `pnpm bench`
- * (`test/bench/render.perf.ts`) opens every scenario headlessly.
+ * mode's published outcome — and the decode scenario at the end of a run (plan R1-05 B4), which
+ * records its failure and finishes the run rather than stopping it. The measurement itself runs in
+ * a browser: `pnpm bench` (`test/bench/render.perf.ts`) opens every scenario headlessly.
  */
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -15,6 +16,7 @@ import {
   atlasFor,
   createRunState,
   parseRunState,
+  recordDecode,
   recordResult,
   serializeRunState,
   startRenderBench,
@@ -22,7 +24,7 @@ import {
   type BenchHost,
   type TvBenchOutcome,
 } from '../../src/bench/index.js';
-import { recordFor } from './fake-record.js';
+import { fakeDecode, recordFor } from './fake-record.js';
 import { shippedAtlas } from './shipped-atlas.js';
 import type { AtlasManifest } from '@shmup/render-pixi';
 
@@ -36,7 +38,7 @@ const ASSETS: BenchAssets = {
 };
 
 /** A fake page: storage, keys, the body marker, reload and exit, and images that fail to load. */
-function fakePage(search = '', stored: string | null = null) {
+function fakePage(search = '', stored: string | null = null, assets: BenchAssets = ASSETS) {
   const store = new Map<string, string>();
   if (stored !== null) store.set(BENCH_STATE_KEY, stored);
   let keydown: ((event: { keyCode: number; preventDefault(): void }) => void) | null = null;
@@ -90,7 +92,7 @@ function fakePage(search = '', stored: string | null = null) {
       canvas: {} as HTMLCanvasElement,
       reportUrl: '',
       buildId: 'test',
-      assets: ASSETS,
+      assets,
       host,
     });
   };
@@ -104,17 +106,34 @@ const settle = async (): Promise<void> => {
 };
 
 /**
- * A complete run.
+ * A run whose 18 render scenarios are measured: the decode scenario is next.
  *
  * @returns Its stored text.
  */
-function completeRun(): string {
+function matrixDone(): string {
   let state = createRunState('rb-done', 1, 1, TV_BENCH_TIMING);
   for (const scenario of BENCH_SCENARIOS) {
     state = recordResult(state, recordFor(scenario.index));
   }
   return serializeRunState(state);
 }
+
+/**
+ * A complete run: the matrix, then the decode scenario.
+ *
+ * @returns Its stored text.
+ */
+function completeRun(): string {
+  const state = parseRunState(matrixDone());
+  if (state === null) throw new Error('unreadable run');
+  return serializeRunState(recordDecode(state, fakeDecode()));
+}
+
+/** {@link ASSETS} with the decode scenario's pages (which never load in Node either). */
+const DECODE_ASSETS: BenchAssets = {
+  ...ASSETS,
+  decode: [{ id: 'rgba-2048', what: 'x', width: 2048, height: 2048, url: 'decode.png' }],
+};
 
 describe('bench page (TV mode)', () => {
   it('finds the atlas of each density, and refuses an unknown one', () => {
@@ -155,7 +174,8 @@ describe('bench page (TV mode)', () => {
     const done = fakePage('', completeRun());
     done.start();
     done.press(403);
-    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 17 });
+    // The last scenario of a whole run is the decode scenario.
+    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 18 });
     expect(done.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -194,6 +214,55 @@ describe('bench page (TV mode)', () => {
     back.press(461);
     expect(back.exit).toHaveBeenCalledTimes(1);
     expect(back.state()).toMatchObject({ running: false, cursor: 0, lastError: null });
+  });
+});
+
+describe('bench page: the decode scenario (plan R1-05 B4)', () => {
+  it('runs after the matrix, records why it could not measure, and ends the run', async () => {
+    const page = fakePage('', matrixDone());
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
+    await settle();
+    const state = page.state();
+    expect(state).toMatchObject({ running: false, cursor: 19, lastError: null });
+    expect(state?.records).toHaveLength(18);
+    expect(state?.decode?.error).toBe('this bench build has no decode pages');
+    expect(state?.decode?.pages).toEqual([]);
+    expect(page.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('notes a renderer that cannot be made as the decode record’s error', async () => {
+    const page = fakePage('', matrixDone(), DECODE_ASSETS);
+    page.start();
+    await settle();
+    const state = page.state();
+    expect(state?.cursor).toBe(19);
+    expect(state?.decode?.error).toContain('atlas page missing.png failed to load');
+    expect(page.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a whole run’s results page with the decode table', async () => {
+    const page = fakePage('', completeRun());
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('results');
+    await settle();
+    expect(page.appended[0].textContent).toContain('DECODE (R1-05) 8 reps GL1');
+    expect(page.appended[0].textContent).toContain('png8-2048  2048x2048 PNG8');
+  });
+
+  it('publishes the decode outcome headlessly (?scenario=decode)', async () => {
+    const page = fakePage('?scenario=decode&reps=2', null, DECODE_ASSETS);
+    page.start();
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('running');
+    await settle();
+    const outcome = (page.win as unknown as { __shmupTvBench: TvBenchOutcome }).__shmupTvBench;
+    expect(outcome.record).toBeNull();
+    expect(outcome.decode?.scenario).toBe('decode');
+    expect(outcome.decode?.repetitions).toBe(2);
+    expect(outcome.error).toContain('failed to load');
+    expect(page.attributes[TV_BENCH_MARKER]).toBe('error');
+    expect(page.state()).toBeNull();
+    expect(page.reload).not.toHaveBeenCalled();
   });
 });
 

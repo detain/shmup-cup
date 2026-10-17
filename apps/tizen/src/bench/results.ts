@@ -4,6 +4,10 @@
  * enough to keep a run, and the relative columns — against the same variant at 384×216 in the same
  * session — are the ones plan §13 decides by.
  *
+ * Below the table, once the run's `decode` scenario has run (plan R1-05 B4 — `./decode.ts`), a
+ * second table: per page its size, encoding and file bytes, and the median / p95 of each stage from
+ * file to GPU ({@link formatDecodeTable}).
+ *
  * Pure string building plus one draw-list writer; the bench draws the lines on its results page
  * (`run.ts`), unit-tested against fake records in `apps/tizen/test/bench/`.
  *
@@ -11,7 +15,8 @@
  */
 import type { DrawList } from '@shmup/core';
 import { RAF_BUCKET_EDGES_MS } from '@shmup/render-pixi';
-import type { RenderBenchRecord } from '@shmup/shell';
+import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
+import { DECODE_SCENARIO_INDEX } from './decode.js';
 import { BENCH_SIZES, type BenchTiming } from './matrix.js';
 import type { BenchRunState } from './state.js';
 
@@ -209,6 +214,136 @@ export function formatResultsTable(records: readonly RenderBenchRecord[]): strin
   return out;
 }
 
+/** The decode table's columns: header and width (every width includes the leading space). */
+const DECODE_COLUMNS: readonly (readonly [string, number])[] = [
+  ['PAGE', 10],
+  ['SIZE', 10],
+  ['ENC', 5],
+  ['FILE_KB', 8],
+  ['FETCH50', 8],
+  ['DEC50', 7],
+  ['DEC95', 7],
+  ['UPL50', 7],
+  ['UPL95', 7],
+  ['TOT50', 7],
+  ['TOT95', 7],
+  ['FIRST', 7],
+  ['BMP50', 7],
+  ['BMPUP', 7],
+];
+
+/**
+ * A row of fixed-width cells: the first left-aligned, the others right-aligned.
+ *
+ * @param cells - The cells.
+ * @param columns - Column headers and widths.
+ * @returns The line.
+ */
+function fixedRow(
+  cells: readonly string[],
+  columns: readonly (readonly [string, number])[],
+): string {
+  let out = '';
+  for (let i = 0; i < columns.length; i++) {
+    const width = columns[i][1];
+    const text = cells[i].length > width ? cells[i].slice(0, width) : cells[i];
+    out += i === 0 ? text + ' '.repeat(Math.max(0, width - text.length)) : cell(text, width);
+  }
+  return out;
+}
+
+/**
+ * The decode table's header line (plan R1-05 B4).
+ *
+ * @returns The header, column for column with {@link formatDecodeRow}.
+ */
+export function formatDecodeHeader(): string {
+  return fixedRow(
+    DECODE_COLUMNS.map((column) => column[0]),
+    DECODE_COLUMNS,
+  );
+}
+
+/**
+ * One page's line of the decode table.
+ *
+ * @remarks
+ * `FETCH50` is the XHR's median, `DEC50` / `DEC95` the image decode's, `UPL50` / `UPL95` the
+ * upload's with `gl.finish()`, `TOT50` / `TOT95` fetch + decode + upload per repetition, `FIRST`
+ * the first repetition's total, `BMP50` / `BMPUP` the medians of the `createImageBitmap` decode and
+ * of its upload.
+ * A stage that was not measured reads `-`.
+ *
+ * @param page - The page's figures.
+ * @returns The line.
+ */
+export function formatDecodeRow(page: DecodeBenchPage): string {
+  /**
+   * A median or p95 cell.
+   *
+   * @param tuple - `[min, p50, p95, max]`, or `null`.
+   * @param at - 1 for the median, 2 for the p95.
+   * @returns The cell.
+   */
+  const ms = (tuple: readonly number[] | null, at: number): string =>
+    tuple === null ? '-' : tuple[at].toFixed(1);
+  return fixedRow(
+    [
+      page.id,
+      `${page.width}x${page.height}`,
+      page.encoding === 'png8' ? 'PNG8' : page.encoding === 'rgba' ? 'RGBA' : '?',
+      String(Math.round(page.bytes / 1024)),
+      ms(page.fetchMs, 1),
+      ms(page.decodeMs, 1),
+      ms(page.decodeMs, 2),
+      ms(page.uploadSyncedMs, 1),
+      ms(page.uploadSyncedMs, 2),
+      ms(page.totalMs, 1),
+      ms(page.totalMs, 2),
+      page.totalMs === null ? '-' : page.firstTotalMs.toFixed(1),
+      ms(page.bitmapMs, 1),
+      ms(page.bitmapUploadMs, 1),
+    ],
+    DECODE_COLUMNS,
+  );
+}
+
+/**
+ * The decode table: a title, the header, one line per page, and the scenario's or a page's error.
+ *
+ * @param record - The decode scenario's record.
+ * @returns The lines (text and colour).
+ *
+ * @example
+ * ```ts
+ * formatDecodeTable(state.decode); // → [{ text: 'DECODE (R1-05) 8 reps GL1 …' }, header, rows…]
+ * ```
+ */
+export function formatDecodeTable(record: DecodeBenchRecord): BenchLine[] {
+  const lines: BenchLine[] = [
+    {
+      text:
+        `DECODE (R1-05) ${record.repetitions} reps GL${record.webGLVersion}  file -> GPU ms: ` +
+        'XHR fetch, Image decode, upload + gl.finish',
+      color: NOTE_COLOR,
+    },
+    { text: formatDecodeHeader(), color: HEADER_COLOR },
+  ];
+  for (let i = 0; i < record.pages.length; i++) {
+    lines.push({ text: formatDecodeRow(record.pages[i]), color: ROW_COLOR });
+  }
+  if (record.error !== null) {
+    lines.push({ text: `ERROR decode: ${record.error}`, color: ERROR_COLOR });
+  }
+  for (let i = 0; i < record.pages.length; i++) {
+    const page = record.pages[i];
+    if (page.error !== null) {
+      lines.push({ text: `NOTE ${page.id}: ${page.error}`, color: ERROR_COLOR });
+    }
+  }
+  return lines;
+}
+
 /** What the results page says (see {@link benchPageLines}). */
 export interface BenchPageInput {
   /** The stored run, or `null` before the first one. */
@@ -253,7 +388,7 @@ export function benchPageLines(input: BenchPageInput): BenchLine[] {
     },
     {
       text:
-        `ENTER run the matrix: ${input.scenarios} scenarios, ~${minutes} min ` +
+        `ENTER run the matrix: ${input.scenarios} scenarios + decode, ~${minutes} min ` +
         `(${seconds(t.warmupMs)} s warm-up, ${seconds(t.measureMs)} s measured, ` +
         `${seconds(t.syncMs)} s synced each)`,
       color: NOTE_COLOR,
@@ -269,19 +404,29 @@ export function benchPageLines(input: BenchPageInput): BenchLine[] {
     { text: '', color: NOTE_COLOR },
   ];
   const state = input.state;
-  if (state === null || state.records.length === 0) {
+  if (state === null || (state.records.length === 0 && state.decode === null)) {
     lines.push({ text: 'No results yet.', color: ROW_COLOR });
   } else {
+    let sent = 0;
+    for (let i = 0; i < state.records.length; i++) {
+      if (state.sent.indexOf(state.records[i].index) >= 0) sent++;
+    }
+    const decodeSent = state.sent.indexOf(DECODE_SCENARIO_INDEX) >= 0;
     lines.push({
       text:
         `RUN ${state.session}  ${state.records.length}/${input.scenarios} measured  ` +
-        `sent ${state.sent.length}/${state.records.length}` +
+        `sent ${sent}/${state.records.length}` +
+        (state.decode === null ? '' : decodeSent ? '  decode sent' : '  decode not sent') +
         (state.running ? '  (still running)' : ''),
       color: NOTE_COLOR,
     });
     const table = formatResultsTable(state.records);
     for (let i = 0; i < table.length; i++) {
       lines.push({ text: table[i], color: i === 0 ? HEADER_COLOR : ROW_COLOR });
+    }
+    if (state.decode !== null) {
+      const decode = formatDecodeTable(state.decode);
+      for (let i = 0; i < decode.length; i++) lines.push(decode[i]);
     }
   }
   if (state !== null && state.lastError !== null) {

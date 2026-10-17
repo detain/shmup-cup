@@ -2,7 +2,7 @@
  * The TV render bench's on-screen results table (plan R0-02 acceptance: "the on-screen results
  * table is unit-tested against a fake result"): the fixed-width lines, the columns read against the
  * session's own 384×216 row, the results page around them, and the draw-list writer the page draws
- * them with.
+ * them with — and the decode scenario's table below it (plan R1-05 B4).
  */
 import { DrawOp, createDrawList } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
@@ -11,19 +11,25 @@ import {
   HEADER_COLOR,
   ROW_COLOR,
   TV_BENCH_TIMING,
+  NOTE_COLOR,
   baselineOf,
   benchPageLines,
   createRunState,
   drawBenchLines,
+  formatDecodeHeader,
+  formatDecodeRow,
+  formatDecodeTable,
   formatResultRow,
   formatResultsHeader,
   formatResultsTable,
   lateShare,
+  markSent,
+  recordDecode,
   recordResult,
   stopRun,
   type BenchPageInput,
 } from '../../src/bench/index.js';
-import { fakeRecord } from './fake-record.js';
+import { fakeDecode, fakeRecord } from './fake-record.js';
 
 /** The 640×360 busy record of the same fake session. */
 const V2_BUSY = fakeRecord({
@@ -105,6 +111,60 @@ describe('bench results table', () => {
   });
 });
 
+describe('bench decode table (plan R1-05 B4)', () => {
+  it('has a fixed-width header that fits the 640x360 results page', () => {
+    expect(formatDecodeHeader()).toBe(
+      'PAGE            SIZE  ENC FILE_KB FETCH50  DEC50  DEC95  UPL50  UPL95  TOT50  TOT95  FIRST' +
+        '  BMP50  BMPUP',
+    );
+    expect(formatDecodeHeader().length).toBeLessThanOrEqual(106);
+  });
+
+  it('prints a page’s medians and p95s from file to GPU, column for column', () => {
+    const [rgba, png8] = fakeDecode().pages;
+    expect(formatDecodeRow(rgba)).toBe(
+      'rgba-2048  2048x2048 RGBA    2442    24.0  420.0  500.0  110.0  140.0  554.0  670.0  696.0' +
+        '  380.0   22.0',
+    );
+    expect(formatDecodeRow(png8)).toContain(' PNG8 ');
+    expect(formatDecodeRow(png8).length).toBe(formatDecodeHeader().length);
+  });
+
+  it('prints "-" for a stage that was not measured', () => {
+    const page = {
+      ...fakeDecode().pages[3],
+      encoding: 'type 2',
+      fetchMs: null,
+      totalMs: null,
+      bitmapMs: null,
+      bitmapUploadMs: null,
+    };
+    const row = formatDecodeRow(page);
+    expect(row).toContain('   ? ');
+    const fetch = 10 + 10 + 5 + 8;
+    expect(row.slice(fetch, fetch + 8)).toBe('       -');
+    expect(row.endsWith('      -      -')).toBe(true);
+  });
+
+  it('titles the table, then its rows, then what went wrong', () => {
+    const page = { ...fakeDecode().pages[1], error: 'bitmap: no createImageBitmap' };
+    const lines = formatDecodeTable(fakeDecode({ pages: [page], error: 'Error: lost context' }));
+    expect(lines.map((line) => line.color)).toEqual([
+      NOTE_COLOR,
+      HEADER_COLOR,
+      ROW_COLOR,
+      ERROR_COLOR,
+      ERROR_COLOR,
+    ]);
+    expect(lines[0].text).toBe(
+      'DECODE (R1-05) 8 reps GL1  file -> GPU ms: XHR fetch, Image decode, upload + gl.finish',
+    );
+    expect(lines[3].text).toBe('ERROR decode: Error: lost context');
+    expect(lines[4].text).toBe('NOTE png8-2048: bitmap: no createImageBitmap');
+    for (const line of lines) expect(line.text).toMatch(/^[ -~]*$/);
+  });
+});
+
 describe('bench results page', () => {
   /**
    * The page's input with overrides.
@@ -132,7 +192,8 @@ describe('bench results page', () => {
       color: HEADER_COLOR,
     });
     expect(lines[1].text).toBe(
-      'ENTER run the matrix: 18 scenarios, ~10 min (10 s warm-up, 14 s measured, 6 s synced each)',
+      'ENTER run the matrix: 18 scenarios + decode, ~10 min (10 s warm-up, 14 s measured, 6 s synced' +
+        ' each)',
     );
     expect(lines[3].text).toBe('LOG off (build with VITE_REPORT_URL)');
     expect(lines[lines.length - 1]).toEqual({ text: 'No results yet.', color: ROW_COLOR });
@@ -155,6 +216,26 @@ describe('bench results page', () => {
     expect(texts).toContain(formatResultsHeader());
     expect(texts.filter((text) => text.startsWith('640x360 busy'))).toHaveLength(1);
     expect(lines[lines.length - 1]).toEqual({ text: 'ERROR Error: no WebGL', color: ERROR_COLOR });
+  });
+
+  it('shows the decode table below the matrix once the decode scenario ran (R1-05 B4)', () => {
+    let state = createRunState('rb-test-0002', 1, 1, TV_BENCH_TIMING);
+    state = recordDecode(recordResult(state, fakeRecord()), fakeDecode());
+    let texts = benchPageLines(input({ state })).map((line) => line.text);
+    expect(texts).toContain('RUN rb-test-0002  1/18 measured  sent 0/1  decode not sent');
+    const header = texts.indexOf(formatDecodeHeader());
+    expect(header).toBeGreaterThan(texts.indexOf(formatResultsHeader()));
+    expect(texts[header + 1].startsWith('rgba-2048')).toBe(true);
+    expect(texts[header + 4].startsWith('zone-a')).toBe(true);
+    // Acknowledged: the render records count apart from the decode record.
+    state = markSent(state, [0, 18]);
+    texts = benchPageLines(input({ state })).map((line) => line.text);
+    expect(texts).toContain('RUN rb-test-0002  1/18 measured  sent 1/1  decode sent');
+    // A decode record alone (a re-run of a run whose records were cleared) is still a result.
+    const alone = recordDecode(createRunState('rb-test-0003', 1, 1, TV_BENCH_TIMING), fakeDecode());
+    expect(benchPageLines(input({ state: alone })).map((line) => line.text)).not.toContain(
+      'No results yet.',
+    );
   });
 
   it('writes one string slot and one text command per line, up to the slots it has', () => {

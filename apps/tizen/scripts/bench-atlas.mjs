@@ -30,8 +30,10 @@
  *   of equal scaled area, and each group is packed on its own.
  *
  * The plugin, {@link shmupRenderBench}, also inlines the shipped particle presets
- * (`content/fx/*.fx.json`, examples excluded) so the bench needs no game content at all; it exposes
- * both through the virtual module {@link BENCH_MODULE_ID}.
+ * (`content/fx/*.fx.json`, examples excluded) so the bench needs no game content at all, and emits
+ * the `decode` scenario's pages (`./bench-decode.mjs` — plan R1-05 B4: two synthetic 2048² pages,
+ * RGBA and PNG-8, and the shipped `common` and zone A pages, as `decode-<id>.png` next to the
+ * density pages); it exposes all three through the virtual module {@link BENCH_MODULE_ID}.
  *
  * The pages are encoded like the game's atlas pages: lossless PNG-8 where a page has at most 256
  * colours, else RGBA (`encodePng(…, { indexed: 'auto' })`, decision W3-3 — today's art has more,
@@ -51,6 +53,7 @@ import { createImage } from '../../../scripts/assets/image.mjs';
 import { MAX_PAGE_SIZE, packRects } from '../../../scripts/assets/packer.mjs';
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
+import { buildDecodePages } from './bench-decode.mjs';
 
 /** The density factors of the bench's three frame sizes (384×216, 640×360, 960×540). */
 export const BENCH_DENSITIES = Object.freeze([1, 1.5, 2.25]);
@@ -402,9 +405,11 @@ export function readFxFiles(dir = FX_DIR) {
  * Vite plugin of the bench builds (`vite.bench.config.ts` of `apps/tizen` and `apps/webos`):
  * builds the density atlases from {@link benchSourceAtlas} (the shipped art, ungrouped, built in
  * memory once per Vite run), emits their pages into
- * {@link BENCH_ATLAS_DIR}, serves them from memory on the dev server, and provides
+ * {@link BENCH_ATLAS_DIR} together with the decode pages (`./bench-decode.mjs`
+ * `buildDecodePages`, plan R1-05 B4), serves them from memory on the dev server, and provides
  * {@link BENCH_MODULE_ID}: `export const atlases = [{ density, label, manifest, pageUrls }, …];
- * export const fx = [{ path, data }, …];`.
+ * export const fx = [{ path, data }, …]; export const decode = [{ id, what, width, height, url },
+ * …];`.
  *
  * @remarks
  * The manifests are inlined (decision D25 — a widget runs from `file://`, no `fetch()`); the pages
@@ -416,6 +421,8 @@ export function readFxFiles(dir = FX_DIR) {
 export function shmupRenderBench() {
   /** @type {BenchAtlas[] | null} */
   let atlases = null;
+  /** @type {import('./bench-decode.mjs').DecodePage[] | null} */
+  let decodePages = null;
   /** @type {'build' | 'serve'} */
   let command = 'build';
 
@@ -429,6 +436,16 @@ export function shmupRenderBench() {
     const source = benchSourceAtlas();
     atlases = buildBenchAtlases(source.manifest, source.pngs);
     return atlases;
+  };
+
+  /**
+   * Builds the decode scenario's pages once per Vite run.
+   *
+   * @returns {import('./bench-decode.mjs').DecodePage[]} The pages.
+   */
+  const ensureDecode = () => {
+    decodePages ??= buildDecodePages();
+    return decodePages;
   };
 
   return {
@@ -446,6 +463,13 @@ export function shmupRenderBench() {
             fileName: `${BENCH_ATLAS_DIR}/${page.file}`,
             source: atlas.png[index],
           });
+        });
+      }
+      for (const page of ensureDecode()) {
+        this.emitFile({
+          type: 'asset',
+          fileName: `${BENCH_ATLAS_DIR}/${page.file}`,
+          source: page.png,
         });
       }
     },
@@ -466,6 +490,12 @@ export function shmupRenderBench() {
             return;
           }
         }
+        const decodePage = ensureDecode().find((page) => page.file === file);
+        if (decodePage !== undefined) {
+          response.setHeader('Content-Type', 'image/png');
+          response.end(decodePage.png);
+          return;
+        }
         next();
       });
     },
@@ -480,10 +510,18 @@ export function shmupRenderBench() {
         manifest: atlas.manifest,
         pageUrls: atlas.pageUrls,
       }));
+      const decode = ensureDecode().map((page) => ({
+        id: page.id,
+        what: page.what,
+        width: page.width,
+        height: page.height,
+        url: `${BENCH_ATLAS_DIR}/${page.file}`,
+      }));
       return (
         `export const atlases = ${JSON.stringify(list)};\n` +
         `export const fx = ${JSON.stringify(readFxFiles())};\n` +
-        'export default { atlases, fx };\n'
+        `export const decode = ${JSON.stringify(decode)};\n` +
+        'export default { atlases, fx, decode };\n'
       );
     },
   };

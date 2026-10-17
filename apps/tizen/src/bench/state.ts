@@ -8,10 +8,16 @@
  * later run overwrites them, so a crash or a power cut loses nothing. Everything here is a pure
  * function of the state, tested headlessly; `run.ts` reads and writes the storage.
  *
+ * A run is the 18 render scenarios of the matrix, then the `decode` scenario (plan R1-05 B4 —
+ * `./decode.ts`): the cursor runs to {@link BENCH_RUN_LENGTH}, the render records go to `records`
+ * and the decode record to `decode`. A state stored by a bench from before B4 (no `decode`) still
+ * reads — its record is `null`.
+ *
  * @module
  */
-import type { RenderBenchRecord } from '@shmup/shell';
-import { BENCH_SCENARIOS, type BenchTiming } from './matrix.js';
+import type { DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
+import { BENCH_RUN_LENGTH, DECODE_SCENARIO_INDEX } from './decode.js';
+import { type BenchTiming } from './matrix.js';
 
 /** `localStorage` key of the run state (the game's `shmup-cup:` prefix). */
 export const BENCH_STATE_KEY = 'shmup-cup:render-bench';
@@ -31,7 +37,10 @@ export interface BenchRunState {
   readonly running: boolean;
   /** Whether only the scenario at the cursor runs, then the run stops (a **Red** re-run). */
   readonly single: boolean;
-  /** Index of the next scenario to run (`BENCH_SCENARIOS.length` = done). */
+  /**
+   * Index of the next scenario to run: a render scenario's index, `DECODE_SCENARIO_INDEX` for the
+   * decode scenario, `BENCH_RUN_LENGTH` = done.
+   */
   readonly cursor: number;
   /** Sequence number of the last payload sent to the log server. */
   readonly seq: number;
@@ -41,7 +50,12 @@ export interface BenchRunState {
   readonly timing: BenchTiming;
   /** The results so far, one per scenario index (a re-run replaces its record). */
   readonly records: readonly RenderBenchRecord[];
-  /** Scenario indexes whose record the log server has acknowledged. */
+  /** The decode scenario's record (plan R1-05 B4), or `null` before it ran. */
+  readonly decode: DecodeBenchRecord | null;
+  /**
+   * Scenario indexes whose record the log server has acknowledged (`DECODE_SCENARIO_INDEX` for the
+   * decode record).
+   */
   readonly sent: readonly number[];
   /** The last error that stopped the run, or `null`. */
   readonly lastError: string | null;
@@ -73,6 +87,7 @@ export function createRunState(
     webGLVersion,
     timing,
     records: [],
+    decode: null,
     sent: [],
     lastError: null,
   };
@@ -96,6 +111,58 @@ function isNumber(value: unknown): value is number {
  */
 function isTuple(value: unknown): boolean {
   return Array.isArray(value) && value.length === 4 && value.every(isNumber);
+}
+
+/**
+ * Whether a value is a `[min, p50, p95, max]` tuple or `null` (a stage that was not measured).
+ *
+ * @param value - The value.
+ * @returns `true` for a tuple of four finite numbers, or `null`.
+ */
+function isTupleOrNull(value: unknown): boolean {
+  return value === null || isTuple(value);
+}
+
+/**
+ * Whether a stored value is a decode record the results page can show (plan R1-05 B4 — everything
+ * its decode table reads).
+ *
+ * @param value - The value.
+ * @returns `true` for a usable record.
+ */
+export function isDecodeRecord(value: unknown): value is DecodeBenchRecord {
+  if (value === null || typeof value !== 'object') return false;
+  const r = value as Record<string, unknown>;
+  if (
+    typeof r.scenario !== 'string' ||
+    !isNumber(r.index) ||
+    !isNumber(r.webGLVersion) ||
+    !isNumber(r.repetitions) ||
+    !(r.error === null || typeof r.error === 'string') ||
+    !Array.isArray(r.pages)
+  ) {
+    return false;
+  }
+  return (r.pages as unknown[]).every((entry) => {
+    if (entry === null || typeof entry !== 'object') return false;
+    const p = entry as Record<string, unknown>;
+    return (
+      typeof p.id === 'string' &&
+      typeof p.encoding === 'string' &&
+      isNumber(p.width) &&
+      isNumber(p.height) &&
+      isNumber(p.bytes) &&
+      isNumber(p.firstTotalMs) &&
+      isTupleOrNull(p.fetchMs) &&
+      isTupleOrNull(p.decodeMs) &&
+      isTupleOrNull(p.uploadMs) &&
+      isTupleOrNull(p.uploadSyncedMs) &&
+      isTupleOrNull(p.totalMs) &&
+      isTupleOrNull(p.bitmapMs) &&
+      isTupleOrNull(p.bitmapUploadMs) &&
+      (p.error === null || typeof p.error === 'string')
+    );
+  });
 }
 
 /**
@@ -162,13 +229,13 @@ export function parseRunState(text: string | null): BenchRunState | null {
   ) {
     return null;
   }
-  const cursor = Math.max(0, Math.min(BENCH_SCENARIOS.length, Math.floor(o.cursor)));
+  const cursor = Math.max(0, Math.min(BENCH_RUN_LENGTH, Math.floor(o.cursor)));
   const records = (o.records as unknown[]).filter(isRecord);
   return {
     version: BENCH_STATE_VERSION,
     session: o.session,
     startedAt: o.startedAt,
-    running: o.running && cursor < BENCH_SCENARIOS.length,
+    running: o.running && cursor < BENCH_RUN_LENGTH,
     single: o.single === true,
     cursor,
     seq: Math.max(0, Math.floor(o.seq)),
@@ -180,6 +247,7 @@ export function parseRunState(text: string | null): BenchRunState | null {
       minFrames: isNumber(timing.minFrames) ? timing.minFrames : 0,
     },
     records,
+    decode: isDecodeRecord(o.decode) ? o.decode : null,
     sent: (o.sent as unknown[]).filter(isNumber),
     lastError: typeof o.lastError === 'string' ? o.lastError : null,
   };
@@ -200,7 +268,8 @@ export function serializeRunState(state: BenchRunState): string {
  *
  * @param state - The state.
  * @param record - The record (replaces an earlier one of the same index).
- * @returns The new state; `running` turns off once the cursor reaches the end of the matrix.
+ * @returns The new state; `running` turns off once the cursor reaches the end of the run (the
+ *   decode scenario still follows the last render scenario).
  */
 export function recordResult(state: BenchRunState, record: RenderBenchRecord): BenchRunState {
   const records = state.records.filter((other) => other.index !== record.index);
@@ -212,10 +281,41 @@ export function recordResult(state: BenchRunState, record: RenderBenchRecord): B
     records,
     sent: state.sent.filter((index) => index !== record.index),
     cursor,
-    running: state.running && !state.single && cursor < BENCH_SCENARIOS.length,
+    running: state.running && !state.single && cursor < BENCH_RUN_LENGTH,
     single: false,
     lastError: null,
   };
+}
+
+/**
+ * Stores the decode scenario's record (plan R1-05 B4) and moves the cursor past it.
+ *
+ * @param state - The state.
+ * @param record - The record (replaces an earlier one).
+ * @returns The new state — the run is over (the decode scenario is its last), its record not yet
+ *   acknowledged.
+ */
+export function recordDecode(state: BenchRunState, record: DecodeBenchRecord): BenchRunState {
+  const cursor = Math.max(state.cursor, DECODE_SCENARIO_INDEX + 1);
+  return {
+    ...state,
+    decode: record,
+    sent: state.sent.filter((index) => index !== DECODE_SCENARIO_INDEX),
+    cursor,
+    running: state.running && !state.single && cursor < BENCH_RUN_LENGTH,
+    single: false,
+    lastError: null,
+  };
+}
+
+/**
+ * Whether the decode record still waits for the log server's acknowledgement.
+ *
+ * @param state - The state.
+ * @returns `true` when there is a decode record the server has not acknowledged.
+ */
+export function decodeUnsent(state: BenchRunState): boolean {
+  return state.decode !== null && state.sent.indexOf(DECODE_SCENARIO_INDEX) < 0;
 }
 
 /**
@@ -265,7 +365,7 @@ export function stopRun(state: BenchRunState, error: string | null): BenchRunSta
 
 /**
  * Re-runs one scenario (the remote's **Red**): during a run the current one, on the results page
- * the last one of the matrix.
+ * the last one measured (after a whole run, the decode scenario).
  *
  * @param state - The state.
  * @returns The new state, `running` with the cursor on the scenario to repeat. During a run the
@@ -274,6 +374,6 @@ export function stopRun(state: BenchRunState, error: string | null): BenchRunSta
  */
 export function rerunScenario(state: BenchRunState): BenchRunState {
   if (state.running) return { ...state, lastError: null };
-  const cursor = Math.max(0, Math.min(state.cursor, BENCH_SCENARIOS.length) - 1);
+  const cursor = Math.max(0, Math.min(state.cursor, BENCH_RUN_LENGTH) - 1);
   return { ...state, running: true, single: true, cursor, lastError: null };
 }

@@ -34,14 +34,16 @@
  * 18 scenarios headlessly (`?scenario=<id>` — 384×216, 640×360 and 960×540 at density 1, 1.5 and
  * 2.25, each busy, with a filtered layer, Mode-7, CRT light / full and all at once) on a 1280×720
  * display. It gates **counts only** (`tvBenchViolations`: the load, draw calls, pooled render
- * targets, atlas pages 1 / 1 / 2, the heap) — the milliseconds are for the TV (R0-03).
+ * targets, atlas pages 1 / 1 / 2, the heap) — the milliseconds are for the TV (R0-03). Since plan
+ * R1-05 (B4) it also opens the bench's **decode scenario** (`?scenario=decode&reps=2`) and checks
+ * its shape: the four pages fetched, decoded and uploaded, with their sizes, encodings and bytes.
  *
  * Not part of `pnpm test`: it needs a browser and a quiet machine.
  *
  * @module
  */
 import { createServer, type Server } from 'node:http';
-import { createReadStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AddressInfo } from 'node:net';
@@ -51,7 +53,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
 import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
 import { BENCH_SCENARIOS, BENCH_SIZES } from '../../apps/tizen/src/bench/matrix.js';
-import type { RenderBenchRecord } from '../../packages/shell/src/telemetry/index.js';
+import { DECODE_SCENARIO_ID } from '../../apps/tizen/src/bench/decode.js';
+import { DECODE_PAGE_IDS, decodePageFile } from '../../apps/tizen/scripts/bench-decode.mjs';
+import type {
+  DecodeBenchRecord,
+  RenderBenchRecord,
+} from '../../packages/shell/src/telemetry/index.js';
 import {
   HEAP_BUDGET,
   nextPowerOfTwo,
@@ -462,19 +469,21 @@ export const TV_BENCH_PAGES: Readonly<Record<number, number>> = Object.freeze({
  *
  * @param url - The served bench.
  * @param id - Scenario id.
+ * @param extra - More query parameters, e.g. `'&reps=2'` (default none).
  * @returns What the page published.
  */
 async function runTvScenario(
   url: string,
   id: string,
-): Promise<{ record: RenderBenchRecord | null; error: string | null }> {
+  extra = '',
+): Promise<{ record: RenderBenchRecord | null; decode?: DecodeBenchRecord; error: string | null }> {
   const page = await browser.newPage({
     viewport: { width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT },
   });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));
   try {
-    await page.goto(`${url}?scenario=${encodeURIComponent(id)}`);
+    await page.goto(`${url}?scenario=${encodeURIComponent(id)}${extra}`);
     await page.waitForSelector(
       'body[data-shmup-tv-bench="done"], body[data-shmup-tv-bench="error"]',
       { timeout: 120_000 },
@@ -483,7 +492,11 @@ async function runTvScenario(
       () =>
         (
           window as unknown as {
-            __shmupTvBench: { record: RenderBenchRecord | null; error: string | null };
+            __shmupTvBench: {
+              record: RenderBenchRecord | null;
+              decode?: DecodeBenchRecord;
+              error: string | null;
+            };
           }
         ).__shmupTvBench,
     );
@@ -558,6 +571,38 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
       ).toEqual([]);
     }, 300_000);
   }
+
+  it('decode — fetches, decodes and uploads the four pages (R1-05 B4)', async () => {
+    const outcome = await runTvScenario(tvUrl, DECODE_SCENARIO_ID, '&reps=2');
+    expect(outcome.error).toBeNull();
+    const decode = outcome.decode as DecodeBenchRecord;
+    expect(decode.pages.map((page) => page.id)).toEqual(DECODE_PAGE_IDS);
+    expect(decode.repetitions).toBe(2);
+    for (const page of decode.pages) {
+      const bytes = statSync(join(TV_BENCH_OUT_DIR, 'assets/atlas', decodePageFile(page.id))).size;
+      console.info(
+        `[bench] tv decode ${page.id} ${page.width}x${page.height} ${page.encoding} ` +
+          `${(page.bytes / 1024).toFixed(0)} KB: fetch ${page.fetchMs?.[1]} ms, decode ` +
+          `${page.decodeMs?.[1]} ms, upload ${page.uploadSyncedMs?.[1]} ms, bitmap ` +
+          `${page.bitmapMs?.[1]} / ${page.bitmapUploadMs?.[1]} ms (SwiftShader — not the M7)`,
+      );
+      expect(page.error, page.id).toBeNull();
+      expect(page.bytes).toBe(bytes);
+      expect(page.repetitions).toBe(2);
+      for (const stage of [page.fetchMs, page.decodeMs, page.uploadMs, page.uploadSyncedMs]) {
+        expect(stage?.every((ms) => Number.isFinite(ms) && ms >= 0)).toBe(true);
+      }
+      // Chromium has createImageBitmap, so the alternative path is measured too.
+      expect(page.bitmapMs).not.toBeNull();
+    }
+    expect(
+      decode.pages.slice(0, 2).map((page) => [page.width, page.height, page.encoding]),
+    ).toEqual([
+      [2048, 2048, 'rgba'],
+      [2048, 2048, 'png8'],
+    ]);
+    expect(decode.imageBitmap).toBe(true);
+  }, 300_000);
 
   it('reports all three sizes with their atlas page counts (1, 1, 2)', () => {
     const pages = BENCH_SIZES.map((size) => {

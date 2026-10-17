@@ -214,6 +214,20 @@ scenario headlessly, `?warmup=` / `?measure=` / `?sync=` shorten the phases). Th
 mode (`DEV_BUILD_MODES` in `vite.shared.ts`), never shipped: the bundle check's rule 9 rejects it in
 the game's `app.js`. Packaging and installing are written, never run here.
 
+**The decode scenario (plan R1-05 B4).** After the 18 scenarios the run loads the page once more
+(`R1-05 DECODE 19/19` on screen, about 20–30 s) and measures what an atlas page costs **from file to
+GPU**: four PNGs built into `dist-bench/assets/atlas/decode-*.png` by `scripts/bench-decode.mjs` — a
+synthetic 2048² RGBA page (≈ 2.4 MB), the same quantised to a 2048² PNG-8 page (≈ 0.5 MB), and the
+shipped `common` and zone A pages — each fetched with XHR, decoded by an `Image` (blob URL, `onload`,
+`decode()`), uploaded through the renderer with `gl.finish()`, and decoded by `createImageBitmap` for
+comparison, eight times, every texture released in between. The figures appear in three places: the
+**`DECODE (R1-05)` table** under the results table on screen (medians and p95s in ms: `FETCH50`,
+`DEC50`/`DEC95`, `UPL50`/`UPL95`, `TOT50`/`TOT95` file → GPU, `FIRST` the coldest repetition,
+`BMP50`/`BMPUP` the bitmap path), the run's last `render-bench` payload (its `decode` field), and the
+analyzer's **"Decode and upload"** section, which ends with plan R3-04's zone-load estimate (common +
+two zone pages, against its 2 s target). **Red** on the results page re-runs it alone;
+`?scenario=decode&reps=<n>` runs it in a browser.
+
 ## config.xml
 
 `public/config.xml`: profile `tv-samsung`, privileges `tv.inputdevice` (extra remote keys),
@@ -245,7 +259,7 @@ reach the desktop on the port (firewall).
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±, and since M3-02b Guide 458 and Extra 10253 so REBIND can capture them; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, the lifecycle over `visibilitychange` **and** window `blur` / `focus` (M3-02b — Home on the M7 is an overlay that fires only the latter; edge-triggered over hidden ∨ unfocused, so the pause menu opens and the audio suspends while the Home bar is up and a `blur` + `hidden` pair suspends once), `exit()`, localStorage (since M2-17 the shell's quota-checked `createWebStorage`, issues logged) |
 | `device-info` | implemented | M2-17: UA / resolution / WebGL (`MAX_TEXTURE_SIZE`) / Samsung `webapis.productinfo` model, model code and firmware (`$WEBAPIS/webapis/webapis.js` loaded only on a TV, only when the debug tools unlock) → the debug overlay's device line (`tizenDebugTools`) and the remote inspector's console |
 | `live-reload` | implemented | M2-17: dev-only reload-on-change on the TV — `tizen:watch` builds with the dev server's WebSocket URL (`__SHMUP_LIVE_RELOAD__`); on each rebuild the app reloads, the installed widget navigating to the served build; reconnects with a growing delay; absent from release builds |
-| `bench` | implemented | R0-02: the TV render bench (its own widget — `vite.bench.config.ts`, `dist-bench/`; never in the game's bundle): the 18-scenario matrix (`matrix.ts`), the density-scaled synthetic scene drawn through the real renderer (`scene.ts` — five parallax layers, ~35 % terrain at `8·s` px, decor, 64 enemies, 512 bullets, 512 point items, 512 particles, the HUD bars; filtered layer, Mode-7, CRT variants), the allocation-free sampler (`stats.ts` — render CPU ms, `gl.finish()`-synced ms, rAF buckets, ticks per frame of the vsync-locked loop), the run state in `localStorage` (`state.ts`), the on-screen results table (`results.ts`), Enter / Back / Red on both TVs (`host.ts`) and the page plumbing with its headless `?scenario=` mode (`run.ts`); results POSTed through `@shmup/shell`'s `sendRenderBench` |
+| `bench` | implemented | R0-02: the TV render bench (its own widget — `vite.bench.config.ts`, `dist-bench/`; never in the game's bundle): the 18-scenario matrix (`matrix.ts`), the density-scaled synthetic scene drawn through the real renderer (`scene.ts` — five parallax layers, ~35 % terrain at `8·s` px, decor, 64 enemies, 512 bullets, 512 point items, 512 particles, the HUD bars; filtered layer, Mode-7, CRT variants), the allocation-free sampler (`stats.ts` — render CPU ms, `gl.finish()`-synced ms, rAF buckets, ticks per frame of the vsync-locked loop), the run state in `localStorage` (`state.ts`), the on-screen results table (`results.ts`), Enter / Back / Red on both TVs (`host.ts`) and the page plumbing with its headless `?scenario=` mode (`run.ts`); results POSTed through `@shmup/shell`'s `sendRenderBench`; R1-05 B4: the decode scenario after the matrix (`decode.ts` — fetch / decode / upload of the `scripts/bench-decode.mjs` pages, its own table and payload field) |
 
 Input device facts (diagonals, repeat behaviour, extra keys, latency) come from
 `tools/input-probe` (a separate npm project) — results change the input profiles in

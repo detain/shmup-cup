@@ -17,6 +17,13 @@
  * Either way the body carries {@link TV_BENCH_MARKER} — `running`, `done`, `error`, `scenario` or
  * `results` — which is also how the Tizen bundle check tells the bench's `app.js` from the game's.
  *
+ * **The decode scenario (plan R1-05 B4).** After the 18 render scenarios a TV run loads the page
+ * once more for `decode` (`./decode.ts`): a renderer on the ×1 atlas, then the bench build's decode
+ * pages fetched, decoded and uploaded {@link TV_DECODE_REPETITIONS} times each. Its record is
+ * stored as the state's `decode`, POSTed in the payload's `decode` field and drawn as a second
+ * table on the results page. Headless, `?scenario=decode` (`&reps=<n>`) publishes it as the
+ * outcome's `decode`.
+ *
  * **The measured frame.** Per animation frame: the vsync-locked fixed-step loop (`core/loop`, as
  * the shell runs it on a 60 Hz TV) advances the scene by its ticks, the particle pool is topped up,
  * then the **timed** part — the backdrop and terrain bindings' sync and `renderer.render()` — runs,
@@ -46,15 +53,31 @@ import {
   type AtlasManifest,
   type AtlasPageImage,
   type FxContent,
+  type PixiRenderer,
 } from '@shmup/render-pixi';
 import {
   buildRenderBenchPayload,
   makeRenderBenchSessionId,
   renderReportEndpoint,
   sendRenderBench,
+  type DecodeBenchRecord,
   type RenderBenchEnv,
   type RenderBenchRecord,
 } from '@shmup/shell';
+import {
+  BENCH_RUN_LENGTH,
+  DECODE_SCENARIO_ID,
+  DECODE_SCENARIO_INDEX,
+  HEADLESS_DECODE_REPETITIONS,
+  TV_DECODE_REPETITIONS,
+  createDecodeHost,
+  decodeRepetitionsFromSearch,
+  failedDecodeRecord,
+  measureDecode,
+  type BenchDecodePage,
+  type DecodeMeasureOptions,
+  type DecodeWindow,
+} from './decode.js';
 import { benchKeyOf, detectBenchHost, type BenchHost } from './host.js';
 import {
   BENCH_SCENARIOS,
@@ -67,7 +90,7 @@ import {
   type BenchScenario,
   type BenchTiming,
 } from './matrix.js';
-import { benchPageLines, drawBenchLines } from './results.js';
+import { NOTE_COLOR, benchPageLines, drawBenchLines } from './results.js';
 import {
   BENCH_LOAD,
   BenchRandom,
@@ -79,9 +102,11 @@ import { BenchSampler } from './stats.js';
 import {
   BENCH_STATE_KEY,
   createRunState,
+  decodeUnsent,
   markSent,
   nextSeq,
   parseRunState,
+  recordDecode,
   recordResult,
   rerunScenario,
   serializeRunState,
@@ -114,8 +139,10 @@ const MAX_TICKS_PER_FRAME = 4;
 
 /** What a headless page publishes on `window.__shmupTvBench`. */
 export interface TvBenchOutcome {
-  /** The record, or `null` when the scenario failed. */
+  /** The record, or `null` when the scenario failed (and for the decode scenario). */
   readonly record: RenderBenchRecord | null;
+  /** The decode scenario's record (`?scenario=decode`, plan R1-05 B4); absent otherwise. */
+  readonly decode?: DecodeBenchRecord;
   /** Why it failed, or `null`. */
   readonly error: string | null;
 }
@@ -178,6 +205,8 @@ export interface BenchAssets {
   readonly atlases: readonly BenchAtlasData[];
   /** The shipped particle-preset files (`content/fx/`). */
   readonly fx: readonly { readonly path: string; readonly data: unknown }[];
+  /** The decode scenario's pages (plan R1-05 B4); absent from older builds and test fakes. */
+  readonly decode?: readonly BenchDecodePage[];
 }
 
 /**
@@ -540,6 +569,107 @@ function measureScenario(
   return { done };
 }
 
+/** The texture source type the renderer uploads (Pixi's `TextureSource`). */
+type UploadSource = Parameters<PixiRenderer['uploadTextureSource']>[0];
+
+/**
+ * Runs the decode scenario on this page (plan R1-05 B4 — see `./decode.ts`): a renderer on the ×1
+ * atlas at the v2 frame (640×360) on the window's display, then {@link measureDecode} over the bench
+ * build's decode pages, each wrapped in a texture source by `createAtlas` exactly as the game wraps
+ * an atlas page and uploaded through `uploadTextureSource`. The progress is drawn between the
+ * measurements.
+ *
+ * @param options - The app options (window, canvas, assets).
+ * @param webGLVersion - The WebGL version to ask for.
+ * @param label - The progress label's prefix.
+ * @param repetitions - Repetitions per page.
+ * @returns Resolves with the record — never rejects: a scenario that cannot run at all (no pages,
+ *   no renderer) resolves with a record that carries the error and no pages.
+ */
+function measureDecodeScenario(
+  options: RenderBenchAppOptions,
+  webGLVersion: 1 | 2,
+  label: string,
+  repetitions: number,
+): Promise<DecodeBenchRecord> {
+  const { win, canvas, assets } = options;
+  const decodeWin = win as unknown as DecodeWindow;
+  const facts: DecodeMeasureOptions = {
+    repetitions,
+    webGLVersion,
+    imageDecode:
+      typeof (decodeWin.Image?.prototype as Partial<HTMLImageElement> | undefined)?.decode ===
+      'function',
+    wallClock: () => Date.now(),
+  };
+  return (async (): Promise<DecodeBenchRecord> => {
+    const pages = assets.decode ?? [];
+    if (pages.length === 0) {
+      return failedDecodeRecord('this bench build has no decode pages', facts);
+    }
+    const size = BENCH_SIZES[1];
+    const source = atlasFor(assets, 1);
+    const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));
+    const atlas = createAtlas(source.manifest, images, { onWarning: () => {} });
+    canvas.width = Math.max(1, Math.floor(win.innerWidth));
+    canvas.height = Math.max(1, Math.floor(win.innerHeight));
+    const renderer = await createPixiRenderer({
+      canvas,
+      displayWidth: canvas.width,
+      displayHeight: canvas.height,
+      width: size.width,
+      height: size.height,
+      atlas,
+      preferWebGLVersion: webGLVersion,
+    });
+    const context = canvas.getContext(renderer.webGLVersion === 2 ? 'webgl2' : 'webgl') as {
+      finish(): void;
+    } | null;
+    const ui = createDrawList(4, 2);
+    const frame = new BenchFrame(null, createDrawList(1, 1), ui);
+    const lineHeight = source.manifest.fonts.pixel?.lineHeight ?? 10;
+    /**
+     * Draws the progress line (between measurements, never inside one).
+     *
+     * @param text - What is being measured.
+     */
+    const show = (text: string): void => {
+      drawBenchLines(ui, [{ text: `${label} ${text}`, color: NOTE_COLOR }], 4, 4, lineHeight);
+      renderer.render(frame);
+    };
+    show('');
+    const host = createDecodeHost({
+      win: decodeWin,
+      createSource: (image, page) =>
+        createAtlas(
+          {
+            formatVersion: 2,
+            pages: [{ file: page.url, w: page.width, h: page.height }],
+            frames: {},
+            sprites: {},
+            animations: {},
+            fonts: {},
+          },
+          [image as AtlasPageImage],
+          { onWarning: () => {} },
+        ).pages[0],
+      upload: (texture) => {
+        renderer.uploadTextureSource(texture as UploadSource);
+      },
+      finish: () => {
+        context?.finish();
+      },
+      progress: show,
+    });
+    const record = await measureDecode(host, pages, {
+      ...facts,
+      webGLVersion: renderer.webGLVersion,
+    });
+    show('done');
+    return record;
+  })().catch((error: unknown) => failedDecodeRecord(String(error), facts));
+}
+
 /**
  * Starts the bench on its page (the entry point — `./main.ts`).
  *
@@ -593,16 +723,23 @@ function runHeadless(options: RenderBenchAppOptions, scenarioId: string, search:
    */
   const publish = (outcome: TvBenchOutcome): void => {
     (win as Window & { __shmupTvBench?: TvBenchOutcome }).__shmupTvBench = outcome;
-    mark(win, outcome.record === null ? 'error' : 'done');
+    mark(win, outcome.error === null ? 'done' : 'error');
   };
   mark(win, 'running');
+  const gl = benchWebGLVersion(search, storageOf(win));
+  if (scenarioId === DECODE_SCENARIO_ID) {
+    const repetitions = decodeRepetitionsFromSearch(search, HEADLESS_DECODE_REPETITIONS);
+    void measureDecodeScenario(options, gl, 'R1-05 DECODE', repetitions).then((decode) => {
+      publish({ record: null, decode, error: decode.error });
+    });
+    return;
+  }
   const scenario = findBenchScenario(scenarioId);
   if (scenario === null) {
     publish({ record: null, error: `unknown scenario "${scenarioId}"` });
     return;
   }
   const timing = timingFromSearch(search, HEADLESS_BENCH_TIMING);
-  const gl = benchWebGLVersion(search, storageOf(win));
   measureScenario(options, scenario, timing, gl, scenario.id).done.then(
     (record) => {
       publish({ record, error: null });
@@ -665,11 +802,17 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
    * POSTs records and notes which were acknowledged.
    *
    * @param records - The records.
-   * @param done - Whether the matrix is complete.
+   * @param done - Whether the run is complete.
    * @param then - Runs once the server answered (or not).
+   * @param decode - The decode scenario's record to carry too (plan R1-05 B4), if any.
    */
-  const post = (records: RenderBenchRecord[], done: boolean, then: () => void): void => {
-    if (state === null || endpoint === null || records.length === 0) {
+  const post = (
+    records: RenderBenchRecord[],
+    done: boolean,
+    then: () => void,
+    decode?: DecodeBenchRecord,
+  ): void => {
+    if (state === null || endpoint === null || (records.length === 0 && decode === undefined)) {
       then();
       return;
     }
@@ -682,6 +825,7 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       envOf(run),
       records,
       done,
+      decode,
     );
     sendRenderBench(
       endpoint,
@@ -689,12 +833,9 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       () => new (win as unknown as { XMLHttpRequest: new () => XMLHttpRequest }).XMLHttpRequest(),
       (ok) => {
         if (ok && state !== null) {
-          save(
-            markSent(
-              state,
-              records.map((record) => record.index),
-            ),
-          );
+          const indexes = records.map((record) => record.index);
+          if (decode !== undefined) indexes.push(DECODE_SCENARIO_INDEX);
+          save(markSent(state, indexes));
         }
         then();
       },
@@ -731,6 +872,22 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     }
   });
 
+  if (mode === 'scenario' && state !== null && state.cursor === DECODE_SCENARIO_INDEX) {
+    const run: BenchRunState = state;
+    mark(win, 'scenario');
+    void measureDecodeScenario(
+      options,
+      run.webGLVersion === 2 ? 2 : 1,
+      `R1-05 DECODE ${run.cursor + 1}/${BENCH_RUN_LENGTH} GL${run.webGLVersion}`,
+      decodeRepetitionsFromSearch(search, TV_DECODE_REPETITIONS),
+    ).then((record) => {
+      if (state === null) return;
+      const next = recordDecode(state, record);
+      save(next);
+      post([], next.cursor >= BENCH_RUN_LENGTH, reload, record);
+    });
+    return;
+  }
   if (mode === 'scenario' && state !== null) {
     const run: BenchRunState = state;
     const scenario = BENCH_SCENARIOS[run.cursor];
@@ -742,7 +899,7 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
         if (state === null) return;
         const next = recordResult(state, record);
         save(next);
-        post([record], next.cursor >= BENCH_SCENARIOS.length, reload);
+        post([record], next.cursor >= BENCH_RUN_LENGTH, reload);
       },
       (error: unknown) => {
         if (state !== null) save(stopRun(state, String(error)));
@@ -784,7 +941,12 @@ function showResults(
   host: BenchHost,
   endpoint: string | null,
   getState: () => BenchRunState | null,
-  post: (records: RenderBenchRecord[], done: boolean, then: () => void) => void,
+  post: (
+    records: RenderBenchRecord[],
+    done: boolean,
+    then: () => void,
+    decode?: DecodeBenchRecord,
+  ) => void,
 ): void {
   const { win, canvas } = options;
   const size = BENCH_SIZES[1];
@@ -822,14 +984,26 @@ function showResults(
     drawBenchLines(ui, lines(status), 4, 4, lineHeight);
   };
   const state = getState();
-  const unsent = state === null ? [] : unsentRecords(state);
-  draw(unsent.length > 0 && endpoint !== null ? `sending ${unsent.length} result(s)...` : '');
-  if (state !== null && unsent.length > 0 && endpoint !== null) {
-    post(unsent, state.cursor >= BENCH_SCENARIOS.length, () => {
-      const after = getState();
-      const left = after === null ? 0 : unsentRecords(after).length;
-      draw(left === 0 ? 'all results acknowledged' : `${left} result(s) not acknowledged`);
-    });
+  /**
+   * The results the log server has not acknowledged (the decode record counts as one).
+   *
+   * @param run - The state.
+   * @returns How many.
+   */
+  const pending = (run: BenchRunState | null): number =>
+    run === null ? 0 : unsentRecords(run).length + (decodeUnsent(run) ? 1 : 0);
+  const unsent = pending(state);
+  draw(unsent > 0 && endpoint !== null ? `sending ${unsent} result(s)...` : '');
+  if (state !== null && unsent > 0 && endpoint !== null) {
+    post(
+      unsentRecords(state),
+      state.cursor >= BENCH_RUN_LENGTH,
+      () => {
+        const left = pending(getState());
+        draw(left === 0 ? 'all results acknowledged' : `${left} result(s) not acknowledged`);
+      },
+      decodeUnsent(state) && state.decode !== null ? state.decode : undefined,
+    );
   }
   (async (): Promise<void> => {
     const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));

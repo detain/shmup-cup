@@ -198,6 +198,8 @@ export {
   type RenderBenchLoad,
   type RenderBenchPayload,
   type RenderBenchRecord,
+  type DecodeBenchPage,
+  type DecodeBenchRecord,
 } from './telemetry/index.js';
 export {
   DISPOSABLE_STORAGE_KEYS,

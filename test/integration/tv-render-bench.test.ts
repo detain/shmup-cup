@@ -5,21 +5,36 @@
  * as `render-bench` payloads through `@shmup/shell`'s wire format to the input probe's real log
  * server, stored, and turned by `results/analyze-bench.mjs` into the tables relative to the
  * session's own 384×216 rows.
+ *
+ * Since plan R1-05 (B4) a run ends with the **decode scenario**: the 18-scenario matrix is unchanged,
+ * the decode record rides in a payload's optional `decode` field through the same log server to the
+ * analyzer's decode table, its synthetic pages are drawn the same on every machine, and `pnpm bench`
+ * opens it headlessly too.
  */
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { BENCH_SCENARIOS } from '../../apps/tizen/src/bench/matrix.js';
+import {
+  BENCH_RUN_LENGTH,
+  DECODE_SCENARIO_ID,
+  DECODE_SCENARIO_INDEX,
+  measureDecode,
+  type DecodeHost,
+} from '../../apps/tizen/src/bench/decode.js';
+import { decodeArtImage } from '../../apps/tizen/scripts/bench-decode.mjs';
 // Relative source imports, as `render-telemetry-pipeline.test.ts` does: the root suite does not
 // depend on `@shmup/shell`.
 import {
   RENDER_BENCH_KIND,
   buildRenderBenchPayload,
   makeRenderBenchSessionId,
+  type DecodeBenchRecord,
   type RenderBenchEnv,
   type RenderBenchRecord,
 } from '../../packages/shell/src/telemetry/index.js';
@@ -35,6 +50,63 @@ import {
   analyzeBenchSession,
   readBenchSession,
 } from '../../tools/input-probe/results/analyze-bench.mjs';
+
+/**
+ * A decode record built the way the bench builds it: {@link measureDecode} over the bench's four
+ * pages against a host whose clock advances by fixed steps (fetch 20 ms, decode 300 ms, upload
+ * 100 ms CPU + 30 ms on `finish()`, bitmap 280 + 25 ms).
+ *
+ * @returns The record.
+ */
+async function decodeRecord(): Promise<DecodeBenchRecord> {
+  let clock = 0;
+  let gpu = 0;
+  const host: DecodeHost = {
+    now: () => clock,
+    fetch: (url) => {
+      clock += 20;
+      const bytes = new Uint8Array(1000);
+      bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      bytes[25] = url.includes('png8') || url.includes('zone') ? 3 : 6;
+      return Promise.resolve(bytes.buffer);
+    },
+    decodeImage: () => {
+      clock += 300;
+      return Promise.resolve({ image: {}, release: () => {} });
+    },
+    decodeUrl: () => Promise.reject(new Error('unused')),
+    decodeBitmap: () => {
+      clock += 280;
+      return Promise.resolve({ image: {}, release: () => {} });
+    },
+    createSource: () => ({ destroy: () => {} }),
+    upload: () => {
+      clock += 100;
+      gpu += 30;
+    },
+    finish: () => {
+      clock += gpu;
+      gpu = 0;
+    },
+  };
+  const pages = [
+    ['rgba-2048', 2048, 2048],
+    ['png8-2048', 2048, 2048],
+    ['common', 1024, 512],
+    ['zone-a', 256, 128],
+  ] as const;
+  return measureDecode(
+    host,
+    pages.map(([id, width, height]) => ({
+      id,
+      what: id,
+      width,
+      height,
+      url: `assets/atlas/decode-${id}.png`,
+    })),
+    { repetitions: 4, webGLVersion: 1, imageDecode: true, wallClock: () => 1_760_000_700_000 },
+  );
+}
 
 /**
  * A healthy record for a scenario, shaped as the bench writes it.
@@ -156,6 +228,44 @@ describe('render bench: the TV gate (tvBenchViolations, R0-02)', () => {
   });
 });
 
+describe('render bench: the decode scenario follows the unchanged matrix (R1-05 B4)', () => {
+  it('appends one page load to the run and leaves the 18 scenarios as R0-02 built them', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(18);
+    expect(BENCH_SCENARIOS[0].id).toBe('384x216-busy');
+    expect(BENCH_SCENARIOS[17].id).toBe('960x540-worst');
+    expect([DECODE_SCENARIO_ID, DECODE_SCENARIO_INDEX, BENCH_RUN_LENGTH]).toEqual([
+      'decode',
+      18,
+      19,
+    ]);
+  });
+
+  it('draws its synthetic pages the same on every machine (integer maths only)', () => {
+    const sha = (mode: 'rgba' | 'png8'): string =>
+      createHash('sha256').update(decodeArtImage(mode, 256).data).digest('hex');
+    expect(sha('rgba')).toBe('14871fc4e03574a43b1c403b95bc269b4c3078c9b5854b8d6da18495d2e27f92');
+    expect(sha('png8')).toBe('fe309d05c530d3f4be9e5b8528123702d518f997bb0a33afae6c7db5fb74c19a');
+  });
+
+  it('builds a record of every page with each stage as [min, p50, p95, max]', async () => {
+    const record = await decodeRecord();
+    expect(record).toMatchObject({ scenario: 'decode', index: 18, repetitions: 4, error: null });
+    expect(record.pages.map((page) => [page.id, page.encoding])).toEqual([
+      ['rgba-2048', 'rgba'],
+      ['png8-2048', 'png8'],
+      ['common', 'rgba'],
+      ['zone-a', 'png8'],
+    ]);
+    const [rgba] = record.pages;
+    expect(rgba.fetchMs).toEqual([20, 20, 20, 20]);
+    expect(rgba.decodeMs).toEqual([300, 300, 300, 300]);
+    expect(rgba.uploadSyncedMs).toEqual([130, 130, 130, 130]);
+    expect(rgba.totalMs).toEqual([450, 450, 450, 450]);
+    expect(rgba.bitmapUploadMs).toEqual([130, 130, 130, 130]);
+    expect(rgba.textureBytes).toBe(2048 * 2048 * 4);
+  });
+});
+
 describe('render bench: the headless driver gates every TV scenario', () => {
   const perf = readFileSync(
     fileURLToPath(new URL('../bench/render.perf.ts', import.meta.url)),
@@ -170,6 +280,11 @@ describe('render bench: the headless driver gates every TV scenario', () => {
     expect(perf).toMatch(/1: 1,\s*1\.5: 1,\s*2\.25: 2,/);
     expect(perf).toContain("configFile: join(appDir, 'vite.bench.config.ts')");
     expect(perf).toContain("mode: 'bench'");
+  });
+
+  it('opens the decode scenario too and checks its four pages (R1-05 B4)', () => {
+    expect(perf).toContain("runTvScenario(tvUrl, DECODE_SCENARIO_ID, '&reps=2')");
+    expect(perf).toContain('DECODE_PAGE_IDS');
   });
 
   it('renders on a 1280x720 display, a whole multiple of 640x360', () => {
@@ -240,5 +355,30 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
     // 640x360 busy: synced p95 4.5 × 1.5 over the baseline's 4 → 1.50×; two-tick 3 % vs 2 % → +1.0.
     expect(report).toContain('| busy | 1 | 3.00 / 4.50 | 4.50 / 6.00 | 1.50× | 3.0 | +1.0 |');
     expect(report).toContain('## Plan §13 at 640×360');
+    // A session from before the decode scenario has no decode table.
+    expect(readBenchSession(file).decode).toBeNull();
+    expect(report).not.toContain('## Decode and upload');
+  });
+
+  it('carries the decode record in the run’s last payload, through to the analyzer (R1-05 B4)', async () => {
+    const decode = await decodeRecord();
+    const payload = buildRenderBenchPayload(session, 19, env.startedAt + 19, env, [], true, decode);
+    const response = await fetch(base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify(payload),
+    });
+    expect(response.status).toBe(200);
+    const file = join(dir, `${session}.jsonl`);
+    expect(readBenchSession(file).decode).toEqual(decode);
+    const report = analyzeBenchSession(file);
+    expect(report).toContain('## Decode and upload — file to GPU (plan R1-05 B4, for R3-04)');
+    expect(report).toContain(
+      '| rgba-2048 | 2048×2048 | rgba | 1 | 20.00 / 20.00 | 300.00 / 300.00 | 100.00 / 100.00 |' +
+        ' 130.00 / 130.00 | 450.00 / 450.00 | 450.00 | 280.00 / 280.00 | 130.00 / 130.00 |',
+    );
+    // 450 + 2 × 450 cold; 130 + 2 × 130 as uploads only.
+    expect(report).toContain('**1350 ms**, within R3-04’s 2000 ms');
+    expect(report).toContain('**390 ms**, within R3-04’s 2000 ms');
   });
 });

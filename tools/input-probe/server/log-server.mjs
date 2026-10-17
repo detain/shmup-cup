@@ -13,7 +13,9 @@
  * A third sender since plan R0-02: the **TV render bench** (`pnpm bench:tv` with the same VITE_REPORT_URL)
  * POSTs `{kind:'render-bench', session, seq, sentAt, env, results, done}` after each scenario — `results`
  * holds that scenario's record (or, once the run is over, every record not yet acknowledged). Its sessions
- * are `rb-…`; `results/analyze-bench.mjs` turns one into the relative tables.
+ * are `rb-…`; `results/analyze-bench.mjs` turns one into the relative tables. Since plan R1-05 (B4) the run's
+ * last payload also carries a `decode` record (what an atlas page costs from file to GPU); the server stores it
+ * like everything else and prints one line per page.
  *
  * The server stays **payload-agnostic** apart from the summary it prints: {@link validatePayload} only
  * checks what the server itself relies on, and {@link formatSummary} picks a per-kind formatter.
@@ -285,8 +287,29 @@ function formatBenchRecord(r) {
 }
 
 /**
+ * One line per page of a bench payload's decode record (plan R1-05 B4): its size, encoding and bytes, and the
+ * medians from file to GPU. Never trusts the shape.
+ *
+ * @param {unknown} page - one entry of `decode.pages`.
+ * @returns {string} e.g.
+ *   `    decode rgba-2048 2048x2048 rgba 2442 KB · FETCH 31.0 · DECODE 402.5 · UPLOAD 120.2 · TOTAL 560.1 · BITMAP 390.0/15.2`.
+ */
+function formatDecodePage(page) {
+  if (!page || typeof page !== 'object') return '    decode ' + String(page);
+  const p50 = (d) => (Array.isArray(d) && d.length >= 4 && typeof d[1] === 'number' ? d[1].toFixed(1) : '—');
+  const kb = typeof page.bytes === 'number' ? String(Math.round(page.bytes / 1024)) : '?';
+  return (
+    `    decode ${str(page.id ?? '?')} ${str(page.width ?? '?')}x${str(page.height ?? '?')} ${str(page.encoding ?? '?')}` +
+    ` ${kb} KB · FETCH ${p50(page.fetchMs)} · DECODE ${p50(page.decodeMs)} · UPLOAD ${p50(page.uploadSyncedMs)}` +
+    ` · TOTAL ${p50(page.totalMs)} · BITMAP ${p50(page.bitmapMs)}/${p50(page.bitmapUploadMs)}` +
+    (typeof page.error === 'string' ? ` · ${page.error}` : '')
+  );
+}
+
+/**
  * Console summary of a TV render-bench payload (plan R0-02): a header line (session, seq, how many results,
- * build, host, display, the run's progress) and one line per record.
+ * build, host, display, the run's progress) and one line per record — and, for the payload that carries the
+ * decode scenario's record (plan R1-05 B4), one line per page.
  *
  * @param {Record<string, any>} p - a valid payload whose `kind` is `'render-bench'`.
  * @returns {string} the summary, one item per line.
@@ -297,10 +320,14 @@ export function formatBenchSummary(p) {
   const last = results.length > 0 && results[results.length - 1] && typeof results[results.length - 1] === 'object'
     ? results[results.length - 1]
     : null;
+  const decode = p.decode !== null && typeof p.decode === 'object' ? p.decode : null;
+  const decodePages = decode !== null && Array.isArray(decode.pages) ? decode.pages : [];
   const progress =
     last !== null && typeof last.index === 'number' && typeof env.scenarios === 'number'
       ? ` · scenario ${last.index + 1}/${env.scenarios}`
-      : '';
+      : decode !== null
+        ? ` · decode ${decodePages.length} page(s) × ${str(decode.repetitions ?? '?')}`
+        : '';
   const lines = [
     `[${str(p.session)} #${str(p.seq)}] render-bench · ${results.length} result(s)` +
       (env.buildId ? ` · build ${str(env.buildId)}` : '') +
@@ -310,6 +337,8 @@ export function formatBenchSummary(p) {
       (p.done === true ? ' · run complete' : ''),
   ];
   for (const r of results) lines.push(formatBenchRecord(r));
+  for (const page of decodePages) lines.push(formatDecodePage(page));
+  if (decode !== null && typeof decode.error === 'string') lines.push(`    decode stopped: ${decode.error}`);
   return lines.join('\n');
 }
 

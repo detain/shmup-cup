@@ -3,7 +3,9 @@
  * fixture session"): a fixture TV render-bench session (`fixtures/bench-session.jsonl` — 18 scenarios, a Red
  * re-run, an older record re-sent at the end of the run) turns into the §12 tables, every row read against the
  * same variant at 384×216 in the same session, with plan §13's outcome applied to 640×360 and the 960×540 note
- * — and two sessions of the same set into the WebGL 1-vs-2 verdict.
+ * — and two sessions of the same set into the WebGL 1-vs-2 verdict. Since plan R1-05 (B4) a run ends with the
+ * decode scenario (`fixtures/bench-decode.jsonl` — its payload alone): its table and R3-04's zone-load estimate,
+ * and an older session without it still reads the same.
  */
 
 import { spawn } from 'node:child_process';
@@ -15,10 +17,13 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import {
+  ZONE_LOAD_TARGET_MS,
   analyzeBenchSession,
   analyzeBenchSessions,
   baselineFor,
   compareWebGL,
+  decodeSection,
+  decodeZoneEstimate,
   lateShare,
   readBenchSession,
   relativeTo,
@@ -27,6 +32,7 @@ import {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'bench-session.jsonl');
+const DECODE_FIXTURE = join(ROOT, 'test', 'fixtures', 'bench-decode.jsonl');
 const tmp = mkdtempSync(join(tmpdir(), 'analyze-bench-'));
 
 afterAll(() => {
@@ -149,6 +155,86 @@ describe('analyzeBenchSession', () => {
     const empty = join(tmp, 'empty.jsonl');
     writeFileSync(empty, '\n');
     expect(analyzeBenchSession(empty)).toBe('no payloads in ' + empty);
+  });
+});
+
+/**
+ * The fixture session followed by its decode payload — a whole run since R1-05 B4.
+ *
+ * @param name - File name.
+ * @param editDecode - Rewrites the decode record.
+ * @returns The path.
+ */
+function decodeSession(name: string, editDecode: (d: Record<string, unknown>) => Record<string, unknown> = (d) => d): string {
+  const payload = JSON.parse(readFileSync(DECODE_FIXTURE, 'utf8')) as Record<string, unknown>;
+  const edited = { ...payload, decode: editDecode(payload['decode'] as Record<string, unknown>) };
+  const file = join(tmp, name);
+  writeFileSync(file, readFileSync(FIXTURE, 'utf8').trim() + '\n' + JSON.stringify(edited) + '\n');
+  return file;
+}
+
+describe('the decode scenario (plan R1-05 B4)', () => {
+  it('has no decode record in a session from before it', () => {
+    expect(readBenchSession(FIXTURE).decode).toBeNull();
+    expect(analyzeBenchSession(FIXTURE)).not.toContain('## Decode and upload');
+  });
+
+  it('reads the decode record next to the 18 render records, the latest one winning', () => {
+    const file = decodeSession('decode.jsonl');
+    const { payloads, records, decode } = readBenchSession(file);
+    expect(payloads).toHaveLength(21);
+    expect(records).toHaveLength(18);
+    expect(decode?.pages.map((p: { id: string }) => p.id)).toEqual(['rgba-2048', 'png8-2048', 'common', 'zone-a']);
+    // A Red re-run of the decode scenario sends a newer record: it wins.
+    const rerun = join(tmp, 'decode-rerun.jsonl');
+    const payload = JSON.parse(readFileSync(DECODE_FIXTURE, 'utf8')) as { decode: Record<string, unknown> };
+    const newer = { ...payload, seq: 22, decode: { ...payload.decode, repetitions: 3, endedAt: 1760000999000 } };
+    writeFileSync(rerun, readFileSync(file, 'utf8') + JSON.stringify(newer) + '\n');
+    expect(readBenchSession(rerun).decode?.repetitions).toBe(3);
+  });
+
+  it('estimates R3-04’s zone load: common + two zone pages, cold and as uploads only', () => {
+    const { decode } = readBenchSession(decodeSession('estimate.jsonl'));
+    const estimate = decodeZoneEstimate(decode);
+    // 554 + 2 × 379 cold; 130 + 2 × 110 uploads; 260 ms over 4.19 Mpx.
+    expect(estimate?.lazyMs).toBe(1312);
+    expect(estimate?.eagerMs).toBe(350);
+    expect(estimate?.perMpxMs).toBeCloseTo(260 / 4.194304, 9);
+    expect(ZONE_LOAD_TARGET_MS).toBe(2000);
+    expect(decodeZoneEstimate(null)).toBeNull();
+    expect(decodeZoneEstimate({ pages: [decode.pages[0]] })).toBeNull();
+    expect(decodeZoneEstimate({ pages: [decode.pages[0], { ...decode.pages[1], totalMs: null }] })).toBeNull();
+  });
+
+  it('prints the decode table, the notes and the estimate', () => {
+    const report = analyzeBenchSession(decodeSession('report.jsonl'), { withRecords: true });
+    expect(report).toContain('## Decode and upload — file to GPU (plan R1-05 B4, for R3-04)');
+    expect(report).toContain('4 page(s), 8 repetition(s) each, WebGL 1;');
+    expect(report).toContain(
+      '| rgba-2048 | 2048×2048 | rgba | 2442 | 24.00 / 30.00 | 400.00 / 450.00 | 110.00 / 140.00 |' +
+        ' 130.00 / 170.00 | 554.00 / 640.00 | 660.00 | 380.00 / 420.00 | 20.00 / 26.00 |',
+    );
+    expect(report).toContain('| zone-a | 256×128 | png8 | 2 | 0.60 / 0.80 |');
+    expect(report).toContain('- **zone-a:** bitmap: createImageBitmap timed out after 30000 ms');
+    expect(report).toContain('**cold load** (fetch + decode + upload — a lazy zone load, B3b): **1312 ms**, within');
+    expect(report).toContain('**350 ms**, within R3-04’s 2000 ms');
+    expect(report).toContain('PNG-8 decode ≈ 62.0 ms per megapixel');
+    // The render tables are unchanged, and --records lists the decode record too.
+    expect(report).toContain('18 of 18 scenario(s) measured, run complete');
+    expect(report).toContain('"scenario":"decode"');
+  });
+
+  it('flags an estimate over the target and a scenario that stopped', () => {
+    const slow = (d: Record<string, unknown>) => ({
+      ...d,
+      error: 'Error: context lost',
+      pages: (d['pages'] as Record<string, unknown>[]).map((p) => ({ ...p, totalMs: [900, 1000, 1100, 1200] })),
+    });
+    const lines = decodeSection(readBenchSession(decodeSession('slow.jsonl', slow)).decode);
+    expect(lines).toContain('**The decode scenario stopped:** Error: context lost');
+    expect(lines.join('\n')).toContain('**3000 ms**, **over** R3-04’s 2000 ms');
+    const none = decodeSection({ repetitions: 1, pages: [] });
+    expect(none).toContain('No zone-load estimate: the 2048² pages were not both measured.');
   });
 });
 

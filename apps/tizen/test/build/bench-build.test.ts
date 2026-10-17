@@ -3,7 +3,9 @@
  * produces a widget directory that passes the Tizen bundle checks"): runs the real bench build
  * (`vite.bench.config.ts`, mode `bench`) into a temporary folder and checks what would be packaged
  * — one classic ES2018 IIFE behind the `globalThis` banner, the bench's own `config.xml`, the
- * density atlases (1, 1 and 2 pages) and nothing of the game's.
+ * density atlases (1, 1 and 2 pages), the decode scenario's four pages (plan R1-05 B4: the
+ * synthetic 2048² RGBA and PNG-8 pages and the shipped `common` and zone A pages) and nothing of the
+ * game's.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -19,6 +21,12 @@ import {
   checkTizenBundle,
 } from '../../scripts/check-bundle.mjs';
 import { BENCH_APP_ID } from '../../scripts/config-xml.mjs';
+import {
+  DECODE_BYTE_BANDS,
+  DECODE_PAGE_IDS,
+  decodePageFile,
+  pngColorType,
+} from '../../scripts/bench-decode.mjs';
 import benchConfig, { BENCH_BUILD_MODE, BENCH_OUT_DIR } from '../../vite.bench.config.js';
 
 const appDir = fileURLToPath(new URL('../../', import.meta.url));
@@ -74,6 +82,10 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
       'assets/atlas/bench-x1.5-0.png',
       'assets/atlas/bench-x2.25-0.png',
       'assets/atlas/bench-x2.25-1.png',
+      'assets/atlas/decode-common.png',
+      'assets/atlas/decode-png8-2048.png',
+      'assets/atlas/decode-rgba-2048.png',
+      'assets/atlas/decode-zone-a.png',
       'config.xml',
       'icon.png',
       'index.html',
@@ -87,6 +99,28 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
     expect(html.match(/<script\b[^>]*>/g)).toEqual(['<script defer src="./app.js">']);
     expect(code).not.toMatch(/\bimport\.meta\b/);
     expect(code).not.toMatch(/\bimport\s*\(/);
+  });
+
+  it('ships the decode pages: 2048² RGBA and PNG-8 in their byte bands, and lists them', () => {
+    const rgba = readFileSync(join(outDir, 'assets/atlas', decodePageFile('rgba-2048')));
+    const png8 = readFileSync(join(outDir, 'assets/atlas', decodePageFile('png8-2048')));
+    expect(pngColorType(rgba)).toBe(6);
+    expect(pngColorType(png8)).toBe(3);
+    expect([rgba.readUInt32BE(16), rgba.readUInt32BE(20)]).toEqual([2048, 2048]);
+    expect([png8.readUInt32BE(16), png8.readUInt32BE(20)]).toEqual([2048, 2048]);
+    const [rgbaLow, rgbaHigh] = DECODE_BYTE_BANDS['rgba-2048'];
+    const [png8Low, png8High] = DECODE_BYTE_BANDS['png8-2048'];
+    expect(rgba.length).toBeGreaterThanOrEqual(rgbaLow);
+    expect(rgba.length).toBeLessThanOrEqual(rgbaHigh);
+    expect(png8.length).toBeGreaterThanOrEqual(png8Low);
+    expect(png8.length).toBeLessThanOrEqual(png8High);
+    // The bundle names every page it measures, in order.
+    let from = 0;
+    for (const id of DECODE_PAGE_IDS) {
+      const at = code.indexOf(`assets/atlas/${decodePageFile(id)}`, from);
+      expect(at, id).toBeGreaterThan(from);
+      from = at;
+    }
   });
 
   it('installs next to the game under its own app id', () => {

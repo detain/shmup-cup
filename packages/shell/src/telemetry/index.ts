@@ -61,13 +61,15 @@
  * {@link RENDER_REPORT_INTERVAL_MS}, {@link RENDER_REQUEST_TIMEOUT_MS},
  * {@link MAX_QUEUED_SAMPLES}); the TV render bench's wire format (plan R0-02 — see below:
  * {@link RENDER_BENCH_KIND}, {@link RenderBenchEnv}, {@link RenderBenchRecord},
- * {@link RenderBenchPayload}, {@link makeRenderBenchSessionId}, {@link buildRenderBenchPayload},
- * {@link sendRenderBench}).
+ * {@link RenderBenchPayload}, {@link DecodeBenchRecord}, {@link DecodeBenchPage},
+ * {@link makeRenderBenchSessionId}, {@link buildRenderBenchPayload}, {@link sendRenderBench}).
  *
  * **The TV render bench (plan R0-02).** The bench widget (`apps/tizen/src/bench`, its own app id)
  * measures a density-scaled synthetic scene at 384×216, 640×360 and 960×540, one scenario per page
  * load, and POSTs each scenario's {@link RenderBenchRecord} to the same log server as a
- * `render-bench` payload ({@link RenderBenchPayload});
+ * `render-bench` payload ({@link RenderBenchPayload}) — and, since plan R1-05 (B4), a last
+ * `decode` scenario's {@link DecodeBenchRecord} (what a PNG atlas page costs from file to GPU) in
+ * the same payload's optional `decode` field;
  * `tools/input-probe/results/analyze-bench.mjs` turns the session into the relative tables of
  * `docs/dev/input-probe-results.md` §12. The bench is a separate bundle, so none of this reaches the
  * game's `app.js` either.
@@ -1642,6 +1644,77 @@ export interface RenderBenchRecord {
 }
 
 /**
+ * One page the bench's `decode` scenario measured (plan R1-05 B4): fetched with XHR, decoded by an
+ * `HTMLImageElement` and uploaded through the renderer's `uploadTextureSource`, several times.
+ *
+ * @remarks
+ * Every millisecond series is a `[min, p50, p95, max]` tuple over the repetitions (the same
+ * nearest-rank rule as {@link RenderBenchRecord}), or `null` when the stage was not measured (an
+ * engine without `createImageBitmap`, or a stage that failed — then `error` says why).
+ */
+export interface DecodeBenchPage {
+  /** Page id: `rgba-2048`, `png8-2048`, `common` or `zone-a`. */
+  id: string;
+  /** What the page stands for. */
+  what: string;
+  /** Width in pixels. */
+  width: number;
+  /** Height in pixels. */
+  height: number;
+  /** `'rgba'` (colour type 6), `'png8'` (3) or `'type <n>'`, read from the fetched file's header. */
+  encoding: string;
+  /** The PNG file's bytes. */
+  bytes: number;
+  /** Bytes of the texture it uploads to (`width · height · 4`). */
+  textureBytes: number;
+  /** Repetitions measured. */
+  repetitions: number;
+  /** The file fetched with `XMLHttpRequest` (`file://` on the TV, like the game's manifest). */
+  fetchMs: number[] | null;
+  /** The fetched bytes decoded by an `HTMLImageElement`: a blob URL → `onload` → `decode()`. */
+  decodeMs: number[] | null;
+  /** The renderer's `uploadTextureSource` (CPU time of the `texImage2D` call). */
+  uploadMs: number[] | null;
+  /** The same upload followed by `gl.finish()` — the GPU done too. */
+  uploadSyncedMs: number[] | null;
+  /** Fetch + decode + synced upload of each repetition: file to GPU. */
+  totalMs: number[] | null;
+  /** The first repetition's total (the coldest: nothing of the page was read before). */
+  firstTotalMs: number;
+  /** The fetched bytes decoded by `createImageBitmap` instead (the alternative path). */
+  bitmapMs: number[] | null;
+  /** That bitmap uploaded and `gl.finish()`ed. */
+  bitmapUploadMs: number[] | null;
+  /** Why a stage could not be measured, or `null`. */
+  error: string | null;
+}
+
+/**
+ * What the bench's `decode` scenario measured (plan R1-05 B4) — the 2048² decode figure plan R3-04
+ * estimates its zone-load time from.
+ */
+export interface DecodeBenchRecord {
+  /** Always `'decode'`. */
+  scenario: string;
+  /** Position of the scenario in the run (after the render matrix). */
+  index: number;
+  /** The WebGL version the renderer really got. */
+  webGLVersion: number;
+  /** Repetitions asked for per page. */
+  repetitions: number;
+  /** Whether the engine has `HTMLImageElement.decode()` (Chromium 64+). */
+  imageDecode: boolean;
+  /** Whether the engine has `createImageBitmap` (Chromium 50+). */
+  imageBitmap: boolean;
+  /** The pages, in the order measured. */
+  pages: DecodeBenchPage[];
+  /** Why the scenario stopped early (no renderer, …), or `null`. */
+  error: string | null;
+  /** Wall-clock end of the scenario (ms since epoch). */
+  endedAt: number;
+}
+
+/**
  * Payload a bench run POSTs to the log server as `text/plain` JSON — after every scenario (one
  * record) and once more at the end of the run with every record the server has not acknowledged.
  */
@@ -1658,6 +1731,11 @@ export interface RenderBenchPayload {
   env: RenderBenchEnv;
   /** The records this payload carries (the analyzer keeps the latest one per scenario). */
   results: RenderBenchRecord[];
+  /**
+   * The `decode` scenario's record, when this payload carries it (plan R1-05 B4 — absent from the
+   * payloads of the render scenarios and of benches built before it).
+   */
+  decode?: DecodeBenchRecord;
   /** Whether the run's matrix is complete. */
   done: boolean;
 }
@@ -1688,7 +1766,8 @@ export function makeRenderBenchSessionId(nowMs: number, random: number): string 
  * @param env - Session-level facts.
  * @param results - The records to carry.
  * @param done - Whether the matrix is complete.
- * @returns The payload ({@link RENDER_BENCH_KIND}).
+ * @param decode - The `decode` scenario's record to carry, if any (plan R1-05 B4).
+ * @returns The payload ({@link RENDER_BENCH_KIND}); it has a `decode` field only when one is given.
  */
 export function buildRenderBenchPayload(
   session: string,
@@ -1697,8 +1776,11 @@ export function buildRenderBenchPayload(
   env: RenderBenchEnv,
   results: RenderBenchRecord[],
   done: boolean,
+  decode?: DecodeBenchRecord,
 ): RenderBenchPayload {
-  return { kind: RENDER_BENCH_KIND, session, seq, sentAt, env, results, done };
+  return decode === undefined
+    ? { kind: RENDER_BENCH_KIND, session, seq, sentAt, env, results, done }
+    : { kind: RENDER_BENCH_KIND, session, seq, sentAt, env, results, decode, done };
 }
 
 /**

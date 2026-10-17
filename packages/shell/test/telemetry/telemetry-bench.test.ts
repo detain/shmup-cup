@@ -11,6 +11,7 @@ import {
   makeRenderBenchSessionId,
   makeRenderSessionId,
   sendRenderBench,
+  type DecodeBenchRecord,
   type RenderBenchEnv,
   type RenderBenchRecord,
 } from '../../src/telemetry/index.js';
@@ -96,6 +97,23 @@ describe('shell/telemetry render-bench payload (R0-02)', () => {
       results: [RECORD],
       done: true,
     });
+  });
+
+  it('carries the decode scenario’s record only when given one (plan R1-05 B4)', () => {
+    const decode = { scenario: 'decode', index: 18, pages: [] } as unknown as DecodeBenchRecord;
+    const payload = buildRenderBenchPayload('rb-x', 19, 5, ENV, [], true, decode);
+    expect(payload).toEqual({
+      kind: 'render-bench',
+      session: 'rb-x',
+      seq: 19,
+      sentAt: 5,
+      env: ENV,
+      results: [],
+      decode,
+      done: true,
+    });
+    // A render scenario's payload has no `decode` key at all, as before B4.
+    expect('decode' in buildRenderBenchPayload('rb-x', 1, 5, ENV, [RECORD], false)).toBe(false);
   });
 
   it('names a bench session rb-…, apart from the probe and the render profile', () => {

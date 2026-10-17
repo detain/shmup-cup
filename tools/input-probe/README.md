@@ -231,7 +231,8 @@ tools/input-probe/
   server/log-server.mjs          receiver for all three senders (ip-…, rp-… and rb-… sessions)
   results/analyze.mjs            re-analysis of an input-probe session
   results/analyze-render.mjs     the game's render profile → the §11 tables (M3-02f)
-  results/analyze-bench.mjs      the TV render bench → the §12 tables, relative to 384×216 (R0-02)
+  results/analyze-bench.mjs      the TV render bench → the §12 tables, relative to 384×216 (R0-02), and the
+                                 decode scenario's file → GPU table with R3-04's zone-load estimate (R1-05 B4)
 ```
 
 ## Tests
@@ -263,4 +264,5 @@ POSIX-only tests of the package/deploy scripts are skipped on Windows):
   the title, one every window of which the sender perturbed, one recorded before the histograms existed, and windows
   that are not the shape the sender produces. `logServerBench.test.ts` stores and summarises a whole TV render-bench
   session (`test/fixtures/bench-session.jsonl`, plan R0-02), and `analyzeBench.test.ts` turns that fixture into the
-  relative tables, plan §13's outcome and the WebGL 1-vs-2 verdict.
+  relative tables, plan §13's outcome and the WebGL 1-vs-2 verdict — and, with the decode scenario's payload appended
+  (`test/fixtures/bench-decode.jsonl`, plan R1-05 B4), into the decode table and the zone-load estimate.

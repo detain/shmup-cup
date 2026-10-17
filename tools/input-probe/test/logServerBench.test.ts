@@ -1,7 +1,8 @@
 /**
  * The log server's TV render-bench support (plan R0-02 acceptance: "the log server stores and summarises a
  * `render-bench` session"): the `render-bench` formatter, the payload check that lets its `results` through,
- * and a whole session POSTed over HTTP, stored as `rb-….jsonl` and readable by `results/analyze-bench.mjs`.
+ * and a whole session POSTed over HTTP, stored as `rb-….jsonl` and readable by `results/analyze-bench.mjs` —
+ * since plan R1-05 (B4) ending with the decode scenario's payload (`fixtures/bench-decode.jsonl`).
  */
 
 import type { AddressInfo } from 'node:net';
@@ -23,15 +24,29 @@ import {
 } from '../server/log-server.mjs';
 
 const FIXTURE = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'bench-session.jsonl');
+const DECODE_FIXTURE = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'bench-decode.jsonl');
 
-/** The fixture's payloads, as the bench POSTed them (the server's `receivedAt` / `from` removed). */
-const PAYLOADS = readFileSync(FIXTURE, 'utf8')
-  .trim()
-  .split('\n')
-  .map((line) => {
-    const { receivedAt: _r, from: _f, ...payload } = JSON.parse(line) as Record<string, unknown>;
-    return payload;
-  });
+/**
+ * A fixture's payloads, as the bench POSTed them (the server's `receivedAt` / `from` removed).
+ *
+ * @param file - The fixture.
+ * @returns The payloads.
+ */
+function payloadsOf(file: string): Record<string, unknown>[] {
+  return readFileSync(file, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => {
+      const { receivedAt: _r, from: _f, ...payload } = JSON.parse(line) as Record<string, unknown>;
+      return payload;
+    });
+}
+
+/** The fixture session's payloads. */
+const PAYLOADS = payloadsOf(FIXTURE);
+
+/** The decode scenario's payload (plan R1-05 B4). */
+const DECODE_PAYLOAD = payloadsOf(DECODE_FIXTURE)[0] as Record<string, unknown>;
 
 describe('formatBenchSummary', () => {
   it('prints a header and one line per record', () => {
@@ -55,6 +70,30 @@ describe('formatBenchSummary', () => {
   it('is picked by formatSummary for the render-bench kind', () => {
     expect(RENDER_BENCH_KIND).toBe('render-bench');
     expect(formatSummary(PAYLOADS[0] as Record<string, unknown>)).toContain('render-bench · 1 result(s)');
+  });
+
+  it('prints one line per page of the decode scenario’s payload (plan R1-05 B4)', () => {
+    const lines = formatBenchSummary(DECODE_PAYLOAD).split('\n');
+    expect(lines[0]).toBe(
+      '[rb-mgabc12-k3f0 #21] render-bench · 0 result(s) · build abc1234 · tizen 1920x1080 · decode 4 page(s) × 8' +
+        ' · run complete',
+    );
+    expect(lines[1]).toBe(
+      '    decode rgba-2048 2048x2048 rgba 2442 KB · FETCH 24.0 · DECODE 400.0 · UPLOAD 130.0 · TOTAL 554.0' +
+        ' · BITMAP 380.0/20.0',
+    );
+    expect(lines[4]).toBe(
+      '    decode zone-a 256x128 png8 2 KB · FETCH 0.6 · DECODE 2.2 · UPLOAD 0.7 · TOTAL 3.5 · BITMAP —/—' +
+        ' · bitmap: createImageBitmap timed out after 30000 ms',
+    );
+    expect(lines).toHaveLength(5);
+    const stopped = formatBenchSummary({ session: 's', seq: 1, decode: { pages: [null, {}], error: 'Error: x' } });
+    expect(stopped.split('\n')).toEqual([
+      '[s #1] render-bench · 0 result(s) · decode 2 page(s) × ?',
+      '    decode null',
+      '    decode ? ?x? ? ? KB · FETCH — · DECODE — · UPLOAD — · TOTAL — · BITMAP —/—',
+      '    decode stopped: Error: x',
+    ]);
   });
 
   it('never throws on a malformed payload', () => {
@@ -116,8 +155,22 @@ describe('log server (HTTP) with a TV render-bench session', () => {
     });
     expect(logged.filter((line) => line.startsWith('[rb-mgabc12-k3f0 #'))).toHaveLength(PAYLOADS.length);
     // …and the analyzer reads the stored session: the 18 scenarios, the Red re-run winning.
-    const { records } = readBenchSession(file);
+    const { records, decode } = readBenchSession(file);
     expect(records).toHaveLength(18);
     expect(records.find((r) => r.scenario === '640x360-busy')?.twoTickShare).toBe(0.02);
+    expect(decode).toBeNull();
+  });
+
+  it('stores the decode scenario’s payload as it came, for the analyzer (plan R1-05 B4)', async () => {
+    const res = await fetch(base + '/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify(DECODE_PAYLOAD),
+    });
+    expect(res.status).toBe(200);
+    const file = join(logDir, 'rb-mgabc12-k3f0.jsonl');
+    const { decode } = readBenchSession(file);
+    expect(decode).toEqual(DECODE_PAYLOAD['decode']);
+    expect(logged[logged.length - 1]).toContain('decode 4 page(s) × 8');
   });
 });

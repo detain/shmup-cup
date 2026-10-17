@@ -31,6 +31,15 @@
  * The same page measures one scenario headlessly with `?scenario=<id>` — `pnpm bench`
  * (`test/bench/render.perf.ts`) gates the counted figures of every scenario that way.
  *
+ * **The decode scenario (plan R1-05 B4, decision W3-6).** After the matrix a run loads the page
+ * once more for `decode` (`./decode.ts`): four PNG pages the bench build ships
+ * (`scripts/bench-decode.mjs` — a synthetic 2048² RGBA page, the same as a 2048² PNG-8 page, the
+ * shipped `common` and zone A pages) are fetched with XHR, decoded by an `HTMLImageElement` and
+ * uploaded through the renderer's `uploadTextureSource` — and decoded by `createImageBitmap` too —
+ * eight times each, every stage timed (median / p95) and every texture released between
+ * repetitions: the 2048² decode figure plan R3-04 estimates its zone-load time from. The 18
+ * scenarios themselves are unchanged, so R0-02's and R0-03's numbers stay comparable.
+ *
  * **Implements.**
  * - shmup_feat.md §22 — the render budget (render ≤ 8 ms, draw calls) the measurements are read
  *   against
@@ -51,12 +60,21 @@
  * {@link summarizeSeries}, {@link roundTo}, {@link BENCH_MAX_FRAMES}, {@link BENCH_TICK_BUCKETS});
  * the results ({@link formatResultsTable}, {@link formatResultsHeader}, {@link formatResultRow},
  * {@link baselineOf}, {@link lateShare}, {@link benchPageLines}, {@link drawBenchLines},
- * {@link BenchLine}, {@link BenchPageInput}, the colours); the run state ({@link BenchRunState},
- * {@link BENCH_STATE_KEY}, {@link BENCH_STATE_VERSION}, {@link createRunState}, {@link isRecord},
- * {@link parseRunState}, {@link serializeRunState}, {@link recordResult}, {@link markSent},
- * {@link nextSeq}, {@link unsentRecords}, {@link stopRun}, {@link rerunScenario}); the host
- * ({@link detectBenchHost}, {@link benchKeyOf}, {@link BENCH_KEY_CODES}, {@link BenchHost},
- * {@link BenchKey}).
+ * {@link BenchLine}, {@link BenchPageInput}, the colours, and the decode table
+ * {@link formatDecodeTable}, {@link formatDecodeHeader}, {@link formatDecodeRow}); the run state
+ * ({@link BenchRunState}, {@link BENCH_STATE_KEY}, {@link BENCH_STATE_VERSION},
+ * {@link createRunState}, {@link isRecord}, {@link isDecodeRecord}, {@link parseRunState},
+ * {@link serializeRunState}, {@link recordResult}, {@link recordDecode}, {@link markSent},
+ * {@link nextSeq}, {@link unsentRecords}, {@link decodeUnsent}, {@link stopRun},
+ * {@link rerunScenario}); the decode scenario ({@link DECODE_SCENARIO_ID},
+ * {@link DECODE_SCENARIO_INDEX}, {@link BENCH_RUN_LENGTH}, {@link TV_DECODE_REPETITIONS},
+ * {@link HEADLESS_DECODE_REPETITIONS}, {@link MAX_DECODE_REPETITIONS},
+ * {@link DECODE_STAGE_TIMEOUT_MS}, {@link measureDecode}, {@link failedDecodeRecord},
+ * {@link createDecodeHost}, {@link decodeRepetitionsFromSearch}, {@link pngEncodingOf},
+ * {@link summarizeRuns}, {@link BenchDecodePage}, {@link DecodedPage}, {@link DecodeTexture},
+ * {@link DecodeHost}, {@link DecodeHostOptions}, {@link DecodeMeasureOptions},
+ * {@link DecodeWindow}); the host ({@link detectBenchHost}, {@link benchKeyOf},
+ * {@link BENCH_KEY_CODES}, {@link BenchHost}, {@link BenchKey}).
  *
  * @module
  */
@@ -124,6 +142,9 @@ export {
   baselineOf,
   benchPageLines,
   drawBenchLines,
+  formatDecodeHeader,
+  formatDecodeRow,
+  formatDecodeTable,
   formatResultRow,
   formatResultsHeader,
   formatResultsTable,
@@ -135,9 +156,12 @@ export {
   BENCH_STATE_KEY,
   BENCH_STATE_VERSION,
   createRunState,
+  decodeUnsent,
+  isDecodeRecord,
   markSent,
   nextSeq,
   parseRunState,
+  recordDecode,
   recordResult,
   rerunScenario,
   serializeRunState,
@@ -146,6 +170,28 @@ export {
   unsentRecords,
   type BenchRunState,
 } from './state.js';
+export {
+  BENCH_RUN_LENGTH,
+  DECODE_SCENARIO_ID,
+  DECODE_SCENARIO_INDEX,
+  DECODE_STAGE_TIMEOUT_MS,
+  HEADLESS_DECODE_REPETITIONS,
+  MAX_DECODE_REPETITIONS,
+  TV_DECODE_REPETITIONS,
+  createDecodeHost,
+  decodeRepetitionsFromSearch,
+  failedDecodeRecord,
+  measureDecode,
+  pngEncodingOf,
+  summarizeRuns,
+  type BenchDecodePage,
+  type DecodeHost,
+  type DecodeHostOptions,
+  type DecodeMeasureOptions,
+  type DecodeTexture,
+  type DecodeWindow,
+  type DecodedPage,
+} from './decode.js';
 export {
   BENCH_KEY_CODES,
   benchKeyOf,

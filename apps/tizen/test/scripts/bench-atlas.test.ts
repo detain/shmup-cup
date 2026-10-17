@@ -271,5 +271,9 @@ describe('bench-atlas plugin and particle presets', () => {
     expect(source).toContain(
       '"pageUrls":["assets/atlas/bench-x2.25-0.png","assets/atlas/bench-x2.25-1.png"]',
     );
+    // The decode scenario's pages (plan R1-05 B4), in the order it measures them.
+    expect(source).toContain('export const decode = [{"id":"rgba-2048",');
+    expect(source).toContain('"url":"assets/atlas/decode-png8-2048.png"');
+    expect(source).toContain('export default { atlases, fx, decode };');
   }, 60_000);
 });
