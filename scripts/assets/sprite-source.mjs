@@ -29,12 +29,20 @@
  * become animations and the first slice pivot becomes the anchor. Frame `i` of a PNG
  * replaces frame `i` (frame name `<sprite>#<i>`) of the code-defined sprite with the
  * same name; frames the PNG does not provide keep their code-defined pixels, extra PNG
- * frames are appended. A PNG with no code-defined counterpart adds a new sprite.
+ * frames are appended. A sidecar anchor wins over the code-defined one (the art knows its
+ * own pivot: a v2 PNG drawn ×1.5 must not keep a v1 anchor — R3-02). A PNG with no
+ * code-defined counterpart adds a new sprite.
+ *
+ * **Ingest files.** The R3-02 ingest tool (`art-prompts/ingest/`) keeps its recipe, its
+ * provenance record and the artist's hand-edit layer next to the PNG it writes
+ * (`<name>.recipe.json`, `<name>.art.json`, `<name>.edit.png`); the loader skips them
+ * ({@link INGEST_SUFFIXES}), so they are never reported as stray JSON nor turned into a
+ * sprite of their own (which would shift every sorted sprite id and so every golden).
  *
  * **Public API.** {@link loadSpriteSources}, {@link parseSpriteSource},
  * {@link readPngFrames}, {@link applyPngOverrides}, {@link listFiles},
- * {@link SPRITE_NAME_PATTERN}, {@link ANIMATION_NAME_PATTERN}, {@link SPRITE_SOURCE_SUFFIX};
- * typedefs {@link SpriteDef}, {@link PngSprite}, {@link AssetIssue}.
+ * {@link SPRITE_NAME_PATTERN}, {@link ANIMATION_NAME_PATTERN}, {@link SPRITE_SOURCE_SUFFIX},
+ * {@link INGEST_SUFFIXES}; typedefs {@link SpriteDef}, {@link PngSprite}, {@link AssetIssue}.
  *
  * @module
  */
@@ -91,6 +99,21 @@ export const ANIMATION_NAME_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 
 /** File suffix of pixel-map sprite sources. */
 export const SPRITE_SOURCE_SUFFIX = '.sprite.json';
+
+/**
+ * Suffixes of the ingest tool's files that sit next to an override PNG and are not sprite
+ * sources: the recipe, the provenance record and the hand-edit layer (R3-02,
+ * `art-prompts/ingest/`). {@link loadSpriteSources} ignores them.
+ */
+export const INGEST_SUFFIXES = Object.freeze(['.recipe.json', '.art.json', '.edit.png']);
+
+/**
+ * Whether a file is one of the ingest tool's own files ({@link INGEST_SUFFIXES}).
+ *
+ * @param {string} file - A path.
+ * @returns {boolean} `true` for `*.recipe.json`, `*.art.json` and `*.edit.png`.
+ */
+const isIngestFile = (file) => INGEST_SUFFIXES.some((suffix) => file.endsWith(suffix));
 
 /** Keys a `*.sprite.json` file may contain. */
 const SPRITE_KEYS = [
@@ -482,8 +505,9 @@ export function listFiles(dir, prefix = '') {
  *
  * @remarks
  * `*.sprite.json` → pixel-map sprites; `*.png` (+ `<same name>.json` sidecar) → real-art
- * overrides; `README.md`, `LICENSES.md`, `.gitkeep` and editor files such as `*.aseprite`
- * are ignored; a `*.json` that is neither a sprite source nor a PNG sidecar is an issue.
+ * overrides; `README.md`, `LICENSES.md`, `.gitkeep`, editor files such as `*.aseprite` and
+ * the ingest tool's `*.recipe.json`, `*.art.json` and `*.edit.png` are ignored; a `*.json`
+ * that is neither a sprite source nor a PNG sidecar is an issue.
  *
  * @param {string} dir - Absolute path of the sprites directory.
  * @param {string} displayRoot - Prefix for issue paths / origins (e.g. `assets/source/sprites`).
@@ -497,7 +521,7 @@ export function loadSpriteSources(dir, displayRoot) {
   const overrides = [];
   /** @type {AssetIssue[]} */
   const issues = [];
-  const files = listFiles(dir);
+  const files = listFiles(dir).filter((file) => !isIngestFile(file));
   const pngs = new Set(files.filter((file) => file.endsWith('.png')));
   for (const relative of files) {
     const shown = `${displayRoot}/${relative}`;
@@ -562,7 +586,13 @@ export function loadSpriteSources(dir, displayRoot) {
 
 /**
  * Applies real-art PNG overrides to the code-defined sprites (frames replaced by index,
- * extra frames appended, sidecar animations merged over code animations).
+ * extra frames appended, sidecar animations merged over code animations, a sidecar anchor
+ * over the code anchor).
+ *
+ * @remarks
+ * The anchor rule changed in R3-02: the code-defined anchor used to win, so a v2 PNG drawn
+ * at ×1.5 kept its v1 anchor. Now the sidecar's slice pivot wins and the code anchor is
+ * the fallback for a PNG without one (no sidecar, or a sidecar without a pivot slice).
  *
  * @param {readonly SpriteDef[]} sprites - Code-defined sprites (pixel maps, procedural).
  * @param {readonly PngSprite[]} overrides - PNG sources.
@@ -594,7 +624,7 @@ export function applyPngOverrides(sprites, overrides) {
     out[index] = {
       ...base,
       frames,
-      anchor: base.anchor ?? png.anchor,
+      anchor: png.anchor ?? base.anchor,
       animations: { ...base.animations, ...png.animations },
       origin: `${base.origin} + ${png.origin}`,
     };

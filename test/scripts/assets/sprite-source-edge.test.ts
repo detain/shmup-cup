@@ -506,6 +506,25 @@ describe('scripts/assets/sprite-source — loading from disk (edge)', () => {
     expect(sprites.map((s) => s.name)).toEqual(['ships/kestrel']);
   });
 
+  it('skips only the exact ingest suffixes: look-alikes are still reported', () => {
+    const dir = tree('disk-ingest-lookalikes', {
+      'x/pic.png': png,
+      'x/pic.recipe.json': '{ not JSON at all',
+      'x/pic.art.json': '[]',
+      'x/pic.edit.png': 'garbage',
+      'x/recipe.json': '{}',
+      'x/pic.arts.json': '{}',
+      'x/pic.edits.png': png,
+    });
+    const { overrides, issues } = loadSpriteSources(dir, 'src');
+    expect(overrides.map((o) => o.name)).toEqual(['x/pic']);
+    expect(issues.map((i) => i.path)).toEqual([
+      'src/x/pic.arts.json:',
+      'src/x/pic.edits.png:',
+      'src/x/recipe.json:',
+    ]);
+  });
+
   it('derives names from nested paths, pairs sidecars only in the same folder', () => {
     const dir = tree('disk-nested', {
       'a/b/c.sprite.json': JSON.stringify({ ...MINI, name: 'a/b/c' }),
@@ -563,6 +582,23 @@ describe('scripts/assets/sprite-source — applyPngOverrides (edge)', () => {
   it('takes the sidecar anchor when the code sprite has none', () => {
     const [out] = applyPngOverrides([base], [png({ anchor: [0, 1] })]);
     expect(out.anchor).toEqual([0, 1]);
+  });
+
+  it('lets a sidecar anchor beat a code anchor and falls back to the code one (R3-02)', () => {
+    const anchored: SpriteDef = { ...base, anchor: [8, 4] };
+    expect(applyPngOverrides([anchored], [png({ anchor: [12, 6] })])[0].anchor).toEqual([12, 6]);
+    expect(applyPngOverrides([anchored], [png({ anchor: null })])[0].anchor).toEqual([8, 4]);
+    expect(anchored.anchor).toEqual([8, 4]);
+  });
+
+  it('keeps the anchor of the last override that has one when two target one sprite', () => {
+    const anchored: SpriteDef = { ...base, anchor: [8, 4] };
+    const out = applyPngOverrides(
+      [anchored],
+      [png({ origin: 'one.png', anchor: [1, 1] }), png({ origin: 'two.png', anchor: null })],
+    );
+    expect(out[0].anchor).toEqual([1, 1]);
+    expect(out[0].origin).toBe('code + one.png + two.png');
   });
 
   it('lets a sidecar tag replace a code animation of the same name', () => {

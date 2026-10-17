@@ -155,12 +155,16 @@ A PNG under `assets/source/sprites/` targets the sprite named by its path:
   `pingpong`); the pivot of the first slice becomes the anchor.
 - Frame `i` of the PNG **replaces** frame `i` of the code-defined sprite; frames the PNG
   does not provide keep their code-defined pixels; extra PNG frames are appended; sidecar
-  tags win over code tags of the same name; a code-defined anchor wins over the pivot.
-  A PNG with no code-defined counterpart adds a new sprite.
+  tags win over code tags of the same name; the sidecar's pivot wins over a code-defined
+  anchor, which stays the fallback for a PNG without one (R3-02 — before, the code anchor
+  won, so a v2 PNG drawn at ×1.5 kept its v1 anchor). A PNG with no code-defined
+  counterpart adds a new sprite.
 - The export must list at least one frame, and every frame must fit an atlas page with its
   border (at most 2046×2046). Both are reported as source issues naming the file.
-- `README.md`, `LICENSES.md`, `.gitkeep` and editor files such as `*.aseprite` are ignored;
-  a `*.json` that is neither a sprite source nor the sidecar of a PNG is an issue.
+- `README.md`, `LICENSES.md`, `.gitkeep`, editor files such as `*.aseprite` and the ingest
+  tool's `*.recipe.json`, `*.art.json` and `*.edit.png` (R3-02,
+  [real-assets.md](real-assets.md)) are ignored; a `*.json` that is neither a sprite source
+  nor the sidecar of a PNG is an issue.
 
 ### Bitmap fonts (`*.font.json`)
 

@@ -273,6 +273,33 @@ describe('scripts/assets/sprite-source — PNG sources', () => {
     ]);
   });
 
+  it("ignores the ingest tool's recipe, provenance record and hand-edit layer (R3-02)", () => {
+    const png = encodePng(solid(2, 2, [255, 255, 0, 255]));
+    const dir = tree('ingest-files', {
+      'ships/a.png': png,
+      'ships/a.json': JSON.stringify({
+        frames: [{ frame: { x: 0, y: 0, w: 1, h: 2 } }, { frame: { x: 1, y: 0, w: 1, h: 2 } }],
+        meta: {
+          slices: [{ keys: [{ bounds: { x: 0, y: 0, w: 1, h: 2 }, pivot: { x: 0, y: 1 } }] }],
+        },
+      }),
+      'ships/a.recipe.json': JSON.stringify({ format: 'shmup-ingest-recipe@1', name: 'ships/a' }),
+      'ships/a.art.json': JSON.stringify({ schema: 'shmup-art-provenance@1', sprite: 'ships/a' }),
+      'ships/a.edit.png': png,
+      // A recipe staged before its first ingest has no PNG yet: still not a stray JSON.
+      'items/b.recipe.json': '{}',
+      'items/b.art.json': '{}',
+      'items/c.edit.png': 'not even a PNG',
+    });
+    const { sprites, overrides, issues } = loadSpriteSources(dir, 'src');
+    expect(issues).toEqual([]);
+    expect(sprites).toEqual([]);
+    // Never a sprite "ships/a.edit" (a new name would shift every sorted sprite id).
+    expect(overrides.map((o) => o.name)).toEqual(['ships/a']);
+    expect(overrides[0].frames).toHaveLength(2);
+    expect(overrides[0].anchor).toEqual([0, 1]);
+  });
+
   it('returns nothing for a missing directory', () => {
     expect(loadSpriteSources(join(tmp, 'nope'), 'x')).toEqual({
       sprites: [],
@@ -292,7 +319,7 @@ describe('scripts/assets/sprite-source — applyPngOverrides', () => {
     origin: 'code',
   };
 
-  it('replaces frames by index, appends extras, keeps anchor and flash, merges tags', () => {
+  it('replaces frames by index, appends extras, takes the sidecar anchor, merges tags', () => {
     const replacement = solid(3, 3, [9, 9, 9, 255]);
     const extra = solid(3, 3, [8, 8, 8, 255]);
     const [out] = applyPngOverrides(
@@ -308,11 +335,21 @@ describe('scripts/assets/sprite-source — applyPngOverrides', () => {
       ],
     );
     expect(out.frames).toEqual([replacement, replacement, extra]);
-    expect(out.anchor).toEqual([3, 3]);
+    // R3-02: the art's own pivot wins over the code-defined anchor (a ×1.5 PNG must not
+    // keep a ×1 anchor).
+    expect(out.anchor).toEqual([0, 0]);
     expect(out.hitFlash).toBe(true);
     expect(out.animations).toEqual({ idle: [0, 1], fly: [2] });
     expect(out.origin).toBe('code + a.png');
     expect(base.frames[0].data[0]).toBe(1); // input untouched
+  });
+
+  it('keeps the code anchor when the PNG has none (no sidecar, or no pivot slice)', () => {
+    const [out] = applyPngOverrides(
+      [base],
+      [{ name: 'ships/a', origin: 'p', frames: [base.frames[0]], animations: {}, anchor: null }],
+    );
+    expect(out.anchor).toEqual([3, 3]);
   });
 
   it('keeps code frames the PNG does not provide', () => {
