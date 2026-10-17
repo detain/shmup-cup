@@ -51,7 +51,11 @@
  * {@link DEFAULT_SHIP_ID}; M2-06:
  * the co-op choice {@link withCoop}, {@link DEFAULT_COOP_EXTRA}, {@link MAX_COOP_EXTRA}) and the
  * screen layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
- * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). User options:
+ * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). R1-01 (plan
+ * `plan_resolution.md` §7): the frame constants every frame-dependent number derives from —
+ * {@link FRAME_W}, {@link FRAME_H}, {@link FRAME_CX}, {@link FRAME_CY}, {@link PLAYFIELD_CY},
+ * {@link HUD_BOTTOM_Y}, {@link TILE_SIZE} (moved here from `core/data`) and the bitmap font's
+ * metrics {@link GLYPH_W}, {@link GLYPH_H}, {@link LINE_H}. User options:
  * {@link UserOptions}, {@link AudioOptions}, {@link InputOptions}, {@link DisplayOptions},
  * {@link DEFAULT_USER_OPTIONS}, {@link VOLUME_LEVELS}, {@link volumeGain},
  * {@link resolveUserOptions}, {@link InputProfileChoice}, {@link INPUT_PROFILE_ID_PATTERN},
@@ -491,9 +495,12 @@ export const AUTOFIRE_INTERVALS: readonly number[] = Object.freeze([8, 6, 5, 4, 
 
 /** Parameters of one game session. All fields are sim-affecting and replay-recorded. */
 export interface GameConfig {
-  /** Internal render width in pixels (384 → ×5 on 1080p). */
+  /**
+   * Internal render width in pixels ({@link FRAME_W}: 384 → ×5 on 1080p). Nothing in the game reads
+   * it beyond its range check — it is the replay header's record of the frame the game ran at.
+   */
   readonly internalWidth: number;
-  /** Internal render height in pixels (216 → ×5 on 1080p). */
+  /** Internal render height in pixels ({@link FRAME_H}: 216 → ×5 on 1080p); see `internalWidth`. */
   readonly internalHeight: number;
   /** Simulation ticks per second (fixed step). */
   readonly tickRate: number;
@@ -724,20 +731,75 @@ export interface GameConfig {
   readonly blackHole: boolean;
 }
 
-/** Height in pixels of each HUD bar outside the playfield (decision D20). */
+// ------------------------------------------------------------------------------ the frame
+//
+// plan_resolution.md §7 / R1-01: every frame-dependent number of the game derives from the few
+// compile-time constants below, so changing them is the whole resolution switch (R2-01 sets
+// 640×360, 12-px HUD bars, 12-px tiles and the new font's metrics). They are plain module
+// constants — never getters or runtime options read in hot paths — and every one is a whole
+// number. Values anchored to a screen edge derive from them; world values (radii, margins, speeds)
+// never do (plan §2.6).
+
+/** Width of the internal frame in pixels (decision D19: 384; R2-01: 640). */
+export const FRAME_W = 384;
+
+/** Height of the internal frame in pixels (decision D19: 216; R2-01: 360). */
+export const FRAME_H = 216;
+
+/** The frame's centre column: `FRAME_W / 2` (192) — where centred menus and text sit. */
+export const FRAME_CX = FRAME_W / 2;
+
+/** The frame's centre row: `FRAME_H / 2` (108) — where centred dialogs sit. */
+export const FRAME_CY = FRAME_H / 2;
+
+/** Height in pixels of each HUD bar outside the playfield (decision D20: 8; R2-01: 12). */
 export const HUD_BAR_HEIGHT = 8;
 
 /**
- * Screen row where the playfield starts: the top HUD bar occupies rows `0…7`
+ * Screen row where the playfield starts: the top HUD bar occupies rows `0 … HUD_BAR_HEIGHT − 1`
  * (decision D20). World-space `y` maps to screen `y - camera.y + PLAYFIELD_Y`.
  */
 export const PLAYFIELD_Y = HUD_BAR_HEIGHT;
 
-/** Playfield width in pixels — the full internal width (decision D20). */
-export const PLAYFIELD_W = 384;
+/** Playfield width in pixels — the full frame width, {@link FRAME_W} (decision D20). */
+export const PLAYFIELD_W = FRAME_W;
 
-/** Playfield height in pixels: 216 − two 8-px HUD bars (decision D20). */
-export const PLAYFIELD_H = 200;
+/**
+ * Playfield height in pixels: the frame less the two HUD bars, `FRAME_H − 2 · HUD_BAR_HEIGHT`
+ * (decision D20: 200; R2-01: 336).
+ */
+export const PLAYFIELD_H = FRAME_H - 2 * HUD_BAR_HEIGHT;
+
+/**
+ * The playfield's centre row in playfield coordinates (0 = the row under the top HUD bar):
+ * `PLAYFIELD_H / 2` (100) — e.g. the default height of a boss.
+ */
+export const PLAYFIELD_CY = PLAYFIELD_H / 2;
+
+/**
+ * Screen row of the bottom HUD bar's top edge — the row just below the playfield:
+ * `FRAME_H − HUD_BAR_HEIGHT` = `PLAYFIELD_Y + PLAYFIELD_H` (208).
+ */
+export const HUD_BOTTOM_Y = FRAME_H - HUD_BAR_HEIGHT;
+
+/**
+ * Tile edge in pixels every tileset and tilemap uses (M1: 8; R2-01: 12). Moved here from
+ * `core/data` in R1-01 (the barrel exports it under the same name).
+ */
+export const TILE_SIZE = 8;
+
+/**
+ * Width in pixels of a cell of the bitmap font — also its advance, the horizontal pitch text is
+ * laid out on (`assets/source/fonts/pixel6x8.font.json` `cellWidth` / `advance`: 6). A line of
+ * `n` characters is `n · GLYPH_W` pixels wide.
+ */
+export const GLYPH_W = 6;
+
+/** Height in pixels of a cell of the bitmap font (the font file's `cellHeight`: 8). */
+export const GLYPH_H = 8;
+
+/** Line advance in pixels of the bitmap font (the font file's `lineHeight`: 10). */
+export const LINE_H = 10;
 
 /**
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,
@@ -747,8 +809,8 @@ export const PLAYFIELD_H = 200;
  * {@link DEFAULT_COOP_EXTRA}).
  */
 export const DEFAULT_GAME_CONFIG: GameConfig = Object.freeze({
-  internalWidth: 384,
-  internalHeight: 216,
+  internalWidth: FRAME_W,
+  internalHeight: FRAME_H,
   tickRate: 60,
   maxTicksPerFrame: 4,
   seed: 0x5eedc0de,

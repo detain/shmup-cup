@@ -135,8 +135,8 @@
  *   {@link MAX_STAGE_TRIGGERS}, {@link MAX_STAGE_BRANCHES}, {@link MAX_BLOCK_CELLS},
  *   {@link DEFAULT_BLOCK_SCREEN_X}, {@link DEFAULT_BLOCK_PERIOD}, {@link BallisticLandName},
  *   {@link BALLISTIC_LANDS}), {@link TilesetSpec} ({@link TileSpec}, {@link TileType},
- *   {@link TILE_TYPES}, {@link TileAnchor}, {@link TILE_ANCHORS}, {@link TILE_SIZE},
- *   {@link TilesetTables}).
+ *   {@link TILE_TYPES}, {@link TileAnchor}, {@link TILE_ANCHORS}, {@link TilesetTables}; the tile
+ *   edge `TILE_SIZE` moved to `core/config` in R1-01 with the other frame constants).
  * - Everything re-exported from {@link ./schema.js | data/schema}: the combinators `s`,
  *   `Schema`, `Infer`, `ObjectShape`, `ObjectValue`, `RefSite`, `ContentRefKind`,
  *   `ValidationIssue`.
@@ -234,6 +234,7 @@ import {
   MIN_BULLET_SPEED_MUL,
   PLAYFIELD_H,
   PLAYFIELD_W,
+  TILE_SIZE,
   type DifficultyRules,
   type DifficultyTable,
   type PowerUpMode,
@@ -1986,9 +1987,6 @@ export type TileAnchor = 'floor' | 'ceiling';
 
 /** Every {@link TileAnchor}, in code order. */
 export const TILE_ANCHORS = Object.freeze(['floor', 'ceiling'] as const);
-
-/** Tile edge in pixels every tileset and tilemap uses (M1). */
-export const TILE_SIZE = 8;
 
 /** One tile of a tileset. */
 export interface TileSpec {

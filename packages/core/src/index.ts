@@ -18,7 +18,8 @@
  * (Types B–D, Weapon Edit, the `!` / `?` choices, the weapon select) with M2-03; the campaign
  * (zone map, run state, zone tally, endings hook, practice), bonus stages and the fly-out with
  * M2-10; `blackhole` (the black-hole bomb — the Direct ship's signature special — and the
- * death-bomb window) with M3-02.
+ * death-bomb window) with M3-02; the frame constants (`FRAME_W` / `FRAME_H` and the values derived
+ * from them, `TILE_SIZE` — now from `config` —, the font metrics) with v2's R1-01.
  *
  * @packageDocumentation
  */
@@ -142,9 +143,17 @@ export {
   BULLET_PALETTES,
   DEFAULT_USER_OPTIONS,
   DIFFICULTY_PRESETS,
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_H,
+  FRAME_W,
+  GLYPH_H,
+  GLYPH_W,
   HUD_BAR_HEIGHT,
+  HUD_BOTTOM_Y,
   INPUT_PROFILE_ID_PATTERN,
   LANGUAGE_ID_PATTERN,
+  LINE_H,
   RETIRED_INPUT_PROFILE_IDS,
   migrateInputProfileId,
   MAX_AUTO_POWER_UP_ORDER,
@@ -154,10 +163,12 @@ export {
   MAX_RANK_GROWTH,
   METER_SLOT_NAMES,
   MIN_BULLET_SPEED_MUL,
+  PLAYFIELD_CY,
   PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
   SCALE_MODES,
+  TILE_SIZE,
   VOLUME_LEVELS,
   difficultyOverrides,
   resolveGameConfig,
@@ -353,7 +364,6 @@ export {
   STAGE_EVENT_TYPES,
   STAGE_TYPES,
   TILE_ANCHORS,
-  TILE_SIZE,
   TILE_TYPES,
   WEAPON_SLOTS,
   bakePath,
