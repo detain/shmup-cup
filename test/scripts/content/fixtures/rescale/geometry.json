@@ -1,0 +1,5 @@
+{
+  "comment": "The geometry the rescale fixtures were written for (v1: a 384 x 216 frame with 8-px HUD bars and tiles) and the port expected-1.5/ holds (v2: x1.5, a 36-px top pad, a 640-px-wide playfield). Not a content file: it sits outside the fixture content roots.",
+  "frame": { "frameW": 384, "frameH": 216, "playfieldW": 384, "playfieldH": 200, "tileSize": 8 },
+  "port": { "factor": 1.5, "topPad": 36, "toWidth": 640, "toHeight": 336, "toTileSize": 12 }
+}

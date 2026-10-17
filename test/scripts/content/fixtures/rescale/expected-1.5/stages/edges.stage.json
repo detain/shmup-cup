@@ -1,0 +1,75 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "edges",
+  "name": "EDGES",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 2400,
+  "camera": [
+    { "x": 0, "speed": 1.5 },
+    { "x": 900, "speed": 1.5, "yTo": 336, "yTicks": 120 }
+  ],
+  "checkpoints": [{ "x": 0 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/prism-facets", "factor": 0.2, "y": -108, "spacing": 192 }
+  ],
+  "raster": [
+    {
+      "layer": "mid",
+      "kind": "lines",
+      "top": 264,
+      "bottom": 336,
+      "factorTop": 0.25,
+      "factorBottom": 1.5,
+      "bands": [3, 3, 5, 5, 6, 7, 9, 10, 12, 12],
+      "wrap": 96
+    },
+    {
+      "layer": "far",
+      "kind": "lines",
+      "top": 60,
+      "bottom": 186,
+      "factorTop": 0.5,
+      "factorBottom": 1,
+      "bands": [42, 42, 42]
+    }
+  ],
+  "mode7": {
+    "sprite": "bg/dimension-floor",
+    "horizon": 168,
+    "bottom": 336,
+    "height": 51,
+    "scroll": 0.09,
+    "sway": 0.05,
+    "fog": "#20124a",
+    "fogDepth": 330,
+    "alpha": 1
+  },
+  "tilemap": {
+    "tileSize": 12,
+    "tileset": "terrain-a",
+    "rowsTall": 53,
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        { "from": 0, "to": 2976, "floor": { "base": 60, "amp": 24, "period": 384, "seed": 9 } }
+      ]
+    }
+  },
+  "events": [
+    { "x": 150, "type": "spawn", "enemy": "edge-runner", "y": 156, "screenX": 664 },
+    { "x": 180, "type": "spawn", "enemy": "edge-runner", "y": 66, "screenX": -36 },
+    { "x": 210, "type": "spawn", "enemy": "edge-runner", "y": -45 },
+    {
+      "x": 450,
+      "type": "block",
+      "tile": "solid",
+      "screenX": 664,
+      "y": 132,
+      "w": 24,
+      "h": 12,
+      "vx": -0.75
+    },
+    { "x": 2400, "type": "end" }
+  ]
+}

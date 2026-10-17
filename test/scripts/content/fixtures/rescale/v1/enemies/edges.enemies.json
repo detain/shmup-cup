@@ -1,0 +1,46 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "edge-runner",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": { "hw": 4, "hh": 4 },
+      "script": "carrier.straight",
+      "sprite": "enemies/drifter",
+      "params": { "speed": 1.2 },
+      "mover": {
+        "type": "waypoint",
+        "x": 300,
+        "y": -10,
+        "speed": 2,
+        "hold": 30,
+        "leaveVx": -3,
+        "leaveVy": 0
+      },
+      "drop": null
+    },
+    {
+      "id": "edge-boss",
+      "boss": {
+        "code": "EB-00",
+        "displayName": "EDGE WARDEN",
+        "introTicks": 120,
+        "score": 1000,
+        "x": 296,
+        "y": 100,
+        "parts": [
+          {
+            "name": "core",
+            "hp": 24,
+            "hurtbox": { "hw": 7, "hh": 7 },
+            "core": true,
+            "sprite": "bosses/core"
+          }
+        ],
+        "phases": [{ "script": "boss.lanes", "params": { "trackSpeed": 0.25 } }]
+      }
+    }
+  ]
+}

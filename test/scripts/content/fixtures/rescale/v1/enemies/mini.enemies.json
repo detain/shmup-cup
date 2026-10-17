@@ -1,0 +1,55 @@
+{
+  "formatVersion": 1,
+  "kind": "enemies",
+  "enemies": [
+    {
+      "id": "mini-drifter",
+      "hp": 1,
+      "score": 100,
+      "hurtbox": { "hw": 5, "hh": 3 },
+      "script": "drifter.sine",
+      "sprite": "enemies/drifter",
+      "anim": { "frames": 2, "ticks": 8 },
+      "params": { "speed": 1, "amp": 12, "period": 90 },
+      "drop": null
+    },
+    {
+      "id": "mini-boss",
+      "boss": {
+        "code": "MB-00",
+        "displayName": "MINI WARDEN",
+        "introTicks": 120,
+        "score": 1000,
+        "x": 200,
+        "y": 100,
+        "parts": [
+          {
+            "name": "hull",
+            "hurtbox": { "hw": 8, "hh": 8 },
+            "vulnerable": "never",
+            "sprite": "bosses/hull-block"
+          },
+          {
+            "name": "core",
+            "parent": "hull",
+            "x": -14,
+            "y": 6,
+            "hp": 24,
+            "hurtbox": { "hw": 7, "hh": 7 },
+            "core": true,
+            "sprite": "bosses/core",
+            "score": 5000
+          }
+        ],
+        "phases": [
+          {
+            "script": "boss.hover",
+            "params": { "trackSpeed": 0.5, "fireTicks": 70 },
+            "until": { "hpBelow": 12 }
+          },
+          { "script": "boss.lanes", "params": { "trackSpeed": 0.25 } }
+        ]
+      }
+    }
+  ]
+}

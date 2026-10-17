@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "kind": "paths",
+  "paths": [
+    {
+      "id": "mini-arc",
+      "points": [
+        { "x": 0, "y": 0 },
+        { "x": -144, "y": 36 },
+        { "x": -285, "y": -19.5 }
+      ]
+    }
+  ]
+}

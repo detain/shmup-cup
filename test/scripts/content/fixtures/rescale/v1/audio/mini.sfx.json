@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "kind": "sfx",
+  "cues": {
+    "PlayerShot": {
+      "priority": "low",
+      "maxInstances": 3,
+      "volume": 0.5,
+      "params": { "shape": "square", "frequency": 1200, "slide": -9000, "sustain": 0.015 }
+    }
+  }
+}

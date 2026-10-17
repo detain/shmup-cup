@@ -1,0 +1,70 @@
+{
+  "formatVersion": 1,
+  "kind": "stage",
+  "id": "mini",
+  "name": "MINI",
+  "music": { "stage": "Stage", "boss": "Boss" },
+  "length": 800,
+  "camera": [
+    { "x": 0, "speed": 1, "ramp": 30 },
+    { "x": 400, "speed": 0.5, "ramp": 60 }
+  ],
+  "checkpoints": [{ "x": 0 }, { "x": 400 }],
+  "parallax": [
+    { "layer": "far", "sprite": "bg/prism-facets", "factor": 0.2, "y": 16, "spacing": 64 }
+  ],
+  "tilemap": {
+    "tileSize": 8,
+    "tileset": "terrain-a",
+    "rowsTall": 25,
+    "rle": [
+      "10*0, 4*1",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "30*0, 2*1",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "generator": {
+      "type": "heightfield",
+      "segments": [
+        { "from": 0, "to": 600, "floor": { "base": 24, "amp": 8, "period": 128, "seed": 3 } },
+        { "from": 600, "to": 1000, "ceiling": { "base": 16, "amp": 8, "period": 96, "seed": 4 } }
+      ]
+    }
+  },
+  "events": [
+    { "x": 100, "type": "spawn", "enemy": "mini-drifter", "y": 100 },
+    { "x": 150, "type": "spawn", "enemy": "mini-drifter", "y": -20 },
+    { "x": 180, "type": "spawn", "enemy": "mini-drifter", "y": 50, "screenX": 200 },
+    {
+      "x": 200,
+      "type": "formation",
+      "enemy": "mini-drifter",
+      "count": 3,
+      "interval": 10,
+      "y": 60
+    },
+    { "x": 600, "type": "boss", "enemy": "mini-boss" },
+    { "x": 800, "type": "end" }
+  ]
+}

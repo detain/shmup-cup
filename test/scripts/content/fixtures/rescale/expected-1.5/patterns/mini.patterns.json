@@ -1,0 +1,35 @@
+{
+  "formatVersion": 1,
+  "kind": "patterns",
+  "actions": [
+    {
+      "id": "mini.ring",
+      "body": [
+        {
+          "op": "repeat",
+          "times": 8,
+          "body": [
+            {
+              "op": "fire",
+              "direction": { "type": "absolute", "value": "$i * 1024 / 8" },
+              "speed": "(1.25 + $rank / 32) * 1.5"
+            }
+          ]
+        },
+        { "op": "wait", "ticks": 30 },
+        { "op": "actionRef", "action": "mini.aimed", "params": [2, 64] }
+      ]
+    },
+    {
+      "id": "mini.aimed",
+      "body": [
+        { "op": "fire", "direction": { "type": "aim", "value": "$2" }, "speed": "($1) * 1.5" },
+        {
+          "op": "fire",
+          "speed": { "type": "sequence", "value": 0.375 },
+          "bullet": { "actions": [{ "op": "accel", "accel": 0.075, "max": 4.5, "term": 20 }] }
+        }
+      ]
+    }
+  ]
+}

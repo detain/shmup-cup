@@ -1,0 +1,22 @@
+{
+  "formatVersion": 1,
+  "kind": "fx",
+  "presets": [
+    {
+      "id": "mini.debris",
+      "sprite": "fx/debris",
+      "frames": [0, 1, 2],
+      "count": 6,
+      "speed": { "min": 0.8, "max": 2.2 },
+      "direction": 270,
+      "spread": 120,
+      "gravity": 0.06,
+      "drag": 0.02,
+      "lifetime": { "min": 24, "max": 40 },
+      "delay": { "min": 0, "max": 4 },
+      "radius": 3,
+      "blend": "normal"
+    }
+  ],
+  "triggers": [{ "event": "fx", "cue": "Debris", "preset": "mini.debris", "dx": 2, "dy": -3 }]
+}
