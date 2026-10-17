@@ -344,6 +344,7 @@ import {
   GLYPH_W,
   LINE_H,
   PLAYFIELD_W,
+  PLAYFIELD_Y,
   arsenalMatches,
   resolveGameConfig,
   withArsenal,
@@ -5313,8 +5314,11 @@ export const WEAPON_EDIT_LABEL = DEFAULT_UI_TEXT.weaponEdit;
 /** The stage the weapon select's live preview flies (free flight when the content lacks it). */
 export const WEAPON_RANGE_STAGE = 'weapon-range';
 
-/** Screen x (playfield pixels) the preview ship is held at. */
-export const PREVIEW_SHIP_X = 232;
+/**
+ * Screen x (playfield pixels) the preview ship is held at: 40 px right of the frame's centre, in
+ * the right half the weapon panel leaves free.
+ */
+export const PREVIEW_SHIP_X = FRAME_CX + 40;
 
 /** Length of the preview ship's scripted weave (up, pause, down, pause), in ticks. */
 export const PREVIEW_WEAVE_TICKS = 160;
@@ -5341,30 +5345,39 @@ export const AUTO_ORDER_LABELS: readonly string[] = ENGLISH.autoOrder;
 const ORDER_SUMMARY_ENTRIES = 8;
 
 /**
- * The weapon select's panel (left half; the preview ship flies on the right): left, top, width,
- * height.
+ * The weapon select's panel (left half, 4 px from the left edge and centred on the frame's centre
+ * row; the preview ship flies on the right): left, top, width, height.
  */
-const WEAPON_PANEL = Object.freeze({ x: 4, y: 12, w: 184, h: 192 });
+const WEAPON_PANEL = Object.freeze({ x: 4, y: FRAME_CY - 96, w: 184, h: 192 });
 
-/** Where the weapon select's menu is drawn (labels at x 18, values from x 72). */
+/** Row height of the weapon select's menu. */
+const WEAPON_LINE_H = LINE_H + 3;
+
+/** Screen x of the weapon select's values (and the ORDER summary): 68 px into the panel. */
+const WEAPON_VALUE_X = WEAPON_PANEL.x + 68;
+
+/** Where the weapon select's menu is drawn (labels 14 px into the panel, values from `valueX`). */
 const WEAPON_MENU_LAYOUT: MenuLayout = Object.freeze({
-  x: 18,
-  y: 34,
-  lineHeight: 13,
-  cursorX: 9,
-  valueX: 72,
+  x: WEAPON_PANEL.x + 14,
+  y: WEAPON_PANEL.y + 22,
+  lineHeight: WEAPON_LINE_H,
+  cursorX: WEAPON_PANEL.x + 5,
+  valueX: WEAPON_VALUE_X,
 });
 
-/** The order editor's panel (right half, over the preview). */
-const ORDER_PANEL = Object.freeze({ x: 196, y: 12, w: 184, h: 192 });
+/**
+ * The order editor's panel (right half, over the preview: 4 px from the right edge, centred on the
+ * frame's centre row).
+ */
+const ORDER_PANEL = Object.freeze({ x: FRAME_W - 188, y: FRAME_CY - 96, w: 184, h: 192 });
 
 /** Where the order editor's menu is drawn. */
 const ORDER_MENU_LAYOUT: MenuLayout = Object.freeze({
-  x: 218,
-  y: 32,
-  lineHeight: 12,
-  cursorX: 207,
-  valueX: 252,
+  x: ORDER_PANEL.x + 22,
+  y: ORDER_PANEL.y + 20,
+  lineHeight: LINE_H + 2,
+  cursorX: ORDER_PANEL.x + 11,
+  valueX: ORDER_PANEL.x + 56,
 });
 
 /**
@@ -5936,9 +5949,9 @@ export class WeaponSelectScene extends SceneBase {
     list.setString(base + 3, t.wsHintGo);
     list.text(base, p.x + (p.w >> 1), p.y + 8, UI_COLORS.title, TextAlign.Center);
     const y = drawMenu(list, this.menu, base + 4, layout, t);
-    const orderY = layout.y + WeaponSelectItem.Order * (layout.lineHeight ?? 12);
+    const orderY = layout.y + WeaponSelectItem.Order * WEAPON_LINE_H;
     const focused = this.menu.focus === WeaponSelectItem.Order;
-    list.text(base + 1, layout.valueX ?? 72, orderY, focused ? UI_COLORS.focus : UI_COLORS.text);
+    list.text(base + 1, WEAPON_VALUE_X, orderY, focused ? UI_COLORS.focus : UI_COLORS.text);
     list.text(base + 2, p.x + 10, y + 8, UI_COLORS.disabled);
     list.text(base + 3, p.x + 10, y + 20, UI_COLORS.disabled);
   }
@@ -6056,17 +6069,23 @@ export class AutoOrderScene extends SceneBase {
 
 // ------------------------------------------------------------------------------ zone map
 
-/** Screen x of the first and the last depth column of the zone map. */
+/** Screen x of the first depth column of the zone map (40 px from the left edge). */
 const MAP_LEFT = 40;
 
-/** Screen x of the last depth column. */
-const MAP_RIGHT = 344;
+/** Screen x of the last depth column (40 px from the right edge). */
+const MAP_RIGHT = FRAME_W - 40;
 
-/** Screen y of the top of the zone map's rows. */
+/** Screen y of the top of the zone map's rows (under the title lines). */
 const MAP_TOP = 40;
 
-/** Screen y of the bottom of the zone map's rows. */
-const MAP_BOTTOM = 136;
+/**
+ * The zone map's preview panel: left, top, width, height — along the bottom of the screen, 24 px
+ * from the sides and 10 px from the bottom edge.
+ */
+const MAP_PANEL = Object.freeze({ x: 24, y: FRAME_H - 70, w: FRAME_W - 48, h: 60 });
+
+/** Screen y of the bottom of the zone map's rows (10 px above the preview panel). */
+const MAP_BOTTOM = MAP_PANEL.y - 10;
 
 /** A zone node's box: width. */
 const MAP_NODE_W = 18;
@@ -6086,9 +6105,6 @@ const MAP_EDGE_DOT_BUDGET = 160;
 
 /** Half-period of the focused choice's blink on the map, in ticks. */
 const MAP_BLINK_TICKS = 16;
-
-/** The zone map's preview panel: left, top, width, height. */
-const MAP_PANEL = Object.freeze({ x: 24, y: 146, w: 336, h: 60 });
 
 /**
  * The zone map (shmup_feat.md §14 "branching zone map", §17 "zone map"; plan M2-10): after a
@@ -6341,7 +6357,7 @@ export class MapScene extends SceneBase {
       const line = zone.preview[l];
       if (line === undefined) continue;
       list.setString(base + 8 + l, line);
-      list.text(base + 8 + l, p.x + 10, p.y + 18 + l * 10, UI_COLORS.text);
+      list.text(base + 8 + l, p.x + 10, p.y + 18 + l * LINE_H, UI_COLORS.text);
     }
     if (!launching || blinkOn) {
       list.text(
@@ -6370,11 +6386,17 @@ function onRoute(route: readonly number[], a: number, b: number): boolean {
 
 // ------------------------------------------------------------------------------ ending
 
-/** The ending's panel: left, top, width, height. */
-const ENDING_PANEL = Object.freeze({ x: 40, y: 24, w: 304, h: 168 });
+/**
+ * The ending's result card: left, top, width, height — the frame's width less 40 px each side,
+ * centred on the frame's centre row.
+ */
+const ENDING_PANEL = Object.freeze({ x: 40, y: FRAME_CY - 84, w: FRAME_W - 80, h: 168 });
 
-/** The epilogue's panel under the sprite scene: left, top, width, height (M2-14). */
-const ENDING_TEXT_PANEL = Object.freeze({ x: 40, y: 124, w: 304, h: 88 });
+/**
+ * The epilogue's panel under the sprite scene (M2-14): left, top, width, height — as wide as the
+ * result card; its top follows the scene's horizon (the sprite scenes are laid out from the top).
+ */
+const ENDING_TEXT_PANEL = Object.freeze({ x: 40, y: 124, w: FRAME_W - 80, h: 88 });
 
 /** The ending's flag lines, in `RunFlag` bit order (English; the flow's are its labels'). */
 const ENDING_FLAG_LABELS: readonly string[] = ENGLISH.endingFlags;
@@ -6573,13 +6595,15 @@ export class EndingScene extends SceneBase {
     if (lines.length === 0) return;
     const base = this.stringBase + 8 + ENDING_FLAG_LABELS.length;
     const p = ENDING_TEXT_PANEL;
-    const top = this.scene === EndingSceneCode.None ? 108 - lines.length * 5 : p.y + 5;
+    // Without a scene the lines are centred on the frame's centre row, one line advance apart.
+    const top =
+      this.scene === EndingSceneCode.None ? FRAME_CY - ((lines.length * LINE_H) >> 1) : p.y + 5;
     if (this.scene !== EndingSceneCode.None) {
       drawPanel(list, p.x, p.y, p.w, p.h, UI_COLORS.panel, UI_COLORS.border, 255);
     }
     for (let i = 0; i < this.shown && i < lines.length; i++) {
       list.setString(base + i, lines[i]);
-      list.text(base + i, FRAME_CX, top + i * 10, UI_COLORS.text, TextAlign.Center);
+      list.text(base + i, FRAME_CX, top + i * LINE_H, UI_COLORS.text, TextAlign.Center);
     }
   }
 
@@ -6626,7 +6650,7 @@ export class EndingScene extends SceneBase {
       if ((flags & (1 << i)) === 0) continue;
       list.setString(base + 8 + i, this.flow.labels.endingFlags[i] ?? '');
       list.text(base + 8 + i, FRAME_CX, y, UI_COLORS.focus, TextAlign.Center);
-      y += 11;
+      y += LINE_H + 1;
     }
     list.text(base + 6, FRAME_CX, p.y + p.h - 30, UI_COLORS.text, TextAlign.Center);
     if (this.phaseTicks > ENDING_LOCK_TICKS) {
@@ -6922,8 +6946,12 @@ const STORY_WINDOW_BOTTOM = 206;
  */
 const STORY_PAGE_LEAD = (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP) >> 1;
 
-/** The story's text panel under the sprite scene: left, top, width, height. */
-const STORY_PANEL = Object.freeze({ x: 40, y: 128, w: 304, h: 82 });
+/**
+ * The story's text panel under the sprite scene: left, top, width, height — the frame's width
+ * less 40 px each side; its top follows the scene's horizon (the sprite scenes are laid out from
+ * the top), like the window's.
+ */
+const STORY_PANEL = Object.freeze({ x: 40, y: 128, w: FRAME_W - 80, h: 82 });
 
 /** Ticks after which a demo's zone card (its zone's label and name) disappears. */
 const DEMO_CARD_TICKS = 180;
@@ -7457,10 +7485,11 @@ export class DemoScene extends SceneBase {
     list.setString(base + 1, this.flow.text.pressOk);
     list.setString(base + 2, this.cardTitle);
     list.setString(base + 3, this.cardName);
+    // 6 px under the top HUD bar.
     if (Math.floor(this.ticks / PROMPT_BLINK_TICKS) % 2 === 0) {
-      list.text(base, FRAME_CX, 14, UI_COLORS.focus, TextAlign.Center);
+      list.text(base, FRAME_CX, PLAYFIELD_Y + 6, UI_COLORS.focus, TextAlign.Center);
     } else {
-      list.text(base + 1, FRAME_CX, 14, UI_COLORS.text, TextAlign.Center);
+      list.text(base + 1, FRAME_CX, PLAYFIELD_Y + 6, UI_COLORS.text, TextAlign.Center);
     }
     if (this.demo !== null && this.ticks < DEMO_CARD_TICKS) {
       list.rect(0, ZONE_CARD_Y, FRAME_W, 32, 0x000000, 128);
@@ -7628,7 +7657,7 @@ export class StoryScene extends SceneBase {
     }
     for (let r = 0; r < rows.length; r++) {
       const y = STORY_WINDOW_BOTTOM + r * STORY_ROW_HEIGHT - scroll;
-      if (y < STORY_WINDOW_TOP || y > STORY_WINDOW_BOTTOM - 8) continue;
+      if (y < STORY_WINDOW_TOP || y > STORY_WINDOW_BOTTOM - GLYPH_H) continue;
       const text = rows[r];
       if (text.length === 0) continue;
       const slot = base + (r % STORY_STRING_SLOTS);
@@ -8705,9 +8734,10 @@ export class ReplayScene extends SceneBase {
     const run = this.run;
     list.setString(base, this.status);
     list.setString(base + 1, t.replayAssisted);
-    list.text(base, FRAME_CX, 14, UI_COLORS.focus, TextAlign.Center);
+    // The status line: 6 px under the top HUD bar.
+    list.text(base, FRAME_CX, PLAYFIELD_Y + 6, UI_COLORS.focus, TextAlign.Center);
     if (run !== null && runAssisted(run.assists)) {
-      list.text(base + 1, FRAME_CX + 120, 14, UI_COLORS.alert, TextAlign.Center);
+      list.text(base + 1, FRAME_CX + 120, PLAYFIELD_Y + 6, UI_COLORS.alert, TextAlign.Center);
     }
     if (this.endTicks < 0) return;
     const playback = this.playback;
