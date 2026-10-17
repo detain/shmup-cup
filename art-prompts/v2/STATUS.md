@@ -2,7 +2,7 @@
 
 Live status of the early AI art round. The spec is in `plan_resolution.md` R0-04, the runbook in
 `docs/dev/art-generation-server.md`, and the driver section in `prompt_resolution.md`'s "Art round".
-Last updated 2026-10-16 22:35 EDT.
+Last updated 2026-10-17 10:50 EDT.
 
 ## Server layout (skynet2)
 
@@ -28,8 +28,8 @@ choices in its `data/choices.json`). The owner picks there.
 | 2 | Qwen-Image | slot b for 75 subjects + slot a for the 7 text items | **done** (82/82) |
 | 3 | SD3.5-large | slot b for the 9 terrain swatches | **done** (9/9) |
 | 4 | FLUX.1-dev | slot c for 29 sets (stage scenes, swatches, non-text key moments and promo) | **done** (29/29) |
-| 5 | Wan2.2-T2V-A14B | video slot a for the 29 text-to-video clips | **running** (started 22:12) |
-| 6 | LTX-2.5 (fallback LTX-Video) | video slot b for the same 29 clips | next |
+| 5 | Wan2.2-T2V-A14B | video slot a for the 29 text-to-video clips | **done** (29: 27 ok, 2 failed but kept) |
+| 6 | LTX-2.5 (`TI2V`) | video slot b for the same 29 clips, plus 4 of the 5 image-to-video clips | **running** (started 10:45) |
 
 Images: 211 candidates. Video: 29 text-to-video clips × 2 slots. Five image-to-video clips wait for
 round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet2, so LTX-2.5 does them):
@@ -41,6 +41,15 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
 - `video/zone-neon-dimension-rush` ← `stage/high-speed-dimension`.
 
 **Known weak or failed candidates** (the best try was kept; the other slot usually covers it):
+
+- Wan2.2 slot a (videos):
+  - failed, take kept: `video/coop-two-ship` (oversized cartoon ships, no lane trading, comet-tailed bullets),
+    `video/bullet-to-gold` (red football-shaped bullets never turn gold);
+  - weak: `ark-diving-abyss` (hull reads as a battleship), `social-vertical` (trim the first 2 frames),
+    `zone-brine-nebula-gassea` (craft looks like a saucer), `zone-dune-expanse-twinsuns` (canopy drawn as a glider
+    wing), `zone-iron-citadel-chase` (forward dolly, not a side view), `zone-abyssal-throne-glow` (upward tilt, not a
+    descent), `manta-blackhole-vortex` (craft not a flat ray), `hollow-king-lure` (cel-shaded, not pixel art);
+  - the other takes are kept in the session scratchpad (`wan-a-1/`, `wan-a-2/`).
 
 - Qwen slot b:
   - failed: `item/power-capsule` (draws cans or pills), `boss/squall-steed` (ground strip),
@@ -63,7 +72,11 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
 - FLUX.1 adds letterbox bars at 1536×640.
 - Metaphors get drawn literally (chains, lanterns, stairways, hearts, sails).
 - Say where the ship's nose and engines are so it faces right.
-- Bullets must be described as round glowing orbs.
+- Bullets must be described as round glowing orbs ("capsules" pulls them toward pills or footballs).
+- Video models draw a "small" ship huge and cartoonish unless told "tiny sprite, a small fraction of the frame",
+  point it left unless told "nose pointing right, flame trailing left", and add pilots unless the negative says
+  "human pilot, people".
+- Wan2.2 render times (server): 1280×720 81 frames ≈ 958 s at 40 steps / 838 s at 35; 832×480 ≈ 204 s at 35 steps.
 
 ## Round 2 — after the owner says picking is done
 
