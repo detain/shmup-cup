@@ -12,7 +12,10 @@
  * - the ported fixture loads through every loader without an issue (the round trip), with the
  *   terrain cell for cell what it was, three rows lower, and the world values ×1.5;
  * - the command line prints the report, honours `--dry-run` and `--json`, and fails on bad
- *   arguments.
+ *   arguments;
+ * - review round 2: the shipped port lists gimmick-range's falling rock, whose branch is now read
+ *   while the trigger that decides it is still armed, and gives each re-sorted timeline's old →
+ *   new indices.
  *
  * The fixtures carry the geometry they were written for (`fixtures/rescale/geometry.json`), so
  * these tests do not depend on core's frame constants (which R2-01 flips).
@@ -34,8 +37,10 @@ import {
 import * as audio from '@shmup/audio-web';
 import * as input from '@shmup/input-web';
 import { FX_FILE_SCHEMA, loadFxContent } from '@shmup/render-pixi';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  loadArt,
+  measureArtScale,
   modulesFrom,
   rescaleContent,
   type RescaleModules,
@@ -81,6 +86,23 @@ const SHIPPED_TILE_SIZE = (
 ).tileSize;
 
 /**
+ * The atlas art's scale against the shipped content's pixels, as the tool measures it from the
+ * terrain tiles (1 today; 1.5 between R2-01's interim art and R2-02's port) — passed as
+ * `--art-scale`, so the shipped runs hold in every window of the R2 switch.
+ */
+let shippedArtScale = 1;
+
+beforeAll(async () => {
+  const dir = join(repo, 'content', 'tilesets');
+  const tilesets = readdirSync(dir)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => ({ path: `tilesets/${name}`, text: readFileSync(join(dir, name), 'utf8') }));
+  const measured = measureArtScale(tilesets, await loadArt({ atlas: null, artScale: null }));
+  expect(measured.tiles.length).toBeGreaterThan(0);
+  shippedArtScale = measured.scale ?? 1;
+}, 60_000);
+
+/**
  * Options with defaults.
  *
  * @param overrides - What differs.
@@ -98,7 +120,7 @@ function options(overrides: Partial<RescaleOptions>): RescaleOptions {
     tileSize: null,
     toWidth: null,
     atlas: null,
-    artScale: 1,
+    artScale: null,
     json: false,
     quiet: false,
     ...overrides,
@@ -121,6 +143,7 @@ function shipped(factor: number, topPad: number): RescaleOptions {
     fromHeight: PLAYFIELD_H,
     tileSize: SHIPPED_TILE_SIZE,
     toWidth: PLAYFIELD_W,
+    artScale: shippedArtScale,
   });
 }
 
@@ -214,6 +237,68 @@ describe('scripts/content/rescale: the shipped content', () => {
     expect(result.timeline.length).toBeGreaterThan(0);
     expect(result.backdrop.length).toBeGreaterThan(0);
   });
+
+  it('lists what the real v1 → v2 port must fix by hand (review round 2)', async () => {
+    // The geometry this content was written for and v2's playfield (the fixtures' geometry.json:
+    // R2-02's real run passes the same numbers as flags).
+    const result = await rescaleContent(
+      options({
+        factor: GEOMETRY.port.factor,
+        topPad: GEOMETRY.port.topPad,
+        fromWidth: GEOMETRY.frame.playfieldW,
+        fromHeight: GEOMETRY.frame.playfieldH,
+        tileSize: GEOMETRY.frame.tileSize,
+        toWidth: GEOMETRY.port.toWidth,
+        artScale: shippedArtScale,
+      }),
+      MODULES,
+    );
+    expect(result.errors).toEqual([]);
+    expect(result.unclassified).toEqual([]);
+    expect(result.geometry.toHeight).toBe(GEOMETRY.port.toHeight);
+    // gimmick-range's falling rock (branch "high" on "took-low") fired after the trigger
+    // events[8] disarmed at 1540; ported it fires at 2276, while the trigger is armed up to 2310
+    // — listed (R2-02 gives the trigger an until below 2276 by hand).
+    const rock = result.timeline.filter(
+      (entry) => entry.file === 'stages/gimmick-range.stage.json' && entry.path === 'events[10].x',
+    );
+    expect(rock.map((entry) => [entry.from, entry.to])).toEqual([[1560, 2276]]);
+    expect(rock[0]?.note).toMatch(
+      /^its branch "high" reads the flag "took-low" of the trigger events\[8\] \(armed 1050 … 1540 → 1575 … 2310\).*until below 2276/,
+    );
+    // The two crossings of the shipped timeline: the rock, and zone-g's ground enemy that leaves
+    // its ground bonus entrance's window.
+    const crossings = result.timeline.filter(
+      (entry) => entry.path.endsWith('.x') && !entry.note.startsWith('a moving block'),
+    );
+    expect(crossings.map((entry) => `${entry.file}:${entry.path}`)).toEqual([
+      'stages/gimmick-range.stage.json:events[10].x',
+      'stages/zone-g.stage.json:events[15].x',
+    ]);
+    // Every re-sorted timeline gives its old → new indices: a permutation of the moved items.
+    const sorts = result.timeline.filter((entry) => entry.field === 'events');
+    expect(sorts.map((entry) => entry.file)).toEqual([
+      'stages/gimmick-range.stage.json',
+      'stages/zone-c.stage.json',
+      'stages/zone-d.stage.json',
+      'stages/zone-g.stage.json',
+      'stages/zone-h.stage.json',
+    ]);
+    for (const entry of sorts) {
+      const from = entry.from as number[];
+      const to = entry.to as number[];
+      expect(from.length, entry.file).toBeGreaterThan(1);
+      expect(
+        [...to].sort((a, b) => a - b),
+        entry.file,
+      ).toEqual(from);
+      expect(entry.note, entry.file).toContain(`${String(from[0])} → ${String(to[0])}`);
+    }
+    expect(sorts[0]?.from).toEqual([9, 10]);
+    expect(sorts[0]?.to).toEqual([10, 9]);
+    // No backdrop band of the shipped content touches two anchors.
+    expect(result.backdrop.filter((entry) => entry.note.includes('two anchors'))).toEqual([]);
+  });
 });
 
 describe('scripts/content/rescale: the fixtures', () => {
@@ -303,18 +388,54 @@ describe('scripts/content/rescale: the fixtures', () => {
     ]);
     expect(result.views).toEqual([]);
     // The field pairs: a moving block now created earlier, a ground enemy before the checkpoint
-    // it followed and one out of the ground entrance's window — and the timeline re-sorted.
-    expect(result.timeline.map((entry) => [entry.path, entry.note])).toEqual([
+    // it followed, a branch-gated one now read while its flag's trigger is armed, one before a
+    // flag event it followed, one at a camera hold it came after, one out of the ground entrance's
+    // window — and the timeline re-sorted, with its old → new indices.
+    expect(result.timeline.map((entry) => [entry.path, entry.from, entry.to, entry.note])).toEqual([
       [
         'events[3].x',
+        300,
+        386,
         'a moving block created 64 px of camera travel earlier: its drift / swing runs ahead of v1',
       ],
-      ['events[9].x', 'now fires before the checkpoint at 600 (→ 900) it followed'],
+      ['events[9].x', 610, 883, 'now fires before the checkpoint at 600 (→ 900) it followed'],
+      [
+        'events[11].x',
+        1220,
+        1766,
+        'its branch "high" reads the flag "low" of the trigger events[10] (armed 1000 … 1200 → ' +
+          '1500 … 1800): in v1 it fired after the trigger disarmed, so the branch was decided; ' +
+          'now it fires while the trigger is armed — a ship entering the region in camera 1766 … ' +
+          "1800 sets the flag after the branch was read, and both branches can play. Keep v1's " +
+          'order by hand: give the trigger an until below 1766 (or move the event)',
+      ],
+      [
+        'events[13].x',
+        1320,
+        1916,
+        'now fires before the flag event events[12] (sets "calm" at 1300 → 1950), which it ' +
+          'followed in v1',
+      ],
+      [
+        'events[14].x',
+        1420,
+        2066,
+        'now fires when the camera reaches the 60-tick camera hold at 1400 (→ 2100), not once ' +
+          'it moves on as in v1',
+      ],
       [
         'events[7].x',
+        505,
+        693.5,
         'a ground enemy that leaves the window of the ground bonus entrance events[6] (750 … 960)',
       ],
-      ['events', 're-sorted by the ported x (2 entries change places; ties keep their order)'],
+      [
+        'events',
+        [6, 7, 12, 13],
+        [7, 6, 13, 12],
+        're-sorted by the ported x (4 entries change places; ties keep their order): 6 → 7, ' +
+          '7 → 6, 12 → 13, 13 → 12 — every other listing names the indices as written',
+      ],
     ]);
     // The backdrop: a raster row near a band edge, a band touching nothing.
     expect(listed(result.backdrop)).toEqual([

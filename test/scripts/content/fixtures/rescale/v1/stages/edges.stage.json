@@ -7,7 +7,8 @@
   "length": 1600,
   "camera": [
     { "x": 0, "speed": 1 },
-    { "x": 700, "speed": 1, "yTo": 200, "yTicks": 120 }
+    { "x": 700, "speed": 1, "yTo": 200, "yTicks": 120 },
+    { "x": 1400, "speed": 1, "hold": 60 }
   ],
   "checkpoints": [{ "x": 0 }, { "x": 600 }],
   "parallax": [
@@ -85,6 +86,17 @@
     { "x": 505, "type": "spawn", "enemy": "edge-turret", "screenX": 400 },
     { "x": 580, "type": "spawn", "enemy": "edge-runner", "y": 50 },
     { "x": 610, "type": "spawn", "enemy": "edge-turret", "screenX": 200 },
+    {
+      "x": 1000,
+      "type": "trigger",
+      "flag": "low",
+      "region": { "x": 1100, "y": 120, "w": 100, "h": 40 }
+    },
+    { "x": 1220, "type": "spawn", "enemy": "edge-turret", "branch": "high" },
+    { "x": 1300, "type": "flag", "flag": "calm" },
+    { "x": 1320, "type": "spawn", "enemy": "edge-turret" },
+    { "x": 1420, "type": "spawn", "enemy": "edge-turret" },
     { "x": 1600, "type": "end" }
-  ]
+  ],
+  "branches": [{ "id": "high", "flag": "low", "value": false }]
 }

@@ -38,13 +38,19 @@
  *   `ground` anchor — collected from the content set's enemy files): the sum is a world x (×k),
  *   only the column snaps, `x` takes the difference (`rescaleWorldSum`); the event so fires earlier
  *   than ×k, and each stage's `events` / `remix` are re-sorted by the ported x (the separators stay,
- *   each entry keeps its text) — the report lists an event now before a checkpoint it followed, a
- *   ground enemy leaving or joining a `ground` bonus window, a moving block whose drift runs ahead;
+ *   each entry keeps its text; the report gives each moved item's old → new index, and names every
+ *   other item by its index as written) — the report lists an event now on the other side of a
+ *   checkpoint, a camera stop, a `flag` event or a region trigger's armed window (a branch-gated
+ *   event that now fires while its flag's trigger can still fire is spelled out: both branches can
+ *   play), a ground enemy leaving or joining a `ground` bonus window, a moving block whose drift
+ *   runs ahead;
  * - a **box** — `y` + `h` of a block or a region: by its edges (`rescaleBoxY`), so a box hanging
  *   from the top edge grows by the pad instead of moving down;
  * - the **backdrop** — a stage's parallax bands (`band-y`), raster and Mode-7 rows, placed as one
  *   layout from the bands' art heights (`rescaleBackdrop`; heights from the atlas — built in memory
- *   from `assets/source/`, or `--atlas`), the raster bands then spread over the placed rows.
+ *   from `assets/source/`, or `--atlas`), the raster bands then spread over the placed rows by
+ *   their rounded boundaries; the report lists free placements, seams and a band that touched two
+ *   anchors (the top edge, the bottom edge, a Mode-7 row) and keeps one.
  *
  * **What it reads.** Every content file (`readContentFiles` of `vite.shared.ts`, plus the
  * `example.*.json` samples unless `--no-examples`), each with its kind's file schema: core's
@@ -75,14 +81,17 @@
  * `content/`), `--no-examples`, `--from-width W`, `--from-height H`, `--tile-size T`,
  * `--to-width W`, `--atlas FILE` (an atlas manifest for the bands' art heights), `--art-scale S`
  * (the atlas art's scale against the content's pixels: 1.5 once R2-01's interim upscale is in the
- * pipeline), `--json` (the result as JSON), `--quiet` (the summary only). Exit code 0 = done
- * (or nothing to do), 1 = refused (unclassified values or errors), 2 = bad arguments.
+ * pipeline — the tool measures it from the atlas' terrain tiles against the content's tilesets and
+ * refuses to guess: without `--art-scale` it runs only while they agree at ×1), `--json` (the
+ * result as JSON), `--quiet` (the summary only). Exit code 0 = done (or nothing to do), 1 =
+ * refused (unclassified values or errors), 2 = bad arguments (an art scale the atlas contradicts
+ * and no `--art-scale` included).
  *
  * **Public API.** {@link parseRescaleArgs}, {@link loadRescaleModules}, {@link rescaleGeometry},
  * {@link planRescale}, {@link rescaleContent}, {@link formatRescaleReport}, {@link jsonSpans},
  * {@link replaceJsonValues}, {@link permuteJsonArrays}, {@link scaleExpression},
- * {@link spreadBands}, {@link modulesFrom}, {@link loadArt}, {@link RescaleError},
- * {@link SKIPPED_DIRS}.
+ * {@link spreadBands}, {@link modulesFrom}, {@link loadArt}, {@link measureArtScale},
+ * {@link resolveArtScale}, {@link RescaleError}, {@link SKIPPED_DIRS}.
  *
  * @module
  */
@@ -141,8 +150,9 @@ export class RescaleError extends Error {
  * @property {number | null} toWidth - New playfield width (`null` = derived).
  * @property {string | null} atlas - An atlas manifest (`main.json`) to read the parallax bands'
  *   art heights from (`null` = build the atlas from `assets/source/` in memory).
- * @property {number} artScale - The atlas art's scale against the content's pixels (1 today;
- *   1.5 once R2-01's interim upscale is in the pipeline).
+ * @property {number | null} artScale - The atlas art's scale against the content's pixels
+ *   (`null` = not given: 1, and the tool refuses when the atlas' terrain tiles say otherwise —
+ *   {@link resolveArtScale}; 1.5 once R2-01's interim upscale is in the pipeline).
  * @property {boolean} json - Print the result as JSON.
  * @property {boolean} quiet - Print the summary only.
  */
@@ -167,7 +177,7 @@ export function parseRescaleArgs(argv) {
     tileSize: null,
     toWidth: null,
     atlas: null,
-    artScale: 1,
+    artScale: null,
     json: false,
     quiet: false,
   };
@@ -735,10 +745,13 @@ function keysOf(leaf) {
  * @property {RescaleEntry[]} tilemaps - Tilemaps given rows at the top.
  * @property {RescaleEntry[]} views - Tilemaps the view would see past after the port.
  * @property {RescaleEntry[]} expressions - Expression strings rewritten.
- * @property {RescaleEntry[]} timeline - Stage timelines re-sorted, and events the field pairs
- *   moved against a checkpoint, a `ground` bonus window or a moving block's drift.
- * @property {RescaleEntry[]} backdrop - Parallax bands and raster rows placed by a fallback, and
- *   seams the pad opens between bands.
+ * @property {RescaleEntry[]} timeline - Events the field pairs moved across a checkpoint, a camera
+ *   stop, a `flag` event, a region trigger's armed window or a `ground` bonus window, moving blocks
+ *   whose drift runs ahead, and the stage timelines re-sorted — such an entry's `from` / `to` are
+ *   the old and new indices of the items that change places (every other index stays; every other
+ *   entry names the indices as written).
+ * @property {RescaleEntry[]} backdrop - Parallax bands and raster rows placed by a fallback, seams
+ *   the pad opens between bands, and anchors a band touched but cannot keep.
  */
 
 /**
@@ -747,10 +760,13 @@ function keysOf(leaf) {
  * @typedef {object} RescaleArt
  * @property {(sprite: string) => number | undefined} height - Height of frame 0 of a sprite, in
  *   the content's pixels (`undefined` = no such sprite).
+ * @property {(sprite: string) => { w: number, h: number } | undefined} [frame] - Size of frame 0
+ *   of a sprite in the atlas' own pixels (`undefined` = no such sprite), for
+ *   {@link measureArtScale}.
  */
 
 /** No art at all (a plan without parallax bands needs none). */
-const NO_ART = Object.freeze({ height: () => undefined });
+const NO_ART = Object.freeze({ height: () => undefined, frame: () => undefined });
 
 /**
  * The unit of a behaviour tunable.
@@ -1227,7 +1243,8 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
       note: `resample: ${String(geometry.tileSize)} → ${String(geometry.toTileSize)} px`,
     });
   }
-  // Raster bands: ×k, rounded so that they still add up to the ported bottom − top.
+  // Raster bands: ×k, rounded at their boundaries so that they still add up to the ported
+  // bottom − top and keep to the art's edges.
   for (const [list, where] of rasterBands) {
     const old = /** @type {number[]} */ (list);
     const top =
@@ -1259,9 +1276,11 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
       to: next,
       note:
         exact === bottom - top
-          ? `×k, rounded by largest remainder to add up to bottom − top (${String(bottom - top)})`
+          ? `×k, rounded at the band boundaries (where a ×k upscale of the art puts them) to add ` +
+            `up to bottom − top (${String(bottom - top)})`
           : `top and bottom do not scale ×k together: the ${String(exact)} rows ×k are spread ` +
-            `over bottom − top (${String(bottom - top)}) by largest remainder — check the art's bands`,
+            `over bottom − top (${String(bottom - top)}), rounded at the band boundaries — check ` +
+            "the art's bands",
     });
   }
 
@@ -1332,8 +1351,20 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
         isObject(event) ? (final(event, 'x') ?? Number(event['x'])) : Number.NaN,
       );
       const order = xs.map((_x, i) => i).sort((a, b) => xs[a] - xs[b] || a - b);
-      const moved = order.filter((index, i) => index !== i).length;
-      if (moved === 0) continue;
+      // The entries that change places: old index → new index, in the old order.
+      /** @type {number[]} */
+      const where = [];
+      for (let i = 0; i < order.length; i++) where[order[i]] = i;
+      /** @type {number[]} */
+      const from = [];
+      /** @type {number[]} */
+      const to = [];
+      where.forEach((next, old) => {
+        if (next === old) return;
+        from.push(old);
+        to.push(next);
+      });
+      if (from.length === 0) continue;
       permutations.push({ keys: [name], order });
       changes++;
       plan.timeline.push({
@@ -1341,9 +1372,12 @@ function portFile(file, data, schema, geometry, modules, art, context, plan) {
         path: name,
         field: name,
         unit: 'world-x',
-        from: undefined,
-        to: undefined,
-        note: `re-sorted by the ported x (${String(moved)} entries change places; ties keep their order)`,
+        from,
+        to,
+        note:
+          `re-sorted by the ported x (${String(from.length)} entries change places; ties keep ` +
+          `their order): ${from.map((old, i) => `${String(old)} → ${String(to[i])}`).join(', ')} — ` +
+          'every other listing names the indices as written',
       });
     }
   }
@@ -1575,13 +1609,61 @@ function portBackdrop(file, pending, geometry, modules, art, overrides, plan) {
       note: 'two bands that touch no longer do: the pad opens a seam between them',
     });
   }
+  for (const conflict of ported.conflicts ?? []) {
+    const band = bands[conflict.band];
+    const placed = ported.bands[conflict.band];
+    if (band === undefined || placed === undefined) continue;
+    const anchor =
+      conflict.anchor === 'bottom'
+        ? 'the bottom edge'
+        : `the Mode-7 row ${rowLeaves[conflict.anchor]?.leaf.path ?? String(conflict.anchor)}`;
+    const gap = cleanFraction(conflict.gap);
+    plan.backdrop.push({
+      file: file.path,
+      path: band.leaf.path,
+      field: band.leaf.field,
+      unit: band.unit,
+      from: band.leaf.value,
+      to: cleanFraction(placed.y),
+      note:
+        `a band that touched two anchors keeps one (${placed.placement}): its ${conflict.edge} ` +
+        `edge was on ${anchor} and now ${gap >= 0 ? `leaves ${String(gap)} px open` : `reaches ${String(-gap)} px past it`} — ` +
+        'the art cannot span both at ×k: fix the art or the layout by hand',
+    });
+  }
   return unplaced;
 }
 
 /**
- * Checks what the field pairs moved against a stage's timeline: an event that fires before a
- * checkpoint it followed, a ground enemy that leaves (or joins) a `ground` bonus entrance's
- * window, a moving block whose drift now runs ahead.
+ * One entry of a stage's timeline — an `events` or `remix` item — for {@link checkTimeline}.
+ *
+ * @typedef {object} TimelineEntry
+ * @property {unknown} event - The event object.
+ * @property {'events' | 'remix'} name - Its array.
+ * @property {number} index - Its index there as written (before any re-sort).
+ * @property {string} path - `events[i]` / `remix[i]`.
+ */
+
+/**
+ * Where an event fires against a region trigger's armed window.
+ *
+ * @typedef {'before' | 'inside' | 'after'} TriggerSide
+ */
+
+/** How the report words a {@link TriggerSide}. */
+const TRIGGER_SIDE_TEXT = Object.freeze({
+  before: 'before the trigger arms',
+  inside: 'while the trigger is armed',
+  after: 'after the trigger disarmed',
+});
+
+/**
+ * Checks what the field pairs moved against a stage's timeline. Everything on the timeline but a
+ * world sum ports ×k, so an event a pair moved (it fires `lead` px of camera travel earlier) can
+ * change places with what it followed; the tool lists an event that now fires on the other side
+ * of a checkpoint, a camera stop (a `lock` or `hold` key), a `flag` event, or a region trigger's
+ * arming or disarming (its `until`, by default the region's right end); a ground enemy that leaves
+ * (or joins) a `ground` bonus entrance's window; and a moving block whose drift now runs ahead.
  *
  * @param {RescaleInputFile} file - The stage file.
  * @param {Record<string, unknown>} data - Its JSON.
@@ -1591,6 +1673,16 @@ function portBackdrop(file, pending, geometry, modules, art, overrides, plan) {
  * @param {RescaleModules} modules - The packages.
  * @param {RescaleContext} context - The ground enemies.
  * @param {RescalePlan} plan - Collector.
+ *
+ * @remarks
+ * The order is the runner's: events by `x`, a tie in file order (the re-sort keeps it); a remix
+ * entry joins the events of a later loop before an event of a greater `x` only (`stageForLoop`
+ * puts the event first on a tie). A trigger arms when the camera reaches its `x` and disarms once
+ * the camera has passed its `until` — after the events of that tick fired — so an event at
+ * `x <= until` can still be followed by the trigger firing. A branch-gated event that fired after
+ * its flag's trigger disarmed in v1 and now fires while it is armed is the one that changes play
+ * (both branches can spawn); the tool does not fix it — no port keeps both the event's column and
+ * the trigger's window — but names the `until` that would restore v1's order.
  */
 function checkTimeline(file, data, moved, final, geometry, modules, context, plan) {
   /**
@@ -1614,17 +1706,158 @@ function checkTimeline(file, data, moved, final, geometry, modules, context, pla
    */
   const list = (path, from, to, text) =>
     plan.timeline.push({ file: file.path, path, field: '', unit: 'world-x', from, to, note: text });
+  /** @type {TimelineEntry[]} */
+  const timeline = [];
+  for (const name of /** @type {const} */ (['events', 'remix'])) {
+    const entries = data[name];
+    if (Array.isArray(entries)) {
+      entries.forEach((event, index) =>
+        timeline.push({ event, name, index, path: `${name}[${String(index)}]` }),
+      );
+    }
+  }
+  /**
+   * Whether one timeline entry fires before another.
+   *
+   * @param {TimelineEntry} a - One entry.
+   * @param {TimelineEntry} b - Another.
+   * @param {0 | 1} side - 0 as written, 1 as ported.
+   * @returns {boolean} `true` when `a` fires first.
+   */
+  const firesBefore = (a, b, side) => {
+    const ax = xOf(a.event)[side];
+    const bx = xOf(b.event)[side];
+    if (ax !== bx) return ax < bx;
+    if (a.name === b.name) return a.index < b.index;
+    return a.name === 'events';
+  };
+  /** @type {Map<string, string>} */
+  const branchFlags = new Map();
+  for (const branch of Array.isArray(data['branches']) ? data['branches'] : []) {
+    if (isObject(branch) && typeof branch['id'] === 'string' && typeof branch['flag'] === 'string')
+      branchFlags.set(branch['id'], branch['flag']);
+  }
+  /**
+   * The flag an event's `branch` reads, or `undefined`.
+   *
+   * @param {unknown} event - The event.
+   * @returns {string | undefined} The flag name.
+   */
+  const flagRead = (event) =>
+    isObject(event) && typeof event['branch'] === 'string'
+      ? branchFlags.get(event['branch'])
+      : undefined;
   const checkpoints = Array.isArray(data['checkpoints']) ? data['checkpoints'] : [];
+  const stops = (Array.isArray(data['camera']) ? data['camera'] : []).filter(
+    (key) => isObject(key) && (key['lock'] === true || Number(key['hold'] ?? 0) > 0),
+  );
+  const flags = timeline.filter((entry) => isObject(entry.event) && entry.event['type'] === 'flag');
+  const triggers = timeline.filter(
+    (entry) => isObject(entry.event) && entry.event['type'] === 'trigger',
+  );
+  /**
+   * A trigger's `until`, as written and as ported (by default its region's right end).
+   *
+   * @param {Record<string, unknown>} trigger - The trigger event.
+   * @returns {[number, number]} Old and new.
+   */
+  const untilOf = (trigger) => {
+    if (trigger['until'] !== undefined) return xOf(trigger, 'until');
+    const region = trigger['region'];
+    const [x, newX] = xOf(region);
+    const [w, newW] = xOf(region, 'w');
+    return [x + w, newX + newW];
+  };
   for (const item of moved) {
+    const entry = timeline.find((candidate) => candidate.event === item.event);
     const [oldX, newX] = xOf(item.event);
+    const reads = flagRead(item.event);
+    const branch = String(item.event['branch']);
     for (const checkpoint of checkpoints) {
       const [oldC, newC] = xOf(checkpoint);
-      if (oldX >= oldC && newX < newC) {
+      if (oldX >= oldC === newX >= newC) continue;
+      list(
+        item.path,
+        oldX,
+        newX,
+        newX < newC
+          ? `now fires before the checkpoint at ${String(oldC)} (→ ${String(newC)}) it followed`
+          : `now fires at or after the checkpoint at ${String(oldC)} (→ ${String(newC)}) it ` +
+              'preceded',
+      );
+    }
+    for (const stop of stops) {
+      const [oldK, newK] = xOf(stop);
+      if (oldX <= oldK === newX <= newK) continue;
+      const what =
+        stop['lock'] === true ? 'scroll lock' : `${String(stop['hold'])}-tick camera hold`;
+      list(
+        item.path,
+        oldX,
+        newX,
+        newX <= newK
+          ? `now fires when the camera reaches the ${what} at ${String(oldK)} (→ ${String(newK)}), ` +
+              'not once it moves on as in v1'
+          : `now fires only once the camera moves on from the ${what} at ${String(oldK)} ` +
+              `(→ ${String(newK)}), not on its arrival as in v1`,
+      );
+    }
+    if (entry !== undefined) {
+      for (const flag of flags) {
+        const event = /** @type {Record<string, unknown>} */ (flag.event);
+        const was = firesBefore(entry, flag, 0);
+        const now = firesBefore(entry, flag, 1);
+        if (was === now) continue;
+        const name = String(event['flag']);
+        const [oldF, newF] = xOf(event);
         list(
           item.path,
           oldX,
           newX,
-          `now fires before the checkpoint at ${String(oldC)} (→ ${String(newC)}) it followed`,
+          `now fires ${now ? 'before' : 'after'} the flag event ${flag.path} ` +
+            `(${event['value'] === false ? 'clears' : 'sets'} "${name}" at ${String(oldF)} → ` +
+            `${String(newF)}), which it ${was ? 'preceded' : 'followed'} in v1` +
+            (reads === name
+              ? ` — its branch "${branch}" now reads "${name}" ${now ? 'before' : 'after'} ` +
+                'that change'
+              : ''),
+        );
+      }
+      for (const trigger of triggers) {
+        const event = /** @type {Record<string, unknown>} */ (trigger.event);
+        const [oldArm, newArm] = xOf(event);
+        const [oldUntil, newUntil] = untilOf(event);
+        /** @type {(side: 0 | 1, x: number, until: number) => TriggerSide} */
+        const sideOf = (side, x, until) =>
+          firesBefore(entry, trigger, side) ? 'before' : x <= until ? 'inside' : 'after';
+        const was = sideOf(0, oldX, oldUntil);
+        const now = sideOf(1, newX, newUntil);
+        if (was === now) continue;
+        const name = String(event['flag']);
+        const window =
+          `armed ${String(oldArm)} … ${String(oldUntil)} → ` +
+          `${String(newArm)} … ${String(newUntil)}`;
+        if (reads === name && was === 'after' && now === 'inside') {
+          list(
+            item.path,
+            oldX,
+            newX,
+            `its branch "${branch}" reads the flag "${name}" of the trigger ${trigger.path} ` +
+              `(${window}): in v1 it fired after the trigger disarmed, so the branch was decided; ` +
+              'now it fires while the trigger is armed — a ship entering the region in camera ' +
+              `${String(newX)} … ${String(newUntil)} sets the flag after the branch was read, and ` +
+              "both branches can play. Keep v1's order by hand: give the trigger an until below " +
+              `${String(newX)} (or move the event)`,
+          );
+          continue;
+        }
+        list(
+          item.path,
+          oldX,
+          newX,
+          `now fires ${TRIGGER_SIDE_TEXT[now]} (the trigger ${trigger.path} on "${name}", ` +
+            `${window}); in v1 it fired ${TRIGGER_SIDE_TEXT[was]}` +
+            (reads === name ? ` — its branch "${branch}" reads that flag: check it by hand` : ''),
         );
       }
     }
@@ -1642,12 +1875,6 @@ function checkTimeline(file, data, moved, final, geometry, modules, context, pla
     }
   }
   // The `ground` bonus entrances count the ground enemies that appear while they are armed.
-  const timeline = [];
-  for (const name of ['events', 'remix']) {
-    const entries = data[name];
-    if (Array.isArray(entries))
-      entries.forEach((event, i) => timeline.push({ event, path: `${name}[${String(i)}]` }));
-  }
   const window = modules.defaultBonusWindow;
   for (const { event: bonus, path: bonusPath } of timeline) {
     if (!isObject(bonus) || bonus['type'] !== 'bonus' || bonus['entrance'] !== 'ground') continue;
@@ -1737,36 +1964,53 @@ function portInteger(unit, value, geometry, modules) {
 }
 
 /**
- * Rounds band heights to whole rows that add up to a total (largest remainder): the heights are
- * first scaled to the total when they do not already add up to it.
+ * Rounds band heights to whole rows that add up to a total by rounding the **boundaries** between
+ * the bands, not each band: the heights are first scaled to the total when they do not already
+ * add up to it, every running sum is rounded half up, and the bands are the differences.
  *
  * @param {readonly number[]} exact - The ported (unrounded) heights.
  * @param {number} total - The rows they must fill.
  * @returns {number[] | null} Whole heights ≥ 1 adding up to `total`, or `null` when `total` is
  *   smaller than the number of bands.
+ *
+ * @remarks
+ * A `lines` raster's bands cut the art they distort into rows, so they must follow the art's own
+ * edges, and the art is scaled by boundary: a nearest-neighbour ×1.5 upscale (R2-01's interim art,
+ * sampling source row `floor(d / 1.5)` for new row `d`) puts source boundary `s` at
+ * `ceil(1.5 · s)` — which, as `1.5 · s` is whole or a half, is `1.5 · s` rounded half up. Rounding
+ * each band instead (largest remainder) put two of raster-range's boundaries 1 px off that art
+ * (review round 2). A band rounded to 0 rows takes one from its neighbours, so every band keeps
+ * at least one row.
  * @example
  * ```js
- * spreadBands([3, 3, 4.5, 4.5, 6, 7.5, 9, 10.5, 12, 12], 72); // [3, 3, 5, 5, 6, 7, 9, 10, 12, 12]
+ * spreadBands([3, 3, 4.5, 4.5, 6, 7.5, 9, 10.5, 12, 12], 72); // [3, 3, 5, 4, 6, 8, 9, 10, 12, 12]
  * ```
  */
 export function spreadBands(exact, total) {
-  if (total < exact.length) return null;
+  const n = exact.length;
+  if (total < n) return null;
   const sum = exact.reduce((a, b) => a + b, 0);
-  const wanted = sum === total || sum <= 0 ? exact.slice() : exact.map((h) => (h * total) / sum);
-  const out = wanted.map((h) => Math.max(1, Math.floor(cleanFraction(h))));
-  let missing = total - out.reduce((a, b) => a + b, 0);
-  // Largest remainders first; ties go to the earlier band.
-  const order = wanted
-    .map((h, i) => ({ i, rest: cleanFraction(h) - Math.floor(cleanFraction(h)) }))
-    .sort((a, b) => b.rest - a.rest || a.i - b.i);
-  for (let k = 0; missing > 0; k = (k + 1) % order.length, missing--) out[order[k].i]++;
-  // Only the ≥ 1 floor can overshoot: take it back from the tallest bands.
-  while (missing < 0) {
-    let tallest = 0;
-    for (let i = 1; i < out.length; i++) if (out[i] > out[tallest]) tallest = i;
-    out[tallest]--;
-    missing++;
+  /** @type {number[]} */
+  const bounds = [0];
+  let running = 0;
+  for (let i = 0; i < n; i++) {
+    running += exact[i];
+    const at =
+      i === n - 1
+        ? total
+        : sum <= 0
+          ? ((i + 1) * total) / n
+          : sum === total
+            ? running
+            : (running * total) / sum;
+    bounds.push(i === n - 1 ? total : Math.floor(cleanFraction(at) + 0.5));
   }
+  // Every band at least one row: push each boundary up past the one before it, then back under
+  // the one after it (the total is at least the number of bands, so both fit).
+  for (let i = 1; i < n; i++) bounds[i] = Math.max(bounds[i], bounds[i - 1] + 1);
+  for (let i = n - 1; i >= 1; i--) bounds[i] = Math.min(bounds[i], bounds[i + 1] - 1);
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(bounds[i + 1] - bounds[i]);
   return out;
 }
 
@@ -1810,12 +2054,15 @@ function listExamples(root, prefix = '') {
  * the tests and `pnpm content:check` read too).
  *
  * @param {Pick<RescaleOptions, 'atlas' | 'artScale'>} options - The options.
- * @returns {Promise<RescaleArt>} The heights (frame 0 of each sprite ÷ `artScale`) — resolves
- *   once the manifest is read or built.
+ * @returns {Promise<RescaleArt>} The heights (frame 0 of each sprite ÷ `artScale`, 1 when not
+ *   given) and the raw frame sizes — resolves once the manifest is read or built.
  * @throws {Error} When the manifest cannot be read or the atlas built.
  */
 export async function loadArt(options) {
-  /** @type {{ sprites: Record<string, { frames: string[] }>, frames: Record<string, { h: number }> }} */
+  /**
+   * @type {{ sprites: Record<string, { frames: string[] }>,
+   *   frames: Record<string, { w?: number, h: number }> }}
+   */
   let manifest;
   if (options.atlas !== null) {
     manifest = JSON.parse(readFileSync(options.atlas, 'utf8'));
@@ -1823,21 +2070,125 @@ export async function loadArt(options) {
     const { buildAtlas } = await import('../assets/pipeline.mjs');
     manifest = /** @type {typeof manifest} */ (/** @type {unknown} */ (buildAtlas().manifest));
   }
+  const scale = options.artScale ?? 1;
+  /**
+   * Frame 0 of a sprite, as the manifest lists it.
+   *
+   * @param {string} sprite - The sprite name.
+   * @returns {{ w?: number, h: number } | undefined} The frame, or `undefined`.
+   */
+  const first = (sprite) => {
+    const entry = Object.prototype.hasOwnProperty.call(manifest.sprites, sprite)
+      ? manifest.sprites[sprite]
+      : undefined;
+    return entry === undefined ? undefined : manifest.frames[entry.frames[0] ?? ''];
+  };
   return {
     height: (sprite) => {
-      const entry = Object.prototype.hasOwnProperty.call(manifest.sprites, sprite)
-        ? manifest.sprites[sprite]
-        : undefined;
-      const frame = entry === undefined ? undefined : manifest.frames[entry.frames[0] ?? ''];
-      return frame === undefined ? undefined : frame.h / options.artScale;
+      const frame = first(sprite);
+      return frame === undefined ? undefined : frame.h / scale;
+    },
+    frame: (sprite) => {
+      const frame = first(sprite);
+      return frame === undefined ? undefined : { w: frame.w ?? frame.h, h: frame.h };
     },
   };
 }
 
 /**
+ * Measures the atlas art's scale against the content's pixels from the terrain tiles: frame 0 of
+ * each tileset's sprite against the tileset's `tileSize` (the tiles are the one art whose size the
+ * content names — after R2-01 they are drawn at the new tile size while the content still says
+ * the old one).
+ *
+ * @param {readonly RescaleInputFile[]} files - The content files (the tilesets are read).
+ * @param {RescaleArt} art - The atlas.
+ * @returns {{ scale: number | null, tiles: { sprite: string, tileSize: number, w: number,
+ *   h: number }[] }} The scale every measured tile agrees on (`null` when no tileset's sprite is
+ *   in the atlas, or when they disagree), and every tile measured.
+ * @example
+ * ```js
+ * measureArtScale(files, art); // { scale: 1, tiles: [...] } today; 1.5 once the tiles are 12 px
+ * ```
+ */
+export function measureArtScale(files, art) {
+  /** @type {{ sprite: string, tileSize: number, w: number, h: number }[]} */
+  const tiles = [];
+  for (const file of files) {
+    /** @type {unknown} */
+    let data;
+    try {
+      data = JSON.parse(file.text);
+    } catch {
+      continue;
+    }
+    if (!isObject(data) || data['kind'] !== 'tileset') continue;
+    const sprite = data['sprite'];
+    const tileSize = data['tileSize'];
+    if (typeof sprite !== 'string' || typeof tileSize !== 'number' || !(tileSize > 0)) continue;
+    const frame = art.frame === undefined ? undefined : art.frame(sprite);
+    if (frame === undefined) continue;
+    tiles.push({ sprite, tileSize, w: frame.w, h: frame.h });
+  }
+  const scales = new Set();
+  for (const tile of tiles) {
+    scales.add(cleanFraction(tile.w / tile.tileSize));
+    scales.add(cleanFraction(tile.h / tile.tileSize));
+  }
+  const only = scales.size === 1 ? /** @type {number} */ ([...scales][0]) : null;
+  return { scale: only, tiles };
+}
+
+/**
+ * Settles the art scale of a port: `--art-scale` if given, else 1 — refused when the atlas'
+ * terrain tiles say the art is drawn at another scale (a run after R2-01's interim ×1.5 art that
+ * forgot the flag would place every band from heights 1.5 times too tall).
+ *
+ * @param {number | null} given - `--art-scale` (`null` = not given).
+ * @param {ReturnType<typeof measureArtScale>} measured - What the atlas' tiles say.
+ * @returns {{ scale: number, measured: number | null, note: string | null }} The scale to use,
+ *   the measured one, and a note for the report when a given scale disagrees with the atlas.
+ * @throws {RescaleError} When no scale is given and the tiles measure another scale than 1, or
+ *   disagree among themselves (exit code 2).
+ */
+export function resolveArtScale(given, measured) {
+  const sizes = (/** @type {'w' | 'h'} */ key) =>
+    [...new Set(measured.tiles.map((tile) => tile[key]))].sort((a, b) => a - b).join(' / ');
+  const content = [...new Set(measured.tiles.map((tile) => tile.tileSize))]
+    .sort((a, b) => a - b)
+    .join(' / ');
+  if (given === null) {
+    if (measured.tiles.length > 0 && measured.scale === null) {
+      throw new RescaleError(
+        `the atlas' terrain tiles (${sizes('w')} px wide, ${sizes('h')} px tall) do not agree on ` +
+          `one scale against the content's tilesets (${content} px): pass --art-scale S, the ` +
+          `scale of the parallax bands' art against the content's pixels`,
+      );
+    }
+    if (measured.scale !== null && measured.scale !== 1) {
+      const scale = String(measured.scale);
+      throw new RescaleError(
+        `the atlas' terrain tiles are ${sizes('h')} px but the content's tilesets say ${content} ` +
+          `px: the art is drawn at ×${scale} the content's pixels, so the bands' art heights need ` +
+          `--art-scale ${scale} (or --atlas with an atlas drawn at the content's pixels)`,
+      );
+    }
+    return { scale: 1, measured: measured.scale, note: null };
+  }
+  const note =
+    measured.scale !== given && measured.tiles.length > 0
+      ? `--art-scale ${String(given)} given, but the atlas' terrain tiles measure ` +
+        `${measured.scale === null ? 'no single scale' : `×${String(measured.scale)}`}: the ` +
+        `bands' art heights use ×${String(given)}`
+      : null;
+  return { scale: given, measured: measured.scale, note };
+}
+
+/**
  * What {@link rescaleContent} did.
  *
- * @typedef {RescalePlan & { written: string[], refused: boolean, dryRun: boolean }} RescaleResult
+ * @typedef {RescalePlan & { written: string[], refused: boolean, dryRun: boolean,
+ *   art?: ReturnType<typeof resolveArtScale> }} RescaleResult
  */
 
 /**
@@ -1848,7 +2199,8 @@ export async function loadArt(options) {
  * @param {RescaleModules} modules - The packages.
  * @returns {Promise<RescaleResult>} The plan, with the files written (none on a dry run or a
  *   refusal) — resolves once every file is formatted and written.
- * @throws {RescaleError} When the geometry is impossible.
+ * @throws {RescaleError} When the geometry is impossible, or the atlas contradicts the art scale
+ *   ({@link resolveArtScale}).
  */
 export async function rescaleContent(options, modules) {
   const geometry = rescaleGeometry(options, modules.frame);
@@ -1859,6 +2211,7 @@ export async function rescaleContent(options, modules) {
     text: readFileSync(join(options.root, path), 'utf8'),
   }));
   const art = await loadArt(options);
+  const artScale = resolveArtScale(options.artScale, measureArtScale(files, art));
   const plan = planRescale(files, geometry, modules, art);
   const prettier = await import('prettier');
   const config = (await prettier.resolveConfig(join(REPO_ROOT, 'package.json'))) ?? {};
@@ -1874,7 +2227,7 @@ export async function rescaleContent(options, modules) {
       written.push(file.path);
     }
   }
-  return { ...plan, written, refused, dryRun: options.dryRun };
+  return { ...plan, written, refused, dryRun: options.dryRun, art: artScale };
 }
 
 /**
@@ -1915,6 +2268,7 @@ export function formatRescaleReport(result, quiet = false) {
       `${String(result.changed.length)} files; ${String(result.unclassified.length)} unclassified, ` +
       `${String(result.errors.length)} errors`,
   ];
+  if (result.art !== undefined && result.art.note !== null) lines.push(`note: ${result.art.note}`);
   if (result.refused) lines.push('REFUSED: nothing written (unclassified values or errors).');
   else if (result.dryRun) lines.push('dry run: nothing written.');
   else lines.push(`${String(result.written.length)} files written.`);

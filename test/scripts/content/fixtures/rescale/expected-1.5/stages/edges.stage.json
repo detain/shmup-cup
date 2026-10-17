@@ -7,7 +7,8 @@
   "length": 2400,
   "camera": [
     { "x": 0, "speed": 1.5 },
-    { "x": 1050, "speed": 1.5, "yTo": 300, "yTicks": 120 }
+    { "x": 1050, "speed": 1.5, "yTo": 300, "yTicks": 120 },
+    { "x": 2100, "speed": 1.5, "hold": 60 }
   ],
   "checkpoints": [{ "x": 0 }, { "x": 900 }],
   "parallax": [
@@ -25,7 +26,7 @@
       "bottom": 336,
       "factorTop": 0.25,
       "factorBottom": 1.5,
-      "bands": [3, 3, 5, 5, 6, 7, 9, 10, 12, 12],
+      "bands": [3, 3, 5, 4, 6, 8, 9, 10, 12, 12],
       "wrap": 96
     },
     {
@@ -85,6 +86,17 @@
     { "x": 750, "type": "bonus", "stage": "mini", "entrance": "ground", "until": 960 },
     { "x": 870, "type": "spawn", "enemy": "edge-runner", "y": 111 },
     { "x": 883, "type": "spawn", "enemy": "edge-turret", "screenX": 332 },
+    {
+      "x": 1500,
+      "type": "trigger",
+      "flag": "low",
+      "region": { "x": 1650, "y": 216, "w": 150, "h": 60 }
+    },
+    { "x": 1766, "type": "spawn", "enemy": "edge-turret", "branch": "high" },
+    { "x": 1916, "type": "spawn", "enemy": "edge-turret" },
+    { "x": 1950, "type": "flag", "flag": "calm" },
+    { "x": 2066, "type": "spawn", "enemy": "edge-turret" },
     { "x": 2400, "type": "end" }
-  ]
+  ],
+  "branches": [{ "id": "high", "flag": "low", "value": false }]
 }

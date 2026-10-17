@@ -3,7 +3,11 @@
  * position-keeping JSON editor, expression scaling, raster band rounding, and every way a value
  * stays unclassified (no unit, a tunable without a unit table, a rule an expression cannot take,
  * an opaque schema) or a file is refused (not JSON, no schema, invalid, another tile size) — and
- * that a refused port writes nothing.
+ * that a refused port writes nothing. Review round 2: raster bands rounded at their boundaries
+ * (raster-range's `lines` bands follow the ×1.5 art), the art scale measured from the atlas'
+ * terrain tiles (a run that forgets `--art-scale` after R2-01 is refused), the timeline crossings
+ * of triggers, flags and camera stops, the re-sort's index map, and a band that touched two
+ * anchors.
  */
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -20,6 +24,7 @@ import {
   formatRescaleReport,
   jsonSpans,
   loadArt,
+  measureArtScale,
   modulesFrom,
   parseRescaleArgs,
   permuteJsonArrays,
@@ -27,6 +32,7 @@ import {
   replaceJsonValues,
   rescaleContent,
   rescaleGeometry,
+  resolveArtScale,
   scaleExpression,
   spreadBands,
   type RescaleGeometry,
@@ -164,7 +170,11 @@ describe('rescale: arguments', () => {
     });
     expect(options.root.endsWith('content')).toBe(true);
     expect(options.atlas?.endsWith('atlas.json')).toBe(true);
-    expect(parseRescaleArgs(['--factor', '2'])).toMatchObject({ topPad: 0, dryRun: false });
+    expect(parseRescaleArgs(['--factor', '2'])).toMatchObject({
+      topPad: 0,
+      dryRun: false,
+      artScale: null,
+    });
   });
 
   it('refuses what it cannot run, with exit code 2', () => {
@@ -292,14 +302,31 @@ describe('rescale: expressions and bands', () => {
     expect(scaleExpression(' $1 * 2 ', 1.5)).toBe('($1 * 2) * 1.5');
   });
 
-  it('rounds bands to whole rows that add up (largest remainder, earlier band on a tie)', () => {
-    expect(spreadBands([3, 3, 4.5, 4.5, 6, 7.5, 9, 10.5, 12, 12], 72)).toEqual([
-      3, 3, 5, 5, 6, 7, 9, 10, 12, 12,
-    ]);
+  it('rounds bands to whole rows at their boundaries, as a ×k upscale of the art moves them', () => {
+    // raster-range's `lines` bands over the 48-row floor art (rows 152–200 → 264–336): source
+    // boundary s lands on ceil(1.5·s) in a nearest-neighbour ×1.5 upscale — 0 3 6 11 15 21 29 38
+    // 48 60 72 — so the bands are [3, 3, 5, 4, 6, 8, 9, 10, 12, 12] (rounding each band by largest
+    // remainder gave [3, 3, 5, 5, 6, 7, …], two edges 1 px off the art).
+    const v1 = [2, 2, 3, 3, 4, 5, 6, 7, 8, 8];
+    const v2 = spreadBands(
+      v1.map((h) => h * 1.5),
+      72,
+    );
+    expect(v2).toEqual([3, 3, 5, 4, 6, 8, 9, 10, 12, 12]);
+    let source = 0;
+    let target = 0;
+    for (let i = 0; i < v1.length; i++) {
+      source += v1[i] ?? 0;
+      target += v2?.[i] ?? 0;
+      expect(target, `boundary ${String(i + 1)}`).toBe(Math.ceil(source * 1.5));
+    }
+    // Top and bottom that do not scale together: the boundaries are scaled to the total first.
     expect(spreadBands([36, 36, 36], 126)).toEqual([42, 42, 42]);
-    expect(spreadBands([1.5, 1.5, 1.5], 5)).toEqual([2, 2, 1]);
-    // The ≥ 1 floor overshoots: taken back from the tallest band.
+    expect(spreadBands([1.5, 1.5, 1.5], 5)).toEqual([2, 1, 2]);
+    // A band rounded to no row takes one from its neighbours: every band keeps at least one.
     expect(spreadBands([0.2, 0.2, 10], 4)).toEqual([1, 1, 2]);
+    expect(spreadBands([10, 0.2, 0.2], 4)).toEqual([2, 1, 1]);
+    expect(spreadBands([0, 0, 0], 3)).toEqual([1, 1, 1]);
     expect(spreadBands([1, 1, 1], 2)).toBeNull();
   });
 });
@@ -375,7 +402,7 @@ describe('rescale: what stays unclassified', () => {
       tileSize: null,
       toWidth: null,
       atlas: null,
-      artScale: 1,
+      artScale: null,
       json: false,
       quiet: false,
     };
@@ -592,8 +619,13 @@ describe('rescale: fields that port together (the R1-03 review)', () => {
       [(300 + 480) * 1.5 - (column + 120), column + 120],
       [3000, undefined],
     ]);
-    expect(plan.timeline.map((entry) => entry.note)).toEqual([
-      're-sorted by the ported x (3 entries change places; ties keep their order)',
+    expect(plan.timeline.map((entry) => [entry.from, entry.to, entry.note])).toEqual([
+      [
+        [0, 1, 2],
+        [2, 0, 1],
+        're-sorted by the ported x (3 entries change places; ties keep their order): 0 → 2, ' +
+          '1 → 0, 2 → 1 — every other listing names the indices as written',
+      ],
     ]);
   });
 
@@ -725,5 +757,310 @@ describe('rescale: re-sorting a JSON array in place', () => {
     );
     expect(permuteJsonArrays(text, [])).toBe(text);
     expect(() => permuteJsonArrays(text, [{ keys: ['f'], order: [0] }])).toThrow(RangeError);
+  });
+});
+
+describe('rescale: crossings on the timeline (review round 2)', () => {
+  it('lists an event moved across a trigger’s window, a flag event or a camera stop', () => {
+    const plan = planRescale(
+      [
+        file('enemies/r.enemies.json', ROSTER),
+        file(
+          'stages/s.stage.json',
+          stage(
+            [
+              { x: 100, type: 'trigger', flag: 'f', region: { x: 300, y: 20, w: 100, h: 20 } },
+              // Not branch-gated: fired after the trigger disarmed (400), now while it is armed.
+              { x: 420, type: 'spawn', enemy: 'turret' },
+              // Gated on another flag: the same crossing, no word about the branch.
+              { x: 430, type: 'spawn', enemy: 'turret', branch: 'other' },
+              // Gated on f but on the same side of the window in both: nothing to list.
+              { x: 900, type: 'spawn', enemy: 'turret', branch: 'took' },
+              { x: 1000, type: 'flag', flag: 'f', value: false },
+              // Gated on f and moved before the flag event that clears it: its branch reads it
+              // before the change.
+              { x: 1020, type: 'spawn', enemy: 'turret', branch: 'took' },
+              // A flyer is not moved: nothing listed for it.
+              { x: 1030, type: 'spawn', enemy: 'flyer' },
+            ],
+            {
+              camera: [
+                { x: 0, speed: 1 },
+                { x: 1500, speed: 1, lock: true },
+              ],
+              branches: [
+                { id: 'took', flag: 'f' },
+                { id: 'other', flag: 'g' },
+              ],
+              remix: [{ x: 1520, type: 'spawn', enemy: 'turret', minLoop: 2 }],
+            },
+          ),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.errors).toEqual([]);
+    const crossings = plan.timeline.filter((entry) => entry.path.endsWith('.x'));
+    expect(crossings.map((entry) => [entry.path, entry.from, entry.to])).toEqual([
+      ['events[1].x', 420, 566],
+      ['events[2].x', 430, 581],
+      ['events[5].x', 1020, 1466],
+      ['remix[0].x', 1520, 2216],
+    ]);
+    const window = 'armed 100 … 400 → 150 … 600';
+    expect(crossings.map((entry) => entry.note)).toEqual([
+      `now fires while the trigger is armed (the trigger events[0] on "f", ${window}); in v1 it ` +
+        'fired after the trigger disarmed',
+      `now fires while the trigger is armed (the trigger events[0] on "f", ${window}); in v1 it ` +
+        'fired after the trigger disarmed',
+      'now fires before the flag event events[4] (clears "f" at 1000 → 1500), which it followed ' +
+        'in v1 — its branch "took" now reads "f" before that change',
+      'now fires when the camera reaches the scroll lock at 1500 (→ 2250), not once it moves on ' +
+        'as in v1',
+    ]);
+  });
+
+  it('spells out a branch-gated event now read while its trigger is armed', () => {
+    const plan = planRescale(
+      [
+        file('enemies/r.enemies.json', ROSTER),
+        file(
+          'stages/s.stage.json',
+          stage(
+            [
+              {
+                x: 100,
+                type: 'trigger',
+                flag: 'f',
+                until: 500,
+                region: { x: 300, y: 20, w: 100, h: 20 },
+              },
+              { x: 520, type: 'spawn', enemy: 'turret', branch: 'took' },
+            ],
+            { branches: [{ id: 'took', flag: 'f' }] },
+          ),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    // An explicit until ports ×k (750); the spawn (520 + 400) × 1.5 − 664 = 716 is now before it.
+    expect(plan.timeline.map((entry) => [entry.path, entry.to])).toEqual([['events[1].x', 716]]);
+    expect(plan.timeline[0]?.note).toMatch(
+      /^its branch "took" reads the flag "f" of the trigger events\[0\] \(armed 100 … 500 → 150 … 750\): in v1 it fired after the trigger disarmed.* give the trigger an until below 716/,
+    );
+  });
+
+  it('asks for a look by hand when a branch-gated event moves before its trigger arms', () => {
+    const plan = planRescale(
+      [
+        file('enemies/r.enemies.json', ROSTER),
+        file(
+          'stages/s.stage.json',
+          stage(
+            [
+              { x: 600, type: 'trigger', flag: 'f', region: { x: 900, y: 20, w: 100, h: 20 } },
+              { x: 610, type: 'spawn', enemy: 'turret', branch: 'took' },
+            ],
+            { branches: [{ id: 'took', flag: 'f', value: false }] },
+          ),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    // (610 + 400) × 1.5 − 664 = 851: before the trigger arms at 900 now, inside its window in v1.
+    expect(plan.timeline.map((entry) => [entry.path, entry.to, entry.note])).toEqual([
+      [
+        'events[1].x',
+        851,
+        'now fires before the trigger arms (the trigger events[0] on "f", armed 600 … 1000 → ' +
+          '900 … 1500); in v1 it fired while the trigger is armed — its branch "took" reads that ' +
+          'flag: check it by hand',
+      ],
+      [
+        'events',
+        [1, 0],
+        're-sorted by the ported x (2 entries change places; ties keep their order): 0 → 1, ' +
+          '1 → 0 — every other listing names the indices as written',
+      ],
+    ]);
+  });
+});
+
+describe('rescale: the art scale (review round 2)', () => {
+  /**
+   * A tileset file.
+   *
+   * @param sprite - Its sprite.
+   * @param size - Its tile size.
+   * @param path - Its path.
+   * @returns The input file.
+   */
+  const tileset = (sprite: string, size: number, path = 'tilesets/t.tileset.json') =>
+    file(path, {
+      formatVersion: 1,
+      kind: 'tileset',
+      id: 't',
+      sprite,
+      tileSize: size,
+      tiles: [
+        { name: 'solid', type: 'solid', frame: 0, anchor: 'floor', mask: Array(size).fill(size) },
+      ],
+    });
+  /**
+   * An atlas with square terrain tiles and one 96-px band.
+   *
+   * @param sizes - Tile sprite → its frame size.
+   * @returns The art.
+   */
+  const atlas = (sizes: Record<string, number>) => ({
+    height: (sprite: string) => (sprite === 'bg/a' ? 96 : undefined),
+    frame: (sprite: string) => {
+      const size = sizes[sprite];
+      return size === undefined ? undefined : { w: size, h: size };
+    },
+  });
+  const mixedFiles = [tileset('tiles/a', 8), tileset('tiles/b', 8, 'tilesets/u.tileset.json')];
+
+  it('measures the art scale from the terrain tiles against the content’s tile size', () => {
+    const files = [tileset('tiles/a', 8)];
+    expect(measureArtScale(files, atlas({ 'tiles/a': 8 })).scale).toBe(1);
+    expect(measureArtScale(files, atlas({ 'tiles/a': 12 })).scale).toBe(1.5);
+    expect(measureArtScale(files, atlas({})).scale).toBeNull();
+    expect(measureArtScale(files, { height: () => undefined }).tiles).toEqual([]);
+    const mixed = measureArtScale(mixedFiles, atlas({ 'tiles/a': 8, 'tiles/b': 12 }));
+    expect([mixed.scale, mixed.tiles.length]).toEqual([null, 2]);
+  });
+
+  it('refuses a port that forgets --art-scale when the atlas is drawn at another scale', () => {
+    const files = [tileset('tiles/a', 8)];
+    // Not given: 1 while the tiles agree (or cannot be measured), refused otherwise.
+    expect(resolveArtScale(null, measureArtScale(files, atlas({ 'tiles/a': 8 })))).toEqual({
+      scale: 1,
+      measured: 1,
+      note: null,
+    });
+    expect(resolveArtScale(null, measureArtScale(files, atlas({}))).scale).toBe(1);
+    let error: unknown;
+    try {
+      resolveArtScale(null, measureArtScale(files, atlas({ 'tiles/a': 12 })));
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toBeInstanceOf(RescaleError);
+    expect((error as RescaleError).exitCode).toBe(2);
+    expect((error as RescaleError).message).toBe(
+      "the atlas' terrain tiles are 12 px but the content's tilesets say 8 px: the art is drawn " +
+        "at ×1.5 the content's pixels, so the bands' art heights need --art-scale 1.5 (or --atlas " +
+        "with an atlas drawn at the content's pixels)",
+    );
+    expect(() =>
+      resolveArtScale(null, measureArtScale(mixedFiles, atlas({ 'tiles/a': 8, 'tiles/b': 12 }))),
+    ).toThrow(/do not agree on one scale/);
+    // Given: used, and a disagreement with the tiles is noted in the report.
+    expect(resolveArtScale(1.5, measureArtScale(files, atlas({ 'tiles/a': 12 })))).toEqual({
+      scale: 1.5,
+      measured: 1.5,
+      note: null,
+    });
+    expect(resolveArtScale(1, measureArtScale(files, atlas({ 'tiles/a': 12 }))).note).toBe(
+      "--art-scale 1 given, but the atlas' terrain tiles measure ×1.5: the bands' art heights " +
+        'use ×1',
+    );
+  });
+
+  it('refuses the whole run, and reads the heights at the given scale', async () => {
+    const root = join(tmp, 'art-scale');
+    mkdirSync(join(root, 'tilesets'), { recursive: true });
+    writeFileSync(
+      join(root, 'tilesets', 't.tileset.json'),
+      tileset('tiles/a', FRAME.tileSize).text,
+    );
+    const path = join(tmp, 'art-scale-atlas.json');
+    const size = FRAME.tileSize * 1.5;
+    writeFileSync(
+      path,
+      JSON.stringify({
+        sprites: { 'tiles/a': { frames: ['tiles/a#0'] }, 'bg/a': { frames: ['bg/a#0'] } },
+        frames: { 'tiles/a#0': { w: size, h: size }, 'bg/a#0': { w: 128, h: 96 } },
+      }),
+    );
+    const options = {
+      factor: GEOMETRY.port.factor,
+      topPad: GEOMETRY.port.topPad,
+      dryRun: true,
+      root,
+      examples: false,
+      fromWidth: null,
+      fromHeight: null,
+      tileSize: null,
+      toWidth: null,
+      atlas: path,
+      artScale: null,
+      json: false,
+      quiet: false,
+    };
+    await expect(rescaleContent(options, MODULES)).rejects.toThrow(/need --art-scale 1\.5/);
+    const given = await rescaleContent({ ...options, artScale: 1.5 }, MODULES);
+    expect(given.art).toEqual({ scale: 1.5, measured: 1.5, note: null });
+    expect(given.errors).toEqual([]);
+    const art = await loadArt({ atlas: path, artScale: 1.5 });
+    expect([art.height('bg/a'), art.frame?.('tiles/a')]).toEqual([64, { w: size, h: size }]);
+    const noted = await rescaleContent({ ...options, artScale: 1 }, MODULES);
+    expect(formatRescaleReport(noted, true)).toContain(
+      "note: --art-scale 1 given, but the atlas' terrain tiles measure ×1.5",
+    );
+  });
+});
+
+describe('rescale: a band that touched two anchors (review round 2)', () => {
+  it('lists it in the backdrop with the strip that opens', () => {
+    const plan = planRescale(
+      [
+        file(
+          'stages/s.stage.json',
+          stage([], {
+            parallax: [
+              { layer: 'far', sprite: 'bg/full', factor: 0.2, y: 0, spacing: 128 },
+              { layer: 'mid', sprite: 'bg/sky', factor: 0.3, y: 0, spacing: 128 },
+            ],
+            mode7: {
+              sprite: 'bg/floor',
+              horizon: 100,
+              bottom: FRAME.playfieldH,
+              height: 34,
+              scroll: 0.1,
+              sway: 0,
+              fog: '#000000',
+              fogDepth: 96,
+              alpha: 1,
+            },
+          }),
+        ),
+      ],
+      V2,
+      MODULES,
+      { height: (sprite: string) => ({ 'bg/full': FRAME.playfieldH, 'bg/sky': 100 })[sprite] },
+    );
+    expect(plan.errors).toEqual([]);
+    expect(plan.unclassified).toEqual([]);
+    expect(plan.backdrop.map((entry) => [entry.path, entry.to, entry.note])).toEqual([
+      [
+        'parallax[0].y',
+        0,
+        'a band that touched two anchors keeps one (top): its bottom edge was on the bottom edge ' +
+          'and now leaves 36 px open — the art cannot span both at ×k: fix the art or the layout ' +
+          'by hand',
+      ],
+      [
+        'parallax[1].y',
+        0,
+        'a band that touched two anchors keeps one (top): its bottom edge was on the Mode-7 row ' +
+          'mode7.horizon and now leaves 18 px open — the art cannot span both at ×k: fix the art ' +
+          'or the layout by hand',
+      ],
+    ]);
   });
 });

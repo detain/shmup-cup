@@ -1,15 +1,17 @@
 {
-  "comment": "A minimal atlas manifest for the rescale fixtures (--atlas): the parallax bands' sprites and the height of frame 0 of each, as an atlas main.json lists them. Kept apart from the real atlas so the fixtures do not change when the art does.",
+  "comment": "A minimal atlas manifest for the rescale fixtures (--atlas): the parallax bands' sprites and the height of frame 0 of each, as an atlas main.json lists them, and the terrain tiles' sprite (8 px: the art is at the content's pixels, so no --art-scale is needed). Kept apart from the real atlas so the fixtures do not change when the art does.",
   "sprites": {
     "bg/brine-nebula": { "frames": ["bg/brine-nebula#0"] },
     "bg/dimension-sky": { "frames": ["bg/dimension-sky#0"] },
     "bg/prism-facets": { "frames": ["bg/prism-facets#0"] },
-    "bg/prism-spires": { "frames": ["bg/prism-spires#0"] }
+    "bg/prism-spires": { "frames": ["bg/prism-spires#0"] },
+    "tiles/terrain-a": { "frames": ["tiles/terrain-a#0"] }
   },
   "frames": {
     "bg/brine-nebula#0": { "w": 128, "h": 64 },
     "bg/dimension-sky#0": { "w": 128, "h": 48 },
     "bg/prism-facets#0": { "w": 128, "h": 64 },
-    "bg/prism-spires#0": { "w": 128, "h": 56 }
+    "bg/prism-spires#0": { "w": 128, "h": 56 },
+    "tiles/terrain-a#0": { "w": 8, "h": 8 }
   }
 }

@@ -89,18 +89,29 @@ A new numeric field needs a unit, and a new behaviour tunable a row in `BEHAVIOR
   stays (×k), one standing on the bottom edge stays on it (×k + the pad), one ending on the Mode-7
   horizon sits on it, touching bands stay touching (a stack of tiles stays closed), a free band
   goes by the edge it is nearer to; a raster row on (or within a tile of) a band edge follows that
-  edge, others snap.
+  edge, others snap. A band can keep one anchor only: one that touched two (the top edge and the
+  bottom edge, the top edge and the Mode-7 horizon, the horizon and the bottom edge) keeps the
+  first and is listed with the strip that opens at the other — the art is ×k, the span between
+  them is not.
 
 Because a world sum moves an event against the camera, the tool also re-sorts each stage's
 `events` and `remix` by the ported `x` (ties keep their order — the loader wants them sorted) and
-lists every event that now fires before a checkpoint it followed, every ground enemy that leaves
-or joins a `ground` bonus entrance's window, and every moving block whose drift now runs ahead.
+reports each re-sorted array's old → new indices; **every other listing names an event by its
+index as written**, before the re-sort. It lists every event that now fires on the other side of
+a checkpoint, a camera stop (a `lock` or `hold` key), a `flag` event or a region trigger's armed
+window (from its `x` to its `until`, by default the region's right end), every ground enemy that
+leaves or joins a `ground` bonus entrance's window, and every moving block whose drift now runs
+ahead. The one that changes play is spelled out: an event whose `branch` reads a trigger's flag
+and that fired after the trigger disarmed now fires while a ship can still set the flag, so both
+branches can play (gimmick-range's falling rock). The tool does not fix it — no port keeps both
+the event's column and the trigger's window — but names the `until` that keeps v1's order.
 
 **The rescale tool.** `node scripts/content/rescale.mjs --factor K [--top-pad P] [--dry-run]`
 walks every file here (and the `example.*.json` samples; `demos/` is skipped — recordings are
 re-recorded, never rescaled) with its schema and applies the rules above. It rewrites only the
 numbers it changes, then formats the file with Prettier, so a port's diff is the values alone.
-Integer fields are rounded and listed; raster `bands` are spread so they still add up to
+Integer fields are rounded and listed; raster `bands` are rounded at their boundaries (where a
+nearest-neighbour ×k upscale of the art puts them: `ceil(1.5·s)` at ×1.5) so they still add up to
 `bottom − top`. It **refuses to write** while any value is unclassified or a file is invalid,
 and its report lists everything a port must look at by hand: every value moved by a rule other
 than ×k, every value on or above the top edge (spawns first — an enemy that spawned above the
@@ -108,14 +119,17 @@ screen and moved in now arrives 36 px higher; a value exactly on the top edge mo
 so what hangs from it may need to grow instead), every rounded integer, values outside today's schema
 bounds, approximated masks, the timeline and backdrop items above, the padded tilemaps and any
 tilemap the camera would see past. The bands' art heights come from the atlas the pipeline
-builds in memory from `assets/source/` (or `--atlas <main.json>`; `--art-scale 1.5` once R2-01's
-interim ×1.5 art is in the pipeline, so heights stay in this content's pixels).
+builds in memory from `assets/source/` (or `--atlas <main.json>`), divided by `--art-scale` so
+they stay in this content's pixels: pass `--art-scale 1.5` once R2-01's interim ×1.5 art is in
+the pipeline. The tool measures that scale from the atlas' terrain tiles against the tilesets'
+`tileSize` and refuses to run without `--art-scale` when they say anything but ×1; a given
+`--art-scale` the tiles disagree with is noted in the report.
 `--factor 1 --dry-run` reports zero changes on this folder; `--factor 1.5 --top-pad 36
 --dry-run` zero unclassified values. The real ×1.5 run is R2-02's: after R2-01 flips the frame,
 pass the geometry this content was written for — `--from-width 384 --from-height 200
---tile-size 8 --to-width 640` (the tool refuses a tile size that does not match) — and run it
-before changing the code's default columns (`DEFAULT_BLOCK_SCREEN_X`, `DEFAULT_SPAWN_SCREEN_X`):
-a block without a `screenX` takes its old column from that constant.
+--tile-size 8 --to-width 640 --art-scale 1.5` (the tool refuses a tile size that does not match)
+— and run it before changing the code's default columns (`DEFAULT_BLOCK_SCREEN_X`,
+`DEFAULT_SPAWN_SCREEN_X`): a block without a `screenX` takes its old column from that constant.
 
 ## Versioning and loading
 
