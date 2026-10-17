@@ -157,7 +157,7 @@ apart:
 | Kind of value | Rule | Examples |
 |---|---|---|
 | **World** (positions in the level, lengths, speeds, radii, accelerations) | ×1.5 | stage `length`, camera keys and speeds, event x, checkpoints, hurtboxes, bullet speeds, path points, fx speeds |
-| **Frame- or edge-anchored** (defined by "the right edge", "one playfield", "the screen centre") | **re-derive from the new frame**, never ×1.5 | spawn x 400 = right edge + 16 → `PLAYFIELD_W + 24`; `laserLength 384` = one screen width → `PLAYFIELD_W`; zone-d `yTo 200` = one playfield; `rowsTall 25` → 28; raster `top`/`bottom`; Mode-7 `horizon 100` / `bottom 200`; `DEFAULT_BOSS_Y 100` (centre); `CX = 192` |
+| **Frame- or edge-anchored** (defined by "the right edge", "one playfield", "the screen centre") | **re-derive from the new frame**, never ×1.5 | spawn x 400 = right edge + 16 → `PLAYFIELD_W + 24`; `laserLength 384` = one screen width → `PLAYFIELD_W`; `rowsTall 25` → 28 (camera `yTo` is **not** here: it is `rel-px`, ×1.5, decision O2); raster `top`/`bottom`; Mode-7 `horizon 100` / `bottom 200`; `DEFAULT_BOSS_Y 100` (centre); `CX = 192` |
 | **Time, angle, count, score** | unchanged | telegraph ticks, `OPTION_SPACING` (ticks), timers, aim directions, pool sizes, point values |
 
 **The vertical fit.** World y × 1.5 fills 300 px of the new 336-px playfield, so 36 px (3 tile rows) are left
@@ -925,7 +925,7 @@ moved.
     (145 entries, 28 bosses), 6 path files (146 points), 3 pattern files, 3 player files, 5 weapon files,
     2 fx files, 10 tilesets. Review the diff zone by zone.
   - **Hand-fix the frame-anchored values the tool flags** (§2.6): spawn x beyond the right edge, one-playfield
-    pans (zone-d `yTo`, `rowsTall`), raster `top`/`bottom`, the Mode-7 `horizon`/`bottom` of the high-speed
+    pans (`rowsTall`; camera `yTo` is `rel-px` and the tool scales it — O2), raster `top`/`bottom`, the Mode-7 `horizon`/`bottom` of the high-speed
     dimension, boss rest positions.
   - **Scale the code constants** in core (Appendix B: margins, radii, speeds, grid cell, black hole, player
     entry, bending lasers, magnet …).
@@ -1692,7 +1692,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
-| R3-05 | AI art provenance and licences | in progress (part 1 done; the origin report waits for R3-02) |
+| R3-05 | AI art provenance and licences | in progress (part 1 done; part 2, the origin report, can start — R3-02 is done) |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
 | R4-02 | Enemy bullets, lasers, items | not started |
