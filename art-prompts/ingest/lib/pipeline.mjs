@@ -219,6 +219,40 @@ const textOf = (candidate, key) =>
     : null;
 
 /**
+ * One input image of an edit (`editFrom` of a candidate sidecar): its hash and, from its own
+ * candidate sidecar when there is one, the model that made it — an edit of a FLUX image
+ * inherits FLUX's licence question whatever model edits it (art-provenance.md §5, §8).
+ *
+ * @param {IngestOptions} options - Run options (root, model table).
+ * @param {string} path - Root-relative path of the reference image.
+ * @returns {{ path: string, sha256: string | null, sidecar: string | null,
+ *   model: string | null, modelKey: string | null, licence: string | null }} The reference.
+ */
+function referenceOf(options, path) {
+  const file = join(options.root, ...path.split('/'));
+  const sidecarFile = `${file.slice(0, file.length - extname(file).length)}.json`;
+  /** @type {Record<string, unknown> | null} */
+  let sidecar = null;
+  if (existsSync(sidecarFile)) {
+    try {
+      sidecar = readCandidateSidecar(sidecarFile);
+    } catch {
+      sidecar = null; // a broken sidecar leaves the model unknown; the hash still ties the image
+    }
+  }
+  const key = textOf(sidecar, 'model');
+  const entry = key === null ? undefined : options.models[key];
+  return {
+    path,
+    sha256: existsSync(file) ? sha256Hex(readFileSync(file)) : null,
+    sidecar: sidecar === null ? null : rel(options.root, sidecarFile),
+    model: textOf(sidecar, 'servedModel') ?? entry?.id ?? key,
+    modelKey: key,
+    licence: entry?.licence ?? null,
+  };
+}
+
+/**
  * A number field of a candidate sidecar, or `null`.
  *
  * @param {Record<string, unknown> | null} candidate - The sidecar.
@@ -395,10 +429,7 @@ export function ingestRecipe(recipeFile, options) {
       generatedAt: textOf(candidate, 'generatedAt'),
       reference: editFrom
         .filter((r) => typeof r === 'string')
-        .map((r) => {
-          const refFile = join(options.root, .../** @type {string} */ (r).split('/'));
-          return { path: r, sha256: existsSync(refFile) ? sha256Hex(readFileSync(refFile)) : null };
-        }),
+        .map((r) => referenceOf(options, /** @type {string} */ (r))),
       generator:
         candidate === null || candidateFile === null
           ? null

@@ -260,7 +260,7 @@ sprite can be cut from several images, so the per-image fields sit **per source*
 | `reviewed` | `{ "on", "by" }` of the content review (look-alikes, logos, stray text — §6 rule 5), or `null` |
 | `ingestedAt` | the date (the plan's "date"), `YYYY-MM-DD` |
 | `author` | who made or cleaned it, or `null` |
-| `sources[]` | `path`, `sha256`, `format`, `width`, `height`; `model` (the **served** model id, `null` for a hand-made source) and `modelKey` (the group key); `weights` (repo, revision, transformer override) and `licence` (an id of §2) from `models.json`; `prompt` `{ file, entry, text, negative }`; `seed`, `size`, `steps`, `guidance`, `generatedAt`; `reference` (an edit's input images, with their SHA-256); `generator` (the candidate sidecar's path, hash, id, slot, mode, instruction) |
+| `sources[]` | `path`, `sha256`, `format`, `width`, `height`; `model` (the **served** model id, `null` for a hand-made source) and `modelKey` (the group key); `weights` (repo, revision, transformer override) and `licence` (an id of §2) from `models.json`; `prompt` `{ file, entry, text, negative }`; `seed`, `size`, `steps`, `guidance`, `generatedAt`; `reference` (an edit's input images: path, SHA-256 and, from their own candidate sidecar, the model and licence that made them — an edit of a FLUX image inherits FLUX's hold); `generator` (the candidate sidecar's path, hash, id, slot, mode, instruction) |
 | `recipe` | `{ path, sha256 }` |
 | `edit` | `{ path, sha256, painted, erased }`, or `null` |
 | `output` | `png`, `sha256`, `sidecar`, `sidecarSha256`, `frames`, `frameWidth`, `frameHeight`, `colors`, `alpha` |

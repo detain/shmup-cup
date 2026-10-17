@@ -23,7 +23,7 @@ import { main } from '../ingest.mjs';
 import { decodeImage, pngChunks } from '../lib/codec.mjs';
 import { chebyshev, packRgb } from '../lib/image.mjs';
 import { ingestRecipe } from '../lib/pipeline.mjs';
-import { loadModels } from '../lib/provenance.mjs';
+import { loadModels, sha256Hex } from '../lib/provenance.mjs';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SPRITES = join(FIXTURES, 'sprites');
@@ -297,6 +297,57 @@ describe('what each fixture shows', () => {
     const [centre, alpha] = px(img, 6, 6);
     assert.equal(alpha, 255);
     assert.ok(((centre >> 8) & 255) > 180, 'the bright core');
+  });
+});
+
+describe('edit references', () => {
+  it("records an edit's input image with its hash and the model that made it", () => {
+    const root = copyRoot('edited');
+    cpSync(join(root, 'sources', 'drone-sheet.png'), join(root, 'sources', 'drone-edit.png'));
+    writeFileSync(
+      join(root, 'sources', 'drone-edit.json'),
+      JSON.stringify({
+        id: 'enemy/drone/edit-1',
+        model: 'qwenedit',
+        servedModel: 'Qwen/Qwen-Image-Edit-2511',
+        seed: 5,
+        mode: 'edit',
+        editFrom: ['sources/drone-sheet.png', 'sources/missing.png'],
+        instruction: 'SYNTHETIC FIXTURE edit',
+      }),
+    );
+    const recipe = join(root, 'sprites', 'enemies', 'drone-edit.recipe.json');
+    writeFileSync(
+      recipe,
+      readFileSync(join(root, 'sprites', 'enemies', 'drone.recipe.json'), 'utf8')
+        .replace('"enemies/drone"', '"enemies/drone-edit"')
+        .replace('sources/drone-sheet.png', 'sources/drone-edit.png'),
+    );
+    const result = ingestRecipe(recipe, { ...OPTIONS, root });
+    assert.deepEqual(result.errors, []);
+    const record = JSON.parse(result.files?.record.text ?? '{}');
+    const [source] = record.sources;
+    assert.deepEqual(
+      [source.model, source.licence, source.generator.mode],
+      ['Qwen/Qwen-Image-Edit-2511', 'apache-2.0', 'edit'],
+    );
+    assert.deepEqual(source.reference[0], {
+      path: 'sources/drone-sheet.png',
+      sha256: sha256Hex(readFileSync(join(root, 'sources', 'drone-sheet.png'))),
+      sidecar: 'sources/drone-sheet.json',
+      model: 'black-forest-labs/FLUX.2-dev',
+      modelKey: 'flux2',
+      licence: 'flux-nc-2.1',
+    });
+    assert.match(source.reference[0].sha256, /^[0-9a-f]{64}$/);
+    assert.deepEqual(source.reference[1], {
+      path: 'sources/missing.png',
+      sha256: null,
+      sidecar: null,
+      model: null,
+      modelKey: null,
+      licence: null,
+    });
   });
 });
 
