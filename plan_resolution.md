@@ -1,6 +1,6 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
-> **Status:** drafted 2026-10-16 — **0 of 37 steps done.** The `v1.x` maintenance branch exists (created from
+> **Status:** drafted 2026-10-16; 2026-10-17 — **2 of 37 steps done** (R0-01, R3-01; owner parts pending), 6 in progress. The `v1.x` maintenance branch exists (created from
 > the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything below happens on `master`, which from
 > now on is the **v2** line.
 >
