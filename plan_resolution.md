@@ -730,7 +730,9 @@ moved.
     is temporary until R4-03).
   - **Interim art:** a pipeline stage `interimScale: 1.5` that upscales every sprite source nearest-neighbour
     (procedural generators run at their native size first). Every sprite name exists at its new size; the tiles
-    are 12×12; anchors are scaled.
+    are 12×12; anchors are scaled. The terrain tilesets are left out of the upscale: `terrain.mjs` already draws
+    at `TILE_SIZE` (R1-04), so after the flip it draws 12-px tiles itself — and its own `TILE_SIZE` copy flips with
+    core's (`terrain-size.test.ts` pins them).
   - **Saves and replays** (§3.4): save migration 2 → 3 (v1 hi-score tables → `legacyScores`);
     `REPLAY_FORMAT_VERSION` and `RUN_REPLAY_FORMAT_VERSION` → 2, plus the header's frame size checked, so v1
     replays are refused with a clear message (a string id in `DEFAULT_UI_TEXT` and the three string tables).
