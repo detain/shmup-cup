@@ -7,11 +7,15 @@
   "length": 2400,
   "camera": [
     { "x": 0, "speed": 1.5 },
-    { "x": 900, "speed": 1.5, "yTo": 300, "yTicks": 120 }
+    { "x": 1050, "speed": 1.5, "yTo": 300, "yTicks": 120 }
   ],
-  "checkpoints": [{ "x": 0 }],
+  "checkpoints": [{ "x": 0 }, { "x": 900 }],
   "parallax": [
-    { "layer": "far", "sprite": "bg/prism-facets", "factor": 0.2, "y": -108, "spacing": 192 }
+    { "layer": "far", "sprite": "bg/brine-nebula", "factor": 0.1, "y": -108, "spacing": 192 },
+    { "layer": "far", "sprite": "bg/prism-facets", "factor": 0.2, "y": 0, "spacing": 192 },
+    { "layer": "far", "sprite": "bg/prism-facets", "factor": 0.2, "y": 96, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/dimension-sky", "factor": 0.3, "y": 96, "spacing": 192 },
+    { "layer": "mid", "sprite": "bg/prism-spires", "factor": 0.5, "y": 252, "spacing": 192 }
   ],
   "raster": [
     {
@@ -61,7 +65,7 @@
     { "x": 180, "type": "spawn", "enemy": "edge-runner", "y": 66, "screenX": -36 },
     { "x": 210, "type": "spawn", "enemy": "edge-runner", "y": -45 },
     {
-      "x": 450,
+      "x": 386,
       "type": "block",
       "tile": "solid",
       "screenX": 664,
@@ -70,6 +74,17 @@
       "h": 12,
       "vx": -0.75
     },
+    { "x": 416, "type": "block", "tile": "solid", "screenX": 784, "y": 0, "w": 24, "h": 72 },
+    {
+      "x": 600,
+      "type": "trigger",
+      "flag": "gap",
+      "region": { "x": 1224, "y": 0, "w": 96, "h": 60 }
+    },
+    { "x": 693.5, "type": "spawn", "enemy": "edge-turret", "screenX": 664 },
+    { "x": 750, "type": "bonus", "stage": "mini", "entrance": "ground", "until": 960 },
+    { "x": 870, "type": "spawn", "enemy": "edge-runner", "y": 111 },
+    { "x": 883, "type": "spawn", "enemy": "edge-turret", "screenX": 332 },
     { "x": 2400, "type": "end" }
   ]
 }

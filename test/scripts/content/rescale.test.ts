@@ -48,6 +48,8 @@ const repo = join(here, '..', '..', '..');
 const fixtures = join(here, 'fixtures', 'rescale');
 const v1Root = join(fixtures, 'v1');
 const expectedRoot = join(fixtures, 'expected-1.5');
+/** The fixtures' atlas manifest: the parallax bands' art heights. */
+const atlas = join(fixtures, 'atlas.json');
 const script = join(repo, 'scripts', 'content', 'rescale.mjs');
 const tmp = mkdtempSync(join(tmpdir(), 'shmup-rescale-'));
 
@@ -95,6 +97,8 @@ function options(overrides: Partial<RescaleOptions>): RescaleOptions {
     fromHeight: null,
     tileSize: null,
     toWidth: null,
+    atlas: null,
+    artScale: 1,
     json: false,
     quiet: false,
     ...overrides,
@@ -204,9 +208,11 @@ describe('scripts/content/rescale: the shipped content', () => {
     expect(result.geometry.padRows).toBe(3);
     // The spawns above the top edge are listed for R2-02's hand fixes.
     expect(result.aboveTop.some((entry) => entry.note.startsWith('spawn'))).toBe(true);
-    // The camera's yTo is ×k (rel-px): zone D's and gimmick-range's pans to the bottom of their
-    // maps reach exactly the bottom of the maps with the three pad rows (R1-03 review).
+    // The camera's yTo ports ×k, so no map is seen past; the field pairs moved some events
+    // against the timeline, and the backdrop placed some bands by a fallback.
     expect(result.views).toEqual([]);
+    expect(result.timeline.length).toBeGreaterThan(0);
+    expect(result.backdrop.length).toBeGreaterThan(0);
   });
 });
 
@@ -214,7 +220,13 @@ describe('scripts/content/rescale: the fixtures', () => {
   it('ports v1/ to exactly expected-1.5/', async () => {
     const root = copyFixture('known');
     const result = await rescaleContent(
-      options({ factor: GEOMETRY.port.factor, topPad: GEOMETRY.port.topPad, root, dryRun: false }),
+      options({
+        factor: GEOMETRY.port.factor,
+        topPad: GEOMETRY.port.topPad,
+        root,
+        dryRun: false,
+        atlas,
+      }),
       FIXTURE_MODULES,
     );
     expect(result.errors).toEqual([]);
@@ -248,21 +260,28 @@ describe('scripts/content/rescale: the fixtures', () => {
 
   it('reports what R2-02 must look at', async () => {
     const result = await rescaleContent(
-      options({ factor: GEOMETRY.port.factor, topPad: GEOMETRY.port.topPad, root: v1Root }),
+      options({ factor: GEOMETRY.port.factor, topPad: GEOMETRY.port.topPad, root: v1Root, atlas }),
       FIXTURE_MODULES,
     );
     expect(result.written).toEqual([]);
     const listed = (entries: readonly { file: string; path: string }[]): string[] =>
       entries.map((entry) => `${entry.file}:${entry.path}`);
-    // Spawns first, then the other values above the top edge.
+    // Spawns first, then the other values on or above the top edge.
     expect(listed(result.aboveTop)).toEqual([
       'stages/edges.stage.json:events[2].y',
       'stages/mini.stage.json:events[1].y',
       'enemies/edges.enemies.json:enemies[0].mover.y',
+      'stages/edges.stage.json:events[4].y',
+      'stages/edges.stage.json:events[5].region.y',
+    ]);
+    // The brick and the region hanging from the top edge grow by the pad instead of moving down.
+    expect(result.aboveTop.slice(3).map((entry) => [entry.to, entry.note])).toEqual([
+      [0, 'hangs from the top edge: its top stays, its height grows by the pad (24 → 72)'],
+      [0, 'hangs from the top edge: its top stays, its height grows by the pad (16 → 60)'],
     ]);
     expect(listed(result.rounded)).toEqual([
-      'enemies/edges.enemies.json:enemies[1].boss.parts[0].hurtbox.hw',
-      'enemies/edges.enemies.json:enemies[1].boss.parts[0].hurtbox.hh',
+      'enemies/edges.enemies.json:enemies[2].boss.parts[0].hurtbox.hw',
+      'enemies/edges.enemies.json:enemies[2].boss.parts[0].hurtbox.hh',
       'enemies/mini.enemies.json:enemies[0].hurtbox.hw',
       'enemies/mini.enemies.json:enemies[0].hurtbox.hh',
       'enemies/mini.enemies.json:enemies[1].boss.parts[1].hurtbox.hw',
@@ -270,20 +289,38 @@ describe('scripts/content/rescale: the fixtures', () => {
       'stages/edges.stage.json:raster[0].bands',
       'stages/edges.stage.json:raster[1].bands',
     ]);
-    // The second raster's top and bottom snap to different anchors: its bands are spread.
+    // The second raster's top and bottom do not scale ×k together: its bands are spread.
     expect(result.rounded[result.rounded.length - 1]?.to).toEqual([42, 42, 42]);
-    expect(result.rounded[result.rounded.length - 1]?.note).toMatch(/snap apart/);
+    expect(result.rounded[result.rounded.length - 1]?.note).toMatch(/do not scale ×k together/);
     expect(listed(result.outOfBounds)).toEqual([
       'enemies/edges.enemies.json:enemies[0].mover.x',
-      'enemies/edges.enemies.json:enemies[1].boss.x',
+      'enemies/edges.enemies.json:enemies[2].boss.x',
       'stages/edges.stage.json:events[0].screenX',
+      'stages/edges.stage.json:events[7].screenX',
       'stages/edges.stage.json:raster[0].top',
       'stages/edges.stage.json:raster[0].bottom',
       'stages/edges.stage.json:mode7.bottom',
     ]);
-    // edges' pan to its map's bottom (yTo 200 + 200 = 50 rows of 8) ports ×k to 300, exactly the
-    // bottom of the 53-row map: nothing to see past.
-    expect(listed(result.views)).toEqual([]);
+    expect(result.views).toEqual([]);
+    // The field pairs: a moving block now created earlier, a ground enemy before the checkpoint
+    // it followed and one out of the ground entrance's window — and the timeline re-sorted.
+    expect(result.timeline.map((entry) => [entry.path, entry.note])).toEqual([
+      [
+        'events[3].x',
+        'a moving block created 64 px of camera travel earlier: its drift / swing runs ahead of v1',
+      ],
+      ['events[9].x', 'now fires before the checkpoint at 600 (→ 900) it followed'],
+      [
+        'events[7].x',
+        'a ground enemy that leaves the window of the ground bonus entrance events[6] (750 … 960)',
+      ],
+      ['events', 're-sorted by the ported x (2 entries change places; ties keep their order)'],
+    ]);
+    // The backdrop: a raster row near a band edge, a band touching nothing.
+    expect(listed(result.backdrop)).toEqual([
+      'stages/edges.stage.json:raster[0].top',
+      'stages/mini.stage.json:parallax[0].y',
+    ]);
     expect(listed(result.expressions)).toEqual([
       'patterns/mini.patterns.json:actions[0].body[0].body[0].speed',
       'patterns/mini.patterns.json:actions[1].body[0].speed',
@@ -301,12 +338,14 @@ describe('scripts/content/rescale: the fixtures', () => {
       'screen-y',
       'tile-px',
       'tile-rows',
+      'world-px',
+      'world-x',
       'world-y',
     ]);
   });
 
   it('is the identity at factor 1', async () => {
-    const result = await rescaleContent(options({ root: v1Root }), FIXTURE_MODULES);
+    const result = await rescaleContent(options({ root: v1Root, atlas }), FIXTURE_MODULES);
     expect(result.errors).toEqual([]);
     expect(result.unclassified).toEqual([]);
     expect(result.changes).toBe(0);
@@ -416,13 +455,15 @@ describe('scripts/content/rescale: the command line', () => {
       '--root',
       v1Root,
       '--dry-run',
+      '--atlas',
+      atlas,
       ...geometry(GEOMETRY.port.toWidth),
     ]);
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('0 unclassified, 0 errors');
     expect(result.stdout).toContain('dry run: nothing written.');
-    expect(result.stdout).toContain('on or above the top edge (3):');
+    expect(result.stdout).toContain('on or above the top edge (5):');
     expect(result.stdout).toContain('[screen-x] 400 → 664 — edge-x: snapped to the end');
   }, 60_000);
 
@@ -434,6 +475,8 @@ describe('scripts/content/rescale: the command line', () => {
       v1Root,
       '--dry-run',
       '--json',
+      '--atlas',
+      atlas,
       ...geometry(GEOMETRY.frame.playfieldW),
     ]);
     expect(result.status).toBe(0);

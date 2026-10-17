@@ -19,8 +19,10 @@ import {
   RescaleError,
   formatRescaleReport,
   jsonSpans,
+  loadArt,
   modulesFrom,
   parseRescaleArgs,
+  permuteJsonArrays,
   planRescale,
   replaceJsonValues,
   rescaleContent,
@@ -140,6 +142,10 @@ describe('rescale: arguments', () => {
       '4',
       '--to-width',
       '30',
+      '--atlas',
+      'atlas.json',
+      '--art-scale',
+      '1.5',
       '--json',
       '--quiet',
     ]);
@@ -152,10 +158,12 @@ describe('rescale: arguments', () => {
       fromHeight: 20,
       tileSize: 4,
       toWidth: 30,
+      artScale: 1.5,
       json: true,
       quiet: true,
     });
     expect(options.root.endsWith('content')).toBe(true);
+    expect(options.atlas?.endsWith('atlas.json')).toBe(true);
     expect(parseRescaleArgs(['--factor', '2'])).toMatchObject({ topPad: 0, dryRun: false });
   });
 
@@ -167,6 +175,8 @@ describe('rescale: arguments', () => {
       [['--factor', '0'], /--factor must be > 0/],
       [['--factor', '1', '--top-pad', '-1'], /--top-pad must be >= 0/],
       [['--factor', '1', '--root'], /--root needs a directory/],
+      [['--factor', '1', '--atlas'], /--atlas needs a file/],
+      [['--factor', '1', '--art-scale', '0'], /--art-scale must be > 0/],
       [['--factor', '1', '--wat'], /unknown option --wat/],
     ];
     for (const [argv, message] of cases) {
@@ -364,6 +374,8 @@ describe('rescale: what stays unclassified', () => {
       fromHeight: null,
       tileSize: null,
       toWidth: null,
+      atlas: null,
+      artScale: 1,
       json: false,
       quiet: false,
     };
@@ -517,5 +529,201 @@ describe('rescale: what it lists', () => {
       '1 files (0 skipped), 1 values, 1 changes in 1 files; 0 unclassified, 0 errors',
       'dry run: nothing written.',
     ]);
+  });
+});
+
+/** A stage with only what the field-pair tests need, plus `events`. */
+const stage = (events: unknown[], extra: Record<string, unknown> = {}) => ({
+  formatVersion: 1,
+  kind: 'stage',
+  id: 's',
+  name: 'S',
+  music: { stage: 'Stage', boss: 'Boss' },
+  length: 2000,
+  camera: [{ x: 0, speed: 1 }],
+  checkpoints: [{ x: 0 }],
+  parallax: [],
+  tilemap: null,
+  events: [...events, { x: 2000, type: 'end' }],
+  ...extra,
+});
+
+/** Enemies: a flying one and one with a ground anchor. */
+const ROSTER = {
+  formatVersion: 1,
+  kind: 'enemies',
+  enemies: [
+    { ...enemy({ speed: 1 }).enemies[0], id: 'flyer' },
+    {
+      ...enemy({ aimTicks: 30, fireTicks: 60, bulletSpeed: 1 }, 'turret.floor').enemies[0],
+      id: 'turret',
+      ground: 'floor',
+    },
+  ],
+};
+
+describe('rescale: fields that port together (the R1-03 review)', () => {
+  it('ports a block’s x + screenX as one world x, and a ground enemy’s; a flyer’s alone', () => {
+    const plan = planRescale(
+      [
+        file('enemies/r.enemies.json', ROSTER),
+        file(
+          'stages/s.stage.json',
+          stage([
+            { x: 100, type: 'spawn', enemy: 'flyer', screenX: 400 },
+            { x: 100, type: 'spawn', enemy: 'turret', screenX: 400 },
+            { x: 100, type: 'spawn', enemy: 'turret' },
+            { x: 300, type: 'block', screenX: 480, y: 64, w: 16, h: 8 },
+          ]),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    expect(plan.errors).toEqual([]);
+    const text = plan.changed.find((changed) => changed.path === 'stages/s.stage.json')?.text;
+    const events = (JSON.parse(text ?? '{}') as { events: Record<string, number>[] }).events;
+    const column = GEOMETRY.port.toWidth + 24;
+    // The flyer: x ×k, its column snapped (when, and where on screen).
+    expect(events.map((event) => [event['x'], event['screenX']])).toEqual([
+      [(100 + 400) * 1.5 - column, column], // the turret, moved before the flyer
+      [(100 + 400) * 1.5 - column, undefined], // the turret with the default column
+      [150, column],
+      [(300 + 480) * 1.5 - (column + 120), column + 120],
+      [3000, undefined],
+    ]);
+    expect(plan.timeline.map((entry) => entry.note)).toEqual([
+      're-sorted by the ported x (3 entries change places; ties keep their order)',
+    ]);
+  });
+
+  it('lets a box hanging from the top edge grow by the pad; a lower box ports as its fields', () => {
+    const plan = planRescale(
+      [
+        file(
+          'stages/s.stage.json',
+          stage([
+            { x: 100, type: 'block', screenX: 400, y: 0, w: 16, h: 24 },
+            { x: 100, type: 'block', screenX: 400, y: 64, w: 16, h: 8 },
+            { x: 200, type: 'trigger', flag: 'f', region: { x: 50, y: -8, w: 10, h: 16 } },
+          ]),
+        ),
+      ],
+      V2,
+      MODULES,
+    );
+    const text = plan.changed[0]?.text ?? '{}';
+    const events = (JSON.parse(text) as { events: Record<string, unknown>[] }).events;
+    expect(events.slice(0, 3).map((event) => [event['y'], event['h']])).toEqual([
+      [0, 24 * 1.5 + GEOMETRY.port.topPad],
+      [64 * 1.5 + GEOMETRY.port.topPad, 12],
+      [undefined, undefined],
+    ]);
+    expect(events[2]?.['region']).toEqual({ x: 75, y: -12, w: 15, h: 8 * 1.5 + 36 + 12 });
+    expect(plan.aboveTop.map((entry) => [entry.path, entry.note.slice(0, 26)])).toEqual([
+      ['events[0].y', 'hangs from the top edge: i'],
+      ['events[2].region.y', 'hangs from the top edge: i'],
+    ]);
+  });
+
+  it('ports each field alone when core has no pair functions', () => {
+    const bare: RescaleModules = { ...MODULES, rescaleWorldSum: null, rescaleBoxY: null };
+    const plan = planRescale(
+      [
+        file(
+          'stages/s.stage.json',
+          stage([{ x: 300, type: 'block', screenX: 400, y: 0, h: 8, w: 8 }]),
+        ),
+      ],
+      V2,
+      bare,
+    );
+    const text = plan.changed[0]?.text ?? '{}';
+    const block = (JSON.parse(text) as { events: Record<string, number>[] }).events[0];
+    expect([block?.['x'], block?.['screenX'], block?.['y'], block?.['h']]).toEqual([
+      450,
+      GEOMETRY.port.toWidth + 24,
+      GEOMETRY.port.topPad,
+      12,
+    ]);
+  });
+});
+
+describe('rescale: the backdrop', () => {
+  /** Art heights of the test bands. */
+  const ART = { height: (sprite: string) => ({ 'bg/a': 64, 'bg/b': 56 })[sprite] };
+
+  it('places the bands from their art heights and the raster rows on their edges', () => {
+    const plan = planRescale(
+      [
+        file(
+          'stages/s.stage.json',
+          stage([], {
+            parallax: [
+              { layer: 'far', sprite: 'bg/a', factor: 0.2, y: 0, spacing: 128 },
+              { layer: 'far', sprite: 'bg/a', factor: 0.2, y: 64, spacing: 128 },
+              { layer: 'mid', sprite: 'bg/b', factor: 0.5, y: 144, spacing: 128 },
+            ],
+            raster: [
+              { layer: 'mid', kind: 'haze', top: 144, bottom: 200, amplitude: 1, wavelength: 8 },
+            ],
+          }),
+        ),
+      ],
+      V2,
+      MODULES,
+      ART,
+    );
+    expect(plan.unclassified).toEqual([]);
+    const data = JSON.parse(plan.changed[0]?.text ?? '{}') as {
+      parallax: { y: number }[];
+      raster: { top: number; bottom: number }[];
+    };
+    // A stack from the top edge stays closed; a band on the bottom edge stays on it.
+    expect(data.parallax.map((band) => band.y)).toEqual([0, 96, 252]);
+    expect([data.raster[0]?.top, data.raster[0]?.bottom]).toEqual([252, 336]);
+  });
+
+  it('leaves a band without art unclassified (and places none of the stage)', () => {
+    const plan = planRescale(
+      [
+        file(
+          'stages/s.stage.json',
+          stage([], {
+            parallax: [{ layer: 'far', sprite: 'bg/missing', factor: 0.2, y: 10, spacing: 128 }],
+          }),
+        ),
+      ],
+      V2,
+      MODULES,
+      ART,
+    );
+    expect(plan.unclassified.map((entry) => entry.note)).toEqual([
+      'no art height for the band\'s sprite "bg/missing" (see --atlas)',
+    ]);
+  });
+
+  it('reads art heights from a manifest, divided by the art scale', async () => {
+    const path = join(tmp, 'atlas.json');
+    writeFileSync(
+      path,
+      JSON.stringify({
+        sprites: { 'bg/a': { frames: ['bg/a#0'] } },
+        frames: { 'bg/a#0': { h: 96 } },
+      }),
+    );
+    const art = await loadArt({ atlas: path, artScale: 1.5 });
+    expect([art.height('bg/a'), art.height('bg/none')]).toEqual([64, undefined]);
+  });
+});
+
+describe('rescale: re-sorting a JSON array in place', () => {
+  it('moves each item with its own text and keeps every separator where it was', () => {
+    const text = '{ "e": [\n  { "x": 3 },\n  {"x":1},\n  { "x": 2 }\n], "f": [1, 2] }';
+    expect(permuteJsonArrays(text, [{ keys: ['e'], order: [1, 2, 0] }])).toBe(
+      '{ "e": [\n  {"x":1},\n  { "x": 2 },\n  { "x": 3 }\n], "f": [1, 2] }',
+    );
+    expect(permuteJsonArrays(text, [])).toBe(text);
+    expect(() => permuteJsonArrays(text, [{ keys: ['f'], order: [0] }])).toThrow(RangeError);
   });
 });

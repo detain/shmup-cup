@@ -32,6 +32,20 @@
  * string of a scaled field becomes `(…) * k` — so passing the old value gives the scaled result
  * however the action combines it.
  *
+ * **Values that port together** (the R1-03 review; core `FieldPair`, `rescaleBackdrop`):
+ *
+ * - a **world sum** — a block's `x` + `screenX`, and a ground enemy's spawn (its enemy has a
+ *   `ground` anchor — collected from the content set's enemy files): the sum is a world x (×k),
+ *   only the column snaps, `x` takes the difference (`rescaleWorldSum`); the event so fires earlier
+ *   than ×k, and each stage's `events` / `remix` are re-sorted by the ported x (the separators stay,
+ *   each entry keeps its text) — the report lists an event now before a checkpoint it followed, a
+ *   ground enemy leaving or joining a `ground` bonus window, a moving block whose drift runs ahead;
+ * - a **box** — `y` + `h` of a block or a region: by its edges (`rescaleBoxY`), so a box hanging
+ *   from the top edge grows by the pad instead of moving down;
+ * - the **backdrop** — a stage's parallax bands (`band-y`), raster and Mode-7 rows, placed as one
+ *   layout from the bands' art heights (`rescaleBackdrop`; heights from the atlas — built in memory
+ *   from `assets/source/`, or `--atlas`), the raster bands then spread over the placed rows.
+ *
  * **What it reads.** Every content file (`readContentFiles` of `vite.shared.ts`, plus the
  * `example.*.json` samples unless `--no-examples`), each with its kind's file schema: core's
  * `CONTENT_FILE_SCHEMAS` and the foreign kinds' `SFX_FILE_SCHEMA` / `MUSIC_FILE_SCHEMA`
@@ -47,9 +61,9 @@
  * significant digits). It **refuses to write** while any value is unclassified (no unit, a
  * behaviour tunable without a unit, a rule an expression string cannot take) or any file has an
  * error, and `--dry-run` writes nothing at all. The report lists every value moved by a rule other
- * than ×k, every value above the top edge, every rounded integer, every value outside today's
- * schema bounds (frame-derived bounds widen at R2-01), every approximated mask, the padded
- * tilemaps and every tilemap the view would see past.
+ * than ×k, every value on or above the top edge, every rounded integer, every value outside
+ * today's schema bounds (frame-derived bounds widen at R2-01), every approximated mask, the
+ * timeline and backdrop items above, the padded tilemaps and every tilemap the view would see past.
  *
  * **Geometry.** The content was written for a playfield of `--from-width` × `--from-height` with
  * `--tile-size` tiles (defaults: core's `PLAYFIELD_W`, `PLAYFIELD_H`, `TILE_SIZE` — today's frame;
@@ -59,13 +73,16 @@
  *
  * Options: `--factor K` (required), `--top-pad P` (default 0), `--dry-run`, `--root DIR` (default
  * `content/`), `--no-examples`, `--from-width W`, `--from-height H`, `--tile-size T`,
- * `--to-width W`, `--json` (the result as JSON), `--quiet` (the summary only). Exit code 0 = done
+ * `--to-width W`, `--atlas FILE` (an atlas manifest for the bands' art heights), `--art-scale S`
+ * (the atlas art's scale against the content's pixels: 1.5 once R2-01's interim upscale is in the
+ * pipeline), `--json` (the result as JSON), `--quiet` (the summary only). Exit code 0 = done
  * (or nothing to do), 1 = refused (unclassified values or errors), 2 = bad arguments.
  *
  * **Public API.** {@link parseRescaleArgs}, {@link loadRescaleModules}, {@link rescaleGeometry},
  * {@link planRescale}, {@link rescaleContent}, {@link formatRescaleReport}, {@link jsonSpans},
- * {@link replaceJsonValues}, {@link scaleExpression}, {@link spreadBands}, {@link modulesFrom},
- * {@link RescaleError}, {@link SKIPPED_DIRS}.
+ * {@link replaceJsonValues}, {@link permuteJsonArrays}, {@link scaleExpression},
+ * {@link spreadBands}, {@link modulesFrom}, {@link loadArt}, {@link RescaleError},
+ * {@link SKIPPED_DIRS}.
  *
  * @module
  */
@@ -122,6 +139,10 @@ export class RescaleError extends Error {
  * @property {number | null} fromHeight - Old playfield height (`null` = core's).
  * @property {number | null} tileSize - Old tile size (`null` = core's).
  * @property {number | null} toWidth - New playfield width (`null` = derived).
+ * @property {string | null} atlas - An atlas manifest (`main.json`) to read the parallax bands'
+ *   art heights from (`null` = build the atlas from `assets/source/` in memory).
+ * @property {number} artScale - The atlas art's scale against the content's pixels (1 today;
+ *   1.5 once R2-01's interim upscale is in the pipeline).
  * @property {boolean} json - Print the result as JSON.
  * @property {boolean} quiet - Print the summary only.
  */
@@ -145,6 +166,8 @@ export function parseRescaleArgs(argv) {
     fromHeight: null,
     tileSize: null,
     toWidth: null,
+    atlas: null,
+    artScale: 1,
     json: false,
     quiet: false,
   };
@@ -193,6 +216,15 @@ export function parseRescaleArgs(argv) {
         options.root = resolve(dir);
         break;
       }
+      case '--atlas': {
+        const path = argv[++i];
+        if (path === undefined) throw new RescaleError('--atlas needs a file');
+        options.atlas = resolve(path);
+        break;
+      }
+      case '--art-scale':
+        options.artScale = numberAt(i++, true);
+        break;
       case '--dry-run':
         options.dryRun = true;
         break;
@@ -224,6 +256,14 @@ export function parseRescaleArgs(argv) {
  * @property {typeof import('@shmup/core').rescaleNumber} rescaleNumber - core/data/units.
  * @property {typeof import('@shmup/core').edgeAnchor} edgeAnchor - core/data/units.
  * @property {typeof import('@shmup/core').UNIT_RULES} unitRules - core/data/units.
+ * @property {typeof import('@shmup/core').rescaleWorldSum | null} rescaleWorldSum - The world-sum
+ *   pair's port (`null` while core has none: each field then ports alone).
+ * @property {typeof import('@shmup/core').rescaleBoxY | null} rescaleBoxY - The box-y pair's port.
+ * @property {typeof import('@shmup/core').rescaleBackdrop | null} rescaleBackdrop - The backdrop's
+ *   port.
+ * @property {typeof import('@shmup/core').topEdgeSide | null} topEdgeSide - The top-edge test.
+ * @property {number} defaultBonusWindow - core's `DEFAULT_BONUS_WINDOW` (a `ground` entrance's
+ *   window when it names no `until`).
  * @property {Readonly<Record<string, Readonly<Record<string, string>>>> | null} behaviorParamUnits
  *   - core's `BEHAVIOR_PARAM_UNITS` (behaviour → tunable → unit), `null` while core has none.
  * @property {{ playfieldW: number, playfieldH: number, tileSize: number, frameW: number,
@@ -291,7 +331,17 @@ export async function loadRescaleModules() {
  * @returns {RescaleModules} The modules.
  */
 export function modulesFrom(core, owners, readContentFiles) {
-  const table = /** @type {Record<string, unknown>} */ (core)['BEHAVIOR_PARAM_UNITS'];
+  const loose = /** @type {Record<string, unknown>} */ (core);
+  const table = loose['BEHAVIOR_PARAM_UNITS'];
+  /**
+   * A core function the tool can do without, or `null` when core has none.
+   *
+   * @template T
+   * @param {string} name - Its export name.
+   * @returns {T | null} It.
+   */
+  const optional = (name) =>
+    /** @type {any} */ (typeof loose[name] === 'function' ? loose[name] : null);
   return {
     schemas: /** @type {RescaleModules['schemas']} */ ({
       ...core.CONTENT_FILE_SCHEMAS,
@@ -304,6 +354,11 @@ export function modulesFrom(core, owners, readContentFiles) {
     rescaleNumber: core.rescaleNumber,
     edgeAnchor: core.edgeAnchor,
     unitRules: core.UNIT_RULES,
+    rescaleWorldSum: optional('rescaleWorldSum'),
+    rescaleBoxY: optional('rescaleBoxY'),
+    rescaleBackdrop: optional('rescaleBackdrop'),
+    topEdgeSide: optional('topEdgeSide'),
+    defaultBonusWindow: core.DEFAULT_BONUS_WINDOW,
     behaviorParamUnits:
       table === undefined ? null : /** @type {RescaleModules['behaviorParamUnits']} */ (table),
     frame: {
@@ -680,7 +735,22 @@ function keysOf(leaf) {
  * @property {RescaleEntry[]} tilemaps - Tilemaps given rows at the top.
  * @property {RescaleEntry[]} views - Tilemaps the view would see past after the port.
  * @property {RescaleEntry[]} expressions - Expression strings rewritten.
+ * @property {RescaleEntry[]} timeline - Stage timelines re-sorted, and events the field pairs
+ *   moved against a checkpoint, a `ground` bonus window or a moving block's drift.
+ * @property {RescaleEntry[]} backdrop - Parallax bands and raster rows placed by a fallback, and
+ *   seams the pad opens between bands.
  */
+
+/**
+ * The art heights the backdrop needs ({@link loadArt}).
+ *
+ * @typedef {object} RescaleArt
+ * @property {(sprite: string) => number | undefined} height - Height of frame 0 of a sprite, in
+ *   the content's pixels (`undefined` = no such sprite).
+ */
+
+/** No art at all (a plan without parallax bands needs none). */
+const NO_ART = Object.freeze({ height: () => undefined });
 
 /**
  * The unit of a behaviour tunable.
@@ -709,6 +779,43 @@ function tunableUnit(leaf, table) {
 }
 
 /**
+ * Whether a content path is a format sample (`example.*.json`, loaded as its own content set).
+ *
+ * @param {string} path - Path below the content root.
+ * @returns {boolean} `true` for a sample.
+ */
+const isExample = (path) => (path.split('/').pop() ?? '').startsWith('example.');
+
+/**
+ * What the shipped set and the samples (two independent content sets, as `pnpm content:check`
+ * loads them) tell the port: their ground enemies.
+ *
+ * @param {readonly RescaleInputFile[]} files - Every file.
+ * @returns {{ shipped: RescaleContext, examples: RescaleContext }} One context per set.
+ */
+function rescaleContexts(files) {
+  const shipped = { groundEnemies: new Set() };
+  const examples = { groundEnemies: new Set() };
+  for (const file of files) {
+    /** @type {unknown} */
+    let data;
+    try {
+      data = JSON.parse(file.text);
+    } catch {
+      continue;
+    }
+    if (!isObject(data) || data['kind'] !== 'enemies' || !Array.isArray(data['enemies'])) continue;
+    const context = isExample(file.path) ? examples : shipped;
+    for (const enemy of data['enemies']) {
+      if (isObject(enemy) && typeof enemy['id'] === 'string' && enemy['ground'] !== undefined) {
+        if (enemy['ground'] !== null) context.groundEnemies.add(enemy['id']);
+      }
+    }
+  }
+  return { shipped, examples };
+}
+
+/**
  * Plans a port: walks every file with its schema and works out every new value, without reading
  * or writing anything on disk.
  *
@@ -716,9 +823,10 @@ function tunableUnit(leaf, table) {
  *   order).
  * @param {RescaleGeometry} geometry - The port's geometry ({@link rescaleGeometry}).
  * @param {RescaleModules} modules - The packages.
+ * @param {RescaleArt} [art] - The parallax bands' art heights (a stage with bands needs them).
  * @returns {RescalePlan} What the port does.
  */
-export function planRescale(files, geometry, modules) {
+export function planRescale(files, geometry, modules, art = NO_ART) {
   /** @type {RescalePlan} */
   const plan = {
     geometry,
@@ -737,7 +845,10 @@ export function planRescale(files, geometry, modules) {
     tilemaps: [],
     views: [],
     expressions: [],
+    timeline: [],
+    backdrop: [],
   };
+  const contexts = rescaleContexts(files);
   const ordered = [...files].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   for (const file of ordered) {
     const top = file.path.split('/')[0];
@@ -775,7 +886,9 @@ export function planRescale(files, geometry, modules) {
       }
       continue;
     }
-    portFile(file, /** @type {Record<string, unknown>} */ (data), schema, geometry, modules, plan);
+    const context = isExample(file.path) ? contexts.examples : contexts.shipped;
+    const json = /** @type {Record<string, unknown>} */ (data);
+    portFile(file, json, schema, geometry, modules, art, context, plan);
   }
   // Spawns first, then the rest, each in path order (a stable sort).
   plan.aboveTop.sort(
@@ -785,6 +898,35 @@ export function planRescale(files, geometry, modules) {
 }
 
 /**
+ * One numeric leaf the walk classified, waiting to be ported ({@link portFile}).
+ *
+ * @typedef {object} PendingLeaf
+ * @property {import('@shmup/core').NumberLeaf} leaf - The leaf (its value is a number).
+ * @property {import('@shmup/core').NumberUnit} unit - Its unit (a tunable's resolved one).
+ * @property {import('@shmup/core').UnitRule} rule - Its unit's rule (`keep` for `inherit`).
+ */
+
+/**
+ * A ported value that a group of fields worked out together ({@link portFile}): a field pair or
+ * the stage's backdrop.
+ *
+ * @typedef {object} Override
+ * @property {number} exact - The ported value (unrounded).
+ * @property {string | undefined} how - Why it moved, for the "moved by a rule other than ×k"
+ *   list (`undefined` = as its rule alone would have it — not listed for that).
+ * @property {string | undefined} [topNote] - The note of its "on or above the top edge" entry,
+ *   when the group knows better than the lone rule.
+ */
+
+/**
+ * What a whole content set tells the port of one file ({@link planRescale}).
+ *
+ * @typedef {object} RescaleContext
+ * @property {Set<string>} groundEnemies - Ids of the enemies with a `ground` anchor (a ground
+ *   enemy's spawn ports as a world x — `WorldSumPair.when`).
+ */
+
+/**
  * Ports one validated file into the plan.
  *
  * @param {RescaleInputFile} file - The file.
@@ -792,12 +934,22 @@ export function planRescale(files, geometry, modules) {
  * @param {import('@shmup/core').Schema<unknown>} schema - Its file schema.
  * @param {RescaleGeometry} geometry - The port's geometry.
  * @param {RescaleModules} modules - The packages.
+ * @param {RescaleArt} art - The art heights of the parallax bands.
+ * @param {RescaleContext} context - What the file's content set tells it.
  * @param {RescalePlan} plan - Collector.
+ *
+ * @remarks
+ * Four phases: the walk classifies every number (expression strings, tileset masks and raster
+ * bands are handled on their own); the groups — field pairs and the stage's backdrop — work out
+ * the values of fields that port together; every number is then finished the same way (rounded,
+ * listed, written back); and a stage's timeline is checked and re-sorted.
  */
-function portFile(file, data, schema, geometry, modules, plan) {
+function portFile(file, data, schema, geometry, modules, art, context, plan) {
   const { factor } = geometry;
   /** @type {JsonReplacement[]} */
   const replacements = [];
+  /** @type {{ keys: (string | number)[], order: number[] }[]} */
+  const permutations = [];
   let changes = 0;
   /** @type {Map<unknown[], { keys: (string | number)[], field: string, path: string }>} */
   const masks = new Map();
@@ -805,9 +957,9 @@ function portFile(file, data, schema, geometry, modules, plan) {
    * @type {Map<unknown[], { keys: (string | number)[], field: string, path: string,
    *   effect: Record<string, unknown>, unit: import('@shmup/core').NumberUnit }>}
    */
-  const bands = new Map();
-  /** @type {number[]} */
-  const cameraYs = [];
+  const rasterBands = new Map();
+  /** @type {PendingLeaf[]} */
+  const pending = [];
   /**
    * Records an entry of the report.
    *
@@ -839,7 +991,8 @@ function portFile(file, data, schema, geometry, modules, plan) {
     );
     return;
   }
-  const tilemap = data['kind'] === 'stage' && isObject(data['tilemap']) ? data['tilemap'] : null;
+  const stage = data['kind'] === 'stage';
+  const tilemap = stage && isObject(data['tilemap']) ? data['tilemap'] : null;
   if (tilemap !== null && tilemap['tileSize'] !== geometry.tileSize) {
     geometryError(
       `tilemap.tileSize ${String(tilemap['tileSize'])} is not --tile-size ` +
@@ -847,6 +1000,8 @@ function portFile(file, data, schema, geometry, modules, plan) {
     );
     return;
   }
+
+  // 1. The walk: classify every number.
   const skips = modules.walkNumbers(schema, data, (leaf) => {
     plan.values++;
     let unit = leaf.unit;
@@ -890,14 +1045,13 @@ function portFile(file, data, schema, geometry, modules, plan) {
       note(plan.expressions, leaf, unit, scaled, `×${String(factor)}`);
       return;
     }
-    const value = leaf.value;
     if (leaf.integer && Array.isArray(leaf.container) && leaf.field.endsWith('raster[].bands[]')) {
-      // Raster band heights must add up to the effect's rows: spread together after the walk.
-      if (!bands.has(leaf.container)) {
+      // Raster band heights must add up to the effect's rows: spread together at the end.
+      if (!rasterBands.has(leaf.container)) {
         const keys = keysOf(leaf);
         keys.pop();
         const effect = leaf.parents[leaf.parents.length - 2];
-        bands.set(leaf.container, {
+        rasterBands.set(leaf.container, {
           keys,
           field: leaf.field,
           path: leaf.path.replace(/\[\d+\]$/, ''),
@@ -920,41 +1074,101 @@ function portFile(file, data, schema, geometry, modules, plan) {
       }
       return;
     }
-    if (rule === 'world-y' && value <= 0 && geometry.topPad !== 0) {
-      const holder = leaf.container;
-      const type = isObject(holder) ? holder['type'] : undefined;
-      const spawn = type === 'spawn' || type === 'formation';
-      const enemy = isObject(holder) && typeof holder['enemy'] === 'string' ? holder['enemy'] : '';
-      const ported = cleanFraction(modules.rescaleNumber(unit, value, geometry));
-      note(
-        plan.aboveTop,
-        leaf,
-        unit,
-        ported,
-        value === 0
-          ? `on the top edge: ×k + pad moves it ${String(geometry.topPad)} px down — what hangs ` +
-              'from the top edge may need to grow by the pad instead'
-          : spawn
-            ? `spawn above the top edge${enemy === '' ? '' : ` (${enemy})`}: ×k only — it now ` +
-              `arrives ${String(geometry.topPad)} px higher than v1's ×k + pad`
-            : 'above the top edge: ×k only',
-      );
+    pending.push({ leaf, unit, rule });
+  });
+  for (const skip of skips) {
+    plan.unclassified.push({
+      file: file.path,
+      path: skip.path,
+      field: '',
+      unit: undefined,
+      from: undefined,
+      to: undefined,
+      note: `the walk could not enter this value (${skip.reason})`,
+    });
+  }
+
+  // 2. The groups: values of fields that port together.
+  /** @type {Map<import('@shmup/core').NumberLeaf, Override>} */
+  const overrides = new Map();
+  const events = portPairs(pending, geometry, modules, context, overrides);
+  const unplaced = stage
+    ? portBackdrop(file, pending, geometry, modules, art, overrides, plan)
+    : new Set();
+
+  // 3. Every number: rounded, listed, written back.
+  /** @type {Map<unknown, Map<string | number, number>>} */
+  const finals = new Map();
+  /**
+   * The ported value of a field of an object (as finished), or `undefined`.
+   *
+   * @param {unknown} holder - The object.
+   * @param {string} key - The field.
+   * @returns {number | undefined} Its ported value.
+   */
+  const final = (holder, key) => finals.get(holder)?.get(key);
+  /** @type {number[]} */
+  const cameraYs = [];
+  for (const item of pending) {
+    if (unplaced.has(item.leaf)) continue; // A band without art: unclassified.
+    const { leaf, unit, rule } = item;
+    const value = /** @type {number} */ (leaf.value);
+    const override = overrides.get(leaf);
+    if (rule === 'world-y' && geometry.topPad !== 0) {
+      const side = topEdgeSideOf(modules, value);
+      if (side !== 'below') {
+        const holder = leaf.container;
+        const type = isObject(holder) ? holder['type'] : undefined;
+        const spawn = type === 'spawn' || type === 'formation';
+        const enemy =
+          isObject(holder) && typeof holder['enemy'] === 'string' ? holder['enemy'] : '';
+        const exact = override?.exact ?? modules.rescaleNumber(unit, value, geometry);
+        note(
+          plan.aboveTop,
+          leaf,
+          unit,
+          cleanFraction(exact),
+          override?.topNote ??
+            (side === 'on'
+              ? `on the top edge: ×k + pad moves it ${String(geometry.topPad)} px down — what ` +
+                'hangs from the top edge may need to grow by the pad instead'
+              : spawn
+                ? `spawn above the top edge${enemy === '' ? '' : ` (${enemy})`}: ×k only — it ` +
+                  `now arrives ${String(geometry.topPad)} px higher than v1's ×k + pad`
+                : 'above the top edge: ×k only'),
+        );
+      }
     }
-    const exact = rule === 'keep' ? value : modules.rescaleNumber(unit, value, geometry);
+    const exact =
+      override !== undefined
+        ? override.exact
+        : rule === 'keep'
+          ? value
+          : modules.rescaleNumber(unit, value, geometry);
     let ported = cleanFraction(exact);
     if (leaf.integer && !Number.isInteger(ported)) {
       ported = Math.round(ported);
       note(plan.rounded, leaf, unit, ported, `${String(exact)} rounded`);
     }
+    if (leaf.container !== null) {
+      let fields = finals.get(leaf.container);
+      if (fields === undefined) {
+        fields = new Map();
+        finals.set(leaf.container, fields);
+      }
+      fields.set(leaf.key, ported);
+    }
     // The camera's y keys, ported by whatever their unit is, for the view check below.
     if (leaf.field === 'camera[].yTo') cameraYs.push(ported);
-    if (Object.is(ported, value)) return;
+    if (Object.is(ported, value)) continue;
     replacements.push({ keys: keysOf(leaf), value: ported });
     changes++;
-    // A scalar tile size (`tile-px`) is ×k like a world length; the masks were taken out above.
-    if (rule !== 'scale' && rule !== 'resample') {
+    if (override !== undefined) {
+      if (override.how !== undefined) note(plan.moved, leaf, unit, ported, override.how);
+    } else if (rule !== 'scale' && rule !== 'resample') {
+      // A scalar tile size (`tile-px`) is ×k like a world length; the masks are apart.
       let how = String(rule);
-      if (rule === 'edge-x' || rule === 'edge-y') {
+      if (rule === 'edge-x' || rule === 'edge-y' || rule === 'band') {
         const size = rule === 'edge-x' ? geometry.fromWidth : geometry.fromHeight;
         how = `${rule}: snapped to the ${modules.edgeAnchor(value, size)}`;
       } else if (rule === 'world-y') {
@@ -976,19 +1190,9 @@ function portFile(file, data, schema, geometry, modules, plan) {
         `outside today's bounds ${String(leaf.min ?? '')}..${String(leaf.max ?? '')}`,
       );
     }
-  });
-  for (const skip of skips) {
-    plan.unclassified.push({
-      file: file.path,
-      path: skip.path,
-      field: '',
-      unit: undefined,
-      from: undefined,
-      to: undefined,
-      note: `the walk could not enter this value (${skip.reason})`,
-    });
   }
-  // Tileset masks.
+
+  // 4. Tileset masks.
   for (const [mask, where] of masks) {
     const old = /** @type {number[]} */ (mask);
     /** @type {number[]} */
@@ -1024,10 +1228,13 @@ function portFile(file, data, schema, geometry, modules, plan) {
     });
   }
   // Raster bands: ×k, rounded so that they still add up to the ported bottom − top.
-  for (const [list, where] of bands) {
+  for (const [list, where] of rasterBands) {
     const old = /** @type {number[]} */ (list);
-    const top = portInteger('screen-y', where.effect['top'], geometry, modules);
-    const bottom = portInteger('screen-y', where.effect['bottom'], geometry, modules);
+    const top =
+      final(where.effect, 'top') ?? portInteger('screen-y', where.effect['top'], geometry, modules);
+    const bottom =
+      final(where.effect, 'bottom') ??
+      portInteger('screen-y', where.effect['bottom'], geometry, modules);
     const next = spreadBands(
       old.map((height) => modules.rescaleNumber(where.unit, height, geometry)),
       bottom - top,
@@ -1053,11 +1260,12 @@ function portFile(file, data, schema, geometry, modules, plan) {
       note:
         exact === bottom - top
           ? `×k, rounded by largest remainder to add up to bottom − top (${String(bottom - top)})`
-          : `top and bottom snap apart: the ${String(exact)} rows ×k are spread over ` +
-            `bottom − top (${String(bottom - top)}) by largest remainder — check the art's bands`,
+          : `top and bottom do not scale ×k together: the ${String(exact)} rows ×k are spread ` +
+            `over bottom − top (${String(bottom - top)}) by largest remainder — check the art's bands`,
     });
   }
-  // Tilemap rows: explicit RLE rows gain copies of their top row.
+
+  // 5. Tilemap rows: explicit RLE rows gain copies of their top row.
   if (tilemap !== null && geometry.padRows > 0) {
     const rle = Array.isArray(tilemap['rle']) ? /** @type {string[]} */ (tilemap['rle']) : null;
     const topRow = rle !== null && rle.length > 0 ? rle[0] : null;
@@ -1093,7 +1301,7 @@ function portFile(file, data, schema, geometry, modules, plan) {
     });
   }
   // Tilemaps the view would see past: the camera's lowest y plus the playfield's height.
-  if (tilemap !== null && data['kind'] === 'stage') {
+  if (tilemap !== null) {
     let lowest = 0;
     for (const y of cameraYs) lowest = Math.max(lowest, y);
     const height = (Number(tilemap['rowsTall']) + geometry.padRows) * geometry.toTileSize;
@@ -1112,14 +1320,407 @@ function portFile(file, data, schema, geometry, modules, plan) {
       });
     }
   }
-  if (replacements.length > 0) {
+
+  // 6. A stage's timeline: what moved against the camera, and the order the loader wants.
+  if (stage) {
+    checkTimeline(file, data, events, final, geometry, modules, context, plan);
+    for (const name of ['events', 'remix']) {
+      const list = data[name];
+      if (!Array.isArray(list)) continue;
+      /** @type {number[]} */
+      const xs = list.map((event) =>
+        isObject(event) ? (final(event, 'x') ?? Number(event['x'])) : Number.NaN,
+      );
+      const order = xs.map((_x, i) => i).sort((a, b) => xs[a] - xs[b] || a - b);
+      const moved = order.filter((index, i) => index !== i).length;
+      if (moved === 0) continue;
+      permutations.push({ keys: [name], order });
+      changes++;
+      plan.timeline.push({
+        file: file.path,
+        path: name,
+        field: name,
+        unit: 'world-x',
+        from: undefined,
+        to: undefined,
+        note: `re-sorted by the ported x (${String(moved)} entries change places; ties keep their order)`,
+      });
+    }
+  }
+  if (replacements.length > 0 || permutations.length > 0) {
     plan.changes += changes;
-    plan.changed.push({
-      path: file.path,
-      text: replaceJsonValues(file.text, replacements),
-      changes,
+    const text = permuteJsonArrays(replaceJsonValues(file.text, replacements), permutations);
+    plan.changed.push({ path: file.path, text, changes });
+  }
+}
+
+/**
+ * Where an absolute y lies against the top edge: core's `topEdgeSide`, or the same test while
+ * core has none.
+ *
+ * @param {RescaleModules} modules - The packages.
+ * @param {number} y - The value as written.
+ * @returns {'above' | 'on' | 'below'} Its side.
+ */
+function topEdgeSideOf(modules, y) {
+  if (modules.topEdgeSide !== null) return modules.topEdgeSide(y);
+  if (y < 0) return 'above';
+  return y === 0 ? 'on' : 'below';
+}
+
+/**
+ * An event a world-sum pair moved against the camera (its x is no longer ×k): checked against
+ * the checkpoints and the `ground` bonus windows.
+ *
+ * @typedef {object} MovedEvent
+ * @property {Record<string, unknown>} event - The event object.
+ * @property {string} path - The JSON path of its `x`.
+ * @property {number} lead - How much earlier than ×k it fires (camera pixels).
+ * @property {boolean} block - Whether it is a moving block (`when: 'always'`).
+ */
+
+/**
+ * Works out the field pairs of a file (core `FieldPair`): a block's — and
+ * a ground enemy's — `x` + `screenX` through `rescaleWorldSum`, a box's `y` + `h` through
+ * `rescaleBoxY`. Both fields are read as written.
+ *
+ * @param {readonly PendingLeaf[]} pending - The file's numbers.
+ * @param {RescaleGeometry} geometry - The port's geometry.
+ * @param {RescaleModules} modules - The packages.
+ * @param {RescaleContext} context - The ground enemies.
+ * @param {Map<import('@shmup/core').NumberLeaf, Override>} overrides - Receives the values.
+ * @returns {MovedEvent[]} The events a world-sum pair moved.
+ */
+function portPairs(pending, geometry, modules, context, overrides) {
+  /** @type {Map<unknown, Map<string, PendingLeaf>>} */
+  const groups = new Map();
+  /** @type {Map<unknown, import('@shmup/core').FieldPair[]>} */
+  const pairsOf = new Map();
+  for (const item of pending) {
+    const pair = item.leaf.pair;
+    if (pair === undefined || item.leaf.container === null) continue;
+    let roles = groups.get(item.leaf.container);
+    if (roles === undefined) {
+      roles = new Map();
+      groups.set(item.leaf.container, roles);
+      pairsOf.set(item.leaf.container, []);
+    }
+    roles.set(pair.role, item);
+    const list = pairsOf.get(item.leaf.container) ?? [];
+    if (list.indexOf(pair.pair) < 0) list.push(pair.pair);
+  }
+  /** @type {MovedEvent[]} */
+  const moved = [];
+  for (const [holder, roles] of groups) {
+    for (const pair of pairsOf.get(holder) ?? []) {
+      if (pair.rule === 'world-sum') {
+        const camera = roles.get('camera');
+        const screen = roles.get('screen');
+        if (camera === undefined || modules.rescaleWorldSum === null || !isObject(holder)) continue;
+        const enemy = holder['enemy'];
+        const holds =
+          pair.when === 'always' || (typeof enemy === 'string' && context.groundEnemies.has(enemy));
+        if (!holds) continue;
+        const column = screen === undefined ? undefined : Number(screen.leaf.value);
+        const ported = modules.rescaleWorldSum(Number(camera.leaf.value), column, pair, geometry);
+        const what = pair.when === 'always' ? 'a block' : 'a ground enemy';
+        overrides.set(camera.leaf, {
+          exact: ported.camera,
+          how:
+            `world-sum (${what}): ${pair.camera} + ${pair.screen} ×k, ` +
+            `appearing at column ${String(ported.screen)} — ${String(cleanFraction(ported.lead))} px of ` +
+            'camera travel earlier than ×k',
+        });
+        if (screen !== undefined) {
+          overrides.set(screen.leaf, {
+            exact: ported.screen,
+            how: `world-sum (${what}): column snapped to the ${modules.edgeAnchor(Number(screen.leaf.value), geometry.fromWidth)}`,
+          });
+        }
+        if (ported.lead !== 0) {
+          moved.push({
+            event: holder,
+            path: camera.leaf.path,
+            lead: ported.lead,
+            block: pair.when === 'always',
+          });
+        }
+      } else if (pair.rule === 'box-y') {
+        const top = roles.get('top');
+        const height = roles.get('height');
+        if (top === undefined || height === undefined || modules.rescaleBoxY === null) continue;
+        const ported = modules.rescaleBoxY(
+          Number(top.leaf.value),
+          Number(height.leaf.value),
+          geometry,
+        );
+        if (!ported.fromTop) continue; // As its two fields alone would port it.
+        const grows =
+          `hangs from the top edge: its top stays, its height grows by the pad ` +
+          `(${String(height.leaf.value)} → ${String(cleanFraction(ported.height))})`;
+        overrides.set(top.leaf, { exact: ported.top, how: `box-y: ${grows}`, topNote: grows });
+        overrides.set(height.leaf, { exact: ported.height, how: `box-y: ${grows}` });
+      }
+    }
+  }
+  return moved;
+}
+
+/**
+ * Places a stage's backdrop together (`rescaleBackdrop`): its parallax bands (`band-y`) by their
+ * art heights, with the raster rows that bound that art and the Mode-7 rows.
+ *
+ * @param {RescaleInputFile} file - The stage file.
+ * @param {readonly PendingLeaf[]} pending - Its numbers.
+ * @param {RescaleGeometry} geometry - The port's geometry.
+ * @param {RescaleModules} modules - The packages.
+ * @param {RescaleArt} art - The bands' art heights.
+ * @param {Map<import('@shmup/core').NumberLeaf, Override>} overrides - Receives the values.
+ * @param {RescalePlan} plan - Collector (bands without art, the listed placements, seams).
+ * @returns {Set<import('@shmup/core').NumberLeaf>} The band leaves it could not place (no art
+ *   height — listed as unclassified; then no band of the stage is placed).
+ */
+function portBackdrop(file, pending, geometry, modules, art, overrides, plan) {
+  /** @type {Set<import('@shmup/core').NumberLeaf>} */
+  const unplaced = new Set();
+  const bands = pending.filter((item) => item.rule === 'band');
+  if (bands.length === 0 || modules.rescaleBackdrop === null) return unplaced;
+  /** @type {import('@shmup/core').BackdropBand[]} */
+  const inputs = [];
+  for (const item of bands) {
+    const holder = item.leaf.container;
+    const sprite = isObject(holder) ? holder['sprite'] : undefined;
+    const height = typeof sprite === 'string' ? art.height(sprite) : undefined;
+    if (height === undefined) {
+      plan.unclassified.push({
+        file: file.path,
+        path: item.leaf.path,
+        field: item.leaf.field,
+        unit: item.unit,
+        from: item.leaf.value,
+        to: undefined,
+        note: `no art height for the band's sprite "${String(sprite)}" (see --atlas)`,
+      });
+      continue;
+    }
+    inputs.push({ y: Number(item.leaf.value), height });
+  }
+  if (inputs.length !== bands.length) {
+    for (const item of bands) unplaced.add(item.leaf);
+    return unplaced;
+  }
+  /** @type {PendingLeaf[]} */
+  const rowLeaves = [];
+  /** @type {import('@shmup/core').BackdropRow[]} */
+  const rows = [];
+  for (const item of pending) {
+    const field = item.leaf.field;
+    const kind =
+      field === 'raster[].top' || field === 'raster[].bottom'
+        ? 'follow'
+        : field === 'mode7.horizon' || field === 'mode7.bottom'
+          ? 'anchor'
+          : null;
+    if (kind === null) continue;
+    rowLeaves.push(item);
+    rows.push({ y: Number(item.leaf.value), kind });
+  }
+  const ported = modules.rescaleBackdrop(inputs, rows, geometry);
+  bands.forEach((item, i) => {
+    const band = ported.bands[i];
+    if (band === undefined) return;
+    const free = band.placement === 'nearest-top' || band.placement === 'nearest-bottom';
+    overrides.set(item.leaf, { exact: band.y, how: `backdrop band: ${band.placement}` });
+    if (free) {
+      plan.backdrop.push({
+        file: file.path,
+        path: item.leaf.path,
+        field: item.leaf.field,
+        unit: item.unit,
+        from: item.leaf.value,
+        to: cleanFraction(band.y),
+        note:
+          `a band touching nothing, placed by the playfield edge it is nearer to ` +
+          `(${band.placement === 'nearest-top' ? 'the top: ×k' : 'the bottom: ×k + the pad'})`,
+      });
+    }
+  });
+  rowLeaves.forEach((item, i) => {
+    const row = ported.rows[i];
+    if (row === undefined) return;
+    overrides.set(item.leaf, { exact: row.y, how: `backdrop row: ${row.placement}` });
+    if (row.placement === 'near-band-edge') {
+      plan.backdrop.push({
+        file: file.path,
+        path: item.leaf.path,
+        field: item.leaf.field,
+        unit: item.unit,
+        from: item.leaf.value,
+        to: cleanFraction(row.y),
+        note: 'a row within a tile of a band edge: its distance to that edge ×k',
+      });
+    }
+  });
+  for (const [upper, lower] of ported.seams) {
+    const a = bands[upper];
+    const b = bands[lower];
+    if (a === undefined || b === undefined) continue;
+    plan.backdrop.push({
+      file: file.path,
+      path: `${a.leaf.path} / ${b.leaf.path}`,
+      field: a.leaf.field,
+      unit: a.unit,
+      from: undefined,
+      to: undefined,
+      note: 'two bands that touch no longer do: the pad opens a seam between them',
     });
   }
+  return unplaced;
+}
+
+/**
+ * Checks what the field pairs moved against a stage's timeline: an event that fires before a
+ * checkpoint it followed, a ground enemy that leaves (or joins) a `ground` bonus entrance's
+ * window, a moving block whose drift now runs ahead.
+ *
+ * @param {RescaleInputFile} file - The stage file.
+ * @param {Record<string, unknown>} data - Its JSON.
+ * @param {readonly MovedEvent[]} moved - The events the pairs moved.
+ * @param {(holder: unknown, key: string) => number | undefined} final - Ported values.
+ * @param {RescaleGeometry} geometry - The port's geometry.
+ * @param {RescaleModules} modules - The packages.
+ * @param {RescaleContext} context - The ground enemies.
+ * @param {RescalePlan} plan - Collector.
+ */
+function checkTimeline(file, data, moved, final, geometry, modules, context, plan) {
+  /**
+   * An object's x as written and as ported.
+   *
+   * @param {unknown} holder - The object.
+   * @param {string} [key] - The field (default `x`).
+   * @returns {[number, number]} Old and new.
+   */
+  const xOf = (holder, key = 'x') => {
+    const old = isObject(holder) ? Number(holder[key]) : Number.NaN;
+    return [old, final(holder, key) ?? old * geometry.factor];
+  };
+  /**
+   * Lists a timeline problem.
+   *
+   * @param {string} path - Where.
+   * @param {unknown} from - The value as written.
+   * @param {unknown} to - Ported.
+   * @param {string} text - What.
+   */
+  const list = (path, from, to, text) =>
+    plan.timeline.push({ file: file.path, path, field: '', unit: 'world-x', from, to, note: text });
+  const checkpoints = Array.isArray(data['checkpoints']) ? data['checkpoints'] : [];
+  for (const item of moved) {
+    const [oldX, newX] = xOf(item.event);
+    for (const checkpoint of checkpoints) {
+      const [oldC, newC] = xOf(checkpoint);
+      if (oldX >= oldC && newX < newC) {
+        list(
+          item.path,
+          oldX,
+          newX,
+          `now fires before the checkpoint at ${String(oldC)} (→ ${String(newC)}) it followed`,
+        );
+      }
+    }
+    if (item.block) {
+      const event = item.event;
+      const moving = ['vx', 'vy', 'dx', 'dy'].some((key) => Number(event[key] ?? 0) !== 0);
+      if (moving) {
+        list(
+          item.path,
+          oldX,
+          newX,
+          `a moving block created ${String(cleanFraction(item.lead))} px of camera travel earlier: its drift / swing runs ahead of v1`,
+        );
+      }
+    }
+  }
+  // The `ground` bonus entrances count the ground enemies that appear while they are armed.
+  const timeline = [];
+  for (const name of ['events', 'remix']) {
+    const entries = data[name];
+    if (Array.isArray(entries))
+      entries.forEach((event, i) => timeline.push({ event, path: `${name}[${String(i)}]` }));
+  }
+  const window = modules.defaultBonusWindow;
+  for (const { event: bonus, path: bonusPath } of timeline) {
+    if (!isObject(bonus) || bonus['type'] !== 'bonus' || bonus['entrance'] !== 'ground') continue;
+    const [oldArm, newArm] = xOf(bonus);
+    const oldEnd = bonus['until'] === undefined ? oldArm + window : Number(bonus['until']);
+    const newEnd =
+      bonus['until'] === undefined
+        ? newArm + window * geometry.factor
+        : (final(bonus, 'until') ?? oldEnd * geometry.factor);
+    for (const { event, path } of timeline) {
+      if (!isObject(event) || typeof event['enemy'] !== 'string') continue;
+      if (!context.groundEnemies.has(event['enemy'])) continue;
+      const [oldX, newX] = xOf(event);
+      const before = oldX >= oldArm && oldX < oldEnd;
+      const after = newX >= newArm && newX < newEnd;
+      if (before !== after) {
+        list(
+          `${path}.x`,
+          oldX,
+          newX,
+          `a ground enemy that ${before ? 'leaves' : 'joins'} the window of the ground bonus ` +
+            `entrance ${bonusPath} (${String(newArm)} … ${String(newEnd)})`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Reorders the items of JSON arrays in place, each item keeping its own text and every separator
+ * staying where it was.
+ *
+ * @param {string} text - The JSON text.
+ * @param {readonly { keys: readonly (string | number)[], order: readonly number[] }[]} permutations
+ *   - Each array (by key path) and its new order (`order[i]` = the old index of the new item i).
+ * @returns {string} The new text.
+ * @throws {RangeError} When a key path is not an array of that many items.
+ */
+export function permuteJsonArrays(text, permutations) {
+  if (permutations.length === 0) return text;
+  const root = jsonSpans(text);
+  const edits = permutations.map((permutation) => {
+    let span = root;
+    for (const key of permutation.keys) {
+      const child = span.children === null ? undefined : span.children.get(key);
+      if (child === undefined)
+        throw new RangeError(`no JSON value at ${permutation.keys.join('.')}`);
+      span = child;
+    }
+    const items = span.children === null ? [] : [...span.children.values()];
+    if (items.length !== permutation.order.length) {
+      throw new RangeError(
+        `${permutation.keys.join('.')} is not an array of ${String(permutation.order.length)} items`,
+      );
+    }
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (first === undefined || last === undefined) return null;
+    let out = '';
+    for (let i = 0; i < items.length; i++) {
+      const source = items[permutation.order[i] ?? i];
+      const item = items[i];
+      if (source === undefined || item === undefined) continue;
+      out += text.slice(source.start, source.end);
+      const next = items[i + 1];
+      if (next !== undefined) out += text.slice(item.end, next.start);
+    }
+    return { start: first.start, end: last.end, text: out };
+  });
+  let out = text;
+  const ordered = edits.filter((edit) => edit !== null).sort((a, b) => b.start - a.start);
+  for (const edit of ordered) out = out.slice(0, edit.start) + edit.text + out.slice(edit.end);
+  return out;
 }
 
 /**
@@ -1204,6 +1805,36 @@ function listExamples(root, prefix = '') {
 }
 
 /**
+ * Reads the parallax bands' art heights: from an atlas manifest file (`--atlas`), or from the
+ * atlas built in memory from `assets/source/` (`scripts/assets/pipeline.mjs` `buildAtlas` — what
+ * the tests and `pnpm content:check` read too).
+ *
+ * @param {Pick<RescaleOptions, 'atlas' | 'artScale'>} options - The options.
+ * @returns {Promise<RescaleArt>} The heights (frame 0 of each sprite ÷ `artScale`) — resolves
+ *   once the manifest is read or built.
+ * @throws {Error} When the manifest cannot be read or the atlas built.
+ */
+export async function loadArt(options) {
+  /** @type {{ sprites: Record<string, { frames: string[] }>, frames: Record<string, { h: number }> }} */
+  let manifest;
+  if (options.atlas !== null) {
+    manifest = JSON.parse(readFileSync(options.atlas, 'utf8'));
+  } else {
+    const { buildAtlas } = await import('../assets/pipeline.mjs');
+    manifest = /** @type {typeof manifest} */ (/** @type {unknown} */ (buildAtlas().manifest));
+  }
+  return {
+    height: (sprite) => {
+      const entry = Object.prototype.hasOwnProperty.call(manifest.sprites, sprite)
+        ? manifest.sprites[sprite]
+        : undefined;
+      const frame = entry === undefined ? undefined : manifest.frames[entry.frames[0] ?? ''];
+      return frame === undefined ? undefined : frame.h / options.artScale;
+    },
+  };
+}
+
+/**
  * What {@link rescaleContent} did.
  *
  * @typedef {RescalePlan & { written: string[], refused: boolean, dryRun: boolean }} RescaleResult
@@ -1227,7 +1858,8 @@ export async function rescaleContent(options, modules) {
     path,
     text: readFileSync(join(options.root, path), 'utf8'),
   }));
-  const plan = planRescale(files, geometry, modules);
+  const art = await loadArt(options);
+  const plan = planRescale(files, geometry, modules, art);
   const prettier = await import('prettier');
   const config = (await prettier.resolveConfig(join(REPO_ROOT, 'package.json'))) ?? {};
   for (const file of plan.changed) {
@@ -1297,6 +1929,8 @@ export function formatRescaleReport(result, quiet = false) {
   section(lines, 'rounded integers', result.rounded);
   section(lines, "outside today's schema bounds", result.outOfBounds);
   section(lines, 'masks only approximated', result.masks);
+  section(lines, 'timeline', result.timeline);
+  section(lines, 'backdrop', result.backdrop);
   section(lines, 'tilemaps padded', result.tilemaps);
   section(lines, 'views past the map', result.views);
   section(lines, 'expressions rewritten', result.expressions);

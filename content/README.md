@@ -51,11 +51,12 @@ the other packages' kinds in their exported `SFX_FILE_SCHEMA`, `MUSIC_FILE_SCHEM
 | `world-px` | a world length | radii, hurtbox `hw` / `hh`, stage `length`, wave `period`, parallax `spacing` | ×k |
 | `world-x` | an absolute x in the level | event `x`, checkpoints, camera keys, heightfield `from` / `to` | ×k |
 | `world-y` | an absolute y | spawn `y`, region / block `y`, a heightfield **ceiling**'s `base` | ×k + the pad; **above the top edge** (y < 0) ×k only, so it stays above — listed, like every y on the top edge (0) |
-| `rel-px` | a relative offset | path points, boss part `x` / `y`, shot offsets, fx `dx` / `dy`, a **floor**'s `base`, `amp` | ×k |
+| `rel-px` | a relative offset; the camera's `yTo` (the world y of the view's top edge) | path points, boss part `x` / `y`, shot offsets, fx `dx` / `dy`, a **floor**'s `base`, `amp`, camera `yTo` | ×k (a map's deepest pan with its three pad rows ports exactly: 200 → 300) |
 | `px-per-tick` | a speed | camera `speed`, mover and shot speeds, pattern speeds, fx `speed` | ×k |
 | `px-per-tick2` | an acceleration | `gravity`, a pattern's `accel` | ×k |
 | `texels` | a distance in the Mode-7 floor's art | `mode7.height`, `mode7.fogDepth` | ×k |
-| `screen-x`, `screen-y` | a column / row anchored to an edge or the centre of the playfield | spawn `screenX`, boss `x` / `y`, raster `top` / `bottom`, Mode-7 `horizon` / `bottom`, camera `yTo` | snapped to the nearest of start, centre and end, distance ×k: a spawn at 400 (16 px past the right edge) → 664 (24 px past the new one), a boss at 296 → 508, a row 100 → 168 |
+| `screen-x`, `screen-y` | a column / row anchored to an edge or the centre of the playfield | spawn `screenX`, boss `x` / `y`, raster `top` / `bottom`, Mode-7 `horizon` / `bottom` | snapped to the nearest of start, centre and end, distance ×k: a spawn at 400 (16 px past the right edge) → 664 (24 px past the new one), a boss at 296 → 508, a row 100 → 168 (raster rows follow the backdrop — below) |
+| `band-y` | a parallax band's top row (at camera y 0) | `parallax[].y` | placed with the stage's whole backdrop from the bands' art heights (below) |
 | `tile-rows` | a tilemap's height in rows | `tilemap.rowsTall` | + the pad's rows (25 → 28); RLE maps gain copies of their top row at the top |
 | `tile-px` | a tile size or a mask entry | `tileSize`, tileset `mask` | sizes ×k (8 → 12); masks resampled to the new size |
 | `ticks` | a duration or interval | timers, `ramp`, `interval`, `lifetime` | unchanged |
@@ -71,6 +72,30 @@ the other packages' kinds in their exported `SFX_FILE_SCHEMA`, `MUSIC_FILE_SCHEM
 A new numeric field needs a unit, and a new behaviour tunable a row in `BEHAVIOR_PARAM_UNITS`
 (`packages/core/test/behaviors/behavior-param-units.test.ts` checks it).
 
+**Values that port together** (the R1-03 review; `units.ts` `FieldPair`, declared with
+`s.object(shape, { pairs })`), because porting each alone would pull apart what lines up in v1:
+
+- **A world sum** — a moving block's `x` + `screenX`, and a **ground enemy**'s spawn (an enemy
+  with a `ground` anchor; owner decision O11 pending): what appears at screen column `screenX`
+  when the camera reaches `x` stands at world x `x + screenX`. That sum is ×k, only the column
+  snaps (400 → 664), and `x` takes the difference (`rescaleWorldSum`): the thing still stands on
+  its terrain, next to its regions (the gap entrances), and appears 64 px of camera travel
+  earlier than ×k because the view is wider. A flying enemy's `x` and `screenX` port alone.
+- **A box** — the `y` + `h` of a block, a trigger region and a bonus region: each edge ports as a
+  `world-y`, an edge on or above the top edge staying there (`rescaleBoxY`), so a box hanging from
+  the top edge grows by the pad (0 + 24 → 0 + 72) instead of moving down.
+- **The backdrop** — a stage's parallax bands (`band-y`), its raster rows and its Mode-7 rows are
+  placed as one layout from the bands' art heights (`rescaleBackdrop`): a band on the top edge
+  stays (×k), one standing on the bottom edge stays on it (×k + the pad), one ending on the Mode-7
+  horizon sits on it, touching bands stay touching (a stack of tiles stays closed), a free band
+  goes by the edge it is nearer to; a raster row on (or within a tile of) a band edge follows that
+  edge, others snap.
+
+Because a world sum moves an event against the camera, the tool also re-sorts each stage's
+`events` and `remix` by the ported `x` (ties keep their order — the loader wants them sorted) and
+lists every event that now fires before a checkpoint it followed, every ground enemy that leaves
+or joins a `ground` bonus entrance's window, and every moving block whose drift now runs ahead.
+
 **The rescale tool.** `node scripts/content/rescale.mjs --factor K [--top-pad P] [--dry-run]`
 walks every file here (and the `example.*.json` samples; `demos/` is skipped — recordings are
 re-recorded, never rescaled) with its schema and applies the rules above. It rewrites only the
@@ -81,11 +106,16 @@ and its report lists everything a port must look at by hand: every value moved b
 than ×k, every value on or above the top edge (spawns first — an enemy that spawned above the
 screen and moved in now arrives 36 px higher; a value exactly on the top edge moves 36 px down,
 so what hangs from it may need to grow instead), every rounded integer, values outside today's schema
-bounds, approximated masks, the padded tilemaps and any tilemap the camera would see past.
+bounds, approximated masks, the timeline and backdrop items above, the padded tilemaps and any
+tilemap the camera would see past. The bands' art heights come from the atlas the pipeline
+builds in memory from `assets/source/` (or `--atlas <main.json>`; `--art-scale 1.5` once R2-01's
+interim ×1.5 art is in the pipeline, so heights stay in this content's pixels).
 `--factor 1 --dry-run` reports zero changes on this folder; `--factor 1.5 --top-pad 36
 --dry-run` zero unclassified values. The real ×1.5 run is R2-02's: after R2-01 flips the frame,
 pass the geometry this content was written for — `--from-width 384 --from-height 200
---tile-size 8 --to-width 640` (the tool refuses a tile size that does not match).
+--tile-size 8 --to-width 640` (the tool refuses a tile size that does not match) — and run it
+before changing the code's default columns (`DEFAULT_BLOCK_SCREEN_X`, `DEFAULT_SPAWN_SCREEN_X`):
+a block without a `screenX` takes its old column from that constant.
 
 ## Versioning and loading
 
