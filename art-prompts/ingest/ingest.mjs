@@ -200,8 +200,11 @@ export function main(argv, io = { log: console.log, error: console.error }) {
     }
     if (result.warnings.length > 0) warned++;
     const r = result.report;
+    const reduced = /** @type {{ from: number, to: number } | null} */ (r.paletteReduced);
     const summary =
-      `${r.frames} × ${r.frameWidth}×${r.frameHeight}, ${r.colours} colours, ÷${r.factor}` +
+      `${r.frames} × ${r.frameWidth}×${r.frameHeight}, ${r.colours} colours` +
+      (reduced === null ? '' : ` (palette ${reduced.from} → ${reduced.to})`) +
+      `, ÷${r.factor}` +
       (Array.isArray(r.keys) && r.keys.length > 0 ? `, key ${r.keys.join(' ')}` : '');
     const files = result.files;
     if (cli.check) {
@@ -209,8 +212,9 @@ export function main(argv, io = { log: console.log, error: console.error }) {
       const differs = [];
       const pngOld = existsSync(files.png.path) ? readFileSync(files.png.path) : null;
       if (pngOld === null || Buffer.compare(pngOld, files.png.bytes) !== 0) differs.push('png');
+      // Line endings as LF: a Windows checkout (core.autocrlf) is not a difference.
       const sidecarOld = existsSync(files.sidecar.path)
-        ? readFileSync(files.sidecar.path, 'utf8')
+        ? readFileSync(files.sidecar.path, 'utf8').replace(/\r\n/g, '\n')
         : null;
       if (sidecarOld !== files.sidecar.text) differs.push('sidecar');
       let recordSame = false;

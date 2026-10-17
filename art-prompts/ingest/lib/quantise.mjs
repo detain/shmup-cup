@@ -138,6 +138,102 @@ export function medianCut(entries, max) {
   return [...new Set(boxes.map(boxMean))].sort((x, y) => x - y);
 }
 
+/** Larger than any squared RGB distance (3 · 255² = 195,075): "no second colour". */
+const FAR = 3 * 255 * 255 + 1;
+
+/**
+ * The subset of a fixed palette (a named or explicit one — a zone's 48–64 colours) that
+ * serves some art best within a colour cap (bible §4.3: ingest quantises to the cap).
+ *
+ * @remarks
+ * Backward elimination: every pixel starts mapped to its nearest palette colour; then, one at
+ * a time, the colour whose removal raises the total squared RGB error of that mapping least
+ * is dropped (its pixels fall to their second-nearest colour), until `max` colours remain —
+ * and colours no pixel needs are dropped even below the cap, so art with fewer colours keeps
+ * fewer. The `forced` colours (the cycle ramps, kept exact; an outline) are never dropped and
+ * count towards `max`. Ties drop the higher colour value. Only integer arithmetic decides (the
+ * sums stay far below 2⁵³), so the result is the same on every machine; at least one colour
+ * always remains.
+ *
+ * @param {readonly [number, number][]} entries - From {@link histogram}.
+ * @param {readonly number[]} candidates - The fixed palette.
+ * @param {readonly number[]} forced - Colours always kept; they count towards `max`.
+ * @param {number} max - The cap.
+ * @returns {number[]} The kept colours (forced ones included), ascending.
+ */
+export function reducePalette(entries, candidates, forced, max) {
+  const forcedSet = new Set(forced);
+  const cols = [...new Set([...candidates, ...forced])].sort((a, b) => a - b);
+  const m = cols.length;
+  const keep = cols.map((c) => forcedSet.has(c));
+  const alive = cols.map(() => true);
+  const n = entries.length;
+  const r = new Int32Array(n);
+  const g = new Int32Array(n);
+  const b = new Int32Array(n);
+  const k = new Float64Array(n);
+  const n1 = new Int32Array(n);
+  const n2 = new Int32Array(n);
+  const d1 = new Float64Array(n);
+  const d2 = new Float64Array(n);
+  /**
+   * Finds an entry's nearest and second-nearest live colours (ties: the lower colour).
+   *
+   * @param {number} h - Entry index.
+   */
+  const nearest = (h) => {
+    let i1 = -1;
+    let i2 = -1;
+    let e1 = FAR;
+    let e2 = FAR;
+    for (let j = 0; j < m; j++) {
+      if (!alive[j]) continue;
+      const c = cols[j];
+      const dr = r[h] - ((c >> 16) & 255);
+      const dg = g[h] - ((c >> 8) & 255);
+      const db = b[h] - (c & 255);
+      const d = dr * dr + dg * dg + db * db;
+      if (d < e1) {
+        i2 = i1;
+        e2 = e1;
+        i1 = j;
+        e1 = d;
+      } else if (d < e2) {
+        i2 = j;
+        e2 = d;
+      }
+    }
+    n1[h] = i1;
+    n2[h] = i2;
+    d1[h] = e1;
+    d2[h] = e2;
+  };
+  for (let h = 0; h < n; h++) {
+    const c = entries[h][0];
+    r[h] = (c >> 16) & 255;
+    g[h] = (c >> 8) & 255;
+    b[h] = c & 255;
+    k[h] = entries[h][1];
+    nearest(h);
+  }
+  const cost = new Float64Array(m);
+  let live = m;
+  while (live > 1) {
+    cost.fill(0);
+    for (let h = 0; h < n; h++) cost[n1[h]] += k[h] * (d2[h] - d1[h]);
+    let pick = -1;
+    for (let j = 0; j < m; j++) {
+      if (!alive[j] || keep[j]) continue;
+      if (pick < 0 || cost[j] <= cost[pick]) pick = j; // ties: the higher colour goes
+    }
+    if (pick < 0 || (live <= max && cost[pick] > 0)) break;
+    alive[pick] = false;
+    live--;
+    for (let h = 0; h < n; h++) if (n1[h] === pick || n2[h] === pick) nearest(h);
+  }
+  return cols.filter((_, j) => alive[j]);
+}
+
 /** Offsets tried when a colour must move away from a reserved one, nearest first. */
 const PUSH_OFFSETS = (() => {
   /** @type {[number, number, number][]} */

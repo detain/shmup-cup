@@ -13,7 +13,12 @@ import {
   LICENCE_IDS,
   VERDICTS,
   checkProvenanceTree,
+  isSafeRelativePath,
+  isUnversioned,
+  lfBytes,
   loadModels,
+  sha256Hex,
+  textSha256,
   validateRecord,
 } from '../lib/provenance.mjs';
 
@@ -99,6 +104,87 @@ describe('validateRecord', () => {
     });
   }
 
+  /** A well-formed edit reference (the input image of an edit). */
+  const REF = Object.freeze({
+    path: 'art-prompts/v2/winners/enemy/drone/winner.png',
+    from: 'art-prompts/v2/candidates/a/enemy/drone.png',
+    sha256: DRONE.sources[0].sha256,
+    sidecar: 'art-prompts/v2/winners/enemy/drone/winner.json',
+    sidecarSha256: DRONE.sources[0].generator.sidecarSha256,
+    model: 'black-forest-labs/FLUX.2-dev',
+    modelKey: 'flux2',
+    weights: null,
+    licence: 'flux-nc-2.1',
+    reference: [],
+  });
+
+  /**
+   * The drone record with one source changed.
+   *
+   * @param {Record<string, unknown>} change - Fields of `sources[0]`.
+   * @returns {Record<string, unknown>} The record.
+   */
+  const withSource = (change) => ({ ...DRONE, sources: [{ ...DRONE.sources[0], ...change }] });
+
+  it('accepts edit references, nested ones included', () => {
+    const record = withSource({ reference: [{ ...REF, reference: [{ ...REF, from: null }] }] });
+    assert.deepEqual(validateRecord(record, { sprite: 'enemies/drone' }), []);
+  });
+
+  for (const bad of ['../outside/secret.png', '/etc/passwd', 'C:/a.png', 'a/./b.png', 'a//b.png', 'a\\b.png']) {
+    it(`rejects the path ${JSON.stringify(bad)} wherever a record names a file`, () => {
+      for (const [record, path] of /** @type {[Record<string, unknown>, string][]} */ ([
+        [withSource({ path: bad }), 'sources[0].path'],
+        [withSource({ reference: [{ ...REF, path: bad }] }), 'sources[0].reference[0].path'],
+        [withSource({ reference: [{ ...REF, from: bad }] }), 'sources[0].reference[0].from'],
+        [withSource({ reference: [{ ...REF, sidecar: bad }] }), 'sources[0].reference[0].sidecar'],
+        [
+          withSource({ reference: [{ ...REF, reference: [{ ...REF, path: bad }] }] }),
+          'sources[0].reference[0].reference[0].path',
+        ],
+        [withSource({ generator: { ...DRONE.sources[0].generator, sidecar: bad } }), 'sources[0].generator.sidecar'],
+        [withSource({ prompt: { ...DRONE.sources[0].prompt, file: bad } }), 'sources[0].prompt.file'],
+        [{ ...DRONE, recipe: { ...DRONE.recipe, path: bad } }, 'recipe.path'],
+        [{ ...DRONE, edit: { ...DRONE.edit, path: bad } }, 'edit.path'],
+      ])) {
+        const problems = validateRecord(record, { sprite: 'enemies/drone' });
+        assert.ok(
+          problems.some((p) => p.startsWith(`${path}: must be a path relative to the root`)),
+          `${path}: ${problems.join('\n')}`,
+        );
+      }
+    });
+  }
+
+  it('rejects a reference without its hash, with a bad licence, or a hand origin over a modelled one', () => {
+    const cases = /** @type {[Record<string, unknown>, RegExp][]} */ ([
+      [withSource({ reference: [{ ...REF, sha256: null }] }), /^sources\[0\]\.reference\[0\]\.sha256:/],
+      [withSource({ reference: [{ ...REF, licence: 'mit' }] }), /^sources\[0\]\.reference\[0\]\.licence:/],
+      [withSource({ reference: ['x.png'] }), /^sources\[0\]\.reference\[0\]: must be an object/],
+      [
+        {
+          ...withSource({ model: null, modelKey: null, licence: null, reference: [REF] }),
+          origin: 'hand',
+        },
+        /^origin: a source or an edit reference names a model/,
+      ],
+    ]);
+    for (const [record, pattern] of cases) {
+      const problems = validateRecord(record, { sprite: 'enemies/drone' });
+      assert.ok(
+        problems.some((p) => pattern.test(p)),
+        problems.join('\n'),
+      );
+    }
+    // A hand-drawn redraw of an AI image is ai-assisted through its reference alone.
+    assert.deepEqual(
+      validateRecord(withSource({ model: null, modelKey: null, licence: null, reference: [REF] }), {
+        sprite: 'enemies/drone',
+      }),
+      [],
+    );
+  });
+
   it('rejects a record at another sprite name', () => {
     assert.match(validateRecord(DRONE, { sprite: 'enemies/other' })[0], /does not match/);
   });
@@ -121,6 +207,26 @@ describe('validateRecord', () => {
       tool: null,
     };
     assert.deepEqual(validateRecord(record, { sprite: 'ships/kestrel' }), []);
+  });
+});
+
+describe('paths and text hashes', () => {
+  it('isSafeRelativePath takes plain relative paths only', () => {
+    for (const ok of ['a.png', 'sources/drone-sheet.png', 'art-prompts/v2/winners/x/winner.png', '..a/b..c'])
+      assert.equal(isSafeRelativePath(ok), true, ok);
+    for (const bad of ['', '/a', '../a', 'a/..', 'a/./b', './a', 'a//b', 'a/', 'C:a', 'c:/a', 'a\\b', 'a\nb', 1, null])
+      assert.equal(isSafeRelativePath(bad), false, JSON.stringify(bad));
+  });
+
+  it('knows the unversioned candidates folder', () => {
+    assert.equal(isUnversioned('art-prompts/v2/candidates/a/x.png'), true);
+    assert.equal(isUnversioned('art-prompts/v2/winners/x/winner.png'), false);
+  });
+
+  it('textSha256 reads CRLF as LF and leaves other bytes alone', () => {
+    assert.equal(textSha256('{\r\n  "a": 1\r\n}\r\n'), sha256Hex('{\n  "a": 1\n}\n'));
+    assert.equal(textSha256(Buffer.from('a\rb\n')), sha256Hex('a\rb\n'), 'a lone CR stays');
+    assert.deepEqual(lfBytes(Buffer.from('x\r\n')), new Uint8Array([120, 10]));
   });
 });
 
@@ -228,6 +334,13 @@ describe('checkProvenanceTree', () => {
       messages.join('\n'),
     );
     assert.ok(messages.some((m) => m.includes('gyre.art.json invalid JSON')));
+  });
+
+  it('accepts a sidecar checked out with CRLF line endings (a Windows checkout)', () => {
+    const dir = copyTree('crlf');
+    const file = join(dir, 'enemies', 'drone.json');
+    writeFileSync(file, readFileSync(file, 'utf8').replace(/\n/g, '\r\n'));
+    assert.deepEqual(checkProvenanceTree(dir, 's').issues, []);
   });
 
   it('ignores the edit layer and handles a missing tree', () => {

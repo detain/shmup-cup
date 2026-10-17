@@ -127,9 +127,14 @@ warning), 2 bad usage. CI's `ingest` job runs `npm test` and `--check`.
    real source colour nearest its box's average, never a blend of an outline and a highlight.
    **Binary alpha:** opaque when at least half of the box is subject.
 4. **Quantise** all frames to one palette: the recipe's named or explicit palette, or a median cut
-   of the art, within the bible's per-category colour cap (§4.3). Every colour but the recipe's
-   own cycle ramps is pushed **≥ 3/255 (Chebyshev) from every reserved palette-cycle colour** —
-   the `cycles` ramps of every stage in `content/stages/` plus the recipe's `reserved` (§4.4);
+   of the art, within the bible's per-category colour cap (§4.3). A named or explicit palette
+   larger than the cap (a zone's 48–64 colours on a 16-colour enemy) is **reduced to the cap**:
+   starting from the whole palette, the colour whose removal raises the total squared error of the
+   mapping least is dropped, one at a time, and colours no pixel needs are dropped too — the
+   recipe's cycle ramps (and an explicit outline) always stay. Ties drop the higher colour value,
+   so the subset is the same on every machine; the report shows `palette 48 → 16`. Every colour
+   but the recipe's own cycle ramps is pushed **≥ 3/255 (Chebyshev) from every reserved
+   palette-cycle colour** — the `cycles` ramps of every stage in `content/stages/` plus the recipe's `reserved` (§4.4);
    cycle art keeps its ramp exactly. Ordered (Bayer) dither only where the bible allows it (§3.7).
 5. **Outline:** the outermost ring of opaque pixels takes the outline colour (default: the
    palette's darkest colour) — inside the frame, so the size, the anchor and the hitbox never
@@ -145,6 +150,11 @@ the PNG has no ancillary chunk (no time, text or gamma), is written indexed (≤
 palette order — Aseprite opens it with the exact palette) or 8-bit RGBA, and is compressed by the
 tool's own DEFLATE (`lib/deflate.mjs`), not by Node's zlib. Every choice breaks ties by a fixed
 rule. Only the record's `ingestedAt` reads the clock, and it is kept when nothing else changed.
+**The record is the same on every checkout too:** it names only committed files (paths inside the
+root, never in the git-ignored `art-prompts/v2/candidates/`), and the text files it hashes — the
+recipe, candidate sidecars, the frame sidecar — are hashed with their line endings read as LF, so a
+Windows checkout (`core.autocrlf`) gives the same records and `--check` result as Linux. Images
+are hashed byte for byte.
 
 ### The report
 
@@ -157,7 +167,8 @@ and warnings for anything the bible asks a human to look at:
 | the subject touches the region border (few key pixels on it — crop first) | §8 step 1 |
 | a region stretched by more than 2 % (`fit: "stretch"` with the wrong aspect) | — |
 | a palette colour moved away from a reserved ramp, and pixels still within 3/255 of one | §4.4 |
-| more colours than the cap (an explicit palette or the edit layer) | §4.3 |
+| more colours than the cap: added by the hand-edit layer, or the recipe's cycle ramps and outline alone fill it | §4.3 |
+| a served model other than the `models.json` row's (`gen-candidate.mjs --any-model`: check the licence row) | — |
 | an outline colour over luma 45, or black | §3.4 |
 | a **backdrop layer over the lighting budget**: far — floor 16, median ≤ 64, 95th percentile ≤ 140; mid-far and mid — floor 16, ≤ 80, ≤ 160; more than 5 % above luma 200 | §4.1 |
 | **mixels**: every run of equal pixels is even-length (a ×2 upscale) | §3.1 |
@@ -177,7 +188,7 @@ anything runs.
   "frame": { "width": 210, "height": 120 },
   "frameCount": 2,                        // optional check
   "sources": [{
-    "image": "art-prompts/v2/winners/boss/galvanic-maw/a.png",   // relative to the root
+    "image": "art-prompts/v2/winners/boss/galvanic-maw/winner.png",   // relative to the root
     "grid": { "x": 0, "y": 0, "cellWidth": 630, "cellHeight": 360, "columns": 2, "rows": 1 }
     // or "crop": [x, y, w, h], or "frames": [[x, y, w, h], …]; none = the whole image
   }],
@@ -196,7 +207,7 @@ anything runs.
 |---|---|---|
 | `category` | — (required) | one of the table below |
 | `frame` | — (required) | the target frame size, at most 2046² |
-| `sources[].image` | — | PNG or JPEG (detected from the bytes); several sources add frames in order |
+| `sources[].image` | — | PNG or JPEG (detected from the bytes); several sources add frames in order. Like every path in a recipe (`provenance.sidecar`, `prompt.file`, `reference`), relative to the root with `/` separators — no `.`, `..` or empty segments, not absolute — and never in the git-ignored `art-prompts/v2/candidates/` (ingest the committed copy under `art-prompts/v2/winners/`) |
 | `sources[].crop` / `frames` / `grid` | the whole image | `grid`: `cellWidth`, `cellHeight`, `columns`, `rows`; optional `x`, `y`, `gapX`, `gapY`, `count` |
 | `fit`, `align` | `stretch`, `center` | `contain` scales uniformly and places the region `center`, `bottom` or `top` |
 | `alpha` | `binary` | `translucent` / `additive` only for the categories and sprites bible §3.6 lists; never on a cycled layer |
@@ -204,7 +215,7 @@ anything runs.
 | `key.color`, `key.tolerance`, `key.test`, `key.threshold` | `auto`, 64, the green test, 8 | `test: false` keys by distance only; `threshold` is the black key's floor |
 | `holes`, `despill`, `cleanup` | `none`, 2, no opening / islands | green key only |
 | `snap`, `coverage` | `true`, 0.5 | the pixel snap and the binary-alpha threshold |
-| `palette` | adaptive, `max` = the category cap | `name` reads `<palettes>/<name>.json` (`{ "schema": "shmup-palette@1", "colors": […], "outline"? }`); a `max` over the cap warns |
+| `palette` | adaptive, `max` = the category cap | `name` reads `<palettes>/<name>.json` (`{ "schema": "shmup-palette@1", "colors": […], "outline"? }`); a named or explicit palette with more colours than `max` (with the cycle ramps and an explicit outline) is reduced to `max` (step 4); a `max` over the cap warns |
 | `dither` | `off` | errors where the bible forbids it |
 | `outline` | per category (off for translucent / additive) | `true`, `false` or `{ "color", "edges": "open" \| "closed" }` |
 | `cycles` | none | ramps this art is quantised to exactly: `{ "stage": "zone-b", "layer": "mid" }` (from `content/stages/`) or `{ "colors": […] }` |
@@ -212,7 +223,7 @@ anything runs.
 | `layer` | — | backdrops only, required: `far`, `mid-far`, `mid`, `near`, `foreground` (the lighting budget) |
 | `anchor`, `animations` | none | written into the sidecar as the slice pivot and the frame tags |
 | `edit.erase` | `#ff00ff` | the hand-edit layer's erase colour |
-| `provenance` | from the candidate sidecar | recipe-wide, or per source: `model` (a `models.json` key, or `"none"` for a hand-made source), `prompt` `{ file, entry }`, `seed`, `sidecar` (a path, or `false`), `author`, `use`, `cleanup`, `reviewed` `{ on, by }`, `notes` |
+| `provenance` | from the candidate sidecar | recipe-wide, or per source: `model` (a `models.json` key, or `"none"` for a hand-made source — required when there is no candidate sidecar), `prompt` `{ file, entry }`, `seed`, `sidecar` (a path, or `false`), `reference` (an edit's input images, below), `author`, `use`, `cleanup`, `reviewed` `{ on, by }`, `notes` |
 
 | Category | Colour cap | Alpha | Dither | Outline |
 |---|---|---|---|---|
@@ -235,7 +246,32 @@ anything runs.
 **Provenance without retyping.** When a source `foo.png` has a candidate sidecar `foo.json` from
 `art-prompts/v2/gen-candidate.mjs`, the tool reads the model, the seed, the prompt as sent, the
 negative, the library entry, the size, steps and guidance, the generation time and the edit
-references from it. Recipe fields override it.
+references from it. Recipe fields override it — except the model, which is a fact the record
+stands on:
+
+- **Every source names its model.** With no candidate sidecar (or `"sidecar": false`), the recipe
+  says `provenance.model`: a `models.json` key, or `"none"` for hand-made art. Giving neither is
+  an error — an unknown model is never recorded as hand-made.
+- A recipe `model` that differs from the sidecar's (`"none"` included) is an error.
+
+**An edit's input images** (the candidate sidecar's `editFrom`) are recorded from **committed
+files** only, so a fresh clone gives the same record as the owner's machine:
+
+- `gen-candidate.mjs` names them in the git-ignored candidates folder. The tool maps
+  `art-prompts/v2/candidates/<slot>/<id>.png` to its committed copy,
+  `art-prompts/v2/winners/<id>/winner.png` — or `art-prompts/v2/winners/<item>/<suffix>.png` for a
+  followup or comment edit `<item>/<suffix>`. The copy's sidecar must name that candidate as its
+  `file`, and the copy must not be generated after the edit.
+- Or the recipe names the committed copies itself in `provenance.reference`, one per `editFrom`
+  entry, in order — each a path (its sidecar is `<image>.json`) or `{ image, sidecar, model }`:
+  `"reference": ["art-prompts/v2/winners/boss/x/winner.png", { "image": "art/sketch.png",
+  "sidecar": false, "model": "none" }]`. A source without a candidate sidecar (a hand redraw of an
+  AI image) names its references the same way.
+- **A missing image, a missing or broken sidecar, or a sidecar without a model is an error**, as is
+  a candidate with no committed copy (even when the candidate exists on this machine), an archived
+  candidate (`candidates/history/…`) and an `editFrom` path outside the root.
+- Each input's own inputs are followed the same way (an edit of an edit), so a FLUX image keeps its
+  licence question however many edits later.
 
 ### The output
 
@@ -254,14 +290,14 @@ sprite can be cut from several images, so the per-image fields sit **per source*
 | Field | What |
 |---|---|
 | `sprite` | the sprite name (its location) |
-| `origin` | `ai-assisted` (a source has a model) or `hand` |
+| `origin` | `ai-assisted` (a source, or an edit reference of one, names a model — a hand redraw of an AI image is AI-assisted) or `hand` |
 | `use` | `pixels` or `reference` (§2's two columns) — recipe `provenance.use`, default `pixels` |
 | `cleanup`, `handCleaned` | `none` · `light` · `heavy` · `redrawn` — the recipe's, or `light` when the edit layer changed pixels, else `none`; `handCleaned` = `cleanup ≠ none` (the plan's yes / no) |
 | `reviewed` | `{ "on", "by" }` of the content review (look-alikes, logos, stray text — §6 rule 5), or `null` |
 | `ingestedAt` | the date (the plan's "date"), `YYYY-MM-DD` |
 | `author` | who made or cleaned it, or `null` |
-| `sources[]` | `path`, `sha256`, `format`, `width`, `height`; `model` (the **served** model id, `null` for a hand-made source) and `modelKey` (the group key); `weights` (repo, revision, transformer override) and `licence` (an id of §2) from `models.json`; `prompt` `{ file, entry, text, negative }`; `seed`, `size`, `steps`, `guidance`, `generatedAt`; `reference` (an edit's input images: path, SHA-256 and, from their own candidate sidecar, the model and licence that made them — an edit of a FLUX image inherits FLUX's hold); `generator` (the candidate sidecar's path, hash, id, slot, mode, instruction) |
-| `recipe` | `{ path, sha256 }` |
+| `sources[]` | `path`, `sha256`, `format`, `width`, `height`; `model` (the **served** model id, `null` for a hand-made source) and `modelKey` (the group key); `weights` (repo, revision, transformer override) and `licence` (an id of §2) from `models.json`; `prompt` `{ file, entry, text, negative }`; `seed`, `size`, `steps`, `guidance`, `generatedAt`; `reference` (an edit's input images: `path` — the committed file —, `from` — the `editFrom` entry it stands for, or `null` —, `sha256`, `sidecar` and `sidecarSha256`, and from that sidecar the `model`, `modelKey`, `weights` and `licence` that made it, and its own `reference` list — an edit of a FLUX image inherits FLUX's hold); `generator` (the candidate sidecar's path, hash, id, slot, mode, instruction) |
+| `recipe` | `{ path, sha256 }` (text hashes — the recipe's, the sidecars' — read line endings as LF) |
 | `edit` | `{ path, sha256, painted, erased }`, or `null` |
 | `output` | `png`, `sha256`, `sidecar`, `sidecarSha256`, `frames`, `frameWidth`, `frameHeight`, `colors`, `alpha` |
 | `tool` | `{ "name": "shmup-ingest", "version" }`; `null` in a hand-written record |
@@ -292,7 +328,8 @@ that file (`kestrel.png`, `ships/kestrel.png`) or by its sprite name in backtick
    FLUX ships, as pixels or as a reference. `"use": "reference"` records a design reference.
 2. **Read the bible's entry** for the category: the frame size and count (§5), the colour cap, the
    alpha recipe.
-3. **Write the recipe** next to where the output goes; the crop removes what keying cannot
+3. **Write the recipe** next to where the output goes, its source the committed
+   `art-prompts/v2/winners/<id>/…` copy (never the candidate); the crop removes what keying cannot
    (ground strips, letterbox bars, darkened edges — bible §8 step 1).
 4. **Run** the tool on it and read the report; adjust the crop, `holes`, `cleanup` or the palette
    and re-run until the warnings are the ones you accept.

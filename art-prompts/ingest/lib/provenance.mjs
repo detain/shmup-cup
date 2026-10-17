@@ -7,8 +7,12 @@
  * AI-assisted asset — `origin`, `use`, `cleanup`, `reviewed`, `ingestedAt`, the recipe hash and,
  * **per source image** (a sprite may be cut from several), the served `model`, its `weights`,
  * its `licence` id, the prompt as sent, the generation settings, the source SHA-256 and the
- * `reference` images of an edit. The verdicts (ship / hold) are policy, not facts, and stay in
- * the model table (`models.json`), joined by licence id.
+ * `reference` images of an edit (and theirs). The verdicts (ship / hold) are policy, not facts,
+ * and stay in the model table (`models.json`), joined by licence id.
+ *
+ * Every recorded path is a plain path inside the root ({@link isSafeRelativePath}), and text
+ * files are hashed with their line endings read as LF ({@link textSha256}), so a record is the
+ * same on every machine and every checkout.
  *
  * **Dependency-free on purpose** (only `node:` built-ins): the repo's own Vitest suite
  * imports this module (`test/scripts/assets/provenance.test.ts`) — and so can R3-05's origin
@@ -18,6 +22,7 @@
  *
  * @module
  */
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -75,12 +80,84 @@ export const DEFAULT_MODELS_FILE = join(
 );
 
 /**
+ * The git-ignored folder of the art round's candidates (root-relative). A path into it is
+ * never in a fresh clone, so nothing a record depends on may live there.
+ */
+export const CANDIDATES_DIR = 'art-prompts/v2/candidates/';
+
+/**
+ * Where round 2 commits the winners (`docs/dev/art-generation-server.md`, "Round 2"):
+ * `<id>/winner.png` + `winner.json` for a candidate `candidates/<slot>/<id>.png`, and
+ * `<id>/<suffix>.png` + `.json` for a followup or comment edit `candidates/<slot>/<id>/<suffix>.png`.
+ */
+export const WINNERS_DIR = 'art-prompts/v2/winners/';
+
+/** Root-relative folders git ignores (a recipe or record path may not point into them). */
+export const UNVERSIONED_DIRS = Object.freeze([CANDIDATES_DIR]);
+
+/**
+ * Whether a path is a plain path inside the root: a non-empty string with `/` separators, no
+ * `.`, `..` or empty segment, not absolute, no drive letter, no backslash and no control
+ * character. Recipes and records hold only such paths, so a record never points outside the
+ * repository.
+ *
+ * @param {unknown} path - Candidate.
+ * @returns {path is string} `true` when it is one.
+ */
+export function isSafeRelativePath(path) {
+  if (typeof path !== 'string' || path === '') return false;
+  if (path.includes('\\') || path.startsWith('/') || /^[A-Za-z]:/.test(path)) return false;
+  if (/[\u0000-\u001f\u007f]/.test(path)) return false;
+  return path.split('/').every((s) => s !== '' && s !== '.' && s !== '..');
+}
+
+/** What {@link isSafeRelativePath} asks, as an error message. */
+export const SAFE_PATH_RULE =
+  'must be a path relative to the root: "/" separators, no ".", ".." or empty segments, not absolute';
+
+/**
+ * Whether a root-relative path points into a git-ignored folder ({@link UNVERSIONED_DIRS}).
+ *
+ * @param {string} path - Root-relative path.
+ * @returns {boolean} `true` when a fresh clone does not have it.
+ */
+export const isUnversioned = (path) => UNVERSIONED_DIRS.some((dir) => path.startsWith(dir));
+
+/**
  * SHA-256 of some bytes.
  *
  * @param {Uint8Array | string} bytes - Input (a string is hashed as UTF-8).
  * @returns {string} Lower-case hex.
  */
 export const sha256Hex = (bytes) => createHash('sha256').update(bytes).digest('hex');
+
+/**
+ * Text bytes with every CRLF read as LF — what a Windows checkout (`core.autocrlf`) turns back
+ * into the bytes git stores.
+ *
+ * @param {Uint8Array | string} bytes - Text (a string is taken as UTF-8).
+ * @returns {Uint8Array} The bytes, CRLF → LF (the input itself when it has no CRLF).
+ */
+export function lfBytes(bytes) {
+  const b = typeof bytes === 'string' ? Buffer.from(bytes, 'utf8') : bytes;
+  let crlf = 0;
+  for (let i = 0; i + 1 < b.length; i++) if (b[i] === 13 && b[i + 1] === 10) crlf++;
+  if (crlf === 0) return b;
+  const out = new Uint8Array(b.length - crlf);
+  let o = 0;
+  for (let i = 0; i < b.length; i++) if (!(b[i] === 13 && b[i + 1] === 10)) out[o++] = b[i];
+  return out;
+}
+
+/**
+ * SHA-256 of a text file (a recipe, a candidate sidecar, a frame sidecar) with its line
+ * endings read as LF, so a Windows checkout gives the same records as Linux. Images are
+ * hashed raw ({@link sha256Hex}).
+ *
+ * @param {Uint8Array | string} bytes - The file's bytes.
+ * @returns {string} Lower-case hex.
+ */
+export const textSha256 = (bytes) => sha256Hex(lfBytes(bytes));
 
 /**
  * One model's entry in `models.json`.
@@ -137,6 +214,9 @@ const HEX64 = /^[0-9a-f]{64}$/;
 
 /** `YYYY-MM-DD`. */
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** How many edits deep a record follows an edit's input images (a loop guard). */
+export const REFERENCE_DEPTH = 16;
 
 /**
  * Validates a provenance record.
@@ -207,6 +287,68 @@ export function validateRecord(record, expect = {}) {
     bad('tool', `must be null or { "name": "${TOOL_NAME}", "version" }`);
   }
 
+  /**
+   * Checks a recorded path ({@link isSafeRelativePath}).
+   *
+   * @param {string} path - JSON path.
+   * @param {unknown} value - The value.
+   * @param {boolean} nullable - Whether `null` is allowed.
+   */
+  const checkPath = (path, value, nullable) => {
+    if (value === null && nullable) return;
+    if (!isSafeRelativePath(value)) bad(path, SAFE_PATH_RULE);
+  };
+  /**
+   * Checks an edit's input images (and theirs, recursively) and counts the modelled ones.
+   *
+   * @param {unknown} list - The `reference` array.
+   * @param {string} at - Its JSON path.
+   * @param {number} depth - Nesting depth.
+   * @returns {number} References that name a model.
+   */
+  const checkReferences = (list, at, depth) => {
+    if (!Array.isArray(list)) {
+      bad(at, 'must be an array (the input images of an edit)');
+      return 0;
+    }
+    if (depth > REFERENCE_DEPTH) {
+      bad(at, `nests deeper than ${REFERENCE_DEPTH} edits`);
+      return 0;
+    }
+    let modelled = 0;
+    list.forEach((r, k) => {
+      const ref = `${at}[${k}]`;
+      if (!isObject(r)) {
+        bad(ref, 'must be an object');
+        return;
+      }
+      checkPath(`${ref}.path`, r.path, false);
+      if (r.from !== undefined) checkPath(`${ref}.from`, r.from, true);
+      if (typeof r.sha256 !== 'string' || !HEX64.test(r.sha256))
+        bad(`${ref}.sha256`, 'must be the SHA-256 hex digest of the input image');
+      if (r.sidecar !== undefined) checkPath(`${ref}.sidecar`, r.sidecar, true);
+      if (
+        r.sidecarSha256 !== undefined &&
+        r.sidecarSha256 !== null &&
+        (typeof r.sidecarSha256 !== 'string' || !HEX64.test(r.sidecarSha256))
+      ) {
+        bad(`${ref}.sidecarSha256`, 'must be a SHA-256 hex digest or null');
+      }
+      if (r.model !== null && (typeof r.model !== 'string' || r.model === '')) {
+        bad(`${ref}.model`, 'must be the served model id, or null for a hand-made image');
+      }
+      if (typeof r.model === 'string') {
+        modelled++;
+        if (r.licence !== null && !LICENCE_IDS.includes(/** @type {string} */ (r.licence)))
+          bad(`${ref}.licence`, `must be one of ${LICENCE_IDS.join(', ')} (or null)`);
+      } else if (r.licence !== null && r.licence !== undefined) {
+        bad(`${ref}.licence`, 'a hand-made image has no model licence');
+      }
+      if (r.reference !== undefined) modelled += checkReferences(r.reference, `${ref}.reference`, depth + 1);
+    });
+    return modelled;
+  };
+
   if (!Array.isArray(record.sources)) bad('sources', 'must be an array');
   else {
     let modelled = 0;
@@ -216,7 +358,7 @@ export function validateRecord(record, expect = {}) {
         bad(at, 'must be an object');
         return;
       }
-      if (typeof s.path !== 'string' || s.path === '') bad(`${at}.path`, 'must be a path');
+      checkPath(`${at}.path`, s.path, false);
       if (typeof s.sha256 !== 'string' || !HEX64.test(s.sha256))
         bad(`${at}.sha256`, 'must be a SHA-256 hex digest');
       if (s.format !== 'png' && s.format !== 'jpeg') bad(`${at}.format`, 'must be "png" or "jpeg"');
@@ -242,15 +384,17 @@ export function validateRecord(record, expect = {}) {
         bad(`${at}.seed`, 'must be an integer or null');
       if (s.prompt !== null && !isObject(s.prompt))
         bad(`${at}.prompt`, 'must be null or { "file", "entry", "text", "negative" }');
-      if (!Array.isArray(s.reference))
-        bad(`${at}.reference`, 'must be an array (the input images of an edit)');
+      else if (isObject(s.prompt) && s.prompt.file !== undefined)
+        checkPath(`${at}.prompt.file`, s.prompt.file, true);
+      modelled += checkReferences(s.reference, `${at}.reference`, 1);
       if (s.generator !== null && !isObject(s.generator))
         bad(`${at}.generator`, 'must be null or an object');
+      else if (isObject(s.generator)) checkPath(`${at}.generator.sidecar`, s.generator.sidecar, false);
     });
     if (origin === 'ai-assisted' && modelled === 0)
-      bad('sources', 'an ai-assisted record names the model of at least one source');
+      bad('sources', 'an ai-assisted record names the model of at least one source or edit reference');
     if (origin === 'hand' && modelled > 0)
-      bad('origin', 'a source names a model, so the origin is "ai-assisted"');
+      bad('origin', 'a source or an edit reference names a model, so the origin is "ai-assisted"');
   }
 
   if (record.recipe !== null && record.recipe !== undefined) {
@@ -262,7 +406,7 @@ export function validateRecord(record, expect = {}) {
       !HEX64.test(r.sha256)
     ) {
       bad('recipe', 'must be null or { "path", "sha256" }');
-    }
+    } else checkPath('recipe.path', r.path, false);
   } else if (byTool) bad('recipe', 'a record the tool wrote names its recipe');
   if (record.edit !== null && record.edit !== undefined) {
     const e = record.edit;
@@ -273,7 +417,7 @@ export function validateRecord(record, expect = {}) {
       !HEX64.test(e.sha256)
     ) {
       bad('edit', 'must be null or { "path", "sha256", "painted", "erased" }');
-    }
+    } else checkPath('edit.path', e.path, false);
   }
   const o = record.output;
   if (!isObject(o)) bad('output', 'must be an object naming the PNG');
@@ -418,7 +562,7 @@ export function checkProvenanceTree(dir, displayRoot = dir) {
           issues.push({ path: shown, message: `its sidecar ${out.sidecar} is missing` });
         else if (
           typeof out.sidecarSha256 === 'string' &&
-          out.sidecarSha256 !== sha256Hex(readFileSync(join(dir, sidecar)))
+          out.sidecarSha256 !== textSha256(readFileSync(join(dir, sidecar)))
         ) {
           issues.push({
             path: shown,

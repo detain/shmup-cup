@@ -27,10 +27,10 @@ cd art-prompts/ingest && npm test        # node --check + the node:test suite on
 | `lib/recipe.mjs` | recipe parsing and the bible's rules per category |
 | `lib/key.mjs` | border-sampled key, flood fill, holes, cleanup, despill, black key |
 | `lib/scale.mjs` | area downscale, pixel snap, binary / translucent / additive alpha |
-| `lib/quantise.mjs` | median cut, reserved palette-cycle ramps, nearest mapping, Bayer dither |
+| `lib/quantise.mjs` | median cut, a fixed palette reduced to the colour cap, reserved palette-cycle ramps, nearest mapping, Bayer dither |
 | `lib/finish.mjs` | outline pass, frame strip, hand-edit layer |
 | `lib/report.mjs` | colour count, lighting budget, ramp near misses, mixel warning |
-| `lib/provenance.mjs` | the `.art.json` validator and tree check — dependency-free, imported by the repo's `test/scripts/assets/provenance.test.ts` |
+| `lib/provenance.mjs` | the `.art.json` validator and tree check, the path rule and the LF text hash — dependency-free, imported by the repo's `test/scripts/assets/provenance.test.ts` |
 | `lib/codec.mjs`, `lib/deflate.mjs`, `lib/image.mjs` | decoding, the deterministic PNG encoder, pixel helpers |
 | `models.json` | the art round's models: served id, weights, licence id and verdicts of `docs/dev/art-provenance.md` §2 |
 | `palettes/<name>.json` | named palettes (`shmup-palette@1`) — none yet; R5 adds the zone palettes |

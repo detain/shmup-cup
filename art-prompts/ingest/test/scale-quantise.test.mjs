@@ -6,7 +6,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { chebyshev, createImage, packRgb, putRgba } from '../lib/image.mjs';
-import { clearReserved, histogram, mapToPalette, medianCut, pushClear } from '../lib/quantise.mjs';
+import {
+  clearReserved,
+  histogram,
+  mapToPalette,
+  medianCut,
+  pushClear,
+  reducePalette,
+} from '../lib/quantise.mjs';
 import { downscale } from '../lib/scale.mjs';
 
 /**
@@ -198,6 +205,40 @@ describe('quantise', () => {
     const pa = medianCut(histogram([a]), 16);
     assert.ok(pa.length <= 16 && pa.length > 8);
     assert.deepEqual(pa, medianCut(histogram([b]), 16));
+  });
+
+  describe('reducePalette (a fixed palette over the cap)', () => {
+    /** The art: three colours, the third rare. */
+    const ART = /** @type {[number, number][]} */ ([
+      [0x204080, 100],
+      [0x80c040, 60],
+      [0xf0e0d0, 3],
+    ]);
+    /** A 40-colour palette: near matches of the art's colours among decoys. */
+    const PALETTE = [
+      0x224482,
+      0x7ec242,
+      0xeee2d2,
+      ...Array.from({ length: 37 }, (_, i) => packRgb(255 - i * 6, i * 3, 128 + (i & 7) * 9)),
+    ];
+
+    it('keeps the palette colours the art needs, the rare highlight included', () => {
+      assert.deepEqual(reducePalette(ART, PALETTE, [], 5), [0x224482, 0x7ec242, 0xeee2d2]);
+    });
+
+    it('stays within the cap, the forced colours included and counted', () => {
+      const out = reducePalette(ART, PALETTE, [0x305a84, 0x28486a], 3);
+      assert.equal(out.length, 3);
+      assert.ok(out.includes(0x305a84) && out.includes(0x28486a));
+      assert.ok(out.includes(0x7ec242), 'the slot left goes to the colour the ramp serves worst');
+    });
+
+    it('does not depend on the palette order, and is never empty', () => {
+      const reversed = PALETTE.slice().reverse();
+      assert.deepEqual(reducePalette(ART, reversed, [], 2), reducePalette(ART, PALETTE, [], 2));
+      assert.deepEqual(reducePalette([], [0x30, 0x10, 0x20], [], 4), [0x10]);
+      assert.deepEqual(reducePalette(ART, PALETTE, [0x1, 0x2], 1), [0x1, 0x2], 'forced over the cap');
+    });
   });
 
   it('pushes a colour at least 3/255 (Chebyshev) from every reserved colour', () => {

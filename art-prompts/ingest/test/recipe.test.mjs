@@ -225,6 +225,72 @@ describe('parseRecipe', () => {
     });
   }
 
+  describe('paths stay inside the root and in git', () => {
+    const BAD = ['../outside/secret.png', 'a/../b.png', './a.png', 'a//b.png', 'a/', 'C:/a.png', 'a\\b.png', ''];
+    const CANDIDATE = 'art-prompts/v2/candidates/a/enemy/gyre.png';
+
+    for (const bad of BAD) {
+      it(`rejects ${JSON.stringify(bad)} as a source image, a sidecar, a prompt file or a reference`, () => {
+        for (const [change, path] of /** @type {[Record<string, unknown>, string][]} */ ([
+          [{ sources: [{ image: bad }] }, 'sources[0].image'],
+          [{ provenance: { sidecar: bad } }, 'provenance.sidecar'],
+          [
+            { sources: [{ image: 'a.png', provenance: { sidecar: bad } }] },
+            'sources[0].provenance.sidecar',
+          ],
+          [{ provenance: { prompt: { file: bad } } }, 'provenance.prompt.file'],
+          [{ provenance: { reference: [bad] } }, 'provenance.reference[0]'],
+          [{ provenance: { reference: [{ image: bad, model: 'flux2' }] } }, 'provenance.reference[0].image'],
+          [
+            { provenance: { reference: [{ image: 'a.png', sidecar: bad } ] } },
+            'provenance.reference[0].sidecar',
+          ],
+        ])) {
+          const result = parse(change);
+          assert.equal(result.recipe, null, `${path}: ${JSON.stringify(result.issues)}`);
+          assert.ok(
+            at(result, path).some((l) => /^error: must be a path relative to the root/.test(l)),
+            `${path}: ${JSON.stringify(result.issues)}`,
+          );
+        }
+      });
+    }
+
+    it('rejects the unversioned candidates folder, which a fresh clone does not have', () => {
+      for (const [change, path] of /** @type {[Record<string, unknown>, string][]} */ ([
+        [{ sources: [{ image: CANDIDATE }] }, 'sources[0].image'],
+        [{ provenance: { sidecar: CANDIDATE.replace('.png', '.json') } }, 'provenance.sidecar'],
+        [{ provenance: { reference: [CANDIDATE] } }, 'provenance.reference[0]'],
+      ])) {
+        assert.match(at(parse(change), path)[0], /^error: .*unversioned folder.*art-prompts\/v2\/winners/);
+      }
+    });
+
+    it('reads named references, and a reference without a sidecar names its model', () => {
+      const { recipe } = parse({
+        provenance: {
+          reference: [
+            'art-prompts/v2/winners/enemy/gyre/winner.png',
+            { image: 'art/sketch.png', sidecar: false, model: 'none' },
+            { image: 'art/b.png', sidecar: 'art/b-side.json' },
+          ],
+        },
+      });
+      assert.deepEqual(recipe?.provenance.reference, [
+        { image: 'art-prompts/v2/winners/enemy/gyre/winner.png' },
+        { image: 'art/sketch.png', sidecar: false, model: 'none' },
+        { image: 'art/b.png', sidecar: 'art/b-side.json' },
+      ]);
+      const bare = parse({ provenance: { reference: [{ image: 'a.png', sidecar: false }] } });
+      assert.match(at(bare, 'provenance.reference[0]')[0], /names its "model"/);
+      assert.match(
+        at(parse({ provenance: { reference: [{ image: 'a.png', seed: 1 }] } }), 'provenance.reference[0].seed')[0],
+        /unknown field/,
+      );
+      assert.match(at(parse({ provenance: { reference: 'a.png' } }), 'provenance.reference')[0], /array/);
+    });
+  });
+
   it('allows dither where the bible does: far and mid layers, boss bodies from 96 px, scenes', () => {
     assert.ok(parse({ category: 'backdrop', layer: 'far', dither: 'bayer4' }).recipe !== null);
     assert.ok(

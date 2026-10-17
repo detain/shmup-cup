@@ -23,7 +23,7 @@ import { main } from '../ingest.mjs';
 import { decodeImage, pngChunks } from '../lib/codec.mjs';
 import { chebyshev, packRgb } from '../lib/image.mjs';
 import { ingestRecipe } from '../lib/pipeline.mjs';
-import { loadModels, sha256Hex } from '../lib/provenance.mjs';
+import { loadModels, sha256Hex, validateRecord } from '../lib/provenance.mjs';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const SPRITES = join(FIXTURES, 'sprites');
@@ -300,30 +300,100 @@ describe('what each fixture shows', () => {
   });
 });
 
+/** Where gen-candidate.mjs puts candidates (git-ignored) and round 2 commits the winners. */
+const CANDIDATES = 'art-prompts/v2/candidates';
+const WINNERS = 'art-prompts/v2/winners';
+
+/**
+ * Writes a file below a root, creating its folders.
+ *
+ * @param {string} root - Root.
+ * @param {string} path - Root-relative path.
+ * @param {string | Buffer} content - Bytes or text (an object is written as JSON).
+ */
+function put(root, path, content) {
+  const file = join(root, ...path.split('/'));
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, content);
+}
+
+/**
+ * A candidate sidecar as `gen-candidate.mjs` writes it (only the fields ingest reads).
+ *
+ * @param {Record<string, unknown>} fields - Fields.
+ * @returns {string} JSON text.
+ */
+const sidecarText = (fields) =>
+  `${JSON.stringify({ slot: 'a', prompt: 'SYNTHETIC FIXTURE', negative: '', ...fields }, null, 2)}\n`;
+
+/**
+ * A fixture root with round 2's layout: the winner of `enemy/drone` and its comment edit
+ * `edit-1` (a Qwen edit of the FLUX winner) committed under `art-prompts/v2/winners/`, and a
+ * recipe `enemies/drone-edit` that ingests the edit. No candidates folder (a fresh clone).
+ *
+ * @param {string} name - Folder name under the temp root.
+ * @param {{ editFrom?: unknown[], source?: string, recipe?: (r: Record<string, any>) => void }} [o]
+ *   The edit's `editFrom`, the image the recipe ingests, a change to the recipe.
+ * @returns {{ root: string, recipe: string }} The root and the recipe path.
+ */
+function editRoot(name, o = {}) {
+  const root = copyRoot(name);
+  const sheet = readFileSync(join(root, 'sources', 'drone-sheet.png'));
+  put(root, `${WINNERS}/enemy/drone/winner.png`, sheet);
+  put(
+    root,
+    `${WINNERS}/enemy/drone/winner.json`,
+    sidecarText({
+      id: 'enemy/drone',
+      model: 'flux2',
+      servedModel: 'black-forest-labs/FLUX.2-dev',
+      seed: 4242,
+      generatedAt: '2026-10-16T00:00:00.000Z',
+      file: `${CANDIDATES}/a/enemy/drone.png`,
+      mode: 'generate',
+    }),
+  );
+  put(root, `${WINNERS}/enemy/drone/edit-1.png`, sheet);
+  put(
+    root,
+    `${WINNERS}/enemy/drone/edit-1.json`,
+    sidecarText({
+      id: 'enemy/drone',
+      model: 'qwenedit',
+      servedModel: 'Qwen/Qwen-Image-Edit-2511',
+      seed: 5,
+      generatedAt: '2026-10-17T00:00:00.000Z',
+      file: `${CANDIDATES}/a/enemy/drone/edit-1.png`,
+      mode: 'edit',
+      editFrom: o.editFrom ?? [`${CANDIDATES}/a/enemy/drone.png`],
+      instruction: 'SYNTHETIC FIXTURE edit',
+    }),
+  );
+  const recipe = JSON.parse(
+    readFileSync(join(root, 'sprites', 'enemies', 'drone.recipe.json'), 'utf8'),
+  );
+  recipe.name = 'enemies/drone-edit';
+  recipe.sources[0].image = o.source ?? `${WINNERS}/enemy/drone/edit-1.png`;
+  o.recipe?.(recipe);
+  const file = join(root, 'sprites', 'enemies', 'drone-edit.recipe.json');
+  writeFileSync(file, `${JSON.stringify(recipe, null, 2)}\n`);
+  return { root, recipe: file };
+}
+
+/**
+ * Ingests with a fixed date (records compare byte for byte).
+ *
+ * @param {string} recipe - Recipe path.
+ * @param {string} root - Root.
+ * @returns {ReturnType<typeof ingestRecipe>} The result.
+ */
+const ingestAt = (recipe, root) =>
+  ingestRecipe(recipe, { ...OPTIONS, root, date: '2026-10-17' });
+
 describe('edit references', () => {
-  it("records an edit's input image with its hash and the model that made it", () => {
-    const root = copyRoot('edited');
-    cpSync(join(root, 'sources', 'drone-sheet.png'), join(root, 'sources', 'drone-edit.png'));
-    writeFileSync(
-      join(root, 'sources', 'drone-edit.json'),
-      JSON.stringify({
-        id: 'enemy/drone/edit-1',
-        model: 'qwenedit',
-        servedModel: 'Qwen/Qwen-Image-Edit-2511',
-        seed: 5,
-        mode: 'edit',
-        editFrom: ['sources/drone-sheet.png', 'sources/missing.png'],
-        instruction: 'SYNTHETIC FIXTURE edit',
-      }),
-    );
-    const recipe = join(root, 'sprites', 'enemies', 'drone-edit.recipe.json');
-    writeFileSync(
-      recipe,
-      readFileSync(join(root, 'sprites', 'enemies', 'drone.recipe.json'), 'utf8')
-        .replace('"enemies/drone"', '"enemies/drone-edit"')
-        .replace('sources/drone-sheet.png', 'sources/drone-edit.png'),
-    );
-    const result = ingestRecipe(recipe, { ...OPTIONS, root });
+  it("records an edit's input as its committed winner: hash, sidecar, model, licence", () => {
+    const { root, recipe } = editRoot('edited');
+    const result = ingestAt(recipe, root);
     assert.deepEqual(result.errors, []);
     const record = JSON.parse(result.files?.record.text ?? '{}');
     const [source] = record.sources;
@@ -331,23 +401,363 @@ describe('edit references', () => {
       [source.model, source.licence, source.generator.mode],
       ['Qwen/Qwen-Image-Edit-2511', 'apache-2.0', 'edit'],
     );
-    assert.deepEqual(source.reference[0], {
-      path: 'sources/drone-sheet.png',
-      sha256: sha256Hex(readFileSync(join(root, 'sources', 'drone-sheet.png'))),
-      sidecar: 'sources/drone-sheet.json',
-      model: 'black-forest-labs/FLUX.2-dev',
-      modelKey: 'flux2',
-      licence: 'flux-nc-2.1',
+    assert.deepEqual(source.reference, [
+      {
+        path: `${WINNERS}/enemy/drone/winner.png`,
+        from: `${CANDIDATES}/a/enemy/drone.png`,
+        sha256: sha256Hex(readFileSync(join(root, 'sources', 'drone-sheet.png'))),
+        sidecar: `${WINNERS}/enemy/drone/winner.json`,
+        sidecarSha256: sha256Hex(readFileSync(join(root, WINNERS, 'enemy', 'drone', 'winner.json'))),
+        model: 'black-forest-labs/FLUX.2-dev',
+        modelKey: 'flux2',
+        weights: loadModels().flux2.weights,
+        licence: 'flux-nc-2.1',
+        reference: [],
+      },
+    ]);
+    assert.equal(record.origin, 'ai-assisted');
+  });
+
+  it('gives the same record whether the unversioned candidates folder is there or not', () => {
+    const { root, recipe } = editRoot('candidates-present');
+    const clean = ingestAt(recipe, root);
+    assert.deepEqual(clean.errors, []);
+    // The owner's machine: the candidates exist too (and differ from anything committed).
+    put(root, `${CANDIDATES}/a/enemy/drone.png`, readFileSync(join(root, 'sources', 'gyre.jpg')));
+    put(root, `${CANDIDATES}/a/enemy/drone.json`, sidecarText({ model: 'qwenvl' }));
+    const owner = ingestAt(recipe, root);
+    assert.deepEqual(owner.errors, []);
+    assert.equal(owner.files?.record.text, clean.files?.record.text);
+    // Without the committed copy the candidate alone is never used — on any machine.
+    rmSync(join(root, WINNERS, 'enemy', 'drone', 'winner.png'));
+    const missing = ingestAt(recipe, root);
+    assert.equal(missing.files, null);
+    assert.match(
+      missing.errors.join('\n'),
+      /reference\[0\]: the edit's input image art-prompts\/v2\/candidates\/a\/enemy\/drone\.png is in the unversioned candidates folder and has no committed copy/,
+    );
+  });
+
+  it("follows a followup's two inputs, and the comment edit's own input below it", () => {
+    const { root, recipe } = editRoot('followup', {
+      source: `${WINNERS}/enemy/drone/reveal.png`,
     });
-    assert.match(source.reference[0].sha256, /^[0-9a-f]{64}$/);
-    assert.deepEqual(source.reference[1], {
-      path: 'sources/missing.png',
-      sha256: null,
-      sidecar: null,
-      model: null,
-      modelKey: null,
-      licence: null,
+    put(root, `${WINNERS}/enemy/drone/reveal.png`, readFileSync(join(root, 'sources', 'drone-sheet.png')));
+    put(
+      root,
+      `${WINNERS}/enemy/drone/reveal.json`,
+      sidecarText({
+        id: 'enemy/drone/reveal',
+        model: 'flux2',
+        servedModel: 'black-forest-labs/FLUX.2-dev',
+        generatedAt: '2026-10-18T00:00:00.000Z',
+        mode: 'edit',
+        editFrom: [`${CANDIDATES}/a/enemy/drone.png`, `${CANDIDATES}/a/enemy/drone/edit-1.png`],
+      }),
+    );
+    const result = ingestAt(recipe, root);
+    assert.deepEqual(result.errors, []);
+    const [winner, edit] = JSON.parse(result.files?.record.text ?? '{}').sources[0].reference;
+    assert.equal(winner.path, `${WINNERS}/enemy/drone/winner.png`);
+    assert.deepEqual(
+      [edit.path, edit.from, edit.modelKey],
+      [`${WINNERS}/enemy/drone/edit-1.png`, `${CANDIDATES}/a/enemy/drone/edit-1.png`, 'qwenedit'],
+    );
+    assert.deepEqual(
+      edit.reference.map((/** @type {{ path: string, licence: string }} */ r) => [r.path, r.licence]),
+      [[`${WINNERS}/enemy/drone/winner.png`, 'flux-nc-2.1']],
+      "the Qwen edit's FLUX input is still recorded",
+    );
+  });
+
+  it('uses the committed copies a recipe names in provenance.reference, one per editFrom entry', () => {
+    const { root, recipe } = editRoot('named', {
+      recipe: (r) => {
+        r.sources[0].provenance = {
+          reference: [{ image: 'sources/far.png', sidecar: false, model: 'flux1' }],
+        };
+      },
     });
+    rmSync(join(root, WINNERS, 'enemy', 'drone', 'winner.png')); // the mapping would fail
+    const result = ingestAt(recipe, root);
+    assert.deepEqual(result.errors, []);
+    const [ref] = JSON.parse(result.files?.record.text ?? '{}').sources[0].reference;
+    assert.deepEqual(
+      [ref.path, ref.from, ref.sidecar, ref.modelKey, ref.licence],
+      ['sources/far.png', `${CANDIDATES}/a/enemy/drone.png`, null, 'flux1', 'flux1-dev-nc-1.1.1'],
+    );
+  });
+
+  it('makes a hand-drawn redraw of an AI image ai-assisted', () => {
+    const root = copyRoot('redraw');
+    const file = join(root, 'sprites', 'bosses', 'fringe-hull.recipe.json');
+    const recipe = JSON.parse(readFileSync(file, 'utf8'));
+    recipe.provenance.reference = ['sources/drone-sheet.png'];
+    recipe.provenance.cleanup = 'redrawn';
+    writeFileSync(file, JSON.stringify(recipe));
+    const result = ingestAt(file, root);
+    assert.deepEqual(result.errors, []);
+    const record = JSON.parse(result.files?.record.text ?? '{}');
+    assert.deepEqual(
+      [record.origin, record.sources[0].model, record.sources[0].reference[0].modelKey],
+      ['ai-assisted', null, 'flux2'],
+    );
+    assert.deepEqual(validateRecord(record, { sprite: 'bosses/fringe-hull' }), []);
+  });
+
+  for (const [
+    label,
+    options,
+    after,
+    pattern,
+  ] of /** @type {[string, object, ((root: string) => void) | null, RegExp][]} */ ([
+    [
+      'a missing input image',
+      { editFrom: ['sources/missing.png'] },
+      null,
+      /reference\[0\]: the edit's input image sources\/missing\.png does not exist/,
+    ],
+    [
+      'an input image without a sidecar',
+      { editFrom: ['sources/far.png'] },
+      null,
+      /sources\/far\.png has no sidecar sources\/far\.json, so the model that made it is unknown/,
+    ],
+    [
+      'an input whose sidecar names no model',
+      { editFrom: ['sources/far.png'] },
+      (root) => put(root, 'sources/far.json', sidecarText({ id: 'x' })),
+      /the sidecar sources\/far\.json of sources\/far\.png names no model/,
+    ],
+    [
+      'an input path that leaves the root',
+      { editFrom: ['../outside/secret.png'] },
+      null,
+      /editFrom\[0\] "\.\.\/outside\/secret\.png" must be a path relative to the root/,
+    ],
+    [
+      'an archived candidate',
+      { editFrom: [`${CANDIDATES}/history/2026-10-17/a/enemy/drone.png`] },
+      null,
+      /has no committed copy/,
+    ],
+    [
+      'a committed copy of another candidate (another slot)',
+      { editFrom: [`${CANDIDATES}/b/enemy/drone.png`] },
+      null,
+      /winner\.png is not the image the edit was made from — its sidecar says it is art-prompts\/v2\/candidates\/a\/enemy\/drone\.png/,
+    ],
+    [
+      'a committed copy generated after the edit',
+      {},
+      (root) => {
+        const file = join(root, WINNERS, 'enemy', 'drone', 'winner.json');
+        writeFileSync(file, readFileSync(file, 'utf8').replace('2026-10-16', '2026-10-19'));
+      },
+      /was generated at 2026-10-19T00:00:00\.000Z, after the edit \(2026-10-17T00:00:00\.000Z\)/,
+    ],
+    [
+      'a named reference list of another length',
+      { recipe: (/** @type {any} */ r) => (r.provenance.reference = []) },
+      null,
+      /provenance\.reference: names 0 image\(s\), the edit was made from 1/,
+    ],
+  ])) {
+    it(`refuses ${label}`, () => {
+      const { root, recipe } = editRoot(`bad-ref-${label.replace(/\W+/g, '-')}`, options);
+      after?.(root);
+      const result = ingestAt(recipe, root);
+      assert.equal(result.files, null);
+      assert.match(result.errors.join('\n'), pattern);
+    });
+  }
+});
+
+describe('the model of a source', () => {
+  /**
+   * Ingests the drone recipe with changed sources or provenance.
+   *
+   * @param {string} name - Scratch root name.
+   * @param {(r: Record<string, any>) => void} change - The change.
+   * @returns {ReturnType<typeof ingestRecipe>} The result.
+   */
+  const drone = (name, change) => {
+    const root = copyRoot(name);
+    const file = join(root, 'sprites', 'enemies', 'drone.recipe.json');
+    const recipe = JSON.parse(readFileSync(file, 'utf8'));
+    change(recipe);
+    writeFileSync(file, JSON.stringify(recipe));
+    return ingestAt(file, root);
+  };
+
+  it('is an error when neither a sidecar nor the recipe names it', () => {
+    for (const [name, change] of /** @type {[string, (r: any) => void][]} */ ([
+      ['no-sidecar', (r) => (r.sources[0] = { image: 'sources/fringe.png', crop: [0, 0, 80, 48] })],
+      ['sidecar-off', (r) => (r.sources[0].provenance = { sidecar: false })],
+    ])) {
+      const result = drone(name, change);
+      assert.equal(result.files, null, name);
+      assert.match(
+        result.errors.join('\n'),
+        /sources\[0\]: no model is known for sources\/.*say provenance\.model: "none" for hand-made art/,
+        name,
+      );
+    }
+  });
+
+  it('is an error when the recipe contradicts the candidate sidecar ("none" included)', () => {
+    for (const model of ['none', 'qwenvl']) {
+      const result = drone(`contradict-${model}`, (r) => (r.provenance.model = model));
+      assert.equal(result.files, null, model);
+      assert.match(
+        result.errors.join('\n'),
+        new RegExp(`provenance\\.model: "${model}" contradicts the candidate sidecar sources/drone-sheet\\.json, which says "flux2"`),
+      );
+    }
+    assert.deepEqual(drone('agree', (r) => (r.provenance.model = 'flux2')).errors, []);
+  });
+
+  it('warns when the sidecar names a served model other than the table row', () => {
+    const root = copyRoot('served');
+    const file = join(root, 'sources', 'drone-sheet.json');
+    writeFileSync(
+      file,
+      readFileSync(file, 'utf8').replace('"black-forest-labs/FLUX.2-dev"', '"someone/other-model"'),
+    );
+    const result = ingestAt(join(root, 'sprites', 'enemies', 'drone.recipe.json'), root);
+    assert.deepEqual(result.errors, []);
+    assert.match(
+      result.warnings.join('\n'),
+      /the sidecar says someone\/other-model served the image, models\.json has black-forest-labs\/FLUX\.2-dev for "flux2"/,
+    );
+  });
+});
+
+describe('a fixed palette over the cap', () => {
+  /** 40 colours: a grey ramp, blues and oranges (none near the fixture's cycle ramp). */
+  const WIDE = Array.from({ length: 40 }, (_, i) => {
+    const v = 8 + i * 6;
+    const c = i % 3 === 0 ? packRgb(v, v, v) : i % 3 === 1 ? packRgb(v >> 1, v >> 1, v) : packRgb(v, v >> 1, 0);
+    return `#${c.toString(16).padStart(6, '0')}`;
+  });
+
+  /**
+   * Ingests a recipe written into a scratch copy of the fixture root.
+   *
+   * @param {string} name - Scratch root name.
+   * @param {string} sprite - Sprite name.
+   * @param {Record<string, unknown>} recipe - The recipe (without format and name).
+   * @param {Record<string, unknown>} [palettes] - Named palettes to write.
+   * @returns {ReturnType<typeof ingestRecipe>} The result.
+   */
+  const run = (name, sprite, recipe, palettes = {}) => {
+    const root = copyRoot(name);
+    for (const [id, colors] of Object.entries(palettes))
+      put(root, `palettes/${id}.json`, JSON.stringify({ schema: 'shmup-palette@1', colors }));
+    const file = join(root, 'sprites', ...`${sprite}.recipe.json`.split('/'));
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({ format: 'shmup-ingest-recipe@1', name: sprite, ...recipe }));
+    return ingestRecipe(file, { ...OPTIONS, root, palettesDir: join(root, 'palettes'), date: '2026-10-17' });
+  };
+
+  /**
+   * Opaque colours of a result's strip.
+   *
+   * @param {ReturnType<typeof ingestRecipe>} result - A result.
+   * @returns {Set<number>} Colours.
+   */
+  const coloursOf = (result) => opaqueColours(decodeImage(/** @type {Buffer} */ (result.files?.png.bytes)).image);
+
+  it('an explicit 40-colour palette on a bullet comes out in at most 5 of its colours, without a warning', () => {
+    const recipe = {
+      category: 'bullet',
+      frame: { width: 16, height: 9 },
+      sources: [{ image: 'sources/far.png', provenance: { model: 'flux1', sidecar: false } }],
+      key: { mode: 'none' },
+      palette: { colors: WIDE },
+    };
+    const result = run('wide-bullet', 'bullets/wide', recipe);
+    assert.deepEqual(result.errors, []);
+    const colours = coloursOf(result);
+    assert.ok(colours.size <= 5 && colours.size >= 2, `${colours.size} colours`);
+    const allowed = new Set(WIDE.map((h) => parseInt(h.slice(1), 16)));
+    for (const c of colours) assert.ok(allowed.has(c), c.toString(16));
+    assert.deepEqual(result.report.paletteReduced, { from: 40, to: 5 });
+    assert.ok(!result.warnings.some((w) => w.startsWith('colours:')), result.warnings.join('\n'));
+    const again = run('wide-bullet-2', 'bullets/wide', recipe);
+    assert.deepEqual(again.files?.png.bytes, result.files?.png.bytes, 'deterministic');
+  });
+
+  it('a named palette over a backdrop cap keeps the cycle ramp exact and stays within the cap', () => {
+    const ramp = [0x203850, 0x28486a, 0x305a84];
+    const result = run(
+      'wide-far',
+      'backdrops/wide-far',
+      {
+        category: 'backdrop',
+        layer: 'far',
+        frame: { width: 64, height: 36 },
+        sources: [{ image: 'sources/far.png', provenance: { model: 'flux1', sidecar: false } }],
+        key: { mode: 'none' },
+        cycles: [{ stage: 'fixture', layer: 'far' }],
+        palette: { name: 'wide', max: 8 },
+      },
+      { wide: WIDE },
+    );
+    assert.deepEqual(result.errors, []);
+    const colours = coloursOf(result);
+    assert.ok(colours.size <= 8, `${colours.size} colours`);
+    for (const r of ramp) assert.ok(colours.has(r), `ramp ${r.toString(16)} kept exactly`);
+    assert.deepEqual(result.report.paletteReduced, { from: 43, to: 8 });
+    assert.ok(!result.warnings.some((w) => w.startsWith('colours:')), result.warnings.join('\n'));
+  });
+
+  it('a fixed palette within the cap is used whole, as before', () => {
+    const result = run('narrow', 'bullets/narrow', {
+      category: 'bullet',
+      frame: { width: 16, height: 9 },
+      sources: [{ image: 'sources/far.png', provenance: { model: 'flux1', sidecar: false } }],
+      key: { mode: 'none' },
+      palette: { colors: WIDE.slice(0, 5) },
+    });
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.report.paletteReduced, null);
+  });
+
+  it('warns only for the colours the hand-edit layer adds', () => {
+    const root = copyRoot('edit-colours');
+    const file = join(root, 'sprites', 'enemies', 'drone.recipe.json');
+    writeFileSync(file, readFileSync(file, 'utf8').replace('"max": 8', '"max": 5'));
+    const withEdit = ingestAt(file, root);
+    assert.deepEqual(withEdit.errors, []);
+    assert.match(
+      withEdit.warnings.join('\n'),
+      /colours: the hand-edit layer brings 5 to 6, over the cap of 5/,
+    );
+    rmSync(join(root, 'sprites', 'enemies', 'drone.edit.png'));
+    const without = ingestAt(file, root);
+    assert.ok(!without.warnings.some((w) => w.startsWith('colours:')), without.warnings.join('\n'));
+  });
+});
+
+describe('line endings', () => {
+  it('a Windows checkout (CRLF recipes and sidecars) gives the same records and passes --check', () => {
+    const root = copyRoot('crlf');
+    const texts = [
+      ...readdirSync(join(root, 'sprites'), { recursive: true })
+        .map(String)
+        .filter((f) => f.endsWith('.json'))
+        .map((f) => join(root, 'sprites', f)),
+      join(root, 'sources', 'drone-sheet.json'),
+    ];
+    for (const file of texts) writeFileSync(file, readFileSync(file, 'utf8').replace(/\n/g, '\r\n'));
+    const check = cli(['--root', root, '--palettes', PALETTES, '--check', join(root, 'sprites')]);
+    assert.equal(check.code, 0, check.err);
+    const gyre = ingestAt(join(root, 'sprites', 'enemies', 'gyre.recipe.json'), root);
+    assert.equal(
+      gyre.files?.record.text,
+      readFileSync(join(SPRITES, 'enemies', 'gyre.art.json'), 'utf8'),
+    );
   });
 });
 
@@ -447,6 +857,12 @@ describe('errors', () => {
       );
     });
   }
+
+  it('reports a recipe outside the root (its record could not name it)', () => {
+    const result = run('enemies/bad', BASE);
+    assert.equal(result.files, null);
+    assert.match(result.errors.join('\n'), /the recipe is outside the root/);
+  });
 
   it('reports an edit layer of the wrong size', () => {
     const dir = join(tmp, 'bad-edit');

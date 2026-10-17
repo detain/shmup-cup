@@ -10,6 +10,7 @@
  */
 import { DEFAULT_GREEN_TEST } from './key.mjs';
 import { parseHex } from './image.mjs';
+import { SAFE_PATH_RULE, isSafeRelativePath, isUnversioned } from './provenance.mjs';
 
 /** The recipe format id. */
 export const RECIPE_FORMAT = 'shmup-ingest-recipe@1';
@@ -113,6 +114,7 @@ const PROVENANCE_KEYS = [
   'prompt',
   'seed',
   'sidecar',
+  'reference',
   'author',
   'use',
   'cleanup',
@@ -151,6 +153,9 @@ const CLEANUPS = ['none', 'light', 'heavy', 'redrawn'];
  * @property {{ file?: string, entry?: string }} [prompt] - Library file and entry id.
  * @property {number | null} [seed] - Generation seed.
  * @property {string | false} [sidecar] - Candidate sidecar path, or `false` for none.
+ * @property {ReferenceSpec[]} [reference] - The committed input images of an edit, in the
+ *   order of the candidate sidecar's `editFrom` (which they replace), or the images a source
+ *   was made from when it has no sidecar.
  * @property {string} [author] - Who made or cleaned it.
  * @property {'pixels' | 'reference'} [use] - How the pixels may be used (default `pixels`).
  * @property {'none' | 'light' | 'heavy' | 'redrawn'} [cleanup] - The hand work in it; default
@@ -158,6 +163,16 @@ const CLEANUPS = ['none', 'light', 'heavy', 'redrawn'];
  * @property {{ on: string, by: string }} [reviewed] - The content review (look-alikes, logos,
  *   stray text — art-provenance.md §6 rule 5): when and by whom.
  * @property {string} [notes] - Free text.
+ */
+
+/**
+ * One input image of an edit, as a recipe names it.
+ *
+ * @typedef {object} ReferenceSpec
+ * @property {string} image - Root-relative path of the committed image.
+ * @property {string | false} [sidecar] - Its candidate sidecar (default: `<image>.json`), or
+ *   `false` for none (then `model` says what made it).
+ * @property {string} [model] - Model group key, or `none` (hand-made).
  */
 
 /**
@@ -208,6 +223,30 @@ const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
  */
 const isInt = (v, lo, hi) =>
   Number.isInteger(v) && /** @type {number} */ (v) >= lo && /** @type {number} */ (v) <= hi;
+
+/**
+ * Checks a path a recipe gives: a plain path inside the root ({@link isSafeRelativePath}), not
+ * in an unversioned folder (a fresh clone would not have it, so the record would differ).
+ *
+ * @param {unknown} value - The path.
+ * @param {string} path - Its JSON path.
+ * @param {(path: string, message: string) => void} error - Error collector.
+ * @returns {boolean} `true` when it is fine.
+ */
+function checkPath(value, path, error) {
+  if (!isSafeRelativePath(value)) {
+    error(path, SAFE_PATH_RULE);
+    return false;
+  }
+  if (isUnversioned(value)) {
+    error(
+      path,
+      `${value} is in an unversioned folder (ignored by git), so a fresh clone does not have it — use the committed copy under art-prompts/v2/winners/`,
+    );
+    return false;
+  }
+  return true;
+}
 
 /**
  * Parses and validates a recipe document.
@@ -296,14 +335,7 @@ export function parseRecipe(json) {
         if (!['image', 'crop', 'frames', 'grid', 'provenance'].includes(k))
           error(`${at}.${k}`, 'unknown field');
       }
-      if (
-        typeof src.image !== 'string' ||
-        src.image === '' ||
-        src.image.startsWith('/') ||
-        src.image.includes('\\')
-      ) {
-        error(`${at}.image`, 'must be a path relative to the root, with "/" separators');
-      }
+      checkPath(src.image, `${at}.image`, error);
       const given = ['crop', 'frames', 'grid'].filter((k) => src[k] !== undefined);
       if (given.length > 1)
         error(at, `give one of crop, frames or grid, not ${given.join(' and ')}`);
@@ -867,6 +899,8 @@ function readProvenance(value, path, error) {
       (p.entry !== undefined && typeof p.entry !== 'string')
     ) {
       error(`${path}.prompt`, 'must be { "file", "entry" } strings');
+    } else if (p.file !== undefined && !isSafeRelativePath(p.file)) {
+      error(`${path}.prompt.file`, SAFE_PATH_RULE);
     } else
       out.prompt = {
         ...(p.file !== undefined ? { file: /** @type {string} */ (p.file) } : {}),
@@ -881,7 +915,62 @@ function readProvenance(value, path, error) {
   if (value.sidecar !== undefined) {
     if (value.sidecar !== false && typeof value.sidecar !== 'string')
       error(`${path}.sidecar`, 'must be a path or false');
-    else out.sidecar = /** @type {string | false} */ (value.sidecar);
+    else if (value.sidecar === false || checkPath(value.sidecar, `${path}.sidecar`, error))
+      out.sidecar = /** @type {string | false} */ (value.sidecar);
+  }
+  if (value.reference !== undefined) {
+    if (!Array.isArray(value.reference)) {
+      error(
+        `${path}.reference`,
+        'must be an array of image paths or { "image", "sidecar", "model" }',
+      );
+    } else {
+      /** @type {ReferenceSpec[]} */
+      const refs = [];
+      value.reference.forEach((r, i) => {
+        const at = `${path}.reference[${i}]`;
+        const spec = typeof r === 'string' ? { image: r } : r;
+        if (!isObject(spec)) {
+          error(at, 'must be an image path or { "image", "sidecar", "model" }');
+          return;
+        }
+        let ok = true;
+        for (const k of Object.keys(spec)) {
+          if (!['image', 'sidecar', 'model'].includes(k)) {
+            error(`${at}.${k}`, 'unknown field');
+            ok = false;
+          }
+        }
+        ok = checkPath(spec.image, typeof r === 'string' ? at : `${at}.image`, error) && ok;
+        if (spec.sidecar !== undefined && spec.sidecar !== false) {
+          if (typeof spec.sidecar !== 'string') {
+            error(`${at}.sidecar`, 'must be a path or false');
+            ok = false;
+          } else ok = checkPath(spec.sidecar, `${at}.sidecar`, error) && ok;
+        }
+        if (spec.model !== undefined && (typeof spec.model !== 'string' || spec.model === '')) {
+          error(`${at}.model`, 'must be a model key such as "flux2", or "none"');
+          ok = false;
+        }
+        if (spec.sidecar === false && spec.model === undefined) {
+          error(
+            at,
+            'an input image without a sidecar names its "model" (a models.json key, or "none" for hand-made art)',
+          );
+          ok = false;
+        }
+        if (ok) {
+          refs.push({
+            image: /** @type {string} */ (spec.image),
+            ...(spec.sidecar !== undefined
+              ? { sidecar: /** @type {string | false} */ (spec.sidecar) }
+              : {}),
+            ...(spec.model !== undefined ? { model: /** @type {string} */ (spec.model) } : {}),
+          });
+        }
+      });
+      out.reference = refs;
+    }
   }
   if (value.author !== undefined) {
     if (typeof value.author !== 'string') error(`${path}.author`, 'must be a string');
