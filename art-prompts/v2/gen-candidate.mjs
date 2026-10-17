@@ -98,6 +98,7 @@
  *             3 server serves another model · 4 output exists (use --force)
  */
 
+import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -567,7 +568,12 @@ async function main() {
     file: path.relative(REPO_DIR, file), format, requestedFormat: o.format,
     servedModel: payload.model, endpoint: `${baseUrl}${endpoint}`, negativeSent,
     mode: editing ? 'edit' : 'generate',
-    ...(editing ? { editFrom: refs.map((r) => path.relative(REPO_DIR, r.file)), instruction: o.instruction } : {}),
+    ...(editing ? {
+      editFrom: refs.map((r) => path.relative(REPO_DIR, r.file)),
+      // SHA-256 of each reference as sent, so the ingest tool can match a committed winner copy byte for byte.
+      editFromSha256: refs.map((r) => createHash('sha256').update(r.bytes).digest('hex')),
+      instruction: o.instruction,
+    } : {}),
     ...(real ? { outputSize: `${real.w}x${real.h}` } : {}),
     ...(archived ? { replaced: path.relative(REPO_DIR, archived) } : {}),
     ...metaField(o),
