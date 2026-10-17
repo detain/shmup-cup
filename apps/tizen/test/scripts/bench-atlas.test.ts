@@ -4,7 +4,6 @@
  * scaling of pixels, extrusion, anchors and font metrics on a tiny fixture, the page model
  * (1, 1, 2 pages for today's atlas) and the shipped density 1 kept byte for byte.
  */
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   BENCH_ATLAS_DIR,
@@ -20,13 +19,12 @@ import {
   shmupRenderBench,
 } from '../../scripts/bench-atlas.mjs';
 import { decodePng } from '../../../../scripts/assets/png.mjs';
+import { shippedAtlas } from '../bench/shipped-atlas.js';
 
-/** The shipped atlas (`pnpm assets`). */
-const ATLAS_DIR = new URL('../../../../assets/generated/atlas/', import.meta.url);
-const shippedManifest = JSON.parse(
-  readFileSync(new URL('main.json', ATLAS_DIR), 'utf8'),
-) as Parameters<typeof scaleAtlas>[0];
-const shippedPng = readFileSync(new URL('main.png', ATLAS_DIR));
+/** The shipped atlas, built in memory (`assets/generated/` is not there in CI). */
+const shipped = shippedAtlas();
+const shippedManifest = shipped.manifest as unknown as Parameters<typeof scaleAtlas>[0];
+const shippedPng = shipped.pngs[0];
 
 /**
  * A 4×2 page: frame `a` is the 2×2 left half (red, green / blue, white), frame `b` the 2×2 right
@@ -153,7 +151,7 @@ describe('bench-atlas scaleAtlas', () => {
 });
 
 describe('bench-atlas on the shipped atlas', () => {
-  const atlases = buildBenchAtlases(shippedManifest, [shippedPng]);
+  const atlases = buildBenchAtlases(shippedManifest, shipped.pngs);
 
   it('builds one atlas per density with 1, 1 and 2 power-of-two pages of at most 2048²', () => {
     expect(atlases.map((atlas) => atlas.density)).toEqual([1, 1.5, 2.25]);

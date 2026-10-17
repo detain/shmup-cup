@@ -5,7 +5,6 @@
  * `docs/dev/conventions.md` requires; measured on a second scene after a throwaway one, so the
  * constructor's hidden-class transitions are not counted.
  */
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { measureHeapGrowth } from '../../../../packages/core/test/helpers/alloc.js';
 import {
@@ -14,11 +13,15 @@ import {
   pickBenchSprites,
   type BenchSceneManifest,
 } from '../../src/bench/index.js';
+import { shippedAtlas } from './shipped-atlas.js';
 
-/** The shipped atlas manifest (density 1 — the scene's arithmetic is the same at every density). */
-const manifest = JSON.parse(
-  readFileSync(new URL('../../../../assets/generated/atlas/main.json', import.meta.url), 'utf8'),
-) as BenchSceneManifest & { sprites: Record<string, { frames: string[] }> };
+/**
+ * The shipped atlas manifest (density 1 — the scene's arithmetic is the same at every density),
+ * built in memory once at load, outside the measured loop (`assets/generated/` is not there in CI).
+ */
+const manifest = shippedAtlas().manifest as unknown as BenchSceneManifest & {
+  sprites: Record<string, { frames: string[] }>;
+};
 
 /**
  * A busy scene with a filtered layer and the Mode-7 floor (every branch of the tick).

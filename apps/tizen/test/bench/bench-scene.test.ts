@@ -4,7 +4,6 @@
  * terrain, full-frame backdrops, the variants' effects), the same field of view at 640×360 and
  * 960×540, the motion that keeps every sprite on screen, and the particle top-up.
  */
-import { readFileSync } from 'node:fs';
 import { LayerId, RasterKind, type SpriteBatchView } from '@shmup/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -18,10 +17,11 @@ import {
   type BenchSceneManifest,
 } from '../../src/bench/index.js';
 import { buildBenchAtlases } from '../../scripts/bench-atlas.mjs';
+import { shippedAtlas } from './shipped-atlas.js';
 
-/** The shipped atlas (`pnpm assets`). */
-const ATLAS_DIR = new URL('../../../../assets/generated/atlas/', import.meta.url);
-const shipped = JSON.parse(readFileSync(new URL('main.json', ATLAS_DIR), 'utf8')) as {
+/** The shipped atlas, built in memory (`assets/generated/` is not there in CI). */
+const atlas = shippedAtlas();
+const shipped = atlas.manifest as unknown as {
   sprites: Record<string, unknown>;
   pages: { file: string; w: number; h: number }[];
 };
@@ -30,9 +30,7 @@ const shipped = JSON.parse(readFileSync(new URL('main.json', ATLAS_DIR), 'utf8')
 const manifests = new Map<number, BenchSceneManifest>();
 
 beforeAll(() => {
-  const atlases = buildBenchAtlases(shipped as never, [
-    readFileSync(new URL('main.png', ATLAS_DIR)),
-  ]);
+  const atlases = buildBenchAtlases(shipped as never, atlas.pngs);
   for (const atlas of atlases) manifests.set(atlas.density, atlas.manifest as BenchSceneManifest);
 }, 60_000);
 

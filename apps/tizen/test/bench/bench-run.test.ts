@@ -6,7 +6,6 @@
  * mode's published outcome. The measurement itself runs in a browser: `pnpm bench`
  * (`test/bench/render.perf.ts`) opens every scenario headlessly.
  */
-import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   BENCH_SCENARIOS,
@@ -24,11 +23,11 @@ import {
   type TvBenchOutcome,
 } from '../../src/bench/index.js';
 import { recordFor } from './fake-record.js';
+import { shippedAtlas } from './shipped-atlas.js';
 import type { AtlasManifest } from '@shmup/render-pixi';
 
-const manifest = JSON.parse(
-  readFileSync(new URL('../../../../assets/generated/atlas/main.json', import.meta.url), 'utf8'),
-) as AtlasManifest;
+/** The shipped atlas manifest, built in memory (`assets/generated/` is not there in CI). */
+const manifest = shippedAtlas().manifest as unknown as AtlasManifest;
 
 /** Assets whose pages never load (Node has no images): every density shares the shipped manifest. */
 const ASSETS: BenchAssets = {
