@@ -13,7 +13,15 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import {
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  TILE_SIZE,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** Face colour of the placeholder `brick` tile (`scripts/assets/procedural/terrain.mjs`). */
 const BRICK = [0xb0, 0x70, 0x4a] as const;
@@ -102,14 +110,17 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
     expect(before).toBeGreaterThan(300);
     // Break every cell of the pillar in the sim (28 bricks), without a shot and without a scroll
     // of a whole tile: only the change log tells the renderer.
-    const broken = await page.evaluate(() => {
+    // Each cell is hit at its centre: the tile edge is the frame's `TILE_SIZE` (8 today), the
+    // pillar's columns and rows are the stage's own.
+    const broken = await page.evaluate((tile) => {
       const d = (window as unknown as DebugWindow).__shmupDebug.game.world.gimmicks.destructible;
       if (d === null) return -1;
+      const half = tile >> 1;
       for (let col = 60; col <= 63; col++) {
-        for (let row = 15; row <= 21; row++) d.hit(col * 8 + 4, row * 8 + 4, 99);
+        for (let row = 15; row <= 21; row++) d.hit(col * tile + half, row * tile + half, 99);
       }
       return d.destroyed;
-    });
+    }, TILE_SIZE);
     expect(broken).toBe(28);
     tick = await stepTo(page, tick + 1);
     expect(await countColour(page, BRICK)).toBeLessThan(before / 20);

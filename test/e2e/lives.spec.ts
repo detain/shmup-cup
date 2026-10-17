@@ -9,12 +9,19 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { FRAME_W, HUD_BOTTOM_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 
 /** KESTREL hull colour (`ships/kestrel` and `hud/life` palette `h`, #c8d0e0). */
 const HULL = [0xc8, 0xd0, 0xe0] as const;
 /** `GAME OVER`'s colour in the flight HUD (0xf85858) — nothing else in the top bar uses it. */
 const GAME_OVER_RED = [0xf8, 0x58, 0x58] as const;
+/**
+ * Frame row of the stock icons' top: the flight scene's `LIVES_Y`, one pixel into the bottom HUD
+ * bar (`HUD_BOTTOM_Y + 1` — 209 at 384×216).
+ */
+const LIVES_Y = HUD_BOTTOM_Y + 1;
+/** Rows of each stock icon the scan reads, from {@link LIVES_Y} (the `hud/life` art's own). */
+const LIFE_ROWS = 5;
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -40,9 +47,12 @@ function waitFrames(page: Page, frames: number): Promise<void> {
 
 /** What one capture of the HUD and playfield shows. */
 interface LifeCapture {
-  /** Stock icons drawn in the bottom bar (bands of 10 px from x 4, rows 209 … 213). */
+  /**
+   * Stock icons drawn in the bottom bar (bands of 10 px from x 4, rows `LIVES_Y` … `LIVES_Y + 4` —
+   * 209 … 213 today).
+   */
   readonly stock: number;
-  /** `GAME OVER`-red pixels in the top bar (rows 0 … 7). */
+  /** `GAME OVER`-red pixels in the top bar (rows 0 … `PLAYFIELD_Y − 1` — 0 … 7 today). */
   readonly gameOver: number;
   /** KESTREL hull pixels in the playfield (0 while the ship is exploding or dead). */
   readonly ship: number;
@@ -67,7 +77,7 @@ async function captureLives(page: Page): Promise<LifeCapture> {
   let stock = 0;
   for (let icon = 0; icon < 8; icon++) {
     let found = false;
-    for (let fy = 209; fy <= 213 && !found; fy++) {
+    for (let fy = LIVES_Y; fy < LIVES_Y + LIFE_ROWS && !found; fy++) {
       for (let fx = 4 + icon * 10; fx < 12 + icon * 10 && !found; fx++) found = is(fx, fy, HULL);
     }
     if (found) stock++;
@@ -76,8 +86,8 @@ async function captureLives(page: Page): Promise<LifeCapture> {
   let ship = 0;
   for (let fy = 0; fy < HUD_BOTTOM_Y; fy++) {
     for (let fx = 0; fx < FRAME_W; fx++) {
-      if (fy < 8 && is(fx, fy, GAME_OVER_RED)) gameOver++;
-      else if (fy >= 8 && is(fx, fy, HULL)) ship++;
+      if (fy < PLAYFIELD_Y && is(fx, fy, GAME_OVER_RED)) gameOver++;
+      else if (fy >= PLAYFIELD_Y && is(fx, fy, HULL)) ship++;
     }
   }
   return { stock, gameOver, ship };

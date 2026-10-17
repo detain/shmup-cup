@@ -148,11 +148,11 @@ test.describe('free flight (web build)', () => {
     // Up: from mid-playfield (100) to the 6 px top margin ≈ 63 ticks; hold 160 frames (enough
     // even if the headless compositor ran rAF faster than the 60 Hz tick).
     await hold(page, 'ArrowUp', 160);
-    // Rows 0 … 199: the top HUD bar included, the bottom bar's stock icons (same hull colour)
-    // left out.
-    const top = await shipCentre(page, [0, 200]);
+    // Rows 0 … HUD_BOTTOM_Y − 1: the top HUD bar included, the bottom bar's stock icons (same
+    // hull colour) left out.
+    const top = await shipCentre(page, [0, HUD_BOTTOM_Y]);
     await hold(page, 'ArrowUp', 30);
-    const stillTop = await shipCentre(page, [0, 200]);
+    const stillTop = await shipCentre(page, [0, HUD_BOTTOM_Y]);
     expect(Math.abs(stillTop.y - top.y)).toBeLessThan(0.5); // pinned
     // Screen y of the ship centre = PLAYFIELD_Y + margin 6 (14 today); no hull pixel in the HUD
     // bar.

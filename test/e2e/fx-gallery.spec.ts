@@ -10,7 +10,16 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { FRAME_H, FRAME_W, pixelIndex, sx, sy } from './frame-pixels.js';
+import {
+  FRAME_CX,
+  FRAME_H,
+  FRAME_W,
+  PLAYFIELD_CY,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+} from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -19,6 +28,21 @@ const TIZEN_INDEX = pathToFileURL(
 
 /** Colour of the gallery's station label (0x38c8e8), drawn around frame rows 16–23. */
 const LABEL = [0x38, 0xc8, 0xe8] as const;
+
+/**
+ * Frame column of the bursts: the gallery's `CENTRE_X` (`PLAYFIELD_W / 2`, its camera stays at
+ * 0) — the frame's centre column (192 today).
+ */
+const BURST_X = FRAME_CX;
+
+/**
+ * Frame row of the bursts: the gallery's `CENTRE_Y` (`PLAYFIELD_H / 2`), drawn under the top HUD
+ * bar (108 today).
+ */
+const BURST_Y = PLAYFIELD_Y + PLAYFIELD_CY;
+
+/** Half the edge of the square the warm pixels are counted in, round the bursts (a world size). */
+const WARM_HALF = 64;
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -46,7 +70,10 @@ function waitFrames(page: Page, frames: number): Promise<void> {
 interface GalleryCapture {
   /** The PNG. */
   readonly png: Buffer;
-  /** Warm (fireball) pixels in the playfield's middle (frame x 128–255, y 40–167). */
+  /**
+   * Warm (fireball) pixels in the 128-px square centred on the bursts (frame x 128–255, y 44–171
+   * today).
+   */
   readonly warm: number;
   /** Label-coloured pixels on frame rows 14–25. */
   readonly label: number;
@@ -74,7 +101,16 @@ async function capture(page: Page): Promise<GalleryCapture> {
     for (let fx = 0; fx < FRAME_W && sx(fx) < width; fx++) {
       const [r, g, b] = at(fx, fy);
       colours.add((r << 16) | (g << 8) | b);
-      if (fx >= 128 && fx < 256 && fy >= 40 && fy < 168 && r >= 200 && r - b >= 100) warm++;
+      if (
+        fx >= BURST_X - WARM_HALF &&
+        fx < BURST_X + WARM_HALF &&
+        fy >= BURST_Y - WARM_HALF &&
+        fy < BURST_Y + WARM_HALF &&
+        r >= 200 &&
+        r - b >= 100
+      ) {
+        warm++;
+      }
       if (
         fy >= 14 &&
         fy < 26 &&

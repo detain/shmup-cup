@@ -31,7 +31,7 @@ import { extname, join, normalize } from 'node:path';
 // not in this Node process — hence the browser globals above.
 import { chromium } from '@playwright/test';
 import { decodePng } from './assets/png.mjs';
-import { CAPTURE_SCALE, FRAME_H, FRAME_W } from './frame.mjs';
+import { CAPTURE_SCALE, FRAME_CY, FRAME_H, FRAME_W } from './frame.mjs';
 
 /** Repository root (this file lives in `scripts/`). */
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
@@ -71,8 +71,9 @@ const MIME = {
  * @property {number} [tick] - World tick to step to once the game scene is up (needs `confirms` 5).
  * @property {{ key: string, from: number, to: number }[]} [hold] - Keys held between two ticks,
  *   so the ship is somewhere worth photographing.
- * @property {[number, number]} [blink] - Playfield rows holding text that blinks (`PRESS OK`):
- *   several captures are taken and the brightest one — the frame the text is on — is kept.
+ * @property {[number, number]} [blink] - Frame rows (first, and one past the last) holding text
+ *   that blinks (`PRESS OK`): several captures are taken and the brightest one — the frame the
+ *   text is on — is kept.
  * @property {'tally' | 'map'} [clear] - Clear the running zone through the debug tools (a score
  *   and `status = 'stageClear'`, the way the zone-map browser test does) and capture the zone
  *   tally, or the ZONE MAP one confirm later.
@@ -91,6 +92,14 @@ const ZONE_TICKS = {
   'zone-i': 900,
 };
 
+/**
+ * The rows round the title's blinking `PRESS OK`, which core's title scene draws at
+ * `FRAME_CY + 28` (`core/scenes` `TitleScene.drawUi`): `[FRAME_CY + 22, FRAME_CY + 42)`, rows
+ * 130 … 149 at 384×216 — six rows either side of its 8-row glyph cell (the 12-row cell of R2-01's
+ * font still fits inside).
+ */
+const TITLE_BLINK_ROWS = /** @type {[number, number]} */ ([FRAME_CY + 22, FRAME_CY + 42]);
+
 /** The ship flies to the middle of the playfield before every action shot. */
 const FLY_OUT = [{ key: 'ArrowRight', from: 60, to: 130 }];
 
@@ -102,7 +111,7 @@ const FLY_OUT = [{ key: 'ArrowRight', from: 60, to: 130 }];
 function shots() {
   /** @type {Shot[]} */
   const list = [
-    { name: 'title', query: '', confirms: 0, blink: [130, 150] },
+    { name: 'title', query: '', confirms: 0, blink: TITLE_BLINK_ROWS },
     { name: 'mode-select', query: '', confirms: 1 },
     { name: 'difficulty', query: '', confirms: 2 },
     { name: 'ship-select', query: '', confirms: 3 },
@@ -212,10 +221,10 @@ async function stepTo(page, tick) {
 }
 
 /**
- * Lit pixels of a capture in a band of playfield rows (the blink test).
+ * Lit pixels of a capture in a band of frame rows (the blink test).
  *
  * @param {Buffer} png - A canvas capture.
- * @param {[number, number]} rows - First and last playfield row of the band.
+ * @param {[number, number]} rows - First frame row of the band, and the row after its last.
  * @returns {number} Pixels brighter than half in that band.
  */
 function litPixels(png, rows) {
