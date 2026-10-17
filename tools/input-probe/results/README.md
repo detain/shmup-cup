@@ -1,8 +1,8 @@
 # Input probe results
 
-Raw logs from on-device runs, kept as evidence, and the analyzers that turn them into numbers. Two kinds of session
-land here, both through `npm run log-server`: the **input probe**'s (`ip-…`) and, since plan step **M3-02f**, the
-game's **render profile** (`rp-…`). The findings and what they change are written up in
+Raw logs from on-device runs, kept as evidence, and the analyzers that turn them into numbers. Three kinds of session
+land here, all through `npm run log-server`: the **input probe**'s (`ip-…`), since plan step **M3-02f** the
+game's **render profile** (`rp-…`), and since plan step **R0-02** the **TV render bench** (`rb-…`). The findings and what they change are written up in
 [`docs/dev/input-probe-results.md`](../../../docs/dev/input-probe-results.md) — the render ones in its §11.
 
 (`tools/input-probe/logs/`, where the log server writes, is git-ignored; copy a run here to keep it.)
@@ -53,3 +53,29 @@ session older than the histograms) and is the median of the windows' own percent
 during — the analyzer drops those windows unless `--all`, because the request runs on the main thread and its cost
 would otherwise be recorded as the renderer's. Recipe:
 [rendering-and-shell.md § Measuring on the TV](../../../docs/dev/rendering-and-shell.md#measuring-on-the-tv).
+
+## TV render-bench analyzer (R0-02)
+
+```sh
+cd tools/input-probe
+node results/analyze-bench.mjs logs/rb-<session>.jsonl                      # the §12 tables, as Markdown
+node results/analyze-bench.mjs logs/rb-<gl1>.jsonl logs/rb-<gl2>.jsonl      # + the WebGL 1-vs-2 comparison
+node results/analyze-bench.mjs logs/rb-<session>.jsonl --records            # + every record in full
+```
+
+An `rb-…` session is written by the TV render bench (`pnpm bench:tv`, built with the same `VITE_REPORT_URL`; the
+bench widget is `apps/tizen/src/bench`). Each JSONL line is `{kind:'render-bench', session, seq, sentAt, env,
+results, done}` plus the server's `receivedAt` / `from`: one payload per scenario (its record in `results`), and at
+the end of a run one more with every record the server had not acknowledged — the analyzer keeps the **latest record
+per scenario and WebGL version**, so a **Red** re-run on the TV replaces its row. A record (`RenderBenchRecord` in
+`packages/shell/src/telemetry/index.ts`) holds the scenario (internal size, density, variant), the render CPU ms and
+the `gl.finish()`-synced ms as `[min, p50, p95, max]`, the rAF-delta histogram, the ticks per frame of the
+vsync-locked loop, draw calls, pooled render-target, frame-target and atlas texture bytes, the atlas pages and the
+coarse JS heap.
+
+The tables print every scenario **relative to the same variant at 384×216 in the same session** — the synced p95 as
+a ratio, the two-tick share as a difference in percentage points — because the M7's rAF jitters to a p95 of ~30 ms
+with nothing running at all, so absolute frame times describe the panel, not the frame. Plan §13's rules are applied
+to the 640×360 rows and the 960×540 note is written out; two sessions of one set with WebGL 1 and 2 also get §13's
+WebGL verdict. The format is pinned by `test/analyzeBench.test.ts` over `test/fixtures/bench-session.jsonl`.
+Commit a real run's logs to `results/<date>-m7-bench/` (plan R0-03).

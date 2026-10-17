@@ -10,6 +10,11 @@
  * short summary printed. The session id says which is which: `ip-…` for the probe, `rp-…` for a render
  * profile, so the two never share a file.
  *
+ * A third sender since plan R0-02: the **TV render bench** (`pnpm bench:tv` with the same VITE_REPORT_URL)
+ * POSTs `{kind:'render-bench', session, seq, sentAt, env, results, done}` after each scenario — `results`
+ * holds that scenario's record (or, once the run is over, every record not yet acknowledged). Its sessions
+ * are `rb-…`; `results/analyze-bench.mjs` turns one into the relative tables.
+ *
  * The server stays **payload-agnostic** apart from the summary it prints: {@link validatePayload} only
  * checks what the server itself relies on, and {@link formatSummary} picks a per-kind formatter.
  *
@@ -28,7 +33,8 @@
  * `tools/input-probe/logs`). Each JSONL line is the payload plus `receivedAt` (ISO time) and `from` (the
  * sender's IP). Bodies above {@link MAX_BODY_BYTES} are rejected with 413; invalid JSON / payloads with 400.
  *
- * Analyzers: `results/analyze.mjs` for an `ip-…` session, `results/analyze-render.mjs` for an `rp-…` one.
+ * Analyzers: `results/analyze.mjs` for an `ip-…` session, `results/analyze-render.mjs` for an `rp-…` one,
+ * `results/analyze-bench.mjs` for an `rb-…` one.
  *
  * The exported functions are used by `test/logServer.test.ts` (and the end-to-end build test) to run the
  * server in-process on 127.0.0.1.
@@ -70,7 +76,8 @@ export function sanitizeSession(session) {
  *
  * @param {unknown} p - the parsed request body.
  * @returns {string | null} error message, or null when valid (a JSON object with a usable `session`, a
- *   numeric `seq` and, if present, an array `newEvents` — the probe — or `samples` — a render profile).
+ *   numeric `seq` and, if present, an array `newEvents` — the probe —, `samples` — a render profile — or
+ *   `results` — a TV render bench).
  */
 export function validatePayload(p) {
   if (p === null || typeof p !== 'object' || Array.isArray(p)) return 'payload must be a JSON object';
@@ -79,23 +86,28 @@ export function validatePayload(p) {
   if (typeof o.seq !== 'number') return 'missing seq';
   if (o.newEvents !== undefined && !Array.isArray(o.newEvents)) return 'newEvents must be an array';
   if (o.samples !== undefined && !Array.isArray(o.samples)) return 'samples must be an array';
+  if (o.results !== undefined && !Array.isArray(o.results)) return 'results must be an array';
   return null;
 }
 
 /** `kind` of a render-telemetry payload (plan M3-02f); the probe's payloads carry no `kind`. */
 export const RENDER_PROFILE_KIND = 'render-profile';
 
+/** `kind` of a TV render-bench payload (plan R0-02: `pnpm bench:tv`, an `rb-…` session). */
+export const RENDER_BENCH_KIND = 'render-bench';
+
 /**
  * One-line-per-item console summary of a payload — the probe's by default, a render profile's when the
- * payload's `kind` is {@link RENDER_PROFILE_KIND}.
+ * payload's `kind` is {@link RENDER_PROFILE_KIND}, a TV render bench's for {@link RENDER_BENCH_KIND}.
  *
  * @param {Record<string, any>} p - a valid payload
  * @returns {string} for the probe: a header line (session, seq, event counts), two verdict lines, then the
  *   last 12 events (with a note when earlier ones were omitted); for a render profile see
- *   {@link formatRenderSummary}.
+ *   {@link formatRenderSummary}, for a bench {@link formatBenchSummary}.
  */
 export function formatSummary(p) {
   if (p.kind === RENDER_PROFILE_KIND) return formatRenderSummary(p);
+  if (p.kind === RENDER_BENCH_KIND) return formatBenchSummary(p);
   const v = p.verdicts !== null && typeof p.verdicts === 'object' ? p.verdicts : {};
   const events = Array.isArray(p.newEvents) ? p.newEvents : [];
   const lines = [
@@ -242,6 +254,66 @@ export function formatRenderSummary(p) {
 }
 
 /**
+ * One line per TV-bench record: the scenario and its render, synced and frame-pacing figures.
+ *
+ * Never trusts the payload's shape (see {@link formatRenderSample}): a malformed entry prints as junk.
+ *
+ * @param {unknown} r - one entry of a bench payload's `results`.
+ * @returns {string} e.g.
+ *   `    640x360-busy gl=1 ×3 · RENDER p50/p95 1.20/2.10 · SYNCED 2.40/3.90 · FRAME p95 30.1 · 2TICK 1.2% · DRAW 12 · RT 0 KB · TEX 8192 KB in 1 page(s) · HEAP +12 KB`.
+ */
+function formatBenchRecord(r) {
+  if (!r || typeof r !== 'object') return '    ' + String(r);
+  const pair = (d, digits) =>
+    Array.isArray(d) && d.length >= 4 && typeof d[1] === 'number' && typeof d[2] === 'number'
+      ? `${d[1].toFixed(digits)}/${d[2].toFixed(digits)}`
+      : '—';
+  const share = typeof r.twoTickShare === 'number' ? `${(r.twoTickShare * 100).toFixed(1)}%` : '—';
+  const kb = (v) => (typeof v === 'number' ? String(Math.round(v / 1024)) : '?');
+  const heap =
+    r.heapMeasured === true && typeof r.heapDeltaBytes === 'number'
+      ? `${r.heapDeltaBytes >= 0 ? '+' : ''}${Math.round(r.heapDeltaBytes / 1024)} KB`
+      : 'n/a';
+  return (
+    `    ${str(r.scenario ?? '?')} gl=${str(r.webGLVersion ?? '?')} ×${str(r.scale ?? '?')}` +
+    ` · RENDER p50/p95 ${pair(r.renderMs, 2)} · SYNCED ${pair(r.syncedMs, 2)}` +
+    ` · FRAME p95 ${Array.isArray(r.frameMs) ? fmt1(r.frameMs[2]) : '—'} · 2TICK ${share}` +
+    ` · DRAW ${str(r.drawCalls ?? '?')} · RT ${kb(r.renderTargetBytes)} KB` +
+    ` · TEX ${kb(r.textureBytes)} KB in ${str(r.atlasPages ?? '?')} page(s) · HEAP ${heap}` +
+    ` (${str(r.frames ?? '?')}+${str(r.syncedFrames ?? '?')} frames)`
+  );
+}
+
+/**
+ * Console summary of a TV render-bench payload (plan R0-02): a header line (session, seq, how many results,
+ * build, host, display, the run's progress) and one line per record.
+ *
+ * @param {Record<string, any>} p - a valid payload whose `kind` is `'render-bench'`.
+ * @returns {string} the summary, one item per line.
+ */
+export function formatBenchSummary(p) {
+  const results = Array.isArray(p.results) ? p.results : [];
+  const env = p.env !== null && typeof p.env === 'object' ? p.env : {};
+  const last = results.length > 0 && results[results.length - 1] && typeof results[results.length - 1] === 'object'
+    ? results[results.length - 1]
+    : null;
+  const progress =
+    last !== null && typeof last.index === 'number' && typeof env.scenarios === 'number'
+      ? ` · scenario ${last.index + 1}/${env.scenarios}`
+      : '';
+  const lines = [
+    `[${str(p.session)} #${str(p.seq)}] render-bench · ${results.length} result(s)` +
+      (env.buildId ? ` · build ${str(env.buildId)}` : '') +
+      (env.host ? ` · ${str(env.host)}` : '') +
+      (typeof env.innerWidth === 'number' ? ` ${env.innerWidth}x${str(env.innerHeight)}` : '') +
+      progress +
+      (p.done === true ? ' · run complete' : ''),
+  ];
+  for (const r of results) lines.push(formatBenchRecord(r));
+  return lines.join('\n');
+}
+
+/**
  * LAN IPv4 addresses of this machine (to put into VITE_REPORT_URL).
  *
  * @returns {string[]} non-internal IPv4 addresses of all interfaces (may include VPN / virtual adapters —
@@ -354,10 +426,12 @@ if (isMain) {
   const server = createLogServer({ logDir });
   server.listen(port, host, () => {
     console.log(`input-probe log server listening on http://${host}:${port}  (logs → ${logDir})`);
-    console.log('Receives both the input probe (ip-… sessions) and the game\'s render telemetry (rp-…).');
+    console.log(
+      'Receives the input probe (ip-… sessions), the game\'s render telemetry (rp-…) and the TV render bench (rb-…).',
+    );
     const ips = lanAddresses();
     if (ips.length) {
-      console.log('Build the probe — or the game\'s Tizen dev bundle — with one of:');
+      console.log('Build the probe — or the game\'s Tizen dev bundle, or the TV render bench — with one of:');
       for (const ip of ips) console.log(`  VITE_REPORT_URL=http://${ip}:${port}`);
     }
   });

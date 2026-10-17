@@ -85,7 +85,7 @@ Individual scripts:
 | `npm run icon` | Regenerates `public/icon.png` (dependency-free Node PNG writer) |
 | `npm run package` | Build → check → `tizen package -t wgt -s $TIZEN_PROFILE -- dist` ⇒ `dist/InputProbe.wgt` |
 | `npm run deploy` | `sdb connect $TV_IP` → `tizen install -n InputProbe.wgt -s <ip>:26101 -- dist` → `tizen run -p ShmpCpIPrb.InputProbe -s <ip>:26101` |
-| `npm run log-server` | Optional JSONL log receiver on port 8787 — it takes the probe's payloads (`ip-…` sessions) **and** the game's render telemetry (`rp-…`, plan M3-02f) |
+| `npm run log-server` | Optional JSONL log receiver on port 8787 — it takes the probe's payloads (`ip-…` sessions), the game's render telemetry (`rp-…`, plan M3-02f) **and** the TV render bench (`rb-…`, plan R0-02 — `pnpm bench:tv`) |
 
 ## Package & deploy — Windows (the desktop next to the monitors)
 
@@ -228,9 +228,10 @@ tools/input-probe/
     tizen.d.ts, vite-env.d.ts, style.css
   test/              Vitest suite (Node environment) + helpers/ (fake browser/Tizen realm, fake XHR/canvas, PNG reader)
   scripts/           package.mjs, deploy.mjs, lib/tizen.mjs, check-compat.mjs, make-icon.mjs
-  server/log-server.mjs          receiver for both senders (ip-… and rp-… sessions)
+  server/log-server.mjs          receiver for all three senders (ip-…, rp-… and rb-… sessions)
   results/analyze.mjs            re-analysis of an input-probe session
   results/analyze-render.mjs     the game's render profile → the §11 tables (M3-02f)
+  results/analyze-bench.mjs      the TV render bench → the §12 tables, relative to 384×216 (R0-02)
 ```
 
 ## Tests
@@ -260,4 +261,6 @@ POSIX-only tests of the package/deploy scripts are skipped on Windows):
   receiver listens on the LAN and authenticates nobody, and an uncaught throw in the request handler would end the
   process mid-capture. `analyzeRenderEdge.test.ts` covers the analyzer's edges: an empty session, one that never left
   the title, one every window of which the sender perturbed, one recorded before the histograms existed, and windows
-  that are not the shape the sender produces.
+  that are not the shape the sender produces. `logServerBench.test.ts` stores and summarises a whole TV render-bench
+  session (`test/fixtures/bench-session.jsonl`, plan R0-02), and `analyzeBench.test.ts` turns that fixture into the
+  relative tables, plan §13's outcome and the WebGL 1-vs-2 verdict.
