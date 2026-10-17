@@ -9,7 +9,9 @@
  * still be the single-group scene it is there to compare against.
  *
  * Its own module so the gates can be tested without a browser
- * (`test/integration/render-bench.test.ts`). The first thing it checks is not a budget at all but
+ * (`test/integration/render-bench.test.ts`). Since plan **R0-02** it also gates the TV render
+ * bench's scenes ({@link tvBenchViolations}) — counts only, never milliseconds: the machine the
+ * headless bench runs on is shared. The first thing it checks is not a budget at all but
  * the **load floor**: a render benchmark that measured an empty scene while printing confident
  * numbers is worse than having none, and that is exactly what M3-02c's review round 1 found
  * (topping the bullet pool up before `game.step()` spawned nothing). A scenario therefore fails
@@ -17,6 +19,7 @@
  *
  * @module
  */
+import type { RenderBenchRecord } from '../../../packages/shell/src/telemetry/index.js';
 import type { RenderBenchResult } from './protocol.js';
 
 /**
@@ -152,6 +155,91 @@ export function renderGroupViolations(result: RenderBenchResult, renderGroups: b
           `${result.structureRebuilds} scene rebuilds — with one group they are the same figure`,
       );
     }
+  }
+  return out;
+}
+
+/**
+ * The next power of two at or above `n` (Pixi pools a render target rounded up on each axis).
+ *
+ * @param n - A positive size.
+ * @returns The power of two.
+ */
+export function nextPowerOfTwo(n: number): number {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+/** What a TV-bench scenario is expected to show (plan R0-02). */
+export interface TvBenchExpectation {
+  /** Atlas pages of its density: 1 at ×1 and ×1.5, 2 at ×2.25. */
+  readonly atlasPages: number;
+}
+
+/**
+ * Every reason a TV render-bench record (plan R0-02, `apps/tizen/src/bench`) must fail the
+ * headless gate: a thin scene first, then the counted budgets. **No time gate** — the machine is
+ * shared and SwiftShader is not the M7; the milliseconds are for the TV run (R0-03).
+ *
+ * @remarks
+ * - the synthetic load: all 512 bullets, 512 point items and 64 enemies on every frame, the
+ *   particle pool above {@link MIN_LIVE_LOAD}, terrain in view, frames in both measured phases;
+ * - draw calls within {@link DRAW_CALL_BUDGET} (the busiest variant stacks a filtered layer, the
+ *   Mode-7 floor and the CRT);
+ * - render targets: none pooled without a filtered layer (the CRT is the blit's shader and the
+ *   Mode-7 floor a mesh since M3-02d), and with one exactly the frame rounded up to powers of two;
+ *   the frame target `width · height · 4`;
+ * - the density's atlas pages, and texture bytes of at least one RGBA page per page;
+ * - the heap within {@link HEAP_BUDGET} whenever the browser reports one.
+ *
+ * @param record - What the bench measured.
+ * @param expected - What its scenario must show.
+ * @returns The violations; empty when the record is a real, in-budget frame.
+ */
+export function tvBenchViolations(
+  record: RenderBenchRecord,
+  expected: TvBenchExpectation,
+): string[] {
+  const out: string[] = [];
+  if (!(record.frames > 0)) out.push(`measured no free-running frame (${record.frames})`);
+  if (!(record.syncedFrames > 0)) out.push(`measured no synced frame (${record.syncedFrames})`);
+  const load = record.load;
+  if (load.bullets !== 512) out.push(`a frame carried ${load.bullets} enemy bullets, not 512`);
+  if (load.points !== 512) out.push(`a frame carried ${load.points} point items, not 512`);
+  if (load.enemies !== 64) out.push(`a frame carried ${load.enemies} enemies, not 64`);
+  if (load.particles <= MIN_LIVE_LOAD) {
+    out.push(`a frame carried only ${load.particles} particles (need > ${MIN_LIVE_LOAD})`);
+  }
+  if (!(load.tiles > 0)) out.push('no terrain tile was in view');
+  if (record.drawCalls <= 0) {
+    out.push(`the frame took ${record.drawCalls} draw calls — nothing was drawn, or none counted`);
+  } else if (record.drawCalls > DRAW_CALL_BUDGET) {
+    out.push(`${record.drawCalls} draw calls, over the budget of ${DRAW_CALL_BUDGET}`);
+  }
+  const pooled = record.filter
+    ? nextPowerOfTwo(record.width) * nextPowerOfTwo(record.height) * 4
+    : 0;
+  if (record.renderTargetBytes !== pooled) {
+    out.push(
+      `${record.renderTargetBytes} bytes of pooled render targets, expected ${pooled} ` +
+        (record.filter ? '(one filter pass at the frame size, power-of-two rounded)' : '(none)'),
+    );
+  }
+  if (record.frameTargetBytes !== record.width * record.height * 4) {
+    out.push(`the frame target holds ${record.frameTargetBytes} bytes, not width · height · 4`);
+  }
+  if (record.atlasPages !== expected.atlasPages) {
+    out.push(`${record.atlasPages} atlas pages, expected ${expected.atlasPages}`);
+  }
+  if (!(record.textureBytes >= record.atlasPages * 4)) {
+    out.push(`${record.textureBytes} texture bytes for ${record.atlasPages} pages`);
+  }
+  if (record.heapMeasured && !(record.heapDeltaBytes < HEAP_BUDGET)) {
+    out.push(
+      `the heap grew ${record.heapDeltaBytes} bytes over the measured phases, ` +
+        `over the budget of ${HEAP_BUDGET}`,
+    );
   }
   return out;
 }

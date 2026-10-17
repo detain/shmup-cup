@@ -28,6 +28,13 @@
  * at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy
  * per-sprite allocation. A deliberately leaky fixture proves that gate actually fails.
  *
+ * **The TV render bench's scenes (plan R0-02).** The second suite builds the bench widget exactly
+ * as `pnpm bench:tv` does (`apps/tizen/vite.bench.config.ts`, mode `bench`) and opens each of its
+ * 18 scenarios headlessly (`?scenario=<id>` — 384×216, 640×360 and 960×540 at density 1, 1.5 and
+ * 2.25, each busy, with a filtered layer, Mode-7, CRT light / full and all at once) on a 1280×720
+ * display. It gates **counts only** (`tvBenchViolations`: the load, draw calls, pooled render
+ * targets, atlas pages 1 / 1 / 2, the heap) — the milliseconds are for the TV (R0-03).
+ *
  * Not part of `pnpm test`: it needs a browser and a quiet machine.
  *
  * @module
@@ -41,10 +48,13 @@ import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
 import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
+import { BENCH_SCENARIOS, BENCH_SIZES } from '../../apps/tizen/src/bench/matrix.js';
+import type { RenderBenchRecord } from '../../packages/shell/src/telemetry/index.js';
 import {
   HEAP_BUDGET,
   renderBenchViolations,
   renderGroupViolations,
+  tvBenchViolations,
 } from './render-harness/gates.js';
 import { WARMUP_TICKS } from './render-harness/load.js';
 import type { RenderBenchOptions, RenderBenchResult } from './render-harness/protocol.js';
@@ -66,11 +76,14 @@ const OUT_DIR = fileURLToPath(
   new URL('../../node_modules/.cache/shmup-render-bench', import.meta.url),
 );
 
-/** Canvas size every scenario renders to, in CSS pixels. */
-export const DISPLAY_WIDTH = 960;
+/**
+ * Canvas size every scenario renders to, in CSS pixels: 1280×720, a whole multiple of 640×360 (×2)
+ * as well as 384×216 (×3 fits) — plan R0-02 (it was 960×540, which the v2 frame does not divide).
+ */
+export const DISPLAY_WIDTH = 1280;
 
 /** See {@link DISPLAY_WIDTH}. */
-export const DISPLAY_HEIGHT = 540;
+export const DISPLAY_HEIGHT = 720;
 
 /**
  * Frames rendered before the measurement: every GL program the scenario uses links on its first
@@ -423,4 +436,132 @@ describe('bench: render (worst-case frames through the real renderer, M3-02c)', 
     expect(result.heapMeasured, 'the bench needs --enable-precise-memory-info').toBe(true);
     expect(result.heapDeltaBytes).toBeGreaterThan(HEAP_BUDGET);
   }, 300_000);
+});
+
+/** Where the TV render bench is built for the headless run (in `node_modules/`, never committed). */
+const TV_BENCH_OUT_DIR = fileURLToPath(
+  new URL('../../node_modules/.cache/shmup-tv-bench', import.meta.url),
+);
+
+/** Atlas pages each density of the TV bench must have (plan R0-02: 1, 1, 2). */
+export const TV_BENCH_PAGES: Readonly<Record<number, number>> = Object.freeze({
+  1: 1,
+  1.5: 1,
+  2.25: 2,
+});
+
+/**
+ * Runs one TV-bench scenario in its own page (`?scenario=<id>` — the bench's headless mode).
+ *
+ * @param url - The served bench.
+ * @param id - Scenario id.
+ * @returns What the page published.
+ */
+async function runTvScenario(
+  url: string,
+  id: string,
+): Promise<{ record: RenderBenchRecord | null; error: string | null }> {
+  const page = await browser.newPage({
+    viewport: { width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT },
+  });
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  try {
+    await page.goto(`${url}?scenario=${encodeURIComponent(id)}`);
+    await page.waitForSelector(
+      'body[data-shmup-tv-bench="done"], body[data-shmup-tv-bench="error"]',
+      { timeout: 120_000 },
+    );
+    const outcome = await page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            __shmupTvBench: { record: RenderBenchRecord | null; error: string | null };
+          }
+        ).__shmupTvBench,
+    );
+    expect(errors, 'the page must not log errors').toEqual([]);
+    return outcome;
+  } finally {
+    await page.close();
+  }
+}
+
+describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
+  let tvServer: Server | undefined;
+  let tvUrl = '';
+  /** Every scenario's record, by id. */
+  const records = new Map<string, RenderBenchRecord>();
+
+  beforeAll(async () => {
+    // Exactly what `pnpm bench:tv` builds (the bench mode, its own config), into a cache folder.
+    const appDir = fileURLToPath(new URL('../../apps/tizen/', import.meta.url));
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      await build({
+        root: join(appDir, 'bench'),
+        configFile: join(appDir, 'vite.bench.config.ts'),
+        mode: 'bench',
+        logLevel: 'warn',
+        build: { outDir: TV_BENCH_OUT_DIR, emptyOutDir: true },
+      });
+    } finally {
+      process.env.NODE_ENV = previous;
+    }
+    const served = await serve(TV_BENCH_OUT_DIR);
+    tvServer = served.server;
+    tvUrl = served.url;
+  }, 300_000);
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => {
+      if (tvServer === undefined) {
+        resolve();
+        return;
+      }
+      tvServer.close(() => {
+        resolve();
+      });
+    });
+  });
+
+  for (const scenario of BENCH_SCENARIOS) {
+    it(`${scenario.id} — counted gates (draw calls, render targets, pages, heap)`, async () => {
+      const outcome = await runTvScenario(tvUrl, scenario.id);
+      expect(outcome.error).toBeNull();
+      const record = outcome.record as RenderBenchRecord;
+      records.set(scenario.id, record);
+      console.info(
+        `[bench] tv ${scenario.id}: render p95 ${record.renderMs[2].toFixed(2)} ms, synced p95 ` +
+          `${record.syncedMs[2].toFixed(2)} ms (SwiftShader — not the M7), ${record.drawCalls} ` +
+          `draw calls, ${(record.renderTargetBytes / 1024).toFixed(0)} KB pooled targets, ` +
+          `${(record.textureBytes / 1024).toFixed(0)} KB atlas in ${record.atlasPages} page(s), ` +
+          `heap ${(record.heapDeltaBytes / 1024).toFixed(0)} KB, ${record.frames}+` +
+          `${record.syncedFrames} frames [WebGL ${record.webGLVersion}, ×${record.scale}]`,
+      );
+      expect(record.scenario).toBe(scenario.id);
+      expect([record.width, record.height, record.density]).toEqual([
+        scenario.size.width,
+        scenario.size.height,
+        scenario.size.density,
+      ]);
+      expect(
+        tvBenchViolations(record, { atlasPages: TV_BENCH_PAGES[scenario.size.density] }),
+      ).toEqual([]);
+    }, 300_000);
+  }
+
+  it('reports all three sizes with their atlas page counts (1, 1, 2)', () => {
+    const pages = BENCH_SIZES.map((size) => {
+      const record = records.get(`${size.id}-busy`);
+      expect(record, `${size.id}-busy must have run`).toBeDefined();
+      return record?.atlasPages ?? -1;
+    });
+    expect(pages).toEqual([1, 1, 2]);
+    // The same field of view at every size: the scene is ×s, the frame ×s too.
+    for (const size of BENCH_SIZES) {
+      expect(records.get(`${size.id}-busy`)?.frameTargetBytes).toBe(size.width * size.height * 4);
+    }
+  });
 });
