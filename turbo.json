@@ -32,6 +32,11 @@
       "dependsOn": ["^build", "//#assets"],
       "outputs": ["dist/**"]
     },
+    "build:bench": {
+      "dependsOn": ["^build", "//#assets"],
+      "env": ["VITE_REPORT_URL", "SHMUP_BUILD_ID"],
+      "outputs": ["dist-bench/**"]
+    },
     "typecheck": {
       "dependsOn": ["transit"]
     },

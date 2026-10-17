@@ -8,7 +8,8 @@
  * in for it — the same trade the Tizen build makes with `validateConfigXml`.
  *
  * **Public API.** {@link validateAppInfo}, {@link APPINFO_KEYS}, {@link APPINFO_ID_PATTERN},
- * {@link APPINFO_VERSION_PATTERN}.
+ * {@link APPINFO_VERSION_PATTERN}; the TV render bench's stub (plan R0-02): {@link benchAppInfo},
+ * {@link BENCH_APPINFO_ID}, {@link BENCH_APPINFO_TITLE}.
  *
  * @module
  */
@@ -37,6 +38,36 @@ export const APPINFO_ID_PATTERN = /^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)+$/;
 
 /** webOS versions are three numbers, like Tizen's widget version — never a pre-release tag. */
 export const APPINFO_VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
+
+/**
+ * App id of the TV render bench's webOS stub (plan R0-02): its own id, so it installs next to the
+ * game and never replaces it.
+ */
+export const BENCH_APPINFO_ID = 'dev.shmupcup.renderbench';
+
+/** The bench's title in the launcher. */
+export const BENCH_APPINFO_TITLE = 'Shmup Cup Bench';
+
+/**
+ * Turns the game's `appinfo.json` into the TV render bench's (plan R0-02 — `vite.bench.config.ts`
+ * writes it to `dist-bench/appinfo.json`): the bench's id, title and description; version, icons
+ * and the Back handling stay the game's.
+ *
+ * @param {string} text - The game's `appinfo.json`.
+ * @returns {string} The bench's `appinfo.json` (2-space JSON, trailing newline).
+ * @throws {SyntaxError} When the text is not JSON.
+ *
+ * @example
+ * const bench = JSON.parse(benchAppInfo(readFileSync('public/appinfo.json', 'utf8')));
+ * bench.id; // → 'dev.shmupcup.renderbench'
+ */
+export function benchAppInfo(text) {
+  const json = JSON.parse(text);
+  json.id = BENCH_APPINFO_ID;
+  json.title = BENCH_APPINFO_TITLE;
+  json.appDescription = 'The TV render benchmark (plan R0-02), not the game.';
+  return JSON.stringify(json, null, 2) + '\n';
+}
 
 /**
  * Whether a value is a plain JSON object.

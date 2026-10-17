@@ -164,6 +164,34 @@ describe('integration: the two TV builds cannot drift apart (M3-03)', () => {
     expect(tizen).toContain("'./polyfills/global-this.js'");
   });
 
+  it('build the TV render bench under the same contract (plan R0-02)', () => {
+    // The bench widgets ship to the same two engines, so they keep the game's target, banner and
+    // classic script tag — and their code lives in `apps/tizen/src/bench`, inside the scan above.
+    const benches = [
+      ['apps/tizen/vite.bench.config.ts', "'./polyfills/global-this.js'"],
+      ['apps/webos/vite.bench.config.ts', "'../tizen/polyfills/global-this.js'"],
+    ] as const;
+    for (const [path, polyfill] of benches) {
+      const source = read(path);
+      expect(source, path).toContain("target: ['chrome69', 'es2018']");
+      expect(source, path).toContain('postBanner: globalThisPolyfill');
+      expect(source, path).toContain(polyfill);
+      expect(source, path).toContain('classicScriptTag()');
+      expect(source, path).toContain("format: 'iife'");
+      expect(source, path).toContain('codeSplitting: false');
+    }
+    expect(sourcesOf('apps/tizen/src/bench').length).toBeGreaterThan(5);
+    // Both bench widgets are checked by the game's own bundle checks.
+    for (const app of ['tizen', 'webos']) {
+      const scripts = (
+        JSON.parse(read(`apps/${app}/package.json`)) as {
+          scripts: Record<string, string>;
+        }
+      ).scripts;
+      expect(scripts['build:bench'], app).toContain('node scripts/check-bundle.mjs dist-bench');
+    }
+  });
+
   it('share one set of bundle budgets, imported rather than repeated', () => {
     const check = read('apps/webos/scripts/check-bundle.mjs');
     expect(check).toContain("from '../../tizen/scripts/check-bundle.mjs'");

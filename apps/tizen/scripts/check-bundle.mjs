@@ -19,12 +19,18 @@
  *  8. Budgets (plan M1-19, shmup_feat.md §22 / §23): `app.js` ≤ {@link APP_JS_GZIP_BUDGET}
  *     gzipped, every atlas page a PNG of at most {@link ATLAS_PAGE_MAX_SIZE}² pixels, the whole
  *     `dist/` ≤ {@link DIST_BUDGET} bytes.
+ *  9. The game and the TV render bench never mix (plan R0-02): a widget whose `config.xml` carries
+ *     the bench's app id (`config-xml.mjs` `BENCH_APP_ID`) must be the bench — its `app.js` holds
+ *     {@link TV_BENCH_MARKER} — and any other widget (the game) must not hold it.
  *
- * Exits non-zero with a readable report on failure. The checks are also exported as
- * {@link checkTizenBundle} so the unit tests can run them against fixture folders.
+ * Exits non-zero with a readable report on failure. Checks `apps/tizen/dist` by default, or the
+ * folder given as the first argument (`node scripts/check-bundle.mjs dist-bench` — `build:bench`).
+ * The checks are also exported as {@link checkTizenBundle} so the unit tests can run them against
+ * fixture folders.
  *
  * **Public API.** {@link checkTizenBundle}, {@link WIDGET_FILES}, {@link POLYFILL_BANNER},
- * {@link APP_JS_GZIP_BUDGET}, {@link ATLAS_PAGE_MAX_SIZE}, {@link DIST_BUDGET}, {@link pngSize}.
+ * {@link APP_JS_GZIP_BUDGET}, {@link ATLAS_PAGE_MAX_SIZE}, {@link DIST_BUDGET}, {@link pngSize},
+ * {@link TV_BENCH_MARKER}, {@link applicationIdOf}.
  *
  * @module
  */
@@ -33,8 +39,8 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { parse } from 'acorn';
-import { validateConfigXml } from './config-xml.mjs';
-import { DIST_DIR } from './tizen-env.mjs';
+import { BENCH_APP_ID, validateConfigXml } from './config-xml.mjs';
+import { APP_DIR, DIST_DIR } from './tizen-env.mjs';
 
 /**
  * Files that make up the widget itself (rule 5 requires them); every other file in `dist/`
@@ -67,6 +73,25 @@ export const ATLAS_PAGE_MAX_SIZE = 2048;
 
 /** Most bytes the whole `dist/` may take (8 MB — the packaged widget). */
 export const DIST_BUDGET = 8 * 1024 * 1024;
+
+/**
+ * The body attribute only the TV render bench sets (`apps/tizen/src/bench` `TV_BENCH_MARKER`, plan
+ * R0-02) — rule 9 reads it to tell the bench's `app.js` from the game's.
+ */
+export const TV_BENCH_MARKER = 'data-shmup-tv-bench';
+
+/**
+ * The application id a `config.xml` declares.
+ *
+ * @param {string} xml - The XML.
+ * @returns {string | null} The `<tizen:application id>`, or `null` when there is none.
+ */
+export function applicationIdOf(xml) {
+  const tag = /<tizen:application\b([^>]*)>/.exec(xml.replace(/<!--[\s\S]*?-->/g, ''));
+  if (tag === null) return null;
+  const id = /(?:^|\s)id="([^"]*)"/.exec(tag[1]);
+  return id === null ? null : id[1];
+}
 
 /** The 8-byte PNG signature. */
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
@@ -197,6 +222,21 @@ export function checkTizenBundle(distDir) {
     for (const problem of validateConfigXml(configXml)) problems.push(`config.xml: ${problem}`);
   }
 
+  // 9. The game and the TV render bench never mix.
+  if (configXml !== null && code !== '') {
+    const bench = applicationIdOf(configXml) === BENCH_APP_ID;
+    const marked = code.includes(TV_BENCH_MARKER);
+    if (bench && !marked) {
+      problems.push(
+        `config.xml names the render bench (${BENCH_APP_ID}) but app.js is not the bench`,
+      );
+    } else if (!bench && marked) {
+      problems.push(
+        'app.js contains the TV render bench (R0-02) — the bench must never ship in the game',
+      );
+    }
+  }
+
   // 6. Non-script assets only under assets/ (scripts anywhere are already reported by 1).
   const stray = files.filter(
     (file) =>
@@ -236,9 +276,13 @@ export function checkTizenBundle(distDir) {
   return { problems, files, code, gzipBytes, distBytes };
 }
 
-/** Command-line entry point: checks apps/tizen/dist and exits non-zero on failure. */
+/**
+ * Command-line entry point: checks `apps/tizen/dist` (or the folder given as the first argument,
+ * relative to the working directory) and exits non-zero on failure.
+ */
 function main() {
-  const { problems, files, code, gzipBytes, distBytes } = checkTizenBundle(DIST_DIR);
+  const target = process.argv[2] === undefined ? DIST_DIR : resolve(process.argv[2]);
+  const { problems, files, code, gzipBytes, distBytes } = checkTizenBundle(target);
   if (problems.length > 0) {
     console.error('Tizen bundle check FAILED:');
     for (const problem of problems) console.error(`  - ${problem}`);
@@ -246,7 +290,8 @@ function main() {
   }
   console.log(
     `Tizen bundle OK: app.js ${kb(code.length)} (${kb(gzipBytes)} gzip of ${kb(APP_JS_GZIP_BUDGET)}), ` +
-      `classic script, ES2018, ${files.length} files in dist/ (${kb(distBytes)} of ${kb(DIST_BUDGET)})`,
+      `classic script, ES2018, ${files.length} files in ${relative(APP_DIR, target) || '.'}/ ` +
+      `(${kb(distBytes)} of ${kb(DIST_BUDGET)})`,
   );
 }
 

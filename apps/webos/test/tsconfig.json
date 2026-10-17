@@ -6,5 +6,5 @@
     // Tests import the Node build/CLI scripts in ../scripts/*.mjs; their JSDoc provides the types.
     "allowJs": true
   },
-  "include": ["./**/*.ts", "../vite.config.ts", "../vitest.config.ts"]
+  "include": ["./**/*.ts", "../vite.config.ts", "../vite.bench.config.ts", "../vitest.config.ts"]
 }

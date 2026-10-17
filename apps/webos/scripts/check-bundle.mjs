@@ -15,9 +15,13 @@
  *  8. The same budgets as the Tizen widget, imported from its check so there is one source of
  *     truth: `app.js` ≤ `APP_JS_GZIP_BUDGET` gzipped, every atlas page at most
  *     `ATLAS_PAGE_MAX_SIZE`² pixels, the whole `dist/` ≤ `DIST_BUDGET`.
+ *  9. The game and the TV render bench's stub never mix (plan R0-02): an `appinfo.json` with the
+ *     bench's id (`appinfo.mjs` `BENCH_APPINFO_ID`) needs the bench's `app.js` (it holds the Tizen
+ *     check's `TV_BENCH_MARKER`), and any other app must not hold it.
  *
- * Exits non-zero with a readable report on failure. The checks are also exported as
- * {@link checkWebosBundle} so the unit tests can run them against fixture folders.
+ * Exits non-zero with a readable report on failure. Checks `apps/webos/dist` by default, or the
+ * folder given as the first argument (`build:bench` checks `dist-bench`). The checks are also
+ * exported as {@link checkWebosBundle} so the unit tests can run them against fixture folders.
  *
  * **Public API.** {@link checkWebosBundle}, {@link WEBOS_APP_FILES}.
  *
@@ -25,7 +29,7 @@
  */
 import { gzipSync } from 'node:zlib';
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
 import {
@@ -33,9 +37,10 @@ import {
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
   POLYFILL_BANNER,
+  TV_BENCH_MARKER,
   pngSize,
 } from '../../tizen/scripts/check-bundle.mjs';
-import { validateAppInfo } from './appinfo.mjs';
+import { BENCH_APPINFO_ID, validateAppInfo } from './appinfo.mjs';
 
 /** `apps/webos/dist`. */
 const DIST_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
@@ -187,12 +192,36 @@ export function checkWebosBundle(distDir) {
     problems.push(`dist/ holds ${kb(distBytes)}, over the ${kb(DIST_BUDGET)} budget`);
   }
 
+  // 9. the game and the TV render bench never mix.
+  if (code !== '' && files.indexOf('appinfo.json') >= 0) {
+    let id = '';
+    try {
+      id = String(JSON.parse(readFileSync(join(distDir, 'appinfo.json'), 'utf8')).id);
+    } catch {
+      // Reported by rule 5.
+    }
+    const marked = code.includes(TV_BENCH_MARKER);
+    if (id === BENCH_APPINFO_ID && !marked) {
+      problems.push(
+        `appinfo.json names the render bench (${BENCH_APPINFO_ID}) but app.js is not it`,
+      );
+    } else if (id !== BENCH_APPINFO_ID && marked) {
+      problems.push(
+        'app.js contains the TV render bench (R0-02) — the bench must never ship in the game',
+      );
+    }
+  }
+
   return { problems, files, code, gzipBytes, distBytes };
 }
 
-/** Command-line entry point: checks apps/webos/dist and exits non-zero on failure. */
+/**
+ * Command-line entry point: checks `apps/webos/dist` (or the folder given as the first argument,
+ * relative to the working directory) and exits non-zero on failure.
+ */
 function main() {
-  const { problems, files, code, gzipBytes, distBytes } = checkWebosBundle(DIST_DIR);
+  const target = process.argv[2] === undefined ? DIST_DIR : resolve(process.argv[2]);
+  const { problems, files, code, gzipBytes, distBytes } = checkWebosBundle(target);
   if (problems.length > 0) {
     console.error('webOS bundle check FAILED:');
     for (const problem of problems) console.error(`  - ${problem}`);
@@ -200,7 +229,8 @@ function main() {
   }
   console.log(
     `webOS bundle OK: app.js ${kb(code.length)} (${kb(gzipBytes)} gzip of ${kb(APP_JS_GZIP_BUDGET)}), ` +
-      `classic script, ES2018, ${files.length} files in dist/ (${kb(distBytes)} of ${kb(DIST_BUDGET)})`,
+      `classic script, ES2018, ${files.length} files in ${basename(target)}/ ` +
+      `(${kb(distBytes)} of ${kb(DIST_BUDGET)})`,
   );
 }
 

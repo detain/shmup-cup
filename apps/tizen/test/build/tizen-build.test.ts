@@ -12,7 +12,7 @@ import { createContext, runInContext } from 'node:vm';
 import { parse } from 'acorn';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { POLYFILL_BANNER, checkTizenBundle } from '../../scripts/check-bundle.mjs';
+import { POLYFILL_BANNER, TV_BENCH_MARKER, checkTizenBundle } from '../../scripts/check-bundle.mjs';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 
 const appDir = fileURLToPath(new URL('../../', import.meta.url));
@@ -107,6 +107,15 @@ describe('tizen build output (vite build → dist/)', () => {
     expect(code).not.toContain('data-shmup-render-telemetry');
     expect(code).not.toContain('sendInFlightFrames');
     expect(code).not.toContain('/report');
+  });
+
+  it('leaves the TV render bench out of the game (plan R0-02)', () => {
+    // The bench is its own widget (`vite.bench.config.ts`, `dist-bench/`): its entry is never
+    // imported by the game's, and the bundle check's rule 9 rejects a game app.js that holds it.
+    expect(code).not.toContain(TV_BENCH_MARKER);
+    expect(code).not.toContain('render-bench');
+    expect(code).not.toContain('ShmpCupBnc');
+    expect(code).not.toContain('bench-x');
   });
 
   it('leaves the cross-engine determinism check out of the TV bundle (plan M2-18)', () => {

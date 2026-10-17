@@ -57,6 +57,8 @@ export default defineConfig([
   globalIgnores([
     '**/node_modules/',
     '**/dist/',
+    // The TV render bench widgets (pnpm bench:tv — plan R0-02).
+    '**/dist-bench/',
     '**/coverage/',
     '**/.turbo/',
     'assets/generated/',

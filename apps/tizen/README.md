@@ -183,6 +183,35 @@ package with a space in its file name (`Failed to install Tizen application.` un
 renames any `.wgt` that still has a space. `tizen:package` also deletes old `.wgt` files first,
 because the CLI packs every file in `dist/`.
 
+## The TV render bench (plan R0-02 — `pnpm bench:tv`)
+
+A second widget built from this app, **next to** the game: its own entry (`bench/index.html` →
+`src/bench`), its own app id `ShmpCupBnc.RenderBench` (its `config.xml` is the game's, rewritten by
+`scripts/config-xml.mjs` `benchConfigXml`) and its own output `dist-bench/`. It measures a
+density-scaled synthetic scene at 384×216, 640×360 and 960×540 (s = 1 / 1.5 / 2.25, the real atlas
+upscaled ×s into `dist-bench/assets/atlas/` by `scripts/bench-atlas.mjs` — never into the game's
+atlas), six variants each, one scenario per page load; see the `bench` module row below.
+
+```powershell
+# Windows PowerShell, from the repo root; the log server runs on the desktop (tools/input-probe)
+$env:VITE_REPORT_URL = "http://<desktop-ip>:8787"
+pnpm bench:tv                     # vite build --config vite.bench.config.ts --mode bench → dist-bench/ + the bundle check
+$env:TIZEN_PROFILE = "shmup"; $env:TV_IP = "192.168.1.50"
+pnpm bench:tv:package             # dist-bench/ShmupCupBench.wgt (scripts/tizen-bench.mjs package)
+pnpm bench:tv:install             # installs it next to the game
+pnpm --filter @shmup/tizen bench:run
+```
+
+On the TV: **Enter** runs the 18-scenario matrix (~10 min: 10 s warm-up, 14 s measured, 6 s with
+`gl.finish()` per scenario, reloading between them), **Red** re-runs a scenario, **Back** exits. The
+results table appears on screen after the run, each scenario is POSTed as a `render-bench` payload
+to the log server (`rb-….jsonl`, `tools/input-probe/results/analyze-bench.mjs`), and the results stay
+in `localStorage` until the next run. `localStorage['shmup-cup:gl'] = '2'` runs it on WebGL 2.
+`pnpm --filter @shmup/tizen dev:bench` serves it in a desktop browser (`?scenario=<id>` runs one
+scenario headlessly, `?warmup=` / `?measure=` / `?sync=` shorten the phases). The bench is a dev-build
+mode (`DEV_BUILD_MODES` in `vite.shared.ts`), never shipped: the bundle check's rule 9 rejects it in
+the game's `app.js`. Packaging and installing are written, never run here.
+
 ## config.xml
 
 `public/config.xml`: profile `tv-samsung`, privileges `tv.inputdevice` (extra remote keys),
@@ -214,6 +243,7 @@ reach the desktop on the port (firewall).
 | `platform` | partial | `registerKeyBatch` of the active input profile's `register` list (Play/Pause, Ch±, and since M3-02b Guide 458 and Extra 10253 so REBIND can capture them; without a profile the fallback list adds the colour keys — never Exit/volume; falls back to per-key `registerKey` when the batch fails, so one key a model lacks does not block the rest), Back 10009 watcher, the lifecycle over `visibilitychange` **and** window `blur` / `focus` (M3-02b — Home on the M7 is an overlay that fires only the latter; edge-triggered over hidden ∨ unfocused, so the pause menu opens and the audio suspends while the Home bar is up and a `blur` + `hidden` pair suspends once), `exit()`, localStorage (since M2-17 the shell's quota-checked `createWebStorage`, issues logged) |
 | `device-info` | implemented | M2-17: UA / resolution / WebGL (`MAX_TEXTURE_SIZE`) / Samsung `webapis.productinfo` model, model code and firmware (`$WEBAPIS/webapis/webapis.js` loaded only on a TV, only when the debug tools unlock) → the debug overlay's device line (`tizenDebugTools`) and the remote inspector's console |
 | `live-reload` | implemented | M2-17: dev-only reload-on-change on the TV — `tizen:watch` builds with the dev server's WebSocket URL (`__SHMUP_LIVE_RELOAD__`); on each rebuild the app reloads, the installed widget navigating to the served build; reconnects with a growing delay; absent from release builds |
+| `bench` | implemented | R0-02: the TV render bench (its own widget — `vite.bench.config.ts`, `dist-bench/`; never in the game's bundle): the 18-scenario matrix (`matrix.ts`), the density-scaled synthetic scene drawn through the real renderer (`scene.ts` — five parallax layers, ~35 % terrain at `8·s` px, decor, 64 enemies, 512 bullets, 512 point items, 512 particles, the HUD bars; filtered layer, Mode-7, CRT variants), the allocation-free sampler (`stats.ts` — render CPU ms, `gl.finish()`-synced ms, rAF buckets, ticks per frame of the vsync-locked loop), the run state in `localStorage` (`state.ts`), the on-screen results table (`results.ts`), Enter / Back / Red on both TVs (`host.ts`) and the page plumbing with its headless `?scenario=` mode (`run.ts`); results POSTed through `@shmup/shell`'s `sendRenderBench` |
 
 Input device facts (diagonals, repeat behaviour, extra keys, latency) come from
 `tools/input-probe` (a separate npm project) — results change the input profiles in

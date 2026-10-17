@@ -432,11 +432,13 @@ export function shmupAssets(options: ShmupAssetsOptions = {}): Plugin {
 
 /**
  * Vite modes that make a **dev / test build** (`__SHMUP_DEV__` true): `development`
- * (`vite build --mode development` — the apps' `build:dev`) and `test` (`build:test`, what
- * `pnpm test:e2e` builds). The dev server is always a dev build; `vite build` (mode `production`,
+ * (`vite build --mode development` — the apps' `build:dev`), `test` (`build:test`, what
+ * `pnpm test:e2e` builds) and `bench` (plan R0-02: the TV render bench, `pnpm bench:tv` — a
+ * separate widget built from `vite.bench.config.ts`, which needs `__SHMUP_REPORT_URL__` to reach
+ * the log server). The dev server is always a dev build; `vite build` (mode `production`,
  * `pnpm build`) is a release build.
  */
-export const DEV_BUILD_MODES: readonly string[] = Object.freeze(['development', 'test']);
+export const DEV_BUILD_MODES: readonly string[] = Object.freeze(['development', 'test', 'bench']);
 
 /**
  * Whether a Vite run makes a dev / test build (debug tools in the bundle — plan M1-19).

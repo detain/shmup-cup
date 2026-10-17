@@ -21,7 +21,9 @@
  * **Public API.** {@link applyConfigVariant}, {@link validateConfigXml}, {@link variantFromEnv},
  * {@link variantName}, {@link isDefaultVariant}, {@link GAME_MODE_METADATA_KEY},
  * {@link GAMEPAD_METADATA_KEY}, {@link KNOWN_METADATA_KEYS}, {@link REQUIRED_PRIVILEGES},
- * {@link GAME_MODE_BUILD_MODE}.
+ * {@link GAME_MODE_BUILD_MODE}; the TV render bench's widget (plan R0-02): {@link benchConfigXml},
+ * {@link BENCH_APP_ID}, {@link BENCH_PACKAGE_ID}, {@link BENCH_WIDGET_ID},
+ * {@link BENCH_WIDGET_NAME}.
  *
  * @module
  */
@@ -48,6 +50,60 @@ export const REQUIRED_PRIVILEGES = Object.freeze([
 
 /** The Vite mode that builds the game-mode variant (`vite build --mode game-mode`). */
 export const GAME_MODE_BUILD_MODE = 'game-mode';
+
+/**
+ * Tizen package id of the TV render bench (plan R0-02): its own 10-character package, so the bench
+ * widget installs **next to** the game and never replaces it.
+ */
+export const BENCH_PACKAGE_ID = 'ShmpCupBnc';
+
+/** Tizen application id of the TV render bench (`<package>.<name>`). */
+export const BENCH_APP_ID = `${BENCH_PACKAGE_ID}.RenderBench`;
+
+/** The bench widget's W3C `id`. */
+export const BENCH_WIDGET_ID = 'http://shmupcup.dev/RenderBench';
+
+/** The bench widget's display name on the TV. */
+export const BENCH_WIDGET_NAME = 'Shmup Cup Bench';
+
+/**
+ * Turns the game's `config.xml` into the TV render bench's (plan R0-02 — `vite.bench.config.ts`
+ * writes it to `dist-bench/config.xml`): the bench's own application and package id, widget id
+ * and name; version, privileges and settings stay the game's, so the two never drift apart.
+ *
+ * @param {string} xml - The game's default `config.xml` (`public/config.xml`).
+ * @returns {string} The bench's `config.xml`.
+ * @throws {Error} When the XML has no `<tizen:application>`, `<widget id>` or `<name>` to rewrite.
+ *
+ * @example
+ * benchConfigXml(readFileSync('public/config.xml', 'utf8')).includes('ShmpCupBnc.RenderBench'); //
+ * → true
+ */
+export function benchConfigXml(xml) {
+  let found = 0;
+  let out = xml.replace(/<tizen:application\b[^>]*>/, (tag) => {
+    found++;
+    return tag
+      .replace(/(\s)id="[^"]*"/, `$1id="${BENCH_APP_ID}"`)
+      .replace(/(\s)package="[^"]*"/, `$1package="${BENCH_PACKAGE_ID}"`);
+  });
+  out = out.replace(/(<widget\b[^>]*?\s)id="[^"]*"/, (_match, head) => {
+    found++;
+    return `${head}id="${BENCH_WIDGET_ID}"`;
+  });
+  out = out.replace(/<name>[^<]*<\/name>/, () => {
+    found++;
+    return `<name>${BENCH_WIDGET_NAME}</name>`;
+  });
+  if (found !== 3) {
+    throw new Error('config.xml needs <tizen:application>, <widget id> and <name> for the bench');
+  }
+  return out.replace(
+    /^(\s*<\?xml\b[^>]*\?>)/,
+    '$1\n<!-- The TV render bench (plan R0-02): generated from public/config.xml by ' +
+      'vite.bench.config.ts — its own app id, so it installs next to the game. -->',
+  );
+}
 
 /** A gamepad model name as the metadata value lists it. */
 const GAMEPAD_MODEL = /^[A-Za-z0-9_-]+$/;

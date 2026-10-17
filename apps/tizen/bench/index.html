@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shmup Cup Bench</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070f;
+      }
+      #game {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <!-- The TV render bench (plan R0-02). Dev: an ES module served by Vite. Build
+         (vite.bench.config.ts): rewritten to a classic deferred app.js (IIFE), like the game. -->
+    <script type="module" src="./entry.js"></script>
+  </body>
+</html>

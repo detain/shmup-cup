@@ -65,6 +65,14 @@ WEBOS_DEVICE=<name> pnpm --filter @shmup/webos webos:install
 WEBOS_DEVICE=<name> pnpm --filter @shmup/webos webos:run
 ```
 
+**The TV render bench's stub (plan R0-02, build-only).** `pnpm bench:tv` also builds
+`pnpm --filter @shmup/webos build:bench`: the Tizen bench (`apps/tizen/bench/`, `apps/tizen/src/bench`)
+packaged the webOS way into `dist-bench/` by `vite.bench.config.ts`, with an `appinfo.json` rewritten to
+its own id `dev.shmupcup.renderbench` (`scripts/appinfo.mjs` `benchAppInfo`) and checked by
+`scripts/check-bundle.mjs dist-bench`. `bench:package` / `bench:install` / `bench:run`
+(`scripts/webos-bench.mjs`, the `.ipk` in `release/bench/`) drive the same `ares-*` wrappers — written,
+never run.
+
 `build` produces `dist/`: `index.html`, one classic IIFE `app.js`, `appinfo.json`, `icon.png`,
 `largeIcon.png` and the atlas pages under `assets/atlas/`. `scripts/check-bundle.mjs` enforces the
 same budgets as the Tizen widget (imported from its check, so there is one source of truth):

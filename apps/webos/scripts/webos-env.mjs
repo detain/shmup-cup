@@ -9,6 +9,9 @@
  *   ARES_BIN     Directory holding the ares tools (default: they are on PATH).
  *   WEBOS_DEVICE Device name from `ares-setup-device` (REQUIRED for install / launch; the name
  *                you gave the TV when you paired it with its Developer Mode passphrase).
+ *   WEBOS_DIST_DIR / WEBOS_RELEASE_DIR / WEBOS_APP_ID  The build folder, the `.ipk` folder and the
+ *                app id (defaults `dist`, `release`, `dev.shmupcup.game`; the TV render bench's
+ *                stub sets them through `scripts/webos-bench.mjs`, plan R0-02).
  *
  * **None of these scripts has ever been run.** The project has no LG hardware and no LG developer
  * account (plan M3-03), so they are written from LG's published CLI contract and checked only by
@@ -24,12 +27,19 @@ import { fileURLToPath } from 'node:url';
 
 /** apps/webos directory. */
 export const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
-/** Build output that gets packaged (contains appinfo.json, index.html, app.js, the icons). */
-export const DIST_DIR = join(APP_DIR, 'dist');
-/** Where `ares-package` writes the `.ipk` (git-ignored, like `apps/electron/release/`). */
-export const RELEASE_DIR = join(APP_DIR, 'release');
-/** webOS application id — `appinfo.json`'s `id`. */
-export const APP_ID = 'dev.shmupcup.game';
+/**
+ * Build output that gets packaged (contains appinfo.json, index.html, app.js, the icons): `dist/`,
+ * or `$WEBOS_DIST_DIR` (relative to apps/webos) — `dist-bench` for the TV render bench's stub
+ * (`scripts/webos-bench.mjs`, plan R0-02).
+ */
+export const DIST_DIR = join(APP_DIR, process.env.WEBOS_DIST_DIR || 'dist');
+/**
+ * Where `ares-package` writes the `.ipk` (git-ignored, like `apps/electron/release/`), or
+ * `$WEBOS_RELEASE_DIR` — the bench's own folder, so packaging it never deletes the game's `.ipk`.
+ */
+export const RELEASE_DIR = join(APP_DIR, process.env.WEBOS_RELEASE_DIR || 'release');
+/** webOS application id — `appinfo.json`'s `id`, or `$WEBOS_APP_ID` (the bench's). */
+export const APP_ID = process.env.WEBOS_APP_ID || 'dev.shmupcup.game';
 
 /** `true` on Windows, where the ares tools are `.cmd` files and must run through a shell. */
 const isWindows = process.platform === 'win32';
@@ -127,7 +137,12 @@ export function removeIpks() {
  */
 export function requireBuild() {
   if (!existsSync(join(DIST_DIR, 'appinfo.json')) || !existsSync(join(DIST_DIR, 'app.js'))) {
-    console.error('apps/webos/dist is missing — run `pnpm --filter @shmup/webos build` first.');
+    const bench = (process.env.WEBOS_DIST_DIR || 'dist') !== 'dist';
+    console.error(
+      bench
+        ? `${DIST_DIR} is missing — run \`pnpm bench:tv\` first.`
+        : 'apps/webos/dist is missing — run `pnpm --filter @shmup/webos build` first.',
+    );
     process.exit(1);
   }
 }

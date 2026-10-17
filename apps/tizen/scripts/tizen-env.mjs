@@ -14,6 +14,9 @@
  *                  lists the monitors' DUIDs).
  *   TV_IP          IP of the TV / monitor in Developer Mode; install/run then `sdb connect` it.
  *   TIZEN_TARGET   sdb serial of the target (default: `${TV_IP}:26101`).
+ *   TIZEN_DIST_DIR Build folder to package / install, relative to apps/tizen (default `dist`;
+ *                  `dist-bench` for the TV render bench — set by `scripts/tizen-bench.mjs`).
+ *   TIZEN_APP_ID   Application id to launch (default the game's `ShmpCupGam.ShmupCup`).
  *
  * These scripts are never run in CI (no Tizen CLI there).
  */
@@ -24,10 +27,17 @@ import { fileURLToPath } from 'node:url';
 
 /** apps/tizen directory. */
 export const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
-/** Build output that gets packaged (contains config.xml, index.html, app.js, icon.png). */
-export const DIST_DIR = join(APP_DIR, 'dist');
-/** Tizen application id from public/config.xml (`<package>.<name>`). */
-export const APP_ID = 'ShmpCupGam.ShmupCup';
+/**
+ * Build output that gets packaged (contains config.xml, index.html, app.js, icon.png): `dist/`, or
+ * `$TIZEN_DIST_DIR` (relative to apps/tizen) — the TV render bench packages `dist-bench/`
+ * (`scripts/tizen-bench.mjs`, plan R0-02).
+ */
+export const DIST_DIR = join(APP_DIR, process.env.TIZEN_DIST_DIR || 'dist');
+/**
+ * Tizen application id (`<package>.<name>`): the game's from public/config.xml, or
+ * `$TIZEN_APP_ID` — the bench's `ShmpCupBnc.RenderBench`.
+ */
+export const APP_ID = process.env.TIZEN_APP_ID || 'ShmpCupGam.ShmupCup';
 
 /** `true` on Windows, where the Tizen CLI is a `.bat` and must run through a shell. */
 const isWindows = process.platform === 'win32';
@@ -182,7 +192,12 @@ export function removeWgts() {
  */
 export function requireBuild() {
   if (!existsSync(join(DIST_DIR, 'config.xml')) || !existsSync(join(DIST_DIR, 'app.js'))) {
-    console.error('apps/tizen/dist is missing — run `pnpm --filter @shmup/tizen build` first.');
+    const bench = (process.env.TIZEN_DIST_DIR || 'dist') !== 'dist';
+    console.error(
+      bench
+        ? `${DIST_DIR} is missing — run \`pnpm bench:tv\` first.`
+        : 'apps/tizen/dist is missing — run `pnpm --filter @shmup/tizen build` first.',
+    );
     process.exit(1);
   }
 }

@@ -1,8 +1,9 @@
 /**
  * The `shmupBuildInfo()` Vite plugin and its helpers (plan M1-19, `vite.shared.ts`):
  *
- * - `isDevBuild`: the dev server and `--mode development | test` are dev / test builds (debug
- *   tools bundled), `vite build` (mode `production`) and any other mode are release builds;
+ * - `isDevBuild`: the dev server and `--mode development | test | bench` are dev / test builds
+ *   (debug tools bundled; `bench` is the TV render bench of plan R0-02), `vite build` (mode
+ *   `production`) and any other mode are release builds;
  * - `buildId`: `SHMUP_BUILD_ID` wins, else the short git SHA of `HEAD` with a `+` for uncommitted
  *   changes to tracked files (untracked files do not count), else `'unknown'` (no git repository);
  * - the plugin defines `__SHMUP_DEV__` / `__SHMUP_BUILD__` as JSON literals;
@@ -71,8 +72,8 @@ function configFor(env: Pick<ConfigEnv, 'command' | 'mode'>): UserConfig {
 }
 
 describe('integration: isDevBuild', () => {
-  it('knows the dev / test modes', () => {
-    expect(DEV_BUILD_MODES).toEqual(['development', 'test']);
+  it('knows the dev / test modes, and the TV render bench mode (plan R0-02)', () => {
+    expect(DEV_BUILD_MODES).toEqual(['development', 'test', 'bench']);
     expect(Object.isFrozen(DEV_BUILD_MODES)).toBe(true);
   });
 
@@ -83,6 +84,7 @@ describe('integration: isDevBuild', () => {
     ['build', 'production', false],
     ['build', 'development', true],
     ['build', 'test', true],
+    ['build', 'bench', true],
     ['build', 'staging', false],
     ['build', 'TEST', false],
     ['build', '', false],
@@ -155,6 +157,10 @@ describe('integration: shmupBuildInfo() Vite plugin', () => {
       expect(
         configFor({ command: 'serve', mode: 'development' }).define?.__SHMUP_REPORT_URL__,
       ).toBe('"http://10.0.0.2:8787"');
+      // … so does the TV render bench (plan R0-02: `pnpm bench:tv`, `--mode bench`) …
+      expect(configFor({ command: 'build', mode: 'bench' }).define?.__SHMUP_REPORT_URL__).toBe(
+        '"http://10.0.0.2:8787"',
+      );
       // … and a release build never even reads the variable, so the sender folds away with it.
       expect(configFor({ command: 'build', mode: 'production' }).define?.__SHMUP_REPORT_URL__).toBe(
         '""',
@@ -194,6 +200,23 @@ describe('integration: shmupBuildInfo() Vite plugin', () => {
       expect(isDevBuild({ command: 'build', mode: mode('build:test') })).toBe(true);
       expect(isDevBuild({ command: 'build', mode: mode('build:dev') })).toBe(true);
       expect([mode('build:test'), mode('build:dev')]).toEqual(['test', 'development']);
+    },
+  );
+
+  it.each(['tizen', 'webos'])(
+    'apps/%s builds the TV render bench in the bench mode from its own config (plan R0-02)',
+    (app) => {
+      const benchConfig = readFileSync(join(repo, 'apps', app, 'vite.bench.config.ts'), 'utf8');
+      expect(benchConfig).toMatch(/plugins:\s*\[[^\]]*shmupBuildInfo\(\)/);
+      const scripts = (
+        JSON.parse(readFileSync(join(repo, 'apps', app, 'package.json'), 'utf8')) as {
+          scripts: Record<string, string>;
+        }
+      ).scripts;
+      expect(scripts['build:bench']).toMatch(
+        /^vite build --config vite\.bench\.config\.ts --mode bench && /,
+      );
+      expect(isDevBuild({ command: 'build', mode: 'bench' })).toBe(true);
     },
   );
 });

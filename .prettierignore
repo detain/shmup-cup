@@ -1,6 +1,7 @@
 # Generated / vendored
 node_modules/
 dist/
+dist-bench/
 apps/electron/release/
 apps/webos/release/
 coverage/

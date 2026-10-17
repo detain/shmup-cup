@@ -108,7 +108,15 @@ beforeEach(() => {
   mocks.existing.clear();
   mocks.files.clear();
   errors = [];
-  for (const name of ['TIZEN_CLI', 'SDB', 'TIZEN_PROFILE', 'TV_IP', 'TIZEN_TARGET']) {
+  for (const name of [
+    'TIZEN_CLI',
+    'SDB',
+    'TIZEN_PROFILE',
+    'TV_IP',
+    'TIZEN_TARGET',
+    'TIZEN_DIST_DIR',
+    'TIZEN_APP_ID',
+  ]) {
     vi.stubEnv(name, undefined);
   }
   vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null) => {
@@ -346,6 +354,72 @@ describe('tizen/scripts wrappers (package / install / run)', () => {
     await runScript('tizen-run');
     expect(spawned()).toEqual([
       { command: 'tizen', args: ['run', '-p', 'ShmpCupGam.ShmupCup', '-s', 'tv-1'] },
+    ]);
+  });
+});
+
+describe('the TV render bench widget (plan R0-02): dist-bench/ and its own app id', () => {
+  const BENCH_DIST = join(APP_DIR, 'dist-bench');
+
+  /** Stubs the environment `scripts/tizen-bench.mjs` gives the wrappers. */
+  async function stubBenchEnv(): Promise<void> {
+    const { benchEnv } = await import('../../scripts/tizen-bench.mjs');
+    for (const [name, value] of Object.entries(benchEnv({}))) vi.stubEnv(name, value);
+  }
+
+  it('benchEnv points the wrappers at dist-bench and the bench app id, an explicit value kept', async () => {
+    const {
+      BENCH_COMMANDS,
+      BENCH_DIST: dir,
+      benchEnv,
+    } = await import('../../scripts/tizen-bench.mjs');
+    expect(dir).toBe('dist-bench');
+    expect(benchEnv({})).toEqual({
+      TIZEN_DIST_DIR: 'dist-bench',
+      TIZEN_APP_ID: 'ShmpCupBnc.RenderBench',
+    });
+    expect(benchEnv({ TIZEN_DIST_DIR: 'x', TIZEN_APP_ID: 'AbcdefGhij.Other' })).toEqual({
+      TIZEN_DIST_DIR: 'x',
+      TIZEN_APP_ID: 'AbcdefGhij.Other',
+    });
+    expect(Object.keys(BENCH_COMMANDS)).toEqual(['package', 'install', 'run']);
+  });
+
+  it('tizen-env reads TIZEN_DIST_DIR / TIZEN_APP_ID', async () => {
+    await stubBenchEnv();
+    const env = await loadEnv();
+    expect(env.DIST_DIR).toBe(BENCH_DIST);
+    expect(env.APP_ID).toBe('ShmpCupBnc.RenderBench');
+    expect(() => env.requireBuild()).toThrow(ExitError);
+    expect(errors[0]).toMatch(/dist-bench is missing — run `pnpm bench:tv` first/);
+  });
+
+  it('packages, installs and launches the bench widget, never the game', async () => {
+    await stubBenchEnv();
+    vi.stubEnv('TIZEN_CLI', 'tizen');
+    vi.stubEnv('TIZEN_PROFILE', 'shmup-profile');
+    vi.stubEnv('TIZEN_TARGET', 'tv-1');
+    mocks.existing
+      .add(BENCH_DIST)
+      .add(join(BENCH_DIST, 'config.xml'))
+      .add(join(BENCH_DIST, 'app.js'));
+    mocks.spawnSync.mockImplementation(() => {
+      mocks.files.set('Shmup Cup Bench.wgt', 3); // named after <name> in the bench's config.xml
+      return { status: 0 };
+    });
+    await runScript('tizen-package');
+    await runScript('tizen-install');
+    await runScript('tizen-run');
+    expect(spawned()).toEqual([
+      {
+        command: 'tizen',
+        args: ['package', '-t', 'wgt', '-s', 'shmup-profile', '--', BENCH_DIST],
+      },
+      {
+        command: 'tizen',
+        args: ['install', '-n', 'ShmupCupBench.wgt', '-s', 'tv-1', '--', BENCH_DIST],
+      },
+      { command: 'tizen', args: ['run', '-p', 'ShmpCupBnc.RenderBench', '-s', 'tv-1'] },
     ]);
   });
 });

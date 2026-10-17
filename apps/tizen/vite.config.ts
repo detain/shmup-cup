@@ -44,7 +44,7 @@ const globalThisPolyfill = readFileSync(
  *
  * @returns The Vite plugin.
  */
-function classicScriptTag(): Plugin {
+export function classicScriptTag(): Plugin {
   return {
     name: 'shmup:classic-script-tag',
     apply: 'build',
