@@ -315,7 +315,7 @@ export interface TerrainChanges {
  * {@link TerrainView.changes} lists it.
  */
 export interface TerrainView {
-  /** Tile edge in pixels (8). */
+  /** Tile edge in pixels (the stage's: 8 today, 12 in v2 — R1-04). */
   readonly tileSize: number;
   /** Map width in tiles. */
   readonly cols: number;

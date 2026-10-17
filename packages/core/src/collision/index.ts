@@ -717,7 +717,7 @@ export type TerrainAnchor = (typeof TerrainAnchor)[keyof typeof TerrainAnchor];
  * map is open space. A tile id `t` (1…255; 0 = empty cell) has the collision type
  * `tileType[t]`, the anchor `tileAnchor[t]` and the column heights
  * `tileMask[t·tileSize + column]` (0 … tileSize pixels, measured from the anchor edge) — a
- * full block is all `tileSize`, a 45° slope `1, 2, … 8` (shmup_feat.md §22 "per-tile
+ * full block is all `tileSize`, a 45° slope `1, 2, … tileSize` (shmup_feat.md §22 "per-tile
  * height/mask for slopes").
  *
  * Since M2-07 a map may carry **moving blocks** ({@link TerrainMap.blocks}, the stage's moving
@@ -726,7 +726,7 @@ export type TerrainAnchor = (typeof TerrainAnchor)[keyof typeof TerrainAnchor];
  * ({@link DestructibleTerrain}) change `tiles` in place.
  */
 export interface TerrainMap {
-  /** Tile edge in pixels (8). */
+  /** Tile edge in pixels (the stage's: 8 today, 12 in v2 — every query reads it, R1-04). */
   readonly tileSize: number;
   /** Map width in tiles. */
   readonly cols: number;

@@ -1,5 +1,6 @@
 /**
- * The placeholder 8×8 terrain tilesets — `tiles/terrain-a` and, since M2-11 … M2-14, its
+ * The placeholder terrain tilesets (8×8 tiles today, any even tile size since R1-04) —
+ * `tiles/terrain-a` and, since M2-11 … M2-14, its
  * recoloured zone sets `tiles/terrain-reef`, `-dune`, `-magma`, `-ridge`, `-vault`, `-prism`,
  * `-citadel` and `-abyss`: solid rock, flat floor / ceiling / wall edges, and slopes at 45° and
  * 22.5° (two tiles per 22.5° slope) for floors and ceilings in both directions.
@@ -10,10 +11,20 @@
  * a rock texture that depends only on the pixel's position inside the tile, so adjacent
  * solid tiles join seamlessly.
  *
- * Solid pixels per column for the floor slopes (heights from the tile bottom):
+ * Solid pixels per column for the floor slopes (heights from the tile bottom, at 8 px):
  * `slope-up` 1…8 (45°); `slope-up-low` 0,1,1,2,2,3,3,4 and `slope-up-high`
  * 4,5,5,6,6,7,7,8 (22.5°: equal pairs, so low → high → the next row's low keeps the
- * rhythm); `-down` variants are mirrored left ↔ right, `ceil-` variants top ↔ bottom.
+ * rhythm); `-down` variants are mirrored left ↔ right, `ceil-` variants top ↔ bottom. Every
+ * slope is a {@link lineMask} between half-tile heights — the very masks `core/data`'s heightfield
+ * generator asks a tileset for — so the art and the collision masks cannot drift apart.
+ *
+ * **Tile size (R1-04, plan_resolution.md §2.7).** {@link generate} draws the atlas at
+ * {@link TILE_SIZE}; {@link renderTerrainTiles} draws the same tiles at any even size (12 for v2),
+ * the shapes scaled with it (45° = `1 … 12`, 22.5° = `0,1,1,2,2,3,3,4,4,5,5,6` / `6 … 12`; the
+ * brick courses, the crystal's core and the rims follow the size). {@link resampleMask} moves a
+ * tileset's column-height masks from one tile size to another, so a rescaled tileset matches the
+ * tiles drawn at the new size (R1-03's content rescale tool uses it); {@link lineMaskEnds} tells
+ * the masks it moves exactly from those it can only approximate.
  *
  * Plan M2-07 appended three full blocks for destructible terrain (the tileset gives them `hp`):
  * `brick` (a cracked brick you can shoot through), `cube` (the crystal a cube rush stacks into
@@ -34,7 +45,8 @@
  * {@link TERRAIN_PALETTES} entry (plus a `content/tilesets/` file naming the sprite).
  *
  * **Public API.** {@link generate}, {@link TERRAIN_TILES}, {@link TILE_SIZE},
- * {@link TERRAIN_PALETTES} (and the `TerrainPalette` typedef).
+ * {@link TERRAIN_PALETTES} (and the `TerrainPalette` typedef); R1-04 {@link renderTerrainTiles},
+ * {@link lineMask}, {@link lineMaskEnds}, {@link resampleMask}.
  *
  * @module
  */
@@ -69,8 +81,16 @@ export const TERRAIN_TILES = /** @type {const} */ ([
   'tissue',
 ]);
 
-/** Tile side in pixels. */
+/**
+ * Tile side in pixels of the generated atlas: `@shmup/core` `TILE_SIZE` (8; R2-01: 12), pinned to
+ * it by `test/scripts/assets/terrain-size.test.ts`. A constant of its own rather than an import of
+ * `scripts/frame.mjs`: the asset pipeline's input hash covers `scripts/assets/**` only, so a
+ * change here re-draws the atlas.
+ */
 export const TILE_SIZE = 8;
+
+/** Smallest tile side {@link renderTerrainTiles} draws (two brick courses, a 2 × 2 core). */
+const MIN_DRAWN_TILE_SIZE = 4;
 
 /**
  * The rock colours of one tileset: the outermost solid pixel facing open space (the light rim),
@@ -139,22 +159,132 @@ export const TERRAIN_PALETTES = Object.freeze({
 });
 
 /**
- * Renders a floor-type tile: solid where `height(x) ≥ 8 - y` (heights in pixels from the
+ * Column heights of a straight tile edge from height `h0` at the tile's left edge to `h1` at its
+ * right edge: column `x` is as high as the line's higher end over the column, floored —
+ * `h0 + ⌊s·(x + 1)⌋` rising, `h1 + ⌊−s·(size − x)⌋` falling (`s = (h1 − h0) / size`).
+ *
+ * @remarks
+ * The same formula as `core/data`'s heightfield generator (`columnHeights` in
+ * `packages/core/src/data/tilemap.ts`), which looks tiles up by exactly these masks, and the one
+ * every slope of {@link renderTerrainTiles} is drawn with: at 8 px, `lineMask(0, 8, 8)` is the 45°
+ * `1 … 8` and `lineMask(0, 4, 8)` the 22.5° `0,1,1,2,2,3,3,4`.
+ *
+ * @param {number} h0 - Height in pixels at the left edge (0 … `size`).
+ * @param {number} h1 - Height in pixels at the right edge (0 … `size`).
+ * @param {number} size - Tile side in pixels (> 0).
+ * @returns {number[]} `size` column heights, each in 0 … `size` (whole numbers for whole ends).
+ * @example
+ * ```js
+ * lineMask(6, 12, 12); // [6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12] — v2's 22.5° high half
+ * ```
+ */
+export function lineMask(h0, h1, size) {
+  const slope = (h1 - h0) / size;
+  const heights = [];
+  for (let x = 0; x < size; x++) {
+    heights.push(
+      slope >= 0 ? h0 + Math.floor(slope * (x + 1)) : h1 + Math.floor(-slope * (size - x)),
+    );
+  }
+  return heights;
+}
+
+/**
+ * The ends of a mask that is a straight edge between half-tile heights: the `[h0, h1]`, each
+ * 0, `size / 2` or `size`, whose {@link lineMask} equals `mask` — every shape the heightfield
+ * generator places and {@link renderTerrainTiles} draws (flat, 45° and both 22.5° halves, either
+ * direction; a full or an empty mask too).
+ *
+ * @param {readonly number[]} mask - Column heights.
+ * @param {number} size - Tile side the mask is for.
+ * @returns {[number, number] | null} The ends, or `null` for any other mask (a hand-drawn shape,
+ *   a length other than `size`, an odd `size`).
+ */
+export function lineMaskEnds(mask, size) {
+  if (mask.length !== size || size % 2 !== 0) return null;
+  const ends = [0, size / 2, size];
+  for (const h0 of ends) {
+    for (const h1 of ends) {
+      const line = lineMask(h0, h1, size);
+      if (line.every((h, x) => h === mask[x])) return [h0, h1];
+    }
+  }
+  return null;
+}
+
+/**
+ * Moves a tile's column-height mask (a tileset's `mask`, heights from its anchor edge) from
+ * `from`-px tiles to `to`-px tiles — the mask half of rescaling a tileset (R1-03's content rescale
+ * tool), so that it still equals the opaque pixels of its tile drawn at the new size.
+ *
+ * @remarks
+ * The contract:
+ * - **Straight edges move exactly.** A mask with {@link lineMaskEnds} `[h0, h1]` becomes
+ *   `lineMask(h0 · to / from, h1 · to / from, to)`: the same edge at the new size — the mask of
+ *   that tile in {@link renderTerrainTiles}`(to)` and the mask `core/data`'s heightfield generator
+ *   asks for at `to`. Every shipped tileset mask is one (8 → 12: `1 … 8` → `1 … 12`,
+ *   `0,1,1,2,2,3,3,4` → `0,1,1,2,2,3,3,4,4,5,5,6`, a full 8 → a full 12). This needs an even `to`
+ *   (the half-tile height must be a whole pixel).
+ * - **Anything else is resampled nearest-neighbour:** column `x` of the result takes column
+ *   `⌊x · from / to⌋` (the column a nearest-neighbour image upscale samples), its height scaled to
+ *   `round(h · to / from)`. That is an approximation: a hand-drawn tile's art must be redrawn or
+ *   checked against its new mask (`test/integration/stage-terrain.test.ts` compares masks with
+ *   the opaque pixels of every shipped tile). Use {@link lineMaskEnds} to list such masks.
+ * - The result is a new array of `to` whole numbers in 0 … `to`; `from === to` returns a copy.
+ *   Pure and deterministic (no floating-point maths beyond exact divisions and rounding).
+ *
+ * @param {readonly number[]} mask - The mask: `from` whole numbers in 0 … `from`.
+ * @param {number} from - Its tile side in pixels (a whole number > 0).
+ * @param {number} to - The new tile side in pixels (a whole number > 0).
+ * @returns {number[]} The mask at `to`.
+ * @throws {RangeError} When a size is not a whole number > 0, or `mask` does not have `from`
+ *   whole-number entries in 0 … `from`.
+ * @example
+ * ```js
+ * resampleMask([0, 1, 1, 2, 2, 3, 3, 4], 8, 12); // [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
+ * ```
+ */
+export function resampleMask(mask, from, to) {
+  for (const size of [from, to]) {
+    if (!Number.isInteger(size) || size <= 0) {
+      throw new RangeError(`tile size must be a whole number > 0, got ${String(size)}`);
+    }
+  }
+  if (mask.length !== from) {
+    throw new RangeError(`mask has ${mask.length} entries, expected ${from}`);
+  }
+  for (const h of mask) {
+    if (!Number.isInteger(h) || h < 0 || h > from) {
+      throw new RangeError(`mask height ${String(h)} is not a whole number in 0 … ${from}`);
+    }
+  }
+  const ends = to % 2 === 0 ? lineMaskEnds(mask, from) : null;
+  if (ends !== null) return lineMask((ends[0] * to) / from, (ends[1] * to) / from, to);
+  const heights = [];
+  for (let x = 0; x < to; x++) {
+    heights.push(Math.min(to, Math.round((mask[Math.floor((x * from) / to)] * to) / from)));
+  }
+  return heights;
+}
+
+/**
+ * Renders a floor-type tile: solid where `height(x) ≥ size - y` (heights in pixels from the
  * bottom), open space above.
  *
- * @param {(x: number) => number} height - Solid height of column `x` (0…8).
+ * @param {(x: number) => number} height - Solid height of column `x` (0…size).
  * @param {boolean} openAbove - Whether the space above the tile is open (surface rim at
  *   the top of full-height columns).
  * @param {string} name - The tileset's sprite name (seeds the rock texture).
+ * @param {number} size - Tile side in pixels.
  * @returns {Image} The tile.
  */
-function floorTile(height, openAbove, name) {
+function floorTile(height, openAbove, name, size) {
   const palette = TERRAIN_PALETTES[name];
   const surface = color(palette.surface);
   const subsurface = color(palette.subsurface);
   const rock = palette.rock.map(color);
   const seed = seedOf(name);
-  const image = createImage(TILE_SIZE, TILE_SIZE);
+  const image = createImage(size, size);
   /**
    * Whether a pixel is solid; above the tile counts as open when `openAbove`.
    *
@@ -162,9 +292,9 @@ function floorTile(height, openAbove, name) {
    * @param {number} y - Row (may be negative).
    * @returns {boolean} Solid?
    */
-  const solid = (x, y) => (y < 0 ? !openAbove : TILE_SIZE - y <= height(x));
-  for (let y = 0; y < TILE_SIZE; y++) {
-    for (let x = 0; x < TILE_SIZE; x++) {
+  const solid = (x, y) => (y < 0 ? !openAbove : size - y <= height(x));
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
       if (!solid(x, y)) continue;
       if (!solid(x, y - 1)) setPixel(image, x, y, surface);
       else if (!solid(x, y - 2)) setPixel(image, x, y, subsurface);
@@ -189,16 +319,18 @@ const TISSUE = [color('#c8587a'), color('#f090b0'), color('#6a1a3a')];
 /**
  * The `brick` tile: two courses of bricks with mortar lines and a diagonal crack.
  *
+ * @param {number} size - Tile side in pixels (even).
  * @returns {Image} The tile (every pixel opaque).
  */
-function brickTile() {
-  const image = createImage(TILE_SIZE, TILE_SIZE);
-  for (let y = 0; y < TILE_SIZE; y++) {
-    for (let x = 0; x < TILE_SIZE; x++) {
-      const course = y < 4 ? 0 : 1;
-      const joint = course === 0 ? x === 3 : x === 7;
-      const mortar = y === 3 || y === 7 || joint;
-      const crack = x + y === 7 && !mortar;
+function brickTile(size) {
+  const half = size / 2;
+  const image = createImage(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const course = y < half ? 0 : 1;
+      const joint = course === 0 ? x === half - 1 : x === size - 1;
+      const mortar = y === half - 1 || y === size - 1 || joint;
+      const crack = x + y === size - 1 && !mortar;
       setPixel(image, x, y, mortar ? BRICK[1] : crack ? BRICK[2] : BRICK[0]);
     }
   }
@@ -206,17 +338,20 @@ function brickTile() {
 }
 
 /**
- * The `cube` tile: a bevelled crystal block (light top-left edge, dark bottom-right, a core).
+ * The `cube` tile: a bevelled crystal block (light top-left edge, dark bottom-right, a 2 × 2 core
+ * in the middle).
  *
+ * @param {number} size - Tile side in pixels (even).
  * @returns {Image} The tile (every pixel opaque).
  */
-function cubeTile() {
-  const image = createImage(TILE_SIZE, TILE_SIZE);
-  for (let y = 0; y < TILE_SIZE; y++) {
-    for (let x = 0; x < TILE_SIZE; x++) {
+function cubeTile(size) {
+  const half = size / 2;
+  const image = createImage(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
       const light = x === 0 || y === 0;
-      const dark = x === TILE_SIZE - 1 || y === TILE_SIZE - 1;
-      const core = (x === 3 || x === 4) && (y === 3 || y === 4);
+      const dark = x === size - 1 || y === size - 1;
+      const core = (x === half - 1 || x === half) && (y === half - 1 || y === half);
       setPixel(image, x, y, light ? CUBE[1] : dark || core ? CUBE[2] : CUBE[0]);
     }
   }
@@ -226,13 +361,14 @@ function cubeTile() {
 /**
  * The `tissue` tile: flesh with a position-hashed highlight and dark nuclei.
  *
+ * @param {number} size - Tile side in pixels.
  * @returns {Image} The tile (every pixel opaque).
  */
-function tissueTile() {
+function tissueTile(size) {
   const seed = seedOf('tiles/terrain-a/tissue');
-  const image = createImage(TILE_SIZE, TILE_SIZE);
-  for (let y = 0; y < TILE_SIZE; y++) {
-    for (let x = 0; x < TILE_SIZE; x++) {
+  const image = createImage(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
       const h = hash2(x, y, seed);
       setPixel(image, x, y, h % 9 === 0 ? TISSUE[2] : h % 4 === 0 ? TISSUE[1] : TISSUE[0]);
     }
@@ -255,29 +391,76 @@ function transpose(image) {
 }
 
 /**
- * Generates the tilesets.
+ * Generates the tilesets at {@link TILE_SIZE}.
  *
- * @returns {SpriteDef[]} `tiles/terrain-a`, then the M2-11 sets `tiles/terrain-reef` and
- *   `tiles/terrain-dune` and the M2-12 sets `tiles/terrain-magma` and `tiles/terrain-ridge`
- *   (anchor top-left, frame `i` = {@link TERRAIN_TILES}`[i]`).
+ * @returns {SpriteDef[]} `tiles/terrain-a`, then the zone sets of M2-11 … M2-14 in
+ *   {@link TERRAIN_PALETTES} order (anchor top-left, frame `i` = {@link TERRAIN_TILES}`[i]`).
  */
 export function generate() {
   return Object.keys(TERRAIN_PALETTES).map(tileset);
 }
 
 /**
- * Draws one tileset in its palette.
+ * Draws one tileset in its palette at {@link TILE_SIZE}.
  *
  * @param {string} name - Its sprite name (a {@link TERRAIN_PALETTES} key).
  * @returns {SpriteDef} The tileset sprite.
  */
 function tileset(name) {
-  const full = () => TILE_SIZE;
-  const solid = floorTile(full, false, name);
-  const floor = floorTile(full, true, name);
-  const slopeUp = floorTile((x) => x + 1, true, name);
-  const upLow = floorTile((x) => (x + 1) / 2, true, name);
-  const upHigh = floorTile((x) => 4 + (x + 1) / 2, true, name);
+  /** @type {Record<string, number[]>} */
+  const animations = {};
+  TERRAIN_TILES.forEach((tile, i) => {
+    animations[tile] = [i];
+  });
+  return makeSprite(name, renderTerrainTiles(TILE_SIZE, name), 'terrain', {
+    anchor: [0, 0],
+    animations,
+  });
+}
+
+/**
+ * Draws the tiles of one tileset at any even tile size (R1-04): the frames {@link generate} puts
+ * in the atlas at {@link TILE_SIZE}, in {@link TERRAIN_TILES} order. Every slope is a
+ * {@link lineMask} between half-tile heights, so the opaque pixels of a tile drawn at `size` are
+ * its shipped 8-px mask moved by {@link resampleMask}`(mask, 8, size)`.
+ *
+ * @param {number} size - Tile side in pixels: an even whole number ≥ 4 (8 today, 12 for v2).
+ * @param {string} name - The tileset's sprite name (a {@link TERRAIN_PALETTES} key: its colours
+ *   and the seed of its rock texture).
+ * @returns {Image[]} One `size × size` image per tile.
+ * @throws {RangeError} When `size` is not an even whole number ≥ 4 or `name` has no palette.
+ * @example
+ * ```js
+ * const frames = renderTerrainTiles(12, 'tiles/terrain-a'); // v2-sized test tiles
+ * ```
+ */
+export function renderTerrainTiles(size, name) {
+  if (!Number.isInteger(size) || size < MIN_DRAWN_TILE_SIZE || size % 2 !== 0) {
+    throw new RangeError(
+      `tile size must be an even whole number >= ${MIN_DRAWN_TILE_SIZE}, got ${String(size)}`,
+    );
+  }
+  if (!Object.prototype.hasOwnProperty.call(TERRAIN_PALETTES, name)) {
+    throw new RangeError(`no terrain palette named "${name}"`);
+  }
+  const half = size / 2;
+  /**
+   * The height function of a straight edge between two heights.
+   *
+   * @param {number} h0 - Height at the left edge.
+   * @param {number} h1 - Height at the right edge.
+   * @returns {(x: number) => number} Column `x`'s height.
+   */
+  const edge = (h0, h1) => {
+    const heights = lineMask(h0, h1, size);
+    return (x) => heights[x];
+  };
+  const full = () => size;
+  const solid = floorTile(full, false, name, size);
+  const floor = floorTile(full, true, name, size);
+  const slopeUp = floorTile(edge(0, size), true, name, size);
+  const upLow = floorTile(edge(0, half), true, name, size);
+  const upHigh = floorTile(edge(half, size), true, name, size);
   const wallLeft = transpose(floor);
   /** @type {Record<(typeof TERRAIN_TILES)[number], Image>} */
   const tiles = {
@@ -298,19 +481,9 @@ function tileset(name) {
     'ceil-slope-up-high': flipVertical(upHigh),
     'ceil-slope-down-high': flipVertical(flipHorizontal(upHigh)),
     'ceil-slope-down-low': flipVertical(flipHorizontal(upLow)),
-    brick: brickTile(),
-    cube: cubeTile(),
-    tissue: tissueTile(),
+    brick: brickTile(size),
+    cube: cubeTile(size),
+    tissue: tissueTile(size),
   };
-  /** @type {Record<string, number[]>} */
-  const animations = {};
-  TERRAIN_TILES.forEach((tile, i) => {
-    animations[tile] = [i];
-  });
-  return makeSprite(
-    name,
-    TERRAIN_TILES.map((tile) => tiles[tile]),
-    'terrain',
-    { anchor: [0, 0], animations },
-  );
+  return TERRAIN_TILES.map((tile) => tiles[tile]);
 }
