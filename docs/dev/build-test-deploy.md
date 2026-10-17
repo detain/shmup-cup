@@ -574,13 +574,25 @@ How a fix moves between the lines:
   again.
 - A v2-only change never goes back to `v1.x`.
 
+**A `v1.x` commit that only `v1.x` needs** — its own version lines, text that describes the
+maintenance branch — is merged with **`git merge -s ours v1.x`**: the merge records the commits as
+taken and keeps `master`'s tree, so the next plain `git merge v1.x` brings in only what came after.
+Both `v1.x` commits of R0-01 went in this way (2026-10-17): `f74cf95` took `bde77b5` (the
+`1.0.1-dev` versions and the maintenance-line notes in its README and CHANGELOG) and `b37bc69` took
+`ef6605c` (its docs describing the 1.0.0 release and the `1.0.1-dev` line). `master` describes the
+two lines in its own words instead. Before a plain merge, `git log master..v1.x` shows what it will
+take; a commit that mixes a real fix with `v1.x`-only text is split on `v1.x` first, or its fix is
+cherry-picked.
+
 ## CI
 
-`.github/workflows/ci.yml` on every push to `master` and every pull request, as parallel jobs
-on GitHub's 4-vCPU runners — the run takes as long as its slowest job. Each job installs on its
-own: `pnpm/action-setup` (version from `packageManager`) → `actions/setup-node` (`.nvmrc`, pnpm
-cache) → `pnpm install --frozen-lockfile`, with `ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is
-only type-checked, tested and compiled) and Turborepo telemetry off.
+`.github/workflows/ci.yml` on every push to `master` or `v1.x` (the two
+[release lines](#release-lines); `v1.x`'s own `ci.yml` has the same trigger) and every pull
+request, as parallel jobs on GitHub's 4-vCPU runners — the run takes as long as its slowest job.
+Each job installs on its own: `pnpm/action-setup` (version from `packageManager`) →
+`actions/setup-node` (`.nvmrc`, pnpm cache) → `pnpm install --frozen-lockfile`, with
+`ELECTRON_SKIP_BINARY_DOWNLOAD=1` (Electron is only type-checked, tested and compiled) and
+Turborepo telemetry off.
 
 | Job | Runs |
 |---|---|

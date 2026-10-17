@@ -78,9 +78,15 @@ pnpm --filter @shmup/tizen tizen:run
   those two commands again. (The input probe's `deploy` accepts a comma-separated list; the game scripts do not.)
 - After every new `build`, run `tizen:package` again before installing.
 - PowerShell: `$env:TIZEN_PROFILE = "shmupcup"; $env:TV_IP = "192.168.1.50"` instead of `set`.
+- **Which game you build** depends on the branch. The default branch, `master`, is v2 in development
+  (version 2.0.0-alpha.0, which still plays like the released game until v2's steps change it); the
+  released game, version 1.0.0 and its fixes, is on the `v1.x` branch — `git switch v1.x` before
+  `pnpm install` to build that one. Going from a `master` build back to a `v1.x` build on the same
+  monitor needs the app removed first ([Removing an app](#removing-an-app)).
 
 The app appears in the Apps panel as **Shmup Cup** (since the v1.0 release candidate with its placeholder icon,
-the logo above the two ships; the app's details give its version as **1.0.0** —
+the logo above the two ships; the app's details give its version as **1.0.0** for the v1.0.0 release,
+**1.0.1** for a build of the `v1.x` branch since, and **2.0.0** for a build of `master` —
 [release-candidate.md](release-candidate.md#where-you-see-the-version)) and opens on the title screen. To leave it, press **Back** on
 the title and answer **YES** to **EXIT SHMUP CUP?** (in a game, Back pauses first — choose QUIT TO TITLE), or press
 **Home**. What it should look like: [preview-build.md](preview-build.md).
@@ -188,6 +194,11 @@ Device Manager in Tizen Studio. Installing a newer build over an existing one do
 unless it was signed with a *different* author certificate (see below). Removing the game preview also deletes its
 saved settings and high scores.
 
+**Going back from v2 to v1.** A build of `master` is v2's 2.0.0 alpha and installs as version
+**2.0.0** of the same app (`ShmpCupGam.ShmupCup`). A monitor that has it may refuse to install a
+build of the `v1.x` branch (version 1.0.N) over it, because that version is lower — remove Shmup Cup
+from the monitor first, then install. That deletes the saved settings and high scores too.
+
 ## Troubleshooting
 
 | Message / symptom | Cause and fix |
@@ -195,7 +206,7 @@ saved settings and high scores.
 | `Tizen CLI not found` | Tizen Studio / the VS Code SDK is not installed where the scripts look. Set `TIZEN_CLI` to the full path of `tizen.bat`, e.g. `C:\tizen-studio\tools\ide\bin\tizen.bat` |
 | `no certificate profile` | Set `TIZEN_PROFILE` to the profile name. List the profiles with `tizen security-profiles list` |
 | `sdb connect failed` | Monitor off or on another network; Developer Mode not pointing at **this** PC's IP; monitor not restarted after enabling Developer Mode; or another PC holds the connection |
-| `install failed` | The distributor certificate does not include this monitor's DUID (re-create the certificate with both DUIDs), or an older build signed with a different author certificate is installed (remove it on the monitor first) |
+| `install failed` | The distributor certificate does not include this monitor's DUID (re-create the certificate with both DUIDs), or an older build signed with a different author certificate is installed (remove it on the monitor first), or a build of `master` (2.0.0) is installed and this is a `v1.x` build (1.0.N) — remove it first ([Removing an app](#removing-an-app)) |
 | App installed but not visible | Look at the end of the Apps list; start it once with `npm run deploy` (it launches the app) |
 | Worked before, now `sdb connect` fails | Check that Developer Mode is still on and the Host PC IP still matches the PC (it changes if the PC gets a new DHCP address) — repeat step 2 on the monitor |
 | Game preview: `ERR_PNPM_BROKEN_LOCKFILE` during `pnpm install` | An old pnpm is being used. `pnpm -v` must print 12.x — run `npm i -g pnpm@latest` and open a new Command Prompt |

@@ -305,8 +305,35 @@ follow R2.
     merge before R2-01, cherry-pick after).
 - **Acceptance:** CI runs on a push to either branch; `pnpm build` is green on both; the workflow runs a step from
   this plan by name.
-- **Manual (owner):** optionally protect `v1.x` (§3.5); optionally add this plan to the project board.
+- **Manual (owner):** optionally protect `v1.x` against force-push and deletion (§3.5,
+  `gh api -X PUT repos/detain/shmup-cup/branches/v1.x/protection …`) — still open. *(Adding this plan to the project
+  board is done: one issue per step since 2026-10-16, §17.)*
 - **Refs:** §3 of this plan.
+- **As built** (2026-10-17; both sides reviewed clean):
+  - **`master`** (`7e46ee8`): all ten `package.json` files say `2.0.0-alpha.0`; the Tizen `config.xml` and the webOS
+    `appinfo.json` say `2.0.0` (both TVs take `major.minor.patch` only), and so does `STORE_LISTING.version` in
+    `scripts/store-assets.mjs`, which the store-assets test ties to `config.xml` (not named in the scope). The
+    CHANGELOG's new first section is `[Unreleased] — v2`, and **master too renames v1's old `[Unreleased]` to
+    `[1.0.0] — 2026-10-16`** (the scope names that heading only for `v1.x`) so that `master` never carries two
+    `[Unreleased]` sections. README and `docs/client/README.md` say v2 is in development and where v1 lives;
+    `build-test-deploy.md` gained "Release lines". `tooling-config.test.ts` pins `2.0.0-alpha.0` and the CHANGELOG
+    order; the `config.xml` variants edge test now breaks the widget version whatever it is.
+  - **`v1.x`** (`bde77b5`, CI run 39020883321 green): every `package.json` says `1.0.1-dev`; `config.xml`,
+    `appinfo.json` and the store listing say `1.0.1` (the scope named only the manifests); the CHANGELOG names the
+    tagged section `[1.0.0] — 2026-10-16` under a new `[Unreleased]`; README, `apps/tizen/README.md` and
+    `install-on-tv.md` carry the maintenance-line note. A second, owner-approved `v1.x` commit (`ef6605c`, CI run
+    39022048800 green) made v1.x's docs describe the 1.0.0 release and the `1.0.1-dev` line instead of the RC.
+  - **Both `v1.x` commits reached `master` as `git merge -s ours`** (`f74cf95`, `b37bc69`): the merges record them
+    and keep `master`'s tree, so v1-only versions and text stay on `v1.x` and the next plain merge brings only later
+    commits (`build-test-deploy.md` § Release lines). `master`'s own docs were brought in line separately by the
+    wave's docs pass.
+  - **The workflow** (`.claude/workflows/shmup-plan-batch.js`, local and git-ignored, installed in the main tree)
+    takes `args.plan` (default `docs/old/shmup_plan.md`; `plan_resolution.md` for v2) and uses it in every prompt;
+    steps may be bare ids (`steps: ["R0-02"]`) or `{ id, title }`. For a v2 plan its agents read §1, §2.6, §2.7 and
+    §4, and its docs agent sets §17 and resyncs the board. Checked by a dry run with stub agents (a v2 step and a v1
+    step, every stage), not by a live run.
+  - `pnpm build` is green in `v1.x`'s CI; on `master` the builder ran the Tizen and webOS builds (bundle checks OK),
+    and the full build runs in `master`'s CI.
 
 ### R0-02 — The TV render benchmark (`bench:tv`)
 
@@ -802,7 +829,7 @@ are fixed by k = 1.5. Detail comes from:
     - outline rule (1-px dark outline at 640×360 — the K3 kernel's "2-pixel outlines" were for 1152-px sources);
     - light direction (top-left);
     - palette rules: lifted dark backgrounds for the VA panels (never #000 behind bullets), per-zone palettes,
-      **reserved palette-cycle ramps** that no other pixel may come near (§9.3 below);
+      **reserved palette-cycle ramps** that no other pixel may come near (R3-03 below);
     - **enemy bullets are always the brightest, highest-contrast thing on screen**;
     - no scaled or rotated pixel art at runtime (heading frames as today);
     - **no "mixels"** — every sprite is drawn at the native 640×360 density.
@@ -827,7 +854,70 @@ are fixed by k = 1.5. Detail comes from:
   (`shmup-art-prompt-library@1`) with the new kernel, and a sample sheet per category has been generated and
   ingested as a proof (owner run — R0-04's round supplies the generated samples).
 - **Manual (owner):** the generation runs on the GPU server, through R0-04's art round and `art-prompts/v2/server.sh`
-  (runbook: `docs/dev/art-generation-server.md`).
+  (runbook: `docs/dev/art-generation-server.md`). Still open after the bible (its §10):
+  - **the ingest proof** — one sample sheet per category generated and ingested; it needs R3-02's tool and the art
+    round's committed winners (`art-prompts/v2/winners/`, after round 2), and is the last acceptance item;
+  - **confirm or override the dusk regrade** the bible proposes for the bright zones' in-game layers (DUNE EXPANSE,
+    TEMPEST RIDGE, BRINE NEBULA — bible §4.1) when those layers are made;
+  - the **R4-02 readability sign-off** (512 bullets over each zone's backdrop in all four bullet palettes) and the
+    **R4-03 font cell** (8×12 or 9×12), both left to those steps;
+  - R3-05's licence decisions before any winner ships (FLUX is on hold — R3-05);
+  - **after round 2 of the art round, apply the remaining five prompt-library edits** (the art round is using the
+    library until then; edits 5 and 6 — the KESTREL in-game sheet's 4-frame thruster loop in a strict side view,
+    and the darker playfield grade for the DUNE EXPANSE / TEMPEST RIDGE / BRINE NEBULA layer followups — were
+    applied to the round-2 followups early, `a092ee9`):
+    - *edit 1* — `art-prompts/images/00-style-kernel.md` v2 targets table: a lead line saying the bible wins over
+      it; bullets 11 / 13 / 17, point item 7, particles 7 / 9 / 13; the laser beam 12 frames, node 1; the force
+      field "4 wear × 1–2 shimmer"; Options "hand, or AI concept → heavy cleanup"; the backdrop lighting budget in
+      the backdrops row;
+    - *edit 2* — the K3 rules: point to bible §8 for the yellowish key, hole seeds and despill, and name the only
+      sprites allowed on the black key (the additive and translucent ones of bible §3.6);
+    - *edit 3* — `art-prompts/images/README.md` model heuristics: FLUX.2-dev first for text (it won 7 of 7),
+      Qwen-Image second; SD3.5 swatches are material references only, never tiles;
+    - *edit 4* — the `40-enemies` zone sheets v1–v3: one subject per sheet; drop "dithered highlights only" (zone A
+      v2) and "light dithering on metal" (zone A v3); fix the stale "Grid layout on a single flat navy field"
+      (zone A v1);
+    - *edit 7*, optional — "SNES-era" → "16-bit console era" (the same question as R3-05's "SNES" decision).
+- **As built** (`c3b775a`, review fixes `7a51aaf`; review round 2 clean) — where `docs/dev/art-bible-v2.md` differs
+  from this scope or from the kernel's v2 targets table, which it overrides:
+  - **Odd sizes for point-symmetric sprites**, so the anchor is a real centre pixel (bible §5.1): bullets
+    11 / 13 / 17 (kernel 11 / 14 / 16), the point item 7 (kernel 8), particles 7 / 9 / 13 (kernel 8 / 9 / 14).
+    Other sizes are v1 × 1.5 with halves rounded up.
+  - **The laser beam has 12 frames**, one per band height of the 6×12 beam (the kernel's "8, as v1" only fits an
+    8-px beam); beams are the one sprite the renderer rotates and stretches, so their frames are uniform along x.
+  - **The force field is 4 wear states × 1–2 shimmer frames** (kernel: 6). Today every frame is a wear state
+    (`FORCE_FIELD_WEAR_FRAMES`, `shieldWearFrame`), so the shimmer needs a wear × shimmer mapping where
+    `PowerUpSystem.sync` picks the frame (as `armWearFrame` does tier × wear) — R4-01; until then 4 frames.
+  - **Alpha is binary by default**; only the listed additive sprites (sparks, sparkles, rings, glow accents, the
+    Mega Crash flash), translucent overlays (the force field's inner glow, Reduce's shimmer, bubble films, smoke)
+    and haze bands on uncycled layers may be partial. R3-02's recipe takes it as a field,
+    `alpha: binary | translucent | additive`. Explosions and the black hole are **normal** blend: today a preset
+    without `blend` is additive, so R4-04 sets `"blend": "normal"` on `explosion.*` and `boss.chain`.
+  - **The palette-cycle ramp rule is scoped**, not project-wide: on a cycled layer every other pixel stays ≥ 3/255
+    (Chebyshev) from that layer's ramps — R3-03's scan, which today's atlas passes — and all new v2 art keeps that
+    margin from all eight shipped ramps; v1 / interim sprites that break the project-wide margin on layers that do
+    not cycle that ramp are listed as exemptions, an empty list by the end of R5. (A project-wide reservation, the
+    first draft, already fails on today's HUD meter slot, boss turrets, raid hull and zone bosses.)
+  - **A measured backdrop lighting budget** (the scope says only "lifted dark backgrounds"): Rec. 709 luma floor 16
+    for far and mid layers; far median ≤ 64, 95th percentile ≤ 140; mid ≤ 80 / ≤ 160; light sources ≥ 24 px and
+    ≤ 5 % of a layer above 200. R3-02's ingest report prints it; R4-02's sign-off is final. The bright winners'
+    zones get a **dusk regrade** (owner decision, above).
+  - **Ingest rules for R3-02** measured on the winners (bible §8): the models' key green is yellowish (median
+    `#3cf102`), so the key is sampled from each image's border and removed by flood fill from it, with hole seeds
+    or `holes: auto`, edge despill and halo removal; the black key is for the additive / translucent FX only.
+  - **Ship anchors:** KESTREL v1 `[8, 4]` × 1.5 → `[12, 6]`; MANTA v1 `[8, 5]` × 1.5 → `[12, 7.5]`, so `[12, 7]` or
+    `[12, 8]` — R4-01 confirms both.
+  - **Options** may be hand-drawn or an AI concept with heavy cleanup (this scope's table); the kernel said hand only.
+  - **The engine changes the new frame counts need** (bible §5.2, the † table): five ship bank frames are a content
+    edit, `"bankFrames": 2`, that re-blesses (R4-01); the thruster is never drawn in the game today (R4-01); Options
+    4 frames, the force-field shimmer and the black hole's 8 frames (`BLACK_HOLE_FRAMES`) — R4-01; item glints
+    (`ITEM_KINDS` `frames: 2`) and point items (hashed, re-bless) — R4-02; the explosions' normal blend — R4-04. From
+    review round 2, for R4-01: drawing the thruster behind each ship needs `playerBatch`'s capacity doubled
+    (`createSpriteBatch(LayerId.Player, MAX_PLAYERS)`, `world/index.ts` ~:1815), and the shell showcase hard-codes
+    the 3-frame bank order (`packages/shell/src/showcase/index.ts` ~:277).
+  - `items/one-up` and `items/bonus` have sizes in the bible but are never drawn by the game today (open, R4-02).
+  - The scope's "§9.3 below" pointed nowhere; the ramp rules are R3-03's, which the bible follows.
+  - The kernel itself is not edited yet (the art round uses it until round 2): see the five edits under Manual.
 
 ### R3-02 — The ingest tool: AI output → clean sprite source, with provenance
 
@@ -929,6 +1019,42 @@ are fixed by k = 1.5. Detail comes from:
     policies at submission. The answers live in `docs/client/store-submission.md`.
 - **Acceptance:** the origin report runs in CI and lists no sprite without provenance; the licence table is
   filled for every model that produced shipped art.
+- **Manual (owner):** the open decisions of `docs/dev/art-provenance.md` §8 (a summary of licence texts, not legal
+  advice):
+  - **FLUX — before round 2** (FLUX.2-dev made 84 of the 91 winners, FLUX.1-dev one): ask Black Forest Labs the
+    three questions of its §4, buy a self-hosted commercial licence, or replace the 85 FLUX winners (from the text
+    prompt with an Apache 2.0 model, or by hand — an edit or a video made *from* a FLUX image inherits the question);
+  - **the licensee** — a person or a company, and its group's revenue: SD3.5's limit is USD 1 M a year and LTX's
+    USD 10 M, both counting affiliates and all revenue;
+  - **register with Stability AI** before any SD3.5-derived pixel ships, and ask whether its "Powered by Stability
+    AI" notice applies to a product holding outputs only;
+  - **LTX clips:** the wording and place of the "machine generated" note each clip needs, and whether re-encoding
+    a clip removes the provenance the model embeds (a question for Lightricks);
+  - **credits:** whether to name the AI models in the game's credits;
+  - **"SNES"** as an era word in the prompts (about 1,400 uses): keep it, or say "16-bit era" (the name check allows
+    it until then);
+  - **reword** the FACET MONARCH picker label "the crystal core …" (`art-prompts/v2/manifest.json`, pinned in the
+    name check) and the zone-montage clip prompt's "in the style of a side-scrolling arcade game";
+  - **the store disclosure texts** (`docs/client/store-submission.md`, AI-content disclosure), including the
+    agent-written translations, in-game text, music and sound data and code.
+- **As built** (part 1, `53bb83b`; 2026-10-17):
+  - `docs/dev/art-provenance.md`: every model of the art round with its licence read for commercial use of its
+    outputs — **FLUX.2-dev and FLUX.1-dev hold** (non-commercial model licences whose outputs clause and
+    commercial-use bans pull in two directions; Black Forest Labs says self-hosted commercial use needs a licence);
+    **SD3.5 Large ships** after a free registration, under USD 1 M a year; **Qwen-Image and Wan2.2 ship** (Apache
+    2.0); **LTX-2.5 ships** under USD 10 M a year, each clip disclaimed as machine generated and its embedded
+    provenance kept. Also what cleanup changes (copyright of the hand-made part, not the licence or the
+    disclosure), what every shipped AI-assisted asset must record, and what part 2 needs from R3-02.
+  - `test/integration/art-prompt-names.test.ts`: the name check of the prompt library (`art-prompts/**`, plus the
+    provenance and recipe files R3-02 writes under `assets/source/`); no forbidden name today. It pins one hit it
+    may not fix (the FACET MONARCH label in the art round's manifest) and allows "SNES" while the owner decides;
+    a style reference to a named game or artist is forbidden by the art bible's §7.
+  - `docs/client/store-submission.md`: an AI-content disclosure section for Steam ("Pre-Generated" in the content
+    survey, shown on the store page), itch.io (its AI disclosure tags), Samsung and LG (no AI question in their
+    public guides today), with draft texts.
+  - **Part 2 waits for R3-02:** the origin report needs the `.art.json` schema and an importable validator, the
+    list of real-art override PNGs, the `LICENSES.md` format, the staging folder handled like
+    `assets/source/sprites/`, and a fixed map of licence ids to model ids.
 
 ### R3-06 — Stage art features for detailed levels
 
@@ -1308,7 +1434,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | CI runs on pushes to `v1.x` (`ci.yml` on both branches) | **done** (2026-10-16) |
 | — | One board issue per step on the GitHub project | **done** (2026-10-16) |
 | — | R3-01's prompt-library update done early | **done** (2026-10-16) |
-| R0-01 | Maintenance branch, version lines and CI | in progress |
+| R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
 | R0-02 | The TV render benchmark (`bench:tv`) | in progress |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 images done (211), videos generating; see `art-prompts/v2/STATUS.md` |
@@ -1321,11 +1447,11 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
-| R3-01 | Art bible v2 and the prompt library update | in progress |
+| R3-01 | Art bible v2 and the prompt library update | done (owner parts pending) — 2026-10-17 |
 | R3-02 | The ingest tool, with provenance | in progress |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
-| R3-05 | AI art provenance and licences | in progress |
+| R3-05 | AI art provenance and licences | in progress (part 1 done; the origin report waits for R3-02) |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
 | R4-02 | Enemy bullets, lasers, items | not started |

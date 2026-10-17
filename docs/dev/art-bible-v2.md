@@ -840,4 +840,7 @@ So R3-01 is *done (owner parts pending)*. Still owner work:
 - the readability sign-off (R4-02);
 - **the licence reading of R3-05 before any winner ships.** 84 of the 91 winners were made by
   FLUX.2-dev, whose weights are under a non-commercial licence, so its terms for outputs decide
-  whether those images may be ingested as pixels or only used as design references.
+  whether those images may be ingested as pixels or only used as design references. R3-05 has read
+  them: [art-provenance.md](art-provenance.md) puts both FLUX models on **hold** until Black Forest
+  Labs answers or a commercial licence covers them, and lists the owner's open decisions
+  ([section 8](art-provenance.md#8-open-decisions-for-the-owner)).

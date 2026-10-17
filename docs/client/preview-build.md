@@ -166,9 +166,13 @@ The earlier start-up pictures are still there: **free flight** straight away wit
 the animated **sprite showcase** and the **calibration screen**, plus the **effects gallery**
 that shows every explosion and screen effect in turn (see [below](#other-screens-browser-only)).
 
-This build is version **1.0.0-rc.1** — the **release candidate of version 1.0**, checked from end
-to end ([release-candidate.md](release-candidate.md)) — built on version 0.1.0, the end of the first
-milestone, and the steps of the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
+This build is version **1.0.0**, released on 2026-10-16 (tag `v1.0.0`) and kept on the `v1.x`
+branch, which takes fixes only. Builds of the `master` branch since then are **2.0.0-alpha.0** (the
+monitor shows **2.0.0**): the start of v2, the 640 × 360 remaster with more detailed art and longer
+zones, which plays exactly like 1.0.0 until its steps change it. Version 1.0.0 is the **release
+candidate** 1.0.0-rc.1, checked from end to end ([release-candidate.md](release-candidate.md)), plus
+the third milestone ([What changed lately](#what-changed-lately)); the candidate was built on
+version 0.1.0, the end of the first milestone, and the steps of the second: the difficulties, extra ships and continues, then the colour-blind bullet colours and
 points for cancelled bullets, then the **weapon types** and the WEAPON SELECT screen, then four
 kinds of **Options**, five **shields**, the **Option Hunter** that steals Options and the rare
 **blue capsule**, then the **second ship, the MANTA**, with its colour items, its growing
@@ -950,7 +954,15 @@ ship may move in four directions only; the game is designed to be fully playable
 
 ### What changed lately
 
-**New in this build: the game is tuned to the measured remote and monitors.** The input probe was
+**Released: version 1.0.0 (2026-10-16), and v2 begins.** Nothing changed in the game: 1.0.0 is the
+build this page describes, tagged `v1.0.0` and kept on the `v1.x` branch, whose builds since then
+are **1.0.1-dev** (the monitor shows **1.0.1**) and take fixes only. Builds of `master` are
+**2.0.0-alpha.0** (the monitor shows **2.0.0**): v2, the 640 × 360 remaster, which still plays
+exactly like 1.0.0 until its steps change it. A monitor with a 2.0.0 build installed may refuse a
+1.0.N build of the same app — remove Shmup Cup first
+([install-on-tv.md](install-on-tv.md#removing-an-app)).
+
+Before that, **the game is tuned to the measured remote and monitors.** The input probe was
 run on both Smart Monitor M7s on 2026-09-15 and the game was retuned to what it found. Nothing in
 the game itself plays differently, but the TV feels different:
 

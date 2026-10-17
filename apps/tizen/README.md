@@ -14,11 +14,12 @@ pnpm --filter @shmup/tizen tizen:watch     # M2-17: dev build + live reload to t
 pnpm --filter @shmup/tizen dev        # desktop-browser preview (no window.tizen: no EXIT, Back never exits)
 ```
 
-The package version is **1.0.0-rc.1** (M2-18, the v1.0 release candidate); the widget version in
-`public/config.xml` is **1.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget
-takes the numeric core of the package's version, kept in step by a test
-(`test/config-xml/config-xml-consistency.test.ts`). Never write a pre-release tag into
-`config.xml`.
+The package version is **2.0.0-alpha.0** on `master` (v2 in development; the released v1, 1.0.0, is
+maintained on the `v1.x` branch as `1.0.1-dev`); the widget version in `public/config.xml` is
+**2.0.0** — Tizen accepts `major.minor.patch` numbers only, so the widget takes the numeric core of
+the package's version, kept in step by a test (`test/config-xml/config-xml-consistency.test.ts`).
+Never write a pre-release tag into `config.xml`. v2 installs as an update of the same widget id, so
+its widget version stays above v1's.
 
 `public/icon.png` (512 × 423) is drawn by `pnpm store:assets` (repo root, M2-18) from the
 placeholder art — the logo above the two ships; regenerate it after changing those sprites
@@ -92,8 +93,9 @@ developer guide: [`docs/dev/debug-and-replays.md`](../../docs/dev/debug-and-repl
   keys registered once, only on the unlock);
 - `test/build/tizen-build.test.ts` also asserts that the release bundle holds no debug code, and
   `test/config-xml/` that `config.xml`'s version is the package's numeric core (M1-19; since
-  M2-18 `1.0.0` for `1.0.0-rc.1`); since M2-18 the build test also asserts that the release
-  bundle holds no cross-engine determinism check (`__shmupDeterminism`).
+  M2-18 `1.0.0` for `1.0.0-rc.1`, since R0-01 `2.0.0` for `2.0.0-alpha.0`); since M2-18 the build
+  test also asserts that the release bundle holds no cross-engine determinism check
+  (`__shmupDeterminism`).
 
 `pnpm test:e2e` (repo root) builds `build:test` and opens `dist/index.html` via `file://` in
 headless Chromium (since M1-19 the smoke also checks the locked debug tools and their unlock), like the TV runs the widget, and checks it boots to the title, that the remote's OK

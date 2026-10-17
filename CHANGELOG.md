@@ -1,8 +1,10 @@
 # Changelog
 
 All notable changes to Shmup Cup. The project follows [Semantic Versioning](https://semver.org/);
-versions before 1.0 may change anything between minor releases. Development follows the step plan in
-[`shmup_plan.md`](docs/old/shmup_plan.md); progress is tracked in [`shmup_progress.md`](docs/old/shmup_progress.md).
+versions before 1.0 may change anything between minor releases. v1 was developed by the step plan in
+[`shmup_plan.md`](docs/old/shmup_plan.md), its progress tracked in
+[`shmup_progress.md`](docs/old/shmup_progress.md); v2 follows
+[`plan_resolution.md`](plan_resolution.md), whose §17 tracks its progress.
 
 ## [Unreleased] — v2
 
@@ -17,6 +19,35 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
 - **Version lines** (R0-01): every package manifest says `2.0.0-alpha.0`; the TV manifests, which
   take numbers only, say `2.0.0` (the Tizen `config.xml`, the webOS `appinfo.json`), so v2 installs
   as an update of the same apps. CI runs on every push to `master` and to `v1.x`.
+- **The maintenance line** (R0-01): `v1.x` carries `1.0.1-dev` (`1.0.1` on the TVs) and names the
+  tagged section `[1.0.0]` in its own CHANGELOG. Its commits that only it needs — those versions,
+  its notes about the maintenance branch — reached `master` as `git merge -s ours` merges, which
+  take nothing into `master`'s tree
+  ([build-test-deploy.md](docs/dev/build-test-deploy.md#release-lines)).
+
+### Documentation
+
+- **The v2 art bible** (R3-01, [`art-bible-v2.md`](docs/dev/art-bible-v2.md)): the style the owner
+  picked in the art round's round 1, measured on the winners; the universal rules (native 640×360
+  density, no runtime scaling, side views, the 1-px outline, light from the top-left, binary alpha
+  and its listed exceptions, dither); the palette rules (the playfield value budget for backdrops
+  on VA panels, enemy bullets first, the reserved palette-cycle ramps); the size and frame table of
+  every category, with the frame counts the engine cannot show yet and the R4 step that changes
+  each; who makes what; and the key-colour rules the ingest tool implements.
+- **AI art licences** (R3-05, part 1, [`art-provenance.md`](docs/dev/art-provenance.md)): every
+  model of the art round, its licence read for commercial use of its outputs, what an AI-assisted
+  asset must record, and the owner's open decisions — FLUX.2-dev and FLUX.1-dev, which made 85 of
+  the 91 winners, are on **hold** until Black Forest Labs answers or a commercial licence covers
+  them. [`store-submission.md`](docs/client/store-submission.md#ai-content-disclosure-every-store)
+  gains each store's AI-content disclosure, and `test/integration/art-prompt-names.test.ts` checks
+  the prompt library for game, studio, character and artist names.
+
+### Testing
+
+- **The v1 baseline** (for R2-02): `test/golden/v1-baseline*.test.ts` records every shipped stage
+  at 384×216 — event and camera ticks, every enemy's spawn, entry and first on-screen tick, the
+  fastest bullet, the bosses' timings — in `test/fixtures/v1-baseline/` (37 scenarios), so the ×1.5
+  port can be compared with v1; the files are re-checked byte for byte until R2-01 flips the frame.
 
 ## [1.0.0] — 2026-10-16
 
