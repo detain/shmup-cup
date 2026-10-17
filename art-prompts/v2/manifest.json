@@ -4149,7 +4149,7 @@
     {
       "id": "video/zone-montage-a",
       "category": "video-60-promo",
-      "label": "Zone Montage A (Zones 1–5) — slow arc-pan along the planet rim (text-to-video, ~5 s)",
+      "label": "Zone montage — azure-verge: slow arc-pan along the planet rim (text-to-video, ~5 s)",
       "kind": "video",
       "mode": "t2v",
       "source": "video/60-promo/zone-montage-a.json#zone-azure-verge-orbit-v1",
@@ -4203,18 +4203,12 @@
           "seed": 26001
         }
       },
-      "takes": [
-        "video/60-promo/zone-montage-a.json#zone-brine-nebula-gassea-v2",
-        "video/60-promo/zone-montage-a.json#zone-dune-expanse-twinsuns-v3",
-        "video/60-promo/zone-montage-a.json#zone-magma-deep-cone-v4",
-        "video/60-promo/zone-montage-a.json#zone-tempest-ridge-timelapse-v5"
-      ],
       "followups": []
     },
     {
       "id": "video/zone-montage-b",
       "category": "video-60-promo",
-      "label": "Zone Montage B (Zones 6–9 + the Neon Dimension) — living walls breathing around the corridor (text-to-video, ~5 s)",
+      "label": "Zone montage — cell-vault: living walls breathing around the corridor (text-to-video, ~5 s)",
       "kind": "video",
       "mode": "t2v",
       "source": "video/60-promo/zone-montage-b.json#zone-cell-vault-pulse-v1",
@@ -4268,12 +4262,6 @@
           "seed": 26006
         }
       },
-      "takes": [
-        "video/60-promo/zone-montage-b.json#zone-prism-labyrinth-refraction-v2",
-        "video/60-promo/zone-montage-b.json#zone-iron-citadel-chase-v3",
-        "video/60-promo/zone-montage-b.json#zone-abyssal-throne-glow-v4",
-        "video/60-promo/zone-montage-b.json#zone-neon-dimension-rush-v5"
-      ],
       "followups": []
     },
     {
@@ -4401,6 +4389,478 @@
         "video/70-ambient-loops/checkerboard-rush.json#loop-checkerboard-rush-ship-v2"
       ],
       "followups": []
+    },
+    {
+      "id": "video/zone-brine-nebula-gassea",
+      "category": "video-60-promo",
+      "label": "Zone montage — brine-nebula: glide over undulating raster wave clouds (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-a.json#zone-brine-nebula-gassea-v2",
+      "prompt": "Camera glides low and steady forward over an ocean of teal luminous gas clouds rolling in slow wavy bands, mist sheets peeling upward off the wave crests, a small manta-shaped craft surfing the ridgeline rightward leaving twin amber ribbons, deeper violet vapor layers drifting slowly below, dreamy undersea-nebula light, pixel-art arcade look, continuous forward motion, no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic clouds",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26002
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26002
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 26002
+        }
+      },
+      "followups": []
+    },
+    {
+      "id": "video/zone-dune-expanse-twinsuns",
+      "category": "video-60-promo",
+      "label": "Zone montage — dune-expanse: wide lateral pan, heat haze, worm eruption (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-a.json#zone-dune-expanse-twinsuns-v3",
+      "prompt": "Retro 16-bit pixel-art widescreen desert vista at high noon under twin suns: the camera pans right across an endless dune expanse rippling with visible heat haze, two round suns — one amber one pale gold — hanging stacked low in a washed violet sky, long double shadows from jagged rock fins, then a colossal segmented sand worm of bold-outlined plated segments erupts diagonally from a dune crest ahead of the pan, throwing a towering fan of backlit sand grains that scatter through the sun glow, a tiny blue fighter banking sharply away from the eruption column, sparkling cascade of falling grit settling as the pan continues past, harsh beautiful menace, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic worm, one sun, night",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26003
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26003
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 26003
+        }
+      },
+      "followups": []
+    },
+    {
+      "id": "video/zone-magma-deep-cone",
+      "category": "video-60-promo",
+      "label": "Zone montage — magma-deep: push in on an erupting lava cone (image-to-video from the winning stage still, ~5 s)",
+      "kind": "video",
+      "mode": "i2v",
+      "source": "video/60-promo/zone-montage-a.json#zone-magma-deep-cone-v4",
+      "prompt": "The camera pushes slowly in toward a erupting magma cone in a vast lava cavern, fountains of bright orange pixel lava cycling up and falling in glowing arcs, the lava lake below heaving and pulsing with rising heat blobs that burst into sparks, long shadow of a passing fighter sliding across the molten surface, embers streaming upward past the lens, rock ceiling glistening with reflected firelight, building intensity as the next eruption loads and fires, continuous single take, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "model": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26004
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26004
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 26004
+        }
+      },
+      "followups": [],
+      "waitsFor": "stage/magma-deep"
+    },
+    {
+      "id": "video/zone-tempest-ridge-timelapse",
+      "category": "video-60-promo",
+      "label": "Zone montage — tempest-ridge: storm timelapse over jagged snow ridges (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-a.json#zone-tempest-ridge-timelapse-v5",
+      "prompt": "Retro 16-bit pixel-art timelapse over a jagged snow ridge in a permanent storm: dark violet-black thunderheads roll and churn leftward fast across the sky in accelerated drift, slanting rain streaking diagonally across the whole frame, bolts flashing inside the cloud volumes and momentarily lighting the ridge teeth in hard blue-white, snow blasting off the peaks in horizontal veils where the gusts hit, a tiny fighter silhouette tracing steadily rightward along the ridge line far below, the storm swallowing it as the clouds descend, cold violent grandeur, bold outlines, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, calm sky, sunshine, realistic clouds",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26005
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26005
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 26005
+        }
+      },
+      "followups": []
+    },
+    {
+      "id": "video/zone-prism-labyrinth-refraction",
+      "category": "video-60-promo",
+      "label": "Zone montage — prism-labyrinth: rotating crystal light through cube stacks (image-to-video from the winning stage still, ~5 s)",
+      "kind": "video",
+      "mode": "i2v",
+      "source": "video/60-promo/zone-montage-b.json#zone-prism-labyrinth-refraction-v2",
+      "prompt": "Light begins to move: long rainbow refraction streaks sweep slowly across the faceted crystal corridor walls, glinting into bright star-flares where beams meet the edges, the floating cube stacks rotate a quarter-turn in a staggered cascade down the hall, each face catching a different spectral color, sparkles drift like glitter in still air, camera tracks gently forward through the labyrinth as the refraction builds to a shimmering peak then settles, jeweled cold beauty, continuous single take, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "model": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26007
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26007
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3,
+          "seed": 26007
+        }
+      },
+      "followups": [],
+      "waitsFor": "stage/prism-labyrinth"
+    },
+    {
+      "id": "video/zone-iron-citadel-chase",
+      "category": "video-60-promo",
+      "label": "Zone montage — iron-citadel: amber lights run down the rivet corridor (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-b.json#zone-iron-citadel-chase-v3",
+      "prompt": "Dark riveted steel industrial corridor in pixel-art arcade style, a sequence of amber wall lights chasing rapidly rightward down the hall as if something is moving through it, shadows swinging past the lit panels, steam jets bursting sideways in rhythm, the camera tracking right with the light chase at matching speed, sparks showering from ceiling cables, tense mechanical atmosphere, single continuous shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, organic walls, bright daylight",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26008
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26008
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3,
+          "seed": 26008
+        }
+      },
+      "followups": []
+    },
+    {
+      "id": "video/zone-abyssal-throne-glow",
+      "category": "video-60-promo",
+      "label": "Zone montage — abyssal-throne: descending past bioluminescent spires (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-b.json#zone-abyssal-throne-glow-v4",
+      "prompt": "Widescreen retro 16-bit pixel-art descent into a lightless abyss: the camera sinks slowly downward past towering black spires furred with glowing bioluminescent filaments in teal, violet and faint pink, clouds of luminous plankton specks swirling in the current and parting around the lens, a lone angler-lure gold light blinking somewhere far below in the deep dark, long ghostly shadows of enormous unseen shapes sliding across the spires and gone, suffocating quiet beauty, bold thin outlines against near-black navy, faint CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, bright scene, clear water",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26009
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26009
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3,
+          "seed": 26009
+        }
+      },
+      "followups": []
+    },
+    {
+      "id": "video/zone-neon-dimension-rush",
+      "category": "video-60-promo",
+      "label": "Zone montage — high-speed dimension: Mode-7 checkerboard sprint to the horizon (image-to-video from the winning stage still, ~5 s)",
+      "kind": "video",
+      "mode": "i2v",
+      "source": "video/60-promo/zone-montage-b.json#zone-neon-dimension-rush-v5",
+      "prompt": "The camera hurtles forward just above an infinite neon-violet checkerboard plane racing toward a hard horizon line, grid squares whipping past in perfect even perspective, streaks of magenta and cyan light trailing along the floor seams toward the vanishing point, the distant horizon pulsing with a stack of horizontal glow bands, the dart fighter skimming low rightward across the grid leaving a bent orange ribbon, the whole plane seeming to accelerate as light trails lengthen into lines, synth-dimension velocity, retro pixel crispness with scanlines, continuous forward rush, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "model": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26010
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26010
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3,
+          "seed": 26010
+        }
+      },
+      "followups": [],
+      "waitsFor": "stage/high-speed-dimension"
     }
   ],
   "updatedAt": "2026-10-17T01:45:25.720Z"
