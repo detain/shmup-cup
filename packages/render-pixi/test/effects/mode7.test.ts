@@ -14,7 +14,16 @@
  *   512 × 256 render target and ran a pass whose input the shader never read);
  * - `destroy` frees the mesh and the shader.
  */
-import { PLAYFIELD_H, PLAYFIELD_W, PLAYFIELD_Y, cosB, sinB, type Mode7View } from '@shmup/core';
+import {
+  FRAME_H,
+  FRAME_W,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  PLAYFIELD_Y,
+  cosB,
+  sinB,
+  type Mode7View,
+} from '@shmup/core';
 import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 import { Container } from 'pixi.js';
 import type * as Pixi from 'pixi.js';
@@ -137,6 +146,7 @@ function fakeShader(): FakeShader {
     setTile(x, y, w, h, pw, ph) {
       fake.tiles.push([x, y, w, h, pw, ph]);
     },
+    setPage() {},
     destroy() {
       fake.destroyed++;
     },
@@ -286,7 +296,7 @@ describe('render-pixi/effects Mode-7 floor (M3-02)', () => {
     floor.bind(view(), [0, 0, 8, 8, 64, 64]);
     expect(layer.children[0]).toBe(floor.view);
     expect(layer.children[1]).toBe(other);
-    expect(sizes).toEqual([[PLAYFIELD_W, PLAYFIELD_Y * 2 + PLAYFIELD_H]]);
+    expect(sizes).toEqual([[FRAME_W, FRAME_H]]);
     const sized = createMode7Floor({ layer, width: 320, height: 180, createShader: sizing });
     sized.bind(view(), [0, 0, 8, 8, 64, 64]);
     expect(sizes.at(-1)).toEqual([320, 180]);
@@ -300,6 +310,7 @@ describe('render-pixi/effects Mode-7 floor (M3-02)', () => {
       mesh: new Container() as unknown as Mode7Shader['mesh'],
       apply() {},
       setTile() {},
+      setPage() {},
       destroy() {},
     };
     const floor = createMode7Floor({ layer: new Container(), createShader: () => quiet });

@@ -20,6 +20,7 @@
  * @module
  */
 import {
+  FRAME_W,
   LAYER_COUNT,
   LayerId,
   PLAYFIELD_Y,
@@ -106,7 +107,7 @@ interface LayerEffectUniforms {
  * data, and must not be multiplied into the colour channels). WebGL only: the filter has no WebGPU
  * program (the renderer is WebGL1-first, shmup_tech.md §2.2).
  *
- * @param rows - Offset table rows (default 216, the frame height).
+ * @param rows - Offset table rows (default {@link LAYER_EFFECT_ROWS}, the frame height).
  * @returns The filter.
  *
  * @example
@@ -176,9 +177,9 @@ export function createLayerEffectFilter(rows: number = LAYER_EFFECT_ROWS): Layer
 export interface LayerEffectsOptions {
   /** The renderer's layer containers, indexed by `LayerId` (`LayerStack.layers`). */
   readonly layers: readonly Container[];
-  /** Frame width in pixels (default 384). */
+  /** Frame width in pixels (default core's `FRAME_W`). */
   readonly width?: number;
-  /** Frame height in pixels = offset table rows (default 216). */
+  /** Frame height in pixels = offset table rows (default {@link LAYER_EFFECT_ROWS}, `FRAME_H`). */
   readonly height?: number;
   /** Frame row of playfield row 0 (default `PLAYFIELD_Y`). */
   readonly offsetY?: number;
@@ -261,7 +262,7 @@ export interface LayerEffects {
  */
 export function createLayerEffects(options: LayerEffectsOptions): LayerEffects {
   const layers = options.layers;
-  const width = options.width ?? 384;
+  const width = options.width ?? FRAME_W;
   const rows = options.height ?? LAYER_EFFECT_ROWS;
   const offsetY = options.offsetY ?? PLAYFIELD_Y;
   const createFilter = options.createFilter ?? createLayerEffectFilter;

@@ -14,7 +14,7 @@
  * - writing a frame's uniforms on the **real** shader allocates nothing (`mode7.test.ts` measures
  *   the floor around a do-nothing fake, so the uniform writes themselves were never measured).
  */
-import { PLAYFIELD_H, PLAYFIELD_W, PLAYFIELD_Y, cosB, sinB, type Mode7View } from '@shmup/core';
+import { FRAME_H, FRAME_W, PLAYFIELD_Y, cosB, sinB, type Mode7View } from '@shmup/core';
 import type * as Pixi from 'pixi.js';
 import { describe, expect, it, vi } from 'vitest';
 import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
@@ -95,16 +95,25 @@ function view(over: Partial<Mode7View> = {}): Mode7View {
  * @param height - Frame height.
  * @returns The shader.
  */
-function shader(width = PLAYFIELD_W, height = PLAYFIELD_Y * 2 + PLAYFIELD_H): Mode7Shader {
+function shader(width = FRAME_W, height = FRAME_H): Mode7Shader {
   return createMode7Shader({} as Pixi.TextureSource, width, height);
 }
 
 describe('render-pixi/effects the Mode-7 mesh (M3-02d)', () => {
   it('draws the frame as two triangles indexed by a Uint32Array, hidden until it is needed', () => {
     const mode7 = shader();
-    // The quad is the whole 384×216 frame at the origin: it is drawn on `BG_MID`, in frame
-    // coordinates, so the fragment's `vScreen` row *is* the frame row the affine matrix needs.
-    expect([...mode7.mesh.geometry.positions]).toEqual([0, 0, 384, 0, 384, 216, 0, 216]);
+    // The quad is the whole frame at the origin: it is drawn on `BG_MID`, in frame coordinates,
+    // so the fragment's `vScreen` row *is* the frame row the affine matrix needs.
+    expect([...mode7.mesh.geometry.positions]).toEqual([
+      0,
+      0,
+      FRAME_W,
+      0,
+      FRAME_W,
+      FRAME_H,
+      0,
+      FRAME_H,
+    ]);
     expect([...mode7.mesh.geometry.uvs]).toEqual([0, 0, 1, 0, 1, 1, 0, 1]);
     // Same `OES_element_index_uint` dependency as the pass-2 blit (see `crt-blit.test.ts`).
     expect(mode7.mesh.geometry.indices).toBeInstanceOf(Uint32Array);

@@ -18,6 +18,7 @@
  *   `apply`, which runs over the whole display, still writes the old display-centred pair;
  * - a size of zero never divides by zero, and writing a frame's uniforms allocates nothing.
  */
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import { Texture, type UniformGroup } from 'pixi.js';
 import type * as Pixi from 'pixi.js';
 import { describe, expect, it, vi } from 'vitest';
@@ -77,13 +78,22 @@ function uniformsOf(blit: CrtBlitHandle): BlitUniforms {
 describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   it('is a frame-sized quad carrying the CRT program over the frame texture', () => {
     const before = programs.length;
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     expect(programs.slice(before)).toEqual([
       { vertex: EFFECT_MESH_VERTEX, fragment: CRT_FRAGMENT, name: 'shmup-crt-blit' },
     ]);
     // The quad is the frame's own size at the origin: the renderer places it, the geometry never
     // does (a fractional vertex would blur the picture — decision D19).
-    expect([...blit.mesh.geometry.positions]).toEqual([0, 0, 384, 0, 384, 216, 0, 216]);
+    expect([...blit.mesh.geometry.positions]).toEqual([
+      0,
+      0,
+      FRAME_W,
+      0,
+      FRAME_W,
+      FRAME_H,
+      0,
+      FRAME_H,
+    ]);
     expect([...blit.mesh.geometry.uvs]).toEqual([0, 0, 1, 0, 1, 1, 0, 1]);
     expect(blit.mesh.texture).toBe(Texture.WHITE);
     expect(blit.mesh.shader?.resources.uTexture).toBe(Texture.WHITE.source);
@@ -98,7 +108,7 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
     // (the TV's Mali-G51 included), but this is the dependency the fold introduced — if it ever
     // has to go, these two meshes are what change. `test/e2e/mode7.spec.ts` asserts the real
     // browser context offers it.
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const indices = blit.mesh.geometry.indices;
     expect(indices).toBeInstanceOf(Uint32Array);
     expect([...indices]).toEqual([0, 1, 2, 0, 2, 3]);
@@ -108,13 +118,13 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   });
 
   it('clamps sampling to the frame texture’s own half texel', () => {
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const clamp = [...uniformsOf(blit).uInputClamp];
     // A `Float32Array`, so the check is to single precision.
-    expect(clamp[0]).toBeCloseTo(0.5 / 384, 7);
-    expect(clamp[1]).toBeCloseTo(0.5 / 216, 7);
-    expect(clamp[2]).toBeCloseTo(383.5 / 384, 7);
-    expect(clamp[3]).toBeCloseTo(215.5 / 216, 7);
+    expect(clamp[0]).toBeCloseTo(0.5 / FRAME_W, 7);
+    expect(clamp[1]).toBeCloseTo(0.5 / FRAME_H, 7);
+    expect(clamp[2]).toBeCloseTo((FRAME_W - 0.5) / FRAME_W, 7);
+    expect(clamp[3]).toBeCloseTo((FRAME_H - 0.5) / FRAME_H, 7);
     // Every component stays inside the texture, low edge below high edge.
     expect(clamp[0]).toBeGreaterThan(0);
     expect(clamp[2]).toBeLessThan(1);
@@ -140,7 +150,7 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   });
 
   it('starts with the look off, so `off` is a plain upscale and not a second program', () => {
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const u = uniformsOf(blit);
     expect([u.uScan, u.uMask, u.uVignette]).toEqual([0, 0, 0]);
     expect(u.uLinePitch).toBe(CRT_MIN_PITCH);
@@ -151,7 +161,7 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   });
 
   it('centres the look on the picture, not on the display (the vec4 uHalf of M3-02d)', () => {
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const u = uniformsOf(blit);
     // Filling a 1920×1080 display: centre and half-size are the same numbers as before M3-02d.
     blit.apply(CRT_LOOKS[2], 5, 0, 0, 1920, 1080);
@@ -183,7 +193,7 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   });
 
   it('clamps the scanline pitch and never lets a zero-sized picture divide by zero', () => {
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const u = uniformsOf(blit);
     for (const pitch of [Number.NaN, -1, 0, 1, CRT_MIN_PITCH - 0.5]) {
       blit.apply(CRT_LOOKS[1], pitch, 0, 0, 384, 216);
@@ -199,7 +209,7 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   });
 
   it('writes a frame’s uniforms without allocating (plan §1.3)', () => {
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const { bytes } = measureHeapGrowth(
       (i) => {
         blit.apply(CRT_LOOKS[i & 1 ? 2 : 1], 3 + (i & 3), i & 7, i & 3, 1152, 648);
@@ -212,7 +222,7 @@ describe('render-pixi/effects the pass-2 blit (M3-02d)', () => {
   });
 
   it('destroy() frees the mesh, its geometry and its shader', () => {
-    const blit = createCrtBlit(Texture.WHITE, 384, 216);
+    const blit = createCrtBlit(Texture.WHITE, FRAME_W, FRAME_H);
     const geometry = blit.mesh.geometry;
     const shader = blit.mesh.shader;
     blit.destroy();

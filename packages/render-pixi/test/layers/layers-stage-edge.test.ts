@@ -10,7 +10,13 @@
  *   the width / offsetY options, re-resolve their sprite id on every sync, and syncs with a
  *   moving vertical pan allocate nothing.
  */
-import { LayerId, PLAYFIELD_Y, type ParallaxView, type TerrainView } from '@shmup/core';
+import {
+  LayerId,
+  PLAYFIELD_W,
+  PLAYFIELD_Y,
+  type ParallaxView,
+  type TerrainView,
+} from '@shmup/core';
 import type { Sprite } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
@@ -235,11 +241,12 @@ describe('render-pixi/layers parallax binding edge', () => {
   it('covers the whole playfield width for every offset and spacing', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
-    const spacings = [8, 13, 64, 100, 128, 383, 384, 1024];
+    // Around the playfield's width too: one pixel short of it, exactly it.
+    const spacings = [8, 13, 64, 100, 128, PLAYFIELD_W - 1, PLAYFIELD_W, 1024];
     const view = bands(spacings);
     const binding = createParallaxBinding({ atlas: a, tables, view });
     for (let b = 0; b < spacings.length; b++) {
-      expect(binding.containers[b].children).toHaveLength(Math.ceil(384 / spacings[b]) + 1);
+      expect(binding.containers[b].children).toHaveLength(Math.ceil(PLAYFIELD_W / spacings[b]) + 1);
     }
     for (let k = 0; k <= 64; k++) {
       for (let b = 0; b < spacings.length; b++) view.offsetX[b] = ((spacings[b] - 1e-9) * k) / 64;
@@ -251,7 +258,7 @@ describe('render-pixi/layers parallax binding edge', () => {
         expect(
           Math.max(...xs) + spacings[b],
           `band ${String(b)} k ${String(k)}`,
-        ).toBeGreaterThanOrEqual(384);
+        ).toBeGreaterThanOrEqual(PLAYFIELD_W);
         expect(container.x === Math.round(-view.offsetX[b])).toBe(true); // (±0 alike)
       }
     }

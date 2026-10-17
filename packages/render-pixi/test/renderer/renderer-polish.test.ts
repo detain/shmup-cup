@@ -7,6 +7,8 @@
  * allocates nothing more than the existing guard allows.
  */
 import {
+  FRAME_H,
+  FRAME_W,
   FlashKind,
   LayerId,
   PLAYFIELD_Y,
@@ -215,11 +217,18 @@ describe('render-pixi/renderer scale modes (plan M2-08)', () => {
     renderer.render(frame);
     const quad = (presented.screen as Pixi.Container).children[2] as Pixi.Sprite;
     expect(renderer.scaleMode).toBe('integer');
-    expect([quad.scale.x, quad.scale.y, quad.x, quad.y]).toEqual([2, 2, 116, 84]);
+    // The default frame's integer scale on the 1000×600 display (×2 at 384×216, ×1 at 640×360).
+    const s = Math.min(Math.floor(1000 / FRAME_W), Math.floor(600 / FRAME_H));
+    expect([quad.scale.x, quad.scale.y, quad.x, quad.y]).toEqual([
+      s,
+      s,
+      Math.floor((1000 - FRAME_W * s) / 2),
+      Math.floor((600 - FRAME_H * s) / 2),
+    ]);
     renderer.setScaleMode('stretch');
     expect(renderer.viewport.mode).toBe('stretch');
-    expect(quad.scale.x).toBeCloseTo(1000 / 384, 10);
-    expect(quad.scale.y).toBeCloseTo(600 / 216, 10);
+    expect(quad.scale.x).toBeCloseTo(1000 / FRAME_W, 10);
+    expect(quad.scale.y).toBeCloseTo(600 / FRAME_H, 10);
     expect([quad.x, quad.y]).toEqual([0, 0]);
     renderer.setScaleMode('fit');
     expect([renderer.viewport.width, renderer.viewport.height]).toEqual([1000, 563]);

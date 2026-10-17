@@ -47,7 +47,7 @@
  * | Uniform | Meaning |
  * |---|---|
  * | `uRasterTable` | the offset table: a 1 × `uRows` RGBA8 texture, one texel per frame row (see `encodeRasterTable`) |
- * | `uRows` | its height (216) |
+ * | `uRows` | its height (the frame's, {@link LAYER_EFFECT_ROWS}) |
  * | `uRaster` | 1 when the table applies, 0 to skip the lookup |
  * | `uRowShift` | the layer's vertical screen offset (screen shake), subtracted from the row |
  * | `uCycleCount` | colours cycled (0 … 8) |
@@ -59,9 +59,10 @@
  *
  * @module
  */
+import { FRAME_H } from '@shmup/core';
 
-/** Rows of the frame the offset table covers (the 384×216 frame's height). */
-export const LAYER_EFFECT_ROWS = 216;
+/** Rows of the frame the offset table covers: the frame's height (core's `FRAME_H`). */
+export const LAYER_EFFECT_ROWS = FRAME_H;
 
 /** Most colours one layer's palette cycles may use (the shader's uniform arrays). */
 export const LAYER_EFFECT_MAX_COLORS = 8;

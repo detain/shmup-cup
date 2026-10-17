@@ -120,6 +120,8 @@
  */
 import {
   ASPECT_MODES,
+  FRAME_H,
+  FRAME_W,
   LayerId,
   defineModule,
   type AspectMode,
@@ -231,8 +233,9 @@ export const PANEL_ALPHA = 0.35;
  * @param atlas - The atlas, or `null`.
  * @param names - The world's sprite name table, or `null`.
  * @param spriteId - Index of the floor's sprite in that table (-1 = none).
- * @returns `[x, y, w, h, pageWidth, pageHeight]` of the sprite's frame 0, or `null` when the atlas
- *   does not have it.
+ * @returns `[x, y, w, h, pageWidth, pageHeight, page]` of the sprite's frame 0 — `page` is the
+ *   index of its atlas page, whose source the floor must bind (plan R1-02) — or `null` when the
+ *   atlas does not have it.
  */
 function mode7TileRect(
   atlas: Atlas | null,
@@ -249,7 +252,7 @@ function mode7TileRect(
   if (info === undefined) return null;
   const page = manifest.pages[info.p] as { w: number; h: number } | undefined;
   if (page === undefined) return null;
-  return [info.x, info.y, info.w, info.h, page.w, page.h];
+  return [info.x, info.y, info.w, info.h, page.w, page.h, info.p];
 }
 
 /** Camera of frames without a world (particles and popups then use frame pixels). */
@@ -282,9 +285,9 @@ export interface PixiRendererOptions {
   readonly displayWidth: number;
   /** Initial display height in CSS pixels. */
   readonly displayHeight: number;
-  /** Internal frame width (default 384). */
+  /** Internal frame width (default core's `FRAME_W`). */
   readonly width?: number;
-  /** Internal frame height (default 216). */
+  /** Internal frame height (default core's `FRAME_H`). */
   readonly height?: number;
   /** WebGL version to try first (default 1; Pixi falls back automatically). */
   readonly preferWebGLVersion?: 1 | 2;
@@ -373,8 +376,8 @@ export interface PixiRendererOptions {
   readonly createCrtFilter?: () => CrtFilterHandle;
   /**
    * Creates the Mode-7 floor's mesh and shader (default the `effects` module's
-   * `createMode7Shader` on the atlas's first page; without an atlas there is none). Tests pass a
-   * fake.
+   * `createMode7Shader`, which the floor then points at the page its tile lives on — `setPage` at
+   * bind time; without an atlas there is none). Tests pass a fake.
    *
    * @param width - The frame's width in pixels.
    * @param height - The frame's height in pixels.
@@ -742,8 +745,8 @@ const countGroupRebuilds = (group: SceneRenderGroup): number => {
  * ```
  */
 export async function createPixiRenderer(options: PixiRendererOptions): Promise<PixiRenderer> {
-  const width = options.width ?? 384;
-  const height = options.height ?? 216;
+  const width = options.width ?? FRAME_W;
+  const height = options.height ?? FRAME_H;
   const atlas = options.atlas ?? null;
 
   const renderer = new WebGLRenderer();
@@ -881,7 +884,8 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
     height,
     createFilter: options.createLayerEffectFilter,
   });
-  // The Mode-7 floor (M3-02; a mesh since M3-02d) at the bottom of the mid-background layer.
+  // The Mode-7 floor (M3-02; a mesh since M3-02d) at the bottom of the mid-background layer. Its
+  // shader starts on page 0; `bindWorld` points it at the page of the bound floor's tile.
   const mode7: Mode7Floor = createMode7Floor({
     layer: layers.layers[LayerId.BgMid],
     width,
@@ -1139,9 +1143,11 @@ export async function createPixiRenderer(options: PixiRendererOptions): Promise<
       }
       // Presentation effects (M2-08) — also without an atlas (they only filter layers).
       layerEffects.bind(world.effects ?? null);
-      // The Mode-7 floor (M3-02): it samples the atlas page the tile sits on.
+      // The Mode-7 floor (M3-02): it samples the atlas page the tile sits on — that page's source
+      // is bound here, at bind time (R1-02; it used to be page 0 whatever the tile's page).
       const floor = world.effects?.mode7 ?? null;
-      mode7.bind(floor, floor === null ? null : mode7TileRect(atlas, spriteNames, floor.spriteId));
+      const tile = floor === null ? null : mode7TileRect(atlas, spriteNames, floor.spriteId);
+      mode7.bind(floor, tile, atlas === null || tile === null ? null : atlas.pages[tile[6]]);
     }
     boundWorld = world;
   };

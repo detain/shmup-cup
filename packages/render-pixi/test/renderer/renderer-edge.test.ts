@@ -9,6 +9,9 @@
  * reaching an unchanged HUD list, a font the atlas lacks, and shake rounding.
  */
 import {
+  FRAME_H,
+  FRAME_W,
+  HUD_BAR_HEIGHT,
   LayerId,
   SpriteFlag,
   createDrawList,
@@ -150,7 +153,7 @@ function animate(frame: TestFrame, player: SpriteBatch, bullets: SpriteBatch, ti
     pushSprite(bullets, i * 9, tick % 200, 1, 0, i % 5 === 0 ? SpriteFlag.Hidden : 0);
   }
   frame.hud.clear();
-  frame.hud.rect(0, 0, 384, 8, 0x1d2a5c);
+  frame.hud.rect(0, 0, FRAME_W, HUD_BAR_HEIGHT, 0x1d2a5c);
   frame.hud.number(tick * 10, 20, 0, 8);
   frame.hud.text(0, 4, 0);
   frame.screen.shakeX = (tick % 5) - 2;
@@ -278,7 +281,12 @@ describe('render-pixi/renderer scene structure (edge)', () => {
       true,
     );
     // It covers the frame plus a margin, so shaking never uncovers an edge.
-    expect([flash.x, flash.y, flash.scale.x, flash.scale.y]).toEqual([-32, -32, 448, 280]);
+    expect([flash.x, flash.y, flash.scale.x, flash.scale.y]).toEqual([
+      -32,
+      -32,
+      FRAME_W + 64,
+      FRAME_H + 64,
+    ]);
     const ui = renderer.layers.layers[LayerId.Ui].children;
     expect(ui).toHaveLength(2);
     expect((ui[0] as Pixi.Sprite).tint).toBe(0x000000);

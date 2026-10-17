@@ -115,6 +115,7 @@ describe('integration: the high-speed dimension stage (M3-02)', () => {
       setTile(...rect: number[]) {
         tiles.push(rect);
       },
+      setPage() {},
       destroy() {},
     };
     const mode7 = createMode7Floor({

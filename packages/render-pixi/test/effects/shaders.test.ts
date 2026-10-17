@@ -3,6 +3,7 @@
  * itself rejects the GLSL ES 3.00 constructs Pixi's own filters are written in — so a later edit
  * that slips one in fails here, before the browser smoke test compiles the real thing.
  */
+import { FRAME_H } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   CRT_FRAGMENT,
@@ -45,7 +46,8 @@ describe('render-pixi/effects layer shader sources', () => {
     expect(LAYER_EFFECT_FRAGMENT).toContain(`uCycleFrom[${LAYER_EFFECT_MAX_COLORS}]`);
     expect(LAYER_EFFECT_FRAGMENT).toContain(`uCycleTo[${LAYER_EFFECT_MAX_COLORS}]`);
     expect(LAYER_EFFECT_FRAGMENT).toContain(`i < ${LAYER_EFFECT_MAX_COLORS}`);
-    expect(LAYER_EFFECT_ROWS).toBe(216);
+    // One offset-table row per frame row (R1-02: from core's frame height).
+    expect(LAYER_EFFECT_ROWS).toBe(FRAME_H);
     // The varyings agree between the stages.
     for (const varying of ['vTextureCoord', 'vScreen']) {
       expect(LAYER_EFFECT_VERTEX).toContain(`varying vec2 ${varying};`);

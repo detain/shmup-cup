@@ -32,7 +32,7 @@ const HAZE_RATIO = 2.3;
 
 /** One offset and wrap period per frame row. */
 export interface RasterTable {
-  /** Rows (216 for the 384×216 frame). */
+  /** Rows (the frame's height, {@link LAYER_EFFECT_ROWS}, by default). */
   readonly rows: number;
   /** Horizontal offset of each row in pixels (the layer is sampled that far to the right). */
   readonly offset: Float64Array;
@@ -43,7 +43,7 @@ export interface RasterTable {
 /**
  * Allocates an empty table (load time).
  *
- * @param rows - Rows (default 216, the frame height).
+ * @param rows - Rows (default {@link LAYER_EFFECT_ROWS}, the frame height).
  * @returns The table, every row 0.
  * @throws {RangeError} When `rows` is not a positive integer.
  *

@@ -12,6 +12,8 @@ import {
   GRID_MARGIN,
   LaserPhase,
   LayerId,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
   PLAYFIELD_Y,
   createDebugCounters,
   createDebugFlags,
@@ -263,13 +265,13 @@ describe('render-pixi/debug outlines', () => {
     const expected: number[] = [];
     for (let k = 0; k <= w.grid.cols; k++) {
       const sx = Math.floor(originX + k * cell - w.camera.x);
-      if (sx >= 0 && sx < 384) expected.push(sx);
+      if (sx >= 0 && sx < PLAYFIELD_W) expected.push(sx);
     }
     expect(expected.length).toBeGreaterThan(10);
     expect(lines.filter((line) => line.w === 1).map((line) => line.x)).toEqual(expected);
     for (const line of lines) {
       expect(line.y).toBeGreaterThanOrEqual(PLAYFIELD_Y);
-      expect(line.y + line.h).toBeLessThanOrEqual(PLAYFIELD_Y + 200);
+      expect(line.y + line.h).toBeLessThanOrEqual(PLAYFIELD_Y + PLAYFIELD_H);
     }
     expect(total(lists)).toBe(lines.length); // only the grid
   });

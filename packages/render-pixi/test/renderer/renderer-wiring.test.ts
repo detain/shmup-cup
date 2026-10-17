@@ -1,12 +1,16 @@
 /**
  * Tests createPixiRenderer() with PixiJS's WebGL classes replaced by recording fakes
  * (headless Node has no WebGL; containers and sprites stay real). Checks the contract from
- * shmup_tech.md §2.2 — WebGL1 preferred, no antialiasing, a 384×216 nearest-neighbour render
- * texture, a two-pass frame and integer-scaled letterboxing — and the render contract of plan
- * §3.4: world batches bound once per WorldView into their layers, HUD / UI draw lists, screen
- * shake, flash and dim, sprite name tables, and the optional calibration pattern.
+ * shmup_tech.md §2.2 — WebGL1 preferred, no antialiasing, a frame-sized (core's `FRAME_W` ×
+ * `FRAME_H`) nearest-neighbour render texture, a two-pass frame and integer-scaled letterboxing —
+ * and the render contract of plan §3.4: world batches bound once per WorldView into their layers,
+ * HUD / UI draw lists, screen shake, flash and dim, sprite name tables, and the optional
+ * calibration pattern.
  */
 import {
+  FRAME_H,
+  FRAME_W,
+  HUD_BAR_HEIGHT,
   LayerId,
   PLAYFIELD_Y,
   createDrawList,
@@ -215,11 +219,11 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     expect(renderer.webGLVersion).toBe(2);
   });
 
-  it('renders into a 384x216 nearest-neighbour render texture by default', async () => {
+  it('renders into a FRAME_W × FRAME_H nearest-neighbour render texture by default', async () => {
     const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
-    expect([renderer.width, renderer.height]).toEqual([384, 216]);
+    expect([renderer.width, renderer.height]).toEqual([FRAME_W, FRAME_H]);
     expect(record.textureOptions).toEqual([
-      { width: 384, height: 216, resolution: 1, antialias: false, scaleMode: 'nearest' },
+      { width: FRAME_W, height: FRAME_H, resolution: 1, antialias: false, scaleMode: 'nearest' },
     ]);
   });
 
@@ -293,7 +297,7 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
     const [background, layers] = renderer.scene.children as [Pixi.Sprite, Pixi.Container];
     expect(background.tint).toBe(PALETTE.space);
-    expect([background.scale.x, background.scale.y]).toEqual([384, 216]);
+    expect([background.scale.x, background.scale.y]).toEqual([FRAME_W, FRAME_H]);
     expect(layers).toBe(renderer.layers.root);
   });
 
@@ -319,7 +323,15 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
     renderer.resize(1280.9, 720.4);
     expect(record.resizes).toEqual([[1280, 720]]);
-    expect(renderer.viewport).toMatchObject({ scale: 3, x: 64, y: 36, width: 1152, height: 648 });
+    // The default frame's integer scale on 720p: ×3 with a letterbox at 384×216, ×2 at 640×360.
+    const scale = Math.min(Math.floor(1280 / FRAME_W), Math.floor(720 / FRAME_H));
+    expect(renderer.viewport).toMatchObject({
+      scale,
+      x: (1280 - FRAME_W * scale) / 2,
+      y: (720 - FRAME_H * scale) / 2,
+      width: FRAME_W * scale,
+      height: FRAME_H * scale,
+    });
     renderer.resize(0, -5);
     expect(record.resizes[1]).toEqual([1, 1]);
     expect(renderer.viewport.scale).toBe(1);
@@ -363,6 +375,7 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
         mesh: new Container() as unknown as Mode7Shader['mesh'],
         apply: () => {},
         setTile: () => {},
+        setPage: () => {},
         destroy: () => {
           mode7Destroyed++;
         },
@@ -536,7 +549,7 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
       glyphCapacity: 8,
     });
     const frame = frameOf(0);
-    frame.hud.rect(0, 0, 384, 8, 0x123456);
+    frame.hud.rect(0, 0, FRAME_W, HUD_BAR_HEIGHT, 0x123456);
     frame.ui.setString(0, 'AB');
     frame.ui.text(0, 10, 10);
     renderer.render(frame);
@@ -803,13 +816,15 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     // Dim, never bright: the panels sit behind the frame and cannot wash the picture out.
     expect(left.tint).toBe(PALETTE.space);
     expect(left.alpha).toBeLessThan(1);
-    expect(renderer.viewport.scale).toBe(3);
+    expect(renderer.viewport.scale).toBe(
+      Math.min(Math.floor(1440 / FRAME_W), Math.floor(1080 / FRAME_H)),
+    );
     expect(renderer.viewport.x).toBe((1920 - renderer.viewport.width) / 2);
     // Ultra-wide on a 16:9 display: a cabinet window, no panels, the whole frame kept.
     renderer.setAspect('wide');
     expect([renderer.panels.panelLeft, renderer.panels.panelRight]).toEqual([0, 0]);
     expect([left.visible, right.visible]).toEqual([false, false]);
-    expect(renderer.viewport.width / renderer.viewport.scaleX).toBe(384);
+    expect(renderer.viewport.width / renderer.viewport.scaleX).toBe(FRAME_W);
     // Back to normal, and setting the same mode twice changes nothing.
     renderer.setAspect('normal');
     renderer.setAspect('normal');
@@ -888,16 +903,19 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
   it('binds a stage Mode-7 floor to the mid-background layer and follows the camera', async () => {
     // The real filter needs a WebGL context to pick its precision, so the floor gets a fake one.
     const tiles: number[][] = [];
+    const pages: Pixi.TextureSource[] = [];
     const origins: Array<[number, number]> = [];
+    const atlas = testAtlas();
     const renderer = await createPixiRenderer({
       canvas,
       displayWidth: 1920,
       displayHeight: 1080,
-      atlas: testAtlas(),
+      atlas,
       createMode7Shader: () => ({
         mesh: new Container() as unknown as Mode7Shader['mesh'],
         apply: (_view: Mode7View, u: number, v: number) => origins.push([u, v]),
         setTile: (...rect: number[]) => tiles.push(rect),
+        setPage: (page: Pixi.TextureSource) => pages.push(page),
         destroy: () => {},
       }),
     });
@@ -942,9 +960,12 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     expect(renderer.mode7.active).toBe(true);
     expect(renderer.mode7.view?.visible).toBe(true);
     expect(renderer.layers.layers[LayerId.BgMid].filters ?? []).toEqual([]);
-    // The tile came from the atlas (`bg/tile` is 16×16 on the 32×16 second page) and the plane's
-    // origin from the camera.
+    // The tile came from the atlas (`bg/tile` is 16×16 on the 32×16 second page), the shader
+    // samples that second page (R1-02: it used to be bound to page 0 whatever the tile's page),
+    // and the plane's origin came from the camera.
     expect(tiles).toEqual([[0, 0, 16, 16, 32, 16]]);
+    expect(pages).toHaveLength(1);
+    expect(pages[0]).toBe(atlas.pages[1]);
     expect(origins.at(-1)).toEqual([60, 0]);
     // A world without one unbinds it again.
     renderer.bindWorld(world);

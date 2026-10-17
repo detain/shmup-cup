@@ -204,6 +204,7 @@ describe('render-pixi/renderer boot warm-up (M3-02d)', () => {
         mesh: mode7Mesh as unknown as Mode7Shader['mesh'],
         apply: () => {},
         setTile: () => {},
+        setPage: () => {},
         destroy: () => {},
       }),
     });

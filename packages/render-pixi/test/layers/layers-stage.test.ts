@@ -1,6 +1,8 @@
 /**
  * Terrain and parallax drawing (plan M1-07), headless over the test atlas: the terrain grid's
- * size (49 × 26 for 8-px tiles, capped at the map's rows), tile textures and positions, the
+ * size (one tile more than the playfield each way — 49 × 26 for 8-px tiles at 384×216 — capped at
+ * the map's rows; R1-02 derives the counts from core's `PLAYFIELD_W` / `PLAYFIELD_H`), tile
+ * textures and positions, the
  * ring update (nothing re-textured inside one tile, one column / row when the camera crosses a
  * tile edge, everything after a jump or new sprite tables), hidden empty / undrawn / off-map
  * cells, pixel agreement with the sprite bindings at half-pixel camera positions, the parallax
@@ -8,6 +10,8 @@
  */
 import {
   LayerId,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
   PLAYFIELD_Y,
   createSpriteBatch,
   pushSprite,
@@ -24,6 +28,18 @@ import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
 /** Sprite names: 0 = ships/a (the "tileset", 3 frames), 1 = bg/tile, 2 = unknown. */
 const NAMES = ['ships/a', 'bg/tile', 'ghost'];
+
+/**
+ * The fixture maps' tile size — their own, not core's `TILE_SIZE` (the binding reads the view's;
+ * `layers-stage-tile12.test.ts` covers 12-px tiles).
+ */
+const TILE = 8;
+
+/** Slot columns of a terrain binding over the playfield: one tile more than it (49 today). */
+const COLS = Math.ceil(PLAYFIELD_W / TILE) + 1;
+
+/** Slot rows of a terrain binding over a map taller than the playfield (26 today). */
+const ROWS = Math.ceil(PLAYFIELD_H / TILE) + 1;
 
 /** @returns The test atlas (warnings silenced). */
 function atlas(): Atlas {
@@ -48,7 +64,7 @@ function terrainView(
   const tiles = new Uint8Array(cols * rows);
   for (const [c, r, id] of cells) tiles[r * cols + c] = id;
   return {
-    tileSize: 8,
+    tileSize: TILE,
     cols,
     rows,
     tiles,
@@ -72,10 +88,15 @@ describe('render-pixi/layers terrain binding', () => {
   it('preallocates one tile more than the playfield in each direction, capped at the map', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
-    const big = createTerrainBinding({ atlas: a, tables, view: terrainView(500, 25, []) });
-    expect([big.columns, big.rows, big.container.children.length]).toEqual([49, 25, 49 * 25]);
-    const tall = createTerrainBinding({ atlas: a, tables, view: terrainView(500, 40, []) });
-    expect([tall.columns, tall.rows]).toEqual([49, 26]);
+    // A map one row shorter than the slots (25 rows today) keeps its own height.
+    const big = createTerrainBinding({ atlas: a, tables, view: terrainView(500, ROWS - 1, []) });
+    expect([big.columns, big.rows, big.container.children.length]).toEqual([
+      COLS,
+      ROWS - 1,
+      COLS * (ROWS - 1),
+    ]);
+    const tall = createTerrainBinding({ atlas: a, tables, view: terrainView(500, ROWS + 14, []) });
+    expect([tall.columns, tall.rows]).toEqual([COLS, ROWS]);
     const short = createTerrainBinding({ atlas: a, tables, view: terrainView(10, 3, []) });
     expect(short.rows).toBe(3);
   });
@@ -102,27 +123,29 @@ describe('render-pixi/layers terrain binding', () => {
     ]);
     expect(slotSprite(binding, 1, 24).visible).toBe(false); // empty
     expect(slotSprite(binding, 5, 20).visible).toBe(false); // undrawn (frame -1)
-    expect(binding.updatedCells).toBe(49 * 25);
+    expect(binding.updatedCells).toBe(COLS * Math.min(view.rows, ROWS));
   });
 
   it('re-textures nothing inside a tile and one column / row when crossing a tile edge', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
-    const view = terrainView(400, 40, [[49, 3, 2]]);
+    // A map taller than the slots (40 rows today), so a row can scroll in.
+    const view = terrainView(400, ROWS + 14, [[COLS, 3, 2]]);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     binding.sync(view, { x: 0, y: 0 });
     binding.sync(view, { x: 7.5, y: 0 });
     expect(binding.updatedCells).toBe(0);
-    binding.sync(view, { x: 8, y: 0 }); // column 49 scrolls in, into the slot column 0 left
-    expect(binding.updatedCells).toBe(26);
-    expect(slotSprite(binding, 49, 3).visible).toBe(true);
-    expect(slotSprite(binding, 49, 3).x).toBe(49 * 8 - 8);
+    // Column COLS (49 today) scrolls in, into the slot column 0 left.
+    binding.sync(view, { x: 8, y: 0 });
+    expect(binding.updatedCells).toBe(ROWS);
+    expect(slotSprite(binding, COLS, 3).visible).toBe(true);
+    expect(slotSprite(binding, COLS, 3).x).toBe(COLS * TILE - 8);
     expect(binding.container.x).toBe(-8);
     binding.sync(view, { x: 8, y: 9 }); // one row scrolls in at the bottom
-    expect(binding.updatedCells).toBe(49);
+    expect(binding.updatedCells).toBe(COLS);
     expect(binding.container.y).toBe(PLAYFIELD_Y - 9);
     binding.sync(view, { x: 1000, y: 0 }); // a jump: everything
-    expect(binding.updatedCells).toBe(49 * 26);
+    expect(binding.updatedCells).toBe(COLS * ROWS);
   });
 
   it('refreshes every cell when the sprite tables are replaced', () => {
@@ -134,7 +157,7 @@ describe('render-pixi/layers terrain binding', () => {
     const swapped = createSpriteTables(a, ['bg/tile']);
     tables.base = swapped.base;
     binding.sync(view, { x: 0, y: 0 });
-    expect(binding.updatedCells).toBe(49 * 25);
+    expect(binding.updatedCells).toBe(COLS * Math.min(view.rows, ROWS));
     expect(slotSprite(binding, 2, 2).texture).toBe(a.textures[swapped.base[0]]);
   });
 

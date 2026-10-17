@@ -22,6 +22,12 @@
  * (load time); a frame only writes numbers, and entering or leaving the floor's range flips one
  * `visible` flag.
  *
+ * **Atlas pages.** The shader samples the floor tile straight out of its atlas page, so binding a
+ * view also binds **the page the tile lives on** ({@link Mode7Shader.setPage}; plan R1-02 — until
+ * then the renderer always bound page 0, harmless with one page and wrong as soon as R3-04's
+ * atlas has more). Swapping the page swaps a resource of the shader's bind group, so it happens
+ * at bind time only, never per frame.
+ *
  * **Hardware.** Pixi's `MeshGeometry` forces `Uint32Array` indices, so the floor needs WebGL1's
  * `OES_element_index_uint` (Pixi requests it; universal in practice — see `./shaders.ts`
  * {@link EFFECT_MESH_VERTEX}).
@@ -35,6 +41,8 @@
  */
 import {
   ANGLE_UNITS,
+  FRAME_H,
+  FRAME_W,
   PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
@@ -105,6 +113,16 @@ export interface Mode7Shader {
    * @param pageHeight - The atlas page's height.
    */
   setTile(x: number, y: number, w: number, h: number, pageWidth: number, pageHeight: number): void;
+  /**
+   * Points the shader at the atlas page the tile lives on; the same page again changes nothing.
+   *
+   * @remarks
+   * Bind time only ({@link Mode7Floor.bind}): a new page is a new resource in the shader's bind
+   * group, which Pixi then rebuilds — never call it per frame.
+   *
+   * @param page - The atlas page's texture source.
+   */
+  setPage(page: TextureSource): void;
   /** Destroys the mesh, its geometry and its shader. */
   destroy(): void;
 }
@@ -118,15 +136,17 @@ export const MODE7_MAX_SCALE = 4096;
 /**
  * Creates the Mode-7 mesh and its shader (load time).
  *
- * @param tile - The atlas page the floor tile lives on (the shader samples it directly).
+ * @param tile - The atlas page the shader samples until {@link Mode7Shader.setPage} names the
+ *   page of the bound floor's tile (the shader samples it directly).
  * @param width - Frame width in pixels (the quad's size).
  * @param height - Frame height in pixels.
  * @returns The mesh and its uniforms.
  *
  * @example
  * ```ts
- * const mode7 = createMode7Shader(atlas.pages[0], 384, 216);
+ * const mode7 = createMode7Shader(atlas.pages[0], FRAME_W, FRAME_H);
  * mode7.setTile(0, 0, 32, 32, 1024, 1024);
+ * mode7.setPage(atlas.pages[1]); // the tile's own page
  * layer.addChildAt(mode7.mesh, 0);
  * ```
  */
@@ -192,6 +212,10 @@ export function createMode7Shader(tile: TextureSource, width: number, height: nu
       rect[2] = w2 / pageWidth;
       rect[3] = h2 / pageHeight;
     },
+    setPage(page) {
+      const resources = shader.resources as { uTile: unknown };
+      if (resources.uTile !== page) resources.uTile = page;
+    },
     destroy() {
       mesh.destroy();
       geometry.destroy();
@@ -204,9 +228,9 @@ export function createMode7Shader(tile: TextureSource, width: number, height: nu
 export interface Mode7FloorOptions {
   /** The layer the floor is drawn on (normally `BG_MID`). */
   readonly layer: Container;
-  /** Frame width in pixels (default {@link PLAYFIELD_W}). */
+  /** Frame width in pixels (default core's `FRAME_W`). */
   readonly width?: number;
-  /** Frame height in pixels (default 216). */
+  /** Frame height in pixels (default core's `FRAME_H`). */
   readonly height?: number;
   /**
    * Creates the mesh and its shader (default {@link createMode7Shader} on the atlas page; tests
@@ -232,9 +256,12 @@ export interface Mode7Floor {
    *
    * @param view - The stage's floor, or `null` for none.
    * @param tile - The tile's atlas rectangle `[x, y, w, h, pageWidth, pageHeight]`, or `null`
-   *   when the atlas has no such sprite (the floor is then never drawn).
+   *   when the atlas has no such sprite (the floor is then never drawn). Entries past the sixth
+   *   are ignored.
+   * @param page - The atlas page the tile lives on ({@link Mode7Shader.setPage}), or `null`
+   *   (default) to keep the shader's page — the renderer always passes it.
    */
-  bind(view: Mode7View | null, tile: readonly number[] | null): void;
+  bind(view: Mode7View | null, tile: readonly number[] | null, page?: TextureSource | null): void;
   /**
    * Updates the floor for one frame: the plane's origin from the camera, the mesh drawn only
    * while the camera is inside `[from, to)`. Never allocates.
@@ -255,13 +282,13 @@ export interface Mode7Floor {
  * @example
  * ```ts
  * const floor = createMode7Floor({ layer: layers.layers[LayerId.BgMid] });
- * floor.bind(world.effects?.mode7 ?? null, atlas.tileRect('bg/grid-floor'));
+ * floor.bind(world.effects?.mode7 ?? null, tileRect, atlas.pages[tilePage]);
  * floor.sync(frame.world.camera);
  * ```
  */
 export function createMode7Floor(options: Mode7FloorOptions): Mode7Floor {
-  const width = options.width ?? PLAYFIELD_W;
-  const height = options.height ?? PLAYFIELD_Y * 2 + PLAYFIELD_H;
+  const width = options.width ?? FRAME_W;
+  const height = options.height ?? FRAME_H;
   const make = options.createShader ?? null;
   let shader: Mode7Shader | null = null;
   let mesh: Container | null = null;
@@ -277,7 +304,7 @@ export function createMode7Floor(options: Mode7FloorOptions): Mode7Floor {
     get active(): boolean {
       return active;
     },
-    bind(next, tile) {
+    bind(next, tile, page = null) {
       view = next !== null && next.spriteId >= 0 && tile !== null ? next : null;
       if (view === null) {
         if (mesh !== null) mesh.visible = false;
@@ -292,6 +319,7 @@ export function createMode7Floor(options: Mode7FloorOptions): Mode7Floor {
       }
       if (shader !== null && tile !== null) {
         shader.setTile(tile[0], tile[1], tile[2], tile[3], tile[4], tile[5]);
+        if (page !== null) shader.setPage(page);
       }
       active = false;
       if (mesh !== null) mesh.visible = false;

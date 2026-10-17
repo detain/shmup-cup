@@ -263,7 +263,7 @@ describe('render-pixi/effects raster tables: waves and hazes (edges)', () => {
     addRasterEffect(a, haze, 13, cam(0));
     addRasterEffect(b, haze, 13 + 40 * 77, cam(0));
     addRasterEffect(c, haze, 13 - 40 * 5, cam(0));
-    for (let i = 0; i < 216; i++) {
+    for (let i = 0; i < LAYER_EFFECT_ROWS; i++) {
       expect(b.offset[i]).toBeCloseTo(a.offset[i], 9);
       expect(c.offset[i]).toBeCloseTo(a.offset[i], 9);
     }

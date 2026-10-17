@@ -53,11 +53,14 @@
 import {
   EnemyFlag,
   EnemyState,
+  GLYPH_W,
   GRID_MARGIN,
   ITEM_RADIUS,
+  LINE_H,
   LaserPhase,
   LayerId,
   PLAYFIELD_H,
+  PLAYFIELD_W,
   PLAYFIELD_Y,
   TextAlign,
   createDrawList,
@@ -677,11 +680,11 @@ export function createRenderTargetMeter(pool: TexturePoolClass = TexturePool): R
   };
 }
 
-/** Width of one panel character (the pixel font is monospaced, 6 px). */
-const COL = 6;
+/** Width of one panel character (the pixel font is monospaced: core's `GLYPH_W`). */
+const COL = GLYPH_W;
 
-/** Height of one panel line (the pixel font's line height). */
-const ROW = 10;
+/** Height of one panel line (the pixel font's line height: core's `LINE_H`). */
+const ROW = LINE_H;
 
 /** Screen x of the panel. */
 const PANEL_X = 2;
@@ -1035,7 +1038,14 @@ function outline(list: DrawList, color: number): void {
   let bottom = (Math.ceil(scratch.y1 - scratch.camY) + PLAYFIELD_Y - 1) | 0;
   if (right < left) right = left;
   if (bottom < top) bottom = top;
-  if (right < 0 || left >= 384 || bottom < PLAYFIELD_Y || top >= PLAYFIELD_Y + PLAYFIELD_H) return;
+  if (
+    right < 0 ||
+    left >= PLAYFIELD_W ||
+    bottom < PLAYFIELD_Y ||
+    top >= PLAYFIELD_Y + PLAYFIELD_H
+  ) {
+    return;
+  }
   const w = right - left + 1;
   const h = bottom - top + 1;
   list.rect(left, top, w, 1, color);
@@ -1080,12 +1090,14 @@ export function buildDebugOutlines(
     const originY = (Math.floor(camera.y) - GRID_MARGIN) | 0;
     for (let k = 0; k <= world.grid.cols; k++) {
       const sx = Math.floor(originX + k * cell - scratch.camX) | 0;
-      if (sx >= 0 && sx < 384) grid.rect(sx, PLAYFIELD_Y, 1, PLAYFIELD_H, OUTLINE_COLORS.grid, 90);
+      if (sx >= 0 && sx < PLAYFIELD_W) {
+        grid.rect(sx, PLAYFIELD_Y, 1, PLAYFIELD_H, OUTLINE_COLORS.grid, 90);
+      }
     }
     for (let k = 0; k <= world.grid.rows; k++) {
       const sy = (Math.floor(originY + k * cell - scratch.camY) + PLAYFIELD_Y) | 0;
       if (sy >= PLAYFIELD_Y && sy < PLAYFIELD_Y + PLAYFIELD_H) {
-        grid.rect(0, sy, 384, 1, OUTLINE_COLORS.grid, 90);
+        grid.rect(0, sy, PLAYFIELD_W, 1, OUTLINE_COLORS.grid, 90);
       }
     }
   }

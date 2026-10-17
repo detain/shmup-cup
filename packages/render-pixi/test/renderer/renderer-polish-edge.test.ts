@@ -16,6 +16,8 @@
  *   mid-fade, an unknown flash kind (an overlay).
  */
 import {
+  FRAME_H,
+  FRAME_W,
   FlashKind,
   LayerId,
   PLAYFIELD_Y,
@@ -487,9 +489,11 @@ describe('render-pixi/renderer interpolation: history resets (plan M2-08)', () =
 describe('render-pixi/renderer scale modes: edges (plan M2-08)', () => {
   it('switches the mode before the first frame and keeps it through broken resizes', async () => {
     const { renderer } = await makeRenderer({ displayWidth: 1920, displayHeight: 1080 });
-    expect(renderer.viewport).toMatchObject({ mode: 'integer', scale: 5, x: 0, y: 0 });
+    // The default frame fills 1080p at an integer scale (×5 at 384×216, ×3 at 640×360).
+    const scale = Math.min(Math.floor(1920 / FRAME_W), Math.floor(1080 / FRAME_H));
+    expect(renderer.viewport).toMatchObject({ mode: 'integer', scale, x: 0, y: 0 });
     renderer.setScaleMode('fit');
-    expect(renderer.viewport).toMatchObject({ mode: 'fit', width: 1920, height: 1080, scale: 5 });
+    expect(renderer.viewport).toMatchObject({ mode: 'fit', width: 1920, height: 1080, scale });
     for (const [w, h] of [
       [0, 0],
       [-10, 300],
@@ -505,7 +509,7 @@ describe('render-pixi/renderer scale modes: edges (plan M2-08)', () => {
       }
       expect(vp.width).toBeGreaterThanOrEqual(1);
     }
-    // 640×360 (floored): the frame at 5/3.
+    // 640×360 (floored): the 16:9 frame fitted to it exactly.
     expect(renderer.viewport).toMatchObject({ width: 640, height: 360, x: 0, y: 0 });
     renderer.setScaleMode('stretch');
     expect(renderer.viewport).toMatchObject({ mode: 'stretch', width: 640, height: 360 });
@@ -516,12 +520,15 @@ describe('render-pixi/renderer scale modes: edges (plan M2-08)', () => {
     const { frame } = shipWorld();
     renderer.render(frame);
     const quad = (presented.screen as Pixi.Container).children[2] as Pixi.Sprite;
-    expect(renderer.viewport).toMatchObject({ scale: 1, x: -42, y: -8, width: 384, height: 216 });
-    expect([quad.x, quad.y, quad.scale.x]).toEqual([-42, -8, 1]);
+    // Integer mode never goes below ×1: the frame is cropped, centred on the display.
+    const x = Math.floor((300 - FRAME_W) / 2);
+    const y = Math.floor((200 - FRAME_H) / 2);
+    expect(renderer.viewport).toMatchObject({ scale: 1, x, y, width: FRAME_W, height: FRAME_H });
+    expect([quad.x, quad.y, quad.scale.x]).toEqual([x, y, 1]);
     renderer.setScaleMode('fit');
     expect(renderer.viewport).toMatchObject({ width: 300, height: 169, x: 0, y: 15 });
-    expect(quad.scale.x).toBeCloseTo(300 / 384, 10);
-    expect(quad.scale.y).toBeCloseTo(169 / 216, 10);
+    expect(quad.scale.x).toBeCloseTo(300 / FRAME_W, 10);
+    expect(quad.scale.y).toBeCloseTo(169 / FRAME_H, 10);
   });
 });
 

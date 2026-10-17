@@ -3,7 +3,7 @@
  * row by row from the core's sine table, their camera ranges, and the RGBA8 encoding the layer
  * shader decodes — exact values, edges, and no allocation per frame.
  */
-import { PLAYFIELD_Y, RasterKind, sinB, type RasterEffectView } from '@shmup/core';
+import { FRAME_H, PLAYFIELD_Y, RasterKind, sinB, type RasterEffectView } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   RASTER_MAX_OFFSET,
@@ -50,9 +50,9 @@ function effect(fields: Partial<RasterEffectView>): RasterEffectView {
 }
 
 describe('render-pixi/effects raster tables', () => {
-  it('creates an empty 216-row table and refuses a bad size', () => {
+  it('creates an empty table of one row per frame row and refuses a bad size', () => {
     const table = createRasterTable();
-    expect(table.rows).toBe(216);
+    expect(table.rows).toBe(FRAME_H);
     expect([...table.offset].every((v) => v === 0)).toBe(true);
     expect(createRasterTable(4).offset.length).toBe(4);
     expect(() => createRasterTable(0)).toThrow(RangeError);
@@ -87,11 +87,11 @@ describe('render-pixi/effects raster tables', () => {
     const d = createRasterTable();
     addRasterEffect(c, moving, 7, cam(0));
     addRasterEffect(d, moving, 7 + 30 * 1000, cam(0));
-    for (let i = 0; i < 216; i++) expect(d.offset[i]).toBeCloseTo(c.offset[i], 9);
+    for (let i = 0; i < FRAME_H; i++) expect(d.offset[i]).toBeCloseTo(c.offset[i], 9);
     // Negative ticks wrap the same way.
     const e = createRasterTable();
     addRasterEffect(e, moving, 7 - 30 * 3, cam(0));
-    for (let i = 0; i < 216; i++) expect(e.offset[i]).toBeCloseTo(c.offset[i], 9);
+    for (let i = 0; i < FRAME_H; i++) expect(e.offset[i]).toBeCloseTo(c.offset[i], 9);
   });
 
   it('adds a heat haze that stays within its amplitude and shimmers over time', () => {
@@ -108,7 +108,7 @@ describe('render-pixi/effects raster tables', () => {
     addRasterEffect(a, haze, 0, cam(0));
     addRasterEffect(b, haze, 5, cam(0));
     let moved = 0;
-    for (let i = 0; i < 216; i++) {
+    for (let i = 0; i < FRAME_H; i++) {
       expect(Math.abs(a.offset[i])).toBeLessThanOrEqual(2 + 1e-9);
       if (Math.abs(a.offset[i] - b.offset[i]) > 0.25) moved++;
     }

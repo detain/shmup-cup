@@ -79,6 +79,7 @@ function fakeShader(): FakeShader {
     setTile(x, y, w, h, pw, ph) {
       fake.tiles.push([x, y, w, h, pw, ph]);
     },
+    setPage() {},
     destroy() {
       fake.destroyed++;
     },
