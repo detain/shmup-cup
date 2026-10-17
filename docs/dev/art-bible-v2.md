@@ -151,7 +151,8 @@ unit of any asset is one frame pixel.
 ### 3.2 No scaling or rotation at runtime
 
 The renderer places sprites at whole-pixel positions (`roundPixels`) and never scales or rotates
-them; only whole-pixel mirrors (`FlipX`, `FlipY`) are used. So:
+them; only whole-pixel mirrors (`FlipX`, `FlipY`) are used — laser beams are the one exception
+(below). So:
 
 - **Anything that turns has heading frames:** turrets 16 headings, oval and needle bullets
   8 directional frames, the ship's bank frames instead of a tilt.
@@ -162,6 +163,14 @@ them; only whole-pixel mirrors (`FlipX`, `FlipY`) are used. So:
 - The only distortions on screen are presentation effects on whole layers — raster effects (whole-
   pixel row shifts), the Mode-7 floor's perspective, the CRT pass on the output and the player's
   fit / stretch scale modes. None of them is a licence to draw at another density.
+
+**The exception: laser beams.** The laser binding (`render-pixi` `layers`, `createLaserBinding`)
+rotates each beam to the laser's angle — any angle, nearest sampling — and stretches it along its
+length (`scale.x = length / frame width`, from the middle of its left end). A beam wider than its
+widest frame also has that frame scaled across. So a beam frame is a band that is **uniform along
+x** — no detail along the length, where the stretch and the rotation would show — and symmetric
+about its centre row. The warning line before a beam is the atlas's 1-px white pixel, tinted and
+stretched the same way; it has no art. Everything else follows the rule above.
 
 ### 3.3 View and facing
 
@@ -229,11 +238,28 @@ them; only whole-pixel mirrors (`FlipX`, `FlipY`) are used. So:
 Binary is the default, and translucency is a choice the recipe states. v1's generators use partial
 alpha in several places; in v2 only these may:
 
-- **Additive sprites** — glow accents (R3-06), particles, the Mega Crash flash. They are authored on
-  black, where black adds nothing.
+- **Additive sprites** — exactly these: the sparks and sparkles (`fx/spark`, `fx/sparkle`: the
+  spark, clink, muzzle, shield-break, cancel and graze presets), the rings (`fx/ring`: the pickup
+  and black-hole presets), the glow accents (R3-06) and the Mega Crash flash (today the renderer's
+  additive full-frame quad, no art). They are authored on black, where black adds nothing, so they
+  carry no dark pixels and no outline.
 - **Translucent overlays and effects** — the force field's inner glow, Reduce's shimmer, bubble
   films, smoke. Their alpha comes from a black-key source (section 8).
 - **Haze and gas bands** on a backdrop layer the stage does not cycle — nebulae, heat haze, fog.
+
+**Additive drawing cannot darken:** an outline, grey smoke or a dark core vanish under it. Today a
+`content/fx` preset without a `blend` field is additive (`render-pixi` `particles`:
+`blend: preset.blend ?? 'add'`), and only `debris` says `"normal"` — so v1's explosions are drawn
+additively. In v2 these are **normal blend**, binary alpha except their translucent smoke:
+
+- **explosions** (`fx/explosion-*`) — R4-04 sets `"blend": "normal"` on `explosion.small`,
+  `explosion.medium`, `explosion.large` and `boss.chain` in `content/fx/particles.fx.json` and
+  re-checks the fx gallery e2e (`test/e2e/fx-gallery.spec.ts`, written for additive fireballs). If
+  R4-04 lays an additive flash preset over a blast, that flash joins the additive list above;
+- **debris** (`fx/debris`) — as today;
+- **the black hole** (`fx/black-hole`) — the black-hole system already draws it as a plain sprite
+  batch on the FX layer (`core` `blackhole`, `createSpriteBatch(LayerId.Fx, …)`), and its dark core
+  needs normal blending. It is keyed on green like any sprite, not on black.
 
 **Never translucent:**
 
@@ -312,12 +338,17 @@ usually darker.
 **Enemy bullets are always the brightest, highest-contrast thing on screen** (design pillar 2):
 
 - **The bullet look:** a **centred white core**, a **saturated body** in the bullet families — pink
-  `#ff5aa0`, red `#ff3a3a`, violet `#b84cff` — and a **dark rim**. The core makes a bullet read on
-  dark backgrounds, the rim on bright ones. No soft glow — it lowers contrast and smears on VA
-  panels.
+  `#ff5aa0`, red `#ff3a3a`, violet `#b84cff` (named `purple` in code and sprite names) — and a
+  **dark rim**. The core makes a bullet read on dark backgrounds, the rim on bright ones. No soft
+  glow — it lowers contrast and smears on VA panels.
 - **Reserved for enemy bullets and lasers:** a round or oval blob 5–17 px with a centred white core
   and a dark rim, in pink, red or violet. Nothing else may look like that:
-  - **items** carry their highlight off-centre (upper left) and are gold or their Direct colour;
+  - **items** differ by **shape and highlight, not hue**: a pill with end caps, or a glossy or
+    faceted orb with its outline; the highlight sits off-centre (upper left), never a centred white
+    core. They keep their own hues — the red-orange power capsule, the blue capsule (its colour is
+    what tells it apart in play), the gold bonus capsule, the green 1UP and the six Direct colours —
+    but no item body takes the bullet pink `#ff5aa0`, red `#ff3a3a` or violet `#b84cff` itself (the
+    Direct red and octagon orbs stay a deeper red, `#e02828` / `#d82020` today);
   - **enemies** may use bullet hues only as slits, lines, rings or cores inside their own body —
     never as a free-floating round blob;
   - **backdrops and terrain** never use saturated bullet hues in bullet-sized spots;
@@ -373,19 +404,48 @@ Palette cycling (`render-pixi` `palette`,
 every pixel of a layer that matches a ramp colour: the shader matches when **every channel is
 within 1.5/255** of it. The rules, from R3-03:
 
-- **A ramp's colours are reserved project-wide.** Only art meant to cycle may use them, and then
-  exactly — a cycled backdrop is quantised to its stage's `cycles` ramps, which its recipe names.
-  Reserving them everywhere is simpler and safer than tracking which layer cycles where, and costs
-  nothing: the margin is tiny.
-- **Every other pixel stays at least 3/255 away** from every reserved colour in at least one
-  channel (Chebyshev distance ≥ 3). That is twice the shader's tolerance. Ingest pushes such pixels
-  away, and R3-03's atlas scan fails on a near miss.
+- **Cycle art uses its ramp exactly** — a cycled backdrop is quantised to its stage's `cycles`
+  ramps, which its recipe names.
+- **On a cycled layer, every other pixel stays at least 3/255 away** from each of that layer's ramp
+  colours in at least one channel (Chebyshev distance ≥ 3) — twice the shader's tolerance. This is
+  what the screen needs, and what **R3-03's scan checks**: per stage, every sprite and tile drawn on
+  a layer the stage cycles, against that stage's ramps. Today's atlas passes it.
+- **New v2 art keeps the margin from every reserved ramp, on any layer.** From R3-02 on, everything
+  ingested or hand-made that is not cycle art stays ≥ 3/255 from all of today's ramps (and R5's), so
+  any layer can later be cycled and art can move between layers without a recheck. Ingest pushes
+  near pixels away and its report lists them; a project-wide scan, if R3-03 adds one, applies this
+  rule with the exemptions below.
 - **A ramp's own colours differ by at least 2 in some channel** — the loader rejects closer ones.
   A layer cycles at most 8 colours.
 - **Cycled regions are flat-coloured,** not dithered (a dithered ramp shimmers), and binary-alpha
   (3.6).
-- **Today's ramps** — `SEA_RAMP`, `BRINE_RAMP`, `MAGMA_RAMP`, `STORM_RAMP`, `VAULT_RAMP`,
-  `PRISM_RAMP` and the v1 stages' `cycles` — stay reserved until R5 re-authors them per zone.
+- **Today's ramps** — all eight shipped `cycles`, defined in `scripts/assets/procedural/` and
+  repeated in the stage files. They stay reserved until R5 re-authors them per zone:
+
+  | Ramp | Stage, cycled layer | Cycle art |
+  |---|---|---|
+  | `SEA_RAMP` | raster-range, mid | `bg/sea-swell` |
+  | `BRINE_RAMP` | zone B and brine-grotto, mid | `bg/brine-sea` |
+  | `MAGMA_RAMP` | zone D, mid | `bg/magma-lava` |
+  | `STORM_RAMP` | zone E, far | `bg/storm-clouds` |
+  | `VAULT_RAMP` | zone F, far | `bg/vault-membrane` |
+  | `PRISM_RAMP` | zone G and glimmer-cache, far | `bg/prism-facets` |
+  | `CITADEL_RAMP` | zone H, far | `bg/citadel-wall` |
+  | `ABYSS_RAMP` | zone I, far | `bg/abyss-murk` |
+
+- **Exempt: v1 and interim art that breaks the project-wide margin** but sits on no layer that
+  cycles that ramp. A scan of today's atlas (2026-10-17) finds exact ramp colours or near misses
+  (distance 1–2) in these; each leaves the list when R4 or R5 replaces it, and the list is empty by
+  the end of R5:
+
+  | Ramp | Sprites |
+  |---|---|
+  | `STORM_RAMP` | `hud/meter-slot`, `bosses/raid-hull`, `bosses/turret` (near); `bosses/steed-head` (exact) |
+  | `PRISM_RAMP` | `bosses/bulwark-hull`, `bulwark-wing-top`, `bulwark-wing-bottom`, `bulwark-emitter` (near); `bosses/hull-block` (exact) |
+  | `VAULT_RAMP` | `bosses/regent-eye` (near) |
+  | `ABYSS_RAMP` | `bg/brine-sea` (near; zone B and brine-grotto, which cycle BRINE); `bosses/king-lure`, `bosses/ark-turret`, `enemies/lumen-mote`, `enemies/abyss-turret` (exact) |
+  | `MAGMA_RAMP` | `bosses/bastion-arm` (exact) |
+  | `BRINE_RAMP` | `bg/brine-nebula` (near; zone B's far layer, the cycle is on mid), `bg/abyss-murk` (near; zone I, which cycles ABYSS) |
 
 ### 4.5 Variants derived from the art — never drawn by hand
 
@@ -393,7 +453,7 @@ within 1.5/255** of it. The rules, from R3-03:
 |---|---|---|
 | `<name>@flash` | white silhouette of the opaque pixels (binary alpha makes it exact) | as v1 |
 | `<ship>@p2` | a **palette map** in the ship's recipe — P1 ramp → P2 ramp: stripe blue → red-orange, canopy cyan → gold, engine orange → blue — replacing v1's channel swap | R3-03 |
-| `<bullet>@<palette>` | procedural, frame for frame, shape-coded cores (pink solid, red ring, violet dot) — `procedural/palettes.mjs` at the new sizes | R3-03 / R4-02 |
+| `<bullet>@<palette>` | procedural, frame for frame, shape-coded cores (`CORE_MARKS`: pink solid, red ring, purple dot) — `procedural/palettes.mjs` at the new sizes | R3-03 / R4-02 |
 
 ---
 
@@ -419,19 +479,19 @@ Frame counts below are **v2 (v1)**. A v1 count is from today's atlas.
 
 | Category | v1 | v2 size | v2 frames (v1) | Made by (section 6) |
 |---|---|---|---|---|
-| Player ships | KESTREL 16×9, MANTA 16×10 | **24×14**, 24×15 | **5** bank (3) | hand-pixelled |
-| Ship thruster | 6×3 | 9×5 | 4 (2) | hand-pixelled |
-| Options | 8×8 | 12×12 | 4 (2) | hand, or AI concept → heavy cleanup |
-| Shields | field 30×24, pod 8×8, Arm 26×18, Reduce 20×14 | 45×36, 12×12, 39×27, 30×21 | field 4 wear states × 1–2 (4); pod 4 (4); Arm 9 (9); Reduce 2 (2) | AI concept → heavy cleanup, or hand |
+| Player ships | KESTREL 16×9, MANTA 16×10 | **24×14**, 24×15 | **5** bank (3) † | hand-pixelled |
+| Ship thruster | 6×3 | 9×5 | 4 (2) † | hand-pixelled |
+| Options | 8×8 | 12×12 | 4 (2) † | hand, or AI concept → heavy cleanup |
+| Shields | field 30×24, pod 8×8, Arm 26×18, Reduce 20×14 | 45×36, 12×12, 39×27, 30×21 | field 4 wear states × 1–2 (4) †; pod 4 (4); Arm 9 (9); Reduce 2 (2) | AI concept → heavy cleanup, or hand |
 | Player shots (22) | 3–44 px | ×1.5 (5.3) | as v1, +1–2 for beams and discs | hand-pixelled |
 | Enemy bullets | round 7, oval 9, needle 11 | **11, 13, 17** | 1 / 8 / 8 headings (1 / 8 / 8) | procedural |
 | Lasers | beam 4×8, bend node 7×7 | beam 6×12, node 11×11 | beam **12** = one per band height (8); node 1 | procedural |
-| Items | capsules 12×8, Direct orbs 10×10, point 5×5 | 18×12, 15×15, 7×7 | **4** glint (2) | hand-pixelled |
+| Items | capsules 12×8, Direct orbs 10×10, point 5×5 | 18×12, 15×15, 7×7 | **4** glint (2) † | hand-pixelled |
 | Enemies | 6–40 px | 9–60 px, set pieces ≤ 96 (5.6) | **4–6** per animation (1–3) | by size (section 6) |
 | Boss parts | 10–30 px | 15–45 px (5.7) | cores and emitters 4 (2), turrets 16 headings | AI concept → cleanup |
 | Boss bodies | hulls 48–96 px | ≤ ≈ 200 tall, ≈ 420 wide; raids in sections | intact + 1–2 damage states | AI → ingest → cleanup |
 | Explosions | 16, 32, 48 | 24, 48, 72 | **12–16** (6–8) | AI concept → cleanup |
-| FX: particles, black hole | spark 5, debris 6, ring 9, black hole 32 | 7, 9, 13, 48 | 4–6 (3–4), black hole 8 (4) | procedural / AI concept |
+| FX: particles, black hole | spark 5, debris 6, ring 9, black hole 32 | 7, 9, 13, 48 | 4–6 (3–4), black hole 8 (4) † | procedural / AI concept |
 | Terrain tiles | 8×8, 20 per set | **12×12**, 20–40 per set | palette cycles only | hand, from AI swatches |
 | Backdrops | 128-px repeating bands | 640 px wide, 4–6 layers (5.10) | 1, optional 2–4 slow | AI → ingest → cleanup |
 | HUD | 8-px bars, icons ≤ 8 | 12-px bars, icons ≤ 12 | as v1 | hand-pixelled |
@@ -440,14 +500,32 @@ Frame counts below are **v2 (v1)**. A v1 count is from today's atlas.
 | Title logo | 165×27 | ≈ 320×64 (≤ 400×80) | 1 (+ optional shine) | AI lockup → hand redraw |
 | Ending scenes | parts up to 128×72 | full frame 640×360 | 1 + animated parts | AI → ingest → cleanup |
 
+**† Counts today's game cannot show yet.** Most categories take their frame count from content or
+the atlas — enemies' and boss parts' `anim.frames`, the player shots, the particle presets, the
+laser beam's band frames — so new art needs at most a content edit (one that changes a hashed
+frame, such as an enemy's `animFrame` or a shot's, is re-blessed as plan §10 says). These do not:
+the step named changes the spot given (paths under `packages/core/src/` unless stated), and until
+it does, the art keeps the v1 count. "Re-bless" means the change alters hashed state, so the
+goldens are re-blessed with the reason; the others are presentation only.
+
+| Sprite | v2 (v1) | What holds the count today | Step | Goldens |
+|---|---|---|---|---|
+| `ships/kestrel`, `ships/manta` | 5 (3) | content, not code: `"bankFrames": 1` in `content/player/kestrel.player.json` and `manta.player.json` (2 gives five frames); the frame order is `playerBankFrame`'s (`player/index.ts:584`) | R4-01 | re-bless: the bank step is hashed (`debug/index.ts:412`) |
+| `ships/kestrel-thruster` | 4 (2) | not drawn in the game at all — only by the shell showcase (`(tick >> 2) & 1`, `packages/shell/src/showcase/index.ts:278`) and `pnpm docs:images`. Drawing it behind the ship is a new push before the ship's in `syncWorldView` (`world/index.ts:2088–2102`) | R4-01 | unchanged |
+| `options/orb`, `options/stolen` | 4 (2) | `Math.floor(tick / OPTION_ANIM_TICKS) & 1` for the Options (`weapons/index.ts:2881`) and an Option Hunter's carried Options (`enemies/index.ts:3161`); a freed Option is an item kind with `frames: 2` (`ITEM_KINDS`, `powerups/index.ts:589`) | R4-01 | unchanged |
+| `shields/force-field` | 4 wear × 1–2 shimmer (4) | `FORCE_FIELD_WEAR_FRAMES = 4` (`shields/index.ts:178`): `shieldWearFrame` (`:915`) maps the hits left to a frame, so every frame is a wear state. A shimmer needs a wear × shimmer mapping where `PowerUpSystem.sync` picks the frame (`powerups/index.ts:2161`), as `armWearFrame` does tier × wear (`shields/index.ts:738`) | R4-01 | unchanged |
+| `fx/black-hole` | 8 (4) | `BLACK_HOLE_FRAMES = 4` (`blackhole/index.ts:132`); `sync` (`:363–366`) cycles frames 0 … `BLACK_HOLE_FRAMES − 2` as the swirl and shows the last as the discharge, so an 8-frame strip would show the wrong frames | R4-01 (its scope has the black hole) | unchanged |
+| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up`, `direct-*` | 4 (2) | `frames: 2` for every kind in `ITEM_KINDS` (`powerups/index.ts:586–595`) | R4-02 | unchanged |
+| `items/point` | 4 (2) | `pf.frame[i] = (age >> 3) & 1` (`bullets/index.ts:2002`), a field of the hashed `cancelPoints` pool | R4-02 | re-bless |
+
 ### 5.3 Player: ships, Options, shields, shots
 
 | Sprite | v1 | v2 | Frames v2 (v1) | Notes |
 |---|---|---|---|---|
-| `ships/kestrel`, `ships/manta` | 16×9, 16×10 | **24×14**, 24×15 | 5 (3): steep climb, climb, level, dive, steep dive | anchor = the hurt centre (v1 `[8, 4]`, ×1.5 → `[12, 6]`; R4-01 confirms); `@flash`, `@p2` derived. Five bank frames need R4-01's engine change (v1 has `level` / `up` / `down`) |
-| `ships/kestrel-thruster` | 6×3 | 9×5 | 4 (2) flicker loop | drawn behind the ship. The MANTA's twin thrusters are in its frames or a strip of their own (R4-01) |
-| `options/orb`, `options/stolen` | 8×8 | 12×12 | 4 (2) | round art, never rotated |
-| `shields/force-field` | 30×24 | 45×36 | 4 wear states (fresh cyan → worn → damaged → critical magenta) × 1–2 shimmer frames | translucent inner glow (3.6) |
+| `ships/kestrel`, `ships/manta` | 16×9, 16×10 | **24×14**, 24×15 | 5 (3) †, in atlas order: 0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive | anchor = the hurt centre, per ship: KESTREL v1 `[8, 4]` ×1.5 → `[12, 6]`; MANTA v1 `[8, 5]` ×1.5 → `[12, 7.5]`, so `[12, 7]` or `[12, 8]` (R4-01 confirms both); `@flash`, `@p2` derived. Five frames need `"bankFrames": 2` (†; v1 has level / up / down) |
+| `ships/kestrel-thruster` | 6×3 | 9×5 | 4 (2) flicker loop † | to be drawn behind the ship — the game does not draw it yet (†). The MANTA's twin thrusters are in its frames or a strip of their own (R4-01) |
+| `options/orb`, `options/stolen` | 8×8 | 12×12 | 4 (2) † | round art, never rotated |
+| `shields/force-field` | 30×24 | 45×36 | 4 wear states (fresh cyan → worn → damaged → critical magenta) × 1–2 shimmer frames † — until R4-01 maps them, 4 frames, one per wear state | translucent inner glow (3.6) |
 | `shields/pod` | 8×8 | 12×12 | 4 wear states | faceted gold gem with a riveted band (the winner) |
 | `shields/arm` | 26×18 | 39×27 | 9 (3 tiers × 3) | Direct mode |
 | `shields/reduce` | 20×14 | 30×21 | 2 | translucent shimmer (3.6) |
@@ -476,11 +554,12 @@ length (`LASER_SEGMENT_LENGTH` 12) and one wave period per segment.
 | `bullets/round-<c>` | 7×7 | **11×11** | 1 | hit radius 3 |
 | `bullets/oval-<c>` | 9×9 | **13×13** | 8 headings, frame `k` at `k · 22.5°` | hit radius 3 |
 | `bullets/needle-<c>` | 11×11 | **17×17** | 8 headings | hit radius 2.25, the fast bullet |
-| `lasers/beam-<c>` | 4×8 | **6×12** | **12** — frame `k` is a band `k + 1` px tall (v1: 8 for 8 px) | stretched along the beam, never across; `LASER_WIDTH` 9 |
+| `lasers/beam-<c>` | 4×8 | **6×12** | **12** — frame `k` is a band `k + 1` px tall (v1: 8 for 8 px) | rotated to the laser's angle and stretched along it, across only past the widest frame (3.2); `LASER_WIDTH` 9 |
 | `lasers/bend-<c>` | 7×7 | **11×11** | 1 | round, drawn at every node |
 
-- **Colours:** three families `<c>` = pink, red, violet; plus three colour-blind sets each, frame
-  for frame.
+- **Colours:** three families `<c>` = `pink`, `red`, `purple` (`BULLET_COLORS`; `purple` is the
+  violet family `#b84cff`, and sprite names keep it); plus three colour-blind sets each, frame for
+  frame.
 - **Who makes them:** procedural (`bullets.mjs`, `lasers.mjs`, `palettes.mjs` rewritten at these
   sizes).
 - **Kept from v1:** the 1-or-8-frame rule (`bullets/index.ts`). Changing it is a deliberate
@@ -490,11 +569,11 @@ length (`LASER_SEGMENT_LENGTH` 12) and one wave period per segment.
 
 | Sprite | v1 | v2 | Frames v2 (v1) |
 |---|---|---|---|
-| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up` | 12×8 | 18×12 | 4 glint (2) |
+| `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up` | 12×8 | 18×12 | 4 glint (2) † |
 | `items/one-up` | 12×8 | 18×12 | 1 |
-| `items/direct-<colour>` (blue, green, octagon, orange, red, yellow) | 10×10 | 15×15 | 4 (2) |
+| `items/direct-<colour>` (blue, green, octagon, orange, red, yellow) | 10×10 | 15×15 | 4 (2) † |
 | `items/bonus` | 10×10 | 15×15 | 1–4 (1) |
-| `items/point` | 5×5 | 7×7 | 4 twinkle (2) |
+| `items/point` | 5×5 | 7×7 | 4 twinkle (2) † |
 
 ### 5.6 Enemies by size class
 
@@ -531,13 +610,13 @@ part of the boss is the one to shoot.
 
 | Sprite | v1 | v2 | Frames v2 (v1) | Notes |
 |---|---|---|---|---|
-| `fx/explosion-small` | 16×16 | 24×24 | 12 (6) | the winner's sequence (2.2), shortened |
-| `fx/explosion-medium` | 32×32 | 48×48 | 12–14 (7) | |
-| `fx/explosion-large` | 48×48 | 72×72 | 14–16 (8) | boss chains overlap large and medium |
-| `fx/black-hole` | 32×32 | 48×48 | 8 (4) | additive, from a black-key source |
-| `fx/spark`, `fx/sparkle` | 5×5 | 7×7 | 4 (3–4) | additive |
-| `fx/debris` | 6×6 | 9×9 | 4–6 (4) | |
-| `fx/ring` | 9×9 | 13×13 | 4–6 (4) | |
+| `fx/explosion-small` | 16×16 | 24×24 | 12 (6) | the winner's sequence (2.2), shortened; normal blend from R4-04 (3.6) |
+| `fx/explosion-medium` | 32×32 | 48×48 | 12–14 (7) | normal blend from R4-04 (3.6) |
+| `fx/explosion-large` | 48×48 | 72×72 | 14–16 (8) | boss chains overlap large and medium; normal blend from R4-04 (3.6) |
+| `fx/black-hole` | 32×32 | 48×48 | 8 (4) † | normal blend, binary alpha, green key — it has a dark core (3.6) |
+| `fx/spark`, `fx/sparkle` | 5×5 | 7×7 | 4 (3–4) | additive, on black (3.6) |
+| `fx/debris` | 6×6 | 9×9 | 4–6 (4) | normal blend, as today |
+| `fx/ring` | 9×9 | 13×13 | 4–6 (4) | additive, on black (3.6) |
 | Glow accents (R3-06) | — | ≤ 48×48 | 1–4 | additive, attached to enemies, bosses, terrain |
 
 Particle speeds, radii and gravity are content (`content/fx`), ×1.5; frame timing is checked in
@@ -695,8 +774,10 @@ R3-02 tunes the test on its fixtures. The steps, in order:
    fails the key test, so the flood fill leaves it. Morphological cleanup (an opening, islands below
    a minimum area removed) or the hand-edit layer takes it away, so the outline lands on the hard
    silhouette. Light that should spill becomes an additive sprite (section 6).
-6. **Black key for additive and translucent FX** (force field, black hole, glow accents): alpha or
-   additive brightness comes from the source's brightness. Only the sprites listed in 3.6 use it.
+6. **Black key for additive and translucent FX** (the additive sprites, the force field's inner
+   glow, Reduce's shimmer, glow accents): alpha or additive brightness comes from the source's
+   brightness. Only the sprites listed in 3.6 use it — not the black hole, which is keyed on green
+   (it is drawn with normal blending and has a dark core).
 7. **Downscale with an area (box) filter straight to the target frame size,** then pixel-snap.
    FLUX.2's winners show an apparent pixel of about 3–5 source px, on no fixed grid, so pick the
    render size to make the factor close to it:
