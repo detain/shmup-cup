@@ -266,10 +266,12 @@ Its changes get one review loop.
 
 ## The art round (`ART_ROUND`)
 
-Plan step **R0-04**. It makes two candidates per basic art subject, the owner picks, then the winners get their
-followups and edits. Read first: plan R0-04; **`docs/dev/art-generation-server.md` in full** (the server, `server.sh`,
-the hazards, the round-1 session table and the round-2 commands); `art-prompts/images/00-style-kernel.md`;
-`node art-prompts/v2/gen-candidate.mjs --help` and `--list`.
+Plan step **R0-04**. It makes two candidates per basic image subject (a third, slot c, for 29 of them) and two clips
+per text-to-video item, the owner picks, then the winners get their followups and edits, and the image-to-video
+clips are made from their winning stills. Read first: plan R0-04; **`docs/dev/art-generation-server.md` in full** (the
+server, `server.sh`, the hazards, the disk budget, the round-1 session table and the round-2 commands);
+`art-prompts/images/00-style-kernel.md`; `art-prompts/video/README.md`; `node art-prompts/v2/gen-candidate.mjs --help`
+and `--list`.
 
 ### Preconditions — stop and ask me if one fails
 
@@ -290,14 +292,23 @@ the round starts.
 
 1. `server.sh status` → `server.sh start <name> --dry-run` → `server.sh start <name>` → `server.sh wait <name>`. A
    first start downloads the model's weights, so the wait can take hours: run it as a background command and wait for
-   `READY`. Spawn no generation agent before it.
+   `READY`. Spawn no generation agent before it. Check `status`'s free disk against the runbook's §4 budget before a
+   first start; if a start would not fit, stop and ask me.
+   - **A video session** (`wan22`, `ltx25`) first makes **one** clip yourself, with `gen-candidate.mjs`, and times
+     it: clip timings on skynet2 are unknown until then. Size the agents' batches from it, and note the time in your
+     report (the runbook records it).
+   - **The `ltx25` session** also checks `curl -s http://skynet2.interserver.net:30001/v1/models` first: its
+     `task_type` (or `supported_task_types`) must include `T2V` or `TI2V` (FLUX.2 reports `TI2I`). If it does not, or
+     LTX-2.5 fails to load, stop it and run slot b's clips with the fallback **`ltxvideo`** (LTX-Video) instead:
+     `server.sh start ltxvideo`, and the agents pass `--model ltxvideo` (its own `settings.ltxvideo`, ÷32). The
+     fallback needs about 237 GiB of free disk — after LTX-2.5's download it does not fit (runbook §4): ask me first.
 2. Spawn **about 4 generation agents** at once, each with one category or a group of categories (the runbook's §6
-   table; regroup with `gen-candidate.mjs --list` if the manifest changed). Slot-a and slot-b work never share an
-   agent. Generation agents run **in the main working tree, without a worktree**: the picker page reads
+   table; regroup with `gen-candidate.mjs --list` if the manifest changed). Work of different slots (a, b, c) never
+   shares an agent. Generation agents run **in the main working tree, without a worktree**: the picker page reads
    `/home/sites/shmup-cup/art-prompts/v2/candidates/`, and they only write git-ignored files there. They do not count
    toward MAX_PARALLEL_LANES.
 3. When every agent has reported (rule 5: resume a blank one with `continue`), check that every (item, slot) of the
-   session has a PNG and its sidecar. Re-run one agent for the gaps, at most once.
+   session has its PNG (a clip: its `.mp4`) and its sidecar. Re-run one agent for the gaps, at most once.
 4. `server.sh stop <name> --dry-run`, then check that the plan names the image server's process group, not the LLM's.
    Then `server.sh stop <name>`, which must end with `VERIFY OK`. **If `stop` refuses or `verify` fails: stop the
    round, kill nothing by any other means, and report to me.**
@@ -309,13 +320,24 @@ Sessions in this order (the runbook's table):
 
 1. `flux2dev` — slot a's FLUX items (4 agents) plus slot b's 7 text items (1 more agent);
 2. `qwenimage` — slot b's Qwen items (4 agents) plus slot a's 7 text items (1 more agent);
-3. `stablediffusion35large` — slot b's 9 terrain swatches (1 agent).
+3. `stablediffusion35large` — slot b's 9 terrain swatches (1 agent);
+4. `flux1dev` — **slot c**'s 29 items (`modelC`: the 11 stage scenes, the 9 swatches, the 7 non-text key moments
+   and the 2 non-text promo items; 2 agents: `50-stages` · `70-key-moments` + `80-promo`);
+5. `wan22` — **slot a of the 24 text-to-video clips** (`video/…`, Wan2.2-T2V-A14B; 2–3 agents by `video-*`
+   category, sized from your timed first clip);
+6. `ltx25` — **slot b of the same 24 clips** (LTX-2.5, after its `task_type` check; `ltxvideo` is the fallback, see
+   "How a model session runs").
+
+The 2 image-to-video clips (`"mode":"i2v"`, `"waitsFor"`) are not made in round 1: they start from a winning still,
+so they wait for round 2 (LTX-2.5; Wan2.2's I2V weights are not on skynet2). The page lists them under "Waits for
+round 2".
 
 A subject with several images gets only its manifest item (the representative image) this round. Its followups wait
 for round 2.
 
 **At the end of round 1:**
-- Report the counts per slot (made / weak / failed), the failures, and the last `VERIFY OK`.
+- Report the counts per slot (made / weak / failed) for images (a, b, c) and clips (a, b), the measured time per
+  clip of each video model, the failures, and the last `VERIFY OK`.
 - Set R0-04 to `waiting on owner` in §17 and run `plan_board_v2.py`.
 - Tell me: **"Pick at http://mystage.interserver.net/shmup-cup/, then run the driver with `ART_ROUND: round 2`."**
 - Then **stop** the art round. Nothing more happens until I have picked.
@@ -326,23 +348,30 @@ for round 2.
    `art-prompts/v2/candidates/ledger.json` (`shmup-art-ledger@1`; create it if missing; you are its only writer). An
    item needs work when its choice's `updatedAt` is newer than the ledger's:
    - a **winner** needs its followups, plus an edit when it has a comment;
-   - **regenerate** needs both slots again, with the comment as the guidance for the new idea.
+   - **regenerate** needs every slot of the item again (a, b and c where it has them), with the comment as the
+     guidance for the new idea;
+   - an **image-to-video clip** needs its clip once the still it `waitsFor` has a winner (for a followup still such
+     as `fx/black-hole/armed-scene`: once that followup exists), and again when that still's winner changes.
    List items without a choice for me, and skip them.
 2. **Sessions:**
    - `flux2dev`: comment edits first; then the followups of every winner (references: the winner, plus its newest edit
      if it has one); then the regenerations whose slot model is FLUX.2-dev;
    - `qwenimage`: the Qwen-Image regenerations;
-   - `stablediffusion35large`: the swatch regenerations.
+   - `stablediffusion35large`: the swatch regenerations;
+   - `flux1dev`: the slot-c regenerations;
+   - `wan22`: the regenerations of slot-a clips;
+   - `ltx25` (or `ltxvideo` if LTX-2.5 failed its check): the image-to-video clips, from the winning still
+     (`--source`), then the regenerations of slot-b clips.
    Skip a session with no work. Use the exact commands of the runbook's §6: edits to `<item id>/edit-<k>.png`,
-   followups to their own ids, the old pair moved to `candidates/history/` before a regeneration.
+   followups to their own ids, the old files moved to `candidates/history/` before a regeneration.
 3. **Ledger.** After each session, record per item the choice's `updatedAt` it was done for and the files made.
 4. **Winners commit.** An item is complete when:
    - it has a winner and no pending regenerate;
    - its followups exist for the current choice;
    - its current comment's edit exists.
-   Copy every complete item to `art-prompts/v2/winners/<item id>/` (`winner.png` / `.json`, `edit-<k>.*`,
-   `<followup suffix>.*`, `choice.json` — the runbook's layout). Check `du -sh art-prompts/v2/winners` first: if this
-   commit would add more than ~200 MB, ask me (Git LFS?) before committing. Stage those paths explicitly and commit
+   Copy every complete item to `art-prompts/v2/winners/<item id>/` (`winner.png` or `winner.mp4` / `.json`,
+   `edit-<k>.*`, `<followup suffix>.*`, `choice.json` — the runbook's layout). Check `du -sh art-prompts/v2/winners`
+   first: if this commit would add more than ~200 MB (clips count fast), ask me (Git LFS?) before committing. Stage those paths explicitly and commit
    with `feat(R0-04): add the art round's winners for <n> subjects` and the Co-Authored-By line; then
    `git fetch origin && git rebase origin/master && git push origin HEAD:master`. Candidates are never committed. A
    later change to an item (a new comment, a new winner) is re-copied and committed the same way.
@@ -352,41 +381,45 @@ for round 2.
    - tell me to pick again where needed and to re-run with `ART_ROUND: round 2`;
    - once every item has a winner with nothing left to do, set R0-04 to `done` in §17 and run `plan_board_v2.py`.
 
-Video is not part of this round.
-
 ### Generation agent brief — put this at the top of every generation agent's prompt
 
 ```text
-You are a generation agent for Shmup Cup v2's early art round (plan step R0-04): round {1 | 2}, slot {a | b},
-session model {flux2dev | qwenimage | stablediffusion35large}, task {candidates | followups | edits | regenerate}.
-Your items: {ID LIST}.
+You are a generation agent for Shmup Cup v2's early art round (plan step R0-04): round {1 | 2}, slot {a | b | c},
+session model {flux2dev | qwenimage | stablediffusion35large | flux1dev | wan22 | ltx25 | ltxvideo}, task {candidates
+| followups | edits | regenerate | image-to-video}. Your items: {ID LIST}.
 
 Read first: plan_resolution.md "### R0-04"; docs/dev/art-generation-server.md §6; art-prompts/images/00-style-kernel.md
 (the kernels K1–K5, the v2 targets table, the key-background rules, the negative-prompt library); each item's entry in
 art-prompts/v2/manifest.json (round 2 also: its choices.json entry and the winner's sidecar).
 
-Independence: you are slot {SLOT}. Never open, list or read anything under art-prompts/v2/candidates/{OTHER SLOT}/,
+Independence: you are slot {SLOT}. Never open, list or read anything under art-prompts/v2/candidates/{OTHER SLOTS}/,
 nor another agent's prompt files. Each prompt is your own take on the item: keep its subject, the kernel paragraph and
 the key-background / no-text clauses; vary the composition, the detail and the wording.
 
-Generating: one image per call — node art-prompts/v2/gen-candidate.mjs --id <id> --slot {SLOT} --prompt-file <a file
-in your scratchpad> (round 2: the runbook's exact commands). In round 1 do not pass --model: the manifest picks it.
+Generating: one image or clip per call — node art-prompts/v2/gen-candidate.mjs --id <id> --slot {SLOT} --prompt-file
+<a file in your scratchpad> (round 2: the runbook's exact commands). Do not pass --model: the manifest picks it (the
+one exception: the orchestrator tells you to use --model ltxvideo, LTX-2.5's fallback). A clip is a job that can run
+for many minutes: let the command finish; if it stops with "resume with --job <id>", re-run it with that --job.
 Never pass --port, --base-url or --any-model. Never run generate.mjs, sweep-models.sh or server.sh, and never ssh. If
 gen-candidate exits 3 (the server serves another model), stop and report. After 3 server failures in a row
 (connection refused, 5xx after its own retries, timeouts), stop and report: the orchestrator owns the server.
 
-Checking: look at EVERY PNG you make with the Read tool. Retry at most twice — a new --seed, and --force on your own
+Checking: look at EVERY PNG you make with the Read tool. For a clip, pull three frames into your scratchpad and Read
+them: ffmpeg -v error -i <clip.mp4> -vf "select='eq(n\,0)+eq(n\,40)+eq(n\,80)'" -vsync 0 <scratchpad>/<name>-%d.png
+(frames 0 / 40 / 80; ffprobe confirms its length). Retry at most twice — a new --seed, and --force on your own
 round-1 file; an edit gets the next edit-<k> — when it shows:
   - the wrong subject;
   - no flat green key where the item needs one (sprite subjects, tiles and FX on green; glow FX on black; scenes and
     key art keep their navy);
   - stray text or letters (text items: anything but their exact words);
   - a broken composition (a cut-off subject, several subjects where one is wanted, the wrong facing — player crafts
-    face right, enemies and bosses face left).
+    face right, enemies and bosses face left);
+  - for a clip: morphing or melting shapes, a picture that barely moves, a cut or a fade where one continuous shot is
+    asked, or (image-to-video) a first frame that no longer matches its still.
 After the second retry, keep the best attempt and report it as weak.
 
-Files: gen-candidate writes <name>.json next to each PNG — never edit or delete a sidecar. Edits never overwrite.
-Candidates are git-ignored: stage nothing, commit nothing, push nothing. Write nothing outside
+Files: gen-candidate writes <name>.json next to each PNG or MP4 — never edit or delete a sidecar. Edits never
+overwrite. Candidates are git-ignored: stage nothing, commit nothing, push nothing. Write nothing outside
 art-prompts/v2/candidates/{SLOT}/ (round-2 regenerations: also candidates/history/) and your scratchpad.
 
 Context: if you are almost at the end of your task, do not bother with context compression — it is quicker to finish

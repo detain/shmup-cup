@@ -1,12 +1,12 @@
 # The art generation server (skynet2) — runbook
 
-The AI images for v2 (plan step **R0-04**, then R3 … R5) are made by SGLang diffusion servers on the owner's GPU
-box **skynet2**. That box also runs the **main LLM**, which other work depends on. This page explains how to use
+The AI images and clips for v2 (plan step **R0-04**, then R3 … R5) are made by SGLang diffusion servers on the owner's
+GPU box **skynet2**. That box also runs the **main LLM**, which other work depends on. This page explains how to use
 the image servers **without ever touching the LLM**, and how the art round uses them.
 
 The one rule: **agents touch skynet2 only through [`art-prompts/v2/server.sh`](../../art-prompts/v2/server.sh).**
-Generation goes through `art-prompts/v2/gen-candidate.mjs` (one image per call) or `art-prompts/generate.mjs` (library
-batches) against `http://skynet2.interserver.net:30001`.
+Generation goes through `art-prompts/v2/gen-candidate.mjs` (one image or clip per call) or `art-prompts/generate.mjs`
+(library batches) against `http://skynet2.interserver.net:30001`.
 
 Facts below were checked read-only on 2026-10-16. Process ids change with every restart: re-detect them with
 `server.sh status`, never copy them from here.
@@ -40,10 +40,10 @@ of them has nohup, a log file, a pid file or a stop script, and bash stays the p
 |---|---|---|---|---|
 | `flux1dev` | `black-forest-labs/FLUX.1-dev` | dp 2 (one copy per card), batching max 4 | **not yet** (cache stub) | text-to-image only |
 | `flux2dev` | `black-forest-labs/FLUX.2-dev` + `--transformer-weights-path lmsys/flux2-dev-modelopt-fp8-sglang-transformer` | dp 2, batching max 2, warm-up 1024² and 2048×1024 | **yes** — 165 GB + 30 GB, downloaded by its first start that day | text + **one or more reference images** (`/v1/images/edits`; requests with images are not batched) |
-| `qwenimage` | `Qwen/Qwen-Image` | dp 2, fp8, batching 4 | not yet | text-to-image only |
+| `qwenimage` | `Qwen/Qwen-Image` | dp 2, fp8, batching 4 | **yes** — 54 GiB (first start, 2026-10-16) | text-to-image only |
 | `stablediffusion35large` | `stabilityai/stable-diffusion-3.5-large` | dp 2, batching 4 | not yet | text-to-image only |
 | `ltxvideo` | `Lightricks/LTX-Video` | dp 2 | not yet | text-to-video, or text + a start image (i2v) |
-| `ltx25` | `Lightricks/LTX-2.5-Diffusers` (LTX2Pipeline, fp8) | dp 2 | not yet | text-to-video, or text + a start image (i2v); no `generate.mjs` group |
+| `ltx25` | `Lightricks/LTX-2.5-Diffusers` (LTX2Pipeline, fp8) | dp 2 | not yet | text-to-video, or text + a start image (i2v); a `gen-candidate.mjs` group, none in `generate.mjs` |
 | `wan22` | `Wan-AI/Wan2.2-T2V-A14B-Diffusers` | one copy across both cards (cfg-parallel), fp8 | not yet | **text-to-video only** |
 
 - Aliases accepted by `server.sh` are the `generate.mjs` group keys: `flux1`, `flux2`, `qwen` / `qwenvl`, `sd35`.
@@ -51,7 +51,18 @@ of them has nohup, a log file, a pid file or a stop script, and bash stays the p
   launcher for it. Until both exist, every edit is a FLUX.2-dev edit. Verify at run time (`server.sh status` lists the
   caches; a launcher would be a new `run_sglang_images_*-1.sh`).
 - **Wan2.2 image-to-video** needs `Wan2.2-I2V-A14B` or `TI2V-5B`. Both are cache stubs only. `generate.mjs`'s
-  `wan2.2-i2v` entries go to the T2V model, which will likely ignore or reject the reference image.
+  `wan2.2-i2v` entries go to the T2V model, which will likely ignore or reject the reference image. The art round's
+  image-to-video clips therefore use LTX-2.5.
+- **LTX-2.5** is expected to be a video model: the Hub tags it text-to-video and image-to-video, the LTX-2 generation
+  that succeeds LTX-Video. SGLang's LTX-2.5 defaults (`configs/sample/ltx_2_5.py`) say how to drive it: the
+  distilled DiT runs **unguided (`guidance_scale` 1.0) on a pinned 8-step schedule**, at 960x544, 121 frames @ 24 fps;
+  sizes ÷32, frames 8n+1. It also makes an audio track (the picker plays clips muted). Its repo is gated: the
+  Hugging Face account of skynet2's token must have accepted the LTX-2.x Community License (FLUX.1-dev and SD3.5
+  Large are gated the same way).
+- **Check it is a video model before its session:** `GET /v1/models` lists each served model's `task_type` and
+  `supported_task_types` (`T2V`, `I2V`, `TI2V` for video; FLUX.2 reports `TI2I`). If LTX-2.5 reports no `T2V` /
+  `TI2V`, or does not load, slot b's clips fall back to **`ltxvideo`** (LTX-Video, ÷32, `--model ltxvideo`).
+  `gen-candidate.mjs` makes the same check before every clip and exits 3 on an image model.
 - `run_sglang_images_qwenimage-1.sh` passes `--text-encoder-cpu-offload` **twice**, first false and then true. That is
   for the owner to fix; until then, check which one won in its log at the first start.
 
@@ -122,8 +133,28 @@ bash $S verify                      # must print VERIFY OK before the next model
 - **Port 30000 is the LLM.** Image requests sent there would go to the LLM. The clients refuse it (§1), and every
   launcher binds 30001.
 - **The first start of each model downloads its weights.** FLUX.2-dev's first start on 2026-10-16 took about 195 GB
-  (543 → 348 GB free). The other six models are still uncached. Before a session, check `status` (free disk, caches);
-  `start` refuses below 150 GB; `wait` allows 3 h. Never start two models to "save time": cards 2,3 hold one.
+  (543 → 348 GB free), Qwen-Image's 54 GiB. Before a session, check `status` (free disk, caches); `start` refuses
+  below 150 GB (`df -BG`, i.e. GiB); `wait` allows 3 h. Never start two models to "save time": cards 2,3 hold one.
+- **Disk budget for the rest of R0-04** (read-only check, 2026-10-16, after the owner freed space: **544 GiB free** on
+  `/root`). SGLang's `maybe_download_model` fetches the **whole repo** minus `*.onnx` / `*.msgpack` (it matched
+  FLUX.2-dev's 165.4 GiB and Qwen-Image's 53.7 GiB), so the Hub's file sizes are the download sizes:
+
+  | Session | Repo | Download | Free before → after |
+  |---|---|---|---|
+  | `stablediffusion35large` | `stabilityai/stable-diffusion-3.5-large` (gated) | 66.7 GiB | 544 → ~477 |
+  | `flux1dev` | `black-forest-labs/FLUX.1-dev` (gated) | 53.9 GiB | ~477 → ~423 |
+  | `wan22` | `Wan-AI/Wan2.2-T2V-A14B-Diffusers` | 117.5 GiB | ~423 → ~306 |
+  | `ltx25` | `Lightricks/LTX-2.5-Diffusers` (gated) | 162.5 GiB (+ any separate fp8 weights its launcher names) | ~306 → ~143 |
+  | `ltxvideo` (fallback only) | `Lightricks/LTX-Video` — every 2B/13B checkpoint sits in the repo root | 236.7 GiB | ~143 → does not fit |
+
+  All four planned starts pass the 150 GiB floor. The **LTX-Video fallback does not**: after LTX-2.5 it would see
+  ~143 GiB (refused) and need 237. If it is needed, the owner frees space first, e.g. LTX-2.5's own cache when it
+  proved unusable (`models--Lightricks--LTX-2.5-Diffusers`, 162.5 GiB), the swatch session's SD3.5 cache (67 GiB) or
+  FLUX.1-dev's (54 GiB) once their regenerations are done, or `/root/hicache_store` (283 GiB — the LLM's HiCache
+  store, his call only). Alternatively he pre-downloads only LTX-Video's diffusers folders (`model_index.json`,
+  `scheduler/`, `tokenizer/`, `text_encoder/`, `transformer/`, `vae/` — about 28 GiB) with `hf download`, which
+  SGLang's cache-first check then uses. Never delete FLUX.2-dev or Qwen-Image (round 2 needs them) or the LLM's
+  weights. Agents delete nothing on skynet2.
 - **The HF token stays on skynet2.** It is inline in the root-only run scripts and in the servers' environment. Never
   `cat`, copy or print a run script or a `/proc/*/environ`. `server.sh` only `grep -o`s three flags, and every log or
   cmdline line it prints goes through a redaction filter (`hf_…`, `--api-key …`).
@@ -139,40 +170,83 @@ Every one of the seven servers is OpenAI-shaped and needs no API key. Base: `htt
 |---|---|
 | `GET /health` | 000 = not bound yet, **503 = warming up**, **200 = ready** (the log says "The server is fired up and ready to roll!") |
 | `GET /liveness`, `GET /health_generate`, `GET /server_info` | liveness; a real generation check; server arguments |
-| `GET /v1/models`, `GET /v1/model_info`, `GET /v1/list_loras`, `POST /v1/set_lora` | the served id (= `--model-path`); LoRAs |
+| `GET /v1/models`, `GET /v1/model_info`, `GET /v1/list_loras`, `POST /v1/set_lora` | the served id (= `--model-path`), its `task_type` / `supported_task_types` (`T2I`, `TI2I`, `T2V`, `I2V`, `TI2V` …), `pipeline_class`; LoRAs |
 | `POST /v1/images/generations` | JSON: `model`, `prompt`, `size "WxH"`, `n`, `response_format b64_json`, `output_format png`, `seed`, `guidance_scale`, `num_inference_steps`, `negative_prompt` (SD3.5 / Qwen only — FLUX ignores negatives) |
 | `POST /v1/images/edits` | multipart: `image` (repeatable — FLUX.2-dev takes several references), `prompt`, `model`, the same settings |
 | `GET /v1/images/{id}/content` | an image by id (when `url` is returned instead of base64) |
-| `POST /v1/videos`, `GET /v1/videos/{id}`, `GET /v1/videos/{id}/content`, `DELETE /v1/videos/{id}` | video jobs; `reference_url` (a data URI) is the start image for i2v |
+| `POST /v1/videos`, `GET /v1/videos/{id}`, `GET /v1/videos/{id}/content`, `DELETE /v1/videos/{id}` | video jobs. JSON: `model`, `prompt`, `size`, `num_frames`, `fps`, `seed`, `guidance_scale`, `num_inference_steps`, `negative_prompt`, and `reference_url` (a data URI) as the start image for i2v. The POST answers at once with `{id, status: "queued"}`; poll until `completed` / `failed`; `/content` is the MP4. Jobs live in the server's memory: a restart loses them |
 
 ## 6. How the art round uses it (R0-04)
 
-The manifest is `art-prompts/v2/manifest.json` (`shmup-art-picks@1`). It lists 91 basic subjects, each with
-`model` (slot a), `modelB` (slot b) and its `followups` (203 in all). Candidates go to
-`art-prompts/v2/candidates/<slot>/<id>.png`, each with a `.json` sidecar, and stay git-ignored. The owner picks on
-`http://mystage.interserver.net/shmup-cup/` (choices: `/home/sites/mystage/public_html/shmup-cup/data/choices.json`).
+The manifest is `art-prompts/v2/manifest.json` (`shmup-art-picks@1`). It lists 117 items:
+
+- **91 basic image subjects**, each with `model` (slot a), `modelB` (slot b) and its `followups` (203 in all). **29**
+  of them also have **`modelC` = `flux1`** (slot c, FLUX.1-dev): the 11 stage scenes and 9 terrain swatches of
+  `50-stages`, and the 7 key moments and 2 promo items that are not text items (a text item has `qwenvl` in slot a).
+- **26 clips** `video/<subject>` (`"kind":"video"`, category `video-<NN-dir>`), one per basic clip of
+  `art-prompts/video/*.json` — its first take; the other takes are listed under `takes`. Each has `mode`, `prompt`,
+  `negative`, `settings.<model>` (resolution, num_frames, fps, seconds, steps, guidance, seed) for every model that
+  may run it, the slot-a values repeated at the top level like an image item's, and `fallback: {ltx25: ltxvideo}`.
+  - **24 text-to-video:** slot a `wan22` (Wan2.2-T2V-A14B at its trained buckets 1280x720 / 832x480 / 720x1280,
+    81 frames @ 16 fps = 5.06 s), slot b `ltx25` (LTX-2.5 at the library's LTX size — 960x544, 768x512 or 576x1024
+    — with the take's frames, else 121 @ 24 fps = 5.04 s; guidance 1.0, 8 steps). `settings.ltxvideo` holds the
+    fallback's (the library's LTX guidance 3.0–3.2 and 30–35 steps).
+  - **2 image-to-video** (`"mode":"i2v"`, slot a `ltx25` only): `video/dawn-flight-home` waits for
+    `moment/ending-citadel-falls-silent` (1152x480, the still's 2.4:1) and `video/blackhole-bomb-slowmo` for
+    `fx/black-hole/armed-scene`, the armed-scene followup of `fx/black-hole` (736x736). `"waitsFor"` names that still.
+
+Candidates go to `art-prompts/v2/candidates/<slot>/<id>.png` (a clip: `.mp4`), each with a `.json` sidecar, and stay
+git-ignored. A clip's sidecar has the image fields plus `kind`, `num_frames`, `fps`, `seconds` (the clip's length;
+the generation's wall time is `generationSeconds`), `jobId`, `taskType`, and for i2v `sourceImage` and `waitsFor`. The owner picks on
+`http://mystage.interserver.net/shmup-cup/` (choices: `/home/sites/mystage/public_html/shmup-cup/data/choices.json`,
+`winner` `a` | `b` | `c` | null). A set shows A | B, or A | B | C with a slot c; clips play in
+`<video controls loop muted playsinline preload="metadata">` players served by `media.php` (HTTP Range, the same id
+and path checks as `img.php`, mtime cache-busting) — clicking the picture chooses, the play bar only plays; the
+image-to-video sets wait in their own section, with a link to their still's set, and take comments.
 The driver is `prompt_resolution.md`, run with `ART_ROUND: round 1` or `round 2`.
 
-### Round 1 — two candidates per subject
+### Round 1 — two candidates per subject (three with a slot c), two per text-to-video clip
 
 One model session at a time, in this order:
 
-| Session | Slot a (agents) | Slot b (separate agents) |
-|---|---|---|
-| 1. `flux2dev` | 84 FLUX items, in about 4 agents: bosses + crafts + logos (22) · enemies (26) · stages (20) · items/FX + key moments + promo (16) | the 7 text items (wordmark, title screen, WARNING, game over, hi-score entry, victory card, store capsule) |
-| 2. `qwenimage` | the 7 text items | 75 Qwen items, in about 4 agents: bosses + crafts + logos (22) · enemies (26) · stages + items/FX (18) · key moments + promo (9) |
-| 3. `stablediffusion35large` | — | the 9 terrain swatches |
+| Session | Slot a (agents) | Slot b (separate agents) | Slot c (separate agents) |
+|---|---|---|---|
+| 1. `flux2dev` | 84 FLUX items, in about 4 agents: bosses + crafts + logos (22) · enemies (26) · stages (20) · items/FX + key moments + promo (16) | the 7 text items (wordmark, title screen, WARNING, game over, hi-score entry, victory card, store capsule) | — |
+| 2. `qwenimage` | the 7 text items | 75 Qwen items, in about 4 agents: bosses + crafts + logos (22) · enemies (26) · stages + items/FX (18) · key moments + promo (9) | — |
+| 3. `stablediffusion35large` | — | the 9 terrain swatches | — |
+| 4. `flux1dev` | — | — | the 29 `modelC` items, in 2 agents: `50-stages` (20) · key moments + promo (9) |
+| 5. `wan22` | the 24 text-to-video clips, in 2–3 agents by `video-*` category | — | — |
+| 6. `ltx25` (fallback `ltxvideo`) | — | the same 24 clips | — |
 
 Each session follows the "A model session" sequence above (§3).
-An agent writes its own prompt for each item and runs one image at a time:
+An agent writes its own prompt for each item and runs one image or clip at a time:
 
 ```bash
-node art-prompts/v2/gen-candidate.mjs --id <item id> --slot <a|b> --prompt-file <its prompt file>
+node art-prompts/v2/gen-candidate.mjs --id <item id> --slot <a|b|c> --prompt-file <its prompt file>
+node art-prompts/v2/gen-candidate.mjs --id video/<subject> --slot <a|b> --prompt-file <its prompt file>
+node art-prompts/v2/gen-candidate.mjs --id video/<subject> --slot b --model ltxvideo …   # only if LTX-2.5 failed its check
 ```
 
-The model, size, steps and seed come from the manifest. The agent then **Reads the PNG**, and retries at most twice
-(`--seed <new> --force`) if it shows the wrong subject, no flat green key where the item needs one, stray text, or a
-broken composition. A slot-a agent never looks at slot b's files, and the reverse.
+The model, size, frames, fps, steps and seed come from the manifest. The agent then **Reads the PNG** (a clip: three
+frames pulled with `ffmpeg` into its scratchpad), and retries at most twice (`--seed <new> --force`) if it shows the
+wrong subject, no flat green key where the item needs one, stray text, or a broken composition — for a clip also
+morphing, a still picture or a cut. An agent of one slot never looks at another slot's files.
+
+**Clips** go through the job API: `POST /v1/videos`, then `GET /v1/videos/{id}` every 10 s (`--poll`), then
+`/content`. The default timeout is 3 h per job; a timeout or a lost poll never re-submits — it prints the job id, and
+`--job <id>` resumes polling and downloads. A job the server reports as `failed` is re-submitted once (`--retries`).
+Before each clip, `gen-candidate.mjs` checks `/v1/models`: the served id (exit 3, as for images) and a video
+`task_type` for the clip's mode (exit 3 on an image model such as `TI2I`).
+
+**Video timings are unknown:** no clip has been made on skynet2 yet. The orchestrator makes and times the first clip
+of each video session itself, sizes the agents' batches from it, and records the times here:
+
+| Model | Size, frames | Time per clip |
+|---|---|---|
+| `wan22` | 1280x720, 81 f @ 16 fps, 35–40 steps | not measured yet |
+| `wan22` | 832x480, 81 f @ 16 fps, 35 steps | not measured yet |
+| `ltx25` | 960x544, 121 f @ 24 fps, 8 steps (distilled) | not measured yet |
+| `ltxvideo` | 960x544, 121 f @ 24 fps, 35 steps | not measured yet |
 
 ### Round 2 — from `choices.json`
 
@@ -201,10 +275,26 @@ since the ledger `art-prompts/v2/candidates/ledger.json` last recorded them. The
     --out art-prompts/v2/candidates/<winner>/<item id>/edit-<k>.png      # k = next free; exit 4 if taken
   ```
 
-- **Regenerate** (the round-1 slot models — FLUX.2-dev first, then Qwen-Image, then SD3.5 — and a new idea; a comment
-  on a regenerate item is the owner's guidance for that idea). Each slot's agent first moves its old pair to
-  `art-prompts/v2/candidates/history/<date>/<slot>/<id>.{png,json}` (never deleted), then generates the slot again.
-  The page shows the new pair at the next poll (every 60 s).
+- **Regenerate** (the round-1 slot models — FLUX.2-dev first, then Qwen-Image, SD3.5, FLUX.1-dev, Wan2.2, LTX-2.5 —
+  and a new idea; a comment on a regenerate item is the owner's guidance for that idea). Each slot's agent first moves
+  its old file to `art-prompts/v2/candidates/history/<date>/<slot>/<id>.{png|mp4,json}` (never deleted), then
+  generates the slot again. The page shows the new candidates at the next poll (every 60 s).
+- **Image-to-video clips** (LTX-2.5 session, after the FLUX.2-dev session — `video/blackhole-bomb-slowmo` starts from
+  the followup `fx/black-hole/armed-scene`, which that session makes): once the still the clip `waitsFor` has a
+  winner,
+
+  ```bash
+  node art-prompts/v2/gen-candidate.mjs --id video/dawn-flight-home --slot a \
+    --source art-prompts/v2/candidates/<winner>/moment/ending-citadel-falls-silent.png
+  node art-prompts/v2/gen-candidate.mjs --id video/blackhole-bomb-slowmo --slot a \
+    --source art-prompts/v2/candidates/<winner of fx/black-hole>/fx/black-hole/armed-scene.png
+  ```
+
+  The still goes as a data URI in `reference_url`. When its aspect differs from the manifest size by more than 3 %,
+  the size is refitted to the still's aspect at the same pixel count (`--width` / `--height` override). Wan2.2 never
+  takes `--source` (its I2V weights are not on skynet2). With LTX-2.5 unusable, the same commands take
+  `--model ltxvideo`. The clip appears in its set at the next poll, and the set leaves "Waits for round 2" at the
+  next reload.
 - **Where the owner sees round 2:** the page shows only the pair per item. Followups and edits are dot-free ids under
   the same tree, so the page's own image route serves them, e.g.
   `http://mystage.interserver.net/shmup-cup/img.php?slot=a&id=boss/halcyon-bulwark/reveal` or
@@ -212,12 +302,13 @@ since the ledger `art-prompts/v2/candidates/ledger.json` last recorded them. The
 - **The loop:** the owner picks again (a new winner, a changed comment, or regenerate), and round 2 runs again until
   every item is decided.
 - **Winners** are copied to the tracked `art-prompts/v2/winners/<item id>/`, then committed:
-  - `winner.png` + `winner.json` — the chosen candidate and its sidecar;
+  - `winner.png` (a clip: `winner.mp4`) + `winner.json` — the chosen candidate and its sidecar;
   - `edit-<k>.png` + `.json` — the comment edits;
   - `<followup suffix>.png` + `.json` — the followups;
   - `choice.json` — the item's `choices.json` entry at copy time.
 
   The R3-02 ingest reads them later, staged until R2-01. Candidates are never committed.
 
-**Video is not part of this round.** Later, the winning stills feed LTX-Video / LTX-2.5 image-to-video. Wan2.2 on
-skynet2 is text-to-video only (§2).
+**Video in this round:** the 24 text-to-video clips get two candidates in round 1 (Wan2.2 in a, LTX-2.5 in b); the 2
+image-to-video clips are made in round 2 from their winning stills with LTX-2.5. Wan2.2 on skynet2 is text-to-video
+only (§2).

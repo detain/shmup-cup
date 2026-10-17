@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /*
- * gen-candidate.mjs — generate ONE candidate image for the v2 art picks
+ * gen-candidate.mjs — generate ONE candidate image or video for the v2 art picks
  * (art-prompts/v2/manifest.json, schema shmup-art-picks@1) on the SGLang diffusion
  * server, reusing generate.mjs's transport (imported, not copied). Zero npm
  * dependencies, Node >= 20.
  *
- * STATUS: NOT YET RUN AGAINST THE SERVER (2026-10-16). Built and checked offline with
- * --dry-run only; the first live run should be one --dry-run, then one real image.
+ * STATUS (2026-10-16): the image path runs against the server in R0-04's round 1. The
+ * VIDEO path is NOT YET RUN against the server — built and checked offline with
+ * --dry-run and a local mock server only; the first live video run should be one
+ * --dry-run, then one real clip.
  *
  * ---------------------------------------------------------------------------
  * WHAT IT DOES
@@ -16,11 +18,12 @@
  *       + art-prompts/v2/candidates/a/boss/halcyon-bulwark.json (sidecar)
  * Every value missing from the command line defaults from the manifest item:
  * prompt, negative, size, steps, guidance; the model is the item's `model` for slot
- * a and its `modelB` for slot b. --id may also name a followup ("<item id>/<suffix>"):
- * its prompt is used, its size and settings come from its library entry when it has
- * one, else from the parent item. Seeds default to the library entry's seed for that
- * model (else a stable hash of the id), so a rerun reproduces an image; pass --seed
- * to re-roll.
+ * a, its `modelB` for slot b and its `modelC` for slot c (only some items have a slot
+ * c — FLUX.1-dev for the stage scenes, the swatches and the non-text key moments and
+ * promo). --id may also name a followup ("<item id>/<suffix>"): its prompt is used,
+ * its size and settings come from its library entry when it has one, else from the
+ * parent item. Seeds default to the library entry's seed for that model (else a stable
+ * hash of the id), so a rerun reproduces an image; pass --seed to re-roll.
  *
  * EDIT MODE (later jobs: "remaining poses following the winner", "update the chosen
  * image per the owner's comment"): --edit-from <png> (repeatable for several
@@ -31,26 +34,57 @@
  * The output size defaults to the first reference's PNG size. Edits never overwrite:
  * they land at <id>.edit-<k>.png (next free k) unless --out says otherwise.
  *
+ * VIDEO MODE (manifest items with "kind":"video", ids video/<subject>):
+ *   node art-prompts/v2/gen-candidate.mjs --id video/logo-sting --slot a
+ *     → art-prompts/v2/candidates/a/video/logo-sting.mp4 + .json sidecar
+ * Slot a is the item's `model` (wan22 = Wan2.2-T2V-A14B for the t2v clips), slot b its
+ * `modelB` (ltx25 = LTX-2.5). Its fallback, when LTX-2.5 is not a video model or does
+ * not load, is `--model ltxvideo` (LTX-Video) — same slot, its own manifest settings.
+ * Size, frames, fps, steps, guidance and seed come from the item's settings.<model>;
+ * overrides are snapped to the model family's grid like generate.mjs does (Wan ÷16 and
+ * then the nearest trained bucket 1280x720 / 832x480 / 720x1280 / 480x832; LTX ÷32;
+ * frames 4n+1 for Wan, 8n+1 for LTX). Items with "mode":"i2v" (and "waitsFor": the
+ * image id of the still they start from) run in round 2 with --source <png> — the
+ * owner's winning still — sent as a data URI in reference_url (generate.mjs's i2v
+ * shape); when the still's aspect differs from the manifest size by more than 3 % the
+ * size is refitted to the still's aspect at the same pixel count (note printed;
+ * --width/--height win). Wan2.2-T2V never takes --source.
+ * The flow is the job API: POST /v1/videos → {id}, poll GET /v1/videos/{id} (every
+ * --poll s) until "completed" or "failed", then GET /v1/videos/{id}/content. If the
+ * client stops or times out, the job keeps running on the server: resume it with
+ * --job <id> (polls and downloads, never re-submits). A timeout never re-submits.
+ * Video sidecars carry the image fields plus kind, num_frames, fps and `seconds` =
+ * the clip's length (num_frames / fps); the generation wall time is
+ * `generationSeconds` (for images, `seconds` stays the generation time).
+ *
  * ---------------------------------------------------------------------------
  * WHAT IT EXPECTS FROM THE SERVER
  * ---------------------------------------------------------------------------
  *  - OpenAI-shaped image API at the base URL (default generate.mjs's single-model
  *    proxy http://skynet2.interserver.net:30001; --base-url / --port override):
- *      GET  /v1/models                 → which model is loaded (checked first)
+ *      GET  /v1/models                 → which model is loaded (checked first; for
+ *                                        videos also its task_type / supported_task_types)
  *      POST /v1/images/generations     JSON: model, prompt, size "WxH", n 1,
  *                                      response_format b64_json, output_format png,
  *                                      seed, guidance_scale, num_inference_steps,
  *                                      negative_prompt (sd35 / qwen only)
  *      POST /v1/images/edits           multipart: image (repeated), prompt, model, …
- *  - ONE model per origin: slot a (flux2) and slot b (qwenvl) need either a model
- *    switch between batches or two origins (pass --base-url per slot). The helper
- *    refuses to run when /v1/models lists a different model than the slot wants
- *    (exit 3), so a wrong model never fills a slot silently; --any-model overrides.
+ *      POST /v1/videos                 JSON: model, prompt, size, num_frames, fps, seed,
+ *                                      guidance_scale, num_inference_steps,
+ *                                      negative_prompt, reference_url (i2v data URI)
+ *      GET  /v1/videos/{id}, GET /v1/videos/{id}/content
+ *  - ONE model per origin: the slots need a model switch between batches or two
+ *    origins (pass --base-url per slot). The helper refuses to run when /v1/models
+ *    lists a different model than the slot wants (exit 3), so a wrong model never
+ *    fills a slot silently; --any-model overrides. A video item also refuses (exit 3)
+ *    a server whose task_type is not a video one (T2V / I2V / TI2V; FLUX.2 reports TI2I)
+ *    or lacks the clip's mode.
  *
  * RETRIES: generate.mjs's transport retries 5xx/429 and connection-phase errors; on
  * top of that this helper retries the whole request (--retries, default 2) after
  * timeouts or mid-flight resets — a single duplicate image is cheap, unlike a sweep.
- * HTTP 4xx (except 429) fails at once.
+ * HTTP 4xx (except 429) fails at once. Videos: --retries (default 1) re-submits only a
+ * job the server reports as "failed"; timeouts and lost polls never re-submit.
  *
  * EXIT CODES: 0 ok (or dry run) · 1 generation failed · 2 usage error ·
  *             3 server serves another model · 4 output exists (use --force)
@@ -74,34 +108,67 @@ const IMAGE_MODEL_GROUPS = {
   ...Object.fromEntries(Object.entries(GROUPS).filter(([, g]) => g.kind === 'image')),
   qwenedit: { kind: 'image', model: 'Qwen/Qwen-Image-Edit-2511', supportsNegative: true },
 };
+/**
+ * Video groups: generate.mjs's wan22 / ltxvideo plus LTX-2.5 (no generate.mjs group).
+ * `defaults` derive settings for an item without settings.<group>; `i2v` = takes a
+ * start image. LTX-2.5's SGLang defaults (configs/sample/ltx_2_5.py): the distilled
+ * DiT runs unguided (guidance 1.0) off a pinned 8-step schedule, 960x544, 121 @ 24 fps.
+ */
+const VIDEO_MODEL_GROUPS = {
+  wan22: { ...GROUPS.wan22, i2v: false, defaults: { fps: 16, frames: 81, steps: 35, guidance: 4.0 } },
+  ltxvideo: { ...GROUPS.ltxvideo, i2v: true, defaults: { fps: 24, frames: 121, steps: 35, guidance: 3.2 } },
+  ltx25: {
+    kind: 'video', model: 'Lightricks/LTX-2.5-Diffusers', supportsNegative: true,
+    frameStep: 8, divisor: 32, i2v: true, defaults: { fps: 24, frames: 121, steps: 8, guidance: 1.0 },
+  },
+};
+const VIDEO_TIMEOUT_MS = 3 * 3600 * 1000;
+const IMAGE_TIMEOUT_MS = 900_000;
+const SLOTS = ['a', 'b', 'c'];
+const SLOT_FIELD = { a: 'model', b: 'modelB', c: 'modelC' };
 const DEFAULTS = { ...README_DEFAULTS, qwenedit: { guidance: 4.0, steps: 40 } };
 const GROUP_TO_MODEL_NAME = Object.fromEntries(Object.entries(MODEL_NAME_TO_GROUP).map(([n, g]) => [g, n]));
 const ID_RE = /^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\/[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)+$/;
 const FOLLOWUP_NEGATIVE = 'photorealistic, 3d render, text, labels, numbers, cell borders, watermark, blurry, green tint on the subject, green spill';
 
-const USAGE = `usage: node art-prompts/v2/gen-candidate.mjs --id <item or followup id> --slot a|b [options]
+const USAGE = `usage: node art-prompts/v2/gen-candidate.mjs --id <item or followup id> --slot a|b|c [options]
 
   --prompt <text> | --prompt-file <path>   positive prompt (default: the manifest's)
-  --negative <text>       negative prompt (default: the manifest's; sent only to sd35/qwen*)
-  --model <group>         ${Object.keys(IMAGE_MODEL_GROUPS).join('|')} (default: item.model for slot a,
-                          item.modelB for slot b)
+  --negative <text>       negative prompt (default: the manifest's; images: sent only to
+                          sd35/qwen*; videos: always sent)
+  --model <group>         images: ${Object.keys(IMAGE_MODEL_GROUPS).join('|')}
+                          videos: ${Object.keys(VIDEO_MODEL_GROUPS).join('|')} (ltxvideo = the LTX-2.5 fallback)
+                          (default: item.model for slot a, item.modelB for slot b,
+                          item.modelC for slot c)
   --seed <n> --width <n> --height <n> --steps <n> --guidance <f>
-  --format png|jpeg|webp  container to request (default png)
+  --format png|jpeg|webp  container to request (images; default png)
   --negative-mode <m>     field (default) | append | drop
-  --out <path>            output file (default art-prompts/v2/candidates/<slot>/<id>.png);
-                          the sidecar is written next to it as <name>.json
+  --out <path>            output file (default art-prompts/v2/candidates/<slot>/<id>.png,
+                          .mp4 for videos); the sidecar is written next to it as <name>.json
   --force                 overwrite an existing output
-  --edit-from <png>       edit mode: reference image (repeatable) → /v1/images/edits
-  --instruction <text>    edit mode: what to change (required with --edit-from)
+  --edit-from <png>       image edit mode: reference image (repeatable) → /v1/images/edits
+  --instruction <text>    image edit mode: what to change (required with --edit-from)
   --base-url <url> | --port <n>   server origin (default generate.mjs's :30001 proxy)
   --served-model <id>     payload model id (skips nothing: the /v1/models check still runs)
   --any-model             accept whatever model the server lists (recorded in the sidecar)
   --api-key <k>           Bearer token (or env SKYNET_API_KEY)
-  --timeout <ms>          per attempt (default 900000) · --retries <n> (default 2)
+  --timeout <ms>          per attempt (default 900000; videos 10800000 = 3 h per job)
+  --retries <n>           images: whole-request retries (default 2); videos: re-submits of a
+                          job the server reports failed (default 1; a timeout never re-submits)
   --manifest <path>       default art-prompts/v2/manifest.json
   --dry-run               print the request and paths; no network, no writes
   --list                  print every item and followup id with its label, then exit
-  --help`;
+  --help
+
+ video items (kind "video", ids video/<subject>; slots a and b):
+  --frames <n>            num_frames (snapped to 4n+1 Wan / 8n+1 LTX)
+  --fps <n>               frames per second (re-derives num_frames from the clip's length)
+  --seconds <s>           clip length (re-derives num_frames at the fps)
+  --source <png>          image-to-video: the start still (required for "mode":"i2v" items;
+                          ltx25 / ltxvideo only), sent as a data URI in reference_url
+  --job <id>              resume an existing /v1/videos job: poll and download, no submit
+  --poll <s>              seconds between job polls (default 10)
+  --no-wan-snap           wan22: keep a ÷16 size instead of the nearest trained bucket`;
 
 function fail(message, code = 2) {
   console.error(`error: ${message}`);
@@ -113,12 +180,13 @@ function parseArgs(argv) {
   const o = {
     id: null, slot: null, prompt: null, promptFile: null, negative: null, model: null,
     seed: null, width: null, height: null, steps: null, guidance: null, format: 'png',
-    negativeMode: 'field', out: null, force: false, editFrom: [], instruction: null,
+    formatGiven: false, negativeMode: 'field', out: null, force: false, editFrom: [], instruction: null,
     baseUrl: null, port: null, modelId: null, anyModel: false,
-    apiKey: process.env.SKYNET_API_KEY ?? null, timeout: 900_000, retries: 2,
+    apiKey: process.env.SKYNET_API_KEY ?? null, timeout: null, retries: null,
     manifest: path.join(SCRIPT_DIR, 'manifest.json'), dryRun: false, list: false, help: false,
+    frames: null, fps: null, seconds: null, source: null, job: null, poll: 10, noWanSnap: false,
   };
-  const flags = new Set(['force', 'any-model', 'dry-run', 'list', 'help']);
+  const flags = new Set(['force', 'any-model', 'dry-run', 'list', 'help', 'no-wan-snap']);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (!arg.startsWith('--')) fail(`unexpected argument "${arg}"`);
@@ -131,6 +199,11 @@ function parseArgs(argv) {
     const int = () => {
       const n = Number(v);
       if (!Number.isInteger(n)) fail(`--${name} expects an integer, got "${v}"`);
+      return n;
+    };
+    const num = () => {
+      const n = Number(v);
+      if (!Number.isFinite(n) || n <= 0) fail(`--${name} expects a positive number, got "${v}"`);
       return n;
     };
     switch (name) {
@@ -149,7 +222,7 @@ function parseArgs(argv) {
         if (!Number.isFinite(o.guidance)) fail(`--guidance expects a number, got "${v}"`);
         break;
       }
-      case 'format': o.format = v.toLowerCase() === 'jpg' ? 'jpeg' : v.toLowerCase(); break;
+      case 'format': o.format = v.toLowerCase() === 'jpg' ? 'jpeg' : v.toLowerCase(); o.formatGiven = true; break;
       case 'negative-mode': o.negativeMode = v; break;
       case 'out': o.out = path.resolve(v); break;
       case 'force': o.force = true; break;
@@ -166,6 +239,13 @@ function parseArgs(argv) {
       case 'dry-run': o.dryRun = true; break;
       case 'list': o.list = true; break;
       case 'help': o.help = true; break;
+      case 'frames': o.frames = int(); break;
+      case 'fps': o.fps = int(); if (o.fps <= 0) fail('--fps expects a positive integer'); break;
+      case 'seconds': o.seconds = num(); break;
+      case 'source': o.source = path.resolve(v); break;
+      case 'job': o.job = v; break;
+      case 'poll': o.poll = num(); break;
+      case 'no-wan-snap': o.noWanSnap = true; break;
       default: fail(`unknown flag --${name}`);
     }
   }
@@ -195,7 +275,7 @@ async function libraryEntry(source) {
 function findTarget(manifest, id) {
   for (const item of manifest.items) {
     if (item.id === id) return { item, followup: null };
-    const f = item.followups.find((x) => x.id === id);
+    const f = (item.followups ?? []).find((x) => x.id === id);
     if (f) return { item, followup: f };
   }
   return null;
@@ -251,6 +331,17 @@ async function checkServedModel(baseUrl, group, groupKey, o) {
   return wanted;
 }
 
+/** The model group key a slot uses for an item (or --model), or a usage error. */
+function slotGroupKey(item, o) {
+  if (o.model) return o.model;
+  const key = item[SLOT_FIELD[o.slot]];
+  if (!key) {
+    const has = SLOTS.filter((s) => item[SLOT_FIELD[s]]).join(', ');
+    fail(`${item.id} has no slot ${o.slot} (no "${SLOT_FIELD[o.slot]}" in the manifest; its slots: ${has || 'none'}). Pass --model to force one.`);
+  }
+  return key;
+}
+
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (o.help) { console.log(USAGE); return; }
@@ -258,25 +349,34 @@ async function main() {
   if (manifest.schema !== 'shmup-art-picks@1') fail(`${o.manifest}: schema "${manifest.schema}" is not shmup-art-picks@1`);
   if (o.list) {
     for (const it of manifest.items) {
-      console.log(`${it.id}  [${it.model}/${it.modelB}]  ${it.label}`);
-      for (const f of it.followups) console.log(`  ${f.id}  ${f.label}`);
+      const slots = [it.model, it.modelB ?? '-', ...(it.modelC ? [it.modelC] : [])].join('/');
+      const video = it.kind === 'video' ? `  (video ${it.mode}${it.waitsFor ? `, waits for ${it.waitsFor}` : ''})` : '';
+      console.log(`${it.id}  [${slots}]  ${it.label}${video}`);
+      for (const f of it.followups ?? []) console.log(`  ${f.id}  ${f.label}`);
     }
     return;
   }
   if (!o.id || !ID_RE.test(o.id)) fail('--id must be a manifest id like boss/halcyon-bulwark (lower-case, "/"-separated)');
-  if (o.slot !== 'a' && o.slot !== 'b') fail('--slot must be a or b');
-  if (!IMAGE_FORMATS.includes(o.format)) fail(`--format must be ${IMAGE_FORMATS.join('|')}`);
+  if (!SLOTS.includes(o.slot)) fail('--slot must be a, b or c');
   if (!['field', 'append', 'drop'].includes(o.negativeMode)) fail('--negative-mode must be field|append|drop');
   if (o.prompt !== null && o.promptFile !== null) fail('pass --prompt or --prompt-file, not both');
-  const editing = o.editFrom.length > 0;
-  if (editing && !o.instruction) fail('--edit-from needs --instruction');
-  if (!editing && o.instruction) fail('--instruction needs --edit-from');
 
   const target = findTarget(manifest, o.id);
   if (!target) fail(`no manifest item or followup with id "${o.id}" (try --list)`);
   const { item, followup } = target;
+  if (item.kind === 'video') return runVideo(o, item);
+  for (const flag of ['frames', 'fps', 'seconds', 'source', 'job']) {
+    if (o[flag] !== null) fail(`--${flag} is for video items; ${o.id} is an image`);
+  }
+  if (o.timeout === null) o.timeout = IMAGE_TIMEOUT_MS;
+  if (o.retries === null) o.retries = 2;
 
-  const groupKey = o.model ?? (o.slot === 'a' ? item.model : item.modelB);
+  if (!IMAGE_FORMATS.includes(o.format)) fail(`--format must be ${IMAGE_FORMATS.join('|')}`);
+  const editing = o.editFrom.length > 0;
+  if (editing && !o.instruction) fail('--edit-from needs --instruction');
+  if (!editing && o.instruction) fail('--instruction needs --edit-from');
+
+  const groupKey = slotGroupKey(item, o);
   const groupDef = IMAGE_MODEL_GROUPS[groupKey];
   if (!groupDef) fail(`unknown --model "${groupKey}" (known: ${Object.keys(IMAGE_MODEL_GROUPS).join(', ')})`);
 
@@ -412,6 +512,291 @@ async function main() {
   await writeFileAtomic(sidecarPath, `${JSON.stringify(sidecar, null, 2)}\n`);
   const warn = format !== (o.format === 'jpeg' ? 'jpg' : o.format) ? `  (warning: server returned ${format}, asked ${o.format})` : '';
   console.log(`ok ${o.slot} ${o.id} ${groupKey} ${width}x${height} seed ${seed} ${seconds}s → ${path.relative(REPO_DIR, file)}${warn}`);
+}
+
+// ---------------------------------------------------------------------------
+// Video
+// ---------------------------------------------------------------------------
+
+/** generate.mjs's Wan2.2 trained buckets and its nearest-bucket rule (snapToWanBucket). */
+const WAN_BUCKETS = [{ w: 1280, h: 720 }, { w: 720, h: 1280 }, { w: 832, h: 480 }, { w: 480, h: 832 }];
+function wanBucket(w, h) {
+  const pair = w / h >= 1 ? [WAN_BUCKETS[0], WAN_BUCKETS[2]] : [WAN_BUCKETS[1], WAN_BUCKETS[3]];
+  const lnReq = Math.log(w / h);
+  const d = pair.map((b) => Math.abs(lnReq - Math.log(b.w / b.h)));
+  if (Math.abs(d[0] - d[1]) >= 0.05) return d[0] <= d[1] ? pair[0] : pair[1];
+  const lnArea = Math.log(w * h);
+  const da = pair.map((b) => Math.abs(lnArea - Math.log(b.w * b.h)));
+  return da[0] <= da[1] ? pair[0] : pair[1];
+}
+
+/** generate.mjs's snapDiv: floor to a multiple of d, at least 256. */
+function snapDiv(n, d) {
+  return Math.max(256, Math.floor(n / d) * d);
+}
+
+/** Size on the family grid (Wan ÷16 + bucket unless --no-wan-snap, LTX ÷32), with notes. */
+function snapVideoSize(w, h, groupKey, group, o) {
+  const d = group.divisor;
+  let sw = w % d === 0 && w >= 256 ? w : snapDiv(w, d);
+  let sh = h % d === 0 && h >= 256 ? h : snapDiv(h, d);
+  if (sw !== w || sh !== h) console.error(`note: ${w}x${h} is not ÷${d} for ${groupKey} — snapped to ${sw}x${sh}`);
+  if (groupKey === 'wan22' && !o.noWanSnap) {
+    const b = wanBucket(sw, sh);
+    if (b.w !== sw || b.h !== sh) console.error(`note: ${sw}x${sh} snapped to the trained Wan2.2 bucket ${b.w}x${b.h} (--no-wan-snap keeps it)`);
+    sw = b.w;
+    sh = b.h;
+  }
+  return { w: sw, h: sh };
+}
+
+/** generate.mjs's snapFrames: the nearest step·n+1 (8n+1 LTX, 4n+1 Wan). */
+function snapFrames(target, step) {
+  const k = Math.max(1, Math.round((target - 1) / step));
+  return k * step + 1;
+}
+
+/** A ÷div size of about `area` pixels with the aspect closest to `aspect`. */
+function fitAspect(aspect, area, div) {
+  let best = null;
+  for (let h = div * 8; h <= 2048; h += div) {
+    const w = Math.round((h * aspect) / div) * div;
+    if (w < div * 8 || w > 2048) continue;
+    const errA = Math.abs(Math.log(w / h) - Math.log(aspect));
+    const score = (errA < 0.02 ? 0 : 10 + errA) + Math.abs(Math.log((w * h) / area));
+    if (!best || score < best.score) best = { w, h, score };
+  }
+  return best;
+}
+
+/** The library's own LTX size for a Wan size (video/00-workflow.md §2). */
+const WAN_TO_LTX = { '1280x720': '960x544', '832x480': '768x512', '720x1280': '576x1024', '480x832': '512x768' };
+
+/** Settings for a group the item has no settings.<group> for, derived from slot a's. */
+function deriveVideoSettings(item, group) {
+  const a = item.settings?.[item.model] ?? item;
+  let w = a.width;
+  let h = a.height;
+  // LTX gets the library's LTX size for a Wan size; Wan's bucket snap happens in snapVideoSize
+  if (group.divisor === 32 && WAN_TO_LTX[`${w}x${h}`]) [w, h] = WAN_TO_LTX[`${w}x${h}`].split('x').map(Number);
+  const seconds = a.seconds ?? (a.num_frames && a.fps ? a.num_frames / a.fps : 5);
+  const fps = group.defaults.fps;
+  return {
+    width: w, height: h, fps, num_frames: snapFrames(Math.round(seconds * fps), group.frameStep),
+    steps: group.defaults.steps, guidance: group.defaults.guidance, seed: a.seed ?? null, derived: true,
+  };
+}
+
+/** Checks /v1/models: the served id (exit 3 like images) and a video task_type for the mode. */
+async function checkVideoModel(baseUrl, group, groupKey, o, mode) {
+  const wanted = o.modelId ?? group.model;
+  let entries;
+  try {
+    const data = await probeModels(baseUrl, o);
+    entries = (Array.isArray(data?.data) ? data.data : []).filter((e) => e?.id);
+  } catch (err) {
+    console.error(`note: ${baseUrl}/v1/models probe failed (${err.message}) — sending "${wanted}" unchecked`);
+    return { model: wanted, taskType: null };
+  }
+  let entry = entries.find((e) => e.id === wanted);
+  if (!entry && entries.length) {
+    if (!o.anyModel) {
+      fail(`${baseUrl} serves [${entries.map((e) => e.id).join(', ')}], but slot ${o.slot} wants ${groupKey} ("${wanted}"). Load that model, point --base-url at an origin that serves it, or pass --any-model.`, 3);
+    }
+    entry = entries[0];
+    console.error(`note: server lists [${entries.map((e) => e.id).join(', ')}]; --any-model adopts "${entry.id}" for slot ${o.slot}`);
+  }
+  const types = new Set([entry?.task_type, ...(Array.isArray(entry?.supported_task_types) ? entry.supported_task_types : [])]
+    .filter((t) => typeof t === 'string').map((t) => t.toUpperCase()));
+  if (types.size) {
+    const need = mode === 'i2v' ? ['I2V', 'TI2V'] : ['T2V', 'TI2V'];
+    if (!need.some((t) => types.has(t))) {
+      const isVideo = [...types].some((t) => /2V$/.test(t));
+      fail(`${baseUrl} serves "${entry.id}" with task_type ${[...types].join('/')} — ${isVideo ? `not a ${mode.toUpperCase()} model` : 'not a video model at all'} (a ${mode} clip needs ${need.join(' or ')}). For slot b, the fallback is --model ltxvideo on the ltxvideo server.`, 3);
+    }
+  } else {
+    console.error(`note: /v1/models gives no task_type for "${entry?.id ?? wanted}" — the video check is the id only`);
+  }
+  return { model: entry?.id ?? wanted, taskType: entry?.task_type ?? null };
+}
+
+async function runVideo(o, item) {
+  if (o.editFrom.length || o.instruction) fail(`${item.id} is a video: --edit-from / --instruction are for images (image-to-video takes --source <png>)`);
+  if (o.formatGiven && o.format !== 'mp4') fail(`${item.id} is a video: --format does not apply (the server returns mp4)`);
+  if (o.slot === 'c') fail(`${item.id} is a video: videos have slots a and b only`);
+  if (o.timeout === null) o.timeout = VIDEO_TIMEOUT_MS;
+  if (o.retries === null) o.retries = 1;
+  if (o.job) o.retries = 0; // a resumed job is never re-submitted
+
+  const groupKey = slotGroupKey(item, o);
+  const group = VIDEO_MODEL_GROUPS[groupKey];
+  if (!group) fail(`${item.id} is a video: --model must be ${Object.keys(VIDEO_MODEL_GROUPS).join('|')} (got "${groupKey}")`);
+  // --- mode and the start still ------------------------------------------------
+  const mode = item.mode === 'i2v' || o.source ? 'i2v' : 't2v';
+  if (mode === 'i2v' && !group.i2v) {
+    fail(`${groupKey} (${group.model}) is text-to-video only on skynet2 — ${o.source ? '--source needs' : `${item.id} is image-to-video and needs`} ltx25 or ltxvideo`);
+  }
+  const base = item.settings?.[groupKey] ?? deriveVideoSettings(item, group);
+  if (base.derived) console.error(`note: ${item.id} has no settings.${groupKey} — derived from slot a's (${base.width}x${base.height}, ${base.num_frames} f @ ${base.fps} fps)`);
+  let ref = null;
+  if (o.source) {
+    const bytes = await fs.readFile(o.source).catch(() => fail(`--source ${o.source}: unreadable`));
+    const fmt = detectImageFormat(bytes);
+    if (!['png', 'jpg', 'webp'].includes(fmt)) fail(`--source ${o.source}: not a PNG/JPEG/WebP image (detected ${fmt})`);
+    ref = { file: o.source, bytes, type: fmt === 'jpg' ? 'image/jpeg' : `image/${fmt}`, size: pngSize(bytes) };
+  } else if (mode === 'i2v' && !o.dryRun && !o.job) {
+    fail(`${item.id} is image-to-video: pass --source <png> — the owner's winning still of ${item.waitsFor ?? '(its still)'}, i.e. art-prompts/v2/candidates/<winner slot>/${item.waitsFor ?? '<still id>'}.png`);
+  }
+
+  // --- settings: CLI > settings.<group> > derived, then the family grid --------
+  let width = o.width ?? base.width;
+  let height = o.height ?? base.height;
+  if (ref?.size && o.width === null && o.height === null) {
+    const aspect = ref.size.w / ref.size.h;
+    if (Math.abs(Math.log((width / height) / aspect)) > Math.log(1.03)) {
+      const fit = fitAspect(aspect, width * height, group.divisor);
+      console.error(`note: the still is ${ref.size.w}x${ref.size.h}; ${width}x${height} refitted to its aspect: ${fit.w}x${fit.h}`);
+      width = fit.w;
+      height = fit.h;
+    }
+  }
+  ({ w: width, h: height } = snapVideoSize(width, height, groupKey, group, o));
+  const fps = o.fps ?? base.fps;
+  const clipSeconds = base.seconds ?? base.num_frames / base.fps;
+  let frames = o.frames ?? (o.seconds !== null ? Math.round(o.seconds * fps)
+    : o.fps !== null ? Math.round(clipSeconds * fps) : base.num_frames);
+  const snapped = snapFrames(frames, group.frameStep);
+  if (snapped !== frames) console.error(`note: num_frames ${frames} snapped to ${snapped} (${group.frameStep}n+1 for ${groupKey})`);
+  frames = snapped;
+  const steps = o.steps ?? base.steps;
+  const guidance = o.guidance ?? base.guidance;
+  const seed = o.seed ?? base.seed ?? hashSeed(item.id);
+  const seconds = Math.round((frames / fps) * 100) / 100;
+
+  const prompt = o.prompt ?? (o.promptFile ? (await fs.readFile(o.promptFile, 'utf8')).trim() : null) ?? item.prompt;
+  const negative = o.negative ?? item.negative ?? '';
+  let sentPrompt = prompt;
+  let negativeSent = null;
+  if (negative) {
+    if (o.negativeMode === 'append') sentPrompt = appendNegative(prompt, negative);
+    else if (o.negativeMode === 'field') negativeSent = negative; // both video families honour it
+  }
+
+  const out = o.out ?? `${path.join(SCRIPT_DIR, 'candidates', o.slot, ...item.id.split('/'))}.mp4`;
+  if (!o.force && !o.dryRun && (await exists(out))) fail(`${path.relative(REPO_DIR, out)} exists — pass --force to replace it`, 4);
+
+  const baseUrl = resolveBaseUrl(o);
+  const payload = {
+    model: o.modelId ?? group.model, prompt: sentPrompt, size: `${width}x${height}`,
+    num_frames: frames, fps, seed, guidance_scale: guidance, num_inference_steps: steps,
+  };
+  if (negativeSent !== null) payload.negative_prompt = negativeSent;
+  // generate.mjs's LTX-Video text-encoder budget (its 128-token default truncates prompts)
+  if (groupKey === 'ltxvideo') payload.diffusers_kwargs = { max_sequence_length: 256 };
+
+  if (o.dryRun) {
+    const still = ref ? path.relative(REPO_DIR, ref.file) : `needs --source: the winning still of ${item.waitsFor ?? 'its still'}`;
+    console.log(`dry-run ${o.slot} ${item.id} ${groupKey} ${mode} ${width}x${height} ${frames}f @ ${fps}fps (${seconds}s) seed ${seed} steps ${steps} guidance ${guidance} → ${path.relative(REPO_DIR, out)}`);
+    console.log(o.job ? `resume job ${o.job}: GET ${baseUrl}/v1/videos/${o.job} every ${o.poll}s, then …/content`
+      : `POST ${baseUrl}/v1/videos, then GET /v1/videos/{id} every ${o.poll}s, then GET /v1/videos/{id}/content (timeout ${Math.round(o.timeout / 60000)} min)`);
+    console.log(JSON.stringify(mode === 'i2v' ? { ...payload, reference_url: `data:image/png;base64,<${still} — encoded at send time>` } : payload, null, 2));
+    return;
+  }
+
+  const check = await checkVideoModel(baseUrl, group, groupKey, o, mode);
+  payload.model = check.model;
+  if (ref) payload.reference_url = `data:${ref.type};base64,${ref.bytes.toString('base64')}`;
+
+  const started = Date.now();
+  let job = null;
+  let lastErr = null;
+  for (let attempt = 0; attempt <= o.retries; attempt++) {
+    const deadline = Date.now() + o.timeout;
+    try {
+      let id = o.job;
+      if (!id || attempt > 0) {
+        const created = await postJson(baseUrl, '/v1/videos', payload, { ...o, retries: 2 }, Math.min(deadline, Date.now() + 300_000));
+        id = created?.id;
+        if (!id) throw new Error(`video submit returned no job id: ${JSON.stringify(created).slice(0, 200)}`);
+        console.error(`job ${id} submitted (${item.id}, slot ${o.slot}, ${groupKey}) — if this client stops, resume with --job ${id}`);
+      }
+      job = await pollVideoJob(baseUrl, id, o, deadline);
+      if (job.status === 'failed') {
+        const msg = typeof job.error === 'string' ? job.error : JSON.stringify(job.error ?? job).slice(0, 300);
+        const err = new Error(`video job ${id} failed server-side: ${msg}`);
+        err.resubmit = true;
+        throw err;
+      }
+      job.bytes = job.url && /^https?:/.test(job.url)
+        ? await getBinary(job.url, { ...o, retries: 3 }, Date.now() + 900_000)
+        : await getBinary(`${baseUrl}/v1/videos/${encodeURIComponent(id)}/content`, { ...o, retries: 3 }, Date.now() + 900_000);
+      job.id = id;
+      lastErr = null;
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (!err.resubmit || attempt === o.retries) break;
+      console.error(`re-submitting (${attempt + 1}/${o.retries}) in 10s: ${err.message.slice(0, 200)}`);
+      await new Promise((r) => setTimeout(r, 10_000));
+    }
+  }
+  if (lastErr) {
+    console.log(`FAILED ${o.slot} ${item.id} ${groupKey}: ${lastErr.message.slice(0, 400)}`);
+    process.exit(1);
+  }
+
+  const format = detectImageFormat(job.bytes);
+  if (format !== 'mp4') console.error(`warning: ${item.id}: expected mp4 bytes, detected "${format}" — kept as .mp4`);
+  const generationSeconds = Math.round((Date.now() - started) / 100) / 10;
+  await fs.mkdir(path.dirname(out), { recursive: true });
+  await writeFileAtomic(out, job.bytes);
+  const sidecar = {
+    id: item.id, slot: o.slot, prompt, negative, model: groupKey, seed, width, height, steps, guidance,
+    generatedAt: new Date().toISOString(), seconds,
+    label: item.label, source: item.source,
+    file: path.relative(REPO_DIR, out), format, requestedFormat: 'mp4',
+    servedModel: payload.model, endpoint: `${baseUrl}/v1/videos`, negativeSent,
+    mode, kind: 'video', num_frames: frames, fps, generationSeconds, jobId: job.id,
+    taskType: check.taskType, bytes: job.bytes.length,
+    ...(ref ? { sourceImage: path.relative(REPO_DIR, ref.file), sourceSize: ref.size ? `${ref.size.w}x${ref.size.h}` : null } : {}),
+    ...(item.waitsFor ? { waitsFor: item.waitsFor } : {}),
+    ...(groupKey !== item[SLOT_FIELD[o.slot]] ? { slotModel: item[SLOT_FIELD[o.slot]] ?? null } : {}),
+  };
+  await writeFileAtomic(`${out.slice(0, out.length - path.extname(out).length)}.json`, `${JSON.stringify(sidecar, null, 2)}\n`);
+  console.log(`ok ${o.slot} ${item.id} ${groupKey} ${mode} ${width}x${height} ${frames}f@${fps} (${seconds}s clip) seed ${seed} ${generationSeconds}s → ${path.relative(REPO_DIR, out)}`);
+}
+
+/** Polls a video job until completed/failed; throws on timeout or a lost job (never re-submits). */
+async function pollVideoJob(baseUrl, id, o, deadline) {
+  const url = `${baseUrl}/v1/videos/${encodeURIComponent(id)}`;
+  let misses = 0;
+  let lastNote = 0;
+  for (;;) {
+    let job = null;
+    try {
+      const res = await fetchWithRetry(url, { method: 'GET', headers: httpHeaders(o) }, { ...o, retries: 3 }, Math.min(deadline, Date.now() + 120_000));
+      const text = await safeText(res);
+      if (res.status === 404) throw Object.assign(new Error(`job ${id} is unknown to the server (404 — restarted?): ${text.slice(0, 200)}`), { lost: true });
+      if (!res.ok) throw new HttpError(res.status, text, url);
+      job = JSON.parse(text);
+      misses = 0;
+    } catch (err) {
+      if (err.lost) throw err;
+      if (++misses >= 6) throw new Error(`lost contact while polling job ${id} (${err.message.slice(0, 200)}) — the job may still run: resume with --job ${id}`);
+      console.error(`poll ${id}: ${err.message.slice(0, 160)} (miss ${misses}/6)`);
+    }
+    const status = job?.status;
+    if (status === 'completed' || status === 'failed') return job;
+    if (Date.now() - lastNote >= 60_000) {
+      lastNote = Date.now();
+      const pct = Number.isFinite(job?.progress) ? ` ${job.progress}%` : '';
+      console.error(`job ${id}: ${status ?? 'unknown'}${pct} after ${Math.round((Date.now() - (deadline - o.timeout)) / 1000)}s`);
+    }
+    if (Date.now() + o.poll * 1000 > deadline) {
+      throw new Error(`job ${id} not finished after ${Math.round(o.timeout / 60000)} min (last status ${status ?? 'unknown'}) — it may still run: resume with --job ${id}`);
+    }
+    await new Promise((r) => setTimeout(r, o.poll * 1000));
+  }
 }
 
 main().catch((err) => {

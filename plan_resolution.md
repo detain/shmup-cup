@@ -398,10 +398,11 @@ follow R2.
 
 ### R0-04 — The early art round: generate, pick, follow up
 
-- **Goal:** two AI candidates for every basic subject of `art-prompts/v2/manifest.json` (91 subjects, 203
-  followups), the owner's pick of each, then the winners' followups and edits — so R3 … R5 start from a chosen visual
-  direction, not from a blank page. **It never blocks anything:** no step waits for its images, and nothing it makes
-  ships before R3-02's ingest and R3-05's licence check.
+- **Goal:** two AI candidates for every basic image subject of `art-prompts/v2/manifest.json` (91 subjects, 203
+  followups; a third for 29 of them), two clips for each of its 24 text-to-video items and one for each of its 2
+  image-to-video items, the owner's pick of each, then the winners' followups and edits — so R3 … R5 start from a
+  chosen visual direction, not from a blank page. **It never blocks anything:** no step waits for its images or clips,
+  and nothing it makes ships before R3-02's ingest and R3-05's licence check.
 - **Depends on:** — (the owner's server switch, below). **Blocks:** nothing.
 - **Builds on:** R3-01's prompt-library half (`b938d5a`: the K3 kernel with the flat green key, PNG output, the
   manifest, `art-prompts/v2/gen-candidate.mjs`); the picker page `http://mystage.interserver.net/shmup-cup/` (files in
@@ -409,7 +410,10 @@ follow R2.
 - **Scope:**
   - *(Tooling done 2026-10-16: `art-prompts/v2/server.sh` with its offline tests `server.test.sh`; the port-30000
     refusal in `generate.mjs`, `gen-candidate.mjs` and `sweep-models.sh`; the runbook
-    `docs/dev/art-generation-server.md`; the driver's `ART_ROUND` setting in `prompt_resolution.md`.)*
+    `docs/dev/art-generation-server.md`; the driver's `ART_ROUND` setting in `prompt_resolution.md`. Then the third
+    image slot and the clips: `modelC` and the 26 `video/…` items in the manifest; `gen-candidate.mjs --slot c`, its
+    video jobs (`/v1/videos`, `--source` for i2v, `--job` to resume) checked offline against a mock server; the
+    picker's A | B | C sets, video players served with HTTP Range by `media.php`, and the round-2 section.)*
   - **The server switch (owner, before anything runs).** The main LLM moves to GPUs 0,1 with
     `/root/run_sglang_qwenflashnext9b.sh` (port 30000 assumed — the LLM's port owner and process group are re-detected
     at run time, never hard-coded). Cards 2,3 then run **one image/video model at a time** with the unchanged
@@ -424,15 +428,42 @@ follow R2.
       manifest item itself, the same subject in both slots; its other images are the item's followups (round 2).
     - Slot a uses the item's `model` (FLUX.2-dev for 84 items), slot b its `modelB` (Qwen-Image for 75; the 7 text
       items are reversed, Qwen-Image in a and FLUX.2-dev in b; SD3.5 Large is slot b of the 9 terrain swatches).
+    - **Slot c (`modelC`, FLUX.1-dev — the second-best model for these types)** is a third candidate for **29 items**:
+      the 11 stage scenes and the 9 terrain swatches of `50-stages`, and the 7 key moments and 2 promo items that are
+      not text items (a text item — slot a `qwenvl` — gets no slot c). Its own agents write `candidates/c/…` and
+      never read slots a or b.
+    - **Videos — 26 items `video/<subject>`** (`"kind":"video"`, category `video-<NN-dir>`), one per basic clip of
+      `art-prompts/video/*.json`; the variations of a clip are alternative takes, so the item is its first take, and
+      the others are listed under `takes`. Each item carries `mode`, `prompt`, `negative` and per-model `settings`
+      (resolution, num_frames, fps, seconds, steps, guidance, seed), snapped to each family's grid as `generate.mjs`
+      does: Wan ÷16 and then its nearest trained bucket (1280x720, 832x480, 720x1280) at the canonical 81 frames @
+      16 fps (5.06 s); LTX ÷32 at the library's LTX size for the clip's aspect (960x544, 768x512, 576x1024) and the
+      take's frames, else 121 @ 24 fps (5.04 s), unguided and 8 steps for LTX-2.5's distilled DiT (SGLang's own
+      LTX-2.5 defaults).
+      - **24 text-to-video clips:** slot a `wan22` (Wan2.2-T2V-A14B), slot b `ltx25` (LTX-2.5,
+        `Lightricks/LTX-2.5-Diffusers`, SGLang's `LTX2Pipeline`). LTX-2.5 is expected to be a video model (the LTX-2
+        generation, successor of LTX-Video); the LTX session checks `/v1/models`' `task_type` first (FLUX.2 reports
+        `TI2I`; a video model reports `T2V`, `I2V` or `TI2V`). If LTX-2.5 is not a T2V/I2V model or does not load,
+        slot b runs with the fallback **`ltxvideo`** (Lightricks/LTX-Video, ÷32, its own `settings.ltxvideo`).
+      - **2 image-to-video clips** (`"mode":"i2v"`, `"waitsFor"`: the image id of the still they start from —
+        `moment/ending-citadel-falls-silent`, and `fx/black-hole/armed-scene`, a followup of `fx/black-hole`): one
+        candidate, slot a `ltx25`, made in **round 2** from the owner's winning still. Wan2.2's I2V weights are not
+        on skynet2.
     - The slots therefore run in separate server sessions, one model at a time: **FLUX.2-dev** (slot a's FLUX items,
       plus slot b's 7 text items by a separate slot-b agent), then **Qwen-Image** (slot b's Qwen items, plus slot a's
-      7 text items by a separate slot-a agent), then **SD3.5 Large** (the 9 swatches).
+      7 text items by a separate slot-a agent), then **SD3.5 Large** (slot b of the 9 swatches), then **FLUX.1-dev**
+      (slot c's 29 items), then **Wan2.2-T2V-A14B** (slot a of the 24 t2v clips), then **LTX-2.5** (slot b of the
+      24 t2v clips; LTX-Video if it fails the check above). Video timings on skynet2 are unknown until the first clip
+      of each model is measured; the sessions are sized from that.
     - Per session about **4 concurrent generation agents**, one per category or group of categories. Each composes
-      its own take on the item's prompt, runs `gen-candidate.mjs`, **looks at every PNG with the Read tool**, and
-      retries at most twice when it shows the wrong subject, no key background where one is required, stray text or
-      a broken composition. Candidates and their JSON sidecars stay git-ignored.
-  - **The owner picks** on the picker page. It saves every 10 s and has no login. The choices land in
-    `data/choices.json` there: `{"schema":"shmup-art-choices@1","items":{"<id>":{"winner":"a"|"b"|null,
+      its own take on the item's prompt, runs `gen-candidate.mjs`, **looks at every PNG with the Read tool** (for a
+      clip: three frames pulled with `ffmpeg` into its scratchpad), and retries at most twice when it shows the wrong
+      subject, no key background where one is required, stray text or a broken composition (clips: also morphing,
+      a frozen picture or a cut). Candidates (`.png`, `.mp4`) and their JSON sidecars stay git-ignored.
+  - **The owner picks** on the picker page. It saves every 10 s and has no login. A set shows A | B, or A | B | C when
+    it has a slot c; clips play in `<video>` players (`media.php`, HTTP Range) and clicking the picture chooses; the
+    image-to-video sets sit in their own "Waits for round 2" section with a link to their still's set. The choices
+    land in `data/choices.json` there: `{"schema":"shmup-art-choices@1","items":{"<id>":{"winner":"a"|"b"|"c"|null,
     "comment":"…","regenerate":bool,"updatedAt":"…"}}}`. A winner and `regenerate` exclude each other. A comment on a
     winner means "update the chosen image using this text as guidance"; on a regenerate it is the guidance for the
     new idea. Agents only read that file — the page owns it.
@@ -443,27 +474,39 @@ follow R2.
     - **(b) Comments:** each comment is applied as an edit of the winner — FLUX.2-dev's edit route, or Qwen-Image-Edit
       only if its weights and a launcher exist (today: cache stubs only, no launcher) — written as a **new file, never
       overwriting** the winner.
-    - **(c) Regenerate:** both candidates of every item flagged `regenerate` are made again with a new idea, with the
-      round-1 slot models; the old pair is moved to `candidates/history/`, never deleted.
+    - **(c) Regenerate:** every candidate of an item flagged `regenerate` (two, or three with a slot c; a clip's one or
+      two) is made again with a new idea, with the round-1 slot models; the old files are moved to
+      `candidates/history/`, never deleted.
+    - **(c2) Image-to-video:** once the still an i2v clip `waitsFor` has a winner (and, for a followup still, its
+      followup exists — so after the FLUX.2-dev session), an **LTX-2.5** session makes the clip with
+      `gen-candidate.mjs --source <the winning still>` (LTX-Video if LTX-2.5 failed its check). The owner then picks
+      or regenerates it like any other set.
     - **(d)** The owner picks again where needed, and the loop repeats until every item is decided. A ledger
       (`art-prompts/v2/candidates/ledger.json`, git-ignored) records which choice (`updatedAt`) each item's work was
       made for, so a re-run acts only on new or changed choices.
     - **(e)** Winners and their followups (with their sidecars) are copied to a tracked
       `art-prompts/v2/winners/<id>/…` and committed; candidates stay git-ignored. The ingest into the game happens
       later (R3-02, staged until R2-01).
-  - **Video is not part of this round.** Later: LTX-Video / LTX-2.5 image-to-video from winning stills. On skynet2
-    today Wan2.2 is text-to-video only — its I2V weights (`Wan2.2-I2V-A14B`, `TI2V-5B`) are missing, so a reference
-    image would be ignored or rejected.
+  - **Disk (checked 2026-10-16, read-only):** 544 GiB free on skynet2's `/root`; `server.sh start` refuses below 150.
+    The first starts still to come download about SD3.5 Large 67 GiB, FLUX.1-dev 54, Wan2.2-T2V-A14B 118 and
+    LTX-2.5 163 (SGLang fetches the whole repo, skipping only `*.onnx` / `*.msgpack`) — all four fit, leaving about
+    143 GiB. The LTX-Video fallback (237 GiB, its repo holds every LTX-Video checkpoint) then neither fits nor passes
+    the floor: the runbook (§4) lists what the owner could delete first.
 - **Acceptance:**
-  - every manifest item has an `a` and a `b` candidate PNG with its sidecar, or a recorded failure after two retries;
+  - every image item has an `a` and a `b` candidate PNG (and a `c` where it has `modelC`) with its sidecar, and every
+    text-to-video item an `a` and a `b` `.mp4` with its sidecar, or a recorded failure after two retries;
+  - every image-to-video item has its clip from its still's winner, once that still is decided;
   - every item in `choices.json` is decided (a winner and no pending regenerate), and every winner has its followups
     and its comment edits;
   - `art-prompts/v2/winners/<id>/` holds each winner, its edits and followups with their sidecars, committed;
   - `server.sh verify` passed after every model session, and the LLM's launcher kept its pid and start time through
     the whole round.
 - **Manual (owner):** the server switch; picking on the page after round 1 and after each round 2; fixing
-  `run_sglang_images_qwenimage-1.sh`'s duplicated `--text-encoder-cpu-offload`; deciding whether committed winners
-  go into Git LFS if they turn out large; the licence reading of R3-05 before any of this art ships.
+  `run_sglang_images_qwenimage-1.sh`'s duplicated `--text-encoder-cpu-offload`; accepting the gated licences of
+  FLUX.1-dev, SD3.5 Large and LTX-2.5 on the Hugging Face account whose token skynet2 uses (else their first start
+  fails to download); freeing disk before an LTX-Video fallback (runbook §4); deciding whether committed winners —
+  clips included — go into Git LFS if they turn out large; the licence reading of R3-05 before any of this art
+  ships.
 - **Refs:** [`docs/dev/art-generation-server.md`](docs/dev/art-generation-server.md); `prompt_resolution.md` "Art
   round"; `art-prompts/v2/manifest.json`, `art-prompts/v2/gen-candidate.mjs`, `art-prompts/v2/server.sh`;
   `art-prompts/images/00-style-kernel.md`; R3-01, R3-02, R3-05.
@@ -1142,7 +1185,7 @@ outcome below maps to an action, not a stop.
 | **The M7 cannot hold 60 fps at 640×360 with detailed art** | low–medium (+25 % fill estimate; CPU follows object counts) | §13's actions; the TV profile; the headless bench gates catch regressions early |
 | **AI art looks inconsistent** across hundreds of generations | high without rules | the art bible, fixed palettes and quantisation in ingest, one kernel per category, per-zone palettes, hand cleanup as the last pass |
 | **AI art is poor at small sizes** (a 24×14 ship, 16-px bullets) | certain | those categories are hand-pixelled from the start (R3-01) |
-| **Model licences** restrict commercial use of outputs | medium | R3-05 checks every model's terms before art ships; regenerate with a permissive model if one does not allow it. For R0-04's models: **Qwen-Image is Apache 2.0**; the **FLUX.1-dev / FLUX.2-dev weights are under a non-commercial licence** — read its clause on outputs before any FLUX-made winner ships, else redraw it with Qwen-Image or by hand, using the winner as a design reference only; SD3.5 Large has its own Stability AI licence to read too. Every sidecar records the model that made the image |
+| **Model licences** restrict commercial use of outputs | medium | R3-05 checks every model's terms before art ships; regenerate with a permissive model if one does not allow it. For R0-04's models: **Qwen-Image is Apache 2.0**; the **FLUX.1-dev / FLUX.2-dev weights are under a non-commercial licence** — read its clause on outputs before any FLUX-made winner ships, else redraw it with Qwen-Image or by hand, using the winner as a design reference only; SD3.5 Large has its own Stability AI licence to read too; for the clips, **Wan2.2 is Apache 2.0** and **LTX-2.5 is under the LTX-2.x Community License Agreement** (LTX-Video, the fallback, has its own licence). Every sidecar records the model that made the image or clip |
 | **Killing the main LLM by accident** while stopping an image model on skynet2 (both run SGLang; renamed children; the stock stop tools — `pkill -f sglang`, `sglang killall`, `killall_sglang.sh` — match by name) | low with the tooling, severe if it happens | only `art-prompts/v2/server.sh stop`: the target is the :30001 listener with the expected `--model-path`, the LLM's process group is refused, every check repeats before each signal, `verify` runs after every stop; `generate.mjs`, `gen-candidate.mjs` and `sweep-models.sh` refuse port 30000 ([runbook](docs/dev/art-generation-server.md)) |
 | **First-start weight downloads** — each model's first start downloads its whole repo (FLUX.2-dev's took ~195 GB on 2026-10-16; 348 GB were left; six models are still uncached) | certain, once per model | `server.sh status` shows free disk and each model's cache; `start` needs ≥ 150 GB free; `wait` allows 3 h; one model at a time |
 | **Style drift between the two slots** — FLUX.2-dev and Qwen-Image read the same prompt differently, so winners mixing both models look like two games | high | one kernel for both slots; every followup and edit made by FLUX.2-dev with the winner as reference; the art bible (R3-01), palette quantisation in ingest (R3-02) and hand cleanup unify the result |

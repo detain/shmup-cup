@@ -3,7 +3,14 @@
   "generatedAt": "2026-10-16T23:57:57.658Z",
   "models": {
     "default": "flux2",
-    "slotB": "qwenvl"
+    "slotB": "qwenvl",
+    "slotC": "flux1",
+    "videoSlotA": "wan22",
+    "videoSlotB": "ltx25",
+    "videoI2v": "ltx25",
+    "videoFallback": {
+      "ltx25": "ltxvideo"
+    }
   },
   "items": [
     {
@@ -1636,6 +1643,7 @@
       "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, oversaturated neon, spaceship cockpit, human figures, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -1683,6 +1691,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -1706,6 +1715,7 @@
       "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, pure black background, real ocean, boats, horizon sunset, blurry, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -1753,6 +1763,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -1776,6 +1787,7 @@
       "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, three suns, purple sky, snow, cactus, people, camels, blurry, pure black background, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -1823,6 +1835,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -1846,6 +1859,7 @@
       "negative": "photorealistic, 3d render, text, watermark, logo, UI elements, blue sky, snow, ocean, people, castle, pure black background, blurry, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -1893,6 +1907,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -1916,6 +1931,7 @@
       "negative": "photorealistic, 3d render, sunny, calm sky, summer, green vegetation, pure black background, watermark, text, blurry, rain going upward, inconsistent rain direction, warm orange lighting, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -1963,6 +1979,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -1986,6 +2003,7 @@
       "negative": "photorealistic, 3d render, red gore, blood, human organs, medical anatomy, teeth, eyes staring, insect swarm, pure black background, watermark, text, blurry, slimy specular highlights, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2033,6 +2051,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -2056,6 +2075,7 @@
       "negative": "photorealistic, 3d render, round pebbles, gravel, ice texture, snow, pure black background, watermark, text, blurry, muddy colors, soft gradients everywhere, single giant crystal only, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2103,6 +2123,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -2126,6 +2147,7 @@
       "negative": "photorealistic, 3d render, rusted scrapyard, post-apocalyptic debris, cyan blue lighting, green lighting, human workers, pure black background, watermark, text, blurry, cluttered random pipes, melted perspective, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2173,6 +2195,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -2196,6 +2219,7 @@
       "negative": "photorealistic, 3d render, sunlight rays, surface of water, turquoise tropical sea, coral reef colors, fish, sharks, bubbles everywhere, pure black background, watermark, text, blurry, green glowing fog, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2243,6 +2267,7 @@
       "negative": "photorealistic, 3d render, perspective, horizon, sky, objects, characters, text, watermark, blurry, seams, vignette, soft focus, depth of field",
       "model": "flux2",
       "modelB": "sd35",
+      "modelC": "flux1",
       "width": 1024,
       "height": 1024,
       "steps": 40,
@@ -2266,6 +2291,7 @@
       "negative": "photorealistic, 3d render, race track, cars, asphalt road, sunset orange, blue sky with clouds, stars visible, pure black background, watermark, text, blurry low-res mush, curved horizon of a planet, checkers melting into stripes mid-frame, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2301,6 +2327,7 @@
       "negative": "photorealistic, 3d render, earthquake city, buildings, modern structures, volcano lava flow, explosion mushroom cloud nuclear, fire spreading forward past debris, pure black background, watermark, text, blurry, safe corridor fully intact, calm scene, frame border, letterboxing",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2518,6 +2545,7 @@
       "negative": "photorealistic, 3d render, coin pile, treasure chest, money, fireworks display, ship intact, single explosion, text, HUD, score numbers, watermark, blurry, gold dots arranged in grid, purple explosions",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2534,6 +2562,7 @@
       "negative": "photorealistic, 3d render, city streets, cars, tunnel of glass, sci-fi neon corridor, ship destroyed, blast ahead of ship, ship facing left, text, timer numbers, HUD countdown, watermark, blurry",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2598,6 +2627,7 @@
       "negative": "photorealistic, 3d render, nuclear mushroom cloud, city skyline burning, buildings, forest fire, ship chasing the viewer, ship on the right, dark unreadable hull, text, watermark, blurry, single small explosion",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2621,6 +2651,7 @@
       "negative": "photorealistic, 3d render, full round sun, sunset orange sky, explosions, smoke columns, enemy ships, fleet, text, watermark, blurry, ship facing right, multiple contrails",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2644,6 +2675,7 @@
       "negative": "photorealistic, 3d render, underwater photo, sharks, whales, sea creatures, stormy sea, big waves, ship underwater, bubbles everywhere, sunset orange heavy, text, watermark, blurry, daytime blue sky",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1152,
       "height": 896,
       "steps": 50,
@@ -2667,6 +2699,7 @@
       "negative": "photorealistic, 3d render, whale animal, harpoon, explosion, fire, sunken galleon, submarine periscope, fleet of ships, ship fully submerged, ship surfaced, text, watermark, blurry, bright daylight, green ocean tropical",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2690,6 +2723,7 @@
       "negative": "photorealistic, 3d render, space scene, planets, sun visible, surface of water, ship intact, explosion, fire trail behind ship, sea creatures, text, watermark, blurry, golden light at bottom, dark at top, diagonal wrong way",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1152,
       "height": 896,
       "steps": 50,
@@ -2713,6 +2747,7 @@
       "negative": "photorealistic, 3d render, text, logo, watermark, UI, health bars, title lettering, blurry, vertical composition, ship on the right, boss smaller than ship, cluttered upper left corner, dark unreadable silhouette",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
@@ -2752,11 +2787,1621 @@
       "negative": "photorealistic, 3d render, photo collage, map with borders, text labels, biome names, arrows, grid lines, blurry, straight vertical cuts only, missing biomes, multiple ships",
       "model": "flux2",
       "modelB": "qwenvl",
+      "modelC": "flux1",
       "width": 1536,
       "height": 640,
       "steps": 50,
       "guidance": 4,
       "followups": []
+    },
+    {
+      "id": "video/logo-sting",
+      "category": "video-10-title-attract",
+      "label": "Logo Sting — wordmark igniting letter-by-letter in fire gradient (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/10-title-attract/logo-sting.json#logo-sting-ignite-v1",
+      "prompt": "Retro 16-bit pixel-art arcade logo animation: a chunky blocky wordmark ignites letter by letter from left to right, each glyph flaring up in a gradient of bright yellow at the core through hot orange to deep red at the edges, bold white outline flashing on each ignition with a burst of small square pixel sparks that drift upward and fade, soft bloom glow pulsing around the finished letters, subtle CRT scanline texture shimmering across the frame, deep navy-black space background with a few slow drifting star pixels, the camera holds nearly static with a very slight slow push-in, ending on one final bright flare pulse that settles into a steady ember glow.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, photorealistic",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 21001
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 21001
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 21001
+        }
+      },
+      "takes": [
+        "video/10-title-attract/logo-sting.json#logo-sting-sparkflash-v2",
+        "video/10-title-attract/logo-sting.json#logo-sting-idle-pulse-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/story-crawl-vista",
+      "category": "video-10-title-attract",
+      "label": "Story-Crawl Space Vista — forward glide toward the fortress-ship armada (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/10-title-attract/story-crawl-vista.json#story-crawl-iron-horizon-v1",
+      "prompt": "Epic widescreen retro 16-bit pixel-art establishing shot: the camera glides slowly and steadily forward through deep-navy space dotted with parallax star layers, ahead a vast dark horizon of the iron tide emerges from the black — silhouettes of enormous mechanical sea-creature fortress-ships, riveted plate armor catching cold blue rim light, a few glowing violet porthole strips and pink energy seams, low orange thruster glows smoldering along their hulls, teal gas wisps drifting across the foreground, ominous but stately pacing, quiet dramatic cosmic dread, continuous single shot with no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, explosions, small cramped composition",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 21007
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 21007
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 21007
+        }
+      },
+      "takes": [
+        "video/10-title-attract/story-crawl-vista.json#story-crawl-planet-rim-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/title-ambient-loop",
+      "category": "video-10-title-attract",
+      "label": "Title-Screen Ambient Loop — multi-layer parallax starfield over a planet rim (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/10-title-attract/title-ambient-loop.json#title-starfield-drift-v1",
+      "prompt": "Deep navy space scrolls quietly: near star pixels slide steadily left while distant stars crawl, a soft blue planet rim glows along the bottom edge of frame with a thin atmospheric haze band, occasional faint cyan glints ripple across the haze, all motion slow, uniform and continuous, camera perfectly static, no cuts, single ambient shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 21004
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 30,
+          "seconds": 4.03,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 21004
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 30,
+          "seconds": 4.03,
+          "steps": 30,
+          "guidance": 3,
+          "seed": 21004
+        }
+      },
+      "takes": [
+        "video/10-title-attract/title-ambient-loop.json#title-ship-idle-v2",
+        "video/10-title-attract/title-ambient-loop.json#title-attract-sweep-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/coop-two-ship",
+      "category": "video-20-gameplay",
+      "label": "Co-op Two-Ship Screen — both crafts trading lanes through bullet rain (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/20-gameplay/coop-two-ship.json#coop-crossfire-formation-v1",
+      "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art co-op arcade shooter: two small fighter crafts hold the left half of frame in loose vertical formation — a steel-blue dart-shaped fighter with cyan canopy glow and orange engine trail above, a flat pale-mint ray-winged manta craft with green canopy and twin amber thrusters below — as they smoothly trade lanes through a rain of hot-pink and red glowing bullets sweeping in from the right, both noses spitting continuous cyan and green pixel tracers leftward, bold-outlined mechanical sea drone enemies burst into chained orange-white explosions on the right edge, gold capsule pickups tumble and glitter among the debris, deep navy starfield with a blue planet rim parallaxes steadily, camera tracks right at constant speed keeping both ships upright and readable, saturated arcade colors, faint CRT scanlines, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, single ship only, first-person camera, vertical scrolling, HUD",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 22007
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 22007
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 22007
+        }
+      },
+      "takes": [
+        "video/20-gameplay/coop-two-ship.json#coop-victory-sweep-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/kestrel-bullet-weave",
+      "category": "video-20-gameplay",
+      "label": "KESTREL Bullet Weave — tight dodge through arcing pink bullet fans (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/20-gameplay/kestrel-bullet-weave.json#kestrel-weave-azurerverge-v1",
+      "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art arcade shooter gameplay in motion: a small steel-blue dart-shaped fighter with a cyan glowing canopy and a streaming orange engine trail holds the left third of frame while the camera tracks steadily right, arcs of hot-pink and violet glowing bullet fans sweep in from the right side travelling left in even curved sheets, the fighter makes short crisp vertical dodges between the streams, bold-outlined mechanical sea-creature drone enemies scroll past on the right, a deep blue planet rim with a thin glowing haze band sits along the bottom against layered parallax starfields in deep navy, occasional muzzle flashes blink from the fighter's nose, tiny square explosion pops bloom orange-white on the right edge, fast telegraphed arcade danger, crisp saturated pixels, faint CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, rotating camera, vertical scrolling, UI elements, HUD",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 22001
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 22001
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 22001
+        }
+      },
+      "takes": [
+        "video/20-gameplay/kestrel-bullet-weave.json#kestrel-graze-close-v2",
+        "video/20-gameplay/kestrel-bullet-weave.json#kestrel-raster-wave-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/manta-blackhole-vortex",
+      "category": "video-20-gameplay",
+      "label": "MANTA & the Black-Hole Vortex — bomb detonates, bullets spiral into the drain (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/20-gameplay/manta-blackhole-vortex.json#manta-vortex-drain-v1",
+      "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art arcade shooter moment: a flat ray-winged manta-shaped craft with a pale-mint hull, green glowing canopy and twin amber thrusters holds the left of frame as a violent violet-blue three-armed spiral vortex tears open at center-right, hundreds of hot-pink and red glowing enemy bullets curve inward and stream into it like water down a drain, shredded pixel debris corkscrews after them, the vortex arms rotate faster and brighter, the whole navy starfield bends slightly toward its core, then a blinding white lightning discharge bursts outward and sweeps the screen clean, bold-outlined sprites, orange-white flash at the edges, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD, realistic smoke",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 22004
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 22004
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 22004
+        }
+      },
+      "takes": [
+        "video/20-gameplay/manta-blackhole-vortex.json#manta-vortex-slowmo-v2",
+        "video/20-gameplay/manta-blackhole-vortex.json#manta-vortex-from-still-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/zone-transition-parallax",
+      "category": "video-20-gameplay",
+      "label": "Parallax Zone Transitions — gliding into the teal gas-sea with wobbling wave walls (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/20-gameplay/zone-transition-parallax.json#transition-brine-raster-v1",
+      "prompt": "Widescreen 2D side-scrolling retro 16-bit pixel-art transition: the steel-blue dart fighter cruises right through layered parallax space as the deep navy gives way ahead to a glowing teal gas-sea, vast wobbling raster wave bands of luminous cyan mist undulate vertically in slow rolling motion across the mid-ground, bright green-yellow vapor currents drift past the foreground at speed while distant wave layers crawl, the fighter's orange trail bends in the cross-currents, pink spark particles fleck the mist, camera tracks right at steady cruise speed, dreamy undersea-nebula atmosphere with bold saturated color bands, faint CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera, vertical scrolling, HUD",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 22009
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 22009
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 22009
+        }
+      },
+      "takes": [
+        "video/20-gameplay/zone-transition-parallax.json#transition-magma-cave-exit-v2",
+        "video/20-gameplay/zone-transition-parallax.json#transition-storm-front-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/abyss-ark-sailing",
+      "category": "video-30-boss-intros",
+      "label": "ABYSS ARK AA-09 (Whale Flagship) — the fluke turns and the horizon starts moving (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/30-boss-intros/abyss-ark-sailing.json#ark-sailing-away-v1",
+      "prompt": "Retro 16-bit pixel-art widescreen boss intro in abyssal indigo water-light: the frame darkens to near-black navy with two deep red warning pulses, then the camera widens to reveal the ABYSS ARK — a continent-sized mechanical whale flagship of overlapping barnacled steel plates and long violet glow-seams — executing a slow majestic turn at the right of frame, its colossal tail fluke sweeping up and shedding curtains of dark water, bioluminescent specks dragging off its edges like a comet tail, rows of amber running lights flicking on along its back as it angles away toward the distant dark, the tiny manta craft silhouetted small at left chasing its wake, current lines and drifting particulate beginning to flow past faster, stately inexorable menace, bold outlines, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic whale, fast motion, aggressive charging",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.2,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.2,
+          "seed": 23011
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 23011
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 23011
+        }
+      },
+      "takes": [
+        "video/30-boss-intros/abyss-ark-sailing.json#ark-wake-drift-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/galvanic-maw-jaw",
+      "category": "video-30-boss-intros",
+      "label": "GALVANIC MAW GM-02 (The Playfield-Sized Fish) — tilt up the steel flank into the opening maw (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/30-boss-intros/galvanic-maw-jaw.json#warning-galvanic-jawopen-v1",
+      "prompt": "Retro 16-bit pixel-art arcade boss intro in widescreen: the frame darkens and a red warning band sweeps vertically once with siren-pulse lighting, then the camera tilts up along an endless scaled steel flank to reveal a mechanical fish the size of the entire playfield, its riveted jaw cracking open in slow heavy segments, exposing a dark electrified throat where arcs of violet lightning crawl and branch along wet-looking metal ribs, pin-point pink glow nodes blink awake deep in the gullet like a charging weapon, the tiny dart fighter at the bottom-left edge of frame flicks its cyan canopy light against the gloom, static spitting blue-white into the open mouth, sea-deep navy surroundings, bold outlines, CRT scanline glow, awe and dread, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic fish, slimy textures, bright open throat, small cramped composition",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 23002
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 23002
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 23002
+        }
+      },
+      "takes": [
+        "video/30-boss-intros/galvanic-maw-jaw.json#warning-galvanic-from-still-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/halcyon-bulwark-shield",
+      "category": "video-30-boss-intros",
+      "label": "HALCYON BULWARK HB-01 (Shield Fortress) — red siren flash as the plate-armored fortress surfaces (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/30-boss-intros/halcyon-bulwark-shield.json#warning-halcyon-rise-v1",
+      "prompt": "Widescreen retro 16-bit pixel-art arcade boss warning: the deep-navy frame suddenly darkens, then heavy red warning energy floods in from the edges pulsing twice like a two-tone siren rhythm, bold blocky danger light strobing over riveted shadow, as the red wash peaks an enormous mechanical sea-creature fortress-ship of thick plate armor rises slowly from the bottom of frame shedding waterfalls of pixel spray, rows of violet porthole lights igniting along its hull one by one, its shield plates interlocking with a dull amber gleam, the tiny steel-blue dart fighter silhouetted at left holds its ground with a flaring orange engine trail, camera pulls back slightly to reveal the scale, explosions of rim light, CRT scanlines, ominous and grand, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, small cramped composition, first-person camera",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 23001
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 23001
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 23001
+        }
+      },
+      "takes": [
+        "video/30-boss-intros/halcyon-bulwark-shield.json#warning-halcyon-shieldup-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/hollow-king-lure",
+      "category": "video-30-boss-intros",
+      "label": "THE HOLLOW KING HK-10 (Anglerfish God) — a single light wakes in the absolute dark (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/30-boss-intros/hollow-king-lure.json#king-lure-glow-v1",
+      "prompt": "Retro 16-bit pixel-art horror-quiet boss intro inside a pitch dark hold: the frame is near-black navy with only faint drifting dust specks, a red warning glow throbs once low and brief, then far center a single pale lure bulb on a bent rod begins to brighten, its warm gold light spreading in a soft cone and revealing one ring of details at a time — wet-looking riveted teeth taller than the frame edge, the suggestion of an anglerfish god's vast skull, rows of dim dead eyes catching the lure light last, as the bulb reaches full strength the shadow behind it shifts and an enormous jaw line begins to part, the tiny fighter silhouette at frame left backpedals with twin orange thrusters flaring, camera static then a slow dolly backward that stops against the frame edge, suffocating dread, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fully lit scene, organic fish, many lights",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 23013
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 23013
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 23013
+        }
+      },
+      "takes": [
+        "video/30-boss-intros/hollow-king-lure.json#king-jaws-over-screen-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/sandgrave-widow-silk",
+      "category": "video-30-boss-intros",
+      "label": "SANDGRAVE WIDOW SW-03 (Desert Spider) — the spider abseils from the twin-sun glare (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/30-boss-intros/sandgrave-widow-silk.json#widow-silk-descent-v1",
+      "prompt": "Retro 16-bit pixel-art widescreen boss intro under a hazy amber twin-sun sky: the frame darkens with a red siren pulse twice, then a gleaming silk cable drops from the top of frame and a colossal mechanical desert spider descends on it, eight bold-outlined riveted legs unfolding and jointing open one after another as it comes down into the heat shimmer, sand eruptions fountaining in slow arcs behind its silhouette, grit streaming off its armored abdomen, its cluster of eyes igniting pink one by one like a targeting grid, the tiny dart fighter darts left across the dune crest below trailing orange, camera pedestal-ups with the descent then locks wide to show the full leg span, harsh warm rim light against deep shadowed underbelly, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic spider, hairy legs, vertical scrolling gameplay",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 23007
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 23007
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 23007
+        }
+      },
+      "takes": [
+        "video/30-boss-intros/sandgrave-widow-silk.json#widow-legs-spread-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/squall-steed-storm",
+      "category": "video-30-boss-intros",
+      "label": "SQUALL STEED SS-05 (Storm Seahorse) — rearing out of the thunderhead wall (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/30-boss-intros/squal-steed-storm.json#steed-storm-rear-v1",
+      "prompt": "Retro 16-bit pixel-art widescreen boss intro inside a churning violet-black storm: rain slashes diagonally across the frame as the screen dips dark and a red warning light throbs twice, then a vast mechanical seahorse of segmented steel plates and taut cables rears upward out of a solid wall of thunderhead clouds, water cascading off its ridged crest in sheets, forked lightning striking along its spine and branching through the cable rigging in blue-white veins, its long snout lifting to the sky and a row of pink glow-lamps blinking awake along its belly plates, wind bending the rain steeper, the tiny steel-blue fighter tumbling briefly in the gust before stabilizing with flaring thrusters, camera dollies backward as it rises to hold the whole arched body in frame, deep storm navy palette with bright bolt highlights, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, organic horse, flesh, calm clear sky",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 23009
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 23009
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 23009
+        }
+      },
+      "takes": [
+        "video/30-boss-intros/squal-steed-storm.json#steed-rigging-arc-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/bullet-to-gold",
+      "category": "video-40-boss-deaths",
+      "label": "Bullet-to-Gold Transmutation — the whole screen turns to treasure (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/40-boss-deaths/bullet-to-gold.json#death-bullets-to-points-v1",
+      "prompt": "Retro 16-bit pixel-art widescreen arcade miracle moment: in the instant after the boss dies, hundreds of glowing hot-pink and red enemy bullets hanging across the entire frame flash white one after another in a fast spreading wave from center outward, each one transmuting mid-air into a spinning sparkling gold point sprite that trails a brief glitter tail, the frozen bullet lattice dissolving into a drifting constellation of falling treasure, small gold capsules tumbling down through it catching light, the tiny blue dart fighter at left surges forward through the golden rain with its cyan canopy glowing brighter, deep navy background now warm-flecked like a jewelry box, soft bloom, CRT scanline glow, joyful abundance, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, coins with numbers, gold bars, explosions",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.2,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.2,
+          "seed": 24004
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 24004
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 24004
+        }
+      },
+      "takes": [
+        "video/40-boss-deaths/bullet-to-gold.json#death-gold-rain-closeup-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/chained-hull-explosions",
+      "category": "video-40-boss-deaths",
+      "label": "Chained Hull Explosions — explosions marching the full spine (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/40-boss-deaths/chained-hull-explosions.json#death-chain-walkdown-v1",
+      "prompt": "Retro 16-bit pixel-art widescreen boss death sequence: the dead mechanical sea-creature fortress-ship drifts broadside across the frame as a chain of explosions begins at its bow and walks the entire hull, each blast a blooming square-pixel fireball of pale yellow core, then orange, then red, popping one after another in a quick marching rhythm that travels left to right along its full length, armor plates buckling and flipping off ahead of the front, thick black smoke columns unfurling behind the chain, violet energy seams shorting with white crackles between blasts, the tiny dart fighter riding low at frame left with its engine flaring as shockwaves ripple past, the final blast at the stern larger than the rest with a full-screen white flash that holds a beat, deep navy starfield backdrop, bold outlines, CRT scanline glow, triumphant destructive rhythm, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, realistic smoke, single explosion, smoke-only mush",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 24001
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 24001
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 24001
+        }
+      },
+      "takes": [
+        "video/40-boss-deaths/chained-hull-explosions.json#death-chain-vertical-v2",
+        "video/40-boss-deaths/chained-hull-explosions.json#death-chain-from-still-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/mega-crash-shockwave",
+      "category": "video-40-boss-deaths",
+      "label": "MEGA CRASH Shockwave — the pure expanding ring (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/40-boss-deaths/mega-crash-shockwave.json#megacrash-white-ring-v1",
+      "prompt": "A pinpoint of white light at frame center blooms into a perfectly round expanding shockwave ring racing outward across a deep navy pixel-art starfield, the ring's edge bright white with a thin violet inner glow, star pixels and loose debris ahead of it pushed aside and scattering as it passes, the whole frame washing to soft white at the end, camera static, one single accelerating expansion, no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, multiple rings, explosion fireball, smoke",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 24006
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 97,
+          "fps": 30,
+          "seconds": 3.23,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 24006
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 97,
+          "fps": 30,
+          "seconds": 3.23,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 24006
+        }
+      },
+      "takes": [
+        "video/40-boss-deaths/mega-crash-shockwave.json#megacrash-field-shove-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/ark-diving-abyss",
+      "category": "video-50-key-moments",
+      "label": "The Ark Dives (War Is Not Over) — the flagship sinks tier by tier (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/50-key-moments/ark-diving-abyss.json#ark-dive-descent-v1",
+      "prompt": "Retro 16-bit pixel-art widescreen coda: the continent-sized mechanical whale flagship angles its barnacled steel snout down into black water and begins an immense slow dive, its broad back and dorsal plate city sliding under the surface in a creeping avalanche of displaced swell, rows of violet glow-seams and amber running lights winking out one tier at a time from top down as the depth takes them, bioluminescent specks swirling up off its hull like inverse snow, the last lit porthole row vanishing below leaving only a widening circular disturbance on the glassy dark sea, faint red embers of its wake still glowing deep under, tiny silhouette fighter unmoving at frame left watching it go, camera static and wide, cold ominous finality, deep navy palette draining to black at the edges, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, fast sinking, explosion, organic whale",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.2,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.2,
+          "seed": 25006
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 25006
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 25006
+        }
+      },
+      "takes": [
+        "video/50-key-moments/ark-diving-abyss.json#ark-dive-tail-only-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/blackhole-bomb-slowmo",
+      "category": "video-50-key-moments",
+      "label": "Black Hole Bomb in Slow Motion — spiral arms unfurl, bullets creep inward (image-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "i2v",
+      "source": "video/50-key-moments/blackhole-bomb-slowmo.json#bh-bomb-slowturn-v1",
+      "prompt": "Extreme slow motion: the violet-blue three-armed spiral at frame center turns lazily, each arm dragging visible warp streaks, dozens of hot-pink enemy bullets crawl toward the core along curving drain paths leaving long thin comet tails, one shattered armor plate corkscrews inward in exaggerated slow rotation, light haloes ripple around the vortex rim, the mint-green manta silhouette at frame edge hangs nearly still with its thruster ribbons unfurling like smoke in the same slow current, camera drifts one careful inch closer, hypnotic suspended destruction, continuous single take.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "model": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "waitsFor": "fx/black-hole/armed-scene",
+      "stillSize": "1024x1024",
+      "resolution": "736x736",
+      "width": 736,
+      "height": 736,
+      "num_frames": 121,
+      "fps": 24,
+      "seconds": 5.04,
+      "steps": 8,
+      "guidance": 1,
+      "settings": {
+        "ltx25": {
+          "resolution": "736x736",
+          "width": 736,
+          "height": 736,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 25010
+        },
+        "ltxvideo": {
+          "resolution": "736x736",
+          "width": 736,
+          "height": 736,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 25010
+        }
+      },
+      "takes": [
+        "video/50-key-moments/blackhole-bomb-slowmo.json#bh-bomb-lightning-roll-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/breaking-surface-sunrise",
+      "category": "video-50-key-moments",
+      "label": "Breaking the Surface at Sunrise — climb through black water into the light (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/50-key-moments/breaking-surface-sunrise.json#surface-breach-gold-v1",
+      "prompt": "Retro 16-bit pixel-art vertical ascent: the battered steel-blue fighter climbs steadily through dark midnight-blue water filled with rising silver bubble columns and drifting silt, the black depths below fading as a warm gold glow strengthens above, the water surface arriving as a bright trembling ceiling that the ship punches through in an explosion of white spray and hanging droplets each catching the sunrise, the frame opening into a vast pale-gold dawn sky over a heaving dark sea, low half-sun flaring on the horizon, the craft arcing up out of the spray with engines catching the light, water streaming off its wings in glittering lines, camera rising with it then leveling into a wide hold as it climbs toward the sun, quiet triumphant relief, bold outlines, soft CRT glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, underwater explosions, enemies, rain",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 25004
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 25004
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 25004
+        }
+      },
+      "takes": [
+        "video/50-key-moments/breaking-surface-sunrise.json#surface-breach-abovewater-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/dawn-flight-home",
+      "category": "video-50-key-moments",
+      "label": "Dawn Flight Home — half-sun, one ship, engines at idle (image-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "i2v",
+      "source": "video/50-key-moments/dawn-flight-home.json#dawn-silhouette-home-v1",
+      "prompt": "The lone steel-blue fighter cruises slowly rightward across the face of a vast pale-gold rising half-sun, its silhouette trimmed in warm light, engine trail thin and steady rather than blazing, high thin cloud bands drifting slowly leftward at three different parallax speeds, the dark sea below throwing a long shimmering gold road, small glints of settled debris still twinkling far behind at frame's left, the ship holding an unhurried level glide as the sun brightens almost imperceptibly, camera static wide then a very gentle drift right with the ship, serene earned-peace mood, continuous single take, no cuts.",
+      "negative": "worst quality, blurry, jittery, morphing, distorted frames, flicker, restyled source image, scene change, cut",
+      "model": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "waitsFor": "moment/ending-citadel-falls-silent",
+      "stillSize": "1536x640",
+      "resolution": "1152x480",
+      "width": 1152,
+      "height": 480,
+      "num_frames": 121,
+      "fps": 24,
+      "seconds": 5.04,
+      "steps": 8,
+      "guidance": 1,
+      "settings": {
+        "ltx25": {
+          "resolution": "1152x480",
+          "width": 1152,
+          "height": 480,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 25008
+        },
+        "ltxvideo": {
+          "resolution": "1152x480",
+          "width": 1152,
+          "height": 480,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 25008
+        }
+      },
+      "takes": [
+        "video/50-key-moments/dawn-flight-home.json#dawn-burned-fortress-v2"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/escape-citadel-collapse",
+      "category": "video-50-key-moments",
+      "label": "Citadel Escape Sequence — steady right-rush through riveted halls (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/50-key-moments/escape-citadel-collapse.json#escape-corridor-run-v1",
+      "prompt": "Widescreen retro 16-bit pixel-art escape run: the steel-blue dart fighter screams rightward through a vast riveted steel corridor of the collapsing citadel, chasing amber warning lights streaking along the walls whipping past at speed, behind it a rolling wall of orange-white fireballs detonates section after section of the hall, floor plates buckling upward into the blast, ceiling girders tumbling end over end ahead of the flame front, the fighter weaving through gaps in falling debris with crisp short dodges, its engine trail stretched long and thin, spark showers bursting where the fire licks the walls, the camera tracks alongside at matching speed with motion-blur only on the background layers so the sprite stays sharp, escalating pace, arcade tension, deep-shadow steel palette with hot orange highlights, CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, slow motion, camera leading the ship, first-person camera, static camera",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 25001
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 25001
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 25001
+        }
+      },
+      "takes": [
+        "video/50-key-moments/escape-citadel-collapse.json#escape-ramp-speed-v2",
+        "video/50-key-moments/escape-citadel-collapse.json#escape-citadel-behind-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/social-vertical",
+      "category": "video-60-promo",
+      "label": "Social Vertical & Square Clips — wordmark slams in, bullet rain behind (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/social-vertical.json#social-logo-drop-vertical-v1",
+      "prompt": "Vertical 9:16 retro 16-bit pixel-art social clip: a heavy blocky arcade wordmark drops fast from the top of the frame and slams into the center with a screen-wide impact flash, bold yellow-to-red fire-gradient letters ringing with a white outline, a shockwave of square pixel sparks radiating outward and upward, behind it an endless slow rain of hot-pink and violet glowing bullets falls past through deep navy darkness, the letters bounce once and settle with an ember pulse, slight camera kick on impact then lock, punchy arcade title energy, CRT scanline glow, single continuous shot.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, watermark, flicker, misspelled letters, warped typography, extra letters, gibberish text, horizontal framing bars",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "720x1280",
+      "width": 720,
+      "height": 1280,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 40,
+      "guidance": 4.5,
+      "settings": {
+        "wan22": {
+          "resolution": "720x1280",
+          "width": 720,
+          "height": 1280,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 40,
+          "guidance": 4.5,
+          "seed": 26011
+        },
+        "ltx25": {
+          "resolution": "576x1024",
+          "width": 576,
+          "height": 1024,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26011
+        },
+        "ltxvideo": {
+          "resolution": "576x1024",
+          "width": 576,
+          "height": 1024,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 26011
+        }
+      },
+      "takes": [
+        "video/60-promo/social-vertical.json#social-kestrel-flyby-vertical-v2",
+        "video/60-promo/social-vertical.json#social-bullethell-beauty-frame-v3"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/zone-montage-a",
+      "category": "video-60-promo",
+      "label": "Zone Montage A (Zones 1–5) — slow arc-pan along the planet rim (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-a.json#zone-azure-verge-orbit-v1",
+      "prompt": "Widescreen retro 16-bit pixel-art orbital vista: the camera begins a slow arcing pan rightward along the glowing blue rim of a planet in deep space, the thin atmospheric band burning from navy to cyan at the limb, layered starfields at three parallax depths sliding behind, a lone steel-blue dart fighter with an orange engine trail crossing the pan from left to right in the near layer while a distant flight of bold-outlined mechanical sea drones drifts silhouetted against the planet glow, cold majestic scale with a single warm thread of motion, crisp saturated pixels, faint CRT scanline glow, continuous single take.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, photorealistic, 3d render, first-person camera",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "1280x720",
+      "width": 1280,
+      "height": 720,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "1280x720",
+          "width": 1280,
+          "height": 720,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26001
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26001
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3.2,
+          "seed": 26001
+        }
+      },
+      "takes": [
+        "video/60-promo/zone-montage-a.json#zone-brine-nebula-gassea-v2",
+        "video/60-promo/zone-montage-a.json#zone-dune-expanse-twinsuns-v3",
+        "video/60-promo/zone-montage-a.json#zone-magma-deep-cone-v4",
+        "video/60-promo/zone-montage-a.json#zone-tempest-ridge-timelapse-v5"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/zone-montage-b",
+      "category": "video-60-promo",
+      "label": "Zone Montage B (Zones 6–9 + the Neon Dimension) — living walls breathing around the corridor (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/60-promo/zone-montage-b.json#zone-cell-vault-pulse-v1",
+      "prompt": "Organic pixel-art corridor with living walls that slowly pulse and ripple like breathing tissue, veins of pink bioluminescent light traveling along the walls in looping circuits, the passage widening and narrowing rhythmically as the camera drifts steadily forward through it, soft wet gloss highlights sliding on the curved surfaces, hypnotic even tempo, single continuous shot, no cuts.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, realistic flesh, gore",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 26006
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 26006
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 35,
+          "guidance": 3,
+          "seed": 26006
+        }
+      },
+      "takes": [
+        "video/60-promo/zone-montage-b.json#zone-prism-labyrinth-refraction-v2",
+        "video/60-promo/zone-montage-b.json#zone-iron-citadel-chase-v3",
+        "video/60-promo/zone-montage-b.json#zone-abyssal-throne-glow-v4",
+        "video/60-promo/zone-montage-b.json#zone-neon-dimension-rush-v5"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/abyss-and-nebula-drift",
+      "category": "video-70-ambient-loops",
+      "label": "Website Hero Backgrounds — three-layer drift, calm and endless (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/70-ambient-loops/abyss-and-nebula-drift.json#loop-starfield-parallax-v1",
+      "prompt": "Deep navy pixel-art starfield drifting quietly: near bright star pixels slide steadily left, mid-layer stars crawl slower, a faint far dust band barely moves, a soft blue planet glow sits fixed along the bottom edge with a thin shimmering haze line, nothing else happens, perfectly even tempo like a conveyor, no flashes, no cuts, seamless loop of ambient drift.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, scene change, cut, flash to black, sudden zoom, shooting stars",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 27001
+        },
+        "ltx25": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 27001
+        },
+        "ltxvideo": {
+          "resolution": "768x512",
+          "width": 768,
+          "height": 512,
+          "num_frames": 121,
+          "fps": 24,
+          "seconds": 5.04,
+          "steps": 30,
+          "guidance": 3,
+          "seed": 27001
+        }
+      },
+      "takes": [
+        "video/70-ambient-loops/abyss-and-nebula-drift.json#loop-starfield-ship-v2",
+        "video/70-ambient-loops/abyss-and-nebula-drift.json#loop-nebula-gasflow-v3",
+        "video/70-ambient-loops/abyss-and-nebula-drift.json#loop-abyss-particles-v4"
+      ],
+      "followups": []
+    },
+    {
+      "id": "video/checkerboard-rush",
+      "category": "video-70-ambient-loops",
+      "label": "Neon Dimension Checkerboard Rush — even-velocity grid sprint, static horizon (text-to-video, ~5 s)",
+      "kind": "video",
+      "mode": "t2v",
+      "source": "video/70-ambient-loops/checkerboard-rush.json#loop-checkerboard-rush-v1",
+      "prompt": "Pixel-art synth dimension rushing forward: an infinite neon-violet and dark checkerboard floor glides steadily toward the viewer in perfect even perspective, floor seam light-trails of magenta and cyan streaming toward a fixed hard horizon, stacked horizontal glow bands at the horizon pulsing on one slow even cycle, no ships, no obstacles, pure constant velocity hypnotic forward travel, no cuts, seamless loop of retro speed ambience.",
+      "negative": "worst quality, blurry, jittery, distorted frames, morphing, text, watermark, flicker, camera turning, camera lifting, obstacles, scene change, cut",
+      "model": "wan22",
+      "modelB": "ltx25",
+      "fallback": {
+        "ltx25": "ltxvideo"
+      },
+      "resolution": "832x480",
+      "width": 832,
+      "height": 480,
+      "num_frames": 81,
+      "fps": 16,
+      "seconds": 5.06,
+      "steps": 35,
+      "guidance": 4,
+      "settings": {
+        "wan22": {
+          "resolution": "832x480",
+          "width": 832,
+          "height": 480,
+          "num_frames": 81,
+          "fps": 16,
+          "seconds": 5.06,
+          "steps": 35,
+          "guidance": 4,
+          "seed": 27005
+        },
+        "ltx25": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 30,
+          "seconds": 4.03,
+          "steps": 8,
+          "guidance": 1,
+          "seed": 27005
+        },
+        "ltxvideo": {
+          "resolution": "960x544",
+          "width": 960,
+          "height": 544,
+          "num_frames": 121,
+          "fps": 30,
+          "seconds": 4.03,
+          "steps": 35,
+          "guidance": 3,
+          "seed": 27005
+        }
+      },
+      "takes": [
+        "video/70-ambient-loops/checkerboard-rush.json#loop-checkerboard-rush-ship-v2"
+      ],
+      "followups": []
     }
-  ]
+  ],
+  "updatedAt": "2026-10-17T01:45:25.720Z"
 }
