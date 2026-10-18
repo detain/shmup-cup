@@ -2097,7 +2097,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
-| R2-01 | Flip the frame; interim art; versioned saves and replays | in progress (wave 4: prepare at 384 in four lanes, then one flip commit; decisions W4-1…W4-14 recorded with the step) |
+| R2-01 | Flip the frame; interim art; versioned saves and replays | in progress (wave 4: prepare at 384 in four lanes, then one flip commit) |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
