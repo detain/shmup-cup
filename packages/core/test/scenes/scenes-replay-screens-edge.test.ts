@@ -4,8 +4,9 @@
  * while fast-forwarding, rumble never forwarded, `OUT OF SYNC` for a replay that desyncs and the
  * return to the browser by itself, the `ASSISTED` mark), the replay browser ({@link ReplaysScene} —
  * an empty slot, KEEP for the last game only and refused when the kept replays have no room,
- * SHARE without a host or refused by it, the rows' texts) and the EXTRA menu ({@link ExtraScene} —
- * without the content its modes need, OK on a choice row, the locked LOOP 2 from either side).
+ * SHARE without a host or refused by it, the rows' texts; since v2's R2-01 a replay v1 recorded —
+ * `V1 REPLAY`, delete-only) and the EXTRA menu ({@link ExtraScene} — without the content its modes
+ * need, OK on a choice row, the locked LOOP 2 from either side).
  */
 import { describe, expect, it } from 'vitest';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
@@ -15,6 +16,7 @@ import { createMemoryStorage } from '../../src/platform/index.js';
 import {
   ReplayStoreResult,
   createReplayLibrary,
+  replayStorageKey,
   type ReplayLibrary,
   type RunReplayJson,
 } from '../../src/replay/index.js';
@@ -27,9 +29,11 @@ import {
   SecretCode,
   TitleItem,
 } from '../../src/scenes/index.js';
+import { UI_COLORS } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { CAMPAIGN, shipped, stage } from '../helpers/campaign.js';
 import { FrontEndSession, type FrontEndSessionOptions } from '../helpers/front-end-session.js';
+import { runTextAtOtherFrame } from '../helpers/v1-replay.js';
 
 /**
  * The KESTREL, Type A and the test campaign with a long start zone (or no campaign at all).
@@ -315,6 +319,44 @@ describe('core/scenes ReplaysScene edges (M3-01)', () => {
     s.act(ReplayActionItem.Share);
     expect(offered).toEqual([library.exportText(0)]);
     expect(s.uiTexts()).toContain('COULD NOT SHARE');
+  });
+});
+
+describe('core/scenes ReplaysScene and v1 replays (R2-01)', () => {
+  it('shows a v1 replay as V1 REPLAY: PLAY / KEEP say why not, SHARE is off, DELETE works', async () => {
+    // A recorded game's text as another frame (v1's, after the flip) recorded it.
+    const { library: source } = recorded();
+    const legacy = runTextAtOtherFrame(source.exportText(0)!);
+    const storage = createMemoryStorage({ [replayStorageKey(0)]: legacy });
+    const library = createReplayLibrary(storage);
+    await library.load();
+    expect(library.summaries[0]).toMatchObject({ legacy: true });
+    const s = new ScreenSession({ replays: library, shareReplay: () => true });
+    s.openReplays();
+    // The row says what it is, greyed out (not the run's ship and zone).
+    const row = s.uiTextColors().find(([text]) => text === 'V1 REPLAY');
+    expect(row).toEqual(['V1 REPLAY', UI_COLORS.disabled]);
+    expect(s.uiTexts()).not.toContain('KESTREL NORMAL  ZONE S');
+    // The row can be chosen (DELETE is the way out), but it is delete-only.
+    s.chooseSlot(0);
+    expect(s.flow.replaysScreen.choosing).toBe(true);
+    const actions = s.flow.replaysScreen.actions;
+    expect(actions.enabled(ReplayActionItem.Share)).toBe(false);
+    for (const action of [ReplayActionItem.Play, ReplayActionItem.Keep]) {
+      const from = s.events.length;
+      s.act(action);
+      expect(s.top).toBe('replays');
+      expect(s.uiTexts()).toContain('RECORDED BY V1: CANNOT PLAY');
+      expect(s.of(SimEventKind.Sfx, from)).toContainEqual([SFX_CUES.PowerUpDenied, 0]);
+      expect(library.summaries[1]).toBeNull(); // KEEP copied nothing
+      s.hold(0, 2);
+      s.chooseSlot(0);
+    }
+    s.act(ReplayActionItem.Delete);
+    expect(s.uiTexts()).toContain('REPLAY DELETED');
+    expect(library.summaries[0]).toBeNull();
+    expect(await storage.get(replayStorageKey(0))).toBe('');
+    expect(s.uiTexts()).not.toContain('V1 REPLAY');
   });
 });
 

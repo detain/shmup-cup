@@ -1435,6 +1435,7 @@ export {
   REPLAY_FORMAT_VERSION,
   REPLAY_HASH_INTERVAL,
   REPLAY_KIND,
+  ReplayVersionError,
   createDemoPlayback,
   createPlayback,
   createReplayGame,
@@ -1459,6 +1460,7 @@ export {
   type ReplayPlayback,
   type ReplayRecorder,
   type ReplayRun,
+  type ReplayVersionReason,
 } from './replay/index.js';
 
 export {
@@ -1540,6 +1542,7 @@ export {
   RunAction,
   SEGMENT_CAPACITY,
   SegmentRecorder,
+  classifyRunReplayText,
   createReplayLibrary,
   decodeRunReplay,
   encodeRunReplay,
@@ -1551,6 +1554,7 @@ export {
   type ReplaySummary,
   type RunReplay,
   type RunReplayJson,
+  type RunReplayTextKind,
   type RunSegment,
   type RunSegmentJson,
 } from './replay/index.js';

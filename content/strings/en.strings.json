@@ -317,6 +317,8 @@
     "replayShareFailed": "COULD NOT SHARE",
     "replayDeleted": "REPLAY DELETED",
     "replayUnreadable": "REPLAY CANNOT BE READ",
+    "replayLegacy": "V1 REPLAY",
+    "replayFromV1": "RECORDED BY V1: CANNOT PLAY",
     "replaySpeed": "REPLAY  X{0}",
     "replayPaused": "REPLAY  PAUSED",
     "replayAssisted": "ASSISTED",

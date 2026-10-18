@@ -13,12 +13,20 @@
  * {@link decodeReplay} reads a replay without it as god mode when `assisted`, else 0). A whole
  * run's replay (`./run.ts`) is a list of these single-World replays.
  *
+ * v2's R2-01 (owner decision W4-7): {@link decodeReplay} refuses a replay of another frame — its
+ * header config's `internalWidth` × `internalHeight` against `core/config` `FRAME_W` × `FRAME_H` —
+ * and one of an older format version with a {@link ReplayVersionError}, so a replay v1 recorded at
+ * 384×216 is refused with a clear message instead of decoding and then desyncing (plan §3.4). The
+ * replay browser shows such a replay as `V1 REPLAY` (`./run.ts` `classifyRunReplayText`).
+ *
  * **Implements.** shmup_feat.md §21 Replays, §22 determinism (see `./index.ts`).
  *
  * @module
  */
 import {
   DEFAULT_GAME_CONFIG,
+  FRAME_H,
+  FRAME_W,
   resolveGameConfig,
   type GameConfig,
   type StartingLoadout,
@@ -33,9 +41,105 @@ export const REPLAY_KIND = 'replay';
 
 /**
  * Current replay format version: bumped when the encoding or what a header must hold changes (a
- * replay of another version is rejected by {@link decodeReplay}).
+ * replay of another version is rejected by {@link decodeReplay} — of an older one with a
+ * {@link ReplayVersionError}).
  */
 export const REPLAY_FORMAT_VERSION = 1;
+
+/**
+ * Why a {@link ReplayVersionError} refused a replay: `'format'` — an older format version (a
+ * replay of v1's format: v2's R2-01 bumps it); `'frame'` — the header's config records another
+ * internal frame than `FRAME_W` × `FRAME_H` (a replay v1 recorded at 384×216 under a 640×360
+ * build).
+ */
+export type ReplayVersionReason = 'format' | 'frame';
+
+/**
+ * The error a replay of an older version or another frame is refused with (v2's R2-01 — owner
+ * decision W4-7, plan_resolution.md §3.4): such a replay would decode, play and desync, so
+ * {@link decodeReplay} (and `./run.ts` `decodeRunReplay`) throws this instead. A `RangeError`, like
+ * every other refusal of a malformed replay, so callers that only want "valid or not" need no
+ * change; the replay library tells it apart (`classifyRunReplayText` → `'legacy'`) to show the
+ * replay as `V1 REPLAY` and refuse to play it.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   decodeReplay(doc);
+ * } catch (error) {
+ *   if (error instanceof ReplayVersionError) showRecordedByV1(error.recordedWidth);
+ *   else throw error;
+ * }
+ * ```
+ */
+export class ReplayVersionError extends RangeError {
+  /** Why it was refused. */
+  readonly reason: ReplayVersionReason;
+  /**
+   * The frame width the replay's header config records (`internalWidth`; `NaN` when it has
+   * none).
+   */
+  readonly recordedWidth: number;
+  /** The frame height the replay's header config records (`internalHeight`; `NaN` when none). */
+  readonly recordedHeight: number;
+
+  /**
+   * Creates the error.
+   *
+   * @param reason - Why the replay is refused.
+   * @param recordedWidth - Its recorded frame width (`NaN` when unknown).
+   * @param recordedHeight - Its recorded frame height (`NaN` when unknown).
+   * @param formatVersion - Its format version (named in the message of a `'format'` refusal).
+   */
+  constructor(
+    reason: ReplayVersionReason,
+    recordedWidth: number,
+    recordedHeight: number,
+    formatVersion: unknown = REPLAY_FORMAT_VERSION,
+  ) {
+    super(
+      `replay recorded at ${String(recordedWidth)}×${String(recordedHeight)} ` +
+        (reason === 'format'
+          ? `(v1, format version ${String(formatVersion)}) `
+          : '(another frame) ') +
+        `cannot play at ${FRAME_W}×${FRAME_H}`,
+    );
+    this.name = 'ReplayVersionError';
+    this.reason = reason;
+    this.recordedWidth = recordedWidth;
+    this.recordedHeight = recordedHeight;
+  }
+}
+
+/**
+ * Whether a format version is an older one this build refuses as a {@link ReplayVersionError}
+ * (`'format'`) rather than as malformed: a whole number from 1 up to, not including, the current
+ * version. A newer, zero or non-numeric version is simply not supported. Shared with `./run.ts`;
+ * not re-exported from `core/replay`.
+ *
+ * @param version - The document's `formatVersion` (anything).
+ * @param current - The current version.
+ * @returns `true` for an older version.
+ */
+export function isOlderFormatVersion(version: unknown, current: number): boolean {
+  return (
+    typeof version === 'number' && Number.isInteger(version) && version >= 1 && version < current
+  );
+}
+
+/**
+ * The frame a replay header's config records, read without validating anything else. Shared with
+ * `./run.ts`; not re-exported from `core/replay`.
+ *
+ * @param config - The header's `config` (anything).
+ * @returns `[internalWidth, internalHeight]`, `NaN` for a missing or non-numeric one.
+ */
+export function recordedFrame(config: unknown): readonly [number, number] {
+  const record = isRecord(config) ? config : {};
+  const w = record.internalWidth;
+  const h = record.internalHeight;
+  return [typeof w === 'number' ? w : Number.NaN, typeof h === 'number' ? h : Number.NaN];
+}
 
 /** Ticks between two recorded state hashes (10 s at 60 Hz). */
 export const REPLAY_HASH_INTERVAL = 600;
@@ -740,10 +844,12 @@ function u32(value: unknown, path: string): number {
  *
  * @param data - The parsed document.
  * @returns The replay.
- * @throws {RangeError} When the document is not a replay, has another format version, its config
- *   fails `resolveGameConfig`, the header's stage / seed / loadout disagree with its config, the
- *   input does not decode to exactly `ticks` words per player, or the hash list has the wrong
- *   length.
+ * @throws {ReplayVersionError} When the replay has an older format version (`'format'`) or its
+ *   config records another frame than `FRAME_W` × `FRAME_H` (`'frame'` — v2's R2-01).
+ * @throws {RangeError} When the document is not a replay, has a newer or unknown format version,
+ *   its config fails `resolveGameConfig`, the header's stage / seed / loadout disagree with its
+ *   config, the input does not decode to exactly `ticks` words per player, or the hash list has the
+ *   wrong length.
  *
  * @example
  * ```ts
@@ -756,6 +862,10 @@ export function decodeReplay(data: unknown): Replay {
   }
   const h = data.header;
   if (!isRecord(h)) throw new RangeError('replay header must be an object');
+  if (isOlderFormatVersion(h.formatVersion, REPLAY_FORMAT_VERSION)) {
+    const [width, height] = recordedFrame(h.config);
+    throw new ReplayVersionError('format', width, height, h.formatVersion);
+  }
   if (h.formatVersion !== REPLAY_FORMAT_VERSION) {
     throw new RangeError(
       `replay format version ${String(h.formatVersion)} is not supported (expected ${REPLAY_FORMAT_VERSION})`,
@@ -768,6 +878,10 @@ export function decodeReplay(data: unknown): Replay {
     if (Object.prototype.hasOwnProperty.call(h.config, key)) overrides[key] = h.config[key];
   }
   const config = resolveGameConfig(overrides);
+  // R2-01: a replay of another frame (v1's 384×216 under v2) would decode and desync.
+  if (config.internalWidth !== FRAME_W || config.internalHeight !== FRAME_H) {
+    throw new ReplayVersionError('frame', config.internalWidth, config.internalHeight);
+  }
   if (h.seed !== config.seed) throw new RangeError('replay header.seed disagrees with its config');
   if (h.stageId !== config.stage) {
     throw new RangeError('replay header.stageId disagrees with its config');

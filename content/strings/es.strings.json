@@ -317,6 +317,8 @@
     "replayShareFailed": "NO SE PUDO COMPARTIR",
     "replayDeleted": "REPETICIÓN BORRADA",
     "replayUnreadable": "REPETICIÓN ILEGIBLE",
+    "replayLegacy": "REPETICIÓN V1",
+    "replayFromV1": "GRABADA CON V1: NO SE PUEDE VER",
     "replaySpeed": "REPETICIÓN  X{0}",
     "replayPaused": "REPETICIÓN  EN PAUSA",
     "replayAssisted": "CON AYUDAS",

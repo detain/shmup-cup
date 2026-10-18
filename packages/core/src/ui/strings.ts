@@ -378,6 +378,9 @@ const STATIC_UI_TEXT = {
   replayShareFailed: 'COULD NOT SHARE',
   replayDeleted: 'REPLAY DELETED',
   replayUnreadable: 'REPLAY CANNOT BE READ',
+  // v2's R2-01: a replay v1 recorded (W4-7) — the browser's row and its PLAY / KEEP answer.
+  replayLegacy: 'V1 REPLAY',
+  replayFromV1: 'RECORDED BY V1: CANNOT PLAY',
   replaySpeed: 'REPLAY  X{0}',
   replayPaused: 'REPLAY  PAUSED',
   replayAssisted: 'ASSISTED',

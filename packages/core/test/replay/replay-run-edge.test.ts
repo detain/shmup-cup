@@ -362,6 +362,7 @@ describe('core/replay ReplayLibrary edges (M3-01)', () => {
       reached: 'B',
       assisted: false,
       ticks: SEGMENT.replay.ticks,
+      legacy: false,
     });
     // The last game is replaced by the next one.
     library.storeLast(runOf([SEGMENT], { score: 900, label: 'MANTA HARD' }));

@@ -317,6 +317,8 @@
     "replayShareFailed": "キョウユウ デキナイ",
     "replayDeleted": "リプレイ サクジョ",
     "replayUnreadable": "リプレイ ヲ ヨメナイ",
+    "replayLegacy": "V1 ノ リプレイ",
+    "replayFromV1": "V1 デ キロク: サイセイ デキナイ",
     "replaySpeed": "リプレイ  X{0}",
     "replayPaused": "リプレイ  ポーズ",
     "replayAssisted": "アシスト アリ",

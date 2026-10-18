@@ -9059,7 +9059,9 @@ const REPLAY_ACTIONS_LAYOUT: MenuLayout = Object.freeze({
  * `ASSISTED` mark; OK on a row with a replay offers PLAY (the {@link ReplayScene}), KEEP (the last
  * game into a free kept slot), SHARE (the host's `shareReplay`, when it has one) and DELETE, Back
  * returns to the list, Back on the list to the EXTRA menu. A one-line message answers KEEP / SHARE /
- * DELETE.
+ * DELETE. A replay v1 recorded (v2's R2-01 — `ReplaySummary.legacy`, owner decision W4-7) shows as
+ * `V1 REPLAY` (no score): PLAY and KEEP answer `RECORDED BY V1: CANNOT PLAY`, SHARE is off, DELETE
+ * works — nothing deletes it by itself.
  *
  * @remarks
  * An overlay over the EXTRA menu with an opaque panel. The rows' texts are built when it opens and
@@ -9135,6 +9137,10 @@ export class ReplaysScene extends SceneBase {
         this.rows[i] = t.replayEmpty;
         continue;
       }
+      if (summary.legacy) {
+        this.rows[i] = t.replayLegacy;
+        continue;
+      }
       let row = summary.label;
       if (summary.reached !== '') row += '  ' + formatUiText(t.zoneCard, summary.reached);
       this.rows[i] = row;
@@ -9172,7 +9178,12 @@ export class ReplaysScene extends SceneBase {
         const actions = this.actions;
         actions.setDisabled(ReplayActionItem.Keep, slot !== 0);
         const share = flow.host.shareReplay;
-        actions.setDisabled(ReplayActionItem.Share, share === undefined || share === null);
+        // A v1 replay (R2-01) is delete-only: no SHARE (PLAY / KEEP answer why).
+        const legacy = library.summaries[slot]?.legacy === true;
+        actions.setDisabled(
+          ReplayActionItem.Share,
+          legacy || share === undefined || share === null,
+        );
         actions.focus = ReplayActionItem.Play;
         actions.open(MENU_OPEN_LOCK_TICKS);
         this.message = '';
@@ -9210,7 +9221,12 @@ export class ReplaysScene extends SceneBase {
     const flow = this.flow;
     const t = flow.text;
     const slot = this.menu.focus;
-    if (action === ReplayActionItem.Play) {
+    const legacy = library.summaries[slot]?.legacy === true;
+    if (legacy && (action === ReplayActionItem.Play || action === ReplayActionItem.Keep)) {
+      // R2-01: a replay v1 recorded cannot play here, so it is neither played nor kept.
+      this.message = t.replayFromV1;
+      flow.sfx(SFX_CUES.PowerUpDenied);
+    } else if (action === ReplayActionItem.Play) {
       const run = library.replay(slot);
       if (run === null) {
         this.message = t.replayUnreadable;
@@ -9265,13 +9281,15 @@ export class ReplaysScene extends SceneBase {
       const y = row + REPLAYS_LAYOUT.descriptionDy;
       const summary = library === null ? null : library.summaries[i];
       list.setString(base + 4 + i, this.rows[i]);
+      const legacy = summary !== null && summary !== undefined && summary.legacy;
       list.text(
         base + 4 + i,
         REPLAYS_LAYOUT.descriptionX,
         y,
-        summary === null ? UI_COLORS.disabled : UI_COLORS.text,
+        summary === null || legacy ? UI_COLORS.disabled : UI_COLORS.text,
       );
-      if (summary === null || summary === undefined) continue;
+      // A v1 replay's row (R2-01) has no score to show.
+      if (summary === null || summary === undefined || legacy) continue;
       list.number(summary.score, REPLAYS_LAYOUT.scoreX, row, 8, UI_COLORS.text, TextAlign.Right);
       if (summary.assisted) list.text(base + 2, REPLAYS_LAYOUT.markX, row, UI_COLORS.alert);
     }

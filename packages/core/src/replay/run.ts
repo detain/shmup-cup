@@ -38,6 +38,12 @@
  *   **Sharing** is the text itself: {@link ReplayLibrary.exportText} /
  *   {@link ReplayLibrary.importText} (the web host copies it to the clipboard and imports a pasted
  *   one — the replay is locked to its build only by its hashes).
+ * - **v1 replays** (v2's R2-01 — owner decision W4-7): a stored or pasted replay that v1 recorded
+ *   (an older format, or another frame — `./format.ts` {@link ReplayVersionError}) is told apart
+ *   from a broken one ({@link classifyRunReplayText} → `'legacy'`). The library keeps such a slot's
+ *   text with a summary marked {@link ReplaySummary.legacy} (`V1 REPLAY` in the browser) and never
+ *   deletes it by itself; it cannot be played or kept, a paste of one gives
+ *   {@link ReplayStoreResult}.Legacy, and DELETE removes it.
  *
  * Pure: the storage arrives as a `PlatformStorage`; nothing here reads a clock.
  *
@@ -45,7 +51,8 @@
  * {@link RunSegment}, {@link RunSegmentJson}, {@link RunReplayJson}, {@link RunAction},
  * {@link ReplaySummary}, {@link ReplayStoreResult}, {@link replayStorageKey}, {@link REPLAY_SLOTS},
  * {@link KEPT_REPLAY_SLOTS}, {@link SEGMENT_CAPACITY}, {@link MAX_RUN_SEGMENTS},
- * {@link MAX_SEGMENT_ACTIONS}, {@link RUN_REPLAY_KIND}, {@link RUN_REPLAY_FORMAT_VERSION}.
+ * {@link MAX_SEGMENT_ACTIONS}, {@link RUN_REPLAY_KIND}, {@link RUN_REPLAY_FORMAT_VERSION}; R2-01:
+ * {@link classifyRunReplayText}, {@link RunReplayTextKind}.
  *
  * **Implements.** shmup_feat.md §21 Replays — "[P2] save/share replays, replay browser,
  * fast-forward" (the browser and the fast-forward are `core/scenes`'), "header: … all sim-affecting
@@ -59,9 +66,12 @@ import type { PlatformStorage } from '../platform/index.js';
 import type { World } from '../world/index.js';
 import {
   REPLAY_HASH_INTERVAL,
+  ReplayVersionError,
   decodeReplay,
   encodeReplay,
+  isOlderFormatVersion,
   packReplayInput,
+  recordedFrame,
   type Replay,
   type ReplayHeader,
   type ReplayJson,
@@ -450,14 +460,24 @@ function shortText(value: unknown, path: string): string {
  *
  * @param data - The parsed document.
  * @returns The run replay.
- * @throws {RangeError} When it is not a run replay of this format, a field is malformed, it has no
- *   segment or more than {@link MAX_RUN_SEGMENTS}, a segment's replay fails `decodeReplay`, its
- *   start is not an object or `null`, or its actions are not `[tick, code]` pairs within the
- *   segment's ticks.
+ * @throws {ReplayVersionError} When it has an older format version (`'format'`, the frame read
+ *   from its first segment's header), or a segment's replay does (`decodeReplay`: an older format
+ *   or another frame) — a replay v1 recorded (v2's R2-01).
+ * @throws {RangeError} When it is not a run replay, has a newer or unknown format version, a field
+ *   is malformed, it has no segment or more than {@link MAX_RUN_SEGMENTS}, a segment's replay fails
+ *   `decodeReplay`, its start is not an object or `null`, or its actions are not `[tick, code]`
+ *   pairs within the segment's ticks.
  */
 export function decodeRunReplay(data: unknown): RunReplay {
   if (!isRecord(data) || data.kind !== RUN_REPLAY_KIND) {
     throw new RangeError(`not a run replay (kind must be "${RUN_REPLAY_KIND}")`);
+  }
+  if (isOlderFormatVersion(data.formatVersion, RUN_REPLAY_FORMAT_VERSION)) {
+    const first: unknown = Array.isArray(data.segments) ? data.segments[0] : undefined;
+    const replay = isRecord(first) ? first.replay : undefined;
+    const header = isRecord(replay) ? replay.header : undefined;
+    const [width, height] = recordedFrame(isRecord(header) ? header.config : undefined);
+    throw new ReplayVersionError('format', width, height, data.formatVersion);
   }
   if (data.formatVersion !== RUN_REPLAY_FORMAT_VERSION) {
     throw new RangeError(
@@ -537,13 +557,58 @@ export function runReplayText(run: RunReplay): string {
  * Parses a run replay's text. Never throws.
  *
  * @param text - The text (a stored or shared replay).
- * @returns The replay, or `null` when the text is not a valid run replay.
+ * @returns The replay, or `null` when the text is not a valid run replay (a v1 replay included —
+ *   {@link classifyRunReplayText} tells the two apart).
  */
 export function parseRunReplayText(text: string): RunReplay | null {
+  return readRunReplayText(text).run;
+}
+
+/**
+ * What a run replay's text is (v2's R2-01): `'ok'` — a run replay this build plays; `'legacy'` —
+ * one v1 recorded (an older format or another frame: a {@link ReplayVersionError}), kept but never
+ * played; `'invalid'` — not a run replay.
+ */
+export type RunReplayTextKind = 'ok' | 'legacy' | 'invalid';
+
+/**
+ * Tells a playable run replay text from a v1 one and from a broken one (v2's R2-01 — owner
+ * decision W4-7). Never throws.
+ *
+ * @param text - The text (a stored or shared replay).
+ * @returns `'ok'`, `'legacy'` (a {@link ReplayVersionError}: recorded by v1) or `'invalid'`.
+ *
+ * @example
+ * ```ts
+ * classifyRunReplayText(runReplayText(run)); // → 'ok'
+ * classifyRunReplayText(textV1Recorded);     // → 'legacy' (from R2-01's flip on)
+ * classifyRunReplayText('{oops');             // → 'invalid'
+ * ```
+ */
+export function classifyRunReplayText(text: string): RunReplayTextKind {
+  const read = readRunReplayText(text);
+  return read.run !== null ? 'ok' : read.legacy ? 'legacy' : 'invalid';
+}
+
+/** What {@link readRunReplayText} found in a text. */
+interface ReadRunReplay {
+  /** The replay, or `null` when the text is not a playable run replay. */
+  readonly run: RunReplay | null;
+  /** Whether the text is a replay v1 recorded (a {@link ReplayVersionError}). */
+  readonly legacy: boolean;
+}
+
+/**
+ * Decodes a run replay's text and says why one is refused (a cold path — a menu action, a load).
+ *
+ * @param text - The text.
+ * @returns The replay, or `null` with whether it is a v1 replay.
+ */
+function readRunReplayText(text: string): ReadRunReplay {
   try {
-    return decodeRunReplay(JSON.parse(text) as unknown);
-  } catch (_error) {
-    return null;
+    return { run: decodeRunReplay(JSON.parse(text) as unknown), legacy: false };
+  } catch (error) {
+    return { run: null, legacy: error instanceof ReplayVersionError };
   }
 }
 
@@ -573,6 +638,12 @@ export interface ReplaySummary {
   readonly assisted: boolean;
   /** See {@link RunReplay.ticks}. */
   readonly ticks: number;
+  /**
+   * Whether the slot holds a replay v1 recorded (v2's R2-01 — {@link classifyRunReplayText}
+   * `'legacy'`): the browser shows `V1 REPLAY` and refuses PLAY / KEEP; DELETE works. Such a
+   * summary's other fields are empty (`''`, 0, `false` — the text is not read further).
+   */
+  readonly legacy: boolean;
 }
 
 /** Why {@link ReplayLibrary.store} or {@link ReplayLibrary.importText} refused a replay. */
@@ -588,6 +659,11 @@ export const ReplayStoreResult = {
    * (delete one first).
    */
   Full: 3,
+  /**
+   * The text is a replay v1 recorded (v2's R2-01 — {@link classifyRunReplayText} `'legacy'`):
+   * it cannot play in this build.
+   */
+  Legacy: 4,
 } as const;
 
 /** A {@link ReplayStoreResult} code. */
@@ -605,7 +681,9 @@ export interface ReplayLibrary {
    * Reads every slot from the storage (the host awaits it before the title). Never rejects: an
    * unreadable or invalid slot is empty. A slot over the size caps ({@link MAX_REPLAY_TEXT}, or a
    * kept slot past {@link MAX_KEPT_REPLAY_TEXT} with the ones before it — an older build's) is
-   * empty too, and its key is cleared so it no longer takes the save's room.
+   * empty too, and its key is cleared so it no longer takes the save's room. A replay v1 recorded
+   * (R2-01) keeps its slot and its text, with a {@link ReplaySummary.legacy} summary; it is never
+   * deleted here.
    *
    * @returns Resolves once read.
    */
@@ -614,7 +692,7 @@ export interface ReplayLibrary {
    * A slot's replay (decoded from its text on every call — a menu action).
    *
    * @param slot - The slot.
-   * @returns The replay, or `null` for an empty slot.
+   * @returns The replay, or `null` for an empty slot or a v1 replay's (R2-01).
    */
   replay(slot: number): RunReplay | null;
   /**
@@ -635,8 +713,8 @@ export interface ReplayLibrary {
    * Keeps a slot's replay in the first free kept slot (the browser's KEEP).
    *
    * @param slot - The slot to copy (normally 0).
-   * @returns The kept slot, or -1 (an empty slot, no free kept slot, or no room left under
-   *   {@link MAX_KEPT_REPLAY_TEXT}).
+   * @returns The kept slot, or -1 (an empty slot, a v1 replay's — R2-01 —, no free kept slot, or
+   *   no room left under {@link MAX_KEPT_REPLAY_TEXT}).
    */
   keep(slot: number): number;
   /**
@@ -644,11 +722,13 @@ export interface ReplayLibrary {
    *
    * @param text - The text.
    * @returns {@link ReplayStoreResult} (Full also when the kept replays have no room left for it
-   *   under {@link MAX_KEPT_REPLAY_TEXT}).
+   *   under {@link MAX_KEPT_REPLAY_TEXT}; Legacy for a replay v1 recorded — R2-01 —, which is not
+   *   stored).
    */
   importText(text: string): ReplayStoreResult;
   /**
-   * Empties a slot (the browser's DELETE) and removes it from the storage (an empty text).
+   * Empties a slot (the browser's DELETE) and removes it from the storage (an empty text) — a v1
+   * replay's slot too (R2-01).
    *
    * @param slot - The slot.
    */
@@ -681,23 +761,44 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
    *
    * @param slot - The slot.
    * @param text - The text (`null` empties it).
-   * @param run - Its decoded replay (with a text).
+   * @param run - Its decoded replay (with a text; `null` for a v1 replay's).
    * @param write - Whether to write it to the storage.
+   * @param legacy - Whether the text is a replay v1 recorded (R2-01): kept with a legacy summary.
    */
-  const put = (slot: number, text: string | null, run: RunReplay | null, write: boolean): void => {
+  const put = (
+    slot: number,
+    text: string | null,
+    run: RunReplay | null,
+    write: boolean,
+    legacy = false,
+  ): void => {
     texts[slot] = text;
     summaries[slot] =
-      text === null || run === null
+      text === null
         ? null
-        : Object.freeze({
-            slot,
-            mode: run.mode,
-            label: run.label,
-            score: run.score,
-            reached: run.reached,
-            assisted: runAssisted(run.assists),
-            ticks: run.ticks,
-          });
+        : run !== null
+          ? Object.freeze({
+              slot,
+              mode: run.mode,
+              label: run.label,
+              score: run.score,
+              reached: run.reached,
+              assisted: runAssisted(run.assists),
+              ticks: run.ticks,
+              legacy: false,
+            })
+          : legacy
+            ? Object.freeze({
+                slot,
+                mode: '',
+                label: '',
+                score: 0,
+                reached: '',
+                assisted: false,
+                ticks: 0,
+                legacy: true,
+              })
+            : null;
     state.revision++;
     if (!write || storage === null) return;
     try {
@@ -759,9 +860,12 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
           text !== null &&
           (text.length > MAX_REPLAY_TEXT ||
             (slot > 0 && kept + text.length > MAX_KEPT_REPLAY_TEXT));
-        const run = text === null || oversize ? null : parseRunReplayText(text);
-        if (run !== null && text !== null && slot > 0) kept += text.length;
-        put(slot, run === null ? null : text, run, oversize);
+        const read = text === null || oversize ? null : readRunReplayText(text);
+        const run = read === null ? null : read.run;
+        // R2-01: a replay v1 recorded keeps its slot (never deleted here) and takes its room.
+        const legacy = read !== null && read.legacy;
+        if ((run !== null || legacy) && text !== null && slot > 0) kept += text.length;
+        put(slot, run === null && !legacy ? null : text, run, oversize, legacy);
       }
     },
     replay(slot: number): RunReplay | null {
@@ -779,7 +883,8 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
     },
     keep(slot: number): number {
       const text = slotText(slot);
-      if (text === null) return -1;
+      // R2-01: a v1 replay is never copied (it cannot play here).
+      if (text === null || summaries[slot]?.legacy === true) return -1;
       const target = freeSlot(text.length);
       if (target < 0) return -1;
       put(target, text, parseRunReplayText(text), true);
@@ -788,7 +893,9 @@ export function createReplayLibrary(storage: PlatformStorage | null): ReplayLibr
     importText(text: string): ReplayStoreResult {
       const trimmed = text.trim();
       if (trimmed.length > MAX_REPLAY_TEXT) return ReplayStoreResult.TooLong;
-      const run = parseRunReplayText(trimmed);
+      const read = readRunReplayText(trimmed);
+      if (read.legacy) return ReplayStoreResult.Legacy;
+      const run = read.run;
       if (run === null) return ReplayStoreResult.Invalid;
       const target = freeSlot(trimmed.length);
       if (target < 0) return ReplayStoreResult.Full;
