@@ -336,22 +336,42 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
 
   it('skips the digits of a CSS hex colour in a string, and nothing else (R2-01, W4-11)', () => {
     const sample = [
-      "export const ROCK = ['#336a64', '#384', '#2160', '#c0d8ff', '#216216ff'];",
+      // Long colours (#rrggbb, #rrggbbaa) are always skipped, whatever digits they hold.
+      "export const LONG = ['#336a64', '#c0d8ff', '#216abc', '#a384a216', '#216216ff'];",
+      // A short colour (#rgb, #rgba) is skipped when its digits are no frame number…
+      "export const SHORT = ['#cfe', '#3a6', '#100', '#2160', '#1a2b'];",
+      // …and a frame number spelled as one still counts.
+      "export const SPELLED = ['#384', '#216', '#200', '#208', '#192', '#108', '#384f'];",
+      // The flipped frame's numbers count once they are frame numbers (R2-01's flip).
+      "export const NEXT = ['#640', '#336', '#348f'];",
+      // 5-, 7- and 9-digit runs are no colours, and neither is a token running into a word.
+      "export const RUNS = ['#a384b', '#a216bcd', '#a200bcdef', '#384px'];",
       "export const LABEL = 'row 384 of #208';",
       'export const MIXED = `#123456 ${216} and 360px`;',
       "export const NOT_HEX = ['384#', 'zone #9 216'];",
     ].join('\n');
+    /** The hits a frame number would give when it is one. */
+    const ifFrame = (symbol: string, line: number, values: number[]): string[] =>
+      values.filter((v) => FRAME_NUMBERS.has(v)).map((v) => `${symbol}=${v}@${line}`);
     expect(
       scanFrameLiterals('sample.mjs', sample, ts.ScriptKind.JS).map(
         (h) => `${h.symbol}=${h.value}@${h.line}`,
       ),
     ).toEqual([
-      'LABEL=384@2',
-      'MIXED=216@3',
+      ...[384, 216, 200, 208, 192, 108, 384].map((v) => `SPELLED=${v}@3`),
+      // 640, 336 and 348 are frame numbers from R2-01's flip on; at 384×216 they are colours.
+      ...ifFrame('NEXT', 4, [640, 336, 348]),
+      'RUNS=384@5',
+      'RUNS=216@5',
+      'RUNS=200@5',
+      'RUNS=384@5',
+      'LABEL=384@6',
+      'LABEL=208@6',
+      'MIXED=216@7',
       // 360 is a frame number from R2-01's flip on: a plain number beside a colour still counts.
-      ...(FRAME_NUMBERS.has(360) ? ['MIXED=360@3'] : []),
-      'NOT_HEX=384@4',
-      'NOT_HEX=216@4',
+      ...ifFrame('MIXED', 7, [360]),
+      'NOT_HEX=384@8',
+      'NOT_HEX=216@8',
     ]);
   });
 
