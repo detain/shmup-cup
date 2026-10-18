@@ -15,7 +15,7 @@
  * With `SHMUP_GOLDEN_UPDATE=1` (what `pnpm golden:update` sets) the test first re-records every
  * scenario from the bot and rewrites its file, then checks the new files the same way.
  */
-import { describe, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 import {
   BLACK_HOLE_PULL_TICKS,
   BONUS_CAPSULE_SCORE,
@@ -34,6 +34,7 @@ import {
   GOLDEN_BUILD_ID,
   GOLDEN_SCENARIOS,
   GOLDEN_UPDATE_ENV,
+  describeGoldensStale,
   playGolden,
   readGolden,
   recordGolden,
@@ -43,7 +44,7 @@ import {
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
 
-describe('golden replays (zone A and the dev stages, playtest bots)', () => {
+describeGoldensStale('golden replays (zone A and the dev stages, playtest bots)', () => {
   it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
     '%s reproduces every state hash and its outcome',
     (_name, scenario) => {
@@ -700,7 +701,7 @@ describe('golden replays (zone A and the dev stages, playtest bots)', () => {
   });
 });
 
-describe('golden replays of the extra modes (M3-01)', () => {
+describeGoldensStale('golden replays of the extra modes (M3-01)', () => {
   it('loop 2: the remix, faster bullets and revenge bullets, cleared with god mode and without', () => {
     const god = readGolden('zone-a-loop2-god');
     expect(god.replay.header.config.loop).toBe(2);

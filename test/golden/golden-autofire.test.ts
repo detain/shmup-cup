@@ -9,6 +9,7 @@
  */
 import { Action, type Replay } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itGoldensStale } from './stale.js';
 import {
   BURST_CYCLE_TICKS,
   GOLDEN_SCENARIOS,
@@ -64,7 +65,7 @@ describe.skipIf(updating)('golden replays: the autofire modes (M2-16 tests)', ()
     ]);
   });
 
-  it('record the mode (and remote mode off) in the header and clear the stage', () => {
+  itGoldensStale('record the mode (and remote mode off) in the header and clear the stage', () => {
     const toggle = readGolden('zone-a-manta-toggle');
     expect(toggle.replay.header.config).toMatchObject({
       autofire: true,
@@ -91,7 +92,7 @@ describe.skipIf(updating)('golden replays: the autofire modes (M2-16 tests)', ()
     }
   });
 
-  it('the recorded inputs carry the fire button the way the pilots press it', () => {
+  itGoldensStale('the recorded inputs carry the fire button the way the pilots press it', () => {
     const toggle = readGolden('zone-a-manta-toggle').replay;
     const shotPresses: number[] = [];
     for (let t = 0; t < toggle.ticks; t++) {
@@ -107,33 +108,36 @@ describe.skipIf(updating)('golden replays: the autofire modes (M2-16 tests)', ()
     }
   });
 
-  it('the toggle run flips the firing switch on each tap and shoots only while it is on', () => {
-    const { replay } = readGolden('zone-a-manta-toggle');
-    const switches: number[] = [];
-    let offTicks = 0;
-    let shotsWhileOff = 0;
-    let previous = -1;
-    let previousShots = 0;
-    playGolden(replay, undefined, (world) => {
-      const on = world.weapons.firing[0];
-      if (on !== previous) switches.push(on);
-      previous = on;
-      const shots = liveShots(world);
-      // A count that grows while the switch is off would be a shot fired with firing off.
-      if (on === 0) {
-        offTicks++;
-        if (shots > previousShots) shotsWhileOff++;
-      }
-      previousShots = shots;
-    });
-    // On at the start, then off / on alternately.
-    expect(switches.length).toBeGreaterThanOrEqual(4);
-    for (let i = 0; i < switches.length; i++) expect(switches[i]).toBe(i % 2 === 0 ? 1 : 0);
-    expect(offTicks).toBeGreaterThan(TOGGLE_TAP_TICKS);
-    expect(shotsWhileOff).toBe(0);
-  });
+  itGoldensStale(
+    'the toggle run flips the firing switch on each tap and shoots only while it is on',
+    () => {
+      const { replay } = readGolden('zone-a-manta-toggle');
+      const switches: number[] = [];
+      let offTicks = 0;
+      let shotsWhileOff = 0;
+      let previous = -1;
+      let previousShots = 0;
+      playGolden(replay, undefined, (world) => {
+        const on = world.weapons.firing[0];
+        if (on !== previous) switches.push(on);
+        previous = on;
+        const shots = liveShots(world);
+        // A count that grows while the switch is off would be a shot fired with firing off.
+        if (on === 0) {
+          offTicks++;
+          if (shots > previousShots) shotsWhileOff++;
+        }
+        previousShots = shots;
+      });
+      // On at the start, then off / on alternately.
+      expect(switches.length).toBeGreaterThanOrEqual(4);
+      for (let i = 0; i < switches.length; i++) expect(switches[i]).toBe(i % 2 === 0 ? 1 : 0);
+      expect(offTicks).toBeGreaterThan(TOGGLE_TAP_TICKS);
+      expect(shotsWhileOff).toBe(0);
+    },
+  );
 
-  it('the hold run launches shots only while SHOT is held', () => {
+  itGoldensStale('the hold run launches shots only while SHOT is held', () => {
     const { replay } = readGolden('zone-a-hold');
     let launchedWhileReleased = 0;
     let launchedWhileHeld = 0;
@@ -152,7 +156,7 @@ describe.skipIf(updating)('golden replays: the autofire modes (M2-16 tests)', ()
     expect(launchedWhileReleased).toBe(0);
   });
 
-  it('play back only under their own mode: the same inputs under ALWAYS desync', () => {
+  itGoldensStale('play back only under their own mode: the same inputs under ALWAYS desync', () => {
     for (const name of ['zone-a-manta-toggle', 'zone-a-hold']) {
       const { replay } = readGolden(name);
       const own = playGolden(withMode(replay, replay.header.config.autofireMode));

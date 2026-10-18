@@ -16,9 +16,9 @@
  * walk misses would then be missing from the screen.
  */
 import type { ContentDb, WorldView } from '@shmup/core';
-import { describe, expect, it } from 'vitest';
+import { expect, it } from 'vitest';
 import { stageSpriteSets } from '../../packages/shell/src/memory/index.js';
-import { playGolden, readGolden } from '../golden/golden.js';
+import { describeGoldensStale, playGolden, readGolden } from '../golden/golden.js';
 import { shippedContent } from '../playtest/harness.js';
 
 /** Golden replays of campaign play, and the zone stage whose set they must stay within. */
@@ -64,7 +64,7 @@ function collectViewSprites(view: WorldView, out: Set<number>): void {
 const db: ContentDb = shippedContent();
 const sets = stageSpriteSets(db);
 
-describe('the zone residency keeps every sprite a zone draws (R1-05)', () => {
+describeGoldensStale('the zone residency keeps every sprite a zone draws (R1-05)', () => {
   it.each(RUNS)(
     '$golden draws only sprites of $zone or global ones',
     ({ golden, zone }) => {

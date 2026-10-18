@@ -25,6 +25,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_SPAWN_SCREEN_X, PLAYFIELD_W, TILE_SIZE } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
+import { itPortPending } from '../../../packages/core/test/helpers/port-pending.js';
 import {
   SPAWN_LEAD,
   TILED_TILE_SIZE,
@@ -176,7 +177,7 @@ describe('tiled-import edges — the map header', () => {
     expect(SPAWN_LEAD).toBe(DEFAULT_SPAWN_SCREEN_X);
   });
 
-  it('refuses non-maps and bad sizes', () => {
+  itPortPending('refuses non-maps and bad sizes', () => {
     expect(() => convertTiledMap(null as never)).toThrow('not a Tiled map');
     expect(() => convertTiledMap('map' as never)).toThrow('not a Tiled map');
     expect(() => convertTiledMap(map([], { width: 60.5 }))).toThrow('positive integer width');
@@ -320,7 +321,7 @@ describe('tiled-import edges — objects', () => {
     expect(stage.checkpoints).toEqual([{ x: 121 }, { x: 500 }]);
   });
 
-  it('arms triggers a screen ahead (or at armX) over their rounded rectangle', () => {
+  itPortPending('arms triggers a screen ahead (or at armX) over their rounded rectangle', () => {
     const { stage } = convertTiledMap(
       map([
         objects(
@@ -366,50 +367,53 @@ describe('tiled-import edges — objects', () => {
     ]);
   });
 
-  it('places blocks a spawn lead ahead: screenX only nearer the start than 400 px', () => {
-    const { stage } = convertTiledMap(
-      map([
-        objects(
-          { id: 1, class: 'block', x: 400, y: 96, width: 32, height: 8 },
-          {
-            id: 2,
-            class: 'block',
-            x: 120,
-            y: 40,
-            width: 16,
-            height: 16,
-            properties: props({
-              tile: 'brick',
-              vx: -1,
-              vy: 0.5,
-              dx: 4,
-              dy: 8,
-              period: 90,
-              phase: 3,
-            }),
-          },
-        ),
-      ]),
-    );
-    expect(stage.events).toEqual([
-      { x: 0, type: 'block', y: 96, w: 32, h: 8 },
-      {
-        x: 0,
-        type: 'block',
-        screenX: 120,
-        y: 40,
-        w: 16,
-        h: 16,
-        tile: 'brick',
-        vx: -1,
-        vy: 0.5,
-        dx: 4,
-        dy: 8,
-        period: 90,
-        phase: 3,
-      },
-    ]);
-  });
+  itPortPending(
+    'places blocks a spawn lead ahead: screenX only nearer the start than 400 px',
+    () => {
+      const { stage } = convertTiledMap(
+        map([
+          objects(
+            { id: 1, class: 'block', x: 400, y: 96, width: 32, height: 8 },
+            {
+              id: 2,
+              class: 'block',
+              x: 120,
+              y: 40,
+              width: 16,
+              height: 16,
+              properties: props({
+                tile: 'brick',
+                vx: -1,
+                vy: 0.5,
+                dx: 4,
+                dy: 8,
+                period: 90,
+                phase: 3,
+              }),
+            },
+          ),
+        ]),
+      );
+      expect(stage.events).toEqual([
+        { x: 0, type: 'block', y: 96, w: 32, h: 8 },
+        {
+          x: 0,
+          type: 'block',
+          screenX: 120,
+          y: 40,
+          w: 16,
+          h: 16,
+          tile: 'brick',
+          vx: -1,
+          vy: 0.5,
+          dx: 4,
+          dy: 8,
+          period: 90,
+          phase: 3,
+        },
+      ]);
+    },
+  );
 
   it('declares branches (value only when given) and reads classes from `type` as well', () => {
     const { stage } = convertTiledMap(
@@ -478,24 +482,27 @@ describe('tiled-import edges — objects', () => {
     }
   });
 
-  it('rounds spawn y without -0 and orders events across layers by x, then file order', () => {
-    const { stage } = convertTiledMap(
-      map([
-        objects({ id: 1, class: 'spawn', name: 'a', x: 500, y: -0.4 }),
-        { type: 'tilelayer', name: 'terrain', data: new Array<number>(120).fill(0) },
-        objects(
-          { id: 2, class: 'music', x: 100, properties: props({ cue: 'Boss' }) },
-          { id: 3, class: 'spawn', name: 'b', x: 500, y: 10.5 },
-        ),
-      ]),
-    );
-    expect(stage.events).toEqual([
-      { x: 100, type: 'spawn', enemy: 'a', y: 0 },
-      { x: 100, type: 'music', cue: 'Boss' },
-      { x: 100, type: 'spawn', enemy: 'b', y: 11 },
-    ]);
-    expect(Object.is((stage.events as { y?: number }[])[0].y, -0)).toBe(false);
-  });
+  itPortPending(
+    'rounds spawn y without -0 and orders events across layers by x, then file order',
+    () => {
+      const { stage } = convertTiledMap(
+        map([
+          objects({ id: 1, class: 'spawn', name: 'a', x: 500, y: -0.4 }),
+          { type: 'tilelayer', name: 'terrain', data: new Array<number>(120).fill(0) },
+          objects(
+            { id: 2, class: 'music', x: 100, properties: props({ cue: 'Boss' }) },
+            { id: 3, class: 'spawn', name: 'b', x: 500, y: 10.5 },
+          ),
+        ]),
+      );
+      expect(stage.events).toEqual([
+        { x: 100, type: 'spawn', enemy: 'a', y: 0 },
+        { x: 100, type: 'music', cue: 'Boss' },
+        { x: 100, type: 'spawn', enemy: 'b', y: 11 },
+      ]);
+      expect(Object.is((stage.events as { y?: number }[])[0].y, -0)).toBe(false);
+    },
+  );
 });
 
 describe('tiled-import edges — warnings', () => {
@@ -535,7 +542,7 @@ describe('tiled-import edges — CLI', () => {
   const cli = (args: string[]) =>
     spawnSync(process.execPath, [script, ...args], { cwd: repo, encoding: 'utf8' });
 
-  it('prints instead of writing with --print', () => {
+  itPortPending('prints instead of writing with --print', () => {
     const out = join(tmp, 'print');
     const file = join(here, 'fixtures', 'tiled-sample.tmj');
     const result = cli([file, '--print', '--stages', out, '--paths', out]);

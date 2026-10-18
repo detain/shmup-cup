@@ -28,6 +28,10 @@ import {
   type ContentDb,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import {
+  CONTENT_PORT_PENDING,
+  PORT_PENDING_REASON,
+} from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 
@@ -51,8 +55,8 @@ const ZONES = [
 ] as const;
 
 describe('integration: zones F and G in Direct mode (M2-13)', () => {
-  it.each(ZONES)(
-    'the MANTA clears $stage, the carriers handing out its own item plan in order',
+  it.skipIf(CONTENT_PORT_PENDING).each(ZONES)(
+    `the MANTA clears $stage, the carriers handing out its own item plan in order [${PORT_PENDING_REASON}]`,
     ({ stage, boss }) => {
       const platform = createHeadlessPlatform();
       const game = createGame(

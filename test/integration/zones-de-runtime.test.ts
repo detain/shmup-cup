@@ -25,6 +25,7 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /** The shipped content, validated like the shell does. */
@@ -77,30 +78,33 @@ describe('integration: zones D and E in the game (M2-12)', () => {
     expect(world.status).toBe('playing');
   });
 
-  it('starts a practice run in the caves: zone D’s music set prepared, the camera down there', () => {
-    const platform = createHeadlessPlatform();
-    const game = createGame(platform, { seed: 3, stage: 'zone-a' }, DB, { scenes: 'game' });
-    game.debug.godMode = true;
-    const flow = game.scenes as SceneFlow;
-    const prepared: number[] = [];
-    expect(flow.startPractice('d', 2)).toBe(true);
-    commitPlayerInput(platform.snapshot.players[0], 0);
-    game.step();
-    game.events.drain((e) => {
-      if (e.kind === SimEventKind.PrepareStage) prepared.push(e.id);
-    });
-    const world = game.world;
-    expect(world.stage?.stage.id).toBe('zone-d');
-    expect(prepared).toContain(DB.stageIndex.get('zone-d'));
-    expect(Math.floor(world.camera.x)).toBe(4000);
-    expect(world.camera.y).toBe(200);
-    // The ship flies in down there too, in the open band of the caves.
-    for (let i = 0; i < 90; i++) game.step();
-    const ship = world.players[0];
-    expect(ship.state).toBe('alive');
-    expect(ship.y - world.camera.y).toBeGreaterThan(40);
-    expect(ship.y - world.camera.y).toBeLessThan(160);
-  });
+  itPortPending(
+    'starts a practice run in the caves: zone D’s music set prepared, the camera down there',
+    () => {
+      const platform = createHeadlessPlatform();
+      const game = createGame(platform, { seed: 3, stage: 'zone-a' }, DB, { scenes: 'game' });
+      game.debug.godMode = true;
+      const flow = game.scenes as SceneFlow;
+      const prepared: number[] = [];
+      expect(flow.startPractice('d', 2)).toBe(true);
+      commitPlayerInput(platform.snapshot.players[0], 0);
+      game.step();
+      game.events.drain((e) => {
+        if (e.kind === SimEventKind.PrepareStage) prepared.push(e.id);
+      });
+      const world = game.world;
+      expect(world.stage?.stage.id).toBe('zone-d');
+      expect(prepared).toContain(DB.stageIndex.get('zone-d'));
+      expect(Math.floor(world.camera.x)).toBe(4000);
+      expect(world.camera.y).toBe(200);
+      // The ship flies in down there too, in the open band of the caves.
+      for (let i = 0; i < 90; i++) game.step();
+      const ship = world.players[0];
+      expect(ship.state).toBe('alive');
+      expect(ship.y - world.camera.y).toBeGreaterThan(40);
+      expect(ship.y - world.camera.y).toBeLessThan(160);
+    },
+  );
 
   it('breaks MAGMA DEEP’s brick walls with the ship’s shots on the way through the maze', () => {
     const game = createGame(

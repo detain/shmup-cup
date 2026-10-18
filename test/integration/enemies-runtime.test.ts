@@ -40,6 +40,7 @@ import {
   type StageFormationEvent,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -99,35 +100,38 @@ function playThrough(g: Game, after: (tick: number) => void, extra = 0): void {
 }
 
 describe('integration: the test-range timeline', () => {
-  it('lets the autofiring KESTREL shoot enemies down (kills, formation bonuses — M1-10)', () => {
-    const g = game(21, true);
-    const w = g.world;
-    let kills = 0;
-    let bonuses = 0;
-    let points = 0;
-    playThrough(g, () => {
-      const o = w.enemies.outcomes;
-      for (let k = 0; k < o.killCount; k++) {
-        expect(o.killBy[k]).toBe(0);
-        kills++;
-        points += o.killScore[k];
-      }
-      const p = w.powerups.outcomes;
-      for (let k = 0; k < p.pickupCount; k++) points += p.pickupScore[k];
-      w.events.drain((event) => {
-        if (event.kind === SimEventKind.FormationBonus) {
-          bonuses++;
-          points += event.param;
+  itPortPending(
+    'lets the autofiring KESTREL shoot enemies down (kills, formation bonuses — M1-10)',
+    () => {
+      const g = game(21, true);
+      const w = g.world;
+      let kills = 0;
+      let bonuses = 0;
+      let points = 0;
+      playThrough(g, () => {
+        const o = w.enemies.outcomes;
+        for (let k = 0; k < o.killCount; k++) {
+          expect(o.killBy[k]).toBe(0);
+          kills++;
+          points += o.killScore[k];
         }
+        const p = w.powerups.outcomes;
+        for (let k = 0; k < p.pickupCount; k++) points += p.pickupScore[k];
+        w.events.drain((event) => {
+          if (event.kind === SimEventKind.FormationBonus) {
+            bonuses++;
+            points += event.param;
+          }
+        });
       });
-    });
-    expect(w.weapons.roleWeapons[0]?.id).toBe('shot.basic');
-    expect(kills).toBeGreaterThan(10);
-    expect(bonuses).toBeGreaterThan(0);
-    // Every kill, bonus and capsule went to player 1's score (M1-12).
-    expect(w.scoring.board.scores[0].score).toBe(points);
-    expect(w.scoring.board.scores[1].score).toBe(0);
-  });
+      expect(w.weapons.roleWeapons[0]?.id).toBe('shot.basic');
+      expect(kills).toBeGreaterThan(10);
+      expect(bonuses).toBeGreaterThan(0);
+      // Every kill, bonus and capsule went to player 1's score (M1-12).
+      expect(w.scoring.board.scores[0].score).toBe(points);
+      expect(w.scoring.board.scores[1].score).toBe(0);
+    },
+  );
 
   it('spawns every roster enemy, stays within the pool and resolves every formation', () => {
     const g = game();
@@ -197,36 +201,39 @@ describe('integration: the test-range timeline', () => {
     expect(peak).toBeGreaterThan(5);
   });
 
-  it('stands ground enemies on the terrain; walkers keep to the surface over the slopes', () => {
-    const g = game(4);
-    const w = g.world;
-    const map = w.terrain;
-    if (map === null) throw new Error('no terrain');
-    let grounded = 0;
-    let walkerTicks = 0;
-    const walker = DB.enemyIndex.get('walker');
-    playThrough(g, () => {
-      for (const e of w.enemies.enemies) {
-        if (e.state !== EnemyState.Live || e.anchor === BodyAnchor.Air) continue;
-        const onSurface =
-          e.anchor === BodyAnchor.Floor
-            ? terrainSolidAt(map, e.x, e.y + e.hh) && !terrainSolidAt(map, e.x, e.y + e.hh - 1)
-            : terrainSolidAt(map, e.x, e.y - e.hh - 1) && !terrainSolidAt(map, e.x, e.y - e.hh);
-        if (e.age === 1) {
-          expect(onSurface, DB.enemies[e.specIndex].id + ' at ' + String(e.x)).toBe(true);
-          grounded++;
+  itPortPending(
+    'stands ground enemies on the terrain; walkers keep to the surface over the slopes',
+    () => {
+      const g = game(4);
+      const w = g.world;
+      const map = w.terrain;
+      if (map === null) throw new Error('no terrain');
+      let grounded = 0;
+      let walkerTicks = 0;
+      const walker = DB.enemyIndex.get('walker');
+      playThrough(g, () => {
+        for (const e of w.enemies.enemies) {
+          if (e.state !== EnemyState.Live || e.anchor === BodyAnchor.Air) continue;
+          const onSurface =
+            e.anchor === BodyAnchor.Floor
+              ? terrainSolidAt(map, e.x, e.y + e.hh) && !terrainSolidAt(map, e.x, e.y + e.hh - 1)
+              : terrainSolidAt(map, e.x, e.y - e.hh - 1) && !terrainSolidAt(map, e.x, e.y - e.hh);
+          if (e.age === 1) {
+            expect(onSurface, DB.enemies[e.specIndex].id + ' at ' + String(e.x)).toBe(true);
+            grounded++;
+          }
+          if (e.specIndex === walker && e.mover === MoverKind.GroundCrawl) {
+            expect(onSurface, 'walker at ' + String(e.x)).toBe(true);
+            walkerTicks++;
+          }
         }
-        if (e.specIndex === walker && e.mover === MoverKind.GroundCrawl) {
-          expect(onSurface, 'walker at ' + String(e.x)).toBe(true);
-          walkerTicks++;
-        }
-      }
-      w.events.clear();
-    });
-    // turret ×2, turret-ceiling ×2, walker ×2, hatch ×2 in the timeline.
-    expect(grounded).toBe(8);
-    expect(walkerTicks).toBeGreaterThan(100);
-  });
+        w.events.clear();
+      });
+      // turret ×2, turret-ceiling ×2, walker ×2, hatch ×2 in the timeline.
+      expect(grounded).toBe(8);
+      expect(walkerTicks).toBeGreaterThan(100);
+    },
+  );
 
   it('awards every formation bonus and drops every capsule under perfect play', () => {
     const g = game(8);

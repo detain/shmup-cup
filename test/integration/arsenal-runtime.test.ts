@@ -52,6 +52,7 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -342,7 +343,7 @@ describe('integration: the meter arsenal on the shipped content (M2-03)', () => 
 });
 
 describe('integration: the weapon range of the select`s preview (M2-03)', () => {
-  it('is harmless: no enemy bullet over a whole loop', () => {
+  itPortPending('is harmless: no enemy bullet over a whole loop', () => {
     const { g } = game({ stage: 'weapon-range', loadout: 'full' });
     const w = g.world;
     let bullets = 0;

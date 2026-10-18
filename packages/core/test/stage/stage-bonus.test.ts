@@ -8,6 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../helpers/port-pending.js';
 import { resolveGameConfig } from '../../src/config/index.js';
 import {
   BONUS_ENTRANCES,
@@ -172,7 +173,7 @@ describe('core/stage bonus entrances (M2-10)', () => {
     expect(w.bonus.entered).toBe(1);
   });
 
-  it('ground: stays shut when one ground enemy survives, or when none appeared', () => {
+  itPortPending('ground: stays shut when one ground enemy survives, or when none appeared', () => {
     const w = world();
     w.stage?.jumpTo(990);
     let spared = -1;

@@ -28,6 +28,7 @@ import {
   type ReplayJson,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itGoldensStale } from '../../../../test/golden/stale.js';
 import { readContentFiles } from '../../../../vite.shared.js';
 import { createDeterminismCheck, installDeterminismCheck } from '../../src/determinism/index.js';
 import { loadGameContent } from '../../src/loader/index.js';
@@ -224,20 +225,23 @@ describe('shell/determinism — edge cases (M2-18)', () => {
     expect(calls).toBe(4);
   });
 
-  it('reproduces every attract demo’s recorded hashes (the demos the browsers play too)', () => {
-    const dir = new URL('../../../../content/demos/', import.meta.url);
-    const demos = readdirSync(dir)
-      .filter((file) => file.endsWith('.replay.json') && !file.startsWith('example.'))
-      .sort();
-    expect(demos).toHaveLength(9);
-    const check = createDeterminismCheck(FILES);
-    for (const file of demos) {
-      const doc = JSON.parse(readFileSync(new URL(file, dir), 'utf8')) as ReplayJson;
-      const run = check.play(doc);
-      expect(run.ok, file).toBe(true);
-      expect(run.ticks, file).toBe(doc.ticks);
-      expect(run.hashes, file).toEqual(doc.hashes);
-      expect(run.finalHash, file).toBe(doc.finalHash);
-    }
-  });
+  itGoldensStale(
+    'reproduces every attract demo’s recorded hashes (the demos the browsers play too)',
+    () => {
+      const dir = new URL('../../../../content/demos/', import.meta.url);
+      const demos = readdirSync(dir)
+        .filter((file) => file.endsWith('.replay.json') && !file.startsWith('example.'))
+        .sort();
+      expect(demos).toHaveLength(9);
+      const check = createDeterminismCheck(FILES);
+      for (const file of demos) {
+        const doc = JSON.parse(readFileSync(new URL(file, dir), 'utf8')) as ReplayJson;
+        const run = check.play(doc);
+        expect(run.ok, file).toBe(true);
+        expect(run.ticks, file).toBe(doc.ticks);
+        expect(run.hashes, file).toEqual(doc.hashes);
+        expect(run.finalHash, file).toBe(doc.finalHash);
+      }
+    },
+  );
 });

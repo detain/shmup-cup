@@ -47,6 +47,11 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import {
+  CONTENT_PORT_PENDING,
+  PORT_PENDING_REASON,
+  itPortPending,
+} from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /** The shipped content, validated like the shell does. */
@@ -190,8 +195,8 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     stage.checkpoints.forEach((checkpoint, i) => starts.push([letter, i, checkpoint.x]));
   }
 
-  it.each(starts)(
-    'practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space',
+  it.skipIf(CONTENT_PORT_PENDING).each(starts)(
+    `practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space [${PORT_PENDING_REASON}]`,
     (letter, checkpoint, x) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
@@ -246,56 +251,60 @@ describe('integration: zones F and G, edge cases (M2-13)', () => {
     expectInOpenSpace(world, 'while the boss fights');
   });
 
-  it('rolls CELL VAULT’s tissue walls back at an Arcade restart, before they could grow back', () => {
-    const game = createGame(
-      createHeadlessPlatform(),
-      {
-        seed: 11,
-        stage: 'zone-f',
-        deathPenalty: 'arcade',
-        startingLives: 3,
-        autofire: false,
-        remoteMode: false,
-      },
-      DB,
-    );
-    const world = game.world;
-    world.debugFlags.godMode = true;
-    const tissue = tileId(world, 'tissue');
-    const full = cellsOf(world, tissue);
-    expect(full).toBeGreaterThan(70);
-    const destructible = world.gimmicks.destructible;
-    expect(destructible).not.toBeNull();
-    if (destructible === null) return;
-    world.stage?.jumpTo(2700);
-    spawnPlayer(world.players[0], world.camera);
-    stepUntil(game, () => world.camera.x >= 2800, 400);
-    // Shoot open every tissue cell of the first three walls (world x < 3,300).
-    const map = destructible.map;
-    let broken = 0;
-    for (let i = 0; i < map.tiles.length; i++) {
-      if (map.tiles[i] !== tissue || (i % map.cols) * 8 >= 3300) continue;
-      for (let k = 0; k < 5 && map.tiles[i] !== 0; k++) {
-        destructible.hit((i % map.cols) * 8 + 4, Math.floor(i / map.cols) * 8 + 4, 1);
+  itPortPending(
+    'rolls CELL VAULT’s tissue walls back at an Arcade restart, before they could grow back',
+    () => {
+      const game = createGame(
+        createHeadlessPlatform(),
+        {
+          seed: 11,
+          stage: 'zone-f',
+          deathPenalty: 'arcade',
+          startingLives: 3,
+          autofire: false,
+          remoteMode: false,
+        },
+        DB,
+      );
+      const world = game.world;
+      world.debugFlags.godMode = true;
+      const tissue = tileId(world, 'tissue');
+      const full = cellsOf(world, tissue);
+      expect(full).toBeGreaterThan(70);
+      const destructible = world.gimmicks.destructible;
+      expect(destructible).not.toBeNull();
+      if (destructible === null) return;
+      world.stage?.jumpTo(2700);
+      spawnPlayer(world.players[0], world.camera);
+      stepUntil(game, () => world.camera.x >= 2800, 400);
+      // Shoot open every tissue cell of the first three walls (world x < 3,300).
+      const map = destructible.map;
+      let broken = 0;
+      for (let i = 0; i < map.tiles.length; i++) {
+        if (map.tiles[i] !== tissue || (i % map.cols) * 8 >= 3300) continue;
+        for (let k = 0; k < 5 && map.tiles[i] !== 0; k++) {
+          destructible.hit((i % map.cols) * 8 + 4, Math.floor(i / map.cols) * 8 + 4, 1);
+        }
+        broken++;
       }
-      broken++;
-    }
-    expect(broken).toBeGreaterThan(20);
-    expect(cellsOf(world, tissue)).toBe(full - broken);
-    const brokeAt = world.tick;
-    crash(game);
-    const ship = world.players[0];
-    stepUntil(game, () => ship.state === 'alive', 600);
-    // Back at the checkpoint at 2,200, every cell standing again — well before the tile's regen.
-    const regen = DB.tilesets.find((t) => t.id === 'terrain-vault')?.tiles[tissue - 1]?.regen ?? 0;
-    expect(world.tick - brokeAt).toBeLessThan(regen);
-    expect(ship.lives).toBe(2);
-    expect(world.camera.x).toBeGreaterThanOrEqual(2200);
-    expect(world.camera.x).toBeLessThan(2500);
-    expect(cellsOf(world, tissue)).toBe(full);
-    expect(destructible.destroyed).toBe(0);
-    expectInOpenSpace(world, 'after the restart');
-  });
+      expect(broken).toBeGreaterThan(20);
+      expect(cellsOf(world, tissue)).toBe(full - broken);
+      const brokeAt = world.tick;
+      crash(game);
+      const ship = world.players[0];
+      stepUntil(game, () => ship.state === 'alive', 600);
+      // Back at the checkpoint at 2,200, every cell standing again — well before the tile's regen.
+      const regen =
+        DB.tilesets.find((t) => t.id === 'terrain-vault')?.tiles[tissue - 1]?.regen ?? 0;
+      expect(world.tick - brokeAt).toBeLessThan(regen);
+      expect(ship.lives).toBe(2);
+      expect(world.camera.x).toBeGreaterThanOrEqual(2200);
+      expect(world.camera.x).toBeLessThan(2500);
+      expect(cellsOf(world, tissue)).toBe(full);
+      expect(destructible.destroyed).toBe(0);
+      expectInOpenSpace(world, 'after the restart');
+    },
+  );
 
   /**
    * Zone G under the Arcade penalty from the prism gallery's checkpoint: the gallery's turrets

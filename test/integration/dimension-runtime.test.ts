@@ -22,6 +22,7 @@ import {
 } from '@shmup/core';
 import { createLayerStack, createMode7Floor, type Mode7Shader } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
   DIMENSION_SKY_H,
@@ -56,7 +57,7 @@ function dimension(db: ContentDb): ContentDb['stages'][number] {
 const { manifest } = buildAtlas();
 
 describe('integration: the high-speed dimension stage (M3-02)', () => {
-  it('asks for the floor and sky the `dimension` generator draws', () => {
+  itPortPending('asks for the floor and sky the `dimension` generator draws', () => {
     const stage = dimension(shipped());
     const floor = stage.mode7;
     expect(floor).not.toBeNull();

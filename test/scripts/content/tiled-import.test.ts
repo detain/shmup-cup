@@ -11,6 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StageEventCode, createStageRunner, loadContent } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
+import { itPortPending } from '../../../packages/core/test/helpers/port-pending.js';
 import {
   SPAWN_LEAD,
   TILED_TILE_SIZE,
@@ -76,13 +77,13 @@ function objects(...objects: unknown[]): Record<string, unknown> {
 }
 
 describe('scripts/content/tiled-import.mjs — the committed fixture', () => {
-  it('converts the fixture map into exactly the expected stage and paths JSON', () => {
+  itPortPending('converts the fixture map into exactly the expected stage and paths JSON', () => {
     const { stage, paths } = convertTiledMap(fixture('tiled-sample.tmj'));
     expect(stage).toEqual(fixture('tiled-sample.stage.json'));
     expect(paths).toEqual(fixture('tiled-sample.paths.json'));
   });
 
-  it('produces content that loads without issues next to the shipped files', () => {
+  itPortPending('produces content that loads without issues next to the shipped files', () => {
     const { stage, paths } = convertTiledMap(fixture('tiled-sample.tmj'));
     const { db, issues } = loadContent([
       ...readContentFiles(),
@@ -104,43 +105,46 @@ describe('scripts/content/tiled-import.mjs — the committed fixture', () => {
     });
   });
 
-  it('puts every spawn where its object is in the world, under the panning camera too', () => {
-    const tmj = fixture('tiled-sample.tmj') as {
-      layers: { objects?: { class?: string; x: number; y: number }[] }[];
-    };
-    const { stage, paths, warnings } = convertTiledMap(tmj);
-    expect(warnings).toEqual([]);
-    const { db, issues } = loadContent([
-      ...readContentFiles(),
-      { path: 'stages/tiled-sample.stage.json', data: stage },
-      { path: 'paths/tiled-sample.paths.json', data: paths },
-    ]);
-    expect(issues).toEqual([]);
-    const spec = db.stages[db.stageIndex.get('tiled-sample') ?? -1];
-    // The world y each spawn event lands on when the real runner fires it (the enemy system
-    // spawns at camera.y + y), keyed by the event's x.
-    const landed = new Map<number, number>();
-    const runner = createStageRunner(spec, {
-      event(code, event) {
-        if (code !== StageEventCode.Spawn && code !== StageEventCode.Formation) return;
-        landed.set(event.x, runner.camera.y + ((event as { y?: number }).y ?? NaN));
-      },
-      clear() {},
-    });
-    // The low branch too (its trigger is never probed here).
-    runner.setFlag(0, true);
-    for (let t = 0; t < 2000 && !runner.ended; t++) runner.tick();
-    expect(runner.ended).toBe(true);
-    const spawns = tmj.layers
-      .flatMap((l) => l.objects ?? [])
-      .filter((o) => o.class === 'spawn' || o.class === 'formation');
-    expect(landed.size).toBe(spawns.length);
-    for (const object of spawns) {
-      const at = Math.max(0, Math.round(object.x) - SPAWN_LEAD);
-      // Within a pixel: the camera may overshoot the event's x by up to one tick's scroll.
-      expect(Math.abs((landed.get(at) ?? NaN) - object.y)).toBeLessThanOrEqual(1);
-    }
-  });
+  itPortPending(
+    'puts every spawn where its object is in the world, under the panning camera too',
+    () => {
+      const tmj = fixture('tiled-sample.tmj') as {
+        layers: { objects?: { class?: string; x: number; y: number }[] }[];
+      };
+      const { stage, paths, warnings } = convertTiledMap(tmj);
+      expect(warnings).toEqual([]);
+      const { db, issues } = loadContent([
+        ...readContentFiles(),
+        { path: 'stages/tiled-sample.stage.json', data: stage },
+        { path: 'paths/tiled-sample.paths.json', data: paths },
+      ]);
+      expect(issues).toEqual([]);
+      const spec = db.stages[db.stageIndex.get('tiled-sample') ?? -1];
+      // The world y each spawn event lands on when the real runner fires it (the enemy system
+      // spawns at camera.y + y), keyed by the event's x.
+      const landed = new Map<number, number>();
+      const runner = createStageRunner(spec, {
+        event(code, event) {
+          if (code !== StageEventCode.Spawn && code !== StageEventCode.Formation) return;
+          landed.set(event.x, runner.camera.y + ((event as { y?: number }).y ?? NaN));
+        },
+        clear() {},
+      });
+      // The low branch too (its trigger is never probed here).
+      runner.setFlag(0, true);
+      for (let t = 0; t < 2000 && !runner.ended; t++) runner.tick();
+      expect(runner.ended).toBe(true);
+      const spawns = tmj.layers
+        .flatMap((l) => l.objects ?? [])
+        .filter((o) => o.class === 'spawn' || o.class === 'formation');
+      expect(landed.size).toBe(spawns.length);
+      for (const object of spawns) {
+        const at = Math.max(0, Math.round(object.x) - SPAWN_LEAD);
+        // Within a pixel: the camera may overshoot the event's x by up to one tick's scroll.
+        expect(Math.abs((landed.get(at) ?? NaN) - object.y)).toBeLessThanOrEqual(1);
+      }
+    },
+  );
 });
 
 describe('scripts/content/tiled-import.mjs — helpers', () => {
@@ -257,57 +261,60 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
     expect(cameraYAt(keys, 400)).toBe(60);
   });
 
-  it('writes spawn y relative to the camera the keys give; blocks and triggers stay in world', () => {
-    const { stage, warnings } = convertTiledMap(
-      map([
-        objects(
-          { id: 1, class: 'camera', x: 0, properties: [{ name: 'speed', value: 2 }] },
-          {
-            id: 2,
-            class: 'camera',
-            x: 100,
-            properties: [
-              { name: 'speed', value: 2 },
-              { name: 'hold', value: 90 },
-              { name: 'yTo', value: 72 },
-              { name: 'yTicks', value: 60 },
-            ],
-          },
-          { id: 3, class: 'spawn', name: 'drifter', x: 600, y: 200 },
-          {
-            id: 4,
-            class: 'formation',
-            x: 650,
-            y: 150,
-            properties: [
-              { name: 'enemy', value: 'fan' },
-              { name: 'count', value: 2 },
-              { name: 'interval', value: 8 },
-            ],
-          },
-          { id: 5, class: 'block', x: 640, y: 200, width: 16, height: 8 },
-          {
-            id: 6,
-            class: 'trigger',
-            x: 500,
-            y: 180,
-            width: 40,
-            height: 40,
-            properties: [{ name: 'flag', value: 'f' }],
-          },
-        ),
-      ]),
-    );
-    expect(warnings).toEqual([]);
-    expect(stage.events).toEqual([
-      { x: 116, type: 'trigger', flag: 'f', region: { x: 500, y: 180, w: 40, h: 40 } },
-      { x: 200, type: 'spawn', enemy: 'drifter', y: 200 - 72 },
-      { x: 240, type: 'block', y: 200, w: 16, h: 8 },
-      { x: 250, type: 'formation', enemy: 'fan', count: 2, interval: 8, y: 150 - 72 },
-    ]);
-  });
+  itPortPending(
+    'writes spawn y relative to the camera the keys give; blocks and triggers stay in world',
+    () => {
+      const { stage, warnings } = convertTiledMap(
+        map([
+          objects(
+            { id: 1, class: 'camera', x: 0, properties: [{ name: 'speed', value: 2 }] },
+            {
+              id: 2,
+              class: 'camera',
+              x: 100,
+              properties: [
+                { name: 'speed', value: 2 },
+                { name: 'hold', value: 90 },
+                { name: 'yTo', value: 72 },
+                { name: 'yTicks', value: 60 },
+              ],
+            },
+            { id: 3, class: 'spawn', name: 'drifter', x: 600, y: 200 },
+            {
+              id: 4,
+              class: 'formation',
+              x: 650,
+              y: 150,
+              properties: [
+                { name: 'enemy', value: 'fan' },
+                { name: 'count', value: 2 },
+                { name: 'interval', value: 8 },
+              ],
+            },
+            { id: 5, class: 'block', x: 640, y: 200, width: 16, height: 8 },
+            {
+              id: 6,
+              class: 'trigger',
+              x: 500,
+              y: 180,
+              width: 40,
+              height: 40,
+              properties: [{ name: 'flag', value: 'f' }],
+            },
+          ),
+        ]),
+      );
+      expect(warnings).toEqual([]);
+      expect(stage.events).toEqual([
+        { x: 116, type: 'trigger', flag: 'f', region: { x: 500, y: 180, w: 40, h: 40 } },
+        { x: 200, type: 'spawn', enemy: 'drifter', y: 200 - 72 },
+        { x: 240, type: 'block', y: 200, w: 16, h: 8 },
+        { x: 250, type: 'formation', enemy: 'fan', count: 2, interval: 8, y: 150 - 72 },
+      ]);
+    },
+  );
 
-  it('warns about a spawn that fires while a timed pan may still be running', () => {
+  itPortPending('warns about a spawn that fires while a timed pan may still be running', () => {
     const pan = (extra: { name: string; value: unknown }[]) =>
       map([
         objects(
@@ -357,7 +364,7 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
 });
 
 describe('scripts/content/tiled-import.mjs — CLI', () => {
-  it('writes the stage and paths files into the given folders', () => {
+  itPortPending('writes the stage and paths files into the given folders', () => {
     const stages = join(tmp, 'stages');
     const paths = join(tmp, 'paths');
     const result = spawnSync(

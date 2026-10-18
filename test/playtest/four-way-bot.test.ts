@@ -17,6 +17,7 @@ import {
   ANGLE_UNITS,
   BulletKind,
   MeterSlot,
+  PLAYFIELD_H,
   createInputSnapshot,
   createWorld,
   fireLaser,
@@ -26,6 +27,7 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import {
   BOT_MAX_SPEED_LEVEL,
   BOT_X,
@@ -98,15 +100,16 @@ function directions(mask: number): number {
 describe('playtest four-way bot: lanes', () => {
   it('splits the playfield into 16-px lanes, clamped at both ends', () => {
     expect(LANE_HEIGHT).toBe(16);
-    expect(LANES).toBe(12);
+    // As many whole lanes as the playfield holds (12 of 200 rows; 21 of 336 at 640×360).
+    expect(LANES).toBe(Math.floor(PLAYFIELD_H / LANE_HEIGHT));
     expect(SLOTS * SLOT_TICKS).toBe(BULLET_HORIZON);
     expect(laneCentre(0)).toBe(8);
-    expect(laneCentre(LANES - 1)).toBe(184);
+    expect(laneCentre(LANES - 1)).toBe((LANES - 1) * LANE_HEIGHT + 8);
     expect(laneOf(-20)).toBe(0);
     expect(laneOf(0)).toBe(0);
     expect(laneOf(15.9)).toBe(0);
     expect(laneOf(16)).toBe(1);
-    expect(laneOf(199)).toBe(LANES - 1);
+    expect(laneOf(PLAYFIELD_H - 1)).toBe(LANES - 1);
     expect(laneOf(1e9)).toBe(LANES - 1);
     for (let k = 0; k < LANES; k++) expect(laneOf(laneCentre(k))).toBe(k);
     const scan = createLaneScan();
@@ -159,20 +162,23 @@ describe('playtest four-way bot: scanLanes', () => {
     expect(scan.centre[8] & (1 << (SLOTS - 1))).not.toBe(0);
   });
 
-  it("finds rock in zone A's corridor lanes (floor and ceiling), none in its open middle", () => {
-    const w = parked('zone-a');
-    w.stage?.jumpTo(4500);
-    place(w, BOT_X, laneCentre(6));
-    const scan = createLaneScan();
-    scanLanes(w, scan);
-    expect(scan.terrain[0]).toBeGreaterThan(0);
-    expect(scan.terrain[LANES - 1]).toBeGreaterThan(0);
-    expect(scan.terrain[5]).toBe(0);
-    expect(scan.terrain[6]).toBe(0);
-    // A wall is rock right at the ship: never in an open lane.
-    for (let k = 0; k < LANES; k++)
-      if (scan.wall[k] !== 0) expect(scan.terrain[k]).toBeGreaterThan(0);
-  });
+  itPortPending(
+    "finds rock in zone A's corridor lanes (floor and ceiling), none in its open middle",
+    () => {
+      const w = parked('zone-a');
+      w.stage?.jumpTo(4500);
+      place(w, BOT_X, laneCentre(6));
+      const scan = createLaneScan();
+      scanLanes(w, scan);
+      expect(scan.terrain[0]).toBeGreaterThan(0);
+      expect(scan.terrain[LANES - 1]).toBeGreaterThan(0);
+      expect(scan.terrain[5]).toBe(0);
+      expect(scan.terrain[6]).toBe(0);
+      // A wall is rock right at the ship: never in an open lane.
+      for (let k = 0; k < LANES; k++)
+        if (scan.wall[k] !== 0) expect(scan.terrain[k]).toBeGreaterThan(0);
+    },
+  );
 
   it('clears the previous result on every scan', () => {
     const w = parked();

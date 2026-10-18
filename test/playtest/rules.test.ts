@@ -16,6 +16,7 @@
 import {
   ANGLE_UNITS,
   BulletKind,
+  PLAYFIELD_CY,
   PLAYFIELD_H,
   createWorld,
   fireLaser,
@@ -97,12 +98,12 @@ describe('playtest rules: laserLaneGaps', () => {
   it('widens a beam by the ship hurt radius', () => {
     const w = world();
     const hurt = w.ship.hurtRadius;
-    lane(w, 100, 6);
+    lane(w, PLAYFIELD_CY, 6);
     const gaps = laserLaneGaps(w);
     expect(gaps.lanes).toBe(1);
     expect(gaps.separate).toBe(1);
     expect(gaps.narrowestBetween).toBe(Number.POSITIVE_INFINITY);
-    expect(gaps.widestOpen).toBeCloseTo(100 - 3 - hurt, 9); // above and below are equal
+    expect(gaps.widestOpen).toBeCloseTo(PLAYFIELD_CY - 3 - hurt, 9); // above and below are equal
   });
 
   it('measures the open rows between separate lanes', () => {
@@ -249,11 +250,11 @@ describe('playtest rules: columnGap (M2-18)', () => {
   it('closes the rows of a bullet crossing the column, widened by its radius and the hurt radius', () => {
     const w = world();
     const x = w.players[0].x + COLUMN_HALF_WIDTH;
-    spawnBullet(w, x, 100, ANGLE_UNITS / 2, 1, BulletKind.RoundPink);
+    spawnBullet(w, x, PLAYFIELD_CY, ANGLE_UNITS / 2, 1, BulletKind.RoundPink);
     const f = w.bullets.pool.fields;
     const half = f.radius[0] + w.ship.hurtRadius;
-    // The open band above (100 − half rows) is wider than the one below.
-    expect(columnGap(w)).toBeCloseTo(100 - half, 9);
+    // The open bands above and below (PLAYFIELD_CY − half rows each) are the widest.
+    expect(columnGap(w)).toBeCloseTo(PLAYFIELD_CY - half, 9);
   });
 
   it('finds the gap a wall of bullets leaves, and the watch flags a wall under 16 px', () => {

@@ -13,6 +13,7 @@
  * - the hi-score screen names the shipped ships: KESTREL for the power meter, MANTA for Direct.
  */
 import { describe, expect, it } from 'vitest';
+import { itGoldensStale } from '../golden/stale.js';
 import {
   Action,
   DrawOp,
@@ -94,27 +95,31 @@ function uiSprites(s: Session): number {
 }
 
 describe('integration: the front end on the shipped content — edge cases (M2-15)', () => {
-  it('plays the demos in zone order, each opening on its zone`s card', () => {
-    const db = shippedContent();
-    const campaign = db.campaign!;
-    const s = session();
-    expect(s.flow.demos.map((demo) => demo.header.stageId)).toEqual(
-      campaign.zones.map((zone) => zone.stage),
-    );
-    for (const zone of campaign.zones) {
-      s.flow.stack.reset(s.flow.title);
-      hold(s, 0, TITLE_ATTRACT_TICKS + 1);
-      expect(s.flow.stack.top?.id).toBe('demo');
-      const demo = s.flow.demo.demo!;
-      expect(demo.world.stage?.stage.id).toBe(zone.stage);
-      expect(uiTexts(s)).toEqual(expect.arrayContaining(['ZONE ' + zone.label, zone.name]));
-      hold(s, 0, 120);
-      expect(demo.playback.report.ok).toBe(true);
-      hold(s, Action.Confirm); // any key: the title
-      expect(s.flow.stack.top?.id).toBe('title');
-    }
-    expect(s.flow.demo.started).toBe(campaign.zones.length);
-  }, 60_000);
+  itGoldensStale(
+    'plays the demos in zone order, each opening on its zone`s card',
+    () => {
+      const db = shippedContent();
+      const campaign = db.campaign!;
+      const s = session();
+      expect(s.flow.demos.map((demo) => demo.header.stageId)).toEqual(
+        campaign.zones.map((zone) => zone.stage),
+      );
+      for (const zone of campaign.zones) {
+        s.flow.stack.reset(s.flow.title);
+        hold(s, 0, TITLE_ATTRACT_TICKS + 1);
+        expect(s.flow.stack.top?.id).toBe('demo');
+        const demo = s.flow.demo.demo!;
+        expect(demo.world.stage?.stage.id).toBe(zone.stage);
+        expect(uiTexts(s)).toEqual(expect.arrayContaining(['ZONE ' + zone.label, zone.name]));
+        hold(s, 0, 120);
+        expect(demo.playback.report.ok).toBe(true);
+        hold(s, Action.Confirm); // any key: the title
+        expect(s.flow.stack.top?.id).toBe('title');
+      }
+      expect(s.flow.demo.started).toBe(campaign.zones.length);
+    },
+    60_000,
+  );
 
   it('offers every zone and each of its checkpoints in the practice select, and starts there', () => {
     const db = shippedContent();

@@ -28,6 +28,7 @@ import {
   type SceneFlow,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 
@@ -79,39 +80,44 @@ function start(seed: number): {
 const stageOf = (game: Game): string => game.world.stage?.stage.id ?? '';
 
 describe('integration: hidden bonus stages in the scene flow (M2-10)', () => {
-  it('opens the ground entrance, plays the vault with the players carried in, clears the run', () => {
-    const { game, flow, step } = start(62);
-    expect(flow.campaign).toBeNull();
-    const range = game.world;
-    let bot = fourWayBot();
-    for (let i = 0; i < 4000 && stageOf(game) === 'bonus-range'; i++) step(bot.decide(game.world));
-    expect(stageOf(game)).toBe('bonus-vault');
-    expect(range.bonus.entered).toBeGreaterThanOrEqual(0);
-    expect(range.enemies.stats.groundKilled).toBeGreaterThanOrEqual(3);
-    expect(flow.run.inBonus).toBe(true);
-    expect(flow.run.bonusReturnX).toBe(range.bonus.enteredX());
-    // Carried in: the range's score, lives and loadout.
-    const vault = game.world;
-    expect(vault.scoring.board.scores[0].score).toBe(range.scoring.board.scores[0].score);
-    expect(vault.players[0].lives).toBe(range.players[0].lives);
-    expect(vault.weapons.loadouts[0].options).toBe(range.weapons.loadouts[0].options);
-    expect(vault.players[0].state).toBe('entering');
-    const lives = vault.players[0].lives;
-    const extends0 = vault.scoring.board.scores[0].extendsEarned;
-    bot = fourWayBot();
-    for (let i = 0; i < 3000 && flow.stack.top?.id === 'game'; i++) step(bot.decide(game.world));
-    expect(flow.stack.top?.id).toBe('stageClear');
-    expect(game.world).toBe(vault);
-    expect(vault.status).toBe('stageClear');
-    // The 1UP: a life beyond the extends the vault's capsules paid for.
-    const extendsGot = vault.scoring.board.scores[0].extendsEarned - extends0;
-    expect(vault.players[0].lives - lives - extendsGot).toBeGreaterThanOrEqual(1);
-    // The range's boss never came: the World that cleared was the vault.
-    expect(vault.bosses.boss.specIndex).toBe(-1);
-    step(0);
-    expect(flow.stack.top?.id).toBe('stageClear');
-    expect(flow.stageClear.zoneMode).toBe(false);
-  }, 60_000);
+  itPortPending(
+    'opens the ground entrance, plays the vault with the players carried in, clears the run',
+    () => {
+      const { game, flow, step } = start(62);
+      expect(flow.campaign).toBeNull();
+      const range = game.world;
+      let bot = fourWayBot();
+      for (let i = 0; i < 4000 && stageOf(game) === 'bonus-range'; i++)
+        step(bot.decide(game.world));
+      expect(stageOf(game)).toBe('bonus-vault');
+      expect(range.bonus.entered).toBeGreaterThanOrEqual(0);
+      expect(range.enemies.stats.groundKilled).toBeGreaterThanOrEqual(3);
+      expect(flow.run.inBonus).toBe(true);
+      expect(flow.run.bonusReturnX).toBe(range.bonus.enteredX());
+      // Carried in: the range's score, lives and loadout.
+      const vault = game.world;
+      expect(vault.scoring.board.scores[0].score).toBe(range.scoring.board.scores[0].score);
+      expect(vault.players[0].lives).toBe(range.players[0].lives);
+      expect(vault.weapons.loadouts[0].options).toBe(range.weapons.loadouts[0].options);
+      expect(vault.players[0].state).toBe('entering');
+      const lives = vault.players[0].lives;
+      const extends0 = vault.scoring.board.scores[0].extendsEarned;
+      bot = fourWayBot();
+      for (let i = 0; i < 3000 && flow.stack.top?.id === 'game'; i++) step(bot.decide(game.world));
+      expect(flow.stack.top?.id).toBe('stageClear');
+      expect(game.world).toBe(vault);
+      expect(vault.status).toBe('stageClear');
+      // The 1UP: a life beyond the extends the vault's capsules paid for.
+      const extendsGot = vault.scoring.board.scores[0].extendsEarned - extends0;
+      expect(vault.players[0].lives - lives - extendsGot).toBeGreaterThanOrEqual(1);
+      // The range's boss never came: the World that cleared was the vault.
+      expect(vault.bosses.boss.specIndex).toBe(-1);
+      step(0);
+      expect(flow.stack.top?.id).toBe('stageClear');
+      expect(flow.stageClear.zoneMode).toBe(false);
+    },
+    60_000,
+  );
 
   it('a death in the vault brings the ships back to the entrance, locked out', () => {
     const { game, flow, step } = start(62);

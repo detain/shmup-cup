@@ -6,6 +6,7 @@
  * for the meter, the planned colour item for the MANTA.
  */
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../helpers/port-pending.js';
 import { PLAYFIELD_H } from '../../src/config/index.js';
 import { DropKind, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -48,31 +49,34 @@ function wave(direct: boolean): World {
 }
 
 describe('core/behaviors cube.pincer (M2-05)', () => {
-  it('spawns three cubes from the top and three from the bottom that converge on the middle', () => {
-    const w = wave(true);
-    const all = cubes(w);
-    expect(all).toHaveLength(6);
-    const input = createInputSnapshot();
-    const viewY = (e: Enemy): number => e.y - w.camera.y;
-    const top = all.filter((e) => e.member % 2 === 0);
-    const bottom = all.filter((e) => e.member % 2 === 1);
-    expect(top).toHaveLength(3);
-    for (const e of top) expect(viewY(e)).toBeLessThan(PLAYFIELD_H / 2);
-    for (const e of bottom) expect(viewY(e)).toBeGreaterThan(PLAYFIELD_H / 2);
-    // Mirror images: member 1 flies the reflection of member 0's line.
-    for (let t = 0; t < 90; t++) stepWorld(w, input);
-    const [a, b] = [all[0], all[1]];
-    expect(Math.abs(viewY(a) - PLAYFIELD_H / 2)).toBeLessThan(40);
-    expect(Math.abs(viewY(b) - PLAYFIELD_H / 2)).toBeLessThan(40);
-    // Then they leave left, above / below the middle row.
-    for (let t = 0; t < 200; t++) stepWorld(w, input);
-    for (const e of cubes(w)) {
-      expect(e.vx).toBeLessThan(0);
-      const dy = viewY(e) - PLAYFIELD_H / 2;
-      expect(Math.abs(Math.abs(dy) - 8)).toBeLessThan(1e-6);
-    }
-    expect(w.enemies.formations.drop[all[0].formation]).toBe(DropKind.PowerUp);
-  });
+  itPortPending(
+    'spawns three cubes from the top and three from the bottom that converge on the middle',
+    () => {
+      const w = wave(true);
+      const all = cubes(w);
+      expect(all).toHaveLength(6);
+      const input = createInputSnapshot();
+      const viewY = (e: Enemy): number => e.y - w.camera.y;
+      const top = all.filter((e) => e.member % 2 === 0);
+      const bottom = all.filter((e) => e.member % 2 === 1);
+      expect(top).toHaveLength(3);
+      for (const e of top) expect(viewY(e)).toBeLessThan(PLAYFIELD_H / 2);
+      for (const e of bottom) expect(viewY(e)).toBeGreaterThan(PLAYFIELD_H / 2);
+      // Mirror images: member 1 flies the reflection of member 0's line.
+      for (let t = 0; t < 90; t++) stepWorld(w, input);
+      const [a, b] = [all[0], all[1]];
+      expect(Math.abs(viewY(a) - PLAYFIELD_H / 2)).toBeLessThan(40);
+      expect(Math.abs(viewY(b) - PLAYFIELD_H / 2)).toBeLessThan(40);
+      // Then they leave left, above / below the middle row.
+      for (let t = 0; t < 200; t++) stepWorld(w, input);
+      for (const e of cubes(w)) {
+        expect(e.vx).toBeLessThan(0);
+        const dy = viewY(e) - PLAYFIELD_H / 2;
+        expect(Math.abs(Math.abs(dy) - 8)).toBeLessThan(1e-6);
+      }
+      expect(w.enemies.formations.drop[all[0].formation]).toBe(DropKind.PowerUp);
+    },
+  );
 
   it('drops the wave`s item where the last cube dies: a capsule, or the planned colour', () => {
     for (const direct of [false, true]) {

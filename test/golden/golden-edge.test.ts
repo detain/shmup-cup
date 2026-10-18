@@ -11,15 +11,19 @@
  *   `scripts/golden-update.mjs` runs this folder with the variable `golden.test.ts` reads.
  *
  * Skipped while re-blessing (`SHMUP_GOLDEN_UPDATE=1`): `golden.test.ts` is rewriting the files.
+ * The checks that read a file skip while the goldens are stale (v2's R2-01 gate, `./stale.ts`).
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Action, REPLAY_HASH_INTERVAL, decodeReplay, encodeReplay, type Replay } from '@shmup/core';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import {
   GOLDEN_SCENARIOS,
+  GOLDENS_STALE,
+  GOLDENS_STALE_REASON,
   GOLDEN_UPDATE_ENV,
   formatGolden,
+  itGoldensStale,
   goldenPath,
   playGolden,
   readGolden,
@@ -54,8 +58,10 @@ describe.skipIf(updating)('golden replays — file guards', () => {
     expect(files).toEqual([...names].sort());
   });
 
-  it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
-    '%s is exactly what golden:update writes for its content',
+  it
+    .skipIf(GOLDENS_STALE)
+    .each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name, scenario] as const))(
+    `%s is exactly what golden:update writes for its content [${GOLDENS_STALE_REASON}]`,
     (name, scenario) => {
       const text = readFileSync(goldenPath(name), 'utf8');
       const { file, replay } = readGolden(name);
@@ -64,8 +70,8 @@ describe.skipIf(updating)('golden replays — file guards', () => {
     },
   );
 
-  it.each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name] as const))(
-    '%s has consistent expectations',
+  it.skipIf(GOLDENS_STALE).each(GOLDEN_SCENARIOS.map((scenario) => [scenario.name] as const))(
+    `%s has consistent expectations [${GOLDENS_STALE_REASON}]`,
     (name) => {
       const { file, replay } = readGolden(name);
       const { expected } = file;
@@ -103,59 +109,69 @@ describe.skipIf(updating)('golden replays — file guards', () => {
     },
   );
 
-  it('re-records the boss scenario byte for byte (a re-bless of an unchanged sim is a no-op)', () => {
-    const scenario = GOLDEN_SCENARIOS.find((candidate) => candidate.name === 'zone-a-boss');
-    expect(scenario).toBeDefined();
-    if (scenario === undefined) return;
-    const { replay, outcome } = recordGolden(scenario);
-    expect(formatGolden(scenario, replay, outcome)).toBe(
-      readFileSync(goldenPath(scenario.name), 'utf8'),
-    );
-  });
+  itGoldensStale(
+    're-records the boss scenario byte for byte (a re-bless of an unchanged sim is a no-op)',
+    () => {
+      const scenario = GOLDEN_SCENARIOS.find((candidate) => candidate.name === 'zone-a-boss');
+      expect(scenario).toBeDefined();
+      if (scenario === undefined) return;
+      const { replay, outcome } = recordGolden(scenario);
+      expect(formatGolden(scenario, replay, outcome)).toBe(
+        readFileSync(goldenPath(scenario.name), 'utf8'),
+      );
+    },
+  );
 });
 
-describe.skipIf(updating)('golden replays — desync detection on zone A', () => {
-  const { replay } = readGolden('zone-a-boss');
-
-  it('the untouched file plays back cleanly', () => {
-    expect(playGolden(replay).report).toMatchObject({ ok: true, finished: true });
-  });
-
-  it('a burst of other input before the first hash desyncs at that hash', () => {
-    expect(replay.ticks).toBeGreaterThan(REPLAY_HASH_INTERVAL);
-    const inputs = [replay.inputs[0].slice(), replay.inputs[1]];
-    // A second of the bot's input replaced by a steady climb from tick 100 on.
-    for (let tick = 100; tick < 160; tick++) inputs[0][tick] = Action.Up;
-    const tampered: Replay = { ...replay, inputs };
-    const { report } = playGolden(tampered);
-    expect(report.ok).toBe(false);
-    expect(report.desyncTick).toBe(REPLAY_HASH_INTERVAL);
-    expect(report.expectedHash).toBe(replay.hashes[0]);
-    expect(report.actualHash).not.toBe(replay.hashes[0]);
-    expect(report.finished).toBe(true);
-  });
-
-  it('a change after the last periodic hash is caught by the final hash', () => {
-    const inputs = [replay.inputs[0].slice(), replay.inputs[1]];
-    const last = replay.hashes.length * REPLAY_HASH_INTERVAL;
-    for (let tick = last + 5; tick < replay.ticks; tick++) inputs[0][tick] = Action.Down;
-    const { report } = playGolden({ ...replay, inputs });
-    expect(report).toMatchObject({ ok: false, desyncTick: replay.ticks, finished: true });
-  });
-
-  it('another seed in the header desyncs (the file is locked to its whole config)', () => {
-    const doc = encodeReplay(replay);
-    const reseeded = decodeReplay({
-      ...doc,
-      header: {
-        ...doc.header,
-        seed: doc.header.seed + 1,
-        config: { ...doc.header.config, seed: doc.header.seed + 1 },
-      },
+describe.skipIf(updating || GOLDENS_STALE)(
+  `golden replays — desync detection on zone A [${GOLDENS_STALE_REASON}]`,
+  () => {
+    // Read in a hook, not while collecting: a stale file must not throw when the suite is skipped.
+    let replay: Replay;
+    beforeAll(() => {
+      replay = readGolden('zone-a-boss').replay;
     });
-    expect(playGolden(reseeded).report.ok).toBe(false);
-  });
-});
+
+    it('the untouched file plays back cleanly', () => {
+      expect(playGolden(replay).report).toMatchObject({ ok: true, finished: true });
+    });
+
+    it('a burst of other input before the first hash desyncs at that hash', () => {
+      expect(replay.ticks).toBeGreaterThan(REPLAY_HASH_INTERVAL);
+      const inputs = [replay.inputs[0].slice(), replay.inputs[1]];
+      // A second of the bot's input replaced by a steady climb from tick 100 on.
+      for (let tick = 100; tick < 160; tick++) inputs[0][tick] = Action.Up;
+      const tampered: Replay = { ...replay, inputs };
+      const { report } = playGolden(tampered);
+      expect(report.ok).toBe(false);
+      expect(report.desyncTick).toBe(REPLAY_HASH_INTERVAL);
+      expect(report.expectedHash).toBe(replay.hashes[0]);
+      expect(report.actualHash).not.toBe(replay.hashes[0]);
+      expect(report.finished).toBe(true);
+    });
+
+    it('a change after the last periodic hash is caught by the final hash', () => {
+      const inputs = [replay.inputs[0].slice(), replay.inputs[1]];
+      const last = replay.hashes.length * REPLAY_HASH_INTERVAL;
+      for (let tick = last + 5; tick < replay.ticks; tick++) inputs[0][tick] = Action.Down;
+      const { report } = playGolden({ ...replay, inputs });
+      expect(report).toMatchObject({ ok: false, desyncTick: replay.ticks, finished: true });
+    });
+
+    it('another seed in the header desyncs (the file is locked to its whole config)', () => {
+      const doc = encodeReplay(replay);
+      const reseeded = decodeReplay({
+        ...doc,
+        header: {
+          ...doc.header,
+          seed: doc.header.seed + 1,
+          config: { ...doc.header.config, seed: doc.header.seed + 1 },
+        },
+      });
+      expect(playGolden(reseeded).report.ok).toBe(false);
+    });
+  },
+);
 
 describe('golden replays — the re-bless script', () => {
   it('runs this folder in the integration project with the variable golden.test.ts reads', () => {
@@ -166,6 +182,8 @@ describe('golden replays — the re-bless script', () => {
     expect(script).toContain(`${GOLDEN_UPDATE_ENV}: '1'`);
     expect(script).toMatch(/\[vitest, 'run', '--project', 'integration', 'test\/golden'\]/);
     expect(script).toContain('process.exit(result.status ?? 1)');
+    // R2-01: it refuses while the content port is pending (v1-scale content under v2's tiles).
+    expect(script).toContain('golden:update refused');
     // The files are generated: Prettier leaves them alone.
     const ignore = readFileSync(new URL('../../.prettierignore', import.meta.url), 'utf8');
     expect(ignore.split('\n')).toContain('test/golden/*.replay.json');

@@ -95,8 +95,8 @@ describe('playtest rules: columnGap — edge cases (M2-18 tests)', () => {
     w.camera.y = 30;
     const slot = bullet(w, w.players[0].x, 30 + 150);
     const half = halfBand(w, slot);
-    // Row 150: the open band above it (150 − half rows) is the widest.
-    expect(columnGap(w)).toBeCloseTo(150 - half, 9);
+    // Row 150: the wider of the open bands above it (150 − half rows) and below it.
+    expect(columnGap(w)).toBeCloseTo(Math.max(150 - half, PLAYFIELD_H - (150 + half)), 9);
   });
 
   it('clips bands to the playfield: outside closes nothing, across the edge only the rows inside', () => {
