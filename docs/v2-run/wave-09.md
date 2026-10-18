@@ -1,13 +1,17 @@
 # Wave 09 — R4 integrators ∥ R5 prep (test splits, `--only`, the fingerprint write mode) ∥ R5 designs
 
 > Schedule: `plan_resolution.md` §18 · how to use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md)
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R4-01 … R4-05 (their integrators and step reviews), R5 prep (`R5-P`: P3, P4, P5a1, P5a2, P5e, P10, the
 LAND helper, the nine zone designs). · **Gate to start:** wave 08's code exit: every R4 subtask of wave 08 on
 `origin/master` with its review at zero, in particular `R4-02.B3` (the last golden re-bless of R4) and
 `R4-05.E1 … E4`. · **Exit (summary):** R4 complete and reviewed to zero; the R5 test splits on master with equal
-test counts; `golden:update -- --only` and `SHMUP_FINGERPRINT_UPDATE=1` work; `land-zone.sh` committed and
-dry-run-tested; the nine designs written and reviewed to zero; §17 R4-01 … R4-05 `done (owner parts pending)`.
+test counts; `node scripts/golden-update.mjs --only <ids>` and `SHMUP_FINGERPRINT_UPDATE=1` work; `land-zone.sh`
+committed and dry-run-tested; the nine designs written and reviewed to zero; §17 R4-01 … R4-05 `done (owner parts
+pending)`.
 
 Line numbers are at `bc8e05d`. Waves 4 to 8 move many of them (the port, the golden re-bless, R4); re-find a line
 by the quoted code or test title before you edit it.
@@ -39,10 +43,13 @@ by the quoted code or test title before you edit it.
 - **Fingerprints in this wave:** `R5-P.P10` changes the code of the three fingerprint tests (the write mode). Push it
   before any other fingerprint change of the wave; `R5-P.P4` builds in parallel but pushes after P10, re-pinning with
   the new `SHMUP_FINGERPRINT_UPDATE=1`. Both take the land lock for their push (README rule 6).
-- **Goldens:** no subtask of this wave changes a `*.replay.json`. `R5-P.P3` runs `pnpm golden:update` only to prove
-  that `--only` re-records byte for byte; its commit holds no replay file.
-- **Designers commit their own design file** (`docs/v2-run/designs/zone-<x>.md`, a `docs:` commit) — the one
-  exception to common rule 7 in this wave. A designer edits nothing else.
+- **Goldens:** no subtask of this wave changes a `*.replay.json`. `R5-P.P3` runs
+  `node scripts/golden-update.mjs --only zone-b` only to prove that `--only` re-records byte for byte; its commit holds
+  no replay file. A filtered re-bless is always `node scripts/golden-update.mjs --only <ids>`, never
+  `pnpm golden:update -- --only <ids>` (pnpm 12 passes the `--` through to the script).
+- **Two exceptions to common rule 7 (`docs/**`) in this wave, both named in their blocks:** the designers commit their
+  own design file (`docs/v2-run/designs/zone-<x>.md`, a `docs:` commit) and edit nothing else; `R5-P.LAND` commits
+  `docs/v2-run/helpers/land-zone.sh` and its row in `docs/v2-run/helpers/README.md`.
 - **The gates are gone.** Every R5 subtask first checks `test/golden/stale.ts`, `test/e2e/gates.ts` and
   `packages/core/test/helpers/port-pending.ts` do not exist (R2-02 and R2-03 deleted them). If one exists, stop and
   report: the goldens are not valid yet.
@@ -65,7 +72,10 @@ by the quoted code or test title before you edit it.
     `test/e2e/lives.spec.ts`, `test/e2e/coop.spec.ts` — only the assertions that sample a colour, a size or a row
     the new art moved.
 - **Steps:**
-  1. `pnpm assets && pnpm docs:images`, then `git status docs/images`; stage only the four folders.
+  0. Read the wave-8 reports' e2e lists for your 8 specs first (`/home/sites/shmup-cup-run/R4-*-report.md`, wave 8's
+     rule 15): they name the failures each art subtask caused.
+  1. `pnpm assets && pnpm docs:images`, then `git status docs/images`; stage only the four folders. After your
+     commit, `git restore docs/images` (it drops the unstaged plates of other folders: `R4-05.E6` regenerates them).
   2. Read 5 of the regenerated plates (ships, a shot, an Option, a shield, the Force Field) and check they show the
      v2 art (no v1 6×8-era sprites, no missing frames).
   3. Run the 8 specs; for each failure, re-measure the expected colour / row from the art (read the sprite's pixels
@@ -75,17 +85,20 @@ by the quoted code or test title before you edit it.
   ```bash
   node scripts/art-origins.mjs --check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/art-origins.test.ts test/scripts/assets/interim-pipeline.test.ts
-  pnpm docs:images --check            # the four folders match (other folders may still differ until E6)
+  pnpm docs:images --check            # after your commit and `git restore docs/images`: exit 1 is expected until E6 — read the stale list
+  git status --short docs/images/ships docs/images/shots docs/images/options docs/images/shields   # prints nothing
   bash docs/v2-run/helpers/e2e-batch.sh ship-select.spec.ts weapon-select.spec.ts weapons.spec.ts flight.spec.ts powerups.spec.ts option-hunter.spec.ts lives.spec.ts coop.spec.ts
   ```
 - **Acceptance:**
   - the 8 specs pass; every changed expectation is derived from the art and named in the commit body;
   - `art-origins.mjs --check` reports 0 failures; the scale-1 digest pin of `interim-pipeline.test.ts` (the
     `fa4198…` case near `:341`) is unchanged;
-  - the four plate folders are committed and match `docs:images`.
+  - the four plate folders are committed and match `docs:images`: none of the stale paths that
+    `pnpm docs:images --check` lists is under `docs/images/{ships,shots,options,shields}/`.
 - **Token:** DOCS-IMAGES for the four folders (take the land lock for the push).
 - **Traps:**
-  - `docs:images --check` fails on folders other than yours until `R4-05.E6`; do not commit them.
+  - `doc-images.mjs --check` has no per-folder mode: it lists every stale path and exits 1 while any folder differs,
+    so until `R4-05.E6` it exits 1 because of other folders. Read its list; do not commit those folders.
   - A spec that fails for a reason other than the new art (a timing flake, a frame-advance issue) is not yours to
     "fix" by loosening it: reproduce with `taskset -c 0-3 E2E_WORKERS=2`, then report.
   - Never step rAF frames: compare captures a known number of ticks apart with `test/e2e/frame-advance.ts`.
@@ -100,6 +113,9 @@ by the quoted code or test title before you edit it.
 - **Depends on:** `R4-02.B1`, `B2`, `B3` and `R4-01.A9` on master.
 - **Goal:** the e2e specs that count bullet and item colours pass on the hand-finished v2 bullets and the new item
   glints; the item plates are regenerated.
+- **Steps:** first read the wave-8 reports' e2e lists for your specs (`/home/sites/shmup-cup-run/R4-*-report.md`,
+  wave 8's rule 15). Then `pnpm assets && pnpm docs:images`, stage only `docs/images/items`, commit, and
+  `git restore docs/images`.
 - **Files (only these; checked on `bc8e05d`):**
   - `test/e2e/bullet-palette.spec.ts` (the standard-palette body colours `STANDARD` at `:17-25`, and the other
     palettes' tables), `test/e2e/bullets.spec.ts`, `test/e2e/direct-items.spec.ts`, `test/e2e/boss.spec.ts` — only
@@ -109,6 +125,8 @@ by the quoted code or test title before you edit it.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/bullet-readability.test.ts test/scripts/assets/bullets-v2.test.ts
+  pnpm docs:images --check            # after your commit and `git restore docs/images`: exit 1 is expected until E6 — none of the stale paths under docs/images/items/
+  git status --short docs/images/items   # prints nothing
   bash docs/v2-run/helpers/e2e-batch.sh bullet-palette.spec.ts bullets.spec.ts direct-items.spec.ts powerups.spec.ts boss.spec.ts
   ```
 - **Acceptance:**
@@ -213,9 +231,14 @@ by the quoted code or test title before you edit it.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-units.test.ts 'test/integration/content*.test.ts' test/golden
+  # only after R5-P.P10 is on master and you rebased (before that the content-DB fingerprint is expected red):
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content test/golden
   ```
+  Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (the filters are
+  substrings, never globs; an unquoted glob is expanded by bash before Vitest sees it).
+  `test/integration/content` selects `content.test.ts`, `content-units`, `content-db-fingerprint`, `content-wiring`,
+  `content-plugin*` and every `content-zone-*` file.
 - **Acceptance:**
   - the bank order is unchanged (files sort `common < zone-b < … < zone-i`, as the old single file's actions did), so
     **every golden and demo of zones B, C, E, F, G and I plays back unchanged** (`test/golden` green, no replay
@@ -242,7 +265,13 @@ by the quoted code or test title before you edit it.
   - `packages/core/test/behaviors/behaviors-zone-{b,c,d,e}.test.ts` and `behaviors-zone-{b,c,d,e}-edge.test.ts` —
     **new** (8): the same cases, moved by the zone they test; a case that tests both zones goes to the earlier zone's
     file with a comment.
-- **Steps:** before you start, `VITEST_MAX_WORKERS=6 pnpm exec vitest list --project core packages/core/test/behaviors > <RUN_DIR>/R5-P.P5a1-before.txt`; after, the same into `-after.txt`; compare the test titles.
+- **Steps:** before you start (on `origin/master`), and again after your change:
+  ```bash
+  mkdir -p /home/sites/shmup-cup-run
+  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project core packages/core/test/behaviors | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P5a1-before.txt   # before
+  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project core packages/core/test/behaviors | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P5a1-after.txt    # after
+  diff /home/sites/shmup-cup-run/R5-P.P5a1-before.txt /home/sites/shmup-cup-run/R5-P.P5a1-after.txt   # no output: the same titles
+  ```
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
@@ -264,11 +293,12 @@ by the quoted code or test title before you edit it.
   `behaviors-zones-hi.test.ts`, `behaviors-zones-hi-edge.test.ts` — **deleted**;
   `packages/core/test/behaviors/behaviors-zone-{f,g,h,i}.test.ts` and `behaviors-zone-{f,g,h,i}-edge.test.ts` —
   **new** (8).
-- **Tests, acceptance, traps:** as `R5-P.P5a1` (`vitest list` before / after, same count and titles).
+- **Tests, acceptance, traps:** as `R5-P.P5a1` (`vitest list` before / after, same count and titles; the files
+  `/home/sites/shmup-cup-run/R5-P.P5a2-before.txt` and `-after.txt`).
 - **Token:** none.
 - **Docs needs:** `docs/dev/repo-layout.md`.
 
-### R5-P.P3 — `pnpm golden:update -- --only <stageId,…>` and the per-zone golden tests
+### R5-P.P3 — `node scripts/golden-update.mjs --only <stageId,…>` and the per-zone golden tests
 
 - **Wave / lane / order:** wave 09, lane 4, first.
 - **Depends on:** `R2-03.G1` (wave 06: `test/golden/stale.ts` deleted) and `R4-02.B3` (wave 08: the last global
@@ -278,12 +308,15 @@ by the quoted code or test title before you edit it.
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/golden-update.mjs` — parse `--only <id,…>` from `process.argv` (a comma list of stage ids) and pass it
     as `SHMUP_GOLDEN_ONLY` in the child's `env` (next to `SHMUP_GOLDEN_UPDATE: '1'`, `:64`); no `--only` = today's
-    behaviour (re-bless all);
+    behaviour (re-bless all). Skip a leading `--`: `node scripts/golden-update.mjs --only zone-b` gives the script
+    `['--only', 'zone-b']`, but `pnpm golden:update -- --only zone-b` gives it `['--', '--only', 'zone-b']` (pnpm 12
+    passes the `--` through); both must work;
   - `test/golden/golden.ts` (the update predicate: a scenario re-records only when updating **and** its `stageId`
     is in `SHMUP_GOLDEN_ONLY`, or the variable is empty), `test/golden/golden.test.ts` (use it),
     `test/golden/demos.test.ts` (the same for demos, by their `stageId`);
   - `test/golden/golden-edge.test.ts` — the re-bless script test (`describe('golden replays — the re-bless script'`,
-    near `:179`): also expect the `--only` parsing and `SHMUP_GOLDEN_ONLY`;
+    near `:179`): also expect the `--only` parsing and `SHMUP_GOLDEN_ONLY`, for both argv shapes
+    `['--only', 'zone-b']` and `['--', '--only', 'zone-b']`, and for no argument;
   - `test/golden/golden-zone-{a,b,c,d,e,f,g,h,i}.test.ts` — **new** (9): move the per-zone `it` blocks of
     `golden.test.ts` there — at `bc8e05d` they are the "covers the real zones B and C…" (`:293`), "D and E" (`:318`),
     "H and I" (`:340`), "H and I without god mode" (`:374`), "F and G" (`:497`), "F and G without god mode"
@@ -293,17 +326,28 @@ by the quoted code or test title before you edit it.
     `zone-hi-recovery.test.ts` — **deleted**; `test/playtest/zone-{b,c,d,e,f,g,h,i}-recovery.test.ts` — **new** (8),
     the same cases split by zone.
 - **Steps:**
-  1. `vitest list --project integration test/golden test/playtest` before and after (into `RUN_DIR`); same titles.
-  2. Proof of `--only`: `pnpm golden:update -- --only zone-b` → `git status --short test/golden content/demos` is
-     empty (an unchanged sim re-records byte for byte) and the run is green.
+  1. List the titles before (on `origin/master`) and after your change, and compare:
+     ```bash
+     mkdir -p /home/sites/shmup-cup-run
+     VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-before.txt   # before
+     VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-after.txt    # after
+     diff /home/sites/shmup-cup-run/R5-P.P3-list-before.txt /home/sites/shmup-cup-run/R5-P.P3-list-after.txt
+     ```
+     The only differences allowed: each split pair block (one old title → its per-zone titles), each listed in the
+     report.
+  2. Proof of `--only`: `node scripts/golden-update.mjs --only zone-b` → `git status --short test/golden content/demos`
+     is empty (an unchanged sim re-records byte for byte) and the run is green. Then the same with
+     `pnpm golden:update -- --only zone-b` (the `--` shape): the same result.
   3. Proof of the verification: edit one byte of `test/golden/zone-c-god.replay.json`'s hash list in your own tree,
-     run `pnpm golden:update -- --only zone-b` → it **fails** on zone C; then `git restore test/golden/zone-c-god.replay.json`
-     (your own temporary edit).
-- **Tests (targeted, run all of them):**
+     run `node scripts/golden-update.mjs --only zone-b` → it **fails** on zone C; then
+     `git restore test/golden/zone-c-god.replay.json` (your own temporary edit).
+- **Tests (targeted, run all of them):** the recovery glob is **unquoted**, so bash expands it to the 8 new files.
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden 'test/playtest/zone-*-recovery.test.ts'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/playtest/zone-*-recovery.test.ts
   pnpm typecheck:root
   ```
+  Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (the filters are
+  substrings, never globs; an unquoted glob is expanded by bash before Vitest sees it).
 - **Acceptance:**
   - `--only zone-b` rewrites exactly zone B's files (none, when the sim is unchanged) and fails when any other
     golden desyncs (proved by step 3, written in the report);
@@ -312,10 +356,11 @@ by the quoted code or test title before you edit it.
 - **Token:** GOLDEN — verification only (no replay file changes).
 - **Traps:**
   - Verifying every golden is the LAND's proof of scope and is allowed here; it is not "the full suite".
-  - `pnpm golden:update` passes arguments after `--` to the script; test the parse with and without `--only`.
+  - pnpm 12 passes the `--` itself to the script (`['--', '--only', 'zone-b']`): skip a leading `--`; test the parse
+    with and without `--only` and with and without the `--`.
   - Never leave the step-3 edit in your tree; `git status` must be clean before you commit.
 - **Docs needs (report them; never edit docs):** `docs/dev/debug-and-replays.md`, `test/golden/README.md`
-  (`--only`), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`pnpm golden:update -- --only <ids>`),
+  (`--only`), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
   `docs/dev/repo-layout.md`, `docs/dev/conventions.md` (golden re-bless per zone).
 
 ### R5-P.P10 — `SHMUP_FINGERPRINT_UPDATE=1`: the fingerprints rewrite their own pins
@@ -330,9 +375,9 @@ by the quoted code or test title before you edit it.
     table, using the same formatting as today's `print()`; it throws when `process.env.CI` is set (a CI run never
     rewrites pins). Shared like `alloc.ts` and `frame-literal-scan.ts`: the integration and shell tests import it by
     relative path;
-  - `test/integration/presentation-fingerprint.test.ts` — `print()` (`:751`) also rewrites under the variable;
-    the `PINNED` tables (one per walk; `PINNED.front` at `:980` … `PINNED.single` at `:1224`);
-  - `test/integration/content-db-fingerprint.test.ts` — `print()` (`:175`), `PINNED` (`:212`);
+  - `test/integration/presentation-fingerprint.test.ts` — `print()` (`:750`) also rewrites under the variable;
+    the `PINNED` constant (`:1643`) holds one table per walk, 12 walks (`front` at `:1644` … `coopRun` at `:1771`);
+  - `test/integration/content-db-fingerprint.test.ts` — `print()` (`:174`), `PINNED` (`:212`);
   - `packages/shell/test/frame-fingerprint.test.ts` — the print branch (`:363`), `PINNED` (`:340`);
   - `packages/core/test/helpers/pin-writer.test.ts` — **new** (a temp file with a fake `PINNED`: rewrite twice →
     the second rewrite is a no-op; the CI guard).
@@ -366,7 +411,8 @@ by the quoted code or test title before you edit it.
 - **Depends on:** `R5-P.P3`, `R5-P.P10` on master (the script calls `--only` and the update mode).
 - **Goal:** one committed script lands a zone's work: squash the zone branch, regenerate every derived file under
   the land lock, prove the scope, push. Global re-blesses (R5-P.P12, R6-01.B4) use the same script in `--all` mode.
-- **Files (only these):**
+- **Files (only these):** the exception to common rule 7 (`docs/**`): you commit these two files under
+  `docs/v2-run/helpers/`, nothing else.
   - `docs/v2-run/helpers/land-zone.sh` — **new**;
   - `docs/v2-run/helpers/README.md` — one row for the new script.
 - **The script** (`bash docs/v2-run/helpers/land-zone.sh (--only <stageId,…> | --all) --message <file> --zone <x>
@@ -376,15 +422,17 @@ by the quoted code or test title before you edit it.
      origin/master` — branch commits hold sources only, so a conflict is real: abort and exit non-zero.
   2. `pnpm install --frozen-lockfile --prefer-offline && pnpm assets`.
   3. `SHMUP_ATLAS_GROUPS_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts && pnpm assets`.
-  4. `pnpm golden:update -- --only <list>` (or `pnpm golden:update` with `--all`).
+  4. `node scripts/golden-update.mjs --only <list>` (or `node scripts/golden-update.mjs` with `--all`).
   5. `SHMUP_FINGERPRINT_UPDATE=1` runs of the presentation and content-DB fingerprints (`--project integration`) and
      of `packages/shell/test/frame-fingerprint.test.ts` (`--project shell`).
   6. `pnpm docs:images`.
   7. The targeted checks: `test/integration/content-zone-<x>.test.ts` (from R5-P.P2b; `content.test.ts` for the
      shared part), `test/integration/atlas-zone-sprites.test.ts`, `test/integration/frame-literals-repo.test.ts`,
      `test/scripts/art-origins.test.ts`, `test/scripts/assets/provenance.test.ts`, `test/playtest/zone-<x>.test.ts`,
-     `test/golden` (all of it: the scope proof), and `test/integration/release-audit.test.ts -t 'zone <X>'`; then the
-     three fingerprints without the variable.
+     `test/golden` (all of it: the scope proof); then, as its own command, the whole
+     `test/integration/release-audit.test.ts` (no `-t`: no test title names a zone — it audits all nine zones, so a
+     `-t 'zone X'` would select nothing); then the three fingerprints without the variable. With `--all`, run the
+     checks of the zone `--zone` names (they include all of `test/golden`).
   8. Abort unless every changed `test/golden/*.replay.json` and `content/demos/*.replay.json` has a `header.stageId`
      in the `--only` list (read with a `node -e` one-liner); with `--all`, skip this check.
   9. `git add` the explicit derived paths that changed (`test/golden`, `content/demos`, the three fingerprint test
@@ -395,18 +443,25 @@ by the quoted code or test title before you edit it.
 - **Tests (targeted):**
   ```bash
   bash -n docs/v2-run/helpers/land-zone.sh
-  # a throwaway worktree at origin/master with a local branch holding one no-op commit (a comment line in a zone test):
-  RUN_DIR=<your RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-b --message <msg> --zone b --dry-run
+  # in a throwaway worktree at origin/master, on a local branch holding one no-op commit (a comment line in a zone test):
+  printf 'test: no-op LAND dry run\n' > /home/sites/shmup-cup-run/R5-P.LAND-msg.txt
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-b --message /home/sites/shmup-cup-run/R5-P.LAND-msg.txt --zone b --dry-run
   ```
 - **Acceptance:** the dry run on a no-op branch reports "nothing derived changed" and passes every check; a dry run
-  after a deliberate golden edit in another zone (your own temporary edit) aborts at step 8 or at the `test/golden`
-  check; `bash -n` clean; the README row explains the arguments.
+  after a deliberate golden edit in another zone aborts at step 8 or at the `test/golden` check — **commit** that
+  edit on the throwaway branch first (the dry run works in a clone of the branch, so an uncommitted edit is not in
+  it), then drop the commit (`git reset --hard HEAD~1` on the throwaway branch only); `bash -n` clean; the README row
+  explains the arguments.
 - **Token:** none (the script itself takes the land lock when it runs for real).
 - **Traps:**
   - Never `git add -A` inside the script; never force-push; never push the zone branch itself (only `HEAD:master`).
   - The script must not run when `CI` is set (the fingerprint update refuses there anyway).
-  - `pnpm docs:images` regenerates every plate: step 9 stages only `docs/images` paths that changed, and a changed
-    plate of another zone is a finding (abort, like step 8).
+  - `pnpm docs:images` regenerates every plate: step 9 stages only the `docs/images` paths that changed and lists
+    every changed plate in the commit body and in the log. It does not abort on a plate (the script has no plate →
+    zone map). The zone's post-LAND check reads that list: only the zone's own enemy and boss plates may change, plus
+    the echo plate of the zone's own boss (`echo-bulwark` a, `echo-maw` b, `echo-bastion` d, `echo-regent` f) — and
+    that one only when a real-art `S3` drop redrew the boss sprites the echo copies (R5-D6: existing sprites stay
+    interim until their `S3` drop). Any other changed plate is a finding.
 - **Docs needs (report them; never edit docs):** `docs/dev/conventions.md` (the LAND flow).
 
 ### R5-P.P5e — Split the zone runtime tests per zone
@@ -423,11 +478,18 @@ by the quoted code or test title before you edit it.
     `test/integration/zone-{b,c,d,e,f,g}-direct.test.ts` (an `-edge` file's cases join the zone's `-runtime` file,
     or stay a separate `zone-<x>-runtime-edge.test.ts` when the file is long — keep whichever keeps the cases
     readable); shared fixtures go to `test/integration/zones/helpers.ts` (R5-P.P2a created it; add, never rewrite).
-- **Tests (targeted):** `vitest list` before / after (into `RUN_DIR`), then
+- **Tests (targeted):** list the titles before (on `origin/master`: the 9 `zones-*` files) and after (the new
+  `zone-*` files), compare, then run the new files. `test/integration/zones/` holds no test files (helpers only).
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration 'test/integration/zone-*.test.ts' test/integration/zones
+  mkdir -p /home/sites/shmup-cup-run
+  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/integration/zones- | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P5e-before.txt   # before
+  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/integration/zone- | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P5e-after.txt    # after
+  diff /home/sites/shmup-cup-run/R5-P.P5e-before.txt /home/sites/shmup-cup-run/R5-P.P5e-after.txt   # no output
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/zone-
   pnpm typecheck:root
   ```
+  Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (the filters are
+  substrings, never globs; an unquoted glob is expanded by bash before Vitest sees it).
 - **Acceptance:** the same test count and titles; all green.
 - **Token:** none.
 - **Traps:** copy each test verbatim; R2-02's un-gating (wave 05) already removed the `port-pending` wrappers — if
@@ -440,7 +502,9 @@ by the quoted code or test title before you edit it.
 - **Depends on:** R2-04 closed (wave 07: the content is ported ×1.5 and retuned).
 - **Goal:** a design spec for zone A's remaster that a zone lane can build without asking a question. It writes no
   code and no content.
-- **Files (only this):** `docs/v2-run/designs/zone-a.md` — **new**; commit it alone (`docs: R5 zone A design`).
+- **Files (only this):** `docs/v2-run/designs/zone-a.md` — **new**; commit it alone (`docs: R5 zone A design`). This is
+  the one exception to common rule 7 for a designer: you commit only this file, as a `docs:` commit, and edit nothing
+  else.
 - **Read first:** `plan_resolution.md` §2.6, §2.7, §11 (the zone template and zone A's row: "a longer capsule-rich
   opening, one new formation section, a mid-boss"); `content/stages/zone-a.stage.json`,
   `content/enemies/zone-a.enemies.json`, `content/paths/zone-a.paths.json`; `test/playtest/rules.ts`,
@@ -496,10 +560,12 @@ by the quoted code or test title before you edit it.
 
 ### R5-P.D-B — Zone design: B, BRINE NEBULA
 
-- As `R5-P.D-A`, for zone B. **File:** `docs/v2-run/designs/zone-b.md` (new). **Read:** `content/stages/zone-b.stage.json`,
+- As `R5-P.D-A`, for zone B. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception (you commit
+  only your design file). **File:** `docs/v2-run/designs/zone-b.md` (new). **Read:** `content/stages/zone-b.stage.json`,
   `content/enemies/zone-b.enemies.json`, `content/tilesets/terrain-reef.tileset.json`,
-  `content/stages/brine-grotto.stage.json` (zone B owns its art), `content/patterns/zone-b.patterns.json` (after
-  `R5-P.P4`), `docs/dev/zones-b-and-c.md`.
+  `content/stages/brine-grotto.stage.json` (zone B owns its art), `content/patterns/zone-b.patterns.json` (or
+  `content/patterns/zones.patterns.json` until `R5-P.P4` has split it; zone B's action is `brine.jelly-ring`),
+  `docs/dev/zones-b-and-c.md`.
 - **Expansion focus (§11):** a tall vertical bubble shaft using the new height (camera `yTo`; `rowsTall` > 28, as zone
   D does). Spell out the bot support it needs (`R5-P.P12`: the vertical shaft).
 - **Zone-specific:** B already has a mid-boss (SPUME HERALD); the boss is GALVANIC MAW (its `maw-*` sprites feed zone
@@ -508,15 +574,18 @@ by the quoted code or test title before you edit it.
 
 ### R5-P.D-C — Zone design: C, DUNE EXPANSE
 
-- As `R5-P.D-A`, for zone C. **File:** `docs/v2-run/designs/zone-c.md` (new). **Read:** `content/stages/zone-c.stage.json`,
+- As `R5-P.D-A`, for zone C. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-c.md` (new). **Read:** `content/stages/zone-c.stage.json`,
   `content/enemies/zone-c.enemies.json`, `content/paths/zone-c.paths.json`, `content/tilesets/terrain-dune.tileset.json`,
-  `content/patterns/zone-c.patterns.json`, `docs/dev/zones-b-and-c.md`.
+  `content/patterns/zone-c.patterns.json` (or `content/patterns/zones.patterns.json` until `R5-P.P4` has split it;
+  zone C's action is `dune.whirl`), `docs/dev/zones-b-and-c.md`.
 - **Expansion focus:** a second worm field and a dune-surfing high-speed section (bot support: terrain look-ahead at
   speed). C needs a new mid-boss; C cycles nothing. Boss: SANDGRAVE WIDOW. LAND scope: `--only zone-c` + demo.
 
 ### R5-P.D-D — Zone design: D, MAGMA DEEP
 
-- As `R5-P.D-A`, for zone D. **File:** `docs/v2-run/designs/zone-d.md` (new). **Read:** `content/stages/zone-d.stage.json`,
+- As `R5-P.D-A`, for zone D. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-d.md` (new). **Read:** `content/stages/zone-d.stage.json`,
   `content/enemies/zone-d.enemies.json`, `content/paths/zone-d.paths.json`, `content/tilesets/terrain-magma.tileset.json`,
   `docs/dev/zones-d-and-e.md`, `docs/dev/advanced-stages.md` (branches and triggers).
 - **Expansion focus:** a longer, branching maze with destructible shortcuts (stage `branches` + region triggers; bot
@@ -526,17 +595,21 @@ by the quoted code or test title before you edit it.
 
 ### R5-P.D-E — Zone design: E, TEMPEST RIDGE
 
-- As `R5-P.D-A`, for zone E. **File:** `docs/v2-run/designs/zone-e.md` (new). **Read:** `content/stages/zone-e.stage.json`,
+- As `R5-P.D-A`, for zone E. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-e.md` (new). **Read:** `content/stages/zone-e.stage.json`,
   `content/enemies/zone-e.enemies.json`, `content/paths/zone-e.paths.json`, `content/tilesets/terrain-ridge.tileset.json`,
-  `content/patterns/zone-e.patterns.json`, `docs/dev/zones-d-and-e.md`.
+  `content/patterns/zone-e.patterns.json` (or `content/patterns/zones.patterns.json` until `R5-P.P4` has split it;
+  zone E's action is `tempest.bolt`), `docs/dev/zones-d-and-e.md`.
 - **Expansion focus:** a storm section with layered weather parallax (mostly presentation: layers, raster). E needs a
   new mid-boss. Boss: SQUALL STEED. E cycles: give the ramp. LAND scope: `--only zone-e` + demo.
 
 ### R5-P.D-F — Zone design: F, CELL VAULT
 
-- As `R5-P.D-A`, for zone F. **File:** `docs/v2-run/designs/zone-f.md` (new). **Read:** `content/stages/zone-f.stage.json`,
+- As `R5-P.D-A`, for zone F. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-f.md` (new). **Read:** `content/stages/zone-f.stage.json`,
   `content/enemies/zone-f.enemies.json`, `content/tilesets/terrain-vault.tileset.json`,
-  `content/patterns/zone-f.patterns.json`, `docs/dev/zones-f-and-g.md`, and R2-02's / R2-04's reports on zone F (the
+  `content/patterns/zone-f.patterns.json` (or `content/patterns/zones.patterns.json` until `R5-P.P4` has split it;
+  zone F's action is `vault.spores`), `docs/dev/zones-f-and-g.md`, and R2-02's / R2-04's reports on zone F (the
   bot struggled there after the port: tissue walls, `lunges`).
 - **Expansion focus:** a regenerating-wall chase sequence (bot support: regrowing walls). F needs a new mid-boss.
   Boss: MANTLE REGENT (13 parts today; `regent-*` sprites feed zone H's echo). F cycles: give the ramp. LAND scope:
@@ -544,9 +617,11 @@ by the quoted code or test title before you edit it.
 
 ### R5-P.D-G — Zone design: G, PRISM LABYRINTH
 
-- As `R5-P.D-A`, for zone G. **File:** `docs/v2-run/designs/zone-g.md` (new). **Read:** `content/stages/zone-g.stage.json`,
+- As `R5-P.D-A`, for zone G. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-g.md` (new). **Read:** `content/stages/zone-g.stage.json`,
   `content/enemies/zone-g.enemies.json`, `content/tilesets/terrain-prism.tileset.json`,
-  `content/stages/glimmer-cache.stage.json` (zone G owns its art), `content/patterns/zone-g.patterns.json`,
+  `content/stages/glimmer-cache.stage.json` (zone G owns its art), `content/patterns/zone-g.patterns.json` (or
+  `content/patterns/zones.patterns.json` until `R5-P.P4` has split it; zone G's action is `prism.fan`),
   `docs/dev/zones-f-and-g.md`.
 - **Expansion focus:** a refraction set piece with moving crystal blocks (bot support: moving blocks). FACET MONARCH
   already has 13 parts: its rebuild needs `MAX_BOSS_PARTS` 24 (R5-P.P8). G needs a new mid-boss. G cycles: give the
@@ -554,7 +629,8 @@ by the quoted code or test title before you edit it.
 
 ### R5-P.D-H — Zone design: H, IRON CITADEL
 
-- As `R5-P.D-A`, for zone H. **File:** `docs/v2-run/designs/zone-h.md` (new). **Read:** `content/stages/zone-h.stage.json`,
+- As `R5-P.D-A`, for zone H. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-h.md` (new). **Read:** `content/stages/zone-h.stage.json`,
   `content/enemies/zone-h.enemies.json` (incl. the parade's echoes `echo-bulwark`, `echo-maw`, `echo-bastion`,
   `echo-regent`), `content/tilesets/terrain-citadel.tileset.json`, `docs/dev/zones-h-and-i.md`.
 - **Expansion focus:** a fortress gate section with moving floors (bot support: moving floors). H has a mid-boss
@@ -564,9 +640,11 @@ by the quoted code or test title before you edit it.
 
 ### R5-P.D-I — Zone design: I, ABYSSAL THRONE
 
-- As `R5-P.D-A`, for zone I. **File:** `docs/v2-run/designs/zone-i.md` (new). **Read:** `content/stages/zone-i.stage.json`,
+- As `R5-P.D-A`, for zone I. Read `R5-P.D-A`'s block first: all of it applies, incl. the docs exception. **File:**
+  `docs/v2-run/designs/zone-i.md` (new). **Read:** `content/stages/zone-i.stage.json`,
   `content/enemies/zone-i.enemies.json`, `content/tilesets/terrain-abyss.tileset.json`,
-  `content/patterns/zone-i.patterns.json`, `content/stages/escape.stage.json`, `content/campaign/main.campaign.json`
+  `content/patterns/zone-i.patterns.json` (or `content/patterns/zones.patterns.json` until `R5-P.P4` has split it;
+  zone I's action is `abyss.gulp`), `content/stages/escape.stage.json`, `content/campaign/main.campaign.json`
   (endings), `docs/dev/zones-h-and-i.md`.
 - **Expansion focus:** a longer descent and the ark approach. Bosses: the ABYSS ARK raid with THE HOLLOW KING inside
   (raid sections ≈ 720-px body, bible §5.7). The ending hook: say whether the escape / ending wiring changes (if yes,
@@ -621,8 +699,9 @@ by the quoted code or test title before you edit it.
 - **Read and re-run** as `R4-01.RV`, for E1 … E6, plus `--project core packages/core/test/scenes packages/core/test/frame-literals.test.ts`,
   `pnpm store:assets --check`, `pnpm docs:images --check`; read every `docs/images/screens/*.png`.
 - **Must hold:** the logo drawn from the bible's text (no FLUX winner); the title backdrop `FRAME_W×FRAME_H`; the
-  WARNING band and the cards frame-derived; the five endings full-frame; the core allow-list entries for the ending
-  scenes still match (`EndingScene.drawCitadel.sink`, `StoryScene.drawDawn.rise`); the four icons regenerated once,
+  WARNING band and the cards frame-derived; the five endings full-frame; the core allow-list entries
+  `EndingScene.drawCitadel.sink` and `StoryScene.drawDawn.rise` unchanged or still matching (E4 owns only the
+  first); the four icons regenerated once,
   from the v2 art.
 
 ### R5-P.prep1.RV — Reviews of the R5 prep subtasks of this wave
@@ -657,7 +736,7 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
   R5 prep As built under §11's intro — the `--only` flow, the fingerprint write mode, the LAND helper, the per-zone
   test layout; §17 rows R4-01 … R4-05 → `done (owner parts pending)`), `CHANGELOG.md` (`[Unreleased] — v2`
   entries).
-- Then `python3 .claude/plan_board_v2.py` (it reads `origin/master`: push first).
+- Push; then report: the orchestrator runs the board sync (it reads origin/master).
 - **Never** edit §18's table except a wave's status note, and never a §17 row of a step that is not done.
 
 ### W09.DOCS-B — Player art docs
@@ -665,7 +744,8 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
 - **Files:** `docs/dev/art-bible-v2.md` († rows done), `docs/dev/options-shields-hunter.md`,
   `docs/dev/weapons-and-options.md`, `docs/dev/meter-arsenal.md`, `docs/dev/direct-mode.md`,
   `docs/dev/visual-and-mechanic-extras.md` (the black hole's 8 frames), `docs/dev/coop.md` (`p2` maps),
-  `content/player/README.md` (`thruster`, `bankFrames`), `docs/client/arsenal.md` (images).
+  `content/player/README.md` (`thruster`, `bankFrames`), `docs/client/arsenal.md` (images), `docs/dev/sim-world.md`
+  (`R4-01.A2`: the player batch holds the thrusters, capacity `2 · MAX_PLAYERS`).
 
 ### W09.DOCS-C — Bullets, items and FX docs
 
@@ -685,7 +765,7 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
   (the font metrics source; the per-zone test layout; golden re-bless per zone; `SHMUP_FINGERPRINT_UPDATE=1`; the
   LAND flow), `docs/dev/api-reference.md` (`UI_SPRITES`, the HUD layout), `docs/dev/debug-and-replays.md` +
   `test/golden/README.md` (`--only`), `docs/dev/content-data.md` + `content/patterns/README.md` (per-zone pattern
-  files), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`pnpm golden:update -- --only <ids>`),
+  files), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
   `docs/dev/repo-layout.md` (the new test files), `docs/dev/platform-polish.md` + `docs/client/store-submission.md`
   (the icons), `README.md` (the banner), `test/README.md`.
 
@@ -703,14 +783,17 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
    pnpm content:check
    node scripts/art-origins.mjs --check
    pnpm docs:images --check && pnpm store:assets --check
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/scripts/assets test/scripts/art-origins.test.ts 'test/integration/content*.test.ts' test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts 'test/integration/zone-*.test.ts' 'test/playtest/zone-*-recovery.test.ts'
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/scripts/assets test/scripts/art-origins.test.ts test/integration/content test/integration/presentation-fingerprint.test.ts test/integration/zone- test/playtest/zone-*-recovery.test.ts
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors packages/core/test/helpers
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
    bash -n docs/v2-run/helpers/land-zone.sh
    ```
+   The Vitest filters are substrings (`test/integration/content` = every `content*` file, `test/integration/zone-` =
+   the new per-zone runtime files); the recovery glob is unquoted, so bash expands it. Check the selection with
+   `pnpm exec vitest list --project integration <the same filters> --filesOnly`.
 3. The splits' `vitest list` comparisons are in their reports (same count and titles).
 4. `ls docs/v2-run/designs/` lists `zone-a.md` … `zone-i.md`, each reviewed to zero.
-5. `W09.DOCS-A` has set §17 R4-01 … R4-05 and synced the board.
+5. `W09.DOCS-A` has set §17 R4-01 … R4-05 and pushed; the orchestrator ran the board sync.
 6. A look at GitHub CI for the wave's pushes (never wait for it).
 - **Deferred to wave 15:** the full `pnpm test`, `pnpm test:e2e` and `pnpm bench`.
 

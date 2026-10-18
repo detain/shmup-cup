@@ -44,7 +44,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 2. **Presentation-only subtasks push directly** (`R2-04.P1`, `R2-04.P3`, `R2-04.P4`, `R2-04.P2` with FP).
 3. **Fingerprints are push-time** (README rule 6): `R2-04.P2`, `R2-04.G`, `R3-06.L1` (the content-DB `examples`
    digest only), `R3-06.L2`, `R3-06.L4`, `R3-06.L6` (and `R2-04.P1` only if the shell frame fingerprint moves) each
-   take `/tmp/shmup-cup-land.lock`, rebase, **re-run the print and paste the printed tables**, verify, push. First come, first served; never merge a `PINNED` table by hand.
+   take `/tmp/shmup-cup-land.lock`, rebase, **re-run the print and paste the printed tables**, verify, push. First
+   come, first served; never merge a `PINNED` table by hand.
 4. **`packages/render-pixi/src/effects/layer-effects.ts`:** `R2-04.P4` edits it first (if it edits it at all); `R3-06.L3`
    starts only after `R2-04.P4` is on `master`.
 5. **`packages/core/src/data/index.ts`:** only lane 5 (`R3-06.L1`, then `R3-06.L4`).
@@ -529,7 +530,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - The per-tick enemy loop must not grow (V8 inlining, M2-04 lesson): put the glow push in the sync, not the tick.
   - A glow batch made with `createSpriteBatch(LayerId.…)` in core must sit on a layer listed in `RENDER_GROUP_LAYERS`
     (`test/integration/render-groups.test.ts:126-150`); prefer the owner's own layer, which already is one.
-  - Never register a glow array in the World's pool registry (`hashWorld` mixes registered pools: the goldens would move).
+  - Never register a glow array in the World's pool registry (`hashWorld` mixes registered pools: the goldens would
+    move).
 - **Docs needs:** `docs/dev/presentation-polish.md`, `docs/dev/content-data.md` (the `glow` field).
 
 ### R3-06.L6 — A test stage with every feature and its art
