@@ -123,7 +123,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     with the design's colours. On the `options.artScale !== 1` path, draw the cycled sprite (e.g. `bg/brine-sea`)
     under the same name in exactly that ramp (`native: true`, bible size); at art scale 1 the v1 sprite stays as it
     is today. The stage's `cycles` names the v2 ramp;
-  - `scripts/assets/v2kit.mjs` (R4-P, wave 07) — only its `RESERVED_RAMPS`, and only when you added a
+  - `scripts/assets/v2kit.mjs` (`R4-P.P4`, wave 07) — only its `RESERVED_RAMPS`, and only when you added a
     `<X>_RAMP_V2`: add it next to that zone's `<X>_RAMP` (keep the v1 one), read lazily inside a function like the
     others, so `offRamp` keeps every S2's colours ≥ 3/255 from the v2 ramps too; `test/scripts/assets/v2kit.test.ts`
     only if it pins the ramp list;
@@ -272,7 +272,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     (`R5-03.S2`). It may import `terrain.mjs`'s exported helpers read-only;
   - `scripts/assets/procedural/index.mjs` — **two lines** registering `azure.mjs`:
     `import * as azure from './azure.mjs';` with the other imports and `{ id: 'azure', generate: azure.generate }` in
-    `PROCEDURAL_GENERATORS` (`:62`), in id order: after `arm` (R4-P, wave 07), before `backdrops` (`abyss`, `arm`,
+    `PROCEDURAL_GENERATORS` (`:62`), in id order: after `arm` (`R4-P.P1`, wave 07), before `backdrops` (`abyss`, `arm`,
     `azure`, `backdrops`, …: the registry test compares the ids with the sorted file names —
     `test/scripts/assets/procedural-registry.test.ts` after R4-P.P2, `procedural.test.ts:243-250` on `bc8e05d`; you
     hold the registry in this wave; no other lane edits it);
