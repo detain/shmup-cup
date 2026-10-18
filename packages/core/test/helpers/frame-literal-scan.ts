@@ -11,7 +11,9 @@
  *
  * The scanner parses a source with the TypeScript compiler, so comments (docblocks included)
  * are never read, and reports every numeric literal — or whole number inside a string or
- * template literal — that is a frame number ({@link FRAME_NUMBERS}). Each hit carries its
+ * template literal — that is a frame number ({@link FRAME_NUMBERS}); the digits of a CSS hex
+ * colour token in a string (`'#336a64'`, `#rgb` … `#rrggbbaa`) are not numbers (R2-01, decision
+ * W4-11: palettes would trip the scan once 336 is a frame number). Each hit carries its
  * **symbol path** (the names of the declarations around the literal, outermost first:
  * `OPTIONS_PANEL.h`, `bossSuction.pullRadius`); an allow-list entry is matched by file, symbol
  * path and value, never by line number, so edits elsewhere in a file do not break it. Each entry
@@ -167,8 +169,9 @@ export function scanFrameLiterals(
       const value = Number(node.text);
       if (FRAME_NUMBERS.has(value)) add(node, value);
     } else if (TEXT_KINDS.has(node.kind)) {
-      for (const digits of (node as ts.LiteralLikeNode).text.match(/(?<![\d.])\d+(?![\d.])/g) ??
-        []) {
+      // A hex colour token (`#336a64`) holds no number (W4-11): blank it out before matching.
+      const text = (node as ts.LiteralLikeNode).text.replace(/#[0-9a-fA-F]{3,8}\b/g, '#');
+      for (const digits of text.match(/(?<![\d.])\d+(?![\d.])/g) ?? []) {
         const value = Number(digits);
         if (FRAME_NUMBERS.has(value)) add(node, value);
       }

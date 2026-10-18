@@ -20,7 +20,7 @@
  *
  * @module
  */
-import { defineModule, type ValidationIssue } from '@shmup/core';
+import { FRAME_H, FRAME_W, defineModule, type ValidationIssue } from '@shmup/core';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -204,7 +204,8 @@ export interface BootOverlay {
  *
  * @remarks
  * The overlay is inserted right after the game canvas in its parent, positioned `fixed` over
- * the whole viewport and sized to the window in device-independent pixels. Returns `null`
+ * the whole viewport and sized to the window in device-independent pixels (the game's frame,
+ * `FRAME_W` × `FRAME_H`, when the document has no window — a fake in tests). Returns `null`
  * (boot runs without progress / error screens) when the game canvas is not in a document or
  * 2D canvases are unavailable — for example in unit tests with a fake canvas.
  *
@@ -229,10 +230,10 @@ export function createBootOverlay(gameCanvas: HTMLCanvasElement): BootOverlay | 
   parent.insertBefore(canvas, gameCanvas.nextSibling);
   let attached = true;
 
-  /** Matches the canvas buffer to the window size. */
+  /** Matches the canvas buffer to the window size (the frame's without a window). */
   const fit = (): void => {
-    const width = Math.max(1, Math.floor(view?.innerWidth ?? 640));
-    const height = Math.max(1, Math.floor(view?.innerHeight ?? 360));
+    const width = Math.max(1, Math.floor(view?.innerWidth ?? FRAME_W));
+    const height = Math.max(1, Math.floor(view?.innerHeight ?? FRAME_H));
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
   };

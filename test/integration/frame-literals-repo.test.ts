@@ -334,6 +334,27 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
     ).toEqual([]);
   });
 
+  it('skips the digits of a CSS hex colour in a string, and nothing else (R2-01, W4-11)', () => {
+    const sample = [
+      "export const ROCK = ['#336a64', '#384', '#2160', '#c0d8ff', '#216216ff'];",
+      "export const LABEL = 'row 384 of #208';",
+      'export const MIXED = `#123456 ${216} and 360px`;',
+      "export const NOT_HEX = ['384#', 'zone #9 216'];",
+    ].join('\n');
+    expect(
+      scanFrameLiterals('sample.mjs', sample, ts.ScriptKind.JS).map(
+        (h) => `${h.symbol}=${h.value}@${h.line}`,
+      ),
+    ).toEqual([
+      'LABEL=384@2',
+      'MIXED=216@3',
+      // 360 is a frame number from R2-01's flip on: a plain number beside a colour still counts.
+      ...(FRAME_NUMBERS.has(360) ? ['MIXED=360@3'] : []),
+      'NOT_HEX=384@4',
+      'NOT_HEX=216@4',
+    ]);
+  });
+
   it('reads a root script as JavaScript and still skips its comments', () => {
     const sample = [
       '// 384 in a line comment',

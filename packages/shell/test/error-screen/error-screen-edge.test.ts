@@ -4,6 +4,7 @@
  * at exactly the character budget (title included), empty inputs, and the overlay when the
  * document has no window or the canvas was already detached.
  */
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   BOOT_SCREEN_COLORS,
@@ -168,13 +169,13 @@ describe('shell/error-screen createBootOverlay (edge)', () => {
     };
   }
 
-  it('sizes to 640×360 without a window and only writes the size when it changes', () => {
+  it('sizes to the frame without a window and only writes the size when it changes', () => {
     const fake = dom(null);
     const overlay = createBootOverlay(fake.gameCanvas);
     overlay?.showProgress(0, 'LOADING');
     overlay?.showProgress(0.5, 'LOADING');
     overlay?.showError('T', []);
-    expect([fake.overlay.width, fake.overlay.height]).toEqual([640, 360]);
+    expect([fake.overlay.width, fake.overlay.height]).toEqual([FRAME_W, FRAME_H]);
     expect(fake.widthWrites()).toBe(1);
   });
 
