@@ -48,6 +48,7 @@ import {
   ART_SCALE,
   FRAME_CY,
   FRAME_W,
+  GLYPH_W,
   HUD_BAR_HEIGHT,
   HUD_BOTTOM_Y,
   LayerId,
@@ -58,6 +59,7 @@ import {
   createSpriteBatch,
   defineModule,
   pushSprite,
+  uiPx,
   type DrawList,
   type Game,
   type RenderFrame,
@@ -136,23 +138,48 @@ const HUD_BAR_COLOR = 0x1d2a5c;
 /** String slots of the HUD draw list. */
 const STRING = { p1: 0, title: 1, hint: 2, hi: 3, gameOver: 4 } as const;
 
-/** Height of the WARNING band (three lines of the 10-px font plus margins). */
-const WARNING_BAND_H = 48;
+// The dev HUD and the WARNING band are laid out like the scene flow's (core `ui` / `scenes`,
+// R2-01): text widths from the font's cell `GLYPH_W`, the art's lengths and gaps at its scale
+// (`uiPx`). The numbers in parentheses are the values at 384×216 with the 6×8 font.
+
+/** Height of the WARNING band: three lines of the font plus margins (48; the scene flow's). */
+const WARNING_BAND_H = uiPx(48);
 
 /**
  * Screen row of the WARNING band's top edge: the band is centred 8 px above the frame's centre
- * row (the playfield's middle), `FRAME_CY − 8 − WARNING_BAND_H / 2` — as the scene flow's.
+ * row (the playfield's middle), `FRAME_CY − uiPx(8) − WARNING_BAND_H / 2` — as the scene flow's.
  */
-const WARNING_BAND_Y = FRAME_CY - 8 - (WARNING_BAND_H >> 1);
+const WARNING_BAND_Y = FRAME_CY - uiPx(8) - (WARNING_BAND_H >> 1);
 
-/** Left edge of the HUD's `HI` label: 84 px in from the frame's right edge. */
-const HI_LABEL_X = FRAME_W - 84;
+/** The WARNING text's row below the band's top edge (9; the scene flow's `WARNING_TEXT_DY`). */
+const WARNING_TEXT_DY = uiPx(9);
 
-/** Left edge of the HUD's hi-score digits: 68 px in from the frame's right edge. */
-const HI_SCORE_X = FRAME_W - 68;
+/** Gap between a HUD label and its score (4; core `ui`'s `HUD_LABEL_GAP`). */
+const HUD_LABEL_GAP = uiPx(4);
 
-/** Row of the stock ships: one pixel into the bottom HUD bar. */
-const LIVES_Y = HUD_BOTTOM_Y + 1;
+/** Digits of a HUD score. */
+const HUD_DIGITS = 8;
+
+/** Left edge of the HUD's `1P` label (4). */
+const P1_LABEL_X = uiPx(4);
+
+/** Left edge of player 1's score: after the two-glyph `1P` label and the gap (20). */
+const P1_SCORE_X = P1_LABEL_X + 2 * GLYPH_W + HUD_LABEL_GAP;
+
+/** Left edge of the hi-score digits: they end 20 px in from the right edge (`FRAME_W − 68`). */
+const HI_SCORE_X = FRAME_W - uiPx(20) - HUD_DIGITS * GLYPH_W;
+
+/** Left edge of the HUD's `HI` label: the two-glyph label, then the gap (`FRAME_W − 84`). */
+const HI_LABEL_X = HI_SCORE_X - HUD_LABEL_GAP - 2 * GLYPH_W;
+
+/** x of the first stock ship (4) and the step to the next (10), the `hud/life` art's own. */
+const LIVES_X = uiPx(4);
+
+/** See {@link LIVES_X}. */
+const LIVES_STEP = uiPx(10);
+
+/** Row of the stock ships: one pixel (at the art's scale) into the bottom HUD bar. */
+const LIVES_Y = HUD_BOTTOM_Y + uiPx(1);
 
 /**
  * Creates the free-flight scene for a game.
@@ -245,8 +272,8 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     hud.clear();
     hud.rect(0, 0, PLAYFIELD_W, HUD_BAR_HEIGHT, HUD_BAR_COLOR);
     hud.rect(0, HUD_BOTTOM_Y, PLAYFIELD_W, HUD_BAR_HEIGHT, HUD_BAR_COLOR);
-    hud.text(STRING.p1, 4, 0, 0x38c8e8);
-    hud.number(p1Score.score, 20, 0, 8);
+    hud.text(STRING.p1, P1_LABEL_X, 0, 0x38c8e8);
+    hud.number(p1Score.score, P1_SCORE_X, 0, HUD_DIGITS);
     hud.text(
       over ? STRING.gameOver : STRING.title,
       PLAYFIELD_W / 2,
@@ -255,9 +282,9 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
       TextAlign.Center,
     );
     hud.text(STRING.hi, HI_LABEL_X, 0, 0xf8d030);
-    hud.number(scoring.hiScore, HI_SCORE_X, 0, 8);
+    hud.number(scoring.hiScore, HI_SCORE_X, 0, HUD_DIGITS);
     for (let i = 0; i < lives - 1 && i < 8; i++) {
-      hud.sprite(base + OWN.life, 0, 4 + i * 10, LIVES_Y);
+      hud.sprite(base + OWN.life, 0, LIVES_X + i * LIVES_STEP, LIVES_Y);
     }
     hud.text(STRING.hint, PLAYFIELD_W / 2, HUD_BOTTOM_Y, 0x8890b0, TextAlign.Center);
     p1Score.displayDirty = false;
@@ -279,7 +306,7 @@ export function createFlightScene(game: Game, options: FlightSceneOptions = {}):
     ui.text(
       0,
       PLAYFIELD_W / 2,
-      WARNING_BAND_Y + 9,
+      WARNING_BAND_Y + WARNING_TEXT_DY,
       look === 1 ? 0xf85858 : 0xf8d030,
       TextAlign.Center,
     );

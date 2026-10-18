@@ -10,6 +10,8 @@ import {
   Action,
   DrawOp,
   ART_SCALE,
+  FRAME_W,
+  GLYPH_W,
   HUD_BAR_HEIGHT,
   HUD_BOTTOM_Y,
   LayerId,
@@ -213,6 +215,32 @@ describe('shell/flight', () => {
     game.world.status = 'gameOver';
     flight.update(game.renderFrame());
     expect(title()).toBe('GAME OVER');
+  });
+
+  it('lays the HUD out in the font cell: scores clear their labels, all inside the frame (R2-01)', () => {
+    // At R2-01's 9×12 font the v1 positions (score 16 px after a 12-px label, the hi-score 68 px in
+    // from the edge) put the digits over the labels and the last digit off the frame (C5).
+    const { game } = realGame();
+    const flight = createFlightScene(game);
+    const hud = flight.frame.hud;
+    flight.update(game.renderFrame());
+    const texts = new Map<string, number>();
+    const numbers: Array<{ x: number; digits: number }> = [];
+    const icons: number[] = [];
+    for (let i = 0; i < hud.count; i++) {
+      if (hud.op[i] === DrawOp.Text) texts.set(hud.strings[hud.ref[i]], hud.x[i]);
+      if (hud.op[i] === DrawOp.Number) numbers.push({ x: hud.x[i], digits: hud.frame[i] });
+      if (hud.op[i] === DrawOp.Sprite) icons.push(hud.x[i]);
+    }
+    const [p1, hi] = numbers;
+    expect(texts.get('1P')).toBeGreaterThanOrEqual(0);
+    expect(p1.x).toBeGreaterThanOrEqual((texts.get('1P') ?? 0) + 2 * GLYPH_W);
+    expect(hi.x).toBeGreaterThanOrEqual((texts.get('HI') ?? 0) + 2 * GLYPH_W);
+    expect(hi.x + hi.digits * GLYPH_W).toBeLessThanOrEqual(FRAME_W);
+    expect(hi.digits).toBe(8);
+    // The stock icons (`hud/life`, 8 px wide at the v1 art) side by side, not overlapping.
+    expect(icons).toHaveLength(2);
+    expect(icons[1] - icons[0]).toBeGreaterThanOrEqual(Math.ceil(8 * ART_SCALE));
   });
 
   it('shows the KESTREL where the input moved it', () => {
