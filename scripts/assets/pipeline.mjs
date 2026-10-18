@@ -5,9 +5,10 @@
  *
  * ```
  * assets/source/sprites/**\/*.sprite.json ─┐
- * scripts/assets/procedural/*.mjs ─────────┼─► sprites ─► + PNG overrides ─► + @flash, @p2 ─┐
- * assets/source/fonts/*.font.json ─────────┘                                                │
- *                         packRects() ◄─────────────────── frames ◄─────────────────────────┘
+ * scripts/assets/procedural/*.mjs ─────────┴─► sprites ─► ×artScale ─► + PNG overrides ─┐
+ * assets/source/fonts/*.font.json ─────────────► fonts ─► ×artScale ────────────────────┤
+ *                                                                     + @flash, @p2 ◄───┘
+ *                         packRects() ◄─────────────────── frames ◄──────────┘
  *                             └─► main.png (+ main-1.png …) + main.json
  * ```
  *
@@ -23,6 +24,15 @@
  * (derived from content by `test/integration/atlas-groups.test.ts`), else a `zone-<id>`
  * directory in its name; the packer never mixes two groups on a page, so the runtime can
  * unload other zones' pages. A page of at most 256 colours is written as lossless PNG-8.
+ *
+ * **The interim art stage (R2-01).** The sprite sources are v1-scale placeholder art; every build
+ * upscales them nearest-neighbour by an **art scale** (`artScale`, default `interim.mjs`
+ * `INTERIM_ART_SCALE` — 1 until R2-01's flip, 3/2 after), except what is already at its v2 size
+ * (decision W4-5): sources marked `native` (the terrain tilesets, which `terrain.mjs` draws at the
+ * scaled tile size itself, and `ui/pixel`) and real-art PNG overrides. The bitmap font is scaled
+ * with the art (W4-4: 6 × 8 → 9 × 12). At scale 1 the stage does nothing, so
+ * `buildAtlas({ artScale: 1 })` is the v1 atlas byte for byte at either frame — the art the TV
+ * bench, the CJK figures, the store icons and the doc images keep (W4-6).
  *
  * **Public API.** {@link generateAssets} (disk, cached — `pnpm assets`, the Vite plugin),
  * {@link buildAtlas} (in memory), {@link collectSprites}, {@link computeInputHash},
@@ -55,9 +65,11 @@ import { FLASH_SUFFIX, makeFlashSprite } from './flash.mjs';
 import { P2_SUFFIX, makeP2Sprite, wantsP2Variant } from './coop.mjs';
 import { buildFontSprite, loadFontSources } from './font.mjs';
 import { createImage, blit, getPixel, setPixel } from './image.mjs';
+import { INTERIM_ART_SCALE, parseArtScale, scaleFont, scaleSprite } from './interim.mjs';
 import { MANIFEST_FORMAT_VERSION, formatManifest, frameName } from './manifest.mjs';
 import { MAX_PAGE_SIZE, packRects } from './packer.mjs';
 import { encodePng } from './png.mjs';
+import { TILE_SIZE as TERRAIN_TILE_SIZE } from './procedural/terrain.mjs';
 import { applyPngOverrides, listFiles, loadSpriteSources } from './sprite-source.mjs';
 
 /** @typedef {import('./image.mjs').Image} Image */
@@ -290,30 +302,64 @@ export function resolveAtlasGroup(name, table) {
 }
 
 /**
- * Collects every sprite and font from the sources and generators, applies PNG overrides,
- * adds hit-flash silhouettes, resolves default anchors and assigns each sprite its atlas
- * group.
+ * The tile side the terrain tilesets are drawn at for an art scale (R2-01): `terrain.mjs`
+ * `TILE_SIZE · artScale / INTERIM_ART_SCALE` — the generator's own size at the default scale, the
+ * v1 8-px tiles at scale 1 and the v2 12-px tiles at 3/2, at either frame.
+ *
+ * @param {number} artScale - The build's art scale.
+ * @returns {number} The tile side in pixels.
+ * @throws {RangeError} When `artScale` is not a valid art scale or gives no whole tile side.
+ */
+function terrainTileSize(artScale) {
+  const scale = parseArtScale(artScale);
+  const base = parseArtScale(INTERIM_ART_SCALE);
+  const top = TERRAIN_TILE_SIZE * scale.num * base.den;
+  const bottom = scale.den * base.num;
+  if (top % bottom !== 0) {
+    throw new RangeError(
+      `art scale ${artScale} draws no whole terrain tile (${TERRAIN_TILE_SIZE} × ${artScale} / ` +
+        `${INTERIM_ART_SCALE})`,
+    );
+  }
+  return top / bottom;
+}
+
+/**
+ * Collects every sprite and font from the sources and generators, applies the art scale and PNG
+ * overrides, adds hit-flash silhouettes, resolves default anchors and assigns each sprite its
+ * atlas group.
  *
  * @remarks
- * Order of work: pixel maps and procedural sprites (a name defined twice is an issue) →
- * PNG overrides by name → font sprites (`font/<name>`) → `<name>@flash` siblings for
- * `hitFlash` sprites → `<name>@p2` palette swaps of the ships and the stock icon (M2-06,
- * `coop.mjs`) → default anchors (centre of frame 0) → atlas groups ({@link
- * resolveAtlasGroup} over `atlas-groups.json`, R1-05: a listed name the atlas lacks, a
- * listed font and an empty `common` group are issues). Never throws for bad sources:
- * everything is reported in `issues`, and the caller decides ({@link buildAtlas} throws
- * {@link AssetSourceError}). With `ungrouped`, every sprite is `common` and the groups file
- * is not read at all.
+ * Order of work: pixel maps and procedural sprites (a name defined twice is an issue; the
+ * terrain tilesets drawn at the art scale's tile size) → the art scale (R2-01, `interim.mjs`:
+ * every sprite but a `native` one scaled nearest-neighbour, its explicit anchor `⌈s·a⌉`) → PNG
+ * overrides by name (never scaled: real art is v2-native) → font sprites (`font/<name>`, scaled
+ * with their metrics) → `<name>@flash` siblings for `hitFlash` sprites → `<name>@p2` palette
+ * swaps of the ships and the stock icon (M2-06, `coop.mjs`) — both from the scaled sprites →
+ * default anchors (centre of the scaled frame 0) → atlas groups ({@link resolveAtlasGroup} over
+ * `atlas-groups.json`, R1-05: a listed name the atlas lacks, a listed font and an empty `common`
+ * group are issues). Names, frame counts, animations and groups never depend on the art scale.
+ * Never throws for bad sources: everything is reported in `issues`, and the caller decides
+ * ({@link buildAtlas} throws {@link AssetSourceError}). With `ungrouped`, every sprite is
+ * `common` and the groups file is not read at all.
  *
- * @param {{ sourceDir?: string, ungrouped?: boolean }} [options] - Source root (default
- *   `assets/source/`); `ungrouped: true` puts every sprite in `common` (the one-group
- *   layout of the atlas before R1-05 — the TV bench's model and the M3-03 CJK figures).
+ * @param {{ sourceDir?: string, ungrouped?: boolean, artScale?: number }} [options] - Source
+ *   root (default `assets/source/`); `ungrouped: true` puts every sprite in `common` (the
+ *   one-group layout of the atlas before R1-05 — the TV bench's model and the M3-03 CJK
+ *   figures); `artScale`, the art's pixel scale relative to the v1 sources (default
+ *   `interim.mjs` `INTERIM_ART_SCALE`; `1` = the v1 art, whatever the frame — W4-6).
  * @returns {{ sprites: SpriteDef[], fonts: Record<string, FontMetrics>, issues: AssetIssue[] }}
  *   Sprites sorted by name (anchors and `group` resolved), font metrics by font name, and
  *   problems.
+ * @throws {RangeError} When `artScale` is not a valid art scale (`interim.mjs` `parseArtScale`)
+ *   or draws no whole terrain tile.
  */
 export function collectSprites(options = {}) {
   const sourceDir = options.sourceDir ?? DEFAULT_SOURCE_DIR;
+  const artScale = options.artScale ?? INTERIM_ART_SCALE;
+  const tileSize = terrainTileSize(artScale);
+  const fraction = parseArtScale(artScale);
+  const scaled = fraction.num !== fraction.den;
   const spritesDir = join(sourceDir, 'sprites');
   const fontsDir = join(sourceDir, 'fonts');
   const code = loadSpriteSources(spritesDir, displayPath(spritesDir));
@@ -339,9 +385,15 @@ export function collectSprites(options = {}) {
     byName.set(sprite.name, sprite);
   };
   for (const sprite of code.sprites) add(sprite);
-  for (const sprite of generateProceduralSprites()) add(sprite);
+  for (const sprite of generateProceduralSprites({ tileSize })) add(sprite);
 
-  const merged = applyPngOverrides([...byName.values()], code.overrides);
+  // The interim art stage (R2-01, W4-5): every v1-scale source to the art scale; `native`
+  // sources (terrain, ui/pixel, v2 redraws) are already at it. Nothing to do at scale 1.
+  const sources = [...byName.values()].map((sprite) =>
+    scaled && sprite.native !== true ? scaleSprite(sprite, artScale) : sprite,
+  );
+  // PNG overrides after the scale: real art is v2-native and never scaled.
+  const merged = applyPngOverrides(sources, code.overrides);
   byName.clear();
   for (const sprite of merged) byName.set(sprite.name, sprite);
 
@@ -350,7 +402,9 @@ export function collectSprites(options = {}) {
   /** @type {Record<string, FontMetrics>} */
   const fonts = {};
   for (const font of fontSources.fonts) {
-    const { sprite, metrics } = buildFontSprite(font);
+    // The interim font (W4-4): the shipped font scaled with the art (6 × 8 → 9 × 12 at 3/2).
+    const built = buildFontSprite(font);
+    const { sprite, metrics } = scaled ? scaleFont(built, artScale) : built;
     if (byName.has(sprite.name)) {
       issues.push({
         path: `${font.origin}:name`,
@@ -462,15 +516,21 @@ export const pageFileName = (index) =>
  * `group` in the manifest. Sprite and frame names never depend on the grouping, and
  * without a groups file (and no `zone-<id>` directories) the layout is the one-group one.
  *
- * @param {{ sourceDir?: string, maxPageSize?: number, ungrouped?: boolean }} [options] -
- *   Source root, page-size limit (power of two, default 2048), and `ungrouped: true` to pack
- *   every sprite as `common` — the one-group layout of the atlas before R1-05, byte for byte
- *   (the TV bench's model, `apps/tizen/scripts/bench-atlas.mjs`; the CJK figures).
+ * With `artScale` (R2-01) the art is built at that scale ({@link collectSprites}); the default is
+ * `interim.mjs` `INTERIM_ART_SCALE`, and `artScale: 1` is the v1 atlas byte for byte at either
+ * frame (W4-6).
+ *
+ * @param {{ sourceDir?: string, maxPageSize?: number, ungrouped?: boolean,
+ *   artScale?: number }} [options] - Source root, page-size limit (power of two, default 2048),
+ *   `ungrouped: true` to pack every sprite as `common` — the one-group layout of the atlas before
+ *   R1-05, byte for byte (the TV bench's model, `apps/tizen/scripts/bench-atlas.mjs`; the CJK
+ *   figures) — and the art scale (default `INTERIM_ART_SCALE`).
  * @returns {{ manifest: AtlasManifest, pages: { file: string, image: Image, png: Buffer }[],
  *   sprites: SpriteDef[] }} The manifest, the pages (pixels + PNG bytes) and the sprites.
  * @throws {AssetSourceError} When any source file is invalid, or a frame is too large for
  *   an atlas page.
- * @throws {RangeError} When `maxPageSize` is not a power of two.
+ * @throws {RangeError} When `maxPageSize` is not a power of two, or `artScale` is not a valid
+ *   art scale.
  *
  * @example
  * const { manifest, pages } = buildAtlas();
@@ -695,7 +755,9 @@ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
  * @remarks
  * Skips when the cache file records the same input hash and every recorded output still
  * exists with the recorded SHA-256 (a deleted or edited output forces a rebuild). Stale
- * pages from a previous, larger atlas are removed.
+ * pages from a previous, larger atlas are removed. It always builds at the default art scale
+ * (`interim.mjs` `INTERIM_ART_SCALE`, which the input hash covers with `scripts/assets/**`) and
+ * takes no `artScale`, so another scale's atlas is never written or cached as the shipped one.
  *
  * @param {{ sourceDir?: string, outDir?: string, force?: boolean,
  *   log?: (message: string) => void }} [options] - Source root, output root

@@ -45,9 +45,17 @@ import * as weapons from './weapons.mjs';
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
 
 /**
+ * Options every generator receives (R2-01). Only `terrain` reads one today: `tileSize`, the tile
+ * side to draw its tilesets at (default its `TILE_SIZE`).
+ *
+ * @typedef {object} GeneratorOptions
+ * @property {number} [tileSize] - Tile side in pixels for the terrain tilesets.
+ */
+
+/**
  * The generators, by id (the module's file name).
  *
- * @type {readonly { id: string, generate: () => SpriteDef[] }[]}
+ * @type {readonly { id: string, generate: (options?: GeneratorOptions) => SpriteDef[] }[]}
  */
 export const PROCEDURAL_GENERATORS = [
   { id: 'abyss', generate: abyss.generate },
@@ -81,8 +89,10 @@ export const PROCEDURAL_GENERATORS = [
 /**
  * Runs every generator.
  *
+ * @param {GeneratorOptions} [options] - Passed to every generator: `tileSize` for the terrain
+ *   tilesets (the pipeline sets it for a build at another art scale — R2-01).
  * @returns {SpriteDef[]} All procedural sprites, in generator order.
  */
-export function generateProceduralSprites() {
-  return PROCEDURAL_GENERATORS.flatMap((generator) => generator.generate());
+export function generateProceduralSprites(options = {}) {
+  return PROCEDURAL_GENERATORS.flatMap((generator) => generator.generate(options));
 }

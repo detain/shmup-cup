@@ -12,6 +12,7 @@
  *   "palette": { ".": null, "o": "#1b2a4a", "h": "#c8d0e0" },
  *   "anchor": [8, 4],
  *   "hitFlash": false,
+ *   "native": false,
  *   "frames": [{ "rows": ["..oo..", ".ohho."] }],
  *   "animations": { "idle": [0, 1] }
  * }
@@ -21,7 +22,9 @@
  * `#rgb`, `#rgba`, `#rrggbb` or `#rrggbbaa`. Every frame has the same size; `anchor`
  * (pixels from the frame's top-left) defaults to the frame centre (`floor(w / 2)`,
  * `floor(h / 2)`); `hitFlash: true` makes the pipeline add the `<name>@flash` silhouette
- * sprite (decision D30).
+ * sprite (decision D30). `native: true` (optional, default `false`) says the pixels are already at
+ * the art's v2 size, so the interim ×1.5 stage leaves them alone (plan_resolution.md R2-01, W4-5 —
+ * `scripts/assets/interim.mjs`); a v1-scale map leaves it out.
  *
  * **Real-art overrides.** `ships/kestrel.png` targets the sprite `ships/kestrel`: without a
  * sidecar the whole PNG is frame 0; with an Aseprite JSON export (`ships/kestrel.json`,
@@ -74,6 +77,9 @@ import { decodePng } from './png.mjs';
  * @property {Image[]} frames - The frames, in index order (at least one).
  * @property {Record<string, number[]>} animations - Named frame-index sequences.
  * @property {string} origin - Where it came from (source file path or `procedural:<module>`).
+ * @property {boolean} [native] - `true` when the frames are already at the art's v2 size: the
+ *   pipeline's interim stage never scales them (R2-01, W4-5 — the terrain tilesets, `ui/pixel`,
+ *   R3 / R4 redraws). Absent (= `false`) for a v1-scale source.
  * @property {string} [group] - Atlas group (`common`, `zone-a`, …), set by the pipeline's
  *   `collectSprites` (R1-05); sources never set it.
  */
@@ -124,6 +130,7 @@ const SPRITE_KEYS = [
   'palette',
   'anchor',
   'hitFlash',
+  'native',
   'frames',
   'animations',
 ];
@@ -329,21 +336,29 @@ export function parseSpriteSource(json, file, expectedName = null) {
     } else hitFlash = json.hitFlash;
   }
 
+  let native = false;
+  if (json.native !== undefined) {
+    if (typeof json.native !== 'boolean') {
+      issues.push({ path: `${file}:native`, message: 'must be a boolean' });
+    } else native = json.native;
+  }
+
   const frameCount = Array.isArray(json.frames) ? json.frames.length : 0;
   const animations = parseAnimations(json.animations, frameCount, `${file}:animations`, issues);
 
   if (issues.length > 0) return { sprite: null, issues };
-  return {
-    sprite: {
-      name: /** @type {string} */ (name),
-      anchor,
-      hitFlash,
-      frames,
-      animations,
-      origin: file,
-    },
-    issues,
+  /** @type {SpriteDef} */
+  const sprite = {
+    name: /** @type {string} */ (name),
+    anchor,
+    hitFlash,
+    frames,
+    animations,
+    origin: file,
   };
+  // Only a native source carries the flag, so a v1-scale sprite keeps its pre-R2-01 shape.
+  if (native) sprite.native = true;
+  return { sprite, issues };
 }
 
 /**

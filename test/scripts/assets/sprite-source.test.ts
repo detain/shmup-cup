@@ -90,6 +90,16 @@ describe('scripts/assets/sprite-source — parseSpriteSource', () => {
       'f',
     );
     expect(sprite).toMatchObject({ anchor: null, hitFlash: false, animations: {} });
+    // A v1-scale map has no `native` flag at all (R2-01): its SpriteDef keeps its old shape.
+    expect(sprite !== null && 'native' in sprite).toBe(false);
+  });
+
+  it('marks a "native": true map native — the interim upscale leaves it alone (R2-01)', () => {
+    const map = { name: 'ui/dot', palette: { x: '#fff' }, frames: [{ rows: ['x'] }] };
+    expect(parseSpriteSource({ ...map, native: true }, 'f').sprite?.native).toBe(true);
+    const plain = parseSpriteSource({ ...map, native: false }, 'f');
+    expect(plain.issues).toEqual([]);
+    expect(plain.sprite !== null && 'native' in plain.sprite).toBe(false);
   });
 
   it.each([
@@ -141,6 +151,7 @@ describe('scripts/assets/sprite-source — parseSpriteSource', () => {
     ],
     ['a bad anchor', { ...GOOD, anchor: [1.5, 0] }, 'f:anchor', '[x, y]'],
     ['a non-boolean hitFlash', { ...GOOD, hitFlash: 'yes' }, 'f:hitFlash', 'boolean'],
+    ['a non-boolean native', { ...GOOD, native: 1 }, 'f:native', 'boolean'],
     [
       'an out-of-range animation frame',
       { ...GOOD, animations: { idle: [0, 2] } },

@@ -391,30 +391,42 @@ function transpose(image) {
 }
 
 /**
- * Generates the tilesets at {@link TILE_SIZE}.
+ * Generates the tilesets at {@link TILE_SIZE} (or at the tile size the pipeline asks for).
  *
+ * @remarks
+ * The tilesets are `native` (plan_resolution.md R2-01, W4-5): they are drawn at their tile size
+ * here, so the pipeline's interim ×1.5 stage never upscales them. The pipeline passes `tileSize`
+ * for a build at another art scale than the default (`TILE_SIZE · artScale / INTERIM_ART_SCALE` —
+ * `scripts/assets/pipeline.mjs` `collectSprites`): 8-px tiles for the v1 art, 12-px for v2.
+ *
+ * @param {{ tileSize?: number }} [options] - `tileSize`: the tile side to draw (default
+ *   {@link TILE_SIZE}; an even whole number ≥ 4, see {@link renderTerrainTiles}).
  * @returns {SpriteDef[]} `tiles/terrain-a`, then the zone sets of M2-11 … M2-14 in
  *   {@link TERRAIN_PALETTES} order (anchor top-left, frame `i` = {@link TERRAIN_TILES}`[i]`).
+ * @throws {RangeError} When `tileSize` is not an even whole number ≥ 4.
  */
-export function generate() {
-  return Object.keys(TERRAIN_PALETTES).map(tileset);
+export function generate(options = {}) {
+  const size = options.tileSize ?? TILE_SIZE;
+  return Object.keys(TERRAIN_PALETTES).map((name) => tileset(name, size));
 }
 
 /**
- * Draws one tileset in its palette at {@link TILE_SIZE}.
+ * Draws one tileset in its palette.
  *
  * @param {string} name - Its sprite name (a {@link TERRAIN_PALETTES} key).
- * @returns {SpriteDef} The tileset sprite.
+ * @param {number} size - The tile side in pixels.
+ * @returns {SpriteDef} The tileset sprite (native: never upscaled by the pipeline).
  */
-function tileset(name) {
+function tileset(name, size) {
   /** @type {Record<string, number[]>} */
   const animations = {};
   TERRAIN_TILES.forEach((tile, i) => {
     animations[tile] = [i];
   });
-  return makeSprite(name, renderTerrainTiles(TILE_SIZE, name), 'terrain', {
+  return makeSprite(name, renderTerrainTiles(size, name), 'terrain', {
     anchor: [0, 0],
     animations,
+    native: true,
   });
 }
 

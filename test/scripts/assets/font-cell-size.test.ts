@@ -5,12 +5,17 @@
  * frames whose pixels are the upscale, packs into an atlas next to the shipped font, and the
  * renderer lays text out with its metrics. Nothing is added to `assets/source/` (the atlas and
  * its sprite ids stay as they are): the font lives in a temporary copy of the sources.
+ *
+ * Since R2-01 the same upscale is the interim font (decision W4-4): the pipeline's
+ * `interim.mjs` `scaleFont` must turn the shipped font into exactly this test font, and core's
+ * `GLYPH_W` / `GLYPH_H` / `LINE_H` are the file's metrics × `ART_SCALE`. The atlas built here is
+ * the v1 art (`artScale: 1`), so the file passes unchanged at either frame.
  */
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { GLYPH_H, GLYPH_W, LINE_H, TextAlign, UI_GLYPHS } from '@shmup/core';
+import { ART_SCALE, GLYPH_H, GLYPH_W, LINE_H, TextAlign, UI_GLYPHS } from '@shmup/core';
 import {
   createAtlas,
   createBitmapFont,
@@ -20,7 +25,8 @@ import {
 } from '@shmup/render-pixi';
 import { afterAll, describe, expect, it } from 'vitest';
 import { buildFontSprite, parseFontSource } from '../../../scripts/assets/font.mjs';
-import { getPixel } from '../../../scripts/assets/image.mjs';
+import { getPixel, imagesEqual } from '../../../scripts/assets/image.mjs';
+import { scaleFont } from '../../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 
 /** The committed asset sources. */
@@ -93,12 +99,10 @@ afterAll(() => {
 describe('a 9 × 12 test font (R1-04)', () => {
   const { font, issues } = parseFontSource(FONT_9X12, 'fonts/pixel9x12.font.json');
 
-  it('upscales the shipped 6 × 8 font, whose metrics core mirrors', () => {
-    expect([SHIPPED.cellWidth, SHIPPED.cellHeight, SHIPPED.lineHeight]).toEqual([
-      GLYPH_W,
-      GLYPH_H,
-      LINE_H,
-    ]);
+  it('upscales the shipped 6 × 8 font, whose metrics × ART_SCALE core mirrors', () => {
+    expect(
+      [SHIPPED.cellWidth, SHIPPED.cellHeight, SHIPPED.lineHeight].map((n) => n * ART_SCALE),
+    ).toEqual([GLYPH_W, GLYPH_H, LINE_H]);
     expect([FONT_9X12.cellWidth, FONT_9X12.cellHeight, FONT_9X12.lineHeight]).toEqual([9, 12, 15]);
     expect(FONT_9X12.advance).toBe(9);
   });
@@ -137,11 +141,34 @@ describe('a 9 × 12 test font (R1-04)', () => {
     expect(metrics.glyphs['65']).toEqual({ frame: `font/pixel9x12#${a}`, advance: 9 });
   });
 
+  it('is what the interim art stage makes of the shipped font (R2-01, W4-4)', () => {
+    const { font: shipped } = parseFontSource(SHIPPED, 'fonts/pixel6x8.font.json');
+    expect(shipped).not.toBeNull();
+    expect(font).not.toBeNull();
+    if (shipped === null || font === null) return;
+    const interim = scaleFont(buildFontSprite(shipped), NUM / DEN);
+    const expected = buildFontSprite(font);
+    // Same cell, line, advances and frame order; only the sprite's name differs.
+    const cell = (m: typeof interim.metrics) => [m.cellWidth, m.cellHeight, m.lineHeight];
+    expect(cell(interim.metrics)).toEqual(cell(expected.metrics));
+    expect(Object.keys(interim.metrics.glyphs)).toEqual(Object.keys(expected.metrics.glyphs));
+    const index = (frame: string) => frame.slice(frame.indexOf('#'));
+    for (const [code, glyph] of Object.entries(interim.metrics.glyphs)) {
+      const want = expected.metrics.glyphs[code];
+      expect([glyph.advance, index(glyph.frame)], code).toEqual([want.advance, index(want.frame)]);
+    }
+    expect(interim.sprite.frames).toHaveLength(expected.sprite.frames.length);
+    interim.sprite.frames.forEach((frame, i) =>
+      expect(imagesEqual(frame, expected.sprite.frames[i]), String(i)).toBe(true),
+    );
+  });
+
   it('packs into an atlas next to the shipped font; the renderer uses its metrics', () => {
     const sourceDir = join(tmp, 'source');
     cpSync(SOURCES, sourceDir, { recursive: true });
     writeFileSync(join(sourceDir, 'fonts', 'pixel9x12.font.json'), JSON.stringify(FONT_9X12));
-    const { manifest } = buildAtlas({ sourceDir });
+    // The v1 art (no interim upscale), so both fonts keep the cells of their files.
+    const { manifest } = buildAtlas({ sourceDir, artScale: 1 });
     expect(manifest.fonts.pixel).toMatchObject({ cellWidth: 6, cellHeight: 8, lineHeight: 10 });
     expect(manifest.fonts.pixel9x12).toMatchObject({
       cellWidth: 9,
@@ -179,6 +206,6 @@ describe('a 9 × 12 test font (R1-04)', () => {
       [0, 15],
     ]);
     // The shipped font beside it keeps its 6 × 8 cell.
-    expect(createBitmapFont(atlas).measure('SHMUP CUP')).toBe(9 * GLYPH_W);
+    expect(createBitmapFont(atlas).measure('SHMUP CUP')).toBe(9 * SHIPPED.advance);
   });
 });

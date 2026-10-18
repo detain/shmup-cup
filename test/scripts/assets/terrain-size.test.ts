@@ -5,15 +5,19 @@
  * between half-tile heights; {@link resampleMask} moves every shipped mask from 8 to 12 so that
  * it equals the opaque pixels of the 12-px frame (the contract R1-03's rescale tool relies on),
  * moves straight edges exactly both ways and anything else nearest-neighbour; bad sizes and masks
- * throw.
+ * throw. Since R2-01 it also pins the interim art stage's {@link INTERIM_ART_SCALE} to core's
+ * `ART_SCALE` (the pipeline's own copy, flipped with core's), and asks that the generator's tilesets
+ * are `native` (never upscaled: drawn at their tile size) and draw at whatever tile size the
+ * pipeline asks for.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TILE_SIZE as CORE_TILE_SIZE } from '@shmup/core';
+import { ART_SCALE, TILE_SIZE as CORE_TILE_SIZE } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { getPixel, imagesEqual, type Image } from '../../../scripts/assets/image.mjs';
+import { INTERIM_ART_SCALE } from '../../../scripts/assets/interim.mjs';
 import {
   TERRAIN_PALETTES,
   TERRAIN_TILES,
@@ -88,8 +92,31 @@ describe('scripts/assets/procedural/terrain — the atlas size (R1-04)', () => {
   it('draws the atlas at the tile size core builds with', () => {
     expect(TILE_SIZE).toBe(CORE_TILE_SIZE);
     for (const set of generate()) {
-      for (const frame of set.frames) expect([frame.width, frame.height]).toEqual([8, 8]);
+      for (const frame of set.frames) {
+        expect([frame.width, frame.height]).toEqual([TILE_SIZE, TILE_SIZE]);
+      }
     }
+  });
+
+  it('builds the atlas at the art scale core lays the UI out for (R2-01)', () => {
+    // The pipeline's own copy of core's ART_SCALE (1 until the flip, 3/2 after); they flip together.
+    expect(INTERIM_ART_SCALE).toBe(ART_SCALE);
+  });
+
+  it('marks its tilesets native and draws them at the tile size it is asked for (R2-01)', () => {
+    for (const size of [8, 12]) {
+      const sets = generate({ tileSize: size });
+      expect(sets.map((set) => set.name)).toEqual(NAMES);
+      for (const set of sets) {
+        expect(set.native, set.name).toBe(true);
+        const frames = renderTerrainTiles(size, set.name);
+        set.frames.forEach((frame, i) =>
+          expect(imagesEqual(frame, frames[i]), set.name).toBe(true),
+        );
+      }
+    }
+    for (const set of generate()) expect(set.native, set.name).toBe(true);
+    expect(() => generate({ tileSize: 9 })).toThrow(RangeError);
   });
 
   it('keeps the 8-px frames byte-identical to the pre-R1-04 generator', () => {

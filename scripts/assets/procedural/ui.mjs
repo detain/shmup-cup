@@ -2,7 +2,8 @@
  * Utility frames for the renderer and the title screen:
  *
  * - `ui/pixel` — one opaque white pixel; the UI/HUD draw rectangles by scaling and
- *   tinting it, so rects batch with sprites on the same atlas page.
+ *   tinting it, so rects batch with sprites on the same atlas page. It is `native` (R2-01): the
+ *   pipeline's interim upscale never touches it.
  * - `ui/missing` — 8×8 magenta/black checker the renderer shows for a sprite name that
  *   is not in the atlas (impossible to overlook, never a crash).
  * - `ui/logo` — the title logo "SHMUP CUP" (plan M1-16): original 5×7 block letters drawn
@@ -119,8 +120,8 @@ function logo() {
 /**
  * Generates the utility sprites.
  *
- * @returns {SpriteDef[]} `ui/pixel` (anchor `[0, 0]`), `ui/missing` (centred) and `ui/logo`
- *   (centred).
+ * @returns {SpriteDef[]} `ui/pixel` (anchor `[0, 0]`, native), `ui/missing` (centred) and
+ *   `ui/logo` (centred).
  */
 export function generate() {
   const pixel = createImage(1, 1);
@@ -135,7 +136,9 @@ export function generate() {
   }
   const title = logo();
   return [
-    makeSprite('ui/pixel', [pixel], 'ui', { anchor: [0, 0] }),
+    // Native (R2-01, W4-5): the renderer stretches this one texel to any rectangle, so the
+    // interim ×1.5 stage must leave it 1 × 1.
+    makeSprite('ui/pixel', [pixel], 'ui', { anchor: [0, 0], native: true }),
     makeSprite('ui/missing', [missing], 'ui'),
     makeSprite('ui/logo', [title], 'ui', {
       anchor: [Math.floor(title.width / 2), Math.floor(title.height / 2)],
