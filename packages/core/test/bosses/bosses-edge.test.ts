@@ -33,7 +33,7 @@ import {
   type BossScriptApi,
 } from '../../src/bosses/index.js';
 import { BulletKind } from '../../src/bullets/index.js';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { HIT_FLASH_TICKS } from '../../src/enemies/index.js';
@@ -667,7 +667,7 @@ describe('core/bosses — edge cases (M1-13)', () => {
       ]);
       // The boss rides the free camera; its intro starts past the right edge (leftmost part: the
       // lid's edge at −22).
-      expect(w.bosses.boss.startX).toBe(384 + BOSS_ENTRY_MARGIN + 22);
+      expect(w.bosses.boss.startX).toBe(PLAYFIELD_W + BOSS_ENTRY_MARGIN + 22);
       // A WARNING while the game is over leaves the status alone, before and after.
       const v = world(null);
       v.status = 'gameOver';

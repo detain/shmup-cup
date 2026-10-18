@@ -14,7 +14,7 @@ import {
   defineBehavior,
   type BehaviorRegistry,
 } from '../../src/behaviors/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import {
@@ -96,6 +96,12 @@ const ENEMIES = [
   enemy('leader', { script: 'test.leader' }),
 ];
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's surface, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /**
  * Test content: the KESTREL, the shipped tileset, a path, the test enemies and a stage.
  *
@@ -146,10 +152,12 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
         tilemap: {
           tileSize: 8,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           generator: {
             type: 'heightfield',
-            segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+            segments: [
+              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+            ],
           },
         },
         events: [],
@@ -320,13 +328,13 @@ describe('core/enemies spawning', () => {
       tilemap: {
         tileSize: 8,
         tileset: 'terrain-a',
-        rowsTall: 25,
+        rowsTall: ROWS,
         generator: {
           type: 'heightfield',
           segments: [
             {
               from: 0,
-              to: 3384,
+              to: 3000 + PLAYFIELD_W,
               floor: { base: 32, amp: 0, period: 64, seed: 1 },
               ceiling: { base: 24, amp: 0, period: 64, seed: 2 },
             },
@@ -337,11 +345,12 @@ describe('core/enemies spawning', () => {
     const w = world(content);
     const floor = w.enemies.spawn(spec(w, 'floor'), 200, Number.NaN);
     const ceiling = w.enemies.spawn(spec(w, 'ceiling'), 220, Number.NaN);
-    // Floor surface at 200 − 32 = 168 → centre 164; ceiling surface at 24 → centre 28.
-    expect(floor?.y).toBe(164);
+    // Floor surface at PLAYFIELD_H − 32 (168 at 384×216) → centre 4 above it; ceiling surface at
+    // 24 → centre 28.
+    expect(floor?.y).toBe(FLOOR_Y - 4);
     expect(ceiling?.y).toBe(28);
     run(w, 30);
-    expect(floor?.y).toBe(164); // world-anchored: no camera ride, no mover
+    expect(floor?.y).toBe(FLOOR_Y - 4); // world-anchored: no camera ride, no mover
     const batch = w.enemies.groundBatch;
     expect(batch.count).toBe(2);
     expect(batch.layer).toBe(LayerId.GroundEnemies);
@@ -530,13 +539,13 @@ describe('core/enemies formations', () => {
 describe('core/enemies off-screen rules', () => {
   it('may fire only on screen and `settleTicks` after its first on-screen tick', () => {
     const w = world();
-    const floor = w.enemies.spawn(spec(w, 'floor'), 450, Number.NaN);
+    const floor = w.enemies.spawn(spec(w, 'floor'), PLAYFIELD_W + 66, Number.NaN);
     if (floor === null) throw new Error('no enemy');
     run(w, 1);
     expect(floor.flags & EnemyFlag.OnScreen).toBe(0);
     expect(floor.flags & EnemyFlag.WasOnScreen).toBe(0);
     // Bring it into view (the camera is static in this stage).
-    floor.x = 380;
+    floor.x = PLAYFIELD_W - 4;
     run(w, 1);
     const seen = floor.firstSeenTick;
     expect(seen).toBe(w.tick - 1);
@@ -549,10 +558,10 @@ describe('core/enemies off-screen rules', () => {
     expect(w.tick - 1 - seen).toBe(10); // settleTicks 10
     expect(floor.flags & EnemyFlag.Settled).toBe(EnemyFlag.Settled);
     // Leaving the view clears OnScreen (canFire needs both).
-    floor.x = 400;
+    floor.x = PLAYFIELD_W + 16;
     run(w, 1);
     expect(floor.flags & EnemyFlag.OnScreen).toBe(0);
-    expect(floor.state).toBe(EnemyState.Live); // 400 − 5 = 395 < 384 + 32
+    expect(floor.state).toBe(EnemyState.Live); // x − hw = W + 11 < W + 32 (the despawn margin)
   });
 
   it('removes an enemy that was on screen once it is 32 px outside the view — escaped', () => {
@@ -572,7 +581,7 @@ describe('core/enemies off-screen rules', () => {
 
   it('removes an enemy that never shows up after UNSEEN_TICKS', () => {
     const w = world();
-    const e = w.enemies.spawn(spec(w, 'idle'), 450, 60); // parked off the right edge
+    const e = w.enemies.spawn(spec(w, 'idle'), PLAYFIELD_W + 66, 60); // parked off the right edge
     if (e === null) throw new Error('no enemy');
     run(w, UNSEEN_TICKS - 1);
     expect(e.state).toBe(EnemyState.Live);

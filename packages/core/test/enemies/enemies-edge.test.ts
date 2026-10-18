@@ -113,6 +113,12 @@ const ENEMIES = [
   enemy('badspawn', { script: 'test.badspawn' }),
 ];
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /**
  * Test content: the KESTREL, the shipped tileset, two paths, the test enemies and a stage.
  *
@@ -165,10 +171,12 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
         tilemap: {
           tileSize: 8,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           generator: {
             type: 'heightfield',
-            segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+            segments: [
+              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+            ],
           },
         },
         events: [],
@@ -372,8 +380,8 @@ describe('core/enemies edge — spawning', () => {
   it('snaps a ground spawn event from its given y downwards', () => {
     const w = world(db({ events: [{ x: 0, type: 'spawn', enemy: 'floor', screenX: 200, y: 20 }] }));
     run(w, 1);
-    // The floor surface of this stage is at 200 − 32 = 168.
-    expect(live(w).map((e) => e.y)).toEqual([168 - 4]);
+    // The floor surface of this stage is at PLAYFIELD_H − 32 (168 at 384×216).
+    expect(live(w).map((e) => e.y)).toEqual([FLOOR_Y - 4]);
   });
 
   it('gives a `path` mover without its own path the spawn event`s path, and keeps its own', () => {
@@ -766,7 +774,7 @@ describe('core/enemies edge — scripts', () => {
   it('snaps only a NaN y: a ground enemy spawned at an explicit y stays there', () => {
     const w = world();
     expect(put(w, 'floor', 200, 60).y).toBe(60);
-    expect(put(w, 'floor', 220, Number.NaN).y).toBe(168 - 4);
+    expect(put(w, 'floor', 220, Number.NaN).y).toBe(FLOOR_Y - 4);
   });
 });
 

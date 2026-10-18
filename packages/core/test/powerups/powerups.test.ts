@@ -11,6 +11,8 @@ import { describe, expect, it } from 'vitest';
 import { spawnBullet, BulletKind } from '../../src/bullets/index.js';
 import {
   DEFAULT_AUTO_POWER_UP_ORDER,
+  PLAYFIELD_H,
+  PLAYFIELD_W,
   resolveGameConfig,
   type GameConfig,
   type MeterSlotName,
@@ -86,6 +88,12 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /**
  * Test content: the KESTREL, Type A weapons, the shipped tileset, test enemies, a static stage `t`
  * (flat 32-px floor) whose timeline starts a three-member formation of `weak` enemies, and the
@@ -126,10 +134,12 @@ function db(): ContentDb {
         tilemap: {
           tileSize: 8,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           generator: {
             type: 'heightfield',
-            segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+            segments: [
+              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+            ],
           },
         },
         events: [
@@ -598,7 +608,7 @@ describe('core/powerups — the Force Field in the World', () => {
     const input = createInputSnapshot();
     const ship = w.players[0];
     grantShield(ship.shield);
-    ship.y = w.camera.y + 200 - 28; // the terrain box reaches into the 32-px floor
+    ship.y = w.camera.y + FLOOR_Y + 4; // the terrain box reaches into the 32-px floor
     for (let i = 0; i < 3; i++) tick(w, input);
     expect(ship.hits).toBe(1);
     expect(ship.hitCause).toBe(PlayerHitCause.Terrain);

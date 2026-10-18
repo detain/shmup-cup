@@ -161,11 +161,13 @@ describe('core/player edge cases — movement', () => {
       margins: { left: 2, right: 30, top: 11, bottom: 1 },
     };
     const { ship, camera, intent } = aliveShip();
+    // Long enough to cross the whole view on a diagonal (2.8 px a tick on each axis).
+    const ticks = PLAYFIELD_W;
     hold(intent, Action.Down | Action.Right);
-    for (let i = 0; i < 200; i++) updatePlayer(ship, spec, intent, camera);
+    for (let i = 0; i < ticks; i++) updatePlayer(ship, spec, intent, camera);
     expect([ship.x, ship.y]).toEqual([PLAYFIELD_W - 30, PLAYFIELD_H - 1]);
     hold(intent, Action.Up | Action.Left);
-    for (let i = 0; i < 200; i++) updatePlayer(ship, spec, intent, camera);
+    for (let i = 0; i < ticks; i++) updatePlayer(ship, spec, intent, camera);
     expect([ship.x, ship.y]).toEqual([2, 11]);
     // Pushing into the corner keeps "moving" true (input is held) but the position fixed.
     updatePlayer(ship, spec, intent, camera);

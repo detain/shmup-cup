@@ -13,7 +13,13 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BulletFlag, BulletKind, fireLaser, spawnBullet } from '../../src/bullets/index.js';
-import { resolveGameConfig, type GameConfig, type MeterSlotName } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type GameConfig,
+  type MeterSlotName,
+} from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
@@ -97,6 +103,9 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
 /**
  * A static stage with a flat 32-px floor.
  *
@@ -119,10 +128,12 @@ function stage(id: string, speed: number, events: unknown[]): Record<string, unk
     tilemap: {
       tileSize: 8,
       tileset: 'terrain-a',
-      rowsTall: 25,
+      rowsTall: ROWS,
       generator: {
         type: 'heightfield',
-        segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+        segments: [
+          { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+        ],
       },
     },
     events,
@@ -680,8 +691,8 @@ describe('core/powerups edge — items', () => {
   it('keeps items up to 32 px outside the view and culls them beyond (NaN too)', () => {
     const w = world({ pickupMagnet: false });
     const input = createInputSnapshot();
-    const right = 384 + ITEM_CULL_MARGIN;
-    const bottom = 200 + ITEM_CULL_MARGIN;
+    const right = PLAYFIELD_W + ITEM_CULL_MARGIN;
+    const bottom = PLAYFIELD_H + ITEM_CULL_MARGIN;
     const inside = [
       capsule(w, right, 100),
       capsule(w, -ITEM_CULL_MARGIN, 150),

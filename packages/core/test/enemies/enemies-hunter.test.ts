@@ -9,7 +9,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig, type GameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import {
@@ -333,7 +333,7 @@ describe('M2-04 Option Hunter: freed Options', () => {
     expect(items(w, ItemKind.FreeOption)).toHaveLength(0);
     const hunter = spawn(w, 'option-hunter-front', 300, 20)!;
     hunter.carried = 2;
-    hunter.x = w.camera.x + 700; // far outside the view: it escapes
+    hunter.x = w.camera.x + PLAYFIELD_W + 316; // far outside the view: it escapes
     run(w, createInputSnapshot(), 3);
     expect(hunter.state).toBe(EnemyState.Free);
     expect(items(w, ItemKind.FreeOption)).toHaveLength(0);
@@ -351,7 +351,7 @@ describe('M2-04 blue capsule', () => {
     expect(blue).toHaveLength(1);
     const a = spawn(w, 'drifter', 250, 150)!;
     const b = spawn(w, 'turret', 330, 100)!;
-    const far = spawn(w, 'drifter', 460, 100)!;
+    const far = spawn(w, 'drifter', PLAYFIELD_W + 76, 100)!; // off screen
     stepWorld(w, createInputSnapshot()); // on-screen flags
     const cursor = w.powerups.meters[0].cursor;
     const ship = w.players[0];

@@ -6,6 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { KNOWN_SCRIPT_IDS } from '../../src/behaviors/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent } from '../../src/data/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { PlayerHitCause } from '../../src/player/index.js';
@@ -144,10 +145,16 @@ describe('core/shields the Arm (M2-05)', () => {
             tilemap: {
               tileSize: 8,
               tileset: 'terrain-a',
-              rowsTall: 25,
+              rowsTall: PLAYFIELD_H / 8, // one playfield tall
               generator: {
                 type: 'heightfield',
-                segments: [{ from: 0, to: 3384, floor: { base: 40, amp: 0, period: 64, seed: 4 } }],
+                segments: [
+                  {
+                    from: 0,
+                    to: 3000 + PLAYFIELD_W,
+                    floor: { base: 40, amp: 0, period: 64, seed: 4 },
+                  },
+                ],
               },
             },
             events: [],
@@ -162,7 +169,8 @@ describe('core/shields the Arm (M2-05)', () => {
       const w = aliveWorld(db, { stage: 'floor' });
       const ship = w.players[0];
       if (armed) collectArm(ship.shield);
-      // Down into the floor and stay there.
+      // 60 px above the floor (its fly-in row at 384×216), then down into it and stay there.
+      ship.y = w.camera.y + PLAYFIELD_H - 40 - 60;
       for (let t = 0; t < 30; t++) {
         commitPlayerInput(input.players[0], Action.Down);
         stepWorld(w, input);

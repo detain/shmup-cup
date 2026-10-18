@@ -176,7 +176,9 @@ const ENEMIES = [
     parts: [
       { name: 'keel', sprite: 'bosses/raid-hull' },
       core({ parent: 'keel', x: 150 }),
-      { name: 'stern', parent: 'keel', x: 500, hp: 5, radius: 4, gun: true },
+      // 200 px left of the keel, which the raid keeps 100 px inside the view: off its left edge
+      // (a part offset is at most 512 px, less than a 640-px view).
+      { name: 'stern', parent: 'keel', x: -200, hp: 5, radius: 4, gun: true },
     ],
   }),
   // A raid with a time limit (one segment, no loop).
@@ -686,8 +688,8 @@ describe('core/bosses — the script API (M2-09 edges)', () => {
     const a = api();
     const [keel, hull, stern] = w.bosses.boss.parts;
     expect(keel.inView).toBe(true);
-    // The stern is 500 px behind the keel: far off the right edge.
-    expect(stern.x - w.camera.x).toBeGreaterThan(PLAYFIELD_W + 8);
+    // The stern is 200 px left of the keel: off the left edge.
+    expect(stern.x - w.camera.x).toBeLessThan(-8);
     expect([stern.inView, hull.inView]).toEqual([false, true]);
     expect([a.canFire(2), a.canFire(1)]).toEqual([false, true]);
     expect(a.aimed(2, 1, 0)).toBe(-1);

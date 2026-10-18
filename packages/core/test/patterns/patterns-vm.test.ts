@@ -13,7 +13,7 @@ import {
   defineBehavior,
 } from '../../src/behaviors/index.js';
 import { AIM_AT_TARGET, BulletKind, BulletOrigin } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyFlag, type ScriptApi } from '../../src/enemies/index.js';
@@ -393,7 +393,12 @@ describe('core/patterns DSL interpreter — behaviour', () => {
 
   it('obeys the fire rule: off screen it fires nothing but the pattern advances', () => {
     const w = arena(null);
-    const e = w.enemies.spawn(DB.enemyIndex.get('dsl.spiral') ?? -1, w.camera.x + 460, 90);
+    // Off the view's right edge (x 460 at 384×216).
+    const e = w.enemies.spawn(
+      DB.enemyIndex.get('dsl.spiral') ?? -1,
+      w.camera.x + PLAYFIELD_W + 76,
+      90,
+    );
     expect(e).not.toBeNull();
     const input = createInputSnapshot();
     for (let t = 0; t < 30; t++) stepWorld(w, input);

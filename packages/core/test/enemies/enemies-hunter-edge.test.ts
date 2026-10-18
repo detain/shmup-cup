@@ -506,11 +506,17 @@ describe('M2-04 Option Hunter edges: behaviour tunables', () => {
     for (let t = 0; t < 80; t++) stepWorld(top, createInputSnapshot());
     expect(h1.y - top.camera.y).toBeCloseTo(12, 0);
     const bottom = world(1, {}, 250, PLAYFIELD_H - 1);
-    const h2 = spawnAt(bottom, 'h-rear', bottom.camera.x - 20, bottom.camera.y + 100)!;
+    // As far from its line-up point as the top one (100 px below the top at 384×216).
+    const h2 = spawnAt(
+      bottom,
+      'h-rear',
+      bottom.camera.x - 20,
+      bottom.camera.y + PLAYFIELD_H - 100,
+    )!;
     for (let t = 0; t < 80; t++) stepWorld(bottom, createInputSnapshot());
     expect(h2.y - bottom.camera.y).toBeCloseTo(PLAYFIELD_H - 12, 0);
     const right = world(1, {}, PLAYFIELD_W - 2, 150);
-    const h3 = spawnAt(right, 'h-dive', right.camera.x + 300, right.camera.y - 20)!;
+    const h3 = spawnAt(right, 'h-dive', right.camera.x + PLAYFIELD_W - 84, right.camera.y - 20)!;
     for (let t = 0; t < 80; t++) stepWorld(right, createInputSnapshot());
     expect(h3.x - right.camera.x).toBeCloseTo(PLAYFIELD_W - 12, 0);
   });

@@ -36,7 +36,13 @@ import {
   moduleInfo,
 } from '../../src/bosses/index.js';
 import { BulletKind } from '../../src/bullets/index.js';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import {
+  FRAME_W,
+  GLYPH_W,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type GameConfig,
+} from '../../src/config/index.js';
 import {
   MAX_BOSS_PARTS,
   loadContent,
@@ -340,7 +346,7 @@ describe('core/bosses', () => {
   it("builds the WARNING text from the game's own template (D10), once per boss", () => {
     const text = formatWarningText('PROBE HULK', 'PB-07');
     expect(text).toBe('WARNING!!\nGIANT HOSTILE "PROBE HULK"\nCLOSING IN - CODE PB-07');
-    for (const line of text.split('\n')) expect(line.length * 6).toBeLessThanOrEqual(384);
+    for (const line of text.split('\n')) expect(line.length * GLYPH_W).toBeLessThanOrEqual(FRAME_W);
     const w = world();
     const probe = DB.enemyIndex.get('probe') ?? -1;
     expect(w.bosses.isBoss(probe)).toBe(true);
@@ -414,9 +420,9 @@ describe('core/bosses', () => {
     until(w, BossState.Intro);
     const boss = w.bosses.boss;
     // The plate's left edge (x −24 − 3 px) starts 8 px past the right edge of the view.
-    expect(boss.screenX).toBe(384 + 8 + 27);
+    expect(boss.screenX).toBe(PLAYFIELD_W + 8 + 27);
     const parts = boss.parts;
-    expect(parts[P.plate].x - parts[P.plate].hw).toBe(w.camera.x + 384 + 8);
+    expect(parts[P.plate].x - parts[P.plate].hw).toBe(w.camera.x + PLAYFIELD_W + 8);
     let last = boss.screenX;
     for (let i = 0; i < 29; i++) {
       run(w, 1);
@@ -716,7 +722,9 @@ describe('core/bosses', () => {
       events.filter((e) => e.kind === SimEventKind.Sfx && e.id === SFX_CUES.Clink),
     ).toHaveLength(1);
     expect(hull.hp).toBe(1);
-    // A piercing laser keeps a cooldown per part.
+    // A piercing laser keeps a cooldown per part. The beam rides its shooter's row: the ship's,
+    // in the plate's row (its fly-in row SPAWN_Y is the boss's row only at 384×216).
+    w.players[0].y = plate.y;
     const laser = w.weapons.spawnShot(WeaponRole.Laser, 0, plate.x - 30, plate.y);
     expect(laser).toBeGreaterThanOrEqual(0);
     const table = w.weapons.pool.fields.table[laser];
