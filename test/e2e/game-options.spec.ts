@@ -4,8 +4,9 @@
  * Chromium: a version-1 save left by an older build boots, the GAME page sets LIVES 5 and the
  * one-button preset, the save is rewritten in the current format (the old options kept, the co-op
  * row moved into its own table — since v2's R2-01 archived with the other v1 tables under
- * `legacyScores`, format 3) and the next game starts with 5 ships, Auto Power-Up, the casual penalty and
- * autofire always on; on the rebind screen Escape cancels a capture (nothing stored) and RESET
+ * `legacyScores`, format 3) and the next game starts with 5 ships, Auto Power-Up, the casual
+ * penalty and autofire always on; on the rebind screen Escape cancels a capture (nothing stored)
+ * and RESET
  * restores a rebound key, while SOCD / DEBOUNCE reach the save; the Tizen build from disk sets
  * LIVES with the remote's keys and keeps it across a relaunch. The flow is read through the test
  * build's debug API (`window.__shmupDebug`).

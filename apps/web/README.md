@@ -143,8 +143,10 @@ recorded, and the shell keeps the last one and three kept ones in `localStorage`
 (`shmup-cup:replay.last`, `replay.1`–`3`). This app gives the replay browser its **SHARE**
 (`copyReplayText` — the replay's text to the clipboard through `navigator.clipboard`, so a secure
 context: `localhost` or `https`) and imports a replay's text **pasted** anywhere on the page into the
-first free kept slot (`listenForPastedReplays`); `main.ts` passes `__SHMUP_BUILD__` as the build id
-the replays record (`WebAppResources.buildId`). Guide:
+first free kept slot (`listenForPastedReplays`); since v2's R2-01 a pasted replay v1 recorded is
+refused with `RECORDED BY V1: CANNOT PLAY` in a page notice for a few seconds (`pastedReplayNotice`,
+`createPageNotice`). `main.ts` passes `__SHMUP_BUILD__` as the build id the replays record
+(`WebAppResources.buildId`). Guide:
 [`docs/dev/extra-modes-and-replays.md`](../../docs/dev/extra-modes-and-replays.md); for players:
 [`docs/client/extra-modes-and-replays.md`](../../docs/client/extra-modes-and-replays.md).
 
@@ -203,7 +205,7 @@ the shell fetches the manifest with XHR, then loads the pages with `new Image()`
 | Module | Status | Responsibility |
 |---|---|---|
 | `main.ts` | — | Entry: boots into `#game` (with `debugToolsFactory` when `__SHMUP_DEV__`, M1-19), disposes on HMR |
-| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); the scene flow by default (title → game ⇄ pause …, M1-16), `?scene=flight` for free flight, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14), `?gl=2` (`webGLVersionFromSearch` → `preferWebGLVersion`, M3-02c — the review's F8 A/B switch; WebGL1 stays the default); since M3-01 SHARE through the clipboard and pasted replays imported (`copyReplayText`, `listenForPastedReplays`), the build id the replays record |
+| `boot` | implemented | Composition root: keyboard/gamepad input with the input profiles (`?profile=`, `?debounce=`, saved choice), Web Audio and the browser platform handed to `@shmup/shell`'s `bootShell` (content + atlas loading, boot error screen, renderer, game, rAF loop, audio unlock on the first key or pointer gesture — gamepad buttons do not count — after which the shell's audio engine plays the sounds and, with `?stage=`, the stage's music, M1-15); the scene flow by default (title → game ⇄ pause …, M1-16), `?scene=flight` for free flight, `?stage=<id>` (`stageFromSearch`, checked with `contentStageIds`), `?loadout=full` (`loadoutFromSearch`, M1-10), `?scene=showcase` / `?scene=calibration` / `?scene=fx-gallery` (M1-14), `?gl=2` (`webGLVersionFromSearch` → `preferWebGLVersion`, M3-02c — the review's F8 A/B switch; WebGL1 stays the default); since M3-01 SHARE through the clipboard and pasted replays imported (`copyReplayText`, `listenForPastedReplays`), the build id the replays record; since R2-01 a pasted v1 replay refused with a page notice (`pastedReplayNotice`, `createPageNotice`, `PageNotice`, `PAGE_NOTICE_MS`) |
 | `platform` | partial | Browser `Platform`: localStorage through the shell's `createWebStorage` (quota checks, memory fallback — M2-17), the visibility **and focus** lifecycle (M3-02b: `createVisibilityLifecycle(document, window)` — hidden ∨ unfocused suspends, edge-triggered, so a system overlay that only fires `blur` pauses the game too; Electron inherits it), no `exit`; inside Electron (M2-17: `getElectronBridge`, `createBridgeStorage`) id `'electron'`, file saves through the bridge, `exit` quits |
 
 The rAF frame loop moved to [`@shmup/shell`](../../packages/shell/README.md) (M1-04).

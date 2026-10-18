@@ -4,13 +4,31 @@
  * `@shmup/shell`. Checks the wiring: keyboard-first input, audio unlocked by the first user
  * gesture only, visibility → suspend/resume, rAF → fixed ticks → render, resize forwarding,
  * storage fallbacks, the `?scene=` switch, the `?stage=` dev stage (M1-07), the input profiles
- * (`keyboard-default`, the `?profile=` / `?debounce=` dev overrides, the saved choice) and a
- * clean stop().
+ * (`keyboard-default`, the `?profile=` / `?debounce=` dev overrides, the saved choice), a pasted
+ * replay v1 recorded refused with a page notice (v2's R2-01) and a clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { Action, FRAME_H, FRAME_W, SAVE_VERSION, SimEventKind, UserOptionKind } from '@shmup/core';
+import {
+  Action,
+  EMPTY_CONTENT_DB,
+  FRAME_H,
+  FRAME_W,
+  RUN_REPLAY_FORMAT_VERSION,
+  SAVE_VERSION,
+  SegmentRecorder,
+  SimEventKind,
+  UserOptionKind,
+  commitPlayerInput,
+  createInputSnapshot,
+  createReplayHeader,
+  createWorld,
+  resolveGameConfig,
+  runReplayText,
+  stepWorld,
+} from '@shmup/core';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { runTextAtOtherFrame } from '../../../../packages/core/test/helpers/v1-replay.js';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
 import {
@@ -262,7 +280,89 @@ async function boot() {
   return { app, canvas };
 }
 
+/**
+ * A short one-segment run replay's text, recorded at the current frame in open space.
+ *
+ * @returns The text (`runReplayText`).
+ */
+function runText(): string {
+  const config = resolveGameConfig({ seed: 5 });
+  const world = createWorld(config, EMPTY_CONTENT_DB);
+  const input = createInputSnapshot();
+  const recorder = new SegmentRecorder();
+  recorder.begin(createReplayHeader(config, { buildId: 'web' }), null);
+  for (let t = 0; t < 30; t++) {
+    commitPlayerInput(input.players[0], (t >> 2) & 1 ? Action.Left : Action.Right);
+    recorder.record(input);
+    stepWorld(world, input);
+    recorder.check(world);
+  }
+  const segment = recorder.finish(world, 0);
+  if (segment === null) throw new Error('no segment');
+  return runReplayText({
+    formatVersion: RUN_REPLAY_FORMAT_VERSION,
+    buildId: 'web',
+    mode: '1p',
+    label: 'KESTREL NORMAL',
+    score: 0,
+    reached: '',
+    assists: 0,
+    ticks: segment.replay.ticks,
+    segments: [segment],
+  });
+}
+
 describe('web/boot bootWebApp wiring', () => {
+  it('refuses a pasted v1 replay with a notice, keeps a good one silently (R2-01)', async () => {
+    // The page notice's document and timers (the fake window has neither).
+    const body = {
+      children: [] as Array<{ textContent: string; style: { display: string } }>,
+      appendChild(child: { parentNode: unknown }) {
+        child.parentNode = body;
+        body.children.push(child as never);
+      },
+      removeChild(child: never) {
+        body.children.splice(body.children.indexOf(child), 1);
+      },
+    };
+    Object.assign(win.document, {
+      body,
+      createElement: () => ({
+        textContent: '',
+        style: { cssText: '', display: '' },
+        parentNode: null,
+        setAttribute() {},
+      }),
+    });
+    Object.assign(win, { setTimeout: () => 1, clearTimeout() {} });
+    const { app } = await boot();
+    /**
+     * Pastes text on the page.
+     *
+     * @param text - The clipboard's text.
+     */
+    const paste = (text: string): void => {
+      win.dispatchEvent(
+        Object.assign(new Event('paste', { cancelable: true }), {
+          clipboardData: { getData: (kind: string) => (kind === 'text' ? text : '') },
+        }),
+      );
+    };
+    const good = runText();
+    paste(good);
+    // Kept in the first free kept slot, with no notice (M3-01).
+    expect(win.stored.get('shmup-cup:replay.1')).toBe(good);
+    expect(body.children).toEqual([]);
+    // A replay another frame recorded (v1's, after the flip): not stored, the message shown.
+    paste(runTextAtOtherFrame(good));
+    expect(win.stored.has('shmup-cup:replay.2')).toBe(false);
+    expect(body.children.map((child) => [child.textContent, child.style.display])).toEqual([
+      ['RECORDED BY V1: CANNOT PLAY', 'block'],
+    ]);
+    app.stop();
+    expect(body.children).toEqual([]);
+  });
+
   it('creates the renderer for the canvas at the window size, with the atlas', async () => {
     const { app, canvas } = await boot();
     expect(fakes.renderer.options).toMatchObject({

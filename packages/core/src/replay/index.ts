@@ -64,10 +64,10 @@
  * {@link AssistFlag} / {@link runAssisted} (also `ReplayHeader.assists`) and the replay library
  * ({@link ReplayLibrary}, {@link createReplayLibrary}, {@link ReplaySummary},
  * {@link ReplayStoreResult}, {@link replayStorageKey}, {@link REPLAY_SLOTS},
- * {@link KEPT_REPLAY_SLOTS}, {@link MAX_REPLAY_TEXT}, {@link MAX_KEPT_REPLAY_TEXT}); v2's R2-01: the
- * refusal of a replay v1 recorded — {@link ReplayVersionError} / {@link ReplayVersionReason}
- * (`./format.ts`), {@link classifyRunReplayText} / {@link RunReplayTextKind}, `ReplaySummary.legacy`
- * and `ReplayStoreResult.Legacy` (`./run.ts`).
+ * {@link KEPT_REPLAY_SLOTS}, {@link MAX_REPLAY_TEXT}, {@link MAX_KEPT_REPLAY_TEXT}); v2's R2-01:
+ * the refusal of a replay v1 recorded — {@link ReplayVersionError} / {@link ReplayVersionReason}
+ * (`./format.ts`), {@link classifyRunReplayText} / {@link RunReplayTextKind},
+ * `ReplaySummary.legacy` and `ReplayStoreResult.Legacy` (`./run.ts`).
  *
  * **Attract playback (M2-15).** The attract loop's demo play (shmup_feat.md §16) runs the bundled
  * demos (`content/demos/*.replay.json`, `core/data` `ContentDb.demos`) through this same playback

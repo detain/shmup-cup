@@ -11,10 +11,10 @@
  * inspection. Storage is async so Electron can use files (M2-17) and the web / Tizen
  * `localStorage`; Tizen deletes it on uninstall.
  *
- * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 3 since v2's R2-01) under the storage
- *   key {@link SAVE_STORAGE_KEY} (`save.v1` — the format family's key; the document's `version`
- *   drives the migrations): `{ version, options: { audio: { master, music, sfx }, input: {
- *   profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
+ * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 3 since v2's R2-01) under the
+ *   storage key {@link SAVE_STORAGE_KEY} (`save.v1` — the format family's key; the document's
+ *   `version` drives the migrations): `{ version, options: { audio: { master, music, sfx },
+ *   input: { profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
  *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar, crtFilter,
  *   aspect, language }, game: {
  *   difficulty, lives, deathPenalty, autoPowerUp, pickupMagnet, oneButton } }, hiScores: {
@@ -30,9 +30,9 @@
  *   one-player tables into their own tables (see {@link SAVE_MIGRATIONS}). **Version 3** (v2's
  *   R2-01 — plan_resolution.md §3.4, owner decisions W4-8 / W4-13) archives the hi-score tables of
  *   v1 (384×216 — scores made in a different game) under the read-only `legacyScores`, kept but
- *   shown nowhere, and starts v2's tables empty; options, stats and unlocks carry over. A v1.x build
- *   reading a version-3 document treats it as newer than itself — the defaults, with the text kept
- *   under {@link SAVE_CORRUPT_KEY} (W4-14).
+ *   shown nowhere, and starts v2's tables empty; options, stats and unlocks carry over. A v1.x
+ *   build reading a version-3 document treats it as newer than itself — the defaults, with the text
+ *   kept under {@link SAVE_CORRUPT_KEY} (W4-14).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
  *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`; since M2-15 the

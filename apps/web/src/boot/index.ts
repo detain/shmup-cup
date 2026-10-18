@@ -64,7 +64,12 @@
  * clipboard ({@link copyReplayText} — `navigator.clipboard`, a secure context), and text pasted
  * anywhere on the page that holds `"run-replay"` is imported into the first free kept slot
  * ({@link listenForPastedReplays} → `Shell.replays.importText`; removed by `WebApp.stop`). The
- * replays live in `localStorage` next to the save (`shmup-cup:replay.last`, `replay.1`–`3`).
+ * replays live in `localStorage` next to the save (`shmup-cup:replay.last`, `replay.1`–`3`). Since
+ * v2's R2-01 (plan_resolution.md §3.4, owner decision W4-7) a pasted replay v1 recorded is refused
+ * with a clear message: the UI string `replayFromV1` (`RECORDED BY V1: CANNOT PLAY`, in the
+ * player's language) in a one-line page notice over the canvas for a few seconds
+ * ({@link pastedReplayNotice}, {@link createPageNotice}) — the canvas UI has no message line
+ * outside its scenes, and the paste may come during any of them.
  *
  * **Implements.** shmup_feat.md §23 (web dev target), §3 (rAF-driven fixed step, pause on
  * visibility change, integer scaling), §19 (resume audio on first input), §4 (input profiles).
@@ -72,17 +77,22 @@
  * **Public API.** {@link bootWebApp}, {@link WebApp}, {@link WebAppResources},
  * {@link inputOverridesFromSearch}, {@link InputOverrides}, {@link stageFromSearch},
  * {@link contentStageIds}, {@link loadoutFromSearch}, {@link stageSkipFromSearch},
- * {@link determinismFromSearch}; M3-01: {@link copyReplayText}, {@link listenForPastedReplays}.
+ * {@link determinismFromSearch}; M3-01: {@link copyReplayText}, {@link listenForPastedReplays};
+ * R2-01: {@link pastedReplayNotice}, {@link createPageNotice}, {@link PageNotice},
+ * {@link PAGE_NOTICE_MS}.
  *
  * @module
  */
 import { createWebAudio, type WebAudio } from '@shmup/audio-web';
 import {
+  DEFAULT_UI_TEXT,
+  ReplayStoreResult,
   defineModule,
   type ContentFile,
   type Game,
   type StageSkip,
   type StartingLoadout,
+  type UiText,
 } from '@shmup/core';
 import {
   DEFAULT_GAMEPAD_PROFILE_ID,
@@ -105,6 +115,7 @@ import {
 } from '@shmup/input-web';
 import type { PixiRenderer } from '@shmup/render-pixi';
 import {
+  BOOT_SCREEN_COLORS,
   bootShell,
   defaultStageId,
   sceneFromSearch,
@@ -160,11 +171,14 @@ export function copyReplayText(win: Window, text: string): boolean {
  *
  * @param win - The window (its `paste` events).
  * @param importText - The library's `importText`.
+ * @param onResult - Called with each import's result (`core/replay` `ReplayStoreResult` — v2's
+ *   R2-01: the web app answers `Legacy` with {@link pastedReplayNotice}); none by default.
  * @returns A function that removes the listener.
  */
 export function listenForPastedReplays(
   win: Window,
   importText: (text: string) => number,
+  onResult?: (result: number) => void,
 ): () => void {
   /**
    * Handles one paste.
@@ -175,12 +189,100 @@ export function listenForPastedReplays(
     const data = (event as ClipboardEvent).clipboardData;
     const text = data === null || data === undefined ? '' : data.getData('text');
     if (text.indexOf('"run-replay"') < 0) return;
-    importText(text);
+    const result = importText(text);
     event.preventDefault();
+    if (onResult !== undefined) onResult(result);
   };
   win.addEventListener('paste', onPaste);
   return () => {
     win.removeEventListener('paste', onPaste);
+  };
+}
+
+/**
+ * The message a pasted replay's import result earns (v2's R2-01 — plan_resolution.md §3.4, owner
+ * decision W4-7): a replay v1 recorded (`ReplayStoreResult.Legacy`, not stored) is refused with the
+ * UI string `replayFromV1`; every other result stays silent, as since M3-01 (a kept replay shows in
+ * the replay browser).
+ *
+ * @param result - `ReplayLibrary.importText`'s result.
+ * @param text - The UI strings in the player's language (`SceneFlow.text`, else the defaults).
+ * @returns The notice's text, or `null` for none.
+ */
+export function pastedReplayNotice(
+  result: number,
+  text: Pick<UiText, 'replayFromV1'>,
+): string | null {
+  return result === ReplayStoreResult.Legacy ? text.replayFromV1 : null;
+}
+
+/** How long a {@link PageNotice} stays up, in milliseconds. */
+export const PAGE_NOTICE_MS = 4000;
+
+/**
+ * The page notice's inline style: one line centred near the top of the window, over the canvas,
+ * in the boot screens' colours; it never takes a click (built once, at load).
+ */
+const PAGE_NOTICE_STYLE =
+  'position:fixed;left:50%;top:6%;transform:translateX(-50%);z-index:10;padding:6px 12px;' +
+  'font:16px monospace;white-space:nowrap;pointer-events:none;display:none;' +
+  `color:${BOOT_SCREEN_COLORS.text};background:${BOOT_SCREEN_COLORS.background};` +
+  `border:2px solid ${BOOT_SCREEN_COLORS.title}`;
+
+/** A one-line notice over the page (v2's R2-01: a pasted replay this build refuses). */
+export interface PageNotice {
+  /**
+   * Shows a text for {@link PAGE_NOTICE_MS}, replacing a notice still up (its time starts again).
+   *
+   * @param text - The line to show.
+   */
+  show(text: string): void;
+  /** Removes the notice's element and timer (idempotent). */
+  dispose(): void;
+}
+
+/**
+ * Creates the page notice: a `role="status"` element added to the body on the first
+ * {@link PageNotice.show} and reused after, hidden again by a timer.
+ *
+ * @remarks
+ * Off every hot path — it runs on a paste. Plain DOM of Chromium 68 (`createElement`, `cssText`,
+ * `textContent`, `setTimeout`); the TV hosts never paste, so only the web app and Electron use it.
+ *
+ * @param win - The window (its document and timers).
+ * @param durationMs - How long a notice stays up.
+ * @returns The notice.
+ */
+export function createPageNotice(win: Window, durationMs: number = PAGE_NOTICE_MS): PageNotice {
+  let element: HTMLElement | null = null;
+  let timer: ReturnType<Window['setTimeout']> | null = null;
+  /** Hides the notice when its time is up. */
+  const hide = (): void => {
+    timer = null;
+    if (element !== null) element.style.display = 'none';
+  };
+  return {
+    show(text) {
+      if (element === null) {
+        const doc = win.document;
+        element = doc.createElement('div');
+        element.setAttribute('role', 'status');
+        element.setAttribute('aria-live', 'polite');
+        element.style.cssText = PAGE_NOTICE_STYLE;
+        doc.body.appendChild(element);
+      }
+      element.textContent = text;
+      element.style.display = 'block';
+      if (timer !== null) win.clearTimeout(timer);
+      timer = win.setTimeout(hide, durationMs);
+    },
+    dispose() {
+      if (timer !== null) win.clearTimeout(timer);
+      timer = null;
+      const parent = element === null ? null : element.parentNode;
+      if (element !== null && parent !== null) parent.removeChild(element);
+      element = null;
+    },
   };
 }
 
@@ -583,8 +685,18 @@ export async function bootWebApp(
     },
   });
 
-  // A shared replay pasted on the page joins the kept replays (M3-01).
-  const stopPaste = listenForPastedReplays(win, (text) => shell.replays.importText(text));
+  // A shared replay pasted on the page joins the kept replays (M3-01); one v1 recorded is refused
+  // with a notice (R2-01, W4-7), in the player's language.
+  const notice = createPageNotice(win);
+  const stopPaste = listenForPastedReplays(
+    win,
+    (text) => shell.replays.importText(text),
+    (result) => {
+      const scenes = shell.game.scenes;
+      const message = pastedReplayNotice(result, scenes === null ? DEFAULT_UI_TEXT : scenes.text);
+      if (message !== null) notice.show(message);
+    },
+  );
   return {
     game: shell.game,
     renderer: shell.renderer,
@@ -594,6 +706,7 @@ export async function bootWebApp(
     shell,
     stop() {
       stopPaste();
+      notice.dispose();
       shell.stop();
     },
   };

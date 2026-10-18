@@ -322,7 +322,8 @@ describe('core/save version 3 (R2-01)', () => {
 
   it('a build one version older (v1.x) reads a newer document as the defaults, kept under save.corrupt (W4-14)', async () => {
     // What v1.x (format 2) does with a version-3 save is what this build does with a version-4
-    // one: `migrateSave` refuses a version newer than the build's, `loadSave` copies the text aside.
+    // one: `migrateSave` refuses a version newer than the build's, `loadSave` copies the text
+    // aside.
     const newer = JSON.stringify({
       version: SAVE_VERSION + 1,
       options: { audio: { music: 1 } },

@@ -171,14 +171,23 @@ describe('core/replay ReplayVersionError (R2-01)', () => {
     expect(recordedFrame(null).map(Number.isNaN)).toEqual([true, true]);
   });
 
-  it('names v1 and the format version in a format refusal', () => {
+  it('names v1 for format version 1 only; a later older format is an older build`s', () => {
     const error = new ReplayVersionError('format', 384, 216, 1);
     expect(error.reason).toBe('format');
     expect(error.message).toBe(
       `replay recorded at 384×216 (v1, format version 1) cannot play at ${FRAME_W}×${FRAME_H}`,
     );
-    expect(new ReplayVersionError('format', Number.NaN, Number.NaN).message).toMatch(
-      /^replay recorded at NaN×NaN \(v1, format version \d+\)/,
+    // A format v2 wrote, refused by a later build (after another bump): not v1's.
+    expect(new ReplayVersionError('format', 640, 360, 2).message).toBe(
+      `replay recorded at 640×360 (an older build, format version 2) cannot play at ` +
+        `${FRAME_W}×${FRAME_H}`,
+    );
+    expect(new ReplayVersionError('format', Number.NaN, Number.NaN, 1).message).toMatch(
+      /^replay recorded at NaN×NaN \(v1, format version 1\)/,
+    );
+    // A frame refusal names no build.
+    expect(new ReplayVersionError('frame', 384, 216).message).toBe(
+      `replay recorded at 384×216 (another frame) cannot play at ${FRAME_W}×${FRAME_H}`,
     );
   });
 
@@ -191,7 +200,12 @@ describe('core/replay ReplayVersionError (R2-01)', () => {
       expect(error).toBeInstanceOf(ReplayVersionError);
       expect(error.reason).toBe('format');
       expect([error.recordedWidth, error.recordedHeight]).toEqual(OTHER_FRAME);
-      expect(error.message).toMatch(/\(v1, format version/);
+      // Format version 1 is v1's (the flip bumps it to 2); a later bump names an older build.
+      expect(error.message).toMatch(
+        REPLAY_FORMAT_VERSION - 1 === 1
+          ? /\(v1, format version 1\)/
+          : /\(an older build, format version/,
+      );
     },
   );
 });

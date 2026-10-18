@@ -82,8 +82,8 @@
  * lightning, the grazes the run scores and the slowdown's load count are all in its hashes.
  *
  * v2's R2-01 (owner decision W4-1): from the flip until R2-03 re-blesses them, the committed files
- * are v1's (384×216, format version 1) and `core/replay` refuses them; the tests that play them skip
- * through `./stale.ts` (`goldenIsStale`, `GOLDENS_STALE`), re-exported here.
+ * are v1's (384×216, format version 1) and `core/replay` refuses them; the tests that play them
+ * skip through `./stale.ts` (`goldenIsStale`, `GOLDENS_STALE`), re-exported here.
  *
  * @module
  */

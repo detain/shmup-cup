@@ -55,12 +55,26 @@ export const REPLAY_FORMAT_VERSION = 1;
 export type ReplayVersionReason = 'format' | 'frame';
 
 /**
+ * The format version every v1 build wrote — `REPLAY_FORMAT_VERSION` and `./run.ts`
+ * `RUN_REPLAY_FORMAT_VERSION` alike (v2's R2-01 bumps both to 2): the one older format a
+ * {@link ReplayVersionError} attributes to v1.
+ */
+const V1_FORMAT_VERSION = 1;
+
+/**
  * The error a replay of an older version or another frame is refused with (v2's R2-01 — owner
  * decision W4-7, plan_resolution.md §3.4): such a replay would decode, play and desync, so
  * {@link decodeReplay} (and `./run.ts` `decodeRunReplay`) throws this instead. A `RangeError`, like
  * every other refusal of a malformed replay, so callers that only want "valid or not" need no
  * change; the replay library tells it apart (`classifyRunReplayText` → `'legacy'`) to show the
  * replay as `V1 REPLAY` and refuse to play it.
+ *
+ * @remarks
+ * The message says what is known, per refusal. `'format'` names the build that wrote the format:
+ * `v1` for format version 1 (the only one v1 ever wrote), `an older build` for any later one, so a
+ * future bump does not call a v2 replay v1's. `'frame'` says `another frame`: the header is at the
+ * current version but records another frame, so no build is implied. The player-facing text is the
+ * UI string `replayFromV1` (`RECORDED BY V1: CANNOT PLAY`), not this message.
  *
  * @example
  * ```ts
@@ -99,9 +113,10 @@ export class ReplayVersionError extends RangeError {
   ) {
     super(
       `replay recorded at ${String(recordedWidth)}×${String(recordedHeight)} ` +
-        (reason === 'format'
-          ? `(v1, format version ${String(formatVersion)}) `
-          : '(another frame) ') +
+        (reason === 'frame'
+          ? '(another frame) '
+          : `(${formatVersion === V1_FORMAT_VERSION ? 'v1' : 'an older build'}, format version ` +
+            `${String(formatVersion)}) `) +
         `cannot play at ${FRAME_W}×${FRAME_H}`,
     );
     this.name = 'ReplayVersionError';
