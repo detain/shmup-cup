@@ -16,8 +16,8 @@
  *   this module in its own worker, so one that starts after the recordings were rewritten would
  *   fail a re-bless that worked; the next normal run throws.
  * - **Its inverse** — the cases asserting that the committed recordings are still v1's and
- *   refused — is `packages/core/test/replay/replay-version-shipped.test.ts`, which reads them itself
- *   and does not import this module: R2-03 deletes it with this file.
+ *   refused — is `packages/core/test/replay/replay-version-shipped.test.ts`, which reads them
+ *   itself and does not import this module: R2-03 deletes it with this file.
  * - {@link describeGoldensStale} / {@link itGoldensStale} — `describe.skipIf` / `it.skipIf` on it,
  *   with {@link GOLDENS_STALE_REASON} appended to the name.
  *

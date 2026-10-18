@@ -8,10 +8,11 @@
  *
  * The cases that hold for good are `replay-version.test.ts`'s: the crafted ones (another frame, an
  * older format at either frame) and a run replay as v1.0.0's replay library wrote it (its own
- * fixture `fixtures/run-replay-v1.json`: refused, `Legacy` on a paste, its slot kept). These hold
- * only from R2-01 until R2-03 re-blesses the goldens and re-records the demos: then a recording is
- * no longer v1's and its case fails by design, its message naming R2-03 — delete this file with
- * the stale-goldens gate (`test/golden/stale.ts`, whose docblock points here).
+ * fixture `fixtures/run-replay-v1.json`: refused, `Legacy` on a paste, its slot kept). This
+ * file's cases, on the shipped recordings, hold only from R2-01 until R2-03 re-blesses the goldens
+ * and re-records the demos: then a recording is no longer v1's and its case fails by design, its
+ * message naming R2-03 — delete this file with the stale-goldens gate (`test/golden/stale.ts`,
+ * whose docblock points here).
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

@@ -128,8 +128,11 @@ const V1_FORMAT = 1;
  * slot or of a SHARE paste: `encodeRunReplay` of v1.0.0 (run format 1, no `ticks` field) as
  * `runReplayText` writes it (one line). The fixture was derived once from v1.0.0's golden
  * `zone-a-god` (its `description` / `expected` dropped: never part of a replay), and v1.0.0's own
- * `parseRunReplayText` reads it and `runReplayText` writes it back byte for byte. It never changes
- * with the goldens; the file is pretty-printed, so it is re-stringified here.
+ * `parseRunReplayText` reads it and `runReplayText` writes it back byte for byte. Only the segment
+ * comes from the golden, header included (`buildId: "golden"`); the run's own fields (build id,
+ * label, score, reached, assists) were picked by hand and are illustrative — the score is not the
+ * golden's, and nothing checks it against the replay. It never changes with the goldens; the file
+ * is pretty-printed, so it is re-stringified here.
  */
 const V1_RUN_TEXT = JSON.stringify(
   JSON.parse(readFileSync(new URL('./fixtures/run-replay-v1.json', import.meta.url), 'utf8')),
