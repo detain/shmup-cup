@@ -39,6 +39,13 @@ import {
   VIEWPORT,
   pixelIndex,
 } from './frame-pixels.js';
+import {
+  BOOT_TIMEOUT_MS,
+  GAME_OVER_DELAY_TICKS,
+  SCENE_SLACK_TICKS,
+  STAGE_CLEAR_DELAY_TICKS,
+  expectScene,
+} from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -452,7 +459,7 @@ async function openTitle(page: Page, url: string): Promise<string[]> {
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   return errors;
@@ -509,8 +516,9 @@ interface DebugWindow {
 }
 
 /**
- * Ends the running World through the debug API: a score, then a status (`stageClear` opens the
- * zone tally, `gameOver` the continue countdown).
+ * Ends the running World through the debug API: a score, then a status. `stageClear` opens the
+ * zone tally {@link STAGE_CLEAR_DELAY_TICKS} ticks later, `gameOver` the continue countdown
+ * {@link GAME_OVER_DELAY_TICKS} ticks later: wait for them with `expectScene`, not wall time.
  *
  * @param page - The page.
  * @param status - The World's new status.
@@ -612,7 +620,7 @@ test.describe('frame layout (web build): the screens', () => {
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await endWorld(page, 'stageClear');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'stageClear');
+    await expectScene(page, 'stageClear', STAGE_CLEAR_DELAY_TICKS + SCENE_SLACK_TICKS);
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // skip the tally
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'map');
@@ -644,7 +652,7 @@ test.describe('frame layout (web build): the screens', () => {
     const canvas = page.locator('#game');
     await startGame(page);
     await endWorld(page, 'gameOver');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'continue');
+    await expectScene(page, 'continue', GAME_OVER_DELAY_TICKS + SCENE_SLACK_TICKS);
     await waitSceneTicks(page, 'continueScreen', 40);
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'gameOver');
@@ -656,7 +664,7 @@ test.describe('frame layout (web build): the screens', () => {
     expectCentredX(wholePanel(entry, FOCUS_YELLOW)); // the name entry's panel has a yellow border
     // A fresh title, then the Options screen through the title menu.
     await page.goto('./');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
     await tap(page, 'ArrowDown'); // 2 PLAYERS

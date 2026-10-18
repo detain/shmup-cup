@@ -14,6 +14,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type ConsoleMessage, type Page } from '@playwright/test';
 import { SAVE_FORMAT } from './save-format.js';
+import { BOOT_TIMEOUT_MS, remoteSequence, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -46,53 +47,13 @@ async function open(page: Page, url: string): Promise<string[]> {
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await expect
     .poll(() => page.evaluate(() => (window as unknown as SaveApiWindow).__shmupDebug.sceneId))
     .toBe('title');
   return errors;
-}
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Dispatches a remote key by key code, down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  for (const type of ['keydown', 'keyup']) {
-    await page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-    await waitFrames(page, 3);
-  }
 }
 
 test.describe('platform polish (M2-17)', () => {
@@ -134,7 +95,9 @@ test.describe('platform polish (M2-17)', () => {
 
     // The next launch loads the imported save.
     await page.reload();
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const reloaded = await page.evaluate(() =>
       (window as unknown as SaveApiWindow).__shmupDebug.save?.export(),
     );
@@ -156,10 +119,11 @@ test.describe('platform polish (M2-17)', () => {
       }
     });
     const errors = await open(page, TIZEN_INDEX);
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     // Locked: nothing collected.
     expect(snapshots).toEqual([]);
-    for (const keyCode of [10252, 427, 427, 427]) await remoteTap(page, keyCode);
+    // Pause, Ch+ ×3 in one go: the unlock must fit in its 3 s of host time on a slow runner too.
+    await remoteSequence(page, [10252, 427, 427, 427]);
     await expect.poll(() => snapshots.length).toBe(1);
     const info = (await snapshots[0]?.args()[1]?.jsonValue()) as {
       cssWidth: number;

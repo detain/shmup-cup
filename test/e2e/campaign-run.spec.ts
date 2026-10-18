@@ -13,11 +13,12 @@
  * - Tizen build from `file://`: the remote's OK skips a zone's tally and launches the next zone;
  * - no console errors (nor atlas warnings) in any.
  *
- * Every wait between inputs counts the game's ticks (`__shmupDebug.tick`), never rAF frames or
- * wall time: a slow runner draws fewer frames a second and the loop then catches up to 4 ticks a
- * frame (core `config` `maxTicksPerFrame`), so a frame count or a wall-clock timeout is a different
- * number of ticks on every machine (the CI flakes of a 90-tick tally delay under a 5 s timeout).
- * Only the tests' own timeouts are wall time, sized for a slow runner.
+ * Every wait after the boot counts the game's ticks (`__shmupDebug.tick`, through `ticks.ts`),
+ * never rAF frames or wall time: a slow runner draws fewer frames a second and the loop then
+ * catches up to 4 ticks a frame (core `config` `maxTicksPerFrame`), so a frame count or a
+ * wall-clock timeout is a different number of ticks on every machine (the CI flakes of a 90-tick
+ * tally delay under a 5 s timeout). Only the boot (`BOOT_TIMEOUT_MS`) and the tests' own timeouts
+ * are wall time, sized for a slow runner.
  *
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720).
  */
@@ -26,6 +27,21 @@ import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
+import {
+  BONUS_WARP_TICKS,
+  BOOT_TIMEOUT_MS,
+  CREDITS_LOCK_TICKS,
+  ENDING_LOCK_TICKS,
+  HI_SCORE_LOCK_TICKS,
+  MAP_LAUNCH_TICKS,
+  SCENE_SLACK_TICKS,
+  STAGE_CLEAR_DELAY_TICKS,
+  expectScene,
+  pollTicks,
+  remoteTap,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -33,19 +49,11 @@ const TIZEN_INDEX = pathToFileURL(
 ).href;
 
 /**
- * Ticks the game runs on after a clear before the tally opens (core `scenes`
- * `STAGE_CLEAR_DELAY_TICKS`).
+ * Ticks from the bonus-range test's jump to the digit window's close: the camera's 20 px from x
+ * 1980 to 2000 at the stage's 1 px a tick (v1 content numbers, which R2-02 ports and R2-03
+ * re-measures: `gates.ts` `PORT_REASON`).
  */
-const STAGE_CLEAR_DELAY_TICKS = 90;
-
-/** Ticks between the zone map's OK and the next zone (core `scenes` `MAP_LAUNCH_TICKS`). */
-const MAP_LAUNCH_TICKS = 60;
-
-/**
- * Ticks a scene wait allows on top of the scene's own delay: a menu's OK changes the scene on the
- * next tick, a delayed push lands a tick after its count — the rest is slack.
- */
-const SCENE_SLACK_TICKS = 30;
+const DIGIT_WINDOW_TICKS = 20;
 
 /** The save's `localStorage` key (the web adapter prefixes `core/save`'s `save.v1`). */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -75,8 +83,6 @@ interface RunView {
 interface DebugWindow {
   readonly __shmupDebug: {
     readonly sceneId: string;
-    /** Ticks the game ran (every tick of the scene flow, menus included). */
-    readonly tick: number;
     /** The debug switches: god mode keeps a ship from being shot down. */
     readonly flags: { godMode: boolean };
     readonly game: {
@@ -140,95 +146,6 @@ function watchErrors(page: Page): string[] {
 }
 
 /**
- * Reads how many ticks the game has run.
- *
- * @param page - The page.
- * @returns `__shmupDebug.tick`.
- */
-function gameTick(page: Page): Promise<number> {
-  return page.evaluate(() => (window as unknown as DebugWindow).__shmupDebug.tick);
-}
-
-/**
- * Waits until the game has run `ticks` more ticks.
- *
- * @param page - The page.
- * @param ticks - Ticks to wait.
- * @returns Resolves once they ran, however many frames or seconds that takes (no timeout of its
- *   own: the test's bounds it).
- */
-async function waitTicks(page: Page, ticks: number): Promise<void> {
-  const goal = (await gameTick(page)) + ticks;
-  await page.waitForFunction(
-    (target) => (window as unknown as DebugWindow).__shmupDebug.tick >= target,
-    goal,
-    { timeout: 0 },
-  );
-}
-
-/**
- * Waits until the canvas shows a scene (its `data-shmup-scene`), allowing it a number of game
- * ticks rather than wall time.
- *
- * @param page - The page.
- * @param scene - The scene id.
- * @param ticks - Ticks the scene may take to show (default {@link SCENE_SLACK_TICKS}: a scene the
- *   last input opens at once).
- * @returns Resolves once the canvas shows `scene`.
- * @throws {Error} A failed expectation naming the scene shown instead, once `ticks` ticks ran
- *   without `scene`.
- */
-async function expectScene(page: Page, scene: string, ticks = SCENE_SLACK_TICKS): Promise<void> {
-  const last = (await gameTick(page)) + ticks;
-  const shown = await page.waitForFunction(
-    ([want, end]) => {
-      const now = document.querySelector('#game')?.getAttribute('data-shmup-scene') ?? '';
-      if (now === want) return now;
-      if ((window as unknown as DebugWindow).__shmupDebug.tick <= end) return false;
-      return now === '' ? '(none)' : now;
-    },
-    [scene, last] as const,
-    { timeout: 0 },
-  );
-  expect(await shown.jsonValue(), `the scene within ${ticks} ticks`).toBe(scene);
-}
-
-/**
- * Presses a key for 3 ticks and lets the game see the release (6 ticks).
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitTicks(page, 3);
-  await page.keyboard.up(key);
-  await waitTicks(page, 6);
-}
-
-/**
- * Dispatches a remote key by its legacy key code, down then up (held 3 ticks, then 6 released).
- *
- * @param page - The page.
- * @param keyCode - The key code (13 OK).
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitTicks(page, 3);
-  await send('keyup');
-  await waitTicks(page, 6);
-}
-
-/**
  * Opens a build and starts a game through the menus (NORMAL, KESTREL, START).
  *
  * @param page - The page.
@@ -237,8 +154,10 @@ async function remoteTap(page: Page, keyCode: number): Promise<void> {
 async function startGame(page: Page, url: string): Promise<void> {
   await page.goto(url);
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
+  await expectScene(page, 'title');
   await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK
   await tap(page, 'Enter'); // 1 PLAYER
@@ -311,8 +230,9 @@ test.describe('campaign run (web build)', () => {
       (window as unknown as DebugWindow).__shmupDebug.flags.godMode = true;
     });
     const zones = ['zone-a', 'zone-b', 'zone-d', 'zone-f', 'zone-h'];
+    const stage = async (): Promise<string | null> => (await view(page)).stage;
     for (let z = 0; z < zones.length; z++) {
-      await expect.poll(async () => (await view(page)).stage).toBe(zones[z]);
+      await pollTicks(page, 'the stage', stage, zones[z], SCENE_SLACK_TICKS);
       await clearZone(page);
       await waitTicks(page, 10);
       await tap(page, 'Enter'); // skip the tally
@@ -324,7 +244,7 @@ test.describe('campaign run (web build)', () => {
     }
     // M3-02: zone H is a final zone with an escape stage — the way out is flown before the ending.
     await expectScene(page, 'game');
-    await expect.poll(async () => (await view(page)).stage).toBe('escape');
+    await pollTicks(page, 'the stage', stage, 'escape', SCENE_SLACK_TICKS);
     await clearZone(page);
     await waitTicks(page, 10);
     await tap(page, 'Enter'); // skip the escape's tally
@@ -336,14 +256,14 @@ test.describe('campaign run (web build)', () => {
     expect(end.ending).toBe('citadel-flawless');
     // M2-14: the citadel's scene and the epilogue, OK shows every line, OK again the result card;
     // after its lock OK the credits, after theirs OK the title.
-    await waitTicks(page, 90); // past the ending's lock (core `ENDING_LOCK_TICKS`, 60)
+    await waitTicks(page, ENDING_LOCK_TICKS + SCENE_SLACK_TICKS); // past the ending's lock
     await tap(page, 'Enter'); // the whole epilogue
     await tap(page, 'Enter'); // the result card
     await expectScene(page, 'ending');
-    await waitTicks(page, 90); // past the result card's lock (the same 60)
+    await waitTicks(page, ENDING_LOCK_TICKS + SCENE_SLACK_TICKS); // past the result card's lock
     await tap(page, 'Enter');
     await expectScene(page, 'credits');
-    await waitTicks(page, 90); // past the credits' lock (`CREDITS_LOCK_TICKS`, 60)
+    await waitTicks(page, CREDITS_LOCK_TICKS + SCENE_SLACK_TICKS); // past the credits' lock
     await tap(page, 'Enter');
     // M2-15: the run's score entered its table — the name entry (A, then OK past the empty letters
     // and on END), the table with the new row, and after its lock OK the title.
@@ -351,7 +271,7 @@ test.describe('campaign run (web build)', () => {
     await waitTicks(page, 10);
     for (let i = 0; i < 4; i++) await tap(page, 'Enter');
     await expectScene(page, 'hiScore');
-    await waitTicks(page, 60); // past the table's lock (`HI_SCORE_LOCK_TICKS`, 30)
+    await waitTicks(page, HI_SCORE_LOCK_TICKS + SCENE_SLACK_TICKS); // past the table's lock
     await tap(page, 'Enter');
     await expectScene(page, 'title');
     const saved = await page.evaluate((key) => window.localStorage.getItem(key), SAVE_KEY);
@@ -380,16 +300,20 @@ test.describe('campaign run (web build)', () => {
       world.stage?.jumpTo(1980);
       world.scoring.board.scores[0].score = 40_000;
     });
-    await expect
-      .poll(async () => (await view(page)).stage, { timeout: 20_000 })
-      .toBe('bonus-vault');
+    // The window closes, the entrance opens, the warp flies the ship in.
+    await pollTicks(
+      page,
+      'the stage',
+      async () => (await view(page)).stage,
+      'bonus-vault',
+      DIGIT_WINDOW_TICKS + BONUS_WARP_TICKS + SCENE_SLACK_TICKS,
+    );
     expect(
       await page.evaluate(
         () => (window as unknown as DebugWindow).__shmupDebug.game.scenes.run.inBonus,
       ),
     ).toBe(true);
-    const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    await expectScene(page, 'game');
     await freezeSim(page);
     const before = await countColours(page, [...ONE_UP_GREEN, ...BONUS_GOLD]);
     // A 1UP and a bonus capsule (ItemKind 9 / 10) in the open right half of the screen.

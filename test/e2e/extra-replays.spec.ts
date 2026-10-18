@@ -7,6 +7,14 @@
  * flow is read through the test build's debug API (`window.__shmupDebug`).
  */
 import { expect, test, type Page } from '@playwright/test';
+import {
+  BOOT_TIMEOUT_MS,
+  REPLAY_END_TICKS,
+  SCENE_SLACK_TICKS,
+  expectScene,
+  gameTick,
+  pollTicks,
+} from './ticks.js';
 
 /** The last game's `localStorage` key (the web storage adapter prefixes `shmup-cup:`). */
 const LAST_KEY = 'shmup-cup:replay.last';
@@ -157,7 +165,9 @@ test.describe('replay library (web build, M3-01)', () => {
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     // A short game: 1 PLAYER → NORMAL → the first ship → START, a climb, then QUIT TO TITLE.
@@ -175,6 +185,8 @@ test.describe('replay library (web build, M3-01)', () => {
     await page.keyboard.up('ArrowUp');
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
+    // The World stands still under the pause menu: the replay is this many World ticks long.
+    const recorded = await gameTick(page, 'worldTick');
     await waitFrames(page, 4);
     for (let i = 0; i < 3; i++) await tap(page, 'ArrowDown'); // QUIT TO TITLE
     await tap(page, 'Enter');
@@ -189,7 +201,9 @@ test.describe('replay library (web build, M3-01)', () => {
 
     // A relaunch reads it back: EXTRA → REPLAYS → LAST GAME → PLAY.
     await page.reload();
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK
@@ -214,11 +228,17 @@ test.describe('replay library (web build, M3-01)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'replay');
     await tap(page, 'ArrowRight');
     await tap(page, 'ArrowRight'); // ×4
-    await expect
-      .poll(async () => (await view(page)).endTicks, { timeout: 60_000 })
-      .toBeGreaterThanOrEqual(0);
+    // Tick budgets, not wall time (a slow runner): the whole replay even at ×1, then REPLAY END's
+    // hold before the browser.
+    await pollTicks(
+      page,
+      'REPLAY END',
+      async () => (await view(page)).endTicks >= 0,
+      true,
+      recorded + SCENE_SLACK_TICKS,
+    );
     expect((await view(page)).replayOk).toBe(true);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'replays', { timeout: 20_000 });
+    await expectScene(page, 'replays', REPLAY_END_TICKS + SCENE_SLACK_TICKS);
 
     // SHARE's other half: the text pasted on the page joins the kept replays; other text does not.
     await paste(page, 'hello, not a replay');

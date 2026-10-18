@@ -18,6 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { PORT_REASON, PORT_UNMEASURED, assertionsGated } from './gates.js';
+import { BOOT_TIMEOUT_MS, remoteSequence } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -135,34 +136,6 @@ async function remoteTap(page: Page, keyCode: number): Promise<void> {
 }
 
 /**
- * Dispatches several remote keys by key code in one go — each down then up, with no frame in
- * between — then waits 3 frames.
- *
- * @remarks
- * For the TV unlock sequence, which must fit in `DEBUG_UNLOCK_WINDOW_MS` (3 s) of host time: a
- * person's keydowns arrive at event time whatever the frame rate, but {@link remoteTap}'s frame
- * waits made four keys take 18 frames, past 3 s on a runner drawing under 6 a second (a CI
- * flake). The debug tools read the sequence from the keydown events themselves, and the keyboard
- * adapter latches a key released before the next tick, so the game still sees the Pause.
- *
- * @param page - The page.
- * @param keyCodes - The legacy key codes, in order.
- * @returns Resolves 3 frames after the last key-up.
- */
-async function remoteSequence(page: Page, keyCodes: readonly number[]): Promise<void> {
-  await page.evaluate((codes) => {
-    for (const code of codes) {
-      for (const type of ['keydown', 'keyup']) {
-        const event = new KeyboardEvent(type, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      }
-    }
-  }, keyCodes);
-  await waitFrames(page, 3);
-}
-
-/**
  * Boots a build, collects its errors and starts zone A (OK past PRESS OK, OK on START).
  *
  * @param page - The page.
@@ -176,7 +149,9 @@ async function startGame(page: Page, url: string): Promise<string[]> {
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await expect.poll(async () => (await view(page)).sceneId).toBe('title');
   await waitFrames(page, 10);
   await tap(page, 'Enter');
@@ -283,7 +258,9 @@ test.describe('debug tools (M1-19)', () => {
 
   test('freezeSim holds a freshly booted page; stepTo then runs exact ticks', async ({ page }) => {
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     await waitFrames(page, 20);
     const held = await view(page);

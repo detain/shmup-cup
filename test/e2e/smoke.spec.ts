@@ -2,14 +2,19 @@
  * The M1 gameplay smoke (plan M1-19) in headless Chromium, on the dev / test builds `pnpm test:e2e`
  * makes (`build:test` — `__SHMUP_DEV__` on, so `window.__shmupDebug` exists): for the web build
  * (served by `vite preview`) and the Tizen `dist/` opened from disk via `file://`, **title → OK →
- * hold the arrows for 5 s → the game scene is active** (`window.__shmupDebug.sceneId === 'game'`,
- * the World ticked, the ship alive or flying in again) **→ no console errors**. Then the debug tools
- * themselves: on the web F1 shows the overlay and F2 turns god mode on; on the TV build nothing
- * works until the remote's Pause, Ch+, Ch+, Ch+ unlocks the tools and shows the overlay, and the
- * number keys then run the commands.
+ * hold the arrows for 300 World ticks (5 s at 60 ticks a second) → the game scene is active**
+ * (`window.__shmupDebug.sceneId === 'game'`, the World ticked, the ship alive or flying in again)
+ * **→ no console errors**. Then the debug tools themselves: on the web F1 shows the overlay and F2
+ * turns god mode on; on the TV build nothing works until the remote's Pause, Ch+, Ch+, Ch+ unlocks
+ * the tools and shows the overlay, and the number keys then run the commands.
+ *
+ * The holds count World ticks (`ticks.ts`), not wall time: a slow runner ran about 9 ticks a second,
+ * so 5 s of wall time gave fewer than the 60 ticks the smoke asserts (C5 review 3). The TV unlock
+ * goes in one go (`remoteSequence`): it must fit in its 3 s of host time.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS, remoteSequence, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -118,9 +123,13 @@ async function remoteTap(page: Page, keyCode: number): Promise<void> {
   await waitFrames(page, 2);
 }
 
+/** World ticks each arrow is held: 2.5 s at 60 ticks a second. */
+const HOLD_TICKS = 150;
+
 /**
- * The smoke itself: title → OK (twice: past `PRESS OK`, then START) → hold the arrows for 5 s →
- * the game scene is active, the World ticked, no console errors.
+ * The smoke itself: title → OK (twice: past `PRESS OK`, then START) → hold the arrows for
+ * {@link HOLD_TICKS} World ticks each → the game scene is active, the World ticked, no console
+ * errors.
  *
  * @param page - The page.
  * @param url - The build's URL.
@@ -135,7 +144,9 @@ async function smoke(page: Page, url: string): Promise<string[]> {
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await expect.poll(async () => (await debugState(page))?.sceneId).toBe('title');
   await waitFrames(page, 10);
   await tap(page, 'Enter'); // OK: past PRESS OK
@@ -148,12 +159,12 @@ async function smoke(page: Page, url: string): Promise<string[]> {
   await tap(page, 'Enter'); // OK on START in the weapon select (M2-03)
   await expect.poll(async () => (await debugState(page))?.sceneId).toBe('game');
   const before = await debugState(page);
-  // Hold the arrows: right and up for 2.5 s each (a remote holds one at a time).
+  // Hold the arrows: right, then up (a remote holds one at a time).
   await page.keyboard.down('ArrowRight');
-  await page.waitForTimeout(2500);
+  await waitTicks(page, HOLD_TICKS, 'worldTick');
   await page.keyboard.up('ArrowRight');
   await page.keyboard.down('ArrowUp');
-  await page.waitForTimeout(2500);
+  await waitTicks(page, HOLD_TICKS, 'worldTick');
   await page.keyboard.up('ArrowUp');
   await waitFrames(page, 5);
   const after = await debugState(page);
@@ -165,7 +176,7 @@ async function smoke(page: Page, url: string): Promise<string[]> {
 }
 
 test.describe('M1 gameplay smoke', () => {
-  test('web build: title → OK → 5 s of arrows → the game scene, no errors; F1 / F2 debug keys', async ({
+  test('web build: title → OK → 300 ticks of arrows → the game scene, no errors; F1 / F2 debug keys', async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -178,7 +189,7 @@ test.describe('M1 gameplay smoke', () => {
     expect(errors).toEqual([]);
   });
 
-  test('Tizen build via file://: title → OK → 5 s of arrows → the game scene, no errors; Pause, Ch+ ×3 unlocks the tools', async ({
+  test('Tizen build via file://: title → OK → 300 ticks of arrows → the game scene, no errors; Pause, Ch+ ×3 unlocks the tools', async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -188,10 +199,8 @@ test.describe('M1 gameplay smoke', () => {
     await remoteTap(page, 50);
     await tap(page, 'F1');
     expect(await debugState(page)).toMatchObject({ overlay: false, godMode: false });
-    await remoteTap(page, 10252); // Play/Pause: the pause menu opens
-    await remoteTap(page, 427);
-    await remoteTap(page, 427);
-    await remoteTap(page, 427);
+    // Play/Pause (the pause menu opens), Ch+ ×3, in one go: the unlock's 3 s of host time.
+    await remoteSequence(page, [10252, 427, 427, 427]);
     expect(await debugState(page)).toMatchObject({
       unlocked: true,
       overlay: true,

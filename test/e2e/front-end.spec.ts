@@ -15,6 +15,7 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS, GAME_OVER_DELAY_TICKS, SCENE_SLACK_TICKS, expectScene } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -152,11 +153,13 @@ async function waitSceneTicks(
 }
 
 /**
- * Ends the running game through the debug API with a score (status `gameOver`: the flow opens
- * the continue countdown, or the game-over screen without continues, after its delay).
+ * Ends the running game through the debug API with a score, status `gameOver`. The flow opens the
+ * continue countdown (NORMAL has continues) {@link GAME_OVER_DELAY_TICKS} ticks later, and this
+ * waits for it.
  *
  * @param page - The page.
  * @param score - Player 1's score.
+ * @returns Resolves once the canvas shows the countdown (`continue`).
  */
 async function endGame(page: Page, score: number): Promise<void> {
   await page.evaluate((value) => {
@@ -164,6 +167,7 @@ async function endGame(page: Page, score: number): Promise<void> {
     world.scoring.board.scores[0].score = value;
     world.status = 'gameOver';
   }, score);
+  await expectScene(page, 'continue', GAME_OVER_DELAY_TICKS + SCENE_SLACK_TICKS);
 }
 
 /**
@@ -191,7 +195,9 @@ test.describe('front end (web build)', () => {
     const errors = watchErrors(page);
     await page.goto('./');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK
@@ -227,9 +233,8 @@ test.describe('front end (web build)', () => {
     expect(run.checkpoint).toBeGreaterThanOrEqual(0);
     expect(run.loadout).toBe('full');
     await waitFrames(page, 20);
-    await endGame(page, 12_340);
     // The continue countdown first (NORMAL has continues): Esc gives up once OK counts.
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'continue');
+    await endGame(page, 12_340);
     await waitSceneTicks(page, 'continueScreen', 40);
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'gameOver');
@@ -284,7 +289,9 @@ test.describe('front end (web build)', () => {
     const errors = watchErrors(page);
     await page.goto('./');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK (also unlocks audio)
@@ -321,7 +328,9 @@ test.describe('front end (Tizen build from disk)', () => {
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await remoteTap(page, REMOTE.ok); // PRESS OK
@@ -335,7 +344,6 @@ test.describe('front end (Tizen build from disk)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await waitFrames(page, 20);
     await endGame(page, 23_450);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'continue');
     await waitSceneTicks(page, 'continueScreen', 40);
     await remoteTap(page, REMOTE.back); // give up
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'gameOver');

@@ -9,11 +9,25 @@
  *   on the map asks "quit to title?" without leaving the app;
  * - no console errors in either.
  *
+ * Every wait after the boot counts the game's ticks (`ticks.ts`), never rAF frames or wall time:
+ * the tally opens 90 ticks after the clear and the next zone 60 ticks after the map's OK, which a
+ * slow runner takes far longer than `expect`'s default 5 s to run (C5 review 3).
+ *
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import {
+  BOOT_TIMEOUT_MS,
+  MAP_LAUNCH_TICKS,
+  SCENE_SLACK_TICKS,
+  STAGE_CLEAR_DELAY_TICKS,
+  expectScene,
+  remoteTap,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -64,10 +78,11 @@ function view(page: Page): Promise<RunView> {
 }
 
 /**
- * Clears the running zone: a score, status `stageClear` (the flow opens the tally after its
- * delay).
+ * Clears the running zone: a score, status `stageClear`. The flow opens the tally
+ * {@link STAGE_CLEAR_DELAY_TICKS} ticks later, and this waits for it.
  *
  * @param page - The page.
+ * @returns Resolves once the canvas shows the tally (`stageClear`).
  */
 async function clearZone(page: Page): Promise<void> {
   await page.evaluate(() => {
@@ -83,63 +98,7 @@ async function clearZone(page: Page): Promise<void> {
     world.scoring.board.scores[0].score = 4_200;
     world.status = 'stageClear';
   });
-}
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key by its legacy key code, down then up.
- *
- * @param page - The page.
- * @param keyCode - The key code (13 OK, 10009 Back).
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
+  await expectScene(page, 'stageClear', STAGE_CLEAR_DELAY_TICKS + SCENE_SLACK_TICKS);
 }
 
 /**
@@ -179,19 +138,20 @@ async function startGame(page: Page, url: string): Promise<string[]> {
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
-  const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
+  await expectScene(page, 'title');
+  await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK
   await tap(page, 'Enter'); // 1 PLAYER
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
+  await expectScene(page, 'difficulty');
   await tap(page, 'Enter'); // NORMAL
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
+  await expectScene(page, 'shipSelect');
   await tap(page, 'Enter'); // KESTREL
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
+  await expectScene(page, 'weaponSelect');
   await tap(page, 'Enter'); // START
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+  await expectScene(page, 'game');
   return errors;
 }
 
@@ -199,19 +159,17 @@ test.describe('zone map (web build)', () => {
   test('zone A`s clear: the tally, the map, ArrowDown + Enter → zone C', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = await startGame(page, './');
-    const canvas = page.locator('#game');
     expect(await view(page)).toMatchObject({ stage: 'zone-a', route: [0] });
     await clearZone(page);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'stageClear');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // skip the tally
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'map');
-    await waitFrames(page, 10);
+    await expectScene(page, 'map');
+    await waitTicks(page, 10);
     // The graph and its panel: yellow for the cleared zone and the focused exit.
     expect(await countColour(page, FOCUS_YELLOW)).toBeGreaterThan(100);
     await tap(page, 'ArrowDown');
     await tap(page, 'Enter');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    await expectScene(page, 'game', MAP_LAUNCH_TICKS + SCENE_SLACK_TICKS);
     const next = await view(page);
     expect(next.stage).toBe('zone-c');
     expect(next.route).toEqual([0, 2]);
@@ -225,20 +183,18 @@ test.describe('zone map (Tizen build via file://)', () => {
   test('the remote: Back on the map asks, OK launches zone B', async ({ page }) => {
     test.setTimeout(90_000);
     const errors = await startGame(page, TIZEN_INDEX);
-    const canvas = page.locator('#game');
     await clearZone(page);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'stageClear');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await remoteTap(page, 13);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'map');
-    await waitFrames(page, 10);
+    await expectScene(page, 'map');
+    await waitTicks(page, 10);
     await remoteTap(page, 10009);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'confirm');
+    await expectScene(page, 'confirm');
     await remoteTap(page, 10009); // NO
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'map');
-    await waitFrames(page, 10);
+    await expectScene(page, 'map');
+    await waitTicks(page, 10);
     await remoteTap(page, 13);
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
+    await expectScene(page, 'game', MAP_LAUNCH_TICKS + SCENE_SLACK_TICKS);
     expect((await view(page)).stage).toBe('zone-b');
     expect(errors).toEqual([]);
   });

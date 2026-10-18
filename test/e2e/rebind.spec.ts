@@ -9,6 +9,7 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS, INPUT_TEST_EXIT_TICKS, SCENE_SLACK_TICKS, expectScene } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -160,7 +161,7 @@ function collectErrors(page: Page): string[] {
  */
 async function openControls(page: Page): Promise<void> {
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu
@@ -226,9 +227,9 @@ test.describe('rebinding (web build)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'inputTest');
     expect((await litWhileHeld(page, 'KeyJ')) & SHOT).toBe(SHOT);
     expect((await litWhileHeld(page, 'KeyZ')) & SHOT).toBe(0);
-    // Holding Pause (Esc) leaves it.
+    // Holding Pause (Esc) leaves it, after its hold of ticks (not wall time: a slow runner).
     await page.keyboard.down('Escape');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'controls', { timeout: 10_000 });
+    await expectScene(page, 'controls', INPUT_TEST_EXIT_TICKS + SCENE_SLACK_TICKS);
     await page.keyboard.up('Escape');
 
     // After a reload the save's rebinding is applied at boot.
