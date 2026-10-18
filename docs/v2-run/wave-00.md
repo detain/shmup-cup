@@ -5,14 +5,20 @@
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
-**Steps:** R2-01 (its last review loop and a CI triage) · **Gate to start:** — · **Exit (summary):** C5 review 3 of
-`c67c7c9` (and any later fix → review round) at zero findings, nits included; both repeat runs of `W00.TRIAGE`
-green on myadmin1 (`--retries=0`). Otherwise the open items become `R2-01.F1` in [wave 1](wave-01.md).
+**Steps:** R2-01 (its last review loop and a CI triage) · **Gate to start:** — · **Exit (summary):** the C5 review
+loop at zero findings, nits included — its last review (review 4 of `8ff2bf6` + `543887b`, or a later round after a
+fix); the three runs of `W00.TRIAGE` green on myadmin1 (`--retries=0`). Otherwise the open items become `R2-01.F1`
+in [wave 1](wave-01.md).
 
 **Status: open** — until C5 review 3 of `c67c7c9` (and any fix → new review loop after it) reaches zero findings,
 nits included. When that loop ends at zero before the hand-off, the old host's orchestrator rewrites this line to
 `**Status: closed** — <date>, <the zero review>`. If it still reads open when the run starts, the opencode
 orchestrator finishes it first, as `R2-01.F1` in [wave 1](wave-01.md).
+
+**Who closes it:** the previous (old host's) orchestrator sets the status line above to `**Status: closed**` and
+fills in the closing SHA when the C5 loop reaches zero; after that the driver skips this wave. If the status line
+still reads `**Status: open**` when the run starts, the open findings are in the newest `r2-01C5-review*.md` and
+`w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1.
 
 Background: C5 review 2 (of `293e885` + `bc8e05d`) found 3 should-fix items and 1 nit (S1–S3, N1). C5 fix 2
 `c67c7c9` (`test(R2-01): e2e waits on ticks, not frame rate (C5 review 2)`, test files only) fixed all four. C5
@@ -22,12 +28,13 @@ ticks (C5 review 3)`, test files only: the new `test/e2e/ticks.ts` and `test/int
 fix 4 `543887b` (`test(R2-01): every e2e boot wait allows BOOT_TIMEOUT_MS; fly-in and item polls count ticks (C5
 review 3)`, test files only) pushed those fixes and the sweep that followed. C5 review 4 (with the slow-host repro and
 the myadmin1 run) and any fix → new review round after it belong to this loop too. The driver checks the literal
-`**Status: open**` /
-`**Status: closed**` at the start of the status line: keep that spelling.
+`**Status: open**` / `**Status: closed**` at the start of the status line: keep that spelling.
 
 - **The new run's orchestrator**, before wave 1, reads the status line on `origin/master`:
-  - **closed:** nothing of wave 0 is left (C5 review 3 already ran its e2e on myadmin1); go to wave 1.
-  - **open:** get C5 review 3's report from the owner or the hand-off note (if there is none, `R2-01.F1.RV` runs the
+  - **closed:** nothing of wave 0 is left (the loop's last, zero-finding review already ran its e2e on myadmin1); go
+    to wave 1.
+  - **open:** take the open findings from the newest C5 review report and fix report (the `r2-01C5-review*.md` /
+    `w4-C5-fix*-report.md` files named above, or the owner's hand-off note; if there is none, `R2-01.F1.RV` runs the
     review); every open finding and every red check becomes `R2-01.F1` in [wave 1](wave-01.md), and wave 1 starts
     with its lane 1. When `R2-01.F1.RV` reaches zero, the orchestrator rewrites the status line to
     `**Status: closed** — <date>, <the zero review>`.
@@ -54,12 +61,13 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 
 - **Wave / lane / order:** wave 0, orchestrator, first.
 - **Depends on:** the C5 fixer's commits `293e885` (the second e2e gate `PORT_UNMEASURED` / `PORT_REASON`,
-  `assertionsGated`) and `bc8e05d` (the sweep review's 9 stale comment sites), and `c67c7c9` (the review-2 fix), all
-  on master.
+  `assertionsGated`) and `bc8e05d` (the sweep review's 9 stale comment sites), `c67c7c9` (the review-2 fix), and
+  `8ff2bf6` and `543887b` (C5 fixes 3 and 4, the review-3 fixes), all on master.
 - **Goal:** C5 review 2 (of `293e885` + `bc8e05d`) found 3 should-fix items and 1 nit, all fixed by C5 fix 2
-  `c67c7c9` (test files only). C5 review 3 of `c67c7c9` (with the full Chromium e2e on myadmin1), and any fix → new
-  review loop after it, reaches zero findings, nits included. A zero C5 review also closes the A5 (the flip) and U3
-  (the post-flip layout pass) loops.
+  `c67c7c9` (test files only). C5 review 3 of `c67c7c9` found 3 should-fix items and 1 nit, fixed by C5 fixes 3
+  `8ff2bf6` and 4 `543887b` (test files only). The loop goes on — C5 review 4 of `8ff2bf6` + `543887b` (with the
+  full Chromium e2e on myadmin1 and the slow-host run), then any fix → new review — until a review reports zero
+  findings, nits included. A zero C5 review also closes the A5 (the flip) and U3 (the post-flip layout pass) loops.
 - **Files:** read-only; a fixer touches only the files a finding names.
 - **Tests:** the reviewer re-runs `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
   test/integration/e2e-gates.test.ts` and the gated specs under the lock
@@ -75,9 +83,10 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 - **Depends on:** nothing.
 - **Goal:** explain, and fix if real, the three e2e failures that were red on GitHub CI only (shard 1, since
   `ac40436`) and the flake seen on myadmin1. **Fixed in `c67c7c9`** (see [`handoffs-w4.md`](handoffs-w4.md) Appendix A
-  (d) and the "C5 review 2" bullet under R2-01's As built). Left: the two repeat runs under **Tests**, checked by C5
-  review 3. Today's lines (on `543887b`; they were `:241` / `:355`, `:233` and `:114` on `bc8e05d`, and `:298` /
-  `:411`, `:261` and `:152` on `c67c7c9`):
+  (d) and the "C5 review 2" bullet under R2-01's As built). Left: the three runs under **Tests** (the third is the
+  slow-host run of `8ff2bf6`'s specs), checked by the loop's newest review (review 4 or later). Today's lines (on
+  `543887b`; they were `:241` / `:355`, `:233` and `:114` on `bc8e05d`, and `:298` / `:411`, `:261` and `:152` on
+  `c67c7c9`):
   - `test/e2e/campaign-run.spec.ts:217` — "A → B → D → F → H: every tally and map, …" (zone B's `clearZone` stayed in
     `game` instead of reaching `stageClear`; atlas pages `0,2`);
   - `test/e2e/campaign-run.spec.ts:335` — ``the remote`s OK skips the tally and launches the next zone`` (the Tizen
@@ -87,7 +96,9 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
   - `test/e2e/flight.spec.ts:153` — "arrow keys move the KESTREL; without input it stays put" (the idle drift was
     0.96 px against a 0.5 px limit, one flaky run on myadmin1).
 - **Files:** `test/e2e/campaign-run.spec.ts`, `test/e2e/debug-tools.spec.ts`, `test/e2e/flight.spec.ts`,
-  `test/e2e/raster.spec.ts`; app or shell source only for a real bug, reported first.
+  `test/e2e/raster.spec.ts`; the files of `8ff2bf6` and `543887b` (`test/e2e/ticks.ts`,
+  `test/integration/e2e-ticks.test.ts` and the specs they touched) only where a finding names them; app or shell
+  source only for a real bug, reported first.
 - **Tests (on myadmin1, under the lock; `--retries=0` because the helper sets `CI=1`, which gives each test one
   retry and would hide a flake):**
   ```bash
@@ -95,8 +106,10 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
   E2E_WORKERS=12 bash docs/v2-run/helpers/e2e-batch.sh campaign-run.spec.ts debug-tools.spec.ts flight.spec.ts raster.spec.ts --repeat-each=4 --retries=0
   # CI-like load on 2 CPUs (the test builds are fresh from the first run)
   taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh campaign-run.spec.ts debug-tools.spec.ts --repeat-each=2 --retries=0
+  # the slow-host run of 8ff2bf6's specs (2 CPUs, 3 repeats)
+  taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh zone-map.spec.ts frame-layout.spec.ts platform-polish.spec.ts smoke.spec.ts continue.spec.ts front-end.spec.ts extra-replays.spec.ts rebind.spec.ts --repeat-each=3 --retries=0
   ```
-- **Acceptance:** the fix is confirmed: both runs green on myadmin1; the cause is named; no timeout raised blindly
+- **Acceptance:** the fix is confirmed: the three runs green on myadmin1; the cause is named; no timeout raised blindly
   (the C5 lesson: a poll that can never come true only looks like slowness).
 - **Token:** none.
 - **Traps:** do not gate a failing test to get green; a gate is only for a test that is wrong at 640×360 by design.
@@ -104,9 +117,9 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 
 ## Exit check
 
-1. C5 review 3 (and every later round) reports zero findings, nits included.
+1. The C5 loop's last review (review 4 or a later round) reports zero findings, nits included.
 2. `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-gates.test.ts` is green.
-3. Both runs of `W00.TRIAGE`'s **Tests** are green on myadmin1 (or the open items are handed to wave 1 as
+3. The three runs of `W00.TRIAGE`'s **Tests** are green on myadmin1 (or the open items are handed to wave 1 as
    `R2-01.F1`).
 4. `git status` is clean in the main checkout; no worktree is left with unpushed commits.
 5. The status line above reads `**Status: closed** — …` (written by the old host's orchestrator), or it still reads
@@ -114,5 +127,6 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 
 ## Owner (Manual) — never blocks this wave
 
-- Hand C5 review 3's report to the new run if this wave is still open at the hand-off.
+- If this wave is still open at the hand-off, hand the newest C5 review report (review 4 or later) and its fix report
+  to the new run (or leave them in `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1).
 - None new otherwise. The open owner questions are in [`decisions.md`](decisions.md).

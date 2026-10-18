@@ -4,6 +4,12 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout:
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w01-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w01-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
 
 **Steps:** R2-01 (docs pass, and `R2-01.F1` if wave 0 left it open) · R2-02 (P0, P1) · **Gate to start:** wave 0
 closed (the C5 review loop at zero: [`wave-00.md`](wave-00.md)'s status line reads `**Status: closed**`), or its
@@ -55,7 +61,7 @@ reviewed to zero.
 
 ## Subtasks
 
-### R2-01.F1 — Finish wave 0: C5 review 3 of `c67c7c9` to zero (only if `wave-00.md` still reads `**Status: open**`)
+### R2-01.F1 — Finish wave 0: C5 review 4 of `8ff2bf6` + `543887b` (and its later rounds) to zero (only if `wave-00.md` still reads `**Status: open**`)
 
 - **Wave / lane / order:** wave 1, lane 1, first: it takes the first slot. Skip this block (and `R2-01.F1.RV`) when
   [`wave-00.md`](wave-00.md)'s status line reads `**Status: closed**`.
@@ -74,7 +80,10 @@ reviewed to zero.
   3. a **new** `R2-01.F1.RV`, and so on, until a review reports zero findings, nits included, and the three e2e runs
      are green.
      Then the orchestrator rewrites `wave-00.md`'s status line to `**Status: closed** — <date>, <the zero review>`.
-- **Depends on:** a review round with findings (C5 review 3's report, or `R2-01.F1.RV`'s).
+- **Depends on:** a review round with findings: the newest C5 review report (review 4 or later) — from the owner, or
+  the newest `r2-01C5-review*.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1 (with
+  the newest `w4-C5-fix*-report.md` beside it) — or `R2-01.F1.RV`'s. Never redo a finding that `8ff2bf6` or
+  `543887b` already fixed (C5 review 3's).
 - **Goal:** every finding of that round fixed, so ten agents do not verify against a red master.
 - **Files (only these; lines on `543887b`; the reviewer reads them, the fixer may edit them):**
   - `test/e2e/campaign-run.spec.ts` — `:217` ("A → B → D → F → H: every tally and map, …", the web build; it was
@@ -84,7 +93,8 @@ reviewed to zero.
     tick"; CI's `:233`);
   - `test/e2e/flight.spec.ts` — `:153` ("arrow keys move the KESTREL; without input it stays put"; the myadmin1 flake
     at `:114`);
-  - `test/e2e/raster.spec.ts` — only what a finding names (`c67c7c9` changed its row comment `:237-239`);
+  - `test/e2e/raster.spec.ts` — only what a finding names (`c67c7c9` changed its row comment, then `:237-239`, now
+    `:240-242`);
   - the files of `8ff2bf6` and `543887b` — `test/e2e/ticks.ts`, `test/integration/e2e-ticks.test.ts` and the specs
     they touched (`git diff --stat c67c7c9 543887b -- test/e2e`) — only what a finding names;
   - app or shell source only if the cause is a real bug — then report it first and wait for the orchestrator.
@@ -407,9 +417,10 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
   `docs/dev/campaign-and-bonus-stages.md`.
 - **What to write:** the layout section (panels no longer literal; picture scenes scaled by `uiPx` / `uiOffsets`);
   the campaign line caps are **47 / 67**, derived from the text panels (`scenes-and-ui.md:363-366` still says
-  "55 / 68"; `zones-h-and-i.md:432-433` too); `SCROLL_HALVES` (the story crawl and the credits keep their v1 duration
-  at 640; `SCROLL_HALVES` = 2 brings back the slow crawl); the title HI-line rule (shown where v1 showed it, hidden
-  only under Options and difficulty).
+  "55 / 68"; `zones-h-and-i.md:432-433` gives the v1 caps 40 / 60 with the old formulas
+  `⌊(FRAME_W − 144) / GLYPH_W⌋` and `⌊(FRAME_W − 24) / GLYPH_W⌋`, which give 55 / 68 at 640); `SCROLL_HALVES` (the
+  story crawl and the credits keep their v1 duration at 640; `SCROLL_HALVES` = 2 brings back the slow crawl); the
+  title HI-line rule (shown where v1 showed it, hidden only under Options and difficulty).
 - **Acceptance:** `grep -n "55 / 68" docs/dev/scenes-and-ui.md docs/dev/zones-h-and-i.md docs/dev/campaign-and-bonus-stages.md`
   is empty; no line of the three files gives the campaign line caps for today's frame as anything but 47 / 67
   (`packages/core/src/data/campaign.ts:151`, `:163`, `:185`); every `handoffs-w4.md` item for these files is written
@@ -421,23 +432,25 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
 ### R2-01.DR — Review of the docs pass
 
 - **Wave / order:** review slot 1, as D pushes land; then a final pass over all seven.
-- **What to read:** `git log --oneline <wave base>..origin/master -- '*.md'` and each diff.
+- **What to read:** `git log --oneline $(cat /home/sites/shmup-cup-run/w01-base.txt)..origin/master -- '*.md'` and
+  each diff.
 - **Must hold:** every number and path in the new text matches the code at HEAD (spot-check at least 10 per agent
   with `git grep`); no doc still says "22 entries", "still runs at 384×216" or "55 / 68"; every item of
   `handoffs-w4.md` for these files is written or explained; no code, test or content file changed; tables readable.
 - **Report:** findings with severity (blocker / should-fix / nit). Zero findings means zero nits. Fixes go to a
   fixer (the D agent's own files), then a **new** reviewer.
 
-### R2-01.F1.RV — C5 review 3 and its later rounds (only while `wave-00.md` reads `**Status: open**`)
+### R2-01.F1.RV — C5 review 4 of `8ff2bf6` + `543887b` and its later rounds (only while `wave-00.md` reads `**Status: open**`)
 
-- **Wave / order:** review slot 2, first in the wave: the first round (unless the owner hands over a finished C5
-  review 3 report), then one new round after each `R2-01.F1` fix push. Fix → a **new** reviewer until zero findings,
-  nits included.
+- **Wave / order:** review slot 2, first in the wave: the first round (unless a finished C5 review report — review 4
+  or later — with findings is handed over), then one new round after each `R2-01.F1` fix push. Fix → a **new**
+  reviewer until zero findings, nits included.
 - **What to read:** `git show c67c7c9`, `git show 8ff2bf6`, `git show 543887b` and every later commit to the e2e specs
   and their helpers
   (`git log --oneline c67c7c9^..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`);
   [`handoffs-w4.md`](handoffs-w4.md)'s "C5 review 2" bullet under R2-01's As built and Appendix A (d); the hand-over
-  note (C5 review 4's report, if the owner hands one over); the previous round's report and F1's report, if any.
+  note (the newest C5 review report — review 4 or later — if one is handed over); the previous round's report and
+  F1's report, if any.
 - **Run:** the three e2e commands and the Vitest command of `R2-01.F1`'s **Tests** (read-only: never edit a file).
 - **Must hold:** every C5 review 2 item (S1–S3, N1) is fixed as `handoffs-w4.md` describes, and every C5 review 3
   item as the commit bodies of `8ff2bf6` and `543887b` say; the three e2e runs green with `--retries=0`; the cause of
@@ -473,7 +486,7 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
    packages/core/test/frame-literals.test.ts` green on `origin/master`.
 3. `bash test/port-v2/two-scale.sh -- node scripts/content/rescale.mjs --factor 1 --dry-run` reports exactly the 3
    IRON LEVIATHAN `parts[].x` errors.
-4. `git diff <wave base>..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
+4. `git diff $(cat /home/sites/shmup-cup-run/w01-base.txt)..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
    is empty.
 5. §17's R2-01 row on `origin/master` says `done (owner parts pending)`; then the orchestrator (only the orchestrator,
    never a docs agent) runs `python3 .claude/plan_board_v2.py` from the main checkout.
