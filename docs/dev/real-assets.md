@@ -317,6 +317,17 @@ report import rather than restate.
 no PNG, when the PNG or its sidecar changed after ingest (the hashes no longer match — hand edits
 go in the edit layer and a re-run), or when a recipe was never ingested.
 
+**The origin report is the gate the ingest tool is not** (R3-05 part 2 —
+[art-provenance.md](art-provenance.md) §9). The tool writes a record for anything it can trace, but
+`node scripts/art-origins.mjs --check` — run in CI by `test/scripts/art-origins.test.ts` — **fails**
+a shipped sprite whose record or reference tree holds a model on `hold` for its `use` (today every
+FLUX model — rule 3), an `ai-assisted` record with `reviewed: null` (rule 4, W3-11), and a
+`"use": "reference"` record whose `cleanup` is `none` **or `light`** — with so little cleanup the
+shipped pixels are still largely the model's, so "reference" needs `heavy` or `redrawn` (rule 5,
+W3-10). In the staging folder those three rules only warn, so art may be ingested before its
+review or the FLUX decision; a broken record, an unknown model or a path into the git-ignored
+candidates fails there too.
+
 **`LICENSES.md`** (for hand-drawn or third-party art without a record): a Markdown file in the
 PNG's folder or any folder above it, up to `sprites/`, that names the PNG by its path relative to
 that file (`kestrel.png`, `ships/kestrel.png`) or by its sprite name in backticks
@@ -325,7 +336,9 @@ that file (`kestrel.png`, `ships/kestrel.png`) or by its sprite name in backtick
 ### Ingesting one winner, step by step
 
 1. **Check that it may ship** ([art-provenance.md](art-provenance.md) §6) — today nothing made by
-   FLUX ships, as pixels or as a reference. `"use": "reference"` records a design reference.
+   FLUX ships, as pixels or as a reference. `"use": "reference"` records a design reference, and
+   only with `cleanup` `heavy` or `redrawn` (the origin report fails `none` / `light` once the
+   sprite leaves the staging folder).
 2. **Read the bible's entry** for the category: the frame size and count (§5), the colour cap, the
    alpha recipe.
 3. **Write the recipe** next to where the output goes, its source the committed
@@ -335,10 +348,11 @@ that file (`kestrel.png`, `ships/kestrel.png`) or by its sprite name in backtick
    and re-run until the warnings are the ones you accept.
 5. **Clean up by hand** in `<name>.edit.png` (copy `<name>.png`, paint, erase with `#ff00ff`),
    re-run, and set `provenance.cleanup` if the work is `heavy` or the AI image was only a reference
-   (`redrawn`). Record the content review in `provenance.reviewed`.
+   (`redrawn`). Record the content review in `provenance.reviewed` — a shipped AI-assisted sprite
+   without it fails the origin report.
 6. **Commit** the recipe, the edit layer and the three outputs; `--check` must pass. Then
-   `pnpm assets` and `pnpm content:check` (after R2-01, when the files live under
-   `assets/source/sprites/`).
+   `pnpm assets`, `pnpm content:check` and `node scripts/art-origins.mjs --check` (after R2-01, when
+   the files live under `assets/source/sprites/`).
 
 ## Music — Furnace / OpenMPT → `content/audio/music/`
 

@@ -266,6 +266,36 @@ can copy the game's save out of a debug build and put one in:
 Importing replaces everything saved on that monitor or browser — export the old save first if you
 want it back. Normal builds have none of this.
 
+## Picture loading times (v2)
+
+Since v2's atlas work (plan R1-05) the game's pictures are split into **pages**: one page every zone
+uses (ships, shots, bullets, items, effects, text — `main.png`) and one page per zone (its enemies,
+boss, backgrounds and ground tiles — `main-1.png` for zone A … `main-9.png` for zone I). The
+picture list (`main.json`) is a file next to them that the game reads at start-up. The monitor's
+graphics memory only holds the pages the current zone needs, and the next zone's page is loaded
+**while the zone starts**, never in the middle of play.
+
+The game writes how long this takes onto its canvas, in **every** build (no debug tools needed) —
+read them in the remote Web Inspector's *Elements* panel on the game's `<canvas>`:
+
+| Attribute | What it says |
+|---|---|
+| `data-shmup-atlas-pages` | Which pages are in graphics memory now, by number: `0,1` on the title (the shared page and zone A's) |
+| `data-shmup-atlas-load-ms` | After start-up: how many milliseconds the pictures took — reading the list, loading and decoding every page, and putting the first zone's pages into graphics memory. After a zone change: how long that change took |
+| `data-shmup-atlas-page-ms` | The same, page by page. After start-up: `manifest:<ms>;main.png:<load>/<decode>/<upload>;main-1.png:…` — the list, then each page's load, decode and upload time (an upload of `0.0` means that page was not needed yet). After a zone change: `main-3.png:0.0/0.0/<upload>` for each page the change put into graphics memory (empty when it only removed pages) |
+| `data-shmup-boot-ms` | The whole start-up, as before |
+
+In a debug build the console has the same numbers and a way to change zones by hand:
+
+| In the console | What it does |
+|---|---|
+| `__shmupDebug.atlas.resident` | For each page, whether it is in graphics memory (`true` / `false`) |
+| `__shmupDebug.atlas.unloads`, `.uploads` | How many times a page was removed / put into graphics memory since start-up |
+| `__shmupDebug.atlas.lastPrepareMs` | How long the last zone change that moved a page took, in milliseconds |
+| `__shmupDebug.atlas.timing` | The start-up's figures as an object: the list's time and size, and each page's load, decode and upload time |
+| `__shmupDebug.atlas.pageMs` | The text of `data-shmup-atlas-page-ms` |
+| `__shmupDebug.atlas.prepare('zone-c')` | Changes the pages as a move to zone C would (any zone or stage name); returns how many pages it removed |
+
 ## The M1 release check
 
 Please run this on **both** monitors with the debug build, and write down the build id. It is the
@@ -315,6 +345,26 @@ With the debug build on each monitor:
    about **24 MB** for it; report the real number so the estimate can be corrected.
 4. **Game mode.** The latency comparison of the normal and the game-mode build —
    [install-on-tv.md](install-on-tv.md#the-game-mode-build-latency-ab-test).
+
+## Extra checks for the v2 atlas build (plan R1-05)
+
+With a debug build of `master` on a monitor and the remote Web Inspector attached:
+
+1. **It starts.** The game reaches the title. This build is the first that **reads its picture list
+   from a file** on the TV. If it stops on a navy screen titled **ATLAS MANIFEST FAILED TO LOAD**,
+   photograph it and report it — that is the one thing this check is for, and a developer has a
+   one-line fallback ready.
+2. **Start-up figures.** On the title, note `data-shmup-atlas-load-ms`, `data-shmup-atlas-page-ms`,
+   `data-shmup-atlas-pages` (expected: `0,1`) and `data-shmup-boot-ms` from the canvas
+   ([Picture loading times](#picture-loading-times-v2)).
+3. **A zone change.** Start zone B — from the title menu's **PRACTICE** box (ZONE B), or by
+   playing on to it from the zone map after zone A — or type
+   `__shmupDebug.atlas.prepare('zone-b')`, then note `data-shmup-atlas-load-ms` and
+   `data-shmup-atlas-page-ms` again — that is the zone-change time — and check that
+   `data-shmup-atlas-pages` now reads `0,2`.
+4. **The bench's decode table.** When the render bench runs on the monitors (plan R0-03), its
+   results page has a second table, **DECODE (R1-05)**, under the first: photograph it too
+   ([the recipe](../dev/build-test-deploy.md#the-tv-render-bench-r0-02)).
 
 ## Extra checks for the remote & hardware build (plan §8.4)
 
@@ -478,6 +528,9 @@ With the debug build on **each** monitor:
 | `RT` jumps by ~16 MB when CRT goes on | Worth reporting with a photo: since the render fix the CRT should take no scratch picture at all. (`RT` counts from the start of the app, not from when you opened the panel, so switching CRT off again never brings it back down.) |
 | The device line reads `? FW ?` | The monitor's product information could not be read within 3 seconds — photograph the panel and report it; everything else works |
 | `__shmupDebug` is `undefined` in the console | A normal build (no debug API) — install `build:dev` (or use `pnpm dev`); on the TV make sure the inspector is attached to the game, not another app |
+| The game stops on **ATLAS MANIFEST FAILED TO LOAD** | The game could not read its picture list (`assets/atlas/main.json`) — on a TV, possibly because it refuses to read a file from its own package this way. Photograph it, note the monitor and the build id, and report it |
+| No `data-shmup-atlas-…` attributes on the canvas | The build predates the v2 atlas work — build it again from `master` |
+| `__shmupDebug.atlas` is `null` | The tools ran without a picture manager (a test page); in a normal debug build of the game it is always there |
 | No list in the top-right corner | The build was made without `VITE_REPORT_URL` (see [the guided capture](#the-guided-capture-preferred)) — it then records nothing at all. Set the variable, build `build:dev` again and reinstall |
 | The list is there but `fails` keeps rising | The monitor cannot reach the desktop: check the address you built with is the desktop's address on the **same** network, that `npm run log-server` is still running, and that Windows allowed Node through the private-network firewall |
 | A line never ticks | Read what it asks for again — each one needs a certain amount of the *right* kind of play (`M2` needs 20 seconds per CRT setting, `M5` a full minute in one stage). `M8` is manual and never ticks |

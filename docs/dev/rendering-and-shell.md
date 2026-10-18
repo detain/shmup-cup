@@ -239,11 +239,21 @@ in `sprites`. Anything that does not resolve draws the magenta checker `ui/missi
 | A quad-pool `frameId` outside the atlas | `ui/missing` |
 
 Each atlas page becomes one Pixi `ImageSource` (`scaleMode: 'nearest'`, no mipmaps) and each
-frame a `Texture` over it, so every sprite of a page batches into one draw call. The atlas
+frame a `Texture` over it, so every sprite of a page batches into one draw call (Pixi batches up
+to 16 textures, so the zone-split atlas of R1-05 — `common` plus a zone page — still draws within
+`DRAW_CALL_BUDGET`). The atlas
 refuses an image whose size differs from its manifest entry (a stale page next to a newer
 manifest), a page over `MAX_ATLAS_SIZE` (2048), a frame outside its page and a sprite that
 lists a missing or shared frame — all as `RangeError`s, which the shell turns into a boot
 error screen.
+
+**The pages' GPU lifetime belongs to the shell (R1-05).** `createAtlas` turns each page's
+`autoGarbageCollect` **off** — Pixi's `ImageSource` forces it on, and its texture GC would drop a
+page no frame bound for 60 s, behind the residency's back — so a page leaves the GPU only through
+`unload()` (the shell's atlas residency between zones) or `Atlas.destroy()`.
+`PixiRenderer.uploadTextureSource(source)` (Pixi's `renderer.texture.initSource`; cold — boot, a
+stage change, a new World) uploads a page **now**, so the residency puts the next zone's pages on
+the GPU at the transition instead of on their first draw mid-play.
 
 ### Layers, bindings and quad pools
 
@@ -463,9 +473,10 @@ The whole story is on [presentation-polish.md](presentation-polish.md); in brief
 
 ## The browser shell (`@shmup/shell`)
 
-`bootShell(options)` is the one boot path of `apps/web` and `apps/tizen` (D34). The apps
-create what is platform-specific — input, audio, the `Platform` — and pass it in with the
-inlined virtual modules:
+`bootShell(options)` is the one boot path of `apps/web`, `apps/tizen` and `apps/webos` (D34). The
+apps create what is platform-specific — input, audio, the `Platform` — and pass it in with the
+virtual modules: the content inlined, the atlas as **where to fetch its manifest** (since R1-05 —
+the manifest ships as `dist/assets/atlas/main.json`, no longer inside `app.js`):
 
 ```ts
 import contentFiles from 'virtual:shmup-content';
@@ -475,7 +486,7 @@ const shell = await bootShell({
   canvas,
   win: window,
   contentFiles,
-  assets, // { manifest, pageUrls }
+  assets, // { manifestUrl, atlasDir, manifestDigest } — or virtual:shmup-assets-inline's { manifest, pageUrls }
   input, // createWebInput(...) — also the platform's input; destroyed by stop()
   audio, // createWebAudio()   — also behind the platform's audio; destroyed by stop()
   platform: (renderer) => createWebPlatform({ input, audio, webgl2: renderer.webGLVersion === 2 /* … */ }),
@@ -494,13 +505,15 @@ const shell = await bootShell({
 |---|---|---|
 | 0 | Canvas marked `data-shmup-state="loading"`; overlay shows `SHMUP CUP` / `LOADING` and an empty bar | — |
 | 1 | `loadGameContent(files, { owners })`: core kinds through `loadContent()`, every foreign kind through its owner | `CONTENT COULD NOT BE READ` (a thrown error), `CONTENT ERRORS: N PROBLEMS` (issues, one `path: message` line each) |
-| 2 | `loadImages(pageUrls, () => new Image())` — all pages in parallel, the bar advances per page | `ATLAS PAGE FAILED TO LOAD` (`<url>: AssetLoadError: …`) |
+| 1a | R1-05, manifest assets only: `loadAtlasManifest(manifestUrl, manifestDigest, createRequest)` — **`XMLHttpRequest`** through audio-web `loadArrayBuffer` (`fetch()` fails on `file://`, D25; there XHR succeeds with status 0), then the digest of the bytes (32-bit FNV-1a, the value `vite.shared.ts` recorded at build time), the format version (`ATLAS_MANIFEST_VERSIONS` 1 or 2) and the shape; the page URLs are `atlasDir` + each page's `file`. An inlined manifest (`virtual:shmup-assets-inline`, the TV fallback of W3-7) skips this | `ATLAS MANIFEST FAILED TO LOAD` (load / parse), `ATLAS DOES NOT MATCH ITS MANIFEST` (digest / version — a manifest of another build) |
+| 2 | `loadImagesTimed(pageUrls, () => new Image(), …)` — all pages in parallel, each awaited through a guarded `img.decode()` (a rejected decode still counts as loaded) and timed (`Shell.atlasTiming`, R1-05); the bar advances per page | `ATLAS PAGE FAILED TO LOAD` (`<url>: AssetLoadError: …`) |
 | 3 | `createAtlas(manifest, images)` | `ATLAS DOES NOT MATCH ITS MANIFEST` |
 | 4 | `createPixiRenderer(...)` — WebGL1 first (the M7 monitors do expose WebGL 2 / OpenGL ES 3.0 with `MAX_TEXTURE_SIZE` 8192 on a Mali-G51 — measured 2026-09-15 —, but older sets do not, so WebGL1 stays the default); `fxSeed` = the game's seed xor a salt, `effects` = `ShellOptions.effects`, `countDrawCalls` only with `ShellOptions.debugTools` (M1-19) | `WEBGL IS NOT AVAILABLE` |
 | 5 | `options.platform(renderer)`; then (M1-17) `loadSave(platform.storage)` — never fails: a corrupt or unreadable save means defaults, its text copied to `save.corrupt` — `createSaveStore`, `applyAudioOptions(audio, save.options.audio)`, and with `options.inputProfiles` its `choices()`, `apply(savedId, 'save')`, (M2-16) `customize?.(save.options.input)` and `active()`; (M2-16) the rebind screen's host side `createShellControls(…)` when the app offers `customize` / `rebindable` and the adapter the capture; then `createGame(platform, gameConfig, content.db, options)` — `{ scenes: 'boot', save, inputProfiles: { choices, active }, soundTest, controls }` for the default scene `game` (the scene flow, M1-16), none for the dev scenes (bare gameplay) — [saves-and-options.md](saves-and-options.md#the-shells-side) | `SHMUP CUP FAILED TO START` (the platform factory, the profile callbacks or `createGame` threw) |
 | 5a | Audio (M1-15): `createAudioEngine({ sfx, music, loader })`, `engine.loadSfx()` (bar labelled `LOADING SOUND`), then for a booted stage `engine.prepareMusic(stage.id, stageMusicCues(stage))` (`LOADING MUSIC`; open space prepares none); the scene flow adds the title theme (and the stage-clear / game-over jingles in open space), then `game.scenes.finishBoot()` — [audio.md](audio.md#the-shells-wiring) | `AUDIO FAILED TO LOAD` (`AudioLoadError: could not load <url>: …`) |
 | 6 | `renderer.setFxContent(shell.fx)`; `applyDisplayOptions(renderer, save.options.display)` (M2-02: the bullet palette — before the sprite names are resolved; M2-08: the scale mode, shake, flashing and hitbox markers — then `ShellOptions.effects.screenShake` / `reduceFlashing` override them), `renderer.setInterpolation(interpolation === 'on')` and the refresh probe (M2-08; M3-02b: the probe also drives `game.setVsyncLock` while `framePacing` is `'auto'` and it reads `VSYNC_LOCK_MIN_HZ … VSYNC_LOCK_MAX_HZ`); scene set up (the scene flow: `createSceneView(game)`, its name table + `bindWorld(view.backdrop)`; free flight / showcase / fx gallery: the scene's name table + `bindWorld(scene.world)`; calibration: content's names and a frame without a world), dispatcher created — in the scene flow and free flight with `connectFxEvents` (M1-14) and `connectAudioEvents(events, engine, camera)` (M1-15; the flow's `sceneView.camera`, free flight's `world.view.camera`); in the scene flow also `connectOptionEvents(events, audio, …)` (M1-17: the Options screen's volumes and profile, live; M2-02: the bullet palette → `renderer.setBulletPalette`; M2-08: the renderer as the display target — scale mode, shake, flashing, hitbox markers; M2-16: `InputSettings` → the app's `customize(save.options.input)`) and `connectStagePreparation(events, engine, stages, stageMusicCues)` (M2-10: `PrepareStage` → the stage's music set) | — |
 | 7 | Suspend → `input.clear()` + `audio.suspend()`; resume → `audio.resume()` + `refresh.reset()`; window `blur` → `input.clear()` (M1-17 — a window without focus never sends its key-ups) **and, since M3-02b, a platform suspend**: the apps' lifecycles treat `blur` / `focus` like hidden / visible (the M7's Home bar is only an overlay — it fires no `visibilitychange`), de-duplicated so a `blur` + `hidden` pair suspends once and the resume waits for both; audio unlock (first `keydown` / `pointerdown` in the capture phase, or immediately) followed by `engine.attach(audio)` right after `unlock()` returns and again when it resolves; `resize` → `renderer.resize()` | — |
+| 6a | R1-05: the atlas residency (`createAtlasResidency` with the renderer's `uploadTextureSource`) prepares the boot stage — the scene flow's and free flight's `game.world` stage; showcase, calibration and the fx gallery keep every page — so its pages are uploaded **behind the loading screen, before the warm-up frame**, each upload timed; the canvas gets `data-shmup-atlas-pages`, `data-shmup-atlas-load-ms` (`atlasTiming.totalMs`) and `data-shmup-atlas-page-ms` | — |
 | 7a | `renderer.warmUp()` (M3-02d) — one throwaway frame into an off-screen target with every GL program and every pooled sprite in it, so nothing links or grows a batch buffer once the game is running; never presented | — |
 | 8 | rAF loop started, overlay removed, canvas marked `running`, `data-shmup-scene` = the top scene (`title`) or the dev scene, and `data-shmup-boot-ms` = the launch-to-ready time (M1-17, `Shell.bootTiming`); then, in dev / test builds, the debug tools from `ShellOptions.debugTools` (M1-19: keys, `window.__shmupDebug`, the overlay — before the first frame, which rAF runs later; since M2-17 with the save store for `__shmupDebug.save`) | — |
 
@@ -508,6 +521,31 @@ Once the atlas and the content are ready (M2-17) the shell also works out which 
 campaign zone needs (`memory` module: `stageSpriteSets` → `atlasPageNeeds` →
 `createAtlasResidency`, `Shell.atlasResidency`) and, in the scene flow, connects it to
 `PrepareStage` next to the music preparation — [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory).
+Since R1-05 the atlas really is split (`common` + one page per zone), and the residency does more:
+
+- **Eager upload** (W3-2): a prepare unloads the pages the next stage does not need, then uploads
+  every needed page without a GPU copy — at boot (step 6a), on every `PrepareStage`, and
+- on every **new World on screen** (W3-9): in the frame loop's `worldChanges` branch (cold, once
+  per World) `prepareShownWorld` finds the World the frame shows — the game's own, or a stack
+  scene's `world` field (the attract demo, which never emits `PrepareStage`; a replay) — by its
+  view (`worldOfView`; `game.world` is the game scene's World, not the demo's). The weapon select's
+  live preview is deliberately **not** placed: it flies the dev `weapon-range`, and placing a stage
+  outside the campaign would put every page on the GPU for a menu.
+- **Self-healing unload:** a prepare unloads every page the stage does not need **whether or not it
+  believes it resident** — the preview draws `terrain-a` from zone A's page behind its back, and
+  Pixi uploads it on that first draw; the game start's prepare frees it again. Unloading a page
+  with no GPU copy costs nothing; `unloads` and `onChange` count only the believed-resident ones.
+- **Timing** (W3-6): `Shell.atlasTiming` (`AtlasTiming` — `manifest` `fetched` / `inline`,
+  `manifestMs`, `manifestBytes`, `pagesMs`, per page `file` / `loadMs` / `decodeMs` / `uploadMs`,
+  `totalMs`), measured with the window's `performance.now()`, never `ShellOptions.now`. The canvas
+  carries `data-shmup-atlas-pages` (the resident page indices, `"0,1"`), `data-shmup-atlas-load-ms`
+  (after boot the atlas's share of the boot, then each stage change's unload + upload) and
+  `data-shmup-atlas-page-ms` (after boot `manifest:<ms>;<file>:<load>/<decode>/<upload>;…`, after a
+  stage change `<file>:0.0/0.0/<upload>` for each page it uploaded — policy "all" fetches and
+  decodes every page at boot), written on those transitions only, never per frame. Dev / test
+  builds expose the same as `window.__shmupDebug.atlas` ([debug-tools](../client/debug-tools.md)).
+
+The manifest itself: [asset-pipeline.md](asset-pipeline.md#the-vite-plugin-shmupassets-in-vitesharedts).
 The platforms' `localStorage` adapter is the shell's `createWebStorage` (the `storage` module,
 quota checks) since M2-17.
 
@@ -998,8 +1036,9 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   the real renderer's bindings at each internal size with a **density** `s`: 384×216 at `s` = 1,
   640×360 at 1.5 (the v2 game), 960×540 at 2.25 (v2's field of view at 1.5× its density). The atlas
   is upscaled ×`s` at build time (`scripts/bench-atlas.mjs`; pages 1 / 1 / 2 by the plan's area
-  model), and the load is v2's layer stack: five parallax layers (two full-frame, three partial with
-  alpha), ~35 % terrain at `8·s`-px tiles, decor, 64 enemies, 512 bullets, 512 point items, 512
+  model — since R1-05 from the **ungrouped** source atlas, `buildAtlas({ ungrouped: true })`, the
+  old one-page layout byte for byte, so R0-02's figures stay comparable), and the load is v2's
+  layer stack: five parallax layers (two full-frame, three partial with alpha), ~35 % terrain at `8·s`-px tiles, decor, 64 enemies, 512 bullets, 512 point items, 512
   particles, the ship with four Options and 32 shots, the HUD bars. Six variants per size — busy, a
   filtered layer, Mode-7, CRT light, CRT full, all at once — make 18 scenarios.
 - **What it measures** (`stats.ts`, allocation-free): `renderer.render()` CPU ms (p50 / p95), the
@@ -1014,11 +1053,36 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   prints every scenario **relative to the same session's 384×216** (the M7's rAF shows a p95 near
   30 ms with nothing running, so absolute times mislead), applies §13's verdict rules and compares a
   WebGL 1 with a WebGL 2 session.
+- **The decode scenario** (R1-05 B4, decision W3-6 — `apps/tizen/src/bench/decode.ts`): after the
+  matrix a run loads the page a **19th time** (`DECODE_SCENARIO_INDEX` 18, `BENCH_RUN_LENGTH` 19;
+  `BENCH_SCENARIOS` stays the 18-scenario matrix and its labels still read `n/18`) to measure what an
+  atlas page costs from file to GPU, on the game's own paths. Four pages are generated at bench-build
+  time (`scripts/bench-decode.mjs`, into `dist-bench/assets/atlas/decode-<id>.png`, so the bundle
+  check's 2048² rule covers them): a synthetic **2048² RGBA** page (2.50 MB), the same art as **2048²
+  PNG-8** (0.54 MB), and the shipped `common` and zone A pages. Each repetition (8 on the TV, 2
+  headless, `?reps=` 1–50) times the stages apart: the **fetch** by XHR (audio-web `loadArrayBuffer`,
+  the request the game fetches its manifest with — `file://`, status 0), the **decode** by an
+  `HTMLImageElement` from a **blob URL** with a guarded `decode()` (the game's decoder; a second load
+  of the file URL would be a memory-cache hit), and the **upload** through `createAtlas` and
+  `uploadTextureSource`, as CPU time and again with `gl.finish()`. For comparison it also decodes
+  with **`createImageBitmap`** (Chromium 50+, feature-detected; the game does not use it) and uploads
+  that — headless, the RGBA image upload took about 5× the bitmap's, which suggests
+  `texImage2D(HTMLImageElement)` converts the image again; the M7 run settles it. Every texture,
+  blob URL and bitmap is released between repetitions, and every stage times out after 30 s. If the
+  XHR fails (the unverified `file://` case) the page is decoded from its URL instead and its `error`
+  says so. The results: a `DECODE (R1-05)` table under the matrix table (median / p95 per stage,
+  the first — coldest — total, the bitmap path), a `decode` field (`DecodeBenchRecord`) in the run's
+  last `render-bench` payload (which now carries the run's `done`), and `analyze-bench.mjs`' "Decode
+  and upload" section ending in plan R3-04's zone-load estimate (`common` + two zone pages against
+  2 s — conservative, since `common` stays resident across a zone change). Red after a whole run
+  re-runs the decode scenario.
 - **Headless:** `pnpm bench` builds the widget exactly as `bench:tv` does and opens each scenario
   with `?scenario=<id>` on the 1280×720 display, gating **counts only** — `tvBenchViolations` in
   `render-harness/gates.ts`: the full load on every frame, draw calls within `DRAW_CALL_BUDGET`, no
   pooled render target without a filtered layer and exactly the frame's power-of-two target with
   one, the density's atlas pages, the heap. Its milliseconds are SwiftShader's and are only printed.
+  Since R1-05 it also opens `?scenario=decode&reps=2` and checks that every page's stages are
+  finite and its bytes equal the emitted files.
 
 ### The on-device readout: the debug overlay
 
@@ -1309,6 +1373,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/layers/layers-lasers*.test.ts` | The laser binding (M1-09): two hidden sprites per slot, the tinted telegraph line vs the beam frame of the rounded width (band / frame boundaries, wider-than-frames scaling), blink and zero / NaN lengths hidden, rotation written only on change, camera rounding without `-0`, shrinking views, capacity validation, destroy, zero allocation through a whole laser life |
 | `packages/render-pixi/test/renderer/` | The renderer wired with a fake `WebGLRenderer`: passes, rebinding (incl. parallax / terrain bindings below the batches), shake / flash / dim, reused pass options (fails if `resetPass` is removed), allocation probes; `renderer-fx*` (M1-14): the particles / popups / effects it owns, stepping by the tick delta, flash tint composition, the two dims, the FX layer under the enemy bullets |
 | `packages/render-pixi/test/effects/mode7-pages.test.ts` | R1-02: the Mode-7 floor samples the atlas page its tile lives on — the real shader over a two-page atlas, `Mode7Floor.bind(view, tile, page)` → `Mode7Shader.setPage` at bind time only (no frame touches it, a same-page bind does nothing); fails on the old page-0 code |
+| `packages/render-pixi/test/atlas/atlas.test.ts`, `renderer/renderer-upload.test.ts` | R1-05: every atlas page out of Pixi's texture GC (`autoGarbageCollect` off) and still freed by `unload()` / `destroy()`; `uploadTextureSource` binding the source through `texture.initSource` on a fake `WebGLRenderer` |
+| `packages/shell/test/loader/loader-manifest.test.ts`, `boot/boot-manifest.test.ts` | R1-05: the manifest fetched by a fake XHR (status 0 and 200 succeed; 404, an empty body and a network error are `load` failures), the digest over the bytes, versions 1 and 2, the page shape; the boot from manifest assets and each failure's error screen, the inline assets still booting. The loader test builds the atlas in memory (`buildAtlas()`), as CI never runs `pnpm assets` |
+| `packages/shell/test/boot/boot-residency.test.ts`, `memory/residency-eager.test.ts`, `debug/debug-atlas.test.ts` | R1-05: unload before upload, idempotence, the self-healing unload of a page drawn behind the residency's back, `onChange` / `lastPrepareMs`; the boot stage's pages uploaded before `warmUp()`, the World-change trigger (a demo World of another zone; the weapon select's preview not placed), the three canvas attributes; `__shmupDebug.atlas` (`resident`, `unloads`, `uploads`, `lastPrepareMs`, `timing`, `pageMs`, `prepare(stageId)`) |
 | `packages/shell/test/frame-fingerprint.test.ts` | R1-02: the shell's own scenes (flight, showcase, fx-gallery) hashed along five scripted walks, pinned on the code before R1-02 derived their frame numbers — green unedited unless a step changes what they draw (re-pin with `SHMUP_FINGERPRINT_PRINT=1`) |
 | `packages/render-pixi/test/particles/`, `effects/` | The `fx` content validation, the particle pool, the screen effects and the score popups (M1-14 — [fx-and-game-feel.md](fx-and-game-feel.md#tests)) |
 | `packages/shell/test/` | The save at boot (M1-17: volumes on a fake audio, the app's profile callbacks, corrupt / unreadable / v0 saves, a failing storage, the Options screen end to end, `blur`, boot timing and `data-shmup-boot-ms`), `connectOptionEvents` / `applyAudioOptions` (`dispatch-options*.test.ts`; `dispatch-options-palette.test.ts` — M2-02: every palette by its index, bad indices and no callback ignored, disconnect), the saved palette applied at boot (`boot.test.ts`); the scene flow's boot (title theme prepared, `finishBoot`, `data-shmup-scene` through boot → title → game → pause) and `scene-view` (backdrop, open-space wrapper per World, starfield frozen under pause, followed camera, `worldChanges` — M1-16); boot happy path and every failure (error screen, state attribute, cleanup), content owners (the default `input-profiles` owner, an app owner replacing it), the input context forwarded before a frame's polls, image loading and progress, dispatch (copy-on-write unsubscribe; `connectFxEvents` — its table, an allocation guard of the whole event path and an end-to-end game-feel run, M1-14; `connectAudioEvents` — its mapping, two allocation guards and the shipped boss range through a real audio engine, M1-15), the audio wiring of boot (bank and stage set prepared, attach after the unlock, `AUDIO FAILED TO LOAD` — M1-15), overlay drawing, the fx gallery, the free-flight scene (sprite ids, starfield drift / wrap / pause, HUD, the WARNING band — M1-13, empty content, zero allocation per frame), showcase determinism and allocation |
@@ -1320,6 +1387,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/render-pixi/test/renderer/renderer-render-groups.test.ts`, `renderer/renderer-render-groups-edge.test.ts`, `renderer/renderer-render-groups-alloc.test.ts` | M3-02e: the option reaching the layer stack, `groupRebuilds` counting every dirty group of a frame (never falling, never below `structureRebuilds`, −1 without `countStructureRebuilds`, kept after `destroy()`), the F9 overlay texture (the five pass-1 overlays on the atlas' `ui/pixel`, the side panels on `Texture.WHITE`, both fallbacks), and the counting walk measured as an allocation A/B against the same loop with counting off |
 | `test/integration/render-groups.test.ts` | M3-02e against the *shipped* game: four stages played through the real sim use only grouped batch layers, every `createSpriteBatch(LayerId.…)` in core names one, no app / shell / core code mentions `renderGroups`, and the two e2e `DRAW_CALL_BUDGET`s agree with each other and with `gates.ts` |
 | `test/e2e/render-groups.spec.ts` | M3-02e in a real browser: seven scenes screenshotted with the groups on and then with `disableRenderGroup()` called on all eleven layers — byte-identical PNGs — plus the sensitivity controls (moving or hiding a layer must change the picture) and the `REB` annotation with the overlay off (0 of 180 frames) and on |
+| `test/e2e/atlas-residency.spec.ts` | R1-05 in a real browser: the web build fetches `assets/atlas/main.json` once; an aborted manifest ends on `ATLAS MANIFEST FAILED TO LOAD`, a foreign one on `ATLAS DOES NOT MATCH ITS MANIFEST`; the Tizen build boots from `file://` (XHR, status 0); `?stage=zone-b` keeps exactly `common` + zone B and a stage change swaps in zone C; the attract demo brings its zone's pages; the weapon select's preview page leaves the GPU at the game start — checked on WebGL's own view (`texImage2D` / `deleteTexture` hooked), not only the attribute |
 | `test/e2e/` | The real browser path, both builds (above) |
 
 ## Gotchas
@@ -1330,7 +1398,9 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | A new batch never appears | `WorldView.batches` was changed in place after the view was bound. Build a new `WorldView` object (or include the batch from the start) |
 | A HUD edit does not show | The list was modified by writing its arrays directly, so `revision` did not move. Use the `DrawList` methods (or call the view's `invalidate()`) |
 | Some HUD glyphs are missing | The draw list is full (`hud.dropped > 0`) or the layer's quad pool is (`pool.dropped > 0`); raise the capacity |
-| Boot error `ATLAS DOES NOT MATCH ITS MANIFEST` | A page image from another pipeline run is next to this bundle (browser cache, a hand-copied file). Rebuild; in a browser, hard-reload |
+| Boot error `ATLAS DOES NOT MATCH ITS MANIFEST` | A page image from another pipeline run is next to this bundle (browser cache, a hand-copied file), or — since R1-05 — a cached `main.json` of another build (its digest differs from the one `app.js` recorded) or of an unknown format version. Rebuild; in a browser, hard-reload |
+| Boot error `ATLAS MANIFEST FAILED TO LOAD` | R1-05: `assets/atlas/main.json` could not be fetched (missing from `dist/`, an HTTP error, an empty body) or is not a manifest. On a TV that refuses `file://` XHR (never seen yet — W3-7) the fallback is to import `virtual:shmup-assets-inline` in the app's `main.ts` and relax the bundle check's rule 10 in the same change |
+| A zone's sprites hitch on first appearance, or `data-shmup-atlas-pages` lists every page | The stage is outside the campaign (a dev range, boss rush, a bonus stage, `escape`): `stagePages` gives it every page, uploaded at the transition. A campaign zone lists `common` + its own pages; if not, `atlas-groups.json` is stale (`test/integration/atlas-groups.test.ts` says so) |
 | Boot error `no loader for content kind "…"` | A content file of a kind no owner validates. Add the owner to `DEFAULT_CONTENT_OWNERS` or to both apps' `contentOwners` |
 | Opening `apps/tizen/dist/index.html` by double-click in desktop Chrome shows WebGL errors | Desktop Chrome treats each `file://` URL as its own origin, so WebGL refuses to upload the atlas page. Start Chrome with `--allow-file-access-from-files`, or use `pnpm --filter @shmup/tizen dev`; the TV serves the widget's files as same-origin |
 | `pnpm test:e2e` hangs creating WebGL contexts | A stale forwarded X display (`DISPLAY=localhost:11.0` in an SSH session) makes SwiftShader try XCB. The config already scrubs `DISPLAY` for the browser; unset it if you launch Chromium yourself |
@@ -1467,6 +1537,12 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
   `PrepareStage` — nothing yet with the single page); the debug tools' `save` API and device line
   (`DebugToolsOptions.device` → render-pixi `DebugOverlay.setDevice`, the panel's sixth line)
   ([platform-polish.md](platform-polish.md)).
+- **R1-05** (done) — the atlas split into `common` + one page per zone and the manifest fetched by XHR
+  (`loadAtlasManifest`, `virtual:shmup-assets-inline` as the fallback, `ATLAS MANIFEST FAILED TO
+  LOAD`); the residency's eager upload (`uploadTextureSource`), World-change trigger, self-healing
+  unload and pages out of Pixi's GC; `Shell.atlasTiming` and the three `data-shmup-atlas-*` canvas
+  attributes; the TV bench's decode scenario ([platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory),
+  [asset-pipeline.md](asset-pipeline.md)).
 - **M3-02c** (done) — the render-performance instruments: `PixiRendererOptions.countStructureRebuilds`
   / `PixiRenderer.structureRebuilds`, `createRenderTargetMeter` and the overlay's seventh line
   (`REB`, `RT`), `webGLVersionFromSearch` (the `?gl=` A/B switch; WebGL1 stays the default) and the

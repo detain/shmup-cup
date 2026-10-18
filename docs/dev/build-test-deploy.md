@@ -100,8 +100,10 @@ tool: `pnpm --filter @shmup/core test loop` runs only test files whose path cont
 - `globalDependencies` (`eslint.config.js`, `tsconfig.base.json`, `.browserslistrc`,
   shared Vite/Vitest configs …) invalidate every cache when they change. They also list
   `content/**`, `types/**`, `assets/source/**` and `scripts/assets/**`: all live outside
-  any package, yet the app builds inline `content/` through `virtual:shmup-content` and the
-  atlas manifest through `virtual:shmup-assets`, the app tsconfigs include
+  any package, yet the app builds inline `content/` through `virtual:shmup-content`, emit the
+  atlas manifest and pages and record the manifest's digest through `virtual:shmup-assets` (R1-05 —
+  the groups file `assets/source/atlas-groups.json` is covered by `assets/source/**`), the app
+  tsconfigs include
   `types/virtual-modules.d.ts`, and the test tasks run real builds. Without them, editing
   only a content file or a sprite would replay a cached `dist/` with stale inlined data.
   Any new root-level input a task reads belongs here too — `scripts/frame.mjs` joined in R1-02
@@ -115,12 +117,12 @@ A cache hit prints `cache hit, replaying logs`. To force a rerun: `pnpm turbo ru
 | Project | Output | Notes |
 |---|---|---|
 | `packages/*` | `dist/*.js` + `.d.ts` (ES2018) | `tsconfig.build.json` switches the `@shmup/source` condition off so dependents' types come from `dist/` |
-| `apps/web` | `apps/web/dist/` (+ `assets/atlas/main.png`) | Vite default (modern) target, `base: './'` (relocatable — required by Electron's `app://`) |
-| `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png`, `assets/atlas/main.png` | Chromium 69 contract below; packaging adds a `.wgt` next to them. `build:test` / `build:dev` write the **same folder** — the last build wins, so rebuild with `build` before packaging a release |
-| repo root | `assets/generated/atlas/main.png` (+ `main-1.png` …), `main.json`, `assets/generated/.asset-cache.json` | `pnpm assets` / `//#assets`; git-ignored. The app builds copy the pages and inline the manifest |
-| `apps/webos` | `apps/webos/dist/`: `index.html`, `app.js`, `appinfo.json`, `icon.png`, `largeIcon.png`, `assets/atlas/main.png` | M3-03: the Tizen contract below, for webOS 5+ (Chromium 68 — one release older, so the same target and polyfill cover both). `scripts/check-bundle.mjs` imports the Tizen budgets. Packaging writes an `.ipk` into `release/`; **nothing here has been packaged or run on a device** |
+| `apps/web` | `apps/web/dist/` (+ `assets/atlas/main.json` and its pages `main.png` …) | Vite default (modern) target, `base: './'` (relocatable — required by Electron's `app://`) |
+| `apps/tizen` | `apps/tizen/dist/`: `index.html`, `app.js`, `config.xml`, `icon.png`, `assets/atlas/main.json` + `main.png` … `main-9.png` (15 files since R1-05) | Chromium 69 contract below; packaging adds a `.wgt` next to them. `build:test` / `build:dev` write the **same folder** — the last build wins, so rebuild with `build` before packaging a release |
+| repo root | `assets/generated/atlas/main.png` (+ `main-1.png` …), `main.json`, `assets/generated/.asset-cache.json` | `pnpm assets` / `//#assets`; git-ignored. Since R1-05 ten pages — `main.png` = `common`, `main-1.png` … `main-9.png` = zones A–I. The app builds copy the pages **and the manifest** (until R1-05 the manifest was inlined into `app.js`) |
+| `apps/webos` | `apps/webos/dist/`: `index.html`, `app.js`, `appinfo.json`, `icon.png`, `largeIcon.png`, `assets/atlas/main.json` and its pages | M3-03: the Tizen contract below, for webOS 5+ (Chromium 68 — one release older, so the same target and polyfill cover both). `scripts/check-bundle.mjs` imports the Tizen budgets. Packaging writes an `.ipk` into `release/`; **nothing here has been packaged or run on a device** |
 | `apps/electron` | `dist/main/*.js`, `dist/preload/preload.cjs`, `dist/renderer/` (copy of `apps/web/dist`) | Needs `@shmup/web` built first (Turborepo does it) |
-| `apps/tizen`, `apps/webos` (bench) | `dist-bench/`: `index.html`, `app.js`, `config.xml` / `appinfo.json`, icons, `assets/atlas/` (the atlas upscaled ×1 / ×1.5 / ×2.25) | R0-02: the TV render bench widget, never the game; git- and Prettier-ignored; `pnpm clean` removes it. `bench:tv:package` writes `ShmupCupBench.wgt` there |
+| `apps/tizen`, `apps/webos` (bench) | `dist-bench/`: `index.html`, `app.js`, `config.xml` / `appinfo.json`, icons, `assets/atlas/` (the atlas upscaled ×1 / ×1.5 / ×2.25 from the ungrouped source atlas, and since R1-05 the decode scenario's four `decode-<id>.png` pages — ≈ 4.7 MB in all) | R0-02: the TV render bench widget, never the game; git- and Prettier-ignored; `pnpm clean` removes it. `bench:tv:package` writes `ShmupCupBench.wgt` there |
 
 ## The Tizen build contract (Chromium 69)
 
@@ -157,7 +159,14 @@ so M2-16 raised the budget to 384 KB
 took it to **374.7 KB**, leaving ≈ 9 KB, so before M3-02 the owner set **512 KB** as the agreed
 ceiling (M3-02's shaders, Mode-7 floor, CRT pass, black-hole module and two new stages took it to
 **383.4 KB**) — room to spend, not a target, and going above it needs their say-so (M2-18's boot-time
-check still guards the launch, which is the real constraint). A release build must also carry
+check still guards the launch, which is the real constraint). **R1-05 moved the atlas manifest out
+of `app.js`** (406.7 → 384.3 KB gzip, −22.4 KB; ≈ 376 KB since), and **rule 10**
+(`checkAtlasManifest`) keeps it out: the game widget must ship `dist/assets/atlas/main.json` that
+parses (format 1 or 2) and lists every page with its real pixel size, no atlas PNG may be unlisted,
+and `app.js` may name at most `MAX_INLINED_FRAME_NAMES` (8) atlas frames — the inlined manifest named
+all ~1,400, so more means it was inlined by accident (the bench widget, which inlines its own
+density atlases, is exempt). `DIST_BUDGET` stays 8 MiB on purpose (decision W3-4); its docblock
+gives the derivation R3-04 re-derives from measured art. A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
@@ -292,7 +301,14 @@ A second widget built from `apps/tizen`, **next to** the game: it measures what 
 M7 at 384×216, 640×360 and 960×540 with a density-scaled synthetic scene (the real atlas upscaled
 ×1 / ×1.5 / ×2.25, five parallax layers, ~35 % terrain, 64 enemies, 512 bullets, 512 point items,
 512 particles, the HUD bars), six variants per size — 18 scenarios, one per page load
-([plan_resolution.md](../../plan_resolution.md) R0-02, §13). Its results **never block** the plan.
+([plan_resolution.md](../../plan_resolution.md) R0-02, §13) — and since R1-05 a **19th page load,
+the decode scenario**: four PNG pages (a synthetic 2048² RGBA page, the same as 2048² PNG-8, the
+shipped `common` and zone A pages, generated at bench-build time by
+`apps/tizen/scripts/bench-decode.mjs` into `dist-bench/assets/atlas/decode-<id>.png`) fetched by XHR,
+decoded and uploaded eight times each, every stage timed — the 2048² decode figure plan R3-04
+estimates its zone-load time from. Its results **never block** the plan. The decode pages take
+`dist-bench/` to ≈ 4.7 MB of the 8 MiB `DIST_BUDGET` the bench shares with the game (≈ 3.4 MiB of
+headroom), and each bench build ≈ 7.5 s longer (the RGBA page's level-9 deflate).
 
 | | Game | Bench |
 |---|---|---|
@@ -323,20 +339,31 @@ $env:TV_IP = "192.168.1.50"; pnpm bench:tv:install
 pnpm --filter @shmup/tizen bench:run
 ```
 
-4. On each monitor press **Enter** — about 10 minutes: per scenario 10 s warm-up, 14 s free-running
-   and 6 s with `gl.finish()` after every render, the page reloading in between. **Red** re-runs the
-   current scenario, **Back** exits. Photograph the results table it draws at the end.
+4. On each monitor press **Enter** (the page says "18 scenarios + decode") — about 10 minutes: per
+   scenario 10 s warm-up, 14 s free-running and 6 s with `gl.finish()` after every render, the page
+   reloading in between; then about 20–30 s of the decode scenario (`R1-05 DECODE 19/19 GL1 <page>
+   <rep>/8`). **Red** re-runs the current scenario (after a whole run: the decode scenario), **Back**
+   exits. Photograph the results table it draws at the end — and the **`DECODE (R1-05)`** table under
+   it (per page `FETCH50`, `DEC50` / `DEC95`, `UPL50` / `UPL95` with `gl.finish()`, `TOT50` / `TOT95`,
+   `FIRST` — the coldest repetition —, `BMP50` / `BMPUP` for `createImageBitmap`; `NOTE` lines flag a
+   failed stage). A page noted `decoded from the URL instead` means the TV refused `file://` XHR — the
+   game's manifest fetch would fail too: report it.
 5. Run it again on WebGL 2: `localStorage['shmup-cup:gl'] = '2'` in the Web Inspector
    ([above](#the-remote-web-inspector-devtools-on-the-tv); the app id is `ShmpCupBnc.RenderBench`).
 6. Each scenario was POSTed as a `render-bench` payload; the sessions are
    `tools/input-probe/logs/rb-*.jsonl`. Commit them to `tools/input-probe/results/<date>-m7-bench/` and
    print the tables with `node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl` — every scenario
-   relative to the same session's 384×216 rows, §13's verdicts, and WebGL 1 against WebGL 2. They go
-   into `input-probe-results.md` §12 (plan R0-03).
+   relative to the same session's 384×216 rows, §13's verdicts, and WebGL 1 against WebGL 2, then the
+   **"Decode and upload"** section (per page median / p95, ms per megapixel) ending in R3-04's
+   zone-load estimate — `common` plus two zone pages against 2 s, cold and eager; conservative,
+   since a real zone change keeps `common` resident. They go into `input-probe-results.md` §12
+   (plan R0-03).
 
 The results also stay in the widget's `localStorage` until the next run, so a crash loses nothing.
 `pnpm --filter @shmup/tizen dev:bench` serves the page in a desktop browser (`?scenario=<id>` runs
-one scenario, `?warmup=` / `?measure=` / `?sync=` shorten the phases, `?gl=2`). The webOS stub is
+one scenario — `?scenario=decode` the decode scenario, `?reps=` 1–50 its repetitions —, `?warmup=`
+/ `?measure=` / `?sync=` shorten the phases, `?gl=2`). `pnpm bench` builds the widget and opens
+every scenario headlessly, `?scenario=decode&reps=2` included. The webOS stub is
 build-only: `pnpm --filter @shmup/webos bench:package` / `bench:install` are written, never run.
 Details: [`apps/tizen/README.md`](../../apps/tizen/README.md),
 [input-probe.md](input-probe.md) (the log server and the analyzer),
@@ -431,7 +458,20 @@ electron-builder cannot read `catalog:` — bump it with the catalog. Details:
   `test/integration/tv-render-bench.test.ts` checks its gate (`tvBenchViolations`), the headless
   driver's wiring and the records → log server → analyzer chain, and `apps/tizen/test/bench/` the
   widget's matrix, scene, sampler, results table and state — those build the atlas in memory with the
-  pipeline, because CI's test shards run without `pnpm assets`.
+  pipeline, because CI's test shards run without `pnpm assets`. Since R1-05 that includes the decode
+  scenario (`bench-decode.test.ts` — the measurement on fake hosts, the run length 19, the DECODE
+  table, stored states from before it; `apps/tizen/test/scripts/bench-decode.test.ts` — the
+  generated pages' sizes, encodings and byte bands) and the ungrouped source atlas the density pages
+  come from (`bench-atlas.test.ts`: still 1 / 1 / 2 pages, density 1 the ungrouped one-page atlas
+  byte for byte, every frame of the zone-split game atlas pixel for pixel).
+- **The atlas (R1-05)** — `test/integration/atlas-groups.test.ts` (the groups file equals its
+  derivation; every campaign zone needs exactly `common` + its own pages), `atlas-zone-sprites.test.ts`
+  (11 golden runs: every sprite drawn is in its zone's set), `cjk-budget.test.ts` (the split's PNG
+  budget), the pipeline's `png-indexed` / `packer-groups` / `pipeline-groups` tests, the shell's
+  `loader-manifest` / `boot-manifest` / `boot-residency` / `residency-eager` / `memory-hand` /
+  `debug-atlas`, render-pixi's `renderer-upload`, the bundle checks' `check-bundle-manifest` (rule 10)
+  and `test/e2e/atlas-residency.spec.ts` — see [asset-pipeline.md](asset-pipeline.md#tests) and
+  [rendering-and-shell.md](rendering-and-shell.md#tests).
 - **v2's frame guards** (plan R1-01, R1-02 — [conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)):
   `packages/core/test/frame-literals.test.ts` fails on a literal frame number in `packages/core/src`
   outside its allow-list, and `test/integration/frame-literals-repo.test.ts` does the same for the
@@ -735,7 +775,10 @@ the frozen install fails.
 | `pnpm content:check` fails an audio check (a cue without a sound, a song that clips or does not loop sample-exactly, a stage cue without a track) | Fix `content/audio/` — listen with `pnpm audio:preview --only <name>`; the rules are in [audio.md](audio.md#extending-it) and [`content/audio/README.md`](../../content/audio/README.md) |
 | `pnpm dev` keeps the old atlas after editing `scripts/assets/` | Vite should restart the server on its own; if it logged `restart the dev server to regenerate the atlas …`, restart `pnpm dev` |
 | Tizen build fails with `unexpected files outside dist/assets/` | Something (a new `public/` file, a plugin) put a file into `dist/` outside `assets/`; move it under `assets/` or keep it out of the widget |
-| The game shows a navy screen with a pink title such as `CONTENT ERRORS: 2 PROBLEMS` or `ATLAS PAGE FAILED TO LOAD` | The shell's boot error screen: every line is one problem (`<file>:<json path>: message` for content). Fix the listed content, rebuild a stale atlas (`ATLAS DOES NOT MATCH ITS MANIFEST`), or check WebGL (`WEBGL IS NOT AVAILABLE`). The console logs "Shmup Cup failed to start" with the `ShellBootError` — see [rendering-and-shell.md](rendering-and-shell.md#the-boot-sequence) |
+| Tizen or webOS build fails on rule 10 (`assets/atlas/main.json` …, or `app.js` names N atlas frames) | R1-05: the manifest is missing or does not list the pages as they are (a stale `dist/`, a hand-copied page — rebuild), or the manifest got **inlined** into `app.js` — an app imports `virtual:shmup-assets-inline` instead of `virtual:shmup-assets`. That is only right as the deliberate `file://` fallback (W3-7), and then rule 10 is relaxed in the same change |
+| `atlas-groups.test.ts` fails: the groups file differs from its derivation | A content change moved a sprite between zones: `SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts`, then `pnpm assets` — never a hand edit ([asset-pipeline.md](asset-pipeline.md#atlas-groups-r1-05)) |
+| `cjk-budget.test.ts` fails on `ATLAS_PNG_BYTES_CAP` or a quoted figure | The art grew: the split's PNG bytes passed 256 KiB, or the one-page figures (479,505 px, 136.6 KB …) moved. Raise the cap on purpose with the reason, and update the six documents the test names — expected at R2-01's interim art |
+| The game shows a navy screen with a pink title such as `CONTENT ERRORS: 2 PROBLEMS` or `ATLAS PAGE FAILED TO LOAD` | The shell's boot error screen: every line is one problem (`<file>:<json path>: message` for content). Fix the listed content, rebuild a stale atlas (`ATLAS DOES NOT MATCH ITS MANIFEST` — since R1-05 also a cached `main.json` of another build), check that `dist/assets/atlas/main.json` ships (`ATLAS MANIFEST FAILED TO LOAD`, R1-05), or check WebGL (`WEBGL IS NOT AVAILABLE`). The console logs "Shmup Cup failed to start" with the `ShellBootError` — see [rendering-and-shell.md](rendering-and-shell.md#the-boot-sequence) |
 | `pnpm test:e2e`: `Executable doesn't exist … chromium` | Playwright's browser is not installed: `pnpm exec playwright install --with-deps chromium firefox` (both engines, once per machine) |
 | `pnpm test:e2e`: every `[firefox]` test fails with `Executable doesn't exist … firefox` | Since M2-18 the `firefox` project runs the determinism spec, so plain `pnpm test:e2e` needs Playwright's Firefox too: `pnpm exec playwright install --with-deps firefox` — or run `pnpm test:e2e --project=chromium` for the Chromium tests alone |
 | `pnpm test:e2e` hangs or times out creating WebGL contexts | A stale `DISPLAY` (forwarded X display of an SSH session) — the config already strips it for the browser; if you launch Chromium by hand, unset `DISPLAY` |

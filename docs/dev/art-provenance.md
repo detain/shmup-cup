@@ -561,6 +561,11 @@ line of the script to relax.
   art only from a `ship` model, FLUX on hold, keep every output's sidecar for ingest). It waits for
   round 2, with R3-01's post-round-2 edits, because the art round uses the library until then.
 - The owner items of section 8 (registration, LTX notices, store texts) are unchanged.
+- **Colour-blind variants of real art (for R3-03).** A real-art bullet needs its `@<palette>`
+  variants too, but an override PNG cannot supply them (`@` is not valid in a sprite name), so they
+  stay `procedural:palettes` sprites and the report lists them as procedural even when their base is
+  real art. When R3-03 decides how variants of real art are made, a derived variant should inherit
+  its base's provenance, as `@flash` / `@p2` already do.
 
 **What part 2 needed from R3-02**, and where R3-02 delivered it ([real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest)):
 

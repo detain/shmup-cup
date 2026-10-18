@@ -71,12 +71,16 @@ packaged the webOS way into `dist-bench/` by `vite.bench.config.ts`, with an `ap
 its own id `dev.shmupcup.renderbench` (`scripts/appinfo.mjs` `benchAppInfo`) and checked by
 `scripts/check-bundle.mjs dist-bench`. `bench:package` / `bench:install` / `bench:run`
 (`scripts/webos-bench.mjs`, the `.ipk` in `release/bench/`) drive the same `ares-*` wrappers — written,
-never run.
+never run. Since R1-05 the stub ships the decode scenario's four `decode-*.png` pages too (≈ 4.7 MB of
+`dist-bench/`).
 
 `build` produces `dist/`: `index.html`, one classic IIFE `app.js`, `appinfo.json`, `icon.png`,
-`largeIcon.png` and the atlas pages under `assets/atlas/`. `scripts/check-bundle.mjs` enforces the
-same budgets as the Tizen widget (imported from its check, so there is one source of truth):
-`app.js` ≤ 512 KB gzipped, atlas pages ≤ 2048², `dist/` ≤ 8 MB.
+`largeIcon.png` and, under `assets/atlas/`, the atlas manifest `main.json` and its pages (plan
+R1-05 — the shell fetches the manifest with XHR from `file://`; never tried on an LG set).
+`scripts/check-bundle.mjs` enforces the same budgets as the Tizen widget (imported from its check,
+so there is one source of truth): `app.js` ≤ 512 KB gzipped, atlas pages ≤ 2048², `dist/` ≤ 8 MB —
+and the Tizen check's rule 10 (`checkAtlasManifest`: the manifest outside `app.js`, every page
+listed).
 
 ## Layout
 

@@ -1,7 +1,8 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
-> **Status:** drafted 2026-10-16; 2026-10-17 — **8 of 37 steps done** (R0-01, R0-02, R1-01, R1-02, R1-03, R1-04,
-> R3-01, R3-02 — owner parts pending for R0-01, R0-02, R3-01 and R3-02), 3 in progress (R0-04, R1-05, R3-05). The `v1.x`
+> **Status:** drafted 2026-10-16; 2026-10-17 — **10 of 37 steps done** (R0-01, R0-02, R1-01, R1-02, R1-03, R1-04,
+> R1-05, R3-01, R3-02, R3-05 — owner parts pending for R0-01, R0-02, R1-05, R3-01, R3-02 and R3-05), 1 in progress
+> (R0-04). The `v1.x`
 > maintenance branch exists (created from the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything
 > below happens on `master`, which from now on is the **v2** line.
 >
@@ -60,7 +61,8 @@ Smaller decisions taken during execution, so the steps that rely on them can cit
 wave-2 scout's recommendations for R1-02 … R1-04, put to the owner as the defaults and adopted on 2026-10-17
 without objection; **O11** came out of R1-03's review and is built as the default while the owner confirms it;
 **W1-D1 … W1-D3** are the orchestrator's wave-1 decisions (named D1–D3 in its notes — not v1's design decisions
-D1 …).
+D1 …); **W3-1 … W3-12** are the orchestrator's wave-3 decisions for R1-05 and R3-05 part 2 — the wave-3 scout's
+recommended defaults, adopted and told to the owner, none blocking.
 
 | ID | Decision | Applies to |
 |---|---|---|
@@ -78,6 +80,18 @@ D1 …).
 | **W1-D1** | The owner approved one `v1.x` commit (versions → `1.0.1-dev` …) by its own agent, then `git merge -s ours` of `v1.x` into `master`; a second owner-approved `v1.x` docs commit went the same way (§3.3, R0-01's As built) | R0-01 |
 | **W1-D2** | R0-01's builder may edit the version lines of `CHANGELOG.md`, `README.md` and `docs/client/README.md` its tests need and add "Release lines" to `build-test-deploy.md` — nothing else in those files | R0-01 |
 | **W1-D3** | R3-02 builds and tests the ingest tool on fixtures only; the real ingest of the round-2 winners is deferred (after the FLUX decision) | R3-02 |
+| **W3-1** | **Ship the zone split in the real atlas now:** a content-derived `assets/source/atlas-groups.json` (≈ 10 pages — `common` + one per zone), so the residency is real in every build and e2e (not a test-only split) | R1-05 |
+| **W3-2** | Residency policy **"all"**: `keepPageImages` stays true, every page's decoded image stays, the GPU copies follow the zone and are **uploaded eagerly** at the transition; the lazy "resident" policy (scout B3b: deferred pages, a hold, a re-fetch after context loss) is built when the estimate crosses the budget — R3-04 at the latest | R1-05, R3-04 |
+| **W3-3** | **Lossless automatic PNG-8** (≤ 256 RGBA colours) for **atlas pages only**; doc and store images keep their bytes; never lossy | R1-05 |
+| **W3-4** | `DIST_BUDGET` **stays 8 MiB**, its derivation documented; R3-04 sets the v2 value from measured stand-in art | R1-05, R3-04 |
+| **W3-5** | Audio budget **24 MiB** (worst zone ≈ 17.8 MiB); the texture budget is **derived from the frame** — 100 − 24 heap − 24 audio − the fixed targets at 1080p: 26 MiB at 384×216, 23 MiB at 640×360 | R1-05, R2-01 |
+| **W3-6** | **Instrument the atlas load now** (per-page fetch / decode / upload ms at boot and zone load, as canvas attributes the owner reads in a `build:dev` on the M7), and add the TV bench's decode scenario (B4) since R0-03 has not run yet | R1-05, R0-03, R3-04 |
+| **W3-7** | The atlas manifest is fetched by **XHR from `file://`** on Tizen and webOS (unverified on hardware); the inline module `virtual:shmup-assets-inline` is the one-line fallback; the owner checks that the M7 boots to the title | R1-05 |
+| **W3-8** | R3-04's "`common` ≤ 1 + zone ≤ 2 pages" at 2048² (48 MiB) is **restated in bytes**: a zone's GPU pages + kept images ≤ `TEXTURE_BUDGET_BYTES` (amended in R3-04's scope) | R3-04 |
+| **W3-9** | A **shell-side World-change trigger** for the residency (the attract demo, a replay — no `PrepareStage`); no core change | R1-05 |
+| **W3-10** | Origin report: `use: "reference"` with cleanup `none` / `light` **fails** (the pixels are largely the model's); `heavy` / `redrawn` pass | R3-05 |
+| **W3-11** | Origin report: a shipped `ai-assisted` record with `reviewed: null` **fails**; staged art only warns | R3-05 |
+| **W3-12** | Origin report: pixel maps, the font, generators and their siblings are **`procedural`** (agent authorship is store-disclosure decision 8); no root `package.json` script — `node scripts/art-origins.mjs`, CI through vitest | R3-05 |
 
 ---
 
@@ -134,8 +148,9 @@ For crisp pixel art the internal frame must divide both TV sizes. The largest 16
   55×29 = 1,595; pools (512 bullets, 64 enemies, 256 particles) are unchanged by the switch itself.
 - **Textures.** Art at ×1.5 is ~2.25× today's atlas area (~1536², still one 2048² page). "Much more detailed" art
   (more frames, bigger bosses, painted full-width backdrops) will **not** fit one page — R3-04 moves to
-  zone-grouped pages. Note that **one 2048² page is 32 MiB including its decoded image**, which is the whole of
-  today's `TEXTURE_BUDGET_BYTES` (`packages/shell/src/memory/index.ts:93`).
+  zone-grouped pages. Note that **one 2048² page is 32 MiB including its decoded image**, which was the whole of
+  `TEXTURE_BUDGET_BYTES` when this was written — since R1-05 that budget is derived from the frame: 26 MiB at
+  384×216, 23 MiB at 640×360 (`packages/shell/src/memory/index.ts` `textureBudgetFor`).
 
 ### 2.5 The world scale k: how much of the level you see
 
@@ -288,8 +303,8 @@ vertical port exact, but spends 17 % of the screen on HUD (v1: 7 %) on a TV wher
      blocked on them: agents build the tools and use the interim art, and the owner's output drops in later.
 - **Interim art is fine on `master`.** Between R2 and the end of R5, `master` will mix interim (×1.5 upscaled v1)
   art and new art. `v1.x` is the shipping line meanwhile.
-- Zero allocation, determinism, the Chromium 68 floor, the bundle budget (`APP_JS_GZIP_BUDGET` 512 KB, ~403 KB
-  used) and "original names, art and music only" all hold in every step.
+- Zero allocation, determinism, the Chromium 68 floor, the bundle budget (`APP_JS_GZIP_BUDGET` 512 KB, ~376 KB
+  used since R1-05 moved the atlas manifest out) and "original names, art and music only" all hold in every step.
 
 ---
 
@@ -429,8 +444,9 @@ follow R2.
   2. `$env:VITE_REPORT_URL="http://<desktop-ip>:8787"; pnpm bench:tv` (both bench widgets + their bundle checks);
   3. `$env:TIZEN_PROFILE="…"; pnpm bench:tv:package` → `apps/tizen/dist-bench/ShmupCupBench.wgt`, then
      `$env:TV_IP="…"; pnpm bench:tv:install` and `pnpm --filter @shmup/tizen bench:run`;
-  4. on each monitor press **Enter** (~10 minutes), photograph the table, then set
-     `localStorage['shmup-cup:gl'] = '2'` (Web Inspector) and run it again on WebGL 2;
+  4. on each monitor press **Enter** (~10 minutes, then since R1-05 about 20–30 s of the decode scenario), photograph
+     the table — and the `DECODE (R1-05)` table under it —, then set `localStorage['shmup-cup:gl'] = '2'` (Web
+     Inspector) and run it again on WebGL 2;
   5. the logs land in `tools/input-probe/logs/rb-*.jsonl`: commit them to `results/<date>-m7-bench/` and run
      `node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl`.
 
@@ -490,13 +506,15 @@ follow R2.
   2. Build with `VITE_REPORT_URL=http://<desktop-ip>:8787 pnpm bench:tv`, then package and install the bench
      widget.
   3. Run the full matrix on **both monitors**, once with WebGL 1 (shipped default) and once with WebGL 2
-     (`localStorage['shmup-cup:gl']`).
+     (`localStorage['shmup-cup:gl']`). Since R1-05 a run ends with the **decode scenario** (the 19th page load, about
+     20–30 s more): photograph the `DECODE (R1-05)` table under the results page's matrix table.
   4. While the TVs are set up, also do v1's first install from `v1.x` and the M3-02c measurement table
      (`docs/client/outstanding-work.md` §1.1).
 - **Scope (agent, afterwards):**
   - commit the raw logs to `tools/input-probe/results/<date>-m7-bench/`;
   - write `docs/dev/input-probe-results.md` **§12 "Resolution benchmark"**: the tables, the relative costs, and
-    the verdict per size using the rules in §13;
+    the verdict per size using the rules in §13 — and `analyze-bench.mjs`' "Decode and upload" section, whose R3-04
+    zone-load estimate R3-04 starts from;
   - set the v2 render budgets used by R3-04 and R6-02 from the 640×360 numbers;
   - record the 960×540 verdict as a note for after v2 (a possible desktop "HD" mode or a v3). It does not change
     this plan.
@@ -1037,6 +1055,114 @@ moved.
   residency unloads the others (unit test + e2e page count), memory estimates match a hand calculation, and the
   bundle check passes with the manifest outside `app.js`. Goldens unchanged (sprite ids are not reordered — if they
   must be, re-bless and say why).
+- **Refs:** decisions **W3-1 … W3-12** (§1 — the wave-3 scout's defaults, adopted); `docs/dev/asset-pipeline.md`,
+  `docs/dev/rendering-and-shell.md`, `docs/dev/platform-polish.md` (memory budget).
+- **Manual (owner)** — on an M7, nothing blocks on it:
+  - **boot a `build:dev` (or test) widget to the title.** It is the first time a TV reads `assets/atlas/main.json`
+    with a `file://` XHR (W3-7, never run on hardware). If it stops on **ATLAS MANIFEST FAILED TO LOAD**, the fallback
+    is one line per app — import `virtual:shmup-assets-inline` in `apps/{tizen,webos}/src/main.ts` — and relaxing the
+    bundle check's rule 10 in the same change (it rejects an inlined manifest on purpose);
+  - in the remote Web Inspector, read the canvas attributes **after boot** — `data-shmup-atlas-load-ms` (the atlas's
+    share of the boot), `data-shmup-atlas-page-ms` (`manifest:<ms>;<file>:<load>/<decode>/<upload>;…`),
+    `data-shmup-atlas-pages` (`0` plus zone A's page), `data-shmup-boot-ms` — and again **after a zone change**
+    (launch zone B from the zone map: the change's unload + upload, and the pages it uploaded);
+    `__shmupDebug.atlas` (`lastPrepareMs`, `timing`, `pageMs`, `prepare('zone-c')`) gives the same figures in a dev
+    build;
+  - **in R0-03's run, photograph the `DECODE (R1-05)` table** the TV render bench now shows under its matrix table,
+    and put the "Decode and upload" section of `analyze-bench.mjs` (with its R3-04 zone-load estimate) into
+    `docs/dev/input-probe-results.md` §12 (R0-03's agent part). A page noted `decoded from the URL instead` means the
+    TV refuses `file://` XHR — report it: the game's manifest fetch would fail too.
+- **As built** (2026-10-17; lane A `ab400a3`, `b30bd4b`, `d4f305b`; lane B `a39de75`, `ce5408b`, `6941af7` (CI fix),
+  `c6c8666` and review fix `56f9ced`; B4 `4289726`. Review loops: lane A round 1 clean; lane B round 1 found three
+  majors — the weapon select's preview page, Pixi's texture GC, per-page timing — fixed by `56f9ced`, round 2 clean;
+  B4 round 1 clean. Master CI green at `56f9ced`):
+  - **PNG-8 (A1, W3-3):** `scripts/assets/png.mjs` `encodePng(image, { indexed: 'never' | 'auto' })`, plus
+    `indexedPalette()` and `MAX_PALETTE_SIZE` (256). `'auto'` writes colour type 3 (`PLTE`, `tRNS` for the entries with
+    alpha < 255 only, filter None) when a page has ≤ 256 distinct RGBA values, else RGBA; lossless (a transparent
+    pixel keeps its RGB) and deterministic (palette ordered translucent-first, then by packed RGBA). Only the atlas
+    pipeline and the bench atlas opt in; the default `'never'` is byte-identical to the old encoder, so the doc images
+    and store icons did not move (`docs:images --check`, `store:assets --check`).
+  - **Groups and manifest format 2 (A2):** `packRects` packs each `group` on its own pages — the ungrouped items
+    first, then `groupOrder`, then the other groups by name; an empty group makes no page; an ungrouped result is the
+    old layout exactly. `MANIFEST_FORMAT_VERSION` is **2**: `pages[i].group`, page 0 = `main.png` = `common`.
+  - **The zone split (A3, W3-1)** — the plan's "a `group` field in the source" became a **content-derived groups
+    file** plus a path rule (lane A review note 3; `SpriteDef.group` is set by the pipeline only):
+    `assets/source/atlas-groups.json` (format `shmup-atlas-groups@1`, 125 base names) lists the sprites exactly one
+    campaign zone names (its stage, enemies, children, bosses, tileset, linked bonus stage); `resolveAtlasGroup`
+    reads the file by base name before `@`, then a `zone-<id>` directory segment (`enemies/zone-d/…`, for future art),
+    else `common`; engine, UI and scene-view sprites and fonts always go to `common`. The file is part of the
+    pipeline's input hash; `test/integration/atlas-groups.test.ts` fails while it differs from the derivation
+    (`SHMUP_ATLAS_GROUPS_UPDATE=1` rewrites it). The shipped atlas is **10 pages**: `main.png` common 1024×512 (RGBA,
+    79,640 B) and nine zone pages of 256×128 / 256×256, eight of them PNG-8 (zone B's sea gradient has more than 256
+    colours) — **120,400 B** in all against 136,592 B for the old 1024² page; a zone keeps 2 MiB (common) + 128–256 KiB
+    on the GPU instead of 4 MiB. Zone A's boss parts stay in `common` (zone H's parade reuses them). Sprite names,
+    frame names and ids never depend on the grouping, so no golden moved; 53 canvas captures of the grouped and the
+    ungrouped build at frozen ticks were byte-identical.
+  - **Deviations in A3:** `buildAtlas({ ungrouped: true })` / `collectSprites({ ungrouped })` packs everything into
+    `common` without reading the groups file — the pre-R1-05 one-page atlas byte for byte. **The TV bench builds from
+    it** (`bench-atlas.mjs` `benchSourceAtlas()`), so its ×1 page is the old `main.png` and its 1 / 1 / 2 pages and
+    R0-02 / R0-03's figures stay comparable. **`cjk-budget.test.ts`** keeps the M3-03 figures (1,048,576 px,
+    136.6 KB, 0.95, 46 %) **live, measured on that ungrouped build**, and holds the shipped split to a budget instead of a
+    page count: every page ≤ 2048², Σ PNG bytes < `ATLAS_PNG_BYTES_CAP` = 256 KiB, the same frames and area as the
+    one-page build. Its `DIST_BUDGET` = 8 MiB pin moved out (the check-bundle tests and `tv-engine-floor` still pin it).
+    `atlas-zone-sprites.test.ts` replays 11 goldens (zones A–I and both linked bonus stages) and finds every sprite the
+    World hands the renderer in the zone's set or the global one — no gap in `stageSpriteSets`' walk.
+  - **The manifest out of `app.js` (B1, W3-7):** the build emits `dist/assets/atlas/main.json` (the pipeline's own
+    bytes). `virtual:shmup-assets` now exports `{ manifestUrl, atlasDir, manifestDigest }`; the inlined
+    `{ manifest, pageUrls }` lives on as **`virtual:shmup-assets-inline`** (the render bench harness, and the TV
+    fallback). The shell's `loadAtlasManifest` fetches it with **XHR** through audio-web `loadArrayBuffer` (status 0 =
+    success on `file://`, D25; no new literal 200), checks the **digest — 32-bit FNV-1a over the file's bytes**, not its
+    text (the same function in `vite.shared.ts` and the shell, pinned equal) — then the format version (1 or 2) and the
+    shape. New boot error **ATLAS MANIFEST FAILED TO LOAD** (load / parse); a digest or version mismatch reuses ATLAS
+    DOES NOT MATCH ITS MANIFEST. Pages load through `loadImagesTimed` (a guarded `decode()`; a rejected decode still
+    counts as loaded). Bundle-check **rule 10** (Tizen's exported `checkAtlasManifest`, imported by webOS): `main.json`
+    exists, parses and lists every page with its real size, no atlas PNG is unlisted, and `app.js` names at most
+    `MAX_INLINED_FRAME_NAMES` (8) frames — the game widget only, the bench inlines its own atlases. Tizen `app.js`
+    **406,651 → 384,287 B gzip (−22,364 B)**; 376 KB at the end of the step.
+  - **Budgets and the estimate (B2, W3-4 / W3-5):** `AUDIO_BUDGET_BYTES` = **24 MiB**; `TEXTURE_BUDGET_BYTES` =
+    `textureBudgetFor({ FRAME_W, FRAME_H })` = 100 − 24 heap − 24 audio − `fixedTargetBytes(frame, 1920×1080, 2
+    filters)`, floored to whole MiB: **26 MiB at 384×216** (targets 26,263,552 B), **23 MiB at 640×360** (29,999,104 B).
+    `estimateMemory().withinBudget` judges the atlas against `textureBudgetFor` of the estimate's own frame;
+    `imagePages` and `estimateStageMemory`'s `imagePolicy: 'all' | 'resident' | 'none'` charge the decoded images of
+    **every** page under the runtime's policy "all" (`keepPageImages` stays true, W3-2), `resident` models the lazy
+    policy for R3-04. `DIST_BUDGET` stays 8 MiB with its derivation in `check-bundle.mjs`' docblock. `memory-hand.test.ts`
+    checks every campaign zone against an independent hand calculation at the current frame, 384×216 and 640×360, and
+    pins both budgets.
+  - **Residency (B3a + `56f9ced`, W3-2 / W3-6 / W3-9):** render-pixi `uploadTextureSource(source)` (Pixi's
+    `texture.initSource`, cold) and `createAtlasResidency(pages, needs, { upload?, onChange?, now? })`: a prepare
+    unloads, then **uploads every needed page without a GPU copy**, eagerly — at boot for the boot stage (before
+    `warmUp()`), on every `PrepareStage`, and on every **new World on screen**: the trigger finds the shown World
+    (`worldOfView` — the game's own, or a stack scene's `world`: the attract demo, a replay), not `game.world` (the
+    game scene's World, not the demo's); the weapon select's `preview` (the dev `weapon-range`) is deliberately not
+    placed. Review round 1's fixes: the **self-healing unload** — a prepare unloads every page the stage does not need
+    whether or not it believes it resident (the preview draws `terrain-a` from zone A's page behind its back; the
+    counters still count only believed-resident pages); **atlas pages out of Pixi's texture GC** (`createAtlas` sets
+    `autoGarbageCollect = false` — `ImageSource` forces it on, and the GC dropped an idle page after 60 s); and the
+    per-page timing on the canvas. Timing lives in **`Shell.atlasTiming`** (the window's `performance.now()`, not
+    `ShellOptions.now`, whose boot tests count calls): manifest ms and bytes, per page load / decode / upload ms,
+    total. Canvas attributes `data-shmup-atlas-pages`, `data-shmup-atlas-load-ms` and **`data-shmup-atlas-page-ms`**
+    (written at boot and per stage change, never per frame); `__shmupDebug.atlas` = `{ resident, unloads, uploads,
+    lastPrepareMs, timing, pageMs, prepare(stageId) }` in dev / test builds. `e2e/atlas-residency.spec.ts` covers the
+    fetch, both error screens, the Tizen `file://` boot, the page swap zone B → C, the attract demo's pages and the
+    preview page leaving the GPU — WebGL's own view (`texImage2D` / `deleteTexture` hooked), not only the attribute.
+  - **The decode scenario (B4, W3-6)** — the TV render bench's **19th page load**, after the unchanged 18-scenario matrix
+    (`DECODE_SCENARIO_INDEX` 18, `BENCH_RUN_LENGTH` 19; render labels still `n/18`, the `done` flag rides on the decode
+    payload): four pages generated at bench-build time (`apps/tizen/scripts/bench-decode.mjs` — a synthetic 2048² RGBA
+    page, 2.50 MB; the same art as 2048² PNG-8, 0.54 MB; the shipped `common` and zone A pages), each fetched by XHR,
+    decoded by an `Image` from a **blob URL** (a second load of the file URL would hit the memory cache), uploaded
+    through `createAtlas` + `uploadTextureSource` (CPU time and with `gl.finish()`) and decoded by `createImageBitmap`
+    for comparison — 8 repetitions on the TV, medians and p95. Results in a `DECODE (R1-05)` table under the matrix
+    table, a `decode` field in the last `render-bench` payload (`DecodeBenchRecord`) and the analyzer's "Decode and
+    upload" section with R3-04's zone-load estimate. `dist-bench/` grew to ≈ 4.7 MB (of 8 MiB); the game bundles are
+    unchanged; `pnpm bench` opens `?scenario=decode` headlessly.
+  - **Not built:** the lazy "resident" policy (B3b — deferred pages, a hold, a re-fetch after context loss; R3-04 at the
+    latest, W3-2), and aliasing linked stages to their parent zone — the bonus stages, `escape`, boss rush, the dev ranges
+    and the weapon select's preview still need every page (see R3-04's notes).
+  - **Acceptance:** each zone needs exactly `common` + its own page (`atlas-groups.test.ts` on `buildAtlas()`, and the e2e
+    page count on the real build); the residency unloads the others (`residency-eager`, `boot-residency`, the e2e with
+    WebGL's view); the estimate equals a hand calculation (`memory-hand.test.ts`); both bundle checks pass with the
+    manifest outside `app.js` (rule 10); goldens, demos, the v1 baseline and both fingerprints unchanged.
+  - Notes for later steps are in R2-01 and R3-04.
 
 ---
 
@@ -1072,11 +1198,25 @@ moved.
       their pins fail otherwise, and their allow-list entries follow `FRAME_W` / `FRAME_H`; `frame.test.ts`'s
       384-only boss-bar case switches itself off.
     - **Literal, and read by no scan:** `apps/webos/test/boot/boot-wiring.test.ts:28-31`'s fake renderer
-      (384×216 ×5); `packages/render-pixi/package.json`'s description; the docblocks of the shell telemetry's
-      `internalWidth` / `internalHeight` ("384 / 216 by default"); `mode7.spec.ts`'s `place.scale >= 2`, which the
-      `classic` window breaks at 640×360 in a 1280×720 viewport (×1).
+      (384×216 ×5); `mode7.spec.ts`'s `place.scale >= 2`, which the `classic` window breaks at 640×360 in a
+      1280×720 viewport (×1). (`packages/render-pixi/package.json`'s description and the shell telemetry's
+      `internalWidth` / `internalHeight` docblocks no longer name a size — fixed by the wave-3 docs pass.)
     - **The render bench's ×2 scenario becomes 1280×720** (×1 on its 1280×720 display) with an 8 MiB pooled filter
       target (2048×1024): re-read its heap and p95 gates on that run.
+  - **Notes from R1-05** (its As built and reviews):
+    - **The atlas budget drops by itself:** `TEXTURE_BUDGET_BYTES` = `textureBudgetFor(FRAME)` goes **26 → 23 MiB** at the
+      flip (`fixedTargetBytes` at 640×360 = 29,999,104 B); `memory-hand.test.ts` already pins both. The e2e page counts and
+      the hand calculation read `main.json`'s groups and `FRAME_W` / `FRAME_H` — nothing to edit there.
+    - **The interim ×1.5 art packs into the same zone pages** with no change to `atlas-groups.json` (the names do not
+      change).
+    - **`ATLAS_PNG_BYTES_CAP` (256 KiB, `cjk-budget.test.ts`) will likely be exceeded** — 120 KB × up to ≈ 2.25 ≈ 270 KB:
+      raise it on purpose, with the reason in the commit and the test's docblock.
+    - **The live M3-03 figures change:** 479,505 px, 136.6 KB, 46 %, 0.95 and 2.1× are measured on the ungrouped build
+      of today's art, so `cjk-budget.test.ts` fails with the interim art until the six documents that quote them
+      (`asset-pipeline.md`, `core/ui/strings.ts`, `docs/old/shmup_plan.md`, `docs/old/shmup_progress.md`, `CHANGELOG.md`,
+      `options-rebinding-and-accessibility.md`) are updated — that is the test's purpose.
+    - **Re-check the TV bench's 1 / 1 / 2 pages** (`TV_BENCH_PAGES`, `render.perf.ts`): the bench builds its density
+      atlases from the ungrouped source atlas, and ≈ 2.25× the area may push ×1 onto a 2048² page and ×2.25 past 2 pages.
 - **Acceptance:** boots in web, Tizen and webOS builds; title, menus and HUD lay out correctly at 640×360 (e2e
   screenshots analysed at the new viewport), with text drawn in the 9×12 interim font (R1-04's deferred browser
   check); a v1 save loads, keeps its options and archives its scores; a v1 replay is refused. Goldens are expected
@@ -1397,7 +1537,10 @@ are fixed by k = 1.5. Detail comes from:
     `loadModels`, `LICENCE_IDS`, `VERDICTS`, `ORIGINS`, `USES`, `CLEANUPS`), walk the nested references when flagging
     `flux-*`, take the override list from `loadSpriteSources(dir).overrides`; the hold gate is the origin report's
     (until it exists, the staging rule keeps FLUX records out of `assets/source/`); `use: "reference"` with
-    `cleanup: "none"` is accepted — R3-05 may forbid it.
+    `cleanup: "none"` is accepted — R3-05 may forbid it. **Done by R3-05 part 2:** the ingest tool still writes such a
+    record, but the origin report (`scripts/art-origins.mjs`, rule 5) **fails** `use: "reference"` with `cleanup`
+    `none` **or `light`** in the shipped tree (W3-10; in the staging folder it warns), and it is the hold gate (rule 3)
+    and the review gate (rule 4, W3-11).
 
 ### R3-03 — Variants, palettes and tiles from real art
 
@@ -1434,10 +1577,43 @@ are fixed by k = 1.5. Detail comes from:
     `DIST_BUDGET`.
   - **Set the v2 budgets** in `check-bundle.mjs` and `memory/index.ts` deliberately, with the reasoning in
     `docs/dev/platform-polish.md`:
-    - pages per zone (target: `common` ≤ 1 page + zone ≤ 2 pages);
+    - the zone's atlas **bytes**, not a page count (restated by decision W3-8): the GPU copies of the pages a zone
+      needs plus the decoded images the policy keeps — `estimateStageMemory(…)`'s `textures + images` — **≤
+      `TEXTURE_BUDGET_BYTES`, 23 MiB at 640×360**, every page ≤ 2048²; the page count follows from the bytes. (The
+      first target, "`common` ≤ 1 page + zone ≤ 2 pages" of 2048², is 48 MiB of GPU memory alone; even at 2048×1024 it
+      is 24 MiB before any decoded image);
     - texture MiB;
     - dist MB;
     - zone-load time ≤ 2 s on the M7 (estimate from the R0 bench's decode figure until measured).
+  - **Notes from R1-05** (its As built and reviews):
+    - **The inputs exist:** `estimateStageMemory({ imagePolicy: 'resident' })` gives the lazy policy's figure next to
+      the runtime's `all` (and `'none'` the figure without kept images); `main.json` carries `pages[].group`, which the
+      residency already follows; the R0 bench's decode figure is `analyze-bench.mjs`' **`decodeZoneEstimate`** — one
+      2048² RGBA page + two 2048² PNG-8 pages (medians), cold (fetch + decode + upload with `gl.finish()`) and eager
+      (uploads only), against the 2 s target. **It is conservative:** under policy "all" (and a lazy zone load) `common`
+      stays resident across a zone change, so a real zone change does not pay its RGBA page — subtract it (the per-page
+      rows are printed); the synthetic pages are byte-sized stand-ins, so scale by bytes and megapixels (the analyzer
+      prints ms / Mpx) and re-measure with this step's stand-in set.
+    - **Under policy "all" every page's decoded image stays in memory** (W3-2), which detailed art cannot afford: build
+      the lazy "resident" policy (scout B3b — deferred pages in `createAtlas`, a hold while the shown World's pages load,
+      a re-fetch after a WebGL context loss, releasing images on unload; the manifest loader and `loadImagesTimed` are
+      the pieces to reuse) when the estimate crosses the budget, here at the latest. Dropping images
+      (`keepPageImages: false`) needs that context-loss re-fetch first.
+    - **Linked and dev stages still keep every page** (`stagePages`: anything outside the campaign): the bonus stages,
+      `escape` (the campaign's `escapeId`), boss rush, the dev ranges and the weapon select's preview
+      (`memory.test.ts` pins today's "every page" for a non-campaign stage). Aliasing them to a parent zone has a trap
+      (lane A review note 2): `escape`, entered from zones H and I, uses `tilesets: terrain-a`, which sits in the `zone-a`
+      group — give the escape World H's or I's pages and its tiles are missing (a mid-play re-upload today, a hole under
+      a lazy policy). Either make the sprite walk follow `escapeId` (then `terrain-a` is named by three zones, moves to
+      `common`, and `atlas-groups.json` must be re-derived — `SHMUP_ATLAS_GROUPS_UPDATE=1`; `atlas-groups.test.ts` fails
+      until then) or keep "every page" for them.
+    - Detailed art quantised to a zone palette (48–64 colours, art bible) makes each zone page PNG-8 automatically; a page
+      over 256 colours falls back to RGBA losslessly, and `common` stays RGBA unless its palette is constrained. Replace
+      `cjk-budget.test.ts`' `ATLAS_PNG_BYTES_CAP` with the real atlas budget, and re-derive the groups file whenever
+      content moves a sprite between zones.
+    - **`DIST_BUDGET`:** pages × measured bytes per page + code + recorded audio (`check-bundle.mjs`' docblock gives the
+      derivation). The bench widget shares it: `dist-bench/` is ≈ 4.66 MB since B4's decode pages, ≈ 3.4 MiB of headroom
+      — watch it when the "v2 zone stand-in" scenario lands.
 - **Acceptance:** the stand-in set passes the new budgets in CI; the render bench gains a "v2 zone stand-in"
   scenario.
 
@@ -1494,6 +1670,40 @@ are fixed by k = 1.5. Detail comes from:
   - **Part 2 waits for R3-02:** the origin report needs the `.art.json` schema and an importable validator, the
     list of real-art override PNGs, the `LICENSES.md` format, the staging folder handled like
     `assets/source/sprites/`, and a fixed map of licence ids to model ids.
+- **As built** (part 2, the origin report — `fa72c78`, review fix `f9d3f69`; review round 2 clean; 2026-10-17):
+  - **`scripts/art-origins.mjs`** (`node scripts/art-origins.mjs [--list] [--json] [--check] [--source DIR] [--staging
+    DIR] [--models FILE]`; no root `package.json` script, W3-12) lists every sprite the atlas packs by origin —
+    `procedural`, `hand`, `ai-assisted`, `unknown` — and kind (`generator`, `pixel-map`, `font`, `flash` / `p2` inheriting
+    their base's class, `record`, `licensed`, `untraced`, `unclassified`), and the served model of every source and
+    **nested** edit reference. "Procedural" is derived from the pipeline's own sprite list (`collectSprites`' origin
+    strings), never declared; records are checked with the ingest tool's `lib/provenance.mjs`, never restated. Exit 1
+    on a failure, a missing source folder or a broken model table; exit 2 for bad usage only.
+  - **Rules 1–6** (`RULES`): 1 every `checkProvenanceTree` issue; 2 every modelled source and reference names a model
+    of `models.json` with its served id and licence id; 3 nothing in a record's source or reference tree is on `hold`
+    for its `use` — joined by model **and** by licence id (the FLUX gate); 4 a shipped `ai-assisted` record is reviewed
+    (W3-11); 5 a `use: "reference"` record has `cleanup` `heavy` or `redrawn` — `none` / `light` fail (W3-10); 6 every
+    origin is classified, the pipeline reports no source issue and no recorded path points into the git-ignored
+    candidates folder. **In the shipped tree every finding fails; in the staging folder rules 3–5 only warn** (art may
+    be staged before its review or the FLUX decision, never with a broken record — rules 1, 2 and 6 fail there too).
+    W3-12: pixel maps, the font, generators and their siblings are `procedural` (agent authorship is a
+    store-disclosure question, `art-provenance.md` §8).
+  - **`test/scripts/art-origins.test.ts`** (26 tests, part of `pnpm test`): the shipped tree passes; the ingest
+    fixtures copied into a temporary tree fail exactly as expected (7 failures: the three FLUX records held, three
+    unreviewed, `gyre`'s reference + `none`); the staged severities (review round 1: a staged warning failed the
+    shipped-tree tests — `f9d3f69` makes them require no failure and no shipped finding, and proves a staged unreviewed
+    sprite passes); the CLI's exit codes, `--list` and `--json`. It also **ties `art-provenance.md` §2 to
+    `models.json`**: every licence cell now ends with `; id \`<licence id>\``, every model in the table has a §2 row
+    with the same pixels / reference verdicts, and the LTX-Video row reads **hold** until its checkpoint and licence
+    are known (as `models.json` already said; no verdict changed).
+  - **Today:** 438 procedural sprites (252 generator, 49 pixel-map, 1 font, 132 `@flash`, 4 `@p2`), no model, no staging
+    folder — 0 failures. The acceptance holds trivially until the real ingest (R3-02's manual step, after the FLUX
+    decision); `art-provenance.md` §9 documents the report.
+  - **Open, for R3-03:** a real-art bullet's `@<palette>` variants cannot be override PNGs (`@` is not valid in a sprite
+    name), so they stay `procedural:palettes` sprites and are reported as procedural even when their base is real art.
+    When R3-03 decides how variants of real art are made, a derived variant should **inherit its base's provenance**,
+    as `@flash` / `@p2` already do.
+  - **Not done here:** the "Licences" note in `art-prompts/images/README.md` waits for round 2, with R3-01's post-round-2
+    edits.
 
 ### R3-06 — Stage art features for detailed levels
 
@@ -1756,7 +1966,7 @@ outcome below maps to an action, not a stop.
 | **Style drift between the two slots** — FLUX.2-dev and Qwen-Image read the same prompt differently, so winners mixing both models look like two games | high | one kernel for both slots; every followup and edit made by FLUX.2-dev with the winner as reference; the art bible (R3-01), palette quantisation in ingest (R3-02) and hand cleanup unify the result |
 | **Repository growth** from committed winner PNGs (≈ 300 images of 1–3 MB) | medium | candidates stay git-ignored; only winners and followups are committed; the owner decides on Git LFS if the total gets large |
 | **Texture memory** with detailed art (one 2048² page = 32 MiB with its image) | high | zone-grouped pages, residency, `keepPageImages` off, PNG-8, budgets set by R3-04 before R4/R5 produce art |
-| **Bundle budget** (512 KB gzip, ~403 KB used) | medium | the atlas manifest moves out of `app.js` (R1-05); new code stays lean |
+| **Bundle budget** (512 KB gzip, ~403 KB used before R1-05, ~376 KB after) | medium | the atlas manifest moved out of `app.js` (R1-05, −22 KB); new code stays lean |
 | **Mechanical port misplaces frame-anchored values** | medium | units on every schema field (R1-03), a tool that refuses unclassified values, the first-visible-tick comparison test (R2-02) |
 | **Golden churn** hides an unintended sim change | medium | R1 keeps goldens unchanged as proof; R2 re-blesses once with a full bot pass; each R5 zone re-blesses only its own zone |
 | **Fix porting between `v1.x` and `master` gets painful** | certain after R2 | merge until R2-01, then cherry-pick code fixes only (§3.3) |
@@ -1822,7 +2032,7 @@ outcome below maps to an action, not a stop.
 
 ### A.4 Art
 
-438 sprites / 1,411 frames on one 1024² page; 49 pixel-map sources and 26 procedural generators; 195-glyph font;
+438 sprites / 1,411 frames on one 1024² page (zone-split since R1-05: a 1024×512 `common` page and nine zone pages, 120 KB); 49 pixel-map sources and 26 procedural generators; 195-glyph font;
 9 tilesets × 20 tiles; ~145 doc plates and 18 doc screenshots; store icons (Tizen 512×423, Electron 512²,
 webOS 80² / 130²).
 
@@ -1885,7 +2095,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
-| R1-05 | Atlas paging and memory ready for detailed art | in progress |
+| R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
 | R2-01 | Flip the frame; interim art; versioned saves and replays | not started |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
@@ -1894,7 +2104,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R3-02 | The ingest tool, with provenance | done (owner parts pending) — 2026-10-17 |
 | R3-03 | Variants, palettes and tiles from real art | not started |
 | R3-04 | Atlas pages and memory with detailed art | not started |
-| R3-05 | AI art provenance and licences | done (owner parts pending) — 2026-10-17 (part 2, the origin report `scripts/art-origins.mjs`: `fa72c78`, `f9d3f69`; As built with the wave-3 docs) |
+| R3-05 | AI art provenance and licences | done (owner parts pending) — 2026-10-17 |
 | R3-06 | Stage art features for detailed levels | not started |
 | R4-01 | Player crafts, Options, shields, player shots | not started |
 | R4-02 | Enemy bullets, lasers, items | not started |

@@ -430,20 +430,26 @@ Game data is JSON under `content/`, validated and turned into numbers once, at b
 ### Asset pipeline (`assets/source/` → atlas → `virtual:shmup-assets`)
 
 Every picture is built from committed source data by Node scripts at build time (decision
-D24, "art as code"); nothing is drawn at run time and nothing is fetched on the TV. Details:
+D24, "art as code"); nothing is drawn at run time and nothing comes from a server on the TV. Details:
 [asset-pipeline.md](asset-pipeline.md).
 
 - **Build time (Node).** `scripts/assets/` turns sprite pixel maps
   (`assets/source/sprites/**/*.sprite.json`), seeded procedural generators, real-art PNG
-  overrides and the bitmap font into packed, power-of-two atlas pages (≤ 2048²) and a JSON
-  manifest in `assets/generated/atlas/`. Hit-flash sprites get a white `<name>@flash`
+  overrides and the bitmap font into packed, power-of-two atlas pages (≤ 2048²; since R1-05 a
+  `common` page plus one page per campaign zone, from `assets/source/atlas-groups.json`, written
+  as lossless PNG-8 where a page fits 256 colours) and a JSON manifest in `assets/generated/atlas/`. Hit-flash sprites get a white `<name>@flash`
   sibling (D30). An input-hash cache skips unchanged runs; output is byte-identical.
 - **Wiring.** Turborepo runs `//#assets` before `build` / `dev`, and the `shmupAssets()`
-  Vite plugin (`vite.shared.ts`) runs the same cached pipeline in `buildStart`, inlines the
-  manifest as `virtual:shmup-assets` and emits the pages into `dist/assets/atlas/`
-  (relative URLs — `file://` on Tizen, `app://` in Electron; D25).
-- **Boot.** The shell loads the pages with `new Image()` from their relative URLs,
-  render-pixi's `createAtlas` turns them into one nearest-neighbour texture source per page,
+  Vite plugin (`vite.shared.ts`) runs the same cached pipeline in `buildStart` and emits the
+  pages and — since R1-05 — the manifest `main.json` into `dist/assets/atlas/` (relative URLs —
+  `file://` on Tizen and webOS, `app://` in Electron; D25); `virtual:shmup-assets` gives the app
+  the manifest's URL, the pages' folder and the manifest's digest (until R1-05 it inlined the
+  manifest, which `virtual:shmup-assets-inline` still does for the render bench and as a fallback).
+- **Boot.** The shell fetches the manifest with `XMLHttpRequest` (`fetch()` fails on `file://`,
+  D25) and checks its digest, loads the pages with `new Image()` from their relative URLs,
+  render-pixi's `createAtlas` turns them into one nearest-neighbour texture source per page
+  (outside Pixi's texture GC — the shell's residency uploads the zone's pages and unloads the
+  others between zones),
   and `renderer.setSpriteNames(names)` resolves every sprite name to a frame id once — the
   sim and the renderer exchange integers only. Content's `sprite` names are checked against
   the manifest by `pnpm content:check`; anything unresolved at run time draws the magenta

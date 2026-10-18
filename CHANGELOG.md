@@ -78,6 +78,38 @@ new presentation fingerprint are unchanged.
   tested on synthetic fixtures; the real winners wait for the FLUX licence decision. The asset
   pipeline ignores the tool's files, and a real-art PNG's sidecar pivot now wins over a code
   anchor ([real-assets.md](docs/dev/real-assets.md#the-ingest-tool-art-promptsingest)).
+- **The atlas is split by zone** (R1-05): one `common` page (ships, shots, bullets, items, effects,
+  the font, the UI, and every sprite more than one zone draws) and one page per campaign zone, from
+  `assets/source/atlas-groups.json` — derived from the content, never edited by hand
+  ([asset-pipeline.md](docs/dev/asset-pipeline.md#atlas-groups-r1-05)). Pages that fit 256 colours
+  are written as lossless PNG-8 (the atlas only), so today's art takes 120 KB instead of 137 KB, and
+  a zone keeps about 2.2 MB of pages on the GPU instead of 4 MB. Between zones the shell unloads the
+  other zones' pages and **uploads the next zone's at the transition** — at boot, at every stage
+  change and when the attract demo or a replay shows another zone — so no page uploads in the middle
+  of play; the pages are out of Pixi's own texture GC. The picture is byte-identical to the one-page
+  atlas's.
+- **The atlas manifest is a file next to its pages** (R1-05): `assets/atlas/main.json`, read with
+  XHR at boot (status 0 on `file://`) and checked against the digest the build recorded — no longer
+  inlined into `app.js`, which is 22 KB smaller for it (≈ 376 KB of 512 gzipped). A new boot error,
+  **ATLAS MANIFEST FAILED TO LOAD**, and a bundle-check rule keep it that way. The inlined form lives
+  on as `virtual:shmup-assets-inline` — the render bench, and the TVs' fallback should their
+  `file://` XHR ever fail (never tried on a TV yet).
+- **Memory budgets from the frame** (R1-05): out of the 100 MB, the audio's share is 24 MiB and the
+  atlas's is what the heap, the audio and the render targets at 1080p leave — 26 MiB at 384×216,
+  23 MiB at 640×360 — and the estimator charges the decoded images of every page, as the runtime
+  keeps them ([platform-polish.md](docs/dev/platform-polish.md#memory-budget-shmupshell-memory)). The
+  atlas load is timed — `data-shmup-atlas-load-ms`, `data-shmup-atlas-page-ms` and
+  `data-shmup-atlas-pages` on the canvas, `__shmupDebug.atlas` in debug builds — for the owner to read
+  on the M7.
+- **The TV bench measures PNG decoding** (R1-05): a run ends with a decode scenario — a 2048² RGBA
+  page, the same as PNG-8 and two shipped pages, fetched, decoded and uploaded eight times each, with
+  `createImageBitmap` for comparison — shown in a `DECODE` table and turned by `analyze-bench.mjs`
+  into the zone-load estimate plan step R3-04 starts from. The 18 render scenarios are unchanged.
+- **The origin report** (R3-05 part 2, `node scripts/art-origins.mjs [--check]`): every sprite the
+  atlas ships by origin — procedural, hand, AI-assisted with the model behind each source and edit
+  reference — failing on an untraced override, a model or licence missing from the table, art made
+  by a model on hold, an unreviewed AI record, or a "reference" with too little cleanup. Today all
+  438 sprites are procedural ([art-provenance.md](docs/dev/art-provenance.md#9-part-2-the-origin-report)).
 
 ### Documentation
 
@@ -102,7 +134,10 @@ new presentation fingerprint are unchanged.
 - **Decisions made while the plan runs** ([plan_resolution.md](plan_resolution.md) §1): the
   owner's O1–O10 (content units, the screen-anchored snap rule, camera `yTo` ported ×1.5, tile sizes
   8 and 12 …), O11 (ground enemies keep their terrain spot in the port — built as the default, the
-  owner's confirmation pending) and the orchestrator's wave-1 decisions, so later steps can cite them.
+  owner's confirmation pending), the orchestrator's wave-1 decisions and its wave-3 decisions
+  W3-1 … W3-12 (the zone split shipped now, the eager residency, PNG-8 for atlas pages only, the
+  budgets, the manifest fetched by XHR, R3-04's page target restated in bytes, the origin report's
+  rules), so later steps can cite them.
 
 ### Testing
 
@@ -135,7 +170,16 @@ new presentation fingerprint are unchanged.
   render-bench scenario now draws to a 1280×720 display, a whole multiple of 640×360.
 - **Provenance in `pnpm test`** (R3-02): `test/scripts/assets/provenance.test.ts` fails on a
   real-art override without a valid record or a `LICENSES.md` entry; CI's new `ingest` job runs
-  the tool's own tests and checks every committed recipe is up to date.
+  the tool's own tests and checks every committed recipe is up to date. Since R3-05 part 2
+  `test/scripts/art-origins.test.ts` runs the origin report on the shipped tree and on the ingest
+  fixtures, and ties `art-provenance.md`'s licence table to `art-prompts/ingest/models.json`.
+- **The zone-split atlas** (R1-05): `test/integration/atlas-groups.test.ts` (the groups file equals
+  its derivation; every zone needs exactly `common` plus its own page), `atlas-zone-sprites.test.ts`
+  (eleven golden runs: every sprite drawn is in its zone's set), the shipped atlas held to a PNG
+  budget instead of a page count (`cjk-budget.test.ts`), the memory estimate against a hand
+  calculation at both frames (`memory-hand.test.ts`), and `test/e2e/atlas-residency.spec.ts` — the
+  manifest's fetch and error screens, the Tizen `file://` boot, and the pages WebGL really holds as
+  the zone changes.
 
 ## [1.0.0] — 2026-10-16
 

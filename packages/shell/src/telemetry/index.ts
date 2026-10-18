@@ -169,9 +169,9 @@ export interface RenderTelemetryEnv {
   devicePixelRatio: number;
   /** The WebGL version the renderer really got (1 or 2 — the review's F8 A/B). */
   webGLVersion: number;
-  /** Internal frame width the renderer draws at (384 by default). */
+  /** Internal frame width the renderer draws at (`renderer.width` — core's `FRAME_W` in the game). */
   internalWidth: number;
-  /** Internal frame height (216 by default). */
+  /** Internal frame height (`renderer.height` — core's `FRAME_H` in the game). */
   internalHeight: number;
   /** Launch-to-ready time in ms (`Shell.bootTiming.readyMs`), against the 10 s store budget. */
   bootMs: number;

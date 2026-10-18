@@ -297,6 +297,18 @@ prints each relative to the same session's 384×216 rows, applies the verdict ru
 given two sessions, compares WebGL 1 with WebGL 2 (`test/logServerBench.test.ts`, `test/analyzeBench.test.ts`, fixture
 `test/fixtures/bench-session.jsonl`). Recipe: [build-test-deploy.md § The TV render bench](build-test-deploy.md#the-tv-render-bench-r0-02).
 
+Since plan step **R1-05** (B4) a run ends with the bench's **decode scenario**, and its last payload carries an optional
+`decode` record (`@shmup/shell` `DecodeBenchRecord`: per page — a synthetic 2048² RGBA page, the same as 2048² PNG-8,
+the game's `common` and zone A pages — the bytes, the encoding and `[min, p50, p95, max]` of each stage: XHR fetch, image
+decode, upload with and without `gl.finish()`, `createImageBitmap` decode and upload, plus the first, coldest total);
+that payload, not the 18th render payload, now carries `done: true`. `validatePayload` accepts a decode-only payload
+(`results: []`), the server prints one summary line per page, and `analyze-bench.mjs` adds a **"Decode and upload"**
+section — per page median / p95 and ms per megapixel, ending in plan R3-04's zone-load estimate (`decodeZoneEstimate`:
+one 2048² RGBA page plus two 2048² PNG-8 pages, cold = fetch + decode + upload with finish, eager = uploads only,
+against 2 s). The estimate is conservative: a real zone change keeps `common` resident. Old sessions (no `decode`) still
+parse and print no such section. Fixture `test/fixtures/bench-decode.jsonl`; the owner puts the section into
+`input-probe-results.md` §12 with the rest of R0-03's run.
+
 Payload (`ReportPayload` in `src/report.ts`):
 
 ```jsonc

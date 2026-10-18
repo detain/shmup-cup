@@ -189,12 +189,13 @@ content JSON file reloads the page. `main.ts` imports the module and hands it to
 shell, which validates it at boot; see [`docs/dev/content-data.md`](../../docs/dev/content-data.md).
 
 It also registers **`shmupAssets()`**: the placeholder asset pipeline runs (cached) when the
-dev server or a build starts, `virtual:shmup-assets` exports the atlas manifest (inlined)
-and the relative page URLs (`assets/atlas/main.png`), and builds emit the pages into
+dev server or a build starts, `virtual:shmup-assets` exports where the atlas manifest is
+(`manifestUrl` `assets/atlas/main.json`, `atlasDir`, `manifestDigest` — since plan R1-05; the
+inlined manifest is `virtual:shmup-assets-inline`), and builds emit the manifest and the pages into
 `dist/assets/atlas/`. In `pnpm dev` the atlas is served from `assets/generated/atlas/`;
 saving a file under `assets/source/` regenerates it and reloads the page, and editing the
 pipeline code in `scripts/assets/` restarts the dev server. `main.ts` imports the module and
-the shell loads the pages with `new Image()`; see
+the shell fetches the manifest with XHR, then loads the pages with `new Image()`; see
 [`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md).
 
 ## Modules

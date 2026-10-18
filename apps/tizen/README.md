@@ -38,11 +38,15 @@ placeholder art — the logo above the two ships; regenerate it after changing t
   cannot `fetch()` local files (decision D25). No content files are copied into `dist/`.
   `main.ts` imports the module and the shell validates it at boot; see
   [`docs/dev/content-data.md`](../../docs/dev/content-data.md).
-- **`shmupAssets()`** (same file) runs the placeholder asset pipeline, inlines the atlas
-  manifest into `app.js` as `virtual:shmup-assets` and emits the atlas pages into
-  `dist/assets/atlas/` with fixed names; the app loads them with relative URLs, which work
-  from `file://` (decision D25). See
-  [`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md).
+- **`shmupAssets()`** (same file) runs the placeholder asset pipeline and emits the atlas
+  pages and — since plan R1-05 — the manifest `assets/atlas/main.json` into
+  `dist/assets/atlas/` with fixed names; `virtual:shmup-assets` gives `main.ts` only the
+  manifest's URL, the pages' folder and the manifest's digest. The shell reads the manifest with
+  `XMLHttpRequest` (`fetch()` fails on `file://`, D25; XHR answers with status 0 there — never yet
+  tried on a TV, W3-7) and the pages with relative URLs. Since R1-05 the atlas is ten pages:
+  `main.png` (`common`) and one per zone. Should a TV refuse the XHR, the fallback is to import
+  `virtual:shmup-assets-inline` (the manifest inlined, as before R1-05) and relax rule 10 below in
+  the same change. See [`docs/dev/asset-pipeline.md`](../../docs/dev/asset-pipeline.md).
 
 `scripts/check-bundle.mjs` fails the build unless: exactly one script exists, it is loaded
 as a classic deferred script, **it parses with acorn as an ES2018 script**, it starts with
@@ -52,8 +56,11 @@ page exists under `dist/assets/atlas/` (the shell cannot boot without it), and �
 **budgets** hold: `app.js` ≤ 512 KB gzipped (350 KB until M2-16, 384 KB until M3-02), every atlas page a PNG of at most 2048², the whole
 `dist/` ≤ 8 MB (`APP_JS_GZIP_BUDGET`, `ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET`; at M1-19 `app.js` is
 228.6 KB gzipped and `dist/` 812.4 KB; after M2-11 `app.js` is 307.5 KB gzipped, after M2-12 313.5 KB,
-after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB, after M2-16 ≈ 359 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos, M2-16 the two UI string tables, the Options pages and the rebinding). The checks are also exported as `checkTizenBundle(distDir)`
-(and `pngSize`) for the tests.
+after M2-13 320.3 KB, after M2-14 331.5 KB, after M2-15 343.8 KB, after M2-16 ≈ 359 KB — the shipped content is inlined, so every new zone adds to it; M2-15 added the front end's scenes and the nine attract demos, M2-16 the two UI string tables, the Options pages and the rebinding; R1-05 took the atlas manifest out, −22 KB, ≈ 376 KB since). Since R1-05 **rule 10** also requires
+`dist/assets/atlas/main.json`, parsing and listing every page with its real size, with no atlas PNG
+unlisted, and fails an `app.js` that names more than 8 atlas frames — an accidentally inlined manifest
+(`checkAtlasManifest`; the bench widget is exempt). The checks are also exported as
+`checkTizenBundle(distDir)` (and `pngSize`, `checkAtlasManifest`) for the tests.
 
 ## Debug build (M1-19)
 
@@ -192,7 +199,9 @@ A second widget built from this app, **next to** the game: its own entry (`bench
 `scripts/config-xml.mjs` `benchConfigXml`) and its own output `dist-bench/`. It measures a
 density-scaled synthetic scene at 384×216, 640×360 and 960×540 (s = 1 / 1.5 / 2.25, the real atlas
 upscaled ×s into `dist-bench/assets/atlas/` by `scripts/bench-atlas.mjs` — never into the game's
-atlas), six variants each, one scenario per page load; see the `bench` module row below.
+atlas; since R1-05 from the **ungrouped** one-page atlas, `buildAtlas({ ungrouped: true })`, so the
+×1 page is byte for byte what R0-02 measured although the game ships zone pages), six variants each,
+one scenario per page load; see the `bench` module row below.
 
 ```powershell
 # Windows PowerShell, from the repo root; the log server runs on the desktop (tools/input-probe)

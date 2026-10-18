@@ -13,8 +13,9 @@ the JSDoc in `scripts/assets/*.mjs` is the authoritative reference.
 Background: `shmup_feat.md` §18 (one atlas, batched rendering, VA-friendly palette), §12
 (bullet readability), §25 (content production list); `shmup_tech.md` §4.7 (art tools);
 plan decisions **D24** (art as code, real art overrides by name), **D25** (metadata inlined
-into the bundle, images loaded by relative URL) and **D30** (hit flash = a white silhouette
-sprite, not a tint).
+into the bundle, images loaded by relative URL — since v2's **R1-05** the atlas manifest is a file
+next to its pages, fetched with XHR; only the content is still inlined) and **D30** (hit flash = a
+white silhouette sprite, not a tint).
 
 ## The pipeline at a glance
 
@@ -23,26 +24,31 @@ assets/source/sprites/**/*.sprite.json ─┐  pixel maps: palette + rows, one f
 scripts/assets/procedural/*.mjs ────────┤  seeded generators: explosions, bullets, terrain …
 assets/source/sprites/**/*.png (+ .json)┤  real-art overrides, replace frames by name
 assets/source/fonts/*.font.json ────────┘  bitmap fonts → one sprite, a frame per glyph
-   │  collectSprites()     validate, merge, add <name>@flash and <name>@p2 siblings, default anchors
+assets/source/atlas-groups.json ────────  R1-05: which sprites pack onto a zone's own pages
+   │  collectSprites()     validate, merge, add <name>@flash and <name>@p2 siblings, default anchors,
+   │                       give every sprite its group (common, zone-a … zone-i)
    ▼
-packRects()                 MaxRects, 1-px padding + 1-px edge extrusion, power-of-two pages ≤ 2048²
-   │  buildAtlas()          place frames, encodePng() each page, build the manifest
+packRects()                 MaxRects per group, 1-px padding + 1-px edge extrusion, power-of-two pages ≤ 2048²
+   │  buildAtlas()          place frames, encodePng(…, { indexed: 'auto' }) each page (PNG-8 when it fits), build the manifest
    ▼
-assets/generated/atlas/main.png (+ main-1.png …)   page images
-assets/generated/atlas/main.json                    manifest (formatVersion 1)
+assets/generated/atlas/main.png (+ main-1.png …)   page images: main.png = common, then the zone pages
+assets/generated/atlas/main.json                    manifest (formatVersion 2: pages carry their group)
 assets/generated/.asset-cache.json                  input hash + output digests (skip unchanged runs)
    │  shmupAssets() Vite plugin (vite.shared.ts)
    ▼
-virtual:shmup-assets       export const manifest = {…} (inlined) · pageUrls = ['assets/atlas/main.png']
-dist/assets/atlas/*.png    emitted next to the bundle (web and Tizen builds)
+virtual:shmup-assets         export const manifestUrl = 'assets/atlas/main.json' · atlasDir · manifestDigest
+virtual:shmup-assets-inline  export const manifest = {…} (inlined) · pageUrls — the render bench, the TV fallback
+dist/assets/atlas/*.png      emitted next to the bundle, with dist/assets/atlas/main.json (web, Tizen, webOS)
 ```
 
 **Status today.** The whole pipeline, the initial sprite set (M1-03: 55 sprites, 272 frames on
 one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo, one
-1024×512 page since the M2-09 boss parts), the pixel font, the Vite plugin and the sprite-name check in
-`pnpm content:check` are done. Both apps register `shmupAssets()` and ship the pages; since
+1024×512 page since the M2-09 boss parts, 1024² since M2-14; **since R1-05 split by zone**: a
+1024×512 `common` page plus one 256×128 / 256×256 page per campaign zone, 120,400 B of PNG in all),
+the pixel font, the Vite plugin and the sprite-name check in `pnpm content:check` are done. The apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
-`new Image()` and render-pixi's `createAtlas` turns them into textures, and the default scene
+`new Image()` (since R1-05 after fetching the manifest) and render-pixi's `createAtlas` turns them
+into textures, and the default scene
 (free flight since M1-06 — the KESTREL's bank frames, the star layers, the HUD; the sprite
 showcase with `?scene=showcase`) draws the real sprites and the pixel font
 ([rendering-and-shell.md](rendering-and-shell.md)).
@@ -52,12 +58,18 @@ Why this design:
 - **No human art needed, but real art drops in.** Every placeholder is source data
   (pixel rows) or code, so the repo builds on any machine, and the pictures are original.
   A PNG with the same sprite name replaces the frames later, without touching code.
-- **One atlas, one batch.** Pixi batches sprites that share a texture; the 1×1 white
-  `ui/pixel` lets the HUD draw rectangles from the same page, and the hit flash is a second
-  sprite on the same page because Pixi's tint can only darken (multiply).
-- **Nothing is fetched on the TV.** The manifest is part of `app.js`; the pages are plain
-  PNG files the host loads with `HTMLImageElement` from a relative URL, which works from
-  `file://` (Tizen) and `app://` (Electron).
+- **One atlas, few batches.** Pixi batches sprites that share a texture (and up to 16 textures
+  per batch, so `common` plus a zone page still batch together); the 1×1 white `ui/pixel` lets
+  the HUD draw rectangles from the `common` page, and the hit flash is a second sprite on its
+  base's page because Pixi's tint can only darken (multiply).
+- **Pages a zone does not need can leave the GPU** (R1-05). Each campaign zone's own art packs
+  onto pages of its own ([below](#atlas-groups-r1-05)), so the shell's residency unloads the other
+  zones' pages ([platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)).
+- **Nothing comes from a server on the TV.** The pages are plain PNG files the host loads with
+  `HTMLImageElement` from a relative URL, and since R1-05 the manifest is `assets/atlas/main.json`
+  next to them, read with `XMLHttpRequest` (`fetch()` fails on `file://` — D25; XHR returns status
+  0 there); both work from `file://` (Tizen, webOS) and `app://` (Electron). Before R1-05 the
+  manifest was inlined into `app.js` (≈ 22 KB gzip that grew with every frame).
 - **Deterministic.** Two runs over the same inputs write byte-identical files, on any
   machine with the same zlib: sorted inputs, a deterministic packer, no timestamps in the
   PNGs and no engine-dependent maths in the generators.
@@ -212,7 +224,8 @@ shape of the decision matters more than the code:
   not drawn twice, and `font.test.ts` asserts they stay equal below row 0. Latin letters keep rows
   0–6, so kana sit one pixel lower — which is what a CJK face does anyway.
 - **Nothing is loaded separately.** The 93 new glyphs cost **1.6 KB of atlas PNG** (134.9 → 136.6
-  KB) and the atlas is still **one 1024² page** of the 2048² limit; the two translations cost
+  KB) and the atlas was still **one 1024² page** of the 2048² limit (M3-03 — since R1-05 the glyphs
+  sit on the `common` page); the two translations cost
   **8.6 KB of `app.js` gzip** (386.9 → 395.5 KB of the 512 KB budget). A separate page or a
   lazily-loaded atlas would be machinery for nothing at this size, so the katakana live in the main
   atlas and load with it.
@@ -223,8 +236,10 @@ The number that made this decision is the one a **real kanji set** would cost �
 `6900 × 12 × 12` = **993,600 pixels** (≈ 1.0 M). Measured against this build:
 
 - the game's **whole** atlas occupies **479,505 pixels** — the sum of every frame in
-  `assets/generated/atlas/main.json` — on **one 1024² page** (1,048,576 px, 46 % full) that encodes
-  to **136.6 KB** of PNG. So a kanji set is about **2.1× the pixels the entire sprite set uses**,
+  `assets/generated/atlas/main.json` — which packed as **one 1024² page** (1,048,576 px, 46 % full)
+  encodes to **136.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone; these figures are
+  measured on the same art packed as one page, `buildAtlas({ ungrouped: true })`, which
+  `test/integration/cjk-budget.test.ts` recomputes — the area is the same either way.) So a kanji set is about **2.1× the pixels the entire sprite set uses**,
   and about 0.95 of that page on its own;
 - one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
   **one extra atlas page**, not five;
@@ -241,8 +256,9 @@ Before shipping one:
 1. **Subset by use**, not by standard — only the characters the shipped `strings` files actually
    contain (a full UI is a few hundred kanji, not seven thousand);
 2. give that set **its own atlas page**, named so the loader can fetch it per language rather than
-   for everyone (`pageUrls` already carries one URL per page, and `loadImages` already loads them
-   in parallel — the mechanism exists, it is simply not needed yet);
+   for everyone (the manifest already lists one file and, since R1-05, one group per page, and the
+   residency already keeps pages off the GPU by group — but the shell still loads every page at boot,
+   so a per-language page also needs the lazy loading R3-04 may build);
 3. re-measure `dist/` against `DIST_BUDGET` and — the figure that actually decides it — the **boot
    time** against the ≤ 10 s launch rule before believing it fits.
 
@@ -251,8 +267,8 @@ Before shipping one:
 For every sprite with `hitFlash: true` the pipeline adds a **sibling sprite**
 `<name>@flash`: the same frame count, sizes, anchor and animations, every visible pixel
 turned white with its alpha kept. The renderer shows a hit by drawing
-`manifest.sprites[name].flash` with the same frame index — one sprite-id swap, still one
-atlas page and one batch. (The plan sketched one `<frame>@flash` per frame; a whole sprite
+`manifest.sprites[name].flash` with the same frame index — one sprite-id swap, on the same
+atlas page as its base (siblings follow their base's group) and in the same batch. (The plan sketched one `<frame>@flash` per frame; a whole sprite
 is simpler for the renderer.) Today the seven enemies and the four boss parts flash.
 
 ### Player 2's palette swap (M2-06)
@@ -297,18 +313,76 @@ roster of M1-08 included), so `pnpm content:check` passes.
   The packer picks the smallest page that holds everything (smallest area, then the
   squarer, then the wider) and only spills onto further pages when a 2048² page is full.
   Pages are named `main.png`, `main-1.png`, `main-2.png`, …
+- **Groups (R1-05).** An item may carry a `group`; each group is packed on pages of its own with
+  the same algorithm, so no page mixes two groups. Pages come group by group: the items without a
+  group first, then `groupOrder` (the pipeline passes `['common']`, so `main.png` is always
+  `common`), then every other group by name; an empty group makes no page. Without groups the
+  layout is exactly the ungrouped one, and the `group` field appears only on grouped pages and
+  placements. Today: `main.png` common 1024×512, then `main-1.png` … `main-9.png` for `zone-a` …
+  `zone-i` (256×128, zone E, H and I 256×256).
+- **PNG-8 (R1-05, decision W3-3).** `buildAtlas` encodes every page with
+  `encodePng(image, { indexed: 'auto' })`: a page with at most 256 distinct RGBA values
+  (`MAX_PALETTE_SIZE`) is written as an indexed PNG (colour type 3 — `PLTE`, a `tRNS` covering only
+  the entries with alpha < 255, filter None on every row), else as 8-bit RGBA. It is **lossless**
+  (the palette holds the exact values; a fully transparent pixel keeps its RGB) and deterministic
+  (`indexedPalette` orders the entries translucent-first, then by packed `0xRRGGBBAA`). Eight of
+  today's zone pages are PNG-8; `common` (the shared art of every zone — the one-page atlas had
+  1,537 colours) and zone B's page (its sea gradient) have more than 256 and stay RGBA. The encoder's default stays `'never'`, byte-identical to
+  the encoder before R1-05, so the documentation pictures and store icons never change
+  (`docs:images --check`, `store:assets --check`); quantised detailed art (48–64 colours a zone,
+  the art bible) will make most zone pages PNG-8 by itself.
 - Speed: a trial of a candidate page size stops at the first cell that does not fit, and
   after each placement only the new free rectangles are tested for containment (the others
   cannot be contained — see `MaxRectsBin.split`). Both leave the layout byte-identical; the
   full atlas builds in about 0.3 s instead of 0.5 s.
 - Manifest coordinates (`x`, `y`, `w`, `h`) are the frame itself, inside its border.
 
+## Atlas groups (R1-05)
+
+Every sprite belongs to one **group**: `common` (page 0, `main.png` — ships, shots, bullets, items,
+fx, the font, the UI and HUD, and every sprite more than one zone draws) or one per campaign zone
+(`zone-a` … `zone-i` — its enemies, boss, backdrops and tiles), and each group is packed on pages of
+its own, so the shell's residency can unload the pages of the zones not being played
+([platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)).
+
+- **Where a sprite's group comes from** (`resolveAtlasGroup`): the groups file by the sprite's
+  **base name** (the part before `@` — `@flash`, `@p2` and the colour-blind palettes follow their
+  sprite); else a `zone-<id>` directory segment in its name (`enemies/zone-d/bat` → `zone-d` — for
+  future art, since today's names carry no zone and R4 keeps them); else `common`. A font always goes
+  to `common`, and so does every sprite when `buildAtlas({ ungrouped: true })` /
+  `collectSprites({ ungrouped: true })` is asked for the one-page layout (it never reads the groups
+  file — the pre-R1-05 atlas byte for byte; the TV render bench builds its density atlases from it,
+  and `cjk-budget.test.ts` measures on it). `SpriteDef.group` is set by the pipeline only — there is
+  no `group` field in a sprite source.
+- **The groups file** `assets/source/atlas-groups.json` (format `shmup-atlas-groups@1`, an optional
+  `comment`, `groups: { "zone-a": [base names…], … }`; 125 names today — zone A 9, B 12, C 16, D 11,
+  E 18, F 10, G 15, H 14, I 20) is **derived from the content, never edited by hand**: a sprite
+  exactly one campaign zone names — through its stage, enemies, children, bosses, tileset and linked
+  bonus stage, the walk `@shmup/shell` `stageSpriteSets` does — goes to that zone; engine, UI-kit and
+  scene-view sprites (`ENGINE_SPRITES`, `UI_SPRITES`, `SCENE_VIEW_SPRITES`) never do, because the
+  renderer draws them everywhere. Zone A's boss parts are in `common`, since zone H's parade reuses
+  them. After a content change that moves a sprite between zones:
+
+  ```sh
+  SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts
+  pnpm assets
+  ```
+
+  `test/integration/atlas-groups.test.ts` fails while the file differs from the derivation. The file
+  is part of the pipeline's input hash (and of turbo's `//#assets` inputs through `assets/source/**`).
+- **Issues** (reported like any source issue): a listed name that is no sprite, a listed font or
+  `@` name, and a `common` group left empty (page 0 must hold it).
+- **What it does not change:** sprite names, their order, frame names and frame ids (the renderer
+  numbers frames by sprite name), so a re-derivation or a new split moves no golden replay — only
+  page positions change. R1-05 compared 53 canvas captures of the grouped and the ungrouped build at
+  frozen ticks: byte-identical.
+
 ## The manifest (`assets/generated/atlas/main.json`)
 
 ```json
 {
-  "formatVersion": 1,
-  "pages": [{ "file": "main.png", "w": 512, "h": 256 }],
+  "formatVersion": 2,
+  "pages": [{ "file": "main.png", "w": 1024, "h": 512, "group": "common" }, { "file": "main-1.png", "w": 256, "h": 128, "group": "zone-a" }],
   "frames": { "ships/kestrel#0": { "p": 0, "x": 1, "y": 1, "w": 16, "h": 9, "ax": 8, "ay": 4 } },
   "sprites": { "ships/kestrel": { "frames": ["ships/kestrel#0", "ships/kestrel#1", "ships/kestrel#2"], "flash": null } },
   "animations": { "ships/kestrel": { "down": [2], "level": [0], "up": [1] } },
@@ -319,8 +393,8 @@ roster of M1-08 included), so `pnpm content:check` passes.
 
 | Key | Meaning |
 |---|---|
-| `formatVersion` | `MANIFEST_FORMAT_VERSION` (1) |
-| `pages[]` | `{ file, w, h }` per page; `pageUrls[i]` in the virtual module is page `i` |
+| `formatVersion` | `MANIFEST_FORMAT_VERSION` (**2** since R1-05; 1 had no `group`) — the shell and both bundle checks read 1 or 2 (`ATLAS_MANIFEST_VERSIONS`) |
+| `pages[]` | `{ file, w, h, group }` per page — page 0 is `main.png`, the `common` group; the shell fetches page `i` from `atlasDir + '/' + pages[i].file` (`atlasPageUrls`), and `pageUrls[i]` of the inline module is page `i` |
 | `frames[name]` | `p` page index; `x`, `y`, `w`, `h` on the page; `ax`, `ay` the sprite's anchor in frame pixels. Frame names are `<sprite>#<index>` |
 | `sprites[name]` | `frames` — frame names in index order (what the renderer resolves once into numeric ids); `flash` — `<name>@flash` or `null` |
 | `animations[sprite][tag]` | Frame indices of a named sequence; sprites without tags are absent |
@@ -345,7 +419,7 @@ Exit code 1 lists **every** invalid source as `<file>:<json path> message` (no s
 exit code 2 means bad arguments. The output tells you what happened:
 
 ```text
-assets generated → assets/generated/atlas/: main.png 512×256; 55 sprites, 272 frames, 1 font(s)
+assets generated → assets/generated/atlas/: main.png 1024×512 common, main-1.png 256×128 zone-a, …, main-9.png 256×256 zone-i; 438 sprites, 1411 frames, 1 font(s)
 assets up to date (assets/generated/atlas/, input c635e061a9cb)
 ```
 
@@ -366,7 +440,8 @@ current **input hash** and every recorded output still exists with its recorded 
 
 - the pipeline code — every file under `scripts/assets/` **as loaded by this process**
   (hashed once, when `pipeline.mjs` is imported) plus the zlib and `pngjs` versions;
-- the sprite and font sources as they are on disk now (`*.md` and `.gitkeep` are skipped).
+- the sprite and font sources as they are on disk now (`*.md` and `.gitkeep` are skipped);
+- the groups file `assets/source/atlas-groups.json` (R1-05).
 
 Hashing the code once at import is deliberate: a long-lived process (the dev server) keeps
 running the pipeline modules it loaded, so it must record *its* code's hash next to the
@@ -380,9 +455,9 @@ change.
 
 | Hook | What it does |
 |---|---|
-| `buildStart` | Runs `generateAssets()` (cached). In builds it emits every page as `assets/atlas/<file>` with `emitFile` — fixed names, no content hash, because the manifest names them |
-| `resolveId` / `load` | Serves `virtual:shmup-assets`: `export const manifest = {…}` (**inlined**), `export const pageUrls = ['assets/atlas/main.png', …]` (relative, one per page) and `export default { manifest, pageUrls }` |
-| `configureServer` | Dev only: a middleware serves `<base>assets/atlas/<file>` (`[a-z0-9-]+.png` / `.json`, no paths; malformed URLs fall through to a 404) from `assets/generated/atlas/`. Edits under `assets/source/` regenerate the atlas, invalidate the virtual module and send a full reload; an invalid edit logs the issues and keeps the last good atlas |
+| `buildStart` | Runs `generateAssets()` (cached). In builds it emits every page as `assets/atlas/<file>` and — since R1-05 — the manifest as `assets/atlas/main.json` (`ATLAS_MANIFEST_URL`; the pipeline's own bytes, so one digest holds for the build and the dev server) with `emitFile` — fixed names, no content hash, because the manifest names the pages and the app names the manifest |
+| `resolveId` / `load` | Serves **`virtual:shmup-assets`** (`ASSETS_MODULE_ID`, what the apps import since R1-05): `export const manifestUrl = 'assets/atlas/main.json'`, `export const atlasDir = 'assets/atlas'` (both relative), `export const manifestDigest = '…'` (`manifestDigest(bytes)` — 32-bit FNV-1a over the manifest file's bytes, 8 hex digits; the shell's loader computes the same and refuses another build's manifest) and `export default { manifestUrl, atlasDir, manifestDigest }`. And **`virtual:shmup-assets-inline`** (`ASSETS_INLINE_MODULE_ID`): what `virtual:shmup-assets` was until R1-05 — `export const manifest = {…}` (inlined), `pageUrls` (relative, one per page), `export default { manifest, pageUrls }` — for the headless render bench harness and as the TVs' one-line fallback should `file://` XHR ever fail (W3-7) |
+| `configureServer` | Dev only: a middleware serves `<base>assets/atlas/<file>` (`[a-z0-9-]+.png` / `.json`, no paths; malformed URLs fall through to a 404) from `assets/generated/atlas/` — the manifest too. Edits under `assets/source/` regenerate the atlas, invalidate **both** virtual modules and send a full reload; an invalid edit logs the issues and keeps the last good atlas |
 
 **Edits to the pipeline code** (`scripts/assets/**`) are *not* regenerated in-process — the
 running server still has the old modules loaded. Every pipeline module is a config
@@ -391,14 +466,20 @@ so Vite restarts the server itself and the new `buildStart` regenerates with the
 When no restart is coming (inline config, `--configLoader native`, a module nothing imports
 yet) the plugin logs a warning asking for a restart.
 
-Both apps register the plugin (`apps/web/vite.config.ts`, `apps/tizen/vite.config.ts`), and
-both builds contain `dist/assets/atlas/main.png`. `ATLAS_URL_DIR` (`'assets/atlas'`) is
+The apps register the plugin (`apps/web/vite.config.ts`, `apps/tizen/vite.config.ts`,
+`apps/webos/vite.config.ts`), and every build contains `dist/assets/atlas/main.json` and its pages
+(`main.png` …). `ATLAS_URL_DIR` (`'assets/atlas'`) is
 relative so the build works from a sub-path, `file://` and `app://`.
 
 The Tizen bundle check (`apps/tizen/scripts/check-bundle.mjs`) accepts the pages: still
 exactly one script anywhere, and every file other than the four widget files
 (`WIDGET_FILES`: `app.js`, `config.xml`, `icon.png`, `index.html`) must live under
-`dist/assets/` — anything else would be packaged into the `.wgt` by accident.
+`dist/assets/` — anything else would be packaged into the `.wgt` by accident. Since R1-05 its
+**rule 10** (`checkAtlasManifest`, which the webOS check imports) holds the manifest outside
+`app.js`: `dist/assets/atlas/main.json` exists, parses (format 1 or 2) and lists every page with its
+real pixel size, no atlas PNG is unlisted, and `app.js` names at most `MAX_INLINED_FRAME_NAMES` (8)
+atlas frames — the inlined manifest named all ~1,400, so more means it was inlined by accident. The
+TV bench widget, which inlines its own density atlases, is exempt.
 
 ## Sprite names used by content
 
@@ -471,9 +552,12 @@ its table in `content/strings/`, and `pnpm assets`. See
 ### Changing the manifest format
 
 Bump `MANIFEST_FORMAT_VERSION` in `manifest.mjs`, update the typedefs there and the
-`virtual:shmup-assets` declaration in `types/virtual-modules.d.ts` in the same commit, and
-update the consumers: render-pixi `atlas` (`AtlasManifest` mirrors the typedefs) and the
-shell's `ShellAssets`.
+`virtual:shmup-assets` / `virtual:shmup-assets-inline` declarations in
+`types/virtual-modules.d.ts` in the same commit, and update the consumers: render-pixi `atlas`
+(`AtlasManifest` mirrors the typedefs), the shell's loader (`ATLAS_MANIFEST_VERSIONS`,
+`parseAtlasManifest`) and `ShellAssets`, and both bundle checks (`ATLAS_MANIFEST_VERSIONS` in
+`apps/tizen/scripts/check-bundle.mjs`). A version the shell does not read stops the boot on
+`ATLAS DOES NOT MATCH ITS MANIFEST` — R1-05 kept version 1 readable for that reason.
 
 ## Commands
 
@@ -489,7 +573,12 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | File | Covers |
 |---|---|
 | `test/scripts/assets/png.test.ts`, `png-edge.test.ts` | Encode → `pngjs` decode round trip equals the source pixels; chunk layout, CRC, filter choice per row; decoding indexed, 1–2-bit, 16-bit and Adam7 PNGs |
+| `test/scripts/assets/png-indexed.test.ts` | R1-05: PNG-8 is lossless for 1–256 colours and falls back to RGBA at 257, keeps partial alpha and the RGB of transparent pixels, writes only `IHDR` / `PLTE` / `tRNS` / `IDAT` / `IEND` with a short `tRNS`, orders the palette independently of the layout; `'never'` byte-identical to the old encoder |
 | `test/scripts/assets/packer.test.ts`, `packer-edge.test.ts` | No overlaps (border + padding included), power-of-two pages ≤ 2048², determinism under reordering, spilling onto more pages, option validation, tie-breaks, a seeded fuzz |
+| `test/scripts/assets/packer-groups.test.ts`, `pipeline-groups.test.ts` | R1-05: one group per page, the page order (ungrouped, `groupOrder`, then by name), an ungrouped result equal to the old layout; `loadAtlasGroups` / `resolveAtlasGroup` (the file by base name, the `zone-<id>` path rule, `common`), the source issues (a stale name, a listed font or `@` name, an empty `common`), the groups file in the input hash, `ungrouped: true` |
+| `test/integration/atlas-groups.test.ts` | R1-05: `atlas-groups.json` equals its derivation from the content (`SHMUP_ATLAS_GROUPS_UPDATE=1` rewrites it); every campaign zone needs exactly the `common` pages plus its own, no zone page is global, every page ≤ 2048², the dev ranges, boss rush, bonus stages and menus need every page |
+| `test/integration/atlas-zone-sprites.test.ts` | R1-05: 11 golden runs (zones A–I in god mode, brine-grotto and glimmer-cache) replayed — every sprite the World hands the renderer is in its zone's set or the global one |
+| `test/integration/cjk-budget.test.ts` | M3-03's CJK arithmetic recomputed on the one-page (`ungrouped`) build and checked against the six documents that quote it; since R1-05 also the shipped split's budget — pages ≤ 2048², Σ PNG bytes < `ATLAS_PNG_BYTES_CAP` (256 KiB), the same frames and area as the one-page build |
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | The charset equals core's `UI_GLYPHS` exactly (M3-03), the katakana layout and the derived voiced kana, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
 | `test/scripts/assets/provenance.test.ts` | R3-02: every override PNG (under `assets/source/sprites/` and the staging folder `art-prompts/v2/ingested/`) has a valid `.art.json` or a `LICENSES.md` entry; a record without its PNG, a PNG or sidecar changed after ingest, a recipe never ingested fail; the ingest tool's fixture outputs load as overrides (its recipes, records and edit layers ignored) and pack pixel for pixel with the sidecar's anchor and tags — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
@@ -500,9 +589,9 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles, M2-08: the sea only in `SEA_RAMP`, the floor's strips …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
 | `test/scripts/assets/pipeline.test.ts`, `pipeline-edge.test.ts` | The whole atlas: frames pixel-exact, extrusion, the initial sprite set, byte-identical runs, every cache state (including a pipeline edit after the code was loaded), stale-page removal, oversized frames as issues, parallel runs |
 | `test/scripts/generate-assets.test.ts`, `generate-assets-edge.test.ts` | The CLI: flags, the cache skip, `--force`, exit codes 1 and 2, issue listing without a stack trace |
-| `test/integration/assets-plugin.test.ts`, `assets-plugin-edge.test.ts` | The plugin: the virtual module, a real IIFE build emitting `assets/atlas/main.png`, the dev middleware and watcher (source edits regenerate, pipeline edits restart or warn), wiring in both apps and `turbo.json` |
+| `test/integration/assets-plugin.test.ts`, `assets-plugin-edge.test.ts` | The plugin: both virtual modules (`virtual:shmup-assets`'s URL, folder and digest — the digest equal to the shell's `manifestDigest` —, the inline module's manifest and page URLs), a real IIFE build emitting `assets/atlas/main.json` byte-identical to the pipeline's and every page, the dev middleware and watcher (source edits regenerate, pipeline edits restart or warn), wiring in the apps and `turbo.json` |
 | `test/integration/content.test.ts` | Every sprite name of the shipped content exists in the atlas; a typo is reported |
-| `apps/tizen/test/scripts/check-bundle.test.ts`, `apps/tizen/test/build/tizen-build.test.ts`, `apps/web/test/build/web-build.test.ts` | Rule 6 (files outside `dist/assets/`); the real Tizen build ships exactly the widget files plus the atlas pages, byte-identical to the pipeline output; the web build ships `assets/atlas/main.png` |
+| `apps/tizen/test/scripts/check-bundle.test.ts`, `check-bundle-manifest.test.ts`, `apps/tizen/test/build/tizen-build.test.ts`, `apps/web/test/build/web-build.test.ts` | Rule 6 (files outside `dist/assets/`); rule 10 (R1-05: the manifest missing, unparsable, of an unknown version, listing a missing or mis-sized page, an unlisted page, frame names inlined into `app.js`; the bench exempt); the real Tizen build ships exactly the widget files plus `main.json` and the atlas pages, byte-identical to the pipeline output; the web build ships `assets/atlas/main.json` and `main.png` |
 
 ## Gotchas
 
@@ -513,7 +602,10 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `pnpm format:check` wants to reflow a sprite | Should not happen: `assets/source/` is in `.prettierignore`. A pixel map anywhere else is not a source |
 | Edited a generator, the dev server shows the old art | Vite restarts on a pipeline edit; if it logged `restart the dev server …` instead, restart `pnpm dev` |
 | A sprite shows as a magenta checker in the app | The renderer's sprite name table names a sprite the atlas lacks (the console warns once per name) — see [rendering-and-shell.md](rendering-and-shell.md#gotchas) |
-| The app stops on `ATLAS DOES NOT MATCH ITS MANIFEST` | A page image from another pipeline run is served with this bundle (browser cache, a hand-copied file) — rebuild and hard-reload |
+| The app stops on `ATLAS DOES NOT MATCH ITS MANIFEST` | A page image from another pipeline run is served with this bundle (browser cache, a hand-copied file), or — since R1-05 — a `main.json` of another build (its digest differs from the one in `app.js`) — rebuild and hard-reload |
+| The app stops on `ATLAS MANIFEST FAILED TO LOAD` | R1-05: `assets/atlas/main.json` is missing next to `app.js` or could not be read (an HTTP error, an empty body, not a manifest). On a TV that refuses `file://` XHR the fallback is `virtual:shmup-assets-inline` in the app's `main.ts`, with rule 10 relaxed in the same change |
+| `atlas-groups.json equals the derivation` fails | A content change moved a sprite between zones (or added one). Re-derive: `SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts`, then `pnpm assets`. Never edit the file by hand. Sprite ids do not depend on the grouping, so no golden moves |
+| `asset sources are invalid` names `atlas-groups.json` | A listed name is not a sprite any more, names a font or an `@` sibling, or leaves `common` empty — re-derive the file as above |
 | The atlas differs on another machine | Only a different zlib (Node version) can change the PNG bytes; the pixels never change. The zlib version is part of the input hash, so the cache rebuilds |
 | `pngjs` has no types in the editor | Deliberate — it is loaded untyped (no `@types/pngjs` dependency); only `png.mjs` and the hash in `pipeline.mjs` touch it |
 | TypeScript cannot see a new export of a `scripts/assets/*.mjs` module | The Node-side TS reads the JSDoc types through `allowJs` in `tsconfig.tooling.json` (no `checkJs`): give the export a JSDoc `@param` / `@returns` type |
@@ -606,3 +698,11 @@ frames — three of the swirl, then the discharge) in the `particles` generator,
 from a **pseudo-angle** (`+ - * /` only, no `Math.atan2`) so the pixels are identical on every
 engine. Both are listed in `main.campaign.json`'s credits, as the content test requires
 ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).
+
+R1-05 (done, v2) split the atlas by zone: the packer's groups, the content-derived
+`assets/source/atlas-groups.json`, lossless PNG-8 pages, manifest format 2 and the manifest shipped as
+`dist/assets/atlas/main.json` (fetched with XHR, `virtual:shmup-assets-inline` as the fallback) —
+[Atlas groups](#atlas-groups-r1-05) above, the residency in
+[platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory). R2-01's interim ×1.5 art
+packs into the same groups (the names do not change); R3-04 sets the atlas budget from detailed
+stand-in art.

@@ -10,7 +10,9 @@ metadata), **`device-info`** (the TV's model and firmware in the debug overlay),
 reload** to the TV (`tizen:watch`) and the `productinfo` privilege. Both browser hosts share one
 **`localStorage` adapter with quota checks** and a **debug save export / import**, and the shell
 got a **memory budget**: an estimator that keeps every campaign zone under 100 MB and the atlas-page
-residency that unloads pages between zones.
+residency that unloads pages between zones. Plan step **R1-05** (v2) gave that budget real work: the
+atlas is split into a `common` page and one page per zone, the residency uploads the next zone's
+pages eagerly, and the texture and audio shares are derived anew — [below](#memory-budget-shmupshell-memory).
 
 This page is the *how and why* and the map of the step's code. Exact signatures are in
 [api-reference.md](api-reference.md) (`save`, `@shmup/render-pixi` `debug`, `@shmup/shell`
@@ -331,19 +333,48 @@ runtime keeps the widget's APIs (`tizen`, key registration) on the served http p
 
 The TV caps dev-installed apps at 120 MB; the budget is **< 100 MB** (`MEMORY_BUDGET_BYTES`).
 
-**The estimator.** `estimateMemory(inputs)` adds up what stays resident: the atlas pages (`w × h ×
-4`, `pageBytes`) plus their decoded images (Pixi keeps the `HTMLImageElement` for a context loss),
-the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
+**The budgets (R1-05, decisions W3-4 / W3-5).** Out of the 100 MiB, three shares are fixed and the
+atlas gets the rest:
+
+| Share | Value | Where it comes from |
+|---|---|---|
+| JS heap baseline (`HEAP_BASELINE_BYTES`) | 24 MiB | an assumption the §8.5 on-device check confirms or corrects |
+| Audio (`AUDIO_BUDGET_BYTES`) | **24 MiB** (32 MiB until R1-05) | the worst zone today needs ≈ 17.8 MiB (SFX bank + zone I's music set) |
+| Fixed render targets (`fixedTargetBytes(frame, DEFAULT_DISPLAY, FILTER_TARGETS)`) | 26,263,552 B (25.05 MiB) at 384×216; 29,999,104 B (28.61 MiB) at 640×360 | the frame target, two pooled filter passes and the canvas's three 1080p buffers (table below) |
+| **Atlas** (`TEXTURE_BUDGET_BYTES` = `textureBudgetFor({ FRAME_W, FRAME_H })`) | **26 MiB** at 384×216, **23 MiB at 640×360** (32 MiB flat until R1-05) | 100 − 24 − 24 − the targets, floored to whole MiB — derived from core's frame, so R2-01's flip lowers it with no edit; `memory-hand.test.ts` pins both values |
+
+The atlas share holds the GPU copies **and** the decoded images. `DIST_BUDGET` (8 MiB, the packaged
+widget — `apps/tizen/scripts/check-bundle.mjs`) stays as it is until R3-04 measures detailed art; its
+docblock gives the derivation (≈ 1.7 MB of code and atlas today, ≈ 2.4 MB with the code at its
+ceiling, ≈ 5.5 MiB left for art) and how R3-04 re-derives it: pages × measured bytes per page + code
++ recorded audio.
+
+**The estimator.** `estimateMemory(inputs)` adds up what stays resident: the atlas pages on the GPU
+(`w × h × 4`, `pageBytes`) plus the decoded images (Pixi keeps each page's `HTMLImageElement` as the
+texture's resource, to re-upload it; since R1-05 the estimate charges the images of the
+`imagePages` it is given, default the GPU pages, because the shell keeps **every** page's image —
+policy "all", W3-2), the SFX bank (`sfxBankBytes` — synthesized cues at the synth rate, mono float), the music set
 (`trackBytes`: chip songs from their rows — `songFrameBound`, `renderSong`'s length without
 rendering —, recorded tracks up to their loop end, else `FILE_TRACK_FALLBACK_SECONDS` of stereo),
 the render targets and a
 **24 MiB heap baseline** (`HEAP_BASELINE_BYTES` — an assumption, not a measurement: the §8.5
-on-device check compares it with DevTools' heap). `withinBudget` also needs the atlas within
-`TEXTURE_BUDGET_BYTES` (32 MiB) and the audio within `AUDIO_BUDGET_BYTES` (32 MiB).
-`estimateStageMemory({ content, manifest, sfx, music, stageIndex })` estimates one stage: its pages
-(`stagePages`) and its music set (`stageMusicTracks`: the title theme plus every cue the stage can
-ask for). Today every campaign zone passes: A–G ≈ 67.0 MiB, H ≈ 74.0, I ≈ 74.7 (4 MiB atlas + 4 MiB
-image, 0.8 MiB SFX, 9–17 MiB music, 25.05 MiB targets, 24 MiB heap).
+on-device check compares it with DevTools' heap). `withinBudget` also needs the atlas (GPU pages +
+images) within `textureBudgetFor` of the estimate's own frame — so a 640×360 estimate is judged
+against 23 MiB — and the audio within `AUDIO_BUDGET_BYTES`.
+`estimateStageMemory({ content, manifest, sfx, music, stageIndex, imagePolicy? })` estimates one
+stage: its pages (`stagePages`), the images its `imagePolicy` charges — `all` (the default, what the
+runtime does: every page), `resident` (only the stage's own pages — the lazy policy R3-04 may build)
+or `none` (no image) — and its music set (`stageMusicTracks`: the title theme plus every cue the
+stage can ask for). Today every campaign zone passes: A–G ≈ 64.7 MiB, H ≈ 71.7, I ≈ 72.5 at 384×216
+(2.1–2.25 MiB of GPU pages — `common` plus the zone's page — and 3.5 MiB of images, 0.76 MiB SFX,
+9.2–16.9 MiB music, 25.05 MiB targets, 24 MiB heap); at 640×360 the targets add 3.56 MiB (≈ 68.2 /
+75.3 / 76.0 MiB).
+
+**The hand calculation (R1-05).** `memory-hand.test.ts` recomputes every campaign zone from
+`manifest.pages` and the constants alone — the GPU copies of `stagePages`, the images of every page,
+`sfxBankBytes` + the zone's music, `FRAME_W·FRAME_H·4 + potBytes(frame)·2 + 1920·1080·4·3`, 24 MiB —
+at the current frame, at 384×216 and at 640×360, and asserts the estimate equals it and stays within
+budget.
 
 **The render-target term, corrected by M3-02d** (the render review's **F3** — it used to model
 `frame × (1 + FILTER_TARGETS)` flat and miss the CRT's target entirely):
@@ -368,20 +399,53 @@ both behaviours on purpose so that nobody "fixes" them into an exact model.
 1. `stageSpriteSets(content)` walks each campaign zone's stage spec and everything it names — enemy
    references (`enemyId`, `bossId`, `innerId`, `doubleId`, `partnerId`, `minionId`, `childId`),
    `tilesetId`, linked `stageId`s (a bonus stage) — collecting every `sprite…Id`; a sprite no zone
-   names (ships, shots, bullets, items, particles, the UI, the dev ranges' enemies) is **global**;
+   names (ships, shots, bullets, items, particles, the UI, the dev ranges' enemies) is **global**,
+   and so — since R1-05 — is every engine, UI-kit and scene-view sprite (`ENGINE_SPRITES`,
+   `UI_SPRITES`, `SCENE_VIEW_SPRITES`) even when a zone names one, because the renderer draws them
+   everywhere and the packer keeps them in `common`;
 2. `atlasPageNeeds(manifest, spriteNames, sets)` maps that onto the pages: a page is global when it
    holds a global sprite (a content sprite covers its `name@…` siblings — hit flash, player 2,
    palettes), a font glyph or a frame of no sprite;
-3. `createAtlasResidency(atlas.pages, needs)` starts with every page resident;
-   `connectAtlasResidency(events, residency)` calls `prepare(event.id)` on each `PrepareStage` (the
-   zone map's launch, a run or practice start, the title's return): pages the next stage does not
-   need are `unload()`ed (Pixi `TextureSource.unload` — the page re-uploads on its next draw, during
-   the loading / fly-in). A stage outside the campaign needs every page.
+3. `createAtlasResidency(atlas.pages, needs, { upload, onChange, now })` starts with every page
+   resident; a `prepare(stageIndex)` unloads every page the stage does not need (Pixi
+   `TextureSource.unload`) and then — R1-05, W3-2 — **uploads every needed page that has no GPU
+   copy** through the renderer's `uploadTextureSource`, so nothing uploads on its first draw
+   mid-play. It runs at boot for the boot stage (before the warm-up frame), on each `PrepareStage`
+   (`connectAtlasResidency`: the zone map's launch, a run or practice start, the title's return) and
+   — W3-9 — whenever the frame shows a **new World** (`prepareShownWorld`: the attract demo, which
+   never emits `PrepareStage`, a replay). A stage outside the campaign needs every page.
 
-`Shell.atlasResidency` exposes it. **Today's atlas is one 1024² page every zone needs, so nothing is
-unloaded yet**; the mechanism is tested on a synthetic three-page atlas and starts to matter when
-real art adds pages (≤ 2048² each). Music was already one set resident (M1-15 / M2-10); the SFX
-bank is pre-rendered once.
+**Since R1-05 the atlas is really split** — `main.png` (`common`, 1024×512) and one 256×128 /
+256×256 page per zone, from the content-derived `assets/source/atlas-groups.json`
+([asset-pipeline.md](asset-pipeline.md#atlas-groups-r1-05)) — so a zone keeps `common` + its own
+page on the GPU (≈ 2.1–2.25 MiB instead of the old 4 MiB page) while the decoded images of all ten
+pages stay in memory (3.5 MiB). Three rules keep the residency honest:
+
+- **It owns the pages' GPU lifetime.** `createAtlas` turns each page's `autoGarbageCollect` off
+  (Pixi's `ImageSource` forces it on, and its texture GC dropped a page no frame bound for 60 s —
+  a zone's second page would have been dropped a minute in and re-uploaded mid-play when the boss
+  appeared). Only `unload()` and `Atlas.destroy()` free a page.
+- **The unload is self-healing.** A prepare unloads every page the stage does not need **whether or
+  not it believes it resident**: the weapon select's live preview flies the dev `weapon-range`,
+  whose `terrain-a` tiles sit on zone A's page, and Pixi uploads that page on the preview's first
+  draw — the game start's prepare frees it again. Unloading a page with no GPU copy costs nothing;
+  the return value, `unloads` and `onChange` count only the believed-resident pages. The preview is
+  deliberately not placed by the World-change trigger: a stage outside the campaign would put every
+  page on the GPU for a menu.
+- **It is measured** (W3-6). The canvas carries `data-shmup-atlas-pages` (resident pages),
+  `data-shmup-atlas-load-ms` (the boot's manifest + pages + uploads, then each stage change's
+  unload + upload) and `data-shmup-atlas-page-ms` (per page — fetch / decode / upload at boot, the
+  uploads of a stage change), and `Shell.atlasTiming` holds the boot's figures; dev / test builds
+  expose `window.__shmupDebug.atlas` ([debug tools](../client/debug-tools.md)). The owner reads
+  them on the M7 (plan R1-05, Manual).
+
+**Not built yet** (W3-2): the lazy "resident" policy — other zones' pages holding nothing, loaded
+and decoded before the zone starts — which needs deferred pages in `createAtlas`, a hold while the
+shown World's pages load, and a re-fetch after a WebGL context loss (dropping images before that
+exists would lose them for good). R3-04 builds it when the estimate crosses the budget, at the
+latest. Linked and dev stages (the bonus stages, `escape`, boss rush, the ranges) still need every
+page. `Shell.atlasResidency` exposes the residency. Music was already one set resident (M1-15 /
+M2-10); the SFX bank is pre-rendered once.
 
 ## The LG webOS host (`apps/webos`, M3-03)
 
@@ -489,9 +553,10 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 - **Another device fact**: add a `DeviceInfoSources` input and a `DeviceInfo` field, read it in
   `collectDeviceInfo` (tolerating absence), and decide whether it belongs in the 56-character line or
   only in the logged snapshot.
-- **More atlas pages**: nothing to do — `atlasPageNeeds` follows the manifest. Keep zone-specific
-  sprites on pages of their own (the packer's order decides) so a zone's pages can leave; check a
-  zone with `estimateStageMemory`.
+- **More atlas pages**: nothing to do — `atlasPageNeeds` follows the manifest, and since R1-05 the
+  packer keeps each zone's sprites on pages of their own (`atlas-groups.json`, re-derived from the
+  content — [asset-pipeline.md](asset-pipeline.md#atlas-groups-r1-05)); check a zone with
+  `estimateStageMemory` (and `imagePolicy: 'resident'` for the lazy policy's figure).
 - **A new sprite reference field** in content specs: name it `sprite…Id` (picked up by the walk), or
   add an enemy-reference key to `ENEMY_REF_KEYS`, or the sprite counts as global.
 
@@ -511,7 +576,12 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
   `boot/debug-tools-device.test.ts` (the device line after the unlock).
 - Shell (`packages/shell/test/`): `storage/*.test.ts` (budget, quota retry, unavailable, usage),
   `memory/*.test.ts` (every campaign zone under budget, song bounds, the residency on a three-page
-  atlas), `debug/debug-save.test.ts`, `debug/debug-device-alloc.test.ts`.
+  atlas and on the shipped zone-split one; R1-05: `memory-hand.test.ts` — the hand calculation at
+  both frames and both budgets pinned —, `residency-eager.test.ts` — unload before upload,
+  idempotence, the self-healing unload, the World-change trigger), `boot/boot-residency.test.ts`
+  (the boot stage's pages before `warmUp`, the canvas attributes), `debug/debug-atlas.test.ts`
+  (`__shmupDebug.atlas`), `debug/debug-save.test.ts`, `debug/debug-device-alloc.test.ts`; the real
+  browser path is `test/e2e/atlas-residency.spec.ts` (WebGL's own view of the pages).
 - webOS (`apps/webos/test/`, M3-03 — every one against fakes): `platform/platform.test.ts` (Back on
   **461** and not on 10009, auto-repeat, the two-reason lifecycle, exit through `platformBack` with
   the `close` fallback, the capabilities), `boot/boot-wiring.test.ts` (the real `@shmup/shell` on a
@@ -552,7 +622,8 @@ __shmupDebug.save.usage()                                    # { bytes, keys, qu
 | The device line allocates | Call `DebugOverlay.setDevice` (it compares its input) — not `setDebugPanelDevice` every frame, which runs `debugDeviceText` each call |
 | An imported save's volumes do not change | By design — reload after `__shmupDebug.save.import`; the tables apply at once |
 | A browser setting "sticks" only until the page closes | The storage was full (`'quota-exceeded'`) or the value over the app's budget (`'over-budget'`): that one value lives in memory — see the `console.warn` and `__shmupDebug.save.usage()` |
-| `atlasResidency.unloads` stays 0 | Expected with today's single atlas page every zone needs |
+| `atlasResidency.unloads` stays 0 | Before R1-05 that was expected (one page every zone needed). Now it moves at the first zone change; it stays 0 only in a dev scene (showcase, calibration, the fx gallery keep every page) or on stages outside the campaign, which need every page |
+| `data-shmup-atlas-pages` lists every page in a campaign zone | `atlas-groups.json` is stale — a content change moved a sprite between zones: re-derive it (`SHMUP_ATLAS_GROUPS_UPDATE=1 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts`, then `pnpm assets`) |
 | The live-reloaded TV lost its remote keys / `tizen` API | The widget navigated to an http page; whether Tizen keeps the widget's APIs there is the open §8.5 question — note it in the plan and reinstall the widget |
 | `tizen:watch` builds but the TV never reloads | The TV cannot reach the desktop on the port (firewall, another subnet), or `lanAddress` picked the wrong interface — set `SHMUP_LIVE_RELOAD_HOST` |
 
