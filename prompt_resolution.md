@@ -347,8 +347,8 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
   **R0-04's row:** once `R0-04.W2` (wave 4) is on `origin/master` and `R0-04.W1` still waits for me (Q-1, Q-2), set
   R0-04 to `waiting on owner — R0-04.W1 (picking done? Git LFS?)` with your next §17 edit; if W1 runs later, that
   wave's `Wnn.DOCS-A` sets `done (owner parts pending)`. **R0-03's row** follows preflight 6. At the release, wave 15's
-  docs agent sets R0-03 and R0-04 to their real state; `waiting on owner` with its reason is a valid final state for
-  both (`docs/v2-run/wave-15.md`, Exit check).
+  docs agent `W15.DOCS-A` sets R0-03, R0-04 and R6-02 to their real state; `waiting on owner` with its reason is a
+  valid final state for all three (`docs/v2-run/wave-15.md`, `W15.DOCS-A` and Exit check 4).
   `plan_board_v2.py` maps `done…` → Done, `in progress` / `blocked` → In Progress, and everything else → Todo. It
   runs `git fetch` and reads `origin/master:plan_resolution.md` in `/home/sites/shmup-cup` (its `ROOT`) whatever the
   current directory, so it sees only pushed rows. It is git-ignored and exists only in the main checkout. Only you run
@@ -381,9 +381,12 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
 5. `opencode debug config` lists the repo's `opencode.json` with its three `instructions`.
 6. Read §17, §18 and `docs/v2-run/README.md`: the next wave is the first §18 wave that is not closed. Check its
    prerequisites. Report any `blocked` step to me; skip `waiting on owner` steps unless their input now exists.
-   **R0-03 is owner-only** (the TV bench run on the M7s) and in no wave: if §17 still says `not started`, set it to
-   `waiting on owner` with your first §17 edit; it becomes agent work only if logs appear under
-   `tools/input-probe/results/*-bench/`. R0-04's row: see "How you work".
+   **R0-03's TV bench run is owner-only** (the bench on both M7s, with R6-02.P2's capture kit of wave 13): if §17
+   still says `not started`, set it to `waiting on owner` with your first §17 edit. Its agent part is wave 15's
+   `R0-03.A1` (commit the owner's logs, analyse the bench), which runs only when the logs exist — the owner commits
+   them under `tools/input-probe/results/<date>-m7/` and `tools/input-probe/results/<date>-m7-bench/`, or sends them
+   and you put them in `/home/sites/shmup-cup-run/owner-logs/` and give A1 the capture date. Logs that arrive after
+   `R6-03.D6` has started go to a v2.0.x follow-up. R0-04's row: see "How you work".
 7. `python3 /home/sites/shmup-cup/.claude/plan_board_v2.py` (it uses `gh`, which is logged in on myadmin1). If the
    file is missing (it is git-ignored and copied by hand), skip it and tell me.
 8. CI, for the record only (owner rule 8): `gh run list --branch master --limit 3`. Note the state in `RESUME.md`; do

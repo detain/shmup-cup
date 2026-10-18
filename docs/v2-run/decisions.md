@@ -148,8 +148,10 @@ Q-12 and Q-13 are answered (2026-10-18); their rows stay here so the history rea
 
 ## 8. Owner (Manual) work that the run lists but never waits for
 
-- **R0-03:** run the TV bench on both M7s (and, from R3-04 on, its stand-in decode scenario); the logs go under
-  `tools/input-probe/results/*-bench/`.
+- **R0-03:** run the TV bench on both M7s, once with WebGL 1 and once with WebGL 2 (with R6-02.P2's capture kit, wave
+  13; from R3-04 on it ends with the stand-in decode scenario); commit the logs under
+  `tools/input-probe/results/<date>-m7-bench/` or send them. Wave 15's `R0-03.A1` commits sent logs and analyses the
+  bench; without logs R0-03 stays `waiting on owner`.
 - **R1-05 / R2-01:** the M7 checks — the interim look, W3-7 (the M7 boots to the title through the XHR manifest).
 - **R2-04:** play zones A, D and I on the M7 in a `build:dev` bundle (the step's real acceptance); sign off the
   `v2.0.0-alpha.1` tag.
