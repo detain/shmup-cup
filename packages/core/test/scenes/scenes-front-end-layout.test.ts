@@ -18,7 +18,6 @@ import {
   TextAlign,
   TitleItem,
   type DrawList,
-  type ListMenu,
 } from '../../src/index.js';
 import { uiPx } from '../../src/ui/index.js';
 import { LayoutWalk, shippedDb } from '../helpers/layout-walks.js';
@@ -278,10 +277,10 @@ describe('core/scenes front-end layout in the session language (R2-01)', () => {
     w.at('options');
     w.hold(0, 2);
     expectTitleHi(w, false);
-    const pages: Array<[number, string, () => ListMenu]> = [
-      [OptionsItem.Display, 'display', () => flow.displayPage.menu],
-      [OptionsItem.Game, 'gameOptions', () => flow.gameOptionsPage.menu],
-      [OptionsItem.Extras, 'extras', () => flow.extrasPage.menu],
+    const pages: Array<[number, string]> = [
+      [OptionsItem.Display, 'display'],
+      [OptionsItem.Game, 'gameOptions'],
+      [OptionsItem.Extras, 'extras'],
     ];
     for (const [item, id] of pages) {
       w.focus(flow.options.menu, item);

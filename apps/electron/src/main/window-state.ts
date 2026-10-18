@@ -8,9 +8,8 @@
  * - **Scale.** The window's content is an exact multiple of the game's frame
  *   ({@link FRAME_WIDTH} × {@link FRAME_HEIGHT}; {@link windowContentSize}: ×1 …
  *   ×{@link MAX_WINDOW_SCALE}; default ×{@link DEFAULT_WINDOW_SCALE} — ×2 = 1280×720 since R2-01,
- *   ×3 = 1152×648 at v1's 384×216),
- *   so the game's integer scale mode fills it crisply. {@link fitWindowScale} lowers a saved scale
- *   that no longer fits the screen's work area.
+ *   ×3 = 1152×648 at v1's 384×216), so the game's integer scale mode fills it crisply.
+ *   {@link fitWindowScale} lowers a saved scale that no longer fits the screen's work area.
  * - **Fullscreen.** Remembered; `SHMUP_FULLSCREEN=1` still forces it for one launch.
  * - **Position.** The window's last top-left corner, kept only while it lies on a screen
  *   ({@link isOnScreen}) — else the window is centred. `main.ts` saves it
@@ -148,8 +147,8 @@ function coordinate(value: unknown): number | null {
  * the v1 window's width, at least ×1.
  *
  * @param value - The stored version-1 scale (valid: a whole number 1 … 10).
- * @returns `max(1, round(scale × V1_WINDOW_FRAME_WIDTH / FRAME_WIDTH))` — the scale itself while
- *   the frame is still v1's — or {@link DEFAULT_WINDOW_SCALE} for an invalid value.
+ * @returns `max(1, round(scale × V1_WINDOW_FRAME_WIDTH / FRAME_WIDTH))`, or
+ *   {@link DEFAULT_WINDOW_SCALE} for an invalid value.
  */
 function fromV1Scale(value: unknown): number {
   const scale = wholeIn(value, 1, V1_MAX_WINDOW_SCALE, 0);
@@ -233,7 +232,7 @@ export function serializeWindowState(state: WindowState): string {
  *
  * @example
  * ```ts
- * windowContentSize(3); // → { width: 1152, height: 648 }
+ * windowContentSize(3); // → { width: 1920, height: 1080 }
  * ```
  */
 export function windowContentSize(scale: number): {
@@ -266,7 +265,8 @@ export interface ScreenArea {
  *
  * @example
  * ```ts
- * fitWindowScale(6, { x: 0, y: 0, width: 1920, height: 1040 }); // → 4 (1536×864)
+ * fitWindowScale(6, { x: 0, y: 0, width: 1920, height: 1040 }); // → 2 (1280×720)
+ * // ×3 (1920×1080) does not fit: its 1080 rows miss the 1040-row work area
  * ```
  */
 export function fitWindowScale(scale: number, area: Pick<ScreenArea, 'width' | 'height'>): number {

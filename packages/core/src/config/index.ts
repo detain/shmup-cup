@@ -11,7 +11,8 @@
  *
  * **Implements.**
  * - shmup_feat.md §2 (design forks: Meter vs Direct, death-penalty presets, difficulty)
- * - shmup_feat.md §3 (384×216 internal resolution, 60 Hz fixed step, max ticks/frame)
+ * - shmup_feat.md §3 (the internal resolution — 640×360 since R2-01, the spec's 384×216 in v1 —
+ *   60 Hz fixed step, max ticks/frame)
  * - shmup_feat.md §15 (lives 1–5; the difficulty presets Easy / Normal / Hard / Arcade — rank base
  *   and growth, lives, extend thresholds, continues, death-penalty preset — M2-01), §21 Options
  *   menu (sim-affecting subset)
@@ -51,7 +52,8 @@
  * {@link DEFAULT_SHIP_ID}; M2-06:
  * the co-op choice {@link withCoop}, {@link DEFAULT_COOP_EXTRA}, {@link MAX_COOP_EXTRA}) and the
  * screen layout constants {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W},
- * {@link PLAYFIELD_H} (decision D20: two 8-px HUD bars outside a 384×200 playfield). R1-01 (plan
+ * {@link PLAYFIELD_H} (decision D20: two HUD bars outside the playfield — 12 px around 640×336
+ * since R2-01; v1: 8 px around 384×200). R1-01 (plan
  * `plan_resolution.md` §7): the frame constants every frame-dependent number derives from —
  * {@link FRAME_W}, {@link FRAME_H}, {@link FRAME_CX}, {@link FRAME_CY}, {@link PLAYFIELD_CY},
  * {@link HUD_BOTTOM_Y}, {@link TILE_SIZE} (moved here from `core/data`) and the bitmap font's
