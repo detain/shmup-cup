@@ -44,11 +44,17 @@
  *   demo never emits `PrepareStage`) — the pages the next zone does not need are unloaded from the
  *   GPU (Pixi `TextureSource.unload`) and, with the residency's `upload` option, every needed page
  *   without a GPU copy is uploaded there and then (the renderer's `uploadTextureSource`), so none
- *   uploads on its first draw mid-play. A stage outside the campaign (the dev ranges, the weapon
- *   select's preview) needs every page. Since R1-05 the shipped atlas is split into a `common`
- *   page and one page per zone (`assets/source/atlas-groups.json`), so a zone keeps
- *   `common` plus its own page on the GPU; the decoded images of every page stay in memory
- *   (policy "all", W3-2 — dropping them needs a re-fetch after a WebGL context loss).
+ *   uploads on its first draw mid-play. A stage outside the campaign (the dev ranges) needs every
+ *   page. Since R1-05 the shipped atlas is split into a `common` page and one page per zone
+ *   (`assets/source/atlas-groups.json`), so a zone keeps `common` plus its own page on the GPU;
+ *   the decoded images of every page stay in memory (policy "all", W3-2 — dropping them needs a
+ *   re-fetch after a WebGL context loss). The residency **owns** the pages' GPU lifetime: Pixi's
+ *   texture GC never drops an atlas page (`@shmup/render-pixi` `createAtlas` turns its
+ *   `autoGarbageCollect` off), and a prepare unloads every page the next stage does not need,
+ *   **whether or not it believes the page resident** — a page drawn behind its back (the weapon
+ *   select's live preview flies the dev `weapon-range`, whose `terrain-a` tiles sit on zone A's
+ *   page, and Pixi uploads that page on the preview's first draw) leaves the GPU at the next
+ *   stage change, the game start.
  *
  * Nothing here runs per frame: the walk runs once at boot, `prepare` once per stage change or new
  * World.
@@ -720,7 +726,11 @@ export function stagePages(needs: AtlasPageNeeds, stageIndex: number): number[] 
 
 /** An atlas page the residency can unload (Pixi's `TextureSource`). */
 export interface AtlasPageLike {
-  /** Frees the page's GPU texture; it is uploaded again when next drawn. */
+  /**
+   * Frees the page's GPU texture; it is uploaded again when next drawn. Must be harmless on a page
+   * that has no GPU copy (Pixi's `TextureSource.unload` then deletes nothing): the residency
+   * unloads every page a stage does not need, resident or not.
+   */
   unload(): void;
 }
 
@@ -757,24 +767,31 @@ export interface AtlasResidencyOptions {
 export interface AtlasResidency {
   /** Per page: whether it is (or will be, on its next draw) on the GPU. */
   readonly resident: readonly boolean[];
-  /** Pages unloaded so far. */
+  /** Pages unloaded so far (only those it believed resident — {@link AtlasResidency.prepare}). */
   readonly unloads: number;
   /** Pages uploaded by prepares so far (always 0 without {@link AtlasResidencyOptions.upload}). */
   readonly uploads: number;
   /** How long the last prepare that changed something took, in ms (0 before any, or untimed). */
   readonly lastPrepareMs: number;
   /**
-   * Prepares the next stage: unloads every resident page it does not need, marks the needed ones
-   * resident and — with {@link AtlasResidencyOptions.upload} — uploads every needed page that has
-   * no GPU copy (unloads first, so the old zone's memory is free before the new one's is taken).
-   * Without `upload`, an unloaded page uploads on its next draw. Idempotent: preparing the stage
-   * already prepared (or one needing the same pages) unloads and uploads nothing.
+   * Prepares the next stage: unloads every page it does not need, marks the needed ones resident
+   * and — with {@link AtlasResidencyOptions.upload} — uploads every needed page that has no GPU
+   * copy (unloads first, so the old zone's memory is free before the new one's is taken). Without
+   * `upload`, an unloaded page uploads on its next draw. Idempotent: preparing the stage already
+   * prepared (or one needing the same pages) uploads nothing and reports nothing.
    *
    * @remarks
    * Cold path — a `PrepareStage` event, a new World, boot; it may allocate.
    *
+   * **Self-healing.** `unload` is called on **every** page the stage does not need, including
+   * the ones the residency believes are already off the GPU: something may have drawn such a page
+   * behind its back (the weapon select's preview draws zone A's terrain page; Pixi uploads a page
+   * on its first draw), and unloading a page without a GPU copy costs nothing. The return value,
+   * {@link AtlasResidency.unloads} and `onChange` count only the pages it believed resident, so a
+   * repeated prepare still reports nothing.
+   *
    * @param stageIndex - The stage about to play (`content.stages` index), -1 = none (every page).
-   * @returns Pages unloaded by this call.
+   * @returns Pages unloaded by this call that it believed resident.
    */
   prepare(stageIndex: number): number;
 }
@@ -828,10 +845,12 @@ export function createAtlasResidency(
       let unloaded = 0;
       for (let p = 0; p < pages.length; p++) {
         const need = needed.indexOf(p) >= 0;
-        if (!need && resident[p]) {
+        if (!need) {
+          // Resident or not: a page drawn behind the residency's back (the weapon select's
+          // preview) has a GPU copy it does not know of. Without one, `unload` frees nothing.
           pages[p].unload();
           onGpu[p] = false;
-          unloaded++;
+          if (resident[p]) unloaded++;
         }
         resident[p] = need;
       }
@@ -910,8 +929,11 @@ export interface ResidencyGameLike {
  * @remarks
  * Cold: the shell calls it when the shown World changes, never per frame. Scenes are read by that
  * field name (duck typing — no core change, W3-9). Anything else is `null` — notably the weapon
- * select's live preview (its `preview` World flies the dev `weapon-range`, whose sprites are all in
- * the `common` group; placing it would put every page on the GPU for a menu).
+ * select's live preview (its `preview` World flies the dev `weapon-range`, a stage outside the
+ * campaign: placing it would put every page on the GPU for a menu). The preview does draw a page
+ * outside `common` — zone A's, which holds the range's `terrain-a` tiles —, and Pixi uploads it on
+ * the preview's first draw when it is off the GPU; the next prepare unloads it again
+ * ({@link AtlasResidency.prepare} unloads every page the stage does not need, resident or not).
  *
  * @param game - The game.
  * @param view - The frame's World view (`RenderFrame.world`).
@@ -963,8 +985,9 @@ export function stageIndexOfWorld(content: ContentDb, world: ResidencyWorldLike 
  * Prepares the residency for the World a frame shows (plan R1-05, W3-9): the shell's trigger for a
  * **new World** — the attract demo (which never emits `PrepareStage`), a replay, a game start the
  * flow did not announce. A World {@link worldOfView} cannot place (the weapon select's preview)
- * leaves the residency as it is: its sprites are `common`, and a page it might draw that is off
- * the GPU would upload on its first draw, as before R1-05.
+ * leaves the residency as it is: a page it draws that is off the GPU — zone A's, for the range's
+ * `terrain-a` tiles — uploads on its first draw (in a menu, as before R1-05), and the next prepare
+ * (the game start's) unloads it again unless that stage needs it.
  *
  * @remarks
  * Cold: once per World change (`SceneView.worldChanges`), never per frame. Preparing the stage a

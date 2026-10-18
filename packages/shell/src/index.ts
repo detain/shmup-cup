@@ -28,6 +28,7 @@
  */
 export {
   ATLAS_LOAD_MS_ATTRIBUTE,
+  ATLAS_PAGE_MS_ATTRIBUTE,
   ATLAS_PAGES_ATTRIBUTE,
   BOOT_STATE_ATTRIBUTE,
   SCENE_ATTRIBUTE,
@@ -35,6 +36,7 @@ export {
   DEFAULT_STAGE_ID,
   SHELL_SCENES,
   ShellBootError,
+  atlasTimingText,
   bootShell,
   defaultStageId,
   sceneFromSearch,

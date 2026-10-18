@@ -470,8 +470,10 @@ export interface PixiRenderer extends IRenderer {
    * Cold path — boot, a stage change, a new World; never per frame. Pixi's
    * `renderer.texture.initSource`: it binds the source (texture unit 0), which uploads it when it
    * has no GPU copy — after `TextureSource.unload()`, or never drawn — and costs only the bind when
-   * it has one. The source keeps Pixi's defaults otherwise (`autoGarbageCollect` stays off, so the
-   * GPU copy stays until the residency unloads it).
+   * it has one. It does not touch the source's `autoGarbageCollect`: an atlas page has it off
+   * (`createAtlas` turns it off — `ImageSource` forces it on, and Pixi's texture GC would drop a
+   * page no frame bound for a minute), so the GPU copy stays until the residency unloads it; any
+   * other source keeps its own setting.
    *
    * @param source - The texture source (an atlas page — `Atlas.pages[i]`).
    */

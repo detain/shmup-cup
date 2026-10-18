@@ -3,11 +3,14 @@
  * pages the next stage does not need, **then** uploads every needed page without a GPU copy —
  * at the stage change, so no page uploads on its first draw mid-play —, reports what is resident
  * through `onChange` with the prepare's time, and is idempotent; a throwing upload is skipped and
- * retried; without options it behaves as before (unload only). And the shell's World-change
- * trigger (W3-9): `worldOfView` finds the World behind a frame — the game's, or one a scene plays
- * itself (the attract demo, a replay; never the weapon select's preview, a dev range of `common`
- * sprites) —, `stageIndexOfWorld` maps it to its stage and `prepareShownWorld` prepares it, leaving
- * the residency alone for a World it cannot place.
+ * retried; without options it behaves as before (unload only). It is self-healing: `unload` reaches
+ * every page the stage does not need, resident or not, so a page drawn behind its back (the weapon
+ * select's preview draws zone A's terrain page) leaves the GPU at the next prepare — checked on a
+ * fake GPU that also uploads on first draw, as Pixi does. And the shell's World-change trigger
+ * (W3-9): `worldOfView` finds the World behind a frame — the game's, or one a scene plays itself
+ * (the attract demo, a replay; never the weapon select's preview, a dev range outside the
+ * campaign) —, `stageIndexOfWorld` maps it to its stage and `prepareShownWorld` prepares it,
+ * leaving the residency alone for a World it cannot place.
  *
  * Over the shipped content and atlas (zone-split since R1-05), written so it also holds on any
  * atlas whose zones need different page sets.
@@ -49,6 +52,7 @@ const stage = (id: string): number => {
 const ZONE_A = stage('zone-a');
 const ZONE_B = stage('zone-b');
 const ZONE_C = stage('zone-c');
+const ZONE_D = stage('zone-d');
 
 /** What the hooks saw, in order: `unload:<p>`, `upload:<p>`, `change:<pages>|<unloads>|<ms>`. */
 interface Log {
@@ -86,6 +90,14 @@ function eager(options: { failUploads?: Set<number>; clock?: () => number } = {}
 const only = (a: number, b: number): number[] =>
   stagePages(needs, a).filter((p) => stagePages(needs, b).indexOf(p) < 0);
 
+/**
+ * The pages a stage does not need, ascending (every one of them is unloaded by its prepare).
+ *
+ * @param a - The stage.
+ * @returns Page indices.
+ */
+const unneeded = (a: number): number[] => only(-1, a);
+
 describe('shell/memory createAtlasResidency — eager upload (R1-05)', () => {
   it('the shipped atlas gives zones different page sets (the premise of the tests below)', () => {
     expect(pageCount).toBeGreaterThan(1);
@@ -116,22 +128,28 @@ describe('shell/memory createAtlasResidency — eager upload (R1-05)', () => {
     const unloaded = residency.prepare(ZONE_B);
     const gone = only(ZONE_A, ZONE_B);
     const fresh = only(ZONE_B, ZONE_A);
+    // Only zone A's own pages were resident; `unload` reaches every page zone B does not need
+    // (self-healing — a no-op on a page off the GPU), but only the resident ones count.
     expect(unloaded).toBe(gone.length);
     expect(log.calls).toEqual([
-      ...gone.map((p) => `unload:${p}`),
+      ...unneeded(ZONE_B).map((p) => `unload:${p}`),
       ...fresh.map((p) => `upload:${p}`),
       `change:${stagePages(needs, ZONE_B).join(',')}|${residency.unloads}|0`,
     ]);
+    expect(gone.every((p) => unneeded(ZONE_B).indexOf(p) >= 0)).toBe(true);
   });
 
-  it('is idempotent: the same stage again moves nothing and reports nothing', () => {
+  it('is idempotent: the same stage again uploads nothing, counts nothing and reports nothing', () => {
     const { residency, log } = eager();
     residency.prepare(ZONE_B);
     const calls = log.calls.length;
     const uploads = residency.uploads;
+    const unloads = residency.unloads;
     expect(residency.prepare(ZONE_B)).toBe(0);
-    expect(log.calls).toHaveLength(calls);
+    // Only the self-healing unloads of the pages zone B does not need (no-ops on the GPU).
+    expect(log.calls.slice(calls)).toEqual(unneeded(ZONE_B).map((p) => `unload:${p}`));
     expect(residency.uploads).toBe(uploads);
+    expect(residency.unloads).toBe(unloads);
   });
 
   it('a stage outside the campaign (and "no stage") uploads every page', () => {
@@ -168,9 +186,53 @@ describe('shell/memory createAtlasResidency — eager upload (R1-05)', () => {
     log.calls.length = 0;
     residency.prepare(ZONE_C);
     expect(log.calls).toEqual([
+      ...unneeded(ZONE_C).map((p) => `unload:${p}`),
       `upload:${failing}`,
       `change:${stagePages(needs, ZONE_C).join(',')}|${residency.unloads}|0`,
     ]);
+  });
+
+  it('heals a page drawn behind its back: the weapon preview’s page leaves at the next prepare', () => {
+    // The page the weapon select's preview draws outside `common`: its range's tileset's.
+    const range = db.stages[stage('weapon-range')];
+    const tilemap = range.tilemap;
+    if (tilemap === null) throw new Error('weapon-range has no tilemap');
+    const tileset = db.tilesets[tilemap.tilesetId];
+    const sprite = manifest.sprites[db.sprites.names[tileset.spriteId]];
+    const previewPage = manifest.frames[sprite.frames[0]].p;
+    // The premise: zone A's page, needed by neither zone C nor zone D.
+    expect(stagePages(needs, ZONE_A)).toContain(previewPage);
+    expect(stagePages(needs, ZONE_C)).not.toContain(previewPage);
+    expect(stagePages(needs, ZONE_D)).not.toContain(previewPage);
+    // A fake GPU: the residency's upload and unload, plus Pixi's upload on a page's first draw.
+    const gpu = new Set<number>();
+    const residency = createAtlasResidency(
+      manifest.pages.map((_, p) => ({ unload: () => gpu.delete(p) })),
+      needs,
+      { upload: (p) => gpu.add(p) },
+    );
+    /**
+     * The pages on the fake GPU.
+     *
+     * @returns Ascending page indices.
+     */
+    const onGpu = (): number[] => [...gpu].sort((a, b) => a - b);
+    residency.prepare(ZONE_C); // as after a zone C attract demo
+    expect(onGpu()).toEqual(stagePages(needs, ZONE_C));
+    gpu.add(previewPage); // the weapon select: the preview draws zone A's terrain page
+    const unloads = residency.unloads;
+    // A practice start on zone D: exactly common + zone D stay, the stray page included in the
+    // unloads but not in the counters (it was never believed resident).
+    expect(residency.prepare(ZONE_D)).toBe(only(ZONE_C, ZONE_D).length);
+    expect(onGpu()).toEqual(stagePages(needs, ZONE_D));
+    expect(residency.unloads).toBe(unloads + only(ZONE_C, ZONE_D).length);
+    expect(residency.resident).toEqual(
+      manifest.pages.map((_, p) => stagePages(needs, ZONE_D).indexOf(p) >= 0),
+    );
+    // Even a prepare of the stage already prepared clears a stray page.
+    gpu.add(previewPage);
+    expect(residency.prepare(ZONE_D)).toBe(0);
+    expect(onGpu()).toEqual(stagePages(needs, ZONE_D));
   });
 
   it('without options it only unloads, as before R1-05 (and reports nothing)', () => {
@@ -226,8 +288,9 @@ describe('shell/memory the World-change trigger (R1-05, W3-9)', () => {
     const demo = world('zone-b');
     const replay = world('zone-c');
     const preview = world('weapon-range');
-    // Scenes expose their Worlds under `world` (demo, replay); the weapon select's `preview` is a
-    // dev range of common sprites, which the trigger leaves alone.
+    // Scenes expose their Worlds under `world` (demo, replay); the weapon select's `preview` flies
+    // a dev range outside the campaign, which the trigger leaves alone (placing it would put
+    // every page on the GPU for a menu; the page it draws is healed by the next prepare).
     const scenes = [
       { id: 'title' },
       { world: demo },

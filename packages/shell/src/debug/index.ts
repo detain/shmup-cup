@@ -103,6 +103,7 @@ import {
   type RenderTelemetry,
   type RenderTelemetryEnv,
 } from '../telemetry/index.js';
+import type { AtlasTiming } from '../boot/index.js';
 import type { AtlasResidency } from '../memory/index.js';
 
 /** Module descriptor. */
@@ -241,12 +242,25 @@ export interface DebugToolsHost {
    * one.
    */
   readonly atlas?: AtlasResidency | null;
+  /**
+   * How long the atlas took at boot, per page (plan R1-05, W3-6 — `__shmupDebug.atlas.timing`;
+   * `Shell.atlasTiming`), or `null` / absent.
+   */
+  readonly atlasTiming?: AtlasTiming | null;
+  /**
+   * The last atlas load per page, as the canvas's `data-shmup-atlas-page-ms` holds it (W3-6 —
+   * `__shmupDebug.atlas.pageMs`), or absent.
+   *
+   * @returns The text (`'main-3.png:0.0/0.0/1.4'` after a stage change).
+   */
+  readonly atlasPageMs?: () => string;
 }
 
 /**
  * The atlas residency as `window.__shmupDebug.atlas` shows it (plan R1-05): which pages are on
- * the GPU, and a way to prepare a stage as a stage change would — for the browser tests and the
- * TV's remote inspector.
+ * the GPU, a way to prepare a stage as a stage change would, and the atlas's load times — at
+ * boot per page (fetch / decode / upload) and the last stage change's uploads (owner decision
+ * W3-6) — for the browser tests and the TV's remote inspector.
  */
 export interface DebugAtlasApi {
   /** Per page: whether it is on the GPU (or will be on its next draw). */
@@ -257,6 +271,17 @@ export interface DebugAtlasApi {
   readonly uploads: number;
   /** How long the last stage change that moved a page took, in ms. */
   readonly lastPrepareMs: number;
+  /**
+   * How long the atlas took at boot (W3-6): the manifest's fetch, every page's load, decode and
+   * boot upload, in ms (`Shell.atlasTiming`), or `null` when the shell gave none.
+   */
+  readonly timing: AtlasTiming | null;
+  /**
+   * The last atlas load per page — after boot, `manifest:<ms>;<file>:<load>/<decode>/<upload>;…`;
+   * after a stage change, the pages it uploaded (the canvas's `data-shmup-atlas-page-ms`); empty
+   * when the shell gave none.
+   */
+  readonly pageMs: string;
   /**
    * Prepares a stage as a stage change would: unloads the pages it does not need and uploads the
    * ones it does.
@@ -480,11 +505,22 @@ function createSaveApi(save: SaveStore | null, game: Game): DebugSaveApi | null 
  *
  * @param residency - The residency, or `null`.
  * @param game - The game (its content maps stage ids to indices).
+ * @param host - The shell's atlas timing (W3-6): the boot's, and the last load per page.
  * @returns The API, or `null` without a residency.
  */
-function createAtlasApi(residency: AtlasResidency | null, game: Game): DebugAtlasApi | null {
+function createAtlasApi(
+  residency: AtlasResidency | null,
+  game: Game,
+  host: Pick<DebugToolsHost, 'atlasTiming' | 'atlasPageMs'>,
+): DebugAtlasApi | null {
   if (residency === null) return null;
+  const timing = host.atlasTiming ?? null;
+  const pageMs = host.atlasPageMs;
   return {
+    timing,
+    get pageMs() {
+      return pageMs === undefined ? '' : pageMs();
+    },
     get resident() {
       return residency.resident;
     },
@@ -751,7 +787,7 @@ export function createDebugTools(
     renderer: host.renderer,
     save: createSaveApi(host.save ?? null, game),
     telemetry,
-    atlas: createAtlasApi(host.atlas ?? null, game),
+    atlas: createAtlasApi(host.atlas ?? null, game, host),
     run(command) {
       return controls.run(command);
     },

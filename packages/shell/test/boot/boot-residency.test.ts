@@ -5,11 +5,17 @@
  *   (the `common` group and the stage's zone, read from the manifest's `pages[].group`) are
  *   uploaded eagerly and every other page is unloaded; dev scenes that draw from any page keep
  *   every page;
- * - the canvas carries the resident pages (`data-shmup-atlas-pages`) and the atlas load time
- *   (`data-shmup-atlas-load-ms`), and `Shell.atlasTiming` the per-page upload times;
- * - the debug tools get the residency (`__shmupDebug.atlas`);
+ * - the canvas carries the resident pages (`data-shmup-atlas-pages`), the atlas load time
+ *   (`data-shmup-atlas-load-ms`) and the same load per page (`data-shmup-atlas-page-ms` — fetch /
+ *   decode / upload at boot, the uploads of each stage change: owner decision W3-6), and
+ *   `Shell.atlasTiming` the per-page times;
+ * - the debug tools get the residency and the timing (`__shmupDebug.atlas`, `.timing`, `.pageMs`);
  * - when the scene flow shows a new World, its stage's pages go up before its first frame — the
- *   shell-side trigger the attract demo needs (W3-9).
+ *   shell-side trigger the attract demo needs (W3-9);
+ * - a page drawn behind the residency's back — the weapon select's preview draws zone A's terrain
+ *   page — leaves the GPU at the next stage change (the residency's self-healing unload; the fake
+ *   renderer keeps a fake GPU: the residency's uploads, Pixi's `unload` events and, like Pixi, an
+ *   upload of the terrain's page on its first draw).
  */
 import {
   Action,
@@ -25,8 +31,10 @@ import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { readContentFiles } from '../../../../vite.shared.js';
 import {
   ATLAS_LOAD_MS_ATTRIBUTE,
+  ATLAS_PAGE_MS_ATTRIBUTE,
   ATLAS_PAGES_ATTRIBUTE,
   SCENE_ATTRIBUTE,
+  atlasTimingText,
   bootShell,
   type ShellInput,
   type ShellOptions,
@@ -38,14 +46,37 @@ import type { LoadableImage } from '../../src/loader/index.js';
 const fakes = vi.hoisted(() => ({
   /** What the renderer was asked, in order: `upload` (with the source), `warmUp`, `render`. */
   calls: [] as Array<{ kind: 'upload' | 'warmUp' | 'render'; source?: unknown }>,
+  /**
+   * The atlas pages on the fake GPU: added by `uploadTextureSource` and — as Pixi uploads a page
+   * on its first draw — by a frame whose World draws terrain from it; removed by the page's
+   * `unload` event (Pixi's texture system frees it then).
+   */
+  gpu: new Set<unknown>(),
 }));
 
 vi.mock('@shmup/render-pixi', async (importOriginal) => {
   const real = await importOriginal<typeof RenderPixi>();
   return {
     ...real,
-    createPixiRenderer: () =>
-      Promise.resolve({
+    createPixiRenderer: (options: { atlas: RenderPixi.Atlas }) => {
+      const { atlas } = options;
+      for (const page of atlas.pages) page.on('unload', () => fakes.gpu.delete(page));
+      /** The sprite names the renderer was given (`setSpriteNames`). */
+      let names: readonly string[] = [];
+      /**
+       * Pixi's upload on first draw, for the terrain: the page of the tileset the frame's World
+       * draws goes on the fake GPU.
+       *
+       * @param frame - The frame drawn.
+       */
+      const drawTerrain = (frame: RenderFrame): void => {
+        const terrain = frame.world?.terrain ?? null;
+        if (terrain === null) return;
+        const sprite = atlas.manifest.sprites[names[terrain.tilesetSpriteId] ?? ''];
+        const info = sprite === undefined ? undefined : atlas.manifest.frames[sprite.frames[0]];
+        if (info !== undefined) fakes.gpu.add(atlas.pages[info.p]);
+      };
+      return Promise.resolve({
         webGLVersion: 1,
         effects: real.createScreenEffects(),
         particles: null,
@@ -58,14 +89,23 @@ vi.mock('@shmup/render-pixi', async (importOriginal) => {
         setInterpolation(this: { interpolation: boolean }, on: boolean) {
           this.interpolation = on;
         },
-        setSpriteNames: () => {},
+        setSpriteNames: (spriteNames: readonly string[]) => {
+          names = spriteNames;
+        },
         bindWorld: () => {},
         warmUp: () => fakes.calls.push({ kind: 'warmUp' }),
-        uploadTextureSource: (source: unknown) => fakes.calls.push({ kind: 'upload', source }),
-        render: (_frame: RenderFrame) => fakes.calls.push({ kind: 'render' }),
+        uploadTextureSource: (source: unknown) => {
+          fakes.gpu.add(source);
+          fakes.calls.push({ kind: 'upload', source });
+        },
+        render: (frame: RenderFrame) => {
+          fakes.calls.push({ kind: 'render' });
+          drawTerrain(frame);
+        },
         resize: () => {},
         destroy: () => {},
-      }),
+      });
+    },
   };
 });
 
@@ -146,6 +186,7 @@ let audio: IAudio;
 beforeEach(() => {
   win = new FakeWindow();
   fakes.calls.length = 0;
+  fakes.gpu.clear();
   platform = createHeadlessPlatform();
   input = {
     poll: () => platform.snapshot,
@@ -206,6 +247,47 @@ function boot(overrides: Partial<ShellOptions> = {}) {
 const uploadedPages = (pages: readonly unknown[]): number[] =>
   fakes.calls.filter((call) => call.kind === 'upload').map((call) => pages.indexOf(call.source));
 
+/**
+ * The page indices on the fake GPU.
+ *
+ * @param pages - The atlas's pages (`Shell.atlas.pages`).
+ * @returns Ascending indices.
+ */
+const gpuPages = (pages: readonly unknown[]): number[] =>
+  pages.flatMap((page, p) => (fakes.gpu.has(page) ? [p] : []));
+
+/**
+ * Presses and releases an action over two displayed frames.
+ *
+ * @param action - The action.
+ * @param at - The first frame's timestamp.
+ * @returns The next free timestamp.
+ */
+function press(action: number, at: number): number {
+  commitPlayerInput(platform.snapshot.players[0], action);
+  win.frame(at);
+  commitPlayerInput(platform.snapshot.players[0], 0);
+  win.frame(at + STEP);
+  return at + 2 * STEP;
+}
+
+/**
+ * From the title to the weapon select (PRESS OK, START, NORMAL, the ship), whose preview is then
+ * on screen.
+ *
+ * @param start - The first frame's timestamp.
+ * @returns The next free timestamp.
+ */
+function toWeaponSelect(start: number): number {
+  let at = press(0, start);
+  at = press(Action.Confirm, at); // PRESS OK
+  at = press(Action.Confirm, at); // START → the difficulty menu
+  at = press(Action.Confirm, at); // NORMAL
+  at = press(0, at);
+  at = press(Action.Confirm, at); // the ship select
+  return press(0, at);
+}
+
 describe('shell/boot atlas residency (R1-05)', () => {
   it('the shipped atlas is split: common + one group per zone (the premise of these tests)', () => {
     expect(manifest.pages.length).toBeGreaterThan(1);
@@ -227,7 +309,12 @@ describe('shell/boot atlas residency (R1-05)', () => {
       manifest.pages.map((_, p) => expected.indexOf(p) >= 0),
     );
     expect(shell.atlasResidency.unloads).toBe(manifest.pages.length - expected.length);
-    expect(attributes.get(ATLAS_LOAD_MS_ATTRIBUTE)).toBe('0'); // no window clock here
+    expect(gpuPages(shell.atlas.pages)).toEqual(expected);
+    // No window clock here: every time is 0, but every page is listed (W3-6).
+    expect(attributes.get(ATLAS_LOAD_MS_ATTRIBUTE)).toBe('0');
+    expect(attributes.get(ATLAS_PAGE_MS_ATTRIBUTE)).toBe(
+      ['manifest:0.0', ...manifest.pages.map((page) => `${page.file}:0.0/0.0/0.0`)].join(';'),
+    );
     shell.stop();
   });
 
@@ -245,6 +332,34 @@ describe('shell/boot atlas residency (R1-05)', () => {
     const uploads = timing.pages.reduce((sum, page) => sum + page.uploadMs, 0);
     expect(timing.totalMs).toBe(timing.manifestMs + timing.pagesMs + uploads);
     expect(attributes.get(ATLAS_LOAD_MS_ATTRIBUTE)).toBe(String(Math.round(timing.totalMs)));
+    // Per page (W3-6): the manifest, then every page's load / decode / upload, in ms to 0.1.
+    expect(timing.pages.every((page) => page.loadMs > 0)).toBe(true);
+    const bootText = [
+      `manifest:${timing.manifestMs.toFixed(1)}`,
+      ...timing.pages.map(
+        (page) =>
+          `${page.file}:${page.loadMs.toFixed(1)}/${page.decodeMs.toFixed(1)}/` +
+          page.uploadMs.toFixed(1),
+      ),
+    ].join(';');
+    expect(attributes.get(ATLAS_PAGE_MS_ATTRIBUTE)).toBe(bootText);
+    expect(atlasTimingText(timing)).toBe(bootText);
+    // A stage change: the pages it uploaded, each with its upload (nothing is fetched or decoded).
+    const zoneC = shell.content.db.stageIndex.get('zone-c') ?? -1;
+    shell.atlasResidency.prepare(zoneC);
+    const fresh = groupPages('zone-c').filter((p) => expected.indexOf(p) < 0);
+    expect(fresh.length).toBeGreaterThan(0);
+    expect(attributes.get(ATLAS_PAGE_MS_ATTRIBUTE)).toBe(
+      fresh.map((p) => `${manifest.pages[p].file}:0.0/0.0/2.0`).join(';'),
+    );
+    expect(attributes.get(ATLAS_LOAD_MS_ATTRIBUTE)).toBe(
+      String(Math.round(shell.atlasResidency.lastPrepareMs)),
+    );
+    // A prepare that moves nothing leaves both as they were; the boot record stays in atlasTiming.
+    const before = attributes.get(ATLAS_PAGE_MS_ATTRIBUTE);
+    shell.atlasResidency.prepare(zoneC);
+    expect(attributes.get(ATLAS_PAGE_MS_ATTRIBUTE)).toBe(before);
+    expect(atlasTimingText(shell.atlasTiming)).toBe(bootText);
     shell.stop();
   });
 
@@ -280,8 +395,16 @@ describe('shell/boot atlas residency (R1-05)', () => {
         destroy: () => {},
       };
     };
-    const shell = await boot({ debugTools: factory }).promise;
+    const { promise, attributes } = boot({ debugTools: factory });
+    const shell = await promise;
     expect(hosts[0].atlas).toBe(shell.atlasResidency);
+    // And the timing (W3-6): the boot's, and the last load per page as the canvas shows it.
+    expect(hosts[0].atlasTiming).toBe(shell.atlasTiming);
+    expect(hosts[0].atlasPageMs?.()).toBe(attributes.get(ATLAS_PAGE_MS_ATTRIBUTE));
+    expect(hosts[0].atlasPageMs?.()).toBe(atlasTimingText(shell.atlasTiming));
+    shell.atlasResidency.prepare(shell.content.db.stageIndex.get('zone-c') ?? -1);
+    expect(hosts[0].atlasPageMs?.()).toBe(attributes.get(ATLAS_PAGE_MS_ATTRIBUTE));
+    expect(hosts[0].atlasPageMs?.()).toMatch(/^main-\d+\.png:0\.0\/0\.0\/0\.0$/);
     shell.stop();
   });
 
@@ -293,27 +416,8 @@ describe('shell/boot atlas residency (R1-05)', () => {
     shell.atlasResidency.prepare(zoneC);
     expect(attributes.get(ATLAS_PAGES_ATTRIBUTE)).toBe(groupPages('zone-c').join(','));
     fakes.calls.length = 0;
-    /**
-     * Presses and releases an action over two displayed frames.
-     *
-     * @param action - The action.
-     * @param at - The first frame's timestamp.
-     * @returns The next free timestamp.
-     */
-    const press = (action: number, at: number): number => {
-      commitPlayerInput(platform.snapshot.players[0], action);
-      win.frame(at);
-      commitPlayerInput(platform.snapshot.players[0], 0);
-      win.frame(at + STEP);
-      return at + 2 * STEP;
-    };
-    let at = press(0, 1000);
-    at = press(Action.Confirm, at); // PRESS OK
-    at = press(Action.Confirm, at); // START → the difficulty menu
-    at = press(Action.Confirm, at); // NORMAL
-    at = press(0, at);
-    at = press(Action.Confirm, at); // the ship select
-    at = press(0, at);
+    let at = toWeaponSelect(1000);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('weaponSelect');
     at = press(Action.Confirm, at); // the weapon select's START
     at = press(0, at);
     expect(attributes.get(SCENE_ATTRIBUTE)).toBe('game');
@@ -325,6 +429,36 @@ describe('shell/boot atlas residency (R1-05)', () => {
     expect(uploads.map((i) => shell.atlas.pages.indexOf(fakes.calls[i].source as never))).toEqual(
       zoneBOwn,
     );
+    shell.stop();
+  });
+
+  it('the page the weapon select’s preview draws leaves the GPU at the next stage change', async () => {
+    const { promise, attributes } = boot();
+    const shell = await promise;
+    const pages = shell.atlas.pages;
+    const stage = (id: string): number => shell.content.db.stageIndex.get(id) ?? -1;
+    expect(gpuPages(pages)).toEqual(groupPages('zone-b'));
+    // As after a zone C attract demo: common + zone C.
+    shell.atlasResidency.prepare(stage('zone-c'));
+    expect(gpuPages(pages)).toEqual(groupPages('zone-c'));
+    // The weapon select: its preview flies the dev weapon-range, whose terrain-a tiles sit on
+    // zone A's page — uploaded on the preview's first draw, behind the residency's back.
+    let at = toWeaponSelect(1000);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('weaponSelect');
+    const zoneAOwn = groupPages('zone-a').filter((p) => groupPages('zone-c').indexOf(p) < 0);
+    expect(zoneAOwn.length).toBeGreaterThan(0);
+    expect(gpuPages(pages)).toEqual([...groupPages('zone-c'), ...zoneAOwn].sort((a, b) => a - b));
+    expect(attributes.get(ATLAS_PAGES_ATTRIBUTE)).toBe(groupPages('zone-c').join(','));
+    // A practice start on zone D (its PrepareStage): exactly common + zone D stay on the GPU.
+    shell.atlasResidency.prepare(stage('zone-d'));
+    expect(gpuPages(pages)).toEqual(groupPages('zone-d'));
+    expect(attributes.get(ATLAS_PAGES_ATTRIBUTE)).toBe(groupPages('zone-d').join(','));
+    // And the game the weapon select starts (zone B — the trigger, W3-9): common + zone B.
+    at = press(Action.Confirm, at);
+    at = press(0, at);
+    win.frame(at);
+    expect(attributes.get(SCENE_ATTRIBUTE)).toBe('game');
+    expect(gpuPages(pages)).toEqual(groupPages('zone-b'));
     shell.stop();
   });
 });

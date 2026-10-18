@@ -175,7 +175,7 @@ describe('shell/memory residency edges', () => {
     campaign: [true, true],
   };
 
-  it('unloads a page once, re-marks it resident when needed and restores every page for menus', () => {
+  it('counts a page’s unload once, re-marks it when needed, restores every page for menus', () => {
     const unloads: number[] = [];
     const residency = createAtlasResidency(
       [0, 1, 2].map((p) => ({ unload: () => unloads.push(p) })),
@@ -184,12 +184,15 @@ describe('shell/memory residency edges', () => {
     expect(residency.resident).toEqual([true, true, true]);
     expect(residency.prepare(0)).toBe(1);
     expect(residency.prepare(0)).toBe(0);
-    expect(unloads).toEqual([2]);
+    // The repeat calls `unload` again (self-healing — R1-05: something may have drawn the page
+    // behind the residency's back) but counts nothing: the page was not believed resident.
+    expect(unloads).toEqual([2, 2]);
+    expect(residency.unloads).toBe(1);
     // Menus / no stage: every page resident again, nothing unloaded.
     expect(residency.prepare(-1)).toBe(0);
     expect(residency.resident).toEqual([true, true, true]);
     expect(residency.prepare(1)).toBe(1);
-    expect(unloads).toEqual([2, 1]);
+    expect(unloads).toEqual([2, 2, 1]);
     expect(residency.unloads).toBe(2);
   });
 

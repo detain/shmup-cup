@@ -157,7 +157,10 @@ export interface Atlas {
   readonly manifest: AtlasManifest;
   /** Number of frame ids: manifest frames plus fallbacks when `ui/missing` / `ui/pixel` lack. */
   readonly size: number;
-  /** One texture source per page (nearest-neighbour). */
+  /**
+   * One texture source per page (nearest-neighbour), outside Pixi's texture GC
+   * (`autoGarbageCollect` off — the owner of the pages unloads them, R1-05).
+   */
   readonly pages: readonly TextureSource[];
   /** Texture by frame id. */
   readonly textures: readonly Texture[];
@@ -242,7 +245,10 @@ function imageSize(image: AtlasPageImage): [number, number] {
  *
  * @remarks
  * - Each page becomes one `ImageSource` (`scaleMode: 'nearest'`, no mipmaps) — upload
- *   happens on first use by the renderer, so this runs without a GPU.
+ *   happens on first use by the renderer (or the shell's eager upload — `uploadTextureSource`),
+ *   so this runs without a GPU. Its `autoGarbageCollect` is **off** (R1-05): Pixi's texture GC
+ *   never unloads a page; only `unload()` — the shell's atlas residency between zones — or
+ *   {@link Atlas.destroy} frees its GPU copy.
  * - Frame ids: sprites in name order, frames in index order (a sprite's frames are
  *   consecutive), then any frame no sprite lists. When the manifest lacks
  *   {@link MISSING_SPRITE} or {@link PIXEL_SPRITE}, Pixi's 1×1 white texture stands in.
@@ -293,14 +299,18 @@ export function createAtlas(
         `atlas: page ${page.file} is ${w}×${h} but the manifest says ${page.w}×${page.h} (stale atlas?)`,
       );
     }
-    pages.push(
-      new ImageSource({
-        resource: image,
-        scaleMode: 'nearest',
-        autoGenerateMipmaps: false,
-        label: `atlas/${page.file}`,
-      }),
-    );
+    const source = new ImageSource({
+      resource: image,
+      scaleMode: 'nearest',
+      autoGenerateMipmaps: false,
+      label: `atlas/${page.file}`,
+    });
+    // Out of Pixi's texture GC (R1-05): `ImageSource`'s constructor forces `autoGarbageCollect`
+    // on, whatever the options say, and the GC would then drop a page no frame bound for a minute
+    // — behind the shell's residency, which uploads the pages eagerly so none uploads mid-play.
+    // The pages leave the GPU only through `unload()` (the residency) or `destroy()`.
+    source.autoGarbageCollect = false;
+    pages.push(source);
   }
 
   // Frame order: sprite by sprite, then orphans.

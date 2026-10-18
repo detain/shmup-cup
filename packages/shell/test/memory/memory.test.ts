@@ -274,11 +274,23 @@ describe('shell/memory zone sprite sets and atlas pages', () => {
       );
       expect(stagePages(needs, stageIndex)).toEqual([...global, ...own].sort((a, b) => a - b));
     }
+    // A fake GPU: every page starts on it, `unload` frees a page that is on it (the residency also
+    // calls it on pages already off — self-healing, a no-op then), and the zone's draws upload
+    // its pages again.
     const unloaded: number[] = [];
-    const pages = manifest.pages.map((_, p) => ({ unload: () => unloaded.push(p) }));
+    const onGpu = manifest.pages.map(() => true);
+    const pages = manifest.pages.map((_, p) => ({
+      unload: () => {
+        if (onGpu[p]) unloaded.push(p);
+        onGpu[p] = false;
+      },
+    }));
     const residency = createAtlasResidency(pages, needs);
     let total = 0;
-    for (const stageIndex of zoneStages) total += residency.prepare(stageIndex);
+    for (const stageIndex of zoneStages) {
+      total += residency.prepare(stageIndex);
+      for (const p of stagePages(needs, stageIndex)) onGpu[p] = true;
+    }
     expect(total > 0).toBe(manifest.pages.length > 1);
     expect(unloaded).toHaveLength(total);
   });

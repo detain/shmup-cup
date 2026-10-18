@@ -3,7 +3,7 @@
  * geometry, `resolveSpriteTable` / `resolveFlashTable` (missing names → `ui/missing`, warned
  * once), fallbacks, manifest validation, and the real pipeline atlas.
  */
-import { Texture } from 'pixi.js';
+import { ImageSource, Texture } from 'pixi.js';
 import { describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import {
@@ -154,6 +154,25 @@ describe('render-pixi/atlas', () => {
     const atlas = createAtlas(orphan, pageImages(orphan));
     expect(atlas.frameId('loose#0')).toBe(25);
     expect(atlas.framesLeft[25]).toBe(1);
+  });
+
+  it('keeps its pages out of Pixi’s texture GC; unload() and destroy() still free them (R1-05)', () => {
+    // The premise: Pixi's `ImageSource` forces `autoGarbageCollect` on, whatever the options say,
+    // so its GC would drop a page no frame bound for a minute (`GCSystem`, 60 s by default).
+    const plain = new ImageSource({ resource: fakeImage(4, 4), autoGarbageCollect: false });
+    expect(plain.autoGarbageCollect).toBe(true);
+    plain.destroy();
+    const manifest = testManifest();
+    const atlas = createAtlas(manifest, pageImages(manifest));
+    expect(atlas.pages.map((page) => page.autoGarbageCollect)).toEqual([false, false]);
+    // The residency's unload still reaches Pixi's texture system (its `unload` listener frees the
+    // GL texture), and so does destroy() for every page.
+    const unloaded: string[] = [];
+    for (const page of atlas.pages) page.on('unload', () => unloaded.push(page.label));
+    atlas.pages[1].unload();
+    expect(unloaded).toEqual(['atlas/main-1.png']);
+    atlas.destroy();
+    expect(unloaded).toEqual(['atlas/main-1.png', 'atlas/main.png', 'atlas/main-1.png']);
   });
 
   it('destroy() releases frame textures and page sources but never the shared white texture', () => {
