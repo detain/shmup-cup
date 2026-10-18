@@ -5,6 +5,13 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w02-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w02-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
 
 **Steps:** R2-02 (prep A: W1–W7, T0, A1, T4a–c, RV-A2) · R3-03 (V1, V3) · R3-04 (M3a–M3e) · **Gate to start:**
 wave 1's exit (`R2-02.P0` and `R2-02.P1` on master) · **Exit (summary):** every prep-A subtask on master, reviewed to
@@ -169,7 +176,9 @@ over).
     2. each export equals `rescaleNumber(unit, v1, geometry)` (core `data/units.ts:265`; geometry from
        `WORLD_SCALE` / `WORLD_TOP_PAD`; identity at 1), or `PLAYFIELD_W + offset * WORLD_SCALE` for the anchored ones;
     3. an `UNSCALED` list with a one-word reason (`ticks`, `angle`, `count`, `ratio`, `frame`, `score`);
-    4. a **completeness audit**: every numeric barrel export (386 at `bc8e05d`; `docs/v2-run/helpers/w5pre/exports.txt`)
+    4. a **completeness audit**: every numeric barrel export (386 at `bc8e05d`, 388 after P0 adds `WORLD_SCALE` /
+       `WORLD_TOP_PAD`; `docs/v2-run/helpers/w5pre/exports.txt` is the list at `ac40436`) — the audit takes today's
+       list from the barrel, never a hard-coded count —
        whose name matches `/MARGIN|RADIUS|SPEED|ACCEL|_X$|_Y$|ORBIT|LINK|WIDTH|LENGTH|RANGE|PULL|DRIFT|SPREAD|STEP|LEAD|OFFSET|SPACING|CELL/`
        is in `V1_WORLD` or in `UNSCALED`.
   - `packages/core/test/behaviors/fixtures/v1-behavior-defaults.json` (new) — the v1 behaviour and weapon defaults
@@ -194,7 +203,9 @@ over).
 ### R2-02.T4b — The Tiled importer and rescale tests
 
 - **Wave / lane / order:** wave 2, lane 2, after `R2-02.A1`.
-- **Depends on:** nothing beyond P0 / P1.
+- **Depends on:** nothing beyond P0 / P1 for the fixtures and the `runIf`s; the kit run of the new identity case
+  needs `R2-02.W5` (the ±768 bound) on master — until then that one case fails under the kit, and you list it in your
+  report by W5's id.
 - **Goal:** the tools' tests pass after the port: the Tiled fixtures at 12-px tiles and the 640 view; the rescale
   tests that read v1-geometry shipped content run only while the content is still v1 (W5-4), plus a new identity case
   on a ported tree.
@@ -207,8 +218,9 @@ over).
   - `test/scripts/content/rescale.test.ts` — the four cases of "the shipped content" that assume v1 geometry
     (`:256`, `:279`, `:329`, `:360`) get `it.runIf(<content still v1>)` (a shipped tileset at 8 px); the identity case
     `:243` stays; add one case: `--factor 1` identity on a ported tree (run the tool ×1.5 on a temp copy of
-    `content/`, then `--factor 1 --dry-run` → 0 changes, 0 unclassified, 0 errors — needs the W5 bound, so it may be
-    `runIf(WORLD_SCALE !== 1)` or use the tool's own bound flag);
+    `content/`, then `--factor 1 --dry-run` → 0 changes, 0 unclassified, 0 errors — needs the W5 bound, so it is
+    `it.runIf(WORLD_SCALE !== 1)`: at K = 1 the bound is still ±512 and the IRON LEVIATHAN `parts[].x` fail;
+    `scripts/content/rescale.mjs` has no bound flag);
   - `test/scripts/content/rescale-edge.test.ts` — the two round-5 cases that read the shipped `terrain-a`
     (`:1466-1470` and its user) get the same `runIf`.
 - **Tests:**
@@ -216,8 +228,9 @@ over).
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/content
   bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/content
   ```
-- **Acceptance:** the 61 fixture tests unchanged and green; green at both scales (the gated cases skip under the kit
-  until U5).
+- **Acceptance:** the 61 fixture tests unchanged and green; green at both scales: the `port-pending` cases
+  (`itPortPending`) skip at K = 1 and **run** under the kit (the stub turns `CONTENT_PORT_PENDING` off), so they must
+  pass there; the four + two `runIf(<content still v1>)` cases skip under the kit (for good, not until U5).
 - **Token:** none.
 - **Traps:** a temp copy of `content/` goes to a temp dir (parallel-safe), never in the repo.
 
@@ -442,7 +455,8 @@ over).
 - **Traps:** never edit the bullets block of `test/scripts/assets/procedural.test.ts` (it pins scale 1); never edit
   the v1 path; generators use exact maths only (no `Math.sin` / `cos`; `DIRECTIONS_8`, integer hashing); two runs
   byte-identical; no frame-number literal in `scripts/**`.
-- **Docs needs:** `docs/dev/asset-pipeline.md` (native v2 bullets), `docs/dev/art-bible-v2.md` § bullets (wave 5).
+- **Docs needs:** `docs/dev/asset-pipeline.md` (native v2 bullets); `docs/dev/art-bible-v2.md` §5.4: none (it
+  already gives the sizes 11 / 13 / 17 and the 11×11 bend node).
 
 ### R3-03.V3 — The palette-cycle scan
 
@@ -573,7 +587,7 @@ over).
 - **Wave / order:** review slot 1, one review per subtask as it lands; fix → a **new** review until zero findings.
 - **What to read:** the subtask's commits (`git show <sha>`) and its report.
 - **Must hold:** `WORLD_SCALE` / `WORLD_TOP_PAD` still 1 / 0 and `scripts/frame.mjs` unchanged by anyone but P0;
-  `git diff <wave base>..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
+  `git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
   empty; the three fingerprints unedited and green; every changed value is a world value by its unit (spot-check 10
   against `docs/v2-run/helpers/w5/defaults-all.txt` / `literals.txt`); no angle, tick or count scaled; frame anchors
   written `PLAYFIELD_W + v * WORLD_SCALE`; the subtask's tests green at K = 1 **and** under the kit (the reviewer re-runs
@@ -626,8 +640,11 @@ over).
 1. W1–W7, A1, T0, T4a, T4b, T4c on master; their reviews at zero findings.
 2. `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
    test/integration/content-db-fingerprint.test.ts` and `--project shell packages/shell/test/frame-fingerprint.test.ts`
-   green with the files unedited since the wave base (`git diff <wave base>..origin/master -- <the three files>` empty).
-3. `git diff <wave base>..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
+   green with the files unedited since the wave base — this is empty:
+   ```bash
+   git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
+   ```
+3. `git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
    is empty.
 4. `bash test/port-v2/two-scale.sh -- node scripts/content/rescale.mjs --factor 1 --dry-run` reports 0 / 0 / 0.
 5. `bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core

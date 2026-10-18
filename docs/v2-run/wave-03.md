@@ -5,6 +5,13 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w03-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w03-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
 
 **Steps:** R2-02 (prep B: T1a–T1e, T2a–T2e, T3, E0) · side lanes carried over from wave 2 (`R3-03.V3`, `R3-04.M3*`)
 · **Gate to start:** wave 2's exit and `R2-02.RV-A2`'s lists in `RUN_DIR/w02/rv-a2/` · **Exit (summary):** every T
@@ -364,12 +371,15 @@ under the kit and master e2e unchanged.
 ## Exit check
 
 1. T1a–T1e, T2a–T2e, T3 and E0 on master; their reviews at zero findings.
-2. Neutral: `git diff <wave base>..origin/master -- content test/golden/*.replay.json content/demos
+2. Neutral: `git diff $(cat /home/sites/shmup-cup-run/w03-base.txt)..origin/master -- content test/golden/*.replay.json content/demos
    test/fixtures/v1-baseline` empty; the three fingerprints green and unedited.
-3. Under the kit (one kept tree, then each command with `--reuse`):
+3. Under the kit: one kept tree, then each command with `--reuse` (`<kit>` is the last line the first command prints;
+   put that path in its place):
    ```bash
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors packages/core/test/enemies packages/core/test/bosses packages/core/test/bullets packages/core/test/weapons packages/core/test/data
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/golden/v2-port.test.ts test/golden/v2-port-zones.test.ts test/golden/v2-port-loop2.test.ts
+   bash test/port-v2/two-scale.sh --keep -- true
+   bash test/port-v2/two-scale.sh --reuse <kit> -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors packages/core/test/enemies packages/core/test/bosses packages/core/test/bullets packages/core/test/weapons packages/core/test/data
+   bash test/port-v2/two-scale.sh --reuse <kit> -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/golden/v2-port.test.ts test/golden/v2-port-zones.test.ts test/golden/v2-port-loop2.test.ts
+   git worktree remove --force <kit>
    ```
    green (the full barrier run is `R2-02.RV-pre` in wave 4).
 4. E0's report: zero failures under the kit in batches A–E (and G), except `atlas-residency.spec.ts` and

@@ -6,7 +6,8 @@
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 >
 > **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
-> `origin/master` SHA at that moment) once, in the main checkout:
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
 > `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w01-base.txt`.
 > Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w01-base.txt)`;
 > an agent's prompt may carry the SHA itself instead, never a placeholder.
