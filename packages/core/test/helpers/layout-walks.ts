@@ -1,15 +1,17 @@
 /**
- * The layout walks of `test/ui/ui-layout-frame*.test.ts` (plan_resolution.md R2-01, lane U): scripted
- * sessions of the scene flow on the **shipped content** that show every scene — the front end, a
- * game with its selects, pause, continue, game over, name entry, the tables and a replay played
- * back, the attract loop, a single stage's STAGE CLEAR, a campaign run through the zone tallies and
- * the map to the ending and the credits, co-op and Direct-mode HUDs and the EXTRA modes — in a
- * given UI language, and check **every frame** core hands a renderer:
+ * The layout walks of `test/ui/ui-layout-frame*.test.ts` (plan_resolution.md R2-01, lane U):
+ * scripted sessions of the scene flow on the **shipped content** that show every scene — the front
+ * end, a game with its selects, pause, continue, game over, name entry, the tables and a replay
+ * played back, the attract loop, a single stage's STAGE CLEAR, a campaign run through the zone
+ * tallies and the map to the ending and the credits, co-op and Direct-mode HUDs and the EXTRA
+ * modes — in a given UI language, and check **every frame** core hands a renderer:
  *
  * - every text box (`length · GLYPH_W` wide, `GLYPH_H` tall; a `\n` adds a line) lies inside the
  *   frame (the credits' rows scroll through the top and bottom edges: only their x is checked);
  * - no two visible text boxes of the UI list overlap, nor two of the HUD list (a text an opaque
  *   panel drawn later covers — the scene under an overlay — is not visible);
+ * - no visible text of the UI list overlaps a visible text of the HUD list, which the renderer
+ *   draws under it (a HUD text under a UI panel is covered, not visible);
  * - a text whose anchor (its alignment point) lies inside a panel (`drawPanel`'s fill and its four
  *   1-px borders) drawn before it ends inside that panel.
  *
@@ -69,6 +71,7 @@ import {
   type RebindOutcome,
   type SaveStore,
   type SceneFlow,
+  type SceneId,
 } from '../../src/index.js';
 
 /** The repository's `content/` folder. */
@@ -206,16 +209,55 @@ export interface LayoutProblem {
   readonly message: string;
 }
 
+/** What one draw list draws, as boxes. */
+interface ListBoxes {
+  /** Its text and number commands, in drawing order (`hidden` once a later panel covers one). */
+  readonly texts: TextBox[];
+  /** Per text: the latest panel drawn before it that holds its anchor, or `null`. */
+  readonly owner: Array<PanelBox | null>;
+  /** Its `drawPanel` rectangles, in drawing order. */
+  readonly panels: PanelBox[];
+}
+
 /**
- * The layout problems of one draw list.
+ * Whether two boxes share a pixel.
+ *
+ * @param a - A text's box.
+ * @param b - Another text's box.
+ * @returns `true` when they overlap.
+ */
+function overlaps(a: TextBox, b: TextBox): boolean {
+  return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+}
+
+/**
+ * Whether a panel covers part of a text.
+ *
+ * @param panel - The panel.
+ * @param t - The text's box.
+ * @returns `true` when they overlap.
+ */
+function covers(panel: PanelBox, t: TextBox): boolean {
+  return t.x0 < panel.x + panel.w && panel.x < t.x1 && t.y0 < panel.y + panel.h && panel.y < t.y1;
+}
+
+/**
+ * Whether a text is visible: not covered by a panel drawn after it, and not blank.
+ *
+ * @param t - The text's box.
+ * @returns `true` when it shows.
+ */
+function visible(t: TextBox): boolean {
+  return !t.hidden && t.text.trim() !== '';
+}
+
+/**
+ * The boxes of one draw list's texts and panels.
  *
  * @param list - The list.
- * @param where - What it shows (the top scene; the HUD), for the messages.
- * @param clipY - The texts may scroll through the top and bottom edges (the credits).
- * @returns One entry per problem.
+ * @returns Them.
  */
-export function listProblems(list: DrawList, where: string, clipY = false): LayoutProblem[] {
-  const out: LayoutProblem[] = [];
+function boxesOf(list: DrawList): ListBoxes {
   const texts: TextBox[] = [];
   const owner: Array<PanelBox | null> = [];
   const panels: PanelBox[] = [];
@@ -225,16 +267,7 @@ export function listProblems(list: DrawList, where: string, clipY = false): Layo
       const panel = panelAt(list, i);
       if (panel === null) continue;
       // A panel covers what was drawn under it (the scene below an overlay).
-      for (const t of texts) {
-        if (
-          t.x0 < panel.x + panel.w &&
-          panel.x < t.x1 &&
-          t.y0 < panel.y + panel.h &&
-          panel.y < t.y1
-        ) {
-          t.hidden = true;
-        }
-      }
+      for (const t of texts) if (covers(panel, t)) t.hidden = true;
       panels.push(panel);
       i += 4;
     } else if (op === DrawOp.Text || op === DrawOp.Number) {
@@ -249,7 +282,33 @@ export function listProblems(list: DrawList, where: string, clipY = false): Layo
       owner.push(home);
     }
   }
-  const at = (t: TextBox): string => `${where}: "${t.text}" ${t.x0}..${t.x1} × ${t.y0}..${t.y1}`;
+  return { texts, owner, panels };
+}
+
+/**
+ * A text's place in a message.
+ *
+ * @param where - What it shows.
+ * @param t - The text's box.
+ * @returns `<where>: "<text>" x0..x1 × y0..y1`.
+ */
+function placeOf(where: string, t: TextBox): string {
+  return `${where}: "${t.text}" ${t.x0}..${t.x1} × ${t.y0}..${t.y1}`;
+}
+
+/**
+ * The layout problems of one draw list: a text leaving the frame or its panel, two visible texts
+ * overlapping.
+ *
+ * @param boxes - The list's boxes.
+ * @param where - What it shows (the top scene; the HUD), for the messages.
+ * @param clipY - The texts may scroll through the top and bottom edges (the credits).
+ * @returns One entry per problem.
+ */
+function boxProblems(boxes: ListBoxes, where: string, clipY: boolean): LayoutProblem[] {
+  const out: LayoutProblem[] = [];
+  const { texts, owner } = boxes;
+  const at = (t: TextBox): string => placeOf(where, t);
   for (let i = 0; i < texts.length; i++) {
     const t = texts[i];
     if (t.text.trim() === '') continue;
@@ -265,18 +324,63 @@ export function listProblems(list: DrawList, where: string, clipY = false): Layo
       }
     }
   }
-  const visible = texts.filter((t) => !t.hidden && t.text.trim() !== '');
-  for (let i = 0; i < visible.length; i++) {
-    for (let j = i + 1; j < visible.length; j++) {
-      const a = visible[i];
-      const b = visible[j];
-      if (a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1) {
+  const shown = texts.filter(visible);
+  for (let i = 0; i < shown.length; i++) {
+    for (let j = i + 1; j < shown.length; j++) {
+      const a = shown[i];
+      const b = shown[j];
+      if (overlaps(a, b)) {
         const message = `${at(a)} overlaps "${b.text}" ${b.x0}..${b.x1} × ${b.y0}..${b.y1}`;
         out.push({ kind: 'overlap', where, text: a.text, other: b.text, message });
       }
     }
   }
   return out;
+}
+
+/**
+ * The UI list's visible texts that overlap the HUD list's (the renderer draws the UI over the
+ * HUD): a HUD text that a UI panel covers — the pause menu's, an overlay's — is not visible, so
+ * it is skipped.
+ *
+ * @param ui - The UI list's boxes.
+ * @param hud - The HUD list's boxes.
+ * @param where - The top scene, for the messages (`<scene> UI/HUD`).
+ * @returns One overlap per pair.
+ */
+function crossProblems(ui: ListBoxes, hud: ListBoxes, where: string): LayoutProblem[] {
+  const out: LayoutProblem[] = [];
+  const hudShown = hud.texts.filter((t) => visible(t) && !ui.panels.some((p) => covers(p, t)));
+  if (hudShown.length === 0) return out;
+  for (const a of ui.texts) {
+    if (!visible(a)) continue;
+    for (const b of hudShown) {
+      if (!overlaps(a, b)) continue;
+      const other = `"${b.text}" ${b.x0}..${b.x1} × ${b.y0}..${b.y1}`;
+      const message = `${placeOf(where, a)} overlaps the HUD's ${other}`;
+      out.push({ kind: 'overlap', where, text: a.text, other: b.text, message });
+    }
+  }
+  return out;
+}
+
+/**
+ * The layout problems of one frame: its UI list (the credits' rows may scroll through the top and
+ * bottom edges), its HUD list, and the UI's texts over the HUD's.
+ *
+ * @param ui - The frame's UI list.
+ * @param hud - The frame's HUD list.
+ * @param top - The top scene's id.
+ * @returns One entry per problem.
+ */
+export function frameProblems(ui: DrawList, hud: DrawList, top: string): LayoutProblem[] {
+  const uiBoxes = boxesOf(ui);
+  const hudBoxes = boxesOf(hud);
+  return [
+    ...boxProblems(uiBoxes, top, top === 'credits'),
+    ...boxProblems(hudBoxes, `${top} HUD`, false),
+    ...crossProblems(uiBoxes, hudBoxes, `${top} UI/HUD`),
+  ];
 }
 
 /** Two keyboard profiles for the CONTROLS page's PROFILE row. */
@@ -332,7 +436,7 @@ interface LayoutWalkOptions {
 
 /**
  * One scripted session on the shipped content: input helpers that compose a frame after every tick
- * and check its UI and HUD lists ({@link listProblems}).
+ * and check its UI and HUD lists ({@link frameProblems}).
  */
 export class LayoutWalk {
   readonly platform = createHeadlessPlatform();
@@ -413,10 +517,7 @@ export class LayoutWalk {
       const frame = this.game.renderFrame();
       const top = this.top;
       this.seen.add(top);
-      for (const problem of listProblems(frame.ui, top, top === 'credits')) {
-        this.problems.set(problem.message, problem);
-      }
-      for (const problem of listProblems(frame.hud, `${top} HUD`)) {
+      for (const problem of frameProblems(frame.ui, frame.hud, top)) {
         this.problems.set(problem.message, problem);
       }
     }
@@ -707,8 +808,8 @@ function frontEnd(w: LayoutWalk): void {
 
 /**
  * A game: the selects (the order editor too), the zone card and the HUD, the pause menu and its
- * Options, QUIT's confirmation, the continue countdown, game over, the name entry, the result table,
- * the replay browser with the last game and its playback.
+ * Options, QUIT's confirmation, the continue countdown, game over, the name entry, the result
+ * table, the replay browser with the last game and its playback.
  *
  * @param w - A walk started on the title, with an exit.
  */
@@ -909,6 +1010,59 @@ function huds(w: LayoutWalk): void {
   w.quit();
 }
 
+/**
+ * Every scene of the flow, one key per `core/scenes` `SceneId` (a `Record`, so the compiler
+ * fails when a scene is added and not listed).
+ */
+const SCENES: Readonly<Record<SceneId, true>> = {
+  boot: true,
+  title: true,
+  game: true,
+  pause: true,
+  stageClear: true,
+  gameOver: true,
+  confirm: true,
+  difficulty: true,
+  shipSelect: true,
+  weaponSelect: true,
+  autoOrder: true,
+  continue: true,
+  map: true,
+  options: true,
+  nameEntry: true,
+  hiScore: true,
+  ending: true,
+  credits: true,
+  demo: true,
+  story: true,
+  practice: true,
+  soundTest: true,
+  controls: true,
+  display: true,
+  gameOptions: true,
+  extras: true,
+  rebind: true,
+  inputTest: true,
+  extra: true,
+  replays: true,
+  replay: true,
+};
+
+/** Every scene id of the flow, sorted: what the walks must show. */
+export const SCENE_IDS: readonly string[] = Object.freeze(Object.keys(SCENES).sort());
+
+/**
+ * The scene ids a report must show: every one, but the demo play when the shipped demos do not
+ * decode at this frame (recorded at 384×216, they are refused at 640×360 until R2-03 re-records
+ * them — the attract loop skips them).
+ *
+ * @param report - The walks' report.
+ * @returns The ids, sorted.
+ */
+export function expectedScenes(report: LayoutReport): string[] {
+  return SCENE_IDS.filter((id) => report.demos || id !== 'demo');
+}
+
 /** What a set of walks found. */
 export interface LayoutReport {
   /** Every problem, sorted by message. */
@@ -1011,8 +1165,9 @@ export const KNOWN_LAYOUT_PROBLEMS: readonly KnownLayoutProblem[] = Object.freez
       p.text === '→' &&
       p.other === 'TEST DE SONIDO',
     reason:
-      "the title menu's cursor sits 40 px left of the centre, and es's 14-glyph TEST DE SONIDO " +
-      "starts 42 px left of it; the fingerprint's es walk pins the title menu — U3 moves the cursor",
+      "the title menu's cursor sits six glyph cells and 4 px left of the centre (40 px at " +
+      "384×216), and es's 14-glyph TEST DE SONIDO starts seven cells left of it; the " +
+      "fingerprint's es walk pins the title menu — U3 moves the cursor",
   },
   {
     languages: ['es'],

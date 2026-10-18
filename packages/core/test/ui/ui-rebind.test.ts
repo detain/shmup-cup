@@ -9,7 +9,7 @@
  * box with its draining bar and the string slots it may use.
  */
 import { describe, expect, it } from 'vitest';
-import { FRAME_CX, FRAME_CY, GLYPH_W } from '../../src/config/index.js';
+import { FRAME_CX, FRAME_CY, GLYPH_H, GLYPH_W } from '../../src/config/index.js';
 import { ACTION_NAMES, Action, type ActionName, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, TextAlign, createDrawList, type DrawList } from '../../src/presentation/index.js';
 import {
@@ -67,7 +67,7 @@ const IDLE: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'keyboard'
  */
 const CAPTURE = (() => {
   const w = 40 * GLYPH_W;
-  const h = uiPx(48);
+  const h = 2 * GLYPH_H + uiPx(32);
   const x = FRAME_CX - (w >> 1);
   const y = FRAME_CY - (h >> 1);
   const inset = uiPx(20);

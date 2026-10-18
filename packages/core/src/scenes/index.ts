@@ -1643,7 +1643,11 @@ export const ENDING_LINE_TICKS = 90;
 /** Ticks the whole epilogue stays after its last line before the result card (M2-14). */
 export const ENDING_STORY_HOLD_TICKS = 240;
 
-/** Ticks per pixel of the credits scroll (M2-14: 2 — 30 px a second). */
+/**
+ * Ticks per step of the credits scroll (M2-14: 2 — 30 steps a second); a step moves the rows
+ * `ART_SCALE` px (`SCROLL_HALVES` — one at 384×216, 1.5 on average at 640×360), so the credits
+ * take as long as at the v1 frame.
+ */
 export const CREDITS_SCROLL_TICKS = 2;
 
 /**
@@ -1744,13 +1748,15 @@ const UI_COMMANDS = 384;
 
 /**
  * Where the title menu is drawn: from just below the frame's centre row (a constant: redrawing
- * allocates nothing).
+ * allocates nothing). The cursor sits left of the centred labels, so its offset is text-sized:
+ * half the longest English label (`SOUND TEST`, five of its ten cells), the cursor's own cell and
+ * 4 px (40 at 384×216).
  */
 const TITLE_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX,
   y: FRAME_CY + uiPx(10),
   align: TextAlign.Center,
-  cursorX: FRAME_CX - uiPx(40),
+  cursorX: FRAME_CX - 6 * GLYPH_W - uiPx(4),
 });
 
 /**
@@ -5134,12 +5140,15 @@ const DIFFICULTY_PANEL = Object.freeze({
   h: uiPx(112),
 });
 
-/** Where the difficulty menu is drawn (inside its panel). */
+/**
+ * Where the difficulty menu is drawn (inside its panel). The cursor sits left of the centred
+ * presets, so its offset is text-sized: seven glyph cells and 2 px (44 at 384×216).
+ */
 const DIFFICULTY_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX,
   y: DIFFICULTY_PANEL.y + uiPx(22),
   align: TextAlign.Center,
-  cursorX: FRAME_CX - uiPx(44),
+  cursorX: FRAME_CX - 7 * GLYPH_W - uiPx(2),
 });
 
 /**
@@ -6868,13 +6877,14 @@ const ENDING_LAYOUT = Object.freeze({
 
 /**
  * The epilogue's panel under the sprite scene (M2-14): left, top, width, height — as wide as the
- * result card; its top follows the scene's horizon (the sprite scenes are laid out from the top).
+ * result card; its top follows the scene's horizon (the sprite scenes are laid out from the top);
+ * it holds an epilogue's most lines, {@link MAX_ENDING_TEXT_LINES} of `LINE_H`, and 8 px (88).
  */
 const ENDING_TEXT_PANEL = Object.freeze({
   x: TEXT_PANEL_INSET,
   y: uiPx(124),
   w: FRAME_W - 2 * TEXT_PANEL_INSET,
-  h: uiPx(88),
+  h: MAX_ENDING_TEXT_LINES * LINE_H + uiPx(8),
 });
 
 /** From the epilogue panel's top to its first line (5). */
@@ -7355,13 +7365,38 @@ function finalZoneCue(flow: FlowControl, credits: boolean): number {
 // ------------------------------------------------------------------------------ credits
 
 /**
+ * How far the credits scroll and the story crawl move a step ({@link CREDITS_SCROLL_TICKS},
+ * {@link STORY_SCROLL_TICKS}), in half pixels: {@link ART_HALVES}, so their rows — laid out at the
+ * art's scale — move `ART_SCALE` px a step (R2-01: one at 384×216; 1 and 2 px in turn, 1.5 on
+ * average, at 640×360) and both take as long in ticks as at the v1 frame. The scroll after `n`
+ * steps is `(n * SCROLL_HALVES) >> 1` — whole numbers, nothing fractional per frame.
+ *
+ * @remarks
+ * The one constant of their rate: 2 keeps one pixel a step at every scale (the v1 rate in pixels —
+ * at 640×360 the credits and the story then take about 1.5 times as long).
+ */
+const SCROLL_HALVES = ART_HALVES;
+
+/**
+ * The steps the credits scroll or the story crawl takes to move a distance: the first `n` with
+ * `(n * SCROLL_HALVES) >> 1 ≥ px` — `⌈2·px / SCROLL_HALVES⌉` (`px` itself at 384×216).
+ *
+ * @param px - The distance in pixels (a whole number; 0 or less takes no step).
+ * @returns The steps, a whole number.
+ */
+function scrollSteps(px: number): number {
+  return px <= 0 ? 0 : Math.floor((2 * px + SCROLL_HALVES - 1) / SCROLL_HALVES);
+}
+
+/**
  * The credits scroll after an ending (plan M2-14, shmup_feat.md §17 "credits"): the campaign's
  * `credits` (`core/data` `CampaignCreditsSection`) scroll up from below the screen, a section's
- * title in the title colour, its lines under it, a blank row between sections, one pixel every
- * {@link CREDITS_SCROLL_TICKS} ticks; when the last row has come up to the middle of the screen the
- * scroll stops for {@link CREDITS_HOLD_TICKS}, then the name entry (the run's score entered its
- * table — M2-15) or the title. OK or Back (after {@link CREDITS_LOCK_TICKS}) skip ahead. The
- * final zone's credits theme (its stage's `music.credits` cue — `Credits` in the shipped zones) plays.
+ * title in the title colour, its lines under it, a blank row between sections, `ART_SCALE` px
+ * every {@link CREDITS_SCROLL_TICKS} ticks ({@link SCROLL_HALVES}); when the last row has come up
+ * to the middle of the screen the scroll stops for {@link CREDITS_HOLD_TICKS}, then the name entry
+ * (the run's score entered its table — M2-15) or the title. OK or Back (after
+ * {@link CREDITS_LOCK_TICKS}) skip ahead. The final zone's credits theme (its stage's
+ * `music.credits` cue — `Credits` in the shipped zones) plays.
  *
  * @remarks
  * The rows are flattened once, when the flow is built (the content's own strings — nothing is built
@@ -7409,9 +7444,12 @@ export class CreditsScene extends SceneBase {
     return CREDITS_STRING_SLOTS;
   }
 
-  /** Pixels scrolled so far (stops when the last row reached the middle of the screen). */
+  /**
+   * Pixels scrolled so far, {@link SCROLL_HALVES} half pixels a step (stops when the last row
+   * reached the middle of the screen).
+   */
   get scroll(): number {
-    const moved = Math.floor(this.ticks / CREDITS_SCROLL_TICKS);
+    const moved = (Math.floor(this.ticks / CREDITS_SCROLL_TICKS) * SCROLL_HALVES) >> 1;
     return moved < this.scrollEnd ? moved : this.scrollEnd;
   }
 
@@ -7422,7 +7460,15 @@ export class CreditsScene extends SceneBase {
 
   /** Whether the scroll has stopped (the hold before the title). */
   get stopped(): boolean {
-    return Math.floor(this.ticks / CREDITS_SCROLL_TICKS) >= this.scrollEnd;
+    return Math.floor(this.ticks / CREDITS_SCROLL_TICKS) >= scrollSteps(this.scrollEnd);
+  }
+
+  /**
+   * Ticks the whole credits take without a skip: the scroll up to
+   * {@link CreditsScene.scrollEnd}, then {@link CREDITS_HOLD_TICKS}.
+   */
+  get duration(): number {
+    return scrollSteps(this.scrollEnd) * CREDITS_SCROLL_TICKS + CREDITS_HOLD_TICKS;
   }
 
   /** Starts from the bottom with the credits theme (the final zone's `music.credits`). */
@@ -7441,10 +7487,7 @@ export class CreditsScene extends SceneBase {
     const skip =
       this.ticks > CREDITS_LOCK_TICKS &&
       (flow.menuInput.pressed & (Action.Confirm | Action.Back)) !== 0;
-    const over =
-      this.ticks >=
-      (this.scrollEnd > 0 ? this.scrollEnd : 0) * CREDITS_SCROLL_TICKS + CREDITS_HOLD_TICKS;
-    if (skip || over) {
+    if (skip || this.ticks >= this.duration) {
       if (skip) flow.sfx(SFX_CUES.MenuSelect);
       flow.finishGame();
     }
@@ -7500,7 +7543,10 @@ export const HI_SCORE_LOCK_TICKS = 30;
 /** Ticks a name entry waits before it takes the name as it stands (30 s, arcade style). */
 export const NAME_ENTRY_TIMEOUT_TICKS = 1800;
 
-/** Ticks per pixel of the story crawl (4 — 15 px a second). */
+/**
+ * Ticks per step of the story crawl (4 — 15 steps a second); a step moves the rows `ART_SCALE` px
+ * (`SCROLL_HALVES`), so the crawl takes as long as at the v1 frame.
+ */
 export const STORY_SCROLL_TICKS = 4;
 
 /**
@@ -7518,8 +7564,11 @@ export const STORY_STRING_SLOTS = 10;
 /** Top of the story crawl's window (a row above it is not drawn — 132). */
 const STORY_WINDOW_TOP = uiPx(132);
 
-/** Bottom of the story crawl's window: rows come in here (206). */
-const STORY_WINDOW_BOTTOM = uiPx(206);
+/**
+ * Bottom of the story crawl's window: rows come in here. The window holds seven rows at a time —
+ * six {@link STORY_ROW_HEIGHT} pitches and a glyph (206).
+ */
+const STORY_WINDOW_BOTTOM = STORY_WINDOW_TOP + 6 * STORY_ROW_HEIGHT + GLYPH_H;
 
 /**
  * How far a page's first row has crawled into the window (pixels) when its scene takes over:
@@ -7530,13 +7579,13 @@ const STORY_PAGE_LEAD = (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP) >> 1;
 /**
  * The story's text panel under the sprite scene: left, top, width, height — the frame's width
  * less 40 px each side; its top follows the scene's horizon (the sprite scenes are laid out from
- * the top), like the window's.
+ * the top), like the window's: the window and 4 px around it (128, 82).
  */
 const STORY_PANEL = Object.freeze({
   x: TEXT_PANEL_INSET,
-  y: uiPx(128),
+  y: STORY_WINDOW_TOP - uiPx(4),
   w: FRAME_W - 2 * TEXT_PANEL_INSET,
-  h: uiPx(82),
+  h: STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP + uiPx(8),
 });
 
 /** Ticks after which a demo's zone card (its zone's label and name) disappears. */
@@ -8251,14 +8300,14 @@ const STORY_SCENE_LAYOUT = Object.freeze({
  *
  * @remarks
  * The rows (every page's lines and a blank row after each page) are flattened when the flow is
- * built; they rise one pixel every {@link STORY_SCROLL_TICKS} ticks and only those inside the
- * panel are drawn, through {@link STORY_STRING_SLOTS} slots taken by row number. A page's scene
- * takes over when its first row has crawled half-way up the panel. When the last row has left the
- * panel (the panel goes with it) and
- * {@link STORY_HOLD_TICKS} more have passed the attract loop returns to the title; **any input**
- * returns at once. The scenes are arithmetic on the tick count over fixed tables and the
- * sprites the game already has (the content's ships, the ending pieces, the logo). The title
- * theme plays on.
+ * built; they rise `ART_SCALE` px every {@link STORY_SCROLL_TICKS} ticks ({@link SCROLL_HALVES})
+ * and only those inside the panel are drawn, through {@link STORY_STRING_SLOTS} slots taken by row
+ * number. A page's scene takes over when its first row has crawled half-way up the panel; its
+ * pieces move on the ticks since then, so a page's scene plays as long as at the v1 frame. When the
+ * last row has left the panel (the panel goes with it) and {@link STORY_HOLD_TICKS} more have
+ * passed the attract loop returns to the title; **any input** returns at once. The scenes are
+ * arithmetic on the tick count over fixed tables and the sprites the game already has (the
+ * content's ships, the ending pieces, the logo). The title theme plays on.
  */
 export class StoryScene extends SceneBase {
   /** See {@link Scene.id}. */
@@ -8299,15 +8348,15 @@ export class StoryScene extends SceneBase {
     return STORY_STRING_SLOTS;
   }
 
-  /** Pixels crawled so far. */
+  /** Pixels crawled so far, {@link SCROLL_HALVES} half pixels a step. */
   get scroll(): number {
-    return Math.floor(this.ticks / STORY_SCROLL_TICKS);
+    return (Math.floor(this.ticks / STORY_SCROLL_TICKS) * SCROLL_HALVES) >> 1;
   }
 
   /** Ticks the whole story takes: every row through the panel, then the hold. */
   get duration(): number {
     const travel = this.rows.length * STORY_ROW_HEIGHT + (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP);
-    return travel * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
+    return scrollSteps(travel) * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
   }
 
   /**
@@ -8359,7 +8408,7 @@ export class StoryScene extends SceneBase {
    */
   drawUi(list: DrawList): void {
     const page = this.page;
-    const since = this.ticks - this.pageStart(page) * STORY_SCROLL_TICKS;
+    const since = this.ticks - scrollSteps(this.pageStart(page)) * STORY_SCROLL_TICKS;
     const t = since > 0 ? since : 0;
     const scene = page < this.scenes.length ? this.scenes[page] : StorySceneCode.None;
     if (scene === StorySceneCode.Dawn) this.drawDawn(list, t);
@@ -8468,7 +8517,10 @@ const PRACTICE_PANEL = Object.freeze({
   h: uiPx(116),
 });
 
-/** The practice select's value column: 76 px right of its labels (at least — the scene's layout). */
+/**
+ * The practice select's value column: 76 px right of its labels (at least — the scene's layout
+ * moves it further for a longer label).
+ */
 const PRACTICE_VALUE_DX = uiPx(76);
 
 /** Where the practice select's menu is drawn (labels left, values from `valueX`). */

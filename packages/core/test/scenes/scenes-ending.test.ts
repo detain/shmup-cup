@@ -35,6 +35,7 @@ import {
 import { UI_COLORS, resolveUiSprites } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { shipped, stage } from '../helpers/campaign.js';
+import { scrollPx, scrollSteps } from '../helpers/scene-layout.js';
 
 /** The campaign: S → U | L, endings with scenes and epilogues, and credits. */
 const CAMPAIGN: ContentFile = {
@@ -292,7 +293,9 @@ describe('core/scenes ending screens and credits (M2-14)', () => {
     expect(s.uiTexts()).toEqual([]);
     s.hold(0, CREDITS_SCROLL_TICKS * 6);
     expect(s.uiTexts()).toEqual(['TEST CREDITS']);
-    s.hold(0, CREDITS_SCROLL_TICKS * CREDITS_ROW_HEIGHT * 3);
+    // Three rows further (`ART_SCALE` px a step).
+    const further = scrollSteps(scrollPx(6) + 3 * CREDITS_ROW_HEIGHT) - 6;
+    s.hold(0, CREDITS_SCROLL_TICKS * further);
     expect(s.uiTexts()).toEqual(['TEST CREDITS', 'FIRST ROW', 'SECOND ROW']);
     // Titles in the title colour, lines in the text colour.
     const ui = s.ui();
@@ -328,8 +331,10 @@ describe('core/scenes ending screens and credits (M2-14)', () => {
     const credits = s.flow.credits;
     expect(credits.rows).toEqual(['TEST CREDITS', 'FIRST ROW', 'SECOND ROW', '', 'THE END', '']);
     expect(credits.stopped).toBe(false);
-    // Scrolls until the last row stands in the middle of the screen, holds, then the title.
-    const total = credits.scrollEnd * CREDITS_SCROLL_TICKS + CREDITS_HOLD_TICKS;
+    // Scrolls until the last row stands in the middle of the screen (`ART_SCALE` px a step),
+    // holds, then the title.
+    const total = scrollSteps(credits.scrollEnd) * CREDITS_SCROLL_TICKS + CREDITS_HOLD_TICKS;
+    expect(credits.duration).toBe(total);
     s.hold(0, total - 2);
     expect(credits.stopped).toBe(true);
     expect(s.top).toBe('credits');

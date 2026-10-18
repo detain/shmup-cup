@@ -6,17 +6,26 @@
  * 640×360 with the 9×12 font and `ART_SCALE` 3/2. The numbers in parentheses are today's values.
  * A change of a scene's layout changes the formula here too, on purpose.
  */
-import { ART_SCALE, FRAME_CX, FRAME_CY, FRAME_W, LINE_H } from '../../src/config/index.js';
+import { ART_SCALE, FRAME_CX, FRAME_CY, FRAME_W, GLYPH_H, LINE_H } from '../../src/config/index.js';
 import { uiPx } from '../../src/ui/index.js';
 
-/** The story crawl's window: its top (132) and bottom (206) rows, and its height (74). */
+/** The story's row pitch (11), as `core/scenes` `STORY_ROW_HEIGHT` derives it. */
+const STORY_ROW = LINE_H + uiPx(1);
+
+/**
+ * The story crawl's window: its top (132) and bottom (206) rows — seven rows at a time, six row
+ * pitches and a glyph — and its height (74).
+ */
 export const STORY_WINDOW = Object.freeze({
   top: uiPx(132),
-  bottom: uiPx(206),
-  height: uiPx(206) - uiPx(132),
+  bottom: uiPx(132) + 6 * STORY_ROW + GLYPH_H,
+  height: 6 * STORY_ROW + GLYPH_H,
 });
 
-/** The text panels' inset from the frame's sides: the ending's card and epilogue, the story's (40). */
+/**
+ * The text panels' inset from the frame's sides: the ending's card and epilogue, the story's
+ * panel (40).
+ */
 export const TEXT_PANEL_INSET = uiPx(40);
 
 /** The story's panel width: the frame less the inset each side (304). */
@@ -53,6 +62,33 @@ export const BOOT_BAR = Object.freeze({
   y: FRAME_CY + uiPx(2),
   h: uiPx(6),
 });
+
+/**
+ * The credits scroll's and the story crawl's half pixels a step, as `core/scenes`
+ * `SCROLL_HALVES` derives them: the art's scale in halves (2) — `ART_SCALE` px a step.
+ */
+export const SCROLL_HALVES = ART_SCALE * 2;
+
+/**
+ * How far the credits or the story have scrolled after some steps (`core/scenes`' rule).
+ *
+ * @param steps - Whole steps (`⌊ticks / CREDITS_SCROLL_TICKS⌋` or `… / STORY_SCROLL_TICKS`).
+ * @returns `(steps · SCROLL_HALVES) >> 1` pixels (`steps` at 384×216).
+ */
+export function scrollPx(steps: number): number {
+  return (steps * SCROLL_HALVES) >> 1;
+}
+
+/**
+ * The steps the credits or the story take to scroll a distance: the first whose
+ * {@link scrollPx} reaches it.
+ *
+ * @param px - Pixels (0 or less: none).
+ * @returns `⌈2·px / SCROLL_HALVES⌉` (`px` at 384×216).
+ */
+export function scrollSteps(px: number): number {
+  return px <= 0 ? 0 : Math.ceil((2 * px) / SCROLL_HALVES);
+}
 
 /** The credits' row pitch (11) as `core/scenes` `CREDITS_ROW_HEIGHT` derives it. */
 export const CREDITS_ROW = LINE_H + uiPx(1);

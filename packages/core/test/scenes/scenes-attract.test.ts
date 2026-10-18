@@ -24,7 +24,7 @@ import {
   type SceneFlow,
 } from '../../src/scenes/index.js';
 import { DEMO_TEST_TICKS, frontEndContent } from '../helpers/front-end.js';
-import { STORY_PANEL_W, STORY_WINDOW } from '../helpers/scene-layout.js';
+import { STORY_PANEL_W, STORY_WINDOW, scrollSteps } from '../helpers/scene-layout.js';
 
 const CONTENT = frontEndContent();
 
@@ -103,7 +103,7 @@ class Session {
 
 /** Ticks the test story takes (two pages, five rows through the window). */
 const STORY_TICKS =
-  (5 * STORY_ROW_HEIGHT + STORY_WINDOW.height) * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
+  scrollSteps(5 * STORY_ROW_HEIGHT + STORY_WINDOW.height) * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
 
 describe('core/scenes attract loop (M2-15)', () => {
   it('cycles title → demo → hi-scores → story → title on exact timings', () => {
@@ -256,12 +256,15 @@ describe('core/scenes attract loop (M2-15)', () => {
     expect(story.rows).toEqual(['FIRST LINE', 'SECOND LINE', '', 'THIRD LINE', '']);
     expect(story.page).toBe(0);
     expect(s.uiTexts()).toEqual([]); // nothing has come in yet
+    // Runs until the crawl has moved a distance (`ART_SCALE` px a step).
+    const crawlTo = (px: number, early = 0): void =>
+      s.hold(0, scrollSteps(px) * STORY_SCROLL_TICKS - early - story.ticks);
     // A row is drawn once its glyphs are inside the window: the first after GLYPH_H + 2 px of
     // scroll (row 1 not yet), the second a row height later.
     const firstIn = GLYPH_H + 2;
-    s.hold(0, firstIn * STORY_SCROLL_TICKS);
+    crawlTo(firstIn);
     expect(s.uiTexts()).toEqual(['FIRST LINE']);
-    s.hold(0, STORY_ROW_HEIGHT * STORY_SCROLL_TICKS);
+    crawlTo(firstIn + STORY_ROW_HEIGHT);
     expect(s.uiTexts()).toEqual(['FIRST LINE', 'SECOND LINE']);
     // The dawn's pieces (the sun, the sea's surface) while the first page crawls.
     const sprites = (): number => {
@@ -274,7 +277,7 @@ describe('core/scenes attract loop (M2-15)', () => {
     // The second page's scene takes over once its first row (row 3: 33 px at 384×216) has crawled
     // half-way up the panel (37 px more) — 70 px in all.
     const takeOver = 3 * STORY_ROW_HEIGHT + (STORY_WINDOW.height >> 1);
-    s.hold(0, (takeOver - firstIn - STORY_ROW_HEIGHT) * STORY_SCROLL_TICKS - 1);
+    crawlTo(takeOver, 1);
     expect(story.page).toBe(0);
     s.hold(0, 1);
     expect(story.page).toBe(1);

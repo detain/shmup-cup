@@ -200,10 +200,10 @@ export type { TextMetrics } from '../presentation/index.js';
  * The UI kit and the scenes lay their screens out in three kinds of numbers: **positions** anchored
  * to the frame (its centre, an edge — `FRAME_CX`, `FRAME_W`), **text-sized** lengths (glyph cells
  * and lines — `GLYPH_W`, `GLYPH_H`, `LINE_H`) and the **art- and padding-sized** lengths — a
- * sprite's size, a gap, a margin, an inset, a bar's thickness — which this scales. At `ART_SCALE` 1 (until
- * the flip) it returns `v`, so nothing moves; from R2-01's flip (`ART_SCALE` 3/2, the ×1.5 interim
- * art and the 9×12 font) the whole UI is a ×1.5 copy of v1's, re-anchored to the 640×360 frame —
- * which fits, since 1.5 < 5/3. World values never use it (plan §2.6).
+ * sprite's size, a gap, a margin, an inset, a bar's thickness — which this scales. At `ART_SCALE` 1
+ * (until the flip) it returns `v`, so nothing moves; from R2-01's flip (`ART_SCALE` 3/2, the ×1.5
+ * interim art and the 9×12 font) the whole UI is a ×1.5 copy of v1's, re-anchored to the 640×360
+ * frame — which fits, since 1.5 < 5/3. World values never use it (plan §2.6).
  *
  * **Module initialisation only:** every caller builds frozen layout constants with it. It is never
  * called per frame or per tick (the layouts stay constants; zero allocation —
@@ -1390,8 +1390,11 @@ const CONFIRM_CURSOR_DX = 3 * GLYPH_W;
 /** Width of {@link drawConfirm}'s panel: a 28-glyph question and 4 px a side (176). */
 const CONFIRM_W = 28 * GLYPH_W + uiPx(8);
 
-/** Height of {@link drawConfirm}'s panel: the question's lines over the YES / NO row (52). */
-const CONFIRM_H = uiPx(52);
+/**
+ * Height of {@link drawConfirm}'s panel: the question's two lines over the YES / NO row's glyphs,
+ * and 24 px — 7 above, 9 between, 8 below (52).
+ */
+const CONFIRM_H = 2 * LINE_H + GLYPH_H + uiPx(24);
 
 /** From the confirm panel's top to the question's first line (7). */
 const CONFIRM_QUESTION_DY = uiPx(7);
@@ -1860,8 +1863,11 @@ export function rebindStringSlots(panel: RebindPanel): number {
 /** Width of the rebind prompt's capture box: a 40-glyph prompt (240). */
 const CAPTURE_W = 40 * GLYPH_W;
 
-/** Height of the rebind prompt's capture box: the prompt, the hint and the bar (48). */
-const CAPTURE_H = uiPx(48);
+/**
+ * Height of the rebind prompt's capture box: the prompt's and the hint's glyph rows, and 32 px
+ * of gaps and the countdown bar (48).
+ */
+const CAPTURE_H = 2 * GLYPH_H + uiPx(32);
 
 /**
  * The rebind prompt's capture box (the prompt, the hint and the countdown bar), centred on the

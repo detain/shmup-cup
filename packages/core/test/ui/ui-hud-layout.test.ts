@@ -3,12 +3,12 @@
  * derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the font's
  * cell (GLYPH_W) and, for the art- and padding-sized lengths, the art's scale (`core/ui` uiPx). The
  * relations below are written in those, so they pin every field to its pixel (a field moved by 1 px
- * breaks one) at 384×216 and keep holding after R2-01 changes the constants; they also cover the co-op halves and the co-op Direct pips, which the presentation
- * fingerprint's walks do not draw. A second test builds every HUD mode — one player and co-op, the
- * meter and Direct mode, the join prompt, a half that may continue or is out, the boss HP bar and
- * the caravan clock, with and without the UI sprites — and checks that each command stays inside
- * the frame and its bar, no bottom-bar command crosses the line between the co-op halves, and no
- * two texts of a row overlap.
+ * breaks one) at 384×216 and keep holding after R2-01 changes the constants; they also cover the
+ * co-op halves and the co-op Direct pips, which the presentation fingerprint's walks do not draw. A
+ * second test builds every HUD mode — one player and co-op, the meter and Direct mode, the join
+ * prompt, a half that may continue or is out, the boss HP bar and the caravan clock, with and
+ * without the UI sprites — and checks that each command stays inside the frame and its bar, no
+ * bottom-bar command crosses the line between the co-op halves, and no two texts of a row overlap.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

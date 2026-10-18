@@ -7,7 +7,7 @@
  * lock, buffer and revision rules; and the builders' defaults, geometry, slot reuse and overflow.
  */
 import { describe, expect, it } from 'vitest';
-import { GLYPH_W, LINE_H } from '../../src/config/index.js';
+import { GLYPH_H, GLYPH_W, LINE_H } from '../../src/config/index.js';
 import { Action, type ActionMask, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, TextAlign, createDrawList, type DrawList } from '../../src/presentation/index.js';
 import {
@@ -495,7 +495,7 @@ const VALUE_GAP = uiPx(6);
 
 /** drawConfirm's panel (176×52), the question's drop (7), the YES / NO row's rise (16). */
 const CONFIRM_W = 28 * GLYPH_W + uiPx(8);
-const CONFIRM_H = uiPx(52);
+const CONFIRM_H = 2 * LINE_H + GLYPH_H + uiPx(24);
 const QUESTION_DY = uiPx(7);
 const CHOICE_ROW_DY = uiPx(16);
 

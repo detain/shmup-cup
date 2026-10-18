@@ -19,8 +19,22 @@
  *   shared —, the scroll stopping exactly at `scrollEnd`, Back during the lock ignored.
  */
 import { describe, expect, it } from 'vitest';
-import { FRAME_CX, FRAME_CY, FRAME_H, FRAME_W, GLYPH_H, LINE_H } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
+import {
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_H,
+  FRAME_W,
+  GLYPH_H,
+  GLYPH_W,
+  LINE_H,
+} from '../../src/config/index.js';
+import {
+  MAX_CREDITS_LINE_LENGTH,
+  MAX_ENDING_LINE_LENGTH,
+  loadContent,
+  type ContentDb,
+  type ContentFile,
+} from '../../src/data/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
 import { Action, commitPlayerInput, type ActionMask } from '../../src/input/index.js';
@@ -42,7 +56,13 @@ import {
 import { resolveUiSprites, uiPx, type UiSprites } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { shipped, stage } from '../helpers/campaign.js';
-import { ENDING_TEXT_PANEL, TEXT_PANEL_INSET, scenePx } from '../helpers/scene-layout.js';
+import {
+  ENDING_TEXT_PANEL,
+  TEXT_PANEL_INSET,
+  scenePx,
+  scrollPx,
+  scrollSteps,
+} from '../helpers/scene-layout.js';
 
 /** One ending of a test campaign. */
 type Ending = Record<string, unknown>;
@@ -392,6 +412,67 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(withScene.rectAt(TEXT_PANEL_INSET, ENDING_TEXT_PANEL.y)).toBe(true); // the panel
   });
 
+  it('fits an epilogue line and a credits line of the campaign caps, and no glyph more', () => {
+    // `core/data`'s caps are what the scenes draw them in, in glyph cells (R1-01, R2-01): an
+    // epilogue line of MAX_ENDING_LINE_LENGTH fits the panel under the scene with 32 px clear a
+    // side, a credits line of MAX_CREDITS_LINE_LENGTH the frame with 12 px clear a side — and a
+    // glyph more would not.
+    const line = 'E'.repeat(MAX_ENDING_LINE_LENGTH);
+    const title = 'C'.repeat(MAX_CREDITS_LINE_LENGTH);
+    const s = new Session(
+      content(
+        campaign(
+          [
+            { id: 'u', name: 'U', zone: 'u', scene: 'citadel', text: [line] },
+            { id: 'l', name: 'L', zone: 'l' },
+          ],
+          { credits: [{ title }] },
+        ),
+      ),
+    );
+    s.toEnding();
+    s.hold(0, ENDING_LINE_TICKS);
+    /**
+     * The left and right edges of a centred text command.
+     *
+     * @param text - Its string.
+     * @returns `[x0, x1]`.
+     */
+    const span = (text: string): [number, number] => {
+      const found = s.texts().filter(([t]) => t === text);
+      expect(found).toHaveLength(1);
+      expect(found[0][1]).toBe(FRAME_CX);
+      const x0 = Math.round(FRAME_CX - (text.length * GLYPH_W) / 2);
+      return [x0, x0 + text.length * GLYPH_W];
+    };
+    const ui = s.ui();
+    let panel = -1;
+    for (let i = 0; i < ui.count && panel < 0; i++) {
+      if (ui.op[i] === DrawOp.Rect && ui.x[i] === TEXT_PANEL_INSET) panel = i;
+    }
+    expect(panel).toBeGreaterThanOrEqual(0);
+    expect(ui.y[panel]).toBe(ENDING_TEXT_PANEL.y);
+    const left = ui.x[panel];
+    const w = ui.w[panel];
+    const pad = uiPx(32);
+    const [x0, x1] = span(line);
+    expect(x0).toBeGreaterThanOrEqual(left + pad);
+    expect(x1).toBeLessThanOrEqual(left + w - pad);
+    expect((MAX_ENDING_LINE_LENGTH + 1) * GLYPH_W).toBeGreaterThan(w - 2 * pad);
+    // On to the card, then the credits; the title row scrolls up into the frame.
+    s.press(Action.Confirm);
+    expect(s.flow.ending.phase).toBe(1);
+    s.hold(0, ENDING_LOCK_TICKS);
+    s.press(Action.Confirm);
+    expect(s.top).toBe('credits');
+    s.hold(0, scrollSteps(2 * LINE_H) * CREDITS_SCROLL_TICKS);
+    const margin = uiPx(12);
+    const [c0, c1] = span(title);
+    expect(c0).toBeGreaterThanOrEqual(margin);
+    expect(c1).toBeLessThanOrEqual(FRAME_W - margin);
+    expect((MAX_CREDITS_LINE_LENGTH + 1) * GLYPH_W).toBeGreaterThan(FRAME_W - 2 * margin);
+  });
+
   it('ignores OK during the lock; once every line is shown OK moves on at once', () => {
     const s = new Session(
       content(
@@ -605,7 +686,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(scene.rows.length).toBeGreaterThan(CREDITS_STRING_SLOTS);
     expect(scene.rows).toHaveLength(18 + 18 + 6);
     let most = 0;
-    for (let t = 0; t < scene.scrollEnd * CREDITS_SCROLL_TICKS; t += 17) {
+    for (let t = 0; t < scrollSteps(scene.scrollEnd) * CREDITS_SCROLL_TICKS; t += 17) {
       s.hold(0, 17);
       if (s.top !== 'credits') break;
       const texts = s.texts();
@@ -643,9 +724,12 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(scene.scrollEnd).toBe(FRAME_H + 2 * CREDITS_ROW_HEIGHT - stopY);
     s.press(Action.Back);
     expect(s.top).toBe('credits');
-    while (scene.ticks < scene.scrollEnd * CREDITS_SCROLL_TICKS - 1) s.hold(0);
+    // `ART_SCALE` px a step: the last step before the stop is short of it.
+    const steps = scrollSteps(scene.scrollEnd);
+    while (scene.ticks < steps * CREDITS_SCROLL_TICKS - 1) s.hold(0);
     expect(scene.stopped).toBe(false);
-    expect(scene.scroll).toBe(scene.scrollEnd - 1);
+    expect(scene.scroll).toBe(scrollPx(steps - 1));
+    expect(scene.scroll).toBeLessThan(scene.scrollEnd);
     s.hold(0);
     expect(scene.stopped).toBe(true);
     expect(scene.scroll).toBe(scene.scrollEnd);
@@ -660,6 +744,6 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.hold(0, 2);
     s.leaveNames(); // the run's score entered its table (M2-15)
     expect(s.top).toBe('title');
-    expect(CREDITS_LOCK_TICKS).toBeLessThan(scene.scrollEnd * CREDITS_SCROLL_TICKS);
+    expect(CREDITS_LOCK_TICKS).toBeLessThan(steps * CREDITS_SCROLL_TICKS);
   });
 });

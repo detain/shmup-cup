@@ -16,8 +16,13 @@
  *   over in order, `none` draws no sprites.
  */
 import { describe, expect, it } from 'vitest';
-import { GLYPH_H } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
+import { FRAME_CX, GLYPH_H, GLYPH_W } from '../../src/config/index.js';
+import {
+  MAX_STORY_LINE_LENGTH,
+  loadContent,
+  type ContentDb,
+  type ContentFile,
+} from '../../src/data/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
 import { Action } from '../../src/input/index.js';
 import { DrawOp } from '../../src/presentation/index.js';
@@ -35,7 +40,13 @@ import {
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { demoFile, frontEndFiles, recordTestDemo } from '../helpers/front-end.js';
 import { FrontEndSession } from '../helpers/front-end-session.js';
-import { STORY_WINDOW } from '../helpers/scene-layout.js';
+import { uiPx } from '../../src/ui/index.js';
+import {
+  STORY_PANEL_W,
+  STORY_WINDOW,
+  TEXT_PANEL_INSET,
+  scrollSteps,
+} from '../helpers/scene-layout.js';
 
 /**
  * Loads content files (no issues expected).
@@ -350,7 +361,7 @@ describe('core/scenes attract loop — the story at its limits (M2-15 edge cases
     const story = s.flow.story;
     expect(story.rows).toHaveLength(8 * 7);
     expect(story.duration).toBe(
-      (8 * 7 * STORY_ROW_HEIGHT + (WINDOW_BOTTOM - WINDOW_TOP)) * STORY_SCROLL_TICKS +
+      scrollSteps(8 * 7 * STORY_ROW_HEIGHT + (WINDOW_BOTTOM - WINDOW_TOP)) * STORY_SCROLL_TICKS +
         STORY_HOLD_TICKS,
     );
     const pages: number[] = [];
@@ -377,6 +388,35 @@ describe('core/scenes attract loop — the story at its limits (M2-15 edge cases
     expect(s.top).toBe('story');
     s.hold(0);
     expect(s.top).toBe('title');
+  });
+
+  it('fits a story line of MAX_STORY_LINE_LENGTH glyphs in its panel, 32 px clear a side', () => {
+    // `core/data`'s cap is the text panel's width less its padding, in glyph cells (R1-01,
+    // R2-01): a line of the cap fits the panel the scene draws with that padding each side, and
+    // a glyph more would not.
+    const line = 'S'.repeat(MAX_STORY_LINE_LENGTH);
+    const s = new FrontEndSession({ db: load(frontEndFiles([{ scene: 'dawn', lines: [line] }])) });
+    s.hold(0, TITLE_ATTRACT_TICKS + HI_SCORE_PAGE_TICKS);
+    expect(s.top).toBe('story');
+    s.hold(0, scrollSteps(GLYPH_H + 2) * STORY_SCROLL_TICKS);
+    const ui = s.game.renderFrame().ui;
+    let panel = -1;
+    let text = -1;
+    for (let i = 0; i < ui.count; i++) {
+      if (ui.op[i] === DrawOp.Rect && panel < 0 && ui.x[i] === TEXT_PANEL_INSET) panel = i;
+      if (ui.op[i] === DrawOp.Text && ui.strings[ui.ref[i]] === line) text = i;
+    }
+    expect(panel).toBeGreaterThanOrEqual(0);
+    expect(text).toBeGreaterThanOrEqual(0);
+    const left = ui.x[panel];
+    const w = ui.w[panel];
+    expect(w).toBe(STORY_PANEL_W);
+    const pad = uiPx(32);
+    const x0 = Math.round(ui.x[text] - (line.length * GLYPH_W) / 2);
+    expect(ui.x[text]).toBe(FRAME_CX);
+    expect(x0).toBeGreaterThanOrEqual(left + pad);
+    expect(x0 + line.length * GLYPH_W).toBeLessThanOrEqual(left + w - pad);
+    expect((MAX_STORY_LINE_LENGTH + 1) * GLYPH_W).toBeGreaterThan(w - 2 * pad);
   });
 
   it('a `none` page draws no sprites; an `invasion` page draws its blasts', () => {

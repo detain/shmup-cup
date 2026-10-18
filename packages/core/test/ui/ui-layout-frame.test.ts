@@ -11,47 +11,44 @@
  * them with its re-pin).
  */
 import { describe, expect, it } from 'vitest';
-import { FRAME_H, FRAME_W } from '../../src/config/index.js';
-import { UI_LANGUAGES } from '../../src/ui/index.js';
-import { shippedDb, unexplained, walkLayouts } from '../helpers/layout-walks.js';
+import { FRAME_CX, FRAME_H, FRAME_W, GLYPH_H, GLYPH_W } from '../../src/config/index.js';
+import { createDrawList } from '../../src/presentation/index.js';
+import { UI_LANGUAGES, drawPanel } from '../../src/ui/index.js';
+import {
+  expectedScenes,
+  frameProblems,
+  shippedDb,
+  unexplained,
+  walkLayouts,
+} from '../helpers/layout-walks.js';
 
-/** Every scene id of the flow (`core/scenes` `SceneId`). */
-const SCENE_IDS = [
-  'boot',
-  'title',
-  'game',
-  'pause',
-  'stageClear',
-  'gameOver',
-  'confirm',
-  'difficulty',
-  'shipSelect',
-  'weaponSelect',
-  'autoOrder',
-  'continue',
-  'map',
-  'options',
-  'nameEntry',
-  'hiScore',
-  'ending',
-  'credits',
-  'demo',
-  'story',
-  'practice',
-  'soundTest',
-  'controls',
-  'display',
-  'gameOptions',
-  'extras',
-  'rebind',
-  'inputTest',
-  'extra',
-  'replays',
-  'replay',
-];
+/**
+ * Whether the walks run at the v1 frame (384×216). The constants are widened to `number`: after
+ * R2-01's flip their literal types (640, 360) never equal 384 / 216, which the compiler rejects.
+ */
+const V1_FRAME = (FRAME_W as number) === 384 && (FRAME_H as number) === 216;
 
 describe('core/ui layout at the current frame and font (R2-01)', () => {
   const db = shippedDb();
+
+  it('flags a UI text over a HUD text, but not over one a UI panel covers', () => {
+    const ui = createDrawList(16, 4);
+    const hud = createDrawList(16, 4);
+    hud.setString(0, 'SCORE');
+    hud.text(0, FRAME_CX, 0);
+    ui.setString(0, 'PAUSE');
+    ui.text(0, FRAME_CX + GLYPH_W, GLYPH_H >> 1);
+    const found = frameProblems(ui, hud, 'pause');
+    expect(found.map((p) => [p.kind, p.where, p.text, p.other])).toEqual([
+      ['overlap', 'pause UI/HUD', 'PAUSE', 'SCORE'],
+    ]);
+    // An overlay's panel over the HUD text: it is covered (the UI is drawn over the HUD).
+    const covered = createDrawList(16, 4);
+    drawPanel(covered, FRAME_CX - 8 * GLYPH_W, 0, 16 * GLYPH_W, 4 * GLYPH_H);
+    covered.setString(0, 'PAUSE');
+    covered.text(0, FRAME_CX + GLYPH_W, GLYPH_H >> 1);
+    expect(frameProblems(covered, hud, 'pause')).toEqual([]);
+  });
 
   it('ships the three languages the walks cover', () => {
     expect(UI_LANGUAGES.map((language) => language.id)).toEqual(['en', 'es', 'ja']);
@@ -60,10 +57,9 @@ describe('core/ui layout at the current frame and font (R2-01)', () => {
   it.each(['en', 'es', 'ja'])('lays out every scene in %s', (language) => {
     const report = walkLayouts(db, language);
     // Everything but the fingerprint-pinned problems listed in the helper — and each of those.
-    const left = unexplained(report, language, FRAME_W === 384 && FRAME_H === 216);
+    const left = unexplained(report, language, V1_FRAME);
     expect(left.problems).toEqual([]);
     expect(left.unused).toEqual([]);
-    const expected = report.demos ? SCENE_IDS : SCENE_IDS.filter((id) => id !== 'demo');
-    expect(report.seen.filter((id) => id !== '')).toEqual([...expected].sort());
+    expect(report.seen.filter((id) => id !== '')).toEqual(expectedScenes(report));
   });
 });
