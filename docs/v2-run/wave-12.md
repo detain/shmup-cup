@@ -8,8 +8,8 @@
 **Steps:** R5-08 (zone H, second half), R5-10 part 1 (bonus stages, escape, dimension, dev ranges, linked-stage
 pages), and the owner-gated real-art drops `R5-0n.S3` of every zone. · **Gate to start:** wave 11's exit — zones B,
 C, D, E, F, G and I LANDed (with zone A from wave 10), zone H's S4a … S5b on `r5/zone-h`. · **Exit (summary):** zone
-H LANDed; R5-10.T1, T2, T3, T6 and T8 on `origin/master`; every review at zero; the wave's docs item done. The S3
-drops are not part of the exit: each lands when the owner's art for it exists (this wave or any later one).
+H LANDed; R5-10.T1, T2, T3 and T8 on `origin/master`, T6 done (pushed or reported); every review at zero; the
+wave's docs item done. The S3 drops are not part of the exit: each lands when the owner's art for it exists (this wave or any later one).
 
 ## At a glance
 
@@ -18,7 +18,7 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 | 1 zone H | `R5-08.S4c → R5-08.S6 → R5-08.RV → R5-08.S7` | `zone-h.*` (the four echoes now), `citadel.mjs` | LAND at S7 | S6 |
 | 2 bonus stages | `R5-10.T1` | `brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range` stages, `bonus.enemies.json` (art) | LAND | none |
 | 3 escape → linked pages | `R5-10.T2 → R5-10.T8` | `escape.stage.json`, `escape.mjs` (new), the registry lines, the campaign credits; then `packages/shell/src/memory/index.ts`, `atlas-groups.test.ts` | LAND (T2), GROUPS (T8) | T8 |
-| 4 dimension | `R5-10.T3` | `dimension.stage.json`, `dimension.mjs`, `extras.enemies.json` (art) | FP | T3 |
+| 4 dimension | `R5-10.T3` | `dimension.stage.json`, `dimension.mjs`, `extras.enemies.json` (art), its four plates | DOCS-IMAGES; FP only if names change | T3 |
 | 5 dev ranges | `R5-10.T6` | the dev range stage and enemy files (art fields only, only if needed) | FP only if content changed | none |
 | 6–7 real art | `R5-0n.S3` (owner-gated; at most 2 at once) | the zone's `assets/source/sprites/**` overrides and recipes | DOCS-IMAGES (+ LAND if a frame count moves) | the zone spec |
 
@@ -48,7 +48,12 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
    `git -C /home/sites/shmup-cup worktree add -b r5/escape /home/sites/shmup-cup-run/wt/escape origin/master`.
    Start each subtask inside it with `git branch --show-current` — it must print `r5/bonus` (T1) or `r5/escape`
    (T2); if HEAD is detached, run `git switch r5/bonus` (or `git switch r5/escape`) and say so in your report — then
-   `git fetch origin && git rebase origin/master`. Commit sources only on the branch; never push it. The helper
+   `git fetch origin && git rebase origin/master`. After the rebase, run
+   `pnpm install --frozen-lockfile --prefer-offline` (shell timeout 600000), and `pnpm assets` when your tests need
+   the atlas: the lane worktree has no `node_modules` until its first agent installs, and a rebase that brings a
+   lockfile change leaves them stale (the agent brief's WORKTREE block is skipped for a lane worktree, install
+   included, so this install is yours; zone H's agents do the same, wave 11 rule 1). Commit sources only on the
+   branch; never push it. The helper
    takes `/tmp/shmup-cup-land.lock` itself — never wrap it in another `flock`. It runs about 25 minutes: give the
    shell call a `timeout` of 3600000 or run it in the background and poll its log. Run it with `--dry-run` first and
    read the dry run's log. After the LAND's push the orchestrator removes the worktree and deletes the branch (the
@@ -81,8 +86,9 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
   - `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts` (created by R5-P.P5a2)
     — the echo cases.
 - **Steps:**
-  1. `cd /home/sites/shmup-cup-run/wt/zone-h && git branch --show-current && git fetch origin && git rebase origin/master`
-     (the branch must print `r5/zone-h`; zone H rebases last, on all the LANDs).
+  1. `cd /home/sites/shmup-cup-run/wt/zone-h && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+     (shell timeout 600000; the branch must print `r5/zone-h`; zone H rebases last, on all the LANDs, and the
+     install picks up any lockfile change they brought — wave 11 rule 1).
   2. For each echo, read the new boss entry (`content/enemies/zone-a.enemies.json` `halcyon-bulwark`,
      `zone-b.enemies.json` `galvanic-maw`, `zone-d.enemies.json` `cinder-bastion`, `zone-f.enemies.json`
      `mantle-regent`) and rebuild the echo from a subset of its part tree: every part the echo keeps has the same
@@ -106,7 +112,7 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 ### R5-08.S6 — Zone H playtest and e2e on the branch
 
 - **Wave / lane / order:** wave 12, lane 1, after R5-08.S4c. It needs one e2e pass.
-- **Depends on:** R5-08.S4a … S4c on the branch.
+- **Depends on:** R5-08.S4a … S5b (wave 11) and S4c on the branch.
 - **Goal:** prove the remastered zone H: the bot clears it in god mode, a no-god run replays to the same hash,
   recovery holds, the runtime test and the e2e spec pass on the stand-in art, the zone's memory fits. If R5-08.S5b
   left the contract at `remastered: false`, switch it now (`test/integration/zones/zone-h.contract.ts`).
@@ -118,11 +124,12 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
   change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-h.test.ts test/playtest/zone-h-recovery.test.ts test/integration/zone-h-runtime.test.ts test/integration/content-zone-h.test.ts test/integration/standin-budget.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-h.test.ts test/playtest/zone-h-recovery.test.ts test/integration/zone-h-runtime test/integration/content-zone-h.test.ts test/integration/standin-budget.test.ts
+  # `test/integration/zone-h-runtime` is a substring filter: it runs `zone-h-runtime.test.ts` and, if R5-P.P5e kept it, `zone-h-runtime-edge.test.ts`
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (wave 11 rule 13; long: shell timeout 1800000, or background with a log):
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
-  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (wave 11 rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts test/golden/v2-port test/playtest/boss-rush.test.ts
+  # red only on its `….toEqual(PINNED.…)` lines (`expect(w.table)…` and the `languages` / `coopSingle` walks' `expect(table)…`); any other failing expect: stop and report (wave 11 rule 9):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
   nohup bash docs/v2-run/helpers/e2e-batch.sh zone-h.spec.ts > /home/sites/shmup-cup-run/R5-08.S6-e2e.log 2>&1 &   # then poll the log
   ```
@@ -178,17 +185,23 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-08.S7-msg.txt` first):
   `feat(R5-08): remaster zone H IRON CITADEL`; the body lists the sections, the fortress gate, the new types, IRON
   SOVEREIGN and the re-rigged echoes, and says "re-bless zone-h-god, zone-h-boss, zone-h-deaths, zone-h-arcade and
-  the demo zone-h: the zone was remastered (R5-08)"; no Co-Authored-By line.
-- **Acceptance:** pushed; the replay diff ⊆ zone H's scope; every other golden and demo verified unchanged; the
-  derived diff touches only zone H's stage ids; in the presentation fingerprint only the walk segments that fly zone
-  H or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); the
-  content-DB entries of zone H; its `atlas-groups.json` block (or `common`); `docs/images/bosses/echo-*.png` and the
-  zone's plates regenerated.
+  the demo zone-h: the zone was remastered (R5-08)" and "the fingerprints re-pinned: the zone's new sprite names
+  shift every later sprite id"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ zone H's scope (every changed replay's `header.stageId` is in
+  `--only`); every other golden and demo verified unchanged (no sim value outside the zone moved); the three
+  fingerprints re-pinned by the LAND: a new sprite name shifts every later sprite id (ids are the sorted names,
+  `wave-07.md`), so most walk segments of the presentation and shell fingerprints and every content-DB entry that
+  holds a sprite id move — that is the re-pin, not a bug, and never a finding against the zone's scope; every
+  fingerprint walk's own `expect` green; the commit body explains the re-pin; its `atlas-groups.json` block (or
+  `common`); `docs/images/bosses/echo-*.png` and the zone's plates regenerated.
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** as wave 11's S7 (a rebase conflict is real: stop and report; never merge a derived file by hand; if the
   script aborts on its scope, report it — never widen the scope).
 - **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with
-  `git log --oneline --grep 'feat(R5-08)' origin/master`) — the derived files match the scope; zone H's S6 Vitest
+  `git log --oneline --grep 'feat(R5-08)' origin/master`) — the replays and demos it changed match the scope (no
+  golden or demo outside it moved, so no sim value outside the zone changed); the fingerprint tables moved far
+  outside the zone — expected, not a finding (a new sprite name shifts every later sprite id); the commit body
+  explains that re-pin and lists the changed plates (zone H's own and the four `echo-*`); zone H's S6 Vitest
   commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e
   passes). Then the orchestrator removes the lane worktree and its branch:
   `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-h && git -C /home/sites/shmup-cup branch -D r5/zone-h`.
@@ -211,14 +224,17 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
   expectations only. Every expectation is derived from the new layout, never pasted from a run.
 - **Steps:** the orchestrator creates the worktree (rule 2:
   `git -C /home/sites/shmup-cup worktree add -b r5/bonus /home/sites/shmup-cup-run/wt/bonus origin/master`); then
-  `cd /home/sites/shmup-cup-run/wt/bonus && git branch --show-current` (it must print `r5/bonus`); edit; test; commit
-  on the branch (sources only); review on the branch; LAND (dry run first).
+  `cd /home/sites/shmup-cup-run/wt/bonus && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; it must print `r5/bonus`; the install is rule 2's); edit; test; commit on the branch
+  (sources only); **stop and report**. After `R5-10.T1.RV` is at zero, the orchestrator starts the LAND (a new agent
+  with this block, or this one resumed) — never run the LAND right after your own tests.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/bonus-stage-runtime.test.ts test/integration/release-audit.test.ts test/golden/golden-zone-b.test.ts test/golden/golden-zone-g.test.ts
   ```
-  then the LAND (each about 25 min: shell timeout 3600000, or background with a log):
+- **The LAND** (after `R5-10.T1.RV` is at zero; from `/home/sites/shmup-cup-run/wt/bonus`; each about 25 min: shell
+  timeout 3600000, or background with a log):
   ```bash
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only brine-grotto,glimmer-cache,bonus-vault,bonus-range --message /home/sites/shmup-cup-run/R5-10.T1-msg.txt --zone b --dry-run
   # read the dry run's log (/home/sites/shmup-cup-run/land-b-<date>.log); only when it is clean, the real LAND:
@@ -231,7 +247,8 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-10.T1-msg.txt` first):
   `feat(R5-10): lay out the bonus stages for v2`; the body lists the four stages' new layouts and says "re-bless
   brine-grotto-god, glimmer-cache-god, bonus-vault-god, bonus-range-god and bonus-range-digit: the bonus stages were
-  laid out for v2 (R5-10)"; no Co-Authored-By line.
+  laid out for v2 (R5-10)" and "the fingerprints re-pinned: the bonus stages' layouts moved (and a new sprite name
+  shifts every later sprite id)"; no Co-Authored-By line.
 - **Expected red until the LAND** (list them in the report; do not fix them): the five bonus goldens (with their
   outcome cases in `golden.test.ts`, `golden-zone-b.test.ts` and `golden-zone-g.test.ts`), the `PINNED` comparisons
   of the three fingerprints, `test/integration/atlas-groups.test.ts`.
@@ -260,23 +277,29 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
   - `scripts/assets/procedural/index.mjs` — **two lines** registering `escape.mjs`:
     `import * as escape from './escape.mjs';` with the other imports and `{ id: 'escape', generate: escape.generate }`
     in `PROCEDURAL_GENERATORS` (this lane holds the registry in this wave; no other lane edits it);
-  - `content/campaign/main.campaign.json` — the credits only: add `escape.mjs` to the "PLACEHOLDER ART GENERATORS"
-    section's lines (for example the last line `"weapons.mjs"` becomes `"escape.mjs  weapons.mjs"`), each line
-    within `MAX_CREDITS_LINE_LENGTH` characters (`packages/core/src/data/campaign.ts`); this lane holds the campaign
+  - `content/campaign/main.campaign.json` — the credits only: append `escape.mjs` to the generator credits line(s) of
+    the "PLACEHOLDER ART GENERATORS" section, wherever the list ends after `R4-P.P1` (wave 7) and `R5-01.S2`
+    (wave 10) rewrote it — read the section on `origin/master` first and add the name to one of its lines (in
+    alphabetical order) or as one new line; each line within `MAX_CREDITS_LINE_LENGTH` characters and the section
+    within `MAX_CREDITS_LINES` lines (both in `packages/core/src/data/campaign.ts`); this lane holds the campaign
     file in this wave;
   - `test/scripts/assets/procedural-escape.test.ts` (**new**) — sizes, frame counts, byte-identical runs.
 - **Steps:** the orchestrator creates the worktree (rule 2:
   `git -C /home/sites/shmup-cup worktree add -b r5/escape /home/sites/shmup-cup-run/wt/escape origin/master`); then
-  `cd /home/sites/shmup-cup-run/wt/escape && git branch --show-current` (it must print `r5/escape`); edit; test;
-  commit on the branch (sources only); review; LAND (dry run first).
+  `cd /home/sites/shmup-cup-run/wt/escape && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; it must print `r5/escape`; the install is rule 2's); edit; test; commit on the branch
+  (sources only); **stop and report**. After `R5-10.T2.RV` is at zero, the orchestrator starts the LAND (a new agent
+  with this block, or this one resumed) — never run the LAND right after your own tests.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   pnpm assets
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/data/campaign-escape.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/campaign-flow.test.ts test/scripts/assets/procedural-escape.test.ts test/integration/frame-literals-repo.test.ts test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/campaign-flow.test.ts test/scripts/assets/procedural-escape.test.ts test/scripts/assets/pipeline.test.ts test/integration/frame-literals-repo.test.ts test/integration/palette-cycle-scan.test.ts
+  # pipeline.test.ts scans every generator (escape.mjs too) for engine maths and for sprite names unique across generators
   ```
-  then the LAND (each about 25 min: shell timeout 3600000, or background with a log):
+- **The LAND** (after `R5-10.T2.RV` is at zero; from `/home/sites/shmup-cup-run/wt/escape`; each about 25 min: shell
+  timeout 3600000, or background with a log):
   ```bash
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-i --message /home/sites/shmup-cup-run/R5-10.T2-msg.txt --zone i --dry-run
   # read the dry run's log (/home/sites/shmup-cup-run/land-i-<date>.log); only when it is clean, the real LAND:
@@ -285,13 +308,16 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-10.T2-msg.txt` first):
   `feat(R5-10): give the escape sequence its v2 layers`; the body lists the new layers and `escape.mjs`, and says
   "no replay re-blessed: no golden plays the escape stage; the fingerprints, the atlas groups and the plates
-  regenerated (R5-10)"; no Co-Authored-By line.
+  regenerated (R5-10): the new escape sprite names shift every later sprite id and the credits name escape.mjs";
+  no Co-Authored-By line.
 - **Acceptance:** the escape plays to its end (`campaign-escape`, `campaign-flow` green); **no replay may differ**
   (no golden or demo plays the escape stage; `zone-i-escape` is the ARK's boss escape in zone I) — the LAND's
-  `--only zone-i` re-records zone I's scenarios byte-identical and verifies every other golden; the presentation
-  fingerprint moves only from `runA.escape` / `runB.escape` / `coopRun.escape` on (the escape, the ending, the
-  credits), the content-DB fingerprint only in the entries the change touches (`core.campaign`, `core.stages`,
-  `core.sprites`); two `pnpm assets` runs byte-identical; no frame literal in `escape.mjs`. After the push the
+  `--only zone-i` re-records zone I's scenarios byte-identical and verifies every other golden; the fingerprints
+  move and the LAND re-pins them (the new escape sprite names shift every later sprite id — ids are the sorted
+  names, `wave-07.md` —, and the credits name `escape.mjs`): that is the re-pin, not a bug; every fingerprint walk's
+  own `expect` green (`runA.escape` / `runB.escape` / `coopRun.escape` still reach the ending and the credits); the
+  commit body explains the re-pin; two `pnpm assets` runs byte-identical; no frame literal in `escape.mjs`. After the
+  push the
   orchestrator removes the lane worktree and its branch:
   `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/escape && git -C /home/sites/shmup-cup branch -D r5/escape`.
 - **Token:** LAND; the registry `scripts/assets/procedural/index.mjs` and `content/campaign/main.campaign.json`
@@ -320,7 +346,7 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 - **Tests (targeted):**
   ```bash
   SHMUP_ATLAS_GROUPS_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts && pnpm assets
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts test/integration/atlas-zone-sprites.test.ts test/integration/standin-budget.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts test/integration/atlas-zone-sprites.test.ts test/integration/standin-budget.test.ts test/integration/tv-engine-floor.test.ts   # tv-engine-floor: no API newer than Chromium 68 in packages/shell/src
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/memory
   nohup bash docs/v2-run/helpers/e2e-batch.sh atlas-residency.spec.ts atlas-context-loss.spec.ts campaign-run.spec.ts > /home/sites/shmup-cup-run/R5-10.T8-e2e.log 2>&1 &   # then poll the log
   ```
@@ -341,21 +367,51 @@ drops are not part of the exit: each lands when the owner's art for it exists (t
 - **Files (only these):** `content/stages/dimension.stage.json` (art fields), `scripts/assets/procedural/dimension.mjs`,
   `content/enemies/extras.enemies.json` (art fields only), `test/e2e/mode7.spec.ts` (the floor rows), and the
   dimension's procedural test file (`test/scripts/assets/procedural-*.test.ts` that holds `dimension.mjs`'s cases
-  after R4-P.P2's split — look it up with `git grep -ln dimension test/scripts/assets`).
+  after R4-P.P2's split — look it up with `git grep -ln dimension test/scripts/assets`); the four plates of the
+  sprites `dimension.mjs` draws — `docs/images/enemies/dim-pylon.png` and `docs/images/bosses/grasping-bloom.png`,
+  `iron-talon.png`, `shadow-strider.png` (the boss portraits are assembled from their part trees) — regenerated by
+  `pnpm docs:images`, never by hand (DOCS-IMAGES).
 - **Tests (targeted):**
   ```bash
   pnpm assets
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/dimension-runtime.test.ts test/integration/palette-cycle-scan.test.ts test/integration/frame-literals-repo.test.ts
+  # $(git grep …) adds the dimension's procedural test file (R4-P.P2's split) and pipeline.test.ts:
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/dimension-runtime.test.ts test/integration/palette-cycle-scan.test.ts test/integration/frame-literals-repo.test.ts $(git grep -ln dimension test/scripts/assets)
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden   # verified unchanged: the dimension has no golden (long: shell timeout 1800000)
+  pnpm docs:images && git status --short docs/images   # only the four dimension plates above (or none)
   nohup bash docs/v2-run/helpers/e2e-batch.sh mode7.spec.ts > /home/sites/shmup-cup-run/R5-10.T3-e2e.log 2>&1 &   # then poll the log
   ```
-  If the content-DB fingerprint moves (new sprite names), re-pin under the land lock with
-  `SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts`
-  and `… --project shell packages/shell/test/frame-fingerprint.test.ts`.
+- **Commit and push:** one commit with explicit paths (sources, the e2e rows, and the plates `git status` showed);
+  the message says which plates moved and, if new sprite names came in, "the fingerprints re-pinned: new sprite
+  names shift every later sprite id"; no Co-Authored-By line. Push under the land lock (README rule 6): write this
+  script to `/home/sites/shmup-cup-run/R5-10.T3-push.sh`, then run
+  `flock -w 5400 /tmp/shmup-cup-land.lock bash /home/sites/shmup-cup-run/R5-10.T3-push.sh` from your worktree
+  (several minutes: a shell timeout of 3600000, or the background with a log):
+  ```bash
+  set -e
+  git fetch origin && git rebase origin/master
+  pnpm install --frozen-lockfile --prefer-offline && pnpm assets
+  pnpm docs:images
+  SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts
+  SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts test/integration/dimension-runtime.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  pnpm docs:images --check
+  git add docs/images test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
+  git commit --amend --no-edit
+  git push origin HEAD:master
+  ```
+  The update runs rewrite nothing when no sprite name changed. If the push is rejected, run the script again (at
+  most 5 times, then report).
 - **Acceptance:** the dimension runtime green; Mode-7 rows re-measured; no golden moves (the dimension has none —
-  `test/golden` verified unchanged).
-- **Token:** FINGERPRINTS (only if names change), at push time.
+  `test/golden` verified unchanged); `pnpm docs:images --check` clean after the push, with only the four dimension
+  plates changed (or none).
+- **Token:** DOCS-IMAGES (those four plates) and FINGERPRINTS (only if names change), both at push time under the
+  land lock.
 - **Traps:** Mode-7 `horizon` / `bottom` are frame rows (`PLAYFIELD_H`-anchored; the port set them); never edit
-  `extras.enemies.json`' sim fields; e2e pixels through `frame-pixels.ts`.
+  `extras.enemies.json`' sim fields; e2e pixels through `frame-pixels.ts`; the dimension bosses' shared parts
+  `bosses/core`, `bosses/orb` and `bosses/captain-shell` are drawn by other generators and used by other bosses —
+  never redraw them here (they would move other plates); a plate outside the four in `git status --short
+  docs/images`: stop and report.
 - **Docs needs:** `docs/dev/visual-and-mechanic-extras.md` and `docs/client/visual-and-mechanic-extras.md`.
 
 ### R5-10.T6 — The dev ranges keep working on the new art
@@ -400,11 +456,16 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
   pnpm assets
   pnpm --filter @shmup/tizen build && pnpm --filter @shmup/webos build
   # Z = your zone's letter (a … i); zone B is shown — change "Z=b" on each of the next two lines:
-  Z=b; VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/provenance.test.ts test/scripts/art-origins.test.ts test/integration/stage-terrain.test.ts test/integration/palette-cycle-scan.test.ts test/integration/standin-budget.test.ts "test/integration/content-zone-$Z.test.ts"
+  Z=b; VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/provenance.test.ts test/scripts/art-origins.test.ts test/integration/stage-terrain.test.ts test/integration/palette-cycle-scan.test.ts test/integration/standin-budget.test.ts test/integration/art-prompt-names.test.ts "test/integration/content-zone-$Z.test.ts"
   Z=b; nohup bash docs/v2-run/helpers/e2e-batch.sh "zone-$Z.spec.ts" > "/home/sites/shmup-cup-run/R5-0n.S3-zone-$Z-e2e.log" 2>&1 &   # then poll the log
+  pnpm docs:images && git status --short docs/images   # only the zone's plates (and its echo plate, if the block names one)
   ```
+  `art-prompt-names.test.ts` scans the new `*.recipe.json` / `*.art.json` under `assets/source/` for names
+  `shmup_feat.md` §26 forbids.
 - **Acceptance:** every shipped record complete (model, prompt, seed, source hash, `reviewed`); `art-origins --check`
-  0 failures; the cycle scan clean (cycle art exactly on the zone's ramp, everything else ≥ 3/255 away); the terrain
+  0 failures; the §26 name scan green; `pnpm docs:images --check` clean after the push, with only the zone's plates
+  (and its echo plate) changed; the cycle scan clean (cycle art exactly on the zone's ramp, everything else
+  ≥ 3/255 away); the terrain
   checks green; the zone's pages within its R3-04 budget (`standin-budget.test.ts`) and `dist/` within `DIST_BUDGET`
   (both TV builds' bundle checks) — never raise either; the zone's e2e rows re-pointed; the goldens and fingerprints
   **unchanged** — unless a sprite's `anim.frames` count changed: then the drop is a small LAND, with the reason in its
@@ -423,10 +484,13 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
 
 - **Depends on:** the template's owner gates; R5-01.S7. **Sprites:** the pixel maps
   `assets/source/sprites/enemies/{darter,drifter,gyre,hatch,hopper,turret,vane}.sprite.json` (the PNG overrides go
-  beside them), `assets/source/sprites/bosses/{bulwark-emitter,bulwark-hull,bulwark-plate,bulwark-wing-bottom,bulwark-wing-top,core}.sprite.json`,
+  beside them), `assets/source/sprites/bosses/{bulwark-emitter,bulwark-hull,bulwark-plate,bulwark-wing-bottom,bulwark-wing-top}.sprite.json`,
   the backdrops of `bg/azure-verge` (`backdrops.mjs`), the stand-ins of `azure.mjs` and the tileset `terrain-azure`.
-  **Checks:** the template's, with `zone-a` (`content-zone-a.test.ts`, `zone-a.spec.ts`). Zone H's `echo-bulwark`
-  uses the `bulwark-*` names: its plate moves too.
+  **Not** `bosses/core`: it is shared by ten bosses (`halcyon-bulwark`, `echo-bulwark`, `captain-circler`,
+  `raid-leviathan`, `raid-heart`, `twin-ember`, `twin-frost`, `grasping-bloom`, `shadow-strider`, `test-boss`), so
+  it is not zone A's to redraw — this drop leaves it on its interim art. **Checks:** the template's, with `zone-a`
+  (`content-zone-a.test.ts`, `zone-a.spec.ts`). Zone H's `echo-bulwark` uses the `bulwark-*` names: its plate moves
+  too.
 
 ### R5-02.S3 — Zone B real art
 
@@ -487,8 +551,9 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
 
 - **Depends on:** R5-08.S7, R5-10.T1, T2, T3, T6, T8 (and any S3 drop that landed).
 - **Goal:** R5-08's As built (sections, the fortress gate, IRON SOVEREIGN, the re-rigged echoes, the re-bless
-  reason) and Manual list; §17 R5-08 → `done (owner parts pending)`; R5-10 stays `in progress` with a short note
-  (part 1 done); the S3 drops' As built lines in their zone sections; CHANGELOG; delete the helpers
+  reason) and Manual list; §17 R5-08 → `done (owner parts pending)`; §17 R5-10 → `in progress` (part 1 done; it is
+  `not started` before you — wave 13's docs agent sets it `done (owner parts pending)`); the S3 drops' As built
+  lines in their zone sections; CHANGELOG; delete the helpers
   `docs/v2-run/helpers/r5r6/zonerefs.py` and `docs/v2-run/helpers/r5r6/zonerefs.txt` (every zone lane is done after
   R5-08.S7) and their rows in `docs/v2-run/helpers/README.md` (the main table's two `r5r6/zonerefs.*` rows; in the
   "Where they came from" table the `r5r6/…` row keeps only `r5r6/carrier.py`); push; then report: the orchestrator
@@ -507,12 +572,19 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
   section), `docs/dev/campaign-and-bonus-stages.md` (the bonus stages), `docs/dev/visual-and-mechanic-extras.md` and
   `docs/client/visual-and-mechanic-extras.md` (the escape, the dimension), `docs/dev/asset-pipeline.md` (the
   linked-stage groups of T8), `docs/dev/rendering-and-shell.md` (T8's residency rule), `docs/dev/art-provenance.md`
-  (the models of the S3 drops, if any), `docs/client/outstanding-work.md` (zone H's owner parts).
-- **Tests:** none.
+  (the models of the S3 drops, if any), `docs/client/outstanding-work.md` (zone H's owner parts),
+  `docs/dev/debug-and-replays.md` (the golden table's rows for zone H's four scenarios and the five bonus goldens:
+  the new outcomes and the re-bless reasons), `content/stages/README.md` and `content/enemies/README.md` (zone H's
+  paragraphs), `content/paths/README.md` (the new `zone-h.paths.json`).
+- **Depends on:** R5-08.S7, R5-10.T1, T2, T3, T8 (and T6's report). **Token:** none.
+- **Tests:** `pnpm content:check` (the content README samples are validated).
+- **Acceptance:** the README samples still validate; no stale v1 number in the touched sections.
 
 ### W12.DOCS-RV — Review of the docs item
 
-- The loop to zero, as in every wave.
+- **Read:** the two docs pushes. **Must hold:** every statement matches the LAND commits, the pushes of T3 and T8
+  and the reports; no builder-only file touched; §17 cells only for R5-08 (`done (owner parts pending)`) and R5-10
+  (`in progress`). The loop to zero, as always.
 
 ## Exit check
 
@@ -520,7 +592,7 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
 2. `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts test/integration/atlas-groups.test.ts test/integration/atlas-zone-sprites.test.ts test/integration/campaign-flow.test.ts test/integration/bonus-stage-runtime.test.ts test/integration/dimension-runtime.test.ts test/playtest/zone-h.test.ts`
    and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/memory`;
    then the cross-zone line (long: shell timeout 3600000):
-   `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts test/integration/bonus-stage-runtime.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts`.
+   `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts test/integration/bonus-stage-runtime.test.ts test/golden/v2-port test/playtest/boss-rush.test.ts`.
 3. `pnpm content:check`, `pnpm docs:images --check`, `node scripts/art-origins.mjs --check`.
 4. The docs review at zero; §17 set by `W12.DOCS-A`; the board synced by the orchestrator after that push.
 5. A CI look at most. **Deferred to wave 15:** the whole `pnpm test`, `pnpm test:e2e`, `pnpm bench`.
