@@ -4351,8 +4351,8 @@ const INPUT_TEST_LAYOUT = Object.freeze({
   deviceDx: uiPx(20),
   /** The device line's offset from the panel's top (26). */
   deviceDy: uiPx(26),
-  /** From the `DEVICE` label to the device's name: ten glyph cells (60). */
-  deviceNameDx: 10 * GLYPH_W,
+  /** From the `DEVICE` label to the device's name: ten glyph cells (60) at least. */
+  deviceNameCells: 10,
   /** The cross's centre, from the panel's left edge (70). */
   crossDx: uiPx(70),
   /** The cross's centre, from the panel's top (86). */
@@ -4420,6 +4420,12 @@ export class InputTestScene extends SceneBase {
   lit = 0;
   /** Per action ({@link REBINDABLE_ACTIONS} game order): ticks left of its press flash. */
   private readonly flash = new Uint8Array(INPUT_TEST_ACTIONS.length);
+  /**
+   * From the `DEVICE` label to the device's name: ten glyph cells, or the label and a cell when the
+   * session's language makes it longer (es `DISPOSITIVO`).
+   */
+  private readonly deviceNameDx =
+    cellsAfter(this.flow.text.inputTestDevice, INPUT_TEST_LAYOUT.deviceNameCells) * GLYPH_W;
   /** The device shown (a `PlayerInput.device` kind). */
   private device = 'none';
 
@@ -4519,7 +4525,7 @@ export class InputTestScene extends SceneBase {
     list.text(base, FRAME_CX, p.y + PANEL_TITLE_DY, UI_COLORS.title, TextAlign.Center);
     const L = INPUT_TEST_LAYOUT;
     list.text(base + 1, p.x + L.deviceDx, p.y + L.deviceDy, UI_COLORS.title);
-    list.text(base + 2, p.x + L.deviceDx + L.deviceNameDx, p.y + L.deviceDy, UI_COLORS.focus);
+    list.text(base + 2, p.x + L.deviceDx + this.deviceNameDx, p.y + L.deviceDy, UI_COLORS.focus);
     // The direction cross (left) and the buttons (right).
     const cx = p.x + L.crossDx;
     const cy = p.y + L.crossDy;
@@ -7592,6 +7598,19 @@ class PracticeChoice {
   loadout: StartingLoadout = 'default';
 }
 
+/**
+ * Glyph cells from a label's x to what follows it on its row: the layout's `cells`, or the label
+ * and one cell when the session's language makes it longer (R2-01's layout check: es / ja). For
+ * values built when a scene is created, never per frame.
+ *
+ * @param label - The label, in the session's language.
+ * @param cells - The layout's distance in glyph cells.
+ * @returns The distance in glyph cells.
+ */
+function cellsAfter(label: string, cells: number): number {
+  return label.length + 1 > cells ? label.length + 1 : cells;
+}
+
 /** The name entry's panel: left, top, width, height (on the frame's centre). */
 const NAME_ENTRY_PANEL = Object.freeze({
   x: FRAME_CX - (18 * GLYPH_W + uiPx(4)),
@@ -7623,6 +7642,8 @@ const NAME_ENTRY_LAYOUT = Object.freeze({
   timeDy: uiPx(148),
   /** `TIME` and its seconds: 20 px either side of the centre. */
   timeDx: uiPx(20),
+  /** The least gap between `TIME` and its seconds (4). */
+  timeGap: uiPx(4),
 });
 
 /**
@@ -7645,6 +7666,18 @@ export class NameEntryScene extends SceneBase {
   readonly id = 'nameEntry' as const;
   /** The letter picker. */
   readonly entry: NameEntry = createNameEntry();
+  /**
+   * `TIME`'s x: 20 px left of the centre, or further left when the session's language makes the
+   * label longer (es `TIEMPO`), so it ends the gap before the two-digit seconds.
+   */
+  private readonly timeX = Math.min(
+    FRAME_CX - NAME_ENTRY_LAYOUT.timeDx,
+    FRAME_CX +
+      NAME_ENTRY_LAYOUT.timeDx -
+      2 * GLYPH_W -
+      NAME_ENTRY_LAYOUT.timeGap -
+      this.flow.text.time.length * GLYPH_W,
+  );
   /** Index of the pending row being named. */
   current = 0;
   /** Ticks since the current name was started. */
@@ -7751,7 +7784,7 @@ export class NameEntryScene extends SceneBase {
     const blinkOff = ((this.ticks >> 4) & 1) === 1;
     drawNameEntry(list, this.entry, base + 8, FRAME_CX, p.y + L.lettersDy, blinkOff, t);
     list.text(base + 6, FRAME_CX, p.y + L.hintDy, UI_COLORS.disabled, TextAlign.Center);
-    list.text(base + 7, FRAME_CX - L.timeDx, p.y + L.timeDy, UI_COLORS.text);
+    list.text(base + 7, this.timeX, p.y + L.timeDy, UI_COLORS.text);
     const secondsX = FRAME_CX + L.timeDx;
     list.number(this.seconds, secondsX, p.y + L.timeDy, 2, UI_COLORS.text, TextAlign.Right);
   }
@@ -8435,13 +8468,16 @@ const PRACTICE_PANEL = Object.freeze({
   h: uiPx(116),
 });
 
+/** The practice select's value column: 76 px right of its labels (at least — the scene's layout). */
+const PRACTICE_VALUE_DX = uiPx(76);
+
 /** Where the practice select's menu is drawn (labels left, values from `valueX`). */
 const PRACTICE_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX - uiPx(104),
   y: PRACTICE_PANEL.y + uiPx(22),
   lineHeight: LINE_H + uiPx(4),
   cursorX: FRAME_CX - uiPx(114),
-  valueX: FRAME_CX - uiPx(28),
+  valueX: FRAME_CX - uiPx(104) + PRACTICE_VALUE_DX,
 });
 
 /** From the practice, sound test and EXTRA panels' bottom edge up to their hint line (16). */
@@ -8522,7 +8558,18 @@ export class PracticeScene extends SceneBase {
       { label: t.practiceLoadout, choice: this.loadout },
       t.start,
     ]);
+    // The values 76 px right of the labels, or after the longest label of the session's language
+    // and two glyph cells (es `PUNTO DE CONTROL`).
+    let longest = 0;
+    for (const item of this.menu.items)
+      if (item.label.length > longest) longest = item.label.length;
+    const dx = (longest + 2) * GLYPH_W;
+    const valueX = PRACTICE_MENU_LAYOUT.x + (dx > PRACTICE_VALUE_DX ? dx : PRACTICE_VALUE_DX);
+    this.layout = Object.freeze({ ...PRACTICE_MENU_LAYOUT, valueX });
   }
+
+  /** Where the menu is drawn: {@link PRACTICE_MENU_LAYOUT} with the value column it needs. */
+  private readonly layout: MenuLayout;
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
@@ -8616,7 +8663,7 @@ export class PracticeScene extends SceneBase {
     list.setString(base + 1, t.practiceHint);
     list.setString(base + 2, '');
     list.text(base, FRAME_CX, p.y + PANEL_TITLE_DY, UI_COLORS.title, TextAlign.Center);
-    drawMenu(list, this.menu, base + 3, PRACTICE_MENU_LAYOUT, t);
+    drawMenu(list, this.menu, base + 3, this.layout, t);
     const hintY = p.y + p.h - MENU_PANEL_HINT_DY;
     list.text(base + 1, FRAME_CX, hintY, UI_COLORS.disabled, TextAlign.Center);
   }

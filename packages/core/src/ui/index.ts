@@ -2075,7 +2075,10 @@ const HUD_SCORE_DX = 2 * GLYPH_W + HUD_LABEL_GAP;
 /** Width of the hi-score display: `HI`, the gap and the {@link HUD_DIGITS} digits (64). */
 const HUD_HI_W = HUD_SCORE_DX + HUD_DIGITS * GLYPH_W;
 
-/** From the caravan clock's `TIME` label to its seconds: four glyph cells (24 — M3-01). */
+/**
+ * From the caravan clock's `TIME` label to its seconds: four glyph cells (24 — M3-01); a longer
+ * label of the session's language (es `TIEMPO`) pushes them to its end and the gap (R2-01).
+ */
 const HUD_CLOCK_DX = 4 * GLYPH_W;
 
 /**
@@ -2578,9 +2581,10 @@ export function buildHud(
     const seconds = hudClockSeconds(world);
     list.setString(S.time, text.time);
     list.text(S.time, L.p2X, L.topY, HUD_COLORS.p2);
+    const label = text.time.length * GLYPH_W;
     list.number(
       seconds,
-      L.p2X + HUD_CLOCK_DX,
+      L.p2X + (label > HUD_CLOCK_DX ? label + HUD_LABEL_GAP : HUD_CLOCK_DX),
       L.topY,
       0,
       seconds <= 10 ? HUD_COLORS.bossLabel : HUD_COLORS.number,
