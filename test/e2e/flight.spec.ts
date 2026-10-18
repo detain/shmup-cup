@@ -43,22 +43,50 @@ function waitFrames(page: Page, frames: number): Promise<void> {
   );
 }
 
+/** Where the KESTREL's hull colour is on screen, in frame pixels ({@link shipCentre}). */
+interface HullView {
+  /** The centroid's x. */
+  readonly x: number;
+  /** The centroid's y. */
+  readonly y: number;
+  /** The leftmost hull column: the tail. */
+  readonly left: number;
+  /** The topmost hull row. */
+  readonly top: number;
+  /** The bottom hull row. */
+  readonly bottom: number;
+  /** Matching screenshot pixels. */
+  readonly pixels: number;
+}
+
 /**
- * Screenshots the canvas and returns the centre (in frame pixels) of the pixels in the playfield
- * rows that have the KESTREL's hull colour.
+ * Screenshots the canvas and finds the pixels in the playfield rows that have the KESTREL's hull
+ * colour: their centre, their leftmost column and their top and bottom rows (in frame pixels).
+ *
+ * @remarks
+ * The centroid moves by up to ~1.3 px while the ship stands still: the autofire's muzzle sparks
+ * (the `PlayerShot` cue's `muzzle` preset, on the Fx layer above the ship) spawn 9 px ahead of
+ * the ship's centre, which since R2-01's ×1.5 art is on the hull's nose (the content's `dx` is
+ * still v1's until R2-02 ports it). They fly forward and never reach the tail, nor the hull's top
+ * and bottom rows (its fins, at the back): compare those for a position.
  *
  * @param page - The page.
- * @returns The centroid and the matching pixel count.
+ * @param rows - The frame rows to scan: the first, and the end (excluded). Default: the playfield,
+ *   `PLAYFIELD_Y` … `HUD_BOTTOM_Y − 1`.
+ * @returns The hull's position and the matching pixel count.
  */
 async function shipCentre(
   page: Page,
   rows: readonly [number, number] = [PLAYFIELD_Y, HUD_BOTTOM_Y],
-): Promise<{ x: number; y: number; pixels: number }> {
+): Promise<HullView> {
   const png = await page.locator('#game').screenshot();
   const { width, height, data } = decodePng(new Uint8Array(png));
   let sumX = 0;
   let sumY = 0;
   let pixels = 0;
+  let left = width;
+  let top = height;
+  let bottom = -1;
   // Playfield = frame rows PLAYFIELD_Y … HUD_BOTTOM_Y − 1 (the HUD bars are outside it); `rows`
   // can widen the scan.
   for (let y = rows[0] * SCALE; y < Math.min(height, rows[1] * SCALE); y++) {
@@ -72,10 +100,20 @@ async function shipCentre(
         sumX += x;
         sumY += y;
         pixels++;
+        if (x < left) left = x;
+        if (y < top) top = y;
+        bottom = y;
       }
     }
   }
-  return { x: sumX / pixels / SCALE, y: sumY / pixels / SCALE, pixels };
+  return {
+    x: sumX / pixels / SCALE,
+    y: sumY / pixels / SCALE,
+    left: left / SCALE,
+    top: top / SCALE,
+    bottom: bottom / SCALE,
+    pixels,
+  };
 }
 
 /**
@@ -120,25 +158,30 @@ test.describe('free flight (web build)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
-    await waitFrames(page, 60); // the 40-tick fly-in is over
+    // Exact ticks, not rAF frames (conventions: a capture compared with another a known time
+    // later), and the hull's tail edges, not its centroid (`shipCentre`: the muzzle sparks).
+    await freezeSim(page);
+    await stepTo(page, 60); // the 40-tick fly-in is over
 
     const start = await shipCentre(page);
     expect(start.pixels).toBeGreaterThan(20);
-    await waitFrames(page, 20);
+    await stepTo(page, 80);
     const idle = await shipCentre(page);
-    expect(Math.abs(idle.x - start.x)).toBeLessThan(0.5);
-    expect(Math.abs(idle.y - start.y)).toBeLessThan(0.5);
+    expect(idle.left).toBe(start.left);
+    expect(idle.top).toBe(start.top);
+    expect(idle.bottom).toBe(start.bottom);
 
-    // 1.5 px/tick at speed level 0: 30 frames ≈ 45 px.
-    await hold(page, 'ArrowRight', 30);
+    // 1.5 px/tick at speed level 0 (the content's, unported until R2-02): 30 ticks = 45 px.
+    await holdTicks(page, 'ArrowRight', 30);
     const right = await shipCentre(page);
-    expect(right.x - idle.x).toBeGreaterThan(20);
-    expect(Math.abs(right.y - idle.y)).toBeLessThan(2);
+    expect(right.left - idle.left).toBeGreaterThan(20);
+    expect(right.top).toBe(idle.top);
 
-    await hold(page, 'ArrowUp', 20);
+    // 20 ticks = 30 px up. The top row: the banking-up frame redraws only the lower half.
+    await holdTicks(page, 'ArrowUp', 20);
     const up = await shipCentre(page);
-    expect(up.y - right.y).toBeLessThan(-12);
-    expect(Math.abs(up.x - right.x)).toBeLessThan(2);
+    expect(up.top - right.top).toBeLessThan(-12);
+    expect(Math.abs(up.left - right.left)).toBeLessThan(2);
 
     expect(errors).toEqual([]);
   });

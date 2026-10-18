@@ -135,6 +135,34 @@ async function remoteTap(page: Page, keyCode: number): Promise<void> {
 }
 
 /**
+ * Dispatches several remote keys by key code in one go — each down then up, with no frame in
+ * between — then waits 3 frames.
+ *
+ * @remarks
+ * For the TV unlock sequence, which must fit in `DEBUG_UNLOCK_WINDOW_MS` (3 s) of host time: a
+ * person's keydowns arrive at event time whatever the frame rate, but {@link remoteTap}'s frame
+ * waits made four keys take 18 frames, past 3 s on a runner drawing under 6 a second (a CI
+ * flake). The debug tools read the sequence from the keydown events themselves, and the keyboard
+ * adapter latches a key released before the next tick, so the game still sees the Pause.
+ *
+ * @param page - The page.
+ * @param keyCodes - The legacy key codes, in order.
+ * @returns Resolves 3 frames after the last key-up.
+ */
+async function remoteSequence(page: Page, keyCodes: readonly number[]): Promise<void> {
+  await page.evaluate((codes) => {
+    for (const code of codes) {
+      for (const type of ['keydown', 'keyup']) {
+        const event = new KeyboardEvent(type, { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'keyCode', { get: () => code });
+        window.dispatchEvent(event);
+      }
+    }
+  }, keyCodes);
+  await waitFrames(page, 3);
+}
+
+/**
  * Boots a build, collects its errors and starts zone A (OK past PRESS OK, OK on START).
  *
  * @param page - The page.
@@ -238,7 +266,7 @@ test.describe('debug tools (M1-19)', () => {
     // Locked: 4 does nothing.
     await remoteTap(page, 52);
     expect((await view(page)).flags.frameAdvance).toBe(false);
-    for (const keyCode of [10252, 427, 427, 427]) await remoteTap(page, keyCode);
+    await remoteSequence(page, [10252, 427, 427, 427]); // Pause, Ch+ ×3: the unlock
     await remoteTap(page, 52); // 4 = frame advance
     const frozen = await view(page);
     expect(frozen.flags.frameAdvance).toBe(true);

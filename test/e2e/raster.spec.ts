@@ -234,8 +234,9 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
     expect(state.mask & FAR_BIT).toBe(0);
     expect(state.drawCalls).toBeGreaterThan(0);
     expect(state.drawCalls).toBeLessThanOrEqual(DRAW_CALL_BUDGET);
-    // The same tick with the effects off: the sea (rows 120 … 159) and the floor (160 … 207)
-    // change, the sky above them does not.
+    // The same tick with the effects off: the sea (playfield rows 112 … 151 — frame rows
+    // 124 … 163 at 640×360, 120 … 159 at 384×216) and the floor (playfield rows 152 … 199 —
+    // frame rows 164 … 211; 160 … 207 at v1) change, the sky above them does not.
     await setEffects(page, false);
     await stepTo(page, tick);
     await page.evaluate(
