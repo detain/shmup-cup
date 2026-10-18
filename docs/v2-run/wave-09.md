@@ -503,26 +503,48 @@ by the quoted code or test title before you edit it.
     `zones-de-runtime.test.ts`, `zones-de-runtime-edge.test.ts`, `zones-de-direct.test.ts`,
     `zones-fg-runtime.test.ts`, `zones-fg-runtime-edge.test.ts`, `zones-fg-direct.test.ts`,
     `zones-hi-runtime-edge.test.ts`;
-  - **new** (about 16): `test/integration/zone-{b,c,d,e,f,g,h,i}-runtime.test.ts` and
-    `test/integration/zone-{b,c,d,e,f,g}-direct.test.ts` (an `-edge` file's cases join the zone's `-runtime` file,
-    or stay a separate `zone-<x>-runtime-edge.test.ts` when the file is long — keep whichever keeps the cases
-    readable); shared fixtures go to `test/integration/zones/helpers.ts` (R5-P.P2a created it; add, never rewrite).
+  - **new** (14): every zone B … I gets `test/integration/zone-<x>-runtime.test.ts`
+    (`zone-{b,c,d,e,f,g,h,i}-runtime.test.ts`), and zones B … G get `test/integration/zone-{b,c,d,e,f,g}-direct.test.ts`.
+    An `-edge` file's cases join the zone's `-runtime` file, and so do H's and I's cases from
+    `zones-hi-runtime-edge.test.ts` (there is no `zones-hi-runtime.test.ts`). Create **no**
+    `zone-<x>-runtime-edge.test.ts`: waves 11, 12 and 14 name the `-runtime` file by exact path. Shared fixtures go
+    to `test/integration/zones/helpers.ts` (R5-P.P2a created it; add, never rewrite).
+  - **What changes in a case when it is split (nothing else does):**
+    - a case that loops over both zones of its pair — the `for (const [letter, stageId] of [['d', 'zone-d'],
+      ['e', 'zone-e']] …)` loops of the edge files, the Direct files' `const ZONES = [ … ]`, the `it.each([['zone-f',
+      …], ['zone-g', …]])` of `zones-fg-runtime-edge.test.ts` — keeps only its own zone's entry in each zone file;
+    - each edge file's case 'checks four checkpoints per zone…' asserts `expect(starts).toHaveLength(8)` (two zones ×
+      four checkpoints); in each zone file it becomes `toHaveLength(4)`. Zone D's file keeps the title 'checks four
+      checkpoints per zone, two of zone D in the caves' and its caves count (`toHaveLength(2)`); zone E's file gets
+      the case titled 'checks four checkpoints per zone' with only `expect(starts).toHaveLength(4)`.
 - **Tests (targeted):** list the titles before (on `origin/master`: the 9 `zones-*` files) and after (the new
-  `zone-*` files), compare, then run the new files. `test/integration/zones/` holds no test files (helpers only).
+  `zone-*` files), compare, then run the new files. The filters `test/integration/zones-` / `test/integration/zone-`
+  never match `test/integration/zones/` (helpers, contracts and `contract.test.ts`, R5-P.P6).
   ```bash
   mkdir -p /home/sites/shmup-cup-run
   VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/integration/zones- | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P5e-before.txt   # before
   VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/integration/zone- | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P5e-after.txt    # after
-  diff /home/sites/shmup-cup-run/R5-P.P5e-before.txt /home/sites/shmup-cup-run/R5-P.P5e-after.txt   # no output
+  diff /home/sites/shmup-cup-run/R5-P.P5e-before.txt /home/sites/shmup-cup-run/R5-P.P5e-after.txt   # only the added lines listed below
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/zone-
   pnpm typecheck:root
   ```
   Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (the filters are
   substrings, never globs; an unquoted glob is expanded by bash before Vitest sees it).
-- **Acceptance:** the same test count and titles; all green.
+  The only differences allowed, each listed in the report — all of them **added** lines of titles that already exist
+  (`vitest list` prints an `it.each` title as its template, once per file, not once per case — checked on `59eb382`;
+  a skipped case is not listed, so the gated ones there appear only after R2-02's un-gating):
+  - the Direct files' `it.each` title 'the MANTA clears $stage, …' — **3 more** (3 pair files → 6 zone files);
+  - the edge files' `it.each` title 'practice start in zone %s at checkpoint %i …' — **3 more** (D/E, F/G, H/I);
+  - `zones-fg-runtime-edge.test.ts`' `it.each` title 'skips %s to its boss: …' — **1 more** (F and G);
+  - 'checks four checkpoints per zone' — **3 more** (F and G, H and I, and zone E's new copy; zone D keeps its
+    '…, two of zone D in the caves' title once).
+
+  Any missing title, changed title or other added title is a mistake: fix it before you commit.
+- **Acceptance:** the same titles before and after, except the differences listed under Tests (in the report); all
+  green.
 - **Token:** none.
-- **Traps:** copy each test verbatim; R2-02's un-gating (wave 05) already removed the `port-pending` wrappers — if
-  one is left, stop and report.
+- **Traps:** copy each test verbatim, apart from the two changes under Files; R2-02's un-gating (wave 05) already
+  removed the `port-pending` wrappers — if one is left, stop and report.
 - **Docs needs:** `docs/dev/repo-layout.md`, `test/README.md`.
 
 ### R5-P.D-A — Zone design: A, AZURE VERGE
@@ -736,7 +758,8 @@ by the quoted code or test title before you edit it.
 ### R5-P.prep1.RV — Reviews of the R5 prep subtasks of this wave
 
 - One review per subtask as it lands (`R5-P.P4.RV1`, `R5-P.P3.RV1`, …), each a new agent.
-- **Must hold:** splits keep the same test count and titles (compare the `vitest list` files in `RUN_DIR`); P4 moves no
+- **Must hold:** splits keep the same test titles (compare the `vitest list` files in `RUN_DIR`), except the
+  differences that P3's step 1 and P5e's Tests allow, each listed in the subtask's report; P4 moves no
   sim value (goldens of B, C, E, F, G, I unchanged); P3's `--only` proof and verification proof are in its report;
   P10's update mode is idempotent and refuses under `CI`; `land-zone.sh` never pushes the branch, never `git add -A`,
   and aborts on an out-of-scope replay change.
