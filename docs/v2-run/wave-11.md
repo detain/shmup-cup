@@ -1,6 +1,9 @@
 # Wave 11 — R5 zones B, C, D, E, F, G, I ∥ zone H's first half
 
 > Schedule: `plan_resolution.md` §18 · how to use: `docs/v2-run/README.md` · decisions: `docs/v2-run/decisions.md`
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R5-02 (B), R5-03 (C), R5-04 (D), R5-05 (E), R5-06 (F), R5-07 (G), R5-09 (I), and the first half of
 R5-08 (H). · **Gate to start:** wave 10's exit — R5-P.P7, R5-P.P12 and R5-P.P5d on `origin/master`, every zone's
@@ -23,7 +26,8 @@ S4a … S5b on its branch; every review at zero findings; the wave's docs item d
 
 - **Lane order matters:** B, D and F come first (lanes 1–3) because R5-08.S4c (wave 12) needs their LANDs.
 - **Reviews:** two review slots: each zone's `R5-0n.RV` loop on its branch, then the post-LAND check of each LAND.
-- **e2e passes:** two for the whole wave. Each zone's S6 takes one for its zone spec; hand them out in lane order.
+- **e2e passes:** two for the whole wave. Each zone's S6 takes one for its zone spec; so does each post-LAND check's
+  e2e run, and an RV's re-run of the spec when the branch changed after S6. Hand them out in lane order, S6 first.
 - **Docs item:** `W11.DOCS-A` … `W11.DOCS-E` after the seven LANDs (they may overlap wave 12's first builders).
 - **Fillers:** none (wave 12's lanes need the LANDs of this wave).
 
@@ -31,17 +35,22 @@ S4a … S5b on its branch; every review at zero findings; the wave's docs item d
 
 These apply to every zone lane, on top of the README's common rules. A zone agent gets them with its block.
 
-1. **Branch work.** The orchestrator creates each zone's worktree once:
-   `git worktree add -b r5/zone-<x> RUN_DIR/wt/zone-<x> origin/master`. Every agent of the lane works in that
-   worktree, one after another (never two at once). Start each subtask with `git fetch origin && git rebase
-   origin/master`. Commit with explicit paths on `r5/zone-<x>`; **never push the branch**. Commits on the branch
+1. **Branch work** (decision RUN-11). **This replaces common rule 1's worktree step:** never `git switch --detach`,
+   never create another worktree. The orchestrator creates each zone's worktree once, from its main checkout — for
+   zone B: `git -C /home/sites/shmup-cup worktree add -b r5/zone-b /home/sites/shmup-cup-run/wt/zone-b origin/master`
+   (the same with `c`, `d`, `e`, `f`, `g`, `i` and `h`). Every agent of the lane works in that worktree, one after
+   another (never two at once). Start each subtask inside it with `git branch --show-current` — it must print your
+   zone's branch (`r5/zone-b` for zone B); if HEAD is detached, run `git switch r5/zone-b` (your zone's branch)
+   and say so in your report — then `git fetch origin && git rebase origin/master`.
+   Commit with explicit paths on `r5/zone-<x>`; **never push the branch**. Commits on the branch
    hold **sources only**: never a replay (`test/golden/*.replay.json`, `content/demos/*`), a fingerprint's `PINNED`
    table, `assets/source/atlas-groups.json` or `docs/images/**`. Only S7 (the LAND) reaches `origin/master`.
    (The plan's rule "commits go to master, no branches" holds: a local branch is scaffolding, decision R5-D8.)
-2. **One LAND at a time, first ready first.** `RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only <list>
-   --message <file> --zone <x>` (the helper of R5-P.LAND, wave 9; read its header). It takes
-   `/tmp/shmup-cup-land.lock` itself — never wrap it in another `flock` (that would wait on itself). Run it with
-   `--dry-run` first. Zones B, D and F LAND before R5-08.S4c starts (wave 12). No GLOBAL re-bless runs in this wave.
+2. **One LAND at a time, first ready first.** The LAND runs `docs/v2-run/helpers/land-zone.sh` (the helper of
+   R5-P.LAND, wave 9; read its header) exactly as your S7 block writes it. It takes `/tmp/shmup-cup-land.lock`
+   itself — never wrap it in another `flock` (that would wait on itself). It runs about 25 minutes: give the shell
+   call a `timeout` of 3600000 or run it in the background and poll its log. Run it with `--dry-run` first and read
+   the dry run's log. Zones B, D and F LAND before R5-08.S4c starts (wave 12). No GLOBAL re-bless runs in this wave.
 3. **The zone template** (plan §11, at its v2 values; the numbers in `test/integration/zones/zone-<x>.contract.ts`
    (R5-P.P6, decision R5-D2) win if they differ):
    - `length` 20,000–22,000 px; scroll to the WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min;
@@ -56,14 +65,20 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
    - 4–6 painted parallax layers, decor, raster rows for 360 rows, the zone's `cycles` ramp unchanged (R5-P.P7);
    - the bot clears the zone in god mode; the zone's pages within its R3-04 byte budget.
 4. **The v2 numbers** (the content is ×1.5 since R2-02 — **never multiply a ported value again**): spawn just past
-   the right edge `screenX` = `PLAYFIELD_W + 24` = 664; boss rest x 508 (`PLAYFIELD_W − 132`), y 168; tiles 12 px;
+   the right edge `screenX` = `PLAYFIELD_W + 24` = 664; a boss's `x` / `y` are `screen-x` /
+   `screen-y` values set by its entry and already ported by R2-02 (e.g. GALVANIC MAW `x` 300 → 514) — never
+   re-derive a ported `x`; only a boss without `x` / `y` rests at `DEFAULT_BOSS_X` 508 (`PLAYFIELD_W − 88 ·
+   WORLD_SCALE`) / `DEFAULT_BOSS_Y` 168 (`PLAYFIELD_CY`); tiles 12 px;
    `rowsTall` 28 = one playfield (336 px); a map is `length + 640` wide; aimed bullets ≤ **3.0** px/tick on Normal;
    laser lane gaps ≥ **24** px; the capsule window **1,350** px; `BOT_X` 96. An above-the-top spawn keeps `y < 0`.
 5. **Frozen shared entries — never edit:** `tender` (`content/enemies/zone-a.enemies.json`, every zone's capsule
    carrier: sim fields hp, hurtbox, params, drop, score); zone A's `picket` and `halcyon-bulwark` (bonus-range uses
    them); the boss sprite names `bulwark-*`, `maw-*`, `bastion-*`, `regent-*` (zone H's echoes copy them — add new
-   names, never rename or delete one). In general: never rename or delete a sprite, enemy, path or pattern id that
-   another file names (`git grep -n '<id>' content/`); add new names instead.
+   names, never rename or delete one). Their echo plates (`docs/images/bosses/echo-maw.png`, `echo-bastion.png`,
+   `echo-regent.png`) must **not** change in a zone B, D or F LAND: the echo entries and the old sprite names stay
+   as they are (decision R5-D6) — if a LAND's plate diff shows one, stop and report. In general: never rename or
+   delete a sprite, enemy, path or pattern id that another file names (`git grep -n '<id>' content/`); add new
+   names instead.
 6. **Shared files no zone lane edits** (send the change to the orchestrator): `content/campaign/main.campaign.json`
    (except zone I's ending hook, see zone I), `content/rules/*`, `content/patterns/common.patterns.json`,
    `content/fx/particles.fx.json`, `content/player/*`, `content/weapons/*`, `content/stages/boss-rush.stage.json`,
@@ -75,9 +90,13 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
 7. **Content-only bosses.** A boss rebuild uses its existing behaviour script and its tunables. New behaviour code
    is a separate BEHAVIOR subtask: stop and report what the design needs.
 8. **The bot is fixed.** A set piece the bot cannot clear is redesigned; never edit the bot or the harness.
-9. **Derived files are red on the branch** until the LAND regenerates them (the zone's goldens and demo, the three
-   fingerprints, `atlas-groups.test.ts`, `docs:images --check`). List them in your report; never "fix" them on the
-   branch.
+9. **Derived files are red on the branch** until the LAND regenerates them (the zone's goldens and demo — with the
+   outcome cases of `test/golden/golden-zone-<x>.test.ts`, which play the old replays —, the `PINNED` comparisons
+   of the three fingerprints, `atlas-groups.test.ts`, `docs:images --check`). List them in your report; never
+   "fix" them on the branch. A fingerprint walk's **own** `expect` is different: if one fails because of the zone
+   change (any failing line of `test/integration/presentation-fingerprint.test.ts` other than an
+   `expect(w.table).toEqual(PINNED.…)` — e.g. `runA.bonus`'s `inBonus`, `runA.bossH`'s HP bar), stop and report:
+   a FINGERPRINTS fix subtask owns the walk.
 10. **Generators:** only `+ - * /` and `Math.sqrt`; randomness only from `scripts/assets/rng.mjs` seeded by the sprite
     name; no frame literal (`384 216 200 208 192 108 640 360 336 348`) — import `FRAME_W` / `FRAME_H` from
     `scripts/frame.mjs` for frame-wide layers, use P9's shared alpha constant from `common.mjs`, never add an
@@ -87,6 +106,12 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
     allocation budgets are never raised in a zone lane.
 12. **AI art** is not this wave's: zones ship with the stand-ins (decision R5-D6, R5-D7). Real art drops later as
     `R5-0n.S3` (wave 12, owner-gated).
+13. **Cross-zone checks.** The campaign routes fly every zone, the boss rush fights every rebuilt boss, the bonus
+    stages use zones B's and G's enemies and tilesets, and the v2-port comparison must drop a remastered zone: every
+    zone S6 runs them (its cross-zone line). A route or the boss rush failing on time with the bigger boss: stop and
+    report — the fix is R5-10.T4's or the design's, never the route test's.
+14. **Long commands.** opencode's shell stops a foreground command after 2 minutes: give the playtests, the
+    cross-zone line and the LAND a `timeout` (1800000; the LAND 3600000) or run them in the background and poll.
 
 ## Subtasks
 
@@ -108,11 +133,11 @@ One section per zone: its own files first, then its blocks in order.
 - **Content:** `content/stages/zone-b.stage.json`, `content/enemies/zone-b.enemies.json`, `content/paths/zone-b.paths.json` (**new** — zone B has no paths file on `bc8e05d`), `content/tilesets/terrain-reef.tileset.json`. Patterns: `content/patterns/zone-b.patterns.json` (created by R5-P.P4 in wave 9 from `zones.patterns.json`; `brine.jelly-ring` lives there).
 - **Bonus stage art:** `content/stages/brine-grotto.stage.json` — **art fields only** (parallax, layers, decor, the tileset reference): zone B owns the bonus stage's look; its layout is R5-10.T1's (wave 12).
 - **Art:** `scripts/assets/procedural/brine.mjs` (its stand-ins come from R5-02.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-b.test.ts` and `procedural-zone-b-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-b.test.ts`; `test/playtest/zone-b-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-b.test.ts` (created by R5-P.P2a); `test/integration/zones/zone-b.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-b.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-b-runtime.test.ts` and `zone-b-direct.test.ts` (created by R5-P.P5e; plus `zone-b-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-b.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-b.test.ts` and `behaviors-zone-b-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-maw-alloc.test.ts`.
+- **Tests:** `test/playtest/zone-b.test.ts`; `test/playtest/zone-b-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-b.test.ts` (created by R5-P.P2a); `test/integration/zones/zone-b.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-b.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone B's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-b-runtime.test.ts` and `zone-b-direct.test.ts` (created by R5-P.P5e; plus `zone-b-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-b.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-b.test.ts` and `behaviors-zone-b-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-maw-alloc.test.ts`.
 - **The boss:** GALVANIC MAW (`galvanic-maw`; script `boss.maw`; 7 parts on `bc8e05d`). Phases: exactly 3.
 - **Mid-boss:** zone B has one: `spume-herald` (SPUME HERALD, `captain.launcher`, 3 parts). Keep it; add no second captain unless the design asks.
-- **Shared, not yours:** `packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts` (zones B and C; `maw-rocket` is `rocket.homing`) — read only; editing it needs the BEHAVIOR token.
-- **Frozen for zone H:** the `maw-*` boss sprite names (zone H's `echo-maw` copies them). **Add** new names; never rename or delete a `maw-*` name. The LAND regenerates `docs/images/bosses/echo-maw.png`.
+- **Shared, not yours:** `packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts` (zones B and C; `maw-rocket` is `rocket.homing`) — run it in S4a and S4b, never edit it (editing needs the BEHAVIOR token).
+- **Frozen for zone H:** the `maw-*` boss sprite names (zone H's `echo-maw` copies them). **Add** new names; never rename or delete a `maw-*` name. Its plate `docs/images/bosses/echo-maw.png` must **not** change in your LAND (the `echo-maw` entry and the old `maw-*` sprites stay as they are, R5-D6); if the dry run's or the LAND's plate diff shows it, stop and report.
 - **Bonus entrance:** zone B has the bonus entrance (a `bonus` event) to `brine-grotto`: keep it, re-placed on the new geometry.
 - **Palette cycles:** one `cycles` entry (layer `mid`), frozen by R5-P.P7.
 
@@ -126,18 +151,19 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-b.patterns.json` — new actions;
   - `packages/core/test/behaviors/behaviors-zone-b.test.ts`, `behaviors-zone-b-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-b && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-b && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-b` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-b` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-b.test.ts packages/core/test/behaviors/behaviors-zone-b-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-b.test.ts packages/core/test/behaviors/behaviors-zone-b-edge.test.ts packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts   # the shared guard: run it, never edit it
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-02.S4b — Zone B boss rebuilt bigger
@@ -148,15 +174,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-b.enemies.json` — the `galvanic-maw` entry;
   - `packages/core/test/behaviors/behaviors-maw-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-b.test.ts`, `behaviors-zone-b-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-b.test.ts`, `behaviors-zone-b-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-b.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-maw-alloc.test.ts packages/core/test/behaviors/behaviors-zone-b.test.ts packages/core/test/behaviors/behaviors-zone-b-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-maw-alloc.test.ts packages/core/test/behaviors/behaviors-zone-b.test.ts packages/core/test/behaviors/behaviors-zone-b-edge.test.ts packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-b.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8); the `maw-*` boss sprite names (zone H's `echo-maw` copies them) — add names, never rename one.
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8); the `maw-*` boss sprite names (zone H's `echo-maw` copies them) — add names, never rename one.
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-02.S5a — Zone B stage geometry
@@ -164,12 +195,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-B lane, after R5-02.S4b (or right after R5-02.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-02.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-b.stage.json` (the geometry fields); `content/tilesets/terrain-reef.tileset.json` (variants, masks); `content/stages/brine-grotto.stage.json` (art fields only).
+- **Files (only these):** `content/stages/zone-b.stage.json` (the geometry fields); `content/tilesets/terrain-reef.tileset.json` (variants, masks); `content/stages/brine-grotto.stage.json` (art fields only); and only to fix a stand-in the stage needs: `scripts/assets/procedural/brine.mjs` with `test/scripts/assets/procedural-zone-b.test.ts` and `procedural-zone-b-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched brine.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-b.test.ts test/scripts/assets/procedural-zone-b-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -198,24 +231,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-B lane, after R5-02.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-02.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime and Direct tests and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-b.test.ts`, `test/playtest/zone-b-recovery.test.ts`, `test/integration/zone-b-runtime.test.ts`, `test/integration/zone-b-direct.test.ts`, `test/e2e/zone-b.spec.ts`, `test/golden/golden-zone-b.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-b.test.ts`, `test/playtest/zone-b-recovery.test.ts`, `test/integration/zone-b-runtime.test.ts`, `test/integration/zone-b-direct.test.ts` (and `zone-b-runtime-edge.test.ts` only if R5-P.P5e kept one), `test/e2e/zone-b.spec.ts`; `test/golden/golden-zone-b.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone B's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-b.test.ts test/playtest/zone-b-recovery.test.ts test/integration/zone-b-runtime.test.ts test/integration/zone-b-direct.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone B'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-b.spec.ts > RUN_DIR/R5-02.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts test/integration/bonus-stage-runtime.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-b.spec.ts > /home/sites/shmup-cup-run/R5-02.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-b.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-b.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-02.RV — Review of zone B on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-02.S6. The loop: review → `R5-02.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-b diff origin/master...r5/zone-b` and `docs/v2-run/designs/zone-b.md`.
-- **Re-run:** every command of R5-02.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone B's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `maw-*` names); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-b diff origin/master...r5/zone-b` and `docs/v2-run/designs/zone-b.md`.
+- **Re-run:** every command of R5-02.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-02.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone B's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `maw-*` names); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-02.S7 — Zone B LAND
@@ -223,17 +260,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-B lane, after R5-02.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND; zone B before R5-08.S4c.
 - **Depends on:** R5-02.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone B's scope only.
-- **Command** (from `RUN_DIR/wt/zone-b`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-b`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-b,brine-grotto --message RUN_DIR/R5-02.S7-msg.txt --zone b
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-b,brine-grotto --message /home/sites/shmup-cup-run/R5-02.S7-msg.txt --zone b --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-b-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-b,brine-grotto --message /home/sites/shmup-cup-run/R5-02.S7-msg.txt --zone b
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-b,brine-grotto` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-02.S7-msg.txt` first): `feat(R5-02): remaster zone B BRINE NEBULA`; the body lists the sections, the new types and the boss, and says "re-bless zone-b-god, zone-b-deaths, brine-grotto-god and the demo zone-b: the zone was remastered (R5-02)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone B's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-b.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-02.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-02.S7-msg.txt` first): `feat(R5-02): remaster zone B BRINE NEBULA`; the body lists the sections, the new types and the boss, and says "re-bless zone-b-god, zone-b-deaths, brine-grotto-god and the demo zone-b: the zone was remastered (R5-02)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone B's stage ids; in the presentation fingerprint only the walk segments that fly zone B or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/` (never `echo-maw.png`).
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-02)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-b && git -C /home/sites/shmup-cup branch -D r5/zone-b`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -250,10 +290,10 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Content:** `content/stages/zone-c.stage.json`, `content/enemies/zone-c.enemies.json`, `content/paths/zone-c.paths.json`, `content/tilesets/terrain-dune.tileset.json`. Patterns: `content/patterns/zone-c.patterns.json` (created by R5-P.P4 in wave 9 from `zones.patterns.json`; `dune.whirl` lives there).
 - **Art:** `scripts/assets/procedural/dune.mjs` (its stand-ins come from R5-03.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-c.test.ts` and `procedural-zone-c-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-c.test.ts`; `test/playtest/zone-c-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-c.test.ts` (created by R5-P.P2a); `test/integration/zones/zone-c.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-c.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-c-runtime.test.ts` and `zone-c-direct.test.ts` (created by R5-P.P5e; plus `zone-c-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-c.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-c.test.ts` and `behaviors-zone-c-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-widow-alloc.test.ts`.
+- **Tests:** `test/playtest/zone-c.test.ts`; `test/playtest/zone-c-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-c.test.ts` (created by R5-P.P2a); `test/integration/zones/zone-c.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-c.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone C's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-c-runtime.test.ts` and `zone-c-direct.test.ts` (created by R5-P.P5e; plus `zone-c-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-c.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-c.test.ts` and `behaviors-zone-c-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-widow-alloc.test.ts`.
 - **The boss:** SANDGRAVE WIDOW (`sandgrave-widow`; script `boss.widow`; 10 parts on `bc8e05d`). Phases: exactly 3.
 - **Mid-boss:** none in v1: S4a adds a captain (`captain.ram`, `captain.launcher`, `captain.circler` or `captain.crab`) and S5b its `boss` event before `length / 2`.
-- **Shared, not yours:** `packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts` (zones B and C; `dune-worm` is `worm.burst`) — read only; editing it needs the BEHAVIOR token.
+- **Shared, not yours:** `packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts` (zones B and C; `dune-worm` is `worm.burst`) — run it in S4a and S4b, never edit it (editing needs the BEHAVIOR token).
 - **Palette cycles:** none in v1 (R5-P.P7 left zone C alone); add a `cycles` entry only if the design has one and R5-P.P7 froze its ramp.
 - **Zone C's trap:** The high-speed section needs R5-P.P12's terrain look-ahead at speed (wave 10); if the bot still crashes, slow the key or open the terrain — never edit the bot.
 
@@ -267,18 +307,19 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-c.patterns.json` — new actions;
   - `packages/core/test/behaviors/behaviors-zone-c.test.ts`, `behaviors-zone-c-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-c && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-c && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-c` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-c` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-c.test.ts packages/core/test/behaviors/behaviors-zone-c-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-c.test.ts packages/core/test/behaviors/behaviors-zone-c-edge.test.ts packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts   # the shared guard: run it, never edit it
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-03.S4b — Zone C boss rebuilt bigger
@@ -289,15 +330,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-c.enemies.json` — the `sandgrave-widow` entry;
   - `packages/core/test/behaviors/behaviors-widow-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-c.test.ts`, `behaviors-zone-c-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-c.test.ts`, `behaviors-zone-c-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-c.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-widow-alloc.test.ts packages/core/test/behaviors/behaviors-zone-c.test.ts packages/core/test/behaviors/behaviors-zone-c-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-widow-alloc.test.ts packages/core/test/behaviors/behaviors-zone-c.test.ts packages/core/test/behaviors/behaviors-zone-c-edge.test.ts packages/core/test/behaviors/behaviors-rocket-worm-alloc.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-c.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-03.S5a — Zone C stage geometry
@@ -305,12 +351,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-C lane, after R5-03.S4b (or right after R5-03.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-03.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-c.stage.json` (the geometry fields); `content/tilesets/terrain-dune.tileset.json` (variants, masks).
+- **Files (only these):** `content/stages/zone-c.stage.json` (the geometry fields); `content/tilesets/terrain-dune.tileset.json` (variants, masks); and only to fix a stand-in the stage needs: `scripts/assets/procedural/dune.mjs` with `test/scripts/assets/procedural-zone-c.test.ts` and `procedural-zone-c-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched dune.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-c.test.ts test/scripts/assets/procedural-zone-c-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -339,24 +387,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-C lane, after R5-03.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-03.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime and Direct tests and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-c.test.ts`, `test/playtest/zone-c-recovery.test.ts`, `test/integration/zone-c-runtime.test.ts`, `test/integration/zone-c-direct.test.ts`, `test/e2e/zone-c.spec.ts`, `test/golden/golden-zone-c.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-c.test.ts`, `test/playtest/zone-c-recovery.test.ts`, `test/integration/zone-c-runtime.test.ts`, `test/integration/zone-c-direct.test.ts` (and `zone-c-runtime-edge.test.ts` only if R5-P.P5e kept one), `test/e2e/zone-c.spec.ts`; `test/golden/golden-zone-c.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone C's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-c.test.ts test/playtest/zone-c-recovery.test.ts test/integration/zone-c-runtime.test.ts test/integration/zone-c-direct.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone C'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-c.spec.ts > RUN_DIR/R5-03.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-c.spec.ts > /home/sites/shmup-cup-run/R5-03.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-c.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-c.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-03.RV — Review of zone C on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-03.S6. The loop: review → `R5-03.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-c diff origin/master...r5/zone-c` and `docs/v2-run/designs/zone-c.md`.
-- **Re-run:** every command of R5-03.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone C's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-c diff origin/master...r5/zone-c` and `docs/v2-run/designs/zone-c.md`.
+- **Re-run:** every command of R5-03.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-03.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone C's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-03.S7 — Zone C LAND
@@ -364,17 +416,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-C lane, after R5-03.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND.
 - **Depends on:** R5-03.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone C's scope only.
-- **Command** (from `RUN_DIR/wt/zone-c`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-c`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-c --message RUN_DIR/R5-03.S7-msg.txt --zone c
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-c --message /home/sites/shmup-cup-run/R5-03.S7-msg.txt --zone c --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-c-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-c --message /home/sites/shmup-cup-run/R5-03.S7-msg.txt --zone c
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-c` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-03.S7-msg.txt` first): `feat(R5-03): remaster zone C DUNE EXPANSE`; the body lists the sections, the new types and the boss, and says "re-bless zone-c-god, zone-c-bot and the demo zone-c: the zone was remastered (R5-03)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone C's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-c.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-03.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-03.S7-msg.txt` first): `feat(R5-03): remaster zone C DUNE EXPANSE`; the body lists the sections, the new types and the boss, and says "re-bless zone-c-god, zone-c-bot and the demo zone-c: the zone was remastered (R5-03)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone C's stage ids; in the presentation fingerprint only the walk segments that fly zone C or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-03)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-c && git -C /home/sites/shmup-cup branch -D r5/zone-c`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -392,10 +447,10 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Content:** `content/stages/zone-d.stage.json`, `content/enemies/zone-d.enemies.json`, `content/paths/zone-d.paths.json`, `content/tilesets/terrain-magma.tileset.json`. Patterns: none of its own (zone D uses `common.patterns.json` actions); if the design needs patterns, create `content/patterns/zone-d.patterns.json` (**new**; since R5-P.P1 a new pattern file no longer moves other zones' hashes) — never edit `common.patterns.json`.
 - **Art:** `scripts/assets/procedural/magma.mjs` (its stand-ins come from R5-04.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-d.test.ts` and `procedural-zone-d-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-d.test.ts`; `test/playtest/zone-d-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-d.test.ts` (created by R5-P.P2a); `test/integration/zones/zone-d.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-d.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-d-runtime.test.ts` and `zone-d-direct.test.ts` (created by R5-P.P5e; plus `zone-d-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-d.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-d.test.ts` and `behaviors-zone-d-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-bastion-alloc.test.ts`.
+- **Tests:** `test/playtest/zone-d.test.ts`; `test/playtest/zone-d-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-d.test.ts` (created by R5-P.P2a); `test/integration/zones/zone-d.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-d.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone D's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-d-runtime.test.ts` and `zone-d-direct.test.ts` (created by R5-P.P5e; plus `zone-d-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-d.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-d.test.ts` and `behaviors-zone-d-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-bastion-alloc.test.ts`.
 - **The boss:** CINDER BASTION (`cinder-bastion`; script `boss.bastion`; 9 parts on `bc8e05d`). Phases: exactly 3.
 - **Mid-boss:** none in v1: S4a adds a captain and S5b its `boss` event before `length / 2`.
-- **Frozen for zone H:** the `bastion-*` boss sprite names (zone H's `echo-bastion` copies them). **Add** new names; never rename or delete a `bastion-*` name. The LAND regenerates `docs/images/bosses/echo-bastion.png`.
+- **Frozen for zone H:** the `bastion-*` boss sprite names (zone H's `echo-bastion` copies them). **Add** new names; never rename or delete a `bastion-*` name. Its plate `docs/images/bosses/echo-bastion.png` must **not** change in your LAND (the `echo-bastion` entry and the old `bastion-*` sprites stay as they are, R5-D6); if the dry run's or the LAND's plate diff shows it, stop and report.
 - **Palette cycles:** one `cycles` entry, frozen by R5-P.P7.
 - **Zone D's trap:** **The dive is redesigned on purpose.** The plan's "re-derive the dive's one-playfield pans" is superseded by O2: R2-02 ported camera `yTo` ×1.5 plus the top pad, so the old dive already works at v2. Redesign it as part of the new maze. A pan of "one playfield" is `PLAYFIELD_H` (336 px), never 200 × 1.5. Zone D is two playfields tall (`rowsTall` 50 at 8 px on `bc8e05d`): read the ported `rowsTall` from the stage file, never assume it. The branch choice and brick shooting come from R5-P.P12 (wave 10).
 
@@ -409,7 +464,8 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-d.patterns.json` — new actions (**new** file, only if the design needs patterns);
   - `packages/core/test/behaviors/behaviors-zone-d.test.ts`, `behaviors-zone-d-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-d && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-d && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-d` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-d` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
@@ -420,7 +476,7 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-04.S4b — Zone D boss rebuilt bigger
@@ -431,15 +487,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-d.enemies.json` — the `cinder-bastion` entry;
   - `packages/core/test/behaviors/behaviors-bastion-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-d.test.ts`, `behaviors-zone-d-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-d.test.ts`, `behaviors-zone-d-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-d.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-bastion-alloc.test.ts packages/core/test/behaviors/behaviors-zone-d.test.ts packages/core/test/behaviors/behaviors-zone-d-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-d.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-d.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8); the `bastion-*` boss sprite names (zone H's `echo-bastion` copies them) — add names, never rename one.
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8); the `bastion-*` boss sprite names (zone H's `echo-bastion` copies them) — add names, never rename one.
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-04.S5a — Zone D stage geometry
@@ -447,12 +508,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-D lane, after R5-04.S4b (or right after R5-04.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-04.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-d.stage.json` (the geometry fields); `content/tilesets/terrain-magma.tileset.json` (variants, masks).
+- **Files (only these):** `content/stages/zone-d.stage.json` (the geometry fields); `content/tilesets/terrain-magma.tileset.json` (variants, masks); and only to fix a stand-in the stage needs: `scripts/assets/procedural/magma.mjs` with `test/scripts/assets/procedural-zone-d.test.ts` and `procedural-zone-d-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-d.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched magma.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-d.test.ts test/scripts/assets/procedural-zone-d-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -481,24 +544,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-D lane, after R5-04.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-04.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime and Direct tests and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-d.test.ts`, `test/playtest/zone-d-recovery.test.ts`, `test/integration/zone-d-runtime.test.ts`, `test/integration/zone-d-direct.test.ts`, `test/e2e/zone-d.spec.ts`, `test/golden/golden-zone-d.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-d.test.ts`, `test/playtest/zone-d-recovery.test.ts`, `test/integration/zone-d-runtime.test.ts`, `test/integration/zone-d-direct.test.ts` (and `zone-d-runtime-edge.test.ts` only if R5-P.P5e kept one), `test/e2e/zone-d.spec.ts`; `test/golden/golden-zone-d.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone D's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-d.test.ts test/playtest/zone-d-recovery.test.ts test/integration/zone-d-runtime.test.ts test/integration/zone-d-direct.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone D'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-d.spec.ts > RUN_DIR/R5-04.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-d.spec.ts > /home/sites/shmup-cup-run/R5-04.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-d.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-d.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-04.RV — Review of zone D on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-04.S6. The loop: review → `R5-04.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-d diff origin/master...r5/zone-d` and `docs/v2-run/designs/zone-d.md`.
-- **Re-run:** every command of R5-04.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone D's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `bastion-*` names); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-d diff origin/master...r5/zone-d` and `docs/v2-run/designs/zone-d.md`.
+- **Re-run:** every command of R5-04.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-04.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone D's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `bastion-*` names); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-04.S7 — Zone D LAND
@@ -506,17 +573,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-D lane, after R5-04.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND; zone D before R5-08.S4c.
 - **Depends on:** R5-04.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone D's scope only.
-- **Command** (from `RUN_DIR/wt/zone-d`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-d`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-d --message RUN_DIR/R5-04.S7-msg.txt --zone d
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-d --message /home/sites/shmup-cup-run/R5-04.S7-msg.txt --zone d --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-d-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-d --message /home/sites/shmup-cup-run/R5-04.S7-msg.txt --zone d
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-d` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-04.S7-msg.txt` first): `feat(R5-04): remaster zone D MAGMA DEEP`; the body lists the sections, the new types and the boss, and says "re-bless zone-d-god, zone-d-bot, zone-d-boss and the demo zone-d: the zone was remastered (R5-04)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone D's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-d.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-04.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-04.S7-msg.txt` first): `feat(R5-04): remaster zone D MAGMA DEEP`; the body lists the sections, the new types and the boss, and says "re-bless zone-d-god, zone-d-bot, zone-d-boss and the demo zone-d: the zone was remastered (R5-04)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone D's stage ids; in the presentation fingerprint only the walk segments that fly zone D or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/` (never `echo-bastion.png`).
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-04)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-d && git -C /home/sites/shmup-cup branch -D r5/zone-d`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -533,7 +603,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Content:** `content/stages/zone-e.stage.json`, `content/enemies/zone-e.enemies.json`, `content/paths/zone-e.paths.json`, `content/tilesets/terrain-ridge.tileset.json`. Patterns: `content/patterns/zone-e.patterns.json` (created by R5-P.P4 in wave 9 from `zones.patterns.json`; `tempest.bolt` lives there).
 - **Art:** `scripts/assets/procedural/tempest.mjs` (its stand-ins come from R5-05.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-e.test.ts` and `procedural-zone-e-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-e.test.ts`; `test/playtest/zone-e-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-e.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-e.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-e.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-e-runtime.test.ts` and `zone-e-direct.test.ts` (created by R5-P.P5e; plus `zone-e-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-e.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-e.test.ts` and `behaviors-zone-e-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-steed-alloc.test.ts`, `packages/core/test/behaviors/behaviors-swoop-alloc.test.ts`.
+- **Tests:** `test/playtest/zone-e.test.ts`; `test/playtest/zone-e-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-e.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-e.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-e.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone E's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-e-runtime.test.ts` and `zone-e-direct.test.ts` (created by R5-P.P5e; plus `zone-e-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-e.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-e.test.ts` and `behaviors-zone-e-edge.test.ts` (created by R5-P.P5a1); `packages/core/test/behaviors/behaviors-steed-alloc.test.ts`, `packages/core/test/behaviors/behaviors-swoop-alloc.test.ts`.
 - **The boss:** SQUALL STEED (`squall-steed`; script `boss.steed`; 8 parts on `bc8e05d`). Phases: exactly 3.
 - **Mid-boss:** none in v1: S4a adds a captain and S5b its `boss` event before `length / 2`.
 - **Palette cycles:** one `cycles` entry, frozen by R5-P.P7.
@@ -549,7 +619,8 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-e.patterns.json` — new actions;
   - `packages/core/test/behaviors/behaviors-zone-e.test.ts`, `behaviors-zone-e-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-e && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-e && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-e` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-e` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
@@ -560,7 +631,7 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-05.S4b — Zone E boss rebuilt bigger
@@ -571,15 +642,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-e.enemies.json` — the `squall-steed` entry;
   - `packages/core/test/behaviors/behaviors-steed-alloc.test.ts`, `packages/core/test/behaviors/behaviors-swoop-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-e.test.ts`, `behaviors-zone-e-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-e.test.ts`, `behaviors-zone-e-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-e.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-steed-alloc.test.ts packages/core/test/behaviors/behaviors-swoop-alloc.test.ts packages/core/test/behaviors/behaviors-zone-e.test.ts packages/core/test/behaviors/behaviors-zone-e-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-e.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-e.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-05.S5a — Zone E stage geometry
@@ -587,12 +663,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-E lane, after R5-05.S4b (or right after R5-05.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-05.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-e.stage.json` (the geometry fields); `content/tilesets/terrain-ridge.tileset.json` (variants, masks).
+- **Files (only these):** `content/stages/zone-e.stage.json` (the geometry fields); `content/tilesets/terrain-ridge.tileset.json` (variants, masks); and only to fix a stand-in the stage needs: `scripts/assets/procedural/tempest.mjs` with `test/scripts/assets/procedural-zone-e.test.ts` and `procedural-zone-e-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-e.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched tempest.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-e.test.ts test/scripts/assets/procedural-zone-e-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -621,24 +699,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-E lane, after R5-05.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-05.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime and Direct tests and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-e.test.ts`, `test/playtest/zone-e-recovery.test.ts`, `test/integration/zone-e-runtime.test.ts`, `test/integration/zone-e-direct.test.ts`, `test/e2e/zone-e.spec.ts`, `test/golden/golden-zone-e.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-e.test.ts`, `test/playtest/zone-e-recovery.test.ts`, `test/integration/zone-e-runtime.test.ts`, `test/integration/zone-e-direct.test.ts` (and `zone-e-runtime-edge.test.ts` only if R5-P.P5e kept one), `test/e2e/zone-e.spec.ts`; `test/golden/golden-zone-e.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone E's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-e.test.ts test/playtest/zone-e-recovery.test.ts test/integration/zone-e-runtime.test.ts test/integration/zone-e-direct.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone E'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-e.spec.ts > RUN_DIR/R5-05.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-e.spec.ts > /home/sites/shmup-cup-run/R5-05.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-e.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-e.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-05.RV — Review of zone E on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-05.S6. The loop: review → `R5-05.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-e diff origin/master...r5/zone-e` and `docs/v2-run/designs/zone-e.md`.
-- **Re-run:** every command of R5-05.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone E's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-e diff origin/master...r5/zone-e` and `docs/v2-run/designs/zone-e.md`.
+- **Re-run:** every command of R5-05.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-05.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone E's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-05.S7 — Zone E LAND
@@ -646,17 +728,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-E lane, after R5-05.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND.
 - **Depends on:** R5-05.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone E's scope only.
-- **Command** (from `RUN_DIR/wt/zone-e`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-e`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-e --message RUN_DIR/R5-05.S7-msg.txt --zone e
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-e --message /home/sites/shmup-cup-run/R5-05.S7-msg.txt --zone e --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-e-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-e --message /home/sites/shmup-cup-run/R5-05.S7-msg.txt --zone e
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-e` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-05.S7-msg.txt` first): `feat(R5-05): remaster zone E TEMPEST RIDGE`; the body lists the sections, the new types and the boss, and says "re-bless zone-e-god, zone-e-bot and the demo zone-e: the zone was remastered (R5-05)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone E's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-e.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-05.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-05.S7-msg.txt` first): `feat(R5-05): remaster zone E TEMPEST RIDGE`; the body lists the sections, the new types and the boss, and says "re-bless zone-e-god, zone-e-bot and the demo zone-e: the zone was remastered (R5-05)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone E's stage ids; in the presentation fingerprint only the walk segments that fly zone E or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-05)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-e && git -C /home/sites/shmup-cup branch -D r5/zone-e`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -674,10 +759,10 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Content:** `content/stages/zone-f.stage.json`, `content/enemies/zone-f.enemies.json`, `content/paths/zone-f.paths.json` (**new** — zone F has no paths file on `bc8e05d`), `content/tilesets/terrain-vault.tileset.json`. Patterns: `content/patterns/zone-f.patterns.json` (created by R5-P.P4 in wave 9 from `zones.patterns.json`; `vault.spores` lives there).
 - **Art:** `scripts/assets/procedural/vault.mjs` (its stand-ins come from R5-06.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-f.test.ts` and `procedural-zone-f-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-f.test.ts`; `test/playtest/zone-f-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-f.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-f.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-f.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-f-runtime.test.ts` and `zone-f-direct.test.ts` (created by R5-P.P5e; plus `zone-f-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-f.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-f.test.ts` and `behaviors-zone-f-edge.test.ts` (created by R5-P.P5a2); `packages/core/test/behaviors/behaviors-squid-alloc.test.ts`, `packages/core/test/behaviors/behaviors-chase-alloc.test.ts`.
+- **Tests:** `test/playtest/zone-f.test.ts`; `test/playtest/zone-f-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-f.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-f.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-f.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone F's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-f-runtime.test.ts` and `zone-f-direct.test.ts` (created by R5-P.P5e; plus `zone-f-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-f.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-f.test.ts` and `behaviors-zone-f-edge.test.ts` (created by R5-P.P5a2); `packages/core/test/behaviors/behaviors-squid-alloc.test.ts`, `packages/core/test/behaviors/behaviors-chase-alloc.test.ts`.
 - **The boss:** MANTLE REGENT (`mantle-regent`; script `boss.squid`; 13 parts on `bc8e05d`). Phases: exactly 3.
 - **Mid-boss:** none in v1: S4a adds a captain and S5b its `boss` event before `length / 2`.
-- **Frozen for zone H:** the `regent-*` boss sprite names (zone H's `echo-regent` copies them). **Add** new names; never rename or delete a `regent-*` name. The LAND regenerates `docs/images/bosses/echo-regent.png`.
+- **Frozen for zone H:** the `regent-*` boss sprite names (zone H's `echo-regent` copies them). **Add** new names; never rename or delete a `regent-*` name. Its plate `docs/images/bosses/echo-regent.png` must **not** change in your LAND (the `echo-regent` entry and the old `regent-*` sprites stay as they are, R5-D6); if the dry run's or the LAND's plate diff shows it, stop and report.
 - **Palette cycles:** one `cycles` entry, frozen by R5-P.P7.
 - **Zone F's trap:** **Zone F is a known bot item.** After the port the bot struggled here (tissue walls `broken` or `lunges` was 0 in god mode, and the non-god run was still `playing` after 600 s). Read R2-02's Z-FG report and R2-04's Z2 section table (the plan's R2-02 / R2-04 As built notes) before you design the chase. The regrowing-wall support is R5-P.P12's (wave 10). If the bot cannot clear a set piece, redesign the set piece; never edit `test/playtest/*.ts` (BOT token: report it). MANTLE REGENT already has 13 parts: a bigger rebuild relies on R5-P.P8's `MAX_BOSS_PARTS` 24 (wave 6).
 
@@ -691,7 +776,8 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-f.patterns.json` — new actions;
   - `packages/core/test/behaviors/behaviors-zone-f.test.ts`, `behaviors-zone-f-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-f && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-f && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-f` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-f` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
@@ -702,7 +788,7 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-06.S4b — Zone F boss rebuilt bigger
@@ -713,15 +799,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-f.enemies.json` — the `mantle-regent` entry;
   - `packages/core/test/behaviors/behaviors-squid-alloc.test.ts`, `packages/core/test/behaviors/behaviors-chase-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-f.test.ts`, `behaviors-zone-f-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-f.test.ts`, `behaviors-zone-f-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-f.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-squid-alloc.test.ts packages/core/test/behaviors/behaviors-chase-alloc.test.ts packages/core/test/behaviors/behaviors-zone-f.test.ts packages/core/test/behaviors/behaviors-zone-f-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-f.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-f.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8); the `regent-*` boss sprite names (zone H's `echo-regent` copies them) — add names, never rename one.
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8); the `regent-*` boss sprite names (zone H's `echo-regent` copies them) — add names, never rename one.
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-06.S5a — Zone F stage geometry
@@ -729,12 +820,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-F lane, after R5-06.S4b (or right after R5-06.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-06.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-f.stage.json` (the geometry fields); `content/tilesets/terrain-vault.tileset.json` (variants, masks).
+- **Files (only these):** `content/stages/zone-f.stage.json` (the geometry fields); `content/tilesets/terrain-vault.tileset.json` (variants, masks); and only to fix a stand-in the stage needs: `scripts/assets/procedural/vault.mjs` with `test/scripts/assets/procedural-zone-f.test.ts` and `procedural-zone-f-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-f.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched vault.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-f.test.ts test/scripts/assets/procedural-zone-f-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -763,24 +856,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-F lane, after R5-06.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-06.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime and Direct tests and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-f.test.ts`, `test/playtest/zone-f-recovery.test.ts`, `test/integration/zone-f-runtime.test.ts`, `test/integration/zone-f-direct.test.ts`, `test/e2e/zone-f.spec.ts`, `test/golden/golden-zone-f.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-f.test.ts`, `test/playtest/zone-f-recovery.test.ts`, `test/integration/zone-f-runtime.test.ts`, `test/integration/zone-f-direct.test.ts` (and `zone-f-runtime-edge.test.ts` only if R5-P.P5e kept one), `test/e2e/zone-f.spec.ts`; `test/golden/golden-zone-f.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone F's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-f.test.ts test/playtest/zone-f-recovery.test.ts test/integration/zone-f-runtime.test.ts test/integration/zone-f-direct.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone F'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-f.spec.ts > RUN_DIR/R5-06.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-f.spec.ts > /home/sites/shmup-cup-run/R5-06.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-f.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-f.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-06.RV — Review of zone F on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-06.S6. The loop: review → `R5-06.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-f diff origin/master...r5/zone-f` and `docs/v2-run/designs/zone-f.md`.
-- **Re-run:** every command of R5-06.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone F's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `regent-*` names); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-f diff origin/master...r5/zone-f` and `docs/v2-run/designs/zone-f.md`.
+- **Re-run:** every command of R5-06.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-06.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone F's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `regent-*` names); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-06.S7 — Zone F LAND
@@ -788,17 +885,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-F lane, after R5-06.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND; zone F before R5-08.S4c.
 - **Depends on:** R5-06.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone F's scope only.
-- **Command** (from `RUN_DIR/wt/zone-f`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-f`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-f --message RUN_DIR/R5-06.S7-msg.txt --zone f
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-f --message /home/sites/shmup-cup-run/R5-06.S7-msg.txt --zone f --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-f-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-f --message /home/sites/shmup-cup-run/R5-06.S7-msg.txt --zone f
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-f` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-06.S7-msg.txt` first): `feat(R5-06): remaster zone F CELL VAULT`; the body lists the sections, the new types and the boss, and says "re-bless zone-f-god, zone-f-boss, zone-f-deaths, zone-f-arcade and the demo zone-f: the zone was remastered (R5-06)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone F's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-f.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-06.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-06.S7-msg.txt` first): `feat(R5-06): remaster zone F CELL VAULT`; the body lists the sections, the new types and the boss, and says "re-bless zone-f-god, zone-f-boss, zone-f-deaths, zone-f-arcade and the demo zone-f: the zone was remastered (R5-06)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone F's stage ids; in the presentation fingerprint only the walk segments that fly zone F or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/` (never `echo-regent.png`).
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-06)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-f && git -C /home/sites/shmup-cup branch -D r5/zone-f`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -816,7 +916,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Content:** `content/stages/zone-g.stage.json`, `content/enemies/zone-g.enemies.json`, `content/paths/zone-g.paths.json` (**new** — zone G has no paths file on `bc8e05d`), `content/tilesets/terrain-prism.tileset.json`. Patterns: `content/patterns/zone-g.patterns.json` (created by R5-P.P4 in wave 9 from `zones.patterns.json`; `prism.fan` lives there).
 - **Bonus stage art:** `content/stages/glimmer-cache.stage.json` — **art fields only** (parallax, layers, decor, the tileset reference): zone G owns the bonus stage's look; its layout is R5-10.T1's (wave 12).
 - **Art:** `scripts/assets/procedural/prism.mjs` (its stand-ins come from R5-07.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-g.test.ts` and `procedural-zone-g-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-g.test.ts`; `test/playtest/zone-g-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-g.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-g.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-g.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-g-runtime.test.ts` and `zone-g-direct.test.ts` (created by R5-P.P5e; plus `zone-g-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-g.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-g.test.ts` and `behaviors-zone-g-edge.test.ts` (created by R5-P.P5a2); `packages/core/test/behaviors/behaviors-facet-alloc.test.ts`.
+- **Tests:** `test/playtest/zone-g.test.ts`; `test/playtest/zone-g-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-g.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-g.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-g.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone G's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-g-runtime.test.ts` and `zone-g-direct.test.ts` (created by R5-P.P5e; plus `zone-g-runtime-edge.test.ts` if P5e kept one — then it is yours too); `test/e2e/zone-g.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-g.test.ts` and `behaviors-zone-g-edge.test.ts` (created by R5-P.P5a2); `packages/core/test/behaviors/behaviors-facet-alloc.test.ts`.
 - **The boss:** FACET MONARCH (`facet-monarch`; script `boss.facet`; 13 parts on `bc8e05d`). Phases: exactly 3.
 - **Mid-boss:** none in v1: S4a adds a captain and S5b its `boss` event before `length / 2`.
 - **Bonus entrance:** zone G has the bonus entrance (a `bonus` event) to `glimmer-cache`: keep it, re-placed on the new geometry.
@@ -833,7 +933,8 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-g.patterns.json` — new actions;
   - `packages/core/test/behaviors/behaviors-zone-g.test.ts`, `behaviors-zone-g-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-g && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-g && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-g` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-g` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
@@ -844,7 +945,7 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-07.S4b — Zone G boss rebuilt bigger
@@ -855,15 +956,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-g.enemies.json` — the `facet-monarch` entry;
   - `packages/core/test/behaviors/behaviors-facet-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-g.test.ts`, `behaviors-zone-g-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-g.test.ts`, `behaviors-zone-g-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-g.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-facet-alloc.test.ts packages/core/test/behaviors/behaviors-zone-g.test.ts packages/core/test/behaviors/behaviors-zone-g-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-g.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: exactly 3; a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-g.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-07.S5a — Zone G stage geometry
@@ -871,12 +977,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-G lane, after R5-07.S4b (or right after R5-07.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-07.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-g.stage.json` (the geometry fields); `content/tilesets/terrain-prism.tileset.json` (variants, masks); `content/stages/glimmer-cache.stage.json` (art fields only).
+- **Files (only these):** `content/stages/zone-g.stage.json` (the geometry fields); `content/tilesets/terrain-prism.tileset.json` (variants, masks); `content/stages/glimmer-cache.stage.json` (art fields only); and only to fix a stand-in the stage needs: `scripts/assets/procedural/prism.mjs` with `test/scripts/assets/procedural-zone-g.test.ts` and `procedural-zone-g-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-g.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched prism.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-g.test.ts test/scripts/assets/procedural-zone-g-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -905,24 +1013,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-G lane, after R5-07.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-07.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime and Direct tests and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-g.test.ts`, `test/playtest/zone-g-recovery.test.ts`, `test/integration/zone-g-runtime.test.ts`, `test/integration/zone-g-direct.test.ts`, `test/e2e/zone-g.spec.ts`, `test/golden/golden-zone-g.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-g.test.ts`, `test/playtest/zone-g-recovery.test.ts`, `test/integration/zone-g-runtime.test.ts`, `test/integration/zone-g-direct.test.ts` (and `zone-g-runtime-edge.test.ts` only if R5-P.P5e kept one), `test/e2e/zone-g.spec.ts`; `test/golden/golden-zone-g.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone G's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-g.test.ts test/playtest/zone-g-recovery.test.ts test/integration/zone-g-runtime.test.ts test/integration/zone-g-direct.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone G'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-g.spec.ts > RUN_DIR/R5-07.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts test/integration/bonus-stage-runtime.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-g.spec.ts > /home/sites/shmup-cup-run/R5-07.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-g.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-g.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-07.RV — Review of zone G on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-07.S6. The loop: review → `R5-07.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-g diff origin/master...r5/zone-g` and `docs/v2-run/designs/zone-g.md`.
-- **Re-run:** every command of R5-07.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone G's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-g diff origin/master...r5/zone-g` and `docs/v2-run/designs/zone-g.md`.
+- **Re-run:** every command of R5-07.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-07.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone G's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-07.S7 — Zone G LAND
@@ -930,17 +1042,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-G lane, after R5-07.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND.
 - **Depends on:** R5-07.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone G's scope only.
-- **Command** (from `RUN_DIR/wt/zone-g`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-g`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-g,glimmer-cache --message RUN_DIR/R5-07.S7-msg.txt --zone g
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-g,glimmer-cache --message /home/sites/shmup-cup-run/R5-07.S7-msg.txt --zone g --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-g-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-g,glimmer-cache --message /home/sites/shmup-cup-run/R5-07.S7-msg.txt --zone g
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-g,glimmer-cache` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-07.S7-msg.txt` first): `feat(R5-07): remaster zone G PRISM LABYRINTH`; the body lists the sections, the new types and the boss, and says "re-bless zone-g-god, zone-g-bot, zone-g-boss, glimmer-cache-god and the demo zone-g: the zone was remastered (R5-07)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone G's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-g.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-07.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-07.S7-msg.txt` first): `feat(R5-07): remaster zone G PRISM LABYRINTH`; the body lists the sections, the new types and the boss, and says "re-bless zone-g-god, zone-g-bot, zone-g-boss, glimmer-cache-god and the demo zone-g: the zone was remastered (R5-07)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone G's stage ids; in the presentation fingerprint only the walk segments that fly zone G or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-07)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-g && git -C /home/sites/shmup-cup branch -D r5/zone-g`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -957,12 +1072,12 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Content:** `content/stages/zone-i.stage.json`, `content/enemies/zone-i.enemies.json`, `content/paths/zone-i.paths.json` (**new** — zone I has no paths file on `bc8e05d`), `content/tilesets/terrain-abyss.tileset.json`. Patterns: `content/patterns/zone-i.patterns.json` (created by R5-P.P4 in wave 9 from `zones.patterns.json`; `abyss.gulp` lives there).
 - **Art:** `scripts/assets/procedural/abyss.mjs` (its stand-ins come from R5-09.S2, wave 10; touch it only to fix a stand-in the stage needs, never its ramp constants) with `test/scripts/assets/procedural-zone-i.test.ts` and `procedural-zone-i-edge.test.ts` (created by R5-P.P5c).
-- **Tests:** `test/playtest/zone-i.test.ts`; `test/playtest/zone-i-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-i.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-i.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-i.test.ts` (created by R5-P.P3 — descriptions only, never a replay); `test/integration/zone-i-runtime.test.ts` (created by R5-P.P5e from `zones-hi-runtime-edge.test.ts`; zone I has no Direct-mode runtime test on `bc8e05d`); `test/e2e/zone-i.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-i.test.ts` and `behaviors-zone-i-edge.test.ts` (created by R5-P.P5a2); `packages/core/test/behaviors/behaviors-ark-alloc.test.ts`, `packages/core/test/behaviors/behaviors-angler-alloc.test.ts`.
-- **The boss:** the ABYSS ARK (a raid) with THE HOLLOW KING inside (`hollow-king`) (`abyss-ark`; script `boss.ark` and `boss.angler`; 11 + 9 parts on `bc8e05d`). Phases: the ARK 2, THE HOLLOW KING exactly 3 (as `content.test.ts:2122` checks on `bc8e05d`).
+- **Tests:** `test/playtest/zone-i.test.ts`; `test/playtest/zone-i-recovery.test.ts` (created by R5-P.P3); `test/integration/content-zone-i.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-i.contract.ts` (created by R5-P.P6); `test/golden/golden-zone-i.test.ts` (created by R5-P.P3 — the zone's outcome expectations; never a replay file); zone I's own entries in `test/golden/golden.ts` and `test/golden/demos.ts` (their descriptions only — shared files: touch nothing else in them); `test/integration/zone-i-runtime.test.ts` (created by R5-P.P5e from `zones-hi-runtime-edge.test.ts`; zone I has no Direct-mode runtime test on `bc8e05d`); `test/e2e/zone-i.spec.ts` (created by R5-P.P5d); `packages/core/test/behaviors/behaviors-zone-i.test.ts` and `behaviors-zone-i-edge.test.ts` (created by R5-P.P5a2); `packages/core/test/behaviors/behaviors-ark-alloc.test.ts`, `packages/core/test/behaviors/behaviors-angler-alloc.test.ts`.
+- **The boss:** the ABYSS ARK (a raid) with THE HOLLOW KING inside (`hollow-king`) (`abyss-ark`; script `boss.ark` and `boss.angler`; 11 + 9 parts on `bc8e05d`). Phases: the ARK 2, THE HOLLOW KING exactly 3 (as the content case 'gives ABYSSAL THRONE mines, trench eels, a whale-class raid and a boss inside it' checks — in `content-zone-i.test.ts` since R5-P.P2b).
 - **Mid-boss:** none in v1: S4a adds a captain and S5b its `boss` event before `length / 2`.
-- **Shared, not yours:** `packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts` (zones H and I; `depth-mine` is `mine.burst`) — read only; editing it needs the BEHAVIOR token.
+- **Shared, not yours:** `packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts` (zones H and I; `depth-mine` is `mine.burst`) — run it in S4a and S4b, never edit it (editing needs the BEHAVIOR token).
 - **Palette cycles:** one `cycles` entry, frozen by R5-P.P7.
-- **Zone I's trap:** **The ending hook.** Zone I ends the campaign. Change the escape or ending wiring (the `endings` of `content/campaign/main.campaign.json`) only if the design needs it, and only after R4-05 (done in wave 9); then that file is yours for zone I's `endings` entries only, and the commit says why. The escape stage `content/stages/escape.stage.json` is **R5-10.T2's** (wave 12): do not edit it. `zone-i-escape` is in your LAND scope because it starts in zone I.
+- **Zone I's trap:** **The ending hook.** Zone I ends the campaign. Change the escape or ending wiring (the `endings` of `content/campaign/main.campaign.json`) only if the design needs it, and only after R4-05 (done in wave 9); then that file is yours for zone I's `endings` entries only, and the commit says why. The escape stage `content/stages/escape.stage.json` is **R5-10.T2's** (wave 12): do not edit it. `zone-i-escape` is in your LAND scope because it is a zone-I scenario (`stageId` `zone-i`: the stage skip to the ABYSS ARK, which sails off after its time limit — the ARK's boss escape, not a run of the escape stage).
 
 ### R5-09.S4a — Zone I roster: the new enemy types and the mid-boss
 
@@ -974,18 +1089,19 @@ One section per zone: its own files first, then its blocks in order.
   - `content/patterns/zone-i.patterns.json` — new actions;
   - `packages/core/test/behaviors/behaviors-zone-i.test.ts`, `behaviors-zone-i-edge.test.ts` — cases for the new types.
 - **Steps:**
-  1. `cd RUN_DIR/wt/zone-i && git fetch origin && git rebase origin/master`.
+  1. `cd /home/sites/shmup-cup-run/wt/zone-i && git branch --show-current && git fetch origin && git rebase origin/master`
+     (the branch must print `r5/zone-i` — rule 1).
   2. Add the entries and patterns; add the test cases.
   3. Run the tests; commit on `r5/zone-i` with explicit paths (sources only).
 - **Tests (targeted, run all of them):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-i.test.ts packages/core/test/behaviors/behaviors-zone-i-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-i.test.ts packages/core/test/behaviors/behaviors-zone-i-edge.test.ts packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts   # the shared guard: run it, never edit it
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts
   ```
 - **Acceptance:** content valid; every script id known and every param a known tunable; aimed bullets ≤ **3.0** px/tick on Normal; every new type's sprite is in the atlas.
 - **Token:** none (branch work). If a new behaviour is unavoidable: **stop and report** — a BEHAVIOR subtask does it, alone.
-- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it.
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; the design's speeds are v2 numbers; never rename or delete an id another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is every zone's capsule carrier and is frozen — use it, never copy or edit it; every new enemy or captain name is original (`shmup_feat.md` §26: never a Konami or Taito name).
 - **Docs needs (report, never edit):** each new type's name, script and look, for `docs/client/bestiary.md` and the zone doc.
 
 ### R5-09.S4b — Zone I boss rebuilt bigger
@@ -996,15 +1112,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):**
   - `content/enemies/zone-i.enemies.json` — the `abyss-ark` entry and the `hollow-king` entry;
   - `packages/core/test/behaviors/behaviors-ark-alloc.test.ts`, `packages/core/test/behaviors/behaviors-angler-alloc.test.ts` — re-run; edit only if its stage fixture moved;
-  - `packages/core/test/behaviors/behaviors-zone-i.test.ts`, `behaviors-zone-i-edge.test.ts` — the boss cases.
+  - `packages/core/test/behaviors/behaviors-zone-i.test.ts`, `behaviors-zone-i-edge.test.ts` — the boss cases;
+  - `test/integration/content-zone-i.test.ts` — one new boss case: the assembled height (each part at its
+    parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs`
+    assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not
+    `vulnerable: 'never'`, and every part its `requires` names exists and is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-ark-alloc.test.ts packages/core/test/behaviors/behaviors-angler-alloc.test.ts packages/core/test/behaviors/behaviors-zone-i.test.ts packages/core/test/behaviors/behaviors-zone-i-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-ark-alloc.test.ts packages/core/test/behaviors/behaviors-angler-alloc.test.ts packages/core/test/behaviors/behaviors-zone-i.test.ts packages/core/test/behaviors/behaviors-zone-i-edge.test.ts packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts
   ```
-- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: the ARK 2, THE HOLLOW KING exactly 3 (as `content.test.ts:2122` checks on `bc8e05d`); a reachable `core`; the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
+- **Acceptance:** parts ≤ `MAX_BOSS_PARTS` (24); phases: the ARK 2, THE HOLLOW KING exactly 3 (as the content case 'gives ABYSSAL THRONE mines, trench eels, a whale-class raid and a boss inside it' checks — in `content-zone-i.test.ts` since R5-P.P2b); a reachable `core` and the boss within 60 % of the playfield height (≤ 202 px = `Math.round(0.6 * PLAYFIELD_H)`), both checked by the new `content-zone-i.test.ts` case (S6's god-mode run, which must shoot the boss down, is the real proof of the core); laser lanes ≤ the zone's `lanes`, gaps ≥ **24** px; the allocation guard green within its budget (**never raise it**).
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** the boss rest position is frame-anchored (x 508 = `PLAYFIELD_W − 132`, y 168 = the playfield centre); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
+- **Traps:** the boss's `x` / `y` are `screen-x` / `screen-y` values its entry already sets, ported by R2-02 (e.g. GALVANIC MAW 300 → 514) — never re-derive them; `DEFAULT_BOSS_X` 508 / `DEFAULT_BOSS_Y` 168 apply only to a boss without `x` / `y` (rule 4); part offsets are world values, already ×1.5 since R2-02, within ±768 (W5-8).
 - **Docs needs:** parts, phases and attacks, for the zone doc and the bestiary.
 
 ### R5-09.S5a — Zone I stage geometry
@@ -1012,12 +1133,14 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-I lane, after R5-09.S4b (or right after R5-09.S4a by a second agent once S4a is committed — never at the same time as S4b).
 - **Depends on:** R5-09.S4a on the branch; R3-06 (decor, painted bands, `yFactor`, the foreground; wave 7) and R5-P.P7 (frozen ramps; wave 10) on `origin/master`.
 - **Goal:** the design's geometry: `length` **20,000–22,000** px; camera keys (at least one high-speed key; the last key starts the calm); checkpoints re-placed (the contract's count, ≥ 5); the tilemap (`rowsTall`, heightfield `segments` — a segment that reaches the map end ends at `length + 640`); tileset variants (the separate `tiles/terrain-<theme>-v2` sprite S2 drew); 4–6 painted parallax layers; decor; raster rows (frame rows 0 … 359); `cycles` = R5-P.P7's ramp, **unchanged**.
-- **Files (only these):** `content/stages/zone-i.stage.json` (the geometry fields); `content/tilesets/terrain-abyss.tileset.json` (variants, masks).
+- **Files (only these):** `content/stages/zone-i.stage.json` (the geometry fields); `content/tilesets/terrain-abyss.tileset.json` (variants, masks); and only to fix a stand-in the stage needs: `scripts/assets/procedural/abyss.mjs` with `test/scripts/assets/procedural-zone-i.test.ts` and `procedural-zone-i-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 unclassified, 0 errors: every new number has a unit
+  # only if you touched abyss.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-i.test.ts test/scripts/assets/procedural-zone-i-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the heightfield finds a tile for every cell); the palette-cycle scan green (cycle art exactly on its ramp, every other colour ≥ 3/255 away); `rescale --factor 1` clean.
 - **Token:** none (branch).
@@ -1029,7 +1152,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-I lane, after R5-09.S5a and R5-09.S4b.
 - **Depends on:** R5-09.S4a, S4b and S5a on the branch.
 - **Goal:** the timeline on the new geometry: the sections and the set piece; spawns and formations of the old and new types; the captain's `boss` event (before `length / 2`); ground enemies on rock (`x + screenX` inside a floor or ceiling segment); the calm (exactly two `carrier.straight` between the last camera key and the WARNING, nothing else); `warning`; `end`; `directItems`; `remix` (spawn / formation only, `drop: null`, sorted by `x`, ≤ 64); paths. Then switch the zone's contract to `remastered: true`.
-- **Files (only these):** `content/stages/zone-i.stage.json` (events, `directItems`, `remix`); `content/paths/zone-i.paths.json` (**new** — zone I has no paths file on `bc8e05d`); `test/integration/zones/zone-i.contract.ts` (`remastered: true`).
+- **Files (only these):** `content/stages/zone-i.stage.json` (events, `directItems`, `remix`); `content/paths/zone-i.paths.json` (**new** — zone I has no paths file on `bc8e05d`); `test/integration/zones/zone-i.contract.ts` (`remastered: true`); `content/campaign/main.campaign.json` — zone I's `endings` entries only, and only if the design needs an ending-hook change (zone I's trap).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
@@ -1046,24 +1169,28 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-I lane, after R5-09.S5b. It needs one of the wave's two e2e passes.
 - **Depends on:** R5-09.S4a … S5b on the branch.
 - **Goal:** prove the remastered zone: the bot clears it in god mode; a no-god run records and replays to the same hash; recovery holds; the runtime test and the e2e spec pass on the stand-in art; the zone's memory fits.
-- **Files (only these):** `test/playtest/zone-i.test.ts`, `test/playtest/zone-i-recovery.test.ts`, `test/integration/zone-i-runtime.test.ts`, `test/e2e/zone-i.spec.ts`, `test/golden/golden-zone-i.test.ts` (descriptions only).
+- **Files (only these):** `test/playtest/zone-i.test.ts`, `test/playtest/zone-i-recovery.test.ts`, `test/integration/zone-i-runtime.test.ts`, `test/e2e/zone-i.spec.ts`; `test/golden/golden-zone-i.test.ts` — the zone's outcome expectations, derived from the design; `test/golden/golden.ts` and `test/golden/demos.ts` — zone I's own scenario / demo descriptions only (a description change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-i.test.ts test/playtest/zone-i-recovery.test.ts test/integration/zone-i-runtime.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone I'
-  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-i.spec.ts > RUN_DIR/R5-09.S6-e2e.log 2>&1 &   # then poll the log
+  # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
+  # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+  nohup bash docs/v2-run/helpers/e2e-batch.sh zone-i.spec.ts > /home/sites/shmup-cup-run/R5-09.S6-e2e.log 2>&1 &   # then poll the log
   ```
-- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]` (THE HOLLOW KING), the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64), peak boss parts ≤ `MAX_BOSS_PARTS` (24), peak particles ≤ 80 % of `PARTICLE_CAPACITY` (256); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget. **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo, the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
+- **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]` (THE HOLLOW KING), the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-i.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-i.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-09.RV — Review of zone I on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-09.S6. The loop: review → `R5-09.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
-- **Read:** `git -C RUN_DIR/wt/zone-i diff origin/master...r5/zone-i` and `docs/v2-run/designs/zone-i.md`.
-- **Re-run:** every command of R5-09.S4a … S6 (the e2e spec under the lock).
-- **Must hold:** only zone I's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the bot clears the zone; the expected-red list matches S6's report.
+- **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-i diff origin/master...r5/zone-i` and `docs/v2-run/designs/zone-i.md`.
+- **Re-run:** every command of R5-09.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-09.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Must hold:** only zone I's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
 ### R5-09.S7 — Zone I LAND
@@ -1071,17 +1198,20 @@ One section per zone: its own files first, then its blocks in order.
 - **Wave / lane / order:** wave 11, zone-I lane, after R5-09.RV is at zero. One LAND at a time on the host (the land lock); first ready, first LAND.
 - **Depends on:** R5-09.RV at zero; R5-01.S7 (zone A's LAND) on `origin/master`.
 - **Goal:** squash the branch into one commit on `origin/master` and regenerate every derived file for zone I's scope only.
-- **Command** (from `RUN_DIR/wt/zone-i`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
+- **Command** (from `/home/sites/shmup-cup-run/wt/zone-i`; the exact usage is in the helper's header — R5-P.LAND, wave 9):
   ```bash
-  RUN_DIR=<RUN_DIR> bash docs/v2-run/helpers/land-zone.sh --only zone-i --message RUN_DIR/R5-09.S7-msg.txt --zone i
-  # first the same with --dry-run; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-i --message /home/sites/shmup-cup-run/R5-09.S7-msg.txt --zone i --dry-run
+  # read the dry run's log (/home/sites/shmup-cup-run/land-i-<date>.log); only when it is clean, the real LAND:
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-i --message /home/sites/shmup-cup-run/R5-09.S7-msg.txt --zone i
+  # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
   The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-i` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
-- **Commit message** (write it to `RUN_DIR/R5-09.S7-msg.txt` first): `feat(R5-09): remaster zone I ABYSSAL THRONE`; the body lists the sections, the new types and the boss, and says "re-bless zone-i-god, zone-i-boss, zone-i-escape and the demo zone-i: the zone was remastered (R5-09)"; the attribution line last.
-- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone I's stage ids, its segments of the presentation fingerprint's walks, its `atlas-groups.json` block (or `common`) and its plates in `docs/images/`.
+- **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-i.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-09.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
+- **Commit message** (write it to `/home/sites/shmup-cup-run/R5-09.S7-msg.txt` first): `feat(R5-09): remaster zone I ABYSSAL THRONE`; the body lists the sections, the new types and the boss, and says "re-bless zone-i-god, zone-i-boss, zone-i-escape and the demo zone-i: the zone was remastered (R5-09)"; no Co-Authored-By line.
+- **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone I's stage ids; in the presentation fingerprint only the walk segments that fly zone I or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
 - **Token:** LAND (the land lock for the whole script).
 - **Traps:** a rebase conflict is real (the branch holds sources only): stop and report; never merge a derived file by hand; if the script aborts on its scope, the zone changed something outside itself — report it, never widen the scope.
-- **Post-LAND check** (a review slot, read-only): `git show --stat <the LAND commit>` — the derived files match the scope; the zone's S6 tests green on `origin/master`.
+- **Post-LAND check** (a review slot, read-only): the LAND commit's `git show --stat` (find its SHA with `git log --oneline --grep 'feat(R5-09)' origin/master`) — the derived files match the scope; the zone's S6 Vitest commands green in a fresh worktree of `origin/master`; the zone's e2e spec once on master (one of the wave's e2e passes). Then the orchestrator removes the lane worktree and its branch: `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-i && git -C /home/sites/shmup-cup branch -D r5/zone-i`.
 - **Docs needs:** everything the lane's reports collected, for `W11.DOCS-*`.
 
 ---
@@ -1107,14 +1237,17 @@ One section per zone: its own files first, then its blocks in order.
   `procedural-zone-h-edge.test.ts` (created by R5-P.P5c).
 - **Tests:** `test/playtest/zone-h.test.ts`; `test/playtest/zone-h-recovery.test.ts` (created by R5-P.P3);
   `test/integration/content-zone-h.test.ts` (created by R5-P.P2b); `test/integration/zones/zone-h.contract.ts`
-  (created by R5-P.P6); `test/golden/golden-zone-h.test.ts` (created by R5-P.P3); `test/integration/zone-h-runtime.test.ts`
+  (created by R5-P.P6); `test/golden/golden-zone-h.test.ts` (created by R5-P.P3 — the outcome expectations; never a
+  replay file) and zone H's own entries in `test/golden/golden.ts` / `test/golden/demos.ts` (descriptions only;
+  both edited in wave 12 by R5-08.S6); `test/integration/zone-h-runtime.test.ts`
   (created by R5-P.P5e from `zones-hi-runtime-edge.test.ts`); `test/e2e/zone-h.spec.ts` (created by R5-P.P5d);
   `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts` (created by R5-P.P5a2);
   `packages/core/test/behaviors/behaviors-sovereign-alloc.test.ts`.
 - **The boss:** IRON SOVEREIGN (`iron-sovereign`; script `boss.sovereign`; 12 parts and **4 phases** on `bc8e05d`;
-  `content.test.ts:2059` asks ≥ 4). **The mid-bosses:** the parade's four echoes (zone H needs no new captain).
-- **Shared, not yours:** `packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts` (zones H and I) — read
-  only.
+  the content case 'gives IRON CITADEL hatches, laser emitters, moving floors and ceilings, a parade and a real
+  finale' asks ≥ 4 — in `content-zone-h.test.ts` since R5-P.P2b). **The mid-bosses:** the parade's four echoes (zone H needs no new captain).
+- **Shared, not yours:** `packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts` (zones H and I) — run
+  it in S4a and S4b, never edit it (BEHAVIOR token).
 - **Palette cycles:** one `cycles` entry, frozen by R5-P.P7.
 - **Zone H's trap:** the moving floors need R5-P.P12's moving-floor support (wave 10). The echoes' sprite names are
   the A, B, D and F bosses' (`bulwark-*`, `maw-*`, `bastion-*`, `regent-*`); they sit in the `common` atlas group
@@ -1129,17 +1262,18 @@ One section per zone: its own files first, then its blocks in order.
 - **Files (only these):** `content/enemies/zone-h.enemies.json` (new entries only; not the `echo-*` entries, not
   `iron-sovereign`); `content/patterns/zone-h.patterns.json` (**new**, only if the design needs it);
   `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts`.
-- **Steps:** `cd RUN_DIR/wt/zone-h && git fetch origin && git rebase origin/master`; add the entries; run the tests;
-  commit on `r5/zone-h` (sources only).
+- **Steps:** `cd /home/sites/shmup-cup-run/wt/zone-h && git branch --show-current && git fetch origin && git rebase origin/master`
+  (the branch must print `r5/zone-h`); add the entries; run the tests; commit on `r5/zone-h` (sources only).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-h.test.ts packages/core/test/behaviors/behaviors-zone-h-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-h.test.ts packages/core/test/behaviors/behaviors-zone-h-edge.test.ts packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts   # the shared guard: run it, never edit it
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts
   ```
 - **Acceptance:** content valid; every script known; aimed bullets ≤ 3.0 px/tick; every new sprite in the atlas.
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** as zone B's S4a: no double multiplication; never rename an id; `tender` frozen.
+- **Traps:** as zone B's S4a: no double multiplication; never rename an id; `tender` frozen; every new name original
+  (`shmup_feat.md` §26).
 - **Docs needs:** the new types for the bestiary and `zones-h-and-i.md`.
 
 ### R5-08.S4b — Zone H boss: IRON SOVEREIGN rebuilt bigger
@@ -1150,17 +1284,22 @@ One section per zone: its own files first, then its blocks in order.
   `boss.sovereign`.
 - **Files (only these):** `content/enemies/zone-h.enemies.json` (the `iron-sovereign` entry);
   `packages/core/test/behaviors/behaviors-sovereign-alloc.test.ts` (re-run; edit only if its fixture moved);
-  `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts`.
+  `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts`;
+  `test/integration/content-zone-h.test.ts` — the boss case of zone B's S4b (the assembled height ≤
+  `Math.round(0.6 * PLAYFIELD_H)`, a reachable `core`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-sovereign-alloc.test.ts packages/core/test/behaviors/behaviors-zone-h.test.ts packages/core/test/behaviors/behaviors-zone-h-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-sovereign-alloc.test.ts packages/core/test/behaviors/behaviors-zone-h.test.ts packages/core/test/behaviors/behaviors-zone-h-edge.test.ts packages/core/test/behaviors/behaviors-mine-emitter-alloc.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts
   ```
-- **Acceptance:** parts ≤ 24; ≥ 4 phases, the last with its spiral (`content.test.ts:2079`); reachable `core`; within
-  60 % of the playfield height; laser lane gaps ≥ 24 px; the guard green (never raise it).
+- **Acceptance:** parts ≤ 24; ≥ 4 phases, the last with its spiral (the content case 'gives IRON CITADEL …'); a
+  reachable `core` and within 60 % of the playfield height (the new `content-zone-h.test.ts` case); laser lane gaps
+  ≥ 24 px; the guards green (never raise them).
 - **Token:** none (branch).
-- **Traps:** boss rest x 508, y 168 (frame-anchored); part offsets within ±768; this block is not in the scout's
-  wave plan for wave 11 — it was moved here from wave 12 because it does not touch the echoes (see the wave report).
+- **Traps:** the boss's `x` / `y` are its entry's ported `screen-x` / `screen-y` values — never re-derive them
+  (rule 4); part offsets within ±768; this block runs in wave 11 rather than wave 12 because it touches no echo
+  (decided by the re-plan).
 - **Docs needs:** parts and phases for the zone doc.
 
 ### R5-08.S5a — Zone H stage geometry
@@ -1170,12 +1309,16 @@ One section per zone: its own files first, then its blocks in order.
 - **Goal:** the design's geometry (`length` 20,000–22,000 px, camera keys, ≥ 5 checkpoints, tilemap, the fortress
   gate's moving floors placed as blocks, tileset variants, 4–6 painted layers, decor, raster rows 0 … 359, `cycles`
   unchanged).
-- **Files (only these):** `content/stages/zone-h.stage.json` (geometry); `content/tilesets/terrain-citadel.tileset.json`.
+- **Files (only these):** `content/stages/zone-h.stage.json` (geometry); `content/tilesets/terrain-citadel.tileset.json`;
+  and only to fix a stand-in the stage needs: `scripts/assets/procedural/citadel.mjs` with
+  `test/scripts/assets/procedural-zone-h.test.ts` and `procedural-zone-h-edge.test.ts` (never its ramp constants).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/palette-cycle-scan.test.ts
   node scripts/content/rescale.mjs --factor 1 --dry-run
+  # only if you touched citadel.mjs:
+  pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-h.test.ts test/scripts/assets/procedural-zone-h-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
 - **Acceptance:** as zone B's S5a (12-px tiles, terrain checks, the cycle scan, `rescale --factor 1` clean).
 - **Token:** none (branch).
@@ -1213,15 +1356,16 @@ The zone reviews `R5-02.RV` … `R5-09.RV` and the post-LAND checks are in each 
 every zone review:
 
 - a **new** review agent each round; the loop ends only at zero findings, nits included;
-- the reviewer reads the branch diff (`git -C RUN_DIR/wt/zone-<x> diff origin/master...r5/zone-<x>`), never edits;
+- the reviewer reads the branch diff (for zone B: `git -C /home/sites/shmup-cup-run/wt/zone-b diff origin/master...r5/zone-b`), never
+  edits;
 - a fixer (`R5-0n.FIX1`, `FIX2`, …) works in the same zone worktree, on the branch, with the zone's file list;
 - zone H's first half (S4a … S5b) is reviewed in wave 12, with S4c and S6 (`R5-08.RV`).
 
 ## Docs item
 
 Starts when the seven LANDs are on `origin/master` and their post-LAND checks are clean. The five agents have
-disjoint files and run at the same time; `W11.DOCS-A` holds PLAN. Inputs: every `R5-0n.*-report.md` in RUN_DIR (the
-"docs needs") and the zone designs `docs/v2-run/designs/zone-<x>.md`.
+disjoint files and run at the same time; `W11.DOCS-A` holds PLAN. Inputs: every `R5-0n.*-report.md` in `/home/sites/shmup-cup-run`
+(the "docs needs") and the zone designs `docs/v2-run/designs/zone-<x>.md`.
 
 ### W11.DOCS-A — The plan and the changelog for the seven zones
 
@@ -1231,10 +1375,12 @@ disjoint files and run at the same time; `W11.DOCS-A` holds PLAN. Inputs: every 
   checkpoints, capsules, timing, stand-in vs real art, the re-bless reason) and its **Manual (owner)** list (generate,
   pick and clean the zone's AI art; play the zone on the M7 and sign off); §17 rows R5-02 … R5-07 and R5-09 →
   `done (owner parts pending)` (decision R5-D7: a zone with stand-ins is done with owner parts pending);
-  CHANGELOG `[Unreleased] — v2` entries; then `python3 .claude/plan_board_v2.py`.
+  CHANGELOG `[Unreleased] — v2` entries; push; then report: the orchestrator runs the board sync.
 - **Files (only these):** `plan_resolution.md` (the R5-02 … R5-07, R5-09 sections and §17 rows only), `CHANGELOG.md`.
-- **Tests:** none (Markdown). Run `python3 .claude/plan_board_v2.py` after the push.
-- **Acceptance:** every hand-off line traceable to a report; the board synced.
+- **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tooling-config.test.ts`
+  (the CHANGELOG's first-section rule). After the push, report: the orchestrator runs the board sync
+  (`python3 .claude/plan_board_v2.py` in its main checkout — docs agents never run it).
+- **Acceptance:** every hand-off line traceable to a report; the test green.
 - **Token:** PLAN.
 - **Traps:** never change a §17 cell of a step this wave did not finish (R5-08 stays `in progress`); the board script
   parses `| R5-0n | … | … |` rows of §17 — keep the three-column shape.
@@ -1281,14 +1427,17 @@ disjoint files and run at the same time; `W11.DOCS-A` holds PLAN. Inputs: every 
 
 1. `git log origin/master` shows the seven LAND commits (`feat(R5-02)` … `feat(R5-09)`, not R5-08), each with its
    re-bless reason.
-2. On a fresh worktree of `origin/master`, for each LANDed zone `<x>`:
-   `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-<x>.test.ts
-   test/golden/golden-zone-<x>.test.ts test/playtest/zone-<x>.test.ts`.
+2. On a fresh worktree of `origin/master`, for the seven LANDed zones (long: shell timeout 3600000):
+   ```bash
+   for z in b c d e f g i; do VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-$z.test.ts test/golden/golden-zone-$z.test.ts test/playtest/zone-$z.test.ts || break; done
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts test/integration/bonus-stage-runtime.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
+   ```
 3. `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts test/scripts/art-origins.test.ts`
    and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts`.
 4. `pnpm content:check` and `pnpm docs:images --check`.
 5. Zone H's branch holds S4a … S5b and is reviewed in wave 12.
-6. The docs review at zero; §17 and the board synced.
+6. The docs review at zero; §17 set by `W11.DOCS-A`, and the board synced by the orchestrator
+   (`python3 .claude/plan_board_v2.py` in its main checkout, after that push is on `origin/master`).
 7. A CI look at most — never wait on it. **Deferred to wave 15:** the whole `pnpm test`, `pnpm test:e2e`, `pnpm bench`.
 
 ## Owner (Manual) — never blocks this wave
