@@ -21,6 +21,7 @@ import {
   uiPx,
 } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The WARNING band's edge colour (core `ui` `UI_COLORS.alert`, 0xf85858). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -116,7 +117,9 @@ test.describe('zone A (web build)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?skip=boss');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu

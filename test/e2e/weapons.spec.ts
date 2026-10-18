@@ -12,6 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -127,7 +128,9 @@ test.describe('player weapons (web build)', () => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     // The 40-tick fly-in, then autofire.
     let first: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && first === null; poll++) {
@@ -157,7 +160,9 @@ test.describe('player weapons (web build)', () => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&loadout=full');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
       await waitFrames(page, 10);
@@ -179,7 +184,9 @@ test.describe('player weapons (Tizen build via file://)', () => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
     await page.goto(TIZEN_INDEX + '?scene=flight&loadout=full');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
       await waitFrames(page, 10);

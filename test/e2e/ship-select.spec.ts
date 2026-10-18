@@ -16,6 +16,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -165,7 +166,7 @@ async function openShips(page: Page, url: string, remote: boolean): Promise<stri
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   const ok = (): Promise<void> => (remote ? remoteTap(page, 13) : tap(page, 'Enter'));
@@ -193,7 +194,13 @@ test.describe('ship select (web build)', () => {
       .toBeGreaterThan(0);
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await expect.poll(async () => (await view(page)).state, { timeout: 10_000 }).toBe('alive');
+    await pollTicks(
+      page,
+      'the ship state',
+      async () => (await view(page)).state,
+      'alive',
+      SHIP_ENTER_TICKS + SCENE_SLACK_TICKS,
+    );
     const game = await view(page);
     expect([game.shipId, game.mode, game.speedLevel]).toEqual(['manta', 'direct', 1]);
     for (const label of ['SHOT', 'SUB', 'ARM', 'SPD', 'DISC']) expect(game.hud).toContain(label);
@@ -212,10 +219,22 @@ test.describe('ship select (Tizen build via file://)', () => {
     await remoteTap(page, 40); // ArrowDown: MANTA
     await remoteTap(page, 13); // OK
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await expect.poll(async () => (await view(page)).state, { timeout: 10_000 }).toBe('alive');
+    await pollTicks(
+      page,
+      'the ship state',
+      async () => (await view(page)).state,
+      'alive',
+      SHIP_ENTER_TICKS + SCENE_SLACK_TICKS,
+    );
     expect((await view(page)).mode).toBe('direct');
     await remoteTap(page, 428); // Ch-: the Speed toggle
-    await expect.poll(async () => (await view(page)).speedLevel).toBe(2);
+    await pollTicks(
+      page,
+      'the speed level',
+      async () => (await view(page)).speedLevel,
+      2,
+      SCENE_SLACK_TICKS,
+    );
     expect(errors).toEqual([]);
   });
 });

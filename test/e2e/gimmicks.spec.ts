@@ -23,6 +23,7 @@ import {
   sy,
 } from './frame-pixels.js';
 import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Face colour of the placeholder `brick` tile (`scripts/assets/procedural/terrain.mjs`). */
 const BRICK = [0xb0, 0x70, 0x4a] as const;
@@ -83,7 +84,9 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=gimmick-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // Near the start the pillar (world x 480…511) is still off screen.
     const start = await stepTo(page, 30);
@@ -106,7 +109,9 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=gimmick-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const start = await stepTo(page, 30);
     let tick = await stepTo(page, start + 450);

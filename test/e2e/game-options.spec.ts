@@ -14,6 +14,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { SAVE_FORMAT } from './save-format.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -201,7 +202,7 @@ async function openPage(
   press: (key: 'Enter' | 'ArrowDown') => Promise<void>,
 ): Promise<void> {
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   await press('Enter'); // PRESS OK → the menu
@@ -216,14 +217,15 @@ async function openPage(
 }
 
 /**
- * From a fresh title: 1 PLAYER → NORMAL → KESTREL → START, the game running.
+ * From a fresh title: 1 PLAYER → NORMAL → KESTREL → START, the game running. Both callers come
+ * straight from a reload, so the title wait is the boot wait and allows {@link BOOT_TIMEOUT_MS}.
  *
  * @param page - The page.
  * @param press - How a key is pressed.
  */
 async function startGame(page: Page, press: (key: 'Enter') => Promise<void>): Promise<void> {
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+  await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
   await waitFrames(page, 10);
   await press('Enter'); // PRESS OK
   await press('Enter'); // 1 PLAYER

@@ -12,6 +12,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, VIEWPORT } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Letterbox colour around the scaled frame (render-pixi `PALETTE.letterbox`). */
 const LETTERBOX = [0x05, 0x07, 0x0f] as const;
@@ -133,7 +134,9 @@ function waitFrames(page: Page, frames: number): Promise<void> {
  */
 async function openRunning(page: Page): Promise<void> {
   await page.goto('./?scene=flight');
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await waitFrames(page, 10);
 }
 
@@ -147,7 +150,9 @@ test.describe('boot error screen (web build)', () => {
     });
     await page.route('**/assets/atlas/*.png', (route) => route.abort());
     await page.goto('./');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'error');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'error', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const overlay = page.locator('canvas[data-shmup-overlay="boot"]');
     await expect(overlay).toHaveCount(1);
     const shot = await shoot(page, 'canvas[data-shmup-overlay="boot"]');

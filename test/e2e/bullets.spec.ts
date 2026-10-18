@@ -11,6 +11,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Body colours of the bullet readability palette (`scripts/assets/procedural/bullets.mjs`). */
 const BULLET_COLOURS = [
@@ -95,7 +96,9 @@ test.describe('enemy bullets (web build, ?stage=test-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
 
     // The first turret spawns at camera x 500 (≈ 9 s in) and fires once it has scrolled in and
     // settled: poll until its bullets are on screen.

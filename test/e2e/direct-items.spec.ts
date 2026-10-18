@@ -16,6 +16,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
 
 /** An RGB colour. */
 type Rgb = readonly [number, number, number];
@@ -188,7 +189,9 @@ test.describe('Direct-mode items (web build)', () => {
     const errors = collectErrors(page);
     await page.goto('./?stage=direct-range');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK
@@ -200,7 +203,13 @@ test.describe('Direct-mode items (web build)', () => {
     await tap(page, 'ArrowDown'); // MANTA
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await expect.poll(async () => (await view(page)).state, { timeout: 15_000 }).toBe('alive');
+    await pollTicks(
+      page,
+      'the ship state',
+      async () => (await view(page)).state,
+      'alive',
+      SHIP_ENTER_TICKS + SCENE_SLACK_TICKS,
+    );
     const start = await view(page);
     expect([start.shipId, start.mode, start.speedLevel, start.armTier]).toEqual([
       'manta',
@@ -237,7 +246,14 @@ test.describe('Direct-mode items (web build)', () => {
       const w = (window as unknown as DebugWindow).__shmupDebug.game.world;
       w.powerups.spawnItem(blue, w.players[0].x, w.players[0].y);
     }, DIRECT_RED + 2);
-    await expect.poll(async () => (await view(page)).armTier, { timeout: 5_000 }).toBe(1);
+    // Flown into on the next tick.
+    await pollTicks(
+      page,
+      'the Arm tier',
+      async () => (await view(page)).armTier,
+      1,
+      SCENE_SLACK_TICKS,
+    );
     let ring = 0;
     for (let poll = 0; poll < 10 && ring < 10; poll++) {
       await waitFrames(page, 3);
@@ -250,7 +266,13 @@ test.describe('Direct-mode items (web build)', () => {
 
     // The keyboard's Speed toggle.
     await tap(page, 'ShiftLeft');
-    await expect.poll(async () => (await view(page)).speedLevel).toBe(2);
+    await pollTicks(
+      page,
+      'the speed level',
+      async () => (await view(page)).speedLevel,
+      2,
+      SCENE_SLACK_TICKS,
+    );
     expect(errors).toEqual([]);
   });
 });

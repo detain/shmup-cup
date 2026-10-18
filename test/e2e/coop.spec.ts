@@ -10,6 +10,7 @@
  * - Esc (player 1's Pause) still opens the pause menu; no console errors.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
 
 /** What the spec reads through `window.__shmupDebug`. */
 interface CoopView {
@@ -108,7 +109,9 @@ test.describe('two-player co-op (web build, split keyboard)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?profile=keyboard-split');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK (player 2's half drives the menus too)
@@ -130,7 +133,14 @@ test.describe('two-player co-op (web build, split keyboard)', () => {
 
     await tap(page, 'Enter'); // player 2's START: it drops in, no pause
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await expect.poll(async () => (await view(page)).p2State, { timeout: 10_000 }).toBe('alive');
+    // Player 2 joins on its START and flies in like a respawn.
+    await pollTicks(
+      page,
+      "player 2's state",
+      async () => (await view(page)).p2State,
+      'alive',
+      SHIP_ENTER_TICKS + SCENE_SLACK_TICKS,
+    );
     game = await view(page);
     expect(game.p2Active).toBe(true);
     for (const label of ['SP', 'MS', 'OP']) expect(game.hud).toContain(label);

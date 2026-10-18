@@ -12,6 +12,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
 
 /** The Option Hunter's violet body (`enemies/option-hunter` palette `p`, #8a3ad8) — unique. */
 const HUNTER_VIOLET = [0x8a, 0x3a, 0xd8] as const;
@@ -177,8 +178,16 @@ test.describe('Option Hunter (web build)', () => {
     test.setTimeout(120_000);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=hunter-range&loadout=full');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
-    await expect.poll(async () => (await view(page)).state, { timeout: 30_000 }).toBe('alive');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
+    await pollTicks(
+      page,
+      'the ship state',
+      async () => (await view(page)).state,
+      'alive',
+      SHIP_ENTER_TICKS + SCENE_SLACK_TICKS,
+    );
     expect((await view(page)).owned).toBe(4);
     // A hunter right on the first Option: it takes the whole chain on its first tick.
     const spawned = await page.evaluate(() => {
@@ -189,7 +198,13 @@ test.describe('Option Hunter (web build)', () => {
       return w.enemies.spawn(index, group.x[0], group.y[0]) !== null;
     });
     expect(spawned).toBe(true);
-    await expect.poll(async () => (await view(page)).stolen, { timeout: 10_000 }).toBe(4);
+    await pollTicks(
+      page,
+      'the Options stolen',
+      async () => (await view(page)).stolen,
+      4,
+      SCENE_SLACK_TICKS,
+    );
     const after = await view(page);
     expect([after.owned, after.carried]).toEqual([0, 4]);
     let drawn: number[] = [0, 0];
@@ -212,7 +227,13 @@ test.describe('Option Hunter (web build)', () => {
       return w.powerups.detonateMegaCrash(0);
     });
     expect(killed).toBeGreaterThanOrEqual(1);
-    await expect.poll(async () => (await view(page)).freed, { timeout: 10_000 }).toBe(4);
+    await pollTicks(
+      page,
+      'the freed Options',
+      async () => (await view(page)).freed,
+      4,
+      SCENE_SLACK_TICKS,
+    );
     expect((await view(page)).carried).toBe(0);
     // Poll a few captures: four frames after the crash its additive white flash
     // (`MEGA_CRASH_FLASH_TICKS`) can still wash the grey out — one such capture read 2 grey pixels
@@ -235,7 +256,13 @@ test.describe('Option Hunter (web build)', () => {
         }
       }
     });
-    await expect.poll(async () => (await view(page)).owned, { timeout: 10_000 }).toBe(4);
+    await pollTicks(
+      page,
+      'the Options owned',
+      async () => (await view(page)).owned,
+      4,
+      SCENE_SLACK_TICKS,
+    );
     expect((await view(page)).freed).toBe(0);
     expect(errors).toEqual([]);
   });

@@ -21,6 +21,7 @@ import {
   uiPx,
 } from './frame-pixels.js';
 import { CONTENT_REASON, R2_03_PENDING, assertionsGated } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The WARNING band's edge colour (0xf85858, the flight scene's WARNING_BAND rows). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -99,7 +100,9 @@ test.describe('boss (web build, ?stage=test-boss)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=test-boss');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await waitFrames(page, 30);
     const before = await capture(page);
     expect(before.band).toBe(0);

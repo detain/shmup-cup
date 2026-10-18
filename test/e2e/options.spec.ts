@@ -12,6 +12,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { SAVE_FORMAT } from './save-format.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The save's `localStorage` key (the web adapter prefixes `core/save`'s `save.v1`). */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -142,7 +143,7 @@ function collectErrors(page: Page): string[] {
  */
 async function openOptions(page: Page): Promise<void> {
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu

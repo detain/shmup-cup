@@ -14,6 +14,7 @@
  *   does not pause again; no console errors.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
 
 /** What the spec reads through `window.__shmupDebug`. */
 interface PadCoopView {
@@ -161,7 +162,9 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
     });
     await page.goto('./');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     // God mode: this test is about whose input moves which ship, so neither may be shot down. A
     // loaded machine runs more ticks per frame, deep enough into zone A for its enemies and terrain
@@ -192,8 +195,21 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
 
     await padTap(page, 9); // the pad's START: player 2's seat and its join, no pause
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await expect.poll(async () => (await view(page)).p2State, { timeout: 10_000 }).toBe('alive');
-    await expect.poll(async () => (await view(page)).screenX[0] > 0).toBe(true);
+    // Player 2 joins on its START and flies in like a respawn.
+    await pollTicks(
+      page,
+      "player 2's state",
+      async () => (await view(page)).p2State,
+      'alive',
+      SHIP_ENTER_TICKS + SCENE_SLACK_TICKS,
+    );
+    await pollTicks(
+      page,
+      'player 1 on screen',
+      async () => (await view(page)).screenX[0] > 0,
+      true,
+      SCENE_SLACK_TICKS,
+    );
     await waitFrames(page, 10);
 
     // The pad's D-pad moves player 2 only.

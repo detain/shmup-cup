@@ -13,6 +13,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { GOLDEN_REASON, recordingIsStale } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** A replay document as the golden and demo files hold it. */
 interface ReplayDocument {
@@ -67,7 +68,9 @@ async function openCheck(page: Page): Promise<string[]> {
     if (message.type() === 'error') errors.push(message.text());
   });
   await page.goto('./?determinism');
-  await expect(page.locator('html')).toHaveAttribute('data-shmup-determinism', 'ready');
+  await expect(page.locator('html')).toHaveAttribute('data-shmup-determinism', 'ready', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   return errors;
 }
 

@@ -12,6 +12,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { HUD_BOTTOM_Y, PLAYFIELD_Y, SCALE } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -157,7 +158,9 @@ test.describe('free flight (web build)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     // Exact ticks, not rAF frames (conventions: a capture compared with another a known time
     // later), and the hull's tail edges, not its centroid (`shipCentre`: the muzzle sparks).
     await freezeSim(page);
@@ -195,7 +198,9 @@ test.describe('free flight (web build)', () => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     // Exact ticks, not rAF frames (conventions: a capture compared with another a known time
     // later): held for frames, the ship could still be a tick short of the margin under load and
     // read 0.9 px "unpinned" (a CI flake at 640×360).
@@ -236,7 +241,9 @@ test.describe('free flight (Tizen build via file://)', () => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(TIZEN_INDEX + '?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await waitFrames(page, 60);
     const start = await shipCentre(page);
     expect(start.pixels).toBeGreaterThan(20);

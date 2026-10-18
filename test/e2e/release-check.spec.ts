@@ -21,6 +21,7 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Boot-to-title budget on CI (plan M2-18; the TV's own budget is 10 s, 5 s ideal). */
 export const BOOT_TO_TITLE_BUDGET_MS = 3000;
@@ -245,7 +246,9 @@ test.describe('release check: boot to title (M2-18)', () => {
       const errors = watchErrors(page);
       await page.goto(build.url);
       const canvas = page.locator('#game');
-      await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+      await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', {
+        timeout: BOOT_TIMEOUT_MS,
+      });
       const { titleAt } = await readProbe(page);
       const bootMs = Number(await canvas.getAttribute('data-shmup-boot-ms'));
       console.info(
@@ -269,7 +272,9 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
 
@@ -345,7 +350,9 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
     const running = await counters(page);
     await waitFrames(page, 20);
     expect((await counters(page)).tick).toBeGreaterThan(running.tick);
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
 
     // User data: only the game's localStorage keys (deleted with the app on Tizen). The debug
     // tools' save import writes the save through the platform's storage as the game does.
@@ -377,7 +384,7 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
     await waitFrames(page, 10);
     await remoteTap(page, BACK);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'confirm');

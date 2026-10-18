@@ -37,6 +37,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim } from './frame-advance.js';
 import { GOLDEN_REASON, R2_03_PENDING } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -279,7 +280,9 @@ test.describe('atlas manifest delivery (R1-05)', () => {
   }) => {
     const log = watch(page);
     await page.goto('./');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
     expect(requested(log, '/assets/atlas/main.json')).toHaveLength(1);
     expect(requested(log, '/assets/atlas/main.png')).toHaveLength(1);
@@ -292,7 +295,9 @@ test.describe('atlas manifest delivery (R1-05)', () => {
     const log = watch(page);
     await page.route('**/assets/atlas/main.json', (route) => route.abort());
     await page.goto('./');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'error');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'error', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect.poll(() => log.console.join('\n')).toContain('ATLAS MANIFEST FAILED TO LOAD');
     // Nothing after the manifest ran: no page was requested.
     expect(requested(log, '/assets/atlas/main.png')).toEqual([]);
@@ -308,7 +313,9 @@ test.describe('atlas manifest delivery (R1-05)', () => {
       await route.fulfill({ response, body: `${await response.text()} ` });
     });
     await page.goto('./');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'error');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'error', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect.poll(() => log.console.join('\n')).toContain('ATLAS DOES NOT MATCH ITS MANIFEST');
     expect(requested(log, '/assets/atlas/main.png')).toEqual([]);
   });
@@ -326,7 +333,9 @@ test.describe('atlas manifest delivery (R1-05)', () => {
     expect(frames.length).toBeGreaterThan(0);
     expect(frames.filter((name) => code.includes(`"${name}"`))).toEqual([]);
     await page.goto(TIZEN_INDEX);
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     // The manifest, then the page, read from disk (`file://` requests show up like any other).
     expect(requested(log, '/assets/atlas/main.json')).toHaveLength(1);
     expect(requested(log, '/assets/atlas/main.png')).toHaveLength(1);
@@ -344,7 +353,9 @@ test.describe('atlas residency (R1-05)', () => {
     const log = watch(page);
     await page.goto('./?stage=zone-b');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const zoneB = zonePages(WEB_MANIFEST, 'zone-b');
     expect(zoneB.pages.length).toBeGreaterThan(0);
     expect(zoneB.pages.length).toBeLessThan(zoneB.total);
@@ -384,7 +395,9 @@ test.describe('atlas residency (R1-05)', () => {
           requestAnimationFrame(next);
         }),
     );
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     expect(
       log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
     ).toEqual([]);
@@ -399,7 +412,9 @@ test.describe('atlas residency (R1-05)', () => {
     // Boot on zone C, so the first demo (another zone) has to swap pages.
     await page.goto('./?stage=zone-c');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await expect(canvas).toHaveAttribute(
       'data-shmup-atlas-pages',
@@ -439,7 +454,9 @@ test.describe('atlas residency (R1-05)', () => {
     await trackGpuPages(page);
     await page.goto('./?stage=zone-c');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     const zoneC = zonePages(WEB_MANIFEST, 'zone-c');
@@ -475,7 +492,9 @@ test.describe('atlas residency (R1-05)', () => {
   }) => {
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const zoneA = zonePages(TIZEN_MANIFEST, 'zone-a');
     expect(zoneA.pages.length).toBeLessThan(zoneA.total);
     await expect(canvas).toHaveAttribute('data-shmup-atlas-pages', zoneA.pages.join(','));

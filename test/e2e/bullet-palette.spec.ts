@@ -12,6 +12,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -129,7 +130,9 @@ test.describe('colour-blind bullet palettes (web build)', () => {
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
@@ -152,7 +155,9 @@ test.describe('colour-blind bullet palettes (web build)', () => {
 
     // The next boot reads the save before the sprite tables are resolved.
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     let seen: PaletteCount | null = null;
     for (let poll = 0; poll < 120 && seen === null; poll++) {
       await waitFrames(page, 20);
@@ -172,7 +177,9 @@ test.describe('colour-blind bullet palettes (web build)', () => {
     await page.goto('./');
     await page.evaluate(() => window.localStorage.clear());
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     let seen: PaletteCount | null = null;
     for (let poll = 0; poll < 120 && seen === null; poll++) {
       await waitFrames(page, 20);

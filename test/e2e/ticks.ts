@@ -26,8 +26,10 @@
  * tick wait would never end. A spec that freezes the sim steps it with `frame-advance.ts` instead.
  *
  * **The delays are core's.** The specs cannot import `@shmup/core` (see `frame-pixels.ts`), so the
- * delays below are pinned mirrors of core's scene-flow constants, like `save-format.ts`.
- * `test/integration/e2e-ticks.test.ts` fails when one moves in core and its copy here does not.
+ * delays below are pinned mirrors of core's scene-flow constants, like `save-format.ts`, and of
+ * the ships' fly-in (`content/player/*.player.json`).
+ * `test/integration/e2e-ticks.test.ts` fails when one moves in core or the content and its copy
+ * here does not.
  *
  * This module imports nothing at run time (only Playwright's `Page` type), so that pin test can
  * load it in Node.
@@ -87,9 +89,17 @@ export const INPUT_TEST_EXIT_TICKS = 60;
 export const REPLAY_END_TICKS = 150;
 
 /**
- * Ticks a scene wait allows on top of the scene's own delay. A menu's OK changes the scene on the
- * next tick, and a delayed push lands a tick after its count; the rest is slack. The specs' own
- * number, not a mirror.
+ * Ticks a ship flies in before it is `alive`: at a game's start (`entering`), and after a death or
+ * a co-op join (`respawning`). The content's `enterTicks`, the longest of the shipped ships in
+ * `content/player/*.player.json` (40 for both today), not a core constant.
+ */
+export const SHIP_ENTER_TICKS = 40;
+
+/**
+ * Ticks a scene wait, or a {@link pollTicks} wait, allows on top of the game's own delay. A menu's
+ * OK changes the scene on the next tick, a delayed push lands a tick after its count, and an item
+ * or an enemy placed by a spec acts on the next tick; the rest is slack. The specs' own number, not
+ * a mirror.
  */
 export const SCENE_SLACK_TICKS = 30;
 

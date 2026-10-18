@@ -25,6 +25,7 @@ import {
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /**
  * Most WebGL draw calls one frame of the raster range may take with its effects on.
@@ -223,7 +224,9 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
     test.skip(PORT_UNMEASURED, PORT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 200);
     const on = await capture(page);
@@ -255,7 +258,9 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
     test.skip(PORT_UNMEASURED, PORT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // Camera x 1 px a tick after the 60-tick ramp: inside [1200, 2400) at tick 1600.
     await stepTo(page, 1600);
@@ -280,7 +285,9 @@ test.describe('display options (web build)', () => {
   test('stretch fills a display the integer mode letterboxes', async ({ page }) => {
     await page.setViewportSize({ width: 1000, height: 600 });
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 30);
     // Integer ×1: a 640×360 frame centred in the 1000×600 window (×2, 768×432 at 384×216) — the
@@ -298,7 +305,9 @@ test.describe('display options (web build)', () => {
 
   test('draws the hitbox markers only while the option is on', async ({ page }) => {
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // After the fly-in the ship is in the playfield.
     let tick = await stepTo(page, 120);

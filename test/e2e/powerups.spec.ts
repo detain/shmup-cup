@@ -20,6 +20,7 @@ import {
   sy,
   uiPx,
 } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -145,7 +146,9 @@ test.describe('Force Field (web build)', () => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&loadout=full');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
       await waitFrames(page, 10);
@@ -171,7 +174,9 @@ test.describe('Force Field (web build)', () => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     // Past the 40-tick fly-in, a few samples: never a ring pixel.
     let hullSeen = false;
     for (let poll = 0; poll < 8; poll++) {
@@ -190,7 +195,9 @@ test.describe('Force Field (Tizen build via file://)', () => {
     test.setTimeout(90_000);
     const errors = collectErrors(page);
     await page.goto(TIZEN_INDEX + '?scene=flight&loadout=full');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     let hullSeen = false;
     for (let poll = 0; poll < 8; poll++) {
       await waitFrames(page, 10);

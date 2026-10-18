@@ -14,6 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -163,7 +164,7 @@ async function storedDisplay(page: Page): Promise<Record<string, unknown> | null
  */
 async function openScaleRow(page: Page): Promise<void> {
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu
@@ -226,7 +227,9 @@ test.describe('display options through the Options screen (web build)', () => {
     await page.goto('./');
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     expect(await rendererDisplay(page)).toEqual({
       scaleMode: 'integer',
       showHitbox: false,
@@ -271,7 +274,9 @@ test.describe('display options through the Options screen (web build)', () => {
 
     // The next boot (free flight on the raster range) starts with them.
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     expect(await rendererDisplay(page)).toEqual({
       scaleMode: 'stretch',
       showHitbox: true,
@@ -292,7 +297,9 @@ test.describe('display options through the Options screen (web build)', () => {
     await page.goto('./');
     await page.evaluate(() => window.localStorage.clear());
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     await stepTo(page, 120);
     const image = await capture(page);
@@ -325,7 +332,9 @@ test.describe('display options through the Options screen (Tizen build from file
     expect((await storedDisplay(page))?.showHitbox).toBe(true);
     // Relaunch: the saved options are applied at boot.
     await page.reload();
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     expect(await rendererDisplay(page)).toEqual({
       scaleMode: 'fit',
       showHitbox: true,

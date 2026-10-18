@@ -12,6 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { VIEWPORT, pixelIndex } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -58,7 +59,9 @@ function watchErrors(page: Page): string[] {
  * @param page - The page.
  */
 async function waitForRunning(page: Page): Promise<void> {
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await page.evaluate(
     () =>
       new Promise<void>((resolve) => {

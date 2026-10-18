@@ -30,6 +30,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { CONTENT_REASON, R2_03_PENDING, assertionsGated } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Layers M3-02e makes render groups (`render-pixi`'s `RENDER_GROUP_LAYERS`). */
 const RENDER_GROUP_COUNT = 11;
@@ -121,7 +122,9 @@ function capture(page: Page): Promise<Buffer> {
  */
 async function open(page: Page, scene: Scene): Promise<void> {
   await page.goto(scene.url);
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await freezeSim(page);
   if (scene.tick > 0) await stepTo(page, scene.tick);
   if (scene.hitbox === true) {
@@ -329,7 +332,9 @@ test.describe('the REB figure the owner reads on the TV (M3-02e)', () => {
     // Played, not frozen: this is the figure read while the game runs, on the busiest shipped
     // zone, with every binding toggling `visible` on every frame.
     await page.goto('./?scene=flight&stage=zone-a');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await settle(page);
 
     // `DEBUG` is deliberately not a render group (it is empty in a release build), which is what

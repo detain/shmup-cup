@@ -21,6 +21,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The webOS build's page, as a `file://` URL. */
 const WEBOS_INDEX = pathToFileURL(
@@ -112,7 +113,7 @@ async function openTitle(page: Page, save: string | null = null): Promise<string
   }
   await page.goto(WEBOS_INDEX);
   const canvas = page.locator('#game');
-  await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+  await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
   await waitFrames(page, 10);
   return errors;

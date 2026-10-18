@@ -10,6 +10,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy, uiPx } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** KESTREL hull colour (`ships/kestrel` and `hud/life` palette `h`, #c8d0e0). */
 const HULL = [0xc8, 0xd0, 0xe0] as const;
@@ -110,7 +111,9 @@ test.describe('lives and game over (web build, ?stage=test-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await waitFrames(page, 60); // past the fly-in
 
     const first = await captureLives(page);

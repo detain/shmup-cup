@@ -40,6 +40,7 @@ import {
   sy,
 } from './frame-pixels.js';
 import { CONTENT_REASON, PORT_REASON, PORT_UNMEASURED, R2_03_PENDING } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -291,7 +292,9 @@ function watchErrors(page: Page): string[] {
  */
 async function open(page: Page, url: string): Promise<void> {
   await page.goto(url);
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   await freezeSim(page);
   await page.evaluate(() => {
     (window as unknown as DebugWindow).__shmupDebug.flags.godMode = true;

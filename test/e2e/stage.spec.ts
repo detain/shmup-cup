@@ -17,6 +17,7 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Colours of the `tiles/terrain-a` placeholder art (surface rim, subsurface, rock tones). */
 const TERRAIN_COLOURS = [
@@ -120,7 +121,9 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // The camera ramps up to 1 px/tick over the first 60 ticks, then holds that speed.
     const start = await stepTo(page, 90);
@@ -152,7 +155,9 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
     });
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight&stage=no-such-stage');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await waitFrames(page, 30);
     const pixels = await terrainPixels(page);
     expect(pixels.playfield + pixels.hud).toBe(0);

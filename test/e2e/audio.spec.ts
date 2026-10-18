@@ -9,6 +9,7 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -98,7 +99,9 @@ test.describe('audio (web build, ?stage=test-range)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     await recordSounds(page);
     await page.goto('./?scene=flight&stage=test-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await waitFrames(page, 10);
     expect(await sounds(page)).toEqual([]); // locked until a gesture (autoplay policy)
     await page.keyboard.press('ArrowDown');
@@ -122,7 +125,9 @@ test.describe('audio (Tizen build via file://)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     await recordSounds(page);
     await page.goto(TIZEN_INDEX + '?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await waitFrames(page, 90);
     const started = await sounds(page);
     const shots = started.filter((sound) => !sound.loop && sound.sampleRate === 22050);

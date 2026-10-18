@@ -16,6 +16,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim } from './frame-advance.js';
 import { GOLDEN_REASON, R2_03_PENDING } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -185,7 +186,9 @@ test.describe('attract loop (web build)', () => {
     const errors = watchErrors(page);
     await page.goto('./');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await freezeSim(page);
     // The title waits, then the demo of zone A plays with its HUD.
@@ -237,7 +240,9 @@ test.describe('attract loop with the v1 demos refused (web build, R2-01 until R2
     const errors = watchErrors(page);
     await page.goto('./');
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await freezeSim(page);
     // The title waits; with no demo it can play, the loop goes straight on to the tables.
@@ -278,7 +283,9 @@ test.describe('attract loop with the v1 demos refused (Tizen build from disk, R2
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await freezeSim(page);
     await runTicks(page, TITLE_ATTRACT_TICKS - (await titleIdle(page)));
@@ -300,7 +307,9 @@ test.describe('attract loop (Tizen build from disk)', () => {
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await freezeSim(page);
     await runTicks(page, TITLE_ATTRACT_TICKS - (await titleIdle(page)));

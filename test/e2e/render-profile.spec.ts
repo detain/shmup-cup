@@ -23,6 +23,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /**
  * The smallest power of two at or above a size.
@@ -140,7 +141,9 @@ test.describe('render profile (web test build, M3-02c)', () => {
   }) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const first = await profile(page);
     // Counting is on (dev / test build) and something was drawn.
     expect(first.rebuilds).toBeGreaterThanOrEqual(0);
@@ -179,7 +182,9 @@ test.describe('render profile (web test build, M3-02c)', () => {
   test('meters the render target a filtered layer pools (review F3)', async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     await stepTo(page, 200);
     const state = await profile(page);
@@ -194,7 +199,9 @@ test.describe('render profile (web test build, M3-02c)', () => {
   test('boots on WebGL1 by default and on WebGL2 with ?gl=2 (review F8)', async ({ page }) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const shipped = await profile(page);
     expect(shipped.webGLVersion).toBe(1);
     expect(shipped.statsWebGLVersion).toBe(1);
@@ -202,7 +209,9 @@ test.describe('render profile (web test build, M3-02c)', () => {
     // The A/B switch: the same page, one query parameter, a WebGL2 context — and a frame that
     // still draws (the overlay's WEBGL figure is what the owner reads on the TV).
     await page.goto('./?scene=flight&gl=2');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     const two = await profile(page);
     expect(two.webGLVersion).toBe(2);
     expect(two.statsWebGLVersion).toBe(2);
@@ -216,7 +225,9 @@ test.describe('render profile (web test build, M3-02c)', () => {
   }) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     // This is a test build — `__SHMUP_DEV__` is on and the debug tools exist — but it was not
     // given `VITE_REPORT_URL`, so `createRenderTelemetry` must start nothing at all: no timer, no
     // listeners, no panel. A dev build the owner is only playing must cost the frame nothing.

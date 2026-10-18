@@ -20,6 +20,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -140,7 +141,9 @@ for (const [name, url] of [
       });
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(url);
-      await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+      await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+        timeout: BOOT_TIMEOUT_MS,
+      });
       await waitFrames(page, 5);
 
       // The first stations are the three explosions (one second each, three bursts per station).

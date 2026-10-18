@@ -37,6 +37,7 @@ import {
   sy,
 } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -259,7 +260,9 @@ test.describe('advanced bosses (web build)', () => {
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await page.goto('./?scene=flight&stage=raid-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // The WARNING at x 400 (≈ 430 ticks), 180 ticks of it, a 240-tick intro: step to the fight.
     let tick = 0;
@@ -311,7 +314,9 @@ test.describe('advanced bosses (web build)', () => {
     );
     await page.reload();
     const canvas = page.locator('#game');
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await waitFrames(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
@@ -359,7 +364,9 @@ test.describe('advanced bosses (web build)', () => {
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await page.goto('./?scene=flight&stage=captain-range');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // CAPTAIN RAM's boss event at x 300 (≈ 315 ticks), then its 60-tick intro.
     const fighting = await stepUntilFight(page, 0, 20);
@@ -383,7 +390,9 @@ test.describe('advanced bosses (Tizen build from file://)', () => {
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX + '?scene=flight');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     // The `boss` event's way in (no WARNING): the EMBER twin brings its partner.
     const started = await page.evaluate(() => {

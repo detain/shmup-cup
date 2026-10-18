@@ -7,6 +7,7 @@
  * the default profile and no errors.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /**
  * Opens a URL of the web build, collecting console errors and the game's warnings, and waits
@@ -28,7 +29,9 @@ async function open(page: Page, url: string): Promise<{ errors: string[]; warnin
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(url);
-  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+  await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+    timeout: BOOT_TIMEOUT_MS,
+  });
   return { errors, warnings };
 }
 

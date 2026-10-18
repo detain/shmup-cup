@@ -31,6 +31,7 @@ import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, PLAYFIELD_Y, VIEWPORT, pixelIndex, sx, sy } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
+import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /**
  * Most WebGL draw calls one frame of the dimension stage may take.
@@ -484,7 +485,9 @@ test.describe('the pseudo-3D dimension stage (web build, ?stage=dimension)', () 
     test.skip(PORT_UNMEASURED, PORT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 240);
     const on = await capture(page);
@@ -517,7 +520,9 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
   }, testInfo) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 240);
     const plain = await capture(page);
@@ -560,7 +565,9 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
   }, testInfo) => {
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 240);
     const normal = await rendererState(page);
@@ -627,7 +634,9 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
     await page.setViewportSize(BLIT_DISPLAY);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 240);
     for (const mode of ['normal', 'classic', 'wide']) {
@@ -678,7 +687,9 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
     // it would not be if the shader still divided by half the display.
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 240);
     for (const mode of ['classic', 'wide']) {
@@ -774,7 +785,9 @@ test.describe('the Mode-7 floor is aligned to the frame (plan M3-02d)', () => {
     // 360-row frame (108 … 207 of v1's 216), and nothing above or below.
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
-    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
+    await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
+      timeout: BOOT_TIMEOUT_MS,
+    });
     await freezeSim(page);
     const tick = await stepTo(page, 240);
     const place = await placementOf(page);
