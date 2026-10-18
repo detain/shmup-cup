@@ -1,8 +1,8 @@
 # Shmup Cup v2 — the 640×360 remaster plan
 
 > **Status:** drafted 2026-10-16; 2026-10-17 — **10 of 37 steps done** (R0-01, R0-02, R1-01, R1-02, R1-03, R1-04,
-> R1-05, R3-01, R3-02, R3-05 — owner parts pending for R0-01, R0-02, R1-05, R3-01, R3-02 and R3-05), 1 in progress
-> (R0-04). The `v1.x`
+> R1-05, R3-01, R3-02, R3-05 — owner parts pending for R0-01, R0-02, R1-05, R3-01, R3-02 and R3-05), 2 in progress
+> (R0-04; R2-01, wave 4). The `v1.x`
 > maintenance branch exists (created from the `v1.0.0` tag, commit `f82e183`, and pushed to `origin`). Everything
 > below happens on `master`, which from now on is the **v2** line.
 >
@@ -2091,13 +2091,13 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
 | R0-02 | The TV render benchmark (`bench:tv`) | done (owner parts pending) — 2026-10-17 |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
-| R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 generated (199 FLUX.2 followups, the halo-crystal / azure-verge regenerations, the fifth image-to-video clip) and waiting for the owner's review on the picker; see `art-prompts/v2/STATUS.md` |
+| R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 generated and reviewed by the owner, every request done (animation frames made in code); waiting for the owner's last review, then winners to `art-prompts/v2/winners/`; see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | done — 2026-10-17 |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
-| R2-01 | Flip the frame; interim art; versioned saves and replays | not started |
+| R2-01 | Flip the frame; interim art; versioned saves and replays | in progress (wave 4: prepare at 384 in four lanes, then one flip commit; decisions W4-1…W4-14 recorded with the step) |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
