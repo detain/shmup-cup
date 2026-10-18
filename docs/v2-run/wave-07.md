@@ -22,7 +22,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 | 4 | `R2-04.Z2` → `R2-04.Z4` | read-only + patches for zones D–F, then bonus / boss rush / loops | none (patches) | none |
 | 5 | `R3-06.L1` → `R3-06.L2` → `R3-06.L4` → `R3-06.L6` | `core/data`, `core/stage`, `core/presentation`, `core/world`, `core/enemies`, `core/bosses`, the new `decor-range` stage; L2: `RENDER_GROUP_LAYERS` only; L4: `render-pixi/src/{sprites,renderer}` after `R3-06.L3` | DATA-INDEX; the core barrel (L2, L4: additions only); FP at L1 (content-DB `examples` only), L2, L4, L6 | L6: `decor raster stage` |
 | 6 | `R3-06.L5` → `R3-06.L3` → `R3-06.L7` | `scripts/content/tiled-import.mjs`, `render-pixi/src/{layers,renderer}`, the render bench | RP-BARREL (L3) | none |
-| 7 | `R4-P.P1` → `R4-P.P2` | `scripts/assets/procedural/**` (split + stubs + registry), `test/scripts/assets/procedural*.test.ts` | the registry `procedural/index.mjs` | none |
+| 7 | `R4-P.P1` → `R4-P.P2` | `scripts/assets/procedural/**` (split + stubs + registry), the campaign credits line, `test/scripts/assets/procedural*.test.ts` | the registry `procedural/index.mjs`; `content/campaign/main.campaign.json` (P1, credits only); FP at P1 (the credits) | none |
 | 8 | `R4-P.P3` → `R4-P.P4` | `scripts/assets/{pipeline,sprite-source,font}.mjs`, `scripts/art-origins.mjs`, the new `scripts/assets/v2kit.mjs` (outside `procedural/`) | none | none |
 
 - **Fillers:** none (the eight lanes fill the eight builder slots; `R5-P.P5e` has its home in wave 9).
@@ -43,7 +43,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
    re-blesses once — a finding on a patch after G's push would need a second re-bless.
 2. **Presentation-only subtasks push directly** (`R2-04.P1`, `R2-04.P3`, `R2-04.P4`, `R2-04.P2` with FP).
 3. **Fingerprints are push-time** (README rule 6): `R2-04.P2`, `R2-04.G`, `R3-06.L1` (the content-DB `examples`
-   digest only), `R3-06.L2`, `R3-06.L4`, `R3-06.L6` (and `R2-04.P1` only if the shell frame fingerprint moves) each
+   digest only), `R3-06.L2`, `R3-06.L4`, `R3-06.L6`, `R4-P.P1` (the credits line only) (and `R2-04.P1` only if the
+   shell frame fingerprint moves) each
    take `/tmp/shmup-cup-land.lock`, rebase, **re-run the print and paste the printed tables**, verify, push. First
    come, first served; never merge a `PINNED` table by hand.
 4. **`packages/render-pixi/src/effects/layer-effects.ts`:** `R2-04.P4` edits it first (if it edits it at all); `R3-06.L3`
@@ -665,6 +666,16 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     no longer does); `ui/pixel` and `ui/missing` stay.
   - stubs returning `[]` (new): `scripts/assets/procedural/thrusters.mjs`, `title.mjs`, `ui-kit.mjs`, `decor.mjs`.
   - `scripts/assets/procedural/index.mjs` — `PROCEDURAL_GENERATORS` (`:62-89`): add every new module, sorted by id.
+  - `content/campaign/main.campaign.json` — the credits only: every registered generator must be named in the
+    credits (`test/integration/content.test.ts:2302-2313`, 'rolls credits that list every placeholder-asset
+    generator, the zones and the bosses', loops over `PROCEDURAL_GENERATORS`), so add the eight new modules to the
+    "PLACEHOLDER ART GENERATORS" section as new lines after its last line (for example
+    `"arm.mjs  blackhole.mjs  decor.mjs"`, `"direct-items.mjs  logo.mjs  thrusters.mjs"`, `"title.mjs  ui-kit.mjs"`),
+    each line within `MAX_CREDITS_LINE_LENGTH` (60) characters and the section within `MAX_CREDITS_LINES` (16) lines
+    (`packages/core/src/data/campaign.ts`; the section has 11 lines today). Change nothing else in the file.
+  - the `PINNED` tables of `test/integration/content-db-fingerprint.test.ts` (only `core.campaign` moves) and
+    `test/integration/presentation-fingerprint.test.ts` (only `runA.credits` / `runB.credits` and the segments after
+    them move) — re-pinned at push time for the credits line.
   - `test/scripts/assets/procedural.test.ts` — only two cases:
     - the registry case (`:243-280`);
     - the ui/logo case (`:1100-1120`, "makes ui/logo …"): import `logo.mjs`, read the sprite from `logo.generate()`
@@ -682,11 +693,22 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* | diff /home/sites/shmup-cup-run/R4-P.P1-atlas-before.sha -
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/scripts/art-origins.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts
   node scripts/art-origins.mjs --check
+  pnpm content:check   # the credits name every registered generator
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts   # unchanged, never re-pinned
   ```
+  then, under the land lock (README rule 6), the re-pin of the credits line:
+  `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
+  test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts` — paste the
+  printed `shipped` table and the printed tables of the walks that moved, then run both tests again without the
+  variable.
 - **Acceptance:** the atlas sha256 identical before and after (the pipeline sorts sprites by name,
   `pipeline.mjs:473`, so moving a sprite between modules does not move it in the atlas); the scale-1 digest pin green;
-  the origin report 0 failures.
-- **Token:** the registry `procedural/index.mjs` (yours, then frozen).
+  the origin report 0 failures; `pnpm content:check` green; the content-DB fingerprint moved only in `core.campaign`
+  and the presentation fingerprint only in `runA.credits` / `runB.credits` and the segments after them, re-pinned with
+  the reason "R4-P.P1: the credits name the new generator modules"; the goldens and the shell frame fingerprint
+  unchanged.
+- **Token:** the registry `procedural/index.mjs` (yours, then frozen); `content/campaign/main.campaign.json` (the
+  credits, work time); FINGERPRINTS (push time, the credits line only).
 - **Traps:**
   - Each moved sprite keeps its seed (`seedOf(name)` — the name, not the module) and its pixels.
   - `makeSprite(name, frames, generator)` writes `origin: 'procedural:<generator>'` (`common.mjs:114-126`). Use the
@@ -870,7 +892,9 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
   `origin/master` (identical); `test/scripts/assets`; the origin report `--check`; `pipeline-v2-sources.test.ts`.
 - **Must hold:** byte-identical atlas at both scales; the scale-1 digest pin untouched; the same test count after the
   split; no banned literal in `v2kit.mjs`; the registry lists every planned module (direct-items, arm, blackhole, logo,
-  thrusters, title, ui-kit, decor).
+  thrusters, title, ui-kit, decor) and the campaign credits name each of them (`pnpm content:check` green); the
+  fingerprints moved only by P1's credits line (content-DB `core.campaign`, presentation `runA.credits` /
+  `runB.credits` and after).
 - **Report:** as above.
 
 ## Docs item
