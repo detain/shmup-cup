@@ -46,7 +46,8 @@ by the quoted code or test title before you edit it.
 - **Goldens:** no subtask of this wave changes a `*.replay.json`. `R5-P.P3` runs
   `node scripts/golden-update.mjs --only zone-b` only to prove that `--only` re-records byte for byte; its commit holds
   no replay file. A filtered re-bless is always `node scripts/golden-update.mjs --only <ids>`, never
-  `pnpm golden:update -- --only <ids>` (pnpm 12 passes the `--` through to the script).
+  `pnpm golden:update -- --only <ids>` (pnpm 12 passes the `--` through to the script). The one exception:
+  `R5-P.P3` runs that form once, in its step 2, only to prove the script accepts pnpm's `--` (no replay changes).
 - **Two exceptions to common rule 7 (`docs/**`) in this wave, both named in their blocks:** the designers commit their
   own design file (`docs/v2-run/designs/zone-<x>.md`, a `docs:` commit) and edit nothing else; `R5-P.LAND` commits
   `docs/v2-run/helpers/land-zone.sh` and its row in `docs/v2-run/helpers/README.md`.
@@ -225,12 +226,15 @@ by the quoted code or test title before you edit it.
   - the 20 core tests that load `shipped('patterns/zones.patterns.json')`:
     `packages/core/test/behaviors/behaviors-{angler,ark,bastion,chase,facet,maw,mine-emitter,rocket-worm,sovereign,squid,steed,swoop,widow}-alloc.test.ts`
     and `behaviors-zones{,-edge,-de,-de-edge,-fg,-fg-edge,-hi}.test.ts` — replace the one load with
-    `...shippedPatterns()`;
-  - `content/patterns/README.md` — only if its sample names `zones.patterns.json`.
+    `...shippedPatterns()`.
+  - **Not** `content/patterns/README.md` or `content/enemies/README.md`: their JSON format samples name no pattern
+    file (checked on `bc8e05d`); only their prose names `zones.patterns.json` (`content/patterns/README.md:103`,
+    `content/enemies/README.md:129`, the `brine.jelly-ring` path) — docs needs for `W09.DOCS-E` (below).
 - **Tests (targeted, run all of them):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
+  pnpm --filter @shmup/core typecheck   # the only typecheck of packages/core/test (shipped.ts, the 20 edited tests)
   # only after R5-P.P10 is on master and you rebased (before that the content-DB fingerprint is expected red):
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content test/golden
@@ -243,7 +247,8 @@ by the quoted code or test title before you edit it.
   - the bank order is unchanged (files sort `common < zone-b < … < zone-i`, as the old single file's actions did), so
     **every golden and demo of zones B, C, E, F, G and I plays back unchanged** (`test/golden` green, no replay
     file in the diff);
-  - `git grep -n "zones.patterns"` returns nothing outside docs;
+  - `git grep -n "zones.patterns" -- ':!*.md'` returns nothing (the Markdown mentions — the two content READMEs, the
+    docs — are the docs agents');
   - the content-DB fingerprint is re-pinned (path names) with the reason in the commit body; the presentation and
     shell fingerprints are unchanged.
 - **Token:** FINGERPRINTS (content-DB only; land lock for the push, after P10).
@@ -252,7 +257,8 @@ by the quoted code or test title before you edit it.
   - A pattern id another file names must keep its id (`git grep '<id>' content/` before you move anything).
   - `example.patterns.json` stays a format sample, not a shipped file.
 - **Docs needs (report them; never edit docs):** `docs/dev/content-data.md`, `content/patterns/README.md` (per-zone
-  pattern files).
+  pattern files; the prose at `:103` names `zones.patterns.json`), `content/enemies/README.md` (`:129`: the
+  `brine.jelly-ring` pattern now lives in `content/patterns/zone-b.patterns.json`).
 
 ### R5-P.P5a1 — Split the zone behaviour tests B–E per zone
 
@@ -324,7 +330,9 @@ by the quoted code or test title before you edit it.
     (`:82` "covers the whole stage…"); split each pair block by zone; find them by title, not by line;
   - `test/playtest/zone-bc-recovery.test.ts`, `zone-de-recovery.test.ts`, `zone-fg-recovery.test.ts`,
     `zone-hi-recovery.test.ts` — **deleted**; `test/playtest/zone-{b,c,d,e,f,g,h,i}-recovery.test.ts` — **new** (8),
-    the same cases split by zone.
+    the same cases split by zone. One assertion changes, on purpose: each pair file's case 'checks four checkpoints
+    per zone' asserts `expect(cases).toHaveLength(8)` (two zones × four checkpoints); in each per-zone file it becomes
+    `toHaveLength(4)`. Nothing else in a case changes.
 - **Steps:**
   1. List the titles before (on `origin/master`) and after your change, and compare:
      ```bash
@@ -333,8 +341,11 @@ by the quoted code or test title before you edit it.
      VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-after.txt    # after
      diff /home/sites/shmup-cup-run/R5-P.P3-list-before.txt /home/sites/shmup-cup-run/R5-P.P3-list-after.txt
      ```
-     The only differences allowed: each split pair block (one old title → its per-zone titles), each listed in the
-     report.
+     The only differences allowed, each listed in the report:
+     - each split golden pair block (one old title → its per-zone titles);
+     - the recovery files' two titles, each shown **4 more times** (4 pair files → 8 zone files): 'checks four
+       checkpoints per zone' and the `it.each` title `%s checkpoint %i: ≥ 3 capsules in the window, all of them
+       dropped` (`vitest list` prints an `it.each` title as its template, once per file, not once per case).
   2. Proof of `--only`: `node scripts/golden-update.mjs --only zone-b` → `git status --short test/golden content/demos`
      is empty (an unchanged sim re-records byte for byte) and the run is green. Then the same with
      `pnpm golden:update -- --only zone-b` (the `--` shape): the same result.
@@ -351,7 +362,7 @@ by the quoted code or test title before you edit it.
 - **Acceptance:**
   - `--only zone-b` rewrites exactly zone B's files (none, when the sim is unchanged) and fails when any other
     golden desyncs (proved by step 3, written in the report);
-  - the same test count and titles before and after; all green;
+  - the same test titles before and after, except the differences step 1 allows (listed in the report); all green;
   - the commit holds **no** `*.replay.json`.
 - **Token:** GOLDEN — verification only (no replay file changes).
 - **Traps:**
@@ -390,6 +401,7 @@ by the quoted code or test title before you edit it.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm typecheck:root && pnpm --filter @shmup/shell typecheck
+  pnpm --filter @shmup/core typecheck   # the only typecheck of packages/core/test (pin-writer.ts, pin-writer.test.ts)
   ```
 - **Acceptance:** update mode twice → no diff; a deliberately changed pin (your own temporary edit) is restored by
   one update run; a normal run is green; `SHMUP_FINGERPRINT_PRINT=1` still prints.
@@ -414,7 +426,9 @@ by the quoted code or test title before you edit it.
 - **Files (only these):** the exception to common rule 7 (`docs/**`): you commit these two files under
   `docs/v2-run/helpers/`, nothing else.
   - `docs/v2-run/helpers/land-zone.sh` — **new**;
-  - `docs/v2-run/helpers/README.md` — one row for the new script.
+  - `docs/v2-run/helpers/README.md` — one row for the new script; and the intro's sentence "All are read-only except
+    `host-check.sh` (…) and `e2e-batch.sh` (…)": if it does not name `land-zone.sh` yet, add it there ("and
+    `land-zone.sh` (which regenerates the derived files, commits and pushes)"). Nothing else in the README.
 - **The script** (`bash docs/v2-run/helpers/land-zone.sh (--only <stageId,…> | --all) --message <file> --zone <x>
   [--dry-run]`, run inside the zone worktree; it takes `/tmp/shmup-cup-land.lock` itself with `flock -w 5400`):
   1. `git fetch origin`; squash the branch to one commit
@@ -438,20 +452,35 @@ by the quoted code or test title before you edit it.
   9. `git add` the explicit derived paths that changed (`test/golden`, `content/demos`, the three fingerprint test
      files, `assets/source/atlas-groups.json`, `docs/images`), `git commit --amend --no-edit`, `git push origin
      HEAD:master`; on a rejected push, release nothing, go back to step 1 (at most 5 times).
-  - `--dry-run`: steps 1–8 in a throwaway clone of the branch, print what would be committed, push nothing.
+  - **On an abort** (any step from 2 on fails, or step 8's scope check): before it exits non-zero, the script runs
+    `git restore --staged --worktree` on the derived paths step 9 lists and deletes the untracked files it created
+    under them (`git clean -fd -- test/golden content/demos docs/images`: a new plate or replay is derived too), so
+    the branch holds sources only again and `git status --short` is empty for the fixer. It logs which step failed.
+  - `--dry-run`: steps 1–8 in a throwaway **`git worktree add --detach`** copy of the branch's `HEAD` (it shares the
+    repository, so `origin/master` is the real one; never a `git clone`, whose `origin` would be the local checkout
+    and its possibly stale `master`); print what would be committed, push nothing, then remove the copy
+    (`git worktree remove --force`). The branch itself is not squashed or changed.
   - Log every step to `RUN_DIR/land-<zone>-<date>.log` (the caller passes `RUN_DIR`).
-- **Tests (targeted):**
+- **Tests (targeted):** the script is not on master yet, so test it from a commit of your own:
+  1. Commit `land-zone.sh` and the README edit in your worktree (do not push yet).
+  2. Make a throwaway worktree from that commit and add the no-op commit there (a comment line in a zone test):
   ```bash
   bash -n docs/v2-run/helpers/land-zone.sh
-  # in a throwaway worktree at origin/master, on a local branch holding one no-op commit (a comment line in a zone test):
+  git worktree add -b land-dry /home/sites/shmup-cup-run/wt/land-dry HEAD
+  printf '// no-op LAND dry run\n' >> /home/sites/shmup-cup-run/wt/land-dry/test/playtest/zone-b.test.ts
+  git -C /home/sites/shmup-cup-run/wt/land-dry commit -am 'test: no-op LAND dry run'
   printf 'test: no-op LAND dry run\n' > /home/sites/shmup-cup-run/R5-P.LAND-msg.txt
-  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-b --message /home/sites/shmup-cup-run/R5-P.LAND-msg.txt --zone b --dry-run
+  cd /home/sites/shmup-cup-run/wt/land-dry && RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-b --message /home/sites/shmup-cup-run/R5-P.LAND-msg.txt --zone b --dry-run
   ```
+  3. Call the script by its relative path from inside `wt/land-dry` (as above): it finds the checkout from its own
+     location, so an absolute path to your own worktree's copy would act on your worktree instead.
+  4. At the end, remove the throwaway worktree and branch:
+     `git worktree remove --force /home/sites/shmup-cup-run/wt/land-dry && git branch -D land-dry`.
 - **Acceptance:** the dry run on a no-op branch reports "nothing derived changed" and passes every check; a dry run
   after a deliberate golden edit in another zone aborts at step 8 or at the `test/golden` check — **commit** that
-  edit on the throwaway branch first (the dry run works in a clone of the branch, so an uncommitted edit is not in
-  it), then drop the commit (`git reset --hard HEAD~1` on the throwaway branch only); `bash -n` clean; the README row
-  explains the arguments.
+  edit on the throwaway branch `land-dry` first (the dry run works in a worktree copy of the branch's `HEAD`, so an
+  uncommitted edit is not in it), then drop the commit (`git -C /home/sites/shmup-cup-run/wt/land-dry reset --hard
+  HEAD~1`, on the throwaway branch only); `bash -n` clean; the README row explains the arguments.
 - **Token:** none (the script itself takes the land lock when it runs for real).
 - **Traps:**
   - Never `git add -A` inside the script; never force-push; never push the zone branch itself (only `HEAD:master`).
@@ -765,7 +794,8 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
   (the font metrics source; the per-zone test layout; golden re-bless per zone; `SHMUP_FINGERPRINT_UPDATE=1`; the
   LAND flow), `docs/dev/api-reference.md` (`UI_SPRITES`, the HUD layout), `docs/dev/debug-and-replays.md` +
   `test/golden/README.md` (`--only`), `docs/dev/content-data.md` + `content/patterns/README.md` (per-zone pattern
-  files), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
+  files; the prose at `:103`) + `content/enemies/README.md` (`:129`: `brine.jelly-ring` now in
+  `content/patterns/zone-b.patterns.json`), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
   `docs/dev/repo-layout.md` (the new test files), `docs/dev/platform-polish.md` + `docs/client/store-submission.md`
   (the icons), `README.md` (the banner), `test/README.md`.
 
