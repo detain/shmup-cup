@@ -16,7 +16,7 @@
  *   over in order, `none` draws no sprites.
  */
 import { describe, expect, it } from 'vitest';
-import { FRAME_CX, GLYPH_H, GLYPH_W } from '../../src/config/index.js';
+import { FRAME_CX, FRAME_H, GLYPH_H, GLYPH_W } from '../../src/config/index.js';
 import {
   MAX_STORY_LINE_LENGTH,
   loadContent,
@@ -417,6 +417,15 @@ describe('core/scenes attract loop — the story at its limits (M2-15 edge cases
     expect(x0).toBeGreaterThanOrEqual(left + pad);
     expect(x0 + line.length * GLYPH_W).toBeLessThanOrEqual(left + w - pad);
     expect((MAX_STORY_LINE_LENGTH + 1) * GLYPH_W).toBeGreaterThan(w - 2 * pad);
+    // The panel holds the window and 4 px around it, centred between the dawn's sea (its lowest
+    // row, 100 down and 24 tall) and the frame's bottom edge (R2-01).
+    const top = ui.y[panel];
+    const h = ui.h[panel];
+    expect([top, h]).toEqual([STORY_WINDOW.top - uiPx(4), STORY_WINDOW.height + uiPx(8)]);
+    const above = top - (uiPx(100) + uiPx(24));
+    const below = FRAME_H - (top + h);
+    expect(above).toBeGreaterThan(0);
+    expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
   });
 
   it('a `none` page draws no sprites; an `invasion` page draws its blasts', () => {

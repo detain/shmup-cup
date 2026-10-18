@@ -46,6 +46,6 @@ export const HUD = Object.freeze({
   tierPipsDx: 3 * GLYPH_W + uiPx(2),
   /** Co-op Direct mode: from a two-glyph label to its pips (13). */
   coopPipsDx: 2 * GLYPH_W + uiPx(1),
-  /** From the caravan clock's `TIME` to its seconds (24). */
-  clockDx: 4 * GLYPH_W,
+  /** From the caravan clock's `TIME` to its seconds: the label and the gap (28). */
+  clockDx: 4 * GLYPH_W + uiPx(4),
 });

@@ -2082,12 +2082,6 @@ const HUD_SCORE_DX = 2 * GLYPH_W + HUD_LABEL_GAP;
 const HUD_HI_W = HUD_SCORE_DX + HUD_DIGITS * GLYPH_W;
 
 /**
- * From the caravan clock's `TIME` label to its seconds: four glyph cells (24 — M3-01); a longer
- * label of the session's language (es `TIEMPO`) pushes them to its end and the gap (R2-01).
- */
-const HUD_CLOCK_DX = 4 * GLYPH_W;
-
-/**
  * Width of the boss HP bar's frame in the top HUD bar (M2-09); the fill is 2 px narrower. As wide
  * as the hi-score display it replaces (64).
  */
@@ -2587,10 +2581,11 @@ export function buildHud(
     const seconds = hudClockSeconds(world);
     list.setString(S.time, text.time);
     list.text(S.time, L.p2X, L.topY, HUD_COLORS.p2);
-    const label = text.time.length * GLYPH_W;
+    // The seconds follow the label and the gap, like the scores (R2-01: v1 drew English's right
+    // after `TIME`, with no gap).
     list.number(
       seconds,
-      L.p2X + (label > HUD_CLOCK_DX ? label + HUD_LABEL_GAP : HUD_CLOCK_DX),
+      L.p2X + text.time.length * GLYPH_W + HUD_LABEL_GAP,
       L.topY,
       0,
       seconds <= 10 ? HUD_COLORS.bossLabel : HUD_COLORS.number,

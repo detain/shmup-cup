@@ -1,5 +1,5 @@
 /**
- * The layout walks of `test/ui/ui-layout-frame*.test.ts` (plan_resolution.md R2-01, lane U):
+ * The layout walks of `test/ui/ui-layout-frame.test.ts` (plan_resolution.md R2-01, lane U):
  * scripted sessions of the scene flow on the **shipped content** that show every scene — the front
  * end, a game with its selects, pause, continue, game over, name entry, the tables and a replay
  * played back, the attract loop, a single stage's STAGE CLEAR, a campaign run through the zone
@@ -16,7 +16,7 @@
  *   1-px borders) drawn before it ends inside that panel.
  *
  * The walks read the frame and font constants through `core/config` like the code under test, so a
- * test file that mocks them (the post-flip metrics) walks the flipped layout. Their scripts follow
+ * test file that mocks them walks that frame's layout. Their scripts follow
  * the presentation fingerprint's walks (`test/integration/presentation-fingerprint.test.ts`), with
  * god mode on so a script never meets an unplanned death.
  */
@@ -1103,106 +1103,4 @@ export function walkLayouts(db: ContentDb, language: string): LayoutReport {
     .sort()
     .map((message) => problems.get(message) as LayoutProblem);
   return { problems: sorted, seen: [...seen].sort(), demos: walks[2].flow.demos.length > 0 };
-}
-
-/** A layout problem the shipped screens draw today and may not fix yet, and why. */
-export interface KnownLayoutProblem {
-  /** The languages it shows in. */
-  readonly languages: readonly string[];
-  /** It shows only at the v1 frame (384×216): the flip resolves it by itself. */
-  readonly v1FrameOnly: boolean;
-  /**
-   * Whether a problem is this one.
-   *
-   * @param problem - A problem the walks found.
-   * @returns `true` when it is.
-   */
-  matches(problem: LayoutProblem): boolean;
-  /** Why it is not fixed now, and who fixes it. */
-  readonly reason: string;
-}
-
-/** The title menu and the overlays drawn over it (which keep it on screen under their panels). */
-const OVER_THE_TITLE = new Set([
-  'title',
-  'difficulty',
-  'shipSelect',
-  'practice',
-  'soundTest',
-  'extra',
-]);
-
-/** Each language's EXIT label of the title menu (the content's `titleExit`). */
-const EXIT_LABELS = new Set(['EXIT', 'SALIR', 'シュウリョウ']);
-
-/**
- * The layout problems the presentation fingerprint pins (`test/integration/presentation-
- * fingerprint.test.ts`): fixing them before R2-01's flip would move pixels the fingerprint must
- * keep until then (no re-pin before the flip — the wave's rule), so they are listed, exactly, and
- * the layout tests fail on anything else **and** on an entry that matches nothing (so the list
- * cannot rot). Lane U's post-flip pass (U3) fixes the rest with its fingerprint re-pin and empties
- * the list.
- */
-export const KNOWN_LAYOUT_PROBLEMS: readonly KnownLayoutProblem[] = Object.freeze([
-  {
-    languages: ['en', 'es', 'ja'],
-    v1FrameOnly: true,
-    matches: (p: LayoutProblem): boolean =>
-      p.kind === 'overlap' &&
-      OVER_THE_TITLE.has(p.where) &&
-      (EXIT_LABELS.has(p.text) || p.text === '→') &&
-      (p.other === 'HI' || /^\d{8}$/.test(p.other)),
-    reason:
-      "the TV's seven-row title menu (EXTRA since M3-01) ends 2 px under the hi-score line at " +
-      '384×216; at 640×360 it ends 15 px above it (the UI grows ×1.5, the frame ×5/3)',
-  },
-  {
-    languages: ['es'],
-    v1FrameOnly: false,
-    matches: (p: LayoutProblem): boolean =>
-      p.kind === 'overlap' &&
-      (p.where === 'title' || p.where === 'soundTest') &&
-      p.text === '→' &&
-      p.other === 'TEST DE SONIDO',
-    reason:
-      "the title menu's cursor sits six glyph cells and 4 px left of the centre (40 px at " +
-      "384×216), and es's 14-glyph TEST DE SONIDO starts seven cells left of it; the " +
-      "fingerprint's es walk pins the title menu — U3 moves the cursor",
-  },
-  {
-    languages: ['es'],
-    v1FrameOnly: false,
-    matches: (p: LayoutProblem): boolean =>
-      p.kind === 'overlap' && p.where === 'difficulty' && p.text === 'CONTINUACIONES',
-    reason:
-      "the difficulty menu's CONTINUES row: es's 14-glyph label runs into its right-aligned " +
-      "number; the fingerprint's es walk shows the difficulty menu — U3 moves the label",
-  },
-]);
-
-/**
- * What a report holds beyond {@link KNOWN_LAYOUT_PROBLEMS}: the problems no entry explains, and
- * the entries (for this language and frame) that explain none.
- *
- * @param report - The walks' report.
- * @param language - Its language.
- * @param v1Frame - The walks ran at the v1 frame (384×216).
- * @returns The unexplained problems' messages and the unused entries' reasons.
- */
-export function unexplained(
-  report: LayoutReport,
-  language: string,
-  v1Frame: boolean,
-): { problems: string[]; unused: string[] } {
-  const entries = KNOWN_LAYOUT_PROBLEMS.filter(
-    (e) => e.languages.includes(language) && (v1Frame || !e.v1FrameOnly),
-  );
-  const used = new Set<KnownLayoutProblem>();
-  const problems: string[] = [];
-  for (const p of report.problems) {
-    const entry = entries.find((e) => e.matches(p));
-    if (entry === undefined) problems.push(p.message);
-    else used.add(entry);
-  }
-  return { problems, unused: entries.filter((e) => !used.has(e)).map((e) => e.reason) };
 }

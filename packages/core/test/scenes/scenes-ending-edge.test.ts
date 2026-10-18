@@ -31,6 +31,7 @@ import {
 import {
   MAX_CREDITS_LINE_LENGTH,
   MAX_ENDING_LINE_LENGTH,
+  MAX_ENDING_TEXT_LINES,
   loadContent,
   type ContentDb,
   type ContentFile,
@@ -452,6 +453,10 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     }
     expect(panel).toBeGreaterThanOrEqual(0);
     expect(ui.y[panel]).toBe(ENDING_TEXT_PANEL.y);
+    // From under the scene to 4 px above the bottom edge (R2-01), with room for the most lines.
+    expect(ui.h[panel]).toBe(ENDING_TEXT_PANEL.h);
+    expect(ui.y[panel] + ui.h[panel]).toBe(FRAME_H - uiPx(4));
+    expect(ui.h[panel]).toBeGreaterThanOrEqual(MAX_ENDING_TEXT_LINES * LINE_H + uiPx(8));
     const left = ui.x[panel];
     const w = ui.w[panel];
     const pad = uiPx(32);

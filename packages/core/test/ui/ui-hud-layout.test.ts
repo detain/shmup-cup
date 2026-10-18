@@ -290,4 +290,22 @@ describe('buildHud layout', () => {
     }
     expect(FRAME_H - L.bottomY).toBe(HUD_BAR_HEIGHT);
   });
+
+  it("draws the caravan clock's seconds the label gap after TIME, like a score (R2-01)", () => {
+    const w = createWorld(resolveGameConfig({}), DB);
+    w.timeLeft = 5999;
+    const list = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
+    buildHud(w, list, resolveUiSprites(DB), true);
+    let label = -1;
+    let seconds = -1;
+    for (let i = 0; i < list.count; i++) {
+      if (list.y[i] !== L.topY || list.x[i] < L.p2X) continue;
+      if (list.op[i] === DrawOp.Text && list.strings[list.ref[i]] === 'TIME') label = i;
+      if (list.op[i] === DrawOp.Number && list.value[i] === 100) seconds = i;
+    }
+    expect(label).toBeGreaterThanOrEqual(0);
+    expect(seconds).toBeGreaterThanOrEqual(0);
+    expect(list.x[label]).toBe(L.p2X);
+    expect(list.x[seconds]).toBe(L.p2X + 4 * GLYPH_W + GAP);
+  });
 });

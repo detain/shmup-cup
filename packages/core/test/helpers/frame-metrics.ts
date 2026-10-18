@@ -4,10 +4,9 @@
  * post-flip one (640×360, 12-px bars and tiles, the interim 9×12 font with its 15-px line,
  * `ART_SCALE` 3/2), and the mocked module itself — every frame and font constant and what derives
  * from them, plus `DEFAULT_GAME_CONFIG`'s internal size. A file mocks the frame with
- * `vi.mock('../../src/config/index.js', …)` (`ui/ui-layout-frame-flip.test.ts`), or loads modules
- * under both frames with `vi.resetModules()` and `vi.doMock`
- * (`scenes/scenes-scroll-frames.test.ts`). This module imports nothing at run time, so a mock
- * factory can import it.
+ * `vi.mock('../../src/config/index.js', …)`, or loads modules under both frames with
+ * `vi.resetModules()` and `vi.doMock` (`scenes/scenes-scroll-frames.test.ts`). This module imports
+ * nothing at run time, so a mock factory can import it.
  */
 import type * as ConfigModule from '../../src/config/index.js';
 

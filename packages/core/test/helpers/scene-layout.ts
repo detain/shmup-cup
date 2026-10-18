@@ -6,20 +6,39 @@
  * 640×360 with the 9×12 font and `ART_SCALE` 3/2. The numbers in parentheses are today's values.
  * A change of a scene's layout changes the formula here too, on purpose.
  */
-import { ART_SCALE, FRAME_CX, FRAME_CY, FRAME_W, GLYPH_H, LINE_H } from '../../src/config/index.js';
+import {
+  ART_SCALE,
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_H,
+  FRAME_W,
+  GLYPH_H,
+  LINE_H,
+} from '../../src/config/index.js';
 import { uiPx } from '../../src/ui/index.js';
 
 /** The story's row pitch (11), as `core/scenes` `STORY_ROW_HEIGHT` derives it. */
 const STORY_ROW = LINE_H + uiPx(1);
 
+/** The story's sprite scenes' lowest row: the dawn's sea, 100 down and 24 tall (124). */
+const STORY_SCENE_BOTTOM = uiPx(100) + uiPx(24);
+
+/** The story crawl's window's height: seven rows at a time, six row pitches and a glyph (74). */
+const STORY_WINDOW_H = 6 * STORY_ROW + GLYPH_H;
+
 /**
- * The story crawl's window: its top (132) and bottom (206) rows — seven rows at a time, six row
- * pitches and a glyph — and its height (74).
+ * The story crawl's window: its top and bottom rows (133 and 207; 214 and 328 at 640×360) and its
+ * height — 4 px inside the story's panel, which is centred between the scene's lowest row and the
+ * frame's bottom edge (R2-01).
  */
+const STORY_WINDOW_TOP =
+  ((STORY_SCENE_BOTTOM + FRAME_H - (STORY_WINDOW_H + uiPx(8))) >> 1) + uiPx(4);
+
+/** See {@link STORY_WINDOW_TOP}. */
 export const STORY_WINDOW = Object.freeze({
-  top: uiPx(132),
-  bottom: uiPx(132) + 6 * STORY_ROW + GLYPH_H,
-  height: 6 * STORY_ROW + GLYPH_H,
+  top: STORY_WINDOW_TOP,
+  bottom: STORY_WINDOW_TOP + STORY_WINDOW_H,
+  height: STORY_WINDOW_H,
 });
 
 /**
@@ -42,10 +61,18 @@ export function scenePx(px: number): number {
   return (px * ART_SCALE * 2) >> 1;
 }
 
-/** The ending's epilogue panel (under its sprite scene): its top (124) and first line (129). */
+/**
+ * The ending's epilogue panel (under its sprite scene): its top, first line and height — from 4 px
+ * under the scene's lowest row (the horizon band, 104 down and 16 tall) to 4 px above the frame's
+ * bottom edge (124, 129 and 88; 186, 194 and 168 at 640×360 — R2-01).
+ */
+const ENDING_TEXT_Y = uiPx(104) + uiPx(16) + uiPx(4);
+
+/** See {@link ENDING_TEXT_Y}. */
 export const ENDING_TEXT_PANEL = Object.freeze({
-  y: uiPx(124),
-  lineY: uiPx(124) + uiPx(5),
+  y: ENDING_TEXT_Y,
+  lineY: ENDING_TEXT_Y + uiPx(5),
+  h: FRAME_H - uiPx(4) - ENDING_TEXT_Y,
 });
 
 /** The WARNING band: its height (48) and top row (`FRAME_CY − 8 − 24`: 76). */

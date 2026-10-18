@@ -1746,18 +1746,39 @@ const UI_STRINGS = 512;
 /** Commands of the UI list (M2-10: 384 — the zone map's graph). */
 const UI_COMMANDS = 384;
 
+/** The title menu's first row: just below the frame's centre row. */
+const TITLE_MENU_Y = FRAME_CY + uiPx(10);
+
 /**
- * Where the title menu is drawn: from just below the frame's centre row (a constant: redrawing
- * allocates nothing). The cursor sits left of the centred labels, so its offset is text-sized:
- * half the longest English label (`SOUND TEST`, five of its ten cells), the cursor's own cell and
- * 4 px (40 at 384×216).
+ * The title menu's cursor sits left of the centred labels, by half the longest label at least
+ * this many glyph cells wide — English `SOUND TEST`'s ten, v1's offset — so a language whose
+ * longest label is shorter keeps that offset.
  */
-const TITLE_MENU_LAYOUT: MenuLayout = Object.freeze({
-  x: FRAME_CX,
-  y: FRAME_CY + uiPx(10),
-  align: TextAlign.Center,
-  cursorX: FRAME_CX - 6 * GLYPH_W - uiPx(4),
-});
+const TITLE_MENU_MIN_CELLS = 10;
+
+/** From the title menu's longest label back to its cursor: the cursor's own cell and 4 px. */
+const TITLE_CURSOR_GAP = GLYPH_W + uiPx(4);
+
+/**
+ * Where the title menu is drawn, for its labels (built once, when the title is created — redrawing
+ * allocates nothing): from {@link TITLE_MENU_Y}, centred on the frame, the cursor
+ * {@link TITLE_CURSOR_GAP} left of the longest label — es `TEST DE SONIDO` pushes it further left
+ * than English's `SOUND TEST` (R2-01's layout check) — and never right of
+ * {@link TITLE_MENU_MIN_CELLS}' offset (`FRAME_CX − 6·GLYPH_W − 4`: 260 at 640×360).
+ *
+ * @param labels - The menu's labels, in the session's language.
+ * @returns The layout (frozen).
+ */
+function titleMenuLayout(labels: readonly string[]): MenuLayout {
+  let cells = TITLE_MENU_MIN_CELLS;
+  for (const label of labels) if (label.length > cells) cells = label.length;
+  return Object.freeze({
+    x: FRAME_CX,
+    y: TITLE_MENU_Y,
+    align: TextAlign.Center,
+    cursorX: FRAME_CX - ((cells * GLYPH_W) >> 1) - TITLE_CURSOR_GAP,
+  });
+}
 
 /**
  * The title's layout: the logo (or the game's name as text) above the frame's centre row, the
@@ -2412,6 +2433,8 @@ export class TitleScene extends SceneBase {
    * a campaign (M2-06 added 2 PLAYERS, M2-15 PRACTICE and SOUND TEST).
    */
   readonly menu: ListMenu;
+  /** Where {@link TitleScene.menu} is drawn: its cursor clears the session language's labels. */
+  private readonly menuLayout: MenuLayout;
   /** 0 = `PRESS OK`, 1 = the menu. */
   phase: number = TitlePhase.Prompt;
   /**
@@ -2445,6 +2468,7 @@ export class TitleScene extends SceneBase {
         (content.campaign === null ? 1 << TitleItem.Practice : 0) |
         (extra ? 0 : 1 << TitleItem.Extra),
     });
+    this.menuLayout = titleMenuLayout(items);
   }
 
   /**
@@ -2567,7 +2591,8 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * Draws the logo, the prompt or the menu, and the session hi-score.
+   * Draws the logo, the prompt or the menu, and — while no menu is open over the title — the
+   * session hi-score.
    *
    * @param list - The UI list.
    */
@@ -2588,10 +2613,17 @@ export class TitleScene extends SceneBase {
         list.text(base + 1, FRAME_CX, L.promptY, UI_COLORS.text, TextAlign.Center);
       }
     } else {
-      drawMenu(list, this.menu, base + 3, TITLE_MENU_LAYOUT, t);
+      drawMenu(list, this.menu, base + 3, this.menuLayout, t);
     }
-    list.text(base + 2, L.hiX, L.hiY, UI_COLORS.focus);
-    list.number(this.flow.hiScore, L.scoreX, L.hiY, 8, UI_COLORS.text);
+    // The session hi-score is the title screen's own line (R2-01): a menu opened over the title
+    // hides it — the difficulty menu shows the preset's best, and at 640×360 the Options pages'
+    // panel no longer reaches down to it —, the exit question leaves it. A push or pop redraws
+    // every scene, so this follows the stack.
+    const top = this.flow.stack.top;
+    if (top === this || top === this.flow.confirm) {
+      list.text(base + 2, L.hiX, L.hiY, UI_COLORS.focus);
+      list.number(this.flow.hiScore, L.scoreX, L.hiY, 8, UI_COLORS.text);
+    }
     if (this.secretTicks > 0) {
       list.setString(base + 3 + menuStringSlots(this.menu), this.secretMessage);
       list.text(
@@ -5162,8 +5194,16 @@ const DIFFICULTY_LAYOUT = Object.freeze({
   labelX: DIFFICULTY_PANEL.x + uiPx(12),
   /** The lives' number x (60 px in). */
   livesX: DIFFICULTY_PANEL.x + uiPx(60),
-  /** `CONTINUES`'s x (80 px in). */
+  /** `CONTINUES`'s x (80 px in), unless the label is too long for it (see `continuesEnd`). */
   continuesX: DIFFICULTY_PANEL.x + uiPx(80),
+  /**
+   * The furthest right `CONTINUES` may end: 4 px before its number's one digit (at most
+   * `MAX_CONTINUES`, 9), so a longer label of the session's language (es `CONTINUACIONES`) starts
+   * further left (R2-01).
+   */
+  continuesEnd: DIFFICULTY_PANEL.x + DIFFICULTY_PANEL.w - uiPx(12) - GLYPH_W - uiPx(4),
+  /** A label's gap to its number when the row is tight (4). */
+  numberGap: uiPx(4),
   /** The right-aligned numbers' right edge (12 px in from the panel's right edge — 164 in). */
   rightX: DIFFICULTY_PANEL.x + DIFFICULTY_PANEL.w - uiPx(12),
   /** From the first line to the `HI` line (12). */
@@ -5195,6 +5235,27 @@ export class DifficultyScene extends SceneBase {
   override readonly dim = PAUSE_DIM;
   /** The presets, in {@link DIFFICULTY_PRESETS} order. */
   readonly menu: ListMenu = createListMenu(this.flow.labels.difficulty.slice());
+  /**
+   * `CONTINUES`'s x in the session's language (R2-01): `DIFFICULTY_LAYOUT.continuesX`, or further
+   * left when the label would run into its number.
+   */
+  private readonly continuesX = Math.min(
+    DIFFICULTY_LAYOUT.continuesX,
+    DIFFICULTY_LAYOUT.continuesEnd - this.flow.text.continues.length * GLYPH_W,
+  );
+  /**
+   * The lives' number x (R2-01): `DIFFICULTY_LAYOUT.livesX`, or — when `CONTINUES` had to move
+   * left — right after `LIVES` and the gap, so each number stays by its own label.
+   */
+  private readonly livesX =
+    this.continuesX < DIFFICULTY_LAYOUT.continuesX
+      ? Math.min(
+          DIFFICULTY_LAYOUT.livesX,
+          DIFFICULTY_LAYOUT.labelX +
+            this.flow.text.lives.length * GLYPH_W +
+            DIFFICULTY_LAYOUT.numberGap,
+        )
+      : DIFFICULTY_LAYOUT.livesX;
 
   /** See {@link SceneBase.stringSlots}. */
   get stringSlots(): number {
@@ -5268,8 +5329,8 @@ export class DifficultyScene extends SceneBase {
     const L = DIFFICULTY_LAYOUT;
     const y = p.y + p.h - PANEL_NOTE_DY;
     list.text(base + 1, L.labelX, y, UI_COLORS.title);
-    list.number(config.startingLives, L.livesX, y, 0, UI_COLORS.text);
-    list.text(base + 2, L.continuesX, y, UI_COLORS.title);
+    list.number(config.startingLives, this.livesX, y, 0, UI_COLORS.text);
+    list.text(base + 2, this.continuesX, y, UI_COLORS.title);
     list.number(config.continues, L.rightX, y, 0, UI_COLORS.text, TextAlign.Right);
     list.text(base + 3, L.labelX, y + L.rowStep, UI_COLORS.focus);
     const best = this.flow.bests[this.flow.bestIndex(this.focused)] ?? 0;
@@ -6878,21 +6939,6 @@ const ENDING_LAYOUT = Object.freeze({
 });
 
 /**
- * The epilogue's panel under the sprite scene (M2-14): left, top, width, height — as wide as the
- * result card; its top follows the scene's horizon (the sprite scenes are laid out from the top);
- * it holds an epilogue's most lines, {@link MAX_ENDING_TEXT_LINES} of `LINE_H`, and 8 px (88).
- */
-const ENDING_TEXT_PANEL = Object.freeze({
-  x: TEXT_PANEL_INSET,
-  y: uiPx(124),
-  w: FRAME_W - 2 * TEXT_PANEL_INSET,
-  h: MAX_ENDING_TEXT_LINES * LINE_H + uiPx(8),
-});
-
-/** From the epilogue panel's top to its first line (5). */
-const ENDING_TEXT_DY = uiPx(5);
-
-/**
  * The art's scale in halves (2 at `ART_SCALE` 1, 3 at 3/2): the sprite scenes scale how far a
  * piece has moved by it in whole numbers, `(px * ART_HALVES) >> 1` — exact, with no fraction per
  * frame (their positions are {@link uiPx} constants).
@@ -6991,6 +7037,33 @@ const ENDING_SCENE_LAYOUT = Object.freeze({
   deepShipX: uiPx(110),
   deepShipY: uiPx(110),
 });
+
+/**
+ * The ending scenes' lowest row: the citadel's horizon band and the deep's water both end there
+ * (120; 180 at 640×360). What a scene draws below it — the sun before it rises, the citadel and
+ * the ARK sinking — is hidden by the epilogue's panel.
+ */
+const ENDING_SCENE_BOTTOM = ENDING_SCENE_LAYOUT.horizonY + ENDING_SCENE_LAYOUT.horizonH;
+
+/** The epilogue panel's margin under the scene's lowest row and above the bottom edge (4). */
+const ENDING_TEXT_MARGIN = uiPx(4);
+
+/**
+ * The epilogue's panel under the sprite scene (M2-14): left, top, width, height — as wide as the
+ * result card, from 4 px under the scene to 4 px above the frame's bottom edge (124 and 88 tall at
+ * 384×216; 186 and 168 tall at 640×360 — R2-01: the scene grows with the art, ×1.5, the frame
+ * ×5/3, so the panel takes the room left under it). It holds an epilogue's most lines,
+ * {@link MAX_ENDING_TEXT_LINES} of `LINE_H`, and 8 px.
+ */
+const ENDING_TEXT_PANEL = Object.freeze({
+  x: TEXT_PANEL_INSET,
+  y: ENDING_SCENE_BOTTOM + ENDING_TEXT_MARGIN,
+  w: FRAME_W - 2 * TEXT_PANEL_INSET,
+  h: FRAME_H - ENDING_SCENE_BOTTOM - 2 * ENDING_TEXT_MARGIN,
+});
+
+/** From the epilogue panel's top to its first line (5). */
+const ENDING_TEXT_DY = uiPx(5);
 
 /** Ticks the sprite scenes play before the citadel has fallen / the ship reaches the light. */
 const ENDING_SCENE_TICKS = 480;
@@ -7563,32 +7636,70 @@ export const STORY_HOLD_TICKS = 90;
 /** String slots of the story crawl: rows in its window at once, taken by row number. */
 export const STORY_STRING_SLOTS = 10;
 
-/** Top of the story crawl's window (a row above it is not drawn — 132). */
-const STORY_WINDOW_TOP = uiPx(132);
+/**
+ * The story's sprite scenes' composition, laid out from the frame's top-left (R4-05 redraws them):
+ * where the pieces sit, at the art's scale.
+ */
+const STORY_SCENE_LAYOUT = Object.freeze({
+  /** The dawn: the star's lowest row (104), the sea (100, 24 tall), the surface's row (98). */
+  sunY: uiPx(104),
+  seaY: uiPx(100),
+  seaH: uiPx(24),
+  surfaceY: uiPx(98),
+  /** The sea surface's tiles: their pitch (64) and offset (32). */
+  surfaceStep: uiPx(64),
+  surfaceDx: uiPx(32),
+  /** The invasion: the fortress (270, 70) and the flagship (330, 100) where they stop. */
+  citadelX: uiPx(270),
+  citadelY: uiPx(70),
+  arkX: uiPx(330),
+  arkY: uiPx(100),
+  /** The launch: the ships start 16 px left of the edge, on rows 56 and 32 px apart. */
+  shipStartX: uiPx(16),
+  shipY: uiPx(56),
+  shipStep: uiPx(32),
+  /** A ship's trail: 40 px behind it, 24 long. */
+  trailDx: uiPx(40),
+  trailW: uiPx(24),
+  /** The logo's row (72). */
+  logoY: uiPx(72),
+});
+
+/** The story's sprite scenes' lowest row: the dawn's sea ends there (124; 186 at 640×360). */
+const STORY_SCENE_BOTTOM = STORY_SCENE_LAYOUT.seaY + STORY_SCENE_LAYOUT.seaH;
 
 /**
- * Bottom of the story crawl's window: rows come in here. The window holds seven rows at a time —
- * six {@link STORY_ROW_HEIGHT} pitches and a glyph (206).
+ * Height of the story crawl's window: it holds seven rows at a time — six
+ * {@link STORY_ROW_HEIGHT} pitches and a glyph (74).
  */
-const STORY_WINDOW_BOTTOM = STORY_WINDOW_TOP + 6 * STORY_ROW_HEIGHT + GLYPH_H;
+const STORY_WINDOW_H = 6 * STORY_ROW_HEIGHT + GLYPH_H;
+
+/** The story's text panel's height: the window and 4 px around it (82). */
+const STORY_PANEL_H = STORY_WINDOW_H + uiPx(8);
+
+/**
+ * The story's text panel under the sprite scene: left, top, width, height — the frame's width
+ * less 40 px each side, centred in the room between the scene's lowest row and the frame's bottom
+ * edge (R2-01: the scene grows with the art, ×1.5, the frame ×5/3 — 210 at 640×360).
+ */
+const STORY_PANEL = Object.freeze({
+  x: TEXT_PANEL_INSET,
+  y: (STORY_SCENE_BOTTOM + FRAME_H - STORY_PANEL_H) >> 1,
+  w: FRAME_W - 2 * TEXT_PANEL_INSET,
+  h: STORY_PANEL_H,
+});
+
+/** Top of the story crawl's window, 4 px inside its panel (a row above it is not drawn). */
+const STORY_WINDOW_TOP = STORY_PANEL.y + uiPx(4);
+
+/** Bottom of the story crawl's window: rows come in here. */
+const STORY_WINDOW_BOTTOM = STORY_WINDOW_TOP + STORY_WINDOW_H;
 
 /**
  * How far a page's first row has crawled into the window (pixels) when its scene takes over:
  * half the window, so the scene changes while the page's text is on screen.
  */
-const STORY_PAGE_LEAD = (STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP) >> 1;
-
-/**
- * The story's text panel under the sprite scene: left, top, width, height — the frame's width
- * less 40 px each side; its top follows the scene's horizon (the sprite scenes are laid out from
- * the top), like the window's: the window and 4 px around it (128, 82).
- */
-const STORY_PANEL = Object.freeze({
-  x: TEXT_PANEL_INSET,
-  y: STORY_WINDOW_TOP - uiPx(4),
-  w: FRAME_W - 2 * TEXT_PANEL_INSET,
-  h: STORY_WINDOW_BOTTOM - STORY_WINDOW_TOP + uiPx(8),
-});
+const STORY_PAGE_LEAD = STORY_WINDOW_H >> 1;
 
 /** Ticks after which a demo's zone card (its zone's label and name) disappears. */
 const DEMO_CARD_TICKS = 180;
@@ -8262,35 +8373,6 @@ const INVASION_BLASTS: readonly number[] = Object.freeze([
 
 /** {@link INVASION_BLASTS} at the art's scale. */
 const INVASION_BLAST_POINTS: readonly number[] = uiOffsets(INVASION_BLASTS);
-
-/**
- * The story's sprite scenes' composition, laid out from the frame's top-left (R4-05 redraws them):
- * where the pieces sit, at the art's scale.
- */
-const STORY_SCENE_LAYOUT = Object.freeze({
-  /** The dawn: the star's lowest row (104), the sea (100, 24 tall), the surface's row (98). */
-  sunY: uiPx(104),
-  seaY: uiPx(100),
-  seaH: uiPx(24),
-  surfaceY: uiPx(98),
-  /** The sea surface's tiles: their pitch (64) and offset (32). */
-  surfaceStep: uiPx(64),
-  surfaceDx: uiPx(32),
-  /** The invasion: the fortress (270, 70) and the flagship (330, 100) where they stop. */
-  citadelX: uiPx(270),
-  citadelY: uiPx(70),
-  arkX: uiPx(330),
-  arkY: uiPx(100),
-  /** The launch: the ships start 16 px left of the edge, on rows 56 and 32 px apart. */
-  shipStartX: uiPx(16),
-  shipY: uiPx(56),
-  shipStep: uiPx(32),
-  /** A ship's trail: 40 px behind it, 24 long. */
-  trailDx: uiPx(40),
-  trailW: uiPx(24),
-  /** The logo's row (72). */
-  logoY: uiPx(72),
-});
 
 /**
  * The attract loop's story crawl (shmup_feat.md §17 "attract-mode story crawl — text over sprite
