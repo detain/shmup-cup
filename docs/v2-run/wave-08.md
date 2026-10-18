@@ -5,6 +5,13 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w08-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w08-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
 
 **Steps:** R4-01 (A1a … A8), R4-02 (B1 … B3), R4-03 (C1 … C7), R4-04 (D1 … D4), R4-05 (E1 … E4). The integrators
 `R4-01.A9`, `R4-02.B4`, `R4-05.E5` and `R4-05.E6` have their blocks in [`wave-09.md`](wave-09.md). · **Gate to start:**
@@ -40,7 +47,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 ## Rules for this wave
 
 1. **RR-1 option A, always.** A v2 sprite is a **new** `assets/source/sprites/<path>.v2.sprite.json` (native implied)
-   or a generator branch on `options.artScale !== 1` with `native: true` on the v2 sprites only. Never edit a v1 pixel
+   or a generator branch on `(options.artScale ?? 1) !== 1` (with `export function generate(options = {})`, as
+   `lasers.mjs:139-140`: a call without options draws v1, which the per-generator tests rely on) with `native: true`
+   on the v2 sprites only. A new v2-only name (absent at scale 1, RR-1a) must be native: the relation case of
+   `interim-pipeline.test.ts` accepts it only then (`R4-P.P3`); never edit that case. Never edit a v1 pixel
    map, the v1 font `assets/source/fonts/pixel6x8.font.json`, or a generator's v1 path. The scale-1 digest pin
    (`test/scripts/assets/interim-pipeline.test.ts:341-357`, `fa4198…`) must stay green and is **never re-pinned**.
 2. **Bible sizes, not frame sizes.** Sprite sizes are the art bible's (`docs/dev/art-bible-v2.md` §5): v1 × 1.5,
@@ -144,13 +154,17 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `content/player/kestrel.player.json`, `content/player/manta.player.json` — `"bankFrames": 2` (`:16`, today 1).
   - `packages/shell/src/showcase/index.ts` — the bank mapping at `:300` (`at[2] > 0.35 ? 2 : …`) → the 5-frame mapping.
   - `packages/shell/test/showcase/showcase.test.ts`.
+  - `test/integration/world-flight.test.ts` — only the case 'has the plan tunables, identical to the built-in
+    fallback ship': drop `'bankFrames'` from the key list and add `expect(kestrel.bankFrames).toBe(2)` with the
+    comment "R4-01.A1b: the v2 ships have five bank frames; DEFAULT_PLAYER_SHIP keeps 1" (leave
+    `DEFAULT_PLAYER_SHIP` alone: core's content-free tests use it).
   - `test/golden/*.replay.json`, `content/demos/*.replay.json` (via `pnpm golden:update`).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/player
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/frame-fingerprint.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/scripts/assets/ships-v2.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/scripts/assets/ships-v2.test.ts test/integration/world-flight.test.ts
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh ship-select.spec.ts flight.spec.ts attract.spec.ts
   ```
@@ -159,9 +173,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   re-blessed"; all three fingerprints re-pinned; `content:check` green (frame counts ≥ `2 · bankFrames + 1` = 5).
 - **Token:** GOLDEN + FINGERPRINTS (land lock, fetch to push).
 - **Traps:** the frame-count change (`bankFrames`) lands in the **same commit** as the 5-frame art (rule 3); the v1
-  pixel maps keep 3 frames and `bankFrames` 1 would index them past their end at scale 1 — the scale-1 build is used
-  only by the bench, CJK figures and store icons, which never fly a ship, but check `content:check` and the bench atlas
-  test; on a rebase conflict in a replay file: take master's and re-run `golden:update`.
+  pixel maps keep 3 frames, and `bankFrames` 2 indexes frames 3–4, past their end, at scale 1 — allowed by decision
+  RR-1b (owner-confirmed): the scale-1 build (the bench, CJK figures, store icons) never flies a ship, but check
+  `content:check` and the bench atlas test; on a rebase conflict in a replay file: take master's and re-run
+  `golden:update`.
 - **Docs needs:** `content/player/README.md` (`bankFrames`), the plan's As built (the re-bless reason).
 
 ### R4-01.A2 — A thruster behind each ship (FP)
@@ -178,15 +193,18 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `syncWorldView` (from `:2088`) pushes the thruster before the ship.
   - art: `assets/source/sprites/ships/kestrel-thruster.v2.sprite.json` → 4 frames; `ships/manta-thruster` — a new name,
     **only** as `assets/source/sprites/ships/manta-thruster.v2.sprite.json` (new) or on the v2 path of
-    `scripts/assets/procedural/thrusters.mjs` (the R4-P.P1 stub; it returns `[]` at `options.artScale === 1`), with a
-    `p2` map. The name is absent at scale 1 (decision RR-1a: a new v2-only name gets no v1 stand-in). Never add a v1
-    `manta-thruster.sprite.json`.
+    `scripts/assets/procedural/thrusters.mjs` (the R4-P.P1 stub; it returns `[]` at `(options.artScale ?? 1) === 1`),
+    with a `p2` map. The name is absent at scale 1 (decision RR-1a: a new v2-only name gets no v1 stand-in). Never
+    add a v1 `manta-thruster.sprite.json`.
   - `packages/shell/src/showcase/index.ts` — the thruster frame at `:301` (`(tick >> 2) & 1`) only if it must change.
+  - `packages/core/src/player/index.ts` — only `DEFAULT_PLAYER_SHIP`: the new resolved field(s) (`thrusterId: -1`,
+    and `thrusterP2Id: -1` if you add one, like `spriteP2Id`).
   - `packages/core/test/world/world-thruster.test.ts` (new), `world-thruster-alloc.test.ts` (new).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/world packages/core/test/data
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/world packages/core/test/data packages/core/test/player
+  pnpm --filter @shmup/core typecheck
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/frame-fingerprint.test.ts
   pnpm content:check
@@ -239,8 +257,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   animated parts drawn by `scripts/assets/procedural/ending.mjs`'s v2 path (today `ui/ending-citadel`, `-ark`,
   `-blast` (4 frames), `-bubble`, `-sun`, `-surface`, `ending.mjs:50-57`).
 - **Files (only these; checked on `bc8e05d`):**
-  - `scripts/assets/procedural/ending.mjs` — a v2 path (`artScale !== 1`, `native: true` on the v2 sprites); the v1
-    path untouched.
+  - `scripts/assets/procedural/ending.mjs` — a v2 path (`(options.artScale ?? 1) !== 1`, rule 1; `native: true` on
+    the v2 sprites); the v1 path untouched.
   - `packages/core/src/scenes/index.ts` — §ending: `EndingScene` (`:7134`) and its `drawCitadel` (`:7370`). **Not**
     `StoryScene.drawDawn` (`:8554`): that is the attract story crawl, not an ending.
   - `packages/core/test/frame-literals.test.ts` — only the allow-list entry `EndingScene.drawCitadel.sink` (360, count
@@ -308,7 +326,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   and drawn by the title scene.
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/assets/procedural/title.mjs` — the backdrop, on the v2 path only; `title.mjs` returns no
-    `ui/title-backdrop` at `options.artScale === 1`, so the name is absent at scale 1 (decision RR-1a: no v1
+    `ui/title-backdrop` at `(options.artScale ?? 1) === 1`, so the name is absent at scale 1 (decision RR-1a: no v1
     stand-in).
   - `packages/core/src/ui/index.ts` — `UI_SPRITES` (`:236`) and `UiSprites`.
   - `packages/core/src/scenes/index.ts` — `TitleScene` (`:2456`) draws it.
@@ -466,8 +484,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - Do not touch the point item (`items/point`, `items.mjs:131`): that is `R4-02.B3`; frame count and art in one
     commit.
   - `items/bonus` and `items/one-up` (the v1 pixel maps) are never drawn: `ITEM_KINDS` uses `items/capsule-bonus` and
-    `items/1up` (`ONE_UP_SPRITE` / `BONUS_CAPSULE_SPRITE`, `powerups/index.ts:443`, `:446`; an open item,
-    `plan_resolution.md:1458`). Draw **no** v2 maps for them —
+    `items/1up` (`ONE_UP_SPRITE` / `BONUS_CAPSULE_SPRITE`, `powerups/index.ts:443`, `:446`; an open item in the
+    plan's R3-01 As built: "`items/one-up` and `items/bonus` have sizes in the bible but are never drawn by the game
+    today"). Draw **no** v2 maps for them —
     `test/integration/assets-plugin-edge.test.ts:246-258` edits the v1 `items/bonus` map and expects the default-scale
     atlas to follow it.
 - **Docs needs:** `docs/dev/powerups-and-shields.md` (glints).
@@ -590,8 +609,13 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   holds because the v1 file stays.
 - **Token:** CORE-CONFIG and STRINGS for the docblocks only (pass STRINGS to `R4-03.C7` and CORE-CONFIG to `R4-01.A3`
   when pushed).
-- **Traps:** the same code points in both files, in the same order; the v2 file must be exactly ×1.5 nearest-neighbour
-  (any other pixel moves the atlas); do not change `GLYPH_W` (RR-2: 9×12 stays).
+- **Traps:**
+  - The same code points in both files, in the same order; the v2 file must be exactly ×1.5 nearest-neighbour (any
+    other pixel moves the atlas); do not change `GLYPH_W` (RR-2: 9×12 stays).
+  - Derive the glyph rows in a throwaway script (not committed), never by hand:
+    `scaleFont(buildFontSprite(v1Font), 1.5)` (`scaleFont` from `scripts/assets/interim.mjs`, `buildFontSprite` from
+    `scripts/assets/font.mjs`, `v1Font` read from `pixel6x8.font.json`), then write each scaled frame back as its
+    glyph's rows.
 - **Docs needs:** `docs/dev/asset-pipeline.md` (the native font), `docs/dev/conventions.md` (the font metrics source).
 
 ### R4-03.C2 — Redraw ASCII 32–126 at 9×12
@@ -777,7 +801,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
      `packages/shell/test/dispatch/dispatch-fx-runtime.test.ts` (the `presentation()` helper at `:101-102`: a headless
      game → `connectFxEvents` → the real `createParticleSystem`; the peak of `particles.liveCount` as at `:189`), but
      with `createParticleSystem({ atlas: ATLAS, content: FX, seed, capacity: 4096 })`, so the peak shows the demand,
-     not today's cap of 256.
+     not today's cap of 256. Give each case a timeout (e.g. `it(…, { timeout: 900_000 })`): the default is 30 s
+     (`vitest.shared.ts` `TEST_TIMEOUT_MS`).
   2. Play each zone A–I, the bonus stages (`brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range`) and the boss
      rush to stage clear with `fourWayBot()` (`test/playtest/four-way-bot.ts`, imported by relative path) in god mode
      with a full loadout; record the peak `liveCount` and the tick it happened at, per stage.
@@ -853,8 +878,9 @@ subtask's acceptance:
 
 - the scale-1 digest pin unchanged and green (`interim-pipeline.test.ts:341-357`; it is the only scale-1 check —
   ATLAS-SHA is the default scale only, rule 14, and moves for every redraw);
-- no v1 pixel map, v1 font or generator v1 path edited (`git diff <base> -- 'assets/source/**/*.sprite.json'
-  ':!*.v2.sprite.json' assets/source/fonts/pixel6x8.font.json` is empty);
+- no v1 pixel map, v1 font or generator v1 path edited
+  (`git diff $(cat /home/sites/shmup-cup-run/w08-base.txt) -- 'assets/source/**/*.sprite.json' ':!*.v2.sprite.json' assets/source/fonts/pixel6x8.font.json`
+  is empty);
 - a fingerprint moved only where the block says, with the reason in the commit; goldens re-blessed only by
   `R4-01.A1b` and `R4-02.B3`;
 - frame counts core reads changed in the same commit as their art; `pnpm content:check` green;
