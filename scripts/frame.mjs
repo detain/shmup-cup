@@ -7,13 +7,13 @@
  * **Why a mirror.** The scripts run as plain Node ES modules, without the workspace's TypeScript
  * build, so they cannot import `@shmup/core` (its source is TypeScript and its `dist/` exists only
  * after a build). The few base values are repeated here and every value is derived exactly the way
- * core derives it, so R2-01's switch to 640×360 changes the same handful of numbers in both files.
+ * core derives it, so R2-01's switch to 640×360 changed the same handful of numbers in both files.
  * `test/scripts/frame.test.ts` pins every export to core, so the two can never drift apart.
  *
  * **Frame ≠ world** (plan §2.6): only values anchored to the frame or a screen edge live here.
  * World values (radii, margins, speeds) stay where they are used, and R2-02 scales them ×1.5.
  *
- * Every value is a whole number, today (384×216) and after the switch (640×360).
+ * Every value is a whole number, at 640×360 (since R2-01's switch) as it was at v1's 384×216.
  *
  * **Public API.** {@link FRAME_W}, {@link FRAME_H}, {@link FRAME_CX}, {@link FRAME_CY},
  * {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H},
@@ -87,6 +87,7 @@ export const SPAWN_LEAD = PLAYFIELD_W + 16;
 /**
  * Whole-number scale of a browser capture (the e2e viewport and `pnpm docs:screens`):
  * `floor(1280 / FRAME_W)` — the largest scale whose picture still fits a 1280-pixel-wide window
- * (decision O9). ×3 (1152×648) at 384×216 today, ×2 (1280×720) at 640×360 (plan §2.7).
+ * (decision O9). ×2 (1280×720) at 640×360 since R2-01 (plan §2.7); it was ×3 (1152×648) at v1's
+ * 384×216.
  */
 export const CAPTURE_SCALE = Math.floor(1280 / FRAME_W);

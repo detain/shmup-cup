@@ -1,8 +1,8 @@
 /**
- * The placeholder terrain tilesets (8×8 tiles today, any even tile size since R1-04) —
- * `tiles/terrain-a` and, since M2-11 … M2-14, its
- * recoloured zone sets `tiles/terrain-reef`, `-dune`, `-magma`, `-ridge`, `-vault`, `-prism`,
- * `-citadel` and `-abyss`: solid rock, flat floor / ceiling / wall edges, and slopes at 45° and
+ * The placeholder terrain tilesets (12×12 tiles since R2-01, 8×8 in v1; any even tile size since
+ * R1-04) — `tiles/terrain-a` and, since M2-11 … M2-14, its recoloured zone sets
+ * `tiles/terrain-reef`, `-dune`, `-magma`, `-ridge`, `-vault`, `-prism`, `-citadel` and
+ * `-abyss`: solid rock, flat floor / ceiling / wall edges, and slopes at 45° and
  * 22.5° (two tiles per 22.5° slope) for floors and ceilings in both directions.
  *
  * Frame `i` is tile {@link TERRAIN_TILES}`[i]`; the manifest also lists every tile as a
@@ -82,10 +82,10 @@ export const TERRAIN_TILES = /** @type {const} */ ([
 ]);
 
 /**
- * Tile side in pixels of the generated atlas: `@shmup/core` `TILE_SIZE` (8; R2-01: 12), pinned to
- * it by `test/scripts/assets/terrain-size.test.ts`. A constant of its own rather than an import of
- * `scripts/frame.mjs`: the asset pipeline's input hash covers `scripts/assets/**` only, so a
- * change here re-draws the atlas.
+ * Tile side in pixels of the generated atlas: `@shmup/core` `TILE_SIZE` (12 since R2-01; v1: 8),
+ * pinned to it by `test/scripts/assets/terrain-size.test.ts`. A constant of its own rather than an
+ * import of `scripts/frame.mjs`: the asset pipeline's input hash covers `scripts/assets/**` only,
+ * so a change here re-draws the atlas.
  */
 export const TILE_SIZE = 12;
 
@@ -436,7 +436,7 @@ function tileset(name, size) {
  * {@link lineMask} between half-tile heights, so the opaque pixels of a tile drawn at `size` are
  * its shipped 8-px mask moved by {@link resampleMask}`(mask, 8, size)`.
  *
- * @param {number} size - Tile side in pixels: an even whole number ≥ 4 (8 today, 12 for v2).
+ * @param {number} size - Tile side in pixels: an even whole number ≥ 4 (12 since R2-01, 8 in v1).
  * @param {string} name - The tileset's sprite name (a {@link TERRAIN_PALETTES} key: its colours
  *   and the seed of its rock texture).
  * @returns {Image[]} One `size × size` image per tile.

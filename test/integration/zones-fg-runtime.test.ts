@@ -33,10 +33,7 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import {
-  CONTENT_PORT_PENDING,
-  PORT_PENDING_REASON,
-} from '../../packages/core/test/helpers/port-pending.js';
+import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 
@@ -190,12 +187,18 @@ describe('integration: zones F and G in the game (M2-13)', () => {
 
   // From the start, the turret before the gallery has left the screen when the window arms: it
   // cannot be shot in the gallery turret's place (a kill of it would count toward the window).
-  it.skipIf(CONTENT_PORT_PENDING).each([0, 1])(
-    `keeps the gallery entrance shut when a turret survives its window (checkpoint %i) [${PORT_PENDING_REASON}]`,
-    (checkpoint) => {
-      expect(playGallery(checkpoint, true)).toBe(-1);
+  // Only the run from the start is gated: on the v1-scale content it opens the entrance (0, not
+  // -1); the run from checkpoint 1 holds at 640×360 already.
+  itPortPending(
+    'keeps the gallery entrance shut when a turret survives its window (checkpoint 0)',
+    () => {
+      expect(playGallery(0, true)).toBe(-1);
     },
   );
+
+  it('keeps the gallery entrance shut when a turret survives its window (checkpoint 1)', () => {
+    expect(playGallery(1, true)).toBe(-1);
+  });
 
   it('opens the gallery entrance from the zone’s start when every gallery turret is shot', () => {
     expect(playGallery(0, false)).toBe(0);

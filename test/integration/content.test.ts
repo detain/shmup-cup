@@ -34,9 +34,11 @@ import {
   BonusEntrance,
   BossState,
   DEFAULT_BEHAVIORS,
+  DEFAULT_BLOCK_SCREEN_X,
   DEFAULT_BOSS_BEHAVIORS,
   DEFAULT_DIFFICULTY_TABLE,
   DEFAULT_SCORING_RULES,
+  DEFAULT_SPAWN_SCREEN_X,
   DEFAULT_UI_TEXT,
   DIFFICULTY_PRESETS,
   FIXED_UI_TEXT_IDS,
@@ -47,6 +49,7 @@ import {
   MAX_UI_TEXT_LENGTH,
   MUSIC_CUES,
   PLAYFIELD_H,
+  PLAYFIELD_W,
   RunFlag,
   SFX_CUE_NAMES,
   TerrainType,
@@ -1127,7 +1130,7 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
         terrainAt(map, x, PLAYFIELD_H - 1) !== TerrainType.Empty;
       const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
       let ceilingColumns = 0;
-      for (let x = 0; x < stage.length + 384; x += 4) {
+      for (let x = 0; x < stage.length + PLAYFIELD_W; x += 4) {
         if (ceiling(x)) {
           ceilingColumns++;
           // A ceiling only in the corridor (section 3, a little beyond its checkpoint and end).
@@ -1139,7 +1142,7 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
       for (const x of [600, 1000, 4000, 5500, 7000])
         expect(floor(x), `floor at ${String(x)}`).toBe(true);
       // The calm and the boss arena (the whole view at the WARNING and beyond): open space.
-      for (let x = 8000; x < stage.length + 384; x += 4) {
+      for (let x = 8000; x < stage.length + PLAYFIELD_W; x += 4) {
         expect(ceiling(x) || floor(x), `rock at ${String(x)}`).toBe(false);
       }
       expect(warningX).toBeGreaterThan(8000);
@@ -1409,7 +1412,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     if (region === null || region === undefined) return;
     const edges = stage.events
       .filter((e) => e.type === 'block')
-      .map((e) => (e.type === 'block' ? e.x + (e.screenX ?? 400) : 0));
+      .map((e) => (e.type === 'block' ? e.x + (e.screenX ?? DEFAULT_BLOCK_SCREEN_X) : 0));
     expect(edges).toContain(region.x - 16);
     expect(edges).toContain(region.x + region.w);
     // The bonus stage: bonus capsules and a 1UP.
@@ -1480,10 +1483,11 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       }
       expect(walls.length).toBeGreaterThanOrEqual(10);
       for (const rows of walls) {
-        expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / 8); // below the surface: in the caves
+        // below the surface (one playfield of tile rows): in the caves
+        expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / map.tileSize);
         let gap = 0;
         for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
-        expect(gap * 8).toBeGreaterThanOrEqual(24); // a gap the ship fits through
+        expect(gap * map.tileSize).toBeGreaterThanOrEqual(24); // a gap the ship fits through
       }
       // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
       const warning = stage.events.find((e) => e.type === 'warning');
@@ -1513,7 +1517,8 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     const stage = stageOf('zone-e');
     // Rear attackers: enemies spawned behind the view that overtake the ship.
     const rear = stage.events.filter(
-      (e) => (e.type === 'spawn' || e.type === 'formation') && (e.screenX ?? 400) < 0,
+      (e) =>
+        (e.type === 'spawn' || e.type === 'formation') && (e.screenX ?? DEFAULT_SPAWN_SCREEN_X) < 0,
     );
     expect(rear.length).toBeGreaterThanOrEqual(12);
     expect(rear.some((e) => 'enemyId' in e && db.enemies[e.enemyId].script === 'rear.swoop')).toBe(
@@ -1606,7 +1611,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     for (const rows of walls) {
       let gap = 0;
       for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
-      expect(gap * 8).toBeGreaterThanOrEqual(48);
+      expect(gap * (tileset?.tileSize ?? 0)).toBeGreaterThanOrEqual(48);
     }
     // Grabbing tentacles on the floor and on the ceiling.
     const claws = events.filter((e) => script(e) === 'tentacle.grab');
@@ -1651,7 +1656,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-g' }, db);
       const map = game.world.terrain;
       if (map === null) throw new Error('no terrain');
-      const middle = Math.floor(PLAYFIELD_H / 16);
+      const middle = Math.floor(PLAYFIELD_H / 2 / map.tileSize);
       const rock = (col: number, from: number, to: number): boolean => {
         for (let row = from; row <= to; row++)
           if (map.tiles[row * map.cols + col] === 0) return false;
@@ -1800,7 +1805,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
         const enemy = db.enemies[event.enemyId];
         if (enemy.ground === null) continue;
         ground++;
-        const x = event.x + (event.screenX ?? 400);
+        const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
         const top = Math.round(runner.camera.y);
         // Rock in the lower (floor) or upper (ceiling) third of the playfield below / above it.
         const rows = (enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7]).map(
@@ -2105,7 +2110,7 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
       .terrain;
     if (map === null) throw new Error('no terrain');
     const calmX = stage.camera[stage.camera.length - 1].x;
-    for (let x = calmX; x < stage.length + 384; x += 8) {
+    for (let x = calmX; x < stage.length + PLAYFIELD_W; x += 8) {
       for (let y = 0; y < PLAYFIELD_H; y += 8) {
         expect(terrainAt(map, x, y), `rock at ${String(x)}, ${String(y)}`).toBe(TerrainType.Empty);
       }
@@ -2181,7 +2186,7 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
         const enemy = db.enemies[event.enemyId];
         if (enemy.ground === null) continue;
         ground++;
-        const x = event.x + (event.screenX ?? 400);
+        const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
         const rows = enemy.ground === 'floor' ? [PLAYFIELD_H - 1, PLAYFIELD_H - 8] : [0, 7];
         expect(
           rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),

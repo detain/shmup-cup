@@ -53,13 +53,15 @@ export const WINDOW_STATE_KEY = 'window';
 export const WINDOW_STATE_VERSION = 2;
 
 /**
- * Width of the game's frame (decision D19): a **mirror** of `@shmup/core`'s `FRAME_W`.
+ * Width of the game's frame (decision D19; 640 since R2-01): a **mirror** of `@shmup/core`'s
+ * `FRAME_W`.
  *
  * @remarks
  * The main process is compiled and packaged without the workspace packages, so it cannot import
  * core (plan R1-02, owner decision O8); `test/main/window-frame.test.ts` pins this mirror and
- * {@link FRAME_HEIGHT} to core's constants, so R2-01's flip to 640×360 fails there until both
- * are changed together. Everything else here derives from the two.
+ * {@link FRAME_HEIGHT} to core's constants, so a change of the frame fails there until both are
+ * changed together — R2-01's flip to 640×360 changed them in one commit. Everything else here
+ * derives from the two.
  */
 export const FRAME_WIDTH = 640;
 

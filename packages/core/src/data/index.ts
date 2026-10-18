@@ -975,7 +975,8 @@ export const BOSS_VULNERABILITIES = Object.freeze([
 
 /**
  * Default home position of a boss (playfield pixels, where its intro ends): 88 px left of the
- * right edge (296 today; the 88 is a world distance — plan_resolution.md §2.6).
+ * right edge (552 since R2-01, 296 at v1's frame; the 88 is a world distance —
+ * plan_resolution.md §2.6).
  */
 export const DEFAULT_BOSS_X = PLAYFIELD_W - 88;
 
