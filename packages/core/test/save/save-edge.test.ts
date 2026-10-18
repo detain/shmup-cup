@@ -220,6 +220,7 @@ describe('core/save migrateSave (edge)', () => {
     const garbage: SaveMigration[] = [
       { from: 0, to: 1, migrate: () => ({ options: 5, hiScores: [1, 2], stats: 'x' }) },
       { from: 1, to: 2, migrate: (doc) => ({ ...doc }) },
+      { from: 2, to: 3, migrate: (doc) => ({ ...doc, legacyScores: 'x' }) },
     ];
     expect(parseSave('{}', garbage)).toEqual({
       data: createDefaultSave(),
@@ -242,7 +243,7 @@ describe('core/save parseSave (edge)', () => {
 
   it('never lets __proto__ keys reach a prototype', () => {
     const text =
-      '{"version":2,"__proto__":{"polluted":1},' +
+      `{"version":${SAVE_VERSION},"__proto__":{"polluted":1},` +
       '"options":{"__proto__":{"audio":{"music":0}}},' +
       '"hiScores":{"__proto__":[{"score":5}],"meter-normal":[{"score":7,"__proto__":{"x":1}}]}}';
     const parsed = parseSave(text);
@@ -255,7 +256,9 @@ describe('core/save parseSave (edge)', () => {
   });
 
   it('keeps a table whose key shadows an Object.prototype member as a plain table', () => {
-    const parsed = parseSave('{"version":1,"hiScores":{"constructor":[{"score":9}]}}');
+    const parsed = parseSave(
+      `{"version":${SAVE_VERSION},"hiScores":{"constructor":[{"score":9}]}}`,
+    );
     expect(scores(parsed.data.hiScores.constructor as unknown as HiScoreEntry[])).toEqual([9]);
     const store = createSaveStore(null, { ...parsed, text: null });
     expect(store.bestScore('constructor')).toBe(9);
@@ -371,7 +374,7 @@ describe('core/save serialisation (edge)', () => {
       },
     } as unknown as SaveData;
     expect(serializeSave(full)).toBe(
-      '{"version":2,"options":{"audio":{"master":1,"music":2,"sfx":3},' +
+      `{"version":${SAVE_VERSION},"options":{"audio":{"master":1,"music":2,"sfx":3},` +
         '"input":{"profileId":"keyboard-default","autofire":null,"autofireInterval":null,' +
         '"socd":null,"releaseDebounce":null,"bindings":{}},' +
         '"game":{"difficulty":null,"lives":null,"deathPenalty":null,"autoPowerUp":null,' +

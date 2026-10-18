@@ -6,7 +6,9 @@
  * keeps the moved, older row above; a full table keeps the best ten), left in place when the
  * target key would be too long or the table is not a one-player one; a version-2 document whose
  * rows are no longer moved on read; and the rebinding written in a canonical order, whatever order
- * it was built in, so an unchanged save writes the same text.
+ * it was built in, so an unchanged save writes the same text. Since v2's R2-01 every one of these
+ * documents goes on to version 3, which archives the tables the move made under `legacyScores`
+ * (`save-v3.test.ts`): the move is read there.
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_USER_OPTIONS, resolveBindingOverrides } from '../../src/config/index.js';
@@ -16,6 +18,7 @@ import {
   SAVE_STORAGE_KEY,
   SAVE_VERSION,
   createSaveStore,
+  type HiScoreEntry,
   loadSave,
   migrateSave,
   parseSave,
@@ -44,8 +47,21 @@ function v1(doc: Record<string, unknown>): ReturnType<typeof parseSave> {
   return parseSave(JSON.stringify({ ...doc, version: 1 }));
 }
 
+/**
+ * Parses a version-1 document and returns its tables as the version-1 → 2 move left them: the
+ * version-2 → 3 step (R2-01) archives them under `legacyScores` and starts v2's tables empty.
+ *
+ * @param doc - The document (its `version` is set to 1).
+ * @returns The archived tables.
+ */
+function v1Tables(doc: Record<string, unknown>): Readonly<Record<string, readonly HiScoreEntry[]>> {
+  const { data } = v1(doc);
+  expect(data.hiScores).toEqual({});
+  return data.legacyScores ?? {};
+}
+
 describe('core/save version 2 (edge): migrations', () => {
-  it('migrates a version-0 document through both steps', () => {
+  it('migrates a version-0 document through every step', () => {
     const parsed = parseSave(
       JSON.stringify({
         hiScores: [{ name: 'OLD', score: 900 }],
@@ -53,14 +69,20 @@ describe('core/save version 2 (edge): migrations', () => {
         unlocks: ['x'],
       }),
     );
-    expect([parsed.status, parsed.fromVersion, parsed.data.version]).toEqual(['migrated', 0, 2]);
+    expect([parsed.status, parsed.fromVersion, parsed.data.version]).toEqual([
+      'migrated',
+      0,
+      SAVE_VERSION,
+    ]);
     expect(parsed.data.options.audio).toEqual({ master: 5, music: 10, sfx: 0 });
     expect(parsed.data.options.input).toEqual({
       ...DEFAULT_USER_OPTIONS.input,
       profileId: 'tizen-remote-safe',
     });
     expect(parsed.data.options.game).toEqual(DEFAULT_USER_OPTIONS.game);
-    expect(parsed.data.hiScores['meter-normal']?.map((r) => r.name)).toEqual(['OLD']);
+    // Version 3 (R2-01) archives the table the version-0 list became.
+    expect(parsed.data.hiScores).toEqual({});
+    expect(parsed.data.legacyScores?.['meter-normal']?.map((r) => r.name)).toEqual(['OLD']);
   });
 
   it('gives a version-1 document the new groups unset, whatever it carried', () => {
@@ -107,86 +129,88 @@ describe('core/save version 2 (edge): migrations', () => {
 
 describe('core/save version 2 (edge): moving the older co-op and practice rows', () => {
   it('puts a moved row above a table’s own row of the same score (the older row wins a tie)', () => {
-    const { data } = v1({
+    const tables = v1Tables({
       hiScores: {
         'meter-normal': [row('OLD', 5000, '2p'), row('ONE', 7000)],
         'meter-normal-2p': [row('NEW', 5000, '2p'), row('TOP', 9000, '2p')],
       },
     });
-    expect(data.hiScores['meter-normal-2p']?.map((r) => r.name)).toEqual(['TOP', 'OLD', 'NEW']);
-    expect(data.hiScores['meter-normal']?.map((r) => r.name)).toEqual(['ONE']);
+    expect(tables['meter-normal-2p']?.map((r) => r.name)).toEqual(['TOP', 'OLD', 'NEW']);
+    expect(tables['meter-normal']?.map((r) => r.name)).toEqual(['ONE']);
   });
 
   it('keeps the best ten when the moved rows overfill a table', () => {
     const own: Record<string, unknown>[] = [];
     for (let i = 0; i < HI_SCORE_TABLE_SIZE; i++) own.push(row(`N${i}`, 1000, 'practice'));
-    const { data } = v1({
+    const tables = v1Tables({
       hiScores: {
         'direct-hard': [row('OLD', 1000, 'practice'), row('LOW', 10, 'practice')],
         'direct-hard-practice': own,
       },
     });
-    const names = data.hiScores['direct-hard-practice']?.map((r) => r.name) ?? [];
+    const names = tables['direct-hard-practice']?.map((r) => r.name) ?? [];
     expect(names).toHaveLength(HI_SCORE_TABLE_SIZE);
     expect(names[0]).toBe('OLD');
     expect(names).not.toContain('LOW');
     expect(names).not.toContain(`N${HI_SCORE_TABLE_SIZE - 1}`);
     // The one-player table emptied by the move is dropped.
-    expect(data.hiScores['direct-hard']).toBeUndefined();
+    expect(tables['direct-hard']).toBeUndefined();
   });
 
   it('leaves a row where it is when its table key would be too long', () => {
     const short = 'm'.repeat(18) + '-' + 'd'.repeat(9); // 28 characters: "-2p" fits in 32
     const long = 'm'.repeat(20) + '-' + 'd'.repeat(10); // 31 characters: neither suffix fits
-    const { data } = v1({
+    const tables = v1Tables({
       hiScores: {
         [short]: [row('A2P', 30, '2p'), row('APR', 20, 'practice')],
         [long]: [row('B2P', 30, '2p'), row('BPR', 20, 'practice')],
       },
     });
-    expect(data.hiScores[short + '-2p']?.map((r) => r.name)).toEqual(['A2P']);
-    expect(data.hiScores[short]?.map((r) => r.name)).toEqual(['APR']);
-    expect(data.hiScores[long]?.map((r) => r.name)).toEqual(['B2P', 'BPR']);
+    expect(tables[short + '-2p']?.map((r) => r.name)).toEqual(['A2P']);
+    expect(tables[short]?.map((r) => r.name)).toEqual(['APR']);
+    expect(tables[long]?.map((r) => r.name)).toEqual(['B2P', 'BPR']);
   });
 
   it('moves rows out of one-player tables only', () => {
-    const { data } = v1({
+    const tables = v1Tables({
       hiScores: {
         'meter-easy-2p': [row('P2P', 40, 'practice')],
         'meter-easy-practice': [row('PR2', 30, '2p')],
         'odd-key-shape-here': [row('ODD', 20, '2p')],
       },
     });
-    expect(data.hiScores['meter-easy-2p']?.map((r) => r.name)).toEqual(['P2P']);
-    expect(data.hiScores['meter-easy-practice']?.map((r) => r.name)).toEqual(['PR2']);
-    expect(data.hiScores['odd-key-shape-here']?.map((r) => r.name)).toEqual(['ODD']);
-    expect(data.hiScores['meter-easy-2p-practice']).toBeUndefined();
+    expect(tables['meter-easy-2p']?.map((r) => r.name)).toEqual(['P2P']);
+    expect(tables['meter-easy-practice']?.map((r) => r.name)).toEqual(['PR2']);
+    expect(tables['odd-key-shape-here']?.map((r) => r.name)).toEqual(['ODD']);
+    expect(tables['meter-easy-2p-practice']).toBeUndefined();
   });
 
   it('drops tables that are not lists and rows that are not usable, after the move', () => {
-    const { data } = v1({
+    const tables = v1Tables({
       hiScores: {
         'meter-hard': [row('BAD', -1, '2p'), 'x', row('OK', 1, '2p')],
         'meter-arcade': 'nope',
       },
     });
-    expect(Object.keys(data.hiScores)).toEqual(['meter-hard-2p']);
-    expect(data.hiScores['meter-hard-2p']?.map((r) => r.name)).toEqual(['OK']);
+    expect(Object.keys(tables)).toEqual(['meter-hard-2p']);
+    expect(tables['meter-hard-2p']?.map((r) => r.name)).toEqual(['OK']);
   });
 
-  it('a version-2 document is read as written: its rows are never moved again', () => {
+  it('a version-2 document is archived as written: its rows are never moved again', () => {
     const parsed = parseSave(
       JSON.stringify({
         version: 2,
         hiScores: { 'meter-normal': [row('DUO', 64000, '2p'), row('ACE', 1000)] },
       }),
     );
-    expect(parsed.status).toBe('ok');
-    expect(parsed.data.hiScores['meter-normal']?.map((r) => r.name)).toEqual(['DUO', 'ACE']);
-    expect(parsed.data.hiScores['meter-normal-2p']).toBeUndefined();
+    expect([parsed.status, parsed.fromVersion]).toEqual(['migrated', 2]);
+    const legacy = parsed.data.legacyScores ?? {};
+    expect(legacy['meter-normal']?.map((r) => r.name)).toEqual(['DUO', 'ACE']);
+    expect(legacy['meter-normal-2p']).toBeUndefined();
+    expect(parsed.data.hiScores).toEqual({});
   });
 
-  it('refuses a document newer than version 2 (defaults, the storage untouched)', async () => {
+  it('refuses a document newer than this build (defaults, the storage untouched)', async () => {
     const text = JSON.stringify({ version: SAVE_VERSION + 1, options: { game: { lives: 2 } } });
     const parsed = parseSave(text);
     expect(parsed.status).toBe('unreadable');

@@ -11,14 +11,15 @@
  * inspection. Storage is async so Electron can use files (M2-17) and the web / Tizen
  * `localStorage`; Tizen deletes it on uninstall.
  *
- * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 2 since M2-16) under the storage
+ * - **Format** ({@link SaveData}, version {@link SAVE_VERSION} = 3 since v2's R2-01) under the storage
  *   key {@link SAVE_STORAGE_KEY} (`save.v1` — the format family's key; the document's `version`
  *   drives the migrations): `{ version, options: { audio: { master, music, sfx }, input: {
  *   profileId, autofire, autofireInterval, socd, releaseDebounce, bindings }, display: {
  *   bulletPalette, scaleMode, screenShake, reduceFlashing, showHitbox, bossHpBar, crtFilter,
  *   aspect, language }, game: {
  *   difficulty, lives, deathPenalty, autoPowerUp, pickupMagnet, oneButton } }, hiScores: {
- *   [modeKey]: HiScoreEntry[≤ 10] }, stats: { gamesStarted, gameOvers, stagesCleared } }`. The
+ *   [modeKey]: HiScoreEntry[≤ 10] }, legacyScores?: { [modeKey]: HiScoreEntry[≤ 10] }, stats: {
+ *   gamesStarted, gameOvers, stagesCleared }, unlocks? }`. The
  *   display fields needed no migration: a version-1 save written before `bulletPalette` (M2-02),
  *   the M2-08 fields, `bossHpBar` (M2-09), `crtFilter` / `aspect` (M3-02) or `language` (M3-03)
  *   resolves the missing ones to their defaults
@@ -26,7 +27,12 @@
  *   `core/config` `resolveUserOptions`). **Version 2** (M2-16) added the controls options (autofire
  *   mode and rate, SOCD, the release debounce, the rebinding — `input.*`) and the game options
  *   (`game.*`), and its migration moves the co-op and practice rows older builds kept in the
- *   one-player tables into their own tables (see {@link SAVE_MIGRATIONS}).
+ *   one-player tables into their own tables (see {@link SAVE_MIGRATIONS}). **Version 3** (v2's
+ *   R2-01 — plan_resolution.md §3.4, owner decisions W4-8 / W4-13) archives the hi-score tables of
+ *   v1 (384×216 — scores made in a different game) under the read-only `legacyScores`, kept but
+ *   shown nowhere, and starts v2's tables empty; options, stats and unlocks carry over. A v1.x build
+ *   reading a version-3 document treats it as newer than itself — the defaults, with the text kept
+ *   under {@link SAVE_CORRUPT_KEY} (W4-14).
  *   A mode key ({@link hiScoreModeKey}) names the table a game's score belongs to
  *   (`meter-normal` in M1; one per difficulty preset since M2-01 — `meter-easy` … `meter-arcade`;
  *   the Direct-mode MANTA's games since M2-05 — `direct-easy` … `direct-arcade`; since M2-15 the
@@ -73,9 +79,13 @@
  * {@link HI_SCORE_MODES}) and assisted rows (`HiScoreEntry.assisted`).
  *
  * **M3-01 fields without a migration.** Like the display options of M2-08, the new fields resolve
- * when missing, so the format stays version 2: `options.play` (the assists and feel — `core/config`
- * `PlayOptions`), a hi-score row's `assisted` (written only when `true`) and `unlocks` (written only
- * once something is unlocked).
+ * when missing, so the format stayed version 2: `options.play` (the assists and feel —
+ * `core/config` `PlayOptions`), a hi-score row's `assisted` (written only when `true`) and
+ * `unlocks` (written only once something is unlocked).
+ *
+ * **R2-01 (v2).** {@link SAVE_VERSION} 3 and {@link SaveData.legacyScores}: the version-2 → 3
+ * migration moves the v1 hi-score tables there (see {@link SAVE_MIGRATIONS}). The storage key stays
+ * `save.v1`.
  *
  * **Planned.** More stats as their screens arrive.
  *
@@ -102,8 +112,11 @@ export const moduleInfo = defineModule({
   specRefs: ['shmup_feat.md §21', 'shmup_feat.md §23', 'shmup_feat.md §15', 'shmup_feat.md §16'],
 });
 
-/** The save format this build writes (2 since M2-16 — the controls and game options). */
-export const SAVE_VERSION = 2;
+/**
+ * The save format this build writes (2 since M2-16 — the controls and game options; 3 since v2's
+ * R2-01 — the v1 hi-score tables archived under {@link SaveData.legacyScores}).
+ */
+export const SAVE_VERSION = 3;
 
 /** `Platform.storage` key of the save document (the web adapter prefixes it: `shmup-cup:save.v1`). */
 export const SAVE_STORAGE_KEY = 'save.v1';
@@ -196,6 +209,15 @@ export interface SaveData {
    * {@link HI_SCORE_TABLE_SIZE} long. A mode nobody has scored in has no table.
    */
   readonly hiScores: Readonly<Record<string, readonly HiScoreEntry[]>>;
+  /**
+   * The hi-score tables of v1 (R2-01 — plan_resolution.md §3.4, owner decisions W4-8 / W4-13):
+   * the version-2 → 3 migration moves a v1 save's tables here and starts {@link SaveData.hiScores}
+   * empty, because v1's scores were made in a different game (384×216). Read-only: nothing records
+   * or renames a row here ({@link SaveStore.recordScore} / {@link SaveStore.renameScore} touch
+   * `hiScores` only) and no screen shows them in R2-01 (the Steam achievements read both). Keyed
+   * and sanitised like `hiScores`; present only when it holds a table.
+   */
+  readonly legacyScores?: Readonly<Record<string, readonly HiScoreEntry[]>>;
   /** Play statistics. */
   readonly stats: SaveStats;
   /**
@@ -361,14 +383,30 @@ function migrateV1(data: Readonly<Record<string, unknown>>): Record<string, unkn
 }
 
 /**
+ * Version 2 → 3 (v2's R2-01 — plan_resolution.md §3.4, owner decision W4-13). A version-2
+ * document was written by v1 (384×216), whose scores were made in a different game: its hi-score
+ * tables move, as they are, to {@link SaveData.legacyScores} (read-only, kept, shown nowhere), and
+ * the v2 tables start empty — the hi-score screens show their default rows. Everything else
+ * (options, stats, unlocks) carries over as is.
+ *
+ * @param data - A version-2 document.
+ * @returns The same data in the version-3 layout (sanitised afterwards).
+ */
+function migrateV2(data: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  return { ...data, version: 3, legacyScores: data.hiScores, hiScores: {} };
+}
+
+/**
  * The migration steps: `SAVE_MIGRATIONS[n]` turns version `n` into `n + 1`. Append one (and bump
  * {@link SAVE_VERSION}) whenever the format changes; never edit a shipped step. Version 0 → 1 is
  * the skeleton's pre-release layout (M1-17); 1 → 2 adds the controls and game options and moves
- * the older co-op / practice rows (M2-16).
+ * the older co-op / practice rows (M2-16); 2 → 3 archives v1's hi-score tables under
+ * `legacyScores` and starts v2's empty (v2's R2-01).
  */
 export const SAVE_MIGRATIONS: readonly SaveMigration[] = Object.freeze([
   Object.freeze({ from: 0, to: 1, migrate: migrateV0 }),
   Object.freeze({ from: 1, to: 2, migrate: migrateV1 }),
+  Object.freeze({ from: 2, to: 3, migrate: migrateV2 }),
 ]);
 
 /**
@@ -470,6 +508,32 @@ function counter(value: unknown): number {
 }
 
 /**
+ * Reads a record of hi-score tables defensively (`hiScores`, and since R2-01 `legacyScores`).
+ *
+ * @param value - Anything (a record of tables by mode key).
+ * @returns The usable tables (see {@link sanitizeSave}) and how many there are.
+ */
+function sanitizeTables(value: unknown): {
+  readonly tables: Record<string, readonly HiScoreEntry[]>;
+  readonly count: number;
+} {
+  const out: Record<string, readonly HiScoreEntry[]> = {};
+  let count = 0;
+  const tables = asRecord(value);
+  if (tables !== null) {
+    for (const key of Object.keys(tables).sort()) {
+      if (count >= MAX_HI_SCORE_TABLES) break;
+      if (key.length > 32 || !MODE_KEY_PATTERN.test(key)) continue;
+      const table = sanitizeTable(tables[key]);
+      if (table === null) continue;
+      out[key] = table;
+      count++;
+    }
+  }
+  return { tables: out, count };
+}
+
+/**
  * Builds a valid {@link SaveData} from a document in the current layout, replacing every unusable
  * field with its default — never throws.
  *
@@ -481,25 +545,16 @@ function counter(value: unknown): number {
  * {@link DEFAULT_HI_SCORE_NAME}, a long one is cut to {@link HI_SCORE_NAME_MAX});
  * each table is sorted best first and cut to {@link HI_SCORE_TABLE_SIZE}; empty tables are
  * dropped (M2-16: the co-op / practice rows older builds kept in the one-player tables were moved
- * by the version-1 → 2 migration). Stats: whole numbers ≥ 0, else 0. Unknown fields are dropped.
+ * by the version-1 → 2 migration). `legacyScores` (R2-01) is read by the same rules with a table
+ * count of its own, and left out when no table is usable. Stats: whole numbers ≥ 0, else 0.
+ * Unknown fields are dropped.
  *
  * @param data - A migrated document.
  * @returns A frozen, valid document at {@link SAVE_VERSION}.
  */
 export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData {
-  const hiScores: Record<string, readonly HiScoreEntry[]> = {};
-  const tables = asRecord(data.hiScores);
-  if (tables !== null) {
-    let count = 0;
-    for (const key of Object.keys(tables).sort()) {
-      if (count >= MAX_HI_SCORE_TABLES) break;
-      if (key.length > 32 || !MODE_KEY_PATTERN.test(key)) continue;
-      const table = sanitizeTable(tables[key]);
-      if (table === null) continue;
-      hiScores[key] = table;
-      count++;
-    }
-  }
+  const hiScores = sanitizeTables(data.hiScores).tables;
+  const legacy = sanitizeTables(data.legacyScores);
   const stats = asRecord(data.stats) ?? {};
   const doc: {
     -readonly [K in keyof SaveData]: SaveData[K];
@@ -513,6 +568,7 @@ export function sanitizeSave(data: Readonly<Record<string, unknown>>): SaveData 
       stagesCleared: counter(stats.stagesCleared),
     }),
   };
+  if (legacy.count > 0) doc.legacyScores = Object.freeze(legacy.tables);
   const unlocks = sanitizeUnlocks(data.unlocks);
   if (unlocks !== null) doc.unlocks = unlocks;
   return Object.freeze(doc);
@@ -627,24 +683,8 @@ export function parseSave(
 export function serializeSave(data: SaveData): string {
   const a = data.options.audio;
   const display = data.options.display;
-  // No prototype: a key can never reach Object.prototype, whatever the document holds.
-  const hiScores = Object.create(null) as Record<string, HiScoreEntry[]>;
-  for (const key of Object.keys(data.hiScores).sort()) {
-    const rows: HiScoreEntry[] = [];
-    for (const row of data.hiScores[key]) {
-      const out: { -readonly [K in keyof HiScoreEntry]: HiScoreEntry[K] } = {
-        name: row.name,
-        score: row.score,
-        reached: row.reached,
-        mode: row.mode,
-        difficulty: row.difficulty,
-      };
-      // M3-01: written only for an assisted row (older saves keep their text).
-      if (row.assisted === true) out.assisted = true;
-      rows.push(out);
-    }
-    hiScores[key] = rows;
-  }
+  const hiScores = serializeTables(data.hiScores);
+  const legacy = data.legacyScores;
   const input = data.options.input;
   const game = data.options.game;
   const play = data.options.play;
@@ -699,6 +739,11 @@ export function serializeSave(data: SaveData): string {
             },
     },
     hiScores,
+    // R2-01: v1's archived tables, written only when there are some.
+    legacyScores:
+      legacy === undefined || Object.keys(legacy).length === 0
+        ? undefined
+        : serializeTables(legacy),
     stats: {
       gamesStarted: data.stats.gamesStarted,
       gameOvers: data.stats.gameOvers,
@@ -708,6 +753,37 @@ export function serializeSave(data: SaveData): string {
     unlocks:
       unlocks === undefined ? undefined : { extraEdit: unlocks.extraEdit, loop2: unlocks.loop2 },
   });
+}
+
+/**
+ * Hi-score tables in a canonical order for {@link serializeSave}: tables in key order, rows field
+ * by field (`assisted` only when set).
+ *
+ * @param tables - `hiScores` or `legacyScores`.
+ * @returns A plain object to stringify (a prototype-free record).
+ */
+function serializeTables(
+  tables: Readonly<Record<string, readonly HiScoreEntry[]>>,
+): Record<string, HiScoreEntry[]> {
+  // No prototype: a key can never reach Object.prototype, whatever the document holds.
+  const out = Object.create(null) as Record<string, HiScoreEntry[]>;
+  for (const key of Object.keys(tables).sort()) {
+    const rows: HiScoreEntry[] = [];
+    for (const row of tables[key]) {
+      const entry: { -readonly [K in keyof HiScoreEntry]: HiScoreEntry[K] } = {
+        name: row.name,
+        score: row.score,
+        reached: row.reached,
+        mode: row.mode,
+        difficulty: row.difficulty,
+      };
+      // M3-01: written only for an assisted row (older saves keep their text).
+      if (row.assisted === true) entry.assisted = true;
+      rows.push(entry);
+    }
+    out[key] = rows;
+  }
+  return out;
 }
 
 /**
@@ -1044,7 +1120,8 @@ export class SaveStore {
 
   /**
    * Records a finished game's row in its mode's table ({@link insertHiScore}). Not written until
-   * {@link SaveStore.flush}.
+   * {@link SaveStore.flush}. Only {@link SaveData.hiScores} changes — the archived
+   * {@link SaveData.legacyScores} are never written to (R2-01).
    *
    * @param modeKey - The mode (must look like a mode key — lower-case kebab, ≤ 32 characters —
    *   else nothing is recorded; a new mode beyond {@link MAX_HI_SCORE_TABLES} tables neither).
@@ -1068,7 +1145,8 @@ export class SaveStore {
    * Names a row already in a table (M2-15 — the name entry after a game that recorded it). The
    * row is found by identity (`hiScores(modeKey)[rank]` right after {@link SaveStore.recordScore}),
    * so rows recorded after it (player 2's) cannot misplace it; a row that has meanwhile left the
-   * table is not found. Not written until {@link SaveStore.flush}.
+   * table is not found. Not written until {@link SaveStore.flush}. Only {@link SaveData.hiScores}
+   * is searched and changed (never {@link SaveData.legacyScores} — R2-01).
    *
    * @param modeKey - The row's table.
    * @param entry - The row (the object the table holds).

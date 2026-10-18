@@ -7,6 +7,7 @@
 import {
   SAVE_CORRUPT_KEY,
   SAVE_STORAGE_KEY,
+  SAVE_VERSION,
   createHiScoreEntry,
   createMemoryStorage,
   createSaveStore,
@@ -201,7 +202,7 @@ describe('shell/storage save export / import', () => {
     const source = createSaveStore(null);
     source.recordScore(hiScoreModeKey(DEFAULT_GAME_CONFIG), createHiScoreEntry(12300));
     const text = exportSaveText(source);
-    expect(text).toContain('\n  "version": 2');
+    expect(text).toContain(`\n  "version": ${SAVE_VERSION}`);
     expect(text).toContain('12300');
 
     const storage = createMemoryStorage();
@@ -217,7 +218,7 @@ describe('shell/storage save export / import', () => {
     const result = await importSaveText(target, '{"version":1,"options":{}}');
     expect(result.ok).toBe(true);
     expect(result.status).toBe('migrated');
-    expect(target.data.version).toBe(2);
+    expect(target.data.version).toBe(SAVE_VERSION);
   });
 
   it('refuses empty, corrupt and unreadable texts and changes nothing', async () => {

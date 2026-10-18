@@ -27,13 +27,18 @@ import {
 
 /**
  * Reads a version-1 document the way a stored save is read: its migration to version 2 (M2-16)
- * moves the older co-op / practice rows, the sanitiser then checks everything.
+ * moves the older co-op / practice rows, the one to version 3 (R2-01) archives the tables the move
+ * made under `legacyScores` and starts v2's empty, the sanitiser then checks everything.
  *
  * @param doc - The document.
- * @returns The save as read.
+ * @returns The tables as the version-1 → 2 move left them (the archived `legacyScores`).
  */
-function readV1(doc: Readonly<Record<string, unknown>>): ReturnType<typeof parseSave>['data'] {
-  return parseSave(JSON.stringify(doc)).data;
+function readV1(doc: Readonly<Record<string, unknown>>): {
+  readonly hiScores: Readonly<Record<string, readonly HiScoreEntry[]>>;
+} {
+  const data = parseSave(JSON.stringify(doc)).data;
+  expect(data.hiScores).toEqual({});
+  return { hiScores: data.legacyScores ?? {} };
 }
 
 describe('core/save hi-score mode keys — edge cases (M2-15)', () => {

@@ -104,9 +104,10 @@ test.describe('platform polish (M2-17)', () => {
     );
     expect(exported).toBeDefined();
     const doc = JSON.parse(exported ?? '') as { version: number; stats: { gamesStarted: number } };
-    expect(doc.version).toBe(2);
+    // `core/save` SAVE_VERSION: 3 since v2's R2-01.
+    expect(doc.version).toBe(3);
     // Readable: pretty-printed.
-    expect(exported).toContain('\n  "version": 2');
+    expect(exported).toContain('\n  "version": 3');
 
     doc.stats.gamesStarted = 7;
     const result = await page.evaluate(

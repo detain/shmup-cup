@@ -8,7 +8,7 @@
  * clean stop().
  */
 import type * as AudioWeb from '@shmup/audio-web';
-import { Action, SimEventKind, UserOptionKind } from '@shmup/core';
+import { Action, SAVE_VERSION, SimEventKind, UserOptionKind } from '@shmup/core';
 import type * as RenderPixi from '@shmup/render-pixi';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
@@ -1013,7 +1013,8 @@ describe('web/boot saves and the Options screen (M1-17 edge)', () => {
   it('the save the flow plays with is the shell’s, on the prefixed localStorage', async () => {
     win.stored.set(
       'shmup-cup:save.v1',
-      JSON.stringify({ version: 1, hiScores: { 'meter-normal': [{ score: 12345 }] } }),
+      // A current save (format 3 since R2-01 — an older one's scores are archived, not played).
+      JSON.stringify({ version: SAVE_VERSION, hiScores: { 'meter-normal': [{ score: 12345 }] } }),
     );
     const { app } = await boot();
     const flow = app.game.scenes!;

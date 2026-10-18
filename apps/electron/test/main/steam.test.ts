@@ -5,7 +5,7 @@
  *
  * @module
  */
-import { createDefaultSave, serializeSave, type SaveData } from '@shmup/core';
+import { createDefaultSave, parseSave, serializeSave, type SaveData } from '@shmup/core';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -204,6 +204,38 @@ describe('electron/main steam — the achievement rules (M3-03)', () => {
     const honest = save({ hiScores: { 'meter-normal': [row(2_000_000, true), row(1_000_000)] } });
     expect(achievementsFor(honest)).toEqual(['MILLION']);
     expect(achievementsFor(save({ hiScores: { 'meter-normal': [row(999_999)] } }))).toEqual([]);
+  });
+
+  it('reads the v1 tables archived under legacyScores too (R2-01, W4-8)', () => {
+    expect(achievementsFor(save({ legacyScores: { 'direct-normal': [row(100)] } }))).toEqual([
+      'MANTA_PILOT',
+    ]);
+    expect(achievementsFor(save({ legacyScores: { 'meter-normal': [row(1_000_000)] } }))).toEqual([
+      'MILLION',
+    ]);
+    // The two records together: the best of either.
+    const both = save({
+      hiScores: { 'meter-normal': [row(500)] },
+      legacyScores: { 'meter-normal-bossrush': [row(1_200_000)] },
+    });
+    expect(achievementsFor(both)).toEqual(['BOSS_RUSH', 'MILLION']);
+    // The archive follows the same rules: assisted rows and keys that do not parse never count.
+    expect(
+      achievementsFor(
+        save({ legacyScores: { 'meter-normal': [row(2_000_000, true)], 'not a key': [row(9)] } }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('keeps what a v1 save earned once it is read as version 3 (R2-01, W4-8)', () => {
+    // A version-2 document as v1 wrote it: the version-3 migration archives its tables.
+    const v1Text = JSON.stringify({
+      version: 2,
+      hiScores: { 'meter-normal': [row(1_000_000)], 'direct-hard': [row(10)] },
+    });
+    const read = parseSave(v1Text).data;
+    expect(read.hiScores).toEqual({});
+    expect(achievementsFor(read)).toEqual(['MANTA_PILOT', 'MILLION']);
   });
 });
 

@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "options": {
+    "audio": { "master": 6, "music": 3, "sfx": 8 },
+    "input": {
+      "profileId": "keyboard-default",
+      "autofire": "toggle",
+      "autofireInterval": 5,
+      "socd": "lastWins",
+      "releaseDebounce": 2,
+      "bindings": {
+        "keyboard-default": {
+          "game": { "Shot": ["code:KeyJ"], "Sub": ["code:KeyK"] },
+          "menu": { "Confirm": ["code:KeyJ"] }
+        },
+        "tizen-remote-safe": { "game": { "PowerUp": ["key:427"], "Special": ["key:13"] } }
+      }
+    },
+    "game": {
+      "difficulty": "hard",
+      "lives": 4,
+      "deathPenalty": "casual",
+      "autoPowerUp": true,
+      "pickupMagnet": false,
+      "oneButton": true
+    },
+    "display": {
+      "bulletPalette": "protanopia",
+      "scaleMode": "fit",
+      "screenShake": false,
+      "reduceFlashing": true,
+      "showHitbox": true,
+      "bossHpBar": true,
+      "crtFilter": "light",
+      "aspect": "classic",
+      "language": "ja"
+    },
+    "play": {
+      "speed": 75,
+      "invincible": false,
+      "optionRecovery": true,
+      "rumble": false,
+      "slowdown": true,
+      "graze": true,
+      "deathBomb": true,
+      "blackHole": true
+    }
+  },
+  "hiScores": {
+    "direct-hard-practice": [
+      {
+        "name": "PRC",
+        "score": 22000,
+        "reached": "zone-d",
+        "mode": "practice",
+        "difficulty": "hard",
+        "assisted": true
+      },
+      { "name": "---", "score": 900, "reached": "zone-a", "mode": "practice", "difficulty": "hard" }
+    ],
+    "meter-normal": [
+      { "name": "ACE", "score": 91000, "reached": "zone-i", "mode": "1p", "difficulty": "normal" },
+      { "name": "BOB", "score": 48200, "reached": "zone-c", "mode": "1p", "difficulty": "normal" },
+      { "name": "CAT", "score": 48200, "reached": "zone-b", "mode": "1p", "difficulty": "normal" }
+    ],
+    "meter-normal-2p": [
+      { "name": "DUO", "score": 64000, "reached": "zone-e", "mode": "2p", "difficulty": "normal" }
+    ]
+  },
+  "stats": { "gamesStarted": 41, "gameOvers": 33, "stagesCleared": 58 },
+  "unlocks": { "extraEdit": true, "loop2": false }
+}

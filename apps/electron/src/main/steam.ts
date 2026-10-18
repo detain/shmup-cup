@@ -84,7 +84,9 @@ export interface SteamAchievement {
 }
 
 /**
- * The best unassisted score in the save's hi-score tables a predicate accepts.
+ * The best unassisted score in the save's hi-score tables a predicate accepts — v2's tables and
+ * the v1 tables archived under `legacyScores` (v2's R2-01, owner decision W4-8: the version-3
+ * migration moves a v1 player's scores there, and what they earned stays earned).
  *
  * @param save - The save.
  * @param match - Tests a table's parts (`core/save` `parseHiScoreModeKey` — the ship, the
@@ -93,11 +95,27 @@ export interface SteamAchievement {
  * @returns The highest score found, or 0.
  */
 function bestScore(save: SaveData, match: (parts: HiScoreKeyParts) => boolean): number {
-  let best = 0;
-  for (const key of Object.keys(save.hiScores)) {
+  const best = bestIn(save.hiScores, match, 0);
+  return save.legacyScores === undefined ? best : bestIn(save.legacyScores, match, best);
+}
+
+/**
+ * The best unassisted score in one record of hi-score tables, at least `best`.
+ *
+ * @param tables - `hiScores` or `legacyScores`.
+ * @param match - Tests a table's parts (see {@link bestScore}).
+ * @param best - The best score found so far.
+ * @returns The highest score found, or `best`.
+ */
+function bestIn(
+  tables: SaveData['hiScores'],
+  match: (parts: HiScoreKeyParts) => boolean,
+  best: number,
+): number {
+  for (const key of Object.keys(tables)) {
     const parts = parseHiScoreModeKey(key);
     if (parts === null || !match(parts)) continue;
-    for (const entry of save.hiScores[key]) {
+    for (const entry of tables[key]) {
       // An assisted run (god mode, the speed or invincibility assist) never earns an achievement.
       if (entry.assisted !== true && entry.score > best) best = entry.score;
     }

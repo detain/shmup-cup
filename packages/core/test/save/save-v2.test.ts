@@ -4,7 +4,8 @@
  * practice row still in a one-player table) migrating to version 2 — the options carried over,
  * the new controls and game options unset, the older rows moved into their own tables, the stats
  * kept — and the rewrite in the new layout on the next flush; the new option groups round-tripping
- * and read defensively.
+ * and read defensively. Since v2's R2-01 the fixture goes on to version 3 (`save-v3.test.ts`), so
+ * the tables the move made are read from the archived `legacyScores`.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -29,15 +30,19 @@ const V1 = readFileSync(
 );
 
 describe('core/save version 2 (M2-16)', () => {
-  it('is version 2 with a step from version 1', () => {
-    expect(SAVE_VERSION).toBe(2);
+  it('has a step from version 1 to 2 (and on to the current version)', () => {
+    expect(SAVE_VERSION).toBeGreaterThanOrEqual(2);
     expect([SAVE_MIGRATIONS[1].from, SAVE_MIGRATIONS[1].to]).toEqual([1, 2]);
   });
 
   it('migrates the version-1 fixture: options kept, new groups unset, stats kept', async () => {
     const storage = createMemoryStorage({ [SAVE_STORAGE_KEY]: V1 });
     const loaded = await loadSave(storage);
-    expect([loaded.status, loaded.fromVersion, loaded.data.version]).toEqual(['migrated', 1, 2]);
+    expect([loaded.status, loaded.fromVersion, loaded.data.version]).toEqual([
+      'migrated',
+      1,
+      SAVE_VERSION,
+    ]);
     expect(loaded.data.options).toEqual({
       audio: { master: 7, music: 4, sfx: 9 },
       // M3-02b migrated the retired `tizen-remote-diagonal` of the fixture to the TV default.
@@ -61,7 +66,10 @@ describe('core/save version 2 (M2-16)', () => {
   });
 
   it('moves the co-op and practice rows of a one-player table into their own tables', () => {
-    const { data } = parseSave(V1);
+    const read = parseSave(V1).data;
+    // Version 3 (R2-01) archives the moved tables and starts v2's empty.
+    expect(read.hiScores).toEqual({});
+    const data = { hiScores: read.legacyScores ?? {} };
     expect(Object.keys(data.hiScores)).toEqual([
       'direct-hard',
       'meter-normal',
@@ -76,7 +84,7 @@ describe('core/save version 2 (M2-16)', () => {
     expect(data.hiScores['direct-hard'].map((row) => row.name)).toEqual(['MNT']);
   });
 
-  it('writes the migrated save in the version-2 layout on the next flush, then leaves it', async () => {
+  it('writes the migrated save in the current layout on the next flush, then leaves it', async () => {
     const storage = createMemoryStorage({ [SAVE_STORAGE_KEY]: V1 });
     const store = createSaveStore(storage, await loadSave(storage));
     expect(store.dirty).toBe(true);
@@ -84,7 +92,7 @@ describe('core/save version 2 (M2-16)', () => {
     const text = await storage.get(SAVE_STORAGE_KEY);
     expect(text).toBe(serializeSave(store.data));
     const doc = JSON.parse(text ?? '{}') as { version: number; options: Record<string, unknown> };
-    expect(doc.version).toBe(2);
+    expect(doc.version).toBe(SAVE_VERSION);
     // M3-01 added `play` (the assists and feel) after the display options.
     expect(Object.keys(doc.options)).toEqual(['audio', 'input', 'game', 'display', 'play']);
     const again = await loadSave(storage);
@@ -137,7 +145,7 @@ describe('core/save version 2 (M2-16)', () => {
   it('reads malformed controls and game options as unset', () => {
     const { data } = parseSave(
       JSON.stringify({
-        version: 2,
+        version: SAVE_VERSION,
         options: {
           input: {
             autofire: 'sometimes',

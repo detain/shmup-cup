@@ -15,6 +15,7 @@ import {
   REPLAY_SLOTS,
   SAVE_CORRUPT_KEY,
   SAVE_STORAGE_KEY,
+  SAVE_VERSION,
   SFX_CUES,
   SimEventKind,
   UserOptionKind,
@@ -1282,7 +1283,8 @@ describe('shell/boot the scene flow (M1-16, the default scene)', () => {
 
 describe('shell/boot saves and options (M1-17)', () => {
   /** A save document's text. */
-  const saveText = (doc: Record<string, unknown>): string => JSON.stringify({ version: 2, ...doc });
+  const saveText = (doc: Record<string, unknown>): string =>
+    JSON.stringify({ version: SAVE_VERSION, ...doc });
 
   /**
    * The audio fake with its bus volumes recorded.
@@ -1539,7 +1541,10 @@ describe('shell/boot saves and options (M1-17 edge)', () => {
       ['sfx', 1],
       ['ui', 1],
     ]);
-    expect(shell.game.scenes!.hiScore).toBe(777);
+    // Save format 3 (v2's R2-01) archives an older save's scores: the session starts without a
+    // hi-score, the old row kept under legacyScores.
+    expect(shell.game.scenes!.hiScore).toBe(0);
+    expect(shell.save.data.legacyScores?.['meter-normal']?.[0]?.score).toBe(777);
   });
 
   it('a storage that fails to read boots like a first launch', async () => {

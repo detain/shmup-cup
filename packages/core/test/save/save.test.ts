@@ -75,7 +75,8 @@ describe('core/save module', () => {
   });
 
   it('has one migration per older version, chained up to the current one', () => {
-    expect(SAVE_VERSION).toBe(2);
+    // 3 since v2's R2-01 (v1's hi-score tables archived); the key stays the format family's.
+    expect(SAVE_VERSION).toBe(3);
     expect(SAVE_STORAGE_KEY).toBe('save.v1');
     expect(SAVE_MIGRATIONS).toHaveLength(SAVE_VERSION);
     SAVE_MIGRATIONS.forEach((step, n) => expect([step.from, step.to]).toEqual([n, n + 1]));
@@ -84,7 +85,7 @@ describe('core/save module', () => {
   it('starts from defaults', () => {
     const data = createDefaultSave();
     expect(data).toEqual({
-      version: 2,
+      version: SAVE_VERSION,
       options: DEFAULT_USER_OPTIONS,
       hiScores: {},
       stats: { gamesStarted: 0, gameOvers: 0, stagesCleared: 0 },
@@ -146,7 +147,7 @@ describe('core/save round trip', () => {
 
     const loaded = await loadSave(storage);
     expect(loaded.status).toBe('ok');
-    expect(loaded.fromVersion).toBe(2);
+    expect(loaded.fromVersion).toBe(SAVE_VERSION);
     expect(loaded.data).toEqual(store.data);
     expect(loaded.data.options.input.bindings).toEqual({
       'tizen-remote-safe': { game: { PowerUp: ['key:427'], Special: ['key:13'] } },
@@ -195,14 +196,14 @@ describe('core/save round trip', () => {
 
   it('serialises every field and parses its own output unchanged', () => {
     const data = sanitizeSave({
-      version: 2,
+      version: SAVE_VERSION,
       options: { audio: { master: 2, music: 4, sfx: 6 }, input: { profileId: 'x' } },
       hiScores: { 'meter-hard': [{ name: 'ZED', score: 5 }] },
       stats: { gamesStarted: 3, gameOvers: 2, stagesCleared: 1 },
     });
     const text = serializeSave(data);
     expect(JSON.parse(text)).toEqual({
-      version: 2,
+      version: SAVE_VERSION,
       options: {
         audio: { master: 2, music: 4, sfx: 6 },
         input: {
@@ -249,7 +250,7 @@ describe('core/save round trip', () => {
       },
       stats: { gamesStarted: 3, gameOvers: 2, stagesCleared: 1 },
     });
-    expect(parseSave(text)).toEqual({ data, status: 'ok', fromVersion: 2, reason: '' });
+    expect(parseSave(text)).toEqual({ data, status: 'ok', fromVersion: SAVE_VERSION, reason: '' });
   });
 
   it('writeSave writes unconditionally under the save key', async () => {
@@ -261,7 +262,7 @@ describe('core/save round trip', () => {
 });
 
 describe('core/save migrations', () => {
-  it('migrates the version-0 fixture to the current version (through version 1)', async () => {
+  it('migrates the version-0 fixture to the current version (through versions 1 and 2)', async () => {
     const { storage, writes } = recordingStorage({ [SAVE_STORAGE_KEY]: V0 });
     const loaded = await loadSave(storage);
     expect(loaded.status).toBe('migrated');
@@ -284,8 +285,10 @@ describe('core/save migrations', () => {
       },
       play: DEFAULT_USER_OPTIONS.play,
     });
-    // The flat list became the meter-normal table: sorted, ties keep their order, bad rows dropped.
-    const rows = loaded.data.hiScores['meter-normal'];
+    // The flat list became the meter-normal table: sorted, ties keep their order, bad rows dropped;
+    // version 3 (R2-01) archives it with the other v1 tables and starts v2's empty.
+    expect(loaded.data.hiScores).toEqual({});
+    const rows = loaded.data.legacyScores?.['meter-normal'] ?? [];
     expect(rows.map((r) => [r.name, r.score])).toEqual([
       ['BOB', 91000],
       ['ACE', 48200],
@@ -314,14 +317,16 @@ describe('core/save migrations', () => {
     const steps = [
       { from: 0, to: 1, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, a: 1 }) },
       { from: 1, to: 2, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, b: 2 }) },
+      { from: 2, to: 3, migrate: (d: Readonly<Record<string, unknown>>) => ({ ...d, c: 3 }) },
     ];
+    expect(steps).toHaveLength(SAVE_VERSION);
     expect(migrateSave({ version: 0 }, steps)).toEqual({
-      data: { version: 0, a: 1, b: 2 },
+      data: { version: 0, a: 1, b: 2, c: 3 },
       fromVersion: 0,
     });
     expect(() => migrateSave({ version: 0 }, [])).toThrow(RangeError);
     expect(() => migrateSave({ version: 0 }, steps.slice(0, 1))).toThrow(/version 1/);
-    expect(() => migrateSave({ version: 3 })).toThrow(/newer/);
+    expect(() => migrateSave({ version: SAVE_VERSION + 1 })).toThrow(/newer/);
     expect(() => migrateSave({ version: -1 })).toThrow(RangeError);
     expect(() => migrateSave({ version: '1' })).toThrow(RangeError);
   });

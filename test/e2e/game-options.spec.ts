@@ -2,8 +2,9 @@
  * Browser tests of the Options screen's GAME and CONTROLS pages (plan M2-16 acceptance "v1 → v2
  * migration", "every option reaches its consumer", "capture / conflict / reset") in headless
  * Chromium: a version-1 save left by an older build boots, the GAME page sets LIVES 5 and the
- * one-button preset, the save is rewritten as version 2 (the old options kept, the co-op row moved
- * into its own table) and the next game starts with 5 ships, Auto Power-Up, the casual penalty and
+ * one-button preset, the save is rewritten in the current format (the old options kept, the co-op
+ * row moved into its own table — since v2's R2-01 archived with the other v1 tables under
+ * `legacyScores`, format 3) and the next game starts with 5 ships, Auto Power-Up, the casual penalty and
  * autofire always on; on the rebind screen Escape cancels a capture (nothing stored) and RESET
  * restores a rebound key, while SOCD / DEBOUNCE reach the save; the Tizen build from disk sets
  * LIVES with the remote's keys and keeps it across a relaunch. The flow is read through the test
@@ -14,6 +15,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
+
+/** The save format the build writes (`core/save` `SAVE_VERSION`: 3 since v2's R2-01). */
+const SAVE_FORMAT = 3;
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -102,6 +106,7 @@ interface StoredSave {
     readonly display: Record<string, unknown>;
   };
   readonly hiScores: Record<string, Array<{ name: string }>>;
+  readonly legacyScores?: Record<string, Array<{ name: string }>>;
   readonly stats: Record<string, number>;
 }
 
@@ -233,7 +238,7 @@ async function startGame(page: Page, press: (key: 'Enter') => Promise<void>): Pr
 }
 
 test.describe('game options (web build)', () => {
-  test('a version-1 save boots; LIVES 5 and ONE BUTTON reach the save (v2) and the next game', async ({
+  test('a version-1 save boots; LIVES 5 and ONE BUTTON reach the save (v3) and the next game', async ({
     page,
   }) => {
     test.setTimeout(180_000);
@@ -256,7 +261,7 @@ test.describe('game options (web build)', () => {
     await tap(page, 'Enter'); // ONE BUTTON on
     await tap(page, 'Escape'); // Back: the page stores, writes the save and closes
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-    await expect.poll(async () => (await storedSave(page))?.version).toBe(2);
+    await expect.poll(async () => (await storedSave(page))?.version).toBe(SAVE_FORMAT);
     const save = await storedSave(page);
     expect(save?.options.game).toEqual({
       difficulty: null,
@@ -279,9 +284,10 @@ test.describe('game options (web build)', () => {
       scaleMode: 'fit',
     });
     expect(save?.stats).toEqual({ gamesStarted: 12, gameOvers: 9, stagesCleared: 17 });
-    // The co-op row moved into its own table.
-    expect(save?.hiScores['meter-normal']?.map((r) => r.name)).toEqual(['ACE']);
-    expect(save?.hiScores['meter-normal-2p']?.map((r) => r.name)).toEqual(['DUO']);
+    // The co-op row moved into its own table, and the v1 tables were archived (R2-01).
+    expect(save?.hiScores).toEqual({});
+    expect(save?.legacyScores?.['meter-normal']?.map((r) => r.name)).toEqual(['ACE']);
+    expect(save?.legacyScores?.['meter-normal-2p']?.map((r) => r.name)).toEqual(['DUO']);
 
     // The next game gets the options (after a reload too: read from the save).
     await page.reload();

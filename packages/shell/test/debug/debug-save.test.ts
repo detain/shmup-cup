@@ -6,6 +6,7 @@
 import {
   DEFAULT_GAME_CONFIG,
   EMPTY_CONTENT_DB,
+  SAVE_VERSION,
   createGame,
   createHeadlessPlatform,
   createHiScoreEntry,
@@ -63,7 +64,7 @@ describe('shell/debug save export / import (M2-17)', () => {
     const api = t.api.save;
     expect(api).not.toBeNull();
     const empty = api?.export() ?? '';
-    expect(JSON.parse(empty)).toMatchObject({ version: 2, hiScores: {} });
+    expect(JSON.parse(empty)).toMatchObject({ version: SAVE_VERSION, hiScores: {} });
 
     const other = createSaveStore(null);
     other.recordScore(hiScoreModeKey(DEFAULT_GAME_CONFIG), createHiScoreEntry(4200));

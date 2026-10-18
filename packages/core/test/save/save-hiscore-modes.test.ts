@@ -119,8 +119,11 @@ describe('core/save hi-score tables per mode (M2-15)', () => {
         'direct-hard-practice': [{ name: 'D', score: 50, mode: 'practice' }],
       },
     };
-    // The version-1 → 2 migration (M2-16) moves them; a version-2 document is taken as it is.
-    const data = parseSave(JSON.stringify(doc)).data;
+    // The version-1 → 2 migration (M2-16) moves them; a version-2 document is taken as it is. The
+    // version-2 → 3 migration (R2-01) then archives the moved tables under `legacyScores`.
+    const read = parseSave(JSON.stringify(doc)).data;
+    expect(read.hiScores).toEqual({});
+    const data = { hiScores: read.legacyScores ?? {} };
     expect(sanitizeSave({ ...doc, version: 2 }).hiScores['meter-normal']).toHaveLength(4);
     expect(Object.keys(data.hiScores)).toEqual([
       'direct-hard-practice',
@@ -132,8 +135,9 @@ describe('core/save hi-score tables per mode (M2-15)', () => {
     expect(data.hiScores['meter-normal-2p'].map((row) => row.name)).toEqual(['TWO', 'NEW', 'TWB']);
     expect(data.hiScores['meter-normal-practice'].map((row) => row.name)).toEqual(['PRA']);
     // Reading the moved document again changes nothing (the move is idempotent).
-    const again = parseSave(JSON.stringify(data));
+    const again = parseSave(JSON.stringify(read));
     expect(again.status).toBe('ok');
-    expect(again.data.hiScores).toEqual(data.hiScores);
+    expect(again.data.legacyScores).toEqual(data.hiScores);
+    expect(again.data.hiScores).toEqual({});
   });
 });
