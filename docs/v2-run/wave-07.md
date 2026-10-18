@@ -5,6 +5,13 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w07-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w07-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
 
 **Steps:** R2-04 (all of it), R3-06 (all of it), R4's prep (`R4-P.P1` … `R4-P.P4`). · **Gate to start:** wave 6's
 exit (R2-03 done: goldens and demos fresh at 640×360, every e2e gate deleted, doc images on the default art scale). ·
@@ -16,14 +23,14 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
-| 1 | `R2-04.F1` → `R2-04.P2` → `R2-04.G` → `R2-04.REL` | `core/fx`, `content/fx/particles.fx.json`, the zone content (from the patches), `test/golden/**`, the 10 `package.json` | F1: none (patch) · P2: FP · G: GOLDEN + FP · REL: none | G: batch A + `display-options` |
+| 1 | `R2-04.F1` → `R2-04.P2` → `R2-04.G` → `R2-04.REL` | `core/fx`, `content/fx/particles.fx.json`, the zone content (from the patches), `test/golden/**`, the 10 `package.json` | F1: none (patch) · P2: FP · G: GOLDEN + FP · REL: none | G: batch A + `display-options attract determinism` + F (Firefox) |
 | 2 | `R2-04.P1` → `R2-04.P3` → `R2-04.P4` | `packages/render-pixi/src/effects/{index,crt,shaders,layer-effects}.ts` | `layer-effects.ts` (P4 before R3-06.L3); FP only if the shell frame fingerprint moves | P3: `display-options` |
 | 3 | `R2-04.Z1` → `R2-04.Z3` | read-only + patches for zones A–C, then G–I | none (patches, never pushed) | none |
 | 4 | `R2-04.Z2` → `R2-04.Z4` | read-only + patches for zones D–F, then bonus / boss rush / loops | none (patches) | none |
 | 5 | `R3-06.L1` → `R3-06.L2` → `R3-06.L4` → `R3-06.L6` | `core/data`, `core/stage`, `core/presentation`, `core/world`, `core/enemies`, `core/bosses`, the new `decor-range` stage; L2: `RENDER_GROUP_LAYERS` only; L4: `render-pixi/src/{sprites,renderer}` after `R3-06.L3` | DATA-INDEX; the core barrel (L2, L4: additions only); FP at L1 (content-DB `examples` only), L2, L4, L6 | L6: `decor raster stage` |
 | 6 | `R3-06.L5` → `R3-06.L3` → `R3-06.L7` | `scripts/content/tiled-import.mjs`, `render-pixi/src/{layers,renderer}`, the render bench | RP-BARREL (L3) | none |
-| 7 | `R4-P.P1` → `R4-P.P2` | `scripts/assets/procedural/**` (split + stubs + registry), the campaign credits line, `test/scripts/assets/procedural*.test.ts` | the registry `procedural/index.mjs`; `content/campaign/main.campaign.json` (P1, credits only); FP at P1 (the credits) | none |
-| 8 | `R4-P.P3` → `R4-P.P4` | `scripts/assets/{pipeline,sprite-source,font}.mjs`, `scripts/art-origins.mjs`, the new `scripts/assets/v2kit.mjs` (outside `procedural/`) | none | none |
+| 7 | `R4-P.P1` → `R4-P.P2` | `scripts/assets/procedural/**` (split + stubs + registry), the campaign credits line, `test/scripts/assets/procedural*.test.ts` | the registry `procedural/index.mjs`; `content/campaign/main.campaign.json` (P1, credits only); FP at P1 (the credits); `test/scripts/assets/pipeline-edge.test.ts` (P1 first, rule 10) | none |
+| 8 | `R4-P.P3` → `R4-P.P4` | `scripts/assets/{pipeline,sprite-source,font}.mjs`, `scripts/art-origins.mjs`, the new `scripts/assets/v2kit.mjs` (outside `procedural/`) | `test/scripts/assets/pipeline-edge.test.ts` after `R4-P.P1` (rule 10) | none |
 
 - **Fillers:** none (the eight lanes fill the eight builder slots; `R5-P.P5e` has its home in wave 9).
 - **Reviews:** a review loop per subtask as it lands (`<id>.RV1` → `<id>.FIX1` → `<id>.RV2` … to zero); for the five
@@ -57,6 +64,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 9. **Nothing in this wave changes the scale-1 atlas.** `test/scripts/assets/interim-pipeline.test.ts:341-357` (the
    digest `fa4198…`) stays green and is never re-pinned. R4 prep is byte-identical at both scales, except P3's new
    mechanism, which no shipped file uses yet.
+10. **`test/scripts/assets/pipeline-edge.test.ts`:** `R4-P.P1` (the case `:271-281`) pushes first; `R4-P.P3` edits its
+    case (`:171-176`) only after P1 is on `master` (fetch and rebase; never hand-merge). P3 may do all its other work
+    before that.
 
 ## Subtasks
 
@@ -165,7 +175,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/playtest
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-*.test.ts test/integration/release-audit.test.ts   # the files exist once R5-P.P2a/P6 (wave 6) landed
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-*.test.ts test/integration/release-audit.test.ts   # the files exist once R5-P.P2a / P2b (wave 6) landed
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/determinism packages/shell/test/fx-gallery
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/fx packages/core/test/bosses packages/core/test/world/world-death.test.ts
   pnpm content:check
@@ -193,7 +203,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 
 - **Wave / lane / order:** wave 07, lane 1, after `R2-04.G`.
 - **Depends on:** `R2-04.G` on `master`.
-- **Goal:** every package manifest says `2.0.0-alpha.1` (decision R2-N8), so the orchestrator can tag it.
+- **Goal:** every package manifest says `2.0.0-alpha.1` (decision R2-N8), so the orchestrator can tag the wave's
+  exit commit (Exit check 3; it follows this commit).
 - **Files (only these; checked on `bc8e05d`, each says `2.0.0-alpha.0` today):**
   - `package.json`, `packages/{audio-web,core,input-web,render-pixi,shell}/package.json`,
     `apps/{electron,tizen,web,webos}/package.json` (10 files);
@@ -434,6 +445,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - An optional field must not change the resolved shape of existing stages in a way the hash or the fingerprint sees:
     leave an absent field out of the resolved object, never set it to `undefined` (the fingerprint's
     `canonical({ a: undefined })` differs from `canonical({})`).
+  - Export no new runtime value from `packages/core/src/data/index.ts` (types are fine):
+    `packages/core/test/index.test.ts` requires a barrel line for every new runtime export, and the barrel is
+    `R3-06.L2`'s.
 - **Docs needs:** `docs/dev/stage-runtime.md`, `docs/dev/content-data.md`, `content/stages/README.md` (prose).
 
 ### R3-06.L2 — The core runtime and the render contract for decor (RR-6)
@@ -547,10 +561,18 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `content/stages/decor-range.stage.json` (new).
   - `scripts/assets/procedural/decor.mjs` (the stub from `R4-P.P1`, filled; do not edit `procedural/index.mjs`).
   - `test/e2e/decor.spec.ts` (new; joins batch G — README "The standard e2e batches").
+  - `test/golden/v1-baseline.test.ts` — only the case 'covers every shipped stage, and every zone on loop 2 too':
+    compare the scenarios' stage ids with `db.stages` minus a named list of stages added after the v1 freeze
+    (`const POST_V1_STAGES = ['decor-range']`, with the reason "R3-06.L6: a v2-only dev range; the v1 baseline is
+    frozen and never re-recorded"; a later v2-only stage joins this list), and assert that every listed id is a
+    shipped stage.
   - the three fingerprints' `PINNED` tables (re-pin: a new stage and new sprite names).
-- **Tests (targeted, run all of them):**
+- **Tests (targeted, run all of them):** `test/integration/stage-runtime.test.ts` is on the first line because its
+  cases 'leaves a flyable corridor in every pixel column and a clear spawn at every checkpoint' and 'plays every
+  shipped stage to stageClear from every checkpoint, deterministically' play every shipped stage, so `decor-range`
+  must pass both.
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts test/scripts/art-origins.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts test/scripts/art-origins.test.ts test/integration/stage-runtime.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden
   pnpm content:check
@@ -561,9 +583,14 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   e2e spec green; the decor art passes `test/integration/palette-cycle-scan.test.ts` (R3-03.V3).
 - **Token:** FINGERPRINTS (push time). **e2e:** one of the wave's two passes.
 - **Traps:**
-  - `decor.mjs` returns `[]` when `options.artScale === 1`: its sprites are new v2-only names, absent from the scale-1
-    build (decision RR-1a). A sprite drawn at scale 1 moves the scale-1 digest pin
-    (`test/scripts/assets/interim-pipeline.test.ts:341-357`), which is never re-pinned (wave rule 9).
+  - `decor.mjs` (`export function generate(options = {})`) returns `[]` when `(options.artScale ?? 1) === 1`: its
+    sprites are new v2-only names, absent from the scale-1 build (decision RR-1a). A sprite drawn at scale 1 moves the
+    scale-1 digest pin (`test/scripts/assets/interim-pipeline.test.ts:341-357`), which is never re-pinned (wave
+    rule 9).
+  - Mark every decor sprite `native: true` (RR-1): it is drawn at its v2 size, and a non-native sprite is scaled ×1.5
+    again by the interim stage (`scripts/assets/pipeline.mjs:395-397`). `R4-P.P3` made the relation case of
+    `test/scripts/assets/interim-pipeline.test.ts` accept a name that exists only in the default-scale build only if
+    it is native; never edit that file.
   - A new sprite name shifts every later sprite id (ids are sorted names): the presentation and content-DB
     fingerprints move — that is the re-pin, not a bug.
   - Frame-wide art uses `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` (allowed after `R4-P.P3` hashes it); no literal
@@ -637,9 +664,11 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `test/bench/render-harness/load.ts`.
   - `test/integration/render-bench.test.ts`.
   - `apps/tizen/src/bench/scene.ts` — only if the TV scene models layers.
+  - `test/bench/render-harness/gates.ts` — only `DRAW_CALL_BUDGET` and its docblock, and only for a deliberate raise
+    (reason in the commit).
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/render-bench.test.ts test/integration/tv-render-bench.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/render-bench.test.ts test/integration/tv-render-bench.test.ts test/integration/render-groups.test.ts
   flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config test/bench/vitest.config.ts test/bench/render.perf.ts
   ```
 - **Acceptance:** `DRAW_CALL_BUDGET` (20, `test/bench/render-harness/gates.ts:33`) raised **only** deliberately, with
@@ -656,23 +685,27 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   pre-register every generator R4 and R3-06 will fill, so nobody edits the registry again.
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/assets/procedural/direct.mjs` — keeps the 8 Direct shots (`shots/direct-missile`, `beam`, `wave`,
-    `sub-*` …, `:294-333`).
-  - `scripts/assets/procedural/direct-items.mjs` (new) — the 6 Direct items `items/direct-*` (from `direct.mjs:294-308`).
+    `sub-*` …, `:309-332`).
+  - `scripts/assets/procedural/direct-items.mjs` (new) — the 6 Direct items `items/direct-*` (from `direct.mjs:293-302`).
   - `scripts/assets/procedural/arm.mjs` (new) — `shields/arm` (from `direct.mjs:334`).
   - `scripts/assets/procedural/particles.mjs` → `fx/black-hole` moves to `scripts/assets/procedural/blackhole.mjs`
     (new; from `particles.mjs:182-235`).
   - `scripts/assets/procedural/ui.mjs` → `ui/logo` moves to `scripts/assets/procedural/logo.mjs` (new; `ui.mjs:143`),
     together with the constants `LOGO_TEXT` and `LOGO_SCALE` (`ui.mjs:22`, `:25`; `logo.mjs` exports both, `ui.mjs`
     no longer does); `ui/pixel` and `ui/missing` stay.
-  - stubs returning `[]` (new): `scripts/assets/procedural/thrusters.mjs`, `title.mjs`, `ui-kit.mjs`, `decor.mjs`.
+  - stubs returning `[]` (new; each `export function generate(options = {}) { return []; }` with a docblock, so a
+    later v2 branch can read `options.artScale`): `scripts/assets/procedural/thrusters.mjs`, `title.mjs`,
+    `ui-kit.mjs`, `decor.mjs`.
   - `scripts/assets/procedural/index.mjs` — `PROCEDURAL_GENERATORS` (`:62-89`): add every new module, sorted by id.
   - `content/campaign/main.campaign.json` — the credits only: every registered generator must be named in the
-    credits (`test/integration/content.test.ts:2302-2313`, 'rolls credits that list every placeholder-asset
-    generator, the zones and the bosses', loops over `PROCEDURAL_GENERATORS`), so add the eight new modules to the
-    "PLACEHOLDER ART GENERATORS" section as new lines after its last line (for example
-    `"arm.mjs  blackhole.mjs  decor.mjs"`, `"direct-items.mjs  logo.mjs  thrusters.mjs"`, `"title.mjs  ui-kit.mjs"`),
-    each line within `MAX_CREDITS_LINE_LENGTH` (60) characters and the section within `MAX_CREDITS_LINES` (16) lines
-    (`packages/core/src/data/campaign.ts`; the section has 11 lines today). Change nothing else in the file.
+    credits (the case 'rolls credits that list every placeholder-asset generator, the zones and the bosses', which
+    loops over `PROCEDURAL_GENERATORS`: on `bc8e05d` it is `test/integration/content.test.ts:2302-2313`;
+    `R5-P.P2b` (wave 6) moved the H / I block, so find it with `git grep -n "rolls credits" test/integration`), so
+    add the eight new modules to the "PLACEHOLDER ART GENERATORS" section as new lines after its last line (for
+    example `"arm.mjs  blackhole.mjs  decor.mjs"`, `"direct-items.mjs  logo.mjs  thrusters.mjs"`,
+    `"title.mjs  ui-kit.mjs"`), each line within `MAX_CREDITS_LINE_LENGTH` (67 today) characters and the section
+    within `MAX_CREDITS_LINES` (16) lines (`packages/core/src/data/campaign.ts`; the section has 11 lines today).
+    Change nothing else in the file.
   - the `PINNED` tables of `test/integration/content-db-fingerprint.test.ts` (only `core.campaign` moves) and
     `test/integration/presentation-fingerprint.test.ts` (only `runA.credits` / `runB.credits` and the segments after
     them move) — re-pinned at push time for the credits line.
@@ -685,6 +718,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     way" (`:271-281`): the too-wide logo's issue path is now `procedural:logo:frames[0]`. Filter with
     `i.path.startsWith('procedural:logo:')` and expect `['procedural:logo:frames[0]']` (the message still contains
     `"ui/logo"`), and add `expect(error.issues.filter((i) => i.path.startsWith('procedural:ui:'))).toEqual([])`.
+    Push this before `R4-P.P3` edits another case of the file (wave rule 10).
 - **Tests (targeted, run all of them):**
   ```bash
   mkdir -p /home/sites/shmup-cup-run
@@ -712,7 +746,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Traps:**
   - Each moved sprite keeps its seed (`seedOf(name)` — the name, not the module) and its pixels.
   - `makeSprite(name, frames, generator)` writes `origin: 'procedural:<generator>'` (`common.mjs:114-126`). Use the
-    new module's id; the origin report pins no per-generator count (only the 438 procedural total), so check
+    new module's id; the origin report prints totals by origin and kind only, no per-generator count (438
+    procedural on `89c95f1`; waves 2–6 may change it; P1 leaves every total unchanged), so check
     `node scripts/art-origins.mjs --check` rather than guessing.
   - Never edit `common.mjs`.
 - **Docs needs:** `docs/dev/asset-pipeline.md` (the generator split; `W07.DOCS-D`). The test-file renames are
@@ -759,7 +794,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 ### R4-P.P3 — v2 sources beside v1 in the pipeline (RR-1 option A)
 
 - **Wave / lane / order:** wave 07, lane 8, first.
-- **Depends on:** nothing in this wave.
+- **Depends on:** `R4-P.P1` on `master` before you edit `test/scripts/assets/pipeline-edge.test.ts` (wave rule 10);
+  start the rest at once.
 - **Goal:** make v2 art possible without moving the scale-1 build. Today a `native` pixel map or a PNG override passes
   through unscaled at **every** scale (`pipeline.mjs:392-399`), so the first v2 pixel map would move the scale-1 digest
   pin, the TV bench atlas, the CJK figures and the store icons.
@@ -774,7 +810,12 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `test/scripts/assets/pipeline-v2-sources.test.ts` (new) — a temp-tree fixture proving the four rules.
   - `test/scripts/assets/interim-pipeline.test.ts` — the native set at `:196-201` becomes **derived** (⊇ terrain,
     `ui/pixel`, beams, and the v2 bullets R3-03.V1 added); the relation tests skip natives for size, frame count and
-    animations. Never touch the digest at `:341-357`.
+    animations, and the case 'has the same sprites, frame counts (but the beams), animations and groups'
+    (`:134-157`) compares the name sets, the frame names and the `[name, group]` lists without the names that exist
+    only in the default-scale build — and asserts that each such name is native (decision RR-1a: a new v2-only name
+    is absent at scale 1); it compares the page groups as sets of group names (a v2-only name may add a page to its
+    own group, never a new group). Prove it with one v2-only native name in the `pipeline-v2-sources.test.ts`
+    fixture. Never touch the digest at `:341-357`.
   - `test/scripts/assets/sprite-source-edge.test.ts`, `test/scripts/assets/font-edge.test.ts`.
   - `test/scripts/assets/pipeline.test.ts` — only the case "contains the initial original sprite set" (`:181-245`):
     it pins v1 identities at the default scale (`ships/kestrel` 3 frames `:184`, the thruster 2 `:185`, the kestrel
@@ -861,7 +902,7 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
 
 ### R2-04.RV — R2-04 step review
 
-- **Read:** `git log --oneline <wave base>..origin/master -- packages/core/src/fx content test/golden packages/render-pixi/src/effects '**/package.json'`;
+- **Read:** `git log --oneline $(cat /home/sites/shmup-cup-run/w07-base.txt)..origin/master -- packages/core/src/fx content test/golden packages/render-pixi/src/effects '**/package.json'`;
   the five patch reports and `R2-04.G`'s report.
 - **Re-run:** `R2-04.G`'s test list (the playtests, the goldens, content:check, the three fingerprints unedited and
   green on master) and `R2-04.REL`'s.
@@ -876,25 +917,39 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
 
 ### R3-06.RV — R3-06 step review
 
-- **Read:** `git log <wave base>..origin/master` for L1–L7.
+- **Read:** `git log $(cat /home/sites/shmup-cup-run/w07-base.txt)..origin/master` for L1–L7.
 - **Re-run:** each L subtask's tests; `node scripts/content/rescale.mjs --factor 1 --dry-run` (0 / 0 / 0); the decor
   e2e spec under the lock.
 - **Must hold:** every new number has a unit; zero allocation (the new guards); goldens unchanged; the foreground below
   enemy bullets; `atlas-groups.json` unchanged; the fingerprints re-pinned only at L1 (content-DB `examples` only), L2,
   L4, L6, each with its reason; `DecorBack` / `DecorFront` in `RENDER_GROUP_LAYERS`, `Foreground` not;
-  `DRAW_CALL_BUDGET` unchanged or raised with a reason.
+  `DRAW_CALL_BUDGET` unchanged or raised with a reason; the v1-baseline coverage case exempts only `decor-range`
+  (`POST_V1_STAGES`, L6).
 - **Report:** as above.
 
 ### R4-P.RV — R4 prep review
 
 - **Read:** the four commits of `R4-P.P1` … `R4-P.P4`.
-- **Re-run:** `node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*` at the wave base and at
-  `origin/master` (identical); `test/scripts/assets`; the origin report `--check`; `pipeline-v2-sources.test.ts`.
+- **Re-run:**
+  - the default-scale atlas at the wave base and at `R4-P.P4`'s pushed commit: identical. Use two throwaway
+    worktrees; replace `<P4 SHA>` with the full SHA of `R4-P.P4`'s pushed commit (from its report):
+    ```bash
+    git -C /home/sites/shmup-cup fetch origin
+    git -C /home/sites/shmup-cup worktree add /home/sites/shmup-wt/R4-P.RV-base "$(cat /home/sites/shmup-cup-run/w07-base.txt)" --detach
+    cd /home/sites/shmup-wt/R4-P.RV-base && pnpm install --frozen-lockfile --prefer-offline && node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* > /home/sites/shmup-cup-run/R4-P.RV-atlas-base.sha
+    git -C /home/sites/shmup-cup worktree add /home/sites/shmup-wt/R4-P.RV-p4 <P4 SHA> --detach
+    cd /home/sites/shmup-wt/R4-P.RV-p4 && pnpm install --frozen-lockfile --prefer-offline && node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* | diff /home/sites/shmup-cup-run/R4-P.RV-atlas-base.sha -   # no output
+    git -C /home/sites/shmup-cup worktree remove --force /home/sites/shmup-wt/R4-P.RV-base && git -C /home/sites/shmup-cup worktree remove --force /home/sites/shmup-wt/R4-P.RV-p4
+    ```
+    Not at `origin/master`: `R3-06.L6` (it starts after P4) adds the decor sprites, which change the default-scale
+    atlas on purpose; scale 1 is covered on `master` by the digest pin of `interim-pipeline.test.ts`.
+  - on `origin/master` (your review worktree): `test/scripts/assets`; the origin report `--check`;
+    `pipeline-v2-sources.test.ts`.
 - **Must hold:** byte-identical atlas at both scales; the scale-1 digest pin untouched; the same test count after the
   split; no banned literal in `v2kit.mjs`; the registry lists every planned module (direct-items, arm, blackhole, logo,
   thrusters, title, ui-kit, decor) and the campaign credits name each of them (`pnpm content:check` green); the
   fingerprints moved only by P1's credits line (content-DB `core.campaign`, presentation `runA.credits` /
-  `runB.credits` and after).
+  `runB.credits` and after); the relation case tolerates v2-only native names (RR-1a) and nothing else.
 - **Report:** as above.
 
 ## Docs item
@@ -933,8 +988,9 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 
 - **Files (only these):** `docs/dev/api-reference.md` (`LayerId` incl. `DecorBack` / `DecorFront` / `Foreground`,
   `DecorView`, `LAYER_COUNT`), `docs/dev/asset-pipeline.md` (v2 sources beside v1 — RR-1; the generator split; `v2kit`),
-  `docs/dev/conventions.md` (the art-scale rule: v2 art in `*.v2.sprite.json` or a generator's `artScale !== 1` path;
-  the scale-1 build stays v1 until a v2.0.x clean-up after the release — deferred from R6-03, decision RR-1),
+  `docs/dev/conventions.md` (the art-scale rule: v2 art in `*.v2.sprite.json` or a generator's v2 path, taken when
+  `(options.artScale ?? 1) !== 1` (a call without options draws v1); the scale-1 build stays v1 until a v2.0.x
+  clean-up after the release — deferred from R6-03, decision RR-1),
   `docs/dev/art-bible-v2.md` §9, `CLAUDE.md` (one line under v2: "v2 art lives in `*.v2.sprite.json` and generator v2
   paths"; and its version sentence `2.0.0-alpha.0` → `2.0.0-alpha.1`), `test/README.md` (new test files; the group
   row at `:77` names `procedural` → `procedural-*`).
@@ -974,8 +1030,15 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
    pnpm content:check
    pnpm --filter @shmup/tizen build && pnpm --filter @shmup/webos build
    ```
-3. The orchestrator tags the pre-release: `gh release create v2.0.0-alpha.1 --prerelease --target <the REL commit>
-   --notes "…plays at 640×360 with interim art; the full suite runs before v2.0.0"` (RUN-1).
+3. The orchestrator tags the pre-release on the commit step 2 checked: the full SHA of `origin/master` once step 1
+   holds, so `R2-04.RV`'s fixes and `W07.DOCS-A`'s push (the CHANGELOG's `2.0.0-alpha.1` line) are on it — **not**
+   the `R2-04.REL` commit, which they follow. In the main checkout:
+   ```bash
+   git -C /home/sites/shmup-cup fetch origin && git -C /home/sites/shmup-cup rev-parse origin/master > /home/sites/shmup-cup-run/w07-tag.txt
+   cd /home/sites/shmup-cup && gh release create v2.0.0-alpha.1 --prerelease --target "$(cat /home/sites/shmup-cup-run/w07-tag.txt)" --title "v2.0.0-alpha.1" --notes "Shmup Cup plays at 640×360 with interim art. A pre-release: the full suite runs before v2.0.0."
+   ```
+   The SHA in `w07-tag.txt` must be the commit step 2 ran on (`git rev-parse HEAD` in that worktree); if
+   `origin/master` moved since, run step 2 again on the new SHA first (RUN-1).
 4. **Deferred to wave 15:** the milestone's full definition-of-done suite (`pnpm test`, `pnpm test:e2e`, `pnpm bench`
    incl. the soak).
 
