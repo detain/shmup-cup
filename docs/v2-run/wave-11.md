@@ -30,6 +30,9 @@ S4a … S5b on its branch; every review at zero findings; the wave's docs item d
   e2e run, and an RV's re-run of the spec when the branch changed after S6. Hand them out in lane order, S6 first.
 - **Docs item:** `W11.DOCS-A` … `W11.DOCS-E` after the seven LANDs (they may overlap wave 12's first builders).
 - **Fillers:** none (wave 12's lanes need the LANDs of this wave).
+- **Timeout fixes:** `R5-0n.TO` (rule 13) runs only when a zone's S6 reports a test that failed only on its Vitest
+  timeout. It takes a builder slot, works on `origin/master`, and must be pushed and reviewed before that zone's
+  LAND.
 
 ## Rules for this wave
 
@@ -44,8 +47,8 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
    and say so in your report — then `git fetch origin && git rebase origin/master`. After the rebase, run
    `pnpm install --frozen-lockfile --prefer-offline` (shell timeout 600000), and `pnpm assets` when your tests need
    the atlas: the lane worktree has no `node_modules` until its first agent installs, and a rebase that brings a
-   lockfile change leaves them stale. (The agent brief's WORKTREE block is skipped for a lane worktree, install
-   included, so this install is yours.)
+   lockfile change leaves them stale. (For a lane worktree the agent brief's WORKTREE block skips only its fetch /
+   worktree add / cd lines and still installs; the install after your rebase, here, is the one that counts.)
    Commit with explicit paths on `r5/zone-<x>`; **never push the branch**. Commits on the branch
    hold **sources only**: never a replay (`test/golden/*.replay.json`, `content/demos/*`), a fingerprint's `PINNED`
    table, `assets/source/atlas-groups.json` or `docs/images/**`. Only S7 (the LAND) reaches `origin/master`.
@@ -59,7 +62,8 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
    (R5-P.P6, decision R5-D2) win if they differ):
    - `length` 20,000–22,000 px; scroll to the WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min;
    - ≥ 5 checkpoints; at least two new sections and one new set piece that uses the taller playfield;
-   - 6–8 enemy types **counted by sprite** (v1's plus at least 2 new), on existing scripts;
+   - 6–8 enemy types **new to the zone**, counted by sprite: a sprite an earlier zone already places (e.g.
+     `tender`'s) does not count. That is v1's own new types plus at least 2 new ones, on existing scripts;
    - a mid-boss (a captain) where the zone lacks one (every zone but B and H); its `boss` event before `length / 2`;
    - the boss rebuilt bigger: ≤ `MAX_BOSS_PARTS` (24 since R5-P.P8), a reachable `core`, 3 phases (zone H's IRON
      SOVEREIGN ≥ 4, zone I's THE HOLLOW KING 3), within 60 % of the playfield height;
@@ -88,8 +92,9 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
    `content/fx/particles.fx.json`, `content/player/*`, `content/weapons/*`, `content/stages/boss-rush.stage.json`,
    `escape.stage.json`, `dimension.stage.json` and the dev ranges (R5-10's), `test/playtest/{four-way-bot,harness,
    rules,recovery,campaign,campaign-routes}.ts` (BOT), `packages/core/src/**` (BEHAVIOR and every other core file),
-   `scripts/assets/procedural/{index,terrain,common,image,rng}.mjs`, the frame-literal allow-lists, the generic part
-   of `test/integration/content.test.ts`, `test/integration/release-audit.test.ts`,
+   `scripts/assets/procedural/{index,terrain,common}.mjs`, `scripts/assets/{image,rng,pipeline,packer}.mjs`, the
+   frame-literal allow-lists, the generic part of `test/integration/content.test.ts`,
+   `test/integration/release-audit.test.ts`,
    `test/integration/release-content-edge.test.ts` (it pins GALVANIC MAW's jaws: zone B runs it, read only), `test/bench/*`,
    `apps/tizen/scripts/check-bundle.mjs` and every budget.
 7. **Content-only bosses.** A boss rebuild uses its existing behaviour script and its tunables. New behaviour code
@@ -114,8 +119,17 @@ These apply to every zone lane, on top of the README's common rules. A zone agen
     `R5-0n.S3` (wave 12, owner-gated).
 13. **Cross-zone checks.** The campaign routes fly every zone, the boss rush fights every rebuilt boss, the bonus
     stages use zones B's and G's enemies and tilesets, and the v2-port comparison must drop a remastered zone: every
-    zone S6 runs them (its cross-zone line). A route or the boss rush failing on time with the bigger boss: stop and
-    report — the fix is R5-10.T4's or the design's, never the route test's.
+    zone S6 runs them (its cross-zone line). A route or the boss rush that fails **only on its Vitest timeout**
+    (`60_000` in `test/playtest/boss-rush.test.ts`, `180_000` in a `test/playtest/campaign-routes-*.test.ts`) is not
+    a design failure. "Only on its timeout" means the test's one error is `Test timed out in 60000ms` (or
+    `180000ms`): these tests run synchronously, so Vitest reports the timeout only after every `expect` of the test
+    passed. Stop and report the file, the test's title and its measured duration (run the file with
+    `--reporter=verbose`: Vitest prints the duration in ms after the title). The orchestrator then spawns the
+    one-file fix `R5-0n.TO` (its block is after zone H's section below) on `origin/master`, **before your LAND**: it
+    raises that timeout, with the measured time in its commit body, and `R5-0n.TO.RV` reviews it. `R5-10.T4`
+    (wave 13) is too late, because it waits for every LAND. Once the fix is on `origin/master`, a new S6 agent
+    re-runs your S6 (rule 1's rebase brings the fix onto the branch). Any other failure (a status, a boss not killed,
+    a zone outside 3–6 min, a rule broken) is the design's: never edit the route test.
 14. **Long commands.** opencode's shell stops a foreground command after 2 minutes: give the playtests, the
     cross-zone line and the LAND a `timeout` (1800000; the LAND 3600000) or run them in the background and poll.
 
@@ -151,7 +165,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-B lane, first.
 - **Depends on:** R5-02.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-B done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-b.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-b.patterns.json` — new actions;
@@ -228,7 +242,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone B's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone B's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -253,14 +267,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-b.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-b.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-b.test.ts`, `zone-b-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-02.RV — Review of zone B on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-02.S6. The loop: review → `R5-02.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-b diff origin/master...r5/zone-b` and `docs/v2-run/designs/zone-b.md`.
-- **Re-run:** every command of R5-02.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-02.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-b` (`git branch --show-current` must print `r5/zone-b`), every **Tests** command of R5-02.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-02.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone B's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `maw-*` names); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -310,7 +324,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-C lane, first.
 - **Depends on:** R5-03.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-C done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-c.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-c.patterns.json` — new actions;
@@ -386,7 +400,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone C's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone C's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -410,14 +424,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-c.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-c.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-c.test.ts`, `zone-c-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-03.RV — Review of zone C on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-03.S6. The loop: review → `R5-03.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-c diff origin/master...r5/zone-c` and `docs/v2-run/designs/zone-c.md`.
-- **Re-run:** every command of R5-03.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-03.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-c` (`git branch --show-current` must print `r5/zone-c`), every **Tests** command of R5-03.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-03.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone C's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -468,7 +482,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-D lane, first.
 - **Depends on:** R5-04.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-D done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-d.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-d.patterns.json` — new actions (**new** file, only if the design needs patterns);
@@ -544,7 +558,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-d.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone D's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone D's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -568,14 +582,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-d.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-d.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-d.test.ts`, `zone-d-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-04.RV — Review of zone D on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-04.S6. The loop: review → `R5-04.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-d diff origin/master...r5/zone-d` and `docs/v2-run/designs/zone-d.md`.
-- **Re-run:** every command of R5-04.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-04.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-d` (`git branch --show-current` must print `r5/zone-d`), every **Tests** command of R5-04.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-04.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone D's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `bastion-*` names); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -624,7 +638,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-E lane, first.
 - **Depends on:** R5-05.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-E done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-e.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-e.patterns.json` — new actions;
@@ -700,7 +714,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-e.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone E's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone E's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -724,14 +738,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-e.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-e.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-e.test.ts`, `zone-e-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-05.RV — Review of zone E on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-05.S6. The loop: review → `R5-05.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-e diff origin/master...r5/zone-e` and `docs/v2-run/designs/zone-e.md`.
-- **Re-run:** every command of R5-05.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-05.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-e` (`git branch --show-current` must print `r5/zone-e`), every **Tests** command of R5-05.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-05.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone E's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -782,7 +796,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-F lane, first.
 - **Depends on:** R5-06.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-F done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-f.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-f.patterns.json` — new actions;
@@ -858,7 +872,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-f.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone F's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone F's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -882,14 +896,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-f.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-f.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-f.test.ts`, `zone-f-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-06.RV — Review of zone F on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-06.S6. The loop: review → `R5-06.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-f diff origin/master...r5/zone-f` and `docs/v2-run/designs/zone-f.md`.
-- **Re-run:** every command of R5-06.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-06.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-f` (`git branch --show-current` must print `r5/zone-f`), every **Tests** command of R5-06.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-06.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone F's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`, the `regent-*` names); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -940,7 +954,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-G lane, first.
 - **Depends on:** R5-07.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-G done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-g.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-g.patterns.json` — new actions;
@@ -1016,7 +1030,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-g.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone G's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone G's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -1040,14 +1054,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]`, the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-g.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-g.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-g.test.ts`, `zone-g-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-07.RV — Review of zone G on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-07.S6. The loop: review → `R5-07.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-g diff origin/master...r5/zone-g` and `docs/v2-run/designs/zone-g.md`.
-- **Re-run:** every command of R5-07.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-07.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-g` (`git branch --show-current` must print `r5/zone-g`), every **Tests** command of R5-07.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-07.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone G's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -1097,7 +1111,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, zone-I lane, first.
 - **Depends on:** R5-09.S2 (wave 10: stand-in art for every new sprite name) and R5-01.S7 (zone A's LAND, wave 10) on `origin/master`; R5-P.P4, R5-P.P5a1 / P5a2 and R5-P.D-I done.
-- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 types by sprite** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
+- **Goal:** add the design's new enemy types — at least 2, so that the zone counts **6–8 new types by sprite (rule 3)** together with v1's — on existing scripts, plus the mid-boss (a captain), and the zone's new patterns.
 - **Files (only these):**
   - `content/enemies/zone-i.enemies.json` — new entries: `id`, `script` (∈ `KNOWN_SCRIPT_IDS`), `params` (tunables of that script in `BEHAVIOR_PARAM_UNITS`), `hp`, `score`, `hurtbox`, `sprite` (a name S2 drew), `drop`;
   - `content/patterns/zone-i.patterns.json` — new actions;
@@ -1173,7 +1187,7 @@ One section per zone: its own files first, then its blocks in order.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
-- **Acceptance:** zone I's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
+- **Acceptance:** zone I's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 new types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
 - **Traps:** a spawn "just past the right edge" has `screenX` = `PLAYFIELD_W + 24` (664), never 400 × 1.5; an above-the-top spawn keeps `y < 0` (×1.5 only, no pad) and lands where the design says; switch `remastered: true` only when everything passes — never relax a bound of the contract; `remix` entries are sorted and carry `drop: null`.
 - **Docs needs:** checkpoints, the capsule count, the timing, the remix list.
@@ -1196,14 +1210,14 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** in god mode: status `stageClear`, the boss down, phases `[0, 1, 2]` (THE HOLLOW KING), the captain seen, the run 4.0–6.0 min, `diagonalTicks` 0, the ship parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe` hook in `zone-i.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run replays to the same hash; the zone's pages within its R3-04 byte budget; the cross-zone line green (every campaign route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the report; do not fix them): the zone's goldens and demo (with the outcome cases of `golden-zone-i.test.ts`), the `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
-- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
+- **Traps:** a route or the boss rush failing on time with the bigger boss: stop and report (rule 13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-i.test.ts`, `zone-i-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance budget never; never paste a failing run's output as an expectation: derive each number from the design; never edit `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT) — a set piece the bot cannot clear is redesigned (report the tick and the section); never run `pnpm golden:update` here (the LAND does); never touch a `PINNED` table, `atlas-groups.json` or `docs/images/**` on the branch; e2e pixels go through `test/e2e/frame-pixels.ts` and exact ticks through `frame-advance.ts`.
 - **Docs needs:** the run times, the bot's damage per section, the memory figure.
 
 ### R5-09.RV — Review of zone I on the branch
 
 - **Wave / lane / order:** wave 11, a review slot, after R5-09.S6. The loop: review → `R5-09.FIX1` (on the branch) → a **new** review → … until zero findings, nits included.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-i diff origin/master...r5/zone-i` and `docs/v2-run/designs/zone-i.md`.
-- **Re-run:** every command of R5-09.S4a … S6 except the e2e spec: read S6's log `/home/sites/shmup-cup-run/R5-09.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-i` (`git branch --show-current` must print `r5/zone-i`), every **Tests** command of R5-09.S4a … S6 except the e2e spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-09.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** only zone I's files changed; no derived file on the branch (no replay, `PINNED` table, `atlas-groups.json` or `docs/images`); no ported number multiplied twice; the contract at `remastered: true` with no bound relaxed; no frozen entry edited (`tender`, `picket`, `halcyon-bulwark`); no new behaviour code; every new number has a unit; the boss's ported `x` / `y` not re-derived; the golden-zone outcome expectations follow the design (never a pasted run output); the bot clears the zone and the cross-zone line is green; the expected-red list matches S6's report.
 - **Report:** findings with a severity (blocker / should-fix / nit), each with file:line and a proposed fix.
 
@@ -1271,7 +1285,7 @@ One section per zone: its own files first, then its blocks in order.
 
 - **Wave / lane / order:** wave 11, lane 8 (zone H), first.
 - **Depends on:** R5-08.S2 (wave 10) and R5-01.S7 (zone A's LAND) on `origin/master`; R5-P.P5a2 and R5-P.D-H done.
-- **Goal:** at least 2 new enemy types on existing scripts (the zone counts 6–8 types by sprite with v1's). No new
+- **Goal:** at least 2 new enemy types on existing scripts (the zone counts 6–8 new types by sprite with v1's, rule 3). No new
   captain: the parade is the mid-boss section.
 - **Files (only these):** `content/enemies/zone-h.enemies.json` (new entries only; not the `echo-*` entries, not
   `iron-sovereign`); `content/patterns/zone-h.patterns.json` (**new**, only if the design needs it);
@@ -1364,6 +1378,70 @@ One section per zone: its own files first, then its blocks in order.
 
 ---
 
+## Rule 13's timeout fix (only when a zone needs it)
+
+### R5-0n.TO — Raise one cross-zone test's Vitest timeout (template)
+
+- **When:** only when a zone's S6 or its RV's re-run reports a test of `test/playtest/boss-rush.test.ts` or of a
+  `test/playtest/campaign-routes-*.test.ts` file that failed **only on its Vitest timeout** (rule 13: its one error
+  is `Test timed out in …ms`). The orchestrator spawns it at once, before that zone's LAND. Its id takes the
+  zone's step: `R5-02.TO` for zone B, `R5-03.TO` for zone C, … `R5-09.TO` for zone I, and `R5-08.TO` for zone H in
+  wave 12 (wave 12 rule 1). One file per subtask: a second file of the same zone is `R5-02.TO2`, and so on. Fixes
+  of different files touch different files, so they may run at the same time.
+- **Wave / lane / order:** wave 11 (wave 12 for zone H), a builder slot outside the zone lanes. The zone's lane
+  waits: its RV and its LAND start only after this fix is on `origin/master`, reviewed, and the zone's S6 re-run.
+- **Depends on:** the zone's S6 (or RV) report, which gives the file, the test's title and its measured duration in
+  ms.
+- **Where you work:** your own worktree from `origin/master` (common rule 1 and the agent brief's WORKTREE block:
+  **not** the zone's lane worktree); push with the README's push protocol (common rule 5). No derived file moves, so
+  no land lock.
+- **Files (only this one):** the one file the S6 report names, and in it only the timeout argument (the number after
+  the test's function, the last argument of `it(…)`) of the test(s) the report names:
+  - `test/playtest/boss-rush.test.ts`: `'shoots every boss down in turn with god mode and the full loadout, then
+    clears'` and `'records a run without god mode that replays to the same deaths and final hash'` (each `60_000`
+    on `bc8e05d`);
+  - `test/playtest/campaign-routes-b.test.ts`, `campaign-routes-c.test.ts`, `campaign-routes-manta-b.test.ts` or
+    `campaign-routes-manta-c.test.ts`: the file's one test, `'clears all eight routes A-B-… with god mode, each
+    ending in H or I'` (or `A-C-…`; each `180_000` on `bc8e05d`).
+- **The new value:** four times the measured duration the report gives, rounded up to the next multiple of
+  `60_000`, written with the `_` separator (a measured 95,400 ms → 381,600 → `420_000`). Read the value on
+  `origin/master` first: if an earlier `R5-0n.TO` already raised it to at least your new value, change nothing,
+  commit nothing, and report that.
+- **Steps:**
+  1. Make your worktree and install (the agent brief's WORKTREE block; `pnpm assets` too: the playtests need the
+     atlas).
+  2. Change the one number (one per test the report names); nothing else in the file.
+  3. Run the tests below; commit the one file by its explicit path; push (common rule 5).
+- **Tests (targeted):** `F` is the file you changed — `boss-rush.test.ts` is shown; change `F=…` on each line:
+  ```bash
+  F=test/playtest/boss-rush.test.ts; VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration "$F"   # green on origin/master (the zone is not landed yet); shell timeout 1800000
+  pnpm typecheck:root
+  F=test/playtest/boss-rush.test.ts; pnpm exec eslint "$F" && pnpm exec prettier --check "$F"
+  ```
+- **Commit message:** for zone B and the routes through B, `test(R5-02): give campaign-routes-b the time remastered
+  zone B needs` (use your zone's step and file); the body: the test's title, its measured duration on the zone's
+  branch (from the S6 or RV report), the old and the new value and the rule ("four times the measured duration,
+  rounded up to a multiple of 60_000"), and "the test failed only on its Vitest timeout: it runs synchronously, so
+  every expect had passed (wave 11 rule 13)"; no Co-Authored-By line.
+- **Acceptance:** `git show --stat HEAD` lists only that one file; `git show HEAD` changes one line per named test,
+  each only in its timeout number; the file green on `origin/master`; the commit body gives the zone, the test and
+  the measured time.
+- **Token:** none (no lane owns these files in waves 11 and 12; `R5-10.T4` edits `boss-rush.test.ts` only in
+  wave 13, after every LAND).
+- **Traps:** never change an `expect`, a route, a zone bound or any other number; never edit
+  `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT); a timeout is raised only
+  from a measured time (common rule 4: never blindly); if the S6 report shows any other error for that test than
+  `Test timed out in …ms`, this subtask does not apply: stop and report.
+- **Review — who and what:** `R5-0n.TO.RV` (`R5-02.TO.RV` for zone B), a review slot, read-only, a new reviewer each
+  round (the README's review loop, to zero findings): read `git show <SHA>` of the pushed commit; check that it
+  changes only the named tests' timeout numbers in that one file, that the new value follows the rule above from the
+  S6 report's measured duration, and that the body says so. A fix of a finding is a new push by `R5-0n.TO.FIX1`.
+- **After the review is at zero:** the orchestrator starts a new S6 agent for the zone with the zone's S6 block (rule
+  1's rebase brings the fix onto the branch), then a new RV round; the zone LANDs only when that S6's cross-zone line
+  is green and the RV is at zero.
+
+---
+
 ## Reviews
 
 The zone reviews `R5-02.RV` … `R5-09.RV` and the post-LAND checks are in each zone's section above. The rules for
@@ -1373,7 +1451,8 @@ every zone review:
 - the reviewer reads the branch diff (for zone B: `git -C /home/sites/shmup-cup-run/wt/zone-b diff origin/master...r5/zone-b`), never
   edits;
 - a fixer (`R5-0n.FIX1`, `FIX2`, …) works in the same zone worktree, on the branch, with the zone's file list;
-- zone H's first half (S4a … S5b) is reviewed in wave 12, with S4c and S6 (`R5-08.RV`).
+- zone H's first half (S4a … S5b) is reviewed in wave 12, with S4c and S6 (`R5-08.RV`);
+- a timeout fix `R5-0n.TO` (rule 13) has its own review, `R5-0n.TO.RV`, on its pushed commit (see its block).
 
 ## Docs item
 
