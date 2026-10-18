@@ -27,10 +27,13 @@ zero.
 | 7 capture kit | `R6-02.P2` | none committed (builds + a checklist in the report) | none | none |
 
 - **Order rules:** `R6-02.P1` waits for `R5-10.T7` (both may touch `test/bench/render.perf.ts`). `R5-10.T9` may run at
-  any time but pushes last of R5-10 (the tag points at a commit with all of R5-10).
+  any time but pushes last of R5-10's builders (T1 … T8). The step review `R5-10.RV`, late subtask-review fixes
+  and the docs item push after T9, so the beta tag is the wave's last action and targets `origin/master` once they
+  are all on it (rule 4), never T9's own commit.
 - **The e2e lock** serialises every bench run (T7, B1/B2, P1): at most two of those agents wait for it at a time.
-- **Reviews:** `R5-10.T4.RV`, `R5-10.T5.RV`, `R5-10.T7.RV`, `R5-10.T9.RV`, `R5-10.RV` (the step), `R6-01.B1.RV`,
-  `R6-01.B2.RV`, `R6-01.B2.DOCS.RV`, `R6-02.P1.RV`.
+- **Reviews:** `R5-10.T4.RV`, `R5-10.T5.RV` (only if T5 committed), `R5-10.T7.RV`, `R5-10.T9.RV`, `R5-10.RV` (the
+  step), `R6-01.B1.RV`, `R6-01.B2.RV`, `R6-01.B2.DOCS.RV`, `R6-02.P1.RV`; and a zone fix's `<id>.RV` on its
+  branch before its LAND, if a zone fix runs (rule 1).
 - **Docs item:** `W13.DOCS-A`, `W13.DOCS-B`, `W13.DOCS-C` (they may overlap wave 14's first builders).
   `R6-01.B2.DOCS` (lane 5) is a docs agent too, but it belongs to the code exit: wave 14 reads the file it commits.
 - **Fillers:** an owner-ready `R5-0n.S3` real-art drop (rule 5).
@@ -39,18 +42,53 @@ zero.
 
 1. **No zone file is open.** The zones are LANDed. A zone fix found here (a remix that does not span the expanded
    stage, a boss-rush delay that needs a zone change) is a small fix subtask the orchestrator spawns, never an edit
-   inside another lane. It works like a zone lane (wave 11 rule 1): the orchestrator creates its worktree and branch
-   (for zone B: `git -C /home/sites/shmup-cup worktree add -b r5/fix-zone-b /home/sites/shmup-cup-run/wt/fix-zone-b origin/master`),
-   and the fix reaches `origin/master` only through a LAND —
-   `RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only <scope> --message /home/sites/shmup-cup-run/<id>-msg.txt --zone <x>`,
-   where `<scope>` is the zone's LAND scope as its S7 block writes it (for zone B `zone-b,brine-grotto`), `<id>` the
-   fix subtask's id and `<x>` the zone's letter; `--dry-run` first; shell timeout 3600000. The orchestrator's prompt
-   for the fix says: "lane worktree, exception (a) of the GIT block — skip the WORKTREE block,
-   `cd /home/sites/shmup-cup-run/wt/fix-zone-<x>` (your zone's letter), `git branch --show-current` must print
-   `r5/fix-zone-<x>`; commit on that branch and never push it" (the agent brief's exception (a) list does not name
-   `fix-zone-<x>`, so the prompt must). After the push the
-   orchestrator removes the worktree and deletes the branch (for zone B:
-   `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/fix-zone-b && git -C /home/sites/shmup-cup branch -D r5/fix-zone-b`).
+   inside another lane. Its id is the zone's step plus `ZFIX` and a number (zone B's first fix: `R5-02.ZFIX1`; the
+   zone steps are in the README's § Subtask ids); below, `<id>` is that id and `<x>` the zone's letter. It works
+   like a zone lane (wave 11 rule 1):
+   - **The worktree:** the orchestrator creates the fix's worktree and branch (for zone B:
+     `git -C /home/sites/shmup-cup worktree add -b r5/fix-zone-b /home/sites/shmup-cup-run/wt/fix-zone-b origin/master`).
+   - **The prompt line:** the orchestrator's prompt for the fix says: "lane worktree, exception (a) of the GIT block —
+     skip only the WORKTREE block's first three lines (fetch, worktree add, cd). Start lines:
+     `cd /home/sites/shmup-cup-run/wt/fix-zone-<x>` (your zone's letter); `git branch --show-current` must print
+     `r5/fix-zone-<x>` (if HEAD is detached, run `git switch r5/fix-zone-<x>` and say so in your report); then
+     `git fetch origin && git rebase origin/master`; then still run the WORKTREE block's `pnpm install` line there
+     (and `pnpm assets` when your tests need the atlas). Commit on that branch and never push it" (the agent brief's
+     exception (a) list names `fix-zone-<x>` too; the prompt still gives the zone's letter).
+   - **Two agent turns, with the review between them** (as wave 14's rule 2):
+     - **Turn 1:** the start lines, the edit, the tests below, one commit on `r5/fix-zone-<x>` (sources only: never a
+       replay, a fingerprint's `PINNED` table, `assets/source/atlas-groups.json` or `docs/images/**`); then report
+       and stop — never write the message file, never run the helper.
+     - **Turn 1's tests:** `pnpm content:check`;
+       `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-<x>.test.ts`;
+       and every Vitest line of the zone's S6 block (zone A: `wave-10.md` `R5-01.S6`; zone H: `wave-12.md`
+       `R5-08.S6`; the other zones: `wave-11.md` `R5-0n.S6`), which the orchestrator copies into the prompt —
+       whatever that block lists: the zone's playtest and recovery tests, `release-audit.test.ts`, the cross-zone
+       checks and, where the zone has them, its runtime and Direct tests. Leave out S6's e2e line: no e2e runs in
+       this wave, and R6-03.D6's full Chromium run (wave 15) covers the zone's spec. A golden, a demo or a
+       fingerprint's `PINNED` comparison that the fix moves stays red until the LAND (the LAND re-records the scope
+       and re-pins): list each in the report, never fix it on the branch.
+     - **The review:** the orchestrator starts `<id>.RV` on the branch. It reads
+       `git -C /home/sites/shmup-cup-run/wt/fix-zone-<x> diff origin/master...r5/fix-zone-<x>`, re-runs turn 1's
+       tests, and checks that only the zone's own files changed and that no derived file is on the branch. A finding
+       goes to a fix agent (`<id>.FIXn`) that works in the same lane worktree and commits on the same branch; a new
+       review follows, until a review reports zero findings.
+     - **Turn 2:** the orchestrator starts a new agent with the same prompt and this line at its top: "You are turn 2:
+       the review is at zero — write the commit message file, run the dry run, read its log, then the LAND." It runs
+       the start lines again and writes `/home/sites/shmup-cup-run/<id>-msg.txt`: the subject
+       `fix(R5-0n): <what the fix does>` with the zone's step (e.g. `fix(R5-02): zone B's remix spans the expanded
+       stage`); a body that says why and "re-bless <scope>: <the reason>"; no Co-Authored-By line. Then it runs the
+       LAND below with `--dry-run`, reads the dry run's log (`/home/sites/shmup-cup-run/land-<x>-<date>.log`), and
+       only when the log is clean runs the real LAND. If the dry run's `test/golden` run fails on an outcome
+       expectation, it does not LAND: it reports, a `<id>.FIXn` corrects that expectation on the branch (as wave 11's
+       S7 "Dry run first" says), then a new review and a new turn 2.
+   - **The LAND** (turn 2, from `/home/sites/shmup-cup-run/wt/fix-zone-<x>`; Token: LAND): the fix reaches
+     `origin/master` only through
+     `RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only <scope> --message /home/sites/shmup-cup-run/<id>-msg.txt --zone <x>`,
+     where `<scope>` is the zone's LAND scope as its S7 block writes it (for zone B `zone-b,brine-grotto`);
+     `--dry-run` first; shell timeout 3600000, or the background with a log; the script takes
+     `/tmp/shmup-cup-land.lock` itself — never wrap it in another `flock`.
+   - **After the push** the orchestrator removes the worktree and deletes the branch (for zone B:
+     `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/fix-zone-b && git -C /home/sites/shmup-cup branch -D r5/fix-zone-b`).
 2. **Benches run under the e2e lock**, one file at a time:
    `flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config test/bench/vitest.config.ts <file>.perf.ts`
    (`<file>` is the bench your block names, e.g. `render`). A bench takes minutes: give the shell call a `timeout` of
@@ -58,13 +96,24 @@ zero.
    2 minutes). The whole `pnpm bench` (with the 30-minute soak) is wave 15's.
 3. **A gate or budget changes only deliberately**, with the measured reason in the commit body and the docblock
    (`DRAW_CALL_BUDGET` 20, the heap gate, `DIST_BUDGET`, `APP_JS_GZIP_BUDGET` 512 KB). Never to get green.
-4. **The beta tag** is a pre-release: the orchestrator runs
-   `gh release create v2.0.0-beta.1 --prerelease --target <R5-10.T9's commit> --title "v2.0.0-beta.1" --notes …` after
-   the wave's exit check, where `<R5-10.T9's commit>` is the full SHA of R5-10.T9's pushed commit (from its report or
-   `git log origin/master`). The notes say: all zones remastered with stand-in art; real art drops pending the owner;
-   the full suite runs before `v2.0.0` (decision RUN-1). The tag is cut without the full suite — unless the driver's
-   SCOPE ends the run here: then R6-03.D6's commands (wave 15) run first, on the commit the tag targets (RUN-1). The
-   owner's sign-off is welcome and never blocks.
+4. **The beta tag** is a pre-release, and it is the wave's **last** action. The orchestrator creates it only when
+   exit checks 1–4 all hold and every review of the wave is at zero (`R5-10.RV`, the subtask reviews,
+   `W13.DOCS-RV`) — so the docs item, with `W13.DOCS-A`'s CHANGELOG line `2.0.0-beta.1`, is pushed. Then, from the
+   main checkout `/home/sites/shmup-cup`:
+   ```bash
+   git -C /home/sites/shmup-cup fetch origin
+   git -C /home/sites/shmup-cup rev-parse origin/master    # prints the full SHA of the tag commit
+   gh release create v2.0.0-beta.1 --prerelease --target <the tag commit> --title "v2.0.0-beta.1" --notes …
+   ```
+   where `<the tag commit>` is the full SHA that the `rev-parse` line printed, and the notes say: all zones remastered
+   with stand-in art; real art drops pending the owner; the full suite runs before `v2.0.0` (decision RUN-1). That
+   commit holds all of R5-10, the fixes of every R5-10 review, the version line and its CHANGELOG line. Never tag
+   R5-10.T9's own commit: `R5-10.RV`, the late subtask reviews' fixes and `W13.DOCS-A` push after it, so it lacks
+   them. If one of wave 14's first LANDs reached `origin/master` before the tag, the tag holds it too; that is fine
+   (the LAND ran its own checks) — never pick an older commit to leave it out. The tag is cut without the full suite —
+   unless the driver's SCOPE ends the run here: then R6-03.D6's commands (wave 15) run first, once exit checks 1–4
+   hold, and `<the tag commit>` is the full SHA of the commit their last green run checked (RUN-1; wave 15's
+   `R6-03.D7` targets `v2.0.0` the same way). The owner's sign-off is welcome and never blocks.
 5. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
    permitting), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
    drop the owner names for the release. The orchestrator pastes wave 12's *Rules for this wave* into the drop's
@@ -172,7 +221,8 @@ zero.
 
 ### R5-10.T9 — The `2.0.0-beta.1` version line
 
-- **Wave / lane / order:** wave 13, lane 4; pushes last of R5-10.
+- **Wave / lane / order:** wave 13, lane 4; pushes last of R5-10's builders (rule 4: the tag does not target this
+  commit).
 - **Depends on:** R5-10.T4 and T7 on `origin/master`, T5 done (pushed or reported), and the wave-12 subtasks of
   R5-10.
 - **Goal:** every workspace project at `2.0.0-beta.1`, mirroring what R2-04.REL did for `2.0.0-alpha.1`.
@@ -359,6 +409,8 @@ zero.
   every proposal traceable to a row of that table, the eleven headings), `R6-01.B2.DOCS.RV` (re-runs the block's
   `cmp` and `grep` lines: the committed file equals the reviewed report byte for byte, the eleven headings),
   `R6-02.P1.RV` (only if a gate or budget changed: the reason is measured).
+- A zone fix's `<id>.RV` (rule 1), if a zone fix runs: on its branch, between its two turns — the branch diff, turn
+  1's tests, only the zone's own files changed, no derived file on the branch.
 - Every loop: a new reviewer each round, until zero findings, nits included.
 
 ## Docs item
@@ -374,12 +426,19 @@ zero.
 - **Files (only these):** `plan_resolution.md` (R5-10, §17), `CHANGELOG.md`, `README.md` (the version line and the
   milestone sentence only), `docs/v2-run/helpers/r5r6/carrier.py` (deleted with `git rm`),
   `docs/v2-run/helpers/README.md` (those rows only).
-- **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tooling-config.test.ts`
-  (the CHANGELOG's first-section rule). After the push, report: the orchestrator runs the board sync
-  (`python3 .claude/plan_board_v2.py` in its main checkout — docs agents never run it).
+- **Tests:** the docs tests that read these files — `CHANGELOG.md` (`tooling-config.test.ts`: the first-section
+  rule; `render-telemetry-pipeline.test.ts`: every "same statistic" claim next to "bench" keeps "not a comparable"
+  within 400 characters, and nothing says "comparable to the bench") and `README.md` (`e2e-docs.test.ts`: the
+  Playwright install line, `--project=chromium`, Firefox; `tooling-config.test.ts`: the Node 24.15+ floor):
+  ```bash
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tooling-config.test.ts test/integration/e2e-docs.test.ts test/integration/render-telemetry-pipeline.test.ts
+  ```
+  After the push, report: the orchestrator runs the board sync (`python3 .claude/plan_board_v2.py` in its main
+  checkout — docs agents never run it).
 - **Token:** PLAN.
 - **Traps:** the CHANGELOG's first section stays `## [Unreleased] — v2` (`tooling-config.test.ts`); keep §17's
-  three-column rows.
+  three-column rows; T7's real-zone bench entries never call the headless numbers comparable to the TV's — a "same
+  statistic" sentence next to "bench" also says "not a comparable" (`render-telemetry-pipeline.test.ts`).
 
 ### W13.DOCS-B — The extra modes, the bench, the bestiary, the capture checklist
 
@@ -410,6 +469,12 @@ zero.
 - **Tests:** the search again, with `-n` instead of `-ln` so that it prints each remaining line, not only the file
   names — every line it still prints is a history line (list them in the report):
   `git grep -n "2\.0\.0-alpha" -- '*.md' ':!docs/v2-run/**' ':!plan_resolution.md' ':!prompt_resolution.md' ':!CHANGELOG.md'`.
+  Then the docs tests that read these files — `docs/dev/build-test-deploy.md` (`e2e-docs.test.ts`) and
+  `docs/client/debug-tools.md` (`render-telemetry-pipeline.test.ts`: every "same statistic" claim next to "bench"
+  keeps "not a comparable" within 400 characters):
+  ```bash
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-docs.test.ts test/integration/render-telemetry-pipeline.test.ts
+  ```
 - **Token:** none.
 
 ### W13.DOCS-RV — Review of the docs item
@@ -427,8 +492,9 @@ zero.
    and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts`.
 3. `pnpm content:check`; `pnpm --filter @shmup/tizen build`.
 4. The docs review at zero; §17 set by `W13.DOCS-A`; the board synced by the orchestrator after that push.
-5. The orchestrator tags `v2.0.0-beta.1` (pre-release, rule 4: `--target` is the full SHA of R5-10.T9's commit). A
-   CI look at most.
+5. **Last**, once items 1–4 hold: the orchestrator tags `v2.0.0-beta.1` (pre-release, rule 4: `--target` is the full
+   SHA that `git -C /home/sites/shmup-cup rev-parse origin/master` prints after a fetch at that moment — never
+   R5-10.T9's own commit). A CI look at most.
 6. **Deferred to wave 15:** R5-10.T10 (the milestone's full suite: `pnpm format:check && pnpm lint && pnpm typecheck
    && pnpm test && pnpm build`, `pnpm test:e2e` with Firefox, the whole `pnpm bench`, `docs:images --check`,
    `store:assets --check`, the input probe) — it runs once, as R6-03.D6 (unless the driver's SCOPE ends the run
