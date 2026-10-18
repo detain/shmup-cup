@@ -6,7 +6,7 @@
  * pipeline's `<sprite>@deuteranopia` variants — their body colours on screen, the standard
  * palette's gone — with no console error and no "unknown sprite" warning from the atlas; without a
  * save the standard palette shows none of the deuteranopia colours (the control).
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';

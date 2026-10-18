@@ -5,8 +5,8 @@
  * screenshot. A spec reads that block's **centre** pixel — screenshot pixel `(sx(fx), sy(fy))` —
  * so a sampling never lands on a block edge where the upscale could blend two frame pixels.
  *
- * At 384×216 the scale is 3: the viewport is 1152×648 and frame pixel `(x, y)` is screenshot pixel
- * `(3x + 1, 3y + 1)`. After R2-01 (640×360) it is 2: 1280×720 and `(2x + 1, 2y + 1)`.
+ * At 640×360 (since R2-01) the scale is 2: the viewport is 1280×720 and frame pixel `(x, y)` is
+ * screenshot pixel `(2x + 1, 2y + 1)`. At v1's 384×216 it was 3: 1152×648 and `(3x + 1, 3y + 1)`.
  *
  * The frame constants (with the font's cell `GLYPH_W` × `GLYPH_H`, the tile edge `TILE_SIZE`) are
  * re-exported from `scripts/frame.mjs` (the scripts' mirror of `@shmup/core`, pinned by
@@ -51,7 +51,10 @@ export {
 /** Screenshot pixels per frame pixel on each axis (×3 at 384×216, ×2 at 640×360). */
 export const SCALE: number = CAPTURE_SCALE;
 
-/** The browser viewport of the e2e projects: the frame at {@link SCALE} (1152×648 today). */
+/**
+ * The browser viewport of the e2e projects: the frame at {@link SCALE} (1280×720 at 640×360,
+ * 1152×648 at 384×216).
+ */
 export const VIEWPORT: Readonly<{ width: number; height: number }> = Object.freeze({
   width: FRAME_W * SCALE,
   height: FRAME_H * SCALE,
@@ -61,7 +64,7 @@ export const VIEWPORT: Readonly<{ width: number; height: number }> = Object.free
  * The screenshot column at the centre of a frame column's block.
  *
  * @param fx - Frame column (0 … `FRAME_W − 1`).
- * @returns `fx · SCALE + ⌊SCALE / 2⌋` (`3fx + 1` today).
+ * @returns `fx · SCALE + ⌊SCALE / 2⌋` (`2fx + 1` at 640×360, `3fx + 1` at 384×216).
  */
 export function sx(fx: number): number {
   return fx * SCALE + (SCALE >> 1);
@@ -71,7 +74,7 @@ export function sx(fx: number): number {
  * The screenshot row at the centre of a frame row's block.
  *
  * @param fy - Frame row (0 … `FRAME_H − 1`).
- * @returns `fy · SCALE + ⌊SCALE / 2⌋` (`3fy + 1` today).
+ * @returns `fy · SCALE + ⌊SCALE / 2⌋` (`2fy + 1` at 640×360, `3fy + 1` at 384×216).
  */
 export function sy(fy: number): number {
   return fy * SCALE + (SCALE >> 1);
@@ -124,19 +127,28 @@ export function uiPx(v: number): number {
   return Math.ceil(v * UI_ART_SCALE);
 }
 
-/** Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP` — 4 today). */
+/**
+ * Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP` — 6 at 640×360, 4 at
+ * 384×216).
+ */
 const HUD_LABEL_GAP = uiPx(4);
 
-/** The bar frame's drop below the top bar's top (`core/ui` `HUD_ROW_DY` — 2 today). */
+/**
+ * The bar frame's drop below the top bar's top (`core/ui` `HUD_ROW_DY` — 3 at 640×360, 2 at
+ * 384×216).
+ */
 const HUD_ROW_DY = uiPx(2);
 
 /**
  * Width of the boss HP bar's frame (`core/ui` `BOSS_HP_BAR_WIDTH` = `HUD_HI_W`: `HI`, the gap and
- * eight digits — 64 today).
+ * eight digits — 96 at 640×360, 64 at 384×216).
  */
 export const BOSS_BAR_W: number = 2 * GLYPH_W + HUD_LABEL_GAP + 8 * GLYPH_W;
 
-/** From the `BOSS` label to the bar's frame (`core/ui` `HUD_BOSS_BAR_DX` — 28 today). */
+/**
+ * From the `BOSS` label to the bar's frame (`core/ui` `HUD_BOSS_BAR_DX` — 42 at 640×360, 28 at
+ * 384×216).
+ */
 const BOSS_BAR_DX = 4 * GLYPH_W + HUD_LABEL_GAP;
 
 /** Width of the `BOSS` label: four glyph cells (`core/ui` `hudBoss`). */
@@ -144,15 +156,15 @@ export const BOSS_LABEL_W: number = 4 * GLYPH_W;
 
 /**
  * The `BOSS` label's x: the label, the gap and the bar centred 2 px right of the frame's centre
- * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 148 today).
+ * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 254 at 640×360, 148 at 384×216).
  */
 export const BOSS_LABEL_X: number = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1) + uiPx(2);
 
-/** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 176 today). */
+/** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 296 at 640×360, 176 at 384×216). */
 export const BOSS_BAR_X: number = BOSS_LABEL_X + BOSS_BAR_DX;
 
 /**
  * The bar fill's top row, counted from the frame's top edge: `buildHud` draws the fill 1 px inside
- * the bar's frame, at `HUD_LAYOUT.topY + HUD_ROW_DY + 1` (3 today).
+ * the bar's frame, at `HUD_LAYOUT.topY + HUD_ROW_DY + 1` (4 at 640×360, 3 at 384×216).
  */
 export const BOSS_FILL_Y: number = HUD_ROW_DY + 1;

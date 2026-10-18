@@ -14,9 +14,9 @@
  *   scene's) barely moves. That pair is what this spec pins: the counters are alive *and* the
  *   churn is confined.
  * - **`RT`** — `createRenderTargetMeter` hooked into Pixi's global `TexturePool`. On
- *   `raster-range` a layer effect pools a target for the frame (384×216 today), and the review's
- *   **F3** says Pixi rounds that up to the next power of two on each axis — 512×256 RGBA8
- *   (512 KB), not 324 KB.
+ *   `raster-range` a layer effect pools a target for the frame (640×360), and the review's **F3**
+ *   says Pixi rounds that up to the next power of two on each axis — 1024×512 RGBA8 (2 MB), not
+ *   900 KB (512×256, 512 KB, not 324 KB at v1's 384×216).
  * - **`?gl=2`** — F8's A/B switch: WebGL1 is the shipped default and the query parameter really
  *   does get a WebGL2 context, with the overlay reporting what was obtained.
  */
@@ -38,7 +38,7 @@ function nextPowerOfTwo(size: number): number {
 
 /**
  * Bytes of the render target Pixi pools for a filter pass over the frame (review F3: each axis
- * rounded up to a power of two, RGBA8 — 512×256 for today's 384×216, 1024×512 at 640×360).
+ * rounded up to a power of two, RGBA8 — 1024×512 at 640×360, 512×256 at v1's 384×216).
  */
 const FRAME_FILTER_TARGET_BYTES = nextPowerOfTwo(FRAME_W) * nextPowerOfTwo(FRAME_H) * 4;
 

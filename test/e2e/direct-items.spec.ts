@@ -10,7 +10,7 @@
  * - ShiftLeft (the keyboard's Speed) toggles the speed level;
  * - no console errors and no "unknown sprite" warning from the atlas.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';

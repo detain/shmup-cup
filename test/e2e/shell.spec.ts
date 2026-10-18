@@ -25,16 +25,19 @@ const HUD_BAR = [0x1d, 0x2a, 0x5c] as const;
 /** The window of the integer-scaling test: a whole multiple of the frame on neither axis. */
 const ODD_WINDOW = { width: 1000, height: 600 } as const;
 
-/** The largest integer scale of the frame in {@link ODD_WINDOW} (×2 at 384×216). */
+/** The largest integer scale of the frame in {@link ODD_WINDOW} (×1 at 640×360, ×2 at 384×216). */
 const ODD_SCALE = Math.min(
   Math.floor(ODD_WINDOW.width / FRAME_W),
   Math.floor(ODD_WINDOW.height / FRAME_H),
 );
 
-/** Size of the scaled frame in {@link ODD_WINDOW} (768×432 at 384×216). */
+/** Size of the scaled frame in {@link ODD_WINDOW} (640×360 at ×1; 768×432 at 384×216). */
 const ODD_PICTURE = { width: FRAME_W * ODD_SCALE, height: FRAME_H * ODD_SCALE } as const;
 
-/** Top-left corner of the centred picture in {@link ODD_WINDOW} ((116, 84) at 384×216). */
+/**
+ * Top-left corner of the centred picture in {@link ODD_WINDOW} ((180, 120) at 640×360, (116, 84)
+ * at 384×216).
+ */
 const ODD_ORIGIN = {
   x: (ODD_WINDOW.width - ODD_PICTURE.width) >> 1,
   y: (ODD_WINDOW.height - ODD_PICTURE.height) >> 1,
@@ -164,7 +167,8 @@ test.describe('integer scaling (web build)', () => {
     await openRunning(page);
     const shot = await shoot(page, '#game');
     expect([shot.width, shot.height]).toEqual([ODD_WINDOW.width, ODD_WINDOW.height]);
-    // ×2 → 768×432 at (116, 84) today: the letterbox just outside each edge of the picture.
+    // ×1 → 640×360 at (180, 120) (×2 → 768×432 at (116, 84) at 384×216): the letterbox just
+    // outside each edge of the picture.
     const { x: left, y: top } = ODD_ORIGIN;
     const right = left + ODD_PICTURE.width;
     const bottom = top + ODD_PICTURE.height;

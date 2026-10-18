@@ -12,7 +12,7 @@ const webIndex = readFileSync(new URL('../../../web/index.html', import.meta.url
 
 describe('electron/main/window-options consistency', () => {
   it("opens at an integer multiple of the game's frame and never smaller than one frame", () => {
-    // Core's FRAME_W × FRAME_H (384×216 today): the window's mirror must follow it (R1-02).
+    // Core's FRAME_W × FRAME_H (640×360 since R2-01): the window's mirror must follow it (R1-02).
     const width = options.width ?? 0;
     const height = options.height ?? 0;
     expect(width % FRAME_W).toBe(0);

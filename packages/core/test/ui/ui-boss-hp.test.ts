@@ -137,8 +137,8 @@ describe('core/ui — the boss HP bar (M2-09)', () => {
     const L = HUD_LAYOUT;
     const frame = [L.bossBarX, HUD.topRowY, BOSS_HP_BAR_WIDTH, HUD.pipH];
     expect(rects(list, HUD_COLORS.bossFrame)).toEqual([frame]);
-    // Full strength: the whole inner width (the test boss's core 24 + plates 10 + 10) — 62 px at
-    // 384×216, the frame less its 1-px border.
+    // Full strength: the whole inner width (the test boss's core 24 + plates 10 + 10) — 94 px at
+    // 640×360, 62 at 384×216: the frame less its 1-px border.
     const inner = BOSS_HP_BAR_WIDTH - 2;
     const fillY = HUD.topRowY + 1;
     const fillH = HUD.pipH - 2;

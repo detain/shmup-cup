@@ -40,12 +40,12 @@ const COLS = 200;
 
 /**
  * Rows of the test map: the terrain ring's rows (the playfield in 8-px tiles, plus one) and 14
- * more below the view — 40 at 384×216 — so a row below the view always exists.
+ * more below the view — 57 at 640×360, 40 at 384×216 — so a row below the view always exists.
  */
 const ROWS = Math.ceil(PLAYFIELD_H / 8) + 15;
 
 /**
- * A 200 × 40 map (taller than the view) of tile 1 on row 24 with a change log.
+ * A 200 × `ROWS` map (taller than the view) of tile 1 on row 24 with a change log.
  *
  * @param withLog - Give the view a change log.
  * @returns The view (writable tiles) and its log.

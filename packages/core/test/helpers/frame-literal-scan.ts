@@ -25,7 +25,7 @@
  * The frame numbers are the v1 frame's `384` (`FRAME_W`), `216` (`FRAME_H`), `200`
  * (`PLAYFIELD_H`), `208` (`HUD_BOTTOM_Y`) — the four the plan names — and its centre, `192`
  * (`FRAME_CX`, the scenes' old `CX`) and `108` (`FRAME_CY`), plus whatever `FRAME_W`, `FRAME_H`,
- * `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now*: once R2-01 sets 640×360, a new literal `640`,
+ * `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now*: since R2-01 set 640×360, a new literal `640`,
  * `360`, `336` or `348` is caught too, and the v1 numbers stay banned. The new centre (`320`,
  * `180`) is not added: `180` is three seconds of ticks and half a turn (six timers today would
  * trip it), and `320` only one v1 boss-box edge. `100` (`PLAYFIELD_CY`) is left out for the same

@@ -4,7 +4,7 @@
  * between captures) — while it stays put without input; holding a direction long enough stops
  * the ship at the playfield margin (the clamp), never over the HUD bars; the same works in the
  * Tizen build opened from disk (remote key codes through the `tizen-remote-safe` profile).
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -177,8 +177,8 @@ test.describe('free flight (web build)', () => {
     await holdTicks(page, 'ArrowUp', 30);
     const stillTop = await shipCentre(page, [0, HUD_BOTTOM_Y]);
     expect(Math.abs(stillTop.y - top.y)).toBeLessThan(0.5); // pinned
-    // Screen y of the ship centre = PLAYFIELD_Y + margin 6 (14 today); no hull pixel in the HUD
-    // bar.
+    // Screen y of the ship centre = PLAYFIELD_Y + margin 6 (18 at 640×360, the content's margin
+    // unported until R2-02; 14 at 384×216); no hull pixel in the HUD bar.
     expect(top.y).toBeGreaterThan(PLAYFIELD_Y);
     expect(top.y).toBeLessThan(PLAYFIELD_Y + 12);
     const inHud = await shipCentre(page, [0, PLAYFIELD_Y]);

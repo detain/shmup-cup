@@ -9,7 +9,7 @@
  * Back on the title: in the browser (no `platform.exit`) it only backs out of the menu to
  * `PRESS OK`; in the Tizen build with a fake `window.tizen` it opens the exit confirmation, NO keeps
  * the app running and only YES calls `tizen.application.getCurrentApplication().exit()`.
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';

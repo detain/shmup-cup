@@ -224,7 +224,8 @@ describe('core/ui co-op HUD: each player`s half (M2-06)', () => {
       ...METER_SHORT_LABELS.slice(0, 7),
       ...METER_SHORT_LABELS.slice(0, 7),
     ]);
-    // Player 2's Force Field pips from x 192 + 164, none for player 1.
+    // Player 2's Force Field pips from x `halfW + coopShieldX` (192 + 164 at 384×216), none for
+    // player 1.
     const pips = cmds.filter(
       (c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY && c[3] >= L.coopShieldX,
     );

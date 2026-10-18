@@ -4,7 +4,7 @@
  * of them in the bottom bar) go 2 → 1 → 0, the ship disappears while it explodes and flies back
  * in, and once the last ship is out `GAME OVER` (red) replaces the stage title in the top bar —
  * all without console errors or atlas warnings. Screenshots are at the e2e capture scale
- * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is screenshot pixel
  * (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
@@ -57,7 +57,7 @@ interface LifeCapture {
    * `LIVES_Y + LIFE_ROWS − 1`).
    */
   readonly stock: number;
-  /** `GAME OVER`-red pixels in the top bar (rows 0 … `PLAYFIELD_Y − 1` — 0 … 7 today). */
+  /** `GAME OVER`-red pixels in the top bar (rows 0 … `PLAYFIELD_Y − 1` — 0 … 11 at 640×360). */
   readonly gameOver: number;
   /** KESTREL hull pixels in the playfield (0 while the ship is exploding or dead). */
   readonly ship: number;

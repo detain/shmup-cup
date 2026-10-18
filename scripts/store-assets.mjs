@@ -15,7 +15,7 @@
  *   to the art or to this script shows up as a failing test until the files are regenerated.
  * - **Store-listing placeholders (generated, ignored)** — `assets/generated/store/`: the icon,
  *   {@link SCREENSHOTS} placeholder screenshots at 1920 × 1080 (the game's frame — `FRAME_W` ×
- *   `FRAME_H` of `scripts/frame.mjs`, 384 × 216 today — at {@link SCREENSHOT_SCALE}, each
+ *   `FRAME_H` of `scripts/frame.mjs`, 640 × 360 since R2-01 — at {@link SCREENSHOT_SCALE}, each
  *   captioned `PLACEHOLDER`) and `listing.json` ({@link STORE_LISTING}: the name, the texts,
  *   the category, the image list with its sizes). They stand in until real screenshots are taken
  *   on the monitors; check the sizes against the Seller Office's current requirements before a
@@ -317,7 +317,7 @@ export function renderIcon(width, height) {
 /**
  * Renders one placeholder screenshot: a scene the size of the game's frame (the zone's backdrop
  * band, its boss's hull, the ship, the caption `PLACEHOLDER` and the zone's name) scaled by
- * {@link SCREENSHOT_SCALE} — 384 × 216 × 5 = 1920 × 1080 today.
+ * {@link SCREENSHOT_SCALE} — 640 × 360 × 3 = 1920 × 1080 (384 × 216 × 5 in v1).
  *
  * @param {number} index - Index into {@link SCREENSHOTS}.
  * @returns {Image} The screenshot.

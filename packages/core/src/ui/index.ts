@@ -26,8 +26,9 @@
  *   choice's label) and
  *   {@link drawConfirm} (question + YES / NO). Text goes through the list's string slots: a builder
  *   writes a slot only when its text changed, so redrawing a menu never builds strings.
- * - **HUD** (decision D20: two 8-px bars outside the playfield). {@link buildHud} draws the top bar
- *   `1P 00012300  HI 00050000  2P ------` and the bottom bar — `lives − 1` stock icons, the 7-slot
+ * - **HUD** (decision D20: two HUD bars outside the playfield — 12 px since R2-01, 8 px in v1).
+ *   {@link buildHud} draws the top bar `1P 00012300  HI 00050000  2P ------` and the bottom bar —
+ *   `lives − 1` stock icons, the 7-slot
  *   power meter (`SPEED MISSILE DOUBLE LASER OPTION ? !` — the MISSILE / DOUBLE / LASER slots
  *   named after the session's weapons since M2-03 —, the highlighted slot flashing every
  *   {@link HUD_METER_FLASH_TICKS} ticks, slots that cannot be equipped dimmed) and the Force
@@ -2531,7 +2532,7 @@ export function hudPlayerState(world: World, slot: number): HudPlayerState {
  * @param bossHp - Draw the boss HP bar (M2-09 — the `bossHpBar` display option; default `false`):
  *   while the World's `bosses.hpBar` is visible, `BOSS` (red) at x 148 and a 4-px frame
  *   {@link BOSS_HP_BAR_WIDTH} wide at x 176 with a 2-px red fill of {@link bossHpBarFill} over
- *   the frame's inner width replace the hi-score.
+ *   the frame's inner width replace the hi-score (the values at 384×216, as in the remarks).
  * @param text - The UI string table the HUD's words come from (default {@link DEFAULT_UI_TEXT} —
  *   M2-16).
  *

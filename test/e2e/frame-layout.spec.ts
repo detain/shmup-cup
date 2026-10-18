@@ -2,9 +2,9 @@
  * The frame's layout in a real browser (plan_resolution.md R2-01's acceptance — and R1-04's
  * deferred browser check of the font cell, owner decision O7): headless Chromium on the web build
  * and the Tizen build opened from disk, at the e2e viewport (`frame-pixels.ts` `VIEWPORT`, the
- * frame at ×`SCALE`). Every check is written in the frame's constants, so the file proves the 6 × 8
- * font and the ×3 picture at 384×216 today and the 9 × 12 font and ×2 at 640×360 after the flip,
- * unedited:
+ * frame at ×`SCALE`). Every check is written in the frame's constants, so the file proves the
+ * 9 × 12 font and the ×2 picture at 640×360 (since R2-01), as it proved the 6 × 8 font and ×3 at
+ * 384×216, unedited:
  *
  * - **the picture**: the canvas is the viewport, every `SCALE × SCALE` block of it one frame pixel
  *   (the integer upscale), the HUD bars exactly `HUD_BAR_HEIGHT · SCALE` screen rows tall;
@@ -244,8 +244,8 @@ let glyphs: Map<string, Glyph> | null = null;
 
 /**
  * A glyph of the font the builds ship: the asset pipeline's atlas, built in memory — the same
- * sources and art scale `build:test` packs into the builds (6 × 8 cells today, 9 × 12 after
- * R2-01's flip).
+ * sources and art scale `build:test` packs into the builds (9 × 12 cells since R2-01's flip;
+ * 6 × 8 before).
  *
  * @param ch - The character.
  * @returns Its ink and advance.

@@ -785,11 +785,12 @@ export const PLAYFIELD_CY = PLAYFIELD_H / 2;
 export const HUD_BOTTOM_Y = FRAME_H - HUD_BAR_HEIGHT;
 
 /**
- * Tile edge in pixels every shipped tileset and tilemap uses (M1: 8; R2-01: 12). Moved here from
- * `core/data` in R1-01 (the barrel exports it under the same name). Since R1-04 the loader also
- * accepts the other of `core/data`'s two sizes `MIN_TILE_SIZE` / `MAX_TILE_SIZE` (8 / 12), so
- * test fixtures can use 12-px tiles; `test/integration/tile-size.test.ts` holds shipped content
- * to this one.
+ * Tile edge in pixels of the shipped tilesets and tilemaps (M1: 8; R2-01: 12 — the content
+ * follows with R2-02's port and stays at v1's 8 until then, `CONTENT_PORT_PENDING`). Moved here
+ * from `core/data` in R1-01 (the barrel exports it under the same name). Since R1-04 the loader
+ * accepts both of `core/data`'s sizes `MIN_TILE_SIZE` / `MAX_TILE_SIZE` (8 / 12), so test
+ * fixtures can use either size and the v1 content still loads; `test/integration/tile-size.test.ts`
+ * holds the shipped content to one size.
  */
 export const TILE_SIZE = 12;
 

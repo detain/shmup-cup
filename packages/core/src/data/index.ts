@@ -2001,8 +2001,9 @@ export interface StageSpec {
  *
  * @remarks
  * The loader accepts exactly the two sizes {@link MIN_TILE_SIZE} and {@link MAX_TILE_SIZE} (8 and
- * 12 — v1's tile and v2's), so a 12-px test tileset loads while the shipped content is still at
- * `TILE_SIZE`; `test/integration/tile-size.test.ts` holds the shipped content to `TILE_SIZE`.
+ * 12 — v1's tile and v2's), so a test tileset of either size loads, and so does the shipped
+ * content between R2-01 and R2-02 (8-px tiles under `TILE_SIZE` 12);
+ * `test/integration/tile-size.test.ts` holds the shipped content to one size.
  */
 export const MIN_TILE_SIZE = 8;
 

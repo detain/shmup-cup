@@ -12,7 +12,7 @@
  * - the display options reach the canvas: the `stretch` scale mode fills a display the integer
  *   mode letterboxes, and the hitbox markers appear on the ship only while shown.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)); the sim is frozen and stepped exact ticks
  * (`./frame-advance.ts`).
  */

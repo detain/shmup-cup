@@ -15,7 +15,7 @@
  *   makes a cabinet window, `normal` fills the display again.
  *
  * Screenshots of the floor, the CRT settings and the aspect modes are attached to the report.
- * They are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel
+ * They are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel
  * (x, y) is screenshot pixel (sx(x), sy(y)); the sim is frozen and stepped exact ticks
  * (`./frame-advance.ts`).
  */
@@ -55,10 +55,16 @@ const FLOOR_TOP = 101;
 /** The row after the last one it covers (`mode7.bottom`). */
 const FLOOR_BOTTOM = 200;
 
-/** Width of the `classic` aspect's 4:3 window on the e2e display (864 at today's 1152×648). */
+/**
+ * Width of the `classic` aspect's 4:3 window on the e2e display (960 of 1280×720, 864 of
+ * 1152×648).
+ */
 const CLASSIC_WINDOW = Math.floor((VIEWPORT.height * 4) / 3);
 
-/** Each side panel the `classic` window leaves on the e2e display (144 today). */
+/**
+ * Each side panel the `classic` window leaves on the e2e display (160 of 1280×720, 144 of
+ * 1152×648).
+ */
 const CLASSIC_PANEL = (VIEWPORT.width - CLASSIC_WINDOW) >> 1;
 
 /**
@@ -78,7 +84,10 @@ const ASPECT_SCALE: Readonly<Record<string, number>> = {
   wide: Math.min(Math.floor(VIEWPORT.width / FRAME_W), Math.floor(WIDE_WINDOW_H / FRAME_H)),
 };
 
-/** The e2e display's middle column (576 today) and middle row (324). */
+/**
+ * The e2e display's middle column and middle row (640 and 360 of 1280×720, 576 and 324 of
+ * 1152×648).
+ */
 const DISPLAY_MID = { x: VIEWPORT.width >> 1, y: VIEWPORT.height >> 1 } as const;
 
 /** A decoded screenshot. */
@@ -550,8 +559,8 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
     const normal = await rendererState(page);
     expect(normal.aspect).toBe('normal');
     expect(normal.panels).toEqual([0, 0]);
-    // At the capture scale with no letterbox the frame fills the display (1152×648 today), so its
-    // left column is the stage.
+    // At the capture scale with no letterbox the frame fills the display (1280×720), so its left
+    // column is the stage.
     const filled = await capture(page);
     const shots: Record<string, Shot> = { normal: filled.image };
     for (const [mode, panels] of [
@@ -574,9 +583,9 @@ test.describe('the CRT filter and the aspect modes (web build)', () => {
       shots[mode] = shot.image;
       expect([shot.image.width, shot.image.height]).toEqual([VIEWPORT.width, VIEWPORT.height]);
     }
-    // `classic`: the picture is 768 wide (×2 of 384) inside the 864-wide window today, so the
-    // display's left edge is the panel, not the stage, and the window's own middle row still shows
-    // the game.
+    // `classic`: the picture is 640 wide (×1 of 640) inside the 960-wide window (768 wide, ×2 of
+    // 384, inside the 864-wide one at 384×216), so the display's left edge is the panel, not the
+    // stage, and the window's own middle row still shows the game.
     const { x: midX, y: midY } = DISPLAY_MID;
     expect(pixelAt(shots.classic, 2, midY)).not.toEqual(pixelAt(shots.normal, 2, midY));
     expect(pixelAt(shots.classic, midX, midY)).not.toEqual(pixelAt(shots.classic, 2, midY));
@@ -638,7 +647,8 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
       expect(blocks.broken).toBe(0);
       // …and the check could have failed: thousands of frame pixels differ from the one left of
       // them here, so a block boundary a display pixel out would have broken a block at each of
-      // them (measured: 3,400–4,000 of the 82,944, the dimension stage's floor grid and stars).
+      // them (measured at 384×216: 3,400–4,000 of the 82,944, the dimension stage's floor grid and
+      // stars).
       expect(blocks.varied).toBeGreaterThan(2000);
     }
     await page.evaluate(() => {
@@ -702,7 +712,8 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
         const relative = edge.ratio / middle.ratio;
         // `uHalf.zw` = the picture's half-size: at its left edge `dot(d, d)` is ~1, so the corner
         // factor is ~`1 − CRT_FULL_VIGNETTE` (0.78). Had the shader kept half the *display*
-        // (576 px) the same pixel would sit at 0.66 of the way out and only lose 0.10 (0.90).
+        // (640 px) the same pixel would sit halfway out and only lose 0.055 (0.945); at 384×216
+        // that was 576 px, 0.66 of the way out and 0.90.
         expect(relative).toBeGreaterThan(0.72);
         expect(relative).toBeLessThan(0.85);
       }

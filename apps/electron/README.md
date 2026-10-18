@@ -12,7 +12,7 @@ players: [`docs/client/desktop-app.md`](../../docs/client/desktop-app.md).
 - `src/main/window-options.ts`: context isolation + sandbox + no Node integration,
   **`backgroundThrottling: false`** (steady fixed-step cadence), content the frame × the remembered
   scale (`window-state.ts`' `FRAME_WIDTH` × `FRAME_HEIGHT`, a mirror of core's frame pinned by
-  `test/main/window-frame.test.ts` — R1-02; default `floor(1280 / FRAME_WIDTH)` = ×3 = 1152×648 today,
+  `test/main/window-frame.test.ts` — R1-02; default `floor(1280 / FRAME_WIDTH)` = ×2 = 1280×720,
   `useContentSize`), the remembered position, optional fullscreen,
   `autoplayPolicy: 'no-user-gesture-required'` (M2-17 — sound from boot).
 - `src/main/app-protocol.ts`: URL → file mapping with path-traversal protection.

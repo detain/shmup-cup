@@ -6,7 +6,7 @@
  * breaking the pillar's cells in the sim takes them off the screen on the next frame (the terrain
  * binding follows the change log, no scroll needed) and the checkpoint rollback draws them again
  * (a reset of the log redraws the grid).
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)); the sim is frozen and stepped exact ticks
  * (`./frame-advance.ts`).
  */
@@ -113,8 +113,8 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
     expect(before).toBeGreaterThan(300);
     // Break every cell of the pillar in the sim (28 bricks), without a shot and without a scroll
     // of a whole tile: only the change log tells the renderer.
-    // Each cell is hit at its centre: the tile edge is the frame's `TILE_SIZE` (8 today), the
-    // pillar's columns and rows are the stage's own.
+    // Each cell is hit at its centre: the tile edge is the frame's `TILE_SIZE` (12 since R2-01),
+    // the pillar's columns and rows are the stage's own.
     const broken = await page.evaluate((tile) => {
       const d = (window as unknown as DebugWindow).__shmupDebug.game.world.gimmicks.destructible;
       if (d === null) return -1;

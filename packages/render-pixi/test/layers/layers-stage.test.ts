@@ -35,10 +35,16 @@ const NAMES = ['ships/a', 'bg/tile', 'ghost'];
  */
 const TILE = 8;
 
-/** Slot columns of a terrain binding over the playfield: one tile more than it (49 today). */
+/**
+ * Slot columns of a terrain binding over the playfield: one tile more than it (81 at 640×360; 49
+ * at 384×216).
+ */
 const COLS = Math.ceil(PLAYFIELD_W / TILE) + 1;
 
-/** Slot rows of a terrain binding over a map taller than the playfield (26 today). */
+/**
+ * Slot rows of a terrain binding over a map taller than the playfield (43 at 640×360; 26 at
+ * 384×216).
+ */
 const ROWS = Math.ceil(PLAYFIELD_H / TILE) + 1;
 
 /** @returns The test atlas (warnings silenced). */
@@ -88,7 +94,8 @@ describe('render-pixi/layers terrain binding', () => {
   it('preallocates one tile more than the playfield in each direction, capped at the map', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
-    // A map one row shorter than the slots (25 rows today) keeps its own height.
+    // A map one row shorter than the slots (42 rows at 640×360; 25 at 384×216) keeps its own
+    // height.
     const big = createTerrainBinding({ atlas: a, tables, view: terrainView(500, ROWS - 1, []) });
     expect([big.columns, big.rows, big.container.children.length]).toEqual([
       COLS,
@@ -129,13 +136,13 @@ describe('render-pixi/layers terrain binding', () => {
   it('re-textures nothing inside a tile and one column / row when crossing a tile edge', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
-    // A map taller than the slots (40 rows today), so a row can scroll in.
+    // A map taller than the slots (57 rows at 640×360; 40 at 384×216), so a row can scroll in.
     const view = terrainView(400, ROWS + 14, [[COLS, 3, 2]]);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     binding.sync(view, { x: 0, y: 0 });
     binding.sync(view, { x: 7.5, y: 0 });
     expect(binding.updatedCells).toBe(0);
-    // Column COLS (49 today) scrolls in, into the slot column 0 left.
+    // Column COLS (81 at 640×360; 49 at 384×216) scrolls in, into the slot column 0 left.
     binding.sync(view, { x: 8, y: 0 });
     expect(binding.updatedCells).toBe(ROWS);
     expect(slotSprite(binding, COLS, 3).visible).toBe(true);

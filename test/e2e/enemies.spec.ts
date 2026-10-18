@@ -3,8 +3,8 @@
  * dev stage's timeline, whose first event is a formation of `drifter` popcorn. The drifters'
  * placeholder colours (used by no other sprite) must show up inside the playfield — never in
  * the HUD bars — and the formation must fly left across the screen, with no console errors
- * while the timeline spawns. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today,
- * viewport 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ * while the timeline spawns. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2,
+ * viewport 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  *
  * The sim runs under frame advance (`./frame-advance.ts`, the test builds' `window.__shmupDebug`),
  * in exact tick counts, so the captures do not depend on how fast the machine is.

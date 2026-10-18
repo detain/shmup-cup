@@ -10,7 +10,7 @@
  *   toggles its speed in the game;
  * - no console errors in either.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel x is screenshot pixel sx(x).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';

@@ -211,7 +211,7 @@ describe('core/replay ReplayVersionError (R2-01)', () => {
     for (const version of [0, 2, 3, 1.5, '1', null, undefined, Number.NaN]) {
       expect(isOlderFormatVersion(version, 2), String(version)).toBe(false);
     }
-    // Today's versions: nothing older than the current one is in use until the flip bumps them.
+    // The current version is never older than itself (R2-01's flip bumped both formats to 2).
     expect(isOlderFormatVersion(REPLAY_FORMAT_VERSION, REPLAY_FORMAT_VERSION)).toBe(false);
     expect(recordedFrame({ internalWidth: 384, internalHeight: 216 })).toEqual([384, 216]);
     expect(recordedFrame({ internalWidth: '384' }).map(Number.isNaN)).toEqual([true, true]);

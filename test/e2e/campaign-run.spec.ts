@@ -13,7 +13,7 @@
  * - Tizen build from `file://`: the remote's OK skips a zone's tally and launches the next zone;
  * - no console errors (nor atlas warnings) in any.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';

@@ -4,8 +4,8 @@
  * an engine sprite, drawn over the ship from the `LayerId.Player` batch — must show its fresh
  * cyan ring around the ship, with no console errors and no "unknown sprite" warning from the
  * atlas. The default web boot and the Tizen build opened from disk (which ignores
- * `?loadout=full`) never show it. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3
- * today, viewport 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ * `?loadout=full`) never show it. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2,
+ * viewport 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';

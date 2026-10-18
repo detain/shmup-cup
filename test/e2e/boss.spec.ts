@@ -4,8 +4,8 @@
  * the flight scene then draws the WARNING band (its red edge rows across the whole width) for
  * three seconds; once it is gone the TRIAL WARDEN flies in from the right and stays in the right
  * part of the playfield (its hull-block colour there) — all without console errors or atlas
- * warnings. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport
- * 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ * warnings. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport
+ * 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';

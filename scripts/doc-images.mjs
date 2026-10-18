@@ -356,7 +356,7 @@ function tileBand(target, tile, y, height, offset) {
  * @param {{ frames: Map<string, Image[]>, glyphs: Map<number, { image: Image, advance: number }>,
  *   cellWidth: number }} art The loaded art.
  * @returns {Image} The banner: one frame wide ({@link FRAME_W}) and 144 rows tall, magnified × 3
- *   (1152×432 at today's 384-wide frame).
+ *   (1920×432 at the 640-wide frame; 1152×432 at v1's 384).
  */
 function buildLogoBanner(art) {
   const width = FRAME_W;

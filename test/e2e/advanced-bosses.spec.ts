@@ -15,7 +15,7 @@
  *   twins fly in, the resting one is drawn on the layer behind (`bosses.backBatch`), and at the
  *   pair's turn they swap — without console errors.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -338,7 +338,8 @@ test.describe('advanced bosses (web build)', () => {
     const now = await page.evaluate(
       () => (window as unknown as DebugWindow).__shmupDebug.worldTick,
     );
-    // The intro fills it; then it is full (62 px of fill in the 64-px frame at x 176 today).
+    // The intro fills it; then it is full (94 px of fill in the 96-px frame at x 296 at 640×360;
+    // 62, 64 and 176 at 384×216).
     await stepTo(page, now + 200);
     is = await colourAt(page, BAR_RED);
     red = 0;

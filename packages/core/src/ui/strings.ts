@@ -450,8 +450,8 @@ export const UI_TEXT_IDS: readonly string[] = Object.freeze(Object.keys(DEFAULT_
 /**
  * Longest text a `strings` entry may have, in characters (it stays a character count: a text of
  * `n` characters is `n · GLYPH_W` pixels wide, and the widest screen line holds
- * `FRAME_W / GLYPH_W` characters — 64 today; `test/integration/tile-size.test.ts` keeps
- * `MAX_UI_TEXT_LENGTH · GLYPH_W <= FRAME_W`).
+ * `FRAME_W / GLYPH_W` characters — 71 since R2-01 (64 at v1's 384 / 6);
+ * `test/integration/tile-size.test.ts` keeps `MAX_UI_TEXT_LENGTH · GLYPH_W <= FRAME_W`).
  */
 export const MAX_UI_TEXT_LENGTH = 48;
 

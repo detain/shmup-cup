@@ -5,7 +5,7 @@
  * loader and packed into the atlas — must show up in the playfield (never in the HUD bars) in
  * the readability palette's body colours, and move between two screenshots, with no console
  * errors and no "unknown sprite" warning from the atlas. Screenshots are at the e2e capture scale
- * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is screenshot pixel
  * (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';

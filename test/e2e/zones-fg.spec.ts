@@ -17,7 +17,7 @@
  *   content and art are in the one-script bundle and draw;
  * - no console errors or atlas warnings anywhere.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';

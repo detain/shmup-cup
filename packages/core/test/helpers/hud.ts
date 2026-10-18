@@ -3,7 +3,7 @@
  * `core/ui` derives them (plan_resolution.md R1-01, R2-01): from `HUD_LAYOUT`, the font's metrics
  * (`GLYPH_W`) and, for the art- and padding-sized lengths, `uiPx` — so the suites' expectations
  * hold at 384×216 with the 6×8 font and `ART_SCALE` 1 and at 640×360 with the 9×12 font and
- * `ART_SCALE` 3/2. The numbers in parentheses are today's values.
+ * `ART_SCALE` 3/2. The numbers in parentheses are the values at 384×216 (v1).
  */
 import { GLYPH_W } from '../../src/config/index.js';
 import { HUD_LAYOUT, uiPx } from '../../src/ui/index.js';

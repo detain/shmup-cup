@@ -9,7 +9,7 @@
  *   on the map asks "quit to title?" without leaving the app;
  * - no console errors in either.
  *
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648).
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';

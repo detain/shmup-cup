@@ -7,7 +7,7 @@
  * WARNING and a boss fight. Nothing here is a mock-up: the page is the web app's test build
  * (`build:test`, so `window.__shmupDebug` exists), the sim is frozen with the debug tools' frame
  * advance and stepped to an exact tick, and the canvas is screenshotted at the e2e capture scale
- * (`scripts/frame.mjs` `CAPTURE_SCALE`: ×3, 1152×648, at today's 384×216 frame). The same tick
+ * (`scripts/frame.mjs` `CAPTURE_SCALE`: ×2, 1280×720, at the 640×360 frame). The same tick
  * always draws the same picture, so a re-run only changes a file when the game changed.
  *
  * Prerequisite: `pnpm turbo run build:test --filter=@shmup/web` (the script says so and exits 1
@@ -43,8 +43,8 @@ const WEB_DIST = join(REPO_ROOT, 'apps', 'web', 'dist');
 export const SCREEN_DIR = join(REPO_ROOT, 'docs', 'images', 'screens');
 
 /**
- * Canvas scale of a capture — the e2e viewport's ({@link CAPTURE_SCALE}): the frame at ×3 today,
- * a 1152×648 viewport.
+ * Canvas scale of a capture — the e2e viewport's ({@link CAPTURE_SCALE}): the frame at ×2, a
+ * 1280×720 viewport.
  */
 const SCALE = CAPTURE_SCALE;
 

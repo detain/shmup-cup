@@ -3,7 +3,8 @@
  * them (plan_resolution.md R1-01, R2-01) for the scene suites: positions from the frame constants,
  * text-sized lengths from the font's metrics, art- and padding-sized lengths through `core/ui`
  * `uiPx` — so the suites' expectations hold at 384×216 with the 6×8 font and `ART_SCALE` 1 and at
- * 640×360 with the 9×12 font and `ART_SCALE` 3/2. The numbers in parentheses are today's values.
+ * 640×360 with the 9×12 font and `ART_SCALE` 3/2. The numbers in parentheses are the values at
+ * 384×216 (v1).
  * A change of a scene's layout changes the formula here too, on purpose.
  */
 import {

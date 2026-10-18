@@ -5,7 +5,7 @@
  * dev override) draws the Options (`options/orb`, an engine sprite) and laser beams, with no
  * console errors and no "unknown sprite" warning from the atlas. The Tizen build opened from disk
  * autofires too without any key (remote rule 1) and ignores the web-only `?loadout=full`.
- * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame
+ * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';

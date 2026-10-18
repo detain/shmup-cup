@@ -104,7 +104,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         browserName: 'chromium',
-        // The frame at the capture scale (`frame-pixels.ts`: ×3 of 384×216 = 1152×648 today):
+        // The frame at the capture scale (`frame-pixels.ts`: ×2 of 640×360 = 1280×720):
         // one frame pixel = SCALE × SCALE screenshot pixels, no letterbox.
         viewport: { width: VIEWPORT.width, height: VIEWPORT.height },
         launchOptions: {

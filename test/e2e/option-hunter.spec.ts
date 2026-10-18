@@ -6,7 +6,7 @@
  * stolen Options (`options/stolen`) in tow —, and a Mega Crash must free them as grey items that
  * drift on screen and give an Option back when flown into. No console errors and no "unknown
  * sprite" warning from the atlas (the new engine sprites are in the atlas). Screenshots are at the
- * e2e capture scale (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is
+ * e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is
  * screenshot pixel (sx(x), sy(y)).
  */
 import { expect, test, type Page } from '@playwright/test';

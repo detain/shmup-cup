@@ -4,7 +4,7 @@
  * first stations, the explosion presets — warm fireball pixels (additively blended) in the middle
  * of the playfield — so the gallery screenshot is not blank; no console errors, no atlas
  * warnings. The screenshot is attached to the test report. Screenshots are at the e2e capture scale
- * (`frame-pixels.ts`; ×3 today, viewport 1152×648): frame pixel (x, y) is screenshot pixel
+ * (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is screenshot pixel
  * (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -31,13 +31,13 @@ const LABEL = [0x38, 0xc8, 0xe8] as const;
 
 /**
  * Frame column of the bursts: the gallery's `CENTRE_X` (`PLAYFIELD_W / 2`, its camera stays at
- * 0) — the frame's centre column (192 today).
+ * 0) — the frame's centre column (320 at 640×360).
  */
 const BURST_X = FRAME_CX;
 
 /**
  * Frame row of the bursts: the gallery's `CENTRE_Y` (`PLAYFIELD_H / 2`), drawn under the top HUD
- * bar (108 today).
+ * bar (180 at 640×360).
  */
 const BURST_Y = PLAYFIELD_Y + PLAYFIELD_CY;
 
@@ -71,8 +71,8 @@ interface GalleryCapture {
   /** The PNG. */
   readonly png: Buffer;
   /**
-   * Warm (fireball) pixels in the 128-px square centred on the bursts (frame x 128–255, y 44–171
-   * today).
+   * Warm (fireball) pixels in the 128-px square centred on the bursts (frame x 256–383, y 116–243
+   * at 640×360).
    */
   readonly warm: number;
   /** Label-coloured pixels on frame rows 14–25. */

@@ -16,8 +16,8 @@
  * layer effects (`raster-range`) and one with the Mode-7 floor (`dimension`). Each scenario
  * asserts the *minimum* live count over the measured frames, so the stated load is the load every
  * timed frame carried. The **internal frame size is a parameter** (review §7.5): the scenarios
- * run at the shipped frame (`FRAME_W` × `FRAME_H` from `@shmup/core` — 384×216 today, 640×360
- * after R2-01), and the last one runs the same load at ×2 of it (768×432 today — the first integer
+ * run at the shipped frame (`FRAME_W` × `FRAME_H` from `@shmup/core` — 640×360 since R2-01,
+ * 384×216 before), and the last one runs the same load at ×2 of it (1280×720 — the first integer
  * step the owner would try), so "what would a higher internal resolution cost?" is a bench run.
  *
  * **What the numbers mean.** Draw calls are hardware-independent and are the strict gate. Render

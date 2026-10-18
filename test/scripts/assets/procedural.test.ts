@@ -944,7 +944,7 @@ describe('scripts/assets/procedural/starfield', () => {
 });
 
 describe('scripts/assets/procedural/terrain', () => {
-  // The 8-px tiles, whatever the atlas's tile size (R2-01 flips it to 12; `terrain-size.test.ts`
+  // The 8-px tiles, whatever the atlas's tile size (R2-01 flipped it to 12; `terrain-size.test.ts`
   // checks the 12-px drawing and that generate() follows TILE_SIZE).
   const [tileset] = terrain.generate({ tileSize: 8 });
   const tile = (name: (typeof terrain.TERRAIN_TILES)[number]): Image =>

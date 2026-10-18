@@ -5,8 +5,8 @@
  * loads, the canvas shows a real picture (not a uniform colour) and nothing is logged as an
  * error. By default both builds show the scene flow's title (plan M1-16: the `ui/logo` sprite,
  * no ship, no HUD bars — `data-shmup-scene="title"`); `?scene=flight` still boots free flight. The
- * pixel checks read the canvas at the e2e capture scale (`frame-pixels.ts`; ×3 today, viewport
- * 1152×648): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ * pixel checks read the canvas at the e2e capture scale (`frame-pixels.ts`; ×2, viewport
+ * 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
