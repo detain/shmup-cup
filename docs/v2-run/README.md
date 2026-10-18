@@ -70,10 +70,13 @@ or on any file outside the repository other than the run directory (§ The run d
 4. **Run the review loop** for every subtask that pushed: review → fix → a **new** review, until a review reports
    **zero findings, nits included**. Doc-only nits may go to a fixer that is already running.
 5. **Track the run** in the run directory (below): the wave's lane table, every agent, its status and its pushes.
-   When a wave's first agent starts, record its **wave base**, `git rev-parse origin/master`, in
-   `RUN_DIR/lanes-<wave>.md`. Keep wave 2's in `RESUME.md` too: waves 4 and 5 diff against it. Every `<wave base>`
-   in a wave file means that wave's SHA, and `<wave-2 base>` / `R2-02.RV-pre`'s `<base>` mean wave 2's. Put the SHA
-   into the agent's prompt; never leave the placeholder.
+   When a wave's first agent starts, record its **wave base** once, in the main checkout:
+   `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/wNN-base.txt` (`NN` = the wave's two
+   digits: `w01-base.txt` … `w15-base.txt`), and note the SHA in `RUN_DIR/lanes-<wave>.md` and `RESUME.md`. Keep
+   `w02-base.txt` for the whole run: waves 4 and 5 diff against wave 2's base. A wave file's command reads that file
+   (`$(cat /home/sites/shmup-cup-run/wNN-base.txt)`); where a wave file still writes `<wave base>` it means that
+   wave's SHA, and `<wave-2 base>` / `R2-02.RV-pre`'s `<base>` mean wave 2's. Put the SHA into the agent's prompt;
+   never leave the placeholder.
 6. **Close the wave**: run its **Exit check** (targeted, on myadmin1; never wait for GitHub CI — look at it at a
    wave's close at most) and let the wave's docs agent (`Wnn.DOCS-A`) update the §17 rows. Once that push is on
    `origin/master`, the orchestrator runs `python3 .claude/plan_board_v2.py` in the main checkout
@@ -263,7 +266,8 @@ stuck holder.
 
 Transient run files live **outside the repository** in the run directory, `RUN_DIR` — by default
 `/home/sites/shmup-cup-run/` on myadmin1 (the driver prompt's Run setting `RUN_DIR`; its preflight creates it). It
-holds the orchestrator's `RESUME.md`, lane file per wave, wave notes, `prompts/` and `logs/`; the agents' reports
+holds the orchestrator's `RESUME.md`, lane file per wave, wave notes, wave bases (`wNN-base.txt`, step 5),
+`prompts/` and `logs/`; the agents' reports
 (every agent writes its report as `$RUN_DIR/<id>-report.md`); RV-A2's failure lists (`w02/rv-a2/`); R2-04's proposed
 patches (`w07/patches/`); and the lane worktrees of R5 / R6 (`wt/`). It survives sessions on the host. Anything a
 **later wave** needs that is not in this list is committed (the zone designs, for example, go to

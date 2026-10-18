@@ -57,10 +57,10 @@ paraphrasing it.
 - **ART_ROUND:** `off` — see "The art round (R0-04) on myadmin1".
 - **FULL_SUITE:** `end of run` — see owner rule 2 and "End of the run".
 - **RUN_DIR:** `/home/sites/shmup-cup-run` — the run directory of `docs/v2-run/README.md` § The run directory
-  (decision RUN-5). It holds your notes (`RESUME.md`, `lanes-<wave>.md`, `wave-<wave>-notes.md`), `prompts/<name>.md`,
-  `logs/<name>.log`, every agent's report `<task id>-report.md`, RV-A2's `w02/rv-a2/`, R2-04's `w07/patches/` and the
-  lane worktrees `wt/`. It is outside the repository; copy it along if the run moves hosts. Every agent gets its value
-  (agent brief, `RUN_DIR:` line).
+  (decision RUN-5). It holds your notes (`RESUME.md`, `lanes-<wave>.md`, `wave-<wave>-notes.md`, the wave bases
+  `wNN-base.txt`), `prompts/<name>.md`, `logs/<name>.log`, every agent's report `<task id>-report.md`, RV-A2's
+  `w02/rv-a2/`, R2-04's `w07/patches/` and the lane worktrees `wt/`. It is outside the repository; copy it along if
+  the run moves hosts. Every agent gets its value (agent brief, `RUN_DIR:` line).
 
 ## The owner's general instructions (follow them exactly, and pass them on to every agent)
 
@@ -229,6 +229,7 @@ restarts; never keep state in `/tmp` or a session folder. The old host's notes i
 - `RESUME.md` — ten lines: the wave, what runs (agent, sessionID, worktree), what is next;
 - `lanes-<wave>.md` — the lane plan: tasks, lanes, exact files, tokens, agents, status, commit SHAs;
 - `wave-<wave>-notes.md` — decisions, review rounds, findings and their outcomes, owner to-dos;
+- `wNN-base.txt` — each wave's base SHA (wave loop, step 2), which the wave files' diff commands read;
 - `prompts/<name>.md`, `logs/<name>.log`;
 - what the agents write there: `<task id>-report.md`, RV-A2's `w02/rv-a2/`, R2-04's `w07/patches/`, the lane
   worktrees `wt/`.
@@ -431,10 +432,13 @@ that needs a new subtask, a red test) gets a scout of its own before a builder.
   `R5-P.LAND`'s helper and its row in `docs/v2-run/helpers/README.md`) or the work order makes them a docs agent. Keep
   such files in their YOUR FILES. They return As-built notes and docs needs in their report, and the docs agent (step
   6) writes them.
-- Write the lane plan to `RUN_DIR/lanes-<wave>.md`, with the wave's **wave base** (`git rev-parse origin/master`
-  when its first agent starts); keep wave 2's base in `RESUME.md` too (waves 4 and 5 diff against it). A wave
-  file's `<wave base>` means that SHA, `<wave-2 base>` and `R2-02.RV-pre`'s `<base>` mean wave 2's: put the SHA into
-  the prompt, never the placeholder (`docs/v2-run/README.md` step 5).
+- Write the lane plan to `RUN_DIR/lanes-<wave>.md`, with the wave's **wave base**: when its first agent starts, run
+  `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/wNN-base.txt` in the main checkout
+  (`NN` = the wave's two digits) and note the SHA in the lane file and `RESUME.md`. Keep `w02-base.txt` for the
+  whole run (waves 4 and 5 diff against wave 2's base). The wave files' commands read that file
+  (`$(cat /home/sites/shmup-cup-run/wNN-base.txt)`); a leftover `<wave base>` means that SHA, `<wave-2 base>` and
+  `R2-02.RV-pre`'s `<base>` mean wave 2's: put the SHA into the prompt, never the placeholder
+  (`docs/v2-run/README.md` step 5).
 - Set the wave's steps to `in progress` in §17 (or give that edit to the `Wnn.DOCS-A` that holds PLAN — see "How you
   work"), push, and run `plan_board_v2.py`.
 
