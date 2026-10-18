@@ -11,7 +11,10 @@
  *   gate off), `true` from the flip until R2-03. A re-bless run (`pnpm golden:update`, which sets
  *   `SHMUP_GOLDEN_UPDATE=1`) is never skipped: it is how R2-03 re-records them.
  * - **It expires by itself:** once the frame is no longer v1's and nothing is stale, importing this
- *   module throws `R2-03 re-blessed: delete the gate` — R2-03 deletes this file and every gate.
+ *   module throws `R2-03 re-blessed: delete the gate` — R2-03 deletes this file and every gate
+ *   ({@link checkStaleGateExpiry}). Never inside the re-bless run itself: each of its files imports
+ *   this module in its own worker, so one that starts after the recordings were rewritten would
+ *   fail a re-bless that worked; the next normal run throws.
  * - {@link describeGoldensStale} / {@link itGoldensStale} — `describe.skipIf` / `it.skipIf` on it,
  *   with {@link GOLDENS_STALE_REASON} appended to the name.
  *
@@ -25,8 +28,12 @@ import { fileURLToPath } from 'node:url';
 import { FRAME_H, FRAME_W, REPLAY_FORMAT_VERSION } from '@shmup/core';
 import { describe, it } from 'vitest';
 
-/** The v1 frame's width (the code runs at it until R2-01's flip). */
-const V1_FRAME_W = 384;
+/**
+ * The v1 frame's width (the code runs at it until R2-01's flip). Typed `number`, not `384`: after
+ * the flip `FRAME_W` is the literal type `640`, and comparing two literal types that never overlap
+ * fails the typecheck (TS2367).
+ */
+const V1_FRAME_W: number = 384;
 
 /** The variable `pnpm golden:update` sets (`golden.ts` `GOLDEN_UPDATE_ENV`). */
 const UPDATE_ENV = 'SHMUP_GOLDEN_UPDATE';
@@ -87,9 +94,28 @@ export function committedRecordings(): Array<readonly [string, unknown]> {
 /** Whether any committed golden replay or demo is stale ({@link goldenIsStale}). */
 const ANY_STALE: boolean = committedRecordings().some(([, doc]) => goldenIsStale(doc));
 
-if (FRAME_W !== V1_FRAME_W && !ANY_STALE) {
-  throw new Error('R2-03 re-blessed: delete the gate (test/golden/stale.ts and its uses)');
+/**
+ * The gate's self-expiry, run when this module is imported: throws once the frame is no longer
+ * v1's and no committed recording is stale — R2-03 re-blessed them, so the gate must go — except
+ * in the re-bless run itself (`SHMUP_GOLDEN_UPDATE=1`), whose files may import this module after
+ * `golden.test.ts` / `demos.test.ts` rewrote every recording.
+ *
+ * @param frameW - The build's frame width (`FRAME_W`).
+ * @param anyStale - Whether a committed recording is stale.
+ * @param env - The environment (`process.env`): `SHMUP_GOLDEN_UPDATE` `'1'` marks the re-bless.
+ * @throws {Error} `R2-03 re-blessed: delete the gate …` when the gate has expired.
+ */
+export function checkStaleGateExpiry(
+  frameW: number,
+  anyStale: boolean,
+  env: Readonly<Record<string, string | undefined>>,
+): void {
+  if (frameW !== V1_FRAME_W && !anyStale && env[UPDATE_ENV] !== '1') {
+    throw new Error('R2-03 re-blessed: delete the gate (test/golden/stale.ts and its uses)');
+  }
 }
+
+checkStaleGateExpiry(FRAME_W, ANY_STALE, process.env);
 
 /**
  * Whether the golden-replay tests skip: a committed recording is stale and this is not a re-bless

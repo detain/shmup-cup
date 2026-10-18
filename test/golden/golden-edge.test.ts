@@ -11,7 +11,9 @@
  *   `scripts/golden-update.mjs` runs this folder with the variable `golden.test.ts` reads.
  *
  * Skipped while re-blessing (`SHMUP_GOLDEN_UPDATE=1`): `golden.test.ts` is rewriting the files.
- * The checks that read a file skip while the goldens are stale (v2's R2-01 gate, `./stale.ts`).
+ * The checks that read a file skip while the goldens are stale (v2's R2-01 gate, `./stale.ts`),
+ * and that gate's self-expiry throws in a normal run once nothing is stale at v2's frame, never
+ * inside the re-bless run.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +31,7 @@ import {
   readGolden,
   recordGolden,
 } from './golden.js';
+import { checkStaleGateExpiry } from './stale.js';
 
 /** Whether this run re-blesses the files. */
 const updating = process.env[GOLDEN_UPDATE_ENV] === '1';
@@ -187,5 +190,28 @@ describe('golden replays — the re-bless script', () => {
     // The files are generated: Prettier leaves them alone.
     const ignore = readFileSync(new URL('../../.prettierignore', import.meta.url), 'utf8');
     expect(ignore.split('\n')).toContain('test/golden/*.replay.json');
+  });
+});
+
+describe('golden replays — the stale gate expires by itself (v2 R2-01)', () => {
+  /** The v1 frame's width and v2's: the gate counts only once the build is not at v1's. */
+  const [V1_W, V2_W] = [384, 640];
+  /** The message the gate's self-expiry throws. */
+  const EXPIRED = 'R2-03 re-blessed: delete the gate (test/golden/stale.ts and its uses)';
+
+  it('throws in a normal run once nothing is stale at v2`s frame (the gate was forgotten)', () => {
+    expect(() => checkStaleGateExpiry(V2_W, false, {})).toThrow(EXPIRED);
+    // Any value but '1' is a normal run.
+    expect(() => checkStaleGateExpiry(V2_W, false, { [GOLDEN_UPDATE_ENV]: '0' })).toThrow(EXPIRED);
+  });
+
+  it('never throws inside the re-bless run, which may import it after rewriting every file', () => {
+    expect(() => checkStaleGateExpiry(V2_W, false, { [GOLDEN_UPDATE_ENV]: '1' })).not.toThrow();
+  });
+
+  it('stays quiet while a recording is stale, and at v1`s frame', () => {
+    expect(() => checkStaleGateExpiry(V2_W, true, {})).not.toThrow();
+    expect(() => checkStaleGateExpiry(V1_W, false, {})).not.toThrow();
+    expect(() => checkStaleGateExpiry(V1_W, true, {})).not.toThrow();
   });
 });

@@ -24,8 +24,12 @@ import { fileURLToPath } from 'node:url';
 import { describe, it } from 'vitest';
 import { FRAME_W, TILE_SIZE } from '../../src/config/index.js';
 
-/** The v1 frame's width (the code runs at it until R2-01's flip). */
-const V1_FRAME_W = 384;
+/**
+ * The v1 frame's width (the code runs at it until R2-01's flip). Typed `number`, not `384`: after
+ * the flip `FRAME_W` is the literal type `640`, and comparing two literal types that never overlap
+ * fails the typecheck (TS2367).
+ */
+const V1_FRAME_W: number = 384;
 
 /** The repository's `content/tilesets/` folder. */
 const TILESETS = fileURLToPath(new URL('../../../../content/tilesets/', import.meta.url));

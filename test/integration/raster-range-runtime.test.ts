@@ -1,9 +1,12 @@
 /**
  * The `raster-range` dev stage across content, assets, core and render-pixi (plan M2-08):
  *
- * - its art matches its effects — the sea band's parallax row, size and repeat are the wave's rows,
- *   the checker floor's are the line-band floor's rows, strips and wrap, and the palette cycle's
- *   ramp is the `raster-bands` generator's (`SEA_RAMP`);
+ * - the atlas draws the `raster-bands` generator's sea and checker floor at the interim art scale
+ *   (v2's R2-01: `INTERIM_ART_SCALE`, a length `n` drawn `⌈s·n⌉`, a strip boundary at row `r` on
+ *   row `⌈s·r⌉`), and its art matches its effects — the sea band's parallax row, size and repeat
+ *   are the wave's rows, the checker floor's are the line-band floor's rows, strips and wrap, and
+ *   the palette cycle's ramp is the generator's (`SEA_RAMP`); that content half is gated until
+ *   R2-02 ports the content to the ×1.5 art;
  * - in the packed atlas the sea is painted only in the ramp's exact colours, and nothing else drawn
  *   on the cycled layer comes within the layer shader's match tolerance (1 per channel) of them —
  *   the floor never flickers with the sea;
@@ -31,6 +34,7 @@ import {
 } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { INTERIM_ART_SCALE, scaleLength } from '../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import * as rasterBands from '../../scripts/assets/procedural/raster-bands.mjs';
 import { readContentFiles } from '../../vite.shared.js';
@@ -67,6 +71,43 @@ function rasterRange(db: ContentDb): ContentDb['stages'][number] {
 const rgbOf = (hex: string): number => parseInt(hex.slice(1), 16);
 
 const { manifest, pages } = buildAtlas();
+
+/**
+ * A length of the `raster-bands` generator as the atlas draws it at the interim art scale.
+ *
+ * @param n - A length the generator draws (its scale-1 constant).
+ * @returns `⌈INTERIM_ART_SCALE · n⌉`.
+ */
+const art = (n: number): number => scaleLength(n, INTERIM_ART_SCALE);
+
+/**
+ * The checker floor's strips as the atlas draws them: the nearest-neighbour upscale puts the
+ * boundary at source row `r` on row `⌈s·r⌉`, so each strip spans its two boundaries.
+ *
+ * @param bands - The generator's strip heights (`FLOOR_BANDS`).
+ * @returns The drawn heights (equal to `bands` at scale 1, summing to the drawn tile's height).
+ */
+function artBands(bands: readonly number[]): number[] {
+  const out: number[] = [];
+  let row = 0;
+  for (const height of bands) {
+    out.push(art(row + height) - art(row));
+    row += height;
+  }
+  return out;
+}
+
+/**
+ * The one frame of a sprite in the packed atlas.
+ *
+ * @param sprite - Sprite name.
+ * @returns Its frame rectangle.
+ */
+function onlyFrame(sprite: string): (typeof manifest.frames)[string] {
+  const frames = manifest.sprites[sprite].frames;
+  expect(frames, sprite).toHaveLength(1);
+  return manifest.frames[frames[0]];
+}
 
 /**
  * Every pixel colour (0xRRGGBB, alpha > 0) of a sprite's frames in the packed atlas.
@@ -106,6 +147,20 @@ function shaderMatches(a: number, b: number): boolean {
 }
 
 describe('integration: the raster range matches its art (M2-08)', () => {
+  it('draws the `raster-bands` generator`s sea and checker floor at the interim art scale', () => {
+    const sea = onlyFrame('bg/sea-swell');
+    expect([sea.w, sea.h]).toEqual([art(rasterBands.SEA_TILE_W), art(rasterBands.SEA_TILE_H)]);
+    const floor = onlyFrame('bg/checker-floor');
+    expect([floor.w, floor.h]).toEqual([
+      art(rasterBands.FLOOR_TILE_W),
+      art(rasterBands.FLOOR_TILE_H),
+    ]);
+    // The strips fill the drawn floor, every one at least a row.
+    const strips = artBands(rasterBands.FLOOR_BANDS);
+    expect(strips.reduce((sum, height) => sum + height, 0)).toBe(floor.h);
+    expect(Math.min(...strips)).toBeGreaterThanOrEqual(1);
+  });
+
   itPortPending("puts the wave on the sea band's rows and the floor on the checker floor's", () => {
     const stage = rasterRange(shipped());
     const band = (sprite: string) => stage.parallax.find((layer) => layer.sprite === sprite);
@@ -116,18 +171,15 @@ describe('integration: the raster range matches its art (M2-08)', () => {
     expect([wave.kind, lines.kind, haze.kind]).toEqual(['wave', 'lines', 'haze']);
     // The sea: its band rows are the wave's, its sprite as tall as the rows and repeating at its width.
     expect([sea.layer, wave.layer]).toEqual(['mid', 'mid']);
-    expect([wave.top, wave.bottom]).toEqual([sea.y, sea.y + rasterBands.SEA_TILE_H]);
-    expect(sea.spacing).toBe(rasterBands.SEA_TILE_W);
-    const seaFrame = manifest.frames[manifest.sprites['bg/sea-swell'].frames[0]];
-    expect([seaFrame.w, seaFrame.h]).toEqual([rasterBands.SEA_TILE_W, rasterBands.SEA_TILE_H]);
-    // The floor: rows, strips and wrap are the checker floor's.
+    const seaFrame = onlyFrame('bg/sea-swell');
+    expect([wave.top, wave.bottom]).toEqual([sea.y, sea.y + seaFrame.h]);
+    expect(sea.spacing).toBe(seaFrame.w);
+    // The floor: rows, strips and wrap are the drawn checker floor's.
     expect(lines.layer).toBe(floor.layer);
-    expect([lines.top, lines.bottom]).toEqual([floor.y, floor.y + rasterBands.FLOOR_TILE_H]);
-    expect(lines.bands).toEqual([...rasterBands.FLOOR_BANDS]);
-    expect([lines.wrap, floor.spacing]).toEqual([
-      rasterBands.FLOOR_TILE_W,
-      rasterBands.FLOOR_TILE_W,
-    ]);
+    const floorFrame = onlyFrame('bg/checker-floor');
+    expect([lines.top, lines.bottom]).toEqual([floor.y, floor.y + floorFrame.h]);
+    expect(lines.bands).toEqual(artBands(rasterBands.FLOOR_BANDS));
+    expect([lines.wrap, floor.spacing]).toEqual([floorFrame.w, floorFrame.w]);
     // A floor band that stays put (factor 0): the raster effect alone scrolls it.
     expect(floor.factor).toBe(0);
     // The haze sits on the far layer above the sea, inside a camera range.

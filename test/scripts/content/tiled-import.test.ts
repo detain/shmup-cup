@@ -3,6 +3,13 @@
  * exactly the committed stage and paths JSON, the result loads as valid content next to the
  * shipped files, the helpers (RLE rows, properties, tile layers) follow their rules, maps that
  * break the rules are refused, and the CLI writes the files where it is told.
+ *
+ * The inline maps place their objects from the importer's own {@link VIEW_WIDTH} and
+ * {@link SPAWN_LEAD} (`SPAWN_LEAD + 200`, not `600`), so each case stays on the same side of the
+ * lead and the view at 384×216 and at 640×360. The tests that read the committed fixture map
+ * (`fixtures/tiled-sample.tmj`, 8-px tiles) are gated by v2's R2-01: the importer takes 12-px tiles
+ * from the flip, and R2-02 redraws the fixture at 12 px — in the commit that ports the tilesets,
+ * since the gate expires on them, not on the fixture.
  */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -76,7 +83,7 @@ function objects(...objects: unknown[]): Record<string, unknown> {
   return { type: 'objectgroup', name: 'events', objects };
 }
 
-describe('scripts/content/tiled-import.mjs — the committed fixture', () => {
+describe('scripts/content/tiled-import.mjs — the committed 8-px fixture (redrawn by R2-02)', () => {
   itPortPending('converts the fixture map into exactly the expected stage and paths JSON', () => {
     const { stage, paths } = convertTiledMap(fixture('tiled-sample.tmj'));
     expect(stage).toEqual(fixture('tiled-sample.stage.json'));
@@ -189,7 +196,7 @@ describe('scripts/content/tiled-import.mjs — helpers', () => {
 });
 
 describe('scripts/content/tiled-import.mjs — conversion rules', () => {
-  it('puts spawns 400 px ahead of their object (screenX only near the start), markers at x', () => {
+  it('puts spawns a lead ahead of their object (screenX only near the start), markers at x', () => {
     const { stage } = convertTiledMap(
       map([
         objects(
@@ -261,60 +268,63 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
     expect(cameraYAt(keys, 400)).toBe(60);
   });
 
-  itPortPending(
-    'writes spawn y relative to the camera the keys give; blocks and triggers stay in world',
-    () => {
-      const { stage, warnings } = convertTiledMap(
-        map([
-          objects(
-            { id: 1, class: 'camera', x: 0, properties: [{ name: 'speed', value: 2 }] },
-            {
-              id: 2,
-              class: 'camera',
-              x: 100,
-              properties: [
-                { name: 'speed', value: 2 },
-                { name: 'hold', value: 90 },
-                { name: 'yTo', value: 72 },
-                { name: 'yTicks', value: 60 },
-              ],
-            },
-            { id: 3, class: 'spawn', name: 'drifter', x: 600, y: 200 },
-            {
-              id: 4,
-              class: 'formation',
-              x: 650,
-              y: 150,
-              properties: [
-                { name: 'enemy', value: 'fan' },
-                { name: 'count', value: 2 },
-                { name: 'interval', value: 8 },
-              ],
-            },
-            { id: 5, class: 'block', x: 640, y: 200, width: 16, height: 8 },
-            {
-              id: 6,
-              class: 'trigger',
-              x: 500,
-              y: 180,
-              width: 40,
-              height: 40,
-              properties: [{ name: 'flag', value: 'f' }],
-            },
-          ),
-        ]),
-      );
-      expect(warnings).toEqual([]);
-      expect(stage.events).toEqual([
-        { x: 116, type: 'trigger', flag: 'f', region: { x: 500, y: 180, w: 40, h: 40 } },
-        { x: 200, type: 'spawn', enemy: 'drifter', y: 200 - 72 },
-        { x: 240, type: 'block', y: 200, w: 16, h: 8 },
-        { x: 250, type: 'formation', enemy: 'fan', count: 2, interval: 8, y: 150 - 72 },
-      ]);
-    },
-  );
+  it("writes spawn y relative to the keys' camera; blocks and triggers stay in world", () => {
+    // The spawns and the block fire at x 200 … 250, the trigger arms at 116 — at any frame.
+    const { stage, warnings } = convertTiledMap(
+      map([
+        objects(
+          { id: 1, class: 'camera', x: 0, properties: [{ name: 'speed', value: 2 }] },
+          {
+            id: 2,
+            class: 'camera',
+            x: 100,
+            properties: [
+              { name: 'speed', value: 2 },
+              { name: 'hold', value: 90 },
+              { name: 'yTo', value: 72 },
+              { name: 'yTicks', value: 60 },
+            ],
+          },
+          { id: 3, class: 'spawn', name: 'drifter', x: SPAWN_LEAD + 200, y: 200 },
+          {
+            id: 4,
+            class: 'formation',
+            x: SPAWN_LEAD + 250,
+            y: 150,
+            properties: [
+              { name: 'enemy', value: 'fan' },
+              { name: 'count', value: 2 },
+              { name: 'interval', value: 8 },
+            ],
+          },
+          { id: 5, class: 'block', x: SPAWN_LEAD + 240, y: 200, width: 16, height: 8 },
+          {
+            id: 6,
+            class: 'trigger',
+            x: VIEW_WIDTH + 116,
+            y: 180,
+            width: 40,
+            height: 40,
+            properties: [{ name: 'flag', value: 'f' }],
+          },
+        ),
+      ]),
+    );
+    expect(warnings).toEqual([]);
+    expect(stage.events).toEqual([
+      {
+        x: 116,
+        type: 'trigger',
+        flag: 'f',
+        region: { x: VIEW_WIDTH + 116, y: 180, w: 40, h: 40 },
+      },
+      { x: 200, type: 'spawn', enemy: 'drifter', y: 200 - 72 },
+      { x: 240, type: 'block', y: 200, w: 16, h: 8 },
+      { x: 250, type: 'formation', enemy: 'fan', count: 2, interval: 8, y: 150 - 72 },
+    ]);
+  });
 
-  itPortPending('warns about a spawn that fires while a timed pan may still be running', () => {
+  it('warns about a spawn that fires while a timed pan may still be running', () => {
     const pan = (extra: { name: string; value: unknown }[]) =>
       map([
         objects(
@@ -329,7 +339,7 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
               ...extra,
             ],
           },
-          { id: 2, class: 'spawn', name: 'drifter', x: 560, y: 100 },
+          { id: 2, class: 'spawn', name: 'drifter', x: SPAWN_LEAD + 160, y: 100 },
         ),
       ]);
     // 60 ticks at 2 px/tick: the pan runs until about x 220; the spawn fires at 160.
@@ -364,7 +374,8 @@ describe('scripts/content/tiled-import.mjs — conversion rules', () => {
 });
 
 describe('scripts/content/tiled-import.mjs — CLI', () => {
-  itPortPending('writes the stage and paths files into the given folders', () => {
+  // Converts the committed 8-px fixture map: gated with the suite above until R2-02 redraws it.
+  itPortPending('writes the fixture`s stage and paths files into the given folders', () => {
     const stages = join(tmp, 'stages');
     const paths = join(tmp, 'paths');
     const result = spawnSync(

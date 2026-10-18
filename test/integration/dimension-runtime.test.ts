@@ -3,8 +3,10 @@
  * high-speed dimension stage (Gradius III arcade stage 4: behind-the-ship view dodging walls) —
  * Mode 7-style effect") across content, assets, core and render-pixi:
  *
- * - its `mode7` section matches the art the `dimension` generator draws (the floor tile's size,
- *   the sky band's parallax row and repeat) and the three P2 bosses of the step are its fights;
+ * - the atlas draws the `dimension` generator's floor tile and sky band at the interim art scale
+ *   (v2's R2-01: `INTERIM_ART_SCALE`, a length `n` drawn `⌈s·n⌉`), and its `mode7` section and sky
+ *   band meet that art (the sky's parallax row and repeat) — the content half is gated until
+ *   R2-02 ports the content to the ×1.5 art; the three P2 bosses of the step are its fights;
  * - it really is a high-speed stage: the camera ramps well past a normal zone's scroll speed;
  * - a headless session of the whole stage drives render-pixi's Mode-7 floor (a fake filter — no
  *   WebGL in Node) frame by frame: the floor is bound from the atlas, attached the whole way, the
@@ -23,6 +25,7 @@ import {
 import { createLayerStack, createMode7Floor, type Mode7Shader } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { INTERIM_ART_SCALE, scaleLength } from '../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
   DIMENSION_SKY_H,
@@ -56,29 +59,52 @@ function dimension(db: ContentDb): ContentDb['stages'][number] {
 
 const { manifest } = buildAtlas();
 
+/**
+ * A length of the `dimension` generator as the atlas draws it at the interim art scale.
+ *
+ * @param n - A length the generator draws (its scale-1 constant).
+ * @returns `⌈INTERIM_ART_SCALE · n⌉`.
+ */
+const art = (n: number): number => scaleLength(n, INTERIM_ART_SCALE);
+
+/**
+ * The one frame of a sprite in the packed atlas.
+ *
+ * @param sprite - Sprite name.
+ * @returns Its frame rectangle.
+ */
+function onlyFrame(sprite: string): (typeof manifest.frames)[string] {
+  const frames = manifest.sprites[sprite].frames;
+  expect(frames, sprite).toHaveLength(1);
+  return manifest.frames[frames[0]];
+}
+
 describe('integration: the high-speed dimension stage (M3-02)', () => {
-  itPortPending('asks for the floor and sky the `dimension` generator draws', () => {
+  it('draws the `dimension` generator`s floor tile and sky band at the interim art scale', () => {
+    // The tile the shader repeats with `fract`: the generator's square cell, one frame.
+    const rect = onlyFrame('bg/dimension-floor');
+    expect([rect.w, rect.h]).toEqual([art(DIMENSION_TILE), art(DIMENSION_TILE)]);
+    const band = onlyFrame('bg/dimension-sky');
+    expect([band.w, band.h]).toEqual([art(DIMENSION_SKY_W), art(DIMENSION_SKY_H)]);
+  });
+
+  itPortPending('asks for that floor and sky, meeting at the horizon', () => {
     const stage = dimension(shipped());
     const floor = stage.mode7;
     expect(floor).not.toBeNull();
     if (floor === null) throw new Error('the dimension stage has no Mode-7 floor');
-    // The tile the shader repeats with `fract`: the generator's square cell, one frame.
-    const tile = manifest.sprites[floor.sprite];
-    expect(tile.frames).toHaveLength(1);
-    const rect = manifest.frames[tile.frames[0]];
-    expect([rect.w, rect.h]).toEqual([DIMENSION_TILE, DIMENSION_TILE]);
+    expect(floor.sprite).toBe('bg/dimension-floor');
     // The horizon is inside the playfield, above the last row the plane covers.
     expect(floor.horizon).toBeGreaterThan(0);
     expect(floor.bottom).toBeGreaterThan(floor.horizon);
     expect(floor.bottom).toBeLessThanOrEqual(PLAYFIELD_H);
-    // The sky band meets the floor at the horizon: the generator's band, its own repeat.
+    // The sky band meets the floor at the horizon: the drawn band, its own repeat.
     const sky = stage.parallax[0];
     expect(sky.sprite).toBe('bg/dimension-sky');
-    expect(sky.spacing).toBe(DIMENSION_SKY_W);
-    const band = manifest.frames[manifest.sprites[sky.sprite].frames[0]];
-    expect([band.w, band.h]).toEqual([DIMENSION_SKY_W, DIMENSION_SKY_H]);
+    const band = onlyFrame(sky.sprite);
+    expect(sky.spacing).toBe(band.w);
     // Its bottom edge reaches the horizon, so no gap of nothing shows between them.
-    expect(sky.y + DIMENSION_SKY_H).toBeGreaterThanOrEqual(floor.horizon);
+    expect(sky.y + band.h).toBeGreaterThanOrEqual(floor.horizon);
   });
 
   it('is a high-speed stage and fights the step’s three P2 bosses', () => {
