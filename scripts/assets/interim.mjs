@@ -42,7 +42,7 @@ import { createImage } from './image.mjs';
  * import (like `terrain.mjs`' `TILE_SIZE`): the pipeline's input hash covers `scripts/assets/**`
  * only, so a change here re-draws the atlas.
  */
-export const INTERIM_ART_SCALE = 1;
+export const INTERIM_ART_SCALE = 3 / 2;
 
 /** Largest denominator {@link parseArtScale} looks for (3/2 needs 2). */
 const MAX_DENOMINATOR = 64;

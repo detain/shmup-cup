@@ -145,6 +145,32 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     value: 216,
     reason: "the TV bench's v1 baseline row's height: data that outlives R2-01 (R0-02, §13)",
   },
+  // The TV bench's v2 row: 640×360 at s = 1.5 equals the game's frame since R2-01, but the rows
+  // are absolute data like the v1 row, not FRAME_W / FRAME_H (R0-02, §13).
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_SIZES.id',
+    value: 640,
+    reason: "the TV bench's v2 row '640x360': bench data, absolute like the v1 row (R0-02, §13)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_SIZES.id',
+    value: 360,
+    reason: "the TV bench's v2 row '640x360': bench data, absolute like the v1 row (R0-02, §13)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_SIZES.width',
+    value: 640,
+    reason: "the TV bench's v2 row's width: bench data, absolute like the v1 row (R0-02, §13)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_SIZES.height',
+    value: 360,
+    reason: "the TV bench's v2 row's height: bench data, absolute like the v1 row (R0-02, §13)",
+  },
   // HTTP status codes: 200 = OK.
   {
     file: 'packages/audio-web/src/loader/index.ts',
@@ -226,6 +252,37 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     symbol: 'CAPTION',
     value: 208,
     reason: "a colour channel: the green 0xd0 of the placeholder screenshots' caption ink",
+  },
+  // Degrees (360 = one turn) — not FRAME_H.
+  {
+    file: 'packages/render-pixi/src/particles/index.ts',
+    symbol: 'UNITS_PER_DEGREE',
+    value: 360,
+    reason: 'degrees: 1024 binary-angle units per 360° turn',
+  },
+  {
+    file: 'packages/render-pixi/src/particles/index.ts',
+    symbol: 'PRESET_SCHEMA.direction.min',
+    value: 360,
+    reason: "degrees: a particle preset's direction is at least −360°",
+  },
+  {
+    file: 'packages/render-pixi/src/particles/index.ts',
+    symbol: 'PRESET_SCHEMA.direction.max',
+    value: 360,
+    reason: "degrees: a particle preset's direction is at most 360°",
+  },
+  {
+    file: 'packages/render-pixi/src/particles/index.ts',
+    symbol: 'PRESET_SCHEMA.spread.max',
+    value: 360,
+    reason: "degrees: a particle preset's spread is at most a full 360° turn",
+  },
+  {
+    file: 'packages/render-pixi/src/particles/index.ts',
+    symbol: 'collectFile.spread',
+    value: 360,
+    reason: 'degrees: a preset without a spread bursts over the full 360° turn',
   },
   // A brightness threshold.
   {

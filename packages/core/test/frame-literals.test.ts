@@ -78,6 +78,20 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     value: 200,
     reason: "a character cap: an attract demo's description is at most 200 characters",
   },
+  // Tick timers (60 Hz: 360 ticks = 6 s — not FRAME_H).
+  {
+    file: 'scenes/index.ts',
+    symbol: 'EndingScene.drawCitadel.sink',
+    value: 360,
+    count: 2,
+    reason: 'a tick timer: the citadel starts to sink 360 ticks (6 s) into the ending scene',
+  },
+  {
+    file: 'scenes/index.ts',
+    symbol: 'StoryScene.drawDawn.rise',
+    value: 360,
+    reason: "a tick timer: the dawn sun's rise stops 360 ticks (6 s) into the story page",
+  },
   // Angles (binary units: 1024 = one turn, so 384 = 135°).
   {
     file: 'weapons/index.ts',
@@ -96,6 +110,12 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     symbol: 'DIRECTION_HEADINGS',
     value: 384,
     reason: "an angle: the Free Way's down-left heading, 135° in binary angle units",
+  },
+  {
+    file: 'weapons/index.ts',
+    symbol: 'DIRECTION_HEADINGS',
+    value: 640,
+    reason: "an angle: the Free Way's up-left heading, 225° in binary angle units",
   },
   {
     file: 'math/trig-table.ts',

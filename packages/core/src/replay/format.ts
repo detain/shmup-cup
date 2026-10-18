@@ -42,9 +42,9 @@ export const REPLAY_KIND = 'replay';
 /**
  * Current replay format version: bumped when the encoding or what a header must hold changes (a
  * replay of another version is rejected by {@link decodeReplay} — of an older one with a
- * {@link ReplayVersionError}).
+ * {@link ReplayVersionError}). 2 since R2-01's 640×360 frame; every v1 build wrote 1.
  */
-export const REPLAY_FORMAT_VERSION = 1;
+export const REPLAY_FORMAT_VERSION = 2;
 
 /**
  * Why a {@link ReplayVersionError} refused a replay: `'format'` — an older format version (a

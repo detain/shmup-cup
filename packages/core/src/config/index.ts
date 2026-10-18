@@ -496,11 +496,11 @@ export const AUTOFIRE_INTERVALS: readonly number[] = Object.freeze([8, 6, 5, 4, 
 /** Parameters of one game session. All fields are sim-affecting and replay-recorded. */
 export interface GameConfig {
   /**
-   * Internal render width in pixels ({@link FRAME_W}: 384 → ×5 on 1080p). Nothing in the game reads
+   * Internal render width in pixels ({@link FRAME_W}: 640 → ×3 on 1080p). Nothing in the game reads
    * it beyond its range check — it is the replay header's record of the frame the game ran at.
    */
   readonly internalWidth: number;
-  /** Internal render height in pixels ({@link FRAME_H}: 216 → ×5 on 1080p); see `internalWidth`. */
+  /** Internal render height in pixels ({@link FRAME_H}: 360 → ×3 on 1080p); see `internalWidth`. */
   readonly internalHeight: number;
   /** Simulation ticks per second (fixed step). */
   readonly tickRate: number;
@@ -734,26 +734,26 @@ export interface GameConfig {
 // ------------------------------------------------------------------------------ the frame
 //
 // plan_resolution.md §7 / R1-01: every frame-dependent number of the game derives from the few
-// compile-time constants below, so changing them is the whole resolution switch (R2-01 sets
-// 640×360, 12-px HUD bars, 12-px tiles and the new font's metrics). They are plain module
-// constants — never getters or runtime options read in hot paths — and every one but
+// compile-time constants below, so changing them is the whole resolution switch (R2-01 set
+// 640×360, 12-px HUD bars, 12-px tiles, the 9×12 font and the ×3/2 art scale). They are plain
+// module constants — never getters or runtime options read in hot paths — and every one but
 // {@link ART_SCALE} is a whole number. Values anchored to a screen edge derive from them; world
 // values (radii, margins, speeds) never do (plan §2.6).
 
 /** Width of the internal frame in pixels (decision D19: 384; R2-01: 640). */
-export const FRAME_W = 384;
+export const FRAME_W = 640;
 
 /** Height of the internal frame in pixels (decision D19: 216; R2-01: 360). */
-export const FRAME_H = 216;
+export const FRAME_H = 360;
 
-/** The frame's centre column: `FRAME_W / 2` (192) — where centred menus and text sit. */
+/** The frame's centre column: `FRAME_W / 2` (320) — where centred menus and text sit. */
 export const FRAME_CX = FRAME_W / 2;
 
-/** The frame's centre row: `FRAME_H / 2` (108) — where centred dialogs sit. */
+/** The frame's centre row: `FRAME_H / 2` (180) — where centred dialogs sit. */
 export const FRAME_CY = FRAME_H / 2;
 
 /** Height in pixels of each HUD bar outside the playfield (decision D20: 8; R2-01: 12). */
-export const HUD_BAR_HEIGHT = 8;
+export const HUD_BAR_HEIGHT = 12;
 
 /**
  * Screen row where the playfield starts: the top HUD bar occupies rows `0 … HUD_BAR_HEIGHT − 1`
@@ -772,13 +772,13 @@ export const PLAYFIELD_H = FRAME_H - 2 * HUD_BAR_HEIGHT;
 
 /**
  * The playfield's centre row in playfield coordinates (0 = the row under the top HUD bar):
- * `PLAYFIELD_H / 2` (100) — e.g. the default height of a boss.
+ * `PLAYFIELD_H / 2` (168) — e.g. the default height of a boss.
  */
 export const PLAYFIELD_CY = PLAYFIELD_H / 2;
 
 /**
  * Screen row of the bottom HUD bar's top edge — the row just below the playfield:
- * `FRAME_H − HUD_BAR_HEIGHT` = `PLAYFIELD_Y + PLAYFIELD_H` (208).
+ * `FRAME_H − HUD_BAR_HEIGHT` = `PLAYFIELD_Y + PLAYFIELD_H` (348).
  */
 export const HUD_BOTTOM_Y = FRAME_H - HUD_BAR_HEIGHT;
 
@@ -789,36 +789,37 @@ export const HUD_BOTTOM_Y = FRAME_H - HUD_BAR_HEIGHT;
  * test fixtures can use 12-px tiles; `test/integration/tile-size.test.ts` holds shipped content
  * to this one.
  */
-export const TILE_SIZE = 8;
+export const TILE_SIZE = 12;
 
 /**
  * Width in pixels of a cell of the bitmap font — also its advance, the horizontal pitch text is
  * laid out on: the font file's `cellWidth` / `advance` × {@link ART_SCALE}
- * (`assets/source/fonts/pixel6x8.font.json`: 6; the atlas pipeline scales the font by the same
- * factor, so R2-01's interim font is 9). A line of `n` characters is `n · GLYPH_W` pixels wide.
+ * (`assets/source/fonts/pixel6x8.font.json`: 6 × 3/2 = 9 since R2-01; the atlas pipeline scales
+ * the font by the same factor — the interim 9×12 font). A line of `n` characters is `n · GLYPH_W`
+ * pixels wide.
  */
-export const GLYPH_W = 6;
+export const GLYPH_W = 9;
 
 /**
  * Height in pixels of a cell of the bitmap font: the font file's `cellHeight` × {@link ART_SCALE}
- * (8; R2-01: 12).
+ * (8 × 3/2 = 12 since R2-01; v1: 8).
  */
-export const GLYPH_H = 8;
+export const GLYPH_H = 12;
 
 /**
  * Line advance in pixels of the bitmap font: the font file's `lineHeight` × {@link ART_SCALE}
- * (10; R2-01: 15).
+ * (10 × 3/2 = 15 since R2-01; v1: 10).
  */
-export const LINE_H = 10;
+export const LINE_H = 15;
 
 /**
- * The art's pixel scale relative to the v1 sprites: 1 until R2-01, 3/2 after (the interim ×1.5
+ * The art's pixel scale relative to the v1 sprites: 3/2 since R2-01, 1 before (the interim ×1.5
  * art, then the art bible's sizes — owner decision W4-3). UI layout scales its art- and
  * padding-sized values by it (`core/ui` `uiPx`, at module initialisation only); the font metrics
  * above are the font file's × this. World values never read it (plan §2.6): it is the only frame
  * constant that need not be a whole number, but its products with the font file's metrics are.
  */
-export const ART_SCALE = 1;
+export const ART_SCALE = 3 / 2;
 
 /**
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,
@@ -1471,7 +1472,7 @@ export const BULLET_PALETTES = Object.freeze([
 export type BulletPalette = (typeof BULLET_PALETTES)[number];
 
 /**
- * How the 384×216 frame fills the display (plan M2-08, shmup_feat.md §3): `integer` — the largest
+ * How the frame (640×360) fills the display (plan M2-08, shmup_feat.md §3): `integer` — the largest
  * whole multiple that fits, letterboxed (the default: every frame pixel the same size); `fit` — the
  * largest scale that fits keeping the aspect ratio, not a whole number (nearest-neighbour, so some
  * pixel rows / columns are one screen pixel wider); `stretch` — the whole display, aspect ratio
@@ -1513,7 +1514,7 @@ export const CRT_MAX_HEIGHT = 1080;
  *   (the picture is never cropped — it is letterboxed inside that window) and the rest of the width
  *   becomes side panels, the console look on a widescreen TV.
  *
- * Presentation only: the playfield stays 384×216 in every mode, so the simulation never changes.
+ * Presentation only: the frame stays 640×360 in every mode, so the simulation never changes.
  */
 export const ASPECT_MODES = Object.freeze(['normal', 'wide', 'classic'] as const);
 

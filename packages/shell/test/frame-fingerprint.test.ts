@@ -8,7 +8,8 @@
  * **Why.** Core's presentation fingerprint (`test/integration/presentation-fingerprint.test.ts`)
  * covers only `@shmup/core`'s output. R1-02 re-derives the shell scenes' HUD rows, bar heights and
  * text positions from core's frame constants and must keep them *pixel-identical* at 384×216;
- * this test is that check. It was pinned on master `5ec7ac5`, before any shell change of R1-02.
+ * this test is that check. It was pinned on master `5ec7ac5`, before any shell change of R1-02,
+ * and re-pinned at R2-01's flip to 640×360.
  *
  * **How it hashes.** Per walk, three FNV-1a hashes: `hud` and `ui` (every drawn command with every
  * field the renderer reads; a text command contributes its string, never its slot), and `world`
@@ -331,13 +332,16 @@ function galleryWalk(): string {
   return print.text();
 }
 
-/** The pinned fingerprints (`'<hud> <ui> <world>'`), by walk. */
+/**
+ * The pinned fingerprints (`'<hud> <ui> <world>'`), by walk. Re-pinned at R2-01's flip to the
+ * 640×360 frame (12-px HUD bars, the 9×12 font, the ×3/2 interim art).
+ */
 const PINNED: Readonly<Record<string, string>> = {
-  'flight.open-space': '5761211c ff7f3235 68eeaeea',
-  'flight.test-range': 'e7115450 ff7f3235 becb7a27',
-  'flight.warning': 'e15ff879 d5a42a35 e2520076',
-  showcase: '56e8a718 cfb34645 7a4632d2',
-  'fx-gallery': '4317ba05 87e74a85 a4feb18e',
+  'flight.open-space': '8f975240 ff7f3235 09a29d8c',
+  'flight.test-range': 'a7208360 ff7f3235 cf5741ed',
+  'flight.warning': 'a0c1ff41 b9e8ba75 f67698c8',
+  showcase: 'b9c2aea8 57ecce45 310f3e44',
+  'fx-gallery': '6eca8905 dc268025 2ff8baab',
 };
 
 /** The walks, by name. */

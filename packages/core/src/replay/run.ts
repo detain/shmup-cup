@@ -80,8 +80,11 @@ import {
 /** The `kind` of an encoded run replay ({@link RunReplayJson}). */
 export const RUN_REPLAY_KIND = 'run-replay';
 
-/** Format version of {@link RunReplayJson} (bumped when the layout changes). */
-export const RUN_REPLAY_FORMAT_VERSION = 1;
+/**
+ * Format version of {@link RunReplayJson} (bumped when the layout changes): 2 since R2-01's
+ * 640×360 frame — v1 wrote 1, which {@link decodeRunReplay} refuses as a `ReplayVersionError`.
+ */
+export const RUN_REPLAY_FORMAT_VERSION = 2;
 
 /** Ticks a {@link SegmentRecorder} holds: 20 minutes at 60 Hz (a zone lasts 3–6). */
 export const SEGMENT_CAPACITY = 72_000;

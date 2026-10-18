@@ -35,8 +35,7 @@ describe("electron/main the window's frame mirror (R1-02)", () => {
     expect(DEFAULT_WINDOW_STATE.scale).toBe(DEFAULT_WINDOW_SCALE);
   });
 
-  it('is ×3 / ×10 for the 384×216 frame today', () => {
-    // Until R2-01 flips the frame; then ×2 (1280×720) and ×6, per plan §2.7.
+  it('is ×2 / ×6 for the 640×360 frame (plan §2.7; v1: ×3 / ×10 at 384×216)', () => {
     if ((FRAME_W as number) === 384) {
       expect([DEFAULT_WINDOW_SCALE, MAX_WINDOW_SCALE]).toEqual([3, 10]);
       expect(windowContentSize(DEFAULT_WINDOW_SCALE)).toEqual({ width: 1152, height: 648 });

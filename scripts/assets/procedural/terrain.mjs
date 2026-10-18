@@ -87,7 +87,7 @@ export const TERRAIN_TILES = /** @type {const} */ ([
  * `scripts/frame.mjs`: the asset pipeline's input hash covers `scripts/assets/**` only, so a
  * change here re-draws the atlas.
  */
-export const TILE_SIZE = 8;
+export const TILE_SIZE = 12;
 
 /** Smallest tile side {@link renderTerrainTiles} draws (two brick courses, a 2 × 2 core). */
 const MIN_DRAWN_TILE_SIZE = 4;

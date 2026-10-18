@@ -9,7 +9,8 @@
  * HUD, a menu, the zone card or the WARNING band passes them. R1 re-derives every frame-dependent
  * number of core from a few constants and must keep the game *pixel-identical* at 384×216; this
  * test is that check for core's presentation output. It was pinned on master `333721b` (the v1.0.0
- * code, before any R1-01 change) and stayed green when R1-01·T0 added the frame constants.
+ * code, before any R1-01 change) and stayed green when R1-01·T0 added the frame constants; R2-01
+ * re-pinned it at the flip to 640×360.
  *
  * **The walks** (one `it` each, independent of the others): the front end (boot, title, the exit
  * confirmation, the Options screen and its CONTROLS / DISPLAY / GAME / EXTRAS pages, the rebind
@@ -35,6 +36,13 @@
  * are player 2's last life (`lives`, then `selfDestruct` for that ship alone), its used continues
  * (`PlayerScore.continues`) and the escaped boss (`World.endingFlags`).
  *
+ * **Content-independent since R2-01.** The flip to 640×360 left the shipped content at v1's scale
+ * until R2-02 ports it and the attract demos refused until R2-03 re-records them, so two walks no
+ * longer lean on either: the one-player game runs in god mode (the FULL POWER code needs a live
+ * ship, and on unported terrain the ship had crashed by then), and the attract loop plays two demos
+ * recorded in the test at the current frame from a fixed input script ({@link recordWalkDemo})
+ * instead of `content/demos`.
+ *
  * **How it hashes.** Every displayed frame (one `Game.renderFrame()` per tick) is folded into four
  * FNV-1a hashes per segment: `ui`, `hud`, `world` and `screen`. A draw list contributes its drawn
  * commands in order with every field the renderer reads; a text command contributes its *string*
@@ -57,6 +65,7 @@ import {
   Action,
   CaptureStatus,
   ControlsItem,
+  DEMO_BUILD_ID,
   DisplayItem,
   ENDING_LOCK_TICKS,
   EndingFlag,
@@ -77,14 +86,20 @@ import {
   createGame,
   createHeadlessPlatform,
   createMemoryStorage,
+  createReplayGame,
+  createReplayHeader,
   createReplayLibrary,
+  createReplayRecorder,
   createSaveStore,
+  encodeReplay,
   hudPlayerState,
+  resolveGameConfig,
   selfDestruct,
   type ActionMask,
   type ActionName,
   type ContentDb,
   type ControlsSetup,
+  type DemoSpec,
   type DrawList,
   type Game,
   type GameConfig,
@@ -741,6 +756,63 @@ function print(name: string, table: Record<string, string>): void {
 /** Scene ids every walk saw (checked against {@link SCENE_IDS} by the last test). */
 const SEEN = new Set<string>();
 
+/** Ticks of the attract walk's first demo: 40 s, as long as a shipped one (`golden/demos.ts`). */
+const WALK_DEMO_TICKS = 2400;
+
+/** Ticks of its second demo: the walk leaves it with a press 200 ticks in. */
+const WALK_DEMO2_TICKS = 600;
+
+/** The MANTA (Direct mode). */
+const MANTA: Partial<GameConfig> = { shipId: 'manta', powerUpMode: 'direct' };
+
+/**
+ * Records one of the attract walk's demos (R2-01) on the given content at the current frame: a
+ * fixed input script — shooting while weaving Up, Right, Down, Left for 30 ticks each, with a
+ * power-up press in every 40 — in god mode (`assisted`, like the shipped demos), through a replay
+ * recorder, so its hashes match when the attract loop plays it back.
+ *
+ * @param db - The content (the walk plays the demo on the same).
+ * @param id - The demo's id.
+ * @param stage - The stage it flies.
+ * @param config - Session options over the defaults (seed, ship).
+ * @param ticks - Recorded ticks.
+ * @returns The demo, as `ContentDb.demos` holds one.
+ */
+function recordWalkDemo(
+  db: ContentDb,
+  id: string,
+  stage: string,
+  config: Partial<GameConfig>,
+  ticks: number,
+): DemoSpec {
+  const header = createReplayHeader(resolveGameConfig({ ...config, stage }), {
+    buildId: DEMO_BUILD_ID,
+    assisted: true,
+  });
+  const platform = createHeadlessPlatform();
+  const recorder = createReplayRecorder(platform.input, header);
+  const game = createReplayGame({ ...platform, input: recorder }, header, db);
+  const input = platform.snapshot.players[0];
+  const moves = [Action.Up, Action.Right, Action.Down, Action.Left];
+  for (let i = 0; i < ticks; i++) {
+    const phase = i % 40;
+    const extra = phase < 30 ? moves[Math.floor(i / 40) & 3] : phase === 30 ? Action.PowerUp : 0;
+    commitPlayerInput(input, Action.Shot | extra);
+    game.step();
+    game.events.clear();
+    recorder.check(game.world);
+  }
+  const replay = recorder.finish(game.world);
+  return Object.freeze({
+    id,
+    description: `the presentation fingerprint's attract walk: ${stage}`,
+    stage,
+    stageIndex: db.stageIndex.get(stage) ?? -1,
+    ticks: replay.ticks,
+    document: { ...encodeReplay(replay) },
+  });
+}
+
 describe('integration: the presentation fingerprint (R1-01)', () => {
   const db = shippedContent();
 
@@ -910,6 +982,9 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
 
   it('a game: the selects, HUD and zone card, pause, continue, game over, replays', () => {
     const w = new Walk(db, { start: 'title', canExit: true });
+    // God mode (R2-01): FULL POWER needs a live ship, whatever the content's terrain does to it.
+    // The run is assisted either way (the code marks it), and the replay plays back the same way.
+    w.game.debug.godMode = true;
     const flow = w.flow;
     w.hold(0, 2);
     w.begin('difficulty');
@@ -1086,13 +1161,26 @@ describe('integration: the presentation fingerprint (R1-01)', () => {
   });
 
   it('the attract loop: demo play, the hi-score tables, the story crawl', () => {
-    const w = new Walk(db, { start: 'title' });
+    // The loop plays in-test demos (R2-01): content/demos stays v1's — refused at the current
+    // frame and skipped by the flow — until R2-03 re-records it. Like the shipped first two, a
+    // KESTREL demo of zone A, then a Direct-mode MANTA one of zone B (cut short by a press).
+    const demos: readonly DemoSpec[] = Object.freeze([
+      recordWalkDemo(db, 'walk-a', 'zone-a', { seed: 101 }, WALK_DEMO_TICKS),
+      recordWalkDemo(db, 'walk-b', 'zone-b', { seed: 102, ...MANTA }, WALK_DEMO2_TICKS),
+    ]);
+    const demoIndex = new Map<string, number>();
+    for (let i = 0; i < demos.length; i++) demoIndex.set(demos[i].id, i);
+    const w = new Walk({ ...db, demos, demoIndex }, { start: 'title' });
     w.begin('attract.idle');
     w.hold(0, 720);
     w.at('demo');
     w.begin('attract.demo');
+    const played = w.flow.demo.demo;
     for (let i = 0; i < 4000 && w.top === 'demo'; i++) w.hold(0);
     w.at('hiScore');
+    // The whole demo played, every hash matching (it ended by running out, not by a desync).
+    expect(played?.playback.done, 'attract.demo played to its end').toBe(true);
+    expect(played?.playback.report.ok, 'attract.demo stayed in sync').toBe(true);
     w.begin('attract.hiScores');
     for (let i = 0; i < 2000 && w.top === 'hiScore'; i++) w.hold(0);
     w.at('story');
@@ -1547,149 +1635,153 @@ function ending(w: Walk, run: string): void {
   w.at('title');
 }
 
-/** The pinned fingerprints, per walk (re-pin with `SHMUP_FINGERPRINT_PRINT=1`). */
+/**
+ * The pinned fingerprints, per walk (re-pin with `SHMUP_FINGERPRINT_PRINT=1`). Re-pinned at R2-01's
+ * flip to the 640×360 frame (12-px HUD bars and tiles, the 9×12 font, the ×3/2 interim art): every
+ * segment moved.
+ */
 const PINNED: Record<string, Record<string, string>> = {
   front: {
-    boot: '80c75401 b004d6e1 05544aa6 ec3e6705',
-    'title.prompt': '0ec1e545 9c557965 80a26cf5 2873a7c5',
-    'title.exit': '165a52f5 c94e24e5 2eab2015 87baae65',
-    'title.menu': 'a9c0359d a5b509f9 82b34cc6 24482885',
-    options: 'c613a599 b3865371 a1aced5e bd7575c5',
-    'options.controls': '340a3c09 843dc42d 3a7064a1 99f2b285',
-    rebind: 'ef0fbe29 23be0ddd 8c48c41a 43fd3c05',
-    inputTest: '54abfd71 fc5910b5 295199b5 414cb545',
-    'options.display': '06ad773d 63a638c1 d7fa924a de8888a5',
-    'options.game': '37f9a7d5 38ff9691 7d424ab3 7bd29525',
-    'options.extras': 'fe941d9d 2ba64ffd 1da5dac9 754cb4a5',
-    soundTest: '021edf0d ddb53aa9 643676be b02f3ee5',
-    practice: 'ecf37641 843dc42d 209efd81 88a2cb85',
-    extra: 'c0bce4e9 0e2b37d5 e8387225 2d0859e5',
-    'replays.empty': '975a7e51 0e2b37d5 ea5fc035 a31a93e5',
+    boot: '9c8573d9 b004d6e1 05544aa6 ec3e6705',
+    'title.prompt': '34e12d45 9c557965 80a26cf5 2873a7c5',
+    'title.exit': '6ab6a4c5 c94e24e5 2eab2015 87baae65',
+    'title.menu': 'e7fcaf65 a5b509f9 82b34cc6 24482885',
+    options: 'd546a8c1 b3865371 a1aced5e bd7575c5',
+    'options.controls': '924c2285 843dc42d 3a7064a1 99f2b285',
+    rebind: '59fffd15 23be0ddd 8c48c41a 43fd3c05',
+    inputTest: 'cc197a69 fc5910b5 295199b5 414cb545',
+    'options.display': 'c8a8b2d1 63a638c1 d7fa924a de8888a5',
+    'options.game': 'e1ed9595 38ff9691 7d424ab3 7bd29525',
+    'options.extras': 'bd2301a9 2ba64ffd 1da5dac9 754cb4a5',
+    soundTest: 'c6116f29 ddb53aa9 643676be b02f3ee5',
+    practice: '7f91b71d 843dc42d 209efd81 88a2cb85',
+    extra: '9f8a4c2d 0e2b37d5 e8387225 2d0859e5',
+    'replays.empty': '553403a5 0e2b37d5 ea5fc035 a31a93e5',
   },
   game: {
-    difficulty: 'e509db6d c94e24e5 c8498595 6d5b6685',
-    shipSelect: '13fa3745 7fa3520d b768f6f1 82623985',
-    weaponSelect: '7787326d 78c5388d 17e25968 0f7c1465',
-    autoOrder: 'fb907b31 b1382dc9 dedc9d3d 3a21ce85',
-    'game.card': '0c097281 c9bcf57d 44f9408f 6cdc9245',
-    'game.play': '0cfccb05 a2d6d54c f9d59431 b952d9c5',
-    pause: 'eb2936c5 2a24ecbd 469c6f8a 94897405',
-    'pause.options': '2d36dbcd bc0cf025 90b0cdd2 83b688c5',
-    'pause.quit': 'e4a1cbc5 ab7a4465 678bc992 fdb096c5',
-    'pause.fullPower': '8ada1521 7eb5d949 d5010def 1b857fa5',
-    'pause.retry': 'ba159f31 14e6c005 af67c946 7c490885',
-    continue: '8c7c9554 89676c65 6c45aae4 007aec6a',
-    gameOver: 'f06827e3 7a264019 b8c2a779 71c564ba',
-    nameEntry: 'a9852841 b1382dc9 56caab8a 70a36b85',
-    'hiScore.result': '2f5b2da5 3bd76f29 ac4eb872 4cf8f185',
-    'replays.lastGame': '84240d91 9b5e7ada 0b47d3e2 3f198b25',
-    replay: '66c3a2e5 6791ac79 871f4147 4e80eaa8',
+    difficulty: '41bb4a9d c94e24e5 c8498595 6d5b6685',
+    shipSelect: 'bff8e969 7fa3520d b768f6f1 82623985',
+    weaponSelect: 'cded2c41 78c5388d 9d44480e 0f7c1465',
+    autoOrder: '46268a65 b1382dc9 15b57b74 3a21ce85',
+    'game.card': '0e219dfd ad8da24d 337d703e 6cdc9245',
+    'game.play': '0cfccb05 6049d805 f2267128 b952d9c5',
+    pause: '7eb86045 b6d222ad 1c0cc392 94897405',
+    'pause.options': '8ac7ca1d 140400e5 17bd1af2 83b688c5',
+    'pause.quit': '3bdffd05 80538925 d7234df2 fdb096c5',
+    'pause.fullPower': 'd43d7b81 1a92c0a9 42f295eb 1b857fa5',
+    'pause.retry': '4c8e6895 1499b8dd 316f277c 7c490885',
+    continue: '8c1b033d 9c5745e5 39741169 007aec6a',
+    gameOver: '9c42a8cb 8a68aac9 b9e0e7e2 71c564ba',
+    nameEntry: '3178a77d b1382dc9 56caab8a 70a36b85',
+    'hiScore.result': '25f89f45 3bd76f29 ac4eb872 4cf8f185',
+    'replays.lastGame': '458dbc91 153e87a3 c840799a 3f198b25',
+    replay: '45cde22e 6a91c205 d41f508a 4e80eaa8',
   },
   coopDirect: {
-    'coop.waiting': 'b43b3ff5 43c61129 3f4314ae 2786acc5',
-    'coop.join': 'c1a35113 19c4d475 8f611940 6cdc9245',
-    'coop.continue': 'b0f50cdc b781596f 0a59f4c5 8a5296aa',
-    direct: '0ddada3b 23b0d84d 1190cd07 15723ac5',
+    'coop.waiting': '06f4a445 0a1b8e32 c587b6e5 2786acc5',
+    'coop.join': 'a9fd96ba ccb259a5 28853e70 6cdc9245',
+    'coop.continue': '7daaad2e aedb7025 b5fb5545 8a5296aa',
+    direct: '5fa66b66 1e27b5f7 dbb2820e 15723ac5',
   },
   attract: {
-    'attract.idle': 'cdf9550f bde69546 975923d7 b9fbf7c5',
-    'attract.demo': '5a0fbca3 bd4ec527 bba8aafe 7e4bc9c5',
-    'attract.hiScores': '74183864 e5de0f9d 21e55742 4a222345',
-    'attract.story': '385618f0 e73051f9 ccb82e6e a468a885',
-    'attract.demo2': 'd4fd4683 abc3ab86 707e43a9 a3a65905',
+    'attract.idle': 'f13cbaf2 92ef7a1f 2da65367 b9fbf7c5',
+    'attract.demo': 'e97f9e81 2124425b d532ce11 7e4bc9c5',
+    'attract.hiScores': 'b7829000 e5de0f9d 21e55742 4a222345',
+    'attract.story': '74db62c3 0f56de91 543ba9fe f7412c05',
+    'attract.demo2': 'bd4963db d9e93d3c a242748f a3a65905',
   },
   single: {
-    'single.title': 'ffa7602f 88ea5420 c2c7c19d aca532e5',
-    'single.game': 'a1e2b9b5 e7924c15 efd8d0fd 157bb6c5',
-    'single.stageClear': '3bf0b8ab 8e4391a9 c179f892 3d4db705',
-    'single.nameEntry': 'a1cf022d 25d9e681 5e0d08f4 4207f105',
+    'single.title': '42b14c0a 5556f71b 20c2c495 aca532e5',
+    'single.game': 'a1e2b9b5 761b4445 514f97a8 157bb6c5',
+    'single.stageClear': 'a4e312a8 eba8857a 953e87b5 3d4db705',
+    'single.nameEntry': '2d5b7d5c 25d9e681 5e0d08f4 4207f105',
   },
   runA: {
-    'runA.boss': 'f485ced7 75453e5f 3e919991 a2623345',
-    'runA.zoneA': '1d5bc40f 57230d39 9af23649 11568378',
-    'runA.mapA': '573c16bf 29e130f7 1155bc8c 7e24c625',
-    'runA.bonus': 'a40c5142 a02bf15d a25799a6 7c941945',
-    'runA.bonusClear': 'c00c7d0f edc94681 10a93364 11568378',
-    'runA.mapB': 'a6b2abfb cd16e5cf 08036456 7e24c625',
-    'runA.bossD': '77e7062e d2559f74 7f00aa67 6e85cbc5',
-    'runA.zoneD': 'a2ce679b 292b3c2a 62f3195b 11568378',
-    'runA.mapD': '09ba8ba6 8d7b9dc8 5e08b271 7e24c625',
-    'runA.bossF': '4e018743 a25acc19 de17ec32 6e85cbc5',
-    'runA.zoneF': '68dc5382 19ba73d5 1e619f7d 11568378',
-    'runA.mapF': '3c34135a 3e9e3f84 595a5648 7e24c625',
-    'runA.bossH': '8c40b98f c537c44c c40ef1fd c897cfc5',
-    'runA.zoneH': '41ab782d f602a5e5 c8889dbe 11568378',
-    'runA.escape': '6b5273bd 9ce0a1f5 bb3a9856 157bb6c5',
-    'runA.escapeClear': '48daf47e 69f96b41 ff66064d 11568378',
-    'runA.ending.story': 'd3e53f71 4c23c6e8 5003ac52 304d08e5',
-    'runA.ending.card': 'cc812d51 a1a5e151 bfc125ec c57fb005',
-    'runA.credits': '2ae3f5f2 b2e35990 ffe77092 d977b065',
-    'runA.nameEntry': '4dd82e91 16eb6249 fce3fb73 9f7d7385',
+    'runA.boss': 'ad3c4b5a 21f3c472 af218c03 a2623345',
+    'runA.zoneA': 'a9adb1a2 1feca8fa 22defcd5 11568378',
+    'runA.mapA': 'a9657da6 d4956372 dad6be9f 7e24c625',
+    'runA.bonus': 'a9e1edbf fcc4cb6d b16d13e6 7c941945',
+    'runA.bonusClear': '6da650b6 cb07d2f1 fb3c9568 11568378',
+    'runA.mapB': 'd299e4ae a9b76472 2ae8eab1 7e24c625',
+    'runA.bossD': '92218127 e2c25a50 a3405e6f 6e85cbc5',
+    'runA.zoneD': '9f22a542 5116d878 0cf0694c 11568378',
+    'runA.mapD': '723cc7e7 5f5e0927 2255046e 7e24c625',
+    'runA.bossF': '4f2fcf3a 59ce449f 129dff96 6e85cbc5',
+    'runA.zoneF': 'e00915db 5116c605 742ce81a 11568378',
+    'runA.mapF': '51935abf a2315ebb eb262c9a 7e24c625',
+    'runA.bossH': '66f575d6 b809338a d3813261 c897cfc5',
+    'runA.zoneH': '16006212 1ffb1119 b281d7a0 11568378',
+    'runA.escape': '238ed7b9 c2005295 a222ca66 157bb6c5',
+    'runA.escapeClear': '1acb24db 8de1c881 d1eb0a7d 11568378',
+    'runA.ending.story': 'f1895fc6 4c23c6e8 5003ac52 304d08e5',
+    'runA.ending.card': '9f4ebcf1 a1a5e151 bfc125ec c57fb005',
+    'runA.credits': '28096e3d 9c921714 4b8684f5 6ebe5925',
+    'runA.nameEntry': 'f11f49d0 16eb6249 d5cde623 9f7d7385',
   },
   runB: {
-    'runB.zoneA': '6c3d962b 9989b215 08f5bb82 157bb6c5',
-    'runB.clearA': '2f40e28c 69abf249 af3badb5 11568378',
-    'runB.map.C': '4e41160f ccf5af1b 58b9d0df e5128665',
-    'runB.zoneC': '6e2a6756 88d6f6b5 1b81cfff 157bb6c5',
-    'runB.clearC': 'f3c09fb9 162af789 5b2f26e3 11568378',
-    'runB.map.E': '6a674f15 1952049b 9f893477 e5128665',
-    'runB.zoneE': '374b92f4 164f1675 6bceced5 157bb6c5',
-    'runB.clearE': 'a4035fb5 80f8bac1 71c780e1 11568378',
-    'runB.map.G': 'a354026c 958eb0eb 32040585 e5128665',
-    'runB.zoneG': '6b6d8045 dffe2e45 d2080728 9cf0c5c5',
-    'runB.bonusClear': '118449b3 8ca15349 5ba03325 11568378',
-    'runB.map.I': '591a9a44 64c770db dff4efed e5128665',
-    'runB.zoneI': 'b2e24289 91af2ab5 8895ef77 157bb6c5',
-    'runB.clearI': 'c814eb3f 4be69019 c0b794a6 11568378',
-    'runB.escape': 'b04f2f61 67734cd5 ca43cd14 157bb6c5',
-    'runB.escapeClear': '3b89cea4 13101776 2646b7fc 11568378',
-    'runB.ending.story': '490e9dd7 76a7d22c 6e4899dd 5b18fda5',
-    'runB.ending.card': 'ab38a344 a1a5e151 6aeb0964 c57fb005',
-    'runB.credits': 'e3b111c7 b2e35990 d8ff0595 d977b065',
-    'runB.nameEntry': '5e68881d 16eb6249 98f3bdfd 9f7d7385',
+    'runB.zoneA': '2eb5abb6 4bcb72b5 5a521f2a 157bb6c5',
+    'runB.clearA': '2103d705 1e14f9e9 e78903ce 11568378',
+    'runB.map.C': '7efdddca 3995df76 40ecf1a4 e5128665',
+    'runB.zoneC': '0e5df027 47e1d3b5 d8f61ec4 157bb6c5',
+    'runB.clearC': 'e2e8fea4 ab19c5e9 72221b7e 11568378',
+    'runB.map.E': 'f947dd64 dc70c4b6 cc24ddd4 e5128665',
+    'runB.zoneE': 'b50d09a1 ed056bb5 cb560f96 157bb6c5',
+    'runB.clearE': '4535ad34 8a245fd1 12970d0e 11568378',
+    'runB.map.G': '116b91a1 4af44f86 20702c72 e5128665',
+    'runB.zoneG': '93676e14 60315c45 41bd3a8f 9cf0c5c5',
+    'runB.bonusClear': 'c2557322 938f3e29 221dbe85 11568378',
+    'runB.map.I': '7f12d515 324f3376 776cb04e e5128665',
+    'runB.zoneI': '48fe709c 45c85c75 1f13c753 157bb6c5',
+    'runB.clearI': 'ed4cf2a2 09011701 b411f1d0 11568378',
+    'runB.escape': 'a7795c29 17ba3f55 5daa8411 157bb6c5',
+    'runB.escapeClear': '8e8dd6d1 172953bc e791e199 11568378',
+    'runB.ending.story': '2f4e479d 76a7d22c 6e4899dd 5b18fda5',
+    'runB.ending.card': 'de4fdfff a1a5e151 6aeb0964 c57fb005',
+    'runB.credits': '20ec7f38 9c921714 1e28f345 6ebe5925',
+    'runB.nameEntry': '325c5cc0 16eb6249 1c809e0a 9f7d7385',
   },
   extraModes: {
-    'extra.weaponTypes': '4ace3691 02773c71 b6143811 bf9340c5',
-    'extra.bossRush': '02c53c78 1bca8c6b d0863857 e9642425',
-    'extra.caravan': '6726456b 0e9c4114 8677a083 68aa3e85',
-    'extra.arcade': 'b556c8e4 76880c1f b62d2edd cfa20445',
+    'extra.weaponTypes': '0a525951 02773c71 ba1c008a bf9340c5',
+    'extra.bossRush': '737252c8 4ecb93be 5165821b e9642425',
+    'extra.caravan': '59491d25 f39b5f29 c452aebd 68aa3e85',
+    'extra.arcade': 'a220dc30 85bd752a b10a3991 cfa20445',
   },
   languages: {
-    'es.title': 'a2793ef8 b4f60d95 fdb07ead 9e6aa4c5',
-    'es.options': 'd7f75309 11e615e9 ca22b30e db81a6c5',
-    'es.game': 'ce9f7288 0f300137 6a573dbd 445802e5',
-    'ja.title': '7af5a9d9 b4f60d95 fdb07ead 9e6aa4c5',
-    'ja.options': '38c32b41 11e615e9 ca22b30e db81a6c5',
-    'ja.game': '05b99130 0f300137 6a573dbd 445802e5',
+    'es.title': 'e580ce91 b4f60d95 fdb07ead 9e6aa4c5',
+    'es.options': '53ee08e1 11e615e9 ca22b30e db81a6c5',
+    'es.game': 'dc753328 64c9d5a2 de9de1f1 445802e5',
+    'ja.title': 'fb0b1cec b4f60d95 fdb07ead 9e6aa4c5',
+    'ja.options': '6da695b1 11e615e9 ca22b30e db81a6c5',
+    'ja.game': 'ccd0f630 64c9d5a2 de9de1f1 445802e5',
   },
   bare: {
-    bare: '4d3bfc25 4d3bfc25 98218125 0e5dbbc5',
+    bare: '4d3bfc25 4d3bfc25 039cc0a3 0e5dbbc5',
   },
   coopSingle: {
-    'coopSingle.join': 'cb6f9fa1 f182d345 975808f6 0d596b05',
-    'coopSingle.shield': '2f111c51 b7efccc9 248a1dc9 44e06d65',
-    'coopSingle.p2Continue': '1f320f34 346a2f55 2ba0c0b4 4c5faf25',
-    'coopSingle.p2Out': '68e4b4f5 29319925 6fe37a04 72a5a2c5',
-    'coopSingle.stageClear': '3ad2372b ee4033ec 69a6ee69 3d4db705',
-    'coopSingle.nameEntry': '93ee3385 25d9e681 f9f4e9bf 4207f105',
-    'coopSingle.gameOver': '3a1e7035 b9c71905 5281f42a ed25983a',
-    'coopSingle.direct': '2c8bc895 e090a595 644ff326 7af1aac5',
-    'coopSingle.directFull': '181a6a11 93ee4f69 852b7b30 3185fae5',
+    'coopSingle.join': 'cb6f9fa1 35b74f35 5f9ef4aa 0d596b05',
+    'coopSingle.shield': '6ad0f861 27b027fd ed413ee7 44e06d65',
+    'coopSingle.p2Continue': '1f320f34 870e6cac 638d1d63 4c5faf25',
+    'coopSingle.p2Out': '68e4b4f5 443a8e45 6fc02203 72a5a2c5',
+    'coopSingle.stageClear': 'af000348 0aa806b4 aac0026f 3d4db705',
+    'coopSingle.nameEntry': '980be92c 25d9e681 f9f4e9bf 4207f105',
+    'coopSingle.gameOver': 'ca39edad 06487065 b697b4d6 ed25983a',
+    'coopSingle.direct': 'ed426345 efaf4035 8faa3793 7af1aac5',
+    'coopSingle.directFull': '0b1da8f1 c15ae601 6c79f50c 3185fae5',
   },
   coopRun: {
-    'coopRun.zoneA': 'b4231e71 f182d345 23f4c820 0d596b05',
-    'coopRun.clearA': 'fc698b3a 83d7785e 87f58488 11568378',
-    'coopRun.map.C': '1e8c803f b28b89fa 8e1a1d7c 55ec2b65',
-    'coopRun.clearC': '89a1bed7 f235a5b1 526ee744 11568378',
-    'coopRun.map.E': '4a8d3e15 bdf8fdda 256a6aca 55ec2b65',
-    'coopRun.clearE': 'b6ad835e df13f9f7 0152e33b 11568378',
-    'coopRun.map.G': '3328378c 6ca3daa0 ba295edb 55ec2b65',
-    'coopRun.clearG': '4b2e2b94 8a0005e3 a8c69373 11568378',
-    'coopRun.map.I': '1d3fbd24 0082ba4a 69add993 55ec2b65',
-    'coopRun.clearI': '5eac9c85 f427f7dc b9a687b7 11568378',
-    'coopRun.escape': '60b2cdf5 8223370d 70df8896 94848a45',
-    'coopRun.escapeClear': 'e91fbda6 c1a23986 1532286b 11568378',
-    'coopRun.ending.story': 'd8bf0065 76a7d22c 9a7cfa7a 5b18fda5',
-    'coopRun.ending.card': 'c301e5cc 9c557965 30678e9e 2873a7c5',
+    'coopRun.zoneA': 'a62bf725 35b74f35 1ee6b95c 0d596b05',
+    'coopRun.clearA': '1d14b596 1afefc8a 21dbd6be 11568378',
+    'coopRun.map.C': '69bf548a be57d84a 4dcce897 55ec2b65',
+    'coopRun.clearC': '34bf5eb7 d3b3c479 9040740e 11568378',
+    'coopRun.map.E': '0627c724 5acdf38a 5e9e8f89 55ec2b65',
+    'coopRun.clearE': 'ca08d0d6 664509e7 34fd2247 11568378',
+    'coopRun.map.G': 'fe4dab01 1428f5b8 539ccac0 55ec2b65',
+    'coopRun.clearG': '9c512818 dff0278b 06a90663 11568378',
+    'coopRun.map.I': 'e8d46955 20cf09ba f41ac8f4 55ec2b65',
+    'coopRun.clearI': 'a1c80ac5 580770e8 eba13719 11568378',
+    'coopRun.escape': '63114da5 577d580d eb14bc1a 94848a45',
+    'coopRun.escapeClear': 'f6bb71d2 c45d222a 41456cf6 11568378',
+    'coopRun.ending.story': '78300a1c 76a7d22c 9a7cfa7a 5b18fda5',
+    'coopRun.ending.card': '1440778c 9c557965 30678e9e 2873a7c5',
   },
 };

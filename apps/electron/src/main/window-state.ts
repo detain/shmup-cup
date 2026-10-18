@@ -61,10 +61,10 @@ export const WINDOW_STATE_VERSION = 2;
  * {@link FRAME_HEIGHT} to core's constants, so R2-01's flip to 640×360 fails there until both
  * are changed together. Everything else here derives from the two.
  */
-export const FRAME_WIDTH = 384;
+export const FRAME_WIDTH = 640;
 
 /** Height of the game's frame: a mirror of `@shmup/core`'s `FRAME_H` (see {@link FRAME_WIDTH}). */
-export const FRAME_HEIGHT = 216;
+export const FRAME_HEIGHT = 360;
 
 /**
  * Width of the frame a version-1 `window.json` was saved against: v1's 384×216 (D19). Not a mirror

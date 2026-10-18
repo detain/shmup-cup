@@ -147,7 +147,7 @@ describe('core/replay', () => {
   it('describes itself', () => {
     expect(moduleInfo.name).toBe('replay');
     expect(moduleInfo.status).toBe('implemented');
-    expect([REPLAY_KIND, REPLAY_FORMAT_VERSION, REPLAY_HASH_INTERVAL]).toEqual(['replay', 1, 600]);
+    expect([REPLAY_KIND, REPLAY_FORMAT_VERSION, REPLAY_HASH_INTERVAL]).toEqual(['replay', 2, 600]);
   });
 
   it('encodes base64 like RFC 4648 and decodes it back', () => {

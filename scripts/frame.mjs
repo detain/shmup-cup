@@ -30,10 +30,10 @@
  */
 
 /** Width of the internal frame in pixels (`@shmup/core` `FRAME_W`; D19: 384; R2-01: 640). */
-export const FRAME_W = 384;
+export const FRAME_W = 640;
 
 /** Height of the internal frame in pixels (`@shmup/core` `FRAME_H`; D19: 216; R2-01: 360). */
-export const FRAME_H = 216;
+export const FRAME_H = 360;
 
 /** The frame's centre column, `FRAME_W / 2` (`@shmup/core` `FRAME_CX`). */
 export const FRAME_CX = FRAME_W / 2;
@@ -42,7 +42,7 @@ export const FRAME_CX = FRAME_W / 2;
 export const FRAME_CY = FRAME_H / 2;
 
 /** Height in pixels of each HUD bar (`@shmup/core` `HUD_BAR_HEIGHT`; D20: 8; R2-01: 12). */
-export const HUD_BAR_HEIGHT = 8;
+export const HUD_BAR_HEIGHT = 12;
 
 /** Screen row where the playfield starts, under the top HUD bar (`@shmup/core` `PLAYFIELD_Y`). */
 export const PLAYFIELD_Y = HUD_BAR_HEIGHT;
@@ -66,16 +66,16 @@ export const PLAYFIELD_CY = PLAYFIELD_H / 2;
 export const HUD_BOTTOM_Y = FRAME_H - HUD_BAR_HEIGHT;
 
 /** Tile edge in pixels of every tileset and tilemap (`@shmup/core` `TILE_SIZE`; R2-01: 12). */
-export const TILE_SIZE = 8;
+export const TILE_SIZE = 12;
 
 /** Cell width (and advance) of the bitmap font in pixels (`@shmup/core` `GLYPH_W`). */
-export const GLYPH_W = 6;
+export const GLYPH_W = 9;
 
 /** Cell height of the bitmap font in pixels (`@shmup/core` `GLYPH_H`). */
-export const GLYPH_H = 8;
+export const GLYPH_H = 12;
 
 /** Line advance of the bitmap font in pixels (`@shmup/core` `LINE_H`). */
-export const LINE_H = 10;
+export const LINE_H = 15;
 
 /**
  * How far ahead of the camera an enemy appears by default: 16 px past the right edge of the

@@ -19,7 +19,7 @@ describe('@shmup/core public API', () => {
     expect(typeof core.createFixedStepLoop).toBe('function');
     expect(typeof core.createInputSnapshot).toBe('function');
     expect(typeof core.createHeadlessPlatform).toBe('function');
-    expect(core.DEFAULT_GAME_CONFIG.internalWidth).toBe(384);
+    expect(core.DEFAULT_GAME_CONFIG.internalWidth).toBe(core.FRAME_W);
   });
 
   it('has the planned module tree (every system from shmup_feat.md §5–§22)', () => {

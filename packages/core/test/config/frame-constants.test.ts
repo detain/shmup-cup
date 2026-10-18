@@ -79,23 +79,23 @@ const CONSTANTS = {
 const FRACTIONAL = new Set(['ART_SCALE']);
 
 describe('core/config frame constants (R1-01)', () => {
-  it('holds the v1 frame until R2-01: 384×216, 8-px HUD bars and tiles, the 6×8 font, v1 art', () => {
+  it('holds the v2 frame since R2-01: 640×360, 12-px bars and tiles, 9×12 font, ×3/2 art', () => {
     expect(CONSTANTS).toEqual({
-      FRAME_W: 384,
-      FRAME_H: 216,
-      FRAME_CX: 192,
-      FRAME_CY: 108,
-      HUD_BAR_HEIGHT: 8,
-      PLAYFIELD_Y: 8,
-      PLAYFIELD_W: 384,
-      PLAYFIELD_H: 200,
-      PLAYFIELD_CY: 100,
-      HUD_BOTTOM_Y: 208,
-      TILE_SIZE: 8,
-      GLYPH_W: 6,
-      GLYPH_H: 8,
-      LINE_H: 10,
-      ART_SCALE: 1,
+      FRAME_W: 640,
+      FRAME_H: 360,
+      FRAME_CX: 320,
+      FRAME_CY: 180,
+      HUD_BAR_HEIGHT: 12,
+      PLAYFIELD_Y: 12,
+      PLAYFIELD_W: 640,
+      PLAYFIELD_H: 336,
+      PLAYFIELD_CY: 168,
+      HUD_BOTTOM_Y: 348,
+      TILE_SIZE: 12,
+      GLYPH_W: 9,
+      GLYPH_H: 12,
+      LINE_H: 15,
+      ART_SCALE: 1.5,
     });
   });
 
