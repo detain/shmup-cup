@@ -161,13 +161,28 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     orbs into the backdrop: leave it out of layer prompts.
   - Layers copy the reference scene or come out as a filled strip in a box; "a skyline against the key" or "separate
     pieces" fixes most. Grid counts in tileset prompts are not kept.
-- **All round-2 generation is done** (2026-10-17 19:15; skynet2's cards 2 and 3 are empty, VERIFY OK). Still to do:
-  1. The owner reviews round 2 on the picker (followups appear next to their winners: accept, comment or
-     regenerate), flips `enemy/sentinel-walker/zone-encounter` and the DUNE poster horizontally, and re-picks
-     `enemy/halo-crystal` and `tiles/azure-verge` (new candidates in every slot).
-  2. A short FLUX.2 session for the four held followups of those two (halo frames, zone roster sheet, zone
-     encounter; azure tileset), plus whatever comments and regenerations the owner asks for.
-  3. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
+- **The owner's round-2 review (2026-10-17 evening) and the work it asked for:**
+  - Picked `enemy/halo-crystal` slot a and `tiles/azure-verge` slot c (the round-1 FLUX.1 swatch; a later slot-c
+    regeneration had archived it by mistake — restored, the new takes stay in history). Halo-crystal slot b was redone
+    with Qwen-Image after the owner's "regenerate" (six satellites: "a core shaped like a single honeycomb cell",
+    satellites counted as two triangles of three).
+  - `video/blackhole-bomb-slowmo`: picked b with a comment (all orbs must swirl into the centre); an LTX-2.5 comment
+    edit (`candidates/b/video/blackhole-bomb-slowmo/edit-1.mp4`) does it and was accepted. The picker now shows video
+    comment edits too.
+  - **FLUX.2 agent E** (24 runs): the four held followups (halo frames weak — identical cells; roster sheet, zone
+    encounter and the azure tileset ok — 20 tiles, each with a dark-green drop shadow to key out), the
+    `special-capsules` regenerate (ok: 3×4, one kind per row) and comment edits of the spin frames and the halo frames
+    (weak: FLUX.2 copies the reference's pose into every cell; at best two or three cells differ).
+  - So the halo and black-hole animation frames are being made **in code** from the winners (the satellites orbit
+    10° a frame, the spiral turns by equal steps), offered as `edit-2` in the picker.
+- **FLUX.2 lessons from agent E:** rotation frames cannot be prompted — make them in code; per-cell colour changes land
+  on the first one to three cells only; an edit of one row of a busy sheet is ignored; "rotation", "turning" or "orbit"
+  draws arrows ("no arrows, no motion lines"); "a regular grid with even gutters" draws dividers — "N sprites evenly
+  spaced on one continuous green background" does not; listing tiles row by row ("five tiles in every row") gives the
+  asked count; "extra-life capsule", not "1UP"; "seen from the side … no vanishing point" removes the tunnel look.
+- **GPU work is finished** (skynet2 cards 2 and 3 empty, VERIFY OK, 2026-10-17 20:49). Still to do:
+  1. The owner reviews the code-made frames (and anything else) on the picker.
+  2. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
 
 ## Round 2 — after the owner says picking is done
 
