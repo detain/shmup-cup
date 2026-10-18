@@ -19,7 +19,7 @@ import {
   KNOWN_SCRIPT_IDS,
   defineBehavior,
 } from '../../src/behaviors/index.js';
-import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState, MAX_ENEMIES, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -106,7 +106,11 @@ const DB: ContentDb = (() => {
             entry('pod', 'field.suction', { hp: 50, params: { radius: 400, strength: 1 } }),
             entry('claw', 'tentacle.grab', { ground: 'ceiling', params: { reach: 20 } }),
             entry('cube', 'cube.stack', { hp: 1, params: { speed: 2, margin: 24 } }),
-            entry('wide', 'cube.stack', { hp: 1, params: { speed: 2, margin: 120 } }),
+            // Margins that leave no span of rows (120 at 384×216).
+            entry('wide', 'cube.stack', {
+              hp: 1,
+              params: { speed: 2, margin: PLAYFIELD_H / 2 + 20 },
+            }),
           ],
         },
       },
@@ -131,7 +135,7 @@ const DB: ContentDb = (() => {
               segments: [
                 {
                   from: 0,
-                  to: 2384,
+                  to: 2000 + PLAYFIELD_W,
                   floor: { base: 40, amp: 0, period: 64, seed: 1 },
                   ceiling: { base: 32, amp: 0, period: 64, seed: 2 },
                 },
@@ -315,7 +319,7 @@ describe('core/behaviors gimmicks — rock.fall and bubble.split edges', () => {
 describe('core/behaviors gimmicks — volcano, suction, tentacle, cube edges', () => {
   it('throws nothing while the volcano may not fire (off screen)', () => {
     const w = world();
-    spawn(w, 'volcano', 600, Number.NaN); // beyond the view's right edge
+    spawn(w, 'volcano', PLAYFIELD_W + 216, Number.NaN); // beyond the view's right edge
     run(w, 60);
     expect(live(w, 'stone')).toHaveLength(0);
     const on = world();
@@ -326,7 +330,7 @@ describe('core/behaviors gimmicks — volcano, suction, tentacle, cube edges', (
 
   it('starts no pull field until the pod is on screen', () => {
     const w = world();
-    const pod = spawn(w, 'pod', 440, 100); // off screen; drifts nowhere (no mover)
+    const pod = spawn(w, 'pod', PLAYFIELD_W + 56, 100); // off screen; drifts nowhere (no mover)
     run(w, 40);
     expect(w.gimmicks.fieldOwner[0]).toBe(-1);
     expect(w.players[0].x).toBe(40);
@@ -360,7 +364,7 @@ describe('core/behaviors gimmicks — volcano, suction, tentacle, cube edges', (
     const wide = world();
     const keep = spawn(wide, 'wide', 300, 100);
     run(wide, 1);
-    expect(PLAYFIELD_H - 2 * 120).toBeLessThanOrEqual(0);
+    expect(PLAYFIELD_H - 2 * (PLAYFIELD_H / 2 + 20)).toBeLessThanOrEqual(0);
     // No span: no random row — it left from y 100 (one mover step at its aimed velocity since).
     expect(keep.y - keep.m1).toBeCloseTo(100, 9);
   });

@@ -1,7 +1,7 @@
 /**
  * The stage gimmick behaviours of plan M2-07 (`core/behaviors`) driving their enemies in a World
- * with the shipped `gimmick-range` roster on a still camera between a flat floor (y 160) and a flat
- * ceiling (y 32): the falling rock (proximity trigger, shatters on the floor, no score), the
+ * with the shipped `gimmick-range` roster on a still camera between a flat floor (y
+ * `PLAYFIELD_H − 40`, 160 at 384×216) and a flat ceiling (y 32): the falling rock (proximity trigger, shatters on the floor, no score), the
  * splitting bubble (children fanned out, none from a Mega Crash), the volcano (seeded lobs that
  * shatter), the suction pod (pull field while it lives), the grabbing tentacle (chain, lunge with a
  * short pull, retract) and the seeded cube rush (cubes stacking into terrain tiles, undone by the
@@ -9,7 +9,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { TerrainType, terrainAt } from '../../src/collision/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
@@ -35,10 +35,16 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's surface, 40 px above the map's bottom edge (160 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 40;
+
 /**
  * The KESTREL, `terrain-a`, the gimmick roster and a still stage between a flat floor and ceiling.
  *
- * @param rle - Optional RLE rows over the generated terrain (25 of them).
+ * @param rle - Optional RLE rows over the generated terrain ({@link ROWS} of them).
  * @returns The DB.
  */
 function db(rle?: string[]): ContentDb {
@@ -62,14 +68,14 @@ function db(rle?: string[]): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             ...(rle === undefined ? {} : { rle }),
             generator: {
               type: 'heightfield',
               segments: [
                 {
                   from: 0,
-                  to: 2384,
+                  to: 2000 + PLAYFIELD_W,
                   floor: { base: 40, amp: 0, period: 64, seed: 1 },
                   ceiling: { base: 32, amp: 0, period: 64, seed: 2 },
                 },
@@ -204,7 +210,7 @@ describe('core/behaviors gimmicks — volcano.lob', () => {
     const b = world();
     for (const w of [a, b]) spawn(w, 'volcano', w.camera.x + 250, Number.NaN);
     const volcano = live(a, 'volcano')[0];
-    expect(volcano.y).toBe(160 - 5); // on the floor
+    expect(volcano.y).toBe(FLOOR_Y - 5); // on the floor
     let seen = 0;
     let shattered = false;
     for (let t = 0; t < 400; t++) {
@@ -288,9 +294,10 @@ describe('core/behaviors gimmicks — tentacle.grab', () => {
 });
 
 describe('core/behaviors gimmicks — cube.stack (the seeded cube rush)', () => {
-  // A solid wall at tile column 5 (x 40…47), rows 5…19 (y 40…159), behind the ship.
+  // A solid wall at tile column 5 (x 40…47), rows 5 … ROWS − 6 (y 40 down to the floor; rows
+  // 5…19, y 40…159 at 384×216), behind the ship.
   const rows: string[] = [];
-  for (let r = 0; r < 25; r++) rows.push(r >= 5 && r <= 19 ? '5*0, 1' : '');
+  for (let r = 0; r < ROWS; r++) rows.push(r >= 5 && r <= ROWS - 6 ? '5*0, 1' : '');
   const WALL_DB = db(rows);
 
   /**

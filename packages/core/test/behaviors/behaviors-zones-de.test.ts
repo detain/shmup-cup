@@ -18,7 +18,12 @@ import {
 } from '../../src/behaviors/index.js';
 import { BossHit, BossState } from '../../src/bosses/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
+import {
+  DEFAULT_BOSS_Y,
+  loadContent,
+  type ContentDb,
+  type ContentFile,
+} from '../../src/data/index.js';
 import { EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind } from '../../src/patterns/index.js';
@@ -257,9 +262,10 @@ describe('core/behaviors — zones D and E (M2-12)', () => {
       if (boss.parts[chest].open) opened = t;
       else expect(live(w, 'steed-foal')).toHaveLength(0);
     }
-    // Phase 0 bobs 14 px round row 100 (2 units a tick: a quarter turn in 128 ticks).
-    expect(low).toBeGreaterThanOrEqual(100 - 14 - 1e-6);
-    expect(high).toBeLessThanOrEqual(100 + 14 + 1e-6);
+    // Phase 0 bobs 14 px round its row DEFAULT_BOSS_Y (100 at 384×216; 2 units a tick: a quarter
+    // turn in 128 ticks).
+    expect(low).toBeGreaterThanOrEqual(DEFAULT_BOSS_Y - 14 - 1e-6);
+    expect(high).toBeLessThanOrEqual(DEFAULT_BOSS_Y + 14 + 1e-6);
     expect(high - low).toBeGreaterThan(10);
     // Open after its 130 shut ticks: the lids 3 px apart, the chest takes hits, a mini comes out.
     expect(opened).toBeGreaterThan(120);

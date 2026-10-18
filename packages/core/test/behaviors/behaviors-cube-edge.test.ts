@@ -134,7 +134,7 @@ describe('core/behaviors cube.pincer — edges', () => {
     expect(issues).toEqual([]);
     const w = aliveWorld(db, { stage: null });
     w.players[0].active = false;
-    const cube = lone(w, db, 'wide-cube', 300, 150);
+    const cube = lone(w, db, 'wide-cube', 300, HALF + 50); // below the middle: meets below it
     idle(w, 2);
     // Moving at 3 px/tick towards view (100, HALF + 30).
     expect(Math.sqrt(cube.vx * cube.vx + cube.vy * cube.vy)).toBeCloseTo(3, 6);

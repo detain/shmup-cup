@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BossHit, BossState } from '../../src/bosses/index.js';
 import { BulletKind } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -166,13 +166,14 @@ const ROSTER = [
       x: 250,
       y: 108,
       minion: 'drone',
-      // A raid: the camera rides with it, 200 px left of it and level — its `far` gun off screen.
+      // A raid: the camera rides with it, 200 px left of it and level — its `far` gun off screen,
+      // 66 px past the right edge (x 250 at 384×216).
       raid: { segments: [{ x: -200, y: -108, ticks: 10, hold: 30000 }] },
       parts: [
         { name: 'hull', hurtbox: { hw: 12, hh: 12 }, vulnerable: 'never' },
         { name: 'heart', hp: 50, hurtbox: { hw: 5, hh: 5 }, core: true },
         { name: 'near', x: -40, y: -30, hp: 5, hurtbox: { hw: 3, hh: 3 }, gun: true },
-        { name: 'far', x: 250, y: 30, hp: 5, hurtbox: { hw: 3, hh: 3 }, gun: true },
+        { name: 'far', x: PLAYFIELD_W - 134, y: 30, hp: 5, hurtbox: { hw: 3, hh: 3 }, gun: true },
       ],
       phases: [
         {

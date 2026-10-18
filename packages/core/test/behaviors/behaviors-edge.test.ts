@@ -24,7 +24,7 @@ import {
   createBehaviorRegistry,
   defineBehavior,
 } from '../../src/behaviors/index.js';
-import { PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyFlag, EnemyState, type Enemy } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -122,9 +122,15 @@ const ENEMIES = [
   }),
 ];
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's surface, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /**
- * Test content: KESTREL, the shipped tileset, the roster above and a stage with a flat floor
- * (surface at 168) and a flat ceiling (surface at 24).
+ * Test content: KESTREL, the shipped tileset, the roster above and a stage one playfield tall
+ * with a flat floor (surface at {@link FLOOR_Y}) and a flat ceiling (surface at 24).
  *
  * @returns The DB.
  */
@@ -152,13 +158,13 @@ function db(): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             generator: {
               type: 'heightfield',
               segments: [
                 {
                   from: 0,
-                  to: 3384,
+                  to: 3000 + PLAYFIELD_W,
                   floor: { base: 32, amp: 0, period: 64, seed: 1 },
                   ceiling: { base: 24, amp: 0, period: 64, seed: 2 },
                 },
@@ -377,7 +383,7 @@ describe('core/behaviors edge — the roster in detail', () => {
     const w = world();
     const floor = put(w, 'turret', 200, Number.NaN);
     const ceiling = put(w, 'turret-top', 220, Number.NaN);
-    expect([floor.anchor, floor.y]).toEqual([BodyAnchor.Floor, 164]);
+    expect([floor.anchor, floor.y]).toEqual([BodyAnchor.Floor, FLOOR_Y - 4]);
     expect([ceiling.anchor, ceiling.y]).toEqual([BodyAnchor.Ceiling, 28]);
     const spawned = w.tick;
     run(w, 1); // first wake: faces the ship on the left
@@ -390,7 +396,7 @@ describe('core/behaviors edge — the roster in detail', () => {
     }
     expect(flips).toEqual([spawned + 20]);
     expect(ceiling.flags & EnemyFlag.FaceRight).toBe(EnemyFlag.FaceRight);
-    expect([floor.x, floor.y, ceiling.x, ceiling.y]).toEqual([200, 164, 220, 28]);
+    expect([floor.x, floor.y, ceiling.x, ceiling.y]).toEqual([200, FLOOR_Y - 4, 220, 28]);
   });
 
   it('walker.floor: walks left without a target, then towards the player at each walk start', () => {
@@ -416,7 +422,7 @@ describe('core/behaviors edge — the roster in detail', () => {
     run(w, 1); // tick start + 40: the next walk starts towards the ship, now on the left
     expect(w.tick - 1).toBe(start + 40);
     expect([e.mover, e.vx]).toEqual([MoverKind.GroundCrawl, -1]);
-    expect(e.y).toBe(164); // on the floor all along
+    expect(e.y).toBe(FLOOR_Y - 4); // on the floor all along
   });
 
   it('walker.floor: a ceiling walker hangs from the ceiling while walking', () => {

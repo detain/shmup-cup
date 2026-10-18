@@ -13,7 +13,7 @@ import {
   defineBehavior,
 } from '../../src/behaviors/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import type { Enemy, ScriptApi } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -223,7 +223,7 @@ describe('core/behaviors firing (M1-09)', () => {
 
   it('turret.floor never fires while off screen', () => {
     const w = world();
-    spawn(w, 'turret', 470, Number.NaN);
+    spawn(w, 'turret', PLAYFIELD_W + 86, Number.NaN); // right of the view, within the margins
     expect(watch(w, 300)).toEqual([]);
   });
 
@@ -288,7 +288,7 @@ describe('core/enemies ScriptApi fire primitives', () => {
     run(w, 25);
     const fired = w.bullets.count;
     expect(fired).toBeGreaterThan(0);
-    e.x = w.camera.x + 400 + 20; // off screen, not yet despawned
+    e.x = w.camera.x + PLAYFIELD_W + 16 + 20; // off screen, not yet despawned
     run(w, 1);
     const before = gunnerLog.length;
     run(w, 20);

@@ -760,7 +760,8 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
   it('bobs on its ellipse from its home, without a jump', () => {
     const w = fighting('steed-bob');
     const b = w.bosses.boss;
-    // Home (304, 100) is the ellipse's right end: cx 296 + rx 8 — here rx 10 (a 2-px slack).
+    // The shipped home is the ellipse's right end: cx (DEFAULT_BOSS_X) + rx 8 — here rx 10 (a 2-px
+    // slack). At 384×216 that is (304, 100) round the centre (296, 100).
     let [x, y] = [b.screenX, b.screenY];
     // 8 units a tick on radii 10 × 30: at most 2π · 30 · 8 / 1024 ≈ 1.5 px a tick (+ the slack).
     const most = (2 * Math.PI * 30 * 8) / ANGLE_UNITS + 2 + 1e-6;
@@ -769,9 +770,9 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
     for (let t = 0; t < 300; t++) {
       run(w, 1);
       expect(Math.hypot(b.screenX - x, b.screenY - y)).toBeLessThanOrEqual(most);
-      // On the ellipse ((x − 296) / 10)² + ((y − 100) / 30)² = 1.
-      const u = (b.screenX - 296) / 10;
-      const v = (b.screenY - 100) / 30;
+      // On the ellipse ((x − cx) / 10)² + ((y − cy) / 30)² = 1.
+      const u = (b.screenX - DEFAULT_BOSS_X) / 10;
+      const v = (b.screenY - DEFAULT_BOSS_Y) / 30;
       expect(u * u + v * v).toBeCloseTo(1, 1);
       [x, y] = [b.screenX, b.screenY];
       low = Math.min(low, y);

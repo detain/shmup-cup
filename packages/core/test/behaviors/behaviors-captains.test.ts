@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { BOSS_BEHAVIOR_IDS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
 import { BossMotion, BossState, turnedFrame } from '../../src/bosses/index.js';
 import { resolveGameConfig } from '../../src/config/index.js';
-import { PLAYFIELD_W } from '../../src/config/index.js';
+import { PLAYFIELD_CY, PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
@@ -147,14 +147,20 @@ describe('core/behaviors — captains and raid turrets (M2-09)', () => {
     const w = fighting('captain-circler');
     const boss = w.bosses.boss;
     expect(boss.motion).toBe(BossMotion.Orbit);
+    // The ellipse's centre is the playfield's (the `cx` / `cy` defaults derive from the frame);
+    // its radii 140 × 64 are world values.
+    const cx = PLAYFIELD_W / 2;
+    const cy = PLAYFIELD_CY;
+    const start = boss.orbitAngle;
     for (let i = 0; i < 120; i++) {
       run(w, 1);
-      const u = (boss.screenX - 192) / 140;
-      const v = (boss.screenY - 100) / 64;
+      const u = (boss.screenX - cx) / 140;
+      const v = (boss.screenY - cy) / 64;
       expect(u * u + v * v).toBeCloseTo(1, 4);
     }
-    // 3 units a tick: a third of a turn in 120 ticks → past the middle's bottom.
-    expect(boss.screenX).toBeLessThan(192);
+    // 3 units a tick: a third of a turn in 120 ticks, from wherever its home put it on the
+    // ellipse (a home at cx + rx, cy: angle 0, so past the middle's bottom by now).
+    expect((boss.orbitAngle - start + 1024) % 1024).toBe(360);
     // Its orbs spin round the hub (spin 6), so they are turned too.
     expect(boss.parts[1].worldAngle).not.toBe(0);
     // Rings of 8 (two so far; those leaving the view are culled).
