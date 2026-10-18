@@ -214,8 +214,14 @@ test.describe('Option Hunter (web build)', () => {
     expect(killed).toBeGreaterThanOrEqual(1);
     await expect.poll(async () => (await view(page)).freed, { timeout: 10_000 }).toBe(4);
     expect((await view(page)).carried).toBe(0);
-    await waitFrames(page, 4);
-    const [violet, grey] = await countColours(page, [HUNTER_VIOLET, STOLEN_GREY]);
+    // Poll a few captures: four frames after the crash its additive white flash
+    // (`MEGA_CRASH_FLASH_TICKS`) can still wash the grey out — one such capture read 2 grey pixels
+    // in 1 of 5 local runs at 640×360.
+    let [violet, grey] = [0, 0];
+    for (let poll = 0; poll < 20 && (violet !== 0 || grey < 4); poll++) {
+      await waitFrames(page, 4);
+      [violet, grey] = await countColours(page, [HUNTER_VIOLET, STOLEN_GREY]);
+    }
     expect(violet).toBe(0);
     expect(grey).toBeGreaterThanOrEqual(4);
     // Fly into them (moved onto the ship): every one gives an Option back.
