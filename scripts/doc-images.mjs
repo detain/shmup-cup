@@ -262,7 +262,9 @@ function loosePlate(content, scale, pad) {
  * @throws {Error} When a sprite source is invalid (every issue is listed).
  */
 function loadArt() {
-  const { sprites, fonts, issues } = collectSprites();
+  // The v1 art (artScale 1, R2-01 decision W4-6) until R2-03 regenerates: the boss portraits
+  // assemble part art by v1 part offsets, which need v1 art until R2-02 ports the offsets.
+  const { sprites, fonts, issues } = collectSprites({ artScale: 1 });
   if (issues.length > 0) {
     throw new Error(
       `asset sources are invalid:\n${issues.map((i) => `  - ${i.path} ${i.message}`).join('\n')}`,

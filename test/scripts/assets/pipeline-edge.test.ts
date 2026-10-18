@@ -144,7 +144,23 @@ describe('scripts/assets/pipeline — collectSprites (edge)', () => {
   });
 
   it('centres a missing anchor on frame 0 (floor of half the size)', () => {
-    const anchor = (name: string) => collected.sprites.find((s) => s.name === name)?.anchor;
+    // At any art scale (R2-01): the centre of the frame 0 the build has.
+    for (const name of [
+      'ui/missing',
+      'bullets/round-pink',
+      'fx/explosion-small',
+      'items/capsule',
+    ]) {
+      const sprite = collected.sprites.find((s) => s.name === name);
+      const frame = sprite?.frames[0];
+      expect(sprite?.anchor, name).toEqual([
+        Math.floor((frame?.width ?? 0) / 2),
+        Math.floor((frame?.height ?? 0) / 2),
+      ]);
+    }
+    // The v1 art's sizes (art scale 1, whatever the frame).
+    const v1 = collectSprites({ artScale: 1 });
+    const anchor = (name: string) => v1.sprites.find((s) => s.name === name)?.anchor;
     expect(anchor('ui/missing')).toEqual([4, 4]); // 8×8
     expect(anchor('bullets/round-pink')).toEqual([3, 3]); // 7×7
     expect(anchor('fx/explosion-small')).toEqual([8, 8]); // 16×16

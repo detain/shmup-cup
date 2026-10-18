@@ -23,6 +23,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { GLYPH_H, GLYPH_W, LINE_H } from '@shmup/core';
 import { afterAll, describe, expect, it } from 'vitest';
 import { getPixel } from '../../../scripts/assets/image.mjs';
 import {
@@ -42,7 +43,7 @@ import {
 } from '../../../scripts/assets/pipeline.mjs';
 import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
-import { TERRAIN_TILES } from '../../../scripts/assets/procedural/terrain.mjs';
+import { TERRAIN_TILES, TILE_SIZE } from '../../../scripts/assets/procedural/terrain.mjs';
 import { comparableSprites } from './sprite-compare.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -252,28 +253,29 @@ describe('scripts/assets/pipeline — buildAtlas', () => {
     ]);
   });
 
-  it('makes ui/pixel a single opaque white pixel and uses 8×8 tiles', () => {
+  it('makes ui/pixel a single opaque white pixel and uses tiles of the tile size', () => {
     const f = manifest.frames['ui/pixel#0'];
     expect([f.w, f.h, f.ax, f.ay]).toEqual([1, 1, 0, 0]);
     expect(getPixel(atlas.pages[f.p].image, f.x, f.y)).toEqual([255, 255, 255, 255]);
     for (const frame of manifest.sprites['tiles/terrain-a'].frames) {
-      expect([manifest.frames[frame].w, manifest.frames[frame].h]).toEqual([8, 8]);
+      expect([manifest.frames[frame].w, manifest.frames[frame].h]).toEqual([TILE_SIZE, TILE_SIZE]);
     }
   });
 
   it('describes the pixel font: glyph frames in the atlas, metrics in the manifest', () => {
+    // The cell core lays text out with: 6 × 8 / 10, and 9 × 12 / 15 from R2-01's flip on.
     const font = manifest.fonts.pixel;
     expect(font).toMatchObject({
       sprite: 'font/pixel',
-      lineHeight: 10,
-      cellWidth: 6,
-      cellHeight: 8,
+      lineHeight: LINE_H,
+      cellWidth: GLYPH_W,
+      cellHeight: GLYPH_H,
     });
     for (let code = 32; code <= 126; code++) {
       const glyph = font.glyphs[String(code)];
       expect(glyph, String.fromCharCode(code)).toBeDefined();
-      expect(glyph.advance).toBe(6);
-      expect(manifest.frames[glyph.frame]).toMatchObject({ w: 6, h: 8, ax: 0, ay: 0 });
+      expect(glyph.advance).toBe(GLYPH_W);
+      expect(manifest.frames[glyph.frame]).toMatchObject({ w: GLYPH_W, h: GLYPH_H, ax: 0, ay: 0 });
     }
     expect(manifest.sprites['font/pixel'].frames).toHaveLength(Object.keys(font.glyphs).length);
   });

@@ -1,7 +1,8 @@
 /**
- * The atlas the TV render bench is built from, for the bench's tests (plan R0-02): the shipped art
+ * The atlas the TV render bench is built from, for the bench's tests (plan R0-02): the v1 art
  * packed without groups — `benchSourceAtlas()` of `scripts/bench-atlas.mjs`, i.e. the asset
- * pipeline's `buildAtlas({ ungrouped: true })`, every sprite on one page.
+ * pipeline's `buildAtlas({ ungrouped: true, artScale: 1 })`, every sprite on one page (the v1 art
+ * at either frame since R2-01, W4-6).
  *
  * Since R1-05 the game's own atlas is split into a `common` page and one page per zone; the bench
  * keeps modelling the art as one atlas (its page counts 1 / 1 / 2 and R0-02's runs stay

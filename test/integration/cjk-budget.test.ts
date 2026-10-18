@@ -23,6 +23,11 @@
  * same in both. The shipped split is held to a **budget**, not a page count: every page within
  * the packer's limit, and every page's PNG bytes summed under {@link ATLAS_PNG_BYTES_CAP}.
  *
+ * **Since R2-01 the shipped atlas is the interim ×1.5 upscale** of the same sources (decision
+ * W4-6): the M3-03 figures describe the v1 art, so they are measured on `artScale: 1` — the v1
+ * atlas the six documents describe, byte for byte at either frame — while the live budget holds
+ * the shipped atlas, whatever its scale. R2-03 decides whether the documents quote the v2 atlas.
+ *
  * Otherwise nothing here is a budget: the assertions are on the *documentation* agreeing with the
  * *build*. If the art legitimately grows, this test fails and the six documents are updated with
  * it.
@@ -37,16 +42,27 @@ import {
   ATLAS_PAGE_MAX_SIZE,
   DIST_BUDGET,
 } from '../../apps/tizen/scripts/check-bundle.mjs';
+import { INTERIM_ART_SCALE } from '../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
+import { ATLAS_PNG_BYTES_CAP } from '../scripts/assets/atlas-budget.js';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** The atlas as the pipeline builds it — byte for byte what `pnpm assets` writes (zone-split). */
 const shipped = buildAtlas();
 
-/** The same art on one page (no groups): the atlas the M3-03 arithmetic is measured against. */
-const built = buildAtlas({ ungrouped: true });
+/**
+ * The v1 art on one page (no groups, art scale 1 — R2-01, W4-6): the atlas the M3-03 arithmetic
+ * is measured against, at either frame.
+ */
+const built = buildAtlas({ ungrouped: true, artScale: 1 });
 const atlas = built.manifest;
+
+/**
+ * The shipped art on one page: the split's check compares the same art at the same scale (the v1
+ * build itself while the shipped scale is 1, before R2-01's flip).
+ */
+const shippedOnePage = INTERIM_ART_SCALE === 1 ? built : buildAtlas({ ungrouped: true });
 
 /**
  * Pixels every frame of an atlas occupies, summed — the "occupied area" the docs quote.
@@ -66,13 +82,6 @@ const OCCUPIED_PIXELS = occupied(atlas);
 
 /** Size of the encoded one-page atlas PNG, in bytes. */
 const PNG_BYTES = built.pages[0].png.length;
-
-/**
- * Cap on the shipped atlas's PNG bytes, every page summed (R1-05): the placeholder art takes
- * ≈ 120 KB split into zone pages (PNG-8 where a page fits a palette). A regression guard for the
- * encoder and the split; detailed art replaces it with its measured budget (plan R3-04).
- */
-const ATLAS_PNG_BYTES_CAP = 256 * 1024;
 
 /** Glyphs of the whole JIS X 0208 repertoire (levels 1 and 2), as the docs quote it. */
 const JIS_GLYPHS = 6900;
@@ -120,7 +129,11 @@ describe('integration: the shipped atlas stays inside its budget (R1-05)', () =>
   });
 
   it('holds the same art as the one-page atlas: the split moves frames, never adds any', () => {
-    expect(occupied(shipped.manifest)).toBe(OCCUPIED_PIXELS);
+    expect(occupied(shipped.manifest)).toBe(occupied(shippedOnePage.manifest));
+    expect(Object.keys(shipped.manifest.frames).sort()).toEqual(
+      Object.keys(shippedOnePage.manifest.frames).sort(),
+    );
+    // …and the same frames as the v1 art the figures below are measured on (only sizes scale).
     expect(Object.keys(shipped.manifest.frames).sort()).toEqual(Object.keys(atlas.frames).sort());
   });
 });

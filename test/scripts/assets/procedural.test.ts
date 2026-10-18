@@ -944,7 +944,9 @@ describe('scripts/assets/procedural/starfield', () => {
 });
 
 describe('scripts/assets/procedural/terrain', () => {
-  const [tileset] = terrain.generate();
+  // The 8-px tiles, whatever the atlas's tile size (R2-01 flips it to 12; `terrain-size.test.ts`
+  // checks the 12-px drawing and that generate() follows TILE_SIZE).
+  const [tileset] = terrain.generate({ tileSize: 8 });
   const tile = (name: (typeof terrain.TERRAIN_TILES)[number]): Image =>
     tileset.frames[terrain.TERRAIN_TILES.indexOf(name)];
 
@@ -963,8 +965,8 @@ describe('scripts/assets/procedural/terrain', () => {
       expect(pixels(name)).not.toBe(pixels('solid'));
     }
     expect(new Set([pixels('brick'), pixels('cube'), pixels('tissue')]).size).toBe(3);
-    expect(terrain.TILE_SIZE).toBe(8);
     for (const frame of tileset.frames) expect([frame.width, frame.height]).toEqual([8, 8]);
+    expect(terrain.generate()[0].frames[0].width).toBe(terrain.TILE_SIZE);
     expect(Object.keys(tileset.animations)).toEqual([...terrain.TERRAIN_TILES]);
     terrain.TERRAIN_TILES.forEach((name, i) => expect(tileset.animations[name]).toEqual([i]));
   });

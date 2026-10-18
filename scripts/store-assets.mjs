@@ -144,7 +144,9 @@ let art = null;
  */
 function loadArt() {
   if (art !== null) return art;
-  const { sprites, fonts, issues } = collectSprites();
+  // The v1 art (artScale 1, R2-01 decision W4-6) until R2-03 regenerates the icons: the layouts
+  // below are measured in v1 pixels, and the committed icons stay byte-identical meanwhile.
+  const { sprites, fonts, issues } = collectSprites({ artScale: 1 });
   if (issues.length > 0) throw new Error(`asset sources have issues: ${issues[0].message}`);
   const frames = new Map(sprites.map((sprite) => [sprite.name, sprite.frames]));
   const font = fonts.pixel;

@@ -6,8 +6,10 @@
  *
  * Since R1-05 the game's atlas is split into zone pages; the bench is built from the **ungrouped
  * re-pack** of the same art (`benchSourceAtlas`, one page — the game's atlas before the split), so
- * its page counts and R0-02's runs stay comparable. Checked here: the source holds every shipped
- * frame with the same pixels, in one page.
+ * its page counts and R0-02's runs stay comparable. Since R2-01 that art is the v1 art at scale 1
+ * (decision W4-6) whatever the game ships, so the comparison is with `buildAtlas({ artScale: 1 })`.
+ * Checked here: the source holds every frame of the v1 game atlas with the same pixels, in one
+ * page.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -207,7 +209,8 @@ describe('bench-atlas on the shipped atlas', () => {
 });
 
 describe('bench-atlas source: the ungrouped re-pack of the zone-split game atlas (R1-05)', () => {
-  const game = buildAtlas();
+  // The v1 art (R2-01, W4-6): the bench keeps it at either frame, so compare with it.
+  const game = buildAtlas({ artScale: 1 });
 
   it('is one page while the game ships common + zone pages', () => {
     expect(shippedManifest.pages).toHaveLength(1);
