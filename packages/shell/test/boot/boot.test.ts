@@ -9,9 +9,12 @@ import {
   Action,
   CaptureStatus,
   ExtraItem,
+  FRAME_CX,
   FRAME_H,
   FRAME_W,
   MUSIC_CUES,
+  PLAYFIELD_CY,
+  PLAYFIELD_W,
   REPLAY_SLOTS,
   SAVE_CORRUPT_KEY,
   SAVE_STORAGE_KEY,
@@ -769,8 +772,8 @@ describe('shell/boot failures (boot error screen)', () => {
     shell.game.events.push(SimEventKind.Particles, 0, 1, 2, 1);
     win.frame(0);
     expect(fakes.frames[fakes.frames.length - 1]?.world).toBe(gallery.world);
-    // The first station's burst, not the World's event.
-    expect(fakes.fxCalls).toEqual([['emit', 0, 192, 100, 1]]);
+    // The first station's burst (at the playfield's centre), not the World's event.
+    expect(fakes.fxCalls).toEqual([['emit', 0, FRAME_CX, PLAYFIELD_CY, 1]]);
   });
 
   it('reports an atlas page that fails to load', async () => {
@@ -1100,8 +1103,10 @@ describe('shell/boot audio (M1-15)', () => {
     expect(theme).toBeDefined();
     const started = engine.sfx?.started ?? 0;
     const camera = shell.game.world.view.camera;
-    shell.game.events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeLarge, camera.x + 384, 90, 0);
-    shell.game.events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeLarge, camera.x + 384, 90, 0);
+    // At the playfield's right edge: panned right.
+    const right = camera.x + PLAYFIELD_W;
+    shell.game.events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeLarge, right, 90, 0);
+    shell.game.events.push(SimEventKind.Sfx, SFX_CUES.EnemyExplodeLarge, right, 90, 0);
     win.frame(1000 + 2 * STEP);
     expect((engine.sfx?.started ?? 0) - started).toBe(1);
     expect(engine.sfx?.deduped).toBeGreaterThanOrEqual(1);

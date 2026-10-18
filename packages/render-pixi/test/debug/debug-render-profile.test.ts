@@ -8,7 +8,7 @@
  *   the total costs a property read — and gives the pool back on `stop()`;
  * - the allocation guard: a panel rebuild with both figures set allocates nothing.
  */
-import { DrawOp, PLAYFIELD_Y, createDebugFlags, type DrawList } from '@shmup/core';
+import { DrawOp, LINE_H, PLAYFIELD_Y, createDebugFlags, type DrawList } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import type { TexturePoolClass } from 'pixi.js';
 import {
@@ -21,8 +21,8 @@ import {
 } from '../../src/debug/index.js';
 import { measureHeapGrowth } from '../../../core/test/helpers/alloc.js';
 
-/** Height of one panel line, in frame pixels (the pixel font's line height). */
-const ROW = 10;
+/** Height of one panel line, in frame pixels (the pixel font's line height: 10 at 6 × 8). */
+const ROW = LINE_H;
 
 /** Screen y of the panel's first line. */
 const PANEL_Y = PLAYFIELD_Y + 2;

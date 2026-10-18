@@ -271,6 +271,41 @@ describe('render-pixi/effects CRT pass — the blit (M3-02d)', () => {
     pass.destroy();
   });
 
+  it('gives the 640×360 frame (R2-01) pitch 3 on 1080p and 2 on 720p, its 4K pass pitch 3', () => {
+    // v2's frame, whatever the build's: ×3 on a 1080p display, ×2 on 720p, ×6 on 4K.
+    const screen = new Container();
+    const blit = fakeBlit();
+    const v2 = { frame: Texture.WHITE, width: 640, height: 360 } as const;
+    const pass = createCrtPass({ screen, ...v2, createBlit: () => blit });
+    pass.setSetting('full');
+    pass.setViewport(3, 0, 0, 1920, 1080, 3, 3, 1080);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[2], 3, 0, 0, 1920, 1080]);
+    // ×2 on 720p is exactly the smallest pitch the look keeps: one dark line per frame row.
+    pass.setViewport(2, 0, 0, 1280, 720, 2, 2, 720);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[2], 2, 0, 0, 1280, 720]);
+    expect(CRT_MIN_PITCH).toBe(2);
+    pass.setViewport(6, 0, 0, 3840, 2160, 6, 6, 2160);
+    expect(blit.applied.at(-1)).toEqual([CRT_LOOKS[2], 6, 0, 0, 3840, 2160]);
+    pass.destroy();
+    // The legacy filter pass on 4K runs at half resolution (capped at 1080 rows): its pitch-6 bands
+    // are 3 of the pass's own rows — still above the smallest pitch.
+    const fake = fakeFilter();
+    const legacy = createCrtPass({
+      screen: new Container(),
+      ...v2,
+      mode: 'filter',
+      createFilter: () => fake,
+    });
+    legacy.setSetting('full');
+    legacy.setViewport(6, 0, 0, 3840, 2160, 6, 6, 2160);
+    expect(fake.applied.at(-1)).toEqual([CRT_LOOKS[2], 6, 3840, 2160]);
+    expect(fake.heights.at(-1)).toBe(2160);
+    expect(crtResolution(2160)).toBe(0.5);
+    expect(6 * crtResolution(2160)).toBe(3);
+    expect(6 * crtResolution(2160)).toBeGreaterThanOrEqual(CRT_MIN_PITCH);
+    legacy.destroy();
+  });
+
   it('uses the real blit by default: the mesh vertex shader and the CRT fragment', () => {
     const screen = new Container();
     const before = programs.length;

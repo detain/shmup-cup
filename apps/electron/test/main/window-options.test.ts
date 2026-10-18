@@ -21,17 +21,22 @@ describe('electron/main/window-options', () => {
     expect(createWindowOptions({ preloadPath: 'p', fullscreen: true }).fullscreen).toBe(true);
   });
 
-  it('sizes the content to the scale of the 384x216 frame, placed or centred (M2-17)', () => {
+  it('sizes the content to the scale of the frame, placed or centred (M2-17)', () => {
     const centred = createWindowOptions({ preloadPath: 'p', fullscreen: false, scale: 5 });
     expect(centred).toMatchObject({
-      width: 1920,
-      height: 1080,
+      width: FRAME_WIDTH * 5, // 1920 × 1080 at 384×216
+      height: FRAME_HEIGHT * 5,
       useContentSize: true,
       center: true,
     });
     expect(centred).not.toHaveProperty('x');
     const placed = createWindowOptions({ preloadPath: 'p', fullscreen: false, x: -40, y: 0 });
-    expect(placed).toMatchObject({ width: 1152, height: 648, x: -40, y: 0 });
+    expect(placed).toMatchObject({
+      width: FRAME_WIDTH * DEFAULT_WINDOW_SCALE, // 1152 × 648 at 384×216, 1280 × 720 at 640×360
+      height: FRAME_HEIGHT * DEFAULT_WINDOW_SCALE,
+      x: -40,
+      y: 0,
+    });
     expect(placed).not.toHaveProperty('center');
     // Half a position centres.
     expect(createWindowOptions({ preloadPath: 'p', fullscreen: false, x: 10 })).toMatchObject({

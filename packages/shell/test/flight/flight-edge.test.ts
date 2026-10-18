@@ -6,6 +6,7 @@
  * (`update()` with a moving camera, a changing tick and the HUD left alone).
  */
 import {
+  ART_SCALE,
   DrawOp,
   EMPTY_CONTENT_DB,
   LayerId,
@@ -78,10 +79,12 @@ describe('shell/flight edge cases', () => {
     const paused = firstX();
     flight.update(frameAt(game, 8)); // the game did not tick: nothing moves
     expect(firstX()).toEqual(paused);
-    // The near layer wraps after one tile (128 px / 0.5 px per tick = 256 ticks).
-    flight.update(frameAt(game, 256));
+    // The near layer wraps after one tile (128 px × ART_SCALE / 0.5 px per tick = 256 ticks at
+    // the v1 art's scale).
+    const wrap = 2 * Math.ceil(128 * ART_SCALE);
+    flight.update(frameAt(game, wrap));
     expect(firstX()[2]).toBe(0);
-    flight.update(frameAt(game, 257));
+    flight.update(frameAt(game, wrap + 1));
     expect(firstX()[2]).toBe(-0.5);
   });
 

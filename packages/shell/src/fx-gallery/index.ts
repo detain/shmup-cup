@@ -29,6 +29,7 @@
  * @module
  */
 import {
+  ART_SCALE,
   FlashKind,
   FLASH_KIND_TICKS,
   HUD_BAR_HEIGHT,
@@ -93,9 +94,19 @@ const STATION_SLOT = 0;
 /** HUD bar fill (the flight scene's). */
 const BAR_COLOR = 0x1d2a5c;
 
+/**
+ * Edge of the square starfield tiles in pixels: the pipeline's 128-px tile
+ * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) — 128
+ * until R2-01's flip, then the interim ×1.5 art's 192.
+ */
+const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
+
 /** Options of {@link createFxGallery}. */
 export interface FxGalleryOptions {
-  /** Edge of the square starfield tiles in pixels (default 128, the pipeline's tile size). */
+  /**
+   * Edge of the square starfield tiles in pixels (default the pipeline's tile at the art scale:
+   * 128 × `ART_SCALE`).
+   */
   readonly starTileSize?: number;
 }
 
@@ -168,7 +179,7 @@ export function createFxGallery(fx: FxTargets, options: FxGalleryOptions = {}): 
   };
 
   // A still starfield (the camera never moves), filled once.
-  const tile = options.starTileSize ?? 128;
+  const tile = options.starTileSize ?? STAR_TILE_SIZE;
   const columns = Math.ceil(PLAYFIELD_W / tile);
   const rows = Math.ceil(PLAYFIELD_H / tile);
   const far = createSpriteBatch(LayerId.BgFar, columns * rows);

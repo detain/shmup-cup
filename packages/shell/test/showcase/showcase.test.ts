@@ -4,6 +4,7 @@
  * reuses its frame, the starfield covers the playfield, and the UI list is built once.
  */
 import {
+  ART_SCALE,
   DrawOp,
   LayerId,
   PLAYFIELD_H,
@@ -98,15 +99,18 @@ describe('shell/showcase', () => {
     for (const tick of [0, 1, 257, 5000]) {
       showcase.update(gameFrame(tick));
       const [far, mid] = showcase.world.batches;
+      // A tile's edge: 128 px of the v1 art at the art scale. No column starts past the last
+      // tile edge the playfield needs (the edge itself at 384×216, where 128 divides the width).
+      const tile = Math.ceil(128 * ART_SCALE);
       for (const batch of [far, mid]) {
         for (let i = 0; i < batch.count; i++) {
-          expect(batch.x[i]).toBeLessThanOrEqual(PLAYFIELD_W);
+          expect(batch.x[i]).toBeLessThanOrEqual(Math.ceil(PLAYFIELD_W / tile) * tile);
         }
         const xs = Array.from({ length: batch.count }, (_, i) => batch.x[i]);
         const ys = Array.from({ length: batch.count }, (_, i) => batch.y[i]);
         expect(Math.min(...xs)).toBeLessThanOrEqual(0);
-        expect(Math.max(...xs) + 128).toBeGreaterThanOrEqual(PLAYFIELD_W);
-        expect(Math.max(...ys) + 128).toBeGreaterThanOrEqual(PLAYFIELD_H);
+        expect(Math.max(...xs) + tile).toBeGreaterThanOrEqual(PLAYFIELD_W);
+        expect(Math.max(...ys) + tile).toBeGreaterThanOrEqual(PLAYFIELD_H);
       }
     }
   });

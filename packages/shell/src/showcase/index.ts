@@ -26,6 +26,7 @@
  * @module
  */
 import {
+  ART_SCALE,
   FRAME_CX,
   FRAME_W,
   HUD_BAR_HEIGHT,
@@ -85,9 +86,19 @@ const SPRITE = {
   meterLabels: 10,
 } as const;
 
+/**
+ * Edge of the square starfield tiles in pixels: the pipeline's 128-px tile
+ * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) — 128
+ * until R2-01's flip, then the interim ×1.5 art's 192.
+ */
+const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
+
 /** Options of {@link createShowcase}. */
 export interface ShowcaseOptions {
-  /** Edge of the square starfield tiles in pixels (default 128, the pipeline's tile size). */
+  /**
+   * Edge of the square starfield tiles in pixels (default the pipeline's tile at the art scale:
+   * 128 × `ART_SCALE`).
+   */
   readonly starTileSize?: number;
 }
 
@@ -185,7 +196,7 @@ function shipAt(tick: number, out: Float64Array): void {
  * ```
  */
 export function createShowcase(options: ShowcaseOptions = {}): Showcase {
-  const tile = options.starTileSize ?? 128;
+  const tile = options.starTileSize ?? STAR_TILE_SIZE;
   const columns = Math.ceil(PLAYFIELD_W / tile) + 1;
   const rows = Math.ceil(PLAYFIELD_H / tile);
   const far = createSpriteBatch(LayerId.BgFar, columns * rows);

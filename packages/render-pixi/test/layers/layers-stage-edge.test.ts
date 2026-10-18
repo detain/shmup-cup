@@ -12,6 +12,7 @@
  */
 import {
   LayerId,
+  PLAYFIELD_H,
   PLAYFIELD_W,
   PLAYFIELD_Y,
   type ParallaxView,
@@ -106,9 +107,9 @@ describe('render-pixi/layers terrain binding edge — the ring', () => {
       // Every map cell inside the view sits in its slot (collected, one assertion per step).
       const wrong: string[] = [];
       const c0 = Math.floor(camera.x / 8);
-      const c1 = Math.floor((camera.x + 383) / 8);
+      const c1 = Math.floor((camera.x + PLAYFIELD_W - 1) / 8);
       const r0 = Math.floor(camera.y / 8);
-      const r1 = Math.min(view.rows - 1, Math.floor((camera.y + 199) / 8));
+      const r1 = Math.min(view.rows - 1, Math.floor((camera.y + PLAYFIELD_H - 1) / 8));
       for (let row = r0; row <= r1; row++) {
         for (let col = c0; col <= c1; col++) {
           const sprite = walker.container.children[
@@ -134,10 +135,15 @@ describe('render-pixi/layers terrain binding edge — the ring', () => {
   it('re-textures 2 columns when crossing two at once, 1 backwards, a column + a row together', () => {
     const a = atlas();
     const tables = createSpriteTables(a, NAMES);
-    const view = randomView(200, 40, 3);
+    // A map taller than the ring (40 rows at 384×216): the ring's rows plus 14.
+    const view = randomView(200, Math.ceil(PLAYFIELD_H / 8) + 15, 3);
     const binding = createTerrainBinding({ atlas: a, tables, view });
     const { columns, rows } = binding;
-    expect([columns, rows]).toEqual([49, 26]);
+    // The playfield in 8-px tiles plus one: 49 × 26 at 384×216.
+    expect([columns, rows]).toEqual([
+      Math.ceil(PLAYFIELD_W / 8) + 1,
+      Math.ceil(PLAYFIELD_H / 8) + 1,
+    ]);
     binding.sync(view, { x: 80, y: 16 });
     binding.sync(view, { x: 96, y: 16 }); // two columns
     expect(binding.updatedCells).toBe(2 * rows);
@@ -147,7 +153,7 @@ describe('render-pixi/layers terrain binding edge — the ring', () => {
     expect(binding.updatedCells).toBe(rows + columns - 1);
     binding.sync(view, { x: 96, y: 24 });
     expect(binding.updatedCells).toBe(0);
-    binding.sync(view, { x: 96 + 49 * 8, y: 24 }); // a whole ring width: everything
+    binding.sync(view, { x: 96 + columns * 8, y: 24 }); // a whole ring width: everything
     expect(binding.updatedCells).toBe(columns * rows);
   });
 

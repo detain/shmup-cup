@@ -7,7 +7,14 @@
  * — a stage's own music set (`stageMusicCues`: a FinalBoss boss theme, a mid-stage music event)
  * played, where the fixed default set left those cues silent.
  */
-import { MUSIC_CUES, SFX_CUES, SfxPriority, type ContentFile, type StageSpec } from '@shmup/core';
+import {
+  MUSIC_CUES,
+  PLAYFIELD_W,
+  SFX_CUES,
+  SfxPriority,
+  type ContentFile,
+  type StageSpec,
+} from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { createAudioEngine, type AudioGraphLike } from '../../src/engine/index.js';
 import {
@@ -169,7 +176,7 @@ describe('audio-web/engine (edge)', () => {
     expect(engine.sfx?.maxVoices).toBe(3);
     const left = engine.playSfx(SFX_CUES.EnemyHit, 0, 0);
     engine.endFrame();
-    const right = engine.playSfx(SFX_CUES.EnemyHit, 384, 0);
+    const right = engine.playSfx(SFX_CUES.EnemyHit, PLAYFIELD_W, 0);
     expect(context.panners[left]?.pan.value).toBe(-1);
     expect(context.panners[right]?.pan.value).toBe(1);
     engine.duckMusic(60);

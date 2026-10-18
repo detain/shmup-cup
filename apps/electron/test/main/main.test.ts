@@ -5,7 +5,9 @@
  * its work at import time and reads its environment variables then. The user-data folder is a
  * temporary directory, so the file saves and the window settings (M2-17) are real files. The fake
  * window emits only what its tests trigger — like Linux, never `moved` (M2-17 review: the position
- * is saved from `move`, once it settles, and on `close`).
+ * is saved from `move`, once it settles, and on `close`). Window sizes are written in frames
+ * (`windowContentSize`), on a fake screen where exactly one scale above the default fits, so the
+ * file passes at 384×216 and at 640×360 (R2-01).
  */
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,7 +15,16 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IPC_CHANNELS } from '../../src/shared/ipc.js';
-import { WINDOW_MOVE_SAVE_MS } from '../../src/main/window-state.js';
+import {
+  DEFAULT_WINDOW_SCALE,
+  FRAME_WIDTH,
+  MAX_WINDOW_SCALE,
+  V1_WINDOW_FRAME_WIDTH,
+  WINDOW_MOVE_SAVE_MS,
+  fitWindowScale,
+  parseWindowState,
+  windowContentSize,
+} from '../../src/main/window-state.js';
 
 type Handler = (request: { url: string }) => Response | Promise<Response>;
 type IpcListener = (event: unknown, ...args: unknown[]) => unknown;
@@ -42,8 +53,9 @@ const electron = vi.hoisted(() => {
     quits: 0,
     fetched: [] as string[],
     userData: '',
+    /** The fake screen's work area (set for the frame by `beforeEach`). */
+    workArea: { x: 0, y: 0, width: 1920, height: 1040 },
   };
-  const workArea = { x: 0, y: 0, width: 1920, height: 1040 };
   class BrowserWindow {
     static getAllWindows(): unknown[] {
       return state.windows;
@@ -154,9 +166,9 @@ const electron = vi.hoisted(() => {
       },
     },
     screen: {
-      getAllDisplays: () => [{ workArea }],
-      getPrimaryDisplay: () => ({ workArea }),
-      getDisplayMatching: () => ({ workArea }),
+      getAllDisplays: () => [{ workArea: state.workArea }],
+      getPrimaryDisplay: () => ({ workArea: state.workArea }),
+      getDisplayMatching: () => ({ workArea: state.workArea }),
     },
   };
   return { state, module };
@@ -166,6 +178,33 @@ vi.mock('electron', () => ({ ...electron.module, default: electron.module }));
 
 /** The game page's IPC event. */
 const GAME_EVENT = { senderFrame: { url: 'app://game/index.html' } };
+
+/**
+ * The fake screen's work area: exactly one window scale above the default fits — a 1080p screen
+ * less its taskbar at 384×216 (×4 = 1536×864 fits, ×5 does not), a 1440p one at 640×360 (×3 =
+ * 1920×1080 fits, ×4 does not).
+ */
+const WORK_AREA =
+  (FRAME_WIDTH as number) === V1_WINDOW_FRAME_WIDTH
+    ? { x: 0, y: 0, width: 1920, height: 1040 }
+    : { x: 0, y: 0, width: 2560, height: 1400 };
+
+/** The default window scale's content size (×3 = 1152×648 at 384×216, ×2 = 1280×720 at 640). */
+const DEFAULT_SIZE = windowContentSize(DEFAULT_WINDOW_SCALE);
+
+/** The largest scale that fits {@link WORK_AREA}: one above the default. */
+const LARGEST = DEFAULT_WINDOW_SCALE + 1;
+
+/**
+ * A content size as the fake window records it.
+ *
+ * @param scale - The window scale.
+ * @returns `[width, height]`.
+ */
+const sized = (scale: number): [number, number] => {
+  const { width, height } = windowContentSize(scale);
+  return [width, height];
+};
 
 /** Imports a fresh main.ts and waits until its `app.whenReady()` chain opened the window. */
 async function startMain(): Promise<void> {
@@ -215,6 +254,7 @@ beforeEach(() => {
   s.quits = 0;
   s.fetched.length = 0;
   s.userData = mkdtempSync(join(tmpdir(), 'shmup-electron-'));
+  s.workArea = WORK_AREA;
   vi.stubEnv('SHMUP_DEV_URL', undefined);
   vi.stubEnv('SHMUP_RENDERER_DIR', undefined);
   vi.stubEnv('SHMUP_FULLSCREEN', undefined);
@@ -226,6 +266,11 @@ afterEach(() => {
 });
 
 describe('electron/main/main', () => {
+  it('runs on a screen where one scale above the default is the largest that fits', () => {
+    expect(fitWindowScale(MAX_WINDOW_SCALE, WORK_AREA)).toBe(LARGEST);
+    expect(LARGEST).toBeLessThanOrEqual(MAX_WINDOW_SCALE);
+  });
+
   it('registers app:// as a privileged, fetch-capable standard scheme before the app is ready', async () => {
     await startMain();
     expect(electron.state.privileged).toEqual([
@@ -244,8 +289,7 @@ describe('electron/main/main', () => {
     expect(win?.options).toMatchObject({
       show: false,
       fullscreen: false,
-      width: 1152,
-      height: 648,
+      ...DEFAULT_SIZE,
       useContentSize: true,
       center: true,
       webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
@@ -326,26 +370,51 @@ describe('electron/main/main', () => {
     mkdirSync(saves, { recursive: true });
     writeFileSync(
       join(saves, 'window.json'),
-      '{"version":1,"fullscreen":true,"scale":4,"x":200,"y":120}',
+      `{"version":2,"fullscreen":true,"scale":${LARGEST},"x":200,"y":120}`,
     );
     await startMain();
     expect(electron.state.windows[0]?.options).toMatchObject({
       fullscreen: true,
-      width: 1536,
-      height: 864,
+      ...windowContentSize(LARGEST),
       x: 200,
       y: 120,
     });
     expect(electron.state.windows[0]?.options).not.toHaveProperty('center');
   });
 
+  it('reads a version-1 window.json in today’s frames and saves version 2 (R2-01)', async () => {
+    const saves = join(electron.state.userData, 'saves');
+    mkdirSync(saves, { recursive: true });
+    const v1 = '{"version":1,"fullscreen":false,"scale":4,"x":200,"y":120}';
+    writeFileSync(join(saves, 'window.json'), v1);
+    await startMain();
+    // ×4 of the v1 frame: ×4 at 384×216 (1536 px), ×2 at 640×360 (1280 px — the nearest).
+    const scale = fitWindowScale(parseWindowState(v1).scale, WORK_AREA);
+    expect(scale).toBe(Math.max(1, Math.round((4 * V1_WINDOW_FRAME_WIDTH) / FRAME_WIDTH)));
+    expect(electron.state.windows[0]?.options).toMatchObject({
+      ...windowContentSize(scale),
+      x: 200,
+      y: 120,
+    });
+    expect(press({ key: 'F11' })).toBe(true);
+    await vi.waitFor(() =>
+      expect(storedWindow()).toEqual({ version: 2, fullscreen: true, scale, x: 200, y: 120 }),
+    );
+  });
+
   it('lowers a remembered scale that no longer fits and forgets an off-screen position', async () => {
     const saves = join(electron.state.userData, 'saves');
     mkdirSync(saves, { recursive: true });
-    writeFileSync(join(saves, 'window.json'), '{"version":1,"scale":9,"x":5000,"y":0}');
+    writeFileSync(
+      join(saves, 'window.json'),
+      `{"version":2,"scale":${MAX_WINDOW_SCALE},"x":5000,"y":0}`,
+    );
     await startMain();
-    // 1920×1040 work area: ×4 = 1536×864 is the largest that fits.
-    expect(electron.state.windows[0]?.options).toMatchObject({ width: 1536, center: true });
+    // One scale above the default is the largest that fits the work area.
+    expect(electron.state.windows[0]?.options).toMatchObject({
+      width: windowContentSize(LARGEST).width,
+      center: true,
+    });
   });
 
   it('toggles fullscreen with F11 / Alt+Enter and steps the scale with Ctrl+= / Ctrl+- / Ctrl+0, remembering both', async () => {
@@ -353,22 +422,24 @@ describe('electron/main/main', () => {
     const win = electron.state.windows[0];
     expect(press({ key: 'z' })).toBe(false);
     expect(press({ key: '=', control: true })).toBe(true);
-    expect(win?.contentSize).toEqual([1536, 864]);
-    await vi.waitFor(() => expect(storedWindow()).toMatchObject({ scale: 4 }));
-    // ×5 would not fit the 1040-px-high work area: nothing changes.
+    expect(win?.contentSize).toEqual(sized(LARGEST));
+    await vi.waitFor(() => expect(storedWindow()).toMatchObject({ scale: LARGEST }));
+    // One more would not fit the work area: nothing changes.
     expect(press({ key: '=', control: true })).toBe(true);
-    expect(win?.contentSize).toEqual([1536, 864]);
+    expect(win?.contentSize).toEqual(sized(LARGEST));
     expect(press({ key: '-', control: true })).toBe(true);
-    expect(win?.contentSize).toEqual([1152, 648]);
+    expect(win?.contentSize).toEqual(sized(DEFAULT_WINDOW_SCALE));
     expect(press({ key: '-', control: true })).toBe(true);
     expect(press({ key: '0', control: true })).toBe(true);
-    expect(win?.contentSize).toEqual([1152, 648]);
+    expect(win?.contentSize).toEqual(sized(DEFAULT_WINDOW_SCALE));
     expect(press({ key: 'F11' })).toBe(true);
     expect(win?.fullScreen).toBe(true);
-    await vi.waitFor(() => expect(storedWindow()).toMatchObject({ fullscreen: true, scale: 3 }));
+    await vi.waitFor(() =>
+      expect(storedWindow()).toMatchObject({ fullscreen: true, scale: DEFAULT_WINDOW_SCALE }),
+    );
     // No scale changes in fullscreen.
     expect(press({ key: '=', control: true })).toBe(true);
-    expect(win?.contentSize).toEqual([1152, 648]);
+    expect(win?.contentSize).toEqual(sized(DEFAULT_WINDOW_SCALE));
     expect(press({ key: 'Enter', alt: true })).toBe(true);
     expect(win?.fullScreen).toBe(false);
     await vi.waitFor(() => expect(storedWindow()).toMatchObject({ fullscreen: false }));
@@ -403,7 +474,9 @@ describe('electron/main/main', () => {
       // The next write (a scale step) still carries the last real position: neither was taken.
       win.minimized = false;
       expect(press({ key: '-', control: true })).toBe(true);
-      await vi.waitFor(() => expect(storedWindow()).toMatchObject({ scale: 2 }));
+      await vi.waitFor(() =>
+        expect(storedWindow()).toMatchObject({ scale: DEFAULT_WINDOW_SCALE - 1 }),
+      );
       expect(storedWindow()).toMatchObject({ x: 300, y: 200 });
     } finally {
       vi.useRealTimers();
@@ -438,8 +511,7 @@ describe('electron/main/main', () => {
     await startMain();
     expect(electron.state.windows[0]?.options).toMatchObject({
       fullscreen: false,
-      width: 1152,
-      height: 648,
+      ...DEFAULT_SIZE,
       center: true,
     });
   });
@@ -447,10 +519,12 @@ describe('electron/main/main', () => {
   it('remembers the scale it lowered to fit, not the one it read', async () => {
     const saves = join(electron.state.userData, 'saves');
     mkdirSync(saves, { recursive: true });
-    writeFileSync(join(saves, 'window.json'), '{"version":1,"scale":9}');
+    writeFileSync(join(saves, 'window.json'), `{"version":2,"scale":${MAX_WINDOW_SCALE}}`);
     await startMain();
     expect(press({ key: 'F11' })).toBe(true);
-    await vi.waitFor(() => expect(storedWindow()).toMatchObject({ fullscreen: true, scale: 4 }));
+    await vi.waitFor(() =>
+      expect(storedWindow()).toMatchObject({ fullscreen: true, scale: LARGEST }),
+    );
   });
 
   it('writes nothing for a close where the window did not move, a step below ×1 or a close in fullscreen', async () => {
@@ -485,7 +559,7 @@ describe('electron/main/main', () => {
     await startMain();
     const win = electron.state.windows[0];
     if (win === undefined) throw new Error('no window');
-    expect(win.options).toMatchObject({ width: 1152, center: true });
+    expect(win.options).toMatchObject({ width: DEFAULT_SIZE.width, center: true });
     win.position = [321, 123];
     win.events.get('close')?.({ preventDefault: () => undefined });
     let prevented = false;

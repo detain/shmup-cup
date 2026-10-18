@@ -44,6 +44,7 @@
  * @module
  */
 import {
+  ART_SCALE,
   FRAME_CY,
   FRAME_W,
   HUD_BAR_HEIGHT,
@@ -87,7 +88,10 @@ const OWN = { starsFar: 0, starsMid: 1, starsNear: 2, life: 3 } as const;
 
 /** Options of {@link createFlightScene}. */
 export interface FlightSceneOptions {
-  /** Edge of the square starfield tiles in pixels (default 128, the pipeline's tile size). */
+  /**
+   * Edge of the square starfield tiles in pixels (default the pipeline's tile at the art scale:
+   * 128 × `ART_SCALE`).
+   */
   readonly starTileSize?: number;
 }
 
@@ -119,6 +123,13 @@ const STAR_LAYERS = [
   { sprite: OWN.starsMid, speed: 0.25, layer: LayerId.BgMid },
   { sprite: OWN.starsNear, speed: 0.5, layer: LayerId.BgMid },
 ] as const;
+
+/**
+ * Edge of the square starfield tiles in pixels: the pipeline's 128-px tile
+ * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) — 128
+ * until R2-01's flip, then the interim ×1.5 art's 192.
+ */
+const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
 
 /** HUD bar fill (lifted navy, readable on VA panels). */
 const HUD_BAR_COLOR = 0x1d2a5c;
@@ -161,7 +172,7 @@ const LIVES_Y = HUD_BOTTOM_Y + 1;
  * ```
  */
 export function createFlightScene(game: Game, options: FlightSceneOptions = {}): FlightScene {
-  const tile = options.starTileSize ?? 128;
+  const tile = options.starTileSize ?? STAR_TILE_SIZE;
   const base = game.content.sprites.names.length;
   const spriteNames = Object.freeze([...game.content.sprites.names, ...FLIGHT_SPRITES]);
   const columns = Math.ceil(PLAYFIELD_W / tile) + 1;

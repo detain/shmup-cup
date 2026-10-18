@@ -237,7 +237,10 @@ describe('render-pixi/layers parallax binding', () => {
     const tables = createSpriteTables(a, NAMES);
     const binding = createParallaxBinding({ atlas: a, tables, view: parallaxView() });
     expect(binding.layers).toEqual([LayerId.BgFar, LayerId.BgMid]);
-    expect(binding.containers.map((c) => c.children.length)).toEqual([25, 4]);
+    // The playfield over each band's spacing, plus one (25 and 4 at 384×216).
+    expect(binding.containers.map((c) => c.children.length)).toEqual(
+      [16, 128].map((spacing) => Math.ceil(PLAYFIELD_W / spacing) + 1),
+    );
   });
 
   it('places the band sprites `spacing` apart and scrolls the band container', () => {

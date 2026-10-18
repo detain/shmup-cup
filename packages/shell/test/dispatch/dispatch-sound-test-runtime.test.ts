@@ -10,6 +10,7 @@
  */
 import {
   Action,
+  FRAME_CX,
   MUSIC_CUES,
   SFX_CUES,
   commitPlayerInput,
@@ -130,7 +131,7 @@ describe('shell/dispatch sound test end to end (M2-15)', () => {
     const played = sfx.slice(from).filter(([cue]) => cue === SFX_CUES.EnemyExplodeSmall);
     expect(played).toHaveLength(1);
     const [, screenX, slot] = played[0];
-    expect(screenX).toBe(192);
+    expect(screenX).toBe(FRAME_CX);
     expect(slot).toBeGreaterThanOrEqual(0);
     const panner = context.panners[slot];
     // The cue's source plays through its voice's panner (a positional cue) …

@@ -5,7 +5,7 @@
  * `setDevice`, which the shell calls every frame, allocates nothing while its input stays the same —
  * even for a TV line longer than the panel, which cleaning cuts into a new string (M2-17 review).
  */
-import { DrawOp, PLAYFIELD_Y, createDebugFlags, type DrawList } from '@shmup/core';
+import { DrawOp, LINE_H, PLAYFIELD_Y, createDebugFlags, type DrawList } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import {
   DEBUG_DEVICE_MAX,
@@ -59,10 +59,14 @@ describe('render-pixi/debug device line (M2-17)', () => {
 
     setDebugPanelDevice(panel, 'QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096');
     buildDebugPanel(panel, stats, null, flags, graph);
-    expect(backdropHeight(panel.backdrop)).toBe(plain + 10);
+    // One more line of the panel: the font's line height (10 at 6 × 8).
+    expect(backdropHeight(panel.backdrop)).toBe(plain + LINE_H);
     const device = texts(panel.values).find(([text]) => text.startsWith('QN43'));
     // Line 7 since M3-02c (the frame-pacing and render-profile lines come before it).
-    expect(device).toEqual(['QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096', PLAYFIELD_Y + 2 + 70]);
+    expect(device).toEqual([
+      'QN43LS03 FW T-KSU2 1920x1080@1 C69 GL1/4096',
+      PLAYFIELD_Y + 2 + 7 * LINE_H,
+    ]);
 
     setDebugPanelDevice(panel, '');
     buildDebugPanel(panel, stats, null, flags, graph);

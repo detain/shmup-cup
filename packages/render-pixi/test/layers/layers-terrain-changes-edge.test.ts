@@ -6,7 +6,12 @@
  * already had entries when the binding was created, a reset together with new changes, and a view
  * without a log (the pre-M2-07 contract).
  */
-import { TERRAIN_CHANGE_LOG, type TerrainChanges, type TerrainView } from '@shmup/core';
+import {
+  PLAYFIELD_H,
+  TERRAIN_CHANGE_LOG,
+  type TerrainChanges,
+  type TerrainView,
+} from '@shmup/core';
 import type { Sprite } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
@@ -34,13 +39,19 @@ interface Log extends TerrainChanges {
 const COLS = 200;
 
 /**
+ * Rows of the test map: the terrain ring's rows (the playfield in 8-px tiles, plus one) and 14
+ * more below the view — 40 at 384×216 — so a row below the view always exists.
+ */
+const ROWS = Math.ceil(PLAYFIELD_H / 8) + 15;
+
+/**
  * A 200 × 40 map (taller than the view) of tile 1 on row 24 with a change log.
  *
  * @param withLog - Give the view a change log.
  * @returns The view (writable tiles) and its log.
  */
 function view(withLog = true): { view: TerrainView & { tiles: Uint8Array }; log: Log } {
-  const rows = 40;
+  const rows = ROWS;
   const tiles = new Uint8Array(COLS * rows);
   tiles.fill(1, 24 * COLS, 25 * COLS);
   const log: Log = { count: 0, resets: 0, cells: new Int32Array(TERRAIN_CHANGE_LOG) };
@@ -129,8 +140,8 @@ describe('render-pixi/layers terrain binding — change log edges (M2-07)', () =
     const { v, log, binding, camera } = setup();
     const aliasCol = 5 + binding.columns; // same slot column, out of view
     change(v, log, aliasCol, 24, 0);
-    const aliasRow = 2 + binding.rows; // the slot row of row 2, below the view (map rows: 40)
-    expect(aliasRow).toBeLessThan(40);
+    const aliasRow = 2 + binding.rows; // the slot row of row 2, below the view
+    expect(aliasRow).toBeLessThan(ROWS);
     change(v, log, 7, aliasRow, 2);
     binding.sync(v, camera);
     expect(binding.updatedCells).toBe(0);

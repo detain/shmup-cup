@@ -12,6 +12,7 @@
  * @module
  */
 import type * as AudioWeb from '@shmup/audio-web';
+import { FRAME_H, FRAME_W } from '@shmup/core';
 import {
   DEFAULT_WEBOS_PROFILE_ID,
   inputProfileChoices,
@@ -25,10 +26,11 @@ import { bootWebosApp, type WebosAppResources } from '../../src/boot/index.js';
 
 const fakes = vi.hoisted(() => {
   const renderer = {
-    width: 384,
-    height: 216,
+    // The frame and its 1080p viewport: set from core's constants by `beforeEach` (R2-01).
+    width: 0,
+    height: 0,
     webGLVersion: 1,
-    viewport: { scale: 5, x: 0, y: 0, width: 1920, height: 1080 },
+    viewport: { scale: 1, x: 0, y: 0, width: 1920, height: 1080 },
     scene: {},
     frames: [] as Array<{ tick: number; alpha: number }>,
     sizes: [] as Array<[number, number]>,
@@ -231,7 +233,16 @@ function savedProfile(profileId: string): string {
 
 let win: FakeWindow;
 
+/** The fake renderer's frame: core's, at its whole scale on a 1080p display (×5 at 384×216). */
+function frameRenderer(): void {
+  const scale = Math.min(Math.floor(1920 / FRAME_W), Math.floor(1080 / FRAME_H));
+  fakes.renderer.width = FRAME_W;
+  fakes.renderer.height = FRAME_H;
+  fakes.renderer.viewport = { scale, x: 0, y: 0, width: 1920, height: 1080 };
+}
+
 beforeEach(() => {
+  frameRenderer();
   vi.stubGlobal('Image', FakeImage);
   win = new FakeWindow();
   fakes.renderer.options = null;

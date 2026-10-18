@@ -5,7 +5,7 @@
  * x, the track already playing not restarted, `Silence` fading out, ducking, and a context
  * without buffer playback leaving the engine silent.
  */
-import { MUSIC_CUES, SFX_CUES, type ContentFile } from '@shmup/core';
+import { MUSIC_CUES, PLAYFIELD_W, SFX_CUES, type ContentFile } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import * as audioWeb from '../../src/index.js';
 import {
@@ -170,7 +170,7 @@ describe('audio-web/engine', () => {
     expect(fade.connections).toEqual([duck]);
     expect(duck.connections).toEqual([buses?.music]);
     expect(context.buffers.length).toBeGreaterThanOrEqual(4); // 3 SFX + the theme
-    expect(engine.playSfx(SFX_CUES.EnemyHit, 192, 0)).toBeGreaterThanOrEqual(0);
+    expect(engine.playSfx(SFX_CUES.EnemyHit, PLAYFIELD_W / 2, 0)).toBeGreaterThanOrEqual(0);
   });
 
   it('pans a positional cue from its screen x and keeps whole-screen cues centred', async () => {
@@ -184,9 +184,10 @@ describe('audio-web/engine', () => {
       return context.panners[slot]?.pan.value;
     };
     expect(pan(SFX_CUES.EnemyHit, 0)).toBeCloseTo(-DEFAULT_PAN_WIDTH, 10);
-    expect(pan(SFX_CUES.EnemyHit, 384)).toBeCloseTo(DEFAULT_PAN_WIDTH, 10);
+    // The pan spans the playfield (R2-01: in frame terms, so at either frame).
+    expect(pan(SFX_CUES.EnemyHit, PLAYFIELD_W)).toBeCloseTo(DEFAULT_PAN_WIDTH, 10);
     expect(pan(SFX_CUES.MegaCrash, 0)).toBe(0);
-    expect(pan(SFX_CUES.EnemyHit, 192)).toBe(0);
+    expect(pan(SFX_CUES.EnemyHit, PLAYFIELD_W / 2)).toBe(0);
     // Off-screen sounds clamp to the edge.
     expect(pan(SFX_CUES.EnemyHit, -500)).toBeCloseTo(-DEFAULT_PAN_WIDTH, 10);
     // Deduped within a frame until endFrame().

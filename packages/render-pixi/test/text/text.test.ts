@@ -3,7 +3,7 @@
  * layout of text and numbers into a recording glyph sink (alignment per line, new lines,
  * spaces, unknown characters, zero padding, negatives), and the real pipeline font.
  */
-import { TextAlign, UI_GLYPHS } from '@shmup/core';
+import { GLYPH_W, LINE_H, TextAlign, UI_GLYPHS } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { buildAtlas } from '../../../../scripts/assets/pipeline.mjs';
 import { createAtlas, type Atlas } from '../../src/atlas/index.js';
@@ -173,15 +173,17 @@ describe('render-pixi/text drawNumber', () => {
 });
 
 describe('render-pixi/text with the real pipeline font', () => {
-  it('covers ASCII 32–126 and the arrow / symbol glyphs; "SHMUP CUP" is 54 px wide', () => {
+  it('covers ASCII 32–126 and the arrow / symbol glyphs; "SHMUP CUP" is 9 cells wide', () => {
     const { manifest } = buildAtlas();
     const real = createAtlas(manifest, pageImages(manifest));
     const font = createBitmapFont(real);
     for (let code = 33; code <= 126; code++) expect(font.glyphFrame(code)).toBeGreaterThan(-1);
     for (const symbol of '←↑→↓●✕★')
       expect(font.glyphFrame(symbol.charCodeAt(0))).toBeGreaterThan(-1);
-    expect(font.measure('SHMUP CUP')).toBe(54);
-    expect(font.lineHeight).toBe(10);
+    // The shipped atlas's font: the cell core lays text out with (54 px and a 10-px line at 6 × 8;
+    // 81 px and 15 at the interim 9 × 12 of R2-01).
+    expect(font.measure('SHMUP CUP')).toBe(9 * GLYPH_W);
+    expect(font.lineHeight).toBe(LINE_H);
   });
 
   // M3-03: the localization's end-to-end gate. `core/ui` `UI_GLYPHS` is what the `strings` loader
@@ -205,13 +207,14 @@ describe('render-pixi/text with the real pipeline font', () => {
     expect(font.glyphFrame('Д'.charCodeAt(0))).toBe(-1);
   });
 
-  it('lays katakana and accented capitals out on the same 6-px grid as ASCII (M3-03)', () => {
+  it('lays katakana and accented capitals out on the same cell grid as ASCII (M3-03)', () => {
     const { manifest } = buildAtlas();
     const font = createBitmapFont(createAtlas(manifest, pageImages(manifest)));
-    // Every glyph keeps advance 6, whatever its block — a translated menu row is as wide as its
-    // character count, which is what `content/strings/README.md` promises translators.
-    expect(font.measure('ステージ')).toBe(24);
-    expect(font.measure('ESPAÑOL')).toBe(42);
-    expect(font.measure('ガギグゲゴ')).toBe(30);
+    // Every glyph keeps the cell's advance (6 at 6 × 8), whatever its block — a translated menu row
+    // is as wide as its character count, which is what `content/strings/README.md` promises
+    // translators.
+    expect(font.measure('ステージ')).toBe(4 * GLYPH_W);
+    expect(font.measure('ESPAÑOL')).toBe(7 * GLYPH_W);
+    expect(font.measure('ガギグゲゴ')).toBe(5 * GLYPH_W);
   });
 });

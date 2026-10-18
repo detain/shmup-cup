@@ -7,7 +7,7 @@
  * `playAt()` (the pan from a whole-pixel x, computed only once a voice starts), the counters, and
  * malformed cue ids (fractional, holes) ignored instead of throwing.
  */
-import { SfxPriority } from '@shmup/core';
+import { PLAYFIELD_W, SfxPriority } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_MAX_VOICES, createSfxPlayer, type SfxVoiceSpec } from '../../src/sfx/index.js';
 import { FakeContext, bufferOf } from '../helpers/fake-context.js';
@@ -200,7 +200,7 @@ describe('audio-web/sfx (edge)', () => {
     const { context, player } = setup();
     const left = player.playAt(CUE.boom, 0, 0);
     player.endFrame();
-    const right = player.playAt(CUE.boom, 384, 0); // PLAYFIELD_W
+    const right = player.playAt(CUE.boom, PLAYFIELD_W, 0);
     expect([context.panners[left]?.pan.value, context.panners[right]?.pan.value]).toEqual([-1, 1]);
     const bare = new FakeContext();
     bare.hasPanner = false;

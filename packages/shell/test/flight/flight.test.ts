@@ -9,6 +9,9 @@
 import {
   Action,
   DrawOp,
+  ART_SCALE,
+  HUD_BAR_HEIGHT,
+  HUD_BOTTOM_Y,
   LayerId,
   PLAYFIELD_H,
   PLAYFIELD_W,
@@ -120,6 +123,8 @@ describe('shell/flight', () => {
     const { game } = realGame();
     const flight = createFlightScene(game);
     const [far, mid] = flight.world.batches;
+    // The starfield art's tile: 128 px of the v1 art at the art scale.
+    const tile = Math.ceil(128 * ART_SCALE);
     for (const [camX, camY, tick] of [
       [0, 0, 0],
       [1234.5, -40, 777],
@@ -134,15 +139,17 @@ describe('shell/flight', () => {
         let maxBottom = -Infinity;
         for (let i = 0; i < batch.count; i++) {
           minX = Math.min(minX, batch.x[i] - camX);
-          maxRight = Math.max(maxRight, batch.x[i] - camX + 128);
-          maxBottom = Math.max(maxBottom, batch.y[i] - camY + 128);
+          maxRight = Math.max(maxRight, batch.x[i] - camX + tile);
+          maxBottom = Math.max(maxBottom, batch.y[i] - camY + tile);
         }
         expect(minX).toBeLessThanOrEqual(0);
         expect(maxRight).toBeGreaterThanOrEqual(PLAYFIELD_W);
         expect(maxBottom).toBeGreaterThanOrEqual(PLAYFIELD_H);
       }
-      expect(far.count).toBe(8);
-      expect(mid.count).toBe(16);
+      // The playfield in tiles, one column more for the scroll (4 × 2 = 8 at 384×216).
+      const stars = (Math.ceil(PLAYFIELD_W / tile) + 1) * Math.ceil(PLAYFIELD_H / tile);
+      expect(far.count).toBe(stars);
+      expect(mid.count).toBe(2 * stars);
     }
   });
 
@@ -153,7 +160,12 @@ describe('shell/flight', () => {
     flight.update(game.renderFrame());
     const ops = Array.from(hud.op.subarray(0, hud.count));
     expect(ops.slice(0, 2)).toEqual([DrawOp.Rect, DrawOp.Rect]);
-    expect([hud.y[0], hud.y[1], hud.w[0], hud.h[1]]).toEqual([0, 208, PLAYFIELD_W, 8]);
+    expect([hud.y[0], hud.y[1], hud.w[0], hud.h[1]]).toEqual([
+      0,
+      HUD_BOTTOM_Y,
+      PLAYFIELD_W,
+      HUD_BAR_HEIGHT,
+    ]);
     expect(hud.strings.slice(0, 3)).toEqual(['1P', 'FREE FLIGHT', 'ARROWS MOVE']);
     // Three ships → two stock icons.
     expect(ops.filter((op) => op === DrawOp.Sprite)).toHaveLength(2);

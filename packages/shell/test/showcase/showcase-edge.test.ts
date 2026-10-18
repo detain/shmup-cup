@@ -7,6 +7,7 @@
  * retains no memory.
  */
 import {
+  ART_SCALE,
   DrawOp,
   PLAYFIELD_H,
   PLAYFIELD_W,
@@ -122,9 +123,16 @@ describe('shell/showcase capacity and layout (edge)', () => {
         expect(batch.count).toBeLessThanOrEqual(batch.capacity);
       }
       const [far, mid, air, player, bullets] = showcase.world.batches;
-      // 4 columns × 2 rows per starfield layer (128-px tiles), two layers share BG_MID.
+      // The playfield in starfield tiles (128 px × ART_SCALE), one column more for the scroll —
+      // 4 columns × 2 rows at 384×216 —, two layers share BG_MID.
+      const tile = Math.ceil(128 * ART_SCALE);
+      const stars = (Math.ceil(PLAYFIELD_W / tile) + 1) * Math.ceil(PLAYFIELD_H / tile);
       expect([far.count, mid.count, air.count, player.count, bullets.count]).toEqual([
-        8, 16, 5, 4, 12,
+        stars,
+        2 * stars,
+        5,
+        4,
+        12,
       ]);
       expect(showcase.frame.hud.dropped).toBe(0);
     }

@@ -31,6 +31,12 @@ import { PALETTE } from '../../src/palette/index.js';
 import { createPixiRenderer } from '../../src/renderer/index.js';
 import { pageImages, testManifest } from '../helpers.js';
 
+/** The frame's whole scale on a 1920×1080 display (×5 at 384×216, ×3 at 640×360). */
+const SCALE_1080P = Math.min(Math.floor(1920 / FRAME_W), Math.floor(1080 / FRAME_H));
+
+/** The frame's whole scale on a 3840×2160 display (×10 at 384×216, ×6 at 640×360). */
+const SCALE_4K = Math.min(Math.floor(3840 / FRAME_W), Math.floor(2160 / FRAME_H));
+
 /** The render-options fields the tests look at. */
 interface RenderPass {
   container: unknown;
@@ -240,7 +246,7 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     expect(renderer.viewport.scale).toBe(4);
   });
 
-  it('draws each frame in two passes: scene → render texture (cleared), then one x5 quad → screen', async () => {
+  it('draws each frame in two passes: scene → render texture (cleared), then one upscaled quad → screen', async () => {
     const renderer = await createPixiRenderer({ canvas, displayWidth: 1920, displayHeight: 1080 });
     renderer.render(frameOf(10));
     expect(record.renders).toHaveLength(2);
@@ -255,8 +261,15 @@ describe('render-pixi/renderer createPixiRenderer (mocked WebGL)', () => {
     expect(screen.children.filter((child) => child.visible)).toHaveLength(1);
     const quad = screen.children[2] as Pixi.Sprite;
     expect(quad.texture).toBe(record.textures[0]);
-    expect([quad.scale.x, quad.x, quad.y]).toEqual([5, 0, 0]);
-    expect(renderer.viewport).toMatchObject({ scale: 5, x: 0, y: 0, width: 1920, height: 1080 });
+    // The frame's whole scale on 1080p: ×5 at 384×216, ×3 at 640×360 — the full screen either way.
+    expect([quad.scale.x, quad.x, quad.y]).toEqual([SCALE_1080P, 0, 0]);
+    expect(renderer.viewport).toMatchObject({
+      scale: SCALE_1080P,
+      x: 0,
+      y: 0,
+      width: 1920,
+      height: 1080,
+    });
   });
 
   it('reuses its two pass-option objects every frame and restores what Pixi wrote into them', async () => {
@@ -828,7 +841,7 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     // Back to normal, and setting the same mode twice changes nothing.
     renderer.setAspect('normal');
     renderer.setAspect('normal');
-    expect(renderer.viewport).toMatchObject({ scale: 5, x: 0, y: 0 });
+    expect(renderer.viewport).toMatchObject({ scale: SCALE_1080P, x: 0, y: 0 });
   });
 
   it('folds the M3-02 CRT into the pass-2 blit, told the picture and the display (M3-02d)', async () => {
@@ -850,22 +863,23 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     const screen = record.renders[1]?.container as Pixi.Container;
     // The blit is the frame quad of the second pass, placed and scaled by the CRT pass.
     expect(screen.children).toContain(mesh);
-    expect([mesh.scale.x, mesh.scale.y]).toEqual([10, 10]);
+    // The frame's whole scale on 4K: ×10 at 384×216, ×6 at 640×360.
+    expect([mesh.scale.x, mesh.scale.y]).toEqual([SCALE_4K, SCALE_4K]);
     expect(renderer.crtFilter).toBe('off');
     // No filter is ever attached: `off` and `full` cost the same one draw call (review F2).
     expect(screen.filters ?? []).toEqual([]);
-    expect(applied.at(-1)).toEqual([0, 10, 0, 0, 3840, 2160]);
+    expect(applied.at(-1)).toEqual([0, SCALE_4K, 0, 0, 3840, 2160]);
     renderer.setCrtFilter('light');
     expect(renderer.crtFilter).toBe('light');
     expect(screen.filters ?? []).toEqual([]);
     // The scanline pitch is the frame's scale on the display.
-    expect(applied.at(-1)?.slice(1)).toEqual([10, 0, 0, 3840, 2160]);
+    expect(applied.at(-1)?.slice(1)).toEqual([SCALE_4K, 0, 0, 3840, 2160]);
     expect(applied.at(-1)?.[0]).toBeGreaterThan(0);
     renderer.setCrtFilter('full');
     expect(applied.at(-1)?.[0]).toBeGreaterThan(applied.at(-2)?.[0] ?? 1);
     // A resize follows the picture through.
     renderer.resize(1920, 1080);
-    expect(applied.at(-1)?.slice(1)).toEqual([5, 0, 0, 1920, 1080]);
+    expect(applied.at(-1)?.slice(1)).toEqual([SCALE_1080P, 0, 0, 1920, 1080]);
     renderer.setCrtFilter('off');
     expect(renderer.crtFilter).toBe('off');
     expect(applied.at(-1)?.[0]).toBe(0);
@@ -894,7 +908,7 @@ describe('render-pixi/renderer render contract (plan §3.4)', () => {
     expect(screen.filters ?? []).toEqual([]);
     renderer.setCrtFilter('light');
     expect(screen.filters).toEqual([fake]);
-    expect(applied.at(-1)?.slice(1)).toEqual([10, 3840, 2160]);
+    expect(applied.at(-1)?.slice(1)).toEqual([SCALE_4K, 3840, 2160]);
     expect(heights.at(-1)).toBe(2160);
     renderer.setCrtFilter('off');
     expect(screen.filters).toEqual([]);

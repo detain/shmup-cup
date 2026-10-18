@@ -11,7 +11,15 @@
  *   count, sub-kilobyte and gigabyte-scale render targets, the rounding and the right-aligned
  *   column, and the seven-line backdrop with and without the M2-17 device line.
  */
-import { DrawOp, PLAYFIELD_Y, TextAlign, createDebugFlags, type DrawList } from '@shmup/core';
+import {
+  DrawOp,
+  GLYPH_W,
+  LINE_H,
+  PLAYFIELD_Y,
+  TextAlign,
+  createDebugFlags,
+  type DrawList,
+} from '@shmup/core';
 import { TexturePool, type TexturePoolClass } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import {
@@ -23,8 +31,8 @@ import {
   setDebugPanelDevice,
 } from '../../src/debug/index.js';
 
-/** Height of one panel line, in frame pixels. */
-const ROW = 10;
+/** Height of one panel line, in frame pixels (the font's line height: 10 at 6 × 8). */
+const ROW = LINE_H;
 
 /** Screen y of the panel's first line. */
 const PANEL_Y = PLAYFIELD_Y + 2;
@@ -32,8 +40,8 @@ const PANEL_Y = PLAYFIELD_Y + 2;
 /** Screen x of the panel's first column. */
 const PANEL_X = 2;
 
-/** Width of one panel character. */
-const COL = 6;
+/** Width of one panel character (the font's cell: 6 at 6 × 8). */
+const COL = GLYPH_W;
 
 /** The one method the meter hooks, as a plain property (not an unbound class method). */
 interface PoolHandle {
