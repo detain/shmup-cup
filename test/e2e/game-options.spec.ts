@@ -13,12 +13,10 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { SAVE_FORMAT } from './save-format.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
-
-/** The save format the build writes (`core/save` `SAVE_VERSION`: 3 since v2's R2-01). */
-const SAVE_FORMAT = 3;
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(

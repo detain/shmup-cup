@@ -11,6 +11,7 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { SAVE_FORMAT } from './save-format.js';
 
 /** The save's `localStorage` key (the web adapter prefixes `core/save`'s `save.v1`). */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -208,7 +209,7 @@ test.describe('options and saves: corrupt save (web build)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.master).toBe(9);
     const save = await storedSave(page);
-    expect(save?.version).toBe(3); // `core/save` SAVE_VERSION: 3 since v2's R2-01
+    expect(save?.version).toBe(SAVE_FORMAT);
     expect(save?.options.audio).toEqual({ master: 9, music: 10, sfx: 10 });
     expect(errors).toEqual([]);
   });

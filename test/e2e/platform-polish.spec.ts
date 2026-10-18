@@ -13,6 +13,7 @@
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type ConsoleMessage, type Page } from '@playwright/test';
+import { SAVE_FORMAT } from './save-format.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -104,10 +105,9 @@ test.describe('platform polish (M2-17)', () => {
     );
     expect(exported).toBeDefined();
     const doc = JSON.parse(exported ?? '') as { version: number; stats: { gamesStarted: number } };
-    // `core/save` SAVE_VERSION: 3 since v2's R2-01.
-    expect(doc.version).toBe(3);
+    expect(doc.version).toBe(SAVE_FORMAT);
     // Readable: pretty-printed.
-    expect(exported).toContain('\n  "version": 3');
+    expect(exported).toContain('\n  "version": ' + String(SAVE_FORMAT));
 
     doc.stats.gamesStarted = 7;
     const result = await page.evaluate(
