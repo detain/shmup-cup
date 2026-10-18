@@ -173,15 +173,19 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
     encounter and the azure tileset ok — 20 tiles, each with a dark-green drop shadow to key out), the
     `special-capsules` regenerate (ok: 3×4, one kind per row) and comment edits of the spin frames and the halo frames
     (weak: FLUX.2 copies the reference's pose into every cell; at best two or three cells differ).
-  - So the halo and black-hole animation frames are being made **in code** from the winners (the satellites orbit
-    10° a frame, the spiral turns by equal steps), offered as `edit-2` in the picker.
+  - So the halo and black-hole animation frames were made **in code** from the winners and are offered as `edit-2` in
+    the picker: the halo's six satellites orbit clockwise 10° a frame (six frames loop exactly; a faint shine crosses
+    the core), the black-hole spiral turns 45° a frame (eight frames, a full turn because the three arms differ in
+    colour; the core stays fixed). Script: `art-prompts/v2/code-frames/make_frames.py` (the sidecars name its scratch
+    path; their `scriptSha256` matches the committed copy). The picker's round-2 heading still says "FLUX.2-dev edit"
+    for them; their details say `model: code`.
 - **FLUX.2 lessons from agent E:** rotation frames cannot be prompted — make them in code; per-cell colour changes land
   on the first one to three cells only; an edit of one row of a busy sheet is ignored; "rotation", "turning" or "orbit"
   draws arrows ("no arrows, no motion lines"); "a regular grid with even gutters" draws dividers — "N sprites evenly
   spaced on one continuous green background" does not; listing tiles row by row ("five tiles in every row") gives the
   asked count; "extra-life capsule", not "1UP"; "seen from the side … no vanishing point" removes the tunnel look.
 - **GPU work is finished** (skynet2 cards 2 and 3 empty, VERIFY OK, 2026-10-17 20:49). Still to do:
-  1. The owner reviews the code-made frames (and anything else) on the picker.
+  1. The owner reviews the code-made frames (`edit-2` of the halo frames and the black-hole spin frames) on the picker.
   2. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
 
 ## Round 2 — after the owner says picking is done
