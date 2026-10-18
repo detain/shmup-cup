@@ -1,7 +1,8 @@
 /**
  * Player shots meeting the terrain hit the destructible tile there (plan M2-07, `core/weapons` →
- * the World's stage gimmicks `hitTerrain`), per shot kind, in a World on a still stage with a
- * flat floor (top at y 168) and a wall at x 240 … 247 standing on it:
+ * the World's stage gimmicks `hitTerrain`), per shot kind, in a World on a still stage one
+ * playfield tall with a flat floor (top at `PLAYFIELD_H − 32`, y 168 at 384×216) and a wall at
+ * x 240 … 247 standing on it:
  *
  * - a straight shot hits once, at the pixel where it met the wall, with its damage, credited to
  *   its player;
@@ -16,10 +17,16 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type GameConfig,
+} from '../../src/config/index.js';
 import { TerrainHit } from '../../src/collision/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
+import { SPAWN_Y } from '../../src/player/index.js';
 import {
   ENGINE_SPRITES,
   createWorld,
@@ -43,20 +50,27 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /** `terrain-a` tile ids: solid rock 1, brick 18 (hp 4, 10 points). */
 const ROCK = 1;
 const BRICK = 18;
 
 /**
  * The content: both ships' weapons, `terrain-a` and a still stage with a floor and a wall column
- * (tile column 30, rows 5 … 20) of one tile.
+ * (tile column 30, rows 5 … `ROWS − 5`: from y 40 down to the floor) of one tile.
  *
  * @param tile - The wall's tile id (0 = no wall).
  * @returns The DB.
  */
 function db(tile: number): ContentDb {
   const rle: string[] = [];
-  for (let r = 0; r < 25; r++) rle.push(tile > 0 && r >= 5 && r <= 20 ? `30*0, ${tile}` : '');
+  for (let r = 0; r < ROWS; r++)
+    rle.push(tile > 0 && r >= 5 && r <= ROWS - 5 ? `30*0, ${tile}` : '');
   const { db: content, issues } = loadContent(
     [
       shipped('player/kestrel.player.json'),
@@ -78,11 +92,17 @@ function db(tile: number): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             rle,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 2384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: 2000 + PLAYFIELD_W,
+                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                },
+              ],
             },
           },
           events: [],
@@ -105,8 +125,8 @@ interface Hit {
 }
 
 /**
- * A world on the test stage, flown in without autofire, player 1 parked at (100, 100), with every
- * `hitTerrain` call recorded.
+ * A world on the test stage, flown in without autofire, player 1 parked at (100, {@link SPAWN_Y})
+ * — its fly-in row, where its Options still are — with every `hitTerrain` call recorded.
  *
  * @param content - The content.
  * @param config - Config fields over the defaults.
@@ -127,7 +147,7 @@ function world(content: ContentDb, config: Partial<GameConfig> = {}): { w: World
   const input = createInputSnapshot();
   for (let i = 0; i < 45; i++) stepWorld(w, input);
   w.players[0].x = 100;
-  w.players[0].y = 100;
+  w.players[0].y = SPAWN_Y;
   const hits: Hit[] = [];
   const gimmicks = w.gimmicks;
   const real = gimmicks.hitTerrain.bind(gimmicks);
@@ -165,7 +185,7 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     const [hit] = hits;
     expect(hit.px).toBeGreaterThanOrEqual(240);
     expect(hit.px).toBeLessThanOrEqual(247);
-    expect(Math.abs(hit.py - 100)).toBeLessThanOrEqual(8);
+    expect(Math.abs(hit.py - SPAWN_Y)).toBeLessThanOrEqual(8);
     expect(hit.amount).toBeGreaterThan(0);
     expect([hit.by, hit.result]).toEqual([0, TerrainHit.None]); // rock does not break
     expect(w.weapons.pool.count).toBe(0);
@@ -200,7 +220,7 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     run(w, Action.Shot, 1);
     run(w, 0, 40);
     expect(hits).toHaveLength(beams);
-    for (const hit of hits) expect([hit.px, hit.py, hit.by]).toEqual([240, 100, 0]);
+    for (const hit of hits) expect([hit.px, hit.py, hit.by]).toEqual([240, SPAWN_Y, 0]);
     // The beams stay blocked at the wall until they are gone: no further hits.
     run(w, 0, 120);
     expect(hits).toHaveLength(beams);
@@ -210,13 +230,13 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     const { w, hits } = world(db(ROCK), { loadout: 'full' });
     run(w, Action.Sub, 1);
     run(w, 0, 200);
-    // Each missile dropped to the floor (top 168), slid right and died in the wall's foot.
+    // Each missile dropped to the floor (top FLOOR_Y), slid right and died in the wall's foot.
     expect(hits.length).toBeGreaterThanOrEqual(1);
     for (const hit of hits) {
       expect(hit.px).toBeGreaterThanOrEqual(240);
       expect(hit.px).toBeLessThanOrEqual(247);
-      expect(hit.py).toBeGreaterThan(150);
-      expect(hit.py).toBeLessThan(168);
+      expect(hit.py).toBeGreaterThan(FLOOR_Y - 18);
+      expect(hit.py).toBeLessThan(FLOOR_Y);
       expect(hit.by).toBe(0);
     }
     expect(w.weapons.pool.count).toBe(0);
@@ -230,8 +250,8 @@ describe('core/weapons — shots hitting destructible terrain', () => {
     // pixel of the floor's top rows their bottom met.
     expect(hits.length).toBeGreaterThanOrEqual(1);
     for (const hit of hits) {
-      expect(hit.py).toBeGreaterThanOrEqual(168);
-      expect(hit.py).toBeLessThan(176);
+      expect(hit.py).toBeGreaterThanOrEqual(FLOOR_Y);
+      expect(hit.py).toBeLessThan(FLOOR_Y + 8);
       expect(hit.result).toBe(TerrainHit.None);
       expect(hit.by).toBe(0);
     }

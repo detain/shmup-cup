@@ -75,6 +75,12 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /**
  * The KESTREL, the shipped tileset and a static stage `t` with a flat 32-px floor (one checkpoint,
  * at 0).
@@ -102,10 +108,16 @@ function db(extraSprites: readonly string[] = ENGINE_SPRITES): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: 3000 + PLAYFIELD_W,
+                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                },
+              ],
             },
           },
           events: [],
@@ -345,7 +357,7 @@ describe('core/bullets edge: spawning', () => {
     p2.active = true;
     w.players[0].state = 'dying';
     p2.x = 200;
-    p2.y = 190; // straight below
+    p2.y = FLOOR_Y + 22; // straight below
     expect(w.bullets.aimFrom(origin(200, 100))).toBe(256);
     p2.state = 'respawning';
     expect(w.bullets.aimFrom(origin(200, 100))).toBe(NO_TARGET_ANGLE);
@@ -365,7 +377,7 @@ describe('core/bullets edge: spawning', () => {
 describe('core/bullets edge: setters', () => {
   it('ignore slots out of range and slots removed this tick', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     w.bullets.spawn(100, 100, 0, 1, 0);
     w.bullets.spawn(120, 100, 0, 1, 0);
@@ -405,7 +417,7 @@ describe('core/bullets edge: setters', () => {
 
   it('setDelay: < 1 / NaN launch at once (no re-aim), fractions floor, 0 cancels a delay', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const cases: Array<[number, number]> = [
@@ -450,7 +462,7 @@ describe('core/bullets edge: setters', () => {
     w.bullets.setDelay(aimed, 2, true);
     run(w, 2);
     expect([f.angle[kept], f.angle[aimed]]).toEqual([0, 0]);
-    park(w, 200, 180); // straight below the bullets at launch
+    park(w, 200, FLOOR_Y + 12); // straight below the bullets at launch
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     run(w, 1);
     expect([f.angle[kept], f.angle[aimed]]).toEqual([0, 256]);
@@ -478,7 +490,7 @@ describe('core/bullets edge: setters', () => {
 
   it('setChange: 0 / negative cancel, fractions floor, a past age never fires, angles wrap', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const a = w.bullets.spawn(100, 60, 0, 1, 0);
@@ -503,7 +515,7 @@ describe('core/bullets edge: setters', () => {
 
   it('applies a change before homing, acceleration and angular velocity of the same tick', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const i = w.bullets.spawn(150, 60, 0, 1, 0);
@@ -515,7 +527,7 @@ describe('core/bullets edge: setters', () => {
 
   it('counts a change on a delayed bullet in moving ticks', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const i = w.bullets.spawn(150, 60, 0, 1, 0);
@@ -532,7 +544,7 @@ describe('core/bullets edge: setters', () => {
 
   it('setHoming: negative turn rate never turns, lifetime < 1 / NaN is off, fractions floor', () => {
     const w = world();
-    park(w, 100, 190);
+    park(w, 100, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const a = w.bullets.spawn(100, 40, 0, 0, 0);
@@ -589,7 +601,7 @@ describe('core/bullets edge: setters', () => {
 
   it('clamps a bullet above maxSpeed on its first accelerating tick; accel 0 never clamps', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const fast = w.bullets.spawn(100, 60, 0, 6, 0);
@@ -603,7 +615,7 @@ describe('core/bullets edge: setters', () => {
 
   it('wraps negative angular velocity below 0 and keeps fractional headings', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const i = w.bullets.spawn(150, 100, 4, 1, BulletKind.NeedlePurple);
@@ -617,7 +629,7 @@ describe('core/bullets edge: setters', () => {
 
   it('recomputes the velocity only when the speed or the heading changed', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     const plain = w.bullets.spawn(150, 100, 0, 1, 0);
@@ -733,7 +745,7 @@ describe('core/bullets edge: culling', () => {
 
   it('keeps a removed bullet hidden in [0, count) until phase 8, then compacts with fields intact', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     const f = fields(w);
     w.bullets.spawn(100, 60, 0, 0, 0); // 0: stays
@@ -759,7 +771,7 @@ describe('core/bullets edge: culling', () => {
 
   it('lets a bullet spawned after a cancel in the same tick survive the flush', () => {
     const w = world();
-    park(w, 20, 190);
+    park(w, 20, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     for (let k = 0; k < 5; k++) w.bullets.spawn(100 + k * 10, 60, 0, 0, 0);
     expect(cancelAllBullets(w, CancelMode.Sparkle)).toBe(5);
@@ -1064,7 +1076,7 @@ describe('core/bullets edge: lasers', () => {
     const aim = w.bullets.aimFrom(origin(300, 100));
     expect(aim % 32).toBe(0);
     expect([f.angle[0], f.angle[1], f.angle[2], f.angle[3]]).toEqual([aim, 768, 101, 7]);
-    park(w, 300, 190);
+    park(w, 300, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death (M1-12)
     run(w, 5);
     expect(f.angle[0]).toBe(aim); // the aim is not tracked

@@ -8,7 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyFlag, EnemyState } from '../../src/enemies/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
@@ -30,6 +30,9 @@ function shipped(path: string): ContentFile {
     ) as unknown,
   };
 }
+
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
 
 /**
  * The KESTREL, Type A, the shipped tileset, two scriptless targets and a static stage whose floor
@@ -75,10 +78,16 @@ function db(): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 12, period: 96, seed: 4 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: 3000 + PLAYFIELD_W,
+                  floor: { base: 32, amp: 12, period: 96, seed: 4 },
+                },
+              ],
             },
           },
           events: [],
@@ -102,9 +111,10 @@ function world(): World {
   while (w.players[0].state !== 'alive') stepWorld(w, input);
   w.players[0].invulnTicks = 1e9;
   const map = w.terrain!;
-  // Walls at x 272 and 336, from the floor up to y 120: missiles die there, shots too.
+  // Walls at x 272 and 336, from the floor up to 80 px above the map's bottom (y 120 at
+  // 384×216): missiles die there, shots too.
   for (const col of [34, 42]) {
-    for (let row = 15; row < map.rows; row++) map.tiles[row * map.cols + col] = 1;
+    for (let row = ROWS - 10; row < map.rows; row++) map.tiles[row * map.cols + col] = 1;
   }
   return w;
 }

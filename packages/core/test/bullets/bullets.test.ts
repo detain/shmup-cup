@@ -63,6 +63,12 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
+
 /**
  * Test content: the KESTREL, the shipped tileset and a static stage with a flat 32-px floor.
  *
@@ -89,10 +95,16 @@ function db(extraSprites: readonly string[] = ENGINE_SPRITES): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: 3000 + PLAYFIELD_W,
+                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                },
+              ],
             },
           },
           events: [],
@@ -416,7 +428,7 @@ describe('core/bullets kinematics', () => {
 
   it('changes speed and / or heading when its age reaches changeAt (NaN keeps, AIM re-aims)', () => {
     const w = world();
-    park(w, 150, 190);
+    park(w, 150, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death
     const a = w.bullets.spawn(100, 40, 0, 1, 0);
     w.bullets.setChange(a, 3, 0.25, UNCHANGED);
@@ -432,7 +444,7 @@ describe('core/bullets kinematics', () => {
 
   it('homes by at most turnRate per tick for its lifetime, then flies straight', () => {
     const w = world();
-    park(w, 100, 190);
+    park(w, 100, FLOOR_Y + 22);
     w.debugFlags.godMode = true; // parked in the floor: no terrain death
     const i = w.bullets.spawn(100, 40, 0, 1, 0);
     w.bullets.setHoming(i, 8, 5);

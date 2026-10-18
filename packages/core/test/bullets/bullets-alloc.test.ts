@@ -16,7 +16,7 @@ import {
   MAX_ENEMY_LASERS,
   fireLaser,
 } from '../../src/bullets/index.js';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { fireNWay, fireRing } from '../../src/patterns/index.js';
@@ -37,6 +37,12 @@ function shipped(path: string): ContentFile {
     ) as unknown,
   };
 }
+
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
+/** World y of the flat floor's top, 32 px above the map's bottom edge (168 at 384×216). */
+const FLOOR_Y = PLAYFIELD_H - 32;
 
 /**
  * The KESTREL, the shipped tileset and a static stage with a flat 32-px floor.
@@ -63,10 +69,16 @@ function db(): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: 3000 + PLAYFIELD_W,
+                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                },
+              ],
             },
           },
           events: [],
@@ -140,7 +152,7 @@ describe('core/bullets allocation', () => {
     left.y = 60;
     const low = new BulletOrigin();
     low.x = 300;
-    low.y = 150;
+    low.y = FLOOR_Y - 18;
     const input = createInputSnapshot();
     let t = 0;
     const growth = measureHeapGrowth(

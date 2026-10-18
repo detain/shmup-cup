@@ -22,6 +22,7 @@ import { EnemyFlag, type Enemy } from '../../src/enemies/index.js';
 import { SFX_CUES, SimEventKind } from '../../src/events/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
 import { SLEEP_FOREVER, type Script } from '../../src/patterns/index.js';
+import { SPAWN_Y } from '../../src/player/index.js';
 import { ShotFlag } from '../../src/weapons/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 import { MANTA, shipped } from '../helpers/direct.js';
@@ -267,7 +268,8 @@ describe('core/weapons — passArmour on boss parts (M2-18)', () => {
 });
 
 /**
- * Parks the MANTA at (40, 100) of the screen with an invulnerable enemy 50 px ahead and a target
+ * Parks the MANTA at (40, {@link SPAWN_Y}) of the screen — its fly-in row, which the wave it fired
+ * on its first live tick flies along too — with an invulnerable enemy 50 px ahead and a target
  * 150 px ahead, and lets one slow wave (one volley at a time) fly through both.
  *
  * @param db - The content.
@@ -278,7 +280,7 @@ function slowPass(db: ContentDb, ticks: number): { clinks: number[]; targetLost:
   const w = mantaWorld(db, 'still');
   const ship = w.players[0];
   ship.x = w.camera.x + 40;
-  ship.y = w.camera.y + 100;
+  ship.y = w.camera.y + SPAWN_Y;
   const spawn = (id: string, dx: number): Enemy => {
     const e = w.enemies.spawn(db.enemyIndex.get(id) ?? -1, ship.x + dx, ship.y);
     expect(e).not.toBeNull();

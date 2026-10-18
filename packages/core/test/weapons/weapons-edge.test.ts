@@ -24,7 +24,12 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type GameConfig,
+} from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -193,6 +198,9 @@ function enemy(id: string, over: Record<string, unknown> = {}): Record<string, u
   };
 }
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
 /**
  * A stage file with a flat 32-px floor.
  *
@@ -216,10 +224,12 @@ function stageFile(id: string, speed: number): ContentFile {
       tilemap: {
         tileSize: 8,
         tileset: 'terrain-a',
-        rowsTall: 25,
+        rowsTall: ROWS,
         generator: {
           type: 'heightfield',
-          segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+          segments: [
+            { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+          ],
         },
       },
       events: [],
@@ -461,7 +471,8 @@ function hitList(w: World): [number, number][] {
 }
 
 /**
- * Clears the terrain of a world and lays a flat floor (surface y 160) under columns `0 … 59`.
+ * Clears the terrain of a world and lays a flat floor (surface y 160) out to 96 px past the view's
+ * right edge (columns `0 … 59` at 384×216).
  *
  * @param w - The world (with a stage).
  * @returns A tile setter `(col, row, tile)`.
@@ -472,7 +483,8 @@ function flatFloor(w: World): (col: number, row: number, tile: number) => void {
   const set = (col: number, row: number, tile: number): void => {
     map.tiles[row * map.cols + col] = tile;
   };
-  for (let col = 0; col < 60; col++) {
+  // Out to 96 px past the view's right edge (60 columns at 384×216).
+  for (let col = 0; col < (PLAYFIELD_W + 96) / 8; col++) {
     for (let row = 21; row < map.rows; row++) set(col, row, 1);
     set(col, 20, 2);
   }
@@ -830,7 +842,7 @@ describe('core/weapons edge cases — firing', () => {
   it('refires a cap-1 weapon the tick after its shot is freed (the timer ran out long ago)', () => {
     const content = db(typeA({ 'shot.basic': { cap: 1 } }));
     const gapsFor = (config: Partial<GameConfig>): number[] => {
-      const w = world(config, content, 40, 100);
+      const w = world(config, content, PLAYFIELD_W - 344, 100);
       const fired: number[] = [];
       for (let t = 0; t < 200; t++) {
         run(w, 1);
@@ -840,9 +852,11 @@ describe('core/weapons edge cases — firing', () => {
       }
       return fired.slice(1).map((t, k) => t - fired[k]);
     };
-    // Spawned at x 48, it moves 7 px/tick and is culled once past 400: after 51 moves.
+    // The ship sits 344 px left of the view's right edge (x 40 at 384×216): its shot spawns 8 px
+    // ahead, moves 7 px/tick and is culled once past the right edge + 16, after 51 moves.
+    const spawnX = PLAYFIELD_W - 336;
     let moves = 1;
-    while (48 + 7 * moves <= 400) moves++;
+    while (spawnX + 7 * moves <= PLAYFIELD_W + SHOT_CULL_MARGIN) moves++;
     expect(moves).toBe(51);
     expect(new Set(gapsFor({}))).toEqual(new Set([moves]));
     // A longer interval wins over the cap.
@@ -1033,16 +1047,19 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
   });
 
   it('culls straight shots exactly at the view ± 16 px on every side', () => {
-    // Free flight: the camera sits at (0, 0), so the kept area is x −16…400, y −16…216.
+    // Free flight: the camera sits at (0, 0), so the kept area is x −16…right, y −16…bottom
+    // (400 and 216 at 384×216).
+    const right = PLAYFIELD_W + SHOT_CULL_MARGIN;
+    const bottom = PLAYFIELD_H + SHOT_CULL_MARGIN;
     const cases: [string, number, number, boolean][] = [
-      ['right edge', 400 - 15, 100, true],
-      ['past the right edge', 400 - 15 + 0.5, 100, false],
+      ['right edge', right - 15, 100, true],
+      ['past the right edge', right - 15 + 0.5, 100, false],
       ['left edge', -16 - 15, 100, true],
       ['past the left edge', -16 - 15 - 0.5, 100, false],
       ['top edge', 100, -16, true],
       ['past the top edge', 100, -16.25, false],
-      ['bottom edge', 100, 216, true],
-      ['past the bottom edge', 100, 216.25, false],
+      ['bottom edge', 100, bottom, true],
+      ['past the bottom edge', 100, bottom + 0.25, false],
     ];
     for (const [label, x, y, kept] of cases) {
       const w = world(MANUAL);
@@ -1053,14 +1070,15 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
   });
 
   it('culls a laser by its head on the left and by its tail on the right', () => {
+    const right = PLAYFIELD_W + SHOT_CULL_MARGIN; // 400 at 384×216
     const cases: [string, number, number, boolean][] = [
       // [label, head before the tick, length before the tick, kept]
       ['head at the left edge', -16 - 10, 0, true],
       ['head past the left edge', -16 - 10.5, 0, false],
-      ['tail at the right edge', 400 + 64 - 10, 54, true],
-      ['tail past the right edge', 400 + 64 - 10 + 0.5, 54, false],
-      ['head past the right edge, tail inside', 500, 64, false],
-      ['head far right, tail inside', 450, 60, true],
+      ['tail at the right edge', right + 64 - 10, 54, true],
+      ['tail past the right edge', right + 64 - 10 + 0.5, 54, false],
+      ['head past the right edge, tail inside', right + 100, 64, false],
+      ['head far right, tail inside', right + 50, 60, true],
     ];
     for (const [label, head, length, kept] of cases) {
       const w = world(MANUAL);
@@ -1201,7 +1219,7 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
     expect(slid.some((p) => p.x >= 200 && p.y === 158)).toBe(true);
     for (const p of slid) expect([150, 158]).toContain(p.y);
     // It left the view on the right (no wall ahead).
-    expect(path[path.length - 1].x).toBeGreaterThan(390);
+    expect(path[path.length - 1].x).toBeGreaterThan(PLAYFIELD_W + 6);
   });
 
   it('dies at an 8-px step and falls off the far side when it may climb 7 px (slideSpeed 6)', () => {
@@ -1279,9 +1297,9 @@ describe('core/weapons edge cases — flight, culling and terrain', () => {
       ticks++;
       for (const m of shots(free)) if ((m.flags & ShotFlag.Sliding) !== 0) sliding = true;
     }
-    // From y 104 at 2.5·sin 45° per tick until past 216.
+    // From y 104 at 2.5·sin 45° per tick until past the view's bottom edge + 16 (216 at 384×216).
     let moves = 1;
-    while (104 + sinB(128) * 2.5 * moves <= 216) moves++;
+    while (104 + sinB(128) * 2.5 * moves <= PLAYFIELD_H + SHOT_CULL_MARGIN) moves++;
     expect(ticks).toBe(moves);
     expect(sliding).toBe(false);
   });

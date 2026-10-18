@@ -8,7 +8,12 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import {
+  PLAYFIELD_H,
+  PLAYFIELD_W,
+  resolveGameConfig,
+  type GameConfig,
+} from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -86,6 +91,9 @@ const ENEMIES = [
   enemy('armor', { hp: 5 }),
 ];
 
+/** Rows of the test stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
 /**
  * Test content: the KESTREL, Type A weapons (or `weapons`), the shipped tileset, the test enemies
  * and a static stage `t` with a flat 32-px floor.
@@ -124,10 +132,12 @@ function db(
         tilemap: {
           tileSize: 8,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           generator: {
             type: 'heightfield',
-            segments: [{ from: 0, to: 3384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+            segments: [
+              { from: 0, to: 3000 + PLAYFIELD_W, floor: { base: 32, amp: 0, period: 64, seed: 1 } },
+            ],
           },
         },
         events: [],
@@ -572,7 +582,10 @@ describe('core/weapons', () => {
 
   it('rate-limits the shot SFX to one per 4 ticks per cue', () => {
     const w = world({ loadout: 'full' });
-    const events = run(w, 200);
+    // Free flight: a shooter refires once its laser leaves the view on the right and its missile
+    // falls out of the bottom, so the cycles are longer in a larger frame — 400 ticks hold three
+    // missile cycles at 640×360 too.
+    const events = run(w, 400);
     for (const cue of [SFX_CUES.PlayerShot, SFX_CUES.PlayerMissile]) {
       const ticks = events
         .filter((e) => e.kind === SimEventKind.Sfx && e.id === cue)
