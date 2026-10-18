@@ -8,7 +8,7 @@
  * At 384×216 the scale is 3: the viewport is 1152×648 and frame pixel `(x, y)` is screenshot pixel
  * `(3x + 1, 3y + 1)`. After R2-01 (640×360) it is 2: 1280×720 and `(2x + 1, 2y + 1)`.
  *
- * The frame constants (with the font's cell width `GLYPH_W` and the tile edge `TILE_SIZE`) are
+ * The frame constants (with the font's cell `GLYPH_W` × `GLYPH_H`, the tile edge `TILE_SIZE`) are
  * re-exported from `scripts/frame.mjs` (the scripts' mirror of `@shmup/core`, pinned by
  * `test/scripts/frame.test.ts`), so a spec imports everything it needs from this one module. They
  * are the **frame**: positions that come from content (an area of a stage's art, a camera y, a
@@ -36,9 +36,11 @@ export {
   FRAME_CY,
   FRAME_H,
   FRAME_W,
+  GLYPH_H,
   GLYPH_W,
   HUD_BAR_HEIGHT,
   HUD_BOTTOM_Y,
+  LINE_H,
   PLAYFIELD_CY,
   PLAYFIELD_H,
   PLAYFIELD_W,
