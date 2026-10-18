@@ -137,47 +137,91 @@ function frame(g: Game, p: Presentation): void {
   p.particles.sync(g.world.camera);
 }
 
+/** What one session on the shipped test range showed ({@link rangeRun}). */
+interface RangeRun {
+  /** The game with the effects connected, after the run. */
+  readonly game: Game;
+  /** Its presentation. */
+  readonly p: Presentation;
+  /** `[tick, hash with the effects, hash of the twin without]`, every 500 ticks and at the end. */
+  readonly hashes: Array<readonly [number, number, number]>;
+  /** The most particles live at once. */
+  readonly most: number;
+  /** Kill bursts (`Particles` events). */
+  readonly bursts: number;
+  /** Formation bonus points. */
+  readonly bonuses: number;
+  /** Formation bonus events worth a point or more. */
+  readonly bonusEvents: number;
+}
+
+/** The test range's run, played once per file ({@link rangeRun}). */
+let rangeRunMemo: RangeRun | null = null;
+
+/**
+ * The shipped test range played for 4000 ticks with autofire in god mode, its events drained into
+ * the real effects, next to a twin game with nothing connected. Played once and shared by the
+ * tests that read it: whichever runs first plays it.
+ *
+ * @returns The run.
+ */
+function rangeRun(): RangeRun {
+  if (rangeRunMemo) return rangeRunMemo;
+  const game = createGame(createHeadlessPlatform(), { seed: 21, stage: 'test-range' }, DB);
+  game.world.debugFlags.godMode = true;
+  const twin = createGame(createHeadlessPlatform(), { seed: 21, stage: 'test-range' }, DB);
+  twin.world.debugFlags.godMode = true;
+  const p = presentation(5);
+  const hashes: Array<readonly [number, number, number]> = [];
+  let most = 0;
+  let bursts = 0;
+  let bonuses = 0;
+  let bonusEvents = 0;
+  p.dispatcher.on(SimEventKind.Particles, () => bursts++);
+  p.dispatcher.on(SimEventKind.FormationBonus, (event) => {
+    bonuses += event.param;
+    if (event.param >= 1) bonusEvents++;
+  });
+  for (let t = 0; t < 4000; t++) {
+    frame(game, p);
+    twin.step();
+    twin.events.clear();
+    if (p.particles.liveCount > most) most = p.particles.liveCount;
+    if (t % 500 === 0) hashes.push([t, hashWorld(game.world), hashWorld(twin.world)]);
+  }
+  hashes.push([4000, hashWorld(game.world), hashWorld(twin.world)]);
+  rangeRunMemo = { game, p, hashes, most, bursts, bonuses, bonusEvents };
+  return rangeRunMemo;
+}
+
 describe('shell/dispatch game feel end to end (shipped content)', () => {
-  // The kills it counts come from the shipped test range's v1-scale placements (R2-01: at
-  // 640×360 the unported range gives 4 kill bursts, under the 5 it asks for) — gated until R2-02.
-  itPortPending('bursts and pops the kills of the test range; the sim does not notice', () => {
-    const g = createGame(createHeadlessPlatform(), { seed: 21, stage: 'test-range' }, DB);
-    g.world.debugFlags.godMode = true;
-    const twin = createGame(createHeadlessPlatform(), { seed: 21, stage: 'test-range' }, DB);
-    twin.world.debugFlags.godMode = true;
-    const p = presentation(5);
-    let most = 0;
-    let bursts = 0;
-    let bonuses = 0;
-    let bonusEvents = 0;
-    p.dispatcher.on(SimEventKind.Particles, () => bursts++);
-    p.dispatcher.on(SimEventKind.FormationBonus, (event) => {
-      bonuses += event.param;
-      if (event.param >= 1) bonusEvents++;
-    });
-    for (let t = 0; t < 4000; t++) {
-      frame(g, p);
-      twin.step();
-      twin.events.clear();
-      if (p.particles.liveCount > most) most = p.particles.liveCount;
-      if (t % 500 === 0) expect(hashWorld(g.world), `tick ${t}`).toBe(hashWorld(twin.world));
-    }
-    expect(hashWorld(g.world)).toBe(hashWorld(twin.world));
-    expect(bursts).toBeGreaterThan(5);
+  it('bursts and pops the kills of the test range; the sim does not notice', () => {
+    const { game, p, hashes, most, bursts, bonuses, bonusEvents } = rangeRun();
+    for (const [t, connected, bare] of hashes) expect(connected, `tick ${t}`).toBe(bare);
+    expect(bursts).toBeGreaterThan(0);
     expect(most).toBeGreaterThan(0);
     expect(most).toBeLessThanOrEqual(PARTICLE_CAPACITY);
-    expect(p.scores.length).toBeGreaterThan(5);
+    expect(p.scores.length).toBeGreaterThan(0);
     for (const [player, x, y, points] of p.scores) {
       expect(player).toBe(0);
       expect(Number.isInteger(x) && Number.isInteger(y)).toBe(true);
       expect(Number.isInteger(points) && points >= 1).toBe(true);
     }
     const popped = p.scores.reduce((sum, [, , , points]) => sum + points, 0);
-    expect(popped + bonuses).toBeLessThanOrEqual(g.world.scoring.board.scores[0].score);
+    expect(popped + bonuses).toBeLessThanOrEqual(game.world.scoring.board.scores[0].score);
     // One white popup per kill, one gold one per completed formation.
     const colours = (color: number): number => p.shown.filter(([, c]) => c === color).length;
     expect(colours(SCORE_POPUP_COLOR)).toBe(p.scores.length);
     expect(colours(BONUS_POPUP_COLOR)).toBe(bonusEvents);
+  });
+
+  // How many it kills comes from the shipped test range's v1-scale placements (R2-01: at 640×360
+  // the unported range gives 4 kill bursts and 4 score events, under the 5 asked for) — only these
+  // two counts are gated, until R2-02 ports the content.
+  itPortPending('kills more than five of the test range in 4000 ticks', () => {
+    const { p, bursts } = rangeRun();
+    expect(bursts).toBeGreaterThan(5);
+    expect(p.scores.length).toBeGreaterThan(5);
   });
 
   it('mirrors the sim shake, flash and dim tick for tick through the test boss fight', () => {
