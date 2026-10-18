@@ -6,8 +6,9 @@ its row in `plan_resolution.md` §1 ("Decisions made while the plan runs") from 
 builds it; this file keeps the whole list in one place for the run.
 
 **Status:** *adopted* (the default is the run's rule), *done* (already built on `master`), *moot* (overtaken),
-*open* (an owner answer is still wanted; the default holds meanwhile), *default adopted — owner to confirm* (new in
-the re-plan of 2026-10-18: the default is the run's rule, but the owner has not seen it yet).
+*open* (an owner answer is still wanted; the default holds meanwhile), *owner-confirmed 2026-10-18* (new in the
+re-plan of 2026-10-18 and confirmed by the owner the same day: the run's rule), *decided by the owner* (the owner
+gave the answer; it replaces the default).
 
 ## 1. Decisions of this schedule (RUN-1 … RUN-14)
 
@@ -94,9 +95,9 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 
 | ID | Decision (the default) | Status |
 |---|---|---|
-| **RR-1** | **v2 art beside v1; scale 1 stays the v1 art until R6.** A pixel map's v2 version is a sibling `<path>.v2.sprite.json` (native implied, used only at art scale ≠ 1); a generator branches on `options.artScale`; a v2 font is a `"native": true` font file with the same `name`; at scale 1 a PNG override of a name that has a code source is skipped. The digest pin, the TV bench, the CJK figures and the store icons never move; R6-03 deletes the v1 sources (built by `R4-P.P3`) | adopted |
-| **RR-1a** | **New in the re-plan — owner to confirm.** **A new sprite name with only a v2 source** (e.g. `ships/manta-thruster`, `ui/title-backdrop`) is absent from the scale-1 build. That is allowed: the scale-1 consumers (the TV bench atlas, the CJK figures, the store icons until R4-05.E5) never draw it, `pnpm content:check` and the content tests run on the default scale, and the scale-1 digest pin holds. No v1 stand-in is drawn for it (applies to R4-01.A2, R4-05.E2, every R4 / R5 new name) | default adopted — owner to confirm |
-| **RR-1b** | **New in the re-plan — owner to confirm.** **Frame counts at scale 1:** when core starts reading more frames than a v1 source has (Option frames 2–3, black-hole frames 4–7, bank frames 3–4), only the v2 art gets them. The scale-1 atlas is never played; the relation tests skip native sprites (`R4-P.P3`); R6-03 retires the scale-1 builds (applies to R4-01.A1b, A3, A8) | default adopted — owner to confirm |
+| **RR-1** | **v2 art beside v1; scale 1 stays the v1 art until a v2.0.x clean-up after the release.** A pixel map's v2 version is a sibling `<path>.v2.sprite.json` (native implied, used only at art scale ≠ 1); a generator branches on `options.artScale`; a v2 font is a `"native": true` font file with the same `name`; at scale 1 a PNG override of a name that has a code source is skipped. The digest pin, the TV bench and the CJK figures never move (the store icons only once, at `R4-05.E5`, RR-3); a v2.0.x step after the release deletes the v1 sources (built by `R4-P.P3`) — deferred from R6-03, because it would move the whole pipeline right before the one full suite; [`wave-15.md`](wave-15.md) § "Not in this wave" lists the step | adopted |
+| **RR-1a** | **New in the re-plan; owner-confirmed 2026-10-18.** **A new sprite name with only a v2 source** (e.g. `ships/manta-thruster`, `ui/title-backdrop`) is absent from the scale-1 build. That is allowed: the scale-1 consumers (the TV bench atlas, the CJK figures, the store icons until R4-05.E5) never draw it, `pnpm content:check` and the content tests run on the default scale, and the scale-1 digest pin holds. No v1 stand-in is drawn for it (applies to R4-01.A2, R4-05.E2, every R4 / R5 new name) | owner-confirmed 2026-10-18 |
+| **RR-1b** | **New in the re-plan; owner-confirmed 2026-10-18.** **Frame counts at scale 1:** when core starts reading more frames than a v1 source has (Option frames 2–3, black-hole frames 4–7, bank frames 3–4), only the v2 art gets them. The scale-1 atlas is never played; the relation tests skip native sprites (`R4-P.P3`); a v2.0.x step after the release retires the scale-1 builds (deferred from R6-03 like RR-1's clean-up; [`wave-15.md`](wave-15.md) § "Not in this wave") (applies to R4-01.A1b, A3, A8) | owner-confirmed 2026-10-18 |
 | **RR-2** | The v2 font cell is **9×12, line 15, advance 9** (today's `GLYPH_W` / `GLYPH_H` / `LINE_H`), so no layout moves | adopted (owner may confirm) |
 | **RR-3** | The store icons stay on `artScale: 1` until `R4-05.E5` moves them to the v2 art once | adopted |
 | **RR-4** | Agent-made v2 art draws from the bible's text, the v1 designs and the palette tables; Qwen-Image, SD3.5 and Wan winners only once committed and content-reviewed; **never a FLUX winner** while FLUX is on hold | adopted (until the FLUX decision) |
@@ -109,9 +110,9 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 
 | ID | Decision (the default) | Status |
 |---|---|---|
-| **R5-D1** | **Zones build in parallel and land one at a time** (overrides §11's "previous zone step" and "one sim-changing lane at a time"), with stable hash keys (`R5-P.P1`), `golden:update -- --only` (`R5-P.P3`), the fingerprint write mode (`R5-P.P10`) and the land lock. Zone A lands first; zone H's echoes wait for A, B, D and F | adopted |
+| **R5-D1** | **Zones build in parallel and land one at a time** (overrides §11's "previous zone step" and "one sim-changing lane at a time"), with stable hash keys (`R5-P.P1`), `node scripts/golden-update.mjs --only <ids>` (`R5-P.P3`), the fingerprint write mode (`R5-P.P10`) and the land lock. Zone A lands first; zone H's echoes wait for A, B, D and F | adopted |
 | **R5-D2** | The v2 zone contract (`R5-P.P6`): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite; 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | adopted |
-| **R5-D3** | Zone A gets a new tileset `terrain-azure`; `terrain-a` stays for the escape, `bonus-vault` and the ranges; `R5-10.T2` decides the escape's look | adopted |
+| **R5-D3** | Zone A gets a new tileset `terrain-azure`; `terrain-a` stays for the escape, `bonus-vault` and the ranges; `R5-10.T2` adds `escape.mjs` for the escape's look (Q-13, owner-confirmed 2026-10-18) | adopted |
 | **R5-D4** | The content-DB fingerprint stays after R2-02, re-pinned only by a LAND (P10's update mode) | adopted |
 | **R5-D5** | Capacity: `MAX_BOSS_PARTS` 16 → **24**; `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 kept unless a design peaks above 80 % (built early by RUN-7) | adopted |
 | **R5-D6** | Stand-ins only for **new** sprite names; existing sprites stay interim ×1.5 until their `S3` drop | adopted |
@@ -123,6 +124,8 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 | **R6-D3** | `gh release create v2.0.0` runs only after the owner's explicit OK | adopted |
 
 ## 7. Open owner questions (none blocks; the default holds)
+
+Q-12 and Q-13 are answered (2026-10-18); their rows stay here so the history reads in one place.
 
 | ID | Question | Default meanwhile | Where it lands |
 |---|---|---|---|
@@ -137,8 +140,8 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 | **Q-9** | O9: docs screenshots at 1920×1080 instead of 1280×720? | 1280×720 | `R2-03.I3`, `R4-05.E6`, `R6-03.D4` |
 | **Q-10** | O11 (ground spawns keep their terrain spot), W3-1 … W3-12 and the W5 rows marked "owner may confirm" | Built as the defaults | §1 register |
 | **Q-11** | The shake magnitudes (R2-N7) and the feel of the spawn row (W5-2) | 2 / 3 / 6; the frame centre | R2-04's play session |
-| **Q-12** | **(new in the re-plan — default adopted, owner to confirm)** v1.x end of life (R6-03): security and crash fixes for how long? | "six months after v2.0.0" until the owner words it | `R6-03.D1` |
-| **Q-13** | **(new in the re-plan — default adopted, owner to confirm)** The escape's look (R5-D3 / `R5-10.T2`) | keeps `terrain-a`; `R5-10.T2` adds `escape.mjs` (one registry line in `procedural/index.mjs`) | `R5-10.T2` |
+| **Q-12** | **(new in the re-plan; decided by the owner 2026-10-18: security and crash fixes on `v1.x` for one year after v2.0.0)** v1.x end of life (R6-03): security and crash fixes for how long? | decided: one year after v2.0.0 | `W15.DOCS-C` (`docs/dev/build-test-deploy.md`, R6-03's "v1.x's future") |
+| **Q-13** | **(new in the re-plan; owner-confirmed 2026-10-18)** The escape's look (R5-D3 / `R5-10.T2`) | keeps `terrain-a`; `R5-10.T2` adds `escape.mjs` (two registry lines in `procedural/index.mjs` — the import and the `PROCEDURAL_GENERATORS` entry — plus `escape.mjs` in the campaign credits) | `R5-10.T2` |
 
 ## 8. Owner (Manual) work that the run lists but never waits for
 

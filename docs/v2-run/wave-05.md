@@ -3,6 +3,9 @@
 > Schedule: [`plan_resolution.md` §18](../../plan_resolution.md#18-execution-waves-for-the-10-agent-run) · how to
 > use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md) · background:
 > [`wave5-scout.md`](wave5-scout.md) §8, §9
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-02 (un-gating, the content READMEs, bench and e2e after the port, residual zone fixes, the step
 review), R3-03 (V4c, the step review), R3-04 (the step review), and the wave's docs for R2-02, R3-03 and R3-04.
@@ -22,7 +25,7 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 | 3 | `R2-02.U3` | 6 zone integration tests | — | no |
 | 4 | `R2-02.U4 → R3-03.V4c` | 11 integration tests (incl. `stage-terrain.test.ts`) | — | no |
 | 5 | `R2-02.R` | `content/*/README.md` (8) | — | no |
-| 6 | `R2-02.B → R2-02.EF` | read-only | — | yes (pass 1: bench files, then batches A–F) |
+| 6 | `R2-02.B → R2-02.EF` | read-only | — | yes (pass 1: bench files, then batches A–G) |
 | 7 | `R2-02.U5` (after U1–U4 on master) | playtest / Tiled tests, `tile-size`, `e2e-gates`, `port-pending*` (deleted), one config comment | — | no |
 | 8 | `R2-02.Z-*` — spawned only for a red zone (Z-A, Z-BC, Z-DE, Z-FG, Z-HI, Z-X) | that zone's content and tests | FINGERPRINTS (at push) | maybe (pass 2) |
 | side | carry-overs from wave 4: any of `R3-03.V2a, V2b, V4a, V4b, V5`, `R3-04.M1a … M4b`, `R3-03.V3`, `R3-04.M3a … M3e` still open | their blocks in [`wave-04.md`](wave-04.md) / [`wave-02.md`](wave-02.md) | as there | as there |
@@ -180,7 +183,8 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 - **Goal:** prove that master's e2e is green on the ported content (the content-bound specs skip on
   `PORT_UNMEASURED` by design; E0's extra gates hold).
 - **Files:** read-only.
-- **Tests:** the standard batches **A, B, C, D, E**, one after another, then **F** (Firefox determinism), each with
+- **Tests:** the standard batches **A, B, C, D, E**, then **G** once it exists (README: it holds the specs R3 adds,
+  e.g. `atlas-context-loss.spec.ts`), one after another, then **F** (Firefox determinism), each with
   `bash docs/v2-run/helpers/e2e-batch.sh <the batch's specs>` (README "The standard e2e batches"), in the background,
   polling the log.
 - **Acceptance:** 0 failures; report per batch: passed / skipped / flaky, and every skip's reason (`PORT_REASON`,

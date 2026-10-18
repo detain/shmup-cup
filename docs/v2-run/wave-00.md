@@ -1,6 +1,9 @@
 # Wave 0 — closing R2-01's review loops (old host's orchestrator, before the hand-off)
 
 > Schedule: `plan_resolution.md` §18 · how to use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md)
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-01 (its last review loop and a CI triage) · **Gate to start:** — · **Exit (summary):** C5 review 3 of
 `c67c7c9` (and any later fix → review round) at zero findings, nits included; both repeat runs of `W00.TRIAGE`
@@ -13,9 +16,14 @@ orchestrator finishes it first, as `R2-01.F1` in [wave 1](wave-01.md).
 
 Background: C5 review 2 (of `293e885` + `bc8e05d`) found 3 should-fix items and 1 nit (S1–S3, N1). C5 fix 2
 `c67c7c9` (`test(R2-01): e2e waits on ticks, not frame rate (C5 review 2)`, test files only) fixed all four. C5
-review 3 of `c67c7c9` (with the full Chromium e2e on myadmin1) was still running when this file was written. The
-driver checks the literal `**Status: open**` / `**Status: closed**` at the start of the status line: keep that
-spelling.
+review 3 of `c67c7c9` (with the full Chromium e2e on myadmin1) found 3 should-fix items and 1 nit — review 2's flake
+patterns in sibling specs. C5 fix 3 `8ff2bf6` (`test(R2-01): one shared tick helper; the remaining e2e waits count
+ticks (C5 review 3)`, test files only: the new `test/e2e/ticks.ts` and `test/integration/e2e-ticks.test.ts`) and C5
+fix 4 `543887b` (`test(R2-01): every e2e boot wait allows BOOT_TIMEOUT_MS; fly-in and item polls count ticks (C5
+review 3)`, test files only) pushed those fixes and the sweep that followed. C5 review 4 (with the slow-host repro and
+the myadmin1 run) and any fix → new review round after it belong to this loop too. The driver checks the literal
+`**Status: open**` /
+`**Status: closed**` at the start of the status line: keep that spelling.
 
 - **The new run's orchestrator**, before wave 1, reads the status line on `origin/master`:
   - **closed:** nothing of wave 0 is left (C5 review 3 already ran its e2e on myadmin1); go to wave 1.
@@ -68,14 +76,15 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 - **Goal:** explain, and fix if real, the three e2e failures that were red on GitHub CI only (shard 1, since
   `ac40436`) and the flake seen on myadmin1. **Fixed in `c67c7c9`** (see [`handoffs-w4.md`](handoffs-w4.md) Appendix A
   (d) and the "C5 review 2" bullet under R2-01's As built). Left: the two repeat runs under **Tests**, checked by C5
-  review 3. Today's lines (on `c67c7c9`; they were `:241` / `:355`, `:233` and `:114` on `bc8e05d`):
-  - `test/e2e/campaign-run.spec.ts:298` — "A → B → D → F → H: every tally and map, …" (zone B's `clearZone` stayed in
+  review 3. Today's lines (on `543887b`; they were `:241` / `:355`, `:233` and `:114` on `bc8e05d`, and `:298` /
+  `:411`, `:261` and `:152` on `c67c7c9`):
+  - `test/e2e/campaign-run.spec.ts:217` — "A → B → D → F → H: every tally and map, …" (zone B's `clearZone` stayed in
     `game` instead of reaching `stageClear`; atlas pages `0,2`);
-  - `test/e2e/campaign-run.spec.ts:411` — ``the remote`s OK skips the tally and launches the next zone`` (the Tizen
+  - `test/e2e/campaign-run.spec.ts:335` — ``the remote`s OK skips the tally and launches the next zone`` (the Tizen
     build);
-  - `test/e2e/debug-tools.spec.ts:261` — "Tizen build via file://: after the unlock, 4 freezes and each 5 runs one
+  - `test/e2e/debug-tools.spec.ts:236` — "Tizen build via file://: after the unlock, 4 freezes and each 5 runs one
     tick" (`frameAdvance` stayed `false` after the debug unlock and remote 4);
-  - `test/e2e/flight.spec.ts:152` — "arrow keys move the KESTREL; without input it stays put" (the idle drift was
+  - `test/e2e/flight.spec.ts:153` — "arrow keys move the KESTREL; without input it stays put" (the idle drift was
     0.96 px against a 0.5 px limit, one flaky run on myadmin1).
 - **Files:** `test/e2e/campaign-run.spec.ts`, `test/e2e/debug-tools.spec.ts`, `test/e2e/flight.spec.ts`,
   `test/e2e/raster.spec.ts`; app or shell source only for a real bug, reported first.

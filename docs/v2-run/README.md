@@ -107,18 +107,23 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    (`behaviors/index.ts` 3,337 lines, `data/index.ts` 5,544, `scenes/index.ts` 10,865, `content.test.ts` 2,315):
    edit with exact old/new strings, never rewrite the whole file.
 3. **Targeted tests only.** Vitest with `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project <p> <files>`. Never run
-   `pnpm test`, `pnpm test:e2e` or the whole `pnpm bench`: the one full suite runs in wave 15. Run the typecheck of
+   `pnpm test`, `pnpm test:e2e` or the whole `pnpm bench`: the one full suite runs in wave 15. The one exception:
+   the port's barrier — `R2-02.RV-A2` (wave 2), `R2-02.RV-pre` and `R2-02.S` (wave 4) — runs whole Vitest projects,
+   as their blocks say; that is the barrier, not the full suite. Run the typecheck of
    what you touched (`pnpm --filter <pkg> typecheck`; `pnpm typecheck:root` for files outside `packages/` and
    `apps/`), and `pnpm exec eslint <files> && pnpm exec prettier --check <files>`. Markdown is not formatted by
    Prettier; keep its tables readable.
 4. **e2e only through the lock.** `bash docs/v2-run/helpers/e2e-batch.sh <≤ 10 specs>` builds the three test
    builds, waits for `/tmp/shmup-cup-e2e.lock` and runs the specs (Firefox: `E2E_PROJECT=firefox`). opencode's shell
    tool stops a foreground command after 2 minutes: start the batch with the shell tool's `background: true` (or
-   `nohup bash docs/v2-run/helpers/e2e-batch.sh … > "$RUN_DIR/<id>-e2e.log" 2>&1 &`) and poll the log. One
-   batch runs at a time on the host (the web server's port 4173 is fixed), and at most two agents of a wave do
-   e2e work. `pnpm docs:screens` and every `pnpm bench` file also run under the same lock (`flock -w 5400
-   /tmp/shmup-cup-e2e.lock <command>`), so they cannot make a timed spec flaky. A failure seen only on CI is
-   reproduced with `taskset -c 0-3` and `E2E_WORKERS=2`; a timeout is never raised blindly.
+   `nohup bash docs/v2-run/helpers/e2e-batch.sh <specs> > /home/sites/shmup-cup-run/<id>-e2e.log 2>&1 &`, with your
+   subtask id for `<id>`) and poll the log. One batch runs at a time on the host (the web server's port 4173 is
+   fixed), and at most two agents of a wave do e2e work. `pnpm docs:screens` and every `pnpm bench` file also run
+   under the same lock (`flock -w 5400 /tmp/shmup-cup-e2e.lock <command>`), so they cannot make a timed spec flaky;
+   a bench file or `pnpm docs:screens` run under the lock does not count toward a wave's two e2e agents (the lock
+   already runs it alone). A failure seen only on CI is reproduced with `taskset -c 0-3` and `E2E_WORKERS=2`; a
+   flake is checked by repeating the spec with `--repeat-each=<N> --retries=0` (the helper sets `CI=1`, which
+   otherwise gives one retry); a timeout is never raised blindly.
 5. **Push protocol.** Commit with explicit paths (`git add <paths>`; never `git add -A`), an imperative subject with
    the repository's prefix style (`feat(R2-02): …`, `test(R2-02): …`, `docs: …`), a body that says why, and no
    Co-Authored-By line (the driver's GIT block). Then `git fetch origin && git rebase origin/master`, re-run your
@@ -137,12 +142,16 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    (never merges a derived file by hand: on a conflict take master's file and regenerate), runs the targeted
    checks and pushes. Only a subtask whose block names the token (GOLDEN, FINGERPRINTS, GROUPS, DOCS-IMAGES, STORE)
    may change those files. A fingerprint moved by a change that should not move it is a bug: stop and report.
-7. **Never:** `pnpm golden:update` unless your block holds GOLDEN; `SHMUP_V1_BASELINE_UPDATE` (the v1 baseline is
-   frozen for good); raising a budget (allocation, bundle, draw calls, atlas bytes) to get green; deleting or
-   skipping a failing test to get green; editing `plan_resolution.md`, `CHANGELOG.md`, `README.md`, `CLAUDE.md`,
-   `docs/**` or `docs/dev/api-reference.md` unless you are a docs agent (builders list their **docs needs** in the
-   report); adding a dependency or touching `pnpm-lock.yaml`; packaging, signing, deploying or any TV / `sdb` /
-   Tizen CLI command; touching skynet2, `art-prompts/v2/server.sh` or port 30000.
+7. **Never:** `pnpm golden:update` (or `node scripts/golden-update.mjs`) unless your block holds GOLDEN, LAND or
+   GLOBAL; `SHMUP_V1_BASELINE_UPDATE` (the v1 baseline is frozen for good); raising a budget (allocation, bundle,
+   draw calls, atlas bytes) to get green; deleting or skipping a failing test to get green; editing
+   `plan_resolution.md`, `CHANGELOG.md`, `README.md`, `CLAUDE.md`, `docs/**` or `docs/dev/api-reference.md` unless
+   you are a docs agent (builders list their **docs needs** in the report) — or unless your block names a
+   `docs/v2-run/` file as yours: the zone designers `R5-P.D-A` … `R5-P.D-I` commit their design file
+   `docs/v2-run/designs/zone-<x>.md` (a `docs:` commit), and `R5-P.LAND` commits `docs/v2-run/helpers/land-zone.sh`
+   and its row in `docs/v2-run/helpers/README.md`; adding a dependency or touching `pnpm-lock.yaml`; packaging,
+   signing, deploying or any TV / `sdb` / Tizen CLI command; touching skynet2, `art-prompts/v2/server.sh` or port
+   30000.
 8. **Frame ≠ world** (`plan_resolution.md` §2.6). The frame is 640×360 (playfield 640×336, 12-px HUD bars, 12-px
    tiles, font cell 9×12). The world is v1 × 1.5. A value anchored to a screen edge or the centre derives from the
    frame (`PLAYFIELD_W + 16 * WORLD_SCALE`, never `PLAYFIELD_W * WORLD_SCALE`); a world length, speed, radius or
@@ -258,7 +267,8 @@ patches (`w07/patches/`); and the lane worktrees of R5 / R6 (`wt/`). It survives
 - **Art data on myadmin1 is a snapshot.** `art-prompts/v2/candidates/` (961 MB, git-ignored) and the picker's
   `data/choices.json` (at `/home/sites/mystage/public_html/shmup-cup/data/choices.json`, not served) were copied
   from the old host. The owner keeps picking on the old host, and myadmin1 cannot reach it, so **every art subtask
-  (R0-04.W1, R3-04.M1c, the R5 `S3` drops) first asks the owner for a fresh copy of `choices.json`**, and treats a
+  that reads the picks (R0-04.W1, the R5 `S3` drops, and R3-04.M1c only when it wants winners — it needs only
+  candidate images otherwise) first asks the owner for a fresh copy of `choices.json`**, and treats a
   regenerate request as done only when every slot's take is newer than the click.
 - **GPU work is done.** Only the owner starts a GPU session on skynet2 (`art-prompts/v2/server.sh`, never port
   30000).

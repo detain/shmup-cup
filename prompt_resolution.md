@@ -598,8 +598,8 @@ COMMANDS:
   E2E_WORKERS=2. Never run Playwright outside that lock. Step exact ticks (test/e2e/frame-advance.ts), sample pixels
   through test/e2e/frame-pixels.ts, never raise a timeout blindly.
 - Never: git stash (the stash is shared by every worktree); git checkout / git reset on files you did not change;
-  git add -A or git add .; pnpm golden:update unless you hold GOLDEN; editing a .replay.json or a fingerprint's PINNED
-  table by hand.
+  git add -A or git add .; pnpm golden:update or node scripts/golden-update.mjs unless you hold GOLDEN, LAND or
+  GLOBAL; editing a .replay.json or a fingerprint's PINNED table by hand.
 
 STAY INSIDE YOUR FILES. If your task truly needs a file outside YOUR FILES and no other lane or token owns it (a test
 helper only you use), change it and list it under "Files outside my list". If it is a token's file or another lane's

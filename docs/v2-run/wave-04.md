@@ -3,6 +3,9 @@
 > Schedule: [`plan_resolution.md` §18](../../plan_resolution.md#18-execution-waves-for-the-10-agent-run) · how to
 > use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md) · background:
 > [`wave5-scout.md`](wave5-scout.md) §0, §1, §8
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-02 (the barrier review and the one port commit), R3-03 (V2a, V2b, V4a, V4b, V5), R3-04 (M1a, M1b,
 M1c, M2a, M2b, M4a, M4b), R0-04 (W1 owner-gated, W2).
@@ -45,7 +48,8 @@ carry over into wave 5).
    (wave 6) is the only re-bless of R2.
 4. **Side lanes are byte-neutral for the shipped atlas** unless the block says otherwise: the scale-1 digest pin in
    `test/scripts/assets/interim-pipeline.test.ts:341-357` (`fa4198…`) never moves in R3-03 / R3-04 (decision RR-1:
-   `buildAtlas({ artScale: 1 })` stays the v1 art until R6). No R3 subtask moves a fingerprint or a golden.
+   `buildAtlas({ artScale: 1 })` stays the v1 art until a v2.0.x clean-up after the release). No R3 subtask moves a
+   fingerprint or a golden.
 5. `ATLAS-SHA` below means `node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*`, run
    before and after your change in your own tree, then compared.
 6. `INGEST` means `cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check` (its own npm project; CI's

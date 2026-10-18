@@ -2,6 +2,9 @@
 
 > Schedule: [`plan_resolution.md` §18](../../plan_resolution.md#18-execution-waves-for-the-10-agent-run) · how to
 > use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md)
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-03 (E1–E4, I1, I2 folded, I3, G1, G2, V, the step review), R5's prep that is cheapest now: `R5-P.P1`
 (the world hash ignores content order) and `R5-P.P8` (boss-part capacity) — their re-bless is G1's — and the first
@@ -14,10 +17,12 @@ one commit with the reason; R1-04's 12-px-terrain browser check passes; `pnpm do
 review at zero; §17 R2-03 → `done` on master; then the orchestrator syncs the board.
 
 **The gate grep** (used by G1, `R2-03.RV` and the exit; limited to code, so the render bench's own
-`./render-harness/gates.js` and the Markdown files never match):
+`./render-harness/gates.js` and the Markdown files never match). On `543887b` it lists 32 files, all of them gate
+users that U5 (wave 5), E1–E4 or G1 delete or edit — `GoldensStale` catches `describeGoldensStale` /
+`itGoldensStale`, `golden/stale` catches `replay-version-shipped.test.ts`:
 
 ```bash
-git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensStale|'\./gates\.js'|stale\.js'" -- packages apps test scripts ':!*.md'
+git grep -n -e R2_03_PENDING -e PORT_UNMEASURED -e GOLDENS_STALE -e goldenIsStale -e GoldensStale -e "e2e/gates" -e "from './gates.js'" -e "golden/stale" -e "from './stale.js'" -- packages apps test scripts ':!*.md'
 ```
 
 ## At a glance
@@ -69,29 +74,30 @@ git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensS
    pushes its one commit under the land lock. Review agents never push. This wave has no zone lane (local branch) and
    no patch-only subtask.
 
-## The e2e gate inventory on `c67c7c9` (what E1–E4 and G1 remove)
+## The e2e gate inventory on `543887b` (what E1–E4 and G1 remove)
 
 Lines move whenever a spec changes: before you rely on one, list today's with
 `git grep -n "test.skip(\|assertionsGated(" test/e2e/`. `c67c7c9` moved three of them (campaign-run `:316` → `:372`,
-debug-tools `:200` → `:228`, raster `:254` → `:255`).
+debug-tools `:200` → `:228`, raster `:254` → `:255`), and the C5 fixes `8ff2bf6` and `543887b` moved almost all of
+them again (the lines below are `543887b`'s).
 
-| Gate | Where (spec:line on `c67c7c9`) | Removed by |
+| Gate | Where (spec:line on `543887b`) | Removed by |
 |---|---|---|
-| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `zone-a:108`; `zones-bc:234, :263, :283, :300`; `zones-de:315, :353`; `zones-fg:312, :351, :385`; `zones-hi:411, :441, :507, :529` | E1 |
-| `test.skip(R2_03_PENDING, CONTENT_REASON)` | `zones-de:275` (MAGMA DEEP lava rows); `zones-hi:468` (the endings' sun rows) | E1 |
-| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `stage:113` (test-range's 1 px/tick camera); `mode7:484, :768` (dimension's horizon / floor rows); `raster:223, :255` (raster-range's rows; "runs the heat haze only inside its camera range"); `campaign-run:372` (bonus-range's digit window, "?stage=bonus-range: the digit entrance …") | E2 |
-| `test.skip(R2_03_PENDING, CONTENT_REASON)` | `gimmicks:76, :100` (brick pillar columns and counts) | E2 |
-| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `advanced-bosses:258, :358, :382` (raid, captain, twins) | E3 |
-| `assertionsGated(…, R2_03_PENDING, …, CONTENT_REASON)` | `boss:133` (the hull check; TRIAL WARDEN at v1's screen x 300); `render-groups:217` (the HUD control) | E3 |
-| `assertionsGated(…, PORT_UNMEASURED, …, PORT_REASON)` | `debug-tools:228` (F7 / F8 camera x = zone A's checkpoint / WARNING x, in "web build: F4 freezes, F5 steps one tick, …") | E3 |
-| E0's gates (wave 3) | listed in `RUN_DIR/R2-02.E0-report.md`; likely bullets, bullet-palette, enemies, weapons, direct-items, option-hunter, raster `:182` / `:280` / `:299`, stage `:144`, coop-gamepad | E4 (or the lane that owns the spec) |
-| `test.skip(R2_03_PENDING, GOLDEN_REASON)` | `attract:183, :298`; `atlas-residency:396` | G1 |
-| `test.skip(recordingIsStale(doc), GOLDEN_REASON)` | `determinism:116` (per recording) | G1 |
-| inverse tests `test.skip(!R2_03_PENDING, …)` | `attract:235` (the web loop without demos), `attract:276` (Tizen: OK leaves the hi-scores) — **deleted** | G1 |
+| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `zone-a:109`; `zones-bc:237, :266, :286, :303`; `zones-de:318, :356`; `zones-fg:315, :354, :388`; `zones-hi:414, :444, :510, :532` | E1 |
+| `test.skip(R2_03_PENDING, CONTENT_REASON)` | `zones-de:278` (MAGMA DEEP lava rows); `zones-hi:471` (the endings' sun rows) | E1 |
+| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `stage:114` (test-range's 1 px/tick camera); `mode7:485, :779` (dimension's horizon / floor rows); `raster:224, :258` (raster-range's rows; "runs the heat haze only inside its camera range"); `campaign-run:292` (bonus-range's digit window, "?stage=bonus-range: the digit entrance …") | E2 |
+| `test.skip(R2_03_PENDING, CONTENT_REASON)` | `gimmicks:77, :103` (brick pillar columns and counts) | E2 |
+| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `advanced-bosses:259, :363, :389` (raid, captain, twins) | E3 |
+| `assertionsGated(…, R2_03_PENDING, …, CONTENT_REASON)` | `boss:136` (the hull check; TRIAL WARDEN at v1's screen x 300); `render-groups:220` (the HUD control) | E3 |
+| `assertionsGated(…, PORT_UNMEASURED, …, PORT_REASON)` | `debug-tools:203` (F7 / F8 camera x = zone A's checkpoint / WARNING x, in "web build: F4 freezes, F5 steps one tick, …") | E3 |
+| E0's gates (wave 3) | listed in `RUN_DIR/R2-02.E0-report.md`; likely bullets, bullet-palette, enemies, weapons, direct-items, option-hunter, raster `:183` / `:285` / `:306`, stage `:147`, coop-gamepad | E4 (or the lane that owns the spec) |
+| `test.skip(R2_03_PENDING, GOLDEN_REASON)` | `attract:184, :305`; `atlas-residency:409` | G1 |
+| `test.skip(recordingIsStale(doc), GOLDEN_REASON)` | `determinism:119` (per recording) | G1 |
+| inverse tests `test.skip(!R2_03_PENDING, …)` | `attract:238` (the web loop without demos), `attract:281` (Tizen: OK leaves the hi-scores) — **deleted** | G1 |
 
 C5's timing note: at 640×360 SwiftShader e2e is about ×1.8 slower per test on CI than locally (4 cores); a test that
 passes locally but is slow is reproduced with `taskset -c 0-3` and `E2E_WORKERS=2`, and gets a commented timeout only
-when the slowness is real (C5 did so for `render-groups:246/:315`), never as a blind raise.
+when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at `543887b`), never as a blind raise.
 
 ## Subtasks
 
@@ -123,16 +129,17 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Goal:** as E1 for these specs, plus **R1-04's deferred browser check**: a stage with 12-px terrain renders.
 - **Files (only these):** `test/e2e/stage.spec.ts`, `test/e2e/mode7.spec.ts`, `test/e2e/raster.spec.ts`,
   `test/e2e/gimmicks.spec.ts`, `test/e2e/campaign-run.spec.ts`.
-- **Steps:** remove the gates of the inventory (on `c67c7c9`: stage `:113`, mode7 `:484 :768`, raster `:223 :255`,
-  gimmicks `:76 :100`, campaign-run `:372`) and every E0 gate in these five files, and re-measure; in `raster.spec.ts`
+- **Steps:** remove the gates of the inventory (on `543887b`: stage `:114`, mode7 `:485 :779`, raster `:224 :258`,
+  gimmicks `:77 :103`, campaign-run `:292`) and every E0 gate in these five files, and re-measure; in `raster.spec.ts`
   also rewrite the content-row comment `:237-239` and its `diffRows` literals from the ported bands; add to `stage.spec.ts` a test that a tile edge of the ported terrain is
   `TILE_SIZE` frame pixels = **24 screenshot pixels at ×2** (sample through `frame-pixels.ts`).
 - **Tests:** `bash docs/v2-run/helpers/e2e-batch.sh stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts
   campaign-run.spec.ts`, twice (the second under `taskset -c 0-3`, `E2E_WORKERS=2`).
 - **Acceptance:** as E1; the new 12-px check passes.
 - **Token:** none.
-- **Traps:** the campaign-run web test `:298` ("A → B → D → F → H: …") and its Tizen test `:411` were CI-only
-  failures that `c67c7c9` fixed (waits count game ticks): keep those fixes, never go back to frame or wall-time
+- **Traps:** the campaign-run web test `:217` ("A → B → D → F → H: …") and its Tizen test `:335` (lines on
+  `543887b`) were CI-only failures that `c67c7c9` fixed (waits count game ticks; `8ff2bf6` moved the tick helpers to
+  `test/e2e/ticks.ts`): keep those fixes, never go back to frame or wall-time
   waits; mode7's block test runs on its own 1920×1080 viewport (`BLIT_DISPLAY`), keep it.
 
 ### R2-03.E3 — Re-measure bosses, the HUD control and the debug camera
@@ -141,15 +148,16 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Depends on:** wave 5's exit.
 - **Files (only these):** `test/e2e/boss.spec.ts`, `test/e2e/advanced-bosses.spec.ts`, `test/e2e/render-groups.spec.ts`,
   `test/e2e/debug-tools.spec.ts`.
-- **Steps:** remove the gates (on `c67c7c9`: advanced-bosses `:258 :358 :382`; the assertion gates `boss:133`,
-  `render-groups:217`, `debug-tools:228`) and every E0 gate in these four files; re-measure: TRIAL WARDEN's ported `boss.x`, zone A's ported checkpoint and WARNING x for F7 /
-  F8 (read them from `content/stages/zone-a.stage.json`, not literals), the HUD control's pixels under the 12-px bars.
+- **Steps:** remove the gates (on `543887b`: advanced-bosses `:259 :363 :389`; the assertion gates `boss:136`,
+  `render-groups:220`, `debug-tools:203`) and every E0 gate in these four files; re-measure: TRIAL WARDEN's ported
+  `boss.x`, zone A's ported checkpoint and WARNING x for F7 / F8 (read them from `content/stages/zone-a.stage.json`,
+  not literals), the HUD control's pixels under the 12-px bars.
 - **Tests:** `bash docs/v2-run/helpers/e2e-batch.sh boss.spec.ts advanced-bosses.spec.ts render-groups.spec.ts
   debug-tools.spec.ts`, twice (second under `taskset -c 0-3`, `E2E_WORKERS=2`).
 - **Acceptance:** as E1; no `assertionsGated` left in these files.
 - **Token:** none.
-- **Traps:** `debug-tools:261` ("Tizen build via file://: after the unlock, 4 freezes and each 5 runs one tick") was a
-  CI-only failure that `c67c7c9` fixed (the unlock sent in one `page.evaluate`): keep its fix.
+- **Traps:** `debug-tools:236` (on `543887b`: "Tizen build via file://: after the unlock, 4 freezes and each 5 runs
+  one tick") was a CI-only failure that `c67c7c9` fixed (the unlock sent in one `page.evaluate`): keep its fix.
 
 ### R2-03.E4 — Sprites, colour counts and every gate E0 added
 
@@ -231,14 +239,15 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
     `test/golden/golden.test.ts`, `golden-edge.test.ts`, `golden-autofire.test.ts`, `demos.test.ts`,
     `packages/shell/test/determinism/determinism.test.ts`, `determinism-edge.test.ts`,
     `test/integration/atlas-zone-sprites.test.ts`, `attract-flow.test.ts`, `attract-flow-edge.test.ts` (find them with
-    `git grep -ln "GOLDENS_STALE\|goldenIsStale\|describeGoldensStale\|itGoldensStale\|stale.js"`);
+    `git grep -ln -e GOLDENS_STALE -e goldenIsStale -e GoldensStale -e "golden/stale" -e "from './stale.js'" --
+    packages apps test scripts ':!*.md'`);
   - `packages/core/test/replay/replay-version-shipped.test.ts` — **deleted** (it asserts every shipped recording is
     refused as v1, which is false after the re-bless);
   - `scripts/golden-update.mjs` — delete the refusal (docblock `:14-16`, `pendingTilesets()` and the exit `:30-50`, and
     imports only it used) and `test/golden/golden-edge.test.ts:188-189` (its `golden:update refused` assertion);
   - `test/e2e/gates.ts` and `test/integration/e2e-gates.test.ts` — **deleted**; the `GOLDEN_REASON` skips
-    (`attract:183`, `:298`; `atlas-residency:396`; `determinism:116`'s `recordingIsStale`) and the two inverse tests
-    (`attract:235`, `:276`) removed from `test/e2e/attract.spec.ts`, `determinism.spec.ts`, `atlas-residency.spec.ts`;
+    (`attract:184`, `:305`; `atlas-residency:409`; `determinism:119`'s `recordingIsStale`; lines at `543887b`) and the
+    two inverse tests (`attract:238`, `:281`) removed from `test/e2e/attract.spec.ts`, `determinism.spec.ts`, `atlas-residency.spec.ts`;
   - `test/integration/content-db-fingerprint.test.ts` — re-pin `core.demos` and `core.demoIndex`.
 - **Steps:**
   1. In your worktree on the latest master: `pnpm install --frozen-lockfile --prefer-offline && pnpm assets`.
@@ -265,7 +274,7 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   pnpm typecheck:root && pnpm --filter @shmup/shell typecheck
   bash docs/v2-run/helpers/e2e-batch.sh attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts
   E2E_PROJECT=firefox bash docs/v2-run/helpers/e2e-batch.sh determinism.spec.ts
-  git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensStale|'\./gates\.js'|stale\.js'" -- packages apps test scripts ':!*.md'
+  git grep -n -e R2_03_PENDING -e PORT_UNMEASURED -e GOLDENS_STALE -e goldenIsStale -e GoldensStale -e "e2e/gates" -e "from './gates.js'" -e "golden/stale" -e "from './stale.js'" -- packages apps test scripts ':!*.md'
   ```
 - **Acceptance:** the last grep (the gate grep, limited to code) prints nothing — it never needs a docs edit and never
   touches the render bench's `./render-harness/gates.js` imports; every golden and demo replays with all hashes
@@ -399,11 +408,10 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   - `test/integration/content-wiring.test.ts` — its `content:check` case (`:51-58`) also expects the zone files.
 - **Tests:**
   ```bash
-  export RUN_DIR="${RUN_DIR:-/home/sites/shmup-cup-run}"
-  pnpm exec vitest list --project integration test/integration/content.test.ts > "$RUN_DIR/p2a-before.txt"   # before any edit
+  pnpm exec vitest list --project integration test/integration/content.test.ts > /home/sites/shmup-cup-run/R5-P.P2a-before.txt   # before any edit
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-wiring.test.ts
-  pnpm exec vitest list --project integration test/integration/content.test.ts test/integration/content-zone- > "$RUN_DIR/p2a-after.txt"
+  pnpm exec vitest list --project integration test/integration/content.test.ts test/integration/content-zone- > /home/sites/shmup-cup-run/R5-P.P2a-after.txt
   pnpm typecheck:root
   ```
 - **Acceptance:** the sorted test **names** (without file paths) are the same before and after, and the count too; all
@@ -573,7 +581,7 @@ orchestrator does, from the main checkout, after `W06.DOCS-A`'s §17 push).
 
 1. On `origin/master` in a fresh worktree:
    ```bash
-   git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensStale|'\./gates\.js'|stale\.js'" -- packages apps test scripts ':!*.md'   # empty
+   git grep -n -e R2_03_PENDING -e PORT_UNMEASURED -e GOLDENS_STALE -e goldenIsStale -e GoldensStale -e "e2e/gates" -e "from './gates.js'" -e "golden/stale" -e "from './stale.js'" -- packages apps test scripts ':!*.md'   # empty
    pnpm content:check && pnpm docs:images --check && pnpm store:assets --check
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-db-fingerprint.test.ts \
      test/integration/presentation-fingerprint.test.ts test/integration/frame-literals-repo.test.ts

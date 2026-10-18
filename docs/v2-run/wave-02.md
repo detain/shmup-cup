@@ -2,6 +2,9 @@
 
 > Schedule: `plan_resolution.md` §18 · how to use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md)
 > · background: [`wave5-scout.md`](wave5-scout.md) §0 and §1 (the experiment and the approach)
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-02 (prep A: W1–W7, T0, A1, T4a–c, RV-A2) · R3-03 (V1, V3) · R3-04 (M3a–M3e) · **Gate to start:**
 wave 1's exit (`R2-02.P0` and `R2-02.P1` on master) · **Exit (summary):** every prep-A subtask on master, reviewed to
@@ -422,14 +425,19 @@ over).
     — only a colour count the new art moves (measured, never guessed), each one listed in the report.
 - **Tests:**
   ```bash
+  mkdir -p /home/sites/shmup-cup-run
+  node docs/v2-run/helpers/r34-gen-list.mjs > /home/sites/shmup-cup-run/R3-03.V1-gens-before.txt   # once, on origin/master, before your change
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/bullets-v2.test.ts test/scripts/assets/interim-pipeline.test.ts test/scripts/assets/procedural.test.ts test/scripts/assets/palettes-names.test.ts test/scripts/assets/pipeline-edge.test.ts test/integration/content.test.ts test/integration/cjk-budget.test.ts
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh bullet-palette.spec.ts bullets.spec.ts boss.spec.ts weapons.spec.ts
+  node docs/v2-run/helpers/r34-gen-list.mjs > /home/sites/shmup-cup-run/R3-03.V1-gens-after.txt    # after it; then diff the two files
   ```
 - **Acceptance:** the scale-1 digest pin (`interim-pipeline.test.ts:341`) unchanged; at 3/2: round 11×11 (1),
   oval 13×13 (8), needle 17×17 (8), bend 11×11 (1); every `@<palette>` frame for frame (`content.test.ts:863`); atlas
   bytes under `ATLAS_PNG_BYTES_CAP` (`test/scripts/assets/atlas-budget.ts`); an e2e count that moves is updated in the
-  same push and listed in the report.
+  same push and listed in the report; the `r34-gen-list.mjs` diff (the generators' sprite lists, frames, sizes,
+  `N` / `F` marks) changes only the `## bullets` line, the `bend-*` entries of `## lasers` and the matching
+  `@<palette>` entries of `## palettes` (the `beam-*` entries stay as they are).
 - **Token:** none.
 - **Traps:** never edit the bullets block of `test/scripts/assets/procedural.test.ts` (it pins scale 1); never edit
   the v1 path; generators use exact maths only (no `Math.sin` / `cos`; `DIRECTIONS_8`, integer hashing); two runs
@@ -534,9 +542,9 @@ over).
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/boot
   bash docs/v2-run/helpers/e2e-batch.sh atlas-context-loss.spec.ts atlas-residency.spec.ts boot.spec.ts zone-map.spec.ts webos.spec.ts
   ```
-- **Acceptance:** both specs green; the new spec joins e2e batch C (README).
+- **Acceptance:** both specs green; the new spec joins e2e batch G (README; A … E hold 10 each).
 - **Token:** none. **e2e:** this lane is one of the wave's two e2e agents.
-- **Traps:** `atlas-residency.spec.ts:396` is gated on `R2_03_PENDING` (`GOLDEN_REASON`); keep that skip (R2-03.G1
+- **Traps:** `atlas-residency.spec.ts:409` (line at `543887b`) is gated on `R2_03_PENDING` (`GOLDEN_REASON`); keep that skip (R2-03.G1
   deletes it in wave 6, and rebases on your extension); `WEBGL_lose_context` is for e2e only. `R2-02.E0` (wave 3)
   never edits `atlas-residency.spec.ts`: if E0's report hands you a test of it that fails under the kit, gate it with
   `test.skip(PORT_UNMEASURED, PORT_REASON)` (from `./gates.js`) in your push, and say so in your report.
@@ -579,13 +587,15 @@ over).
   lists (precheck §2.1).
 - **Run:**
   ```bash
-  bash test/port-v2/two-scale.sh --keep -- true
-  # then in the kept tree (--reuse <dir>):
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core --reporter=json --outputFile=<tmp>/core.json
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration --reporter=json --outputFile=<tmp>/int.json
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell --project render-pixi --reporter=json --outputFile=<tmp>/pkg.json
+  mkdir -p /home/sites/shmup-cup-run/w02/rv-a2
+  bash test/port-v2/two-scale.sh --keep -- true   # its last output line is the kept tree's path: put it for <kit> below
+  bash test/port-v2/two-scale.sh --reuse <kit> -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core --reporter=json --outputFile=/home/sites/shmup-cup-run/w02/rv-a2/core.json
+  bash test/port-v2/two-scale.sh --reuse <kit> -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration --reporter=json --outputFile=/home/sites/shmup-cup-run/w02/rv-a2/int.json
+  bash test/port-v2/two-scale.sh --reuse <kit> -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell --project render-pixi --reporter=json --outputFile=/home/sites/shmup-cup-run/w02/rv-a2/pkg.json
   ```
-  (projects run in the throwaway tree are the barrier's kind of check, not the run's full suite.)
+  (projects run in the throwaway tree are the barrier's kind of check, not the run's full suite. A whole project runs
+  longer than the shell tool's 2 minutes: give each command a `timeout`, e.g. `1800000`. Remove the kept tree at the
+  end with `git worktree remove --force <kit>`.)
 - **Output:** `RUN_DIR/w02/rv-a2/<id>.txt` for `R2-02.T1a` … `T1e`, `T2a` … `T2e`, `T3`, and `other.txt` (failures
   that fit no T, with a suggested owner): one failing test per line, `file > describe > it — first error line`, by
   the file lists of wave 3's blocks.

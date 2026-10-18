@@ -8,10 +8,10 @@
 # specs measure frame pacing, and two batches at once make them flaky.
 #
 # Run (opencode's shell tool stops a foreground command after 2 minutes: start the batch with
-# the shell tool's `background: true`, or with nohup as below, and poll the log; RUN_DIR is the
-# run directory, /home/sites/shmup-cup-run on myadmin1):
+# the shell tool's `background: true`, or with nohup as below, and poll the log; the log goes to
+# the run directory, /home/sites/shmup-cup-run on myadmin1; put your subtask id for <id>):
 #   nohup bash docs/v2-run/helpers/e2e-batch.sh options.spec.ts game-options.spec.ts \
-#     > "$RUN_DIR/<id>-e2e.log" 2>&1 &
+#     > /home/sites/shmup-cup-run/<id>-e2e.log 2>&1 &
 # Arguments: up to ~10 spec files (or any other `playwright test` arguments, e.g. `-g <title>`).
 # CI=1 (set below) gives each test one retry: for a flake repeat pass `--retries=0 --repeat-each=N`.
 # Environment (defaults in brackets):
