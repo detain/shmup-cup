@@ -11,12 +11,16 @@
  * the app running and only YES calls `tizen.application.getCurrentApplication().exit()`.
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing
+ * about 3 frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced
+ * taps ran this spec at 80-95 % of its test timeouts.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, pixelIndex } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -87,64 +91,6 @@ function frameRgb(shot: Shot, x: number, y: number): [number, number, number] {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release (remote profiles debounce
- * releases by two ticks).
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key the desktop keyboard does not have (Back = 10009), down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
-}
-
-/**
  * Opens a build and waits for its title.
  *
  * @param page - The page.
@@ -161,7 +107,7 @@ async function openTitle(page: Page, url: string): Promise<string[]> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   return errors;
 }
 
@@ -183,7 +129,7 @@ test.describe('scene flow (web build)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await tap(page, 'Enter'); // START in the weapon select (M2-03)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 60); // the fly-in
+    await waitTicks(page, 60); // the fly-in
     const game = await shoot(page);
     expect(count(game, KESTREL_HULL)).toBeGreaterThan(0);
     expect(count(game, LOGO_RED)).toBe(0);
@@ -195,7 +141,7 @@ test.describe('scene flow (web build)', () => {
     const paused = await shoot(page);
     const bar = frameRgb(paused, 0, 0);
     expect(bar[2]).toBeLessThan(HUD_BAR[2]); // dimmed
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     const still = await shoot(page);
     expect(Buffer.from(still.data).equals(Buffer.from(paused.data))).toBe(true); // frozen
     await tap(page, 'Escape'); // Back in the menu context: resume
@@ -212,7 +158,7 @@ test.describe('scene flow (web build)', () => {
     await tap(page, 'Enter'); // the menu
     await tap(page, 'Escape'); // back to PRESS OK
     await tap(page, 'Enter'); // the menu again — not START yet
-    await waitFrames(page, 6);
+    await waitTicks(page, 6);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
@@ -240,7 +186,7 @@ test.describe('scene flow (Tizen build via file://)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await tap(page, 'Enter'); // START in the weapon select (M2-03)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 60);
+    await waitTicks(page, 60);
     expect(count(await shoot(page), KESTREL_HULL)).toBeGreaterThan(0);
     await remoteTap(page, 10009);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');

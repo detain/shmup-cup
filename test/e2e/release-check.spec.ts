@@ -18,10 +18,15 @@
  *     runs its frame loop;
  *   - user data: everything the game keeps is in `localStorage` under the game's prefix (Tizen
  *     deletes it with the app — no cookies, no IndexedDB).
+ *
+ * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
+ * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
+ * this spec at 80-90 % of its test timeouts. Its other pauses stay frames: some run while no
+ * tick does (a hidden page, frame advance).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap } from './ticks.js';
 
 /** Boot-to-title budget on CI (plan M2-18; the TV's own budget is 10 s, 5 s ideal). */
 export const BOOT_TO_TITLE_BUDGET_MS = 3000;
@@ -150,41 +155,6 @@ async function waitFrames(page: Page, frames: number): Promise<void> {
       }),
     frames,
   );
-}
-
-/**
- * Presses a desktop key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key the desktop keyboard does not have, down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
 }
 
 /**

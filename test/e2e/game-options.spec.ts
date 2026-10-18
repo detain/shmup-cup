@@ -10,11 +10,15 @@
  * restores a rebound key, while SOCD / DEBOUNCE reach the save; the Tizen build from disk sets
  * LIVES with the remote's keys and keeps it across a relaunch. The flow is read through the test
  * build's debug API (`window.__shmupDebug`).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing
+ * about 3 frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced
+ * taps ran this spec at 80-95 % of its test timeouts.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { SAVE_FORMAT } from './save-format.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap, waitTicks } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -40,61 +44,6 @@ const V1_SAVE = JSON.stringify({
   },
   stats: { gamesStarted: 12, gameOvers: 9, stagesCleared: 17 },
 });
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames, then lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Taps a TV remote key by key code (no `code`, the way the TV sends them).
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  for (const type of ['keydown', 'keyup'] as const) {
-    await page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-    await waitFrames(page, type === 'keydown' ? 3 : 6);
-  }
-}
 
 /** The stored save document (the fields the tests read). */
 interface StoredSave {
@@ -204,16 +153,16 @@ async function openPage(
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await press('Enter'); // PRESS OK → the menu
   for (let i = 0; i < 3; i++) await press('ArrowDown'); // 2 PLAYERS, PRACTICE, OPTIONS
   await press('Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-  await waitFrames(page, 4);
+  await waitTicks(page, 4);
   for (let i = 0; i < rows; i++) await press('ArrowDown');
   await press('Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', scene);
-  await waitFrames(page, 4);
+  await waitTicks(page, 4);
 }
 
 /**
@@ -226,7 +175,7 @@ async function openPage(
 async function startGame(page: Page, press: (key: 'Enter') => Promise<void>): Promise<void> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await press('Enter'); // PRESS OK
   await press('Enter'); // 1 PLAYER
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
@@ -323,7 +272,7 @@ test.describe('game options (web build)', () => {
     await tap(page, 'ArrowDown'); // REBIND KEYS
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'rebind');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     for (let i = 0; i < 6; i++) await tap(page, 'ArrowDown'); // MODE, UP … SHOT → SUB
     await tap(page, 'Enter');
     await expect.poll(async () => (await view(page)).capturing).toBe(true);
@@ -333,12 +282,12 @@ test.describe('game options (web build)', () => {
     expect((await view(page)).capturing).toBe(false);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'rebind');
     // A real rebinding: SUB → K, then RESET brings X back.
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'Enter');
     await expect.poll(async () => (await view(page)).capturing).toBe(true);
     await tap(page, 'KeyK');
     await expect.poll(async () => (await view(page)).message).toBe('SUB REBOUND');
-    await waitFrames(page, 6);
+    await waitTicks(page, 6);
     for (let i = 0; i < 5; i++) await tap(page, 'ArrowDown'); // POWER-UP … PAUSE, RESET
     await tap(page, 'Enter');
     await expect.poll(async () => (await view(page)).message).toBe('RESET TO DEFAULTS');

@@ -8,11 +8,15 @@
  * when the Options screen closes. The Tizen build opened from disk (`file://`) does the same with
  * the remote only — arrows, OK, Back (10009) — and keeps SFX and the CONTROLS page's profile
  * (M2-16) across a relaunch (the manual check of plan M1-17, automated).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing
+ * about 3 frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced
+ * taps ran this spec at 80-95 % of its test timeouts.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { SAVE_FORMAT } from './save-format.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap, waitTicks } from './ticks.js';
 
 /** The save's `localStorage` key (the web adapter prefixes `core/save`'s `save.v1`). */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -34,41 +38,6 @@ interface StoredSave {
     readonly audio: { readonly master: number; readonly music: number; readonly sfx: number };
     readonly input: { readonly profileId: string | null };
   };
-}
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames, then lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
 }
 
 /**
@@ -100,28 +69,6 @@ async function storedSave(page: Page): Promise<StoredSave | null> {
 }
 
 /**
- * Dispatches a remote key the desktop keyboard does not have (Back = 10009), down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
-}
-
-/**
  * Collects console errors and page errors.
  *
  * @param page - The page.
@@ -145,14 +92,14 @@ async function openOptions(page: Page): Promise<void> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu
   await tap(page, 'ArrowDown'); // 2 PLAYERS (M2-06)
   await tap(page, 'ArrowDown'); // PRACTICE (M2-15)
   await tap(page, 'ArrowDown'); // OPTIONS
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-  await waitFrames(page, 4); // the menu's open lock
+  await waitTicks(page, 4); // the menu's open lock
 }
 
 test.describe('options and saves (web build)', () => {
