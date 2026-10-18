@@ -11,10 +11,10 @@
  *
  * The scanner parses a source with the TypeScript compiler, so comments (docblocks included)
  * are never read, and reports every numeric literal — or whole number inside a string or
- * template literal — that is a frame number ({@link FRAME_NUMBERS}); the digits of a CSS hex
- * colour token in a string (`'#336a64'`, `#rrggbb` / `#rrggbbaa`, and a `#rgb` / `#rgba` whose
- * digits are no frame number) are not numbers (R2-01, decision W4-11: palettes would trip the scan
- * once 336 is a frame number; see {@link blankHexColours}). Each hit carries its
+ * template literal — that is a frame number ({@link FRAME_NUMBERS}); the digits of a `#rrggbb` /
+ * `#rrggbbaa` colour token in a string (`'#336a64'`) are not numbers (R2-01, decision W4-11:
+ * palettes would trip the scan once 336 is a frame number; see {@link blankHexColours}), while a
+ * `#rgb` / `#rgba` is read as text, so `'#384'` still counts. Each hit carries its
  * **symbol path** (the names of the declarations around the literal, outermost first:
  * `OPTIONS_PANEL.h`, `bossSuction.pullRadius`); an allow-list entry is matched by file, symbol
  * path and value, never by line number, so edits elsewhere in a file do not break it. Each entry
@@ -145,33 +145,28 @@ const TEXT_KINDS: ReadonlySet<ts.SyntaxKind> = new Set([
 ]);
 
 /**
- * A CSS hex colour token in a string, in the forms `scripts/assets/image.mjs` `parseColor` reads:
- * `#rrggbbaa`, `#rrggbb`, `#rgba` or `#rgb`, ending at a word boundary — so a 5- or 7-digit run
- * (`'#a384b'`), which is no colour, never matches, and neither does `'#384px'`.
+ * A long CSS hex colour token in a string, in the forms `scripts/assets/image.mjs` `parseColor`
+ * reads: `#rrggbbaa` or `#rrggbb`, ending at a word boundary — so a 5-, 7- or 9-digit run
+ * (`'#a384b'`), which is no colour, never matches. A short colour (`#rgb`, `#rgba`) is not
+ * matched: its digits are read as text and give a hit only when they spell a frame number
+ * (`'#384'`), which `'#cfe'` never does.
  */
-const HEX_COLOUR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g;
+const HEX_COLOUR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
 
 /** A whole number in a literal's text: digits with no digit or `.` on either side. */
 const WHOLE_NUMBER = /(?<![\d.])\d+(?![\d.])/g;
 
 /**
- * A string's text with its hex colour tokens' digits blanked out (R2-01, decision W4-11): the
- * `336` of `'#336a64'` is a palette entry, not a frame number. A long token (`#rrggbb`,
- * `#rrggbbaa`) is always blanked. A short one (`#rgb`, `#rgba`) is blanked only when no digit run
- * in it is a frame number: every frame number is also a valid `#rgb` (`'#384'`, `'#208'`,
- * `'#640'`), so such a token still counts as the number it spells.
+ * A string's text with its `#rrggbb` / `#rrggbbaa` colour tokens' digits blanked out (R2-01,
+ * decision W4-11): the `336` of `'#336a64'` is a palette entry, not a frame number. A `#rgb` /
+ * `#rgba` stays as it is ({@link HEX_COLOUR}): every frame number is also a valid `#rgb`
+ * (`'#384'`, `'#208'`, `'#640'`), so such a token still counts as the number it spells.
  *
  * @param text - The text of a string or template literal.
- * @returns The text, each blanked token replaced by `#`.
+ * @returns The text, each long colour token replaced by `#`.
  */
 function blankHexColours(text: string): string {
-  return text.replace(HEX_COLOUR, (token) => {
-    if (token.length > 5) return '#';
-    for (const digits of token.match(/\d+/g) ?? []) {
-      if (FRAME_NUMBERS.has(Number(digits))) return token;
-    }
-    return '#';
-  });
+  return text.replace(HEX_COLOUR, '#');
 }
 
 /**

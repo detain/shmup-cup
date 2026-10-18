@@ -94,6 +94,8 @@ export const PROCEDURAL_GENERATORS = [
  * @param {GeneratorOptions} [options] - Passed to every generator: `tileSize` for the terrain
  *   tilesets and `artScale` for the laser beams (the pipeline sets both — R2-01).
  * @returns {SpriteDef[]} All procedural sprites, in generator order.
+ * @throws {RangeError} When `options.tileSize` is not an even whole number ≥ 4 (`terrain.mjs`),
+ *   or `options.artScale` is not a valid art scale (`lasers.mjs`, `palettes.mjs`).
  */
 export function generateProceduralSprites(options = {}) {
   return PROCEDURAL_GENERATORS.flatMap((generator) => generator.generate(options));

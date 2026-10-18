@@ -383,7 +383,6 @@ function expectUpscaledFrame(shot: Shot): void {
     }
   }
   expect(mixed, 'frame-pixel blocks of more than one colour').toBe(0);
-  // Column 0 of the top bar holds no label (the 1P label starts further right).
   /**
    * How many screen rows from the top of one screenshot column are HUD-bar coloured.
    *
@@ -399,6 +398,7 @@ function expectUpscaledFrame(shot: Shot): void {
     }
     return n;
   };
+  // Column 0 of the top bar holds no label (the 1P label starts further right).
   expect(screenRows(0)).toBe(HUD_BAR_HEIGHT * SCALE);
 }
 

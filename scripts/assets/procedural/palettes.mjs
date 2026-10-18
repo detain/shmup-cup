@@ -46,6 +46,8 @@ export const CORE_MARKS = Object.freeze({ pink: 'solid', red: 'ring', purple: 'd
  *   are drawn at (default 1; native like the standard beams, `lasers.mjs` — R2-01).
  * @returns {SpriteDef[]} For each palette: the nine bullets (shape-coded), the three beams and
  *   the three bending laser segments, named `<sprite>@<palette>`.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
 export function generate(options = {}) {
   /** @type {SpriteDef[]} */

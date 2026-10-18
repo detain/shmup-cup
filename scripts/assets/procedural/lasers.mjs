@@ -133,6 +133,8 @@ export function laserSprites(colours, suffix = '', generator = 'lasers', artScal
  * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale to draw
  *   the beams at (default 1).
  * @returns {SpriteDef[]} One beam and one segment per bullet colour.
+ * @throws {RangeError} When `options.artScale` is not a valid art scale (`interim.mjs`
+ *   `parseArtScale`).
  */
 export function generate(options = {}) {
   return laserSprites(BULLET_COLORS, '', 'lasers', options.artScale ?? 1);

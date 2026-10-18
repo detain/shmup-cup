@@ -334,13 +334,14 @@ describe('the repo outside core: no literal frame numbers (plan R1-02)', () => {
     ).toEqual([]);
   });
 
-  it('skips the digits of a CSS hex colour in a string, and nothing else (R2-01, W4-11)', () => {
+  it('skips the digits of a long hex colour in a string, and nothing else (R2-01, W4-11)', () => {
     const sample = [
       // Long colours (#rrggbb, #rrggbbaa) are always skipped, whatever digits they hold.
       "export const LONG = ['#336a64', '#c0d8ff', '#216abc', '#a384a216', '#216216ff'];",
-      // A short colour (#rgb, #rgba) is skipped when its digits are no frame number…
+      // A short colour (#rgb, #rgba) is read as text: it gives a hit only when it spells a
+      // frame number — none of these does…
       "export const SHORT = ['#cfe', '#3a6', '#100', '#2160', '#1a2b'];",
-      // …and a frame number spelled as one still counts.
+      // …and these do.
       "export const SPELLED = ['#384', '#216', '#200', '#208', '#192', '#108', '#384f'];",
       // The flipped frame's numbers count once they are frame numbers (R2-01's flip).
       "export const NEXT = ['#640', '#336', '#348f'];",
