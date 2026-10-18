@@ -13,6 +13,9 @@
 #   nohup bash docs/v2-run/helpers/e2e-batch.sh options.spec.ts game-options.spec.ts \
 #     > /home/sites/shmup-cup-run/<id>-e2e.log 2>&1 &
 # Arguments: up to ~10 spec files (or any other `playwright test` arguments, e.g. `-g <title>`).
+# A spec argument is a regular expression on the path: `options.spec.ts` also matches
+# `game-options.spec.ts` and `display-options.spec.ts`; to select it alone pass
+# `test/e2e/options.spec.ts`.
 # CI=1 (set below) gives each test one retry: for a flake repeat pass `--retries=0 --repeat-each=N`.
 # Environment (defaults in brackets):
 #   E2E_PROJECT [chromium]  the Playwright project (firefox runs only the determinism spec)

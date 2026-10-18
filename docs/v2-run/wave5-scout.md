@@ -725,13 +725,16 @@ blocks nothing).
   `scripts/frame.mjs` untouched; the three fingerprints unedited and green; the suite green with the gated list
   unchanged; their gated and two-scale-only tests pass under the two-scale check (the reviewer runs it). **[Corrected after the flip:** `scripts/frame.mjs`
   gains the `WORLD_SCALE` mirror in `R2-02.P0` (value 1); "the gated list unchanged" reads "unchanged except the
-  `WORLD_SCALE`-keyed `runIf` / `skipIf` cases"; after the port the expected skips are **280** = 239
-  `GOLDENS_STALE` + 41 frame `runIf`s, with 0 `CONTENT_PORT_PENDING`.**]**
+  `WORLD_SCALE`-keyed `runIf` / `skipIf` cases"; after the port the expected skips are **286** = 239
+  `GOLDENS_STALE` + 41 frame `runIf`s + the 6 cases `R2-02.T4b` retires (`rescale.test.ts` ×4,
+  `rescale-edge.test.ts` ×2; or T4b's reported number), with 0 `CONTENT_PORT_PENDING`.**]**
 - **The port commit:** its content equals a fresh tool run on the parent plus `handfix.patch` (the reviewer re-runs
   and diffs); its code is `flip.sh`'s lines plus the gate deletion (**[Corrected after the flip:** the kit's flip lines plus the port-pending stub; the gate deletion is `R2-02.U1` … `U5`**]**); three re-pins with reasons; no `port-pending`
   import left (after `U5`); `rescale --factor 1` 0 / 0 / 0; `pnpm content:check` green with the 4-way rules at 3.0 / 24 / 1,350; the
   bot clears every zone, bonus stage and the boss rush in god mode; `v2-port*` green (camera ±2 %, first-visible ±1
-  for non-ground spawns, landing ±2 px); all 66 allocation guards green with **no budget raised**.
+  for non-ground spawns, landing ±2 px); every allocation guard `find packages apps test -name '*alloc*.test.ts'`
+  lists green with **no budget raised** (**[Corrected after the flip:** 66 on `bc8e05d`, plus new ones such as
+  `R3-04.M3b`'s `residency-lazy-alloc`**]**).
   `world-scale.test.ts`'s audit classifies every numeric export; `behavior-defaults-port.test.ts` covers every tunable
   of `BEHAVIOR_PARAM_UNITS`.
 - **V:** `buildAtlas({ artScale: 1 })` sha256 unchanged; V2 leaves `buildAtlas()` unchanged; beam frame `k` is `k + 1`

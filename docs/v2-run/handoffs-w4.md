@@ -20,6 +20,11 @@ docs agent. Grouped by the file that needs the edit.
 `debug-tools.spec.ts`, `flight.spec.ts` and `raster.spec.ts` changed. See the R2-01 As built, the R2-02 notes, Appendix A
 (b)'s moved line numbers and Appendix A (d).
 
+**Updated for `543887b`:** C5 review 3 → fix 3 `8ff2bf6` (the shared `test/e2e/ticks.ts`, its mirrors pinned by
+`test/integration/e2e-ticks.test.ts`) and fix 4 `543887b` (every boot wait `BOOT_TIMEOUT_MS`; fly-in and item polls
+count ticks, `SHIP_ENTER_TICKS`). Read their commit bodies (`git show -s 8ff2bf6 543887b`); the e2e line numbers
+below are older — `wave-00.md` / `wave-06.md` cite them on `543887b`.
+
 Tags:
 
 - `(src)` names the report or review an item comes from.
@@ -201,16 +206,20 @@ Add to the mirrors:
 - **Tile-row ↔ pixel conversions in tests read the content's own tile size** (`map.tileSize`, `tileset.tileSize`),
   not `TILE_SIZE`. `TILE_SIZE` is already 12, while the content stays 8 until R2-02.
 
-### § Tests: e2e waits count ticks (C5 review 2, `c67c7c9`)
+### § Tests: e2e waits count ticks (C5 review 2, `c67c7c9`; C5 fixes 3 and 4, `8ff2bf6`, `543887b`)
 
 - A spec that waits for the game counts ticks, never wall time or rAF frames:
-  - a scene wait is a tick budget (`campaign-run.spec.ts` `waitTicks` / `expectScene`, e.g.
-    `STAGE_CLEAR_DELAY_TICKS + SCENE_SLACK_TICKS`);
-  - a key sequence checked against a host-time window goes in one `page.evaluate` (`debug-tools.spec.ts`
-    `remoteSequence`);
-  - a still-ship check freezes the sim and compares edges the fx cannot reach (`flight.spec.ts` `HullView`).
-- `campaign-run.spec.ts` mirrors core's `STAGE_CLEAR_DELAY_TICKS` 90 and `MAP_LAUNCH_TICKS` 60, as `attract.spec.ts`
-  mirrors its timings. These mirrors are unpinned.
+  - a scene wait is a tick budget (`test/e2e/ticks.ts` `waitTicks` / `expectScene`, e.g.
+    `STAGE_CLEAR_DELAY_TICKS + SCENE_SLACK_TICKS`); a fly-in or a one-tick event is polled in ticks
+    (`pollTicks(SHIP_ENTER_TICKS + SCENE_SLACK_TICKS)`, `pollTicks(SCENE_SLACK_TICKS)`);
+  - a key sequence checked against a host-time window goes in one `page.evaluate` (`ticks.ts` `remoteSequence`);
+  - a still-ship check freezes the sim and compares edges the fx cannot reach (`flight.spec.ts` `HullView`);
+  - a boot wait is wall-clock work and takes `{ timeout: BOOT_TIMEOUT_MS }` (`ticks.ts`).
+- `test/e2e/ticks.ts` mirrors core's `STAGE_CLEAR_DELAY_TICKS` 90, `MAP_LAUNCH_TICKS` 60 and the other scene-flow
+  delays, pinned to core by `test/integration/e2e-ticks.test.ts` (and `SHIP_ENTER_TICKS` 40 to the content's longest
+  `enterTicks`, `content/player/*.player.json`); only `SCENE_SLACK_TICKS` and `BOOT_TIMEOUT_MS` are the specs' own.
+  `attract.spec.ts` still keeps its own unpinned mirrors (`TITLE_ATTRACT_TICKS` 720, `DEMO_TICKS` 2400,
+  `HI_SCORE_PAGE_TICKS` 300). (found while verifying)
 
 ## docs/dev/api-reference.md
 

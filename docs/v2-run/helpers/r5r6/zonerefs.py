@@ -7,7 +7,8 @@ B, …). Prints one block per group: the group key (the zone letters, e.g. `a`, 
 its file count, then the files. Read-only.
 
 Run (from anywhere; the root argument is optional and defaults to the checkout holding this file):
-    python3 docs/v2-run/helpers/r5r6/zonerefs.py [ROOT] > /tmp/zonerefs.txt
+    python3 docs/v2-run/helpers/r5r6/zonerefs.py [ROOT] > /home/sites/shmup-cup-run/<id>-zonerefs.txt
+(<id> = your subtask id: each lane writes its own file in the run directory, never a shared path.)
 
 `zonerefs.txt` next to this file is its output at bc8e05d (2026-10-18). Re-run it before a zone's
 fixture triage: R2-02 … R4 move files and tests, so the lists drift.
@@ -15,7 +16,8 @@ fixture triage: R2-02 … R4 move files and tests, so the lists drift.
 Used by: `R5-01.S6b` (docs/v2-run/wave-10.md), the fixture triage: the tests in group `a` pin
 zone A's content and must follow its redesign; the other zones' lanes may read their own group
 the same way.
-Delete when: R5's zone lanes are on master (after R5-09).
+Delete when: R5's zone lanes are on master (after zone H's LAND, `R5-08.S7`, wave 12;
+W12.DOCS-A deletes it).
 Was: scratchpad r5r6/zonerefs.py of the R5/R6 re-plan scout (it hard-coded its worktree).
 """
 import collections

@@ -70,6 +70,10 @@ or on any file outside the repository other than the run directory (§ The run d
 4. **Run the review loop** for every subtask that pushed: review → fix → a **new** review, until a review reports
    **zero findings, nits included**. Doc-only nits may go to a fixer that is already running.
 5. **Track the run** in the run directory (below): the wave's lane table, every agent, its status and its pushes.
+   When a wave's first agent starts, record its **wave base**, `git rev-parse origin/master`, in
+   `RUN_DIR/lanes-<wave>.md`. Keep wave 2's in `RESUME.md` too: waves 4 and 5 diff against it. Every `<wave base>`
+   in a wave file means that wave's SHA, and `<wave-2 base>` / `R2-02.RV-pre`'s `<base>` mean wave 2's. Put the SHA
+   into the agent's prompt; never leave the placeholder.
 6. **Close the wave**: run its **Exit check** (targeted, on myadmin1; never wait for GitHub CI — look at it at a
    wave's close at most) and let the wave's docs agent (`Wnn.DOCS-A`) update the §17 rows. Once that push is on
    `origin/master`, the orchestrator runs `python3 .claude/plan_board_v2.py` in the main checkout
@@ -114,7 +118,9 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    `apps/`), and `pnpm exec eslint <files> && pnpm exec prettier --check <files>`. Markdown is not formatted by
    Prettier; keep its tables readable.
 4. **e2e only through the lock.** `bash docs/v2-run/helpers/e2e-batch.sh <≤ 10 specs>` builds the three test
-   builds, waits for `/tmp/shmup-cup-e2e.lock` and runs the specs (Firefox: `E2E_PROJECT=firefox`). opencode's shell
+   builds, waits for `/tmp/shmup-cup-e2e.lock` and runs the specs (Firefox: `E2E_PROJECT=firefox`). Playwright reads
+   each argument as a regular expression on the path: `options.spec.ts` also matches `game-options.spec.ts` and
+   `display-options.spec.ts`; to run it alone pass `test/e2e/options.spec.ts`. opencode's shell
    tool stops a foreground command after 2 minutes: start the batch with the shell tool's `background: true` (or
    `nohup bash docs/v2-run/helpers/e2e-batch.sh <specs> > /home/sites/shmup-cup-run/<id>-e2e.log 2>&1 &`, with your
    subtask id for `<id>`) and poll the log. One batch runs at a time on the host (the web server's port 4173 is
@@ -146,10 +152,11 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    GLOBAL; `SHMUP_V1_BASELINE_UPDATE` (the v1 baseline is frozen for good); raising a budget (allocation, bundle,
    draw calls, atlas bytes) to get green; deleting or skipping a failing test to get green; editing
    `plan_resolution.md`, `CHANGELOG.md`, `README.md`, `CLAUDE.md`, `docs/**` or `docs/dev/api-reference.md` unless
-   you are a docs agent (builders list their **docs needs** in the report) — or unless your block names a
-   `docs/v2-run/` file as yours: the zone designers `R5-P.D-A` … `R5-P.D-I` commit their design file
-   `docs/v2-run/designs/zone-<x>.md` (a `docs:` commit), and `R5-P.LAND` commits `docs/v2-run/helpers/land-zone.sh`
-   and its row in `docs/v2-run/helpers/README.md`; adding a dependency or touching `pnpm-lock.yaml`; packaging,
+   you are a docs agent (builders list their **docs needs** in the report) or your block's Files list names the
+   file — a DOCS-IMAGES holder's `docs/images/**` (rule 6), `R2-02.R`'s `content/*/README.md`, the zone designers
+   `R5-P.D-A` … `R5-P.D-I`, who commit their design file `docs/v2-run/designs/zone-<x>.md` (a `docs:` commit), and
+   `R5-P.LAND`, who commits `docs/v2-run/helpers/land-zone.sh` and its row in `docs/v2-run/helpers/README.md`. Here
+   `README.md` means the repository root's. Also never: adding a dependency or touching `pnpm-lock.yaml`; packaging,
    signing, deploying or any TV / `sdb` / Tizen CLI command; touching skynet2, `art-prompts/v2/server.sh` or port
    30000.
 8. **Frame ≠ world** (`plan_resolution.md` §2.6). The frame is 640×360 (playfield 640×336, 12-px HUD bars, 12-px
@@ -189,6 +196,10 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
     `export RUN_DIR=/home/sites/shmup-cup-run`.
 16. **If you are almost at the end of your task, do not bother with context compression; it is quicker to finish the
     task and respond.**
+17. **If your context gets high, or the orchestrator asks:** finish the current edit, push what is consistent (in a
+    lane worktree or a patch subtask: commit it locally, as your block says), and end your report (your final
+    message) with an exact LEFT TO DO list: file, old → new text, the tests still to run. The orchestrator then gives
+    that list to a **fresh** agent with the same file ownership (your files and tokens), rather than resuming you.
 
 ## The standard e2e batches
 
@@ -222,7 +233,7 @@ holds it and when it passes on. Two kinds:
 
 | Token | Files | Kind |
 |---|---|---|
-| **PLAN** | `plan_resolution.md`, `CHANGELOG.md` | work-time: the wave's docs agent (`Wnn.DOCS-A`) only |
+| **PLAN** | `plan_resolution.md`, `CHANGELOG.md` | work-time: the wave's docs agent (`Wnn.DOCS-A`), and `R6-03.D7.DOCS` after the release (wave 15) |
 | **GOLDEN** | `test/golden/*.replay.json`, `content/demos/*.replay.json`, running `pnpm golden:update` | push-time; only the blocks that name it |
 | **FINGERPRINTS** (FP) | the `PINNED` tables of the three fingerprint tests (re-pin with `SHMUP_FINGERPRINT_PRINT=1`, or from R5-P.P10 on with `SHMUP_FINGERPRINT_UPDATE=1`) | push-time |
 | **GROUPS** | `assets/source/atlas-groups.json` (re-derive with `SHMUP_ATLAS_GROUPS_UPDATE=1`) | push-time |

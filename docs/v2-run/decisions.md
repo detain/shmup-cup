@@ -25,7 +25,7 @@ Made by the re-plan that wrote `plan_resolution.md` §18 and these work orders.
 | **RUN-7** | **R5's stable hash keys (`R5-P.P1`) and capacity (`R5-P.P8`) are folded into R2-03** (wave 6), so R2-03.G1's single re-bless pays for the port, the keys and the capacity. Capacity takes R5-D5's default (`MAX_BOSS_PARTS` 24) before the designs exist; a design that peaks above 80 % of a pool gets a GLOBAL re-bless in R5 | R2-03, R5 | adopted |
 | **RUN-8** | **R2-03.I2 shrinks to `pnpm store:assets --check`** inside `R2-03.V`: by RR-3 the store icons stay on the v1 art until R4-05.E5 | R2-03, R4-05 | adopted |
 | **RUN-9** | **Benches:** single bench files under the e2e lock (`stress`, `zones`, `render`); the 30-minute soak and the whole `pnpm bench` only in wave 15 | R2-02.B, R3-04, R4-04.D3, R5-10.T7, R6-02.P1 | adopted |
-| **RUN-10** | **R2-01.F1** exists only if wave 0 is still open at the hand-off. Wave 0's triage of the CI e2e shard-1 failures (`campaign-run.spec.ts:241`, `:355`, `debug-tools.spec.ts:233` at `bc8e05d`) and of the myadmin1 `flight.spec.ts:114` flake was fixed by C5 fix 2 (`c67c7c9`, test files only); wave 0 stays open until C5 review 3 of `c67c7c9` (and any fix → new review loop) reaches zero findings, and `R2-01.F1` then finishes exactly that. The run never waits on GitHub CI, but a CI-only failure is still a bug to explain | W00, W01 | adopted |
+| **RUN-10** | **R2-01.F1** exists only if wave 0 is still open at the hand-off. Wave 0's triage of the CI e2e shard-1 failures (`campaign-run.spec.ts:241`, `:355`, `debug-tools.spec.ts:233` at `bc8e05d`) and of the myadmin1 `flight.spec.ts:114` flake was fixed by C5 fix 2 (`c67c7c9`, test files only), and C5 review 3's findings by C5 fixes 3 (`8ff2bf6`) and 4 (`543887b`, both test files only). The C5 loop closes when its last review is at zero findings; the previous orchestrator then sets `wave-00.md` to `**Status: closed**`. If that line still reads open at the hand-off, the open findings are in the newest `r2-01C5-review*.md` / `w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1, and `R2-01.F1` finishes exactly that loop (review → fix → new review to zero). The run never waits on GitHub CI, but a CI-only failure is still a bug to explain | W00, W01 | adopted |
 | **RUN-11** | **R5 zone lanes:** one worktree per zone in `RUN_DIR/wt/zone-<x>` holding a local branch `r5/zone-<x>` that is never pushed; the lane's successive agents work in that worktree; only the LAND pushes (one squashed commit) | W10–W12 | adopted |
 | **RUN-12** | **The LAND procedure is a committed helper**, `docs/v2-run/helpers/land-zone.sh`, written and tested in wave 9 (`R5-P.LAND`); GLOBAL re-blesses hold the same lock | W09–W14 | adopted |
 | **RUN-13** | **Several docs agents per wave**, each with disjoint files; the one that holds `plan_resolution.md` and `CHANGELOG.md` (`Wnn.DOCS-A`) also updates the §17 rows; the orchestrator then runs `python3 .claude/plan_board_v2.py` in the main checkout (the script is git-ignored and exists only there; docs agents never run it). Replaces the earlier "one docs agent at a time" | every wave | adopted |
@@ -79,6 +79,9 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 | **W5-19** | Zone load ≤ 2 s on the M7: estimated from headless Chromium × the R0-02 desktop-to-M7 ratio if R0-03 logs exist, otherwise flagged unmeasured | adopted |
 
 ## 4. R2 re-plan decisions R2-N1 … R2-N8
+
+They reach §1's register through the docs agent of the wave that builds them: R2-N1 … R2-N3 `W05.DOCS-A`, R2-N4
+`W06.DOCS-A`, R2-N5 … R2-N8 `W07.DOCS-A`.
 
 | ID | Decision (the default) | Status |
 |---|---|---|

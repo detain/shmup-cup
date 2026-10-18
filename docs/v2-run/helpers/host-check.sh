@@ -11,8 +11,13 @@
 # A failing step does not stop the run; the script exits 1 when any step failed.
 #
 # Run (from anywhere; ~12 min on myadmin1). Run it ALONE — it runs the full suite and the bench,
-# so never while builder agents work (owner rule: the full suite only at the end):
-#   bash docs/v2-run/helpers/host-check.sh 2>&1 | tee ~/shmup-host-check.log
+# so never while builder agents work (owner rule: the full suite only at the end). opencode's
+# shell tool stops a foreground command after 2 minutes, so start it in the background and poll
+# the log until its last line reads "ALL DONE: <n> step(s) failed" (<id> = your subtask id, e.g.
+# R6-03.D6):
+#   HOST_CHECK_LOG_DIR=/home/sites/shmup-cup-run/<id>-steps \
+#     nohup bash docs/v2-run/helpers/host-check.sh \
+#     > /home/sites/shmup-cup-run/<id>-host-check.log 2>&1 &
 # Environment:
 #   HOST_CHECK_LOG_DIR      where the step logs go (default: /tmp/shmup-host-check-<timestamp>)
 #   HOST_CHECK_SKIP_PW_DEPS 1 = skip `playwright install-deps` (no passwordless sudo, or done)

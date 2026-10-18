@@ -10,12 +10,14 @@
 > **State on 2026-10-18:** 10 of 37 steps done — R0-01, R0-02, R3-01, R3-02, R3-05 and R1-01 … R1-05 (several with
 > owner parts pending). **R2-01 is flipped on master** (`72b18a1`: 640×360, 12-px HUD bars and tiles, `ART_SCALE` 3/2,
 > replay format 2, save format 3) and closing: its docs pass is this run's first wave. **R0-04** (the art round) is
-> waiting on the owner. **Wave 0** — the C5 review loop and the triage of the CI e2e shard-1 failures — is open until
-> C5 review 3 of `c67c7c9` (and any fix → new review loop after it) reaches zero findings. At `c67c7c9` the triage's
-> fix (C5 fix 2, test files only) was pushed, and C5 review 3 (which also runs the full Chromium e2e on myadmin1) was
-> running. If `docs/v2-run/wave-00.md`'s Status line still reads `**Status: open**` (not `**Status: closed**`) when
-> you start, you finish wave 0 first, as `R2-01.F1` in wave 1. All remaining work is scheduled in **plan §18
-> "Execution waves for the ~10-agent run"**, with the work orders in **`docs/v2-run/`** (index
+> waiting on the owner. **Wave 0** is R2-01's last C5 review loop and the triage of the CI e2e shard-1 failures (C5
+> fixes 2 `c67c7c9`, 3 `8ff2bf6` and 4 `543887b` are on master, test files only). The C5 loop closes when its last
+> review is at zero findings; the previous orchestrator then sets `docs/v2-run/wave-00.md`'s status line to
+> `**Status: closed**`. If the line still reads `**Status: open**` when you start, run wave 0's "open" branch first
+> (`wave-00.md`: its open items become `R2-01.F1` in wave 1); the open findings are in the newest
+> `r2-01C5-review*.md` / `w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` (the
+> old host's scratchpad, copied to myadmin1). All remaining work is scheduled in **plan
+> §18 "Execution waves for the ~10-agent run"**, with the work orders in **`docs/v2-run/`** (index
 > `docs/v2-run/README.md`, helper scripts in `docs/v2-run/helpers/`).
 >
 > **What exists on myadmin1:** the repo (everything the run needs is on `master`), plus what the previous orchestrator
@@ -46,7 +48,8 @@ paraphrasing it.
 - **MAX_E2E_AGENTS:** `2` — agents that run Playwright. They share one machine-wide lock; a third would only wait.
 - **VITEST_MAX_WORKERS:** `6` per agent (myadmin1 has 64 cores and 251 GB of RAM).
 - **E2E_WORKERS:** `2` inside the e2e lock — what the timed specs were measured with, and the default of
-  `docs/v2-run/helpers/e2e-batch.sh`. A batch with no timed spec may use up to `6` on this host.
+  `docs/v2-run/helpers/e2e-batch.sh`. Keep `2` unless a block says otherwise (`R2-01.F1`'s myadmin1 repeat uses `12`
+  on purpose).
 - **PAUSE:** `no` — `waves`: stop after each §18 wave, report, and wait for me; `milestones`: stop only after the
   last wave of each milestone (R2 … R6).
 - **AI_GENERATION:** `no` — on myadmin1 no agent calls an image or video model (the GPU work is done; only the owner
@@ -61,14 +64,15 @@ paraphrasing it.
 
 ## The owner's general instructions (follow them exactly, and pass them on to every agent)
 
-The agent brief below passes all eight on to every agent. Rules 1, 3, 5 and 6 are yours to carry out; 2, 4, 7 and 8
-bind every agent directly.
+The agent brief below passes all nine on to every agent. Rules 1, 3, 5, 6 and 9 are yours to carry out (9 also tells
+each agent how to stop); 2, 4, 7 and 8 bind every agent directly.
 
 1. **Utilize agents and concurrency as much as possible, safely.**
    - Spawn agents to investigate the proposed fixes, come up with which files each will likely touch, and respond
      with it.
    - From those answers, figure out **concurrency lanes**: work with disjoint files runs in parallel, work that
-     overlaps runs one after another in the same lane. Then spawn the builders, one agent per lane.
+     overlaps runs one after another in the same lane. Then spawn the builders: lanes run in parallel; inside a lane,
+     one fresh agent per subtask, in order (`docs/v2-run/README.md` § How an orchestrator uses this folder, step 2).
    - In this run the work orders already hold the re-plan scouts' file lists. A wave still starts with **re-check
      scouts** (wave loop, step 1), and any new work (a review finding, a red test) gets a scout before a builder.
 2. **Tests as you go; the full suite only at the end.**
@@ -89,6 +93,12 @@ bind every agent directly.
    context compression — it is quicker to just finish the task and respond.*
 8. **Tests and timing on myadmin1 — never wait on GitHub CI.** CI still runs on every push, but nobody waits for its
    result: the local results on myadmin1 are what count. Look at CI at a wave's close at most, and never block on it.
+9. **High context → LEFT TO DO → a fresh agent.** When an agent's context gets high (opencode shows its session near
+   the limit, the agent says so, or it has been compacted once), tell it: *finish the current edit, push what is
+   consistent (in a lane worktree or a patch subtask: commit it locally, as its block says), and reply with an exact
+   LEFT TO DO list — file, old → new text, the tests still to run.* Then give that list to a **fresh** agent with the
+   same file ownership (the same files and tokens) to finish it; its prompt is the four parts plus the list. Do not
+   keep resuming the old agent.
 
 ## Read first (you; agents read their own parts in depth)
 
@@ -187,7 +197,8 @@ and use whatever the subagent tool is called there.
 - **Record** each agent the moment you start it, in the wave's lane file: name, role, lane, task ids, worktree path,
   **sessionID**, tokens held, status.
 - **Resume** an agent by calling the subagent tool again with its `sessionID` and the prompt `continue` (a blank
-  reply — owner rule 5), or `RESUME: <what to do>` after a restart. Its context is intact.
+  reply — owner rule 5), or `RESUME: <what to do>` after a restart. Its context is intact. Never resume an agent
+  whose context is high: it returns its LEFT TO DO list and a fresh agent finishes it (owner rule 9).
 - **Fallback**, only if the subagent tool cannot run children in the background: start each agent as its own process
   from a background shell command —
   `opencode run --auto --agent general --title <name> "$(cat /home/sites/shmup-cup-run/prompts/<name>.md)"` with its
@@ -208,8 +219,9 @@ not fail: run it again with a longer timeout. The agent brief says the same.
 **Compaction.** opencode compacts a session by itself near the context limit (a summary plus the last ~15k tokens),
 and on myadmin1 the DCP plugin also gives sessions a `compress` tool. Both lose detail. So keep the run notes current
 after every agent event, so that an automatic compaction loses nothing; compact or compress yourself only after the
-content is used and written down (after writing the lane plan or a wave report), never right before; and agents near
-the end of a task do not compress at all.
+content is used and written down (after writing the lane plan or a wave report), never right before; agents near
+the end of a task do not compress at all; and an agent whose context gets high stops with its LEFT TO DO list, which a
+fresh agent finishes (owner rule 9).
 
 **Your notes folder is RUN_DIR (`/home/sites/shmup-cup-run/`).** It is outside the repository and survives
 restarts; never keep state in `/tmp` or a session folder. The old host's notes in
@@ -230,8 +242,11 @@ Write to it **before** any compaction, and after every agent start, report and p
 **Every agent works in its own git worktree** under `/home/sites/shmup-wt/` — reviewers and scouts too, so that they
 read exactly `origin/master`. `<name>` is the agent's name from the lane file (unique, e.g. `w2-S-port`). The one
 exception is a **lane worktree** that a work order names: those live in `RUN_DIR/wt/` (`zone-<x>`, `r6-zone-<x>`,
-`bonus`, `escape`, `r6-global`), hold a local branch that is never pushed, and are shared by the lane's successive
-agents (see below):
+`bonus`, `escape`, `r6-global`, and wave 13's `fix-zone-<x>`), hold a local branch that is never pushed, and are
+shared by the lane's successive agents (see below). An agent in a lane worktree skips the first three lines below
+(`fetch`, `worktree add`, `cd`), `cd`s into its lane worktree instead, and still runs the `pnpm install` line there
+(and `pnpm assets` when its tests need the atlas): the orchestrator's `git worktree add -b …` makes a tree with no
+`node_modules`, and a rebase can bring a lockfile change:
 
 ```bash
 git -C /home/sites/shmup-cup fetch origin
@@ -262,7 +277,8 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
 - **Two exceptions to "push each task"** (the agent brief's GIT block repeats them; the subtask's block says which
   applies):
   - a **lane worktree** (`RUN_DIR/wt/zone-<x>` on `r5/zone-<x>`, `RUN_DIR/wt/bonus`, `RUN_DIR/wt/escape`,
-    `RUN_DIR/wt/r6-zone-<x>`, `RUN_DIR/wt/r6-global`): the lane's agents commit on its local branch and never push;
+    `RUN_DIR/wt/r6-zone-<x>`, `RUN_DIR/wt/r6-global`, wave 13's `RUN_DIR/wt/fix-zone-<x>` on `r5/fix-zone-<x>`): the
+    lane's agents commit on its local branch and never push;
     only the LAND subtask pushes, through `docs/v2-run/helpers/land-zone.sh`. Local branches are scaffolding: never
     pushed, deleted after the land;
   - a **patch subtask** (`R2-04.F1`, `R2-04.Z1` … `Z4`): it commits locally, writes `RUN_DIR/w07/patches/<id>.patch`
@@ -328,6 +344,11 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
   - `done (owner parts pending)` — the code is complete and only "Manual (owner)" items remain;
   - `waiting on owner` — the agent part cannot start before the owner's input, e.g. R0-03 before bench logs exist;
   - `blocked: <reason>`.
+  **R0-04's row:** once `R0-04.W2` (wave 4) is on `origin/master` and `R0-04.W1` still waits for me (Q-1, Q-2), set
+  R0-04 to `waiting on owner — R0-04.W1 (picking done? Git LFS?)` with your next §17 edit; if W1 runs later, that
+  wave's `Wnn.DOCS-A` sets `done (owner parts pending)`. **R0-03's row** follows preflight 6. At the release, wave 15's
+  docs agent sets R0-03 and R0-04 to their real state; `waiting on owner` with its reason is a valid final state for
+  both (`docs/v2-run/wave-15.md`, Exit check).
   `plan_board_v2.py` maps `done…` → Done, `in progress` / `blocked` → In Progress, and everything else → Todo. It
   runs `git fetch` and reads `origin/master:plan_resolution.md` in `/home/sites/shmup-cup` (its `ROOT`) whatever the
   current directory, so it sees only pushed rows. It is git-ignored and exists only in the main checkout. Only you run
@@ -335,7 +356,9 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
   Docs agents never run it.
 - **You edit only §17's status cells** of `plan_resolution.md`: commit and push them from the main checkout
   (`git pull --rebase origin master` first), and only while no agent holds PLAN; marking a step `in progress` while a
-  `Wnn.DOCS-A` holds PLAN goes into that agent's task instead.
+  `Wnn.DOCS-A` holds PLAN goes into that agent's task instead. The one other line you edit, the same way: if
+  `R2-01.F1` ran, `docs/v2-run/wave-00.md`'s status line (→ `**Status: closed** — <date>, <the zero review>`) once
+  `R2-01.F1.RV` reaches zero.
 - **Owner-only parts never block** (plan §4, §13): the TV benchmark run, AI generation, hand cleanup of sprites, play
   sessions on the M7, the FLUX licence. Agents build the tools, use interim or procedural art, and list what is left
   under the step's **Manual (owner)** in its As-built notes.
@@ -360,7 +383,7 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
    prerequisites. Report any `blocked` step to me; skip `waiting on owner` steps unless their input now exists.
    **R0-03 is owner-only** (the TV bench run on the M7s) and in no wave: if §17 still says `not started`, set it to
    `waiting on owner` with your first §17 edit; it becomes agent work only if logs appear under
-   `tools/input-probe/results/*-bench/`.
+   `tools/input-probe/results/*-bench/`. R0-04's row: see "How you work".
 7. `python3 /home/sites/shmup-cup/.claude/plan_board_v2.py` (it uses `gh`, which is logged in on myadmin1). If the
    file is missing (it is git-ignored and copied by hand), skip it and tell me.
 8. CI, for the record only (owner rule 8): `gh run list --branch master --limit 3`. Note the state in `RESUME.md`; do
@@ -399,19 +422,27 @@ that needs a new subtask, a red test) gets a scout of its own before a builder.
   the others go in different lanes (parallel), at most MAX_PARALLEL agents at once and at most MAX_E2E_AGENTS that run
   Playwright.
 - **Assign every token** to one lane (see "Tokens and locks").
-- **Builders never edit** `plan_resolution.md`, `CHANGELOG.md`, `docs/dev/api-reference.md`, `README.md`, `CLAUDE.md`
-  or `docs/**` unless the work order makes them the wave's docs agent. They return As-built notes and docs needs in
-  their report, and the docs agent (step 6) writes them.
-- Write the lane plan to `RUN_DIR/lanes-<wave>.md`.
+- **Builders never edit** `plan_resolution.md`, `CHANGELOG.md`, `docs/dev/api-reference.md`, `README.md` (the
+  repository root's), `CLAUDE.md` or `docs/**` unless their block's Files list names the file (a DOCS-IMAGES holder's
+  `docs/images/**`, `R2-02.R`'s `content/*/README.md`, the zone designers' `docs/v2-run/designs/zone-<x>.md`,
+  `R5-P.LAND`'s helper and its row in `docs/v2-run/helpers/README.md`) or the work order makes them a docs agent. Keep
+  such files in their YOUR FILES. They return As-built notes and docs needs in their report, and the docs agent (step
+  6) writes them.
+- Write the lane plan to `RUN_DIR/lanes-<wave>.md`, with the wave's **wave base** (`git rev-parse origin/master`
+  when its first agent starts); keep wave 2's base in `RESUME.md` too (waves 4 and 5 diff against it). A wave
+  file's `<wave base>` means that SHA, `<wave-2 base>` and `R2-02.RV-pre`'s `<base>` mean wave 2's: put the SHA into
+  the prompt, never the placeholder (`docs/v2-run/README.md` step 5).
 - Set the wave's steps to `in progress` in §17 (or give that edit to the `Wnn.DOCS-A` that holds PLAN — see "How you
   work"), push, and run `plan_board_v2.py`.
 
-### 3. Build (one agent per lane, lanes in parallel)
+### 3. Build (lanes in parallel; one agent per subtask, in lane order)
 
-- A lane's agent does its tasks **in order**. For each: implement it per the work order and the plan section; write
-  and fix the **targeted tests** and run only those, plus typecheck / lint / prettier of what it touched; **commit and
-  push** the task to `master` — except in a lane worktree or a patch subtask (see "Worktrees and pushing"), which
-  commit locally and never push.
+- A lane's subtasks run **in order**, each by a fresh agent. The next one starts when the previous one is finished —
+  its push on `origin/master`; in a lane worktree, its commit on the lane's branch; for a patch subtask, its patch in
+  `RUN_DIR/w07/patches/` — and its own "Depends on" holds. Each subtask's agent implements it per the work order and
+  the plan section; writes and fixes the **targeted tests** and runs only those, plus typecheck / lint / prettier of
+  what it touched; and **commits and pushes** the subtask to `master` — except in a lane worktree or a patch subtask
+  (see "Worktrees and pushing"), which commit locally and never push.
 - **Before you start a lane's next agent, re-read the lane file.** If a builder reports touching a file outside its
   list, check every running lane against it, and re-plan or serialize when they collide.
 - **Blank response → `continue`** (owner rule 5).
@@ -463,6 +494,11 @@ Their changes get one review loop (step 4) to zero.
 
 ### 7. Close the wave (you)
 
+- **Run the wave's `## Exit check`** (in its work order): its git / gh lines yourself; its Vitest, build,
+  `content:check` and other commands through one fresh `general` agent (role tester, its own worktree on
+  `origin/master`, YOUR TESTS = the Exit check's commands verbatim — targeted even when they name `test/golden`; it
+  reports pass / fail / skip counts and pushes nothing). The **code exit** is every Exit-check item except the docs
+  review and the §17 row; RUN-2 starts wave N+1's builders on it.
 - Check that every task's commit is on `origin/master` (`git log`).
 - Remove finished worktrees (see "Worktrees and pushing"), prune the rest, delete local scaffolding branches.
 - Run `plan_board_v2.py`.
@@ -484,6 +520,12 @@ Their changes get one review loop (step 4) to zero.
 
 ## End of the run: the one full suite
 
+With SCOPE `all remaining steps`, this section **is** wave 15's `R6-03.D6` → `R6-03.D6.FIXn` / `R6-03.D6.RV` →
+`R6-03.RV` → `R6-03.D7` (only after my explicit OK) → `R6-03.D7.DOCS`: follow those blocks of
+`docs/v2-run/wave-15.md` — never a second full suite after wave 15. With a narrower SCOPE, run it only when SCOPE ends
+at a milestone (RUN-1, before that milestone's tag). A SCOPE that stops mid-milestone ends with its last wave's
+targeted Exit check and the report, with no full suite.
+
 1. **Run the full suite.** One **integration agent** (its own worktree on `origin/master`) runs the full check suite
    once, on myadmin1, **alone** (no other agent runs meanwhile):
    - `bash docs/v2-run/helpers/host-check.sh` from its worktree (background, with its log). It runs install,
@@ -491,7 +533,8 @@ Their changes get one review loop (step 4) to zero.
      `pnpm test:e2e` for Chromium and Firefox under the e2e lock, the input probe
      (`cd tools/input-probe && npm ci && npm run verify`) and the ingest tool
      (`cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check`);
-   - then `pnpm content:check`, `pnpm docs:images --check` and `pnpm store:assets --check`.
+   - then `pnpm content:check`, `pnpm docs:images --check`, `pnpm store:assets --check` and
+     `node scripts/art-origins.mjs --check`.
 2. **Update everything that tracks the changes:**
    - re-bless goldens and attract demos (`pnpm golden:update`) **only where a step changed the simulation on
      purpose**, with the reason in the commit message — any other golden failure is a bug to fix;
@@ -502,10 +545,12 @@ Their changes get one review loop (step 4) to zero.
 4. **CI, once:** look at the run of the final `master` commit (`gh run list --branch master --limit 3`). The local
    result counts (owner rule 8). A job that is red on CI only gets one triage agent (reproduce with `taskset -c 0-3`);
    its result goes into the final report.
-5. **Close out:** the final §17 update (docs agent), `plan_board_v2.py`, and the final report: steps done, review
-   rounds, findings fixed or declined, test counts, As-built deviations, everything waiting on me grouped by step, the
-   local full-suite result and the CI state, and the next manual actions (the TV benchmark run, AI art and cleanup,
-   the FLUX licence, M7 play sessions).
+5. **Close out:** with SCOPE `all`, `R6-03.D7` (`gh release create v2.0.0`, only after my explicit OK); with a SCOPE
+   that ends at an earlier milestone, that milestone's pre-release tag (wave loop step 7). Then the final §17 update
+   (`R6-03.D7.DOCS`, after `R6-03.D7`; for an earlier milestone, its last wave's `Wnn.DOCS-A`), `plan_board_v2.py`,
+   and the final report: steps done, review rounds, findings fixed or declined, test counts, As-built deviations,
+   everything waiting on me grouped by step, the local full-suite result and the CI state, and the next manual
+   actions (the TV benchmark run, AI art and cleanup, the FLUX licence, M7 play sessions).
 
 ## The art round (R0-04) on myadmin1
 
@@ -545,11 +590,13 @@ absolute path; start each shell command that uses it with export RUN_DIR=/home/s
 DONE WHEN: {the acceptance items, copied from the work order}
 THE TASK, copied from the work order: {VERBATIM TEXT}
 
-READ FIRST, in this order: this prompt; plan_resolution.md "### {STEP ID} — {Title}" (the whole section), §2.6
+READ FIRST, in this order: this prompt; plan_resolution.md "### {STEP ID} — {Title}" (the whole section; for R4-P /
+R5-P prep, the section of the step it prepares; for a Wnn.* docs item, the sections of the wave's steps), §2.6
 (frame ≠ world) and §18's row for wave {WAVE}; CLAUDE.md, docs/dev/conventions.md, docs/dev/repo-layout.md (opencode
 gives you these three as instructions; if you cannot see them, read the files). Read every file in YOUR FILES before
 you edit it. Big files (packages/core/src/behaviors/index.ts, packages/core/src/data/index.ts,
-test/integration/content.test.ts): edit with exact old/new strings, never rewrite the whole file.
+packages/core/src/scenes/index.ts, test/integration/content.test.ts): edit with exact old/new strings, never rewrite
+the whole file.
 
 The host also gives every session a global "Code Philosophy - MANDATORY" instruction (load code-philosophy /
 frontend-philosophy, refactor if needed). In this repo it never widens your task: never refactor or edit outside YOUR
@@ -557,12 +604,14 @@ FILES. Where they differ, this prompt and docs/dev/conventions.md win.
 
 {HARD RULES block, verbatim}
 
-THE OWNER'S GENERAL INSTRUCTIONS (the orchestrator carries out 1, 3, 5 and 6; 2, 4, 7 and 8 are yours directly):
+THE OWNER'S GENERAL INSTRUCTIONS (the orchestrator carries out 1, 3, 5, 6 and 9; 2, 4, 7 and 8 are yours directly,
+and 9 tells you how to stop):
 1. Agents and concurrency are used as much as is safely possible: scouts report the files each fix will touch, and
    the orchestrator plans lanes from that. If you are a scout, your file lists are what the lanes are built from: be
    exact.
 2. Tests as you go: build, fix and update the targeted tests for what you touch, and run only those. Never run the
-   full suite (pnpm test, pnpm test:e2e, pnpm bench, all goldens): it runs once at the end of all the changes.
+   full suite (pnpm test, pnpm test:e2e, pnpm bench, all goldens — unless YOUR TESTS name them, as an Exit check's
+   do): it runs once at the end of all the changes.
 3. After fixes, a review agent reports findings, a fix agent fixes them, then a NEW review agent reviews again, until
    a review finds no issues. If you are a reviewer, report every real issue, nits included; if a fixer, fix each
    finding at the root or decline it with a concrete reason.
@@ -572,9 +621,15 @@ THE OWNER'S GENERAL INSTRUCTIONS (the orchestrator carries out 1, 3, 5 and 6; 2,
 7. If you are almost at the end of your task, don't bother with context compression — it is quicker to just finish the
    task and respond.
 8. Tests and timing happen on this host (myadmin1); never wait for GitHub CI.
+9. If your context gets high, or the orchestrator asks: finish the current edit, push what is consistent (in a lane
+   worktree or a patch subtask: commit it locally, as your block says), and end your report (your final message)
+   with an exact LEFT TO DO list: file, old → new text, the tests still to run. A fresh agent with your files and
+   tokens finishes it.
 
-WORKTREE — do this first (skip this block when your work order names a lane worktree under RUN_DIR/wt/: cd there
-instead, and use that path wherever this prompt says /home/sites/shmup-wt/{NAME}):
+WORKTREE — do this first. When your work order names a lane worktree under RUN_DIR/wt/, skip only the first three
+lines (git fetch, worktree add, cd): cd into that lane worktree instead, still run the pnpm install and pnpm assets
+lines there (the lane worktree has no node_modules until its first agent installs, and a rebase can bring a lockfile
+change), and use that path wherever this prompt says /home/sites/shmup-wt/{NAME}:
   git -C /home/sites/shmup-cup fetch origin
   git -C /home/sites/shmup-cup worktree add /home/sites/shmup-wt/{NAME} origin/master --detach
   cd /home/sites/shmup-wt/{NAME}
@@ -615,9 +670,9 @@ GIT (file-changing roles only; scouts and reviewers commit nothing):
   git fetch origin && git rebase origin/master && git push origin HEAD:master
 - EXCEPTIONS (they override the push lines above and below; your block says which applies):
   (a) A LANE WORKTREE on a local branch (R5 zone lanes RUN_DIR/wt/zone-<x> on r5/zone-<x>; RUN_DIR/wt/bonus,
-      RUN_DIR/wt/escape; RUN_DIR/wt/r6-zone-<x>, RUN_DIR/wt/r6-global): skip the WORKTREE block and cd there; commit on
-      that branch and NEVER push. Only the LAND subtask pushes, through docs/v2-run/helpers/land-zone.sh. Never remove
-      that worktree.
+      RUN_DIR/wt/escape; RUN_DIR/wt/r6-zone-<x>, RUN_DIR/wt/r6-global; wave 13's RUN_DIR/wt/fix-zone-<x> on
+      r5/fix-zone-<x>): cd there as the WORKTREE block says (still install); commit on that branch and NEVER push.
+      Only the LAND subtask pushes, through docs/v2-run/helpers/land-zone.sh. Never remove that worktree.
   (b) A PATCH subtask (R2-04.F1, R2-04.Z1 … Z4): commit locally, write RUN_DIR/w07/patches/<id>.patch as the block
       says, push nothing.
 - Never commit node_modules, dist, dist-bench, *.wgt, *.ipk, logs, coverage, .turbo, test-results, .claude/,
@@ -659,6 +714,7 @@ Manual (owner): …
 Docs needs: …
 Open issues: …
 Outcomes (fixers only): F1 fixed in <sha> | F2 declined — <concrete reason>
+Left to do (owner rule 9): none | <file — old → new text — tests still to run> (one line each)
 Worktree: removed | kept — why
 ```
 
@@ -669,7 +725,7 @@ Worktree: removed | kept — why
 Commits reviewed: <shas>
 Checks run: <exact command> → <result> (one line each)
 Findings: none
-  — or one line each: F1 [blocker | major | nit] <file>:<line> — <title>. <detail>. Fix: <suggested fix>.
+  — or one line each: F1 [blocker | should-fix | nit] <file>:<line> — <title>. <detail>. Fix: <suggested fix>.
 Summary: 2–4 lines.
 ```
 
@@ -684,7 +740,7 @@ Changed since the work order: …
 Risks: …
 ```
 
-**Docs:** `Files changed`, `§17 rows`, `Commits`, `Worktree` — the same style.
+**Docs:** `Files changed`, `§17 rows`, `Commits`, `Left to do`, `Worktree` — the same style.
 
 ## Reporting to me
 
