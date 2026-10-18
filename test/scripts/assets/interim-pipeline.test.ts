@@ -269,8 +269,11 @@ describe('scripts/assets/pipeline — scale 1 is the v1 atlas, at either frame (
 
   it('pins the v1 atlas: every page’s pixels and the manifest, by digest', () => {
     // Pinned when R2-01 landed the stage (the atlas `pnpm assets` wrote before it, byte for byte).
-    // Only an edit of the v1 sprite sources or generators may move it — then re-pin and say why;
-    // never the interim stage, the art scale's default or the frame.
+    // Only an edit of the v1 sprite sources or generators may move it — or a real-art PNG override,
+    // a `native` source or a v2 font file landing in `assets/source/` (R3, R4-03): overrides and
+    // native sources pass through unscaled at every scale, so they put v2-size frames into the
+    // scale-1 build too. Then re-pin and say why; never the interim stage, the art scale's default
+    // or the frame.
     const hash = createHash('sha256');
     for (const page of v1.pages) {
       hash.update(`${page.file} ${page.image.width}x${page.image.height}\0`);

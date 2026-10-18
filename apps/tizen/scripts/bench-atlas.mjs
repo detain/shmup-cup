@@ -14,6 +14,9 @@
  *   interim ×1.5 upscale of the v1 sources (later the art bible's v2 art); the bench's densities
  *   are relative to the v1 art (s = 1.5 *is* the ×1.5 art), so it keeps building from the v1
  *   sources at scale 1 — the 1 / 1 / 2 page model and R0-02 / R0-03's runs stay comparable.
+ *   That holds while no real-art PNG override, `native` source or v2 font ships: those enter the
+ *   scale-1 build at their v2 size, so R3 must decide whether `artScale: 1` builds skip overrides
+ *   and native sources (and R4-03 how the v2 font opts out of the art scale).
  *
  * - **Why ungrouped (R1-05).** The game's atlas is split into a `common` page and one small page
  *   per zone since R1-05, so the zone residency can unload other zones' art. The bench keeps

@@ -28,7 +28,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createImage, getPixel, setPixel } from '../../../scripts/assets/image.mjs';
+import { createImage, getPixel, imagesEqual, setPixel } from '../../../scripts/assets/image.mjs';
 import {
   ATLAS_DIR,
   AssetSourceError,
@@ -285,7 +285,8 @@ describe('scripts/assets/pipeline — page limits', () => {
   });
 
   it('writes a page of at most 256 colours as lossless PNG-8 and the others as RGBA (R1-05)', () => {
-    // At 512² the shipped sprites spread over three pages; the last holds ≤ 256 colours.
+    // At 512² the common sprites overflow onto more pages beside the zones' own; some pages
+    // hold ≤ 256 colours and some more, so both PNG types appear.
     const { pages } = buildAtlas({ maxPageSize: 512 });
     const types = pages.map((page) => page.png[25]); // IHDR colour type
     expect(types).toContain(3);
@@ -296,7 +297,9 @@ describe('scripts/assets/pipeline — page limits', () => {
       expect(Buffer.compare(page.png, encodePng(page.image, { indexed: 'auto' })), page.file).toBe(
         0,
       );
-      expect(decodePng(page.png), page.file).toEqual(page.image);
+      // `imagesEqual`, not a deep `toEqual`: comparing megabytes of pixels element by element
+      // took most of this test's 15 s at 384 and neared the 30-s timeout at 640.
+      expect(imagesEqual(decodePng(page.png), page.image), page.file).toBe(true);
     }
     // The shipped common page (main.png) has far more than 256 colours: it stays RGBA.
     expect(indexedPalette(reference.pages[0].image)).toBeNull();

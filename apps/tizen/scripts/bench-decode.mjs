@@ -16,7 +16,11 @@
  *   alpha, which the repo's encoder writes as lossless **PNG-8** (colour type 3, decision W3-3) —
  *   like a zone page of art quantised to a zone palette (art bible: 48–64 colours).
  * - **`common`** and **`zone-a`** — the shipped atlas's `common` page and zone A's page, exactly
- *   as the asset pipeline builds them (`buildAtlas()`), for reference.
+ *   as the asset pipeline builds them (`buildAtlas()`), for reference. They follow what the game
+ *   ships: from R2-01's flip they are the interim ×1.5 pages (`common` 1024² instead of 1024×512,
+ *   `zone-a` 256² instead of 256×128), unlike `./bench-atlas.mjs`'s density atlases, which keep
+ *   the v1 art for good — so R0-03 decode rows recorded before and after the flip are not like
+ *   for like.
  *
  * The synthetic pages are **stand-ins with a stated size**, not art: what decides a PNG's decode
  * cost is its pixel count and its compressed bytes, so both pages are full 2048² and their bytes
