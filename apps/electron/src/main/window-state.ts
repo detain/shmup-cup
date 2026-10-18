@@ -7,7 +7,8 @@
  *
  * - **Scale.** The window's content is an exact multiple of the game's frame
  *   ({@link FRAME_WIDTH} × {@link FRAME_HEIGHT}; {@link windowContentSize}: ×1 …
- *   ×{@link MAX_WINDOW_SCALE}; default ×{@link DEFAULT_WINDOW_SCALE} — ×3 = 1152×648 at 384×216),
+ *   ×{@link MAX_WINDOW_SCALE}; default ×{@link DEFAULT_WINDOW_SCALE} — ×2 = 1280×720 since R2-01,
+ *   ×3 = 1152×648 at v1's 384×216),
  *   so the game's integer scale mode fills it crisply. {@link fitWindowScale} lowers a saved scale
  *   that no longer fits the screen's work area.
  * - **Fullscreen.** Remembered; `SHMUP_FULLSCREEN=1` still forces it for one launch.
@@ -211,7 +212,7 @@ export function parseWindowState(text: string | null): WindowState {
  * @example
  * ```ts
  * serializeWindowState(DEFAULT_WINDOW_STATE);
- * // → '{"version":2,"fullscreen":false,"scale":3,"x":null,"y":null}' (×3 at 384×216)
+ * // → '{"version":2,"fullscreen":false,"scale":2,"x":null,"y":null}' (×2 at 640×360)
  * ```
  */
 export function serializeWindowState(state: WindowState): string {

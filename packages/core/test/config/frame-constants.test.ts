@@ -1,6 +1,6 @@
 /**
  * `core/config` — the frame constants of plan_resolution.md R1-01 (§7: every frame-dependent
- * number derives from a few compile-time constants): their values until R2-01 flips them, the
+ * number derives from a few compile-time constants): their 640×360 values since R2-01's flip, the
  * relations the derived values keep, the font metrics pinned to the font file the atlas is built
  * from (× `ART_SCALE`, the factor the atlas pipeline scales the font by — R2-01, W4-3), and
  * `DEFAULT_GAME_CONFIG` recording the frame.

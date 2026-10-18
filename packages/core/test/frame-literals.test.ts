@@ -10,8 +10,8 @@
  * frame.
  *
  * The frame numbers are the v1 frame's `384`, `216`, `200`, `208` and its centre `192` / `108`,
- * plus whatever `FRAME_W`, `FRAME_H`, `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now* (`640`, `360`,
- * `336`, `348` once R2-01 flips them); the helper's docblock says why `100` and the new centre
+ * plus whatever `FRAME_W`, `FRAME_H`, `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now* (since R2-01:
+ * `640`, `360`, `336`, `348`); the helper's docblock says why `100` and the new centre
  * `320` / `180` are not among them.
  *
  * The scanner itself — and the list of frame numbers it bans, the symbol paths, the stale-entry

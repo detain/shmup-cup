@@ -3,11 +3,11 @@
  *
  * The main process is compiled and packaged without the workspace packages, so it cannot import
  * `@shmup/core`: `main/window-state.ts` keeps its own `FRAME_WIDTH` / `FRAME_HEIGHT`. This file
- * pins them to core's `FRAME_W` / `FRAME_H` (the tests can import core), so R2-01's flip to
- * 640×360 fails here until the mirror moves with it, and checks that the window scales derive
- * from the frame as plan §2.7 asks: the default scale is the largest whose window is at most
- * 1280 px wide (×3 = 1152×648 now, ×2 = 1280×720 at 640×360), the largest scale the one that
- * reaches 4K (×10 now, ×6 at 640×360).
+ * pins them to core's `FRAME_W` / `FRAME_H` (the tests can import core), so a change of the frame
+ * fails here until the mirror moves with it (R2-01's flip to 640×360 moved both in one commit),
+ * and checks that the window scales derive from the frame as plan §2.7 asks: the default scale is
+ * the largest whose window is at most 1280 px wide (×2 = 1280×720 since R2-01; ×3 = 1152×648 at
+ * v1's 384×216), the largest scale the one that reaches 4K (×6 since R2-01; ×10 at v1's frame).
  */
 import { FRAME_H, FRAME_W } from '@shmup/core';
 import { describe, expect, it } from 'vitest';

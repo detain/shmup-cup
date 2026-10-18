@@ -48,7 +48,7 @@ export const REPLAY_FORMAT_VERSION = 2;
 
 /**
  * Why a {@link ReplayVersionError} refused a replay: `'format'` — an older format version (a
- * replay of v1's format: v2's R2-01 bumps it); `'frame'` — the header's config records another
+ * replay of v1's format: v2's R2-01 bumped it); `'frame'` — the header's config records another
  * internal frame than `FRAME_W` × `FRAME_H` (a replay v1 recorded at 384×216 under a 640×360
  * build).
  */
@@ -56,7 +56,7 @@ export type ReplayVersionReason = 'format' | 'frame';
 
 /**
  * The format version every v1 build wrote — `REPLAY_FORMAT_VERSION` and `./run.ts`
- * `RUN_REPLAY_FORMAT_VERSION` alike (v2's R2-01 bumps both to 2): the one older format a
+ * `RUN_REPLAY_FORMAT_VERSION` alike (v2's R2-01 bumped both to 2): the one older format a
  * {@link ReplayVersionError} attributes to v1.
  */
 const V1_FORMAT_VERSION = 1;
