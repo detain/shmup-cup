@@ -208,7 +208,7 @@ test.describe('options and saves: corrupt save (web build)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-scene', 'title');
     await expect.poll(async () => (await storedSave(page))?.options.audio.master).toBe(9);
     const save = await storedSave(page);
-    expect(save?.version).toBe(2); // M2-16: save format version 2
+    expect(save?.version).toBe(3); // `core/save` SAVE_VERSION: 3 since v2's R2-01
     expect(save?.options.audio).toEqual({ master: 9, music: 10, sfx: 10 });
     expect(errors).toEqual([]);
   });
