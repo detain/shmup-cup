@@ -101,10 +101,13 @@ describe('test/e2e/frame-pixels.ts', () => {
   });
 
   // The specs' hand-written mapping before R1-02 (the 640×360 frame of R2-01 is ×2 instead).
-  it.runIf(core.FRAME_W === 384)('is the specs’ old ×3 mapping at the 384×216 frame', () => {
-    expect(VIEWPORT).toEqual({ width: 1152, height: 648 });
-    for (const f of [0, 8, 100, 207, 383]) expect(sx(f)).toBe(3 * f + 1);
-  });
+  it.runIf((core.FRAME_W as number) === 384)(
+    'is the specs’ old ×3 mapping at the 384×216 frame',
+    () => {
+      expect(VIEWPORT).toEqual({ width: 1152, height: 648 });
+      for (const f of [0, 8, 100, 207, 383]) expect(sx(f)).toBe(3 * f + 1);
+    },
+  );
 });
 
 /**
@@ -211,7 +214,10 @@ describe('test/e2e/frame-pixels.ts: the boss HP bar of advanced-bosses.spec.ts',
   });
 
   // The values the spec read before R1-02 (the bar moves with the frame and the font at R2-01).
-  it.runIf(core.FRAME_W === 384 && core.GLYPH_W === 6)('is x 148 / 176, 64 wide at 384×216', () => {
-    expect([BOSS_LABEL_X, BOSS_BAR_X, BOSS_BAR_W, BOSS_FILL_Y]).toEqual([148, 176, 64, 3]);
-  });
+  it.runIf((core.FRAME_W as number) === 384 && (core.GLYPH_W as number) === 6)(
+    'is x 148 / 176, 64 wide at 384×216',
+    () => {
+      expect([BOSS_LABEL_X, BOSS_BAR_X, BOSS_BAR_W, BOSS_FILL_Y]).toEqual([148, 176, 64, 3]);
+    },
+  );
 });
