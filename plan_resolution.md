@@ -2087,6 +2087,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | CI runs on pushes to `v1.x` (`ci.yml` on both branches) | **done** (2026-10-16) |
 | — | One board issue per step on the GitHub project | **done** (2026-10-16) |
 | — | R3-01's prompt-library update done early | **done** (2026-10-16) |
+| — | R1 exit gate: every golden, demo and the v1 baseline (268 passed) plus master CI with all e2e shards, on `56f9ced` | **done** (2026-10-17) |
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
 | R0-02 | The TV render benchmark (`bench:tv`) | done (owner parts pending) — 2026-10-17 |
 | R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |

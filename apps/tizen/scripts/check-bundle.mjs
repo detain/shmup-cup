@@ -82,17 +82,17 @@ export const ATLAS_PAGE_MAX_SIZE = 2048;
  * Most bytes the whole `dist/` may take (8 MiB — the packaged widget).
  *
  * @remarks
- * Kept at 8 MiB on purpose by plan R1-05 (owner decision W3-4), with its derivation written down
- * so R3-04 can re-derive it from measured art. `dist/` is `app.js` **raw** (≈ 1.4 MB today —
- * ≈ 375 KB gzipped; at the {@link APP_JS_GZIP_BUDGET} ceiling ≈ 1.9 MB), the atlas (its pages —
- * one 1024² placeholder page of ≈ 133 KB today — and `main.json`, ≈ 193 KB since R1-05 moved it
- * out of `app.js`), `index.html`, `config.xml` and the icon (< 20 KB): ≈ 1.7 MB today, ≈ 2.4 MB
- * with the code at its ceiling. 8 MiB therefore leaves ≈ 5.5 MiB for detailed art — roughly 10–20
- * PNG-8 pages of 2048×1024, if one takes 0.3–0.6 MB (an assumption R3-04 measures). The real caps
- * are far above it — the Tizen dev install cap is 120 MB and the TV's memory budget 100 MB
- * (`@shmup/shell` `memory`) — so this is a regression guard, not a platform limit. R3-04 sets the
- * v2 value from its stand-in art: pages × measured bytes per page + code + recorded audio. A change
- * also updates `check-bundle.test.ts` and the budget tables of `docs/dev`.
+ * Kept at 8 MiB on purpose by plan R1-05 (owner decision W3-4), with its derivation written down so
+ * R3-04 can re-derive it from measured art. `dist/` is `app.js` **raw** (≈ 1.4 MB today — ≈ 375 KB
+ * gzipped; at the {@link APP_JS_GZIP_BUDGET} ceiling ≈ 1.9 MB), the atlas (its pages — ten
+ * placeholder pages since R1-05's zone split, ≈ 118 KB in all — and `main.json`, ≈ 193 KB since
+ * R1-05 moved it out of `app.js`), `index.html`, `config.xml` and the icon (< 20 KB): ≈ 1.7 MB
+ * today, ≈ 2.4 MB with the code at its ceiling. 8 MiB therefore leaves ≈ 5.5 MiB for detailed art —
+ * roughly 10–20 PNG-8 pages of 2048×1024, if one takes 0.3–0.6 MB (an assumption R3-04 measures).
+ * The real caps are far above it — the Tizen dev install cap is 120 MB and the TV's memory budget
+ * 100 MB (`@shmup/shell` `memory`) — so this is a regression guard, not a platform limit. R3-04
+ * sets the v2 value from its stand-in art: pages × measured bytes per page + code + recorded audio.
+ * A change also updates `check-bundle.test.ts` and the budget tables of `docs/dev`.
  */
 export const DIST_BUDGET = 8 * 1024 * 1024;
 
