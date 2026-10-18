@@ -43,7 +43,7 @@ function waitFrames(page: Page, frames: number): Promise<void> {
 
 /** Bullet-coloured pixels of one screenshot. */
 interface BulletPixels {
-  /** In the playfield (frame rows 8 … 207). */
+  /** In the playfield (frame rows `PLAYFIELD_Y … HUD_BOTTOM_Y − 1`: 12 … 347 at 640×360). */
   readonly playfield: number;
   /** In the HUD bars. */
   readonly hud: number;

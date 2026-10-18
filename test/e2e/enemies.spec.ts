@@ -25,8 +25,8 @@ const DRIFTER_COLOURS = [
  * Samples the canvas at frame-pixel resolution and finds the drifter-coloured pixels.
  *
  * @param page - The page.
- * @returns Drifter pixels in the playfield (rows 8 … 207) and in the HUD bars, and the leftmost
- *   frame column holding one (-1 = none).
+ * @returns Drifter pixels in the playfield (rows `PLAYFIELD_Y … HUD_BOTTOM_Y − 1`: 12 … 347 at
+ *   640×360) and in the HUD bars, and the leftmost frame column holding one (-1 = none).
  */
 async function drifterPixels(
   page: Page,

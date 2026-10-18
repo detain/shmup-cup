@@ -26,8 +26,9 @@ players: [`docs/client/desktop-app.md`](../../docs/client/desktop-app.md).
 - `src/main/ipc-handlers.ts` (M2-17): the main side of the IPC contract — quit and the storage
   channels, refused for any page but the game's (`app://game/`, or `SHMUP_DEV_URL`'s origin) and for
   invalid keys / values.
-- `src/main/window-state.ts` (M2-17): the remembered window — fullscreen, the scale of the 384×216
-  frame (×1 … ×10, lowered to fit the screen), the position (saved once a `move` settles and on
+- `src/main/window-state.ts` (M2-17): the remembered window — fullscreen, the scale of the frame
+  (×1 … ×6 at 640×360 — a version-1 file's ×1 … ×10 of 384×216 is converted, W4-10 — lowered to
+  fit the screen), the position (saved once a `move` settles and on
   `close` — Linux emits no `moved`; the app quits after that write) — and the shortcuts **F11** /
   **Alt+Enter** (fullscreen), **Ctrl+=** / **Ctrl+-** / **Ctrl+0** (scale; Cmd on macOS).
 - The web build it loads detects the bridge (`apps/web` `getElectronBridge`): platform

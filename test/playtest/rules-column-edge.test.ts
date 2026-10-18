@@ -116,7 +116,7 @@ describe('playtest rules: columnGap — edge cases (M2-18 tests)', () => {
     const a = bullet(w, x, 60);
     bullet(w, x, 63); // overlaps the first
     const half = halfBand(w, a);
-    // Open: [0, 60 − half] and [63 + half, 200].
+    // Open: [0, 60 − half] and [63 + half, PLAYFIELD_H].
     expect(columnGap(w)).toBeCloseTo(Math.max(60 - half, PLAYFIELD_H - (63 + half)), 9);
     bullet(w, x, 150);
     // Now [63 + half, 150 − half] is between them; above the first stays open too.

@@ -770,8 +770,8 @@ test.describe('the Mode-7 floor is aligned to the frame (plan M3-02d)', () => {
     // frame row the per-row affine matrix is built from. Half a row out and the whole floor would
     // be sheared by one row of depth; the exact first and last rows it touches pin that.
     // `content/stages/dimension.stage.json` has `horizon: 100`, `bottom: 200`, and the shader
-    // measures both from `PLAYFIELD_Y` (8) — so rows 108 … 207 of the 216-row frame, and nothing
-    // above or below.
+    // measures both from `PLAYFIELD_Y` (12 at 640×360, 8 at 384×216) — so rows 112 … 211 of the
+    // 360-row frame (108 … 207 of v1's 216), and nothing above or below.
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');

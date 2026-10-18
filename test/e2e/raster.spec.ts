@@ -282,7 +282,8 @@ test.describe('display options (web build)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
     await freezeSim(page);
     const tick = await stepTo(page, 30);
-    // Integer ×2: a 768×432 frame centred — the corner pixel is letterbox (render-pixi PALETTE).
+    // Integer ×1: a 640×360 frame centred in the 1000×600 window (×2, 768×432 at 384×216) — the
+    // corner pixel is letterbox (render-pixi PALETTE).
     let { image } = await capture(page);
     const corner = (): number[] => [image.data[0], image.data[1], image.data[2]];
     expect(corner()).toEqual([0x05, 0x07, 0x0f]);

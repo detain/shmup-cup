@@ -49,7 +49,8 @@ interface DebugWindow {
  *
  * @param page - The page.
  * @param rgb - The colour.
- * @returns Frame pixels of that colour in rows 8 … 207.
+ * @returns Frame pixels of that colour in rows `PLAYFIELD_Y … HUD_BOTTOM_Y − 1` (12 … 347 at
+ *   640×360).
  */
 async function countColour(page: Page, rgb: readonly [number, number, number]): Promise<number> {
   const png = await page.locator('#game').screenshot();

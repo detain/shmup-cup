@@ -260,7 +260,7 @@ describe('playtest rules: columnGap (M2-18)', () => {
   it('finds the gap a wall of bullets leaves, and the watch flags a wall under 16 px', () => {
     const w = world();
     const x = w.players[0].x;
-    // A wall every 8 px from row 0 to 200 but a 30-px hole around row 100.
+    // A wall every 8 px from row 0 to PLAYFIELD_H but a 30-px hole around row 100.
     for (let y = 4; y < PLAYFIELD_H; y += 8) {
       if (y > 85 && y < 115) continue;
       spawnBullet(w, x, y, ANGLE_UNITS / 2, 0.5, BulletKind.RoundPink);

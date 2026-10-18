@@ -185,7 +185,8 @@ test.describe('render profile (web test build, M3-02c)', () => {
     const state = await profile(page);
     // The sea is filtered at this camera x (the raster spec pins the mask itself) …
     expect(state.layerEffectMask).toBeGreaterThan(0);
-    // … and the pass is pooled at the next power of two on each axis (512×256, not 384×216).
+    // … and the pass is pooled at the next power of two on each axis (1024×512, not 640×360;
+    // 512×256 at v1's 384×216).
     expect(state.renderTargetBytes).toBeGreaterThanOrEqual(FRAME_FILTER_TARGET_BYTES);
     expect(errors).toEqual([]);
   });
