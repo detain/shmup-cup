@@ -841,8 +841,10 @@ describe('core/weapons edge cases — firing', () => {
 
   it('refires a cap-1 weapon the tick after its shot is freed (the timer ran out long ago)', () => {
     const content = db(typeA({ 'shot.basic': { cap: 1 } }));
+    // The ship sits 344 px left of the view's right edge (x 40 at 384×216).
+    const shipX = PLAYFIELD_W - 344;
     const gapsFor = (config: Partial<GameConfig>): number[] => {
-      const w = world(config, content, PLAYFIELD_W - 344, 100);
+      const w = world(config, content, shipX, 100);
       const fired: number[] = [];
       for (let t = 0; t < 200; t++) {
         run(w, 1);
@@ -852,9 +854,9 @@ describe('core/weapons edge cases — firing', () => {
       }
       return fired.slice(1).map((t, k) => t - fired[k]);
     };
-    // The ship sits 344 px left of the view's right edge (x 40 at 384×216): its shot spawns 8 px
-    // ahead, moves 7 px/tick and is culled once past the right edge + 16, after 51 moves.
-    const spawnX = PLAYFIELD_W - 336;
+    // Its shot spawns 8 px ahead, moves 7 px/tick and is culled once past the right edge + 16,
+    // after 51 moves.
+    const spawnX = shipX + 8;
     let moves = 1;
     while (spawnX + 7 * moves <= PLAYFIELD_W + SHOT_CULL_MARGIN) moves++;
     expect(moves).toBe(51);

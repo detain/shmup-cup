@@ -12,8 +12,8 @@
  *   the grid as its square;
  * - **the script API**: `orbit` (hold on 0 / NaN, no jump from the ellipse, the enrage factor, the
  *   reverse direction), `launch` (the minion at the part, refused without a minion, in the intro,
- *   for a destroyed part or with every enemy slot taken), a raid part off screen that may not fire,
- *   the enraged fire interval's floor;
+ *   for a destroyed part or with every enemy slot taken), a raid part off screen (past the left or
+ *   the right edge) that may not fire, the enraged fire interval's floor;
  * - **raids**: a looping camera path and a zero-tick segment, a raid's time limit (the camera eased
  *   back over the escape, the follow ended, the ending flag), a raid killed in its intro (no follow
  *   at all), `clear()` and a checkpoint restart in the middle of a raid;
@@ -179,6 +179,18 @@ const ENEMIES = [
       // 200 px left of the keel, which the raid keeps 100 px inside the view: off its left edge
       // (a part offset is at most 512 px, less than a 640-px view).
       { name: 'stern', parent: 'keel', x: -200, hp: 5, radius: 4, gun: true },
+    ],
+  }),
+  // A raid whose camera keeps the keel 100 px inside the view's right edge (one segment, held):
+  // its prow (100 px right of the keel) is on that edge, its bow (200 px right) past it.
+  entry('wide-raid', {
+    x: 100,
+    raid: { segments: [{ x: 100 - PLAYFIELD_W, y: -60, ticks: 0, hold: 600 }], loop: false },
+    parts: [
+      { name: 'keel', sprite: 'bosses/raid-hull' },
+      core({ parent: 'keel', x: -150 }),
+      { name: 'prow', parent: 'keel', x: 100, hp: 5, radius: 4, gun: true },
+      { name: 'bow', parent: 'keel', x: 200, hp: 5, radius: 4, gun: true },
     ],
   }),
   // A raid with a time limit (one segment, no loop).
@@ -698,6 +710,23 @@ describe('core/bosses — the script API (M2-09 edges)', () => {
     expect(a.spray(2, 3, 64, 1, 2, 0)).toBe(0);
     expect(a.laser(2)).toBe(-1);
     expect(a.ring(1, 8, 1, 0)).toBe(8);
+  });
+
+  it('never fires a raid’s part past the right edge either: the view’s width plus the margin', () => {
+    const w = world();
+    w.bosses.startBoss(index('wide-raid'));
+    run(w, 1);
+    const a = api();
+    const [keel, hull, prow, bow] = w.bosses.boss.parts;
+    // The keel 100 px inside the right edge: the prow on the edge (inside the fire margin), the
+    // bow 100 px past it.
+    expect(keel.x - w.camera.x).toBeCloseTo(PLAYFIELD_W - 100, 6);
+    expect(bow.x - w.camera.x).toBeGreaterThan(PLAYFIELD_W + 8);
+    expect([keel.inView, hull.inView, prow.inView, bow.inView]).toEqual([true, true, true, false]);
+    expect([a.canFire(1), a.canFire(2), a.canFire(3)]).toEqual([true, true, false]);
+    expect(a.aimed(3, 1, 0)).toBe(-1);
+    expect(a.ring(3, 8, 1, 0)).toBe(0);
+    expect(a.ring(2, 8, 1, 0)).toBe(8);
   });
 
   it('floors the enraged fire interval at one tick', () => {

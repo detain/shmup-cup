@@ -7,7 +7,7 @@
  * the starting loadouts, the rank's direct power term and determinism.
  */
 import { describe, expect, it } from 'vitest';
-import { CONTENT_PORT_PENDING } from '../helpers/port-pending.js';
+import { itPortPending } from '../helpers/port-pending.js';
 import { BulletKind, spawnBullet } from '../../src/bullets/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { EnemyState } from '../../src/enemies/index.js';
@@ -365,6 +365,18 @@ describe('core/powerups Direct mode — death penalty and starting loadouts', ()
   });
 });
 
+/**
+ * What the determinism runs hold on tick `t`: up and down by turns of 50 ticks, Speed pressed
+ * every 400.
+ *
+ * @param t - The tick.
+ * @returns The held actions.
+ */
+function weave(t: number): number {
+  const held = (t / 50) % 2 < 1 ? Action.Up : Action.Down;
+  return held | (t % 400 === 0 ? Action.Speed : 0);
+}
+
 describe('core/powerups Direct mode — determinism', () => {
   it('two MANTA worlds on the direct range with the same input hash alike, tick after tick', () => {
     const a = aliveWorld(DB, { stage: 'direct-range' });
@@ -372,17 +384,24 @@ describe('core/powerups Direct mode — determinism', () => {
     const inputA = createInputSnapshot();
     const inputB = createInputSnapshot();
     for (let t = 0; t < 2400; t++) {
-      const held = (t / 50) % 2 < 1 ? Action.Up : Action.Down;
-      run(a, inputA, held | (t % 400 === 0 ? Action.Speed : 0));
-      run(b, inputB, held | (t % 400 === 0 ? Action.Speed : 0));
+      run(a, inputA, weave(t));
+      run(b, inputB, weave(t));
       a.events.clear();
       b.events.clear();
       expect(hashWorld(a)).toBe(hashWorld(b));
     }
-    const drops = a.powerups.planCursor;
-    // The pincer waves and lead carriers of the range handed out items — on the shipped
-    // direct-range's v1-scale waves, so this waits for R2-02's port (R2-01 gate; the lockstep
-    // hashes above hold at both frames).
-    if (!CONTENT_PORT_PENDING) expect(drops).toBeGreaterThanOrEqual(3);
+  });
+
+  // The pincer waves and lead carriers of the range hand out its items on the shipped
+  // direct-range's v1-scale waves (R2-01: at 640×360 the unported range hands out 2 by tick 2400,
+  // under the 3 it asks for) — gated until R2-02. The lockstep above runs at both frames.
+  itPortPending('hands out at least three planned items on the same run', () => {
+    const w = aliveWorld(DB, { stage: 'direct-range' });
+    const input = createInputSnapshot();
+    for (let t = 0; t < 2400; t++) {
+      run(w, input, weave(t));
+      w.events.clear();
+    }
+    expect(w.powerups.planCursor).toBeGreaterThanOrEqual(3);
   });
 });

@@ -16,7 +16,7 @@ import { PLAYFIELD_CY, PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { EnemyState } from '../../src/enemies/index.js';
 import { createInputSnapshot } from '../../src/input/index.js';
-import { atan2B } from '../../src/math/index.js';
+import { atan2B, cosB, sinB } from '../../src/math/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
@@ -161,6 +161,11 @@ describe('core/behaviors — captains and raid turrets (M2-09)', () => {
     // 3 units a tick: a third of a turn in 120 ticks, from wherever its home put it on the
     // ellipse (a home at cx + rx, cy: angle 0, so past the middle's bottom by now).
     expect((boss.orbitAngle - start + 1024) % 1024).toBe(360);
+    // And the screen follows that angle: the boss is where the ellipse puts it a third of a turn
+    // on, not merely somewhere on the ellipse.
+    const end = (start + 360) & 1023;
+    expect(boss.screenX).toBeCloseTo(cx + cosB(end) * 140, 6);
+    expect(boss.screenY).toBeCloseTo(cy + sinB(end) * 64, 6);
     // Its orbs spin round the hub (spin 6), so they are turned too.
     expect(boss.parts[1].worldAngle).not.toBe(0);
     // Rings of 8 (two so far; those leaving the view are culled).

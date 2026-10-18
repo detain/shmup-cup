@@ -28,6 +28,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { itPortPending } from '../helpers/port-pending.js';
 import { DEFAULT_BEHAVIORS, DEFAULT_BOSS_BEHAVIORS } from '../../src/behaviors/index.js';
 import { BossHit, BossState } from '../../src/bosses/index.js';
 import { BulletKind, LaserPhase } from '../../src/bullets/index.js';
@@ -757,14 +758,20 @@ describe('core/behaviors boss.steed — edge cases (M2-12)', () => {
     expect([b.screenX, b.screenY]).toEqual([x, y]);
   });
 
-  it('bobs on its ellipse from its home, without a jump', () => {
+  // The shipped home of `squall-steed` (304, 100) is v1 content: at 384×216 it is the right end
+  // of the ellipse round (DEFAULT_BOSS_X, DEFAULT_BOSS_Y); at 640×360 it sits ~250 px from it, and
+  // the orbit's first step (the last tick of `fighting`) jumps the boss onto it — gated until
+  // R2-02 ports the home.
+  itPortPending('bobs on its ellipse from its home, without a jump', () => {
     const w = fighting('steed-bob');
     const b = w.bosses.boss;
-    // The shipped home is the ellipse's right end: cx (DEFAULT_BOSS_X) + rx 8 — here rx 10 (a 2-px
-    // slack). At 384×216 that is (304, 100) round the centre (296, 100).
-    let [x, y] = [b.screenX, b.screenY];
+    // At 384×216 the shipped home (304, 100) is the ellipse's right end: cx (DEFAULT_BOSS_X 296)
+    // + rx 8 — here rx 10 (a 2-px slack) — round cy (DEFAULT_BOSS_Y 100). R2-02 ports it.
     // 8 units a tick on radii 10 × 30: at most 2π · 30 · 8 / 1024 ≈ 1.5 px a tick (+ the slack).
     const most = (2 * Math.PI * 30 * 8) / ANGLE_UNITS + 2 + 1e-6;
+    // The orbit's first step ran in `fighting`'s last tick: still within a step of the home.
+    expect(Math.hypot(b.screenX - b.homeX, b.screenY - b.homeY)).toBeLessThanOrEqual(most);
+    let [x, y] = [b.screenX, b.screenY];
     let low = Number.POSITIVE_INFINITY;
     let high = Number.NEGATIVE_INFINITY;
     for (let t = 0; t < 300; t++) {
