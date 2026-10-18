@@ -5,7 +5,7 @@
  * World handing it (with the ships' hurtboxes) to the renderer through its view.
  */
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
 import {
   DEFAULT_RASTER_PERIOD,
   MAX_CYCLE_COLORS_PER_LAYER,
@@ -145,7 +145,7 @@ describe('core/data stage raster effects and palette cycles (M2-08)', () => {
         { ...WAVE, layer: 'air' },
         { ...WAVE, kind: 'ripple' },
         { ...WAVE, amplitude: 33 },
-        { ...WAVE, bottom: 201 },
+        { ...WAVE, bottom: PLAYFIELD_H + 1 },
       ],
       cycles: [
         { ...SEA, layer: 'hud' },

@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType } from '../../src/collision/index.js';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import {
   TILE_ANCHORS,
   TILE_TYPES,
@@ -26,8 +27,8 @@ const TERRAIN_A = JSON.parse(
   ),
 ) as Record<string, unknown>;
 
-/** Map width of a 1000-px stage (length + one 384-px screen, in 8-px tiles). */
-const COLS = 173;
+/** Map width of a 1000-px stage (length + one playfield, in 8-px tiles: 173 at 384×216). */
+const COLS = Math.ceil((1000 + PLAYFIELD_W) / 8);
 
 /**
  * A stage file.

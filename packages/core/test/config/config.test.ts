@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_AUTO_POWER_UP_ORDER,
   DEFAULT_GAME_CONFIG,
+  FRAME_H,
+  FRAME_W,
   HUD_BAR_HEIGHT,
   MAX_AUTO_POWER_UP_ORDER,
   METER_SLOT_NAMES,
@@ -18,9 +20,10 @@ describe('core/config', () => {
     expect(moduleInfo.name).toBe('config');
   });
 
-  it('defaults to the 384x216 internal resolution at 60 Hz, remote-first', () => {
-    expect(DEFAULT_GAME_CONFIG.internalWidth).toBe(384);
-    expect(DEFAULT_GAME_CONFIG.internalHeight).toBe(216);
+  it('defaults to the internal resolution of the frame (FRAME_W × FRAME_H) at 60 Hz, remote-first', () => {
+    // The frame's numbers themselves are pinned in frame-constants.test.ts.
+    expect(DEFAULT_GAME_CONFIG.internalWidth).toBe(FRAME_W);
+    expect(DEFAULT_GAME_CONFIG.internalHeight).toBe(FRAME_H);
     expect(DEFAULT_GAME_CONFIG.tickRate).toBe(60);
     expect(DEFAULT_GAME_CONFIG.remoteMode).toBe(true);
     expect(DEFAULT_GAME_CONFIG.autofire).toBe(true);
@@ -131,8 +134,12 @@ describe('core/config power-up options (M1-11)', () => {
 });
 
 describe('core/config screen layout (decision D20)', () => {
-  it('puts a 384×200 playfield between two 8-px HUD bars of the 384×216 frame', () => {
-    expect([HUD_BAR_HEIGHT, PLAYFIELD_Y, PLAYFIELD_W, PLAYFIELD_H]).toEqual([8, 8, 384, 200]);
+  it('puts the playfield between two HUD bars of the frame (384×200 between 8-px bars at 384×216)', () => {
+    expect([PLAYFIELD_Y, PLAYFIELD_W, PLAYFIELD_H]).toEqual([
+      HUD_BAR_HEIGHT,
+      FRAME_W,
+      FRAME_H - 2 * HUD_BAR_HEIGHT,
+    ]);
     expect(PLAYFIELD_W).toBe(DEFAULT_GAME_CONFIG.internalWidth);
     expect(PLAYFIELD_Y + PLAYFIELD_H + HUD_BAR_HEIGHT).toBe(DEFAULT_GAME_CONFIG.internalHeight);
   });

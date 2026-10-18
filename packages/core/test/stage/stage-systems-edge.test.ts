@@ -19,7 +19,12 @@ import {
   type TerrainMap,
 } from '../../src/collision/index.js';
 import { PLAYFIELD_H, PLAYFIELD_W } from '../../src/config/index.js';
-import { loadContent, type ContentDb, type StageSpec } from '../../src/data/index.js';
+import {
+  DEFAULT_BLOCK_SCREEN_X,
+  loadContent,
+  type ContentDb,
+  type StageSpec,
+} from '../../src/data/index.js';
 import { buildTilesetTables, type TilesetTables } from '../../src/data/tilemap.js';
 import { EnemyState, type Enemy } from '../../src/enemies/index.js';
 import {
@@ -212,8 +217,14 @@ describe('core/stage MovingBlockSystem — unit', () => {
     for (const index of [-1, 0, 2, 3, 6, Number.NaN])
       expect(system.spawn(index), String(index)).toBe(-1);
     expect(system.spawn(1)).toBe(0);
-    // Default screenX 400: the left edge is world x 20 + 400.
-    expect([blocks.x0[0], blocks.y0[0], blocks.x1[0], blocks.y1[0]]).toEqual([420, 40, 435, 47]);
+    // Default screenX (400 at 384×216): the left edge is world x 20 + DEFAULT_BLOCK_SCREEN_X.
+    const left = 20 + DEFAULT_BLOCK_SCREEN_X;
+    expect([blocks.x0[0], blocks.y0[0], blocks.x1[0], blocks.y1[0]]).toEqual([
+      left,
+      40,
+      left + 15,
+      47,
+    ]);
     expect(blocks.type[0]).toBe(TerrainType.Solid);
     expect(system.spawn(4)).toBe(1);
     expect([blocks.x0[1], blocks.type[1]]).toEqual([66, TerrainType.Hazard]); // 50 + 16, lava

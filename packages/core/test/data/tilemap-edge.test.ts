@@ -15,6 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType, findCeiling, findFloor } from '../../src/collision/index.js';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentFile, type LoadContentResult } from '../../src/data/index.js';
 import { buildTilesetTables, decodeRleRow } from '../../src/data/tilemap.js';
 import { createRng, type Rng } from '../../src/rng/index.js';
@@ -114,7 +115,7 @@ describe('core/data heightfield edge — random single profiles', () => {
     for (let trial = 0; trial < 120; trial++) {
       const rows = trial < 25 ? trial + 1 : rng.rangeInt(1, 25);
       const length = rng.rangeInt(100, 1500);
-      const cols = Math.ceil((length + 384) / 8);
+      const cols = Math.ceil((length + PLAYFIELD_W) / 8);
       const from = rng.rangeInt(0, length);
       const to = from + rng.rangeInt(1, trial % 10 === 0 ? 3000 : 800);
       const ceiling = trial % 2 === 1;
@@ -277,7 +278,9 @@ describe('core/data heightfield edge — small shapes', () => {
     const result = load(100, { rowsTall: 3 });
     expect(result.issues).toEqual([]);
     const terrain = result.db.stages[0].terrain;
-    expect([terrain?.cols, terrain?.rows, terrain?.tiles.length]).toEqual([61, 3, 183]);
+    // length + one playfield, in whole 8-px tiles (61 at 384×216).
+    const cols = Math.ceil((100 + PLAYFIELD_W) / 8);
+    expect([terrain?.cols, terrain?.rows, terrain?.tiles.length]).toEqual([cols, 3, cols * 3]);
     expect(terrain?.tiles.every((t) => t === 0)).toBe(true);
   });
 

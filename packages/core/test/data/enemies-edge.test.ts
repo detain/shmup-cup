@@ -12,6 +12,7 @@
  *   `drop` (`null` or `capsule`) and `bonus` bounds.
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import {
   DEFAULT_SETTLE_TICKS,
   ENEMY_DROPS,
@@ -220,10 +221,11 @@ describe('core/data enemies — movers', () => {
     ],
     [{ type: 'path', speed: -1 }, 'mover.speed', 'must be a finite number in 0..16'],
     [{ type: 'path', path: '', speed: 1 }, 'mover.path', 'must be a non-empty path id'],
+    // A waypoint column at most 64 px past the right edge (448 at 384×216).
     [
-      { type: 'waypoint', x: 449, y: 0, speed: 1, hold: 0, leaveVx: 0, leaveVy: 0 },
+      { type: 'waypoint', x: PLAYFIELD_W + 65, y: 0, speed: 1, hold: 0, leaveVx: 0, leaveVy: 0 },
       'mover.x',
-      'must be a finite number in -64..448',
+      'must be a finite number in -64..' + String(PLAYFIELD_W + 64),
     ],
     [
       { type: 'waypoint', x: 0, y: 0, speed: 0, hold: 0, leaveVx: 0, leaveVy: 0 },
@@ -310,7 +312,7 @@ describe('core/data stage events — enemy spawn fields', () => {
   it('reports out-of-range spawn fields at the event path', () => {
     const { issues } = stage([
       { x: 0, type: 'spawn', enemy: 'e', screenX: -129 },
-      { x: 1, type: 'spawn', enemy: 'e', screenX: 513 },
+      { x: 1, type: 'spawn', enemy: 'e', screenX: PLAYFIELD_W + 129 }, // 513 at 384×216
       { x: 2, type: 'formation', enemy: 'e', count: 0, interval: 1 },
       { x: 3, type: 'formation', enemy: 'e', count: 65, interval: 1 },
       { x: 4, type: 'formation', enemy: 'e', count: 2, interval: 0 },

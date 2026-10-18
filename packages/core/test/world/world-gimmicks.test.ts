@@ -8,7 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { TerrainType, terrainAt } from '../../src/collision/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
@@ -44,7 +44,8 @@ const BRICK = 18;
 const TISSUE = 20;
 
 /**
- * The KESTREL, Type A, `terrain-a` and a still test stage with a floor (and optional RLE rows).
+ * The KESTREL, Type A, `terrain-a` and a still test stage with a floor (and optional RLE rows);
+ * the default map is one playfield tall, so the ship's fly-in row stays above its floor.
  *
  * @param stage - Stage fields over the defaults.
  * @returns The DB.
@@ -70,10 +71,16 @@ function db(stage: Record<string, unknown> = {}): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: PLAYFIELD_H / 8,
             generator: {
               type: 'heightfield',
-              segments: [{ from: 0, to: 2384, floor: { base: 32, amp: 0, period: 64, seed: 1 } }],
+              segments: [
+                {
+                  from: 0,
+                  to: 2000 + PLAYFIELD_W,
+                  floor: { base: 32, amp: 0, period: 64, seed: 1 },
+                },
+              ],
             },
           },
           events: [],

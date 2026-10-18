@@ -9,7 +9,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
 import {
@@ -18,7 +18,7 @@ import {
   createInputSnapshot,
   type InputSnapshot,
 } from '../../src/input/index.js';
-import { PlayerHitCause, spawnPlayer } from '../../src/player/index.js';
+import { PlayerHitCause, SPAWN_Y, spawnPlayer } from '../../src/player/index.js';
 import { createWorld, stepWorld, type World } from '../../src/world/index.js';
 
 /**
@@ -94,16 +94,19 @@ function world(stage: Record<string, unknown>): World {
   return createWorld(resolveGameConfig({ seed: 3, stage: 't' }), db);
 }
 
+/** Rows of the test maps: one playfield of 8-px tiles (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
 /**
- * RLE rows (25) with one row filled with a tile id.
+ * RLE rows ({@link ROWS}) with one row filled with a tile id.
  *
  * @param row - Map row.
  * @param id - Tile id.
  * @returns The rows.
  */
 function band(row: number, id: number): string[] {
-  const rows = new Array<string>(25).fill('');
-  rows[row] = '298*' + String(id); // (2000 + 384) / 8 columns
+  const rows = new Array<string>(ROWS).fill('');
+  rows[row] = String((2000 + PLAYFIELD_W) / 8) + '*' + String(id); // the map's columns
   return rows;
 }
 
@@ -220,7 +223,7 @@ describe('core/world stage edge — stages without terrain', () => {
 
   it('runs a stage whose tileset is missing without terrain (the loader reported it)', () => {
     const { db, issues } = load({
-      tilemap: { tileSize: 8, tileset: 'gone', rowsTall: 25, rle: band(24, 1) },
+      tilemap: { tileSize: 8, tileset: 'gone', rowsTall: ROWS, rle: band(ROWS - 1, 1) },
     });
     expect(issues.map((i) => i.message)).toEqual(['unknown tileset id "gone"']);
     const w = createWorld(resolveGameConfig({ stage: 't' }), db);
@@ -233,12 +236,16 @@ describe('core/world stage edge — stages without terrain', () => {
 
 describe('core/world stage edge — terrain hits', () => {
   it('hits an active, alive player 2 but never an inactive one', () => {
-    const w = world({ tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: 25, rle: band(20, 1) } });
+    // A rock band 5 rows above the map's bottom (row 20, world y 160 … 167 at 384×216).
+    const row = ROWS - 5;
+    const w = world({
+      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: ROWS, rle: band(row, 1) },
+    });
     const input = createInputSnapshot();
     run(w, input, 0, 45);
     const p2 = w.players[1];
     p2.x = w.camera.x + 100;
-    p2.y = 164; // inside the rock band (world y 160 … 167)
+    p2.y = row * 8 + 4; // inside the rock band
     p2.state = 'alive';
     run(w, input, 0, 3);
     expect(p2.hits).toBe(0); // inactive
@@ -249,11 +256,15 @@ describe('core/world stage edge — terrain hits', () => {
   });
 
   it('does not hit a player 2 still flying in', () => {
-    const w = world({ tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: 25, rle: band(12, 1) } });
+    // A rock band on the fly-in row SPAWN_Y (row 12, world y 96 … 103 at 384×216).
+    const row = Math.floor(SPAWN_Y / 8);
+    const w = world({
+      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: ROWS, rle: band(row, 1) },
+    });
     const input = createInputSnapshot();
     const p2 = w.players[1];
     p2.active = true;
-    spawnPlayer(p2, w.camera); // y 100: inside the rock band (world y 96 … 103)
+    spawnPlayer(p2, w.camera); // y SPAWN_Y: inside the rock band
     run(w, input, 0, 30);
     expect(p2.state).toBe('entering');
     expect(p2.hits).toBe(0);
@@ -263,13 +274,13 @@ describe('core/world stage edge — terrain hits', () => {
 
   it('hits on hazard tiles, never on decorative ones, and on a ceiling', () => {
     const hazard = world({
-      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: 25, rle: band(22, 2) },
+      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: ROWS, rle: band(22, 2) },
     });
     const vine = world({
-      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: 25, rle: band(22, 3) },
+      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: ROWS, rle: band(22, 3) },
     });
     const ceiling = world({
-      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: 25, rle: band(2, 1) },
+      tilemap: { tileSize: 8, tileset: 'mixed', rowsTall: ROWS, rle: band(2, 1) },
     });
     const input = createInputSnapshot();
     for (const w of [hazard, vine]) run(w, input, Action.Down, 150);
@@ -278,8 +289,8 @@ describe('core/world stage edge — terrain hits', () => {
     expect(hazard.players[0].hitCause).toBe(PlayerHitCause.Terrain);
     expect(vine.players[0].hits).toBe(0);
     expect(ceiling.players[0].hits).toBeGreaterThan(0);
-    // The ship's clamp keeps it 6 px off the bottom edge (world y 194): the vine row 22 covers
-    // 176 … 183, so the ship really flew through it.
+    // The ship's clamp keeps it 6 px off the bottom edge (world y PLAYFIELD_H − 6): the vine row
+    // 22 covers 176 … 183, so the ship really flew through it.
     expect(vine.players[0].y).toBeGreaterThan(183);
   });
 });

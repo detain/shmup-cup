@@ -99,10 +99,13 @@ describe('core/config resolveGameConfig boundaries', () => {
     expect(JSON.parse(JSON.stringify(config))).toEqual(config);
   });
 
-  it('defaults to an internal resolution that scales to 1080p exactly by 5 and to 720p by 3', () => {
+  it('defaults to a 16:9 internal resolution that scales to 1080p by a whole factor, to 720p by ≥ 2', () => {
+    // ×5 / ×3 at 384×216, ×3 / ×2 at 640×360 (the frame itself is pinned in frame-constants.test.ts).
     const { internalWidth: w, internalHeight: h } = DEFAULT_GAME_CONFIG;
-    expect([1920 / w, 1080 / h]).toEqual([5, 5]);
-    expect([Math.floor(1280 / w), Math.floor(720 / h)]).toEqual([3, 3]);
+    expect(Number.isInteger(1920 / w)).toBe(true);
+    expect(1080 / h).toBe(1920 / w);
+    expect(Math.floor(720 / h)).toBe(Math.floor(1280 / w));
+    expect(Math.floor(1280 / w)).toBeGreaterThanOrEqual(2);
     expect(w / h).toBeCloseTo(16 / 9, 10);
   });
 });

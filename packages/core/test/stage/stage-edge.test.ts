@@ -17,6 +17,7 @@
  *   parallax / terrain helpers, and zero allocation with locks, pans and hooks that unlock.
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import {
   loadContent,
   type ContentDb,
@@ -987,9 +988,10 @@ describe('core/stage edge — camera object and helpers', () => {
   });
 
   it('rounds the map width up to whole tiles', () => {
-    expect(stageMapWidth(1, 8)).toBe(Math.ceil(385 / 8));
-    expect(stageMapWidth(4800, 8)).toBe(648);
-    expect(stageMapWidth(4801, 8)).toBe(649);
+    // length + one playfield (PLAYFIELD_W, a multiple of 8): 49, 648 and 649 at 384×216.
+    expect(stageMapWidth(1, 8)).toBe(Math.ceil((1 + PLAYFIELD_W) / 8));
+    expect(stageMapWidth(4800, 8)).toBe((4800 + PLAYFIELD_W) / 8);
+    expect(stageMapWidth(4801, 8)).toBe((4800 + PLAYFIELD_W) / 8 + 1);
   });
 
   it('gives each world its own terrain copy and no terrain for a missing tileset', () => {

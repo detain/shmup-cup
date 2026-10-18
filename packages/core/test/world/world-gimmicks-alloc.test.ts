@@ -8,10 +8,11 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { Action, commitPlayerInput, createInputSnapshot } from '../../src/input/index.js';
 import { MoverKind, setMover } from '../../src/patterns/index.js';
+import { SPAWN_Y } from '../../src/player/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld } from '../../src/world/index.js';
 import { KNOWN_SCRIPT_IDS } from '../../src/behaviors/index.js';
 import { measureHeapGrowth } from '../helpers/alloc.js';
@@ -31,14 +32,26 @@ function shipped(path: string): ContentFile {
   };
 }
 
+/** Rows of the stage's 8-px map: one playfield tall (25 at 384×216, 42 at 640×360). */
+const ROWS = PLAYFIELD_H / 8;
+
 /**
- * RLE rows: a tissue column (`terrain-a` tile 20) at tile columns 22 and 30, rows 8…16.
+ * The map row of the ship's fly-in row `SPAWN_Y` (12 at 384×216): the systems below sit around it,
+ * where the ship weaves and shoots.
+ */
+const SHIP_ROW = Math.floor(SPAWN_Y / 8);
+
+/**
+ * RLE rows: a tissue column (`terrain-a` tile 20) at tile columns 22 and 30, four rows above and
+ * below the ship's row (rows 8…16 at 384×216).
  *
- * @returns The 25 rows.
+ * @returns The {@link ROWS} rows.
  */
 function tissue(): string[] {
   const rows: string[] = [];
-  for (let r = 0; r < 25; r++) rows.push(r >= 8 && r <= 16 ? '22*0, 20, 7*0, 20' : '');
+  for (let r = 0; r < ROWS; r++) {
+    rows.push(r >= SHIP_ROW - 4 && r <= SHIP_ROW + 4 ? '22*0, 20, 7*0, 20' : '');
+  }
   return rows;
 }
 
@@ -59,12 +72,14 @@ const STAGE_LENGTH = 6400;
 function db(): ContentDb {
   const events: unknown[] = [];
   for (let x = 0; x < STAGE_LENGTH - 200; x += 200) {
-    events.push({ x, type: 'block', screenX: 250, y: 40, w: 16, h: 8, dy: 24, period: 90 });
+    // Placed round the ship's fly-in row (a block at y 40, a trigger band at y 60 at 384×216).
+    const y = SPAWN_Y - 60;
+    events.push({ x, type: 'block', screenX: 250, y, w: 16, h: 8, dy: 24, period: 90 });
     events.push({
       x: x + 1,
       type: 'trigger',
       flag: 'band',
-      region: { x: x, y: 60, w: 400, h: 30 },
+      region: { x: x, y: y + 20, w: 400, h: 30 },
     });
   }
   const { db: content, issues } = loadContent(
@@ -92,14 +107,14 @@ function db(): ContentDb {
           tilemap: {
             tileSize: 8,
             tileset: 'terrain-a',
-            rowsTall: 25,
+            rowsTall: ROWS,
             rle: tissue(),
             generator: {
               type: 'heightfield',
               segments: [
                 {
                   from: 0,
-                  to: STAGE_LENGTH + 384,
+                  to: STAGE_LENGTH + PLAYFIELD_W,
                   floor: { base: 24, amp: 0, period: 64, seed: 1 },
                 },
               ],
@@ -121,8 +136,9 @@ describe('core/world allocation — stage gimmicks (M2-07)', () => {
     w.debugFlags.godMode = true;
     const input = createInputSnapshot();
     for (let i = 0; i < 60; i++) stepWorld(w, input);
-    // A suction pod that stays put above the ship (outside the measured window).
-    const pod = w.enemies.spawn(w.content.enemyIndex.get('suction-pod') ?? -1, 250, 150);
+    // A suction pod that stays put near the ship, 50 px under its fly-in row (outside the measured
+    // window).
+    const pod = w.enemies.spawn(w.content.enemyIndex.get('suction-pod') ?? -1, 250, SPAWN_Y + 50);
     if (pod === null) throw new Error('no pod');
     for (let i = 0; i < 20; i++) stepWorld(w, input);
     setMover(pod, w.enemies.movers, MoverKind.None);

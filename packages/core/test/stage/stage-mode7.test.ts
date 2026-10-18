@@ -143,7 +143,7 @@ describe('core/data — a stage`s mode7 section (M3-02)', () => {
   it('rejects values outside the schema`s bounds', () => {
     for (const bad of [
       { horizon: -1 },
-      { horizon: 215 },
+      { horizon: PLAYFIELD_H - 1 }, // the horizon is at most PLAYFIELD_H − 2
       { height: 0 },
       { turn: 1024 },
       { alpha: 1.5 },

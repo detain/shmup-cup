@@ -5,6 +5,7 @@
  * `hooks.clear()`), the parallax and terrain views, and the allocation-free `tick()`.
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type StageSpec } from '../../src/data/index.js';
 import { LayerId } from '../../src/presentation/index.js';
 import {
@@ -113,8 +114,9 @@ describe('core/stage module', () => {
   });
 
   it('sizes a map to the stage length plus one screen', () => {
-    expect(stageMapWidth(1000, 8)).toBe(Math.ceil(1384 / 8));
-    expect(stageMapWidth(0, 8)).toBe(48);
+    // One screen is PLAYFIELD_W (384 at 384×216: 173 and 48 columns).
+    expect(stageMapWidth(1000, 8)).toBe(Math.ceil((1000 + PLAYFIELD_W) / 8));
+    expect(stageMapWidth(0, 8)).toBe(PLAYFIELD_W / 8);
   });
 });
 

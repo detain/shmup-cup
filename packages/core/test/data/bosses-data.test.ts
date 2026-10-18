@@ -5,6 +5,7 @@
  * enemies in their places (stage events, spawner children).
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_W } from '../../src/config/index.js';
 import {
   BOSS_VULNERABILITIES,
   DEFAULT_BOSS_INTRO_TICKS,
@@ -299,7 +300,7 @@ describe('core/data — boss section (M1-13)', () => {
     expect(issuesOf([boss({ parts: many })])).toEqual([
       { path: 'e.json:enemies[0].boss.parts', message: 'must have at most 16 items' },
     ]);
-    expect(issuesOf([boss({ introTicks: 601, x: 500 })]).map((i) => i.path)).toEqual([
+    expect(issuesOf([boss({ introTicks: 601, x: PLAYFIELD_W + 116 })]).map((i) => i.path)).toEqual([
       'e.json:enemies[0].boss.introTicks',
       'e.json:enemies[0].boss.x',
     ]);

@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { resampleMask } from '../../../../scripts/assets/procedural/terrain.mjs';
 import { TerrainAnchor, TerrainType, findFloor, terrainAt } from '../../src/collision/index.js';
-import { PLAYFIELD_H, PLAYFIELD_W, TILE_SIZE, resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import {
   MAX_TILE_SIZE,
   loadContent,
@@ -47,15 +47,22 @@ function shipped(path: string): Record<string, unknown> {
   ) as Record<string, unknown>;
 }
 
-/** `terrain-a` at 12 px: the shipped tiles with their masks resampled from `TILE_SIZE`. */
+/**
+ * `terrain-a` at 12 px: the shipped tiles with their masks resampled from the tileset's own
+ * `tileSize` (8 until R2-02 ports the content, whatever `TILE_SIZE` says; then 12, a copy).
+ */
 function tileset12(): Record<string, unknown> {
   const data = shipped('tilesets/terrain-a.tileset.json') as {
+    tileSize: number;
     tiles: { mask: number[] }[];
   } & Record<string, unknown>;
   return {
     ...data,
     tileSize: SIZE,
-    tiles: data.tiles.map((tile) => ({ ...tile, mask: resampleMask(tile.mask, TILE_SIZE, SIZE) })),
+    tiles: data.tiles.map((tile) => ({
+      ...tile,
+      mask: resampleMask(tile.mask, data.tileSize, SIZE),
+    })),
   };
 }
 

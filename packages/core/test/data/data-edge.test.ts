@@ -6,6 +6,7 @@
  * references (`sfxId` / `mainId` are `-1`, not missing).
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_H, PLAYFIELD_W } from '../../src/config/index.js';
 import { MUSIC_CUES, SFX_CUES } from '../../src/events/index.js';
 import {
   CONTENT_FORMAT_VERSION,
@@ -335,17 +336,18 @@ describe('core/data loadContent — per-kind schemas', () => {
     ['hurtRadius', 0.2, 'ships[0].hurtRadius', 'must be a finite number in 0.25..16'],
     ['terrainBox', { hw: 0, hh: 1 }, 'ships[0].terrainBox.hw', 'must be an integer in 1..512'],
     ['pickupBox', { hw: 1, hh: 513 }, 'ships[0].pickupBox.hh', 'must be an integer in 1..512'],
+    // Margins of at most half the playfield (192 × 100 at 384×216).
     [
       'margins',
-      { left: 0, right: 193, top: 0, bottom: 0 },
+      { left: 0, right: PLAYFIELD_W / 2 + 1, top: 0, bottom: 0 },
       'ships[0].margins.right',
-      'must be an integer in 0..192',
+      'must be an integer in 0..' + String(PLAYFIELD_W / 2),
     ],
     [
       'margins',
-      { left: 0, right: 0, top: 101, bottom: 0 },
+      { left: 0, right: 0, top: PLAYFIELD_H / 2 + 1, bottom: 0 },
       'ships[0].margins.top',
-      'must be an integer in 0..100',
+      'must be an integer in 0..' + String(PLAYFIELD_H / 2),
     ],
     ['enterTicks', 1.5, 'ships[0].enterTicks', 'must be an integer in 0..600'],
     ['respawnInvulnTicks', 601, 'ships[0].respawnInvulnTicks', 'must be an integer in 0..600'],
@@ -545,10 +547,11 @@ describe('core/data loadContent — per-kind schemas', () => {
       'events[0].flag',
       'must be a string of length in 1..64 matching /^[a-z][a-z0-9-]*$/',
     ],
+    // A spawn row at most 120 px below the playfield (320 at 384×216).
     [
-      { x: 0, type: 'spawn', enemy: 'a', y: 321 },
+      { x: 0, type: 'spawn', enemy: 'a', y: PLAYFIELD_H + 121 },
       'events[0].y',
-      'must be a finite number in -64..320',
+      'must be a finite number in -64..' + String(PLAYFIELD_H + 120),
     ],
     [{ x: 0, type: 'boss', enemy: 'a', path: 'p' }, 'events[0].path', 'unknown field'],
     [{ x: 0, type: 'music' }, 'events[0].cue', 'is required'],

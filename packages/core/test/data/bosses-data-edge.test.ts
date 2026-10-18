@@ -7,6 +7,7 @@
  * `partsDestroyed`, which made the phase's part condition impossible to meet.
  */
 import { describe, expect, it } from 'vitest';
+import { PLAYFIELD_H } from '../../src/config/index.js';
 import {
   MAX_BOSS_PHASES,
   loadContent,
@@ -185,7 +186,7 @@ describe('core/data — boss section edge cases (M1-13)', () => {
     ]);
     const paths = (over: Record<string, unknown>): string[] =>
       issuesOf([boss(over)]).map((i) => i.path.replace('e.json:enemies[0].boss.', ''));
-    expect(paths({ x: -1, y: 201, introTicks: -1, score: -5 })).toEqual([
+    expect(paths({ x: -1, y: PLAYFIELD_H + 1, introTicks: -1, score: -5 })).toEqual([
       'introTicks',
       'score',
       'x',

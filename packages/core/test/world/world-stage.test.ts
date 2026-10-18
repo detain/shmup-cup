@@ -8,7 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, resolveGameConfig } from '../../src/config/index.js';
 import { loadContent, type ContentDb } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
@@ -37,9 +37,16 @@ function shipped(path: string): unknown {
 }
 
 /**
- * Content with the KESTREL, the `terrain-a` tileset and a test stage.
+ * Height of the test stage's floor: its top 52 px below the ship's fly-in row `SPAWN_Y` (the
+ * playfield's middle) — 48 px at 384×216, a floor top at y 152 under a fly-in at y 100.
+ */
+const FLOOR_BASE = PLAYFIELD_H / 2 - 52;
+
+/**
+ * Content with the KESTREL, the `terrain-a` tileset and a test stage one playfield tall.
  *
- * @param stage - Stage fields over the defaults (a floor from x 0 at 48 px, speed 1).
+ * @param stage - Stage fields over the defaults (a floor from x 0, {@link FLOOR_BASE} px high,
+ *   speed 1).
  * @returns The DB.
  */
 function stageDb(stage: Record<string, unknown> = {}): ContentDb {
@@ -61,10 +68,16 @@ function stageDb(stage: Record<string, unknown> = {}): ContentDb {
         tilemap: {
           tileSize: 8,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: PLAYFIELD_H / 8,
           generator: {
             type: 'heightfield',
-            segments: [{ from: 0, to: 3384, floor: { base: 48, amp: 0, period: 64, seed: 1 } }],
+            segments: [
+              {
+                from: 0,
+                to: 3000 + PLAYFIELD_W,
+                floor: { base: FLOOR_BASE, amp: 0, period: 64, seed: 1 },
+              },
+            ],
           },
         },
         events: [
@@ -198,7 +211,7 @@ describe('core/world with a stage — terrain hits', () => {
     const w = world();
     const input = createInputSnapshot();
     const ship = w.players[0];
-    // The floor top is at world y 200 - 48 = 152; the ship spawns at y 100.
+    // The floor top is 52 px below the ship's fly-in row (y 152 and 100 at 384×216).
     run(w, input, Action.Down, 20); // still flying in: ignored
     expect(ship.hits).toBe(0);
     run(w, input, Action.Down, 60);

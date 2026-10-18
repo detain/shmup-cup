@@ -5,6 +5,7 @@
  * mover — and every validation issue those can raise.
  */
 import { describe, expect, it } from 'vitest';
+import { TILE_SIZE } from '../../src/config/index.js';
 import {
   BALLISTIC_LANDS,
   MAX_BLOCK_CELLS,
@@ -320,8 +321,12 @@ describe('core/data — moving blocks (M2-07)', () => {
         message: 'tileset "rock" has no tile named "lava"',
       },
     ]);
+    // Without a tilemap the block's size is checked against TILE_SIZE.
     expect(
-      issuesOf({ tilemap: null, events: [{ x: 10, type: 'block', y: 0, w: 8, h: 8 }] }),
+      issuesOf({
+        tilemap: null,
+        events: [{ x: 10, type: 'block', y: 0, w: TILE_SIZE, h: TILE_SIZE }],
+      }),
     ).toEqual([
       {
         path: 'stages/s.stage.json:events[0]',

@@ -13,7 +13,7 @@
  *   presentation only — a stage with them and the same stage without run to the same state hash.
  */
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { PLAYFIELD_H, resolveGameConfig } from '../../src/config/index.js';
 import {
   MAX_CYCLE_COLORS_PER_LAYER,
   MAX_RASTER_BANDS,
@@ -85,11 +85,18 @@ describe('core/data stage raster effects: limits (edges)', () => {
       issuesOf({
         raster: [
           { ...WAVE, top: 0, bottom: 1, amplitude: 0, wavelength: 2, period: 0 },
-          { ...WAVE, top: 199, bottom: 200, amplitude: 32, wavelength: 1024, period: 36000 },
+          {
+            ...WAVE,
+            top: PLAYFIELD_H - 1,
+            bottom: PLAYFIELD_H,
+            amplitude: 32,
+            wavelength: 1024,
+            period: 36000,
+          },
           { ...LINES, factorTop: -4, factorBottom: 4, wrap: 0 },
           { ...LINES, factorTop: 4, factorBottom: -4, wrap: 1024, from: 0, to: 1000000 },
           { ...LINES, top: 0, bottom: 64, bands: new Array(MAX_RASTER_BANDS).fill(1) },
-          { ...LINES, top: 0, bottom: 200, bands: [200] },
+          { ...LINES, top: 0, bottom: PLAYFIELD_H, bands: [PLAYFIELD_H] },
           { ...WAVE, wrap: 64 },
           { layer: 'far', kind: 'haze', top: 5, bottom: 6, amplitude: 1, wavelength: 2 },
         ],
@@ -100,7 +107,7 @@ describe('core/data stage raster effects: limits (edges)', () => {
   it('refuses every field just past its range', () => {
     const cases: Array<[Record<string, unknown>, string]> = [
       [{ ...WAVE, top: -1 }, 'raster[0].top'],
-      [{ ...WAVE, top: 200, bottom: 200 }, 'raster[0].top'],
+      [{ ...WAVE, top: PLAYFIELD_H, bottom: PLAYFIELD_H }, 'raster[0].top'],
       [{ ...WAVE, bottom: 0, top: 0 }, 'raster[0].bottom'],
       [{ ...WAVE, top: 10.5 }, 'raster[0].top'],
       [{ ...WAVE, amplitude: -0.1 }, 'raster[0].amplitude'],
