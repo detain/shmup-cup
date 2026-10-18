@@ -98,22 +98,25 @@ zero.
    (`DRAW_CALL_BUDGET` 20, the heap gate, `DIST_BUDGET`, `APP_JS_GZIP_BUDGET` 512 KB). Never to get green.
 4. **The beta tag** is a pre-release, and it is the wave's **last** action. The orchestrator creates it only when
    exit checks 1–4 all hold and every review of the wave is at zero (`R5-10.RV`, the subtask reviews,
-   `W13.DOCS-RV`) — so the docs item, with `W13.DOCS-A`'s CHANGELOG line `2.0.0-beta.1`, is pushed. Then, from the
-   main checkout `/home/sites/shmup-cup`:
+   `W13.DOCS-RV`) — so the docs item, with `W13.DOCS-A`'s CHANGELOG line `2.0.0-beta.1`, is pushed. The tag commit
+   is the full SHA of `origin/master` at that moment: it holds all of R5-10, the fixes of every R5-10 review, the
+   version line and its CHANGELOG line — **not** R5-10.T9's own commit, which `R5-10.RV`, the late subtask reviews'
+   fixes and `W13.DOCS-A` follow. In the main checkout:
    ```bash
-   git -C /home/sites/shmup-cup fetch origin
-   git -C /home/sites/shmup-cup rev-parse origin/master    # prints the full SHA of the tag commit
-   gh release create v2.0.0-beta.1 --prerelease --target <the tag commit> --title "v2.0.0-beta.1" --notes …
+   git -C /home/sites/shmup-cup fetch origin && git -C /home/sites/shmup-cup rev-parse origin/master > /home/sites/shmup-cup-run/w13-tag.txt
+   cd /home/sites/shmup-cup && gh release create v2.0.0-beta.1 --prerelease --target "$(cat /home/sites/shmup-cup-run/w13-tag.txt)" --title "v2.0.0-beta.1" --notes "Shmup Cup v2: all zones remastered with stand-in art; real art drops pending the owner. A pre-release: the full suite runs before v2.0.0."
    ```
-   where `<the tag commit>` is the full SHA that the `rev-parse` line printed, and the notes say: all zones remastered
-   with stand-in art; real art drops pending the owner; the full suite runs before `v2.0.0` (decision RUN-1). That
-   commit holds all of R5-10, the fixes of every R5-10 review, the version line and its CHANGELOG line. Never tag
-   R5-10.T9's own commit: `R5-10.RV`, the late subtask reviews' fixes and `W13.DOCS-A` push after it, so it lacks
-   them. If one of wave 14's first LANDs reached `origin/master` before the tag, the tag holds it too; that is fine
-   (the LAND ran its own checks) — never pick an older commit to leave it out. The tag is cut without the full suite —
-   unless the driver's SCOPE ends the run here: then R6-03.D6's commands (wave 15) run first, once exit checks 1–4
-   hold, and `<the tag commit>` is the full SHA of the commit their last green run checked (RUN-1; wave 15's
-   `R6-03.D7` targets `v2.0.0` the same way). The owner's sign-off is welcome and never blocks.
+   The SHA in `w13-tag.txt` must be a commit that exit checks 2 and 3 ran on (`git rev-parse HEAD` in the tester's
+   worktree). The docs item pushes after the code exit, so `origin/master` has moved since those checks ran: run
+   exit checks 2 and 3 again on the SHA in `w13-tag.txt` first — a fresh tester agent, as for the code exit, whose
+   worktree is made from that SHA instead of `origin/master` — and run the `gh` line only when they pass (RUN-1). A
+   failure gets a fixer as at any exit; after its push, write `w13-tag.txt` again and re-run the checks. If one of
+   wave 14's first LANDs reached `origin/master` before this, the tag holds it too; that is fine (the re-run checks
+   it) — never pick an older commit to leave it out. The tag is cut without the full suite — unless the driver's
+   SCOPE ends the run here: then R6-03.D6's commands (wave 15) run first, once exit checks 1–4 hold, and the tag
+   targets the full SHA of the commit their last green run checked (write it to `w13-tag.txt` instead of the
+   `rev-parse` output; RUN-1, as wave 15's `R6-03.D7` targets `v2.0.0`). The owner's sign-off is welcome and never
+   blocks.
 5. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
    permitting), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
    drop the owner names for the release. The orchestrator pastes wave 12's *Rules for this wave* into the drop's
@@ -492,9 +495,9 @@ zero.
    and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts`.
 3. `pnpm content:check`; `pnpm --filter @shmup/tizen build`.
 4. The docs review at zero; §17 set by `W13.DOCS-A`; the board synced by the orchestrator after that push.
-5. **Last**, once items 1–4 hold: the orchestrator tags `v2.0.0-beta.1` (pre-release, rule 4: `--target` is the full
-   SHA that `git -C /home/sites/shmup-cup rev-parse origin/master` prints after a fetch at that moment — never
-   R5-10.T9's own commit). A CI look at most.
+5. **Last**, once items 1–4 hold and every review is at zero: the orchestrator tags `v2.0.0-beta.1` (pre-release,
+   rule 4: `--target` is the SHA in `/home/sites/shmup-cup-run/w13-tag.txt` — `origin/master` at that moment, with
+   exit checks 2 and 3 run again on it — never R5-10.T9's own commit). A CI look at most.
 6. **Deferred to wave 15:** R5-10.T10 (the milestone's full suite: `pnpm format:check && pnpm lint && pnpm typecheck
    && pnpm test && pnpm build`, `pnpm test:e2e` with Firefox, the whole `pnpm bench`, `docs:images --check`,
    `store:assets --check`, the input probe) — it runs once, as R6-03.D6 (unless the driver's SCOPE ends the run
