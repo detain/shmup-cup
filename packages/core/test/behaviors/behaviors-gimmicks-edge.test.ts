@@ -4,8 +4,8 @@
  *
  * - `defineBehavior` keeps a `death` callback only when given; the registry knows the six ids;
  * - `rock.fall`: a trigger of 0 falls at once; a stone keeps a `Ballistic` arc it was given;
- * - `bubble.split`: one child flies straight left, three fan out evenly, no child / `count` 0 do not
- *   split, a full enemy table drops the pieces quietly;
+ * - `bubble.split`: one child flies straight left, three fan out evenly, no child / `count` 0 do
+ *   not split, a full enemy table drops the pieces quietly;
  * - `volcano.lob`: nothing while it may not fire (off screen) or without a child;
  * - `field.suction`: no pull until the pod is on screen;
  * - `tentacle.grab`: never lunges while no ship is in reach;

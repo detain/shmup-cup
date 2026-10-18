@@ -570,7 +570,8 @@ describe('core/enemies edge — formations', () => {
     run(w, 11);
     const f = w.enemies.formations;
     const leader = w.enemies.enemies[f.leader[slot]];
-    leader.x = w.camera.x - 60; // 60 px left of the view: escaped (> 32), not yet past the ghost margin
+    // 60 px left of the view: escaped (> 32), not yet past the ghost margin
+    leader.x = w.camera.x - 60;
     run(w, 1);
     expect(leader.state).toBe(EnemyState.Live);
     expect(leader.flags & EnemyFlag.Ghost).toBe(EnemyFlag.Ghost);

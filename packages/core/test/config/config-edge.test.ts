@@ -100,7 +100,8 @@ describe('core/config resolveGameConfig boundaries', () => {
   });
 
   it('defaults to a 16:9 internal resolution that scales to 1080p by a whole factor, to 720p by ≥ 2', () => {
-    // ×5 / ×3 at 384×216, ×3 / ×2 at 640×360 (the frame itself is pinned in frame-constants.test.ts).
+    // ×5 / ×3 at 384×216, ×3 / ×2 at 640×360 (the frame itself is pinned in
+    // frame-constants.test.ts).
     const { internalWidth: w, internalHeight: h } = DEFAULT_GAME_CONFIG;
     expect(Number.isInteger(1920 / w)).toBe(true);
     expect(1080 / h).toBe(1920 / w);

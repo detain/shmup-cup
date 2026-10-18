@@ -473,7 +473,8 @@ describe('core/patterns DSL interpreter — behaviour', () => {
   it('timed changes land exactly on their target speed and heading; sequence changes add per tick', () => {
     const w = arena('dsl.glide');
     const input = createInputSnapshot();
-    stepWorld(w, input); // age 1: the program starts, speed 1 → 3 over 10 ticks, heading 0 → 256 over 8
+    // age 1: the program starts, speed 1 → 3 over 10 ticks, heading 0 → 256 over 8
+    stepWorld(w, input);
     const f = w.bullets.pool.fields;
     expect(f.speed[0]).toBeCloseTo(1.2, 12);
     for (let t = 1; t < 8; t++) stepWorld(w, input);

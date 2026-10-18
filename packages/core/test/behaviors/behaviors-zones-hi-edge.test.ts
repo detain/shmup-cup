@@ -10,9 +10,9 @@
  * - `mine.burst`: `trigger` 0 never arms (it drifts on); `ring` 0 bursts into nothing, `ring` is
  *   floored; `fuse` below 1 is one tick; a mine that bursts scores nothing and drops nothing;
  * - `boss.sovereign`: `spin` rounded, reversing every `reverseTicks`; `firstLaser` below 1 is one
- *   tick, the lanes go to the standing guns in turn (a destroyed one skipped); the spiral's tunables
- *   floored and each phase's spiral turning from heading 0; `count` 0 launches nothing, `count` 2
- *   launches from both guns;
+ *   tick, the lanes go to the standing guns in turn (a destroyed one skipped); the spiral's
+ *   tunables floored and each phase's spiral turning from heading 0; `count` 0 launches nothing,
+ *   `count` 2 launches from both guns;
  * - `boss.ark`: a gun off screen never fires or launches; `ways` below 1 is one bullet; `aimStep`
  *   caps the turn of a volley; the ring comes from the on-screen core, turned half a gap each time;
  * - `boss.angler`: an open mouth shorter than the first spread's 12 ticks fires nothing; `gape` 0

@@ -295,7 +295,8 @@ describe('core/world with a stage — determinism and allocation', () => {
         if (ship.lives < 3) ship.lives = 3;
         const hits = ship.hits;
         stepWorld(w, input);
-        if (i >= warmup) measuredHits += ship.hits - hits; // the windows' indices follow the warm-up
+        // the windows' indices follow the warm-up
+        if (i >= warmup) measuredHits += ship.hits - hits;
         w.events.clear();
       },
       10_000,

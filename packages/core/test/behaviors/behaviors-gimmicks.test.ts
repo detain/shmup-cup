@@ -1,11 +1,11 @@
 /**
  * The stage gimmick behaviours of plan M2-07 (`core/behaviors`) driving their enemies in a World
- * with the shipped `gimmick-range` roster on a still camera between a flat floor (y
- * `PLAYFIELD_H − 40`, 160 at 384×216) and a flat ceiling (y 32): the falling rock (proximity trigger, shatters on the floor, no score), the
- * splitting bubble (children fanned out, none from a Mega Crash), the volcano (seeded lobs that
- * shatter), the suction pod (pull field while it lives), the grabbing tentacle (chain, lunge with a
- * short pull, retract) and the seeded cube rush (cubes stacking into terrain tiles, undone by the
- * checkpoint rollback).
+ * with the shipped `gimmick-range` roster on a still camera between a flat floor
+ * (y `PLAYFIELD_H − 40`, 160 at 384×216) and a flat ceiling (y 32): the falling rock (proximity
+ * trigger, shatters on the floor, no score), the splitting bubble (children fanned out, none from a
+ * Mega Crash), the volcano (seeded lobs that shatter), the suction pod (pull field while it lives),
+ * the grabbing tentacle (chain, lunge with a short pull, retract) and the seeded cube rush (cubes
+ * stacking into terrain tiles, undone by the checkpoint rollback).
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
