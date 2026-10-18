@@ -27,7 +27,7 @@ const STORY_SCENE_BOTTOM = uiPx(100) + uiPx(24);
 const STORY_WINDOW_H = 6 * STORY_ROW + GLYPH_H;
 
 /**
- * The story crawl's window: its top and bottom rows (133 and 207; 214 and 328 at 640×360) and its
+ * The story crawl's window: its top and bottom rows (133 and 207; 216 and 330 at 640×360) and its
  * height — 4 px inside the story's panel, which is centred between the scene's lowest row and the
  * frame's bottom edge (R2-01).
  */

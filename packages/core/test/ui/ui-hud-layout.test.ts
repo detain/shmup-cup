@@ -38,6 +38,7 @@ import {
   type UiSprites,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, type World } from '../../src/world/index.js';
+import { HUD } from '../helpers/hud.js';
 
 const L = HUD_LAYOUT;
 
@@ -306,6 +307,6 @@ describe('buildHud layout', () => {
     expect(label).toBeGreaterThanOrEqual(0);
     expect(seconds).toBeGreaterThanOrEqual(0);
     expect(list.x[label]).toBe(L.p2X);
-    expect(list.x[seconds]).toBe(L.p2X + 4 * GLYPH_W + GAP);
+    expect(list.x[seconds]).toBe(L.p2X + HUD.clockDx);
   });
 });

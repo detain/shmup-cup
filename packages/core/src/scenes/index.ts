@@ -2406,6 +2406,35 @@ export class BootScene extends SceneBase {
 const TitlePhase = { Prompt: 0, Menu: 1 } as const;
 
 /**
+ * Whether the title's session hi-score line hides while a scene is the top one (R2-01).
+ *
+ * @remarks
+ * The line is the title's, and v1 drew it under every screen opened over the title. Two kinds hide
+ * it at 640×360: the Options pages, whose panel covered it at 384×216 but no longer reaches down
+ * to it, and the difficulty menu, which shows the preset's own `HI` beside it. Every other screen
+ * over the title — the exit question, the ship select, PRACTICE, SOUND TEST, EXTRA, REPLAYS —
+ * leaves it, as v1 did. Compares interned ids only, so a redraw allocates nothing.
+ *
+ * @param id - The top scene's id.
+ * @returns `true` when the title leaves the line out.
+ */
+function hidesTitleHi(id: SceneId): boolean {
+  switch (id) {
+    case 'options':
+    case 'controls':
+    case 'rebind':
+    case 'inputTest':
+    case 'display':
+    case 'gameOptions':
+    case 'extras':
+    case 'difficulty':
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
  * The title: logo, `PRESS OK`, then the mode select — 1 PLAYER / 2 PLAYERS / PRACTICE / OPTIONS /
  * SOUND TEST / EXIT (M2-15).
  *
@@ -2591,8 +2620,8 @@ export class TitleScene extends SceneBase {
   }
 
   /**
-   * Draws the logo, the prompt or the menu, and — while no menu is open over the title — the
-   * session hi-score.
+   * Draws the logo, the prompt or the menu, and — unless an Options page or the difficulty menu is
+   * open over the title ({@link hidesTitleHi}) — the session hi-score.
    *
    * @param list - The UI list.
    */
@@ -2615,12 +2644,11 @@ export class TitleScene extends SceneBase {
     } else {
       drawMenu(list, this.menu, base + 3, this.menuLayout, t);
     }
-    // The session hi-score is the title screen's own line (R2-01): a menu opened over the title
-    // hides it — the difficulty menu shows the preset's best, and at 640×360 the Options pages'
-    // panel no longer reaches down to it —, the exit question leaves it. A push or pop redraws
+    // The session hi-score line stays under the screens opened over the title, as in v1, except
+    // under the Options pages and the difficulty menu (see hidesTitleHi). A push or pop redraws
     // every scene, so this follows the stack.
     const top = this.flow.stack.top;
-    if (top === this || top === this.flow.confirm) {
+    if (top === null || !hidesTitleHi(top.id)) {
       list.text(base + 2, L.hiX, L.hiY, UI_COLORS.focus);
       list.number(this.flow.hiScore, L.scoreX, L.hiY, 8, UI_COLORS.text);
     }
