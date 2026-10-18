@@ -8,9 +8,10 @@
  * - {@link CONTENT_PORT_PENDING} — whether a shipped tileset (`content/tilesets/*.tileset.json`)
  *   is not at `TILE_SIZE`: `false` while the code runs at 384×216 (8 = 8: every gate is off),
  *   `true` from the flip until R2-02 ports the content.
- * - **It expires by itself:** once the frame is no longer v1's and no tileset is pending, importing
- *   this module throws `R2-02 ported the content: delete port-pending.ts and its uses` — R2-02
- *   deletes this file and every gate, and each gated test must then pass.
+ * - **It expires by itself** ({@link checkPortPendingExpiry}): once the frame is no longer v1's and
+ *   no tileset is pending, importing this module throws `R2-02 ported the content: delete
+ *   port-pending.ts and its uses` — R2-02 deletes this file and every gate, and each gated test
+ *   must then pass.
  * - {@link describePortPending} / {@link itPortPending} — `describe.skipIf` / `it.skipIf` on
  *   {@link CONTENT_PORT_PENDING}, with {@link PORT_PENDING_REASON} appended to the name.
  *
@@ -57,9 +58,22 @@ export const CONTENT_PORT_PENDING: boolean = shippedTileSizes().some(
   ([, size]) => size !== TILE_SIZE,
 );
 
-if (FRAME_W !== V1_FRAME_W && !CONTENT_PORT_PENDING) {
-  throw new Error('R2-02 ported the content: delete port-pending.ts and its uses');
+/**
+ * The gate's self-expiry, run when this module is imported: throws once the frame is no longer
+ * v1's and no shipped tileset is pending — R2-02 ported the content, so the gate must go.
+ *
+ * @param frameW - The build's frame width (`FRAME_W`).
+ * @param pending - Whether the content port is pending ({@link CONTENT_PORT_PENDING}).
+ * @throws {Error} `R2-02 ported the content: delete port-pending.ts and its uses` when the gate has
+ *   expired.
+ */
+export function checkPortPendingExpiry(frameW: number, pending: boolean): void {
+  if (frameW !== V1_FRAME_W && !pending) {
+    throw new Error('R2-02 ported the content: delete port-pending.ts and its uses');
+  }
 }
+
+checkPortPendingExpiry(FRAME_W, CONTENT_PORT_PENDING);
 
 /** What a gated test's name says (`… [R2-01 gate: skipped while …]`). */
 export const PORT_PENDING_REASON = "R2-01 gate: skipped while R2-02's content port is pending";

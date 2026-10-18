@@ -430,9 +430,9 @@ describe('core/replay decodeReplay validation', () => {
     ['another kind', (d) => void (d.kind = 'stage'), /not a replay/],
     ['a missing header', (d) => void (d.header = null), /header must be an object/],
     [
-      'another format version',
-      (d) => void ((d.header as Record<string, unknown>).formatVersion = 2),
-      /format version 2/,
+      'a newer format version',
+      (d) => void ((d.header as Record<string, unknown>).formatVersion = REPLAY_FORMAT_VERSION + 1),
+      new RegExp(`format version ${REPLAY_FORMAT_VERSION + 1} is not supported`),
     ],
     [
       'a non-string build id',

@@ -125,8 +125,9 @@ describe('integration: the zone map in the scene flow (M2-10)', () => {
       expect(table).toHaveLength(1);
       expect(table[0].reached).toBe('zone-i');
       expect(save.data.stats.stagesCleared).toBe(5);
-      // M2-14: the ending the flags chose (no ship lost in god mode) plays the deep's scene and its
-      // epilogue to the ending theme, then the result card, then the credits to theirs, then the title.
+      // M2-14: the ending the flags chose (no ship lost in god mode) plays the deep's scene and
+      // its epilogue to the ending theme, then the result card, then the credits to theirs, then
+      // the title.
       expect(flow.run.ending?.id).toBe('throne-flawless');
       expect(flow.run.ending?.scene).toBe('abyss');
       const music: number[] = [];
