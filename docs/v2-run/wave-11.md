@@ -219,7 +219,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone B'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone B's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -235,7 +235,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-b.test.ts test/playtest/zone-b-recovery.test.ts test/integration/zone-b-runtime.test.ts test/integration/zone-b-direct.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone B'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts test/integration/bonus-stage-runtime.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -267,7 +267,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-b,brine-grotto --message /home/sites/shmup-cup-run/R5-02.S7-msg.txt --zone b
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-b,brine-grotto` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-b,brine-grotto` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-b.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-02.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-02.S7-msg.txt` first): `feat(R5-02): remaster zone B BRINE NEBULA`; the body lists the sections, the new types and the boss, and says "re-bless zone-b-god, zone-b-deaths, brine-grotto-god and the demo zone-b: the zone was remastered (R5-02)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone B's stage ids; in the presentation fingerprint only the walk segments that fly zone B or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/` (never `echo-maw.png`).
@@ -375,7 +375,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone C'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone C's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -391,7 +391,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-c.test.ts test/playtest/zone-c-recovery.test.ts test/integration/zone-c-runtime.test.ts test/integration/zone-c-direct.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone C'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -423,7 +423,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-c --message /home/sites/shmup-cup-run/R5-03.S7-msg.txt --zone c
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-c` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-c` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-c.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-03.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-03.S7-msg.txt` first): `feat(R5-03): remaster zone C DUNE EXPANSE`; the body lists the sections, the new types and the boss, and says "re-bless zone-c-god, zone-c-bot and the demo zone-c: the zone was remastered (R5-03)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone C's stage ids; in the presentation fingerprint only the walk segments that fly zone C or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
@@ -532,7 +532,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-d.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone D'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone D's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -548,7 +548,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-d.test.ts test/playtest/zone-d-recovery.test.ts test/integration/zone-d-runtime.test.ts test/integration/zone-d-direct.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone D'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -580,7 +580,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-d --message /home/sites/shmup-cup-run/R5-04.S7-msg.txt --zone d
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-d` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-d` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-d.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-04.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-04.S7-msg.txt` first): `feat(R5-04): remaster zone D MAGMA DEEP`; the body lists the sections, the new types and the boss, and says "re-bless zone-d-god, zone-d-bot, zone-d-boss and the demo zone-d: the zone was remastered (R5-04)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone D's stage ids; in the presentation fingerprint only the walk segments that fly zone D or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/` (never `echo-bastion.png`).
@@ -687,7 +687,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-e.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone E'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone E's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -703,7 +703,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-e.test.ts test/playtest/zone-e-recovery.test.ts test/integration/zone-e-runtime.test.ts test/integration/zone-e-direct.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone E'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -735,7 +735,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-e --message /home/sites/shmup-cup-run/R5-05.S7-msg.txt --zone e
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-e` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-e` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-e.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-05.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-05.S7-msg.txt` first): `feat(R5-05): remaster zone E TEMPEST RIDGE`; the body lists the sections, the new types and the boss, and says "re-bless zone-e-god, zone-e-bot and the demo zone-e: the zone was remastered (R5-05)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone E's stage ids; in the presentation fingerprint only the walk segments that fly zone E or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
@@ -844,7 +844,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-f.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone F'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone F's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -860,7 +860,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-f.test.ts test/playtest/zone-f-recovery.test.ts test/integration/zone-f-runtime.test.ts test/integration/zone-f-direct.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone F'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -892,7 +892,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-f --message /home/sites/shmup-cup-run/R5-06.S7-msg.txt --zone f
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-f` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-f` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-f.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-06.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-06.S7-msg.txt` first): `feat(R5-06): remaster zone F CELL VAULT`; the body lists the sections, the new types and the boss, and says "re-bless zone-f-god, zone-f-boss, zone-f-deaths, zone-f-arcade and the demo zone-f: the zone was remastered (R5-06)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone F's stage ids; in the presentation fingerprint only the walk segments that fly zone F or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/` (never `echo-regent.png`).
@@ -1001,7 +1001,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-g.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone G'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone G's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -1017,7 +1017,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-g.test.ts test/playtest/zone-g-recovery.test.ts test/integration/zone-g-runtime.test.ts test/integration/zone-g-direct.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone G'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts test/integration/bonus-stage-runtime.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -1049,7 +1049,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-g,glimmer-cache --message /home/sites/shmup-cup-run/R5-07.S7-msg.txt --zone g
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-g,glimmer-cache` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-g,glimmer-cache` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-g.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-07.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-07.S7-msg.txt` first): `feat(R5-07): remaster zone G PRISM LABYRINTH`; the body lists the sections, the new types and the boss, and says "re-bless zone-g-god, zone-g-bot, zone-g-boss, glimmer-cache-god and the demo zone-g: the zone was remastered (R5-07)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone G's stage ids; in the presentation fingerprint only the walk segments that fly zone G or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
@@ -1157,7 +1157,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone I'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** zone I's v2 contract passes (decision R5-D2: scroll to the WARNING 3.75–5.25 min; ≥ 5 checkpoints; 6–8 types by sprite; 18–48 capsule sources before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; ≤ 2 blue capsules; the `directItems` budget); the 4-way rules (aimed ≤ 3.0 px/tick, laser lane gaps ≥ 24 px).
 - **Token:** none (branch).
@@ -1173,7 +1173,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Tests (targeted):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-i.test.ts test/playtest/zone-i-recovery.test.ts test/integration/zone-i-runtime.test.ts test/integration/standin-budget.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone I'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts 'test/golden/v2-port*.test.ts' test/playtest/boss-rush.test.ts
   # red only on its `expect(w.table).toEqual(PINNED.…)` lines; any other failing expect: stop and report (rule 9):
@@ -1205,7 +1205,7 @@ One section per zone: its own files first, then its blocks in order.
   RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-i --message /home/sites/shmup-cup-run/R5-09.S7-msg.txt --zone i
   # each about 25 min: shell timeout 3600000, or background with a log; the script takes /tmp/shmup-cup-land.lock itself — never wrap it in another flock
   ```
-  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `pnpm golden:update -- --only zone-i` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
+  The script takes the land lock, squashes, rebases, installs, runs `pnpm assets`, re-derives `atlas-groups.json` (`SHMUP_ATLAS_GROUPS_UPDATE=1`), runs `node scripts/golden-update.mjs --only zone-i` (which re-records the scope and **verifies every other golden and demo**), rewrites the fingerprints (`SHMUP_FINGERPRINT_UPDATE=1`), runs `pnpm docs:images` and the zone's checks, aborts unless `git diff --stat test/golden content/demos` stays inside the scope, then pushes.
 - **Dry run first:** if its `test/golden` run fails (an outcome expectation of `golden-zone-i.test.ts`, a description), do not run the real LAND: report it; a fixer (`R5-09.FIXn`) corrects the expectation on the branch so it states what the design predicts (the log shows the recorded outcome — an outcome that contradicts the design is a content bug, never an expectation to copy), then a new review and a new dry run.
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-09.S7-msg.txt` first): `feat(R5-09): remaster zone I ABYSSAL THRONE`; the body lists the sections, the new types and the boss, and says "re-bless zone-i-god, zone-i-boss, zone-i-escape and the demo zone-i: the zone was remastered (R5-09)"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ the scope; every other golden and demo verified unchanged; the derived diff touches only zone I's stage ids; in the presentation fingerprint only the walk segments that fly zone I or come after it in the same walk, plus `extra.bossRush` (later segments cascade — that is expected); its `atlas-groups.json` block (or `common`); and its own plates in `docs/images/`.
@@ -1340,7 +1340,7 @@ One section per zone: its own files first, then its blocks in order.
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts -t 'zone H'
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   ```
 - **Acceptance:** content valid; the 4-way rules; the contract (if switched) passes.
 - **Token:** none (branch).
