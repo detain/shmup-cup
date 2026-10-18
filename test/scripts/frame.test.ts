@@ -19,6 +19,7 @@ import {
   BOSS_LABEL_W,
   BOSS_LABEL_X,
   SCALE,
+  UI_ART_SCALE,
   VIEWPORT,
   pixelIndex,
   sx,
@@ -174,6 +175,10 @@ function drawn(list: core.DrawList, op: core.DrawOp, color: number): Drawn[] {
 }
 
 describe('test/e2e/frame-pixels.ts: the boss HP bar of advanced-bosses.spec.ts', () => {
+  it('derives the art scale core lays the HUD out with (R2-01: ART_SCALE)', () => {
+    expect(UI_ART_SCALE).toBe(core.ART_SCALE);
+  });
+
   it('places the BOSS label and the bar where core/ui draws them', () => {
     expect(BOSS_LABEL_X).toBe(core.HUD_LAYOUT.bossX);
     expect(BOSS_BAR_X).toBe(core.HUD_LAYOUT.bossBarX);

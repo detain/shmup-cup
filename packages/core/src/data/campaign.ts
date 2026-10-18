@@ -73,7 +73,7 @@
  *
  * @module
  */
-import { FRAME_W, GLYPH_W } from '../config/index.js';
+import { ART_SCALE, FRAME_W, GLYPH_W } from '../config/index.js';
 import type { ValidationIssue } from './schema.js';
 
 /**
@@ -125,17 +125,22 @@ export const MAX_ENDING_TEXT_LINES = 8;
 
 // The line caps below are text widths on the screen (plan_resolution.md R1-01): glyph cells
 // (`core/config` GLYPH_W) that fit the frame (FRAME_W) less the margins of what the lines are drawn
-// in, so they follow the frame and the font. The numbers in parentheses are the values at 384 px
-// with the 6-px cell.
+// in, so they follow the frame and the font — and, since R2-01, the margins follow the art's scale
+// as `core/scenes` draws them (`core/ui` uiPx: ⌈v · ART_SCALE⌉, written out here because `data`
+// does not import `ui`). The numbers in parentheses are the values at 384 px with the 6-px cell and
+// `ART_SCALE` 1.
 
 /**
  * Inset of the ending's and the story's text panels from each side of the frame (`core/scenes`
  * draws both 40 px in from the edges).
  */
-const TEXT_PANEL_INSET = 40;
+const TEXT_PANEL_INSET = Math.ceil(40 * ART_SCALE);
 
-/** Room kept between a text panel's side and its longest line (centred). */
-const TEXT_PANEL_PADDING = 32;
+/** Room kept between a text panel's side and its longest line (centred — 32). */
+const TEXT_PANEL_PADDING = Math.ceil(32 * ART_SCALE);
+
+/** Room kept clear on each side of a credits line (12). */
+const CREDITS_LINE_MARGIN = Math.ceil(12 * ART_SCALE);
 
 /** Glyph cells of the longest line a text panel holds (40). */
 const TEXT_PANEL_LINE_LENGTH = Math.floor(
@@ -155,7 +160,7 @@ export const MAX_CREDITS_LINES = 16;
  * Most characters of a credits line or title — the glyph cells that fit the frame, 12 px kept clear
  * on each side (60).
  */
-export const MAX_CREDITS_LINE_LENGTH = Math.floor((FRAME_W - 2 * 12) / GLYPH_W);
+export const MAX_CREDITS_LINE_LENGTH = Math.floor((FRAME_W - 2 * CREDITS_LINE_MARGIN) / GLYPH_W);
 
 /**
  * The sprite scenes a page of the attract loop's story crawl can play over (M2-15, `core/scenes`

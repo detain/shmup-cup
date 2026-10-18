@@ -1279,6 +1279,7 @@ export {
   resolveUiText,
   uiLanguageIds,
   uiLanguageLabel,
+  uiPx,
   type RebindPanelLabels,
   type UiLanguage,
   type UiStringTableLike,

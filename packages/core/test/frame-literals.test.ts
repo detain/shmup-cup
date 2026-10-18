@@ -111,51 +111,9 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     value: 200,
     reason: "a world radius: boss.suction's pull field (plan §2.6 — not PLAYFIELD_H)",
   },
-  // Panels and columns sized by their 6×8 text, not by the frame: they stay centred on
-  // FRAME_CX / FRAME_CY (or anchored to an edge) at any frame size; R4-03 resizes them for the
-  // new font (≈ 9×12), and R2-01 checks them at 640×360.
-  {
-    file: 'scenes/index.ts',
-    symbol: 'OPTIONS_PANEL.h',
-    value: 192,
-    reason: 'a content-sized panel: a 26-px title band + eleven 14-px menu rows (M2-09)',
-  },
-  {
-    file: 'scenes/index.ts',
-    symbol: 'ZONE_TALLY_PANEL.w',
-    value: 200,
-    reason: "a content-sized panel: sized by the zone tally's rows of 6×8 text",
-  },
-  {
-    file: 'scenes/index.ts',
-    symbol: 'SHIP_PANEL.w',
-    value: 208,
-    reason: "a content-sized panel: sized by the ship select's names and hint lines of 6×8 text",
-  },
-  {
-    file: 'scenes/index.ts',
-    symbol: 'WEAPON_PANEL.h',
-    value: 192,
-    reason: "a content-sized panel: the weapon select's menu rows (R2-01 decides if it grows)",
-  },
-  {
-    file: 'scenes/index.ts',
-    symbol: 'ORDER_PANEL.h',
-    value: 192,
-    reason: "a content-sized panel: the order editor's rows, as tall as the weapon panel",
-  },
-  {
-    file: 'scenes/index.ts',
-    symbol: 'HI_SCORE_PANEL.h',
-    value: 200,
-    reason: 'a content-sized panel: a 54-px header + HI_SCORE_TABLE_SIZE (10) rows of 14 px',
-  },
-  {
-    file: 'scenes/index.ts',
-    symbol: 'HiScoreScene.drawUi.rankX',
-    value: 108,
-    reason: "a text column: the rank column's offset left of FRAME_CX (18 glyphs), not the centre",
-  },
+  // Scene art, not the frame (R2-01 lays the panels and columns out from GLYPH_W / LINE_H and
+  // `core/ui` uiPx, so none of their sizes is a literal any more; this table is scaled by
+  // uiOffsets at load).
   {
     file: 'scenes/index.ts',
     symbol: 'INVASION_BLASTS',

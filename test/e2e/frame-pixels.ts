@@ -92,14 +92,39 @@ export function pixelIndex(width: number, fx: number, fy: number): number {
 }
 
 // The boss HP bar's place in the top HUD bar (`advanced-bosses.spec.ts`), derived the way
-// `core/ui` derives it (R1-01): from the frame's centre and the font's cell, so it follows the
-// frame and the font at R2-01 / R4-03. The 4-px label gap, the 2-px nudge right and the fill's
-// 3-px drop are the HUD's own pixel literals there. `test/scripts/frame.test.ts` checks every
-// exported value against what core's `buildHud` really draws for a frame with the bar up — the
-// label's x and width, the bar frame's x and width, the fill's top row — and against `HUD_LAYOUT`.
+// `core/ui` derives it (R1-01, R2-01): from the frame's centre and the font's cell, and its gaps —
+// the 4-px label gap, the 2-px nudge right, the frame's 2-px drop — at the art's scale (`core/ui`
+// `uiPx`), so it follows the frame, the font and the art at R2-01 / R4-03.
+// `test/scripts/frame.test.ts` checks every exported value against what core's `buildHud` really
+// draws for a frame with the bar up — the label's x and width, the bar frame's x and width, the
+// fill's top row — against `HUD_LAYOUT`, and {@link UI_ART_SCALE} against core's `ART_SCALE`.
 
-/** Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP`). */
-const HUD_LABEL_GAP = 4;
+/** The cell width of the font file (`assets/source/fonts/pixel6x8.font.json`, the v1 font). */
+const FONT_FILE_CELL_W = 6;
+
+/**
+ * The art's scale (`core/config` `ART_SCALE`: 1 until R2-01, 3/2 after), which the specs cannot
+ * import: the font's cell (`GLYPH_W`, mirrored by `scripts/frame.mjs`) over the font file's — the
+ * relation core pins (`GLYPH_W` = the font file's cell × `ART_SCALE`: the interim 9×12 font is the
+ * 6×8 file at ×1.5). `test/scripts/frame.test.ts` pins it to `ART_SCALE`.
+ */
+export const UI_ART_SCALE: number = GLYPH_W / FONT_FILE_CELL_W;
+
+/**
+ * A HUD length at the art's scale, as `core/ui` `uiPx` computes it: `⌈v · UI_ART_SCALE⌉`.
+ *
+ * @param v - The v1 length in pixels.
+ * @returns It at the art's scale.
+ */
+function uiPx(v: number): number {
+  return Math.ceil(v * UI_ART_SCALE);
+}
+
+/** Gap between a HUD label and what follows it (`core/ui` `HUD_LABEL_GAP` — 4 today). */
+const HUD_LABEL_GAP = uiPx(4);
+
+/** The bar frame's drop below the top bar's top (`core/ui` `HUD_ROW_DY` — 2 today). */
+const HUD_ROW_DY = uiPx(2);
 
 /**
  * Width of the boss HP bar's frame (`core/ui` `BOSS_HP_BAR_WIDTH` = `HUD_HI_W`: `HI`, the gap and
@@ -117,13 +142,13 @@ export const BOSS_LABEL_W: number = 4 * GLYPH_W;
  * The `BOSS` label's x: the label, the gap and the bar centred 2 px right of the frame's centre
  * (`core/ui` `HUD_BOSS_X`, `HUD_LAYOUT.bossX` — 148 today).
  */
-export const BOSS_LABEL_X: number = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1) + 2;
+export const BOSS_LABEL_X: number = FRAME_CX - ((BOSS_BAR_DX + BOSS_BAR_W) >> 1) + uiPx(2);
 
 /** The boss HP bar's frame x (`core/ui` `HUD_LAYOUT.bossBarX` — 176 today). */
 export const BOSS_BAR_X: number = BOSS_LABEL_X + BOSS_BAR_DX;
 
 /**
- * The bar fill's top row, counted from the frame's top edge: `buildHud` draws the 2-px fill at
- * `HUD_LAYOUT.topY + 3` (3 today).
+ * The bar fill's top row, counted from the frame's top edge: `buildHud` draws the fill 1 px inside
+ * the bar's frame, at `HUD_LAYOUT.topY + HUD_ROW_DY + 1` (3 today).
  */
-export const BOSS_FILL_Y = 3;
+export const BOSS_FILL_Y: number = HUD_ROW_DY + 1;

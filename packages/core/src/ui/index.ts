@@ -91,7 +91,9 @@
  * {@link MAX_UI_TEXT_LENGTH}, {@link DEFAULT_LANGUAGE}). M3-01: {@link hudClockSeconds} (the
  * caravan's clock, drawn as `TIME` and its seconds in player 2's place — slot `time` of
  * {@link HUD_STRING_SLOTS}, red for the last ten) and the Extra Edit weapons' meter labels at the
- * end of {@link METER_LABEL_FRAMES} / {@link METER_SHORT_IDS}.
+ * end of {@link METER_LABEL_FRAMES} / {@link METER_SHORT_IDS}. R2-01: {@link uiPx} (a UI length
+ * at the art's scale — the kit, the HUD and the scenes lay their art- and padding-sized lengths out
+ * with it).
  *
  * **Boss HP bar (M2-09).** With the `bossHpBar` display option ({@link Hud.showBossHp}, the
  * `buildHud` argument) the top bar shows `BOSS` and a bar filled by {@link bossHpBarFill} of the
@@ -123,6 +125,7 @@
  * @module
  */
 import {
+  ART_SCALE,
   FRAME_CX,
   FRAME_CY,
   FRAME_W,
@@ -186,6 +189,39 @@ export const moduleInfo = defineModule({
 
 // Bitmap-font metrics for layout live in `presentation` (the renderer implements them).
 export type { TextMetrics } from '../presentation/index.js';
+
+// ------------------------------------------------------------------------------ layout scale
+
+/**
+ * A UI length at the art's scale (plan_resolution.md R2-01, owner decision W4-3): `v` pixels of the
+ * v1 (384×216) UI times `core/config` `ART_SCALE`, rounded up — `⌈v · ART_SCALE⌉`.
+ *
+ * @remarks
+ * The UI kit and the scenes lay their screens out in three kinds of numbers: **positions** anchored
+ * to the frame (its centre, an edge — `FRAME_CX`, `FRAME_W`), **text-sized** lengths (glyph cells
+ * and lines — `GLYPH_W`, `GLYPH_H`, `LINE_H`) and the **art- and padding-sized** lengths — a
+ * sprite's size, a gap, a margin, an inset, a bar's thickness — which this scales. At `ART_SCALE` 1 (until
+ * the flip) it returns `v`, so nothing moves; from R2-01's flip (`ART_SCALE` 3/2, the ×1.5 interim
+ * art and the 9×12 font) the whole UI is a ×1.5 copy of v1's, re-anchored to the 640×360 frame —
+ * which fits, since 1.5 < 5/3. World values never use it (plan §2.6).
+ *
+ * **Module initialisation only:** every caller builds frozen layout constants with it. It is never
+ * called per frame or per tick (the layouts stay constants; zero allocation —
+ * docs/dev/conventions.md).
+ *
+ * @param v - A length of the v1 UI in pixels: a whole number ≥ 0.
+ * @returns `⌈v · ART_SCALE⌉` (`v` at `ART_SCALE` 1; 2 → 3, 4 → 6, 5 → 8 at 3/2).
+ * @throws RangeError when `v` is not a whole number ≥ 0 (a layout typo, caught at module load).
+ *
+ * @example
+ * ```ts
+ * const PANEL = Object.freeze({ x: FRAME_CX - uiPx(76), y: FRAME_CY - uiPx(48), w: uiPx(152) });
+ * ```
+ */
+export function uiPx(v: number): number {
+  if (!(v >= 0 && Math.floor(v) === v)) throw new RangeError(`uiPx: ${v} is not a whole px ≥ 0`);
+  return Math.ceil(v * ART_SCALE);
+}
 
 // ------------------------------------------------------------------------------ sprites
 
@@ -1177,27 +1213,37 @@ export const UI_COLORS = Object.freeze({
 const CURSOR = '→';
 
 // The UI kit's text-relative sizes (plan_resolution.md R1-01) derive from the bitmap font's metrics
-// (`core/config` GLYPH_W / GLYPH_H / LINE_H), so they grow with the font; the numbers in
-// parentheses are their values at the 6×8 font. Gaps, paddings and bar thicknesses stay pixel
-// literals.
+// (`core/config` GLYPH_W / GLYPH_H / LINE_H), so they grow with the font; since R2-01 its gaps,
+// paddings and bar thicknesses are {@link uiPx} lengths, so they grow with the art (W4-3). The
+// numbers in parentheses are their values at the 6×8 font and `ART_SCALE` 1. One-pixel lines
+// (panel borders, underlines) stay one pixel.
 
 /**
  * Width in pixels of a slider's bar: eight glyph cells and 2 px (50), so it grows with the text of
  * the value column it sits in.
  */
-const SLIDER_BAR_W = 8 * GLYPH_W + 2;
+const SLIDER_BAR_W = 8 * GLYPH_W + uiPx(2);
+
+/** Top of a slider's bar below its row's top (2). */
+const SLIDER_BAR_DY = uiPx(2);
+
+/** Height of a slider's bar (4). */
+const SLIDER_BAR_H = uiPx(4);
+
+/** From a slider bar's right end to its value (6). */
+const SLIDER_VALUE_GAP = uiPx(6);
 
 /** Default row pitch of {@link drawMenu} (and the rebind panel): a line of text and 2 px (12). */
-const MENU_LINE_H = LINE_H + 2;
+const MENU_LINE_H = LINE_H + uiPx(2);
 
 /** Default distance from a menu label's x back to the cursor glyph: the glyph and 4 px (10). */
-const MENU_CURSOR_DX = GLYPH_W + 4;
+const MENU_CURSOR_DX = GLYPH_W + uiPx(4);
 
 /**
  * Default distance from a menu label's x to its value column (a slider, `ON` / `OFF`, a choice's
  * label): room for a 13-glyph label and 2 px (80).
  */
-const MENU_VALUE_DX = 13 * GLYPH_W + 2;
+const MENU_VALUE_DX = 13 * GLYPH_W + uiPx(2);
 
 /**
  * Draws a framed box: a translucent fill and a 1-px border.
@@ -1315,9 +1361,9 @@ export function drawMenu(
     if (slider !== null) {
       const span = slider.max - slider.min;
       const filled = span > 0 ? Math.round((SLIDER_BAR_W * (slider.value - slider.min)) / span) : 0;
-      list.rect(valueX, y + 2, SLIDER_BAR_W, 4, UI_COLORS.track);
-      if (filled > 0) list.rect(valueX, y + 2, filled, 4, color);
-      list.number(slider.value, valueX + SLIDER_BAR_W + 6, y, 0, color);
+      list.rect(valueX, y + SLIDER_BAR_DY, SLIDER_BAR_W, SLIDER_BAR_H, UI_COLORS.track);
+      if (filled > 0) list.rect(valueX, y + SLIDER_BAR_DY, filled, SLIDER_BAR_H, color);
+      list.number(slider.value, valueX + SLIDER_BAR_W + SLIDER_VALUE_GAP, y, 0, color);
     }
     const toggle = item.toggle;
     if (toggle !== null) list.text(toggle.value ? onSlot : offSlot, valueX, y, color);
@@ -1340,6 +1386,21 @@ export const CONFIRM_STRING_SLOTS = 4;
  * cells (18) — half a three-letter word, a gap and the cursor.
  */
 const CONFIRM_CURSOR_DX = 3 * GLYPH_W;
+
+/** Width of {@link drawConfirm}'s panel: a 28-glyph question and 4 px a side (176). */
+const CONFIRM_W = 28 * GLYPH_W + uiPx(8);
+
+/** Height of {@link drawConfirm}'s panel: the question's lines over the YES / NO row (52). */
+const CONFIRM_H = uiPx(52);
+
+/** From the confirm panel's top to the question's first line (7). */
+const CONFIRM_QUESTION_DY = uiPx(7);
+
+/** From the confirm panel's bottom up to the YES / NO row (16). */
+const CONFIRM_ROW_DY = uiPx(16);
+
+/** From the confirm panel's centre to the YES and NO choices' centres (32). */
+const CONFIRM_CHOICE_DX = uiPx(32);
 
 /**
  * Draws a YES / NO prompt centred at a point: a panel, the question (up to two lines) and the two
@@ -1364,8 +1425,8 @@ export function drawConfirm(
   cy: number,
   text: UiText = DEFAULT_UI_TEXT,
 ): void {
-  const w = 176;
-  const h = 52;
+  const w = CONFIRM_W;
+  const h = CONFIRM_H;
   const x = Math.round(cx - w / 2);
   const y = Math.round(cy - h / 2);
   drawPanel(list, x, y, w, h, UI_COLORS.panel, UI_COLORS.focus, 255);
@@ -1373,10 +1434,10 @@ export function drawConfirm(
   list.setString(stringBase + 1, text.yes);
   list.setString(stringBase + 2, text.no);
   list.setString(stringBase + 3, CURSOR);
-  list.text(stringBase, cx, y + 7, UI_COLORS.text, TextAlign.Center);
-  const yesX = Math.round(cx - 32);
-  const noX = Math.round(cx + 32);
-  const row = y + h - 16;
+  list.text(stringBase, cx, y + CONFIRM_QUESTION_DY, UI_COLORS.text, TextAlign.Center);
+  const yesX = Math.round(cx - CONFIRM_CHOICE_DX);
+  const noX = Math.round(cx + CONFIRM_CHOICE_DX);
+  const row = y + h - CONFIRM_ROW_DY;
   const yes = confirm.focus === ConfirmChoice.Yes;
   list.text(stringBase + 3, (yes ? yesX : noX) - CONFIRM_CURSOR_DX, row, UI_COLORS.focus);
   list.text(stringBase + 1, yesX, row, yes ? UI_COLORS.focus : UI_COLORS.text, TextAlign.Center);
@@ -1384,22 +1445,22 @@ export function drawConfirm(
 }
 
 /** Pitch in pixels between two letters of {@link drawNameEntry}: a glyph cell and 10 px (16). */
-const NAME_CELL_PITCH = GLYPH_W + 10;
+const NAME_CELL_PITCH = GLYPH_W + uiPx(10);
 
 /** Width of a letter's underline in {@link drawNameEntry}: a glyph cell and 2 px a side (10). */
-const NAME_LINE_W = GLYPH_W + 4;
+const NAME_LINE_W = GLYPH_W + uiPx(4);
 
 /** Width of `END`'s underline in {@link drawNameEntry}: three glyph cells and 2 px (20). */
-const NAME_END_LINE_W = 3 * GLYPH_W + 2;
+const NAME_END_LINE_W = 3 * GLYPH_W + uiPx(2);
 
 /** Rows from the letters' top to their underline: a glyph and 2 px (10). */
-const NAME_LINE_DY = GLYPH_H + 2;
+const NAME_LINE_DY = GLYPH_H + uiPx(2);
 
 /** Rows from the letters' top up to the `↑` above the cursor: a glyph and 3 px (11). */
-const NAME_UP_DY = GLYPH_H + 3;
+const NAME_UP_DY = GLYPH_H + uiPx(3);
 
 /** Rows from the letters' top down to the `↓` below the cursor: a glyph and 5 px (13). */
-const NAME_DOWN_DY = GLYPH_H + 5;
+const NAME_DOWN_DY = GLYPH_H + uiPx(5);
 
 /**
  * Draws a name entry centred at a point: one cell per letter (the letter, or `_` while empty,
@@ -1796,11 +1857,40 @@ export function rebindStringSlots(panel: RebindPanel): number {
   return panel.menuSlots + panel.maxRows + 3;
 }
 
+/** Width of the rebind prompt's capture box: a 40-glyph prompt (240). */
+const CAPTURE_W = 40 * GLYPH_W;
+
+/** Height of the rebind prompt's capture box: the prompt, the hint and the bar (48). */
+const CAPTURE_H = uiPx(48);
+
 /**
  * The rebind prompt's capture box (the prompt, the hint and the countdown bar), centred on the
  * frame (R1-01: at 72, 84 in the 384×216 frame).
  */
-const CAPTURE_PANEL = Object.freeze({ x: FRAME_CX - 120, y: FRAME_CY - 24, w: 240, h: 48 });
+const CAPTURE_PANEL = Object.freeze({
+  x: FRAME_CX - (CAPTURE_W >> 1),
+  y: FRAME_CY - (CAPTURE_H >> 1),
+  w: CAPTURE_W,
+  h: CAPTURE_H,
+});
+
+/** From the capture box's top to its prompt line (8). */
+const CAPTURE_PROMPT_DY = uiPx(8);
+
+/** From the capture box's top to its hint line (22). */
+const CAPTURE_HINT_DY = uiPx(22);
+
+/** Inset of the capture box's countdown bar from each side of the box (20). */
+const CAPTURE_BAR_INSET = uiPx(20);
+
+/** From the capture box's bottom up to its countdown bar (10). */
+const CAPTURE_BAR_DY = uiPx(10);
+
+/** Height of the capture box's countdown bar (3). */
+const CAPTURE_BAR_H = uiPx(3);
+
+/** From the rebind rows' bottom to the message line (4). */
+const REBIND_MESSAGE_DY = uiPx(4);
 
 /**
  * Draws a rebind widget: the context's rows ({@link drawMenu}) with each action's keys at the
@@ -1846,7 +1936,7 @@ export function drawRebindPanel(
   const messageSlot = keyBase + panel.maxRows;
   if (panel.message !== '') {
     list.setString(messageSlot, panel.message);
-    list.text(messageSlot, FRAME_CX, bottom + 4, UI_COLORS.focus, TextAlign.Center);
+    list.text(messageSlot, FRAME_CX, bottom + REBIND_MESSAGE_DY, UI_COLORS.focus, TextAlign.Center);
   }
   if (!panel.capturing) return;
   const p = CAPTURE_PANEL;
@@ -1857,12 +1947,15 @@ export function drawRebindPanel(
   drawPanel(list, x, y, w, h, UI_COLORS.panel, UI_COLORS.focus, 255);
   list.setString(messageSlot + 1, panel.prompt);
   list.setString(messageSlot + 2, hint);
-  list.text(messageSlot + 1, FRAME_CX, y + 8, UI_COLORS.focus, TextAlign.Center);
-  list.text(messageSlot + 2, FRAME_CX, y + 22, UI_COLORS.disabled, TextAlign.Center);
+  list.text(messageSlot + 1, FRAME_CX, y + CAPTURE_PROMPT_DY, UI_COLORS.focus, TextAlign.Center);
+  list.text(messageSlot + 2, FRAME_CX, y + CAPTURE_HINT_DY, UI_COLORS.disabled, TextAlign.Center);
   const left = REBIND_CAPTURE_TICKS - panel.captureTicks;
-  const bar = left > 0 ? Math.floor(((w - 40) * left) / REBIND_CAPTURE_TICKS) : 0;
-  list.rect(x + 20, y + h - 10, w - 40, 3, UI_COLORS.track);
-  if (bar > 0) list.rect(x + 20, y + h - 10, bar, 3, UI_COLORS.title);
+  const barW = w - 2 * CAPTURE_BAR_INSET;
+  const bar = left > 0 ? Math.floor((barW * left) / REBIND_CAPTURE_TICKS) : 0;
+  const barX = x + CAPTURE_BAR_INSET;
+  const barY = y + h - CAPTURE_BAR_DY;
+  list.rect(barX, barY, barW, CAPTURE_BAR_H, UI_COLORS.track);
+  if (bar > 0) list.rect(barX, barY, bar, CAPTURE_BAR_H, UI_COLORS.title);
 }
 
 // ------------------------------------------------------------------------------ HUD
@@ -1919,13 +2012,59 @@ export const HUD_COLORS = Object.freeze({
 // x derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the text
 // extents from the font's cell (GLYPH_W), and each run of labels and pips starts after the one
 // before it — so the HUD stays laid out when the frame or the font changes. The numbers in
-// parentheses are the values at 384×216 with the 6×8 font. The HUD art's own sizes (the 40-px
-// `hud/meter-slot` box, the 8-px life icons 10 px apart, the pips' sizes and steps, the rows inside
-// a bar) stay pixel literals: they are the art's, not the frame's (R4-03 redraws the HUD for 12-px
-// bars).
+// parentheses are the values at 384×216 with the 6×8 font and `ART_SCALE` 1. The HUD art's own
+// sizes (the 40-px `hud/meter-slot` box, the 8-px life icons 10 px apart, the pips' sizes and
+// steps, the rows inside a bar) and its gaps are uiPx lengths since R2-01: they follow the art's
+// scale (×1.5 from the flip, with the interim art and the 12-px bars), not the frame's (R4-03
+// redraws the HUD). One-pixel borders stay one pixel.
 
-/** Gap in pixels between a HUD label and the number or bar after it. */
-const HUD_LABEL_GAP = 4;
+/** Gap in pixels between a HUD label and the number or bar after it (4). */
+const HUD_LABEL_GAP = uiPx(4);
+
+/** A row of art inside a HUD bar (the stock icons, the pips, the boss bar's frame): its top (2). */
+const HUD_ROW_DY = uiPx(2);
+
+/** Height of a HUD pip, a stock icon's stand-in and the boss bar's frame (4). */
+const HUD_PIP_H = uiPx(4);
+
+/** Width of a HUD pip: the Direct-mode tier pips and the co-op shield pips (4). */
+const HUD_PIP_W = uiPx(4);
+
+/** Width of a co-op Direct-mode compact pip (3). */
+const HUD_COOP_PIP_W = uiPx(3);
+
+/** Width of a Force Field pip on the one-player bottom bar (5). */
+const HUD_SHIELD_PIP_W = uiPx(5);
+
+/** Pitch of the one-player Force Field pips (7). */
+const HUD_SHIELD_PIP_STEP = uiPx(7);
+
+/** Pitch of the co-op Force Field pips (5). */
+const HUD_COOP_SHIELD_PIP_STEP = uiPx(5);
+
+/** Direct mode: pitch of the `SHOT` / `SUB` level pips (5). */
+const HUD_LEVEL_PIP_STEP = uiPx(5);
+
+/** Direct mode: pitch of the `ARM` / `SPD` pips (6). */
+const HUD_TIER_PIP_STEP = uiPx(6);
+
+/** Co-op Direct mode: pitch of the compact pips (4). */
+const HUD_COOP_PIP_STEP = uiPx(4);
+
+/** Width of a stock icon (`hud/life`) — its stand-in rectangle's (8). */
+const HUD_STOCK_W = uiPx(8);
+
+/** Pitch of the stock icons (10); the co-op count follows its icon by the same. */
+const HUD_STOCK_STEP = uiPx(10);
+
+/** From the one stock icon to the count drawn after it when there are more than five (12). */
+const HUD_STOCK_COUNT_DX = uiPx(12);
+
+/** Height of a meter slot's stand-in box (one-player and co-op) without the UI sprites (6). */
+const HUD_SLOT_BOX_H = uiPx(6);
+
+/** From a meter slot's left edge to its `hud/meter-labels` frame, and down from the bar (2). */
+const HUD_SLOT_LABEL_D = uiPx(2);
 
 /** Digits of a top-bar score. */
 const HUD_DIGITS = 8;
@@ -1952,55 +2091,61 @@ const HUD_BOSS_BAR_DX = 4 * GLYPH_W + HUD_LABEL_GAP;
  * The boss HP bar's `BOSS` label x: the label, the gap and the bar centred 2 px right of the
  * frame's centre (148).
  */
-const HUD_BOSS_X = FRAME_CX - ((HUD_BOSS_BAR_DX + BOSS_HP_BAR_WIDTH) >> 1) + 2;
+const HUD_BOSS_X = FRAME_CX - ((HUD_BOSS_BAR_DX + BOSS_HP_BAR_WIDTH) >> 1) + uiPx(2);
 
 /** Direct mode (M2-05): from the `SHOT` label to its first pip — four glyph cells and 2 px (26). */
-const HUD_SHOT_PIPS_DX = 4 * GLYPH_W + 2;
+const HUD_SHOT_PIPS_DX = 4 * GLYPH_W + uiPx(2);
 
 /** Direct mode: from a three-glyph tier label (`SUB`, `ARM`, `SPD`) to its first pip (20). */
-const HUD_TIER_PIPS_DX = 3 * GLYPH_W + 2;
+const HUD_TIER_PIPS_DX = 3 * GLYPH_W + uiPx(2);
 
 /** Co-op Direct mode (M2-06): from a two-glyph label (`SH`, `SB`, `AR`, `SP`) to its pips (13). */
-const HUD_COOP_PIPS_DX = 2 * GLYPH_W + 1;
+const HUD_COOP_PIPS_DX = 2 * GLYPH_W + uiPx(1);
+
+/** Most stock icons drawn; more show one icon and the count. */
+const HUD_STOCK_ICONS = 5;
+
+/** The first stock icon's x (4). */
+const HUD_STOCK_X = uiPx(4);
 
 /**
- * The first meter slot x — after the five stock icons (58). Direct mode's `SHOT` label starts there
- * too.
+ * The first meter slot x — after the five stock icons and 4 px (58). Direct mode's `SHOT` label
+ * starts there too.
  */
-const HUD_METER_X = 58;
+const HUD_METER_X = HUD_STOCK_X + HUD_STOCK_ICONS * HUD_STOCK_STEP + uiPx(4);
 
 /** Direct mode: the `SUB` label x — after `SHOT`'s 8 pips 5 px apart and 6 px (130). */
-const HUD_SUB_X = HUD_METER_X + HUD_SHOT_PIPS_DX + 8 * 5 + 6;
+const HUD_SUB_X = HUD_METER_X + HUD_SHOT_PIPS_DX + 8 * HUD_LEVEL_PIP_STEP + uiPx(6);
 
 /** Direct mode: the `ARM` label x — after `SUB`'s 8 pips 5 px apart and 6 px (196). */
-const HUD_ARM_X = HUD_SUB_X + HUD_TIER_PIPS_DX + 8 * 5 + 6;
+const HUD_ARM_X = HUD_SUB_X + HUD_TIER_PIPS_DX + 8 * HUD_LEVEL_PIP_STEP + uiPx(6);
 
 /** Direct mode: the `SPD` label x — after `ARM`'s 5 pips 6 px apart and 6 px (252). */
-const HUD_SPEED_X = HUD_ARM_X + HUD_TIER_PIPS_DX + 5 * 6 + 6;
+const HUD_SPEED_X = HUD_ARM_X + HUD_TIER_PIPS_DX + 5 * HUD_TIER_PIP_STEP + uiPx(6);
 
 /** Direct mode: the main-shot family's label x — after `SPD`'s 5 pips 6 px apart and 4 px (306). */
-const HUD_FAMILY_X = HUD_SPEED_X + HUD_TIER_PIPS_DX + 5 * 6 + 4;
+const HUD_FAMILY_X = HUD_SPEED_X + HUD_TIER_PIPS_DX + 5 * HUD_TIER_PIP_STEP + uiPx(4);
 
-/** Co-op: the stock icon x in a half. */
-const HUD_COOP_STOCK_X = 2;
+/** Co-op: the stock icon x in a half (2). */
+const HUD_COOP_STOCK_X = uiPx(2);
 
 /**
  * Co-op: the first compact meter slot x in a half — after the stock icon, its count's digit (10 px
  * after the icon) and the gap (22). Co-op Direct mode's `SH` starts there too.
  */
-const HUD_COOP_METER_X = HUD_COOP_STOCK_X + 10 + GLYPH_W + HUD_LABEL_GAP;
+const HUD_COOP_METER_X = HUD_COOP_STOCK_X + HUD_STOCK_STEP + GLYPH_W + HUD_LABEL_GAP;
 
 /** Co-op: compact meter slot width — a two-glyph label and 4 px a side (20). */
-const HUD_COOP_SLOT_W = 2 * GLYPH_W + 8;
+const HUD_COOP_SLOT_W = 2 * GLYPH_W + uiPx(8);
 
 /** Co-op Direct mode: the `SB` label x — after `SH`'s 8 pips 4 px apart and 1 px (68). */
-const HUD_COOP_SUB_X = HUD_COOP_METER_X + HUD_COOP_PIPS_DX + 8 * 4 + 1;
+const HUD_COOP_SUB_X = HUD_COOP_METER_X + HUD_COOP_PIPS_DX + 8 * HUD_COOP_PIP_STEP + uiPx(1);
 
 /** Co-op Direct mode: the `AR` label x — after `SB`'s 8 pips 4 px apart and 1 px (114). */
-const HUD_COOP_ARM_X = HUD_COOP_SUB_X + HUD_COOP_PIPS_DX + 8 * 4 + 1;
+const HUD_COOP_ARM_X = HUD_COOP_SUB_X + HUD_COOP_PIPS_DX + 8 * HUD_COOP_PIP_STEP + uiPx(1);
 
 /** Co-op Direct mode: the `SP` label x — after `AR`'s 5 pips 4 px apart and 1 px (148). */
-const HUD_COOP_SPEED_X = HUD_COOP_ARM_X + HUD_COOP_PIPS_DX + 5 * 4 + 1;
+const HUD_COOP_SPEED_X = HUD_COOP_ARM_X + HUD_COOP_PIPS_DX + 5 * HUD_COOP_PIP_STEP + uiPx(1);
 
 /**
  * Pixel positions of the HUD in frame coordinates — derived from the frame and the font's metrics
@@ -2011,27 +2156,27 @@ export const HUD_LAYOUT = Object.freeze({
   topY: 0,
   /** Bottom bar row: the row under the playfield (`HUD_BOTTOM_Y`, 208). */
   bottomY: HUD_BOTTOM_Y,
-  /** `1P` label x; its score follows a two-glyph label and 4 px later (`+16`). */
-  p1X: 8,
+  /** `1P` label x (8); its score follows a two-glyph label and 4 px later (`+16`). */
+  p1X: uiPx(8),
   /** `HI` label x: the hi-score display centred 4 px left of the frame's centre (156). */
-  hiX: FRAME_CX - (HUD_HI_W >> 1) - 4,
+  hiX: FRAME_CX - (HUD_HI_W >> 1) - uiPx(4),
   /**
    * `2P` label x: room for the label, the gap and an 11-glyph `PRESS START` (the widest thing its
    * slot shows) 10 px from the right edge (292); its score (or dashes) follows at `+16`.
    */
-  p2X: FRAME_W - 10 - HUD_SCORE_DX - 11 * GLYPH_W,
+  p2X: FRAME_W - uiPx(10) - HUD_SCORE_DX - 11 * GLYPH_W,
   /** Score digits. */
   digits: HUD_DIGITS,
-  /** First stock icon x (icons are 10 px apart). */
-  stockX: 4,
+  /** First stock icon x (4; icons are 10 px apart). */
+  stockX: HUD_STOCK_X,
   /** Most stock icons drawn; more show one icon and the count. */
-  stockIcons: 5,
-  /** First meter slot x (slots are 40 px wide). */
+  stockIcons: HUD_STOCK_ICONS,
+  /** First meter slot x (58; slots are 40 px wide). */
   meterX: HUD_METER_X,
-  /** Meter slot width (the `hud/meter-slot` art's). */
-  slotW: 40,
+  /** Meter slot width (the `hud/meter-slot` art's — 40). */
+  slotW: uiPx(40),
   /** First Force Field pip x: 5 pips 7 px apart ending 7 px from the right edge (344). */
-  shieldX: FRAME_W - 40,
+  shieldX: FRAME_W - (5 * HUD_SHIELD_PIP_STEP + HUD_SHIELD_PIP_W),
   /** Direct mode (M2-05): `SHOT` label x; its pips (5 px apart) start 26 px later. */
   shotX: HUD_METER_X,
   /** Direct mode: `SUB` label x; its pips start 20 px later. */
@@ -2059,7 +2204,7 @@ export const HUD_LAYOUT = Object.freeze({
   /** Co-op: compact meter slot width (a box with the slot's two-letter label). */
   coopSlotW: HUD_COOP_SLOT_W,
   /** Co-op: the first shield pip x, after the seven slots and 2 px (164; pips are 5 px apart). */
-  coopShieldX: HUD_COOP_METER_X + METER_SLOT_COUNT * HUD_COOP_SLOT_W + 2,
+  coopShieldX: HUD_COOP_METER_X + METER_SLOT_COUNT * HUD_COOP_SLOT_W + uiPx(2),
   /** Co-op Direct mode: `SH` (shot) label x; its pips (4 px apart) start 13 px later. */
   coopShotX: HUD_COOP_METER_X,
   /** Co-op Direct mode: `SB` (sub-weapon) label x. */
@@ -2419,9 +2564,11 @@ export function buildHud(
     // The boss HP bar (M2-09) replaces the hi-score during a boss fight.
     list.setString(S.boss, text.hudBoss);
     list.text(S.boss, L.bossX, L.topY, HUD_COLORS.bossLabel);
-    list.rect(L.bossBarX, L.topY + 2, BOSS_HP_BAR_WIDTH, 4, HUD_COLORS.bossFrame);
+    list.rect(L.bossBarX, L.topY + HUD_ROW_DY, BOSS_HP_BAR_WIDTH, HUD_PIP_H, HUD_COLORS.bossFrame);
     const fill = bossHpBarFill(bar, BOSS_HP_BAR_WIDTH - 2);
-    if (fill > 0) list.rect(L.bossBarX + 1, L.topY + 3, fill, 2, HUD_COLORS.bossFill);
+    if (fill > 0) {
+      list.rect(L.bossBarX + 1, L.topY + HUD_ROW_DY + 1, fill, HUD_PIP_H - 2, HUD_COLORS.bossFill);
+    }
   } else {
     list.text(S.hi, L.hiX, L.topY, HUD_COLORS.hi);
     list.number(board.hiScore, L.hiX + HUD_SCORE_DX, L.topY, L.digits, HUD_COLORS.number);
@@ -2453,15 +2600,16 @@ export function buildHud(
 
   const ship = players[0];
   const stock = ship.lives - 1;
-  const iconY = L.bottomY + 2;
+  const iconY = L.bottomY + HUD_ROW_DY;
   if (stock > L.stockIcons) {
     if (sprites.life >= 0) list.sprite(sprites.life, 0, L.stockX, iconY);
-    else list.rect(L.stockX, iconY, 8, 4, HUD_COLORS.p1);
-    list.number(stock, L.stockX + 12, L.bottomY, 0, HUD_COLORS.number);
+    else list.rect(L.stockX, iconY, HUD_STOCK_W, HUD_PIP_H, HUD_COLORS.p1);
+    list.number(stock, L.stockX + HUD_STOCK_COUNT_DX, L.bottomY, 0, HUD_COLORS.number);
   } else {
     for (let i = 0; i < stock; i++) {
-      if (sprites.life >= 0) list.sprite(sprites.life, 0, L.stockX + i * 10, iconY);
-      else list.rect(L.stockX + i * 10, iconY, 8, 4, HUD_COLORS.p1);
+      const x = L.stockX + i * HUD_STOCK_STEP;
+      if (sprites.life >= 0) list.sprite(sprites.life, 0, x, iconY);
+      else list.rect(x, iconY, HUD_STOCK_W, HUD_PIP_H, HUD_COLORS.p1);
     }
   }
 
@@ -2485,7 +2633,7 @@ export function buildHud(
         x + 1,
         L.bottomY + 1,
         L.slotW - 2,
-        6,
+        HUD_SLOT_BOX_H,
         lit ? HUD_COLORS.slotLit : can ? HUD_COLORS.slotOn : HUD_COLORS.slotOff,
       );
     }
@@ -2493,8 +2641,8 @@ export function buildHud(
       list.sprite(
         sprites.meterLabels,
         meterLabelFrame(world, slot),
-        x + 2,
-        L.bottomY + 2,
+        x + HUD_SLOT_LABEL_D,
+        L.bottomY + HUD_SLOT_LABEL_D,
         0,
         can || lit ? HUD_COLORS.label : HUD_COLORS.labelDisabled,
       );
@@ -2505,10 +2653,10 @@ export function buildHud(
   if (shieldActive(shield)) {
     for (let i = 0; i < shield.maxHits && i < 5; i++) {
       list.rect(
-        L.shieldX + i * 7,
-        L.bottomY + 2,
-        5,
-        4,
+        L.shieldX + i * HUD_SHIELD_PIP_STEP,
+        L.bottomY + HUD_ROW_DY,
+        HUD_SHIELD_PIP_W,
+        HUD_PIP_H,
         i < shield.hits ? HUD_COLORS.shield : HUD_COLORS.shieldSpent,
       );
     }
@@ -2594,9 +2742,13 @@ function coopHalf(
   const ship = world.players[slot];
   const life = slot === 1 && sprites.lifeP2 >= 0 ? sprites.lifeP2 : sprites.life;
   const stock = ship.lives > 0 ? ship.lives - 1 : 0;
-  if (life >= 0) list.sprite(life, 0, ox + L.coopStockX, y + 2);
-  else list.rect(ox + L.coopStockX, y + 2, 8, 4, slot === 1 ? HUD_COLORS.p2 : HUD_COLORS.p1);
-  list.number(stock, ox + L.coopStockX + 10, y, 0, HUD_COLORS.number);
+  const iconX = ox + L.coopStockX;
+  if (life >= 0) list.sprite(life, 0, iconX, y + HUD_ROW_DY);
+  else {
+    const color = slot === 1 ? HUD_COLORS.p2 : HUD_COLORS.p1;
+    list.rect(iconX, y + HUD_ROW_DY, HUD_STOCK_W, HUD_PIP_H, color);
+  }
+  list.number(stock, iconX + HUD_STOCK_STEP, y, 0, HUD_COLORS.number);
   if (world.powerups.direct) {
     coopDirectPips(world, list, slot, ox, text);
     return;
@@ -2612,7 +2764,7 @@ function coopHalf(
       x + 1,
       y + 1,
       L.coopSlotW - 2,
-      6,
+      HUD_SLOT_BOX_H,
       lit ? HUD_COLORS.slotLit : can ? HUD_COLORS.slotOn : HUD_COLORS.slotOff,
     );
     const label = S.meterShort + m;
@@ -2630,10 +2782,10 @@ function coopHalf(
   if (shieldActive(shield)) {
     for (let i = 0; i < shield.maxHits && i < 5; i++) {
       list.rect(
-        ox + L.coopShieldX + i * 5,
-        y + 2,
-        4,
-        4,
+        ox + L.coopShieldX + i * HUD_COOP_SHIELD_PIP_STEP,
+        y + HUD_ROW_DY,
+        HUD_PIP_W,
+        HUD_PIP_H,
         i < shield.hits ? HUD_COLORS.shield : HUD_COLORS.shieldSpent,
       );
     }
@@ -2662,7 +2814,8 @@ function clearDirty(world: World): void {
  * @param lit - Lit pips (the first ones).
  * @param on - Lit colour.
  * @param off - Unlit colour.
- * @param width - Pip width (default 4; the co-op HUD's compact pips are 3).
+ * @param width - Pip width (default `HUD_PIP_W`, 4; the co-op HUD's compact pips are
+ *   `HUD_COOP_PIP_W`, 3).
  */
 function drawPips(
   list: DrawList,
@@ -2672,10 +2825,10 @@ function drawPips(
   lit: number,
   on: number,
   off: number,
-  width = 4,
+  width = HUD_PIP_W,
 ): void {
-  const y = HUD_LAYOUT.bottomY + 2;
-  for (let i = 0; i < count; i++) list.rect(x + i * step, y, width, 4, i < lit ? on : off);
+  const y = HUD_LAYOUT.bottomY + HUD_ROW_DY;
+  for (let i = 0; i < count; i++) list.rect(x + i * step, y, width, HUD_PIP_H, i < lit ? on : off);
 }
 
 /**
@@ -2715,25 +2868,27 @@ function buildDirectPips(world: World, list: DrawList, text: UiText): void {
   list.text(S.shot, L.shotX, y, HUD_COLORS.pipLabel);
   const shotTop = directMaxLevel(family);
   const color = HUD_FAMILY_COLORS[index % HUD_FAMILY_COLORS.length] ?? HUD_COLORS.label;
-  drawPips(list, L.shotX + HUD_SHOT_PIPS_DX, 5, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
+  const step = HUD_LEVEL_PIP_STEP;
+  drawPips(list, L.shotX + HUD_SHOT_PIPS_DX, step, shotTop, loadout.shot, color, HUD_COLORS.pipOff);
   list.text(S.sub, L.subX, y, HUD_COLORS.pipLabel);
   const subTop = directMaxLevel(world.weapons.subFamily);
   const subPipsX = L.subX + HUD_TIER_PIPS_DX;
-  drawPips(list, subPipsX, 5, subTop, loadout.sub, HUD_COLORS.subPip, HUD_COLORS.pipOff);
+  drawPips(list, subPipsX, step, subTop, loadout.sub, HUD_COLORS.subPip, HUD_COLORS.pipOff);
   list.text(S.arm, L.armX, y, HUD_COLORS.pipLabel);
   const shield = ship.shield;
   if (shieldActive(shield) && shield.kind === ShieldKind.Arm && shield.tier >= 1) {
     const tier = shield.tier > HUD_ARM_COLORS.length ? HUD_ARM_COLORS.length : shield.tier;
     const max = shield.maxHits > 5 ? 5 : shield.maxHits;
     const on = HUD_ARM_COLORS[tier - 1];
-    drawPips(list, L.armX + HUD_TIER_PIPS_DX, 6, max, shield.hits, on, HUD_COLORS.pipOff);
+    const armPipsX = L.armX + HUD_TIER_PIPS_DX;
+    drawPips(list, armPipsX, HUD_TIER_PIP_STEP, max, shield.hits, on, HUD_COLORS.pipOff);
   }
   list.text(S.speed, L.speedX, y, HUD_COLORS.pipLabel);
   const speeds = world.ship.speeds.length > 5 ? 5 : world.ship.speeds.length;
   drawPips(
     list,
     L.speedX + HUD_TIER_PIPS_DX,
-    6,
+    HUD_TIER_PIP_STEP,
     speeds,
     ship.speedLevel + 1,
     HUD_COLORS.speedPip,
@@ -2780,24 +2935,24 @@ function coopDirectPips(
   drawPips(
     list,
     ox + L.coopShotX + HUD_COOP_PIPS_DX,
-    4,
+    HUD_COOP_PIP_STEP,
     shotTop,
     loadout.shot,
     color,
     HUD_COLORS.pipOff,
-    3,
+    HUD_COOP_PIP_W,
   );
   list.text(S.shortSub, ox + L.coopSubX, y, HUD_COLORS.pipLabel);
   const subTop = directMaxLevel(world.weapons.subFamily);
   drawPips(
     list,
     ox + L.coopSubX + HUD_COOP_PIPS_DX,
-    4,
+    HUD_COOP_PIP_STEP,
     subTop,
     loadout.sub,
     HUD_COLORS.subPip,
     HUD_COLORS.pipOff,
-    3,
+    HUD_COOP_PIP_W,
   );
   list.text(S.shortArm, ox + L.coopArmX, y, HUD_COLORS.pipLabel);
   const shield = ship.shield;
@@ -2808,12 +2963,12 @@ function coopDirectPips(
     drawPips(
       list,
       ox + L.coopArmX + HUD_COOP_PIPS_DX,
-      4,
+      HUD_COOP_PIP_STEP,
       max,
       shield.hits,
       on,
       HUD_COLORS.pipOff,
-      3,
+      HUD_COOP_PIP_W,
     );
   }
   list.text(S.shortSpeed, ox + L.coopSpeedX, y, HUD_COLORS.pipLabel);
@@ -2822,12 +2977,12 @@ function coopDirectPips(
   drawPips(
     list,
     ox + L.coopSpeedX + HUD_COOP_PIPS_DX,
-    4,
+    HUD_COOP_PIP_STEP,
     speeds,
     lit,
     HUD_COLORS.speedPip,
     HUD_COLORS.pipOff,
-    3,
+    HUD_COOP_PIP_W,
   );
 }
 
