@@ -6,10 +6,22 @@
  * rebinding is applied at boot. The Tizen build opened from disk rebinds the remote's POWER-UP to
  * CH- with the remote's keys only and keeps it across a relaunch. Web and TV read the flow through
  * the test build's debug API (`window.__shmupDebug.game`).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: paced in frames, the
+ * web test's ~40 taps and pauses (~500 frames) outlasted its 180 s on a runner drawing about 3
+ * frames a second (2 CPUs, C5 review 3's repro), where a frame runs up to 4 ticks.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS, INPUT_TEST_EXIT_TICKS, SCENE_SLACK_TICKS, expectScene } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  INPUT_TEST_EXIT_TICKS,
+  SCENE_SLACK_TICKS,
+  expectScene,
+  remoteTap,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -22,41 +34,6 @@ const TIZEN_INDEX = pathToFileURL(
 /** Bits of the core's `Action` the tests read. */
 const SHOT = 1 << 4;
 const POWER_UP = 1 << 6;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames, then lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
 
 /**
  * Sends a remote key by key code (the TV remote's CH− = 428), down or up.
@@ -74,19 +51,6 @@ function remoteKey(page: Page, type: 'keydown' | 'keyup', keyCode: number): Prom
     },
     [type, keyCode] as const,
   );
-}
-
-/**
- * Taps a remote key by key code.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  await remoteKey(page, 'keydown', keyCode);
-  await waitFrames(page, 3);
-  await remoteKey(page, 'keyup', keyCode);
-  await waitFrames(page, 6);
 }
 
 /** The scene flow's state the tests read, through the debug API. */
@@ -163,16 +127,16 @@ async function openControls(page: Page): Promise<void> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu
   for (let i = 0; i < 3; i++) await tap(page, 'ArrowDown'); // 2 PLAYERS, PRACTICE, OPTIONS
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-  await waitFrames(page, 4);
+  await waitTicks(page, 4);
   for (let i = 0; i < 3; i++) await tap(page, 'ArrowDown'); // MUSIC, SFX, CONTROLS
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'controls');
-  await waitFrames(page, 4);
+  await waitTicks(page, 4);
 }
 
 /**
@@ -184,10 +148,10 @@ async function openControls(page: Page): Promise<void> {
  */
 async function litWhileHeld(page: Page, key: string): Promise<number> {
   await page.keyboard.down(key);
-  await waitFrames(page, 4);
+  await waitTicks(page, 4);
   const lit = (await probe(page)).lit;
   await page.keyboard.up(key);
-  await waitFrames(page, 20); // the press flash goes out
+  await waitTicks(page, 20); // the press flash goes out
   return lit;
 }
 
@@ -206,14 +170,14 @@ test.describe('rebinding (web build)', () => {
     for (let i = 0; i < 5; i++) await tap(page, 'ArrowDown');
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'rebind');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     for (let i = 0; i < 5; i++) await tap(page, 'ArrowDown'); // MODE, UP … RIGHT → SHOT
     await tap(page, 'Enter');
     await expect.poll(async () => (await probe(page)).rebind.capturing).toBe(true);
     await tap(page, 'KeyJ');
     await expect.poll(async () => (await probe(page)).rebind.message).toBe('SHOT REBOUND');
     expect((await probe(page)).rebind.capturing).toBe(false);
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Escape'); // Back: DONE
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'controls');
     await expect
@@ -221,7 +185,7 @@ test.describe('rebinding (web build)', () => {
       .toEqual({ 'keyboard-default': { game: { Shot: ['code:KeyJ'] } } });
 
     // The input test (the gameplay table): J shoots, Z no longer does.
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     for (let i = 0; i < 2; i++) await tap(page, 'ArrowDown'); // REBIND PAD, INPUT TEST
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'inputTest');
@@ -256,13 +220,13 @@ test.describe('rebinding (Tizen build from file://)', () => {
     for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown');
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'rebind');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     for (let i = 0; i < 7; i++) await tap(page, 'ArrowDown'); // MODE, UP … SUB → POWER-UP
     await tap(page, 'Enter');
     await expect.poll(async () => (await probe(page)).rebind.capturing).toBe(true);
     await remoteTap(page, 428); // CH−: Speed's only key — the two swap
     await expect.poll(async () => (await probe(page)).rebind.message).toBe('SWAPPED WITH SPEED');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await remoteTap(page, 10009); // Back: DONE (the remote's Back never moves)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'controls');
     await expect
@@ -275,7 +239,7 @@ test.describe('rebinding (Tizen build from file://)', () => {
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'inputTest');
     await remoteKey(page, 'keydown', 428);
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     expect((await probe(page)).lit & POWER_UP).toBe(POWER_UP);
     await remoteKey(page, 'keyup', 428);
     expect(errors).toEqual([]);
