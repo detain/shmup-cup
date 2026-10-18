@@ -56,8 +56,10 @@ over).
   through a call V8 does not inline is boxed. Run your modules' allocation guards at K = 1 **and** under the kit;
   never raise a budget; never move a measured loop into a helper.
 - **Side lanes (7, 8) are independent of R2-02** and touch none of its files. They never edit the bullet e2e specs
-  (`bullet-palette`, `bullets`, `weapons`, `boss`) except V1's measured re-point listed in its report; they never
-  change a fingerprint, a golden, `atlas-groups.json`, the strings or `content/`.
+  (`bullet-palette`, `bullets`, `weapons`, `boss`) except V1's measured re-point (listed in V1's Files and its
+  report); they never change a fingerprint, a golden, `atlas-groups.json`, the strings or `content/`.
+- **Pushes:** every builder and fixer of this wave pushes its own task to `master` (Common rule 5), after its kit
+  proof; review agents never push. This wave has no zone lane (local branch) and no patch-only subtask.
 - **Same-file order inside this wave:** `packages/render-pixi/src/index.ts` (the barrel) is lane 8's (`R3-04.M3a`);
   `R2-02.T4a` must not export anything new from it. `test/scripts/assets/interim-pipeline.test.ts` is `R3-03.V1`'s
   only. `packages/core/src/data/index.ts` is `R2-02.W5`'s only.
@@ -81,8 +83,11 @@ over).
      `docs/v2-run/helpers/w5/defaults-all.txt` (the v1 values at `2c865b6`).
   2. Edit each default with an exact old/new string; leave `ticks`, `angle`, `count`, `ratio`, `score`, `index`,
      `seed`, `switch` units alone.
-  3. **Leave the 15 kit lines alone** (they are `screen-x` / `screen-y` literals the kit flips: `:568-569`, `:703`,
-     `:1031`, `:1613`, `:1749-1752`, `:2021-2024`, `:3158-3159`).
+  3. **Leave the 14 kit lines and the `meetX: 176` token alone** — they are the literals the kit flips (`screen-x` /
+     `screen-y`, plus `orbiter.loop` `y`, a `world-y` the kit writes as 186): `:568-569`, `:1031`, `:1613`,
+     `:1749-1752`, `:2021-2024`, `:3158-3159`, and `meetX: 176` on `:703`. **On `:703`** (`{ speed: 1.5, meetX: 176,
+     gap: 8, leaveSpeed: 1.75 },`) scale `speed` and `leaveSpeed` (`px-per-tick`) and `gap` (`rel-px`) like every
+     other default, and keep the text `meetX: 176` byte for byte (the kit's replacement matches that token only).
 - **Tests (targeted, run all of them, at K = 1 and under the kit):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
@@ -90,7 +95,8 @@ over).
   bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
   ```
 - **Acceptance:** the wave's R2-02 acceptance; the 14 `behaviors-*-alloc` guards green at both scales, no budget
-  raised; `node docs/v2-run/helpers/w5/defaults.mjs` prints the same values as before at K = 1.
+  raised; `node docs/v2-run/helpers/w5/defaults.mjs` prints the same values as before at K = 1; the kit still applies
+  all 15 replacements (`bash test/port-v2/two-scale.sh -- true` exits 0).
 - **Token:** BEHAVIOR (`behaviors/index.ts`, `behaviors/units.ts`) for lane 1 through `R2-02.W7`.
 - **Traps:** 3,337 lines — exact edits only, never a rewrite; a fractional default (1.25 → `1.25 * WORLD_SCALE`) is a
   plain number field, fine; a guard that fails under the kit because a fraction now crosses a non-inlined call is
@@ -100,7 +106,7 @@ over).
 ### R2-02.W7 — Boss behaviour defaults in `WORLD_SCALE` terms
 
 - **Wave / lane / order:** wave 2, lane 1, after `R2-02.W6` (same file, same lane).
-- **Depends on:** `R2-02.W6` committed in the lane (pushed or not).
+- **Depends on:** `R2-02.W6` on master (each agent pushes its own task; W7 starts from a worktree that has W6).
 - **Goal:** as W6, for the boss behaviours.
 - **Files (only these):**
   - `packages/core/src/behaviors/index.ts` — the boss behaviours (from about `:1224` to `DEFAULT_BOSS_BEHAVIOR_DEFS`
@@ -113,7 +119,7 @@ over).
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/frame-literals.test.ts packages/core/test/bosses
   ```
-- **Acceptance:** as W6; the core allow-list still holds **14** entries.
+- **Acceptance:** as W6 (the kit still applies all 15 replacements); the core allow-list still holds **14** entries.
 - **Token:** BEHAVIOR.
 - **Traps:** the 15 kit lines include `boss.widow` (`:2021-2024`) and `boss.walker` (`:3158-3159`): leave them.
 - **Docs needs:** as W6.
@@ -411,7 +417,9 @@ over).
     exact 90° turn of k; rim < body < core; every `@<palette>` variant frame for frame; `buildAtlas({ artScale: 1 })`
     unchanged;
   - `test/scripts/assets/interim-pipeline.test.ts` — only the `NATIVE` expectation (`:196-201`): add the bullets, the
-    bend nodes and their `@<palette>` variants.
+    bend nodes and their `@<palette>` variants;
+  - `test/e2e/bullet-palette.spec.ts`, `test/e2e/bullets.spec.ts`, `test/e2e/boss.spec.ts`, `test/e2e/weapons.spec.ts`
+    — only a colour count the new art moves (measured, never guessed), each one listed in the report.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/bullets-v2.test.ts test/scripts/assets/interim-pipeline.test.ts test/scripts/assets/procedural.test.ts test/scripts/assets/palettes-names.test.ts test/scripts/assets/pipeline-edge.test.ts test/integration/content.test.ts test/integration/cjk-budget.test.ts
@@ -529,7 +537,9 @@ over).
 - **Acceptance:** both specs green; the new spec joins e2e batch C (README).
 - **Token:** none. **e2e:** this lane is one of the wave's two e2e agents.
 - **Traps:** `atlas-residency.spec.ts:396` is gated on `R2_03_PENDING` (`GOLDEN_REASON`); keep that skip (R2-03.G1
-  deletes it in wave 6, and rebases on your extension); `WEBGL_lose_context` is for e2e only.
+  deletes it in wave 6, and rebases on your extension); `WEBGL_lose_context` is for e2e only. `R2-02.E0` (wave 3)
+  never edits `atlas-residency.spec.ts`: if E0's report hands you a test of it that fails under the kit, gate it with
+  `test.skip(PORT_UNMEASURED, PORT_REASON)` (from `./gates.js`) in your push, and say so in your report.
 
 ### R3-04.M3e — The lazy policy, images released, becomes the hosts' default
 
@@ -559,7 +569,8 @@ over).
   empty; the three fingerprints unedited and green; every changed value is a world value by its unit (spot-check 10
   against `docs/v2-run/helpers/w5/defaults-all.txt` / `literals.txt`); no angle, tick or count scaled; frame anchors
   written `PLAYFIELD_W + v * WORLD_SCALE`; the subtask's tests green at K = 1 **and** under the kit (the reviewer re-runs
-  them); allocation guards green, no budget raised.
+  them); allocation guards green, no budget raised; after W6 and W7, the kit still matches all 15 flip replacements
+  (`bash test/port-v2/two-scale.sh -- true` exits 0; `meetX: 176` still in `behaviors/index.ts` byte for byte).
 
 ### R2-02.RV-A2 — The failure lists under the kit
 
@@ -582,10 +593,12 @@ over).
 
 ### R3-03.V1.RV — Review of the native v2 bullets
 
-- **Must hold:** `node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*` at `artScale: 1`
-  (the scale-1 build) unchanged against the parent commit; sizes and frame counts as V1 says; frame k+4 is the exact
-  90° turn of k; every `@<palette>` frame for frame; no edit of the v1 path or of `procedural.test.ts`'s bullets block;
-  generators deterministic (two runs identical).
+- **Must hold:** the scale-1 build is unchanged: the digest pin `interim-pipeline.test.ts:341-357` (`fa4198…`) is
+  green **and unedited** by V1 (`node scripts/generate-assets.mjs` has no art-scale flag — it builds
+  `INTERIM_ART_SCALE` 3/2, which V1 changes on purpose — so a `sha256sum assets/generated/atlas/*` before / after
+  comparison is not the check here; that one is only for the byte-neutral side lanes); sizes and frame counts as V1 says; frame k+4 is the exact 90° turn of k; every
+  `@<palette>` frame for frame; no edit of the v1 path or of `procedural.test.ts`'s bullets block; every e2e count V1
+  changed is listed in its report with its measurement; generators deterministic (two runs identical).
 
 ### R3-03.V3.RV — Review of the palette-cycle scan
 

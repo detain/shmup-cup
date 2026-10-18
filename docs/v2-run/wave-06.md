@@ -6,11 +6,19 @@
 **Steps:** R2-03 (E1–E4, I1, I2 folded, I3, G1, G2, V, the step review), R5's prep that is cheapest now: `R5-P.P1`
 (the world hash ignores content order) and `R5-P.P8` (boss-part capacity) — their re-bless is G1's — and the first
 test splits `R5-P.P2a`, `P2b`, `P6`, `P5c`, `P9`.
-**Gate to start:** wave 5's code exit — U1–U5 on master, `R2-02.RV` at zero (wave 5's docs agents may still run).
-**Exit (summary):** `git grep -n "R2_03_PENDING\|PORT_UNMEASURED\|GOLDENS_STALE\|goldenIsStale\|gates.js\|stale.js"`
-is empty; the 62 goldens and 10 demos re-blessed in one commit with the reason; R1-04's 12-px-terrain browser check
-passes; `pnpm docs:images --check` and `pnpm store:assets --check` green; P1's "content order does not move a hash"
-test green; the step review and the docs review at zero; §17 R2-03 → `done`; the board synced.
+**Gate to start:** wave 5's code exit — U1–U5, R, B, EF and every spawned Z on master; `R2-02.RV`, `R3-03.RV` and
+`R3-04.RV` at zero (so no R3-03 / R3-04 subtask carries over into this wave); wave 5's docs agents may still run.
+**Exit (summary):** the gate grep (G1's last test command) prints nothing; the 62 goldens and 10 demos re-blessed in
+one commit with the reason; R1-04's 12-px-terrain browser check passes; `pnpm docs:images --check` and
+`pnpm store:assets --check` green; P1's "content order does not move a hash" test green; the step review and the docs
+review at zero; §17 R2-03 → `done` on master; then the orchestrator syncs the board.
+
+**The gate grep** (used by G1, `R2-03.RV` and the exit; limited to code, so the render bench's own
+`./render-harness/gates.js` and the Markdown files never match):
+
+```bash
+git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensStale|'\./gates\.js'|stale\.js'" -- packages apps test scripts ':!*.md'
+```
 
 ## At a glance
 
@@ -19,17 +27,23 @@ test green; the step review and the docs review at zero; §17 R2-03 → `done`; 
 | 1 | `R2-03.E1 → R2-03.E2` | the zone specs, then stage / mode7 / raster / gimmicks / campaign-run specs | — | pass 1 |
 | 2 | `R2-03.E3 → R2-03.E4` | boss / advanced-bosses / render-groups / debug-tools, then the sprite and colour specs | — | pass 2 |
 | 3 | `R2-03.I1` | `scripts/doc-images.mjs`, `docs/images/**` (not `screens/`) | DOCS-IMAGES | no |
-| 4 | `R5-P.P1 → R5-P.P8` | `packages/core/src/{debug,data,pools,bosses}/…`, core tests | DATA-INDEX, FINGERPRINTS (P1, at push) | no |
+| 4 | `R5-P.P1 → R5-P.P8` | `packages/core/src/{debug,data,pools,bosses}/…`, core tests | DATA-INDEX, CORE-CONFIG (P1, only for a barrel export), FINGERPRINTS (P1, at push) | no |
 | 5 | `R5-P.P2a → R5-P.P2b → R5-P.P6` | `content.test.ts` split, `test/integration/zones/*` (new), `release-audit.test.ts`, the `content:check` script | CONTENT-TEST | no |
-| 6 | `R5-P.P5c → R5-P.P9` | `test/scripts/assets/procedural-zones*` split; four generators + `common.mjs`, the repo allow-list | — | no |
-| 7 | `R2-03.G1` (after E1–E4, P1, P8 on master) | all goldens and demos, the gates' deletion | GOLDEN, FINGERPRINTS, land lock for the whole commit | after E1–E4 |
+| 6 | `R5-P.P5c → R5-P.P9` | `test/scripts/assets/procedural-zones*` split; four generators + `common.mjs`, the repo allow-list | — (rule 6: the repo allow-list is P9's) | no |
+| 7 | `R2-03.G1` (after E1–E4, P1, P8 and `R3-04.M3d` on master) | all goldens and demos, the gates' deletion | GOLDEN, FINGERPRINTS, land lock for the whole commit | after E1–E4 |
 | 8 | `R2-03.I3` (after lanes 1–2 end) → `R2-03.G2` (optional) → `R2-03.V` | `docs/images/screens/*`; the presentation fingerprint (G2) | DOCS-IMAGES; FINGERPRINTS (G2) | I3 under the lock; V |
 
 - `R2-03.I2` is folded into `R2-03.V` by decision RR-3 (the store icons stay on the v1 art until R4-05.E5).
-- **Reviews:** slot 1 reviews E1–E4, I1, I3 and G1 as they land, then runs `R2-03.RV`. Slot 2 reviews P1 and P8 —
-  with a **second, determinism-focused** reviewer for P1 (`R5-P.P1.RV-D`) — then P2a … P9, then the docs.
+- **Slots:** 8 builders in all, **wave 5's docs agents included** (README step 1). While `W05.DOCS-A` … `F` run,
+  lanes 1, 2 and 4 (G1's prerequisites) take the free builder slots first, in that order; lanes 3, 5 and 6 take the
+  slots the docs agents free; lanes 7 and 8 start when their Depends hold. Never more than 8 builders.
+- **Reviews:** `W05.DOCS-RV` (wave 5's docs review) uses review slot 2 before this wave's slot-2 reviews. Slot 1
+  reviews E1–E4, I1, I3, G1 and G2 (if it runs) as they land, then runs `R2-03.RV`. Slot 2 reviews P1 and P8 — with
+  a **second, determinism-focused** reviewer for P1 (`R5-P.P1.RV-D`) — then P2a … P9, then the docs.
 - **Docs item:** `W06.DOCS-A` … `W06.DOCS-D`, after `R2-03.RV` is at zero.
-- **e2e passes:** two — lanes 1 and 2. When both end, lane 7 (G1) and lane 8 (I3, V) take them.
+- **e2e passes:** two — lanes 1 and 2. When both end, lane 7 (G1) and lane 8 (I3, V) take them. P8's stress bench
+  and I3's `pnpm docs:screens` run under the e2e lock; a bench file or `docs:screens` under the lock does not count
+  toward the two e2e agents (the lock already runs it alone).
 
 ## Rules for this wave
 
@@ -51,19 +65,26 @@ test green; the step review and the docs review at zero; §17 R2-03 → `done`; 
    names before and after, the atlas bytes identical, no golden or fingerprint moved (P9's atlas digest unchanged).
 6. **The repo allow-list** (`test/integration/frame-literals-repo.test.ts`) is P9's in this wave. I1 must not add an
    entry: derive a value from `scripts/frame.mjs` instead, or report.
+7. **Pushes:** every builder, docs agent and fixer of this wave pushes its own task to `master` (Common rule 5); G1
+   pushes its one commit under the land lock. Review agents never push. This wave has no zone lane (local branch) and
+   no patch-only subtask.
 
-## The e2e gate inventory on `bc8e05d` (what E1–E4 and G1 remove)
+## The e2e gate inventory on `c67c7c9` (what E1–E4 and G1 remove)
 
-| Gate | Where (spec:line on `bc8e05d`) | Removed by |
+Lines move whenever a spec changes: before you rely on one, list today's with
+`git grep -n "test.skip(\|assertionsGated(" test/e2e/`. `c67c7c9` moved three of them (campaign-run `:316` → `:372`,
+debug-tools `:200` → `:228`, raster `:254` → `:255`).
+
+| Gate | Where (spec:line on `c67c7c9`) | Removed by |
 |---|---|---|
 | `test.skip(PORT_UNMEASURED, PORT_REASON)` | `zone-a:108`; `zones-bc:234, :263, :283, :300`; `zones-de:315, :353`; `zones-fg:312, :351, :385`; `zones-hi:411, :441, :507, :529` | E1 |
 | `test.skip(R2_03_PENDING, CONTENT_REASON)` | `zones-de:275` (MAGMA DEEP lava rows); `zones-hi:468` (the endings' sun rows) | E1 |
-| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `stage:113` (test-range's 1 px/tick camera); `mode7:484, :768` (dimension's horizon / floor rows); `raster:223, :254` (raster-range's rows and camera range); `campaign-run:316` (bonus-range's digit window) | E2 |
+| `test.skip(PORT_UNMEASURED, PORT_REASON)` | `stage:113` (test-range's 1 px/tick camera); `mode7:484, :768` (dimension's horizon / floor rows); `raster:223, :255` (raster-range's rows; "runs the heat haze only inside its camera range"); `campaign-run:372` (bonus-range's digit window, "?stage=bonus-range: the digit entrance …") | E2 |
 | `test.skip(R2_03_PENDING, CONTENT_REASON)` | `gimmicks:76, :100` (brick pillar columns and counts) | E2 |
 | `test.skip(PORT_UNMEASURED, PORT_REASON)` | `advanced-bosses:258, :358, :382` (raid, captain, twins) | E3 |
 | `assertionsGated(…, R2_03_PENDING, …, CONTENT_REASON)` | `boss:133` (the hull check; TRIAL WARDEN at v1's screen x 300); `render-groups:217` (the HUD control) | E3 |
-| `assertionsGated(…, PORT_UNMEASURED, …, PORT_REASON)` | `debug-tools:200` (F7 / F8 camera x = zone A's checkpoint / WARNING x) | E3 |
-| E0's gates (wave 3) | listed in `RUN_DIR/R2-02.E0-report.md`; likely bullets, bullet-palette, enemies, weapons, direct-items, option-hunter, raster `:182/:279/:297`, stage `:144`, coop-gamepad | E4 (or the lane that owns the spec) |
+| `assertionsGated(…, PORT_UNMEASURED, …, PORT_REASON)` | `debug-tools:228` (F7 / F8 camera x = zone A's checkpoint / WARNING x, in "web build: F4 freezes, F5 steps one tick, …") | E3 |
+| E0's gates (wave 3) | listed in `RUN_DIR/R2-02.E0-report.md`; likely bullets, bullet-palette, enemies, weapons, direct-items, option-hunter, raster `:182` / `:280` / `:299`, stage `:144`, coop-gamepad | E4 (or the lane that owns the spec) |
 | `test.skip(R2_03_PENDING, GOLDEN_REASON)` | `attract:183, :298`; `atlas-residency:396` | G1 |
 | `test.skip(recordingIsStale(doc), GOLDEN_REASON)` | `determinism:116` (per recording) | G1 |
 | inverse tests `test.skip(!R2_03_PENDING, …)` | `attract:235` (the web loop without demos), `attract:276` (Tizen: OK leaves the hi-scores) — **deleted** | G1 |
@@ -102,15 +123,17 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Goal:** as E1 for these specs, plus **R1-04's deferred browser check**: a stage with 12-px terrain renders.
 - **Files (only these):** `test/e2e/stage.spec.ts`, `test/e2e/mode7.spec.ts`, `test/e2e/raster.spec.ts`,
   `test/e2e/gimmicks.spec.ts`, `test/e2e/campaign-run.spec.ts`.
-- **Steps:** remove the gates of the inventory (stage `:113`, mode7 `:484 :768`, raster `:223 :254`, gimmicks `:76
-  :100`, campaign-run `:316`) and re-measure; add to `stage.spec.ts` a test that a tile edge of the ported terrain is
+- **Steps:** remove the gates of the inventory (on `c67c7c9`: stage `:113`, mode7 `:484 :768`, raster `:223 :255`,
+  gimmicks `:76 :100`, campaign-run `:372`) and every E0 gate in these five files, and re-measure; in `raster.spec.ts`
+  also rewrite the content-row comment `:237-239` and its `diffRows` literals from the ported bands; add to `stage.spec.ts` a test that a tile edge of the ported terrain is
   `TILE_SIZE` frame pixels = **24 screenshot pixels at ×2** (sample through `frame-pixels.ts`).
 - **Tests:** `bash docs/v2-run/helpers/e2e-batch.sh stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts
   campaign-run.spec.ts`, twice (the second under `taskset -c 0-3`, `E2E_WORKERS=2`).
 - **Acceptance:** as E1; the new 12-px check passes.
 - **Token:** none.
-- **Traps:** `campaign-run:241` / `:355` were CI-only failures before (wave 0 triaged them): keep their fixes;
-  mode7's block test runs on its own 1920×1080 viewport (`BLIT_DISPLAY`), keep it.
+- **Traps:** the campaign-run web test `:298` ("A → B → D → F → H: …") and its Tizen test `:411` were CI-only
+  failures that `c67c7c9` fixed (waits count game ticks): keep those fixes, never go back to frame or wall-time
+  waits; mode7's block test runs on its own 1920×1080 viewport (`BLIT_DISPLAY`), keep it.
 
 ### R2-03.E3 — Re-measure bosses, the HUD control and the debug camera
 
@@ -118,14 +141,15 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Depends on:** wave 5's exit.
 - **Files (only these):** `test/e2e/boss.spec.ts`, `test/e2e/advanced-bosses.spec.ts`, `test/e2e/render-groups.spec.ts`,
   `test/e2e/debug-tools.spec.ts`.
-- **Steps:** remove the gates (advanced-bosses `:258 :358 :382`; the assertion gates `boss:133`, `render-groups:217`,
-  `debug-tools:200`); re-measure: TRIAL WARDEN's ported `boss.x`, zone A's ported checkpoint and WARNING x for F7 /
+- **Steps:** remove the gates (on `c67c7c9`: advanced-bosses `:258 :358 :382`; the assertion gates `boss:133`,
+  `render-groups:217`, `debug-tools:228`) and every E0 gate in these four files; re-measure: TRIAL WARDEN's ported `boss.x`, zone A's ported checkpoint and WARNING x for F7 /
   F8 (read them from `content/stages/zone-a.stage.json`, not literals), the HUD control's pixels under the 12-px bars.
 - **Tests:** `bash docs/v2-run/helpers/e2e-batch.sh boss.spec.ts advanced-bosses.spec.ts render-groups.spec.ts
   debug-tools.spec.ts`, twice (second under `taskset -c 0-3`, `E2E_WORKERS=2`).
 - **Acceptance:** as E1; no `assertionsGated` left in these files.
 - **Token:** none.
-- **Traps:** `debug-tools:233` (Tizen frame advance) was a CI-only failure triaged in wave 0: keep its fix.
+- **Traps:** `debug-tools:261` ("Tizen build via file://: after the unlock, 4 freezes and each 5 runs one tick") was a
+  CI-only failure that `c67c7c9` fixed (the unlock sent in one `page.evaluate`): keep its fix.
 
 ### R2-03.E4 — Sprites, colour counts and every gate E0 added
 
@@ -140,8 +164,11 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   every `@<palette>` colour the specs read.
 - **Tests:** `bash docs/v2-run/helpers/e2e-batch.sh` with those 10 specs (one batch), twice (second under
   `taskset -c 0-3`, `E2E_WORKERS=2`); a second batch for any extra spec.
-- **Acceptance:** 0 `PORT_UNMEASURED` / `R2_03_PENDING` gates left outside G1's three specs:
-  `git grep -n "PORT_UNMEASURED\|CONTENT_REASON\|PORT_REASON\|assertionsGated" test/e2e/*.spec.ts` is empty.
+- **Acceptance:** in your files, `git grep -n "PORT_UNMEASURED\|CONTENT_REASON\|PORT_REASON\|assertionsGated" --
+  <your spec files>` is empty. Once E1, E2 and E3 are also on master, the same grep over every spec
+  (`git grep -n "PORT_UNMEASURED\|CONTENT_REASON\|PORT_REASON\|assertionsGated" -- 'test/e2e/*.spec.ts'`) is empty:
+  no `PORT_UNMEASURED` / `R2_03_PENDING` content gate is left outside G1's three specs (check it before your push
+  if E1–E3 are on master; otherwise say in your report which lanes were still open).
 - **Token:** none.
 
 ### R2-03.I1 — Doc images on the default art scale, the banner included
@@ -192,8 +219,9 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 
 ### R2-03.G1 — The one re-bless: goldens, demos, and the gates deleted
 
-- **Wave / lane / order:** wave 06, lane 7, after E1–E4, `R5-P.P1` and `R5-P.P8` are on master.
-- **Depends on:** `R2-03.E1`, `E2`, `E3`, `E4`, `R5-P.P1`, `R5-P.P8` on master.
+- **Wave / lane / order:** wave 06, lane 7, after E1–E4, `R5-P.P1`, `R5-P.P8` and `R3-04.M3d` are on master.
+- **Depends on:** `R2-03.E1`, `E2`, `E3`, `E4`, `R5-P.P1`, `R5-P.P8` on master; `R3-04.M3d` on master (it extends
+  `atlas-residency.spec.ts`, which G1 edits; the wave's gate already requires `R3-04.RV` at zero).
 - **Goal:** re-record every golden replay and attract demo at 640×360 on the ported content, and delete everything
   that existed only because they were stale — in **one** commit.
 - **Files (only these):**
@@ -237,10 +265,11 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   pnpm typecheck:root && pnpm --filter @shmup/shell typecheck
   bash docs/v2-run/helpers/e2e-batch.sh attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts
   E2E_PROJECT=firefox bash docs/v2-run/helpers/e2e-batch.sh determinism.spec.ts
-  git grep -n "R2_03_PENDING\|PORT_UNMEASURED\|GOLDENS_STALE\|goldenIsStale\|gates.js\|stale.js"
+  git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensStale|'\./gates\.js'|stale\.js'" -- packages apps test scripts ':!*.md'
   ```
-- **Acceptance:** the last grep prints nothing; every golden and demo replays with all hashes equal; Firefox's
-  determinism spec plays them; the commit message says why.
+- **Acceptance:** the last grep (the gate grep, limited to code) prints nothing — it never needs a docs edit and never
+  touches the render bench's `./render-harness/gates.js` imports; every golden and demo replays with all hashes
+  equal; Firefox's determinism spec plays them; the commit message says why.
 - **Token:** GOLDEN, FINGERPRINTS (content-DB), the land lock for the whole commit.
 - **Traps:** never edit a replay file by hand (Prettier skips them; they are generated); never re-bless twice to
   "fix" a desync — a desync after the re-bless is a nondeterminism bug: stop and report. `test/golden/v1-baseline*`
@@ -312,7 +341,8 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Acceptance:** the dummy-content test green; zero allocation in `hashWorld` (guard green, warm-up ≥ 20,000, new
   indices per window); the presentation and shell frame fingerprints **unchanged** (P1 changes no drawn output); the
   content-DB fingerprint re-pinned for the new fields only; the goldens are re-blessed by G1, not here.
-- **Token:** DATA-INDEX (lane 4), FINGERPRINTS (content-DB; land lock at push).
+- **Token:** DATA-INDEX (lane 4), CORE-CONFIG (only if you add a barrel export to `packages/core/src/index.ts`),
+  FINGERPRINTS (content-DB; land lock at push).
 - **Traps:** determinism — FNV-1a with `Math.imul` and `>>> 0` (allowed), no `**`, no `Math.pow`; keys are computed
   once at load, never per tick; the per-tick lookup is a typed-array read by index. A hash change is expected (every
   golden is stale until G1 anyway); a **lockstep** test failing (two worlds, same input, different hash) is a bug.
@@ -326,10 +356,12 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Depends on:** `R5-P.P1` pushed.
 - **Goal:** room for the R5 bosses: `MAX_BOSS_PARTS` 16 → **24** (decision R5-D5). `MAX_ENEMIES` 64 and
   `PARTICLE_CAPACITY` 256 stay (R5-D5: raise them only if a zone design peaks above 80 %).
-- **Files (only these):** `packages/core/src/data/index.ts` (`:955`); `packages/core/src/bosses/index.ts` (the slot
-  arrays derive from it: `BOSS_PART_SLOTS` `:219`, `global = owner * MAX_BOSS_PARTS + index` `:547`; change code only
-  if something assumes 16); the bosses' allocation guards and tests under `packages/core/test/bosses/` only if a pin
-  names 16.
+- **Files (only these):** `packages/core/src/data/index.ts` (`MAX_BOSS_PARTS`, `:955` on `bc8e05d` — P1 may move it:
+  find it with `grep -n "export const MAX_BOSS_PARTS"`); `packages/core/src/bosses/index.ts` (the slot arrays derive
+  from it: `BOSS_PART_SLOTS` `:219`, `global = owner * MAX_BOSS_PARTS + index` `:547`; change code only if something
+  assumes 16); `packages/core/test/data/bosses-data.test.ts` (`:73` pins
+  `expect([MAX_BOSS_PARTS, MAX_BOSS_PHASES]).toEqual([16, 8])` → `[24, 8]`); the bosses' allocation guards and tests
+  under `packages/core/test/bosses/` only if a pin names 16 (`bosses.test.ts:342` names 16 only in a comment).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/bosses packages/core/test/enemies \
@@ -352,7 +384,8 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Depends on:** wave 5's exit (`R2-02.U2` un-gated `content.test.ts`).
 - **Goal:** the zone blocks of `content.test.ts` move into one file per zone, so the R5 zone lanes never share a test
   file. **The first commit** generalises the speed-literal scan.
-- **Files (only these):**
+- **Files (only these; lines on `bc8e05d`, unchanged on `c67c7c9` — `R2-02.T2a` and `U2` move them, so find each zone
+  block by `stageOf('zone-x')` and each `describe` by its title):**
   - `test/integration/content.test.ts` — commit 1: the DSL speed scan (`:1763-1769`, today
     `shippedFiles.find((file) => file.path === 'patterns/zones.patterns.json')`) reads **every**
     `content/patterns/*.patterns.json` (so `R5-P.P4`'s split in wave 9 cannot blind it); commit 2: move zone A's block
@@ -366,6 +399,7 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   - `test/integration/content-wiring.test.ts` — its `content:check` case (`:51-58`) also expects the zone files.
 - **Tests:**
   ```bash
+  export RUN_DIR="${RUN_DIR:-/home/sites/shmup-cup-run}"
   pnpm exec vitest list --project integration test/integration/content.test.ts > "$RUN_DIR/p2a-before.txt"   # before any edit
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-wiring.test.ts
@@ -384,8 +418,9 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 
 - **Wave / lane / order:** wave 06, lane 5, after `R5-P.P2a`.
 - **Depends on:** `R5-P.P2a` pushed.
-- **Files (only these):** `test/integration/content.test.ts` (zones E ≈ `:1517`, F ≈ `:1591`, G ≈ `:1653` from the
-  B–G block, and the H / I block `:1884`); `test/integration/zones/helpers.ts`; `test/integration/content-zone-e.test.ts`
+- **Files (only these):** `test/integration/content.test.ts` (on `bc8e05d`: zones E ≈ `:1517`, F ≈ `:1591`, G ≈ `:1653`
+  from the B–G block, and the H / I block `:1884` — after P2a they have moved: find them by `stageOf('zone-x')` and the
+  `describe` title); `test/integration/zones/helpers.ts`; `test/integration/content-zone-e.test.ts`
   … `content-zone-i.test.ts` (new).
 - **Tests / acceptance / token / traps:** as P2a (names and count equal; `pnpm content:check` green). The generic part
   (validation, audio, sprites, the shared tables) stays in `content.test.ts`.
@@ -398,15 +433,16 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   budgets) would fail a 20–22 k-px zone. Each zone gets a contract file whose flag picks v1 bounds (`false`, today) or
   v2 bounds (`true`, set by the zone's own R5 lane).
 - **Files (only these):** `test/integration/zones/zone-a.contract.ts` … `zone-i.contract.ts` (new, 9; each exports
-  `{ remastered: false, … }`); `test/integration/zones/helpers.ts`; `test/integration/content-zone-*.test.ts` (read the
-  contract); `test/integration/release-audit.test.ts` (`CAPSULE_BUDGET` `:57`, `DIRECT_ITEM_BUDGET` `:60` read from the
-  zone's contract).
+  `{ remastered: false, … }`); `test/integration/zones/helpers.ts`; `test/integration/zones/contract.test.ts` (new:
+  the unit test that feeds a fake 21,000-px stage to the v2 branch); `test/integration/content-zone-*.test.ts` (read
+  the contract); `test/integration/release-audit.test.ts` (`CAPSULE_BUDGET` `:57`, `DIRECT_ITEM_BUDGET` `:60` read
+  from the zone's contract).
 - **The v2 bounds (decision R5-D2):** length 20,000–22,000 px; scroll to the WARNING 3.75–5.25 min; the bot's
   god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite; 18–48 capsules before the WARNING;
   ≥ 3 capsules in every 1,350-px window after a checkpoint; `directItems` ≥ 30; ≤ 2 blue capsules.
 - **Tests:** `pnpm content:check`; `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
-  test/integration/release-audit.test.ts test/integration/zones`; a unit test that feeds a fake 21,000-px stage to the
-  v2 branch.
+  test/integration/release-audit.test.ts test/integration/zones/` (the trailing `/` matters: without it the filter
+  also runs every `test/integration/zones-*` runtime test).
 - **Acceptance:** every zone `remastered: false` and green on the ported content; the v2 branch tested; names of the
   existing tests unchanged.
 - **Token:** CONTENT-TEST.
@@ -445,7 +481,8 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
   ```
 - **Acceptance:** the atlas bytes identical at the default scale and the scale-1 digest pin unchanged; the allow-list
   has three fewer entries (32 → 29).
-- **Token:** the repo allow-list (lane 6 holds it this wave).
+- **Token:** none by name — wave rule 6 makes P9 this wave's only editor of
+  `test/integration/frame-literals-repo.test.ts` (the repo allow-list).
 - **Traps:** the allow-list matches by symbol and count: the new entry's symbol is the constant's name in
   `common.mjs`, count 1. Nothing else in the generators changes.
 - **Docs needs:** `conventions.md` (the repo allow-list count).
@@ -464,8 +501,8 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 
 - **Wave / lane / order:** wave 06, review slot 1, after `R2-03.V`. Fix → **new** review → … until zero.
 - **Must hold:** G1 is one commit holding exactly the 62 + 10 replay files, the gate deletions and the content-DB
-  re-pin; its message gives the reasons; `git grep -n "R2_03_PENDING\|PORT_UNMEASURED\|GOLDENS_STALE\|goldenIsStale\|gates.js\|stale.js"`
-  empty; every spec re-measured samples through `frame-pixels.ts`; R1-04's 12-px terrain check exists and passes;
+  re-pin; its message gives the reasons; the gate grep (top of this file, limited to code) empty; every spec
+  re-measured samples through `frame-pixels.ts`; R1-04's 12-px terrain check exists and passes;
   `docs:images --check` and `store:assets --check` green; the 18 screens look right (Read 4); no timeout raised without
   a comment and a measured reason.
 
@@ -474,11 +511,16 @@ when the slowness is real (C5 did so for `render-groups:246/:315`), never as a b
 - **Wave / lane / order:** wave 06, review slot 2, after W06.DOCS-A … D. Loop to zero.
 - **Must hold:** every docs need of this wave's reports is written or deferred with a reason; no doc still says the
   goldens are stale or quotes 384×216 as today's frame (the zones docs, `render-performance-review.md`,
-  `preview-build.md`, `bestiary.md`); D19 / D20 marked superseded by R-D1 / R-D3 where quoted; the board synced.
+  `preview-build.md`, `bestiary.md`); D19 / D20 marked superseded by R-D1 / R-D3 where quoted; the §17 R2-03 row
+  changed on master (the board sync is the orchestrator's, after this review — not checked here).
 
 ## Docs item
 
-Inputs: this wave's reports in `RUN_DIR` ("docs needs") and `git log` of the wave.
+Every block **depends on** `R2-03.RV` at zero and `W05.DOCS-RV` at zero (README step 1). Inputs: this wave's reports
+in `RUN_DIR` (`RUN_DIR/<id>-report.md`, "docs needs") and `git log` of the wave. Every block's acceptance also
+includes: each docs need of those reports that names one of your files is written, or listed in your report with its
+reason. Docs agents push their own docs commit to `master` and never run `python3 .claude/plan_board_v2.py` (the
+orchestrator does, from the main checkout, after `W06.DOCS-A`'s §17 push).
 
 ### W06.DOCS-A — The plan and the changelog (holds PLAN)
 
@@ -487,24 +529,35 @@ Inputs: this wave's reports in `RUN_DIR` ("docs needs") and `git log` of the wav
   docs images and screens, I2 folded by RR-3); **the CJK decision**: the M3-03 figures stay at `artScale: 1` and
   `test/integration/cjk-budget.test.ts` is R3-04's; `R5-P.P1` / `P8` / `P2a` / `P2b` / `P6` / `P5c` / `P9` as built
   under §11's R5 notes; §1's register: R5-D2, R5-D5, R5-D9, RR-3 (texts in [`decisions.md`](decisions.md)); §17
-  R2-03 → `done`; CHANGELOG entries; then `python3 .claude/plan_board_v2.py`.
+  R2-03 → `done`; CHANGELOG entries; then push, and say in your report that §17 changed (the orchestrator runs the
+  board sync).
+- **Acceptance:** `grep -n "^| R2-03 |" plan_resolution.md` shows `done`; the §1 rows exist (spot-check:
+  `grep -n "^| \*\*R5-D9\*\* |\|^| \*\*RR-3\*\* |" plan_resolution.md` prints two rows).
 
 ### W06.DOCS-B — Replays, performance, conventions, layout
 
 - **Files (only these):** `docs/dev/render-performance-review.md`, `docs/dev/debug-and-replays.md`,
   `test/golden/README.md`, `content/demos/README.md`, `docs/dev/conventions.md`, `docs/dev/repo-layout.md`,
-  `test/README.md`.
+  `test/README.md`, `CLAUDE.md`.
 - **Write:** the goldens and demos at 640×360 and the gates gone; stable hash keys (what `hashWorld` mixes now, and
   why a content change no longer moves every golden); the per-zone content tests and contracts (`content-zone-*`,
   `test/integration/zones/`); the repo allow-list count after P9 (29); the split generator tests; 384×216 quotes in
-  `render-performance-review.md` updated.
+  `render-performance-review.md` updated; `CLAUDE.md`: the Commands line `pnpm content:check` now runs
+  `content.test.ts` and the `content-zone-*` files (`R5-P.P2a`), and the self-expiring gates bullet loses
+  `GOLDENS_STALE` and the e2e gates (deleted by G1).
+- **Acceptance:** every hit of `grep -n "GOLDENS_STALE\|R2_03_PENDING\|PORT_UNMEASURED\|stale\.ts\|gates\.ts" CLAUDE.md docs/dev/debug-and-replays.md test/golden/README.md content/demos/README.md`
+  describes history only; `grep -n "content-zone" CLAUDE.md docs/dev/conventions.md test/README.md` finds the split;
+  the repo allow-list count in `conventions.md` matches `test/integration/frame-literals-repo.test.ts`' `ALLOWED`.
 
 ### W06.DOCS-C — The zone docs
 
 - **Files (only these):** `docs/dev/zones-b-and-c.md`, `docs/dev/zones-d-and-e.md`, `docs/dev/zones-f-and-g.md`,
-  `docs/dev/zones-h-and-i.md`.
+  `docs/dev/zones-h-and-i.md`, `docs/dev/zone-a-and-playtest.md`.
 - **Write:** their world numbers ×1.5 as ported (lengths, positions, speeds; from the ported content, not by
-  multiplying the doc's numbers); D19 / D20 marked superseded.
+  multiplying the doc's numbers); D19 / D20 marked superseded; in `zone-a-and-playtest.md` also the v2 zone contract
+  bounds (decision R5-D2) and the per-zone `remastered` flag (`R5-P.P6`).
+- **Acceptance:** spot-check 5 world numbers per file against the ported content (`git grep` in `content/`): each
+  matches; `grep -n "remastered" docs/dev/zone-a-and-playtest.md` finds the flag and the v2 bounds.
 
 ### W06.DOCS-D — Client docs, READMEs, bosses, API
 
@@ -512,18 +565,22 @@ Inputs: this wave's reports in `RUN_DIR` ("docs needs") and `git log` of the wav
   `README.md`, `docs/README.md`, `docs/dev/advanced-bosses.md`, `docs/dev/api-reference.md`.
 - **Write:** 384×216 quotes → 640×360 where they describe today's game; the new images; `MAX_BOSS_PARTS` 24; the
   new `ContentDb` key fields.
+- **Acceptance:** every hit of `grep -n "384×216" README.md docs/README.md docs/client/preview-build.md docs/client/bestiary.md docs/client/controls.md`
+  describes v1 or is marked superseded; `grep -n "MAX_BOSS_PARTS" docs/dev/api-reference.md docs/dev/advanced-bosses.md`
+  gives 24.
 
 ## Exit check
 
 1. On `origin/master` in a fresh worktree:
    ```bash
-   git grep -n "R2_03_PENDING\|PORT_UNMEASURED\|GOLDENS_STALE\|goldenIsStale\|gates.js\|stale.js"   # empty
+   git grep -nE "R2_03_PENDING|PORT_UNMEASURED|GOLDENS_STALE|goldenIsStale|GoldensStale|'\./gates\.js'|stale\.js'" -- packages apps test scripts ':!*.md'   # empty
    pnpm content:check && pnpm docs:images --check && pnpm store:assets --check
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-db-fingerprint.test.ts \
      test/integration/presentation-fingerprint.test.ts test/integration/frame-literals-repo.test.ts
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/debug
    ```
-2. `R2-03.RV`, `R5-P.P1.RV-D` and `W06.DOCS-RV` at zero findings; §17 R2-03 `done`; the board synced.
+2. `R2-03.RV`, `R5-P.P1.RV-D` and `W06.DOCS-RV` at zero findings; §17 R2-03 `done` on `origin/master`; then the
+   orchestrator (only the orchestrator) runs `python3 .claude/plan_board_v2.py` from the main checkout.
 3. Deferred to wave 15: R2-03's full definition-of-done suite (`pnpm test`, `pnpm test:e2e` incl. Firefox, the whole
    `pnpm bench`). A CI look at the close at most.
 

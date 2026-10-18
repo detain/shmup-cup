@@ -8,9 +8,10 @@
 review), R3-03 (V4c, the step review), R3-04 (the step review), and the wave's docs for R2-02, R3-03 and R3-04.
 **Gate to start:** wave 4's exit — the port commit `feat(R2-02): port all content ×1.5 …` on `origin/master`.
 **Exit (summary):** U1–U5, R, B, EF and every spawned Z on master; the R2-02, R3-03 and R3-04 step reviews at zero
-findings; `git grep -n port-pending` lists only docblock mentions in `test/golden/stale.ts` and `test/e2e/gates.ts`
-(R2-03 deletes both files); the docs review at zero; §17 R2-02, R3-03, R3-04 → `done` (owner parts pending where
-the step has some); the board synced.
+findings; `git grep -n port-pending -- packages apps test scripts` lists only docblock mentions in
+`test/golden/stale.ts` and `test/e2e/gates.ts` (R2-03 deletes both files); the docs review at zero; §17 R2-02,
+R3-03, R3-04 → `done` (owner parts pending where the step has some) on master; then the orchestrator syncs the board.
+The **code exit** (what wave 6's gate needs) is everything above except the docs.
 
 ## At a glance
 
@@ -26,11 +27,17 @@ the step has some); the board synced.
 | 8 | `R2-02.Z-*` — spawned only for a red zone (Z-A, Z-BC, Z-DE, Z-FG, Z-HI, Z-X) | that zone's content and tests | FINGERPRINTS (at push) | maybe (pass 2) |
 | side | carry-overs from wave 4: any of `R3-03.V2a, V2b, V4a, V4b, V5`, `R3-04.M1a … M4b`, `R3-03.V3`, `R3-04.M3a … M3e` still open | their blocks in [`wave-04.md`](wave-04.md) / [`wave-02.md`](wave-02.md) | as there | as there |
 
+- **Slots:** 8 builders. Lanes 1–6 start at once. Lane 7 (U5) waits for U1–U4, so **the side lane takes lane 7's
+  slot until U1–U4 are on master**; then U5 takes the next free slot. Z agents (lane 8) start as red lists arrive,
+  one at a time in lane 8; a second Z runs only in a slot another lane has freed — never more than 8 builders.
 - **Reviews:** slot 1 reviews U1–U5, R and each Z as they push, then runs `R2-02.RV` (the step review). Slot 2 runs
   `R3-03.RV` and `R3-04.RV` once their last subtasks are on master, then reviews the docs (`W05.DOCS-RV`).
 - **Docs item:** `W05.DOCS-A` … `W05.DOCS-F`, six docs agents with disjoint files, **after** the three step reviews
   are at zero. Wave 6 may start once this wave's code exit passes; these docs agents then count against wave 6's cap.
-- **e2e passes:** two. Pass 1: lane 6 (B's bench files, then EF's batches). Pass 2: a Z agent, or an M3 carry-over.
+- **e2e passes:** two. Pass 1: lane 6 (B's bench files, then EF's batches). Pass 2: one at a time, a Z agent, an M3
+  carry-over, or `R3-04.RV`'s batch (a review agent's e2e batch counts as pass 2 too). B's bench files run under the
+  e2e lock; a bench file or `pnpm docs:screens` under the lock does not count toward the two e2e agents (the lock
+  already runs it alone).
 
 ## Rules for this wave
 
@@ -47,8 +54,12 @@ the step has some); the board synced.
    `itPortPending(name, fn, t?)` → `it(name, fn, t?)`, `describe.skipIf(CONTENT_PORT_PENDING)` / `it.skipIf(…)` →
    plain `describe` / `it`; delete the import of `port-pending.js` when nothing else of it is used. A test that
    fails once un-gated is a real failure: report it (it is a Z item or a T item missed in wave 3), never re-gate it.
-5. Expected skips once U1–U5 are on master: **280** = 239 `GOLDENS_STALE` + 41 frame `runIf`s, and **0**
-   `CONTENT_PORT_PENDING`.
+5. Expected skips once U1–U5 are on master: **286** = 239 `GOLDENS_STALE` + 41 frame `runIf`s + the 6 cases
+   `R2-02.T4b` retired with `runIf(content still v1)` (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2; if T4b's
+   report gives another number, use T4b's), and **0** `CONTENT_PORT_PENDING`.
+6. **Pushes:** every builder and fixer of this wave pushes its own task to `master` (Common rule 5); review agents
+   never push. This wave has no zone lane (the Z agents are fix subtasks that push to master, not R5's zone lanes)
+   and no patch-only subtask.
 
 ## Subtasks
 
@@ -156,8 +167,8 @@ the step has some); the board synced.
     --config test/bench/vitest.config.ts test/bench/stress.perf.ts test/bench/zones.perf.ts test/bench/render.perf.ts
   ```
   **Not** `test/bench/soak.perf.ts` and not the whole `pnpm bench`: wave 15 runs them.
-- **Acceptance:** every gate green, or each red gate reported with its numbers. Compare with wave 4's C5 numbers on
-  `e7ff5db`: stress median 0.138 ms/tick, zones medians 0.479–0.524 ms/tick, render worst case p95 5.7 ms with 9 draw
+- **Acceptance:** every gate green, or each red gate reported with its numbers. Compare with the C5 numbers of the
+  old run's wave 4 (R2-01's lanes, not this run's port wave) on `e7ff5db`: stress median 0.138 ms/tick, zones medians 0.479–0.524 ms/tick, render worst case p95 5.7 ms with 9 draw
   calls (a shared, noisy host).
 - **Token:** none.
 - **Traps:** **never raise a budget**; a red gate is a finding for the orchestrator.
@@ -201,10 +212,11 @@ the step has some); the board synced.
     test/integration/e2e-gates.test.ts test/playtest/four-way-bot.test.ts test/playtest/harness.test.ts test/scripts/content
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/helpers packages/core/test/frame-literals.test.ts
   pnpm --filter @shmup/core typecheck && pnpm typecheck:root
-  git grep -n port-pending
+  git grep -n port-pending -- packages apps test scripts
   ```
-- **Acceptance:** `git grep -n port-pending` lists only docblock mentions in `test/golden/stale.ts` (`:26`) and
-  `test/e2e/gates.ts` (`:24`, `:39`, `:132`) — R2-03.G1 deletes both files; all green.
+- **Acceptance:** `git grep -n port-pending -- packages apps test scripts` lists only docblock mentions in
+  `test/golden/stale.ts` (`:26`) and `test/e2e/gates.ts` (`:24`, `:39`, `:132`) — R2-03.G1 deletes both files; all
+  green. (Markdown files are out of the grep on purpose: docs mention `port-pending` and are not yours.)
 - **Token:** CORE-CONFIG (one comment).
 - **Traps:** `test/e2e/gates.ts` keeps its own `contentPorted()`; do not edit it (it is a spec helper R2-03 deletes).
   The playtests are slow (minutes of simulation per zone): run only the two playtest unit files listed.
@@ -212,7 +224,10 @@ the step has some); the board synced.
 ### R2-02.Z-A — Residual fixes: zone A (spawn only if red)
 
 - **Wave / lane / order:** wave 05, lane 8, only when S's, U3–U5's or EF's report names a red zone-A test.
-- **Depends on:** the port commit on master; the red list in those reports.
+- **Depends on:** the port commit on master; the red list in those reports. **Every Z:** a Z whose files include a
+  file of `R2-02.U3` (`test/integration/zones-de-runtime.test.ts`, `zones-de-runtime-edge.test.ts`,
+  `zones-fg-runtime.test.ts`, `zones-fg-runtime-edge.test.ts`, `zones-fg-direct.test.ts`,
+  `zones-hi-runtime-edge.test.ts`) starts only after `R2-02.U3` is on master.
 - **Goal:** fix what the port left wrong in zone A's content or its zone-owned tests, so the bot clears it and the
   v2-port comparison holds.
 - **Files (only these):** `content/stages/zone-a.stage.json`, `content/enemies/zone-a.enemies.json`,
@@ -247,8 +262,8 @@ the step has some); the board synced.
 - **As `R2-02.Z-A`**, for zones D and E. **Files:** `content/stages/zone-d.stage.json`, `zone-e.stage.json`;
   `content/enemies/zone-d.enemies.json`, `zone-e.enemies.json`; `content/paths/zone-d.paths.json`, `zone-e.paths.json`;
   `test/playtest/zone-d.test.ts`, `zone-e.test.ts`, `zone-de-recovery.test.ts`; `test/integration/zones-de-runtime.test.ts`,
-  `zones-de-runtime-edge.test.ts`, `zones-de-direct.test.ts`. Known: zone D's `camera.y` pins (the dive's `yTo` is ×1.5
-  + pad, O2) are T2b's / T2c's — check they landed.
+  `zones-de-runtime-edge.test.ts`, `zones-de-direct.test.ts`. Known: zone D's `camera.y` pins (the dive's `yTo` is
+  `rel-px`: ×1.5, no pad, O2 — 200 → 300) are T2b's / T2c's — check they landed.
 
 ### R2-02.Z-FG — Residual fixes: zones F and G (spawn only if red; zone F is a known item)
 
@@ -295,12 +310,15 @@ the step has some); the board synced.
   - the bot clears every zone, bonus stage and the boss rush in god mode
     (`VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest`);
   - `test/golden/v2-port*.test.ts` green; every exemption carries its reason;
-  - all 66 allocation guards green with no budget raised
+  - every allocation guard the `find` lists green with no budget raised (66 on `bc8e05d`, plus any new one such as
+    `R3-04.M3b`'s `residency-lazy-alloc`)
     (`VITEST_MAX_WORKERS=6 pnpm exec vitest run $(find packages apps test -name '*alloc*.test.ts' -not -path '*/node_modules/*')`);
   - `world-scale.test.ts` classifies every numeric barrel export; `behavior-defaults-port.test.ts` covers every tunable
     of `BEHAVIOR_PARAM_UNITS`;
-  - skips: 280 (239 `GOLDENS_STALE` + 41 frame `runIf`), 0 `CONTENT_PORT_PENDING`;
-  - `git grep -n port-pending` as U5's acceptance; no API newer than Chromium 68; zero allocation per tick / frame.
+  - skips: 286 (239 `GOLDENS_STALE` + 41 frame `runIf` + T4b's 6 retired cases, or T4b's reported number), 0
+    `CONTENT_PORT_PENDING`;
+  - `git grep -n port-pending -- packages apps test scripts` as U5's acceptance; no API newer than Chromium 68; zero
+    allocation per tick / frame.
 - **Must not have changed:** R2-03's work (no re-bless, no demo re-record, no `docs:images` / `docs:screens` /
   `store:assets` regeneration, no e2e re-measurement); R2-04's (shake, popup and particle-look speeds, the CRT look,
   spawn-lead retuning); `assets/source/atlas-groups.json`.
@@ -312,7 +330,7 @@ the step has some); the board synced.
 - **Must hold:** `buildAtlas({ artScale: 1 })` unchanged (the scale-1 digest pin of `interim-pipeline.test.ts:341-357`
   green, unedited); V2a left `buildAtlas()` byte-identical (`ATLAS-SHA` at the commit before and after); bullets and
   bends native at 3/2 at the bible's sizes (round 11, oval 13 ×8, needle 17 ×8, bend 11), beams still `k + 1` rows;
-  every `@<palette>` variant frame for frame (`content.test.ts:852`); the cycle scan passes on the shipped atlas and
+  every `@<palette>` variant frame for frame (`content.test.ts:863`); the cycle scan passes on the shipped atlas and
   fails on its stray-pixel fixture; `INGEST` byte-identical with old fixtures unchanged; `node scripts/art-origins.mjs
   --check` 0 failures (438 procedural); `stage-terrain.test.ts` imports `terrain-checks.ts` with the same tests.
 - **Re-run:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets
@@ -323,7 +341,8 @@ the step has some); the board synced.
 ### R3-04.RV — The R3-04 step review
 
 - **Wave / lane / order:** wave 05, review slot 2, once M1a–M4b (M1c optional) and M3a–M3e are on master. Loop to
-  zero.
+  zero. Its e2e batch (the last command below) is the wave's e2e pass 2 while it runs: no Z or M3 e2e at the same
+  time.
 - **Must hold:** the stand-in deterministic; budgets in bytes with derivations in docblocks (`DIST_BUDGET`, the atlas
   caps, `TEXTURE_BUDGET_BYTES`); the lazy policy holds the sim (a replay across a zone change hashes equal with and
   without the hold); debug frame advance still steps (`freezeSim` / `stepTo`); the context-loss e2e and the residency
@@ -348,13 +367,18 @@ the step has some); the board synced.
 - **Must hold:** every docs need in the reports of this wave's builders (`RUN_DIR/<id>-report.md`) and of wave 2–4's
   R2-02 / R3-03 / R3-04 subtasks is either written or listed as deferred with its reason; no doc quotes a number the
   code does not have (spot-check 10: `WORLD_SCALE`, `WORLD_TOP_PAD`, `SPAWN_LEAD` 664, `DIST_BUDGET`, the 4-way rules,
-  `BOT_X`); tables readable; links resolve; `python3 .claude/plan_board_v2.py` ran after the §17 edit.
+  `BOT_X`); tables readable; links resolve; the §17 rows of R2-02, R3-03 and R3-04 changed on master (the board sync
+  is the orchestrator's, after this review — not checked here).
 
 ## Docs item
 
-All six run after `R2-02.RV`, `R3-03.RV` and `R3-04.RV` are at zero. Inputs for every one: the builders' reports in
-`RUN_DIR` ("docs needs"), [`wave5-scout.md`](wave5-scout.md) §9, and `git log` of the three steps. Each edits only its
-files; markdown is not formatted by Prettier, so keep tables readable by hand.
+All six run after `R2-02.RV`, `R3-03.RV` and `R3-04.RV` are at zero (that is each block's **Depends on**). Inputs
+for every one: the builders' reports in `RUN_DIR` (`RUN_DIR/<id>-report.md`, "docs needs"; waves 2–5),
+[`wave5-scout.md`](wave5-scout.md) §9, and `git log` of the three steps. Each edits only its files; markdown is not
+formatted by Prettier, so keep tables readable by hand. Every block's acceptance also includes: each docs need of
+those reports that names one of your files is written, or listed in your report with its reason. Docs agents push
+their own docs commit to `master` and never run `python3 .claude/plan_board_v2.py` (the orchestrator does, from the
+main checkout, after `W05.DOCS-A`'s §17 push).
 
 ### W05.DOCS-A — The plan and the changelog (holds PLAN)
 
@@ -371,25 +395,41 @@ files; markdown is not formatted by Prettier, so keep tables readable by hand.
     (W5-3);
   - §17: R2-02, R3-03, R3-04 → `done` (owner parts pending where they have some: R3-04's M7 bench run);
   - `CHANGELOG.md` `[Unreleased] — v2`: one entry per step;
-  - then `python3 .claude/plan_board_v2.py`.
-- **Never:** §17 cells of other steps; any other file.
+  - then push, and say in your report that §17 changed (the orchestrator runs the board sync).
+- **Acceptance:** `grep -n "^| R2-02 |\|^| R3-03 |\|^| R3-04 |" plan_resolution.md` shows the new statuses; the §1
+  rows exist (spot-check: `grep -n "^| \*\*W5-1\*\* |\|^| \*\*R2-N1\*\* |\|^| \*\*RR-8\*\* |" plan_resolution.md`
+  prints three rows).
+- **Never:** §17 cells of other steps; any other file; `python3 .claude/plan_board_v2.py`.
 
 ### W05.DOCS-B — `CLAUDE.md` and the conventions
 
 - **Files (only these):** `CLAUDE.md`, `docs/dev/conventions.md`.
 - **Write:** CLAUDE.md's "every world-pixel value ×1.5" line names `WORLD_SCALE` / `WORLD_TOP_PAD` and says R2-02 is
-  done (`rescale.mjs` "R2-02 runs it for real" → ran); conventions: world values in code are `v1 × WORLD_SCALE`
+  done; the frame bullet's "**The world is still ×1:** …" sentence becomes the ported truth; the Tooling bullet's
+  `rescale.mjs` note: "R2-02 runs it for real" → ran, the pre-port command with the four v1 flags dropped, the
+  post-port `--factor 1 --dry-run` identity check kept; the "Self-expiring gates" bullet loses `CONTENT_PORT_PENDING`
+  (`R2-02.U5` deleted `port-pending.ts`; `GOLDENS_STALE` and the e2e gates stay until wave 6); conventions: world values in code are `v1 × WORLD_SCALE`
   (`+ WORLD_TOP_PAD` for an absolute world y), the audit tests (`world-scale.test.ts`, `behavior-defaults-port.test.ts`),
   and the `particles.emit` lesson (a fractional `dx` added at a non-inlined call is boxed: `emit` adds the offset
   itself).
+- **Acceptance:** `grep -n "WORLD_SCALE" CLAUDE.md docs/dev/conventions.md` finds the world-value rule in both;
+  `grep -n "R2-02 runs it for real\|The world is still ×1\|CONTENT_PORT_PENDING\|--from-width 384" CLAUDE.md` is
+  empty.
 
 ### W05.DOCS-C — Content, enemies, playtest, stages
 
 - **Files (only these):** `docs/dev/content-data.md`, `docs/dev/enemies-and-behaviors.md`,
-  `docs/dev/zone-a-and-playtest.md`, `docs/dev/stage-runtime.md`, `docs/dev/advanced-stages.md`.
+  `docs/dev/zone-a-and-playtest.md`, `docs/dev/stage-runtime.md`, `docs/dev/advanced-stages.md`,
+  `docs/dev/bullets-and-patterns.md`, `docs/dev/meter-arsenal.md`, `docs/dev/weapons-and-options.md`,
+  `docs/dev/coop.md`.
 - **Write:** the port done and the identity rule (`--factor 1` is 0 / 0 / 0); ported behaviour defaults and their
   snapshot test; the 4-way rules at 3.0 px/tick, 24 px, 1,350 px and `BOT_X = ENTER_END_X` (96); the masks tool
-  (`scripts/assets/tileset-masks.mjs`) in `advanced-stages.md` or `stage-runtime.md`.
+  (`scripts/assets/tileset-masks.mjs`) in `advanced-stages.md` or `stage-runtime.md`; the bullet and pattern world
+  values ×1.5 (`R2-02.W1`) in `bullets-and-patterns.md`; the shot sizes ×1.5 (`R2-02.W2`) in `meter-arsenal.md` or
+  `weapons-and-options.md`; player 2's `p2` palette map (`R3-03.V2a`) in `coop.md`.
+- **Acceptance:** `grep -n "2\.0 px/tick\|900 px\|BOT_X" docs/dev/zone-a-and-playtest.md` shows today's rules only
+  as 3.0 px/tick / 1,350 px / `BOT_X = ENTER_END_X` (v1's numbers only where marked as v1); the docs needs of
+  `R2-02.W1`, `W2`, `W5`, `W6`, `W7`, `S` and `R3-03.V2a`, `V4b` for these files are written.
 
 ### W05.DOCS-D — API reference, test and script READMEs, package READMEs
 
@@ -399,6 +439,9 @@ files; markdown is not formatted by Prettier, so keep tables readable by hand.
   pages (`loadPage` / `unloadPage`); the shell's `ImagePolicy` at run time and `prepare(): Promise<void>`; the new tests'
   rows (`world-scale`, `behavior-defaults-port`, `v1-port`, `v2-port*`, `palette-cycle-scan`, `standin*`,
   `tileset-masks`, `coop-p2`, `p2-ingest`, `palette-recolour`, `residency-*`, `atlas-context-loss.spec`).
+- **Acceptance:** `grep -n "WORLD_SCALE\|WORLD_TOP_PAD\|loadPage\|unloadPage\|ImagePolicy" docs/dev/api-reference.md`
+  finds a row for each; every test file added under `test/` in waves 2–5
+  (`git diff --name-only --diff-filter=A <wave-2 base>..origin/master -- test`) has a `test/README.md` row.
 
 ### W05.DOCS-E — The asset pipeline and real art
 
@@ -407,6 +450,9 @@ files; markdown is not formatted by Prettier, so keep tables readable by hand.
 - **Write:** "Player 2's palette swap" → the palette map; native v2 bullets and bends; palette variants of real art
   (kind `palette`); the stand-in generator; recipe keys `p2` and `collision`, `masks.json`; the cycle scan exists now and
   its exemption list is pinned in `test/integration/palette-cycle-scan.test.ts` (bible §4.4).
+- **Acceptance:** every hit of `grep -n -i "swap\|red↔blue" docs/dev/asset-pipeline.md` describes the palette map (or
+  is marked as history); `grep -n "p2\|collision\|masks.json" docs/dev/real-assets.md art-prompts/ingest/README.md`
+  finds both recipe keys and the masks file; `grep -n "palette-cycle-scan" docs/dev/art-bible-v2.md` finds the scan.
 
 ### W05.DOCS-F — Platform, rendering, build, performance
 
@@ -415,12 +461,16 @@ files; markdown is not formatted by Prettier, so keep tables readable by hand.
 - **Write:** **the budget reasoning** (required by R3-04's scope: `DIST_BUDGET`, the atlas caps, `TEXTURE_BUDGET_BYTES`
   23 MiB at 640×360, the policies); the lazy residency, the hold and context loss; the bench's stand-in scenario; the
   owner's M7 run in outstanding-work.
+- **Acceptance:** `grep -n "DIST_BUDGET\|TEXTURE_BUDGET_BYTES\|ATLAS_PNG_BYTES" docs/dev/platform-polish.md` finds each
+  budget with its derivation; `docs/client/outstanding-work.md` lists the owner's M7 bench run;
+  `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-docs.test.ts` green (it reads
+  `build-test-deploy.md`).
 
 ## Exit check
 
 1. On `origin/master` in a fresh worktree:
    ```bash
-   git grep -n port-pending                                   # only stale.ts and gates.ts docblock lines
+   git grep -n port-pending -- packages apps test scripts     # only stale.ts and gates.ts docblock lines
    pnpm content:check
    node scripts/content/rescale.mjs --factor 1 --dry-run      # 0 / 0 / 0
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tile-size.test.ts \
@@ -428,7 +478,8 @@ files; markdown is not formatted by Prettier, so keep tables readable by hand.
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/frame-literals.test.ts \
      packages/core/test/config
    ```
-2. `R2-02.RV`, `R3-03.RV`, `R3-04.RV` and `W05.DOCS-RV` at zero findings; §17 updated; the board synced.
+2. `R2-02.RV`, `R3-03.RV`, `R3-04.RV` and `W05.DOCS-RV` at zero findings; §17 updated on `origin/master`; then the
+   orchestrator (only the orchestrator) runs `python3 .claude/plan_board_v2.py` from the main checkout.
 3. Deferred to wave 15: the full suite, the bench soak.
 
 ## Owner (Manual) — never blocks this wave

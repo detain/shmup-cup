@@ -29,7 +29,9 @@ carry over into wave 5).
   fresh reviewer per round). Slot 2 reviews the side lanes as they push (`<id>.RV1`, …), loop to zero each.
 - **Docs item:** none in this wave. R2-02, R3-03 and R3-04 are documented by wave 5's docs agents.
 - **e2e passes:** two. Pass 1 belongs to S during its verification; pass 2 to the M3 carry-over (M3d / M3e). No
-  other lane runs e2e in this wave.
+  other lane runs an e2e batch in this wave. M4b's render bench (`test/bench/render.perf.ts`, Playwright) also runs
+  under the e2e lock, but a bench file or `pnpm docs:screens` run under the lock does **not** count toward the two
+  e2e agents: the lock already runs it alone.
 
 ## Rules for this wave
 
@@ -48,6 +50,13 @@ carry over into wave 5).
    before and after your change in your own tree, then compared.
 6. `INGEST` means `cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check` (its own npm project; CI's
    `ingest` job runs the same).
+7. **The barrier's exception to Common rule 3.** `R2-02.RV-pre` and `R2-02.S` run whole Vitest projects (core,
+   integration, shell, render-pixi, audio-web, input-web, web, tizen, webos, electron) because they are the port's
+   barrier — like wave 2's `R2-02.RV-A2`. That is not the run's full suite: they still never run `pnpm test`,
+   `pnpm test:e2e` or the whole `pnpm bench`. Every other agent of this wave runs targeted tests only.
+8. **Pushes:** every builder and fixer of this wave pushes its own task to `master` (Common rule 5) — side lanes hold
+   their pushes during the PORT window (rule 1). Review agents never push. This wave has no zone lane (local branch)
+   and no patch-only subtask.
 
 ## Subtasks
 
@@ -71,13 +80,16 @@ carry over into wave 5).
   4. Classify **every** failure: (a) expected, the derived files S re-pins (the three fingerprints); (b) an open item
      of a named subtask (say which); (c) a real problem nobody owns. Any (b) or (c) is a finding.
   5. Check the skip accounting: under the kit, `CONTENT_PORT_PENDING` is `false` (the stub), so the 80 port-pending
-     tests **run**; the 239 `GOLDENS_STALE` skips stay; the 41 frame `runIf` skips stay. Report the numbers you see.
+     tests **run**; the 239 `GOLDENS_STALE` skips stay; the 41 frame `runIf` skips stay; the 6 cases `R2-02.T4b`
+     retired with `runIf(content still v1)` (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2) now skip — **286** in
+     all (if T4b's report gives another number of retired cases, use T4b's). Report the numbers you see.
   6. Check `node scripts/content/rescale.mjs --factor 1 --dry-run` in the kit tree: 0 changes, 0 unclassified,
      0 errors (W5's ±768 bound for IRON LEVIATHAN's `parts[].x` is on master).
   7. Check the kit's flip replacements each matched exactly once (the script fails loudly otherwise) and that
      `handfix.patch` applies cleanly on the tool's output.
 - **Tests:** the commands of S's step 5, run in the kit tree (core, integration, shell, render-pixi, audio-web,
-  input-web and the apps' projects; the 66 allocation guards; `pnpm content:check`; typecheck).
+  input-web and the apps' projects; every allocation guard the `find` of S's Tests lists — 66 on `bc8e05d`, plus any
+  new one such as `R3-04.M3b`'s `residency-lazy-alloc`; `pnpm content:check`; typecheck).
 - **Acceptance:** zero unexplained failures; every prep commit neutral; skip numbers as in step 5. Findings are
   reported by severity (blocker / should-fix / nit); zero findings means zero nits too.
 - **Token:** none (read-only). Remove the kept worktree at the end (`git worktree remove <path>`).
@@ -103,10 +115,12 @@ carry over into wave 5).
     ×2);
   - `scripts/frame.mjs` — the `WORLD_SCALE` mirror P0 added (so `SPAWN_LEAD` = `PLAYFIELD_W + 16 * WORLD_SCALE`,
     `:85`, becomes 664);
-  - `packages/core/test/helpers/port-pending.ts` — the stub: `:57` becomes `CONTENT_PORT_PENDING: boolean = false`,
-    and the import-time call `checkPortPendingExpiry(FRAME_W, CONTENT_PORT_PENDING)` at `:76` is removed; all six
-    exports stay (`shippedTileSizes`, `CONTENT_PORT_PENDING`, `checkPortPendingExpiry` unchanged,
-    `PORT_PENDING_REASON`, `describePortPending`, `itPortPending`);
+  - `packages/core/test/helpers/port-pending.ts` — the stub: `:57-59` becomes `export const CONTENT_PORT_PENDING:
+    boolean = false;`, the import-time call `checkPortPendingExpiry(FRAME_W, CONTENT_PORT_PENDING)` at `:76` is
+    removed, and the now-unused `import { FRAME_W, TILE_SIZE } from '../../src/config/index.js';` (`:26`) is dropped
+    (`noUnusedLocals` fails `pnpm typecheck` otherwise); all six exports stay (`shippedTileSizes`,
+    `CONTENT_PORT_PENDING`, `checkPortPendingExpiry` unchanged, `PORT_PENDING_REASON`, `describePortPending`,
+    `itPortPending`);
   - `test/integration/presentation-fingerprint.test.ts`, `test/integration/content-db-fingerprint.test.ts`,
     `packages/shell/test/frame-fingerprint.test.ts` — their `PINNED` tables only;
   - `packages/core/test/frame-literals.test.ts` — only if step 4 needs it;
@@ -165,14 +179,16 @@ carry over into wave 5).
     a red zone goes to wave 5's `R2-02.Z-*`, it does not block S unless the zone test fails for a reason the
     hand-fix patch should have covered);
   - `test/golden/v2-port*.test.ts` green (camera ±2 %, first-visible ±1 tick for non-ground spawns, landing ±2 px);
-  - all 66 allocation guards green, **no budget raised**;
+  - every allocation guard the `find` above lists green (66 on `bc8e05d`, plus any new one such as `R3-04.M3b`'s
+    `residency-lazy-alloc`), **no budget raised**;
   - `world-scale.test.ts`' audit classifies every numeric export; `behavior-defaults-port.test.ts` covers every
     tunable of `BEHAVIOR_PARAM_UNITS`;
-  - after S, the skip count is 239 `GOLDENS_STALE` + 41 frame `runIf` = **280**, and 0 `CONTENT_PORT_PENDING`
-    (the stub makes the wrappers run; wave 5 deletes them);
-  - `test/e2e/gates.ts`' `PORT_UNMEASURED` is now `true` (23 specs skip on it, by design) and
-    `test/integration/e2e-gates.test.ts` stays green (its pin `contentPorted() === !CONTENT_PORT_PENDING` holds
-    with the stub);
+  - after S, the skip count is 239 `GOLDENS_STALE` + 41 frame `runIf` + the 6 cases `R2-02.T4b` retired
+    (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2) = **286** (or T4b's own number, if its report gives another),
+    and 0 `CONTENT_PORT_PENDING` (the stub makes the wrappers run; wave 5 deletes them);
+  - `test/e2e/gates.ts`' `PORT_UNMEASURED` is now `true` (23 tests skip on it on `bc8e05d`, plus debug-tools'
+    gated assertions, plus every gate `R2-02.E0` added — by design) and `test/integration/e2e-gates.test.ts` stays
+    green (its pin `contentPorted() === !CONTENT_PORT_PENDING` holds with the stub);
   - the commit holds only the files listed above.
 - **Token:** CORE-CONFIG, BEHAVIOR (the 15 lines), KIT (deletes it), FINGERPRINTS (land lock for step 6 and the
   push), the PORT window.
@@ -220,10 +236,13 @@ carry over into wave 5).
     test/scripts/assets/sprite-source-edge.test.ts test/scripts/assets/pipeline.test.ts \
     test/scripts/assets/interim-pipeline.test.ts test/scripts/art-origins.test.ts test/integration/content.test.ts
   node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*   # ATLAS-SHA, before and after
-  pnpm store:assets --check && pnpm docs:images --check
+  pnpm store:assets --check            # expected: exit 0
+  pnpm docs:images --check             # expected: exit 1, and only docs/images/logo.png flagged (since the flip)
   node scripts/art-origins.mjs --check
   ```
+  Run the two image checks as separate commands, never chained with `&&`: the second exits 1 by design.
 - **Acceptance:** the sha256 of every page and of `main.json` identical before and after (default scale);
+  `pnpm store:assets --check` exit 0; `pnpm docs:images --check` flags only `docs/images/logo.png`;
   `interim-pipeline.test.ts`' scale-1 digest pin unchanged; `git grep -n swapRedBlue` empty; the three issues tested;
   the origin report at 0 failures.
 - **Token:** none.
@@ -322,8 +341,9 @@ carry over into wave 5).
 - **Goal:** when an engine bullet, beam or bend sprite gets a PNG override, its colour-blind `@<palette>` siblings
   are made by recolouring that override frame for frame (decision W5-13), with provenance kind `palette`.
 - **Files (only these):**
-  - `scripts/assets/pipeline.mjs` — for a sprite of `content.test.ts:852`'s engine set that has a PNG override: drop its
-    procedural `@<palette>` siblings and recolour the override (rim, body and core classified by luma against the
+  - `scripts/assets/pipeline.mjs` — for a bullet, beam or bend sprite (`BULLET_SPRITES` filtered to `bullets/` and
+    `lasers/`, the palette-variant test `content.test.ts:863-864`) that has a PNG override: drop its procedural
+    `@<palette>` siblings and recolour the override (rim, body and core classified by luma against the
     family's three v1 colours; the `BULLET_PALETTES` body colours plus `CORE_MARKS`; origin `palette:<base>`);
   - `scripts/assets/procedural/palettes.mjs` — export the tables it needs (`BULLET_PALETTES` `:29`, `CORE_MARKS` `:40`
     are exported already; add only what is missing);
@@ -341,7 +361,7 @@ carry over into wave 5).
 - **Acceptance:** the shipped atlas unchanged (no override exists today); the fixture gives every variant with its
   marks, frame for frame; the origin report holds 438 procedural sprites and 0 failures.
 - **Token:** none.
-- **Traps:** every bullet / beam / bend sprite keeps every `@<palette>` variant frame for frame (`content.test.ts:852`);
+- **Traps:** every bullet / beam / bend sprite keeps every `@<palette>` variant frame for frame (`content.test.ts:863`);
   the generators' v1 paths stay byte-identical (RR-1). Exact maths only in the recolour (no `Math.pow`, no float
   luma that can differ across engines — integer weights).
 - **Docs needs:** `asset-pipeline.md` (palette variants of real art), `art-provenance.md` §9 (kind `palette`).
@@ -399,8 +419,8 @@ carry over into wave 5).
 - **Token:** none.
 - **Traps:** **the art data on myadmin1 is a snapshot** copied from the old host (`art-prompts/v2/candidates/`,
   961 MB, git-ignored; the picker's `choices.json` at `/home/sites/mystage/public_html/shmup-cup/data/choices.json`,
-  not served). M1c needs only candidate images, not the picks; if you want winners specifically, ask the owner for a
-  fresh `choices.json` copy first. **No FLUX candidate**, even as a reference (RR-4). Nothing from `candidates/` is
+  not served). M1c needs only candidate images, not the picks: ask the owner for a fresh `choices.json` copy **only
+  when M1c wants winners** (never read the snapshot's picks as current). **No FLUX candidate**, even as a reference (RR-4). Nothing from `candidates/` is
   committed. If skipped, the constants are marked "uncalibrated" (RR-7: PNG-8 at 0.3–0.6 MB per 2048×1024 page).
 
 ### R3-04.M2a — Measure the stand-in against the memory budget
@@ -432,8 +452,8 @@ carry over into wave 5).
   - `test/scripts/assets/atlas-budget.ts` — `ATLAS_PNG_BYTES_CAP` (`:15`) becomes a `common` cap plus a per-zone cap
     and a total; keep the export name, or update its two users `test/scripts/assets/interim-pipeline.test.ts:46,330`
     and `test/integration/cjk-budget.test.ts:47,127-128`;
-  - `packages/shell/src/memory/index.ts` — docblocks only, and only if no `R3-04.M3*` subtask is still open (M3b,
-    M3c and M3e edit this file); otherwise put the docblock text in your report;
+  - `packages/shell/src/memory/index.ts` — docblocks only, and only once `R3-04.M3b` (the one M3 subtask whose block
+    lists this file) is on master and reviewed; otherwise put the docblock text in your report;
   - `test/README.md` — the `atlas-budget.ts` row (append; rebase if another lane pushed first).
 - **Tests:**
   ```bash
@@ -563,7 +583,8 @@ carry over into wave 5).
   --dry-run`).
 - **Must hold:** `git diff --name-only <parent>..<port> -- test/golden/'*.replay.json' content/demos
   test/fixtures/v1-baseline` empty; content equals tool + patch; the 4-way rules at 3.0 / 24 / 1,350; `v2-port*`
-  green; 66 guards green with no budget raised; 280 skips as stated; the build delta reported.
+  green; every allocation guard the `find` lists green (66 on `bc8e05d`, plus any new one) with no budget raised;
+  286 skips as S states (280 + T4b's 6); the build delta reported.
 - **Report:** findings by severity; zero findings means zero nits.
 
 ### W04.RV-SIDE — Reviews of the side lanes (`<id>.RV1`, `<id>.RV2`, … per side subtask)

@@ -49,8 +49,12 @@ under the kit and master e2e unchanged.
   (`R2-02.U1` … `U5`, wave 5). `test/golden/stale.ts` and `test/e2e/gates.ts` are not yours.
 - **`test/integration/content.test.ts` is T2a's only** in this wave; everyone else reads it.
 - **Same-file order:** `test/integration/stage-terrain.test.ts` is T2e's in this wave (R3-03.V4b only *copies* its
-  checks, in wave 4). `test/e2e/atlas-residency.spec.ts`: if E0 must gate a test in it, E0 waits for `R3-04.M3d` on
-  master (lane 8 extends that spec).
+  checks, in wave 4). `test/e2e/atlas-residency.spec.ts` belongs to lane 8 (`R3-04.M3d` extends it): **E0 never
+  edits it**. A test of it that fails under the kit goes into E0's report by name; the orchestrator hands it to
+  `R3-04.M3d` if M3d has not pushed yet, otherwise to a small fix agent (the spec is free once M3d is on master).
+  Nothing in this wave waits for a later wave.
+- **Pushes:** every builder and fixer of this wave pushes its own task to `master` (Common rule 5), after its kit
+  proof; review agents never push. This wave has no zone lane (local branch) and no patch-only subtask.
 
 ## Subtasks
 
@@ -217,8 +221,9 @@ under the kit and master e2e unchanged.
     (`PLAYFIELD_H - tileSize` and `[0, tileSize - 1]`); the sample step `y += 8` (`:2114`) → `y += tileSize`;
   - the PRISM LABYRINTH case (`:1651-1662`, middle row `floor(PLAYFIELD_H / 2 / map.tileSize)` = 14 ported) stays: the
     content fix (zone G's walls one row up) is in `test/port-v2/handfix.patch`.
-  - its 80-test gated share (`itPortPending` at `:626`, `:1121`, `:1450`, `:1650`, `:1995`; `it.skipIf(CONTENT_PORT_PENDING)`
-    at `:1791`, `:2176`): green under the kit; the gates stay.
+  - its 13 gated cases (`itPortPending` at `:626`, `:1121`, `:1450`, `:1650`, `:1995`;
+    `it.skipIf(CONTENT_PORT_PENDING).each(zones)` at `:1791` — 6 zones — and `:2176` — 2 zones): green under the kit;
+    the gates stay.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts
@@ -268,8 +273,9 @@ under the kit and master e2e unchanged.
   with the frozen v1 baseline (`test/fixtures/v1-baseline/*.baseline.json`, 37 scenarios).
 - **Files (only these; "new" = create):** `test/golden/v2-port.ts` (new), `test/golden/v2-port-suite.ts` (new),
   `test/golden/v2-port.test.ts` (new), `test/golden/v2-port-zones.test.ts` (new), `test/golden/v2-port-loop2.test.ts`
-  (new) — split by `BASELINE_GROUPS` (`test/golden/v1-baseline.ts:255`) like `v1-baseline*`; and
-  `test/port-v2/handfix.patch` (your findings).
+  (new) — split by `BASELINE_GROUPS` (`test/golden/v1-baseline.ts:255`) like `v1-baseline*`;
+  `test/port-v2/handfix.patch` (your findings); and `test/port-v2/two-scale.sh` only for a kit bug the orchestrator
+  hands you while you hold KIT.
 - **What the test does:** `recordBaseline(scenario)` (`test/golden/v1-baseline.ts`) **in memory** (never into the
   fixtures) with `startX` ×K (`hunter-range-dive`: `HUNTER_DIVE_START_X` 1440 → 2160), then compares with the v1 file
   by `test/fixtures/v1-baseline/README.md` § "Comparing a v2 run" (`:83-122`) through `mapEnemyRow` / `mapBossRow`:
@@ -285,30 +291,37 @@ under the kit and master e2e unchanged.
   ```
 - **Acceptance:** green under the kit **after** your content findings are in `handfix.patch` (the tool's 7 "on or
   above the top edge" items among them); skipped (not failing) at K = 1.
-- **Token:** KIT (`handfix.patch`): only T3 edits it in this wave. Every patch change is content-only and re-applies to
-  a fresh tool output (`two-scale.sh` must still pass for everyone).
+- **Token:** KIT (`test/port-v2/**`): only T3 edits `handfix.patch` in this wave, and while T3 runs it also makes any
+  kit fix the orchestrator hands it (no second KIT holder; after T3's push a small fix agent may take KIT). Every
+  patch change is content-only and re-applies to a fresh tool output (`two-scale.sh` must still pass for everyone).
 - **Traps:** never `SHMUP_V1_BASELINE_UPDATE` (the v1 baseline is frozen for good); the v1 files are read, never
   written; above the top edge (y < 0) the mapping is `K·y` only, and the landing (`turnY`) is what must match.
 
 ### R2-02.E0 — The e2e pre-gate (last of the wave)
 
 - **Wave / lane / order:** wave 3, the first slot that frees after **every** T subtask is on master.
-- **Depends on:** `R2-02.T1a` … `T1e`, `T2a` … `T2e`, `T3` on master; for `atlas-residency.spec.ts`, `R3-04.M3d` on
-  master.
+- **Depends on:** `R2-02.T1a` … `T1e`, `T2a` … `T2e`, `T3` on master. Nothing of a later wave
+  (`atlas-residency.spec.ts` is not yours — rule "Same-file order").
 - **Goal:** after the port the content-bound specs that have not been re-measured must skip, not fail: gate every
   spec that fails under the kit on `PORT_UNMEASURED` (decision R2-N3). The gate is neutral on master today
   (`PORT_UNMEASURED` = stale recordings ∧ content ported = false), true from the port until R2-03 re-records.
-- **Files (only these):** the failing `test/e2e/*.spec.ts` only — never `test/e2e/gates.ts`.
-- **What is gated today** (at `bc8e05d`; do not touch these): `PORT_UNMEASURED` + `PORT_REASON` at zone-a `:108`,
-  stage `:113`, mode7 `:484` `:768`, raster `:223` `:254`, campaign-run `:316`, zones-bc `:234` `:263` `:283` `:300`,
-  zones-de `:315` `:353`, zones-fg `:312` `:351` `:385`, zones-hi `:411` `:441` `:507` `:529`, advanced-bosses `:258`
-  `:358` `:382`, debug-tools `:200` (assertion level); `R2_03_PENDING` + `CONTENT_REASON` at zones-de `:275`,
-  zones-hi `:468`, gimmicks `:76` `:100`, boss `:133` (the hull, assertion level), render-groups `:217` (the HUD,
-  assertion level); `GOLDEN_REASON` at attract `:183` `:298`, atlas-residency `:396`, determinism; the inverse tests
+- **Files (only these):** the failing `test/e2e/*.spec.ts` only — never `test/e2e/gates.ts`, never
+  `test/e2e/atlas-residency.spec.ts` (lane 8's: report a failure there by test title).
+- **What is gated today** (at `c67c7c9`; do not touch these; list them yourself with
+  `git grep -n "test.skip(\|assertionsGated(" test/e2e/`): `PORT_UNMEASURED` + `PORT_REASON` at zone-a `:108`,
+  stage `:113`, mode7 `:484` `:768`, raster `:223` `:255` ("runs the heat haze only inside its camera range"),
+  campaign-run `:372` ("?stage=bonus-range: the digit entrance flies the ship into the vault, …"), zones-bc `:234`
+  `:263` `:283` `:300`, zones-de `:315` `:353`, zones-fg `:312` `:351` `:385`, zones-hi `:411` `:441` `:507` `:529`,
+  advanced-bosses `:258` `:358` `:382`, debug-tools `:228` (assertion level, inside "web build: F4 freezes, F5 steps
+  one tick, F7 / F8 jump the stage, F3 / F6 cycle"); `R2_03_PENDING` + `CONTENT_REASON` at zones-de `:275`, zones-hi
+  `:468`, gimmicks `:76` `:100`, boss `:133` (the hull, assertion level), render-groups `:217` (the HUD, assertion
+  level); `GOLDEN_REASON` at attract `:183` `:298`, atlas-residency `:396`, determinism `:116`; the inverse tests
   attract `:235` `:276`.
-- **The likely new ones** (C5's "content-backed but not gated" list, expected to hold but to be checked): bullets,
-  bullet-palette ×2, enemies, weapons ×3, direct-items, option-hunter, raster `:182` `:279` `:297`, stage `:144`,
-  coop-gamepad.
+- **The likely new ones** (C5's "content-backed but not gated" list, expected to hold but to be checked; lines on
+  `c67c7c9`): bullets, bullet-palette ×2, enemies, weapons ×3, direct-items, option-hunter, raster `:182` ("compiles
+  and links in a WebGL1 context"), `:280` ("stretch fills a display the integer mode letterboxes") and `:299`
+  ("draws the hitbox markers only while the option is on"), stage `:144` ("warns about an unknown ?stage= and flies
+  in open space without terrain"), coop-gamepad.
 - **Steps:**
   1. `bash test/port-v2/two-scale.sh --keep -- true` → a kept kit tree `<kit>`; in it, run the five standard batches
      A–E (README) one after another with **its own** helper: `bash <kit>/docs/v2-run/helpers/e2e-batch.sh <batch>`
@@ -322,8 +335,9 @@ under the kit and master e2e unchanged.
   bash <kit>/docs/v2-run/helpers/e2e-batch.sh <batch A specs>   # … B, C, D, E
   bash docs/v2-run/helpers/e2e-batch.sh <every spec you edited>    # on your own tree (master + your commit)
   ```
-- **Acceptance:** zero e2e failures under the kit; master e2e unchanged (the edited specs pass, nothing skips that
-  ran before).
+- **Acceptance:** zero e2e failures under the kit outside `atlas-residency.spec.ts` (a failure there is listed in your
+  report by test title, for `R3-04.M3d` or its fix agent); master e2e unchanged (the edited specs pass, nothing skips
+  that ran before).
 - **Token:** none. **e2e:** one of the wave's two e2e agents.
 - **Traps:** never edit `gates.ts` or its pin `test/integration/e2e-gates.test.ts`; never gate a spec that also fails
   on master (that is a bug: report it); e2e steps exact ticks (`frame-advance.ts`), samples through `frame-pixels.ts`;
@@ -351,7 +365,8 @@ under the kit and master e2e unchanged.
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/golden/v2-port.test.ts test/golden/v2-port-zones.test.ts test/golden/v2-port-loop2.test.ts
    ```
    green (the full barrier run is `R2-02.RV-pre` in wave 4).
-4. E0's report: zero failures under the kit in batches A–E.
+4. E0's report: zero failures under the kit in batches A–E, except `atlas-residency.spec.ts` tests handed over by
+   title (to `R3-04.M3d` or its fix agent).
 5. Deferred to wave 15: nothing new.
 
 ## Owner (Manual) — never blocks this wave
