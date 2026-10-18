@@ -37,6 +37,7 @@
 15. [Appendix A — what is coupled to 384×216 today](#15-appendix-a--what-is-coupled-to-384216-today)
 16. [Appendix B — the ×1.5 port table](#16-appendix-b--the-15-port-table)
 17. [Progress](#17-progress)
+18. [Execution waves for the ~10-agent run](#18-execution-waves-for-the-10-agent-run)
 
 ---
 
@@ -305,6 +306,10 @@ vertical port exact, but spends 17 % of the screen on HUD (v1: 7 %) on a TV wher
   art and new art. `v1.x` is the shipping line meanwhile.
 - Zero allocation, determinism, the Chromium 68 floor, the bundle budget (`APP_JS_GZIP_BUDGET` 512 KB, ~376 KB
   used since R1-05 moved the atlas manifest out) and "original names, art and music only" all hold in every step.
+- **From 2026-10-18 the run continues on the host myadmin1**, driven by opencode with about 10 agents at once, in
+  the waves of **§18**; their work orders, decisions and helpers are committed under
+  [`docs/v2-run/`](docs/v2-run/README.md). Tests run there, targeted, and nobody waits for GitHub CI; the one full
+  suite runs at the end of the run (§18.1).
 
 ---
 
@@ -324,6 +329,10 @@ Dependencies: R0 ∥ R1 → R2 → R3 → R4 ∥ R5 (R5 zone steps need R3 and R
 block nothing.** Two R3 steps do not wait for R2: **R3-01**'s prompt-library half is done (`b938d5a`) and its art bible
 half depends on nothing; **R3-02** depends only on R3-01, and its output is staged until R2-01. R3-03 … R3-06 still
 follow R2.
+
+**The schedule (§18) tightens these where the files allow it:** R3-03 and R3-04 need only R2-01 and run beside R2-02's
+prep; R3-06 and R4's prep run beside R2-04; R4-01 … R4-05 follow R2-04; and the R5 zones build in parallel and land one
+at a time (decision R5-D1 in [`docs/v2-run/decisions.md`](docs/v2-run/decisions.md)), with zone A first.
 
 ---
 
@@ -1304,6 +1313,10 @@ moved.
     `render-performance-review.md`) updated, with D19/D20 marked superseded by R-D1/R-D3.
 - **Acceptance:** the full definition-of-done suite is green on `master`, including an e2e run in which a stage
   with 12-px terrain renders (R1-04's deferred browser check).
+- **Schedule (§18, wave 6):** the e2e re-measure, the doc images and the one re-bless are checked by targeted runs;
+  the full definition-of-done suite runs once, at the end of the run (wave 15, decision RUN-1). R5's stable hash
+  keys and capacity raise (`R5-P.P1`, `R5-P.P8`) land in this step's wave, so `R2-03.G1`'s single re-bless covers them
+  (RUN-7). The store icons stay on the v1 art until R4-05 (RR-3).
 
 ### R2-04 — First retune at the new scale
 
@@ -1320,6 +1333,8 @@ moved.
   of scale (notes in the step's As built list).
 - **Manual (owner):** play zones A, D and I on the M7 in a `build:dev` bundle; watch TPF and RENDER on the overlay.
 - **Milestone:** tag **`v2.0.0-alpha.1`** — "plays at 640×360, interim art".
+- **Schedule (§18, wave 7):** the tag is a pre-release cut after the wave's targeted exit check; the full suite runs
+  at the end of the run (RUN-1).
 
 ---
 
@@ -1842,6 +1857,9 @@ the allocation guards and the bench showing it fits.
 
 Each step below means **the zone template above + its row in this table**. **Depends on:** R3-01 … R3-06 and
 R4-01 … R4-03 for every zone step, and the previous zone step (one zone at a time keeps golden churn local).
+**§18 relaxes the last part** (decision R5-D1): with content-order-independent hash keys and per-zone re-blesses, the
+zones build in parallel on local branches and land one at a time; zone A lands first, and zone H's echoes wait for A,
+B, D and F.
 
 ### R5-01 — Zone A remaster: AZURE VERGE
 
@@ -1884,7 +1902,8 @@ R4-01 … R4-03 for every zone step, and the previous zone step (one zone at a t
 - **Scope:** per the table's last row. The loop remixes and the caravan follow the remastered zones. The boss rush
   uses the new bosses. The test and dev ranges (`test-range`, `weapon-range`, `gimmick-range`, `raster-range`, …)
   get ported art only.
-- **After R5-10:** tag **`v2.0.0-beta.1`**.
+- **After R5-10:** tag **`v2.0.0-beta.1`** — a pre-release cut after wave 13's targeted exit; the milestone's full
+  suite runs with the run's one full suite in wave 15 (§18, RUN-1).
 
 ---
 
@@ -2125,3 +2144,90 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R6-01 | Balance and difficulty | not started |
 | R6-02 | Performance and memory on the TV with the final art | not started |
 | R6-03 | Docs, store refresh and the v2.0.0 release | not started |
+
+---
+
+## 18. Execution waves for the ~10-agent run
+
+Written 2026-10-18, when the run moved to the host **myadmin1** (opencode with Qwen 3.8 Flash agents, about 10 at
+once; the driver prompt is [`prompt_resolution.md`](prompt_resolution.md)). It schedules **every step of §17 that is
+not `done…`**, from Wave 0 to `v2.0.0`, in 16 waves. This section holds the rules and one row per wave; the work orders
+— every subtask with its exact files, tests, acceptance, token and traps — are in
+[`docs/v2-run/`](docs/v2-run/README.md), one file per wave (`wave-00.md` … `wave-15.md`), with the decisions in
+[`docs/v2-run/decisions.md`](docs/v2-run/decisions.md). The step sections above stay the specification: where a
+wave file and a step section disagree on *how* (order, lanes, tokens), the wave file wins; on *what* (scope,
+acceptance), the step section wins.
+
+### 18.1 The rules of the run
+
+- **Lanes come from file lists.** The re-plan scouts listed the files of every subtask. Subtasks with disjoint files
+  run in parallel; subtasks that share a file run one after another in one lane. A wave runs at most **8 builders and
+  2 review agents** at once; when a lane ends, the next queued lane or a listed filler starts.
+- **Tokens** name who may change a hot or a derived file ([`docs/v2-run/README.md`](docs/v2-run/README.md) § Tokens):
+  work-time tokens (one lane edits `behaviors/index.ts`, `scenes/index.ts`, `content.test.ts`, …) and push-time
+  tokens (GOLDEN, FINGERPRINTS, GROUPS, DOCS-IMAGES, STORE, LAND, GLOBAL). Every push that regenerates a derived file
+  holds the **land lock** (`/tmp/shmup-cup-land.lock`) from the fetch to the push and **regenerates, never merges**
+  a derived file.
+- **Push protocol:** explicit `git add`, `git fetch && git rebase origin/master`, the targeted tests again if the
+  rebase touched the agent's files, `git push origin HEAD:master`; on a rejection, repeat. Straight to `master`: no
+  branch is pushed, no pull request is opened, nothing goes to `v1.x`. In wave 4 nobody else pushes while the port
+  commit is verified (the PORT window).
+- **Review loops:** every subtask that pushed is reviewed; a finding goes to a fix agent; then a **new** review agent
+  looks again; the loop ends when a review reports zero findings, nits included.
+- **Docs:** builders never edit docs; they list their docs needs in their report. Each wave ends with its docs item:
+  one docs agent holds `plan_resolution.md` and `CHANGELOG.md` (the As built notes, §1's decisions, the §17 rows,
+  then `python3 .claude/plan_board_v2.py`), and further docs agents with disjoint files may run beside it.
+- **Tests run locally on myadmin1**, targeted: `VITEST_MAX_WORKERS=6` per agent; e2e only through
+  `docs/v2-run/helpers/e2e-batch.sh` under `/tmp/shmup-cup-e2e.lock` (one batch at a time on the host, at most two
+  agents of a wave doing e2e); `pnpm docs:screens` and single bench files under the same lock. **Nobody waits for
+  GitHub CI**; a wave's close may look at it.
+- **The one full suite runs at the end of the run** (wave 15): `pnpm test`, `pnpm test:e2e`, the whole `pnpm bench`
+  with the soak, every golden and demo, the image and icon checks. It updates whatever tracks the changes, with the
+  reasons. Deferred to it: R2-03's full definition-of-done suite, the milestone suites of R2-04 and R5-10, the soak.
+  The pre-release tags `v2.0.0-alpha.1` and `v2.0.0-beta.1` are cut after their wave's targeted exit (RUN-1).
+- **Owner-only work never blocks a wave.** Each wave file lists its Manual (owner) items; agents build the tools and
+  keep the interim art.
+- **The agents:** a blank reply is answered with `continue`, up to 10 times, before the agent is replaced; every
+  agent is told that near the end of its task it should finish rather than compress its context.
+
+### 18.2 The waves
+
+*Lanes / agents* counts the builder lanes (≤ 8 at once) and the review slots (2). *e2e* names the agents doing e2e
+work (≤ 2 per wave). Ids are `<step>.<subtask>` ([`docs/v2-run/README.md`](docs/v2-run/README.md) § Subtask ids).
+
+| Wave | Steps | Lanes / agents | Tokens | e2e | Gate to start | Exit |
+|---|---|---|---|---|---|---|
+| **W00** | R2-01's review loops | the orchestrator before the hand-off: C5 review 2 → fix → new review; the triage of CI e2e shard 1 and of the `flight.spec.ts:114` flake | — | the triage | — | **closed by the orchestrator before the hand-off**; a CI-only failure still open becomes `R2-01.F1` in W01 |
+| **W01** | R2-01 docs pass; R2-02 opening | 8: `R2-01.D1` … `D7` (seven docs agents, disjoint files), `R2-02.P0 → P1`; `R2-01.F1` first if open; + 2 reviews | PLAN (D1), CORE-CONFIG (P0), KIT (P1) | F1 only | W00 closed | docs review at zero; §17 R2-01 done; `WORLD_SCALE` = 1 and the two-scale kit `test/port-v2/` on master, neutral |
+| **W02** | R2-02 prep A; R3-03 and R3-04 side lanes | 8: `W6 → W7`, `T0 → A1 → T4b`, `W2`, `W1 → T4c`, `W3 → W5`, `W4 → T4a`, `R3-03.V1 → V3`, `R3-04.M3a → … → M3e`; + 2 reviews, then `R2-02.RV-A2` | BEHAVIOR, DATA-INDEX, RP-BARREL and SHELL-BARREL (M3) | V1, M3d / M3e | W01 exit | prep A on master, reviewed and neutral (fingerprints unedited); RV-A2's failure lists written; V1 on master |
+| **W03** | R2-02 prep B | 8: `T1a → T2c`, `T1b → T2d`, `T1c → T2e`, `T1d → T1e`, `T2a`, `T2b`, `T3`, one side lane (an R3 carry-over or the filler `R3-03.V2a`); then `R2-02.E0`; + 2 reviews | CONTENT-TEST (T2a), BOT (T2b), KIT (T3) | E0, M3* | W02 exit | every test pin and the v2-port comparison green under the kit; E0: zero e2e failures under the kit, master unchanged |
+| **W04** | R2-02 barrier and port; R3-03 and R3-04 side lanes; R0-04's agent parts | `R2-02.RV-pre` (the barrier) → `R2-02.S` alone; side lanes `V2a → V5`, `V2b → V4a → V4b`, `M1a → M1b → M2a → M2b`, `M4a → M4b`, carry-overs, `R0-04.W2`, `R0-04.W1` (owner-gated) | the PORT window; S: content, CORE-CONFIG, BEHAVIOR, KIT, FP | S, M3* | W03 exit; RV-pre at zero | the port commit on master; `rescale --factor 1 --dry-run` 0 / 0 / 0; S's verify list green |
+| **W05** | R2-02 after the port; R3-03 and R3-04 close | 8: `U1`, `U2`, `U3`, `U4 → R3-03.V4c`, `R`, `B → EF`, `U5`, `Z-*` (red zones only), R3 left-overs; + 2 reviews (`R2-02.RV`, `R3-03.RV`, `R3-04.RV`) | CONTENT-TEST (U2), FP (Z-*) | B → EF, M3* | W04 exit | the port gates gone (`stale.ts`, `gates.ts` stay); 280 expected skips; step reviews at zero; docs `W05.DOCS-A` … `F`; §17 R2-02, R3-03, R3-04 done |
+| **W06** | R2-03; R5's stable hash keys and capacity; R5's first test splits | 8: `E1 → E2`, `E3 → E4`, `I1`, `R5-P.P1 → P8`, `R5-P.P2a → P2b → P6`, `R5-P.P5c → P9`, then `G1`, `I3`, `G2`, `R2-03.V`; + 2 reviews | GOLDEN + FP (G1, one commit), DOCS-IMAGES (I1, I3), CONTENT-TEST (P2a) | E1 / E2, E3 / E4, then G1, I3, V (batches A, B, C, F) | W05 exit | goldens and demos re-blessed once, with reasons; every e2e gate removed; content-order-independent hashes; docs `W06.DOCS-A` … `D`; §17 R2-03 done |
+| **W07** | R2-04; R3-06; R4's prep | 8: `R2-04.F1 → P2 → G → REL`, `R2-04.P1 → P3 → P4`, `Z1 → Z3`, `Z2 → Z4`, `R3-06.L1 → L2 → L4 → L6`, `L5 → L3 → L7`, `R4-P.P1 → P2`, `R4-P.P3 → P4`; + 2 reviews | GOLDEN (G), FP (P2, G, L2, L4, L6), DATA-INDEX (the L1 lane), `layer-effects.ts` (P4, then L3) | P3, G, L6 | W06 exit | the retune re-blessed with reasons; `2.0.0-alpha.1` and its pre-release tag; the decor layers; the RR-1 pipeline; docs `W07.DOCS-A` … `D`; §17 R2-04, R3-06 done |
+| **W08** | R4-01 … R4-05, all but the integrators | 8: ships `A1a → A1b → A2`; scenes `E3 → E4 → C7 → E2 → E1`; HUD and kit `C5 → C6`; `A3 → B2 → A4`; `A5 → A7 → A6`; the font `C1 → … → C4b`; `A8 → B1 → B3`; FX `D1 → … → D4`; fillers: the zone designs; + 2 reviews | GOLDEN (A1b, B3), FP, SCENES, UI-FILE, STRINGS, POWERUPS, E2E-MIRROR | the ships and HUD lanes, then scenes; at the end `W08.E2E` (batches C, D and `fx-gallery`) | W07 exit | all on master and reviewed; the scale-1 digest pin unchanged; the origin report at 0 failures |
+| **W09** | R4's integrators; R5 prep; the R5 designs | 8: `A9 → B4` (both edit `powerups.spec.ts`), `E5 → E6`, `R5-P.P4 → P5a1 → P5a2` (P4 pushes after P10), `R5-P.P3 → P10 → LAND`, `R5-P.P5e`, the designs `R5-P.D-A` … `D-I`; + 2 reviews (one is the design review) | DOCS-IMAGES (A9, E6), STORE (E5), FP (P4, P10) | A9 / B4, E6 | W08 exit | R4 complete; equal test counts after every split; `land-zone.sh` tested; designs reviewed to zero; docs `W09.DOCS-A` … `E`; §17 R4-01 … R4-05 done (owner parts pending) |
+| **W10** | R5 prep 2; the zones' stand-in art; the zone-A pilot | 8: `R5-P.P7`, `R5-P.P12`, `R5-P.P5d`, zone A `S2 → S4a → … → S6b → S7` (LAND), `R5-03.S2`, then the S2s of B, D, E, F, G, H, I; + 2 reviews | GLOBAL (P12), FP (P7), LAND (zone A) | P5d, zone A | W09 exit | every S2 on master; zone A landed first, with only its own goldens moved; docs; §17 R5-01 done (owner parts pending) |
+| **W11** | R5-02 … R5-07, R5-09; zone H's first half | 8: zones B, C, D, E, F, G, I (local branches, one worktree each) and zone H `S4a → S4b → S5a → S5b` (no echo change); + 2 reviews | LAND (one at a time; B, D and F before H's echoes) | two zones at a time | W10 exit | seven zones landed with their post-LAND checks; docs; their §17 rows done (owner parts pending) |
+| **W12** | R5-08; R5-10 part 1; the real-art drops | `R5-08.S4c → S6 → S7`, `R5-10.T1`, `T2 → T8`, `T3`, `T6`, up to two `S3` drops (owner-gated); + 2 reviews | LAND (H, T1, T2), GROUPS (T8) | zone H, T3 | W11 exit | H landed; the bonus stages, the escape, the dimension, the ranges and the linked pages done; docs; §17 R5-08 done |
+| **W13** | R5-10 part 2; R6's opening | `R5-10.T4`, `T5`, `T7`, `T9`; `R6-01.B1 → B2`; `R6-02.P1`, `P2`; + 2 reviews | the version lines (T9) | none (benches under the e2e lock) | W12 exit | `2.0.0-beta.1` and its pre-release tag; the balance report; the TV capture kit; docs; §17 R5-10 done |
+| **W14** | R6-01 balance | up to 8 of `R6-01.B3a` … `B3i`, then `B4 → B5` alone; + 2 reviews | LAND (B3x), GLOBAL (B4, B5), STRINGS (B5) | none | W13 exit | re-blessed with reasons; docs; §17 R6-01 done |
+| **W15** | R6-02, R6-03; **the one full suite** | `R6-02.P3 → P4a … P4d` (only if a budget is missed), `R6-03.D3`, `D4`, `D1` (the docs agent: 2.0.0 and the CHANGELOG `[2.0.0]` in one push), then `R6-03.D6` (the full suite), then `D7`; + 2 reviews | STORE (D3), DOCS-IMAGES (D4), PLAN (D1) | D4, D6 | W14 exit | the full suite green on myadmin1 and a CI look; the owner's OK; `gh release create v2.0.0` |
+
+### 18.3 Open owner decisions and the defaults adopted
+
+None blocks a wave; each default holds until the owner says otherwise. The full list, with where each one lands, is
+[`docs/v2-run/decisions.md`](docs/v2-run/decisions.md); its built rows reach §1's register through each wave's docs
+agent.
+
+| ID | Default adopted |
+|---|---|
+| RUN-1 … RUN-14 | this schedule's rules: one full suite at the end of the run and pre-release tags after targeted exits; the land lock; the e2e batches and passes; the run directory; home waves and fillers; R5's hash keys and capacity folded into R2-03; the R2-03 store check (RR-3); single bench files; R2-01.F1 only if wave 0 leaves it open; one worktree per zone lane; the committed LAND helper; several docs agents per wave; 6 Vitest workers per agent |
+| W4-1 … W4-14 | built in R2-01; recorded in §1 by wave 1's docs agent |
+| W5-1 … W5-19 | adopted (W5-6 done in R2-01; W5-9's beam half moot); W5-2, W5-10 … W5-13, W5-15 and W5-16 await the owner's confirmation |
+| R2-N1 … R2-N6, R2-N8 | the port kit committed and deleted by the port; the gate stub at the port; the e2e pre-gate; the e2e re-measure before the one re-bless; patches and one integrator in R2-04; literal v2 values for the 15 frame-unit defaults; `2.0.0-alpha.1` everywhere before the tag |
+| R2-N7 | `ShakeMagnitude` 2 / 3 / 6 (from 1 / 2 / 4) until the owner's play session decides |
+| RR-1 | v2 art beside v1 (`*.v2.sprite.json`, generator branches on `artScale`, a native font file); scale 1 stays the v1 art until R6 |
+| RR-2 … RR-8 | the 9×12 font cell; the store icons on the v1 art until R4-05; no FLUX reference while FLUX is on hold; R4 after R2-03 (its re-blesses after R2-04); the new `LayerId`s; the stand-in uncalibrated on myadmin1; stand-in pages in the TV bench |
+| R5-D1 … R5-D9, R6-D1 … R6-D3 | parallel zones that land one at a time; the v2 zone contract; `terrain-azure`; `MAX_BOSS_PARTS` 24; stand-ins for new names only; one LAND per zone; a 3-min caravan; the 2.0.0 bump with its CHANGELOG section in one push; `v2.0.0` only after the owner's OK |
+| Q-1 … Q-11 | is picking finished; Git LFS for the winners; the FLUX licence; prompt-library edit 7; the FACET MONARCH label; v1.0.0's TV title overlap (no `v1.x` push without the owner); the HI-line rule; the crawl and credits durations; 1080p screenshots (O9); the "owner may confirm" rows; the shake and spawn-row feel — each keeps its default until answered |
