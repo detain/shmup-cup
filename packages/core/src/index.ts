@@ -20,7 +20,7 @@
  * M2-10; `blackhole` (the black-hole bomb — the Direct ship's signature special — and the
  * death-bomb window) with M3-02; the frame constants (`FRAME_W` / `FRAME_H` and the values derived
  * from them, `TILE_SIZE` — now from `config` —, the font metrics) with v2's R1-01; the tile-size
- * range `MIN_TILE_SIZE` / `MAX_TILE_SIZE` with R1-04.
+ * range `MIN_TILE_SIZE` / `MAX_TILE_SIZE` with R1-04; the art scale `ART_SCALE` with R2-01.
  *
  * @packageDocumentation
  */
@@ -144,6 +144,7 @@ export {
   BULLET_PALETTES,
   DEFAULT_USER_OPTIONS,
   DIFFICULTY_PRESETS,
+  ART_SCALE,
   FRAME_CX,
   FRAME_CY,
   FRAME_H,

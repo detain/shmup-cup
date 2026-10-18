@@ -736,9 +736,9 @@ export interface GameConfig {
 // plan_resolution.md §7 / R1-01: every frame-dependent number of the game derives from the few
 // compile-time constants below, so changing them is the whole resolution switch (R2-01 sets
 // 640×360, 12-px HUD bars, 12-px tiles and the new font's metrics). They are plain module
-// constants — never getters or runtime options read in hot paths — and every one is a whole
-// number. Values anchored to a screen edge derive from them; world values (radii, margins, speeds)
-// never do (plan §2.6).
+// constants — never getters or runtime options read in hot paths — and every one but
+// {@link ART_SCALE} is a whole number. Values anchored to a screen edge derive from them; world
+// values (radii, margins, speeds) never do (plan §2.6).
 
 /** Width of the internal frame in pixels (decision D19: 384; R2-01: 640). */
 export const FRAME_W = 384;
@@ -793,16 +793,32 @@ export const TILE_SIZE = 8;
 
 /**
  * Width in pixels of a cell of the bitmap font — also its advance, the horizontal pitch text is
- * laid out on (`assets/source/fonts/pixel6x8.font.json` `cellWidth` / `advance`: 6). A line of
- * `n` characters is `n · GLYPH_W` pixels wide.
+ * laid out on: the font file's `cellWidth` / `advance` × {@link ART_SCALE}
+ * (`assets/source/fonts/pixel6x8.font.json`: 6; the atlas pipeline scales the font by the same
+ * factor, so R2-01's interim font is 9). A line of `n` characters is `n · GLYPH_W` pixels wide.
  */
 export const GLYPH_W = 6;
 
-/** Height in pixels of a cell of the bitmap font (the font file's `cellHeight`: 8). */
+/**
+ * Height in pixels of a cell of the bitmap font: the font file's `cellHeight` × {@link ART_SCALE}
+ * (8; R2-01: 12).
+ */
 export const GLYPH_H = 8;
 
-/** Line advance in pixels of the bitmap font (the font file's `lineHeight`: 10). */
+/**
+ * Line advance in pixels of the bitmap font: the font file's `lineHeight` × {@link ART_SCALE}
+ * (10; R2-01: 15).
+ */
 export const LINE_H = 10;
+
+/**
+ * The art's pixel scale relative to the v1 sprites: 1 until R2-01, 3/2 after (the interim ×1.5
+ * art, then the art bible's sizes — owner decision W4-3). UI layout scales its art- and
+ * padding-sized values by it (`core/ui` `uiPx`, at module initialisation only); the font metrics
+ * above are the font file's × this. World values never read it (plan §2.6): it is the only frame
+ * constant that need not be a whole number, but its products with the font file's metrics are.
+ */
+export const ART_SCALE = 1;
 
 /**
  * Defaults: remote-first, Normal difficulty (its {@link DEFAULT_DIFFICULTY_TABLE} row: rank base 2,

@@ -2,7 +2,8 @@
  * `core/config` — the frame constants of plan_resolution.md R1-01 (§7: every frame-dependent
  * number derives from a few compile-time constants): their values until R2-01 flips them, the
  * relations the derived values keep, the font metrics pinned to the font file the atlas is built
- * from, and `DEFAULT_GAME_CONFIG` recording the frame.
+ * from (× `ART_SCALE`, the factor the atlas pipeline scales the font by — R2-01, W4-3), and
+ * `DEFAULT_GAME_CONFIG` recording the frame.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -10,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as core from '../../src/index.js';
 import {
+  ART_SCALE,
   DEFAULT_GAME_CONFIG,
   FRAME_CX,
   FRAME_CY,
@@ -70,10 +72,14 @@ const CONSTANTS = {
   GLYPH_W,
   GLYPH_H,
   LINE_H,
+  ART_SCALE,
 };
 
+/** The one frame constant that need not be whole (R2-01: 3/2). */
+const FRACTIONAL = new Set(['ART_SCALE']);
+
 describe('core/config frame constants (R1-01)', () => {
-  it('holds the v1 frame until R2-01: 384×216, 8-px HUD bars and tiles, the 6×8 font', () => {
+  it('holds the v1 frame until R2-01: 384×216, 8-px HUD bars and tiles, the 6×8 font, v1 art', () => {
     expect(CONSTANTS).toEqual({
       FRAME_W: 384,
       FRAME_H: 216,
@@ -89,12 +95,25 @@ describe('core/config frame constants (R1-01)', () => {
       GLYPH_W: 6,
       GLYPH_H: 8,
       LINE_H: 10,
+      ART_SCALE: 1,
     });
   });
 
   it('keeps every constant a positive whole number (hot paths pass them as whole pixels)', () => {
     for (const [name, value] of Object.entries(CONSTANTS)) {
+      if (FRACTIONAL.has(name)) continue;
       expect(Number.isInteger(value) && value > 0, name).toBe(true);
+    }
+  });
+
+  it('keeps ART_SCALE a positive rational whose products with the font metrics are whole', () => {
+    expect(ART_SCALE).toBeGreaterThan(0);
+    // A rational with a small denominator (1, 3/2, 2 …): some multiple up to 12 of it is whole.
+    let denominator = 1;
+    while (denominator < 12 && !Number.isInteger(ART_SCALE * denominator)) denominator += 1;
+    expect(Number.isInteger(ART_SCALE * denominator)).toBe(true);
+    for (const metric of [FONT.cellWidth, FONT.cellHeight, FONT.lineHeight, FONT.advance]) {
+      expect(Number.isInteger(metric * ART_SCALE), String(metric)).toBe(true);
     }
   });
 
@@ -117,19 +136,20 @@ describe('core/config frame constants (R1-01)', () => {
     expect(LINE_H).toBeGreaterThanOrEqual(GLYPH_H);
   });
 
-  it('mirrors the metrics of the bitmap font file (assets/source/fonts/pixel6x8.font.json)', () => {
-    expect(FONT.cellWidth).toBe(GLYPH_W);
-    expect(FONT.cellHeight).toBe(GLYPH_H);
-    expect(FONT.lineHeight).toBe(LINE_H);
+  it('mirrors the bitmap font file × ART_SCALE (assets/source/fonts/pixel6x8.font.json)', () => {
+    // The atlas pipeline scales the font by ART_SCALE (R2-01's interim 9×12 is the 6×8 file × 3/2).
+    expect(GLYPH_W).toBe(FONT.cellWidth * ART_SCALE);
+    expect(GLYPH_H).toBe(FONT.cellHeight * ART_SCALE);
+    expect(LINE_H).toBe(FONT.lineHeight * ART_SCALE);
     // Text is laid out on a GLYPH_W pitch: the advance is the cell width.
-    expect(FONT.advance).toBe(GLYPH_W);
-    // Every glyph is drawn in a GLYPH_W × GLYPH_H cell.
+    expect(GLYPH_W).toBe(FONT.advance * ART_SCALE);
+    // Every glyph of the file is drawn in a cellWidth × cellHeight cell.
     const glyphs = Object.keys(FONT.glyphs);
     expect(glyphs.length).toBeGreaterThan(0);
     for (const glyph of glyphs) {
       const rows = FONT.glyphs[glyph];
-      expect(rows.length, glyph).toBe(GLYPH_H);
-      for (const row of rows) expect(row.length, glyph).toBe(GLYPH_W);
+      expect(rows.length, glyph).toBe(FONT.cellHeight);
+      for (const row of rows) expect(row.length, glyph).toBe(FONT.cellWidth);
     }
   });
 
