@@ -8,11 +8,17 @@
  * save the standard palette shows none of the deuteranopia colours (the control).
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
+ * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
+ * this spec at about 70 % of its test timeouts. Its other waits stay frames: three short menu
+ * pauses, and the flight's bullet poll, whose 2,400-frame budget gives a slow runner more ticks,
+ * not fewer.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, tap } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -54,19 +60,6 @@ function waitFrames(page: Page, frames: number): Promise<void> {
       }),
     frames,
   );
-}
-
-/**
- * Presses a key for a few frames, then lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
 }
 
 /**

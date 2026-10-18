@@ -9,12 +9,17 @@
  *
  * Screenshots are of the canvas at 1000×600 (integer ×2 = a 768×432 frame letterboxed; stretch =
  * the whole canvas); the sim is frozen and stepped exact ticks (`./frame-advance.ts`).
+ *
+ * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
+ * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
+ * this spec at about 70 % of its test timeouts. Its three menu pauses stay short frame waits, and
+ * the screenshots step the frozen sim (`./frame-advance.ts`).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -71,41 +76,6 @@ function waitFrames(page: Page, frames: number): Promise<void> {
       }),
     frames,
   );
-}
-
-/**
- * Presses a key for a few frames, then lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key the desktop keyboard does not have (Back = 10009), down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
 }
 
 /**
