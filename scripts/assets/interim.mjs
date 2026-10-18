@@ -13,10 +13,12 @@
  * ({@link parseArtScale}), so the output is identical on every machine.
  *
  * **What is never upscaled** (W4-5): the terrain tilesets (`terrain.mjs` draws them at the tile
- * size itself), `ui/pixel` (the renderer stretches it as one texel), real-art PNG overrides
- * (v2-native: drawn at the art bible's sizes) and every source marked `native: true` (a pixel
- * map's `"native"` key, `makeSprite`'s `native` option — what R3 / R4 redraws set). The pipeline
- * (`collectSprites`) applies the rule; this module only scales.
+ * size itself), `ui/pixel` (the renderer stretches it as one texel), the laser beams
+ * `lasers/beam-*` and their `@<palette>` variants (the renderer reads a frame's number as the
+ * beam's thickness, so `lasers.mjs` draws one frame per band height at the art scale itself),
+ * real-art PNG overrides (v2-native: drawn at the art bible's sizes) and every source marked
+ * `native: true` (a pixel map's `"native"` key, `makeSprite`'s `native` option — what R3 / R4
+ * redraws set). The pipeline (`collectSprites`) applies the rule; this module only scales.
  *
  * **The interim font** (W4-4): the shipped `pixel6x8.font.json` stays the source; at s = 3/2 the
  * pipeline turns it into a 9 × 12 cell, a 15-px line and a 9-px advance ({@link scaleFont}).

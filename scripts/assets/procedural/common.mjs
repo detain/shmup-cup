@@ -107,7 +107,8 @@ export function seedOf(text) {
  * @param {{ anchor?: [number, number] | null, hitFlash?: boolean,
  *   animations?: Record<string, number[]>, native?: boolean }} [options] - Metadata; `native:
  *   true` marks frames already drawn at the art's v2 size, which the pipeline's interim stage
- *   never scales (plan_resolution.md R2-01, W4-5: the terrain tilesets, `ui/pixel`).
+ *   never scales (plan_resolution.md R2-01, W4-5: the terrain tilesets, `ui/pixel`, the laser
+ *   beams).
  * @returns {SpriteDef} The sprite (with `native: true` only when asked for).
  */
 export function makeSprite(name, frames, generator, options = {}) {

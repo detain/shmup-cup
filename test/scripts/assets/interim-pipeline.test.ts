@@ -2,13 +2,16 @@
  * The interim art stage in the asset pipeline (plan_resolution.md R2-01, decisions W4-4 … W4-6):
  * `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })`, both built in memory.
  *
- * - The same sprite names, frame counts, animations and atlas groups at both scales (sprite ids,
- *   `atlas-groups.json` and the goldens' view of the atlas never move).
+ * - The same sprite names, animations and atlas groups at both scales (sprite ids,
+ *   `atlas-groups.json` and the goldens' view of the atlas never move), and the same frame counts
+ *   but the laser beams': one frame per band height, 8 at scale 1 and 12 at 3/2.
  * - Every frame of a v1-scale source `⌈1.5·w⌉ × ⌈1.5·h⌉`, its pixels the nearest-neighbour
  *   upscale, an explicit anchor `⌈1.5·a⌉`, a default one the centre of the scaled frame 0.
  * - What is never upscaled (W4-5): the terrain tilesets come out 12 × 12 — drawn by `terrain.mjs`
  *   at that size, their opaque pixels every shipped mask resampled to 12 — `ui/pixel` stays 1 × 1,
- *   a real-art PNG override keeps its size and its sidecar anchor, a `"native": true` map its size.
+ *   every laser beam frame `k` is a band `k + 1` px tall (the renderer reads the frame's number as
+ *   the beam's thickness; `lasers.mjs` draws them at the art scale), a real-art PNG override keeps
+ *   its size and its sidecar anchor, a `"native": true` map its size.
  * - The interim font (W4-4): 9 × 12 cells, a 15-px line, a 9-px advance.
  * - The budget: every page within 2048², the PNG bytes under the atlas cap.
  * - The guard: at scale 1 the stage is a no-op — the v1 atlas, pinned by digest, at either frame.
@@ -23,12 +26,21 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createImage, getPixel, setPixel, type Image } from '../../../scripts/assets/image.mjs';
-import { INTERIM_ART_SCALE, scaleImage } from '../../../scripts/assets/interim.mjs';
+import {
+  createImage,
+  getPixel,
+  imagesEqual,
+  setPixel,
+  type Image,
+} from '../../../scripts/assets/image.mjs';
+import { INTERIM_ART_SCALE, scaleImage, scaleLength } from '../../../scripts/assets/interim.mjs';
 import { formatManifest } from '../../../scripts/assets/manifest.mjs';
 import { DEFAULT_SOURCE_DIR, buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import { encodePng } from '../../../scripts/assets/png.mjs';
+import { BULLET_COLORS } from '../../../scripts/assets/procedural/bullets.mjs';
 import { generateProceduralSprites } from '../../../scripts/assets/procedural/index.mjs';
+import { BEAM_HEIGHT, BEAM_WIDTH } from '../../../scripts/assets/procedural/lasers.mjs';
+import { BULLET_PALETTES } from '../../../scripts/assets/procedural/palettes.mjs';
 import { TERRAIN_PALETTES, resampleMask } from '../../../scripts/assets/procedural/terrain.mjs';
 import { loadSpriteSources, type SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
 import { ATLAS_PNG_BYTES_CAP } from './atlas-budget.js';
@@ -51,7 +63,8 @@ afterAll(() => {
 type Atlas = ReturnType<typeof buildAtlas>;
 
 /**
- * The pixels of one atlas frame, cut out of its page.
+ * The pixels of one atlas frame, cut out of its page (one copy per row: fast enough to cut every
+ * frame of both atlases).
  *
  * @param atlas - The atlas.
  * @param name - Frame name (`<sprite>#<i>`).
@@ -62,7 +75,8 @@ function framePixels(atlas: Atlas, name: string): Image {
   const page = atlas.pages[f.p].image;
   const out = createImage(f.w, f.h);
   for (let y = 0; y < f.h; y++) {
-    for (let x = 0; x < f.w; x++) setPixel(out, x, y, getPixel(page, f.x + x, f.y + y));
+    const from = ((f.y + y) * page.width + f.x) * 4;
+    out.data.set(page.data.subarray(from, from + f.w * 4), y * f.w * 4);
   }
   return out;
 }
@@ -78,6 +92,23 @@ const hex = (image: Image): string =>
 
 /** The sprites whose frames are drawn at their v2 size already (native, W4-5), by name. */
 const NATIVE = new Set(v2.sprites.filter((s) => s.native === true).map((s) => s.name));
+
+/** The laser beams: one per bullet colour, plus its variant for each colour-blind palette. */
+const BEAMS = Object.keys(BULLET_COLORS).flatMap((colour) =>
+  ['', ...Object.keys(BULLET_PALETTES).map((palette) => `@${palette}`)].map(
+    (suffix) => `lasers/beam-${colour}${suffix}`,
+  ),
+);
+
+/**
+ * The frame names of a sprite with `count` frames.
+ *
+ * @param name - Sprite name.
+ * @param count - Frame count.
+ * @returns `<name>#0` … `<name>#<count − 1>`.
+ */
+const frameNames = (name: string, count: number): string[] =>
+  Array.from({ length: count }, (_, k) => `${name}#${k}`);
 
 /** The sources' own anchors (`null` = the default centre), by sprite name. */
 const SOURCE_ANCHORS = new Map<string, [number, number] | null>(
@@ -100,12 +131,24 @@ function sourceAnchor(name: string): [number, number] | null | undefined {
 }
 
 describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’s shape (R2-01)', () => {
-  it('has the same sprites, frame counts, animations and groups at both scales', () => {
+  it('has the same sprites, frame counts (but the beams), animations and groups', () => {
     expect(Object.keys(v2.manifest.sprites)).toEqual(Object.keys(v1.manifest.sprites));
+    const beams = new Set(BEAMS);
+    const extra: string[] = [];
     for (const [name, sprite] of Object.entries(v1.manifest.sprites)) {
-      expect(v2.manifest.sprites[name], name).toEqual(sprite);
+      if (!beams.has(name)) {
+        expect(v2.manifest.sprites[name], name).toEqual(sprite);
+        continue;
+      }
+      // A beam has one frame per band height: frames 0 … 7 keep their names, 8 … 11 are new.
+      const frames = frameNames(name, scaleLength(BEAM_HEIGHT, 1.5));
+      expect(v2.manifest.sprites[name], name).toEqual({ ...sprite, frames });
+      extra.push(...frames.slice(sprite.frames.length));
     }
-    expect(Object.keys(v2.manifest.frames).sort()).toEqual(Object.keys(v1.manifest.frames).sort());
+    expect(extra).toHaveLength(BEAMS.length * 4);
+    expect(Object.keys(v2.manifest.frames).sort()).toEqual(
+      [...Object.keys(v1.manifest.frames), ...extra].sort(),
+    );
     expect(v2.manifest.animations).toEqual(v1.manifest.animations);
     expect(v2.sprites.map((s) => [s.name, s.group])).toEqual(
       v1.sprites.map((s) => [s.name, s.group]),
@@ -115,19 +158,20 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
 
   it('upscales every v1-scale frame to ⌈1.5·w⌉ × ⌈1.5·h⌉, nearest-neighbour', () => {
     let scaled = 0;
+    const wrongPixels: string[] = [];
     for (const sprite of v1.sprites) {
       if (NATIVE.has(sprite.name)) continue;
       for (const frame of v1.manifest.sprites[sprite.name].frames) {
         const a = v1.manifest.frames[frame];
         const b = v2.manifest.frames[frame];
         expect([b.w, b.h], frame).toEqual([Math.ceil(1.5 * a.w), Math.ceil(1.5 * a.h)]);
+        const upscaled = scaleImage(framePixels(v1, frame), 1.5);
+        if (!imagesEqual(framePixels(v2, frame), upscaled)) wrongPixels.push(frame);
         scaled++;
       }
     }
     expect(scaled).toBeGreaterThan(1000);
-    for (const frame of ['ships/kestrel#0', 'enemies/drifter#0', 'ui/logo#0', 'font/pixel#33']) {
-      expect(hex(framePixels(v2, frame)), frame).toBe(hex(scaleImage(framePixels(v1, frame), 1.5)));
-    }
+    expect(wrongPixels).toEqual([]);
   });
 
   it('scales an explicit anchor ⌈1.5·a⌉ and centres a default one on the scaled frame', () => {
@@ -150,8 +194,35 @@ describe('scripts/assets/pipeline — the interim ×1.5 stage keeps the atlas’
 });
 
 describe('scripts/assets/pipeline — what the interim stage never upscales (W4-5)', () => {
-  it('marks exactly the terrain tilesets and ui/pixel native', () => {
-    expect([...NATIVE].sort()).toEqual([...Object.keys(TERRAIN_PALETTES), 'ui/pixel'].sort());
+  it('marks exactly the terrain tilesets, ui/pixel and the laser beams native', () => {
+    expect(BEAMS).toHaveLength(12); // 3 colours × (standard + 3 colour-blind palettes)
+    expect([...NATIVE].sort()).toEqual(
+      [...Object.keys(TERRAIN_PALETTES), 'ui/pixel', ...BEAMS].sort(),
+    );
+  });
+
+  it('draws laser beam frame k as a band k + 1 px tall at both scales', () => {
+    // The renderer draws a beam `w` px wide as frame `w − 1` unscaled (render-pixi
+    // `createLaserBinding`), so frame k must be k + 1 px thick at every scale: 8 frames of 4 × 8
+    // for the v1 art, 12 of 6 × 12 at 3/2 — R2-02 ports the shipped widths 6 and 8 to 9 and 12.
+    for (const [atlas, scale, count] of [
+      [v1, 1, 8],
+      [v2, 1.5, 12],
+    ] as const) {
+      expect(scaleLength(BEAM_HEIGHT, scale)).toBe(count);
+      const size = [scaleLength(BEAM_WIDTH, scale), count];
+      for (const name of BEAMS) {
+        const frames = atlas.manifest.sprites[name].frames;
+        expect(frames, `${name} at ${scale}`).toEqual(frameNames(name, count));
+        frames.forEach((frame, k) => {
+          const pixels = framePixels(atlas, frame);
+          expect([pixels.width, pixels.height], `${frame} at ${scale}`).toEqual(size);
+          let rows = 0;
+          for (let y = 0; y < pixels.height; y++) if (getPixel(pixels, 0, y)[3] > 0) rows++;
+          expect(rows, `${frame} at ${scale}`).toBe(k + 1);
+        });
+      }
+    }
   });
 
   it('draws the terrain tiles at 12 px (8 px for the v1 art), masks resampled from the content', () => {

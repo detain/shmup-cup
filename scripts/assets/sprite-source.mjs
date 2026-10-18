@@ -79,7 +79,7 @@ import { decodePng } from './png.mjs';
  * @property {string} origin - Where it came from (source file path or `procedural:<module>`).
  * @property {boolean} [native] - `true` when the frames are already at the art's v2 size: the
  *   pipeline's interim stage never scales them (R2-01, W4-5 — the terrain tilesets, `ui/pixel`,
- *   R3 / R4 redraws). Absent (= `false`) for a v1-scale source.
+ *   the laser beams, R3 / R4 redraws). Absent (= `false`) for a v1-scale source.
  * @property {string} [group] - Atlas group (`common`, `zone-a`, …), set by the pipeline's
  *   `collectSprites` (R1-05); sources never set it.
  */

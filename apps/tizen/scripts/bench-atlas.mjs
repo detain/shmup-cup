@@ -3,12 +3,12 @@
  *
  * The bench (`apps/tizen/src/bench`) draws a synthetic scene at 384×216, 640×360 and 960×540 with
  * a density factor `s` = 1, 1.5 and 2.25 — sprites, tiles and font ×s — so the larger frames cost
- * what a denser scene would, not just a bigger empty target. Its art is **the real atlas's v1 art**,
- * packed **without groups** ({@link benchSourceAtlas}: `buildAtlas({ ungrouped: true, artScale: 1 })`
- * of the asset pipeline — every sprite on one page), upscaled ×s with nearest-neighbour **at
- * bench-build time, into the bench's own output** (`dist-bench/assets/atlas/bench-x<s>-<page>.png`).
- * Nothing is ever added to the game's atlas: a new sprite there would shift every sprite id, and
- * with them every golden replay.
+ * what a denser scene would, not just a bigger empty target. Its art is **the real atlas's v1
+ * art**, packed **without groups** ({@link benchSourceAtlas}:
+ * `buildAtlas({ ungrouped: true, artScale: 1 })` of the asset pipeline — every sprite on one
+ * page), upscaled ×s with nearest-neighbour **at bench-build time, into the bench's own output**
+ * (`dist-bench/assets/atlas/bench-x<s>-<page>.png`). Nothing is ever added to the game's atlas: a
+ * new sprite there would shift every sprite id, and with them every golden replay.
  *
  * - **Why the v1 art, for good (R2-01, decision W4-6).** From R2-01 the game's atlas is the
  *   interim ×1.5 upscale of the v1 sources (later the art bible's v2 art); the bench's densities

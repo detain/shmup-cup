@@ -45,11 +45,13 @@ import * as weapons from './weapons.mjs';
 /** @typedef {import('../sprite-source.mjs').SpriteDef} SpriteDef */
 
 /**
- * Options every generator receives (R2-01). Only `terrain` reads one today: `tileSize`, the tile
- * side to draw its tilesets at (default its `TILE_SIZE`).
+ * Options every generator receives (R2-01): `tileSize`, the tile side `terrain` draws its tilesets
+ * at (default its `TILE_SIZE`), and `artScale`, the build's art scale `lasers` and `palettes` draw
+ * the laser beams at (default 1) — both for sprites the interim stage never upscales (`native`).
  *
  * @typedef {object} GeneratorOptions
  * @property {number} [tileSize] - Tile side in pixels for the terrain tilesets.
+ * @property {number} [artScale] - Art scale of the build (`interim.mjs`), for the laser beams.
  */
 
 /**
@@ -90,7 +92,7 @@ export const PROCEDURAL_GENERATORS = [
  * Runs every generator.
  *
  * @param {GeneratorOptions} [options] - Passed to every generator: `tileSize` for the terrain
- *   tilesets (the pipeline sets it for a build at another art scale — R2-01).
+ *   tilesets and `artScale` for the laser beams (the pipeline sets both — R2-01).
  * @returns {SpriteDef[]} All procedural sprites, in generator order.
  */
 export function generateProceduralSprites(options = {}) {

@@ -2,8 +2,9 @@
 /**
  * `pnpm store:assets` — the icon set and the store-listing placeholders of the v1.0 release
  * candidate (plan M2-18, shmup_feat.md §23 "store", shmup_tech.md §2.6), generated from the game's
- * own placeholder art — the atlas sprites (`collectSprites()`: the logo, the two ships, the zone
- * backdrops, the bosses) and the bitmap font — so no image is drawn by hand (plan §1.5):
+ * own placeholder art — the atlas sprites (`collectSprites({ artScale: 1 })`: the v1 art until
+ * R2-03 — the logo, the two ships, the zone backdrops, the bosses) and the bitmap font — so no
+ * image is drawn by hand (plan §1.5):
  *
  * - **Icons (committed)** — {@link ICON_TARGETS}: the Tizen widget / Seller Office icon
  *   `apps/tizen/public/icon.png` (512 × 423, copied into the widget by Vite), the desktop app's

@@ -133,8 +133,16 @@ describe('integration: the shipped atlas stays inside its budget (R1-05)', () =>
     expect(Object.keys(shipped.manifest.frames).sort()).toEqual(
       Object.keys(shippedOnePage.manifest.frames).sort(),
     );
-    // …and the same frames as the v1 art the figures below are measured on (only sizes scale).
-    expect(Object.keys(shipped.manifest.frames).sort()).toEqual(Object.keys(atlas.frames).sort());
+    // …and the same frames as the v1 art the figures below are measured on (only sizes scale) —
+    // but the laser beams', one per band height: the ×1.5 atlas adds frames 8 … 11 to each
+    // (`lasers.mjs`, R2-01), none at scale 1.
+    const beamFrames = Object.entries(shipped.manifest.sprites)
+      .filter(([name]) => name.startsWith('lasers/beam-'))
+      .flatMap(([name, sprite]) => sprite.frames.slice(atlas.sprites[name].frames.length));
+    expect(beamFrames).toHaveLength(INTERIM_ART_SCALE === 1 ? 0 : 12 * 4);
+    expect(Object.keys(shipped.manifest.frames).sort()).toEqual(
+      [...Object.keys(atlas.frames), ...beamFrames].sort(),
+    );
   });
 });
 

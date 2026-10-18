@@ -6,9 +6,9 @@
  * it equals the opaque pixels of the 12-px frame (the contract R1-03's rescale tool relies on),
  * moves straight edges exactly both ways and anything else nearest-neighbour; bad sizes and masks
  * throw. Since R2-01 it also pins the interim art stage's {@link INTERIM_ART_SCALE} to core's
- * `ART_SCALE` (the pipeline's own copy, flipped with core's), and asks that the generator's tilesets
- * are `native` (never upscaled: drawn at their tile size) and draw at whatever tile size the
- * pipeline asks for.
+ * `ART_SCALE` (the pipeline's own copy, flipped with core's), and asks that the generator's
+ * tilesets are `native` (never upscaled: drawn at their tile size) and draw at whatever tile size
+ * the pipeline asks for.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -99,7 +99,8 @@ describe('scripts/assets/procedural/terrain — the atlas size (R1-04)', () => {
   });
 
   it('builds the atlas at the art scale core lays the UI out for (R2-01)', () => {
-    // The pipeline's own copy of core's ART_SCALE (1 until the flip, 3/2 after); they flip together.
+    // The pipeline's own copy of core's ART_SCALE (1 until the flip, 3/2 after); they flip
+    // together.
     expect(INTERIM_ART_SCALE).toBe(ART_SCALE);
   });
 

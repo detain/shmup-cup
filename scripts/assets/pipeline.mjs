@@ -29,7 +29,8 @@
  * upscales them nearest-neighbour by an **art scale** (`artScale`, default `interim.mjs`
  * `INTERIM_ART_SCALE` — 1 until R2-01's flip, 3/2 after), except what is already at its v2 size
  * (decision W4-5): sources marked `native` (the terrain tilesets, which `terrain.mjs` draws at the
- * scaled tile size itself, and `ui/pixel`) and real-art PNG overrides. The bitmap font is scaled
+ * scaled tile size itself, `ui/pixel`, and the laser beams, whose frame number is their thickness:
+ * `lasers.mjs` draws them at the art scale) and real-art PNG overrides. The bitmap font is scaled
  * with the art (W4-4: 6 × 8 → 9 × 12). At scale 1 the stage does nothing, so
  * `buildAtlas({ artScale: 1 })` is the v1 atlas byte for byte at either frame — the art the TV
  * bench, the CJK figures, the store icons and the doc images keep (W4-6).
@@ -338,7 +339,8 @@ function terrainTileSize(artScale) {
  * swaps of the ships and the stock icon (M2-06, `coop.mjs`) — both from the scaled sprites →
  * default anchors (centre of the scaled frame 0) → atlas groups ({@link resolveAtlasGroup} over
  * `atlas-groups.json`, R1-05: a listed name the atlas lacks, a listed font and an empty `common`
- * group are issues). Names, frame counts, animations and groups never depend on the art scale.
+ * group are issues). Names, animations and groups never depend on the art scale, and frame counts
+ * only for the laser beams (one frame per band height: 8 at scale 1, 12 at 3/2 — `lasers.mjs`).
  * Never throws for bad sources: everything is reported in `issues`, and the caller decides
  * ({@link buildAtlas} throws {@link AssetSourceError}). With `ungrouped`, every sprite is
  * `common` and the groups file is not read at all.
@@ -385,10 +387,11 @@ export function collectSprites(options = {}) {
     byName.set(sprite.name, sprite);
   };
   for (const sprite of code.sprites) add(sprite);
-  for (const sprite of generateProceduralSprites({ tileSize })) add(sprite);
+  for (const sprite of generateProceduralSprites({ tileSize, artScale })) add(sprite);
 
   // The interim art stage (R2-01, W4-5): every v1-scale source to the art scale; `native`
-  // sources (terrain, ui/pixel, v2 redraws) are already at it. Nothing to do at scale 1.
+  // sources (terrain, ui/pixel, the laser beams, v2 redraws) are already at it. Nothing to do
+  // at scale 1.
   const sources = [...byName.values()].map((sprite) =>
     scaled && sprite.native !== true ? scaleSprite(sprite, artScale) : sprite,
   );

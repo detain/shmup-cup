@@ -8,8 +8,8 @@
 
 /**
  * Cap on an atlas's PNG bytes, every page summed (R1-05): the placeholder art takes ≈ 120 KB split
- * into zone pages (PNG-8 where a page fits a palette), and its interim ×1.5 upscale (R2-01) ≈ 136 KB.
- * A regression guard for the encoder and the split; detailed art replaces it with its measured
- * budget (plan R3-04).
+ * into zone pages (PNG-8 where a page fits a palette), and its interim ×1.5 upscale (R2-01)
+ * ≈ 137 KB. A regression guard for the encoder and the split; detailed art replaces it with its
+ * measured budget (plan R3-04).
  */
 export const ATLAS_PNG_BYTES_CAP = 256 * 1024;

@@ -42,15 +42,17 @@ export const CORE_MARKS = Object.freeze({ pink: 'solid', red: 'ring', purple: 'd
 /**
  * Generates every colour-blind variant.
  *
+ * @param {import('./index.mjs').GeneratorOptions} [options] - `artScale`, the art scale the beams
+ *   are drawn at (default 1; native like the standard beams, `lasers.mjs` — R2-01).
  * @returns {SpriteDef[]} For each palette: the nine bullets (shape-coded), the three beams and
  *   the three bending laser segments, named `<sprite>@<palette>`.
  */
-export function generate() {
+export function generate(options = {}) {
   /** @type {SpriteDef[]} */
   const sprites = [];
   for (const [palette, colours] of Object.entries(BULLET_PALETTES)) {
     sprites.push(...bulletSprites(colours, `@${palette}`, CORE_MARKS, 'palettes'));
-    sprites.push(...laserSprites(colours, `@${palette}`, 'palettes'));
+    sprites.push(...laserSprites(colours, `@${palette}`, 'palettes', options.artScale ?? 1));
   }
   return sprites;
 }
