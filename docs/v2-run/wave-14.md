@@ -21,8 +21,12 @@ item done.
 - **Order rules:** at most 8 zone passes build at once; their LANDs run one at a time (the land lock). **B4 starts
   only after every B3 has LANDed**, and holds the land lock for its whole re-bless (GLOBAL: no LAND meanwhile). B5
   follows B4 in the same lane.
-- **Reviews:** each `R6-01.B3x.RV` on its branch before its LAND; `R6-01.B4.RV`, `R6-01.B5.RV`; `R6-01.RV` (the step)
-  at the end.
+- **Reviews:** each `R6-01.B3x.RV` on its branch before its LAND (between the block's two turns, rule 2);
+  `R6-01.B4.RV` on its branch before the re-bless (the same two turns); `R6-01.B5.RV` on B5's pushed commit;
+  `R6-01.RV` (the step) at the end.
+- **No e2e in this wave:** a zone pass may move what `test/e2e/zone-<x>.spec.ts` samples at exact ticks, but no
+  subtask here runs a spec — R6-03.D6's full Chromium run (wave 15) covers every zone spec, and a moved sample there
+  becomes an `R6-03.D6.FIXn`.
 - **Docs item:** `W14.DOCS-A`, `W14.DOCS-B`.
 - **Fillers:** wave 15's `R6-03.D3` / `D4` must **not** start early (the art and the screens follow the balance). An
   owner-ready `R5-0n.S3` drop may run as a filler under rule 6.
@@ -48,11 +52,25 @@ item done.
    push, the orchestrator removes the lane worktree and deletes its branch (the command is in each block). The
    scopes are the zone LANDs' (A `zone-a,bonus-range`; B `zone-b,brine-grotto`; C `zone-c`; D `zone-d`; E `zone-e`;
    F `zone-f`; G `zone-g,glimmer-cache`; H `zone-h`; I `zone-i`).
+   **Each B3x block (and B4, which works the same way in `/home/sites/shmup-cup-run/wt/r6-global`) runs in two agent
+   turns, with its review between them:**
+   - **Turn 1:** the start lines, the edit, the block's tests, one commit on the branch (sources only); then report
+     and stop — never write the message file, never run the helper.
+   - **Review:** the orchestrator starts `R6-01.B3x.RV` (for B4 `R6-01.B4.RV`) on the branch; a finding goes to a fix
+     agent (`R6-01.B3x.FIXn`) that works in the same lane worktree and commits on the same branch; a new review
+     follows, until a review reports zero findings.
+   - **Turn 2:** the orchestrator starts a new agent with the same block and this line at the top of its prompt:
+     "You are turn 2: the review is at zero — write the commit message file, run the dry run, read its log, then
+     the LAND." It runs the start lines again (`git branch --show-current`, fetch, rebase), writes the message file
+     and runs the helper (dry run first).
 3. **Still frozen:** `tender`'s fields (`content/enemies/zone-a.enemies.json`; it is every zone's capsule carrier —
    only B4 may change it, as a global change); the ids and sprite names every other file names.
 4. **Scores and density only** in a zone pass: an enemy's or a boss's `score`, the number and spacing of spawns. A
    change that breaks the zone's v2 contract (`test/integration/zones/zone-<x>.contract.ts`) or the 4-way rules is
-   wrong — keep the contract green, never relax it.
+   wrong — keep the contract green, never relax it. Density and scores are what the zone's recovery rule and its
+   runtime tests measure, so each block's integration line runs `test/playtest/zone-<x>-recovery.test.ts` and, for
+   zones B … I, `test/integration/zone-<x>-runtime.test.ts` (B … G also `zone-<x>-direct.test.ts`); if R5-P.P5e kept
+   a `test/integration/zone-<x>-runtime-edge.test.ts` for your zone, add it to that line.
 5. **Goldens:** every re-bless names its reason ("R6-01 balance: …"); a diff outside the declared scope is a bug.
    **Dry run first:** if the dry run's `test/golden` run fails on an outcome expectation (in
    `test/golden/golden-zone-<x>.test.ts`, or in `test/golden/golden.test.ts` for B4) because the report's change
@@ -61,7 +79,10 @@ item done.
    (through the constant where one exists; never a pasted run output), then a new review and a new dry run.
 6. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
    permitting), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
-   drop the owner names for the release.
+   drop the owner names for the release. The orchestrator pastes wave 12's *Rules for this wave* into the drop's
+   prompt instead of this wave's (the drop needs wave 12's rules 3–6: the normal worktree and push protocol, one
+   derived-file push at a time, the art snapshot, the winners folder — this wave's rule 2 "never create another
+   worktree" and rule 4 "scores and density only" do not apply to it).
 
 ## Subtasks
 
@@ -77,13 +98,16 @@ item done.
   dry run (rule 5).
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-a` on the local branch `r6/zone-a` (rule 2). The orchestrator
   creates it: `git -C /home/sites/shmup-cup worktree add -b r6/zone-a /home/sites/shmup-cup-run/wt/r6-zone-a origin/master`.
-- **Steps:** `cd /home/sites/shmup-cup-run/wt/r6-zone-a && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-a`); edit; run the tests; commit on `r6/zone-a` (sources only); review
-  (`R6-01.B3a.RV`) to zero; write the commit message; the LAND (dry run first).
+- **Steps** (two agent turns, rule 2):
+  - **Turn 1:** `cd /home/sites/shmup-cup-run/wt/r6-zone-a && git branch --show-current && git fetch origin && git rebase origin/master`
+    (the branch must print `r6/zone-a`); edit; run the tests; commit on `r6/zone-a` (sources only); report and stop.
+  - Between the turns: `R6-01.B3a.RV` on the branch, to zero (its fixes commit on the same branch).
+  - **Turn 2** (the prompt says "You are turn 2"): the same `cd … && git branch --show-current && git fetch origin && git rebase origin/master`;
+    write the commit message file; the LAND (dry run first, then read its log, then the real LAND).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-a.test.ts test/playtest/zone-a.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-a.test.ts test/playtest/zone-a.test.ts test/playtest/zone-a-recovery.test.ts test/integration/release-audit.test.ts
   ```
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3a-msg.txt` first): `feat(R6-01): balance zone A
   — scores and density`; the body lists each changed value (old → new, with the report's line) and says "re-bless
@@ -102,7 +126,8 @@ item done.
 - **Token:** LAND.
 - **Traps:** a score is a count, never ×1.5; density changes keep the capsule window rule (≥ 3 per 1,350 px after a
   checkpoint) and the calm (exactly two `carrier.straight`); never `golden:update` outside the LAND script.
-- **Docs needs:** the changed values for `docs/dev/death-and-scoring.md` and the zone doc.
+- **Docs needs:** the changed values for `docs/dev/death-and-scoring.md`, the zone doc, `docs/client/bestiary.md`
+  (its `N HP · M pts` cells) and `docs/client/preview-build.md` (the points lines this pass changed).
 
 ### R6-01.B3b — Zone B's balance pass
 
@@ -118,7 +143,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts test/playtest/zone-b.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-b.test.ts test/playtest/zone-b.test.ts test/playtest/zone-b-recovery.test.ts test/integration/zone-b-runtime.test.ts test/integration/zone-b-direct.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3b.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-b`):
   ```bash
@@ -144,7 +169,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts test/playtest/zone-c.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-c.test.ts test/playtest/zone-c.test.ts test/playtest/zone-c-recovery.test.ts test/integration/zone-c-runtime.test.ts test/integration/zone-c-direct.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3c.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-c`):
   ```bash
@@ -170,7 +195,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-d.test.ts test/playtest/zone-d.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-d.test.ts test/playtest/zone-d.test.ts test/playtest/zone-d-recovery.test.ts test/integration/zone-d-runtime.test.ts test/integration/zone-d-direct.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3d.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-d`):
   ```bash
@@ -196,7 +221,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-e.test.ts test/playtest/zone-e.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-e.test.ts test/playtest/zone-e.test.ts test/playtest/zone-e-recovery.test.ts test/integration/zone-e-runtime.test.ts test/integration/zone-e-direct.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3e.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-e`):
   ```bash
@@ -223,7 +248,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-f.test.ts test/playtest/zone-f.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-f.test.ts test/playtest/zone-f.test.ts test/playtest/zone-f-recovery.test.ts test/integration/zone-f-runtime.test.ts test/integration/zone-f-direct.test.ts test/integration/release-audit.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-f.test.ts     # the second playtest run
   ```
 - **The LAND** (after `R6-01.B3f.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-f`):
@@ -250,7 +275,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-g.test.ts test/playtest/zone-g.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-g.test.ts test/playtest/zone-g.test.ts test/playtest/zone-g-recovery.test.ts test/integration/zone-g-runtime.test.ts test/integration/zone-g-direct.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3g.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-g`):
   ```bash
@@ -276,7 +301,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts test/playtest/zone-h.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts test/playtest/zone-h.test.ts test/playtest/zone-h-recovery.test.ts test/integration/zone-h-runtime.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3h.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-h`):
   ```bash
@@ -302,7 +327,7 @@ item done.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts test/playtest/zone-i.test.ts test/integration/release-audit.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-i.test.ts test/playtest/zone-i.test.ts test/playtest/zone-i-recovery.test.ts test/integration/zone-i-runtime.test.ts test/integration/release-audit.test.ts
   ```
 - **The LAND** (after `R6-01.B3i.RV` is at zero; from `/home/sites/shmup-cup-run/wt/r6-zone-i`):
   ```bash
@@ -342,12 +367,14 @@ item done.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-global` on the local branch `r6/global` (never pushed). This
   replaces common rule 1's worktree step, as rule 2 does for the zones. The orchestrator creates it after the last B3
   LAND: `git -C /home/sites/shmup-cup worktree add -b r6/global /home/sites/shmup-cup-run/wt/r6-global origin/master`.
-- **Steps:**
+- **Steps** (two agent turns, rule 2: turn 1 is step 1, then report and stop; the review runs between the turns;
+  turn 2 — the prompt says "You are turn 2" — repeats step 1's start line, then does steps 2–3):
   1. `cd /home/sites/shmup-cup-run/wt/r6-global && git branch --show-current && git fetch origin && git rebase origin/master`
      (it must print `r6/global`; if HEAD is detached, run `git switch r6/global` and say so in your report). Edit
      content and the built-in copies together; fix the pins that changed (through the constants, never by pasting a
-     failing run's output); commit on the branch (sources only).
-  2. Review (`R6-01.B4.RV`) on the branch to zero. Write the commit message to
+     failing run's output); commit on the branch (sources only). Turn 1 ends here: report and stop.
+  2. (Turn 2, after `R6-01.B4.RV` on the branch is at zero; its fixes, `R6-01.B4.FIXn`, commit on the same branch.)
+     Write the commit message to
      `/home/sites/shmup-cup-run/R6-01.B4-msg.txt`: `feat(R6-01): balance the presets, extends, scoring and rank`; the
      body lists every changed value and says "re-bless every golden and demo: R6-01 balance: presets / extends /
      scoring / rank (docs/v2-run/balance-report.md)"; no Co-Authored-By line.
@@ -368,9 +395,13 @@ item done.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/config packages/core/test/rank packages/core/test/scoring packages/core/test/world/world-m3-content.test.ts packages/core/test/replay
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/patterns-runtime.test.ts test/integration/release-audit.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-a-recovery.test.ts test/playtest/zone-b-recovery.test.ts test/playtest/zone-c-recovery.test.ts test/playtest/zone-d-recovery.test.ts test/playtest/zone-e-recovery.test.ts test/playtest/zone-f-recovery.test.ts test/playtest/zone-g-recovery.test.ts test/playtest/zone-h-recovery.test.ts test/playtest/zone-i-recovery.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/determinism
   pnpm --filter @shmup/core typecheck
   ```
+  The nine recovery tests restart each zone at its checkpoints (what the `arcade` death penalty and continues do)
+  and count the capsules a perfect player meets, so a change to the death penalty or to `tender` can break them:
+  they must be green on the branch (they are not in the expected-red list below).
   **Expected red on the branch, until the re-bless** (list them in the report; never fix them by hand — the helper
   re-records and re-checks them): `test/golden` (the replays), `packages/shell/test/determinism` (it replays the
   goldens) and the `PINNED` comparisons of the three fingerprints.
@@ -382,7 +413,8 @@ item done.
   `tender` may change only here, as a global change, with the reason; a rank curve change touches every zone — the
   bot must still clear them all (run the nine `test/playtest/zone-<x>.test.ts` files if the curve changed).
 - **Docs needs:** the new tables for `docs/dev/difficulty-and-rank.md`, `docs/dev/death-and-scoring.md`, the client
-  difficulty notes.
+  difficulty notes, `docs/client/bestiary.md` (`tender`'s `pts`, if it changed) and `docs/client/preview-build.md`
+  (its extend, lives and points lines — 20,000 / 90,000 / 160,000 / every 70,000, the lives per preset).
 
 ### R6-01.B5 — The extra modes: the caravan clock and the boss-rush delays
 
@@ -401,13 +433,15 @@ item done.
   - the `PINNED` tables of `test/integration/presentation-fingerprint.test.ts`,
     `test/integration/content-db-fingerprint.test.ts` and `packages/shell/test/frame-fingerprint.test.ts`
     (FINGERPRINTS — regenerated by the push script in step 3, never edited by hand).
-- **Steps:**
+- **Steps** (one agent turn: B5 is not a lane worktree, so its commit is pushed as soon as its tests pass, and
+  `R6-01.B5.RV` reviews the pushed commit — README's review loop; a fix is a new push, through the same script when
+  it changes what a fingerprint pins):
   1. Your own worktree from `origin/master` (common rule 1 — B5 is not a lane worktree), then
      `pnpm install --frozen-lockfile --prefer-offline && pnpm assets`.
   2. Edit; run the tests below; make **one** commit with explicit paths (sources only):
      `feat(R6-01): retime the extra modes`, the body listing each changed value and "R6-01 balance: extra modes
-     (docs/v2-run/balance-report.md)"; no Co-Authored-By line. Review (`R6-01.B5.RV`) to zero.
-  3. Push under the land lock (README rule 6): write the script below to `/home/sites/shmup-cup-run/R6-01.B5-push.sh`,
+     (docs/v2-run/balance-report.md)"; no Co-Authored-By line.
+  3. Push under the land lock (README rule 6), right after step 2: write the script below to `/home/sites/shmup-cup-run/R6-01.B5-push.sh`,
      then run `flock -w 5400 /tmp/shmup-cup-land.lock bash /home/sites/shmup-cup-run/R6-01.B5-push.sh` from your
      worktree (several minutes: a shell timeout of 3600000, or the background with a log):
      ```bash
@@ -436,7 +470,8 @@ item done.
   `extra.caravan` walk of the presentation fingerprint and `scenes-extra-modes.test.ts`); the presentation fingerprint
   moves only in segments that show the caravan (its clock or its hint) or the boss rush, the content-DB fingerprint
   only in its strings and stage digests; the shell frame fingerprint unchanged (its scenes show neither — if its
-  `PINNED` table moved, stop and report).
+  `PINNED` table moved, stop and report). This narrow scope holds because B5 adds **no sprite name** (a clock, a
+  string and delays), so no sprite id shifts (`wave-07.md`: a new sprite name shifts every later sprite id).
 - **Token:** SCENES, STRINGS (⇒ FINGERPRINTS); the land lock for the push.
 - **Traps:** ticks never scale; a text change must fit its panel in all three languages (`ui-layout-frame.test.ts`
   under `packages/core/test/ui`); likely a no-op if the report keeps 3 min; never `pnpm golden:update` (B5 holds no
@@ -449,7 +484,9 @@ item done.
   density fields (and, after a dry run, a `golden-zone-<x>.test.ts` expectation under rule 5), every change
   traceable to the report (or an owner override), the contract green.
 - `R6-01.B4.RV`: the tables equal content, the re-bless reason, nothing outside the global section changed.
-- `R6-01.B5.RV`: the clock and its strings agree; the scope; the fingerprints moved only where the change shows.
+- `R6-01.B5.RV` (on B5's pushed commit, `git show <its SHA>`): the clock and its strings agree; the scope; the
+  fingerprints moved only where the change shows. A finding goes to a fix agent (`R6-01.B5.FIXn`) whose fix is a new
+  push (through B5's push script when it changes what a fingerprint pins).
 - `R6-01.RV`: the step review over B1 … B5 — the report's proposals all applied or explicitly declined.
 - Every loop: a new reviewer each round, until zero findings, nits included.
 
@@ -471,7 +508,10 @@ item done.
 - **Files (only these):** `docs/dev/difficulty-and-rank.md`, `docs/dev/death-and-scoring.md`, `docs/client/controls.md`
   and `docs/client/README.md` (their difficulty notes only), `docs/client/extra-modes-and-replays.md` (the caravan,
   the boss rush), `docs/dev/zone-a-and-playtest.md`, `docs/dev/zones-b-and-c.md`, `docs/dev/zones-d-and-e.md`,
-  `docs/dev/zones-f-and-g.md` and `docs/dev/zones-h-and-i.md` (the B3x score and density notes only).
+  `docs/dev/zones-f-and-g.md` and `docs/dev/zones-h-and-i.md` (the B3x score and density notes only),
+  `docs/client/bestiary.md` (the `pts` values B3a … B3i changed — its `N HP · M pts` cells; "Numbers are the
+  shipped values on NORMAL") and `docs/client/preview-build.md` (the extend, lives and points lines B3x / B4
+  changed — e.g. "20,000, 90,000, 160,000 …", "EASY five, ARCADE two" — not its version lines).
 - **Tests:** none.
 
 ### W14.DOCS-RV — Review of the docs item
@@ -485,6 +525,7 @@ item done.
    ```bash
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/release-audit.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/playtest/boss-rush.test.ts
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts test/integration/bonus-stage-runtime.test.ts test/golden/v2-port
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-a-recovery.test.ts test/playtest/zone-b-recovery.test.ts test/playtest/zone-c-recovery.test.ts test/playtest/zone-d-recovery.test.ts test/playtest/zone-e-recovery.test.ts test/playtest/zone-f-recovery.test.ts test/playtest/zone-g-recovery.test.ts test/playtest/zone-h-recovery.test.ts test/playtest/zone-i-recovery.test.ts
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/config packages/core/test/rank packages/core/test/scoring
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/determinism
    ```
