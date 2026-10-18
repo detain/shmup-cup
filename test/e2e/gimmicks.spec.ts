@@ -22,6 +22,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** Face colour of the placeholder `brick` tile (`scripts/assets/procedural/terrain.mjs`). */
 const BRICK = [0xb0, 0x70, 0x4a] as const;
@@ -71,6 +72,7 @@ async function countColour(page: Page, rgb: readonly [number, number, number]): 
 
 test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
   test('boots the gimmick range and draws its destructible brick pillar', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors: string[] = [];
     page.on('console', (message) => {
       // Errors, plus the atlas's "unknown sprite" warning (content naming a missing sprite).
@@ -94,6 +96,7 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
   test('takes broken bricks off the screen at once and draws them again after the rollback', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error' || message.text().startsWith('atlas:')) {

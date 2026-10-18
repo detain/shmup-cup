@@ -186,7 +186,11 @@ test.describe('ship select (web build)', () => {
     const canvas = page.locator('#game');
     await waitFrames(page, 4);
     await tap(page, 'ArrowDown'); // MANTA: its picture on the panel
-    await expect.poll(async () => countColour(page, MANTA_CANOPY)).toBeGreaterThan(0);
+    // One poll is a 1280×720 capture decoded and scanned in Node: on a loaded 4-core runner at
+    // 640×360 a single one can outlast `expect.poll`'s default 5 s, so give it the time of a few.
+    await expect
+      .poll(async () => countColour(page, MANTA_CANOPY), { timeout: 30_000 })
+      .toBeGreaterThan(0);
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await expect.poll(async () => (await view(page)).state, { timeout: 10_000 }).toBe('alive');

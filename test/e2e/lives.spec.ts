@@ -9,19 +9,24 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy, uiPx } from './frame-pixels.js';
 
 /** KESTREL hull colour (`ships/kestrel` and `hud/life` palette `h`, #c8d0e0). */
 const HULL = [0xc8, 0xd0, 0xe0] as const;
 /** `GAME OVER`'s colour in the flight HUD (0xf85858) — nothing else in the top bar uses it. */
 const GAME_OVER_RED = [0xf8, 0x58, 0x58] as const;
 /**
- * Frame row of the stock icons' top: the flight scene's `LIVES_Y`, one pixel into the bottom HUD
- * bar (`HUD_BOTTOM_Y + 1` — 209 at 384×216).
+ * Frame row of the stock icons' top: the flight scene's `LIVES_Y`, one pixel at the art's scale
+ * into the bottom HUD bar (`HUD_BOTTOM_Y + uiPx(1)` — 209 at 384×216, 350 at 640×360).
  */
-const LIVES_Y = HUD_BOTTOM_Y + 1;
+const LIVES_Y = HUD_BOTTOM_Y + uiPx(1);
 /** Rows of each stock icon the scan reads, from {@link LIVES_Y} (the `hud/life` art's own). */
-const LIFE_ROWS = 5;
+const LIFE_ROWS = uiPx(5);
+/**
+ * The stock icons' columns: the first at the flight scene's `LIVES_X`, then one every
+ * `LIVES_STEP`, each `hud/life` icon 8 px wide in the v1 art (4, 10 and 8 at the art's scale).
+ */
+const LIFE = { x: uiPx(4), step: uiPx(10), w: uiPx(8) } as const;
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -48,8 +53,8 @@ function waitFrames(page: Page, frames: number): Promise<void> {
 /** What one capture of the HUD and playfield shows. */
 interface LifeCapture {
   /**
-   * Stock icons drawn in the bottom bar (bands of 10 px from x 4, rows `LIVES_Y` … `LIVES_Y + 4` —
-   * 209 … 213 today).
+   * Stock icons drawn in the bottom bar (one band per {@link LIFE} column, rows `LIVES_Y` …
+   * `LIVES_Y + LIFE_ROWS − 1`).
    */
   readonly stock: number;
   /** `GAME OVER`-red pixels in the top bar (rows 0 … `PLAYFIELD_Y − 1` — 0 … 7 today). */
@@ -78,7 +83,8 @@ async function captureLives(page: Page): Promise<LifeCapture> {
   for (let icon = 0; icon < 8; icon++) {
     let found = false;
     for (let fy = LIVES_Y; fy < LIVES_Y + LIFE_ROWS && !found; fy++) {
-      for (let fx = 4 + icon * 10; fx < 12 + icon * 10 && !found; fx++) found = is(fx, fy, HULL);
+      const x0 = LIFE.x + icon * LIFE.step;
+      for (let fx = x0; fx < x0 + LIFE.w && !found; fx++) found = is(fx, fy, HULL);
     }
     if (found) stock++;
   }

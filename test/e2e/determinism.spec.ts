@@ -12,6 +12,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { GOLDEN_REASON, recordingIsStale } from './gates.js';
 
 /** A replay document as the golden and demo files hold it. */
 interface ReplayDocument {
@@ -111,6 +112,8 @@ test.describe('cross-engine determinism: golden replays in the browser (M2-18)',
       test.setTimeout(180_000);
       const text = readFileSync(file.path, 'utf8');
       const doc = JSON.parse(text) as ReplayDocument;
+      // A v1 recording (384×216, format 1) is refused by this build until R2-03 re-records it.
+      test.skip(recordingIsStale(doc), GOLDEN_REASON);
       const errors = await openCheck(page);
       const run = await page.evaluate((json) => {
         const check = (

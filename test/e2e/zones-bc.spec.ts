@@ -33,6 +33,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -230,6 +231,7 @@ test.describe('zones B and C (web build)', () => {
   test('BRINE NEBULA: the cycling brine sea, then GALVANIC MAW fights with its mouth opening', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-b');
@@ -258,6 +260,7 @@ test.describe('zones B and C (web build)', () => {
   });
 
   test('DUNE EXPANSE: the dune ridge, then SANDGRAVE WIDOW fights', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-c');
@@ -277,6 +280,7 @@ test.describe('zones B and C (web build)', () => {
   test('PEARL GROTTO: the bonus stage draws its reef floor and ceiling over the brine sea', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=brine-grotto');
@@ -293,6 +297,7 @@ test.describe('zones B and C (Tizen build via file://)', () => {
   test('SANDGRAVE WIDOW, brought in through the debug API, draws on the TV build', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');

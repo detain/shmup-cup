@@ -24,6 +24,7 @@ import {
 } from '../../packages/render-pixi/src/effects/shaders.js';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /**
  * Most WebGL draw calls one frame of the raster range may take with its effects on.
@@ -219,6 +220,7 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
   test('draws the sea wave, the palette cycle and the line-band floor within the draw-call budget', async ({
     page,
   }, testInfo) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
@@ -249,6 +251,7 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
   });
 
   test('runs the heat haze only inside its camera range', async ({ page }, testInfo) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');

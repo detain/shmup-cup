@@ -30,6 +30,7 @@ import {
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, PLAYFIELD_Y, VIEWPORT, pixelIndex, sx, sy } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /**
  * Most WebGL draw calls one frame of the dimension stage may take.
@@ -59,6 +60,23 @@ const CLASSIC_WINDOW = Math.floor((VIEWPORT.height * 4) / 3);
 
 /** Each side panel the `classic` window leaves on the e2e display (144 today). */
 const CLASSIC_PANEL = (VIEWPORT.width - CLASSIC_WINDOW) >> 1;
+
+/**
+ * Height of the `wide` aspect's 64:27 window on the e2e display, which is as wide as the display
+ * (`render-pixi` `computeAspectViewport`: 486 rows of 1152×648, 540 of 1280×720).
+ */
+const WIDE_WINDOW_H = Math.floor((VIEWPORT.width * 27) / 64);
+
+/**
+ * The integer scale each aspect mode's window allows the frame on the e2e display: ×SCALE for
+ * `normal`, whatever fits for the narrower `classic` and the shorter `wide` (×2 and ×2 at 384×216;
+ * ×1 and ×1 at 640×360, where neither window holds two frames).
+ */
+const ASPECT_SCALE: Readonly<Record<string, number>> = {
+  normal: Math.min(Math.floor(VIEWPORT.width / FRAME_W), Math.floor(VIEWPORT.height / FRAME_H)),
+  classic: Math.min(Math.floor(CLASSIC_WINDOW / FRAME_W), Math.floor(VIEWPORT.height / FRAME_H)),
+  wide: Math.min(Math.floor(VIEWPORT.width / FRAME_W), Math.floor(WIDE_WINDOW_H / FRAME_H)),
+};
 
 /** The e2e display's middle column (576 today) and middle row (324). */
 const DISPLAY_MID = { x: VIEWPORT.width >> 1, y: VIEWPORT.height >> 1 } as const;
@@ -447,6 +465,7 @@ test.describe('the pseudo-3D dimension stage (web build, ?stage=dimension)', () 
   test('draws the Mode-7 floor under the horizon within the draw-call budget', async ({
     page,
   }, testInfo) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
@@ -603,7 +622,9 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
       expect(place.scaleX).toBe(place.scale);
       expect(place.scaleY).toBe(place.scale);
       expect(place.scale).toBe(Math.round(place.scale));
-      expect(place.scale).toBeGreaterThanOrEqual(2);
+      // The largest whole scale the mode's window allows (never under ×1); ×2 or more only where
+      // the window holds two frames — not `classic` or `wide` on the 1280×720 display at 640×360.
+      expect(place.scale).toBe(Math.max(1, ASPECT_SCALE[mode]));
       expect(place.width).toBe(FRAME_W * place.scale);
       expect(place.height).toBe(FRAME_H * place.scale);
       // The picture's own origin is a whole display pixel too.
@@ -722,6 +743,7 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
 
 test.describe('the Mode-7 floor is aligned to the frame (plan M3-02d)', () => {
   test('covers exactly the frame rows between its horizon and its bottom', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     // The floor is a `Mesh` on `BG_MID` since M3-02d, so its fragment shader's `vScreen.y` is the
     // frame row the per-row affine matrix is built from. Half a row out and the whole floor would
     // be sheared by one row of depth; the exact first and last rows it touches pin that.

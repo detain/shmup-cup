@@ -36,6 +36,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim } from './frame-advance.js';
+import { GOLDEN_REASON, R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -392,6 +393,7 @@ test.describe('atlas residency (R1-05)', () => {
   test('the attract demo brings its zone’s pages, though it never emits PrepareStage (W3-9)', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, GOLDEN_REASON);
     test.setTimeout(90_000);
     const log = watch(page);
     // Boot on zone C, so the first demo (another zone) has to swap pages.

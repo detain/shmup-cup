@@ -10,7 +10,16 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import {
+  FRAME_H,
+  FRAME_W,
+  HUD_BOTTOM_Y,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+  uiPx,
+} from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -21,6 +30,12 @@ const TIZEN_INDEX = pathToFileURL(
 const RING = [0x70, 0xe8, 0xff] as const;
 /** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0). */
 const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
+
+/**
+ * The fresh Force Field's ellipse at the art's scale: 30×24 in the v1 art, ×1.5 rounded up in the
+ * interim art since R2-01 (45×36) — the most a box around its ring pixels can measure.
+ */
+const RING_BOX = { w: uiPx(30), h: uiPx(24) } as const;
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -135,16 +150,16 @@ test.describe('Force Field (web build)', () => {
     for (let poll = 0; poll < 60 && found === null; poll++) {
       await waitFrames(page, 10);
       const pixels = await findColours(page, [RING, KESTREL_HULL]);
-      // The 30×24 ellipse's ring: dozens of pixels (fewer where Options overlap it).
+      // The ellipse's ring: dozens of pixels (fewer where Options overlap it).
       if (pixels[0].count >= 20 && pixels[1].count > 0) found = pixels;
     }
     expect(found, 'no Force Field ring within 600 frames').not.toBeNull();
     if (found === null) return;
     const [ring, hull] = found;
     expect(ring.hud).toBe(0);
-    // Around the ship: the ring's box (at most 30×24) contains the hull's.
-    expect(ring.maxX - ring.minX).toBeLessThanOrEqual(30);
-    expect(ring.maxY - ring.minY).toBeLessThanOrEqual(24);
+    // Around the ship: the ring's box (at most the ellipse's) contains the hull's.
+    expect(ring.maxX - ring.minX).toBeLessThanOrEqual(RING_BOX.w);
+    expect(ring.maxY - ring.minY).toBeLessThanOrEqual(RING_BOX.h);
     expect(ring.minX).toBeLessThanOrEqual(hull.minX);
     expect(ring.maxX).toBeGreaterThanOrEqual(hull.maxX);
     expect(ring.minY).toBeLessThanOrEqual(hull.minY);

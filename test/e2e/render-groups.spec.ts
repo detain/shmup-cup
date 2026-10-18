@@ -29,6 +29,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { R2_03_PENDING } from './gates.js';
 
 /** Layers M3-02e makes render groups (`render-pixi`'s `RENDER_GROUP_LAYERS`). */
 const RENDER_GROUP_COUNT = 11;
@@ -208,7 +209,12 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // - `TERRAIN` under the parallax bands,
     // - `PLAYER` under them as well (the ship behind the background),
     // - `HUD` under the whole world container (the bars behind the stage).
-    for (const layer of [2, 6, 11]) {
+    //
+    // The `HUD` control needs the stage to draw under a bar. Zone A's v1-scale terrain and bands
+    // (8-px tiles, v1 rows) end above the 640×360 frame's bottom bar, so the bars hide nothing and
+    // moving the `HUD` changes no pixel: that control waits for R2-02's port and R2-03's
+    // re-measure (`gates.ts`, CONTENT_REASON).
+    for (const layer of R2_03_PENDING ? [2, 6] : [2, 6, 11]) {
       const restore = await page.evaluate((id) => {
         const { layers } = (window as unknown as DebugWindow).__shmupDebug.renderer;
         const target = layers.layers[id];
@@ -238,6 +244,9 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
   });
 
   test('every busy layer group really contributes pixels of its own', async ({ page }) => {
+    // Nine hide / settle / capture rounds: ~25 s on a CI runner at 384×216, over the 60 s default
+    // at 640×360 (SwiftShader rasterises the bigger frame and its ×2 picture in software).
+    test.setTimeout(120_000);
     const errors = collectErrors(page);
     await open(page, { id: 'zone-a', url: './?scene=flight&stage=zone-a', tick: 240 });
     const full = await capture(page);
@@ -306,6 +315,10 @@ test.describe('the REB figure the owner reads on the TV (M3-02e)', () => {
   test('is 0 or very near it while the game plays, and the overlay is the only thing that moves it', async ({
     page,
   }, testInfo) => {
+    // Four 180-frame measurements of a running game: ~38 s on a CI runner at 384×216, over the
+    // 60 s default at 640×360 (SwiftShader's frame rate there is about half; ~95 s on four pinned
+    // cores of a loaded box).
+    test.setTimeout(180_000);
     const errors = collectErrors(page);
     // Played, not frozen: this is the figure read while the game runs, on the busiest shipped
     // zone, with every binding toggling `visible` on every frame.

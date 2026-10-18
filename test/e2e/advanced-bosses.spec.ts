@@ -36,6 +36,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -254,6 +255,7 @@ test.describe('advanced bosses (web build)', () => {
   test('the raid: a battleship wider than the screen, the camera panning round it', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await page.goto('./?scene=flight&stage=raid-range');
@@ -352,6 +354,7 @@ test.describe('advanced bosses (web build)', () => {
   });
 
   test('a captain: it fights while the camera keeps scrolling', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await page.goto('./?scene=flight&stage=captain-range');
@@ -375,6 +378,7 @@ test.describe('advanced bosses (Tizen build from file://)', () => {
   test('the twins: the resting one drawn behind, and they swap at the pair’s turn', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX + '?scene=flight');

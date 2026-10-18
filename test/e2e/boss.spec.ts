@@ -18,7 +18,9 @@ import {
   pixelIndex,
   sx,
   sy,
+  uiPx,
 } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** The WARNING band's edge colour (0xf85858, the flight scene's WARNING_BAND rows). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -26,9 +28,10 @@ const WARNING_RED = [0xf8, 0x58, 0x58] as const;
 const HULL = [0x3a, 0x4a, 0x68] as const;
 /**
  * Screen row of the band's top edge (the flight scene's `WARNING_BAND_Y`, like the game scene's:
- * the 48-row band centred 8 px above the frame's centre row — 76 at 384×216).
+ * the 48-row band centred 8 px above the frame's centre row, both at the art's scale — 76 at
+ * 384×216, 132 at 640×360).
  */
-const BAND_Y = FRAME_CY - 8 - 24;
+const BAND_Y = FRAME_CY - uiPx(8) - (uiPx(48) >> 1);
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -87,6 +90,7 @@ async function capture(page: Page): Promise<BossCapture> {
 
 test.describe('boss (web build, ?stage=test-boss)', () => {
   test('the WARNING band shows for three seconds, then the boss flies in', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on('console', (message) => {

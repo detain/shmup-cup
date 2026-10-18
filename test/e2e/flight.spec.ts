@@ -10,6 +10,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
+import { freezeSim, stepTo } from './frame-advance.js';
 import { HUD_BOTTOM_Y, PLAYFIELD_Y, SCALE } from './frame-pixels.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -91,6 +92,24 @@ async function hold(page: Page, key: string, frames: number): Promise<void> {
   await waitFrames(page, 5);
 }
 
+/**
+ * Holds a key for an exact number of ticks of a frozen sim ({@link freezeSim}), then releases it
+ * and runs a few more ticks, so the ship has stopped and the canvas shows it.
+ *
+ * @param page - The page (frozen).
+ * @param key - Playwright key name.
+ * @param ticks - Ticks to hold it.
+ */
+async function holdTicks(page: Page, key: string, ticks: number): Promise<void> {
+  const now = await page.evaluate(
+    () => (window as unknown as { __shmupDebug: { worldTick: number } }).__shmupDebug.worldTick,
+  );
+  await page.keyboard.down(key);
+  await stepTo(page, now + ticks);
+  await page.keyboard.up(key);
+  await stepTo(page, now + ticks + 5);
+}
+
 test.describe('free flight (web build)', () => {
   test('arrow keys move the KESTREL; without input it stays put', async ({ page }) => {
     test.setTimeout(90_000);
@@ -127,31 +146,35 @@ test.describe('free flight (web build)', () => {
   test('holding a direction stops the ship at the playfield margin, clear of the HUD', async ({
     page,
   }) => {
-    // ~400 rAF frames and five canvas captures: ~55 s on a CI runner's SwiftShader, over the
-    // 60 s default under load (the M1-10/M1-11 CI flakes).
+    // Five canvas captures: ~55 s on a CI runner's SwiftShader when this counted rAF frames, over
+    // the 60 s default under load (the M1-10/M1-11 CI flakes).
     test.setTimeout(120_000);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('./?scene=flight');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running');
-    await waitFrames(page, 60);
+    // Exact ticks, not rAF frames (conventions: a capture compared with another a known time
+    // later): held for frames, the ship could still be a tick short of the margin under load and
+    // read 0.9 px "unpinned" (a CI flake at 640×360).
+    await freezeSim(page);
+    await stepTo(page, 60); // the 40-tick fly-in is over
 
-    // Left: 64 px from the fly-in end to the 8 px margin at 1.5 px/tick ≈ 38 ticks; hold 100.
-    await hold(page, 'ArrowLeft', 100);
+    // Left: 64 px from the fly-in end to the 8 px margin at 1.5 px/tick ≈ 43 ticks; hold 100.
+    await holdTicks(page, 'ArrowLeft', 100);
     const left = await shipCentre(page);
-    await hold(page, 'ArrowLeft', 30);
+    await holdTicks(page, 'ArrowLeft', 30);
     const stillLeft = await shipCentre(page);
     expect(left.pixels).toBeGreaterThan(20);
     expect(Math.abs(stillLeft.x - left.x)).toBeLessThan(0.5); // pinned
     expect(left.x).toBeLessThan(16); // the hull sits around the ship centre (x = 8)
 
-    // Up: from mid-playfield (100) to the 6 px top margin ≈ 63 ticks; hold 160 frames (enough
-    // even if the headless compositor ran rAF faster than the 60 Hz tick).
-    await hold(page, 'ArrowUp', 160);
+    // Up: from mid-playfield to the 6 px top margin at 1.5 px/tick (≈ 108 ticks from the 168 of
+    // 640×360, ≈ 63 from the 100 of 384×216); hold 160.
+    await holdTicks(page, 'ArrowUp', 160);
     // Rows 0 … HUD_BOTTOM_Y − 1: the top HUD bar included, the bottom bar's stock icons (same
     // hull colour) left out.
     const top = await shipCentre(page, [0, HUD_BOTTOM_Y]);
-    await hold(page, 'ArrowUp', 30);
+    await holdTicks(page, 'ArrowUp', 30);
     const stillTop = await shipCentre(page, [0, HUD_BOTTOM_Y]);
     expect(Math.abs(stillTop.y - top.y)).toBeLessThan(0.5); // pinned
     // Screen y of the ship centre = PLAYFIELD_Y + margin 6 (14 today); no hull pixel in the HUD

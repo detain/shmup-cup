@@ -24,6 +24,7 @@ import {
   pixelIndex,
   sx,
   sy,
+  uiPx,
 } from '../e2e/frame-pixels.js';
 
 /** Mirror export → the `@shmup/core` export it must equal. */
@@ -180,6 +181,11 @@ function drawn(list: core.DrawList, op: core.DrawOp, color: number): Drawn[] {
 describe('test/e2e/frame-pixels.ts: the boss HP bar of advanced-bosses.spec.ts', () => {
   it('derives the art scale core lays the HUD out with (R2-01: ART_SCALE)', () => {
     expect(UI_ART_SCALE).toBe(core.ART_SCALE);
+  });
+
+  it('scales a UI length the way core/ui uiPx does', () => {
+    for (const v of [0, 1, 2, 4, 5, 8, 9, 10, 20, 24, 30, 48])
+      expect(uiPx(v), String(v)).toBe(core.uiPx(v));
   });
 
   it('places the BOSS label and the bar where core/ui draws them', () => {

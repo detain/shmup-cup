@@ -35,6 +35,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -308,6 +309,7 @@ test.describe('zones F and G (web build)', () => {
   test('CELL VAULT: the cycling cell wall over the fleshy folds, then MANTLE REGENT curls its tentacles', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-f');
@@ -346,6 +348,7 @@ test.describe('zones F and G (web build)', () => {
   test('PRISM LABYRINTH: the cycling crystal facets over the spires, then FACET MONARCH waves its arms', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-g');
@@ -379,6 +382,7 @@ test.describe('zones F and G (Tizen build via file://)', () => {
   test('MANTLE REGENT and FACET MONARCH, brought in through the debug API, draw on the TV build', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');

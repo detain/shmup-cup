@@ -5,7 +5,8 @@
  * - a failing atlas page request ends on the **boot error screen** (overlay canvas, state
  *   `error`, the failure logged) instead of a black screen;
  * - a window that is not a multiple of the frame gets the largest integer scale, centred on the
- *   letterbox colour; resizing the window re-fits the frame (×2 → ×5 at today's 384×216);
+ *   letterbox colour; resizing the window re-fits the frame (1920×1080 is a whole multiple of
+ *   the frame: ×5 of 384×216, ×3 of 640×360 since R2-01 — no letterbox, HUD bars in its corners);
  * - the frame loop runs: captures a few frames apart differ.
  */
 import { expect, test, type Page } from '@playwright/test';
@@ -181,7 +182,7 @@ test.describe('integer scaling (web build)', () => {
     expect(rgb(shot, right - 1, bottom - 1)).toEqual([...HUD_BAR]); // the frame's last pixel
   });
 
-  test('resizing the window re-fits the frame (×2 → ×5 today, no letterbox at 1920×1080)', async ({
+  test('resizing the window re-fits the frame (a whole multiple at 1920×1080: no letterbox)', async ({
     page,
   }) => {
     await openRunning(page);
@@ -189,6 +190,8 @@ test.describe('integer scaling (web build)', () => {
     await waitFrames(page, 5);
     const shot = await shoot(page, '#game');
     expect([shot.width, shot.height]).toEqual([1920, 1080]);
+    // The picture fills the window: each corner is a HUD bar, no letterbox and no HUD text there.
+    expect([1920 % FRAME_W, 1080 % FRAME_H, 1920 / FRAME_W]).toEqual([0, 0, 1080 / FRAME_H]);
     for (const [x, y] of [
       [0, 0],
       [1919, 0],

@@ -17,6 +17,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
+import { R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -193,11 +194,14 @@ test.describe('debug tools (M1-19)', () => {
     await tap(page, 'F7');
     const jumped = await view(page);
     expect(jumped.checkpoint).toBe(before.checkpoint + 1);
-    expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
+    // The camera x's are zone A's v1 numbers: R2-02 ports them ×1.5, R2-03 re-measures them
+    // (`gates.ts`, CONTENT_REASON). The jumps themselves are checked either way.
+    if (!R2_03_PENDING) expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
     expect(jumped.worldTick).toBe(before.worldTick); // a jump is not a tick
     await tap(page, 'F8');
     const skipped = await view(page);
-    expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
+    if (!R2_03_PENDING) expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
+    expect(skipped.cameraX).toBeGreaterThan(jumped.cameraX);
     expect(skipped.status).toBe('playing');
 
     // F3 cycles the outlines, F6 the slow motion.

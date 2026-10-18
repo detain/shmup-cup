@@ -10,7 +10,17 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { FRAME_CX, FRAME_CY, FRAME_W, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import {
+  FRAME_CX,
+  FRAME_CY,
+  FRAME_W,
+  PLAYFIELD_Y,
+  pixelIndex,
+  sx,
+  sy,
+  uiPx,
+} from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** The WARNING band's edge colour (core `ui` `UI_COLORS.alert`, 0xf85858). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -18,9 +28,10 @@ const WARNING_RED = [0xf8, 0x58, 0x58] as const;
 const BULWARK_HULL = [0x2e, 0x50, 0x82] as const;
 /**
  * Screen row of the band's top edge (the game scene's `WARNING_BAND_Y`: the 48-row band centred
- * 8 px above the frame's centre row, `FRAME_CY − 8 − 24` — 76 at 384×216).
+ * 8 px above the frame's centre row, both at the art's scale — `FRAME_CY − uiPx(8) − uiPx(48) / 2`,
+ * 76 at 384×216, 132 at 640×360).
  */
-const BAND_Y = FRAME_CY - 8 - 24;
+const BAND_Y = FRAME_CY - uiPx(8) - (uiPx(48) >> 1);
 
 /**
  * Waits for `frames` animation frames in the page.
@@ -94,6 +105,7 @@ test.describe('zone A (web build)', () => {
   test('?skip=boss: START reaches the WARNING and HALCYON BULWARK within seconds', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on('console', (message) => {

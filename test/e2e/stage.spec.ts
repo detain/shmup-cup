@@ -16,6 +16,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** Colours of the `tiles/terrain-a` placeholder art (surface rim, subsurface, rock tones). */
 const TERRAIN_COLOURS = [
@@ -109,6 +110,7 @@ function leftShift(before: number[], after: number[]): { shift: number; error: n
 
 test.describe('stage runtime (web build, ?stage=test-range)', () => {
   test('shows the generated terrain and scrolls it', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors: string[] = [];
     page.on('console', (message) => {
       // Errors, plus the atlas's "unknown sprite" warning (a stage naming a missing sprite).

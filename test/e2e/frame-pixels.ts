@@ -113,12 +113,14 @@ const FONT_FILE_CELL_W = 6;
 export const UI_ART_SCALE: number = GLYPH_W / FONT_FILE_CELL_W;
 
 /**
- * A HUD length at the art's scale, as `core/ui` `uiPx` computes it: `⌈v · UI_ART_SCALE⌉`.
+ * A UI or art length at the art's scale, as `core/ui` `uiPx` computes it: `⌈v · UI_ART_SCALE⌉`
+ * (the v1 length until R2-01, ×1.5 rounded up after). For what core and the shell lay out with
+ * `uiPx` — the WARNING band, the HUD's gaps and icons — and for the size of a sprite's interim art.
  *
  * @param v - The v1 length in pixels.
  * @returns It at the art's scale.
  */
-function uiPx(v: number): number {
+export function uiPx(v: number): number {
   return Math.ceil(v * UI_ART_SCALE);
 }
 

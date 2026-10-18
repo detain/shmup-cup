@@ -163,6 +163,14 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
     const canvas = page.locator('#game');
     await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    // God mode: this test is about whose input moves which ship, so neither may be shot down. A
+    // loaded machine runs more ticks per frame, deep enough into zone A for its enemies and terrain
+    // to kill both ships, and a dead ship's screen x drifts with the camera (seen at 640×360).
+    await page.evaluate(() => {
+      (
+        window as unknown as { __shmupDebug: { flags: { godMode: boolean } } }
+      ).__shmupDebug.flags.godMode = true;
+    });
     await waitFrames(page, 10);
     expect((await view(page)).seats).toBe(1);
 

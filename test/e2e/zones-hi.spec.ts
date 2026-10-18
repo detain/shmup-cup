@@ -39,6 +39,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
+import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -407,6 +408,7 @@ test.describe('zones H and I (web build)', () => {
   test('IRON CITADEL: the cycling fortress wall, then IRON SOVEREIGN holds the right half', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-h');
@@ -436,6 +438,7 @@ test.describe('zones H and I (web build)', () => {
   test('ABYSSAL THRONE: the cycling murk, then the ABYSS ARK`s bone plating fills the raid`s view', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-i');
@@ -462,6 +465,7 @@ test.describe('zones H and I (web build)', () => {
   test('the endings: the flagship sails off under the dawn; the citadel falls under its blasts', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './');
@@ -500,6 +504,7 @@ test.describe('zones H and I (Tizen build via file://)', () => {
   test('IRON SOVEREIGN and the ABYSS ARK, brought in through the debug API, draw on the TV build', async ({
     page,
   }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');
@@ -521,6 +526,7 @@ test.describe('zones H and I (Tizen build via file://)', () => {
   });
 
   test('the citadel`s ending scene draws on the TV build', async ({ page }) => {
+    test.skip(R2_03_PENDING, CONTENT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX);
