@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
+import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -313,7 +313,7 @@ test.describe('campaign run (web build)', () => {
   test('?stage=bonus-range: the digit entrance flies the ship into the vault, its items drawn', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
+    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await startGame(page, './?stage=bonus-range');

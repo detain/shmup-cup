@@ -17,7 +17,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { R2_03_PENDING } from './gates.js';
+import { PORT_REASON, PORT_UNMEASURED, assertionsGated } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -194,13 +194,20 @@ test.describe('debug tools (M1-19)', () => {
     await tap(page, 'F7');
     const jumped = await view(page);
     expect(jumped.checkpoint).toBe(before.checkpoint + 1);
-    // The camera x's are zone A's v1 numbers: R2-02 ports them ×1.5, R2-03 re-measures them
-    // (`gates.ts`, CONTENT_REASON). The jumps themselves are checked either way.
-    if (!R2_03_PENDING) expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
+    // The camera x's are zone A's v1 numbers, right at 640×360 on the v1 content: R2-02 ports
+    // them ×1.5, R2-03 re-measures them (`gates.ts`, PORT_REASON). The jumps themselves are
+    // checked either way.
+    const cameraGated = assertionsGated(
+      test.info(),
+      PORT_UNMEASURED,
+      'the F7 / F8 camera x’s (zone A’s checkpoint and WARNING x)',
+      PORT_REASON,
+    );
+    if (!cameraGated) expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
     expect(jumped.worldTick).toBe(before.worldTick); // a jump is not a tick
     await tap(page, 'F8');
     const skipped = await view(page);
-    if (!R2_03_PENDING) expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
+    if (!cameraGated) expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
     expect(skipped.cameraX).toBeGreaterThan(jumped.cameraX);
     expect(skipped.status).toBe('playing');
 

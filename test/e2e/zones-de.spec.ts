@@ -36,7 +36,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
-import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
+import { CONTENT_REASON, PORT_REASON, PORT_UNMEASURED, R2_03_PENDING } from './gates.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -312,7 +312,7 @@ test.describe('zones D and E (web build)', () => {
   test('TEMPEST RIDGE: the cycling storm clouds over the jagged ridge, then SQUALL STEED opens its chest', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
+    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, './?scene=flight&stage=zone-e');
@@ -350,7 +350,7 @@ test.describe('zones D and E (Tizen build via file://)', () => {
   test('CINDER BASTION and SQUALL STEED, brought in through the debug API, draw on the TV build', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
+    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await open(page, TIZEN_INDEX + '?scene=flight');

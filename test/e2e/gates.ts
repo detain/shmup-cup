@@ -1,38 +1,52 @@
 /**
- * The browser tests' gate of v2's R2-01 (owner decisions W4-12 and W5-6): from R2-01's flip of the
+ * The browser tests' gates of v2's R2-01 (owner decisions W4-12 and W5-6): from R2-01's flip of the
  * frame until R2-03, some specs cannot pass, and they skip with a reason instead of turning the e2e
  * shards red.
  *
  * - **Golden-based specs** play the committed golden replays (`test/golden/*.replay.json`) or
  *   attract demos (`content/demos/*.replay.json`). Those are v1 recordings: 384×216, replay format
  *   1. The build refuses them (`ReplayVersionError`) and the attract loop skips them (W4-9). They
- *   skip with {@link GOLDEN_REASON}; `determinism.spec.ts` skips each stale file on its own
- *   ({@link recordingIsStale}).
- * - **Content-bound specs** sample rows, columns, areas or timings of the shipped content, or play
- *   a shipped zone. That content is v1-scale until R2-02 ports it ×1.5, and R2-03 re-measures the
- *   specs against the ported content. They skip with {@link CONTENT_REASON}.
+ *   skip on {@link R2_03_PENDING} with {@link GOLDEN_REASON}; `determinism.spec.ts` skips each
+ *   stale file on its own ({@link recordingIsStale}).
+ * - **Content-bound specs that fail at 640×360** sample rows, columns or areas the v1-scale content
+ *   does not fill in the new frame (a boss left of the centre, lava and sun rows, brick pillars).
+ *   R2-02 ports the content ×1.5 and R2-03 re-measures them. They skip on {@link R2_03_PENDING}
+ *   with {@link CONTENT_REASON}.
+ * - **Content-bound specs that pass at 640×360** on the v1 content, but hardcode v1-scale content
+ *   numbers (zone A's checkpoint x's, the dimension stage's horizon rows, a 1 px/tick camera) that
+ *   R2-02's port moves. They run until the port, and skip from it until R2-03 re-measures them: on
+ *   {@link PORT_UNMEASURED}, with {@link PORT_REASON}.
  *
- * Both kinds skip while {@link R2_03_PENDING}: a committed recording is still stale. The condition
- * is the twin of `test/golden/stale.ts` (`goldenIsStale`, the Vitest gate of the same recordings),
- * not of the content-port gate (`packages/core/test/helpers/port-pending.ts`). That one clears at
- * R2-02, before R2-03 has re-measured these specs (W5-6). This one clears when R2-03 re-blesses
- * the goldens and re-records the demos (`pnpm golden:update`).
+ * {@link R2_03_PENDING} holds while a committed recording is stale: the twin of
+ * `test/golden/stale.ts` (`goldenIsStale`, the Vitest gate of the same recordings). It clears when
+ * R2-03 re-blesses the goldens and re-records the demos (`pnpm golden:update`), not at R2-02's port
+ * (W5-6). {@link PORT_UNMEASURED} adds the content-port signal of
+ * `packages/core/test/helpers/port-pending.ts` (`CONTENT_PORT_PENDING`, inverted: every shipped
+ * tileset at `TILE_SIZE`), so it holds only from R2-02's port until R2-03 ({@link resolveGates}).
  *
- * **It expires by itself.** Once the frame is no longer v1's and no committed recording is stale,
- * importing this module throws ({@link checkGateExpiry}). Every gated spec and
+ * **They expire by themselves.** Once the frame is no longer v1's and no committed recording is
+ * stale, importing this module throws ({@link checkGateExpiry}). Every gated spec and
  * `test/integration/e2e-gates.test.ts` then fail loudly until R2-03 deletes this file and every
  * use of it.
  *
- * The specs cannot import `@shmup/core` (see `frame-pixels.ts`), so the gate reads the frame from
- * `scripts/frame.mjs` and the replay format from {@link REPLAY_FORMAT}, a pinned mirror of core's
- * `REPLAY_FORMAT_VERSION` (like `save-format.ts`). `test/integration/e2e-gates.test.ts` pins both
- * the mirror and the predicate to core and to `stale.ts`.
+ * An assertion-level gate (a test that runs with some of its assertions held back) goes through
+ * {@link assertionsGated}, which notes what it skipped in the test's report.
+ *
+ * The specs cannot import `@shmup/core` (see `frame-pixels.ts`), so the gates read the frame and
+ * the tile size from `scripts/frame.mjs` and the replay format from {@link REPLAY_FORMAT}, a pinned
+ * mirror of core's `REPLAY_FORMAT_VERSION` (like `save-format.ts`).
+ * `test/integration/e2e-gates.test.ts` pins the mirror and both predicates to core, `stale.ts` and
+ * `port-pending.ts`.
  *
  * @example
  * ```ts
- * import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
+ * import { CONTENT_REASON, PORT_REASON, PORT_UNMEASURED, R2_03_PENDING } from './gates.js';
  * test('the lava lake rises into view', async ({ page }) => {
  *   test.skip(R2_03_PENDING, CONTENT_REASON);
+ *   // …
+ * });
+ * test('the camera holds at the checkpoint', async ({ page }) => {
+ *   test.skip(PORT_UNMEASURED, PORT_REASON);
  *   // …
  * });
  * ```
@@ -42,7 +56,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FRAME_H, FRAME_W } from '../../scripts/frame.mjs';
+import { FRAME_H, FRAME_W, TILE_SIZE } from '../../scripts/frame.mjs';
 
 /**
  * The replay format this build records and plays (`core/replay` `REPLAY_FORMAT_VERSION`: 2 since
@@ -61,6 +75,9 @@ const FOLDERS: readonly string[] = [
   fileURLToPath(new URL('../golden/', import.meta.url)),
   fileURLToPath(new URL('../../content/demos/', import.meta.url)),
 ];
+
+/** The repository's `content/tilesets/` folder (the content-port signal). */
+const TILESETS = fileURLToPath(new URL('../../content/tilesets/', import.meta.url));
 
 /**
  * Whether a value is a plain (non-array, non-null) object.
@@ -110,21 +127,29 @@ export function committedRecordings(): Array<readonly [string, unknown]> {
 }
 
 /**
- * Whether R2-03 is still pending: a committed golden replay or demo is stale
- * ({@link recordingIsStale}). It is `false` at 384×216 and `true` from R2-01's flip until R2-03
- * re-records them. Every content-bound and golden-based spec skips while it holds.
+ * Whether R2-02 has ported the content: every shipped tileset (`content/tilesets/*.tileset.json`,
+ * the format example included) is at the build's `TILE_SIZE`. The inverse of
+ * `packages/core/test/helpers/port-pending.ts` `CONTENT_PORT_PENDING`, rule for rule: `false` from
+ * R2-01's flip (12-px tiles, the content's still v1's 8) until R2-02's port.
+ *
+ * @returns `true` when no tileset is left at another tile size.
  */
-export const R2_03_PENDING: boolean = committedRecordings().some(([, doc]) =>
-  recordingIsStale(doc),
-);
+export function contentPorted(): boolean {
+  return readdirSync(TILESETS)
+    .filter((name) => name.endsWith('.tileset.json'))
+    .every((name) => {
+      const data = JSON.parse(readFileSync(join(TILESETS, name), 'utf8')) as { tileSize?: unknown };
+      return data.tileSize === TILE_SIZE;
+    });
+}
 
 /**
- * The gate's self-expiry, run when this module is imported: throws once the frame is no longer
- * v1's and no committed recording is stale. R2-03 re-blessed them, so the gate and its skips must go.
+ * The gates' self-expiry: throws once the frame is no longer v1's and no committed recording is
+ * stale. R2-03 re-blessed them, so the gates and their skips must go.
  *
  * @param frameW - The build's frame width (`FRAME_W`).
  * @param pending - Whether a committed recording is stale ({@link R2_03_PENDING}).
- * @throws {Error} `R2-03 re-recorded the goldens and demos: …` when the gate has expired.
+ * @throws {Error} `R2-03 re-recorded the goldens and demos: …` when the gates have expired.
  */
 export function checkGateExpiry(frameW: number, pending: boolean): void {
   if (frameW !== V1_FRAME_W && !pending) {
@@ -135,14 +160,106 @@ export function checkGateExpiry(frameW: number, pending: boolean): void {
   }
 }
 
-checkGateExpiry(FRAME_W, R2_03_PENDING);
+/** Both gates, as {@link resolveGates} derives them from their signals. */
+export interface E2eGates {
+  /** {@link R2_03_PENDING}: some committed recording is stale. */
+  readonly r203Pending: boolean;
+  /** {@link PORT_UNMEASURED}: the content is ported, the recordings are not re-recorded yet. */
+  readonly portUnmeasured: boolean;
+}
+
+/**
+ * Derives both gates from their signals, after the self-expiry ({@link checkGateExpiry}).
+ *
+ * | State (at 640×360)                | `ported` | `anyStale` | Result                   |
+ * |---|---|---|---|
+ * | R2-01 until R2-02: the v1 content | `false`  | `true`     | only R2-03 pending       |
+ * | R2-02's port until R2-03          | `true`   | `true`     | both gates hold          |
+ * | R2-03 re-recorded                 | either   | `false`    | throws: delete the gates |
+ *
+ * At v1's 384×216 nothing is stale and both gates are off.
+ *
+ * @param frameW - The build's frame width (`FRAME_W`).
+ * @param ported - Whether the content is ported ({@link contentPorted}).
+ * @param anyStale - Whether a committed recording is stale ({@link recordingIsStale}).
+ * @returns The two gates.
+ * @throws {Error} When the gates have expired ({@link checkGateExpiry}).
+ */
+export function resolveGates(frameW: number, ported: boolean, anyStale: boolean): E2eGates {
+  checkGateExpiry(frameW, anyStale);
+  return { r203Pending: anyStale, portUnmeasured: anyStale && ported };
+}
+
+/** This tree's gates, resolved when the module is imported (which throws once they expired). */
+const GATES: E2eGates = resolveGates(
+  FRAME_W,
+  contentPorted(),
+  committedRecordings().some(([, doc]) => recordingIsStale(doc)),
+);
+
+/**
+ * Whether R2-03 is still pending: a committed golden replay or demo is stale
+ * ({@link recordingIsStale}). It is `false` at 384×216 and `true` from R2-01's flip until R2-03
+ * re-records them. The golden-based specs, and the content-bound specs that fail at 640×360,
+ * skip while it holds.
+ */
+export const R2_03_PENDING: boolean = GATES.r203Pending;
+
+/**
+ * Whether the content is ported but the specs that measure it are not yet re-measured: R2-02's
+ * port happened ({@link contentPorted}) and R2-03 is still pending ({@link R2_03_PENDING}). It is
+ * `false` until the port, so the content-bound specs that pass at 640×360 on the v1 content run
+ * through R2-01 and R2-02's preparation; from the port until R2-03 they skip.
+ */
+export const PORT_UNMEASURED: boolean = GATES.portUnmeasured;
 
 /** Why a golden-based test skips: the build refuses the v1 recordings it plays. */
 export const GOLDEN_REASON =
   'R2-01 gate: the golden replays and demos are v1 recordings (384×216, format 1) the build ' +
   'refuses, until R2-03 re-records them';
 
-/** Why a content-bound test skips: it measures shipped content that R2-02 ports and R2-03 re-measures. */
+/** Why a content-bound test skips at 640×360: it fails on the v1-scale shipped content. */
 export const CONTENT_REASON =
-  'R2-01 gate: samples or plays v1-scale shipped content; R2-02 ports it ×1.5 and R2-03 ' +
+  'R2-01 gate: fails at 640×360 on the v1-scale shipped content; R2-02 ports it ×1.5 and R2-03 ' +
   're-measures this test';
+
+/**
+ * Why a content-bound test skips from R2-02's port: it passes at 640×360 on the v1 content, but
+ * hardcodes v1-scale content numbers that the port moves.
+ */
+export const PORT_REASON =
+  "R2-01 gate: hardcodes v1-scale content numbers that R2-02's port moves; R2-03 re-measures " +
+  'this test';
+
+/** The part of Playwright's `TestInfo` that {@link assertionsGated} writes to. */
+export interface GateNotes {
+  /** The test's annotations, shown in its report. */
+  readonly annotations: Array<{ type: string; description?: string }>;
+}
+
+/**
+ * An assertion-level gate: whether some assertions of a running test must wait for a gate. When
+ * they must, the test's report says so with a `skip` annotation naming them and the reason (the
+ * record a whole-test `test.skip` leaves), so a run shows what it did not check.
+ *
+ * @param info - The test's info (`test.info()`).
+ * @param gate - The gate ({@link R2_03_PENDING} or {@link PORT_UNMEASURED}).
+ * @param what - The assertions it holds back, for the note.
+ * @param reason - Why ({@link CONTENT_REASON} or {@link PORT_REASON}).
+ * @returns `true` when the assertions must be skipped.
+ * @example
+ * ```ts
+ * if (!assertionsGated(test.info(), R2_03_PENDING, 'the boss hull', CONTENT_REASON)) {
+ *   expect(hull).toBeGreaterThan(50);
+ * }
+ * ```
+ */
+export function assertionsGated(
+  info: GateNotes,
+  gate: boolean,
+  what: string,
+  reason: string,
+): boolean {
+  if (gate) info.annotations.push({ type: 'skip', description: `${what}: ${reason}` });
+  return gate;
+}

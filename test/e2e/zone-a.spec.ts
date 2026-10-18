@@ -20,7 +20,7 @@ import {
   sy,
   uiPx,
 } from './frame-pixels.js';
-import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
+import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 
 /** The WARNING band's edge colour (core `ui` `UI_COLORS.alert`, 0xf85858). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -105,7 +105,7 @@ test.describe('zone A (web build)', () => {
   test('?skip=boss: START reaches the WARNING and HALCYON BULWARK within seconds', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
+    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on('console', (message) => {

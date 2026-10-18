@@ -6,6 +6,10 @@
  * demo; any key returns to the title. The sim is frozen with frame advance and stepped by exact
  * tick counts (`test/e2e/frame-advance.ts`), so the timings are the game's, not the machine's. The
  * Tizen build from disk reaches the demo too, and the remote's OK returns to the title.
+ *
+ * From R2-01 until R2-03 the demos are v1 recordings the build refuses (`gates.ts`), so the loop
+ * skips them: those tests skip, and two others run instead — the web loop without its demos, and
+ * the Tizen remote's OK leaving the hi-scores. R2-03 deletes both with the gate.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -132,6 +136,25 @@ async function countColour(page: Page, rgb: readonly [number, number, number]): 
 }
 
 /**
+ * Presses and releases the Tizen remote's OK: key code 13, the code the Tizen adapter reads
+ * (`keyCode`), dispatched on the window 100 ms apart.
+ *
+ * @param page - The page (the Tizen build, its sim running on its own).
+ * @returns Resolves once the key is up again.
+ */
+async function pressRemoteOk(page: Page): Promise<void> {
+  const send = (type: string): Promise<void> =>
+    page.evaluate((eventType) => {
+      const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'keyCode', { get: () => 13 });
+      window.dispatchEvent(event);
+    }, type);
+  await send('keydown');
+  await page.waitForTimeout(100);
+  await send('keyup');
+}
+
+/**
  * The demo playing now: its stage and its playback report.
  *
  * @param page - The page.
@@ -246,6 +269,30 @@ test.describe('attract loop with the v1 demos refused (web build, R2-01 until R2
   });
 });
 
+test.describe('attract loop with the v1 demos refused (Tizen build from disk, R2-01 until R2-03)', () => {
+  test('the title hands over to the hi-scores; the remote`s OK returns', async ({ page }) => {
+    // The remote's way out of the attract loop while the Tizen demo test below is gated: once
+    // R2-03 re-records the demos, that test covers it again — R2-03 deletes this one with the gate.
+    test.skip(!R2_03_PENDING, 'the demos play again since R2-03: the Tizen test below covers it');
+    test.setTimeout(60_000);
+    const errors = watchErrors(page);
+    await page.goto(TIZEN_INDEX);
+    const canvas = page.locator('#game');
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    await freezeSim(page);
+    await runTicks(page, TITLE_ATTRACT_TICKS - (await titleIdle(page)));
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'hiScore');
+    await runTicks(page, 120);
+    await page.evaluate(() => {
+      (window as unknown as DebugWindow).__shmupDebug.flags.frameAdvance = false;
+    });
+    await pressRemoteOk(page);
+    await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe('attract loop (Tizen build from disk)', () => {
   test('the title hands over to the demo; the remote`s OK returns', async ({ page }) => {
     test.skip(R2_03_PENDING, GOLDEN_REASON);
@@ -263,16 +310,7 @@ test.describe('attract loop (Tizen build from disk)', () => {
     await page.evaluate(() => {
       (window as unknown as DebugWindow).__shmupDebug.flags.frameAdvance = false;
     });
-    // The remote's OK (key code 13 — the Tizen adapter reads `keyCode`).
-    const send = (type: string): Promise<void> =>
-      page.evaluate((eventType) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => 13 });
-        window.dispatchEvent(event);
-      }, type);
-    await send('keydown');
-    await page.waitForTimeout(100);
-    await send('keyup');
+    await pressRemoteOk(page);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     expect(errors).toEqual([]);
   });

@@ -29,7 +29,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { R2_03_PENDING } from './gates.js';
+import { CONTENT_REASON, R2_03_PENDING, assertionsGated } from './gates.js';
 
 /** Layers M3-02e makes render groups (`render-pixi`'s `RENDER_GROUP_LAYERS`). */
 const RENDER_GROUP_COUNT = 11;
@@ -214,7 +214,13 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // (8-px tiles, v1 rows) end above the 640×360 frame's bottom bar, so the bars hide nothing and
     // moving the `HUD` changes no pixel: that control waits for R2-02's port and R2-03's
     // re-measure (`gates.ts`, CONTENT_REASON).
-    for (const layer of R2_03_PENDING ? [2, 6] : [2, 6, 11]) {
+    const hudGated = assertionsGated(
+      test.info(),
+      R2_03_PENDING,
+      'the HUD control (layer 11 moved under the world)',
+      CONTENT_REASON,
+    );
+    for (const layer of hudGated ? [2, 6] : [2, 6, 11]) {
       const restore = await page.evaluate((id) => {
         const { layers } = (window as unknown as DebugWindow).__shmupDebug.renderer;
         const target = layers.layers[id];

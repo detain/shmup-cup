@@ -1,22 +1,40 @@
 /**
  * `test/e2e/gates.ts` (plan_resolution.md R2-01, owner decisions W4-12 and W5-6): the browser
- * tests' skip gate follows the same rule as the Vitest one (`test/golden/stale.ts`), its replay
- * format mirror equals core's, and it expires once nothing is stale. The specs cannot import core,
- * so without this pin a replay-format bump, or a gate that drifted from `goldenIsStale`, would show
- * only in an e2e shard.
+ * tests' skip gates follow the same rules as the Vitest ones — `R2_03_PENDING` the stale goldens'
+ * (`test/golden/stale.ts`), and `PORT_UNMEASURED` adds the content port's
+ * (`packages/core/test/helpers/port-pending.ts`, inverted) — their replay format mirror equals
+ * core's, and they expire once nothing is stale. The specs cannot import core, so without this pin
+ * a replay-format bump, or a gate that drifted from `goldenIsStale` or `CONTENT_PORT_PENDING`,
+ * would show only in an e2e shard.
+ *
+ * R2-02 deletes `port-pending.ts` with its port, and with it this file's pin of `contentPorted` to
+ * `CONTENT_PORT_PENDING`; the state table (`resolveGates`) stays until R2-03 deletes the gates.
  */
 import { FRAME_H, FRAME_W, REPLAY_FORMAT_VERSION } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { CONTENT_PORT_PENDING } from '../../packages/core/test/helpers/port-pending.js';
 import {
   CONTENT_REASON,
   GOLDEN_REASON,
+  PORT_REASON,
+  PORT_UNMEASURED,
   R2_03_PENDING,
   REPLAY_FORMAT,
+  assertionsGated,
   checkGateExpiry,
   committedRecordings,
+  contentPorted,
   recordingIsStale,
+  resolveGates,
+  type GateNotes,
 } from '../e2e/gates.js';
 import { committedRecordings as goldenRecordings, goldenIsStale } from '../golden/stale.js';
+
+/** The v1 frame's width (typed `number`: `FRAME_W` is a literal type that never equals it). */
+const V1_FRAME_W: number = 384;
+
+/** A flipped frame width: the build's when it is not v1's, else v2's 640. */
+const FLIPPED_W: number = FRAME_W === V1_FRAME_W ? 640 : FRAME_W;
 
 /**
  * A minimal replay document.
@@ -72,17 +90,64 @@ describe('the e2e gate (test/e2e/gates.ts)', () => {
   });
 
   it('expires once the frame is not v1’s and nothing is stale', () => {
-    const v1Width: number = 384;
-    expect(() => checkGateExpiry(v1Width, false)).not.toThrow();
-    expect(() => checkGateExpiry(v1Width, true)).not.toThrow();
-    expect(() => checkGateExpiry(FRAME_W === v1Width ? 640 : FRAME_W, true)).not.toThrow();
-    expect(() => checkGateExpiry(FRAME_W === v1Width ? 640 : FRAME_W, false)).toThrow(
+    expect(() => checkGateExpiry(V1_FRAME_W, false)).not.toThrow();
+    expect(() => checkGateExpiry(V1_FRAME_W, true)).not.toThrow();
+    expect(() => checkGateExpiry(FLIPPED_W, true)).not.toThrow();
+    expect(() => checkGateExpiry(FLIPPED_W, false)).toThrow(
       /R2-03 re-recorded the goldens and demos: .*delete test\/e2e\/gates\.ts/,
     );
+  });
+
+  it('reads the content port as port-pending.ts does, inverted', () => {
+    expect(contentPorted()).toBe(!CONTENT_PORT_PENDING);
+  });
+
+  it('holds the port gate only while the content is ported and a recording is stale', () => {
+    expect(PORT_UNMEASURED).toBe(R2_03_PENDING && contentPorted());
+    expect(resolveGates(FRAME_W, contentPorted(), R2_03_PENDING)).toEqual({
+      r203Pending: R2_03_PENDING,
+      portUnmeasured: PORT_UNMEASURED,
+    });
+  });
+
+  it('resolves the three states from R2-01 to R2-03, and v1’s frame', () => {
+    // R2-01's flip until R2-02: the v1 content (8-px tiles), the v1 recordings. The specs that
+    // pass on the v1 content run.
+    expect(resolveGates(FLIPPED_W, false, true)).toEqual({
+      r203Pending: true,
+      portUnmeasured: false,
+    });
+    // R2-02's port until R2-03: the content ported, the recordings still v1's. Both gates hold.
+    expect(resolveGates(FLIPPED_W, true, true)).toEqual({
+      r203Pending: true,
+      portUnmeasured: true,
+    });
+    // R2-03 re-recorded: both gates expire, whatever the content.
+    for (const ported of [true, false]) {
+      expect(() => resolveGates(FLIPPED_W, ported, false)).toThrow(
+        /R2-03 re-recorded the goldens and demos/,
+      );
+    }
+    // v1's 384×216 (before the flip, and `v1.x`): nothing stale, both gates off.
+    expect(resolveGates(V1_FRAME_W, true, false)).toEqual({
+      r203Pending: false,
+      portUnmeasured: false,
+    });
+  });
+
+  it('notes the assertions an assertion-level gate holds back, and only then', () => {
+    const info: GateNotes = { annotations: [] };
+    expect(assertionsGated(info, false, 'the hull', CONTENT_REASON)).toBe(false);
+    expect(info.annotations).toEqual([]);
+    expect(assertionsGated(info, true, 'the hull', CONTENT_REASON)).toBe(true);
+    expect(info.annotations).toEqual([
+      { type: 'skip', description: `the hull: ${CONTENT_REASON}` },
+    ]);
   });
 
   it('names the steps a skip waits for', () => {
     expect(GOLDEN_REASON).toMatch(/^R2-01 gate: .*R2-03/);
     expect(CONTENT_REASON).toMatch(/^R2-01 gate: .*R2-02.*R2-03/);
+    expect(PORT_REASON).toMatch(/^R2-01 gate: .*R2-02.*R2-03/);
   });
 });
