@@ -2,6 +2,9 @@
 
 > Schedule: [`plan_resolution.md` §18](../../plan_resolution.md#18-execution-waves-for-the-10-agent-run) · how to
 > use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md)
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-04 (all of it), R3-06 (all of it), R4's prep (`R4-P.P1` … `R4-P.P4`). · **Gate to start:** wave 6's
 exit (R2-03 done: goldens and demos fresh at 640×360, every e2e gate deleted, doc images on the default art scale). ·
@@ -17,29 +20,31 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 | 2 | `R2-04.P1` → `R2-04.P3` → `R2-04.P4` | `packages/render-pixi/src/effects/{index,crt,shaders,layer-effects}.ts` | `layer-effects.ts` (P4 before R3-06.L3); FP only if the shell frame fingerprint moves | P3: `display-options` |
 | 3 | `R2-04.Z1` → `R2-04.Z3` | read-only + patches for zones A–C, then G–I | none (patches, never pushed) | none |
 | 4 | `R2-04.Z2` → `R2-04.Z4` | read-only + patches for zones D–F, then bonus / boss rush / loops | none (patches) | none |
-| 5 | `R3-06.L1` → `R3-06.L2` → `R3-06.L4` → `R3-06.L6` | `core/data`, `core/stage`, `core/presentation`, `core/world`, `core/enemies`, `core/bosses`, the new `decor-range` stage | DATA-INDEX; FP at L2, L4, L6 | L6: `decor raster stage` |
+| 5 | `R3-06.L1` → `R3-06.L2` → `R3-06.L4` → `R3-06.L6` | `core/data`, `core/stage`, `core/presentation`, `core/world`, `core/enemies`, `core/bosses`, the new `decor-range` stage; L2: `RENDER_GROUP_LAYERS` only; L4: `render-pixi/src/{sprites,renderer}` after `R3-06.L3` | DATA-INDEX; the core barrel (L2, L4: additions only); FP at L1 (content-DB `examples` only), L2, L4, L6 | L6: `decor raster stage` |
 | 6 | `R3-06.L5` → `R3-06.L3` → `R3-06.L7` | `scripts/content/tiled-import.mjs`, `render-pixi/src/{layers,renderer}`, the render bench | RP-BARREL (L3) | none |
 | 7 | `R4-P.P1` → `R4-P.P2` | `scripts/assets/procedural/**` (split + stubs + registry), `test/scripts/assets/procedural*.test.ts` | the registry `procedural/index.mjs` | none |
-| 8 | `R4-P.P3` → `R4-P.P4` | `scripts/assets/{pipeline,sprite-source,font}.mjs`, `scripts/art-origins.mjs`, the new `v2kit.mjs` | none | none |
+| 8 | `R4-P.P3` → `R4-P.P4` | `scripts/assets/{pipeline,sprite-source,font}.mjs`, `scripts/art-origins.mjs`, the new `scripts/assets/v2kit.mjs` (outside `procedural/`) | none | none |
 
 - **Fillers:** none (the eight lanes fill the eight builder slots; `R5-P.P5e` has its home in wave 9).
-- **Reviews:** a review loop per subtask as it lands (`<id>.RV1` → `<id>.FIX1` → `<id>.RV2` … to zero), then the step
-  reviews `R2-04.RV`, `R3-06.RV`, `R4-P.RV`.
-- **Docs item:** `W07.DOCS-A` (PLAN) … `W07.DOCS-D`, after the step reviews are at zero.
+- **Reviews:** a review loop per subtask as it lands (`<id>.RV1` → `<id>.FIX1` → `<id>.RV2` … to zero); for the five
+  R2-04 patches a loop per patch as it lands (`R2-04.patches.RV`, before `R2-04.G` starts); then the step reviews
+  `R2-04.RV`, `R3-06.RV`, `R4-P.RV`.
+- **Docs item:** `W07.DOCS-A` (PLAN) … `W07.DOCS-E`, after the step reviews are at zero.
 - **e2e passes:** two. Order: `R2-04.P3` and `R3-06.L6` first, `R2-04.G` last.
 
 ## Rules for this wave
 
 1. **R2-04's simulation changes are proposals.** `R2-04.F1` and `R2-04.Z1` … `R2-04.Z4` never push. Each writes one
    patch to `RUN_DIR/w07/patches/<id>.patch` (made with `git diff <base> -- <files>` from a local commit; the base SHA
-   goes in the report) plus its report. Only `R2-04.G` applies them, with **one** golden re-bless and the three
-   fingerprint re-pins. The reason: shake is hashed (`packages/core/src/debug/index.ts:569-572`
+   goes in the report) plus its report. Each patch gets its own review loop as it lands (`R2-04.patches.RV`, under
+   Reviews); only when all five loops are at zero does `R2-04.G` apply them, with **one** golden re-bless and the
+   three fingerprint re-pins. The reason: shake is hashed (`packages/core/src/debug/index.ts:569-572`
    `mixFxAndScores` mixes `fx.shakeMagnitude`), and every spawn move changes the goldens, so one integrator
-   re-blesses once.
+   re-blesses once — a finding on a patch after G's push would need a second re-bless.
 2. **Presentation-only subtasks push directly** (`R2-04.P1`, `R2-04.P3`, `R2-04.P4`, `R2-04.P2` with FP).
-3. **Fingerprints are push-time** (README rule 6): `R2-04.P2`, `R2-04.G`, `R3-06.L2`, `R3-06.L4`, `R3-06.L6` (and
-   `R2-04.P1` only if the shell frame fingerprint moves) each take `/tmp/shmup-cup-land.lock`, rebase, **re-run the
-   print and paste the printed tables**, verify, push. First come, first served; never merge a `PINNED` table by hand.
+3. **Fingerprints are push-time** (README rule 6): `R2-04.P2`, `R2-04.G`, `R3-06.L1` (the content-DB `examples`
+   digest only), `R3-06.L2`, `R3-06.L4`, `R3-06.L6` (and `R2-04.P1` only if the shell frame fingerprint moves) each
+   take `/tmp/shmup-cup-land.lock`, rebase, **re-run the print and paste the printed tables**, verify, push. First come, first served; never merge a `PINNED` table by hand.
 4. **`packages/render-pixi/src/effects/layer-effects.ts`:** `R2-04.P4` edits it first (if it edits it at all); `R3-06.L3`
    starts only after `R2-04.P4` is on `master`.
 5. **`packages/core/src/data/index.ts`:** only lane 5 (`R3-06.L1`, then `R3-06.L4`).
@@ -63,16 +68,27 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `packages/core/src/fx/index.ts` — `ShakeMagnitude` at `:79-86` (`Small: 1`, `Medium: 2`, `Large: 4`) and its
     docblock.
   - `packages/core/test/fx/fx.test.ts` — the pin at `:57` (`toEqual([1, 2, 4])`).
-  - `packages/core/test/fx/fx-edge.test.ts` — only if it pins a magnitude.
+  - `packages/core/test/fx/fx-edge.test.ts` — it pins two magnitudes through their amplitudes: `:111-117`
+    (`ShakeMagnitude.Medium`, the comment "amplitudes 2, 2, 1, 1, 0", `toBe(1)`, `toEqual([4, 2])`) and `:133-135`
+    (`ShakeMagnitude.Small`, `toBe(1)`). Recompute them for Medium 3 and Small 2; change nothing else in the file.
+  - `packages/core/test/world/world-death.test.ts` — the literal pin at `:227`
+    (`find(SimEventKind.Shake, DEATH_SHAKE_TICKS)?.param).toBe(2)` → `.toBe(ShakeMagnitude.Medium)`).
+  - `packages/shell/test/fx-gallery/fx-gallery.test.ts` — the literal pin at `:121` (`shakeAmount` after
+    `shake.large`, `.toBe(4)` → `.toBe(ShakeMagnitude.Large)`, 6 with the patch).
 - **Steps:**
-  1. Commit the change locally in your worktree.
-  2. `git diff <base> -- packages/core/src/fx packages/core/test/fx > RUN_DIR/w07/patches/R2-04.F1.patch`.
+  1. Commit the change locally in your worktree. `<base>` below is the `origin/master` SHA you started from (print it
+     with `git merge-base HEAD origin/master`; it goes in the report).
+  2. Write the patch (replace `<base>` with that SHA):
+     ```bash
+     mkdir -p /home/sites/shmup-cup-run/w07/patches && git diff <base> -- packages/core/src/fx packages/core/test/fx packages/core/test/world/world-death.test.ts packages/shell/test/fx-gallery > /home/sites/shmup-cup-run/w07/patches/R2-04.F1.patch
+     ```
   3. List in the report which goldens move: all of them (every recording that shakes), and the shell fx gallery
      (`packages/shell/src/fx-gallery/index.ts:250-252` uses `ShakeMagnitude`), so the shell frame fingerprint moves too.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/fx packages/core/test/bosses/bosses.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/fx packages/core/test/bosses/bosses.test.ts packages/core/test/world/world-death.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/effects
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/fx-gallery
   pnpm --filter @shmup/core typecheck
   ```
 - **Acceptance:** the patch applies cleanly on `origin/master`; the tests above pass with it; the report names the
@@ -101,6 +117,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/dispatch
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts   # the fx kind is in it: red until your re-pin
   pnpm content:check
   ```
 - **Acceptance:** `dispatch-fx-alloc` (in `packages/shell/test/dispatch/`) green with its budget unchanged; the
@@ -118,11 +135,12 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 
 - **Wave / lane / order:** wave 07, lane 1, after `R2-04.P2`.
 - **Depends on:** the patches of `R2-04.F1`, `R2-04.Z1` … `R2-04.Z4` in `RUN_DIR/w07/patches/` (all five reports in);
-  `R2-04.P1`, `R2-04.P2`, `R2-04.P3` on `master`.
+  `R2-04.patches.RV` at zero for all five patches (under Reviews); `R2-04.P1`, `R2-04.P2`, `R2-04.P3` on `master`.
 - **Goal:** apply F1 and the Z patches, add the v2-port exemptions each moved spawn needs, re-bless every golden and
   demo once, re-pin the three fingerprints, and prove the zones still clear.
 - **Files (only these):**
-  - every file the five patches touch: `packages/core/src/fx/index.ts`, `packages/core/test/fx/*`, and
+  - every file the five patches touch: `packages/core/src/fx/index.ts`, `packages/core/test/fx/*`,
+    `packages/core/test/world/world-death.test.ts`, `packages/shell/test/fx-gallery/fx-gallery.test.ts`, and
     `content/stages/zone-*.stage.json` / `content/enemies/zone-*.enemies.json` / the bonus, boss-rush and remix events
     the Z patches name;
   - `test/golden/v2-port.ts`, `v2-port-suite.ts`, `v2-port*.test.ts` (created in wave 3 by `R2-02.T3`) — one exemption
@@ -131,8 +149,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - the `PINNED` tables of `test/integration/presentation-fingerprint.test.ts`,
     `test/integration/content-db-fingerprint.test.ts`, `packages/shell/test/frame-fingerprint.test.ts`.
 - **Steps:**
-  1. Apply the patches in order F1, Z1, Z2, Z3, Z4 (`git apply --3way`). A conflict between two Z patches means two
-     agents touched one file: stop and report.
+  1. Apply the patches in order F1, Z1, Z2, Z3, Z4 (`git apply --3way`). Two patches may touch the same file in
+     different hunks (Z4 edits only the `remix` arrays of the files Z1–Z3 edit): that applies. A conflict means two
+     patches touched the same **lines**: stop and report.
   2. For every spawn a Z patch moved, add an exemption to the v2-port comparison (first-visible ±1 tick no longer holds
      for it) with the reason ("R2-04 Z1: zone B section 3 opens 40 px later").
   3. Hold the land lock for the rest: fetch, rebase, `pnpm golden:update`, the three re-pins
@@ -145,8 +164,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/playtest
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-*.test.ts test/integration/release-audit.test.ts   # the files exist once R5-P.P2a/P6 (wave 6) landed
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/determinism
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/fx packages/core/test/bosses
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/determinism packages/shell/test/fx-gallery
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/fx packages/core/test/bosses packages/core/test/world/world-death.test.ts
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh zone-a.spec.ts zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts campaign-run.spec.ts
   bash docs/v2-run/helpers/e2e-batch.sh display-options.spec.ts attract.spec.ts determinism.spec.ts
@@ -177,7 +196,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `package.json`, `packages/{audio-web,core,input-web,render-pixi,shell}/package.json`,
     `apps/{electron,tizen,web,webos}/package.json` (10 files);
   - `test/integration/tooling-config.test.ts` — `RELEASE` at `:323` and `semver.prerelease(...)` `toEqual(['alpha', 0])`
-    at `:325` → `['alpha', 1]`;
+    at `:328` → `['alpha', 1]`;
   - `apps/tizen/test/config-xml/config-xml-consistency.test.ts` — the title at `:32` ("2.0.0-alpha.0 = 2.0.0 on the TV");
   - `test/scripts/store-assets-edge.test.ts` — the comment / value at `:182`.
 - **Tests (targeted, run all of them):**
@@ -192,11 +211,13 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   only); the lockfile unchanged.
 - **Token:** none.
 - **Traps:**
-  - `CHANGELOG.md`'s "Version **2.0.0-alpha.0**" line and the docs that quote `alpha.0` are the docs agent's
-    (`W07.DOCS-A`). The CHANGELOG test (`tooling-config.test.ts:336-345`) still needs `## [Unreleased] — v2` as the
-    first section: do not add a release section.
+  - `CHANGELOG.md`'s "Version **2.0.0-alpha.0**" line and the docs that quote `alpha.0` are the docs agents'
+    (`W07.DOCS-A`: CHANGELOG; `W07.DOCS-D`: `CLAUDE.md`; `W07.DOCS-E`: every other doc). The CHANGELOG test
+    (`tooling-config.test.ts:336-345`) still needs `## [Unreleased] — v2` as the first section: do not add a release
+    section.
   - Do not create the git tag or a GitHub release: the orchestrator does that after the wave's exit.
-- **Docs needs:** `CHANGELOG.md` version line; every doc quoting `2.0.0-alpha.0` (`git grep -n "alpha.0" -- '*.md'`).
+- **Docs needs:** `CHANGELOG.md` version line (`W07.DOCS-A`); every doc quoting `2.0.0-alpha.0`
+  (`git grep -n "alpha.0" -- '*.md'`; `W07.DOCS-D` for `CLAUDE.md`, `W07.DOCS-E` for the rest).
 
 ### R2-04.P1 — Score popups rise ×1.5
 
@@ -226,12 +247,15 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Wave / lane / order:** wave 07, lane 2, after `R2-04.P1`.
 - **Depends on:** nothing in this wave.
 - **Goal:** at 640×360 the 1080p scale is ×3, so the scanline pitch is 3 (`crt.ts:439`:
-  `pitch = max(CRT_MIN_PITCH, round(scale))`). Retune the `light` and `full` strengths (`CRT_LOOKS` at `crt.ts:93-97`,
-  the `CRT_LIGHT_SCAN` / `CRT_FULL_*` constants above it, `writeLook` at `:112-130`) so the look matches v1's at
-  pitch 5. `CRT_MIN_PITCH` 2 (`:100`) still holds at 720p.
-- **Files (only these; checked on `bc8e05d`):**
-  - `packages/render-pixi/src/effects/crt.ts`, `packages/render-pixi/src/effects/shaders.ts` (only if the shader
-    needs a pitch-dependent term; GLSL ES 1.0 only).
+  `pitch = max(CRT_MIN_PITCH, round(scale))`). Retune the `light` and `full` strengths so the look matches v1's at
+  pitch 5. The strengths are the constants `CRT_LIGHT_SCAN` 0.2, `CRT_FULL_SCAN` 0.34, `CRT_FULL_MASK` 0.18 and
+  `CRT_FULL_VIGNETTE` 0.22, defined in `packages/render-pixi/src/effects/shaders.ts:371-381` and imported by
+  `crt.ts:48-56` into `CRT_LOOKS` (`crt.ts:93-97`; `writeLook` at `:112-130`). `CRT_MIN_PITCH` 2 (`:100`) still holds
+  at 720p.
+- **Files (only these; checked on `8ff2bf6`):**
+  - `packages/render-pixi/src/effects/shaders.ts` — the four constants at `:371-381` (the retune target); a
+    pitch-dependent shader term only if the constants alone cannot match the look (GLSL ES 1.0 only).
+  - `packages/render-pixi/src/effects/crt.ts` — only if `CRT_LOOKS` / `writeLook` must change.
   - `packages/render-pixi/test/effects/crt.test.ts`, `crt-blit.test.ts`, `shaders.test.ts`.
 - **Tests (targeted, run all of them):**
   ```bash
@@ -273,9 +297,18 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Wave / lane / order:** wave 07, lane 3, first.
 - **Depends on:** nothing in this wave.
 - **Goal:** the playfield shows +11 % wide / +12 % tall more than v1, so enemies are seen longer before they act. For
-  each section of zones A, B and C, measure the ticks from first-visible to the first threat and the bot's damage per
-  section against the v1 baseline (`test/fixtures/v1-baseline/zone-<x>*.baseline.json`). Where play is "noticeably
-  easier", propose a spawn-x or density change. Write a patch, do not push.
+  each section of zones A, B and C, compare the ticks to the first threat (v1 vs v2) and measure the bot's damage
+  (v2 only). Where play is "noticeably easier", propose a spawn-x or density change. Write a patch, do not push.
+- **How to measure (exactly):**
+  - **A section** is the stretch between two checkpoints of the baseline's `camera.checkpoints` (pairs `[x, tick]`).
+  - **v1 "ticks to first threat":** in `test/fixtures/v1-baseline/zone-<x>.baseline.json`, read `enemyColumns`
+    (`spawnTick … visibleTick … turnTick … endTick, fate`) and take every enemy row whose spec is not ground-anchored
+    (`specs[spec]`'s `anchor` column is 0) and whose `turnTick` is ≥ 0; its value is `turnTick − visibleTick`. Report
+    the median per section. The v1 baselines are god-mode runs with no shots and no damage recorded, and v1 cannot be
+    re-run on master: these columns are all there is.
+  - **v2 "ticks to first threat":** the same columns from `recordBaseline(scenario)` of `test/golden/v1-baseline.ts`,
+    called in memory on the v2 stage (as `test/golden/v2-port.ts` does), never written to a file.
+  - **Damage:** v2 only — a non-god run of the bot (deaths and hits per section). There is no v1 damage to compare.
 - **Files (only these; in the patch):** `content/stages/zone-a.stage.json`, `zone-b.stage.json`, `zone-c.stage.json`;
   `content/enemies/zone-{a,b,c}.enemies.json` only for density. **Not** `tender` (`zone-a.enemies.json`, the capsule
   carrier of every zone), `picket` or `halcyon-bulwark` (used by `bonus-range`), and no shared content
@@ -286,8 +319,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden/v2-port.test.ts test/golden/v2-port-zones.test.ts
   pnpm content:check
   ```
-- **Acceptance:** the patch in `RUN_DIR/w07/patches/R2-04.Z1.patch`; a table per section (x range, v1 ticks to first
-  threat, v2 ticks, bot damage v1 / v2, change proposed); the list of **v2-port rows each moved spawn breaks**
+- **Acceptance:** the patch in `RUN_DIR/w07/patches/R2-04.Z1.patch` (written as in `R2-04.F1` step 2, with your
+  files); a table per section (x range, v1 median ticks to first threat, v2 median ticks, v2 bot deaths / hits, change
+  proposed); the list of **v2-port rows each moved spawn breaks**
   (first-visible ±1), so `R2-04.G` can exempt them with reasons; the bot still clears each zone with the patch.
 - **Token:** none (never push; never `pnpm golden:update`).
 - **Traps:**
@@ -344,8 +378,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Goal:** as `R2-04.Z1`, for the bonus stages (`brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range`), the
   boss rush and every zone's loop-2 `remix` events.
 - **Files (only these; in the patch):** `content/stages/{brine-grotto,glimmer-cache,bonus-vault,bonus-range,boss-rush}.stage.json`;
-  the `remix` lists of `content/stages/zone-*.stage.json` **only** (coordinate: Z1–Z3 own the rest of those files —
-  write your hunks so they apply after theirs, and list the line ranges in the report).
+  the `remix` lists of `content/stages/zone-*.stage.json` **only** (Z1–Z3 own the rest of those files and run at the
+  same time: every hunk of your patch stays inside a file's `remix` array, so it applies in a different hunk from
+  theirs; list the line ranges in the report).
 - **Tests (targeted, with the patch applied):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/boss-rush.test.ts test/integration/bonus-stage-runtime.test.ts test/integration/loops-runtime.test.ts
@@ -373,6 +408,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `content/stages/README.md`, `content/stages/example.stage.json` — the format sample (validated by
     `content:check`).
   - `packages/core/test/data/data-stage-decor.test.ts` (new).
+  - `test/integration/content-db-fingerprint.test.ts` — **only `PINNED.examples`** (re-pin at push time): the test
+    digests every `example.*.json` (`:188-196`), so the decor sample in `example.stage.json` moves that one table.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/data
@@ -380,13 +417,21 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 changes, 0 unclassified, 0 errors
   pnpm --filter @shmup/core typecheck
   ```
-- **Acceptance:** every new number has a unit (`content-units.test.ts`); the README sample validates; the content-DB
-  fingerprint **unchanged** (no shipped stage uses the fields yet).
-- **Token:** DATA-INDEX (work time, lane 5).
+  then, under the land lock, the content-DB re-pin of `PINNED.examples` only (README rule 6:
+  `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
+  test/integration/content-db-fingerprint.test.ts`, paste the printed `examples` table over `PINNED.examples`).
+- **Acceptance:** every new number has a unit (`content-units.test.ts`); the README sample validates; in the content-DB
+  fingerprint **only `PINNED.examples` moved** (the reason in the commit: "R3-06.L1: the decor sample in
+  `example.stage.json`"); `PINNED.shipped` and every other table unchanged (no shipped stage uses the fields yet). If
+  a shipped table moves, the resolved stage shape changed (an absent optional field must be absent from the resolved
+  object too): fix the code, never re-pin it.
+- **Token:** DATA-INDEX (work time, lane 5); FINGERPRINTS (content-DB `examples` only, push time).
 - **Traps:**
   - A `decor` x is a world x; a band's `y` is a playfield row (frame-anchored); `yFactor` and `frameTicks` are a ratio
     and ticks. Name the unit by meaning, never by the field's name.
-  - An optional field must not change the resolved shape of existing stages in a way the hash or the fingerprint sees.
+  - An optional field must not change the resolved shape of existing stages in a way the hash or the fingerprint sees:
+    leave an absent field out of the resolved object, never set it to `undefined` (the fingerprint's
+    `canonical({ a: undefined })` differs from `canonical({})`).
 - **Docs needs:** `docs/dev/stage-runtime.md`, `docs/dev/content-data.md`, `content/stages/README.md` (prose).
 
 ### R3-06.L2 — The core runtime and the render contract for decor (RR-6)
@@ -403,26 +448,45 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `packages/core/src/world/index.ts` — the wiring (`createWorld` near `:1815`).
   - `packages/core/src/index.ts` — barrel exports (CORE-CONFIG barrel: only the new names).
   - `packages/core/test/stage/stage-decor.test.ts` (new), `packages/core/test/stage/stage-decor-alloc.test.ts` (new).
+  - `packages/core/test/presentation/presentation.test.ts` — the layer pin at `:41-58`: the title's "14", `LAYER_COUNT`
+    14 → 17, and `LAYER_NAMES` with `'DECOR_BACK'` after `'BG_MID'`, `'DECOR_FRONT'` after `'TERRAIN'`, `'FOREGROUND'`
+    after `'FX'`.
+  - `packages/render-pixi/src/layers/index.ts` — **only** `RENDER_GROUP_LAYERS` (`:137-149`: add `LayerId.DecorBack`
+    and `LayerId.DecorFront`) and one sentence of its docblock (`:127-132`: the foreground is a parallax band, left out
+    like `BG_FAR` / `BG_MID`). Everything else in the file is `R3-06.L3`'s.
+  - `packages/render-pixi/test/layers/layers-render-groups.test.ts` — the sorted list at `:14-25` gains
+    `LayerId.DecorBack` and `LayerId.DecorFront`; the "not grouped" loop at `:30` gains `LayerId.Foreground`.
+  - `packages/render-pixi/test/layers/layers-render-groups-edge.test.ts` — `:102` `left` →
+    `['BG_FAR', 'BG_MID', 'FOREGROUND', 'DEBUG']`.
   - the three fingerprints' `PINNED` tables (re-pin).
+- **Decision (state it in the commit body):** `DecorBack` and `DecorFront` are render groups: culled decor sprites
+  toggle `visible`, which is the rule of `RENDER_GROUP_LAYERS`' docblock, and `test/integration/render-groups.test.ts`
+  (`:126-150`) requires every layer a core `createSpriteBatch(LayerId.…)` names (in its scanned files, `world/index.ts`
+  among them) to be grouped. `Foreground` is not a group: it is a parallax band, shown once when bound, like
+  `BG_FAR` / `BG_MID`.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/stage packages/core/test/presentation packages/core/test/world
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/stage packages/core/test/presentation packages/core/test/world packages/core/test/index.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/layers packages/render-pixi/test/renderer
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/frame-fingerprint.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden
-  pnpm --filter @shmup/core typecheck
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/render-groups.test.ts
+  pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/render-pixi typecheck
   ```
   then, under the land lock, the FP re-pin (README rule 6).
 - **Acceptance:**
   - zero allocation per tick and per frame (the new guard: warm-up ≥ 20,000, new indices each window);
   - goldens green, unchanged;
-  - render-pixi and shell tests green **without edits** (they use `LayerId.*` names and `LAYER_COUNT`, e.g.
-    `packages/render-pixi/test/layers/layers.test.ts:17-37`); if one pins a number, stop and report;
+  - render-pixi and shell tests green; the only render-pixi edits are the four above (`RENDER_GROUP_LAYERS`, its
+    docblock sentence, the two render-group tests). The other tests use `LayerId.*` names and `LAYER_COUNT` (e.g.
+    `packages/render-pixi/test/layers/layers.test.ts:17-37`); if another one pins a number, stop and report;
+  - `packages/core/test/index.test.ts` green (every new runtime export is in the barrel);
   - the fingerprints re-pinned with the reason "R3-06: three new layers (RR-6) renumber the draw layers".
 - **Token:** FINGERPRINTS (push time); the core barrel (only additions).
 - **Traps:**
   - Renumbering `LayerId` moves the presentation fingerprint: expected, re-pin. It must not move a golden (layers are
     not hashed by `hashWorld`).
+  - Never register decor arrays in the World's pool registry: `hashWorld` mixes every registered pool's arrays
+    (`packages/core/src/debug/index.ts:777-783`), so a registered decor pool would move every golden.
   - Keep `EnemyBullets` above every new layer except the HUD (shmup_feat.md §12 readability).
   - Decor views use typed arrays and class fields; no object literals per frame.
 - **Docs needs:** `docs/dev/stage-runtime.md`, `docs/dev/api-reference.md` (`LayerId`, `DecorView`),
@@ -431,46 +495,60 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 ### R3-06.L4 — Lighting accents: glow sprites on enemies, bosses and terrain
 
 - **Wave / lane / order:** wave 07, lane 5, after `R3-06.L2`.
-- **Depends on:** `R3-06.L2` on `master`; if you must touch `packages/render-pixi/src/layers/index.ts`, also
-  `R3-06.L3` on `master`.
+- **Depends on:** `R3-06.L2` **and** `R3-06.L3` on `master` (L4 edits the renderer and the layer file after L3 is done
+  with them).
 - **Goal:** an optional `glow` sprite on enemy and boss-part specs, drawn additively above its owner — presentation
   only.
-- **Files (only these; checked on `bc8e05d`):**
+- **Files (only these; checked on `8ff2bf6`):**
   - `packages/core/src/data/index.ts` — the enemy and boss-part `glow` field (with its unit rows in
     `packages/core/src/data/units.ts`).
   - `packages/core/src/enemies/index.ts`, `packages/core/src/bosses/index.ts` — the glow views (sync only).
+  - `packages/core/src/world/index.ts` — the glow batches join the view's batch list (assembled at `:1819-1937`).
+  - `packages/core/src/presentation/index.ts` — a blend field on the batch view (or a glow view): `SpriteBatchView` has
+    no blend field today.
+  - `packages/core/src/index.ts` — the core barrel, additions only.
   - `packages/render-pixi/src/sprites/index.ts` — the additive batch (prefer this file over `layers/index.ts`).
+  - `packages/render-pixi/src/renderer/index.ts` — binding the glow batch in `bindWorld` (`:1094-1140`).
+  - `packages/render-pixi/src/layers/index.ts` — only if a glow batch sits on a layer that is not yet in
+    `RENDER_GROUP_LAYERS`.
   - tests: `packages/core/test/enemies/` and `packages/core/test/bosses/` (one new file each, e.g.
     `enemies-glow.test.ts`, `bosses-glow.test.ts`), `packages/render-pixi/test/sprites/sprites-glow.test.ts` (new).
   - the three fingerprints' `PINNED` tables (re-pin, only if they move).
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies packages/core/test/bosses packages/core/test/data
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/sprites
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-units.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies packages/core/test/bosses packages/core/test/data packages/core/test/world packages/core/test/index.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/sprites packages/render-pixi/test/renderer packages/render-pixi/test/layers
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-units.test.ts test/integration/render-groups.test.ts
+  pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/render-pixi typecheck
   ```
 - **Acceptance:** glows additive and presentation-only; goldens green and unchanged; the enemies / bosses allocation
   guards green with no budget raised.
-- **Token:** DATA-INDEX (lane 5); FINGERPRINTS if they move.
-- **Traps:** a Pixi `blendMode` setter copies state: one sprite set per blend mode, never switched per frame. The
-  per-tick enemy loop must not grow (V8 inlining, M2-04 lesson): put the glow push in the sync, not the tick.
+- **Token:** DATA-INDEX (lane 5); the core barrel (additions only); FINGERPRINTS if they move.
+- **Traps:**
+  - A Pixi `blendMode` setter copies state: one sprite set per blend mode, never switched per frame.
+  - The per-tick enemy loop must not grow (V8 inlining, M2-04 lesson): put the glow push in the sync, not the tick.
+  - A glow batch made with `createSpriteBatch(LayerId.…)` in core must sit on a layer listed in `RENDER_GROUP_LAYERS`
+    (`test/integration/render-groups.test.ts:126-150`); prefer the owner's own layer, which already is one.
+  - Never register a glow array in the World's pool registry (`hashWorld` mixes registered pools: the goldens would move).
 - **Docs needs:** `docs/dev/presentation-polish.md`, `docs/dev/content-data.md` (the `glow` field).
 
 ### R3-06.L6 — A test stage with every feature and its art
 
 - **Wave / lane / order:** wave 07, lane 5, after `R3-06.L4`.
-- **Depends on:** `R3-06.L4` and `R4-P.P1` (the `decor.mjs` stub) on `master`.
+- **Depends on:** `R3-06.L4`, `R4-P.P1` (the `decor.mjs` stub), `R4-P.P3` (hashes `scripts/frame.mjs`; the v2-path
+  rules) and `R4-P.P4` (`v2kit.offRamp`) on `master`.
 - **Goal:** `content/stages/decor-range.stage.json` uses every R3-06 feature (decor back and front, 6 bands with
   `yFactor` and slow frames, the foreground, glows), with procedural art in `decor.mjs`. Reached with
   `?scene=flight&stage=decor-range` (dev stages have no list).
 - **Files (only these):**
   - `content/stages/decor-range.stage.json` (new).
   - `scripts/assets/procedural/decor.mjs` (the stub from `R4-P.P1`, filled; do not edit `procedural/index.mjs`).
-  - `test/e2e/decor.spec.ts` (new; joins batch A).
+  - `test/e2e/decor.spec.ts` (new; joins batch G — README "The standard e2e batches").
   - the three fingerprints' `PINNED` tables (re-pin: a new stage and new sprite names).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts test/scripts/art-origins.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh decor.spec.ts raster.spec.ts stage.spec.ts
@@ -480,6 +558,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   e2e spec green; the decor art passes `test/integration/palette-cycle-scan.test.ts` (R3-03.V3).
 - **Token:** FINGERPRINTS (push time). **e2e:** one of the wave's two passes.
 - **Traps:**
+  - `decor.mjs` returns `[]` when `options.artScale === 1`: its sprites are new v2-only names, absent from the scale-1
+    build (decision RR-1a). A sprite drawn at scale 1 moves the scale-1 digest pin
+    (`test/scripts/assets/interim-pipeline.test.ts:341-357`), which is never re-pinned (wave rule 9).
   - A new sprite name shifts every later sprite id (ids are sorted names): the presentation and content-DB
     fingerprints move — that is the re-pin, not a bug.
   - Frame-wide art uses `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` (allowed after `R4-P.P3` hashes it); no literal
@@ -517,16 +598,23 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   for the three new `LayerId`s with the foreground below enemy bullets.
 - **Files (only these; checked on `bc8e05d`):**
   - `packages/render-pixi/src/layers/index.ts` — the layer stack loops over `LAYER_COUNT` (`:203-205`);
-    `WORLD_LAYER_COUNT = LayerId.Hud` (`:111`); the decor binding and bands.
+    `WORLD_LAYER_COUNT = LayerId.Hud` (`:111`); the decor binding and bands. **Not** the membership of
+    `RENDER_GROUP_LAYERS`: `R3-06.L2` set it (`DecorBack`, `DecorFront` grouped; `Foreground` not).
   - `packages/render-pixi/src/renderer/index.ts` — wiring.
   - `packages/render-pixi/src/effects/layer-effects.ts` — only if it indexes layers (it sizes by `LAYER_COUNT`, `:24`).
   - `packages/render-pixi/src/index.ts` — the barrel (RP-BARREL).
   - `packages/render-pixi/test/layers/layers-decor.test.ts` (new), `layers-decor-alloc.test.ts` (new).
+  - `test/integration/render-groups.test.ts` — only the `fixed` list at `:163`, and only if L3 binds a fixed container
+    on a decor layer in the renderer (`layers.layers[LayerId.DecorBack].addChild(…)`; both decor layers are grouped).
+    Bind the foreground band through the parallax path instead (`layers.layers[parallax.layers[i]]`,
+    `renderer/index.ts:1122-1133`; extend the `BgFar` / `BgMid` checks at `renderer/index.ts:1122` and
+    `layers/index.ts:496` to `Foreground`), never as `layers.layers[LayerId.Foreground]`: the test's regex
+    (`:152-163`) would count that as a fixed binding, which must be grouped, and `Foreground` is not.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/layers packages/render-pixi/test/renderer packages/render-pixi/test/effects
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/showcase
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tv-engine-floor.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tv-engine-floor.test.ts test/integration/render-groups.test.ts
   pnpm --filter @shmup/render-pixi typecheck
   ```
 - **Acceptance:** enemy bullets stay above everything except the HUD; the new allocation guard and the existing
@@ -570,16 +658,26 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `scripts/assets/procedural/arm.mjs` (new) — `shields/arm` (from `direct.mjs:334`).
   - `scripts/assets/procedural/particles.mjs` → `fx/black-hole` moves to `scripts/assets/procedural/blackhole.mjs`
     (new; from `particles.mjs:182-235`).
-  - `scripts/assets/procedural/ui.mjs` → `ui/logo` moves to `scripts/assets/procedural/logo.mjs` (new; `ui.mjs:143`);
-    `ui/pixel` and `ui/missing` stay.
+  - `scripts/assets/procedural/ui.mjs` → `ui/logo` moves to `scripts/assets/procedural/logo.mjs` (new; `ui.mjs:143`),
+    together with the constants `LOGO_TEXT` and `LOGO_SCALE` (`ui.mjs:22`, `:25`; `logo.mjs` exports both, `ui.mjs`
+    no longer does); `ui/pixel` and `ui/missing` stay.
   - stubs returning `[]` (new): `scripts/assets/procedural/thrusters.mjs`, `title.mjs`, `ui-kit.mjs`, `decor.mjs`.
   - `scripts/assets/procedural/index.mjs` — `PROCEDURAL_GENERATORS` (`:62-89`): add every new module, sorted by id.
-  - `test/scripts/assets/procedural.test.ts` — the registry case (`:243-280`) only.
+  - `test/scripts/assets/procedural.test.ts` — only two cases:
+    - the registry case (`:243-280`);
+    - the ui/logo case (`:1100-1120`, "makes ui/logo …"): import `logo.mjs`, read the sprite from `logo.generate()`
+      and the text from `logo.LOGO_TEXT` (the case's assertions stay as they are). After the move, `ui.generate()` no
+      longer returns `ui/logo`.
+  - `test/scripts/assets/pipeline-edge.test.ts` — only the case "checks frames against a smaller page limit the same
+    way" (`:271-281`): the too-wide logo's issue path is now `procedural:logo:frames[0]`. Filter with
+    `i.path.startsWith('procedural:logo:')` and expect `['procedural:logo:frames[0]']` (the message still contains
+    `"ui/logo"`), and add `expect(error.issues.filter((i) => i.path.startsWith('procedural:ui:'))).toEqual([])`.
 - **Tests (targeted, run all of them):**
   ```bash
-  node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* > "$RUN_DIR"/R4-P.P1-atlas-before.sha   # run on origin/master first
+  mkdir -p /home/sites/shmup-cup-run
+  node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* > /home/sites/shmup-cup-run/R4-P.P1-atlas-before.sha   # run on origin/master first
   # … make the change …
-  node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* | diff "$RUN_DIR"/R4-P.P1-atlas-before.sha -
+  node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* | diff /home/sites/shmup-cup-run/R4-P.P1-atlas-before.sha -
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/scripts/art-origins.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts
   node scripts/art-origins.mjs --check
   ```
@@ -593,8 +691,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     new module's id; the origin report pins no per-generator count (only the 438 procedural total), so check
     `node scripts/art-origins.mjs --check` rather than guessing.
   - Never edit `common.mjs`.
-- **Docs needs:** `docs/dev/asset-pipeline.md` (the generator split), `test/README.md` (if a row names
-  `procedural.test.ts`).
+- **Docs needs:** `docs/dev/asset-pipeline.md` (the generator split; `W07.DOCS-D`). The test-file renames are
+  `R4-P.P2`'s docs needs.
 
 ### R4-P.P2 — Split `procedural.test.ts` into one file per generator
 
@@ -611,18 +709,28 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     `procedural-arm.test.ts`, `procedural-blackhole.test.ts`, `procedural-logo.test.ts` holding the cases of the
     sprites `R4-P.P1` moved (if a case existed in another block, move it; else a smoke case: name, size, frames).
   - a shared helper `test/scripts/assets/procedural-helpers.ts` (new) only if several files need the same setup.
-- **Tests (targeted, run all of them):**
+- **Tests (targeted, run all of them):** the after-list names the new files one by one (bash brace expansion), so the
+  16 `procedural-zone-*` files of wave 6 are not in it; each line's file part is cut off before the compare.
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/scripts/assets/procedural.test.ts > "$RUN_DIR"/R4-P.P2-list-before.txt   # on origin/master
+  mkdir -p /home/sites/shmup-cup-run
+  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/scripts/assets/procedural.test.ts | sed 's/^\[integration\] [^ ]* > //' | sort > /home/sites/shmup-cup-run/R4-P.P2-list-before.txt   # on origin/master, before your change
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets
-  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/scripts/assets/procedural-*.test.ts > "$RUN_DIR"/R4-P.P2-list-after.txt
+  VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/scripts/assets/procedural-{common,registry,bullets,explosions,hud,weapons,items,particles,shields,backdrops,raster-bands,starfield,terrain,ui,lasers,palettes,bosses,direct,direct-items,arm,blackhole,logo}.test.ts | sed 's/^\[integration\] [^ ]* > //' | sort > /home/sites/shmup-cup-run/R4-P.P2-list-after.txt
+  diff /home/sites/shmup-cup-run/R4-P.P2-list-before.txt /home/sites/shmup-cup-run/R4-P.P2-list-after.txt
   ```
-- **Acceptance:** the same test count (and names, apart from the file prefix) before and after; all green.
+  Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (22 files).
+- **Acceptance:** all green; the `diff` shows the same titles before and after. The only extra lines allowed are new
+  smoke cases in the five moved-sprite files (`procedural-direct`, `procedural-direct-items`, `procedural-arm`,
+  `procedural-blackhole`, `procedural-logo`), each listed by name in the report.
 - **Token:** none.
-- **Traps:** do not touch the `procedural-zones*.test.ts` files (R5-P.P5c split those in wave 6); do not change an
-  assertion while moving it.
-- **Docs needs (report them; never edit docs):** `test/README.md` — the row of `procedural.test.ts` becomes one row
-  for the `procedural-*.test.ts` files (for `W07.DOCS-D`).
+- **Traps:** do not touch the `procedural-zone-*.test.ts` files (R5-P.P5c made them from `procedural-zones*.test.ts`
+  in wave 6); do not change an assertion while moving it (`R4-P.P1` already re-pointed the ui/logo case at
+  `logo.mjs`, so it moves as it is); keep each moved case's `describe` and `it` titles, so the `diff` above compares.
+- **Docs needs (report them; never edit docs):** the docs that name `test/scripts/assets/procedural.test.ts` now name
+  the matching `procedural-<generator>.test.ts` file: `docs/dev/advanced-bosses.md:479` and
+  `docs/dev/bullets-and-patterns.md:564` (`W07.DOCS-E`), `docs/dev/presentation-polish.md:457` (`W07.DOCS-B`),
+  `docs/dev/asset-pipeline.md:519` and `:589` (`W07.DOCS-D`); `test/README.md:77` names `procedural` in a group row
+  → `procedural-*` (`W07.DOCS-D`).
 
 ### R4-P.P3 — v2 sources beside v1 in the pipeline (RR-1 option A)
 
@@ -644,9 +752,19 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     `ui/pixel`, beams, and the v2 bullets R3-03.V1 added); the relation tests skip natives for size, frame count and
     animations. Never touch the digest at `:341-357`.
   - `test/scripts/assets/sprite-source-edge.test.ts`, `test/scripts/assets/font-edge.test.ts`.
+  - `test/scripts/assets/pipeline.test.ts` — only the case "contains the initial original sprite set" (`:181-245`):
+    it pins v1 identities at the default scale (`ships/kestrel` 3 frames `:184`, the thruster 2 `:185`, the kestrel
+    animations `:186`, `enemies` 73 `:201`, `ships/manta` 3 `:205`, `items/capsule` 2 `:241`, `shields/force-field` 4
+    `:242`), which v2 art in wave 8 and wave 10 would move. Make the case read a manifest of
+    `buildAtlas({ artScale: 1 })` (a second build, inside the case or in its own `const`); every assertion stays. The
+    shared `const atlas = buildAtlas()` at `:56` and the other cases stay on the default scale.
+  - `test/scripts/assets/pipeline-edge.test.ts` — only the case "names source files repo-relative …" (`:171-176`):
+    look `ships/kestrel` up in `collectSprites({ artScale: 1 })`, so its origin stays the v1 file after `R4-01.A1a`
+    adds `kestrel.v2.sprite.json`.
 - **Tests (targeted, run all of them):**
   ```bash
   node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*   # before (origin/master) and after: identical
+  node docs/v2-run/helpers/r34-gen-list.mjs   # before and after: every generator's list unchanged (no v2 file exists yet)
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/scripts/art-origins.test.ts test/integration/cjk-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen apps/tizen/test/scripts/bench-atlas.test.ts
   node scripts/art-origins.mjs --check
@@ -666,25 +784,56 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Depends on:** `R4-P.P3` on `master` (it hashes `scripts/frame.mjs`, so a generator may import it).
 - **Goal:** one read-only kit every R4 generator uses.
 - **Files (only these):**
-  - `scripts/assets/procedural/v2kit.mjs` (new): a 1-px outline in the palette's outline colour; top-left light ramps;
-    `RESERVED_RAMPS` re-exported from the generators that define them; `offRamp(colour)` (moves a colour ≥ 3/255,
-    Chebyshev, from every reserved ramp); frame sizes from `scripts/frame.mjs`.
+  - `scripts/assets/v2kit.mjs` (new; **outside** `procedural/`): a 1-px outline in the palette's outline colour;
+    top-left light ramps; `RESERVED_RAMPS` re-exported from the generators that define them; `offRamp(colour)` (moves
+    a colour ≥ 3/255, Chebyshev, from every reserved ramp); frame sizes from `scripts/frame.mjs`. Outside the folder
+    it is not a generator for the registry test (`test/scripts/assets/procedural.test.ts:244-250`, after `R4-P.P2`
+    in `procedural-registry.test.ts`: every `.mjs` in `procedural/` but `index.mjs` and `common.mjs` must be
+    registered), yet it is still hashed by the pipeline's `CODE_HASH` (all of `scripts/assets/**`) and scanned for
+    engine maths by `test/scripts/assets/pipeline.test.ts:342-360`.
   - `test/scripts/assets/v2kit.test.ts` (new).
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/v2kit.test.ts test/integration/frame-literals-repo.test.ts test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/v2kit.test.ts test/scripts/assets/pipeline.test.ts test/integration/frame-literals-repo.test.ts test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural.test.ts test/scripts/assets/procedural-registry.test.ts   # the registry case stays green; it is in whichever of the two exists (R4-P.P2 moves it)
   ```
 - **Acceptance:** deterministic (exact maths only); no banned frame literal; `offRamp` tested at the ramp edges.
 - **Token:** `v2kit.mjs` is yours; after this subtask every R4 agent only reads it.
-- **Traps:** the kit is not registered as a generator (no `generate()`); the registry is `R4-P.P1`'s. Never
-  `Math.sin` / `cos` / `random`.
+- **Traps:**
+  - The kit lives in `scripts/assets/`, **not** in `scripts/assets/procedural/` (a `.mjs` there must be registered,
+    and the registry is frozen after `R4-P.P1`). It has no `generate()`.
+  - The kit imports the zone generators' ramp constants. Read them only inside functions (lazily), never at the kit's
+    top level, so a generator that defines a ramp may import the kit without a module-cycle TDZ error
+    ("Cannot access … before initialization").
+  - Never `Math.sin` / `cos` / `random`.
 - **Docs needs:** `docs/dev/asset-pipeline.md` (`v2kit`).
 
 ## Reviews
 
 Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent) → `<id>.FIX1` if it found anything →
 `<id>.RV2` (a **new** agent) … until a review reports zero findings, nits included. The R2-04 patch subtasks (`F1`,
-`Z1` … `Z4`) are reviewed as part of `R2-04.G`'s review.
+`Z1` … `Z4`) push nothing; each patch gets its own loop in `R2-04.patches.RV`, **before** `R2-04.G` starts.
+
+### R2-04.patches.RV — Review each R2-04 patch before the re-bless
+
+- **When:** as each patch lands in `RUN_DIR/w07/patches/` (with its report), one fresh read-only reviewer per patch:
+  `R2-04.F1.RV1`, `R2-04.Z1.RV1`, `R2-04.Z2.RV1`, `R2-04.Z3.RV1`, `R2-04.Z4.RV1`.
+- **Read:** the patch file `/home/sites/shmup-cup-run/w07/patches/<id>.patch`, its report
+  `/home/sites/shmup-cup-run/<id>-report.md`, and the subtask's block above.
+- **Check:**
+  - `git apply --check /home/sites/shmup-cup-run/w07/patches/<id>.patch` on a fresh worktree of `origin/master`
+    (replace `<id>` with the patch's id) — it applies;
+  - the patch touches only the files its block lists (Z4: only inside the `remix` arrays of the zone files);
+  - with the patch applied, the subtask's own test commands pass;
+  - the report's tables follow the block's definitions (a section between two baseline checkpoints; v1 median
+    `turnTick − visibleTick` from the baseline's `enemyColumns`; v2 from an in-memory `recordBaseline`; damage on v2
+    only), and every proposed change has a table row that justifies it;
+  - the list of v2-port rows each moved spawn breaks is complete (F1: none; it moves no spawn).
+- **Fix loop:** a finding goes to a fix agent (`<id>.FIX1`), which rewrites the patch file and the report from its own
+  local commit (as the subtask did); then a **new** reviewer (`<id>.RV2`) … until a review reports zero findings,
+  nits included.
+- **Gate:** `R2-04.G` starts only when all five loops are at zero.
+- **Report:** findings with severity (blocker / should-fix / nit). Zero findings means zero nits.
 
 ### R2-04.RV — R2-04 step review
 
@@ -707,7 +856,8 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
 - **Re-run:** each L subtask's tests; `node scripts/content/rescale.mjs --factor 1 --dry-run` (0 / 0 / 0); the decor
   e2e spec under the lock.
 - **Must hold:** every new number has a unit; zero allocation (the new guards); goldens unchanged; the foreground below
-  enemy bullets; `atlas-groups.json` unchanged; the fingerprints re-pinned only at L2, L4, L6, each with its reason;
+  enemy bullets; `atlas-groups.json` unchanged; the fingerprints re-pinned only at L1 (content-DB `examples` only), L2,
+  L4, L6, each with its reason; `DecorBack` / `DecorFront` in `RENDER_GROUP_LAYERS`, `Foreground` not;
   `DRAW_CALL_BUDGET` unchanged or raised with a reason.
 - **Report:** as above.
 
@@ -723,7 +873,7 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
 
 ## Docs item
 
-Starts after `R2-04.RV`, `R3-06.RV` and `R4-P.RV` are at zero. The four agents' files are disjoint; `W07.DOCS-A` alone
+Starts after `R2-04.RV`, `R3-06.RV` and `R4-P.RV` are at zero. The five agents' files are disjoint; `W07.DOCS-A` alone
 holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs") and the Z tables.
 
 ### W07.DOCS-A — The plan, the changelog, the board
@@ -732,16 +882,19 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 - **Goal:** R2-04's **As built** (the Z tables in short, the shake choice, the owner's session notes if any); §1 rows
   R2-N5 … R2-N8; R3-06's As built and RR-6; an "R4 prep" note under §10 with RR-1 (v2 sources beside v1); §17:
   R2-04 → `done (owner parts pending)` (the M7 play session), R3-06 → `done`; CHANGELOG `[Unreleased] — v2` entries
-  for R2-04, R3-06, R4 prep, and the version line `2.0.0-alpha.1`; then `python3 .claude/plan_board_v2.py`.
+  for R2-04, R3-06, R4 prep, and the version line `2.0.0-alpha.1` (and `plan_resolution.md`'s lines that state the
+  current version `2.0.0-alpha.0`); push; then report: the orchestrator runs the board sync.
 - **Acceptance:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tooling-config.test.ts`
-  green (the CHANGELOG section test); the board synced; no step row in §18 changed.
+  green (the CHANGELOG section test); pushed; the orchestrator ran the board sync; no step row in §18 changed.
 - **Traps:** never edit a §17 status the orchestrator did not confirm; keep `## [Unreleased] — v2` the first section.
 
 ### W07.DOCS-B — FX, presentation, CRT
 
 - **Files (only these):** `docs/dev/fx-and-game-feel.md` (shake 2/3/6, popups ×1.5, the particle look),
-  `docs/dev/presentation-polish.md` (the CRT at pitch 3; R3-06's decor, painted bands and glows),
-  `docs/dev/visual-and-mechanic-extras.md` (the CRT, Mega Crash, the black-hole check).
+  `docs/dev/presentation-polish.md` (the CRT at pitch 3; R3-06's decor, painted bands and glows; the test row at
+  `:457`: `procedural.test.ts` → `procedural-raster-bands.test.ts`, `R4-P.P2`),
+  `docs/dev/visual-and-mechanic-extras.md` (the CRT, Mega Crash, the black-hole check), `content/fx/README.md` (only
+  if `R2-04.P2` changed a field's meaning).
 
 ### W07.DOCS-C — Stages and rendering
 
@@ -755,12 +908,33 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 - **Files (only these):** `docs/dev/api-reference.md` (`LayerId` incl. `DecorBack` / `DecorFront` / `Foreground`,
   `DecorView`, `LAYER_COUNT`), `docs/dev/asset-pipeline.md` (v2 sources beside v1 — RR-1; the generator split; `v2kit`),
   `docs/dev/conventions.md` (the art-scale rule: v2 art in `*.v2.sprite.json` or a generator's `artScale !== 1` path;
-  the scale-1 build stays v1 until R6-03), `docs/dev/art-bible-v2.md` §9, `CLAUDE.md` (one line under v2: "v2 art lives
-  in `*.v2.sprite.json` and generator v2 paths"), `test/README.md` (new test files).
+  the scale-1 build stays v1 until a v2.0.x clean-up after the release — deferred from R6-03, decision RR-1),
+  `docs/dev/art-bible-v2.md` §9, `CLAUDE.md` (one line under v2: "v2 art lives in `*.v2.sprite.json` and generator v2
+  paths"; and its version sentence `2.0.0-alpha.0` → `2.0.0-alpha.1`), `test/README.md` (new test files; the group
+  row at `:77` names `procedural` → `procedural-*`).
+- Also in `docs/dev/asset-pipeline.md`: the two lines naming `test/scripts/assets/procedural.test.ts` (`:519`, `:589`)
+  → the `procedural-*.test.ts` files (`R4-P.P2`).
+
+### W07.DOCS-E — Zones, the version sweep, renamed tests
+
+- **Files (only these):**
+  - the zone docs, from the Z reports' tables (R2-04's per-section changes): `docs/dev/zone-a-and-playtest.md`,
+    `docs/dev/zones-b-and-c.md`, `docs/dev/zones-d-and-e.md`, `docs/dev/zones-f-and-g.md`, `docs/dev/zones-h-and-i.md`,
+    `docs/dev/campaign-and-bonus-stages.md` (the bonus stages), `docs/dev/extra-modes-and-replays.md` (the boss rush
+    and the loop remixes);
+  - the version sweep `2.0.0-alpha.0` → `2.0.0-alpha.1` (`R2-04.REL`): `README.md`, `apps/tizen/README.md`,
+    `docs/README.md`, `docs/client/README.md`, `docs/client/debug-tools.md`, `docs/client/desktop-app.md`,
+    `docs/client/install-on-tv.md`, `docs/client/preview-build.md`, `docs/client/release-candidate.md`,
+    `docs/dev/README.md`, `docs/dev/build-test-deploy.md`, `docs/dev/platform-polish.md`,
+    `docs/dev/release-hardening.md` (find the lines with `git grep -n "alpha\.0" -- <file>`, `<file>` one of these);
+  - the renamed test file (`R4-P.P2`): `docs/dev/advanced-bosses.md:479` (→ `procedural-bosses.test.ts`) and
+    `docs/dev/bullets-and-patterns.md:564` (→ `procedural-lasers.test.ts`).
+- **Traps:** change only lines that state the current version; a line that tells history ("`2.0.0-alpha.0` was set
+  when …") stays. `CHANGELOG.md` and `plan_resolution.md` are `W07.DOCS-A`'s, `CLAUDE.md` is `W07.DOCS-D`'s.
 
 ### W07.DOCS-RV — Docs review
 
-- Review all four docs pushes against the builders' reports and the code on `master`; fix → new review → zero.
+- Review all five docs pushes against the builders' reports and the code on `master`; fix → new review → zero.
 
 ## Exit check
 
@@ -783,4 +957,5 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 
 - Play zones A, D and I on the M7 in a `pnpm --filter @shmup/tizen build:dev` bundle; watch TPF and RENDER on the
   overlay; note any zone that "feels wrong" because of scale (R2-04's real acceptance).
-- Confirm the shake magnitudes (R2-N7) and the alpha.1 tag (R2-N8).
+- Confirm the shake magnitudes (R2-N7) and the alpha.1 tag (R2-N8) — this never delays the tag at the exit (RUN-1):
+  the orchestrator tags `v2.0.0-alpha.1` when the exit check passes, and a later owner change goes into a later step.
