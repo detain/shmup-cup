@@ -30,6 +30,7 @@ import {
   type World,
   type WorldStatus,
 } from '../../src/world/index.js';
+import { HUD } from '../helpers/hud.js';
 
 /**
  * A shipped content file.
@@ -168,7 +169,8 @@ describe('core/ui co-op HUD edge: drawing (M2-06)', () => {
     expect(texts(list).filter((t) => t[0] === 'PRESS START')).toHaveLength(1);
     const numbers: number[] = [];
     for (let i = 0; i < list.count; i++) {
-      if (list.op[i] === DrawOp.Number && list.x[i] === L.p1X + 16) numbers.push(list.value[i]);
+      if (list.op[i] === DrawOp.Number && list.x[i] === L.p1X + HUD.scoreDx)
+        numbers.push(list.value[i]);
     }
     expect(numbers).toEqual([12_340]);
     // On the blink's "off" half the prompt is gone; the score stays.

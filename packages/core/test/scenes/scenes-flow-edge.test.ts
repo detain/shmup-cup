@@ -10,7 +10,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig } from '../../src/config/index.js';
+import { FRAME_CX, FRAME_CY, FRAME_H, GLYPH_W, resolveGameConfig } from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -44,8 +44,9 @@ import {
   type SceneStart,
 } from '../../src/scenes/index.js';
 import { MAX_SCORE } from '../../src/scoring/index.js';
-import { ConfirmChoice, UI_COLORS, resolveUiSprites } from '../../src/ui/index.js';
+import { ConfirmChoice, UI_COLORS, resolveUiSprites, uiPx } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, type World } from '../../src/world/index.js';
+import { BOOT_BAR, WARNING_BAND } from '../helpers/scene-layout.js';
 
 /**
  * A shipped content file.
@@ -347,13 +348,14 @@ describe('core/scenes flow edge: boot', () => {
       const ui = s.game.renderFrame().ui;
       return indicesOf(ui, DrawOp.Rect).map((i) => ui.w[i]);
     };
-    expect(bar()).toEqual([160]); // the track only
+    const w = BOOT_BAR.w; // 160 at 384×216
+    expect(bar()).toEqual([w]); // the track only
     s.flow.setBootProgress(0.25, 'LOADING ART');
-    expect(bar()).toEqual([160, 40]);
+    expect(bar()).toEqual([w, Math.round(w * 0.25)]);
     s.flow.setBootProgress(-1);
-    expect(bar()).toEqual([160]);
+    expect(bar()).toEqual([w]);
     s.flow.setBootProgress(2);
-    expect(bar()).toEqual([160, 160]);
+    expect(bar()).toEqual([w, w]);
     expect(s.uiTexts()).toEqual(['LOADING ART']);
     s.press(Action.Confirm);
     s.press(Action.Back);
@@ -501,10 +503,14 @@ describe('core/scenes flow edge: title', () => {
     const ui = s.game.renderFrame().ui;
     const logo = resolveUiSprites(DB).logo;
     const sprites = indicesOf(ui, DrawOp.Sprite);
-    expect(sprites.map((i) => [ui.ref[i], ui.x[i], ui.y[i]])).toEqual([[logo, 192, 64]]);
+    // The logo 44 px above the centre row; `HI` 40 px left of the centre and 20 px above the
+    // bottom edge, its score after the two glyphs and 4 px (192, 64 and 168, 196 at 384×216).
+    const logoY = FRAME_CY - uiPx(44);
+    expect(sprites.map((i) => [ui.ref[i], ui.x[i], ui.y[i]])).toEqual([[logo, FRAME_CX, logoY]]);
     const numbers = indicesOf(ui, DrawOp.Number);
+    const scoreX = FRAME_CX - uiPx(40) + 2 * GLYPH_W + uiPx(4);
     expect(numbers.map((i) => [ui.value[i], ui.x[i], ui.y[i], ui.frame[i]])).toEqual([
-      [4321, 168, 196, 8],
+      [4321, scoreX, FRAME_H - uiPx(20), 8],
     ]);
     const bare = new Session('title', true, EMPTY_CONTENT_DB);
     expect(indicesOf(bare.game.renderFrame().ui, DrawOp.Sprite)).toEqual([]);
@@ -584,10 +590,11 @@ describe('core/scenes flow edge: game', () => {
     warning.text = 'WARNING!! TEST CRAFT';
     s.hold(0);
     const frame = s.game.renderFrame();
+    const band = WARNING_BAND; // 76, 48 tall at 384×216
     expect(indicesOf(frame.ui, DrawOp.Rect).map((i) => [frame.ui.y[i], frame.ui.h[i]])).toEqual([
-      [76, 48],
-      [76, 1],
-      [123, 1],
+      [band.y, band.h],
+      [band.y, 1],
+      [band.y + band.h - 1, 1],
     ]);
     const text = indicesOf(frame.ui, DrawOp.Text)[0];
     expect(frame.ui.strings[frame.ui.ref[text]]).toBe('WARNING!! TEST CRAFT');
@@ -749,9 +756,10 @@ describe('core/scenes flow edge: end screens', () => {
     s.hold(0, STAGE_CLEAR_DELAY_TICKS);
     const ui = s.game.renderFrame().ui;
     const numbers = indicesOf(ui, DrawOp.Number);
+    const right = FRAME_CX + uiPx(64); // 256 at 384×216
     expect(numbers.map((i) => [ui.value[i], ui.x[i], ui.flags[i]])).toEqual([
-      [3100, 256, TextAlign.Right],
-      [9000, 256, TextAlign.Right],
+      [3100, right, TextAlign.Right],
+      [9000, right, TextAlign.Right],
     ]);
     expect(s.game.renderFrame().screen.dim).toBe(0.25);
     s.press(Action.Back);

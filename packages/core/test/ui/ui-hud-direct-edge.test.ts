@@ -23,13 +23,14 @@ import {
 } from '../../src/ui/index.js';
 import type { World } from '../../src/world/index.js';
 import { aliveWorld, directDb, familyDb, testWeapon } from '../helpers/direct.js';
+import { HUD } from '../helpers/hud.js';
 
 /** The shipped Direct-mode content. */
 const DB = directDb();
 const SPRITES = resolveUiSprites(DB);
 
 /**
- * The 4×4 pips of the bottom bar in one x range, as colours left to right.
+ * The 4×4 pips (at the art's scale) of the bottom bar in one x range, as colours left to right.
  *
  * @param list - The HUD list.
  * @param x0 - First x (inclusive).
@@ -39,8 +40,8 @@ const SPRITES = resolveUiSprites(DB);
 function pips(list: DrawList, x0: number, x1: number): number[] {
   const out: number[] = [];
   for (let i = 0; i < list.count; i++) {
-    if (list.op[i] !== DrawOp.Rect || list.y[i] !== HUD_LAYOUT.bottomY + 2) continue;
-    if (list.w[i] !== 4 || list.h[i] !== 4) continue;
+    if (list.op[i] !== DrawOp.Rect || list.y[i] !== HUD.rowY) continue;
+    if (list.w[i] !== HUD.pipW || list.h[i] !== HUD.pipH) continue;
     if (list.x[i] >= x0 && list.x[i] < x1) out.push(list.color[i]);
   }
   return out;

@@ -23,6 +23,7 @@ import {
   createHud,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, stepWorld, type World } from '../../src/world/index.js';
+import { HUD } from '../helpers/hud.js';
 
 /**
  * A shipped content file.
@@ -134,15 +135,21 @@ describe('core/ui — the boss HP bar (M2-09)', () => {
     expect(texts(list)).toContain('BOSS');
     expect(texts(list)).not.toContain('HI');
     const L = HUD_LAYOUT;
-    expect(rects(list, HUD_COLORS.bossFrame)).toEqual([[L.bossBarX, 2, BOSS_HP_BAR_WIDTH, 4]]);
-    // Full strength: the whole inner width (the test boss's core 24 + plates 10 + 10).
+    const frame = [L.bossBarX, HUD.topRowY, BOSS_HP_BAR_WIDTH, HUD.pipH];
+    expect(rects(list, HUD_COLORS.bossFrame)).toEqual([frame]);
+    // Full strength: the whole inner width (the test boss's core 24 + plates 10 + 10) — 62 px at
+    // 384×216, the frame less its 1-px border.
+    const inner = BOSS_HP_BAR_WIDTH - 2;
+    const fillY = HUD.topRowY + 1;
+    const fillH = HUD.pipH - 2;
     expect(w.bosses.hpBar.maxHp).toBe(44);
-    expect(rects(list, HUD_COLORS.bossFill)).toEqual([[L.bossBarX + 1, 3, 62, 2]]);
-    // A plate down: ⌈34 × 62 / 44⌉ = 48 px.
+    expect(rects(list, HUD_COLORS.bossFill)).toEqual([[L.bossBarX + 1, fillY, inner, fillH]]);
+    // A plate down: ⌈34 × 62 / 44⌉ = 48 px at 384×216.
     w.bosses.damagePart(5, 10, 0);
     run(w, 1);
     buildHud(w, list, undefined, true);
-    expect(rects(list, HUD_COLORS.bossFill)).toEqual([[L.bossBarX + 1, 3, 48, 2]]);
+    const plateDown = Math.ceil((34 * inner) / 44);
+    expect(rects(list, HUD_COLORS.bossFill)).toEqual([[L.bossBarX + 1, fillY, plateDown, fillH]]);
     // No boss: the hi-score is back.
     w.bosses.clear();
     run(w, 1);
@@ -170,13 +177,15 @@ describe('core/ui — the boss HP bar (M2-09)', () => {
     run(w, 200);
     expect(hud.update(w, list)).toBe(true);
     expect(hud.update(w, list)).toBe(false);
-    // 1 hp off the core (24 of 44): ⌈43 × 62 / 44⌉ = 61 px — a rebuild.
+    // 1 hp off the core (24 of 44): ⌈43 × 62 / 44⌉ = 61 px at 384×216 — a rebuild.
     w.bosses.damagePart(4, 1, 0);
     run(w, 1);
     expect(hud.update(w, list)).toBe(false);
     w.bosses.damagePart(5, 1, 0);
     run(w, 1);
     expect(hud.update(w, list)).toBe(true);
-    expect(rects(list, HUD_COLORS.bossFill)[0]?.[2]).toBe(61);
+    expect(rects(list, HUD_COLORS.bossFill)[0]?.[2]).toBe(
+      Math.ceil((43 * (BOSS_HP_BAR_WIDTH - 2)) / 44),
+    );
   });
 });

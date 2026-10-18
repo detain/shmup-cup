@@ -1,9 +1,9 @@
 /**
- * The HUD's layout rules (plan_resolution.md R1-01): `HUD_LAYOUT` and `BOSS_HP_BAR_WIDTH` derive
- * from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT) and the font's
- * cell (GLYPH_W). The relations below are written in those constants, so they pin every field to
- * its pixel today (a field moved by 1 px breaks one) and keep holding after R2-01 changes the
- * constants; they also cover the co-op halves and the co-op Direct pips, which the presentation
+ * The HUD's layout rules (plan_resolution.md R1-01, R2-01): `HUD_LAYOUT` and `BOSS_HP_BAR_WIDTH`
+ * derive from the frame (`core/config` FRAME_W, FRAME_CX, HUD_BOTTOM_Y, HUD_BAR_HEIGHT), the font's
+ * cell (GLYPH_W) and, for the art- and padding-sized lengths, the art's scale (`core/ui` uiPx). The
+ * relations below are written in those, so they pin every field to its pixel (a field moved by 1 px
+ * breaks one) at 384×216 and keep holding after R2-01 changes the constants; they also cover the co-op halves and the co-op Direct pips, which the presentation
  * fingerprint's walks do not draw. A second test builds every HUD mode — one player and co-op, the
  * meter and Direct mode, the join prompt, a half that may continue or is out, the boss HP bar and
  * the caravan clock, with and without the UI sprites — and checks that each command stays inside
@@ -34,14 +34,18 @@ import {
   HUD_STRING_COUNT,
   buildHud,
   resolveUiSprites,
+  uiPx,
   type UiSprites,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, type World } from '../../src/world/index.js';
 
 const L = HUD_LAYOUT;
 
-/** From a two-glyph top-bar label to its number: the label and a 4-px gap. */
-const SCORE_DX = 2 * GLYPH_W + 4;
+/** The gap between a HUD label and what follows it (4 px at the v1 art's scale). */
+const GAP = uiPx(4);
+
+/** From a two-glyph top-bar label to its number: the label and the gap. */
+const SCORE_DX = 2 * GLYPH_W + GAP;
 
 /**
  * A shipped content file.
@@ -79,42 +83,44 @@ describe('HUD_LAYOUT', () => {
     expect(L.bottomY).toBe(HUD_BOTTOM_Y);
     expect(L.halfW * 2).toBe(FRAME_W);
     // The HI display (label, gap, digits) centred 4 px left of the frame's centre.
-    expect(L.hiX + (SCORE_DX + L.digits * GLYPH_W) / 2).toBe(FRAME_CX - 4);
+    expect(L.hiX + ((SCORE_DX + L.digits * GLYPH_W) >> 1)).toBe(FRAME_CX - uiPx(4));
     // 2P and an 11-glyph PRESS START ending 10 px from the right edge.
-    expect(L.p2X + SCORE_DX + 11 * GLYPH_W).toBe(FRAME_W - 10);
+    expect(L.p2X + SCORE_DX + 11 * GLYPH_W).toBe(FRAME_W - uiPx(10));
     // Five Force Field pips 7 px apart, the last (5 px wide) ending 7 px from the right edge.
-    expect(L.shieldX + 4 * 7 + 5).toBe(FRAME_W - 7);
+    expect(L.shieldX + 4 * uiPx(7) + uiPx(5)).toBe(FRAME_W - uiPx(7));
     // The boss HP bar: as wide as the HI display, BOSS + gap + bar centred 2 px right of centre.
     expect(BOSS_HP_BAR_WIDTH).toBe(SCORE_DX + L.digits * GLYPH_W);
-    expect(L.bossBarX).toBe(L.bossX + 4 * GLYPH_W + 4);
-    expect(L.bossX + (L.bossBarX - L.bossX + BOSS_HP_BAR_WIDTH) / 2).toBe(FRAME_CX + 2);
+    expect(L.bossBarX).toBe(L.bossX + 4 * GLYPH_W + GAP);
+    const bossW = L.bossBarX - L.bossX + BOSS_HP_BAR_WIDTH;
+    expect(L.bossX + (bossW >> 1)).toBe(FRAME_CX + uiPx(2));
   });
 
   it('lays the left-anchored runs out one after the other from the font', () => {
-    expect([L.p1X, L.digits, L.stockX, L.stockIcons]).toEqual([8, 8, 4, 5]);
+    expect([L.p1X, L.digits, L.stockX, L.stockIcons]).toEqual([uiPx(8), 8, uiPx(4), 5]);
     // The meter (the art's 40-px slots) after the five stock icons 10 px apart.
-    expect(L.meterX).toBe(L.stockX + L.stockIcons * 10 + 4);
-    expect(L.slotW).toBe(40);
+    expect(L.meterX).toBe(L.stockX + L.stockIcons * uiPx(10) + uiPx(4));
+    expect(L.slotW).toBe(uiPx(40));
     // Direct mode: SHOT (4 glyphs, 8 pips 5 px apart), SUB (3 glyphs, 8 pips), ARM and SPD (3
     // glyphs, 5 pips 6 px apart), then the family's label.
     expect(L.shotX).toBe(L.meterX);
-    expect(L.subX).toBe(L.shotX + 4 * GLYPH_W + 2 + 8 * 5 + 6);
-    expect(L.armX).toBe(L.subX + 3 * GLYPH_W + 2 + 8 * 5 + 6);
-    expect(L.speedX).toBe(L.armX + 3 * GLYPH_W + 2 + 5 * 6 + 6);
-    expect(L.familyX).toBe(L.speedX + 3 * GLYPH_W + 2 + 5 * 6 + 4);
+    expect(L.subX).toBe(L.shotX + 4 * GLYPH_W + uiPx(2) + 8 * uiPx(5) + uiPx(6));
+    expect(L.armX).toBe(L.subX + 3 * GLYPH_W + uiPx(2) + 8 * uiPx(5) + uiPx(6));
+    expect(L.speedX).toBe(L.armX + 3 * GLYPH_W + uiPx(2) + 5 * uiPx(6) + uiPx(6));
+    expect(L.familyX).toBe(L.speedX + 3 * GLYPH_W + uiPx(2) + 5 * uiPx(6) + uiPx(4));
   });
 
   it('lays the co-op halves out from the font', () => {
-    expect(L.coopStockX).toBe(2);
+    expect(L.coopStockX).toBe(uiPx(2));
     // The stock icon, its count 10 px later (one digit), a 4-px gap, then the meter.
-    expect(L.coopMeterX).toBe(L.coopStockX + 10 + GLYPH_W + 4);
-    expect(L.coopSlotW).toBe(2 * GLYPH_W + 8);
-    expect(L.coopShieldX).toBe(L.coopMeterX + METER_SLOT_COUNT * L.coopSlotW + 2);
+    expect(L.coopMeterX).toBe(L.coopStockX + uiPx(10) + GLYPH_W + GAP);
+    expect(L.coopSlotW).toBe(2 * GLYPH_W + uiPx(8));
+    expect(L.coopShieldX).toBe(L.coopMeterX + METER_SLOT_COUNT * L.coopSlotW + uiPx(2));
     // Co-op Direct mode: SH, SB (2 glyphs + 1 px, 8 pips 4 px apart, 1 px), AR (5 pips), SP.
+    const pips = 2 * GLYPH_W + uiPx(1);
     expect(L.coopShotX).toBe(L.coopMeterX);
-    expect(L.coopSubX).toBe(L.coopShotX + 2 * GLYPH_W + 1 + 8 * 4 + 1);
-    expect(L.coopArmX).toBe(L.coopSubX + 2 * GLYPH_W + 1 + 8 * 4 + 1);
-    expect(L.coopSpeedX).toBe(L.coopArmX + 2 * GLYPH_W + 1 + 5 * 4 + 1);
+    expect(L.coopSubX).toBe(L.coopShotX + pips + 8 * uiPx(4) + uiPx(1));
+    expect(L.coopArmX).toBe(L.coopSubX + pips + 8 * uiPx(4) + uiPx(1));
+    expect(L.coopSpeedX).toBe(L.coopArmX + pips + 5 * uiPx(4) + uiPx(1));
   });
 });
 

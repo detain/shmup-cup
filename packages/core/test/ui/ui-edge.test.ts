@@ -7,6 +7,7 @@
  * lock, buffer and revision rules; and the builders' defaults, geometry, slot reuse and overflow.
  */
 import { describe, expect, it } from 'vitest';
+import { GLYPH_W, LINE_H } from '../../src/config/index.js';
 import { Action, type ActionMask, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, TextAlign, createDrawList, type DrawList } from '../../src/presentation/index.js';
 import {
@@ -30,6 +31,7 @@ import {
   menuResultSfx,
   menuTick,
   repeatDirections,
+  uiPx,
 } from '../../src/ui/index.js';
 
 /** A player input driven like the input adapters do (edges from the previous held mask). */
@@ -474,6 +476,33 @@ describe('core/ui edge: menu sounds', () => {
   });
 });
 
+// The UI kit's default geometry, derived as core/ui derives it (R1-01, R2-01) — the values at
+// 384×216 with the 6×8 font in parentheses.
+
+/** drawMenu's default row pitch: a line and 2 px (12). */
+const ROW = LINE_H + uiPx(2);
+
+/** drawMenu's default cursor: a glyph cell and 4 px left of the labels (10). */
+const CURSOR_DX = GLYPH_W + uiPx(4);
+
+/** drawMenu's default value column: a 13-glyph label and 2 px right of them (80). */
+const VALUE_DX = 13 * GLYPH_W + uiPx(2);
+
+/** A slider's bar: its width (50), its drop below the row's top (2), the gap to its value (6). */
+const BAR_W = 8 * GLYPH_W + uiPx(2);
+const BAR_DY = uiPx(2);
+const VALUE_GAP = uiPx(6);
+
+/** drawConfirm's panel (176×52), the question's drop (7), the YES / NO row's rise (16). */
+const CONFIRM_W = 28 * GLYPH_W + uiPx(8);
+const CONFIRM_H = uiPx(52);
+const QUESTION_DY = uiPx(7);
+const CHOICE_ROW_DY = uiPx(16);
+
+/** From the dialog's centre to YES's and NO's centres (32), and their cursor's offset (18). */
+const CHOICE_DX = uiPx(32);
+const CHOICE_CURSOR_DX = 3 * GLYPH_W;
+
 describe('core/ui edge: builders', () => {
   it('drawPanel honours custom colours and opacity; the border is opaque', () => {
     const list = createDrawList();
@@ -485,12 +514,12 @@ describe('core/ui edge: builders', () => {
   it('drawMenu defaults: cursor 10 px left, 12-px rows, left aligned, values 80 px right', () => {
     const menu = createListMenu(['A', { label: 'T', toggle: createToggle(true) }], { focus: 1 });
     const list = createDrawList(32, 8);
-    expect(drawMenu(list, menu, 0, { x: 100, y: 40 })).toBe(64);
+    expect(drawMenu(list, menu, 0, { x: 100, y: 40 })).toBe(40 + 2 * ROW);
     expect(commands(list)).toEqual([
       [DrawOp.Text, 0, 100, 40, 0, UI_COLORS.text],
-      [DrawOp.Text, 4, 90, 52, 0, UI_COLORS.focus], // cursor
-      [DrawOp.Text, 1, 100, 52, 0, UI_COLORS.focus],
-      [DrawOp.Text, 2, 180, 52, 0, UI_COLORS.focus], // ON
+      [DrawOp.Text, 4, 100 - CURSOR_DX, 40 + ROW, 0, UI_COLORS.focus], // cursor
+      [DrawOp.Text, 1, 100, 40 + ROW, 0, UI_COLORS.focus],
+      [DrawOp.Text, 2, 100 + VALUE_DX, 40 + ROW, 0, UI_COLORS.focus], // ON
     ]);
     for (let i = 0; i < list.count; i++) expect(list.flags[i]).toBe(TextAlign.Left);
     expect(drawMenu(list, menu, 0, { x: 0, y: 0, lineHeight: 20 })).toBe(40);
@@ -503,7 +532,7 @@ describe('core/ui edge: builders', () => {
     drawMenu(list, menu, 0, { x: 50, y: 0 });
     expect(commands(list)).toEqual([
       [DrawOp.Text, 0, 50, 0, 0, UI_COLORS.disabled],
-      [DrawOp.Text, 1, 50, 12, 0, UI_COLORS.text],
+      [DrawOp.Text, 1, 50, ROW, 0, UI_COLORS.text],
     ]);
   });
 
@@ -520,19 +549,20 @@ describe('core/ui edge: builders', () => {
     drawMenu(list, menu, 0, { x: 0, y: 0, valueX: 100 });
     const rects = commands(list).filter((c) => c[0] === DrawOp.Rect);
     expect(rects.map((c) => [c[2], c[3], c[4], c[5]])).toEqual([
-      [100, 2, 50, UI_COLORS.track],
-      [100, 14, 50, UI_COLORS.track],
-      [100, 14, 50, UI_COLORS.text], // full
-      [100, 26, 50, UI_COLORS.track],
+      [100, BAR_DY, BAR_W, UI_COLORS.track],
+      [100, ROW + BAR_DY, BAR_W, UI_COLORS.track],
+      [100, ROW + BAR_DY, BAR_W, UI_COLORS.text], // full
+      [100, 2 * ROW + BAR_DY, BAR_W, UI_COLORS.track],
     ]);
     const numbers: Array<[number, number, number]> = [];
     for (let i = 0; i < list.count; i++) {
       if (list.op[i] === DrawOp.Number) numbers.push([list.value[i], list.x[i], list.frame[i]]);
     }
+    const valueX = 100 + BAR_W + VALUE_GAP;
     expect(numbers).toEqual([
-      [0, 156, 0],
-      [10, 156, 0],
-      [3, 156, 0],
+      [0, valueX, 0],
+      [10, valueX, 0],
+      [3, valueX, 0],
     ]);
     // The focused slider's bar and value take the focus colour.
     expect(list.color[0]).toBe(UI_COLORS.focus); // cursor
@@ -546,7 +576,7 @@ describe('core/ui edge: builders', () => {
     const before = list.revision;
     list.clear();
     const n = drawMenu(list, menu, 1, { x: 0, y: 0 });
-    expect(n).toBe(36);
+    expect(n).toBe(3 * ROW);
     expect(list.strings).toEqual(strings);
     expect(list.revision).toBe(before + 1 + list.count);
     expect(list.strings[0]).toBe(''); // below stringBase: untouched
@@ -565,17 +595,24 @@ describe('core/ui edge: builders', () => {
     const prompt = createConfirm('SURE?');
     const list = createDrawList(32, 8);
     drawConfirm(list, prompt, 0, 101, 51);
-    // Panel 176×52 at (13, 25), opaque, bordered in the focus colour.
+    // Panel 176×52 at (13, 25) at 384×216, opaque, bordered in the focus colour.
+    const x = Math.round(101 - CONFIRM_W / 2);
+    const y = Math.round(51 - CONFIRM_H / 2);
     expect([list.x[0], list.y[0], list.w[0], list.h[0], list.alpha[0]]).toEqual([
-      13, 25, 176, 52, 255,
+      x,
+      y,
+      CONFIRM_W,
+      CONFIRM_H,
+      255,
     ]);
     for (let i = 1; i < 5; i++) expect(list.color[i]).toBe(UI_COLORS.focus);
     const texts = commands(list).filter((c) => c[0] === DrawOp.Text);
+    const row = y + CONFIRM_H - CHOICE_ROW_DY;
     expect(texts.map((c) => [c[1], c[2], c[3]])).toEqual([
-      [0, 101, 32], // the question, 7 px below the top
-      [3, 133 - 18, 61], // the cursor left of NO (row = top + 52 − 16)
-      [1, 69, 61],
-      [2, 133, 61],
+      [0, 101, y + QUESTION_DY], // the question, 7 px below the top
+      [3, 101 + CHOICE_DX - CHOICE_CURSOR_DX, row], // the cursor left of NO (row = top + 52 − 16)
+      [1, 101 - CHOICE_DX, row],
+      [2, 101 + CHOICE_DX, row],
     ]);
   });
 
@@ -587,9 +624,9 @@ describe('core/ui edge: builders', () => {
     const texts = commands(list).filter((c) => c[0] === DrawOp.Text);
     expect(texts.map((c) => [c[1], c[2], c[5]])).toEqual([
       [4, 192, UI_COLORS.text],
-      [7, 160 - 18, UI_COLORS.focus],
-      [5, 160, UI_COLORS.focus],
-      [6, 224, UI_COLORS.text],
+      [7, 192 - CHOICE_DX - CHOICE_CURSOR_DX, UI_COLORS.focus],
+      [5, 192 - CHOICE_DX, UI_COLORS.focus],
+      [6, 192 + CHOICE_DX, UI_COLORS.text],
     ]);
     // A second-line question stays in one slot (the renderer breaks at `\n`).
     prompt.open('LINE ONE\nLINE TWO');

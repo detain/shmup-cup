@@ -19,6 +19,7 @@
  *   shared —, the scroll stopping exactly at `scrollEnd`, Back during the lock ignored.
  */
 import { describe, expect, it } from 'vitest';
+import { FRAME_CX, FRAME_CY, FRAME_H, FRAME_W, GLYPH_H, LINE_H } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
@@ -38,9 +39,10 @@ import {
   type SceneFlow,
   HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
-import { resolveUiSprites, type UiSprites } from '../../src/ui/index.js';
+import { resolveUiSprites, uiPx, type UiSprites } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { shipped, stage } from '../helpers/campaign.js';
+import { ENDING_TEXT_PANEL, TEXT_PANEL_INSET, scenePx } from '../helpers/scene-layout.js';
 
 /** One ending of a test campaign. */
 type Ending = Record<string, unknown>;
@@ -364,14 +366,13 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.hold(0, ENDING_LINE_TICKS * 4);
     const plain = s.texts();
     expect(plain.map(([t]) => t)).toEqual(lines);
-    // Centred: the block's top at 108 − 5 per line, 10 px a line, on the frame's centre.
-    expect(plain.map(([, x, y]) => [x, y])).toEqual([
-      [192, 88],
-      [192, 98],
-      [192, 108],
-      [192, 118],
-    ]);
-    expect(s.rectAt(40, 124)).toBe(false);
+    // Centred: the block's top at 108 − 5 per line, 10 px a line, on the frame's centre (at
+    // 384×216 with the 6×8 font).
+    const top = FRAME_CY - ((lines.length * LINE_H) >> 1);
+    expect(plain.map(([, x, y]) => [x, y])).toEqual(
+      lines.map((_, i) => [FRAME_CX, top + i * LINE_H]),
+    );
+    expect(s.rectAt(TEXT_PANEL_INSET, ENDING_TEXT_PANEL.y)).toBe(false);
 
     const withScene = new Session(
       content(
@@ -384,13 +385,11 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     withScene.toEnding(true);
     expect(withScene.flow.ending.scene).toBe(1);
     withScene.hold(0, ENDING_LINE_TICKS * 4);
-    expect(withScene.texts().map(([, x, y]) => [x, y])).toEqual([
-      [192, 129],
-      [192, 139],
-      [192, 149],
-      [192, 159],
-    ]);
-    expect(withScene.rectAt(40, 124)).toBe(true); // the panel
+    // In the panel under the scene: from 5 px under its top (129 at 384×216), a line apart.
+    expect(withScene.texts().map(([, x, y]) => [x, y])).toEqual(
+      lines.map((_, i) => [FRAME_CX, ENDING_TEXT_PANEL.lineY + i * LINE_H]),
+    );
+    expect(withScene.rectAt(TEXT_PANEL_INSET, ENDING_TEXT_PANEL.y)).toBe(true); // the panel
   });
 
   it('ignores OK during the lock; once every line is shown OK moves on at once', () => {
@@ -451,16 +450,31 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(s.flow.run.endingFlags & RunFlag.NoDeath).toBe(RunFlag.NoDeath);
     const sp = s.sprites;
     const ship = s.game.world.ship.spriteId;
+    // The scene's pieces sit at the art's scale (the v1 positions in the comments).
+    const sun = uiPx(292);
+    const sunY = uiPx(118);
+    const citadel = uiPx(100);
+    const citadelY = uiPx(68);
     s.endingAt(100);
-    expect(s.spriteAt(sp.endingSun)).toEqual([[292, 118]]);
-    expect(s.spriteAt(sp.endingCitadel)).toEqual([[100, 68]]);
+    expect(s.spriteAt(sp.endingSun)).toEqual([[sun, sunY]]); // 292, 118
+    expect(s.spriteAt(sp.endingCitadel)).toEqual([[citadel, citadelY]]); // 100, 68
     expect(s.spriteAt(ship)).toHaveLength(1);
-    s.endingAt(320); // the ship past x 420: gone
+    // The ship accelerates away from x 150 and is gone past `FRAME_W + 36` (t 315 at 384×216).
+    const exit = FRAME_W + uiPx(36);
+    let gone = 60;
+    while (uiPx(150) + scenePx(Math.floor(((gone - 60) * (gone - 60)) / 240)) < exit) gone++;
+    gone += gone & 1; // the scene redraws on even ticks
+    expect(gone).toBeLessThan(400);
+    s.endingAt(gone - 2);
+    expect(s.spriteAt(ship)).toHaveLength(1);
+    s.endingAt(gone);
     expect(s.spriteAt(ship)).toEqual([]);
     s.endingAt(400);
-    expect(s.spriteAt(sp.endingCitadel)).toEqual([[100, 73]]); // sinking since 360
+    // Sinking since 360: 5 px by 400.
+    expect(s.spriteAt(sp.endingCitadel)).toEqual([[citadel, citadelY + scenePx(5)]]);
     s.endingAt(430);
-    expect(s.spriteAt(sp.endingSun)).toEqual([[292, 88]]); // risen 30 px, no further
+    // Risen 30 px, no further.
+    expect(s.spriteAt(sp.endingSun)).toEqual([[sun, sunY - scenePx(30)]]);
     s.endingAt(479);
     expect(s.spriteAt(sp.endingCitadel)).toHaveLength(1);
     s.endingAt(480);
@@ -468,7 +482,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     expect(s.spriteAt(sp.endingBlast).length).toBeGreaterThan(0); // the last cluster
     s.endingAt(560);
     expect(s.spriteAt(sp.endingBlast)).toEqual([]);
-    expect(s.spriteAt(sp.endingSun)).toEqual([[292, 88]]);
+    expect(s.spriteAt(sp.endingSun)).toEqual([[sun, sunY - scenePx(30)]]);
   });
 
   it("plays the deep's scene out: the ship rises 80 px, the ARK sinks away or sails off; player 2 behind", () => {
@@ -481,33 +495,44 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.toEnding(true);
     const sp = s.sprites;
     const ship = s.game.world.ship.spriteId;
-    // A flawless run: the dawn above the surface.
-    expect(s.spriteAt(sp.endingSun)).toEqual([[300, 0]]);
-    expect(s.spriteAt(sp.endingSurface).length).toBe(7);
+    // A flawless run: the dawn above the surface; the surface tiled across the frame (seven
+    // 64-px tiles at 384×216).
+    expect(s.spriteAt(sp.endingSun)).toEqual([[uiPx(300), 0]]);
+    expect(s.spriteAt(sp.endingSurface).length).toBe(Math.ceil(FRAME_W / uiPx(64)) + 1);
+    // The ship starts at (110, 110), the ARK at (250, 74) — at the art's scale.
+    const shipX = uiPx(110);
+    const shipY = uiPx(110);
+    const ark = uiPx(250);
+    const arkY = uiPx(74);
     s.endingAt(240);
-    expect(s.spriteAt(ship)).toEqual([[110, 70]]); // half way up
-    expect(s.spriteAt(sp.endingArk)).toEqual([[250, 104]]);
+    expect(s.spriteAt(ship)).toEqual([[shipX, shipY - scenePx(40)]]); // half way up
+    expect(s.spriteAt(sp.endingArk)).toEqual([[ark, arkY + scenePx(30)]]);
     s.endingAt(304);
     expect(s.spriteAt(sp.endingArk)).toEqual([]); // under
     s.endingAt(480);
-    expect(s.spriteAt(ship)).toEqual([[110, 30]]); // at the light
+    expect(s.spriteAt(ship)).toEqual([[shipX, shipY - scenePx(80)]]); // at the light
     s.endingAt(490);
-    expect(s.spriteAt(ship)).toEqual([[125, 30]]); // then off to the right
+    // Then off to the right, 1.5 px a tick.
+    expect(s.spriteAt(ship)).toEqual([[shipX + scenePx(15), shipY - scenePx(80)]]);
     // Player 2 in the run: its ship (its palette swap) a little behind, from the next redraw.
     s.flow.run.carry.players[1].active = true;
     s.hold(0, 2);
     const world = s.game.world;
     const p2 = world.ship.spriteP2Id >= 0 ? world.ship.spriteP2Id : ship;
-    expect(s.spriteAt(ship)[0]).toEqual([128, 30]);
-    expect(s.spriteAt(p2)).toContainEqual([106, 44]);
+    const p1At = [shipX + scenePx(18), shipY - scenePx(80)];
+    expect(s.spriteAt(ship)[0]).toEqual(p1At); // 128, 30
+    expect(s.spriteAt(p2)).toContainEqual([p1At[0] - uiPx(22), p1At[1] + uiPx(14)]); // 106, 44
     s.flow.run.carry.players[1].active = false;
 
     const escape = new Session(content(file));
     escape.toEnding(true, RunFlag.BossEscaped);
     expect(escape.flow.run.ending?.id).toBe('l-escape');
-    escape.endingAt(836);
-    expect(escape.spriteAt(sp.endingArk)).toEqual([[459, 74]]);
-    escape.endingAt(840);
+    // It sails off right, 1 px every 4 ticks, and is gone past `FRAME_W + 76` (t 840 at 384×216).
+    let sailed = 0;
+    while (ark + scenePx(sailed >> 2) < FRAME_W + uiPx(76)) sailed++;
+    escape.endingAt(sailed - 4);
+    expect(escape.spriteAt(sp.endingArk)).toEqual([[ark + scenePx((sailed - 4) >> 2), arkY]]);
+    escape.endingAt(sailed);
     expect(escape.spriteAt(sp.endingArk)).toEqual([]); // sailed off the edge
   });
 
@@ -588,7 +613,7 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
       // No two rows on screen share a string slot, and each shows its own row's text.
       expect(new Set(texts.map(([, , , slot]) => slot)).size).toBe(texts.length);
       for (const [text, , y] of texts) {
-        const row = Math.round((y - 216 + scene.scroll) / CREDITS_ROW_HEIGHT);
+        const row = Math.round((y - FRAME_H + scene.scroll) / CREDITS_ROW_HEIGHT);
         expect(scene.rows[row]).toBe(text);
       }
     }
@@ -613,8 +638,9 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.press(Action.Confirm);
     const scene = s.flow.credits;
     expect(scene.rows).toEqual(['ONLY', '']);
-    // 216 + 2 rows × 11 − 100.
-    expect(scene.scrollEnd).toBe(138);
+    // From under the screen to the stop line: 216 + 2 rows × 11 − 100 at 384×216.
+    const stopY = FRAME_CY - GLYPH_H;
+    expect(scene.scrollEnd).toBe(FRAME_H + 2 * CREDITS_ROW_HEIGHT - stopY);
     s.press(Action.Back);
     expect(s.top).toBe('credits');
     while (scene.ticks < scene.scrollEnd * CREDITS_SCROLL_TICKS - 1) s.hold(0);
@@ -626,7 +652,9 @@ describe('core/scenes ending and credits — edge cases (M2-14 tests)', () => {
     s.hold(0, 50);
     expect(scene.scroll).toBe(scene.scrollEnd); // held
     // The rows end at the stop line (y 100): the title two rows above it, the blank row under it.
-    expect(s.texts()).toEqual([['ONLY', 192, 100 - 2 * CREDITS_ROW_HEIGHT, expect.any(Number)]]);
+    expect(s.texts()).toEqual([
+      ['ONLY', FRAME_CX, stopY - 2 * CREDITS_ROW_HEIGHT, expect.any(Number)],
+    ]);
     s.hold(0, CREDITS_HOLD_TICKS - 52);
     expect(s.top).toBe('credits');
     s.hold(0, 2);

@@ -5,6 +5,7 @@
  * World and HUD in the frame), any input returning to the title, and the story crawl's pages.
  */
 import { describe, expect, it } from 'vitest';
+import { GLYPH_H } from '../../src/config/index.js';
 import type { ContentDb } from '../../src/data/index.js';
 import { hashWorld } from '../../src/debug/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
@@ -23,6 +24,7 @@ import {
   type SceneFlow,
 } from '../../src/scenes/index.js';
 import { DEMO_TEST_TICKS, frontEndContent } from '../helpers/front-end.js';
+import { STORY_PANEL_W, STORY_WINDOW } from '../helpers/scene-layout.js';
 
 const CONTENT = frontEndContent();
 
@@ -99,8 +101,9 @@ class Session {
   }
 }
 
-/** Ticks the test story takes (two pages, five rows). */
-const STORY_TICKS = (5 * STORY_ROW_HEIGHT + 74) * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
+/** Ticks the test story takes (two pages, five rows through the window). */
+const STORY_TICKS =
+  (5 * STORY_ROW_HEIGHT + STORY_WINDOW.height) * STORY_SCROLL_TICKS + STORY_HOLD_TICKS;
 
 describe('core/scenes attract loop (M2-15)', () => {
   it('cycles title → demo → hi-scores → story → title on exact timings', () => {
@@ -253,9 +256,12 @@ describe('core/scenes attract loop (M2-15)', () => {
     expect(story.rows).toEqual(['FIRST LINE', 'SECOND LINE', '', 'THIRD LINE', '']);
     expect(story.page).toBe(0);
     expect(s.uiTexts()).toEqual([]); // nothing has come in yet
-    s.hold(0, 12 * STORY_SCROLL_TICKS);
+    // A row is drawn once its glyphs are inside the window: the first after GLYPH_H + 2 px of
+    // scroll (row 1 not yet), the second a row height later.
+    const firstIn = GLYPH_H + 2;
+    s.hold(0, firstIn * STORY_SCROLL_TICKS);
     expect(s.uiTexts()).toEqual(['FIRST LINE']);
-    s.hold(0, 11 * STORY_SCROLL_TICKS);
+    s.hold(0, STORY_ROW_HEIGHT * STORY_SCROLL_TICKS);
     expect(s.uiTexts()).toEqual(['FIRST LINE', 'SECOND LINE']);
     // The dawn's pieces (the sun, the sea's surface) while the first page crawls.
     const sprites = (): number => {
@@ -265,9 +271,10 @@ describe('core/scenes attract loop (M2-15)', () => {
       return n;
     };
     expect(sprites()).toBeGreaterThan(0);
-    // The second page's scene takes over once its first row (row 3: 33 px) has crawled half-way
-    // up the panel (37 px more) — 70 px in all.
-    s.hold(0, (70 - 23) * STORY_SCROLL_TICKS - 1);
+    // The second page's scene takes over once its first row (row 3: 33 px at 384×216) has crawled
+    // half-way up the panel (37 px more) — 70 px in all.
+    const takeOver = 3 * STORY_ROW_HEIGHT + (STORY_WINDOW.height >> 1);
+    s.hold(0, (takeOver - firstIn - STORY_ROW_HEIGHT) * STORY_SCROLL_TICKS - 1);
     expect(story.page).toBe(0);
     s.hold(0, 1);
     expect(story.page).toBe(1);
@@ -279,7 +286,9 @@ describe('core/scenes attract loop (M2-15)', () => {
     expect(s.uiTexts()).toEqual([]);
     let rects = 0;
     const ui = s.game.renderFrame().ui;
-    for (let i = 0; i < ui.count; i++) if (ui.op[i] === DrawOp.Rect && ui.w[i] === 304) rects++;
+    for (let i = 0; i < ui.count; i++) {
+      if (ui.op[i] === DrawOp.Rect && ui.w[i] === STORY_PANEL_W) rects++;
+    }
     expect(rects).toBe(0);
   });
 });

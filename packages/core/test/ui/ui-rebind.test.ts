@@ -9,6 +9,7 @@
  * box with its draining bar and the string slots it may use.
  */
 import { describe, expect, it } from 'vitest';
+import { FRAME_CX, FRAME_CY, GLYPH_W } from '../../src/config/index.js';
 import { ACTION_NAMES, Action, type ActionName, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, TextAlign, createDrawList, type DrawList } from '../../src/presentation/index.js';
 import {
@@ -29,6 +30,7 @@ import {
   rebindTick,
   type MenuLayout,
   type RebindPanelLabels,
+  uiPx,
 } from '../../src/ui/index.js';
 
 /** Every action's row label: its name in upper case. */
@@ -57,6 +59,27 @@ const LAYOUT: MenuLayout = Object.freeze({
 });
 
 const IDLE: PlayerInput = { held: 0, pressed: 0, released: 0, device: 'keyboard' };
+
+/**
+ * The capture box, derived as core/ui lays it out (R1-01, R2-01): a 40-glyph-wide box of 48 px
+ * centred on the frame (at 72, 84 at 384×216), its prompt 8 px and its hint 22 px under its top,
+ * its countdown bar 20 px in from each side, 10 px up from its bottom and 3 px tall.
+ */
+const CAPTURE = (() => {
+  const w = 40 * GLYPH_W;
+  const h = uiPx(48);
+  const x = FRAME_CX - (w >> 1);
+  const y = FRAME_CY - (h >> 1);
+  const inset = uiPx(20);
+  return {
+    promptY: y + uiPx(8),
+    hintY: y + uiPx(22),
+    barX: x + inset,
+    barY: y + h - uiPx(10),
+    barW: w - 2 * inset,
+    barH: uiPx(3),
+  };
+})();
 
 /**
  * One tick with a fresh press (held as well).
@@ -471,7 +494,7 @@ describe('core/ui rebind widget: drawRebindPanel', () => {
     const message = texts(list).find(([s]) => s === 'SHOT REBOUND');
     expect(message).toBeDefined();
     expect([message?.[1], message?.[3], message?.[4]]).toEqual([
-      192,
+      FRAME_CX,
       UI_COLORS.focus,
       TextAlign.Center,
     ]);
@@ -506,8 +529,16 @@ describe('core/ui rebind widget: drawRebindPanel', () => {
     const drawn = texts(list);
     const prompt = drawn.find(([s]) => s === 'PRESS A KEY FOR SHOT');
     const hint = drawn.find(([s]) => s === 'ESC / BACK OR WAIT: CANCEL');
-    expect([prompt?.[1], prompt?.[2], prompt?.[3]]).toEqual([192, 92, UI_COLORS.focus]);
-    expect([hint?.[1], hint?.[2], hint?.[3]]).toEqual([192, 106, UI_COLORS.disabled]);
+    expect([prompt?.[1], prompt?.[2], prompt?.[3]]).toEqual([
+      FRAME_CX,
+      CAPTURE.promptY,
+      UI_COLORS.focus,
+    ]);
+    expect([hint?.[1], hint?.[2], hint?.[3]]).toEqual([
+      FRAME_CX,
+      CAPTURE.hintY,
+      UI_COLORS.disabled,
+    ]);
     const slot = base + p.menuSlots + p.maxRows;
     expect([list.strings[slot + 1], list.strings[slot + 2]]).toEqual([
       'PRESS A KEY FOR SHOT',
@@ -522,25 +553,26 @@ describe('core/ui rebind widget: drawRebindPanel', () => {
      */
     const bar = (): Array<[number, number]> =>
       rects(list)
-        .filter(([x, y, , h]) => x === 92 && y === 122 && h === 3)
+        .filter(([x, y, , h]) => x === CAPTURE.barX && y === CAPTURE.barY && h === CAPTURE.barH)
         .map(([, , w, , c]) => [w, c]);
+    const full = CAPTURE.barW; // 200 at 384×216
     expect(bar()).toEqual([
-      [200, UI_COLORS.track],
-      [200, UI_COLORS.title],
+      [full, UI_COLORS.track],
+      [full, UI_COLORS.title],
     ]);
     for (let t = 0; t < REBIND_CAPTURE_TICKS / 2; t++) rebindTick(p, IDLE);
     draw();
     expect(bar()).toEqual([
-      [200, UI_COLORS.track],
-      [100, UI_COLORS.title],
+      [full, UI_COLORS.track],
+      [Math.floor(full / 2), UI_COLORS.title],
     ]);
     for (let t = 0; t < REBIND_CAPTURE_TICKS / 2; t++) rebindTick(p, IDLE);
     draw();
-    expect(bar()).toEqual([[200, UI_COLORS.track]]);
+    expect(bar()).toEqual([[full, UI_COLORS.track]]);
     // Past the timeout the bar stays empty.
     rebindTick(p, IDLE);
     draw();
-    expect(bar()).toEqual([[200, UI_COLORS.track]]);
+    expect(bar()).toEqual([[full, UI_COLORS.track]]);
   });
 
   it('writes a slot only when its text changed and stays inside its slot range', () => {

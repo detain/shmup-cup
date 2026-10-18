@@ -8,6 +8,7 @@
  * `drawNameEntry` draws for a finished entry and where it writes its strings.
  */
 import { describe, expect, it } from 'vitest';
+import { GLYPH_W } from '../../src/config/index.js';
 import { Action, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, createDrawList, type DrawList } from '../../src/presentation/index.js';
 import {
@@ -23,6 +24,7 @@ import {
   drawNameEntry,
   nameEntryTick,
   type NameEntry,
+  uiPx,
 } from '../../src/ui/index.js';
 
 /**
@@ -337,12 +339,15 @@ describe('core/ui drawNameEntry — edge cases', () => {
     for (let i = 0; i < list.count; i++) {
       if (list.op[i] === DrawOp.Text && list.y[i] === 50) xs.push(list.x[i]);
     }
-    // Three letters and END, 16 px apart for the letters, END one cell further.
+    // Three letters and END, a glyph cell and 10 px apart (16 at the 6×8 font) for the letters,
+    // END one cell and a half further.
+    const pitch = GLYPH_W + uiPx(10);
     expect(xs).toHaveLength(4);
-    expect(xs[1] - xs[0]).toBe(16);
-    expect(xs[2] - xs[1]).toBe(16);
-    expect(xs[3] - xs[2]).toBe(24);
+    expect(xs[1] - xs[0]).toBe(pitch);
+    expect(xs[2] - xs[1]).toBe(pitch);
+    expect(xs[3] - xs[2]).toBe(2 * pitch - (pitch >> 1));
     // Symmetric about cx: the row spans (n + 2) cells centred on it.
-    expect((xs[0] - 8 + xs[0] - 8 + 5 * 16) / 2).toBe(200);
+    const left = xs[0] - (pitch >> 1);
+    expect(Math.abs(left + (5 * pitch) / 2 - 200)).toBeLessThanOrEqual(0.5);
   });
 });

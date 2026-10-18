@@ -4,6 +4,7 @@
  * items, the extra string slot and how `drawMenu` shows the chosen label.
  */
 import { describe, expect, it } from 'vitest';
+import { GLYPH_W } from '../../src/config/index.js';
 import { Action, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, createDrawList } from '../../src/presentation/index.js';
 import {
@@ -16,6 +17,7 @@ import {
   drawMenu,
   menuStringSlots,
   menuTick,
+  uiPx,
 } from '../../src/ui/index.js';
 
 /**
@@ -97,7 +99,8 @@ describe('core/ui Choice', () => {
         texts.push([list.strings[list.ref[i]], list.x[i], list.color[i]]);
     }
     expect(texts).toEqual([
-      ['→', 0, UI_COLORS.focus],
+      // drawMenu's default cursor: a glyph cell and 4 px left of the labels.
+      ['→', LAYOUT.x - GLYPH_W - uiPx(4), UI_COLORS.focus],
       ['ONE', 10, UI_COLORS.focus],
       ['SECOND', 90, UI_COLORS.focus],
       ['TWO', 10, UI_COLORS.text],

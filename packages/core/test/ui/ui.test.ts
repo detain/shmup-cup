@@ -5,6 +5,7 @@
  * command output.
  */
 import { describe, expect, it } from 'vitest';
+import { GLYPH_W, LINE_H } from '../../src/config/index.js';
 import { SFX_CUES } from '../../src/events/index.js';
 import { Action, type ActionMask, type PlayerInput } from '../../src/input/index.js';
 import { DrawOp, TextAlign, createDrawList } from '../../src/presentation/index.js';
@@ -34,6 +35,7 @@ import {
   repeatDirections,
   resolveUiSprites,
   type ListMenu,
+  uiPx,
 } from '../../src/ui/index.js';
 import { EMPTY_CONTENT_DB, loadContent } from '../../src/data/index.js';
 
@@ -338,6 +340,9 @@ describe('core/ui menu sounds', () => {
   });
 });
 
+/** drawMenu's default row pitch: a line and 2 px (12 at 384×216 with the 6×8 font). */
+const ROW = LINE_H + uiPx(2);
+
 describe('core/ui builders', () => {
   it('drawPanel: a translucent fill and four border lines', () => {
     const list = createDrawList();
@@ -367,7 +372,7 @@ describe('core/ui builders', () => {
       align: TextAlign.Center,
       cursorX: 150,
     });
-    expect(bottom).toBe(136);
+    expect(bottom).toBe(100 + 3 * ROW);
     expect(list.strings.slice(2, 8)).toEqual(['START', 'OPTIONS', 'EXIT', 'ON', 'OFF', '→']);
     const texts: Array<[number, number, number, number]> = [];
     for (let i = 0; i < list.count; i++) {
@@ -377,8 +382,8 @@ describe('core/ui builders', () => {
     expect(texts).toEqual([
       [7, 150, 100, UI_COLORS.focus], // cursor
       [2, 192, 100, UI_COLORS.focus],
-      [3, 192, 112, UI_COLORS.disabled],
-      [4, 192, 124, UI_COLORS.text],
+      [3, 192, 100 + ROW, UI_COLORS.disabled],
+      [4, 192, 100 + 2 * ROW, UI_COLORS.text],
     ]);
     const revision = list.revision;
     list.clear();
@@ -404,7 +409,9 @@ describe('core/ui builders', () => {
       DrawOp.Text, // SHAKE
       DrawOp.Text, // OFF
     ]);
-    expect([list.x[2], list.w[2], list.w[3]]).toEqual([200, 50, 25]);
+    // The bar: eight glyph cells and 2 px (50 at the 6×8 font), half filled.
+    const bar = 8 * GLYPH_W + uiPx(2);
+    expect([list.x[2], list.w[2], list.w[3]]).toEqual([200, bar, Math.round(bar / 2)]);
     expect(list.value[4]).toBe(5);
     expect(list.ref[6]).toBe(menu.items.length + 1); // the OFF slot
   });
@@ -419,11 +426,13 @@ describe('core/ui builders', () => {
     for (let i = 0; i < list.count; i++) {
       if (list.op[i] === DrawOp.Text) texts.push([list.ref[i], list.x[i], list.color[i]]);
     }
+    // YES and NO 32 px either side of the centre, the cursor three glyph cells left of a choice.
+    const dx = uiPx(32);
     expect(texts).toEqual([
       [10, 192, UI_COLORS.text],
-      [13, 224 - 18, UI_COLORS.focus], // cursor left of NO
-      [11, 160, UI_COLORS.text],
-      [12, 224, UI_COLORS.focus],
+      [13, 192 + dx - 3 * GLYPH_W, UI_COLORS.focus], // cursor left of NO
+      [11, 192 - dx, UI_COLORS.text],
+      [12, 192 + dx, UI_COLORS.focus],
     ]);
   });
 });

@@ -20,6 +20,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { FRAME_H, FRAME_W } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { SimEventKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
@@ -38,6 +39,7 @@ import {
   type SceneFlow,
   HI_SCORE_LOCK_TICKS,
 } from '../../src/scenes/index.js';
+import { uiPx } from '../../src/ui/index.js';
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { CAMPAIGN, campaignContent as content, shipped, stage } from '../helpers/campaign.js';
 
@@ -243,8 +245,16 @@ describe('core/scenes campaign edges: the zone map (M2-10)', () => {
     // Zone order: s (depth 0), u (depth 1, row 0), l (depth 1, row 1).
     expect(s.flow.campaign?.zones[0].exits).toEqual([2, 1]); // edge order
     expect(map.exits[0]).toEqual([1, 2]); // the map's order: top to bottom
-    expect([...map.nodeX]).toEqual([40, 344, 344]);
-    expect([...map.nodeY]).toEqual([88, 64, 112]);
+    // The depth columns run from 40 px in from each side; the rows fill the band between 40 px
+    // under the top and 10 px above the 60-px preview panel (itself 10 px off the bottom).
+    const left = uiPx(40);
+    const right = FRAME_W - uiPx(40);
+    const top = uiPx(40);
+    const bottom = FRAME_H - uiPx(10) - uiPx(60) - uiPx(10);
+    const row = (r: number, rows: number): number =>
+      Math.round(top + ((r + 0.5) * (bottom - top)) / rows);
+    expect([...map.nodeX]).toEqual([left, right, right]); // 40, 344, 344 at 384×216
+    expect([...map.nodeY]).toEqual([row(0, 1), row(0, 2), row(1, 2)]); // 88, 64, 112
     expect(map.edgeDots).toBe(7);
     s.toMap();
     expect(map.focusedZone).toBe(1); // the top one first

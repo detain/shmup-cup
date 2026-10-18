@@ -30,6 +30,7 @@ import {
   type SoundTestSetup,
 } from '../../src/scenes/index.js';
 import { addScore } from '../../src/scoring/index.js';
+import { uiPx } from '../../src/ui/index.js';
 import { frontEndContent } from '../helpers/front-end.js';
 
 const DB = frontEndContent({ demos: false }).db;
@@ -505,12 +506,12 @@ describe('core/scenes continue countdown polish (M2-15)', () => {
       const ui = s.game.renderFrame().ui;
       let width = -1;
       for (let i = 0; i < ui.count; i++) {
-        if (ui.op[i] === DrawOp.Rect && ui.h[i] === 3) width = ui.w[i];
+        if (ui.op[i] === DrawOp.Rect && ui.h[i] === uiPx(3)) width = ui.w[i];
       }
       return width;
     };
     const full = bar();
-    expect(full).toBeGreaterThan(110);
+    expect(full).toBeGreaterThan(uiPx(110));
     s.hold(0, CONTINUE_LOCK_TICKS + 2);
     expect(bar()).toBeLessThan(full);
     expect(s.uiTexts()).toEqual(expect.arrayContaining(['PRESS OK', 'BACK: GIVE UP']));

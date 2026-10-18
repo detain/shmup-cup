@@ -8,7 +8,13 @@
  * inside the frame and the panel, a scale mode unknown to the screen shown as INTEGER.
  */
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_USER_OPTIONS, PLAYFIELD_H, type DisplayOptions } from '../../src/config/index.js';
+import {
+  DEFAULT_USER_OPTIONS,
+  FRAME_H,
+  GLYPH_H,
+  LINE_H,
+  type DisplayOptions,
+} from '../../src/config/index.js';
 import { SimEventKind, UserOptionKind } from '../../src/events/index.js';
 import { createGame, type Game } from '../../src/game/index.js';
 import { Action, commitPlayerInput, type ActionMask } from '../../src/input/index.js';
@@ -28,6 +34,7 @@ import {
   TitleItem,
   type SceneFlow,
 } from '../../src/scenes/index.js';
+import { uiPx } from '../../src/ui/index.js';
 
 /** A headless scene-flow session on a save, with helpers to drive it. */
 class Session {
@@ -328,14 +335,15 @@ describe('core/scenes options: display rows (edges)', () => {
     ];
     const ys = labels.map((label) => rows.get(label));
     expect(ys.every((y) => y !== undefined)).toBe(true);
-    for (let i = 1; i < ys.length; i++) expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBe(14);
+    // The Options pages' pitch: a line and 4 px (14 at the 6×8 font).
+    const pitch = LINE_H + uiPx(4);
+    for (let i = 1; i < ys.length; i++) expect((ys[i] ?? 0) - (ys[i - 1] ?? 0)).toBe(pitch);
     const title = rows.get('DISPLAY') ?? -1;
     expect(title).toBeLessThan(ys[0] ?? 0);
     expect(panelTop).toBeLessThanOrEqual(title);
-    // Glyphs are 8 px tall: the last row ends inside the panel, the panel inside the frame.
-    expect((ys[ys.length - 1] ?? 0) + 8).toBeLessThanOrEqual(panelBottom);
+    // The last row's glyphs end inside the panel, the panel inside the frame.
+    expect((ys[ys.length - 1] ?? 0) + GLYPH_H).toBeLessThanOrEqual(panelBottom);
     expect(panelTop).toBeGreaterThanOrEqual(0);
-    // The 216-row frame: the playfield and the two 8-row HUD bars.
-    expect(panelBottom).toBeLessThanOrEqual(PLAYFIELD_H + 16);
+    expect(panelBottom).toBeLessThanOrEqual(FRAME_H);
   });
 });

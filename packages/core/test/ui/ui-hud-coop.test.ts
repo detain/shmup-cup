@@ -31,6 +31,7 @@ import {
   resolveUiSprites,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, playerCanJoin, type World } from '../../src/world/index.js';
+import { HUD } from '../helpers/hud.js';
 
 /**
  * A shipped content file.
@@ -156,7 +157,7 @@ describe('core/ui co-op HUD: the top bar (M2-06)', () => {
     const w = world({ coop: false });
     expect(hudPlayerState(w, 1)).toBe(HudPlayerState.Absent);
     const list = hud(w);
-    expect(texts(list)).toContainEqual(['------', L.p2X + 16, L.topY]);
+    expect(texts(list)).toContainEqual(['------', L.p2X + HUD.scoreDx, L.topY]);
     expect(texts(list).map((t) => t[0])).not.toContain('PRESS START');
   });
 
@@ -164,7 +165,7 @@ describe('core/ui co-op HUD: the top bar (M2-06)', () => {
     const w = world();
     expect(hudPlayerState(w, 1)).toBe(HudPlayerState.Join);
     const on = hud(w);
-    expect(texts(on)).toContainEqual(['PRESS START', L.p2X + 16, L.topY]);
+    expect(texts(on)).toContainEqual(['PRESS START', L.p2X + HUD.scoreDx, L.topY]);
     expect(texts(on)).toContainEqual(['2P', L.p2X, L.topY]);
     w.tick = HUD_PROMPT_BLINK_TICKS; // the "off" half
     expect(texts(hud(w)).map((t) => t[0])).not.toContain('PRESS START');
@@ -180,7 +181,11 @@ describe('core/ui co-op HUD: the top bar (M2-06)', () => {
     const list = hud(w);
     const cmds = commands(list);
     const numbers = cmds.filter((c) => c[0] === DrawOp.Number && c[4] === L.topY);
-    expect(numbers.map((c) => c[3])).toEqual([L.p1X + 16, L.hiX + 16, L.p2X + 16]);
+    expect(numbers.map((c) => c[3])).toEqual([
+      L.p1X + HUD.scoreDx,
+      L.hiX + HUD.scoreDx,
+      L.p2X + HUD.scoreDx,
+    ]);
     expect(list.value[cmds.indexOf(numbers[2])]).toBe(4_560);
     expect(texts(list)).toContainEqual(['2P', L.p2X, L.topY]);
   });
@@ -198,16 +203,17 @@ describe('core/ui co-op HUD: each player`s half (M2-06)', () => {
     // Stock icons: player 1's at x 2, player 2's palette swap at 194; each with its count.
     expect(SPRITES.lifeP2).toBeGreaterThanOrEqual(0);
     expect(cmds.filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.life)).toEqual([
-      [DrawOp.Sprite, SPRITES.life, 0, L.coopStockX, L.bottomY + 2, 0xffffff, 0],
+      [DrawOp.Sprite, SPRITES.life, 0, L.coopStockX, HUD.rowY, 0xffffff, 0],
     ]);
     expect(cmds.filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.lifeP2)).toEqual([
-      [DrawOp.Sprite, SPRITES.lifeP2, 0, L.halfW + L.coopStockX, L.bottomY + 2, 0xffffff, 0],
+      [DrawOp.Sprite, SPRITES.lifeP2, 0, L.halfW + L.coopStockX, HUD.rowY, 0xffffff, 0],
     ]);
     const counts = cmds.filter((c) => c[0] === DrawOp.Number && c[4] === L.bottomY);
-    expect(counts.map((c) => c[3])).toEqual([L.coopStockX + 10, L.halfW + L.coopStockX + 10]);
+    const countX = L.coopStockX + HUD.stockStep;
+    expect(counts.map((c) => c[3])).toEqual([countX, L.halfW + countX]);
     expect(counts.map((c) => list.value[cmds.indexOf(c)])).toEqual([2, 4]);
     // Seven compact slots per half, labelled with two letters.
-    const boxes = cmds.filter((c) => c[0] === DrawOp.Rect && c[4] === L.bottomY + 1);
+    const boxes = cmds.filter((c) => c[0] === DrawOp.Rect && c[4] === HUD.boxY);
     expect(boxes).toHaveLength(14);
     expect(boxes[0]?.[3]).toBe(L.coopMeterX + 1);
     expect(boxes[7]?.[3]).toBe(L.halfW + L.coopMeterX + 1);
@@ -220,7 +226,7 @@ describe('core/ui co-op HUD: each player`s half (M2-06)', () => {
     ]);
     // Player 2's Force Field pips from x 192 + 164, none for player 1.
     const pips = cmds.filter(
-      (c) => c[0] === DrawOp.Rect && c[4] === L.bottomY + 2 && c[3] >= L.coopShieldX,
+      (c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY && c[3] >= L.coopShieldX,
     );
     expect(pips.length).toBeGreaterThan(0);
     for (const pip of pips) expect(pip[3]).toBeGreaterThanOrEqual(L.halfW + L.coopShieldX);
@@ -241,7 +247,7 @@ describe('core/ui co-op HUD: each player`s half (M2-06)', () => {
     expect(over?.[6]).toBe(TextAlign.Center);
     // Its score stays on the top bar.
     expect(
-      commands(list).filter((c) => c[0] === DrawOp.Number && c[3] === L.p2X + 16),
+      commands(list).filter((c) => c[0] === DrawOp.Number && c[3] === L.p2X + HUD.scoreDx),
     ).toHaveLength(1);
   });
 
@@ -265,9 +271,9 @@ describe('core/ui co-op HUD: each player`s half (M2-06)', () => {
     ]);
     // 3-px pips 4 px apart: 8 SHOT, 8 SUB, 5 ARM (the full Hyper Arm), 3 SPD per player.
     const cmds = commands(list);
-    const pips = cmds.filter((c) => c[0] === DrawOp.Rect && c[4] === L.bottomY + 2);
+    const pips = cmds.filter((c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY);
     expect(pips).toHaveLength(2 * (8 + 8 + 5 + 3));
-    expect(list.w[cmds.indexOf(pips[0])]).toBe(3);
+    expect(list.w[cmds.indexOf(pips[0])]).toBe(HUD.coopPipW);
   });
 
   it('names the MISSILE / DOUBLE / LASER slots after the arsenal', () => {

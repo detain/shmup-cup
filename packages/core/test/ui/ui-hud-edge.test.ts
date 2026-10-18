@@ -28,6 +28,7 @@ import {
   type UiSprites,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, type World } from '../../src/world/index.js';
+import { HUD } from '../helpers/hud.js';
 
 /**
  * A shipped content file.
@@ -119,7 +120,7 @@ function stock(list: DrawList, sprites: UiSprites): Command[] {
   return commands(list).filter(
     (c) =>
       (c[0] === DrawOp.Sprite && c[1] === sprites.life && sprites.life >= 0) ||
-      (c[0] === DrawOp.Rect && c[4] === HUD_LAYOUT.bottomY + 2 && c[3] < HUD_LAYOUT.meterX) ||
+      (c[0] === DrawOp.Rect && c[4] === HUD.rowY && c[3] < HUD_LAYOUT.meterX) ||
       (c[0] === DrawOp.Number && c[4] === HUD_LAYOUT.bottomY),
   );
 }
@@ -140,19 +141,16 @@ describe('core/ui HUD edge: stock', () => {
     const list = createDrawList(64, 4);
     setLives(w, 6);
     buildHud(w, list, SPRITES);
-    expect(stock(list, SPRITES).map((c) => [c[0], c[3]])).toEqual([
-      [DrawOp.Sprite, 4],
-      [DrawOp.Sprite, 14],
-      [DrawOp.Sprite, 24],
-      [DrawOp.Sprite, 34],
-      [DrawOp.Sprite, 44],
-    ]);
+    const x0 = HUD_LAYOUT.stockX;
+    expect(stock(list, SPRITES).map((c) => [c[0], c[3]])).toEqual(
+      [0, 1, 2, 3, 4].map((i) => [DrawOp.Sprite, x0 + i * HUD.stockStep]),
+    );
     setLives(w, 7);
     buildHud(w, list, SPRITES);
     const cmds = stock(list, SPRITES);
     expect(cmds.map((c) => [c[0], c[3]])).toEqual([
-      [DrawOp.Sprite, 4],
-      [DrawOp.Number, 16],
+      [DrawOp.Sprite, x0],
+      [DrawOp.Number, x0 + HUD.stockCountDx],
     ]);
   });
 
@@ -161,18 +159,27 @@ describe('core/ui HUD edge: stock', () => {
     const list = createDrawList(64, 4);
     setLives(w, 4);
     buildHud(w, list);
+    const x0 = HUD_LAYOUT.stockX;
     expect(stock(list, NONE)).toEqual(
-      [4, 14, 24].map((x): Command => [DrawOp.Rect, 0, 0, x, 210, HUD_COLORS.p1]),
+      [0, 1, 2].map((i): Command => [
+        DrawOp.Rect,
+        0,
+        0,
+        x0 + i * HUD.stockStep,
+        HUD.rowY,
+        HUD_COLORS.p1,
+      ]),
     );
     // Regression: beyond five the count used to stand alone without its icon.
     setLives(w, 9);
     buildHud(w, list);
     const cmds = stock(list, NONE);
+    const bottomY = HUD_LAYOUT.bottomY;
     expect(cmds).toEqual([
-      [DrawOp.Rect, 0, 0, 4, 210, HUD_COLORS.p1],
-      [DrawOp.Number, 0, 0, 16, 208, HUD_COLORS.number],
+      [DrawOp.Rect, 0, 0, x0, HUD.rowY, HUD_COLORS.p1],
+      [DrawOp.Number, 0, 0, x0 + HUD.stockCountDx, bottomY, HUD_COLORS.number],
     ]);
-    const at = commands(list).findIndex((c) => c[0] === DrawOp.Number && c[4] === 208);
+    const at = commands(list).findIndex((c) => c[0] === DrawOp.Number && c[4] === bottomY);
     expect(list.value[at]).toBe(8);
   });
 });
@@ -196,15 +203,15 @@ describe('core/ui HUD edge: meter', () => {
     const list = createDrawList(64, 4);
     buildHud(w, list);
     const equippable = w.powerups.equippable(0);
-    const boxes = commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === 209);
+    const boxes = commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === HUD.boxY);
     expect(boxes).toHaveLength(7);
     boxes.forEach((c, slot) => {
       expect(c[3]).toBe(HUD_LAYOUT.meterX + slot * HUD_LAYOUT.slotW + 1);
       const can = (equippable & (1 << slot)) !== 0;
       expect(c[5]).toBe(slot === 0 ? 0x5a3c10 : can ? 0x18204a : 0x1c2030);
     });
-    const i = commands(list).findIndex((c) => c[0] === DrawOp.Rect && c[4] === 209);
-    expect([list.w[i], list.h[i]]).toEqual([HUD_LAYOUT.slotW - 2, 6]);
+    const i = commands(list).findIndex((c) => c[0] === DrawOp.Rect && c[4] === HUD.boxY);
+    expect([list.w[i], list.h[i]]).toEqual([HUD_LAYOUT.slotW - 2, HUD.slotBoxH]);
   });
 
   it('lights no slot without a cursor, and the tick alone never rebuilds then', () => {
@@ -234,10 +241,10 @@ describe('core/ui HUD edge: Force Field and player 2', () => {
     const list = createDrawList(64, 4);
     buildHud(w, list, SPRITES);
     const pips = commands(list).filter(
-      (c) => c[0] === DrawOp.Rect && c[4] === 210 && c[3] >= HUD_LAYOUT.shieldX,
+      (c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY && c[3] >= HUD_LAYOUT.shieldX,
     );
     expect(pips.map((c) => [c[3], c[5]])).toEqual(
-      [0, 1, 2, 3, 4].map((i) => [HUD_LAYOUT.shieldX + i * 7, HUD_COLORS.shield]),
+      [0, 1, 2, 3, 4].map((i) => [HUD_LAYOUT.shieldX + i * HUD.shieldStep, HUD_COLORS.shield]),
     );
   });
 

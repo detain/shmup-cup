@@ -6,7 +6,12 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveGameConfig, type GameConfig } from '../../src/config/index.js';
+import {
+  FRAME_W,
+  HUD_BAR_HEIGHT,
+  resolveGameConfig,
+  type GameConfig,
+} from '../../src/config/index.js';
 import {
   EMPTY_CONTENT_DB,
   loadContent,
@@ -26,6 +31,9 @@ import {
   resolveUiSprites,
 } from '../../src/ui/index.js';
 import { ENGINE_SPRITES, createWorld, type World } from '../../src/world/index.js';
+import { HUD } from '../helpers/hud.js';
+
+const L = HUD_LAYOUT;
 
 /**
  * A shipped content file.
@@ -99,16 +107,16 @@ describe('core/ui HUD: bars and scores', () => {
     const head = commands(list).slice(0, 8);
     expect(head).toEqual([
       [DrawOp.Rect, 0, 0, 0, 0, HUD_COLORS.bar],
-      [DrawOp.Rect, 0, 0, 0, 208, HUD_COLORS.bar],
-      [DrawOp.Text, 0, 0, 8, 0, HUD_COLORS.p1],
-      [DrawOp.Number, 0, 8, 24, 0, HUD_COLORS.number],
-      [DrawOp.Text, 1, 0, 156, 0, HUD_COLORS.hi],
-      [DrawOp.Number, 0, 8, 172, 0, HUD_COLORS.number],
-      [DrawOp.Text, 2, 0, 292, 0, HUD_COLORS.inactive],
-      [DrawOp.Text, 3, 0, 308, 0, HUD_COLORS.inactive],
+      [DrawOp.Rect, 0, 0, 0, L.bottomY, HUD_COLORS.bar],
+      [DrawOp.Text, 0, 0, L.p1X, 0, HUD_COLORS.p1],
+      [DrawOp.Number, 0, 8, L.p1X + HUD.scoreDx, 0, HUD_COLORS.number],
+      [DrawOp.Text, 1, 0, L.hiX, 0, HUD_COLORS.hi],
+      [DrawOp.Number, 0, 8, L.hiX + HUD.scoreDx, 0, HUD_COLORS.number],
+      [DrawOp.Text, 2, 0, L.p2X, 0, HUD_COLORS.inactive],
+      [DrawOp.Text, 3, 0, L.p2X + HUD.scoreDx, 0, HUD_COLORS.inactive],
     ]);
     expect([list.value[3], list.value[5]]).toEqual([12300, 50000]);
-    expect([list.w[0], list.h[0]]).toEqual([384, 8]);
+    expect([list.w[0], list.h[0]]).toEqual([FRAME_W, HUD_BAR_HEIGHT]);
   });
 
   it("shows player 2's score once player 2 plays", () => {
@@ -118,8 +126,8 @@ describe('core/ui HUD: bars and scores', () => {
     const list = createDrawList(HUD_COMMAND_COUNT, HUD_STRING_COUNT);
     buildHud(w, list, SPRITES);
     const cmds = commands(list);
-    expect(cmds[6]).toEqual([DrawOp.Text, 2, 0, 292, 0, HUD_COLORS.p2]);
-    expect(cmds[7]).toEqual([DrawOp.Number, 0, 8, 308, 0, HUD_COLORS.number]);
+    expect(cmds[6]).toEqual([DrawOp.Text, 2, 0, L.p2X, 0, HUD_COLORS.p2]);
+    expect(cmds[7]).toEqual([DrawOp.Number, 0, 8, L.p2X + HUD.scoreDx, 0, HUD_COLORS.number]);
     expect(list.value[7]).toBe(777);
   });
 
@@ -129,14 +137,15 @@ describe('core/ui HUD: bars and scores', () => {
     buildHud(w, list, SPRITES);
     const icons = commands(list).filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.life);
     expect(icons).toEqual([
-      [DrawOp.Sprite, SPRITES.life, 0, 4, 210, 0xffffff],
-      [DrawOp.Sprite, SPRITES.life, 0, 14, 210, 0xffffff],
+      [DrawOp.Sprite, SPRITES.life, 0, L.stockX, HUD.rowY, 0xffffff],
+      [DrawOp.Sprite, SPRITES.life, 0, L.stockX + HUD.stockStep, HUD.rowY, 0xffffff],
     ]);
     (w.players[0] as { lives: number }).lives = 8;
     buildHud(w, list, SPRITES);
     const cmds = commands(list);
     const at = cmds.findIndex((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.life);
-    expect(cmds[at + 1]).toEqual([DrawOp.Number, 0, 0, 16, 208, HUD_COLORS.number]);
+    const countX = L.stockX + HUD.stockCountDx;
+    expect(cmds[at + 1]).toEqual([DrawOp.Number, 0, 0, countX, L.bottomY, HUD_COLORS.number]);
     expect(list.value[at + 1]).toBe(7);
     expect(cmds.filter((c) => c[0] === DrawOp.Sprite && c[1] === SPRITES.life)).toHaveLength(1);
   });
@@ -166,22 +175,29 @@ describe('core/ui HUD: power meter', () => {
     const frames = [0, 2, 0, 1, 2, 2, 0];
     const lit = [true, false, true, true, false, false, true];
     for (let slot = 0; slot < 7; slot++) {
-      const x = HUD_LAYOUT.meterX + slot * 40;
-      expected.push([DrawOp.Sprite, SPRITES.meterSlot, frames[slot], x, 208, 0xffffff]);
+      const x = L.meterX + slot * L.slotW;
+      expected.push([DrawOp.Sprite, SPRITES.meterSlot, frames[slot], x, L.bottomY, 0xffffff]);
       expected.push([
         DrawOp.Sprite,
         SPRITES.meterLabels,
         slot,
-        x + 2,
-        210,
+        x + HUD.slotLabelDx,
+        L.bottomY + HUD.slotLabelDx,
         lit[slot] ? HUD_COLORS.label : HUD_COLORS.labelDisabled,
       ]);
     }
     expect(meter).toEqual(expected);
     // The Force Field's five pips, all charged.
-    const pips = commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === 210);
+    const pips = commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY);
     expect(pips).toEqual(
-      [0, 1, 2, 3, 4].map((i) => [DrawOp.Rect, 0, 0, 344 + i * 7, 210, HUD_COLORS.shield]),
+      [0, 1, 2, 3, 4].map((i) => [
+        DrawOp.Rect,
+        0,
+        0,
+        L.shieldX + i * HUD.shieldStep,
+        HUD.rowY,
+        HUD_COLORS.shield,
+      ]),
     );
   });
 
@@ -215,7 +231,7 @@ describe('core/ui HUD: power meter', () => {
     w.players[0].shield.hits = 2;
     const list = createDrawList(64, 4);
     buildHud(w, list, SPRITES);
-    const pips = commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === 210);
+    const pips = commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY);
     expect(pips.map((c) => c[5])).toEqual([
       HUD_COLORS.shield,
       HUD_COLORS.shield,
@@ -225,7 +241,7 @@ describe('core/ui HUD: power meter', () => {
     ]);
     clearShield(w.players[0].shield);
     buildHud(w, list, SPRITES);
-    expect(commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === 210)).toEqual([]);
+    expect(commands(list).filter((c) => c[0] === DrawOp.Rect && c[4] === HUD.rowY)).toEqual([]);
   });
 
   it('falls back to rectangles without the HUD sprites', () => {
@@ -235,7 +251,7 @@ describe('core/ui HUD: power meter', () => {
     const cmds = commands(list);
     expect(cmds.filter((c) => c[0] === DrawOp.Sprite)).toEqual([]);
     // Two stock rects and seven slot rects in the bottom bar.
-    const bottom = cmds.filter((c) => c[0] === DrawOp.Rect && c[4] >= 209);
+    const bottom = cmds.filter((c) => c[0] === DrawOp.Rect && c[4] >= HUD.boxY);
     expect(bottom).toHaveLength(2 + 7);
   });
 });

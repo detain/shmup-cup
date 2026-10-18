@@ -21,13 +21,14 @@ import {
 } from '../../src/ui/index.js';
 import type { World } from '../../src/world/index.js';
 import { aliveWorld, directDb } from '../helpers/direct.js';
+import { HUD } from '../helpers/hud.js';
 
 /** The shared content. */
 const DB = directDb();
 const SPRITES = resolveUiSprites(DB);
 
 /**
- * The 4×4 pips of the bottom bar in one x range, as `[x, colour]`.
+ * The 4×4 pips (at the art's scale) of the bottom bar in one x range, as `[x, colour]`.
  *
  * @param list - The HUD list.
  * @param x0 - First x (inclusive).
@@ -37,8 +38,8 @@ const SPRITES = resolveUiSprites(DB);
 function pips(list: DrawList, x0: number, x1: number): Array<[number, number]> {
   const out: Array<[number, number]> = [];
   for (let i = 0; i < list.count; i++) {
-    if (list.op[i] !== DrawOp.Rect || list.y[i] !== HUD_LAYOUT.bottomY + 2) continue;
-    if (list.w[i] !== 4 || list.h[i] !== 4) continue;
+    if (list.op[i] !== DrawOp.Rect || list.y[i] !== HUD.rowY) continue;
+    if (list.w[i] !== HUD.pipW || list.h[i] !== HUD.pipH) continue;
     if (list.x[i] >= x0 && list.x[i] < x1) out.push([list.x[i], list.color[i]]);
   }
   return out;
@@ -83,7 +84,9 @@ describe('core/ui HUD in Direct mode', () => {
     const shot = pips(list, HUD_LAYOUT.shotX, HUD_LAYOUT.subX);
     expect(shot).toHaveLength(8);
     expect(shot.map(([, c]) => c)).toEqual([on, on, on, off, off, off, off, off]);
-    expect(shot.map(([x]) => x - HUD_LAYOUT.shotX)).toEqual([26, 31, 36, 41, 46, 51, 56, 61]);
+    expect(shot.map(([x]) => x - HUD_LAYOUT.shotX)).toEqual(
+      [0, 1, 2, 3, 4, 5, 6, 7].map((i) => HUD.shotPipsDx + i * HUD.levelStep),
+    );
     const sub = pips(list, HUD_LAYOUT.subX, HUD_LAYOUT.armX);
     expect(sub.filter(([, c]) => c === HUD_COLORS.subPip)).toHaveLength(5);
     expect(sub).toHaveLength(8);

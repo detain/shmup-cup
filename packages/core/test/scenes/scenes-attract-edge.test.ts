@@ -16,6 +16,7 @@
  *   over in order, `none` draws no sprites.
  */
 import { describe, expect, it } from 'vitest';
+import { GLYPH_H } from '../../src/config/index.js';
 import { loadContent, type ContentDb, type ContentFile } from '../../src/data/index.js';
 import { MUSIC_CUES, SimEventKind } from '../../src/events/index.js';
 import { Action } from '../../src/input/index.js';
@@ -34,6 +35,7 @@ import {
 import { ENGINE_SPRITES } from '../../src/world/index.js';
 import { demoFile, frontEndFiles, recordTestDemo } from '../helpers/front-end.js';
 import { FrontEndSession } from '../helpers/front-end-session.js';
+import { STORY_WINDOW } from '../helpers/scene-layout.js';
 
 /**
  * Loads content files (no issues expected).
@@ -337,8 +339,8 @@ const FULL_STORY = Array.from({ length: 8 }, (_, p) => ({
 }));
 
 /** Top and bottom of the story's window (rows are drawn while their y is in it). */
-const WINDOW_TOP = 132;
-const WINDOW_BOTTOM = 206;
+const WINDOW_TOP = STORY_WINDOW.top;
+const WINDOW_BOTTOM = STORY_WINDOW.bottom;
 
 describe('core/scenes attract loop — the story at its limits (M2-15 edge cases)', () => {
   it('draws exactly the rows inside its panel on every tick of an eight-page story', () => {
@@ -360,7 +362,7 @@ describe('core/scenes attract loop — the story at its limits (M2-15 edge cases
       const expected: string[] = [];
       for (let r = 0; r < story.rows.length; r++) {
         const y = WINDOW_BOTTOM + r * STORY_ROW_HEIGHT - scroll;
-        if (y < WINDOW_TOP || y > WINDOW_BOTTOM - 8 || story.rows[r] === '') continue;
+        if (y < WINDOW_TOP || y > WINDOW_BOTTOM - GLYPH_H || story.rows[r] === '') continue;
         expected.push(story.rows[r]);
       }
       const texts = s.uiTexts();

@@ -35,7 +35,7 @@ import {
   type RebindOutcome,
   type SceneFlow,
 } from '../../src/scenes/index.js';
-import { CaptureStatus, REBIND_CAPTURE_TICKS, RebindStatus } from '../../src/ui/index.js';
+import { CaptureStatus, REBIND_CAPTURE_TICKS, RebindStatus, uiPx } from '../../src/ui/index.js';
 
 /** Two keyboard profiles. */
 const PROFILES: readonly InputProfileChoice[] = [
@@ -821,8 +821,15 @@ describe('core/scenes input test (M2-16)', () => {
       const ui = s.game.renderFrame().ui;
       let widest = 0;
       for (let i = 0; i < ui.count; i++) {
-        // The track is 160 px wide; the fill is the shorter rect drawn on top of it.
-        if (ui.op[i] === DrawOp.Rect && ui.h[i] === 3 && ui.w[i] < 160 && ui.w[i] > widest) {
+        // The track is 160 px wide and 3 px tall (at the art's scale); the fill is the shorter
+        // rect drawn on top of it.
+        const track = uiPx(160);
+        if (
+          ui.op[i] === DrawOp.Rect &&
+          ui.h[i] === uiPx(3) &&
+          ui.w[i] < track &&
+          ui.w[i] > widest
+        ) {
           widest = ui.w[i];
         }
       }

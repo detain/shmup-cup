@@ -36,7 +36,7 @@ import {
   TitleItem,
 } from '../../src/scenes/index.js';
 import { addScore } from '../../src/scoring/index.js';
-import { UI_COLORS } from '../../src/ui/index.js';
+import { UI_COLORS, uiPx } from '../../src/ui/index.js';
 import { frontEndContent } from '../helpers/front-end.js';
 import { FrontEndSession, type FrontEndSessionOptions } from '../helpers/front-end-session.js';
 
@@ -519,7 +519,7 @@ describe('core/scenes continue polish — edge cases (M2-15)', () => {
     const ui = s.game.renderFrame().ui;
     let found: { w: number; color: number } | null = null;
     for (let i = 0; i < ui.count; i++) {
-      if (ui.op[i] === DrawOp.Rect && ui.h[i] === 3 && ui.color[i] !== UI_COLORS.track) {
+      if (ui.op[i] === DrawOp.Rect && ui.h[i] === uiPx(3) && ui.color[i] !== UI_COLORS.track) {
         found = { w: ui.w[i], color: ui.color[i] };
       }
     }
@@ -539,11 +539,19 @@ describe('core/scenes continue polish — edge cases (M2-15)', () => {
     expect(fill(s)?.color).toBe(UI_COLORS.title);
     s.hold(0);
     expect(scene.seconds).toBe(2);
-    expect(fill(s)).toEqual({ w: 36, color: UI_COLORS.alert });
+    // The 120-px bar (at the art's scale) with 180 of its ticks left: 36 px at 384×216.
+    const barW = uiPx(120);
+    expect(fill(s)).toEqual({
+      w: Math.floor((barW * 180) / CONTINUE_COUNTDOWN_TICKS),
+      color: UI_COLORS.alert,
+    });
     // The bar is redrawn every 6 ticks: its last look before time runs out is 1 px.
     s.hold(0, CONTINUE_COUNTDOWN_TICKS - 6 - scene.ticks);
     expect(scene.seconds).toBe(0);
-    expect(fill(s)).toEqual({ w: 1, color: UI_COLORS.alert });
+    expect(fill(s)).toEqual({
+      w: Math.floor((barW * 6) / CONTINUE_COUNTDOWN_TICKS),
+      color: UI_COLORS.alert,
+    });
     s.hold(0, 5);
     expect(s.top).toBe('continue');
     s.hold(0);
