@@ -58,7 +58,7 @@ zero.
    `gh release create v2.0.0-beta.1 --prerelease --target <R5-10.T9's commit> --title "v2.0.0-beta.1" --notes …` after
    the wave's exit check. The notes say: all zones remastered with stand-in art; real art drops pending the owner;
    the full suite runs before `v2.0.0` (decision RUN-1). The owner's sign-off is welcome and never blocks.
-5. **A late real-art drop.** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
+5. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
    permitting), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
    drop the owner names for the release.
 
