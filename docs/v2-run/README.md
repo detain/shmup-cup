@@ -26,8 +26,8 @@ or on any file outside the repository other than the run directory (§ The run d
    - [`handoffs-w4.md`](handoffs-w4.md): the inputs of the R2-01 docs pass and the hand-offs to later steps;
    - [`wave5-scout.md`](wave5-scout.md): the background of R2-02, R3-03 and R3-04, corrected after the frame flip;
    - `designs/zone-<x>.md`: the R5 zone designs, written in waves 8 and 9;
-   - [`helpers/README.md`](helpers/README.md): the helper scripts (`e2e-batch.sh`, `host-check.sh`, the export
-     and default listers).
+   - [`helpers/README.md`](helpers/README.md): the helper scripts (`e2e-batch.sh`, `host-check.sh`, and until
+     wave 5 the export and default listers).
 
 ## The waves
 

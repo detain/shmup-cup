@@ -25,6 +25,10 @@ docs agent. Grouped by the file that needs the edit.
 count ticks, `SHIP_ENTER_TICKS`). Read their commit bodies (`git show -s 8ff2bf6 543887b`); the e2e line numbers
 below are older — `wave-00.md` / `wave-06.md` cite them on `543887b`.
 
+**Updated for `0cabaec`:** C5 fix 5 (`rebind.spec.ts` only) replaces the spec's local frame-paced taps and pauses
+with the shared `test/e2e/ticks.ts` `tap`, `remoteTap` and `waitTicks` (the slow-host repro's timeout); read
+`git show -s 0cabaec`.
+
 Tags:
 
 - `(src)` names the report or review an item comes from.

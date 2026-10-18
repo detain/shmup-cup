@@ -11,9 +11,9 @@
 > owner parts pending). **R2-01 is flipped on master** (`72b18a1`: 640×360, 12-px HUD bars and tiles, `ART_SCALE` 3/2,
 > replay format 2, save format 3) and closing: its docs pass is this run's first wave. **R0-04** (the art round) is
 > waiting on the owner. **Wave 0** is R2-01's last C5 review loop and the triage of the CI e2e shard-1 failures (C5
-> fixes 2 `c67c7c9`, 3 `8ff2bf6` and 4 `543887b` are on master, test files only). The C5 loop closes when its last
-> review is at zero findings; the previous orchestrator then sets `docs/v2-run/wave-00.md`'s status line to
-> `**Status: closed**`. If the line still reads `**Status: open**` when you start, run wave 0's "open" branch first
+> fixes 2 `c67c7c9`, 3 `8ff2bf6`, 4 `543887b` and 5 `0cabaec` are on master, test files only). The C5 loop closes
+> when its last review is at zero findings; the previous orchestrator then sets `docs/v2-run/wave-00.md`'s status line
+> to `**Status: closed**`. If the line still reads `**Status: open**` when you start, run wave 0's "open" branch first
 > (`wave-00.md`: its open items become `R2-01.F1` in wave 1); the open findings are in the newest
 > `r2-01C5-review*.md` / `w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` (the
 > old host's scratchpad, copied to myadmin1). All remaining work is scheduled in **plan
