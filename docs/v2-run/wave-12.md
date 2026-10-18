@@ -28,16 +28,18 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **Reviews:** `R5-08.RV` (the whole H branch: S4a … S6), the post-LAND checks, `R5-10.T1.RV` … `R5-10.T8.RV`, each
   S3's review.
 - **e2e passes:** two. Hand them out in this order: R5-08.S6, R5-10.T3, R5-10.T8, then the S3 drops. A post-LAND
-  check's e2e run and an RV's re-run of a spec take a pass too. While the filler `R6-01.B1` runs its bench it holds
-  the e2e lock: count it as one of the two passes.
+  check's e2e run and an RV's re-run of a spec take a pass too. `R6-01.B1`'s bench runs under the e2e lock (wave 13
+  rule 2); like every bench it does not count toward the two passes (README common rule 4).
 - **Docs item:** `W12.DOCS-A`, `W12.DOCS-B`.
-- **Fillers:** wave 13's `R6-01.B1` (a new bench file, no shared file) may start early when a slot is free.
+- **Fillers:** wave 13's `R6-01.B1` (a new bench file, no shared file) may start early, once R5-08.S7 (zone H's
+  LAND) is on `origin/master` (its Depends on is all nine zone LANDs) and a slot is free.
 
 ## Rules for this wave
 
 1. Zone H follows wave 11's **Rules for this wave** (branch work in `RUN_DIR/wt/zone-h`, the zone template, the v2
    numbers, the frozen entries, the LAND helper, the cross-zone checks, long commands). The orchestrator pastes wave
-   11's *Rules for this wave* into zone H's prompts, after this wave's rules.
+   11's *Rules for this wave* into zone H's prompts, after this wave's rules. A timeout-only failure of the boss
+   rush or a route in zone H's S6 (wave 11 rule 13) gets wave 11's `R5-0n.TO` block as `R5-08.TO`, before R5-08.S7.
 2. **R5-10's stage subtasks are LANDs too.** T1 changes what the simulation does and T2 moves several kinds of
    derived files (the fingerprints, the atlas groups, the plates), so each works on its own local branch in its own
    lane worktree, is reviewed there, and reaches `origin/master` only through the `land-zone.sh` commands its block
@@ -51,10 +53,10 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
    `git fetch origin && git rebase origin/master`. After the rebase, run
    `pnpm install --frozen-lockfile --prefer-offline` (shell timeout 600000), and `pnpm assets` when your tests need
    the atlas: the lane worktree has no `node_modules` until its first agent installs, and a rebase that brings a
-   lockfile change leaves them stale (the agent brief's WORKTREE block is skipped for a lane worktree, install
-   included, so this install is yours; zone H's agents do the same, wave 11 rule 1). Commit sources only on the
-   branch; never push it. The helper
-   takes `/tmp/shmup-cup-land.lock` itself — never wrap it in another `flock`. It runs about 25 minutes: give the
+   lockfile change leaves them stale (for a lane worktree the agent brief's WORKTREE block skips only its fetch /
+   worktree add / cd lines and still installs; the install after your rebase, here, is the one that counts; zone
+   H's agents do the same, wave 11 rule 1). Commit sources only on the branch; never push it. The helper takes
+   `/tmp/shmup-cup-land.lock` itself — never wrap it in another `flock`. It runs about 25 minutes: give the
    shell call a `timeout` of 3600000 or run it in the background and poll its log. Run it with `--dry-run` first and
    read the dry run's log. After the LAND's push the orchestrator removes the worktree and deletes the branch (the
    command is in the block's acceptance).
@@ -77,10 +79,11 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **Depends on:** R5-01.S7, R5-02.S7, R5-04.S7 and R5-06.S7 (the LANDs of zones A, B, D and F) on `origin/master`;
   R5-08.S4a … S5b on `r5/zone-h`.
 - **Goal:** rebuild the parade's four echoes from the **new** part trees of HALCYON BULWARK, GALVANIC MAW, CINDER
-  BASTION and MANTLE REGENT: each echo uses a subset of its boss's new part tree (the same sprite names, offsets and
-  roles for the parts it keeps, a reachable `core`), fewer HP, one phase, its `role: captain` / `timeLimit` kept, and
-  the same behaviour script (`boss.bulwark`, `boss.maw`, `boss.bastion`, `boss.squid`). Today's echoes are such
-  reduced forms (8 of 10, 5 of 7, 5 of 9 and 8 of 13 parts): never copy a whole boss into the parade.
+  BASTION and MANTLE REGENT: each echo uses a subset of its boss's new part tree (the same `name`, `parent`, `x` /
+  `y`, `sprite` and `core` / `gun` flags for the parts it keeps, a reachable `core`), fewer HP, one phase, its
+  `role: captain` / `timeLimit` kept, and the same behaviour script (`boss.bulwark`, `boss.maw`, `boss.bastion`,
+  `boss.squid`). Today's echoes are such reduced forms (8 of 10, 5 of 7, 5 of 9 and 8 of 13 parts): never copy a
+  whole boss into the parade.
 - **Files (only these):**
   - `content/enemies/zone-h.enemies.json` — the entries `echo-bulwark`, `echo-maw`, `echo-bastion`, `echo-regent`;
   - `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts` (created by R5-P.P5a2)
@@ -92,8 +95,9 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   2. For each echo, read the new boss entry (`content/enemies/zone-a.enemies.json` `halcyon-bulwark`,
      `zone-b.enemies.json` `galvanic-maw`, `zone-d.enemies.json` `cinder-bastion`, `zone-f.enemies.json`
      `mantle-regent`) and rebuild the echo from a subset of its part tree: every part the echo keeps has the same
-     parent, offset, sprite and role as in the new boss; keep a reachable `core`, fewer HP, one phase, and the echo's
-     own `role: captain` and `timeLimit`.
+     `name`, `parent`, `x` / `y`, `sprite` and `core` / `gun` flags as in the new boss (boss parts have no `role`
+     field); keep a reachable `core`, fewer HP, one phase, and the echo's own boss-level `role: captain` and
+     `timeLimit`.
   3. Run the tests; commit on `r5/zone-h`.
 - **Tests (targeted):**
   ```bash
@@ -101,9 +105,9 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-zone-h.test.ts packages/core/test/behaviors/behaviors-zone-h-edge.test.ts packages/core/test/behaviors/behaviors-bulwark-alloc.test.ts packages/core/test/behaviors/behaviors-maw-alloc.test.ts packages/core/test/behaviors/behaviors-bastion-alloc.test.ts packages/core/test/behaviors/behaviors-squid-alloc.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-h.test.ts
   ```
-- **Acceptance:** each echo names only sprites that exist; every echo part matches a part of its new boss (name,
-  offset, role); a reachable `core`; parts ≤ `MAX_BOSS_PARTS` (24); one phase each; the four allocation guards green
-  (they belong to zones A, B, D, F — run them, never edit them).
+- **Acceptance:** each echo names only sprites that exist; every echo part matches a part of its new boss (`name`,
+  `parent`, `x` / `y`, `sprite`, `core` / `gun`); a reachable `core`; parts ≤ `MAX_BOSS_PARTS` (24); one phase each;
+  the four allocation guards green (they belong to zones A, B, D, F — run them, never edit them).
 - **Token:** none (branch).
 - **Traps:** never edit the A, B, D or F boss entries — copy from them; the echoes' sprites stay in the `common`
   atlas group (zone H names them); the LAND re-derives `atlas-groups.json`, you never edit it.
@@ -144,7 +148,9 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **Token:** one e2e pass.
 - **Traps:** the moving floors rely on R5-P.P12's bot support; a floor the bot cannot ride is redesigned, never the
   bot; a route or the boss rush failing on time with the bigger boss: stop and report (wave 11 rule 13) — never edit
-  the route test; never paste a failing run's output as an expectation: derive each number from the design; no
+  the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-h.test.ts`,
+  `zone-h-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance
+  budget never; never paste a failing run's output as an expectation: derive each number from the design; no
   derived file on the branch.
 - **Docs needs:** run times, the bot's damage per section, the memory figure.
 
@@ -153,14 +159,16 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **Wave / lane / order:** wave 12, a review slot, after R5-08.S6; review → `R5-08.FIX1` → a **new** review → … zero.
 - **Read:** `git -C /home/sites/shmup-cup-run/wt/zone-h diff origin/master...r5/zone-h` (S4a … S6) and
   `docs/v2-run/designs/zone-h.md`.
-- **Re-run:** every command of R5-08.S4a … S6 except the e2e spec: read S6's log
-  `/home/sites/shmup-cup-run/R5-08.S6-e2e.log`; re-run the spec only if the branch changed after S6 (it then takes
-  one of the wave's two e2e passes).
+- **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-h` (`git branch --show-current` must print `r5/zone-h`),
+  every **Tests** command of R5-08.S4a … S6 (wave 11's S4a … S5b blocks and this wave's S4c and S6) except the e2e
+  spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree
+  of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-08.S6-e2e.log`; re-run the
+  spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** wave 11's zone-review list (only zone H's files; no derived file; nothing multiplied twice; the
   contract on with no bound relaxed; no frozen entry edited; no behaviour code; the boss's ported `x` / `y` not
   re-derived; the golden-zone outcome expectations follow the design, never a pasted run output; the cross-zone line
-  green; the expected-red list matches S6's report); every echo part matches a part of its new boss (name, offset,
-  role); one phase each.
+  green; the expected-red list matches S6's report); every echo part matches a part of its new boss (`name`,
+  `parent`, `x` / `y`, `sprite`, `core` / `gun`); one phase each.
 - **Report:** findings with severity and file:line.
 
 ### R5-08.S7 — Zone H LAND
@@ -301,9 +309,10 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **The LAND** (after `R5-10.T2.RV` is at zero; from `/home/sites/shmup-cup-run/wt/escape`; each about 25 min: shell
   timeout 3600000, or background with a log):
   ```bash
-  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-i --message /home/sites/shmup-cup-run/R5-10.T2-msg.txt --zone i --dry-run
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only escape --message /home/sites/shmup-cup-run/R5-10.T2-msg.txt --zone i --dry-run
   # read the dry run's log (/home/sites/shmup-cup-run/land-i-<date>.log); only when it is clean, the real LAND:
-  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only zone-i --message /home/sites/shmup-cup-run/R5-10.T2-msg.txt --zone i
+  RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only escape --message /home/sites/shmup-cup-run/R5-10.T2-msg.txt --zone i
+  # `--only escape` matches no golden or demo: step 8 aborts if any replay changed; `--zone i` picks zone I's checks
   ```
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-10.T2-msg.txt` first):
   `feat(R5-10): give the escape sequence its v2 layers`; the body lists the new layers and `escape.mjs`, and says
@@ -312,7 +321,8 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   no Co-Authored-By line.
 - **Acceptance:** the escape plays to its end (`campaign-escape`, `campaign-flow` green); **no replay may differ**
   (no golden or demo plays the escape stage; `zone-i-escape` is the ARK's boss escape in zone I) — the LAND's
-  `--only zone-i` re-records zone I's scenarios byte-identical and verifies every other golden; the fingerprints
+  `--only escape` re-records nothing, verifies every golden and demo, and would abort on any changed replay; the
+  LAND commit's `git show --stat` lists no `*.replay.json`; the fingerprints
   move and the LAND re-pins them (the new escape sprite names shift every later sprite id — ids are the sorted
   names, `wave-07.md` —, and the credits name `escape.mjs`): that is the re-pin, not a bug; every fingerprint walk's
   own `expect` green (`runA.escape` / `runB.escape` / `coopRun.escape` still reach the ending and the credits); the
@@ -348,10 +358,40 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   SHMUP_ATLAS_GROUPS_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts && pnpm assets
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts test/integration/atlas-zone-sprites.test.ts test/integration/standin-budget.test.ts test/integration/tv-engine-floor.test.ts   # tv-engine-floor: no API newer than Chromium 68 in packages/shell/src
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/memory
+  # must stay green: the groups never move a sprite id or the sim (long: shell timeout 1800000):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/golden
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   nohup bash docs/v2-run/helpers/e2e-batch.sh atlas-residency.spec.ts atlas-context-loss.spec.ts campaign-run.spec.ts > /home/sites/shmup-cup-run/R5-10.T8-e2e.log 2>&1 &   # then poll the log
   ```
+- **Commit and push:** one commit with explicit paths — `packages/shell/src/memory/index.ts`,
+  `test/integration/atlas-groups.test.ts`, `assets/source/atlas-groups.json`, each
+  `packages/shell/test/memory/*.test.ts` you changed, `test/e2e/atlas-residency.spec.ts` — subject
+  `feat(R5-10): linked stages share their zones' atlas pages`, a body that says why (decision W5-18's follow-up: the
+  escape needs `common` + H + I, the bonus stages their zone's, `terrain-a` moves to `common`; the groups
+  re-derived; no golden or fingerprint moved); no Co-Authored-By line. Push under the land lock (README rule 6:
+  `atlas-groups.json` is derived): write this script to `/home/sites/shmup-cup-run/R5-10.T8-push.sh`, then run
+  `flock -w 5400 /tmp/shmup-cup-land.lock bash /home/sites/shmup-cup-run/R5-10.T8-push.sh` from your worktree
+  (several minutes: a shell timeout of 3600000, or the background with a log):
+  ```bash
+  set -e
+  git fetch origin && git rebase origin/master
+  pnpm install --frozen-lockfile --prefer-offline && pnpm assets
+  SHMUP_ATLAS_GROUPS_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts && pnpm assets
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts test/integration/atlas-zone-sprites.test.ts test/integration/standin-budget.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/memory
+  git add assets/source/atlas-groups.json
+  git commit --amend --no-edit
+  git push origin HEAD:master
+  ```
+  If the script stops on a rebase conflict in `assets/source/atlas-groups.json`, take master's file and let the
+  script re-derive it — never merge it by hand:
+  `git checkout origin/master -- assets/source/atlas-groups.json && git add assets/source/atlas-groups.json && GIT_EDITOR=true git rebase --continue`,
+  then run the flock line again. (During a rebase `--ours` / `--theirs` are swapped, so name `origin/master`.) A
+  conflict in any other file is real: `git rebase --abort`, stop and report. If the push is rejected, run the flock
+  line again (at most 5 times, then report). After the push, `git show --stat HEAD` must list only the files above.
 - **Acceptance:** for every campaign zone the needed pages are `common` + its own; the escape needs `common` + H + I;
-  the residency never re-uploads mid-play; the shell's allocation guards green; e2e green.
+  the residency never re-uploads mid-play; the shell's allocation guards green; e2e green; the fingerprints and
+  `test/golden` green without an update (nothing re-pinned, no replay re-blessed).
 - **Token:** GROUPS (the land lock for the push); SHELL memory module (work-time, this lane).
 - **Traps:** sprite names, their order and frame names never depend on the groups file, so goldens and fingerprints
   must **not** move — if one does, stop and report; Chromium 68 in `packages/shell/src` (no `.flat`, `.at(`, …);
@@ -396,12 +436,15 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts test/integration/dimension-runtime.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm docs:images --check
-  git add docs/images test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
+  test -z "$(git status --porcelain docs/images | grep -v -e dim-pylon.png -e grasping-bloom.png -e iron-talon.png -e shadow-strider.png)" || { echo 'a plate outside the four dimension plates changed: stop and report'; exit 1; }
+  git add docs/images/enemies/dim-pylon.png docs/images/bosses/grasping-bloom.png docs/images/bosses/iron-talon.png docs/images/bosses/shadow-strider.png test/integration/content-db-fingerprint.test.ts test/integration/presentation-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
   git commit --amend --no-edit
   git push origin HEAD:master
   ```
-  The update runs rewrite nothing when no sprite name changed. If the push is rejected, run the script again (at
-  most 5 times, then report).
+  The update runs rewrite nothing when no sprite name changed. The `test -z` line stops the script before anything
+  is staged when `pnpm docs:images` changed any other plate (`pnpm docs:images --check` is green right after a
+  regeneration, so it cannot catch that). If the push is rejected, run the script again (at most 5 times, then
+  report).
 - **Acceptance:** the dimension runtime green; Mode-7 rows re-measured; no golden moves (the dimension has none —
   `test/golden` verified unchanged); `pnpm docs:images --check` clean after the push, with only the four dimension
   plates changed (or none).
@@ -448,7 +491,10 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
   `<name>.png`, `<name>.json` (frame sidecar), `<name>.art.json` (provenance) next to it; tiles: the recipe's
   `collision` mode (W5-11: "clip-to-mask" for tiles the heightfield matches by mask) and, if a mask must change,
   `node scripts/assets/tileset-masks.mjs --write <tileset> <masks.json>`; the zone's e2e colour rows in
-  `test/e2e/zone-<x>.spec.ts`; the zone's plates in `docs/images/` (DOCS-IMAGES).
+  `test/e2e/zone-<x>.spec.ts`; the zone's plates in `docs/images/` (DOCS-IMAGES);
+  `content/enemies/zone-<x>.enemies.json` — the `anim.frames` fields only, and only on the LAND path below (a
+  sprite whose real art has a new frame count shows its new frames only when the content's `anim.frames` names
+  them).
 - **Tests (targeted):**
   ```bash
   (cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check)
@@ -469,10 +515,19 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
   checks green; the zone's pages within its R3-04 budget (`standin-budget.test.ts`) and `dist/` within `DIST_BUDGET`
   (both TV builds' bundle checks) — never raise either; the zone's e2e rows re-pointed; the goldens and fingerprints
   **unchanged** — unless a sprite's `anim.frames` count changed: then the drop is a small LAND, with the reason in its
-  commit message. For it, commit the drop in your worktree without pushing, and run `land-zone.sh` from there as the
-  zone's S7 block writes it (zone A: wave 10's R5-01.S7; zones B … G and I: wave 11; zone H: R5-08.S7 above) — the
-  same `--only` scope and `--zone` letter, `--message /home/sites/shmup-cup-run/<id>-msg.txt` where `<id>` is your
-  block's id (for example `R5-02.S3`), `--dry-run` first, then the real LAND.
+  commit message. For it (the LAND path):
+  1. In your worktree, put the drop on a local branch first: `git switch -c r5/s3-zone-<x>` (your zone's letter,
+     e.g. `r5/s3-zone-b`). `land-zone.sh` squashes and dry-runs "the branch" (R5-P.LAND, wave 9) and was tested only
+     from a local branch, never from a detached HEAD. **Never push the branch** (the agent brief's GIT exception (a):
+     only `land-zone.sh` pushes, as `HEAD:master`).
+  2. Commit the drop there, sources only: the PNG overrides, recipes, sidecars and `.art.json` records, the
+     `anim.frames` edits in `content/enemies/zone-<x>.enemies.json`, the e2e rows — never `docs/images/**`, a
+     `PINNED` table, `atlas-groups.json` or a replay (the LAND regenerates them).
+  3. Write the message to `/home/sites/shmup-cup-run/<id>-msg.txt` (`<id>` is your block's id, for example
+     `R5-02.S3`) and run `land-zone.sh` from your worktree as the zone's S7 block writes it (zone A: wave 10's
+     R5-01.S7; zones B … G and I: wave 11; zone H: R5-08.S7 above) — the same `--only` scope and `--zone` letter,
+     `--message /home/sites/shmup-cup-run/<id>-msg.txt`, `--dry-run` first, then the real LAND.
+  4. After the push: `git switch --detach origin/master && git branch -D r5/s3-zone-<x>` (your zone's letter).
 - **Token:** DOCS-IMAGES for the zone's plates (land lock at push); LAND only if a frame count changed.
 - **Traps:** a pure redraw (same names, same frame counts) moves only the atlas — a moved fingerprint is a bug: stop;
   never edit a v1 pixel map or a generator's v1 path (RR-1); a PNG override replaces a generated sprite by its name;
@@ -495,53 +550,71 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
 ### R5-02.S3 — Zone B real art
 
 - **Depends on:** the gates; R5-02.S7. **Sprites:** everything `scripts/assets/procedural/brine.mjs` draws (the zone's
-  enemies, `maw-*`, `herald-shell`, the backdrop layers, `terrain-reef`'s tiles) and `brine-grotto`'s look.
-  **Checks:** the template's with `zone-b`; `echo-maw`'s plate moves too.
+  enemies, `maw-*`, `herald-shell`, the backdrop layers, the tile variants `tiles/terrain-reef-v2` of R5-02.S2), the
+  tiles of `tiles/terrain-reef` (drawn by `scripts/assets/procedural/terrain.mjs`, not by `brine.mjs`) and
+  `brine-grotto`'s look. **Checks:** the template's with `zone-b`; `echo-maw`'s plate moves too.
 
 ### R5-03.S3 — Zone C real art
 
 - **Depends on:** the gates; R5-03.S7. **Sprites:** what `dune.mjs` draws (`widow-*`, the worms, the skimmers, the
-  layers, `terrain-dune`). **Checks:** the template's with `zone-c`.
+  layers, `tiles/terrain-dune-v2`) and the tiles of `tiles/terrain-dune` (drawn by `terrain.mjs`). **Checks:** the
+  template's with `zone-c`.
 
 ### R5-04.S3 — Zone D real art
 
 - **Depends on:** the gates; R5-04.S7. **Sprites:** what `magma.mjs` draws (`bastion-*`, the bats, the cones, the
-  layers, `terrain-magma`, the bricks). **Checks:** the template's with `zone-d`; `echo-bastion`'s plate moves too.
+  layers, `tiles/terrain-magma-v2`) and the tiles of `tiles/terrain-magma`, the bricks among them (drawn by
+  `terrain.mjs`). **Checks:** the template's with `zone-d`; `echo-bastion`'s plate moves too.
 
 ### R5-05.S3 — Zone E real art
 
 - **Depends on:** the gates; R5-05.S7. **Sprites:** what `tempest.mjs` draws (`steed-*`, the kites, the weather
-  layers, `terrain-ridge`). **Checks:** the template's with `zone-e`.
+  layers, `tiles/terrain-ridge-v2`) and the tiles of `tiles/terrain-ridge` (drawn by `terrain.mjs`). **Checks:** the
+  template's with `zone-e`.
 
 ### R5-06.S3 — Zone F real art
 
-- **Depends on:** the gates; R5-06.S7. **Sprites:** what `vault.mjs` draws (`regent-*`, the cells, the tissue walls,
-  `terrain-vault`). **Checks:** the template's with `zone-f`; `echo-regent`'s plate moves too.
+- **Depends on:** the gates; R5-06.S7. **Sprites:** what `vault.mjs` draws (`regent-*`, the cells, the layers,
+  `tiles/terrain-vault-v2`) and the tiles of `tiles/terrain-vault`, the tissue walls among them (drawn by
+  `terrain.mjs`). **Checks:** the template's with `zone-f`; `echo-regent`'s plate moves too.
 
 ### R5-07.S3 — Zone G real art
 
-- **Depends on:** the gates; R5-07.S7. **Sprites:** what `prism.mjs` draws (`facet-*`, the crystals, the cubes,
-  `terrain-prism`) and `glimmer-cache`'s look. **Checks:** the template's with `zone-g`.
+- **Depends on:** the gates; R5-07.S7. **Sprites:** what `prism.mjs` draws (`facet-*`, the crystals, the
+  `enemies/prism-cube` cubes, the layers, `tiles/terrain-prism-v2`), the tiles of `tiles/terrain-prism`, the stacked
+  `cube` tile among them (drawn by `terrain.mjs`), and `glimmer-cache`'s look. **Checks:** the template's with
+  `zone-g`.
 
 ### R5-08.S3 — Zone H real art
 
-- **Depends on:** the gates; R5-08.S7. **Sprites:** what `citadel.mjs` draws (`sovereign-*`, the pistons, the
-  floors, `terrain-citadel`). The echoes use the A, B, D, F bosses' names: their art comes with those zones' S3.
-  **Checks:** the template's with `zone-h`.
+- **Depends on:** the gates; R5-08.S7. **Sprites:** what `citadel.mjs` draws (`sovereign-*`, the zone's enemies,
+  the layers, `tiles/terrain-citadel-v2`) and the tiles of `tiles/terrain-citadel` (drawn by `terrain.mjs`; the
+  pistons and moving floors are `block` events drawn with these tiles). The echoes use the A, B, D, F bosses' names:
+  their art comes with those zones' S3. **Checks:** the template's with `zone-h`.
 
 ### R5-09.S3 — Zone I real art
 
 - **Depends on:** the gates; R5-09.S7. **Sprites:** what `abyss.mjs` draws (`ark-*`, `king-*`, the mines, the eels,
-  `terrain-abyss`). **Checks:** the template's with `zone-i`.
+  the layers, `tiles/terrain-abyss-v2`) and the tiles of `tiles/terrain-abyss` (drawn by `terrain.mjs`).
+  **Checks:** the template's with `zone-i`.
 
 ## Reviews
 
 - `R5-08.RV` and the post-LAND check: in zone H's blocks above.
 - `R5-10.T1.RV`, `R5-10.T2.RV` (on their branches, before their LANDs), `R5-10.T3.RV`, `R5-10.T6.RV` (if it
   committed), `R5-10.T8.RV`: read the diff, re-run the block's tests, check the block's acceptance and traps; the
-  loop to zero findings, a new reviewer each round. T1's diff:
-  `git -C /home/sites/shmup-cup-run/wt/bonus diff origin/master...r5/bonus`; T2's:
-  `git -C /home/sites/shmup-cup-run/wt/escape diff origin/master...r5/escape`.
+  loop to zero findings, a new reviewer each round.
+  - **T1.RV / T2.RV:** T1's diff is
+    `git -C /home/sites/shmup-cup-run/wt/bonus diff origin/master...r5/bonus`, T2's
+    `git -C /home/sites/shmup-cup-run/wt/escape diff origin/master...r5/escape`. Re-run the block's **Tests** inside
+    `/home/sites/shmup-cup-run/wt/bonus` (T1) / `/home/sites/shmup-cup-run/wt/escape` (T2) — `git branch
+    --show-current` must print `r5/bonus` / `r5/escape` — never rebasing or committing there, and never its LAND
+    commands (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test
+    master).
+  - **T3.RV, T6.RV, T8.RV:** these pushed to `origin/master`: read `git show <SHA>` and re-run the block's Tests in
+    your own fresh worktree of `origin/master`, except the e2e batch (read the block's log
+    `/home/sites/shmup-cup-run/<id>-e2e.log`, `<id>` being the block's id); a re-derive or `pnpm docs:images` line
+    must leave `git status --short` empty there.
 - `R5-0n.S3.RV` for each drop: the provenance records against `docs/dev/art-provenance.md` (rules 1–6 of the origin
   report), the cycle scan, the unchanged goldens and fingerprints.
 
