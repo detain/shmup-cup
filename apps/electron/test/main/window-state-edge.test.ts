@@ -43,7 +43,7 @@ describe('electron/main/window-state edges', () => {
     const parsed = parseWindowState('{"version":1,"scale":2}');
     expect(Object.isFrozen(parsed)).toBe(true);
     expect(serializeWindowState(DEFAULT_WINDOW_STATE)).toBe(
-      '{"version":1,"fullscreen":false,"scale":3,"x":null,"y":null}',
+      `{"version":2,"fullscreen":false,"scale":${DEFAULT_WINDOW_SCALE},"x":null,"y":null}`,
     );
     expect(parseWindowState(serializeWindowState(DEFAULT_WINDOW_STATE))).toEqual(
       DEFAULT_WINDOW_STATE,
@@ -63,8 +63,10 @@ describe('electron/main/window-state edges', () => {
     expect(parseWindowState('{"x":null,"y":20}')).toMatchObject({ x: null, y: null });
     expect(parseWindowState('{"fullscreen":1}').fullscreen).toBe(false);
     expect(parseWindowState('{"fullscreen":true}').fullscreen).toBe(true);
-    // A foreign version is read field by field like any other document.
-    expect(parseWindowState('{"version":7,"scale":5}')).toMatchObject({ version: 1, scale: 5 });
+    // A foreign version is read field by field like any other document (only version 1's scale
+    // is converted — R2-01); the result is always a version-2 state.
+    expect(parseWindowState('{"version":7,"scale":5}')).toMatchObject({ version: 2, scale: 5 });
+    expect(parseWindowState('{"scale":5}')).toMatchObject({ version: 2, scale: 5 });
     expect(parseWindowState('')).toBe(DEFAULT_WINDOW_STATE);
     expect(parseWindowState('null')).toBe(DEFAULT_WINDOW_STATE);
     expect(parseWindowState('42')).toBe(DEFAULT_WINDOW_STATE);
@@ -84,9 +86,10 @@ describe('electron/main/window-state edges', () => {
     expect(fitWindowScale(Number.NEGATIVE_INFINITY, big)).toBe(1);
     expect(fitWindowScale(Number.NaN, big)).toBe(1);
     // The exact size fits; one pixel less in either direction does not.
-    expect(fitWindowScale(4, { width: 1536, height: 864 })).toBe(4);
-    expect(fitWindowScale(4, { width: 1535, height: 864 })).toBe(3);
-    expect(fitWindowScale(4, { width: 1536, height: 863 })).toBe(3);
+    const four = windowContentSize(4);
+    expect(fitWindowScale(4, four)).toBe(4);
+    expect(fitWindowScale(4, { width: four.width - 1, height: four.height })).toBe(3);
+    expect(fitWindowScale(4, { width: four.width, height: four.height - 1 })).toBe(3);
     // A tiny work area still gets ×1 (the window may be bigger than the screen).
     expect(fitWindowScale(3, { width: 0, height: 0 })).toBe(1);
   });

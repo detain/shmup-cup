@@ -101,6 +101,13 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     value: FRAME_H,
     reason: "Electron main's mirror of FRAME_H (O8), pinned by test/main/window-frame.test.ts",
   },
+  // Not a mirror: the frame a version-1 window.json counted its scale in (R2-01, W4-10).
+  {
+    file: 'apps/electron/src/main/window-state.ts',
+    symbol: 'V1_WINDOW_FRAME_WIDTH',
+    value: 384,
+    reason: "v1's frame width, which a version-1 window.json's scale counts — fixed history",
+  },
   {
     file: 'scripts/frame.mjs',
     symbol: 'FRAME_W',

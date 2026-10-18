@@ -23,20 +23,34 @@
  * {@link parseWindowState} is defensive like the save parser: a missing, corrupt or foreign file
  * gives the defaults, field by field.
  *
+ * **Versions** ({@link WINDOW_STATE_VERSION}). Version 1 (M2-17) stored the scale of the v1 frame,
+ * {@link V1_WINDOW_FRAME_WIDTH} px wide; version 2 (plan_resolution.md R2-01, decision W4-10) stores
+ * the scale of {@link FRAME_WIDTH}. A version-1 file keeps its window's size as nearly as a whole
+ * scale allows: `scale′ = max(1, round(scale × 384 / FRAME_WIDTH))` — at 640×360, ×3 (1152 px) → ×2
+ * (1280 px), ×5 → ×3 (1920 px), ×10 → ×6 (4K); `main.ts` then fits it to the screen as for any
+ * file. Fullscreen and the position are kept; the next save writes version 2.
+ *
  * **Implements.** shmup_feat.md §23 Electron-specific — fullscreen BrowserWindow, window / scale
  * settings; shmup_feat.md §3 (integer scaling of the game's frame).
  *
  * **Public API.** {@link WindowState}, {@link DEFAULT_WINDOW_STATE}, {@link parseWindowState},
  * {@link serializeWindowState}, {@link windowContentSize}, {@link fitWindowScale},
  * {@link isOnScreen}, {@link windowShortcut}, {@link WindowShortcut}, {@link ShortcutInput},
- * {@link ScreenArea}, {@link WINDOW_STATE_KEY}, {@link FRAME_WIDTH}, {@link FRAME_HEIGHT},
- * {@link DEFAULT_WINDOW_SCALE}, {@link MAX_WINDOW_SCALE}, {@link WINDOW_MOVE_SAVE_MS}.
+ * {@link ScreenArea}, {@link WINDOW_STATE_KEY}, {@link WINDOW_STATE_VERSION}, {@link FRAME_WIDTH},
+ * {@link FRAME_HEIGHT}, {@link V1_WINDOW_FRAME_WIDTH}, {@link DEFAULT_WINDOW_SCALE},
+ * {@link MAX_WINDOW_SCALE}, {@link WINDOW_MOVE_SAVE_MS}.
  *
  * @module
  */
 
 /** Storage key of the window settings (`window.json` in the saves folder). */
 export const WINDOW_STATE_KEY = 'window';
+
+/**
+ * Format version of `window.json`: 2 since R2-01 (the scale counts {@link FRAME_WIDTH}-wide frames;
+ * a version-1 file's scale counted {@link V1_WINDOW_FRAME_WIDTH}-wide ones and is converted).
+ */
+export const WINDOW_STATE_VERSION = 2;
 
 /**
  * Width of the game's frame (decision D19): a **mirror** of `@shmup/core`'s `FRAME_W`.
@@ -51,6 +65,15 @@ export const FRAME_WIDTH = 384;
 
 /** Height of the game's frame: a mirror of `@shmup/core`'s `FRAME_H` (see {@link FRAME_WIDTH}). */
 export const FRAME_HEIGHT = 216;
+
+/**
+ * Width of the frame a version-1 `window.json` was saved against: v1's 384×216 (D19). Not a mirror
+ * — it never changes; {@link parseWindowState} converts a version-1 scale with it (W4-10).
+ */
+export const V1_WINDOW_FRAME_WIDTH = 384;
+
+/** The largest scale a version-1 file could store: the v1 frame at most 3840 px wide (×10). */
+const V1_MAX_WINDOW_SCALE = Math.floor(3840 / V1_WINDOW_FRAME_WIDTH);
 
 /**
  * The window scale of a first launch: the largest whose content is at most 1280 px wide — ×3 =
@@ -69,8 +92,8 @@ export const WINDOW_MOVE_SAVE_MS = 400;
 
 /** The remembered window settings. */
 export interface WindowState {
-  /** Format version (1). */
-  readonly version: 1;
+  /** Format version ({@link WINDOW_STATE_VERSION}). */
+  readonly version: typeof WINDOW_STATE_VERSION;
   /** Fullscreen at launch. */
   readonly fullscreen: boolean;
   /** Window content = frame × scale (1 … {@link MAX_WINDOW_SCALE}). */
@@ -81,9 +104,9 @@ export interface WindowState {
   readonly y: number | null;
 }
 
-/** The settings of a first launch: windowed, ×3, centred. */
+/** The settings of a first launch: windowed, at {@link DEFAULT_WINDOW_SCALE}, centred. */
 export const DEFAULT_WINDOW_STATE: WindowState = Object.freeze({
-  version: 1,
+  version: WINDOW_STATE_VERSION,
   fullscreen: false,
   scale: DEFAULT_WINDOW_SCALE,
   x: null,
@@ -118,7 +141,27 @@ function coordinate(value: unknown): number | null {
 }
 
 /**
+ * The scale of a version-1 file in frames of today's width (W4-10): the whole scale nearest to
+ * the v1 window's width, at least ×1.
+ *
+ * @param value - The stored version-1 scale (valid: a whole number 1 … 10).
+ * @returns `max(1, round(scale × V1_WINDOW_FRAME_WIDTH / FRAME_WIDTH))` — the scale itself while
+ *   the frame is still v1's — or {@link DEFAULT_WINDOW_SCALE} for an invalid value.
+ */
+function fromV1Scale(value: unknown): number {
+  const scale = wholeIn(value, 1, V1_MAX_WINDOW_SCALE, 0);
+  if (scale === 0) return DEFAULT_WINDOW_SCALE;
+  const nearest = Math.round((scale * V1_WINDOW_FRAME_WIDTH) / FRAME_WIDTH);
+  return Math.min(MAX_WINDOW_SCALE, Math.max(1, nearest));
+}
+
+/**
  * Parses the stored settings. Never throws.
+ *
+ * @remarks
+ * A version-1 document's scale counts v1 frames and is converted ({@link V1_WINDOW_FRAME_WIDTH},
+ * the module docs); a document of any other version — 2, a newer one or none — is read field by
+ * field as it is. The result is always a version-2 state.
  *
  * @param text - The stored text, or `null` when nothing is stored.
  * @returns The settings; anything missing or invalid takes its default (a position needs both
@@ -126,8 +169,9 @@ function coordinate(value: unknown): number | null {
  *
  * @example
  * ```ts
- * parseWindowState('{"version":1,"fullscreen":true,"scale":4}'); // → fullscreen, ×4, centred
- * parseWindowState('{oops');                                      // → DEFAULT_WINDOW_STATE
+ * parseWindowState('{"version":2,"fullscreen":true,"scale":4}'); // → fullscreen, ×4, centred
+ * parseWindowState('{"version":1,"scale":3}'); // → ×2 at 640×360 (1152 → 1280 px), centred
+ * parseWindowState('{oops');                   // → DEFAULT_WINDOW_STATE
  * ```
  */
 export function parseWindowState(text: string | null): WindowState {
@@ -144,9 +188,12 @@ export function parseWindowState(text: string | null): WindowState {
   const y = coordinate(doc.y);
   const placed = x !== null && y !== null;
   return Object.freeze({
-    version: 1,
+    version: WINDOW_STATE_VERSION,
     fullscreen: doc.fullscreen === true,
-    scale: wholeIn(doc.scale, 1, MAX_WINDOW_SCALE, DEFAULT_WINDOW_SCALE),
+    scale:
+      doc.version === 1
+        ? fromV1Scale(doc.scale)
+        : wholeIn(doc.scale, 1, MAX_WINDOW_SCALE, DEFAULT_WINDOW_SCALE),
     x: placed ? x : null,
     y: placed ? y : null,
   });
@@ -162,12 +209,12 @@ export function parseWindowState(text: string | null): WindowState {
  * @example
  * ```ts
  * serializeWindowState(DEFAULT_WINDOW_STATE);
- * // → '{"version":1,"fullscreen":false,"scale":3,"x":null,"y":null}'
+ * // → '{"version":2,"fullscreen":false,"scale":3,"x":null,"y":null}' (×3 at 384×216)
  * ```
  */
 export function serializeWindowState(state: WindowState): string {
   return JSON.stringify({
-    version: 1,
+    version: WINDOW_STATE_VERSION,
     fullscreen: state.fullscreen,
     scale: state.scale,
     x: state.x,
