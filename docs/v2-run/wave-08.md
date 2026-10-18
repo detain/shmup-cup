@@ -2,6 +2,9 @@
 
 > Schedule: [`plan_resolution.md` §18](../../plan_resolution.md#18-execution-waves-for-the-10-agent-run) · how to
 > use: [`README.md`](README.md) · decisions: [`decisions.md`](decisions.md)
+>
+> **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
+> path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R4-01 (A1a … A8), R4-02 (B1 … B3), R4-03 (C1 … C7), R4-04 (D1 … D4), R4-05 (E1 … E4). The integrators
 `R4-01.A9`, `R4-02.B4`, `R4-05.E5` and `R4-05.E6` have their blocks in [`wave-09.md`](wave-09.md). · **Gate to start:**
@@ -20,17 +23,19 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 | 5 | `R4-01.A5` → `R4-01.A7` → `R4-01.A6` | `shields.mjs` (pods, Reduce), `arm.mjs`, `weapons.mjs`, `direct.mjs`, `shots/*.v2.sprite.json` | none (atlas only) | no |
 | 6 | `R4-03.C1` → `R4-03.C2` → `R4-03.C3` → `R4-03.C4a` → `R4-03.C4b` | `assets/source/fonts/pixel9x12.font.json` | none (C1: CORE-CONFIG + STRINGS docblocks only) | no (`W08.E2E`) |
 | 7 | `R4-01.A8` → `R4-02.B1` → `R4-02.B3` | `core/blackhole`, `blackhole.mjs`, `bullets.mjs` / `palettes.mjs` / `lasers.mjs` v2 paths, `core/bullets` (point frame), `items.mjs` (point) | A8: FP · B3: GOLDEN + FP | no |
-| 8 | `R4-04.D1` → `R4-04.D2` → `R4-04.D3` → `R4-04.D4` | `explosions.mjs`, `particles.mjs`, `content/fx/particles.fx.json`, `render-pixi/src/particles`, `shell/src/fx-gallery` | FP (D1, D2, D4) | no (`W08.E2E` covers `fx-gallery`) |
+| 8 | `R4-04.D1` → `R4-04.D2` → `R4-04.D3` → `R4-04.D4` | `explosions.mjs`, `particles.mjs`, `content/fx/particles.fx.json`, `render-pixi/src/particles`, `shell/src/fx-gallery` | FP (D1, D2, D4) | no (`W08.E2E` covers `fx-gallery`, batch E) |
 
 - **Fillers** (home [`wave-09.md`](wave-09.md)): the zone designs `R5-P.D-A`, `R5-P.D-B`, `R5-P.D-C`, `R5-P.D-D`,
   `R5-P.D-E`, `R5-P.D-F`, `R5-P.D-G`, `R5-P.D-H`, `R5-P.D-I` — read-only, each writes `docs/v2-run/designs/zone-<x>.md`.
-  Start them, in that order, when a lane ends.
+  Start them, in that order, when a lane ends. Paste **`wave-09.md`'s** "Rules for this wave" into a designer's prompt
+  (not this wave's): the designers' block, their docs exception and their rules live there.
 - **Reviews:** a loop per subtask as it lands (`<id>.RV1` → `<id>.FIX1` → `<id>.RV2` … to zero). The R4 step reviews
   run in wave 9, after the integrators.
 - **Docs item:** none in this wave — `W09.DOCS-*` documents all of R4.
 - **e2e passes:** two. Lanes 1 and 3 hold them first; lane 2 takes the first one that frees. Lanes 4–8 run no e2e:
-  `R4-01.A9`, `R4-02.B4` and `R4-05.E6` (wave 9) re-measure their specs, and `W08.E2E` (end of this wave) runs batches
-  C and D on `master`.
+  `R4-01.A9`, `R4-02.B4` and `R4-05.E6` (wave 9) re-measure their specs, and `W08.E2E` (end of this wave) runs every
+  other spec on `master` (batches A, C without `boss`, D, E without the three ship / weapon specs, G, F, plus
+  `enemies` and `coop-gamepad`). No subtask of this wave edits a spec except `W08.E2E` (rule 15).
 
 ## Rules for this wave
 
@@ -52,7 +57,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
    `pnpm golden:update` runs only in those two, under the land lock, with the reason in the commit.
 6. **Work-time tokens in this wave:** SCENES = lane 2 (all of it); UI-FILE = lane 3 (`C5` → `C6`), then lane 2's
    `R4-05.E2`; POWERUPS = lane 4 (`B2` → `A4`); STRINGS = `R4-03.C1` (docblocks), then `R4-03.C7`; E2E-MIRROR =
-   `R4-03.C5`; CORE-CONFIG = `R4-03.C1` (docblocks only); DATA-INDEX = `R4-01.A2`.
+   `R4-03.C5`; CORE-CONFIG = `R4-03.C1` (docblocks only), then `R4-01.A3` (one barrel name); DATA-INDEX = `R4-01.A2`.
 7. **Same-file orders** (do not start a subtask before its partner is on `master`):
    - `R4-03.C7` after `R4-03.C6` (C5, C6 and C7 share `packages/core/test/ui/*`, `ui-layout-frame.test.ts`,
      `helpers/layout-walks.ts`) and after `R4-03.C1` (`ui/strings.ts`, `localization.test.ts`);
@@ -63,14 +68,18 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
    - `R4-05.E3` and `R4-05.E4` never edit `packages/core/test/ui/*`, `packages/core/test/helpers/layout-walks.ts` or
      `scripts/assets/procedural/ui-kit.mjs` (lane 3's): if a layout test fails, stop and report.
 8. **Generators.** Never edit `scripts/assets/procedural/index.mjs` (R4-P.P1 registered everything), `common.mjs`,
-   `v2kit.mjs` (R4-P.P4's; read it), or another subject's generator. Exact maths only, seeded from the sprite name
-   (`seedOf`); two runs byte-identical.
+   `scripts/assets/v2kit.mjs` (R4-P.P4's, outside `procedural/`; read it), or another subject's generator. Exact
+   maths only, seeded from the sprite name (`seedOf`); two runs byte-identical.
 9. **Frame-literal scan.** No `384 216 200 208 192 108 640 360 336 348` in `scripts/**` or any `src/`. Frame-sized art
    uses `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` (allowed in generators since R4-P.P3 hashes it). A boss height is
    `Math.round(0.6 * PLAYFIELD_H)`, never `200`.
 10. **Palette rules.** Every new colour is ≥ 3/255 (Chebyshev) from the 8 reserved cycle ramps (`v2kit.offRamp`;
     `test/integration/palette-cycle-scan.test.ts` fails otherwise). Alpha is binary unless the bible lists the sprite as
     additive or translucent (§3.6). Replacing an exempt sprite deletes its exemption line in the scan, same commit.
+    Several lanes do this in `test/integration/palette-cycle-scan.test.ts`: delete **only your own sprite's** line;
+    fetch and rebase right before the push; on a conflict in that file take master's version
+    (`git checkout origin/master -- test/integration/palette-cycle-scan.test.ts`), delete your line again, `git add`
+    it, `git rebase --continue`. Never hand-merge conflict markers.
 11. **Variants.** `hitFlash` sprites get `@flash`; ships and `hud/life` need a `p2` map (R3-03.V2a issues an error
     without one); bullet, beam and bend sprites keep every `@<palette>` frame for frame (`content.test.ts:863`).
 12. **Provenance.** Agent pixel maps and generators are `procedural` (W3-12). No FLUX winner as a reference, not even
@@ -78,8 +87,19 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `art-prompts/v2/candidates/` is committed.
 13. **Generated files.** Commit `docs/images/<own folder>/` only when your block says so. Never run
     `pnpm store:assets` (that is `R4-05.E5`). `assets/generated/` is git-ignored.
-14. **ATLAS-SHA** = `node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*`, run on
-    `origin/master` before your change (save it in `RUN_DIR/<id>-atlas-before.sha`) and after.
+14. **ATLAS-SHA** — the shipped atlas's sha256, **at the default art scale only** (`scripts/generate-assets.mjs`
+    takes only `--force`, `--out`, `--source`, `--quiet` and builds the default scale). Before your change, on
+    `origin/master` (replace `<id>` with your subtask id):
+    ```bash
+    mkdir -p /home/sites/shmup-cup-run && node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* > /home/sites/shmup-cup-run/<id>-atlas-before.sha
+    ```
+    and after it: `node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* | diff
+    /home/sites/shmup-cup-run/<id>-atlas-before.sha -`. Scale 1 has no ATLAS-SHA: it is proved by the scale-1 digest
+    pin `test/scripts/assets/interim-pipeline.test.ts:341-357` (green, never re-pinned).
+15. **No spec edits in wave 8, except `W08.E2E`.** An e2e failure your art or layout caused goes into your report
+    (spec, line, old → new, why) for the spec's owner: `R4-01.A9` (`ship-select`, `weapon-select`, `weapons`,
+    `flight`, `powerups`, `option-hunter`, `lives`, `coop`), `R4-02.B4` (`bullet-palette`, `bullets`, `direct-items`,
+    `boss`), `W08.E2E` (every other spec). Two lanes therefore never edit one spec at the same time.
 
 ## Subtasks
 
@@ -104,7 +124,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   bash docs/v2-run/helpers/e2e-batch.sh ship-select.spec.ts flight.spec.ts lives.spec.ts coop.spec.ts
   ```
 - **Acceptance:** fingerprints and goldens untouched (a redraw with the same names and frame counts); the scale-1
-  digest pin green; the e2e specs green, or a colour row that moved updated in the same push and listed in the report.
+  digest pin green; the e2e specs green, or each art-caused failure listed for its owner (rule 15: these four are
+  `R4-01.A9`'s) — never edit a spec here.
 - **Token:** none for the code; DOCS-IMAGES only for `docs/images/ships/` (land lock at push).
 - **Traps:** rule 1 (never edit `ships/kestrel.sprite.json`); the `p2` map must change exactly the P1 ramp colours;
   binary alpha; the anchor is the bible's, not v1's ×1.5 (it is the same here, but check).
@@ -156,9 +177,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `packages/core/src/world/index.ts` — `playerBatch` capacity `2 · MAX_PLAYERS` (`:1815`, today `MAX_PLAYERS`);
     `syncWorldView` (from `:2088`) pushes the thruster before the ship.
   - art: `assets/source/sprites/ships/kestrel-thruster.v2.sprite.json` → 4 frames; `ships/manta-thruster` — a new name,
-    as `assets/source/sprites/ships/manta-thruster.v2.sprite.json` (new) **and** a v1 `manta-thruster.sprite.json` (new,
-    v1 size) so the scale-1 build has the name too — or drawn in `scripts/assets/procedural/thrusters.mjs` (the R4-P.P1
-    stub) with a v1 and a v2 path; with a `p2` map either way.
+    **only** as `assets/source/sprites/ships/manta-thruster.v2.sprite.json` (new) or on the v2 path of
+    `scripts/assets/procedural/thrusters.mjs` (the R4-P.P1 stub; it returns `[]` at `options.artScale === 1`), with a
+    `p2` map. The name is absent at scale 1 (decision RR-1a: a new v2-only name gets no v1 stand-in). Never add a v1
+    `manta-thruster.sprite.json`.
   - `packages/shell/src/showcase/index.ts` — the thruster frame at `:301` (`(tick >> 2) & 1`) only if it must change.
   - `packages/core/test/world/world-thruster.test.ts` (new), `world-thruster-alloc.test.ts` (new).
   - the three fingerprints' `PINNED` tables.
@@ -172,9 +194,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```
   then the FP re-pin under the land lock.
 - **Acceptance:** zero allocation (the new guard: warm-up ≥ 20,000, new indices each window); goldens green and
-  unchanged (presentation only); the scale-1 digest pin green — **if a new v1 `manta-thruster` map is added, the pin
-  moves**: then prefer the generator route (a v1 path that matches nothing new is impossible), and report it so the
-  orchestrator decides (RR-1: the pin moves only for a v1 edit, with the reason).
+  unchanged (presentation only); the scale-1 digest pin green (the name is absent at scale 1, RR-1a).
 - **Token:** FINGERPRINTS (push time); DATA-INDEX (work time).
 - **Traps:** a new sprite name re-pins the presentation and content-DB fingerprints (rule 4); push whole-pixel
   positions into the batch (a fractional x passed to a non-inlined push is boxed); the thruster is not hashed — a golden
@@ -221,10 +241,13 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/assets/procedural/ending.mjs` — a v2 path (`artScale !== 1`, `native: true` on the v2 sprites); the v1
     path untouched.
-  - `packages/core/src/scenes/index.ts` — §ending (`EndingScene`, the `drawCitadel` / `drawDawn` functions).
-  - `packages/core/test/frame-literals.test.ts` — the allow-list entries `EndingScene.drawCitadel.sink` (360, count 2,
-    `:84`) and `StoryScene.drawDawn.rise` (360, `:91`), only if those functions change (E4 owns them).
-  - `test/scripts/assets/procedural-ending.test.ts` (new, or the ending cases in the files R4-P.P2 made).
+  - `packages/core/src/scenes/index.ts` — §ending: `EndingScene` (`:7134`) and its `drawCitadel` (`:7370`). **Not**
+    `StoryScene.drawDawn` (`:8554`): that is the attract story crawl, not an ending.
+  - `packages/core/test/frame-literals.test.ts` — only the allow-list entry `EndingScene.drawCitadel.sink` (360, count
+    2, `:84`), and only if `drawCitadel` changes (E4 owns it). The entry `StoryScene.drawDawn.rise` (`:91`) stays.
+  - the ending generator's test cases: today in `test/scripts/assets/procedural-zones-hi-edge.test.ts:115-200`; after
+    `R5-P.P5c` (wave 6) in `procedural-zone-h-edge.test.ts` or `procedural-zone-i-edge.test.ts` — find them with
+    `git grep -l ending.mjs test/scripts/assets`. E4 may edit only those cases in that file.
   - tests in `packages/core/test/scenes/` (`scenes-ending*.test.ts`).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
@@ -284,8 +307,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Goal:** a full-frame `ui/title-backdrop` (`FRAME_W×FRAME_H`) drawn by `title.mjs`, interned through `UI_SPRITES`
   and drawn by the title scene.
 - **Files (only these; checked on `bc8e05d`):**
-  - `scripts/assets/procedural/title.mjs` — the backdrop (v2 path; at scale 1 a v1-size backdrop so the name exists in
-    both builds, or the v1 path draws a minimal stand-in — check the scale-1 pin).
+  - `scripts/assets/procedural/title.mjs` — the backdrop, on the v2 path only; `title.mjs` returns no
+    `ui/title-backdrop` at `options.artScale === 1`, so the name is absent at scale 1 (decision RR-1a: no v1
+    stand-in).
   - `packages/core/src/ui/index.ts` — `UI_SPRITES` (`:236`) and `UiSprites`.
   - `packages/core/src/scenes/index.ts` — `TitleScene` (`:2456`) draws it.
   - tests in `packages/core/test/scenes/` and `packages/core/test/ui/`.
@@ -298,8 +322,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```
   then the FP re-pin under the land lock.
 - **Acceptance:** the backdrop is opaque, full-frame, drawn below the logo and the menus; the new name re-pins the
-  fingerprints (expected); the scale-1 digest pin: a **new** sprite at scale 1 moves it — draw the v2 backdrop only on
-  the v2 path and report how the name resolves at scale 1 (the CJK figures and bench do not draw the title).
+  fingerprints (expected); the scale-1 digest pin green (the name is absent at scale 1, RR-1a; the CJK figures and the
+  bench do not draw the title).
 - **Token:** SCENES + UI-FILE; FINGERPRINTS (push time).
 - **Traps:** `FRAME_W` / `FRAME_H` from `scripts/frame.mjs`, no literal; colours off the reserved ramps; the title's HI
   line stays where v1 showed it (U3 fix `5d5a050`).
@@ -338,8 +362,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `assets/source/sprites/hud/life.v2.sprite.json` (new, 12×8, with a `p2` map).
   - `packages/core/test/ui/ui-hud*.test.ts`, `ui-boss-hp*.test.ts`, `ui-layout-frame.test.ts`.
   - `test/e2e/frame-pixels.ts` (the HUD and boss-bar constants, `:99-170`) and `test/scripts/frame.test.ts` (its pins).
-  - `test/integration/palette-cycle-scan.test.ts` — remove the `hud/meter-slot` exemption once the v2 art no longer
-    trips it.
+  - `test/integration/palette-cycle-scan.test.ts` — remove only the `hud/meter-slot` exemption line, once the v2 art
+    no longer trips it (rule 10: fetch and rebase right before the push; on a conflict take master's file and delete
+    your line again — never hand-merge).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
@@ -385,24 +410,28 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 ### R4-01.A3 — Four Option frames (FP)
 
 - **Wave / lane / order:** wave 08, lane 4, first.
-- **Depends on:** nothing in this wave.
+- **Depends on:** `R4-03.C1` on `master` (CORE-CONFIG passes from C1 to A3 for the barrel).
 - **Goal:** the Options pulse over 4 frames instead of 2.
-- **Files (only these; checked on `bc8e05d`):**
+- **Files (only these; checked on `8ff2bf6`):**
   - `packages/core/src/weapons/index.ts:2881` and `packages/core/src/enemies/index.ts:3161` —
     `Math.floor(this.host.tick / OPTION_ANIM_TICKS) & 1` → `& 3`, through **one exported constant** (e.g.
-    `OPTION_FRAMES = 4`, `& (OPTION_FRAMES - 1)`), defined next to `OPTION_ANIM_TICKS`.
+    `OPTION_FRAMES = 4`, `& (OPTION_FRAMES - 1)`).
+  - `packages/core/src/options/index.ts` — the new constant, next to `OPTION_ANIM_TICKS` (`:97`), with its docblock.
+  - `packages/core/src/index.ts` — the barrel: one added name, next to `OPTION_ANIM_TICKS` (`:911`).
   - `assets/source/sprites/options/orb.v2.sprite.json` (new, 12×12 × 4), `options/stolen.v2.sprite.json` (new, 12×12 × 4).
   - tests in `packages/core/test/options/`, `packages/core/test/weapons/`, `packages/core/test/enemies/` (the frame pins).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/options packages/core/test/weapons packages/core/test/enemies
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/options packages/core/test/weapons packages/core/test/enemies packages/core/test/index.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts
+  pnpm --filter @shmup/core typecheck
   ```
   then the FP re-pin under the land lock.
 - **Acceptance:** goldens green and unchanged (the Option frame is computed at sync, not hashed); the weapons and
-  enemies allocation guards green; fingerprints re-pinned with the reason "four Option frames".
-- **Token:** FINGERPRINTS (push time).
+  enemies allocation guards green; `packages/core/test/index.test.ts` green (the new constant is in the barrel);
+  fingerprints re-pinned with the reason "four Option frames".
+- **Token:** CORE-CONFIG (the barrel, one added name; after `R4-03.C1`); FINGERPRINTS (push time).
 - **Traps:** the v1 maps `options/orb.sprite.json` / `stolen.sprite.json` have 2 frames: at scale 1 `& 3` indexes
   frames 2 and 3 — check how the atlas resolves a missing frame for the scale-1 consumers (none draws Options, but
   `content:check` and the scale-1 relation tests must stay green); the frame change and the 4-frame art in **one**
@@ -420,7 +449,6 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `scripts/assets/procedural/items.mjs` — v2 path: `items/capsule`, `capsule-blue`, `capsule-bonus`, `1up`
     (18×12 × 4; `items.mjs:128-140`).
   - `scripts/assets/procedural/direct-items.mjs` (R4-P.P1's) — v2 path: the six `items/direct-*` (15² × 4).
-  - `assets/source/sprites/items/bonus.v2.sprite.json`, `one-up.v2.sprite.json` (new).
   - tests in `packages/core/test/powerups/`, `test/scripts/assets/procedural-items.test.ts`,
     `procedural-direct-items.test.ts`.
   - the three fingerprints' `PINNED` tables.
@@ -434,8 +462,14 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Acceptance:** goldens green and unchanged (the item frame is sync-time); the powerups allocation guards green; the
   v1 path of `items.mjs` byte-identical (scale-1 pin).
 - **Token:** POWERUPS (work time, then to `R4-01.A4`); FINGERPRINTS (push time).
-- **Traps:** do not touch the point item (`items/point`, `items.mjs:131`): that is `R4-02.B3`; frame count and art in one
-  commit.
+- **Traps:**
+  - Do not touch the point item (`items/point`, `items.mjs:131`): that is `R4-02.B3`; frame count and art in one
+    commit.
+  - `items/bonus` and `items/one-up` (the v1 pixel maps) are never drawn: `ITEM_KINDS` uses `items/capsule-bonus` and
+    `items/1up` (`ONE_UP_SPRITE` / `BONUS_CAPSULE_SPRITE`, `powerups/index.ts:443`, `:446`; an open item,
+    `plan_resolution.md:1458`). Draw **no** v2 maps for them —
+    `test/integration/assets-plugin-edge.test.ts:246-258` edits the v1 `items/bonus` map and expects the default-scale
+    atlas to follow it.
 - **Docs needs:** `docs/dev/powerups-and-shields.md` (glints).
 
 ### R4-01.A4 — The force field: 4 wear states × 2 shimmer frames (FP + POWERUPS)
@@ -476,7 +510,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-shields.test.ts test/scripts/assets/procedural-arm.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
   ```
-  plus ATLAS-SHA at scale 1 (identical).
+  plus the scale-1 digest pin green (in `interim-pipeline.test.ts`); ATLAS-SHA changes at the default scale (rule 14):
+  expected.
 - **Acceptance:** frame counts unchanged (the pod's count is what core reads today; check
   `packages/core/src/shields/index.ts` for the pod frame use); no fingerprint moves (a redraw); scale-1 pin green.
 - **Token:** none.
@@ -499,7 +534,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-weapons.test.ts test/scripts/assets/procedural-direct.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/content.test.ts test/integration/palette-cycle-scan.test.ts
   ```
-  plus ATLAS-SHA at scale 1 (identical).
+  plus the scale-1 digest pin green (in `interim-pipeline.test.ts`); ATLAS-SHA changes at the default scale (rule 14):
+  expected.
 - **Acceptance:** frame counts unchanged; segment shots are 12 wide (`LASER_SEGMENT_LENGTH` after R2-02); no fingerprint
   moves.
 - **Token:** none.
@@ -548,10 +584,12 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/config packages/core/test/ui/ui-strings.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/localization.test.ts test/integration/cjk-budget.test.ts
   ```
-  plus ATLAS-SHA at both scales (identical).
-- **Acceptance:** byte-identical atlas at both scales; the e2e mirror's `UI_ART_SCALE` (`test/e2e/frame-pixels.ts:116`,
-  `GLYPH_W / FONT_FILE_CELL_W` with `FONT_FILE_CELL_W = 6`) still holds because the v1 file stays.
-- **Token:** CORE-CONFIG and STRINGS for the docblocks only (pass STRINGS to `R4-03.C7` when pushed).
+  plus ATLAS-SHA (rule 14; default scale) identical before and after, and the scale-1 digest pin green.
+- **Acceptance:** ATLAS-SHA identical (default scale) and the scale-1 digest pin green; the e2e mirror's
+  `UI_ART_SCALE` (`test/e2e/frame-pixels.ts:116`, `GLYPH_W / FONT_FILE_CELL_W` with `FONT_FILE_CELL_W = 6`) still
+  holds because the v1 file stays.
+- **Token:** CORE-CONFIG and STRINGS for the docblocks only (pass STRINGS to `R4-03.C7` and CORE-CONFIG to `R4-01.A3`
+  when pushed).
 - **Traps:** the same code points in both files, in the same order; the v2 file must be exactly ×1.5 nearest-neighbour
   (any other pixel moves the atlas); do not change `GLYPH_W` (RR-2: 9×12 stays).
 - **Docs needs:** `docs/dev/asset-pipeline.md` (the native font), `docs/dev/conventions.md` (the font metrics source).
@@ -732,14 +770,31 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   (`packages/render-pixi/src/particles/index.ts:83-84`) holds.
 - **Files (only these):** none, unless the measurement says so: then `packages/render-pixi/src/particles/index.ts`
   (the capacity) and its allocation guard's setup only.
+- **How to measure (a temporary test, never committed):** the render bench cannot show a peak
+  (`test/bench/render.perf.ts` and `render-harness/load.ts:139` keep the particle pool full, so it always reports the
+  capacity). Instead:
+  1. Create `packages/shell/test/dispatch/particle-peak.tmp.test.ts`, copying the setup of
+     `packages/shell/test/dispatch/dispatch-fx-runtime.test.ts` (the `presentation()` helper at `:101-102`: a headless
+     game → `connectFxEvents` → the real `createParticleSystem`; the peak of `particles.liveCount` as at `:189`), but
+     with `createParticleSystem({ atlas: ATLAS, content: FX, seed, capacity: 4096 })`, so the peak shows the demand,
+     not today's cap of 256.
+  2. Play each zone A–I, the bonus stages (`brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range`) and the boss
+     rush to stage clear with `fourWayBot()` (`test/playtest/four-way-bot.ts`, imported by relative path) in god mode
+     with a full loadout; record the peak `liveCount` and the tick it happened at, per stage.
+  3. Run it in the background (it is long; opencode stops a foreground command after 2 minutes):
+     `nohup env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/dispatch/particle-peak.tmp.test.ts > /home/sites/shmup-cup-run/R4-04.D3-peak.log 2>&1 &`
+     and poll the log.
+  4. Delete the file before any commit (`rm packages/shell/test/dispatch/particle-peak.tmp.test.ts`;
+     `git status --short` must not list it).
 - **Tests (targeted, run all of them):**
   ```bash
-  flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config test/bench/vitest.config.ts test/bench/render.perf.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
   ```
-- **Acceptance:** a recorded decision in the report (peak per zone, the chosen capacity, why); a capacity change only
-  with the guards green and no budget raised.
-- **Token:** none (the bench under the e2e lock).
+  and, only if you change the capacity: `flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config
+  test/bench/vitest.config.ts test/bench/render.perf.ts` ("keeps the pool full" then fills the new capacity).
+- **Acceptance:** a recorded decision in the report (the peak per stage with its tick, the chosen capacity, why); a
+  capacity change only with the guards green and no budget raised; the temporary test file not committed.
+- **Token:** none (the bench, if run, under the e2e lock).
 - **Traps:** one bench file, never `pnpm bench`; R5-P.P8 owns the core capacities — this is render-pixi's particle pool
   only.
 - **Docs needs:** `docs/dev/fx-and-game-feel.md` (the pool review).
@@ -764,20 +819,26 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Traps:** the gallery's stations are built once in its constructor; no per-frame allocation.
 - **Docs needs:** `docs/dev/fx-and-game-feel.md` (the gallery).
 
-### W08.E2E — The wave's closing e2e check (batches C and D)
+### W08.E2E — The wave's closing e2e check (every spec no wave-9 integrator owns)
 
-- **Wave / lane / order:** wave 08, after every lane has pushed (one e2e pass).
+- **Wave / lane / order:** wave 08, after every lane has pushed (one e2e pass: the batches below run one after
+  another, each under the lock).
 - **Depends on:** all subtasks of this wave on `master`.
-- **Goal:** the specs no wave-9 integrator re-measures: the front end, options, layout and recordings, plus the fx
-  gallery, on the new font, HUD, UI kit and scenes.
-- **Files (only these):** the failing `test/e2e/*.spec.ts` of batches C, D and `fx-gallery.spec.ts` — only a colour or
-  row a redraw moved on purpose, re-measured through `test/e2e/frame-pixels.ts`; anything else is a finding for the
-  subtask that caused it (by id).
-- **Tests:**
+- **Goal:** re-measure, on the new font, HUD, UI kit, ships, endings and scenes, every spec that `R4-01.A9` and
+  `R4-02.B4` (wave 9) do not own (rule 15): batches A, C without `boss`, D, E without `flight`, `ship-select`,
+  `weapon-select`, G, F, plus `enemies` and `coop-gamepad` from batch B.
+- **Files (only these):** the failing specs among those — only a colour or row a redraw moved on purpose,
+  re-measured through `test/e2e/frame-pixels.ts`; anything else is a finding for the subtask that caused it (by id).
+  Read the wave's reports first (`/home/sites/shmup-cup-run/R4-*-report.md`): their rule-15 lists name the failures
+  they caused. Never edit a spec of `R4-01.A9` or `R4-02.B4`.
+- **Tests** (start each batch in the background and poll its log, README rule 4):
   ```bash
-  bash docs/v2-run/helpers/e2e-batch.sh boss.spec.ts advanced-bosses.spec.ts render-groups.spec.ts debug-tools.spec.ts attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts zone-map.spec.ts continue.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh zone-a.spec.ts zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts campaign-run.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh advanced-bosses.spec.ts render-groups.spec.ts debug-tools.spec.ts attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts zone-map.spec.ts continue.spec.ts
   bash docs/v2-run/helpers/e2e-batch.sh smoke.spec.ts boot.spec.ts frame-layout.spec.ts scenes.spec.ts front-end.spec.ts options.spec.ts game-options.spec.ts display-options.spec.ts rebind.spec.ts input.spec.ts
-  bash docs/v2-run/helpers/e2e-batch.sh fx-gallery.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh fx-gallery.spec.ts audio.spec.ts shell.spec.ts webos.spec.ts platform-polish.spec.ts release-check.spec.ts render-profile.spec.ts enemies.spec.ts coop-gamepad.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh decor.spec.ts atlas-context-loss.spec.ts
+  E2E_PROJECT=firefox bash docs/v2-run/helpers/e2e-batch.sh determinism.spec.ts
   ```
 - **Acceptance:** zero failures; every spec edit listed with the subtask that moved it.
 - **Token:** none. **e2e:** one pass.
@@ -790,8 +851,8 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
 **new** agent) … until a review reports zero findings, nits included. Every review of this wave checks, on top of the
 subtask's acceptance:
 
-- the scale-1 digest pin unchanged (`interim-pipeline.test.ts:341-357`), ATLAS-SHA at scale 1 identical to the
-  wave base;
+- the scale-1 digest pin unchanged and green (`interim-pipeline.test.ts:341-357`; it is the only scale-1 check —
+  ATLAS-SHA is the default scale only, rule 14, and moves for every redraw);
 - no v1 pixel map, v1 font or generator v1 path edited (`git diff <base> -- 'assets/source/**/*.sprite.json'
   ':!*.v2.sprite.json' assets/source/fonts/pixel6x8.font.json` is empty);
 - a fingerprint moved only where the block says, with the reason in the commit; goldens re-blessed only by
