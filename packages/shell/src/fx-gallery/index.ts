@@ -29,7 +29,6 @@
  * @module
  */
 import {
-  ART_SCALE,
   FlashKind,
   FLASH_KIND_TICKS,
   HUD_BAR_HEIGHT,
@@ -50,6 +49,7 @@ import {
 } from '@shmup/core';
 import { BONUS_POPUP_COLOR, SCORE_POPUP_COLOR } from '@shmup/render-pixi';
 import type { FxTargets } from '../dispatch/index.js';
+import { STAR_TILE_SIZE } from '../flight/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -94,19 +94,9 @@ const STATION_SLOT = 0;
 /** HUD bar fill (the flight scene's). */
 const BAR_COLOR = 0x1d2a5c;
 
-/**
- * Edge of the square starfield tiles in pixels: the pipeline's 128-px tile
- * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) — 128
- * until R2-01's flip, then the interim ×1.5 art's 192.
- */
-const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
-
 /** Options of {@link createFxGallery}. */
 export interface FxGalleryOptions {
-  /**
-   * Edge of the square starfield tiles in pixels (default the pipeline's tile at the art scale:
-   * 128 × `ART_SCALE`).
-   */
+  /** Edge of the square starfield tiles in pixels (default {@link STAR_TILE_SIZE}). */
   readonly starTileSize?: number;
 }
 

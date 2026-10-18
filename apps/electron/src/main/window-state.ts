@@ -24,11 +24,11 @@
  * gives the defaults, field by field.
  *
  * **Versions** ({@link WINDOW_STATE_VERSION}). Version 1 (M2-17) stored the scale of the v1 frame,
- * {@link V1_WINDOW_FRAME_WIDTH} px wide; version 2 (plan_resolution.md R2-01, decision W4-10) stores
- * the scale of {@link FRAME_WIDTH}. A version-1 file keeps its window's size as nearly as a whole
- * scale allows: `scale′ = max(1, round(scale × 384 / FRAME_WIDTH))` — at 640×360, ×3 (1152 px) → ×2
- * (1280 px), ×5 → ×3 (1920 px), ×10 → ×6 (4K); `main.ts` then fits it to the screen as for any
- * file. Fullscreen and the position are kept; the next save writes version 2.
+ * {@link V1_WINDOW_FRAME_WIDTH} px wide; version 2 (plan_resolution.md R2-01, decision W4-10)
+ * stores the scale of {@link FRAME_WIDTH}. A version-1 file keeps its window's size as nearly as a
+ * whole scale allows: `scale′ = max(1, round(scale × 384 / FRAME_WIDTH))` — at 640×360, ×3
+ * (1152 px) → ×2 (1280 px), ×5 → ×3 (1920 px), ×10 → ×6 (4K); `main.ts` then fits it to the
+ * screen as for any file. Fullscreen and the position are kept; the next save writes version 2.
  *
  * **Implements.** shmup_feat.md §23 Electron-specific — fullscreen BrowserWindow, window / scale
  * settings; shmup_feat.md §3 (integer scaling of the game's frame).

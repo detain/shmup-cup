@@ -384,6 +384,12 @@ function expectUpscaledFrame(shot: Shot): void {
   }
   expect(mixed, 'frame-pixel blocks of more than one colour').toBe(0);
   // Column 0 of the top bar holds no label (the 1P label starts further right).
+  /**
+   * How many screen rows from the top of one screenshot column are HUD-bar coloured.
+   *
+   * @param sxCol - A screen column of the screenshot.
+   * @returns The run of bar-coloured rows from row 0, in screen pixels.
+   */
   const screenRows = (sxCol: number): number => {
     let n = 0;
     while (n < shot.height) {
@@ -480,14 +486,22 @@ async function startGame(page: Page, ship: 'kestrel' | 'manta' = 'kestrel'): Pro
 
 /** What the spec sets through the test build's `window.__shmupDebug`. */
 interface DebugWindow {
+  /** The test build's debug API. */
   readonly __shmupDebug: {
+    /** The running game. */
     readonly game: {
+      /** Its World: the spec writes a score and the status. */
       readonly world: {
+        /** The World's status (`stageClear` / `gameOver` end it). */
         status: string;
+        /** The score board: player 1's score is `scores[0].score`. */
         readonly scoring: { readonly board: { readonly scores: Array<{ score: number }> } };
       };
+      /** The scene flow's screens the spec waits on. */
       readonly scenes: {
+        /** The continue countdown: ticks since it opened. */
         readonly continueScreen: { readonly ticks: number };
+        /** The game-over screen: ticks since it opened. */
         readonly gameOver: { readonly ticks: number };
       };
     };

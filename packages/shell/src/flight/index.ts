@@ -39,7 +39,8 @@
  * - shmup_feat.md §17 — HUD bars outside the playfield (decision D20)
  *
  * **Public API.** {@link createFlightScene}, {@link FlightScene}, {@link FlightSceneOptions},
- * {@link FLIGHT_SPRITES}.
+ * {@link FLIGHT_SPRITES}; {@link STAR_TILE_SIZE}, the starfield tile the showcase and the fx
+ * gallery share.
  *
  * @module
  */
@@ -88,10 +89,7 @@ const OWN = { starsFar: 0, starsMid: 1, starsNear: 2, life: 3 } as const;
 
 /** Options of {@link createFlightScene}. */
 export interface FlightSceneOptions {
-  /**
-   * Edge of the square starfield tiles in pixels (default the pipeline's tile at the art scale:
-   * 128 × `ART_SCALE`).
-   */
+  /** Edge of the square starfield tiles in pixels (default {@link STAR_TILE_SIZE}). */
   readonly starTileSize?: number;
 }
 
@@ -125,11 +123,12 @@ const STAR_LAYERS = [
 ] as const;
 
 /**
- * Edge of the square starfield tiles in pixels: the pipeline's 128-px tile
- * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) — 128
- * until R2-01's flip, then the interim ×1.5 art's 192.
+ * Edge of the square starfield tiles in pixels, the default of the dev scenes' starfield (free
+ * flight, the showcase and the fx gallery): the pipeline's 128-px tile
+ * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) —
+ * 128 until R2-01's flip, then the interim ×1.5 art's 192.
  */
-const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
+export const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
 
 /** HUD bar fill (lifted navy, readable on VA panels). */
 const HUD_BAR_COLOR = 0x1d2a5c;

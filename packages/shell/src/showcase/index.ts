@@ -26,7 +26,6 @@
  * @module
  */
 import {
-  ART_SCALE,
   FRAME_CX,
   FRAME_W,
   HUD_BAR_HEIGHT,
@@ -48,6 +47,7 @@ import {
   type SpriteBatch,
   type WorldView,
 } from '@shmup/core';
+import { STAR_TILE_SIZE } from '../flight/index.js';
 
 /** Module descriptor. */
 export const moduleInfo = defineModule({
@@ -86,19 +86,9 @@ const SPRITE = {
   meterLabels: 10,
 } as const;
 
-/**
- * Edge of the square starfield tiles in pixels: the pipeline's 128-px tile
- * (`scripts/assets/procedural/starfield.mjs` `STAR_TILE_SIZE`) at the art scale (`ART_SCALE`) — 128
- * until R2-01's flip, then the interim ×1.5 art's 192.
- */
-const STAR_TILE_SIZE = Math.ceil(128 * ART_SCALE);
-
 /** Options of {@link createShowcase}. */
 export interface ShowcaseOptions {
-  /**
-   * Edge of the square starfield tiles in pixels (default the pipeline's tile at the art scale:
-   * 128 × `ART_SCALE`).
-   */
+  /** Edge of the square starfield tiles in pixels (default {@link STAR_TILE_SIZE}). */
   readonly starTileSize?: number;
 }
 
