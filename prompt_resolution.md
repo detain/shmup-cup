@@ -58,7 +58,9 @@ paraphrasing it.
 - **FULL_SUITE:** `end of run` — see owner rule 2 and "End of the run".
 - **RUN_DIR:** `/home/sites/shmup-cup-run` — the run directory of `docs/v2-run/README.md` § The run directory
   (decision RUN-5). It holds your notes (`RESUME.md`, `lanes-<wave>.md`, `wave-<wave>-notes.md`, the wave bases
-  `wNN-base.txt`), `prompts/<name>.md`, `logs/<name>.log`, every agent's report `<task id>-report.md`, RV-A2's
+  `wNN-base.txt`, the pre-release tag targets `w07-tag.txt` / `w13-tag.txt`), `prompts/<name>.md`,
+  `logs/<name>.log`, the owner's TV logs `owner-logs/` (preflight 6), every agent's report `<task id>-report.md` and
+  working files (`<id>-msg.txt`, `<id>-push.sh`, `<id>-e2e.log`, the LAND logs `land-<x>-<date>.log`), RV-A2's
   `w02/rv-a2/`, R2-04's `w07/patches/` and the lane worktrees `wt/`. It is outside the repository; copy it along if
   the run moves hosts. Every agent gets its value (agent brief, `RUN_DIR:` line).
 
@@ -230,9 +232,13 @@ restarts; never keep state in `/tmp` or a session folder. The old host's notes i
 - `lanes-<wave>.md` — the lane plan: tasks, lanes, exact files, tokens, agents, status, commit SHAs;
 - `wave-<wave>-notes.md` — decisions, review rounds, findings and their outcomes, owner to-dos;
 - `wNN-base.txt` — each wave's base SHA (wave loop, step 2), which the wave files' diff commands read;
+- `w07-tag.txt`, `w13-tag.txt` — the commit each pre-release tag targets: you write it at the wave's exit, and your
+  `gh release create --target "$(cat …)"` reads it (wave loop, step 7, "Milestone boundary");
+- `owner-logs/` — the owner's TV logs, if they arrive by hand (preflight 6);
 - `prompts/<name>.md`, `logs/<name>.log`;
-- what the agents write there: `<task id>-report.md`, RV-A2's `w02/rv-a2/`, R2-04's `w07/patches/`, the lane
-  worktrees `wt/`.
+- what the agents write there: `<task id>-report.md`; their working files (commit messages `<id>-msg.txt`, push
+  scripts `<id>-push.sh`, e2e logs `<id>-e2e.log`, test-list snapshots, the LAND helper's logs
+  `land-<x>-<date>.log`); RV-A2's `w02/rv-a2/`; R2-04's `w07/patches/`; the lane worktrees `wt/`.
 
 Write to it **before** any compaction, and after every agent start, report and push.
 
@@ -281,7 +287,10 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
     `RUN_DIR/wt/r6-zone-<x>`, `RUN_DIR/wt/r6-global`, wave 13's `RUN_DIR/wt/fix-zone-<x>` on `r5/fix-zone-<x>`): the
     lane's agents commit on its local branch and never push;
     only the LAND subtask pushes, through `docs/v2-run/helpers/land-zone.sh`. Local branches are scaffolding: never
-    pushed, deleted after the land;
+    pushed, deleted after the land. The same holds for a real-art drop on its LAND path (wave 12's `R5-0n.S3`
+    template, steps 1–4): in its own worktree it commits on a local branch `r5/s3-zone-<x>`, reaches `origin/master`
+    only through `land-zone.sh`, then detaches to `origin/master`, deletes the branch and removes its worktree as
+    usual;
   - a **patch subtask** (`R2-04.F1`, `R2-04.Z1` … `Z4`): it commits locally, writes `RUN_DIR/w07/patches/<id>.patch`
     as its block says, and pushes nothing; one integrator (`R2-04.G`) applies the patches.
 - At a wave's close you check `git worktree list` and `git worktree prune`, and remove only worktrees whose HEAD is on
@@ -475,6 +484,17 @@ that needs a new subtask, a red test) gets a scout of its own before a builder.
   finding may be re-raised only with new concrete evidence.
 - **Repeat until a review returns zero findings, nits included.** If the same finding keeps coming back, have one
   fresh tie-breaker agent rule on it, then follow its ruling.
+- **Lane branches:** work on a lane worktree's local branch is reviewed **on the branch, before its LAND** (give the
+  reviewer the branch-diff command the wave file writes); its fixer (`<id>.FIXn`) commits on the same branch. Where
+  a wave file splits a subtask into **two agent turns** (wave 13 rule 1's zone fixes, wave 14 rule 2's `R6-01.B3x`
+  and `B4`), turn 1 commits on the branch and stops, the review loop runs to zero, and turn 2 is a **new** agent
+  with the same prompt plus the wave file's "You are turn 2: …" line at its top: it writes the message file, runs
+  the LAND's dry run, reads its log, then the LAND.
+- **On-demand fixes** (`docs/v2-run/README.md` § Subtask ids), each in a builder slot: a timeout fix `R5-0n.TO`
+  (wave 11 rule 13 and its template block; for zone H `R5-08.TO`, wave 12 rule 1) pushes to `origin/master` before
+  that zone's LAND, is reviewed by `R5-0n.TO.RV`, and is followed by a new S6 and a new RV of the zone; a zone fix
+  `R5-0n.ZFIX<n>` (wave 13 rule 1) works in `RUN_DIR/wt/fix-zone-<x>` in two turns, reviewed by
+  `R5-0n.ZFIX<n>.RV` between them.
 - Independent steps' review loops run in parallel. Record every round in the wave notes.
 
 ### 5. Tests (per step, targeted)
@@ -505,7 +525,7 @@ Their changes get one review loop (step 4) to zero.
   `content:check` and other commands through one fresh `general` agent (role tester, its own worktree on
   `origin/master`, YOUR TESTS = the Exit check's commands verbatim — targeted even when they name `test/golden`; it
   reports pass / fail / skip counts and pushes nothing). The **code exit** is every Exit-check item except the docs
-  review and the §17 row; RUN-2 starts wave N+1's builders on it.
+  review, the §17 row and (waves 7 and 13) the pre-release tag; RUN-2 starts wave N+1's builders on it.
 - Check that every task's commit is on `origin/master` (`git log`).
 - Remove finished worktrees (see "Worktrees and pushing"), prune the rest, delete local scaffolding branches.
 - Run `plan_board_v2.py`.
@@ -518,10 +538,15 @@ Their changes get one review loop (step 4) to zero.
 - Write the wave's state to the run notes and `RESUME.md`; then compress if you need to.
 - **PAUSE:** if it is `waves`, or `milestones` and this was a milestone's last wave, stop and wait for me.
 - **Milestone boundary:** wave 7 (R2-04) tags `v2.0.0-alpha.1` and wave 13 (R5-10) tags `v2.0.0-beta.1`, each with
-  `gh release create … --prerelease`, after the wave's targeted exit check — no full suite (decision RUN-1; the
-  release notes say so; the work orders say which subtask bumps the versions first). Only if SCOPE ends the run at
-  that milestone does its last wave run the full suite before the tag. `gh release create v2.0.0` (`R6-03.D7`) runs
-  only after my explicit OK (decision R6-D3).
+  `gh release create … --prerelease` — no full suite (decision RUN-1; the release notes say so; the work orders say
+  which subtask bumps the versions first). The tag is the wave's **last** action: after the targeted exit check and
+  once every review of the wave and its docs item are at zero (the docs item writes the CHANGELOG line). You write
+  the full SHA of `origin/master` at that moment to `RUN_DIR/w07-tag.txt` (`w13-tag.txt`) — never the version
+  bump's own commit — and run the `gh` line from the main checkout with `--target "$(cat …)"`, exactly as wave 7's
+  Exit check 3 and wave 13's rule 4 write them. That SHA must be a commit the exit's targeted checks ran on: if
+  `origin/master` moved since (wave N+1's builders push meanwhile), a fresh tester runs those checks again on it
+  first. Only if SCOPE ends the run at that milestone does its last wave run the full suite before the tag.
+  `gh release create v2.0.0` (`R6-03.D7`) runs only after my explicit OK (decision R6-D3).
 - **Next wave:** wave N+1's builders may start once this wave's code exit passes; this wave's docs agents then run
   inside wave N+1's cap (RUN-2, above).
 
@@ -661,7 +686,9 @@ COMMANDS:
   through test/e2e/frame-pixels.ts, never raise a timeout blindly.
 - Never: git stash (the stash is shared by every worktree); git checkout / git reset on files you did not change;
   git add -A or git add .; pnpm golden:update or node scripts/golden-update.mjs unless you hold GOLDEN, LAND or
-  GLOBAL; editing a .replay.json or a fingerprint's PINNED table by hand.
+  GLOBAL; editing a .replay.json or a fingerprint's PINNED table by hand; a gh command that writes (gh release,
+  gh pr, gh issue, gh api -X …: tags and releases are the orchestrator's — a read-only gh run list / gh run view
+  that YOUR TESTS name is fine); plan_board_v2.py (the orchestrator runs it).
 
 STAY INSIDE YOUR FILES. If your task truly needs a file outside YOUR FILES and no other lane or token owns it (a test
 helper only you use), change it and list it under "Files outside my list". If it is a token's file or another lane's
@@ -680,6 +707,10 @@ GIT (file-changing roles only; scouts and reviewers commit nothing):
       RUN_DIR/wt/escape; RUN_DIR/wt/r6-zone-<x>, RUN_DIR/wt/r6-global; wave 13's RUN_DIR/wt/fix-zone-<x> on
       r5/fix-zone-<x>): cd there as the WORKTREE block says (still install); commit on that branch and NEVER push.
       Only the LAND subtask pushes, through docs/v2-run/helpers/land-zone.sh. Never remove that worktree.
+      The same for a real-art drop on its LAND path (wave 12's R5-0n.S3 template, steps 1–4): in your own worktree,
+      git switch -c r5/s3-zone-<x> (your zone's letter); commit there and NEVER push the branch; only land-zone.sh
+      pushes (as HEAD:master); afterwards git switch --detach origin/master && git branch -D r5/s3-zone-<x>, then
+      remove your worktree as below.
   (b) A PATCH subtask (R2-04.F1, R2-04.Z1 … Z4): commit locally, write RUN_DIR/w07/patches/<id>.patch as the block
       says, push nothing.
 - Never commit node_modules, dist, dist-bench, *.wgt, *.ipk, logs, coverage, .turbo, test-results, .claude/,

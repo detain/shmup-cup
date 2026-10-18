@@ -11,8 +11,9 @@ end of the run: wave 15's Exit check 5 lists what is left, and the owner decides
 `docs/v2-run/` is deleted (every helper with it) or kept as history.
 
 Every script finds the checkout from its own location, so it runs from any clone or worktree and
-from any directory. All are read-only except `host-check.sh` (which installs and builds) and
-`e2e-batch.sh` (which builds the test builds).
+from any directory. All are read-only except `host-check.sh` (which installs and builds),
+`e2e-batch.sh` (which builds the test builds) and, from wave 9, `land-zone.sh` (which regenerates
+the derived files, commits and pushes).
 
 | Path (`docs/v2-run/helpers/…`) | What | Run | Used by | Delete when |
 |---|---|---|---|---|

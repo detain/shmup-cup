@@ -26,8 +26,8 @@ or on any file outside the repository other than the run directory (§ The run d
    - [`handoffs-w4.md`](handoffs-w4.md): the inputs of the R2-01 docs pass and the hand-offs to later steps;
    - [`wave5-scout.md`](wave5-scout.md): the background of R2-02, R3-03 and R3-04, corrected after the frame flip;
    - `designs/zone-<x>.md`: the R5 zone designs, written in waves 8 and 9;
-   - [`helpers/README.md`](helpers/README.md): the helper scripts (`e2e-batch.sh`, `host-check.sh`, and until
-     wave 5 the export and default listers).
+   - [`helpers/README.md`](helpers/README.md): the helper scripts (`e2e-batch.sh`, `host-check.sh`, from wave 9
+     the LAND helper `land-zone.sh`, and until wave 5 the export and default listers).
 
 ## The waves
 
@@ -53,7 +53,8 @@ or on any file outside the repository other than the run directory (§ The run d
 ## How an orchestrator uses this folder
 
 1. **Pick the wave.** It is the first wave whose exit is not met; §17 and the wave file's "Gate to start" tell you.
-   Wave N+1 may start as soon as wave N's **code exit** passes; wave N's docs agents then run inside wave N+1's cap.
+   Wave N+1 may start as soon as wave N's **code exit** passes (every Exit-check item except the docs review, the
+   §17 row and, in waves 7 and 13, the pre-release tag); wave N's docs agents then run inside wave N+1's cap.
    Wave N+1's own docs item starts only once wave N's docs review is at zero findings.
 2. **Fill the slots.** At most **8 builders and 2 review agents** run at once; the re-check scouts (the driver's wave
    loop, step 1) and the fix agents take builder slots, and the cap is 10 agents in all. Take the wave's lanes in the
@@ -68,7 +69,12 @@ or on any file outside the repository other than the run directory (§ The run d
 
    Review and docs agents get the same four parts, with their own block.
 4. **Run the review loop** for every subtask that pushed: review → fix → a **new** review, until a review reports
-   **zero findings, nits included**. Doc-only nits may go to a fixer that is already running.
+   **zero findings, nits included**. Doc-only nits may go to a fixer that is already running. Work on a lane
+   worktree's local branch is reviewed **on the branch, before its LAND**: the reviewer reads the branch diff (the
+   wave file gives the command, e.g. wave 11's § Reviews), and a fixer (`<id>.FIXn`) commits on the same branch.
+   Where a wave file splits a subtask into **two agent turns** (wave 13 rule 1, wave 14 rule 2), turn 1 commits and
+   stops, the review loop runs to zero, and turn 2 is a **new** agent with the same prompt and the wave file's
+   "You are turn 2: …" line at its top: it writes the message file and runs the LAND.
 5. **Track the run** in the run directory (below): the wave's lane table, every agent, its status and its pushes.
    When a wave's first agent starts, record its **wave base** once, in the main checkout:
    `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/wNN-base.txt` (`NN` = the wave's two
@@ -80,8 +86,13 @@ or on any file outside the repository other than the run directory (§ The run d
 6. **Close the wave**: run its **Exit check** (targeted, on myadmin1; never wait for GitHub CI — look at it at a
    wave's close at most) and let the wave's docs agent (`Wnn.DOCS-A`) update the §17 rows. Once that push is on
    `origin/master`, the orchestrator runs `python3 .claude/plan_board_v2.py` in the main checkout
-   `/home/sites/shmup-cup` (the script is git-ignored, so it exists only there; docs agents never run it). Then go
-   to step 1.
+   `/home/sites/shmup-cup` (the script is git-ignored, so it exists only there; docs agents never run it). In
+   waves 7 and 13 the wave's **last** action is the pre-release tag, after the docs item and once every review is at
+   zero: the orchestrator writes the full SHA of `origin/master` at that moment to
+   `/home/sites/shmup-cup-run/w07-tag.txt` (`w13-tag.txt`) and runs `gh release create … --target "$(cat …)"` from
+   the main checkout, exactly as the wave file writes it (wave 7's Exit check 3, wave 13's rule 4) — never on the
+   version bump's own commit. That SHA must be a commit the exit's targeted checks ran on: if `origin/master` moved
+   since, a fresh tester runs them again on it first. Only the orchestrator runs `gh release`. Then go to step 1.
 
 Owner-only work (**Manual (owner)** in each wave file) is listed so it is visible. It never blocks a wave.
 
@@ -98,6 +109,13 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
   of subtasks, e.g. `R2-02.prepA.RV`) or `<step>.RV` (the step review); `R2-02.RV-pre` is the barrier review. The
   rounds of a loop are numbered when the orchestrator launches them: `R2-02.P0.RV1`, `R2-02.P0.FIX1`,
   `R2-02.P0.RV2`, …
+- **On-demand fixes** (spawned only when a report calls for one; each takes a builder slot):
+  - a **timeout fix** `R5-0n.TO` with the zone's step (`R5-02.TO` for zone B; a second file of the same zone
+    `R5-02.TO2`): wave 11 rule 13 and its template block `### R5-0n.TO`, for zone H wave 12 rule 1. It pushes to
+    `origin/master` before that zone's LAND; its review is `R5-02.TO.RV`, its fixes `R5-02.TO.FIX1`, …;
+  - a **zone fix** `R5-0n.ZFIX<n>` in wave 13 (zone B's first: `R5-02.ZFIX1`): wave 13 rule 1. It works in the lane
+    worktree `RUN_DIR/wt/fix-zone-<x>` in two agent turns; its review is `R5-02.ZFIX1.RV` (on the branch, between
+    the turns), its fixes `R5-02.ZFIX1.FIX1`, …, and turn 2 is its LAND.
 - **Wave items:** `W07.DOCS-A` (the docs agent that holds the plan), `W07.DOCS-B` …; a wave's exit is its
   `## Exit check` section (no id).
 - Every block heading is `### <id> — <title>`. The ids are unique across the whole folder.
@@ -140,8 +158,13 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    rejected, repeat from the fetch (at most 5 times, then report). Never force-push. Never push `v1.x`. No branches
    are pushed and no pull requests are opened. **Two exceptions, as your block says:** an agent in a **lane
    worktree** (`RUN_DIR/wt/…`, on a local branch) commits there and never pushes — only its LAND subtask pushes,
-   through `docs/v2-run/helpers/land-zone.sh`; a **patch subtask** (`R2-04.F1`, `R2-04.Z1` … `Z4`) commits locally,
-   writes `RUN_DIR/w07/patches/<id>.patch` and pushes nothing.
+   through `docs/v2-run/helpers/land-zone.sh`; the same holds for a real-art drop on its LAND path (wave 12's
+   `R5-0n.S3` template, steps 1–4), which commits on a local branch `r5/s3-zone-<x>` in its own worktree and
+   reaches `origin/master` only through `land-zone.sh`; a **patch subtask** (`R2-04.F1`, `R2-04.Z1` … `Z4`) commits
+   locally, writes `RUN_DIR/w07/patches/<id>.patch` and pushes nothing. Never run a `gh` command that writes
+   (`gh release`, `gh pr`, `gh issue`, `gh api -X …`: tags and releases are the orchestrator's; a read-only
+   `gh run list` / `gh run view` your block names is fine) or `plan_board_v2.py` (the orchestrator runs it after the
+   §17 row is pushed).
 6. **Derived files go through the land lock.** A push that regenerates a derived file — the golden replays
    (`test/golden/*.replay.json`), the attract demos (`content/demos/*.replay.json`), a `PINNED` table of the three
    fingerprints (`test/integration/presentation-fingerprint.test.ts`, `test/integration/content-db-fingerprint.test.ts`,
@@ -242,7 +265,7 @@ holds it and when it passes on. Two kinds:
 | **GROUPS** | `assets/source/atlas-groups.json` (re-derive with `SHMUP_ATLAS_GROUPS_UPDATE=1`) | push-time |
 | **DOCS-IMAGES** | `docs/images/**` (`pnpm docs:images`, `pnpm docs:screens`) | push-time; a subject folder may be committed by its subtask, a full regeneration only by the wave's integrator |
 | **STORE** | `apps/tizen/public/icon.png`, `apps/webos/public/{icon,largeIcon}.png`, `apps/electron/build/icon.png` | push-time; R4-05.E5 and R6-03.D3 only |
-| **LAND** | a zone's whole re-bless (`--only`) in R5 / R6 | push-time; the land lock for the whole LAND script |
+| **LAND** | a zone's whole re-bless (`--only`) in R5 / R6: a zone's `S7`, `R5-10.T1` / `T2`, an `S3` drop whose frame count changed, a wave-13 zone fix's turn 2, a wave-14 zone pass | push-time; the land lock for the whole LAND script |
 | **GLOBAL** | a whole-set re-bless (R5-P.P12, R6-01.B4) | the land lock for the whole re-bless; no LAND meanwhile |
 | **KIT** | `test/port-v2/**` (R2-02's two-scale kit) | work-time: R2-02.P1, then R2-02.T3 for `handfix.patch`, then R2-02.S deletes it |
 | **CORE-CONFIG** | `packages/core/src/config/index.ts`, `packages/core/src/index.ts` (barrel), `scripts/frame.mjs` | work-time |
@@ -266,12 +289,23 @@ stuck holder.
 
 Transient run files live **outside the repository** in the run directory, `RUN_DIR` — by default
 `/home/sites/shmup-cup-run/` on myadmin1 (the driver prompt's Run setting `RUN_DIR`; its preflight creates it). It
-holds the orchestrator's `RESUME.md`, lane file per wave, wave notes, wave bases (`wNN-base.txt`, step 5),
-`prompts/` and `logs/`; the agents' reports
-(every agent writes its report as `$RUN_DIR/<id>-report.md`); RV-A2's failure lists (`w02/rv-a2/`); R2-04's proposed
-patches (`w07/patches/`); and the lane worktrees of R5 / R6 (`wt/`). It survives sessions on the host. Anything a
-**later wave** needs that is not in this list is committed (the zone designs, for example, go to
-`docs/v2-run/designs/`). Before the run moves to another host, copy the run directory along.
+holds:
+
+- the orchestrator's `RESUME.md`, lane file per wave, wave notes, wave bases (`wNN-base.txt`, step 5), `prompts/` and
+  `logs/`;
+- the pre-release tag targets `w07-tag.txt` and `w13-tag.txt` (step 6: the orchestrator writes each at its wave's
+  exit, and its `gh release create --target` reads it);
+- the owner's TV logs when they arrive by hand (`owner-logs/`, wave 15's `R0-03.A1`);
+- the agents' reports (every agent writes its report as `$RUN_DIR/<id>-report.md`) and their working files: commit
+  messages (`<id>-msg.txt`), push scripts (`<id>-push.sh`), e2e and host-check logs (`<id>-e2e.log`,
+  `<id>-host-check.log`), test-list snapshots (`<id>-…-before.txt` / `-after.txt`) and the LAND helper's logs
+  (`land-<x>-<date>.log`);
+- RV-A2's failure lists (`w02/rv-a2/`); R2-04's proposed patches (`w07/patches/`); and the lane worktrees of R5 / R6
+  (`wt/`).
+
+It survives sessions on the host. Anything a **later wave** needs that is not in this list is committed (the zone
+designs, for example, go to `docs/v2-run/designs/`). Before the run moves to another host, copy the run directory
+along.
 
 ## The host
 
