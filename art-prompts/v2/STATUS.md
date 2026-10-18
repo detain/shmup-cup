@@ -185,7 +185,8 @@ round 2 (they start from a winning still; Wan2.2's I2V weights are not on skynet
   spaced on one continuous green background" does not; listing tiles row by row ("five tiles in every row") gives the
   asked count; "extra-life capsule", not "1UP"; "seen from the side … no vanishing point" removes the tunnel look.
 - **GPU work is finished** (skynet2 cards 2 and 3 empty, VERIFY OK, 2026-10-17 20:49). Still to do:
-  1. The owner reviews the code-made frames (`edit-2` of the halo frames and the black-hole spin frames) on the picker.
+  1. ~~The owner reviews the code-made frames on the picker.~~ Done 2026-10-18 02:24 UTC: the owner picked `a` on both
+     `edit-2` sheets (halo frames, black-hole spin frames), with no comment and no regenerate.
   2. Winners and followups go to `winners/<id>/` (decide on Git LFS first).
 
 ## Round 2 — after the owner says picking is done
