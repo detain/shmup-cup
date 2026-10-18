@@ -1,0 +1,95 @@
+{
+  "kind": "run-replay",
+  "formatVersion": 1,
+  "buildId": "1.0.0",
+  "mode": "1p",
+  "label": "KESTREL NORMAL",
+  "score": 48200,
+  "reached": "A",
+  "assists": 1,
+  "segments": [
+    {
+      "replay": {
+        "kind": "replay",
+        "header": {
+          "formatVersion": 1,
+          "buildId": "golden",
+          "seed": 1,
+          "stageId": "zone-a",
+          "checkpoint": -1,
+          "loadout": "default",
+          "assisted": true,
+          "assists": 1,
+          "config": {
+            "internalWidth": 384,
+            "internalHeight": 216,
+            "tickRate": 60,
+            "maxTicksPerFrame": 4,
+            "seed": 1,
+            "difficulty": "normal",
+            "rankBase": 2,
+            "rankGrowth": 1,
+            "extendFirst": 20000,
+            "extendEvery": 70000,
+            "continues": 3,
+            "bulletSpeedMul": 1,
+            "powerUpMode": "meter",
+            "shipId": "kestrel",
+            "deathPenalty": "classic",
+            "startingLives": 3,
+            "autofire": true,
+            "autofireMode": "always",
+            "remoteMode": true,
+            "stage": "zone-a",
+            "stageSkip": "none",
+            "aimDirections": 32,
+            "autofireInterval": 4,
+            "missileInterval": 10,
+            "loadout": "default",
+            "autoPowerUp": false,
+            "autoPowerUpOrder": [
+              "speed",
+              "missile",
+              "laser",
+              "option",
+              "option",
+              "option",
+              "option",
+              "shield"
+            ],
+            "pickupMagnet": true,
+            "weaponPreset": "type-a",
+            "weaponEdit": null,
+            "megaChoice": "megaCrash",
+            "shieldChoice": "forceField",
+            "optionChoice": "trail",
+            "coop": false,
+            "coopExtra": 0.5,
+            "loop": 1,
+            "timeLimit": 0,
+            "invincible": false,
+            "optionRecovery": false,
+            "slowdown": false,
+            "graze": false,
+            "deathBomb": 0,
+            "blackHole": false
+          }
+        },
+        "ticks": 12661,
+        "hashInterval": 600,
+        "inputs": [
+          "ACiCgAgBAgIAlAeBgAQBAR8A9gLAgIACAUAJAB+CgAgBAhcAD4KACAECDwCzBMCAgAIBQAkAowWBgAQBAQYAC4GABAEBBQCnA8CAgAIBQAkAogOBgAQBAQUAKIKACAEAAYKACAECBAD2AYGABAEBBQACgYAEAQEEAAGCgAgBAgoAigWBgAQBAQUALIKACAECBQCuBIGABAEAAYGABAEAAYGABAEAAYKACAECAgABgoAIAQABgoAIAQABgoAIAQABgoAIAQABgoAIAQABgoAIAQACgYAEAQABgYAEAQABgYAEAQABgYAEAQABgYAEAQABgYAEAQACgoAIAQABgoAIAQABgYAEAQEBAMUCgoAIAQIFAM0BgYAEAQEFAF6CgAgBAgUAB4KACAECBgCeA4GABAEBDABmgoAIAQIMAEfAgIACAUAJABGBgAQBAQYAWIGABAEAAYKACAECBwADgYAEAQESAPMDgoAIAQIFAIgBgYAEAQEFACSCgAgBAAGCgAgBAgQAG4KACAECBQAJgoAIAQIGACKBgAQBAQwALYKACAECBQAigYAEAQABgYAEAQEEALoHgYAEAQEFADmCgAgBAgUAPoGABAEBBQAqgoAIAQABgoAIAQIEABOCgAgBAgUALoGABAEBBQBFgYAEAQEFAKEBgoAIAQILAM0BwICAAgFACQBOgYAEAQELAIgCgYAEAQEGAMMBgoAIAQImAL0IgYAEAQEMAOoBgYAEAQEMAPYL",
+          "APVi"
+        ],
+        "hashes": [
+          1214109426, 1249564424, 2412561387, 1006931148, 1849832861, 2495315559, 3513397729,
+          1761262676, 266050047, 3771874787, 4120811003, 2397317784, 4038296236, 445326919,
+          3892146664, 1937665496, 4051613789, 2096006793, 1401556190, 1520266017, 3130933556
+        ],
+        "finalHash": 3932780079
+      },
+      "start": null,
+      "actions": []
+    }
+  ]
+}

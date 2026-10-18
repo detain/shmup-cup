@@ -6,9 +6,15 @@
  * segment's refusal on and refuses an older run format itself; {@link classifyRunReplayText} tells
  * `'ok'` / `'legacy'` / `'invalid'` apart; and the replay library keeps a v1 replay's slot (never
  * deleted by itself) with a legacy summary, refuses to play or keep it, answers a paste of one
- * with `ReplayStoreResult.Legacy`, and deletes it on DELETE. Every case holds at both frames: the
- * crafted replays record {@link OTHER_FRAME}.
+ * with `ReplayStoreResult.Legacy`, and deletes it on DELETE. The crafted cases hold at both frames:
+ * their replays record {@link OTHER_FRAME}.
+ *
+ * The run replay v1.0.0's replay library wrote is a committed fixture,
+ * `fixtures/run-replay-v1.json` ({@link V1_RUN_TEXT}), so its cases hold from the flip on for good
+ * — a v1 replay a player kept stays one — and never read the shipped recordings, which R2-03
+ * re-blesses (the cases on those are `replay-version-shipped.test.ts`'s, deleted then).
  */
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FRAME_H, FRAME_W, resolveGameConfig } from '../../src/config/index.js';
 import { EMPTY_CONTENT_DB } from '../../src/data/index.js';
@@ -19,6 +25,7 @@ import {
   REPLAY_FORMAT_VERSION,
   REPLAY_SLOTS,
   RUN_REPLAY_FORMAT_VERSION,
+  RUN_REPLAY_KIND,
   ReplayStoreResult,
   ReplayVersionError,
   SegmentRecorder,
@@ -108,6 +115,43 @@ function thrown(fn: () => unknown): unknown {
     return error;
   }
   throw new Error('expected a throw');
+}
+
+/** v1's frame: what the header config of every replay v1 recorded holds. */
+const V1_FRAME: readonly [number, number] = [384, 216];
+
+/** v1's replay format version, and its run replay format version. */
+const V1_FORMAT = 1;
+
+/**
+ * A run replay as v1.0.0's replay library wrote it — the text of a v1 `replay.last` / `replay.N`
+ * slot or of a SHARE paste: `encodeRunReplay` of v1.0.0 (run format 1, no `ticks` field) as
+ * `runReplayText` writes it (one line). The fixture was derived once from v1.0.0's golden
+ * `zone-a-god` (its `description` / `expected` dropped: never part of a replay), and v1.0.0's own
+ * `parseRunReplayText` reads it and `runReplayText` writes it back byte for byte. It never changes
+ * with the goldens; the file is pretty-printed, so it is re-stringified here.
+ */
+const V1_RUN_TEXT = JSON.stringify(
+  JSON.parse(readFileSync(new URL('./fixtures/run-replay-v1.json', import.meta.url), 'utf8')),
+);
+
+/**
+ * Asserts that a refusal is a v1 replay's: a {@link ReplayVersionError} for its older format, with
+ * v1's frame, and a message that names v1.
+ *
+ * @param error - What decoding threw.
+ */
+function expectV1Refusal(error: unknown): void {
+  expect(error).toBeInstanceOf(ReplayVersionError);
+  const refusal = error as ReplayVersionError;
+  expect(refusal.name).toBe('ReplayVersionError');
+  // The format check comes first: a v1 replay is refused for its version, not its frame.
+  expect(refusal.reason).toBe('format');
+  expect([refusal.recordedWidth, refusal.recordedHeight]).toEqual(V1_FRAME);
+  expect(refusal.message).toBe(
+    `replay recorded at ${V1_FRAME[0]}×${V1_FRAME[1]} (v1, format version ${V1_FORMAT}) ` +
+      `cannot play at ${FRAME_W}×${FRAME_H}`,
+  );
 }
 
 describe('core/replay ReplayVersionError (R2-01)', () => {
@@ -323,5 +367,88 @@ describe('core/replay the library and v1 replays (R2-01)', () => {
     library.remove(1);
     expect(library.importText(runReplayText(recordRun()))).toBe(ReplayStoreResult.Ok);
     expect(library.summaries[1]).toMatchObject({ legacy: false });
+  });
+});
+
+describe('core/replay a run replay v1.0.0 wrote (fixtures/run-replay-v1.json, R2-01)', () => {
+  it('is v1.0.0`s shape: run format 1, no ticks, one segment of format 1 at v1`s frame', () => {
+    // This build writes newer formats at another frame, so the fixture is an older build's.
+    expect(REPLAY_FORMAT_VERSION).toBeGreaterThan(V1_FORMAT);
+    expect(RUN_REPLAY_FORMAT_VERSION).toBeGreaterThan(V1_FORMAT);
+    expect([FRAME_W, FRAME_H]).not.toEqual(V1_FRAME);
+    // The fixture stays v1's for good (the guard against re-blessing it with the goldens).
+    const doc = JSON.parse(V1_RUN_TEXT) as Record<string, unknown>;
+    expect(Object.keys(doc)).toEqual([
+      'kind',
+      'formatVersion',
+      'buildId',
+      'mode',
+      'label',
+      'score',
+      'reached',
+      'assists',
+      'segments',
+    ]);
+    expect(doc.kind).toBe(RUN_REPLAY_KIND);
+    expect(doc.formatVersion).toBe(V1_FORMAT);
+    const segments = doc.segments as Array<Record<string, unknown>>;
+    expect(segments).toHaveLength(1);
+    expect(Object.keys(segments[0])).toEqual(['replay', 'start', 'actions']);
+    const replay = segments[0].replay as Record<string, unknown>;
+    expect(Object.keys(replay)).toEqual([
+      'kind',
+      'header',
+      'ticks',
+      'hashInterval',
+      'inputs',
+      'hashes',
+      'finalHash',
+    ]);
+    const header = replay.header as { formatVersion: unknown; config: Record<string, unknown> };
+    expect(header.formatVersion).toBe(V1_FORMAT);
+    expect([header.config.internalWidth, header.config.internalHeight]).toEqual(V1_FRAME);
+  });
+
+  it('is legacy: decodeRunReplay refuses it as v1`s, with the frame of its first segment', () => {
+    expectV1Refusal(thrown(() => decodeRunReplay(JSON.parse(V1_RUN_TEXT))));
+    expect(classifyRunReplayText(V1_RUN_TEXT)).toBe('legacy');
+    expect(parseRunReplayText(V1_RUN_TEXT)).toBeNull();
+    // Its segment alone is refused the same way.
+    const doc = JSON.parse(V1_RUN_TEXT) as { segments: Array<{ replay: unknown }> };
+    expectV1Refusal(thrown(() => decodeReplay(doc.segments[0].replay)));
+  });
+
+  it('answers a paste of it with ReplayStoreResult.Legacy and stores nothing', async () => {
+    const storage = createMemoryStorage();
+    const library = createReplayLibrary(storage);
+    await library.load();
+    const revision = library.revision;
+    expect(library.importText(V1_RUN_TEXT)).toBe(ReplayStoreResult.Legacy);
+    // A pasted text carries the clipboard's whitespace.
+    expect(library.importText('\n' + V1_RUN_TEXT + '  \n')).toBe(ReplayStoreResult.Legacy);
+    expect(library.revision).toBe(revision);
+    for (let slot = 0; slot < REPLAY_SLOTS; slot++) {
+      expect(library.summaries[slot], String(slot)).toBeNull();
+      expect(await storage.get(replayStorageKey(slot)), String(slot)).toBeNull();
+    }
+  });
+
+  it('keeps a stored one as a v1 replay: never played, kept or deleted by itself', async () => {
+    const storage = createMemoryStorage({
+      [replayStorageKey(0)]: V1_RUN_TEXT,
+      [replayStorageKey(1)]: V1_RUN_TEXT,
+    });
+    const library = createReplayLibrary(storage);
+    await library.load();
+    for (const slot of [0, 1]) {
+      expect(library.summaries[slot], String(slot)).toMatchObject({ slot, legacy: true });
+      expect(library.replay(slot), String(slot)).toBeNull();
+      expect(library.exportText(slot), String(slot)).toBe(V1_RUN_TEXT);
+      expect(await storage.get(replayStorageKey(slot)), String(slot)).toBe(V1_RUN_TEXT);
+    }
+    expect(library.keep(0)).toBe(-1);
+    library.remove(1);
+    expect(library.summaries[1]).toBeNull();
+    expect(await storage.get(replayStorageKey(1))).toBe('');
   });
 });
