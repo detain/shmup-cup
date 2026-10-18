@@ -12,7 +12,7 @@
  *   row's 1-px gap is 2 px at `ART_SCALE` 3/2 (a third of a v1 pixel more a row) and the credits
  *   run from under the frame to its centre, which grow with the frame (×5/3), not the art (×1.5).
  *   On the shipped campaign that is +28 ticks of the story's 1,046 and +70 of the credits' 1,990
- *   (at one pixel a step they took +508 and +980).
+ *   (at one pixel a step they took +520 and +980).
  */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it, vi } from 'vitest';

@@ -5142,7 +5142,9 @@ const DIFFICULTY_PANEL = Object.freeze({
 
 /**
  * Where the difficulty menu is drawn (inside its panel). The cursor sits left of the centred
- * presets, so its offset is text-sized: seven glyph cells and 2 px (44 at 384×216).
+ * presets, so its offset is text-sized: half the longest preset (es `DIFÍCIL`, 3½ of its seven
+ * cells), the cursor's own cell and 2½ cells and 2 px of room — seven glyph cells and 2 px, v1's
+ * offset (44 at 384×216).
  */
 const DIFFICULTY_MENU_LAYOUT: MenuLayout = Object.freeze({
   x: FRAME_CX,

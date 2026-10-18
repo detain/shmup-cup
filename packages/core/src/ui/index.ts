@@ -1883,8 +1883,8 @@ const CAPTURE_PANEL = Object.freeze({
 /** From the capture box's top to its prompt line (8). */
 const CAPTURE_PROMPT_DY = uiPx(8);
 
-/** From the capture box's top to its hint line (22). */
-const CAPTURE_HINT_DY = uiPx(22);
+/** From the capture box's top to its hint line: the prompt's glyph and 6 px under it (22). */
+const CAPTURE_HINT_DY = CAPTURE_PROMPT_DY + GLYPH_H + uiPx(6);
 
 /** Inset of the capture box's countdown bar from each side of the box (20). */
 const CAPTURE_BAR_INSET = uiPx(20);
