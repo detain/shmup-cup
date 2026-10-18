@@ -33,7 +33,11 @@ A5 derived `content.test.ts`' literals and U1–U3 relaid the UI, so they are st
 ## 0. What the code and the experiment show (this changes how the steps must be run)
 
 1. **The rescale dry run is clean today** (`node scripts/content/rescale.mjs --factor 1.5 --top-pad 36 --dry-run`,
-   core at 384, ≈ 10 s; the full report is not committed):
+   core at 384, ≈ 10 s; the full report is not committed). **[Corrected after the flip:** since `72b18a1` this
+   command exits 2; use the four v1 flags + `--art-scale 1.5`
+   (`--from-width 384 --from-height 200 --tile-size 8 --to-width 640 --art-scale 1.5`), see `handoffs-w4.md` R2-02
+   notes. Re-run that way at `c67c7c9`, it prints the same counts as below, except "outside today's schema bounds"
+   3 instead of 66 (the frame-derived bounds widened at the flip).**]**
 
    ```
    rescale ×1.5, top pad 36 px: playfield 384×200 → 640×336, tiles 8 → 12 px, +3 tilemap rows

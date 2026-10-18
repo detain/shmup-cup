@@ -12,8 +12,8 @@ scheduled for **about 10 agents at once** (builders plus review agents), driven 
   its token and its traps.
 
 Everything here is committed on purpose. The run does not depend on any scratchpad, on the git-ignored `.claude/`
-folder (except `.claude/plan_board_v2.py` and `.claude/skills/`, which the owner copies to the host), or on any file
-outside the repository.
+folder (except `.claude/plan_board_v2.py` and `.claude/skills/`, which the previous orchestrator copied to myadmin1),
+or on any file outside the repository other than the run directory (§ The run directory).
 
 ## Read it in this order
 
@@ -33,7 +33,7 @@ outside the repository.
 
 | File | Wave | Steps |
 |---|---|---|
-| [`wave-00.md`](wave-00.md) | 0 | closed by the orchestrator before the hand-off: the R2-01 C5 review loop and the CI triage |
+| [`wave-00.md`](wave-00.md) | 0 | the R2-01 C5 review loop and the CI triage — closed by the orchestrator before the hand-off, or its open item (verifying C5 fix 2 `c67c7c9`: C5 review 3 and any fix → review loop to zero) becomes `R2-01.F1` in wave 1 |
 | [`wave-01.md`](wave-01.md) | 1 | R2-01 docs pass (7 docs agents) · R2-02 opening (`WORLD_SCALE`, the port kit) |
 | [`wave-02.md`](wave-02.md) | 2 | R2-02 prep A (world constants and defaults) · R3-03 / R3-04 side lanes |
 | [`wave-03.md`](wave-03.md) | 3 | R2-02 prep B (the test pins, the v2-port comparison, the e2e pre-gate) |
@@ -55,9 +55,11 @@ outside the repository.
 1. **Pick the wave.** It is the first wave whose exit is not met; §17 and the wave file's "Gate to start" tell you.
    Wave N+1 may start as soon as wave N's **code exit** passes; wave N's docs agents then run inside wave N+1's cap.
    Wave N+1's own docs item starts only once wave N's docs review is at zero findings.
-2. **Fill the slots.** At most **8 builders and 2 review agents** run at once. Take the wave's lanes in the order the
-   wave file gives; a lane runs its subtasks one after another, one agent per subtask. When a lane ends, start the
-   next queued lane, or a listed **filler**. A subtask starts only when its "Depends on" holds **on `origin/master`**.
+2. **Fill the slots.** At most **8 builders and 2 review agents** run at once; the re-check scouts (the driver's wave
+   loop, step 1) and the fix agents take builder slots, and the cap is 10 agents in all. Take the wave's lanes in the
+   order the wave file gives; a lane runs its subtasks one after another, one agent per subtask. When a lane ends,
+   start the next queued lane, or a listed **filler**. A subtask starts only when its "Depends on" holds **on
+   `origin/master`**.
 3. **Write each agent's prompt** from four parts, verbatim:
    1. the agent brief of `prompt_resolution.md`;
    2. the **Common rules** section below;
@@ -69,7 +71,9 @@ outside the repository.
    **zero findings, nits included**. Doc-only nits may go to a fixer that is already running.
 5. **Track the run** in the run directory (below): the wave's lane table, every agent, its status and its pushes.
 6. **Close the wave**: run its **Exit check** (targeted, on myadmin1; never wait for GitHub CI — look at it at a
-   wave's close at most), let the wave's docs agent update §17 and run `python3 .claude/plan_board_v2.py`, then go
+   wave's close at most) and let the wave's docs agent (`Wnn.DOCS-A`) update the §17 rows. Once that push is on
+   `origin/master`, the orchestrator runs `python3 .claude/plan_board_v2.py` in the main checkout
+   `/home/sites/shmup-cup` (the script is git-ignored, so it exists only there; docs agents never run it). Then go
    to step 1.
 
 Owner-only work (**Manual (owner)** in each wave file) is listed so it is visible. It never blocks a wave.
@@ -87,14 +91,16 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
   of subtasks, e.g. `R2-02.prepA.RV`) or `<step>.RV` (the step review); `R2-02.RV-pre` is the barrier review. The
   rounds of a loop are numbered when the orchestrator launches them: `R2-02.P0.RV1`, `R2-02.P0.FIX1`,
   `R2-02.P0.RV2`, …
-- **Wave items:** `W07.DOCS-A` (the docs agent that holds the plan), `W07.DOCS-B` …, `W07.EXIT`.
+- **Wave items:** `W07.DOCS-A` (the docs agent that holds the plan), `W07.DOCS-B` …; a wave's exit is its
+  `## Exit check` section (no id).
 - Every block heading is `### <id> — <title>`. The ids are unique across the whole folder.
 
 ## Common rules (paste into every agent prompt)
 
 1. **Where you work.** Your own git worktree, made from `origin/master` (`git fetch origin && git switch --detach
-   origin/master`). Then `pnpm install --frozen-lockfile --prefer-offline` and `pnpm assets`. Never work in the
-   main checkout, never `git stash` (the stash is shared by every worktree), never `git checkout -- <path>` to undo
+   origin/master`) — or the lane worktree under `RUN_DIR/wt/` that your block names. Then
+   `pnpm install --frozen-lockfile --prefer-offline`, and `pnpm assets` when your tests need the atlas. Never work in
+   the main checkout, never `git stash` (the stash is shared by every worktree), never `git checkout -- <path>` to undo
    someone else's change.
 2. **Only your files.** Edit only the files your block lists (a "new" file is one you create). A change anywhere
    else goes into your report, with the file and the reason; the orchestrator gives it to its owner. Big files
@@ -106,18 +112,22 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    `apps/`), and `pnpm exec eslint <files> && pnpm exec prettier --check <files>`. Markdown is not formatted by
    Prettier; keep its tables readable.
 4. **e2e only through the lock.** `bash docs/v2-run/helpers/e2e-batch.sh <≤ 10 specs>` builds the three test
-   builds, waits for `/tmp/shmup-cup-e2e.lock` and runs the specs (Firefox: `E2E_PROJECT=firefox`). A batch can
-   outlast a 10-minute shell limit: start it in the background (`nohup … > <log> 2>&1 &`) and poll the log. One
+   builds, waits for `/tmp/shmup-cup-e2e.lock` and runs the specs (Firefox: `E2E_PROJECT=firefox`). opencode's shell
+   tool stops a foreground command after 2 minutes: start the batch with the shell tool's `background: true` (or
+   `nohup bash docs/v2-run/helpers/e2e-batch.sh … > "$RUN_DIR/<id>-e2e.log" 2>&1 &`) and poll the log. One
    batch runs at a time on the host (the web server's port 4173 is fixed), and at most two agents of a wave do
    e2e work. `pnpm docs:screens` and every `pnpm bench` file also run under the same lock (`flock -w 5400
    /tmp/shmup-cup-e2e.lock <command>`), so they cannot make a timed spec flaky. A failure seen only on CI is
    reproduced with `taskset -c 0-3` and `E2E_WORKERS=2`; a timeout is never raised blindly.
 5. **Push protocol.** Commit with explicit paths (`git add <paths>`; never `git add -A`), an imperative subject with
-   the repository's prefix style (`feat(R2-02): …`, `test(R2-02): …`, `docs: …`), a body that says why, and the
-   attribution line your driver gives. Then `git fetch origin && git rebase origin/master`, re-run your targeted
-   tests if the rebase brought changes to your files, and `git push origin HEAD:master`. If the push is rejected,
-   repeat from the fetch (at most 5 times, then report). Never force-push. Never push `v1.x`. No branches are
-   pushed and no pull requests are opened.
+   the repository's prefix style (`feat(R2-02): …`, `test(R2-02): …`, `docs: …`), a body that says why, and no
+   Co-Authored-By line (the driver's GIT block). Then `git fetch origin && git rebase origin/master`, re-run your
+   targeted tests if the rebase brought changes to your files, and `git push origin HEAD:master`. If the push is
+   rejected, repeat from the fetch (at most 5 times, then report). Never force-push. Never push `v1.x`. No branches
+   are pushed and no pull requests are opened. **Two exceptions, as your block says:** an agent in a **lane
+   worktree** (`RUN_DIR/wt/…`, on a local branch) commits there and never pushes — only its LAND subtask pushes,
+   through `docs/v2-run/helpers/land-zone.sh`; a **patch subtask** (`R2-04.F1`, `R2-04.Z1` … `Z4`) commits locally,
+   writes `RUN_DIR/w07/patches/<id>.patch` and pushes nothing.
 6. **Derived files go through the land lock.** A push that regenerates a derived file — the golden replays
    (`test/golden/*.replay.json`), the attract demos (`content/demos/*.replay.json`), a `PINNED` table of the three
    fingerprints (`test/integration/presentation-fingerprint.test.ts`, `test/integration/content-db-fingerprint.test.ts`,
@@ -164,14 +174,18 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
 15. **Your report** (the last thing you write) has: the subtask id; the commits you pushed (SHA + subject); the
     files you changed; the exact test commands you ran and their results; what you could not do and why; findings
     that belong to another subtask (by its id); **docs needs** (file + what to say); owner (Manual) items. Write it
-    to the run directory as `<id>-report.md` and repeat its first lines as your final reply.
+    to the run directory as `$RUN_DIR/<id>-report.md` and repeat its first lines as your final reply. `RUN_DIR` is
+    `/home/sites/shmup-cup-run` (the driver's Run setting): wherever a block writes `RUN_DIR/…`, `<RUN_DIR>` or
+    `$RUN_DIR` it means that absolute path; start each shell command that uses it with
+    `export RUN_DIR=/home/sites/shmup-cup-run`.
 16. **If you are almost at the end of your task, do not bother with context compression; it is quicker to finish the
     task and respond.**
 
 ## The standard e2e batches
 
 Every one of the 50 specs of `test/e2e/` is in exactly one batch. A subtask that "runs all e2e" runs the five
-batches one after another (each under the lock), plus Firefox's determinism spec.
+Chromium batches A … E one after another (each under the lock) — plus batch G once it exists — and Firefox's
+determinism spec (F).
 
 | Batch | Specs |
 |---|---|
@@ -181,10 +195,12 @@ batches one after another (each under the lock), plus Firefox's determinism spec
 | **D** (front end and options) | `smoke.spec.ts boot.spec.ts frame-layout.spec.ts scenes.spec.ts front-end.spec.ts options.spec.ts game-options.spec.ts display-options.spec.ts rebind.spec.ts input.spec.ts` |
 | **E** (hosts and the rest) | `flight.spec.ts ship-select.spec.ts weapon-select.spec.ts fx-gallery.spec.ts audio.spec.ts shell.spec.ts webos.spec.ts platform-polish.spec.ts release-check.spec.ts render-profile.spec.ts` |
 | **F** (Firefox) | `E2E_PROJECT=firefox bash docs/v2-run/helpers/e2e-batch.sh determinism.spec.ts` |
+| **G** (new specs) | none yet; `atlas-context-loss.spec.ts` (R3-04.M3d) and `decor.spec.ts` (R3-06.L6) when they land |
 
 When R5-P.P5d (wave 10) splits `zones-{bc,de,fg,hi}.spec.ts` into `zone-{b…i}.spec.ts`, batch A becomes two batches:
 `A1` = `zone-a … zone-e` + `stage mode7`, `A2` = `zone-f … zone-i` + `raster gimmicks campaign-run`. A new spec
-(`atlas-context-loss.spec.ts` from R3-04.M3d, `decor.spec.ts` from R3-06.L6) joins batch C or A respectively.
+(`atlas-context-loss.spec.ts` from R3-04.M3d, `decor.spec.ts` from R3-06.L6) goes into a new batch **G** (≤ 10
+specs; batches A … E already hold 10 each).
 
 ## Tokens and locks
 
@@ -226,17 +242,19 @@ stuck holder.
 ## The run directory
 
 Transient run files live **outside the repository** in the run directory, `RUN_DIR` — by default
-`/home/sites/shmup-cup-run/` on myadmin1 (the driver prompt may name another): the orchestrator's lane file per
-wave, the agents' reports (`<id>-report.md`), RV-A2's failure lists (`w02/rv-a2/`), R2-04's proposed patches
-(`w07/patches/`), the throwaway worktrees of the port kit and of the zone lanes (`wt/`). It survives sessions on the
-host. Anything a **later wave** needs that is not in this list is committed (the zone designs, for example, go to
+`/home/sites/shmup-cup-run/` on myadmin1 (the driver prompt's Run setting `RUN_DIR`; its preflight creates it). It
+holds the orchestrator's `RESUME.md`, lane file per wave, wave notes, `prompts/` and `logs/`; the agents' reports
+(every agent writes its report as `$RUN_DIR/<id>-report.md`); RV-A2's failure lists (`w02/rv-a2/`); R2-04's proposed
+patches (`w07/patches/`); and the lane worktrees of R5 / R6 (`wt/`). It survives sessions on the host. Anything a
+**later wave** needs that is not in this list is committed (the zone designs, for example, go to
 `docs/v2-run/designs/`). Before the run moves to another host, copy the run directory along.
 
 ## The host
 
 - **myadmin1** (64 cores, 251 GB RAM, Ubuntu 24.04, Node 24 via nvm, pnpm 12 via corepack, `gh` logged in).
   Repository: `/home/sites/shmup-cup`. `bash docs/v2-run/helpers/host-check.sh` reruns the CI-equivalent check that
-  passed there on `bc8e05d` (about 12 minutes); it is a full suite, so it runs only before wave 1 and in wave 15.
+  passed there on `bc8e05d` (about 12 minutes); it is the full suite, so it runs only in wave 15 (`R6-03.D6`), or
+  when the host itself is rebuilt — never in the preflight.
 - **Art data on myadmin1 is a snapshot.** `art-prompts/v2/candidates/` (961 MB, git-ignored) and the picker's
   `data/choices.json` (at `/home/sites/mystage/public_html/shmup-cup/data/choices.json`, not served) were copied
   from the old host. The owner keeps picking on the old host, and myadmin1 cannot reach it, so **every art subtask

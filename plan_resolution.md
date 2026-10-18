@@ -304,8 +304,9 @@ vertical port exact, but spends 17 % of the screen on HUD (v1: 7 %) on a TV wher
      blocked on them: agents build the tools and use the interim art, and the owner's output drops in later.
 - **Interim art is fine on `master`.** Between R2 and the end of R5, `master` will mix interim (×1.5 upscaled v1)
   art and new art. `v1.x` is the shipping line meanwhile.
-- Zero allocation, determinism, the Chromium 68 floor, the bundle budget (`APP_JS_GZIP_BUDGET` 512 KB, ~376 KB
-  used since R1-05 moved the atlas manifest out) and "original names, art and music only" all hold in every step.
+- Zero allocation, determinism, the Chromium 68 floor, the bundle budget (`APP_JS_GZIP_BUDGET` 512 KB: ~376 KB
+  used after R1-05 moved the atlas manifest out, ~380 KB after R2-01's flip — check-bundle's 380.2 KB at `bc8e05d`)
+  and "original names, art and music only" all hold in every step.
 - **From 2026-10-18 the run continues on the host myadmin1**, driven by opencode with about 10 agents at once, in
   the waves of **§18**; their work orders, decisions and helpers are committed under
   [`docs/v2-run/`](docs/v2-run/README.md). Tests run there, targeted, and nobody waits for GitHub CI; the one full
@@ -1312,7 +1313,8 @@ moved.
   - `docs/dev/*.md` that quote 384×216 (about 15 files, most in `api-reference.md` and
     `render-performance-review.md`) updated, with D19/D20 marked superseded by R-D1/R-D3.
 - **Acceptance:** the full definition-of-done suite is green on `master`, including an e2e run in which a stage
-  with 12-px terrain renders (R1-04's deferred browser check).
+  with 12-px terrain renders (R1-04's deferred browser check). (That suite runs once, in wave 15 — §18, RUN-1;
+  R2-03 closes on its targeted checks.)
 - **Schedule (§18, wave 6):** the e2e re-measure, the doc images and the one re-bless are checked by targeted runs;
   the full definition-of-done suite runs once, at the end of the run (wave 15, decision RUN-1). R5's stable hash
   keys and capacity raise (`R5-P.P1`, `R5-P.P8`) land in this step's wave, so `R2-03.G1`'s single re-bless covers them
@@ -2151,18 +2153,20 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 
 Written 2026-10-18, when the run moved to the host **myadmin1** (opencode with Qwen 3.8 Flash agents, about 10 at
 once; the driver prompt is [`prompt_resolution.md`](prompt_resolution.md)). It schedules **every step of §17 that is
-not `done…`**, from Wave 0 to `v2.0.0`, in 16 waves. This section holds the rules and one row per wave; the work orders
-— every subtask with its exact files, tests, acceptance, token and traps — are in
-[`docs/v2-run/`](docs/v2-run/README.md), one file per wave (`wave-00.md` … `wave-15.md`), with the decisions in
+not `done…`** — except R0-03 (the owner's TV run) and R0-04's owner parts — from Wave 0 to `v2.0.0`, in 16 waves.
+This section holds the rules and one row per wave; the work orders — every subtask with its exact files, tests,
+acceptance, token and traps — are in [`docs/v2-run/`](docs/v2-run/README.md), one file per wave (`wave-00.md` … `wave-15.md`), with the decisions in
 [`docs/v2-run/decisions.md`](docs/v2-run/decisions.md). The step sections above stay the specification: where a
 wave file and a step section disagree on *how* (order, lanes, tokens), the wave file wins; on *what* (scope,
-acceptance), the step section wins.
+acceptance), the step section wins — except the full-suite items (R2-03's acceptance, the R2-04 and R5-10 milestone
+suites), which RUN-1 moves to wave 15's one full suite.
 
 ### 18.1 The rules of the run
 
 - **Lanes come from file lists.** The re-plan scouts listed the files of every subtask. Subtasks with disjoint files
   run in parallel; subtasks that share a file run one after another in one lane. A wave runs at most **8 builders and
-  2 review agents** at once; when a lane ends, the next queued lane or a listed filler starts.
+  2 review agents** at once; the re-check scouts (the driver's wave loop, step 1) and the fix agents take builder
+  slots, and the cap is 10 agents in all. When a lane ends, the next queued lane or a listed filler starts.
 - **Tokens** name who may change a hot or a derived file ([`docs/v2-run/README.md`](docs/v2-run/README.md) § Tokens):
   work-time tokens (one lane edits `behaviors/index.ts`, `scenes/index.ts`, `content.test.ts`, …) and push-time
   tokens (GOLDEN, FINGERPRINTS, GROUPS, DOCS-IMAGES, STORE, LAND, GLOBAL). Every push that regenerates a derived file
@@ -2175,8 +2179,9 @@ acceptance), the step section wins.
 - **Review loops:** every subtask that pushed is reviewed; a finding goes to a fix agent; then a **new** review agent
   looks again; the loop ends when a review reports zero findings, nits included.
 - **Docs:** builders never edit docs; they list their docs needs in their report. Each wave ends with its docs item:
-  one docs agent holds `plan_resolution.md` and `CHANGELOG.md` (the As built notes, §1's decisions, the §17 rows,
-  then `python3 .claude/plan_board_v2.py`), and further docs agents with disjoint files may run beside it.
+  one docs agent holds `plan_resolution.md` and `CHANGELOG.md` (the As built notes, §1's decisions, the §17 rows; the
+  orchestrator then runs `python3 .claude/plan_board_v2.py` in the main checkout), and further docs agents with
+  disjoint files may run beside it.
 - **Tests run locally on myadmin1**, targeted: `VITEST_MAX_WORKERS=6` per agent; e2e only through
   `docs/v2-run/helpers/e2e-batch.sh` under `/tmp/shmup-cup-e2e.lock` (one batch at a time on the host, at most two
   agents of a wave doing e2e); `pnpm docs:screens` and single bench files under the same lock. **Nobody waits for
@@ -2197,8 +2202,8 @@ work (≤ 2 per wave). Ids are `<step>.<subtask>` ([`docs/v2-run/README.md`](doc
 
 | Wave | Steps | Lanes / agents | Tokens | e2e | Gate to start | Exit |
 |---|---|---|---|---|---|---|
-| **W00** | R2-01's review loops | the orchestrator before the hand-off: C5 review 2 → fix → new review; the triage of CI e2e shard 1 and of the `flight.spec.ts:114` flake | — | the triage | — | **closed by the orchestrator before the hand-off**; a CI-only failure still open becomes `R2-01.F1` in W01 |
-| **W01** | R2-01 docs pass; R2-02 opening | 8: `R2-01.D1` … `D7` (seven docs agents, disjoint files), `R2-02.P0 → P1`; `R2-01.F1` first if open; + 2 reviews | PLAN (D1), CORE-CONFIG (P0), KIT (P1) | F1 only | W00 closed | docs review at zero; §17 R2-01 done; `WORLD_SCALE` = 1 and the two-scale kit `test/port-v2/` on master, neutral |
+| **W00** | R2-01's review loops | the orchestrator before the hand-off: C5 review 2 → C5 fix 2 (`c67c7c9`, which also fixed the CI e2e shard-1 triage and the `flight.spec.ts:114` flake) → C5 review 3 (with the full Chromium e2e on myadmin1) → fix → new review, to zero | — | the triage; C5 review 3 | — | open until C5 review 3 (and any fix → review loop) reaches zero findings; closed by the orchestrator before the hand-off — or its open item (verifying C5 fix 2 `c67c7c9`, C5 review 3) becomes `R2-01.F1` in W01 |
+| **W01** | R2-01 docs pass; R2-02 opening | 8: `R2-01.D1` … `D7` (seven docs agents, disjoint files), `R2-02.P0 → P1`; `R2-01.F1` first if open; + 2 reviews | PLAN (D1), CORE-CONFIG (P0), KIT (P1) | F1 only | W00 closed, or its open item handed over as `R2-01.F1` | docs review at zero; §17 R2-01 done; `WORLD_SCALE` = 1 and the two-scale kit `test/port-v2/` on master, neutral |
 | **W02** | R2-02 prep A; R3-03 and R3-04 side lanes | 8: `W6 → W7`, `T0 → A1 → T4b`, `W2`, `W1 → T4c`, `W3 → W5`, `W4 → T4a`, `R3-03.V1 → V3`, `R3-04.M3a → … → M3e`; + 2 reviews, then `R2-02.RV-A2` | BEHAVIOR, DATA-INDEX, RP-BARREL and SHELL-BARREL (M3) | V1, M3d / M3e | W01 exit | prep A on master, reviewed and neutral (fingerprints unedited); RV-A2's failure lists written; V1 on master |
 | **W03** | R2-02 prep B | 8: `T1a → T2c`, `T1b → T2d`, `T1c → T2e`, `T1d → T1e`, `T2a`, `T2b`, `T3`, one side lane (an R3 carry-over or the filler `R3-03.V2a`); then `R2-02.E0`; + 2 reviews | CONTENT-TEST (T2a), BOT (T2b), KIT (T3) | E0, M3* | W02 exit | every test pin and the v2-port comparison green under the kit; E0: zero e2e failures under the kit, master unchanged |
 | **W04** | R2-02 barrier and port; R3-03 and R3-04 side lanes; R0-04's agent parts | `R2-02.RV-pre` (the barrier) → `R2-02.S` alone; side lanes `V2a → V5`, `V2b → V4a → V4b`, `M1a → M1b → M2a → M2b`, `M4a → M4b`, carry-overs, `R0-04.W2`, `R0-04.W1` (owner-gated) | the PORT window; S: content, CORE-CONFIG, BEHAVIOR, KIT, FP | S, M3* | W03 exit; RV-pre at zero | the port commit on master; `rescale --factor 1 --dry-run` 0 / 0 / 0; S's verify list green |
@@ -2228,6 +2233,7 @@ agent.
 | R2-N1 … R2-N6, R2-N8 | the port kit committed and deleted by the port; the gate stub at the port; the e2e pre-gate; the e2e re-measure before the one re-bless; patches and one integrator in R2-04; literal v2 values for the 15 frame-unit defaults; `2.0.0-alpha.1` everywhere before the tag |
 | R2-N7 | `ShakeMagnitude` 2 / 3 / 6 (from 1 / 2 / 4) until the owner's play session decides |
 | RR-1 | v2 art beside v1 (`*.v2.sprite.json`, generator branches on `artScale`, a native font file); scale 1 stays the v1 art until R6 |
+| RR-1a, RR-1b (new — owner to confirm) | a v2-only sprite name is absent from the scale-1 build; frame counts beyond a v1 source exist only in the v2 art |
 | RR-2 … RR-8 | the 9×12 font cell; the store icons on the v1 art until R4-05; no FLUX reference while FLUX is on hold; R4 after R2-03 (its re-blesses after R2-04); the new `LayerId`s; the stand-in uncalibrated on myadmin1; stand-in pages in the TV bench |
 | R5-D1 … R5-D9, R6-D1 … R6-D3 | parallel zones that land one at a time; the v2 zone contract; `terrain-azure`; `MAX_BOSS_PARTS` 24; stand-ins for new names only; one LAND per zone; a 3-min caravan; the 2.0.0 bump with its CHANGELOG section in one push; `v2.0.0` only after the owner's OK |
-| Q-1 … Q-11 | is picking finished; Git LFS for the winners; the FLUX licence; prompt-library edit 7; the FACET MONARCH label; v1.0.0's TV title overlap (no `v1.x` push without the owner); the HI-line rule; the crawl and credits durations; 1080p screenshots (O9); the "owner may confirm" rows; the shake and spawn-row feel — each keeps its default until answered |
+| Q-1 … Q-13 | is picking finished; Git LFS for the winners; the FLUX licence; prompt-library edit 7; the FACET MONARCH label; v1.0.0's TV title overlap (no `v1.x` push without the owner); the HI-line rule; the crawl and credits durations; 1080p screenshots (O9); the "owner may confirm" rows; the shake and spawn-row feel — each keeps its default until answered; Q-12 (new — owner to confirm): v1.x end of life "six months after v2.0.0" until the owner words it; Q-13 (new — owner to confirm): the escape keeps `terrain-a`, `R5-10.T2` registers `escape.mjs` |

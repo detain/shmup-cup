@@ -16,6 +16,10 @@ docs agent. Grouped by the file that needs the edit.
 - `pnpm --filter @shmup/tizen build`, `node scripts/doc-images.mjs --check`, and the rescale dry run with the v1 flags;
 - `gh run view` on the latest master CI run.
 
+**Updated for `c67c7c9`** (C5 review 2 and C5 fix 2, after `bc8e05d`): only `test/e2e/campaign-run.spec.ts`,
+`debug-tools.spec.ts`, `flight.spec.ts` and `raster.spec.ts` changed. See the R2-01 As built, the R2-02 notes, Appendix A
+(b)'s moved line numbers and Appendix A (d).
+
 Tags:
 
 - `(src)` names the report or review an item comes from.
@@ -37,9 +41,14 @@ The re-plan that wrote `docs/v2-run/` may already have changed these lines; read
   - `ART_SCALE` 3/2.
 
   The rest of that bullet describes R1. The fingerprint was re-pinned at R2-01, with reasons. The scans now ban the
-  v1 numbers and also 640 / 360 / 336 / 348. (A5, scout §9)
+  v1 numbers and also 640 / 360 / 336 / 348. (A5, scout §9) (done in `92da486`: the flip bullet now says 640×360)
 - **`CLAUDE.md:76`, "merge `v1.x` → `master` until R2-01 lands":** R2-01's flip has landed. From now on only code
   fixes are cherry-picked (`git cherry-pick -x`). (found while verifying; plan §3.3 says the same)
+- **`CLAUDE.md`'s Tooling bullet quoted `node scripts/content/rescale.mjs --factor 1.5 --top-pad 36 --dry-run`, which
+  exits 2 since the flip** ("the atlas' terrain tiles are 12 px against the content's tilesets' 8 px … need
+  --art-scale 1.5"). Until R2-02's port it needs the four v1 flags and `--art-scale 1.5` (R2-02 notes); after the port
+  the check is `--factor 1 --dry-run`. (found by the re-plan review; done in the re-plan's review fix: the bullet now
+  gives both commands — check it, and after the port drop the pre-port one)
 
 ## docs/dev/conventions.md
 
@@ -191,6 +200,17 @@ Add to the mirrors:
 - **A heightfield floor reaches its `base` only after `base / tile` columns of ramp.**
 - **Tile-row ↔ pixel conversions in tests read the content's own tile size** (`map.tileSize`, `tileset.tileSize`),
   not `TILE_SIZE`. `TILE_SIZE` is already 12, while the content stays 8 until R2-02.
+
+### § Tests: e2e waits count ticks (C5 review 2, `c67c7c9`)
+
+- A spec that waits for the game counts ticks, never wall time or rAF frames:
+  - a scene wait is a tick budget (`campaign-run.spec.ts` `waitTicks` / `expectScene`, e.g.
+    `STAGE_CLEAR_DELAY_TICKS + SCENE_SLACK_TICKS`);
+  - a key sequence checked against a host-time window goes in one `page.evaluate` (`debug-tools.spec.ts`
+    `remoteSequence`);
+  - a still-ship check freezes the sim and compares edges the fx cannot reach (`flight.spec.ts` `HullView`).
+- `campaign-run.spec.ts` mirrors core's `STAGE_CLEAR_DELAY_TICKS` 90 and `MAP_LAUNCH_TICKS` 60, as `attract.spec.ts`
+  mirrors its timings. These mirrors are unpinned.
 
 ## docs/dev/api-reference.md
 
@@ -494,7 +514,7 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
     - A6: `696f067`, `e56d4c0`, `9c91b01`;
     - A5 fixes: `9a4c315`, `9e725e2`;
     - U3: `49a8f3f`, `5d5a050`;
-    - C5: `c2a9ed5`, `93f6391`, `e7ff5db`, `293e885`;
+    - C5: `c2a9ed5`, `93f6391`, `e7ff5db`, `293e885`, then C5 fix 2 `c67c7c9` (after C5 review 2);
     - comment sweeps: `4b6930a`, `3623be2`, `bc8e05d`;
     - `ac40436` (the §17 row).
 - **The flip commit body is wrong on two causes** (A5 review 1 #2, #3; it cannot be amended):
@@ -549,6 +569,28 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
 - **CI at `bc8e05d`** (run `39156155873`, verified with `gh`): every job is green except e2e 1/5, which failed 3 tests
   (`campaign-run.spec.ts:241`, `:355`, `debug-tools.spec.ts:233`). The same 3 failed on `ac40436` (`39154793108`);
   `3623be2` (`39119741233`) was green. Context is in Appendix A (d).
+- **C5 review 2** (of `293e885` + `bc8e05d`, plus the flake triage) confirmed every C5 review 1 and sweep-review fix
+  and found 3 should-fix items and 1 nit, all in e2e specs that paced the game in rAF frames or wall time. The flip
+  slowed SwiftShader about ×1.6, so they failed on slow runners. **C5 fix 2 (`c67c7c9`, test files only)** fixed all
+  four:
+  - **S1, `campaign-run.spec.ts`** (CI's `:241` web and `:355` Tizen): the four `stageClear` waits gave
+    `STAGE_CLEAR_DELAY_TICKS` 90 (at ≤ 4 ticks a frame) the default 5 s, and the web test's 180 s covered ~820 rAF
+    frames. Reproduced on 4 CPUs (`taskset -c 0-3`, `E2E_WORKERS=2`) and on 2. Now every wait counts game ticks
+    (`gameTick`, `waitTicks` on `__shmupDebug.tick`, `expectScene(page, scene, ticks)`): the tally gets 90 + 30
+    (`SCENE_SLACK_TICKS`), the map launch `MAP_LAUNCH_TICKS` 60 + 30, a tap holds 3 ticks and releases 6. The web test
+    timeout is 420 s.
+  - **S2, `debug-tools.spec.ts`** (CI's `:233`): the Tizen unlock Pause + Ch+ ×3 took 18 rAF frames against the shell's
+    3 s `DEBUG_UNLOCK_WINDOW_MS`. Now `remoteSequence` sends the four keys in one `page.evaluate`.
+  - **S3, `flight.spec.ts`** (the myadmin1 flake, `:114` then): the idle check compared hull centroids that the
+    autofire's muzzle sparks shift. The `muzzle` preset spawns at `"dx": 9` (`content/fx/particles.fx.json:287`), a v1
+    offset, while the ×1.5 KESTREL's nose reaches x + 12. Now `freezeSim` + `stepTo`, the moves use `holdTicks`, and
+    `shipCentre` returns a `HullView` whose tail column and top / bottom rows are compared.
+  - **N1, `raster.spec.ts:237-239`**: the comment gives playfield rows 112 … 151 / 152 … 199 and their frame rows at
+    640×360 (124 … 163 / 164 … 211) and at 384×216.
+
+  Its four specs passed 14 / 14 under the lock (2 workers, unpinned). Open when it was pushed: the `taskset -c 0-1`
+  repeat of campaign-run and debug-tools, the myadmin1 run of the four specs with `--repeat-each=4`, and C5 review 3.
+  These are wave 0's exit, or `R2-01.F1`.
 
 ### Decision register
 
@@ -626,6 +668,12 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
   by design until R2-03 (W5-6). R2-02 makes no e2e gate edit. (C5 fix 1)
 - **Watch the content-backed e2e specs that are not gated** (C5's risk list): the port can turn CI e2e red on them.
   The list is in Appendix A (b).
+- **The muzzle sparks (C5 review 2 S3, `c67c7c9`).** Between the flip and the port the KESTREL's `muzzle` sparks
+  (`content/fx/particles.fx.json:287`, `"dx": 9`) draw over its ×1.5 nose (x + 12). The port fixes this with no hand
+  edit. The fx trigger's `dx` / `dy` have the unit `rel-px` (`packages/render-pixi/src/particles/index.ts:232`), and
+  that unit's rule is `scale` (`packages/core/src/data/units.ts:149`). So the rescale run moves `dx` 9 → 13.5, together
+  with 20 other fx values (speeds, radii, gravity); C5 fix 2's real run on a copy of `content/` showed it.
+  `flight.spec.ts` no longer depends on it: it compares the hull's tail and fins.
 - **`stale.ts` and `replay-version-shipped.test.ts` stay through R2-02.** The port writes no `*.replay.json`
   (`SKIPPED_DIRS = ['demos']`, `scripts/content/rescale.mjs:127`; the goldens are outside `content/`). (precheck §1.2)
 - **R2-02 must not bump any format version.** `save-format.ts` `SAVE_FORMAT` and `gates.ts` `REPLAY_FORMAT` are pinned
@@ -644,8 +692,10 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
     `test/playtest/four-way-bot.ts` (`BOT_X` 64 → 96, `LANE_HEIGHT` 16 → 24, `TERRAIN_AHEAD` 56 → 84).
 - **Between the flip and the port,** the beams draw at their unported sim widths (6 / 8 px), on native frames that
   match their hitboxes. The port moves them to 9 / 12, still native. (lane B review 3)
-- **e2e content rows that R2-02 rewrites with the content:** `test/e2e/raster.spec.ts:237` ("the floor (160 … 207)").
-  The mode7 floor rows were already fixed at `:772` in `bc8e05d`. (sweep review, C5 fix 1)
+- **e2e content rows that move with the content:** `test/e2e/raster.spec.ts:237-239`. Since `c67c7c9` (C5 review 2
+  N1) the comment gives raster-range's playfield rows 112 … 151 / 152 … 199 and their 640×360 frame rows (124 … 163 /
+  164 … 211). The port moves the bands (×1.5 + 36), so R2-03 rewrites the comment together with the `diffRows`
+  literals when it re-measures the spec. The mode7 floor rows were already fixed at `:772` in `bc8e05d`.
 
 ### R2-03 notes
 
@@ -754,10 +804,8 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
 - **The credits and story scroll rate.** Today it is the ART_SCALE step, with durations in v1 ticks. If the owner wants
   the slower 1-px crawl back, set `SCROLL_HALVES` to 2 (`scenes/index.ts:7481`, test mirror in
   `helpers/scene-layout.ts`); `scenes-scroll-frames.test.ts` then fails by design. (U fix 1)
-- **The three CI-only e2e 1/5 failures** (`campaign-run.spec.ts:241`, `:355`, `debug-tools.spec.ts:233`) are still
-  open at `bc8e05d`. They do not reproduce locally. (C5 fix 1)
-- **The flaky `flight.spec.ts:114` idle drift** was seen on the myadmin1 host. Its idle check waits on rAF frames
-  (`waitFrames(page, 20)`), not exact ticks.
+- **The three CI-only e2e 1/5 failures and the myadmin1 flight flake** were open at `bc8e05d`. C5 review 2 reproduced
+  them under CPU pinning, and C5 fix 2 (`c67c7c9`) fixed them (see the R2-01 As built). They are not owner questions.
 - **Optional manual looks (none blocking):**
   - text readability of the interim build at 640×360 (`pnpm dev`, or a `build:dev` on the M7);
   - the es front end on a TV;
@@ -836,6 +884,14 @@ drops that pin with `port-pending.ts`.
 | v1 frame | false | false |
 
 #### Every gated line (from `git grep -n -E "R2_03_PENDING|PORT_UNMEASURED|assertionsGated|GOLDEN_REASON|CONTENT_REASON|PORT_REASON|recordingIsStale" -- test/e2e`)
+
+**Line numbers moved by `c67c7c9`** (re-run the `git grep` above before relying on one):
+- `campaign-run.spec.ts`: gate `:316` → `:372` (test `:313` → `:369`); the web run `:241` → `:298`, with god mode
+  `:252` → `:311`; the Tizen run `:355` → `:411`.
+- `debug-tools.spec.ts`: `assertionsGated` `:200` → `:228` (web test `:167` → `:195`); the Tizen unlock test
+  `:233` → `:261`.
+- `raster.spec.ts`: gate `:254` → `:255` (test `:253` → `:254`); risk list `:279` → `:280`, `:298` → `:299`.
+- `flight.spec.ts`: the idle test `:114` → `:152`.
 
 **`PORT_UNMEASURED`, `PORT_REASON`.** These pass at 640 on v1 content, so they run today. They skip from R2-02's port
 until R2-03 re-measures them. 23 whole tests plus 1 assertion gate:
@@ -1101,3 +1157,17 @@ ticks" rule:
     const idle = await shipCentre(page);
     expect(Math.abs(idle.x - start.x)).toBeLessThan(0.5);   // :129
 ```
+
+**Resolved after `bc8e05d`.** C5 review 2 reproduced all three failures under CI-like load (`taskset -c 0-3`,
+`E2E_WORKERS=2`; on 2 CPUs `:355` also failed 2 of 2) and the flight flake (6 of 48 with 12 workers on 12 CPUs). The
+causes:
+- the tally waits gave 90 ticks 5 s of wall time, and the web test 180 s for ~820 rAF frames (S1);
+- the unlock spent 18 rAF frames of a 3 s window (S2);
+- the muzzle sparks at the v1 `dx` 9 covered the ×1.5 nose (S3).
+
+`c67c7c9` fixed them, in test files only:
+- tick-budget waits and a 420 s web timeout (the tests are now `campaign-run.spec.ts:298` and `:411`);
+- the one-`evaluate` `remoteSequence` (`debug-tools.spec.ts:152`, test `:261`);
+- `freezeSim` / `stepTo` / `holdTicks` and the tail-and-fins `HullView` (`flight.spec.ts:47`, test `:152`).
+
+The excerpts above are `bc8e05d`'s.

@@ -2,15 +2,19 @@
 
 > **How to use:** log in to **myadmin1** (`ssh -i ~/.ssh/id_ed25519_new my@myadmin1`), then
 > `cd /home/sites/shmup-cup && git pull --rebase origin master`, start **opencode** there (`opencode`, the default
-> primary agent `build`), edit **Run settings** below if you want to limit the run, and paste everything below the
-> line. It is safe to paste again later: it resumes from §17 of [`plan_resolution.md`](plan_resolution.md), the wave
-> schedule in its §18 and the run notes in `.claude/orchestrator/myadmin1/`.
+> primary agent `build`; this prompt overrides its delegate-only system prompt — see "Your own agent" below), edit
+> **Run settings** below if you want to limit the run, and paste everything below the line. It is safe to paste again
+> later: it resumes from §17 of [`plan_resolution.md`](plan_resolution.md), the wave schedule in its §18 and the run
+> notes in the run directory `RUN_DIR` (`/home/sites/shmup-cup-run/`).
 >
 > **State on 2026-10-18:** 10 of 37 steps done — R0-01, R0-02, R3-01, R3-02, R3-05 and R1-01 … R1-05 (several with
 > owner parts pending). **R2-01 is flipped on master** (`72b18a1`: 640×360, 12-px HUD bars and tiles, `ART_SCALE` 3/2,
 > replay format 2, save format 3) and closing: its docs pass is this run's first wave. **R0-04** (the art round) is
-> waiting on the owner. Wave 0 — the C5 review loop and the triage of the CI e2e shard-1 failures — was closed by the
-> previous orchestrator before the hand-off (§18 records it). All remaining work is scheduled in **plan §18
+> waiting on the owner. **Wave 0** — the C5 review loop and the triage of the CI e2e shard-1 failures — is open until
+> C5 review 3 of `c67c7c9` (and any fix → new review loop after it) reaches zero findings. At `c67c7c9` the triage's
+> fix (C5 fix 2, test files only) was pushed, and C5 review 3 (which also runs the full Chromium e2e on myadmin1) was
+> running. If `docs/v2-run/wave-00.md`'s Status line still reads `**Status: open**` (not `**Status: closed**`) when
+> you start, you finish wave 0 first, as `R2-01.F1` in wave 1. All remaining work is scheduled in **plan §18
 > "Execution waves for the ~10-agent run"**, with the work orders in **`docs/v2-run/`** (index
 > `docs/v2-run/README.md`, helper scripts in `docs/v2-run/helpers/`).
 >
@@ -35,10 +39,10 @@ paraphrasing it.
 
 - **SCOPE:** `all remaining steps` — every step in `plan_resolution.md` whose §17 status is not `done…`, run **in the
   waves of §18**, each from its work order in `docs/v2-run/`. A new paste resumes at the first §18 wave that is not
-  closed (check §17 and `.claude/orchestrator/myadmin1/RESUME.md`). Alternatives: `wave <id>` (one §18 wave),
-  `milestone R2`, a range like `R2-02..R2-04`, a single step id, or `none`.
-- **MAX_PARALLEL:** `10` — agents running at the same time, every role counted (about 8 builders + 2 reviewers or
-  fixers; scouts count too).
+  closed (check §17 and `RUN_DIR/RESUME.md`). Alternatives: `wave <id>` (one §18 wave), `milestone R2`, a range like
+  `R2-02..R2-04`, a single step id, or `none`.
+- **MAX_PARALLEL:** `10` — agents running at the same time, every role counted: about 8 builders + 2 reviewers. The
+  re-check scouts (wave loop, step 1) and the fix agents take builder slots; the cap is 10 agents in all.
 - **MAX_E2E_AGENTS:** `2` — agents that run Playwright. They share one machine-wide lock; a third would only wait.
 - **VITEST_MAX_WORKERS:** `6` per agent (myadmin1 has 64 cores and 251 GB of RAM).
 - **E2E_WORKERS:** `2` inside the e2e lock — what the timed specs were measured with, and the default of
@@ -49,6 +53,11 @@ paraphrasing it.
   starts GPU sessions). Only I can change this.
 - **ART_ROUND:** `off` — see "The art round (R0-04) on myadmin1".
 - **FULL_SUITE:** `end of run` — see owner rule 2 and "End of the run".
+- **RUN_DIR:** `/home/sites/shmup-cup-run` — the run directory of `docs/v2-run/README.md` § The run directory
+  (decision RUN-5). It holds your notes (`RESUME.md`, `lanes-<wave>.md`, `wave-<wave>-notes.md`), `prompts/<name>.md`,
+  `logs/<name>.log`, every agent's report `<task id>-report.md`, RV-A2's `w02/rv-a2/`, R2-04's `w07/patches/` and the
+  lane worktrees `wt/`. It is outside the repository; copy it along if the run moves hosts. Every agent gets its value
+  (agent brief, `RUN_DIR:` line).
 
 ## The owner's general instructions (follow them exactly, and pass them on to every agent)
 
@@ -75,7 +84,7 @@ bind every agent directly.
    starting a new agent or changing the prompt.
 6. **Context compression (you).** When doing any type of context compression, only do it on content after you have
    used it — for example after writing a plan file, not right before. Write the state to disk first (§17 and the run
-   notes in `.claude/orchestrator/myadmin1/`), then compress.
+   notes in `RUN_DIR`), then compress.
 7. **Context compression (agents).** Tell every agent: *if you are almost at the end of your task, don't bother with
    context compression — it is quicker to just finish the task and respond.*
 8. **Tests and timing on myadmin1 — never wait on GitHub CI.** CI still runs on every push, but nobody waits for its
@@ -131,7 +140,8 @@ HARD RULES — Shmup Cup v2, for every agent and every task
    provenance; nothing from art-prompts/v2/candidates/ ships.
 9. skynet2 (the owner's GPU server; it also serves the LLM the agents run on): the only allowed way to touch it is
    art-prompts/v2/server.sh, run by the owner or on the owner's word — never by an agent on its own. Never stop
-   SGLang by name or GPU (no pkill, killall, sglang killall), never touch port 30000. Never print, copy or log the HF token. Never read, run or edit the owner's /root scripts.
+   SGLang by name or GPU (no pkill, killall, sglang killall), never touch port 30000. Never print, copy or log the
+   HF token. Never read, run or edit the owner's /root scripts.
 10. The picker's data/choices.json is written only by the picker (picks_save() in its lib.php). On myadmin1,
     /home/sites/mystage/public_html/shmup-cup/data/choices.json is a SNAPSHOT: an art task first gets a fresh copy
     from the owner, and nothing ever writes it.
@@ -139,11 +149,18 @@ HARD RULES — Shmup Cup v2, for every agent and every task
     caliber, never install or edit a git hook, never commit with --no-verify.
 12. Never package, sign, deploy or touch hardware (no Tizen CLI, sdb, ares-*): such scripts may be written, never
     run. Add only the dependencies your task names; TypeScript stays 6.0.x. APP_JS_GZIP_BUDGET is 512 KB with about
-    390 KB used: keep shipped code lean, and change a budget only deliberately, with the reason in the commit.
+    380 KB used (check-bundle: 380.2 KB at bc8e05d): keep shipped code lean, and change a budget only deliberately,
+    with the reason in the commit.
 13. Tests and timing happen on myadmin1. Never wait for GitHub CI.
 ```
 
 ## opencode: how you run agents
+
+**Your own agent.** You run as the host's primary agent `build`. Its system prompt (the owner's global config) says
+you only delegate (to `coder`, `scribe`, `explore`, `researcher`) and never edit files or run commands. For this run,
+this prompt overrides that: you run the preflight's commands, every git / gh / worktree / flock command and
+`plan_board_v2.py` yourself, and you edit and push §17's status cells. Every agent you start is `general` (`explore`
+only for a pure read-only search). Never start `coder`, `scribe`, `reviewer` or `researcher`.
 
 **Checked on 2026-10-18:** myadmin1 runs **opencode v2.0.32** (`opencode --version`; `opencode --help`,
 `opencode debug agents`, `opencode debug config`). Its model is `sglang/Qwen3.8-Flash-Next` from the owner's global
@@ -158,25 +175,29 @@ the full `prompt`, and `background: true`; it returns a **`sessionID`**. (In ope
 `subagent_type` and `task_id`; in Claude Code it is the Agent tool and SendMessage.) Look at your own tool list once
 and use whatever the subagent tool is called there.
 - **Agent id `general` for every role** — builder, fixer, tester, docs, integration, reviewer, scout. It has full tool
-  access and cannot start subagents of its own. Do not use the host's custom `coder`, `reviewer`, `scribe` or `build`
-  agents: their prompts load the owner's generic "philosophy" skills, not this repo's rules. `explore` is fine for a
-  pure read-only search.
+  access and cannot start subagents of its own. Do not use the host's custom `coder`, `reviewer`, `scribe`,
+  `researcher` or `build` agents: their prompts load the owner's generic "philosophy" skills, not this repo's rules.
+  `explore` is fine for a pure read-only search.
 - **Background:** start agents with `background: true`, up to MAX_PARALLEL at once; opencode notifies you when each
   child finishes.
-- **The prompt** is the agent brief below with every brace filled in, then the task's text copied **verbatim** from
-  the work order (its subtask row or section: files, tests, acceptance). Save it as
-  `.claude/orchestrator/myadmin1/prompts/<name>.md` before you send it.
+- **The prompt** has four parts, verbatim (`docs/v2-run/README.md` § How an orchestrator uses this folder, step 3):
+  the agent brief below with every brace filled in; the README's **Common rules**; the wave file's **Rules for this
+  wave**; and the subtask's block, from its `### <id> — …` heading to the next heading. Save it as
+  `RUN_DIR/prompts/<name>.md` before you send it.
 - **Record** each agent the moment you start it, in the wave's lane file: name, role, lane, task ids, worktree path,
   **sessionID**, tokens held, status.
 - **Resume** an agent by calling the subagent tool again with its `sessionID` and the prompt `continue` (a blank
   reply — owner rule 5), or `RESUME: <what to do>` after a restart. Its context is intact.
 - **Fallback**, only if the subagent tool cannot run children in the background: start each agent as its own process
-  from a background shell command — `opencode run --auto --title <name> "$(cat .claude/orchestrator/myadmin1/prompts/<name>.md)"`
-  with its output sent to `.claude/orchestrator/myadmin1/logs/<name>.log` — and resume it with
-  `opencode run --auto --session <sessionID> continue` (`opencode session list` shows the ids). Check
-  `opencode run --help` first; flags can change between versions.
-- Every agent also writes its report to `.claude/orchestrator/myadmin1/reports/<name>.md`. The reply is the report;
-  the file is the backup. A blank reply still gets `continue`.
+  from a background shell command —
+  `opencode run --auto --agent general --title <name> "$(cat /home/sites/shmup-cup-run/prompts/<name>.md)"` with its
+  output sent to `/home/sites/shmup-cup-run/logs/<name>.log` — and resume it with
+  `opencode run --auto --agent general --session <sessionID> continue` (`opencode session list` shows the ids).
+  Check `opencode run --help` first; flags can change between versions. If `opencode run` refuses `--agent general`
+  (a subagent-mode agent), do not use the fallback: ask me.
+- Every agent also writes its report to `RUN_DIR/<task id>-report.md` — one file per subtask id it worked on, the
+  name the work orders read (a scout or another agent without a subtask id uses its agent name). The reply is the
+  report; the file is the backup. A blank reply still gets `continue`.
 
 **Long commands.** opencode's shell tool stops a foreground command after **2 minutes** unless the call sets
 `timeout` (milliseconds). Any command that can take longer — `pnpm install`, a Vitest folder, a typecheck, e2e,
@@ -190,23 +211,27 @@ after every agent event, so that an automatic compaction loses nothing; compact 
 content is used and written down (after writing the lane plan or a wave report), never right before; and agents near
 the end of a task do not compress at all.
 
-**Your notes folder: `/home/sites/shmup-cup/.claude/orchestrator/myadmin1/`.** It is git-ignored (all of `.claude/`
-is) and survives restarts; never keep state in `/tmp` or a session folder. The older files directly in
-`.claude/orchestrator/` are the old host's history. Keep here:
+**Your notes folder is RUN_DIR (`/home/sites/shmup-cup-run/`).** It is outside the repository and survives
+restarts; never keep state in `/tmp` or a session folder. The old host's notes in
+`/home/sites/shmup-cup/.claude/orchestrator/` are history. Keep here:
 - `RESUME.md` — ten lines: the wave, what runs (agent, sessionID, worktree), what is next;
 - `lanes-<wave>.md` — the lane plan: tasks, lanes, exact files, tokens, agents, status, commit SHAs;
 - `wave-<wave>-notes.md` — decisions, review rounds, findings and their outcomes, owner to-dos;
-- `prompts/<name>.md`, `reports/<name>.md`, `logs/`.
+- `prompts/<name>.md`, `logs/<name>.log`;
+- what the agents write there: `<task id>-report.md`, RV-A2's `w02/rv-a2/`, R2-04's `w07/patches/`, the lane
+  worktrees `wt/`.
 
 Write to it **before** any compaction, and after every agent start, report and push.
 
 ## Worktrees and pushing
 
-**The main checkout `/home/sites/shmup-cup` is yours.** It stays on `master` and clean. Agents never edit it; the one
-exception is an agent's own report file under `.claude/orchestrator/myadmin1/reports/`.
+**The main checkout `/home/sites/shmup-cup` is yours.** It stays on `master` and clean. Agents never edit it.
 
 **Every agent works in its own git worktree** under `/home/sites/shmup-wt/` — reviewers and scouts too, so that they
-read exactly `origin/master`. `<name>` is the agent's name from the lane file (unique, e.g. `w2-S-port`):
+read exactly `origin/master`. `<name>` is the agent's name from the lane file (unique, e.g. `w2-S-port`). The one
+exception is a **lane worktree** that a work order names: those live in `RUN_DIR/wt/` (`zone-<x>`, `r6-zone-<x>`,
+`bonus`, `escape`, `r6-global`), hold a local branch that is never pushed, and are shared by the lane's successive
+agents (see below):
 
 ```bash
 git -C /home/sites/shmup-cup fetch origin
@@ -216,8 +241,8 @@ pnpm install --frozen-lockfile --prefer-offline     # shell timeout 600000
 pnpm assets                                         # only when the task's tests need the atlas
 ```
 
-Every path an agent edits starts with `/home/sites/shmup-wt/<name>/`, and every shell command runs there (the shell
-tool's `workdir`).
+Every path an agent edits starts with `/home/sites/shmup-wt/<name>/` (or its lane worktree's path), and every shell
+command runs there (the shell tool's `workdir`).
 
 **Pushing** (file-changing roles; reviewers and scouts commit nothing):
 
@@ -234,18 +259,31 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
   `git status` must be clean. Then the agent removes its worktree:
   `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-wt/<name>`. Read-only agents remove theirs when
   done. Anything dirty or unpushed: keep the worktree and report it.
-- A work order may keep a lane's worktree across several agents (for example a zone lane on a **local** branch, landed
-  later by one LAND commit). Local branches are scaffolding: never pushed, deleted after the land.
+- **Two exceptions to "push each task"** (the agent brief's GIT block repeats them; the subtask's block says which
+  applies):
+  - a **lane worktree** (`RUN_DIR/wt/zone-<x>` on `r5/zone-<x>`, `RUN_DIR/wt/bonus`, `RUN_DIR/wt/escape`,
+    `RUN_DIR/wt/r6-zone-<x>`, `RUN_DIR/wt/r6-global`): the lane's agents commit on its local branch and never push;
+    only the LAND subtask pushes, through `docs/v2-run/helpers/land-zone.sh`. Local branches are scaffolding: never
+    pushed, deleted after the land;
+  - a **patch subtask** (`R2-04.F1`, `R2-04.Z1` … `Z4`): it commits locally, writes `RUN_DIR/w07/patches/<id>.patch`
+    as its block says, and pushes nothing; one integrator (`R2-04.G`) applies the patches.
 - At a wave's close you check `git worktree list` and `git worktree prune`, and remove only worktrees whose HEAD is on
   `origin/master` with no changes left.
 
 ## Tokens and locks
 
-- **A token** is the right to edit one set of shared files during a wave: **GOLDEN** (the goldens, the attract demos,
-  `pnpm golden:update`), **FP** (the presentation, content-DB and shell frame fingerprints), and the others §18 and the
-  work orders name (LAND, BOT, BEHAVIOR, STRINGS, SCENES …). **You assign each token to one lane in the lane plan.**
-  Only that lane touches the token's files in that wave, and the token passes on only after the holder's push is on
-  `origin/master`. A builder that finds it needs a token it does not hold stops and reports.
+- **Tokens** (full table: `docs/v2-run/README.md` § Tokens and locks). Two kinds:
+  - **work-time tokens** (CORE-CONFIG, DATA-INDEX, BEHAVIOR, CONTENT-TEST, BOT, SCENES, UI-FILE, STRINGS, POWERUPS,
+    E2E-MIRROR, RP-BARREL / SHELL-BARREL, KIT, PLAN): you give each to one lane in the lane plan; only that lane
+    edits those files; it passes on once the holder's push is on `origin/master`;
+  - **push-time tokens** for derived files (GOLDEN, FINGERPRINTS = FP, GROUPS, DOCS-IMAGES, STORE, LAND, GLOBAL):
+    every lane the work order names may build in parallel; each push that regenerates a derived file holds
+    `/tmp/shmup-cup-land.lock` from the fetch to the push (`flock -w 5400 /tmp/shmup-cup-land.lock bash <script>`:
+    fetch, rebase, regenerate — never merge — check, push); no LAND runs during a GLOBAL. A LAND runs through
+    `docs/v2-run/helpers/land-zone.sh`, which takes the land lock itself: never wrap it in another `flock`.
+  - **The PORT window** (wave 4): from `R2-02.S`'s verification start to its push nobody else pushes; hold every
+    other lane's push.
+  - A builder that finds it needs a token it does not hold stops and reports.
 - **Shared hot files** count as touched by every task that mentions them, so those tasks serialize:
   - `packages/core/src/index.ts` (the barrel) and the packages' `src/index.ts`;
   - `packages/core/src/config/index.ts`, `packages/core/src/data/index.ts`, `packages/core/src/behaviors/index.ts`;
@@ -253,9 +291,10 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
   - the frame-literal allow-lists (`packages/core/test/frame-literals.test.ts`,
     `test/integration/frame-literals-repo.test.ts`) and `scripts/frame.mjs`;
   - `pnpm-lock.yaml`, the `package.json` files, `turbo.json`, `eslint.config.js`, `.github/workflows/ci.yml`;
-  - `plan_resolution.md`, `CHANGELOG.md`, `README.md`, `docs/**`, `CLAUDE.md` (the docs agent only).
-- **At most one sim-changing lane** at a time, unless §18 says otherwise for a wave (R5's "build in parallel, land one
-  at a time" under its LAND lock).
+  - `plan_resolution.md`, `CHANGELOG.md`, `README.md`, `docs/**`, `CLAUDE.md` (docs agents only, each with its own
+    files; `plan_resolution.md` and `CHANGELOG.md` only by the PLAN holder).
+- **Sim-changing lanes** follow their wave file: GOLDEN is push-time (RUN-3); R2-04's sim changes are patches with one
+  integrator; R5 and R6 zones land one at a time under LAND.
 - **The e2e lock.** Playwright's web server uses the fixed port 4173 (`--strictPort`), and the timed specs measure
   frame pacing, so one e2e batch runs on myadmin1 at a time. A batch is at most 10 specs, built outside the lock and
   run inside it. The helper does both, from the worktree it lives in; start it with the shell tool's
@@ -273,8 +312,9 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
     --config test/e2e/playwright.config.ts --project=chromium <spec files>
   ```
 
-  `CI=1` keeps Playwright from reusing another worktree's server. `pnpm bench`, `pnpm docs:screens` and
-  `host-check.sh`'s e2e steps take the same lock, so they cannot make a timed spec flaky. If an agent's shell refuses
+  `CI=1` keeps Playwright from reusing another worktree's server. `pnpm bench` files and `pnpm docs:screens` do not
+  take the lock by themselves: run them as `flock -w 5400 /tmp/shmup-cup-e2e.lock <command>`, so they cannot make a
+  timed spec flaky. `host-check.sh`'s two e2e steps and its bench step take it themselves. If an agent's shell refuses
   `flock` directly, it writes the command into a script file and runs `bash <file>`.
 
 ## How you work
@@ -289,10 +329,13 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
   - `waiting on owner` — the agent part cannot start before the owner's input, e.g. R0-03 before bench logs exist;
   - `blocked: <reason>`.
   `plan_board_v2.py` maps `done…` → Done, `in progress` / `blocked` → In Progress, and everything else → Todo. It
-  reads `plan_resolution.md` from the current directory: run it as `python3 .claude/plan_board_v2.py` in the main
-  checkout, after `git pull --rebase origin master`. Only you run it.
-- **You edit only §17's status cells** of `plan_resolution.md`, and only while no docs agent runs: commit and push them
-  from the main checkout (`git pull --rebase origin master` first).
+  runs `git fetch` and reads `origin/master:plan_resolution.md` in `/home/sites/shmup-cup` (its `ROOT`) whatever the
+  current directory, so it sees only pushed rows. It is git-ignored and exists only in the main checkout. Only you run
+  it, after the wave's §17 edit is on `origin/master`: `python3 /home/sites/shmup-cup/.claude/plan_board_v2.py`.
+  Docs agents never run it.
+- **You edit only §17's status cells** of `plan_resolution.md`: commit and push them from the main checkout
+  (`git pull --rebase origin master` first), and only while no agent holds PLAN; marking a step `in progress` while a
+  `Wnn.DOCS-A` holds PLAN goes into that agent's task instead.
 - **Owner-only parts never block** (plan §4, §13): the TV benchmark run, AI generation, hand cleanup of sprites, play
   sessions on the M7, the FLUX licence. Agents build the tools, use interim or procedural art, and list what is left
   under the step's **Manual (owner)** in its As-built notes.
@@ -308,31 +351,38 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
    Do **not** run the tests, e2e or bench here. The Playwright browsers and their system packages are installed; if a
    spec reports a missing browser: `pnpm exec playwright install chromium firefox`, and for system packages
    `sudo -n env "PATH=$PATH" pnpm exec playwright install-deps chromium firefox`.
-4. `mkdir -p .claude/orchestrator/myadmin1/{prompts,reports,logs} /home/sites/shmup-wt`. If
-   `.claude/orchestrator/myadmin1/RESUME.md` exists, this is a resumed run: read it and the lane file it names, and
-   resume the agents it lists by sessionID before starting new ones. `git worktree list`: check every leftover worktree
-   (clean? pushed?) before removing it.
+4. `mkdir -p /home/sites/shmup-cup-run/{prompts,logs,wt} /home/sites/shmup-wt` (RUN_DIR and the agents' worktree
+   folder). If `/home/sites/shmup-cup-run/RESUME.md` exists, this is a resumed run: read it and the lane file it
+   names, and resume the agents it lists by sessionID before starting new ones. `git worktree list`: check every
+   leftover worktree (clean? pushed?) before removing it.
 5. `opencode debug config` lists the repo's `opencode.json` with its three `instructions`.
 6. Read §17, §18 and `docs/v2-run/README.md`: the next wave is the first §18 wave that is not closed. Check its
-   prerequisites. Report any `blocked` step to me; skip `waiting on owner` steps unless their input now exists (R0-03:
-   logs under `tools/input-probe/results/*-bench/`).
-7. `python3 .claude/plan_board_v2.py` (it uses `gh`, which is logged in on myadmin1). If the file is missing (it is
-   git-ignored and copied by hand), skip it and tell me.
+   prerequisites. Report any `blocked` step to me; skip `waiting on owner` steps unless their input now exists.
+   **R0-03 is owner-only** (the TV bench run on the M7s) and in no wave: if §17 still says `not started`, set it to
+   `waiting on owner` with your first §17 edit; it becomes agent work only if logs appear under
+   `tools/input-probe/results/*-bench/`.
+7. `python3 /home/sites/shmup-cup/.claude/plan_board_v2.py` (it uses `gh`, which is logged in on myadmin1). If the
+   file is missing (it is git-ignored and copied by hand), skip it and tell me.
 8. CI, for the record only (owner rule 8): `gh run list --branch master --limit 3`. Note the state in `RESUME.md`; do
    not wait for a run and do not chase a CI-only red here.
 
 `docs/v2-run/helpers/host-check.sh` is the full CI-equivalent run on this host (install, Playwright, format, lint,
 typecheck, test, build, bench, e2e Chromium and Firefox, the input probe, the ingest check; about 12 minutes; it passed
-on `bc8e05d`). It is the **full suite**: run it at the end of the run, or when the host itself is rebuilt, never in the
-preflight.
+on `bc8e05d`). It is the **full suite**: it runs only in wave 15 (`R6-03.D6`, the one full suite), or when the host
+itself is rebuilt — never in the preflight.
 
 ## The wave loop
 
 A **wave** is one row of §18: its steps and subtasks, its lanes, its tokens and its order are in its work order. Run
 the waves in §18's order. **Nothing waits for R0-02 / R0-03** (§13), and **R0-04 is never built in a wave**: its agent
-parts (the winners copy, the prompt-library edits) appear in §18 where the owner's inputs allow. The first wave holds
-R2-01's **docs pass** (with whatever §18 runs beside it); R2-01 becomes `done` in §17 once that pass's review loop
-reaches zero.
+parts (the winners copy, the prompt-library edits) appear in §18 where the owner's inputs allow. If wave 0 is still
+open (`docs/v2-run/wave-00.md`'s Status line reads `**Status: open**`), its open item runs first, as `R2-01.F1` in
+wave 1. The first wave holds R2-01's **docs pass** (with whatever §18 runs beside it); R2-01 becomes `done` in §17
+once that pass's review loop reaches zero.
+
+**Waves overlap only at their edges (RUN-2):** wave N+1's builders may start once wave N's **code exit** passes; wave
+N's docs agents then run inside wave N+1's cap, and wave N+1's own docs item waits until wave N's docs review is at
+zero findings.
 
 ### 1. Re-check scouts (read-only, in parallel)
 
@@ -352,14 +402,16 @@ that needs a new subtask, a red test) gets a scout of its own before a builder.
 - **Builders never edit** `plan_resolution.md`, `CHANGELOG.md`, `docs/dev/api-reference.md`, `README.md`, `CLAUDE.md`
   or `docs/**` unless the work order makes them the wave's docs agent. They return As-built notes and docs needs in
   their report, and the docs agent (step 6) writes them.
-- Write the lane plan to `.claude/orchestrator/myadmin1/lanes-<wave>.md`.
-- Set the wave's steps to `in progress` in §17 and run `plan_board_v2.py`.
+- Write the lane plan to `RUN_DIR/lanes-<wave>.md`.
+- Set the wave's steps to `in progress` in §17 (or give that edit to the `Wnn.DOCS-A` that holds PLAN — see "How you
+  work"), push, and run `plan_board_v2.py`.
 
 ### 3. Build (one agent per lane, lanes in parallel)
 
 - A lane's agent does its tasks **in order**. For each: implement it per the work order and the plan section; write
   and fix the **targeted tests** and run only those, plus typecheck / lint / prettier of what it touched; **commit and
-  push** the task to `master`.
+  push** the task to `master` — except in a lane worktree or a patch subtask (see "Worktrees and pushing"), which
+  commit locally and never push.
 - **Before you start a lane's next agent, re-read the lane file.** If a builder reports touching a file outside its
   list, check every running lane against it, and re-plan or serialize when they collide.
 - **Blank response → `continue`** (owner rule 5).
@@ -392,19 +444,22 @@ that needs a new subtask, a red test) gets a scout of its own before a builder.
 A **test agent** strengthens the step's targeted tests: edge cases, a regression test for every fixed finding, the
 plan's acceptance checks as tests. It runs only those tests and pushes. Its changes get the same review loop (step 4).
 
-### 6. Docs (per wave — one agent, never two docs agents at once)
+### 6. Docs (per wave — one docs agent holds PLAN; others may run beside it)
 
-The **docs agent**:
-- completes TSDoc on everything the wave touched (`conventions.md` standard);
-- updates `docs/dev/*.md` (including `api-reference.md`), `docs/client/*.md`, package READMEs, the root `README.md`
+The wave's docs item is `Wnn.DOCS-A`, which holds `plan_resolution.md` and `CHANGELOG.md` (the PLAN token), plus the
+`Wnn.DOCS-B` … agents the work order lists, each with disjoint files (decision RUN-13). Never two agents on one docs
+file. Between them, the docs agents:
+- complete TSDoc on everything the wave touched (`conventions.md` standard);
+- update `docs/dev/*.md` (including `api-reference.md`), `docs/client/*.md`, package READMEs, the root `README.md`
   and, where the wave changed a rule, `CLAUDE.md`;
-- writes each step's **As built:** notes and **Manual (owner)** items under its section in `plan_resolution.md`, and
-  the wave's decisions in the decision register;
-- sets the steps' rows in **§17** (you then pull the main checkout and run `plan_board_v2.py`);
-- adds CHANGELOG `[Unreleased] — v2` entries;
-- pushes.
+- write each step's **As built:** notes and **Manual (owner)** items under its section in `plan_resolution.md`, and
+  the wave's decisions in the decision register (DOCS-A);
+- set the steps' rows in **§17** (DOCS-A; once its push is on `origin/master` you run `plan_board_v2.py` — the docs
+  agents never run it);
+- add CHANGELOG `[Unreleased] — v2` entries (DOCS-A);
+- push.
 
-Its changes get one review loop (step 4) to zero.
+Their changes get one review loop (step 4) to zero.
 
 ### 7. Close the wave (you)
 
@@ -419,9 +474,13 @@ Its changes get one review loop (step 4) to zero.
 - Report to me in a few lines (see "Reporting to me").
 - Write the wave's state to the run notes and `RESUME.md`; then compress if you need to.
 - **PAUSE:** if it is `waves`, or `milestones` and this was a milestone's last wave, stop and wait for me.
-- **Milestone boundary:** at the end of R2 (R2-04), tag `v2.0.0-alpha.1`; at the end of R5-10, `v2.0.0-beta.1`; each
-  with `gh release create … --prerelease`, after that run's full suite has passed on myadmin1 (the work orders say
-  which subtask bumps the versions first).
+- **Milestone boundary:** wave 7 (R2-04) tags `v2.0.0-alpha.1` and wave 13 (R5-10) tags `v2.0.0-beta.1`, each with
+  `gh release create … --prerelease`, after the wave's targeted exit check — no full suite (decision RUN-1; the
+  release notes say so; the work orders say which subtask bumps the versions first). Only if SCOPE ends the run at
+  that milestone does its last wave run the full suite before the tag. `gh release create v2.0.0` (`R6-03.D7`) runs
+  only after my explicit OK (decision R6-D3).
+- **Next wave:** wave N+1's builders may start once this wave's code exit passes; this wave's docs agents then run
+  inside wave N+1's cap (RUN-2, above).
 
 ## End of the run: the one full suite
 
@@ -481,6 +540,8 @@ the 640×360 remaster. Wave {WAVE}, lane {LANE}, task {TASK IDS} from {WORK ORDE
 YOUR FILES — the only files you may create or change: {EXACT PATHS, or "none" for scouts and reviewers}
 YOUR TOKENS: {GOLDEN | FP | LAND | … | none}. Files of a token you do not hold are read-only for you.
 YOUR TESTS — run exactly these, plus the new tests your task needs: {EXACT COMMANDS}
+RUN_DIR: /home/sites/shmup-cup-run — wherever the work order writes RUN_DIR/…, <RUN_DIR> or $RUN_DIR it means this
+absolute path; start each shell command that uses it with export RUN_DIR=/home/sites/shmup-cup-run;
 DONE WHEN: {the acceptance items, copied from the work order}
 THE TASK, copied from the work order: {VERBATIM TEXT}
 
@@ -489,6 +550,10 @@ READ FIRST, in this order: this prompt; plan_resolution.md "### {STEP ID} — {T
 gives you these three as instructions; if you cannot see them, read the files). Read every file in YOUR FILES before
 you edit it. Big files (packages/core/src/behaviors/index.ts, packages/core/src/data/index.ts,
 test/integration/content.test.ts): edit with exact old/new strings, never rewrite the whole file.
+
+The host also gives every session a global "Code Philosophy - MANDATORY" instruction (load code-philosophy /
+frontend-philosophy, refactor if needed). In this repo it never widens your task: never refactor or edit outside YOUR
+FILES. Where they differ, this prompt and docs/dev/conventions.md win.
 
 {HARD RULES block, verbatim}
 
@@ -508,14 +573,15 @@ THE OWNER'S GENERAL INSTRUCTIONS (the orchestrator carries out 1, 3, 5 and 6; 2,
    task and respond.
 8. Tests and timing happen on this host (myadmin1); never wait for GitHub CI.
 
-WORKTREE — do this first:
+WORKTREE — do this first (skip this block when your work order names a lane worktree under RUN_DIR/wt/: cd there
+instead, and use that path wherever this prompt says /home/sites/shmup-wt/{NAME}):
   git -C /home/sites/shmup-cup fetch origin
   git -C /home/sites/shmup-cup worktree add /home/sites/shmup-wt/{NAME} origin/master --detach
   cd /home/sites/shmup-wt/{NAME}
   pnpm install --frozen-lockfile --prefer-offline        (shell timeout 600000)
   pnpm assets                                            (only if your tests need the atlas)
 Work ONLY in /home/sites/shmup-wt/{NAME}: every path you edit starts with it, every shell command runs with its workdir
-set to it. Never edit /home/sites/shmup-cup (the orchestrator's checkout), except your report file.
+set to it. Never edit /home/sites/shmup-cup (the orchestrator's checkout). Your report goes to RUN_DIR (see REPORT).
 
 COMMANDS:
 - The shell tool stops a command after 2 minutes unless you set `timeout`. Give every longer command a timeout (e.g.
@@ -547,10 +613,18 @@ GIT (file-changing roles only; scouts and reviewers commit nothing):
   git commit -F <message file>   (imperative subject in the repo's style — feat(R2-02): …, test(R2-02): …,
                                   docs: … — and a body that says why)
   git fetch origin && git rebase origin/master && git push origin HEAD:master
+- EXCEPTIONS (they override the push lines above and below; your block says which applies):
+  (a) A LANE WORKTREE on a local branch (R5 zone lanes RUN_DIR/wt/zone-<x> on r5/zone-<x>; RUN_DIR/wt/bonus,
+      RUN_DIR/wt/escape; RUN_DIR/wt/r6-zone-<x>, RUN_DIR/wt/r6-global): skip the WORKTREE block and cd there; commit on
+      that branch and NEVER push. Only the LAND subtask pushes, through docs/v2-run/helpers/land-zone.sh. Never remove
+      that worktree.
+  (b) A PATCH subtask (R2-04.F1, R2-04.Z1 … Z4): commit locally, write RUN_DIR/w07/patches/<id>.patch as the block
+      says, push nothing.
 - Never commit node_modules, dist, dist-bench, *.wgt, *.ipk, logs, coverage, .turbo, test-results, .claude/,
   .caliber/, .playwright-mcp/, art-prompts/v2/candidates/ or secrets. Add no Co-Authored-By line: the Claude lines
   in git log belong to the old host's agents, not to you.
-- One commit per task, pushed as soon as its tests pass. Push rejected: fetch, rebase, push again, up to 5 times.
+- One commit per task, pushed as soon as its tests pass (unless an EXCEPTION above applies). Push rejected: fetch,
+  rebase, push again, up to 5 times.
 - A rebase conflict: keep both sides' intent and re-run YOUR TESTS before pushing. In a fingerprint PINNED table or
   another generated file, regenerate it; never merge it by hand.
 - Never force-push, never --no-verify, never push another branch, never touch v1.x.
@@ -561,8 +635,9 @@ GIT (file-changing roles only; scouts and reviewers commit nothing):
 OWNER-ONLY WORK (TV runs, hand cleanup of sprites, play sessions, AI generation, the FLUX licence) never blocks you:
 build the tooling, use interim or procedural art, and list what remains under "Manual (owner)".
 
-REPORT: write it to /home/sites/shmup-cup/.claude/orchestrator/myadmin1/reports/{NAME}.md AND make it your final
-message, in the template for your role. Your final message must never be blank.
+REPORT: write it to /home/sites/shmup-cup-run/<task id>-report.md (one file per subtask id you worked on; a scout or
+another agent without a subtask id uses /home/sites/shmup-cup-run/{NAME}-report.md) AND make it your final message, in
+the template for your role. Your final message must never be blank.
 ```
 
 ## Report templates (what each agent returns)

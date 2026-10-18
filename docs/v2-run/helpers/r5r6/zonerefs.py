@@ -12,9 +12,9 @@ Run (from anywhere; the root argument is optional and defaults to the checkout h
 `zonerefs.txt` next to this file is its output at bc8e05d (2026-10-18). Re-run it before a zone's
 fixture triage: R2-02 … R4 move files and tests, so the lists drift.
 
-Used by: R5-01's A.S6b "fixture triage" subtask (replan-scout-R5R6 §4.1): the tests in group `a`
-pin zone A's content and must follow its redesign; the other zones' lanes may read their own
-group the same way.
+Used by: `R5-01.S6b` (docs/v2-run/wave-10.md), the fixture triage: the tests in group `a` pin
+zone A's content and must follow its redesign; the other zones' lanes may read their own group
+the same way.
 Delete when: R5's zone lanes are on master (after R5-09).
 Was: scratchpad r5r6/zonerefs.py of the R5/R6 re-plan scout (it hard-coded its worktree).
 """

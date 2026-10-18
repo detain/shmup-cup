@@ -18,8 +18,9 @@
 #   HOST_CHECK_SKIP_PW_DEPS 1 = skip `playwright install-deps` (no passwordless sudo, or done)
 #   HOST_CHECK_STEPS        only these steps, by name, space-separated (default: all), e.g.
 #                           HOST_CHECK_STEPS="format lint typecheck" for a quick re-check
-#   E2E_LOCK                the machine-wide e2e lock (default /tmp/shmup-cup-e2e.lock); both
-#                           e2e steps take it, so a check never overlaps an agent's e2e batch
+#   E2E_LOCK                the machine-wide e2e lock (default /tmp/shmup-cup-e2e.lock); the
+#                           bench step and both e2e steps take it, so a check never overlaps an
+#                           agent's e2e batch
 #
 # Step log: one line `=== HH:MM:SS <step>` when a step starts and `rc=<code> (<last 3 lines>)`
 # when it ends, on stdout and in $LOG_DIR/summary.log; each step's full output is in
@@ -32,8 +33,8 @@
 #   flight.spec.ts:114 idle drift 0.96 px > 0.5) · e2e firefox 2 passed · probe verify and
 #   ingest test + --check green. (Install, deps, browsers and format were not timed separately.)
 #
-# Used by: the orchestrator when it sets up a host (wave 0 / the hand-off to myadmin1) and for
-# the full suite at the end of a wave or of the run (docs/v2-run/, plan_resolution.md §18).
+# Used by: the orchestrator when a host is rebuilt, and R6-03.D6 (the one full suite, wave 15)
+# (docs/v2-run/, plan_resolution.md §18). Never in the preflight or at a wave's close.
 # Delete when: the v2 agent run ends (R6-03) — or a docs pass promotes it to scripts/.
 # Was: the orchestrator's scratchpad myadmin1-setup.sh (it hard-coded /home/sites/shmup-cup).
 set -u
@@ -74,7 +75,7 @@ step lint pnpm lint
 step typecheck pnpm typecheck
 step test pnpm test
 step build pnpm build
-step bench pnpm bench
+step bench flock -w 5400 "$E2E_LOCK" pnpm bench
 step e2e-chromium flock -w 5400 "$E2E_LOCK" pnpm test:e2e --project=chromium
 step e2e-firefox flock -w 5400 "$E2E_LOCK" pnpm test:e2e --project=firefox
 step probe bash -c 'cd tools/input-probe && npm ci && npm run verify'

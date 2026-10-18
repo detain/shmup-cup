@@ -13,9 +13,9 @@
  * node docs/v2-run/helpers/r34-gen-list.mjs [<root>]
  * ```
  *
- * **Used by** the R3-03 / R3-04 / R4 art and asset lanes (and their reviewers) to check a
- * generator's sprite list, frame counts, sizes and native / flash marks before and after a change;
- * the R3/R4 re-plan scout built its generator tables with it.
+ * **Used by** `R3-03.V1` (docs/v2-run/wave-02.md) and `R4-P.P3` (docs/v2-run/wave-07.md), and
+ * their reviewers, to check a generator's sprite list, frame counts, sizes and native / flash
+ * marks before and after the change; the R3/R4 re-plan scout built its generator tables with it.
  *
  * **Delete** when R4 is on master (after R4-05). Was scratchpad `r34-gen-list.mjs` (it hard-coded
  * the scout's worktree).

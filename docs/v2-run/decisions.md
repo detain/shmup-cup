@@ -6,7 +6,8 @@ its row in `plan_resolution.md` §1 ("Decisions made while the plan runs") from 
 builds it; this file keeps the whole list in one place for the run.
 
 **Status:** *adopted* (the default is the run's rule), *done* (already built on `master`), *moot* (overtaken),
-*open* (an owner answer is still wanted; the default holds meanwhile).
+*open* (an owner answer is still wanted; the default holds meanwhile), *default adopted — owner to confirm* (new in
+the re-plan of 2026-10-18: the default is the run's rule, but the owner has not seen it yet).
 
 ## 1. Decisions of this schedule (RUN-1 … RUN-14)
 
@@ -17,16 +18,16 @@ Made by the re-plan that wrote `plan_resolution.md` §18 and these work orders.
 | **RUN-1** | **One full suite, at the end of the run** (wave 15, `R6-03.D6`). The pre-release tags `v2.0.0-alpha.1` (wave 7) and `v2.0.0-beta.1` (wave 13) are cut after their wave's targeted exit check, without a full suite; their release notes say so. If the owner ends a run at a milestone (the driver's SCOPE), that run's last wave runs the full suite before the tag | R2-03, R2-04, R5-10.T10, R6-03 | adopted |
 | **RUN-2** | **Waves overlap only at their edges.** Wave N+1's builders start once wave N's code exit passes; wave N's docs agents then run inside wave N+1's cap; wave N+1's docs item waits for wave N's docs review to reach zero | every wave | adopted |
 | **RUN-3** | **One land lock for every derived-file push** (`/tmp/shmup-cup-land.lock`): goldens, demos, the three fingerprints, `atlas-groups.json`, `docs/images/**`, the store icons. Inside it: fetch, rebase, regenerate (never merge by hand), check, push. GOLDEN and FINGERPRINTS are push-time tokens, so lanes that move them build in parallel and push one at a time | every wave | adopted |
-| **RUN-4** | **e2e:** the standard batches A–F of `README.md` (every spec in one batch); at most two agents of a wave do e2e work; one batch at a time on the host (`/tmp/shmup-cup-e2e.lock`, port 4173); `E2E_WORKERS` as `docs/v2-run/helpers/e2e-batch.sh` sets it (2, what the timed specs were measured with) | every wave | adopted |
+| **RUN-4** | **e2e:** the standard batches A–G of `README.md` (every spec in one batch; G holds the specs R3 adds); at most two agents of a wave do e2e work; one batch at a time on the host (`/tmp/shmup-cup-e2e.lock`, port 4173); `E2E_WORKERS` as `docs/v2-run/helpers/e2e-batch.sh` sets it (2, what the timed specs were measured with) | every wave | adopted |
 | **RUN-5** | **The run directory** (`RUN_DIR`, default `/home/sites/shmup-cup-run/`) holds transient files outside the repository; whatever a later wave needs and is not transient (the zone designs) is committed under `docs/v2-run/` | every wave | adopted |
 | **RUN-6** | **Home wave and fillers.** Each subtask's block lives in its home wave's file; an earlier wave may start it as a *filler* when a slot is free and its dependencies hold | W03, W08 | adopted |
 | **RUN-7** | **R5's stable hash keys (`R5-P.P1`) and capacity (`R5-P.P8`) are folded into R2-03** (wave 6), so R2-03.G1's single re-bless pays for the port, the keys and the capacity. Capacity takes R5-D5's default (`MAX_BOSS_PARTS` 24) before the designs exist; a design that peaks above 80 % of a pool gets a GLOBAL re-bless in R5 | R2-03, R5 | adopted |
 | **RUN-8** | **R2-03.I2 shrinks to `pnpm store:assets --check`** inside `R2-03.V`: by RR-3 the store icons stay on the v1 art until R4-05.E5 | R2-03, R4-05 | adopted |
 | **RUN-9** | **Benches:** single bench files under the e2e lock (`stress`, `zones`, `render`); the 30-minute soak and the whole `pnpm bench` only in wave 15 | R2-02.B, R3-04, R4-04.D3, R5-10.T7, R6-02.P1 | adopted |
-| **RUN-10** | **R2-01.F1** (CI e2e shard 1: `campaign-run.spec.ts:241`, `:355`, `debug-tools.spec.ts:233`) exists only if wave 0 leaves it open. The run never waits on GitHub CI, but a CI-only failure is still a bug to explain | W00, W01 | adopted |
+| **RUN-10** | **R2-01.F1** exists only if wave 0 is still open at the hand-off. Wave 0's triage of the CI e2e shard-1 failures (`campaign-run.spec.ts:241`, `:355`, `debug-tools.spec.ts:233` at `bc8e05d`) and of the myadmin1 `flight.spec.ts:114` flake was fixed by C5 fix 2 (`c67c7c9`, test files only); wave 0 stays open until C5 review 3 of `c67c7c9` (and any fix → new review loop) reaches zero findings, and `R2-01.F1` then finishes exactly that. The run never waits on GitHub CI, but a CI-only failure is still a bug to explain | W00, W01 | adopted |
 | **RUN-11** | **R5 zone lanes:** one worktree per zone in `RUN_DIR/wt/zone-<x>` holding a local branch `r5/zone-<x>` that is never pushed; the lane's successive agents work in that worktree; only the LAND pushes (one squashed commit) | W10–W12 | adopted |
 | **RUN-12** | **The LAND procedure is a committed helper**, `docs/v2-run/helpers/land-zone.sh`, written and tested in wave 9 (`R5-P.LAND`); GLOBAL re-blesses hold the same lock | W09–W14 | adopted |
-| **RUN-13** | **Several docs agents per wave**, each with disjoint files; the one that holds `plan_resolution.md` and `CHANGELOG.md` (`Wnn.DOCS-A`) also updates §17 and runs `python3 .claude/plan_board_v2.py`. Replaces the earlier "one docs agent at a time" | every wave | adopted |
+| **RUN-13** | **Several docs agents per wave**, each with disjoint files; the one that holds `plan_resolution.md` and `CHANGELOG.md` (`Wnn.DOCS-A`) also updates the §17 rows; the orchestrator then runs `python3 .claude/plan_board_v2.py` in the main checkout (the script is git-ignored and exists only there; docs agents never run it). Replaces the earlier "one docs agent at a time" | every wave | adopted |
 | **RUN-14** | **`VITEST_MAX_WORKERS=6` per agent** on myadmin1 (64 cores, 8 builders), replacing the scouts' 4 | every wave | adopted |
 
 ## 2. Wave 4 (R2-01) decisions W4-1 … W4-14 — built
@@ -94,8 +95,8 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 | ID | Decision (the default) | Status |
 |---|---|---|
 | **RR-1** | **v2 art beside v1; scale 1 stays the v1 art until R6.** A pixel map's v2 version is a sibling `<path>.v2.sprite.json` (native implied, used only at art scale ≠ 1); a generator branches on `options.artScale`; a v2 font is a `"native": true` font file with the same `name`; at scale 1 a PNG override of a name that has a code source is skipped. The digest pin, the TV bench, the CJK figures and the store icons never move; R6-03 deletes the v1 sources (built by `R4-P.P3`) | adopted |
-| **RR-1a** | **A new sprite name with only a v2 source** (e.g. `ships/manta-thruster`, `ui/title-backdrop`) is absent from the scale-1 build. That is allowed: the scale-1 consumers (the TV bench atlas, the CJK figures, the store icons until R4-05.E5) never draw it, `pnpm content:check` and the content tests run on the default scale, and the scale-1 digest pin holds. No v1 stand-in is drawn for it | R4-01.A2, R4-05.E2, every R4 / R5 new name | adopted |
-| **RR-1b** | **Frame counts at scale 1:** when core starts reading more frames than a v1 source has (Option frames 2–3, black-hole frames 4–7, bank frames 3–4), only the v2 art gets them. The scale-1 atlas is never played; the relation tests skip native sprites (`R4-P.P3`); R6-03 retires the scale-1 builds | R4-01.A1b, A3, A8 | adopted |
+| **RR-1a** | **New in the re-plan — owner to confirm.** **A new sprite name with only a v2 source** (e.g. `ships/manta-thruster`, `ui/title-backdrop`) is absent from the scale-1 build. That is allowed: the scale-1 consumers (the TV bench atlas, the CJK figures, the store icons until R4-05.E5) never draw it, `pnpm content:check` and the content tests run on the default scale, and the scale-1 digest pin holds. No v1 stand-in is drawn for it (applies to R4-01.A2, R4-05.E2, every R4 / R5 new name) | default adopted — owner to confirm |
+| **RR-1b** | **New in the re-plan — owner to confirm.** **Frame counts at scale 1:** when core starts reading more frames than a v1 source has (Option frames 2–3, black-hole frames 4–7, bank frames 3–4), only the v2 art gets them. The scale-1 atlas is never played; the relation tests skip native sprites (`R4-P.P3`); R6-03 retires the scale-1 builds (applies to R4-01.A1b, A3, A8) | default adopted — owner to confirm |
 | **RR-2** | The v2 font cell is **9×12, line 15, advance 9** (today's `GLYPH_W` / `GLYPH_H` / `LINE_H`), so no layout moves | adopted (owner may confirm) |
 | **RR-3** | The store icons stay on `artScale: 1` until `R4-05.E5` moves them to the v2 art once | adopted |
 | **RR-4** | Agent-made v2 art draws from the bible's text, the v1 designs and the palette tables; Qwen-Image, SD3.5 and Wan winners only once committed and content-reviewed; **never a FLUX winner** while FLUX is on hold | adopted (until the FLUX decision) |
@@ -135,9 +136,9 @@ From [`wave5-scout.md`](wave5-scout.md) §5, corrected by the post-flip pre-chec
 | **Q-8** | The story crawl and the credits keep their v1 duration at 640 (`SCROLL_HALVES = 2` in `scenes/index.ts` restores the slow crawl) — keep? | Keep | R4-03 if changed |
 | **Q-9** | O9: docs screenshots at 1920×1080 instead of 1280×720? | 1280×720 | `R2-03.I3`, `R4-05.E6`, `R6-03.D4` |
 | **Q-10** | O11 (ground spawns keep their terrain spot), W3-1 … W3-12 and the W5 rows marked "owner may confirm" | Built as the defaults | §1 register |
-| **Q-12** | v1.x end of life (R6-03): security and crash fixes for how long? | "six months after v2.0.0" until the owner words it | `R6-03.D1` |
-| **Q-13** | The escape's look (R5-D3 / `R5-10.T2`) | keeps `terrain-a`; `R5-10.T2` adds `escape.mjs` (one registry line in `procedural/index.mjs`) | `R5-10.T2` |
 | **Q-11** | The shake magnitudes (R2-N7) and the feel of the spawn row (W5-2) | 2 / 3 / 6; the frame centre | R2-04's play session |
+| **Q-12** | **(new in the re-plan — default adopted, owner to confirm)** v1.x end of life (R6-03): security and crash fixes for how long? | "six months after v2.0.0" until the owner words it | `R6-03.D1` |
+| **Q-13** | **(new in the re-plan — default adopted, owner to confirm)** The escape's look (R5-D3 / `R5-10.T2`) | keeps `terrain-a`; `R5-10.T2` adds `escape.mjs` (one registry line in `procedural/index.mjs`) | `R5-10.T2` |
 
 ## 8. Owner (Manual) work that the run lists but never waits for
 
