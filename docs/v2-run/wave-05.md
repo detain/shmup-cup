@@ -6,6 +6,15 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w05-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w05-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
+> The commands that diff against **wave 2's** base read `/home/sites/shmup-cup-run/w02-base.txt` (recorded
+> when wave 2 started, by the same command).
 
 **Steps:** R2-02 (un-gating, the content READMEs, bench and e2e after the port, residual zone fixes, the step
 review), R3-03 (V4c, the step review), R3-04 (the step review), and the wave's docs for R2-02, R3-03 and R3-04.
@@ -26,15 +35,17 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 | 4 | `R2-02.U4 → R3-03.V4c` | 11 integration tests (incl. `stage-terrain.test.ts`) | — | no |
 | 5 | `R2-02.R` | `content/*/README.md` (8) | — | no |
 | 6 | `R2-02.B → R2-02.EF` | read-only | — | yes (pass 1: bench files, then batches A–G) |
-| 7 | `R2-02.U5` (after U1–U4 on master) | playtest / Tiled tests, `tile-size`, `e2e-gates`, `port-pending*` (deleted), one config comment | — | no |
+| 7 | `R2-02.U5` (after U1–U4 on master) | playtest / Tiled tests, `tile-size`, `e2e-gates`, `port-pending*` (deleted), one config comment | CORE-CONFIG (one comment) | no |
 | 8 | `R2-02.Z-*` — spawned only for a red zone (Z-A, Z-BC, Z-DE, Z-FG, Z-HI, Z-X) | that zone's content and tests | FINGERPRINTS (at push) | maybe (pass 2) |
 | side | carry-overs from wave 4: any of `R3-03.V2a, V2b, V4a, V4b, V5`, `R3-04.M1a … M4b`, `R3-03.V3`, `R3-04.M3a … M3e` still open | their blocks in [`wave-04.md`](wave-04.md) / [`wave-02.md`](wave-02.md) | as there | as there |
 
 - **Slots:** 8 builders. Lanes 1–6 start at once. Lane 7 (U5) waits for U1–U4, so **the side lane takes lane 7's
   slot until U1–U4 are on master**; then U5 takes the next free slot. Z agents (lane 8) start as red lists arrive,
   one at a time in lane 8; a second Z runs only in a slot another lane has freed — never more than 8 builders.
-- **Reviews:** slot 1 reviews U1–U5, R and each Z as they push, then runs `R2-02.RV` (the step review). Slot 2 runs
-  `R3-03.RV` and `R3-04.RV` once their last subtasks are on master, then reviews the docs (`W05.DOCS-RV`).
+- **Reviews:** slot 1 reviews U1–U5, R and each Z as they push, then runs `R2-02.RV` (the step review). Slot 2 first
+  reviews each carry-over push from wave 4 (`<id>.RV<n>`, with `W04.RV-SIDE`'s must-hold; fix → a **new** review to
+  zero), then runs `R3-03.RV` and `R3-04.RV` once their last subtasks are on master, then reviews the docs
+  (`W05.DOCS-RV`).
 - **Docs item:** `W05.DOCS-A` … `W05.DOCS-F`, six docs agents with disjoint files, **after** the three step reviews
   are at zero. Wave 6 may start once this wave's code exit passes; these docs agents then count against wave 6's cap.
 - **e2e passes:** two. Pass 1: lane 6 (B's bench files, then EF's batches). Pass 2: one at a time, a Z agent, an M3
@@ -306,7 +317,7 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
   review → … until zero findings, nits included.
 - **Goal:** the step's acceptance and the wave-5 reviewer gate (`wave5-scout.md` §8, as corrected after the flip).
 - **Steps / must hold:**
-  - `git diff --name-only <wave-2 base>..origin/master -- test/golden/'*.replay.json' content/demos
+  - `git diff --name-only $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- test/golden/'*.replay.json' content/demos
     test/fixtures/v1-baseline` empty; `pnpm golden:update` and `SHMUP_V1_BASELINE_UPDATE` never ran;
   - pre-port commits were neutral (wave 4's RV-pre said so; spot-check two);
   - the port commit = tool + `handfix.patch` + the kit's flip lines + the stub (wave 4's S.RV1 said so);
@@ -351,7 +362,9 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
   caps, `TEXTURE_BUDGET_BYTES`); the lazy policy holds the sim (a replay across a zone change hashes equal with and
   without the hold); debug frame advance still steps (`freezeSim` / `stepTo`); the context-loss e2e and the residency
   steady-state allocation guard green; both bundle checks and `pnpm bench:tv` pass; `DRAW_CALL_BUDGET` not raised;
-  `app.js` ≤ 512 KB gzip; no API newer than Chromium 68 in `packages/shell/src` and `packages/render-pixi/src`.
+  `app.js` ≤ 512 KB gzip; no API newer than Chromium 68 in `packages/shell/src` and `packages/render-pixi/src`; the
+  zone-load figure against R3-04's 2 s (decision W5-19), or its line `zone-load: unmeasured until the owner's M7 run
+  (R0-03)`, is in `R3-04.M4b`'s report.
 - **Re-run:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/memory packages/shell/test/boot \
@@ -386,7 +399,9 @@ main checkout, after `W05.DOCS-A`'s §17 push).
 
 ### W05.DOCS-A — The plan and the changelog (holds PLAN)
 
-- **Files (only these):** `plan_resolution.md`, `CHANGELOG.md`.
+- **Files (only these):** `plan_resolution.md`, `CHANGELOG.md`; the R2-02 helpers `docs/v2-run/helpers/load-core.mjs`,
+  `docs/v2-run/helpers/w5pre/*` and `docs/v2-run/helpers/w5/*` (deleted with `git rm`) and
+  `docs/v2-run/helpers/README.md` (their rows and section only).
 - **Write:**
   - R2-02's **As built** under its step: the tool's run and summary line, the hand fixes, `WORLD_SCALE` (1 → 3/2) and
     `WORLD_TOP_PAD` (0 → 36), the 15 frame-unit defaults, the kit (`test/port-v2/`, deleted by the port), the stub and
@@ -399,10 +414,20 @@ main checkout, after `W05.DOCS-A`'s §17 push).
     (W5-3);
   - §17: R2-02, R3-03, R3-04 → `done` (owner parts pending where they have some: R3-04's M7 bench run);
   - `CHANGELOG.md` `[Unreleased] — v2`: one entry per step;
+  - delete the R2-02 helpers whose users are done (A1, W1–W7 and T4c were on master before the port; README
+    "Delete when"). First check that no later wave file calls them:
+    `git grep -n "load-core\|helpers/w5" -- docs/v2-run/wave-0[6-9].md docs/v2-run/wave-1*.md` lists only wave 15's
+    leftover note (exit check 5). If it lists anything else, leave the helpers (wave 15's exit 5 deletes leftovers)
+    and say so in your report. Otherwise:
+    - `git rm docs/v2-run/helpers/load-core.mjs docs/v2-run/helpers/w5pre/exports.mjs docs/v2-run/helpers/w5pre/exports.txt docs/v2-run/helpers/w5pre/hurtbox.mjs docs/v2-run/helpers/w5/defaults.mjs docs/v2-run/helpers/w5/defaults-all.txt docs/v2-run/helpers/w5/literals.mjs docs/v2-run/helpers/w5/literals.txt`;
+    - in `docs/v2-run/helpers/README.md`: their eight rows of the main table, the section "A pre-flip (v1) tree for
+      `exports.mjs` / `defaults.mjs`", and in "Where they came from" the four rows whose "Here" names them (keep the
+      rows whose "Here" is "—");
   - then push, and say in your report that §17 changed (the orchestrator runs the board sync).
 - **Acceptance:** `grep -n "^| R2-02 |\|^| R3-03 |\|^| R3-04 |" plan_resolution.md` shows the new statuses; the §1
   rows exist (spot-check: `grep -n "^| \*\*W5-1\*\* |\|^| \*\*R2-N1\*\* |\|^| \*\*RR-8\*\* |" plan_resolution.md`
-  prints three rows).
+  prints three rows); `git ls-files docs/v2-run/helpers/` lists no `load-core.mjs`, `w5pre/` or `w5/` file (or your
+  report says why they stay).
 - **Never:** §17 cells of other steps; any other file; `python3 .claude/plan_board_v2.py`.
 
 ### W05.DOCS-B — `CLAUDE.md` and the conventions
@@ -445,7 +470,7 @@ main checkout, after `W05.DOCS-A`'s §17 push).
   `tileset-masks`, `coop-p2`, `p2-ingest`, `palette-recolour`, `residency-*`, `atlas-context-loss.spec`).
 - **Acceptance:** `grep -n "WORLD_SCALE\|WORLD_TOP_PAD\|loadPage\|unloadPage\|ImagePolicy" docs/dev/api-reference.md`
   finds a row for each; every test file added under `test/` in waves 2–5
-  (`git diff --name-only --diff-filter=A <wave-2 base>..origin/master -- test`) has a `test/README.md` row.
+  (`git diff --name-only --diff-filter=A $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- test`) has a `test/README.md` row.
 
 ### W05.DOCS-E — The asset pipeline and real art
 
@@ -464,7 +489,9 @@ main checkout, after `W05.DOCS-A`'s §17 push).
   `docs/dev/render-performance-review.md`, `docs/client/outstanding-work.md`, `tools/input-probe/README.md`.
 - **Write:** **the budget reasoning** (required by R3-04's scope: `DIST_BUDGET`, the atlas caps, `TEXTURE_BUDGET_BYTES`
   23 MiB at 640×360, the policies); the lazy residency, the hold and context loss; the bench's stand-in scenario; the
-  owner's M7 run in outstanding-work.
+  2-s zone-load target on the M7 (decision W5-19) and its status from `R3-04.M4b`'s report — the estimate with its
+  ratio, or "unmeasured until the owner's M7 run (R0-03)" — in `render-performance-review.md`; the owner's M7 run in
+  outstanding-work (with the zone-load measurement while it is unmeasured).
 - **Acceptance:** `grep -n "DIST_BUDGET\|TEXTURE_BUDGET_BYTES\|ATLAS_PNG_BYTES" docs/dev/platform-polish.md` finds each
   budget with its derivation; `docs/client/outstanding-work.md` lists the owner's M7 bench run;
   `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-docs.test.ts` green (it reads

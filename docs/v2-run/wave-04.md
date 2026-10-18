@@ -6,6 +6,15 @@
 >
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
+>
+> **Wave base:** when this wave's first agent starts, the orchestrator records the wave's base (the
+> `origin/master` SHA at that moment) once, in the main checkout, and notes it in `RUN_DIR/lanes-<wave>.md` too
+> (README step 5):
+> `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/w04-base.txt`.
+> Every command below that diffs against the wave base reads that file, `$(cat /home/sites/shmup-cup-run/w04-base.txt)`;
+> an agent's prompt may carry the SHA itself instead, never a placeholder.
+> The commands that diff against **wave 2's** base read `/home/sites/shmup-cup-run/w02-base.txt` (recorded
+> when wave 2 started, by the same command).
 
 **Steps:** R2-02 (the barrier review and the one port commit), R3-03 (V2a, V2b, V4a, V4b, V5), R3-04 (M1a, M1b,
 M1c, M2a, M2b, M4a, M4b), R0-04 (W1 owner-gated, W2).
@@ -72,13 +81,16 @@ carry over into wave 5).
   on master is neutral at `WORLD_SCALE` 1.
 - **Files:** read-only. You write only your report (`RUN_DIR/R2-02.RV-pre-report.md`).
 - **Steps:**
-  1. List the wave's base (the commit wave 2 started from; the orchestrator gives it) and every R2-02 prep commit
-     since: `git log --oneline <base>..origin/master`.
+  1. List wave 2's base (the `origin/master` SHA wave 2 started from, recorded in `RUN_DIR/w02-base.txt`) and every
+     R2-02 prep commit since: `git log --oneline $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master`.
   2. Neutrality on master:
-     `git diff --name-only <base>..origin/master -- content test/golden/'*.replay.json' content/demos test/fixtures/v1-baseline`
+     `git diff --name-only $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/'*.replay.json' content/demos test/fixtures/v1-baseline`
      must print nothing. `WORLD_SCALE` / `WORLD_TOP_PAD` are still `1` / `0` (`grep -n "WORLD_SCALE\|WORLD_TOP_PAD"
      packages/core/src/config/index.ts scripts/frame.mjs`). The three fingerprint tests are unedited since the base
-     (`git log <base>..origin/master -- <the 3 files>` is empty) and green.
+     and green; this prints nothing:
+     ```bash
+     git log $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
+     ```
   3. Make a kept kit worktree: `bash test/port-v2/two-scale.sh --keep -- true` (it prints the worktree's path). In
      it, run S's whole verify list (S's step 5 below), **except** the builds and e2e.
   4. Classify **every** failure: (a) expected, the derived files S re-pins (the three fingerprints); (b) an open item
@@ -96,7 +108,8 @@ carry over into wave 5).
   new one such as `R3-04.M3b`'s `residency-lazy-alloc`; `pnpm content:check`; typecheck).
 - **Acceptance:** zero unexplained failures; every prep commit neutral; skip numbers as in step 5. Findings are
   reported by severity (blocker / should-fix / nit); zero findings means zero nits too.
-- **Token:** none (read-only). Remove the kept worktree at the end (`git worktree remove <path>`).
+- **Token:** none (read-only). Remove the kept worktree at the end: `git worktree remove --force <path>`, with the
+  path step 3's command printed for `<path>` (`--force`: the tree holds the ported `content/` and the code flip).
 - **Traps:** this is the barrier, not the run's full suite: it updates nothing (no re-bless, no re-pin, no image).
   Never fix anything here; a finding goes to a fixer, then a **new** RV-pre review runs.
 
@@ -517,10 +530,21 @@ carry over into wave 5).
     test/integration/tv-render-bench.test.ts
   flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config test/bench/vitest.config.ts test/bench/render.perf.ts
   ```
-- **Acceptance:** the new scenario runs; `DRAW_CALL_BUDGET` 20 and the heap gate are **not raised**.
+- **Zone-load estimate (decision W5-19; R3-04's "zone-load time ≤ 2 s on the M7"):** check for the owner's R0-03
+  logs with `ls -d tools/input-probe/results/*-m7-bench/`.
+  - If it lists a folder: estimate a zone load as the stand-in pages' load time in headless Chromium (the shell's
+    `data-shmup-atlas-*` timings, or the bench's load timing) × the R0-02 desktop-to-M7 ratio (the same bench
+    scenario's time on the M7 ÷ its time in headless Chromium, read with `tools/input-probe/results/analyze-bench.mjs`).
+    Write the estimate, the ratio and their sources in your report, against 2 s.
+  - If it lists nothing (§17 has R0-03 `not started` today): write `zone-load: unmeasured until the owner's M7 run
+    (R0-03)` in your report.
+  Never guess a ratio.
+- **Acceptance:** the new scenario runs; `DRAW_CALL_BUDGET` 20 and the heap gate are **not raised**; the report holds
+  the zone-load estimate or its "unmeasured" line.
 - **Token:** none.
 - **Traps:** a bench file runs under the e2e lock; never run the whole `pnpm bench` (wave 15 does).
-- **Docs needs:** `render-performance-review.md` (a short note), `build-test-deploy.md`.
+- **Docs needs:** `render-performance-review.md` (a short note), `build-test-deploy.md`; the zone-load figure or its
+  "unmeasured" flag (for `W05.DOCS-F`).
 
 ### R0-04.W2 — Prompt-library edits 1–4 and the licence note
 

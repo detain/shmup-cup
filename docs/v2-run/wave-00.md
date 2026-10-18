@@ -6,8 +6,8 @@
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
 **Steps:** R2-01 (its last review loop and a CI triage) · **Gate to start:** — · **Exit (summary):** the C5 review
-loop at zero findings, nits included — its last review (review 4 of `8ff2bf6` + `543887b`, or a later round after a
-fix); the three runs of `W00.TRIAGE` green on myadmin1 (`--retries=0`). Otherwise the open items become `R2-01.F1`
+loop at zero findings, nits included — its last review (review 4 of the C5 fixes since `c67c7c9`, or a later round
+after a fix); the three runs of `W00.TRIAGE` green on myadmin1 (`--retries=0`). Otherwise the open items become `R2-01.F1`
 in [wave 1](wave-01.md).
 
 **Status: open** — until C5 review 3 of `c67c7c9` (and any fix → new review loop after it) reaches zero findings,
@@ -26,8 +26,10 @@ review 3 of `c67c7c9` (with the full Chromium e2e on myadmin1) found 3 should-fi
 patterns in sibling specs. C5 fix 3 `8ff2bf6` (`test(R2-01): one shared tick helper; the remaining e2e waits count
 ticks (C5 review 3)`, test files only: the new `test/e2e/ticks.ts` and `test/integration/e2e-ticks.test.ts`) and C5
 fix 4 `543887b` (`test(R2-01): every e2e boot wait allows BOOT_TIMEOUT_MS; fly-in and item polls count ticks (C5
-review 3)`, test files only) pushed those fixes and the sweep that followed. C5 review 4 (with the slow-host repro and
-the myadmin1 run) and any fix → new review round after it belong to this loop too. The driver checks the literal
+review 3)`, test files only) pushed those fixes and the sweep that followed, and C5 fix 5 `0cabaec`
+(`test(R2-01): rebind's taps and pauses count ticks, not rAF frames (C5 review 3)`, `test/e2e/rebind.spec.ts` only)
+the slow-host repro's last timeout. C5 review 4 of these fixes (`8ff2bf6`, `543887b`, `0cabaec` and any later C5
+fix; with the slow-host repro and the myadmin1 run) and any fix → new review round after it belong to this loop too. The driver checks the literal
 `**Status: open**` / `**Status: closed**` at the start of the status line: keep that spelling.
 
 - **The new run's orchestrator**, before wave 1, reads the status line on `origin/master`:
@@ -62,12 +64,12 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 - **Wave / lane / order:** wave 0, orchestrator, first.
 - **Depends on:** the C5 fixer's commits `293e885` (the second e2e gate `PORT_UNMEASURED` / `PORT_REASON`,
   `assertionsGated`) and `bc8e05d` (the sweep review's 9 stale comment sites), `c67c7c9` (the review-2 fix), and
-  `8ff2bf6` and `543887b` (C5 fixes 3 and 4, the review-3 fixes), all on master.
+  `8ff2bf6`, `543887b` and `0cabaec` (C5 fixes 3, 4 and 5, the review-3 fixes), all on master.
 - **Goal:** C5 review 2 (of `293e885` + `bc8e05d`) found 3 should-fix items and 1 nit, all fixed by C5 fix 2
   `c67c7c9` (test files only). C5 review 3 of `c67c7c9` found 3 should-fix items and 1 nit, fixed by C5 fixes 3
-  `8ff2bf6` and 4 `543887b` (test files only). The loop goes on — C5 review 4 of `8ff2bf6` + `543887b` (with the
-  full Chromium e2e on myadmin1 and the slow-host run), then any fix → new review — until a review reports zero
-  findings, nits included. A zero C5 review also closes the A5 (the flip) and U3 (the post-flip layout pass) loops.
+  `8ff2bf6`, 4 `543887b` and 5 `0cabaec` (test files only). The loop goes on — C5 review 4 of the fixes since
+  `c67c7c9` (with the full Chromium e2e on myadmin1 and the slow-host run), then any fix → new review — until a
+  review reports zero findings, nits included. A zero C5 review also closes the A5 (the flip) and U3 (the post-flip layout pass) loops.
 - **Files:** read-only; a fixer touches only the files a finding names.
 - **Tests:** the reviewer re-runs `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
   test/integration/e2e-gates.test.ts` and the gated specs under the lock
@@ -96,8 +98,9 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
   - `test/e2e/flight.spec.ts:153` — "arrow keys move the KESTREL; without input it stays put" (the idle drift was
     0.96 px against a 0.5 px limit, one flaky run on myadmin1).
 - **Files:** `test/e2e/campaign-run.spec.ts`, `test/e2e/debug-tools.spec.ts`, `test/e2e/flight.spec.ts`,
-  `test/e2e/raster.spec.ts`; the files of `8ff2bf6` and `543887b` (`test/e2e/ticks.ts`,
-  `test/integration/e2e-ticks.test.ts` and the specs they touched) only where a finding names them; app or shell
+  `test/e2e/raster.spec.ts`; the files of the C5 fixes since `c67c7c9` (`8ff2bf6`, `543887b`, `0cabaec`:
+  `test/e2e/ticks.ts`, `test/integration/e2e-ticks.test.ts` and the specs they touched) only where a finding names
+  them; app or shell
   source only for a real bug, reported first.
 - **Tests (on myadmin1, under the lock; `--retries=0` because the helper sets `CI=1`, which gives each test one
   retry and would hide a flake):**
