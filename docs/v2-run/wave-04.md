@@ -105,9 +105,13 @@ carry over into wave 5).
   4. Classify **every** failure: (a) expected, the derived files S re-pins (the three fingerprints); (b) an open item
      of a named subtask (say which); (c) a real problem nobody owns. Any (b) or (c) is a finding.
   5. Check the skip accounting: under the kit, `CONTENT_PORT_PENDING` is `false` (the stub), so the 80 port-pending
-     tests **run**; the 239 `GOLDENS_STALE` skips stay; the 41 frame `runIf` skips stay; the 6 cases `R2-02.T4b`
-     retired with `runIf(content still v1)` (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2) now skip — **286** in
-     all (if T4b's report gives another number of retired cases, use T4b's). Report the numbers you see.
+     tests **run**; the 223 `GOLDENS_STALE` skips stay (4 files; 260 skips across the 7 `test/golden` files, the
+     extra 37 from the v1-baseline suites' own frame gate — `wave5-scout.md` §0 item 18, measured by `fbade82`'s
+     re-run); the frame `runIf` skips stay (the old 41 is not countable from `test/golden`, so take it from the
+     run); the 6 cases `R2-02.T4b` retired with `runIf(content still v1)` (`rescale.test.ts` ×4,
+     `rescale-edge.test.ts` ×2) now skip (if T4b's report gives another number of retired cases, use T4b's) —
+     the old **286** in all does not reproduce; re-derive the expected total from a full-suite run at the port.
+     Report the numbers you see.
   6. Check `node scripts/content/rescale.mjs --factor 1 --dry-run` in the kit tree: 0 changes, 0 unclassified,
      0 errors (W5's ±768 bound for IRON LEVIATHAN's `parts[].x` is on master).
   7. Check the kit's flip replacements each matched exactly once (the script fails loudly otherwise) and that
@@ -226,9 +230,12 @@ carry over into wave 5).
     `residency-lazy-alloc`), **no budget raised**;
   - `world-scale.test.ts`' audit classifies every numeric export; `behavior-defaults-port.test.ts` covers every
     tunable of `BEHAVIOR_PARAM_UNITS`;
-  - after S, the skip count is 239 `GOLDENS_STALE` + 41 frame `runIf` + the 6 cases `R2-02.T4b` retired
-    (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2) = **286** (or T4b's own number, if its report gives another),
-    and 0 `CONTENT_PORT_PENDING` (the stub makes the wrappers run; wave 5 deletes them);
+  - after S, the skip count is re-derived from a full-suite run at the port: the old **286 = 239 + 41 + 6**
+    does not reproduce (`GOLDENS_STALE` skips 223, not 239 — 4 files, 260 across the 7 `test/golden` files
+    with the v1-baseline frame gate's own 37; the 41 frame `runIf`s are not countable from `test/golden`),
+    while `R2-02.T4b` retires the 6 cases (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2; or T4b's own
+    number, if its report gives another), and 0 `CONTENT_PORT_PENDING` (the stub makes the wrappers run;
+    wave 5 deletes them);
   - `test/e2e/gates.ts`' `PORT_UNMEASURED` is now `true` (23 tests skip on it on `bc8e05d`, plus debug-tools'
     gated assertions, plus every gate `R2-02.E0` added — by design) and `test/integration/e2e-gates.test.ts` stays
     green (its pin `contentPorted() === !CONTENT_PORT_PENDING` holds with the stub);
@@ -741,8 +748,9 @@ carry over into wave 5).
 - **Must hold:** `git diff --name-only <port>^ <port> -- test/golden/'*.replay.json' content/demos
   test/fixtures/v1-baseline` empty (`<port>` = the port commit's SHA from S's report); content equals tool + patch;
   the 4-way rules at 3.0 / 24 / 1,350; `v2-port*` green; every allocation guard the `find` lists green (66 on
-  `bc8e05d`, plus any new one) with no budget raised; 286 skips as S states (280 + T4b's 6); the build delta
-  reported.
+  `bc8e05d`, plus any new one) with no budget raised; the skips match S's corrected accounting (re-derived from
+  a full-suite run at the port — S's old **286** = 239 + 41 + 6, i.e. 280 + T4b's 6, does not reproduce); the
+  build delta reported.
 - **Report:** findings by severity; zero findings means zero nits.
 
 ### W04.RV-SIDE — Reviews of the side lanes (`<id>.RV1`, `<id>.RV2`, … per side subtask)
