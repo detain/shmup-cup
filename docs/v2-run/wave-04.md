@@ -390,17 +390,23 @@ carry over into wave 5).
 - **Goal:** a seeded generator that draws a zone of v2-detailed stand-in art at the bible's sizes, so R3-04 can
   measure memory and bytes before real art exists (decision W5-14).
 - **Files (only these):**
-  - `scripts/assets/standin.mjs` (new; not a pipeline input, so it may import `scripts/frame.mjs`) —
+  - `scripts/assets/standin.mjs` (new; never used by the shipped pipeline — only hashed with `scripts/assets/`
+    (`pipeline.mjs:84`), so it may import `scripts/frame.mjs`; adding the file makes `pnpm assets` rebuild once, and
+    the atlas bytes do not change) —
     `standinZone(zoneId, { seed })`: a seeded zone palette of 48–64 colours, every colour ≥ 3/255 (Chebyshev) from
     the 8 reserved cycle ramps; the far layer `FRAME_W × FRAME_H` (or `2 * FRAME_W` wide), opaque; 3–5 bands of
-    `FRAME_W` × 120–240, keyed; a 40-tile 12-px set;
-  - `test/scripts/assets/standin.test.ts` (new) — two runs byte-identical; the sizes; the colour caps.
+    `FRAME_W` × 120–240, keyed; a 40-tile 12-px set; named entropy constants (noise, detail density), documented in
+    the docblock as **uncalibrated** (RR-7: aimed at PNG-8 0.3–0.6 MB per 2048×1024 page);
+  - `test/scripts/assets/standin.test.ts` (new) — two runs byte-identical; the sizes; the colour caps (art bible
+    §4.3: zone palette 48–64; backdrop layer, boss body and tileset ≤ 32; enemy up to 30 px ≤ 16; larger enemy and
+    boss part ≤ 24 — the enemy and boss caps check `R3-04.M1b`'s sprites).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/standin.test.ts \
     test/integration/frame-literals-repo.test.ts
   ```
-- **Acceptance:** deterministic; bible sizes and colour caps hold; no banned frame literal.
+- **Acceptance:** deterministic; bible sizes and the §4.3 colour caps (as listed under Files) hold; no banned frame
+  literal.
 - **Token:** none.
 - **Traps:** exact maths and the seeded `scripts/assets/rng.mjs` only (no `Math.random`, no `Math.sin`); write
   `FRAME_W`, `FRAME_H` from `scripts/frame.mjs`, never `640` / `360`. Do not edit `scripts/assets/pipeline.mjs`.
@@ -412,14 +418,35 @@ carry over into wave 5).
 - **Depends on:** `R3-04.M1a` pushed.
 - **Goal:** complete the stand-in with sprites and pack it through the real pipeline in a temp tree.
 - **Files (only these):** `scripts/assets/standin.mjs` (≈ 10 enemies × 4–6 frames with `@flash`; a boss of ≈ 420 ×
-  `Math.round(0.6 * PLAYFIELD_H)` in 3 states plus its parts and `@flash`; `standinAtlas(zones)`: write the stand-ins
-  as PNG overrides with sidecars plus an `atlas-groups.json` into a **temp source tree**, then call `buildAtlas({
-  sourceDir })` — the real packer, groups and PNG-8 encoder); `test/scripts/assets/standin.test.ts`.
+  `Math.round(0.6 * PLAYFIELD_H)` in 3 states plus its parts and `@flash`; `standinAtlas(zones)`, steps below);
+  `test/scripts/assets/standin.test.ts`.
+- **Steps of `standinAtlas(zones)`:**
+  1. `mkdtemp` a **temp source tree** and copy all of `assets/source/` into it (`cpSync(DEFAULT_SOURCE_DIR, tmp,
+     { recursive: true })`, as `test/scripts/assets/interim-pipeline.test.ts:267` does; `tmp` = the temp tree's
+     path). `buildAtlas` reads the sprites, the fonts and `atlas-groups.json` from that one root
+     (`pipeline.mjs:360-367`, `:442`), and every name a groups file lists must be a sprite there, so today's sources
+     must come too.
+  2. Write each stand-in as a `<name>.sprite.json` pixel map into `sprites/standin/zone-<x>/…` of the temp tree (the
+     name is that path, e.g. `standin/zone-a/boss`), with `"native": true` and, for the enemies, the boss and its
+     parts, `"hitFlash": true`. Palette keys are single printable ASCII characters (`!` … `~`: 94, so 48–64 colours
+     fit). Not PNG overrides: a PNG with no code-defined sprite is added with `hitFlash: false`
+     (`sprite-source.mjs:624-633`), so the pipeline makes no `@flash` for it, and a `…@flash.png` is refused
+     (`SPRITE_NAME_PATTERN`, `:103`, has no `@`).
+  3. Overwrite the temp tree's `atlas-groups.json` with the shipped groups, unchanged, plus one group per stand-in
+     zone, `standin-zone-<x>`, listing that zone's stand-in names. The shipped groups keep today's zone sprites out
+     of `common` (every procedural sprite is always added, `pipeline.mjs:390`); the stand-ins' own groups keep the
+     stand-in pages pure — the zone's own v2 pages, PNG-8 within 256 colours, not mixed with today's interim zone
+     sprites (so `common` is the shipped `common`: the stand-in draws zone art only).
+  4. `buildAtlas({ sourceDir: tmp })` — the real packer, groups and PNG-8 encoder — then remove the temp tree.
 - **Tests:** as M1a.
-- **Acceptance:** one `common` group plus 9 zone groups; every page ≤ 2048²; deterministic.
+- **Acceptance:** `standinAtlas` of the nine zones gives the groups `common`, today's `zone-a` … `zone-i` and the
+  nine stand-in groups `standin-zone-a` … `standin-zone-i`; every page ≤ 2048²; each `standin-zone-<x>` group's
+  pages are PNG-8 (colour type 3) and their bytes, scaled to a 2048×1024 page (`Σ bytes × 2048 × 1024 / Σ (w × h)`),
+  fall in 300,000–600,000 (RR-7); deterministic.
 - **Token:** none.
 - **Traps:** the boss height is `Math.round(0.6 * PLAYFIELD_H)` (= 202), **never** a literal `200`: the repo scan
-  fails it. Never write into `assets/source/` or `assets/source/atlas-groups.json`; the temp tree is `mkdtemp`'d.
+  fails it. Never write into `assets/source/` or `assets/source/atlas-groups.json` (only read them); the temp tree is
+  `mkdtemp`'d. The stand-in groups are `standin-zone-<x>`, never `zone-<x>`: today's zone groups stay as shipped.
 - **Docs needs:** `asset-pipeline.md` (the stand-in atlas).
 
 ### R3-04.M1c — (optional) Calibrate the stand-in on real candidates
@@ -427,28 +454,35 @@ carry over into wave 5).
 - **Wave / lane / order:** wave 04, lane 8, optional, after `R3-04.M1b`; skip it if no slot is free (decision RR-7).
 - **Depends on:** `R3-04.M1b` pushed; the candidates folder on the host.
 - **Goal:** tune `standin.mjs`' entropy knobs so its PNG-8 bytes per Mpx match real AI art.
-- **Files (only these):** `scripts/assets/standin.mjs` (the docblock's constants only).
+- **Files (only these):** `scripts/assets/standin.mjs` (only the entropy constants and their docblock);
+  `test/scripts/assets/standin.test.ts` (only `R3-04.M1b`'s byte band, and only if the measured bytes move it out of
+  RR-7's 0.3–0.6 MB — then the commit body says so).
 - **Steps:** ingest about 6 **Qwen-Image** candidates (a backdrop, a boss, an enemy sheet; Apache-2.0) from
   `art-prompts/v2/candidates/` into a temp `--root` with `art-prompts/ingest/ingest.mjs`; measure their PNG-8 bytes
-  per Mpx; set the knobs; record the numbers in the commit body and the docblock.
+  per Mpx; set the knobs; replace the docblock's **uncalibrated** mark with the measured numbers, and record them in
+  the commit body too.
 - **Tests:** as M1a.
 - **Acceptance:** the measured bytes per Mpx are in the commit body; the generator stays deterministic.
 - **Token:** none.
 - **Traps:** **the art data on myadmin1 is a snapshot** copied from the old host (`art-prompts/v2/candidates/`,
   961 MB, git-ignored; the picker's `choices.json` at `/home/sites/mystage/public_html/shmup-cup/data/choices.json`,
   not served). M1c needs only candidate images, not the picks: ask the owner for a fresh `choices.json` copy **only
-  when M1c wants winners** (never read the snapshot's picks as current). **No FLUX candidate**, even as a reference (RR-4). Nothing from `candidates/` is
-  committed. If skipped, the constants are marked "uncalibrated" (RR-7: PNG-8 at 0.3–0.6 MB per 2048×1024 page).
+  when M1c wants winners** (never read the snapshot's picks as current). **No FLUX candidate**, even as a reference
+  (RR-4). Nothing from `candidates/` is committed. If skipped, the constants stay marked "uncalibrated" (as M1a wrote
+  them; RR-7: PNG-8 at 0.3–0.6 MB per 2048×1024 page).
 
 ### R3-04.M2a — Measure the stand-in against the memory budget
 
 - **Wave / lane / order:** wave 04, lane 5, after `R3-04.M1b`.
 - **Depends on:** `R3-04.M1b` pushed.
 - **Goal:** a test that measures each stand-in zone and `common` against the texture budget, in bytes.
-- **Files (only these):** `test/integration/standin-budget.test.ts` (new): per zone and for `common`, the pages, and
-  `estimateStageMemory({ …, needs, imagePolicy: 'none' | 'resident' })` (`packages/shell/src/memory/index.ts:1097`):
-  textures + images ≤ `TEXTURE_BUDGET_BYTES` (`:261`, 23 MiB at 640×360), and the PNG bytes; with
-  `SHMUP_STANDIN_PRINT=1` it prints the table.
+- **Files (only these):** `test/integration/standin-budget.test.ts` (new): for `common` and per stand-in zone, the
+  pages and `estimateStageMemory({ …, needs, imagePolicy })` (`packages/shell/src/memory/index.ts:1097`; `needs`
+  built by hand: `common`'s pages global, each `standin-zone-<x>` page needed by zone x's stage only, today's
+  `zone-<x>` pages by none). **The gate:** textures + images ≤ `TEXTURE_BUDGET_BYTES` (`:261`, 23 MiB at 640×360)
+  under `imagePolicy: 'none'` (W5-15's policy: the decoded images dropped) **and** `withinBudget` (total ≤
+  `MEMORY_BUDGET_BYTES`, 100 MiB, `:123`); the `'resident'` figure is printed beside it, not gated. Also the PNG
+  bytes; with `SHMUP_STANDIN_PRINT=1` it prints the table.
 - **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/standin-budget.test.ts`.
 - **Acceptance:** the budgets in bytes; the printed table in the commit body.
 - **Token:** none.
@@ -464,8 +498,12 @@ carry over into wave 5).
 - **Files (only these):**
   - `apps/tizen/scripts/check-bundle.mjs` — `DIST_BUDGET` (`:97`) and its derivation in the docblock (`:82-96`):
     `common` + 9 stand-in zones + code + recorded audio + margin;
-  - `apps/tizen/test/scripts/check-bundle.test.ts` (`:278` the constants, `:313` the "8192.0 KB" message),
-    `apps/tizen/test/scripts/check-bundle-budgets.test.ts` (`:124-133`);
+  - `apps/tizen/test/scripts/check-bundle.test.ts` (`:277` and `:300` the test names' "8 MB", `:278` the constants,
+    `:313` the "8192.0 KB" message), `apps/tizen/test/scripts/check-bundle-budgets.test.ts` (`:3` the docblock's
+    "8 MB", `:124-133`);
+  - `apps/webos/test/scripts/check-bundle.test.ts` (`:142-147`, the shared-budgets pin — its `8 * 1024 * 1024`);
+  - `apps/tizen/README.md` (`:57`) and `apps/webos/README.md` (`:81`) — their "`dist/` ≤ 8 MB" (no docs agent owns
+    these two READMEs);
   - `test/scripts/assets/atlas-budget.ts` — `ATLAS_PNG_BYTES_CAP` (`:15`) becomes a `common` cap plus a per-zone cap
     and a total; keep the export name, or update its two users `test/scripts/assets/interim-pipeline.test.ts:46,330`
     and `test/integration/cjk-budget.test.ts:47,127-128`;
@@ -478,14 +516,17 @@ carry over into wave 5).
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project webos apps/webos/test/scripts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/cjk-budget.test.ts \
     test/scripts/assets/interim-pipeline.test.ts test/integration/tv-engine-floor.test.ts
-  pnpm --filter @shmup/tizen build && pnpm --filter @shmup/webos build
+  pnpm --filter @shmup/tizen build && pnpm --filter @shmup/webos build && pnpm bench:tv
   ```
-- **Acceptance:** every budget has its derivation in a docblock; both bundle checks pass; the webOS check imports
-  the Tizen budgets (it must not repeat them).
+- **Acceptance:** every budget has its derivation in a docblock; both bundle checks pass, and so does `bench:tv`
+  (`DIST_BUDGET` also governs `dist-bench/`, `check-bundle.mjs:399`); the webOS check imports the Tizen budgets (it
+  must not repeat them).
 - **Token:** none.
 - **Traps:** the M3-03 CJK figures stay at `artScale: 1` (`cjk-budget.test.ts`); the scale-1 digest pin is not
   yours to touch. A budget is set from a measurement with its derivation, never raised to make a test pass.
-- **Docs needs:** `build-test-deploy.md` (`DIST_BUDGET`), `platform-polish.md` (the budget reasoning).
+- **Docs needs:** every "8 MB" / "8 MiB" said of `DIST_BUDGET`: `build-test-deploy.md` (`DIST_BUDGET`; `:149`,
+  `:168`, `:310`), `platform-polish.md` (the budget reasoning; `:346`), `api-reference.md` (`:1735`),
+  `debug-and-replays.md` (`:707`, `:711`), `real-assets.md` (`:31`).
 
 ### R3-04.M4a — The stand-in in the TV bench's decode scenario
 
@@ -493,27 +534,61 @@ carry over into wave 5).
 - **Depends on:** `R3-04.M1b` on master.
 - **Goal:** the TV bench decodes one stand-in zone plus `common` instead of the two synthetic 2048² pages (decision
   RR-8 / W5-17), and renders one frame from them.
+- **The new ids and bands (decided here):**
+  - `DECODE_PAGE_IDS` (`apps/tizen/scripts/bench-decode.mjs:53`) becomes `['standin-zone-a', 'common', 'zone-a']`:
+    the stand-in zone A's page (group `standin-zone-a` of `standinAtlas(['zone-a'])`, `R3-04.M1b`) replaces
+    `rgba-2048` / `png8-2048`. If that group packs onto two pages, the second is `standin-zone-a-2`, listed right
+    after the first. The shipped `common` and `zone-a` pages stay as they are; `common` is also the stand-in's
+    `common` (M1b's atlas draws zone art only, so its `common` page is the shipped one — no second copy).
+  - `DECODE_BYTE_BANDS` (`:61-62`) becomes `{ standin: [300_000 / (2048 * 1024), 600_000 / (2048 * 1024)] }` — RR-7's
+    PNG-8 0.3–0.6 MB per 2048×1024 page, in bytes **per pixel** — and the tests check the stand-in pages together
+    against it (`Σ bytes / Σ (width × height)`), as M1b's acceptance does.
+  - `decodeArtImage`, `DECODE_PAGE_SIZE` and `DECODE_SEED` stay exported (their tests and the sha pins in
+    `test/integration/tv-render-bench.test.ts` stay), but the build no longer ships a page drawn by them: say so in
+    the module docblock.
+  - **The 20th page load:** after `decode` (index 18, `DECODE_SCENARIO_INDEX` unchanged) the bench loads the page once
+    more for `standin-zone` (index 19; headless: `?scenario=standin-zone`), draws one `FRAME_W × FRAME_H` frame from
+    the stand-in pages (bands, tiles, a row of enemies, the boss) and measures it like a render scenario. Its record
+    is a `RenderBenchRecord` (scenario `standin-zone`, index 19 — the type in `packages/shell` does not change),
+    stored and sent like a render scenario's. `BENCH_RUN_LENGTH` becomes 20; the 18-scenario matrix (`matrix.ts`)
+    does not change.
 - **Files (only these):**
-  - `apps/tizen/scripts/bench-decode.mjs` — `DECODE_PAGE_IDS` (`:53`: `rgba-2048`, `png8-2048`, `common`, `zone-a`)
-    and `DECODE_BYTE_BANDS` (`:61-62`): one stand-in zone plus `common` replace `rgba-2048` / `png8-2048`;
-  - `apps/tizen/src/bench/decode.ts` (`:64`, the id list), `apps/tizen/src/bench/run.ts` and/or
-    `apps/tizen/src/bench/scene.ts` (a 20th page load renders a `FRAME_W × FRAME_H` frame from those pages);
-  - `apps/tizen/test/scripts/bench-decode.test.ts`, `apps/tizen/test/bench/bench-decode.test.ts`,
-    `apps/tizen/test/scripts/check-bundle-bench.test.ts`;
-  - `tools/input-probe/results/analyze-bench.mjs` (`decodeZoneEstimate`, `:272-275`, reads the new ids) and
-    `tools/input-probe/test/analyzeBench.test.ts`.
+  - `apps/tizen/scripts/bench-decode.mjs` — the ids, the bands and `buildDecodePages` (the stand-in pages from
+    `standinAtlas(['zone-a'])`, `scripts/assets/standin.mjs`);
+  - `apps/tizen/scripts/bench-atlas.mjs` — the virtual module gains the stand-in pages' manifest for the 20th load
+    (its page URLs are the same `decode-standin-zone-a*.png` files), and the docblock's decode list (`:42-43`);
+    `apps/tizen/src/bench/virtual-bench.d.ts` — its declaration, and the id / URL docblocks (`:33`, `:41`);
+  - `apps/tizen/src/bench/decode.ts` (`:48` `BENCH_RUN_LENGTH`, `:7` and `:64` the docblocks), `run.ts`, `scene.ts`,
+    `state.ts` (the docblocks at `:11-13` and `:39-43`), `results.ts` (the run lines, `:391` and `:414-420`) and the
+    barrel `index.ts` (the docblock `:34-41`, the exports `:173-178`) — only for the 20th page load;
+  - `packages/shell/src/telemetry/index.ts` — the `DecodeBenchPage` id docblock (`:1656`) only;
+  - tests: `apps/tizen/test/scripts/bench-decode.test.ts`, `apps/tizen/test/bench/bench-decode.test.ts` (`:147`, the
+    run length), `apps/tizen/test/scripts/check-bundle-bench.test.ts`, `apps/tizen/test/build/bench-build.test.ts`
+    (`:86-87` the file list, `:105-119` the bands), `apps/tizen/test/scripts/bench-atlas.test.ts` (`:278-279`),
+    `apps/tizen/test/bench/{bench,bench-state,bench-run,bench-results,bench-scene,bench-scene-alloc}.test.ts` and
+    `fake-record.ts` (only the ids, the run length and the 20th load), `test/integration/tv-render-bench.test.ts` (`:236`, the run
+    length; the 20th load — `R3-04.M4b` edits this file again after you);
+  - `tools/input-probe/results/analyze-bench.mjs` — `decodeZoneEstimate` (`:272-288`) reads the new ids: `common`
+    plus the stand-in zone pages, each at its median (no ×2 — the zone's pages are measured); a session recorded
+    before this change (`rgba-2048` / `png8-2048`) keeps today's formula. The `standin-zone` record is printed on its
+    own line, not in the matrix tables. And `tools/input-probe/test/analyzeBench.test.ts` (a case for the new ids;
+    the old fixture and its cases stay).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen apps/tizen/test
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tv-render-bench.test.ts
   pnpm bench:tv
   cd tools/input-probe && npm ci && npm run verify
   ```
-- **Acceptance:** `dist-bench/` passes `check-bundle`; the scenario matrix stays 18; the analyser reads the new ids.
+- **Acceptance:** `dist-bench/` passes `check-bundle`; the scenario matrix stays 18 and a run is 20 page loads; the
+  analyser reads the new ids (and still a session with the old ones).
 - **Token:** none.
 - **Traps:** never package or install the bench (`bench:tv:package` / `bench:tv:install` are the owner's); the bench
   is never in the game's bundle (check-bundle rule 9). Chromium 68 floor in `apps/tizen/src/bench/*`.
   `tools/input-probe` is its own npm project (not linted by the root ESLint).
-- **Docs needs:** `tools/input-probe/README.md`, `build-test-deploy.md` (the bench scenario),
+- **Docs needs:** `tools/input-probe/README.md`, `build-test-deploy.md` (the bench scenario; `:310`, `dist-bench/`'s
+  size), `api-reference.md` (`:1748`, the `bench-decode.mjs` row: `DECODE_PAGE_IDS`, now
+  `['standin-zone-a', 'common', 'zone-a']`, and `DECODE_BYTE_BANDS`; `:1661`, the `DecodeBenchPage` id list),
   `docs/client/outstanding-work.md` (the owner's M7 run).
 - **Owner (Manual):** run `bench:tv` with the stand-in scenario on the M7 (R0-03).
 
