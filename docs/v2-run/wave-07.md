@@ -24,10 +24,10 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
 | 1 | `R2-04.F1` → `R2-04.P2` → `R2-04.G` → `R2-04.REL` | `core/fx`, `content/fx/particles.fx.json`, the zone content (from the patches), `test/golden/**`, the 10 `package.json` | F1: none (patch) · P2: FP · G: GOLDEN + FP · REL: none | G: batch A + `display-options attract determinism` + F (Firefox) |
-| 2 | `R2-04.P1` → `R2-04.P3` → `R2-04.P4` | `packages/render-pixi/src/effects/{index,crt,shaders,layer-effects}.ts` | `layer-effects.ts` (P4 before R3-06.L3); FP only if the shell frame fingerprint moves | P3: `display-options` |
+| 2 | `R2-04.P1` → `R2-04.P3` → `R2-04.P4` | `packages/render-pixi/src/effects/{index,crt,shaders,layer-effects}.ts` | `layer-effects.ts` (P4 before R3-06.L3); FP only if the shell frame fingerprint moves | P3: `mode7 display-options` |
 | 3 | `R2-04.Z1` → `R2-04.Z3` | read-only + patches for zones A–C, then G–I | none (patches, never pushed) | none |
 | 4 | `R2-04.Z2` → `R2-04.Z4` | read-only + patches for zones D–F, then bonus / boss rush / loops | none (patches) | none |
-| 5 | `R3-06.L1` → `R3-06.L2` → `R3-06.L4` → `R3-06.L6` | `core/data`, `core/stage`, `core/presentation`, `core/world`, `core/enemies`, `core/bosses`, the new `decor-range` stage; L2: `RENDER_GROUP_LAYERS` only; L4: `render-pixi/src/{sprites,renderer}` after `R3-06.L3` | DATA-INDEX; the core barrel (L2, L4: additions only); FP at L1 (content-DB `examples` only), L2, L4, L6 | L6: `decor raster stage` |
+| 5 | `R3-06.L1` → `R3-06.L2` → `R3-06.L4` → `R3-06.L6` | `core/data`, `core/stage`, `core/presentation`, `core/world`, `core/enemies`, `core/bosses`, the new `decor-range` stage; L2: `RENDER_GROUP_LAYERS` only; L4: `render-pixi/src/{sprites,renderer}` after `R3-06.L3` | DATA-INDEX; the core barrel (L2, L4: additions only); FP at L1 (content-DB `examples` only), L2, L4, L6 | L2: `render-groups` · L6: `decor raster stage` |
 | 6 | `R3-06.L5` → `R3-06.L3` → `R3-06.L7` | `scripts/content/tiled-import.mjs`, `render-pixi/src/{layers,renderer}`, the render bench | RP-BARREL (L3) | none |
 | 7 | `R4-P.P1` → `R4-P.P2` | `scripts/assets/procedural/**` (split + stubs + registry), the campaign credits line, `test/scripts/assets/procedural*.test.ts` | the registry `procedural/index.mjs`; `content/campaign/main.campaign.json` (P1, credits only); FP at P1 (the credits); `test/scripts/assets/pipeline-edge.test.ts` (P1 first, rule 10) | none |
 | 8 | `R4-P.P3` → `R4-P.P4` | `scripts/assets/{pipeline,sprite-source,font}.mjs`, `scripts/art-origins.mjs`, the new `scripts/assets/v2kit.mjs` (outside `procedural/`) | `test/scripts/assets/pipeline-edge.test.ts` after `R4-P.P1` (rule 10) | none |
@@ -37,7 +37,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   R2-04 patches a loop per patch as it lands (`R2-04.patches.RV`, before `R2-04.G` starts); then the step reviews
   `R2-04.RV`, `R3-06.RV`, `R4-P.RV`.
 - **Docs item:** `W07.DOCS-A` (PLAN) … `W07.DOCS-E`, after the step reviews are at zero.
-- **e2e passes:** two. Order: `R2-04.P3` and `R3-06.L6` first, `R2-04.G` last.
+- **e2e passes:** two. Order: `R2-04.P3` and `R3-06.L2` first, then `R3-06.L6` (L2's lane, so never at the same
+  time), `R2-04.G` last.
 
 ## Rules for this wave
 
@@ -270,14 +271,30 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     pitch-dependent shader term only if the constants alone cannot match the look (GLSL ES 1.0 only).
   - `packages/render-pixi/src/effects/crt.ts` — only if `CRT_LOOKS` / `writeLook` must change.
   - `packages/render-pixi/test/effects/crt.test.ts`, `crt-blit.test.ts`, `shaders.test.ts`.
+  - `test/e2e/mode7.spec.ts` — only the bounds of its two CRT tests and the comments that derive them, and only if the
+    retuned constants move them: 'the CRT settings only darken the picture, and off restores it' (`light < base`,
+    `full < light`, `light > base * 0.5`) and 'the CRT look covers the picture and nothing else, and follows a boxed
+    picture' (the vignette window `relative` 0.72 … 0.85 and its comment "~`1 − CRT_FULL_VIGNETTE` (0.78)"). These two
+    tests, not `display-options.spec.ts`, sample the CRT (`display-options` only saves `crtFilter: 'off'`).
+- **How to read the numbers:** the two CRT tests compute `base` / `light` / `full` (`meanLevel`) and `relative`
+  (the vignette ratio) but print nothing. In your worktree only, add one temporary line after each:
+  `console.log('P3 CRT levels', JSON.stringify({ base, light, full }));` after `const full = meanLevel(shots.full);`,
+  and `console.log('P3 CRT vignette', relative);` after `const relative = edge.ratio / middle.ratio;` (the `list`
+  reporter prints a test's console output). Run the two tests once **before** you edit `shaders.ts`:
+  ```bash
+  bash docs/v2-run/helpers/e2e-batch.sh mode7.spec.ts -g 'CRT settings only darken|CRT look covers'
+  ```
+  then retune and run the full lines below; the second run prints the "after" numbers. Delete both `console.log`
+  lines before the commit (`git diff test/e2e/mode7.spec.ts` then shows only bound or comment changes, or nothing).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/effects/crt.test.ts packages/render-pixi/test/effects/crt-blit.test.ts packages/render-pixi/test/effects/shaders.test.ts
   pnpm --filter @shmup/render-pixi typecheck
-  bash docs/v2-run/helpers/e2e-batch.sh display-options.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh mode7.spec.ts display-options.spec.ts
   ```
-- **Acceptance:** tests green; the e2e spec green; the report has before/after screenshots' numbers (the brightness the
-  spec samples) or a short description.
+- **Acceptance:** tests green; both e2e specs green; the report has, before and after, the mean levels base / light /
+  full that `mode7.spec.ts`'s first CRT test measures and the vignette ratio its second CRT test measures (both
+  tests attach their screenshots: `dimension-crt-light` / `-full`, `blit-crt-classic` / `-wide`).
 - **Token:** none. **e2e:** one of the wave's two passes.
 - **Traps:** WebGL1 / GLSL ES 1.0 only (`test/integration/tv-engine-floor.test.ts`, `glsl-es100.ts` in the effects
   tests); the CRT pass attaches and detaches only at a setting edge — never per frame.
@@ -421,6 +438,15 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `content/stages/README.md`, `content/stages/example.stage.json` — the format sample (validated by
     `content:check`).
   - `packages/core/test/data/data-stage-decor.test.ts` (new).
+  - `packages/core/test/data/stage-edge.test.ts` — only the case 'allows 8 parallax bands, not 9' (in
+    `describe('core/data stage edge — schema limits'`; it pins today's cap `{ max: 8 }` and the issue
+    `'parallax must have at most 8 items'`): make it test the new cap instead — 6 bands plus one `fore` band load with
+    no issue; a 7th non-`fore` band, and a second `fore` band, are each rejected with the issue messages your
+    validation writes — and rename it to match (e.g. 'allows 6 parallax bands plus one foreground, not 7 or a second
+    foreground').
+  - `packages/core/test/data/data-edge.test.ts` — only the expected message of `parallax[0].layer` in the case 'stage:
+    checks the camera, tilemap and parallax blocks': `'must be one of: far, mid'` → `'must be one of: far, mid, fore'`
+    (so add `'fore'` last in the parallax `layer` field's `s.enumOf([...])` list).
   - `test/integration/content-db-fingerprint.test.ts` — **only `PINNED.examples`** (re-pin at push time): the test
     digests every `example.*.json` (`:188-196`), so the decor sample in `example.stage.json` moves that one table.
 - **Tests (targeted, run all of them):**
@@ -474,6 +500,22 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     `LayerId.DecorBack` and `LayerId.DecorFront`; the "not grouped" loop at `:30` gains `LayerId.Foreground`.
   - `packages/render-pixi/test/layers/layers-render-groups-edge.test.ts` — `:102` `left` →
     `['BG_FAR', 'BG_MID', 'FOREGROUND', 'DEBUG']`.
+  - `test/e2e/render-groups.spec.ts` — **only its layer pins** (batch C). It picks layer containers by their code
+    (`layers.layers[2]`), so the renumbering breaks it. Find each pin by its text, not by line (wave 6's `R2-03.E3`
+    removed the HUD control's gate, so the lines moved). The new codes: `DECOR_BACK` 2, `TERRAIN` 3, `DECOR_FRONT` 4,
+    `GROUND_ENEMIES` 5, `AIR_ENEMIES` 6, `PLAYER_SHOTS` 7, `PLAYER` 8, `HITBOX` 9, `ITEMS` 10, `FX` 11, `FOREGROUND` 12,
+    `ENEMY_BULLETS` 13, `HUD` 14, `UI` 15, `DEBUG` 16. The edits:
+    - `const RENDER_GROUP_COUNT = 11;` → `13`, and in the file's top docblock the word "eleven" of "called on all
+      eleven grouped layer containers" (it wraps onto the next line) → "thirteen";
+    - the controls of 'the comparison would catch a layer drawn in the wrong place': the list `[2, 6, 11]` (TERRAIN,
+      PLAYER, HUD) → `[3, 8, 14]`, and any text that still says "layer 11" → "layer 14";
+    - the busy list of 'every busy layer group really contributes pixels of its own':
+      `[2, 3, 4, 5, 6, 8, 9, 10, 11]` → `[3, 5, 6, 7, 8, 10, 11, 13, 14]`, and `expect.arrayContaining([2, 6, 11])` →
+      `expect.arrayContaining([3, 8, 14])`;
+    - both `layers.layers[13]` (`DEBUG`, in 'is 0 or very near it while the game plays, …': `.isRenderGroup` and
+      `.enableRenderGroup()`) → `layers.layers[16]`;
+    - nothing else in the spec (no lookup by label, no new test): these are exact replacements, and no later wave
+      renumbers `LayerId` again.
   - the three fingerprints' `PINNED` tables (re-pin).
 - **Decision (state it in the commit body):** `DecorBack` and `DecorFront` are render groups: culled decor sprites
   toggle `visible`, which is the rule of `RENDER_GROUP_LAYERS`' docblock, and `test/integration/render-groups.test.ts`
@@ -487,6 +529,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/frame-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/render-groups.test.ts
   pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/render-pixi typecheck
+  bash docs/v2-run/helpers/e2e-batch.sh render-groups.spec.ts
   ```
   then, under the land lock, the FP re-pin (README rule 6).
 - **Acceptance:**
@@ -496,8 +539,10 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     docblock sentence, the two render-group tests). The other tests use `LayerId.*` names and `LAYER_COUNT` (e.g.
     `packages/render-pixi/test/layers/layers.test.ts:17-37`); if another one pins a number, stop and report;
   - `packages/core/test/index.test.ts` green (every new runtime export is in the barrel);
+  - `test/e2e/render-groups.spec.ts` green with the new codes (13 groups found and turned off; the TERRAIN, PLAYER
+    and HUD controls change the picture);
   - the fingerprints re-pinned with the reason "R3-06: three new layers (RR-6) renumber the draw layers".
-- **Token:** FINGERPRINTS (push time); the core barrel (only additions).
+- **Token:** FINGERPRINTS (push time); the core barrel (only additions). **e2e:** one of the wave's two passes.
 - **Traps:**
   - Renumbering `LayerId` moves the presentation fingerprint: expected, re-pin. It must not move a golden (layers are
     not hashed by `hashWorld`).
@@ -513,11 +558,13 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Wave / lane / order:** wave 07, lane 5, after `R3-06.L2`.
 - **Depends on:** `R3-06.L2` **and** `R3-06.L3` on `master` (L4 edits the renderer and the layer file after L3 is done
   with them).
-- **Goal:** an optional `glow` sprite on enemy and boss-part specs, drawn additively above its owner — presentation
-  only.
+- **Goal:** an optional `glow` sprite on enemy and boss-part specs, and on a stage's `decor` entries (the terrain
+  glows: a decor glow placed over the terrain), drawn additively above its owner — presentation only.
 - **Files (only these; checked on `8ff2bf6`):**
-  - `packages/core/src/data/index.ts` — the enemy and boss-part `glow` field (with its unit rows in
-    `packages/core/src/data/units.ts`).
+  - `packages/core/src/data/index.ts` — the enemy, boss-part and decor `glow` field (with its unit rows in
+    `packages/core/src/data/units.ts`, if the field carries a number).
+  - `packages/core/src/stage/index.ts` — only the decor glow view (beside `R3-06.L2`'s decor compile and cull; lane 5,
+    so L2 is done with the file).
   - `packages/core/src/enemies/index.ts`, `packages/core/src/bosses/index.ts` — the glow views (sync only).
   - `packages/core/src/world/index.ts` — the glow batches join the view's batch list (assembled at `:1819-1937`).
   - `packages/core/src/presentation/index.ts` — a blend field on the batch view (or a glow view): `SpriteBatchView` has
@@ -527,18 +574,20 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `packages/render-pixi/src/renderer/index.ts` — binding the glow batch in `bindWorld` (`:1094-1140`).
   - `packages/render-pixi/src/layers/index.ts` — only if a glow batch sits on a layer that is not yet in
     `RENDER_GROUP_LAYERS`.
-  - tests: `packages/core/test/enemies/` and `packages/core/test/bosses/` (one new file each, e.g.
-    `enemies-glow.test.ts`, `bosses-glow.test.ts`), `packages/render-pixi/test/sprites/sprites-glow.test.ts` (new).
+  - tests: `packages/core/test/enemies/`, `packages/core/test/bosses/` and `packages/core/test/stage/` (one new file
+    each, e.g. `enemies-glow.test.ts`, `bosses-glow.test.ts`, `stage-decor-glow.test.ts`),
+    `packages/render-pixi/test/sprites/sprites-glow.test.ts` (new).
   - the three fingerprints' `PINNED` tables (re-pin, only if they move).
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies packages/core/test/bosses packages/core/test/data packages/core/test/world packages/core/test/index.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies packages/core/test/bosses packages/core/test/stage packages/core/test/data packages/core/test/world packages/core/test/index.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/sprites packages/render-pixi/test/renderer packages/render-pixi/test/layers
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-units.test.ts test/integration/render-groups.test.ts
   pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/render-pixi typecheck
   ```
-- **Acceptance:** glows additive and presentation-only; goldens green and unchanged; the enemies / bosses allocation
-  guards green with no budget raised.
+- **Acceptance:** glows additive and presentation-only, on enemies, boss parts and decor entries; goldens green and
+  unchanged; the enemies / bosses allocation guards and `R3-06.L2`'s decor guard
+  (`packages/core/test/stage/stage-decor-alloc.test.ts`) green with no budget raised.
 - **Token:** DATA-INDEX (lane 5); the core barrel (additions only); FINGERPRINTS if they move.
 - **Traps:**
   - A Pixi `blendMode` setter copies state: one sprite set per blend mode, never switched per frame.
@@ -547,7 +596,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     (`test/integration/render-groups.test.ts:126-150`); prefer the owner's own layer, which already is one.
   - Never register a glow array in the World's pool registry (`hashWorld` mixes registered pools: the goldens would
     move).
-- **Docs needs:** `docs/dev/presentation-polish.md`, `docs/dev/content-data.md` (the `glow` field).
+- **Docs needs:** `docs/dev/presentation-polish.md`, `docs/dev/content-data.md` (the `glow` field, on enemies, boss
+  parts and decor entries).
 
 ### R3-06.L6 — A test stage with every feature and its art
 
@@ -555,10 +605,18 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Depends on:** `R3-06.L4`, `R4-P.P1` (the `decor.mjs` stub), `R4-P.P3` (hashes `scripts/frame.mjs`; the v2-path
   rules) and `R4-P.P4` (`v2kit.offRamp`) on `master`.
 - **Goal:** `content/stages/decor-range.stage.json` uses every R3-06 feature (decor back and front, 6 bands with
-  `yFactor` and slow frames, the foreground, glows), with procedural art in `decor.mjs`. Reached with
-  `?scene=flight&stage=decor-range` (dev stages have no list).
+  `yFactor` and slow frames, the foreground, glows (on an enemy, a boss part and a decor entry — the decor entry
+  outside every collision tile, as the trap "Decor never sits inside a collision tile" says, its glow drawn over the
+  terrain beside it)), with procedural art in `decor.mjs`. Reached with `?scene=flight&stage=decor-range` (dev stages
+  have no list).
 - **Files (only these):**
   - `content/stages/decor-range.stage.json` (new).
+  - `content/enemies/decor-range.enemies.json` (new) — the range's own enemies, each under a new id: at least one
+    small enemy with a `glow`, and one boss copied from `content/enemies/test-boss.enemies.json` (TRIAL WARDEN; give
+    the copy its own `code` and `displayName` too) with a `glow` on one part, met by a `warning` event in the stage
+    (as in `content/stages/test-boss.stage.json`). Reuse existing sprites, scripts and movers; only the `glow` sprites
+    are new (from `decor.mjs`). Never add `glow` to an existing enemies file: all of them are shipped (the zones and
+    the other ranges), and a glow there changes their look and fingerprints.
   - `scripts/assets/procedural/decor.mjs` (the stub from `R4-P.P1`, filled; do not edit `procedural/index.mjs`).
   - `test/e2e/decor.spec.ts` (new; joins batch G — README "The standard e2e batches").
   - `test/golden/v1-baseline.test.ts` — only the case 'covers every shipped stage, and every zone on loop 2 too':
