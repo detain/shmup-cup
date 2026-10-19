@@ -18,7 +18,7 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 | 1 zone H | `R5-08.S4c → R5-08.S6 → R5-08.RV → R5-08.S7` | `zone-h.*` (the four echoes now) | LAND at S7 | S6 |
 | 2 bonus stages | `R5-10.T1` | `brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range` stages, `bonus.enemies.json` (art) | LAND | none |
 | 3 escape → linked pages | `R5-10.T2 → R5-10.T8` | `escape.stage.json`, `escape.mjs` (new), the registry lines, the campaign credits; then `packages/shell/src/memory/index.ts`, `atlas-groups.test.ts` | LAND (T2), GROUPS (T8) | T8 |
-| 4 dimension | `R5-10.T3` | `dimension.stage.json`, `dimension.mjs`, `extras.enemies.json` (art), its four plates | DOCS-IMAGES; FP only if names change | T3 |
+| 4 dimension | `R5-10.T3` | `dimension.stage.json`, `dimension.mjs`, `extras.enemies.json` (art), its four plates | DOCS-IMAGES; FP always (content-DB; presentation/shell only if names change) | T3 |
 | 5 dev ranges | `R5-10.T6` | the dev range stage and enemy files (art fields only, only if needed) | FP only if content changed | none |
 | 6–7 real art | `R5-0n.S3` (owner-gated; at most 2 at once) | the zone's `assets/source/sprites/**` overrides and recipes | DOCS-IMAGES (+ LAND if a frame count moves) | the zone spec |
 
@@ -435,8 +435,10 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   nohup bash docs/v2-run/helpers/e2e-batch.sh mode7.spec.ts > /home/sites/shmup-cup-run/R5-10.T3-e2e.log 2>&1 &   # then poll the log
   ```
 - **Commit and push:** one commit with explicit paths (sources, the e2e rows, and the plates `git status` showed);
-  the message says which plates moved and, if new sprite names came in, "the fingerprints re-pinned: new sprite
-  names shift every later sprite id"; no Co-Authored-By line. Push under the land lock (README rule 6): write this
+  the message says which plates moved and names the re-pin reason: "the content-DB fingerprint re-pinned: the
+  dimension's and the extras roster's content changed", plus, when new sprite names came in, "new sprite names
+  shift every later sprite id (the presentation and shell tables too)"; no Co-Authored-By line. Push under the
+  land lock (README rule 6): write this
   script to `/home/sites/shmup-cup-run/R5-10.T3-push.sh`, then run
   `flock -w 5400 /tmp/shmup-cup-land.lock bash /home/sites/shmup-cup-run/R5-10.T3-push.sh` from your worktree
   (several minutes: a shell timeout of 3600000, or the background with a log):
@@ -455,14 +457,17 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   git commit --amend --no-edit
   git push origin HEAD:master
   ```
-  The update runs rewrite nothing when no sprite name changed. The `test -z` line stops the script before anything
+  The content-DB update run re-pins its table always — your art-field edits change shipped content values, name
+  changes or not; the presentation and shell update runs rewrite nothing unless a new name shifts later sprite
+  ids. The `test -z` line stops the script before anything
   is staged when `pnpm docs:images` changed any other plate (`pnpm docs:images --check` is green right after a
   regeneration, so it cannot catch that). If the push is rejected, run the script again (at most 5 times, then
   report).
 - **Acceptance:** the dimension runtime green; Mode-7 rows re-measured; no golden moves (the dimension has none —
   `test/golden` verified unchanged); `pnpm docs:images --check` clean after the push, with only the four dimension
   plates changed (or none).
-- **Token:** DOCS-IMAGES (those four plates) and FINGERPRINTS (only if names change), both at push time under the
+- **Token:** DOCS-IMAGES (those four plates) and FINGERPRINTS (always: the content-DB table re-pins with your
+  content edits; the presentation and shell tables only when a new name shifts ids), both at push time under the
   land lock.
 - **Traps:** Mode-7 `horizon` / `bottom` are frame rows (`PLAYFIELD_H`-anchored; the port set them); never edit
   `extras.enemies.json`' sim fields; e2e pixels through `frame-pixels.ts`; the dimension bosses' shared parts
