@@ -297,13 +297,17 @@ carry over into wave 5).
 ### R3-03.V2b — The ingest recipe key `p2`, written to the sidecar
 
 - **Wave / lane / order:** wave 04, lane 4, first.
-- **Depends on:** `R3-03.V2a` on master (the sidecar format `meta.shmup.p2` it reads).
+- **Depends on:** `R3-03.V2a` on master (V2b writes the `meta.shmup.p2` sidecar format that V2a's
+  `readPngFrames` reads).
 - **Goal:** an ingested ship can carry its player-2 palette map from its recipe into the PNG sidecar, so real art
   gets an `@p2` variant without code.
 - **Files (only these):**
   - `art-prompts/ingest/lib/recipe.mjs` — `RECIPE_KEYS` (`:82`) gains `p2`; validate `#rrggbb` pairs;
-  - `art-prompts/ingest/lib/finish.mjs` — the sidecar writer writes `meta.shmup.p2`;
-  - `art-prompts/ingest/test/recipe.test.mjs`, `art-prompts/ingest/test/finish-report.test.mjs`;
+  - `art-prompts/ingest/lib/pipeline.mjs` — the sidecar writer (its `meta` object, `:950-991`) writes
+    `meta.shmup.p2` into the frame sidecar; `lib/finish.mjs` is the pixel stages only — touch it just if the
+    map must ride a pixel pass;
+  - `art-prompts/ingest/test/recipe.test.mjs`, `art-prompts/ingest/test/pipeline.test.mjs` (the sidecar's
+    `meta`, cf. `:210-211`);
   - a new fixture under `art-prompts/ingest/test/fixtures/` (a ship recipe with `p2`; model `qwenvl`, cleanup
     `heavy`, `reviewed` set) and its committed outputs (`.png`, `.json`, `.art.json`), made by the fixture maker
     `art-prompts/ingest/test/fixtures/make-fixtures.mjs` if it covers it;
@@ -382,8 +386,8 @@ carry over into wave 5).
 ### R3-03.V5 — Real-art bullet variants by recolouring the override
 
 - **Wave / lane / order:** wave 04, lane 3, after `R3-03.V2a`.
-- **Depends on:** `R3-03.V1` (wave 2) and `R3-03.V2b` on master (both lanes touch `test/scripts/art-origins.test.ts`
-  only through V5).
+- **Depends on:** `R3-03.V1` (wave 2 — its native v2 bullet art is what V5 recolours) and `R3-03.V2b` on
+  master (in this wave only V5 edits `test/scripts/art-origins.test.ts`, so V2b reports its count changes here).
 - **Goal:** when an engine bullet, beam or bend sprite gets a PNG override, its colour-blind `@<palette>` siblings
   are made by recolouring that override frame for frame (decision W5-13), with provenance kind `palette`.
 - **Files (only these):**
@@ -487,8 +491,9 @@ carry over into wave 5).
   `test/scripts/assets/standin.test.ts` (only `R3-04.M1b`'s byte band, and only if the measured bytes move it out of
   RR-7's 0.3–0.6 MB — then the commit body says so).
 - **Steps:** ingest about 6 **Qwen-Image** candidates (a backdrop, a boss, an enemy sheet; Apache-2.0) from
-  `art-prompts/v2/candidates/` into a temp `--root` with `art-prompts/ingest/ingest.mjs`; measure their PNG-8 bytes
-  per Mpx; set the knobs; replace the docblock's **uncalibrated** mark with the measured numbers, and record them in
+  `art-prompts/v2/candidates/` into a temp `--root` with `art-prompts/ingest/ingest.mjs` (after
+  `cd art-prompts/ingest && npm ci` — its own npm project, rule 6, without the `--check`); measure their PNG-8
+  bytes per Mpx; set the knobs; replace the docblock's **uncalibrated** mark with the measured numbers, and record them in
   the commit body too.
 - **Tests:** as M1a.
 - **Acceptance:** the measured bytes per Mpx are in the commit body; the generator stays deterministic.
@@ -600,7 +605,9 @@ carry over into wave 5).
   - `tools/input-probe/results/analyze-bench.mjs` — `decodeZoneEstimate` (`:272-288`) reads the new ids: `common`
     plus the stand-in zone pages, each at its median (no ×2 — the zone's pages are measured); a session recorded
     before this change (`rgba-2048` / `png8-2048`) keeps today's formula. The `standin-zone` record is printed on its
-    own line, not in the matrix tables. And `tools/input-probe/test/analyzeBench.test.ts` (a case for the new ids;
+    own line, not in the matrix tables. The zone-load-estimate header print (`:330-332`, the `ZONE_PAGES` sentence)
+    is reworded to the measured-pages formula (or `ZONE_PAGES` stops being used there); `R3-04.M4b` does not edit
+    this file. And `tools/input-probe/test/analyzeBench.test.ts` (a case for the new ids;
     the old fixture and its cases stay).
 - **Tests:**
   ```bash
@@ -626,7 +633,7 @@ carry over into wave 5).
 - **Wave / lane / order:** wave 04, lane 6, after `R3-04.M4a`.
 - **Depends on:** `R3-04.M4a` pushed.
 - **Goal:** the Node / Playwright render bench measures a zone drawn from the stand-in pages.
-- **Files (only these):** `test/bench/render.perf.ts` (the `SCENARIOS` list, `:150-210`), `test/bench/render-harness/load.ts`,
+- **Files (only these):** `test/bench/render.perf.ts` (the `SCENARIOS` list, `:150-218`), `test/bench/render-harness/load.ts`,
   `test/integration/render-bench.test.ts`, `test/integration/tv-render-bench.test.ts`.
 - **Tests:**
   ```bash
@@ -675,7 +682,8 @@ carry over into wave 5).
   ```
 - **Acceptance:** the library parses; the name check passes; `.md` and `.json` of each zone sheet agree.
 - **Token:** none.
-- **Traps:** edit 7 ("SNES-era" → "16-bit console era", about 1,100 hits) waits for the owner's decision: do not do
+- **Traps:** edit 7 ("SNES-era" → "16-bit console era", 1,379 hits by `git grep -c "SNES-era"` on 2026-10-19;
+  `plan_resolution.md:1673` says about 1,400 of bare "SNES") waits for the owner's decision: do not do
   it. The FACET MONARCH label reword (Q-5) likewise: only if the owner has decided it — then reword the label in
   `art-prompts/v2/manifest.json` (the zone G boss line, "the crystal core with an orbiting crown") and update its
   `KNOWN_HITS` pin in `test/integration/art-prompt-names.test.ts`; those two files join your Files list only then.
