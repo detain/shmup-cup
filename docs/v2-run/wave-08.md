@@ -200,8 +200,11 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh ship-select.spec.ts flight.spec.ts attract.spec.ts
   ```
-  Under the land lock: fetch, rebase, `pnpm golden:update`, the FP re-pins, the Vitest lines and `pnpm content:check`
-  above (the e2e batch runs **outside** the land lock — never hold the land lock through an e2e lock wait), push.
+  Outside the land lock first: the FP re-pin's print-and-paste pass (rule 4) — run the fingerprint lines above
+  with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables, run them once more without the variable, commit
+  that. Then under the land lock: fetch, rebase, `pnpm golden:update`, the Vitest lines and `pnpm content:check`
+  above — the locked script only re-verifies the fingerprints and re-pins if the rebase moved a table (rule 4) —
+  push (the e2e batch runs **outside** the land lock — never hold the land lock through an e2e lock wait).
 - **Acceptance:** one commit; its body: "R4-01.A1b: five bank frames — `p.bank` is hashed, so every golden and demo is
   re-blessed"; all three fingerprints re-pinned; `content:check` green; both ships have 5 frames at the default scale
   (≥ `2 · bankFrames + 1`): `test/integration/world-flight.test.ts`' bank-step case for the KESTREL,
@@ -317,9 +320,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   `scenes/index.ts:3005-3007`; mind the list's `UI_COMMANDS` budget), and never edit `title.mjs`, `ui-kit.mjs` or
   `ui/index.ts`. If the stripes truly need a sprite, report it for `R4-05.E2`, which holds UI-FILE and `title.mjs`.
   The shell free-flight scene mirrors the band by hand (`packages/shell/src/flight/index.ts:145-155` — its
-  comments say "as the scene flow's"); it is not yours (C5 holds that file, its dev HUD only, wave-08.md:484): put
-  the band's final height, top row, text row and stripe colours in your report under "flight mirror" so the
-  orchestrator re-measures the mirror before `W08.E2E`.
+  comments say "as the scene flow's"); it is not yours (`R4-03.C5`'s Files list holds that file — its dev-HUD
+  bullet only): put the band's final height, top row, text row and stripe colours in your report under
+  "flight mirror" so the orchestrator re-measures the mirror before `W08.E2E`.
 - **Docs needs:** `docs/dev/bosses-and-warning.md` (the band), `docs/dev/front-end-and-attract.md` (cards),
   `docs/dev/art-bible-v2.md` § 5.11 (the "WARNING banner" row `:675` — the hazard stripes, the frame-derived height —
   and the "Zone cards, attract cards" row `:674`).
@@ -347,7 +350,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `procedural-zone-i*` files — find them with `git grep -l ending.mjs test/scripts/assets`. E4 may edit only those
     cases in those files.
   - tests in `packages/core/test/scenes/` (`scenes-ending*.test.ts`, `scenes-attract*.test.ts`).
-  - the three fingerprints' `PINNED` tables.
+  - the presentation fingerprint's `PINNED` table (`test/integration/presentation-fingerprint.test.ts`) — the only
+    one this subtask can move: it edits no `content/` and keeps the six names, so the content-DB and shell
+    fingerprints cannot change; if either moves anyway, stop and report it (rule 4). The two lines above are
+    guards.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui/ui-layout-frame.test.ts packages/core/test/frame-literals.test.ts
