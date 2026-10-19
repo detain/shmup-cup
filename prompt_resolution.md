@@ -319,7 +319,9 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
     fetch, rebase, regenerate — never merge — check, push); no LAND runs during a GLOBAL. A LAND runs through
     `docs/v2-run/helpers/land-zone.sh`, which takes the land lock itself: never wrap it in another `flock`.
   - **The PORT window** (wave 4): from `R2-02.S`'s verification start to its push nobody else pushes; hold every
-    other lane's push.
+    other lane's push. The window is the file `/home/sites/shmup-cup-run/w04-port-window`: S creates it at its step 5
+    and removes it after its push, and every other agent tests it before each push (wave-04 rule 1). If S stops
+    without pushing and the file is still there after its reply, delete it.
   - A builder that finds it needs a token it does not hold stops and reports.
 - **Shared hot files** count as touched by every task that mentions them, so those tasks serialize:
   - `packages/core/src/index.ts` (the barrel) and the packages' `src/index.ts`;
@@ -588,12 +590,12 @@ targeted Exit check and the report, with no full suite.
 4. **CI, once:** look at the run of the final `master` commit (`gh run list --branch master --limit 3`). The local
    result counts (owner rule 8). A job that is red on CI only gets one triage agent (reproduce with `taskset -c 0-3`);
    its result goes into the final report.
-5. **Close out:** with SCOPE `all`, `R6-03.D7` (`gh release create v2.0.0`, only after my explicit OK); with a SCOPE
-   that ends at an earlier milestone, that milestone's pre-release tag (wave loop step 7). Then the final §17 update
-   (`R6-03.D7.DOCS`, after `R6-03.D7`; for an earlier milestone, its last wave's `Wnn.DOCS-A`), `plan_board_v2.py`,
-   and the final report: steps done, review rounds, findings fixed or declined, test counts, As-built deviations,
-   everything waiting on me grouped by step, the local full-suite result and the CI state, and the next manual
-   actions (the TV benchmark run, AI art and cleanup, the FLUX licence, M7 play sessions).
+5. **Close out:** with SCOPE `all remaining steps`, `R6-03.D7` (`gh release create v2.0.0`, only after my explicit
+   OK); with a SCOPE that ends at an earlier milestone, that milestone's pre-release tag (wave loop step 7). Then the
+   final §17 update (`R6-03.D7.DOCS`, after `R6-03.D7`; for an earlier milestone, its last wave's `Wnn.DOCS-A`),
+   `plan_board_v2.py`, and the final report: steps done, review rounds, findings fixed or declined, test counts,
+   As-built deviations, everything waiting on me grouped by step, the local full-suite result and the CI state, and
+   the next manual actions (the TV benchmark run, AI art and cleanup, the FLUX licence, M7 play sessions).
 
 ## The art round (R0-04) on myadmin1
 
