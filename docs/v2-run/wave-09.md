@@ -289,38 +289,48 @@ by the quoted code or test title before you edit it.
     **new** (8): the same cases, moved by the zone they test; a case that tests both zones goes to the earlier zone's
     file with a comment.
   - `packages/core/test/helpers/zone-behaviors.ts` — **new** (P5a2 adds to it, never rewrites): every module-level
-    helper of the old files, shared so no helper is copied into two new files — as **one kit per old file**,
-    because the same helper name hides up to four different bodies across the eight old files. Never unify two
-    bodies: each kit holds its own file's code byte for byte. (a) The world-only helpers move as they are —
+    helper of the old files, shared so no helper is copied into two new files — as **one factory per old-file
+    shape**, because the same helper name hides two or three different bodies across the eight old files: the
+    `DB` families come in five shapes, not two, and the shipped-roster builders in three. Never unify two
+    bodies: each factory holds its own files' code byte for byte. (a) The world-only helpers move as they are —
     `run` is byte-identical in all eight old files (one export serves them); `part`, `bullets`, `freshAngles`,
     `untilMouth`, `untilChest`, `lasersOf`, `fired`, `turn`, `moverOf`, `timeline`, `arms`, `curlOf`, `curls`,
     `runs`, `biggestStep`, `apart`, `guarded` likewise in every file that defines them — **except** the
     `-hi-edge` `part` (`behaviors-zones-hi-edge.test.ts:373`), which *throws* where the others assert: it rides
     that file's kit under its own name. A helper only one new file ever needs stays in that file. (b) The
-    helpers that close over the file's `DB` come as `zoneKit(db)` — the **four non-edge files share one**:
-    their `freeFlight` (`behaviors-zones.test.ts:62`), `fighting` (`:100`), `live` (`:89`) are byte-identical —
-    and one kit **per edge old file**: `zoneKitEdgeBC(db)` (`-edge`: `world:284` seed 11 + `stage 'w'`,
-    `indexOf:319`, `spawn:334`, `fighting:361`, `live:347` — the only `live` that drops ghosts),
-    `zoneKitEdgeDE(db)` (`-de-edge`: `world:262` seed 13 + `stage 's'`, the rest at `:297/:312/:336/:325`),
-    `zoneKitEdgeFG(db)` (`-fg-edge`: `world:310` — one line, no `stage` —, the rest at `:336/:351/:375/:364`),
-    `zoneKitEdgeHI(db)` (`-hi-edge` has **no `world`/`indexOf`**: its kit is its own `freeFlight:289` — steps 60
-    fly-in ticks —, `spawn:319` — camera-relative —, `fighting:357` — runs `run(w, 1)` first —, `live:346`, the
-    same body as the non-edge kit). Where a member is byte-identical across kits (`indexOf` and `spawn` in
-    BC/DE/FG), the module defines it once and each kit returns it. Each new file destructures **its old file's**
-    kit once — `const { freeFlight, fighting, live } = zoneKit(DB);` — so every `it` moves verbatim. (c) The
-    roster builders read the file's `ROSTER` and run while the file *builds* its `DB` (never inside an `it`), so
-    they ride their file's kit, each with its own real body and name set: BC/DE/FG share one `copy`
-    (`behaviors-zones-edge.test.ts:86–131`); `enemy` is one body in BC/DE (`-edge:102`) and FG's wider one in
-    FG (`-fg-edge:113`, the extra `extra: Partial<Entry>` argument); `boss` has three bodies (BC
-    `(base, id, params, extraParts)` `-edge:117`, DE `(base, id, params)` `-de-edge:120`, FG
-    `(base, id, ...phases: Partial<Phase>[])` `-fg-edge:133`); `-hi-edge` has only its own content-row `enemy`
-    (`:57`, `(id, script, params, over)`) for its **untyped** `ROSTER` (`:81`) — it defines no `copy`, no `boss`,
-    and each `h`/`i` edge file destructures only what it has. The roster types move beside the kits as exported
-    types (a factory cannot return a type): `Entry` of `-edge:61` (identical in `-de-edge:65`, one export), and
-    FG's own `Entry` + `Phase` (`-fg-edge:70`/`:63`) under kit-qualified names; `-hi-edge` needs none. Each new
-    edge file keeps only its zone's `ROSTER` rows (plus the entry the `P5a2` cross-zone rule names), calls its
-    old file's kit above its `DB`, and builds the `DB` with its builders. `shipped(path)` goes into
-    `packages/core/test/helpers/shipped.ts` (P4's) beside `shippedPatterns()`.
+    helpers that resolve an id against the built `DB` come as **five kits**: `zoneKit(db)` — the **four
+    non-edge files share one**: their `freeFlight` (`behaviors-zones.test.ts:62`), `fighting` (`:100`) and
+    ghost-keeping `live` (`:89`) are byte-identical — and one kit **per edge old file**: `zoneKitEdgeBc(db)`
+    (`-edge`: `world:284` seed 11 + `stage 'w'`, `indexOf:319`, `spawn:334`, `fighting:361`, `live:347` — the
+    only `live` that **drops** ghosts), `zoneKitEdgeDe(db)` / `zoneKitEdgeFg(db)` (each its own `world` — DE
+    `:262` seed 13 + `stage 's'`; FG `:310`, seed 13, one line, no `stage` —, with the shared `indexOf`,
+    `spawn`, `fighting` and the ghost-**keeping** edge `live`, identical in the two — DE `:325`, FG `:364`),
+    and `zoneKitEdgeHi(db)` (`-hi-edge` has **no `world`/`indexOf`**: its kit is its own `freeFlight:289` —
+    steps 60 fly-in ticks —, `spawn:319` — camera-relative —, the `fighting:357` that steps **one tick more**
+    once the boss is fighting (`run(w, 1)` — its first phase's script has started) —, `live:346`, the same
+    body as the non-edge kit). Where a body repeats — `indexOf`, `spawn` and `fighting` in the BC/DE/FG kits,
+    the ghost-keeping `live` in the DE and FG kits — the module defines it once and each kit returns it. Each
+    new file destructures **its old file's** kit once — `const { freeFlight, fighting, live } = zoneKit(DB);`
+    — so every `it` moves verbatim. (c) The
+    roster builders read the file's `ROSTER` and run while the file *builds* its `DB` (never inside an `it`),
+    so they cannot come from a `zoneKit` — they become **one factory per file kind**. The three
+    shipped-roster edge files (B/C, D/E, F/G) share one shape: `copy` is byte-identical in all three
+    (`behaviors-zones-edge.test.ts:86`, `behaviors-zones-de-edge.test.ts:90`,
+    `behaviors-zones-fg-edge.test.ts:96`) and moves once, while `enemy`/`boss` differ per file — BC/DE
+    `enemy(base, id, params)` (`-edge:102`, byte-identical) and FG's wider one (`-fg-edge:113`, the extra
+    `extra: Partial<Entry>` argument); `boss` has three bodies (BC `(base, id, params, extraParts = [])`
+    `-edge:117`, DE `(base, id, params)` `-de-edge:120`, FG `(base, id, ...phases: Partial<Phase>[])`
+    `-fg-edge:133`) — so the factories are `rosterKitBc(roster)` / `rosterKitDe(roster)` /
+    `rosterKitFg(roster)`, each returning that file's `copy`-based `enemy`/`boss`. The same group carries the
+    roster types, exported beside the factories (a factory cannot return a type): the shared `Entry` and
+    `Phase` (`-edge:61`, identical in `-de-edge:65`; `-fg-edge:70`/`:63` — the FG `Entry` adds the optional
+    `child?` and names its phases by `Phase`; one widened type serves all three files). Each new edge file of
+    those three kinds keeps only its zone's `ROSTER` rows (plus the entry the `P5a2` cross-zone rule names),
+    then `const { copy, enemy, boss } = rosterKitBc(ROSTER);` (its own factory), and builds the `DB` with
+    them. **The HI-edge is not one of them:** its `ROSTER` (`:81`) is hand-written **untyped** rows built by
+    its own `enemy(id, script, params, over)` (`:57`) — no `copy`, no `boss`, no `Entry`/`Phase`; that
+    `enemy` moves as it is and both new H/I edge files import it from `zone-behaviors.ts`. `shipped(path)`
+    goes into `packages/core/test/helpers/shipped.ts` (P4's) beside `shippedPatterns()`.
 - **Steps:** before you start (on `origin/master`), and again after your change:
   ```bash
   mkdir -p /home/sites/shmup-cup-run
