@@ -12,11 +12,22 @@
  *
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws
+ * fewer frames a second and catches up by up to 4 ticks a frame, so a count of frames is a
+ * different number of ticks on every machine (C5 review 4).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  SCENE_SLACK_TICKS,
+  SHIP_ENTER_TICKS,
+  pollTicks,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** An RGB colour. */
 type Rgb = readonly [number, number, number];
@@ -104,41 +115,6 @@ function view(page: Page): Promise<DirectView> {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
  * Counts the playfield pixels of each colour in a screenshot of the canvas.
  *
  * @param page - The page.
@@ -193,13 +169,13 @@ test.describe('Direct-mode items (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
     await tap(page, 'Enter'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'ArrowDown'); // MANTA
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
@@ -235,7 +211,7 @@ test.describe('Direct-mode items (web build)', () => {
     }, DIRECT_RED);
     let seen = ITEM_COLOURS.map(() => 0);
     for (let poll = 0; poll < 12 && seen.some((n) => n < 8); poll++) {
-      await waitFrames(page, 3);
+      await waitTicks(page, 3);
       const counts = await countColours(page, palette);
       seen = seen.map((n, k) => Math.max(n, counts[k * 2] + counts[k * 2 + 1]));
     }
@@ -256,7 +232,7 @@ test.describe('Direct-mode items (web build)', () => {
     );
     let ring = 0;
     for (let poll = 0; poll < 10 && ring < 10; poll++) {
-      await waitFrames(page, 3);
+      await waitTicks(page, 3);
       [ring] = await countColours(page, [ARM_GREEN]);
     }
     expect(ring, 'the green Arm drawn').toBeGreaterThanOrEqual(10);

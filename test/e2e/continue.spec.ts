@@ -11,11 +11,23 @@
  * - no console errors in either.
  *
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws
+ * fewer frames a second and catches up by up to 4 ticks a frame, so a count of frames is a
+ * different number of ticks on every machine (C5 review 4).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { BOOT_TIMEOUT_MS, GAME_OVER_DELAY_TICKS, SCENE_SLACK_TICKS, expectScene } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  GAME_OVER_DELAY_TICKS,
+  SCENE_SLACK_TICKS,
+  expectScene,
+  remoteTap,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -104,63 +116,6 @@ async function endGame(page: Page): Promise<void> {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key the desktop keyboard does not have (Back = 10009), down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
-}
-
-/**
  * Counts the canvas pixels within 2 of a colour.
  *
  * @param page - The page.
@@ -202,7 +157,7 @@ async function startGame(page: Page, url: string, downs: number): Promise<string
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK
   await tap(page, 'Enter'); // START
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
@@ -223,10 +178,10 @@ test.describe('difficulty and continues (web build)', () => {
     const canvas = page.locator('#game');
     const hard = await view(page);
     expect([hard.difficulty, hard.rank, hard.lives]).toEqual(['hard', 4, 3]);
-    await waitFrames(page, 30);
+    await waitTicks(page, 30);
     expect(await countColour(page, ALERT_RED)).toBe(0); // no countdown panel in play
     await endGame(page);
-    await waitFrames(page, 40); // past the countdown's lock
+    await waitTicks(page, 40); // past the countdown's lock (core CONTINUE_LOCK_TICKS 30)
     expect(await countColour(page, ALERT_RED)).toBeGreaterThan(50);
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
@@ -249,7 +204,7 @@ test.describe('difficulty and continues (Tizen build via file://)', () => {
     const canvas = page.locator('#game');
     expect((await view(page)).difficulty).toBe('normal');
     await endGame(page);
-    await waitFrames(page, 40);
+    await waitTicks(page, 40);
     await remoteTap(page, 10009);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'gameOver');
     expect((await view(page)).continuesUsed).toBe(0);

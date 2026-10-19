@@ -17,6 +17,10 @@
  *
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * Key taps, pauses and the HP-bar test's poll for the bar count the game's ticks (`ticks.ts`),
+ * never rAF frames: a slow runner draws fewer frames a second and catches up by up to 4 ticks a
+ * frame, so a count of frames is a different number of ticks on every machine (C5 review 4).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -37,7 +41,7 @@ import {
   sy,
 } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, pollTicks, tap, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -147,41 +151,6 @@ async function stepUntilFight(page: Page, slot: number, blocks: number): Promise
   }
   expect(now.states[slot], 'the boss in slot ' + String(slot) + ' never fought').toBe(3);
   return now;
-}
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames, then releases it.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
 }
 
 /**
@@ -318,7 +287,7 @@ test.describe('advanced bosses (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
     await tap(page, 'Enter'); // START
     await tap(page, 'Enter'); // NORMAL
@@ -331,14 +300,16 @@ test.describe('advanced bosses (web build)', () => {
     for (let fx = BOSS_BAR_X; fx < BOSS_BAR_X + BOSS_BAR_W; fx++) if (is(fx, BOSS_FILL_Y)) red++;
     expect(red).toBe(0);
     // Poll until the bar is up (the WARNING, then the intro filling it).
-    let visible = false;
-    for (let poll = 0; poll < 300 && !visible; poll++) {
-      await waitFrames(page, 10);
-      visible = await page.evaluate(
-        () => (window as unknown as DebugWindow).__shmupDebug.game.world.bosses.hpBar.visible,
-      );
-    }
-    expect(visible, 'the boss HP bar never became visible').toBe(true);
+    await pollTicks(
+      page,
+      'the boss HP bar visible',
+      () =>
+        page.evaluate(
+          () => (window as unknown as DebugWindow).__shmupDebug.game.world.bosses.hpBar.visible,
+        ),
+      true,
+      3000,
+    );
     await freezeSim(page);
     const now = await page.evaluate(
       () => (window as unknown as DebugWindow).__shmupDebug.worldTick,

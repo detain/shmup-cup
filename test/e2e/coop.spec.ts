@@ -8,9 +8,20 @@
  * - Enter (player 2's START) drops player 2 in without pausing: its ship flies in, the bottom bar
  *   splits into both players' compact halves, and player 2's arrows move it;
  * - Esc (player 1's Pause) still opens the pause menu; no console errors.
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws
+ * fewer frames a second and catches up by up to 4 ticks a frame, so a count of frames is a
+ * different number of ticks on every machine (C5 review 4).
  */
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  SCENE_SLACK_TICKS,
+  SHIP_ENTER_TICKS,
+  pollTicks,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** What the spec reads through `window.__shmupDebug`. */
 interface CoopView {
@@ -62,41 +73,6 @@ function view(page: Page): Promise<CoopView> {
   });
 }
 
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
 test.describe('two-player co-op (web build, split keyboard)', () => {
   test('2 PLAYERS, player 2 joins with its START, both play; player 1 still pauses', async ({
     page,
@@ -113,18 +89,18 @@ test.describe('two-player co-op (web build, split keyboard)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK (player 2's half drives the menus too)
     await tap(page, 'ArrowDown'); // 2 PLAYERS
     await tap(page, 'KeyF'); // player 1's OK
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'KeyF'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'KeyF'); // KESTREL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'KeyF'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     let game = await view(page);
@@ -147,7 +123,7 @@ test.describe('two-player co-op (web build, split keyboard)', () => {
     // Player 2's arrows move player 2 (relative to the scrolling view).
     const before = game.p2X - game.cameraX;
     await page.keyboard.down('ArrowRight');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     await page.keyboard.up('ArrowRight');
     game = await view(page);
     expect(game.p2X - game.cameraX).toBeGreaterThan(before + 10);

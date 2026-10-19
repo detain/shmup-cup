@@ -12,9 +12,22 @@
  * - the pad's START now pauses (player 2 plays) and the pause menu, which routes one seat, stays
  *   open (the held START is no second press on player 1's slot); START there resumes and the game
  *   does not pause again; no console errors.
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws
+ * fewer frames a second and catches up by up to 4 ticks a frame, so a count of frames is a
+ * different number of ticks on every machine (C5 review 4). The pad's taps too: the fake pad is
+ * read level by level once a tick (`platform.input.poll()`), with no latch, so a press must last
+ * ticks, not frames.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  SCENE_SLACK_TICKS,
+  SHIP_ENTER_TICKS,
+  pollTicks,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** What the spec reads through `window.__shmupDebug`. */
 interface PadCoopView {
@@ -64,28 +77,6 @@ function view(page: Page): Promise<PadCoopView> {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
  * Sets the fake pad's pressed buttons (standard mapping: 0 = A, 9 = START, 12–15 = D-pad).
  *
  * @param page - The page.
@@ -98,29 +89,17 @@ function padButtons(page: Page, pressed: number[]): Promise<void> {
 }
 
 /**
- * Presses a pad button for a few frames and lets the game see the release.
+ * Presses a pad button for 3 ticks, then lets the game see the release (6 ticks), like `tap`.
  *
- * @param page - The page.
+ * @param page - The page (its sim running).
  * @param button - Button index.
+ * @returns Resolves 6 ticks after the release.
  */
 async function padTap(page: Page, button: number): Promise<void> {
   await padButtons(page, [button]);
-  await waitFrames(page, 3);
+  await waitTicks(page, 3);
   await padButtons(page, []);
-  await waitFrames(page, 6);
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
+  await waitTicks(page, 6);
 }
 
 test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
@@ -174,20 +153,20 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
         window as unknown as { __shmupDebug: { flags: { godMode: boolean } } }
       ).__shmupDebug.flags.godMode = true;
     });
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     expect((await view(page)).seats).toBe(1);
 
     await padTap(page, 0); // PRESS OK with the pad's A (one seat: the pad is player 1's)
     await padTap(page, 13); // D-pad down: 2 PLAYERS
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'Enter'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'Enter'); // KESTREL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     let game = await view(page);
@@ -210,12 +189,12 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
       true,
       SCENE_SLACK_TICKS,
     );
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
 
     // The pad's D-pad moves player 2 only.
     game = await view(page);
     await padButtons(page, [15]);
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     await padButtons(page, []);
     let after = await view(page);
     expect(after.screenX[1]).toBeGreaterThan(game.screenX[1] + 10);
@@ -224,7 +203,7 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
     // The keyboard's arrows move player 1 only.
     game = after;
     await page.keyboard.down('ArrowRight');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     await page.keyboard.up('ArrowRight');
     after = await view(page);
     expect(after.screenX[0]).toBeGreaterThan(game.screenX[0] + 10);
@@ -234,14 +213,14 @@ test.describe('two-player co-op (web build, keyboard + gamepad)', () => {
     // 1's slot) must not take the still-held START as a second press that resumes at once.
     await padTap(page, 9);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
     expect((await view(page)).seats).toBe(1);
     // The pad's START in the pause menu resumes; back in the game (two seats) it does not pause
     // again.
     await padTap(page, 9);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     expect((await view(page)).seats).toBe(2);
     expect(errors).toEqual([]);

@@ -31,13 +31,19 @@
  *   the residency's back, and the game it starts sends that page off the GPU again;
  * - the Tizen build from `file://` marks its resident pages (`common` + zone A, its start zone)
  *   and every page's fetch / decode / upload time.
+ *
+ * Key taps count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws fewer
+ * frames a second and catches up by up to 4 ticks a frame, so a count of frames is a different
+ * number of ticks on every machine (C5 review 4). The waits before a GPU or residency check stay
+ * frames, because what they wait for happens on a draw, not a tick: Pixi uploads a page when a
+ * sprite on it is first drawn, and the residency acts in the frame's event dispatch.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim } from './frame-advance.js';
 import { GOLDEN_REASON, R2_03_PENDING } from './gates.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, tap } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -183,6 +189,10 @@ function gpuPages(page: Page): Promise<string[]> {
 /**
  * Waits for `frames` animation frames in the page.
  *
+ * @remarks
+ * Frames, not ticks: the GPU checks it precedes read what a draw does (Pixi's texture uploads) or
+ * what the frame's event dispatch does (the residency's unload).
+ *
  * @param page - The page.
  * @param frames - Frames to wait.
  */
@@ -200,19 +210,6 @@ function waitFrames(page: Page, frames: number): Promise<void> {
       }),
     frames,
   );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
 }
 
 /**
@@ -382,7 +379,7 @@ test.describe('atlas residency (R1-05)', () => {
       expect(entry).toMatch(PAGE_MS_ENTRY);
       expect(entry).toMatch(/:0\.0\/0\.0\//);
     }
-    // The game keeps drawing.
+    // The game keeps drawing (ten frames, not ticks: the draws are what is checked).
     await page.evaluate(
       () =>
         new Promise<void>((resolve) => {
@@ -395,9 +392,7 @@ test.describe('atlas residency (R1-05)', () => {
           requestAnimationFrame(next);
         }),
     );
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
-      timeout: BOOT_TIMEOUT_MS,
-    });
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
     expect(
       log.console.filter((line) => line.startsWith('error') || line.startsWith('pageerror')),
     ).toEqual([]);

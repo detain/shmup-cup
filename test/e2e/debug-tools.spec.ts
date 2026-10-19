@@ -13,12 +13,19 @@
  * - **the `frame-advance.ts` helpers** (regression cover for the M1-19 review fix): `freezeSim`
  *   holds a freshly booted dev scene however many frames pass, and `stepTo` then reaches the exact
  *   tick asked for.
+ *
+ * `startGame`'s menu taps and its pause count the game's ticks (`ticks.ts`), never rAF frames: a
+ * slow runner draws fewer frames a second and catches up by up to 4 ticks a frame, so a count of
+ * frames is a different number of ticks on every machine (C5 review 4). The debug keys stay
+ * frame-paced (`debugTap`, `debugRemoteTap`): the tools act on the keydown and must work
+ * under the freeze, when no tick runs. So do the waits that check the freeze holds: no tick runs
+ * there either.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { PORT_REASON, PORT_UNMEASURED, assertionsGated } from './gates.js';
-import { BOOT_TIMEOUT_MS, remoteSequence } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteSequence, tap, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -83,6 +90,10 @@ function view(page: Page): Promise<DebugView> {
 /**
  * Waits for `frames` animation frames in the page.
  *
+ * @remarks
+ * Frames, not ticks: the spec waits with it only while the sim is frozen (F4, the remote's 4,
+ * `freezeSim`), where no tick runs — the check is that none does.
+ *
  * @param page - The page.
  * @param frames - Frames to wait.
  */
@@ -103,12 +114,16 @@ function waitFrames(page: Page, frames: number): Promise<void> {
 }
 
 /**
- * Presses a key for a few frames, then releases it (no auto-repeat).
+ * Presses a debug key (F2–F8) for a few frames, then releases it (no auto-repeat).
+ *
+ * @remarks
+ * Frames, not ticks: the debug tools act on the keydown (`shell/debug` `onKeyDown`) and these keys
+ * must work under the freeze, when no tick runs — a tick-paced tap would never end there.
  *
  * @param page - The page.
  * @param key - Playwright key name.
  */
-async function tap(page: Page, key: string): Promise<void> {
+async function debugTap(page: Page, key: string): Promise<void> {
   await page.keyboard.down(key);
   await waitFrames(page, 3);
   await page.keyboard.up(key);
@@ -116,12 +131,17 @@ async function tap(page: Page, key: string): Promise<void> {
 }
 
 /**
- * Dispatches a remote key by key code (keys the desktop keyboard lacks), down then up.
+ * Dispatches a remote debug key by key code (4, 5: keys the desktop keyboard lacks), down then up.
+ *
+ * @remarks
+ * Frames, not ticks, like `debugTap`: 4 and 5 act on the keydown and 5 must work under the
+ * freeze. The locked 4 is a negative check too: a tick-paced tap would hang there instead of
+ * failing if 4 froze the sim.
  *
  * @param page - The page.
  * @param keyCode - The legacy key code.
  */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
+async function debugRemoteTap(page: Page, keyCode: number): Promise<void> {
   for (const type of ['keydown', 'keyup']) {
     await page.evaluate(
       ([eventType, code]) => {
@@ -153,7 +173,7 @@ async function startGame(page: Page, url: string): Promise<string[]> {
     timeout: BOOT_TIMEOUT_MS,
   });
   await expect.poll(async () => (await view(page)).sceneId).toBe('title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await tap(page, 'Enter');
   await tap(page, 'Enter'); // START
   await expect.poll(async () => (await view(page)).sceneId).toBe('difficulty');
@@ -172,8 +192,8 @@ test.describe('debug tools (M1-19)', () => {
   }) => {
     test.setTimeout(90_000);
     const errors = await startGame(page, './');
-    await tap(page, 'F2'); // god mode: nothing ends the run while the spec looks around
-    await tap(page, 'F4');
+    await debugTap(page, 'F2'); // god mode: nothing ends the run while the spec looks around
+    await debugTap(page, 'F4');
     const frozen = await view(page);
     expect(frozen.flags.frameAdvance).toBe(true);
     await waitFrames(page, 30);
@@ -181,7 +201,7 @@ test.describe('debug tools (M1-19)', () => {
 
     // Each F5 press: exactly one tick (no auto-repeat, whatever the frame rate).
     for (let i = 1; i <= 3; i++) {
-      await tap(page, 'F5');
+      await debugTap(page, 'F5');
       await expect.poll(async () => (await view(page)).worldTick).toBe(frozen.worldTick + i);
     }
     await waitFrames(page, 10);
@@ -194,7 +214,7 @@ test.describe('debug tools (M1-19)', () => {
 
     // F7: the next checkpoint (the camera at its x); F8: just before the WARNING.
     const before = await view(page);
-    await tap(page, 'F7');
+    await debugTap(page, 'F7');
     const jumped = await view(page);
     expect(jumped.checkpoint).toBe(before.checkpoint + 1);
     // The camera x's are zone A's v1 numbers, right at 640×360 on the v1 content: R2-02 ports
@@ -208,25 +228,25 @@ test.describe('debug tools (M1-19)', () => {
     );
     if (!cameraGated) expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
     expect(jumped.worldTick).toBe(before.worldTick); // a jump is not a tick
-    await tap(page, 'F8');
+    await debugTap(page, 'F8');
     const skipped = await view(page);
     if (!cameraGated) expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
     expect(skipped.cameraX).toBeGreaterThan(jumped.cameraX);
     expect(skipped.status).toBe('playing');
 
     // F3 cycles the outlines, F6 the slow motion.
-    await tap(page, 'F3');
+    await debugTap(page, 'F3');
     expect((await view(page)).flags).toMatchObject({ showHitboxes: true, showGrid: false });
-    await tap(page, 'F3');
+    await debugTap(page, 'F3');
     expect((await view(page)).flags).toMatchObject({ showHitboxes: true, showGrid: true });
-    await tap(page, 'F6');
+    await debugTap(page, 'F6');
     expect((await view(page)).flags.slowMo).toBe(2);
-    await tap(page, 'F6');
-    await tap(page, 'F6');
+    await debugTap(page, 'F6');
+    await debugTap(page, 'F6');
     expect((await view(page)).flags.slowMo).toBe(1);
 
     // F4 again: the game runs on.
-    await tap(page, 'F4');
+    await debugTap(page, 'F4');
     const running = await view(page);
     expect(running.flags.frameAdvance).toBe(false);
     await expect.poll(async () => (await view(page)).worldTick).toBeGreaterThan(running.worldTick);
@@ -239,17 +259,17 @@ test.describe('debug tools (M1-19)', () => {
     test.setTimeout(90_000);
     const errors = await startGame(page, TIZEN_INDEX);
     // Locked: 4 does nothing.
-    await remoteTap(page, 52);
+    await debugRemoteTap(page, 52);
     expect((await view(page)).flags.frameAdvance).toBe(false);
     await remoteSequence(page, [10252, 427, 427, 427]); // Pause, Ch+ ×3: the unlock
-    await remoteTap(page, 52); // 4 = frame advance
+    await debugRemoteTap(page, 52); // 4 = frame advance
     const frozen = await view(page);
     expect(frozen.flags.frameAdvance).toBe(true);
     await waitFrames(page, 20);
     expect((await view(page)).tick).toBe(frozen.tick);
-    await remoteTap(page, 53); // 5 = step
+    await debugRemoteTap(page, 53); // 5 = step
     await expect.poll(async () => (await view(page)).tick).toBe(frozen.tick + 1);
-    await remoteTap(page, 53);
+    await debugRemoteTap(page, 53);
     await expect.poll(async () => (await view(page)).tick).toBe(frozen.tick + 2);
     await waitFrames(page, 10);
     expect((await view(page)).tick).toBe(frozen.tick + 2);

@@ -10,13 +10,16 @@
  * From R2-01 until R2-03 the demos are v1 recordings the build refuses (`gates.ts`), so the loop
  * skips them: those tests skip, and two others run instead — the web loop without its demos, and
  * the Tizen remote's OK leaving the hi-scores. R2-03 deletes both with the gate.
+ *
+ * The remote's OK is pressed once the sim runs on its own again, with the shared `remoteTap`
+ * (`ticks.ts`: 3 ticks held, 6 released).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim } from './frame-advance.js';
 import { GOLDEN_REASON, R2_03_PENDING } from './gates.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -134,25 +137,6 @@ async function countColour(page: Page, rgb: readonly [number, number, number]): 
     }
   }
   return n;
-}
-
-/**
- * Presses and releases the Tizen remote's OK: key code 13, the code the Tizen adapter reads
- * (`keyCode`), dispatched on the window 100 ms apart.
- *
- * @param page - The page (the Tizen build, its sim running on its own).
- * @returns Resolves once the key is up again.
- */
-async function pressRemoteOk(page: Page): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate((eventType) => {
-      const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-      Object.defineProperty(event, 'keyCode', { get: () => 13 });
-      window.dispatchEvent(event);
-    }, type);
-  await send('keydown');
-  await page.waitForTimeout(100);
-  await send('keyup');
 }
 
 /**
@@ -294,7 +278,7 @@ test.describe('attract loop with the v1 demos refused (Tizen build from disk, R2
     await page.evaluate(() => {
       (window as unknown as DebugWindow).__shmupDebug.flags.frameAdvance = false;
     });
-    await pressRemoteOk(page);
+    await remoteTap(page, 13); // the remote's OK
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     expect(errors).toEqual([]);
   });
@@ -319,7 +303,7 @@ test.describe('attract loop (Tizen build from disk)', () => {
     await page.evaluate(() => {
       (window as unknown as DebugWindow).__shmupDebug.flags.frameAdvance = false;
     });
-    await pressRemoteOk(page);
+    await remoteTap(page, 13); // the remote's OK
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
     expect(errors).toEqual([]);
   });
