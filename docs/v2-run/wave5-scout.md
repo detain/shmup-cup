@@ -763,8 +763,8 @@ picker.
   palette variants, the stand-in); `art-provenance.md` §9 (the `palette` kind); `platform-polish.md` /
   `rendering-and-shell.md` (lazy policy, context loss, budgets); `api-reference.md` rows; `test/README.md` and
   `scripts/README.md` rows if missing.
-- **R2-03:** delete `GOLDENS_STALE`, re-bless the 62 goldens, re-record the 9 demos (W5-6's e2e gate expires with
-  them); re-measure the content e2e rows (S3's local look is in its report); regenerate `docs:images` — the boss
+- **R2-03:** delete `GOLDENS_STALE`, re-bless the 62 goldens, re-record the 10 demos (the nine zone demos and
+  the `example` format sample; W5-6's e2e gate expires with them); re-measure the content e2e rows (S3's local look is in its report); regenerate `docs:images` — the boss
   portraits need `doc-images.mjs` on the default `artScale`, since part offsets are ×1.5 from S2 on — and
   `store:assets`; optionally give the fingerprint's attract walk the shipped demos back. **[Corrected after the flip:** also delete `test/e2e/gates.ts` with
   both gates (their skips, the inverse attract tests, the assertion gates), `test/integration/e2e-gates.test.ts`,

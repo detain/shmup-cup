@@ -133,11 +133,11 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    edit with exact old/new strings, never rewrite the whole file.
 3. **Targeted tests only.** Vitest with `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project <p> <files>`. Never run
    `pnpm test`, `pnpm test:e2e` or the whole `pnpm bench`: the one full suite runs in wave 15. The one exception:
-   the port's barrier — `R2-02.RV-A2` (wave 2), `R2-02.RV-pre` and `R2-02.S` (wave 4) — runs whole Vitest projects,
-   as their blocks say; that is the barrier, not the full suite. Run the typecheck of
-   what you touched (`pnpm --filter <pkg> typecheck`; `pnpm typecheck:root` for files outside `packages/` and
-   `apps/`), and `pnpm exec eslint <files> && pnpm exec prettier --check <files>`. Markdown is not formatted by
-   Prettier; keep its tables readable.
+   the port's barrier — `R2-02.RV-A2` (wave 2), `R2-02.RV-pre`, `R2-02.S` and S's review `R2-02.S.RV1` (each of its
+   rounds; wave 4) — runs whole Vitest projects, as their blocks say; that is the barrier, not the full suite. Run
+   the typecheck of what you touched (`pnpm --filter <pkg> typecheck`; `pnpm typecheck:root` for files outside
+   `packages/` and `apps/`), and `pnpm exec eslint <files> && pnpm exec prettier --check <files>`. Markdown is not
+   formatted by Prettier; keep its tables readable.
 4. **e2e only through the lock.** `bash docs/v2-run/helpers/e2e-batch.sh <≤ 10 specs>` builds the three test
    builds, waits for `/tmp/shmup-cup-e2e.lock` and runs the specs (Firefox: `E2E_PROJECT=firefox`). Playwright reads
    each argument as a regular expression on the path: `options.spec.ts` also matches `game-options.spec.ts` and
@@ -243,7 +243,8 @@ determinism spec (F).
 | **F** (Firefox) | `E2E_PROJECT=firefox bash docs/v2-run/helpers/e2e-batch.sh determinism.spec.ts` |
 | **G** (new specs) | none yet; `atlas-context-loss.spec.ts` (R3-04.M3d) and `decor.spec.ts` (R3-06.L6) when they land |
 
-When R5-P.P5d (wave 10) splits `zones-{bc,de,fg,hi}.spec.ts` into `zone-{b…i}.spec.ts`, batch A becomes two batches:
+When R5-P.P5d (wave 10, after `R5-P.P7`'s review is at zero, in the wave's e2e pass 1) splits
+`zones-{bc,de,fg,hi}.spec.ts` into `zone-{b…i}.spec.ts`, batch A becomes two batches:
 `A1` = `zone-a … zone-e` + `stage mode7`, `A2` = `zone-f … zone-i` + `raster gimmicks campaign-run`. A new spec
 (`atlas-context-loss.spec.ts` from R3-04.M3d, `decor.spec.ts` from R3-06.L6) goes into a new batch **G** (≤ 10
 specs; batches A … E already hold 10 each).

@@ -17,8 +17,9 @@
  * their reviewers, to check a generator's sprite list, frame counts, sizes and native / flash
  * marks before and after the change; the R3/R4 re-plan scout built its generator tables with it.
  *
- * **Delete** when R4 is on master (after R4-05). Was scratchpad `r34-gen-list.mjs` (it hard-coded
- * the scout's worktree).
+ * **Not needed** once R4 is on master (after R4-05), but **never deleted** before the end of the
+ * run: it stays until wave 15's Exit check 5, where the owner decides whether `docs/v2-run/` goes.
+ * Was scratchpad `r34-gen-list.mjs` (it hard-coded the scout's worktree).
  *
  * @module
  */

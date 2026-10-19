@@ -11,7 +11,7 @@ Run (from anywhere; the root argument is optional and defaults to the checkout h
 Used by: `R5-01.S4a` (the frozen shared entries — `tender` in every zone, `picket` /
 `halcyon-bulwark` in bonus-range; docs/v2-run/wave-10.md) and `R5-01.RV`; re-run it in each zone
 lane's review to check that no frozen entry moved.
-Delete when: R5 is on master (after R5-10).
+Delete when: R5 is on master (after R5-10; W13.DOCS-A deletes it).
 Was: scratchpad r5r6/carrier.py of the R5/R6 re-plan scout (it hard-coded its worktree).
 """
 import json

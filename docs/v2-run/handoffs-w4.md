@@ -29,6 +29,11 @@ below are older — `wave-00.md` / `wave-06.md` cite them on `543887b`.
 with the shared `test/e2e/ticks.ts` `tap`, `remoteTap` and `waitTicks` (the slow-host repro's timeout); read
 `git show -s 0cabaec`.
 
+**Updated for `b0dede1`:** `424afd7` (options, game-options and scenes: taps and pauses; release-check and
+weapon-select: taps only) and `b0dede1` (display-options and bullet-palette: taps) replace those specs' local
+frame-paced helpers with the shared `test/e2e/ticks.ts` `tap` / `remoteTap` / `waitTicks` (test files only); read
+`git show -s 424afd7 b0dede1`. Appendix A (d)'s spec lines are `e7ff5db`'s.
+
 Tags:
 
 - `(src)` names the report or review an item comes from.
@@ -315,7 +320,10 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
 
 - **`:172` (the `CreditsScene` row) and the credits / story text** (U fix 1):
   - the scroll moves `ART_SCALE` px a step (`SCROLL_HALVES = ART_HALVES`, scroll = `(steps·SCROLL_HALVES) >> 1`);
-  - durations stay in v1 ticks within 5 %: story 1,046 → 1,074 ticks (+2.7 %), credits 1,990 → 2,060 (+3.5 %);
+  - durations stay in v1 ticks within 5 %: story 1,046 → 1,074 ticks (+2.7 %), credits 1,990 → 2,060 ticks (+3.5 %;
+    `CreditsScene.duration` over the 69 credit rows). The fingerprint walk's `credits` segment holds one frame less,
+    1,989 → 2,059, because the walk's `press(Action.Confirm)` (a held tick, then a released one) already runs the
+    scene's first tick (measured on master `526af20`);
   - `SCROLL_HALVES` (`scenes/index.ts:7481`) is the one constant: 2 restores one pixel a step (story 1,566 and
     credits 2,970 ticks at 640).
 - **§ The HUD (`:478-490`):**
@@ -536,7 +544,9 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
     went `d6fa1ca40cde8817` → `1c02c14c0a4a7047`, the examples `75374beda8914daf` → `26f2e401282941b6`. No boss,
     spawn or block default reaches `core.stages`.
   - **The 3 `screen`-hash moves** (attract, runA, runB) come from the story crawl and the credits running longer
-    (`attract.story` 1,046 → 1,074 frames, `runA` / `runB.credits` 1,989 → 2,059), not from frame-sized effects.
+    (`attract.story` 1,046 → 1,074 frames, `runA` / `runB.credits` 1,989 → 2,059 frames — the walk's segments; the
+    credits scene itself runs 1,990 → 2,060 ticks, its first tick inside the walk's Confirm press: § Other sections),
+    not from frame-sized effects.
 
   (both unverified here: reviewer measurements)
 - **`49a8f3f`'s body credits `es.options` / `es.game` only to the HI rule.** Both also moved from the es title cursor
