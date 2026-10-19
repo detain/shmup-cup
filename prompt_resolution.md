@@ -749,7 +749,9 @@ GIT (file-changing roles only; scouts and reviewers commit nothing):
 - Never force-push, never --no-verify, never push another branch, never touch v1.x.
 - After your last push: git fetch origin && git merge-base --is-ancestor HEAD origin/master must succeed and git status
   must be clean; then git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-wt/{NAME}. Scouts and reviewers
-  remove their worktree when done. Anything dirty or unpushed: keep the worktree and say so.
+  remove their worktree when done. Anything dirty or unpushed: keep the worktree and say so. A PATCH subtask (b):
+  once your patch file and report are written, remove your worktree with git -C /home/sites/shmup-cup worktree
+  remove --force /home/sites/shmup-wt/{NAME} — your commits live on in the patch file.
 
 OWNER-ONLY WORK (TV runs, hand cleanup of sprites, play sessions, AI generation, the FLUX licence) never blocks you:
 build the tooling, use interim or procedural art, and list what remains under "Manual (owner)".
