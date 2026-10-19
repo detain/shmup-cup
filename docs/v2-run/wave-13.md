@@ -86,7 +86,9 @@ zero.
        the review is at zero — write the commit message file, run the dry run, read its log, then the LAND." It runs
        the start lines again and writes `/home/sites/shmup-cup-run/<id>-msg.txt`: the subject
        `fix(R5-0n): <what the fix does>` with the zone's step (e.g. `fix(R5-02): zone B's remix spans the expanded
-       stage`); a body that says why and "re-bless <scope>: <the reason>"; no Co-Authored-By line. Then it runs the
+       stage`); a body that says why, "re-bless <scope>: <the reason>" and, when the fix's LAND re-pins a
+       fingerprint (a stage-content fix always re-pins the content-DB `core.stages` digest), "the fingerprints
+       re-pinned: <the reason>" (as wave 11's S7 message does); no Co-Authored-By line. Then it runs the
        LAND below with `--dry-run`, reads the dry run's log (`/home/sites/shmup-cup-run/land-<x>-<date>.log`), and
        only when the log is clean runs the real LAND. If the dry run's `test/golden` run fails on an outcome
        expectation, it does not LAND: it reports, a `<id>.FIXn` corrects that expectation on the branch (as wave 11's
@@ -102,7 +104,9 @@ zero.
        fix is on `origin/master` and `R5-0n.TO.RV` is at zero, the orchestrator starts a new agent with the fix's
        prompt and this line at its top: "You are turn 1 again: your edit is already committed on the branch and a
        timeout fix is on `origin/master` — run the start lines (their rebase brings the timeout fix onto the
-       branch), then turn 1's tests; make no edit and no new commit; report."
+       branch), then turn 1's tests; make no edit and no new commit; report." If the TO fix committed nothing
+       (wave 11's TO block: `origin/master` already holds a high enough value), there is no `R5-0n.TO.RV` — start
+       the new turn 1 at once.
      - Only when those tests are green does `<id>.RV` start (a new round, if one had already run). A test red for
        any other reason goes to an `<id>.FIXn`, like a review finding.
    - **The LAND** (turn 2, from `/home/sites/shmup-cup-run/wt/fix-zone-<x>`; Token: LAND): the fix reaches
@@ -353,8 +357,9 @@ zero.
   ship × preset reaches gets no row: leave it missing in the table — never an invented number — and name each such
   gap (ship, preset, zone) in your report. The sim is deterministic — any difference between two runs is a bug; no
   `Math.random` / `Date.now` in what feeds the sim.
-- **Docs needs:** how to run it, for `docs/dev/difficulty-and-rank.md`; a row for `test/README.md` (it has one row
-  per bench file) and the bench list in `docs/dev/repo-layout.md`'s `test/` entry.
+- **Docs needs:** how to run it, for `docs/dev/difficulty-and-rank.md`; a row for `test/README.md` (add a
+  `bench/balance.perf.ts` row to its bench table, like the `bench/stress.perf.ts` row) and the bench list in
+  `docs/dev/repo-layout.md`'s `test/` entry.
 
 ### R6-01.B2 — The balance report
 
@@ -399,7 +404,7 @@ zero.
   grep -n '^## ' docs/v2-run/balance-report.md   # ## Zone A … ## Zone I, ## Global, ## Extra modes
   ```
 - **Acceptance:** the committed file equals the reviewed report byte for byte; pushed.
-- **Token:** none (a new file of the run folder).
+- **Token:** none (the file is new: no other agent of any wave holds `docs/v2-run/balance-report.md`).
 - **Traps:** never edit a number or a heading: a wrong proposal goes back to `R6-01.B2` and a new review loop.
 
 ### R6-02.P1 — The headless re-measure with the final content
@@ -411,7 +416,13 @@ zero.
 - **Files:** none, unless a gate must change deliberately: then `test/bench/{stress,zones}.perf.ts` or
   `test/bench/render-harness/gates.ts` (gates only; a `gates.ts` change also runs
   `test/integration/render-groups.test.ts`, below) or `apps/tizen/scripts/check-bundle.mjs` (a budget only), each
-  with the measured reason.
+  with the measured reason. A budget change also re-pins its literals: the two test titles and the two message
+  regexes in `apps/tizen/test/scripts/check-bundle.test.ts` (`:277`, `:300`, `:312`, `:313` on this master), the
+  expected message in `apps/tizen/test/scripts/check-bundle-budgets.test.ts:133`, the shared-budgets pin in
+  `apps/webos/test/scripts/check-bundle.test.ts`, and the "`dist/` ≤ 8 MB" line of `apps/tizen/README.md` and
+  `apps/webos/README.md`; then run `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen
+  apps/tizen/test/scripts` and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project webos apps/webos/test/scripts`
+  (the line numbers may have moved since wave 4 re-pinned the budgets — locate each by its text).
 - **Tests (targeted):**
   ```bash
   flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config test/bench/vitest.config.ts stress.perf.ts
@@ -534,8 +545,9 @@ zero.
     "A build of `master` is v2's 2.0.0 alpha" → "… v2's 2.0.0 beta" (no hyphen there, so a `2\.0\.0-alpha`
     search misses it);
   - `docs/dev/difficulty-and-rank.md` (how to run `balance.perf.ts`, with `SHMUP_BALANCE=1`);
-  - `test/README.md` and `docs/dev/repo-layout.md` (the `balance.perf.ts` row / mention only: `test/README.md` has a
-    row per bench file, `repo-layout.md`'s `test/` entry lists the benches);
+  - `test/README.md` and `docs/dev/repo-layout.md` (the `balance.perf.ts` row / mention only: add the
+    `bench/balance.perf.ts` row to `test/README.md`'s bench table and name the bench in `repo-layout.md`'s
+    `test/` entry);
   - only if a zone fix ran: that zone's doc (`docs/dev/zone-a-and-playtest.md`, `zones-b-and-c.md`,
     `zones-d-and-e.md`, `zones-f-and-g.md` or `zones-h-and-i.md`) — the lines the fix's docs needs name.
 - **Tests:** `docs/dev/repo-layout.md` is read by `e2e-docs.test.ts` (its `pnpm test:e2e` command line names
