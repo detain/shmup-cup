@@ -108,7 +108,7 @@ template literals are — and fails on any literal of a frame number: the v1 fra
 `100` and the new centre `320` / `180` are not banned — ticks, percentages and scores use them.
 
 A literal that is a frame number but does not mean the frame goes on the allow-list `ALLOWED` in
-that file, one entry per symbol:
+that file, one entry per symbol and value:
 
 ```ts
 {
@@ -129,8 +129,8 @@ distance or generated data, with the reason (text-sized panels are no longer a c
 the constants. The flip (R2-01, `72b18a1`) added three new entries covering the four literals plan
 R1-01's As built predicted: the 360-tick ending timers `EndingScene.drawCitadel.sink` (`count: 2`)
 and `StoryScene.drawDawn.rise`, and the angle `640` in `DIRECTION_HEADINGS`; `92120c7` — the same
-step's uiPx commit, earlier than the flip — had already removed the text-sized panel entries, the
-`ZONE_TALLY_PANEL.w` entry this doc's old example quoted among them.
+step's uiPx commit, earlier than the flip — had already removed the seven panel / column entries,
+among them the `ZONE_TALLY_PANEL.w` entry this doc's old example quoted.
 
 **The repo-wide scan** (`test/integration/frame-literals-repo.test.ts`, R1-02) does the same for
 everything else, with the same scanner — the shared test helper
