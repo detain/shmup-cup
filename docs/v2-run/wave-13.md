@@ -50,9 +50,8 @@ zero.
    numbers, the frozen entries, the shared files, content-only bosses, the fixed bot, derived files red on the
    branch, generators, budgets, AI art, the cross-zone checks, long commands), into the fix's prompts after this
    wave's rules; wave 11's rules 1–2 do not apply (the worktree, turns and LAND below replace them). Rule 13's
-   timeout fix uses wave 11's `R5-0n.TO` block with the next free id of the zone (`R5-02.TO2` if `R5-02.TO` exists);
-   one that raises `test/playtest/boss-rush.test.ts`' timeout waits until `R5-10.T4` is on `origin/master` (T4 owns
-   that file in this wave):
+   timeout fix uses wave 11's `R5-0n.TO` block with the next free id of the zone (`R5-02.TO2` if `R5-02.TO` exists),
+   as the bullet "A timeout fix" below says:
    - **The worktree:** the orchestrator creates the fix's worktree and branch (for zone B:
      `git -C /home/sites/shmup-cup worktree add -b r5/fix-zone-b /home/sites/shmup-cup-run/wt/fix-zone-b origin/master`).
    - **The prompt line:** the orchestrator's prompt for the fix says: "lane worktree, exception (a) of the GIT block —
@@ -92,6 +91,20 @@ zero.
        only when the log is clean runs the real LAND. If the dry run's `test/golden` run fails on an outcome
        expectation, it does not LAND: it reports, a `<id>.FIXn` corrects that expectation on the branch (as wave 11's
        S7 "Dry run first" says), then a new review and a new turn 2.
+   - **A timeout fix** (wave 11 rule 13 and its `R5-0n.TO` block, which name the zone's S6): in this wave the S6 is
+     the zone fix's turn 1 or its `<id>.RV` re-run of turn 1's tests.
+     - A turn 1 whose only red test failed only on its Vitest timeout (rule 13) still makes its one commit on the
+       branch, then reports the file, the test's title and its measured duration.
+     - A TO fix of `test/playtest/boss-rush.test.ts` waits until `R5-10.T4` is on `origin/master` with
+       `R5-10.T4.RV` at zero (T4 and its fixers own that file in this wave; wave 11 rule 13's "`R5-10.T4`
+       (wave 13) is too late" does not apply here). A TO fix of a `campaign-routes-*.test.ts` file starts at once.
+     - The TO block's "new S6 agent" (rule 13's "a new S6 agent re-runs your S6") is a **new turn 1**: once the TO
+       fix is on `origin/master` and `R5-0n.TO.RV` is at zero, the orchestrator starts a new agent with the fix's
+       prompt and this line at its top: "You are turn 1 again: your edit is already committed on the branch and a
+       timeout fix is on `origin/master` — run the start lines (their rebase brings the timeout fix onto the
+       branch), then turn 1's tests; make no edit and no new commit; report."
+     - Only when those tests are green does `<id>.RV` start (a new round, if one had already run). A test red for
+       any other reason goes to an `<id>.FIXn`, like a review finding.
    - **The LAND** (turn 2, from `/home/sites/shmup-cup-run/wt/fix-zone-<x>`; Token: LAND): the fix reaches
      `origin/master` only through
      `RUN_DIR=/home/sites/shmup-cup-run bash docs/v2-run/helpers/land-zone.sh --only <scope> --message /home/sites/shmup-cup-run/<id>-msg.txt --zone <x>`,
@@ -181,7 +194,14 @@ zero.
      git commit --amend --no-edit
      git push origin HEAD:master
      ```
-     If the push is rejected, run the script again (at most 5 times, then report). After the push,
+     If the push is rejected, run the script again (at most 5 times, then report). If the script stops on a rebase
+     conflict in one of the three fingerprint files (a re-run's commit already holds their regenerated `PINNED`
+     tables, and a push that moved master in between may have re-pinned them too), take master's file and let the
+     script re-pin it — never merge it by hand:
+     `git checkout origin/master -- <that file> && git add <that file> && GIT_EDITOR=true git rebase --continue`
+     (`<that file>` is the conflicted fingerprint file's path, as `git status` prints it), then run the flock line
+     again. (During a rebase `--ours` / `--theirs` are swapped, so name `origin/master`.) A conflict in any other
+     file is real: `git rebase --abort`, stop and report. After the push,
      `git show --stat HEAD` must list only your sources and the fingerprint files; anything else: stop and
      report. `R5-10.T4.RV` reviews the pushed commit; its fixes are new pushes (README's review loop), through the
      same script when they change what a fingerprint pins.
@@ -327,9 +347,12 @@ zero.
   `pnpm bench` and CI's Benchmark job skip it; the bench is excluded from `pnpm test` (it lives in `test/bench/`); no
   shared harness file changed.
 - **Token:** none.
-- **Traps:** the run is long (16 routes × 2 ships × 4 presets, 5 zones each): run it in the background and poll; the
-  sim is deterministic — any difference between two runs is a bug; no `Math.random` / `Date.now` in what feeds the
-  sim.
+- **Traps:** the run is long (per ship × preset `walkCampaignRoutes` plays up to 31 zone runs for the 16 routes,
+  zone A once — at most 248 in all): run it in the background and poll. Without god mode a route stops at its first
+  zone that does not clear (`test/playtest/campaign.ts`: no fork after a game over), so a zone that no route of a
+  ship × preset reaches gets no row: leave it missing in the table — never an invented number — and name each such
+  gap (ship, preset, zone) in your report. The sim is deterministic — any difference between two runs is a bug; no
+  `Math.random` / `Date.now` in what feeds the sim.
 - **Docs needs:** how to run it, for `docs/dev/difficulty-and-rank.md`; a row for `test/README.md` (it has one row
   per bench file) and the bench list in `docs/dev/repo-layout.md`'s `test/` entry.
 
@@ -495,6 +518,11 @@ zero.
 - **Depends on:** R5-10.T4, T7, T9 and R6-01.B1 on `origin/master`, T5 done (pushed or reported), every zone fix
   (rule 1) LANDed; the reports of R6-02.P1 (and `R6-02.P1.RV` at zero if P1 changed a gate or a budget) and
   R6-02.P2 (`/home/sites/shmup-cup-run/R6-02.P1-report.md`, `/home/sites/shmup-cup-run/R6-02.P2-report.md`).
+- **Goal:** the docs needs of R5-10.T4, T5 (only if it names one) and T7, of R6-01.B1, of R6-02.P1 (its headless
+  numbers; its memory sentence is `W13.DOCS-C`'s) and R6-02.P2, and of a zone fix if one ran, in the files below:
+  the install-on-tv checklist from `/home/sites/shmup-cup-run/R6-02.P2-report.md`, the headless numbers from
+  `/home/sites/shmup-cup-run/R6-02.P1-report.md`, and the two install-on-tv version lines; push (common rule 5); then
+  report.
 - **Files (only these):**
   - `docs/dev/extra-modes-and-replays.md` and `docs/client/extra-modes-and-replays.md` (the boss rush, the loops, the
     caravan);
@@ -515,6 +543,7 @@ zero.
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-docs.test.ts
   ```
+- **Token:** none (no other docs agent of this wave holds these files).
 
 ### W13.DOCS-C — The version lines
 
