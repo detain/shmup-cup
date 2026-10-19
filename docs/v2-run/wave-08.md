@@ -313,32 +313,44 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Depends on:** `R4-05.E3` on `master`.
 - **Goal:** the endings (`EndingScene` at `packages/core/src/scenes/index.ts:7134`) fill the 640×360 frame, with
   animated parts drawn by `scripts/assets/procedural/ending.mjs`'s v2 path (today `ui/ending-citadel`, `-ark`,
-  `-blast` (4 frames), `-bubble`, `-sun`, `-surface`, `ending.mjs:50-57`).
+  `-blast` (4 frames), `-bubble`, `-sun`, `-surface`, `ending.mjs:50-57`). "The five endings" are the campaign's
+  five endings over its two sprite scenes, `citadel` and `abyss`, with their flag variants (the flawless dawn, the
+  escape); add no scene. Drawn from the bible's text and the v1 scenes — no FLUX ending winner (RR-4, rule 12).
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/assets/procedural/ending.mjs` — a v2 path (`(options.artScale ?? 1) !== 1`, rule 1; `native: true` on
     the v2 sprites); the v1 path untouched.
-  - `packages/core/src/scenes/index.ts` — §ending: `EndingScene` (`:7134`) and its `drawCitadel` (`:7370`). **Not**
-    `StoryScene.drawDawn` (`:8554`): that is the attract story crawl, not an ending.
+  - `packages/core/src/scenes/index.ts` — §ending: `EndingScene` (`:7134`) and its `drawCitadel` (`:7370`), and,
+    because the attract story crawl draws the same pieces, `StoryScene`'s sprite scenes (`STORY_SCENE_LAYOUT`
+    `:7671` and the draw code of `drawDawn` `:8554`, `drawInvasion` `:8575`, `drawLaunch` `:8604`): only to place
+    the redrawn pieces. The story's text panel stays `R4-03.C7`'s, and the 360-tick timer of `drawDawn` stays.
   - `packages/core/test/frame-literals.test.ts` — only the allow-list entry `EndingScene.drawCitadel.sink` (360, count
     2, `:84`), and only if `drawCitadel` changes (E4 owns it). The entry `StoryScene.drawDawn.rise` (`:91`) stays.
-  - the ending generator's test cases: today in `test/scripts/assets/procedural-zones-hi-edge.test.ts:115-200`; after
-    `R5-P.P5c` (wave 6) in `procedural-zone-h-edge.test.ts` or `procedural-zone-i-edge.test.ts` — find them with
-    `git grep -l ending.mjs test/scripts/assets`. E4 may edit only those cases in that file.
-  - tests in `packages/core/test/scenes/` (`scenes-ending*.test.ts`).
+  - the ending generator's test cases: today in `test/scripts/assets/procedural-zones-hi.test.ts` and
+    `procedural-zones-hi-edge.test.ts`; after `R5-P.P5c` (wave 6) in the `procedural-zone-h*` /
+    `procedural-zone-i*` files — find them with `git grep -l ending.mjs test/scripts/assets`. E4 may edit only those
+    cases in those files.
+  - tests in `packages/core/test/scenes/` (`scenes-ending*.test.ts`, `scenes-attract*.test.ts`).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/frame-literals.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui/ui-layout-frame.test.ts packages/core/test/frame-literals.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/frame-literals-repo.test.ts test/integration/palette-cycle-scan.test.ts
-  bash docs/v2-run/helpers/e2e-batch.sh zones-hi.spec.ts campaign-run.spec.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  bash docs/v2-run/helpers/e2e-batch.sh zones-hi.spec.ts campaign-run.spec.ts attract.spec.ts
   ```
-  then the FP re-pin under the land lock.
-- **Acceptance:** full-frame scenes with `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` in the generator; an allow-list
-  entry only for a tick or count that equals a banned number, with its reason (derive everything else); scale-1 pin
-  green; fingerprints re-pinned with the reason.
+  then, under the land lock, run those two lines with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the
+  walks that moved, and run them again without the variable.
+- **Acceptance:** full-frame scenes with `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` in the generator; the
+  allow-list entry `EndingScene.drawCitadel.sink` changed only for a tick or count that equals a banned number, with
+  its reason (derive everything else); scale-1 pin green; fingerprints re-pinned with the reason.
 - **Token:** SCENES; FINGERPRINTS (push time).
-- **Traps:** rule 7; the epilogue and story panels' layout rule belongs to `R4-03.C7` — do not change the panels here;
-  a new sprite name is a re-pin.
+- **Traps:** rule 7; the epilogue and story panels' layout rule belongs to `R4-03.C7` — do not change the panels
+  here; keep the six names: a new `ui/ending-*` name must be in `core/ui` `UI_SPRITES` (the case "names exactly the
+  core's ending UI sprites" of the H / I generator tests), and `packages/core/src/ui/index.ts` is lane 3's UI-FILE.
+  Grow the six sprites and draw flat sky / sea bands as draw-list rectangles.
+- `docs/v2-run/handoffs-w4.md` § "R4 notes" (R4-05): fix the sun / ARK sliver between the scene and the epilogue
+  panel, and the top-left-anchored ×1.5 composition.
 - **Docs needs:** `docs/dev/zones-h-and-i.md` (endings).
 
 ### R4-03.C7 — The scenes at the new metrics; the campaign line caps; one panel rule
@@ -348,30 +360,39 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Goal:** lay out the zone map (`MapScene` `:6662`), name entry (`NameEntryScene` `:7854`), rebind (`RebindScene`
   `:4178`), input test (`InputTestScene` `:4470`) and credits (`CreditsScene` `:7510`) at the font's metrics; settle
   **one rule** for the story and epilogue text panels (today the story panel is centred with 24-px margins while the
-  epilogue panel hugs its scene with its text at the top — U3 review 1 O2/O3); check the campaign line caps.
+  epilogue panel hugs its scene with its text at the top — U3 review 1 O2/O3, `docs/v2-run/handoffs-w4.md`
+  § "R4 notes"); check the campaign line caps.
 - **Files (only these; checked on `bc8e05d`):**
-  - `packages/core/src/scenes/index.ts` — those scenes.
+  - `packages/core/src/scenes/index.ts` — those scenes, and the epilogue and story text panels
+    (`ENDING_TEXT_PANEL` `:7086`, `ENDING_TEXT_DY` `:7094`, `EndingScene.drawStory` `:7266`, `STORY_PANEL` `:7713`).
   - `packages/core/src/data/campaign.ts` — the caps (`MAX_ENDING_LINE_LENGTH = TEXT_PANEL_LINE_LENGTH` `:151`,
-    `MAX_CREDITS_LINE_LENGTH` `:163`, `MAX_STORY_LINE_LENGTH` `:185`; 47 / 67 today) — they validate
+    `MAX_CREDITS_LINE_LENGTH` `:163`, `MAX_STORY_LINE_LENGTH` `:185`; 47 / 67 today), and the panel insets they
+    derive from (`TEXT_PANEL_INSET` / `TEXT_PANEL_PADDING`, `:137-147`) — they validate
     `content/campaign/main.campaign.json`.
   - only if a label must shorten: `content/strings/{en,es,ja}.strings.json` and `packages/core/src/ui/strings.ts`
     (`DEFAULT_UI_TEXT`; `en` must equal it).
-  - tests in `packages/core/test/scenes/`, `packages/core/test/ui/ui-layout-frame.test.ts`,
+  - tests in `packages/core/test/scenes/`, the cap cases of `packages/core/test/data/campaign-ending*.test.ts` and
+    `data-demos*.test.ts`, `packages/core/test/ui/ui-layout-frame.test.ts`,
     `packages/core/test/helpers/layout-walks.ts`, `test/integration/localization.test.ts`.
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui packages/core/test/data/campaign.test.ts packages/core/test/data/campaign-edge.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui packages/core/test/data/campaign packages/core/test/data/data-demos packages/core/test/frame-literals.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/localization.test.ts test/integration/content.test.ts test/integration/cjk-budget.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh zone-map.spec.ts rebind.spec.ts input.spec.ts attract.spec.ts zones-hi.spec.ts front-end.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock, run those two lines with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the
+  walks that moved, and run them again without the variable.
 - **Acceptance:** nothing truncates or overlaps in en, es or ja; the shipped campaign validates against the caps; the
   fingerprints re-pinned with the reason.
 - **Token:** SCENES; STRINGS (if a label changes; implies FP); FINGERPRINTS (push time).
 - **Traps:** a string change moves the content-DB and presentation fingerprints (strings are hashed);
-  `cjk-budget.test.ts`'s figures stay on `artScale: 1` (the M3-03 CJK decision) — never edit that file; panel sizes
+  `cjk-budget.test.ts`'s figures stay on `artScale: 1` (the M3-03 CJK decision) — never edit that file (since
+  `R4-P.P3` its same-art case accepts native v2-only frames; if it fails on a frame you did not add, stop and
+  report); panel sizes
   derive from `GLYPH_*` / `LINE_H` / `uiPx`, never literal.
 - **Docs needs:** `docs/dev/scenes-and-ui.md` (the panel rule, the caps), `docs/dev/options-rebinding-and-accessibility.md`,
   `content/strings/README.md` (only if a string changed).
@@ -381,28 +402,38 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Wave / lane / order:** wave 08, lane 2, after `R4-03.C7`.
 - **Depends on:** `R4-03.C6` on `master` (UI-FILE passes to you).
 - **Goal:** a full-frame `ui/title-backdrop` (`FRAME_W×FRAME_H`) drawn by `title.mjs`, interned through `UI_SPRITES`
-  and drawn by the title scene.
+  and drawn by the title scene. Drawn from the bible's text and the v1 title — not from the FLUX title key art
+  (RR-4, rule 12).
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/assets/procedural/title.mjs` — the backdrop, on the v2 path only; `title.mjs` returns no
     `ui/title-backdrop` at `(options.artScale ?? 1) === 1`, so the name is absent at scale 1 (decision RR-1a: no v1
     stand-in).
-  - `packages/core/src/ui/index.ts` — `UI_SPRITES` (`:236`) and `UiSprites`.
+  - `packages/core/src/ui/index.ts` — `UI_SPRITES` (`:236`), `UiSprites` (`:251`), `resolveUiSprites` (`:288`) and
+    `NO_SPRITES` (`:310`).
   - `packages/core/src/scenes/index.ts` — `TitleScene` (`:2456`) draws it.
   - tests in `packages/core/test/scenes/` and `packages/core/test/ui/`.
+  - `test/scripts/assets/procedural-title.test.ts` (new: the backdrop only at `artScale` ≠ 1, `FRAME_W`×`FRAME_H`,
+    opaque, native).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui packages/core/test/frame-literals.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/palette-cycle-scan.test.ts test/integration/frame-literals-repo.test.ts
-  bash docs/v2-run/helpers/e2e-batch.sh front-end.spec.ts frame-layout.spec.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  pnpm content:check
+  bash docs/v2-run/helpers/e2e-batch.sh front-end.spec.ts frame-layout.spec.ts boot.spec.ts scenes.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock, run those two lines with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the
+  walks that moved, and run them again without the variable.
 - **Acceptance:** the backdrop is opaque, full-frame, drawn below the logo and the menus; the new name re-pins the
   fingerprints (expected); the scale-1 digest pin green (the name is absent at scale 1, RR-1a; the CJK figures and the
   bench do not draw the title).
 - **Token:** SCENES + UI-FILE; FINGERPRINTS (push time).
 - **Traps:** `FRAME_W` / `FRAME_H` from `scripts/frame.mjs`, no literal; colours off the reserved ramps; the title's HI
   line stays where v1 showed it (U3 fix `5d5a050`).
+- `boot.spec.ts` and `scenes.spec.ts` check that the title has no KESTREL hull `#c8d0e0` (and the logo's red
+  `#e04828`): keep `#c8d0e0` out of the backdrop, or report the spec lines for `W08.E2E` (rule 15).
 - **Docs needs:** `docs/dev/front-end-and-attract.md` (title).
 
 ### R4-05.E1 — The v2 logo, drawn procedurally
@@ -415,15 +446,22 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `scripts/assets/procedural/logo.mjs` — v2 path; the v1 path untouched.
   - `test/scripts/assets/procedural-logo.test.ts` (from R4-P.P2).
   - only if the logo overlaps the HI line or the code message: `packages/core/src/scenes/index.ts` `TITLE_LAYOUT`
-    (`logoY: FRAME_CY - uiPx(44)`, `:1787-1791`) and the FP re-pin.
+    (`logoY: FRAME_CY - uiPx(44)`, `:1787-1791`), the case 'draws the logo sprite, or its name without the UI
+    sprites, and the session hi-score' of `packages/core/test/scenes/scenes-flow-edge.test.ts` (`:500-509`, it pins
+    `logoY`), and the FP re-pin.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-logo.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
-  bash docs/v2-run/helpers/e2e-batch.sh front-end.spec.ts boot.spec.ts attract.spec.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-logo.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts test/integration/frame-literals-repo.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui/ui-layout-frame.test.ts packages/core/test/frame-literals.test.ts   # only if TITLE_LAYOUT changed
+  bash docs/v2-run/helpers/e2e-batch.sh front-end.spec.ts boot.spec.ts attract.spec.ts scenes.spec.ts
   ```
 - **Acceptance:** a pure redraw (same name) moves no fingerprint; the scale-1 pin green; nothing overlaps on the title.
 - **Token:** none, or SCENES + FINGERPRINTS if the layout moves.
 - **Traps:** rule 4 (a moved fingerprint without a layout change = stop); original lettering only.
+- Keep `#e04828` as the bottom band of the logo's gradient (`boot.spec.ts`, `scenes.spec.ts` look for it), or report
+  the spec lines for `W08.E2E` (rule 15).
 - **Docs needs:** `docs/dev/front-end-and-attract.md`; `README.md` banner is `R4-05.E6`'s.
 
 ### R4-03.C5 — The HUD for the 12-px bars
