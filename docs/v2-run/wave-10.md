@@ -90,7 +90,8 @@ this wave; re-find any line by its code before you edit.
   `packages/core/src/debug/index.ts` and the two stage-skip core tests — `R5-P.P14` only (no zone file of this
   wave edits core; wave-11 rule 6's equivalent holds here).
 - **Land lock users:** P7 (fingerprints), `R5-01.S2` (fingerprints: the credits line), P12 (if it re-records),
-  `R5-P.P14` (the `zone-h-boss` golden and the two fingerprint pairs), `R5-01.S7` (LAND). They never overlap:
+  `R5-P.P14` (the `zone-h-boss` golden and the two re-pinned `runA` boss-skip segments), `R5-01.S7` (LAND).
+  They never overlap:
   each takes `/tmp/shmup-cup-land.lock` for its whole regenerate-and-push.
 
 ## The v2 numbers a zone agent needs
@@ -125,7 +126,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   (`test/integration/palette-cycle-scan.test.ts`, from R3-03.V3) fails on near-misses.
 - **Files (only these; checked on `bc8e05d`):**
   - the `cycles` arrays only of `content/stages/zone-b.stage.json`, `zone-d`, `zone-e`, `zone-f`, `zone-g`,
-    `zone-h`, `zone-i`, `brine-grotto.stage.json`, `glimmer-cache.stage.json` (the stages that cycle today); zones A
+    `zone-h`, `zone-i`, `brine-grotto.stage.json`, `glimmer-cache.stage.json` (the nine zone stages that cycle
+    today; `raster-range` cycles too — a dev range, never touch it; Traps); zones A
     and C cycle nothing — if `zone-a.md` / `zone-c.md` §9 sets a ramp, write it into the `cycles` of
     `content/stages/zone-a.stage.json` / `zone-c.stage.json` too (no art paints it yet: that zone's S2 starts after
     you and paints with exactly these colours; say so in your report);
@@ -138,9 +140,10 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     rule 1; besides the new constant and the new branch, that parameter is the only change), draw the cycled
     sprite (e.g. `bg/brine-sea`) under the same name in exactly that ramp (`native: true`, bible size); at art
     scale 1 the v1 sprite stays as it is today. The stage's `cycles` names the v2 ramp;
-  - `scripts/assets/v2kit.mjs` (`R4-P.P4`, wave 07) — only its `RESERVED_RAMPS`, and only when you added a
-    `<X>_RAMP_V2`: add it next to that zone's `<X>_RAMP` (keep the v1 one), read lazily inside a function like the
-    others, so `offRamp` keeps every S2's colours ≥ 3/255 from the v2 ramps too; `test/scripts/assets/v2kit.test.ts`
+  - `scripts/assets/v2kit.mjs` (`R4-P.P4`, wave 07) — only the reserved-ramp list its `offRamp` assembles (there is
+    no `RESERVED_RAMPS` array: the kit reads each ramp lazily, inside `offRamp`, and you keep that shape), and only
+    when you added a `<X>_RAMP_V2`: add a lazy read of it next to that zone's `<X>_RAMP` read (keep the v1 one), so
+    `offRamp` keeps every S2's colours ≥ 3/255 from the v2 ramps too; `test/scripts/assets/v2kit.test.ts`
     only if it pins the ramp list;
   - their procedural tests `test/scripts/assets/procedural-zone-{b,d,e,f,g,h,i}.test.ts` and `-edge.test.ts` (from
     R5-P.P5c) — only the ramp pins (they follow the v2 ramp);
@@ -425,7 +428,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   pnpm format:check && pnpm lint && pnpm typecheck
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core test/debug/debug-skip
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/zone-h-runtime test/integration/zone-i-runtime test/integration/campaign-flow.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts   # the whole file: no test title names a zone
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts   # the whole file: it audits all nine zones; its zone cases carry the campaign's UPPER-CASE labels (wave 09's rule note) — never -t with the lower-case zone letter, which selects nothing
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
@@ -616,13 +619,16 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Traps:**
   - The `bulwark-*` boss sprites are copied by name into zone H's `echo-bulwark` (`content/enemies/zone-h.enemies.json`):
     never rename or delete one, and keep a part of the rebuilt bulwark for every sprite `echo-bulwark` uses
-    (`bulwark-hull`, `bulwark-wing-top`, `bulwark-wing-bottom`, `bulwark-emitter`, `bosses/core`, `bulwark-plate`)
+    (`bosses/bulwark-hull`, `bosses/bulwark-wing-top`, `bosses/bulwark-wing-bottom`, `bosses/bulwark-emitter`,
+    `bosses/core`, `bosses/bulwark-plate`)
     with more parts in total than the echo's 8 — a part dropped with its sprite turns zone H's content case
     'gives IRON CITADEL …' red (`pnpm content:check` runs it in your own lane); new parts get new sprite names
     (from S2). Zone H re-rigs its echo later (`R5-08.S4c`, wave 12).
   - `halcyon-bulwark` is also in `bonus-range` and the boss rush (`content/stages/boss-rush.stage.json` `rush`): the
     boss-rush playtest must still pass (S6 runs it).
   - Run the allocation guard file alone; never move its measured loop.
+- **Docs needs (report them; never edit docs):** `docs/client/bestiary.md` (the rebuilt HALCYON BULWARK: parts,
+  phases and attacks), the `docs/images` boss plate re-generated by `pnpm docs:images`.
 
 ### R5-01.S5a — Zone A: stage geometry and the new tileset
 
@@ -633,7 +639,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Files (only these; checked on `bc8e05d`):**
   - `content/stages/zone-a.stage.json` — `length`, camera keys (≥ 1 high-speed key; the last key starts the calm),
     checkpoints (≥ 5), `tilemap` (`tileset: "terrain-azure"`, `rowsTall`, heightfield `segments` — a segment that
-    reaches the map's end ends at `length + 640`), 4–6 parallax layers, `decor`, raster rows (frame rows 0 … 359);
+    reaches the map's end ends at `length + 640`), 4–6 parallax layers, `decor`, raster rows (playfield rows:
+    `top` 0 … 335, `bottom` 1 … 336 — Traps);
     no `cycles` unless R5-P.P7 set one;
   - `content/tilesets/terrain-azure.tileset.json` — **new** (sprite `tiles/terrain-azure` from S2; per-tile
     collision type and 12-entry column masks; `tileSize` 12); `terrain-a` stays for the escape, the bonus stages and
@@ -646,10 +653,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-a.test.ts test/integration/stage-terrain.test.ts test/integration/tile-size.test.ts test/integration/content-units.test.ts
-  node scripts/content/rescale.mjs --factor 1 --dry-run   # expect 0 changes, 0 unclassified, 0 errors
+  node scripts/content/rescale.mjs --factor 1 --dry-run   # expect exit 0, "dry run: nothing written." and no "files changed", "unclassified" or "errors" section
   ```
 - **Acceptance:** the content validates; the heightfield finds a tile for every cell it shapes (`stage-terrain`);
-  every number has its unit; the identity rescale run reports 0 changes, 0 unclassified, 0 errors.
+  every number has its unit; the identity rescale run exits 0, says 'dry run: nothing written.' and lists no
+  changed file, no unclassified value and no error.
 - **Token:** none (branch commit).
 - **Traps:**
   - Tiles are art clipped to the designed mask for every tile the heightfield matches by mask (W5-11): a stand-in
@@ -681,7 +689,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-a.test.ts test/integration/content.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts   # the whole file: no test title names a zone (it audits all nine), so -t 'zone A' would select nothing
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts   # the whole file: it audits all nine zones; its zone cases carry the campaign's UPPER-CASE labels (wave 09's rule note) — never -t with the lower-case zone letter, which selects nothing
   ```
 - **Acceptance (the v2 contract, R5-D2):** length 20,000–22,000; scroll to the WARNING 3.75–5.25 min; ≥ 5
   checkpoints; 6–8 new enemy types counted by behaviour besides the boss (zone A's contract rule — the by-sprite
@@ -714,7 +722,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   replays to the same hash, the recovery rule holds, its e2e spec passes on the stand-in art, and its pages fit the
   memory budget.
 - **Files (only these):**
-  - `test/playtest/zone-a.test.ts` (the bounds `3 * 60` / `6 * 60` → the contract's 4.0–6.0 min; the captain seen;
+  - `test/playtest/zone-a.test.ts` (the bounds `3 * 60` / `6 * 60` → the contract's 4.0–6.0 min; the test title's
+    '3 to 6 minutes' → '4 to 6 minutes'; the captain seen;
     the peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and the peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled
     through the harness's `observe` hook, as every zone B … I does in wave 11; particles are not measured here — see
     Traps), `test/playtest/zone-a-recovery.test.ts`;
@@ -733,10 +742,12 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     no later zone edits the shared comparison. Make the same condition cover the **non-zone scenarios a rebuilt zone
     feeds**: `boss-rush` opens with `halcyon-bulwark` (its `warnings` are compared within ±2 %, and the rebuild moves
     the WARNING ticks) and `bonus-range` places `picket` and `halcyon-bulwark`. Drop every scenario whose stage
-    content names an enemy or boss of a `remastered: true` zone (read the content, not the stage id), and name the
-    dropped scenarios in your report. This is the one decision for every later rebuilt rush boss: waves 11 and 12
-    never edit the shared comparison — their zones' S6 traps stop and report a foreign failure exactly because this
-    bullet owns it.
+    content names an enemy or boss of a `remastered: true` zone (read the content, not the stage id) — except an
+    entry that zone's own `S4a` froze (`tender`'s sim fields, S4a's Frozen trap, `helpers/r5r6/carrier.py`: every
+    zone B–I spawns it and it never changes, so their scenarios keep comparing; a scenario that names only
+    frozen entries stays) — and name the dropped scenarios in your report. This is the one decision for every
+    later rebuilt rush boss: waves 11 and 12 never edit the shared comparison — their zones' S6 traps stop and
+    report a foreign failure exactly because this bullet owns it.
 - **Tests (targeted, run all of them; the playtests in the background):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-a.test.ts test/playtest/zone-a-recovery.test.ts test/playtest/boss-rush.test.ts test/integration/release-audit.test.ts test/integration/standin-budget.test.ts test/golden/v2-port test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts
@@ -791,7 +802,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   run it, and fix it only if the remaster broke it; name each such file in your report.
 - **Files (only these — the test files of group `a` that fail on the branch):**
   - core: `packages/core/test/config/config-difficulty{,-edge}.test.ts`, `packages/core/test/data/{data,data-edge,data-direct,data-demos-edge,campaign-escape}.test.ts`,
-    `packages/core/test/debug/{debug-controls-edge,debug-skip,debug-skip-edge}.test.ts`, `packages/core/test/replay/{replay-coop,replay-version,replay-version-shipped}.test.ts`,
+    `packages/core/test/debug/{debug-controls-edge,debug-skip,debug-skip-edge}.test.ts`, `packages/core/test/replay/{replay-coop,replay-version}.test.ts` (`replay-version-shipped.test.ts` is deleted by `R2-03.G1`, wave 6 — do not look for it),
     `packages/core/test/save/{save,save-edge,save-v2-edge,save-v3}.test.ts`, `packages/core/test/scenes/scenes-campaign-edge.test.ts`,
     `packages/core/test/stage/stage-bonus.test.ts`;
   - shell: `packages/shell/test/boot/boot-manifest.test.ts`, `packages/shell/test/determinism/{determinism,determinism-edge}.test.ts`,
