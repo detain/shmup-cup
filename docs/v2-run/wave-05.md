@@ -75,9 +75,12 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
    wrapper produced minus the reason; then delete the `PORT_PENDING_REASON` import. Delete the import of
    `port-pending.js` when nothing else of it is used. A test that fails once un-gated is a real failure: report it
    (it is a Z item or a T item missed in wave 3), never re-gate it.
-5. Expected skips once U1–U5 are on master: **286** = 239 `GOLDENS_STALE` + 41 frame `runIf`s + the 6 cases
-   `R2-02.T4b` retired with `runIf(content still v1)` (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2; if T4b's
-   report gives another number, use T4b's), and **0** `CONTENT_PORT_PENDING`.
+5. Expected skips once U1–U5 are on master are re-derived from a full-suite run at the port: the old
+   **286 = 239 + 41 + 6** does not reproduce (`GOLDENS_STALE` skips 223 tests in 4 files, not 239 — 260
+   skips across the 7 `test/golden` files, the extra 37 from the v1-baseline suites' own frame gate; the 41
+   frame `runIf`s are not countable from `test/golden`), while `R2-02.T4b` retires the 6 cases with
+   `runIf(content still v1)` (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2; if T4b's report gives another
+   number, use T4b's), and **0** `CONTENT_PORT_PENDING`.
 6. **Pushes:** every builder and fixer of this wave pushes its own task to `master` (Common rule 5); review agents
    never push. This wave has no zone lane (the Z agents are fix subtasks that push to master, not R5's zone lanes)
    and no patch-only subtask.
@@ -378,8 +381,10 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
     (`VITEST_MAX_WORKERS=6 pnpm exec vitest run $(find packages apps test -name '*alloc*.test.ts' -not -path '*/node_modules/*')`);
   - `world-scale.test.ts` classifies every numeric barrel export; `behavior-defaults-port.test.ts` covers every tunable
     of `BEHAVIOR_PARAM_UNITS`;
-  - skips: 286 (239 `GOLDENS_STALE` + 41 frame `runIf` + T4b's 6 retired cases, or T4b's reported number), 0
-    `CONTENT_PORT_PENDING`;
+  - skips: re-derived from a full-suite run at the port — the old 286 = 239 + 41 + 6 does not reproduce
+    (`GOLDENS_STALE` skips 223, not 239; the v1-baseline frame gate's 37 are its own skips; the 41 frame
+    `runIf`s are not countable from `test/golden`), while T4b's 6 retired cases (or T4b's reported number)
+    still count, 0 `CONTENT_PORT_PENDING`;
   - `git grep -n port-pending -- packages apps test scripts` as U5's acceptance; no API newer than Chromium 68; zero
     allocation per tick / frame.
 - **Must not have changed:** R2-03's work (no re-bless, no demo re-record, no `docs:images` / `docs:screens` /
