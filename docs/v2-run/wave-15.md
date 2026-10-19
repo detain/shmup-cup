@@ -94,8 +94,9 @@ this list of what that v2.0.x step must do:
 4. **Re-blessing in D6** happens only for a change made on purpose and not yet re-blessed — there should be none. A
    golden that moves without a reason is a bug: fix it, never re-bless it.
 5. **The release needs the owner's explicit OK** (decision R6-D3). Store submissions stay the owner's.
-6. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
-   permitting), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
+6. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2; its zone
+   spec is one of the wave's two e2e agents, README common rule 4 — it runs through `docs/v2-run/helpers/e2e-batch.sh`
+   under the e2e lock), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
    drop the owner names for the release. The orchestrator pastes wave 12's *Rules for this wave* into the drop's
    prompt instead of this wave's (the drop needs wave 12's rules 3–6: the normal worktree and push protocol, one
    derived-file push at a time, the art snapshot, the winners folder).
