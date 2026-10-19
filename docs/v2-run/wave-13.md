@@ -517,7 +517,7 @@ zero.
   `docs/v2-run/helpers/README.md` (the main table's `r5r6/carrier.py` row and the "Where they came from" table's
   `r5r6/…` row); push; then report: the orchestrator runs the board sync.
 - **Files (only these):** `plan_resolution.md` (R5-10, §17, and a zone fix's As built line), `CHANGELOG.md`,
-  `README.md` (the version line and the milestone sentence only), `docs/v2-run/helpers/r5r6/carrier.py` (deleted
+  `README.md` (the version line `Version **2.0.0-alpha.0** on `master`` → `Version **2.0.0-beta.1** on `master`, only — the README has no other line to touch), `docs/v2-run/helpers/r5r6/carrier.py` (deleted
   with `git rm`), `docs/v2-run/helpers/README.md` (those rows only).
 - **Tests:** the docs tests that read these files — `CHANGELOG.md` (`tooling-config.test.ts`: the first-section
   rule; `render-telemetry-pipeline.test.ts`: every "same statistic" claim next to "bench" keeps "not a comparable"
