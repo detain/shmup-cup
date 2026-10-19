@@ -151,9 +151,12 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   bot; the parade cases of `zone-h-runtime.test.ts` enter through `world.stage.jumpTo` at the first echo's x
   (`R5-P.P14` moved them off the stage skip — re-derive that x from the rebuilt stage's own `boss` events; the
   skip itself stays on IRON SOVEREIGN's WARNING), and `golden-zone-h.test.ts`'s `zone-h-boss` case keeps P14's
-  shape (WARNING entry, no echoes, sovereign phases), re-derived from the new geometry; a route or the boss rush
-  failing on time with the bigger boss: stop and report (wave 11 rule 13) — never edit the route test; your own
-  playtest files' Vitest timeouts (`test/playtest/zone-h.test.ts`,
+  shape (WARNING entry, no echoes, sovereign phases), re-derived from the new geometry;
+  if `test/golden/v2-port` fails on a scenario other than your zone's own (`zone-h`, `zone-h-loop2`) — e.g.
+  `boss-rush`, whose WARNING ticks are compared within ±2 % and move with the rebuilt IRON SOVEREIGN — stop
+  and report the scenario and the field; never edit `test/golden/v2-port*.ts` (zone A's R5-01.S6 owns the
+  drop condition); a route or the boss rush failing on time with the bigger boss: stop and report (wave 11 rule
+  13) — never edit the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-h.test.ts`,
   `zone-h-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance
   budget never; never paste a failing run's output as an expectation: derive each number from the design; no
   derived file on the branch.
