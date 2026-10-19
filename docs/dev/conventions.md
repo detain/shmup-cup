@@ -177,7 +177,9 @@ segment: `ui`, `hud`, `world`, `screen` (a text command contributes its string, 
 It was pinned on the v1.0.0 code (`333721b`; the co-op walks on `4dfca16`) and covers core's output
 only, not render-pixi or the shell.
 
-- **Through R1 it stays green without an edit.** A red segment names the walk, the segment and the
+- **Through R1 it stayed green without an edit** — the re-pin R2-01's flip performed is exactly the
+  exception below, and the walks are content-independent since. A red segment names the walk, the
+  segment and the
   kind of output that moved: a moved pixel (or a moved sim value — then the goldens fail too).
 - **Re-pinning** is for a step that changes what is drawn on purpose — R2-01's flip, an art or
   layout step, a change of the shipped content (strings, stages, the campaign): run
@@ -198,8 +200,11 @@ recording is stale — `CONTENT_REASON` / `GOLDEN_REASON` name which rule) and `
 (the port happened but R2-03 has not re-recorded and re-measured yet — `PORT_REASON`), skip the
 specs whose numbers belong to the ported world (`test/e2e/gates.ts`). Its logic — and the
 `REPLAY_FORMAT` mirror above — is pinned in Node by `test/integration/e2e-gates.test.ts`
-(10 tests); the gate's own self-expiry is `checkGateExpiry`. A failure that comes from a test's
-own fixture is fixed, never gated: only a content-caused assertion skips.
+(10 tests); the gate's own self-expiry is `checkGateExpiry`. While the port is pending,
+`scripts/golden-update.mjs` refuses to run — `golden:update refused: … shipped tileset(s) are not
+at TILE_SIZE …; R2-02 ports the content first, then R2-03 re-blesses` — a refusal pinned by
+`test/golden/golden-edge.test.ts`. A failure that comes from a test's own fixture is fixed, never
+gated: only a content-caused assertion skips.
 
 ## Chromium 68 / 69 rules (the TV engine floor)
 
@@ -552,6 +557,17 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   load is too close to its steady state — follow the guard rules under
   [Performance](#performance-zero-allocation-in-hot-paths) (warm-up, windows, `settled`), never
   the budget.
+- **Fixture stages fly in over one playfield** (R2-01, lane A3): a fixture stage the ship flies into
+  is one playfield tall — `rowsTall: PLAYFIELD_H / tile` — and its map is `length + PLAYFIELD_W`
+  wide; the fly-in row is `SPAWN_Y = PLAYFIELD_H / 2`, and the ground snap searches from there.
+  Off-screen and cull positions derive from `PLAYFIELD_W` / `PLAYFIELD_H` plus
+  `SHOT_CULL_MARGIN` / `ITEM_CULL_MARGIN` / `DEFAULT_BLOCK_SCREEN_X`, never from a literal frame
+  number. A heightfield floor reaches its `base` only after `base / tile` columns of ramp — a
+  fixture that wants flat ground at `base` must leave the ramp room. And tile-row ↔ pixel
+  conversions inside a test read the content's own tile size (`map.tileSize`,
+  `tileset.tileSize`), not `TILE_SIZE`: since R2-01 `TILE_SIZE` is 12 while the shipped content
+  stays at 8 until R2-02's port, so the two are different numbers and a test that mixes them is
+  wrong at one of the two frames.
 - **Browser specs count the game's ticks, never rAF frames or wall seconds** (the rule C5 wrote
   into `test/e2e/ticks.ts`). The loop runs up to 4 ticks a frame under load, so a count of rAF
   frames or a wall timeout is a different number of game ticks on every machine; a spec waiting
