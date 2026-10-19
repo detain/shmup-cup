@@ -354,8 +354,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - tests in `packages/core/test/scenes/` (`scenes-ending*.test.ts`, `scenes-attract*.test.ts`).
   - the presentation fingerprint's `PINNED` table (`test/integration/presentation-fingerprint.test.ts`) — the only
     one this subtask can move: it edits no `content/` and keeps the six names, so the content-DB and shell
-    fingerprints cannot change; if either moves anyway, stop and report it (rule 4). The two lines above are
-    guards.
+    fingerprints cannot change; if either moves anyway, stop and report it (rule 4). The content-DB and shell
+    lines in the Tests block below are guards — never re-pin them.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui/ui-layout-frame.test.ts packages/core/test/frame-literals.test.ts
