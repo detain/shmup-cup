@@ -102,7 +102,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 | Frame / playfield | 640×360 / 640×336 (y 12 … 347) | `FRAME_W`, `PLAYFIELD_W`, `PLAYFIELD_H` in `packages/core/src/config/index.ts` (640 / 336 on `bc8e05d`) |
 | Tiles | 12 px; `rowsTall` 28 = one playfield; a tilemap is `length + 640` wide | `TILE_SIZE`; the stage's `tilemap` (25 rows of 8 px on `bc8e05d`, 28 of 12 after R2-02) |
 | Spawn just past the right edge | screen x 664 = `PLAYFIELD_W + 16 · WORLD_SCALE` | `DEFAULT_SPAWN_SCREEN_X`, `packages/core/src/enemies/index.ts:265` (`PLAYFIELD_W + 16` = 656 on `bc8e05d`) |
-| Boss rest | x 508 = `PLAYFIELD_W − 88 · WORLD_SCALE`, y 168 = `PLAYFIELD_CY` | `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y`, `packages/core/src/data/index.ts:981`, `:984` (552 / 168 on `bc8e05d`) |
+| Boss rest | x 508 = `PLAYFIELD_W − 88 · WORLD_SCALE`, y 168 = `PLAYFIELD_CY` — **only for a boss whose entry sets no `x` / `y`**; a content boss sets its own screen-x / screen-y, already ported by R2-02 (zone A's bulwark rests at 514, not 508): never re-derive it | `DEFAULT_BOSS_X` / `DEFAULT_BOSS_Y`, `packages/core/src/data/index.ts:981`, `:984` (552 / 168 on `bc8e05d`) |
 | Boss height | ≤ 60 % of the playfield = 202 px (`Math.round(0.6 * PLAYFIELD_H)`) | `docs/dev/art-bible-v2.md` §5.7 |
 | Boss parts | ≤ `MAX_BOSS_PARTS` = 24 (after R5-P.P8; 16 on `bc8e05d`, `data/index.ts:955`) | |
 | Live enemies / particles | `MAX_ENEMIES` 64 (`enemies/index.ts:259`), `PARTICLE_CAPACITY` 256 (`render-pixi/src/particles/index.ts:84`) | |
@@ -110,7 +110,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 | Laser lane gap | ≥ 24 px | `rules.ts` `MIN_LANE_GAP` (16 → 24 after R2-02) |
 | Capsule recovery window | 1,350 px after each checkpoint, ≥ 3 sources | `test/playtest/recovery.ts` `RECOVERY_WINDOW` (900 → 1,350 after R2-02) |
 | Bot x | `BOT_X` 96 = `ENTER_END_X` | `test/playtest/four-way-bot.ts:56`, `packages/core/src/player/index.ts:138` (64 / 64 on `bc8e05d`, 96 after R2-02) |
-| The v2 zone contract (R5-D2) | length 20,000–22,000; scroll to the WARNING 3.75–5.25 min; bot run (god mode) 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new types by sprite; capsules before the WARNING 18–48; ≥ 3 per 1,350-px window; ≤ 2 blue capsules; `directItems` ≥ 30 | `test/integration/zones/zone-<x>.contract.ts` (`remastered: true` switches a zone to these bounds; R5-P.P6) |
+| The v2 zone contract (R5-D2) | length 20,000–22,000; scroll to the WARNING 3.75–5.25 min; bot run (god mode) 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new types by sprite **for zones B–I — zone A counts 6–8 distinct enemy behaviours besides the boss** (its contract keeps v1's behaviour rule, `zone-a.contract.ts` / `content-zone-a.test.ts`'s first case, R5-P.P6); capsules before the WARNING 18–48; ≥ 3 per 1,350-px window; ≤ 2 blue capsules; `directItems` ≥ 30 | `test/integration/zones/zone-<x>.contract.ts` (`remastered: true` switches a zone to these bounds; R5-P.P6) |
 
 ## Subtasks
 
@@ -615,8 +615,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Token:** none (branch commit).
 - **Traps:**
   - The `bulwark-*` boss sprites are copied by name into zone H's `echo-bulwark` (`content/enemies/zone-h.enemies.json`):
-    never rename or delete one; new parts get new sprite names (from S2). Zone H re-rigs its echo later
-    (`R5-08.S4c`, wave 12).
+    never rename or delete one, and keep a part of the rebuilt bulwark for every sprite `echo-bulwark` uses
+    (`bulwark-hull`, `bulwark-wing-top`, `bulwark-wing-bottom`, `bulwark-emitter`, `bosses/core`, `bulwark-plate`)
+    with more parts in total than the echo's 8 — a part dropped with its sprite turns zone H's content case
+    'gives IRON CITADEL …' red (`pnpm content:check` runs it in your own lane); new parts get new sprite names
+    (from S2). Zone H re-rigs its echo later (`R5-08.S4c`, wave 12).
   - `halcyon-bulwark` is also in `bonus-range` and the boss rush (`content/stages/boss-rush.stage.json` `rush`): the
     boss-rush playtest must still pass (S6 runs it).
   - Run the allocation guard file alone; never move its measured loop.
@@ -649,11 +652,16 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   every number has its unit; the identity rescale run reports 0 changes, 0 unclassified, 0 errors.
 - **Token:** none (branch commit).
 - **Traps:**
-  - Tiles are art clipped to the designed mask for every tile the heightfield matches by mask (W5-11); a mask comes
-    into a tileset only through `scripts/assets/tileset-masks.mjs --write` (R3-03.V4b).
+  - Tiles are art clipped to the designed mask for every tile the heightfield matches by mask (W5-11): a stand-in
+    tile's mask is designed — write its column heights in the tileset and draw (or keep) the stand-in to match (the
+    opaque = mask check of `test/integration/stage-terrain.test.ts`); masks **derived from real art** reach a tileset
+    only through `node scripts/assets/tileset-masks.mjs --write <tileset> <masks.json>` (R3-03.V4b), and no real art
+    arrives in this wave (real art drops as `R5-0n.S3`, wave 12).
   - Decor never sits inside a collision tile.
-  - Raster `top` / `bottom` and camera `yTo` are frame-anchored values: derive them from the 360-row frame, never ×1.5
-    of a v1 number.
+  - Raster `top` / `bottom` are playfield rows (the schema bounds them to `top` 0 … 335, `bottom` 1 … 336 =
+    `PLAYFIELD_H`): frame-anchored, never ×1.5 of a v1 number. Camera `yTo` is a content value, not a frame-anchored
+    one: R2-02 ported it as `rel-px`, ×1.5 with **no** pad (decision O2 as revised — a v1 200 became 300), so a
+    ported `yTo` is never re-derived from the frame; only a value defined as "one playfield" is `PLAYFIELD_H`.
 - **Docs needs (report them; never edit docs):** `content/tilesets/README.md` (the `terrain-azure` set).
 
 ### R5-01.S5b — Zone A: events, sections and the set piece
@@ -676,7 +684,9 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts   # the whole file: no test title names a zone (it audits all nine), so -t 'zone A' would select nothing
   ```
 - **Acceptance (the v2 contract, R5-D2):** length 20,000–22,000; scroll to the WARNING 3.75–5.25 min; ≥ 5
-  checkpoints; 6–8 new enemy types by sprite; 18–48 capsule sources before the WARNING and ≥ 12 before the boss; ≥ 3
+  checkpoints; 6–8 new enemy types counted by behaviour besides the boss (zone A's contract rule — the by-sprite
+  bound is zones B–I, R5-P.P6, checked by `content-zone-a.test.ts`'s first case); 18–48 capsule sources before the
+  WARNING and ≥ 12 before the boss; ≥ 3
   within 1,350 px after every checkpoint; ≤ 2 blue capsules; the calm holds exactly two `carrier.straight` carriers
   between the last camera key and the WARNING; ground enemies stand on rock (`x + screenX` inside a floor or ceiling
   segment); the captain's `boss` event before `length / 2`; `remix` has spawn / formation events only, `drop: null`,
@@ -720,7 +730,13 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - `test/e2e/zone-a.spec.ts` — rows and colours re-measured on the new stage and the stand-ins;
   - `test/golden/v2-port*.ts` (R2-02.T3) — **only if** the v2-port comparison does not already drop a zone whose
     contract says `remastered: true`: add that one condition (read `test/integration/zones/zone-<x>.contract.ts`), so
-    no later zone edits the shared comparison.
+    no later zone edits the shared comparison. Make the same condition cover the **non-zone scenarios a rebuilt zone
+    feeds**: `boss-rush` opens with `halcyon-bulwark` (its `warnings` are compared within ±2 %, and the rebuild moves
+    the WARNING ticks) and `bonus-range` places `picket` and `halcyon-bulwark`. Drop every scenario whose stage
+    content names an enemy or boss of a `remastered: true` zone (read the content, not the stage id), and name the
+    dropped scenarios in your report. This is the one decision for every later rebuilt rush boss: waves 11 and 12
+    never edit the shared comparison — their zones' S6 traps stop and report a foreign failure exactly because this
+    bullet owns it.
 - **Tests (targeted, run all of them; the playtests in the background):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-a.test.ts test/playtest/zone-a-recovery.test.ts test/playtest/boss-rush.test.ts test/integration/release-audit.test.ts test/integration/standin-budget.test.ts test/golden/v2-port test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts
