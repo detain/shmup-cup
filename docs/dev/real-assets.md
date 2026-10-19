@@ -26,7 +26,7 @@ generated image into a sprite source with its provenance. Its companions:
 | Rule | Why |
 |---|---|
 | **Original work only** — never a Konami or Taito name, sprite, sound or look-alike; no prompt names a game, studio, artist or character | `shmup_feat.md` §26; `test/integration/art-prompt-names.test.ts`; the store review checks it too |
-| Art is drawn at the **native 640×360 density** — the 640×336 playfield between two 12-px HUD bars, ×1.5 world sizes (the ship 24×14, 12-px tiles). Never upscale v1 art, never mix pixel sizes ("mixels") | art bible §1, §3.1. *The code still runs at 384×216 until R2-01; v1's art stays on `v1.x`* |
+| Art is drawn at the **native 640×360 density** — the 640×336 playfield between two 12-px HUD bars, ×1.5 world sizes (the ship 24×14, 12-px tiles). Never upscale v1 art, never mix pixel sizes ("mixels") | art bible §1, §3.1. *The frame is 640×360 since R2-01; the interim art is v1's sprites upscaled ×1.5 — the real art arrives with R3; v1's art stays on `v1.x`* |
 | Sprites are **indexed-looking pixel art with hard edges and binary alpha**; the renderer samples nearest and never rotates or scales a sprite (laser beams excepted, bible §3.2) | decisions D24, D30; art bible §3.2, §3.6 |
 | An atlas page is at most **2048 × 2048** and the whole `dist/` at most **8 MB** | `apps/tizen/scripts/check-bundle.mjs`; R3-04 sets the v2 budgets |
 | Music loops **sample-exactly**; nothing is decoded mid-stage | decision D22, `shmup_tech.md` §2.4 |
