@@ -58,7 +58,8 @@ over).
   above the top edge (y < 0) becomes `v1 * WORLD_SCALE` only; a frame anchor plus a world margin is
   `PLAYFIELD_W + 16 * WORLD_SCALE` (never `PLAYFIELD_W * WORLD_SCALE`, never `(PLAYFIELD_W + 16) * …`); ticks,
   angles (`ANGLE_UNITS` 1024; `FREE_POD_SPREAD` 96 and `FRONT_POD_ANGLE` 64 are angles), counts, scores and ratios
-  never scale. The values to change come from plan Appendix B (§16), the precheck's extras and
+  never scale. The values to change come from plan Appendix B (§16 — it now holds every world-unit default
+  that the post-flip pre-check found missing from it) and
   `docs/v2-run/helpers/w5/literals.txt` (every numeric literal of the sim modules, with its line); the unit of a
   behaviour tunable comes from `packages/core/src/behaviors/units.ts` `BEHAVIOR_PARAM_UNITS`, never from its name.
 - **`SPAWN_Y` stays `PLAYFIELD_H / 2`** (W5-2) and `DEFAULT_BOSS_Y` stays `PLAYFIELD_CY`: frame-centred.
@@ -105,8 +106,8 @@ over).
   bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
   ```
 - **Acceptance:** the wave's R2-02 acceptance; the 14 `behaviors-*-alloc` guards green at both scales, no budget
-  raised; `node docs/v2-run/helpers/w5/defaults.mjs` prints the same values as before at K = 1; the kit still applies
-  all 15 replacements (`bash test/port-v2/two-scale.sh -- true` exits 0).
+  raised; `node docs/v2-run/helpers/w5/defaults.mjs` prints the same values as before at K = 1; the kit still
+  replaces all 15 kit literals (`bash test/port-v2/two-scale.sh -- true` exits 0).
 - **Token:** BEHAVIOR (`behaviors/index.ts`, `behaviors/units.ts`) for lane 1 through `R2-02.W7`.
 - **Traps:** 3,337 lines — exact edits only, never a rewrite; a fractional default (1.25 → `1.25 * WORLD_SCALE`) is a
   plain number field, fine; a guard that fails under the kit because a fraction now crosses a non-inlined call is
@@ -136,7 +137,7 @@ over).
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/frame-literals.test.ts packages/core/test/bosses
   ```
-- **Acceptance:** as W6 (the kit still applies all 15 replacements); the core allow-list still holds **14** entries.
+- **Acceptance:** as W6 (the kit still replaces all 15 kit literals); the core allow-list still holds **14** entries.
 - **Token:** BEHAVIOR.
 - **Traps:** the kit lines in this range are `captain.ram` `ramX` (`:1613`), `captain.crab` `minX` / `maxX` /
   `minY` / `maxY` (`:1749-1752`), `boss.widow` (`:2021-2024`) and `boss.walker` (`:3158-3159`): leave them byte for
@@ -155,7 +156,8 @@ over).
     identity at 1), `V1_FRAME = { w: 384, h: 200 }` (test files are not frame-scanned), and `mapEnemyRow` /
     `mapBossRow` implementing `test/fixtures/v1-baseline/README.md` § "Comparing a v2 run" (`:83-122`). Numbers only;
     no `instanceof`; import core by relative path (`../../src/index.js`; `v1-replay.ts` does the same with
-    `../../src/config/index.js`), so core tests do not load a second `@shmup/core` instance (precheck item 12).
+    `../../src/config/index.js`), so core tests do not load a second `@shmup/core` instance (w5-precheck §2 item
+    12 — the report is not committed; the rule is stated here).
   - `packages/core/test/helpers/v1-port.test.ts` (new) — the identity at K = 1, and the mapping rules on hand-made
     rows (with K and PAD passed in, so both scales are tested at K = 1).
 - **Tests:**
@@ -256,9 +258,9 @@ over).
 - **Acceptance:** the 54 other tests of `rescale.test.ts` / `rescale-edge.test.ts` (13 + 48 = 61 today, less the 7
   named above) unchanged and green; green at both scales: the `port-pending` cases (`itPortPending`) skip at K = 1
   and **run** under the kit (the stub turns `CONTENT_PORT_PENDING` off), so they must pass there; the four + two
-  `runIf(CONTENT_STILL_V1)` cases skip under the kit (for good, not until U5) — 6 retired cases, the number waves 4
-  and 5 expect; `:243` runs at both scales (under the kit it is red only for the 3 IRON LEVIATHAN errors, until
-  `R2-02.W5` is on master).
+  `runIf(CONTENT_STILL_V1)` cases skip under the kit — retired by design, and `R2-02.U5` does not touch these two
+  files — 6 retired cases, the number waves 4 and 5 expect; `:243` runs at both scales (under the kit it is red
+  only for the 3 IRON LEVIATHAN errors, until `R2-02.W5` is on master).
 - **Token:** none.
 - **Traps:** every shipped-content run here is a dry run of `content/` as it is — no temp copy, no ×1.5 port inside a
   test, nothing written to `content/`.
@@ -577,14 +579,20 @@ over).
   across a zone change hashes the same with and without the hold; and, with debug frame advance on, a
   `game.requestStep(1)` asked for while pages load runs exactly one tick once they are in — the e2e helper `stepTo`
   (`test/e2e/frame-advance.ts`) relies on it); `packages/shell/test/memory/memory-hand.test.ts` (under the lazy
-  policy).
+  policy); `apps/{web,tizen,webos}/test/boot/boot-wiring.test.ts` — they boot each host through the real
+  `@shmup/shell` and count residency uploads (`uploads`) and ticks (`apps/web/test/boot/boot-wiring.test.ts:509`):
+  if the hold covers the first World's page load, change only an upload or tick count it moves, and explain each
+  in the commit body.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/boot packages/shell/test/frame-loop packages/shell/test/memory
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project web apps/web/test/boot
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen apps/tizen/test/boot
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project webos apps/webos/test/boot
   ```
 - **Acceptance:** determinism proved by the replay test; the frame-loop guards (`frame-loop-refresh-alloc.test.ts`)
   green; **debug frame advance (`freezeSim` / `stepTo` in e2e) still steps** (the `requestStep` case of
-  `residency-hold.test.ts`).
+  `residency-hold.test.ts`); the three apps' boot tests green.
 - **Token:** none (M3c, M3d and M3e share `boot/index.ts`: one lane, in order).
 - **Traps:** the hold must not consume input or tick: a held frame that ticks changes every replay hash.
 
@@ -601,7 +609,9 @@ over).
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/boot
   bash docs/v2-run/helpers/e2e-batch.sh atlas-context-loss.spec.ts atlas-residency.spec.ts boot.spec.ts zone-map.spec.ts webos.spec.ts
   ```
-- **Acceptance:** both specs green; the new spec joins e2e batch G (README; A … E hold 10 each).
+- **Acceptance:** the two atlas specs (`atlas-context-loss.spec.ts`, `atlas-residency.spec.ts`) green — the line's
+  other three (`boot.spec.ts` batch D, `zone-map.spec.ts` batch C, `webos.spec.ts` batch E) are regression checks
+  that pass as on master; the new spec joins e2e batch G (README; A … E hold 10 each).
 - **Token:** none. **e2e:** this lane is one of the wave's two e2e agents.
 - **Traps:** `atlas-residency.spec.ts:409` (line at `543887b`) is gated on `R2_03_PENDING` (`GOLDEN_REASON`); keep that skip (R2-03.G1
   deletes it in wave 6, and rebases on your extension); `WEBGL_lose_context` is for e2e only. `R2-02.E0` (wave 3)
@@ -649,7 +659,7 @@ over).
   empty; the three fingerprints unedited and green; every changed value is a world value by its unit (spot-check 10
   against `docs/v2-run/helpers/w5/defaults-all.txt` / `literals.txt`); no angle, tick or count scaled; frame anchors
   written `PLAYFIELD_W + v * WORLD_SCALE`; the subtask's tests green at K = 1 **and** under the kit (the reviewer re-runs
-  them); allocation guards green, no budget raised; after W6 and W7, the kit still matches all 15 flip replacements
+  them); allocation guards green, no budget raised; after W6 and W7, the kit still replaces all 15 kit literals
   (`bash test/port-v2/two-scale.sh -- true` exits 0; `meetX: 176` still in `behaviors/index.ts` byte for byte).
 
 ### R2-02.RV-A2 — The failure lists under the kit
@@ -694,14 +704,14 @@ over).
 - **Must hold:** Chromium 68 floor (`VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
   test/integration/tv-engine-floor.test.ts`); zero allocation in the steady state; the hold changes no hash (the
   replay test); frame advance still steps (the `requestStep` case of `residency-hold.test.ts`); `app.js` ≤ 512 KB
-  gzip; after M3e, the three apps' boot tests green (`--project web` / `tizen` / `webos`, `apps/*/test/boot`).
+  gzip; after M3c and M3e, the three apps' boot tests green (`--project web` / `tizen` / `webos`, `apps/*/test/boot`).
 
 ## Exit check
 
 1. W1–W7, A1, T0, T4a, T4b, T4c on master; their reviews at zero findings.
 2. `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
-   test/integration/content-db-fingerprint.test.ts` and `--project shell packages/shell/test/frame-fingerprint.test.ts`
-   green with the files unedited since the wave base — this is empty:
+   test/integration/content-db-fingerprint.test.ts` — and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell
+   packages/shell/test/frame-fingerprint.test.ts` — green with the files unedited since the wave base — this is empty:
    ```bash
    git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
    ```

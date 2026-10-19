@@ -59,8 +59,11 @@ under the kit and master e2e unchanged.
   orchestrator's: before the wave's builders start, it gives each line to the subtask RV-A2 suggests, adding the
   file to that subtask's Files **and** to both lines of its Tests in its prompt. A line in
   `test/integration/release-audit.test.ts` goes to `R2-02.T2a`: that file is under T2a's token CONTENT-TEST (README
-  § "Tokens and locks"), and it runs whole (`-t 'zone X'` selects no test there). A line that no T of this wave can
-  take (a shell or render-pixi test, or any line whose suggested owner is not a T of this wave) goes to a fix
+  § "Tokens and locks"), and it runs whole (`-t 'zone X'` selects no test there). For T2a, "both lines of its
+  Tests" means its prompt gains the file's own two lines — `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project
+  integration test/integration/release-audit.test.ts` and the same command under
+  `bash test/port-v2/two-scale.sh -- env`; the `pnpm content:check` line takes no file. A line that no T of this
+  wave can take (a shell or render-pixi test, or any line whose suggested owner is not a T of this wave) goes to a fix
   agent `R2-02.prepB.FIX<n>` (the next free number), in a builder slot, with the same kit proof and review as a T.
   No line is left for `R2-02.RV-pre` (wave 4).
 - **The gates stay.** `describePortPending` / `itPortPending` / `skipIf(CONTENT_PORT_PENDING)` remain in place: under
@@ -388,14 +391,16 @@ under the kit and master e2e unchanged.
 - **Must hold:** test files only (no `src/`, no `content/`, no fingerprint file); pins written through `v1-port`
   from v1 values and their units, not pasted outputs (spot-check 10 per subtask); the gates still in place; the
   subtask's tests green at K = 1 **and** under the kit (the reviewer re-runs them); for E0, each new skip names
-  `PORT_UNMEASURED` / `PORT_REASON` and the spec still runs on master; for T3, the exemptions each carry a reason and
+  `PORT_UNMEASURED` / `PORT_REASON`; the reviewer reads E0's batch log from the kit pass (do not re-run the
+  five kit batches) and re-runs only the specs E0 edited on its own tree under the e2e lock, started after
+  E0's agent is done — that run is the wave's second e2e agent, so the reviewer never starts it while lane 8
+  (M3d / M3e) still runs e2e; for T3, the exemptions each carry a reason and
   `handfix.patch` is content-only.
 
 ## Exit check
 
 1. T1a–T1e, T2a–T2e, T3 and E0 on master; their reviews at zero findings.
-2. Neutral: `git diff $(cat /home/sites/shmup-cup-run/w03-base.txt)..origin/master -- content test/golden/*.replay.json content/demos
-   test/fixtures/v1-baseline` empty; the three fingerprints green and unedited:
+2. Neutral: `git diff --name-only $(cat /home/sites/shmup-cup-run/w03-base.txt)..origin/master -- content test/golden/'*.replay.json' content/demos test/fixtures/v1-baseline` empty; the three fingerprints green and unedited:
    `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
    test/integration/content-db-fingerprint.test.ts` and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell
    packages/shell/test/frame-fingerprint.test.ts` green, and this is empty:
