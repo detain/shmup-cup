@@ -454,9 +454,12 @@ at a time (decision R5-D1 in [`docs/v2-run/decisions.md`](docs/v2-run/decisions.
   2. `$env:VITE_REPORT_URL="http://<desktop-ip>:8787"; pnpm bench:tv` (both bench widgets + their bundle checks);
   3. `$env:TIZEN_PROFILE="…"; pnpm bench:tv:package` → `apps/tizen/dist-bench/ShmupCupBench.wgt`, then
      `$env:TV_IP="…"; pnpm bench:tv:install` and `pnpm --filter @shmup/tizen bench:run`;
-  4. on each monitor press **Enter** (~10 minutes, then since R1-05 about 20–30 s of the decode scenario), photograph
-     the table — and the `DECODE (R1-05)` table under it —, then set `localStorage['shmup-cup:gl'] = '2'` (Web
-     Inspector) and run it again on WebGL 2;
+  4. on each monitor press **Enter** (~10 minutes, then since R1-05 about 20–30 s of the decode
+     scenario); the streamed payload is the record — it carries the `DECODE (R1-05)` table in its
+     `decode` field. Photograph the tables under the results page only as the fallback, when
+     step 5's logs show a session's payload never reached the log server or holds no `decode`
+     field — check and photograph before the TV is reset; then set
+     `localStorage['shmup-cup:gl'] = '2'` (Web Inspector) and run it again on WebGL 2;
   5. the logs land in `tools/input-probe/logs/rb-*.jsonl`: commit them to `results/<date>-m7-bench/` and run
      `node results/analyze-bench.mjs <gl1>.jsonl <gl2>.jsonl`.
 
@@ -517,7 +520,10 @@ at a time (decision R5-D1 in [`docs/v2-run/decisions.md`](docs/v2-run/decisions.
      widget.
   3. Run the full matrix on **both monitors**, once with WebGL 1 (shipped default) and once with WebGL 2
      (`localStorage['shmup-cup:gl']`). Since R1-05 a run ends with the **decode scenario** (the 19th page load, about
-     20–30 s more): photograph the `DECODE (R1-05)` table under the results page's matrix table.
+     20–30 s more): its `DECODE (R1-05)` table rides in the streamed payload's `decode` field; the
+     saved session, read with `analyze-bench.mjs` right after the run, is the record. Photograph
+     the table under the results page's matrix table only as the fallback, when that session's
+     payload never reached the log server or holds no `decode` field — check before the TV is reset.
   4. While the TVs are set up, also do v1's first install from `v1.x` and the M3-02c measurement table
      (`docs/client/outstanding-work.md` §1.1).
 - **Scope (agent, afterwards):**
@@ -1082,10 +1088,13 @@ moved.
     (launch zone B from the zone map: the change's unload + upload, and the pages it uploaded);
     `__shmupDebug.atlas` (`lastPrepareMs`, `timing`, `pageMs`, `prepare('zone-c')`) gives the same figures in a dev
     build;
-  - **in R0-03's run, photograph the `DECODE (R1-05)` table** the TV render bench now shows under its matrix table,
-    and put the "Decode and upload" section of `analyze-bench.mjs` (with its R3-04 zone-load estimate) into
-    `docs/dev/input-probe-results.md` §12 (R0-03's agent part). A page noted `decoded from the URL instead` means the
-    TV refuses `file://` XHR — report it: the game's manifest fetch would fail too.
+  - **in R0-03's run, the `DECODE (R1-05)` table rides the streamed payload** (its `decode` field):
+    the saved session is the record — put the "Decode and upload" section of `analyze-bench.mjs`
+    (with its R3-04 zone-load estimate) into `docs/dev/input-probe-results.md` §12 (R0-03's agent
+    part). Photograph the table the bench shows under its matrix table only as the fallback, when a
+    session's payload never reached the log server or has no `decode` field — check right after the
+    run, before the TV is reset. A page noted `decoded from the URL instead` means the TV refuses
+    `file://` XHR — report it: the game's manifest fetch would fail too.
 - **As built** (2026-10-17; lane A `ab400a3`, `b30bd4b`, `d4f305b`; lane B `a39de75`, `ce5408b`, `6941af7` (CI fix),
   `c6c8666` and review fix `56f9ced`; B4 `4289726`. Review loops: lane A round 1 clean; lane B round 1 found three
   majors — the weapon select's preview page, Pixi's texture GC, per-page timing — fixed by `56f9ced`, round 2 clean;
