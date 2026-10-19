@@ -15,7 +15,7 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
-| 1 zone H | `R5-08.S4c → R5-08.S6 → R5-08.RV → R5-08.S7` | `zone-h.*` (the four echoes now), `citadel.mjs` | LAND at S7 | S6 |
+| 1 zone H | `R5-08.S4c → R5-08.S6 → R5-08.RV → R5-08.S7` | `zone-h.*` (the four echoes now) | LAND at S7 | S6 |
 | 2 bonus stages | `R5-10.T1` | `brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range` stages, `bonus.enemies.json` (art) | LAND | none |
 | 3 escape → linked pages | `R5-10.T2 → R5-10.T8` | `escape.stage.json`, `escape.mjs` (new), the registry lines, the campaign credits; then `packages/shell/src/memory/index.ts`, `atlas-groups.test.ts` | LAND (T2), GROUPS (T8) | T8 |
 | 4 dimension | `R5-10.T3` | `dimension.stage.json`, `dimension.mjs`, `extras.enemies.json` (art), its four plates | DOCS-IMAGES; FP only if names change | T3 |
@@ -148,8 +148,12 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   `PINNED` comparisons of the three fingerprints, `test/integration/atlas-groups.test.ts`, `pnpm docs:images --check`.
 - **Token:** one e2e pass.
 - **Traps:** the moving floors rely on R5-P.P12's bot support; a floor the bot cannot ride is redesigned, never the
-  bot; a route or the boss rush failing on time with the bigger boss: stop and report (wave 11 rule 13) — never edit
-  the route test; your own playtest files' Vitest timeouts (`test/playtest/zone-h.test.ts`,
+  bot; the parade cases of `zone-h-runtime.test.ts` enter through `world.stage.jumpTo` at the first echo's x
+  (`R5-P.P14` moved them off the stage skip — re-derive that x from the rebuilt stage's own `boss` events; the
+  skip itself stays on IRON SOVEREIGN's WARNING), and `golden-zone-h.test.ts`'s `zone-h-boss` case keeps P14's
+  shape (WARNING entry, no echoes, sovereign phases), re-derived from the new geometry; a route or the boss rush
+  failing on time with the bigger boss: stop and report (wave 11 rule 13) — never edit the route test; your own
+  playtest files' Vitest timeouts (`test/playtest/zone-h.test.ts`,
   `zone-h-recovery.test.ts`) may grow in proportion to the longer stage — say why in the commit; a performance
   budget never; never paste a failing run's output as an expectation: derive each number from the design; no
   derived file on the branch.
@@ -162,7 +166,8 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   `docs/v2-run/designs/zone-h.md`.
 - **Re-run:** inside `/home/sites/shmup-cup-run/wt/zone-h` (`git branch --show-current` must print `r5/zone-h`),
   every **Tests** command of R5-08.S4a … S6 (wave 11's S4a … S5b blocks and this wave's S4c and S6) except the e2e
-  spec — never a step's rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree
+  spec, including `python3 docs/v2-run/helpers/r5r6/carrier.py` (the frozen shared entries) — never a step's
+  rebase, never a commit (the branch's changes exist only in that worktree; a fresh worktree
   of `origin/master` would test master). Read S6's log `/home/sites/shmup-cup-run/R5-08.S6-e2e.log`; re-run the
   spec only if the branch changed after S6 (it then takes one of the wave's two e2e passes).
 - **Must hold:** wave 11's zone-review list (only zone H's files; no derived file; nothing multiplied twice; the
@@ -194,7 +199,9 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R5-08.S7-msg.txt` first):
   `feat(R5-08): remaster zone H IRON CITADEL`; the body lists the sections, the fortress gate, the new types, IRON
   SOVEREIGN and the re-rigged echoes, and says "re-bless zone-h-god, zone-h-boss, zone-h-deaths, zone-h-arcade and
-  the demo zone-h: the zone was remastered (R5-08)" and "the fingerprints re-pinned: the zone's new sprite names
+  the demo zone-h: the zone was remastered (R5-08)" (since `R5-P.P14` the `zone-h-boss` skip already enters at IRON
+  SOVEREIGN's WARNING, so its replay head only moves with the rebuilt stage's new WARNING x — not a second skip
+  change) and "the fingerprints re-pinned: the zone's new sprite names
   shift every later sprite id"; no Co-Authored-By line.
 - **Acceptance:** pushed; the replay diff ⊆ zone H's scope (every changed replay's `header.stageId` is in
   `--only`); every other golden and demo verified unchanged (no sim value outside the zone moved); the three
@@ -502,9 +509,10 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
   node scripts/art-origins.mjs --check
   pnpm assets
   pnpm --filter @shmup/tizen build && pnpm --filter @shmup/webos build
-  # Z = your zone's letter (a … i); zone B is shown — change "Z=b" on each of the next two lines:
+  # Z = your zone's letter (a … i); <n> = your zone's step number (zone A → 01 … zone I → 09); zone B is shown —
+  # change the whole "Z=b … R5-02" pair on each of the next two lines:
   Z=b; VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/provenance.test.ts test/scripts/art-origins.test.ts test/integration/stage-terrain.test.ts test/integration/palette-cycle-scan.test.ts test/integration/standin-budget.test.ts test/integration/art-prompt-names.test.ts "test/integration/content-zone-$Z.test.ts"
-  Z=b; nohup bash docs/v2-run/helpers/e2e-batch.sh "zone-$Z.spec.ts" > "/home/sites/shmup-cup-run/R5-0n.S3-zone-$Z-e2e.log" 2>&1 &   # then poll the log
+  Z=b; nohup bash docs/v2-run/helpers/e2e-batch.sh "zone-$Z.spec.ts" > "/home/sites/shmup-cup-run/R5-02.S3-zone-$Z-e2e.log" 2>&1 &   # then poll the log
   pnpm docs:images && git status --short docs/images   # only the zone's plates (and its echo plate, if the block names one)
   ```
   `art-prompt-names.test.ts` scans the new `*.recipe.json` / `*.art.json` under `assets/source/` for names
