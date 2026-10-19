@@ -335,8 +335,9 @@ R2-02's port, then 3/2; world lengths, speeds, radii and accelerations in code a
 replaces them (`R2-02.P1`: `two-scale.sh` carries the flip and the stub, `handfix.patch` the content fixes, zone
 G's rising walls included).**]** The patch is
 content only, against the tool's output, with W5-7's defaults: gimmick-range `events[8].until` 2275; zone-g
-`events[15]` back into `events[14]`'s window (x ≥ 3450); the hunter-range dive's first path leg +36 px; captain-circler
-home x 530 (`cx + rx`). `flip.sh` is the code half of S2 (§1). Announce each new version to T.
+`events[15]` back into `events[14]`'s window (x ≥ 3450); the hunter-range dive needs no edit (it has no path;
+W6's `lineY` lands it; T3 confirms); captain-circler home x 530 (`cx + rx`). `flip.sh` is the code half of S2 (§1).
+Announce each new version to T.
 
 **S2. THE PORT COMMIT** (after S0, T0–T4 and the reviewer's pre-port two-scale run; nobody else pushes meanwhile).
 1. The tool with `--art-scale 1.5`, then `handfix.patch`, then `flip.sh`'s edits (in that order).
@@ -631,7 +632,7 @@ ref `:46`); items 1, 2, 3, 6, 7, 9, 11 and 12 are corrected in place above. Each
 | **W5-4** | The rescale tests that read the shipped content at v1 geometry | **Retire them, keeping factor-1 identity on the ported tree** plus the 61 fixture tests | Commit a frozen v1 copy of `content/` as a fixture (≈ 2 MB) so they keep running |
 | **W5-5** | Behaviour and weapon defaults | **Ported in code, pinned by a v1 snapshot and each unit's rule** (`behavior-defaults-port.test.ts`) | Write every default explicitly into every content file: content churn, and defaults rot |
 | **W5-6** | e2e content specs after R2-02 | **[Corrected after the flip:** done in R2-01 (`test/e2e/gates.ts`)**]** **Re-key their skip to "R2-03 re-measures"**: skip while `content/demos/*.replay.json` were recorded at another frame (R2-03 re-records them, so the gate expires with it) | Re-measure the specs in R2-02, pulling R2-03's work forward and needing the e2e lock in the sim lane |
-| **W5-7** | The tool's hand fixes | **gimmick-range trigger `until` 2275; zone-g `events[15]` back inside the ground window; hunter dive first path leg +36 px; circler home 530** | Move the rock; widen the window; move the hunter's spawn; set `cx` so the home stays 562 |
+| **W5-7** | The tool's hand fixes | **gimmick-range trigger `until` 2275; zone-g `events[15]` back inside the ground window; hunter dive: no edit (no path; W6's `lineY` lands it, T3 confirms); circler home 530** | Move the rock; widen the window; move the hunter's spawn; set `cx` so the home stays 562 |
 | **W5-8** | The fixed `parts[].x/y` bound ±512 | **±768 (×1.5)** | Re-rig IRON LEVIATHAN's part tree to fit ±512 |
 | **W5-9** | v2 bullets and lasers now or in R4-02 | **Now, procedurally at the bible's sizes (V1)** (**[Corrected after the flip:** the beam half is moot, done in `16aff20`**]**): fixes the beam-frame contract and completes the colour-blind sets at v2 sizes | Keep the interim ×1.5 until R4-02: beams and telegraphs ×1.5 too thick until then |
 | **W5-10** | `@p2` for procedural ships | **Palette maps that reproduce today's swap exactly**, and the swap code removed | Keep the channel swap for procedural sprites and maps only for real art: two code paths |

@@ -111,8 +111,9 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
   `R2-02.P0.RV2`, …
 - **On-demand fixes** (spawned only when a report calls for one; each takes a builder slot):
   - a **timeout fix** `R5-0n.TO` with the zone's step (`R5-02.TO` for zone B; a second file of the same zone
-    `R5-02.TO2`): wave 11 rule 13 and its template block `### R5-0n.TO`, for zone H wave 12 rule 1. It pushes to
-    `origin/master` before that zone's LAND; its review is `R5-02.TO.RV`, its fixes `R5-02.TO.FIX1`, …;
+    `R5-02.TO2`): wave 11 rule 13 and its template block `### R5-0n.TO`, for zone H wave 12 rule 1, and
+    `R5-01.TO` for zone A in wave 10 (`wave-10.md` R5-01.S6 Traps). It pushes to `origin/master` before that zone's
+    LAND; its review is `R5-02.TO.RV`, its fixes `R5-02.TO.FIX1`, …;
   - a **zone fix** `R5-0n.ZFIX<n>` in wave 13 (zone B's first: `R5-02.ZFIX1`): wave 13 rule 1. It works in the lane
     worktree `RUN_DIR/wt/fix-zone-<x>` in two agent turns; its review is `R5-02.ZFIX1.RV` (on the branch, between
     the turns), its fixes `R5-02.ZFIX1.FIX1`, …, and turn 2 is its LAND.
@@ -280,7 +281,7 @@ holds it and when it passes on. Two kinds:
 | **POWERUPS** | `packages/core/src/powerups/index.ts` | work-time |
 | **E2E-MIRROR** | `test/e2e/frame-pixels.ts`, `test/scripts/frame.test.ts` (and `scripts/frame.mjs` with CORE-CONFIG) | work-time |
 | **RP-BARREL** / **SHELL-BARREL** | `packages/render-pixi/src/index.ts` / `packages/shell/src/index.ts` | work-time |
-| **PORT window** | everything | wave 4 only: from R2-02.S's verification start to its push, nobody else pushes |
+| **PORT window** | everything | wave 4 only: from R2-02.S's verification start to its push, nobody else pushes — the window is open while `/home/sites/shmup-cup-run/w04-port-window` exists (wave-04 rule 1) |
 
 The locks: `/tmp/shmup-cup-e2e.lock` (every e2e batch, `pnpm docs:screens`, every bench run) and
 `/tmp/shmup-cup-land.lock` (rule 6, LAND, GLOBAL). Both are machine-wide on the host; `flock -w 5400` notices a
@@ -297,9 +298,11 @@ holds:
 - the pre-release tag targets `w07-tag.txt` and `w13-tag.txt` (step 6: the orchestrator writes each at its wave's
   exit, and its `gh release create --target` reads it);
 - the owner's TV logs when they arrive by hand (`owner-logs/`, wave 15's `R0-03.A1`);
-- the agents' reports (every agent writes its report as `$RUN_DIR/<id>-report.md`) and their working files: commit
-  messages (`<id>-msg.txt`), push scripts (`<id>-push.sh`), e2e and host-check logs (`<id>-e2e.log`,
-  `<id>-host-check.log`), test-list snapshots (`<id>-…-before.txt` / `-after.txt`) and the LAND helper's logs
+- the agents' reports (every agent writes its report as `$RUN_DIR/<id>-report.md`; an agent without a subtask id
+  uses its name, `<name>-report.md`) and their working files, named after the subtask id: commit messages
+  (`<id>-msg.txt`), push scripts (`<id>-push.sh`), e2e and host-check logs (`<id>-e2e.log`, `<id>-host-check.log`),
+  test-list snapshots (`<id>-…-before.txt` / `-after.txt`), any other `<id>-…` file or folder its block names
+  (e.g. `R6-03.D6-steps/`, `R6-03.D7-notes.md`, `R6-01.B2-table/`), and the LAND helper's logs
   (`land-<x>-<date>.log`);
 - RV-A2's failure lists (`w02/rv-a2/`); R2-04's proposed patches (`w07/patches/`); and the lane worktrees of R5 / R6
   (`wt/`).
