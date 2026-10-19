@@ -5,13 +5,13 @@
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
-**Steps:** R5 prep (`R5-P`: P7, P12, P5d, P13), R5-01 (zone A, the pilot, from stand-in art to its LAND), the stand-in
+**Steps:** R5 prep (`R5-P`: P7, P12, P5d, P13, P14), R5-01 (zone A, the pilot, from stand-in art to its LAND), the stand-in
 art (`S2`) of R5-02 … R5-09. · **Gate to start:** wave 09's exit: R4 closed; `R5-P.P3` (`--only`), `R5-P.P4`,
 `R5-P.P5a1`/`P5a2`, `R5-P.P5e`, `R5-P.P10` (fingerprint write mode) and `R5-P.LAND` (`land-zone.sh`) on master;
 the nine designs in `docs/v2-run/designs/` reviewed to zero; and from earlier waves `R5-P.P1` (stable hash keys),
 `R5-P.P8` (`MAX_BOSS_PARTS` 24), `R5-P.P2a`/`P2b`/`P6` (per-zone content tests and the v2 contract),
 `R5-P.P5c`/`P9` (per-zone procedural tests, the shared alpha constant), R3-06 (decor, painted layers), R3-03, R3-04.
-· **Exit (summary):** P7, P12, P5d, P13 and every zone's S2 on master; zone A LANDed with its post-LAND check; reviews at
+· **Exit (summary):** P7, P12, P5d, P13, P14 and every zone's S2 on master; zone A LANDed with its post-LAND check; reviews at
 zero; §17 R5-01 `done (owner parts pending)`.
 
 Line numbers are at `bc8e05d`. **The content on `bc8e05d` is still v1 scale** (zone A `length` 9000, 8-px tiles,
@@ -23,7 +23,7 @@ this wave; re-find any line by its code before you edit.
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
 | 1 | `R5-P.P7` → then S2s from the queue below | the zone stages' `cycles`, the generators' v2 ramps (`<X>_RAMP_V2`), the pair e2e specs' ramp imports | FINGERPRINTS | yes (pass 1, first; only if a ramp changed) |
-| 2 | `R5-P.P12` → then `R5-P.P13` | `test/playtest/{four-way-bot,harness}.ts` and their tests; then the two zone-tileset pins in `test/integration/content.test.ts` | BOT (= GLOBAL if it re-records); P13: CONTENT-TEST | no |
+| 2 | `R5-P.P12` → then `R5-P.P13` → then `R5-P.P14` | `test/playtest/{four-way-bot,harness}.ts` and their tests; then the two zone-tileset pins in `test/integration/content.test.ts`; then the stage-skip rule in `packages/core/src/debug/index.ts`, its tests and the two derived artefacts it moves | BOT (= GLOBAL if it re-records); P13: CONTENT-TEST; P14: FINGERPRINTS + GOLDEN (the land lock) | no |
 | 3 | `R5-P.P5d` (after `R5-P.P7` is on master and its review is at zero) | `test/e2e/zones-*.spec.ts` → `zone-{b…i}.spec.ts` | none | yes (pass 1, after P7's batch) |
 | 4 | `R5-01.S2` (after `R5-P.P7` only if `zone-a.md` §9 sets a ramp) → `R5-01.S4a` → `S4b` → `S5a` → `S5b` → `S6` → `S6b` → `R5-01.RV` loop → `R5-01.S7` | zone A's generator, the registry, the campaign credits line, content, tests; then the LAND | FP (S2: the credits line); LAND (S7) | yes (pass 2, S6 / S6b / S7) |
 | 5 | `R5-03.S2` (zone C cycles nothing today: independent of P7, unless `zone-c.md` §9 sets a ramp — then after P7) | `scripts/assets/procedural/dune.mjs` | none | no |
@@ -35,7 +35,8 @@ this wave; re-find any line by its code before you edit.
 - **Reviews:** two review slots, never more than two reviewers at once. Slot 1 takes whichever of its reviews is
   ready, in this priority: `R5-01.RV` (the zone-A branch loop) first whenever it is ready — the zone-A loop has
   priority; then `R5-P.P7.RV1` and its later rounds (`R5-P.P5d` waits for P7's review to be at zero, so this loop
-  goes ahead of P12's); then `R5-P.P12.RV1` and the determinism-focused `R5-P.P12.RV1b` (after `R5-P.P12.RV1`).
+  goes ahead of P12's); then `R5-P.P12.RV1` and the determinism-focused `R5-P.P12.RV1b` (after `R5-P.P12.RV1`),
+  then `R5-P.P14.RV1` (after `R5-P.P12.RV1b`).
   P7's review rounds and `R5-P.P12.RV1b` may run in slot 2 when slot 2 is free. Slot 2 — `R5-P.P5d.RV1` and the S2
   reviews (`R5-0n.S2.RV1`).
 - **Docs item:** `W10.DOCS-A`, `W10.DOCS-B`, then `W10.DOCS-RV`.
@@ -85,9 +86,12 @@ this wave; re-find any line by its code before you edit.
   `content/campaign/main.campaign.json` — `R5-01.S2` only (zone A's new generator `azure.mjs`); nobody edits
   `scripts/assets/procedural/terrain.mjs` in this wave (zone A's `tiles/terrain-azure` is drawn by `azure.mjs`); the
   bot files — `R5-P.P12` only; `test/golden/v2-port*.ts` — `R5-01.S6` only; the generic part of
-  `test/integration/content.test.ts` (its two zone-tileset loops, relaxed by `R5-P.P13`) — `R5-P.P13` only.
+  `test/integration/content.test.ts` (its two zone-tileset loops, relaxed by `R5-P.P13`) — `R5-P.P13` only;
+  `packages/core/src/debug/index.ts` and the two stage-skip core tests — `R5-P.P14` only (no zone file of this
+  wave edits core; wave-11 rule 6's equivalent holds here).
 - **Land lock users:** P7 (fingerprints), `R5-01.S2` (fingerprints: the credits line), P12 (if it re-records),
-  `R5-01.S7` (LAND). They never overlap: each takes `/tmp/shmup-cup-land.lock` for its whole regenerate-and-push.
+  `R5-P.P14` (the `zone-h-boss` golden and the two fingerprint pairs), `R5-01.S7` (LAND). They never overlap:
+  each takes `/tmp/shmup-cup-land.lock` for its whole regenerate-and-push.
 
 ## The v2 numbers a zone agent needs
 
@@ -346,6 +350,107 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   `assets/source/atlas-groups.json` move.
 - **Docs needs (report them; never edit docs):** none expected.
 
+### R5-P.P14 — The stage skip enters at the stage boss's WARNING
+
+- **Wave / lane / order:** wave 10, lane 2, after `R5-P.P13` (the lane order only; nothing of P13's is in these
+  files). It must be on `origin/master` **before `R5-01.S5b` starts**, and wave 11 keeps the rule for its zones:
+  the v2 contract puts a captain whose `boss` event sits before `length / 2` into every rebuilt zone, and under
+  today's first-event rule every stage skip of every such zone — and the debug skip in play — would land on the
+  captain instead of the stage boss.
+- **Depends on:** `R5-P.P3` (wave 09: `golden-zone-<x>.test.ts` and `node scripts/golden-update.mjs --only`),
+  `R5-P.P5e` (wave 09: `test/integration/zone-h-runtime.test.ts`), `R5-P.P10` (wave 09:
+  `SHMUP_FINGERPRINT_UPDATE=1`).
+- **Goal:** `skipToBoss` (`packages/core/src/debug/index.ts`) jumps to the stage's **last** `warning` event,
+  `BOSS_SKIP_LEAD` px before it (clamped to 0) — and to the **first** `boss` event only when the stage has no
+  `warning` at all (so `captain-range` — four `boss` events, no WARNING — and any warning-less boss stage keep
+  today's target). Sound because the loader's reference pass already forbids a `warning` event to name a captain
+  (`packages/core/src/data/index.ts`, the M2-09 pass: 'a `warning` event must not name a captain'), and stage
+  events are sorted by `x`: the last `warning` **is** the stage boss's WARNING. This is the rule behind
+  everything named "the stage skip to <the zone boss>": `GameConfig.stageSkip: 'boss'` (the boss goldens,
+  `test/integration/campaign-flow.test.ts`, the per-zone 4-way boss-rule cases of `test/integration/content*.test.ts`,
+  `test/integration/release-audit.test.ts`, the presentation fingerprint's `runA` boss walk) and the debug
+  `DebugCommand.SkipToBoss`. **Decision (a)** of re-plan review 7 W11d S1 (the orchestrator's row FIX-STAGESKIP):
+  the per-zone-text alternative was rejected — every rebuilt zone's skip bound would move to the captain, nine
+  lanes would re-derive the boss goldens around it, and the goldens' meaning ("the stage boss's fight") would
+  drift silently. Under this rule every existing "skipped to the WARNING" bound stays true.
+- **Files (only these):**
+  - `packages/core/src/debug/index.ts` — the `skipToBoss` loop and its docblock: scan `runner.eventCodes` once,
+    take the last `StageEventCode.Warning` index, remember the first `StageEventCode.Boss` as the fallback, jump
+    to the chosen event's `x − BOSS_SKIP_LEAD` (clamped, `flyShipsIn` unchanged; no event of either kind →
+    `false` as today). The docblock's "Only the **first** `warning` / `boss` event counts (a stage with two
+    bosses skips to the first)" becomes: the **last** `warning` (the stage boss's WARNING — a captain's `boss`
+    event never steals it); only a stage without any `warning` skips to its first `boss` event. `BOSS_SKIP_LEAD`
+    (96) and the clamp do not move; core purity rules hold;
+  - `packages/core/test/debug/debug-skip.test.ts`, `packages/core/test/debug/debug-skip-edge.test.ts` — the
+    "first" reads become the new rule; keep the two-`boss`-no-`warning` fixture (still the first `boss`), add:
+    a `boss` before the `warning` (the captain shape — the skip lands at the warning), and a second later
+    `warning` (the skip lands at the later one). Pin each expected `camera.x` as the fixture's own event `x −
+    BOSS_SKIP_LEAD`, never a pasted number;
+  - `test/golden/golden-zone-h.test.ts` (the case `R5-P.P3` moved out of `golden.test.ts`) — `zone-h-boss` no
+    longer enters the parade: rewrite its assertions from `content/stages/zone-h.stage.json` on master — the
+    skip lands `BOSS_SKIP_LEAD` px before the **warning** (IRON SOVEREIGN's, after the parade), the four echoes
+    are not in the recording (assert none fought), the sovereign still runs its four phases and the ending
+    flags stay 0; keep the "the skip takes far less than a whole zone" shape (`zone-h-god` comparison);
+  - `test/golden/golden.ts` — the file header comment (…'the stage skips into zone H's parade hangar') and the
+    `zone-h-boss` description: the skip enters at IRON SOVEREIGN's WARNING at the hangar door; say in the
+    description that the parade itself is covered by the full runs (`zone-h-god` / `-bot` / `-deaths` /
+    `-arcade`). The `zone-i-*` descriptions stay true as written ("the stage skip to the ABYSS ARK" — zone I's
+    only `warning` is the ARK's);
+  - `test/integration/zone-h-runtime.test.ts` (the zone-H cases of `R5-P.P5e`'s split) — the two parade cases
+    (the echo fight, the echo that outlasts its time limit) enter with
+    `world.stage.jumpTo(<first echo x> − BOSS_SKIP_LEAD)` (the same API `skipToBoss` uses; take the echo's x
+    from the stage's own `boss` events, derived — never a pasted run output) instead of `stageSkip: 'boss'`;
+    drop the flag from those cases. The zone-I skip cases in the same lane's `zone-i-runtime.test.ts` keep the
+    flag and their bounds unchanged;
+  - `test/integration/presentation-fingerprint.test.ts` — the `runA` boss walk: the comment "Zone H's boss skip
+    lands at the parade's first echo (a boss without a WARNING)." becomes the last-warning rule, and the
+    `runA.bossH` segment takes the `w.toWarning()` shape of the D/F loop's entries; re-pin with
+    `SHMUP_FINGERPRINT_UPDATE=1` — the segments that move are exactly zone B's boss-skip stretch (its skip
+    moves off the `spume-herald` `boss` event to GALVANIC MAW's WARNING — the one pre-R5 content stage whose
+    target changes) and zone H's; every other segment must hash unchanged;
+  - `test/golden/zone-h-boss.replay.json` — recorded by the script in Steps 4, never by hand.
+- **Steps:**
+  1. Common rules 1–5: a fresh worktree at `origin/master`, `pnpm install --frozen-lockfile`.
+  2. The core change (rule + docblock) and the two core test files; run the core debug tests.
+  3. The golden, runtime and fingerprint edits above — every bound derived from the content on master.
+  4. Regenerate under the land lock (README rule 6): `flock -w 5400 /tmp/shmup-cup-land.lock bash <script>` —
+     the script fetches, rebases, runs `node scripts/golden-update.mjs --only zone-h` (it must re-record
+     **only** `zone-h-boss` and verify every other golden and demo — a second replay moved: stop and report,
+     the sim did not change), then the `SHMUP_FINGERPRINT_UPDATE=1` presentation-fingerprint run, then the
+     checks of Tests, then commits and pushes.
+  5. Commit `fix(core): the stage skip enters at the stage boss's WARNING (R5-P.P14)` (no Co-Authored-By
+     line).
+- **Tests (targeted):**
+  ```bash
+  pnpm format:check && pnpm lint && pnpm typecheck
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core test/debug/debug-skip
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/zone-h-runtime test/integration/zone-i-runtime test/integration/campaign-flow.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts   # the whole file: no test title names a zone
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  ```
+- **Acceptance:** the new rule green on a fixture with a `boss` before the `warning`; every other boss-skip
+  artefact unchanged: `zone-a-boss`, `zone-a-loop2-boss`, `zone-a-manta-boss`, `zone-d-boss`, `zone-f-boss`,
+  `zone-g-boss`, `zone-i-boss`, `zone-i-escape` replay byte-identical (their first `warning` / `boss` event is
+  already their only/last warning), `zone-h-boss` re-recorded at SOVEREIGN's WARNING; the presentation
+  fingerprint moved only in the `runA` boss-walk segments of zones B and H, the content-DB and shell
+  fingerprints unchanged; the skip cases of `zone-f-runtime`/`zone-g-runtime`/`zone-d-runtime`, the 4-way
+  boss-rule cases, `campaign-flow` and `release-audit` green (in those, zone B's runs now enter at GALVANIC
+  MAW's WARNING and get **shorter** — that is the fix, not a regression). The report quotes the docblock's
+  rule sentence and lists every moved file.
+- **Token:** FINGERPRINTS + GOLDEN — under the land lock for the whole regenerate-and-push (this wave's Land
+  lock users line).
+- **Traps:** the rule reads event **types** only — never resolve boss roles inside the skip (roles belong to
+  `loadContent`; the runner hands `eventCodes`); a stage with two warnings skips to the later one — a calm's
+  false WARNING, if a design ever adds one, must not use the `warning` type (the contract forbids a captain on
+  one; that is the guarantee this rule stands on); never touch `BOSS_SKIP_LEAD`, the clamp or `flyShipsIn`;
+  `node scripts/golden-update.mjs` without `--only` re-blesses everything — never; a `golden.ts` description
+  change re-blesses its scenario (in `--only zone-h`'s scope anyway); no e2e pass (no spec drives the skip —
+  only the apps' `?stageSkip` boot pass-through names it).
+- **Docs needs (report them; never edit docs):** `docs/dev/debug-and-replays.md` (the stage-skip / debug-tools
+  paragraph: last `warning`, fallback first `boss`), `docs/dev/advanced-bosses.md` (the captain paragraph: a
+  captain's `boss` event no longer moves the debug skip).
+
 ### R5-01.S2 — Zone A: stand-in art for every new sprite name
 
 - **Wave / lane / order:** wave 10, lane 4, first. Works in a normal worktree (not the zone worktree) and pushes to
@@ -581,6 +686,12 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - A spawn x is a world x: just past the right edge means the camera x + 664 at that tick, not a literal.
   - Never edit another zone's stage or a shared content file (`content/campaign/main.campaign.json`,
     `content/rules/*`, `content/patterns/common.patterns.json`): send the need to the orchestrator.
+  - **The captain does not move the stage skip:** `R5-P.P14` (this wave, lane 2 — on master before this
+    subtask starts) made `stageSkip: 'boss'` and the debug skip enter at the stage's **last** `warning` event,
+    so the captain's `boss` event before `length / 2` (Acceptance) never becomes the skip target: keep the
+    skip bounds of `test/playtest/zone-a.test.ts` ("the debug stage skip brings the WARNING within a few
+    seconds"), the `zone-a-boss` goldens and the 4-way boss-rule case as they are. If a stage skip starts at
+    the captain anyway, P14 is not on master: stop and report — never edit core from this lane.
 
 ### R5-01.S6 — Zone A: playtest, runtime tests, e2e, memory
 
@@ -639,6 +750,10 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     (four times the measured duration, rounded up to a multiple of `60_000`; reviewed by `R5-01.TO.RV`), then a new
     S6. Any other failure of a route or the boss rush is the design's, never the route test's.
   - Never paste a failing run's output as the new expectation: derive each number from the design and the content.
+  - The stage-skip cases keep the WARNING target (`R5-P.P14`, S5b's trap): the `zone-a-boss` family of
+    `test/golden/golden-zone-a.test.ts`, the 4-way boss-rule case and the `runA.boss` / `runA.zoneA` segments of
+    the fingerprint walk enter at HALCYON BULWARK's `warning`, not at the captain — re-derive their bounds only
+    for the stage's new geometry, never for a moved skip target.
 - **Docs needs:** `docs/dev/zone-a-and-playtest.md` (zone A's v2 section: sections with x / time, set piece, new
   types, mid-boss, boss parts and phases, checkpoints, capsules, timing, stand-in vs real art),
   `docs/dev/debug-and-replays.md` (golden rows with new outcomes).
@@ -861,15 +976,18 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
 - **Report** by severity; a fixer (`R5-01.FIX1`, a new agent, in the zone worktree) fixes on the branch; then a new
   review (`R5-01.RV2`), until zero findings, nits included. Only then `R5-01.S7`.
 
-### R5-P.prep2.RV — Reviews of P7, P12, P5d and every S2
+### R5-P.prep2.RV — Reviews of P7, P12, P5d, P14 and every S2
 
 - One new review agent per subtask (`R5-P.P7.RV1`, `R5-P.P12.RV1` plus a determinism-focused `R5-P.P12.RV1b`,
-  `R5-P.P5d.RV1`, `R5-0n.S2.RV1`), loop to zero.
+  `R5-P.P14.RV1`, `R5-P.P5d.RV1`, `R5-0n.S2.RV1`), loop to zero.
 - **Must hold:** P7 — `cycles`, the generators' `<X>_RAMP_V2` / v2 path (with `generate(options = {})`) and the
   pair specs' ramp lines only (`<X>_RAMP` and the v1 path unchanged; the pair specs' ramp checks name the v2 ramps,
   an area or a threshold changed only with a re-measure), ramps from the designs, the scan, ingest `--check` and
   P7's e2e batch green, goldens unchanged, the scale-1 digest pin unchanged; P12 — today's runs byte-identical
-  (`zone-a-boss` re-records byte for byte), every zone still clears; P5d — started after P7's review was at zero,
+  (`zone-a-boss` re-records byte for byte), every zone still clears; P14 — the last-`warning` /
+  fallback-first-`boss` rule and docblock, `BOSS_SKIP_LEAD` and the clamp unchanged, every golden outside
+  `zone-h-boss` byte-identical, only `runA`'s zone-B and zone-H boss-skip segments re-pinned, the content-DB and
+  shell fingerprints unchanged; P5d — started after P7's review was at zero,
   P7's ramp lines kept, the same e2e titles except the Tizen split its block allows; each S2 — neutral
   (fingerprints, groups and goldens unchanged; `R5-01.S2` moves only `core.campaign` and the credits segments, from
   its credits line), the scale-1 digest pin unchanged, no frame literal, deterministic, within budget, sizes and
