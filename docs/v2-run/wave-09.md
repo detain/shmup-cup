@@ -665,7 +665,8 @@ by the quoted code or test title before you edit it.
   `content/enemies/zone-a.enemies.json`, `content/paths/zone-a.paths.json`; `test/playtest/rules.ts`,
   `test/playtest/recovery.ts`, `test/playtest/four-way-bot.ts`; `docs/dev/art-bible-v2.md` §4.4, §5.6, §5.7, §5.9,
   §5.10; `docs/dev/zone-a-and-playtest.md`; [`decisions.md`](decisions.md) R5-D2 (the v2 contract), R5-D3, R5-D5,
-  R5-D6.
+  R5-D6; `test/integration/zones/zone-<x>.contract.ts` (R5-P.P6: the contract as code — its numbers win if they
+  differ).
 - **The design file has these sections (all numbers in v2 world pixels, after R2-02):**
   1. **Today:** length, camera keys, checkpoints, sections with x-ranges, the WARNING x, capsule sources, enemies by
      type.
@@ -676,37 +677,50 @@ by the quoted code or test title before you edit it.
      `R5-P.P12`, or "nothing").
   4. **Checkpoints:** ≥ 5 x positions; for each, the capsule sources in the following 1,350 px (≥ 3).
   5. **Capsules:** ≥ 12 sources before the boss, 18–48 before the WARNING (R5-D2); the calm before the WARNING has
-     exactly two `carrier.straight` carriers.
+     exactly two `carrier.straight` carriers; ≤ 2 blue capsules.
   6. **New enemy types:** ≥ 2 (6–8 new types by sprite in total, R5-D2): id, script (must be in
      `KNOWN_SCRIPT_IDS`, `packages/core/src/behaviors/index.ts:3235`), params with their units and values under the
      4-way caps (aimed bullets ≤ 3.0 px/tick, laser lane gaps ≥ 24 px), sprite name (new), bible size class (§5.6),
-     frames.
+     frames. **Zone A** is the first zone: no earlier zone is subtracted, so a by-sprite count would include all 8 of
+     its v1 sprites. Its check is the behaviour count of `content-zone-a.test.ts`'s first case (from `R5-P.P2a`):
+     6–8 scripts besides the boss, 8 today. Give its ≥ 2 new types scripts zone A already places. Give both counts
+     (sprites and scripts), and say how `test/integration/zones/zone-a.contract.ts` (R5-P.P6) counts zone A's types.
+     If that contract counts sprites against 6–8, stop and report it to the orchestrator: the contract needs a
+     zone-A rule.
   7. **Mid-boss:** a captain (`captain.ram`, `captain.launcher`, `captain.circler` or `captain.crab`), its event x
      (< `length / 2`), params, parts.
   8. **Boss rebuild (HALCYON BULWARK):** the part tree (≤ `MAX_BOSS_PARTS` — 24 after R5-P.P8), roles (`core`,
-     `gun`), exactly 3 phases, a reachable `core`, height ≤ 60 % of the playfield (≤ 202 px), new part sprites with
-     sizes (§5.7).
-  9. **Backdrops and decor:** 4–6 layers (name, size, scroll factor), decor pieces, raster rows (frame rows 0 … 359),
+     `gun`), exactly 3 phases (zone H's IRON SOVEREIGN keeps ≥ 4; zone I: the ABYSS ARK 2, THE HOLLOW KING exactly
+     3), a reachable `core`, height ≤ 60 % of the playfield (≤ 202 px), new part sprites with sizes (§5.7).
+  9. **Backdrops and decor:** 4–6 layers (name, size, scroll factor), decor pieces, raster rows (playfield rows:
+     `top` 0 … 335, `bottom` 1 … 336 = `PLAYFIELD_H`; `RASTER_EFFECT_SCHEMA` in `packages/core/src/data/index.ts`),
      palette cycles (zone A cycles nothing in v1; say whether it gets a ramp, and if so the exact colours for
      `R5-P.P7`).
   10. **Tiles:** the new `terrain-azure` set (R5-D3): the tile list (20–40 tiles, §5.9) and which tiles the
       heightfield matches by mask (collision mode "art clipped to mask", W5-11).
   11. **Loops and Direct mode:** the `remix` list (spawn / formation only, `drop: null`, sorted, ≤ 64) and the
-      `directItems` plan.
+      `directItems` plan (≥ 30 items).
   12. **Peaks:** live enemies (of `MAX_ENEMIES` 64), boss parts, particles (of 256); flag anything above 80 %.
-  13. **Budget:** an estimate of the zone's atlas bytes against R3-04's per-zone budget.
-  14. **New sprite names** (one list: name, size, frames, `@flash`, who draws it — stand-in in `R5-01.S2`).
+  13. **Budget:** an estimate of the zone's atlas bytes against R3-04's per-zone budget
+      (`test/scripts/assets/atlas-budget.ts`, `test/integration/standin-budget.test.ts`).
+  14. **New sprite names** (one list: name, size, frames, `@flash`, who draws it — stand-in in the zone's `S2`
+      (wave 10: `R5-01.S2` for zone A, `R5-02.S2` for B, …)).
   15. **Goldens to re-bless:** the LAND scope (`--only zone-a,bonus-range` + the demo `zone-a`) and why.
-  16. **Frozen entries it keeps:** `tender` (the capsule carrier of every zone — sim fields frozen), `picket` and
-      `halcyon-bulwark` (used by `bonus-range`), the `bulwark-*` boss sprites (zone H's echo copies them).
+  16. **Frozen entries it keeps:** `tender` (the capsule carrier of every zone — sim fields frozen) and the `bulwark-*`
+      boss sprite names (zone H's echo copies them: add names, never rename or delete one). **Shared, not frozen:**
+      `picket` and `halcyon-bulwark` are also placed by `bonus-range` (and `halcyon-bulwark` by the boss rush,
+      `content/stages/boss-rush.stage.json`). Zone A may change them: that re-blesses `bonus-range-god` /
+      `bonus-range-digit` (in the LAND scope, §15), and the boss-rush playtest must still pass.
 - **Tests:** none (read-only). Check every number against the files it cites.
 - **Acceptance:** `R5-P.D-RV` reports zero findings.
 - **Token:** none.
 - **Traps:**
   - Frame ≠ world: the spawn x just past the right edge is `PLAYFIELD_W + 24` = 664 after R2-02 (core
     `DEFAULT_SPAWN_SCREEN_X`, `packages/core/src/enemies/index.ts:265`, is `PLAYFIELD_W + 16` = 656 on `bc8e05d`
-    and becomes `+ 16 * WORLD_SCALE` in wave 02); the boss rests at x 508 (`DEFAULT_BOSS_X` =
-    `PLAYFIELD_W − 88 · WORLD_SCALE`, `packages/core/src/data/index.ts:981`), y 168 (`PLAYFIELD_CY`); tiles are
+    and becomes `+ 16 * WORLD_SCALE` in wave 02); a boss's `x` / `y` are `screen-x` / `screen-y` values its entry sets,
+    already ported by R2-02 (HALCYON BULWARK `x` 300 → 514, `y` 100 → 168) — never re-derive them; only a boss
+    without `x` / `y` rests at `DEFAULT_BOSS_X` 508 (`PLAYFIELD_W − 88 · WORLD_SCALE`,
+    `packages/core/src/data/index.ts:981`; 552 on `bc8e05d`) / `DEFAULT_BOSS_Y` 168 (`PLAYFIELD_CY`); tiles are
     12 px and `rowsTall` 28 is one playfield (336 px); a map is `length + 640` wide; `BOT_X` is 96 (=
     `ENTER_END_X` after R2-02; 64 on `bc8e05d`). Never multiply a ported value by 1.5 again.
   - Original names only (no Konami or Taito names).
@@ -735,7 +749,8 @@ by the quoted code or test title before you edit it.
   `content/patterns/zone-c.patterns.json` (or `content/patterns/zones.patterns.json` until `R5-P.P4` has split it;
   zone C's action is `dune.whirl`), `docs/dev/zones-b-and-c.md`.
 - **Expansion focus:** a second worm field and a dune-surfing high-speed section (bot support: terrain look-ahead at
-  speed). C needs a new mid-boss; C cycles nothing. Boss: SANDGRAVE WIDOW. LAND scope: `--only zone-c` + demo.
+  speed). C needs a new mid-boss; C cycles nothing today: say in §9 whether it gets a ramp (as zone A).
+  Boss: SANDGRAVE WIDOW. LAND scope: `--only zone-c` + demo.
 
 ### R5-P.D-D — Zone design: D, MAGMA DEEP
 
@@ -745,8 +760,9 @@ by the quoted code or test title before you edit it.
   `docs/dev/zones-d-and-e.md`, `docs/dev/advanced-stages.md` (branches and triggers).
 - **Expansion focus:** a longer, branching maze with destructible shortcuts (stage `branches` + region triggers; bot
   support: branch choice and brick shooting). The plan's "re-derive the dive's one-playfield pans" is superseded by
-  O2 (R2-02 ported `yTo` ×1.5 + pad): redesign the dive on purpose. Boss: CINDER BASTION (`bastion-*` sprites feed
-  zone H's echo). D cycles: give the ramp. LAND scope: `--only zone-d` + demo.
+  O2 (R2-02 ported `yTo` ×1.5 with no pad — zone D's 200 → 300 — and gave the map 3 pad rows, 50 → 53): redesign the
+  dive on purpose. Boss: CINDER BASTION (`bastion-*` sprites feed zone H's echo). D needs a new mid-boss.
+  D cycles: give the ramp. LAND scope: `--only zone-d` + demo.
 
 ### R5-P.D-E — Zone design: E, TEMPEST RIDGE
 
@@ -764,8 +780,10 @@ by the quoted code or test title before you edit it.
   `docs/v2-run/designs/zone-f.md` (new). **Read:** `content/stages/zone-f.stage.json`,
   `content/enemies/zone-f.enemies.json`, `content/tilesets/terrain-vault.tileset.json`,
   `content/patterns/zone-f.patterns.json` (or `content/patterns/zones.patterns.json` until `R5-P.P4` has split it;
-  zone F's action is `vault.spores`), `docs/dev/zones-f-and-g.md`, and R2-02's / R2-04's reports on zone F (the
-  bot struggled there after the port: tissue walls, `lunges`).
+  zone F's action is `vault.spores`), `docs/dev/zones-f-and-g.md`, and the port reports on zone F
+  (`/home/sites/shmup-cup-run/R2-02.Z-FG-report.md`, if Z-FG was spawned, and `R2-04.Z2`'s report
+  `/home/sites/shmup-cup-run/R2-04.Z2-report.md`; failing those, the plan's R2-02 / R2-04 As built notes — the bot
+  struggled there after the port: tissue walls, `lunges`).
 - **Expansion focus:** a regenerating-wall chase sequence (bot support: regrowing walls). F needs a new mid-boss.
   Boss: MANTLE REGENT (13 parts today; `regent-*` sprites feed zone H's echo). F cycles: give the ramp. LAND scope:
   `--only zone-f` + demo.
@@ -789,7 +807,8 @@ by the quoted code or test title before you edit it.
   `content/enemies/zone-h.enemies.json` (incl. the parade's echoes `echo-bulwark`, `echo-maw`, `echo-bastion`,
   `echo-regent`), `content/tilesets/terrain-citadel.tileset.json`, `docs/dev/zones-h-and-i.md`.
 - **Expansion focus:** a fortress gate section with moving floors (bot support: moving floors). H has a mid-boss
-  (the parade). Boss: IRON SOVEREIGN. **The echo re-rig is its own later subtask** (`R5-08.S4c`, wave 12, after zones
+  (the parade). Boss: IRON SOVEREIGN (≥ 4 phases, as today: `content-zone-h.test.ts`). **The echo re-rig is its own
+  later subtask** (`R5-08.S4c`, wave 12, after zones
   A, B, D and F have LANDed): describe it (the echoes copy the new bosses' part trees with fewer HP / phases, as
   today) but keep it separate from the rest of zone H. H cycles: give the ramp. LAND scope: `--only zone-h` + demo.
 
@@ -802,8 +821,11 @@ by the quoted code or test title before you edit it.
   zone I's action is `abyss.gulp`), `content/stages/escape.stage.json`, `content/campaign/main.campaign.json`
   (endings), `docs/dev/zones-h-and-i.md`.
 - **Expansion focus:** a longer descent and the ark approach. Bosses: the ABYSS ARK raid with THE HOLLOW KING inside
-  (raid sections ≈ 720-px body, bible §5.7). The ending hook: say whether the escape / ending wiring changes (if yes,
-  it waits for R4-05, done in wave 08). I cycles: give the ramp. LAND scope: `--only zone-i` (incl.
+  (raid sections 144×60 and up, a ≈ 720-px body, bible §5.7). I needs a new mid-boss. The ending hook: say whether
+  zone I's `endings` entries in `content/campaign/main.campaign.json` change (zone I's lane may edit only those,
+  after R4-05, closed in wave 9). The escape stage (`content/stages/escape.stage.json`) is `R5-10.T2`'s (wave 12):
+  describe any escape change in its own section, as input for T2, separate from the rest of zone I (as D-H does with
+  the echo re-rig). I cycles: give the ramp. LAND scope: `--only zone-i` (incl.
   `zone-i-escape`) + demo.
 
 ## Reviews
@@ -812,7 +834,7 @@ by the quoted code or test title before you edit it.
 
 - **Read:** `git log --oneline` for every R4-01 commit (A1a … A9) and their diffs; the agents' reports in `RUN_DIR`.
 - **Re-run:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/{player,weapons,options,shields,powerups,blackhole,world}`;
-  `--project integration test/scripts/assets test/scripts/art-origins.test.ts test/golden`; the three fingerprints;
+  `--project integration test/scripts/assets test/scripts/art-origins.test.ts test/integration/palette-cycle-scan.test.ts test/golden`; the three fingerprints;
   `node scripts/art-origins.mjs --check`; `pnpm docs:images --check` (after E6).
 - **Must hold:** v1 pixel maps, the v1 font and every generator's v1 path unedited (RR-1 A: v2 art is
   `*.v2.sprite.json` or an `artScale !== 1` branch); the scale-1 digest pin unchanged; every frame count core reads
@@ -844,7 +866,7 @@ by the quoted code or test title before you edit it.
 ### R4-04.RV — Step review of R4-04 (FX and particles)
 
 - **Read and re-run** as `R4-01.RV`, for D1 … D4, plus `--project render-pixi packages/render-pixi/test/particles packages/render-pixi/test/effects`
-  and `--project shell packages/shell/test/fx-gallery`.
+  and `--project shell packages/shell/test/fx-gallery packages/shell/test/dispatch`.
 - **Must hold:** explosion sizes and frame counts per bible §5.8; `"blend": "normal"` on `explosion.*` and
   `boss.chain`; the particle pool's capacity decision recorded (D3); the render-pixi allocation guards green with no
   budget raised; the gallery shows every preset.
@@ -856,8 +878,7 @@ by the quoted code or test title before you edit it.
 - **Must hold:** the logo drawn from the bible's text (no FLUX winner); the title backdrop `FRAME_W×FRAME_H`; the
   WARNING band and the cards frame-derived; the five endings full-frame; the core allow-list entries
   `EndingScene.drawCitadel.sink` and `StoryScene.drawDawn.rise` unchanged or still matching (E4 owns only the
-  first); the four icons regenerated once,
-  from the v2 art.
+  first); the four icons regenerated once, from the v2 art.
 
 ### R5-P.prep1.RV — Reviews of the R5 prep subtasks of this wave
 
@@ -866,17 +887,20 @@ by the quoted code or test title before you edit it.
   differences that P3's step 1 and P5e's Tests allow, each listed in the subtask's report; P4 moves no
   sim value (goldens of B, C, E, F, G, I unchanged); P3's `--only` proof and verification proof are in its report;
   P10's update mode is idempotent and refuses under `CI`; `land-zone.sh` never pushes the branch, never `git add -A`,
-  and aborts on an out-of-scope replay change.
+  aborts on an out-of-scope replay change, and its commit body carries the `Changed plates:` list.
 
 ### R5-P.D-RV — Review of a zone design
 
 - **Wave / lane:** wave 09, review slot 2; one new review agent per design (`R5-P.D-A.RV1`, …).
 - **Read:** the design file and every content file it cites.
 - **Check:** every number against `plan_resolution.md` §2.6 / §2.7 and the v2 contract (R5-D2: length 20,000–22,000;
-  scroll to the WARNING 3.75–5.25 min; bot run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new types by sprite; capsules before
-  the WARNING 18–48; ≥ 3 per 1,350-px window after each checkpoint; ≤ 2 blue capsules); the 4-way caps (aimed ≤ 3.0
-  px/tick, lane gap ≥ 24 px); every script id in `KNOWN_SCRIPT_IDS`; every tunable's unit in `BEHAVIOR_PARAM_UNITS`;
-  the boss ≤ `MAX_BOSS_PARTS`, 3 phases, a reachable `core`, ≤ 60 % of the playfield tall; frozen entries untouched;
+  scroll to the WARNING 3.75–5.25 min; bot run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new types by sprite (for zone A: the
+  behaviour count instead — 6–8 scripts besides the boss, see D-A §6); capsules before the WARNING 18–48; ≥ 3 per
+  1,350-px window after each checkpoint; ≤ 2 blue capsules; `directItems` ≥ 30); the 4-way caps (aimed ≤ 3.0 px/tick,
+  lane gap ≥ 24 px); every script id in `KNOWN_SCRIPT_IDS`; every tunable's unit in `BEHAVIOR_PARAM_UNITS`; the boss
+  ≤ `MAX_BOSS_PARTS`, 3 phases (IRON SOVEREIGN ≥ 4; the ABYSS ARK 2, THE HOLLOW KING 3), a reachable `core`, ≤ 60 %
+  of the playfield tall; frozen entries untouched (`tender`'s sim fields; the `bulwark-*`, `maw-*`, `bastion-*`,
+  `regent-*` sprite names; only zone A may change `picket` / `halcyon-bulwark`, with `bonus-range` in its LAND scope);
   original names; no value multiplied by 1.5 twice; the LAND scope complete.
 - **Report** findings by severity; the designer (a new agent, `R5-P.D-A.FIX1`) fixes the file; a new reviewer checks
   again, until zero.
@@ -884,7 +908,7 @@ by the quoted code or test title before you edit it.
 ## Docs item
 
 All five run after the R4 step reviews and the R5 prep reviews of this wave are at zero. They read the builders'
-reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised here.
+reports in `RUN_DIR` ("docs needs") and the file lists below.
 
 ### W09.DOCS-A — The plan and the changelog (PLAN)
 
@@ -900,7 +924,8 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
 - **Files:** `docs/dev/art-bible-v2.md` († rows done), `docs/dev/options-shields-hunter.md`,
   `docs/dev/weapons-and-options.md`, `docs/dev/meter-arsenal.md`, `docs/dev/direct-mode.md`,
   `docs/dev/visual-and-mechanic-extras.md` (the black hole's 8 frames), `docs/dev/coop.md` (`p2` maps),
-  `content/player/README.md` (`thruster`, `bankFrames`), `docs/client/arsenal.md` (images), `docs/dev/sim-world.md`
+  `content/player/README.md` (`thruster`, `bankFrames`), `docs/client/arsenal.md` (images),
+  `docs/client/bestiary.md` (images regenerated in place by `R4-05.E6`: check captions only), `docs/dev/sim-world.md`
   (`R4-01.A2`: the player batch holds the thrusters, capacity `2 · MAX_PLAYERS`).
 
 ### W09.DOCS-C — Bullets, items and FX docs
@@ -912,7 +937,9 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
 ### W09.DOCS-D — UI, scenes and front-end docs
 
 - **Files:** `docs/dev/scenes-and-ui.md` (font, HUD, UI kit, caps, the panel rule), `docs/dev/options-rebinding-and-accessibility.md`,
-  `docs/dev/front-end-and-attract.md` (title, cards), `docs/dev/zones-h-and-i.md` (the endings section only),
+  `docs/dev/front-end-and-attract.md` (title, cards), `docs/dev/zones-h-and-i.md` (the endings section, plus the
+  split lines of `R5-P.P4` / `R5-P.P5a2`: the `zones.patterns.json` mention at `:71` and the `behaviors-zones-hi*`
+  names at `:734-735` — nothing else in the file),
   `docs/dev/bosses-and-warning.md` (WARNING), `content/strings/README.md`.
 
 ### W09.DOCS-E — Pipeline, conventions, API and the R5 prep docs
@@ -924,7 +951,11 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
   files; the prose at `:103`) + `content/enemies/README.md` (`:129`: `brine.jelly-ring` now in
   `content/patterns/zone-b.patterns.json`), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
   `docs/dev/repo-layout.md` (the new test files), `docs/dev/platform-polish.md` + `docs/client/store-submission.md`
-  (the icons), `README.md` (the banner), `test/README.md`.
+  (the icons), `README.md` (the banner), `test/README.md`, and the pattern-file and test-file names only in
+  `docs/dev/enemies-and-behaviors.md` (`:606`), `docs/dev/release-hardening.md` (`:222`), `docs/dev/zones-b-and-c.md`
+  (`:58`, `:406`, `:319`, `:500-501`), `docs/dev/zones-d-and-e.md` (`:59`, `:486`, `:516-517`) and
+  `docs/dev/zones-f-and-g.md` (`:62`, `:541`, `:570-571`) — `R5-P.P4` / `R5-P.P5a1` / `R5-P.P5a2`'s docs needs; find
+  the lines with `git grep -n "zones.patterns\|behaviors-zones" -- docs/dev`; nothing else in those files.
 
 ### W09.DOCS-RV — Review of the docs pushes
 
@@ -933,7 +964,8 @@ reports in `RUN_DIR` ("docs needs") and the R3R4 / R5R6 docs tables summarised h
 
 ## Exit check
 
-1. Every subtask above on `origin/master`; every review at zero findings (R4-01 … R4-05, R5 prep, every design).
+1. Every subtask above on `origin/master`; every review at zero findings (R4-01 … R4-05, R5 prep, every design;
+   `W09.DOCS-RV` for the full exit — not part of the code exit, README step 1).
 2. On myadmin1, at `origin/master`:
    ```bash
    pnpm install --frozen-lockfile && pnpm assets
