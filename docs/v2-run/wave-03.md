@@ -49,7 +49,7 @@ under the kit and master e2e unchanged.
   "within one tick of scroll" (`|camera.x − x| ≤ speed`). A still ship parked for a test sits on the enemies' line
   `v1y(100)` (W5-2: `SPAWN_Y` itself stays the frame centre).
 - **Fixtures that pair with a shipped tileset** take **that tileset's** `tileSize` **and** `rowsTall = PLAYFIELD_H /
-  tileSize` together (precheck item 7: 42 core test files pair a `tileSize: 8` fixture tilemap with a shipped
+  tileSize` together (the background §0.7: 42 core test files pair a `tileSize: 8` fixture tilemap with a shipped
   tileset, mostly `terrain-a`; 18 of them also hard-code `ROWS = PLAYFIELD_H / 8`). After the port that tileset is
   12 px and the loader rejects an 8-px map with "must equal the tileset's tileSize (12)". Floors measured in 8-px
   rows (a "32-px floor") may need re-deriving at 12.
@@ -346,8 +346,9 @@ under the kit and master e2e unchanged.
   test title).
 - **What is gated today** (lines at `543887b` — the C5 fixes keep moving them, so list today's yourself with
   `git grep -n "test.skip(\|assertionsGated(" test/e2e/`; do not touch these): `PORT_UNMEASURED` + `PORT_REASON` at
-  zone-a `:109`, stage `:114`, mode7 `:485` `:779`, raster `:224` `:258` ("runs the heat haze only inside its camera
-  range"), campaign-run `:292` ("?stage=bonus-range: the digit entrance flies the ship into the vault, …"), zones-bc
+  zone-a `:109`, stage `:114`, mode7 `:485` `:779`, raster `:224` ("draws the sea wave, the palette cycle and the
+  line-band floor …") `:258` ("runs the heat haze only inside its camera range"), campaign-run `:292`
+  ("?stage=bonus-range: the digit entrance flies the ship into the vault, …"), zones-bc
   `:237` `:266` `:286` `:303`, zones-de `:318` `:356`, zones-fg `:315` `:354` `:388`, zones-hi `:414` `:444` `:510`
   `:532`, advanced-bosses `:259` `:363` `:389`, debug-tools `:203` (assertion level, inside "web build: F4 freezes,
   F5 steps one tick, F7 / F8 jump the stage, F3 / F6 cycle"); `R2_03_PENDING` + `CONTENT_REASON` at zones-de `:278`,
