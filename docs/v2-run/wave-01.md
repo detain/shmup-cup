@@ -102,7 +102,7 @@ reviewed to zero.
     `:355`);
   - `test/e2e/debug-tools.spec.ts` — `:236` ("Tizen build via file://: after the unlock, 4 freezes and each 5 runs one
     tick"; CI's `:233`);
-  - `test/e2e/flight.spec.ts` — `:153` ("arrow keys move the KESTREL; without input it stays put"; the myadmin1 flake
+  - `test/e2e/flight.spec.ts` — `:137` ("arrow keys move the KESTREL; without input it stays put"; the myadmin1 flake
     at `:114`);
   - `test/e2e/raster.spec.ts` — only what a finding names (`c67c7c9` changed its row comment, then `:237-239`, now
     `:240-242`);

@@ -108,7 +108,7 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
     build);
   - `test/e2e/debug-tools.spec.ts:236` — "Tizen build via file://: after the unlock, 4 freezes and each 5 runs one
     tick" (`frameAdvance` stayed `false` after the debug unlock and remote 4);
-  - `test/e2e/flight.spec.ts:153` — "arrow keys move the KESTREL; without input it stays put" (the idle drift was
+  - `test/e2e/flight.spec.ts:137` — "arrow keys move the KESTREL; without input it stays put" (the idle drift was
     0.96 px against a 0.5 px limit, one flaky run on myadmin1).
 - **Files:** `test/e2e/campaign-run.spec.ts`, `test/e2e/debug-tools.spec.ts`, `test/e2e/flight.spec.ts`,
   `test/e2e/raster.spec.ts`; the files of the C5 fixes since `c67c7c9` (`8ff2bf6`, `543887b`, `0cabaec`, `424afd7`,
