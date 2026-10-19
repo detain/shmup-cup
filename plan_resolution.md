@@ -516,15 +516,22 @@ at a time (decision R5-D1 in [`docs/v2-run/decisions.md`](docs/v2-run/decisions.
 - **Depends on:** R0-02. **Blocks:** nothing.
 - **Scope (owner):**
   1. Start the log server on the desktop (`npm run log-server` in `tools/input-probe/`).
-  2. Build with `VITE_REPORT_URL=http://<desktop-ip>:8787 pnpm bench:tv`, then package and install the bench
-     widget.
-  3. Run the full matrix on **both monitors**, once with WebGL 1 (shipped default) and once with WebGL 2
-     (`localStorage['shmup-cup:gl']`). Since R1-05 a run ends with the **decode scenario** (the 19th page load, about
+  2. Build with `VITE_REPORT_URL=http://10.0.0.2:8787 pnpm bench:tv` (the owner's desktop; the TV is
+     `10.0.0.224`), then package and install the bench widget. The first scenario's console summary
+     line at the log server is the reachability test — if it does not appear within ~2 min, fix the
+     firewall before running the matrix.
+  3. The two M7 units are exactly the same model (owner, 2026-10-19), so run on **one unit** — the
+     full matrix once with WebGL 1 (shipped default), once with WebGL 2
+     (`localStorage['shmup-cup:gl']`), then the decode scenario; then a **repeat of the 640×360
+     WebGL1 pass** on the same unit as the run-to-run stability check. Since R1-05 a run ends with
+     the **decode scenario** (the 19th page load, about
      20–30 s more): its `DECODE (R1-05)` table rides in the streamed payload's `decode` field; the
      saved session, read with `analyze-bench.mjs` right after the run, is the record. Photograph
      the table under the results page's matrix table only as the fallback, when that session's
      payload never reached the log server or holds no `decode` field — check before the TV is reset.
-  4. While the TVs are set up, also do v1's first install from `v1.x` and the M3-02c measurement table
+     The second monitor is optional — only worth its time if its firmware differs; note the firmware
+     build of the unit that ran (Settings → About).
+  4. While the TV is set up, also do v1's first install from `v1.x` and the M3-02c measurement table
      (`docs/client/outstanding-work.md` §1.1).
 - **Scope (agent, afterwards):**
   - commit the raw logs to `tools/input-probe/results/<date>-m7-bench/`;
@@ -538,8 +545,10 @@ at a time (decision R5-D1 in [`docs/v2-run/decisions.md`](docs/v2-run/decisions.
     and analyses the bench) and `W15.DOCS-C` (§12). R3-04 runs before any log exists (its zone-load figure
     estimated or flagged unmeasured, decision W5-19), so A1 only proposes budgets in its report, never edits one;
     `R6-02.P3` measures against R6-02's budgets (wave 15, rule 2).
-- **Acceptance:** §12 exists with numbers from both monitors; §13's decision table has been applied and its
-  outcome written down; nothing else in the plan waits for it.
+- **Acceptance:** §12 exists with numbers from one unit's WebGL1 + WebGL2 matrices, the decode
+  record, and the 640×360 repeat pass (a second unit's run only if made — then its firmware note
+  too); §13's decision table has been applied and its outcome written down; nothing else in the
+  plan waits for it.
 
 ### R0-04 — The early art round: generate, pick, follow up
 
