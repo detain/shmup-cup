@@ -33,9 +33,11 @@ this wave; re-find any line by its code before you edit.
 - **Timeout fix:** `R5-01.TO` (S6's Traps) takes a builder slot only when S6 (or `R5-01.RV`'s re-run of S6's tests)
   reports a timeout-only failure; it is pushed and reviewed before `R5-01.S7`.
 - **Reviews:** two review slots, never more than two reviewers at once. Slot 1 takes whichever of its reviews is
-  ready, `R5-01.RV` (the zone-A branch loop) first whenever it is ready — the zone-A loop has priority; its other
-  reviews are `R5-P.P7.RV1`, `R5-P.P12.RV1` and the determinism-focused `R5-P.P12.RV1b` (after `R5-P.P12.RV1`; it
-  may run in slot 2 when slot 2 is free). Slot 2 — `R5-P.P5d.RV1` and the S2 reviews (`R5-0n.S2.RV1`).
+  ready, in this priority: `R5-01.RV` (the zone-A branch loop) first whenever it is ready — the zone-A loop has
+  priority; then `R5-P.P7.RV1` and its later rounds (`R5-P.P5d` waits for P7's review to be at zero, so this loop
+  goes ahead of P12's); then `R5-P.P12.RV1` and the determinism-focused `R5-P.P12.RV1b` (after `R5-P.P12.RV1`).
+  P7's review rounds and `R5-P.P12.RV1b` may run in slot 2 when slot 2 is free. Slot 2 — `R5-P.P5d.RV1` and the S2
+  reviews (`R5-0n.S2.RV1`).
 - **Docs item:** `W10.DOCS-A`, `W10.DOCS-B`, then `W10.DOCS-RV`.
 - **e2e passes:** 2 — pass 1: `R5-P.P7`'s pair-spec batch (lane 1, only if a ramp changed), then lane 3 (P5d,
   which starts after P7's review is at zero); pass 2: lane 4 (zone A: S6, S6b, `R5-01.RV`'s re-run of their batches
@@ -46,8 +48,8 @@ this wave; re-find any line by its code before you edit.
 - **The gates are gone.** Every subtask first checks `test/golden/stale.ts`, `test/e2e/gates.ts` and
   `packages/core/test/helpers/port-pending.ts` do not exist. If one exists, stop and report.
 - **Zone A lands first in all of R5.** No other zone's `S7` runs before `R5-01.S7` is on master.
-- **The zone-A lane lives on a local branch in one worktree.** After `R5-01.S2` is on master, the orchestrator
-  creates `RUN_DIR/wt/zone-a` once:
+- **The zone-A lane lives on a local branch in one worktree.** After `R5-01.S2` is on master (or at once, if
+  `R5-01.S2`'s Budget trap moves it onto the branch), the orchestrator creates `RUN_DIR/wt/zone-a` once:
   `git -C /home/sites/shmup-cup worktree add -b r5/zone-a /home/sites/shmup-cup-run/wt/zone-a origin/master`. Every
   later agent of the lane (S4a … S7, the reviewers and fixers) works **in that worktree**, commits on `r5/zone-a`,
   and **never pushes the branch**. This is common rule 1's and rule 5's lane-worktree exception: skip rule 1's
@@ -59,8 +61,10 @@ this wave; re-find any line by its code before you edit.
   (sources only: a conflict is real — stop and report).
 - **On the branch, the derived checks are expected red** (goldens of the zone's scenarios, the three fingerprints,
   `atlas-groups.test.ts`, the zone's attract demo): each report lists them by test name; the LAND regenerates them.
-  Every other test must be green. A fingerprint walk's **own** `expect` is different: if one fails because of the
-  zone change (any failing line of `test/integration/presentation-fingerprint.test.ts` other than a `PINNED`
+  Only if `R5-01.S2`'s Budget trap moved it onto the branch, the budget tests its report named are expected red too
+  (zone A's new sprites stay in `common` until the LAND re-derives `atlas-groups.json`; `R5-01.S7` re-runs them on
+  master). Every other test must be green. A fingerprint walk's **own** `expect` is different: if one fails because
+  of the zone change (any failing line of `test/integration/presentation-fingerprint.test.ts` other than a `PINNED`
   comparison — `expect(w.table).toEqual(PINNED.…)` or `expect(table).toEqual(PINNED.…)` (the `languages` and
   `coopSingle` walks) — e.g. `runA`'s `toWarning` in zone A, the attract walk's zone-A demo, a `Walk.at()` scene
   check), stop and report: a FINGERPRINTS fix subtask owns the walk (wave 11 rule 9).
@@ -362,7 +366,14 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `seedOf(name)`; no `Math.sin` / `cos` / `random`.
   - **Budget:** sprites no content names pack into `common` until the LAND names them and re-derives the groups. If
     `common` goes over its cap (`test/scripts/assets/atlas-budget.ts`) or `standin-budget.test.ts` fails, do not push
-    and never raise a cap: report it — the orchestrator then moves this subtask onto the zone branch.
+    and never raise a cap: report it, naming every failing budget test. The orchestrator then creates the zone
+    worktree at once (the `git worktree add` line of this wave's rules) and moves this subtask onto `r5/zone-a`: a
+    new agent in that worktree, like S4a … S7 (its review `R5-01.S2.RV1` and any fixer work there too). There it
+    commits the generator, the registry lines, the credits line and `procedural-zone-a.test.ts`, **without** the
+    fingerprint re-pin, without the land lock and without a push. On the branch the two fingerprints (`core.campaign`,
+    the credits segments) and the budget tests that failed are then expected red derived checks (this wave's rules):
+    `R5-01.S7`'s LAND regenerates the fingerprints and re-derives `atlas-groups.json`, which moves the new sprites out
+    of `common`, and `R5-01.S7` re-runs the budget tests on master after its push.
   - The bible's sizes are art sizes (v1 × 1.5, halves rounded up, odd for point-symmetric sprites); hitboxes are
     content and are not yours.
   - Never edit an existing sprite, pixel map or generator path (`backdrops.mjs`' `bg/azure-verge` stays).
@@ -663,7 +674,9 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
      re-pinned (wave 11's post-LAND wording, `wave-11.md` R5-02.S7); the commit body explains that re-pin; the groups
      diff touches only zone A's block and `common`; the plate list the LAND printed (commit body and log) holds only
      zone A's plates — `halcyon-bulwark.png` and the new enemy plates, never `echo-bulwark.png`. Then re-run the
-     three e2e batches of `R5-01.S6b` on master.
+     three e2e batches of `R5-01.S6b` on master. Only if `R5-01.S2` came through the branch (its Budget trap), also
+     run `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/standin-budget.test.ts test/scripts/assets test/integration/cjk-budget.test.ts`
+     on master: it must be green now that the groups are re-derived; if not, report it (never raise a cap).
   4. The orchestrator removes the zone worktree and its branch:
      `git -C /home/sites/shmup-cup worktree remove /home/sites/shmup-cup-run/wt/zone-a && git -C /home/sites/shmup-cup branch -D r5/zone-a`.
 - **Tests (targeted):** the script's own step 7 checks, then
