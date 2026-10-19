@@ -720,7 +720,7 @@ blocks nothing).
 ## 8. The reviewer gate
 
 **Must hold:**
-- `git diff --name-only <wave-base>..HEAD -- test/golden/*.replay.json content/demos test/fixtures/v1-baseline` is
+- `git diff --name-only <wave-base>..HEAD -- test/golden/'*.replay.json' content/demos test/fixtures/v1-baseline` is
   **empty**; `pnpm golden:update` and `SHMUP_V1_BASELINE_UPDATE` never ran.
 - **Pre-port commits (S0, T0–T4):** no content change; `WORLD_SCALE` / `WORLD_TOP_PAD` stay 1 / 0 and
   `scripts/frame.mjs` untouched; the three fingerprints unedited and green; the suite green with the gated list
