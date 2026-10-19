@@ -1359,7 +1359,8 @@ moved.
     entry, bending lasers, magnet …).
   - **Scale the 4-way design rules and the bot:**
     - `test/playtest/rules.ts:25-31`: 2.0 → 3.0 px/tick, lane gap 16 → 24, column half-width 8 → 12;
-    - the capsule window 900 → 1,350 (`content.test.ts:1035,1762`);
+    - the capsule window 900 → 1,350 (`content.test.ts`, the three `checkpoint.x + 900` filters — :1046,
+      :1785, :2170 — and the rule's docblock at :24);
     - `four-way-bot.ts:56-68`: `BOT_X` 64 → 96, `LANE_HEIGHT` 16 → 24, `TERRAIN_AHEAD` 56 → 84;
     - `remote-strict.ts` counts ticks and is unaffected.
   - **The Tiled importer** at 12-px tiles and a 640 view.
@@ -1448,7 +1449,7 @@ moved.
     - **`test/e2e/raster.spec.ts:240-242`** — since `c67c7c9` the comment gives raster-range's playfield rows
       112 … 151 / 152 … 199 and their 640×360 frame rows (124 … 163 / 164 … 211); the port moves the bands, so
       R2-03 rewrites the comment with the `diffRows` literals. The mode7 floor rows were already fixed in
-      `bc8e05d` (`test/e2e/mode7.spec.ts`, the "rows 112 … 211 of the field" comment).
+      `bc8e05d` (`test/e2e/mode7.spec.ts`, the "rows 112 … 211 of the 360-row frame" comment).
     - **No format-version bumps in R2-02** (`save-format.ts` `SAVE_FORMAT` and `gates.ts` `REPLAY_FORMAT` are
       pinned mirrors). **Build-delta baseline:** Tizen `app.js` 386,228 B gzip-9, check-bundle 380.2 KB of 512.
 - **Acceptance:**
