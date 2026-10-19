@@ -1,42 +1,60 @@
 #!/usr/bin/env node
 /**
- * Turns a TV render-bench session (plan R0-02 — `pnpm bench:tv`, collected by `npm run log-server`) into the
- * tables of `docs/dev/input-probe-results.md` §12 "Resolution benchmark" — **relative to the session's own
- * 384×216 rows**.
+ * Turns TV render-bench sessions (plan R0-02 — `pnpm bench:tv`, collected by `npm run log-server`) into the
+ * tables of `docs/dev/input-probe-results.md` §12 "Resolution benchmark".
  *
- * Why relative: the M7's `requestAnimationFrame` already shows a p95 of ~30 ms with nothing running at all
- * (`input-probe-results.md` §8), so an absolute frame time says more about the panel than about the frame.
- * Each scenario is therefore printed next to the same variant at 384×216 measured minutes earlier on the same
- * set: the synced render's p95 as a ratio, the share of frames the vsync-locked loop needed two ticks for as a
- * difference in percentage points. Plan §13's decision rules are applied to the 640×360 rows (and the 960×540
- * note) at the end.
+ * **A campaign, not a run.** One run on the M7 is not enough to decide anything that differs by less than the
+ * run-to-run noise: two identical WebGL 1 runs of R0-03 differed by up to 1.51× in synced p95
+ * (`results/2026-10-19-m7-bench/README.md`). So a campaign records several sessions on one set — today GL 1,
+ * GL 2, GL 1, GL 2 — and this script reads them together:
+ *
+ * 1. **Aggregation per WebGL version.** Every scenario's synced p95, render p95 and two-tick share become a
+ *    median / min / max across that version's runs.
+ * 2. **Noise floor.** From the same-version repeats: per scenario the relative spread of the synced p95
+ *    (`(max − min) / median`) and the absolute spread of the two-tick share (`max − min`, percentage points);
+ *    the band is the median and the p90 of those spreads across scenarios.
+ * 3. **GL 1 vs GL 2.** Only with ≥ {@link MIN_RUNS_FOR_VERDICT} runs of each version. A scenario's difference
+ *    (of the two versions' medians) is called only beyond the band's **p90** and with the versions' run ranges
+ *    apart; the overall shift (the median of the per-scenario differences) only beyond the **run-to-run drift**
+ *    (the largest median shift between two runs of one version). Anything else is "within noise — no verdict".
+ *    With fewer runs the script refuses.
+ * 4. **Summary matrices** (rows = the 25 size ids, scaled then native, in matrix order; columns = the six
+ *    variants): two-tick % and synced p95 ms per version, plus a **knob table** (a knob row against its own
+ *    plain row at the same size, paired run by run) and plan §13's outcome at 640×360.
+ *
+ * Why the figures are read relative: the M7's `requestAnimationFrame` already shows a p95 of ~30 ms with nothing
+ * running at all (`input-probe-results.md` §8), so an absolute frame time says more about the panel than about
+ * the frame. Plan §13 reads each 640×360 row against the same variant at 384×216 **of the same run** (the
+ * median of those per-run differences), which also cancels a run's own drift (a slow first run after an install).
  *
  * Each JSONL line is one payload the bench POSTed: `{kind:'render-bench', session, seq, sentAt, env, results,
  * done}` plus the server's `receivedAt` / `from`. `results` holds that scenario's record — the shape is
  * `RenderBenchRecord` in `packages/shell/src/telemetry/index.ts` — and the end of a run re-sends the records
  * the server had not acknowledged, so the **latest record per scenario and WebGL version wins** (a **Red**
- * re-run on the TV replaces its scenario's row the same way).
+ * re-run on the TV replaces its scenario's row the same way). The matrix (`apps/tizen/src/bench/matrix.ts`):
+ * scenario ids `<size>-<variant>` — scaled `640x360` (density height / 240) or native `1280x720n` (density 1) —
+ * and knob rows `<size>-<variant>-<knob>` whose record `variant` is `<variant>-<knob>`. Sessions of the old
+ * 18-scenario matrix (three scaled sizes, no knobs) read the same way.
  *
  * Since plan R1-05 (B4) a run ends with a **decode scenario**, whose `DecodeBenchRecord` rides in a payload's
- * optional `decode` field: per atlas page (a synthetic 2048² RGBA page, a 2048² PNG-8 page, the shipped `common`
- * and zone A pages) the median / p95 of the XHR fetch, the `HTMLImageElement` decode, the upload through the
- * renderer (with `gl.finish()`) and the `createImageBitmap` alternative. It is printed as its own table with
- * plan R3-04's zone-load estimate (≤ 2 s); sessions recorded before B4 simply have no such table.
+ * optional `decode` field: per atlas page the median / p95 of the XHR fetch, the `HTMLImageElement` decode, the
+ * upload through the renderer (with `gl.finish()`) and the `createImageBitmap` alternative. It is printed as its
+ * own table with plan R3-04's zone-load estimate (≤ 2 s); sessions recorded before B4 simply have none.
  *
  * Usage (from tools/input-probe/):
- *   node results/analyze-bench.mjs logs/rb-<session>.jsonl [more sessions …] [--records]
+ *   node results/analyze-bench.mjs <session.jsonl | folder> [more …] [--full] [--records]
  *
- *   several sessions   printed one after the other; a WebGL 1 and a WebGL 2 session of the same set are
- *                      also compared scenario by scenario (§13's "WebGL 2 clearly better" rule)
- *   --records          also list every record in full (JSON)
+ *   folder       every `rb-*.jsonl` in it (every `*.jsonl` when none is named `rb-…`)
+ *   --full       also print each session's own report: the per-size detail tables and its §13 block
+ *   --records    also list every record in full (JSON) — implies the per-session reports
  *
- * Zero dependencies; prints Markdown.
+ * Zero dependencies; prints Markdown that stays within ~120 columns (the --full detail tables are wider).
  *
  * @module results/analyze-bench
  */
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 /** The baseline frame: v1's internal size. */
@@ -48,12 +66,24 @@ export const V2_SIZE = '640x360';
 /** The "hi-bit" frame recorded for after v2. */
 export const HI_BIT_SIZE = '960x540';
 
-/** The sizes in table order, with their density and what they stand for. */
+/** The R0-02 sizes with their density and what they stand for (headings of the per-session tables). */
 const SIZES = [
   [BASELINE_SIZE, 1, 'the baseline (v1 as it ships)'],
   [V2_SIZE, 1.5, 'the v2 frame and density'],
   [HI_BIT_SIZE, 2.25, 'the same field of view at 1.5× the density (for the record)'],
 ];
+
+/** The load variants in column order (`BENCH_VARIANTS` of `apps/tizen/src/bench/matrix.ts`). */
+export const VARIANTS = ['busy', 'filter', 'mode7', 'crt-light', 'crt-full', 'worst'];
+
+/** The knobs in matrix order (`BENCH_KNOBS`). */
+export const KNOBS = ['fit', 'stretch', 'interp', 'out720', 'out540'];
+
+/** Runs of each WebGL version the GL 1-vs-2 verdict needs (and the noise floor needs of one version). */
+export const MIN_RUNS_FOR_VERDICT = 2;
+
+/** Most scenarios the GL 1-vs-2 section lists without `--full`. */
+const CALLED_LIST_MAX = 25;
 
 /** First rAF bucket (of `RAF_BUCKET_EDGES_MS` 12/15/17/19/21/25/33) of a frame 21 ms or later. */
 const LATE_BUCKET = 5;
@@ -78,6 +108,15 @@ export const ZONE_LOAD_TARGET_MS = 2000;
 
 /** Plan R3-04's page target per zone: `common` ≤ 1 page, the zone's own ≤ 2 pages. */
 export const ZONE_PAGES = { common: 1, zone: 2 };
+
+/** §13's tiers and the action each maps to (none of them blocks). */
+const SECTION13_ACTIONS = {
+  planned: 'proceed as planned; record the headroom as the R3-04 / R6-02 budget',
+  'tv-profile':
+    'proceed; R3-06 and R5 adopt the TV profile from the start (parallax capped at 4 on Tizen, far backdrop at' +
+    ' half resolution, CRT off by default on TV)',
+  'performance-step': 'proceed; open a performance step before R5, then re-measure',
+};
 
 /**
  * Reads a session's payloads and keeps the latest record per scenario and WebGL version.
@@ -125,6 +164,29 @@ function num(v, digits = 2) {
 }
 
 /**
+ * A signed number (`+1.2`, `-0.4`, `0.0`), or `—`.
+ *
+ * @param {unknown} v - the value.
+ * @param {number} [digits] - decimals (default 1).
+ * @returns {string} the text.
+ */
+function signed(v, digits = 1) {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return '—';
+  const text = v.toFixed(digits);
+  return v > 0 && Number(text) !== 0 ? '+' + text : text;
+}
+
+/**
+ * A percentage of a 0 … 1 fraction, or `—`.
+ *
+ * @param {unknown} v - the fraction.
+ * @returns {string} the text, e.g. `12%`.
+ */
+function pct(v) {
+  return typeof v === 'number' && Number.isFinite(v) ? `${(v * 100).toFixed(0)}%` : '—';
+}
+
+/**
  * A `p50 / p95` cell from a `[min, p50, p95, max]` tuple.
  *
  * @param {unknown} d - the tuple.
@@ -132,6 +194,61 @@ function num(v, digits = 2) {
  */
 function pair(d) {
   return Array.isArray(d) && d.length >= 4 ? `${num(d[1])} / ${num(d[2])}` : '—';
+}
+
+/**
+ * The p95 of a `[min, p50, p95, max]` tuple.
+ *
+ * @param {unknown} d - the tuple.
+ * @returns {number | null} the p95, or null.
+ */
+function p95Of(d) {
+  return Array.isArray(d) && typeof d[2] === 'number' && Number.isFinite(d[2]) ? d[2] : null;
+}
+
+/**
+ * A value at quantile `q` of a list (linear interpolation between the closest ranks).
+ *
+ * @param {number[]} values - the values (non-finite ones are ignored).
+ * @param {number} q - 0 … 1 (0.5 = the median).
+ * @returns {number | null} the quantile, or null for an empty list.
+ */
+export function quantile(values, q) {
+  const s = values.filter((v) => typeof v === 'number' && Number.isFinite(v)).sort((a, b) => a - b);
+  if (s.length === 0) return null;
+  const pos = (s.length - 1) * q;
+  const lo = Math.floor(pos);
+  const hi = Math.ceil(pos);
+  return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+}
+
+/**
+ * Median / min / max of a list of run values.
+ *
+ * @param {number[]} values - the values (non-finite ones are ignored).
+ * @returns {{n: number, median: number, min: number, max: number, values: number[]} | null} the figures, or
+ *   null when no value is finite.
+ */
+export function runStats(values) {
+  const v = values.filter((x) => typeof x === 'number' && Number.isFinite(x));
+  if (v.length === 0) return null;
+  return { n: v.length, median: /** @type {number} */ (quantile(v, 0.5)), min: Math.min(...v), max: Math.max(...v), values: v };
+}
+
+/**
+ * Splits a record's `variant` into the load variant and the knob of a knob row.
+ *
+ * @param {unknown} variant - the record's `variant`: `busy`, `crt-light`, `busy-stretch`, `worst-out720` ….
+ * @returns {{base: string, knob: string | null}} the load variant and the knob (null on a plain row).
+ */
+export function parseRow(variant) {
+  const v = String(variant ?? '');
+  let best = null;
+  for (const base of VARIANTS) {
+    if (v === base) return { base, knob: null };
+    if (v.startsWith(base + '-') && (best === null || base.length > best.length)) best = base;
+  }
+  return best === null ? { base: v, knob: null } : { base: best, knob: v.slice(best.length + 1) };
 }
 
 /**
@@ -153,17 +270,18 @@ export function lateShare(r) {
 }
 
 /**
- * The record a row is read against: the same variant and WebGL version at 384×216.
+ * The record a row is read against: the same variant and WebGL version at 384×216 — or, for a knob row
+ * (`busy-stretch`), its own plain row (`busy`) at the same size, as the bench's `results.ts` `baselineOf` does.
  *
  * @param {any} r - the row's record.
  * @param {any[]} records - the session's records.
  * @returns {any | null} the baseline, or null.
  */
 export function baselineFor(r, records) {
-  return (
-    records.find((b) => b.size === BASELINE_SIZE && b.variant === r.variant && b.webGLVersion === r.webGLVersion) ??
-    null
-  );
+  const { base, knob } = parseRow(r.variant);
+  const size = knob === null ? BASELINE_SIZE : r.size;
+  const variant = knob === null ? r.variant : base;
+  return records.find((b) => b.size === size && b.variant === variant && b.webGLVersion === r.webGLVersion) ?? null;
 }
 
 /**
@@ -190,6 +308,20 @@ export function relativeTo(r, base) {
 }
 
 /**
+ * Plan §13's tier for a two-tick difference and a synced p95.
+ *
+ * @param {number | null} points - the two-tick share's difference against 384×216, percentage points.
+ * @param {number | null} synced - the synced render p95, ms.
+ * @returns {'planned' | 'tv-profile' | 'performance-step' | 'unknown'} the tier.
+ */
+export function section13Tier(points, synced) {
+  if (typeof points !== 'number' || typeof synced !== 'number') return 'unknown';
+  if (points <= TWO_TICK_OK_POINTS && synced <= SYNC_OK_MS) return 'planned';
+  if (points <= TWO_TICK_TV_PROFILE_POINTS && synced <= SYNC_TV_PROFILE_MS) return 'tv-profile';
+  return 'performance-step';
+}
+
+/**
  * Plan §13's outcome for one frame at 640×360 against its baseline.
  *
  * @param {any} r - the 640×360 record.
@@ -198,30 +330,64 @@ export function relativeTo(r, base) {
  *   action §13 maps it to (none of them blocks).
  */
 export function section13Outcome(r, base) {
-  const points = relativeTo(r, base).twoTickPoints;
-  const synced = Array.isArray(r.syncedMs) ? r.syncedMs[2] : null;
-  if (points === null || typeof synced !== 'number') {
-    return { tier: 'unknown', action: 'no baseline in this session — re-run the 384x216 rows' };
-  }
-  if (points <= TWO_TICK_OK_POINTS && synced <= SYNC_OK_MS) {
-    return { tier: 'planned', action: 'proceed as planned; record the headroom as the R3-04 / R6-02 budget' };
-  }
-  if (points <= TWO_TICK_TV_PROFILE_POINTS && synced <= SYNC_TV_PROFILE_MS) {
-    return {
-      tier: 'tv-profile',
-      action:
-        'proceed; R3-06 and R5 adopt the TV profile from the start (parallax capped at 4 on Tizen, far backdrop at' +
-        ' half resolution, CRT off by default on TV)',
-    };
-  }
-  return {
-    tier: 'performance-step',
-    action: 'proceed; open a performance step before R5, then re-measure',
-  };
+  const tier = section13Tier(relativeTo(r, base).twoTickPoints, p95Of(r.syncedMs));
+  return tier === 'unknown'
+    ? { tier, action: 'no baseline in this session — re-run the 384x216 rows' }
+    : { tier, action: SECTION13_ACTIONS[tier] };
 }
 
 /**
- * The Markdown table of one internal size.
+ * The size ids of some records in display order: the scaled ids first, then the native (`…n`) ones, each in
+ * matrix order (the first record index a size has).
+ *
+ * @param {any[]} records - the records.
+ * @returns {{id: string, density: number | null, native: boolean}[]} the sizes.
+ */
+export function sizeOrder(records) {
+  const sizes = new Map();
+  for (const r of records) {
+    if (typeof r.size !== 'string') continue;
+    const s = sizes.get(r.size);
+    const index = typeof r.index === 'number' ? r.index : Infinity;
+    if (s === undefined) {
+      sizes.set(r.size, {
+        id: r.size,
+        density: typeof r.density === 'number' ? r.density : null,
+        native: /n$/.test(r.size),
+        index,
+        height: typeof r.height === 'number' ? r.height : 0,
+      });
+    } else {
+      s.index = Math.min(s.index, index);
+      if (parseRow(r.variant).knob === null && typeof r.density === 'number') s.density = r.density;
+    }
+  }
+  return [...sizes.values()]
+    .sort((a, b) => Number(a.native) - Number(b.native) || a.index - b.index || a.height - b.height)
+    .map(({ id, density, native }) => ({ id, density, native }));
+}
+
+/**
+ * A Markdown table with its columns padded, so it reads as plain text too.
+ *
+ * @param {string[]} header - the column titles.
+ * @param {string[][]} rows - the cells.
+ * @param {number[]} [left] - indices of left-aligned columns (the rest are right-aligned; default: column 0).
+ * @returns {string[]} the lines.
+ */
+export function mdTable(header, rows, left = [0]) {
+  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((row) => String(row[i] ?? '').length)));
+  const line = (cells) =>
+    '| ' +
+    widths
+      .map((w, i) => (left.includes(i) ? String(cells[i] ?? '').padEnd(w) : String(cells[i] ?? '').padStart(w)))
+      .join(' | ') +
+    ' |';
+  return [line(header), '|' + widths.map((w) => '-'.repeat(w + 2)).join('|') + '|', ...rows.map(line)];
+}
+
+/**
+ * The Markdown table of one internal size (one session's records; the `--full` detail).
  *
  * @param {any[]} rows - the size's records.
  * @param {any[]} records - every record of the session (for the baselines).
@@ -341,7 +507,8 @@ export function decodeSection(decode) {
 }
 
 /**
- * The report of one session.
+ * The report of one session (the `--full` detail): a table per internal size, every row relative to the same
+ * session's baseline, plan §13 on this run alone, and the decode section.
  *
  * @param {string} file - path to the `<session>.jsonl`.
  * @param {{withRecords?: boolean}} [options] - `withRecords`: list every record in full.
@@ -366,21 +533,25 @@ export function analyzeBenchSession(file, options = {}) {
       ` @${env.devicePixelRatio} · WebGL ${glVersions.join(' + ') || '?'} · UA ${env.userAgent ?? '?'}`,
   );
   out.push(
-    'Each row is read against the same variant at 384×216 in this session: **Synced p95 × 384** is the' +
-      ' `gl.finish()`-synced render p95 over the baseline’s, **Δ points** the two-tick share’s difference. The M7’s' +
-      ' rAF jitters to a p95 of ~30 ms on its own, so the absolute frame times are context, not budgets.',
+    'Each row is read against the same variant at 384×216 in this session (a knob row such as `busy-stretch`' +
+      ' against its own plain row at the same size): **Synced p95 × 384** is the `gl.finish()`-synced render p95' +
+      ' over the baseline’s, **Δ points** the two-tick share’s difference. The M7’s rAF jitters to a p95 of' +
+      ' ~30 ms on its own, so the absolute frame times are context, not budgets. One run is inside the run-to-run' +
+      ' noise — read the campaign summary for anything that compares runs.',
   );
-  out.push('');
-  out.push('Paste the tables below into `docs/dev/input-probe-results.md` §12.');
-  for (const [size, density, what] of SIZES) {
-    const rows = records.filter((r) => r.size === size);
-    if (rows.length === 0) continue;
+  for (const size of sizeOrder(records)) {
+    const rows = records.filter((r) => r.size === size.id);
+    const known = SIZES.find(([id]) => id === size.id);
     out.push('');
-    out.push(`## ${size} (s = ${density}) — ${what}`);
+    out.push(
+      known !== undefined
+        ? `## ${size.id} (s = ${known[1]}) — ${known[2]}`
+        : `## ${size.id} (s = ${size.density ?? '?'}) — ${size.native ? 'native art: more world at s = 1' : 'scaled art: the same world at s = height / 240'}`,
+    );
     out.push('');
     for (const line of sizeTable(rows, records)) out.push(line);
   }
-  const v2 = records.filter((r) => r.size === V2_SIZE);
+  const v2 = records.filter((r) => r.size === V2_SIZE && parseRow(r.variant).knob === null);
   if (v2.length > 0) {
     out.push('');
     out.push('## Plan §13 at 640×360');
@@ -403,13 +574,7 @@ export function analyzeBenchSession(file, options = {}) {
         const tierV2 = section13Outcome(busyV2, baselineFor(busyV2, records)).tier;
         const tierHi = section13Outcome(busyHi, baselineFor(busyHi, records)).tier;
         out.push('');
-        out.push(
-          tierHi === tierV2
-            ? `960×540 (busy) lands in the same §13 tier as 640×360 (**${tierHi}**): note "960×540 is viable on the` +
-                ' M7" for after v2 (a desktop HD mode / v3). It changes nothing in this plan.'
-            : `960×540 (busy) is **${tierHi}** where 640×360 is **${tierV2}**: clearly worse — note it; nothing` +
-                ' changes.',
-        );
+        out.push(hiBitNote(tierV2, tierHi));
       }
     }
   }
@@ -428,66 +593,758 @@ export function analyzeBenchSession(file, options = {}) {
 }
 
 /**
- * Plan §13's WebGL 1-vs-2 comparison between two sessions of the same set (review F8).
+ * The 960×540 note §13 attaches to the busy row.
  *
- * @param {any[]} gl1 - the WebGL 1 session's records.
- * @param {any[]} gl2 - the WebGL 2 session's records.
- * @returns {string[]} a Markdown table and the verdict on the 640×360 busy frame.
+ * @param {string} tierV2 - 640×360 busy's tier.
+ * @param {string} tierHi - 960×540 busy's tier.
+ * @returns {string} the note.
  */
-export function compareWebGL(gl1, gl2) {
-  const out = [
-    '| Scenario | Synced p95 GL 1 | Synced p95 GL 2 | GL 2 / GL 1 |',
-    '|---|---|---|---|',
-  ];
-  let busy = null;
-  for (const a of gl1) {
-    const b = gl2.find((r) => r.scenario === a.scenario);
-    if (b === undefined) continue;
-    const ratio =
-      Array.isArray(a.syncedMs) && Array.isArray(b.syncedMs) && a.syncedMs[2] > 0 ? b.syncedMs[2] / a.syncedMs[2] : null;
-    if (a.scenario === `${V2_SIZE}-busy`) busy = ratio;
-    out.push(`| ${a.scenario} | ${num(a.syncedMs?.[2])} | ${num(b.syncedMs?.[2])} | ${ratio === null ? '—' : num(ratio) + '×'} |`);
+function hiBitNote(tierV2, tierHi) {
+  return tierHi === tierV2
+    ? `960×540 (busy) lands in the same §13 tier as 640×360 (**${tierHi}**): note "960×540 is viable on the` +
+        ' M7" for after v2 (a desktop HD mode / v3). It changes nothing in this plan.'
+    : `960×540 (busy) is **${tierHi}** where 640×360 is **${tierV2}**: clearly worse — note it; nothing changes.`;
+}
+
+// ------------------------------------------------------------------ campaigns
+
+/**
+ * Expands the command line's paths: a folder stands for every `rb-*.jsonl` in it (every `*.jsonl` when none is
+ * named `rb-…`), a file for itself.
+ *
+ * @param {string[]} paths - files and folders.
+ * @returns {string[]} the session files.
+ */
+export function expandSessionArgs(paths) {
+  const out = [];
+  for (const p of paths) {
+    let dir = false;
+    try {
+      dir = statSync(p).isDirectory();
+    } catch (_error) {
+      dir = false;
+    }
+    if (!dir) {
+      out.push(p);
+      continue;
+    }
+    const names = readdirSync(p)
+      .filter((n) => n.endsWith('.jsonl'))
+      .sort();
+    const rb = names.filter((n) => n.startsWith('rb-'));
+    for (const n of rb.length > 0 ? rb : names) out.push(join(p, n));
   }
-  out.push('');
+  return out;
+}
+
+/**
+ * Aggregates the runs of one WebGL version per scenario.
+ *
+ * @param {any[]} runs - the runs (`{session, gl, byScenario}`), oldest first.
+ * @returns {Map<string, any>} per scenario id: `{scenario, size, density, variant, base, knob, index, runs, sync,
+ *   render, twoTick}` — `sync` / `render` the synced and CPU render p95 (ms) and `twoTick` the two-tick share
+ *   (percent) as {@link runStats}, each over the runs that measured the scenario.
+ */
+export function aggregateRuns(runs) {
+  const acc = new Map();
+  for (const run of runs) {
+    for (const r of run.byScenario.values()) {
+      let a = acc.get(r.scenario);
+      if (a === undefined) {
+        const { base, knob } = parseRow(r.variant);
+        a = {
+          scenario: r.scenario,
+          size: r.size,
+          density: r.density ?? null,
+          variant: r.variant,
+          base,
+          knob,
+          index: typeof r.index === 'number' ? r.index : 0,
+          runs: 0,
+          syncValues: [],
+          renderValues: [],
+          twoTickValues: [],
+        };
+        acc.set(r.scenario, a);
+      }
+      a.runs += 1;
+      a.syncValues.push(p95Of(r.syncedMs));
+      a.renderValues.push(p95Of(r.renderMs));
+      a.twoTickValues.push(typeof r.twoTickShare === 'number' ? r.twoTickShare * 100 : null);
+    }
+  }
+  const out = new Map();
+  for (const [id, a] of acc) {
+    out.set(id, {
+      scenario: a.scenario,
+      size: a.size,
+      density: a.density,
+      variant: a.variant,
+      base: a.base,
+      knob: a.knob,
+      index: a.index,
+      runs: a.runs,
+      sync: runStats(a.syncValues),
+      render: runStats(a.renderValues),
+      twoTick: runStats(a.twoTickValues),
+    });
+  }
+  return out;
+}
+
+/**
+ * The noise floor from same-version repeats: per scenario and WebGL version with ≥ 2 runs, the relative spread
+ * of the synced p95 (`(max − min) / median`) and the absolute spread of the two-tick share (`max − min`, points);
+ * the band is the median and the p90 of each across those scenarios.
+ *
+ * @param {Map<number, Map<string, any>>} aggregates - {@link aggregateRuns} per WebGL version.
+ * @returns {{samples: {gl: number, scenario: string, relSync: number | null, twoTick: number | null}[],
+ *   relSync: {n: number, median: number, p90: number, worst: any} | null,
+ *   twoTick: {n: number, median: number, p90: number, worst: any} | null} | null} the band, or null without a
+ *   single repeated scenario.
+ */
+export function noiseFloor(aggregates) {
+  const samples = [];
+  for (const [gl, scenarios] of aggregates) {
+    for (const a of scenarios.values()) {
+      const relSync = a.sync !== null && a.sync.n >= 2 && a.sync.median > 0 ? (a.sync.max - a.sync.min) / a.sync.median : null;
+      const twoTick = a.twoTick !== null && a.twoTick.n >= 2 ? a.twoTick.max - a.twoTick.min : null;
+      if (relSync !== null || twoTick !== null) samples.push({ gl, scenario: a.scenario, relSync, twoTick });
+    }
+  }
+  if (samples.length === 0) return null;
+  const band = (key) => {
+    const with_ = samples.filter((s) => s[key] !== null);
+    if (with_.length === 0) return null;
+    const values = with_.map((s) => s[key]);
+    const worst = with_.reduce((w, s) => (s[key] > w[key] ? s : w));
+    return { n: values.length, median: quantile(values, 0.5), p90: quantile(values, 0.9), worst };
+  };
+  return { samples, relSync: band('relSync'), twoTick: band('twoTick') };
+}
+
+/**
+ * Loads a campaign: its sessions (oldest first), one run per session and WebGL version, the per-version
+ * aggregates, the display order of the sizes and the noise floor.
+ *
+ * @param {string[]} files - the session files.
+ * @returns {any} the campaign.
+ */
+export function loadCampaign(files) {
+  const sessions = files
+    .map((file, order) => {
+      const { payloads, records, decode } = readBenchSession(file);
+      const last = payloads[payloads.length - 1] ?? {};
+      const env = last.env ?? payloads[0]?.env ?? {};
+      return {
+        file,
+        order,
+        id: last.session ?? basename(file),
+        env,
+        from: last.from ?? null,
+        payloads,
+        records,
+        decode,
+        startedAt: typeof env.startedAt === 'number' ? env.startedAt : null,
+        complete: payloads.some((p) => p.done === true),
+      };
+    })
+    .filter((s) => s.payloads.length > 0)
+    .sort((a, b) =>
+      a.startedAt !== null && b.startedAt !== null ? a.startedAt - b.startedAt || a.order - b.order : a.order - b.order,
+    );
+  const runsByGl = new Map();
+  for (const session of sessions) {
+    const gls = [...new Set(session.records.map((r) => r.webGLVersion))].sort();
+    for (const gl of gls) {
+      const byScenario = new Map();
+      for (const r of session.records) if (r.webGLVersion === gl) byScenario.set(r.scenario, r);
+      if (!runsByGl.has(gl)) runsByGl.set(gl, []);
+      runsByGl.get(gl).push({ session, gl, byScenario });
+    }
+  }
+  const gls = [...runsByGl.keys()].sort();
+  const aggregates = new Map(gls.map((gl) => [gl, aggregateRuns(runsByGl.get(gl))]));
+  const noise = noiseFloor(aggregates);
+  if (noise !== null) noise.drift = runDrift(runsByGl);
+  return { sessions, gls, runsByGl, aggregates, sizes: sizeOrder(sessions.flatMap((s) => s.records)), noise };
+}
+
+/**
+ * Run-to-run drift: for every pair of runs of the same version, the median across their common scenarios of
+ * the two-tick difference (points) and of the synced p95 ratio — how far a whole run moves on its own (R0-03's
+ * first run after an install sat ~4 points above the repeat). The largest pair is the band an overall GL 1-vs-2
+ * shift must exceed.
+ *
+ * @param {Map<number, any[]>} runsByGl - the runs per version.
+ * @returns {{twoTick: number | null, relSync: number | null, pairs: number}} the largest absolute drift of each
+ *   metric (`relSync` as `|ratio − 1|`) and how many run pairs were compared.
+ */
+export function runDrift(runsByGl) {
+  let twoTick = null;
+  let relSync = null;
+  let pairs = 0;
+  for (const runs of runsByGl.values()) {
+    for (let i = 0; i < runs.length; i++) {
+      for (let j = i + 1; j < runs.length; j++) {
+        const points = [];
+        const ratios = [];
+        for (const [id, a] of runs[i].byScenario) {
+          const b = runs[j].byScenario.get(id);
+          if (b === undefined) continue;
+          const rel = relativeTo(b, a);
+          points.push(rel.twoTickPoints);
+          ratios.push(rel.syncRatio);
+        }
+        const p = quantile(points, 0.5);
+        const r = quantile(ratios, 0.5);
+        if (p === null && r === null) continue;
+        pairs += 1;
+        if (p !== null) twoTick = Math.max(twoTick ?? 0, Math.abs(p));
+        if (r !== null) relSync = Math.max(relSync ?? 0, Math.abs(r - 1));
+      }
+    }
+  }
+  return { twoTick, relSync, pairs };
+}
+
+/**
+ * The aggregate of a size and row (`busy`, `busy-stretch`) in one version's aggregates.
+ *
+ * @param {Map<string, any>} agg - one version's aggregates.
+ * @param {string} size - size id.
+ * @param {string} variant - the record's `variant`.
+ * @returns {any | null} the aggregate, or null.
+ */
+function aggOf(agg, size, variant) {
+  for (const a of agg.values()) if (a.size === size && a.variant === variant) return a;
+  return null;
+}
+
+/**
+ * A summary-matrix cell: the median across runs and, with ≥ 2 runs, `±` half the min–max range.
+ *
+ * @param {any} stats - {@link runStats} or null.
+ * @param {number} digits - decimals.
+ * @returns {string} the cell.
+ */
+function cell(stats, digits) {
+  if (stats === null || stats === undefined) return '—';
+  return stats.n >= 2 ? `${num(stats.median, digits)} ±${num((stats.max - stats.min) / 2, digits)}` : num(stats.median, digits);
+}
+
+/**
+ * One summary matrix of a version: rows = the size ids, columns = the variants.
+ *
+ * @param {any} campaign - {@link loadCampaign}.
+ * @param {number} gl - the WebGL version.
+ * @param {'twoTick' | 'sync' | 'render'} metric - the figure.
+ * @param {number} digits - decimals.
+ * @returns {string[]} the lines.
+ */
+function summaryMatrix(campaign, gl, metric, digits) {
+  const agg = campaign.aggregates.get(gl);
+  const plain = [...agg.values()].filter((a) => a.knob === null);
+  const columns = [...VARIANTS, ...new Set(plain.map((a) => a.base).filter((b) => !VARIANTS.includes(b)))].filter((v) =>
+    plain.some((a) => a.base === v),
+  );
+  const rows = [];
+  for (const size of campaign.sizes) {
+    if (!plain.some((a) => a.size === size.id)) continue;
+    rows.push([
+      size.id,
+      size.density === null ? '?' : String(size.density),
+      ...columns.map((v) => {
+        const a = aggOf(agg, size.id, v);
+        return a === null ? '—' : cell(a[metric], digits);
+      }),
+    ]);
+  }
+  return mdTable(['Size', 's', ...columns], rows, [0]);
+}
+
+/**
+ * The per-run difference between two rows of the same run, as median / min / max over the runs that have both.
+ *
+ * @param {any[]} runs - one version's runs.
+ * @param {(run: any) => [any, any] | null} rowsOf - the two records of a run (`[row, reference]`), or null.
+ * @returns {{points: any, ratio: any}} the two-tick difference (points) and the synced p95 ratio, as
+ *   {@link runStats} (null when no run has both).
+ */
+function pairedDelta(runs, rowsOf) {
+  const points = [];
+  const ratios = [];
+  for (const run of runs) {
+    const pairOf = rowsOf(run);
+    if (pairOf === null) continue;
+    const rel = relativeTo(pairOf[0], pairOf[1]);
+    points.push(rel.twoTickPoints);
+    ratios.push(rel.syncRatio);
+  }
+  return { points: runStats(points), ratio: runStats(ratios) };
+}
+
+/**
+ * The record of a size and row in one run.
+ *
+ * @param {any} run - the run.
+ * @param {string} size - size id.
+ * @param {string} variant - the record's `variant`.
+ * @returns {any | null} the record.
+ */
+function recordOf(run, size, variant) {
+  for (const r of run.byScenario.values()) if (r.size === size && r.variant === variant) return r;
+  return null;
+}
+
+/**
+ * Whether a value exceeds a band (`beyond`), stays inside it (`within`) or cannot be judged (`—`).
+ *
+ * @param {number | null | undefined} value - the absolute difference.
+ * @param {number | null | undefined} band - the band.
+ * @returns {string} the call.
+ */
+function call(value, band) {
+  if (typeof value !== 'number' || typeof band !== 'number') return '—';
+  return Math.abs(value) > band ? 'beyond' : 'within';
+}
+
+/**
+ * The GL 1-vs-2 call of one scenario: `beyond` only when the difference exceeds the band **and** the two
+ * versions' run ranges do not overlap (with two runs a version, a difference half its own spread is otherwise
+ * "called" against a version that happened to repeat itself exactly).
+ *
+ * @param {number | null} value - the difference (points, or ratio − 1).
+ * @param {number | null | undefined} band - the noise floor's p90.
+ * @param {any} a - GL 1's {@link runStats}.
+ * @param {any} b - GL 2's {@link runStats}.
+ * @returns {string} `beyond`, `within` or `—`.
+ */
+function scenarioCall(value, band, a, b) {
+  const c = call(value, band);
+  if (c !== 'beyond' || a === null || b === null) return c;
+  return a.max < b.min || b.max < a.min ? 'beyond' : 'within';
+}
+
+/**
+ * Plan §13 at 640×360 for one version, on the medians of the per-run figures (each run's 640×360 row against
+ * that run's 384×216 row), plus the 960×540 note.
+ *
+ * @param {any} campaign - {@link loadCampaign}.
+ * @param {number} gl - the WebGL version.
+ * @returns {string[]} the lines (empty without 640×360 rows).
+ */
+function section13Block(campaign, gl) {
+  const runs = campaign.runsByGl.get(gl);
+  const agg = campaign.aggregates.get(gl);
+  const tierOf = (size, variant) => {
+    const a = aggOf(agg, size, variant);
+    if (a === null) return null;
+    const d = pairedDelta(runs, (run) => {
+      const row = recordOf(run, size, variant);
+      const base = recordOf(run, BASELINE_SIZE, variant);
+      return row === null || base === null ? null : [row, base];
+    });
+    const points = d.points === null ? null : d.points.median;
+    const synced = a.sync === null ? null : a.sync.median;
+    return { a, d, points, synced, tier: section13Tier(points, synced) };
+  };
+  const rows = [];
+  for (const variant of VARIANTS) {
+    const t = tierOf(V2_SIZE, variant);
+    if (t === null) continue;
+    rows.push([
+      variant,
+      String(t.a.runs),
+      t.d.points === null ? '—' : signed(t.points) + (t.d.points.n >= 2 ? ` (${signed(t.d.points.min)} … ${signed(t.d.points.max)})` : ''),
+      cell(t.a.sync, 2),
+      `**${t.tier}**`,
+    ]);
+  }
+  if (rows.length === 0) return [];
+  const n = runs.length;
+  const out = [
+    `### Plan §13 at 640×360 — GL ${gl}, ${n === 1 ? 'one run' : `median of ${n} runs`}`,
+    '',
+    'Δ 2-tick = each run’s 640×360 row against the same run’s 384×216 row (median, and the runs’ range).',
+    '',
+    ...mdTable(['Variant', 'Runs', 'Δ 2-tick points', 'Synced p95 ms', 'Outcome'], rows, [0, 4]),
+    '',
+  ];
+  for (const tier of Object.keys(SECTION13_ACTIONS)) {
+    if (rows.some((r) => r[4] === `**${tier}**`)) out.push(`- **${tier}**: ${SECTION13_ACTIONS[tier]}`);
+  }
+  if (rows.some((r) => r[4] === '**unknown**')) out.push('- **unknown**: no 384x216 baseline in the same run — re-run it');
+  const busyV2 = tierOf(V2_SIZE, 'busy');
+  const busyHi = tierOf(HI_BIT_SIZE, 'busy');
+  if (busyV2 !== null && busyHi !== null) out.push('', hiBitNote(busyV2.tier, busyHi.tier));
+  return out;
+}
+
+/**
+ * The knob table of one version: every knob row against its own plain row at the same size, paired run by run
+ * (median of the per-run differences), and whether the difference exceeds the noise floor's p90.
+ *
+ * @param {any} campaign - {@link loadCampaign}.
+ * @param {number} gl - the WebGL version.
+ * @returns {string[]} the lines (empty without knob rows).
+ */
+function knobTable(campaign, gl) {
+  const runs = campaign.runsByGl.get(gl);
+  const agg = campaign.aggregates.get(gl);
+  const knobRows = [...agg.values()]
+    .filter((a) => a.knob !== null)
+    .sort((a, b) => {
+      const ka = KNOBS.indexOf(a.knob);
+      const kb = KNOBS.indexOf(b.knob);
+      return (ka < 0 ? KNOBS.length : ka) - (kb < 0 ? KNOBS.length : kb) || a.index - b.index;
+    });
+  if (knobRows.length === 0) return [];
+  const noise = campaign.noise;
+  const rows = knobRows.map((k) => {
+    const plain = aggOf(agg, k.size, k.base);
+    const d = pairedDelta(runs, (run) => {
+      const row = recordOf(run, k.size, k.variant);
+      const base = recordOf(run, k.size, k.base);
+      return row === null || base === null ? null : [row, base];
+    });
+    return [
+      k.size,
+      k.variant,
+      plain === null ? '—' : num(plain.twoTick?.median, 1),
+      num(k.twoTick?.median, 1),
+      d.points === null ? '—' : signed(d.points.median),
+      plain === null ? '—' : num(plain.sync?.median, 1),
+      num(k.sync?.median, 1),
+      d.ratio === null ? '—' : num(d.ratio.median) + '×',
+      noise === null || d.points === null ? '—' : call(d.points.median, noise.twoTick?.p90),
+      noise === null || d.ratio === null ? '—' : call(d.ratio.median - 1, noise.relSync?.p90),
+    ];
+  });
+  return [
+    `### Knobs — GL ${gl} (each against its plain row at the same size, paired per run)`,
+    '',
+    ...mdTable(['Size', 'Row', '2t plain', '2t knob', 'Δ pts', 'p95 plain', 'p95 knob', 'p95 ×', 'noise 2t', 'noise p95'], rows, [0, 1]),
+    '',
+    noise === null
+      ? 'No noise floor (one run per version): every knob difference is unjudged.'
+      : `"beyond" = the difference exceeds the noise floor’s p90 (two-tick ${num(noise.twoTick?.p90, 1)} points, synced` +
+        ` p95 ${pct(noise.relSync?.p90)}); "within" = no call.`,
+  ];
+}
+
+/**
+ * The noise-floor section.
+ *
+ * @param {any} campaign - {@link loadCampaign}.
+ * @returns {string[]} the lines.
+ */
+function noiseSection(campaign) {
+  const out = ['## Noise floor — same-GL repeats', ''];
+  const noise = campaign.noise;
+  const counts = campaign.gls.map((gl) => `GL ${gl} × ${campaign.runsByGl.get(gl).length}`).join(', ');
+  if (noise === null) {
+    out.push(
+      `No noise floor: no WebGL version has ${MIN_RUNS_FOR_VERDICT} runs (${counts || 'no runs'}). Without one,` +
+        ' no difference between runs can be judged.',
+    );
+    return out;
+  }
+  const perGl = campaign.gls
+    .map((gl) => `GL ${gl}: ${noise.samples.filter((s) => s.gl === gl).length}`)
+    .join(', ');
   out.push(
-    busy === null
-      ? 'No 640x360-busy row in both sessions: no WebGL verdict.'
-      : busy <= 1 - WEBGL2_GAIN
-        ? `WebGL 2 is clearly better at 640×360 (${num(busy)}× the synced p95): §13 — a step to make WebGL 2 the TV` +
-          ' default with a WebGL 1 fallback.'
-        : `WebGL 2 is not clearly better at 640×360 (${num(busy)}× the synced p95, the rule is ≤ ${num(1 - WEBGL2_GAIN)}×):` +
-          ' WebGL 1 stays the default.',
+    `Runs: ${counts}. ${noise.samples.length} scenario × version pair(s) measured at least twice (${perGl}). A pair’s` +
+      ' spread is `(max − min) / median` of its synced p95 across runs, and `max − min` of its two-tick share in' +
+      ' points.',
+  );
+  out.push('');
+  const worst = (b, fmt) => (b === null ? '—' : `${fmt(b.worst)} ${b.worst.scenario} GL ${b.worst.gl}`);
+  out.push(
+    ...mdTable(
+      ['Spread', 'Pairs', 'Median', 'p90', 'Worst'],
+      [
+        [
+          'synced p95, relative',
+          String(noise.relSync?.n ?? 0),
+          pct(noise.relSync?.median),
+          pct(noise.relSync?.p90),
+          worst(noise.relSync, (s) => pct(s.relSync)),
+        ],
+        [
+          'two-tick share, points',
+          String(noise.twoTick?.n ?? 0),
+          num(noise.twoTick?.median, 1),
+          num(noise.twoTick?.p90, 1),
+          worst(noise.twoTick, (s) => num(s.twoTick, 1)),
+        ],
+      ],
+      [0, 4],
+    ),
+  );
+  out.push('');
+  const drift = noise.drift;
+  if (drift !== undefined && drift.pairs > 0) {
+    out.push(
+      `Run-to-run drift (a whole run moving on its own: the median over scenarios of one run against another of the` +
+        ` same version, largest of ${drift.pairs} pair(s)): two-tick **${num(drift.twoTick, 1)} points**, synced p95` +
+        ` **${pct(drift.relSync)}**.`,
+    );
+    out.push('');
+  }
+  out.push(
+    'GL 1 vs 2 calls a scenario’s difference only beyond the **p90** spread *and* with the two versions’ run' +
+      ' ranges apart; the overall shift (the median of the per-scenario differences) only beyond the run-to-run' +
+      ' **drift**. Two-tick share is the stable metric; synced p95 is the noisy one.',
   );
   return out;
 }
 
 /**
- * The report of several sessions: each one's, then the WebGL comparison when a WebGL 1 and a WebGL 2 session
- * are among them.
+ * The WebGL 1-vs-2 verdict (plan §13, review F8): only with ≥ {@link MIN_RUNS_FOR_VERDICT} runs of each version,
+ * and only differences beyond the noise floor.
  *
- * @param {string[]} files - the `<session>.jsonl` paths.
- * @param {{withRecords?: boolean}} [options] - see {@link analyzeBenchSession}.
+ * @param {any} campaign - {@link loadCampaign}.
+ * @param {{full?: boolean}} [options] - `full`: list every compared scenario, not only the called ones.
+ * @returns {string[]} the lines.
+ */
+export function glVerdict(campaign, options = {}) {
+  const out = ['## WebGL 1 vs 2 (plan §13, review F8)', ''];
+  const n1 = campaign.runsByGl.get(1)?.length ?? 0;
+  const n2 = campaign.runsByGl.get(2)?.length ?? 0;
+  if (n1 === 0 || n2 === 0) {
+    out.push(`No comparison: the sessions hold WebGL ${campaign.gls.join(' + ') || '?'} runs only.`);
+    return out;
+  }
+  if (n1 < MIN_RUNS_FOR_VERDICT || n2 < MIN_RUNS_FOR_VERDICT) {
+    out.push(
+      `**No verdict:** it needs ≥ ${MIN_RUNS_FOR_VERDICT} runs of each WebGL version, these sessions hold` +
+        ` GL 1 × ${n1} and GL 2 × ${n2}. Identical runs of one version differ by as much as the versions do (R0-03:` +
+        ' up to 1.51× in synced p95), so a single run of a version cannot be told from run-to-run noise — record' +
+        ' the campaign (GL 1, GL 2, GL 1, GL 2) and analyse the four sessions together.',
+    );
+    return out;
+  }
+  const noise = campaign.noise;
+  const a1 = campaign.aggregates.get(1);
+  const a2 = campaign.aggregates.get(2);
+  const compared = [];
+  for (const a of a1.values()) {
+    const b = a2.get(a.scenario);
+    if (b === undefined) continue;
+    const points = a.twoTick !== null && b.twoTick !== null ? b.twoTick.median - a.twoTick.median : null;
+    const ratio = a.sync !== null && b.sync !== null && a.sync.median > 0 ? b.sync.median / a.sync.median : null;
+    compared.push({
+      a,
+      b,
+      points,
+      ratio,
+      callPoints: scenarioCall(points, noise?.twoTick?.p90, a.twoTick, b.twoTick),
+      callRatio: ratio === null ? '—' : scenarioCall(ratio - 1, noise?.relSync?.p90, a.sync, b.sync),
+    });
+  }
+  compared.sort((x, y) => x.a.index - y.a.index);
+  const tally = (key, value, callKey) => {
+    const better = compared.filter((c) => c[callKey] === 'beyond' && c[key] < value).length;
+    const worse = compared.filter((c) => c[callKey] === 'beyond' && c[key] > value).length;
+    const within = compared.filter((c) => c[callKey] === 'within').length;
+    return { better, worse, within };
+  };
+  const t2 = tally('points', 0, 'callPoints');
+  const tp = tally('ratio', 1, 'callRatio');
+  const medPoints = quantile(compared.map((c) => c.points), 0.5);
+  const medRatio = quantile(compared.map((c) => c.ratio), 0.5);
+  const overallPoints = call(medPoints, noise?.drift?.twoTick);
+  const overallRatio = medRatio === null ? '—' : call(medRatio - 1, noise?.drift?.relSync);
+  out.push(
+    `GL 1 × ${n1} runs against GL 2 × ${n2}, ${compared.length} scenario(s) in both; each version’s figure is its` +
+      ' median across runs. Lower is better for both metrics.',
+  );
+  out.push('');
+  out.push(
+    ...mdTable(
+      ['Metric', 'GL 2 better', 'GL 2 worse', 'Within noise', 'Overall (median)', 'Overall band', 'Overall'],
+      [
+        ['two-tick share', String(t2.better), String(t2.worse), String(t2.within), `${signed(medPoints)} pts`, `${num(noise?.drift?.twoTick, 1)} pts`, overallPoints],
+        ['synced p95', String(tp.better), String(tp.worse), String(tp.within), medRatio === null ? '—' : num(medRatio) + '×', pct(noise?.drift?.relSync), overallRatio],
+      ],
+      [0],
+    ),
+  );
+  const isBusy = (c) => c.a.scenario === `${V2_SIZE}-busy`;
+  const called = compared.filter((c) => c.callPoints === 'beyond' || c.callRatio === 'beyond' || isBusy(c));
+  // Without --full the called scenarios are capped: the largest two-tick differences, shown in matrix order.
+  const shown =
+    options.full === true
+      ? compared
+      : called.length <= CALLED_LIST_MAX
+        ? called
+        : called
+            .filter((c) => !isBusy(c))
+            .sort((x, y) => Math.abs(y.points ?? 0) - Math.abs(x.points ?? 0))
+            .slice(0, CALLED_LIST_MAX - 1)
+            .concat(called.filter(isBusy));
+  const listed = compared.filter((c) => shown.includes(c));
+  if (listed.length > 0) {
+    out.push('');
+    out.push(
+      options.full === true
+        ? 'Every compared scenario:'
+        : listed.length < called.length
+          ? `The ${listed.filter((c) => !isBusy(c)).length} largest two-tick differences of the` +
+            ` ${called.filter((c) => !isBusy(c)).length} scenario(s) beyond the` +
+            ` p90 band (and ${V2_SIZE}-busy); \`--full\` lists all:`
+          : `Scenarios with a difference beyond the p90 band (and ${V2_SIZE}-busy); \`--full\` lists all:`,
+    );
+    out.push('');
+    out.push(
+      ...mdTable(
+        ['Scenario', '2t GL 1', '2t GL 2', 'Δ pts', '2t', 'p95 GL 1', 'p95 GL 2', 'p95 ×', 'p95'],
+        listed.map((c) => [
+          c.a.scenario,
+          cell(c.a.twoTick, 1),
+          cell(c.b.twoTick, 1),
+          signed(c.points),
+          c.callPoints,
+          cell(c.a.sync, 1),
+          cell(c.b.sync, 1),
+          c.ratio === null ? '—' : num(c.ratio) + '×',
+          c.callRatio,
+        ]),
+        [0, 4, 8],
+      ),
+    );
+  }
+  out.push('');
+  const busy = compared.find((c) => c.a.scenario === `${V2_SIZE}-busy`);
+  if (busy === undefined || busy.ratio === null) {
+    out.push(`§13’s rule: no ${V2_SIZE}-busy row in both versions — no rule verdict.`);
+  } else if (busy.ratio <= 1 - WEBGL2_GAIN && busy.callRatio === 'beyond') {
+    out.push(
+      `§13’s rule: WebGL 2 is clearly better at 640×360 (${num(busy.ratio)}× the synced p95, beyond the noise` +
+        ` floor’s ${pct(noise?.relSync?.p90)}).`,
+    );
+  } else if (busy.ratio <= 1 - WEBGL2_GAIN) {
+    out.push(
+      `§13’s rule: ${num(busy.ratio)}× the synced p95 at 640×360 would pass ≤ ${num(1 - WEBGL2_GAIN)}×, but it is` +
+        ` within noise (p90 band ${pct(noise?.relSync?.p90)}) — no verdict.`,
+    );
+  } else {
+    out.push(`§13’s rule: WebGL 2 is not clearly better at 640×360 (${num(busy.ratio)}× the synced p95, the rule is ≤ ${num(1 - WEBGL2_GAIN)}×).`);
+  }
+  out.push('');
+  const verdict = (() => {
+    const better = overallPoints === 'beyond' && medPoints < 0;
+    const worse = (overallPoints === 'beyond' && medPoints > 0) || (overallRatio === 'beyond' && medRatio > 1);
+    const p95Better = overallRatio === 'beyond' && medRatio < 1;
+    if (better && !worse) {
+      return 'WebGL 2 is better beyond the noise floor (two-tick share): §13 — a step to make WebGL 2 the TV default with a WebGL 1 fallback.';
+    }
+    if (worse && !better && !p95Better) return 'WebGL 2 is worse beyond the noise floor: WebGL 1 stays the default.';
+    if (better || worse || p95Better) return 'mixed — the two metrics disagree beyond noise: no verdict; WebGL 1 stays the default.';
+    // No overall shift, but the per-scenario calls may still lean one way (a gain on some variants only).
+    const lean = Math.max(3, Math.ceil(compared.length / 10));
+    if (t2.better >= lean && t2.worse === 0) {
+      return `within noise overall — no verdict; but WebGL 2 is better beyond noise on ${t2.better} scenario(s) and` +
+        ' worse on none (two-tick share; the list above): worth a targeted look, WebGL 1 stays the default.';
+    }
+    if (t2.worse >= lean && t2.better === 0) {
+      return `within noise overall — no verdict; but WebGL 2 is worse beyond noise on ${t2.worse} scenario(s) and` +
+        ' better on none (two-tick share): WebGL 1 stays the default.';
+    }
+    return 'within noise — no verdict: WebGL 1 (the shipped default) stays.';
+  })();
+  out.push(`**Verdict:** ${verdict}`);
+  return out;
+}
+
+/**
+ * The campaign report: the sessions, then per WebGL version the summary matrices, plan §13 and the knob table,
+ * the noise floor, the GL 1-vs-2 verdict and the decode section; with `full` (or `withRecords`) each session's
+ * own report after it.
+ *
+ * @param {string[]} paths - session files and folders of them.
+ * @param {{withRecords?: boolean, full?: boolean}} [options] - `full`: the per-session detail reports and every
+ *   compared scenario of the verdict; `withRecords`: the per-session reports with every record in full.
  * @returns {string} the Markdown report.
  */
-export function analyzeBenchSessions(files, options = {}) {
-  const parts = files.map((file) => analyzeBenchSession(file, options));
-  const sessions = files.map((file) => readBenchSession(file).records);
-  const gl1 = sessions.find((records) => records.length > 0 && records.every((r) => r.webGLVersion === 1));
-  const gl2 = sessions.find((records) => records.length > 0 && records.every((r) => r.webGLVersion === 2));
-  if (gl1 !== undefined && gl2 !== undefined) {
-    parts.push(['## WebGL 1 vs 2 (plan §13, review F8)', '', ...compareWebGL(gl1, gl2)].join('\n'));
+export function analyzeBenchSessions(paths, options = {}) {
+  const files = expandSessionArgs(paths);
+  const campaign = loadCampaign(files);
+  if (campaign.sessions.length === 0) return 'no payloads in ' + (files.join(', ') || paths.join(', '));
+  const latest = campaign.sessions[campaign.sessions.length - 1];
+  const env = latest.env;
+  const out = [];
+  out.push(`# TV render bench — ${campaign.sessions.length} session(s)`);
+  out.push('');
+  out.push(
+    `From ${latest.from ?? '?'} · host ${env.host ?? '?'} · display ${env.innerWidth ?? '?'}×${env.innerHeight ?? '?'}` +
+      ` @${env.devicePixelRatio ?? '?'} · UA ${env.userAgent ?? '?'}`,
+  );
+  out.push('');
+  out.push(
+    ...mdTable(
+      ['#', 'Session', 'GL', 'Scenarios', 'Run', 'Build', 'Zone load cold / change ms'],
+      campaign.sessions.map((s, i) => {
+        const gls = [...new Set(s.records.map((r) => r.webGLVersion))].sort().join('+') || '?';
+        const est = s.decode === null ? null : decodeZoneEstimate(s.decode);
+        return [
+          String(i + 1),
+          s.id,
+          gls,
+          `${s.records.length}/${typeof s.env.scenarios === 'number' ? s.env.scenarios : '?'}`,
+          s.complete ? 'complete' : '**incomplete**',
+          s.env.buildId ?? '?',
+          est === null ? '—' : `${num(est.lazyMs, 0)} / ${num(est.eagerMs, 0)}`,
+        ];
+      }),
+      [1, 4, 5],
+    ),
+  );
+  for (const gl of campaign.gls) {
+    const n = campaign.runsByGl.get(gl).length;
+    const how = n === 1 ? 'one run' : `median ±half the min–max range of ${n} runs`;
+    out.push('');
+    out.push(`## WebGL ${gl} — ${n} run(s)`);
+    out.push('');
+    out.push(`### Two-tick share % (frames the vsync-locked loop needed two ticks for) — ${how}`);
+    out.push('');
+    out.push(...summaryMatrix(campaign, gl, 'twoTick', 1));
+    out.push('');
+    out.push(`### Synced render p95 ms (\`gl.finish()\` after every render) — ${how}`);
+    out.push('');
+    out.push(...summaryMatrix(campaign, gl, 'sync', 1));
+    const s13 = section13Block(campaign, gl);
+    if (s13.length > 0) out.push('', ...s13);
+    const knobs = knobTable(campaign, gl);
+    if (knobs.length > 0) out.push('', ...knobs);
   }
-  return parts.join('\n\n');
+  out.push('');
+  out.push(...noiseSection(campaign));
+  out.push('');
+  out.push(...glVerdict(campaign, options));
+  const withDecode = [...campaign.sessions].reverse().find((s) => s.decode !== null);
+  if (withDecode !== undefined) {
+    out.push('');
+    const lines = decodeSection(withDecode.decode);
+    out.push(lines[0], '', `From the latest session with one (${withDecode.id}); every session’s estimate is in the table above.`);
+    out.push(...lines.slice(1));
+  }
+  if (options.full === true || options.withRecords === true) {
+    for (const s of campaign.sessions) out.push('', '---', '', analyzeBenchSession(s.file, options));
+  }
+  return out.join('\n');
 }
 
 // ------------------------------------------------------------------ CLI
 /** True when run as a script (`node results/analyze-bench.mjs`), false when imported (tests). */
 const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isMain) {
-  const files = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
+  const args = process.argv.slice(2);
+  const files = args.filter((arg) => !arg.startsWith('--'));
   if (files.length === 0) {
-    console.error('usage: node results/analyze-bench.mjs <session.jsonl> [more …] [--records]');
+    console.error('usage: node results/analyze-bench.mjs <session.jsonl | folder> [more …] [--full] [--records]');
     process.exit(2);
   }
-  console.log(analyzeBenchSessions(files, { withRecords: process.argv.includes('--records') }));
+  console.log(analyzeBenchSessions(files, { withRecords: args.includes('--records'), full: args.includes('--full') }));
 }

@@ -14,10 +14,19 @@
  *   that scenario with the short {@link HEADLESS_BENCH_TIMING} (or `?warmup=` / `?measure=` /
  *   `?sync=`) and publishes the record on `window.__shmupTvBench` — no storage, no POST, no reload.
  *
+ * - **Campaign mode (`options.campaign`, a build with `VITE_BENCH_CAMPAIGN` — `./campaign.ts`):**
+ *   the TV mode without a key press. A scenario page first counts its launch and skips a scenario
+ *   launched more than `MAX_SCENARIO_ATTEMPTS` times in a row (it crashed or hung the TV). The
+ *   results page re-sends what the log server has not acknowledged (retrying a few times), then
+ *   resumes a stopped pass after 5 s (skipping a scenario that threw), starts the next pass after
+ *   the build's pause with that pass's WebGL version, or says the campaign is complete — a
+ *   countdown on the status line, **Enter** acts at once, **Back** still exits (the next launch
+ *   carries on).
+ *
  * Either way the body carries {@link TV_BENCH_MARKER} — `running`, `done`, `error`, `scenario` or
  * `results` — which is also how the Tizen bundle check tells the bench's `app.js` from the game's.
  *
- * **The decode scenario (plan R1-05 B4).** After the 18 render scenarios a TV run loads the page
+ * **The decode scenario (plan R1-05 B4).** After the render scenarios a TV run loads the page
  * once more for `decode` (`./decode.ts`): a renderer on the ×1 atlas, then the bench build's decode
  * pages fetched, decoded and uploaded {@link TV_DECODE_REPETITIONS} times each. Its record is
  * stored as the state's `decode`, POSTed in the payload's `decode` field and drawn as a second
@@ -78,10 +87,23 @@ import {
   type DecodeMeasureOptions,
   type DecodeWindow,
 } from './decode.js';
+import {
+  BENCH_CAMPAIGN_KEY,
+  CAMPAIGN_RESUME_MS,
+  campaignFor,
+  campaignStatus,
+  campaignStep,
+  noteScenarioLaunch,
+  parseCampaign,
+  serializeCampaign,
+  startPass,
+  type BenchCampaignConfig,
+  type BenchCampaignState,
+} from './campaign.js';
 import { benchKeyOf, detectBenchHost, type BenchHost } from './host.js';
 import {
   BENCH_SCENARIOS,
-  BENCH_SIZES,
+  BENCH_V2_SIZE,
   HEADLESS_BENCH_TIMING,
   TV_BENCH_TIMING,
   findBenchScenario,
@@ -90,7 +112,14 @@ import {
   type BenchScenario,
   type BenchTiming,
 } from './matrix.js';
-import { NOTE_COLOR, benchPageLines, drawBenchLines } from './results.js';
+import {
+  NOTE_COLOR,
+  benchPageLines,
+  benchResultPages,
+  drawBenchLines,
+  type BenchLine,
+  type BenchPageInput,
+} from './results.js';
 import {
   BENCH_LOAD,
   BenchRandom,
@@ -109,7 +138,9 @@ import {
   recordDecode,
   recordResult,
   rerunScenario,
+  resumeRun,
   serializeRunState,
+  skipScenario,
   stopRun,
   unsentRecords,
   type BenchRunState,
@@ -137,6 +168,28 @@ const TICK_RATE = 60;
 /** Most ticks one frame may run (the shell's cap). */
 const MAX_TICKS_PER_FRAME = 4;
 
+/** Top and left margin of the results page's text, in frame pixels. */
+const RESULTS_MARGIN = 4;
+
+/** Most lines the results page draws (its draw list's string slots). */
+const RESULTS_MAX_LINES = 48;
+
+/**
+ * Glyph quads of the results page's UI layer: a full page of the table is ~35 lines of up to ~100
+ * characters. The renderer's default (1024) ran out inside R0-03's 18-row table, which is why its
+ * last row lost every column from `SYNC95` on (owner, 2026-10-19).
+ */
+const RESULTS_GLYPHS = 4096;
+
+/** How often the campaign mode's results page re-POSTs records the log server did not acknowledge. */
+const CAMPAIGN_POST_RETRIES = 3;
+
+/** The wait between those re-POSTs, in ms. */
+const CAMPAIGN_POST_RETRY_MS = 5000;
+
+/** How often a campaign countdown redraws its status line, in ms. */
+const COUNTDOWN_STEP_MS = 1000;
+
 /** What a headless page publishes on `window.__shmupTvBench`. */
 export interface TvBenchOutcome {
   /** The record, or `null` when the scenario failed (and for the decode scenario). */
@@ -161,6 +214,11 @@ export interface RenderBenchAppOptions {
   readonly assets: BenchAssets;
   /** The host (default {@link detectBenchHost}). */
   readonly host?: BenchHost;
+  /**
+   * The campaign the build carries (`./campaign.ts` — `VITE_BENCH_CAMPAIGN`), or `null` / absent
+   * for none: the TV mode then runs hands-off (see the module docs).
+   */
+  readonly campaign?: BenchCampaignConfig | null;
 }
 
 /** The empty screen effects of every bench frame. */
@@ -170,8 +228,12 @@ const NO_SCREEN: ScreenView = Object.freeze({ shakeX: 0, shakeY: 0, flash: 0, di
 class BenchFrame implements RenderFrame {
   /** Simulated tick. */
   tick = 0;
-  /** Interpolation factor (the bench never interpolates). */
-  readonly alpha = 0;
+  /**
+   * Interpolation factor: 0, except on the `interp` knob's rows, which hand the renderer the
+   * loop's leftover fraction every frame (on a vsync-locked 60 Hz loop that stays near 0 — the
+   * knob measures what the interpolating path costs, not a visible blend).
+   */
+  alpha = 0;
   /** Screen effects (none). */
   readonly screen = NO_SCREEN;
 
@@ -354,8 +416,16 @@ function measureScenario(
       filter: variant.filter,
       mode7: variant.mode7,
     });
-    const displayWidth = Math.max(1, Math.floor(win.innerWidth));
-    const displayHeight = Math.max(1, Math.floor(win.innerHeight));
+    // The canvas's backbuffer: the window's, or the output knob's (its CSS size stays the whole
+    // window, so the browser scales a smaller backbuffer up to the panel).
+    const displayWidth = Math.max(
+      1,
+      Math.floor(scenario.outputWidth > 0 ? scenario.outputWidth : win.innerWidth),
+    );
+    const displayHeight = Math.max(
+      1,
+      Math.floor(scenario.outputHeight > 0 ? scenario.outputHeight : win.innerHeight),
+    );
     canvas.width = displayWidth;
     canvas.height = displayHeight;
     // Pixi's TexturePool is global and never shrinks: one scenario per page, so this meter's total
@@ -370,6 +440,8 @@ function measureScenario(
       height: size.height,
       atlas,
       preferWebGLVersion: webGLVersion,
+      scaleMode: scenario.scaleMode,
+      interpolation: scenario.interpolation,
       countDrawCalls: true,
       countStructureRebuilds: true,
       particleCapacity: BENCH_LOAD.particles,
@@ -410,6 +482,7 @@ function measureScenario(
       renderer.warmUp();
 
       const frame = new BenchFrame(scene.world, scene.hud, scene.ui);
+      const interpolate = scenario.interpolation;
       const sampler = new BenchSampler();
       const random = new BenchRandom(7);
       const particles = renderer.particles;
@@ -464,6 +537,7 @@ function measureScenario(
             const ticks = loop.advance(now);
             fillBenchParticles(particles, scene, random);
             frame.tick = loop.totalTicks;
+            if (interpolate) frame.alpha = loop.alpha;
             const t0 = clock.now();
             parallax.sync(scene.parallax);
             terrain.sync(scene.terrain, scene.camera);
@@ -514,7 +588,7 @@ function measureScenario(
                   width: size.width,
                   height: size.height,
                   density: size.density,
-                  variant: variant.id,
+                  variant: scenario.row,
                   crt: variant.crt,
                   filter: variant.filter,
                   mode7: variant.mode7,
@@ -607,7 +681,7 @@ function measureDecodeScenario(
     if (pages.length === 0) {
       return failedDecodeRecord('this bench build has no decode pages', facts);
     }
-    const size = BENCH_SIZES[1];
+    const size = BENCH_V2_SIZE;
     const source = atlasFor(assets, 1);
     const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));
     const atlas = createAtlas(source.manifest, images, { onWarning: () => {} });
@@ -781,6 +855,29 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
   const reload = (): void => {
     win.location.reload();
   };
+  const campaignConfig = options.campaign ?? null;
+  /** The campaign's progress (`./campaign.ts`), `null` without a campaign build. */
+  let campaign: BenchCampaignState | null =
+    campaignConfig === null
+      ? null
+      : campaignFor(
+          parseCampaign(read(storage, BENCH_CAMPAIGN_KEY)),
+          campaignConfig,
+          options.buildId,
+        );
+  /**
+   * Stores the campaign.
+   *
+   * @param next - The new campaign state.
+   */
+  const saveCampaign = (next: BenchCampaignState): void => {
+    campaign = next;
+    try {
+      storage?.setItem(BENCH_CAMPAIGN_KEY, serializeCampaign(next));
+    } catch (_error) {
+      // As for the run state: the campaign goes on in this page.
+    }
+  };
   /**
    * The session-level facts of a payload.
    *
@@ -842,10 +939,19 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     );
   };
 
+  /** Turns the results page (set by `showResults`; a scenario page has none). */
+  let turnPage: (delta: number) => void = () => {};
+  /** What **Enter** does on a campaign's results page (`null`: start a run by hand, as without). */
+  let campaignEnter: (() => void) | null = null;
+
   win.addEventListener('keydown', (event: KeyboardEvent) => {
     const key = benchKeyOf(event.keyCode);
     if (key === null) return;
     event.preventDefault();
+    if (key === 'prev' || key === 'next') {
+      if (mode === 'results') turnPage(key === 'next' ? 1 : -1);
+      return;
+    }
     if (key === 'back') {
       if (state !== null && mode === 'scenario') save(stopRun(state, null));
       host.exit();
@@ -856,6 +962,10 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
       if (state === null || (mode === 'results' && state.records.length === 0)) return;
       save(rerunScenario(state));
       reload();
+      return;
+    }
+    if (mode === 'results' && campaignEnter !== null) {
+      campaignEnter();
       return;
     }
     if (mode === 'results') {
@@ -872,6 +982,18 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     }
   });
 
+  if (mode === 'scenario' && state !== null && campaign !== null) {
+    // The campaign's guard: a scenario launched more than MAX_SCENARIO_ATTEMPTS times in a row
+    // crashed or hung the TV every time — skip it rather than be relaunched into it forever.
+    const launch = noteScenarioLaunch(campaign, state);
+    saveCampaign(launch.campaign);
+    if (launch.skip) {
+      mark(win, 'scenario');
+      save(skipScenario(state, `skipped after ${launch.campaign.attempt?.count ?? 0} launches`));
+      reload();
+      return;
+    }
+  }
   if (mode === 'scenario' && state !== null && state.cursor === DECODE_SCENARIO_INDEX) {
     const run: BenchRunState = state;
     mark(win, 'scenario');
@@ -908,19 +1030,96 @@ function runOnTv(options: RenderBenchAppOptions, search: string): void {
     );
     return;
   }
+  /**
+   * The campaign mode's results page (see the module docs): sets what **Enter** does and returns
+   * what runs once the unacknowledged records were re-sent — a countdown, then the next step.
+   *
+   * @param current - The campaign.
+   * @returns The callback `showResults` calls with its status-line drawer.
+   */
+  function campaignResults(current: BenchCampaignState): (draw: (status: string) => void) => void {
+    const step = campaignStep(current, state);
+    if (step === 'complete') {
+      return (draw) => {
+        draw(campaignStatus(current, step, state, 0));
+      };
+    }
+    let ready = false;
+    let early = false;
+    let fired = false;
+    /** Takes the step: resumes the stopped pass or starts the next one, then reloads. */
+    const act = (): void => {
+      if (fired) return;
+      fired = true;
+      if (step === 'resume') {
+        if (state !== null) save(resumeRun(state));
+      } else {
+        const now = Date.now();
+        const session = makeRenderBenchSessionId(now, Math.random());
+        // The run first: a power cut between the two writes repeats a pass, never skips one.
+        save(
+          createRunState(
+            session,
+            now,
+            current.passes[current.next],
+            timingFromSearch(search, TV_BENCH_TIMING),
+          ),
+        );
+        saveCampaign(startPass(current, session));
+      }
+      reload();
+    };
+    campaignEnter = (): void => {
+      if (ready) act();
+      else early = true;
+    };
+    return (draw) => {
+      ready = true;
+      if (early) {
+        act();
+        return;
+      }
+      const deadline =
+        Date.now() + (step === 'resume' ? CAMPAIGN_RESUME_MS : (campaignConfig?.pauseMs ?? 0));
+      /** One countdown step: redraws the seconds left, or acts once they ran out. */
+      const tick = (): void => {
+        if (fired) return;
+        const left = Math.ceil((deadline - Date.now()) / 1000);
+        if (left <= 0) {
+          act();
+          return;
+        }
+        draw(campaignStatus(current, step, state, left));
+        win.setTimeout(tick, COUNTDOWN_STEP_MS);
+      };
+      tick();
+    };
+  }
   mark(win, 'results');
-  showResults(options, host, endpoint, () => state, post);
+  const settled = campaign === null ? undefined : campaignResults(campaign);
+  showResults(
+    options,
+    host,
+    endpoint,
+    () => state,
+    post,
+    (turn) => {
+      turnPage = turn;
+    },
+    settled,
+  );
 }
 
 /**
- * Reads the stored state's text.
+ * Reads a stored state's text.
  *
  * @param storage - The storage, or `null`.
+ * @param key - The key (default the run state's, {@link BENCH_STATE_KEY}).
  * @returns The text, or `null`.
  */
-function read(storage: Storage | null): string | null {
+function read(storage: Storage | null, key: string = BENCH_STATE_KEY): string | null {
   try {
-    return storage?.getItem(BENCH_STATE_KEY) ?? null;
+    return storage?.getItem(key) ?? null;
   } catch (_error) {
     return null;
   }
@@ -935,6 +1134,12 @@ function read(storage: Storage | null): string | null {
  * @param endpoint - The log server's POST URL, or `null`.
  * @param getState - Reads the current run state.
  * @param post - Sends records (see `runOnTv`).
+ * @param onPager - Receives the function that turns the page (the remote's Left / Right).
+ * @param onSettled - The campaign mode's continuation (`runOnTv`): called with the status-line
+ *   drawer once the re-POST of unacknowledged records is over — at once when there is nothing to
+ *   send, else after the server answered; records still unacknowledged are re-sent up to
+ *   {@link CAMPAIGN_POST_RETRIES} times {@link CAMPAIGN_POST_RETRY_MS} apart first, then it carries
+ *   on anyway. Absent without a campaign (one POST, no retries — as before).
  */
 function showResults(
   options: RenderBenchAppOptions,
@@ -947,42 +1152,77 @@ function showResults(
     then: () => void,
     decode?: DecodeBenchRecord,
   ) => void,
+  onPager: (turn: (delta: number) => void) => void,
+  onSettled?: (draw: (status: string) => void) => void,
 ): void {
   const { win, canvas } = options;
-  const size = BENCH_SIZES[1];
+  const size = BENCH_V2_SIZE;
   const source = atlasFor(options.assets, 1);
-  const ui = createDrawList(256, 48);
+  const ui = createDrawList(256, RESULTS_MAX_LINES);
   const hud = createDrawList(1, 1);
   const lineHeight = source.manifest.fonts.pixel?.lineHeight ?? 10;
+  // Whole lines that fit the frame below the 4-px top margin.
+  const maxLines = Math.max(
+    1,
+    Math.min(RESULTS_MAX_LINES, Math.floor((size.height - RESULTS_MARGIN) / lineHeight)),
+  );
+  let page = 0;
+  let lastStatus = '';
+  /** The plain-text page shown when the renderer could not start (no WebGL), or `null`. */
+  let fallback: HTMLPreElement | null = null;
+  /** Why the renderer could not start (the plain-text page's status line). */
+  let fallbackError = '';
+  /**
+   * What the page shows for the current state.
+   *
+   * @param status - The log line's status.
+   * @returns The page input.
+   */
+  const inputOf = (status: string): BenchPageInput => ({
+    state: getState(),
+    buildId: options.buildId,
+    host: host.name,
+    webGLVersion: benchWebGLVersion(
+      (win as Partial<Window>).location?.search ?? '',
+      storageOf(win),
+    ),
+    display: `${win.innerWidth}x${win.innerHeight}`,
+    endpoint,
+    status,
+    scenarios: BENCH_SCENARIOS.length,
+    timing: TV_BENCH_TIMING,
+    page,
+    maxLines,
+  });
   /**
    * The page's lines for the current state.
    *
    * @param status - The log line's status.
    * @returns The lines.
    */
-  const lines = (status: string): ReturnType<typeof benchPageLines> =>
-    benchPageLines({
-      state: getState(),
-      buildId: options.buildId,
-      host: host.name,
-      webGLVersion: benchWebGLVersion(
-        (win as Partial<Window>).location?.search ?? '',
-        storageOf(win),
-      ),
-      display: `${win.innerWidth}x${win.innerHeight}`,
-      endpoint,
-      status,
-      scenarios: BENCH_SCENARIOS.length,
-      timing: TV_BENCH_TIMING,
-    });
+  const lines = (status: string): BenchLine[] => benchPageLines(inputOf(status));
+  /** Rewrites the plain-text page (no WebGL) for the current page number. */
+  const drawFallback = (): void => {
+    if (fallback === null) return;
+    fallback.textContent = lines(fallbackError)
+      .map((line) => line.text)
+      .join('\n');
+  };
   /**
    * Redraws the page.
    *
    * @param status - The log line's status.
    */
   const draw = (status: string): void => {
-    drawBenchLines(ui, lines(status), 4, 4, lineHeight);
+    lastStatus = status;
+    drawBenchLines(ui, lines(status), RESULTS_MARGIN, RESULTS_MARGIN, lineHeight);
+    drawFallback();
   };
+  onPager((delta) => {
+    const pages = benchResultPages(inputOf(lastStatus));
+    page = (page + delta + pages) % pages;
+    draw(lastStatus);
+  });
   const state = getState();
   /**
    * The results the log server has not acknowledged (the decode record counts as one).
@@ -994,17 +1234,36 @@ function showResults(
     run === null ? 0 : unsentRecords(run).length + (decodeUnsent(run) ? 1 : 0);
   const unsent = pending(state);
   draw(unsent > 0 && endpoint !== null ? `sending ${unsent} result(s)...` : '');
-  if (state !== null && unsent > 0 && endpoint !== null) {
+  let retries = 0;
+  /**
+   * POSTs the unacknowledged records of the current state, then reports — and, in the campaign
+   * mode, retries or hands over to `onSettled`.
+   */
+  const send = (): void => {
+    const run = getState();
+    if (run === null) {
+      onSettled?.(draw);
+      return;
+    }
     post(
-      unsentRecords(state),
-      state.cursor >= BENCH_RUN_LENGTH,
+      unsentRecords(run),
+      run.cursor >= BENCH_RUN_LENGTH,
       () => {
         const left = pending(getState());
         draw(left === 0 ? 'all results acknowledged' : `${left} result(s) not acknowledged`);
+        if (onSettled === undefined) return;
+        if (left === 0 || retries >= CAMPAIGN_POST_RETRIES) {
+          onSettled(draw);
+          return;
+        }
+        retries++;
+        win.setTimeout(send, CAMPAIGN_POST_RETRY_MS);
       },
-      decodeUnsent(state) && state.decode !== null ? state.decode : undefined,
+      decodeUnsent(run) && run.decode !== null ? run.decode : undefined,
     );
-  }
+  };
+  if (state !== null && unsent > 0 && endpoint !== null) send();
+  else if (onSettled !== undefined) onSettled(draw);
   (async (): Promise<void> => {
     const images = await Promise.all(source.pageUrls.map((url) => loadImage(win, url)));
     const atlas = createAtlas(source.manifest, images, { onWarning: () => {} });
@@ -1018,6 +1277,7 @@ function showResults(
       height: size.height,
       atlas,
       preferWebGLVersion: 1,
+      glyphCapacity: RESULTS_GLYPHS,
     });
     const frame = new BenchFrame(null, hud, ui);
     /** Redraws every animation frame (the page is static; this keeps it on screen). */
@@ -1030,9 +1290,9 @@ function showResults(
     // No WebGL: the lines as plain text, so the page still says what happened.
     const pre = win.document.createElement('pre');
     pre.style.cssText = 'color:#cfe;background:#05070f;font:14px monospace;margin:8px;';
-    pre.textContent = lines(String(error))
-      .map((line) => line.text)
-      .join('\n');
+    fallback = pre;
+    fallbackError = String(error);
+    drawFallback();
     win.document.body.appendChild(pre);
   });
 }

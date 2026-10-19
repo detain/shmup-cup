@@ -6,10 +6,13 @@
  * server, stored, and turned by `results/analyze-bench.mjs` into the tables relative to the
  * session's own 384×216 rows.
  *
- * Since plan R1-05 (B4) a run ends with the **decode scenario**: the 18-scenario matrix is unchanged,
+ * Since plan R1-05 (B4) a run ends with the **decode scenario**, after the matrix's last scenario;
  * the decode record rides in a payload's optional `decode` field through the same log server to the
  * analyzer's decode table, its synthetic pages are drawn the same on every machine, and `pnpm bench`
  * opens it headlessly too.
+ *
+ * The matrix is the resolution sweep (the owner's R0-03 follow-up): 25 frame sizes × 6 variants
+ * plus 22 knob rows, 172 scenarios — with R0-02's 18 ids (384×216, 640×360, 960×540) unchanged.
  */
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
@@ -19,7 +22,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { BENCH_SCENARIOS } from '../../apps/tizen/src/bench/matrix.js';
+import {
+  BENCH_DENSITIES,
+  BENCH_KNOBS,
+  BENCH_SCENARIOS,
+  BENCH_SIZES,
+  BENCH_V2_SIZE,
+  BENCH_VARIANTS,
+} from '../../apps/tizen/src/bench/matrix.js';
 import {
   BENCH_RUN_LENGTH,
   DECODE_SCENARIO_ID,
@@ -126,7 +136,7 @@ function record(index: number, over: Partial<RenderBenchRecord> = {}): RenderBen
     width: size.width,
     height: size.height,
     density: size.density,
-    variant: variant.id,
+    variant: scenario.row,
     crt: variant.crt,
     filter: variant.filter,
     mode7: variant.mode7,
@@ -228,15 +238,86 @@ describe('render bench: the TV gate (tvBenchViolations, R0-02)', () => {
   });
 });
 
-describe('render bench: the decode scenario follows the unchanged matrix (R1-05 B4)', () => {
-  it('appends one page load to the run and leaves the 18 scenarios as R0-02 built them', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(18);
+describe('render bench: the resolution sweep keeps R0-02’s rows (R0-03 follow-up)', () => {
+  it('sweeps 25 frame sizes, 150 plain rows then 22 knob rows', () => {
+    expect(BENCH_SIZES).toHaveLength(25);
+    expect(BENCH_SIZES.filter((size) => size.art === 'scaled')).toHaveLength(11);
+    expect(BENCH_SIZES.filter((size) => size.art === 'native')).toHaveLength(14);
+    expect(BENCH_DENSITIES).toEqual([1, 1.33, 1.5, 2, 2.25, 2.4, 2.5, 2.67]);
+    expect(BENCH_SCENARIOS).toHaveLength(172);
+    expect(BENCH_SCENARIOS.filter((s) => s.knob === null)).toHaveLength(
+      BENCH_SIZES.length * BENCH_VARIANTS.length,
+    );
+    expect(BENCH_SCENARIOS.filter((s) => s.knob !== null)).toHaveLength(22);
+    expect(BENCH_KNOBS.map((knob) => knob.id)).toEqual([
+      'fit',
+      'stretch',
+      'interp',
+      'out720',
+      'out540',
+    ]);
+    // Plain rows first, sizes outer: the 384×216 baseline is the first resolution measured.
     expect(BENCH_SCENARIOS[0].id).toBe('384x216-busy');
-    expect(BENCH_SCENARIOS[17].id).toBe('960x540-worst');
+    expect(BENCH_SCENARIOS[149].id).toBe('1920x1080n-worst');
+    expect(BENCH_SCENARIOS[150].id).toBe('800x600-busy-fit');
+    expect(BENCH_SCENARIOS[171].id).toBe('640x360-worst-out540');
+    BENCH_SCENARIOS.forEach((s, i) => {
+      expect(s.index).toBe(i);
+      expect(s.id).toBe(`${s.size.id}-${s.row}`);
+    });
+    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(172);
+    expect(BENCH_V2_SIZE.id).toBe('640x360');
+  });
+
+  it("keeps R0-02's 18 ids byte-identical, at the same frame and density", () => {
+    const old: [string, number, number, number][] = [
+      ['384x216', 384, 216, 1],
+      ['640x360', 640, 360, 1.5],
+      ['960x540', 960, 540, 2.25],
+    ];
+    for (const [id, width, height, density] of old) {
+      const size = BENCH_SIZES.find((s) => s.id === id);
+      expect(size, id).toMatchObject({ width, height, density, art: 'scaled' });
+      const rows = BENCH_SCENARIOS.filter((s) => s.size.id === id && s.knob === null);
+      expect(rows.map((s) => s.id)).toEqual(
+        ['busy', 'filter', 'mode7', 'crt-light', 'crt-full', 'worst'].map((v) => `${id}-${v}`),
+      );
+      for (const s of rows) {
+        expect([s.row, s.scaleMode, s.interpolation, s.outputWidth, s.outputHeight]).toEqual([
+          s.variant.id,
+          'integer',
+          false,
+          0,
+          0,
+        ]);
+      }
+    }
+    // 384×216 has one row (its native row is its scaled row); the others gain a native row.
+    expect(BENCH_SIZES.some((s) => s.id === '384x216n')).toBe(false);
+    expect(BENCH_SIZES.find((s) => s.id === '640x360n')?.density).toBe(1);
+    expect(BENCH_SIZES.find((s) => s.id === '960x540n')?.density).toBe(1);
+  });
+
+  it('carries each knob on its rows', () => {
+    const stretch = BENCH_SCENARIOS.find((s) => s.id === '640x360-busy-stretch');
+    expect(stretch).toMatchObject({
+      row: 'busy-stretch',
+      scaleMode: 'stretch',
+      interpolation: false,
+    });
+    const interp = BENCH_SCENARIOS.find((s) => s.id === '1920x1080n-worst-interp');
+    expect(interp).toMatchObject({ scaleMode: 'integer', interpolation: true, outputWidth: 0 });
+    const out720 = BENCH_SCENARIOS.find((s) => s.id === '640x360-busy-out720');
+    expect([out720?.outputWidth, out720?.outputHeight]).toEqual([1280, 720]);
+  });
+});
+
+describe('render bench: the decode scenario follows the matrix (R1-05 B4)', () => {
+  it('appends one page load to the run, after the matrix’s last scenario', () => {
     expect([DECODE_SCENARIO_ID, DECODE_SCENARIO_INDEX, BENCH_RUN_LENGTH]).toEqual([
       'decode',
-      18,
-      19,
+      172,
+      173,
     ]);
   });
 
@@ -249,7 +330,7 @@ describe('render bench: the decode scenario follows the unchanged matrix (R1-05 
 
   it('builds a record of every page with each stage as [min, p50, p95, max]', async () => {
     const record = await decodeRecord();
-    expect(record).toMatchObject({ scenario: 'decode', index: 18, repetitions: 4, error: null });
+    expect(record).toMatchObject({ scenario: 'decode', index: 172, repetitions: 4, error: null });
     expect(record.pages.map((page) => [page.id, page.encoding])).toEqual([
       ['rgba-2048', 'rgba'],
       ['png8-2048', 'png8'],
@@ -272,12 +353,14 @@ describe('render bench: the headless driver gates every TV scenario', () => {
     'utf8',
   );
 
-  it('opens every scenario of the matrix and gates it by counts with the pages 1, 1, 2', () => {
+  it('opens every scenario and gates it by counts with the pages of its density', () => {
     expect(perf).toContain('for (const scenario of BENCH_SCENARIOS)');
     expect(perf).toContain(
       'tvBenchViolations(record, { atlasPages: TV_BENCH_PAGES[scenario.size.density] })',
     );
-    expect(perf).toMatch(/1: 1,\s*1\.5: 1,\s*2\.25: 2,/);
+    expect(perf).toMatch(
+      /1: 1,\s*1\.33: 1,\s*1\.5: 1,\s*2: 1,\s*2\.25: 2,\s*2\.4: 2,\s*2\.5: 2,\s*2\.67: 2,/,
+    );
     expect(perf).toContain("configFile: join(appDir, 'vite.bench.config.ts')");
     expect(perf).toContain("mode: 'bench'");
   });
@@ -351,7 +434,7 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
     );
     const report = analyzeBenchSession(file);
     expect(report).toContain(`# ${session} — TV render bench`);
-    expect(report).toContain('18 of 18 scenario(s) measured, run complete');
+    expect(report).toContain('172 of 172 scenario(s) measured, run complete');
     // 640x360 busy: synced p95 4.5 × 1.5 over the baseline's 4 → 1.50×; two-tick 3 % vs 2 % → +1.0.
     expect(report).toContain('| busy | 1 | 3.00 / 4.50 | 4.50 / 6.00 | 1.50× | 3.0 | +1.0 |');
     expect(report).toContain('## Plan §13 at 640×360');
@@ -362,7 +445,15 @@ describe('render bench: records → log server → analyzer (R0-02)', () => {
 
   it('carries the decode record in the run’s last payload, through to the analyzer (R1-05 B4)', async () => {
     const decode = await decodeRecord();
-    const payload = buildRenderBenchPayload(session, 19, env.startedAt + 19, env, [], true, decode);
+    const payload = buildRenderBenchPayload(
+      session,
+      BENCH_RUN_LENGTH,
+      env.startedAt + BENCH_RUN_LENGTH,
+      env,
+      [],
+      true,
+      decode,
+    );
     const response = await fetch(base, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },

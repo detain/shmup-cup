@@ -97,7 +97,8 @@ function pixel(image: { width: number; data: Uint8Array }, x: number, y: number)
 
 describe('bench-atlas names and sizes', () => {
   it('scales lengths to whole pixels, never below one', () => {
-    expect(BENCH_DENSITIES).toEqual([1, 1.5, 2.25]);
+    // The matrix's list exactly (`src/bench/matrix.ts` — pinned against it in bench.test.ts).
+    expect(BENCH_DENSITIES).toEqual([1, 1.33, 1.5, 2, 2.25, 2.4, 2.5, 2.67]);
     expect([
       scaledSize(8, 1.5),
       scaledSize(8, 2.25),
@@ -110,8 +111,10 @@ describe('bench-atlas names and sizes', () => {
     expect(BENCH_MODULE_ID).toBe('virtual:shmup-render-bench');
   });
 
-  it('models a ×s atlas as the real pages ×s² over 2048² pages: 1, 1 and 2 today', () => {
-    expect(BENCH_DENSITIES.map((s) => benchPageCount(shippedManifest, s))).toEqual([1, 1, 2]);
+  it('models a ×s atlas as the real pages ×s² over 2048² pages: one up to ×2, then two', () => {
+    expect(BENCH_DENSITIES.map((s) => benchPageCount(shippedManifest, s))).toEqual([
+      1, 1, 1, 1, 2, 2, 2, 2,
+    ]);
     expect(benchPageCount(FIXTURE, 1)).toBe(1);
     expect(benchPageCount({ pages: [{ w: 2048, h: 2048 }] } as never, 1)).toBe(1);
     expect(benchPageCount({ pages: [{ w: 2048, h: 2048 }] } as never, 1.01)).toBe(2);
@@ -162,9 +165,20 @@ describe('bench-atlas scaleAtlas', () => {
 describe('bench-atlas on the shipped atlas', () => {
   const atlases = buildBenchAtlases(shippedManifest, shipped.pngs);
 
-  it('builds one atlas per density with 1, 1 and 2 power-of-two pages of at most 2048²', () => {
-    expect(atlases.map((atlas) => atlas.density)).toEqual([1, 1.5, 2.25]);
-    expect(atlases.map((atlas) => atlas.manifest.pages.length)).toEqual([1, 1, 2]);
+  it('builds one atlas per density with one or two power-of-two pages of at most 2048²', () => {
+    expect(atlases.map((atlas) => atlas.density)).toEqual([1, 1.33, 1.5, 2, 2.25, 2.4, 2.5, 2.67]);
+    expect(
+      atlases.map((atlas) => atlas.manifest.pages.map((page) => `${page.w}x${page.h}`)),
+    ).toEqual([
+      ['1024x1024'],
+      ['1024x1024'],
+      ['2048x1024'],
+      ['2048x2048'],
+      ['2048x1024', '2048x1024'],
+      ['2048x1024', '2048x1024'],
+      ['2048x1024', '2048x1024'],
+      ['2048x1024', '2048x1024'],
+    ]);
     for (const atlas of atlases) {
       expect(atlas.pageUrls).toEqual(
         atlas.manifest.pages.map((page) => `assets/atlas/${page.file}`),
@@ -187,7 +201,7 @@ describe('bench-atlas on the shipped atlas', () => {
     expect(atlases[0].manifest.pages[0].file).toBe('bench-x1-0.png');
   });
 
-  it('scales every frame of the shipped atlas, and splits ×2.25 over both pages', () => {
+  it('scales every frame of the shipped atlas, and splits ×2.25 … ×2.67 over both pages', () => {
     const names = Object.keys(shippedManifest.frames);
     for (const atlas of atlases.slice(1)) {
       expect(Object.keys(atlas.manifest.frames)).toEqual(names);
@@ -203,8 +217,10 @@ describe('bench-atlas on the shipped atlas', () => {
         expect(frame.y + frame.h).toBeLessThanOrEqual(page.h);
       }
     }
-    const pagesUsed = new Set(Object.values(atlases[2].manifest.frames).map((frame) => frame.p));
-    expect([...pagesUsed].sort()).toEqual([0, 1]);
+    for (const atlas of atlases.filter((candidate) => candidate.density > 2)) {
+      const pagesUsed = new Set(Object.values(atlas.manifest.frames).map((frame) => frame.p));
+      expect([...pagesUsed].sort(), `x${atlas.density}`).toEqual([0, 1]);
+    }
   });
 });
 

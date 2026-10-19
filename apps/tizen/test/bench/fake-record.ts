@@ -4,7 +4,7 @@
  * @module
  */
 import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
-import { BENCH_SCENARIOS } from '../../src/bench/index.js';
+import { BENCH_SCENARIOS, DECODE_SCENARIO_INDEX } from '../../src/bench/index.js';
 
 /**
  * A complete fake record.
@@ -69,7 +69,8 @@ export function recordFor(index: number, over: Partial<RenderBenchRecord> = {}):
     width: scenario.size.width,
     height: scenario.size.height,
     density: scenario.size.density,
-    variant: scenario.variant.id,
+    // A knob row's record names its row (`busy-stretch`), as `run.ts` writes it.
+    variant: scenario.row,
     crt: scenario.variant.crt,
     filter: scenario.variant.filter,
     mode7: scenario.variant.mode7,
@@ -124,7 +125,7 @@ export function fakeDecode(over: Partial<DecodeBenchRecord> = {}): DecodeBenchRe
   });
   return {
     scenario: 'decode',
-    index: 18,
+    index: DECODE_SCENARIO_INDEX,
     webGLVersion: 1,
     repetitions: 8,
     imageDecode: true,

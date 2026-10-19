@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { measureHeapGrowth } from '../../../../packages/core/test/helpers/alloc.js';
 import {
-  BENCH_SIZES,
+  BENCH_V2_SIZE,
   BenchScene,
   pickBenchSprites,
   type BenchSceneManifest,
@@ -24,12 +24,19 @@ const manifest = shippedAtlas().manifest as unknown as BenchSceneManifest & {
 };
 
 /**
- * A busy scene with a filtered layer and the Mode-7 floor (every branch of the tick).
+ * A busy scene at the v2 frame (640×360, ×1.5) with a filtered layer and the Mode-7 floor (every
+ * branch of the tick).
+ *
+ * @remarks
+ * Pinned to {@link BENCH_V2_SIZE} by id, not by position in the matrix: the resolution sweep put
+ * 480×320 (×1.33) second. Known finding, not guarded here: at the densities 1.33, 2.25, 2.4 and
+ * 2.67 the tick allocates ~80 KB per 60k ticks (2.25 was in R0-02's matrix already) — the budget
+ * is not raised for them.
  *
  * @returns The scene.
  */
 function scene(): BenchScene {
-  const size = BENCH_SIZES[1];
+  const size = BENCH_V2_SIZE;
   return new BenchScene({
     width: size.width,
     height: size.height,

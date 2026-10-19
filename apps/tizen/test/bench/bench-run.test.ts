@@ -9,6 +9,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import {
+  BENCH_DENSITIES,
   BENCH_SCENARIOS,
   BENCH_STATE_KEY,
   TV_BENCH_MARKER,
@@ -33,7 +34,7 @@ const manifest = shippedAtlas().manifest as unknown as AtlasManifest;
 
 /** Assets whose pages never load (Node has no images): every density shares the shipped manifest. */
 const ASSETS: BenchAssets = {
-  atlases: [1, 1.5, 2.25].map((density) => ({ density, manifest, pageUrls: ['missing.png'] })),
+  atlases: BENCH_DENSITIES.map((density) => ({ density, manifest, pageUrls: ['missing.png'] })),
   fx: [],
 };
 
@@ -106,7 +107,7 @@ const settle = async (): Promise<void> => {
 };
 
 /**
- * A run whose 18 render scenarios are measured: the decode scenario is next.
+ * A run whose 172 render scenarios are measured: the decode scenario is next.
  *
  * @returns Its stored text.
  */
@@ -175,7 +176,7 @@ describe('bench page (TV mode)', () => {
     done.start();
     done.press(403);
     // The last scenario of a whole run is the decode scenario.
-    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 18 });
+    expect(done.state()).toMatchObject({ running: true, single: true, cursor: 172 });
     expect(done.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -224,8 +225,8 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     expect(page.attributes[TV_BENCH_MARKER]).toBe('scenario');
     await settle();
     const state = page.state();
-    expect(state).toMatchObject({ running: false, cursor: 19, lastError: null });
-    expect(state?.records).toHaveLength(18);
+    expect(state).toMatchObject({ running: false, cursor: 173, lastError: null });
+    expect(state?.records).toHaveLength(172);
     expect(state?.decode?.error).toBe('this bench build has no decode pages');
     expect(state?.decode?.pages).toEqual([]);
     expect(page.reload).toHaveBeenCalledTimes(1);
@@ -236,18 +237,34 @@ describe('bench page: the decode scenario (plan R1-05 B4)', () => {
     page.start();
     await settle();
     const state = page.state();
-    expect(state?.cursor).toBe(19);
+    expect(state?.cursor).toBe(173);
     expect(state?.decode?.error).toContain('atlas page missing.png failed to load');
     expect(page.reload).toHaveBeenCalledTimes(1);
   });
 
-  it('shows a whole run’s results page with the decode table', async () => {
-    const page = fakePage('', completeRun());
-    page.start();
-    expect(page.attributes[TV_BENCH_MARKER]).toBe('results');
+  it('pages a whole run’s results: the table first, the decode table on the last page', async () => {
+    const first = fakePage('', completeRun());
+    first.start();
+    expect(first.attributes[TV_BENCH_MARKER]).toBe('results');
     await settle();
-    expect(page.appended[0].textContent).toContain('DECODE (R1-05) 8 reps GL1');
-    expect(page.appended[0].textContent).toContain('png8-2048  2048x2048 PNG8');
+    const text = first.appended[0].textContent;
+    expect(text).toMatch(/ {2}PAGE 1\/\d+$/m);
+    expect(text).toContain('384x216 busy');
+    expect(text).not.toContain('DECODE (R1-05)');
+
+    // Left on the first page wraps round to the last one: the decode table.
+    const last = fakePage('', completeRun());
+    last.start();
+    last.press(37);
+    await settle();
+    const decode = last.appended[0].textContent;
+    const pages = /PAGE (\d+)\/(\d+)/.exec(decode);
+    expect(pages?.[1]).toBe(pages?.[2]);
+    expect(Number(pages?.[2])).toBeGreaterThan(1);
+    expect(decode).toContain('DECODE (R1-05) 8 reps GL1');
+    expect(decode).toContain('png8-2048  2048x2048 PNG8');
+    expect(decode).not.toContain('384x216 busy');
+    expect(last.reload).not.toHaveBeenCalled();
   });
 
   it('publishes the decode outcome headlessly (?scenario=decode)', async () => {

@@ -2,7 +2,14 @@
  * The TV render bench's **on-screen results table** (plan R0-02 — part of the `bench` module, see
  * `./index.ts`): one fixed-width line per scenario in the bitmap font, so a photograph of the TV is
  * enough to keep a run, and the relative columns — against the same variant at 384×216 in the same
- * session — are the ones plan §13 decides by.
+ * session — are the ones plan §13 decides by. A knob row (`640x360-busy-stretch`) is read against
+ * its own plain row instead (`640x360-busy`), so its relative columns say what the knob cost.
+ *
+ * **Paged.** The resolution sweep's 172 rows do not fit one screen, so {@link benchPageLines}
+ * returns one page — the head, then as many rows as fit — and **Left / Right** turn the page; the
+ * decode table is the last page. (R0-03's 18-row table already lost the end of its last row on the
+ * TV: the page's text overran the renderer's 1024-glyph UI pool, which the results page now sizes
+ * for a whole page — `run.ts`.)
  *
  * Below the table, once the run's `decode` scenario has run (plan R1-05 B4 — `./decode.ts`), a
  * second table: per page its size, encoding and file bytes, and the median / p95 of each stage from
@@ -17,7 +24,7 @@ import type { DrawList } from '@shmup/core';
 import { RAF_BUCKET_EDGES_MS } from '@shmup/render-pixi';
 import type { DecodeBenchPage, DecodeBenchRecord, RenderBenchRecord } from '@shmup/shell';
 import { DECODE_SCENARIO_INDEX } from './decode.js';
-import { BENCH_SIZES, type BenchTiming } from './matrix.js';
+import { BENCH_SIZES, findBenchScenario, type BenchTiming } from './matrix.js';
 import type { BenchRunState } from './state.js';
 
 /** One line of a bench page and its colour. */
@@ -47,7 +54,8 @@ const LATE_BUCKET = RAF_BUCKET_EDGES_MS.indexOf(21) + 1;
 const BASELINE_SIZE = BENCH_SIZES[0].id;
 
 /**
- * The record a row is read against: the same variant and WebGL version at 384×216.
+ * The record a row is read against: the same variant and WebGL version at 384×216 — or, for a knob
+ * row, the same size and variant without the knob (so the row says what the knob cost).
  *
  * @param record - The row's record.
  * @param records - Every record of the session.
@@ -57,11 +65,15 @@ export function baselineOf(
   record: RenderBenchRecord,
   records: readonly RenderBenchRecord[],
 ): RenderBenchRecord | null {
+  const knobRow = findBenchScenario(record.scenario);
+  const plain = knobRow !== null && knobRow.knob !== null ? knobRow.variant.id : null;
+  const size = plain === null ? BASELINE_SIZE : record.size;
+  const variant = plain === null ? record.variant : plain;
   for (let i = 0; i < records.length; i++) {
     const other = records[i];
     if (
-      other.size === BASELINE_SIZE &&
-      other.variant === record.variant &&
+      other.size === size &&
+      other.variant === variant &&
       other.webGLVersion === record.webGLVersion
     ) {
       return other;
@@ -114,7 +126,7 @@ function signed(value: number, digits: number): string {
 
 /** The table's columns: header and width (every width includes the column's leading space). */
 const COLUMNS: readonly (readonly [string, number])[] = [
-  ['SCENARIO', 17],
+  ['SCENARIO', 25],
   ['GL', 3],
   ['REND95', 7],
   ['SYNC50', 7],
@@ -150,7 +162,8 @@ export function formatResultsHeader(): string {
  * `REND95` is the p95 of the timed render (CPU), `SYNC50` / `SYNC95` the synced pass's (render +
  * `gl.finish()`), `xBASE` the synced p95 over the baseline's, `2TICK%` the share of frames the
  * vsync-locked loop gave two ticks or more and `D2T` its difference from the baseline in
- * percentage points (plan §13's "+2 points" rule), `RAF21%` the frames that came 21 ms or later,
+ * percentage points (plan §13's "+2 points" rule) — a knob row's against its plain row —,
+ * `RAF21%` the frames that came 21 ms or later,
  * then the draw calls, pooled render-target KB, atlas texture KB and the heap delta. A cell without
  * a baseline (the baseline row itself shows `1.00x` / `0.0`) or a heap reading reads `-`.
  *
@@ -364,16 +377,45 @@ export interface BenchPageInput {
   readonly scenarios: number;
   /** The phase timing of a TV run. */
   readonly timing: BenchTiming;
+  /** The page to show, from 0 (clamped to the pages there are; default 0). */
+  readonly page?: number;
+  /** Lines that fit the screen (default: no limit — one page holds everything). */
+  readonly maxLines?: number;
 }
 
 /**
- * The results page's lines: title, the keys, the log server, the run's summary, the table and
- * the run's last error.
+ * How many pages {@link benchPageLines} splits a state into.
+ *
+ * @param input - What to show (`page` is ignored).
+ * @returns At least 1.
+ */
+export function benchResultPages(input: BenchPageInput): number {
+  return benchPage(input).pages;
+}
+
+/**
+ * The results page's lines: title, the keys, the log server, the run's summary, one page of the
+ * table (or, on the last page, the decode table) and the run's last error.
  *
  * @param input - What to show.
- * @returns The lines, top to bottom.
+ * @returns The lines, top to bottom — never more than `input.maxLines`.
+ *
+ * @example
+ * ```ts
+ * benchPageLines({ ...input, page: 2, maxLines: 35 }); // the head, then rows 2·n … 3·n − 1
+ * ```
  */
 export function benchPageLines(input: BenchPageInput): BenchLine[] {
+  return benchPage(input).lines;
+}
+
+/**
+ * Lays out one page (see {@link benchPageLines}).
+ *
+ * @param input - What to show.
+ * @returns The page's lines and how many pages there are.
+ */
+function benchPage(input: BenchPageInput): { lines: BenchLine[]; pages: number } {
   const t = input.timing;
   const seconds = (ms: number): string => String(Math.round(ms / 1000));
   const minutes = Math.round(
@@ -393,7 +435,10 @@ export function benchPageLines(input: BenchPageInput): BenchLine[] {
         `${seconds(t.syncMs)} s synced each)`,
       color: NOTE_COLOR,
     },
-    { text: 'RED re-run the last scenario    BACK exit', color: NOTE_COLOR },
+    {
+      text: 'LEFT/RIGHT page    RED re-run the last scenario    BACK exit (stops a run)',
+      color: NOTE_COLOR,
+    },
     {
       text:
         'LOG ' +
@@ -404,35 +449,55 @@ export function benchPageLines(input: BenchPageInput): BenchLine[] {
     { text: '', color: NOTE_COLOR },
   ];
   const state = input.state;
+  const error: BenchLine | null =
+    state !== null && state.lastError !== null
+      ? { text: `ERROR ${state.lastError}`, color: ERROR_COLOR }
+      : null;
   if (state === null || (state.records.length === 0 && state.decode === null)) {
     lines.push({ text: 'No results yet.', color: ROW_COLOR });
-  } else {
-    let sent = 0;
-    for (let i = 0; i < state.records.length; i++) {
-      if (state.sent.indexOf(state.records[i].index) >= 0) sent++;
-    }
-    const decodeSent = state.sent.indexOf(DECODE_SCENARIO_INDEX) >= 0;
-    lines.push({
-      text:
-        `RUN ${state.session}  ${state.records.length}/${input.scenarios} measured  ` +
-        `sent ${sent}/${state.records.length}` +
-        (state.decode === null ? '' : decodeSent ? '  decode sent' : '  decode not sent') +
-        (state.running ? '  (still running)' : ''),
-      color: NOTE_COLOR,
-    });
-    const table = formatResultsTable(state.records);
-    for (let i = 0; i < table.length; i++) {
-      lines.push({ text: table[i], color: i === 0 ? HEADER_COLOR : ROW_COLOR });
-    }
-    if (state.decode !== null) {
-      const decode = formatDecodeTable(state.decode);
-      for (let i = 0; i < decode.length; i++) lines.push(decode[i]);
-    }
+    if (error !== null) lines.push(error);
+    return { lines, pages: 1 };
   }
-  if (state !== null && state.lastError !== null) {
-    lines.push({ text: `ERROR ${state.lastError}`, color: ERROR_COLOR });
+  let sent = 0;
+  for (let i = 0; i < state.records.length; i++) {
+    if (state.sent.indexOf(state.records[i].index) >= 0) sent++;
   }
-  return lines;
+  const decodeSent = state.sent.indexOf(DECODE_SCENARIO_INDEX) >= 0;
+  const table = formatResultsTable(state.records);
+  const rows = table.length - 1;
+  const decode = state.decode === null ? null : formatDecodeTable(state.decode);
+  // Without a line limit one page holds everything: the table, then the decode table below it.
+  const unlimited = input.maxLines === undefined;
+  // Room for the rows on one page: the head, the RUN line, the table's header and the error line.
+  const room = unlimited
+    ? Math.max(1, rows)
+    : Math.max(1, (input.maxLines ?? 0) - lines.length - 3);
+  const tablePages = rows === 0 ? 0 : Math.ceil(rows / room);
+  const pages = unlimited ? 1 : Math.max(1, tablePages + (decode === null ? 0 : 1));
+  const page = Math.max(0, Math.min(pages - 1, Math.floor(input.page ?? 0)));
+  lines.push({
+    text:
+      `RUN ${state.session}  ${state.records.length}/${input.scenarios} measured  ` +
+      `sent ${sent}/${state.records.length}` +
+      (state.decode === null ? '' : decodeSent ? '  decode sent' : '  decode not sent') +
+      (state.running ? '  (still running)' : '') +
+      `  PAGE ${page + 1}/${pages}`,
+    color: NOTE_COLOR,
+  });
+  if (page < tablePages) {
+    lines.push({ text: table[0], color: HEADER_COLOR });
+    const first = 1 + page * room;
+    const last = Math.min(table.length, first + room);
+    for (let i = first; i < last; i++) lines.push({ text: table[i], color: ROW_COLOR });
+  }
+  if (decode !== null && (unlimited || page >= tablePages)) {
+    for (let i = 0; i < decode.length; i++) lines.push(decode[i]);
+  }
+  if (error !== null) lines.push(error);
+  if (input.maxLines !== undefined && lines.length > input.maxLines) {
+    lines.length = Math.max(0, input.maxLines);
+  }
+  return { lines, pages };
 }
 
 /**

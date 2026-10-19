@@ -31,10 +31,12 @@
  *
  * **The TV render bench's scenes (plan R0-02).** The second suite builds the bench widget exactly
  * as `pnpm bench:tv` does (`apps/tizen/vite.bench.config.ts`, mode `bench`) and opens each of its
- * 18 scenarios headlessly (`?scenario=<id>` — 384×216, 640×360 and 960×540 at density 1, 1.5 and
- * 2.25, each busy, with a filtered layer, Mode-7, CRT light / full and all at once) on a 1280×720
- * display. It gates **counts only** (`tvBenchViolations`: the load, draw calls, pooled render
- * targets, atlas pages 1 / 1 / 2, the heap) — the milliseconds are for the TV (R0-03). Since plan
+ * 172 scenarios headlessly (`?scenario=<id>` — the resolution sweep's 25 frame sizes, from 384×216
+ * to 1920×1080 in the `scaled` and `native` art modes, each busy, with a filtered layer, Mode-7,
+ * CRT light / full and all at once, then the 22 knob rows) on a 1280×720 display. It gates
+ * **counts only** (`tvBenchViolations`: the load, draw calls, pooled render targets, the atlas
+ * pages of the density — {@link TV_BENCH_PAGES} —, the heap) — the milliseconds are for the TV
+ * (R0-03). Since plan
  * R1-05 (B4) it also opens the bench's **decode scenario** (`?scenario=decode&reps=2`) and checks
  * its shape: the four pages fetched, decoded and uploaded, with their sizes, encodings and bytes.
  *
@@ -52,7 +54,11 @@ import { chromium, type Browser } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build } from 'vite';
 import { clientConditions, shmupAssets, shmupContent } from '../../vite.shared.js';
-import { BENCH_SCENARIOS, BENCH_SIZES } from '../../apps/tizen/src/bench/matrix.js';
+import {
+  BENCH_DENSITIES,
+  BENCH_SCENARIOS,
+  BENCH_SIZES,
+} from '../../apps/tizen/src/bench/matrix.js';
 import { DECODE_SCENARIO_ID } from '../../apps/tizen/src/bench/decode.js';
 import { DECODE_PAGE_IDS, decodePageFile } from '../../apps/tizen/scripts/bench-decode.mjs';
 import type {
@@ -457,11 +463,21 @@ const TV_BENCH_OUT_DIR = fileURLToPath(
   new URL('../../node_modules/.cache/shmup-tv-bench', import.meta.url),
 );
 
-/** Atlas pages each density of the TV bench must have (plan R0-02: 1, 1, 2). */
+/**
+ * Atlas pages each density of the TV bench must have: the modelled ×s atlas is the 1024² source
+ * page scaled ×s and re-packed into pages of at most 2048² (`apps/tizen/scripts/bench-atlas.mjs`
+ * `benchPageCount`, `ceil(s² / 4)`) — one page up to ×2 (×1.5 is one 2048×1024 page, ×2 one 2048²),
+ * two 2048×1024 pages from ×2.25 to ×2.67. Its keys are the matrix's `BENCH_DENSITIES`.
+ */
 export const TV_BENCH_PAGES: Readonly<Record<number, number>> = Object.freeze({
   1: 1,
+  1.33: 1,
   1.5: 1,
+  2: 1,
   2.25: 2,
+  2.4: 2,
+  2.5: 2,
+  2.67: 2,
 });
 
 /**
@@ -604,15 +620,24 @@ describe('bench: the TV render bench scenes, headless (plan R0-02)', () => {
     expect(decode.imageBitmap).toBe(true);
   }, 300_000);
 
-  it('reports all three sizes with their atlas page counts (1, 1, 2)', () => {
+  it('reports every size with the atlas page count of its density', () => {
+    // Sorted: an object lists integer keys (1, 2) before the others.
+    const densities = Object.keys(TV_BENCH_PAGES)
+      .map(Number)
+      .sort((a, b) => a - b);
+    expect(densities).toEqual(BENCH_DENSITIES);
     const pages = BENCH_SIZES.map((size) => {
       const record = records.get(`${size.id}-busy`);
       expect(record, `${size.id}-busy must have run`).toBeDefined();
       return record?.atlasPages ?? -1;
     });
-    expect(pages).toEqual([1, 1, 2]);
-    // Each size renders its whole own frame. 640×360 and 960×540 show the same field of view (the
-    // frame and s both ×1.5); 384×216 at s = 1 shows less, since its frame is ×3/5 but s only ×2/3.
+    expect(pages).toEqual(BENCH_SIZES.map((size) => TV_BENCH_PAGES[size.density]));
+    // R0-02's three rows keep their pages: 1, 1, 2.
+    expect(
+      ['384x216', '640x360', '960x540'].map((id) => records.get(`${id}-busy`)?.atlasPages),
+    ).toEqual([1, 1, 2]);
+    // Each size renders its whole own frame. A `scaled` row keeps the v2 frame's field of view
+    // (s = height / 240); a `native` row draws the ×1 art, so a bigger frame shows more world.
     for (const size of BENCH_SIZES) {
       expect(records.get(`${size.id}-busy`)?.frameTargetBytes).toBe(size.width * size.height * 4);
     }

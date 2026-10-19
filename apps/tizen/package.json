@@ -21,6 +21,7 @@
     "bench:package": "node scripts/tizen-bench.mjs package",
     "bench:install": "node scripts/tizen-bench.mjs install",
     "bench:run": "node scripts/tizen-bench.mjs run",
+    "bench:campaign": "node scripts/bench-campaign.mjs",
     "tizen:package": "node scripts/tizen-package.mjs",
     "tizen:install": "node scripts/tizen-install.mjs",
     "tizen:run": "node scripts/tizen-run.mjs",

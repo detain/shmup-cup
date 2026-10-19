@@ -140,11 +140,11 @@ function scriptedHost(
 }
 
 describe('decode scenario: its place in the run', () => {
-  it('follows the unchanged 18-scenario matrix as the run’s last page load', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(18);
+  it('follows the 172-scenario matrix as the run’s last page load', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(172);
     expect(DECODE_SCENARIO_ID).toBe('decode');
-    expect(DECODE_SCENARIO_INDEX).toBe(18);
-    expect(BENCH_RUN_LENGTH).toBe(19);
+    expect(DECODE_SCENARIO_INDEX).toBe(172);
+    expect(BENCH_RUN_LENGTH).toBe(173);
     expect(BENCH_SCENARIOS.some((s) => s.id === DECODE_SCENARIO_ID)).toBe(false);
     expect([TV_DECODE_REPETITIONS, HEADLESS_DECODE_REPETITIONS]).toEqual([8, 2]);
   });
@@ -180,7 +180,7 @@ describe('decode scenario: measureDecode', () => {
     const record = await measureDecode(script.host, PAGES, FACTS);
     expect(record).toMatchObject({
       scenario: 'decode',
-      index: 18,
+      index: 172,
       webGLVersion: 1,
       repetitions: 3,
       imageDecode: true,
@@ -276,7 +276,7 @@ describe('decode scenario: measureDecode', () => {
   it('records a scenario that could not run at all', () => {
     expect(failedDecodeRecord('Error: no WebGL', FACTS)).toEqual({
       scenario: 'decode',
-      index: 18,
+      index: 172,
       webGLVersion: 1,
       repetitions: 3,
       imageDecode: true,

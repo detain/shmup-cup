@@ -34,6 +34,7 @@
     "bench:tv": "turbo run build:bench --filter=@shmup/tizen --filter=@shmup/webos",
     "bench:tv:package": "pnpm --filter @shmup/tizen bench:package",
     "bench:tv:install": "pnpm --filter @shmup/tizen bench:install",
+    "bench:tv:campaign": "pnpm --filter @shmup/tizen bench:campaign",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "turbo run clean && node scripts/clean.mjs .turbo coverage",

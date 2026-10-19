@@ -4,7 +4,8 @@
  *
  * One bench bundle serves both TVs (the webOS stub builds the same entry) and a desktop browser,
  * so the keys of all three are accepted everywhere: **Enter** (13) starts, **Back** (Tizen 10009,
- * webOS 461, Escape, Backspace) exits, **Red** (403 on both TVs, or `R`) re-runs a scenario. On
+ * webOS 461, Escape, Backspace) exits, **Red** (403 on both TVs, or `R`) re-runs a scenario,
+ * **Left / Right** (and Up / Down — 37–40, no registration needed) page the results. On
  * Tizen the Red key must be registered (`tv.inputdevice`); the bench registers only that one.
  *
  * @module
@@ -12,7 +13,7 @@
 import { getTizenApi, registerRemoteKeys } from '../platform/index.js';
 
 /** A bench remote action. */
-export type BenchKey = 'enter' | 'back' | 'red';
+export type BenchKey = 'enter' | 'back' | 'red' | 'prev' | 'next';
 
 /** Key codes per action (every host's, accepted on every host). */
 export const BENCH_KEY_CODES: Readonly<Record<BenchKey, readonly number[]>> = Object.freeze({
@@ -22,6 +23,10 @@ export const BENCH_KEY_CODES: Readonly<Record<BenchKey, readonly number[]>> = Ob
   back: Object.freeze([10009, 461, 27, 8]),
   /** The red colour key (Tizen `ColorF0Red`, webOS), or `R` on a keyboard. */
   red: Object.freeze([403, 82]),
+  /** Left or Up: the previous results page. */
+  prev: Object.freeze([37, 38]),
+  /** Right or Down: the next results page. */
+  next: Object.freeze([39, 40]),
 });
 
 /**
@@ -39,6 +44,8 @@ export function benchKeyOf(keyCode: number): BenchKey | null {
   if (BENCH_KEY_CODES.enter.indexOf(keyCode) >= 0) return 'enter';
   if (BENCH_KEY_CODES.back.indexOf(keyCode) >= 0) return 'back';
   if (BENCH_KEY_CODES.red.indexOf(keyCode) >= 0) return 'red';
+  if (BENCH_KEY_CODES.prev.indexOf(keyCode) >= 0) return 'prev';
+  if (BENCH_KEY_CODES.next.indexOf(keyCode) >= 0) return 'next';
   return null;
 }
 

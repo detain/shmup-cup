@@ -8,7 +8,7 @@
  * later run overwrites them, so a crash or a power cut loses nothing. Everything here is a pure
  * function of the state, tested headlessly; `run.ts` reads and writes the storage.
  *
- * A run is the 18 render scenarios of the matrix, then the `decode` scenario (plan R1-05 B4 —
+ * A run is the render scenarios of the matrix (172 since the resolution sweep), then the `decode` scenario (plan R1-05 B4 —
  * `./decode.ts`): the cursor runs to {@link BENCH_RUN_LENGTH}, the render records go to `records`
  * and the decode record to `decode`. A state stored by a bench from before B4 (no `decode`) still
  * reads — its record is `null`.
@@ -361,6 +361,45 @@ export function unsentRecords(state: BenchRunState): RenderBenchRecord[] {
  */
 export function stopRun(state: BenchRunState, error: string | null): BenchRunState {
   return { ...state, running: false, single: false, lastError: error };
+}
+
+/**
+ * Skips the scenario at the cursor (the campaign mode's guard, `./campaign.ts`: a scenario that
+ * crashed or hung the TV more than `MAX_SCENARIO_ATTEMPTS` times is passed over, so the relaunches
+ * cannot loop on it forever).
+ *
+ * @param state - The state.
+ * @param reason - Why, stored as `lastError` (e.g. `'skipped after 4 launches'`).
+ * @returns The new state, the cursor one past the skipped scenario (no record for it); `running`
+ *   while scenarios remain, never `single`.
+ */
+export function skipScenario(state: BenchRunState, reason: string): BenchRunState {
+  const cursor = Math.min(BENCH_RUN_LENGTH, state.cursor + 1);
+  return {
+    ...state,
+    cursor,
+    running: cursor < BENCH_RUN_LENGTH,
+    single: false,
+    lastError: reason,
+  };
+}
+
+/**
+ * Resumes a stopped run (the campaign mode, `./campaign.ts`): after the owner's Back the scenario
+ * at the cursor runs again; after an error (a scenario that threw) that scenario is skipped.
+ *
+ * @param state - The state (not `running`).
+ * @returns The new state, `running` (and not `single`) with the cursor on the scenario to run —
+ *   kept when `lastError` is `null`, one further on otherwise. `lastError` is kept, so the results
+ *   page still says why a scenario is missing until the next record clears it.
+ * @remarks Resuming a run whose cursor is already at {@link BENCH_RUN_LENGTH} leaves it stopped.
+ */
+export function resumeRun(state: BenchRunState): BenchRunState {
+  const cursor = Math.min(
+    BENCH_RUN_LENGTH,
+    state.lastError !== null ? state.cursor + 1 : state.cursor,
+  );
+  return { ...state, cursor, running: cursor < BENCH_RUN_LENGTH, single: false };
 }
 
 /**

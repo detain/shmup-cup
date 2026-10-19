@@ -3,9 +3,9 @@
  * produces a widget directory that passes the Tizen bundle checks"): runs the real bench build
  * (`vite.bench.config.ts`, mode `bench`) into a temporary folder and checks what would be packaged
  * — one classic ES2018 IIFE behind the `globalThis` banner, the bench's own `config.xml`, the
- * density atlases (1, 1 and 2 pages), the decode scenario's four pages (plan R1-05 B4: the
- * synthetic 2048² RGBA and PNG-8 pages and the shipped `common` and zone A pages) and nothing of the
- * game's.
+ * eight density atlases (one page each up to ×2, two from ×2.25), the decode scenario's four
+ * pages (plan R1-05 B4: the synthetic 2048² RGBA and PNG-8 pages and the shipped `common` and
+ * zone A pages) and nothing of the game's.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -79,9 +79,17 @@ describe('tizen bench build (vite.bench.config.ts → dist-bench/)', () => {
     expect(report.files.sort()).toEqual([
       'app.js',
       'assets/atlas/bench-x1-0.png',
+      'assets/atlas/bench-x1.33-0.png',
       'assets/atlas/bench-x1.5-0.png',
+      'assets/atlas/bench-x2-0.png',
       'assets/atlas/bench-x2.25-0.png',
       'assets/atlas/bench-x2.25-1.png',
+      'assets/atlas/bench-x2.4-0.png',
+      'assets/atlas/bench-x2.4-1.png',
+      'assets/atlas/bench-x2.5-0.png',
+      'assets/atlas/bench-x2.5-1.png',
+      'assets/atlas/bench-x2.67-0.png',
+      'assets/atlas/bench-x2.67-1.png',
       'assets/atlas/decode-common.png',
       'assets/atlas/decode-png8-2048.png',
       'assets/atlas/decode-rgba-2048.png',

@@ -8,13 +8,14 @@ import { LayerId, RasterKind, type SpriteBatchView } from '@shmup/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
   BENCH_LOAD,
-  BENCH_SIZES,
   BenchRandom,
   BenchScene,
   fillBenchParticles,
+  findBenchSize,
   pickBenchSprites,
   type BenchParticles,
   type BenchSceneManifest,
+  type BenchSize,
 } from '../../src/bench/index.js';
 import { buildBenchAtlases } from '../../scripts/bench-atlas.mjs';
 import { shippedAtlas } from './shipped-atlas.js';
@@ -40,13 +41,13 @@ const sprites = pickBenchSprites(Object.keys(shipped.sprites));
 /**
  * A scene at one of the bench sizes.
  *
- * @param index - Index into `BENCH_SIZES`.
+ * @param id - A `BENCH_SIZES` id, e.g. `'640x360'`.
  * @param filter - Filtered layer on.
  * @param mode7 - Mode-7 floor on.
  * @returns The scene.
  */
-function sceneAt(index: number, filter = false, mode7 = false): BenchScene {
-  const size = BENCH_SIZES[index];
+function sceneAt(id: string, filter = false, mode7 = false): BenchScene {
+  const size = sizeOf(id);
   return new BenchScene({
     width: size.width,
     height: size.height,
@@ -57,6 +58,21 @@ function sceneAt(index: number, filter = false, mode7 = false): BenchScene {
     mode7,
   });
 }
+
+/**
+ * A bench size by id.
+ *
+ * @param id - Size id.
+ * @returns The size.
+ */
+function sizeOf(id: string): BenchSize {
+  const size = findBenchSize(id);
+  if (size === null) throw new Error(`no bench size ${id}`);
+  return size;
+}
+
+/** The sizes the load model is checked at: the baseline, R0-02's two v2 rows and the sweep's ends. */
+const SIZES = ['384x216', '480x320', '640x360', '960x540', '960x640', '1920x1080n'];
 
 /**
  * A batch of the scene's world by layer.
@@ -96,9 +112,9 @@ describe('bench sprites', () => {
 });
 
 describe('bench scene (the v2 layer stack as a load model)', () => {
-  it.each([0, 1, 2])('carries the same load at every size (size %i)', (index) => {
-    const size = BENCH_SIZES[index];
-    const scene = sceneAt(index);
+  it.each(SIZES)('carries the same load at every size (%s)', (id) => {
+    const size = sizeOf(id);
+    const scene = sceneAt(id);
     const s = size.density;
     expect(scene.hudBar).toBe(Math.round(8 * s));
     expect(scene.playHeight).toBe(size.height - 2 * scene.hudBar);
@@ -116,11 +132,11 @@ describe('bench scene (the v2 layer stack as a load model)', () => {
     expect(scene.world.effects).toBeNull();
   });
 
-  it.each([0, 1, 2])(
-    'covers ~35 %% of the frame with terrain and the playfield with backdrops (size %i)',
-    (index) => {
-      const size = BENCH_SIZES[index];
-      const scene = sceneAt(index);
+  it.each(SIZES)(
+    'covers ~35 %% of the frame with terrain and the playfield with backdrops (%s)',
+    (id) => {
+      const size = sizeOf(id);
+      const scene = sceneAt(id);
       const terrain = scene.terrain;
       let solid = 0;
       for (let i = 0; i < terrain.tiles.length; i++) if (terrain.tiles[i] !== 0) solid++;
@@ -151,7 +167,7 @@ describe('bench scene (the v2 layer stack as a load model)', () => {
   );
 
   it('turns on a raster wave on the far backdrop and the Mode-7 floor for their variants', () => {
-    const filtered = sceneAt(1, true, false);
+    const filtered = sceneAt('640x360', true, false);
     expect(filtered.world.effects?.raster).toHaveLength(1);
     expect(filtered.world.effects?.raster[0]).toMatchObject({
       layer: LayerId.BgFar,
@@ -160,18 +176,18 @@ describe('bench scene (the v2 layer stack as a load model)', () => {
       bottom: filtered.playHeight,
     });
     expect(filtered.world.effects?.mode7).toBeNull();
-    const floored = sceneAt(2, false, true);
+    const floored = sceneAt('960x540', false, true);
     expect(floored.world.effects?.raster).toEqual([]);
     expect(floored.world.effects?.mode7?.spriteId).toBe(sprites.floor);
     expect(floored.world.effects?.mode7?.bottom).toBe(floored.playHeight);
-    const both = sceneAt(0, true, true);
+    const both = sceneAt('384x216', true, true);
     expect(both.world.effects?.raster).toHaveLength(1);
     expect(both.world.effects?.mode7).not.toBeNull();
   });
 
   it('shows the same field of view at 640x360 and 960x540 (the scene is ×s, like the frame)', () => {
-    const v2 = sceneAt(1);
-    const hiBit = sceneAt(2);
+    const v2 = sceneAt('640x360');
+    const hiBit = sceneAt('960x540');
     for (let t = 0; t < 240; t++) {
       v2.tick();
       hiBit.tick();
@@ -181,9 +197,9 @@ describe('bench scene (the v2 layer stack as a load model)', () => {
   });
 
   it('keeps every sprite on screen while the camera scrolls', () => {
-    for (const index of [0, 1, 2]) {
-      const size = BENCH_SIZES[index];
-      const scene = sceneAt(index);
+    for (const id of SIZES) {
+      const size = sizeOf(id);
+      const scene = sceneAt(id);
       const margin = 80 * size.density;
       for (let t = 0; t < 1500; t++) scene.tick();
       expect(scene.camera.x).toBeGreaterThan(0);
@@ -206,7 +222,7 @@ describe('bench scene (the v2 layer stack as a load model)', () => {
   });
 
   it('redraws the HUD only when its label or score changed', () => {
-    const scene = sceneAt(1);
+    const scene = sceneAt('640x360');
     const before = scene.hud.revision;
     scene.setLabel('R0-02 1/18');
     expect(scene.hud.revision).toBeGreaterThan(before);
@@ -222,8 +238,8 @@ describe('bench scene (the v2 layer stack as a load model)', () => {
   });
 
   it('starts from the same layout on every run', () => {
-    const a = sceneAt(1);
-    const b = sceneAt(1);
+    const a = sceneAt('640x360');
+    const b = sceneAt('640x360');
     const bulletsA = batchOn(a, LayerId.EnemyBullets);
     const bulletsB = batchOn(b, LayerId.EnemyBullets);
     expect(Array.from(bulletsA.x as Float64Array)).toEqual(Array.from(bulletsB.x as Float64Array));
@@ -254,7 +270,7 @@ describe('bench particles', () => {
   }
 
   it('tops the pool up to its capacity, and is safe without one', () => {
-    const scene = sceneAt(0);
+    const scene = sceneAt('384x216');
     const random = new BenchRandom();
     const pool = new FakePool(512, 20);
     fillBenchParticles(pool, scene, random);

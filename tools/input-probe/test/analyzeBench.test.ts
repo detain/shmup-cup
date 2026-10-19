@@ -21,13 +21,18 @@ import {
   analyzeBenchSession,
   analyzeBenchSessions,
   baselineFor,
-  compareWebGL,
   decodeSection,
   decodeZoneEstimate,
+  expandSessionArgs,
   lateShare,
+  loadCampaign,
+  parseRow,
+  quantile,
   readBenchSession,
   relativeTo,
+  runStats,
   section13Outcome,
+  sizeOrder,
 } from '../results/analyze-bench.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -238,22 +243,110 @@ describe('the decode scenario (plan R1-05 B4)', () => {
   });
 });
 
-describe('WebGL 1 vs 2 (plan §13, review F8)', () => {
-  it('compares two sessions of the same set scenario by scenario', () => {
-    const faster = variantSession('gl2-faster.jsonl', (r) => ({
-      ...r,
-      webGLVersion: 2,
-      syncedMs: (r['syncedMs'] as number[]).map((v) => v * 0.85),
-    }));
-    const report = analyzeBenchSessions([FIXTURE, faster]);
+describe('knob rows', () => {
+  it('splits a record variant into the load variant and the knob', () => {
+    expect(parseRow('busy')).toEqual({ base: 'busy', knob: null });
+    expect(parseRow('crt-light')).toEqual({ base: 'crt-light', knob: null });
+    expect(parseRow('crt-light-out720')).toEqual({ base: 'crt-light', knob: 'out720' });
+    expect(parseRow('worst-stretch')).toEqual({ base: 'worst', knob: 'stretch' });
+    expect(parseRow('nope')).toEqual({ base: 'nope', knob: null });
+  });
+
+  it('reads a knob row against its own plain row at the same size', () => {
+    const { records } = readBenchSession(FIXTURE);
+    const plain = records.find((r) => r.scenario === '640x360-busy');
+    const knob = { ...plain, scenario: '640x360-busy-stretch', variant: 'busy-stretch', index: 150 };
+    expect(baselineFor(knob, records)).toBe(plain);
+  });
+
+  it('orders sizes scaled first, then native, each in matrix order', () => {
+    const records = [
+      { size: '1280x720n', index: 40, variant: 'busy' },
+      { size: '640x360', index: 6, variant: 'busy', density: 1.5 },
+      { size: '480x320n', index: 12, variant: 'busy' },
+      { size: '384x216', index: 0, variant: 'busy', density: 1 },
+      { size: '960x540', index: 30, variant: 'busy' },
+    ];
+    expect(sizeOrder(records).map((s) => s.id)).toEqual(['384x216', '640x360', '960x540', '480x320n', '1280x720n']);
+  });
+});
+
+describe('campaigns: aggregation, noise floor, GL 1 vs 2 (plan §13, review F8)', () => {
+  /** A GL 1 repeat: synced p95 ×1.1 and two-tick +0.2 points on every row. */
+  const gl1b = variantSession('gl1-repeat.jsonl', (r) => ({
+    ...r,
+    syncedMs: (r['syncedMs'] as number[]).map((v) => v * 1.1),
+    twoTickShare: (r['twoTickShare'] as number) + 0.002,
+  }));
+
+  it('aggregates the runs of a version and derives the noise band from same-version repeats', () => {
+    const campaign = loadCampaign([FIXTURE, gl1b]);
+    expect(campaign.runsByGl.get(1)).toHaveLength(2);
+    const busy = campaign.aggregates.get(1).get('640x360-busy');
+    expect(busy.runs).toBe(2);
+    expect(busy.sync.min).toBe(5);
+    expect(busy.sync.max).toBeCloseTo(5.5, 9);
+    expect(busy.sync.median).toBeCloseTo(5.25, 9);
+    expect(busy.twoTick.median).toBeCloseTo(2.1, 9);
+    expect(campaign.noise.relSync.median).toBeCloseTo(0.1 / 1.05, 9);
+    expect(campaign.noise.twoTick.p90).toBeCloseTo(0.2, 9);
+    expect(quantile([1, 2, 3, 4], 0.5)).toBe(2.5);
+    expect(runStats([])).toBeNull();
+  });
+
+  it('prints the summary matrices, §13 on the medians and the noise band', () => {
+    const report = analyzeBenchSessions([FIXTURE, gl1b]);
+    expect(report).toContain('# TV render bench — 2 session(s)');
+    expect(report).toContain('## WebGL 1 — 2 run(s)');
+    expect(report).toMatch(/\| Size +\| +s \| +busy \| +filter \| +mode7 \| +crt-light \| +crt-full \| +worst \|/);
+    // Two-tick %: the median of 2.0 and 2.2, ± half the range.
+    expect(report).toMatch(/\| 640x360 \| +1\.5 \| +2\.1 ±0\.1 \|/);
+    expect(report).toContain('### Plan §13 at 640×360 — GL 1, median of 2 runs');
+    expect(report).toContain('| synced p95, relative   |    18 |    10% | 10% |');
+    // Only GL 1 runs: no comparison.
+    expect(report).toContain('No comparison: the sessions hold WebGL 1 runs only.');
+  });
+
+  it('refuses a verdict with fewer than two runs of each version', () => {
+    const gl2 = variantSession('gl2-once.jsonl', (r) => ({ ...r, webGLVersion: 2 }));
+    const report = analyzeBenchSessions([FIXTURE, gl2]);
     expect(report).toContain('## WebGL 1 vs 2 (plan §13, review F8)');
-    expect(report).toContain('| 640x360-busy | 5.00 | 4.25 | 0.85× |');
-    expect(report).toContain('WebGL 2 is clearly better at 640×360 (0.85× the synced p95)');
-    const same = variantSession('gl2-same.jsonl', (r) => ({ ...r, webGLVersion: 2 }));
-    expect(analyzeBenchSessions([FIXTURE, same])).toContain('WebGL 2 is not clearly better at 640×360 (1.00×');
-    // One session alone gets no comparison.
-    expect(analyzeBenchSessions([FIXTURE])).not.toContain('WebGL 1 vs 2');
-    expect(compareWebGL([], [])).toContain('No 640x360-busy row in both sessions: no WebGL verdict.');
+    expect(report).toContain('**No verdict:** it needs ≥ 2 runs of each WebGL version, these sessions hold GL 1 × 1 and GL 2 × 1.');
+    expect(report).toContain('No noise floor: no WebGL version has 2 runs (GL 1 × 1, GL 2 × 1).');
+    expect(report).not.toContain('**Verdict:**');
+  });
+
+  it('calls a difference only beyond the noise band', () => {
+    const asGl2 = (name: string, edit: (r: Record<string, unknown>) => Record<string, unknown>) =>
+      variantSession(name, (r) => edit({ ...r, webGLVersion: 2 }));
+    const same = [asGl2('gl2-same-a.jsonl', (r) => r), asGl2('gl2-same-b.jsonl', (r) => r)];
+    const within = analyzeBenchSessions([FIXTURE, gl1b, ...same]);
+    expect(within).toContain('**Verdict:** within noise — no verdict: WebGL 1 (the shipped default) stays.');
+    // GL 2 halves the two-tick share and the synced p95 everywhere: far beyond a 0.2-point / 10 % band.
+    const better = (r: Record<string, unknown>) => ({
+      ...r,
+      twoTickShare: (r['twoTickShare'] as number) * 0.5,
+      syncedMs: (r['syncedMs'] as number[]).map((v) => v * 0.5),
+    });
+    const report = analyzeBenchSessions([FIXTURE, gl1b, asGl2('gl2-a.jsonl', better), asGl2('gl2-b.jsonl', better)]);
+    expect(report).toContain('**Verdict:** WebGL 2 is better beyond the noise floor (two-tick share)');
+    expect(report).toContain('§13’s rule: WebGL 2 is clearly better at 640×360 (0.48× the synced p95');
+    // A GL 2 that repeats one GL 1 run exactly is half GL 1's spread away — inside GL 1's range, never called.
+    const repeat = [asGl2('gl2-rep-a.jsonl', (r) => r), asGl2('gl2-rep-b.jsonl', (r) => r)];
+    expect(analyzeBenchSessions([FIXTURE, gl1b, ...repeat])).toMatch(/\| two-tick share \| +0 \| +0 \| +18 \|/);
+    expect(report).toMatch(/\| 640x360-busy +\| +2\.1 ±0\.1 \| +1\.0 ±0\.0 \| +-1\.1 \| beyond \|/);
+  });
+
+  it('reads a folder of sessions and prints the per-session detail with --full', () => {
+    const dir = mkdtempSync(join(tmp, 'campaign-'));
+    writeFileSync(join(dir, 'rb-a.jsonl'), readFileSync(FIXTURE, 'utf8'));
+    writeFileSync(join(dir, 'rb-b.jsonl'), readFileSync(gl1b, 'utf8'));
+    writeFileSync(join(dir, 'ip-other.jsonl'), '{"kind":"input-probe"}\n');
+    expect(expandSessionArgs([dir]).map((f) => f.slice(dir.length + 1))).toEqual(['rb-a.jsonl', 'rb-b.jsonl']);
+    const report = analyzeBenchSessions([dir], { full: true });
+    expect(report).toContain('# TV render bench — 2 session(s)');
+    expect(report).toContain('## 640x360 (s = 1.5) — the v2 frame and density');
+    expect(analyzeBenchSessions([dir])).not.toContain('## 640x360 (s = 1.5)');
   });
 
   it('runs from the command line', async () => {

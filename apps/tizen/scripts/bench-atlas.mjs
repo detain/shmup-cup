@@ -63,8 +63,15 @@ import { decodePng, encodePng } from '../../../scripts/assets/png.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import { buildDecodePages } from './bench-decode.mjs';
 
-/** The density factors of the bench's three frame sizes (384×216, 640×360, 960×540). */
-export const BENCH_DENSITIES = Object.freeze([1, 1.5, 2.25]);
+/**
+ * The density factors the bench's frame sizes use, ascending: 1 (the 384×216 baseline and every
+ * `native` row), then the `scaled` rows' `height / 240` — 1.33 (480×320), 1.5 (640×360), 2
+ * (the 480-row frames), 2.25 (960×540), 2.4 (1024×576), 2.5 (the 600-row frames) and 2.67
+ * (960×640). Must equal `src/bench/matrix.ts` `BENCH_DENSITIES` (pinned by
+ * `test/bench/bench.test.ts`); the resolutions past 2.67 have no scaled row, since their modelled
+ * atlas would need more than two 2048² pages (see the matrix's module docs).
+ */
+export const BENCH_DENSITIES = Object.freeze([1, 1.33, 1.5, 2, 2.25, 2.4, 2.5, 2.67]);
 
 /** The virtual module the bench imports its atlases and particle presets from. */
 export const BENCH_MODULE_ID = 'virtual:shmup-render-bench';

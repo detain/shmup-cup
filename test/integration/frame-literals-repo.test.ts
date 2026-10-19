@@ -120,56 +120,67 @@ const ALLOWED: readonly AllowedFrameLiteral[] = [
     value: FRAME_H,
     reason: "the root scripts' mirror of FRAME_H (O8), pinned by test/scripts/frame.test.ts",
   },
-  // The TV bench's v1 baseline: 384×216 stays a measured row after R2-01 (plan R0-02, §13).
+  // The TV bench's resolution sweep (R0-02, the owner's R0-03 follow-up): absolute data, not
+  // FRAME_W / FRAME_H. 384×216 is v1's baseline row, which outlives R2-01; 640×360 at s = 1.5
+  // equals the game's frame since R2-01, and 640 / 360 recur as other rows' width and height.
   {
     file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.id',
-    value: 384,
-    reason: "the TV bench's v1 baseline row '384x216': data that outlives R2-01 (R0-02, §13)",
-  },
-  {
-    file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.id',
-    value: 216,
-    reason: "the TV bench's v1 baseline row '384x216': data that outlives R2-01 (R0-02, §13)",
-  },
-  {
-    file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.width',
+    symbol: 'BENCH_RESOLUTIONS.width',
     value: 384,
     reason: "the TV bench's v1 baseline row's width: data that outlives R2-01 (R0-02, §13)",
   },
   {
     file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.height',
+    symbol: 'BENCH_RESOLUTIONS.height',
     value: 216,
     reason: "the TV bench's v1 baseline row's height: data that outlives R2-01 (R0-02, §13)",
   },
-  // The TV bench's v2 row: 640×360 at s = 1.5 equals the game's frame since R2-01, but the rows
-  // are absolute data like the v1 row, not FRAME_W / FRAME_H (R0-02, §13).
   {
     file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.id',
+    symbol: 'BENCH_RESOLUTIONS.width',
     value: 640,
-    reason: "the TV bench's v2 row '640x360': bench data, absolute like the v1 row (R0-02, §13)",
+    count: 2,
+    reason: "the TV bench's 640×360 (v2) and 640×480 rows' width: absolute bench data (R0-02)",
   },
   {
     file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.id',
-    value: 360,
-    reason: "the TV bench's v2 row '640x360': bench data, absolute like the v1 row (R0-02, §13)",
-  },
-  {
-    file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.width',
-    value: 640,
-    reason: "the TV bench's v2 row's width: bench data, absolute like the v1 row (R0-02, §13)",
-  },
-  {
-    file: 'apps/tizen/src/bench/matrix.ts',
-    symbol: 'BENCH_SIZES.height',
+    symbol: 'BENCH_RESOLUTIONS.height',
     value: 360,
     reason: "the TV bench's v2 row's height: bench data, absolute like the v1 row (R0-02, §13)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_RESOLUTIONS.height',
+    value: 640,
+    reason: "the TV bench's 960×640 row's height: absolute bench data (R0-02 sweep)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_V2_SIZE',
+    value: 640,
+    reason: "the TV bench's v2 row id '640x360' it looks up: bench data, not FRAME_W (R0-02)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_V2_SIZE',
+    value: 360,
+    reason: "the TV bench's v2 row id '640x360' it looks up: bench data, not FRAME_H (R0-02)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_KNOBS.sizes',
+    value: 640,
+    count: 4,
+    reason:
+      "the knob rows' size id '640x360' (stretch, interp, out720, out540): bench data (R0-02)",
+  },
+  {
+    file: 'apps/tizen/src/bench/matrix.ts',
+    symbol: 'BENCH_KNOBS.sizes',
+    value: 360,
+    count: 4,
+    reason:
+      "the knob rows' size id '640x360' (stretch, interp, out720, out540): bench data (R0-02)",
   },
   // HTTP status codes: 200 = OK.
   {

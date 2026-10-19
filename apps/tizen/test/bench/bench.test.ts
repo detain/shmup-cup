@@ -5,10 +5,16 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import {
+  BENCH_DEFAULT_SCALE_MODE,
+  BENCH_DENSITIES,
   BENCH_GL_KEY,
   BENCH_KEY_CODES,
+  BENCH_KNOBS,
+  BENCH_MAX_ATLAS_PAGES,
+  BENCH_RESOLUTIONS,
   BENCH_SCENARIOS,
   BENCH_SIZES,
+  BENCH_V2_SIZE,
   BENCH_VARIANTS,
   HEADLESS_BENCH_TIMING,
   TV_BENCH_MARKER,
@@ -17,12 +23,14 @@ import {
   benchWebGLVersion,
   detectBenchHost,
   findBenchScenario,
+  findBenchSize,
   moduleInfo,
   searchParam,
   timingFromSearch,
 } from '../../src/bench/index.js';
 import { WEBGL_VERSION_KEY } from '../../src/boot/index.js';
 import { TV_BENCH_MARKER as CHECK_MARKER } from '../../scripts/check-bundle.mjs';
+import { BENCH_DENSITIES as ATLAS_DENSITIES } from '../../scripts/bench-atlas.mjs';
 
 describe('bench module', () => {
   it('describes itself', () => {
@@ -37,17 +45,59 @@ describe('bench module', () => {
 });
 
 describe('bench matrix (plan R0-02, §13)', () => {
-  it('measures the three frames at density 1, 1.5 and 2.25', () => {
-    expect(BENCH_SIZES.map((size) => [size.id, size.width, size.height, size.density])).toEqual([
-      ['384x216', 384, 216, 1],
-      ['640x360', 640, 360, 1.5],
-      ['960x540', 960, 540, 2.25],
+  it('sweeps 25 sizes: a scaled row at height / 240 up to 2.67 and a native row at density 1', () => {
+    expect(
+      BENCH_SIZES.map((size) => [size.id, size.width, size.height, size.density, size.art]),
+    ).toEqual([
+      ['384x216', 384, 216, 1, 'scaled'],
+      ['480x320', 480, 320, 1.33, 'scaled'],
+      ['480x320n', 480, 320, 1, 'native'],
+      ['640x360', 640, 360, 1.5, 'scaled'],
+      ['640x360n', 640, 360, 1, 'native'],
+      ['640x480', 640, 480, 2, 'scaled'],
+      ['640x480n', 640, 480, 1, 'native'],
+      ['800x480', 800, 480, 2, 'scaled'],
+      ['800x480n', 800, 480, 1, 'native'],
+      ['854x480', 854, 480, 2, 'scaled'],
+      ['854x480n', 854, 480, 1, 'native'],
+      ['960x540', 960, 540, 2.25, 'scaled'],
+      ['960x540n', 960, 540, 1, 'native'],
+      ['1024x576', 1024, 576, 2.4, 'scaled'],
+      ['1024x576n', 1024, 576, 1, 'native'],
+      ['800x600', 800, 600, 2.5, 'scaled'],
+      ['800x600n', 800, 600, 1, 'native'],
+      ['1024x600', 1024, 600, 2.5, 'scaled'],
+      ['1024x600n', 1024, 600, 1, 'native'],
+      ['960x640', 960, 640, 2.67, 'scaled'],
+      ['960x640n', 960, 640, 1, 'native'],
+      ['1280x720n', 1280, 720, 1, 'native'],
+      ['1024x768n', 1024, 768, 1, 'native'],
+      ['1280x960n', 1280, 960, 1, 'native'],
+      ['1920x1080n', 1920, 1080, 1, 'native'],
     ]);
-    // The same field of view: frame width over density is v2's 640 / 1.5 at both larger sizes.
-    expect(BENCH_SIZES[1].width / BENCH_SIZES[1].density).toBeCloseTo(
-      BENCH_SIZES[2].width / BENCH_SIZES[2].density,
+    expect(BENCH_RESOLUTIONS).toHaveLength(15);
+    // Every scaled density but the baseline's is height / 240 to two decimals; past 2.67 the
+    // modelled atlas needs more than two 2048² pages, so those resolutions are native only.
+    for (const frame of BENCH_RESOLUTIONS.slice(1)) {
+      const s = Math.round((frame.height / 240) * 100) / 100;
+      expect(frame.scaled).toBe(Math.ceil((s * s) / 4) > BENCH_MAX_ATLAS_PAGES ? null : s);
+    }
+    // The same field of view: frame width over density is v2's 640 / 1.5 at 960x540 too.
+    const v2 = findBenchSize('640x360');
+    const hiBit = findBenchSize('960x540');
+    expect(v2).toBe(BENCH_V2_SIZE);
+    expect(hiBit).not.toBeNull();
+    expect(BENCH_V2_SIZE.width / BENCH_V2_SIZE.density).toBeCloseTo(
+      (hiBit?.width ?? 0) / (hiBit?.density ?? 1),
       9,
     );
+    expect(findBenchSize('1280x720')).toBeNull();
+    expect(new Set(BENCH_SIZES.map((size) => size.id)).size).toBe(25);
+  });
+
+  it('needs an atlas at eight densities — the bench atlas script’s list, exactly', () => {
+    expect(BENCH_DENSITIES).toEqual([1, 1.33, 1.5, 2, 2.25, 2.4, 2.5, 2.67]);
+    expect(Array.from(ATLAS_DENSITIES)).toEqual(Array.from(BENCH_DENSITIES));
   });
 
   it('has the busy frame, a filtered layer, Mode-7, CRT light / full and everything at once', () => {
@@ -61,23 +111,65 @@ describe('bench matrix (plan R0-02, §13)', () => {
     ]);
   });
 
-  it('lists 18 scenarios, sizes outer, so the 384x216 baseline runs first', () => {
-    expect(BENCH_SCENARIOS).toHaveLength(18);
+  it('lists 150 plain scenarios, sizes outer, so the 384x216 baseline runs first, then 22 knob rows', () => {
+    expect(BENCH_SCENARIOS).toHaveLength(172);
     expect(BENCH_SCENARIOS.slice(0, 6).every((s) => s.size.id === '384x216')).toBe(true);
     BENCH_SCENARIOS.forEach((scenario, index) => {
       expect(scenario.index).toBe(index);
-      expect(scenario.id).toBe(`${scenario.size.id}-${scenario.variant.id}`);
+      const plain = index < BENCH_SIZES.length * BENCH_VARIANTS.length;
+      expect(scenario.knob === null).toBe(plain);
+      expect(scenario.row).toBe(
+        plain ? scenario.variant.id : `${scenario.variant.id}-${scenario.knob?.id}`,
+      );
+      expect(scenario.id).toBe(`${scenario.size.id}-${scenario.row}`);
+      if (plain) {
+        expect([scenario.scaleMode, scenario.interpolation]).toEqual(['integer', false]);
+        expect([scenario.outputWidth, scenario.outputHeight]).toEqual([0, 0]);
+      }
     });
-    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(18);
+    expect(new Set(BENCH_SCENARIOS.map((s) => s.id)).size).toBe(172);
     expect(Object.isFrozen(BENCH_SCENARIOS)).toBe(true);
+    // R0-02's and R0-03's 18 ids are still there, byte for byte.
+    for (const size of ['384x216', '640x360', '960x540']) {
+      for (const variant of BENCH_VARIANTS) {
+        expect(findBenchScenario(`${size}-${variant.id}`)?.knob).toBeNull();
+      }
+    }
+  });
+
+  it('runs every knob at its sizes with busy and worst, against the default settings', () => {
+    expect(BENCH_KNOBS.map((knob) => [knob.id, knob.sizes.length * knob.variants.length])).toEqual([
+      ['fit', 4],
+      ['stretch', 6],
+      ['interp', 6],
+      ['out720', 4],
+      ['out540', 2],
+    ]);
+    const knobRows = BENCH_SCENARIOS.filter((s) => s.knob !== null);
+    expect(knobRows).toHaveLength(22);
+    expect(knobRows[0].id).toBe('800x600-busy-fit');
+    expect(findBenchScenario('640x360-busy-stretch')).toMatchObject({
+      row: 'busy-stretch',
+      scaleMode: 'stretch',
+      interpolation: false,
+    });
+    expect(findBenchScenario('1280x720n-worst-interp')).toMatchObject({
+      scaleMode: BENCH_DEFAULT_SCALE_MODE,
+      interpolation: true,
+    });
+    expect(findBenchScenario('1920x1080n-busy-out720')).toMatchObject({
+      outputWidth: 1280,
+      outputHeight: 720,
+    });
   });
 
   it('finds a scenario by id', () => {
-    expect(findBenchScenario('640x360-mode7')?.index).toBe(8);
+    expect(findBenchScenario('640x360-mode7')?.index).toBe(20);
+    expect(findBenchScenario('1920x1080n-worst')?.index).toBe(149);
     expect(findBenchScenario('640x360-nope')).toBeNull();
   });
 
-  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — about 10 minutes', () => {
+  it('runs 10 s of warm-up and 20 s of measurement per scenario on the TV — 86 minutes', () => {
     expect(TV_BENCH_TIMING).toEqual({
       warmupMs: 10_000,
       measureMs: 14_000,
@@ -86,7 +178,7 @@ describe('bench matrix (plan R0-02, §13)', () => {
     });
     const perScenario =
       TV_BENCH_TIMING.warmupMs + TV_BENCH_TIMING.measureMs + TV_BENCH_TIMING.syncMs;
-    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(9);
+    expect((perScenario * BENCH_SCENARIOS.length) / 60_000).toBe(86);
     expect(HEADLESS_BENCH_TIMING.measureMs).toBeGreaterThan(0);
   });
 });
@@ -135,12 +227,16 @@ describe('bench query string', () => {
 });
 
 describe('bench remote and host', () => {
-  it('maps Enter, every host’s Back and the Red key', () => {
+  it('maps Enter, every host’s Back, the Red key and the arrows that page the results', () => {
     expect(benchKeyOf(13)).toBe('enter');
     for (const code of [10009, 461, 27, 8]) expect(benchKeyOf(code)).toBe('back');
     expect(benchKeyOf(403)).toBe('red');
     expect(benchKeyOf(82)).toBe('red');
-    expect(benchKeyOf(37)).toBeNull();
+    expect(benchKeyOf(37)).toBe('prev');
+    expect(benchKeyOf(38)).toBe('prev');
+    expect(benchKeyOf(39)).toBe('next');
+    expect(benchKeyOf(40)).toBe('next');
+    expect(benchKeyOf(65)).toBeNull();
     expect(BENCH_KEY_CODES.back).toContain(10009);
   });
 

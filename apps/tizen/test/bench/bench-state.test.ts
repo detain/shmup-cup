@@ -73,7 +73,7 @@ describe('bench run state', () => {
     const messy = parseRunState(
       JSON.stringify({
         ...state,
-        cursor: 99,
+        cursor: 999,
         // A record the results page could not draw (no timings) is dropped like junk.
         records: [null, 3, { scenario: '384x216-filter', index: 1 }, rec(1)],
         sent: ['x', 1],
@@ -117,16 +117,16 @@ describe('bench run state', () => {
     for (let i = 0; i < BENCH_SCENARIOS.length; i++) state = recordResult(state, rec(i));
     const { decode: _decode, ...old } = { ...state, running: false };
     state = parseRunState(JSON.stringify(old)) ?? state;
-    expect([state.running, state.cursor, state.decode]).toEqual([false, 18, null]);
-    state = markSent(state, [17]);
+    expect([state.running, state.cursor, state.decode]).toEqual([false, 172, null]);
+    state = markSent(state, [171]);
     state = rerunScenario(state);
-    expect([state.running, state.single, state.cursor]).toEqual([true, true, 17]);
-    state = recordResult(state, { ...rec(17), frames: 7 });
-    expect([state.running, state.single, state.cursor]).toEqual([false, false, 18]);
-    expect(state.records).toHaveLength(18);
-    expect(state.records[17].frames).toBe(7);
+    expect([state.running, state.single, state.cursor]).toEqual([true, true, 171]);
+    state = recordResult(state, { ...rec(171), frames: 7 });
+    expect([state.running, state.single, state.cursor]).toEqual([false, false, 172]);
+    expect(state.records).toHaveLength(172);
+    expect(state.records[171].frames).toBe(7);
     // The new record is not acknowledged yet.
-    expect(unsentRecords(state).map((r) => r.index)).toContain(17);
+    expect(unsentRecords(state).map((r) => r.index)).toContain(171);
   });
 
   it('re-runs the decode scenario from the results page after a whole run', () => {
@@ -135,13 +135,13 @@ describe('bench run state', () => {
     state = markSent(recordDecode(state, fakeDecode()), [DECODE_SCENARIO_INDEX]);
     expect(decodeUnsent(state)).toBe(false);
     state = rerunScenario(state);
-    expect([state.running, state.single, state.cursor]).toEqual([true, true, 18]);
+    expect([state.running, state.single, state.cursor]).toEqual([true, true, 172]);
     state = recordDecode(state, fakeDecode({ repetitions: 3 }));
-    expect([state.running, state.single, state.cursor]).toEqual([false, false, 19]);
+    expect([state.running, state.single, state.cursor]).toEqual([false, false, 173]);
     expect(state.decode?.repetitions).toBe(3);
     // The new decode record is not acknowledged yet; the render records are untouched.
     expect(decodeUnsent(state)).toBe(true);
-    expect(state.records).toHaveLength(18);
+    expect(state.records).toHaveLength(172);
   });
 
   it('stops where it is on Back or an error, keeping the results so far', () => {

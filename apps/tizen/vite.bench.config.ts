@@ -68,6 +68,11 @@ export function benchConfigXmlPlugin(): Plugin {
 export default defineConfig({
   root: join(appDir, 'bench'),
   base: './',
+  // The campaign mode (`src/bench/campaign.ts`): the passes and the pause, `''` = no campaign.
+  define: {
+    __SHMUP_BENCH_CAMPAIGN__: JSON.stringify(process.env.VITE_BENCH_CAMPAIGN ?? ''),
+    __SHMUP_BENCH_PAUSE_S__: JSON.stringify(process.env.VITE_BENCH_PAUSE_S ?? '30'),
+  },
   publicDir: join(appDir, 'public'),
   resolve: {
     conditions: clientConditions,

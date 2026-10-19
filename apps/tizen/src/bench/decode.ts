@@ -3,7 +3,7 @@
  * `bench` module, see `./index.ts`): what an atlas page costs **from file to GPU** on the TV, so
  * R0-03's owner session records the 2048² figure plan R3-04 estimates its zone-load time from.
  *
- * It runs after the 18 render scenarios, as the run's 19th page load ({@link DECODE_SCENARIO_ID},
+ * It runs after the render scenarios, as the run's last page load ({@link DECODE_SCENARIO_ID},
  * {@link BENCH_RUN_LENGTH}), and measures four pages the bench build ships next to its density
  * atlases (`scripts/bench-decode.mjs`): a synthetic 2048² RGBA page, the same quantised to a
  * 2048² PNG-8 page, and the shipped atlas's `common` and zone A pages for reference. Per page and
@@ -41,7 +41,7 @@ import { roundTo, summarizeSeries } from './stats.js';
 /** The decode scenario's id (`?scenario=decode` runs it headlessly). */
 export const DECODE_SCENARIO_ID = 'decode';
 
-/** Its position in a TV run: after the 18 render scenarios (the matrix is unchanged). */
+/** Its position in a TV run: after every render scenario of the matrix. */
 export const DECODE_SCENARIO_INDEX = BENCH_SCENARIOS.length;
 
 /** Page loads of a whole TV run: the render matrix, then the decode scenario. */
