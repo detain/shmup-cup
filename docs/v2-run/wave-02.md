@@ -83,7 +83,7 @@ over).
 - **Goal:** every world-unit default of the enemy behaviours reads `v * WORLD_SCALE` (or `v * WORLD_SCALE +
   WORLD_TOP_PAD` for `world-y`), neutral at K = 1, so R2-02's port flips them with one constant (W5-5).
 - **Files (only these; checked on `bc8e05d`):**
-  - `packages/core/src/behaviors/index.ts` — the enemy behaviours (`defineBehavior` calls from about `:430` up to
+  - `packages/core/src/behaviors/index.ts` — the enemy behaviours (`defineBehavior` calls from `:455` up to
     `DEFAULT_BEHAVIOR_DEFS` at `:1194`): every default whose unit (from `BEHAVIOR_PARAM_UNITS`) is `px-per-tick`,
     `px-per-tick2`, `world-px` or `rel-px` → `v * WORLD_SCALE`; `world-y` → `v * WORLD_SCALE + WORLD_TOP_PAD`.
     Inline literals: `HUNTER_EDGE = 12` (`:633`) → `12 * WORLD_SCALE`; `api.spawn(child, 0, -self.hh - 4)` (`:799`)
@@ -125,13 +125,22 @@ over).
   - `packages/core/test/frame-literals.test.ts` — only the **reason** of the `bossSuction.pullRadius` entry
     (`:127-133`): the literal 200 stays inside `200 * WORLD_SCALE`, so the count stays 1; say "a world radius,
     `200 * WORLD_SCALE`".
+- **Steps:** `R2-02.W6`'s steps 1–2 and its unit rule (in its Files), for this range:
+  1. list the defaults with units: `node docs/v2-run/helpers/w5/defaults.mjs` (today) and read
+     `docs/v2-run/helpers/w5/defaults-all.txt` (the v1 values at `2c865b6`);
+  2. edit each boss default with an exact old/new string, by its unit in `BEHAVIOR_PARAM_UNITS`: `px-per-tick`,
+     `px-per-tick2`, `world-px` or `rel-px` → `v * WORLD_SCALE`; `world-y` → `v * WORLD_SCALE + WORLD_TOP_PAD`;
+     leave `ticks`, `angle`, `count`, `ratio`, `score`, `index`, `seed`, `switch` units alone;
+  3. leave the kit lines of this range byte for byte (Traps).
 - **Tests:** as W6, plus
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/frame-literals.test.ts packages/core/test/bosses
   ```
 - **Acceptance:** as W6 (the kit still applies all 15 replacements); the core allow-list still holds **14** entries.
 - **Token:** BEHAVIOR.
-- **Traps:** the 15 kit lines include `boss.widow` (`:2021-2024`) and `boss.walker` (`:3158-3159`): leave them.
+- **Traps:** the kit lines in this range are `captain.ram` `ramX` (`:1613`), `captain.crab` `minX` / `maxX` /
+  `minY` / `maxY` (`:1749-1752`), `boss.widow` (`:2021-2024`) and `boss.walker` (`:3158-3159`): leave them byte for
+  byte — the kit replaces each by an exact match, and a scaled line makes `two-scale.sh` exit 1.
 - **Docs needs:** as W6.
 
 ### R2-02.T0 — The v1 → v2 mapping helper for tests
@@ -145,8 +154,8 @@ over).
     `v1screenY` (core's `rescaleNumber('screen-x' | 'screen-y', v, …)` with the v2 geometry when `K !== 1`, the
     identity at 1), `V1_FRAME = { w: 384, h: 200 }` (test files are not frame-scanned), and `mapEnemyRow` /
     `mapBossRow` implementing `test/fixtures/v1-baseline/README.md` § "Comparing a v2 run" (`:83-122`). Numbers only;
-    no `instanceof`; import core by relative path (`../../src/index.js`), like `v1-replay.ts`, so core tests do not
-    load a second `@shmup/core` instance (precheck item 12).
+    no `instanceof`; import core by relative path (`../../src/index.js`; `v1-replay.ts` does the same with
+    `../../src/config/index.js`), so core tests do not load a second `@shmup/core` instance (precheck item 12).
   - `packages/core/test/helpers/v1-port.test.ts` (new) — the identity at K = 1, and the mapping rules on hand-made
     rows (with K and PAD passed in, so both scales are tested at K = 1).
 - **Tests:**
@@ -175,7 +184,11 @@ over).
        offset (32, 40, 16, 16, −88), not the absolute value;
     2. each export equals `rescaleNumber(unit, v1, geometry)` (core `data/units.ts:265`; geometry from
        `WORLD_SCALE` / `WORLD_TOP_PAD`; identity at 1), or `PLAYFIELD_W + offset * WORLD_SCALE` for the anchored ones;
-    3. an `UNSCALED` list with a one-word reason (`ticks`, `angle`, `count`, `ratio`, `frame`, `score`);
+    3. an `UNSCALED` list with a one-word reason (`ticks`, `angle`, `count`, `ratio`, `frame`, `score`, `flag`,
+       `hash`, `resolution`, `bound`): `ACCEL_HAS_MAX` / `ACCEL_HAS_MIN` are `flag` (bit flags), `FNV_OFFSET_BASIS`
+       is `hash`, `PATH_SAMPLE_STEP` (`data/paths.ts:26`, 1 px) is `resolution` (the baked path tables' sampling
+       step: it stays 1 px, a ported path just has more samples), `MAX_PATH_LENGTH` (16384 px) is `bound` (a
+       load-time cap far above every shipped path, ported or not: their control polylines are under 1,000 px);
     4. a **completeness audit**: every numeric barrel export (386 at `bc8e05d`, 388 after P0 adds `WORLD_SCALE` /
        `WORLD_TOP_PAD`; `docs/v2-run/helpers/w5pre/exports.txt` is the list at `ac40436`) — the audit takes today's
        list from the barrel, never a hard-coded count —
@@ -203,36 +216,52 @@ over).
 ### R2-02.T4b — The Tiled importer and rescale tests
 
 - **Wave / lane / order:** wave 2, lane 2, after `R2-02.A1`.
-- **Depends on:** nothing beyond P0 / P1 for the fixtures and the `runIf`s; the kit run of the new identity case
-  needs `R2-02.W5` (the ±768 bound) on master — until then that one case fails under the kit, and you list it in your
-  report by W5's id.
+- **Depends on:** nothing beyond P0 / P1 for the fixtures and the `runIf`s; the kit run of the identity case `:243`
+  (its ported branch, below) needs `R2-02.W5` (the ±768 bound) on master — until then that one case fails under the
+  kit, and you list it in your report by W5's id.
 - **Goal:** the tools' tests pass after the port: the Tiled fixtures at 12-px tiles and the 640 view; the rescale
-  tests that read v1-geometry shipped content run only while the content is still v1 (W5-4), plus a new identity case
-  on a ported tree.
+  tests that read v1-geometry shipped content run only while the content is still v1 (W5-4), and the factor-1
+  identity case runs on either tree (v1 content, or ported).
 - **Files (only these):**
   - `test/scripts/content/fixtures/tiled-sample.tmj`, `tiled-sample.stage.json`, `tiled-sample.paths.json` — rebuilt
     at 12-px tiles and the 640 view (`scripts/content/tiled-import.mjs` reads `scripts/frame.mjs`: 640 / 12 since
     the flip);
-  - `test/scripts/content/tiled-import.test.ts`, `tiled-import-edge.test.ts` — their literals (`:182` pins
-    `SPAWN_LEAD`); **their `port-pending` gates stay** (U5 deletes them in wave 5);
-  - `test/scripts/content/rescale.test.ts` — the four cases of "the shipped content" that assume v1 geometry
-    (`:256`, `:279`, `:329`, `:360`) get `it.runIf(<content still v1>)` (a shipped tileset at 8 px); the identity case
-    `:243` stays; add one case: `--factor 1` identity on a ported tree (run the tool ×1.5 on a temp copy of
-    `content/`, then `--factor 1 --dry-run` → 0 changes, 0 unclassified, 0 errors — needs the W5 bound, so it is
-    `it.runIf(WORLD_SCALE !== 1)`: at K = 1 the bound is still ±512 and the IRON LEVIATHAN `parts[].x` fail;
-    `scripts/content/rescale.mjs` has no bound flag);
-  - `test/scripts/content/rescale-edge.test.ts` — the two round-5 cases that read the shipped `terrain-a`
-    (`:1466-1470` and its user) get the same `runIf`.
+  - `test/scripts/content/tiled-import.test.ts`, `tiled-import-edge.test.ts` — their literals
+    (`tiled-import-edge.test.ts:182` pins `SPAWN_LEAD` symbolically: leave it); **their `port-pending` gates stay**
+    (U5 deletes them in wave 5);
+  - `test/scripts/content/rescale.test.ts`:
+    - **the condition.** Write one constant in this test file itself, `CONTENT_STILL_V1`: read every
+      `content/tilesets/*.tileset.json` `tileSize`; the content is still v1 while one of them is 8. Never take it from
+      `packages/core/test/helpers/port-pending.ts` (`CONTENT_PORT_PENDING`, `shippedTileSizes`): `R2-02.U5` deletes
+      that file in wave 5 without touching these tests, wave 5's mechanical un-gating (its rule 4) would turn a
+      `runIf(CONTENT_PORT_PENDING)` into a plain `it`, and the 6 retired cases must keep skipping after it;
+    - the four cases of "the shipped content" that assume v1 geometry (`:256`, `:279`, `:329`, `:360`) get
+      `it.runIf(CONTENT_STILL_V1)`;
+    - **the identity case `:243`** reads the content with the v1 geometry (`shipped('identity')`: `--tile-size 8`),
+      so under the kit it fails ("tileSize 12 is not --tile-size 8"). Make it the factor-1 identity on **either**
+      tree: while `CONTENT_STILL_V1`, it keeps `shipped('identity')`; once the content is ported, it uses core's own
+      geometry (`options({ factor: 1 })`: `content/` as it is, a dry run — what
+      `node scripts/content/rescale.mjs --factor 1 --dry-run` runs) and expects 0 changes, 0 unclassified, 0 errors.
+      Under the kit, before `R2-02.W5` is on master, the ported branch reports the 3 IRON LEVIATHAN `parts[].x`
+      errors (the bound is still ±512): list them in your report by W5's id. Never port `content/` ×1.5 inside a
+      test: at `WORLD_SCALE !== 1` it is already ported. Add no other case;
+  - `test/scripts/content/rescale-edge.test.ts` — the two round-5 cases `:1557` and `:1626` (they read the shipped
+    `terrain-a` through `TILESET_FILE`, `:1466-1470`, in `portAndDraw`) get the same `it.runIf(CONTENT_STILL_V1)`,
+    with the same constant written in this file too (same rule: never from `port-pending.ts`).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/content
   bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/content
   ```
-- **Acceptance:** the 61 fixture tests unchanged and green; green at both scales: the `port-pending` cases
-  (`itPortPending`) skip at K = 1 and **run** under the kit (the stub turns `CONTENT_PORT_PENDING` off), so they must
-  pass there; the four + two `runIf(<content still v1>)` cases skip under the kit (for good, not until U5).
+- **Acceptance:** the 54 other tests of `rescale.test.ts` / `rescale-edge.test.ts` (13 + 48 = 61 today, less the 7
+  named above) unchanged and green; green at both scales: the `port-pending` cases (`itPortPending`) skip at K = 1
+  and **run** under the kit (the stub turns `CONTENT_PORT_PENDING` off), so they must pass there; the four + two
+  `runIf(CONTENT_STILL_V1)` cases skip under the kit (for good, not until U5) — 6 retired cases, the number waves 4
+  and 5 expect; `:243` runs at both scales (under the kit it is red only for the 3 IRON LEVIATHAN errors, until
+  `R2-02.W5` is on master).
 - **Token:** none.
-- **Traps:** a temp copy of `content/` goes to a temp dir (parallel-safe), never in the repo.
+- **Traps:** every shipped-content run here is a dry run of `content/` as it is — no temp copy, no ×1.5 port inside a
+  test, nothing written to `content/`.
 
 ### R2-02.W2 — Weapons in `WORLD_SCALE` terms
 
@@ -376,7 +405,7 @@ over).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies packages/core/test/bosses packages/core/test/stage packages/core/test/world packages/core/test/collision packages/core/test/debug
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies/enemies-hunter-alloc.test.ts packages/core/test/enemies/enemies-rank-alloc.test.ts packages/core/test/bosses/bosses-alloc.test.ts packages/core/test/bosses/bosses-advanced-alloc.test.ts packages/core/test/bosses/bosses-escape-alloc.test.ts packages/core/test/bosses/bosses-pull-alloc.test.ts packages/core/test/world/world-death-alloc.test.ts packages/core/test/world/world-coop-alloc.test.ts packages/core/test/debug/debug-alloc.test.ts packages/core/test/stage/stage-bonus-alloc.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies/enemies-hunter-alloc.test.ts packages/core/test/enemies/enemies-rank-alloc.test.ts packages/core/test/bosses/bosses-alloc.test.ts packages/core/test/bosses/bosses-advanced-alloc.test.ts packages/core/test/bosses/bosses-escape-alloc.test.ts packages/core/test/bosses/bosses-pull-alloc.test.ts packages/core/test/world/world-death-alloc.test.ts packages/core/test/world/world-death-arcade-alloc.test.ts packages/core/test/world/world-coop-alloc.test.ts packages/core/test/world/world-gimmicks-alloc.test.ts packages/core/test/debug/debug-alloc.test.ts packages/core/test/stage/stage-bonus-alloc.test.ts
   bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/enemies packages/core/test/bosses packages/core/test/stage packages/core/test/world packages/core/test/collision packages/core/test/debug
   ```
 - **Acceptance:** the wave's R2-02 acceptance; the grid cell is 48 under the kit and a whole number (the grid divides
