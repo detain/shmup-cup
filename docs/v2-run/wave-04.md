@@ -499,8 +499,9 @@ carry over into wave 5).
 - **Acceptance:** the measured bytes per Mpx are in the commit body; the generator stays deterministic.
 - **Token:** none.
 - **Traps:** **the art data on myadmin1 is a snapshot** copied from the old host (`art-prompts/v2/candidates/`,
-  961 MB, git-ignored; the picker's `choices.json` at `/home/sites/mystage/public_html/shmup-cup/data/choices.json`,
-  not served). M1c needs only candidate images, not the picks: ask the owner for a fresh `choices.json` copy **only
+  ≈ 1 GB by `du -sh`, git-ignored; the picker's `choices.json` at
+  `/home/sites/mystage/public_html/shmup-cup/data/choices.json`, not served). M1c needs only candidate images, not
+  the picks: ask the owner for a fresh `choices.json` copy **only
   when M1c wants winners** (never read the snapshot's picks as current). **No FLUX candidate**, even as a reference
   (RR-4). Nothing from `candidates/` is committed. If skipped, the constants stay marked "uncalibrated" (as M1a wrote
   them; RR-7: PNG-8 at 0.3–0.6 MB per 2048×1024 page).
@@ -593,7 +594,7 @@ carry over into wave 5).
     (its page URLs are the same `decode-standin-zone-a*.png` files), and the docblock's decode list (`:42-43`);
     `apps/tizen/src/bench/virtual-bench.d.ts` — its declaration, and the id / URL docblocks (`:33`, `:41`);
   - `apps/tizen/src/bench/decode.ts` (`:48` `BENCH_RUN_LENGTH`, `:7` and `:64` the docblocks), `run.ts`, `scene.ts`,
-    `state.ts` (the docblocks at `:11-13` and `:39-43`), `results.ts` (the run lines, `:391` and `:414-420`) and the
+    `state.ts` (the docblocks at `:11-14` and `:40-43`), `results.ts` (the run lines, `:391` and `:414-420`) and the
     barrel `index.ts` (the docblock `:34-41`, the exports `:173-178`) — only for the 20th page load;
   - `packages/shell/src/telemetry/index.ts` — the `DecodeBenchPage` id docblock (`:1656`) only;
   - tests: `apps/tizen/test/scripts/bench-decode.test.ts`, `apps/tizen/test/bench/bench-decode.test.ts` (`:147`, the
@@ -700,7 +701,10 @@ carry over into wave 5).
 - **Goal:** copy every picked winner, its edits and its followups with their sidecars into
   `art-prompts/v2/winners/<id>/`, so later real-art ingest (R3-02's owner part, R5's `S3` drops) has committed inputs.
 - **Files (only these):** `art-prompts/v2/copy-winners.mjs` (new: reads a **copy** of `choices.json` and
-  `art-prompts/v2/candidates/ledger.json`; copies, never moves, a candidate); `art-prompts/v2/winners/**` (new);
+  the ledger `art-prompts/v2/candidates/ledger.json` (plan R0-04 (d) — **the myadmin1 snapshot has no ledger and no
+  committed tool writes one**: it arrives with the owner's fresh copy, so ask for it together with `choices.json`, and
+  if there is none, derive the based-on data from the choices' own `updatedAt` and say so in the report); copies, never
+  moves, a candidate); `art-prompts/v2/winners/**` (new);
   `.gitattributes` (only if the owner chose Git LFS); `art-prompts/v2/STATUS.md`.
 - **Steps:** a dry run first (it prints the counts per pick; they must match the choices: about 334 decided items —
   281 `a`, 49 `b`, 4 `c` in the last snapshot), then the real copy; commit with explicit paths (plan R0-04 (e):
