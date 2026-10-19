@@ -63,7 +63,9 @@ wave-2 scout's recommendations for R1-02 … R1-04, put to the owner as the defa
 without objection; **O11** came out of R1-03's review and is built as the default while the owner confirms it;
 **W1-D1 … W1-D3** are the orchestrator's wave-1 decisions (named D1–D3 in its notes — not v1's design decisions
 D1 …); **W3-1 … W3-12** are the orchestrator's wave-3 decisions for R1-05 and R3-05 part 2 — the wave-3 scout's
-recommended defaults, adopted and told to the owner, none blocking.
+recommended defaults, adopted and told to the owner, none blocking. **W4-1 … W4-14** are the orchestrator's
+wave-4 decisions for R2-01 and **W5-6** the wave-5 confirmation its C5 loop closed on; all fifteen are
+built, as R2-01's As built records.
 
 | ID | Decision | Applies to |
 |---|---|---|
@@ -93,6 +95,21 @@ recommended defaults, adopted and told to the owner, none blocking.
 | **W3-10** | Origin report: `use: "reference"` with cleanup `none` / `light` **fails** (the pixels are largely the model's); `heavy` / `redrawn` pass | R3-05 |
 | **W3-11** | Origin report: a shipped `ai-assisted` record with `reviewed: null` **fails**; staged art only warns | R3-05 |
 | **W3-12** | Origin report: pixel maps, the font, generators and their siblings are **`procedural`** (agent authorship is store-disclosure decision 8); no root `package.json` script — `node scripts/art-origins.mjs`, CI through vitest | R3-05 |
+| **W4-1** | Self-expiring gates instead of a red window: `CONTENT_PORT_PENDING` (until R2-02) and `GOLDENS_STALE` (until R2-03), each throwing at import once its condition is gone; a failure that comes from the test's own fixture is fixed, never gated | R2-01, R2-02, R2-03 |
+| **W4-2** | Prepare at 384×216 and flip last, in one atomic commit (`72b18a1`) — everything buildable before the flip lands at the old frame first | R2-01 |
+| **W4-3** | The interim art size is core's `ART_SCALE` (1 → 3/2 at the flip) with `core/ui`'s `uiPx(v)` for art-sized UI values; the font pin is the font file × `ART_SCALE` | R2-01 |
+| **W4-4** | The interim font is the 6×8 font upscaled ×1.5 at **pipeline time** (9×12, line 15) — no new font file until R4-03 | R2-01 |
+| **W4-5** | Never upscaled: the terrain tilesets (`terrain.mjs` draws at `TILE_SIZE`), the `ui/pixel` sheet, real-art PNG overrides and `native: true` sources. Amended by `16aff20`: the laser beams are drawn natively at the art scale | R2-01 |
+| **W4-6** | The TV bench's atlas, the CJK budget figures, the store icons and the doc images keep the v1 art (`artScale: 1`): the bench **for good**, the rest until R2-03; the store icons until R4-05 (RR-1, RR-3) | R2-01, R2-03, R4-05 |
+| **W4-7** | A v1 replay raises `ReplayVersionError` and the browser shows **V1 REPLAY** / "recorded by v1: cannot play"; the entry is deleted by hand, never automatically | R2-01 |
+| **W4-8** | `legacyScores` has no UI in R2-01; Steam achievements read `hiScores ∪ legacyScores` | R2-01 |
+| **W4-9** | The attract demos stay stale recordings until R2-03: the attract loop skips the demos the build refuses | R2-01, R2-03 |
+| **W4-10** | Electron's `window.json` is version 2; a v1 file's scale converts as `max(1, round(scale × 384/640))`, keeping the window's physical size | R2-01 |
+| **W4-11** | The frame-literal allow-lists take the tick timers, the angle 640, `BENCH_SIZES` and the particle degrees; the boot overlay's fallback derives from the frame; the scanner skips `#rrggbb` / `#rrggbbaa` strings | R2-01 |
+| **W4-12** | The menu / HUD / boot / options e2e specs must pass at 1280×720 on the interim art; the content- and golden-backed specs are gated until R2-03 | R2-01, R2-03 |
+| **W4-13** | v1's hi-score tables are archived under `legacyScores` on the 2 → 3 migration; v2's tables start empty | R2-01 |
+| **W4-14** | A `v1.x` build reading a format-3 save falls back to defaults — no back-migration, no rewrite | R2-01, `v1.x` |
+| **W5-6** | The e2e content gate is keyed on R2-03's re-measure, not on `CONTENT_PORT_PENDING`: `PORT_UNMEASURED` holds only from R2-02's port until R2-03, so the specs that pass at 640 on v1 content keep running through R2-02 (built as `test/e2e/gates.ts`, cited there and in `e2e-gates.test.ts`) | R2-01, R2-02, R2-03 |
 
 ---
 
@@ -1253,6 +1270,75 @@ moved.
   screenshots analysed at the new viewport), with text drawn in the 9×12 interim font (R1-04's deferred browser
   check); a v1 save loads, keeps its options and archives its scores; a v1 replay is refused. Goldens are expected
   to fail here and are re-blessed in R2-03.
+- **As built** (2026-10-18/19; the 61 `(R2-01)` commits `8d89dd2` … `602f8ab` in lanes A0 … A6, B1–B2, C1–C5,
+  U1–U3 and the review loops; the flip `72b18a1`; the C5 loop closed at zero with reviews 5 and 6 — wave 00 is
+  done; `R2-01.F1` did not run, the full Chromium e2e is 149 passed / 78 skipped / 0 failed):
+  - **The sequence** (W4-2): everything buildable at 384 landed first — `ART_SCALE` (`8d89dd2`), save format 3
+    (`b93b326`), the replay refusal (`691a79e`), the gates (`31c49c7`), the frame-independent test reworks
+    (A3, B2, C2), Electron's window conversion (`346c430`), the interim art stage (`31c0a34`, `f7bcd33`), the
+    boot-overlay derive and the scanner's hex-colour skip (`20a5b00`), the uiPx panel layout (`92120c7`) — then
+    `72b18a1` flipped the frame, `ART_SCALE` and the mirrors in one commit, and the post-flip lanes (A6, A5, U3,
+    C5, the comment sweeps `4b6930a`, `3623be2`, `bc8e05d`) fixed only what the flip moved.
+  - **The interim art is built differently from the scope text** ("a pipeline stage `interimScale: 1.5`"): it is
+    core's `ART_SCALE` plus `scripts/assets/interim.mjs` (`INTERIM_ART_SCALE`, the pipeline's `artScale` option),
+    and the laser beams are drawn natively at the art scale (`16aff20`, W4-5's amendment).
+  - **The flip's re-pins, with the commit body's two wrong causes corrected** (A5 review 1 #2, #3, reviewer
+    measurements; `72b18a1` cannot be amended): the presentation fingerprint moved on all 119 segments (ui 113,
+    hud 81, world 87, screen 3) after two walk fixes (the god-mode game walk, in-test demos); the content-DB
+    `core.stages` re-pin (shipped `d6fa1ca40cde8817` → `1c02c14c0a4a7047`, examples `75374beda8914daf` →
+    `26f2e401282941b6`) came **only from the map widths** — `terrain.cols` +32, 32 empty tile columns in the 17
+    terrain stages — no boss / spawn / block default reaches `core.stages`; and the 3 `screen`-hash moves
+    (attract, runA, runB) come from the story crawl and the credits running **longer** (`attract.story`
+    1,046 → 1,074 frames, `runA` / `runB.credits` 1,989 → 2,059 frames; the credits scene itself 1,990 → 2,060
+    ticks, its first tick inside the walk's Confirm press) — within 5 % of v1 (+2.7 % / +3.5 %), not equal; the
+    docblocks `packages/core/src/scenes/index.ts:1649`, `:7474`, `:7651` still say "as long as at the v1 frame"
+    (open — R2-03's docs pass fixes the wording).
+  - **The later re-pins:** `49a8f3f` re-pinned 35 / 119 segments (all `ui` but the caravan's `hud`), `5d5a050`
+    16 / 119 (`ui` only). `49a8f3f`'s body credits the `es.options` / `es.game` moves only to the HI rule; both
+    also moved from the es title-cursor fix (the row reads "title cursor + HI (+ difficulty row)"), and
+    `5d5a050` kept `es.options` and gave `es.game` / `ja.game` new values. The shell fingerprint: 5 / 5 at A5,
+    then the 3 flight walks at `c2a9ed5`.
+  - **The allow-lists:** core 14 entries (the flip added 3 entries / 4 hits), repo 32 — `72b18a1` added A5's 9
+    over the pre-flip 23 (C1's `V1_WINDOW_FRAME_WIDTH` had landed earlier, in `346c430`). **Not** the four
+    entries R1-01's As built predicted. (Count by the `value:` key: a `file://` inside the HTTP-status reason
+    string reads 33 to a `file:` grep.)
+  - **The gates as built** (W4-1, W4-12, W5-6): `packages/core/test/helpers/port-pending.ts` and
+    `test/golden/stale.ts` on the Vitest side; `test/e2e/gates.ts` with `test/integration/e2e-gates.test.ts`
+    (10 tests) on the browser side. A full run at `bc8e05d` skips 239 (`GOLDENS_STALE`) + 80
+    (`CONTENT_PORT_PENDING`) + 41 (frame `runIf`) = 360 tests, 0 failed (81 before A5 fix 1 split
+    `zones-fg-runtime`). The e2e gates hold 31 `test.skip` lines (23 `PORT_UNMEASURED`, 4 `CONTENT_REASON`,
+    3 `GOLDEN_REASON`, the per-file `recordingIsStale` skip in `determinism.spec.ts:116`), the two W4-9 inverse
+    tests (`attract.spec.ts:230`, `:273`) and the 3 `assertionsGated` sites (`boss.spec.ts:133`,
+    `debug-tools.spec.ts:200`, `render-groups.spec.ts:217`).
+  - **The e2e pacing** (C5's review loop): the flip slowed CI's SwiftShader ≈ ×1.6 (median/test ×1.83, the sums
+    1,400 → 2,642 s, CI `39106182210` at 384 vs `39109703989` at 640; shards up to ~6 min), so three specs failed
+    on slow runners (`39156155873` at `bc8e05d`, same three at `ac40436`). `c67c7c9` (review 2) made
+    `campaign-run` (S1), `debug-tools` (S2) and `flight` (S3) wait on game ticks — `gameTick`, `waitTicks`,
+    `expectScene(page, scene, ticks)`, `remoteSequence`'s unlock in one `page.evaluate`, `freezeSim` + `stepTo`
+    with a `HullView` hull compare, the raster comment corrected (N1); `8ff2bf6` (review 3) added the shared
+    `test/e2e/ticks.ts` (`SHIP_ENTER_TICKS` 40, `BOOT_TIMEOUT_MS` 30 000, the scene-flow delays as pinned mirrors
+    of core through `test/integration/e2e-ticks.test.ts`), and `543887b`, `0cabaec`, `424afd7`, `b0dede1` carried
+    it through the boot, rebind and menu taps; review 4 swept the remaining specs (`9da5dc2`, `72a9b65`,
+    `409a36c`, `8e5272b`, `725297a`) and review 5's one nit closed in `602f8ab`; reviews 5 and 6 came back zero.
+  - **Scope notes that did not happen:** `ATLAS_PNG_BYTES_CAP` was **not** exceeded (139,944 B under 262,144 B;
+    the cap moved to `atlas-budget.ts`); `cjk-budget.test.ts` did **not** fail — W4-6 keeps the CJK figures on
+    `buildAtlas({ ungrouped: true, artScale: 1 })` (`:58`), so the live M3-03 figures and the six documents
+    quoting them stand (R2-03 decides whether the docs quote the v2 atlas); the TV bench's 1 / 1 / 2 pages held
+    (v1 art for good); R1-04's "between R2-01 and R2-02 `tile-size.test.ts` is red" did not happen — A4 rewrote
+    it as the "never mixed" check with a pending branch, green.
+  - **Scope notes as built:** `mode7.spec`'s classic-window case runs on its own `3·FRAME_W × 3·FRAME_H`
+    viewport (`BLIT_DISPLAY`, `mode7.spec.ts:76`; every aspect mode is ×2 or more there) since `293e885`; the
+    webOS / web / Tizen boot-wiring fakes are frame-independent (C2); the render bench's ×2 scenario is
+    1280×720 with an 8192 KB filter target and passes; `TEXTURE_BUDGET_BYTES` is 23 MiB
+    (`packages/shell/src/memory/index.ts:261`), as R1-05's note predicted.
+  - **The builds and the bench:** at `bc8e05d` Tizen `app.js` is 1,432,504 B raw / 386,228 B gzip-9 and
+    check-bundle prints "380.2 KB gzip of 512.0 KB, 15 files, 1742.0 KB of 8192.0 KB" (379.9 KB / 1741.2 KB at
+    the flip); webOS 379.9 KB gzip of 512, 16 files, 1737.8 KB (C5 at `e7ff5db`, unverified). `pnpm bench` at
+    the flip passed 41 / 41, zones A–I medians 0.50–0.56 ms/tick, render worst p95 3.1 ms, 9 draw calls (A5,
+    unverified). CI at `bc8e05d` was green except the three C5 specs (fixed by `c67c7c9`); `3623be2`
+    (`39119741233`) had been fully green.
+  - **Owner parts open** (the §17 row's parenthetical): the M7 look at the interim art and font — the title
+    boot over the XHR'd manifest (W3-7) on the flipped build — and the CRT pitch re-check at ×3 / ×2.
 
 ### R2-02 — Port all content ×1.5
 
@@ -1289,9 +1375,11 @@ moved.
     - **Hand fixes it lists:** gimmick-range — give trigger `events[8]` (`took-low`) an `until` ≤ 2275, below the
       falling rock's ported 2276 (a ship within ~34 px of the left edge can then no longer set the flag in that
       stretch), or move the rock; zone-g `events[15]` leaves `events[14]`'s `ground` bonus window (3446 against 3450 —
-      the pair moves ground spawns 64 px earlier while the window's `x` / `until` stay ×k); the 66 values outside
-      today's bounds (frame-derived bounds widen with R2-01; fixed ones such as boss `parts[].x` ±512 — IRON
-      LEVIATHAN's 384 → 576 — need a deliberate bound change); the 7 values on or above the top edge.
+      the pair moves ground spawns 64 px earlier while the window's `x` / `until` stay ×k); the values outside
+      today's bounds — **3 since R2-01, not 66** (the frame-derived bounds widened at the flip; what is left is
+      IRON LEVIATHAN's `advanced-bosses.enemies.json` `enemies[4].boss.parts[4 | 8 | 12].x`, 384 → 576,
+      384 → 576 and 360 → 540, against the fixed ±512 in `core/data`; the fix is W5-8: widen to ±768);
+      the 7 values on or above the top edge.
     - **Comparing with the v1 baseline:** pair events through the re-sort's index map (gimmick-range 9↔10, zone-c
       8↔9, zone-d 42↔43, zone-g 14↔15, zone-h 15↔16, 19↔20, 28↔29, 32↔33, 62↔63) — every other listing names indices
       as written; ground-enemy spawns appear 64 px of camera travel earlier at the same terrain spot, so the
@@ -1308,6 +1396,57 @@ moved.
       `terrain-a` tileset — they assume 8-px tiles.
     - **Code defaults with world units** that were missing from Appendix B are in it now: `DEFAULT_BONUS_WINDOW`,
       `DEFAULT_MODE7_FOG_DEPTH`, `DEFAULT_REVENGE_SPEED`, `DEFAULT_PATTERN_SPEED`.
+  - **Notes from R2-01** (its As built, reviews and the wave-4 handoff):
+    - **The four v1 geometry flags above are now required** (the tool's defaults are v2's since the flip): without
+      them the run reads the content as 640×336 → 1024×540 with 12 → 18-px tiles and refuses with 28 errors;
+      without `--art-scale` it exits 2, and with `--art-scale 1` too (the tiles contradict the bands). The identity
+      re-run after the port (`--factor 1 --dry-run`) needs no flags. The dry run at `bc8e05d` (verified): 126
+      files (10 skipped), 10,623 values, **4,035 changes in 77 files, 0 unclassified, 0 errors** — and exactly the
+      3 bound errors above. (B3)
+    - **Hand fix `test/integration/content.test.ts:1659` (PRISM LABYRINTH):** on the ported content it finds 0
+      rising walls at row 14 and needs 6 — zone G's walls start on row 15, 12 px below the centre; raise them one
+      row (add it to W5-7's list). The middle row deriving from the frame is right per §2.6. (A5 review 2 #1)
+    - **Delete the content-port gate and everything on it:** `packages/core/test/helpers/port-pending.ts` and its
+      test, every `itPortPending` / `describePortPending` / `CONTENT_PORT_PENDING` use (**29 test files, 80
+      tests** — the list includes the drop-count gate in `powerups-direct.test.ts` and the steed-bob case in
+      `behaviors-zones-de-edge`), `tile-size.test.ts`'s pending branch (its `CONTENT_TILE_SIZE` becomes
+      `TILE_SIZE`), the `CONTENT_PORT_PENDING` pin in `test/integration/e2e-gates.test.ts` (the static import at
+      `:15`), and the docblock mentions in `test/golden/stale.ts` and `test/e2e/gates.ts`. The golden-update
+      refusal lifts by itself once the tilesets are 12 px — delete it with its pin
+      `test/golden/golden-edge.test.ts:189`, or keep it, dead, for R2-03. When the gates go, all 13 gated
+      `content.test.ts` cases and the zones-fg checkpoint 0 must pass on the ported content (with the gate forced
+      off at the flip, 63 of the 80 failed on v1 content — the coarse thresholds were accepted).
+    - **`test/golden/stale.ts` and `packages/core/test/replay/replay-version-shipped.test.ts` stay through
+      R2-02** — the port writes no `*.replay.json` (`SKIPPED_DIRS = ['demos']`, `scripts/content/rescale.mjs:127`;
+      the goldens live outside `content/`). Both go in R2-03, together.
+    - **The port switches the e2e gate `PORT_UNMEASURED` on:** 23 specs and the `debug-tools.spec.ts` camera
+      assertions then skip by design until R2-03 re-measures (W5-6); R2-02 edits no e2e gate. Watch the
+      content-backed specs that are **not** gated — the port can turn CI e2e red on them. The gated dimension and
+      raster tests compare the ported content with the ×1.5 art directly once the gate is gone.
+    - **The muzzle sparks fix themselves with the port** (C5 review 2 S3): the `muzzle` preset's `"dx": 9`
+      (`content/fx/particles.fx.json:287`) is `rel-px`, whose rule is `scale`, so the run moves it to 13.5 with
+      20 other fx values — between the flip and the port those sparks draw over the KESTREL's ×1.5 nose. The
+      beams likewise draw at their unported sim widths (6 / 8 px) on native frames matching their hitboxes until
+      the port moves them to 9 / 12.
+    - **The Tiled fixture:** redraw `test/scripts/content/fixtures/tiled-sample.tmj` and its expected
+      `.stage.json` / `.paths.json` at 12 px **in the same commit that ports the tilesets** (exactly 5 tests read
+      it: the fixture suite's 3, the CLI write, `--print`). The gate expires on the tilesets, not on the fixture.
+    - **After the tool:** `DEFAULT_BLOCK_SCREEN_X` / `DEFAULT_SPAWN_SCREEN_X` become `PLAYFIELD_W + 24` (today
+      `+ 16`) and `DEFAULT_BONUS_WINDOW` scales — the margin move does not touch the content-DB fingerprint, the
+      stage lengths will. Re-pin the content-DB **and** presentation fingerprints: expect far more than 12 red
+      segments, every zone A / B and campaign walk moves. The boss part offsets meet the ×1.5 art only after the
+      port. `bossSuction.pullRadius` 200 (core allow-list): write a literal 300 and remove the entry, or keep
+      `200 * WORLD_SCALE` with `count: 1` and a new reason.
+    - **The bot geometry** (the plan's own scope list, confirmed): `rules.ts` 2.0 → 3.0 px/tick, 16 → 24, 8 → 12;
+      `BOT_X` 96, `LANE_HEIGHT` 24, `TERRAIN_AHEAD` 84; the gated `content.test.ts` thresholds — ship gaps
+      24 → 36 (MAGMA DEEP) and 48 → 72 (CELL VAULT), the ground probe rows `PLAYFIELD_H − 8` / `[0, 7]` and the
+      sample step `y += 8` to tile-12 values, the capsule window 900 → 1,350.
+    - **`test/e2e/raster.spec.ts:237-239`** — since `c67c7c9` the comment gives raster-range's playfield rows
+      112 … 151 / 152 … 199 and their 640×360 frame rows (124 … 163 / 164 … 211); the port moves the bands, so
+      R2-03 rewrites the comment with the `diffRows` literals. The mode7 floor rows were fixed at `:772` in
+      `bc8e05d`.
+    - **No format-version bumps in R2-02** (`save-format.ts` `SAVE_FORMAT` and `gates.ts` `REPLAY_FORMAT` are
+      pinned mirrors). **Build-delta baseline:** Tizen `app.js` 386,228 B gzip-9, check-bundle 380.2 KB of 512.
 - **Acceptance:**
   - `pnpm content:check` is green, including the 4-way rules at their new values;
   - the playtest bot clears every zone, bonus stage and the boss rush in god mode within its budgets;
@@ -1336,6 +1475,35 @@ moved.
     640×360 × 3);
   - `docs/dev/*.md` that quote 384×216 (about 15 files, most in `api-reference.md` and
     `render-performance-review.md`) updated, with D19/D20 marked superseded by R-D1/R-D3.
+  - **Notes from R2-01** (its As built and the wave-4 handoff):
+    - **The gate deletions, complete:** `test/golden/stale.ts`, its re-export in `golden.ts` and every
+      `GOLDENS_STALE` use (9 test files, 239 tests) go **together with**
+      `packages/core/test/replay/replay-version-shipped.test.ts` (73 tests), whose cases fail by design once the
+      recordings are re-blessed, each saying "R2-03 re-blessed this recording: delete
+      replay-version-shipped.test.ts with the gates (test/golden/stale.ts)"; the permanent cases stay in
+      `replay-version.test.ts` with `fixtures/run-replay-v1.json`. `test/e2e/gates.ts` goes with every use: the
+      31 gating `test.skip` lines (23 `PORT_UNMEASURED`, 4 `CONTENT_REASON`, 3 `GOLDEN_REASON`, the per-file
+      `recordingIsStale` skip in `determinism.spec.ts:116`), the two W4-9 inverse tests (`attract.spec.ts:230`,
+      `:273`), the 3 `assertionsGated` sites (`boss.spec.ts:133`, `debug-tools.spec.ts:200`,
+      `render-groups.spec.ts:217`) and `test/integration/e2e-gates.test.ts`. Every gate throws at import once
+      its window closes, so none can be forgotten.
+    - **Re-measure every `PORT_REASON` and `CONTENT_REASON` test** on the ported content — the 23
+      `PORT_REASON` specs passed at 640 on v1 content, so a failure after the port is the port's. Give the
+      fingerprint's attract walk the shipped demos again (optional).
+    - **The art switch:** `scripts/store-assets.mjs:150` and `scripts/doc-images.mjs:267` move off
+      `collectSprites({ artScale: 1 })` to the default, then regenerate `pnpm docs:images`, `pnpm docs:screens`
+      and `pnpm store:assets`, **including `docs/images/logo.png`**. The TV bench keeps `artScale: 1` for good
+      (W4-6); the store icons' v2 art is R4-05's (RR-3). The CJK figures: decide here whether the docs quote the
+      v2 atlas (W4-6 kept them on the v1 build).
+    - **The render bench needs nothing:** its 640×360 default has held since R1-02 (`e9e5af7`) —
+      `test/bench/render.perf.ts` `load()` reads `FRAME_W` / `FRAME_H`.
+    - **The docs sweep is 20 files, not ~15** (grep at `bc8e05d`): most mentions in `render-performance-review.md`
+      (19), `api-reference.md` (13), `rendering-and-shell.md` (10).
+    - **Expect e2e shards up to ~6 min** (median/test ×1.83 since the flip — SwiftShader software raster: 2.8×
+      the pixels with the ×1.5 art upscaled to 1280×720; the bench's real GPU p95 rose only ≈ 30 %).
+    - **Open wording from R2-01:** the story / credits docblocks (`packages/core/src/scenes/index.ts:1649`,
+      `:7474`, `:7651`) still say "as long as at the v1 frame" — the durations are within 5 % of v1
+      (+2.7 % / +3.5 %), not equal.
 - **Acceptance:** the full definition-of-done suite is green on `master`, including an e2e run in which a stage
   with 12-px terrain renders (R1-04's deferred browser check). (That suite runs once, in wave 15 — §18, RUN-1;
   R2-03 closes on its targeted checks.)

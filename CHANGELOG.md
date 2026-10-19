@@ -25,6 +25,32 @@ on the **`v1.x`** branch with fixes only; a fix lands there first and reaches `m
   take nothing into `master`'s tree
   ([build-test-deploy.md](docs/dev/build-test-deploy.md#release-lines)).
 
+### The 640×360 flip (R2-01)
+
+These change what the game shows: since `72b18a1` `master` boots at the v2 frame. The content is still v1's
+world scale — plan step R2-02 ports it ×1.5 — so the golden replays and the attract demos are v1 recordings
+until R2-03 re-blesses them, and the interim art is v1's sprites ×1.5 until the R4 round replaces it.
+
+- **The frame is 640×360** (R2-01): `FRAME_W` / `FRAME_H` 640 / 360, 12-px HUD bars and 12-px tiles (the
+  playfield 640×336), the font cell 9×12 — the interim font is v1's 6×8 pixel font upscaled ×1.5 at pipeline
+  time, uneven on purpose. The interim art is the same story through core's `ART_SCALE` (3/2) and the
+  pipeline's `artScale`: every sprite at its new size, the terrain tiles drawn 12-px natively, the laser beams
+  drawn natively, and every UI panel sized through `core/ui`'s `uiPx`.
+- **v1 replays are refused** (R2-01): the replay format is 2 (`REPLAY_FORMAT_VERSION` /
+  `RUN_REPLAY_FORMAT_VERSION`) and the header carries the frame size, so a v1 recording raises
+  `ReplayVersionError` and the replay browser shows **V1 REPLAY** — "recorded by v1: cannot play". The entry is
+  deleted by hand, never automatically; the attract loop skips the stale demos until R2-03 re-records them.
+- **Saves are format 3** (R2-01): a v1 save loads, keeps its options, and its hi-score tables move under
+  `legacyScores` — v2's tables start empty, `legacyScores` has no UI yet, and Steam achievements read both. A
+  `v1.x` build reading a v3 save falls back to defaults.
+- **Electron's `window.json` is version 2** (R2-01): a v1 file's scale converts as
+  `max(1, round(scale × 384/640))`, so the window keeps its physical size at the new frame.
+- **Self-expiring gates** (R2-01): what cannot pass between the flip and the port skips with the reason in the
+  test's name — `CONTENT_PORT_PENDING` (until R2-02), `GOLDENS_STALE` (until R2-03), and in the browser tests
+  `R2_03_PENDING` / `PORT_UNMEASURED` — and each throws at import once its window closes. The frame-literal
+  scans now ban 640 / 360 / 336 / 348 next to v1's numbers, with the tick timers, the angle 640, the bench
+  sizes and the particle degrees on their allow-lists.
+
 ### Engine and tooling
 
 Nothing here changes what the game shows or does: the golden replays, the attract demos and the
@@ -137,7 +163,9 @@ new presentation fingerprint are unchanged.
   owner's confirmation pending), the orchestrator's wave-1 decisions and its wave-3 decisions
   W3-1 … W3-12 (the zone split shipped now, the eager residency, PNG-8 for atlas pages only, the
   budgets, the manifest fetched by XHR, R3-04's page target restated in bytes, the origin report's
-  rules), so later steps can cite them.
+  rules), its wave-4 decisions W4-1 … W4-14 and its wave-5 decision W5-6 for R2-01 (the flip's
+  sequence, the interim art and font, the versioned saves and replays, the self-expiring gates), so
+  later steps can cite them.
 
 ### Testing
 
@@ -180,6 +208,15 @@ new presentation fingerprint are unchanged.
   calculation at both frames (`memory-hand.test.ts`), and `test/e2e/atlas-residency.spec.ts` — the
   manifest's fetch and error screens, the Tizen `file://` boot, and the pages WebGL really holds as
   the zone changes.
+- **R2-01's gates and tick-paced e2e** (R2-01): tests that cannot pass between the frame flip and the
+  content port skip with the reason in their name — `CONTENT_PORT_PENDING` (until R2-02),
+  `GOLDENS_STALE` (until R2-03), `R2_03_PENDING` and `PORT_UNMEASURED` in the browser tests
+  (`test/e2e/gates.ts`, pinned by `test/integration/e2e-gates.test.ts`) — 360 skips and zero failures
+  in the full run at `bc8e05d`; each gate throws at import once its window closes. The e2e specs wait
+  on game ticks, not rAF frames (`test/e2e/ticks.ts`, its delays pinned to core by
+  `test/integration/e2e-ticks.test.ts`): the flip slowed CI's software raster ≈ ×1.6, and frame-paced
+  waits failed on slow runners. The 62 golden replays and the 9 attract demos stand as v1 recordings
+  until R2-03 re-blesses them; the v1 baseline fixtures are frozen as v1's record.
 
 ## [1.0.0] — 2026-10-16
 
