@@ -6,13 +6,18 @@
  * Tizen build opened from disk (remote key codes through the `tizen-remote-safe` profile).
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * The web tests freeze the sim and step exact ticks (`holdTicks`). The Tizen test's pause and key
+ * holds count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws fewer frames a
+ * second and catches up by up to 4 ticks a frame, so a count of frames is a different number of
+ * ticks on every machine (C5 review 4).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { HUD_BOTTOM_Y, PLAYFIELD_Y, SCALE } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -21,28 +26,6 @@ const TIZEN_INDEX = pathToFileURL(
 
 /** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0) — nothing else uses it. */
 const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /** Where the KESTREL's hull colour is on screen, in frame pixels ({@link shipCentre}). */
 interface HullView {
@@ -118,17 +101,18 @@ async function shipCentre(
 }
 
 /**
- * Holds a key for a number of animation frames, then releases it and lets the picture settle.
+ * Holds a key for a number of game ticks, then releases it and lets the picture settle (5 ticks).
  *
- * @param page - The page.
+ * @param page - The page (its sim running).
  * @param key - Playwright key name.
- * @param frames - Frames to hold it.
+ * @param ticks - Ticks to hold it.
+ * @returns Resolves 5 ticks after the key-up.
  */
-async function hold(page: Page, key: string, frames: number): Promise<void> {
+async function hold(page: Page, key: string, ticks: number): Promise<void> {
   await page.keyboard.down(key);
-  await waitFrames(page, frames);
+  await waitTicks(page, ticks);
   await page.keyboard.up(key);
-  await waitFrames(page, 5);
+  await waitTicks(page, 5);
 }
 
 /**
@@ -244,7 +228,7 @@ test.describe('free flight (Tizen build via file://)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
-    await waitFrames(page, 60);
+    await waitTicks(page, 60); // the 40-tick fly-in is over
     const start = await shipCentre(page);
     expect(start.pixels).toBeGreaterThan(20);
     await hold(page, 'ArrowRight', 30);

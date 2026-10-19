@@ -6,10 +6,16 @@
  * are the song's exact sample indices (intro 64 rows × 2,205 samples); in the Tizen build (audio
  * unlocked at boot, forced autofire) the ship's shots play as short one-shot buffers. No console
  * errors either way.
+ *
+ * Its pauses count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws fewer
+ * frames a second and catches up by up to 4 ticks a frame, so a count of frames is a different
+ * number of ticks on every machine (C5 review 4). The 10 ticks after the web test's key press are
+ * slack: the shell starts the theme inside the keydown handler (`unlock()` creates the context
+ * synchronously, and the engine attaches at once).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -65,28 +71,6 @@ function sounds(page: Page): Promise<StartedSound[]> {
   return page.evaluate(() => (window as unknown as { __sounds: StartedSound[] }).__sounds.slice());
 }
 
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
 test.describe('audio (web build, ?stage=test-range)', () => {
   test('the first key press unlocks audio and the zone theme loops sample-exactly', async ({
     page,
@@ -102,10 +86,10 @@ test.describe('audio (web build, ?stage=test-range)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     expect(await sounds(page)).toEqual([]); // locked until a gesture (autoplay policy)
     await page.keyboard.press('ArrowDown');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     const started = await sounds(page);
     const theme = started.find((sound) => sound.loop);
     expect(theme).toBeDefined();
@@ -128,7 +112,7 @@ test.describe('audio (Tizen build via file://)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
-    await waitFrames(page, 90);
+    await waitTicks(page, 90); // the 40-tick fly-in, then the autofire
     const started = await sounds(page);
     const shots = started.filter((sound) => !sound.loop && sound.sampleRate === 22050);
     expect(shots.length).toBeGreaterThan(0);

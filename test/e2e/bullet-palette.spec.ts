@@ -9,16 +9,14 @@
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
  *
- * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
- * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
- * this spec at about 70 % of its test timeouts. Its other waits stay frames: three short menu
- * pauses, and the flight's bullet poll, whose 2,400-frame budget gives a slow runner more ticks,
- * not fewer.
+ * Key taps, the menu pauses and the flight's bullet polls count the game's ticks (`ticks.ts`),
+ * never rAF frames: on a runner drawing about 3 frames a second (2 CPUs, C5 review 3's repro; up
+ * to 4 ticks a frame) the frame-paced taps ran this spec at about 70 % of its test timeouts.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS, tap } from './ticks.js';
+import { BOOT_TIMEOUT_MS, tap, waitTicks } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -39,28 +37,6 @@ const DEUTERANOPIA = [
   [0xff, 0x8a, 0xd8],
   [0x3a, 0xb0, 0xff],
 ] as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /**
  * The stored bullet palette, or `null` when nothing is stored.
@@ -127,18 +103,18 @@ test.describe('colour-blind bullet palettes (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
     await tap(page, 'ArrowDown'); // 2 PLAYERS (M2-06)
     await tap(page, 'ArrowDown'); // PRACTICE (M2-15)
     await tap(page, 'ArrowDown'); // OPTIONS
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown'); // MUSIC, SFX, CONTROLS, DISPLAY
     await tap(page, 'Enter'); // the DISPLAY page (M2-16), BULLETS first
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'display');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'ArrowRight'); // STANDARD → DEUTERANOPIA
     await tap(page, 'Escape'); // Back: save and close the page
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
@@ -153,11 +129,11 @@ test.describe('colour-blind bullet palettes (web build)', () => {
     });
     let seen: PaletteCount | null = null;
     for (let poll = 0; poll < 120 && seen === null; poll++) {
-      await waitFrames(page, 20);
+      await waitTicks(page, 20);
       const count = await paletteCount(page);
       if (count.deuteranopia >= 3) seen = count;
     }
-    expect(seen, 'no deuteranopia bullet appeared within 2,400 frames').not.toBeNull();
+    expect(seen, 'no deuteranopia bullet appeared within 2,400 ticks').not.toBeNull();
     if (seen === null) return;
     expect(seen.standard).toBe(0);
     expect(errors).toEqual([]);
@@ -175,11 +151,11 @@ test.describe('colour-blind bullet palettes (web build)', () => {
     });
     let seen: PaletteCount | null = null;
     for (let poll = 0; poll < 120 && seen === null; poll++) {
-      await waitFrames(page, 20);
+      await waitTicks(page, 20);
       const count = await paletteCount(page);
       if (count.standard >= 3) seen = count;
     }
-    expect(seen, 'no standard bullet appeared within 2,400 frames').not.toBeNull();
+    expect(seen, 'no standard bullet appeared within 2,400 ticks').not.toBeNull();
     expect(seen?.deuteranopia).toBe(0);
   });
 });

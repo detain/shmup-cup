@@ -7,11 +7,15 @@
  * errors and no "unknown sprite" warning from the atlas. Screenshots are at the e2e capture scale
  * (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is screenshot pixel
  * (sx(x), sy(y)).
+ *
+ * Its pauses and its poll count the game's ticks (`ticks.ts`), never rAF frames: a slow runner
+ * draws fewer frames a second and catches up by up to 4 ticks a frame, so a count of frames is a
+ * different number of ticks on every machine (C5 review 4).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** Body colours of the bullet readability palette (`scripts/assets/procedural/bullets.mjs`). */
 const BULLET_COLOURS = [
@@ -19,28 +23,6 @@ const BULLET_COLOURS = [
   [0xff, 0x3a, 0x3a],
   [0xb8, 0x4c, 0xff],
 ] as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /** Bullet-coloured pixels of one screenshot. */
 interface BulletPixels {
@@ -104,16 +86,16 @@ test.describe('enemy bullets (web build, ?stage=test-range)', () => {
     // settled: poll until its bullets are on screen.
     let first: BulletPixels | null = null;
     for (let poll = 0; poll < 120 && first === null; poll++) {
-      await waitFrames(page, 20);
+      await waitTicks(page, 20);
       const pixels = await bulletPixels(page);
       if (pixels.playfield >= 3) first = pixels;
     }
-    expect(first, 'no enemy bullet appeared within 2,400 frames').not.toBeNull();
+    expect(first, 'no enemy bullet appeared within 2,400 ticks').not.toBeNull();
     if (first === null) return;
     expect(first.hud).toBe(0);
 
-    // A few frames later the bullets have moved (≥ 1.25 px/tick): the pixel sets differ.
-    await waitFrames(page, 8);
+    // A few ticks later the bullets have moved (≥ 1.25 px/tick): the pixel sets differ.
+    await waitTicks(page, 8);
     const second = await bulletPixels(page);
     expect(second.hud).toBe(0);
     const same = [...second.positions].filter((p) => first.positions.has(p)).length;

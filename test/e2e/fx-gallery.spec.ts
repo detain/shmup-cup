@@ -6,6 +6,11 @@
  * warnings. The screenshot is attached to the test report. Screenshots are at the e2e capture scale
  * (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is screenshot pixel
  * (sx(x), sy(y)).
+ *
+ * Its pauses count the game's ticks (`ticks.ts`), which the gallery's stations follow
+ * (`shell/fx-gallery`), never rAF frames: a slow runner draws fewer frames a second and catches up
+ * by up to 4 ticks a frame, so a count of frames is a different number of ticks on every machine
+ * (C5 review 4).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -20,7 +25,7 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -44,28 +49,6 @@ const BURST_Y = PLAYFIELD_Y + PLAYFIELD_CY;
 
 /** Half the edge of the square the warm pixels are counted in, round the bursts (a world size). */
 const WARM_HALF = 64;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /** What one capture shows. */
 interface GalleryCapture {
@@ -144,12 +127,12 @@ for (const [name, url] of [
       await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
         timeout: BOOT_TIMEOUT_MS,
       });
-      await waitFrames(page, 5);
+      await waitTicks(page, 5);
 
       // The first stations are the three explosions (one second each, three bursts per station).
       let best: GalleryCapture | null = null;
       for (let poll = 0; poll < 60 && (best === null || best.warm < 40); poll++) {
-        await waitFrames(page, 3);
+        await waitTicks(page, 3);
         const shot = await capture(page);
         if (best === null || shot.warm > best.warm) best = shot;
       }

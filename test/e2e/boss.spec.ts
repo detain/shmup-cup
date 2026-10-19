@@ -6,6 +6,10 @@
  * part of the playfield (its hull-block colour there) — all without console errors or atlas
  * warnings. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport
  * 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * Its pauses and polls count the game's ticks (`ticks.ts`), never rAF frames: a slow runner draws
+ * fewer frames a second and catches up by up to 4 ticks a frame, so a count of frames is a
+ * different number of ticks on every machine (C5 review 4).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
@@ -21,7 +25,7 @@ import {
   uiPx,
 } from './frame-pixels.js';
 import { CONTENT_REASON, R2_03_PENDING, assertionsGated } from './gates.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The WARNING band's edge colour (0xf85858, the flight scene's WARNING_BAND rows). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -33,28 +37,6 @@ const HULL = [0x3a, 0x4a, 0x68] as const;
  * 384×216, 132 at 640×360).
  */
 const BAND_Y = FRAME_CY - uiPx(8) - (uiPx(48) >> 1);
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /** What one capture shows. */
 interface BossCapture {
@@ -103,35 +85,35 @@ test.describe('boss (web build, ?stage=test-boss)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
-    await waitFrames(page, 30);
+    await waitTicks(page, 30);
     const before = await capture(page);
     expect(before.band).toBe(0);
     expect(before.hull).toBe(0);
 
     let shown = false;
     for (let poll = 0; poll < 300 && !shown; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       shown = (await capture(page)).band > 300;
     }
-    expect(shown, 'no WARNING band within 3,000 frames').toBe(true);
+    expect(shown, 'no WARNING band within 3,000 ticks').toBe(true);
 
     // Two captures in a row without the band: a single one can land on one of the WARNING's
-    // 8-tick red flashes, which tint the band's edge rows (a flake under parallel load).
+    // 8-tick red flashes, which tint the band's edge rows (a flake under parallel load). They are
+    // 10 ticks apart, so two of them never land in one flash.
     let gone = false;
     let clear = 0;
     for (let poll = 0; poll < 100 && !gone; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       clear = (await capture(page)).band === 0 ? clear + 1 : 0;
       gone = clear >= 2;
     }
     expect(gone, 'the WARNING band never went away').toBe(true);
 
     // The intro takes 120 ticks; then the boss holds the right side of the playfield. Poll for
-    // it rather than wait a fixed number of frames: a busy machine runs up to 4 ticks a frame,
-    // and the ship's autofire can destroy the test boss before a late capture. The TRIAL WARDEN
-    // holds v1's screen x 300, left of the 640×360 frame's centre, until R2-02's port: the hull
-    // check waits for it (`gates.ts`, CONTENT_REASON); the band above is the shell's own layout
-    // and runs either way.
+    // it every 5 ticks rather than wait out the intro: the ship's autofire can destroy the test
+    // boss before a late capture. The TRIAL WARDEN holds v1's screen x 300, left of the 640×360
+    // frame's centre, until R2-02's port: the hull check waits for it (`gates.ts`,
+    // CONTENT_REASON); the band above is the shell's own layout and runs either way.
     if (
       !assertionsGated(
         test.info(),
@@ -142,7 +124,7 @@ test.describe('boss (web build, ?stage=test-boss)', () => {
     ) {
       let hull = 0;
       for (let poll = 0; poll < 60 && hull <= 50; poll++) {
-        await waitFrames(page, 5);
+        await waitTicks(page, 5);
         hull = (await capture(page)).hull;
       }
       expect(hull).toBeGreaterThan(50);

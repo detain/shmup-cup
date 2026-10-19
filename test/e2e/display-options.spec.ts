@@ -10,16 +10,16 @@
  * Screenshots are of the canvas at 1000×600 (integer ×2 = a 768×432 frame letterboxed; stretch =
  * the whole canvas); the sim is frozen and stepped exact ticks (`./frame-advance.ts`).
  *
- * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
- * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
- * this spec at about 70 % of its test timeouts. Its three menu pauses stay short frame waits, and
- * the screenshots step the frozen sim (`./frame-advance.ts`).
+ * Key taps and the menu pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner
+ * drawing about 3 frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the
+ * frame-paced taps ran this spec at about 70 % of its test timeouts. The screenshots step the
+ * frozen sim (`./frame-advance.ts`).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { BOOT_TIMEOUT_MS, remoteTap, tap } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap, waitTicks } from './ticks.js';
 
 /** The save's `localStorage` key. */
 const SAVE_KEY = 'shmup-cup:save.v1';
@@ -54,28 +54,6 @@ interface DebugWindow {
       };
     };
   };
-}
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
 }
 
 /**
@@ -136,19 +114,19 @@ async function openScaleRow(page: Page): Promise<void> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK → the menu
   await tap(page, 'ArrowDown'); // 2 PLAYERS
   await tap(page, 'ArrowDown'); // PRACTICE (M2-15)
   await tap(page, 'ArrowDown'); // OPTIONS
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-  await waitFrames(page, 4); // the menu's open lock
+  await waitTicks(page, 4); // the menu's open lock
   // MUSIC, SFX, CONTROLS, DISPLAY (M2-16: the display options' page).
   for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown');
   await tap(page, 'Enter');
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'display');
-  await waitFrames(page, 4);
+  await waitTicks(page, 4);
   await tap(page, 'ArrowDown'); // BULLETS → SCALE
 }
 
