@@ -243,9 +243,13 @@ The panel shows `ZONE X CLEAR` (or `BONUS STAGE CLEAR`), the zone's name, the sc
 ## The zone map (`MapScene`, id `map`)
 
 A full screen over the title's drifting starfield. The constructor lays the graph out once: one
-column per depth between x 40 and 344, the zones of a depth spread between y 40 and 136 in file
-order (`nodeX` / `nodeY`, `Int16Array`s), an 18×12 node box per zone with its label, the edges as
-dotted lines (`edgeDots` dots each), and a preview panel (24, 146, 336 × 60) with `ZONE`, the
+column per depth between `MAP_LEFT` = `uiPx(40)` and `FRAME_W − uiPx(40)` (x 60 and 580 at
+today's 640×360, 40 and 344 at v1), the zones of a depth spread between `MAP_TOP` = `uiPx(40)`
+and `MAP_BOTTOM` (10 px, `uiPx(10)`, above the preview panel — y 60 and 240 today, 40 and 136
+at v1) in file order (`nodeX` / `nodeY`, `Int16Array`s), a `uiPx(18) × uiPx(12)` node box (27×18
+today) per zone with its label, the edges as dotted lines (`edgeDots` dots each), and a preview
+panel `uiPx(24)` from the sides and `uiPx(10)` off the bottom edge (36, 255, 568 × 90 today;
+v1's 24, 146, 336 × 60) with `ZONE`, the
 label, the name and the preview lines of the focused zone. One `ListMenu` per zone over its exits
 sorted top to bottom (`exits`), so Up / Down move between them with wrap and the UI kit's
 auto-repeat.

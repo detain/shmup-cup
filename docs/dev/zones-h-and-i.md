@@ -429,8 +429,8 @@ M2-14 fills it in.
 | Field | Meaning | Limits |
 |---|---|---|
 | `endings[].scene` | The sprite scene of the ending screen: `ENDING_SCENES` — `none` (the card alone, the default), `citadel`, `abyss` | an enum |
-| `endings[].text` | The epilogue, line by line (default none) | ≤ `MAX_ENDING_TEXT_LINES` 8 lines of ≤ `MAX_ENDING_LINE_LENGTH` 40 characters (since R1-01 ⌊(`FRAME_W` − 144) / `GLYPH_W`⌋ — the glyph cells that fit the text panel) |
-| `credits` | The credits scroll after every ending (`CampaignCreditsSection`: a `title` and its `lines`; default none — no scroll) | ≤ `MAX_CREDITS_SECTIONS` 24 sections of ≤ `MAX_CREDITS_LINES` 16 lines, every line and title ≤ `MAX_CREDITS_LINE_LENGTH` 60 characters (since R1-01 ⌊(`FRAME_W` − 24) / `GLYPH_W`⌋ — centred on the frame, 12 px clear a side) |
+| `endings[].text` | The epilogue, line by line (default none) | ≤ `MAX_ENDING_TEXT_LINES` 8 lines of ≤ `MAX_ENDING_LINE_LENGTH` 47 characters at today's 640×360 — the glyph cells that fit the text panel with its margins at the art scale (⌊(`FRAME_W` − 2 · 108) / `GLYPH_W`⌋; 40 at v1's 384×216) |
+| `credits` | The credits scroll after every ending (`CampaignCreditsSection`: a `title` and its `lines`; default none — no scroll) | ≤ `MAX_CREDITS_SECTIONS` 24 sections of ≤ `MAX_CREDITS_LINES` 16 lines, every line and title ≤ `MAX_CREDITS_LINE_LENGTH` 67 characters at today's 640×360 (⌊(`FRAME_W` − 2 · 18) / `GLYPH_W`⌋ — centred on the frame, `⌈12 · ART_SCALE⌉` px clear a side; 60 at v1) |
 
 `completeCampaign` fills the defaults (`scene` `'none'`, `text` `[]`, `credits` `[]`, a section's
 `lines` `[]`); `creditsLineCount(credits)` counts the scroll's rows (per section its title, its lines
@@ -471,13 +471,16 @@ the zone was cleared) and `RunState.endingFlags`. It has two phases:
    - `abyss`: dark water under the sea's surface (`ui/ending-surface`, tiled and drifting),
      bubbles rising (`ui/ending-bubble`, eight columns from a fixed table), the ARK's silhouette
      (`ui/ending-ark`) sinking — or, when a boss escaped, sailing off to the right — and the ship
-     rising 80 px towards the light over 480 ticks, then flying off;
+     rising 80 v1-px towards the light over 480 ticks (motion scaled by `(px · ART_HALVES) >> 1`
+     since R2-01 — 120 px at 640×360, the same ticks), then flying off;
    - a flawless run (`noDeath`) adds the dawn sun (`ui/ending-sun`): rising over the citadel's
      horizon, above the surface in the deep.
 
    The epilogue's lines appear one every `ENDING_LINE_TICKS` (90) in a panel under the scene
-   (`ENDING_TEXT_PANEL`, `FRAME_W − 80` wide at y 124 — its top follows the scene, which is laid
-   out from the top-left, until R4-05 redraws it; centred on `FRAME_CY` when the scene is `none`).
+   (`ENDING_TEXT_PANEL`: `FRAME_W − 2 · TEXT_PANEL_INSET` wide — 520 at 640×360 — at y
+   `ENDING_SCENE_BOTTOM + uiPx(4)`, 186 since R2-01: it fills the room the ×1.5 scene leaves above
+   the bottom edge, its top still masking what sinks below it; centred on `FRAME_CY` when the scene
+   is `none`).
    OK (after `ENDING_LOCK_TICKS`, 60) shows every line at once; OK again — or
    `ENDING_STORY_HOLD_TICKS` (240) after the last line — moves on.
 2. **Result** — the M2-10 card: `ENDING`, the ending's name, the route's labels, the score(s), a line
@@ -492,15 +495,18 @@ and names are the content's strings, the route line is built on `enter`.
 
 ### The credits (`CreditsScene`, id `credits`)
 
-The campaign's `credits` scroll up from just below the screen (row y 216 — `FRAME_H` since R1-01): a
+The campaign's `credits` scroll up from just below the screen (row y 360 — `FRAME_H`): a
 section's title in the title colour, its lines in the text colour, a blank row after each section,
-`CREDITS_ROW_HEIGHT` (11 — `LINE_H + 1`) px a row, **1 px every `CREDITS_SCROLL_TICKS` (2)
-ticks** (30 px a second). When the last row has come up to the middle of the screen (y 100 —
-`scrollEnd`; its glyphs end on the centre row, `FRAME_CY − GLYPH_H`) the scroll stops for
+`CREDITS_ROW_HEIGHT` (`LINE_H + uiPx(1)` — 17 px since R2-01, 11 at v1) px a row,
+**`ART_SCALE` px every `CREDITS_SCROLL_TICKS` (2) ticks** — `SCROLL_HALVES`, 1 and 2 px in turn,
+so the scroll keeps its v1 duration in ticks at the bigger frame. When the last row has come up to
+the middle of the screen (y 168 — `scrollEnd`; its glyphs end on the centre row,
+`FRAME_CY − GLYPH_H`) the scroll stops for
 `CREDITS_HOLD_TICKS` (240), then the title. OK or Back after `CREDITS_LOCK_TICKS` (60) skip to the title. The rows are
 flattened once, when the flow is built; only the rows on screen are drawn, each through one of
 `CREDITS_STRING_SLOTS` (24) string slots taken by row number — a long list costs no more than a short
-one. The shipped credits (12 sections, 68 rows, ≈ 33 s with the hold): the game, **the zones**, **the
+one. The shipped credits (12 sections, 69 rows, ≈ 34 s with the hold at 640×360 — `CreditsScene.duration`
+2,060 ticks, v1's 1,990): the game, **the zones**, **the
 giants** (every zone boss by name and code), design, the engine packages, **every placeholder-art
 generator** of `scripts/assets/procedural/`, the pixel maps and the font, music and sound, the
 platforms, the tools, special thanks and `THANK YOU FOR PLAYING`.
@@ -722,7 +728,7 @@ selectCampaignEnding(campaign, i, RunFlag.NoDeath | RunFlag.BossEscaped)?.name; 
 |---|---|
 | Add an ending | An entry in `endings` with its `zone`, `all` / `none` flags, a `scene` and ≤ 8 lines of `text`; flagged endings **before** the unconditional one (file order decides), and exclude every flag its epilogue contradicts (`throne-flawless`'s `none: [bossEscaped]`) |
 | Add an ending scene | A new `ENDING_SCENES` name, its UI sprites (a generator in `ending.mjs`, the names in `core/ui` `UI_SPRITES` / `UiSprites`), and a `draw…` method in `EndingScene` — arithmetic on the tick count over fixed tables, no randomness, no allocation |
-| Change the credits | Edit `credits` in `main.campaign.json` (≤ 24 sections, ≤ 16 lines of ≤ 60 characters); keep every generator listed |
+| Change the credits | Edit `credits` in `main.campaign.json` (≤ 24 sections, ≤ 16 lines of ≤ `MAX_CREDITS_LINE_LENGTH` 67 characters at today's frame, 60 at v1); keep every generator listed |
 | Make another stage a final zone | Name `"ending"` / `"credits"` in its `music`, or the ending plays over the stage-clear tune |
 | Wait for a ship in a behaviour | `yield api.sleepUntilNear(range)`, never a polling `yield n` loop |
 | Fire a fast repeating boss pattern | Hand it to the boss system as a stream (`api.spiral`) rather than waking the script per volley; a new stream kind would be a new set of `Boss` fields fired in `runScript`, hashed |

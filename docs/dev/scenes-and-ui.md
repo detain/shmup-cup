@@ -23,10 +23,12 @@ Options screen into the CONTROLS / DISPLAY / GAME pages, added the rebind screen
 **rebind widget**) and the input test, folded the save's game options into the next games' configs
 and moved **every UI label into a string table** (`SceneFlow.text`) — see
 [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md); this page keeps the
-flow's overview up to date. v2's **R1-01** (plan_resolution.md) lays every screen and the HUD out
-from the frame and font constants of `core/config` instead of literal 384×216 numbers, with every
-position unchanged today — see [Laying screens out from the frame (R1-01)](#laying-screens-out-from-the-frame-r1-01).
-The pixel numbers quoted on this page are the 384×216 values with the 6×8 font.
+flow's overview up to date. v2's **R1-01** (plan_resolution.md) laid every screen and the HUD out
+from the frame and font constants of `core/config` instead of literal 384×216 numbers, and **R2-01**
+flipped those constants — the game runs at 640×360 with the 12-px bars and the 9×12 interim font,
+the art-sized lengths following the art's scale through `core/ui` `uiPx`; see
+[Laying screens out from the frame (R1-01)](#laying-screens-out-from-the-frame-r1-01). The pixel
+numbers quoted outside that section are v1's (384×216, 6×8 font) unless the text says otherwise.
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#scenes--scene-stack-and-the-scene-flow-implemented) (`scenes`) and
@@ -153,7 +155,7 @@ configs.
 | Scene | Overlay / dim / context | Shows | Input (any player) | Leads to |
 |---|---|---|---|---|
 | `BootScene` | no / 0 / menu | `LOADING` (or a label) and a progress bar (`setBootProgress`) | — | title on the tick after `finishBoot()` (`replace`) |
-| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the **mode select** 1 PLAYER / 2 PLAYERS / PRACTICE / OPTIONS / SOUND TEST / EXIT at y 118 (M2-06 — 1 PLAYER was START; M2-15 PRACTICE — disabled without a campaign — and SOUND TEST); `HI` and the session hi-score (the save's best at start) at the bottom | OK: prompt → menu (locked 2 ticks, focus 1 PLAYER); 1 PLAYER / 2 PLAYERS → `choosePlayers` (every difficulty's config `withCoop`, M2-06), then the difficulty menu (M2-01; before, the game); PRACTICE → the practice select; OPTIONS → Options; SOUND TEST → the sound test; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK`. **M2-15:** `TITLE_ATTRACT_TICKS` (720) on `PRESS OK` without a press or a held key → the attract loop | difficulty, practice select, options, sound test, confirm (`push`); demo play or hi-score tables (`reset`) |
+| `TitleScene` | no / 0 / menu | `ui/logo` (or `SHMUP CUP` as text), `PRESS OK` blinking (32-tick half period), then the **mode select** 1 PLAYER / 2 PLAYERS / PRACTICE / OPTIONS / SOUND TEST / EXIT at y 118 (M2-06 — 1 PLAYER was START; M2-15 PRACTICE — disabled without a campaign — and SOUND TEST); `HI` and the session hi-score (the save's best at start) at the bottom — shown under every screen opened over the title, hidden only under the Options pages and the difficulty menu (`hidesTitleHi`, R2-01) | OK: prompt → menu (locked 2 ticks, focus 1 PLAYER); 1 PLAYER / 2 PLAYERS → `choosePlayers` (every difficulty's config `withCoop`, M2-06), then the difficulty menu (M2-01; before, the game); PRACTICE → the practice select; OPTIONS → Options; SOUND TEST → the sound test; EXIT → confirm; Back: confirm if the platform can exit, else menu → `PRESS OK`. **M2-15:** `TITLE_ATTRACT_TICKS` (720) on `PRESS OK` without a press or a held key → the attract loop | difficulty, practice select, options, sound test, confirm (`push`); demo play or hi-score tables (`reset`) |
 | `DifficultyScene` (M2-01) | yes / 0.5 / menu | Opaque panel, `DIFFICULTY`, EASY / NORMAL / HARD / ARCADE (focus on the preset chosen last, at first the host config's), the focused preset's `LIVES`, `CONTINUES` and `HI` | Up / Down move (wrap); OK chooses the preset; Back closes | ship select (`push`, M2-05; with a single ship in the content the weapon select — M2-03 — or, for a Direct-mode config, the game), title menu (`pop`) |
 | `ShipSelectScene` (M2-05) | yes / 0.5 / menu | Opaque 208×136 panel, `SHIP SELECT`, the content's ships by name (KESTREL, MANTA; focus on the ship chosen last, at first the host config's `shipId`), the focused ship's picture (frame 0 of its sprite), its model (`POWER METER` / `DIRECT ITEMS`) and three hints, `OK: CHOOSE` | Up / Down move (wrap); OK chooses the ship (`withShip` for every difficulty's config); Back closes | weapon select (`push`, a meter ship), game (`reset`, a Direct-mode ship — no loadout to choose), difficulty menu (`pop`) |
 | `WeaponSelectScene` (M2-03) | no / 0 / menu | Panel on the left: `WEAPON SELECT`, TYPE (`TYPE A` … `TYPE D`, `EDIT`), MISSILE / DOUBLE / LASER (the type's weapons, disabled unless EDIT), OPTION (M2-04: `TRAIL` / `SNAKE` / `FORMATION` / `ROTATE`), `? SLOT` (five shields since M2-04), `! SLOT`, AUTO, ORDER (one-letter summary), START, two hints; behind it, full screen, the live preview World (no HUD) | Up / Down move (disabled rows skipped); Left / Right / OK change a value; OK on ORDER → the editor; OK on START starts; Back closes. Opens focused on START (2-tick lock) | game (`reset` — its World on the difficulty's config with this loadout, `withArsenal`, and the chosen ship), order editor (`push`), ship select (`pop`; the difficulty menu when it was skipped) |
@@ -169,7 +171,7 @@ configs.
 | `StageClearScene` | yes / 0.25 / menu | Single-stage run: `STAGE CLEAR`, `SCORE` (`1P` / `2P` once player 2 joined a co-op game, M2-06), `HI` for 240 ticks, then `TO BE CONTINUED` for 240. Campaign run (M2-10, `zoneMode`): the **zone result tally** — `ZONE X CLEAR` / `BONUS STAGE CLEAR`, the zone's name, the score(s), `KILLS %`, `KILL BONUS`, `TIME BONUS` — for 300 ticks (entering it tallies, pays, notes the World's deaths / continues / flags and carries the players out) | OK skips a phase; entering it records a single-stage run (or a campaign run's final zone) in the save | M2-15: `finishGame()` — the name entry when a score entered its table, else the title (`reset`); campaign run: the zone map (a zone with exits), the ending (the final zone) or `finishGame()` (practice) — `reset` |
 | `MapScene` (M2-10) | no / 0 / menu | Full screen over the starfield: the campaign's name, `CHOOSE YOUR COURSE`, the node graph (a column per depth, dotted edges, the route lit, the cleared zone yellow, its exits outlined, the focused one blinking) and a preview panel (label, name, preview lines, hints); fades the music out | Up / Down choose one of the cleared zone's exits (wrap, auto-repeat); OK pushes `PrepareStage` for its stage and blinks `LAUNCH` for 60 ticks; Back → confirm "quit to title?" | game (`reset`, the next zone — `advanceZone`), confirm (`push`) |
 | `EndingScene` (M2-10; M2-14) | no / 0 / menu | Since M2-14 first the **story** (an ending with a scene or text): the ending's sprite scene (`citadel` / `abyss`, a dawn for a flawless run, the flagship sailing off after an escape) and its epilogue, a line every 90 ticks; then the full-screen card: `ENDING`, the ending's name (`run.ending`), `ROUTE` and the zones' labels, the score(s), a line per run flag set, `THANK YOU FOR PLAYING`, `OK: CREDITS` (or `OK: TITLE`) after 60 ticks. The final zone's ending theme plays | Story: OK after 60 ticks shows every line, then moves on (or 240 ticks after the last line); card: OK after 60 ticks or 1,200 ticks → credits | credits (`reset`), or — without credits — `finishGame()` (M2-15) |
-| `CreditsScene` (M2-14) | no / 0 / menu | The campaign's credits scrolling up, 1 px every 2 ticks, section titles in the title colour; stops when the last row reaches mid-screen and holds 240 ticks. The final zone's credits theme plays | OK / Back after 60 ticks, or the end of the hold → `finishGame()` (M2-15) | name entry or title (`reset`) |
+| `CreditsScene` (M2-14) | no / 0 / menu | The campaign's credits scrolling up, 1 px every 2 ticks at v1 — `ART_SCALE` px a step since R2-01 (`SCROLL_HALVES`, keeping the v1 duration), section titles in the title colour; stops when the last row reaches mid-screen and holds 240 ticks. The final zone's credits theme plays | OK / Back after 60 ticks, or the end of the hold → `finishGame()` (M2-15) | name entry or title (`reset`) |
 | `ContinueScene` (M2-01) | yes / 0.35 / menu | Red-edged panel, `CONTINUE?`, the seconds left (9 … 0, a tick sound each; the last three flashing — M2-15) over a draining 120-px time bar (red for the last three seconds — M2-15), the score (M2-15) and `CREDITS` = continues left (`1P` / `2P` credits once player 2 joined, M2-06), a blinking `PRESS OK` and `BACK: GIVE UP` once OK counts (M2-15); the music fades out | OK / Back after 30 ticks: OK continues (`continueWorld` — checkpoint restart, fresh lives; in a co-op game only the players whose OK was pressed, M2-06), Back gives up | game (`pop`), game over (`replace`, also after 600 ticks) |
 | `GameOverScene` | yes / 0.35 / menu | Red-edged panel, `GAME OVER`, the final score (both players', `1P` / `2P`, once player 2 joined a co-op game — M2-06); `NEW HI-SCORE` below it for a new best (player 1's place) | OK / Back after 30 ticks; entering it records the run in the save | `finishGame()` after OK / Back or 600 ticks (M2-15): the name entry when a score entered its table, else the title (`reset`) |
 | `ConfirmDialog` | yes / 0.5 / menu | Opaque panel, `EXIT SHMUP CUP?` or `QUIT TO TITLE?`, YES / NO focused on **NO** | Left / Up → YES, Right / Down → NO; OK answers; Back = NO | `Exit`: pop, then `host.exit()`; `QuitToTitle`: title (`reset`); NO: pop |
@@ -300,89 +302,148 @@ The boss **WARNING band** moved from the shell's flight scene into `GameScene.dr
 a black band at alpha 144 across screen rows 76–123, 1-px red edges, the World's WARNING text
 centred at row 85, red and yellow alternating every 16 World ticks). The scene bumps its
 `uiRevision` only when the look (off / red / yellow) changes. Since R1-01 the band is `FRAME_W`
-wide, 48 px tall and centred 8 px above the frame's centre row (`FRAME_CY − 8 − 24` = 76); the
-zone card's 32-px band starts at `FRAME_CY − 72` (36), ending 40 px above the ship's fly-in row.
+wide; since R2-01 it is `uiPx(48)` tall (72) and centred `uiPx(8)` above the frame's centre row
+(`WARNING_BAND_Y` = `FRAME_CY − uiPx(8) − WARNING_BAND_H / 2`, 132 at 640×360); the zone card's
+`uiPx(32)`-tall band (48) starts at `FRAME_CY − uiPx(40) − ZONE_CARD_H` (72), ending `uiPx(40)`
+above the ship's fly-in row.
 
 ## Laying screens out from the frame (R1-01)
 
 v2's step R1-01 (plan_resolution.md §7) made every frame-dependent number of `core/scenes` and
-`core/ui` derive from the `core/config` constants — `FRAME_W` / `FRAME_H` (384 / 216), their
-centre `FRAME_CX` / `FRAME_CY` (192 / 108), `HUD_BAR_HEIGHT` (8), `PLAYFIELD_Y` / `PLAYFIELD_W` /
-`PLAYFIELD_H` (8 / 384 / 200), `HUD_BOTTOM_Y` (208) and the font metrics `GLYPH_W` / `GLYPH_H` /
-`LINE_H` (6 / 8 / 10, pinned to `pixel6x8.font.json`) — so R2-01's switch to 640×360 is a change of
-those constants alone ([api-reference.md](api-reference.md#config--session-configuration)). Every
-value is unchanged at 384×216, which the presentation fingerprint proves (below). The convention:
+`core/ui` derive from the `core/config` constants — `FRAME_W` / `FRAME_H`, their centre `FRAME_CX` /
+`FRAME_CY`, `HUD_BAR_HEIGHT`, `PLAYFIELD_Y` / `PLAYFIELD_W` / `PLAYFIELD_H`, `HUD_BOTTOM_Y` and the
+font metrics `GLYPH_W` / `GLYPH_H` / `LINE_H` (pinned to the font file) — so R2-01's switch to
+640×360 was a change of those constants alone
+([api-reference.md](api-reference.md#config--session-configuration)). **R2-01 made that switch:**
+the constants now read 640 / 360 (centre 320 / 180), bars 12, playfield 640×336, font 9×12 with
+`LINE_H` 15, and `ART_SCALE` is 3/2. Since the flip a third family of lengths goes through
+`core/ui` `uiPx(v)` = `⌈v · ART_SCALE⌉`: every length that belongs to the **art** — a padding, a
+panel inset, a picture-scene offset, a HUD gap — is `uiPx` of its v1 value, so it grows with the
+art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyph / line terms —
+`48 · GLYPH_W`, `LINE_H + uiPx(1)`. In this section numbers without a mark are today's
+(640×360, 9×12); v1's are marked. The convention:
 
 - **A screen's block of UI is anchored to the frame** — centred (`FRAME_CX` / `FRAME_CY`) or a fixed
-  distance from an edge — and everything inside it is placed relative to that anchor, so a bigger
-  frame keeps each screen where it is on the 384×216 one. The old local `CX = 192` is gone (its 159
+  distance from an edge — and everything inside it is placed relative to that anchor, so the bigger
+  frame kept each screen where it is on the 384×216 one. The old local `CX = 192` is gone (its 159
   uses read `FRAME_CX`).
-- **Panels are frozen module constants centred on the frame**, e.g. `OPTIONS_PANEL` =
-  `{ x: FRAME_CX − 144, y: FRAME_CY − 96, w: 288, h: 192 }` (shared by the CONTROLS / DISPLAY / GAME
-  / EXTRAS pages, the rebind screen and the input test), and so are the pause menu's, stage clear's,
-  the zone tally's, game over's, the continue countdown's, the difficulty and ship selects', the
-  name entry's, the hi-score table's, practice's, the sound test's, EXTRA's and the replay
-  browser's; their menu layouts and texts are placed from the panel's top / left edge. Centred
-  dialogs take their **y from `FRAME_CY`** too: the confirm dialog sits on (`FRAME_CX`, `FRAME_CY`),
-  the rebind capture box (`CAPTURE_PANEL`, 240×48) is centred on both.
-- **Panel widths and heights stay pixel literals:** they are sized to rows of 6×8 text, so R2-01
-  and R4-03 (the final 9×12 font) must scale them. The literal scan names the ones that happen to
-  equal a frame number (`OPTIONS_PANEL.h` 192, `ZONE_TALLY_PANEL.w` 200, `SHIP_PANEL.w` 208,
-  `HI_SCORE_PANEL.h` 200, and `WEAPON_PANEL.h` / `ORDER_PANEL.h` 192 — "R2-01 decides" whether those
-  two stay content-sized or follow the frame); so are `drawConfirm`'s 176×52 panel and its paddings.
+- **Panels are frozen module constants centred on the frame**, sized from the text they hold and
+  the art's scale — since R2-01's `uiPx` pass **no panel size is a pixel literal** (R1-01 had left
+  them literal for this flip to scale). `OPTIONS_PANEL` is `48 · GLYPH_W` wide (432) and
+  `uiPx(26) + 11 · (LINE_H + uiPx(4)) + uiPx(12)` tall (288; shared by the CONTROLS / DISPLAY /
+  GAME / EXTRAS pages, the rebind screen and the input test), and so are the pause menu's, stage
+  clear's, the zone tally's, game over's, the continue countdown's, the difficulty and ship
+  selects' (`SHIP_PANEL_W` = `34 · GLYPH_W + uiPx(4)`), the name entry's, the hi-score table's
+  (`HI_SCORE_PANEL_W` = `40 · GLYPH_W + uiPx(8)`, height head + ten rows + `uiPx(6)`), practice's,
+  the sound test's, EXTRA's and the replay browser's; their menu layouts and texts are placed from
+  the panel's top / left edge in `uiPx` / glyph terms. Per scene a frozen `*_LAYOUT` object holds
+  those rows: title, clear, zone tally, game over, difficulty, continue, ship, weapon and order,
+  map, ending, ending scene, story scene, name entry, hi-score, input test, replays, replay end.
+  Centred dialogs take their **y from `FRAME_CY`** too: the confirm dialog sits on (`FRAME_CX`,
+  `FRAME_CY`), the rebind capture box is centred on both (`drawConfirm`'s panel is
+  `28 · GLYPH_W + uiPx(8)` wide, 264 at 640×360).
+- **The weapon select's panel grows with its rows:** `WEAPON_PANEL_H` = `uiPx(22) + 10 ·
+  WEAPON_LINE_H + uiPx(40)` with `WEAPON_LINE_H` = `LINE_H + uiPx(3)` (273 at 640×360) — the plan's
+  "R2-01 decides" question is decided: it is content-sized, and the order editor matches it
+  (`ORDER_PANEL` reuses the size, mirrored to the right edge, both centred on the centre row).
+- **The sprite scenes are scaled by `uiPx` / `uiOffsets`:** their positions are `uiPx` constants,
+  their signed v1 tables (the citadel's and the invasion's blast lists, the abyss's bubble x's)
+  are scaled once at module init through `uiOffsets` (`uiPx` of each magnitude, the sign kept),
+  and a piece's motion is the half-pixel product `(px · ART_HALVES) >> 1` with
+  `ART_HALVES = 2 · ART_SCALE` asserted whole at init (`artHalves()` throws a `RangeError`
+  otherwise) — nothing fractional is computed per frame. Tick timers are unchanged (ticks do not
+  scale).
 - **Full-width bands are `FRAME_W` wide:** the WARNING band, the zone card (also the demo's), the
   ending and story sprite scenes' horizon and water; the sea surface tiles across `FRAME_W`, the
   dawn's star rises on `FRAME_CX`.
-- **Edges:** the title's hi-score line sits at `FRAME_H − 20`; `DEMO PLAY` and the replay's status
-  line 6 px under the top HUD bar (`PLAYFIELD_Y + 6`); the weapon select's panel 4 px from the left
-  edge and the order editor's 4 px from the right (`FRAME_W − 188`), both centred on the centre row,
-  the preview ship held at `PREVIEW_SHIP_X` = `FRAME_CX + 40` (232); the zone map's depth columns
-  span `MAP_LEFT` 40 to `FRAME_W − 40`, its preview panel runs along the bottom (`FRAME_H − 70`,
-  `FRAME_W − 48` wide) and its rows end 10 px above it; the ending's result card is `FRAME_W − 80`
-  wide, centred on the centre row.
+- **Edges:** the title's hi-score line sits at `FRAME_H − uiPx(20)` (330); `DEMO PLAY` and the
+  replay's status line `uiPx(6)` under the top HUD bar (`STATUS_LINE_Y` = `PLAYFIELD_Y + uiPx(6)`);
+  the weapon select's panel `uiPx(4)` from the left edge and the order editor's `uiPx(4)` from the
+  right (`WEAPON_PANEL_INSET`), both centred on the centre row, the preview ship held at
+  `PREVIEW_SHIP_X` = `FRAME_CX + uiPx(40)` (380); the zone map's depth columns span
+  `MAP_LEFT` = `uiPx(40)` (60) to `FRAME_W − uiPx(40)` (580), its preview panel runs along the
+  bottom (`uiPx(24)` from the sides, `uiPx(10)` off the bottom edge) and its rows end `uiPx(10)`
+  above it; the ending's result card is `FRAME_W − 2 · TEXT_PANEL_INSET` wide (`TEXT_PANEL_INSET`
+  = `uiPx(40)` — 520 at 640×360), centred on the centre row.
+- **The title's session hi-score line** shows where v1 showed it — under every screen opened over
+  the title — and hides only under the Options pages (controls, rebind, input test, display, game,
+  extras) and the difficulty menu (`hidesTitleHi`): the Options panels no longer reach down to the
+  line, and the difficulty menu shows the preset's own `HI` beside it. The exit question, the ship
+  select, PRACTICE, SOUND TEST, EXTRA and REPLAYS leave it, as v1 did.
+- **Menus are laid out for the session's language, once, at scene creation** (redrawing allocates
+  nothing): the title menu's cursor comes from `titleMenuLayout` (`TITLE_MENU_MIN_CELLS` 10 —
+  `FRAME_CX − 6 · GLYPH_W − 4`, 260 at 640×360 in en / ja; es `TEST DE SONIDO` pushes it to 242),
+  and the difficulty menu's CONTINUES / lives row is built from field initialisers (es reads
+  `VIDAS 3   CONTINUACIONES 3`). A longer label pushes what follows it instead of overlapping it —
+  the four es fixes (`87acfdb`): the HUD caravan clock (`TIEMPO`), name-entry `TIEMPO`,
+  input-test `DISPOSITIVO` and practice `PUNTO DE CONTROL`; the English output is unchanged.
 - **Credits and story:** the credits start just below the screen (`CREDITS_TOP` = `FRAME_H`), are
   culled at `FRAME_H` and stop when the last row's glyphs end on the centre row
-  (`CREDITS_STOP_Y` = `FRAME_CY − GLYPH_H`, 100); credits and story rows are `LINE_H + 1` apart
-  (`CREDITS_ROW_HEIGHT`, `STORY_ROW_HEIGHT` — 11). The sprite scenes' ships stop being drawn past
-  `SCENE_EXIT_X` = `FRAME_W + 36` (a module constant of `scenes/index.ts`, not exported; the ark past
-  `FRAME_W + 76`).
-- **Kept top-anchored on purpose:** the story crawl's window and panel (`STORY_WINDOW_TOP` 132 …
-  `STORY_WINDOW_BOTTOM` 206, `STORY_PANEL` y 128) and the epilogue panel (`ENDING_TEXT_PANEL` y 124)
-  follow the sprite scenes above them, which are laid out from the top-left; at 640×360 they float
-  mid-screen. R4-05 redraws those vignettes "full-frame" and decides their anchor then.
+  (`CREDITS_STOP_Y` = `FRAME_CY − GLYPH_H`, 168); credits and story rows are `LINE_H + uiPx(1)`
+  apart (`CREDITS_ROW_HEIGHT`, `STORY_ROW_HEIGHT` — 11 at v1, 17 now). The sprite scenes' ships
+  stop being drawn past `SCENE_EXIT_X` = `FRAME_W + uiPx(36)` (a module constant of
+  `scenes/index.ts`, not exported; the ark past `FRAME_W + uiPx(76)`).
+- **The scroll rate — `SCROLL_HALVES`:** the credits scroll and the story crawl move
+  **`ART_SCALE` px a step** — `SCROLL_HALVES = ART_HALVES` half-pixels every
+  `CREDITS_SCROLL_TICKS` (2) / `STORY_SCROLL_TICKS` (4) ticks, 1 and 2 px in turn
+  (scroll = `(steps · SCROLL_HALVES) >> 1`, whole numbers, nothing fractional per frame) — so
+  their rows, laid out at the art's scale, mean **both keep their v1 duration in ticks at
+  640×360**, within 5 %: story 1,046 → 1,074 ticks, credits 1,990 → 2,060 (`CreditsScene.duration`
+  over the shipped 69 credit rows; the fingerprint walk's `credits` segment holds one frame less —
+  its `press(Action.Confirm)` already runs the scene's first tick — 1,989 → 2,059).
+  `SCROLL_HALVES` (`scenes/index.ts`) is the one constant of their rate: 2 there restores the slow
+  one-pixel-a-step crawl — the v1 rate in pixels — at the cost of about 1.5× the time (story
+  1,566, credits 2,970 ticks at 640×360).
+- **Story and epilogue panels (re-anchored by the flip):** the story panel is **centred in the
+  room between the scenes' lowest row (`STORY_SCENE_BOTTOM` — the dawn's sea, 186) and the bottom
+  edge**: 210..336 at 640×360 (y 128 at v1); its window stays `uiPx(4)` inside it and keeps its
+  seven rows (`6 · STORY_ROW_HEIGHT + GLYPH_H` = 114 tall, window 216..330). The epilogue panel
+  **fills the room under the scene** with v1's 4-px margins: `y = ENDING_SCENE_BOTTOM + uiPx(4)`,
+  `h = FRAME_H − ENDING_SCENE_BOTTOM − 2 · uiPx(4)` — 186 / 168 at 640×360 (124 / 88 at 384×216),
+  `ENDING_SCENE_BOTTOM` = 180 (the horizon band's bottom). Its top stays where it is because the
+  scenes use it as a **mask**: the citadel's sun before it rises, the sinking citadel and ARK are
+  hidden below it. Both panels are `FRAME_W − 2 · TEXT_PANEL_INSET` wide. R4-05 redraws those
+  vignettes "full-frame".
 - **Line heights read the font:** menus `LINE_H + 4` / `+ 3` / `+ 1`, a replay row two lines
   (`2 · LINE_H`, its description `GLYPH_H + 1` under the label), the ship select's hints `LINE_H`
   apart, an epilogue without a scene centred on `FRAME_CY` with its lines `LINE_H` apart, a crawl row
   drawn while its glyphs (`GLYPH_H`) fit the window.
-- **The UI kit** (T2): `drawMenu` / `drawRebindPanel` default to a row pitch of `LINE_H + 2` (12), the
-  cursor `GLYPH_W + 4` (10) left of the label and the value column `13 · GLYPH_W + 2` (80) right of
-  it; a slider's bar is `SLIDER_BAR_W` = `8 · GLYPH_W + 2` (50); `drawConfirm`'s cursor sits
-  `3 · GLYPH_W` left of a choice's centre; `drawNameEntry`'s letters are `NAME_CELL_PITCH` =
-  `GLYPH_W + 10` (16) apart, its half taken with `>> 1`.
-- **Text caps in the content:** `core/data/campaign.ts`'s line caps count the glyph cells that fit:
-  `MAX_ENDING_LINE_LENGTH` and `MAX_STORY_LINE_LENGTH` = ⌊(`FRAME_W` − 144) / `GLYPH_W`⌋ (40 — the
-  text panels sit 40 px in from each edge with 32 px around the line), `MAX_CREDITS_LINE_LENGTH` =
-  ⌊(`FRAME_W` − 24) / `GLYPH_W`⌋ (60). At 640×360 with a 9-px cell they become 55 / 68 (R4-03
-  re-derives them for the final font).
-- **Whole numbers only:** every derived value is an integer now and at 640×360 with 12-px bars
-  (`>> 1` or `Math.floor` wherever a halving could go odd with a 9-px font); nothing became a getter,
-  a closure or a per-call computation — the layouts stay frozen constants.
+- **The UI kit** (T2): `drawMenu` / `drawRebindPanel` default to a row pitch of `LINE_H + 2` (17;
+  12 at v1), the cursor `MENU_CURSOR_DX` = `GLYPH_W + uiPx(4)` (15) left of the label and the value
+  column `MENU_VALUE_DX` = `13 · GLYPH_W + uiPx(2)` (119) right of it; a slider's bar is
+  `SLIDER_BAR_W` = `8 · GLYPH_W + uiPx(2)` (74); `drawConfirm`'s cursor sits `3 · GLYPH_W` left of
+  a choice's centre; `drawNameEntry`'s letters are `NAME_CELL_PITCH` = `GLYPH_W + uiPx(10)` (24)
+  apart, its half taken with `>> 1`.
+- **Text caps in the content:** `core/data/campaign.ts`'s line caps count the glyph cells that fit
+  the text panels, whose margins follow the art's scale (`uiPx`, written out in `data` because it
+  does not import `ui`): the panel inset `⌈40 · ART_SCALE⌉` and the line padding `⌈32 · ART_SCALE⌉`
+  a side (108 px a side at 640×360), the credits line's margin `⌈12 · ART_SCALE⌉` (18). So
+  `MAX_ENDING_LINE_LENGTH` = `MAX_STORY_LINE_LENGTH` = ⌊(`FRAME_W` − 216) / `GLYPH_W`⌋ = **47** and
+  `MAX_CREDITS_LINE_LENGTH` = ⌊(`FRAME_W` − 36) / `GLYPH_W`⌋ = **67** — they derive from the text
+  panels, not from a fixed pixel inset (campaign.ts's docblock parentheticals, 40 / 60 with the
+  144- / 24-px insets, are v1's). R4-03 re-derives them for the final font.
+- **Whole numbers only:** every derived value is a whole number at today's frame (`uiPx` ceils;
+  `>> 1` or `Math.floor` wherever a halving could go odd with the 9-px font; `ART_HALVES` is
+  asserted whole at init); nothing became a getter, a closure or a per-call computation — the
+  layouts stay frozen constants.
 
-The sprite scenes' compositions (the citadel, the deep, the dawn, the invasion, the launch) keep
-their pixel positions: R4-05 redraws them. **Two checks keep this true**: the presentation
-fingerprint (`test/integration/presentation-fingerprint.test.ts`) fails on any moved pixel of
-core's draw lists, and the literal scan (`packages/core/test/frame-literals.test.ts`) fails on a new
-literal frame number in `packages/core/src` — their rules, the allow-list and the re-pin procedure
-are in [conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint).
+**Two checks keep this honest**: the presentation fingerprint
+(`test/integration/presentation-fingerprint.test.ts`) fails on any moved pixel of core's draw
+lists — re-pinned on purpose by R2-01's flip — and the literal scan
+(`packages/core/test/frame-literals.test.ts`) fails on a new literal frame number in
+`packages/core/src`; `packages/core/test/ui/ui-layout-frame.test.ts` walks every scene in en / es /
+ja and asserts every text inside the frame and inside its panel and no UI / HUD overlap. Their
+rules, the allow-list and the re-pin procedure are in
+[conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint).
 
-**At 640×360** (R1-01's throwaway experiment with the constants flipped — content not ported): the
-hi-score table, the Options pages, the ending card, EXTRA and the co-op game over centre exactly on
-(320, 180); the pause menu, the difficulty and ship selects and the name entry are centred
-horizontally and keep v1's small deliberate offsets; the WARNING band and the zone card are centred
-and full width; the HUD bars are 640×12 at y 0 and 348 and the co-op halves split at x 320. What still
-looks v1-sized is left to later steps: the story and epilogue panels (above), the single-player
-meter slots and the Direct HUD packed into x 58–338, 8-px text in 12-px bars, the weapon select's
-184-px panel (R4-03), and the 560-px ending card's sparse rows (R4-05).
+**Live at 640×360 since R2-01:** what R1-01 tried as a throwaway experiment with flipped constants
+is the shipped frame. The hi-score table, the Options pages, the ending card, EXTRA and the co-op
+game over centre exactly on (320, 180); the pause menu, the difficulty and ship selects and the
+name entry are centred horizontally and keep v1's small deliberate offsets; the WARNING band and
+the zone card are centred and full width; the HUD bars are 640×12 at y 0 and 348 and the co-op
+halves split at x 320. The art is v1's sprites and font nearest-neighbour ×1.5 (the interim look
+until R4-03's font and R4-05 / R5's redraws); the content is still v1's world (×1) until R2-02's
+port.
 
 ## The UI kit (`core/ui`)
 
@@ -472,24 +533,29 @@ an object literal written at the call site allocates on every redraw.
  x: 4 (10 px apart)  58 + 40·slot (7 slots)                    344 (7 px apart)
 ```
 
-**Laid out from the frame and the font (R1-01).** `HUD_LAYOUT` is still a frozen module constant,
-computed once at load from `core/config`; the numbers in the diagrams are its values at 384×216 with
-the 6×8 font. Both bars are `FRAME_W` × `HUD_BAR_HEIGHT`, the bottom one at `HUD_BOTTOM_Y` (208), the
+**Laid out from the frame and the font (R1-01; the art lengths through `uiPx` since R2-01).**
+`HUD_LAYOUT` is still a frozen module constant, computed once at load from `core/config`; the
+numbers in the diagrams — and the parenthesised ones here — are its values at 384×216 with the
+6×8 font. Both bars are `FRAME_W` × `HUD_BAR_HEIGHT`, the bottom one at `HUD_BOTTOM_Y`, the
 playfield between them `PLAYFIELD_W` × `PLAYFIELD_H`. The x positions anchored to the frame:
-`hiX` centres the HI display (label, gap, 8 digits — 64 px) 4 px left of `FRAME_CX` (156); `p2X`
-leaves room for `2P`, the gap and an 11-glyph `PRESS START` (the widest thing that slot shows) ending
-10 px from the right edge (292); `shieldX` = `FRAME_W − 40` (344); the co-op `halfW` = `FRAME_W / 2`
-(192). Text extents follow `GLYPH_W`: a label's number starts `2 · GLYPH_W + 4` later (16), the
-caravan clock's seconds `4 · GLYPH_W` after `TIME` (24), the Direct pips after their 4- / 3-glyph
-labels (26 / 20) and the co-op pips after 2 glyphs (13). Each Direct-mode run (`SHOT` 58, `SUB` 130,
-`ARM` 196, `SPD` 252, the family 306) and each co-op run (the meter at 22 with `2 · GLYPH_W + 8` =
-20-px slots, the shield pips at 164, `SH` 22 / `SB` 68 / `AR` 114 / `SP` 148) starts after the one
-before it, so a wider font cannot make them overlap. The HUD art's own sizes — the 40-px meter-slot
-box, the life icons 10 px apart, pip sizes and steps, rows inside a bar — stay literals for R4-03's
-HUD redesign. `packages/core/test/ui/ui-hud-layout.test.ts` writes these relations in the
-constants (a 1-px move of any field fails) and checks every HUD mode inside the frame, its bar and
-its co-op half with no overlapping texts — also with the constants set to 640×360 and a 6×8 or a
-9×12 font.
+`hiX` centres the HI display (label, gap, 8 digits) `uiPx(4)` left of `FRAME_CX` (156); `p2X`
+leaves room for `2P`, the gap and an 11-glyph `PRESS START` (the widest thing that slot shows)
+ending `uiPx(10)` from the right edge (292); `shieldX` = `FRAME_W − (5 · HUD_SHIELD_PIP_STEP +
+HUD_SHIELD_PIP_W)` (344); the co-op `halfW` = `FRAME_W / 2` (192). Text extents follow `GLYPH_W`:
+a label's number starts `2 · GLYPH_W + HUD_LABEL_GAP` after it (`HUD_SCORE_DX`, 16), the caravan
+clock's seconds follow `TIME` and `HUD_LABEL_GAP` the same way — "TIME 5", not "TIME5" (the fixed
+`HUD_CLOCK_DX` is gone since R2-01; `HUD_LABEL_GAP` = `uiPx(4)`) —, the Direct pips after their
+4- / 3-glyph labels and `uiPx(2)` (26 / 20) and the co-op pips after 2 glyphs (13). Each
+Direct-mode run (`SHOT` 58, `SUB` 130, `ARM` 196, `SPD` 252, the family 306) and each co-op run
+(the meter at 22 with `2 · GLYPH_W + 8` = 20-px slots, the shield pips at 164, `SH` 22 / `SB` 68 /
+`AR` 114 / `SP` 148) starts after the one before it, so a wider font cannot make them overlap.
+**The HUD art's own sizes** — the 40-px meter-slot box, the life icons 10 px apart, the pip sizes
+and steps, the rows inside a bar — are `uiPx` lengths since R2-01: they follow the art's scale
+(×1.5 with the interim art and the 12-px bars), not the frame's, and one-pixel borders stay one
+pixel (R4-03 redraws the HUD art). `packages/core/test/ui/ui-hud-layout.test.ts` writes these
+relations in the constants (a 1-px move of any field fails — the relations held at 384×216 and
+pin today's 640×360) and checks every HUD mode inside the frame, its bar and its co-op half with
+no overlapping texts.
 
 `buildHud(world, list, sprites)` clears the list and draws: both bars (`HUD_COLORS.bar`, the
 lifted navy of the VA panels); `1P`, `HI`, `2P` with 8-digit numbers 16 px after each label (the
@@ -680,7 +746,8 @@ rate, the game options) reach a World only through the config the flow resolves 
 | `packages/core/test/ui/ui.test.ts`, `ui-edge.test.ts` | Navigation, wrap (also across disabled ends), disabled items and `Denied`, repeat timing over long holds / chords / latched taps, the Confirm buffer vs Back, a disabled item and a same-tick direction, lock lengths 1–4, sliders (overshoot, fractional steps, one-value ranges, NaN) and toggles, the YES / NO prompt, builder defaults, geometry, slot reuse and overflow |
 | `packages/core/test/ui/ui-hud.test.ts`, `ui-hud-edge.test.ts` | The exact meter commands, the flash, greyed slots, pips, stock boundaries (0, 5, > 5) with and without sprites, partial sprites, player 2, change detection, the worst case within 64 commands, labels written once, big scores |
 | `packages/core/test/ui/ui-alloc.test.ts` | Widgets, builders and the HUD without allocation |
-| `packages/core/test/ui/ui-hud-layout.test.ts` | R1-01: `HUD_LAYOUT`'s relations written in the frame and font constants (every field pinned — a 1-px move of a co-op field fails — and still true after R2-01), every HUD mode inside the frame, its bar and its co-op half with no overlapping texts |
+| `packages/core/test/ui/ui-hud-layout.test.ts` | R1-01: `HUD_LAYOUT`'s relations written in the frame and font constants (every field pinned — a 1-px move of a co-op field fails — and still true after R2-01, at today's 640×360), every HUD mode inside the frame, its bar and its co-op half with no overlapping texts |
+| `packages/core/test/ui/ui-layout-frame.test.ts` | R2-01: every scene of the flow walked in en / es / ja — every text inside the frame, no UI / UI, HUD / HUD or UI / HUD overlap (`frameProblems`), every text inside its panel; asserts zero problems (the `KNOWN_LAYOUT_PROBLEMS` list and the `-flip` twin are deleted) |
 | `test/integration/presentation-fingerprint.test.ts` | R1-01: four FNV-1a hashes (`ui`, `hud`, `world`, `screen`) per segment of everything core hands a renderer, frame by frame along 12 scripted walks through every scene (119 segments, plus a 13th test that every `SceneId` was shown), pinned on the v1.0.0 code — a red segment is a moved pixel. Re-pinned only on purpose (R2-01, or a step that changes what is drawn) with `SHMUP_FINGERPRINT_PRINT=1`, the reason in the commit ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)) |
 | `packages/core/test/frame-literals.test.ts`, `config/frame-constants.test.ts`, `data/frame-bounds.test.ts`, `behaviors/behaviors-frame-defaults.test.ts`, `bosses/bosses-warning-width.test.ts` | R1-01: no literal frame number in `packages/core/src` outside the allow-list (an AST scan — since R1-02 through the scanner shared with the repo-wide scan, `test/helpers/frame-literal-scan.ts`); the constants' values, relations and the font metrics pinned to the font file; the content loader's frame bounds at their limits; the behaviours' `laserLength` defaults = `PLAYFIELD_W` and the ellipse centres; every WARNING line fits `PLAYFIELD_W / GLYPH_W` characters |
 | `packages/core/test/ui/ui-boss-hp.test.ts`, `ui-boss-hp-edge.test.ts` | M2-09: `bossHpBarFill` (whole pixels, ≥ 1 px while anything is left, full only at full strength; unusable, infinite and fractional values), `BOSS` and the bar in place of the hi-score only with the option and while a boss counts, rebuilds only when the fill's pixels or the option change; the e2e check is in `test/e2e/advanced-bosses.spec.ts` |
@@ -793,6 +860,12 @@ rate, the game options) reach a World only through the config the flow resolves 
   ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md)).
 - **R1-01** (v2, done) — every screen, panel, band and the HUD laid out from the `core/config` frame
   and font constants, unchanged at 384×216; the presentation fingerprint and the literal scan
-  ([above](#laying-screens-out-from-the-frame-r1-01)). Next: **R2-01** flips the constants to
-  640×360 and re-pins the fingerprint; **R4-03** redraws the font, the HUD and the UI kit (the panel
-  sizes, the line caps); **R4-05** the title, the ending scenes and their panels.
+  ([above](#laying-screens-out-from-the-frame-r1-01)).
+- **R2-01** (v2, done) — the flip: the game draws at 640×360 with the 12-px bars and the 9×12
+  interim font; panels sized from the text and the art scale through `uiPx` (no panel literal),
+  picture scenes scaled by `uiPx` / `uiOffsets` with `(px · ART_HALVES) >> 1` motion, the campaign
+  line caps at 47 / 67 (panel-derived margins), the credits and story scrolls keeping their v1
+  durations through `SCROLL_HALVES`, the title hi-score rule and the per-language menu layouts
+  ([above](#laying-screens-out-from-the-frame-r1-01)); the fingerprint re-pinned on purpose.
+  Next: **R4-03** redraws the font, the HUD and the UI kit (the line caps re-derive); **R4-05** the
+  title, the ending scenes and their panels.
