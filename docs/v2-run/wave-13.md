@@ -34,7 +34,8 @@ zero.
   is the wave's last action and targets `origin/master` once they are all on it (rule 4), never T9's own commit.
 - **The e2e lock** serialises every bench run (T7, B1/B2, P1): at most two of those agents wait for it at a time.
 - **Reviews:** `R5-10.T4.RV`, `R5-10.T5.RV` (only if T5 committed), `R5-10.T7.RV`, `R5-10.T9.RV`, `R5-10.RV` (the
-  step), `R6-01.B1.RV`, `R6-01.B2.RV`, `R6-01.B2.DOCS.RV`, `R6-02.P1.RV`; and a zone fix's `<id>.RV` on its
+  step), `R6-01.B1.RV`, `R6-01.B2.RV`, `R6-01.B2.DOCS.RV`, `R6-02.P1.RV` (only if P1 changed a gate or a
+  budget); and a zone fix's `<id>.RV` on its
   branch before its LAND, if a zone fix runs (rule 1).
 - **Docs item:** `W13.DOCS-A`, `W13.DOCS-B`, `W13.DOCS-C` (they may overlap wave 14's first builders).
   `R6-01.B2.DOCS` (lane 5) is a docs agent too, but it belongs to the code exit: wave 14 reads the file it commits.
