@@ -421,17 +421,23 @@ over).
 - **Depends on:** nothing beyond P0 / P1.
 - **Goal:** after the port, the muzzle trigger's `dx` 9 → 13.5 (`content/fx/particles.fx.json`) would be added at
   the call `emit(p, x + dx[base + k], y + dy[base + k], intensity)` (`packages/render-pixi/src/particles/index.ts:883`)
-  and boxed on every shot (166,000 B against the 65,536 B budget of `dispatch-fx-alloc`). Make `emit` take the trigger
-  slot and add `dx` / `dy` itself.
+  and boxed on every shot (166,000 B against the 65,536 B budget of `dispatch-fx-alloc`). Keep the public
+  `ParticleSystem.emit(preset, x, y, intensity)` (`:530`, also used by `packages/shell/src/fx-gallery/index.ts:236`,
+  `apps/tizen/src/bench/scene.ts:847` and `packages/render-pixi/test/particles/particles-edge.test.ts`) exactly as it
+  is. Give `emitRow` (`:867`) its own inner helper that takes the whole `x`, `y`, the offset arrays and the trigger
+  slot `base + k`, and adds `dx[slot]` / `dy[slot]` itself. Read the offsets only where the position is stored
+  (`px[i]` / `py[i]`, as `spawn` (`:812`) writes them): an offset or a sum handed on to another call is boxed there
+  instead.
 - **Files (only these):**
-  - `packages/render-pixi/src/particles/index.ts` — the trigger loop (`:878-886`) and `emit`'s signature (whole `x`,
-    `y`, plus the trigger index; the offsets read inside);
+  - `packages/render-pixi/src/particles/index.ts` — the trigger loop (`:878-886`) and a new inner helper for
+    `emitRow` (whole `x`, `y`, plus the trigger slot; the offsets read inside); the public `emit` unchanged;
   - `packages/render-pixi/test/particles/particles.test.ts` — `:138` (`dx` of `PlayerShot` is 9) reads the preset
     through `K` (`v1x(9)` from `packages/core/test/helpers/v1-port.ts` once T0 is on master, or `9 * WORLD_SCALE`).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/dispatch
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/dispatch packages/shell/test/frame-fingerprint.test.ts
+  bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
   bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/dispatch/dispatch-fx-alloc.test.ts
   pnpm --filter @shmup/render-pixi typecheck
   ```
@@ -449,14 +455,17 @@ over).
 - **Depends on:** nothing in this wave.
 - **Goal:** on the `artScale !== 1` path only, draw the round, oval and needle bullets and the bending-laser node
   natively at the art bible's v2 sizes (§5.4), marked `native` so the interim stage does not scale them again. The
-  beams are already native (12 frames of 6×12; precheck item 12) — leave them. `GeneratorOptions` already has
-  `artScale` (`procedural/index.mjs:47-55`) — do not add it.
+  beams are already native (12 frames of 6×12; `lasers.mjs:10-15`, and `r34-gen-list.mjs` prints
+  `beam-*(12f 6x12 N)`) — leave them. `GeneratorOptions` already has `artScale` (`procedural/index.mjs:47-55`) — do
+  not add it.
 - **Files (only these; "new" = create):**
   - `scripts/assets/procedural/bullets.mjs` — a v2 path in `bulletSprites` (`:108`): round 11×11 (1 frame), oval
     13×13 with 8 headings (interim is 14 — the only size that changes), needle 17×17 with 8 headings; `native: true`
-    on the v2 sprites only;
-  - `scripts/assets/procedural/palettes.mjs` — pass `options.artScale` to `bulletSprites` (`:56`); v2 `CORE_MARKS`
-    (`:40`: `pink: 'solid'`, `red: 'ring'`, `purple: 'dot'`) redrawn for the v2 cores;
+    on the v2 sprites only; `generate()` (`:147`) takes `options = {}` and passes `options.artScale ?? 1` to
+    `bulletSprites`, as `lasers.mjs` `generate()` (`:139-141`) does;
+  - `scripts/assets/procedural/palettes.mjs` — pass `options.artScale` to `bulletSprites` (`:56`); `CORE_MARKS`
+    (`:40`) stays as it is (pink solid, red ring, purple dot); the v2 path of `bullets.mjs` `drawEllipse` (`:61`)
+    draws the ring / dot marks at the v2 core size;
   - `scripts/assets/procedural/lasers.mjs` — the bend node (`bendBlob`, `:74`) 11×11, native on the v2 path;
   - `test/scripts/assets/bullets-v2.test.ts` (new) — sizes and frame counts at 3/2; frame k is k·22.5°, frame k+4 the
     exact 90° turn of k; rim < body < core; every `@<palette>` variant frame for frame; `buildAtlas({ artScale: 1 })`
@@ -493,15 +502,19 @@ over).
 - **Depends on:** `R3-03.V1` on master (the scan reads the atlas V1 changes).
 - **Goal:** a test that enforces the art bible's §4.4 rules on the shipped atlas (decision W5-12: fail, not warn).
 - **Files (only these; "new" = create):** `test/integration/palette-cycle-scan.test.ts` (new); optionally
-  `test/integration/palette-cycle.ts` (new helper). It reads `content/stages/*.stage.json` (`cycles`,
-  `parallax[].layer` and its sprite) and `buildAtlas()` in memory, and writes nothing in `content/` or `scripts/`.
+  `test/integration/palette-cycle.ts` (new helper). It reads the shipped `content/stages/*.stage.json` (skip
+  `example.*`, a format sample whose `terrain` cycle is no reserved ramp) (`cycles`, `parallax[].layer` and its
+  sprite) and `buildAtlas()` in memory, and writes nothing in `content/` or `scripts/`.
 - **The three rules:**
   1. per stage with `cycles`: on a cycled layer every pixel is an exact ramp colour of that layer's cycle art, or at
      Chebyshev distance ≥ 3 from every ramp colour of that layer;
-  2. project-wide: every sprite is ≥ 3 from all 8 reserved ramps (`SEA`, `BRINE`, `MAGMA`, `STORM`, `VAULT`, `PRISM`,
-     `CITADEL`, `ABYSS` — read from the stages, never copied), except the bible's exemption list
-     (`docs/dev/art-bible-v2.md` §4.4, after the ramp table), pinned in the test; an entry that no longer trips fails,
-     so the list cannot rot;
+  2. project-wide: every sprite is ≥ 3 from all 8 reserved ramps (the distinct `cycles` colour lists of the shipped
+     stages — read from the stages, never copied; name each by the stage that cycles it, as the bible's ramp table
+     does: `SEA` = raster-range, `BRINE` = zone-b and brine-grotto, `MAGMA` = zone-d, `STORM` = zone-e, `VAULT` =
+     zone-f, `PRISM` = zone-g and glimmer-cache, `CITADEL` = zone-h, `ABYSS` = zone-i), **except a cycle-art sprite
+     against its own ramp** (the ramp table's "Cycle art" column, e.g. `bg/sea-swell` against `SEA`; rule 1 checks
+     it) and the bible's exemption list (`docs/dev/art-bible-v2.md` §4.4, after the ramp table), pinned in the test;
+     an entry that no longer trips fails, so the list cannot rot;
   3. a synthetic fixture backdrop passes; the same with one pixel 2/255 off fails.
 - **Tests:**
   ```bash
@@ -561,14 +574,17 @@ over).
 - **Files (only these; "new" = create):** `packages/shell/src/boot/index.ts`, `packages/shell/src/frame-loop/index.ts`
   (while the shown World's pages load, the loop redraws the last frame: no tick, no input consumed);
   `packages/shell/test/boot/boot-residency.test.ts`; `packages/shell/test/boot/residency-hold.test.ts` (new: a replay
-  across a zone change hashes the same with and without the hold); `packages/shell/test/memory/memory-hand.test.ts`
-  (under the lazy policy).
+  across a zone change hashes the same with and without the hold; and, with debug frame advance on, a
+  `game.requestStep(1)` asked for while pages load runs exactly one tick once they are in — the e2e helper `stepTo`
+  (`test/e2e/frame-advance.ts`) relies on it); `packages/shell/test/memory/memory-hand.test.ts` (under the lazy
+  policy).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/boot packages/shell/test/frame-loop packages/shell/test/memory
   ```
 - **Acceptance:** determinism proved by the replay test; the frame-loop guards (`frame-loop-refresh-alloc.test.ts`)
-  green; **debug frame advance (`freezeSim` / `stepTo` in e2e) still steps**.
+  green; **debug frame advance (`freezeSim` / `stepTo` in e2e) still steps** (the `requestStep` case of
+  `residency-hold.test.ts`).
 - **Token:** none (M3c, M3d and M3e share `boot/index.ts`: one lane, in order).
 - **Traps:** the hold must not consume input or tick: a held frame that ticks changes every replay hash.
 
@@ -598,15 +614,28 @@ over).
 - **Depends on:** `R3-04.M3d` on master.
 - **Files (only these):** one `bootShell` option in `packages/shell/src/boot/index.ts` (a one-line switch back);
   `packages/shell/test/memory/memory.test.ts` (the non-campaign "every page" pin stays);
-  `packages/shell/test/boot/boot.test.ts`.
+  `packages/shell/test/boot/boot.test.ts`; `apps/{web,tizen,webos}/test/boot/boot-wiring.test.ts` — they boot each
+  host through the real `@shmup/shell` and count residency uploads (`uploads`) and ticks
+  (`apps/web/test/boot/boot-wiring.test.ts:509`): change only an upload or tick count the lazy default moves, and
+  explain each in the commit body.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project web apps/web/test/boot
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen apps/tizen/test/boot
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project webos apps/webos/test/boot
   pnpm --filter @shmup/tizen build
-  bash docs/v2-run/helpers/e2e-batch.sh atlas-residency.spec.ts atlas-context-loss.spec.ts campaign-run.spec.ts attract.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh boss.spec.ts advanced-bosses.spec.ts render-groups.spec.ts debug-tools.spec.ts attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts zone-map.spec.ts continue.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh smoke.spec.ts boot.spec.ts frame-layout.spec.ts scenes.spec.ts front-end.spec.ts options.spec.ts game-options.spec.ts display-options.spec.ts rebind.spec.ts input.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh atlas-context-loss.spec.ts campaign-run.spec.ts
   ```
-  (`--project shell` is one package's project, allowed as a targeted run.)
-- **Acceptance:** `app.js` ≤ 512 KB gzip (about 380 KB now); no e2e regression.
+  (`--project shell` is one package's project, allowed as a targeted run. The three e2e lines are README's batch C,
+  batch D, and batch G plus batch A's `campaign-run.spec.ts`, run one after another: the lazy default changes how
+  every host boots and changes zones, so the boot, front-end, attract, determinism and zone-map specs must run.
+  Master's e2e is green or skipped all through waves 2–4 — after wave 4's port commit the specs it moves skip on
+  `PORT_UNMEASURED` — so a spec that turns red with your change is yours to fix.)
+- **Acceptance:** `app.js` ≤ 512 KB gzip (about 380 KB now); the three apps' boot tests green; the three e2e batches
+  above green (the existing skips stay skips).
 - **Token:** none.
 
 ## Reviews
@@ -616,7 +645,7 @@ over).
 - **Wave / order:** review slot 1, one review per subtask as it lands; fix → a **new** review until zero findings.
 - **What to read:** the subtask's commits (`git show <sha>`) and its report.
 - **Must hold:** `WORLD_SCALE` / `WORLD_TOP_PAD` still 1 / 0 and `scripts/frame.mjs` unchanged by anyone but P0;
-  `git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
+  `git diff --name-only $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/'*.replay.json' content/demos test/fixtures/v1-baseline`
   empty; the three fingerprints unedited and green; every changed value is a world value by its unit (spot-check 10
   against `docs/v2-run/helpers/w5/defaults-all.txt` / `literals.txt`); no angle, tick or count scaled; frame anchors
   written `PLAYFIELD_W + v * WORLD_SCALE`; the subtask's tests green at K = 1 **and** under the kit (the reviewer re-runs
@@ -627,7 +656,8 @@ over).
 
 - **Wave / order:** review slot 1, after W1–W7, A1 and T0 are on master (lane 2 may still be on T4b).
 - **Goal:** the list of tests that fail under the kit, one file per wave-3 subtask, replacing the background's stale
-  lists (precheck §2.1).
+  lists (`if-new.txt` / `cf-new.txt`, never committed: see the "[Corrected after the flip" note before
+  `wave5-scout.md` §0).
 - **Run:**
   ```bash
   mkdir -p /home/sites/shmup-cup-run/w02/rv-a2
@@ -655,14 +685,16 @@ over).
 
 ### R3-03.V3.RV — Review of the palette-cycle scan
 
-- **Must hold:** the ramps are read from the stages, never copied; the exemption list equals the bible's; rule 3's
-  fixture fails with a 2/255 pixel; the test passes on today's atlas.
+- **Must hold:** the ramps are read from the shipped stages (`example.*` skipped), never copied; the exemption list
+  equals the bible's (a cycle-art sprite against its own ramp is skipped by rule 2, never listed); rule 3's fixture
+  fails with a 2/255 pixel; the test passes on today's atlas.
 
 ### R3-04.M3.RV — Review of each M3 subtask
 
 - **Must hold:** Chromium 68 floor (`VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
   test/integration/tv-engine-floor.test.ts`); zero allocation in the steady state; the hold changes no hash (the
-  replay test); frame advance still steps; `app.js` ≤ 512 KB gzip.
+  replay test); frame advance still steps (the `requestStep` case of `residency-hold.test.ts`); `app.js` ≤ 512 KB
+  gzip; after M3e, the three apps' boot tests green (`--project web` / `tizen` / `webos`, `apps/*/test/boot`).
 
 ## Exit check
 
@@ -673,7 +705,7 @@ over).
    ```bash
    git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
    ```
-3. `git diff $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/*.replay.json content/demos test/fixtures/v1-baseline`
+3. `git diff --name-only $(cat /home/sites/shmup-cup-run/w02-base.txt)..origin/master -- content test/golden/'*.replay.json' content/demos test/fixtures/v1-baseline`
    is empty.
 4. `bash test/port-v2/two-scale.sh -- node scripts/content/rescale.mjs --factor 1 --dry-run` reports 0 / 0 / 0.
 5. `bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core
