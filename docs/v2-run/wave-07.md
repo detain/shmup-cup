@@ -54,8 +54,10 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 2. **Presentation-only subtasks push directly** (`R2-04.P1`, `R2-04.P3`, `R2-04.P4`, `R2-04.P2` with FP).
 3. **Fingerprints are push-time** (README rule 6): `R2-04.P2`, `R2-04.G`, `R3-06.L1` (the content-DB `examples`
    digest only), `R3-06.L2`, `R3-06.L4`, `R3-06.L6`, `R4-P.P1` (the credits line only) each
-   take `/tmp/shmup-cup-land.lock`, rebase, **re-run the print and paste the printed tables**, verify, push. First
-   come, first served; never merge a `PINNED` table by hand.
+   run README rule 6's two passes: first, outside the lock, re-pin each failing table (print, paste,
+   run again without the variable) and commit that; then, holding `/tmp/shmup-cup-land.lock`, fetch,
+   rebase, re-run the fingerprint tests — only if the rebase moved one, re-pin inside the lock, amend —
+   and push. First come, first served; never merge a `PINNED` table by hand.
 4. **`packages/render-pixi/src/effects/layer-effects.ts`:** `R2-04.P4` edits it first (if it edits it at all); `R3-06.L3`
    starts only after `R2-04.P4` is on `master`.
 5. **`packages/core/src/data/index.ts`:** only lane 5 (`R3-06.L1`, then `R3-06.L4`).
@@ -65,7 +67,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 7. **`R3-06.L6` waits for `R4-P.P1`** on `master` (it fills the `decor.mjs` stub).
 8. **R3-06 must keep the goldens unchanged.** It adds presentation only. A golden that moves is a bug.
 9. **Nothing in this wave changes the scale-1 atlas.** The digest case of
-   `test/scripts/assets/interim-pipeline.test.ts` — 'pins the v1 atlas: every page's pixels and the manifest, by
+   `test/scripts/assets/interim-pipeline.test.ts` — 'pins the v1 atlas: every page’s pixels and the manifest, by
    digest' (`:341-357` on `bc8e05d`; waves 2 and 4 add lines above it, so find it by its title or by the digest
    `fa4198…`) — stays green and is never re-pinned. R4 prep is byte-identical at both scales, except P3's new
    mechanism, which no shipped file uses yet.
@@ -499,9 +501,11 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   node scripts/content/rescale.mjs --factor 1 --dry-run     # 0 changes, 0 unclassified, 0 errors
   pnpm --filter @shmup/core typecheck
   ```
-  then, under the land lock, the content-DB re-pin of `PINNED.examples` only (README rule 6:
-  `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
-  test/integration/content-db-fingerprint.test.ts`, paste the printed `examples` table over `PINNED.examples`).
+  then the content-DB re-pin of `PINNED.examples` only in README rule 6's two passes (wave-08 rule 4's
+  form): outside the lock, run `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run
+  --project integration test/integration/content-db-fingerprint.test.ts`, paste the printed `examples`
+  table over `PINNED.examples`, commit that; the locked script only re-verifies and re-pins if the
+  rebase moved a table.
 - **Acceptance:** every new number has a unit (`content-units.test.ts`); the README sample validates; in the content-DB
   fingerprint **only `PINNED.examples` moved** (the reason in the commit: "R3-06.L1: the decor sample in
   `example.stage.json`"); `PINNED.shipped` and every other table unchanged (no shipped stage uses the fields yet). If
@@ -579,7 +583,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   ```
   then, under the land lock, the FP re-pin (README rule 6). Of the two integration runs only the presentation
   one is red — the renumbering moves it, and it is the only table you re-pin here; the content-DB run stays green
-  (`:559-561`). Seeing exactly that red/green split is the check that only the expected tables moved (L1's
+  (`:563-565`). Seeing exactly that red/green split is the check that only the expected tables moved (L1's
   pattern: it runs the content-DB fingerprint in its targeted tests too).
 - **Acceptance:**
   - zero allocation per tick and per frame (the new guard: warm-up ≥ 20,000, new indices each window);
@@ -692,7 +696,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   bash docs/v2-run/helpers/e2e-batch.sh decor.spec.ts raster.spec.ts stage.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then the FP re-pin in README rule 6's two passes: the print-and-paste pass outside the lock (wave-08
+  rule 4's form), the locked script only re-verifies and re-pins if the rebase moved a table.
 - **Acceptance:** `assets/source/atlas-groups.json` unchanged (a dev range packs into `common`); goldens green; the
   e2e spec green; the decor art passes `test/integration/palette-cycle-scan.test.ts` (R3-03.V3).
 - **Token:** FINGERPRINTS (push time). **e2e:** one of the wave's two passes.
@@ -857,11 +862,12 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   pnpm content:check   # the credits name every registered generator
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts   # unchanged, never re-pinned
   ```
-  then, under the land lock (README rule 6), the re-pin of the credits line:
+  then the re-pin of the credits line in README rule 6's two passes: outside the lock, run
   `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
-  test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts` — paste the
-  printed `shipped` table and the printed tables of the walks that moved, then run both tests again without the
-  variable.
+  test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts` — paste
+  the printed `shipped` table and the printed tables of the walks that moved, then run both tests again
+  without the variable, and commit that; then the locked script (fetch, rebase, run them again — a failure
+  means the rebase moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** the atlas sha256 identical before and after (the pipeline sorts sprites by name,
   `pipeline.mjs:473` on `bc8e05d` — `R3-03.V2a` (wave 4) inserts the `@p2` checks just above; find it by that
   text — so moving a sprite between modules does not move it in the atlas); the scale-1 digest pin green;
