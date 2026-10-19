@@ -116,20 +116,22 @@ reviewed to zero.
 - **Tests (on myadmin1, under the lock; `--retries=0` because the helper sets `CI=1`, which gives each test one retry
   and would hide a flake):**
   ```bash
-  # the four specs, 4 repeats, 12 workers — the load the flight flake was seen under (6 of 48)
+  # the four specs, 4 repeats, 12 workers — as C5 review 3's myadmin1 run (the flake was first seen at 12 workers in
+  # myadmin1's full suite; its 6-of-48 repro was 12 workers pinned to 12 CPUs, taskset -c 0-11)
   E2E_WORKERS=12 bash docs/v2-run/helpers/e2e-batch.sh campaign-run.spec.ts debug-tools.spec.ts flight.spec.ts raster.spec.ts --repeat-each=4 --retries=0
   # CI-like load on 2 CPUs (the test builds are fresh from the first run)
   taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh campaign-run.spec.ts debug-tools.spec.ts --repeat-each=2 --retries=0
   # the slow-host run of 8ff2bf6's specs (2 CPUs, 3 repeats)
   taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh zone-map.spec.ts frame-layout.spec.ts platform-polish.spec.ts smoke.spec.ts continue.spec.ts front-end.spec.ts extra-replays.spec.ts rebind.spec.ts --repeat-each=3 --retries=0
-  # the slow-host run of 424afd7's and b0dede1's specs (2 CPUs, 2 repeats, as their commit bodies)
-  taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh test/e2e/options.spec.ts game-options.spec.ts display-options.spec.ts scenes.spec.ts release-check.spec.ts weapon-select.spec.ts bullet-palette.spec.ts --repeat-each=2 --retries=0
+  # the slow-host run of 424afd7's and b0dede1's specs (2 CPUs, 2 repeats, as their commit bodies); release-check's
+  # wall-clock "shows the title in under 3 s" budget is left out, as there and in C5 review 4's run
+  taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh test/e2e/options.spec.ts game-options.spec.ts display-options.spec.ts scenes.spec.ts release-check.spec.ts weapon-select.spec.ts bullet-palette.spec.ts --repeat-each=2 --retries=0 --grep-invert 'shows the title in under 3 s'
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-gates.test.ts test/integration/e2e-ticks.test.ts
   ```
   Start each batch in the background and poll its log (Common rule 4). **The fourth run also covers the later C5
   fixes:** when `git log --oneline b0dede1..origin/master -- test/e2e test/integration/e2e-ticks.test.ts` lists any
   commit, run every spec they changed with the fourth command's flags (2 CPUs, `E2E_SKIP_BUILD=1`,
-  `--repeat-each=2 --retries=0`). `git diff --name-only b0dede1 origin/master -- 'test/e2e/*.spec.ts'` prints them
+  `--repeat-each=2 --retries=0 --grep-invert 'shows the title in under 3 s'`). `git diff --name-only b0dede1 origin/master -- 'test/e2e/*.spec.ts'` prints them
   as `test/e2e/<name>.spec.ts` paths, which the helper takes as they are (each path selects that spec alone); pass up
   to 10 per batch, one batch after the other.
 - **Acceptance:** every finding of the round closed (or answered in the report with its reason); the four e2e runs
