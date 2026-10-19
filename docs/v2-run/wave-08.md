@@ -25,7 +25,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 |---|---|---|---|---|
 | 1 | `R4-01.A1a` → `R4-01.A1b` → `R4-01.A2` | `ships/*.v2.sprite.json`, `content/player/*`, `core/world` (thruster) | A1a: DOCS-IMAGES (`docs/images/ships/`) · A1b: GOLDEN + FP · A2: FP + DATA-INDEX | yes (pass 1) |
 | 2 | `R4-05.E3` → `R4-05.E4` → `R4-03.C7` → `R4-05.E2` → `R4-05.E1` | `packages/core/src/scenes/index.ts`, `title.mjs`, `ending.mjs`, `logo.mjs`, `core/data/campaign.ts` | SCENES (whole lane); FP each; C7 + STRINGS; E2 + UI-FILE | yes (after lane 1 or 3 ends) |
-| 3 | `R4-03.C5` → `R4-03.C6` | `packages/core/src/ui/index.ts`, `hud.mjs`, `ui-kit.mjs`, `test/e2e/frame-pixels.ts` | UI-FILE, E2E-MIRROR, FP | yes (pass 2) |
+| 3 | `R4-03.C5` → `R4-03.C6` | `packages/core/src/ui/index.ts`, `hud.mjs`, `test/e2e/frame-pixels.ts`, `packages/shell/src/flight/index.ts` | UI-FILE, E2E-MIRROR, FP | yes (pass 2) |
 | 4 | `R4-01.A3` → `R4-02.B2` → `R4-01.A4` | `core/weapons`, `core/enemies` (Option frame), `core/powerups`, `core/shields`, `items.mjs`, `direct-items.mjs`, `shields.mjs` (force field) | CORE-CONFIG (A3, after `R4-03.C1`); FP; POWERUPS (B2, A4) | no (W09's A9 / B4) |
 | 5 | `R4-01.A5` → `R4-01.A7` → `R4-01.A6` | `shields.mjs` (pods, Reduce), `arm.mjs`, `weapons.mjs`, `direct.mjs`, `shots/*.v2.sprite.json` | DOCS-IMAGES (A6: `docs/images/shots/`); otherwise none (atlas only) | no |
 | 6 | `R4-03.C1` → `R4-03.C2` → `R4-03.C3` → `R4-03.C4a` → `R4-03.C4b` | `assets/source/fonts/pixel9x12.font.json` | none (C1: CORE-CONFIG + STRINGS docblocks only) | no (`W08.E2E`) |
@@ -74,8 +74,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
    fingerprint moves, stop and report. A new sprite name that the content or `UI_SPRITES` references **is** a re-pin
    of the presentation and content-DB fingerprints, and of the shell frame fingerprint too when the content
    references it (its flight walks hash the content's sprite ids); sprite ids are the sorted interned names. A name
-   nothing references moves none of them. Re-pin only under the land lock with `SHMUP_FINGERPRINT_PRINT=1`,
-   paste the printed tables, give the reason in the commit.
+   nothing references moves none of them. Re-pin in README rule 6's two passes: the print-and-paste pass
+   outside the lock (run the failed test with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables, run it once
+   more without the variable, commit that), the locked script only re-verifies and re-pins if the rebase moved a
+   table; give the reason in the commit.
 5. **GOLDEN only for `R4-01.A1b`** (`p.bank` is hashed, `packages/core/src/debug/index.ts:412`) **and then
    `R4-02.B3`** (the point item's `pf.frame` is a hashed pool field, `packages/core/src/bullets/index.ts:2003`).
    `pnpm golden:update` runs only in those two, under the land lock, with the reason in the commit.
@@ -85,7 +87,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 7. **Same-file orders** (do not start a subtask before its partner is on `master`):
    - `R4-03.C7` after `R4-03.C6` (C5, C6 and C7 share `packages/core/test/ui/*`, `ui-layout-frame.test.ts`,
      `helpers/layout-walks.ts`) and after `R4-03.C1` (`ui/strings.ts`, `localization.test.ts`);
-   - `R4-05.E2` after `R4-03.C6` (`UI_SPRITES` in `ui/index.ts`);
+   - `R4-05.E2` after `R4-03.C6` (the UI-FILE hand-off; both edit `ui/index.ts`);
    - `R4-02.B3` after `R4-02.B2` (both edit `scripts/assets/procedural/items.mjs`) and after `R4-01.A1b`'s re-bless;
    - `R4-01.A4` after `R4-01.A5` (both edit `scripts/assets/procedural/shields.mjs`) and after `R4-02.B2` (POWERUPS);
    - `R4-02.B2` after `R4-01.A3` (the stolen Option item uses A3's 4-frame `options/stolen` art);
@@ -159,7 +161,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   `R4-01.A9`'s) — never edit a spec here.
 - **Token:** none for the code; DOCS-IMAGES only for `docs/images/ships/` (land lock at push).
 - **Traps:** rule 1 (never edit `ships/kestrel.sprite.json`); the `p2` map must change exactly the P1 ramp colours;
-  binary alpha; the anchor is the bible's, not v1's ×1.5 (it is the same here, but check).
+  binary alpha; the anchor is the bible's (`art-bible-v2.md` § 5.3), not a computed ×1.5: the KESTREL's `[12, 6]`
+  *is* exact ×1.5, but the MANTA's v1 `[8, 5]` gives 7.5 and the bible allows `[12, 7]` or `[12, 8]` — draw the
+  Goal's `[12, 7]`; the owner check confirms it.
 - **Docs needs:** `docs/dev/art-bible-v2.md` § 5.3 (the anchors chosen; the ships' † rows stay — their `bankFrames`
   change lands in `R4-01.A1b`), `docs/client/arsenal.md` (images).
 - **Owner (Manual):** approve the ships' look and anchors (KESTREL `[12, 6]`; MANTA `[12, 7]` or `[12, 8]`).
@@ -209,8 +213,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   `content:check` and the bench atlas test (both are run lines above); on a rebase conflict in a replay file: take
   master's and re-run `golden:update`.
 - **Docs needs:** `content/player/README.md` (`bankFrames`), `docs/dev/art-bible-v2.md` (the ships' † rows: § 5.2's
-  "counts today's game cannot show" row and § 5.3's ship row both say `"bankFrames": 1` — with this commit they are
-  2, five frames), the plan's As built (the re-bless reason).
+  "counts today's game cannot show" table holds the kestrel/manta row saying `"bankFrames": 1` — with this commit it
+  is 2 and five frames; § 5.3's ship row carries the † on `5 (3)` and the note `(†; v1 has level / up / down)` —
+  drop both † there: from this commit the game shows the five frames), the plan's As built (the re-bless reason).
 
 ### R4-01.A2 — A thruster behind each ship (FP)
 
@@ -257,7 +262,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh flight.spec.ts ship-select.spec.ts coop.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then the FP re-pin in README rule 6's two passes: the print-and-paste pass outside the lock (rule 4), the
+  locked script only re-verifies and re-pins if the rebase moved a table.
 - **Acceptance:** zero allocation (the new guard: warm-up ≥ 20,000, new indices each window); goldens green and
   unchanged (presentation only); the scale-1 digest pin green (the name is absent at scale 1, RR-1a).
 - **Token:** FINGERPRINTS (push time); DATA-INDEX (work time).
@@ -282,20 +288,25 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     10,865 lines).
   - tests in `packages/core/test/scenes/` that pin those rows (e.g. `scenes-attract*.test.ts`, `scenes-flow*.test.ts`).
   - `packages/core/test/helpers/scene-layout.ts` — only `WARNING_BAND` (`:79-84`): change its formula with the
-    scene's (the scenes' suites re-derive the band there; its docblock says a layout change changes it on purpose).
-  - the three fingerprints' `PINNED` tables.
+    scene's (`scenes-flow-edge.test.ts` re-derives the band from it — the only test importer; its docblock says a
+    layout change changes it on purpose).
+  - the presentation fingerprint's `PINNED` table (`test/integration/presentation-fingerprint.test.ts`) — the only
+    one this subtask can move: it edits no `content/`, no sprite name and no shell scene, so the content-DB and
+    shell fingerprints cannot change; if either moves anyway, stop and report it (rule 4).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui/ui-layout-frame.test.ts packages/core/test/frame-literals.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
   bash docs/v2-run/helpers/e2e-batch.sh zone-a.spec.ts attract.spec.ts campaign-run.spec.ts
   ```
-  then the FP re-pin under the land lock. (`zone-a.spec.ts` samples the game scene's band row and colour;
+  then the FP re-pin in README rule 6's two passes: the print-and-paste pass outside the lock (rule 4), the
+  locked script only re-verifies and re-pins if the rebase moved a table. (`zone-a.spec.ts` samples the game
+  scene's band row and colour;
   `boss.spec.ts` checks the shell flight scene's own band, which this subtask does not change. `zone-a.spec.ts` is
-  `W08.E2E`'s spec (rule 15): run it, edit it not.)
-- **Acceptance:** heights derive from the frame or `uiPx` (frame ≠ world: the band is frame-anchored); nothing overlaps
-  in en, es or ja (`ui-layout-frame.test.ts` green **unedited**); fingerprints re-pinned with the reason; goldens
-  untouched.
+  `W08.E2E`'s spec (rule 15): run it, never edit it.)
+- **Acceptance:** heights derive from the frame or `uiPx` (frame ≠ world: the band is frame-anchored); nothing
+  overlaps in en, es or ja (`ui-layout-frame.test.ts` green **unedited**); the presentation fingerprint re-pinned
+  with the reason, the other two untouched; goldens untouched.
 - **Token:** SCENES (lane 2); FINGERPRINTS (push time). **e2e:** lane 2's pass.
 - **Traps:** rule 7 (no edit of `packages/core/test/ui/*` or `helpers/layout-walks.ts`); no literal frame number in
   `scenes/index.ts` (`packages/core/test/frame-literals.test.ts`); the WARNING band's timing is ticks — unchanged; the
@@ -305,7 +316,13 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   stripes and the cards with the UI list's `rect` and `text` commands (the band is three `rect`s today,
   `scenes/index.ts:3005-3007`; mind the list's `UI_COMMANDS` budget), and never edit `title.mjs`, `ui-kit.mjs` or
   `ui/index.ts`. If the stripes truly need a sprite, report it for `R4-05.E2`, which holds UI-FILE and `title.mjs`.
-- **Docs needs:** `docs/dev/bosses-and-warning.md` (the band), `docs/dev/front-end-and-attract.md` (cards).
+  The shell free-flight scene mirrors the band by hand (`packages/shell/src/flight/index.ts:145-155` — its
+  comments say "as the scene flow's"); it is not yours (C5 holds that file, its dev HUD only, wave-08.md:484): put
+  the band's final height, top row, text row and stripe colours in your report under "flight mirror" so the
+  orchestrator re-measures the mirror before `W08.E2E`.
+- **Docs needs:** `docs/dev/bosses-and-warning.md` (the band), `docs/dev/front-end-and-attract.md` (cards),
+  `docs/dev/art-bible-v2.md` § 5.11 (the "WARNING banner" row `:675` — the hazard stripes, the frame-derived height —
+  and the "Zone cards, attract cards" row `:674`).
 
 ### R4-05.E4 — The five endings as full-frame scenes
 
@@ -339,8 +356,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   bash docs/v2-run/helpers/e2e-batch.sh zones-hi.spec.ts campaign-run.spec.ts attract.spec.ts
   ```
-  then, under the land lock, run those two lines with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the
-  walks that moved, and run them again without the variable.
+  then re-pin those two lines in README rule 6's two passes: outside the lock, run them with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, run them again without the
+  variable, and commit that; then the locked script (fetch, rebase, run them again — a failure means the rebase
+  moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** full-frame scenes with `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` in the generator; the
   allow-list entry `EndingScene.drawCitadel.sink` changed only for a tick or count that equals a banned number, with
   its reason (derive everything else); scale-1 pin green; fingerprints re-pinned with the reason.
@@ -384,8 +403,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh zone-map.spec.ts rebind.spec.ts input.spec.ts attract.spec.ts zones-hi.spec.ts front-end.spec.ts
   ```
-  then, under the land lock, run those two lines with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the
-  walks that moved, and run them again without the variable.
+  then re-pin those two lines in README rule 6's two passes: outside the lock, run them with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, run them again without the
+  variable, and commit that; then the locked script (fetch, rebase, run them again — a failure means the rebase
+  moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** nothing truncates or overlaps in en, es or ja; the shipped campaign validates against the caps; the
   fingerprints re-pinned with the reason.
 - **Token:** SCENES; STRINGS (if a label changes; implies FP); FINGERPRINTS (push time).
@@ -424,8 +445,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh front-end.spec.ts frame-layout.spec.ts boot.spec.ts scenes.spec.ts
   ```
-  then, under the land lock, run those two lines with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the
-  walks that moved, and run them again without the variable.
+  then re-pin those two lines in README rule 6's two passes: outside the lock, run them with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, run them again without the
+  variable, and commit that; then the locked script (fetch, rebase, run them again — a failure means the rebase
+  moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** the backdrop is opaque, full-frame, drawn below the logo and the menus; the new name re-pins the
   fingerprints (expected); the scale-1 digest pin green (the name is absent at scale 1, RR-1a; the CJK figures and the
   bench do not draw the title).
@@ -459,7 +482,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```
 - **Acceptance:** a pure redraw (same name) moves no fingerprint; the scale-1 pin green; nothing overlaps on the title.
 - **Token:** none, or SCENES + FINGERPRINTS if the layout moves.
-- **Traps:** rule 4 (a moved fingerprint without a layout change = stop); original lettering only.
+- **Traps:** rule 4 (a moved fingerprint without a layout change = stop); if the conditional
+  `ui-layout-frame.test.ts` fails, stop and report it — that file and `helpers/layout-walks.ts` are `R4-03.C7`'s
+  (as rule 7 says for E3/E4); original lettering only.
 - Keep `#e04828` as the bottom band of the logo's gradient (`boot.spec.ts`, `scenes.spec.ts` look for it), or report
   the spec lines for `W08.E2E` (rule 15).
 - **Docs needs:** `docs/dev/front-end-and-attract.md`; `README.md` banner is `R4-05.E6`'s.
@@ -495,9 +520,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   node scripts/art-origins.mjs --check
   bash docs/v2-run/helpers/e2e-batch.sh frame-layout.spec.ts lives.spec.ts coop.spec.ts direct-items.spec.ts boss.spec.ts advanced-bosses.spec.ts
   ```
-  then, under the land lock, run the two fingerprint lines (the `integration` one and the `shell` one) with
-  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, and run them again without the
-  variable.
+  then re-pin in README rule 6's two passes: outside the lock, run the two fingerprint lines (the `integration`
+  one and the `shell` one) with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved,
+  run them again without the variable, and commit that; then the locked script (fetch, rebase, run them again —
+  a failure means the rebase moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** nothing overlaps in en, es or ja; the HUD allocation guards green (`ui-hud-*-alloc`, `ui-alloc`), no
   budget raised; the e2e mirror equals core's layout (`frame.test.ts`).
 - **Token:** UI-FILE, E2E-MIRROR (work time); FINGERPRINTS (push time). **e2e:** pass 2.
@@ -528,9 +554,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   bash docs/v2-run/helpers/e2e-batch.sh options.spec.ts rebind.spec.ts game-options.spec.ts display-options.spec.ts input.spec.ts front-end.spec.ts scenes.spec.ts
   ```
-  then, under the land lock, run the two fingerprint lines (the `integration` one and the `shell` one) with
-  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, and run them again without the
-  variable.
+  then re-pin in README rule 6's two passes: outside the lock, run the two fingerprint lines (the `integration`
+  one and the `shell` one) with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved,
+  run them again without the variable, and commit that; then the locked script (fetch, rebase, run them again —
+  a failure means the rebase moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** menus keep their 18/6-tick auto-repeat and 4-tick confirm buffer (ticks never change); the UI
   allocation guards green; the fingerprints re-pinned with the reason. Hand UI-FILE to `R4-05.E2` when pushed.
 - **Token:** UI-FILE; FINGERPRINTS (push time).
@@ -549,7 +576,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `Math.floor(this.host.tick / OPTION_ANIM_TICKS) & 1` → `& 3`, through **one exported constant** (e.g.
     `OPTION_FRAMES = 4`, `& (OPTION_FRAMES - 1)`); also the docblock at `weapons/index.ts:1254`.
   - `packages/core/src/options/index.ts` — the new constant, next to `OPTION_ANIM_TICKS` (`:97`), with its docblock,
-    and the `OPTION_ANIM_TICKS` docblock (`:96`, "two-frame").
+    the `OPTION_ANIM_TICKS` docblock (`:96`, "two-frame"), and the file's **Public API** paragraph (`:55` — add the
+    new name after `OPTION_ANIM_TICKS`).
   - `packages/core/src/index.ts` — the barrel: one added name, next to `OPTION_ANIM_TICKS` (`:911`).
   - `assets/source/sprites/options/orb.v2.sprite.json` (new, 12×12 × 4), `options/stolen.v2.sprite.json` (new, 12×12 × 4).
   - `test/scripts/assets/options-v2.test.ts` (new): `options/orb` and `options/stolen` in the default-scale atlas are
@@ -565,8 +593,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   pnpm --filter @shmup/core typecheck
   node scripts/art-origins.mjs --check
   ```
-  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
-  SHMUP_FINGERPRINT_PRINT=1, paste the printed tables over `PINNED`, then run it once more without the variable.
+  then re-pin each fingerprint test that failed above, in the two passes of README rule 6: outside the lock, run
+  it again with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, run it once more without the
+  variable, and commit that; then the locked script (fetch, rebase, run the fingerprint tests again — a failure
+  means the rebase moved it: re-pin inside the lock the same way, amend, push).
   The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
   report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the Option frame is computed at sync, not hashed); the weapons and
@@ -603,8 +633,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm content:check
   ```
-  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
-  SHMUP_FINGERPRINT_PRINT=1, paste the printed tables over `PINNED`, then run it once more without the variable.
+  then re-pin each fingerprint test that failed above, in the two passes of README rule 6: outside the lock, run
+  it again with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, run it once more without the
+  variable, and commit that; then the locked script (fetch, rebase, run the fingerprint tests again — a failure
+  means the rebase moved it: re-pin inside the lock the same way, amend, push).
   The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
   report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the item frame is sync-time); the powerups allocation guards green; the
@@ -648,8 +680,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
-  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
-  SHMUP_FINGERPRINT_PRINT=1, paste the printed tables over `PINNED`, then run it once more without the variable.
+  then re-pin each fingerprint test that failed above, in the two passes of README rule 6: outside the lock, run
+  it again with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, run it once more without the
+  variable, and commit that; then the locked script (fetch, rebase, run the fingerprint tests again — a failure
+  means the rebase moved it: re-pin inside the lock the same way, amend, push).
   The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
   report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged; `shields-alloc` and the powerups guards green; the Arm's
@@ -657,7 +691,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Token:** POWERUPS; FINGERPRINTS (push time).
 - **Traps:**
   - the shimmer frame comes from the tick at sync (whole numbers); `shieldWearFrame` is called with `frames`:
-    keep the wear count (4) as the divisor and add the shimmer bit, do not change what `hits` maps to.
+    keep the wear count (4) as the divisor and add the shimmer to the result, on the sync line — never inside
+    `shieldWearFrame` — and do not change what `hits` maps to.
   - Export no new runtime value: `packages/core/test/index.test.ts` requires a barrel line for every runtime
     export, and the barrel is CORE-CONFIG, which you do not hold. Reduce (2 frames) must keep frames 0–1: test it.
 - **Docs needs:** `docs/dev/options-shields-hunter.md`, `docs/dev/art-bible-v2.md` († row: shimmer).
@@ -749,8 +784,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - docblocks only: `packages/core/src/config/index.ts:797-816` (the `GLYPH_W` / `GLYPH_H` / `LINE_H` comments name
     `pixel6x8 × ART_SCALE`), `packages/core/src/ui/strings.ts:466` and `:514` (the font file the charset is compared
     with).
-  - `packages/core/test/ui/ui-strings.test.ts` (only the comment at `:26`; push before `R4-03.C6` starts — C6's
-    files cover `packages/core/test/ui/`), `test/integration/localization.test.ts` (compare the glyph set with the
+  - `packages/core/test/ui/ui-strings.test.ts` (only the comment at `:26`; `R4-03.C6`'s files exclude this
+    file), `test/integration/localization.test.ts` (compare the glyph set with the
     native file too), `test/scripts/assets/font-cell-size.test.ts`, `test/scripts/assets/font.test.ts`
     (the code points).
   - `test/scripts/assets/interim-pipeline.test.ts` — the font case (`:310-320`), and in the case 'upscales every
@@ -858,8 +893,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
-  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
-  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, then run it once more without the variable.
+  then re-pin each fingerprint test that failed above, in the two passes of README rule 6: outside the lock, run
+  it again with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, run it once more without the
+  variable, and commit that; then the locked script (fetch, rebase, run the fingerprint tests again — a failure
+  means the rebase moved it: re-pin inside the lock the same way, amend, push).
   The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
   report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the frame is sync-time); the allocation guard untouched and green.
@@ -870,7 +907,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     natives).
   - Read `/home/sites/shmup-cup-run/R2-04.P4-report.md` first; the art stays the bible's 48² × 8 — if P4 recommends
     another size or draw, note it in your report for `R4-01.RV` rather than changing it.
-- **Docs needs:** `docs/dev/visual-and-mechanic-extras.md` (black hole), `docs/dev/art-bible-v2.md` († row).
+- **Docs needs:** `docs/dev/visual-and-mechanic-extras.md` (black hole), `docs/dev/art-bible-v2.md` († row),
+  `docs/dev/api-reference.md` (`BLACK_HOLE_FRAMES` row: `4` frames → `8`, swirl 0–6 / discharge 7).
 
 ### R4-02.B1 — Hand-finish the v2 bullets; the readability sheets
 
@@ -954,7 +992,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/dispatch
   pnpm content:check
   ```
-  then the FP re-pin under the land lock.
+  then the FP re-pin in README rule 6's two passes: the print-and-paste pass outside the lock (rule 4), the
+  locked script only re-verifies and re-pins if the rebase moved a table.
 - **Acceptance:** allocation guards green (`dispatch-fx-alloc`, the particles guards), no budget raised; frame counts
   in the presets ≤ the art's; the scale-1 digest pin green; every v2 sprite with a new frame count is `native: true`
   (rule 1: the relation case of `interim-pipeline.test.ts` accepts a changed count only on a native sprite); the
@@ -1072,8 +1111,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   they caused. Never edit a spec of `R4-01.A9` or `R4-02.B4`.
 - **Tests** — one batch at a time: start each with nohup and its own log
   (`nohup bash docs/v2-run/helpers/e2e-batch.sh <its specs> > /home/sites/shmup-cup-run/W08.E2E-1.log 2>&1 &`, then
-  `-2.log` … `-6.log` — the log names below in order), poll it, and start the next only after its log ends with
-  Playwright's summary (README rule 4). Batches 2–6 may set `E2E_SKIP_BUILD=1` (a spec edit needs no rebuild):
+  `-2.log` … `-6.log`, numbered by the order of the six commands below), poll it, and start the next only after its
+  log ends with Playwright's summary (README rule 4). Batches 2–6 may set `E2E_SKIP_BUILD=1` (a spec edit needs no
+  rebuild):
   ```bash
   bash docs/v2-run/helpers/e2e-batch.sh zone-a.spec.ts zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts campaign-run.spec.ts
   bash docs/v2-run/helpers/e2e-batch.sh advanced-bosses.spec.ts render-groups.spec.ts debug-tools.spec.ts attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts zone-map.spec.ts continue.spec.ts
@@ -1093,8 +1133,9 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
 **new** agent) … until a review reports zero findings, nits included. Every review of this wave checks, on top of the
 subtask's acceptance:
 
-- the scale-1 digest pin unchanged and green (`interim-pipeline.test.ts:341-357`; it is the only scale-1 check —
-  ATLAS-SHA is the default scale only, rule 14, and moves for every redraw);
+- the scale-1 digest pin unchanged and green (`interim-pipeline.test.ts`, the case 'pins the v1 atlas: every
+  page’s pixels and the manifest, by digest' — find it by its title, its line range moves with `R4-P.P3`; it is
+  the only scale-1 check — ATLAS-SHA is the default scale only, rule 14, and moves for every redraw);
 - no v1 pixel map, v1 font or generator v1 path edited
   (`git diff $(cat /home/sites/shmup-cup-run/w08-base.txt) -- 'assets/source/**/*.sprite.json' ':!*.v2.sprite.json' assets/source/fonts/pixel6x8.font.json`
   is empty);
