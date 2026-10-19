@@ -573,8 +573,9 @@ by the quoted code or test title before you edit it.
      `test/integration/atlas-zone-sprites.test.ts`, `test/integration/frame-literals-repo.test.ts`,
      `test/scripts/art-origins.test.ts`, `test/scripts/assets/provenance.test.ts`, `test/playtest/zone-<x>.test.ts`,
      `test/golden` (all of it: the scope proof); then, as its own command, the whole
-     `test/integration/release-audit.test.ts` (no `-t`: it audits all nine zones, and its five `zone $label: …`
-     cases carry the campaign's UPPER-CASE labels `A` … `I` (`content/campaign/main.campaign.json`, asserted at
+     `test/integration/release-audit.test.ts` (no `-t`: it audits all nine zones, and its five cases whose title
+     starts `zone $label` (four `zone $label: …`, the fifth `zone $label boss, …`) carry the campaign's UPPER-CASE
+     labels `A` … `I` (`content/campaign/main.campaign.json`, asserted at
      `release-audit.test.ts:122`) — a `-t "zone $z"` with the script's lower-case `--zone` letter would select
      nothing); then the three fingerprints without the variable. With `--all`, run the
      checks of the zone `--zone` names (they include all of `test/golden`).
@@ -693,7 +694,11 @@ by the quoted code or test title before you edit it.
 - **Docs needs:** `docs/dev/repo-layout.md`, `test/README.md`, `docs/dev/direct-mode.md` (the sentences naming
   `zones-bc-direct.test.ts`, `zones-de-direct.test.ts` and `zones-fg-direct.test.ts`), and the four zone docs
   `docs/dev/zones-b-and-c.md`, `docs/dev/zones-d-and-e.md`, `docs/dev/zones-f-and-g.md`, `docs/dev/zones-h-and-i.md`
-  — their "test files" tables and the `db` comments that name the deleted `zones-*.test.ts` files.
+  — their "test files" tables (`zones-b-and-c.md:506-507`, `zones-d-and-e.md:522-524`, `zones-f-and-g.md:576-578`,
+  `zones-h-and-i.md:744`), the `db` comments (`zones-d-and-e.md:496`, `zones-f-and-g.md:551`, `zones-h-and-i.md:712`)
+  and the prose sentences naming a deleted file (`zones-b-and-c.md:366`, `zones-d-and-e.md:295`,
+  `zones-d-and-e.md:382`, `zones-f-and-g.md:423`) — find them all with
+  `git grep -n "zones-[a-z]*-runtime\|zones-[a-z]*-direct" -- docs/dev`.
 
 ### R5-P.D-A — Zone design: A, AZURE VERGE
 
@@ -983,8 +988,9 @@ reports in `RUN_DIR` ("docs needs") and the file lists below.
 
 - **Files:** `docs/dev/scenes-and-ui.md` (font, HUD, UI kit, caps, the panel rule), `docs/dev/options-rebinding-and-accessibility.md`,
   `docs/dev/front-end-and-attract.md` (title, cards), `docs/dev/zones-h-and-i.md` (the endings section, plus the
-  split lines of `R5-P.P4` / `R5-P.P5a2`: the `zones.patterns.json` mention at `:71` and the `behaviors-zones-hi*`
-  names at `:734-735` — nothing else in the file),
+  split lines of `R5-P.P4` / `R5-P.P5a2` / `R5-P.P5e`: the `zones.patterns.json` mention at `:71`, the
+  `behaviors-zones-hi*` names at `:734-735` and the `zones-hi-runtime-edge` rows at `:712` and `:744` — nothing
+  else in the file),
   `docs/dev/bosses-and-warning.md` (WARNING), `content/strings/README.md`.
 
 ### W09.DOCS-E — Pipeline, conventions, API and the R5 prep docs
@@ -1000,8 +1006,11 @@ reports in `RUN_DIR` ("docs needs") and the file lists below.
   (the icons), `README.md` (the banner), `test/README.md`, and the pattern-file and test-file names only in
   `docs/dev/enemies-and-behaviors.md` (`:606`), `docs/dev/release-hardening.md` (`:222`), `docs/dev/zones-b-and-c.md`
   (`:58`, `:406`, `:319`, `:500-501`), `docs/dev/zones-d-and-e.md` (`:59`, `:486`, `:516-517`) and
-  `docs/dev/zones-f-and-g.md` (`:62`, `:541`, `:570-571`) — `R5-P.P4` / `R5-P.P5a1` / `R5-P.P5a2`'s docs needs; find
-  the lines with `git grep -n "zones.patterns\|behaviors-zones" -- docs/dev`; nothing else in those files.
+  `docs/dev/zones-f-and-g.md` (`:62`, `:541`, `:570-571`) — `R5-P.P4` / `R5-P.P5a1` / `R5-P.P5a2` / `R5-P.P5e`'s
+  docs needs (P5e's rows and prose: `zones-[a-z]*-runtime` / `zones-[a-z]*-direct` hits in the three files); find
+  the lines with
+  `git grep -n "zones.patterns\|behaviors-zones\|zones-[a-z]*-runtime\|zones-[a-z]*-direct" -- docs/dev`; nothing
+  else in those files.
 
 ### W09.DOCS-RV — Review of the docs pushes
 
