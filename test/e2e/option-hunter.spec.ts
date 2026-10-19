@@ -8,11 +8,20 @@
  * sprite" warning from the atlas (the new engine sprites are in the atlas). Screenshots are at the
  * e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame pixel (x, y) is
  * screenshot pixel (sx(x), sy(y)).
+ *
+ * Every wait after the boot counts the game's ticks (`ticks.ts`), never rAF frames (C5 review 4): a
+ * runner drawing about 3 frames a second runs up to 4 ticks a frame.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  SCENE_SLACK_TICKS,
+  SHIP_ENTER_TICKS,
+  pollTicks,
+  waitTicks,
+} from './ticks.js';
 
 /** The Option Hunter's violet body (`enemies/option-hunter` palette `p`, #8a3ad8) — unique. */
 const HUNTER_VIOLET = [0x8a, 0x3a, 0xd8] as const;
@@ -102,28 +111,6 @@ function view(page: Page): Promise<HunterView> {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
  * Counts the playfield pixels of each colour in a screenshot of the canvas.
  *
  * @param page - The page.
@@ -209,7 +196,7 @@ test.describe('Option Hunter (web build)', () => {
     expect([after.owned, after.carried]).toEqual([0, 4]);
     let drawn: number[] = [0, 0];
     for (let poll = 0; poll < 20 && (drawn[0] < 20 || drawn[1] < 4); poll++) {
-      await waitFrames(page, 4);
+      await waitTicks(page, 4);
       drawn = await countColours(page, [HUNTER_VIOLET, STOLEN_GREY]);
     }
     expect(drawn[0], 'the hunter drawn').toBeGreaterThanOrEqual(20);
@@ -235,12 +222,12 @@ test.describe('Option Hunter (web build)', () => {
       SCENE_SLACK_TICKS,
     );
     expect((await view(page)).carried).toBe(0);
-    // Poll a few captures: four frames after the crash its additive white flash
-    // (`MEGA_CRASH_FLASH_TICKS`) can still wash the grey out — one such capture read 2 grey pixels
-    // in 1 of 5 local runs at 640×360.
+    // Poll a few captures: soon after the crash its additive white flash (`MEGA_CRASH_FLASH_TICKS`)
+    // can still wash the grey out — one such capture read 2 grey pixels in 1 of 5 local runs at
+    // 640×360.
     let [violet, grey] = [0, 0];
     for (let poll = 0; poll < 20 && (violet !== 0 || grey < 4); poll++) {
-      await waitFrames(page, 4);
+      await waitTicks(page, 4);
       [violet, grey] = await countColours(page, [HUNTER_VIOLET, STOLEN_GREY]);
     }
     expect(violet).toBe(0);

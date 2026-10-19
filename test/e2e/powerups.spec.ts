@@ -6,6 +6,9 @@
  * atlas. The default web boot and the Tizen build opened from disk (which ignores
  * `?loadout=full`) never show it. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2,
  * viewport 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * The polls' intervals count the game's ticks (`ticks.ts`), never rAF frames (C5 review 4): a
+ * runner drawing about 3 frames a second runs up to 4 ticks a frame.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
@@ -20,7 +23,7 @@ import {
   sy,
   uiPx,
 } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -37,28 +40,6 @@ const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
  * interim art since R2-01 (45×36) — the most a box around its ring pixels can measure.
  */
 const RING_BOX = { w: uiPx(30), h: uiPx(24) } as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /** Frame pixels of one colour. */
 interface ColourPixels {
@@ -151,12 +132,12 @@ test.describe('Force Field (web build)', () => {
     });
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const pixels = await findColours(page, [RING, KESTREL_HULL]);
       // The ellipse's ring: dozens of pixels (fewer where Options overlap it).
       if (pixels[0].count >= 20 && pixels[1].count > 0) found = pixels;
     }
-    expect(found, 'no Force Field ring within 600 frames').not.toBeNull();
+    expect(found, 'no Force Field ring within 600 ticks').not.toBeNull();
     if (found === null) return;
     const [ring, hull] = found;
     expect(ring.hud).toBe(0);
@@ -180,7 +161,7 @@ test.describe('Force Field (web build)', () => {
     // Past the 40-tick fly-in, a few samples: never a ring pixel.
     let hullSeen = false;
     for (let poll = 0; poll < 8; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const [ring, hull] = await findColours(page, [RING, KESTREL_HULL]);
       expect(ring.count + ring.hud).toBe(0);
       hullSeen ||= hull.count > 0;
@@ -200,7 +181,7 @@ test.describe('Force Field (Tizen build via file://)', () => {
     });
     let hullSeen = false;
     for (let poll = 0; poll < 8; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const [ring, hull] = await findColours(page, [RING, KESTREL_HULL]);
       expect(ring.count + ring.hud).toBe(0);
       hullSeen ||= hull.count > 0;

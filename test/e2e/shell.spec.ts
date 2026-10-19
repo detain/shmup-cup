@@ -8,6 +8,10 @@
  *   letterbox colour; resizing the window re-fits the frame (1920×1080 is a whole multiple of
  *   the frame: ×5 of 384×216, ×3 of 640×360 since R2-01 — no letterbox, HUD bars in its corners);
  * - the frame loop runs: captures a few frames apart differ.
+ *
+ * Its frame waits count drawn frames on purpose, not the game's ticks (`ticks.ts`): frames drawn
+ * before the scaling checks, the renderer's re-fit after a resize, and the "animates" check, where
+ * a tick wait would hang rather than fail if the frame loop stopped.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
@@ -106,7 +110,8 @@ function contains(shot: Shot, color: readonly number[], tolerance = 2): boolean 
 }
 
 /**
- * Waits for `frames` animation frames in the page.
+ * Waits for `frames` animation frames in the page: drawn frames, which is what these tests wait
+ * for (see the file's docblock).
  *
  * @param page - The page.
  * @param frames - Frames to wait.

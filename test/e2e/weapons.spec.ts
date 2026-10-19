@@ -7,12 +7,15 @@
  * autofires too without any key (remote rule 1) and ignores the web-only `?loadout=full`.
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * The polls' intervals count the game's ticks (`ticks.ts`), never rAF frames (C5 review 4): a
+ * runner drawing about 3 frames a second runs up to 4 ticks a frame.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -27,28 +30,6 @@ const LASER_BODY = [0x9f, 0xe8, 0xff] as const;
 const OPTION_BODY = [0xe8, 0x38, 0x38] as const;
 /** KESTREL hull colour (`ships/kestrel` palette `h`, #c8d0e0). */
 const KESTREL_HULL = [0xc8, 0xd0, 0xe0] as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /** Frame pixels of one colour in the playfield. */
 interface ColourPixels {
@@ -134,20 +115,20 @@ test.describe('player weapons (web build)', () => {
     // The 40-tick fly-in, then autofire.
     let first: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && first === null; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const pixels = await findColours(page, [SHOT_RIM, KESTREL_HULL]);
       if (pixels[0].count >= 2 && pixels[1].count > 0) first = pixels;
     }
-    expect(first, 'no shot appeared within 600 frames').not.toBeNull();
+    expect(first, 'no shot appeared within 600 ticks').not.toBeNull();
     if (first === null) return;
     const [shots, hull] = first;
     expect(shots.hud).toBe(0);
     expect(shots.minX).toBeGreaterThan(hull.minX);
-    // A few frames later the shots have moved (7 px/tick): the pixel sets differ. Poll, so a
-    // loaded machine that runs fewer ticks per frame still gets there.
+    // A few ticks later the shots have moved (7 px/tick): the pixel sets differ (polled, up to ten
+    // captures).
     let moved = false;
     for (let poll = 0; poll < 10 && !moved; poll++) {
-      await waitFrames(page, 4);
+      await waitTicks(page, 4);
       const [later] = await findColours(page, [SHOT_RIM]);
       const same = [...later.positions].filter((p) => shots.positions.has(p)).length;
       moved = same < Math.max(shots.positions.size, later.positions.size);
@@ -165,13 +146,13 @@ test.describe('player weapons (web build)', () => {
     });
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const pixels = await findColours(page, [OPTION_BODY, LASER_BODY]);
       // Orbs show their red body (some may still trail off screen, left, after the fly-in); a
       // full beam ≥ 64 pixels (its top and bottom rows).
       if (pixels[0].count >= 8 && pixels[1].count >= 64) found = pixels;
     }
-    expect(found, 'no Options and lasers within 600 frames').not.toBeNull();
+    expect(found, 'no Options and lasers within 600 ticks').not.toBeNull();
     if (found === null) return;
     expect(found[0].hud).toBe(0);
     expect(found[1].hud).toBe(0);
@@ -189,17 +170,17 @@ test.describe('player weapons (Tizen build via file://)', () => {
     });
     let found: ColourPixels[] | null = null;
     for (let poll = 0; poll < 60 && found === null; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const pixels = await findColours(page, [SHOT_RIM, KESTREL_HULL]);
       if (pixels[0].count >= 2 && pixels[1].count > 0) found = pixels;
     }
-    expect(found, 'no shot appeared within 600 frames').not.toBeNull();
+    expect(found, 'no shot appeared within 600 ticks').not.toBeNull();
     if (found === null) return;
     expect(found[0].hud).toBe(0);
     expect(found[0].minX).toBeGreaterThan(found[1].minX);
     // Still the default loadout: no Options, no laser beams, ever.
     for (let poll = 0; poll < 3; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       const [orbs, beams] = await findColours(page, [OPTION_BODY, LASER_BODY]);
       expect(orbs.count + orbs.hud).toBe(0);
       expect(beams.count + beams.hud).toBe(0);
