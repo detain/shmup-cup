@@ -25,9 +25,10 @@ scripts/assets/procedural/*.mjs ────────┤  seeded generators: 
 assets/source/sprites/**/*.png (+ .json)┤  real-art overrides, replace frames by name
 assets/source/fonts/*.font.json ────────┘  bitmap fonts → one sprite, a frame per glyph
 assets/source/atlas-groups.json ────────  R1-05: which sprites pack onto a zone's own pages
-   │  collectSprites()     validate, merge, add <name>@flash and <name>@p2 siblings, default anchors,
-   │                       give every sprite its group (common, zone-a … zone-i), then scale every
-   │                       v1-scale source by `artScale` (the interim ×1.5 stage, below)
+   │  collectSprites()     validate, scale every v1-scale source by `artScale` (the interim ×1.5
+   │                       stage, below), merge the PNG overrides after the scale, add <name>@flash
+   │                       and <name>@p2 siblings from the scaled sprites, default anchors from the
+   │                       scaled frame 0, give every sprite its group (common, zone-a … zone-i)
    ▼
 packRects()                 MaxRects per group, 1-px padding + 1-px edge extrusion, power-of-two pages ≤ 2048²
    │  buildAtlas()          place frames, encodePng(…, { indexed: 'auto' }) each page (PNG-8 when it fits), build the manifest
@@ -46,8 +47,8 @@ dist/assets/atlas/*.png      emitted next to the bundle, with dist/assets/atlas/
 one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo, one
 1024×512 page since the M2-09 boss parts, 1024² since M2-14; **since R1-05 split by zone**, and
 since R2-01's interim ×1.5 art (below) a 1024² `common` page plus zone pages of 256² / 512×128 /
-512×256 / 256×512, 438 sprites in 1,459 frames and 139,944 B of PNG in all — v1's ungrouped page
-held 438 sprites in 1,411 frames, 120,400 B split by zone),
+512×256 / 256×512, 438 sprites in 1,459 frames and 139,944 B of PNG in all — v1's art held 438
+sprites in 1,411 frames; split by zone that was 120,400 B of PNG),
 the pixel font, the Vite plugin and the sprite-name check in `pnpm content:check` are done. The apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
 `new Image()` (since R1-05 after fetching the manifest) and render-pixi's `createAtlas` turns them
@@ -94,8 +95,10 @@ take it as an option (default `INTERIM_ART_SCALE`; scale 1 is the v1 art at eith
 every axis, copying every channel (alpha included) as is. Explicit anchors become `⌈s·a⌉`
 (`scaleAnchor`). Every computation is whole-number arithmetic on the scale's exact fraction
 (`parseArtScale`), so the output is identical on every machine. That rounding is what R2-02's
-rescale tool agrees with: it rounds a stage's raster `bands` to `⌈s·b⌉`, and pixel-centre sampling
-would land the `.5` boundaries a pixel higher. The procedural generators run at their native size
+rescale tool agrees with: its `spreadBands` spreads a stage's raster `bands` so their edges land at
+`⌈s·b⌉` — the bands are the differences of the rounded running boundaries, so an exact `.5` height
+lands a row taller or shorter with its neighbours — and pixel-centre sampling would land the `.5`
+boundaries a pixel higher. The procedural generators run at their native size
 first and the stage scales their output, exactly like the pixel maps (`ships/kestrel` 16×9 with
 anchor [8, 4] → 24×14 with anchor [12, 6]).
 
@@ -119,7 +122,8 @@ atlas. That is where core's `GLYPH_W` / `GLYPH_H` / `LINE_H` come from — the f
 **The `artScale: 1` builds** (decision W4-6): the TV bench's density atlas is built with
 `buildAtlas({ ungrouped: true, artScale: 1 })` **for good**, and the CJK figures (above), the store
 icons (`scripts/store-assets.mjs`) and the doc images (`scripts/doc-images.mjs`) build at scale 1
-until R2-03 switches the last two to the default. Scale 1 means *the v1 art at either frame* — the
+until R2-03 switches the doc images to the default; the store icons keep the v1 art until R4-05
+(W4-6, RR-3). Scale 1 means *the v1 art at either frame* — the
 bench's R0-02 / R0-03 figures therefore stay comparable across the frame flip.
 
 **The atlas with interim art** — what `pnpm assets` writes today: 438 sprites and **1,459** frames
@@ -175,8 +179,11 @@ Prettier (`.prettierignore`), because Prettier would fold short row arrays onto 
 
 ### Procedural generators (`scripts/assets/procedural/`)
 
-Each module exports `generate(): SpriteDef[]` and is registered in
-`procedural/index.mjs` (`PROCEDURAL_GENERATORS`).
+Each module exports `generate(options?: GeneratorOptions): SpriteDef[]` and is registered in
+`procedural/index.mjs` (`PROCEDURAL_GENERATORS`). Since R2-01 `GeneratorOptions` is
+`{ tileSize?, artScale? }`: the pipeline passes both to every generator — `terrain` draws its
+tilesets at `tileSize` and `lasers` / `palettes` draw the beams at the build's `artScale` — for
+the `native` sprites the interim stage never upscales (the "Never upscaled" list, above).
 
 | Module | Sprites |
 |---|---|
@@ -582,8 +589,11 @@ designs only, native resolution, no pure black next to small bright bullets.
 
 ### Adding a procedural generator
 
-1. New module `scripts/assets/procedural/<id>.mjs` exporting `generate(): SpriteDef[]`
-   (build sprites with `makeSprite(name, frames, '<id>', { anchor, hitFlash, animations })`).
+1. New module `scripts/assets/procedural/<id>.mjs` exporting
+   `generate(options?: GeneratorOptions): SpriteDef[]` — the pipeline passes `{ tileSize, artScale }`
+   to every generator (`terrain` reads `tileSize`, `lasers` / `palettes` read `artScale`; accept the
+   argument and ignore it otherwise) — and build sprites with
+   `makeSprite(name, frames, '<id>', { anchor, hitFlash, animations })`.
 2. Seed from the sprite name (`createAssetRng(seedOf(name))`); use only exactly rounded
    maths (see above).
 3. Register it in `procedural/index.mjs` (`PROCEDURAL_GENERATORS`), add a test to
@@ -653,8 +663,8 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | The charset equals core's `UI_GLYPHS` exactly (M3-03), the katakana layout and the derived voiced kana, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
 | `test/scripts/assets/provenance.test.ts` | R3-02: every override PNG (under `assets/source/sprites/` and the staging folder `art-prompts/v2/ingested/`) has a valid `.art.json` or a `LICENSES.md` entry; a record without its PNG, a PNG or sidecar changed after ingest, a recipe never ingested fail; the ingest tool's fixture outputs load as overrides (its recipes, records and edit layers ignored) and pack pixel for pixel with the sidecar's anchor and tags — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
-| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`, `INTERIM_ART_SCALE` equals core `ART_SCALE`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native`), the 9×12 interim font, the scale-1 digest pin |
-| `test/scripts/assets/terrain-size.test.ts`, `font-cell-size.test.ts` | R1-04: the terrain generator at 12 px and any even size (masks equal to every shipped mask resampled 8 → 12, the 8-px frames byte-identical to before, its `TILE_SIZE` equal to core's), `resampleMask` both ways; a 9×12 font made in the test (a ×1.5 upscale of `pixel6x8`, exactly the `UI_GLYPHS` code points) parses, packs next to the shipped font and lays out at advance 9 and a 15-px line |
+| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native`), the 9×12 interim font, the scale-1 digest pin |
+| `test/scripts/assets/terrain-size.test.ts`, `font-cell-size.test.ts` | R1-04: the terrain generator at 12 px and any even size (masks equal to every shipped mask resampled 8 → 12, the 8-px frames byte-identical to before, its `TILE_SIZE` equal to core's, `INTERIM_ART_SCALE` equal to core's `ART_SCALE`), `resampleMask` both ways; a 9×12 font made in the test (a ×1.5 upscale of `pixel6x8`, exactly the `UI_GLYPHS` code points) parses, packs next to the shipped font and lays out at advance 9 and a 15-px line |
 | `test/integration/tile-size.test.ts`, `stage-terrain.test.ts` | Every shipped tileset and stage uses `TILE_SIZE` (R1-04); every tileset mask equals the opaque pixels of its frame — since R1-04 also at 12 px |
 | `test/scripts/assets/coop.test.ts` | M2-06: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the exact red / blue swap, `makeP2Sprite`, every ship's and the stock icon's variant in the atlas |
 | `test/scripts/assets/palettes-names.test.ts` | M2-02: the pipeline's palettes are exactly core's `BULLET_PALETTES` other than `standard`, in core order; every family has a body colour and a core mark in every palette; one `<standard sprite>@<palette>` per standard sprite and palette; two runs draw the same pixels |

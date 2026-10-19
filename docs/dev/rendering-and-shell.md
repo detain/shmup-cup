@@ -695,7 +695,11 @@ game World's own batches**, on the World's camera object and with the World's `p
 `terrain` / `lasers` views passed through (the starfield batches are left out when the World has
 parallax bands — a stage brings its own background) — a batch the World adds later is
 drawn without changing the scene (the view is bound once, so the World's batch list must be
-complete at creation). Its sprite ids index one table: the content's names, then
+complete at creation). The three dev scenes with a starfield (free flight, the showcase, the fx
+gallery) share its tile edge: `STAR_TILE_SIZE = Math.ceil(128 × ART_SCALE)` — the pipeline's 128-px
+starfield tile at the art scale, 192 since R2-01's flip; `packages/shell/src/flight/index.ts`
+exports it, and the showcase and the fx gallery import it from there. Its sprite ids index one
+table: the content's names, then
 `FLIGHT_SPRITES`. `update(frame)` copies tick, alpha and screen effects, refills the stars
 from the tick (world space relative to the camera, so they pause with the game) and rebuilds
 the HUD only when player 1's lives, the World's status (`gameOver`) or a score's dirty flag
@@ -997,8 +1001,7 @@ that decide whether the game holds 60 fps come from the overlay on the monitors
 |---|---|
 | **render-ms p50 / p95 / max** | CPU time inside `renderer.render()`. Under SwiftShader, so it is a *regression* gate (`RENDER_P95_BUDGET_MS`), never a prediction of the Mali-G51 |
 | **draw calls** | Hardware-independent — the strict gate (`DRAW_CALL_BUDGET`; `shmup_feat.md` §22 allows 20–50) |
-| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 1024×512 for today's 640×360
-pass, as 512×256 was for the 384×216 pass F3 reviewed. Since **M3-02d** the CRT and the Mode-7 floor pool nothing (they are meshes); only `screenPass: 'filter'` still pools one the size of the canvas |
+| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 1024×512 for today's 640×360 pass, as 512×256 was for the 384×216 pass F3 reviewed. Since **M3-02d** the CRT and the Mode-7 floor pool nothing (they are meshes); only `screenPass: 'filter'` still pools one the size of the canvas |
 | **scene rebuilds**, and **render-group rebuilds** beside them | Frames on which Pixi threw the *scene's* instruction set away and re-walked it (review **F1**), and the same flag counted over every render group of the scene. Since **M3-02e** the first is 0 and the second says where that churn went — a layer group at a time — so the first cannot fall by the work merely moving out of sight |
 | **JS-heap delta over 600 frames** | The gate **F5** needs: the Node allocation guards stop at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation. A deliberately leaky fixture in the same file proves the gate really fails |
 
