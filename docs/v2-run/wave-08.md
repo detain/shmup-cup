@@ -91,8 +91,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
    - `R4-02.B3` after `R4-02.B2` (both edit `scripts/assets/procedural/items.mjs`) and after `R4-01.A1b`'s re-bless;
    - `R4-01.A4` after `R4-01.A5` (both edit `scripts/assets/procedural/shields.mjs`) and after `R4-02.B2` (POWERUPS);
    - `R4-02.B2` after `R4-01.A3` (the stolen Option item uses A3's 4-frame `options/stolen` art);
-   - `R4-05.E3` and `R4-05.E4` never edit `packages/core/test/ui/*`, `packages/core/test/helpers/layout-walks.ts` or
-     `scripts/assets/procedural/ui-kit.mjs` (lane 3's): if a layout test fails, stop and report.
+   - `R4-05.E3` and `R4-05.E4` never edit `packages/core/test/ui/*` or
+     `packages/core/test/helpers/layout-walks.ts` (lane 3's and `R4-03.C7`'s), nor
+     `scripts/assets/procedural/ui-kit.mjs` (the `R4-P.P1` stub — no one edits it): if a layout
+     test fails, stop and report.
 8. **Generators.** Never edit `scripts/assets/procedural/index.mjs` (R4-P.P1 registered everything), `common.mjs`,
    `scripts/assets/v2kit.mjs` (R4-P.P4's, outside `procedural/`; read it), or another subject's generator. Exact
    maths only, seeded from the sprite name (`seedOf`); two runs byte-identical.
@@ -368,7 +370,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** full-frame scenes with `FRAME_W` / `FRAME_H` from `scripts/frame.mjs` in the generator; the
   allow-list entry `EndingScene.drawCitadel.sink` changed only for a tick or count that equals a banned number, with
-  its reason (derive everything else); scale-1 pin green; fingerprints re-pinned with the reason.
+  its reason (derive everything else); scale-1 pin green; the presentation fingerprint re-pinned with the
+  reason, the other two untouched.
 - **Token:** SCENES; FINGERPRINTS (push time).
 - **Traps:** rule 7; the epilogue and story panels' layout rule belongs to `R4-03.C7` — do not change the panels
   here; keep the six names: a new `ui/ending-*` name must be in `core/ui` `UI_SPRITES` (the case "names exactly the
@@ -441,7 +444,11 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - tests in `packages/core/test/scenes/` and `packages/core/test/ui/`.
   - `test/scripts/assets/procedural-title.test.ts` (new: the backdrop only at `artScale` ≠ 1, `FRAME_W`×`FRAME_H`,
     opaque, native).
-  - the three fingerprints' `PINNED` tables.
+  - the presentation and content-DB fingerprints' `PINNED` tables
+    (`test/integration/presentation-fingerprint.test.ts`, `test/integration/content-db-fingerprint.test.ts`) —
+    the shell frame fingerprint cannot move: no content file names `ui/title-backdrop`, the new name sorts after
+    every sprite name today so no interned id shifts, and no shell scene draws the title (rule 4); the shell
+    line below is a guard — if it fails, stop and report it.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui packages/core/test/frame-literals.test.ts
@@ -456,8 +463,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   variable, and commit that; then the locked script (fetch, rebase, run them again — a failure means the rebase
   moved it: re-pin inside the lock the same way, amend, push).
 - **Acceptance:** the backdrop is opaque, full-frame, drawn below the logo and the menus; the new name re-pins the
-  fingerprints (expected); the scale-1 digest pin green (the name is absent at scale 1, RR-1a; the CJK figures and the
-  bench do not draw the title).
+  presentation and content-DB fingerprints (expected), the shell frame fingerprint untouched; the scale-1 digest
+  pin green (the name is absent at scale 1, RR-1a; the CJK figures and the bench do not draw the title).
 - **Token:** SCENES + UI-FILE; FINGERPRINTS (push time).
 - **Traps:** `FRAME_W` / `FRAME_H` from `scripts/frame.mjs`, no literal; colours off the reserved ramps; the title's HI
   line stays where v1 showed it (U3 fix `5d5a050`).
@@ -515,7 +522,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `packages/shell/src/flight/index.ts` — only the free-flight dev HUD (its layout constants `:157-185` and
     `buildHud` `:271`), following core's new HUD rows (`docs/v2-run/handoffs-w4.md` § "R4 notes" demands it);
     `packages/shell/test/flight/`; the shell frame fingerprint's `PINNED` (the flight walks).
-  - the three fingerprints' `PINNED` tables.
+  - the presentation fingerprint's `PINNED` table (with the shell's, the two C5 moves — see the line above;
+    the content-DB fingerprint cannot move here, the guard in the Tests note below).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/frame-literals.test.ts
@@ -529,7 +537,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   then re-pin in README rule 6's two passes: outside the lock, run the two fingerprint lines (the `integration`
   one and the `shell` one) with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved,
   run them again without the variable, and commit that; then the locked script (fetch, rebase, run them again —
-  a failure means the rebase moved it: re-pin inside the lock the same way, amend, push).
+  a failure means the rebase moved it: re-pin inside the lock the same way, amend, push). The content-DB
+  fingerprint cannot move here (no `content/` edit and no new sprite name — `hud/life` keeps its name): if it
+  fails, stop and report (rule 4).
 - **Acceptance:** nothing overlaps in en, es or ja; the HUD allocation guards green (`ui-hud-*-alloc`, `ui-alloc`), no
   budget raised; the e2e mirror equals core's layout (`frame.test.ts`).
 - **Token:** UI-FILE, E2E-MIRROR (work time); FINGERPRINTS (push time). **e2e:** pass 2.
@@ -548,10 +558,14 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   `packages/core/src/scenes/index.ts` (lane 2's SCENES); `scripts/assets/procedural/ui-kit.mjs` stays the R4-P.P1
   stub.
 - **Files (only these; checked on `bc8e05d`):**
-  - `packages/core/src/ui/index.ts` — §widgets, §builders, §name entry, §rebind.
+  - `packages/core/src/ui/index.ts` — §input (`DirectionRepeat` and the repeat/buffer constants), §widgets,
+    §builders, §name entry, §rebind; §sprites (`UI_SPRITES`) and §HUD stay — the first is not yours before
+    `R4-05.E2`, the second is `R4-03.C5`'s.
   - tests in `packages/core/test/ui/` except `ui-strings.test.ts` (`R4-03.C1`'s) (incl. `ui-alloc`,
     `ui-rebind-alloc`, `ui-name-entry*`).
-  - the three fingerprints' `PINNED` tables.
+  - the presentation fingerprint's `PINNED` table (`test/integration/presentation-fingerprint.test.ts`) — the
+    only one this subtask can move: it edits no `content/`, no sprite name and no shell scene, so the
+    content-DB and shell fingerprints cannot change; if either moves anyway, stop and report it (rule 4).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/scenes packages/core/test/frame-literals.test.ts
@@ -560,12 +574,14 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   bash docs/v2-run/helpers/e2e-batch.sh options.spec.ts rebind.spec.ts game-options.spec.ts display-options.spec.ts input.spec.ts front-end.spec.ts scenes.spec.ts
   ```
-  then re-pin in README rule 6's two passes: outside the lock, run the two fingerprint lines (the `integration`
-  one and the `shell` one) with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved,
-  run them again without the variable, and commit that; then the locked script (fetch, rebase, run them again —
-  a failure means the rebase moved it: re-pin inside the lock the same way, amend, push).
+  then re-pin the presentation fingerprint in README rule 6's two passes: outside the lock, run it with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, run it again without the
+  variable, and commit that; then the locked script (fetch, rebase, run the three fingerprint lines again — a
+  failure of the presentation one means the rebase moved it: re-pin inside the lock the same way, amend, push;
+  the content-DB and shell lines cannot move here — if one fails, stop and report, rule 4).
 - **Acceptance:** menus keep their 18/6-tick auto-repeat and 4-tick confirm buffer (ticks never change); the UI
-  allocation guards green; the fingerprints re-pinned with the reason. Hand UI-FILE to `R4-05.E2` when pushed.
+  allocation guards green; the presentation fingerprint re-pinned with the reason. Hand UI-FILE to `R4-05.E2`
+  when pushed.
 - **Token:** UI-FILE; FINGERPRINTS (push time).
 - **Traps:** `MenuLayout` objects are frozen module constants (M1-16); no `for … of` in per-frame code (M2-16);
   `docs/v2-run/handoffs-w4.md` § "R4 notes" (R4-03): overlays over the title leave cut-off title menu rows under
@@ -891,7 +907,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `blackhole-alloc.test.ts` untouched).
   - `test/scripts/assets/procedural-blackhole.test.ts` — only a new case for the v2 path
     (`generate({ artScale: 1.5 })`: 48×48, `BLACK_HOLE_FRAMES` frames, `native: true`, binary alpha).
-  - the three fingerprints' `PINNED` tables.
+  - the presentation fingerprint's `PINNED` table (`test/integration/presentation-fingerprint.test.ts`) — the
+    only one A8 can move (the `coopDirect` walk's `direct` segment draws the black hole on the new metrics).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/blackhole
@@ -903,8 +920,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   it again with `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, run it once more without the
   variable, and commit that; then the locked script (fetch, rebase, run the fingerprint tests again — a failure
   means the rebase moved it: re-pin inside the lock the same way, amend, push).
-  The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
-  report. If none failed, push without a re-pin and say so in your report.
+  The content-DB and the shell fingerprints cannot move here (no content file or sprite name changes, and the
+  three shell walks fly the KESTREL and never draw the black hole — its sprite name is unchanged): if either
+  fails, stop and report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the frame is sync-time); the allocation guard untouched and green.
 - **Token:** FINGERPRINTS (push time).
 - **Traps:**
@@ -965,7 +983,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/content.test.ts test/scripts/assets/procedural-items.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
-  Under the land lock: fetch, rebase, `pnpm golden:update`, the FP re-pins, the tests above, push.
+  Under the land lock: fetch, rebase, `pnpm golden:update`, the tests above, push — the FP re-pin in README rule
+  6's two passes: the print-and-paste pass outside the lock (rule 4), the locked script only re-verifies and
+  re-pins if the rebase moved a table.
 - **Acceptance:** one commit; body "R4-02.B3: four point-item frames — the cancel points' `frame` is a hashed pool
   field, so every golden and demo is re-blessed"; `bullets-alloc*` guards green, no budget raised; the scale-1 digest
   pin green; every v2 sprite with a new frame count is `native: true` (rule 1: the relation case of
