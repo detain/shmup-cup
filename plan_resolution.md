@@ -1495,11 +1495,12 @@ moved.
     - **Re-measure every `PORT_REASON` and `CONTENT_REASON` test** on the ported content — the 23
       `PORT_REASON` specs passed at 640 on v1 content, so a failure after the port is the port's. Give the
       fingerprint's attract walk the shipped demos again (optional).
-    - **The art switch:** `scripts/store-assets.mjs:150` and `scripts/doc-images.mjs:267` move off
-      `collectSprites({ artScale: 1 })` to the default, then regenerate `pnpm docs:images`, `pnpm docs:screens`
-      and `pnpm store:assets`, **including `docs/images/logo.png`**. The TV bench keeps `artScale: 1` for good
-      (W4-6); the store icons' v2 art is R4-05's (RR-3). The CJK figures: decide here whether the docs quote the
-      v2 atlas (W4-6 kept them on the v1 build).
+    - **The art switch:** `scripts/doc-images.mjs:267` moves off `collectSprites({ artScale: 1 })` to the
+      default, then regenerate `pnpm docs:images` and `docs:screens`, **including `docs/images/logo.png`**.
+      `scripts/store-assets.mjs:150` does **not** move here: W4-6 and RR-3 keep the store icons on the v1 art
+      until R4-05, so at R2-03 `pnpm store:assets` only `--check`s that the committed icons and placeholders
+      have not moved. The TV bench keeps `artScale: 1` for good (W4-6). The CJK figures: decide here whether
+      the docs quote the v2 atlas (W4-6 kept them on the v1 build).
     - **The render bench needs nothing:** its 640×360 default has held since R1-02 (`e9e5af7`) —
       `test/bench/render.perf.ts` `load()` reads `FRAME_W` / `FRAME_H`.
     - **The docs sweep is 20 files, not ~15** (grep at `bc8e05d`): most mentions in `render-performance-review.md`
