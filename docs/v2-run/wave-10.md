@@ -22,20 +22,23 @@ this wave; re-find any line by its code before you edit.
 
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
-| 1 | `R5-P.P7` → then S2s from the queue below | the zone stages' `cycles`, the generators' v2 ramps (`<X>_RAMP_V2`) | FINGERPRINTS | no |
+| 1 | `R5-P.P7` → then S2s from the queue below | the zone stages' `cycles`, the generators' v2 ramps (`<X>_RAMP_V2`), the pair e2e specs' ramp imports | FINGERPRINTS | yes (pass 1, first; only if a ramp changed) |
 | 2 | `R5-P.P12` | `test/playtest/{four-way-bot,harness}.ts` and their tests | BOT (= GLOBAL if it re-records) | no |
-| 3 | `R5-P.P5d` | `test/e2e/zones-*.spec.ts` → `zone-{b…i}.spec.ts` | none | yes (pass 1) |
+| 3 | `R5-P.P5d` (after `R5-P.P7` is on master and its review is at zero) | `test/e2e/zones-*.spec.ts` → `zone-{b…i}.spec.ts` | none | yes (pass 1, after P7's batch) |
 | 4 | `R5-01.S2` (after `R5-P.P7` only if `zone-a.md` §9 sets a ramp) → `R5-01.S4a` → `S4b` → `S5a` → `S5b` → `S6` → `S6b` → `R5-01.RV` loop → `R5-01.S7` | zone A's generator, the registry, the campaign credits line, content, tests; then the LAND | FP (S2: the credits line); LAND (S7) | yes (pass 2, S6 / S6b / S7) |
 | 5 | `R5-03.S2` (zone C cycles nothing today: independent of P7, unless `zone-c.md` §9 sets a ramp — then after P7) | `scripts/assets/procedural/dune.mjs` | none | no |
 | 6–8 | after `R5-P.P7` is on master: `R5-02.S2`, `R5-04.S2`, `R5-05.S2`, `R5-06.S2`, `R5-07.S2`, `R5-08.S2`, `R5-09.S2` (three at a time; lane 1 takes them too once P7 is done) | each zone's own generator and procedural tests | none | no |
 
 - **Fillers:** none.
+- **Timeout fix:** `R5-01.TO` (S6's Traps) takes a builder slot only when S6 (or `R5-01.RV`'s re-run of S6's tests)
+  reports a timeout-only failure; it is pushed and reviewed before `R5-01.S7`.
 - **Reviews:** slot 1 — `R5-01.RV` (the zone-A branch loop, its highest priority), then `R5-P.P7.RV1`,
   `R5-P.P12.RV1` (with a second, determinism-focused reviewer); slot 2 — `R5-P.P5d.RV1` and the S2 reviews
   (`R5-0n.S2.RV1`).
 - **Docs item:** `W10.DOCS-A`, `W10.DOCS-B`, then `W10.DOCS-RV`.
-- **e2e passes:** 2 — lane 3 (P5d) and lane 4 (zone A: S6, S6b, `R5-01.RV`'s re-run of their batches and S7,
-  one after another; S7 waits for the review). Nobody else runs e2e in this wave.
+- **e2e passes:** 2 — pass 1: `R5-P.P7`'s pair-spec batch (lane 1, only if a ramp changed), then lane 3 (P5d,
+  which starts after P7's review is at zero); pass 2: lane 4 (zone A: S6, S6b, `R5-01.RV`'s re-run of their batches
+  and S7, one after another; S7 waits for the review). Nobody else runs e2e in this wave.
 
 ## Rules for this wave
 
@@ -120,9 +123,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `abyss.mjs` — only for a design that changes its zone's ramp. Keep `<X>_RAMP` (`BRINE_RAMP`, `MAGMA_RAMP`,
     `STORM_RAMP`, `VAULT_RAMP`, `PRISM_RAMP`, `CITADEL_RAMP`, `ABYSS_RAMP`) and the v1 path byte for byte (RR-1 A:
     none of the seven has an `artScale` branch today, and the scale-1 digest pin must not move). Add `<X>_RAMP_V2`
-    with the design's colours. On the `options.artScale !== 1` path, draw the cycled sprite (e.g. `bg/brine-sea`)
-    under the same name in exactly that ramp (`native: true`, bible size); at art scale 1 the v1 sprite stays as it
-    is today. The stage's `cycles` names the v2 ramp;
+    with the design's colours. On the `(options.artScale ?? 1) !== 1` path (with
+    `export function generate(options = {})`, as `lasers.mjs:139-140`: a call without options draws v1 — wave 8
+    rule 1; besides the new constant and the new branch, that parameter is the only change), draw the cycled
+    sprite (e.g. `bg/brine-sea`) under the same name in exactly that ramp (`native: true`, bible size); at art
+    scale 1 the v1 sprite stays as it is today. The stage's `cycles` names the v2 ramp;
   - `scripts/assets/v2kit.mjs` (`R4-P.P4`, wave 07) — only its `RESERVED_RAMPS`, and only when you added a
     `<X>_RAMP_V2`: add it next to that zone's `<X>_RAMP` (keep the v1 one), read lazily inside a function like the
     others, so `offRamp` keeps every S2's colours ≥ 3/255 from the v2 ramps too; `test/scripts/assets/v2kit.test.ts`
@@ -130,12 +135,22 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - their procedural tests `test/scripts/assets/procedural-zone-{b,d,e,f,g,h,i}.test.ts` and `-edge.test.ts` (from
     R5-P.P5c) — only the ramp pins (they follow the v2 ramp);
   - `test/integration/palette-cycle-scan.test.ts` — only its exemption list, if a sprite starts or stops tripping
-    (an entry that no longer trips must be deleted).
+    (an entry that no longer trips must be deleted);
+  - `test/e2e/zones-bc.spec.ts`, `zones-de.spec.ts`, `zones-fg.spec.ts`, `zones-hi.spec.ts` (the pair specs;
+    `R5-P.P5d` splits them only after your review is at zero, and copies your edits) — only for a zone whose ramp
+    changed. Each spec imports its zones' v1 ramps and counts screen pixels of exactly those colours, which the v2
+    art no longer shows, so that zone's checks would go red: `BRINE_RAMP` → `SEA` (`zones-bc`; the PEARL GROTTO case
+    reads it too), `MAGMA_RAMP` → `LAVA` and `STORM_RAMP` → `CLOUDS` (`zones-de`), `VAULT_RAMP` → `MEMBRANE` and
+    `PRISM_RAMP` → `FACETS` (`zones-fg`), `CITADEL_RAMP` → `LIGHTS` and `ABYSS_RAMP` → `SPECKS` (`zones-hi`). Change
+    that import and its `const … = <X>_RAMP.map(rgb)` line to `<X>_RAMP_V2`; change the area or the threshold of a
+    check that reads the constant (`countColours(…)` / `rampMap(…)`) only if the v2 cycled sprite's rows or pixel
+    count moved — re-measure it on the test build, never guess. Nothing else in the specs.
 - **Steps:**
   1. Collect the ramps from `docs/v2-run/designs/zone-<x>.md` §9. A design that keeps today's ramp says so: then
      nothing changes for that zone (the freeze is still recorded in your report).
   2. Edit each stage's `cycles` and the generator's `<X>_RAMP_V2` (with its v2 path) together; run the zone's
-     procedural tests.
+     procedural tests. For a zone whose ramp changed, change its pair spec's ramp lines too (Files) and run the e2e
+     line of the Tests before step 3 (pass 1 of the wave's e2e; `R5-P.P5d` runs its batch after you).
   3. Re-pin the fingerprints the ramps move (cycles are stage content and presentation) with the update mode.
 - **Tests (targeted, run all of them):**
   ```bash
@@ -143,14 +158,18 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone- test/integration/palette-cycle-scan.test.ts test/scripts/assets/interim-pipeline.test.ts test/scripts/assets/v2kit.test.ts test/golden
   pnpm content:check
   (cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check)
+  bash docs/v2-run/helpers/e2e-batch.sh zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts   # only the pair specs you edited (drop the others; skip the line if you edited none)
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
   Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (the filters are
   substrings, never globs). `test/scripts/assets/procedural-zone-` selects every `procedural-zone-*` file.
+  Run the e2e line in the background (`nohup … > /home/sites/shmup-cup-run/R5-P.P7-e2e.log 2>&1 &`, or the shell
+  tool's background mode) and poll its log; it waits for the machine-wide e2e lock itself. Run it before you take
+  the land lock for the re-pin.
 - **Acceptance:** the cycle scan green; ingest `--check` byte-identical; `test/golden` green with no replay file in
-  the diff (cycles never reach the simulation); the fingerprints re-pinned with the reason "R5 ramps frozen (P7)";
-  the scale-1 digest pin unchanged.
+  the diff (cycles never reach the simulation); the pair specs you edited green in the e2e batch; the fingerprints
+  re-pinned with the reason "R5 ramps frozen (P7)"; the scale-1 digest pin unchanged.
 - **Token:** FINGERPRINTS (land lock for the push).
 - **Traps:**
   - A changed ramp never edits `<X>_RAMP` or the v1 path: the default scale draws the v1 art ×1.5, so a new v1 ramp
@@ -159,6 +178,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - Cycle art uses its ramp's colours **exactly**; every other colour stays ≥ 3/255 (Chebyshev) from all ramps.
   - Never touch `raster-range.stage.json`'s ramp (a dev range; unchanged).
   - Change only `cycles`: any other field of a stage file is a zone lane's.
+  - Never split, rename or move a pair e2e spec, and never create a `zone-<x>.spec.ts`: the split is `R5-P.P5d`'s,
+    after you. In the pair specs you change only the ramp lines named under Files.
 - **Docs needs (report them; never edit docs):** `docs/dev/art-bible-v2.md` §4.4 (the frozen R5 ramps).
 
 ### R5-P.P12 — Bot and harness support for the designs' set pieces
@@ -207,8 +228,10 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 
 ### R5-P.P5d — Split the zone e2e specs per zone
 
-- **Wave / lane / order:** wave 10, lane 3, alone.
-- **Depends on:** R4-05 closed (wave 09: `R4-05.E4` ran `zones-hi.spec.ts`).
+- **Wave / lane / order:** wave 10, lane 3, alone; it starts after `R5-P.P7` (Depends on).
+- **Depends on:** R4-05 closed (wave 09: `R4-05.E4` ran `zones-hi.spec.ts`); `R5-P.P7` on master with its review
+  at zero (P7 points the pair specs' ramp checks at the v2 ramps; you copy those lines verbatim like every other
+  line, so the split never races P7).
 - **Goal:** each zone owns its e2e spec, so a zone lane re-measures only its own file.
 - **Files (only these; checked on `bc8e05d`):**
   - **deleted:** `test/e2e/zones-bc.spec.ts` (315 lines), `zones-de.spec.ts` (375), `zones-fg.spec.ts` (407),
@@ -292,9 +315,9 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `procedural-zones-de-edge.test.ts:199-204`) — files other lanes own.
 - **Steps:**
   1. Read the design's §14 (names, sizes, frames, `@flash`) and the bible's §5.6, §5.7, §5.9, §5.10.
-  2. Draw each sprite only on the `options.artScale !== 1` path, marked `native: true` (RR-1 A); at art scale 1 the
-     generator returns `[]`, so the `artScale: 1` build stays v1 byte for byte (RR-1a: the new names are absent
-     there).
+  2. Draw each sprite only on the `(options.artScale ?? 1) !== 1` path (`export function generate(options = {})`),
+     marked `native: true` (RR-1 A); at art scale 1, and in a call without options, the generator returns `[]`, so
+     the `artScale: 1` build stays v1 byte for byte (RR-1a: the new names are absent there).
   3. Name every sprite by its path (lower-case kebab segments; `enemies/…`, `bosses/…`, `bg/…`, `decor/…`).
   4. Mark hittable sprites `hitFlash` so they get `@flash` siblings.
 - **Tests (targeted, run all of them):**
@@ -353,7 +376,10 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `picket`, `picket-ceiling`, `strider`, `burrow`, `burrow-mite`, `gyre`, `halcyon-bulwark`);
   - `content/patterns/zone-a.patterns.json` — **new**, only if the design gives zone A its own patterns
     (`formatVersion` / `kind` like the other pattern files; with R5-P.P1's stable hash keys a new file shifts no other
-    zone's hashes).
+    zone's hashes);
+  - `test/integration/content-zone-a.test.ts` (from `R5-P.P2a`) — only the zone-A cases your change moves, with the
+    design's values (never a pasted run output): here only the enemy-types check of the first case (6–8 behaviours
+    besides the boss), and only if a new type brings a script zone A does not use yet.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
@@ -381,18 +407,27 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Depends on:** `R5-01.S4a`; `R5-P.P8` (wave 06: `MAX_BOSS_PARTS` 24).
 - **Goal:** the boss is rebuilt as the design says: more parts, animation frames, exactly 3 phases, a reachable
   `core` — content only.
-- **Files (only these):** `content/enemies/zone-a.enemies.json` (the `halcyon-bulwark` entry);
-  `packages/core/test/behaviors/behaviors-bulwark.test.ts`, `behaviors-bulwark-edge.test.ts`,
-  `behaviors-bulwark-alloc.test.ts` — re-run them; edit only an assertion that pins the old part tree, and only with
-  the design's values.
+- **Files (only these):**
+  - `content/enemies/zone-a.enemies.json` (the `halcyon-bulwark` entry);
+  - `packages/core/test/behaviors/behaviors-bulwark.test.ts`, `behaviors-bulwark-edge.test.ts`,
+    `behaviors-bulwark-alloc.test.ts` — re-run them; edit only an assertion that pins the old part tree, and only
+    with the design's values;
+  - `test/integration/content-zone-a.test.ts` (from `R5-P.P2a`) — only the zone-A cases your change moves, with the
+    design's values (never a pasted run output): the HB-01 checks (its plates, core and guns in the first case; the
+    HB-01 fight's phases and lanes), plus one new boss case, as `wave-11.md` R5-02.S4b: the assembled height (each
+    part at its parents' offsets plus its own, frame heights from `buildAtlas()`'s manifest — as
+    `scripts/doc-images.mjs` assembles a boss plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, parts ≤ `MAX_BOSS_PARTS`, and
+    a reachable `core` (the `core` part is not `vulnerable: 'never'`, and every part its `requires` names exists and
+    is not `'never'`).
 - **Tests (targeted):**
   ```bash
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-bulwark.test.ts packages/core/test/behaviors/behaviors-bulwark-edge.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors/behaviors-bulwark-alloc.test.ts   # alone
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-a.test.ts
   ```
-- **Acceptance:** ≤ 24 parts; `core` / `gun` roles; 3 phases; the boss ≤ 202 px tall; the allocation guard green
-  **without** a raised budget; laser lanes ≥ 24 px apart.
+- **Acceptance:** ≤ 24 parts; `core` / `gun` roles; 3 phases; the boss ≤ 202 px tall (the new
+  `content-zone-a.test.ts` case); the allocation guard green **without** a raised budget; laser lanes ≥ 24 px apart.
 - **Token:** none (branch commit).
 - **Traps:**
   - The `bulwark-*` boss sprites are copied by name into zone H's `echo-bulwark` (`content/enemies/zone-h.enemies.json`):
@@ -415,7 +450,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     no `cycles` unless R5-P.P7 set one;
   - `content/tilesets/terrain-azure.tileset.json` — **new** (sprite `tiles/terrain-azure` from S2; per-tile
     collision type and 12-entry column masks; `tileSize` 12); `terrain-a` stays for the escape, the bonus stages and
-    the ranges (R5-D3).
+    the ranges (R5-D3);
+  - `test/integration/content-zone-a.test.ts` (from `R5-P.P2a`) — only the zone-A cases your change moves, with the
+    design's values (never a pasted run output): the length, checkpoint and camera-key expectations. The cases that
+    read the events (the WARNING x, the sections, the capsules) are `R5-01.S5b`'s: if your new length or checkpoints
+    turn one red before S5b moves the events, leave it and name it in your report as S5b's.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
@@ -441,7 +480,10 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Files (only these):**
   - `content/stages/zone-a.stage.json` — `events` (sorted by x), `directItems`, `remix`;
   - `content/paths/zone-a.paths.json` — new paths for new formations;
-  - `test/integration/zones/zone-a.contract.ts` (R5-P.P6) — `remastered: false` → `true` once every check passes.
+  - `test/integration/zones/zone-a.contract.ts` (R5-P.P6) — `remastered: false` → `true` once every check passes;
+  - `test/integration/content-zone-a.test.ts` (from `R5-P.P2a`) — only the zone-A cases your change moves, with the
+    design's values (never a pasted run output): the WARNING x, the sections (`sectionScripts`, the calm) and the
+    capsule cases.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
@@ -476,6 +518,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     Traps), `test/playtest/zone-a-recovery.test.ts`;
   - `test/golden/golden-zone-a.test.ts` (R5-P.P3) — the outcome expectations of the zone-A scenarios ("covers the
     whole stage …"), from the re-recorded runs' real outcomes as the design predicts them;
+  - `test/golden/golden.test.ts` — only the cases of `describe('golden replays of the extra modes (M3-01)')` (every
+    one reads a `zone-a-*` scenario: `zone-a-loop2-god`, `-loop2-boss`, `-caravan`, `-extra`, `-recovery`, `-extras`,
+    `-invincible`): their outcome expectations, from the design (e.g. the `zone-a-extras` slowdown checks
+    `maxLoad ≤ SLOWDOWN_THRESHOLD` and `skipped` 0, which hold only while zone A never reaches the threshold); never a
+    constant they import (`SLOWDOWN_THRESHOLD`, `BLACK_HOLE_PULL_TICKS`), and nothing else in the file;
   - `test/golden/golden.ts` — zone A's scenario descriptions only (a description change re-blesses that scenario: it
     is in the LAND scope anyway);
   - `test/e2e/zone-a.spec.ts` — rows and colours re-measured on the new stage and the stand-ins;
@@ -507,8 +554,12 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `R4-04.D3` (wave 08) chose the capacity from each pre-remaster stage's measured peak. Never add a particle
     measurement to `zone-a.test.ts` or to the harness (the harness is BOT's).
   - A playtest's test timeout may grow in proportion to the longer stage (say why); a performance budget never.
-  - If the boss rush or a campaign route fails on time with the bigger boss, stop and report: the fix belongs to
-    R5-10 or to the design, not to the route test.
+  - If the boss rush or a campaign route fails **only on its Vitest timeout** (its one error is
+    `Test timed out in 60000ms` / `180000ms`; these tests run synchronously, so every `expect` passed), stop and
+    report the file, the test's title and its measured duration (`--reporter=verbose`). The orchestrator then spawns
+    a one-file timeout fix `R5-01.TO` on `origin/master` before R5-01.S7, as wave 11's `R5-0n.TO` block describes
+    (four times the measured duration, rounded up to a multiple of `60_000`; reviewed by `R5-01.TO.RV`), then a new
+    S6. Any other failure of a route or the boss rush is the design's, never the route test's.
   - Never paste a failing run's output as the new expectation: derive each number from the design and the content.
 - **Docs needs:** `docs/dev/zone-a-and-playtest.md` (zone A's v2 section: sections with x / time, set piece, new
   types, mid-boss, boss parts and phases, checkpoints, capsules, timing, stand-in vs real art),
@@ -619,6 +670,10 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - If the rebase in step 1 of the script conflicts, the conflict is real (another push touched a zone-A source):
     stop and report.
   - The script refuses under `CI`; do not export `CI=1` in the shell you run it from.
+  - An outcome expectation of `test/golden/golden-zone-a.test.ts`, or of `golden.test.ts`'s
+    `describe('golden replays of the extra modes (M3-01)')`, that fails in the dry run is not a scope breach: stop and
+    report; the orchestrator sends it to `R5-01.FIX<n>` (the next free number) on the branch with S6's files, then a
+    new `R5-01.RV`.
 
 **Not in this wave: `R5-01.S3`** (zone A's real-art drop, owner-gated) has its home in wave 12 (`wave-12.md`, with
 the S3 template that applies to every zone). It is named here only so the zone-A lane knows it is not part of this
@@ -632,9 +687,10 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
   sets a ramp (then paint the cycle art with exactly the colours P7 wrote into `zone-c.stage.json`'s `cycles`).
 - **Goal, steps, tests, acceptance, traps:** as `R5-01.S2`, for zone C, with these differences:
   - **Files:** `scripts/assets/procedural/dune.mjs` (zone C's existing generator: add the design's new names on the
-    `artScale !== 1` path; tile variants as a separate sprite `tiles/terrain-dune-v2`, so `terrain.mjs` stays
-    untouched); `test/scripts/assets/procedural-zone-c.test.ts` and `procedural-zone-c-edge.test.ts` (R5-P.P5c) — new
-    cases only.
+    `(options.artScale ?? 1) !== 1` path, and give `generate` the parameter `options = {}`, so a call without
+    options still draws v1 — wave 8 rule 1; tile variants as a separate sprite `tiles/terrain-dune-v2`, so
+    `terrain.mjs` stays untouched); `test/scripts/assets/procedural-zone-c.test.ts` and
+    `procedural-zone-c-edge.test.ts` (R5-P.P5c) — new cases only.
   - Never edit `index.mjs` (zone A holds it in this wave), `terrain.mjs` (nobody edits it in this wave) or the
     campaign file; never change an existing sprite of `dune.mjs`. `dune.mjs` is already registered and credited, so
     this S2 is fully neutral: no fingerprint moves.
@@ -711,13 +767,15 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
 
 - One new review agent per subtask (`R5-P.P7.RV1`, `R5-P.P12.RV1` plus a determinism-focused `R5-P.P12.RV1b`,
   `R5-P.P5d.RV1`, `R5-0n.S2.RV1`), loop to zero.
-- **Must hold:** P7 — `cycles` and the generators' `<X>_RAMP_V2` / v2 path only (`<X>_RAMP` and the v1 path
-  unchanged), ramps from the designs, the scan and ingest `--check` green, goldens unchanged, the scale-1 digest pin
-  unchanged; P12 — today's runs byte-identical (`zone-a-boss` re-records byte for byte), every zone still clears;
-  P5d — the same e2e titles except the Tizen split its block allows; each S2 — neutral (fingerprints, groups and
-  goldens unchanged; `R5-01.S2` moves only `core.campaign` and the credits segments, from its credits line), the
-  scale-1 digest pin unchanged, no frame literal, deterministic, within budget, sizes and frames as the design lists
-  them; no S2 edits `terrain.mjs`.
+- **Must hold:** P7 — `cycles`, the generators' `<X>_RAMP_V2` / v2 path (with `generate(options = {})`) and the
+  pair specs' ramp lines only (`<X>_RAMP` and the v1 path unchanged; the pair specs' ramp checks name the v2 ramps,
+  an area or a threshold changed only with a re-measure), ramps from the designs, the scan, ingest `--check` and
+  P7's e2e batch green, goldens unchanged, the scale-1 digest pin unchanged; P12 — today's runs byte-identical
+  (`zone-a-boss` re-records byte for byte), every zone still clears; P5d — started after P7's review was at zero,
+  P7's ramp lines kept, the same e2e titles except the Tizen split its block allows; each S2 — neutral
+  (fingerprints, groups and goldens unchanged; `R5-01.S2` moves only `core.campaign` and the credits segments, from
+  its credits line), the scale-1 digest pin unchanged, no frame literal, deterministic, within budget, sizes and
+  frames as the design lists them; no S2 edits `terrain.mjs`.
 
 ## Docs item
 
