@@ -170,6 +170,8 @@ HARD RULES — Shmup Cup v2, for every agent and every task
     380 KB used (check-bundle: 380.2 KB at bc8e05d): keep shipped code lean, and change a budget only deliberately,
     with the reason in the commit.
 13. Tests and timing happen on myadmin1. Never wait for GitHub CI.
+14. You are a subagent yourself: never start or resume another agent (no subagent/task tool calls, no opencode run).
+    Do the work in your own session and report what you cannot finish.
 ```
 
 ## opencode: how you run agents
@@ -193,9 +195,11 @@ the full `prompt`, and `background: true`; it returns a **`sessionID`**. (In ope
 `subagent_type` and `task_id`; in Claude Code it is the Agent tool and SendMessage.) Look at your own tool list once
 and use whatever the subagent tool is called there.
 - **Agent id `general` for every role** — builder, fixer, tester, docs, integration, reviewer, scout. It has full tool
-  access and cannot start subagents of its own. Do not use the host's custom `coder`, `reviewer`, `scribe`,
-  `researcher` or `build` agents: their prompts load the owner's generic "philosophy" skills, not this repo's rules.
-  `explore` is fine for a pure read-only search.
+  access, and on this host it **can** start subagents of its own (the global config sets `subagent_depth: 4`), so hard
+  rule 14 above forbids it — count only your own children against MAX_PARALLEL, and check each child's report for
+  agents it should not have started. Do not use the host's custom `coder`, `reviewer`, `scribe`, `researcher` or
+  `build` agents: they carry the owner's generic role prompts on top of this repo's rules, and `coder`'s and
+  `reviewer`'s make them load his philosophy skills before any work. `explore` is fine for a pure read-only search.
 - **Background:** start agents with `background: true`, up to MAX_PARALLEL at once; opencode notifies you when each
   child finishes.
 - **The prompt** has four parts, verbatim (`docs/v2-run/README.md` § How an orchestrator uses this folder, step 3):
@@ -331,7 +335,9 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
     `test/integration/frame-literals-repo.test.ts`) and `scripts/frame.mjs`;
   - `pnpm-lock.yaml`, the `package.json` files, `turbo.json`, `eslint.config.js`, `.github/workflows/ci.yml`;
   - `plan_resolution.md`, `CHANGELOG.md`, `README.md`, `docs/**`, `CLAUDE.md` (docs agents only, each with its own
-    files; `plan_resolution.md` and `CHANGELOG.md` only by the PLAN holder).
+    files, plus the builders rule 7 names whose Files list cites the file: the DOCS-IMAGES holder's
+    `docs/images/**`, `R2-02.R`'s `content/*/README.md`, the zone designers' `docs/v2-run/designs/`, `R5-P.LAND`'s
+    helper and its README row; `plan_resolution.md` and `CHANGELOG.md` still only by the PLAN holder).
 - **Sim-changing lanes** follow their wave file: GOLDEN is push-time (RUN-3); R2-04's sim changes are patches with one
   integrator; R5 and R6 zones land one at a time under LAND.
 - **The e2e lock.** Playwright's web server uses the fixed port 4173 (`--strictPort`), and the timed specs measure
@@ -565,14 +571,17 @@ Their changes get one review loop (step 4) to zero.
 
 ## End of the run: the one full suite
 
-With SCOPE `all remaining steps`, this section **is** wave 15's `R6-03.D6` → `R6-03.D6.FIXn` / `R6-03.D6.RV` →
-`R6-03.RV` → `R6-03.D7` (only after my explicit OK) → `R6-03.D7.DOCS`: follow those blocks of
+With SCOPE `all remaining steps`, this section **is** wave 15's `R6-03.D6` → `R6-03.D6.FIXn` / `R6-03.D6.RV`
+(→ `R6-03.D6.DOCS` / `R6-03.D6.DOCS.RV` when a fix moved a documented number) → `R6-03.RV` → `R6-03.D7` (only after
+my explicit OK) → `R6-03.D7.DOCS` / `R6-03.D7.DOCS.RV`: follow those blocks of
 `docs/v2-run/wave-15.md` — never a second full suite after wave 15. With a narrower SCOPE, run it only when SCOPE ends
 at a milestone (RUN-1, before that milestone's tag). A SCOPE that stops mid-milestone ends with its last wave's
 targeted Exit check and the report, with no full suite.
 
 1. **Run the full suite.** One **integration agent** (its own worktree on `origin/master`) runs the full check suite
-   once, on myadmin1, **alone** (no other agent runs meanwhile):
+   once per attempt on myadmin1, **alone** (no other agent runs meanwhile; after a `R6-03.D6.FIXn` round D6 runs the
+   failed steps, then the whole suite, again — `wave-15.md`'s *Fixes*), and the last green attempt is the one
+   `R6-03.D7` tags:
    - `bash docs/v2-run/helpers/host-check.sh` from its worktree (background, with its log). It runs install,
      Playwright, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm bench`,
      `pnpm test:e2e` for Chromium and Firefox under the e2e lock, the input probe
@@ -603,15 +612,17 @@ targeted Exit check and the report, with no full suite.
 reviewed, and R0-04 is waiting on the owner: is picking finished, and Git LFS for the winners? Model sessions do not
 run from myadmin1: it has no tested key for `root@skynet2` (`server.sh`'s `SERVER_SH_HOST`), the picker page is served
 from the old host only, and only the owner starts GPU sessions. So `ART_ROUND` stays `off` here, and no agent runs
-`gen-candidate.mjs`, `generate.mjs`, `sweep-models.sh` or `server.sh`.
+`gen-candidate.mjs` or `sweep-models.sh`, calls `generate.mjs` on a model, or touches `server.sh` — the read-only
+`generate.mjs --list` census is allowed (it is `R0-04.W2`'s test).
 
-What agents can still do here is in §18 and its work orders (R0-04's winners copy and the prompt-library edits;
-R3-02's real ingest and R3-04's calibration on real candidates are owner-gated). The rules for any task that reads the
-picks:
+What agents can still do here is in §18 and its work orders (R0-04's prompt-library edits, the winners copy once I
+open it, and wave 4's optional `R3-04.M1c` — it calibrates on the candidate images on this host and needs no pick;
+only R3-02's real ingest of the committed winners waits on me). The rules for any task that reads the picks:
 - The candidates are in `art-prompts/v2/candidates/` (git-ignored, copied over; never committed), and
   `/home/sites/mystage/public_html/shmup-cup/data/choices.json` is a **snapshot** — the owner keeps picking on the old
-  host. Before any art step, **ask me for a fresh copy** of `choices.json` (myadmin1 cannot reach the old host), and
-  read that copy; nothing ever writes the live file except the picker's `picks_save()`.
+  host. Before a step that reads the **picks** (`R0-04.W1`, an `R5 S3` drop, `R3-04.M1c` when it wants winners),
+  **ask me for a fresh copy** of `choices.json` (myadmin1 cannot reach the old host), and read that copy; nothing
+  ever writes the live file except the picker's `picks_save()`.
 - A regenerate request counts as done only when every slot's take is newer than the click.
 - Winners go to `art-prompts/v2/winners/<item id>/` only after my "picking is done" and the Git LFS decision; check
   `du -sh art-prompts/v2/winners` first and ask me before committing more than ~200 MB.
@@ -656,7 +667,7 @@ and 9 tells you how to stop):
    exact.
 2. Tests as you go: build, fix and update the targeted tests for what you touch, and run only those. Never run the
    full suite (pnpm test, pnpm test:e2e, pnpm bench, all goldens — unless YOUR TESTS name them, as an Exit check's
-   do): it runs once at the end of all the changes.
+   commands sometimes do): it runs once at the end of all the changes.
 3. After fixes, a review agent reports findings, a fix agent fixes them, then a NEW review agent reviews again, until
    a review finds no issues. If you are a reviewer, report every real issue, nits included; if a fixer, fix each
    finding at the root or decline it with a concrete reason.
@@ -764,6 +775,7 @@ As built (deviations from the plan, with the reason): …
 Manual (owner): …
 Docs needs: …
 Open issues: …
+Other subtasks: <the other subtask's id> — <what I saw> | none
 Outcomes (fixers only): F1 fixed in <sha> | F2 declined — <concrete reason>
 Left to do (owner rule 9): none | <file — old → new text — tests still to run> (one line each)
 Worktree: removed | kept — why
@@ -791,7 +803,8 @@ Changed since the work order: …
 Risks: …
 ```
 
-**Docs:** `Files changed`, `§17 rows`, `Commits`, `Left to do`, `Worktree` — the same style.
+**Docs:** `Summary`, `Commits`, `Files changed`, `§17 rows`, `Tests run`, `Manual (owner)`, `Open issues`,
+`Left to do`, `Worktree` — the same style.
 
 ## Reporting to me
 
