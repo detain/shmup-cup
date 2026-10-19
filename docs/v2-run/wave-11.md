@@ -1250,7 +1250,7 @@ One section per zone: its own files first, then its blocks in order.
 ## Zone H (first half) — R5-08 IRON CITADEL
 
 - **Expansion focus (plan §11):** a fortress gate section with moving floors.
-- **Design:** `docs/v2-run/designs/zone-h.md` (R5-P.D-H, reviewed in wave 9).
+- **Design:** `docs/v2-run/designs/zone-h.md` (R5-P.D-H, reviewed in wave 9). Its numbers are v2 numbers; follow it, and put any deviation in your report.
 - **Worktree / branch:** `RUN_DIR/wt/zone-h`, local branch `r5/zone-h` (never pushed). The lane goes on in wave 12
   (`R5-08.S4c → S6 → RV → S7`); zone H rebases last, after the other LANDs.
 - **LAND scope (wave 12):** `--only zone-h` — `zone-h-god`, `zone-h-boss`, `zone-h-deaths`, `zone-h-arcade` and the
@@ -1287,7 +1287,7 @@ One section per zone: its own files first, then its blocks in order.
 ### R5-08.S4a — Zone H roster: the new enemy types
 
 - **Wave / lane / order:** wave 11, lane 8 (zone H), first.
-- **Depends on:** R5-08.S2 (wave 10) and R5-01.S7 (zone A's LAND) on `origin/master`; R5-P.P5a2 and R5-P.D-H done.
+- **Depends on:** R5-08.S2 (wave 10) and R5-01.S7 (zone A's LAND) on `origin/master`; R5-P.P5a2 and R5-P.D-H done; read first the design `docs/v2-run/designs/zone-h.md` (its numbers are v2 numbers; put any deviation in your report) and this wave file's `## Zone H (first half)` section above (own files, the boss, the frozen echoes).
 - **Goal:** at least 2 new enemy types on existing scripts (the zone counts 6–8 new types by sprite with v1's, rule 3). No new
   captain: the parade is the mid-boss section.
 - **Files (only these):** `content/enemies/zone-h.enemies.json` (new entries only; not the `echo-*` entries, not
@@ -1303,21 +1303,25 @@ One section per zone: its own files first, then its blocks in order.
   ```
 - **Acceptance:** content valid; every script known; aimed bullets ≤ 3.0 px/tick; every new sprite in the atlas.
 - **Token:** none (branch). A new behaviour → stop and report (BEHAVIOR).
-- **Traps:** as zone B's S4a: no double multiplication; never rename an id; `tender` frozen; every new name original
-  (`shmup_feat.md` §26).
+- **Traps:** the content is ×1.5 since R2-02 — never multiply a ported number again; never rename or delete an id
+  another file names (`git grep -n '<id>' content/`); `tender` (`content/enemies/zone-a.enemies.json`) is frozen —
+  use it, never copy or edit it; every new name original (`shmup_feat.md` §26).
 - **Docs needs:** the new types for the bestiary and `zones-h-and-i.md`.
 
 ### R5-08.S4b — Zone H boss: IRON SOVEREIGN rebuilt bigger
 
 - **Wave / lane / order:** wave 11, lane 8, after R5-08.S4a.
-- **Depends on:** R5-08.S4a on the branch; R5-P.P8 on `origin/master`.
+- **Depends on:** R5-08.S4a on the branch; R5-P.P8 on `origin/master`; read first the design `docs/v2-run/designs/zone-h.md` (its numbers are v2 numbers; put any deviation in your report) and this wave file's `## Zone H (first half)` section above (own files, the boss, the frozen echoes).
 - **Goal:** IRON SOVEREIGN with more parts and frames, a reachable `core`, ≥ 4 phases — part tree and params only, on
   `boss.sovereign`.
 - **Files (only these):** `content/enemies/zone-h.enemies.json` (the `iron-sovereign` entry);
   `packages/core/test/behaviors/behaviors-sovereign-alloc.test.ts` (re-run; edit only if its fixture moved);
   `packages/core/test/behaviors/behaviors-zone-h.test.ts`, `behaviors-zone-h-edge.test.ts`;
-  `test/integration/content-zone-h.test.ts` — the boss case of zone B's S4b (the assembled height ≤
-  `Math.round(0.6 * PLAYFIELD_H)`, a reachable `core`).
+  `test/integration/content-zone-h.test.ts` — one new boss case: the assembled height (each part at its parents'
+  offsets plus its own, frame heights from `buildAtlas()`'s manifest — as `scripts/doc-images.mjs` assembles a boss
+  plate) ≤ `Math.round(0.6 * PLAYFIELD_H)`, and a reachable `core` (the `core` part is not `vulnerable: 'never'`,
+  and every part its `requires` names exists and is not `'never'`). Add only that case; never edit the existing
+  case 'gives IRON CITADEL …'.
 - **Tests (targeted):**
   ```bash
   pnpm content:check
@@ -1330,15 +1334,26 @@ One section per zone: its own files first, then its blocks in order.
 - **Token:** none (branch).
 - **Traps:** the boss's `x` / `y` are its entry's ported `screen-x` / `screen-y` values — never re-derive them
   (rule 4); part offsets within ±768; this block runs in wave 11 rather than wave 12 because it touches no echo
-  (decided by the re-plan).
+  (decided by the re-plan); the content case 'gives IRON CITADEL …' (`content-zone-h.test.ts`, read only) also
+  pins IRON SOVEREIGN's shape — keep all of it in the bigger tree:
+  - the `core` stays `vulnerable: 'afterParts'`, and each plate it `requires` sits left of it
+    (`x + hurtbox.hw` < the core's `x`);
+  - a `hub` part (parent `core`, no hurtbox, no `radius`) carries ≥ 4 pods (`vulnerable: 'never'`, with a
+    `radius`);
+  - ≥ 2 `gun` parts;
+  - every phase is `boss.sovereign`, and phase 0 ends on `until.partsDestroyed`;
+  - one phase has a non-zero `spin`, one a `launchTicks`, and the last a `spiral`.
+
+  A design that needs another shape: stop and report.
 - **Docs needs:** parts and phases for the zone doc.
 
 ### R5-08.S5a — Zone H stage geometry
 
 - **Wave / lane / order:** wave 11, lane 8, after R5-08.S4b.
-- **Depends on:** R5-08.S4a on the branch; R3-06, R5-P.P7 and R5-P.P13 (the relaxed zone-tileset pins, wave 10) on `origin/master`.
-- **Goal:** the design's geometry (`length` 20,000–22,000 px, camera keys, ≥ 5 checkpoints, tilemap, the fortress
-  gate's moving floors placed as blocks, tileset variants (point `terrain-citadel.tileset.json`'s `"sprite"` at
+- **Depends on:** R5-08.S4a on the branch; R3-06, R5-P.P7 and R5-P.P13 (the relaxed zone-tileset pins, wave 10) on `origin/master`; read first the design `docs/v2-run/designs/zone-h.md` (its numbers are v2 numbers; put any deviation in your report) and this wave file's `## Zone H (first half)` section above (own files, the boss, the frozen echoes).
+- **Goal:** the design's geometry (`length` 20,000–22,000 px, camera keys, ≥ 5 checkpoints, tilemap (the fortress
+  gate's floor and ceiling terrain; its moving floors are `block` events — S5b's), tileset variants (point
+  `terrain-citadel.tileset.json`'s `"sprite"` at
   S2's complete v2 tileset sprite `tiles/terrain-citadel-v2` — `terrain-a`'s tiles first, in their order, then the
   variants — and append the variant tiles after the existing entries, never moving or renaming one, exactly as
   zone B's R5-02.S5a Goal says; `R5-P.P13` relaxed the pins for this), 4–6 painted layers, decor, raster rows
@@ -1354,17 +1369,20 @@ One section per zone: its own files first, then its blocks in order.
   # only if you touched citadel.mjs:
   pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone-h.test.ts test/scripts/assets/procedural-zone-h-edge.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts
   ```
-- **Acceptance:** as zone B's S5a (12-px tiles, terrain checks, the cycle scan, `rescale --factor 1` clean).
+- **Acceptance:** content valid; `tileSize` 12 (`TILE_SIZE`); the terrain checks green (opaque = mask; the
+  heightfield finds a tile for every cell); the palette-cycle scan green; `rescale --factor 1` clean.
 - **Token:** none (branch).
 - **Traps:** the piston hall's top pistons no longer reach above the top edge since the port (R1-03's note): keep
-  them inside the frame or redesign them; `rowsTall` 28 = one playfield; never change the ramp.
+  them inside the frame or redesign them; `rowsTall` 28 = one playfield; never change the ramp; raster rows are
+  frame rows, not world rows; masks reach the tileset only through
+  `node scripts/assets/tileset-masks.mjs --write`; decor never sits inside a collision tile.
 - **Docs needs:** the sections table.
 
 ### R5-08.S5b — Zone H stage events
 
 - **Wave / lane / order:** wave 11, lane 8, after R5-08.S5a.
-- **Depends on:** R5-08.S4a, S4b, S5a on the branch.
-- **Goal:** the timeline: sections, the fortress gate, spawns of old and new types, **the parade's four `boss` events
+- **Depends on:** R5-08.S4a, S4b, S5a on the branch; read first the design `docs/v2-run/designs/zone-h.md` (its numbers are v2 numbers; put any deviation in your report) and this wave file's `## Zone H (first half)` section above (own files, the boss, the frozen echoes).
+- **Goal:** the timeline: sections, the fortress gate (its moving floors: `block` events with `dy`, re-placed on the new geometry), spawns of old and new types, **the parade's four `boss` events
   for the echoes, unchanged in content** (only their positions move with the new geometry), ground enemies on rock,
   the calm, `warning`, `end`, `directItems`, `remix`, paths. Switch `zone-h.contract.ts` to `remastered: true` only
   if every rule passes with the old echoes; otherwise leave it for R5-08.S6 (wave 12) and say so.
@@ -1379,7 +1397,15 @@ One section per zone: its own files first, then its blocks in order.
 - **Acceptance:** content valid; the 4-way rules; the contract (if switched) passes.
 - **Token:** none (branch).
 - **Traps:** do not edit the echo entries; the four parade events keep their `enemy` ids; the captain rule
-  (`boss` event before `length / 2`) applies to the first parade event.
+  (`boss` event before `length / 2`) applies to the first parade event; the content case 'gives IRON CITADEL …'
+  (`content-zone-h.test.ts`, read only) pins the timeline:
+  - ≥ 8 pistons (`block` events with `dy` ≠ 0), at least 3 with `y > PLAYFIELD_H / 2` and at least 3 above;
+  - ≥ 3 `hatch.spawner` and ≥ 4 `emitter.laser` placements, each set on both floor and ceiling;
+  - every parade `boss` event before the `warning`, each next one at least half its predecessor's stay
+    (`timeLimit + introTicks`, at the parade's camera speed) after it;
+  - the parade's camera speed under the case's slow-hangar bound (< 0.75).
+
+  Keep the case green, never edit it.
 - **Docs needs:** the parade's new positions.
 
 ---
@@ -1392,9 +1418,12 @@ One section per zone: its own files first, then its blocks in order.
   `test/playtest/campaign-routes-*.test.ts` file that failed **only on its Vitest timeout** (rule 13: its one error
   is `Test timed out in …ms`). The orchestrator spawns it at once, before that zone's LAND. Its id takes the
   zone's step: `R5-02.TO` for zone B, `R5-03.TO` for zone C, … `R5-09.TO` for zone I, and `R5-08.TO` for zone H in
-  wave 12 (wave 12 rule 1). One file per subtask: a second file of the same zone is `R5-02.TO2`, and so on. Fixes
-  of different files touch different files, so they may run at the same time.
-- **Wave / lane / order:** wave 11 (wave 12 for zone H), a builder slot outside the zone lanes. The zone's lane
+  wave 12 (wave 12 rule 1), and `R5-01.TO` for zone A in wave 10 (`wave-10.md` R5-01.S6 Traps). One file per
+  subtask: a second file of the same zone is `R5-02.TO2`, and so on. Fixes of different files touch different
+  files, so they may run at the same time. Two fixes of the same file run one after the other: the second starts
+  once the first is on `origin/master`, and reads its value first (The new value).
+- **Wave / lane / order:** wave 11 (wave 12 for zone H, wave 10 for zone A), a builder slot outside the zone
+  lanes. The zone's lane
   waits: its RV and its LAND start only after this fix is on `origin/master`, reviewed, and the zone's S6 re-run.
 - **Depends on:** the zone's S6 (or RV) report, which gives the file, the test's title and its measured duration in
   ms.
@@ -1414,8 +1443,8 @@ One section per zone: its own files first, then its blocks in order.
   `origin/master` first: if an earlier `R5-0n.TO` already raised it to at least your new value, change nothing,
   commit nothing, and report that.
 - **Steps:**
-  1. Make your worktree and install (the agent brief's WORKTREE block; `pnpm assets` too: the playtests need the
-     atlas).
+  1. Make your worktree and install (the agent brief's WORKTREE block; these tests read no atlas, so skip
+     `pnpm assets`).
   2. Change the one number (one per test the report names); nothing else in the file.
   3. Run the tests below; commit the one file by its explicit path; push (common rule 5).
 - **Tests (targeted):** `F` is the file you changed — `boss-rush.test.ts` is shown; change `F=…` on each line:
@@ -1432,7 +1461,7 @@ One section per zone: its own files first, then its blocks in order.
 - **Acceptance:** `git show --stat HEAD` lists only that one file; `git show HEAD` changes one line per named test,
   each only in its timeout number; the file green on `origin/master`; the commit body gives the zone, the test and
   the measured time.
-- **Token:** none (no lane owns these files in waves 11 and 12; `R5-10.T4` edits `boss-rush.test.ts` only in
+- **Token:** none (no lane owns these files in waves 10, 11 and 12; `R5-10.T4` edits `boss-rush.test.ts` only in
   wave 13, after every LAND).
 - **Traps:** never change an `expect`, a route, a zone bound or any other number; never edit
   `test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts` (BOT); a timeout is raised only
@@ -1444,7 +1473,8 @@ One section per zone: its own files first, then its blocks in order.
   S6 report's measured duration, and that the body says so. A fix of a finding is a new push by `R5-0n.TO.FIX1`.
 - **After the review is at zero:** the orchestrator starts a new S6 agent for the zone with the zone's S6 block (rule
   1's rebase brings the fix onto the branch), then a new RV round; the zone LANDs only when that S6's cross-zone line
-  is green and the RV is at zero.
+  is green and the RV is at zero. If the fix committed nothing (an earlier `R5-0n.TO` already raised the value),
+  there is no `.TO.RV`: the orchestrator starts the new S6 at once.
 
 ---
 
@@ -1513,11 +1543,12 @@ disjoint files and run at the same time; `W11.DOCS-A` holds PLAN. Inputs: every 
 
 - **Files (only these):** `docs/client/bestiary.md` (the seven zones' sections and their images from
   `docs/images/`), `content/stages/README.md` and `content/enemies/README.md` (zone paragraphs),
-  `content/paths/README.md` (its per-zone list: the new paths files `zone-b`, `zone-f`, `zone-g`, `zone-i` and any
-  new curve in `zone-c`, `zone-d`, `zone-e`),
-  `docs/dev/debug-and-replays.md` (the golden table's rows: new outcomes and the per-zone re-bless),
-  `docs/dev/art-provenance.md` (only if an `S3` drop shipped), `docs/client/outstanding-work.md` (the owner parts per
-  zone: art, cleanup, the M7 sign-off).
+  `content/paths/README.md` (its per-zone list: each new paths file a LAND created (zones B, F, G and I had none;
+  check `ls content/paths/`) and any new curve in `zone-c`, `zone-d`, `zone-e`), `content/patterns/README.md` (the
+  zone patterns paragraph: each zone's new actions in its `zone-<x>.patterns.json`), `content/tilesets/README.md`
+  (each zone tileset's `-v2` variants), `docs/dev/debug-and-replays.md` (the golden table's rows: new outcomes and
+  the per-zone re-bless), `docs/client/outstanding-work.md` (the owner parts per zone: art, cleanup, the M7
+  sign-off).
 - **Depends on:** the seven LANDs. **Token:** none.
 - **Tests:** `pnpm content:check` (the content README samples are validated).
 - **Acceptance:** the README samples still validate; no stale v1 number in the touched sections.
@@ -1541,7 +1572,8 @@ disjoint files and run at the same time; `W11.DOCS-A` holds PLAN. Inputs: every 
 3. `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/atlas-groups.test.ts test/integration/frame-literals-repo.test.ts test/scripts/art-origins.test.ts`
    and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts`.
 4. `pnpm content:check` and `pnpm docs:images --check`.
-5. Zone H's branch holds S4a … S5b and is reviewed in wave 12.
+5. `git -C /home/sites/shmup-cup-run/wt/zone-h log --oneline origin/master..r5/zone-h` lists the commits of
+   R5-08.S4a … S5b (their reports name them); the branch is reviewed in wave 12 (`R5-08.RV`).
 6. The docs review at zero; §17 set by `W11.DOCS-A`, and the board synced by the orchestrator
    (`python3 .claude/plan_board_v2.py` in its main checkout, after that push is on `origin/master`).
 7. A CI look at most — never wait on it. **Deferred to wave 15:** the whole `pnpm test`, `pnpm test:e2e`, `pnpm bench`.
