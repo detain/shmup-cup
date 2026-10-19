@@ -347,43 +347,76 @@ by the quoted code or test title before you edit it.
     as `SHMUP_GOLDEN_ONLY` in the child's `env` (next to `SHMUP_GOLDEN_UPDATE: '1'`, `:64`); no `--only` = today's
     behaviour (re-bless all). Skip a leading `--`: `node scripts/golden-update.mjs --only zone-b` gives the script
     `['--only', 'zone-b']`, but `pnpm golden:update -- --only zone-b` gives it `['--', '--only', 'zone-b']` (pnpm 12
-    passes the `--` through); both must work;
+    passes the `--` through); both must work. Export the parse as `parseOnly(argv)` (the id list; `[]` without
+    `--only`), and run the tileset check and the `spawnSync` only when the file is the entry point
+    (`process.argv[1] === fileURLToPath(import.meta.url)`), so a test can import it — the script runs Vitest at top
+    level today;
   - `test/golden/golden.ts` (the update predicate: a scenario re-records only when updating **and** its `stageId`
     is in `SHMUP_GOLDEN_ONLY`, or the variable is empty), `test/golden/golden.test.ts` (use it),
-    `test/golden/demos.test.ts` (the same for demos, by their `stageId`);
+    `test/golden/demos.test.ts` (the same for demos, by their `stageId`, and the format sample's
+    `writeDemo(EXAMPLE_DEMO, …)` — its `stageId` is `null`, so it re-records only without `--only`);
   - `test/golden/golden-edge.test.ts` — the re-bless script test (`describe('golden replays — the re-bless script'`,
-    near `:179`): also expect the `--only` parsing and `SHMUP_GOLDEN_ONLY`, for both argv shapes
-    `['--only', 'zone-b']` and `['--', '--only', 'zone-b']`, and for no argument;
+    near `:179`): import `parseOnly` and call it with `['--only', 'zone-b']`, `['--', '--only', 'zone-b']` and `[]`
+    — a source grep cannot check how three argv shapes parse. Keep the source-text checks and add
+    `SHMUP_GOLDEN_ONLY` to them. Never spawn the script from a test: it runs `test/golden` again, in update mode,
+    and this test with it (the re-bless describe is not skipped while updating — it would recurse);
   - `test/golden/golden-zone-{a,b,c,d,e,f,g,h,i}.test.ts` — **new** (9): move the per-zone `it` blocks of
     `golden.test.ts` there — at `bc8e05d` they are the "covers the real zones B and C…" (`:293`), "D and E" (`:318`),
     "H and I" (`:340`), "H and I without god mode" (`:374`), "F and G" (`:497`), "F and G without god mode"
     (`:526`), "D and E without god mode" (`:633`), "B and C without god mode" (`:681`) blocks, plus zone A's
-    (`:82` "covers the whole stage…"); split each pair block by zone; find them by title, not by line;
+    (`:82` "covers the whole stage…"); split each pair block by zone; find them by title, not by line.
+    - A zone file reads **only its own zone's goldens** (B also `brine-grotto-god`, G also `glimmer-cache-god`,
+      I also `zone-i-escape`). Two pair blocks are not mechanical splits — each holds a check that compares one
+      zone's golden with the *other* zone's; make each an own-zone check:
+      - "H and I without god mode" checks `expect(i.outcome.ticks).toBeLessThan(h.outcome.ticks)`: zone I's file
+        checks `expect(i.outcome.ticks).toBeLessThan(readGolden('zone-i-god').file.expected.ticks)` instead
+        (4,860 < 16,419 on today's files); zone H keeps `h.outcome.ticks < zone-h-god`;
+      - "F and G without god mode" checks **both** `zone-f-boss` and `zone-g-boss` with
+        `toBeLessThan(arcade.file.expected.ticks / 4)`, where `arcade` is zone F's `zone-f-arcade`: zone G's file
+        checks `toBeLessThan(readGolden('zone-g-god').file.expected.ticks / 4)` instead (1,900 < 3,517); zone F
+        keeps `zone-f-arcade`.
+      The H/I block's `follow` helper (defined inside that block, used by both its zones) goes into
+      `test/golden/golden.ts` (exported), so both files import it. These are the only assertion changes; list them
+      in the report.
+    - each new file wraps its cases in `describe.skipIf(updating)(…)` with
+      `const updating = process.env[GOLDEN_UPDATE_ENV] === '1'`, as `golden-edge.test.ts` and
+      `golden-autofire.test.ts` do: during a re-bless, `golden.test.ts` rewrites the replays while the other files
+      run in parallel workers (`scripts/golden-update.mjs` runs `test/golden` with no file-parallelism switch), and
+      a half-written file would fail the run. LAND step 7 and the normal run check them.
   - `test/playtest/zone-bc-recovery.test.ts`, `zone-de-recovery.test.ts`, `zone-fg-recovery.test.ts`,
     `zone-hi-recovery.test.ts` — **deleted**; `test/playtest/zone-{b,c,d,e,f,g,h,i}-recovery.test.ts` — **new** (8),
     the same cases split by zone. One assertion changes, on purpose: each pair file's case 'checks four checkpoints
     per zone' asserts `expect(cases).toHaveLength(8)` (two zones × four checkpoints); in each per-zone file it becomes
     `toHaveLength(4)`. Nothing else in a case changes.
+  - `test/playtest/zone-a-recovery.test.ts` — docblock only: its last sentence cites "zones B and C in
+    `zone-bc-recovery.test.ts`", a file P3 deletes → "the other zones in `zone-<x>-recovery.test.ts`";
 - **Steps:**
   1. List the titles before (on `origin/master`) and after your change, and compare:
      ```bash
      mkdir -p /home/sites/shmup-cup-run
-     VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-before.txt   # before
-     VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-after.txt    # after
+     VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden/golden test/golden/demos test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-before.txt   # before
+     VITEST_MAX_WORKERS=6 pnpm exec vitest list --project integration test/golden/golden test/golden/demos test/playtest | sed 's/.* > //' | sort > /home/sites/shmup-cup-run/R5-P.P3-list-after.txt    # after
      diff /home/sites/shmup-cup-run/R5-P.P3-list-before.txt /home/sites/shmup-cup-run/R5-P.P3-list-after.txt
+     wc -l /home/sites/shmup-cup-run/R5-P.P3-list-before.txt /home/sites/shmup-cup-run/R5-P.P3-list-after.txt   # about 150 lines each; an empty file means vitest list failed
      ```
+     Never list all of `test/golden`: `v1-baseline-zones.test.ts` and `v1-baseline-loop2.test.ts` hold only a suite
+     skipped at 640, so `vitest list` prints `Error: No test suite found in file …` for both and **no test at all**,
+     with exit 0 — the diff would prove nothing.
      The only differences allowed, each listed in the report:
      - each split golden pair block (one old title → its per-zone titles);
      - the recovery files' two titles, each shown **4 more times** (4 pair files → 8 zone files): 'checks four
        checkpoints per zone' and the `it.each` title `%s checkpoint %i: ≥ 3 capsules in the window, all of them
        dropped` (`vitest list` prints an `it.each` title as its template, once per file, not once per case).
-  2. Proof of `--only`: `node scripts/golden-update.mjs --only zone-b` → `git status --short test/golden content/demos`
-     is empty (an unchanged sim re-records byte for byte) and the run is green. Then the same with
+  2. Proof of `--only`: `node scripts/golden-update.mjs --only zone-b` →
+     `git status --short -- 'test/golden/*.replay.json' 'content/demos/*.replay.json'` is empty (an unchanged sim
+     re-records byte for byte) and the run is green. Only the derived replays: your own edits to `test/golden`'s test
+     files show in a plain `git status test/golden` and must not be mistaken for a rewrite. Then the same with
      `pnpm golden:update -- --only zone-b` (the `--` shape): the same result.
   3. Proof of the verification: edit one byte of `test/golden/zone-c-god.replay.json`'s hash list in your own tree,
      run `node scripts/golden-update.mjs --only zone-b` → it **fails** on zone C; then
      `git restore test/golden/zone-c-god.replay.json` (your own temporary edit).
-- **Tests (targeted, run all of them):** the recovery glob is **unquoted**, so bash expands it to the 8 new files.
+- **Tests (targeted, run all of them):** the recovery glob is **unquoted**, so bash expands it to the 8 new files and
+  `zone-a-recovery.test.ts` (9 in total).
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/playtest/zone-*-recovery.test.ts
   pnpm typecheck:root
@@ -400,14 +433,20 @@ by the quoted code or test title before you edit it.
   - Verifying every golden is the LAND's proof of scope and is allowed here; it is not "the full suite".
   - pnpm 12 passes the `--` itself to the script (`['--', '--only', 'zone-b']`): skip a leading `--`; test the parse
     with and without `--only` and with and without the `--`.
-  - Never leave the step-3 edit in your tree; `git status` must be clean before you commit.
+  - Never leave the step-3 edit in your tree; `git status --short -- '*.replay.json'` must print nothing before you
+    commit (your source edits are the commit; no `*.replay.json` belongs in it).
 - **Docs needs (report them; never edit docs):** `docs/dev/debug-and-replays.md`, `test/golden/README.md`
   (`--only`), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
-  `docs/dev/repo-layout.md`, `docs/dev/conventions.md` (golden re-bless per zone).
+  `docs/dev/repo-layout.md`, `docs/dev/conventions.md` (golden re-bless per zone); and the docs that name the deleted
+  or split files — their playtest rows and their `vitest run` commands select nothing after P3:
+  `docs/dev/zone-a-and-playtest.md` (the `:367-369` rows, the `:488` note), `docs/dev/zones-b-and-c.md`
+  (its `zone-bc-recovery.test.ts` command near `:455`), `docs/dev/zones-d-and-e.md`, `docs/dev/zones-f-and-g.md`,
+  `docs/dev/zones-h-and-i.md` (the same pattern), `docs/dev/build-test-deploy.md` (`:428-433`), and
+  `docs/dev/api-reference.md` (`:1922`).
 
 ### R5-P.P10 — `SHMUP_FINGERPRINT_UPDATE=1`: the fingerprints rewrite their own pins
 
-- **Wave / lane / order:** wave 09, lane 4, after `R5-P.P3`. Pushes **before** `R5-P.P4`.
+- **Wave / lane / order:** wave 09, lane 4, after `R5-P.P3`.
 - **Depends on:** `R5-P.P3` on master.
 - **Goal:** two agents never merge fingerprint hashes by hand: `SHMUP_FINGERPRINT_UPDATE=1` rewrites a test's
   `PINNED` table in place, the way `SHMUP_ATLAS_GROUPS_UPDATE=1` rewrites `atlas-groups.json`.
@@ -418,24 +457,33 @@ by the quoted code or test title before you edit it.
     rewrites pins). Shared like `alloc.ts` and `frame-literal-scan.ts`: the integration and shell tests import it by
     relative path;
   - `test/integration/presentation-fingerprint.test.ts` — `print()` (`:750`) also rewrites under the variable;
-    the `PINNED` constant (`:1643`) holds one table per walk, 12 walks (`front` at `:1644` … `coopRun` at `:1771`);
+    the `PINNED` constant (`:1643`) holds one table per walk, 12 walks (`front` at `:1644` … `coopRun` at `:1771`).
+    Today `print()` runs right before `expect(w.table).toEqual(PINNED.<walk>)`, so an update run stays red exactly
+    when it rewrote a pin (the table in memory is still the old one). Under the variable, a test must rewrite its
+    pin and then compare with the table it just wrote (or skip its `toEqual(PINNED.…)`, as the shell's print branch
+    returns before its `expect`) — an update run is then green whenever only `PINNED` moved. A walk's own `expect`
+    still fails when the walk changed for real (wave 11 rule 9). Apply the same to the content-DB and shell tests;
   - `test/integration/content-db-fingerprint.test.ts` — `print()` (`:174`), `PINNED` (`:212`);
   - `packages/shell/test/frame-fingerprint.test.ts` — the print branch (`:363`), `PINNED` (`:340`);
   - `packages/core/test/helpers/pin-writer.test.ts` — **new** (a temp file with a fake `PINNED`: rewrite twice →
-    the second rewrite is a no-op; the CI guard).
+    the second rewrite is a no-op; the CI guard). GitHub Actions sets `CI=true` and runs this file in `pnpm test`:
+    the rewrite cases delete `process.env.CI` first and restore it after; the guard case sets it and restores it
+    after.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/helpers/pin-writer.test.ts
+  git add -A && git commit -m 'R5-P.P10 — SHMUP_FINGERPRINT_UPDATE: the fingerprints rewrite their own pins'   # your change, committed locally first (push later, under the land lock): the checks below want a clean tree, and `git diff` alone cannot tell an update-run rewrite from your own edits
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
-  git diff --stat   # must be empty after the update runs: nothing moved, so nothing is rewritten
+  git status --short   # must print nothing after the update runs: nothing moved, so nothing is rewritten
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm typecheck:root && pnpm --filter @shmup/shell typecheck
   pnpm --filter @shmup/core typecheck   # the only typecheck of packages/core/test (pin-writer.ts, pin-writer.test.ts)
   ```
-- **Acceptance:** update mode twice → no diff; a deliberately changed pin (your own temporary edit) is restored by
-  one update run; a normal run is green; `SHMUP_FINGERPRINT_PRINT=1` still prints.
+- **Acceptance:** update mode twice on your committed change → `git status --short` empty; a deliberately changed
+  pin (your own temporary edit) is restored by one update run, **and that run is green** (the update run compares
+  with the table it just wrote); a normal run is green; `SHMUP_FINGERPRINT_PRINT=1` still prints.
 - **Token:** FINGERPRINTS (land lock for the push — you change the files every other re-pin touches).
 - **Traps:**
   - Prettier formats these `.ts` files: the rewritten table must already be Prettier-clean (run
