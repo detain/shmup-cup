@@ -66,8 +66,13 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
    `pnpm golden:update` — after the port its refusal has lifted by itself, so the command would really re-bless.
 4. **The un-gating is mechanical.** `describePortPending(name, fn)` → `describe(name, fn)`,
    `itPortPending(name, fn, t?)` → `it(name, fn, t?)`, `describe.skipIf(CONTENT_PORT_PENDING)` / `it.skipIf(…)` →
-   plain `describe` / `it`; delete the import of `port-pending.js` when nothing else of it is used. A test that
-   fails once un-gated is a real failure: report it (it is a Z item or a T item missed in wave 3), never re-gate it.
+   plain `describe` / `it`. In a title that embeds the reason (`` `… [${PORT_PENDING_REASON}]` `` — seven
+   `it.skipIf(CONTENT_PORT_PENDING).each(…)` cases: two in `content.test.ts`, one each in `death-runtime.test.ts`,
+   `zones-de-runtime-edge.test.ts`, `zones-fg-direct.test.ts`, `zones-fg-runtime-edge.test.ts` and
+   `zones-hi-runtime-edge.test.ts`), drop the `` [${PORT_PENDING_REASON}]`` suffix, so the name equals what the
+   wrapper produced minus the reason; then delete the `PORT_PENDING_REASON` import. Delete the import of
+   `port-pending.js` when nothing else of it is used. A test that fails once un-gated is a real failure: report it
+   (it is a Z item or a T item missed in wave 3), never re-gate it.
 5. Expected skips once U1–U5 are on master: **286** = 239 `GOLDENS_STALE` + 41 frame `runIf`s + the 6 cases
    `R2-02.T4b` retired with `runIf(content still v1)` (`rescale.test.ts` ×4, `rescale-edge.test.ts` ×2; if T4b's
    report gives another number, use T4b's), and **0** `CONTENT_PORT_PENDING`.
@@ -103,11 +108,16 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 
 - **Wave / lane / order:** wave 05, lane 2, first.
 - **Depends on:** the port commit on master.
-- **Goal:** the 9 port-pending sites in `content.test.ts` become plain tests.
-- **Files (only these):** `test/integration/content.test.ts` (find the sites with
-  `grep -n "PortPending\|CONTENT_PORT_PENDING" test/integration/content.test.ts`; 9 on `bc8e05d`).
-- **Tests:** `pnpm content:check` (= `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
-  test/integration/content.test.ts`).
+- **Goal:** the 7 gated cases in `content.test.ts` (plus the import) become plain tests.
+- **Files (only these):** `test/integration/content.test.ts` (edit every hit of
+  `grep -n "PortPending\|PORT_PENDING" test/integration/content.test.ts` — 12 lines on `bc8e05d`: the import's three
+  names, the 7 gated cases (5 `itPortPending`, 2 `it.skipIf(CONTENT_PORT_PENDING).each`) and the 2 titles that embed
+  `PORT_PENDING_REASON` (rule 4) — and the import's `from '…/port-pending.js'` line, which the grep does not show).
+- **Tests:**
+  ```bash
+  pnpm content:check    # = VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts
+  pnpm typecheck:root && pnpm exec eslint --max-warnings=0 test/integration/content.test.ts
+  ```
 - **Acceptance:** no `port-pending` reference left; green, with the 4-way rules at 3.0 / 24 / 1,350.
 - **Token:** CONTENT-TEST.
 - **Traps:** a 2,315-line file: edit with exact old/new strings, never rewrite it. The A5 review's PRISM LABYRINTH
@@ -120,10 +130,17 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 - **Depends on:** the port commit on master.
 - **Files (only these):** `test/integration/zones-de-runtime.test.ts`, `zones-de-runtime-edge.test.ts`,
   `zones-fg-runtime.test.ts`, `zones-fg-runtime-edge.test.ts`, `zones-fg-direct.test.ts`, `zones-hi-runtime-edge.test.ts`.
-- **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/zones-de-runtime.test.ts
-  test/integration/zones-de-runtime-edge.test.ts test/integration/zones-fg-runtime.test.ts
-  test/integration/zones-fg-runtime-edge.test.ts test/integration/zones-fg-direct.test.ts
-  test/integration/zones-hi-runtime-edge.test.ts`.
+- **Tests:**
+  ```bash
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/zones-de-runtime.test.ts \
+    test/integration/zones-de-runtime-edge.test.ts test/integration/zones-fg-runtime.test.ts \
+    test/integration/zones-fg-runtime-edge.test.ts test/integration/zones-fg-direct.test.ts \
+    test/integration/zones-hi-runtime-edge.test.ts
+  pnpm typecheck:root && pnpm exec eslint --max-warnings=0 test/integration/zones-de-runtime.test.ts \
+    test/integration/zones-de-runtime-edge.test.ts test/integration/zones-fg-runtime.test.ts \
+    test/integration/zones-fg-runtime-edge.test.ts test/integration/zones-fg-direct.test.ts \
+    test/integration/zones-hi-runtime-edge.test.ts
+  ```
 - **Acceptance:** no `port-pending` reference left; green. A red zone test goes to the matching Z item.
 - **Token:** none.
 
@@ -135,7 +152,21 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
   `campaign-flow.test.ts`, `death-runtime.test.ts`, `dimension-runtime.test.ts`, `enemies-runtime.test.ts`,
   `extra-edit-runtime.test.ts`, `raster-range-runtime.test.ts`, `stage-runtime.test.ts`, `weapons-runtime.test.ts`,
   `stage-terrain.test.ts` (its `itPortPending` at `:131` and `:205`).
-- **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration` with those 11 files.
+- **Tests:**
+  ```bash
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/arsenal-runtime.test.ts \
+    test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts \
+    test/integration/death-runtime.test.ts test/integration/dimension-runtime.test.ts \
+    test/integration/enemies-runtime.test.ts test/integration/extra-edit-runtime.test.ts \
+    test/integration/raster-range-runtime.test.ts test/integration/stage-runtime.test.ts \
+    test/integration/weapons-runtime.test.ts test/integration/stage-terrain.test.ts
+  pnpm typecheck:root && pnpm exec eslint --max-warnings=0 test/integration/arsenal-runtime.test.ts \
+    test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts \
+    test/integration/death-runtime.test.ts test/integration/dimension-runtime.test.ts \
+    test/integration/enemies-runtime.test.ts test/integration/extra-edit-runtime.test.ts \
+    test/integration/raster-range-runtime.test.ts test/integration/stage-runtime.test.ts \
+    test/integration/weapons-runtime.test.ts test/integration/stage-terrain.test.ts
+  ```
 - **Acceptance:** no `port-pending` reference left; green.
 - **Token:** none.
 - **Traps:** in `stage-terrain.test.ts` change only the wrappers; V4c (next) replaces its checks by imports.
@@ -147,8 +178,13 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 - **Goal:** remove the duplicate: `stage-terrain.test.ts` imports the two checks from `terrain-checks.ts`.
 - **Files (only these):** `test/integration/stage-terrain.test.ts`; `test/integration/terrain-checks.ts` only if the
   copy drifted from the original (keep one version, the original's behaviour).
-- **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/stage-terrain.test.ts
-  test/scripts/assets/tileset-masks.test.ts`.
+- **Tests:**
+  ```bash
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/stage-terrain.test.ts \
+    test/scripts/assets/tileset-masks.test.ts
+  pnpm typecheck:root && pnpm exec eslint --max-warnings=0 test/integration/stage-terrain.test.ts \
+    test/integration/terrain-checks.ts
+  ```
 - **Acceptance:** the same test count and names as before (`pnpm exec vitest list --project integration
   test/integration/stage-terrain.test.ts` before and after); all green.
 - **Token:** none.
@@ -217,7 +253,7 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
     docblock (`:5-9`) and the next case's title (`:80`, "TILE_SIZE, or 8 while the port is pending");
   - `test/integration/e2e-gates.test.ts` — rewrite the pin `contentPorted() === !CONTENT_PORT_PENDING` (`:15`, `:101-102`)
     as a direct read of every `content/tilesets/*.tileset.json` `tileSize` against `scripts/frame.mjs` `TILE_SIZE`;
-    update its docblock (`:5`, `:10-11`);
+    update its docblock (`:5`, `:7`, `:10-11`);
   - `packages/core/test/helpers/port-pending.ts` and `packages/core/test/helpers/port-pending.test.ts` — **deleted**;
   - `packages/core/src/config/index.ts` — the comment at `:788-789` (drop "stays at v1's 8 until then,
     `CONTENT_PORT_PENDING`"); comment only.
@@ -238,7 +274,7 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 
 ### R2-02.Z-A — Residual fixes: zone A (spawn only if red)
 
-- **Wave / lane / order:** wave 05, lane 8, only when S's, U3–U5's or EF's report names a red zone-A test.
+- **Wave / lane / order:** wave 05, lane 8, only when S's, U1–U5's or EF's report names a red zone-A test.
 - **Depends on:** the port commit on master; the red list in those reports. **Every Z:** a Z whose files include a
   file of `R2-02.U3` (`test/integration/zones-de-runtime.test.ts`, `zones-de-runtime-edge.test.ts`,
   `zones-fg-runtime.test.ts`, `zones-fg-runtime-edge.test.ts`, `zones-fg-direct.test.ts`,
@@ -251,7 +287,7 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-a.test.ts \
-    test/playtest/zone-a-recovery.test.ts test/golden/v2-port.test.ts test/golden/v2-port-zones.test.ts
+    test/playtest/zone-a-recovery.test.ts test/golden/v2-port   # a path filter: v2-port, -zones and -loop2
   pnpm content:check
   ```
 - **Acceptance:** the bot clears zone A in god mode within its budgets; `v2-port*` green; `content:check` green.
@@ -304,10 +340,15 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 
 - **As `R2-02.Z-A`**, for `bonus-range`, `bonus-vault`, `brine-grotto` and `glimmer-cache` (if Z-BC / Z-FG are not
   running), `boss-rush`, `gauntlet-range`, `escape`, `dimension`, the dev ranges and the campaign routes.
-- **Files:** the red stage's `content/stages/<id>.stage.json` and, for a range with its own roster, its
-  `content/enemies/<id>.enemies.json`; `test/playtest/boss-rush.test.ts`, `test/playtest/campaign-routes*.test.ts`
-  only to fix a v1 literal (through `v1-port.ts`). Never the shared harness (`test/playtest/{four-way-bot,harness,
-  rules,recovery,campaign,campaign-routes}.ts`: BOT token) — report.
+- **Files:** the red stage's `content/stages/<id>.stage.json` and the roster file under `content/enemies/` that
+  holds its enemies — rosters are named by content, not by stage id (e.g. `bonus`, `extras`, `advanced-bosses`,
+  `option-hunters`, `direct-carriers`, `test-range`, `test-boss`). Find an enemy's roster with
+  `git grep -l '"id": "<enemy id>"' -- content/enemies` and every stage that uses it with
+  `git grep -l '"<enemy id>"' -- content/stages` (the enemy's id in place of `<enemy id>`). The `zone-*` rosters are
+  the zone Z agents' files, never Z-X's. An enemy that another stage also uses: do not change its sim fields —
+  report it instead, as rule 1 and `R2-02.Z-A`'s traps. Also `test/playtest/boss-rush.test.ts` and
+  `test/playtest/campaign-routes*.test.ts`, only to fix a v1 literal (through `v1-port.ts`). Never the shared
+  harness (`test/playtest/{four-way-bot,harness,rules,recovery,campaign,campaign-routes}.ts`: BOT token) — report.
 
 ## Reviews
 
@@ -321,7 +362,8 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
     test/fixtures/v1-baseline` empty; `pnpm golden:update` and `SHMUP_V1_BASELINE_UPDATE` never ran;
   - pre-port commits were neutral (wave 4's RV-pre said so; spot-check two);
   - the port commit = tool + `handfix.patch` + the kit's flip lines + the stub (wave 4's S.RV1 said so);
-  - `rescale --factor 1 --dry-run` 0 / 0 / 0; `pnpm content:check` green with the 4-way rules at 3.0 / 24 / 1,350;
+  - `node scripts/content/rescale.mjs --factor 1 --dry-run` 0 / 0 / 0; `pnpm content:check` green with the 4-way
+    rules at 3.0 / 24 / 1,350;
   - the bot clears every zone, bonus stage and the boss rush in god mode
     (`VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest`);
   - `test/golden/v2-port*.test.ts` green; every exemption carries its reason;
@@ -505,7 +547,7 @@ main checkout, after `W05.DOCS-A`'s §17 push).
    pnpm content:check
    node scripts/content/rescale.mjs --factor 1 --dry-run      # 0 / 0 / 0
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tile-size.test.ts \
-     test/integration/e2e-gates.test.ts test/integration/stage-terrain.test.ts test/golden/v2-port.test.ts
+     test/integration/e2e-gates.test.ts test/integration/stage-terrain.test.ts test/golden/v2-port   # all three v2-port files
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/frame-literals.test.ts \
      packages/core/test/config
    ```
