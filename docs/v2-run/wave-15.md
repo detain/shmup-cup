@@ -249,7 +249,7 @@ this list of what that v2.0.x step must do:
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project webos apps/webos/test/boot            # only if you edited the webOS boot
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
-  nohup bash docs/v2-run/helpers/e2e-batch.sh display-options.spec.ts options.spec.ts > /home/sites/shmup-cup-run/R6-02.P4c-e2e.log 2>&1 &
+  nohup bash docs/v2-run/helpers/e2e-batch.sh display-options.spec.ts test/e2e/options.spec.ts > /home/sites/shmup-cup-run/R6-02.P4c-e2e.log 2>&1 &
   ```
 - **Acceptance:** a fresh TV save has CRT off; web and desktop unchanged; an existing save keeps its value;
   `SAVE_VERSION` unchanged (no format change); all three fingerprints unchanged (the walks run without a TV host, so
@@ -497,11 +497,16 @@ block's *Depends on* names exactly what it waits for. After the release, `R6-03.
 - **Wave / lane / order:** wave 15, after D6.
 - **Depends on:** R6-03.D6 green and reviewed; `R6-03.RV` at zero; **the owner's explicit OK** (decision R6-D3).
 - **Goal:** the GitHub release, run by the orchestrator. First write the body of CHANGELOG's `[2.0.0]` section
-  (without its heading) to `/home/sites/shmup-cup-run/R6-03.D7-notes.md`, then
-  `gh release create v2.0.0 --target <the D6 commit> --title "Shmup Cup 2.0.0" --notes-file /home/sites/shmup-cup-run/R6-03.D7-notes.md`
-  (`<the D6 commit>` = the full SHA of the commit D6's last green run checked, from D6's report). Then the one-line
-  §17 follow-up `R6-03.D7.DOCS` (R6-03 → `done`, a docs agent with PLAN), and the orchestrator runs
-  `python3 .claude/plan_board_v2.py` in the main checkout after that push.
+  (without its heading) to `/home/sites/shmup-cup-run/R6-03.D7-notes.md`. Then, from the main checkout, write the
+  tag target and create the release (RUN-1, as waves 7's and 13's tags do — the `rev-parse` is replaced by
+  `<the D6 commit>`, the full SHA of the commit D6's last green run checked, from D6's report):
+  ```bash
+  git -C /home/sites/shmup-cup fetch origin
+  echo "<the D6 commit>" > /home/sites/shmup-cup-run/w15-tag.txt
+  cd /home/sites/shmup-cup && gh release create v2.0.0 --target "$(cat /home/sites/shmup-cup-run/w15-tag.txt)" --title "Shmup Cup 2.0.0" --notes-file /home/sites/shmup-cup-run/R6-03.D7-notes.md
+  ```
+  Then the one-line §17 follow-up `R6-03.D7.DOCS` (R6-03 → `done`, a docs agent with PLAN), and the orchestrator
+  runs `python3 .claude/plan_board_v2.py` in the main checkout after that push.
 - **Files:** none (the follow-up push is `R6-03.D7.DOCS`'s).
 - **Acceptance:** the release exists with the notes; after `R6-03.D7.DOCS`'s push, §17 says done and the board is
   synced.
@@ -554,12 +559,13 @@ block's *Depends on* names exactly what it waits for. After the release, `R6-03.
    points of its *Acceptance*) and R6-02 (no capture logs) — set by `W15.DOCS-A` and, for R6-03, `R6-03.D7.DOCS`;
    the board synced by the orchestrator after that push (`python3 .claude/plan_board_v2.py` in its main checkout —
    docs agents never run it).
-5. The run's helpers in `docs/v2-run/helpers/` say "delete when the v2 agent run ends": `land-zone.sh`, `e2e-batch.sh`
-   and `host-check.sh` stay until here (`r5r6/zonerefs.*` and `r5r6/carrier.py` were deleted by `W12.DOCS-A` and
-   `W13.DOCS-A`). Run `git ls-files docs/v2-run/helpers/`: besides `README.md` and those three it may still list
-   `load-core.mjs`, `w5pre/exports.mjs`, `w5pre/exports.txt`, `w5pre/hurtbox.mjs`, `w5/defaults.mjs`,
-   `w5/defaults-all.txt`, `w5/literals.mjs`, `w5/literals.txt` and `r34-gen-list.mjs` — their "Delete when" passed in
-   waves 4–9; any of them still listed is a leftover of the same kind (no earlier docs agent deleted it). The
+5. The run's helpers in `docs/v2-run/helpers/` say "delete when the v2 agent run ends": `land-zone.sh`,
+   `e2e-batch.sh`, `host-check.sh` and `r34-gen-list.mjs` stay until here (`r5r6/zonerefs.*` and
+   `r5r6/carrier.py` were deleted by `W12.DOCS-A` and `W13.DOCS-A`). Run `git ls-files docs/v2-run/helpers/`:
+   besides `README.md` and those four it may still list `load-core.mjs`, `w5pre/exports.mjs`, `w5pre/exports.txt`,
+   `w5pre/hurtbox.mjs`, `w5/defaults.mjs`, `w5/defaults-all.txt`, `w5/literals.mjs` and `w5/literals.txt` — their
+   "Delete when" passed in wave 5; any of them still listed is a leftover of the same kind (no earlier docs agent
+   deleted it). The
    orchestrator asks the
    owner whether to delete `docs/v2-run/` now (every helper with it) or keep it as history (the deferred RR-1
    clean-up is recorded in R6-03's As built, so deleting the folder loses nothing).
