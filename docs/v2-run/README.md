@@ -33,7 +33,7 @@ or on any file outside the repository other than the run directory (§ The run d
 
 | File | Wave | Steps |
 |---|---|---|
-| [`wave-00.md`](wave-00.md) | 0 | the R2-01 C5 review loop and the CI triage — closed by the orchestrator before the hand-off, or its open item (verifying C5 fix 2 `c67c7c9`: C5 review 3 and any fix → review loop to zero) becomes `R2-01.F1` in wave 1 |
+| [`wave-00.md`](wave-00.md) | 0 | the R2-01 C5 review loop and the CI triage — closed by the orchestrator before the hand-off, or its open item (verifying the C5 fixes since `c67c7c9`: C5 review 4 and any fix → review loop to zero) becomes `R2-01.F1` in wave 1 |
 | [`wave-01.md`](wave-01.md) | 1 | R2-01 docs pass (7 docs agents) · R2-02 opening (`WORLD_SCALE`, the port kit) |
 | [`wave-02.md`](wave-02.md) | 2 | R2-02 prep A (world constants and defaults) · R3-03 / R3-04 side lanes |
 | [`wave-03.md`](wave-03.md) | 3 | R2-02 prep B (the test pins, the v2-port comparison, the e2e pre-gate) |
@@ -79,10 +79,11 @@ or on any file outside the repository other than the run directory (§ The run d
    When a wave's first agent starts, record its **wave base** once, in the main checkout:
    `git fetch origin && git rev-parse origin/master > /home/sites/shmup-cup-run/wNN-base.txt` (`NN` = the wave's two
    digits: `w01-base.txt` … `w15-base.txt`), and note the SHA in `RUN_DIR/lanes-<wave>.md` and `RESUME.md`. Keep
-   `w02-base.txt` for the whole run: waves 4 and 5 diff against wave 2's base. A wave file's command reads that file
-   (`$(cat /home/sites/shmup-cup-run/wNN-base.txt)`); where a wave file still writes `<wave base>` it means that
-   wave's SHA, and `<wave-2 base>` / `R2-02.RV-pre`'s `<base>` mean wave 2's. Put the SHA into the agent's prompt;
-   never leave the placeholder.
+   `w02-base.txt` for the whole run: waves 4 and 5 diff against wave 2's base. A wave file's command reads that file —
+   every wave file spells the `$(cat /home/sites/shmup-cup-run/wNN-base.txt)` form; the `<base>` of wave 7's patch
+   blocks is that patch maker's own start SHA, defined there — replace it with
+   `git merge-base HEAD origin/master`, and record it in the report. Put the SHA into the agent's prompt; never
+   leave the placeholder.
 6. **Close the wave**: run its **Exit check** (targeted, on myadmin1; never wait for GitHub CI — look at it at a
    wave's close at most) and let the wave's docs agent (`Wnn.DOCS-A`) update the §17 rows. Once that push is on
    `origin/master`, the orchestrator runs `python3 .claude/plan_board_v2.py` in the main checkout
@@ -180,8 +181,8 @@ Owner-only work (**Manual (owner)** in each wave file) is listed so it is visibl
    `SHMUP_FINGERPRINT_UPDATE=1`, which rewrites `PINNED` itself) and commit that; then the locked script — fetch,
    rebase, run the fingerprint tests again; if one fails, the rebase
    moved it: re-pin it the same way inside the lock, amend your commit, and push. Never leave the lock with a red
-   fingerprint. Only a subtask whose block names the token (GOLDEN, FINGERPRINTS, GROUPS, DOCS-IMAGES, STORE)
-   may change those files. A fingerprint moved by a change that should not move it is a bug: stop and report.
+   fingerprint. Only a subtask whose block names the token (GOLDEN, FINGERPRINTS, GROUPS, DOCS-IMAGES, STORE, LAND
+   or GLOBAL) may change those files. A fingerprint moved by a change that should not move it is a bug: stop and report.
 7. **Never:** `pnpm golden:update` (or `node scripts/golden-update.mjs`) unless your block holds GOLDEN, LAND or
    GLOBAL; `SHMUP_V1_BASELINE_UPDATE` (the v1 baseline is frozen for good); raising a budget (allocation, bundle,
    draw calls, atlas bytes) to get green; deleting or skipping a failing test to get green; editing
@@ -306,7 +307,8 @@ holds:
 - the orchestrator's `RESUME.md`, lane file per wave, wave notes, wave bases (`wNN-base.txt`, step 5), `prompts/` and
   `logs/`;
 - the pre-release tag targets `w07-tag.txt` and `w13-tag.txt` (step 6: the orchestrator writes each at its wave's
-  exit, and its `gh release create --target` reads it);
+  exit, and its `gh release create --target` reads it); `v2.0.0`'s target `w15-tag.txt` is written the same way by
+  wave 15's `R6-03.D7` — there it holds the full SHA of D6's last green-checked commit, not a `rev-parse`;
 - the owner's TV logs when they arrive by hand (`owner-logs/`, wave 15's `R0-03.A1`);
 - the agents' reports (every agent writes its report as `$RUN_DIR/<id>-report.md`; an agent without a subtask id
   uses its name, `<name>-report.md`) and their working files, named after the subtask id: commit messages

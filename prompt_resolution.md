@@ -240,8 +240,8 @@ fresh agent finishes (owner rule 9).
 
 **Your notes folder is RUN_DIR (`/home/sites/shmup-cup-run/`).** It is outside the repository and survives
 restarts; never keep state in `/tmp` or a session folder. The old host's notes in
-`/home/sites/shmup-cup/.claude/orchestrator/` are history, except the C5 review and fix reports in its `scratchpad/`
-subfolder, which wave 0's open branch reads (the State paragraph above). Keep here:
+`/home/sites/shmup-cup/.claude/orchestrator/` are history, except the C5 review and fix reports directly in that
+folder (flat — no `scratchpad/` folder), which wave 0's open branch reads (the State paragraph above). Keep here:
 - `RESUME.md` — ten lines: the wave, what runs (agent, sessionID, worktree), what is next;
 - `lanes-<wave>.md` — the lane plan: tasks, lanes, exact files, tokens, agents, status, commit SHAs;
 - `wave-<wave>-notes.md` — decisions, review rounds, findings and their outcomes, owner to-dos;
@@ -316,9 +316,9 @@ git fetch origin && git rebase origin/master && git push origin HEAD:master
 ## Tokens and locks
 
 - **Tokens** (full table: `docs/v2-run/README.md` § Tokens and locks). Two kinds:
-  - **work-time tokens** (CORE-CONFIG, DATA-INDEX, BEHAVIOR, CONTENT-TEST, BOT, SCENES, UI-FILE, STRINGS, POWERUPS,
-    E2E-MIRROR, RP-BARREL / SHELL-BARREL, KIT, PLAN): you give each to one lane in the lane plan; only that lane
-    edits those files; it passes on once the holder's push is on `origin/master`;
+  - **work-time tokens** (CORE-CONFIG, DATA-INDEX, BEHAVIOR, CONTENT-TEST, BOT, SCENES, UI-FILE, STRINGS,
+    POWERUPS, E2E-MIRROR, RP-BARREL / SHELL-BARREL, SHELL memory, KIT, PLAN): you give each to one lane in the
+    lane plan; only that lane edits those files; it passes on once the holder's push is on `origin/master`;
   - **push-time tokens** for derived files (GOLDEN, FINGERPRINTS = FP, GROUPS, DOCS-IMAGES, STORE, LAND, GLOBAL):
     every lane the work order names may build in parallel; each push that regenerates a derived file holds
     `/tmp/shmup-cup-land.lock` from the fetch to the push (`flock -w 5400 /tmp/shmup-cup-land.lock bash <script>`:
