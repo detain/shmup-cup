@@ -19,9 +19,9 @@ owner's explicit OK — the GitHub release `v2.0.0`.
 
 | Lane | Subtasks, in order | Main files | Tokens | e2e / bench |
 |---|---|---|---|---|
-| 1 TV analysis | `R0-03.A1` (only if the owner's logs exist) → `R6-02.P3` → (only if a budget is missed) `R6-02.P4a → P4b` | A1: `tools/input-probe/results/<date>-m7/`, `tools/input-probe/results/<date>-m7-bench/` (the owner's logs); P3: none (a report); P4a/b: `packages/render-pixi/src/{layers,renderer}/index.ts`, `apps/{tizen,webos}/src/boot`, `packages/shell/src/boot/index.ts` (P4a: the flag travels through `ShellOptions`) | RP files, shell boot (work-time) | e2e at P4 |
+| 1 TV analysis | `R0-03.A1` (only if the owner's logs exist) → `R6-02.P3` → (only if a budget is missed) `R6-02.P4a → P4b` | A1: `tools/input-probe/results/<date>-m7/`, `tools/input-probe/results/<date>-m7-bench/` (the owner's logs); P3: none (a report); P4a/b: `packages/render-pixi/src/{layers,renderer}/index.ts`, `apps/{tizen,webos}/src/boot`, `packages/shell/src/boot/index.ts` (P4a: the flag travels through `ShellOptions`) | render-pixi `layers` / `renderer`, shell boot (work-time) | e2e at P4 |
 | 2 CRT default | (only if needed) `R6-02.P4c`, after P4a if P4a runs | `packages/core/src/config/index.ts` (a per-host user-option default), the save tests; `apps/{tizen,webos}/src/boot` and `packages/shell/src/boot/index.ts` if the default is passed through `ShellOptions` | CORE-CONFIG | e2e |
-| 3 WebGL 2 | (only if needed) `R6-02.P4d`, after P4b (or after P4a if P4b is not needed) and after P4c if it runs | `packages/render-pixi/src/renderer/index.ts`, `packages/shell/src/boot/index.ts`, the hosts' boots | RP files, shell boot | e2e |
+| 3 WebGL 2 | (only if needed) `R6-02.P4d`, after P4b (or after P4a if P4b is not needed) and after P4c if it runs | `packages/render-pixi/src/renderer/index.ts`, `packages/shell/src/boot/index.ts`, the hosts' boots | render-pixi `renderer`, shell boot and the TV boots (work-time) | e2e |
 | 4 store icons | `R6-03.D3` | the four store icons | STORE | none |
 | 5 doc images | `R6-03.D4` (after D3 and any P4) | `docs/images/**` | DOCS-IMAGES | `docs:screens` (lock) |
 | 6 version + changelog | `R6-03.D1` = `W15.DOCS-A` | the 10 manifests, the version tests, `CHANGELOG.md`, `plan_resolution.md`, `CLAUDE.md` | PLAN | none |
@@ -38,7 +38,7 @@ owner's explicit OK — the GitHub release `v2.0.0`.
 - **Reviews:** `R0-03.A1.RV` (if A1 ran), `R6-02.P3.RV`, `R6-02.P4*.RV` (if any), `R6-03.D3.RV`, `R6-03.D4.RV`,
   `W15.DOCS-RV`, then `R6-03.D6.RV` over the full-suite fixes (and `R6-03.D6.DOCS.RV` if that docs agent ran), then
   `R6-03.RV` (the release review), and after D7 `R6-03.D7.DOCS.RV`.
-- **e2e passes:** two while lanes 1–5 run; D6 runs alone (no other agent) because it runs the full suite.
+- **e2e passes:** two while lanes 1–5 run, a late drop's zone spec counting toward the two (rule 6); D6 runs alone (no other agent) because it runs the full suite.
 
 ## What runs here because it was deferred
 
