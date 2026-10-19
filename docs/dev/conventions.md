@@ -76,10 +76,14 @@ under the full `pnpm test` load).
 v2 changes the internal frame from 384×216 to 640×360 by changing a few constants
 ([plan_resolution.md](../../plan_resolution.md) R1-01, R2-01). So since R1-01 every
 frame-dependent number in `@shmup/core` **derives** from the constants of `core/config`:
-`FRAME_W` / `FRAME_H` (384 / 216), `FRAME_CX` / `FRAME_CY` (the centre), `HUD_BAR_HEIGHT` (8),
-`PLAYFIELD_Y` / `PLAYFIELD_W` / `PLAYFIELD_H` / `PLAYFIELD_CY`, `HUD_BOTTOM_Y` (208), `TILE_SIZE`
-(8) and the font metrics `GLYPH_W` / `GLYPH_H` / `LINE_H` (6 / 8 / 10, pinned to the font file by
-`packages/core/test/config/frame-constants.test.ts`).
+`FRAME_W` / `FRAME_H` (640 / 360 since R2-01's flip), `FRAME_CX` / `FRAME_CY` (the centre),
+`HUD_BAR_HEIGHT` (12), `PLAYFIELD_Y` / `PLAYFIELD_W` / `PLAYFIELD_H` / `PLAYFIELD_CY` (the
+playfield is 640×336), `HUD_BOTTOM_Y` (348), `TILE_SIZE` (12), `ART_SCALE` (3/2 — a positive
+rational, not a whole number; the config's whole-number check exempts it and a rational check
+requires its products with the font metrics to be whole) and the font metrics `GLYPH_W` /
+`GLYPH_H` / `LINE_H` (9 / 12 / 15 — the font file's 6 / 8 / 10 × `ART_SCALE`, pinned to the file
+times that scale by `packages/core/test/config/frame-constants.test.ts`; glyph rows stay laid out
+at the file's own cell).
 
 Since R1-02 the same holds outside core: the other packages and the apps import the constants from
 `@shmup/core`, and code that cannot — Electron's main process, the Node scripts — reads a **pinned
@@ -88,7 +92,14 @@ mirror** (owner decision O8): `apps/electron/src/main/window-state.ts` `FRAME_WI
 [`scripts/frame.mjs`](../../scripts/frame.mjs) — the frame constants plus `SPAWN_LEAD` and
 `CAPTURE_SCALE` — for the root scripts, the apps' scripts, the browser specs and the Playwright
 config (pinned export by export by `test/scripts/frame.test.ts`). A mirror's test fails when core
-flips alone, so R2-01 changes them together.
+flips alone, so R2-01 changes them together. Since R2-01 the browser specs hold three mirrors of
+their own, each pinned to core by a Node test: `test/e2e/frame-pixels.ts` re-exports the font
+metrics and computes `UI_ART_SCALE` (core's `ART_SCALE`, read back as `GLYPH_W` over the font
+file's cell width) and its own `uiPx` exactly as `core/ui` does (both pinned by
+`test/scripts/frame.test.ts`); `test/e2e/save-format.ts` holds `SAVE_FORMAT` = 3, pinned to core's
+`SAVE_VERSION` by `test/integration/e2e-save-format.test.ts`; and `test/e2e/gates.ts` holds
+`REPLAY_FORMAT` = 2, a mirror of core's `REPLAY_FORMAT_VERSION` pinned by
+`test/integration/e2e-gates.test.ts` (see the gates below).
 
 | Rule | Enforced by |
 |---|---|
@@ -102,13 +113,17 @@ flips alone, so R2-01 changes them together.
 
 **The literal scan** (`frame-literals.test.ts`) parses every `packages/core/src/**/*.ts` file with
 the TypeScript compiler — comments and docblocks are never read, numbers inside strings and
-template literals are — and fails on any literal of a frame number: the v1 frame's `384`, `216`,
+template literals are, except that the digits of a long `#rrggbb` / `#rrggbbaa` colour token are
+blanked before the numbers are matched (decision W4-11: the `336` of `'#336a64'` is a palette
+entry, not a frame number — and a palette would trip the scan now that 336 is one; a short
+`#rgb` / `#rgba` is read as text, so `'#384'` still counts) — and fails on any literal of a frame
+number: the v1 frame's `384`, `216`,
 `200` (`PLAYFIELD_H`), `208` (`HUD_BOTTOM_Y`) and its centre `192` / `108`, plus whatever `FRAME_W`,
 `FRAME_H`, `PLAYFIELD_H` and `HUD_BOTTOM_Y` are *now* (from R2-01: `640`, `360`, `336`, `348`).
 `100` and the new centre `320` / `180` are not banned — ticks, percentages and scores use them.
 
 A literal that is a frame number but does not mean the frame goes on the allow-list `ALLOWED` in
-that file, one entry per symbol and value:
+that file — core's holds **14 entries** today — one entry per symbol and value:
 
 ```ts
 {
@@ -140,7 +155,7 @@ packages import the allocation guard). It parses every package's `src/` but core
 `src/` and — where it has one — `scripts/` (the bundle checks, the manifest validators, packaging
 and bench helpers), and the root `scripts/`; `.mjs` files are parsed as JavaScript. The trees are
 read from disk, so a new package or app is scanned without editing the test. Its own `ALLOWED` list
-(32 entries today) has the same shape, with `file` relative to the repository root, and holds HTTP
+(33 entries today) has the same shape, with `file` relative to the repository root, and holds HTTP
 statuses, alphas, colour channels, a key code, a brightness sum, degrees (the 360° turn), the TV
 bench's 384×216 and 640×360 baseline rows, v1's window-state width — and the four **mirror
 definitions**, whose entries say `value: FRAME_W` / `value: FRAME_H` rather than a number, so they
@@ -169,6 +184,22 @@ only, not render-pixi or the shell.
   `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
   test/integration/presentation-fingerprint.test.ts`, paste the printed tables over `PINNED`, and
   say in the commit message why the output changed. Never re-pin to quiet an unexplained change.
+
+**Self-expiring gates (R2-01 → R2-03).** Between the flip, R2-02's content port and R2-03's
+re-bless, some checks cannot pass. Each gate skips its cases — the reason rides in the test's
+name — while its condition holds, and its helper throws at import once the condition is gone, so
+the step that clears it deletes the file and every use of it. `CONTENT_PORT_PENDING`
+(`packages/core/test/helpers/port-pending.ts`) holds while a shipped tileset is not at `TILE_SIZE`
+— the content stays at 8-px tiles until R2-02's port; `GOLDENS_STALE` (`test/golden/stale.ts`,
+re-exported by `golden.ts`) holds while a committed golden replay or attract demo records another
+replay format or another frame (`goldenIsStale`), and is never true under `SHMUP_GOLDEN_UPDATE=1`,
+so the re-bless run itself is spared; and the browser specs' twins, `R2_03_PENDING` (a committed
+recording is stale — `CONTENT_REASON` / `GOLDEN_REASON` name which rule) and `PORT_UNMEASURED`
+(the port happened but R2-03 has not re-recorded and re-measured yet — `PORT_REASON`), skip the
+specs whose numbers belong to the ported world (`test/e2e/gates.ts`). Its logic — and the
+`REPLAY_FORMAT` mirror above — is pinned in Node by `test/integration/e2e-gates.test.ts`
+(10 tests); the gate's own self-expiry is `checkGateExpiry`. A failure that comes from a test's
+own fixture is fixed, never gated: only a content-caused assertion skips.
 
 ## Chromium 68 / 69 rules (the TV engine floor)
 
@@ -521,9 +552,25 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   load is too close to its steady state — follow the guard rules under
   [Performance](#performance-zero-allocation-in-hot-paths) (warm-up, windows, `settled`), never
   the budget.
-- Browser specs that compare two captures a known number of ticks apart freeze the sim and step
-  exact ticks (`test/e2e/frame-advance.ts` — `freezeSim`, `stepTo`); never count rAF frames, the
-  loop runs 1–4 ticks per frame under load.
+- **Browser specs count the game's ticks, never rAF frames or wall seconds** (the rule C5 wrote
+  into `test/e2e/ticks.ts`). The loop runs up to 4 ticks a frame under load, so a count of rAF
+  frames or a wall timeout is a different number of game ticks on every machine; a spec waiting
+  for something the game does after ticks counts `window.__shmupDebug.tick` through the shared
+  helpers — `expectScene` for a scene that opens after a delay or a lock (the delay's mirror plus
+  `SCENE_SLACK_TICKS`), `pollTicks` for any other tick-reached state, `waitTicks` for a pause or a
+  held key, `tap` / `remoteTap` for a press, and a key sequence the host times in milliseconds
+  (the TV unlock) goes in one `page.evaluate` (`remoteSequence`). The delay mirrors
+  (`STAGE_CLEAR_DELAY_TICKS` 90, `MAP_LAUNCH_TICKS` 60, `SHIP_ENTER_TICKS` 40 — the content's
+  longest fly-in — …) are pinned to core and the content by
+  `test/integration/e2e-ticks.test.ts`; only `SCENE_SLACK_TICKS` and `BOOT_TIMEOUT_MS` are the
+  specs' own. Waits for real-time work stay wall time — the boot (`BOOT_TIMEOUT_MS`), audio
+  rendered and started, a screenshot captured and decoded, a console line — and a spec's own
+  timeout is wall time sized for a slow runner (the campaign-run test allows 420 s). A wait stays
+  in rAF frames only where no ticks run (a frozen sim, a hidden page), where a tick wait would
+  hang instead of failing (before a "ticks advance" check), or where it waits for drawn frames (a
+  renderer re-fit, a picture); each such spec says why in its docblock. A spec that freezes the
+  sim steps it with `test/e2e/frame-advance.ts` (`freezeSim`, `stepTo`) — two captures a known
+  number of ticks apart land on exact ticks. A flake repeat runs with `--retries=0`.
 - Pixi display objects need no GPU, so render code is unit-tested in Node with the
   `WebGLRenderer` faked; the real WebGL path is covered by the Playwright browser tests in
   `test/e2e/` (`pnpm test:e2e`, part of the definition of done from M1-04 on).
