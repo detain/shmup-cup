@@ -38,7 +38,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   `R2-04.RV`, `R3-06.RV`, `R4-P.RV`.
 - **Docs item:** `W07.DOCS-A` (PLAN) … `W07.DOCS-E`, after the step reviews are at zero.
 - **e2e passes:** two. Order: `R2-04.P3` and `R3-06.L2` first, then `R3-06.L6` (L2's lane, so never at the same
-  time), `R2-04.G` last.
+  time), `R2-04.G` last. The step reviews that re-run e2e (`R2-04.RV`: G's three batch lines; `R3-06.RV`: the e2e
+  lines among the L subtasks' tests) count as e2e agents too: start one only while fewer than two agents of the wave
+  are doing e2e work (README common rule 4).
 
 ## Rules for this wave
 
@@ -59,7 +61,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
    starts only after `R2-04.P4` is on `master`.
 5. **`packages/core/src/data/index.ts`:** only lane 5 (`R3-06.L1`, then `R3-06.L4`).
 6. **`scripts/assets/procedural/index.mjs` (the registry):** only `R4-P.P1`. It pre-registers every generator R4 and
-   R3-06 plan, so no later subtask edits it.
+   R3-06 plan, so no R3 / R4 subtask edits it again (R5's new generators — `azure.mjs` in wave 10, `escape.mjs` in
+   wave 12 — register themselves under their wave's registry token).
 7. **`R3-06.L6` waits for `R4-P.P1`** on `master` (it fills the `decor.mjs` stub).
 8. **R3-06 must keep the goldens unchanged.** It adds presentation only. A golden that moves is a bug.
 9. **Nothing in this wave changes the scale-1 atlas.** `test/scripts/assets/interim-pipeline.test.ts:341-357` (the
@@ -112,7 +115,10 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - Magnitudes are whole pixels: no 1.5, no 4.5.
   - `packages/render-pixi/test/effects/*` call the renderer's shake with literal numbers; they do not read the core
     constant. Do not edit them (lane 2 owns them).
-- **Docs needs (report them; never edit docs):** `docs/dev/fx-and-game-feel.md` (the magnitudes).
+- **Docs needs (report them; never edit docs):** the magnitudes in `docs/dev/fx-and-game-feel.md` (`:42`, "a shake
+  of magnitude 2") and `docs/dev/death-and-scoring.md` (`:98`, the death row's "2 px"; `:295`, "`Small` 1 /
+  `Medium` 2 / `Large` 4 px") — `W07.DOCS-B`; `docs/dev/api-reference.md:978` (the `ShakeMagnitude` row) —
+  `W07.DOCS-D`.
 - **Owner (Manual):** confirm 2 / 3 / 6 in the M7 play session.
 
 ### R2-04.P2 — The particle look at 640×360 (FP)
@@ -154,8 +160,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Files (only these):**
   - every file the five patches touch: `packages/core/src/fx/index.ts`, `packages/core/test/fx/*`,
     `packages/core/test/world/world-death.test.ts`, `packages/shell/test/fx-gallery/fx-gallery.test.ts`, and
-    `content/stages/zone-*.stage.json` / `content/enemies/zone-*.enemies.json` / the bonus, boss-rush and remix events
-    the Z patches name;
+    `content/stages/zone-*.stage.json` / `content/enemies/zone-*.enemies.json` / `content/paths/zone-{d,e}.paths.json`
+    (Z2, if its patch moves a path start) / the bonus, boss-rush and remix events the Z patches name;
   - `test/golden/v2-port.ts`, `v2-port-suite.ts`, `v2-port*.test.ts` (created in wave 3 by `R2-02.T3`) — one exemption
     per moved spawn, with its reason;
   - `test/golden/*.replay.json`, `content/demos/*.replay.json` (via `pnpm golden:update` only);
@@ -210,7 +216,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `package.json`, `packages/{audio-web,core,input-web,render-pixi,shell}/package.json`,
     `apps/{electron,tizen,web,webos}/package.json` (10 files);
   - `test/integration/tooling-config.test.ts` — `RELEASE` at `:323` and `semver.prerelease(...)` `toEqual(['alpha', 0])`
-    at `:328` → `['alpha', 1]`;
+    at `:328` → `['alpha', 1]`, and the docblock above `RELEASE` (`:319-322`, "the first pre-release of 2.0.0" → "a
+    pre-release of 2.0.0");
   - `apps/tizen/test/config-xml/config-xml-consistency.test.ts` — the title at `:32` ("2.0.0-alpha.0 = 2.0.0 on the TV");
   - `test/scripts/store-assets-edge.test.ts` — the comment / value at `:182`.
 - **Tests (targeted, run all of them):**
@@ -339,6 +346,14 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - **v2 "ticks to first threat":** the same columns from `recordBaseline(scenario)` of `test/golden/v1-baseline.ts`,
     called in memory on the v2 stage (as `test/golden/v2-port.ts` does), never written to a file.
   - **Damage:** v2 only — a non-god run of the bot (deaths and hits per section). There is no v1 damage to compare.
+  - **With what:** a throwaway test file in your worktree, `test/golden/R2-04-Z1-measure.test.ts` (Z2 … Z4: your own
+    id in the name; never in the patch, never committed), run with
+    `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden/R2-04-Z1-measure.test.ts`. In it:
+    `recordBaseline(scenario)` (`test/golden/v1-baseline.ts`, a scenario of its `BASELINE_SCENARIOS`) for the v2
+    columns, and `runStage('zone-<x>', fourWayBot(), { godMode: false })` (`test/playtest/harness.ts`,
+    `test/playtest/four-way-bot.ts`; `<x>` the zone's letter) for the deaths (`run.deaths`: `tick`, `cameraX`,
+    `cause`). The harness records deaths only: count the other hits in `runStage`'s `observe` callback
+    (`PlaytestFlags.observe`, called after every tick), or write "n/a" in the hits column.
 - **Files (only these; in the patch):** `content/stages/zone-a.stage.json`, `zone-b.stage.json`, `zone-c.stage.json`;
   `content/enemies/zone-{a,b,c}.enemies.json` only for density. **Not** `tender` (`zone-a.enemies.json`, the capsule
   carrier of every zone), `picket` or `halcyon-bulwark` (used by `bonus-range`), and no shared content
@@ -740,7 +755,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Wave / lane / order:** wave 07, lane 7, first.
 - **Depends on:** nothing in this wave.
 - **Goal:** three generators hold subjects of two R4 steps. Split them so every R4 subtask owns its generator, and
-  pre-register every generator R4 and R3-06 will fill, so nobody edits the registry again.
+  pre-register every generator R4 and R3-06 will fill, so no R3 / R4 subtask edits the registry again (wave rule 6).
 - **Files (only these; checked on `bc8e05d`):**
   - `scripts/assets/procedural/direct.mjs` — keeps the 8 Direct shots (`shots/direct-missile`, `beam`, `wave`,
     `sub-*` …, `:309-332`).
@@ -777,6 +792,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     `i.path.startsWith('procedural:logo:')` and expect `['procedural:logo:frames[0]']` (the message still contains
     `"ui/logo"`), and add `expect(error.issues.filter((i) => i.path.startsWith('procedural:ui:'))).toEqual([])`.
     Push this before `R4-P.P3` edits another case of the file (wave rule 10).
+  - `test/e2e/direct-items.spec.ts` — only the comment above `ITEM_COLOURS` (`:25-26`,
+    "`scripts/assets/procedural/direct.mjs` `ITEM_COLORS`" → `direct-items.mjs`); no e2e run needed.
 - **Tests (targeted, run all of them):**
   ```bash
   mkdir -p /home/sites/shmup-cup-run
@@ -799,8 +816,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   and the presentation fingerprint only in `runA.credits` / `runB.credits` and the segments after them, re-pinned with
   the reason "R4-P.P1: the credits name the new generator modules"; the goldens and the shell frame fingerprint
   unchanged.
-- **Token:** the registry `procedural/index.mjs` (yours, then frozen); `content/campaign/main.campaign.json` (the
-  credits, work time); FINGERPRINTS (push time, the credits line only).
+- **Token:** the registry `procedural/index.mjs` (yours; then frozen for R3 / R4);
+  `content/campaign/main.campaign.json` (the credits, work time); FINGERPRINTS (push time, the credits line only).
 - **Traps:**
   - Each moved sprite keeps its seed (`seedOf(name)` — the name, not the module) and its pixels.
   - `makeSprite(name, frames, generator)` writes `origin: 'procedural:<generator>'` (`common.mjs:114-126`). Use the
@@ -808,8 +825,12 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     procedural on `89c95f1`; waves 2–6 may change it; P1 leaves every total unchanged), so check
     `node scripts/art-origins.mjs --check` rather than guessing.
   - Never edit `common.mjs`.
-- **Docs needs:** `docs/dev/asset-pipeline.md` (the generator split; `W07.DOCS-D`). The test-file renames are
-  `R4-P.P2`'s docs needs.
+- **Docs needs:** the generator split — `docs/dev/asset-pipeline.md`, the generators row of
+  `docs/dev/api-reference.md` (`:1887`: `ui` with `LOGO_TEXT` / `LOGO_SCALE`, `direct` with the items and the Arm; no
+  `arm` / `blackhole` / `direct-items` / `logo` / stubs yet), `docs/dev/direct-mode.md:280-282` (`direct.mjs` draws
+  "the six items and `shields/arm`" → `direct-items.mjs`, `arm.mjs`) and `docs/dev/scenes-and-ui.md:577` (`ui/logo`
+  in `ui.mjs` → `logo.mjs`) — `W07.DOCS-D`; `docs/dev/visual-and-mechanic-extras.md:250` (`fx/black-hole` from
+  `particles.mjs` → `blackhole.mjs`) — `W07.DOCS-B`. The test-file renames are `R4-P.P2`'s docs needs.
 
 ### R4-P.P2 — Split `procedural.test.ts` into one file per generator
 
@@ -924,7 +945,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
 - **Token:** `v2kit.mjs` is yours; after this subtask every R4 agent only reads it.
 - **Traps:**
   - The kit lives in `scripts/assets/`, **not** in `scripts/assets/procedural/` (a `.mjs` there must be registered,
-    and the registry is frozen after `R4-P.P1`). It has no `generate()`.
+    and R3 / R4 never edit the registry after `R4-P.P1`). It has no `generate()`.
   - The kit imports the zone generators' ramp constants. Read them only inside functions (lazily), never at the kit's
     top level, so a generator that defines a ramp may import the kit without a module-cycle TDZ error
     ("Cannot access … before initialization").
@@ -952,9 +973,12 @@ Every subtask that pushes gets its own loop: `<id>.RV1` (a fresh read-only agent
     `turnTick − visibleTick` from the baseline's `enemyColumns`; v2 from an in-memory `recordBaseline`; damage on v2
     only), and every proposed change has a table row that justifies it;
   - the list of v2-port rows each moved spawn breaks is complete (F1: none; it moves no spawn).
-- **Fix loop:** a finding goes to a fix agent (`<id>.FIX1`), which rewrites the patch file and the report from its own
-  local commit (as the subtask did); then a **new** reviewer (`<id>.RV2`) … until a review reports zero findings,
-  nits included.
+- **Fix loop:** a finding goes to a fix agent (`<id>.FIX1`), which rewrites the patch file and the report: in a fresh
+  worktree of `origin/master`, `git apply --3way /home/sites/shmup-cup-run/w07/patches/<id>.patch` (replace `<id>`
+  with the patch's id), commit locally, fix, commit locally, then write the patch again as in `R2-04.F1` step 2 (with
+  that subtask's files), with `<base>` = that worktree's `git merge-base HEAD origin/master` (the new base SHA goes in
+  the report); like the patch subtask it pushes nothing (GIT exception (b)). Then a **new** reviewer (`<id>.RV2`) …
+  until a review reports zero findings, nits included.
 - **Gate:** `R2-04.G` starts only when all five loops are at zero.
 - **Report:** findings with severity (blocker / should-fix / nit). Zero findings means zero nits.
 
@@ -1018,8 +1042,9 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 ### W07.DOCS-A — The plan, the changelog, the board
 
 - **Files (only these):** `plan_resolution.md`, `CHANGELOG.md`.
-- **Goal:** R2-04's **As built** (the Z tables in short, the shake choice, the owner's session notes if any); §1 rows
-  R2-N5 … R2-N8; R3-06's As built and RR-6; an "R4 prep" note under §10 with RR-1 (v2 sources beside v1); §17:
+- **Goal:** R2-04's **As built** (the Z tables in short, the shake choice, the owner's session notes if any); §1's
+  register rows R2-N5 … R2-N8, RR-1, RR-1a, RR-1b, RR-5 and RR-6 (texts in `decisions.md`); R3-06's As built; an
+  "R4 prep" note under §10 with RR-1 (v2 sources beside v1); §17:
   R2-04 → `done (owner parts pending)` (the M7 play session), R3-06 → `done`; CHANGELOG `[Unreleased] — v2` entries
   for R2-04, R3-06, R4 prep, and the version line `2.0.0-alpha.1` (and `plan_resolution.md`'s lines that state the
   current version `2.0.0-alpha.0`); push; then report: the orchestrator runs the board sync.
@@ -1032,8 +1057,10 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 - **Files (only these):** `docs/dev/fx-and-game-feel.md` (shake 2/3/6, popups ×1.5, the particle look),
   `docs/dev/presentation-polish.md` (the CRT at pitch 3; R3-06's decor, painted bands and glows; the test row at
   `:457`: `procedural.test.ts` → `procedural-raster-bands.test.ts`, `R4-P.P2`),
-  `docs/dev/visual-and-mechanic-extras.md` (the CRT, Mega Crash, the black-hole check), `content/fx/README.md` (only
-  if `R2-04.P2` changed a field's meaning).
+  `docs/dev/visual-and-mechanic-extras.md` (the CRT, Mega Crash, the black-hole check, and `fx/black-hole`'s
+  generator, `blackhole.mjs` — `R4-P.P1`), `docs/dev/death-and-scoring.md` (only the shake magnitudes: the death
+  row's "2 px" and the `requestShake` row's "`Small` 1 / `Medium` 2 / `Large` 4 px", `:98`, `:295`),
+  `content/fx/README.md` (only if `R2-04.P2` changed a field's meaning).
 
 ### W07.DOCS-C — Stages and rendering
 
@@ -1045,7 +1072,11 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 ### W07.DOCS-D — API, asset pipeline, conventions
 
 - **Files (only these):** `docs/dev/api-reference.md` (`LayerId` incl. `DecorBack` / `DecorFront` / `Foreground`,
-  `DecorView`, `LAYER_COUNT`), `docs/dev/asset-pipeline.md` (v2 sources beside v1 — RR-1; the generator split; `v2kit`),
+  `DecorView`, `LAYER_COUNT`; `ShakeMagnitude` (`:978`, the magnitudes `R2-04.G` landed); the generators row
+  (`:1887`, `R4-P.P1`'s split: `logo` with `LOGO_TEXT` / `LOGO_SCALE`, `direct-items`, `arm`, `blackhole` and the
+  stubs)), `docs/dev/asset-pipeline.md` (v2 sources beside v1 — RR-1; the generator split; `v2kit`),
+  `docs/dev/direct-mode.md` and `docs/dev/scenes-and-ui.md` (only the moved generators: `direct-items.mjs` /
+  `arm.mjs` at `direct-mode.md:280-282`, `logo.mjs` at `scenes-and-ui.md:577` — `R4-P.P1`),
   `docs/dev/conventions.md` (the art-scale rule: v2 art in `*.v2.sprite.json` or a generator's v2 path, taken when
   `(options.artScale ?? 1) !== 1` (a call without options draws v1); the scale-1 build stays v1 until a v2.0.x
   clean-up after the release — deferred from R6-03, decision RR-1),
@@ -1079,7 +1110,7 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 ## Exit check
 
 1. Every subtask of the table is on `origin/master`; every review and the docs review at zero findings.
-2. On a fresh worktree of `origin/master`:
+2. On a fresh worktree of `origin/master` (the tester reports its `git rev-parse HEAD`):
    ```bash
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/tooling-config.test.ts test/scripts/assets
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
@@ -1093,12 +1124,24 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
    the `R2-04.REL` commit, which they follow. In the main checkout:
    ```bash
    git -C /home/sites/shmup-cup fetch origin && git -C /home/sites/shmup-cup rev-parse origin/master > /home/sites/shmup-cup-run/w07-tag.txt
+   # stop here: re-run step 2 on that SHA (the paragraph below); only when it passes, run the next line
    cd /home/sites/shmup-cup && gh release create v2.0.0-alpha.1 --prerelease --target "$(cat /home/sites/shmup-cup-run/w07-tag.txt)" --title "v2.0.0-alpha.1" --notes "Shmup Cup plays at 640×360 with interim art. A pre-release: the full suite runs before v2.0.0."
    ```
-   The SHA in `w07-tag.txt` must be the commit step 2 ran on (`git rev-parse HEAD` in that worktree); if
-   `origin/master` moved since, run step 2 again on the new SHA first (RUN-1).
+   The SHA in `w07-tag.txt` must be a commit that step 2 ran on: the tester puts `git rev-parse HEAD` of its
+   worktree in its report. The docs item pushes after the code exit, so `origin/master` has moved since step 2 ran:
+   run step 2 again on the SHA in `w07-tag.txt` first — a fresh tester agent whose worktree is made from that SHA
+   instead of `origin/master` (in its prompt's WORKTREE block the `worktree add` line becomes
+   `git -C /home/sites/shmup-cup worktree add /home/sites/shmup-wt/{NAME} "$(cat /home/sites/shmup-cup-run/w07-tag.txt)" --detach`,
+   `{NAME}` filled in as for every agent) — and run the `gh` line only when it passes (RUN-1). A failure gets a fixer
+   as at any exit; after its push, write `w07-tag.txt` again and re-run step 2. If wave 8's first pushes reached
+   `origin/master` before this, the tag holds them too; that is fine (the re-run checks them) — never pick an older
+   commit to leave them out. If the driver's SCOPE ends the run here, R6-03.D6's commands (wave 15) run first, once
+   step 1 holds, and the tag targets the full SHA of the commit their last green run checked (write it to
+   `w07-tag.txt` instead of the `rev-parse` output; that green run replaces the re-run of step 2; RUN-1, as wave 15's
+   `R6-03.D7` targets `v2.0.0`).
 4. **Deferred to wave 15:** the milestone's full definition-of-done suite (`pnpm test`, `pnpm test:e2e`, `pnpm bench`
-   incl. the soak).
+   incl. the soak) — unless the driver's SCOPE ends the run here: then R6-03.D6's commands run before the tag (item 3,
+   RUN-1).
 
 ## Owner (Manual) — never blocks this wave
 
