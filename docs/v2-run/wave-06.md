@@ -259,7 +259,9 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
 - **Files (only these):**
   - `test/golden/*.replay.json` (62), `content/demos/*.replay.json` (10, the format sample `example` included) —
     by `pnpm golden:update` only;
-  - `test/golden/stale.ts` — **deleted**; and every use: `test/golden/golden.ts` (the re-export, `:116-121`),
+  - `test/golden/stale.ts` — **deleted**; and every use: `test/golden/golden.ts` (the `export { … } from './stale.js'`
+    re-export at `:115-121`, **and the docblock sentence at `:84-86`** that names `goldenIsStale` / `GOLDENS_STALE`
+    and says "re-exported here" — rewrite it so no gate token is left in the file, or step 8's gate grep stays red),
     `test/golden/golden.test.ts`, `golden-edge.test.ts`, `golden-autofire.test.ts`, `demos.test.ts`,
     `packages/shell/test/determinism/determinism.test.ts`, `determinism-edge.test.ts`,
     `test/integration/atlas-zone-sprites.test.ts`, `attract-flow.test.ts`, `attract-flow-edge.test.ts` (find them with
@@ -390,7 +392,8 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
     and pattern action, in typed arrays on `ContentDb` (the sprite table is `buildStringTable`, `:3538`, a global sort
     of every name);
   - `packages/core/src/debug/index.ts` — `hashWorld` (`:745`) mixes the keys instead of: runner `r.entry` / `r.pc`
-    (`:382-383`) → (action key, `pc − actionStart`); `e.specIndex` (`:426`); `e.pathId` (`:455`); `b.specIndex`
+    (`:382-383`) → (action key, `pc − r.entry` — the bank start the runner already holds, `PatternBank.entries`);
+    `e.specIndex` (`:426`); `e.pathId` (`:455`); `b.specIndex`
     (`:607`); formations' `f.enemy[slot]` (`:706`) and `f.path[slot]` (`:715`); and pool fields named `sprite`
     (`bullets/index.ts:434`, `:518`, `:545` — mixed in the generic pool loop `:777-783`) through the key table. Audit
     every other mixed field for a content-order index and list your verdict per field in the report;
@@ -404,13 +407,16 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
     formations, enemy bullets and pattern runners are live, so every key lookup runs. The existing guard
     (`debug.test.ts:101`, 'does not allocate per hashed value (only the boxed result, if anything)', a bare world with
     one test pool) stays as it is, budget included;
-  - `packages/core/test/debug/*.test.ts` — only pins that hash values changed;
+  - `packages/core/test/debug/*.test.ts` — update only the pinned hash literals whose hash value really moved (this
+    is the expected change);
   - `test/integration/content-db-fingerprint.test.ts` — the re-pin of the new `ContentDb` key fields.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/debug packages/core/test/data \
     packages/core/test/replay packages/core/test/frame-literals.test.ts packages/core/test/index.test.ts
   SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts
+  # paste the printed table over PINNED, then run the same command once more without the variable (README rule 6):
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts
   pnpm --filter @shmup/core typecheck
   ```
 - **Acceptance:** the dummy-content test green; zero allocation in `hashWorld` (the new guard of
@@ -516,16 +522,20 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
 
 - **Wave / lane / order:** wave 06, lane 5, after `R5-P.P2b`.
 - **Depends on:** `R5-P.P2b` pushed.
-- **Goal:** the v1 zone contract (scroll time to the WARNING 2.5–4.5 min, 4–6 new enemy types by sprite, capsule
-  budgets) would fail a 20–22 k-px zone. Each zone gets a contract file whose flag picks v1 bounds (`false`, today) or
-  v2 bounds (`true`, set by the zone's own R5 lane).
+- **Goal:** the v1 zone contract (scroll time to the WARNING 2.5–4.5 min, 4–6 new enemy types by sprite for zones
+  B–I, capsule budgets; zone A instead counts 6–8 distinct enemy **behaviours** besides the boss, today 8 —
+  `content.test.ts:981-987`) would fail a 20–22 k-px zone. Each zone gets a contract file whose flag picks v1 bounds
+  (`false`, today) or v2 bounds (`true`, set by the zone's own R5 lane).
 - **Files (only these):** `test/integration/zones/zone-a.contract.ts` … `zone-i.contract.ts` (new, 9; each exports
   `{ remastered: false, … }`); `test/integration/zones/helpers.ts`; `test/integration/zones/contract.test.ts` (new:
   the unit test that feeds a fake 21,000-px stage to the v2 branch); `test/integration/content-zone-*.test.ts` (read
   the contract); `test/integration/release-audit.test.ts` (`CAPSULE_BUDGET` `:57`, `DIRECT_ITEM_BUDGET` `:60` read
-  from the zone's contract).
+  from the zone's contract). `test/integration/zones/zone-a.contract.ts` exports the behaviour rule and says so in a
+  comment — wave 09's `R5-P.D-A` §6 relies on this and must never have to stop and report.
 - **The v2 bounds (decision R5-D2):** length 20,000–22,000 px; scroll to the WARNING 3.75–5.25 min; the bot's
-  god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite; 18–48 capsules before the WARNING;
+  god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite — **zones B–I only**:
+  `zone-a.contract.ts` keeps the behaviour count (6–8 distinct scripts besides the boss, v1's rule; zone A places 8
+  sprites already and has no earlier zone, so a by-sprite count cannot fit 6–8); 18–48 capsules before the WARNING;
   ≥ 3 capsules in every 1,350-px window after a checkpoint; `directItems` ≥ 30; ≤ 2 blue capsules.
 - **Tests:** `pnpm content:check`; `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
   test/integration/release-audit.test.ts test/integration/zones/` (the trailing `/` matters: without it the filter
@@ -546,7 +556,7 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
   a shared helper file next to them only if needed (new).
 - **Tests:** `pnpm assets && VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone`
   (before: `test/scripts/assets/procedural-zones`), with `vitest list` before and after.
-- **Acceptance:** the same test names and count; green.
+- **Acceptance:** the same test **names** (without file paths, as `R5-P.P2a`'s acceptance) and count; green.
 - **Token:** none.
 
 ### R5-P.P9 — Hoist the generators' alpha 200 into one constant
@@ -668,6 +678,7 @@ orchestrator does, from the main checkout, after `W06.DOCS-A`'s §17 push).
    pnpm content:check && pnpm docs:images --check && pnpm store:assets --check
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-db-fingerprint.test.ts \
      test/integration/presentation-fingerprint.test.ts test/integration/frame-literals-repo.test.ts
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/debug
    ```
 2. `R2-03.RV`, `R5-P.P1.RV-D`, every other `R5-P.*` review of this wave (P1's `RV<n>`, P8, P2a, P2b, P6, P5c, P9)
