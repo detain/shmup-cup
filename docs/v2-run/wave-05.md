@@ -21,7 +21,9 @@ review), R3-03 (V4c, the step review), R3-04 (the step review), and the wave's d
 **Gate to start:** wave 4's exit — the port commit `feat(R2-02): port all content ×1.5 …` on `origin/master`.
 **Exit (summary):** U1–U5, R, B, EF and every spawned Z on master; the R2-02, R3-03 and R3-04 step reviews at zero
 findings; `git grep -n port-pending -- packages apps test scripts` lists only docblock mentions in
-`test/golden/stale.ts` and `test/e2e/gates.ts` (R2-03 deletes both files); the docs review at zero; §17 R2-02,
+`test/golden/stale.ts` and `test/e2e/gates.ts` (R2-03 deletes both files), plus the two warning comments in
+`test/scripts/content/rescale.test.ts` and `rescale-edge.test.ts` (wave 2's `R2-02.T4b` writes them — they are
+why those tests' condition never comes from the deleted file); the docs review at zero; §17 R2-02,
 R3-03, R3-04 → `done` (owner parts pending where the step has some) on master; then the orchestrator syncs the board.
 The **code exit** (what wave 6's gate needs) is everything above except the docs.
 
@@ -266,8 +268,11 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
   git grep -n port-pending -- packages apps test scripts
   ```
 - **Acceptance:** `git grep -n port-pending -- packages apps test scripts` lists only docblock mentions in
-  `test/golden/stale.ts` (`:26`) and `test/e2e/gates.ts` (`:24`, `:39`, `:132`) — R2-03.G1 deletes both files; all
-  green. (Markdown files are out of the grep on purpose: docs mention `port-pending` and are not yours.)
+  `test/golden/stale.ts` (`:26`) and `test/e2e/gates.ts` (`:24`, `:39`, `:132`) — R2-03.G1 deletes both files — plus
+  the two warning comments in `test/scripts/content/rescale.test.ts` and `rescale-edge.test.ts` (wave 2's
+  `R2-02.T4b` writes them — they are why those tests' condition never comes from the deleted file, and U5 does not
+  touch those two tests); all green. (Markdown files are out of the grep on purpose: docs mention `port-pending`
+  and are not yours.)
 - **Token:** CORE-CONFIG (one comment).
 - **Traps:** `test/e2e/gates.ts` keeps its own `contentPorted()`; do not edit it (it is a spec helper R2-03 deletes).
   The playtests are slow (minutes of simulation per zone): run only the two playtest unit files listed.
@@ -292,9 +297,10 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
   ```
 - **Acceptance:** the bot clears zone A in god mode within its budgets; `v2-port*` green; `content:check` green.
 - **Token:** FINGERPRINTS (content-DB, and presentation: zone A is in every campaign walk) under the land lock.
-- **Traps:** `tender` (zone A's capsule carrier) is used by every zone B–I and `picket` / `halcyon-bulwark` by
-  `bonus-range`: do not change their sim fields here — report instead. Test pins are written through
-  `packages/core/test/helpers/v1-port.ts` (`v1x`, `v1speed`, `v1screenX`), never by pasting a failing run's output.
+- **Traps:** `tender` (zone A's capsule carrier) is used by every zone B–I, `picket` by `bonus-range` and
+  `halcyon-bulwark` by `bonus-range` and `boss-rush`: do not change their sim fields here — report instead.
+  Test pins are written through `packages/core/test/helpers/v1-port.ts` (`v1x`, `v1speed`, `v1screenX`), never by
+  pasting a failing run's output.
   A moved spawn breaks the v2-port first-visible ±1 check: add an exemption only with its reason, and say so.
 
 ### R2-02.Z-BC — Residual fixes: zones B and C (spawn only if red)
@@ -528,12 +534,15 @@ main checkout, after `W05.DOCS-A`'s §17 push).
 ### W05.DOCS-F — Platform, rendering, build, performance
 
 - **Files (only these):** `docs/dev/platform-polish.md`, `docs/dev/rendering-and-shell.md`, `docs/dev/build-test-deploy.md`,
-  `docs/dev/render-performance-review.md`, `docs/client/outstanding-work.md`, `tools/input-probe/README.md`.
-- **Write:** **the budget reasoning** (required by R3-04's scope: `DIST_BUDGET`, the atlas caps, `TEXTURE_BUDGET_BYTES`
-  23 MiB at 640×360, the policies); the lazy residency, the hold and context loss; the bench's stand-in scenario; the
-  2-s zone-load target on the M7 (decision W5-19) and its status from `R3-04.M4b`'s report — the estimate with its
-  ratio, or "unmeasured until the owner's M7 run (R0-03)" — in `render-performance-review.md`; the owner's M7 run in
-  outstanding-work (with the zone-load measurement while it is unmeasured).
+  `docs/dev/render-performance-review.md`, `docs/client/outstanding-work.md`, `tools/input-probe/README.md`,
+  `docs/dev/debug-and-replays.md` (only the budget table's `DIST_BUDGET` row and its OK line, `:707`, `:711`).
+- **Write:** **the budget reasoning** (required by R3-04's scope: `DIST_BUDGET`, the atlas PNG caps (take their
+  names from `test/scripts/assets/atlas-budget.ts` as it is then — today `ATLAS_PNG_BYTES_CAP`, split by
+  `R3-04.M2b` into common + per-zone + total), `TEXTURE_BUDGET_BYTES` 23 MiB at 640×360, the policies); the lazy
+  residency, the hold and context loss; the bench's stand-in scenario; the 2-s zone-load target on the M7
+  (decision W5-19) and its status from `R3-04.M4b`'s report — the estimate with its ratio, or "unmeasured until
+  the owner's M7 run (R0-03)" — in `render-performance-review.md`; the owner's M7 run in outstanding-work (with
+  the zone-load measurement while it is unmeasured).
 - **Acceptance:** `grep -n "DIST_BUDGET\|TEXTURE_BUDGET_BYTES\|ATLAS_PNG_BYTES" docs/dev/platform-polish.md` finds each
   budget with its derivation; `docs/client/outstanding-work.md` lists the owner's M7 bench run;
   `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-docs.test.ts` green (it reads
@@ -543,7 +552,7 @@ main checkout, after `W05.DOCS-A`'s §17 push).
 
 1. On `origin/master` in a fresh worktree:
    ```bash
-   git grep -n port-pending -- packages apps test scripts     # only stale.ts and gates.ts docblock lines
+   git grep -n port-pending -- packages apps test scripts   # stale.ts/gates.ts docblocks + T4b's two rescale comments
    pnpm content:check
    node scripts/content/rescale.mjs --factor 1 --dry-run      # 0 / 0 / 0
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tile-size.test.ts \
