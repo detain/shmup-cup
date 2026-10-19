@@ -95,7 +95,7 @@ flips alone, so R2-01 changes them together.
 | No literal frame number in `packages/core/src`: write `FRAME_W`, `PLAYFIELD_W + 16`, `FRAME_CX - 120`, `n * GLYPH_W` — never `384`, `400`, `72` | `packages/core/test/frame-literals.test.ts` |
 | No literal frame number in the other packages' `src/`, the apps' `src/` and `scripts/`, or the root `scripts/`: import the constants from `@shmup/core` (in a Node script: from `scripts/frame.mjs`) | `test/integration/frame-literals-repo.test.ts` |
 | **Frame ≠ world** (plan §2.6): only values anchored to the frame derive from it — an edge, the centre, "one playfield", a text width. World values (radii, margins, speeds, a boss's distance from the edge) stay literal; R2-02 scales them ×1.5 | review |
-| Panel widths and heights sized by their 6×8 text stay literal (allow-listed); their position derives from the centre or an edge | the scan's allow-list; [scenes-and-ui.md](scenes-and-ui.md) |
+| Since R2-01 (`92120c7`) no panel size is a literal at all — they derive from `GLYPH_W` / `LINE_H` through `core/ui` `uiPx`; a panel's position derives from the centre or an edge | [scenes-and-ui.md](scenes-and-ui.md) |
 | A browser spec samples a screenshot through `test/e2e/frame-pixels.ts` (`sx`, `sy`, `pixelIndex`, `VIEWPORT`) — never `3x + 1`; rows that come from content (a stage's bands, a Mode-7 horizon) stay literal | review |
 | Core's presentation output does not move unless a step means it to | `test/integration/presentation-fingerprint.test.ts` |
 | The shell's own scenes (flight, showcase, fx-gallery) do not move either | `packages/shell/test/frame-fingerprint.test.ts` |
@@ -124,11 +124,13 @@ The failure message names the file, symbol path, value and line of each unlisted
 entry can be written from it. Entries never match on line numbers; the test fails on an entry whose
 symbol now holds more literals than `count` (a frame number crept in beside an allowed one), fewer,
 or none — the list cannot rot. Add an entry only for a count, an angle, a character cap, a world
-distance, a text-sized panel or generated data, with the reason; anything that does mean the frame
-derives from the constants. The flip (R2-01, `72b18a1`) added three new entries covering the four
-literals plan R1-01's As built predicted: the 360-tick ending timers
-`EndingScene.drawCitadel.sink` (`count: 2`) and `StoryScene.drawDawn.rise`, and the angle `640` in
-`DIRECTION_HEADINGS`; `92120c7` removed the `ZONE_TALLY_PANEL.w` entry.
+distance or generated data, with the reason (text-sized panels are no longer a category —
+`92120c7` laid them out from `GLYPH_W` / `LINE_H`); anything that does mean the frame derives from
+the constants. The flip (R2-01, `72b18a1`) added three new entries covering the four literals plan
+R1-01's As built predicted: the 360-tick ending timers `EndingScene.drawCitadel.sink` (`count: 2`)
+and `StoryScene.drawDawn.rise`, and the angle `640` in `DIRECTION_HEADINGS`; `92120c7` — the same
+step's uiPx commit, earlier than the flip — had already removed the text-sized panel entries, the
+`ZONE_TALLY_PANEL.w` entry this doc's old example quoted among them.
 
 **The repo-wide scan** (`test/integration/frame-literals-repo.test.ts`, R1-02) does the same for
 everything else, with the same scanner — the shared test helper
