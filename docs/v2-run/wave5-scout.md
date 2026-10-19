@@ -134,8 +134,8 @@ A5 derived `content.test.ts`' literals and U1–U3 relaid the UI, so they are st
     - zone-g `events[15]` leaves `events[14]`'s ground window: `content.test` "leaves no ground enemy … standing"
       fails with "camera 3451, facet-turret at 4111";
     - gimmick-range trigger `events[8]` needs `until ≤ 2275`;
-    - the hunter-range dive (`y −24 → −36`) is the only above-top spawn and needs the landing fix;
-    - `captain.circler`'s home x 332 → 562 (end-anchored) against `cx + rx` = 320 + 210 = 530;
+    - the hunter-range dive (`y −24 → −36`) is the only above-top spawn and needs the landing fix; **[Corrected after the flip:** it needs no edit — it has no path, W6's `lineY` lands it, T3 confirms**]**
+    - `captain.circler`'s home x 332 → 562 (end-anchored) against `cx + rx` = 320 + 210 = 530; **[Corrected after the flip:** the ruling is home 530, the `cx + rx` one (W5-7, S1)**]**
     - the parts bound;
     - **[Corrected after the flip:** and zone G's rising walls one row up: on ported content
       PRISM LABYRINTH's middle-row case (`content.test.ts` ≈ `:1659`) finds 0 rising walls at row 14 because they
@@ -191,7 +191,8 @@ A5 derived `content.test.ts`' literals and U1–U3 relaid the UI, so they are st
     stand-in must be a **seeded generator**, so the budgets pass in CI reproducibly.
 18. **Goldens during R2-02:** stale since A5, behind `GOLDENS_STALE` (**[Corrected after the flip:** defined in `test/golden/stale.ts` — `goldenIsStale` `:57`,
     `GOLDENS_STALE` `:127`, `checkStaleGateExpiry` `:111` run at import —, re-exported by `golden.ts:116-121`; it
-    skips 239 tests in 9 files; its inverse is `packages/core/test/replay/replay-version-shipped.test.ts`. R2-02
+    skips 223 tests in 4 files (260 skips across the 7 `test/golden` files, the extra 37 from the v1-baseline
+    suites' own frame gate); its inverse is `packages/core/test/replay/replay-version-shipped.test.ts`. R2-02
     keeps both; both stay green after the port**]**). R2-02 changes the sim massively but **must not re-bless** (R2-03 does). The v1 baseline files
     are refused for re-recording at 640 (`v1-baseline.test.ts:104-110`); the tool skips `content/demos/`
     (`rescale.mjs:127`). The **v2 port comparison** (camera ±2 %, first-visible ±1 tick, landing ±2 px) is a new test
@@ -234,7 +235,8 @@ written inside the port commit — is one agent and one ≈ 400-hunk commit (W5-
 **The two-scale check** (local, never committed; every R2-02 prep subtask runs its tests **on master and under it**):
 
 **[Corrected after the flip:** it is no longer an uncommitted recipe: `R2-02.P1` commits it as the kit `test/port-v2/two-scale.sh`
-with `test/port-v2/handfix.patch` (decision R2-N1). The kit runs in a **throwaway** worktree at the caller's
+with `test/port-v2/handfix.patch` (decision R2-N1; the kit is not on master at `77eedd7`, so these blocks
+describe the planned kit). The kit runs in a **throwaway** worktree at the caller's
 HEAD: install, `pnpm assets`, the tool, the hand-fix patch, the code flip (`WORLD_SCALE` 3/2, `WORLD_TOP_PAD`
 36, the `scripts/frame.mjs` mirror, the 15 frame-unit defaults), then the **mandatory** port-pending stub (all
 six exports kept, `CONTENT_PORT_PENDING = false`, no import-time `checkPortPendingExpiry` call — otherwise about
@@ -331,8 +333,8 @@ R2-02's port, then 3/2; world lengths, speeds, radii and accelerations in code a
   the v2 geometry (O3's snap); every tunable of `BEHAVIOR_PARAM_UNITS` (`behaviors/units.ts`) has a row.
 - **Tests:** as S0b, plus `--project core packages/core/test/behaviors packages/core/test/weapons`.
 
-**S1. `handfix.patch`, `flip.sh`, `port-pending.stub.ts`.** **[Corrected after the flip:** never created as scratchpad files; the committed kit `test/port-v2/`
-replaces them (`R2-02.P1`: `two-scale.sh` carries the flip and the stub, `handfix.patch` the content fixes, zone
+**S1. `handfix.patch`, `flip.sh`, `port-pending.stub.ts`.** **[Corrected after the flip:** never created as scratchpad files; the kit `test/port-v2/` that `R2-02.P1` commits
+(decision R2-N1; not on master at `77eedd7`) replaces them (`R2-02.P1`: `two-scale.sh` carries the flip and the stub, `handfix.patch` the content fixes, zone
 G's rising walls included).**]** The patch is
 content only, against the tool's output, with W5-7's defaults: gimmick-range `events[8].until` 2275; zone-g
 `events[15]` back into `events[14]`'s window (x ≥ 3450); the hunter-range dive needs no edit (it has no path;
@@ -536,7 +538,7 @@ with the ramps read from `content/stages/*.stage.json` `cycles` (never copied; V
 | `V1_WORLD` / `UNSCALED` tables | **S0b** | `packages/core/test/config/world-scale.test.ts` |
 | `v1-behavior-defaults.json` | **S0c** | `packages/core/test/behaviors/fixtures/` |
 | `v1-port.ts` (`K`, `PAD`, `v1x`, `v1y`, `v1screenX/Y`, row mappers) | **T0** | `packages/core/test/helpers/v1-port.ts` (corrected); reused by T1–T3 |
-| `handfix.patch`, `two-scale.sh` (the flip and the stub) | **R2-02.P1** (corrected) | the committed kit `test/port-v2/`, deleted by the port commit |
+| `handfix.patch`, `two-scale.sh` (the flip and the stub) | **R2-02.P1** (corrected) | the kit `test/port-v2/` (`R2-02.P1`; not on master at `77eedd7`), deleted by the port commit |
 | ~~the e2e content gate after S2~~ | — | corrected: done in R2-01 (`test/e2e/gates.ts`); R2-02 edits no gate |
 | native bullets (the beams are already native) | **V1** | `GeneratorOptions.artScale` exists (corrected); `artScale: 1` = v1 bytes |
 | `SpriteDef.p2Map`, pixel-map `"p2"`, recipe `p2`, sidecar `meta.shmup.p2` | **V2** | `sprite-source.mjs`, `coop.mjs`, ingest |
@@ -632,7 +634,7 @@ ref `:46`); items 1, 2, 3, 6, 7, 9, 11 and 12 are corrected in place above. Each
 | **W5-4** | The rescale tests that read the shipped content at v1 geometry | **Retire them, keeping factor-1 identity on the ported tree** plus the 61 fixture tests | Commit a frozen v1 copy of `content/` as a fixture (≈ 2 MB) so they keep running |
 | **W5-5** | Behaviour and weapon defaults | **Ported in code, pinned by a v1 snapshot and each unit's rule** (`behavior-defaults-port.test.ts`) | Write every default explicitly into every content file: content churn, and defaults rot |
 | **W5-6** | e2e content specs after R2-02 | **[Corrected after the flip:** done in R2-01 (`test/e2e/gates.ts`)**]** **Re-key their skip to "R2-03 re-measures"**: skip while `content/demos/*.replay.json` were recorded at another frame (R2-03 re-records them, so the gate expires with it) | Re-measure the specs in R2-02, pulling R2-03's work forward and needing the e2e lock in the sim lane |
-| **W5-7** | The tool's hand fixes | **gimmick-range trigger `until` 2275; zone-g `events[15]` back inside the ground window; hunter dive: no edit (no path; W6's `lineY` lands it, T3 confirms); circler home 530** | Move the rock; widen the window; move the hunter's spawn; set `cx` so the home stays 562 |
+| **W5-7** | The tool's hand fixes | **gimmick-range trigger `until` 2275; zone-g `events[15]` back inside the ground window; zone G's rising walls one row up; hunter dive: no edit (no path; W6's `lineY` lands it, T3 confirms); circler home 530** | Move the rock; widen the window; move the hunter's spawn; set `cx` so the home stays 562 |
 | **W5-8** | The fixed `parts[].x/y` bound ±512 | **±768 (×1.5)** | Re-rig IRON LEVIATHAN's part tree to fit ±512 |
 | **W5-9** | v2 bullets and lasers now or in R4-02 | **Now, procedurally at the bible's sizes (V1)** (**[Corrected after the flip:** the beam half is moot, done in `16aff20`**]**): fixes the beam-frame contract and completes the colour-blind sets at v2 sizes | Keep the interim ×1.5 until R4-02: beams and telegraphs ×1.5 too thick until then |
 | **W5-10** | `@p2` for procedural ships | **Palette maps that reproduce today's swap exactly**, and the swap code removed | Keep the channel swap for procedural sprites and maps only for real art: two code paths |
@@ -726,8 +728,10 @@ blocks nothing).
   `scripts/frame.mjs` untouched; the three fingerprints unedited and green; the suite green with the gated list
   unchanged; their gated and two-scale-only tests pass under the two-scale check (the reviewer runs it). **[Corrected after the flip:** `scripts/frame.mjs`
   gains the `WORLD_SCALE` mirror in `R2-02.P0` (value 1); "the gated list unchanged" reads "unchanged except the
-  `WORLD_SCALE`-keyed `runIf` / `skipIf` cases"; after the port the expected skips are **286** = 239
-  `GOLDENS_STALE` + 41 frame `runIf`s + the 6 cases `R2-02.T4b` retires (`rescale.test.ts` ×4,
+  `WORLD_SCALE`-keyed `runIf` / `skipIf` cases"; after the port the expected skips are re-derived from a
+  full-suite run at the port: the old **286 = 239 + 41 + 6** does not reproduce (`GOLDENS_STALE` skips
+  223, not 239 — §0 item 18; the v1-baseline frame gate's 37 are its own skips; the 41 frame `runIf`s
+  are not countable from `test/golden`), while `R2-02.T4b` retires the 6 cases (`rescale.test.ts` ×4,
   `rescale-edge.test.ts` ×2; or T4b's reported number), with 0 `CONTENT_PORT_PENDING`.**]**
 - **The port commit:** its content equals a fresh tool run on the parent plus `handfix.patch` (the reviewer re-runs
   and diffs); its code is `flip.sh`'s lines plus the gate deletion (**[Corrected after the flip:** the kit's flip lines plus the port-pending stub; the gate deletion is `R2-02.U1` … `U5`**]**); three re-pins with reasons; no `port-pending`
