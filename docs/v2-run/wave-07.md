@@ -583,7 +583,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   ```
   then, under the land lock, the FP re-pin (README rule 6). Of the two integration runs only the presentation
   one is red — the renumbering moves it, and it is the only table you re-pin here; the content-DB run stays green
-  (`:563-565`). Seeing exactly that red/green split is the check that only the expected tables moved (L1's
+  (`:567-569`). Seeing exactly that red/green split is the check that only the expected tables moved (L1's
   pattern: it runs the content-DB fingerprint in its targeted tests too).
 - **Acceptance:**
   - zero allocation per tick and per frame (the new guard: warm-up ≥ 20,000, new indices each window);
