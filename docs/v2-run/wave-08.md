@@ -653,9 +653,17 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - docblocks only: `packages/core/src/config/index.ts:797-816` (the `GLYPH_W` / `GLYPH_H` / `LINE_H` comments name
     `pixel6x8 × ART_SCALE`), `packages/core/src/ui/strings.ts:466` and `:514` (the font file the charset is compared
     with).
-  - `packages/core/test/ui/ui-strings.test.ts` (`:26`), `test/integration/localization.test.ts` (compare the glyph set
-    with the native file too), `test/scripts/assets/font-cell-size.test.ts`, the font case of
-    `test/scripts/assets/interim-pipeline.test.ts`, `test/scripts/assets/font.test.ts` (the code points).
+  - `packages/core/test/ui/ui-strings.test.ts` (only the comment at `:26`; push before `R4-03.C6` starts — C6's
+    files cover `packages/core/test/ui/`), `test/integration/localization.test.ts` (compare the glyph set with the
+    native file too), `test/scripts/assets/font-cell-size.test.ts`, `test/scripts/assets/font.test.ts`
+    (the code points).
+  - `test/scripts/assets/interim-pipeline.test.ts` — the font case (`:310-320`), and in the case 'upscales every
+    v1-scale frame to ⌈1.5·w⌉ × ⌈1.5·h⌉, nearest-neighbour' (`:159-174`) skip `font/pixel` when the default-scale
+    build takes it from a native font file (skip nothing if `R4-P.P3` already puts it in `NATIVE`): `R4-03.C2` …
+    `C4b` redraw the glyphs and may not edit this file.
+  - `test/scripts/assets/pipeline-edge.test.ts` — only the case 'reports a sprite source that takes a font sprite
+    name, and drops that font' (`:187-200`): call `collectSprites({ sourceDir: src, artScale: 1 })`, so the one
+    clash issue stays on `pixel6x8.font.json` (at the default scale the native `pixel9x12.font.json` replaces it).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/config packages/core/test/ui/ui-strings.test.ts
@@ -674,6 +682,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `scaleFont(buildFontSprite(v1Font), 1.5)` (`scaleFont` from `scripts/assets/interim.mjs`, `buildFontSprite` from
     `scripts/assets/font.mjs`, `v1Font` read from `pixel6x8.font.json`), then write each scaled frame back as its
     glyph's rows.
+  - Pin only what `R4-03.C2` … `C4b` keep: the code points, the cell, the line and the advance. Never pin the glyph
+    pixels (their Files are the font file and `font-v2.test.ts` only); prove C1's ×1.5 identity with ATLAS-SHA
+    (rule 14), not with a committed test.
 - **Docs needs:** `docs/dev/asset-pipeline.md` (the native font), `docs/dev/conventions.md` (the font metrics source).
 
 ### R4-03.C2 — Redraw ASCII 32–126 at 9×12
@@ -685,7 +696,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   the spacing column, the baseline, every glyph distinct).
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/font-v2.test.ts test/integration/localization.test.ts test/scripts/assets/interim-pipeline.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/localization.test.ts
   ```
 - **Acceptance:** fingerprints untouched (text is hashed by its string, not its pixels); the scale-1 pin green (the v2
   font is ignored at scale 1); every glyph distinct.
@@ -717,14 +728,16 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Acceptance:** as `R4-03.C2`; the CJK figures (`cjk-budget.test.ts`) unchanged — they stay on `artScale: 1`.
 - **Token:** none.
 - **Traps:** as `R4-03.C2`; never edit `cjk-budget.test.ts`.
+- **Docs needs:** none beyond C2's.
 - **Owner (Manual):** a Japanese reader's check of the katakana.
 
 ### R4-03.C4b — Redraw the small, voiced and semi-voiced katakana and `ー・、。`
 
 - **Wave / lane / order:** wave 08, lane 6, after `R4-03.C4a`.
 - **Depends on:** `R4-03.C4a` on `master`.
-- **Goal:** the rest of the 84 katakana and the punctuation, at 9×12.
-- **Files, tests, acceptance, token, traps:** as `R4-03.C4a`.
+- **Goal:** the other 38 glyphs of `KATAKANA_GLYPHS` — the 9 small, 20 voiced and 5 semi-voiced kana and `ー・、。` —
+  at 9×12.
+- **Files, tests, acceptance, token, traps, docs needs:** as `R4-03.C4a`.
 - **Owner (Manual):** a Japanese reader's check.
 
 ### R4-01.A8 — The black hole: 8 frames (FP)
@@ -739,18 +752,28 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `scripts/assets/procedural/blackhole.mjs` (R4-P.P1's) — the v2 path.
   - tests in `packages/core/test/blackhole/` (`blackhole.test.ts`, `blackhole-edge.test.ts`; the guard
     `blackhole-alloc.test.ts` untouched).
+  - `test/scripts/assets/procedural-blackhole.test.ts` — only a new case for the v2 path
+    (`generate({ artScale: 1.5 })`: 48×48, `BLACK_HOLE_FRAMES` frames, `native: true`, binary alpha).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/blackhole
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/scripts/assets/procedural-blackhole.test.ts test/integration/content.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/scripts/assets/procedural-blackhole.test.ts test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables over `PINNED`, then run it once more without the variable.
+  The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
+  report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the frame is sync-time); the allocation guard untouched and green.
 - **Token:** FINGERPRINTS (push time).
-- **Traps:** frame count and art in one commit; the v1 path keeps 4 frames — at scale 1, frames 4–7 do not exist:
-  check that no scale-1 consumer draws the black hole and that the scale-1 relation tests skip it (R4-P.P3 made them
-  skip natives).
+- **Traps:**
+  - Frame count and art in one commit; the v1 path keeps 4 frames — at scale 1, frames 4–7 do not exist: check that
+    no scale-1 consumer draws the black hole and that the scale-1 relation tests skip it (R4-P.P3 made them skip
+    natives).
+  - Read `/home/sites/shmup-cup-run/R2-04.P4-report.md` first; the art stays the bible's 48² × 8 — if P4 recommends
+    another size or draw, note it in your report for `R4-01.RV` rather than changing it.
 - **Docs needs:** `docs/dev/visual-and-mechanic-extras.md` (black hole), `docs/dev/art-bible-v2.md` († row).
 
 ### R4-02.B1 — Hand-finish the v2 bullets; the readability sheets
