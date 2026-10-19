@@ -238,7 +238,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Traps:**
   - The bot re-records every golden scenario on a re-bless; a changed decision anywhere changes many recordings.
     Keep each new behaviour strictly inside its own condition.
-  - The bot plays like a remote: never a diagonal (`diagonalTicks` 0), parked at `BOT_X ± 4`, the remote-strict
+  - The bot plays like a remote: never a diagonal (`diagonalTicks` 0), parked within one speed step of `BOT_X`
+    (`BOT_X ± speed`, capped level 2 → 3.75 px after R2-02), the remote-strict
     model of `test/playtest/remote-strict.ts`.
   - World values in the bot are `v1 × WORLD_SCALE` since R2-02 (`LANE_HEIGHT`, `TERRAIN_AHEAD`, the inline margins):
     write new ones the same way.
@@ -247,7 +248,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 ### R5-P.P5d — Split the zone e2e specs per zone
 
 - **Wave / lane / order:** wave 10, lane 3, alone; it starts after `R5-P.P7` (Depends on).
-- **Depends on:** R4-05 closed (wave 09: `R4-05.E4` ran `zones-hi.spec.ts`); `R5-P.P7` on master with its review
+- **Depends on:** R4-05 closed (wave 08: `R4-05.E4` ran `zones-hi.spec.ts`; its `E5`/`E6` integrators close R4 at the
+  wave-09 exit); `R5-P.P7` on master with its review
   at zero (P7 points the pair specs' ramp checks at the v2 ramps; you copy those lines verbatim like every other
   line, so the split never races P7).
 - **Goal:** each zone owns its e2e spec, so a zone lane re-measures only its own file.
@@ -267,8 +269,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `stepTo(page, 30)`: drop the first boss's `clear()`, the `stepTo(…)` after it (`bastion.tick + 5`,
     `regent.tick + 5`, `sovereign.tick + 5`) and the `….toBe(0)` check of the first boss's colours. `zones-bc`'s one
     Tizen case (SANDGRAVE WIDOW) goes to zone C; zone B has no Tizen case, as today;
-  - a case of the bonus stage goes with its zone (PEARL GROTTO → zone B; no spec has a glimmer-cache case); the
-    zone-I ending / escape cases go to `zone-i.spec.ts`;
+  - a case of the bonus stage goes with its zone (PEARL GROTTO → zone B; no spec has a glimmer-cache case); of the
+    ending cases: the web `'the endings: …'` case is one shared test (its first half is zone I's escape ending, its
+    second half zone H's citadel) and goes whole to `zone-i.spec.ts`; the Tizen ``'the citadel`s ending scene draws
+    on the TV build'`` case is zone H's own Tizen case and goes to `zone-h.spec.ts` — the title lists cut the file
+    name off and cannot catch a case placed in the wrong zone's file;
   - keep every `describe` title verbatim (e.g. 'zones D and E (web build)' in both `zone-d.spec.ts` and
     `zone-e.spec.ts`), so the title lists below compare.
 - **Tests (targeted):** list the titles before (on `origin/master`) and after your change, with the file and line part
@@ -761,7 +766,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Acceptance:** all green **except** the derived checks the LAND regenerates — the zone-A and `bonus-range`
   goldens (`test/golden`), the zone-A demo, the three fingerprints, `atlas-groups.test.ts` — each listed in the
   report by test name; status `stageClear`, boss down, phases `[0, 1, 2]`, the captain seen, `diagonalTicks` 0, the
-  ship parked at `BOT_X ± 4`, no rule violations; peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts
+  ship parked within one speed step of `BOT_X` (`BOT_X ± speed`, capped level 2 → 3.75 px after R2-02), no rule
+  violations; peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and peak boss parts
   ≤ `MAX_BOSS_PARTS` (24), sampled in `zone-a.test.ts`; the boss rush and every campaign route still clear.
 - **Token:** none (branch commit; you own `test/golden/v2-port*.ts` in this wave).
 - **Traps:**
