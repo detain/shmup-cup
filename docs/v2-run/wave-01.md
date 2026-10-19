@@ -43,13 +43,17 @@ reviewed to zero.
 
 ## Rules for this wave
 
-- **D1 … D7 never touch code or tests.** They describe R2-01 as built at `543887b` — `c67c7c9` plus the C5 review-3
-  fixes `8ff2bf6`, `543887b` and `0cabaec` (plus any later C5 fix and `R2-01.F1`, if they land). Their inputs are
+- **D1 … D7 never touch code or tests.** They describe R2-01 as built on `origin/master` when the D agent starts —
+  `c67c7c9` plus the C5 review-3 fixes `8ff2bf6`, `543887b`, `0cabaec`, `424afd7` and `b0dede1`, plus every later C5
+  fix and `R2-01.F1`, if they land (this lists the later ones:
+  `git log --oneline b0dede1..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`). Their inputs are
   [`handoffs-w4.md`](handoffs-w4.md) (the hand-offs of every report of the old run's wave 4 — R2-01's lanes —,
   grouped by target file; since `b49703a` it also has C5 review 2 and C5 fix 2 `c67c7c9`: the "C5 review 2" bullet
   under R2-01's As built, § docs/dev/conventions.md "Tests: e2e waits count ticks", Appendix A (d)), the commit
-  messages of `c67c7c9`, C5 fix 3 `8ff2bf6`, C5 fix 4 `543887b` and C5 fix 5 `0cabaec`
-  (`git show -s c67c7c9 8ff2bf6 543887b 0cabaec`), and the facts named in each block; every number they write is checked in the code first.
+  messages of `c67c7c9`, C5 fix 3 `8ff2bf6`, C5 fix 4 `543887b`, C5 fix 5 `0cabaec` and the later `424afd7` /
+  `b0dede1` (`git show -s c67c7c9 8ff2bf6 543887b 0cabaec 424afd7 b0dede1`) and of every later C5 fix
+  (`git log --format='%h %s%n%n%b' b0dede1..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`), and the
+  facts named in each block; every number they write is checked in the code first.
 - **Docs files are disjoint**: one D agent per file. A D agent that finds a needed change in another D's file puts
   it in its report; the orchestrator gives it to that agent or its fixer.
 - **Builders and docs agents do not block each other**: `R2-02.P0` / `P1` change code and a new test folder only.
@@ -71,21 +75,26 @@ reviewed to zero.
   `8ff2bf6` fixed them: one shared tick helper `test/e2e/ticks.ts` (its mirrors pinned to core by
   `test/integration/e2e-ticks.test.ts`), used by ten specs. C5 fix 4 `543887b` finished that list: every boot wait
   takes `{ timeout: BOOT_TIMEOUT_MS }`, and the ship fly-in and item polls count ticks (`SHIP_ENTER_TICKS`). C5 fix 5
-  `0cabaec` made `rebind.spec.ts`'s taps and pauses count ticks (the slow-host repro). C5 review 4 of these fixes
-  follows, with the slow-host run (the third command under **Tests**) and the myadmin1 run (the first two). F1
-  verifies all of it and closes the loop:
-  1. **review** — `R2-01.F1.RV` (below), a fresh read-only review of `c67c7c9`, `8ff2bf6`, `543887b` and any later C5
-     fix against [`handoffs-w4.md`](handoffs-w4.md) (the "C5 review 2" bullet under R2-01's As built, and Appendix A
-     (d)), with the three e2e runs under **Tests**. If the owner hands over a finished C5 review report (review 4 or
-     later) with findings, that report is the first round instead;
+  `0cabaec` made `rebind.spec.ts`'s taps and pauses count ticks (the slow-host repro), and `424afd7` / `b0dede1` did
+  the same for the menu specs' taps (`options`, `game-options`, `scenes`, `release-check`, `weapon-select`,
+  `display-options`, `bullet-palette`). Later C5 fixes may be on master before this wave starts (this lists them:
+  `git log --oneline b0dede1..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`); F1 treats each one like
+  these.
+  C5 review 4 of these fixes (and its later rounds) follows, with the slow-host runs (the third and fourth commands
+  under **Tests**) and the myadmin1 run (the first two). F1 verifies all of it and closes the loop:
+  1. **review** — `R2-01.F1.RV` (below), a fresh read-only review of `c67c7c9`, `8ff2bf6`, `543887b`, `0cabaec`,
+     `424afd7`, `b0dede1` and any later C5 fix against [`handoffs-w4.md`](handoffs-w4.md) (the "C5 review 2" bullet
+     under R2-01's As built, and Appendix A (d)), with the four e2e runs under **Tests**. If the owner hands over a
+     finished C5 review report (review 4 or later) with findings, that report is the first round instead;
   2. **fix** — this block, `R2-01.F1`: one fix agent for the round's findings (only when there are findings);
-  3. a **new** `R2-01.F1.RV`, and so on, until a review reports zero findings, nits included, and the three e2e runs
+  3. a **new** `R2-01.F1.RV`, and so on, until a review reports zero findings, nits included, and the four e2e runs
      are green.
      Then the orchestrator rewrites `wave-00.md`'s status line to `**Status: closed** — <date>, <the zero review>`.
 - **Depends on:** a review round with findings: the newest C5 review report (review 4 or later) — from the owner, or
   the newest `r2-01C5-review*.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1 (with
   the newest `w4-C5-fix*-report.md` beside it) — or `R2-01.F1.RV`'s. Never redo a finding that `8ff2bf6`,
-  `543887b` or `0cabaec` already fixed (C5 review 3's).
+  `543887b`, `0cabaec`, `424afd7` or `b0dede1` already fixed (C5 review 3's), or that a later C5 fix on master
+  already fixed (its commit body names the review).
 - **Goal:** every finding of that round fixed, so ten agents do not verify against a red master.
 - **Files (only these; lines on `543887b`; the reviewer reads them, the fixer may edit them):**
   - `test/e2e/campaign-run.spec.ts` — `:217` ("A → B → D → F → H: every tally and map, …", the web build; it was
@@ -97,10 +106,10 @@ reviewed to zero.
     at `:114`);
   - `test/e2e/raster.spec.ts` — only what a finding names (`c67c7c9` changed its row comment, then `:237-239`, now
     `:240-242`);
-  - the files of the C5 fixes since `c67c7c9` (`8ff2bf6`, `543887b`, `0cabaec` and any later one) —
-    `test/e2e/ticks.ts`, `test/integration/e2e-ticks.test.ts` and the specs they touched (the `test(R2-01): … (C5
-    review …)` commits of `git log --stat c67c7c9..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`) —
-    only what a finding names;
+  - the files of the C5 fixes since `c67c7c9` (`8ff2bf6`, `543887b`, `0cabaec`, `424afd7`, `b0dede1` and any later
+    one) — `test/e2e/ticks.ts`, `test/integration/e2e-ticks.test.ts` and the specs they touched (the `test(R2-01): …
+    (C5 review …)` commits of `git log --stat c67c7c9..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`)
+    — only what a finding names;
   - app or shell source only if the cause is a real bug — then report it first and wait for the orchestrator.
 - **Steps (fix agent):** read the round's findings; for a red run, read what the poll waits for — a poll that can
   never come true is a bug in the test or the game, not slowness; fix; run the commands under **Tests**.
@@ -113,10 +122,17 @@ reviewed to zero.
   taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh campaign-run.spec.ts debug-tools.spec.ts --repeat-each=2 --retries=0
   # the slow-host run of 8ff2bf6's specs (2 CPUs, 3 repeats)
   taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh zone-map.spec.ts frame-layout.spec.ts platform-polish.spec.ts smoke.spec.ts continue.spec.ts front-end.spec.ts extra-replays.spec.ts rebind.spec.ts --repeat-each=3 --retries=0
+  # the slow-host run of 424afd7's and b0dede1's specs (2 CPUs, 2 repeats, as their commit bodies)
+  taskset -c 0-1 env E2E_WORKERS=2 E2E_SKIP_BUILD=1 bash docs/v2-run/helpers/e2e-batch.sh test/e2e/options.spec.ts game-options.spec.ts display-options.spec.ts scenes.spec.ts release-check.spec.ts weapon-select.spec.ts bullet-palette.spec.ts --repeat-each=2 --retries=0
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/e2e-gates.test.ts test/integration/e2e-ticks.test.ts
   ```
-  Start each batch in the background and poll its log (Common rule 4).
-- **Acceptance:** every finding of the round closed (or answered in the report with its reason); the three e2e runs
+  Start each batch in the background and poll its log (Common rule 4). **The fourth run also covers the later C5
+  fixes:** when `git log --oneline b0dede1..origin/master -- test/e2e test/integration/e2e-ticks.test.ts` lists any
+  commit, run every spec they changed with the fourth command's flags (2 CPUs, `E2E_SKIP_BUILD=1`,
+  `--repeat-each=2 --retries=0`). `git diff --name-only b0dede1 origin/master -- 'test/e2e/*.spec.ts'` prints them
+  as `test/e2e/<name>.spec.ts` paths, which the helper takes as they are (each path selects that spec alone); pass up
+  to 10 per batch, one batch after the other.
+- **Acceptance:** every finding of the round closed (or answered in the report with its reason); the four e2e runs
   green; the cause of each fix written in the commit body; no timeout raised without a cause; then a new
   `R2-01.F1.RV` at zero findings.
 - **Token:** none.
@@ -148,7 +164,9 @@ reviewed to zero.
   - `scripts/frame.mjs` — a pinned mirror `export const WORLD_SCALE = 1;` with a docblock, and `SPAWN_LEAD` (`:85`)
     becomes `PLAYFIELD_W + 16 * WORLD_SCALE` (656 today, unchanged);
   - `test/scripts/frame.test.ts` — add `WORLD_SCALE: core.WORLD_SCALE` to `MIRRORED` (`:31-47`; the case "exports
-    exactly the mirrored constants and the capture scale" then holds).
+    exactly the mirrored constants and the capture scale" then holds). In "holds only whole numbers" (`:66-70`) skip
+    `WORLD_SCALE`, and give it a case of its own: positive, and `WORLD_SCALE * 2` whole. The kit and the port make it
+    3/2, and a whole-number check would fail there.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/config packages/core/test/index.test.ts packages/core/test/frame-literals.test.ts
@@ -199,10 +217,15 @@ reviewed to zero.
     `--keep`, edit, `git diff` in the kept tree). It holds decision W5-7's fixes and A5 review 2's:
     - `content/stages/gimmick-range.stage.json`: trigger `events[8]` (flag `took-low`) gets `until` 2275, below the
       falling rock's ported 2276;
-    - `content/stages/zone-g.stage.json`: `events[15]` back inside `events[14]`'s `ground` bonus window (x ≥ 3450;
-      the port puts it at 3446);
-    - `content/stages/hunter-range.stage.json` (or its path in `content/paths/`): the dive's first path leg +36 px,
-      so the hunter that enters from above lands where v1's did (×1.5 + 36);
+    - `content/stages/zone-g.stage.json`: the `facet-turret` spawn (master's `events[15]`, x 2340; the tool re-sorts
+      it to `events[14]`, x 3446) back inside the `glimmer-cache` `ground` bonus window (master's `events[14]`;
+      `events[15]` in the tool's output, x 3450 … 4650). Give it x ≥ 3450 and move it back **after** the bonus event
+      in the file (its order on master): at the same x, file order decides. Indices in the tool's output are not
+      master's: find both events by `enemy` / `stage`;
+    - the hunter-range dive (`content/stages/hunter-range.stage.json:38`, `y: -24`; the tool gives -36): **no content
+      edit in P1**. The dive has no path. `hunter.option` (variant 2) flies to its `lineY`, a `world-y` default that
+      `R2-02.W6` writes as `24 * WORLD_SCALE + WORLD_TOP_PAD` (72 at the port), so it lands at ×1.5 + 36 by itself.
+      `R2-02.T3`'s landing check (`turnY`, wave 3) confirms it, and adds a hand fix to the patch only if it fails;
     - `content/enemies/advanced-bosses.enemies.json` `captain-circler` (`:78`): its home x 530 (`cx + rx` of its orbit;
       the port's end-anchored 562 would make it jump at its start);
     - `content/stages/zone-g.stage.json` tilemap: zone G's rising crystal walls one row up, so they cross the
@@ -216,10 +239,14 @@ reviewed to zero.
   `orbiter.loop` `y`, which is `world-y` (`units.ts:94`) and still one of the 15 kit literals (`rescaleNumber`
   gives 186); check each in `packages/core/src/behaviors/units.ts` `BEHAVIOR_PARAM_UNITS`. Compute each v2 value with
   core's `rescaleNumber(unit, v1, options)` (`packages/core/src/data/units.ts:265`, the same options the tool passes:
-  v1 geometry 384×200 / 8-px tiles → 640×336, factor 1.5, pad 36). Write 14 replacements with the full line context,
-  so each matches once (two `minX: 250` lines exist). **The one exception is `cube.pincer`:** its line `:703`
-  (`{ speed: 1.5, meetX: 176, gap: 8, leaveSpeed: 1.75 },`) also holds three world values that `R2-02.W6` rewrites
-  in wave 2, so its replacement matches the token `meetX: 176` only (unique in the file), never the whole line.
+  v1 geometry 384×200 / 8-px tiles → 640×336, factor 1.5, pad 36). The other 14 lines take 12 replacements, each
+  pattern made of whole lines, so that every pattern matches once: the line `minX: 250,` occurs twice (`:1749`,
+  `:2021`), so each one is replaced together with the line after it — `captain.crab`'s `minX: 250,` + `maxX: 340,`
+  and `boss.widow`'s `minX: 250,` + `maxX: 320,` — as one two-line pattern that writes both v2 values (those two
+  `maxX` lines get no replacement of their own); every other line is one replacement of its own. **The one exception
+  is `cube.pincer`:** its line `:703` (`{ speed: 1.5, meetX: 176, gap: 8, leaveSpeed: 1.75 },`) also holds three
+  world values that `R2-02.W6` rewrites in wave 2, so its replacement matches the token `meetX: 176` only (unique in
+  the file), never the whole line.
 - **The stub** (`packages/core/test/helpers/port-pending.ts`): `:57-59` becomes `export const CONTENT_PORT_PENDING:
   boolean = false;`, the import-time call `checkPortPendingExpiry(FRAME_W, CONTENT_PORT_PENDING);` (`:76`) is
   removed, and the now-unused import `import { FRAME_W, TILE_SIZE } from '../../src/config/index.js';` (`:26`) is
@@ -288,7 +315,10 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
      shared e2e helper `test/e2e/ticks.ts` (tick-paced taps, scene waits with tick budgets, the scene-flow delays as
      mirrors of core pinned by `test/integration/e2e-ticks.test.ts`, `BOOT_TIMEOUT_MS` for the wall-clock boot), and
      C5 fix 4 `543887b`: every boot wait takes `BOOT_TIMEOUT_MS`; the ship fly-in and item polls count ticks
-     (`SHIP_ENTER_TICKS` 40, pinned against `content/player/*.player.json`).
+     (`SHIP_ENTER_TICKS` 40, pinned against `content/player/*.player.json`). Add C5 fix 5 `0cabaec` and the later
+     `424afd7` / `b0dede1` (rebind's and the menu specs' taps, and where the sim always runs their pauses, count
+     ticks), and every later C5 fix on master, each from its commit message (this lists them:
+     `git log --oneline b0dede1..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`).
   2. **§1 register:** rows W4-1 … W4-14 ([`decisions.md`](decisions.md) has them), with "R2-01" in "Applies to".
   3. **Notes for later steps** (into R2-02's and R2-03's sections, as `- **Notes from R2-01:**` bullets): from
      `handoffs-w4.md` — rescale's four required v1 flags and `--art-scale 1.5`; the 3 IRON LEVIATHAN errors (W5-8);
@@ -449,16 +479,18 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
 - **Wave / order:** review slot 2, first in the wave: the first round (unless a finished C5 review report — review 4
   or later — with findings is handed over), then one new round after each `R2-01.F1` fix push. Fix → a **new**
   reviewer until zero findings, nits included.
-- **What to read:** `git show c67c7c9`, `git show 8ff2bf6`, `git show 543887b` and every later commit to the e2e specs
-  and their helpers
+- **What to read:** `git show c67c7c9`, `git show 8ff2bf6`, `git show 543887b`, `git show 0cabaec`,
+  `git show 424afd7`, `git show b0dede1` and every later commit to the e2e specs and their helpers
   (`git log --oneline c67c7c9^..origin/master -- test/e2e test/integration/e2e-ticks.test.ts`);
   [`handoffs-w4.md`](handoffs-w4.md)'s "C5 review 2" bullet under R2-01's As built and Appendix A (d); the hand-over
   note (the newest C5 review report — review 4 or later — if one is handed over); the previous round's report and
   F1's report, if any.
-- **Run:** the three e2e commands and the Vitest command of `R2-01.F1`'s **Tests** (read-only: never edit a file).
+- **Run:** the four e2e commands (the fourth with the later C5 fixes' specs, as **Tests** says) and the Vitest
+  command of `R2-01.F1`'s **Tests** (read-only: never edit a file).
 - **Must hold:** every C5 review 2 item (S1–S3, N1) is fixed as `handoffs-w4.md` describes, and every C5 review 3
-  item as the commit bodies of `8ff2bf6`, `543887b` and `0cabaec` say; the three e2e runs green with `--retries=0`; the cause of
-  each later fix named in its commit body; no timeout raised without a measured, commented reason (the boot waits'
+  item as the commit bodies of `8ff2bf6`, `543887b`, `0cabaec`, `424afd7` and `b0dede1` say (and every later round's
+  item as its fix commits' bodies say); the four e2e runs green with `--retries=0`; the cause of each later fix named
+  in its commit body; no timeout raised without a measured, commented reason (the boot waits'
   `BOOT_TIMEOUT_MS` is the named one); no gate or skip added; only the files F1 lists (or a reported real-bug fix)
   changed; `test/integration/e2e-gates.test.ts` and `test/integration/e2e-ticks.test.ts` green.
 - **Report:** findings with severity (blocker / should-fix / nit). Zero findings means zero nits; at zero, the
@@ -467,7 +499,9 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
 ### R2-02.P0.RV — Review of `WORLD_SCALE` / `WORLD_TOP_PAD`
 
 - **Must hold:** both typed `number`; docblocks as P0 says; the barrel exports them; `scripts/frame.mjs` mirror
-  pinned by `test/scripts/frame.test.ts`; `SPAWN_LEAD` still 656; the `CONSTANTS` pin of `frame-constants.test.ts`
+  pinned by `test/scripts/frame.test.ts`, whose "holds only whole numbers" case skips `WORLD_SCALE` and whose own
+  `WORLD_SCALE` case checks it positive with `WORLD_SCALE * 2` whole (at 3/2, under the kit and after the port, a
+  whole-number check would fail); `SPAWN_LEAD` still 656; the `CONSTANTS` pin of `frame-constants.test.ts`
   unchanged (the two constants have cases of their own); the three fingerprints unedited and green; no allow-list
   entry added; P0's test commands green when re-run.
 
