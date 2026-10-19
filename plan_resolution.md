@@ -1298,36 +1298,40 @@ moved.
     also moved from the es title-cursor fix (the row reads "title cursor + HI (+ difficulty row)"), and
     `5d5a050` kept `es.options` and gave `es.game` / `ja.game` new values. The shell fingerprint: 5 / 5 at A5,
     then the 3 flight walks at `c2a9ed5`.
-  - **The allow-lists:** core 14 entries (the flip added 3 entries / 4 hits), repo 32 — `72b18a1` added A5's 9
-    over the pre-flip 23 (C1's `V1_WINDOW_FRAME_WIDTH` had landed earlier, in `346c430`). **Not** the four
-    entries R1-01's As built predicted. (Count by the `value:` key: a `file://` inside the HTTP-status reason
-    string reads 33 to a `file:` grep.)
+  - **The allow-lists:** core 14 entries today (the flip added 3 entries / 4 hits), repo 32 **at the flip** —
+    `72b18a1` added A5's 9 over the pre-flip 23 (C1's `V1_WINDOW_FRAME_WIDTH` had landed earlier, in
+    `346c430`) — and 33 today (`9e60df2`'s bench-matrix rewrite added one). **Not** the four entries R1-01's
+    As built predicted. (Count by the `value:` key — a `file://` inside the HTTP-status reason string greps
+    one extra.)
   - **The gates as built** (W4-1, W4-12, W5-6): `packages/core/test/helpers/port-pending.ts` and
     `test/golden/stale.ts` on the Vitest side; `test/e2e/gates.ts` with `test/integration/e2e-gates.test.ts`
     (10 tests) on the browser side. A full run at `bc8e05d` skips 239 (`GOLDENS_STALE`) + 80
     (`CONTENT_PORT_PENDING`) + 41 (frame `runIf`) = 360 tests, 0 failed (81 before A5 fix 1 split
     `zones-fg-runtime`). The e2e gates hold 31 `test.skip` lines (23 `PORT_UNMEASURED`, 4 `CONTENT_REASON`,
-    3 `GOLDEN_REASON`, the per-file `recordingIsStale` skip in `determinism.spec.ts:116`), the two W4-9 inverse
-    tests (`attract.spec.ts:230`, `:273`) and the 3 `assertionsGated` sites (`boss.spec.ts:133`,
-    `debug-tools.spec.ts:200`, `render-groups.spec.ts:217`).
+    3 `GOLDEN_REASON`, the per-file `recordingIsStale` skip in `determinism.spec.ts`), the two W4-9 inverse
+    tests (`attract.spec.ts`, the two `test.skip(!R2_03_PENDING, …)` cases) and the 3 `assertionsGated`
+    sites: the boss hull half-check (`boss.spec.ts`), `cameraGated` (`debug-tools.spec.ts`) and `hudGated`
+    (`render-groups.spec.ts`).
   - **The e2e pacing** (C5's review loop): the flip slowed CI's SwiftShader ≈ ×1.6 (median/test ×1.83, the sums
     1,400 → 2,642 s, CI `39106182210` at 384 vs `39109703989` at 640; shards up to ~6 min), so three specs failed
     on slow runners (`39156155873` at `bc8e05d`, same three at `ac40436`). `c67c7c9` (review 2) made
     `campaign-run` (S1), `debug-tools` (S2) and `flight` (S3) wait on game ticks — `gameTick`, `waitTicks`,
     `expectScene(page, scene, ticks)`, `remoteSequence`'s unlock in one `page.evaluate`, `freezeSim` + `stepTo`
     with a `HullView` hull compare, the raster comment corrected (N1); `8ff2bf6` (review 3) added the shared
-    `test/e2e/ticks.ts` (`SHIP_ENTER_TICKS` 40, `BOOT_TIMEOUT_MS` 30 000, the scene-flow delays as pinned mirrors
-    of core through `test/integration/e2e-ticks.test.ts`), and `543887b`, `0cabaec`, `424afd7`, `b0dede1` carried
-    it through the boot, rebind and menu taps; review 4 swept the remaining specs (`9da5dc2`, `72a9b65`,
-    `409a36c`, `8e5272b`, `725297a`) and review 5's one nit closed in `602f8ab`; reviews 5 and 6 came back zero.
+    `test/e2e/ticks.ts` (`BOOT_TIMEOUT_MS` 30 000 and the scene-flow delays as pinned mirrors of core through
+    `test/integration/e2e-ticks.test.ts`; `SHIP_ENTER_TICKS` 40 joined it in `543887b`, which carried the
+    boot and fly-in waits across), `0cabaec`, `424afd7`, `b0dede1` the rebind and menu taps; review 4 swept
+    the remaining specs (`9da5dc2`, `72a9b65`, `409a36c`, `8e5272b`, `725297a`) and review 5's one nit closed
+    in `602f8ab`; reviews 5 and 6 came back zero.
   - **Scope notes that did not happen:** `ATLAS_PNG_BYTES_CAP` was **not** exceeded (139,944 B under 262,144 B;
     the cap moved to `atlas-budget.ts`); `cjk-budget.test.ts` did **not** fail — W4-6 keeps the CJK figures on
     `buildAtlas({ ungrouped: true, artScale: 1 })` (`:58`), so the live M3-03 figures and the six documents
     quoting them stand (R2-03 decides whether the docs quote the v2 atlas); the TV bench's 1 / 1 / 2 pages held
     (v1 art for good); R1-04's "between R2-01 and R2-02 `tile-size.test.ts` is red" did not happen — A4 rewrote
     it as the "never mixed" check with a pending branch, green.
-  - **Scope notes as built:** `mode7.spec`'s classic-window case runs on its own `3·FRAME_W × 3·FRAME_H`
-    viewport (`BLIT_DISPLAY`, `mode7.spec.ts:76`; every aspect mode is ×2 or more there) since `293e885`; the
+  - **Scope notes as built:** `mode7.spec`'s pass-2 blit block case (every aspect mode ≥ ×2 on its own
+    `3·FRAME_W × 3·FRAME_H` `BLIT_DISPLAY` viewport; the reason is the `classic` / `wide` windows collapsing to
+    ×1 on a ×2 display) runs since `293e885`; the
     webOS / web / Tizen boot-wiring fakes are frame-independent (C2); the render bench's ×2 scenario is
     1280×720 with an 8192 KB filter target and passes; `TEXTURE_BUDGET_BYTES` is 23 MiB
     (`packages/shell/src/memory/index.ts:261`), as R1-05's note predicted.
@@ -1441,10 +1445,10 @@ moved.
       `BOT_X` 96, `LANE_HEIGHT` 24, `TERRAIN_AHEAD` 84; the gated `content.test.ts` thresholds — ship gaps
       24 → 36 (MAGMA DEEP) and 48 → 72 (CELL VAULT), the ground probe rows `PLAYFIELD_H − 8` / `[0, 7]` and the
       sample step `y += 8` to tile-12 values, the capsule window 900 → 1,350.
-    - **`test/e2e/raster.spec.ts:237-239`** — since `c67c7c9` the comment gives raster-range's playfield rows
+    - **`test/e2e/raster.spec.ts:240-242`** — since `c67c7c9` the comment gives raster-range's playfield rows
       112 … 151 / 152 … 199 and their 640×360 frame rows (124 … 163 / 164 … 211); the port moves the bands, so
-      R2-03 rewrites the comment with the `diffRows` literals. The mode7 floor rows were fixed at `:772` in
-      `bc8e05d`.
+      R2-03 rewrites the comment with the `diffRows` literals. The mode7 floor rows were already fixed in
+      `bc8e05d` (`test/e2e/mode7.spec.ts`, the "rows 112 … 211 of the field" comment).
     - **No format-version bumps in R2-02** (`save-format.ts` `SAVE_FORMAT` and `gates.ts` `REPLAY_FORMAT` are
       pinned mirrors). **Build-delta baseline:** Tizen `app.js` 386,228 B gzip-9, check-bundle 380.2 KB of 512.
 - **Acceptance:**
@@ -1483,9 +1487,10 @@ moved.
       replay-version-shipped.test.ts with the gates (test/golden/stale.ts)"; the permanent cases stay in
       `replay-version.test.ts` with `fixtures/run-replay-v1.json`. `test/e2e/gates.ts` goes with every use: the
       31 gating `test.skip` lines (23 `PORT_UNMEASURED`, 4 `CONTENT_REASON`, 3 `GOLDEN_REASON`, the per-file
-      `recordingIsStale` skip in `determinism.spec.ts:116`), the two W4-9 inverse tests (`attract.spec.ts:230`,
-      `:273`), the 3 `assertionsGated` sites (`boss.spec.ts:133`, `debug-tools.spec.ts:200`,
-      `render-groups.spec.ts:217`) and `test/integration/e2e-gates.test.ts`. Every gate throws at import once
+      `recordingIsStale` skip in `determinism.spec.ts`), the two W4-9 inverse tests (`attract.spec.ts`, the
+      two `test.skip(!R2_03_PENDING, …)` cases), the 3 `assertionsGated` sites (the boss hull half-check in
+      `boss.spec.ts`, `cameraGated` in `debug-tools.spec.ts`, `hudGated` in `render-groups.spec.ts`) and
+      `test/integration/e2e-gates.test.ts`. Every gate throws at import once
       its window closes, so none can be forgotten.
     - **Re-measure every `PORT_REASON` and `CONTENT_REASON` test** on the ported content — the 23
       `PORT_REASON` specs passed at 640 on v1 content, so a failure after the port is the port's. Give the
