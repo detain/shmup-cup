@@ -356,9 +356,10 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
     rest of the v2 section.
   - `conventions.md` § Frame numbers: the frame constants' current values (640 / 360, `HUD_BAR_HEIGHT` 12,
     `HUD_BOTTOM_Y` 348, `TILE_SIZE` 12, `GLYPH_W` / `GLYPH_H` / `LINE_H` 9 / 12 / 15 = the font file × `ART_SCALE`);
-    the panel rule (`:98`, "Panel widths and heights sized by their 6×8 text stay literal") is replaced — panel sizes
-    now derive from `GLYPH_*` and `uiPx`; the scanner skips long hex colours (`#rrggbb` / `#rrggbbaa`); the
-    allow-lists hold **32 repo / 14 core** entries (the doc already says 32 at `:138` — `76b6f2a` fixed that before
+    the panel rule (`:98`) was **already replaced** by `209a898` — it now reads "Since R2-01 (`92120c7`) no
+    panel size is a literal at all — they derive from `GLYPH_W` / `LINE_H` through `core/ui` `uiPx`"; only
+    check it against the code; the scanner skips long hex colours (`#rrggbb` / `#rrggbbaa`); the
+    allow-lists hold **32 repo / 14 core** entries (the doc already says 32 at `:143` — `76b6f2a` fixed that before
     the run; the core count is still not stated anywhere there, write it); the banned set includes
     640 / 360 / 336 / 348; the two e2e gates and `test/integration/e2e-gates.test.ts`.
   - `repo-layout.md`: the lines that still say 384×216 for the render target or the frame.
