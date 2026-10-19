@@ -12,10 +12,22 @@
  * - Tizen build from `file://`, **the remote only**: the name entry after a game over through the
  *   remote's arrow keys and OK (legacy key codes, the Tizen adapter reads `keyCode`);
  * - no console errors (nor atlas warnings) in any.
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing
+ * about 3 frames a second (2 CPUs, C5 review 4's repro; up to 4 ticks a frame) the frame-paced
+ * taps ran this spec at up to 100 % of its test timeouts (the practice test timed out once).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS, GAME_OVER_DELAY_TICKS, SCENE_SLACK_TICKS, expectScene } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  GAME_OVER_DELAY_TICKS,
+  SCENE_SLACK_TICKS,
+  expectScene,
+  remoteTap,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -75,63 +87,6 @@ function watchErrors(page: Page): string[] {
   });
   page.on('pageerror', (error) => errors.push(error.message));
   return errors;
-}
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key by its legacy key code, down then up.
- *
- * @param page - The page.
- * @param keyCode - The key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
 }
 
 /**
@@ -199,7 +154,7 @@ test.describe('front end (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK
     await tap(page, 'ArrowDown');
     await tap(page, 'ArrowDown'); // PRACTICE
@@ -232,7 +187,7 @@ test.describe('front end (web build)', () => {
     expect(run.practice).toBe(true);
     expect(run.checkpoint).toBeGreaterThanOrEqual(0);
     expect(run.loadout).toBe('full');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     // The continue countdown first (NORMAL has continues): Esc gives up once OK counts.
     await endGame(page, 12_340);
     await waitSceneTicks(page, 'continueScreen', 40);
@@ -241,7 +196,7 @@ test.describe('front end (web build)', () => {
     await waitSceneTicks(page, 'gameOver', 40);
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'nameEntry');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     // B (Up from A), Right, A then B on the empty second letter, Right, Right (END), OK.
     for (const key of ['ArrowUp', 'ArrowRight', 'ArrowUp', 'ArrowUp', 'ArrowRight', 'ArrowRight']) {
       await tap(page, key);
@@ -293,7 +248,7 @@ test.describe('front end (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK (also unlocks audio)
     for (let i = 0; i < 4; i++) await tap(page, 'ArrowDown'); // SOUND TEST
     await tap(page, 'Enter');
@@ -332,7 +287,7 @@ test.describe('front end (Tizen build from disk)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await remoteTap(page, REMOTE.ok); // PRESS OK
     await remoteTap(page, REMOTE.ok); // 1 PLAYER
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
@@ -342,7 +297,7 @@ test.describe('front end (Tizen build from disk)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await remoteTap(page, REMOTE.ok); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     await endGame(page, 23_450);
     await waitSceneTicks(page, 'continueScreen', 40);
     await remoteTap(page, REMOTE.back); // give up
@@ -350,7 +305,7 @@ test.describe('front end (Tizen build from disk)', () => {
     await waitSceneTicks(page, 'gameOver', 40);
     await remoteTap(page, REMOTE.ok);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'nameEntry');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     // Down on A: the space, then `!`; Right; Up (A); Left (back to `!`), Down (`-`); Right, Right,
     // Right: END.
     for (const code of [

@@ -19,6 +19,10 @@
  *
  * Every capture is attached to the test (`testInfo.attach`) and kept in its output folder for the
  * layout pass and the review. webOS boots in `webos.spec.ts`.
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing
+ * about 3 frames a second (2 CPUs, C5 review 4's repro; up to 4 ticks a frame) the frame-paced
+ * taps ran this spec at up to 100 % of its test timeouts (the name-entry test timed out once).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
@@ -45,6 +49,8 @@ import {
   SCENE_SLACK_TICKS,
   STAGE_CLEAR_DELAY_TICKS,
   expectScene,
+  tap,
+  waitTicks,
 } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -410,41 +416,6 @@ function expectUpscaledFrame(shot: Shot): void {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
  * Opens a build and waits for its title.
  *
  * @param page - The page.
@@ -461,7 +432,7 @@ async function openTitle(page: Page, url: string): Promise<string[]> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   return errors;
 }
 
@@ -488,7 +459,7 @@ async function startGame(page: Page, ship: 'kestrel' | 'manta' = 'kestrel'): Pro
     await tap(page, 'Enter'); // START
   }
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-  await waitFrames(page, 60); // the fly-in
+  await waitTicks(page, 60); // the fly-in
 }
 
 /** What the spec sets through the test build's `window.__shmupDebug`. */
@@ -557,7 +528,7 @@ for (const build of BUILDS) {
       test.setTimeout(90_000);
       const errors = await openTitle(page, build.url);
       await tap(page, 'Enter'); // PRESS OK → the menu
-      await waitFrames(page, 6);
+      await waitTicks(page, 6);
       const title = await shoot(page, testInfo, 'title-menu');
       expect([title.width, title.height]).toEqual([FRAME_W * SCALE, FRAME_H * SCALE]);
       // The unfocused items (normal text colour) below the centre row, above the hi-score's row
@@ -614,17 +585,17 @@ test.describe('frame layout (web build): the screens', () => {
     await startGame(page);
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     const paused = await shoot(page, testInfo, 'pause');
     expectCentredX(wholePanel(paused));
     await tap(page, 'Escape');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     await endWorld(page, 'stageClear');
     await expectScene(page, 'stageClear', STAGE_CLEAR_DELAY_TICKS + SCENE_SLACK_TICKS);
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // skip the tally
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'map');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     const map = await shoot(page, testInfo, 'zone-map');
     // The zone's description panel along the bottom, and the graph above it.
     const description = wholePanel(map, PANEL_BORDER, {
@@ -659,20 +630,20 @@ test.describe('frame layout (web build): the screens', () => {
     await waitSceneTicks(page, 'gameOver', 40);
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'nameEntry');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     const entry = await shoot(page, testInfo, 'name-entry');
     expectCentredX(wholePanel(entry, FOCUS_YELLOW)); // the name entry's panel has a yellow border
     // A fresh title, then the Options screen through the title menu.
     await page.goto('./');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
     await tap(page, 'ArrowDown'); // 2 PLAYERS
     await tap(page, 'ArrowDown'); // PRACTICE
     await tap(page, 'ArrowDown'); // OPTIONS
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'options');
-    await waitFrames(page, 6);
+    await waitTicks(page, 6);
     const options = await shoot(page, testInfo, 'options');
     const panel = wholePanel(options);
     expectCentredX(panel);
@@ -716,18 +687,18 @@ test.describe('frame layout (web build): the screens', () => {
     await tap(page, 'ArrowDown'); // 2 PLAYERS
     await tap(page, 'KeyF'); // player 1's OK
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'KeyF'); // NORMAL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'KeyF'); // KESTREL
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'KeyF'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 30);
+    await waitTicks(page, 30);
     await tap(page, 'Enter'); // player 2's START: it drops in
-    await waitFrames(page, 90);
+    await waitTicks(page, 90);
     const game = await shoot(page, testInfo, 'game-2p');
     expectHudBars(game);
     const p1 = expectLabel(game, '1P', P1_LABEL, 0);
