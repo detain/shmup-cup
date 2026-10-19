@@ -135,7 +135,7 @@ everything else, with the same scanner — the shared test helper
 allocation guard. It parses every package's `src/` but core's, every app's `src/` and — where it
 has one — `scripts/` (the bundle checks, the manifest validators, packaging and bench helpers), and
 the root `scripts/`; `.mjs` files are parsed as JavaScript. The trees are read from disk, so a new
-package or app is scanned without editing the test. Its own `ALLOWED` list (22 entries today) has the
+package or app is scanned without editing the test. Its own `ALLOWED` list (32 entries today) has the
 same shape, with `file` relative to the repository root, and holds HTTP statuses, alphas, colour
 channels, a key code, a brightness sum, the TV bench's 384×216 baseline row — and the four **mirror
 definitions**, whose entries say `value: FRAME_W` / `value: FRAME_H` rather than a number, so they
