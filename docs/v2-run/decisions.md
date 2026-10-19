@@ -106,15 +106,15 @@ They reach §1's register through the docs agent of the wave that builds them: R
 | **RR-4** | Agent-made v2 art draws from the bible's text, the v1 designs and the palette tables; Qwen-Image, SD3.5 and Wan winners only once committed and content-reviewed; **never a FLUX winner** while FLUX is on hold | adopted (until the FLUX decision) |
 | **RR-5** | R4 starts after R2-03; the subtasks that re-bless (`R4-01.A1b`, `R4-02.B3`) after R2-04; R4's prep runs in R2-04's wave | adopted |
 | **RR-6** | R3-06's new draw layers are inserted into `LayerId` (`DecorBack` after `BgMid`, `DecorFront` after `Terrain`, `Foreground` after `Fx`, below `EnemyBullets`); the fingerprints are re-pinned | adopted |
-| **RR-7** | R3-04's stand-in uses R1-05's assumption (PNG-8 at 0.3–0.6 MB per 2048×1024 page), its constants marked "uncalibrated"; the owner may calibrate later (`R3-04.M1c`, on a host that has the candidates — myadmin1 has a snapshot) | adopted |
+| **RR-7** | R3-04's stand-in uses R1-05's assumption (PNG-8 at 0.3–0.6 MB per 2048×1024 page), its constants marked "uncalibrated"; an agent may run the optional `R3-04.M1c` here (myadmin1 has the candidates snapshot — wave 4, lane 8) | adopted |
 | **RR-8** | W5-17 kept: one stand-in zone plus `common` replace the TV bench's synthetic `rgba-2048` / `png8-2048` decode pages; `tools/input-probe/results/analyze-bench.mjs` reads the new ids | adopted |
 
 ## 6. R5 / R6 re-plan decisions R5-D1 … R5-D9, R6-D1 … R6-D3
 
 | ID | Decision (the default) | Status |
 |---|---|---|
-| **R5-D1** | **Zones build in parallel and land one at a time** (overrides §11's "previous zone step" and "one sim-changing lane at a time"), with stable hash keys (`R5-P.P1`), `node scripts/golden-update.mjs --only <ids>` (`R5-P.P3`), the fingerprint write mode (`R5-P.P10`) and the land lock. Zone A lands first; zone H's echoes wait for A, B, D and F | adopted |
-| **R5-D2** | The v2 zone contract (`R5-P.P6`): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss, `content.test.ts`); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | adopted |
+| **R5-D1** | **Zones build in parallel and land one at a time** (overrides §11's "previous zone step" and the pre-re-plan driver prompt's "At most one sim-changing lane" rule), with stable hash keys (`R5-P.P1`), `node scripts/golden-update.mjs --only <ids>` (`R5-P.P3`), the fingerprint write mode (`R5-P.P10`) and the land lock. Zone A lands first; zone H's echoes wait for A, B, D and F | adopted |
+| **R5-D2** | The v2 zone contract (`R5-P.P6`): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss, `content-zone-a.test.ts` after `R5-P.P2a` splits `content.test.ts`); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | adopted |
 | **R5-D3** | Zone A gets a new tileset `terrain-azure`; `terrain-a` stays for the escape, `bonus-vault` and the ranges; `R5-10.T2` adds `escape.mjs` for the escape's look (Q-13, owner-confirmed 2026-10-18) | adopted |
 | **R5-D4** | The content-DB fingerprint stays after R2-02, re-pinned only by a LAND (P10's update mode) | adopted |
 | **R5-D5** | Capacity: `MAX_BOSS_PARTS` 16 → **24**; `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 kept unless a design peaks above 80 % (built early by RUN-7) | adopted |
@@ -135,7 +135,7 @@ Q-12 and Q-13 are answered (2026-10-18); their rows stay here so the history rea
 | **Q-1** | **Is picking finished** for the R0-04 art round? | Not finished: the winners copy (`R0-04.W1`) waits | wave 4 or later |
 | **Q-2** | **Git LFS** for `art-prompts/v2/winners/` (≈ 334 items, videos included)? | Undecided: `R0-04.W1` waits | `R0-04.W1` |
 | **Q-3** | **The FLUX licence** (`art-provenance.md` §8, decision 1): ask BFL or buy the commercial licence before anything FLUX-made ships | On hold (RR-4): no FLUX pixels, no FLUX reference; AI art stays staged in `art-prompts/v2/ingested/` | R3-02's real ingest, every `S3` |
-| **Q-4** | Prompt-library edit 7: "SNES" → "16-bit console era" (≈ 1,100 hits)? | Not done; `R0-04.W2` does edits 1–4 only | `R0-04.W2` |
+| **Q-4** | Prompt-library edit 7: "SNES" → "16-bit console era" (≈ 1,400 uses — plan R3-05 and `art-provenance.md` §7; measured 1,405 on master)? | Not done; `R0-04.W2` does edits 1–4 only | `R0-04.W2` |
 | **Q-5** | The FACET MONARCH label reword (and its pin in `art-prompt-names.test.ts`)? | Unchanged | `R0-04.W2` if decided |
 | **Q-6** | v1.0.0's TV title overlap (the 7th menu row against the HI line): fix it on `v1.x`? | Not fixed; nothing is pushed to `v1.x` without the owner's OK | a separate v1.x fix, outside these waves |
 | **Q-7** | The title's HI line: shown where v1 showed it, hidden only under Options and difficulty (`5d5a050`) — keep? | Keep | R4-03 / R4-05 if changed |
