@@ -560,8 +560,10 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
   - `5d5a050`: 16 / 119, `ui` only.
 
   Shell frame fingerprint: 5 / 5 at A5, then 3 flight walks at `c2a9ed5`.
-- **Allow-lists:** core 14 entries (+3 entries / 4 hits); repo 33 — the flip commit `72b18a1` added 9 entries over
-  the pre-flip 24 (C1's and A5's entries all landed in it). Not R1-01's "four entries".
+- **Allow-lists:** core 14 entries (+3 entries / 4 hits); repo 32 — the flip commit `72b18a1` added A5's 9
+  entries over the pre-flip 23 (C1's entry `V1_WINDOW_FRAME_WIDTH` landed earlier, in `346c430`). Not R1-01's
+  "four entries". (found while verifying: count the entries by their `value:` key — a `file://` inside the
+  HTTP-status reason string (`:179`) makes a `file:` grep read 33)
 - **The skips at `bc8e05d`** (verified by a full run): `GOLDENS_STALE` 239 · `CONTENT_PORT_PENDING` 80 · frame
   `runIf` 41 = 360. 0 failed. (was: 81, until A5 fix 1 split `zones-fg-runtime`)
 - **The interim art is built differently from the plan's scope text** ("a pipeline stage `interimScale: 1.5`"):

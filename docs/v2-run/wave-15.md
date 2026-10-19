@@ -489,7 +489,7 @@ block's *Depends on* names exactly what it waits for. After the release, `R6-03.
 - **Token:** all (no other agent runs); the land lock for any re-bless or derived-file push; the e2e lock for its e2e
   and bench steps.
 - **Traps:** never raise a budget, skip a test or re-bless without a reason to get green; a flaky timed spec
-  (`flight.spec.ts:114`'s idle drift was one) is reproduced under load and fixed, not retried until green; the
+  (`flight.spec.ts:137`'s idle drift was one) is reproduced under load and fixed, not retried until green; the
   playwright browsers need `sudo -n env "PATH=$PATH" pnpm exec playwright install-deps chromium firefox` once per
   host (the helper does it unless `HOST_CHECK_SKIP_PW_DEPS=1`).
 
