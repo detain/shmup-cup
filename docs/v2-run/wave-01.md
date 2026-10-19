@@ -180,8 +180,10 @@ reviewed to zero.
   `core.DEFAULT_SPAWN_SCREEN_X` by `test/scripts/frame.test.ts:46` and at `test/scripts/content/tiled-import-edge.test.ts:182`).
 - **Token:** CORE-CONFIG and E2E-MIRROR (`test/scripts/frame.test.ts`).
 - **Traps:**
-  - **The TS2367 trap:** declare both as `: number`. A literal type `1` makes every later `WORLD_SCALE === 3 / 2` or
-    `WORLD_SCALE !== 1` comparison a type error at one of the two scales.
+  - **The TS2367 trap:** declare both as `: number`. An unannotated `const` gets a literal type (`1`, `0`), and
+    TypeScript fails a comparison of two non-overlapping literals — `WORLD_TOP_PAD === 36` against type `0` is error
+    TS2367. The annotations also give P1's flip patterns their exact text: `WORLD_SCALE: number = 1` and
+    `WORLD_TOP_PAD: number = 0` (`:211-212`).
   - `1` and `0` are not banned frame numbers, so the frame-literal scans need no new entry; do not add one.
   - Neutral: nothing reads the constants yet except `SPAWN_LEAD`, whose value stays 656.
 - **Docs needs (report them):** `docs/dev/api-reference.md` (two rows), `docs/dev/conventions.md` (world values are
@@ -305,8 +307,8 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
   1. **R2-01 As built** (under `### R2-01`): the flip `72b18a1` (640×360, 12-px HUD and tiles, `ART_SCALE` 3/2,
      `uiPx`, replay format 2, save version 3, Electron window state v2, the interim ×1.5 art with native terrain,
      `ui/pixel` and beams, the 9×12 interim font), the two e2e gates (`test/e2e/gates.ts`: `R2_03_PENDING` with
-     `CONTENT_REASON` / `GOLDEN_REASON`, and `PORT_UNMEASURED` with `PORT_REASON`, from `293e885`), the self-expiring
-     gates `CONTENT_PORT_PENDING` / `GOLDENS_STALE`, and the **corrected** causes from `handoffs-w4.md`: the
+     `CONTENT_REASON` / `GOLDEN_REASON`, and `PORT_UNMEASURED` with `PORT_REASON` — the file and the first gate are
+     `93f6391`'s, `293e885` added the second), the self-expiring gates `CONTENT_PORT_PENDING` / `GOLDENS_STALE`, and the
      content-DB fingerprint's `core.stages` move comes only from the map widths (`terrain.cols` +32 and 32 empty
      columns in the 17 terrain stages); the presentation fingerprint's 3 screen-hash moves come from the story crawl
      and credits running longer (1,046 → 1,074 and 1,989 → 2,059 frames); `es.options` / `es.game` move from both
@@ -356,14 +358,17 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
     `HUD_BOTTOM_Y` 348, `TILE_SIZE` 12, `GLYPH_W` / `GLYPH_H` / `LINE_H` 9 / 12 / 15 = the font file × `ART_SCALE`);
     the panel rule (`:98`, "Panel widths and heights sized by their 6×8 text stay literal") is replaced — panel sizes
     now derive from `GLYPH_*` and `uiPx`; the scanner skips long hex colours (`#rrggbb` / `#rrggbbaa`); the
-    allow-lists hold **32 repo / 14 core** entries (the doc says 22 at `:138`); the banned set includes
+    allow-lists hold **32 repo / 14 core** entries (the doc already says 32 at `:138` — `76b6f2a` fixed that before
+    the run; the core count is still not stated anywhere there, write it); the banned set includes
     640 / 360 / 336 / 348; the two e2e gates and `test/integration/e2e-gates.test.ts`.
   - `repo-layout.md`: the lines that still say 384×216 for the render target or the frame.
   - `test/README.md`, `scripts/README.md`: rows for files R2-01 added or changed (`test/e2e/gates.ts`,
     `test/e2e/save-format.ts`, `test/e2e/ticks.ts`, `test/integration/e2e-gates.test.ts`, `e2e-save-format.test.ts`,
     `e2e-ticks.test.ts`, the replay v1 fixture), if missing.
 - **Tests:** none.
-- **Acceptance:** `grep -n "22 entries\|still runs at 384" CLAUDE.md docs/dev/conventions.md` is empty.
+- **Acceptance:** `grep -n "22 entries\|still runs at 384" CLAUDE.md docs/dev/conventions.md` is empty, and so is
+  `grep -n "(384 / 216)" docs/dev/conventions.md` — today that grep hits line 79, § Frame numbers' stale constants
+  line; rewriting it to the current values is the point of this item.
 - **Token:** none.
 
 ### R2-01.D3 — The API reference and the package READMEs
