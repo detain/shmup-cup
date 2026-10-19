@@ -420,17 +420,24 @@ by the quoted code or test title before you edit it.
 ### R5-P.LAND — The LAND helper `land-zone.sh`
 
 - **Wave / lane / order:** wave 09, lane 4, after `R5-P.P10`.
-- **Depends on:** `R5-P.P3`, `R5-P.P10` on master (the script calls `--only` and the update mode).
+- **Depends on:** `R5-P.P3`, `R5-P.P10` and `R4-05.E6` on master (the script calls `--only` and the update mode;
+  before E6 commits the regenerated plates, `pnpm docs:images` redraws `docs/images/logo.png` from R4-05.E1's new
+  `ui/logo`, so a no-op dry run cannot report "nothing derived changed").
 - **Goal:** one committed script lands a zone's work: squash the zone branch, regenerate every derived file under
   the land lock, prove the scope, push. Global re-blesses (R5-P.P12, R6-01.B4) use the same script in `--all` mode.
 - **Files (only these):** the exception to common rule 7 (`docs/**`): you commit these two files under
   `docs/v2-run/helpers/`, nothing else.
   - `docs/v2-run/helpers/land-zone.sh` — **new**;
-  - `docs/v2-run/helpers/README.md` — one row for the new script; and the intro's sentence "All are read-only except
-    `host-check.sh` (…) and `e2e-batch.sh` (…)": if it does not name `land-zone.sh` yet, add it there ("and
-    `land-zone.sh` (which regenerates the derived files, commits and pushes)"). Nothing else in the README.
+  - `docs/v2-run/helpers/README.md` — one row for the new script (the intro's sentence "All are read-only except
+    `host-check.sh` (…) and `e2e-batch.sh` (…) already names `land-zone.sh` — checked on master — so the row is all;
+    do not edit the intro). Nothing else in the README.
 - **The script** (`bash docs/v2-run/helpers/land-zone.sh (--only <stageId,…> | --all) --message <file> --zone <x>
-  [--dry-run]`, run inside the zone worktree; it takes `/tmp/shmup-cup-land.lock` itself with `flock -w 5400`):
+  [--dry-run]`, run inside the zone worktree; it takes `/tmp/shmup-cup-land.lock` itself with `flock -w 5400` —
+  `--dry-run` takes no lock (it pushes nothing and works in its own copy); it exits non-zero at once if `RUN_DIR` is
+  unset, because every step logs to `$RUN_DIR/land-<zone>-<date>.log`):
+  0. Exit non-zero unless `git status --porcelain` prints nothing (commit every source first — an uncommitted file
+     under `test/golden`, `content/demos` or `docs/images` would fail late at step 1's rebase, be deleted by the
+     abort rule's `git clean -fd`, or get staged by step 9's `git add test/golden`).
   1. `git fetch origin`; squash the branch to one commit
      (`git reset --soft "$(git merge-base HEAD origin/master)" && git commit -F <message>`); `git rebase
      origin/master` — branch commits hold sources only, so a conflict is real: abort and exit non-zero.
@@ -440,18 +447,25 @@ by the quoted code or test title before you edit it.
   5. `SHMUP_FINGERPRINT_UPDATE=1` runs of the presentation and content-DB fingerprints (`--project integration`) and
      of `packages/shell/test/frame-fingerprint.test.ts` (`--project shell`).
   6. `pnpm docs:images`.
-  7. The targeted checks: `test/integration/content-zone-<x>.test.ts` (from R5-P.P2b; `content.test.ts` for the
-     shared part), `test/integration/atlas-zone-sprites.test.ts`, `test/integration/frame-literals-repo.test.ts`,
+  7. The targeted checks: `test/integration/content-zone-<x>.test.ts` (from R5-P.P2a / P2b — P2a creates
+     `content-zone-a` … `d`, P2b creates `e` … `i`; `content.test.ts` for the shared part),
+     `test/integration/atlas-zone-sprites.test.ts`, `test/integration/frame-literals-repo.test.ts`,
      `test/scripts/art-origins.test.ts`, `test/scripts/assets/provenance.test.ts`, `test/playtest/zone-<x>.test.ts`,
      `test/golden` (all of it: the scope proof); then, as its own command, the whole
      `test/integration/release-audit.test.ts` (no `-t`: no test title names a zone — it audits all nine zones, so a
      `-t 'zone X'` would select nothing); then the three fingerprints without the variable. With `--all`, run the
      checks of the zone `--zone` names (they include all of `test/golden`).
-  8. Abort unless every changed `test/golden/*.replay.json` and `content/demos/*.replay.json` has a `header.stageId`
-     in the `--only` list (read with a `node -e` one-liner); with `--all`, skip this check.
+  8. Abort unless every changed or new `test/golden/*.replay.json` and `content/demos/*.replay.json` (untracked
+     included — take the list from `git status --porcelain`) has a `header.stageId` in the `--only` list (read with a
+     `node -e` one-liner); with `--all`, skip this check.
   9. `git add` the explicit derived paths that changed (`test/golden`, `content/demos`, the three fingerprint test
-     files, `assets/source/atlas-groups.json`, `docs/images`), `git commit --amend --no-edit`, `git push origin
-     HEAD:master`; on a rejected push, release nothing, go back to step 1 (at most 5 times).
+     files, `assets/source/atlas-groups.json`, `docs/images`); before the amend, save the sources-only commit:
+     `SOURCES=$(git rev-parse HEAD)`. Copy the message file, append the line `Changed plates:` and one
+     `docs/images/…` path per changed plate (or the single word `none`), and `git commit --amend -F` that copy — the
+     zone's post-LAND check reads that list from the commit body, and `--no-edit` could never add it. Then
+     `git push origin HEAD:master`; on a rejected push, `git reset --hard "$SOURCES"` (the amended commit holds
+     derived files; step 1 must re-squash the sources-only commit, and the abort rule must restore a branch that
+     holds sources only), release nothing, go back to step 1 (at most 5 times).
   - **On an abort** (any step from 2 on fails, or step 8's scope check): before it exits non-zero, the script runs
     `git restore --staged --worktree` on the derived paths step 9 lists and deletes the untracked files it created
     under them (`git clean -fd -- test/golden content/demos docs/images`: a new plate or replay is derived too), so
@@ -459,7 +473,8 @@ by the quoted code or test title before you edit it.
   - `--dry-run`: steps 1–8 in a throwaway **`git worktree add --detach`** copy of the branch's `HEAD` (it shares the
     repository, so `origin/master` is the real one; never a `git clone`, whose `origin` would be the local checkout
     and its possibly stale `master`); print what would be committed, push nothing, then remove the copy
-    (`git worktree remove --force`). The branch itself is not squashed or changed.
+    (`git worktree remove --force`) — on every exit, a failed step included (`trap … EXIT`), so a failed dry run
+    leaves no worktree behind. The branch itself is not squashed or changed.
   - Log every step to `RUN_DIR/land-<zone>-<date>.log` (the caller passes `RUN_DIR`).
 - **Tests (targeted):** the script is not on master yet, so test it from a commit of your own:
   1. Commit `land-zone.sh` and the README edit in your worktree (do not push yet).
@@ -474,10 +489,12 @@ by the quoted code or test title before you edit it.
   ```
   3. Call the script by its relative path from inside `wt/land-dry` (as above): it finds the checkout from its own
      location, so an absolute path to your own worktree's copy would act on your worktree instead.
-  4. At the end, remove the throwaway worktree and branch:
+  4. At the end, go back to your own worktree first (a `cd` out of `wt/land-dry` — step 2 left the shell inside the
+     directory being removed), then remove the throwaway worktree and branch from there:
      `git worktree remove --force /home/sites/shmup-cup-run/wt/land-dry && git branch -D land-dry`.
 - **Acceptance:** the dry run on a no-op branch reports "nothing derived changed" and passes every check; a dry run
-  after a deliberate golden edit in another zone aborts at step 8 or at the `test/golden` check — **commit** that
+  after a deliberate golden edit in another zone aborts at step 4 (the `--only` golden run verifies every other
+  zone — R5-P.P3's design), at step 7's `test/golden` or at step 8 — **commit** that
   edit on the throwaway branch `land-dry` first (the dry run works in a worktree copy of the branch's `HEAD`, so an
   uncommitted edit is not in it), then drop the commit (`git -C /home/sites/shmup-cup-run/wt/land-dry reset --hard
   HEAD~1`, on the throwaway branch only); `bash -n` clean; the README row explains the arguments.
@@ -534,7 +551,12 @@ by the quoted code or test title before you edit it.
   (`vitest list` prints an `it.each` title as its template, once per file, not once per case — checked on `59eb382`;
   a skipped case is not listed, so the gated ones there appear only after R2-02's un-gating):
   - the Direct files' `it.each` title 'the MANTA clears $stage, …' — **3 more** (3 pair files → 6 zone files);
-  - the edge files' `it.each` title 'practice start in zone %s at checkpoint %i …' — **3 more** (D/E, F/G, H/I);
+  - the edge files' `it.each` title 'practice start in zone %s at checkpoint %i …' — **3 more** in all, and they are
+    **two** different templates: D/E's 'practice start in zone %s at checkpoint %i (x %i): the camera at y %i, the
+    ship in open space' appears **once** more (the one file `zones-de-runtime-edge.test.ts` → zone D's and zone E's
+    files, one line each), and F/G's and H/I's 'practice start in zone %s at checkpoint %i (x %i): the ship flown in
+    to open space' appears **twice** more (once from `zones-fg-runtime-edge.test.ts`, once from
+    `zones-hi-runtime-edge.test.ts`);
   - `zones-fg-runtime-edge.test.ts`' `it.each` title 'skips %s to its boss: …' — **1 more** (F and G);
   - 'checks four checkpoints per zone' — **3 more** (F and G, H and I, and zone E's new copy; zone D keeps its
     '…, two of zone D in the caves' title once).
@@ -545,7 +567,10 @@ by the quoted code or test title before you edit it.
 - **Token:** none.
 - **Traps:** copy each test verbatim, apart from the two changes under Files; R2-02's un-gating (wave 05) already
   removed the `port-pending` wrappers — if one is left, stop and report.
-- **Docs needs:** `docs/dev/repo-layout.md`, `test/README.md`.
+- **Docs needs:** `docs/dev/repo-layout.md`, `test/README.md`, `docs/dev/direct-mode.md` (the sentences naming
+  `zones-bc-direct.test.ts`, `zones-de-direct.test.ts` and `zones-fg-direct.test.ts`), and the four zone docs
+  `docs/dev/zones-b-and-c.md`, `docs/dev/zones-d-and-e.md`, `docs/dev/zones-f-and-g.md`, `docs/dev/zones-h-and-i.md`
+  — their "test files" tables and the `db` comments that name the deleted `zones-*.test.ts` files.
 
 ### R5-P.D-A — Zone design: A, AZURE VERGE
 
