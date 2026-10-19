@@ -18,7 +18,9 @@ orchestrator finishes it first, as `R2-01.F1` in [wave 1](wave-01.md).
 **Who closes it:** the previous (old host's) orchestrator sets the status line above to `**Status: closed**` and
 fills in the closing SHA when the C5 loop reaches zero; after that the driver skips this wave. If the status line
 still reads `**Status: open**` when the run starts, the open findings are in the newest `r2-01C5-review*.md` and
-`w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1.
+`w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/` on myadmin1 — that copy is flat, there
+is no `scratchpad/` folder there; if the newest report is missing, the old orchestrator still holds it in its
+session scratchpad, so ask the owner for it (the hand-off note in the "The new run's orchestrator" list below).
 
 Background: C5 review 2 (of `293e885` + `bc8e05d`) found 3 should-fix items and 1 nit (S1–S3, N1). C5 fix 2
 `c67c7c9` (`test(R2-01): e2e waits on ticks, not frame rate (C5 review 2)`, test files only) fixed all four. C5
@@ -154,5 +156,6 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
 ## Owner (Manual) — never blocks this wave
 
 - If this wave is still open at the hand-off, hand the newest C5 review report (review 4 or later) and its fix report
-  to the new run (or leave them in `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1).
+  to the new run (or leave them in `/home/sites/shmup-cup/.claude/orchestrator/` on myadmin1 — flat, beside the
+  earlier C5 reports).
 - None new otherwise. The open owner questions are in [`decisions.md`](decisions.md).

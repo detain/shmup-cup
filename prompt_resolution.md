@@ -16,15 +16,17 @@
 > orchestrator then sets `docs/v2-run/wave-00.md`'s status line to `**Status: closed**`. If the line still reads
 > `**Status: open**` when you start, run wave 0's "open" branch first (`wave-00.md`: its open items become `R2-01.F1`
 > in wave 1); the open findings are in the newest `r2-01C5-review*.md` / `w4-C5-fix*-report.md` under
-> `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` (the old host's scratchpad, copied to myadmin1). All
+> `/home/sites/shmup-cup/.claude/orchestrator/` on myadmin1 — that copy is flat, there is no `scratchpad/` folder
+> there; if the newest report is missing, the old orchestrator still holds it in its session scratchpad, so ask the
+> owner. All
 > remaining work is scheduled in **plan §18 "Execution waves for the ~10-agent run"**, with the work orders in
 > **`docs/v2-run/`** (index `docs/v2-run/README.md`, helper scripts in `docs/v2-run/helpers/`).
 >
 > **What exists on myadmin1:** the repo (everything the run needs is on `master`), plus what the previous orchestrator
 > copied over: `.claude/` (`plan_board_v2.py`, `skills/`, its old notes — history only, except the C5 review and fix
-> reports in `.claude/orchestrator/scratchpad/` that wave 0's open branch reads, above), the git-ignored art
-> candidates `art-prompts/v2/candidates/` and a **snapshot** of the picker site with `data/choices.json`. Nothing else
-> from the old host is here, and myadmin1 cannot ssh to it.
+> reports in `.claude/orchestrator/` (flat — no `scratchpad/` folder) that wave 0's open branch reads, above), the
+> git-ignored art candidates `art-prompts/v2/candidates/` and a **snapshot** of the picker site with
+> `data/choices.json`. Nothing else from the old host is here, and myadmin1 cannot ssh to it.
 
 ---
 

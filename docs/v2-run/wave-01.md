@@ -91,7 +91,7 @@ reviewed to zero.
      are green.
      Then the orchestrator rewrites `wave-00.md`'s status line to `**Status: closed** — <date>, <the zero review>`.
 - **Depends on:** a review round with findings: the newest C5 review report (review 4 or later) — from the owner, or
-  the newest `r2-01C5-review*.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` on myadmin1 (with
+  the newest `r2-01C5-review*.md` under `/home/sites/shmup-cup/.claude/orchestrator/` on myadmin1 (with
   the newest `w4-C5-fix*-report.md` beside it) — or `R2-01.F1.RV`'s. Never redo a finding that `8ff2bf6`,
   `543887b`, `0cabaec`, `424afd7` or `b0dede1` already fixed (C5 review 3's), or that a later C5 fix on master
   already fixed (its commit body names the review).
@@ -380,8 +380,9 @@ Tests for docs: none unless the block names one. Push with a `docs:` subject.
   formulas; the code derives them from the text panels: `data/campaign.ts:151`, `:163`, `:185`),
   `TEXTURE_BUDGET_BYTES` 23 MiB at 640×360; D19 / D20 marked superseded by R-D1 / R-D3 where this file quotes them.
 - **Tests:** none.
-- **Acceptance:** every new R2-01 export of the core barrel has a row (`git diff d4de048 bc8e05d --
-  packages/core/src/index.ts` lists them; `c67c7c9` did not touch the barrel). Do **not** document `R2-02.P0`'s
+- **Acceptance:** every new R2-01 export of the core barrel has a row (`git diff 8d89dd2^ bc8e05d --
+  packages/core/src/index.ts` lists them (`8d89dd2` `ART_SCALE`, `92120c7` `uiPx`, `691a79e` the replay-version
+  refusal's four); `c67c7c9` did not touch the barrel). Do **not** document `R2-02.P0`'s
   `WORLD_SCALE` / `WORLD_TOP_PAD` here, even if P0 has pushed: wave 5's `W05.DOCS-D` does.
 - **Token:** none.
 
