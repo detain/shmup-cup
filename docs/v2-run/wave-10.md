@@ -87,8 +87,10 @@ this wave; re-find any line by its code before you edit.
   `scripts/assets/procedural/terrain.mjs` in this wave (zone A's `tiles/terrain-azure` is drawn by `azure.mjs`); the
   bot files — `R5-P.P12` only; `test/golden/v2-port*.ts` — `R5-01.S6` only; the generic part of
   `test/integration/content.test.ts` (its two zone-tileset loops, relaxed by `R5-P.P13`) — `R5-P.P13` only;
-  `packages/core/src/debug/index.ts` and the two stage-skip core tests — `R5-P.P14` only (no zone file of this
-  wave edits core; wave-11 rule 6's equivalent holds here).
+  `packages/core/src/debug/index.ts` — `R5-P.P14` only (no zone file of this wave edits `packages/core/src`;
+  wave-11 rule 6's equivalent holds here). The skip **rule** in `debug-skip{,-edge}.test.ts` is P14's too (it is
+  on master before `R5-01.S5b` starts); `R5-01.S6b` may afterwards re-fix those two tests and
+  `debug-controls-edge.test.ts` for what the zone-A remaster itself broke — that list is S6b's, not core work.
 - **Land lock users:** P7 (fingerprints), `R5-01.S2` (fingerprints: the credits line), P12 (if it re-records),
   `R5-P.P14` (the `zone-h-boss` golden and the two re-pinned `runA` boss-skip segments), `R5-01.S7` (LAND).
   They never overlap:
