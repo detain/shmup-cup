@@ -33,7 +33,7 @@ or on any file outside the repository other than the run directory (§ The run d
 
 | File | Wave | Steps |
 |---|---|---|
-| [`wave-00.md`](wave-00.md) | 0 | the R2-01 C5 review loop and the CI triage — closed by the orchestrator before the hand-off, or its open item (verifying the C5 fixes since `c67c7c9`: C5 review 4 and any fix → review loop to zero) becomes `R2-01.F1` in wave 1 |
+| [`wave-00.md`](wave-00.md) | 0 | the R2-01 C5 review loop and the CI triage — **closed** by the orchestrator: the loop reached zero at reviews 5 and 6 (2026-10-19, `r2-01C5-review5.md`), so nothing became `R2-01.F1` in wave 1 |
 | [`wave-01.md`](wave-01.md) | 1 | R2-01 docs pass (7 docs agents) · R2-02 opening (`WORLD_SCALE`, the port kit) |
 | [`wave-02.md`](wave-02.md) | 2 | R2-02 prep A (world constants and defaults) · R3-03 / R3-04 side lanes |
 | [`wave-03.md`](wave-03.md) | 3 | R2-02 prep B (the test pins, the v2-port comparison, the e2e pre-gate) |
