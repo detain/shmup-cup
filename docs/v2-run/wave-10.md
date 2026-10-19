@@ -5,13 +5,13 @@
 > **Run directory:** `RUN_DIR` is `/home/sites/shmup-cup-run` (README common rule 15). The commands below spell the
 > path out, so each one runs as typed in a fresh shell; prose that says `RUN_DIR/…` means the same path.
 
-**Steps:** R5 prep (`R5-P`: P7, P12, P5d), R5-01 (zone A, the pilot, from stand-in art to its LAND), the stand-in
+**Steps:** R5 prep (`R5-P`: P7, P12, P5d, P13), R5-01 (zone A, the pilot, from stand-in art to its LAND), the stand-in
 art (`S2`) of R5-02 … R5-09. · **Gate to start:** wave 09's exit: R4 closed; `R5-P.P3` (`--only`), `R5-P.P4`,
 `R5-P.P5a1`/`P5a2`, `R5-P.P5e`, `R5-P.P10` (fingerprint write mode) and `R5-P.LAND` (`land-zone.sh`) on master;
 the nine designs in `docs/v2-run/designs/` reviewed to zero; and from earlier waves `R5-P.P1` (stable hash keys),
 `R5-P.P8` (`MAX_BOSS_PARTS` 24), `R5-P.P2a`/`P2b`/`P6` (per-zone content tests and the v2 contract),
 `R5-P.P5c`/`P9` (per-zone procedural tests, the shared alpha constant), R3-06 (decor, painted layers), R3-03, R3-04.
-· **Exit (summary):** P7, P12, P5d and every zone's S2 on master; zone A LANDed with its post-LAND check; reviews at
+· **Exit (summary):** P7, P12, P5d, P13 and every zone's S2 on master; zone A LANDed with its post-LAND check; reviews at
 zero; §17 R5-01 `done (owner parts pending)`.
 
 Line numbers are at `bc8e05d`. **The content on `bc8e05d` is still v1 scale** (zone A `length` 9000, 8-px tiles,
@@ -23,7 +23,7 @@ this wave; re-find any line by its code before you edit.
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
 | 1 | `R5-P.P7` → then S2s from the queue below | the zone stages' `cycles`, the generators' v2 ramps (`<X>_RAMP_V2`), the pair e2e specs' ramp imports | FINGERPRINTS | yes (pass 1, first; only if a ramp changed) |
-| 2 | `R5-P.P12` | `test/playtest/{four-way-bot,harness}.ts` and their tests | BOT (= GLOBAL if it re-records) | no |
+| 2 | `R5-P.P12` → then `R5-P.P13` | `test/playtest/{four-way-bot,harness}.ts` and their tests; then the two zone-tileset pins in `test/integration/content.test.ts` | BOT (= GLOBAL if it re-records); P13: CONTENT-TEST | no |
 | 3 | `R5-P.P5d` (after `R5-P.P7` is on master and its review is at zero) | `test/e2e/zones-*.spec.ts` → `zone-{b…i}.spec.ts` | none | yes (pass 1, after P7's batch) |
 | 4 | `R5-01.S2` (after `R5-P.P7` only if `zone-a.md` §9 sets a ramp) → `R5-01.S4a` → `S4b` → `S5a` → `S5b` → `S6` → `S6b` → `R5-01.RV` loop → `R5-01.S7` | zone A's generator, the registry, the campaign credits line, content, tests; then the LAND | FP (S2: the credits line); LAND (S7) | yes (pass 2, S6 / S6b / S7) |
 | 5 | `R5-03.S2` (zone C cycles nothing today: independent of P7, unless `zone-c.md` §9 sets a ramp — then after P7) | `scripts/assets/procedural/dune.mjs` | none | no |
@@ -84,7 +84,8 @@ this wave; re-find any line by its code before you edit.
 - **One owner per shared file in this wave:** `scripts/assets/procedural/index.mjs` and the credits of
   `content/campaign/main.campaign.json` — `R5-01.S2` only (zone A's new generator `azure.mjs`); nobody edits
   `scripts/assets/procedural/terrain.mjs` in this wave (zone A's `tiles/terrain-azure` is drawn by `azure.mjs`); the
-  bot files — `R5-P.P12` only; `test/golden/v2-port*.ts` — `R5-01.S6` only.
+  bot files — `R5-P.P12` only; `test/golden/v2-port*.ts` — `R5-01.S6` only; the generic part of
+  `test/integration/content.test.ts` (its two zone-tileset loops, relaxed by `R5-P.P13`) — `R5-P.P13` only.
 - **Land lock users:** P7 (fingerprints), `R5-01.S2` (fingerprints: the credits line), P12 (if it re-records),
   `R5-01.S7` (LAND). They never overlap: each takes `/tmp/shmup-cup-land.lock` for its whole regenerate-and-push.
 
@@ -286,6 +287,64 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   README already says so).
 - **Docs needs (report them; never edit docs):** `docs/dev/build-test-deploy.md` and the zones docs that name the
   pair specs; `test/README.md`; `docs/dev/repo-layout.md`.
+
+### R5-P.P13 — Relax the zone-tileset pins so the v2 variant tiles can be wired
+
+- **Wave / lane / order:** wave 10, lane 2, after `R5-P.P12` (a one-file test change; take it as soon as lane 2 is
+  free). It must be on `origin/master` **before the wave-11 zones' first `S5a`** — wave 11's gate (its Exit)
+  already lists the wave-10 exit, and the exit now names P13.
+- **Depends on:** the wave-09 exit (gate). `R5-P.P2a`/`P2b` (wave 06) moved only the single-zone cases out of
+  `test/integration/content.test.ts`; the two zone-tileset loops edited here stayed in its generic part, which no
+  zone lane may edit (wave-11 rule 6) — this subtask is the only opener.
+- **Goal:** wave 11's zone lanes point each zone tileset at the theme's **complete** v2 sprite
+  `tiles/terrain-<theme>-v2` — R5-0n.S2 draws it with every `terrain-a` tile first, in `terrain-a`'s order, then
+  the design's variant tiles, because a tileset names exactly **one** `sprite` and each tile only a `frame` of it
+  (`TILESET_FILE_SCHEMA` / `TILE_SCHEMA`, `packages/core/src/data/index.ts`: no per-tile sprite; zone A's
+  `tiles/terrain-azure` from `R5-01.S2`/`R5-01.S5a` is the same pattern, R5-D3). Today two pins forbid that: each
+  zone-tileset loop expects the tileset's tile names to **equal** `terrain-a`'s (`toEqual`) and its sprite's frame
+  count to **equal** `terrain-a`'s tile count (`toBe`), so one added tile, or a switch to a fuller sprite, turns
+  `pnpm content:check` red. Relax both to a prefix-and-coverage check. The content stays untouched, so P13 lands
+  green as is (equal names pass the prefix; twenty frames for twenty tiles pass the coverage).
+- **Files (only these):** `test/integration/content.test.ts`. Find the two loops by their case titles — 'draws
+  every zone B–G sprite with its hit flash; the zone tilesets have every tile' and 'draws every zone H and I
+  sprite with its hit flash; the zone tilesets have every tile' (line numbers move; never select by line). Each
+  ends with the pair of pins:
+  ```ts
+  expect(tileset?.tiles.map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
+  expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBe(a?.tiles.length);
+  ```
+  Replace each pair with (Prettier may rewrap; 100 columns):
+  ```ts
+  expect(tileset?.tiles.slice(0, a?.tiles.length).map((t) => t.name)).toEqual(a?.tiles.map((t) => t.name));
+  expect(manifest.sprites[tileset?.sprite ?? '']?.frames.length).toBeGreaterThanOrEqual(
+    tileset?.tiles.length ?? 0,
+  );
+  ```
+  Read: a zone tileset keeps `terrain-a`'s whole tile list as its **prefix, in order**, and may grow variant
+  tiles after it; its sprite has a frame **for every tile** and may hold unused ones after the last. Change
+  nothing else — not the loops' id lists, not the enemy-sprite flash-frame checks above the loops, not the case
+  titles.
+- **Steps:**
+  1. Common rules 1–5: a fresh worktree at `origin/master`, `pnpm install --frozen-lockfile`.
+  2. Make the two replacements above.
+  3. Run the tests below; commit the one file: `test: zone tilesets keep terrain-a's tiles as a prefix and may
+     grow v2 variants (R5-P.P13)`; push to `master` per the README's prep-lane flow (no land lock — nothing
+     derived moves).
+- **Tests (targeted):**
+  ```bash
+  pnpm format:check
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts
+  pnpm content:check
+  ```
+- **Acceptance:** both green with the content unchanged; `git show` is the one file and the two replaced pairs;
+  the report quotes both case titles and the four new lines.
+- **Token:** CONTENT-TEST (`test/integration/content.test.ts`, the README token table).
+- **Traps:** never **delete** either check — the heightfield and the RLE name tiles, so losing a `terrain-a`
+  tile from a zone tileset is a sim bug, not a style choice; never compare the names sorted or as a set (the
+  frame index follows the order); do not move these cases into `test/integration/zones/` (that split is
+  `R5-P.P2a`/`P2b`'s, done); nothing but the test file changes, so no fingerprint, no golden and
+  `assets/source/atlas-groups.json` move.
+- **Docs needs (report them; never edit docs):** none expected.
 
 ### R5-01.S2 — Zone A: stand-in art for every new sprite name
 
@@ -713,9 +772,15 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
 - **Goal, steps, tests, acceptance, traps:** as `R5-01.S2`, for zone C, with these differences:
   - **Files:** `scripts/assets/procedural/dune.mjs` (zone C's existing generator: add the design's new names on the
     `(options.artScale ?? 1) !== 1` path, and give `generate` the parameter `options = {}`, so a call without
-    options still draws v1 — wave 8 rule 1; tile variants as a separate sprite `tiles/terrain-dune-v2`, so
-    `terrain.mjs` stays untouched); `test/scripts/assets/procedural-zone-c.test.ts` and
-    `procedural-zone-c-edge.test.ts` (R5-P.P5c) — new cases only.
+    options still draws v1 — wave 8 rule 1; the design's new tile variants **and** the theme's base tiles in
+    **one** complete v2 tileset sprite `tiles/terrain-dune-v2`, so `terrain.mjs` stays untouched — its first
+    frames repeat `terrain-a.tileset.json`'s tile list in order (`solid` … `tissue`, twenty today — read the
+    file, never hardcode: the dune-palette base tiles redrawn at `options.tileSize` with `native: true`, from
+    `terrain.mjs`'s exported helpers, as zone A's `tiles/terrain-azure` does in `R5-01.S2`), then the design's
+    variant tiles; `R5-03.S5a` (wave 11, after `R5-P.P13` is on `origin/master`) points
+    `terrain-dune.tileset.json`'s `"sprite"` at this sprite — S2's report lists `-v2`'s frame order);
+    `test/scripts/assets/procedural-zone-c.test.ts` and `procedural-zone-c-edge.test.ts` (R5-P.P5c) — new cases
+    only.
   - Never edit `index.mjs` (zone A holds it in this wave), `terrain.mjs` (nobody edits it in this wave) or the
     campaign file; never change an existing sprite of `dune.mjs`. `dune.mjs` is already registered and credited, so
     this S2 is fully neutral: no fingerprint moves.
@@ -730,42 +795,50 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
 - **Depends on:** `R5-P.P7`; `docs/v2-run/designs/zone-b.md` reviewed.
 - **As `R5-03.S2`, with:** `scripts/assets/procedural/brine.mjs` (zone B and its bonus stage `brine-grotto` — the
   grotto's new names too; the `maw-*` boss sprites are copied by zone H's `echo-maw`: never rename one);
-  `test/scripts/assets/procedural-zone-b{,-edge}.test.ts`; tile variants `tiles/terrain-reef-v2`. Keep P7's ramp
+  `test/scripts/assets/procedural-zone-b{,-edge}.test.ts`; the complete tileset sprite `tiles/terrain-reef-v2`
+  (base tiles first, in `terrain-a`'s order, then the variants — as `R5-03.S2` says). Keep P7's ramp
   constants as they are.
 
 ### R5-04.S2 — Zone D: stand-in art
 
 - **As `R5-02.S2`, with:** `scripts/assets/procedural/magma.mjs`; `test/scripts/assets/procedural-zone-d{,-edge}.test.ts`;
-  tile variants `tiles/terrain-magma-v2` (destructible shortcut blocks and their crack stages if the design wants
+  the complete tileset sprite `tiles/terrain-magma-v2` (base tiles first, in `terrain-a`'s order, then the
+  variants — as `R5-03.S2` says; the destructible shortcut blocks and their crack stages if the design wants
   them); the `bastion-*` boss sprites feed zone H's echo: never rename one.
 
 ### R5-05.S2 — Zone E: stand-in art
 
 - **As `R5-02.S2`, with:** `scripts/assets/procedural/tempest.mjs`; `test/scripts/assets/procedural-zone-e{,-edge}.test.ts`;
-  tile variants `tiles/terrain-ridge-v2`; the weather layers are full-width (`FRAME_W` from `scripts/frame.mjs`).
+  the complete tileset sprite `tiles/terrain-ridge-v2` (base tiles first, in `terrain-a`'s order, then the
+  variants — as `R5-03.S2` says); the weather layers are full-width (`FRAME_W` from `scripts/frame.mjs`).
 
 ### R5-06.S2 — Zone F: stand-in art
 
 - **As `R5-02.S2`, with:** `scripts/assets/procedural/vault.mjs`; `test/scripts/assets/procedural-zone-f{,-edge}.test.ts`;
-  tile variants `tiles/terrain-vault-v2` (regrowing tissue); the `regent-*` boss sprites feed zone H's echo: never
+  the complete tileset sprite `tiles/terrain-vault-v2` (base tiles first, in `terrain-a`'s order, then the
+  variants — as `R5-03.S2` says; the regrowing tissue); the `regent-*` boss sprites feed zone H's echo: never
   rename one.
 
 ### R5-07.S2 — Zone G: stand-in art
 
 - **As `R5-02.S2`, with:** `scripts/assets/procedural/prism.mjs` (zone G and its bonus stage `glimmer-cache`);
-  `test/scripts/assets/procedural-zone-g{,-edge}.test.ts`; tile variants `tiles/terrain-prism-v2`; FACET MONARCH's new
+  `test/scripts/assets/procedural-zone-g{,-edge}.test.ts`; the complete tileset sprite
+  `tiles/terrain-prism-v2` (base tiles first, in `terrain-a`'s order, then the variants — as `R5-03.S2` says);
+  FACET MONARCH's new
   parts (the rebuild needs up to 24 parts).
 
 ### R5-08.S2 — Zone H: stand-in art
 
 - **As `R5-02.S2`, with:** `scripts/assets/procedural/citadel.mjs`; `test/scripts/assets/procedural-zone-h{,-edge}.test.ts`;
-  tile variants `tiles/terrain-citadel-v2` (moving floors). The echoes' sprites are the other bosses' — draw nothing
+  the complete tileset sprite `tiles/terrain-citadel-v2` (base tiles first, in `terrain-a`'s order, then the
+  variants — as `R5-03.S2` says; the moving floors). The echoes' sprites are the other bosses' — draw nothing
   for them here.
 
 ### R5-09.S2 — Zone I: stand-in art
 
 - **As `R5-02.S2`, with:** `scripts/assets/procedural/abyss.mjs`; `test/scripts/assets/procedural-zone-i{,-edge}.test.ts`;
-  tile variants `tiles/terrain-abyss-v2`; the ark's raid sections (≈ 144×60 and up, bible §5.7). The ending scenes
+  the complete tileset sprite `tiles/terrain-abyss-v2` (base tiles first, in `terrain-a`'s order, then the
+  variants — as `R5-03.S2` says); the ark's raid sections (≈ 144×60 and up, bible §5.7). The ending scenes
   are R4-05's (`ending.mjs`): never edit them here.
 
 ## Reviews

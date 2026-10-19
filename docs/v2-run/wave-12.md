@@ -550,52 +550,65 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
 ### R5-02.S3 — Zone B real art
 
 - **Depends on:** the gates; R5-02.S7. **Sprites:** everything `scripts/assets/procedural/brine.mjs` draws (the zone's
-  enemies, `maw-*`, `herald-shell`, the backdrop layers, the tile variants `tiles/terrain-reef-v2` of R5-02.S2), the
-  tiles of `tiles/terrain-reef` (drawn by `scripts/assets/procedural/terrain.mjs`, not by `brine.mjs`) and
-  `brine-grotto`'s look. **Checks:** the template's with `zone-b`; `echo-maw`'s plate moves too.
+  enemies, `maw-*`, `herald-shell`, the backdrop layers, and the **complete** tileset sprite
+  `tiles/terrain-reef-v2` of R5-02.S2 — since `R5-02.S5a` the tileset names that one `sprite` and draws **every**
+  tile from it (`terrain-a`'s tiles first, in their order, then the variants: `R5-P.P13`), so the real-art tile
+  frames land there too; the `tiles/terrain-reef` frames `terrain.mjs` draws show nowhere in the zone — leave
+  them) and `brine-grotto`'s look. **Checks:** the template's with `zone-b`; `echo-maw`'s plate moves too.
 
 ### R5-03.S3 — Zone C real art
 
 - **Depends on:** the gates; R5-03.S7. **Sprites:** what `dune.mjs` draws (`widow-*`, the worms, the skimmers, the
-  layers, `tiles/terrain-dune-v2`) and the tiles of `tiles/terrain-dune` (drawn by `terrain.mjs`). **Checks:** the
-  template's with `zone-c`.
+  layers, and the complete tileset sprite `tiles/terrain-dune-v2` — the tileset draws **every** tile from it since
+  `R5-03.S5a` (`R5-P.P13`), so the real-art tile frames land there; the `tiles/terrain-dune` frames of
+  `terrain.mjs` show nowhere in the zone). **Checks:** the template's with `zone-c`.
 
 ### R5-04.S3 — Zone D real art
 
 - **Depends on:** the gates; R5-04.S7. **Sprites:** what `magma.mjs` draws (`bastion-*`, the bats, the cones, the
-  layers, `tiles/terrain-magma-v2`) and the tiles of `tiles/terrain-magma`, the bricks among them (drawn by
-  `terrain.mjs`). **Checks:** the template's with `zone-d`; `echo-bastion`'s plate moves too.
+  layers, and the complete tileset sprite `tiles/terrain-magma-v2` — the tileset draws **every** tile from it since
+  `R5-04.S5a` (`R5-P.P13`), the bricks among them, so the real-art tile frames land there; the
+  `tiles/terrain-magma` frames of `terrain.mjs` show nowhere in the zone). **Checks:** the template's with
+  `zone-d`; `echo-bastion`'s plate moves too.
 
 ### R5-05.S3 — Zone E real art
 
 - **Depends on:** the gates; R5-05.S7. **Sprites:** what `tempest.mjs` draws (`steed-*`, the kites, the weather
-  layers, `tiles/terrain-ridge-v2`) and the tiles of `tiles/terrain-ridge` (drawn by `terrain.mjs`). **Checks:** the
-  template's with `zone-e`.
+  layers, and the complete tileset sprite `tiles/terrain-ridge-v2` — the tileset draws **every** tile from it since
+  `R5-05.S5a` (`R5-P.P13`), so the real-art tile frames land there; the `tiles/terrain-ridge` frames of
+  `terrain.mjs` show nowhere in the zone). **Checks:** the template's with `zone-e`.
 
 ### R5-06.S3 — Zone F real art
 
 - **Depends on:** the gates; R5-06.S7. **Sprites:** what `vault.mjs` draws (`regent-*`, the cells, the layers,
-  `tiles/terrain-vault-v2`) and the tiles of `tiles/terrain-vault`, the tissue walls among them (drawn by
-  `terrain.mjs`). **Checks:** the template's with `zone-f`; `echo-regent`'s plate moves too.
+  and the complete tileset sprite `tiles/terrain-vault-v2` — the tileset draws **every** tile from it since
+  `R5-06.S5a` (`R5-P.P13`), the tissue walls among them, so the real-art tile frames land there; the
+  `tiles/terrain-vault` frames of `terrain.mjs` show nowhere in the zone). **Checks:** the template's with
+  `zone-f`; `echo-regent`'s plate moves too.
 
 ### R5-07.S3 — Zone G real art
 
 - **Depends on:** the gates; R5-07.S7. **Sprites:** what `prism.mjs` draws (`facet-*`, the crystals, the
-  `enemies/prism-cube` cubes, the layers, `tiles/terrain-prism-v2`), the tiles of `tiles/terrain-prism`, the stacked
-  `cube` tile among them (drawn by `terrain.mjs`), and `glimmer-cache`'s look. **Checks:** the template's with
-  `zone-g`.
+  `enemies/prism-cube` cubes, the layers, and the complete tileset sprite `tiles/terrain-prism-v2` — the tileset
+  draws **every** tile from it since `R5-07.S5a` (`R5-P.P13`), the stacked `cube` tile among it, so the real-art
+  tile frames land there; the `tiles/terrain-prism` frames of `terrain.mjs` show nowhere in the zone), and
+  `glimmer-cache`'s look. **Checks:** the template's with `zone-g`.
 
 ### R5-08.S3 — Zone H real art
 
 - **Depends on:** the gates; R5-08.S7. **Sprites:** what `citadel.mjs` draws (`sovereign-*`, the zone's enemies,
-  the layers, `tiles/terrain-citadel-v2`) and the tiles of `tiles/terrain-citadel` (drawn by `terrain.mjs`; the
-  pistons and moving floors are `block` events drawn with these tiles). The echoes use the A, B, D, F bosses' names:
+  the layers, and the complete tileset sprite `tiles/terrain-citadel-v2` — the tileset draws **every** tile from it
+  since `R5-08.S5a` (`R5-P.P13`), so the real-art tile frames land there; the `tiles/terrain-citadel` frames of
+  `terrain.mjs` show nowhere in the zone — the pistons and moving floors are `block` events drawn with the `-v2`
+  tiles now). The echoes use the A, B, D, F bosses' names:
   their art comes with those zones' S3. **Checks:** the template's with `zone-h`.
 
 ### R5-09.S3 — Zone I real art
 
 - **Depends on:** the gates; R5-09.S7. **Sprites:** what `abyss.mjs` draws (`ark-*`, `king-*`, the mines, the eels,
-  the layers, `tiles/terrain-abyss-v2`) and the tiles of `tiles/terrain-abyss` (drawn by `terrain.mjs`).
+  the layers, and the complete tileset sprite `tiles/terrain-abyss-v2` — the tileset draws **every** tile from it
+  since `R5-09.S5a` (`R5-P.P13`), so the real-art tile frames land there; the `tiles/terrain-abyss` frames of
+  `terrain.mjs` show nowhere in the zone).
   **Checks:** the template's with `zone-i`.
 
 ## Reviews
