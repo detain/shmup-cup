@@ -437,18 +437,29 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `scripts/assets/procedural/hud.mjs` — v2 path: `hud/meter-slot` 60×12 × 3 (v1 40×8), `hud/meter-labels` 54×8 × 23.
   - `assets/source/sprites/hud/life.v2.sprite.json` (new, 12×8, with a `p2` map).
   - `packages/core/test/ui/ui-hud*.test.ts`, `ui-boss-hp*.test.ts`, `ui-layout-frame.test.ts`.
+  - `packages/core/test/helpers/hud.ts` (the HUD geometry those suites read).
+  - `test/scripts/assets/procedural-hud.test.ts` (v2 cases only; the no-options v1 cases stay).
   - `test/e2e/frame-pixels.ts` (the HUD and boss-bar constants, `:99-170`) and `test/scripts/frame.test.ts` (its pins).
   - `test/integration/palette-cycle-scan.test.ts` — remove only the `hud/meter-slot` exemption line, once the v2 art
     no longer trips it (rule 10: fetch and rebase right before the push; on a conflict take master's file and delete
     your line again — never hand-merge).
+  - `packages/shell/src/flight/index.ts` — only the free-flight dev HUD (its layout constants `:157-185` and
+    `buildHud` `:271`), following core's new HUD rows (`docs/v2-run/handoffs-w4.md` § "R4 notes" demands it);
+    `packages/shell/test/flight/`; the shell frame fingerprint's `PINNED` (the flight walks).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/frame.test.ts test/integration/palette-cycle-scan.test.ts test/scripts/assets test/integration/presentation-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/frame-literals.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/frame.test.ts test/integration/palette-cycle-scan.test.ts test/scripts/assets test/integration/frame-literals-repo.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/flight packages/shell/test/frame-fingerprint.test.ts
+  pnpm --filter @shmup/shell typecheck
+  node scripts/art-origins.mjs --check
   bash docs/v2-run/helpers/e2e-batch.sh frame-layout.spec.ts lives.spec.ts coop.spec.ts direct-items.spec.ts boss.spec.ts advanced-bosses.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock, run the two fingerprint lines (the `integration` one and the `shell` one) with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, and run them again without the
+  variable.
 - **Acceptance:** nothing overlaps in en, es or ja; the HUD allocation guards green (`ui-hud-*-alloc`, `ui-alloc`), no
   budget raised; the e2e mirror equals core's layout (`frame.test.ts`).
 - **Token:** UI-FILE, E2E-MIRROR (work time); FINGERPRINTS (push time). **e2e:** pass 2.
@@ -462,26 +473,33 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Wave / lane / order:** wave 08, lane 3, after `R4-03.C5`.
 - **Depends on:** `R4-03.C5` on `master`.
 - **Goal:** rework the widgets (`DirectionRepeat` `:345` … `Confirm` `:907`), `NameEntry` (`:1026`), `drawMenu`
-  (`:1332`) and `RebindPanel` (`:1657`): panels, cursors, sliders, toggles; optional parts ≤ 12×12 drawn in
-  `scripts/assets/procedural/ui-kit.mjs` (the R4-P.P1 stub) and named in `UI_SPRITES`.
+  (`:1332`) and `RebindPanel` (`:1657`): panels, cursors, sliders, toggles as draw-list rectangles and the font
+  (bible §5.11). No sprite parts: the builders take no sprite ids and their callers are in
+  `packages/core/src/scenes/index.ts` (lane 2's SCENES); `scripts/assets/procedural/ui-kit.mjs` stays the R4-P.P1
+  stub.
 - **Files (only these; checked on `bc8e05d`):**
-  - `packages/core/src/ui/index.ts` — §widgets, §builders, §name entry, §rebind; `UI_SPRITES` (`:236`).
-  - `scripts/assets/procedural/ui-kit.mjs`.
-  - tests in `packages/core/test/ui/` (incl. `ui-alloc`, `ui-rebind-alloc`, `ui-name-entry*`).
+  - `packages/core/src/ui/index.ts` — §widgets, §builders, §name entry, §rebind.
+  - tests in `packages/core/test/ui/` except `ui-strings.test.ts` (`R4-03.C1`'s) (incl. `ui-alloc`,
+    `ui-rebind-alloc`, `ui-name-entry*`).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/scenes
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/presentation-fingerprint.test.ts test/integration/palette-cycle-scan.test.ts
-  bash docs/v2-run/helpers/e2e-batch.sh options.spec.ts rebind.spec.ts game-options.spec.ts display-options.spec.ts input.spec.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/scenes packages/core/test/frame-literals.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
+  bash docs/v2-run/helpers/e2e-batch.sh options.spec.ts rebind.spec.ts game-options.spec.ts display-options.spec.ts input.spec.ts front-end.spec.ts scenes.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock, run the two fingerprint lines (the `integration` one and the `shell` one) with
+  `SHMUP_FINGERPRINT_PRINT=1`, paste the printed tables of the walks that moved, and run them again without the
+  variable.
 - **Acceptance:** menus keep their 18/6-tick auto-repeat and 4-tick confirm buffer (ticks never change); the UI
   allocation guards green; the fingerprints re-pinned with the reason. Hand UI-FILE to `R4-05.E2` when pushed.
 - **Token:** UI-FILE; FINGERPRINTS (push time).
-- **Traps:** `MenuLayout` objects are frozen module constants (M1-16); no `for … of` in per-frame code (M2-16); a new
-  `UI_SPRITES` name is a re-pin.
-- **Docs needs:** `docs/dev/scenes-and-ui.md` (UI kit), `docs/dev/api-reference.md` (`UI_SPRITES`).
+- **Traps:** `MenuLayout` objects are frozen module constants (M1-16); no `for … of` in per-frame code (M2-16);
+  `docs/v2-run/handoffs-w4.md` § "R4 notes" (R4-03): overlays over the title leave cut-off title menu rows under
+  their panels (a v1 trait) — fix it, or say in your report that it stays.
+- **Docs needs:** `docs/dev/scenes-and-ui.md` (UI kit), `docs/dev/api-reference.md` (the widget builders).
 
 ### R4-01.A3 — Four Option frames (FP)
 
