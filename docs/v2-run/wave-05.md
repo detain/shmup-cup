@@ -390,7 +390,9 @@ The **code exit** (what wave 6's gate needs) is everything above except the docs
 
 - **Wave / lane / order:** wave 05, review slot 2, once V1, V2a, V2b, V3, V4a, V4b, V4c and V5 are on master. Loop to
   zero.
-- **Must hold:** `buildAtlas({ artScale: 1 })` unchanged (the scale-1 digest pin of `interim-pipeline.test.ts:341-357`
+- **Must hold:** `buildAtlas({ artScale: 1 })` unchanged (the scale-1 digest pin of
+  `interim-pipeline.test.ts` — 'pins the v1 atlas: every page’s pixels and the manifest, by digest' (`:341-357` on
+  `bc8e05d`; R5-03.E0 and its fixers may add lines above it, so find it by its title or by the digest `fa4198…`),
   green, unedited); V2a left `buildAtlas()` byte-identical (`ATLAS-SHA` at the commit before and after); bullets and
   bends native at 3/2 at the bible's sizes (round 11, oval 13 ×8, needle 17 ×8, bend 11), beams still `k + 1` rows;
   every `@<palette>` variant frame for frame (`content.test.ts:863`); the cycle scan passes on the shipped atlas and
