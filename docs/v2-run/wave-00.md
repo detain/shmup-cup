@@ -10,10 +10,10 @@ loop at zero findings, nits included — its last review (review 4 of the C5 fix
 after a fix); the four runs of `W00.TRIAGE` green (`--retries=0`). Otherwise the open items become `R2-01.F1` in
 [wave 1](wave-01.md).
 
-**Status: open** — until C5 review 3 of `c67c7c9` (and any fix → new review loop after it) reaches zero findings,
-nits included. When that loop ends at zero before the hand-off, the old host's orchestrator rewrites this line to
-`**Status: closed** — <date>, <the zero review>`. If it still reads open when the run starts, the opencode
-orchestrator finishes it first, as `R2-01.F1` in [wave 1](wave-01.md).
+**Status: closed** — 2026-10-19, the C5 review loop at zero findings, nits included, by reviews 5 and 6
+(`r2-01C5-review5.md` — the fixes it ended on: `409a36c`, `9da5dc2`, `8e5272b`, `72a9b65`, `725297a`, and
+review 5's one nit fixed in `602f8ab`; the full Chromium e2e 149 passed / 78 skipped / 0 failed, zero flaky).
+Nothing of wave 0 becomes `R2-01.F1`; a closed wave 0 needs no re-run.
 
 **Who closes it:** the previous (old host's) orchestrator sets the status line above to `**Status: closed**` and
 fills in the closing SHA when the C5 loop reaches zero; after that the driver skips this wave. If the status line
@@ -35,7 +35,9 @@ always runs, pauses) count ticks (C5 review 3)`, then `test(R2-01): display-opti
 count ticks (C5 review 3)`; the patches that `w4-C5-fix5-report.md` left, pushed by the next fixer, report
 `w4-C5-fix6-report.md`; test files only: seven menu specs) made the menu specs' frame-paced key taps count ticks.
 C5 review 4 of these fixes (`8ff2bf6`, `543887b`, `0cabaec`, `424afd7`, `b0dede1` and any later C5 fix; with the
-slow-host repro and the myadmin1 run) and any fix → new review round after it belong to this loop too. The driver
+slow-host repro and the myadmin1 run) and any fix → new review round after it belonged to this loop too — and the
+loop ran its course: reviews 4, 5 and 6, review 4's fixes `409a36c` … `725297a`, review 5's one nit fixed in
+`602f8ab`, ending at zero (the status line above). The driver
 checks the literal `**Status: open**` / `**Status: closed**` at the start of the status line: keep that spelling.
 
 - **The new run's orchestrator**, before wave 1, reads the status line on `origin/master`:
@@ -62,7 +64,8 @@ Reviews: the C5 review loop itself. Docs item: none (the R2-01 docs pass is wave
   nothing runs as wave 0: a closed wave 0 needs no re-run, and an open one becomes `R2-01.F1`.
 - **Pushes:** a fixer pushes its own fix to `master` (README Common rule 5); review agents never push. This wave has
   no zone lane and no patch-only subtask.
-- Nothing in wave 0 changes a golden, a demo, `content/`, a fingerprint or `plan_resolution.md`.
+- Nothing in wave 0 changes a golden, a demo, `content/` or a fingerprint; wave 0's agents do not touch
+  `plan_resolution.md` — the §18 W00 row and the §17 board cells are the orchestrator's close-time edits.
 
 ## Subtasks
 
