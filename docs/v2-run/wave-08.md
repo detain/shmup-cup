@@ -491,28 +491,39 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Files (only these; checked on `8ff2bf6`):**
   - `packages/core/src/weapons/index.ts:2881` and `packages/core/src/enemies/index.ts:3161` —
     `Math.floor(this.host.tick / OPTION_ANIM_TICKS) & 1` → `& 3`, through **one exported constant** (e.g.
-    `OPTION_FRAMES = 4`, `& (OPTION_FRAMES - 1)`).
-  - `packages/core/src/options/index.ts` — the new constant, next to `OPTION_ANIM_TICKS` (`:97`), with its docblock.
+    `OPTION_FRAMES = 4`, `& (OPTION_FRAMES - 1)`); also the docblock at `weapons/index.ts:1254`.
+  - `packages/core/src/options/index.ts` — the new constant, next to `OPTION_ANIM_TICKS` (`:97`), with its docblock,
+    and the `OPTION_ANIM_TICKS` docblock (`:96`, "two-frame").
   - `packages/core/src/index.ts` — the barrel: one added name, next to `OPTION_ANIM_TICKS` (`:911`).
   - `assets/source/sprites/options/orb.v2.sprite.json` (new, 12×12 × 4), `options/stolen.v2.sprite.json` (new, 12×12 × 4).
+  - `test/scripts/assets/options-v2.test.ts` (new): `options/orb` and `options/stolen` in the default-scale atlas are
+    12×12 with `OPTION_FRAMES` frames, binary alpha.
   - tests in `packages/core/test/options/`, `packages/core/test/weapons/`, `packages/core/test/enemies/` (the frame pins).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/options packages/core/test/weapons packages/core/test/enemies packages/core/test/index.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts test/scripts/art-origins.test.ts test/scripts/assets/options-v2.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm --filter @shmup/core typecheck
+  node scripts/art-origins.mjs --check
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
+  SHMUP_FINGERPRINT_PRINT=1, paste the printed tables over `PINNED`, then run it once more without the variable.
+  The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
+  report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the Option frame is computed at sync, not hashed); the weapons and
   enemies allocation guards green; `packages/core/test/index.test.ts` green (the new constant is in the barrel);
-  fingerprints re-pinned with the reason "four Option frames".
+  every fingerprint that moved re-pinned with the reason "four Option frames".
 - **Token:** CORE-CONFIG (the barrel, one added name; after `R4-03.C1`); FINGERPRINTS (push time).
 - **Traps:** the v1 maps `options/orb.sprite.json` / `stolen.sprite.json` have 2 frames: at scale 1 `& 3` indexes
-  frames 2 and 3 — check how the atlas resolves a missing frame for the scale-1 consumers (none draws Options, but
-  `content:check` and the scale-1 relation tests must stay green); the frame change and the 4-frame art in **one**
-  commit.
-- **Docs needs:** `docs/dev/options-shields-hunter.md`, `docs/dev/weapons-and-options.md`.
+  frames 2 and 3 — check how the atlas resolves a missing frame for the scale-1 consumers (only the TV bench scene
+  draws `options/orb`, frame 0 only — `apps/tizen/src/bench/scene.ts:559`; decision RR-1b allows the missing frames
+  2–3 at scale 1; but `content:check` and the scale-1 relation tests must stay green); the frame change and the
+  4-frame art in **one** commit.
+- **Docs needs:** `docs/dev/options-shields-hunter.md`, `docs/dev/weapons-and-options.md`,
+  `docs/dev/api-reference.md` (`:866`: the new constant), `docs/dev/art-bible-v2.md` († row: Options).
 
 ### R4-02.B2 — Four-frame item glints (FP + POWERUPS)
 
@@ -531,12 +542,18 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/powerups
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-items.test.ts test/scripts/assets/procedural-direct-items.test.ts test/integration/content.test.ts test/golden
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-items.test.ts test/scripts/assets/procedural-direct-items.test.ts test/integration/content.test.ts test/golden test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   pnpm content:check
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
+  SHMUP_FINGERPRINT_PRINT=1, paste the printed tables over `PINNED`, then run it once more without the variable.
+  The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
+  report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged (the item frame is sync-time); the powerups allocation guards green; the
-  v1 path of `items.mjs` byte-identical (scale-1 pin).
+  v1 path of `items.mjs` byte-identical (scale-1 pin); a v2 case in `procedural-items.test.ts` /
+  `procedural-direct-items.test.ts` pins each kind's frame count to its `ITEM_KINDS` entry (4).
 - **Token:** POWERUPS (work time, then to `R4-01.A4`); FINGERPRINTS (push time).
 - **Traps:**
   - Do not touch the point item (`items/point`, `items.mjs:131`): that is `R4-02.B3`; frame count and art in one
@@ -547,7 +564,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     today"). Draw **no** v2 maps for them —
     `test/integration/assets-plugin-edge.test.ts:246-258` edits the v1 `items/bonus` map and expects the default-scale
     atlas to follow it.
-- **Docs needs:** `docs/dev/powerups-and-shields.md` (glints).
+- **Docs needs:** `docs/dev/powerups-and-shields.md` (glints), `docs/dev/art-bible-v2.md` († row: items).
 
 ### R4-01.A4 — The force field: 4 wear states × 2 shimmer frames (FP + POWERUPS)
 
@@ -555,23 +572,38 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Depends on:** `R4-02.B2` and `R4-01.A5` on `master`.
 - **Goal:** `shields/force-field` becomes 45×36 × 8 (4 wear × 2 shimmer).
 - **Files (only these; checked on `bc8e05d`):**
-  - `packages/core/src/shields/index.ts` — `FORCE_FIELD_WEAR_FRAMES` (`:177-178`, 4) and `shieldWearFrame`
-    (`:915`) → wear × shimmer.
-  - `packages/core/src/powerups/index.ts` — the sync at `:2159-2163` picks the frame.
+  - `packages/core/src/shields/index.ts` — docblocks only: `FORCE_FIELD_WEAR_FRAMES` (`:177-178`) stays 4 (the wear
+    states) and `FORCE_FIELD_SPRITE` now has 4 wear × 2 shimmer frames; `shieldWearFrame` (`:915`) stays as it is
+    (Reduce, the pods and `armWearFrame` share it).
+  - `packages/core/src/powerups/index.ts` — the sync at `:2159-2163`: for `ShieldKind.ForceField` only, frame =
+    wear × 2 + shimmer (e.g. `shieldWearFrame(shield, frames) * FORCE_FIELD_SHIMMER_FRAMES + shimmer`, the shimmer
+    from `this.host.tick`, whole numbers), with `FORCE_FIELD_SHIMMER_FRAMES = 2` a non-exported `const` in this
+    file; the Arm and Reduce keep their frames.
   - `scripts/assets/procedural/shields.mjs` — the force field's v2 path (`:112-136`).
+  - `test/scripts/assets/procedural-shields.test.ts` — only a new case for the force field's v2 path
+    (`generate({ artScale: 1.5 })`: 45×36, 8 frames, `native: true`), and the force-field entry of an `R4-01.A5` v2
+    case if one pins it; leave A5's pod and Reduce cases as they are.
   - tests in `packages/core/test/shields/`, `packages/core/test/powerups/`.
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/shields packages/core/test/powerups
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/scripts/assets/procedural-shields.test.ts test/integration/content.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/scripts/assets/procedural-shields.test.ts test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
-  then the FP re-pin under the land lock.
+  then, under the land lock (README rule 6), re-pin each fingerprint test that failed above: run it again with
+  SHMUP_FINGERPRINT_PRINT=1, paste the printed tables over `PINNED`, then run it once more without the variable.
+  The content-DB fingerprint cannot move here (no content file or sprite name changes): if it fails, stop and
+  report. If none failed, push without a re-pin and say so in your report.
 - **Acceptance:** goldens green and unchanged; `shields-alloc` and the powerups guards green; the Arm's
   `armWearFrame` unchanged.
 - **Token:** POWERUPS; FINGERPRINTS (push time).
-- **Traps:** the shimmer frame comes from the tick at sync (whole numbers); `shieldWearFrame` is called with `frames`:
-  keep the wear count (4) as the divisor and add the shimmer bit, do not change what `hits` maps to.
+- **Traps:**
+  - the shimmer frame comes from the tick at sync (whole numbers); `shieldWearFrame` is called with `frames`:
+    keep the wear count (4) as the divisor and add the shimmer bit, do not change what `hits` maps to.
+  - Export no new runtime value: `packages/core/test/index.test.ts` requires a barrel line for every runtime
+    export, and the barrel is CORE-CONFIG, which you do not hold. Reduce (2 frames) must keep frames 0–1: test it.
 - **Docs needs:** `docs/dev/options-shields-hunter.md`, `docs/dev/art-bible-v2.md` († row: shimmer).
 
 ### R4-01.A5 — The other shields (art only)
@@ -600,7 +632,7 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Wave / lane / order:** wave 08, lane 5, after `R4-01.A5`.
 - **Depends on:** nothing more.
 - **Goal:** v2 paths for the generated player shots, with v1's frame counts.
-- **Files (only these):**
+- **Files (only these; line numbers on `bc8e05d`, before `R4-P.P1`'s split — find the shots by their names):**
   - `scripts/assets/procedural/weapons.mjs` — `shots/blast` 48² × 4, `shots/ripple` 36×66 × 6 (v1 24×44), `shots/cyclone`
     12×14 × 4 (`weapons.mjs:154-163`).
   - `scripts/assets/procedural/direct.mjs` — `shots/direct-missile` 18×9 × 2, disc 30² × 4, `shots/beam` 39×12 × 4,
@@ -616,7 +648,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Acceptance:** frame counts unchanged; segment shots are 12 wide (`LASER_SEGMENT_LENGTH` after R2-02); no fingerprint
   moves.
 - **Token:** none.
-- **Traps:** the ripple's frame k is a ring size core picks (`laser.ripple`): keep the size order; rule 4.
+- **Traps:**
+  - the ripple's frame k is a ring size core picks (`laser.ripple`): keep the size order; rule 4.
+  - `shots/cyclone` has an explicit anchor `[0, 4]` (`weapons.mjs:164`): its v2 sprite takes `[0, 6]` (⌈1.5·a⌉; the
+    segment starts at x 0); the other generated shots have none (the centre).
 - **Docs needs:** `docs/dev/meter-arsenal.md`, `docs/dev/direct-mode.md`.
 
 ### R4-01.A6 — The 11 shot pixel maps (art only)
@@ -628,7 +663,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `assets/source/sprites/shots/{basic,laser,tail,twin,missile,double,free,two-way,bomb,torpedo,vertical}.v2.sprite.json`
     (11 new; the v1 maps stay).
   - `test/scripts/assets/shots-v2.test.ts` (new).
-  - `docs/images/shots/` — `pnpm docs:images`, commit only this folder.
+  - `docs/images/shots/` — `pnpm docs:images`, commit only this folder, then `git restore docs/images` (the other
+    folders' plates are `R4-01.A9`'s and `R4-05.E6`'s).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/shots-v2.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/content.test.ts test/integration/palette-cycle-scan.test.ts test/scripts/art-origins.test.ts
@@ -636,8 +672,12 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```
 - **Acceptance:** frame counts equal the v1 maps'; no fingerprint moves; scale-1 pin green.
 - **Token:** DOCS-IMAGES for `docs/images/shots/` only (land lock at push).
-- **Traps:** rule 1; anchors per the bible, so the shots leave the ship's muzzle where core puts them.
-- **Docs needs:** `docs/client/arsenal.md` (images), `docs/dev/art-bible-v2.md` († rows: shots).
+- **Traps:** rule 1. Anchors: the bible gives none for shots (§9: "anchor where the content expects it"), so keep
+  today's — an explicit v1 anchor becomes ⌈1.5·a⌉, what the interim build uses now: `basic`, `missile`, `tail`
+  `[4, 1]` → `[6, 2]`; `laser`, `twin` `[0, 1]` → `[0, 2]` (a segment starts at its anchor); `torpedo` `[5, 1]` →
+  `[8, 2]`; `vertical` `[1, 4]` → `[2, 6]`; `bomb`, `double`, `free` and `two-way` have none (the centre of the new
+  odd frame). `shots-v2.test.ts` pins every anchor.
+- **Docs needs:** `docs/client/arsenal.md` (images), `docs/dev/art-bible-v2.md` (§5.3's shot table: the 11 maps are drawn).
 
 ### R4-03.C1 — A native font file, neutral
 
