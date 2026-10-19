@@ -27,10 +27,11 @@ Background: `shmup_feat.md` §3 (pixel-perfect camera, integer scaling), §17 (H
 UI), §18 (draw order, one atlas, hit flash), §22 (rendering pipeline, sim/presentation
 split); `shmup_tech.md` §2.2 (WebGL1, low-res render texture), §4.1 (Pixi as a renderer
 only), §4.10 (no UI framework); plan §3.3 (frame), §3.4 (render contract), §3.5 (content
-owners) and decisions **D20** (HUD bars outside the playfield), **D25** (no `fetch` on the
+owners) and decisions **D20** (HUD bars outside the playfield — v2 keeps the layout, **R-D3**
+replaces its numbers: 12-px bars, a 640×336 playfield), **D25** (no `fetch` on the
 TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser host).
 
-> **Thinking of changing the internal resolution?** The frame is 384×216 upscaled by whole numbers (decision D19). What that costs at 768×432, 960×540 or 1080p — fill rate, power-of-two render-target memory, which findings change, and why 960×540 is not an integer multiple — is in [`render-performance-review.md` §7](render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-). v2 does change it, to 640×360 ([plan_resolution.md](../../plan_resolution.md)): since R1-02 the renderer's defaults, the layer effects, the Mode-7 floor, the debug overlay, the shell's own scenes, the memory estimator and the hosts take the frame from `@shmup/core`'s constants (`FRAME_W`, `FRAME_H`, `HUD_BAR_HEIGHT`, `GLYPH_W` …), and `test/integration/frame-literals-repo.test.ts` keeps literal frame numbers out ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)).
+> **Thinking of changing the internal resolution?** The frame is 640×360 upscaled by whole numbers (decision **R-D1**, replacing v1's D19 at 384×216): ×3 on 1080p, ×2 on 720p, ×4 on 1440p, ×6 on 4K — every display we ship to. What such a change costs — fill rate, power-of-two render-target memory, which findings from the v1 measurements change, and why 960×540 is not an integer multiple of 720p — is in [`render-performance-review.md` §7](render-performance-review.md#7-if-the-internal-resolution-changes-later-960540-1080p-), written when the frame still was 384×216; v2's step R2-01 of [plan_resolution.md](../../plan_resolution.md) answered its question and flipped the frame. The renderer's defaults, the layer effects, the Mode-7 floor, the debug overlay, the shell's own scenes, the memory estimator and the hosts take the frame from `@shmup/core`'s constants (`FRAME_W`, `FRAME_H`, `HUD_BAR_HEIGHT`, `GLYPH_W` …) since R1-02, and `test/integration/frame-literals-repo.test.ts` keeps literal frame numbers out ([conventions.md](conventions.md#frame-numbers-the-literal-scan-and-the-fingerprint)). Until the art bible's art arrives (R3 … R5) the shipped art is v1's sprites upscaled ×1.5 by the pipeline ([asset-pipeline.md](asset-pipeline.md#the-interim-15-art-stage-r2-01)); the simulation's world stays at v1 scale until R2-02's port (plan §2.6).
 
 ## The picture at a glance
 
@@ -45,7 +46,7 @@ TV), **D30** (hit flash = white sibling sprite) and **D34** (one shared browser 
 │     batches: SpriteBatchView[] (typed arrays)│        │   world group ← round(shakeX, shakeY)  │
 │     lasers: LaserView | null (M1-09)         │        │   flash / dim quads                    │
 │   hud, ui: DrawList (typed-array commands)   │        │   hudView.draw(hud), uiView.draw(ui)   │
-│   screen: { shakeX, shakeY, flash, dim }     │        │   pass 1: scene → 384×216 texture      │
+│   screen: { shakeX, shakeY, flash, dim }     │        │   pass 1: scene → 640×360 texture      │
 └──────────────────────────────────────────────┘        │   pass 2: texture ×N → canvas          │
  game.events ──► shell dispatcher (connectFxEvents) ──► │ fx (M1-14): effects / particles /      │
                                                         │   popups stepped by the tick delta,    │
@@ -91,8 +92,8 @@ A batch is one layer's worth of sprites as parallel arrays: `layer`, `capacity`,
 and per slot `x`, `y`, `spriteId`, `frame`, `flags`. Slots `[0, count)` are drawn.
 
 - Positions are **world pixels** of the sprite's *anchor*. The renderer draws slot `i` at
-  `round(x − camera.x)`, `round(y − camera.y) + PLAYFIELD_Y` — the top HUD bar owns rows 0–7
-  (D20), so world `y = 0` is screen row 8.
+  `round(x − camera.x)`, `round(y − camera.y) + PLAYFIELD_Y` — the top HUD bar owns rows 0–11
+  (D20's layout, R-D3's 12-px bar), so world `y = 0` is screen row 12.
 - The arrays are typed `ArrayLike<number>`, so a struct-of-arrays pool (`createSoaPool`) *is*
   a batch view: point the view's fields at the pool's `Float64Array` / `Uint16Array` fields.
 - Object-based systems (players, enemies, bosses) fill a small mirror each tick:
@@ -173,7 +174,7 @@ The HUD and menus draw through a fixed-capacity command buffer, stored column-wi
 | `flags` | — | `SpriteFlag` | `TextAlign` | `TextAlign` |
 | `value` | — | — | — | the number |
 
-Coordinates are screen pixels of the 384×216 frame, rounded and stored as `Int16`. Text lives
+Coordinates are screen pixels of the 640×360 frame, rounded and stored as `Int16`. Text lives
 in **string slots**: `setString(slot, text)` when the text changes (returns `false` and does
 nothing if it is unchanged), then the per-frame `text(slot, …)` command carries only the slot
 number. Scores and counters use `number(value, …)` — digits are extracted at draw time, no
@@ -210,8 +211,11 @@ in the renderer's `effects` and are added on top of it. `screen.shakeX/Y` are ro
 renderer; `flash` (white over the playfield, under the HUD) and `dim` (black under the UI layer)
 are 0…1 and clamped.
 
-The layout constants are in core `config`: `HUD_BAR_HEIGHT` 8, `PLAYFIELD_Y` 8,
-`PLAYFIELD_W` 384, `PLAYFIELD_H` 200 (D20). `Game` also exposes `events` — the `core/events`
+The layout constants are in core `config`: `FRAME_W` / `FRAME_H` 640 / 360, `HUD_BAR_HEIGHT` 12,
+`PLAYFIELD_Y` 12, `PLAYFIELD_W` 640, `PLAYFIELD_H` 336, `HUD_BOTTOM_Y` 348, `TILE_SIZE` 12 (D20's
+layout with R-D3's numbers, R2-01's flip), and the font metrics `GLYPH_W` / `GLYPH_H` / `LINE_H`
+9 / 12 / 15 with `ART_SCALE` 3/2 — while `WORLD_SCALE` is still 1: the content ports ×1.5 in R2-02
+([plan_resolution.md](../../plan_resolution.md) §2.6). `Game` also exposes `events` — the `core/events`
 queue its systems push presentation events into; the shell drains it once per frame.
 
 ## The renderer (`@shmup/render-pixi`)
@@ -268,9 +272,9 @@ the GPU at the transition instead of on their first draw mid-play.
   (later calls draw on top), `end()` hides the leftovers. Rectangles are the atlas's 1×1
   white `ui/pixel` scaled and tinted. A full pool counts `dropped` and draws nothing more.
 - **`TerrainBinding`** (`createTerrainBinding`, one per bound `TerrainView`, on `TERRAIN`): a
-  preallocated ring of tile sprites one tile wider and taller than the playfield — **49 × 26**
-  for 8-px tiles (rows capped at the map's). Slot column `s` shows the map column `≡ s (mod
-  49)` inside the view, so `sync(view, camera)` re-textures only the column (or row, for
+  preallocated ring of tile sprites one tile wider and taller than the playfield — **55 × 29**
+  for 12-px tiles (v1: 49 × 26 for 8-px tiles; rows capped at the map's). Slot column `s` shows the map column `≡ s (mod
+  55)` inside the view, so `sync(view, camera)` re-textures only the column (or row, for
   vertical pans) that scrolled in, and moves the whole grid as one container at
   `round(−camera.x)`, `PLAYFIELD_Y + round(−camera.y)` — which lands integer world positions on
   exactly the pixels the sprite bindings use. `updatedCells` reports how many cells the last
@@ -311,7 +315,8 @@ frame** (the bench measured 655–659 of 660).
 So every layer that toggles sprites while the game runs is its own render group
 (`RENDER_GROUP_LAYERS`: `TERRAIN` … `UI`). Pixi does not descend into a child render group while
 collecting a parent's renderables — it emits one instruction for it — so a bullet appearing
-rebuilds the 512-sprite `ENEMY_BULLETS` group and leaves the 1,274-tile terrain grid, the HUD and
+rebuilds the 512-sprite `ENEMY_BULLETS` group and leaves the 1,595-tile terrain grid (55 × 29 at
+12-px tiles; v1: the 1,274-tile 49 × 26 grid), the HUD and
 the UI alone, buffers included. `BG_FAR`, `BG_MID` and `DEBUG` stay plain: the parallax bands are
 shown once when they are bound and only their containers move afterwards, the Mode-7 mesh follows
 a camera range, and `DEBUG` is empty in a release build.
@@ -331,8 +336,11 @@ the bitmap font. It skips the whole list when it is the same list at the same `r
 
 ### Bitmap text (`text`)
 
-`createBitmapFont(atlas, 'pixel')` resolves the pipeline's font (6×8 cells, `lineHeight` 10,
-ASCII 32–126 plus `← ↑ → ↓ ● ✕ ★`) into dense lookup tables. `drawText(sink, font, text, x,
+`createBitmapFont(atlas, 'pixel')` resolves the pipeline's font (since R2-01 the interim **9×12
+cells, `lineHeight` 15** — the 6×8 file scaled ×3/2 by the pipeline, not a new file
+([asset-pipeline.md](asset-pipeline.md#the-interim-15-art-stage-r2-01)); glyphs: the 195 of
+`UI_GLYPHS` — ASCII 32–126 plus `← ↑ → ↓ ● ✕ ★`, the Spanish capitals and the katakana subset)
+into dense lookup tables. `drawText(sink, font, text, x,
 y, color, align)` walks `charCodeAt` and emits one quad per visible glyph: `\n` starts a new
 line, alignment (`TextAlign.Left/Center/Right`) applies per line, spaces only advance, a
 missing character draws `?`. `drawNumber()` splits the integer part into a shared digit
@@ -367,9 +375,9 @@ particle pool and the score popups (the last two on the `FX` layer, with an atla
    brighter of the frame's white flash and the effects' tinted flash (on the additive quad for an
    additive look — the Mega Crash since M2-08), sets both dims;
 5. draws the HUD and UI lists (skipped when unchanged);
-6. renders the scene into the 384×216 render texture, then that texture as one **quad** onto the
-   canvas, placed by the scale mode (`computeViewport` — integer-scaled and centred by default;
-   `fit` / `stretch` since M2-08). Since **M3-02d** that quad is a `Mesh` whose shader is the CRT
+6. renders the scene into the 640×360 render texture, then that texture as one **quad** onto the
+   canvas, placed by the scale mode (`computeViewport` — integer-scaled and centred by default,
+   ×3 on 1080p and ×2 on 720p since R2-01's flip; `fit` / `stretch` since M2-08). Since **M3-02d** that quad is a `Mesh` whose shader is the CRT
    program (`effects` `createCrtBlit`), so the CRT look costs no extra pass and no pooled render
    target — `PixiRendererOptions.screenPass: 'filter'` restores M3-02's plain sprite plus a Pixi
    filter if a device ever needs it.
@@ -454,7 +462,7 @@ The whole story is on [presentation-polish.md](presentation-polish.md); in brief
 - **Layer effects.** `renderer.layerEffects` (`effects` module, `createLayerEffects`) binds the
   world's `effects` in `bindWorld` and, every frame, attaches one GLSL ES 1.0 filter to a world
   layer while one of its raster effects or palette cycles is in camera range — a per-row offset
-  table in a 1 × 216 RGBA8 texture plus up to 8 colour pairs, one program. Since M3-02e a plain
+  table in a 1 × 360 RGBA8 texture (the frame height — `LAYER_EFFECT_ROWS`) plus up to 8 colour pairs, one program. Since M3-02e a plain
   frame is about 7 WebGL draw calls (roughly one per render group that holds something — see
   **Render groups** below); each filtered layer adds about 3. `effects.settings.rasterEffects =
   false` draws every layer plain.
@@ -744,8 +752,8 @@ pnpm test:e2e --project=chromium                             # one engine only (
 **test builds** — release code plus the debug tools, so `window.__shmupDebug` exists), then
 `playwright test --config test/e2e/playwright.config.ts`: headless Chromium, the viewport `VIEWPORT` of
 `test/e2e/frame-pixels.ts` — the frame at `CAPTURE_SCALE` (`floor(1280 / FRAME_W)`, `scripts/frame.mjs`):
-1152×648 today (×3, so frame pixel `(x, y)` is screenshot pixel `(3x + 1, 3y + 1)`), 1280×720 after
-R2-01 (×2) — and since R1-02 every spec samples through its `sx` / `sy` / `pixelIndex` instead of
+1280×720 since R2-01 (×2, so frame pixel `(x, y)` is screenshot pixel `(2x + 1, 2y + 1)`; v1's
+1152×648 was ×3) — and since R1-02 every spec samples through its `sx` / `sy` / `pixelIndex` instead of
 writing `3x + 1`, the web build served by
 `vite preview` on port 4173 and the Tizen `dist/index.html` opened via `file://`. That is the
 `chromium` project, which runs every spec; since M2-18 a `firefox` project runs only the
@@ -834,8 +842,8 @@ renderer-free `?determinism` page — [release-hardening.md](release-hardening.m
   other sprite) holds the right half of the playfield; no console errors or atlas warnings
   ([zone-a-and-playtest.md](zone-a-and-playtest.md)).
 - `shell.spec.ts` — an aborted atlas request ends on the boot error screen (overlay canvas,
-  state `error`); a 1000×600 window gets a centred ×2 frame on the letterbox colour and a
-  resize to 1920×1080 re-fits it to ×5; free flight animates.
+  state `error`); a 1000×600 window gets a centred ×1 frame on the letterbox colour (640×360 at
+  (180, 120)) and a resize to 1920×1080 re-fits it to ×3 (v1: ×2 at 1000×600, ×5 at 1080p); free flight animates.
 - `smoke.spec.ts` (M1-19) — the M1 gameplay smoke on both builds: title → OK, OK (START), OK on
   NORMAL in the difficulty menu (M2-01), OK on the ship select's KESTREL (M2-05), OK on the weapon
   select's START (M2-03) → hold → then ↑
@@ -974,7 +982,7 @@ a shared CI runner as often as not. That decides what its output is worth:
 | **Pooled render-target bytes** — Pixi's power-of-two rounding is the same everywhere, and so is the VRAM it costs | **Fill-rate conclusions.** A tiler's cost model for a second full-screen pass is not SwiftShader's |
 | **Structure rebuilds** — a pure scene-graph property (the review's F1) | **Frame-rate verdicts.** The bench never claims 60 fps; only the overlay on the monitors can |
 | **Heap delta** — JS allocation is V8's, not the GPU's | |
-| **Relative comparisons** between scenarios on one run (CRT off vs light vs full; the shipped frame vs ×2 of it — 384×216 vs 768×432 today) | Comparisons **across machines or across runs on different machines** |
+| **Relative comparisons** between scenarios on one run (CRT off vs light vs full; the shipped frame vs ×2 of it — 640×360 vs 1280×720 today) | Comparisons **across machines or across runs on different machines** |
 
 So: M3-02d and M3-02e are judged against the *counted quantities* and the *relative* comparisons
 this step recorded, and the millisecond columns exist to catch a path that became structurally more
@@ -989,18 +997,20 @@ that decide whether the game holds 60 fps come from the overlay on the monitors
 |---|---|
 | **render-ms p50 / p95 / max** | CPU time inside `renderer.render()`. Under SwiftShader, so it is a *regression* gate (`RENDER_P95_BUDGET_MS`), never a prediction of the Mali-G51 |
 | **draw calls** | Hardware-independent — the strict gate (`DRAW_CALL_BUDGET`; `shmup_feat.md` §22 allows 20–50) |
-| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 512×256 for a 384×216 pass. Since **M3-02d** the CRT and the Mode-7 floor pool nothing (they are meshes); only `screenPass: 'filter'` still pools one the size of the canvas |
+| **pooled render-target bytes** + the frame target | Every filter pass costs a power-of-two-rounded target (review **F3**): 1024×512 for today's 640×360
+pass, as 512×256 was for the 384×216 pass F3 reviewed. Since **M3-02d** the CRT and the Mode-7 floor pool nothing (they are meshes); only `screenPass: 'filter'` still pools one the size of the canvas |
 | **scene rebuilds**, and **render-group rebuilds** beside them | Frames on which Pixi threw the *scene's* instruction set away and re-walked it (review **F1**), and the same flag counted over every render group of the scene. Since **M3-02e** the first is 0 and the second says where that churn went — a layer group at a time — so the first cannot fall by the work merely moving out of sight |
 | **JS-heap delta over 600 frames** | The gate **F5** needs: the Node allocation guards stop at the `renderer.render()` boundary and cannot see Pixi's batch-buffer growth or its lazy per-sprite allocation. A deliberately leaky fixture in the same file proves the gate really fails |
 
 The **internal frame size is a scenario parameter** (review §7.5): one scenario runs the
-layer-effect load at ×2 of the shipped frame — since R1-02 `2·FRAME_W` × `2·FRAME_H`, so 768×432
-today (the first integer step of 384×216) and 1280×720 after R2-01, when its pooled filter target
-grows to 2048×1024 (8 MiB, the floor `render.perf.ts` asserts) — so "what would a higher internal
+layer-effect load at ×2 of the shipped frame — since R1-02 `2·FRAME_W` × `2·FRAME_H`, so 1280×720
+since R2-01's flip (v1: 768×432, the first integer step of 384×216), its pooled filter target
+2048×1024 = 8,192 KB, the floor `render.perf.ts` asserts — so "what would a higher internal
 resolution cost?" is a bench run rather than a build-and-hope; the other scenarios default to
 `FRAME_W` × `FRAME_H`. What it shows
-today: the pooled filter target goes 512 KB → 2,048 KB and the frame render texture 324 KB →
-1,296 KB, exactly the ×4 of §7.3's table.
+today: the pooled filter target goes 2,048 KB → 8,192 KB and the frame render texture 900 KB →
+3,600 KB, exactly the ×4 of §7.3's table (the pre-flip step was 512 KB → 2,048 KB and 324 KB →
+1,296 KB).
 
 What the first runs measured (headless, so read the shape, not the milliseconds): **655–659 of 660
 frames rebuilt the scene's instruction set** — F1's mechanism confirmed against a real browser,
@@ -1036,7 +1046,8 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   the real renderer's bindings at each internal size with a **density** `s`: 384×216 at `s` = 1,
   640×360 at 1.5 (the v2 game), 960×540 at 2.25 (v2's field of view at 1.5× its density). The atlas
   is upscaled ×`s` at build time (`scripts/bench-atlas.mjs`; pages 1 / 1 / 2 by the plan's area
-  model — since R1-05 from the **ungrouped** source atlas, `buildAtlas({ ungrouped: true })`, the
+  model — since R1-05 from the **ungrouped** source atlas, and since R2-01 W4-6 at `artScale: 1`
+  (`buildAtlas({ ungrouped: true, artScale: 1 })`) so the bench draws v1-scale art for good — the
   old one-page layout byte for byte, so R0-02's figures stay comparable), and the load is v2's
   layer stack: five parallax layers (two full-frame, three partial with alpha), ~35 % terrain at `8·s`-px tiles, decor, 64 enemies, 512 bullets, 512 point items, 512
   particles, the ship with four Options and 32 shots, the HUD bars. Six variants per size — busy, a
@@ -1059,7 +1070,10 @@ build-only webOS stub too). How to build, package and run it on the monitors:
   atlas page costs from file to GPU, on the game's own paths. Four pages are generated at bench-build
   time (`scripts/bench-decode.mjs`, into `dist-bench/assets/atlas/decode-<id>.png`, so the bundle
   check's 2048² rule covers them): a synthetic **2048² RGBA** page (2.50 MB), the same art as **2048²
-  PNG-8** (0.54 MB), and the shipped `common` and zone A pages. Each repetition (8 on the TV, 2
+  PNG-8** (0.54 MB), and the shipped `common` and zone A pages — since R2-01's flip those shipped
+  pages are the interim ×1.5 ones (`common` 1024² instead of 1024×512, the script's docblock says),
+  so R0-03's decode rows are not like-for-like across the flip; only the two synthetic 2048² pages
+  compare directly. Each repetition (8 on the TV, 2
   headless, `?reps=` 1–50) times the stages apart: the **fetch** by XHR (audio-web `loadArrayBuffer`,
   the request the game fetches its manifest with — `file://`, status 0), the **decode** by an
   `HTMLImageElement` from a **blob URL** with a guarded `decode()` (the game's decoder; a second load
@@ -1366,7 +1380,7 @@ code is the draw order); the layer stack picks it up. A new *world* layer must s
 | `packages/core/test/presentation/` | `createSpriteBatch` / `pushSprite` bounds, `DrawList` encoding of every op, rounding, clamps, string slots and `revision`, `dropped`, layer tables |
 | `packages/render-pixi/test/atlas/` | Frame numbering, sprite / flash tables, `ui/missing` fallback and warn-once, stale / oversized / corrupt manifests |
 | `packages/render-pixi/test/sprites/`, `ui/`, `text/`, `layers/` | Binding sync (camera, `PLAYFIELD_Y`, anchors, flips, blink, flash, shrinking batches), quad-pool ordering and overflow, draw-list views (revision skipping, hidden sprites), text layout and metrics, number formatting, layer order |
-| `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (49 × 26, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
+| `packages/render-pixi/test/layers/layers-stage*.test.ts` | Terrain grid size (one column / row more than the playfield in tiles — 55 × 29 at 12-px tiles, 81 × 43 for the 8-px fixtures, capped at the map's rows), textures and positions, the ring (nothing re-textured inside a tile, one column / row per tile edge, all after a jump or new tables; after a long random camera walk it equals a freshly built grid), pixel agreement with the sprite bindings at half-pixel cameras, parallax coverage for any offset / spacing, validation, allocation-free syncs |
 | `packages/render-pixi/test/layers/layers-terrain-changes.test.ts`, `layers-terrain-changes-edge.test.ts` | M2-07: only the logged cells in view re-textured, a reset or an overflowing gap redraws the grid, a view without `changes` |
 | `packages/render-pixi/test/layers/layers-bending.test.ts` | The bending laser binding (M2-02): the newest `filled` nodes of each active slot, tail first, the head on top; a shrinking body's extra sprites, hidden and inactive slots hidden; clamping to its nodes; bad capacities and node counts; a moving body synced without allocating |
 | `packages/render-pixi/test/palette/palette-bullets.test.ts`, `renderer/renderer-wiring.test.ts` | M2-02: `bulletPaletteSpriteName`, `resolveBulletPaletteTable` (variants in place of their sprites, the rest kept); the renderer binding the bending laser view after the lasers and `setBulletPalette` swapping the sprite tables to a palette's variants and back |

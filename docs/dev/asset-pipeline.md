@@ -26,7 +26,8 @@ assets/source/sprites/**/*.png (+ .json)┤  real-art overrides, replace frames 
 assets/source/fonts/*.font.json ────────┘  bitmap fonts → one sprite, a frame per glyph
 assets/source/atlas-groups.json ────────  R1-05: which sprites pack onto a zone's own pages
    │  collectSprites()     validate, merge, add <name>@flash and <name>@p2 siblings, default anchors,
-   │                       give every sprite its group (common, zone-a … zone-i)
+   │                       give every sprite its group (common, zone-a … zone-i), then scale every
+   │                       v1-scale source by `artScale` (the interim ×1.5 stage, below)
    ▼
 packRects()                 MaxRects per group, 1-px padding + 1-px edge extrusion, power-of-two pages ≤ 2048²
    │  buildAtlas()          place frames, encodePng(…, { indexed: 'auto' }) each page (PNG-8 when it fits), build the manifest
@@ -43,8 +44,10 @@ dist/assets/atlas/*.png      emitted next to the bundle, with dist/assets/atlas/
 
 **Status today.** The whole pipeline, the initial sprite set (M1-03: 55 sprites, 272 frames on
 one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo, one
-1024×512 page since the M2-09 boss parts, 1024² since M2-14; **since R1-05 split by zone**: a
-1024×512 `common` page plus one 256×128 / 256×256 page per campaign zone, 120,400 B of PNG in all),
+1024×512 page since the M2-09 boss parts, 1024² since M2-14; **since R1-05 split by zone**, and
+since R2-01's interim ×1.5 art (below) a 1024² `common` page plus zone pages of 256² / 512×128 /
+512×256 / 256×512, 438 sprites in 1,459 frames and 139,944 B of PNG in all — v1's ungrouped page
+held 438 sprites in 1,411 frames, 120,400 B split by zone),
 the pixel font, the Vite plugin and the sprite-name check in `pnpm content:check` are done. The apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
 `new Image()` (since R1-05 after fetching the manifest) and render-pixi's `createAtlas` turns them
@@ -74,6 +77,67 @@ Why this design:
   machine with the same zlib: sorted inputs, a deterministic packer, no timestamps in the
   PNGs and no engine-dependent maths in the generators.
 
+## The interim ×1.5 art stage (R2-01)
+
+Since R2-01 the frame is 640×360 (decision R-D1, replacing D19's 384×216), the tiles are 12 px
+(R-D4) and the font cell is 9×12 with a 15-px line (R-D5, interim) — while the art bible's v2 art
+only arrives through R3 … R5. In between, the pipeline upscales every v1-scale source by **3/2**,
+so every sprite exists at the new size. The scale is core's `ART_SCALE` (3/2) mirrored by
+`INTERIM_ART_SCALE` in `scripts/assets/interim.mjs` (pinned equal by
+`test/scripts/assets/terrain-size.test.ts`); `buildAtlas({ artScale })` / `collectSprites({ artScale })`
+take it as an option (default `INTERIM_ART_SCALE`; scale 1 is the v1 art at either frame) and
+`generateAssets()` builds only the default scale. (The plan's wording "a pipeline stage
+`interimScale: 1.5`" was built this way — decisions W4-3 … W4-6.)
+
+**The sampling is plain nearest-neighbour** (`scaleImage`): an image `w × h` becomes
+`⌈s·w⌉ × ⌈s·h⌉` and destination pixel `d` takes source pixel `⌊d / s⌋` — `⌊2d / 3⌋` at 3/2 — on
+every axis, copying every channel (alpha included) as is. Explicit anchors become `⌈s·a⌉`
+(`scaleAnchor`). Every computation is whole-number arithmetic on the scale's exact fraction
+(`parseArtScale`), so the output is identical on every machine. That rounding is what R2-02's
+rescale tool agrees with: it rounds a stage's raster `bands` to `⌈s·b⌉`, and pixel-centre sampling
+would land the `.5` boundaries a pixel higher. The procedural generators run at their native size
+first and the stage scales their output, exactly like the pixel maps (`ships/kestrel` 16×9 with
+anchor [8, 4] → 24×14 with anchor [12, 6]).
+
+**Never upscaled** (decision W4-5, amended by `16aff20`) — these sources are *drawn* at the
+build's art size instead:
+
+| Source | Why it is native |
+|---|---|
+| The terrain tilesets (`terrain.mjs`) | Draws at `TILE_SIZE` directly (12 since the flip; its own copy of the constant is pinned to core's by `terrain-size.test.ts`), so it makes true 12-px tiles beside the ×1.5 bands |
+| `ui/pixel` | The renderer stretches the one texel — its drawn size is the quad's, never the art's |
+| The laser beams `lasers/beam-*` and their `@<palette>` variants | The renderer reads a frame's number as the beam's thickness, so frame `k` must be a band `k + 1` px tall — ×1.5 of frame `k` would not be `k + 1` px any more. `lasers.mjs` therefore draws one frame per band height at the art scale itself: 8 frames of 4×8 at scale 1, **12 frames of 6×12 at 3/2** (frame `k` a band `k + 1` px tall — the art bible's v2 beam, `art-bible-v2.md` §5.4). The only frames whose *count* changes at the interim scale (+4 per beam) |
+| Real-art PNG overrides | Already v2-native: drawn at the art bible's sizes ([below](#real-art-png-overrides)) |
+| A `native: true` source | A pixel map's `"native"` key, or `makeSprite({ native })` — what the R3 / R4 redraws set |
+
+**The interim font** (decision W4-4): `assets/source/fonts/pixel6x8.font.json` stays on disk
+unchanged; `scaleFont` turns it into a 9 × 12 cell with a 15-px line and a 9-px advance inside the
+atlas. That is where core's `GLYPH_W` / `GLYPH_H` / `LINE_H` come from — the file's values ×
+`ART_SCALE`, pinned by `packages/core/test/config/frame-constants.test.ts`. The strokes come out
+1 or 2 px wide by position and look uneven; it is temporary until R4-03's redraw.
+
+**The `artScale: 1` builds** (decision W4-6): the TV bench's density atlas is built with
+`buildAtlas({ ungrouped: true, artScale: 1 })` **for good**, and the CJK figures (above), the store
+icons (`scripts/store-assets.mjs`) and the doc images (`scripts/doc-images.mjs`) build at scale 1
+until R2-03 switches the last two to the default. Scale 1 means *the v1 art at either frame* — the
+bench's R0-02 / R0-03 figures therefore stay comparable across the frame flip.
+
+**The atlas with interim art** — what `pnpm assets` writes today: 438 sprites and **1,459** frames
+(v1: 1,411; the beams' +4 each is the only count change), `main.png` a 1024² `common` page plus
+zone pages of 256² / 512×128 / 512×256 / 256×512 — **139,944 B** of PNG in all, inside the 256 KiB
+`ATLAS_PNG_BYTES_CAP` (now `test/scripts/assets/atlas-budget.ts`), and a 204,869 B `main.json`.
+The sprite *names* do not change, so the interim art packs into the same zone groups (R1-05).
+
+**Hand-offs to R3.** The `artScale: 1` builds pass real-art PNG overrides and `native` sources
+through at their v2 size — so once R3 art ships they no longer hold pure v1 art and
+`interim-pipeline.test.ts`'s scale-1 digest pin moves; R3 must decide whether `artScale: 1` skips
+overrides and native sources (the pin holds) or is re-pinned with the reason. Related:
+`applyPngOverrides` keeps the remaining base frames when an override has fewer, which at 3/2 puts
+upscaled v1 frames beside v2 ones — R3 decides whether a partial override is allowed. And
+`*.font.json` has no `native` key yet: when R4-03 lands the real 9×12 font file, either give font
+sources one that the interim stage honours or drop the font scale, or a 3/2 build turns the 9×12
+font into 14×18 (both the font pin and the scale-1 digest pin would move).
+
 ## Sources
 
 ### Pixel maps (`*.sprite.json`)
@@ -102,6 +166,7 @@ One file per sprite under `assets/source/sprites/`. The **sprite name is the pat
 | `palette` | Single printable ASCII character → `null` (transparent) or `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` |
 | `anchor` | Optional `[x, y]` in pixels from the frame's top-left; default `[floor(w/2), floor(h/2)]` of frame 0. The sprite's position maps to this pixel |
 | `hitFlash` | Optional boolean; `true` adds the `<name>@flash` silhouette sprite (below) |
+| `native` | Optional boolean (v2, decision W4-5; default `false`); `true` says the pixels are already at the art's v2 size, so the interim stage ([above](#the-interim-15-art-stage-r2-01)) leaves them unscaled |
 | `frames` | Non-empty; every frame has the same size, every row the same width, every character is in the palette |
 | `animations` | Optional tag → non-empty list of frame indices (`ANIMATION_NAME_PATTERN`: lower-case words joined by `-` or `_`) |
 
@@ -127,7 +192,7 @@ Each module exports `generate(): SpriteDef[]` and is registered in
 | `backdrops` | M1-18: `bg/azure-verge` — zone A's far planet band, a 128×48 tile (`AZURE_TILE_W`, `AZURE_TILE_H`, anchored top-left) that repeats seamlessly along x: a translucent haze thickening towards a lit rim row (`AZURE_RIM_ROW` 10), then an opaque dark-azure-to-navy body with seeded cloud streaks that wrap round the tile edge. Dark and low in saturation so the pink / red / purple bullets and the gold capsules stay readable over it, never pure black |
 | `raster-bands` | M2-08 (`shmup_feat.md` §18): backdrops made for the raster effects and palette cycling — `bg/sea-swell` (`SEA_TILE_W` 128 × `SEA_TILE_H` 40, opaque, anchored top-left) painted **only** in the four colours of `SEA_RAMP` (`#183c78`, `#24569c`, `#3474bc`, `#5096d8`, dark → light — the exact ramp a stage's palette cycle names): 3-px rows whose ramp index steps with the row and bumps with a 32-px swell profile, so cycling the ramp rolls the swell and a `wave` effect wobbles it; `bg/checker-floor` (`FLOOR_TILE_W` 64 × `FLOOR_TILE_H` 48) — a checker floor in ten strips `FLOOR_BANDS` (2, 2, 3, 3, 4, 5, 6, 7, 8, 8 rows) whose squares `FLOOR_SQUARES` widen towards the bottom (4 → 32 px; each divides 32, so the tile repeats every 64 px), `FLOOR_COLORS` plus a horizon line — made for a `lines` effect with the same strips as its `bands`. Integer maths only ([presentation-polish.md](presentation-polish.md#content-and-assets)) |
 | `bosses` | M2-09 (`shmup_feat.md` §13, decision D24): the advanced bosses' parts, each with its `@flash` sibling — `bosses/turret` (16×16 × 16 heading frames: a round armoured base with a 3-px barrel of length 7 pointing `k × 22.5°` clockwise from +x — `DIRECTIONS_8` and their negations, no trig; a turned part's `turn: 16`, so a raid's turrets visibly aim), `bosses/orb` (12×12 × 2, `pulse`: a shaded armour orb — round art for spinning arms and rings of pods, which are never rotated), `bosses/raid-hull` (96×40, one riveted hull section of a battleship larger than the screen — rivets from the seeded `hash2`; sections side by side make IRON LEVIATHAN's 480-px body) and `bosses/captain-shell` (28×20 × 2, `blink`: a mid-boss's rounded carapace with a glowing eye slit) |
-| `terrain` | `tiles/terrain-a` — 20 8×8 tiles (solid, floor, ceiling, walls, 45° and 22.5° slopes, and since M2-07 the destructible `brick`, crystal `cube` and regrowing `tissue` — opaque full blocks in their own colours so players can tell what breaks); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together. Since M2-11 it draws one tileset per `TERRAIN_PALETTES` entry (`TerrainPalette { surface, subsurface, rock }`): `tiles/terrain-a` unchanged, `tiles/terrain-reef` (zone B's pale coral over blue-grey stone) and `tiles/terrain-dune` (zone C's sand), since M2-12 `tiles/terrain-magma` (zone D's basalt, ember rim) and `tiles/terrain-ridge` (zone E's storm-grey granite, frost rim), since M2-13 `tiles/terrain-vault` (zone F's dark olive flesh, pale-green rim) and `tiles/terrain-prism` (zone G's deep-blue crystal, ice-blue rim — lighter than the facet backdrop) — the same tiles and frames, only the rock colours (the texture hash seeded per set); the bricks, cubes and tissue look the same in every set; `terrain-reef` / `terrain-dune.tileset.json` are copies of `terrain-a`'s naming the other sprite. **Tile size (R1-04):** `renderTerrainTiles(size, name)` draws a set at any even size ≥ 4 — slopes, rims, brick courses and the crystal core scale with it — and `generate()` draws at the module's own `TILE_SIZE` (8), a copy kept here rather than imported so the pipeline's input hash sees a change; `test/scripts/assets/terrain-size.test.ts` pins it to core's, and R2-01 flips both. `resampleMask(mask, from, to)` moves a collision mask between tile sizes: straight edges between half-tile heights exactly (`lineMask` / `lineMaskEnds` — every shipped mask, so a resampled 8-px mask equals the opaque pixels of the 12-px tile), anything else nearest-neighbour; it throws `RangeError` on a bad size or mask |
+| `terrain` | `tiles/terrain-a` — 20 tiles (v1 8×8, 12×12 since R2-01's flip — solid, floor, ceiling, walls, 45° and 22.5° slopes, and since M2-07 the destructible `brick`, crystal `cube` and regrowing `tissue` — opaque full blocks in their own colours so players can tell what breaks); every tile is also a one-frame animation named after it (`floor → [1]`, list in `TERRAIN_TILES`); collision masks and frames live in `content/tilesets/terrain-a.tileset.json` — change both together. Since M2-11 it draws one tileset per `TERRAIN_PALETTES` entry (`TerrainPalette { surface, subsurface, rock }`): `tiles/terrain-a` unchanged, `tiles/terrain-reef` (zone B's pale coral over blue-grey stone) and `tiles/terrain-dune` (zone C's sand), since M2-12 `tiles/terrain-magma` (zone D's basalt, ember rim) and `tiles/terrain-ridge` (zone E's storm-grey granite, frost rim), since M2-13 `tiles/terrain-vault` (zone F's dark olive flesh, pale-green rim) and `tiles/terrain-prism` (zone G's deep-blue crystal, ice-blue rim — lighter than the facet backdrop) — the same tiles and frames, only the rock colours (the texture hash seeded per set); the bricks, cubes and tissue look the same in every set; `terrain-reef` / `terrain-dune.tileset.json` are copies of `terrain-a`'s naming the other sprite. **Tile size (R1-04):** `renderTerrainTiles(size, name)` draws a set at any even size ≥ 4 — slopes, rims, brick courses and the crystal core scale with it — and `generate()` draws at the module's own `TILE_SIZE` (12 since R2-01's flip; v1: 8), a copy kept here rather than imported so the pipeline's input hash sees a change; `test/scripts/assets/terrain-size.test.ts` pins it to core's. `resampleMask(mask, from, to)` moves a collision mask between tile sizes: straight edges between half-tile heights exactly (`lineMask` / `lineMaskEnds` — every shipped mask, so a resampled 8-px mask equals the opaque pixels of the 12-px tile), anything else nearest-neighbour; it throws `RangeError` on a bad size or mask |
 | `brine` | M2-11 (zone B, BRINE NEBULA; [zones-b-and-c.md](zones-b-and-c.md#placeholder-art-scriptsassetsprocedural)): `BRINE_SPRITES` in order — `bg/brine-nebula` (`NEBULA_TILE_W` 128 × `NEBULA_TILE_H` 64: translucent gas clouds wrapping round the tile edge), `bg/brine-sea` (`BRINE_SEA_W` 128 × `BRINE_SEA_H` 48: painted only in the four `BRINE_RAMP` colours zone B's palette cycle names, plus pale bubble rings), the enemies `enemies/froth`, `froth-bead`, `brood-bubble`, `gill-dart`, `reef-jelly`, `urchin`, `maw-rocket` and the boss parts `bosses/maw-hull`, `maw-jaw-top` / `-bottom`, `maw-core`, `maw-pod`, `maw-fin`, `herald-shell` — drawn with `fillEllipse` / `drawLine`, hit flashes on everything that can be hit |
 | `dune` | M2-11 (zone C, DUNE EXPANSE): `DUNE_SPRITES` — `bg/dune-suns` (`SUNS_TILE_W` 72 × `SUNS_TILE_H` 40, the twin suns in a glow), `bg/dune-ridge` (`RIDGE_TILE_W` 128 × `RIDGE_TILE_H` 40, two layers of dune silhouettes summed from triangle waves whose periods divide the tile width — seamless), the enemies `enemies/dune-worm`, `husk-crawler`, `sand-skimmer`, `dust-devil` (3 frames), `sand-geyser`, `sand-clod`, `widow-drone` and the boss parts `bosses/widow-body`, `widow-head`, `widow-fang`, `widow-leg-top` / `-bottom`, `widow-spinneret` |
 | `magma` | M2-12 (zone D, MAGMA DEEP; [zones-d-and-e.md](zones-d-and-e.md#placeholder-art-scriptsassetsprocedural)): `MAGMA_SPRITES` (13) in order — `bg/magma-peaks` (`PEAKS_TILE_W` 128 × `PEAKS_TILE_H` 56: distant ash cones with glowing craters and smoke plumes, wrapping round the tile edge), `bg/magma-lava` (`LAVA_TILE_W` 128 × `LAVA_TILE_H` 40: painted only in the four `MAGMA_RAMP` colours zone D's palette cycle names, plus dark crust floes; opaque everywhere), the enemies `enemies/ember-wisp`, `cinder-bat`, `magma-cone`, `magma-bomb`, `cinder-rock`, `slag-crawler`, `basalt-turret` and the boss parts `bosses/bastion-hull` (56×40), `bastion-core`, `bastion-emitter`, `bastion-arm` (a round 12×12 shield segment — turned by its hub, so no heading frames) |
@@ -206,8 +271,11 @@ per glyph in code-point order (anchor `[0, 0]`); its metrics go into the manifes
 section with glyphs keyed by **decimal code point**. Nothing assumes 6×8: the pipeline takes any
 cell, advance and line height from the file, and render-pixi's text module lays text out with them
 (R1-04 proves a 9×12 font in `font-cell-size.test.ts`); core's layout reads the mirrored constants
-`GLYPH_W` / `GLYPH_H` / `LINE_H`, which `frame-constants.test.ts` pins to this file — so v2's font
-(R2-01's interim ×1.5, R4-03's redraw) changes the file and those three constants together.
+`GLYPH_W` / `GLYPH_H` / `LINE_H`, which `frame-constants.test.ts` pins to this file **× `ART_SCALE`**.
+As built, R2-01 did not change this file at all: the interim stage scales it (`scaleFont`, above),
+so the shipped file stays the 6×8 original and the constants are its values × 3/2 — 9 / 12 / 15.
+R4-03 replaces the file with the redrawn font (and must then either give `*.font.json` a `native`
+key the interim stage honours or drop the font scale, or a 3/2 build would turn 9×12 into 14×18).
 
 #### Katakana and the CJK budget (M3-03)
 
@@ -237,9 +305,11 @@ The number that made this decision is the one a **real kanji set** would cost �
 
 - the game's **whole** atlas occupies **479,505 pixels** — the sum of every frame in
   `assets/generated/atlas/main.json` — which packed as **one 1024² page** (1,048,576 px, 46 % full)
-  encodes to **136.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone; these figures are
-  measured on the same art packed as one page, `buildAtlas({ ungrouped: true })`, which
-  `test/integration/cjk-budget.test.ts` recomputes — the area is the same either way.) So a kanji set is about **2.1× the pixels the entire sprite set uses**,
+  encodes to **136.6 KB** of PNG. (Since R1-05 the shipped atlas is split by zone, and since R2-01
+  these figures are computed on the **v1-scale** art: `test/integration/cjk-budget.test.ts` rebuilds
+  `buildAtlas({ ungrouped: true, artScale: 1 })` — decision W4-6, so the interim ×1.5 atlas (2.25×
+  the area) does not move them and the six documents that quote them stand; R2-03 decides whether
+  the docs quote the v2 atlas instead. Grouped or ungrouped, the area is the same.) So a kanji set is about **2.1× the pixels the entire sprite set uses**,
   and about 0.95 of that page on its own;
 - one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
   **one extra atlas page**, not five;
@@ -318,8 +388,9 @@ roster of M1-08 included), so `pnpm content:check` passes.
   group first, then `groupOrder` (the pipeline passes `['common']`, so `main.png` is always
   `common`), then every other group by name; an empty group makes no page. Without groups the
   layout is exactly the ungrouped one, and the `group` field appears only on grouped pages and
-  placements. Today: `main.png` common 1024×512, then `main-1.png` … `main-9.png` for `zone-a` …
-  `zone-i` (256×128, zone E, H and I 256×256).
+  placements. Today: `main.png` common 1024², then `main-1.png` … `main-9.png` for `zone-a` …
+  `zone-i` — A, C, D and F 256², B and G 512×128, E and H 512×256, I 256×512 (the interim ×1.5
+  art; v1's art packed `common` at 1024×512 and the zone pages at 256×128 / 256×256).
 - **PNG-8 (R1-05, decision W3-3).** `buildAtlas` encodes every page with
   `encodePng(image, { indexed: 'auto' })`: a page with at most 256 distinct RGBA values
   (`MAX_PALETTE_SIZE`) is written as an indexed PNG (colour type 3 — `PLTE`, a `tRNS` covering only
@@ -382,12 +453,12 @@ its own, so the shell's residency can unload the pages of the zones not being pl
 ```json
 {
   "formatVersion": 2,
-  "pages": [{ "file": "main.png", "w": 1024, "h": 512, "group": "common" }, { "file": "main-1.png", "w": 256, "h": 128, "group": "zone-a" }],
-  "frames": { "ships/kestrel#0": { "p": 0, "x": 1, "y": 1, "w": 16, "h": 9, "ax": 8, "ay": 4 } },
+  "pages": [{ "file": "main.png", "w": 1024, "h": 1024, "group": "common" }, { "file": "main-1.png", "w": 256, "h": 256, "group": "zone-a" }],
+  "frames": { "ships/kestrel#0": { "p": 0, "x": 1, "y": 1, "w": 24, "h": 14, "ax": 12, "ay": 6 } },
   "sprites": { "ships/kestrel": { "frames": ["ships/kestrel#0", "ships/kestrel#1", "ships/kestrel#2"], "flash": null } },
   "animations": { "ships/kestrel": { "down": [2], "level": [0], "up": [1] } },
-  "fonts": { "pixel": { "sprite": "font/pixel", "lineHeight": 10, "cellWidth": 6, "cellHeight": 8,
-    "glyphs": { "65": { "frame": "font/pixel#33", "advance": 6 } } } }
+  "fonts": { "pixel": { "sprite": "font/pixel", "lineHeight": 15, "cellWidth": 9, "cellHeight": 12,
+    "glyphs": { "65": { "frame": "font/pixel#33", "advance": 9 } } } }
 }
 ```
 
@@ -419,7 +490,7 @@ Exit code 1 lists **every** invalid source as `<file>:<json path> message` (no s
 exit code 2 means bad arguments. The output tells you what happened:
 
 ```text
-assets generated → assets/generated/atlas/: main.png 1024×512 common, main-1.png 256×128 zone-a, …, main-9.png 256×256 zone-i; 438 sprites, 1411 frames, 1 font(s)
+assets generated → assets/generated/atlas/: main.png 1024×1024 common, main-1.png 256×256 zone-a, …, main-9.png 256×512 zone-i; 438 sprites, 1459 frames, 1 font(s)
 assets up to date (assets/generated/atlas/, input c635e061a9cb)
 ```
 
@@ -582,6 +653,7 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | The charset equals core's `UI_GLYPHS` exactly (M3-03), the katakana layout and the derived voiced kana, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
 | `test/scripts/assets/provenance.test.ts` | R3-02: every override PNG (under `assets/source/sprites/` and the staging folder `art-prompts/v2/ingested/`) has a valid `.art.json` or a `LICENSES.md` entry; a record without its PNG, a PNG or sidecar changed after ingest, a recipe never ingested fail; the ingest tool's fixture outputs load as overrides (its recipes, records and edit layers ignored) and pack pixel for pixel with the sidecar's anchor and tags — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
+| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`, `INTERIM_ART_SCALE` equals core `ART_SCALE`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native`), the 9×12 interim font, the scale-1 digest pin |
 | `test/scripts/assets/terrain-size.test.ts`, `font-cell-size.test.ts` | R1-04: the terrain generator at 12 px and any even size (masks equal to every shipped mask resampled 8 → 12, the 8-px frames byte-identical to before, its `TILE_SIZE` equal to core's), `resampleMask` both ways; a 9×12 font made in the test (a ×1.5 upscale of `pixel6x8`, exactly the `UI_GLYPHS` code points) parses, packs next to the shipped font and lays out at advance 9 and a 15-px line |
 | `test/integration/tile-size.test.ts`, `stage-terrain.test.ts` | Every shipped tileset and stage uses `TILE_SIZE` (R1-04); every tileset mask equals the opaque pixels of its frame — since R1-04 also at 12 px |
 | `test/scripts/assets/coop.test.ts` | M2-06: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the exact red / blue swap, `makeP2Sprite`, every ship's and the stock icon's variant in the atlas |
@@ -703,6 +775,7 @@ R1-05 (done, v2) split the atlas by zone: the packer's groups, the content-deriv
 `assets/source/atlas-groups.json`, lossless PNG-8 pages, manifest format 2 and the manifest shipped as
 `dist/assets/atlas/main.json` (fetched with XHR, `virtual:shmup-assets-inline` as the fallback) —
 [Atlas groups](#atlas-groups-r1-05) above, the residency in
-[platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory). R2-01's interim ×1.5 art
-packs into the same groups (the names do not change); R3-04 sets the atlas budget from detailed
+[platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory). R2-01 (done, v2) flipped
+the frame and shipped the interim ×1.5 art ([above](#the-interim-15-art-stage-r2-01)) — it packs
+into the same groups, the names do not change; R3-04 sets the atlas budget from detailed
 stand-in art.

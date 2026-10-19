@@ -58,7 +58,7 @@ PixiRenderer.render(frame)
   camera ← world.camera, or drawn between the last two ticks by frame.alpha (interpolation)
   bindings: parallax / sprites / hitbox markers — sync, or syncInterpolated(blend)
   layerEffects.sync(tick, camera, shakeY, settings.rasterEffects)
-    per layer: effects in [from, to) → RasterTable (216 rows) → 1×216 RGBA8 texture
+    per layer: effects in [from, to) → RasterTable (360 rows) → 1×360 RGBA8 texture
                cycles in [from, to)  → colour pairs (≤ 8)
                filter attached only while something is active
   flash quad (normal) · flashAdd quad (blend 'add' — the Mega Crash)
@@ -131,8 +131,8 @@ their own `WorldView` (`effects: view.effects ?? null`, `hitboxes: view.hitboxes
 
 ## Raster tables (`render-pixi` `effects/raster.ts`)
 
-A `RasterTable` holds one horizontal offset and one wrap period per frame row (216 rows —
-`LAYER_EFFECT_ROWS`). Every frame the layer effects clear a layer's table
+A `RasterTable` holds one horizontal offset and one wrap period per frame row (360 rows since
+R2-01's flip — `LAYER_EFFECT_ROWS` is `FRAME_H`, 216 in v1). Every frame the layer effects clear a layer's table
 (`clearRasterTable`), add each active effect of the layer (`addRasterEffect`) and encode it
 (`encodeRasterTable`). Playfield row `r` is frame row `r + PLAYFIELD_Y`; rows outside the table
 are skipped. With `k = r − top`:
@@ -151,8 +151,9 @@ few hundred pixels of scroll and the floor turns into noise; strips drawn with a
 nearer the bottom (`bg/checker-floor`) and scrolled strip by strip keep their shape at any camera
 x.
 
-**Encoding.** `encodeRasterTable(table, bytes)` writes row `i` into texel `i` of the 1 × 216 RGBA8
-texture: R, G = the offset rounded to whole pixels, clamped to ±`RASTER_MAX_OFFSET` (2047), as
+**Encoding.** `encodeRasterTable(table, bytes)` writes row `i` into texel `i` of the 1 × 360 RGBA8
+texture (the frame height — `LAYER_EFFECT_ROWS` is `FRAME_H`, 360 since R2-01's flip, 216 in v1):
+R, G = the offset rounded to whole pixels, clamped to ±`RASTER_MAX_OFFSET` (2047), as
 `offset + 32768` (R the high byte — the shader decodes `(R − 128) · 256 + G`); B, A = the wrap
 period rounded and clamped to 0 … 2047 (B high, A low). It returns whether a byte changed, so the
 texture is re-uploaded only then. Whole pixels keep the pixel art crisp (the frame is sampled
@@ -169,14 +170,14 @@ use. One program does both effects, so a layer with a wave **and** a cycle costs
 | Uniform | Meaning |
 |---|---|
 | `uRasterTable` | the offset table (1 × `uRows` RGBA8, sampled nearest, clamped) |
-| `uRows` | its height (216) |
+| `uRows` | its height (360; v1: 216) |
 | `uRaster` | 1 when the table applies, 0 to skip the lookup |
 | `uRowShift` | the world layers' vertical screen offset (screen shake), subtracted from the row so the effect stays on its rows while the picture shakes |
 | `uCycleCount` | colour pairs in use (0 … 8) |
 | `uCycleFrom[8]`, `uCycleTo[8]` | pixel colour `uCycleFrom[i]` is drawn as `uCycleTo[i]` (RGB 0 … 1) |
 
-The fragment shader reads its row's texel (`vScreen.y` — the fragment's pixel row in the 384×216
-render target — minus `uRowShift`), samples the layer `offset` pixels to the right, and with a wrap
+The fragment shader reads its row's texel (`vScreen.y` — the fragment's pixel row in the 640×360
+render target; 384×216 in v1, before R2-01's flip — minus `uRowShift`), samples the layer `offset` pixels to the right, and with a wrap
 period moves a sample past the layer's right edge back (or before its left edge forward) by whole
 periods — seamless for art that repeats every `wrap` pixels — before clamping to the input. Then a
 pixel (un-premultiplied) within 1.5/255 of `uCycleFrom[i]` takes `uCycleTo[i]`, keeping its alpha.
@@ -194,8 +195,8 @@ one renderer; the renderer creates it with its layer stack and exposes it as
 - **`bind(view)`** (load time, from `PixiRenderer.bindWorld`) detaches every filter, sorts the
   view's effects and cycles by layer (a layer outside the world group throws `RangeError` before
   anything is bound) and creates the filter of each layer that gets its first effect —
-  `createLayerEffectFilter(rows)`: the program (cached by Pixi across filters), a 1 × 216 RGBA8
-  `BufferImageSource` (nearest, clamp-to-edge, no mipmaps, `alphaMode: 'premultiplied-alpha'` —
+  `createLayerEffectFilter(rows)`: the program (cached by Pixi across filters), a 1 × 360 RGBA8
+  `BufferImageSource` (rows = `LAYER_EFFECT_ROWS`, the frame height; nearest, clamp-to-edge, no mipmaps, `alphaMode: 'premultiplied-alpha'` —
   its alpha is data) starting as the neutral table (offset 0 = `0x80 0x00`), and the uniform
   group. Filters are kept across worlds.
 - **`sync(tick, camera, rowShift, enabled)`** (every frame) per layer: the raster effects whose
@@ -282,13 +283,13 @@ baseH)` → `Viewport { mode, scale, scaleX, scaleY, x, y, width, height }`:
 
 | Mode | Placement | 1280×720 display | 1000×600 display |
 |---|---|---|---|
-| `integer` (default) | the largest whole multiple that fits, centred, letterboxed (`computeIntegerViewport`) | ×3 = 1152×648 at (64, 36) | ×2 = 768×432 at (116, 84) |
-| `fit` | the largest scale that keeps 16:9 (`min(dW / bW, dH / bH)`, below 1 on a display smaller than the frame), size rounded, centred | ×3.33 = 1280×720, no border | ×2.6 = 1000×563 at (0, 18) |
+| `integer` (default) | the largest whole multiple that fits, centred, letterboxed (`computeIntegerViewport`) | ×2 = 1280×720 at (0, 0) | ×1 = 640×360 at (180, 120) |
+| `fit` | the largest scale that keeps 16:9 (`min(dW / bW, dH / bH)`, below 1 on a display smaller than the frame), size rounded, centred | ×2 = 1280×720, no border | ×1.56 = 1000×563 at (0, 18) |
 | `stretch` | the whole display, x and y scaled separately | 1280×720 | 1000×600 |
 
 The frame is always sampled nearest-neighbour, so `fit` and `stretch` make some pixel rows /
-columns one screen pixel wider than others. On the TV's 1920×1080 all three are the same (×5 fits
-exactly). `renderer.setScaleMode(mode)` re-places the frame sprite at once; `resize()` keeps the
+columns one screen pixel wider than others. On the TV's 1920×1080 all three are the same (since
+R2-01 ×3 fits exactly; in v1 it was ×5). `renderer.setScaleMode(mode)` re-places the frame sprite at once; `resize()` keeps the
 mode. Sizes that are not positive count as 1.
 
 **Show hitbox.** `createHitboxBinding({ atlas, capacity, offsetY? })` (render-pixi `layers`): per
@@ -412,7 +413,7 @@ const stage = db.stages[db.stageIndex.get('raster-range')!];
 const effects = createStageEffectsView(stage)!; // what createWorld puts on view.effects
 const wave = effects.raster.find((e) => e.kind === RasterKind.Wave)!;
 
-const table = createRasterTable(); // 216 rows
+const table = createRasterTable(); // 360 rows (FRAME_H)
 const bytes = new Uint8Array(table.rows * 4);
 clearRasterTable(table);
 addRasterEffect(table, wave, 30, { x: 0, y: 0 }); // tick 30, camera at 0
@@ -420,7 +421,7 @@ encodeRasterTable(table, bytes); // → true (changed)
 decodeRasterRow(bytes, PLAYFIELD_Y + 112); // → [offset, wrap] of the sea's first row
 
 colorCycleStep(25, 8, 4); // → 3: the ramp's position at tick 25
-computeViewport('fit', 1280, 720, 384, 216); // → scale 3.33…, 1280×720 at (0, 0)
+computeViewport('fit', 1280, 720, FRAME_W, FRAME_H); // → scale 2, 1280×720 at (0, 0)
 
 const refresh = createRefreshMonitor();
 // per rAF: refresh.sample(now); if (refresh.ready) renderer.setInterpolation(refresh.hz > INTERPOLATION_MIN_HZ);
@@ -472,7 +473,7 @@ const refresh = createRefreshMonitor();
 | Motion looks a tick late on a 120 Hz monitor | Expected with interpolation (it draws between the last two ticks); at 60 Hz it is off |
 | A sprite jumps instead of gliding with interpolation on | Its slot changed sprite id or it moved more than 24 px in one tick — drawn where it is, by design |
 | The hitbox marker is not on the ship | A custom scene view without `hitboxes`, or a renderer built without an atlas (no binding) |
-| `setScaleMode` seems to do nothing on the TV | At 1920×1080 all three modes are ×5 |
+| `setScaleMode` seems to do nothing on the TV | At 1920×1080 all three modes are ×3 (v1: ×5) |
 | A saved SHAKE / FLASHES setting is ignored at boot | The host passed `ShellOptions.effects.screenShake` / `reduceFlashing`, which win |
 
 ## Next steps that build on this page

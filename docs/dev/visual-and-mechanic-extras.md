@@ -35,8 +35,9 @@ Background: `shmup_feat.md` §18 (Mode 7 effects, CRT / scanline filter, ultra-w
 (authentic slowdown, classic 4:3 with pillarbox side art), §7C (the black-hole bomb as the one
 signature mechanic), §10 (the death-bomb window), §13 (the P2 suction, grabber and invincible-walker
 bosses), §14 (the escape sequence, the pseudo-3D high-speed dimension stage), §22 (graze detection);
-plan §1.5 (sim-affecting options live in `GameConfig`, goldens re-blessed on purpose), decision D19
-(the internal resolution is fixed at 384×216) and D24 (placeholder art comes from committed
+plan §1.5 (sim-affecting options live in `GameConfig`, goldens re-blessed on purpose), decisions D19
+(the internal resolution fixed at 384×216 — superseded by v2's **R-D1**: the frame is 640×360 since
+R2-01's flip, [plan_resolution.md](../../plan_resolution.md) §2.7) and D24 (placeholder art comes from committed
 generators).
 
 ## The picture at a glance
@@ -153,8 +154,10 @@ order):
 | `full` | yes (stronger) | yes | yes |
 
 It runs over the **upscaled** second pass, so the scanline pitch follows the frame's scale on the
-display (`CrtPass.setViewport`, at least `CRT_MIN_PITCH` output pixels) and one dark line falls
-between two frame rows at any zoom.
+display (`CrtPass.setViewport`: `max(CRT_MIN_PITCH, round(scale))`, `CRT_MIN_PITCH` 2) and one dark
+line falls between two frame rows at any zoom. Since R2-01's flip that is pitch **3** on a 1080p TV
+(640×360 × 3) and **2** on a 720p one (×2, the floor itself) — v1's 384×216 gave 5 and 3. The legacy
+filter path's `CRT_MAX_HEIGHT` cap runs a 4K display at 0.5 resolution, an effective pitch of 3.
 
 **Since plan M3-02d the program is the blit's own shader** (`createCrtBlit`): the second pass draws
 the frame texture with a `Mesh` whose shader *is* the CRT program, and `off` simply writes
@@ -181,8 +184,8 @@ switching the setting.
 ## Aspect modes
 
 `ASPECT_MODES` (`core/config`) are `normal`, `wide` (64:27) and `classic` (4:3), and they are a
-**window** on the display — never a crop, never a wider playfield. Decision D19 fixes the internal
-picture at 384×216; `computeAspectViewport(aspect, scaleMode, displayW, displayH, baseW, baseH)`
+**window** on the display — never a crop, never a wider playfield. The internal picture is fixed
+(R-D1: 640×360 since R2-01's flip, superseding D19's 384×216); `computeAspectViewport(aspect, scaleMode, displayW, displayH, baseW, baseH)`
 places the frame in the largest rectangle of `ASPECT_RATIOS` that fits, centred, and reports the
 leftover width as **side panels**:
 
@@ -435,7 +438,8 @@ ship): SHIP SELECT → MANTA, then pick up the stage's yellow items and press `S
   `screen.destroy({ children: true })` explicitly; without them the `Mesh` / `MeshGeometry` /
   `Shader` / `GlProgram` and the two side-panel sprites outlive the renderer (found by M3-02d's
   tests, with a regression test in `renderer-wiring.test.ts`).
-- **Aspect modes do not widen the playfield.** D19 fixes 384×216; `wide` gives a wide *cabinet*, not
+- **Aspect modes do not widen the playfield.** The frame is fixed (R-D1's 640×360 since R2-01,
+  superseding D19's 384×216); `wide` gives a wide *cabinet*, not
   more visible stage. Anything else would change the simulation.
 - **Re-blessing.** Any change to the four `GameConfig` fields' defaults, or to the header, re-blesses
   every golden. Say why in the commit message.
