@@ -121,15 +121,14 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
   recovery holds, the runtime test and the e2e spec pass on the stand-in art, the zone's memory fits. If R5-08.S5b
   left the contract at `remastered: false`, switch it now (`test/integration/zones/zone-h.contract.ts`).
 - **Files (only these):** `test/playtest/zone-h.test.ts`, `test/playtest/zone-h-recovery.test.ts` (created by
-  R5-P.P3), `test/integration/zone-h-runtime.test.ts` (created by R5-P.P5e; and `zone-h-runtime-edge.test.ts` only
-  if R5-P.P5e kept one), `test/e2e/zone-h.spec.ts` (created by R5-P.P5d), `test/integration/zones/zone-h.contract.ts`;
+  R5-P.P3), `test/integration/zone-h-runtime.test.ts` (created by R5-P.P5e from `zones-hi-runtime-edge.test.ts` —
+  P5e creates no `-runtime-edge` file), `test/e2e/zone-h.spec.ts` (created by R5-P.P5d), `test/integration/zones/zone-h.contract.ts`;
   `test/golden/golden-zone-h.test.ts` — the zone's outcome expectations, derived from the design;
   `test/golden/golden.ts` and `test/golden/demos.ts` — zone H's own scenario / demo descriptions only (a description
   change re-blesses that scenario; it is in the LAND scope).
 - **Tests (targeted):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-h.test.ts test/playtest/zone-h-recovery.test.ts test/integration/zone-h-runtime test/integration/content-zone-h.test.ts test/integration/standin-budget.test.ts
-  # `test/integration/zone-h-runtime` is a substring filter: it runs `zone-h-runtime.test.ts` and, if R5-P.P5e kept it, `zone-h-runtime-edge.test.ts`
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-h.test.ts test/playtest/zone-h-recovery.test.ts test/integration/zone-h-runtime.test.ts test/integration/content-zone-h.test.ts test/integration/standin-budget.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/release-audit.test.ts
   # the cross-zone checks (wave 11 rule 13; long: shell timeout 1800000, or background with a log):
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/campaign-routes-b.test.ts test/playtest/campaign-routes-c.test.ts test/playtest/campaign-routes-manta-b.test.ts test/playtest/campaign-routes-manta-c.test.ts test/integration/campaign-flow.test.ts test/golden/v2-port test/playtest/boss-rush.test.ts
@@ -140,7 +139,9 @@ wave's docs item done. The S3 drops are not part of the exit: each lands when th
 - **Acceptance:** god mode: `stageClear`, IRON SOVEREIGN down through all its phases (≥ 4), the four echoes seen,
   the run 4.0–6.0 min, `diagonalTicks` 0, parked at `BOT_X` (96) ± 4, no 4-way rule broken, peak live enemies ≤ 80 %
   of `MAX_ENEMIES` (64) and peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled through the harness's `observe`
-  hook in `zone-h.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them); the no-god run
+  hook in `zone-h.test.ts` (particles are not measured here: R6-02.P1 and the render bench own them — a full pool
+  recycles its oldest particle, the bench always draws a full 512 pool, and R4-04.D3 (wave 08) chose 256; see
+  `wave-10.md` R5-01.S6 Traps); the no-god run
   replays to the same hash; the pages within the zone's R3-04 budget; the cross-zone line green (every campaign
   route, the campaign flow, the v2-port comparison, the boss rush). **Expected red until the LAND** (list them in the
   report; do not fix them): zone H's goldens and demo (with the outcome cases of `golden-zone-h.test.ts`), the
