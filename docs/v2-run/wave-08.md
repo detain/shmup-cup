@@ -23,26 +23,30 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
-| 1 | `R4-01.A1a` → `R4-01.A1b` → `R4-01.A2` | `ships/*.v2.sprite.json`, `content/player/*`, `core/world` (thruster) | A1b: GOLDEN + FP · A2: FP + DATA-INDEX | yes (pass 1) |
+| 1 | `R4-01.A1a` → `R4-01.A1b` → `R4-01.A2` | `ships/*.v2.sprite.json`, `content/player/*`, `core/world` (thruster) | A1a: DOCS-IMAGES (`docs/images/ships/`) · A1b: GOLDEN + FP · A2: FP + DATA-INDEX | yes (pass 1) |
 | 2 | `R4-05.E3` → `R4-05.E4` → `R4-03.C7` → `R4-05.E2` → `R4-05.E1` | `packages/core/src/scenes/index.ts`, `title.mjs`, `ending.mjs`, `logo.mjs`, `core/data/campaign.ts` | SCENES (whole lane); FP each; C7 + STRINGS; E2 + UI-FILE | yes (after lane 1 or 3 ends) |
 | 3 | `R4-03.C5` → `R4-03.C6` | `packages/core/src/ui/index.ts`, `hud.mjs`, `ui-kit.mjs`, `test/e2e/frame-pixels.ts` | UI-FILE, E2E-MIRROR, FP | yes (pass 2) |
-| 4 | `R4-01.A3` → `R4-02.B2` → `R4-01.A4` | `core/weapons`, `core/enemies` (Option frame), `core/powerups`, `core/shields`, `items.mjs`, `direct-items.mjs`, `shields.mjs` (force field) | FP; POWERUPS (B2, A4) | no (W09's A9 / B4) |
-| 5 | `R4-01.A5` → `R4-01.A7` → `R4-01.A6` | `shields.mjs` (pods, Reduce), `arm.mjs`, `weapons.mjs`, `direct.mjs`, `shots/*.v2.sprite.json` | none (atlas only) | no |
+| 4 | `R4-01.A3` → `R4-02.B2` → `R4-01.A4` | `core/weapons`, `core/enemies` (Option frame), `core/powerups`, `core/shields`, `items.mjs`, `direct-items.mjs`, `shields.mjs` (force field) | CORE-CONFIG (A3, after `R4-03.C1`); FP; POWERUPS (B2, A4) | no (W09's A9 / B4) |
+| 5 | `R4-01.A5` → `R4-01.A7` → `R4-01.A6` | `shields.mjs` (pods, Reduce), `arm.mjs`, `weapons.mjs`, `direct.mjs`, `shots/*.v2.sprite.json` | DOCS-IMAGES (A6: `docs/images/shots/`); otherwise none (atlas only) | no |
 | 6 | `R4-03.C1` → `R4-03.C2` → `R4-03.C3` → `R4-03.C4a` → `R4-03.C4b` | `assets/source/fonts/pixel9x12.font.json` | none (C1: CORE-CONFIG + STRINGS docblocks only) | no (`W08.E2E`) |
 | 7 | `R4-01.A8` → `R4-02.B1` → `R4-02.B3` | `core/blackhole`, `blackhole.mjs`, `bullets.mjs` / `palettes.mjs` / `lasers.mjs` v2 paths, `core/bullets` (point frame), `items.mjs` (point) | A8: FP · B3: GOLDEN + FP | no |
-| 8 | `R4-04.D1` → `R4-04.D2` → `R4-04.D3` → `R4-04.D4` | `explosions.mjs`, `particles.mjs`, `content/fx/particles.fx.json`, `render-pixi/src/particles`, `shell/src/fx-gallery` | FP (D1, D2, D4) | no (`W08.E2E` covers `fx-gallery`, batch E) |
+| 8 | `R4-04.D1` → `R4-04.D2` → `R4-04.D3` → `R4-04.D4` | `explosions.mjs`, `particles.mjs`, `content/fx/particles.fx.json`, `render-pixi/src/particles`, `shell/src/fx-gallery` | FP (D1, D2) | no (`W08.E2E` covers `fx-gallery`, batch E) |
 
 - **Fillers** (home [`wave-09.md`](wave-09.md)): the zone designs `R5-P.D-A`, `R5-P.D-B`, `R5-P.D-C`, `R5-P.D-D`,
   `R5-P.D-E`, `R5-P.D-F`, `R5-P.D-G`, `R5-P.D-H`, `R5-P.D-I` — read-only, each writes `docs/v2-run/designs/zone-<x>.md`.
-  Start them, in that order, when a lane ends. Paste **`wave-09.md`'s** "Rules for this wave" into a designer's prompt
-  (not this wave's): the designers' block, their docs exception and their rules live there.
+  Start them, in that order, when a lane ends — and in the slot lane 4 leaves free until `R4-03.C1` is on `master`
+  (`R4-01.A3` waits for it, so lane 4 cannot start with the wave). Paste **`wave-09.md`'s** "Rules for this wave"
+  into a designer's prompt (not this wave's): the designers' block, their docs exception and their rules live there.
 - **Reviews:** a loop per subtask as it lands (`<id>.RV1` → `<id>.FIX1` → `<id>.RV2` … to zero). The R4 step reviews
   run in wave 9, after the integrators.
 - **Docs item:** none in this wave — `W09.DOCS-*` documents all of R4.
 - **e2e passes:** two. Lanes 1 and 3 hold them first; lane 2 takes the first one that frees. Lanes 4–8 run no e2e:
-  `R4-01.A9`, `R4-02.B4` and `R4-05.E6` (wave 9) re-measure their specs, and `W08.E2E` (end of this wave) runs every
-  other spec on `master` (batches A, C without `boss`, D, E without the three ship / weapon specs, G, F, plus
-  `enemies` and `coop-gamepad`). No subtask of this wave edits a spec except `W08.E2E` (rule 15).
+  `R4-01.A9` and `R4-02.B4` (wave 9) re-measure their specs (`R4-05.E6` owns no spec — it regenerates the docs
+  images and screens), and `W08.E2E` (end of this wave) runs every other spec on `master` (batches A, C without
+  `boss`, D, E without the three ship / weapon specs, G, F, plus `enemies` and `coop-gamepad`). No subtask of this
+  wave edits a spec except `W08.E2E` (rule 15). The review agents re-run no e2e; they read the builder's
+  `/home/sites/shmup-cup-run/<id>-e2e.log` (`<id>` is the subtask id, rule 14). A reviewer that must re-run a spec
+  counts as one of the two e2e agents.
 
 ## Rules for this wave
 
@@ -51,16 +55,26 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
    `lasers.mjs:139-140`: a call without options draws v1, which the per-generator tests rely on) with `native: true`
    on the v2 sprites only. A new v2-only name (absent at scale 1, RR-1a) must be native: the relation case of
    `interim-pipeline.test.ts` accepts it only then (`R4-P.P3`); never edit that case. Never edit a v1 pixel
-   map, the v1 font `assets/source/fonts/pixel6x8.font.json`, or a generator's v1 path. The scale-1 digest pin
-   (`test/scripts/assets/interim-pipeline.test.ts:341-357`, `fa4198…`) must stay green and is **never re-pinned**.
+   map, the v1 font `assets/source/fonts/pixel6x8.font.json`, or a generator's v1 path. The scale-1 digest pin —
+   the case 'pins the v1 atlas: every page’s pixels and the manifest, by digest' in
+   `test/scripts/assets/interim-pipeline.test.ts` (digest `fa419802…`; find it by its title, its line range moves
+   with `R4-P.P3`) — must stay green and is **never re-pinned**.
 2. **Bible sizes, not frame sizes.** Sprite sizes are the art bible's (`docs/dev/art-bible-v2.md` §5): v1 × 1.5,
    halves rounded up, odd for point-symmetric sprites. Hitboxes are content and never change in R4.
 3. **Frame counts that core reads change in the same commit as the art that has the frames** (`ITEM_KINDS`,
-   `BLACK_HOLE_FRAMES`, the Option `& 1`, `FORCE_FIELD_WEAR_FRAMES`, `bankFrames`, the point item's `& 1`). Every count
-   is ≥ what core or content indexes, or `pnpm content:check` fails.
+   `BLACK_HOLE_FRAMES`, the Option `& 1`, `FORCE_FIELD_WEAR_FRAMES`, `bankFrames`, the point item's `& 1`). Every
+   count is ≥ what core or content indexes. `pnpm content:check` checks only the counts **content** indexes (the
+   enemy and boss-part `anim.frames`, in `test/integration/content.test.ts` 'animates every shipped enemy and boss
+   part with frames the atlas has; zone A flashes on hits'); for every other sprite it checks names only. For a
+   count core reads, **your block's tests** assert it at the default scale
+   (`buildAtlas().manifest.sprites[<name>].frames.length` ≥ the count) — for `bankFrames`:
+   `test/integration/world-flight.test.ts` 'has an atlas frame for every bank step the World can draw' (the
+   KESTREL) and `test/scripts/assets/ships-v2.test.ts` (both ships).
 4. **Fingerprints.** A pure redraw (same names, same frame counts core reads) moves **nothing** but the atlas: if a
-   fingerprint moves, stop and report. A new sprite name **is** a re-pin of the presentation and content-DB
-   fingerprints (sprite ids are the sorted names). Re-pin only under the land lock with `SHMUP_FINGERPRINT_PRINT=1`,
+   fingerprint moves, stop and report. A new sprite name that the content or `UI_SPRITES` references **is** a re-pin
+   of the presentation and content-DB fingerprints, and of the shell frame fingerprint too when the content
+   references it (its flight walks hash the content's sprite ids); sprite ids are the sorted interned names. A name
+   nothing references moves none of them. Re-pin only under the land lock with `SHMUP_FINGERPRINT_PRINT=1`,
    paste the printed tables, give the reason in the commit.
 5. **GOLDEN only for `R4-01.A1b`** (`p.bank` is hashed, `packages/core/src/debug/index.ts:412`) **and then
    `R4-02.B3`** (the point item's `pf.frame` is a hashed pool field, `packages/core/src/bullets/index.ts:2003`).
@@ -91,7 +105,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     (`git checkout origin/master -- test/integration/palette-cycle-scan.test.ts`), delete your line again, `git add`
     it, `git rebase --continue`. Never hand-merge conflict markers.
 11. **Variants.** `hitFlash` sprites get `@flash`; ships and `hud/life` need a `p2` map (R3-03.V2a issues an error
-    without one); bullet, beam and bend sprites keep every `@<palette>` frame for frame (`content.test.ts:863`).
+    without one); bullet, beam and bend sprites keep every `@<palette>` frame for frame
+    (`test/integration/content.test.ts`, the case 'has every colour-blind palette variant of every bullet / laser
+    sprite, frame for frame (M2-02)' — find it by its title; its line number moves with wave 5's `R2-02.U2`).
 12. **Provenance.** Agent pixel maps and generators are `procedural` (W3-12). No FLUX winner as a reference, not even
     for the look (RR-4): draw from the bible's text, the v1 designs and the palette tables. Nothing from
     `art-prompts/v2/candidates/` is committed.
@@ -105,7 +121,8 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     ```
     and after it: `node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/* | diff
     /home/sites/shmup-cup-run/<id>-atlas-before.sha -`. Scale 1 has no ATLAS-SHA: it is proved by the scale-1 digest
-    pin `test/scripts/assets/interim-pipeline.test.ts:341-357` (green, never re-pinned).
+    pin — the case 'pins the v1 atlas: every page’s pixels and the manifest, by digest' in
+    `test/scripts/assets/interim-pipeline.test.ts` (green, never re-pinned).
 15. **No spec edits in wave 8, except `W08.E2E`.** An e2e failure your art or layout caused goes into your report
     (spec, line, old → new, why) for the spec's owner: `R4-01.A9` (`ship-select`, `weapon-select`, `weapons`,
     `flight`, `powerups`, `option-hunter`, `lives`, `coop`), `R4-02.B4` (`bullet-palette`, `bullets`, `direct-items`,
@@ -118,18 +135,22 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Wave / lane / order:** wave 08, lane 1, first.
 - **Depends on:** nothing in this wave (R4-P.P3 on `master`).
 - **Goal:** draw the v2 KESTREL (24×14, anchor `[12,6]`), MANTA (24×15, anchor `[12,7]`) and the KESTREL thruster
-  (9×5, 2 frames for now) as new pixel maps, with v1's three frames (level, banking up, banking down = the v2 bank
-  frames 0, 1, 3 of the final five; `R4-01.A1b` adds the other two).
+  (9×5, anchor `[9, 2]` = v1 `[6, 1]` × 1.5 halves up — the right-edge attachment point of
+  `ships/kestrel-thruster.sprite.json`; 2 frames for now) as new pixel maps, with v1's three frames (level, banking
+  up, banking down = the v2 bank frames 0, 1, 3 of the final five; `R4-01.A1b` adds the other two).
 - **Files (only these; "new" = create):**
   - `assets/source/sprites/ships/kestrel.v2.sprite.json` (new), `manta.v2.sprite.json` (new),
-    `kestrel-thruster.v2.sprite.json` (new) — each with `hitFlash` where the v1 map has it and a `p2` map (bible §4.5:
+    `kestrel-thruster.v2.sprite.json` (new) — each with `"hitFlash": false` like its v1 map (no `@flash`: the game
+    never flashes a ship — `syncWorldView` only hides it, `SpriteFlag.Hidden`), and each with a `p2` map (bible §4.5:
     stripe blue → red-orange, canopy cyan → gold, engine orange → blue). The v1 maps (`ships/kestrel.sprite.json`,
     anchor `[8, 4]`, frames "0 level, 1 banking up, 2 banking down") stay untouched.
-  - `test/scripts/assets/ships-v2.test.ts` (new): sizes, anchors, 3 frames, `@flash`, `@p2` changes only the P1 ramp.
-  - `docs/images/ships/` — regenerate with `pnpm docs:images` and commit **only this folder**.
+  - `test/scripts/assets/ships-v2.test.ts` (new): sizes, anchors, 3 frames, no `@flash`, `@p2` changes only the P1 ramp.
+  - `docs/images/ships/` — regenerate with `pnpm docs:images` and commit **only this folder**; then
+    `git restore docs/images` for every other file it rewrote (`logo.png`'s banner draws the KESTREL and its
+    thruster; `R4-05.E6` regenerates it).
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/ships-v2.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/content.test.ts test/integration/palette-cycle-scan.test.ts test/scripts/art-origins.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/integration/content.test.ts test/integration/palette-cycle-scan.test.ts test/scripts/art-origins.test.ts
   node scripts/art-origins.mjs --check
   bash docs/v2-run/helpers/e2e-batch.sh ship-select.spec.ts flight.spec.ts lives.spec.ts coop.spec.ts
   ```
@@ -139,13 +160,15 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Token:** none for the code; DOCS-IMAGES only for `docs/images/ships/` (land lock at push).
 - **Traps:** rule 1 (never edit `ships/kestrel.sprite.json`); the `p2` map must change exactly the P1 ramp colours;
   binary alpha; the anchor is the bible's, not v1's ×1.5 (it is the same here, but check).
-- **Docs needs:** `docs/dev/art-bible-v2.md` († row: ships), `docs/client/arsenal.md` (images).
+- **Docs needs:** `docs/dev/art-bible-v2.md` § 5.3 (the anchors chosen; the ships' † rows stay — their `bankFrames`
+  change lands in `R4-01.A1b`), `docs/client/arsenal.md` (images).
 - **Owner (Manual):** approve the ships' look and anchors (KESTREL `[12, 6]`; MANTA `[12, 7]` or `[12, 8]`).
 
 ### R4-01.A1b — The five bank frames (GOLDEN + FP)
 
 - **Wave / lane / order:** wave 08, lane 1, after `R4-01.A1a`.
-- **Depends on:** `R4-01.A1a` on `master`; wave 7 closed (GOLDEN free).
+- **Depends on:** `R4-01.A1a` on `master`; wave 7's code exit (`R2-04.G` on `master` — the last GOLDEN holder of
+  wave 7; its docs reviews run inside this wave, decision RUN-2).
 - **Goal:** the v2 ships get five bank frames: 0 level, 1 climb, 2 steep climb, 3 dive, 4 steep dive, in
   `playerBankFrame`'s order (`packages/core/src/player/index.ts:576-587`: `0` level, `1 … n` up, `n+1 … 2n` down), and
   `bankFrames` goes 1 → 2.
@@ -154,6 +177,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `content/player/kestrel.player.json`, `content/player/manta.player.json` — `"bankFrames": 2` (`:16`, today 1).
   - `packages/shell/src/showcase/index.ts` — the bank mapping at `:300` (`at[2] > 0.35 ? 2 : …`) → the 5-frame mapping.
   - `packages/shell/test/showcase/showcase.test.ts`.
+  - `test/scripts/assets/ships-v2.test.ts` (from `R4-01.A1a`) — the ships' frame count 3 → 5.
+  - `packages/shell/test/flight/flight.test.ts` — only the case 'shows the KESTREL where the input moved it': with
+    `bankFrames` 2 its banking-down frame is `playerBankFrame(2, 2)` = 4 (`:259`, today `toBe(2)`).
   - `test/integration/world-flight.test.ts` — only the case 'has the plan tunables, identical to the built-in
     fallback ship': drop `'bankFrames'` from the key list and add `expect(kestrel.bankFrames).toBe(2)` with the
     comment "R4-01.A1b: the v2 ships have five bank frames; DEFAULT_PLAYER_SHIP keeps 1" (leave
@@ -163,28 +189,37 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/player
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/frame-fingerprint.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/scripts/assets/ships-v2.test.ts test/integration/world-flight.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/flight packages/shell/test/frame-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/scripts/assets test/scripts/art-origins.test.ts test/integration/palette-cycle-scan.test.ts test/integration/world-flight.test.ts
+  node scripts/art-origins.mjs --check
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project tizen apps/tizen/test/scripts/bench-atlas.test.ts
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh ship-select.spec.ts flight.spec.ts attract.spec.ts
   ```
-  Under the land lock: fetch, rebase, `pnpm golden:update`, the FP re-pins, the tests above, push.
+  Under the land lock: fetch, rebase, `pnpm golden:update`, the FP re-pins, the Vitest lines and `pnpm content:check`
+  above (the e2e batch runs **outside** the land lock — never hold the land lock through an e2e lock wait), push.
 - **Acceptance:** one commit; its body: "R4-01.A1b: five bank frames — `p.bank` is hashed, so every golden and demo is
-  re-blessed"; all three fingerprints re-pinned; `content:check` green (frame counts ≥ `2 · bankFrames + 1` = 5).
+  re-blessed"; all three fingerprints re-pinned; `content:check` green; both ships have 5 frames at the default scale
+  (≥ `2 · bankFrames + 1`): `test/integration/world-flight.test.ts`' bank-step case for the KESTREL,
+  `test/scripts/assets/ships-v2.test.ts` for both.
 - **Token:** GOLDEN + FINGERPRINTS (land lock, fetch to push).
 - **Traps:** the frame-count change (`bankFrames`) lands in the **same commit** as the 5-frame art (rule 3); the v1
   pixel maps keep 3 frames, and `bankFrames` 2 indexes frames 3–4, past their end, at scale 1 — allowed by decision
   RR-1b (owner-confirmed): the scale-1 build (the bench, CJK figures, store icons) never flies a ship, but check
-  `content:check` and the bench atlas test; on a rebase conflict in a replay file: take master's and re-run
-  `golden:update`.
-- **Docs needs:** `content/player/README.md` (`bankFrames`), the plan's As built (the re-bless reason).
+  `content:check` and the bench atlas test (both are run lines above); on a rebase conflict in a replay file: take
+  master's and re-run `golden:update`.
+- **Docs needs:** `content/player/README.md` (`bankFrames`), `docs/dev/art-bible-v2.md` (the ships' † rows: § 5.2's
+  "counts today's game cannot show" row and § 5.3's ship row both say `"bankFrames": 1` — with this commit they are
+  2, five frames), the plan's As built (the re-bless reason).
 
 ### R4-01.A2 — A thruster behind each ship (FP)
 
 - **Wave / lane / order:** wave 08, lane 1, after `R4-01.A1b`.
 - **Depends on:** `R4-01.A1b` on `master`.
 - **Goal:** core draws a thruster sprite behind each ship (today only the shell showcase does), frame
-  `(tick >> 2) & 3`, presentation only.
+  `(tick >> 2) & 3`, presentation only. It is pushed at the ship's position less the hull's rear offset
+  (12 = the v1 showcase's `at[0] - 8` × 1.5, `packages/shell/src/showcase/index.ts:301`, and the ships' anchor x),
+  or through a content field with its unit.
 - **Files (only these; checked on `bc8e05d`):**
   - `packages/core/src/data/index.ts` — the player schema's optional `thruster` sprite ref (near `bankFrames`, `:2296`;
     the type at `:504`), with its unit row if a number is added.
@@ -196,6 +231,17 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
     `scripts/assets/procedural/thrusters.mjs` (the R4-P.P1 stub; it returns `[]` at `(options.artScale ?? 1) === 1`),
     with a `p2` map. The name is absent at scale 1 (decision RR-1a: a new v2-only name gets no v1 stand-in). Never
     add a v1 `manta-thruster.sprite.json`.
+  - `test/scripts/assets/ships-v2.test.ts` (from `R4-01.A1a`) — the KESTREL thruster's 2 → 4 frames, and the new
+    `ships/manta-thruster` (size, frames, `@p2`, absent from `buildAtlas({ artScale: 1 })`).
+  - `packages/core/test/world/world-coop.test.ts` and `world-coop-edge.test.ts` — only their `playerBatch` count and
+    slot assertions: `directDb()` (`packages/core/test/helpers/direct.ts`) loads the **shipped** player files, so
+    with a thruster each player `i` has its ship at slot `2i + 1` and the count doubles. The cases:
+    ``world-coop.test.ts``' ``draws player 2 with the ship`s palette swap``, and the three cases of
+    ``world-coop-edge.test.ts``'s ``describe('core/world co-op edge: player 2`s sprite (M2-06)')`` — the MANTA's own
+    palette swap, the ship with no palette swap, and player 2 before it joins or while it is out.
+  - `packages/shell/test/flight/flight.test.ts` — only the cases "appends its sprites after the content's names, so
+    world ids keep their meaning" and 'shows the KESTREL where the input moved it': the ship is slot 1, after its
+    thruster, and the count is 2.
   - `packages/shell/src/showcase/index.ts` — the thruster frame at `:301` (`(tick >> 2) & 1`) only if it must change.
   - `packages/core/src/player/index.ts` — only `DEFAULT_PLAYER_SHIP`: the new resolved field(s) (`thrusterId: -1`,
     and `thrusterP2Id: -1` if you add one, like `spriteP2Id`).
@@ -205,8 +251,9 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/world packages/core/test/data packages/core/test/player
   pnpm --filter @shmup/core typecheck
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/scripts/assets/interim-pipeline.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/frame-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content.test.ts test/scripts/assets test/scripts/art-origins.test.ts test/integration/palette-cycle-scan.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
+  node scripts/art-origins.mjs --check
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/showcase packages/shell/test/flight packages/shell/test/frame-fingerprint.test.ts
   pnpm content:check
   bash docs/v2-run/helpers/e2e-batch.sh flight.spec.ts ship-select.spec.ts coop.spec.ts
   ```
@@ -214,11 +261,10 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Acceptance:** zero allocation (the new guard: warm-up ≥ 20,000, new indices each window); goldens green and
   unchanged (presentation only); the scale-1 digest pin green (the name is absent at scale 1, RR-1a).
 - **Token:** FINGERPRINTS (push time); DATA-INDEX (work time).
-- **Traps:** a new sprite name re-pins the presentation and content-DB fingerprints (rule 4); push whole-pixel
-  positions into the batch (a fractional x passed to a non-inlined push is boxed); the thruster is not hashed — a golden
-  that moves is a bug.
-- **Docs needs:** `content/player/README.md` (`thruster`), `docs/dev/sim-world.md` (the player batch),
-  `docs/dev/art-bible-v2.md` († row: thruster).
+- **Traps:** a new sprite name the content references re-pins **all three** fingerprints (rule 4 — the shell's too:
+  its flight walks hash the content's sprite ids); push whole-pixel positions into the batch (a fractional x passed
+  to a non-inlined push is boxed); the thruster is not hashed — a golden that moves is a bug.
+- **Docs needs:** `docs/dev/sim-world.md` (the player batch), `docs/dev/art-bible-v2.md` († row: thruster).
 
 ### R4-05.E3 — The attract cards, the WARNING band and the zone cards
 
@@ -903,8 +949,8 @@ The builders' "docs needs" wait in their reports in `RUN_DIR`.
    ```bash
    node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*
    VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/scripts/art-origins.test.ts test/integration/palette-cycle-scan.test.ts test/integration/content.test.ts test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/localization.test.ts
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/scenes packages/core/test/powerups packages/core/test/shields packages/core/test/blackhole packages/core/test/bullets
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/showcase packages/shell/test/fx-gallery
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/world packages/core/test/ui packages/core/test/scenes packages/core/test/powerups packages/core/test/shields packages/core/test/blackhole packages/core/test/bullets
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/showcase packages/shell/test/flight packages/shell/test/fx-gallery
    node scripts/art-origins.mjs --check
    pnpm content:check
    pnpm --filter @shmup/tizen build
