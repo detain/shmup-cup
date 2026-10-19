@@ -19,14 +19,17 @@
  *   - user data: everything the game keeps is in `localStorage` under the game's prefix (Tizen
  *     deletes it with the app — no cookies, no IndexedDB).
  *
- * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
- * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
- * this spec at 80-90 % of its test timeouts. Its other pauses stay frames: some run while no
- * tick does (a hidden page, frame advance).
+ * Key taps, and the pauses while the game runs, count the game's ticks (`ticks.ts`), never rAF
+ * frames: on a runner drawing about 3 frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks
+ * a frame) the frame-paced taps ran this spec at 80-90 % of its test timeouts. Six pauses of the
+ * multitasking check stay frames: the three while the page is hidden, where no tick runs, and the
+ * three that back a "the game resumed" or "ticks advance" check (the first after the page shows
+ * again, and the two before the World and game tick checks), where a tick wait would hang rather
+ * than fail if the game stayed frozen.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { BOOT_TIMEOUT_MS, remoteTap, tap } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap, waitTicks } from './ticks.js';
 
 /** Boot-to-title budget on CI (plan M2-18; the TV's own budget is 10 s, 5 s ideal). */
 export const BOOT_TO_TITLE_BUDGET_MS = 3000;
@@ -136,7 +139,8 @@ function readProbe(page: Page): Promise<{ titleAt: number; exits: number; audio:
 }
 
 /**
- * Waits for `frames` animation frames in the page.
+ * Waits for `frames` animation frames in the page: only where no tick runs (a hidden page) or a
+ * tick wait would hang instead of failing (before a "the game resumed" or "ticks advance" check).
  *
  * @param page - The page.
  * @param frames - Frames to wait.
@@ -246,7 +250,7 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
 
     // Back on the title: the exit confirmation; NO and Back keep the app, YES exits — once.
     await remoteTap(page, BACK);
@@ -269,22 +273,22 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await tap(page, 'Enter');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 30);
+    await waitTicks(page, 30);
     await remoteTap(page, BACK);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
     await remoteTap(page, BACK);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     expect((await readProbe(page)).exits).toBe(0);
 
     // Multitasking: hidden freezes the game and suspends the audio …
     const before = await counters(page);
     expect(before.suspended).toBe(false);
     await setVisibility(page, 'hidden');
-    await waitFrames(page, 30);
+    await waitFrames(page, 30); // frames: hidden, no tick runs
     const hidden = await counters(page);
     expect(hidden.suspended).toBe(true);
-    await waitFrames(page, 30);
+    await waitFrames(page, 30); // frames: hidden, no tick runs
     const still = await counters(page);
     expect(still.tick).toBe(hidden.tick);
     expect(still.worldTick).toBe(hidden.worldTick);
@@ -294,7 +298,7 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
     expect((await readProbe(page)).audio.length).toBeGreaterThan(0);
     // … visible again: the audio resumes, the pause menu is up, no catch-up burst.
     await setVisibility(page, 'visible');
-    await waitFrames(page, 10);
+    await waitFrames(page, 10); // frames: backs the resume checks (a tick wait would hang)
     const back = await counters(page);
     expect(back.suspended).toBe(false);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
@@ -304,25 +308,23 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
       .toBe(true);
     await remoteTap(page, BACK);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
-    await waitFrames(page, 20);
+    await waitFrames(page, 20); // frames: backs "ticks advance" (a tick wait would hang)
     expect((await counters(page)).worldTick).toBeGreaterThan(back.worldTick);
 
     // No crash on resume: five more trips to the home screen and back.
     for (let k = 0; k < 5; k++) {
       await setVisibility(page, 'hidden');
-      await waitFrames(page, 5);
+      await waitFrames(page, 5); // frames: hidden, no tick runs
       await setVisibility(page, 'visible');
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       await expect(canvas).toHaveAttribute('data-shmup-scene', 'pause');
       await remoteTap(page, BACK);
       await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
     }
     const running = await counters(page);
-    await waitFrames(page, 20);
+    await waitFrames(page, 20); // frames: backs "ticks advance" (a tick wait would hang)
     expect((await counters(page)).tick).toBeGreaterThan(running.tick);
-    await expect(canvas).toHaveAttribute('data-shmup-state', 'running', {
-      timeout: BOOT_TIMEOUT_MS,
-    });
+    await expect(canvas).toHaveAttribute('data-shmup-state', 'running');
 
     // User data: only the game's localStorage keys (deleted with the app on Tizen). The debug
     // tools' save import writes the save through the platform's storage as the game does.
@@ -355,14 +357,14 @@ test.describe('release check: Tizen certification self-checks (M2-18)', () => {
     await page.goto(TIZEN_INDEX);
     const canvas = page.locator('#game');
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title', { timeout: BOOT_TIMEOUT_MS });
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await remoteTap(page, BACK);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'confirm');
     await tap(page, 'ArrowLeft'); // YES
     expect((await readProbe(page)).exits).toBe(0);
     await tap(page, 'Enter');
     await expect.poll(async () => (await readProbe(page)).exits).toBe(1);
-    await waitFrames(page, 10);
+    await waitTicks(page, 10); // the title plays on: the stand-in exit() closes nothing
     expect((await readProbe(page)).exits).toBe(1);
     expect(errors).toEqual([]);
   });

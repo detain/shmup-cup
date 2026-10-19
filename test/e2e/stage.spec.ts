@@ -10,14 +10,16 @@
  * The scroll check does not depend on how fast the machine is: `pnpm test:e2e` runs the test
  * builds, whose `window.__shmupDebug` (plan M1-19) lets the spec freeze the sim with frame advance
  * and run exact tick counts (`./frame-advance.ts`). The two captures are then exactly 30 ticks of
- * camera travel apart, however many ticks a loaded machine would have run per frame.
+ * camera travel apart, however many ticks a loaded machine would have run per frame. The unknown
+ * stage's free flight runs on its own clock: its pause counts the game's ticks (`ticks.ts`), never
+ * rAF frames (C5 review 4).
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** Colours of the `tiles/terrain-a` placeholder art (surface rim, subsurface, rock tones). */
 const TERRAIN_COLOURS = [
@@ -27,28 +29,6 @@ const TERRAIN_COLOURS = [
   [0x1e, 0x44, 0x48],
   [0x33, 0x6a, 0x64],
 ] as const;
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
 
 /**
  * Samples the canvas at frame-pixel resolution and summarises the terrain-coloured pixels.
@@ -158,7 +138,7 @@ test.describe('stage runtime (web build, ?stage=test-range)', () => {
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
-    await waitFrames(page, 30);
+    await waitTicks(page, 30);
     const pixels = await terrainPixels(page);
     expect(pixels.playfield + pixels.hud).toBe(0);
     expect(warnings.some((text) => text.includes('no stage "no-such-stage"'))).toBe(true);

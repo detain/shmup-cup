@@ -7,6 +7,10 @@
  * right half of the playfield (its hull colour there) — all without console errors or atlas
  * warnings. Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport
  * 1280×720): frame pixel (x, y) is screenshot pixel (sx(x), sy(y)).
+ *
+ * Key taps, pauses and the polls' intervals count the game's ticks (`ticks.ts`), never rAF frames
+ * (C5 review 4): a runner drawing about 3 frames a second runs up to 4 ticks a frame, and with no
+ * god mode a poll that overshot in frames could let the game run on to its game over.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
@@ -21,7 +25,7 @@ import {
   uiPx,
 } from './frame-pixels.js';
 import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, tap, waitTicks } from './ticks.js';
 
 /** The WARNING band's edge colour (core `ui` `UI_COLORS.alert`, 0xf85858). */
 const WARNING_RED = [0xf8, 0x58, 0x58] as const;
@@ -33,41 +37,6 @@ const BULWARK_HULL = [0x2e, 0x50, 0x82] as const;
  * 76 at 384×216, 132 at 640×360).
  */
 const BAND_Y = FRAME_CY - uiPx(8) - (uiPx(48) >> 1);
-
-/**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (count) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= count) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames, then releases it.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
 
 /** What one capture shows. */
 interface Capture {
@@ -121,7 +90,7 @@ test.describe('zone A (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await tap(page, 'Enter'); // PRESS OK → the menu
     await tap(page, 'Enter'); // START
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
@@ -138,15 +107,15 @@ test.describe('zone A (web build)', () => {
     // The WARNING: about two seconds of scrolling after the skip.
     let shown = false;
     for (let poll = 0; poll < 120 && !shown; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       shown = (await capture(page)).band > 300;
     }
-    expect(shown, 'no WARNING band within 1,200 frames of START').toBe(true);
+    expect(shown, 'no WARNING band within 1,200 ticks of START').toBe(true);
 
     // Two band-free captures in a row (one may land on a red WARNING flash).
     let clear = 0;
     for (let poll = 0; poll < 100 && clear < 2; poll++) {
-      await waitFrames(page, 10);
+      await waitTicks(page, 10);
       clear = (await capture(page)).band === 0 ? clear + 1 : 0;
     }
     expect(clear, 'the WARNING band never went away').toBe(2);
@@ -154,7 +123,7 @@ test.describe('zone A (web build)', () => {
     // The boss flies in (150 ticks) and holds the right half of the playfield.
     let hull = 0;
     for (let poll = 0; poll < 80 && hull <= 100; poll++) {
-      await waitFrames(page, 5);
+      await waitTicks(page, 5);
       hull = (await capture(page)).hull;
     }
     expect(hull).toBeGreaterThan(100);

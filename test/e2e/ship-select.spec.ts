@@ -12,11 +12,24 @@
  *
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel x is screenshot pixel sx(x).
+ *
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames (C5 review 4): a
+ * runner drawing about 3 frames a second runs up to 4 ticks a frame, so a key held 3 frames could
+ * last 12 ticks, near the menus' 18-tick and the remote's 21-tick auto-repeat (a repeated
+ * ArrowDown would skip past the MANTA).
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { BOOT_TIMEOUT_MS, SCENE_SLACK_TICKS, SHIP_ENTER_TICKS, pollTicks } from './ticks.js';
+import {
+  BOOT_TIMEOUT_MS,
+  SCENE_SLACK_TICKS,
+  SHIP_ENTER_TICKS,
+  pollTicks,
+  remoteTap,
+  tap,
+  waitTicks,
+} from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -71,63 +84,6 @@ function view(page: Page): Promise<DirectView> {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
- *
- * @param page - The page.
- * @param frames - Frames to wait.
- */
-function waitFrames(page: Page, frames: number): Promise<void> {
-  return page.evaluate(
-    (total) =>
-      new Promise<void>((resolve) => {
-        let seen = 0;
-        const next = (): void => {
-          seen++;
-          if (seen >= total) resolve();
-          else requestAnimationFrame(next);
-        };
-        requestAnimationFrame(next);
-      }),
-    frames,
-  );
-}
-
-/**
- * Presses a key for a few frames and lets the game see the release.
- *
- * @param page - The page.
- * @param key - Playwright key name.
- */
-async function tap(page: Page, key: string): Promise<void> {
-  await page.keyboard.down(key);
-  await waitFrames(page, 3);
-  await page.keyboard.up(key);
-  await waitFrames(page, 6);
-}
-
-/**
- * Dispatches a remote key by its legacy key code (the TV sends no `code`), down then up.
- *
- * @param page - The page.
- * @param keyCode - The key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
-}
-
-/**
  * Counts the canvas pixels within 2 of a colour.
  *
  * @param page - The page.
@@ -168,7 +124,7 @@ async function openShips(page: Page, url: string, remote: boolean): Promise<stri
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   const ok = (): Promise<void> => (remote ? remoteTap(page, 13) : tap(page, 'Enter'));
   await ok(); // PRESS OK
   await ok(); // START
@@ -185,7 +141,7 @@ test.describe('ship select (web build)', () => {
     test.setTimeout(90_000);
     const errors = await openShips(page, './', false);
     const canvas = page.locator('#game');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await tap(page, 'ArrowDown'); // MANTA: its picture on the panel
     // One poll is a 1280×720 capture decoded and scanned in Node: on a loaded 4-core runner at
     // 640×360 a single one can outlast `expect.poll`'s default 5 s, so give it the time of a few.
@@ -215,7 +171,7 @@ test.describe('ship select (Tizen build via file://)', () => {
     test.setTimeout(90_000);
     const errors = await openShips(page, TIZEN_INDEX, true);
     const canvas = page.locator('#game');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await remoteTap(page, 40); // ArrowDown: MANTA
     await remoteTap(page, 13); // OK
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');

@@ -17,11 +17,16 @@
  * - a saved choice of the *Tizen* remote profile is ignored — the M3-03 lock-out regression, here
  *   against the real bundle rather than a fake window;
  * - no console errors anywhere in the run.
+ *
+ * Remote taps and the title's pause count the game's ticks (`ticks.ts`; the test build publishes
+ * `window.__shmupDebug`), never rAF frames (C5 review 4): a runner drawing about 3 frames a second
+ * runs up to 4 ticks a frame. The 20-frame wait before the screenshot counts drawn frames, not
+ * ticks: what it waits for is the picture.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
-import { BOOT_TIMEOUT_MS } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, waitTicks } from './ticks.js';
 
 /** The webOS build's page, as a `file://` URL. */
 const WEBOS_INDEX = pathToFileURL(
@@ -35,7 +40,7 @@ const SAVE_KEY = 'shmup-cup:save.v1';
 const REMOTE = { left: 37, up: 38, right: 39, down: 40, ok: 13, back: 461 } as const;
 
 /**
- * Waits for `frames` animation frames in the page.
+ * Waits for `frames` animation frames in the page: drawn frames, for the screenshot's picture.
  *
  * @param page - The page.
  * @param frames - Frames to wait.
@@ -54,28 +59,6 @@ function waitFrames(page: Page, frames: number): Promise<void> {
       }),
     frames,
   );
-}
-
-/**
- * Dispatches a remote key the desktop keyboard does not have, down then up.
- *
- * @param page - The page.
- * @param keyCode - The legacy key code.
- */
-async function remoteTap(page: Page, keyCode: number): Promise<void> {
-  const send = (type: string): Promise<void> =>
-    page.evaluate(
-      ([eventType, code]) => {
-        const event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'keyCode', { get: () => code });
-        window.dispatchEvent(event);
-      },
-      [type, keyCode] as const,
-    );
-  await send('keydown');
-  await waitFrames(page, 3);
-  await send('keyup');
-  await waitFrames(page, 6);
 }
 
 /**
@@ -115,7 +98,7 @@ async function openTitle(page: Page, save: string | null = null): Promise<string
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   return errors;
 }
 

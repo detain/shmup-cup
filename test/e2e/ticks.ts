@@ -14,9 +14,11 @@
  * - a pause, a key held for a while: {@link waitTicks};
  * - a key press: {@link tap}, {@link remoteTap}.
  *
- * Two waits stay wall time, because what they wait for is not ticks:
+ * Waits for wall-clock work stay wall time, because what they wait for is not ticks:
  *
  * - the boot ({@link BOOT_TIMEOUT_MS});
+ * - other work the page or the test does in real time: audio rendered and started, a screenshot
+ *   captured and decoded, a console line logged;
  * - a key sequence the host times in milliseconds: the TV unlock, which {@link remoteSequence}
  *   sends in one go.
  *
@@ -24,6 +26,9 @@
  *
  * **The game must be running.** A frozen sim (the debug tools' frame advance) runs no ticks, so a
  * tick wait would never end. A spec that freezes the sim steps it with `frame-advance.ts` instead.
+ * A wait stays in rAF frames only where no tick runs (a frozen sim, a hidden page), where a tick
+ * wait would hang instead of failing (before a "ticks advance" check), or where it waits for drawn
+ * frames (a renderer re-fit, a picture); the spec's docblock says why.
  *
  * **The delays are core's.** The specs cannot import `@shmup/core` (see `frame-pixels.ts`), so the
  * delays below are pinned mirrors of core's scene-flow constants, like `save-format.ts`, and of

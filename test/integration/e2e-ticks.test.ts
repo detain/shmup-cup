@@ -1,5 +1,5 @@
 /**
- * `test/e2e/ticks.ts` (plan_resolution.md R2-01, C5 reviews 3 and 4): the browser tests' tick
+ * `test/e2e/ticks.ts` (plan_resolution.md R2-01, C5 review 3): the browser tests' tick
  * budgets are core's scene-flow delays and the ships' fly-in plus slack, and the specs cannot
  * import core, so `ticks.ts` keeps pinned mirrors of them. This test keeps each mirror equal to
  * `@shmup/core`'s constant or to the shipped content, and fails on a new numeric constant there

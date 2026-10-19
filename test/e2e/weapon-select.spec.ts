@@ -15,16 +15,16 @@
  * Screenshots are at the e2e capture scale (`frame-pixels.ts`; ×2, viewport 1280×720): frame
  * pixel x is screenshot pixel sx(x).
  *
- * Key taps count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing about 3
- * frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced taps ran
- * this spec at 80-90 % of its test timeouts. Its other pauses stay frames: some run while no
- * tick does (frame advance, in `holdLaserTurn` / `resumeSim`).
+ * Key taps and pauses count the game's ticks (`ticks.ts`), never rAF frames: on a runner drawing
+ * about 3 frames a second (2 CPUs, C5 review 3's repro; up to 4 ticks a frame) the frame-paced
+ * taps ran this spec at 80-90 % of its test timeouts. Its one frame wait runs under frame advance
+ * (`holdLaserTurn`): no tick runs there, and it waits for the canvas to draw the stepped tick.
  */
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { SCALE } from './frame-pixels.js';
-import { BOOT_TIMEOUT_MS, remoteTap, tap } from './ticks.js';
+import { BOOT_TIMEOUT_MS, remoteTap, tap, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
 const TIZEN_INDEX = pathToFileURL(
@@ -82,7 +82,7 @@ function view(page: Page): Promise<SelectView> {
 }
 
 /**
- * Waits for `frames` animation frames in the page.
+ * Waits for `frames` animation frames in the page: only under frame advance, where no tick runs.
  *
  * @param page - The page.
  * @param frames - Frames to wait.
@@ -156,7 +156,8 @@ async function holdLaserTurn(page: Page, into: number): Promise<void> {
 }
 
 /**
- * Turns frame advance off again: the sim runs on its own clock.
+ * Turns frame advance off again: the sim runs on its own clock (two ticks of it before this
+ * resolves).
  *
  * @param page - The page.
  */
@@ -166,7 +167,7 @@ async function resumeSim(page: Page): Promise<void> {
       window as unknown as { __shmupDebug: { flags: { frameAdvance: boolean } } }
     ).__shmupDebug.flags.frameAdvance = false;
   });
-  await waitFrames(page, 2);
+  await waitTicks(page, 2);
 }
 
 /**
@@ -217,7 +218,7 @@ async function openSelect(page: Page, url: string): Promise<string[]> {
   const canvas = page.locator('#game');
   await expect(canvas).toHaveAttribute('data-shmup-state', 'running', { timeout: BOOT_TIMEOUT_MS });
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'title');
-  await waitFrames(page, 10);
+  await waitTicks(page, 10);
   await tap(page, 'Enter'); // PRESS OK
   await tap(page, 'Enter'); // START
   await expect(canvas).toHaveAttribute('data-shmup-scene', 'difficulty');
@@ -233,7 +234,7 @@ test.describe('weapon select (web build)', () => {
     test.setTimeout(90_000);
     const errors = await openSelect(page, './');
     const canvas = page.locator('#game');
-    await waitFrames(page, 20);
+    await waitTicks(page, 20);
     // The preview's KESTREL flies right of the panel (held at x 232).
     const [hull, hullRight] = await countColour(page, KESTREL_HULL, 190);
     expect(hull).toBeGreaterThan(0);
@@ -261,10 +262,10 @@ test.describe('weapon select (Tizen build via file://)', () => {
     test.setTimeout(90_000);
     const errors = await openSelect(page, TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await remoteTap(page, 10009); // Back
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'shipSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await remoteTap(page, 13); // OK: KESTREL (M2-05)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
     await remoteTap(page, 13); // OK: START (the menu opens on it)
@@ -279,7 +280,7 @@ test.describe('weapon select (Tizen build via file://)', () => {
     test.setTimeout(90_000);
     const errors = await openSelect(page, TIZEN_INDEX);
     const canvas = page.locator('#game');
-    await waitFrames(page, 10);
+    await waitTicks(page, 10);
     await remoteTap(page, 40); // START → TYPE (wraps)
     await remoteTap(page, 37); // TYPE A → EDIT (wraps)
     await remoteTap(page, 40); // MISSILE (unlocked by EDIT)
@@ -299,11 +300,11 @@ test.describe('weapon select (Tizen build via file://)', () => {
     await remoteTap(page, 40); // ORDER
     await remoteTap(page, 13); // the order editor (an overlay)
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'autoOrder');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await remoteTap(page, 39); // row 1: SPEED → MISSILE
     await remoteTap(page, 10009); // Back stores the rows and closes
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'weaponSelect');
-    await waitFrames(page, 4);
+    await waitTicks(page, 4);
     await remoteTap(page, 40); // START
     await remoteTap(page, 13);
     await expect(canvas).toHaveAttribute('data-shmup-scene', 'game');
