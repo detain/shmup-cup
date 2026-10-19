@@ -23,7 +23,7 @@ by the quoted code or test title before you edit it.
 | 1 | `R4-01.A9` → `R4-02.B4` | the R4-01 / R4-02 e2e specs, `docs/images/{ships,shots,options,shields,items}/` | DOCS-IMAGES (own folders) | yes (pass 1) |
 | 2 | `R4-05.E5` → `R4-05.E6` (E6 after A9 and B4 are on master) | `scripts/store-assets.mjs`, the 4 icons; then all of `docs/images/**` | STORE; then DOCS-IMAGES (full) | E6 runs `docs:screens` under the e2e lock (pass 2) |
 | 3 | `R5-P.P4` → `R5-P.P5a1` → `R5-P.P5a2` | `content/patterns/*`, the 20 core behaviour tests, then the `behaviors-zones*` splits | none | no |
-| 4 | `R5-P.P3` → `R5-P.P10` → `R5-P.LAND` | `scripts/golden-update.mjs`, `test/golden/*.test.ts`, recovery tests; the 3 fingerprint tests; `docs/v2-run/helpers/land-zone.sh` | GOLDEN (verify only, P3); FINGERPRINTS (P10) | no |
+| 4 | `R5-P.P3` → `R5-P.P10` → `R5-P.LAND` (LAND after `R4-05.E6` is on master) | `scripts/golden-update.mjs`, `test/golden/*.test.ts`, recovery tests; the 3 fingerprint tests; `docs/v2-run/helpers/land-zone.sh` | GOLDEN (verify only, P3); FINGERPRINTS (P10) | no |
 | 5 | `R5-P.P5e` | `test/integration/zones-*-{runtime,runtime-edge,direct}.test.ts` → per zone | none | no |
 | 6–8 | `R5-P.D-A` … `R5-P.D-I` (the designs not finished in wave 08), one agent per design | `docs/v2-run/designs/zone-<x>.md` (new) | none (docs commit of its own file) | no |
 
