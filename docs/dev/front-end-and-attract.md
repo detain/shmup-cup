@@ -203,17 +203,25 @@ allocation-free apart from its spawns' coroutines, D29).
 The story is **campaign content**: `campaign.story`, up to `MAX_STORY_PAGES` (8) pages
 (`CampaignStoryPage { scene, lines }`), each naming a sprite scene of `STORY_SCENES` — `none`,
 `dawn`, `invasion`, `launch` (default `none`) — and 0–`MAX_STORY_LINES` (6) lines of ≤
-`MAX_STORY_LINE_LENGTH` (40) characters — since R1-01 the glyph cells that fit the story panel,
-⌊(`FRAME_W` − 144) / `GLYPH_W`⌋ ([scenes-and-ui.md](scenes-and-ui.md#laying-screens-out-from-the-frame-r1-01)).
+`MAX_STORY_LINE_LENGTH` (**47** since R2-01; 40 at v1's frame) characters — the glyph cells that fit
+the story's text panel: `data/campaign`'s `TEXT_PANEL_LINE_LENGTH`,
+⌊(`FRAME_W` − 2·(`TEXT_PANEL_INSET` + `TEXT_PANEL_PADDING`)) / `GLYPH_W`⌋, both margins
+`⌈v · ART_SCALE⌉` of the drawn px (60 + 48 at 640×360, the 9-px cell: ⌊(640 − 216) / 9⌋ = 47). The
+v1 form ⌊(`FRAME_W` − 144) / `GLYPH_W`⌋ — 2·(40 + 32), the unscaled margins — held only at v1's
+frame: the frame grows ×5/3 while the panel's art-scaled margins grow ×3/2
+([scenes-and-ui.md](scenes-and-ui.md#laying-screens-out-from-the-frame-r1-01)).
 `completeCampaign` defaults the fields. The shipped story
 is three pages of original text (the Verge worlds, the Iron Tide, KESTREL and MANTA — see
 `content/campaign/main.campaign.json`).
 
 `StoryScene` flattens the pages into rows once, when the flow is built (every page's lines, then a
-blank row). The rows rise 1 px every `STORY_SCROLL_TICKS` (4 — 15 px a second), `STORY_ROW_HEIGHT`
-(11 — `LINE_H + 1` since R1-01) px apart, through a panel at the bottom of the screen (rows between
-y 132 and 206, `STORY_PANEL` `FRAME_W − 80` wide at x 40 — its rows stay top-anchored on purpose
-under the sprite scenes until R4-05 redraws them); only the
+blank row). The rows rise `ART_SCALE` px every `STORY_SCROLL_TICKS` (4 — 15 steps a second, 22.5 px
+a second; each step counts `SCROLL_HALVES` half-pixels and lands whole, so the crawl takes as long
+as at v1's frame — where it was 1 px a step, 15 px a second), `STORY_ROW_HEIGHT` apart (17 —
+`LINE_H + uiPx(1)` since R2-01; v1's 11 was `LINE_H + 1`), through a panel at the bottom of the
+screen (rows between y 216 and 330, `STORY_PANEL` `FRAME_W − 2·uiPx(40)` = 520 wide at x 60 — v1's
+band y 132–206 had it `FRAME_W − 80` = 304 at x 40 — its rows stay top-anchored on purpose under the
+sprite scenes until R4-05 redraws them); only the
 rows inside it are drawn, through `STORY_STRING_SLOTS` (10) slots **taken by row number** — the
 credits' trick from M2-14, so any story length fits a fixed budget. A page's scene takes over
 when its first row has crawled **half-way up** the panel (`STORY_PAGE_LEAD`), so the picture
@@ -225,7 +233,7 @@ The scenes are arithmetic on the tick count over fixed tables — no new art:
 
 | Scene | Draws |
 |---|---|
-| `dawn` | `ui/ending-sun` rising 60 px over a dark sea band, `ui/ending-surface` tiles drifting |
+| `dawn` | `ui/ending-sun` rising 90 px (`ART_SCALE` × the 60-step rise table, `SCROLL_HALVES` half-px — v1's 60) over a dark sea band, `ui/ending-surface` tiles drifting |
 | `invasion` | `ui/ending-citadel` and `ui/ending-ark` closing in from the right, three `ui/ending-blast` explosions cycling through a fixed table of 8 positions |
 | `launch` | the content's first two ships racing off one after the other (accelerating, a speed line behind each), then the `ui/logo` |
 
