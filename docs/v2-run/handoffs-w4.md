@@ -56,7 +56,7 @@ The re-plan that wrote `docs/v2-run/` may already have changed these lines; read
 
   The rest of that bullet describes R1. The fingerprint was re-pinned at R2-01, with reasons. The scans now ban the
   v1 numbers and also 640 / 360 / 336 / 348. (A5, scout §9) (done in `92da486`: the flip bullet now says 640×360)
-- **`CLAUDE.md:76`, "merge `v1.x` → `master` until R2-01 lands":** R2-01's flip has landed. From now on only code
+- **`CLAUDE.md:79` (was `:76`), "merge `v1.x` → `master` until R2-01 lands":** R2-01's flip has landed. From now on only code
   fixes are cherry-picked (`git cherry-pick -x`). (found while verifying; plan §3.3 says the same)
 - **`CLAUDE.md`'s Tooling bullet quoted `node scripts/content/rescale.mjs --factor 1.5 --top-pad 36 --dry-run`, which
   exits 2 since the flip** ("the atlas' terrain tiles are 12 px against the content's tilesets' 8 px … need
@@ -138,7 +138,8 @@ Add to the mirrors:
 
 - **`test/e2e/frame-pixels.ts`** (C4, lane U, C5):
   - it re-exports `GLYPH_H` and `LINE_H`;
-  - `UI_ART_SCALE: number = GLYPH_W / 6` (`:116`) and `uiPx` (`:126`), pinned to core in
+  - `UI_ART_SCALE: number = GLYPH_W / FONT_FILE_CELL_W` (= 3/2; `:116`, the cell constant at `:108`) and `uiPx`
+    (`:126`), pinned to core in
     `test/scripts/frame.test.ts:183` and `:186`.
 
   `scripts/frame.mjs` has no `ART_SCALE` (verified).
@@ -559,7 +560,8 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
   - `5d5a050`: 16 / 119, `ui` only.
 
   Shell frame fingerprint: 5 / 5 at A5, then 3 flight walks at `c2a9ed5`.
-- **Allow-lists:** core 14 entries (+3 entries / 4 hits); repo 32 (+1 C1, +9 A5). Not R1-01's "four entries".
+- **Allow-lists:** core 14 entries (+3 entries / 4 hits); repo 33 — the flip commit `72b18a1` added 9 entries over
+  the pre-flip 24 (C1's and A5's entries all landed in it). Not R1-01's "four entries".
 - **The skips at `bc8e05d`** (verified by a full run): `GOLDENS_STALE` 239 · `CONTENT_PORT_PENDING` 80 · frame
   `runIf` 41 = 360. 0 failed. (was: 81, until A5 fix 1 split `zones-fg-runtime`)
 - **The interim art is built differently from the plan's scope text** ("a pipeline stage `interimScale: 1.5`"):
@@ -578,7 +580,8 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
   - **The webOS / web / Tizen boot-wiring fakes** are frame-independent (C2).
   - **The render bench's ×2 scenario** is 1280×720 with an 8192 KB target, and passes.
   - **`TEXTURE_BUDGET_BYTES`** is 23 MiB at 640 (`packages/shell/src/memory/index.ts:261`).
-- **R1-04's note (plan `:1019`) "Between R2-01 and R2-02 `tile-size.test.ts` is red"** did not happen. A4 rewrote it as
+- **R1-04's note (plan `:1019` at `bc8e05d` — locate by the phrase, the plan shifts) "Between R2-01 and R2-02
+  `tile-size.test.ts` is red"** did not happen. A4 rewrote it as
   the "never mixed" check with a pending branch, and it is green at `bc8e05d`.
 - **Story and credits durations** are within 5 % of v1 (+2.7 % / +3.5 %), not equal. The docblocks
   `packages/core/src/scenes/index.ts:1649`, `:7474` and `:7651` still say "as long as at the v1 frame". (A5 review 1
@@ -617,7 +620,9 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
 
 ### Decision register
 
-- **The register has no W4-* row** (verified: 0 hits in `plan_resolution.md`). Code cites them, e.g. `test/e2e/gates.ts`,
+- **The §1 register has no W4-* row** (verified 0 hits at `bc8e05d`; the plan's only W4-* line today is the §18.3
+  decisions row, which records that the §1 rows are wave 1's docs agent's job).
+  Code cites them, e.g. `test/e2e/gates.ts`,
   `test/golden/stale.ts`, `core/save`, `core/replay`, `core/ui`, `core/scenes` and the scanner. Add **W4-1 … W4-14**:
   - **W4-1:** self-expiring gates `CONTENT_PORT_PENDING` (until R2-02) and `GOLDENS_STALE` (until R2-03), each
     throwing once its condition is gone; fixture-caused failures are fixed, never gated.
@@ -655,7 +660,8 @@ R1-01's 55 / 68 at 640 (lane U, U review 1 #6). Verified at `packages/core/src/d
   - The identity re-run after the port (`--factor 1 --dry-run`) needs no flags.
 
   (B3, precheck §1.8)
-- **"Outside today's schema bounds": 3, not 66.** The plan's R2-02 note at `:1261` still says 66. The frame-derived
+- **"Outside today's schema bounds": 3, not 66.** The plan's R2-02 note at `:1261` (at `bc8e05d`; locate by the
+  phrase) still says 66. The frame-derived
   bounds widened at the flip. The 3 left are IRON LEVIATHAN's `advanced-bosses.enemies.json` `enemies[4].boss.parts[4 |
   8 | 12].x` (384 → 576, 384 → 576, 360 → 540) against the fixed ±512 (`packages/core/src/data/index.ts:2465-2466`).
   The real run then gives exactly these 3 errors. The fix is W5-8: widen to ±768. (B3, verified)
@@ -848,7 +854,10 @@ every item they hold for the docs pass is in this file.
 ## Appendix A — data the work orders need inline
 
 All line numbers are at master `bc8e05d`, checked with `git grep -n` and a full `vitest run` (782 files,
-9,314 tests: 0 failed, 360 skipped).
+9,314 tests: 0 failed, 360 skipped). **Convention:** where a table names a later commit, its numbers are **that
+commit's**; since `c67c7c9` the C5 fixers moved many cites again (in `test/e2e/*`, the `scripts/assets/` and
+`core/config` areas, and the plan). Do not re-pin every number — locate by the quoted phrase, or re-run the
+`git grep` line the section names, before relying on one.
 
 ### A (a) `test/integration/content.test.ts`: the gap and probe-row values the gated cases check after R2-02's port
 
@@ -908,7 +917,8 @@ drops that pin with `port-pending.ts`.
 
 #### Every gated line (from `git grep -n -E "R2_03_PENDING|PORT_UNMEASURED|assertionsGated|GOLDEN_REASON|CONTENT_REASON|PORT_REASON|recordingIsStale" -- test/e2e`)
 
-**Line numbers moved by `c67c7c9`** (re-run the `git grep` above before relying on one):
+**Line numbers at `c67c7c9`** (both columns are historical — the C5 fixes moved them again; re-run the `git grep`
+above before relying on one):
 - `campaign-run.spec.ts`: gate `:316` → `:372` (test `:313` → `:369`); the web run `:241` → `:298`, with god mode
   `:252` → `:311`; the Tizen run `:355` → `:411`.
 - `debug-tools.spec.ts`: `assertionsGated` `:200` → `:228` (web test `:167` → `:195`); the Tizen unlock test
@@ -1008,7 +1018,8 @@ Two class-(a) specs also run in **god mode on v1 content**, ungated:
 - `coop-gamepad.spec.ts:126` (god mode at `:171-172`): both ships died to v1 zone A on 4 cores;
 - `campaign-run.spec.ts:241` (god mode at `:252`): the flawless citadel ending needs no ship lost.
 
-The wave-5 pre-check (§2 item 14) notes that the e2e lock was given only to lanes V and M in wave 5, while lane S needs
+The wave-5 scout (§4 "Hot spots and serialisation" — not the §0 items; the pre-check's §2 item 14 is not in the
+committed text) notes that the e2e lock was given only to lanes V and M in wave 5, while lane S needs
 it at S2 and S3 for these specs.
 
 #### C5's e2e timing notes
@@ -1025,8 +1036,9 @@ it at S2 and S3 for these specs.
 - **render-groups timeouts:** `:252` (was `:246`) has 120 s and `:321` (was `:315`) has 180 s, each with a comment.
   They run locally in 15 s and 28 s, but take 54 s and about 95 s on 4 pinned cores (`taskset -c 0-3`, like a CI
   runner). C5 review 1 measured 13.8 s and 27.0 s locally, unpinned.
-- **In the TV scenes of the render bench,** 640×360 renders about 37 % fewer frames than 384×216 in the same window
-  (72 → 45, 68 → 26, 65 → 32). The CPU-side p95 moved only from 2.4–2.9 to 2.4–4.8 ms. The TV figures are R0-02's.
+- **In the TV scenes of the render bench,** 640×360 renders about half the frames of 384×216 in the same window
+  (72 → 45, 68 → 26, 65 → 32: 37.5 %, 61.8 %, 50.8 % — aggregate 205 → 103; the first pair alone is the 37 % a
+  first pass quoted). The CPU-side p95 moved only from 2.4–2.9 to 2.4–4.8 ms. The TV figures are R0-02's.
 - **Already long tests with their own 90–180 s timeouts** (times on CI at `e7ff5db`): `options:219` (57.6 s),
   `game-options:306` (59.2 s), `scenes:168` (56.8 s).
 - **Local runs under the lock** (Chromium, `CI=1`, `E2E_WORKERS=2`, retries 0):
@@ -1189,8 +1201,9 @@ causes:
 - the muzzle sparks at the v1 `dx` 9 covered the ×1.5 nose (S3).
 
 `c67c7c9` fixed them, in test files only:
-- tick-budget waits and a 420 s web timeout (the tests are now `campaign-run.spec.ts:298` and `:411`);
-- the one-`evaluate` `remoteSequence` (`debug-tools.spec.ts:152`, test `:261`);
-- `freezeSim` / `stepTo` / `holdTicks` and the tail-and-fins `HullView` (`flight.spec.ts:47`, test `:152`).
+- tick-budget waits and a 420 s web timeout (the tests are now `campaign-run.spec.ts:217` and `:335`);
+- the one-`evaluate` `remoteSequence` (defined in `test/e2e/ticks.ts`, imported by `debug-tools.spec.ts:28`; the
+  unlock test is `debug-tools.spec.ts:257`);
+- `freezeSim` / `stepTo` / `holdTicks` and the tail-and-fins `HullView` (`flight.spec.ts:31`, test `:137`).
 
 The excerpts above are `bc8e05d`'s.
