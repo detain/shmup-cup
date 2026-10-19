@@ -268,31 +268,43 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 
 ### R4-05.E3 — The attract cards, the WARNING band and the zone cards
 
-- **Wave / lane / order:** wave 08, lane 2, first.
+- **Wave / lane / order:** wave 08, lane 2, first — start it once lane 1 or lane 3 has ended (it needs the e2e pass
+  that frees, At a glance).
 - **Depends on:** nothing in this wave.
 - **Goal:** redo the WARNING band (`packages/core/src/scenes/index.ts:1708-1718`: `WARNING_BAND_H = uiPx(48)`,
   `WARNING_BAND_Y`, `WARNING_TEXT_DY`), the zone title cards (`ZONE_CARD_H` / `ZONE_CARD_Y` at `:1721-1727`,
-  `ZONE_CARD_TICKS` 150 at `:1620`) and the attract cards at 640×360: frame-derived band heights, hazard stripes.
+  `ZONE_CARD_TICKS` 150 at `:1620`) and the attract demo's cards (`DemoScene.drawUi` `:8356`: `DEMO PLAY` at
+  `STATUS_LINE_Y` `:1736`, and its zone card for `DEMO_CARD_TICKS` `:7733`, drawn with the same `ZONE_CARD_*`,
+  `:8368-8373`) at 640×360: frame-derived band heights, hazard stripes.
 - **Files (only these; checked on `bc8e05d`):**
-  - `packages/core/src/scenes/index.ts` — the constants above and the code that draws them (exact old/new strings; the
-    file is 10,865 lines).
-  - `scripts/assets/procedural/title.mjs` (the R4-P.P1 stub) — only if a card uses sprites. **Not** `ui-kit.mjs`.
+  - `packages/core/src/scenes/index.ts` — the constants above and the code that draws them: the band and the zone
+    cards draw in `GameScene.drawUi` / `GameScene.drawCard` (`:3000-3036`) (exact old/new strings; the file is
+    10,865 lines).
   - tests in `packages/core/test/scenes/` that pin those rows (e.g. `scenes-attract*.test.ts`, `scenes-flow*.test.ts`).
+  - `packages/core/test/helpers/scene-layout.ts` — only `WARNING_BAND` (`:79-84`): change its formula with the
+    scene's (the scenes' suites re-derive the band there; its docblock says a layout change changes it on purpose).
   - the three fingerprints' `PINNED` tables.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/scenes packages/core/test/ui/ui-layout-frame.test.ts packages/core/test/frame-literals.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
-  bash docs/v2-run/helpers/e2e-batch.sh boss.spec.ts attract.spec.ts campaign-run.spec.ts
+  bash docs/v2-run/helpers/e2e-batch.sh zone-a.spec.ts attract.spec.ts campaign-run.spec.ts
   ```
-  then the FP re-pin under the land lock.
+  then the FP re-pin under the land lock. (`zone-a.spec.ts` samples the game scene's band row and colour;
+  `boss.spec.ts` checks the shell flight scene's own band, which this subtask does not change. `zone-a.spec.ts` is
+  `W08.E2E`'s spec (rule 15): run it, edit it not.)
 - **Acceptance:** heights derive from the frame or `uiPx` (frame ≠ world: the band is frame-anchored); nothing overlaps
   in en, es or ja (`ui-layout-frame.test.ts` green **unedited**); fingerprints re-pinned with the reason; goldens
   untouched.
 - **Token:** SCENES (lane 2); FINGERPRINTS (push time). **e2e:** lane 2's pass.
 - **Traps:** rule 7 (no edit of `packages/core/test/ui/*` or `helpers/layout-walks.ts`); no literal frame number in
   `scenes/index.ts` (`packages/core/test/frame-literals.test.ts`); the WARNING band's timing is ticks — unchanged; the
-  card strings are UI string ids (never upper-case literals).
+  card strings are UI string ids (never upper-case literals — existing ids only; a new id is STRINGS'
+  (`R4-03.C7`): report it); no new sprite — a scene draws a sprite only through `UI_SPRITES`
+  (`packages/core/src/ui/index.ts:236`), which is UI-FILE (lane 3, then `R4-05.E2`): draw the band, its hazard
+  stripes and the cards with the UI list's `rect` and `text` commands (the band is three `rect`s today,
+  `scenes/index.ts:3005-3007`; mind the list's `UI_COMMANDS` budget), and never edit `title.mjs`, `ui-kit.mjs` or
+  `ui/index.ts`. If the stripes truly need a sprite, report it for `R4-05.E2`, which holds UI-FILE and `title.mjs`.
 - **Docs needs:** `docs/dev/bosses-and-warning.md` (the band), `docs/dev/front-end-and-attract.md` (cards).
 
 ### R4-05.E4 — The five endings as full-frame scenes
