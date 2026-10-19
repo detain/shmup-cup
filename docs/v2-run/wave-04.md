@@ -33,7 +33,7 @@ carry over into wave 5).
 | 3 | `R3-03.V2a → R3-03.V5` (V5 after V1 and V2b on master) | `scripts/assets/{coop,sprite-source,pipeline}.mjs`, ship / life pixel maps, `procedural/palettes.mjs`, `scripts/art-origins.mjs` | — | no |
 | 4 | `R3-03.V2b → V4a → V4b` (V2b after V2a on master) | `art-prompts/ingest/**`, `scripts/assets/tileset-masks.mjs` (new), `test/integration/terrain-checks.ts` (new) | — | no |
 | 5 | `R3-04.M1a → M1b → M2a → M2b` (M2b after V1 on master) | `scripts/assets/standin.mjs` (new), `test/integration/standin-budget.test.ts` (new), `apps/tizen/scripts/check-bundle.mjs`, `test/scripts/assets/atlas-budget.ts` | — | no |
-| 6 | `R3-04.M4a → M4b` (M4a after M1b on master) | `apps/tizen/scripts/bench-decode.mjs`, `apps/tizen/src/bench/*`, `tools/input-probe/results/analyze-bench.mjs`, `test/bench/render.perf.ts` | — | no (bench under the e2e lock) |
+| 6 | `R3-04.M4a → M4b` (M4a after M1b on master) | `apps/tizen/scripts/{bench-decode,bench-atlas}.mjs`, `apps/tizen/src/bench/*`, `tools/input-probe/results/analyze-bench.mjs`, `test/integration/tv-render-bench.test.ts`, `test/bench/render.perf.ts` | — | no (bench under the e2e lock) |
 | 7 | carry-overs from wave 2/3: `R3-03.V3`, `R3-04.M3a … M3e` (blocks in [`wave-02.md`](wave-02.md)) | see their blocks | RP-BARREL, SHELL-BARREL (M3) | M3d / M3e (pass 2) |
 | 8 | filler `R0-04.W2`; `R0-04.W1` only when the owner opens it; optional `R3-04.M1c` | `art-prompts/images/**`; `art-prompts/v2/**` | — | no |
 
@@ -71,9 +71,10 @@ carry over into wave 5).
    before and after your change in your own tree, then compared.
 6. `INGEST` means `cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check` (its own npm project; CI's
    `ingest` job runs the same).
-7. **The barrier's exception to Common rule 3.** `R2-02.RV-pre` and `R2-02.S` run whole Vitest projects (core,
-   integration, shell, render-pixi, audio-web, input-web, web, tizen, webos, electron) because they are the port's
-   barrier — like wave 2's `R2-02.RV-A2`. That is not the run's full suite: they still never run `pnpm test`,
+7. **The barrier's exception to Common rule 3.** `R2-02.RV-pre`, `R2-02.S` and every round of S's review
+   `R2-02.S.RV1` run whole Vitest projects (core, integration, shell, render-pixi, audio-web, input-web, web, tizen,
+   webos, electron) because they are the port's barrier — like wave 2's `R2-02.RV-A2`. That is not the run's full
+   suite: they still never run `pnpm test`,
    `pnpm test:e2e` or the whole `pnpm bench`. Every other agent of this wave runs targeted tests only.
 8. **Pushes:** every builder and fixer of this wave pushes its own task to `master` (Common rule 5) — side lanes hold
    their pushes during the PORT window (rule 1). Review agents never push. This wave has no zone lane (local branch)
@@ -675,7 +676,11 @@ carry over into wave 5).
 - **Acceptance:** the library parses; the name check passes; `.md` and `.json` of each zone sheet agree.
 - **Token:** none.
 - **Traps:** edit 7 ("SNES-era" → "16-bit console era", about 1,100 hits) waits for the owner's decision: do not do
-  it. `art-prompts/` is outside the workspace and not formatted by Prettier — keep its layout. Original names only.
+  it. The FACET MONARCH label reword (Q-5) likewise: only if the owner has decided it — then reword the label in
+  `art-prompts/v2/manifest.json` (the zone G boss line, "the crystal core with an orbiting crown") and update its
+  `KNOWN_HITS` pin in `test/integration/art-prompt-names.test.ts`; those two files join your Files list only then.
+  Until decided, leave both unchanged. `art-prompts/` is outside the workspace and not formatted by Prettier — keep
+  its layout. Original names only.
 - **Docs needs:** plan R3-01 / R0-04 Manual lists (edits 1–4 done, edit 7 pending).
 
 ### R0-04.W1 — Copy the art-round winners into the repository (owner-gated)
@@ -690,7 +695,9 @@ carry over into wave 5).
   `art-prompts/v2/candidates/ledger.json`; copies, never moves, a candidate); `art-prompts/v2/winners/**` (new);
   `.gitattributes` (only if the owner chose Git LFS); `art-prompts/v2/STATUS.md`.
 - **Steps:** a dry run first (it prints the counts per pick; they must match the choices: about 334 decided items —
-  281 `a`, 49 `b`, 4 `c` in the last snapshot), then the real copy; commit with explicit paths.
+  281 `a`, 49 `b`, 4 `c` in the last snapshot), then the real copy; commit with explicit paths (plan R0-04 (e):
+  committing these copies under `winners/` is the one exception to Common rule 14; the `candidates/` folder itself
+  is never committed).
 - **Tests:** the dry run; `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/art-prompt-names.test.ts`.
 - **Acceptance:** one folder per decided subject with its winner, edits, followups and sidecars; nothing moved out of
   `candidates/`; `STATUS.md` says which `choices.json` copy (its time) was used.
@@ -707,15 +714,23 @@ carry over into wave 5).
 
 - **Wave / lane / order:** wave 04, review slot 1, right after S's push (a **new** reviewer for each round).
 - **Goal:** check the port commit against the wave-5 reviewer gate.
-- **Steps:** in a fresh worktree at the port commit's parent, re-run the tool with the same flags, `git apply
-  test/port-v2/handfix.patch` (from the parent) and diff the result against the commit's `content/**`; check the code
-  diff is the kit's flip lines plus the stub; the three re-pins carry the reason; no `port-pending` import was
-  deleted; S's verify list (re-run core, the playtests, `content:check`, the allocation guards, `rescale --factor 1
-  --dry-run`).
-- **Must hold:** `git diff --name-only <parent>..<port> -- test/golden/'*.replay.json' content/demos
-  test/fixtures/v1-baseline` empty; content equals tool + patch; the 4-way rules at 3.0 / 24 / 1,350; `v2-port*`
-  green; every allocation guard the `find` lists green (66 on `bc8e05d`, plus any new one) with no budget raised;
-  286 skips as S states (280 + T4b's 6); the build delta reported.
+- **Steps:** `<port>` in every command below = the port commit's SHA, from S's report.
+  1. In a fresh worktree at the port commit's parent (`git switch --detach <port>^`), after
+     `pnpm install --frozen-lockfile --prefer-offline` (S's step 1): run the tool with the flags of `R2-02.S`
+     step 2 — read that block in this file, `docs/v2-run/wave-04.md` — then `git apply
+     test/port-v2/handfix.patch` (the file exists at the parent), then `git diff --stat <port> -- content` must
+     print nothing.
+  2. `git switch --detach <port>`, run `pnpm assets` (the checks below need the atlas), then re-run the commands
+     under `R2-02.S` **Tests** — read that block in this file, and skip only its e2e line — including its `find`
+     of the allocation guards, plus `node scripts/content/rescale.mjs --factor 1 --dry-run`. This is the barrier's
+     check (rule 7): it runs whole Vitest projects.
+  3. Read the commit itself (`git show <port>`): the code diff is the kit's flip lines plus the stub (the names are
+     in `R2-02.S` **Files**); the three re-pins carry the reason; no `port-pending` import was deleted.
+- **Must hold:** `git diff --name-only <port>^ <port> -- test/golden/'*.replay.json' content/demos
+  test/fixtures/v1-baseline` empty (`<port>` = the port commit's SHA from S's report); content equals tool + patch;
+  the 4-way rules at 3.0 / 24 / 1,350; `v2-port*` green; every allocation guard the `find` lists green (66 on
+  `bc8e05d`, plus any new one) with no budget raised; 286 skips as S states (280 + T4b's 6); the build delta
+  reported.
 - **Report:** findings by severity; zero findings means zero nits.
 
 ### W04.RV-SIDE — Reviews of the side lanes (`<id>.RV1`, `<id>.RV2`, … per side subtask)
