@@ -64,8 +64,10 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
    wave 12 — register themselves under their wave's registry token).
 7. **`R3-06.L6` waits for `R4-P.P1`** on `master` (it fills the `decor.mjs` stub).
 8. **R3-06 must keep the goldens unchanged.** It adds presentation only. A golden that moves is a bug.
-9. **Nothing in this wave changes the scale-1 atlas.** `test/scripts/assets/interim-pipeline.test.ts:341-357` (the
-   digest `fa4198…`) stays green and is never re-pinned. R4 prep is byte-identical at both scales, except P3's new
+9. **Nothing in this wave changes the scale-1 atlas.** The digest case of
+   `test/scripts/assets/interim-pipeline.test.ts` — 'pins the v1 atlas: every page's pixels and the manifest, by
+   digest' (`:341-357` on `bc8e05d`; waves 2 and 4 add lines above it, so find it by its title or by the digest
+   `fa4198…`) — stays green and is never re-pinned. R4 prep is byte-identical at both scales, except P3's new
    mechanism, which no shipped file uses yet.
 10. **`test/scripts/assets/pipeline-edge.test.ts`:** `R4-P.P1` (the case `:271-281`) pushes first; `R4-P.P3` edits its
     case (`:171-176`) only after P1 is on `master` (fetch and rebase; never hand-merge). P3 may do all its other work
@@ -131,7 +133,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   `?scene=fx-gallery` and change only `content/fx` numbers that look wrong at 640×360. With what: a throwaway
   Vitest (not committed) that loads `content/fx/particles.fx.json`, steps `@shmup/render-pixi`'s particle system
   from one burst per preset and prints each preset's max extent and end tick — compare against the 640×336
-  playfield; the `?scene=fx-gallery` page is the owner's eyeball check (README rule 10), not your tool.
+  playfield; the `?scene=fx-gallery` page is the owner's eyeball check (report it as an Owner (Manual) item —
+  README rule 15), not your tool.
 - **Files (only these; checked on `bc8e05d`):**
   - `content/fx/particles.fx.json` — presets (305 lines).
   - `packages/render-pixi/test/particles/particles.test.ts`, `particles-edge.test.ts`, `particles-units.test.ts` —
@@ -196,7 +199,7 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/playtest
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone-*.test.ts test/integration/release-audit.test.ts   # the files exist once R5-P.P2a / P2b (wave 6) landed
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-zone- test/integration/release-audit.test.ts   # substring filter, the form wave 6 uses: the files exist once R5-P.P2a / P2b (wave 6) landed
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/atlas-groups.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/determinism packages/shell/test/fx-gallery
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/fx packages/core/test/bosses packages/core/test/world/world-death.test.ts
@@ -276,8 +279,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   pnpm --filter @shmup/render-pixi typecheck
   ```
 - **Acceptance:** whole-pixel positions only; the effects allocation guards unchanged and green; the shell frame
-  fingerprint unedited and green (if it moves, take FP and re-pin under the land lock with the reason).
-- **Token:** none (FP only if the shell frame fingerprint moves).
+  fingerprint unedited and green (it cannot move: render-pixi internals reach none of its hashes — see the glance,
+  lane 2; if it did move, stop and report).
+- **Token:** none (nothing in P1 can move a fingerprint — glance, lane 2).
 - **Traps:** a fractional y passed to a Pixi setter or a non-inlined call is boxed per frame; compute whole pixels
   inside `sync`. Ticks never scale: the popup's lifetime and blink stay.
 - **Docs needs:** `docs/dev/fx-and-game-feel.md` (popups).
@@ -573,9 +577,10 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/render-pixi typecheck
   bash docs/v2-run/helpers/e2e-batch.sh render-groups.spec.ts
   ```
-  then, under the land lock, the FP re-pin (README rule 6). The two fingerprint tests are red for exactly the
-  tables you re-pin — that red run is the check that only the expected tables moved (L1's pattern: it runs the
-  content-DB fingerprint in its targeted tests too).
+  then, under the land lock, the FP re-pin (README rule 6). Of the two integration runs only the presentation
+  one is red — the renumbering moves it, and it is the only table you re-pin here; the content-DB run stays green
+  (`:559-561`). Seeing exactly that red/green split is the check that only the expected tables moved (L1's
+  pattern: it runs the content-DB fingerprint in its targeted tests too).
 - **Acceptance:**
   - zero allocation per tick and per frame (the new guard: warm-up ≥ 20,000, new indices each window);
   - goldens green, unchanged;
@@ -628,9 +633,13 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/sprites packages/render-pixi/test/renderer packages/render-pixi/test/layers
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/content-units.test.ts test/integration/render-groups.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   pnpm --filter @shmup/core typecheck && pnpm --filter @shmup/render-pixi typecheck
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
-  The two fingerprint lines are how "only if they move" is decided: with no shipped content using `glow`, all
-  three tables should stay green — that is the check.
+  The three fingerprint runs are how "only if they move" is decided: with no shipped content using `glow`, all
+  three tables should stay green — that is the check. The shell run belongs here although L4 touches no shell
+  file: its hash mixes `view.batches.length` and every batch's `layer` and `count`
+  (`packages/shell/test/frame-fingerprint.test.ts:150-153`), and L4 is the lane that pushes batches onto that
+  list — push a glow batch only when its system has something to draw, or the three runs say what moved.
 - **Acceptance:** glows additive and presentation-only, on enemies, boss parts and decor entries; goldens green and
   unchanged; the enemies / bosses allocation guards and `R3-06.L2`'s decor guard
   (`packages/core/test/stage/stage-decor-alloc.test.ts`) green with no budget raised.
@@ -820,12 +829,17 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     them move) — re-pinned at push time for the credits line.
   - `test/scripts/assets/procedural.test.ts` — only two cases:
     - the registry case (`:243-280`);
-    - the ui/logo case (`:1100-1120`, "makes ui/logo …"): import `logo.mjs`, read the sprite from `logo.generate()`
-      and the text from `logo.LOGO_TEXT` (the case's assertions stay as they are). After the move, `ui.generate()` no
-      longer returns `ui/logo`.
+    - the ui/logo case (`:1100-1120`, "makes ui/logo …"): import `logo.mjs` **under a name that is not `logo`** —
+      the case's own `const logo = byName(…)` (`:1101`) shadows any module bound as `logo`, so
+      `import * as logoGen from '../../../scripts/assets/procedural/logo.mjs'`; read the sprite from
+      `logoGen.generate()` and the text from `logoGen.LOGO_TEXT`. The case's assertions stay as they are (the
+      local `logo` const and its `logo.frames` / `logo.anchor` lines do not change). After the move,
+      `ui.generate()` no longer returns `ui/logo`.
   - `test/scripts/assets/pipeline-edge.test.ts` — only the case "checks frames against a smaller page limit the same
     way" (`:271-281`): the too-wide logo's issue path is now `procedural:logo:frames[0]` — replace the case's last
-    three lines (the `ui` filter and its two expects): filter with
+    three lines (the `ui` filter and its two expects) and rewrite the comment line above (`:277`, 'Small frames
+    are fine: …') — the logo is no longer a `ui` sprite, e.g. 'Small frames are fine: the `logo` module's title
+    frame is the only too-wide one': filter with
     `i.path.startsWith('procedural:logo:')` and expect `['procedural:logo:frames[0]']` (the message still contains
     `"ui/logo"`), and add `expect(error.issues.filter((i) => i.path.startsWith('procedural:ui:'))).toEqual([])`.
     Push this before `R4-P.P3` edits another case of the file (wave rule 10).
@@ -849,7 +863,8 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   printed `shipped` table and the printed tables of the walks that moved, then run both tests again without the
   variable.
 - **Acceptance:** the atlas sha256 identical before and after (the pipeline sorts sprites by name,
-  `pipeline.mjs:473`, so moving a sprite between modules does not move it in the atlas); the scale-1 digest pin green;
+  `pipeline.mjs:473` on `bc8e05d` — `R3-03.V2a` (wave 4) inserts the `@p2` checks just above; find it by that
+  text — so moving a sprite between modules does not move it in the atlas); the scale-1 digest pin green;
   the origin report 0 failures; `pnpm content:check` green; the content-DB fingerprint moved only in `core.campaign`
   and the presentation fingerprint only in `runA.credits` / `runB.credits` and the segments after them, re-pinned with
   the reason "R4-P.P1: the credits name the new generator modules"; the goldens and the shell frame fingerprint
@@ -923,19 +938,23 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
   - `scripts/assets/font.mjs` — the font key `native` (a v2 font is a `"native": true` font file with the same `name`).
   - `scripts/assets/pipeline.mjs` — at art scale ≠ 1, a v2 source or a native font replaces the v1 source, unscaled; at
     scale 1 they are ignored; at scale 1 a PNG override of a name that has a code source is skipped; `CODE_HASH`
-    (`:684`) also hashes `scripts/frame.mjs`.
+    (`:684` on `bc8e05d`; find the symbol by name) also hashes `scripts/frame.mjs`.
   - `scripts/art-origins.mjs` — v2 maps are kind `pixel-map`.
   - `test/scripts/assets/pipeline-v2-sources.test.ts` (new) — a temp-tree fixture proving the four rules.
-  - `test/scripts/assets/interim-pipeline.test.ts` — the native set at `:196-201` becomes **derived** (⊇ terrain,
+  - `test/scripts/assets/interim-pipeline.test.ts` — the native set becomes **derived** (the case 'marks exactly
+    the terrain tilesets, ui/pixel and the laser beams native', `:196-201` on `bc8e05d` — wave 2's `R3-03.V1`
+    grows this very case; find it by title) (⊇ terrain,
     `ui/pixel`, beams, and the v2 bullets R3-03.V1 added); the relation tests skip natives for size, frame count and
     animations, and the case 'has the same sprites, frame counts (but the beams), animations and groups'
     (`:134-157`) compares the name sets, the frame names and the `[name, group]` lists without the names that exist
     only in the default-scale build — and asserts that each such name is native (decision RR-1a: a new v2-only name
     is absent at scale 1); it compares the page groups as sets of group names (a v2-only name may add a page to its
     own group, never a new group). Prove it with one v2-only native name in the `pipeline-v2-sources.test.ts`
-    fixture. Never touch the digest at `:341-357`.
+    fixture. Never touch the digest case 'pins the v1 atlas …' (`:341-357` on `bc8e05d` — find it by its title,
+    earlier waves move it; its `fa4198…` digest literal must stay byte for byte).
   - `test/integration/cjk-budget.test.ts` — only the case 'holds the same art as the one-page atlas: the split
-    moves frames, never adds any' (`:131-145`): its last assertion compares the shipped frames with the scale-1
+    moves frames, never adds any' (`:131-145` on `bc8e05d` — wave 4 may edit lines above it; find the case by its
+    title): its last assertion compares the shipped frames with the scale-1
     frames plus the beams' extra frames. Leave out the frames of native sprites that the scale-1 build lacks (a
     v2-only name, RR-1a; an extra v2 frame, RR-1b) and assert that every frame left out belongs to a native sprite
     (the derived native set, as in `interim-pipeline.test.ts`). Every M3-03 figure stays on `artScale: 1`.
@@ -978,7 +997,9 @@ prep P1–P4 on `master`; every review at zero findings; the orchestrator tags `
     top-level array (the trap below); `offRamp(colour)` (moves
     a colour ≥ 3/255, Chebyshev, from every reserved ramp); frame sizes from `scripts/frame.mjs`. Outside the folder
     it is not a generator for the registry test (`test/scripts/assets/procedural.test.ts:244-250`, after `R4-P.P2`
-    in `procedural-registry.test.ts`: every `.mjs` in `procedural/` but `index.mjs` and `common.mjs` must be
+    in `procedural-registry.test.ts` (the lines are `bc8e05d`'s — both P1 and P2 move them; find the case by the
+    quoted title `registers every generator module in the folder, by file name`): every `.mjs` in `procedural/`
+    but `index.mjs` and `common.mjs` must be
     registered), yet it is still hashed by the pipeline's `CODE_HASH` (all of `scripts/assets/**`) and scanned for
     engine maths by `test/scripts/assets/pipeline.test.ts:343-361`.
   - `test/scripts/assets/v2kit.test.ts` (new).
@@ -1121,7 +1142,9 @@ holds PLAN. Inputs: the builders' reports (`RUN_DIR/<id>-report.md`, "docs needs
 ### W07.DOCS-D — API, asset pipeline, conventions
 
 - **Files (only these):** `docs/dev/api-reference.md` (`LayerId` incl. `DecorBack` / `DecorFront` / `Foreground`,
-  `DecorView`, `LAYER_COUNT` and `WORLD_LAYER_COUNT` (`:1486`, `(11)` → `(14)`); `ShakeMagnitude` (`:978`, the magnitudes `R2-04.G` landed); the generators row
+  `DecorView`, `LAYER_COUNT`, `WORLD_LAYER_COUNT` (`:1486`, `(11)` → `(14)`) and `RENDER_GROUP_LAYERS` (`:1485`,
+  `TERRAIN` … `UI` → `DECOR_BACK` … `UI`); `ShakeMagnitude` (`:978`, the magnitudes `R2-04.G` landed); the
+  generators row
   (`:1887`, `R4-P.P1`'s split: `logo` with `LOGO_TEXT` / `LOGO_SCALE`, `direct-items`, `arm`, `blackhole` and the
   stubs)), `docs/dev/asset-pipeline.md` (v2 sources beside v1 — RR-1; the generator split; `v2kit`),
   `docs/dev/direct-mode.md` and `docs/dev/scenes-and-ui.md` (only the moved generators: `direct-items.mjs` /
