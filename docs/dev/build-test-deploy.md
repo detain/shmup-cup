@@ -613,14 +613,16 @@ electron-builder cannot read `catalog:` — bump it with the catalog. Details:
   (`test/e2e/frame-advance.ts`, M1-19). Since R2-01's C5 review 2 (`c67c7c9`) the rule is the wider
   one: **an e2e wait counts game ticks**, never rAF frames or seconds of wall time — the helpers in
   `test/e2e/ticks.ts` (since `8ff2bf6`) read `window.__shmupDebug.tick` (`waitTicks`, `pollTicks`,
-  `expectScene`; `tap` / `remoteTap` / `holdTicks` pace a press in ticks; `remoteSequence` sends a
-  key sequence the host times in milliseconds — the Tizen debug unlock — in one `page.evaluate`).
-  Wall time stays only for what is not ticks: the boot (`BOOT_TIMEOUT_MS`, 30 s), real-time page
-  work (audio started, a screenshot decoded, a console line) and a test's own timeout, sized for a
-  slow runner (the campaign-run web test: 420 s); a wait stays in rAF frames only where no tick
-  runs (a frozen sim, a hidden page), where a tick wait would hang instead of failing, or where it
-  waits for drawn frames — each such spec's docblock says why. The full rule:
-  [conventions.md § Tests](conventions.md#tests). Since M1-19 the suite runs
+  `expectScene`; `tap` / `remoteTap` pace a press in ticks (a held key: `waitTicks`);
+  `remoteSequence` sends a key sequence the host times in milliseconds — the Tizen debug unlock —
+  in one `page.evaluate`). Wall time stays only for what is not ticks: the boot
+  (`BOOT_TIMEOUT_MS`, 30 s), real-time page work (audio started, a screenshot decoded, a console
+  line), the host-timed TV-unlock sequence, which `remoteSequence` sends in one `page.evaluate`,
+  and a test's own timeout, sized for a slow runner (the campaign-run web test: 420 s); a wait
+  stays in rAF frames only where no tick runs (a frozen sim, a hidden page), where a tick wait
+  would hang instead of failing, or where it waits for drawn frames — each such spec's docblock
+  says why. The full rule: [conventions.md § Tests](conventions.md#tests). Since M1-19 the suite
+  runs
   on the **test builds** (`build:test`), every test in parallel on one browser per five cores
   ([Test concurrency](#test-concurrency)).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
