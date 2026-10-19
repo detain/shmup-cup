@@ -838,20 +838,28 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 
 - **Wave / lane / order:** wave 08, lane 7, after `R4-01.A8`.
 - **Depends on:** R3-03.V1 (native v2 bullets, wave 2) on `master`.
-- **Goal:** finish the v2 paths of the bullets, beams and bend nodes by hand, and generate the readability sheets: 512
-  bullets over each zone's far and mid layers (interim art, or R3-04's stand-in) × the 4 palettes.
+- **Goal:** finish the v2 paths of the bullets, beams and bend nodes by hand, and generate the readability sheets:
+  512 bullets over each zone's far and mid layers × the 4 palettes — the layers as `R3-04.M1a`'s stand-in draws them
+  (`scripts/assets/standin.mjs` `standinZone(zoneId, { seed })`: its far layer and its first band; the plan's
+  acceptance), or the zone's interim parallax art from `buildAtlas()` where the stand-in lacks one; the report says
+  which.
 - **Files (only these):**
-  - the v2 paths of `scripts/assets/procedural/bullets.mjs`, `palettes.mjs`, `lasers.mjs` (round 11, oval 13 × 8,
-    needle 17 × 8, bend 11; beams 6×12 × 12 stay).
+  - the v2 paths of `scripts/assets/procedural/bullets.mjs`, `palettes.mjs`, `lasers.mjs` — generator code only, no
+    pixel maps (the `@<palette>` variants are generated from it); the sizes stay `R3-03.V1`'s (bible §5.4): round
+    11×11 (1 frame), oval 13×13 (8 headings), needle 17×17 (8 headings), bend node 11×11 (1 frame); the beams stay
+    6×12 px with 12 frames.
   - `scripts/bullet-readability.mjs` (new) → `assets/generated/readability/*.png` (git-ignored).
-  - `test/scripts/bullet-readability.test.ts` (new).
+  - `test/scripts/bullet-readability.test.ts` (new) — it renders into a `mkdtemp` folder (e.g. through an
+    `--out <dir>` flag of the script), never into `assets/generated/`.
 - **Tests (targeted, run all of them):**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/bullet-readability.test.ts test/scripts/assets/bullets-v2.test.ts test/integration/content.test.ts test/integration/palette-cycle-scan.test.ts test/integration/frame-literals-repo.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/bullet-readability.test.ts test/scripts/assets test/integration/content.test.ts test/integration/palette-cycle-scan.test.ts test/integration/frame-literals-repo.test.ts
   node scripts/bullet-readability.mjs
   ```
 - **Acceptance:** the sheets are deterministic (two runs byte-identical); every `@<palette>` variant frame for frame
-  (`content.test.ts:863`); no fingerprint moves (redraw); the report lists the sheet paths for the owner.
+  (`test/integration/content.test.ts`, the case 'has every colour-blind palette variant of every bullet / laser
+  sprite, frame for frame (M2-02)' — find it by its title); no fingerprint moves (redraw); the report lists the
+  sheet paths for the owner.
 - **Token:** none.
 - **Traps:** `scripts/bullet-readability.mjs` is in the frame-literal scan (import `FRAME_W` from `scripts/frame.mjs`);
   never commit anything under `assets/generated/`; the beam frame k stays k + 1 rows; rule 10 (ramps).
@@ -872,12 +880,14 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/bullets
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/content.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/content.test.ts test/scripts/assets/procedural-items.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   ```
   Under the land lock: fetch, rebase, `pnpm golden:update`, the FP re-pins, the tests above, push.
 - **Acceptance:** one commit; body "R4-02.B3: four point-item frames — the cancel points' `frame` is a hashed pool
-  field, so every golden and demo is re-blessed"; `bullets-alloc*` guards green, no budget raised.
+  field, so every golden and demo is re-blessed"; `bullets-alloc*` guards green, no budget raised; the scale-1 digest
+  pin green; every v2 sprite with a new frame count is `native: true` (rule 1: the relation case of
+  `interim-pipeline.test.ts` accepts a changed count only on a native sprite).
 - **Token:** GOLDEN + FINGERPRINTS (land lock, fetch to push).
 - **Traps:** the point item's v1 art has 2 frames: frame count and v2 art in one commit; a golden that moves for any
   other reason is a bug.
@@ -893,18 +903,24 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   - `scripts/assets/procedural/explosions.mjs` — v2 path (`makeSprite` at `:82`).
   - `content/fx/particles.fx.json` — the explosion presets and their frame use.
   - `packages/render-pixi/src/particles/index.ts` — frame timing, only if needed.
-  - tests in `packages/render-pixi/test/particles/`, `test/scripts/assets/procedural-explosions.test.ts`.
-  - the three fingerprints' `PINNED` tables (the content-DB fx loader; the shell gallery).
+  - tests in `packages/render-pixi/test/particles/`, `test/scripts/assets/procedural-explosions.test.ts` — pin the
+    v2 sizes and frame counts in a `generate({ artScale: 1.5 })` case of that test (the plain per-generator cases
+    call the v1 path).
+  - the content-DB fingerprint's `PINNED` table (only `shipped.fx` moves). The presentation and shell frame
+    fingerprints cannot move — core never reads `content/fx`, and the shell's gallery walk uses three fake presets
+    (`packages/shell/test/frame-fingerprint.test.ts:305`): if one moves, stop and report (rule 4).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-explosions.test.ts test/integration/content.test.ts test/integration/content-db-fingerprint.test.ts
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-explosions.test.ts test/integration/content.test.ts test/integration/content-db-fingerprint.test.ts test/scripts/assets/interim-pipeline.test.ts test/integration/palette-cycle-scan.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/dispatch
   pnpm content:check
   ```
   then the FP re-pin under the land lock.
 - **Acceptance:** allocation guards green (`dispatch-fx-alloc`, the particles guards), no budget raised; frame counts
-  in the presets ≤ the art's.
+  in the presets ≤ the art's; the scale-1 digest pin green; every v2 sprite with a new frame count is `native: true`
+  (rule 1: the relation case of `interim-pipeline.test.ts` accepts a changed count only on a native sprite); the
+  content-DB fingerprint re-pinned in `shipped.fx` only, with the reason.
 - **Token:** FINGERPRINTS (push time).
 - **Traps:** a preset's frame count must match the new art (12–16), changed in the same commit; particle speeds and
   lifetimes were set by R2-04.P2 — change only what the new frames need; one sprite set per blend mode.
@@ -915,11 +931,13 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 
 - **Wave / lane / order:** wave 08, lane 8, after `R4-04.D1`.
 - **Depends on:** `R4-04.D1` on `master`.
-- **Goal:** v2 `fx/spark` 7 × 4, `fx/sparkle` 7 × 4, `fx/debris` 9 × 4–6, `fx/ring` 13 × 4–6 (`particles.mjs:55-162`)
-  and their presets.
+- **Goal:** v2 `fx/spark` 7×7 × 4 frames, `fx/sparkle` 7×7 × 4, `fx/debris` 9×9 × 4–6, `fx/ring` 13×13 × 4–6
+  (bible §5.8; `particles.mjs:55-162`) and their presets.
 - **Files (only these):** `scripts/assets/procedural/particles.mjs` (v2 path; `fx/black-hole` moved out in R4-P.P1),
-  their presets in `content/fx/particles.fx.json`, `test/scripts/assets/procedural-particles.test.ts`,
-  `packages/render-pixi/test/particles/*` (pins only), the three `PINNED` tables.
+  their presets in `content/fx/particles.fx.json`, `test/scripts/assets/procedural-particles.test.ts` — pin the v2
+  sizes and frame counts in a `generate({ artScale: 1.5 })` case of that test (the plain per-generator cases call
+  the v1 path) — `packages/render-pixi/test/particles/*` (pins only), and the content-DB fingerprint's `PINNED`
+  table (only `shipped.fx` moves, as in `R4-04.D1`).
 - **Tests:** as `R4-04.D1` with `test/scripts/assets/procedural-particles.test.ts` in place of the explosions test.
 - **Acceptance / token / traps:** as `R4-04.D1`; the `animations` tags (`fade`, `tumble`, `twinkle`, `grow`) keep their
   names and cover the new frames.
@@ -930,9 +948,15 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 - **Wave / lane / order:** wave 08, lane 8, after `R4-04.D2`.
 - **Depends on:** `R4-04.D2` on `master`.
 - **Goal:** measure the peak live particles with the new presets and decide whether the pool of 256
-  (`packages/render-pixi/src/particles/index.ts:83-84`) holds.
+  (`packages/render-pixi/src/particles/index.ts:83-84`) holds — by decision R5-D5 (`docs/v2-run/decisions.md`): it
+  holds while every stage's peak stays ≤ 80 % of the capacity (≤ 204 of 256); above that, raise it until every peak
+  is ≤ 80 % again.
 - **Files (only these):** none, unless the measurement says so: then `packages/render-pixi/src/particles/index.ts`
-  (the capacity) and its allocation guard's setup only.
+  (`PARTICLE_CAPACITY`, `:84`); `packages/render-pixi/test/particles/particles.test.ts` (the pin at `:114` and the
+  allocation guard's setup at `:428`); `test/bench/render-harness/load.ts` (`BENCH_PARTICLE_CAPACITY` at `:54` stays
+  twice the shipped capacity, and its docblock `:44-53`); `test/bench/render-harness/main.ts` (the comment at
+  `:175-176`); `test/integration/render-bench.test.ts` (the case 'is a worst case: the bench pools twice the
+  particles the shell ships', `:354-359`).
 - **How to measure (a temporary test, never committed):** the render bench cannot show a peak
   (`test/bench/render.perf.ts` and `render-harness/load.ts:139` keep the particle pool full, so it always reports the
   capacity). Instead:
@@ -942,9 +966,11 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
      with `createParticleSystem({ atlas: ATLAS, content: FX, seed, capacity: 4096 })`, so the peak shows the demand,
      not today's cap of 256. Give each case a timeout (e.g. `it(…, { timeout: 900_000 })`): the default is 30 s
      (`vitest.shared.ts` `TEST_TIMEOUT_MS`).
-  2. Play each zone A–I, the bonus stages (`brine-grotto`, `glimmer-cache`, `bonus-vault`, `bonus-range`) and the boss
-     rush to stage clear with `fourWayBot()` (`test/playtest/four-way-bot.ts`, imported by relative path) in god mode
-     with a full loadout; record the peak `liveCount` and the tick it happened at, per stage.
+  2. Play each zone A–I, the bonus stages (`brine-grotto`, `glimmer-cache`, `bonus-vault`), the escape (`escape`), the
+     bonus-entrance range (`bonus-range`) and the boss rush (`boss-rush`) to stage clear with `fourWayBot()`
+     (`test/playtest/four-way-bot.ts`, imported by relative path) in god mode
+     (`game.world.debugFlags.godMode = true`) with the full loadout (config `{ loadout: 'full' }`, as
+     `test/playtest/boss-rush.test.ts:68`); record the peak `liveCount` and the tick it happened at, per stage.
   3. Run it in the background (it is long; opencode stops a foreground command after 2 minutes):
      `nohup env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/dispatch/particle-peak.tmp.test.ts > /home/sites/shmup-cup-run/R4-04.D3-peak.log 2>&1 &`
      and poll the log.
@@ -954,32 +980,40 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
   ```
-  and, only if you change the capacity: `flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config
-  test/bench/vitest.config.ts test/bench/render.perf.ts` ("keeps the pool full" then fills the new capacity).
-- **Acceptance:** a recorded decision in the report (the peak per stage with its tick, the chosen capacity, why); a
-  capacity change only with the guards green and no budget raised; the temporary test file not committed.
+  and, only if you change the capacity: `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
+  test/integration/render-bench.test.ts`, then `flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm exec vitest run --config
+  test/bench/vitest.config.ts test/bench/render.perf.ts` (its scenarios fill `BENCH_PARTICLE_CAPACITY`, twice the
+  shipped capacity — `render-bench.test.ts` pins that ratio, so it must be re-measured with the bench).
+- **Acceptance:** a recorded decision in the report (the peak per stage with its tick, the chosen capacity and the
+  80 % check, why); a capacity change only with the guards green and no budget raised; the temporary test file not
+  committed.
 - **Token:** none (the bench, if run, under the e2e lock).
 - **Traps:** one bench file, never `pnpm bench`; R5-P.P8 owns the core capacities — this is render-pixi's particle pool
   only.
 - **Docs needs:** `docs/dev/fx-and-game-feel.md` (the pool review).
 
-### R4-04.D4 — The fx gallery shows every preset (FP)
+### R4-04.D4 — Check that the fx gallery shows every preset
 
 - **Wave / lane / order:** wave 08, lane 8, after `R4-04.D3`.
 - **Depends on:** `R4-04.D3` on `master`.
-- **Goal:** `?scene=fx-gallery` (`packages/shell/src/fx-gallery/index.ts`) shows every preset of
-  `content/fx/particles.fx.json` (the plan's acceptance).
-- **Files (only these):** `packages/shell/src/fx-gallery/index.ts`, `packages/shell/test/fx-gallery/fx-gallery.test.ts`,
-  `fx-gallery-edge.test.ts`, the shell frame fingerprint's `PINNED` table.
+- **Goal:** confirm that `?scene=fx-gallery` shows every preset of `content/fx/particles.fx.json` after `R4-04.D1`
+  and `R4-04.D2` (the plan's acceptance). On `master` it already does: `createFxGallery` makes one station per preset
+  (`packages/shell/src/fx-gallery/index.ts:149-150`), and `fx-gallery-edge.test.ts` 'spawns particles at every preset
+  station with the shipped presets' proves it on the shipped content. This subtask checks it stays true on the new
+  presets; build nothing unless the check fails.
+- **Files (only these):** none (read-only) — unless that case fails on `R4-04.D1`/`D2`'s presets: then
+  `packages/shell/src/fx-gallery/index.ts` and the two fx-gallery tests (and the shell frame fingerprint's `PINNED`
+  table only if the gallery code changed).
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/fx-gallery packages/shell/test/frame-fingerprint.test.ts
   pnpm --filter @shmup/shell typecheck
   ```
-  then the shell FP re-pin under the land lock (the e2e `fx-gallery.spec.ts` runs in `W08.E2E`).
-- **Acceptance:** every preset reachable; the gallery's allocation guard green; the shell frame fingerprint re-pinned
-  with the reason.
-- **Token:** FINGERPRINTS (push time).
+  (the e2e `fx-gallery.spec.ts` runs in `W08.E2E`).
+- **Acceptance:** the edge case green on the new presets, reported; the gallery's allocation guard green; no
+  fingerprint moves (the shell walk uses three fake presets, `packages/shell/test/frame-fingerprint.test.ts:305`) —
+  if one moves, stop (rule 4).
+- **Token:** none (`FINGERPRINTS` only if the gallery code changed).
 - **Traps:** the gallery's stations are built once in its constructor; no per-frame allocation.
 - **Docs needs:** `docs/dev/fx-and-game-feel.md` (the gallery).
 
@@ -987,15 +1021,21 @@ with its review loop at zero; the scale-1 digest pin unchanged; the origin repor
 
 - **Wave / lane / order:** wave 08, after every lane has pushed (one e2e pass: the batches below run one after
   another, each under the lock).
-- **Depends on:** all subtasks of this wave on `master`.
+- **Depends on:** all subtasks of this wave on `master` **and their review loops at zero findings** — if a `FIXn`
+  still lands after this check, re-run the batches whose specs its files can move.
 - **Goal:** re-measure, on the new font, HUD, UI kit, ships, endings and scenes, every spec that `R4-01.A9` and
   `R4-02.B4` (wave 9) do not own (rule 15): batches A, C without `boss`, D, E without `flight`, `ship-select`,
   `weapon-select`, G, F, plus `enemies` and `coop-gamepad` from batch B.
-- **Files (only these):** the failing specs among those — only a colour or row a redraw moved on purpose,
-  re-measured through `test/e2e/frame-pixels.ts`; anything else is a finding for the subtask that caused it (by id).
+- **Files (only these):** the failing specs among those — only a colour, position (row or column) or size that a
+  subtask of this wave moved on purpose — its report's rule-15 list names the spec, line, old → new and why; check
+  each against the art or layout, re-measured through `test/e2e/frame-pixels.ts`; a failure no report explains is a
+  finding for the subtask that caused it (by id).
   Read the wave's reports first (`/home/sites/shmup-cup-run/R4-*-report.md`): their rule-15 lists name the failures
   they caused. Never edit a spec of `R4-01.A9` or `R4-02.B4`.
-- **Tests** (start each batch in the background and poll its log, README rule 4):
+- **Tests** — one batch at a time: start each with nohup and its own log
+  (`nohup bash docs/v2-run/helpers/e2e-batch.sh <its specs> > /home/sites/shmup-cup-run/W08.E2E-1.log 2>&1 &`, then
+  `-2.log` … `-6.log` — the log names below in order), poll it, and start the next only after its log ends with
+  Playwright's summary (README rule 4). Batches 2–6 may set `E2E_SKIP_BUILD=1` (a spec edit needs no rebuild):
   ```bash
   bash docs/v2-run/helpers/e2e-batch.sh zone-a.spec.ts zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts stage.spec.ts mode7.spec.ts raster.spec.ts gimmicks.spec.ts campaign-run.spec.ts
   bash docs/v2-run/helpers/e2e-batch.sh advanced-bosses.spec.ts render-groups.spec.ts debug-tools.spec.ts attract.spec.ts determinism.spec.ts atlas-residency.spec.ts extra-replays.spec.ts zone-map.spec.ts continue.spec.ts
@@ -1040,10 +1080,11 @@ The builders' "docs needs" wait in their reports in `RUN_DIR`.
 1. Every subtask of the table and `W08.E2E` on `origin/master`; every review loop at zero findings.
 2. On a fresh worktree of `origin/master`:
    ```bash
-   node scripts/generate-assets.mjs --force && sha256sum assets/generated/atlas/*
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/scripts/art-origins.test.ts test/integration/palette-cycle-scan.test.ts test/integration/content.test.ts test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/localization.test.ts
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/world packages/core/test/ui packages/core/test/scenes packages/core/test/powerups packages/core/test/shields packages/core/test/blackhole packages/core/test/bullets
-   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/showcase packages/shell/test/flight packages/shell/test/fx-gallery
+   node scripts/generate-assets.mjs --force   # builds the atlas the checks below read
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets test/scripts/art-origins.test.ts test/scripts/bullet-readability.test.ts test/scripts/frame.test.ts test/integration/palette-cycle-scan.test.ts test/integration/content.test.ts test/integration/world-flight.test.ts test/integration/cjk-budget.test.ts test/integration/frame-literals-repo.test.ts test/golden test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts test/integration/localization.test.ts
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/ui packages/core/test/scenes packages/core/test/powerups packages/core/test/shields packages/core/test/blackhole packages/core/test/bullets packages/core/test/player packages/core/test/world packages/core/test/data packages/core/test/options packages/core/test/weapons packages/core/test/enemies packages/core/test/config packages/core/test/index.test.ts packages/core/test/frame-literals.test.ts
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts packages/shell/test/showcase packages/shell/test/flight packages/shell/test/fx-gallery packages/shell/test/dispatch
+   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project render-pixi packages/render-pixi/test/particles
    node scripts/art-origins.mjs --check
    pnpm content:check
    pnpm --filter @shmup/tizen build
