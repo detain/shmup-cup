@@ -47,9 +47,17 @@ carry over into wave 5).
 
 ## Rules for this wave
 
-1. **The PORT window.** When `R2-02.S` starts its verification (step 5 of its block), the orchestrator tells every
-   running agent: **no push to master until S has pushed**. Side lanes keep working and committing locally; they
-   push only after S's push is on `origin/master`, rebasing onto it first. The window lasts about 1.5–2.5 hours.
+1. **The PORT window.** When `R2-02.S` starts its verification (step 5 of its block), it creates the file
+   `/home/sites/shmup-cup-run/w04-port-window` (`touch`). It deletes the file right after its push is on
+   `origin/master`. **No push to master while that file exists.** Every other agent of this wave runs
+   `test -e /home/sites/shmup-cup-run/w04-port-window` before each `git push`. While the file exists, keep working
+   and committing locally; to wait, run
+   `while test -e /home/sites/shmup-cup-run/w04-port-window; do sleep 60; done` with the shell tool's
+   `background: true` (a foreground command stops after 2 minutes), and push only after the file is gone, rebasing
+   onto S's push first. The window lasts about 1.5–2.5 hours. The orchestrator also holds any new side-lane start
+   that would push in it. If S stops without pushing (a failure it reports), S deletes the file before it replies;
+   if the file is still there after S's reply, the orchestrator deletes it. (A file, not a message: an opencode
+   background agent gets no message from the orchestrator while it runs.)
 2. **Nobody but S** touches `content/**`, `packages/core/src/config/index.ts`, `scripts/frame.mjs`,
    `packages/core/test/helpers/port-pending.ts`, `test/port-v2/**` or the three fingerprint tests in this wave.
 3. **Nobody runs `pnpm golden:update`.** After S the tool's refusal (`scripts/golden-update.mjs:14-16`, `:30-50`)
@@ -105,7 +113,9 @@ carry over into wave 5).
      `handfix.patch` applies cleanly on the tool's output.
 - **Tests:** the commands of S's step 5, run in the kit tree (core, integration, shell, render-pixi, audio-web,
   input-web and the apps' projects; every allocation guard the `find` of S's Tests lists — 66 on `bc8e05d`, plus any
-  new one such as `R3-04.M3b`'s `residency-lazy-alloc`; `pnpm content:check`; typecheck).
+  new one such as `R3-04.M3b`'s `residency-lazy-alloc`; `pnpm content:check`; typecheck), plus
+  `pnpm exec prettier --check content` in the kit tree (the tool's output with `handfix.patch` applied; a failure
+  there is a finding for `handfix.patch`).
 - **Acceptance:** zero unexplained failures; every prep commit neutral; skip numbers as in step 5. Findings are
   reported by severity (blocker / should-fix / nit); zero findings means zero nits too.
 - **Token:** none (read-only). Remove the kept worktree at the end: `git worktree remove --force <path>`, with the
@@ -145,8 +155,9 @@ carry over into wave 5).
 - **Steps:**
   1. In your worktree at `origin/master`: `pnpm install --frozen-lockfile --prefer-offline && pnpm assets`.
      Measure the baseline bundle: `pnpm --filter @shmup/tizen build` and note `app.js`'s gzip size
-     (`gzip -9 -c apps/tizen/dist/app.js | wc -c`; about 386.2 KB on `bc8e05d`, check-bundle prints 380.2 KB of
-     512 KB).
+     (`gzip -9 -c apps/tizen/dist/app.js | wc -c` prints bytes — about 386,000 on `bc8e05d`; check-bundle's own
+     line, 380.2 KB of 512 KB, uses zlib's default level and 1024-byte KB, so the two never match). Compare step 1
+     and step 5 with the same `gzip -9 … | wc -c` command.
   2. `bash test/port-v2/two-scale.sh apply` — in your own tree, in this order: the tool
      (`node scripts/content/rescale.mjs --factor 1.5 --top-pad 36 --from-width 384 --from-height 200 --tile-size 8
      --to-width 640 --art-scale 1.5`, the four v1 geometry flags are required since the flip), then
@@ -156,7 +167,7 @@ carry over into wave 5).
   4. If one of the 15 kit literals now equals a banned frame number (`336 348 640 360 384 216 200 208 192 108`),
      derive it from the frame constants (preferred) or add a reasoned entry to `packages/core/test/frame-literals.test.ts`.
      `bossSuction.pullRadius` keeps its entry (`200 * WORLD_SCALE` still holds the literal 200, count 1).
-  5. **Announce the PORT window** (tell the orchestrator), then verify:
+  5. **Open the PORT window** (rule 1): `touch /home/sites/shmup-cup-run/w04-port-window`, then verify:
      - the three fingerprints red only in their pinned tables; re-pin them (step 6) before the rest;
      - the verify list under **Tests** below, all green;
      - `node scripts/content/rescale.mjs --factor 1 --dry-run`: 0 changes, 0 unclassified, 0 errors (no flags: the
@@ -174,10 +185,13 @@ carry over into wave 5).
      zone B or the campaign), not a dozen.
   7. Commit `feat(R2-02): port all content ×1.5 and the world constants (plan §2.6)`. The body gives: the tool's
      summary line; the hand fixes (W5-7: gimmick-range `events[8].until` 2275; zone-g `events[15]` back inside
-     `events[14]`'s ground window; the hunter-range dive's first leg +36 px; the captain-circler home 530; zone G's
-     rising walls one row up; T3's items); `WORLD_SCALE` 3/2 and `WORLD_TOP_PAD` 36; the 15 defaults; the stub; the
+     `events[14]`'s ground window; the captain-circler home 530; zone G's rising walls one row up; T3's items, if
+     any); the line "hunter-range dive: no hand fix — `hunter.option` flies to its `lineY` (72 at the port)", unless
+     `handfix.patch` holds a hunter-range fix that T3 added because its landing check (`turnY`) failed — then list
+     that fix with the others instead; `WORLD_SCALE` 3/2 and `WORLD_TOP_PAD` 36; the 15 defaults; the stub; the
      three re-pins and why ("R2-02: content ×1.5 and the world constants, plan §2.6"); and the sentence "goldens and
-     demos stay stale until R2-03; no re-bless". Push, then tell the orchestrator the window is closed.
+     demos stay stale until R2-03; no re-bless". Push, then **close the PORT window** right after the push is on
+     `origin/master`: `rm /home/sites/shmup-cup-run/w04-port-window`. Say in your report that the window is closed.
 - **Tests (targeted for a port that touches everything; run all of them in your tree):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core
@@ -186,9 +200,20 @@ carry over into wave 5).
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project web --project tizen --project webos --project electron
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run $(find packages apps test -name '*alloc*.test.ts' -not -path '*/node_modules/*')
-  pnpm typecheck && pnpm exec eslint packages/core/src/config/index.ts packages/core/src/behaviors/index.ts scripts/frame.mjs
-  bash docs/v2-run/helpers/e2e-batch.sh <the specs E0's report lists, ≤ 10 per batch> smoke.spec.ts boot.spec.ts
+  pnpm typecheck && pnpm exec eslint packages/core/src/config/index.ts packages/core/src/behaviors/index.ts \
+    scripts/frame.mjs packages/core/test/helpers/port-pending.ts
+  pnpm exec prettier --check content packages/core/src/config/index.ts packages/core/src/behaviors/index.ts \
+    scripts/frame.mjs packages/core/test/helpers/port-pending.ts \
+    test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts \
+    packages/shell/test/frame-fingerprint.test.ts
+  bash docs/v2-run/helpers/e2e-batch.sh <the specs E0's report lists, ≤ 8 per batch> smoke.spec.ts boot.spec.ts
   ```
+  If step 4 changed `packages/core/test/frame-literals.test.ts`, add it to the `eslint` and `prettier --check` lines.
+  The tool formats its own output through Prettier, but `handfix.patch` and the pasted `PINNED` tables are not
+  formatted by anything: on a `prettier --check` failure, run `pnpm exec prettier --write` on the files it names
+  (never reflow them by hand), then run the check again. In the e2e line, `smoke.spec.ts` and `boot.spec.ts` go in
+  the first batch only; further batches take ≤ 10 of E0's specs (README rule 4). For the `<…>` part, write the spec
+  file names from `R2-02.E0`'s report (`/home/sites/shmup-cup-run/R2-02.E0-report.md`).
   The goldens still skip (`GOLDENS_STALE`). The playtests take several minutes of simulation per zone.
 - **Acceptance:**
   - `pnpm content:check` green, with the 4-way rules at 3.0 px/tick / 24 px / 1,350 px;
@@ -333,7 +358,9 @@ carry over into wave 5).
   - `scripts/assets/tileset-masks.mjs` (new) — `--check | --write <tileset> <masks.json> [--allow-remap]`; refuses to
     change the mask of a floor or ceiling tile the heightfield places by anchor + mask unless `--allow-remap`;
   - `test/integration/terrain-checks.ts` (new) — a **copy** of the two checks of `test/integration/stage-terrain.test.ts`
-    (`expectMasksMatchArt` at `:71` with the test at `:131`, and the heightfield check at `:205`), exported;
+    (`expectMasksMatchArt` at `:71`, used by the test at `:131`, and the heightfield check — the test "a 12-px
+    fixture: the heightfield finds a tile for every cell it shapes" at `:158`, its body made a function that takes a
+    tileset file — lines on `95210d1`; `R2-02.T2e` may move them in wave 3, so find them by name), exported;
   - `test/scripts/assets/tileset-masks.test.ts` (new) — a temp 12-px tileset, a stage and V4a's ingested tiles pass
     both checks; the refusal; `--write` never touches `content/` unless given a path there;
   - `scripts/README.md` — one row (append; if another lane pushed a row first, rebase).
@@ -344,7 +371,8 @@ carry over into wave 5).
   ```
 - **Acceptance:** both modes pass the terrain checks; the refusal tested; `stage-terrain.test.ts` unchanged.
 - **Token:** none.
-- **Traps:** **copy, do not edit** `stage-terrain.test.ts`: S's port and wave 5's U4 change that file; `R3-03.V4c`
+- **Traps:** **copy, do not edit** `stage-terrain.test.ts`: wave 3's `R2-02.T2e` changed it and wave 5's
+  `R2-02.U4` changes it (U4 removes its `itPortPending` wrappers); `R3-03.V4c`
   (wave 5, after U4) makes it import `terrain-checks.ts`. `scripts/**` is in the frame-literal scan: no
   `384 216 200 208 192 108 640 360 336 348`.
 - **Docs needs:** `real-assets.md`, `advanced-stages.md` or `stage-runtime.md` (the masks tool), `scripts/README.md`
