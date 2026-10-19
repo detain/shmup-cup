@@ -29,7 +29,7 @@ Made by the re-plan that wrote `plan_resolution.md` §18 and these work orders.
 | **RUN-11** | **R5 zone lanes:** one worktree per zone in `RUN_DIR/wt/zone-<x>` holding a local branch `r5/zone-<x>` that is never pushed; the lane's successive agents work in that worktree; only the LAND pushes (one squashed commit). The same pattern: wave 12's `wt/bonus` / `wt/escape` (`R5-10.T1` / `T2`), wave 13's zone fixes `wt/fix-zone-<x>` on `r5/fix-zone-<x>` and wave 14's `wt/r6-zone-<x>` / `wt/r6-global`; an `S3` drop that LANDs uses a local branch `r5/s3-zone-<x>` in its own worktree | W10–W14 | adopted |
 | **RUN-12** | **The LAND procedure is a committed helper**, `docs/v2-run/helpers/land-zone.sh`, written and tested in wave 9 (`R5-P.LAND`); GLOBAL re-blesses hold the same lock | W09–W14 | adopted |
 | **RUN-13** | **Several docs agents per wave**, each with disjoint files; the one that holds `plan_resolution.md` and `CHANGELOG.md` (`Wnn.DOCS-A`) also updates the §17 rows; the orchestrator then runs `python3 .claude/plan_board_v2.py` in the main checkout (the script is git-ignored and exists only there; docs agents never run it). Replaces the earlier "one docs agent at a time" | every wave | adopted |
-| **RUN-14** | **`VITEST_MAX_WORKERS=6` per agent** on myadmin1 (64 cores, 8 builders), replacing the scouts' 4 | every wave | adopted |
+| **RUN-14** | **`VITEST_MAX_WORKERS=6` per agent** on myadmin1 (64 cores, 8 builders), replacing the scouts' 4 (their drafts were not committed — wave 5's scout already writes 6) | every wave | adopted |
 
 ## 2. Wave 4 (R2-01) decisions W4-1 … W4-14 — built
 
@@ -42,7 +42,7 @@ All built in R2-01 and adopted without objection; `W01.DOCS-A` (`R2-01.D1`) writ
 | **W4-3** | Core `ART_SCALE` (1 → 3/2) and `uiPx(v)`; the font pin = the file × `ART_SCALE` | done |
 | **W4-4** | The interim font is a pipeline-time ×1.5 of `pixel6x8.font.json` (9×12, line 15) | done |
 | **W4-5** | Never upscale the terrain tilesets, `ui/pixel`, real-art PNG overrides or `native: true` sources | done |
-| **W4-6** | The TV bench atlas, the CJK figures, the store icons and the doc images keep the v1 art (`artScale: 1`) until R2-03 (the bench for good) — RR-3 keeps the store icons on it until R4-05.E5 | done |
+| **W4-6** | The TV bench atlas, the CJK figures, the store icons and the doc images keep the v1 art (`artScale: 1`) until R2-03 (the bench for good; RR-1 keeps the CJK figures on it for good too) — RR-3 keeps the store icons on it until R4-05.E5 | done |
 | **W4-7** | v1 replays: `ReplayVersionError`, the "V1 REPLAY" row and "RECORDED BY V1: CANNOT PLAY"; delete only, never auto-deleted | done |
 | **W4-8** | `legacyScores`: no UI in R2-01; Steam achievements read `hiScores ∪ legacyScores` | done |
 | **W4-9** | The attract demos stay stale (the loop skips refused demos) until R2-03 | done |
@@ -114,7 +114,7 @@ They reach §1's register through the docs agent of the wave that builds them: R
 | ID | Decision (the default) | Status |
 |---|---|---|
 | **R5-D1** | **Zones build in parallel and land one at a time** (overrides §11's "previous zone step" and "one sim-changing lane at a time"), with stable hash keys (`R5-P.P1`), `node scripts/golden-update.mjs --only <ids>` (`R5-P.P3`), the fingerprint write mode (`R5-P.P10`) and the land lock. Zone A lands first; zone H's echoes wait for A, B, D and F | adopted |
-| **R5-D2** | The v2 zone contract (`R5-P.P6`): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite; 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | adopted |
+| **R5-D2** | The v2 zone contract (`R5-P.P6`): length 20,000–22,000 px; scroll to WARNING 3.75–5.25 min; the bot's god-mode run 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new enemy types counted by sprite (zones B–I; zone A keeps v1's behaviour count — 6–8 distinct scripts besides the boss, `content.test.ts`); 18–48 capsules before the WARNING; ≥ 3 in every 1,350-px window after a checkpoint; `directItems` from 30; ≤ 2 blue capsules | adopted |
 | **R5-D3** | Zone A gets a new tileset `terrain-azure`; `terrain-a` stays for the escape, `bonus-vault` and the ranges; `R5-10.T2` adds `escape.mjs` for the escape's look (Q-13, owner-confirmed 2026-10-18) | adopted |
 | **R5-D4** | The content-DB fingerprint stays after R2-02, re-pinned only by a LAND (P10's update mode) | adopted |
 | **R5-D5** | Capacity: `MAX_BOSS_PARTS` 16 → **24**; `MAX_ENEMIES` 64 and `PARTICLE_CAPACITY` 256 kept unless a design peaks above 80 % (built early by RUN-7) | adopted |
