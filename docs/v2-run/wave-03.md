@@ -23,18 +23,19 @@ under the kit and master e2e unchanged.
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
 | 1 | `R2-02.T1a` → `R2-02.T2c` | `packages/core/test/behaviors/**`; `test/integration/zones-*.test.ts` | — | no |
-| 2 | `R2-02.T1b` → `R2-02.T2d` | `packages/core/test/{enemies,bosses}/**`; 8 `test/integration/*-runtime*` files | — | no |
+| 2 | `R2-02.T1b` → `R2-02.T2d` | `packages/core/test/{enemies,bosses}/**`; 8 `test/integration/` runtime files (`world-flight` and seven `*-runtime*`) | — | no |
 | 3 | `R2-02.T1c` → `R2-02.T2e` | `packages/core/test/{bullets,weapons,shields,patterns}/**`; 13 integration files | — | no |
 | 4 | `R2-02.T1d` → `R2-02.T1e` | `packages/core/test/{powerups,world,debug,replay,blackhole,player,options}/**`, one scenes test; `packages/core/test/{data,stage,collision,config}/**` | — | no |
 | 5 | `R2-02.T2a` | `test/integration/content.test.ts` | CONTENT-TEST | no |
 | 6 | `R2-02.T2b` | `test/playtest/{rules,recovery,four-way-bot}.ts` and their tests, `zone-{d,i}.test.ts` | BOT | no |
 | 7 | `R2-02.T3` | `test/golden/v2-port*.ts` (new); `test/port-v2/handfix.patch` | KIT | no |
-| 8 (side) | carry-over `R3-03.V3` / `R3-04.M3c` … `M3e` (blocks in [wave 2](wave-02.md)); else filler `R3-03.V2a` (block in [wave 4](wave-04.md)) | — | as their blocks | M3d, M3e |
+| 8 (side) | carry-over `R3-03.V3` / whatever of `R3-04.M3a` … `M3e` is left (blocks in [wave 2](wave-02.md)); else filler `R3-03.V2a` (block in [wave 4](wave-04.md)) | — | as their blocks | M3d, M3e |
 | last | `R2-02.E0` (after every T on master) | the failing `test/e2e/*.spec.ts` only | — | **yes** |
 
 - **Slots:** 8 builders. `R2-02.E0` takes the first slot that frees after every T is on master.
-- **Reviews:** slot 1 = each T as it lands, then E0; slot 2 = the side lanes, and a second T reviewer when slot 1
-  queues.
+- **Reviews:** slot 1 = each T as it lands, then E0; slot 2 = the side lanes, each round `<id>.RV<n>` with its
+  block's must-hold (`R3-03.V3.RV`, `R3-04.M3.RV` in [wave 2](wave-02.md); `W04.RV-SIDE` in [wave 4](wave-04.md) for
+  V2a), and a second T reviewer when slot 1 queues.
 - **Docs item:** none (wave 5).
 - **e2e:** E0 and lane 8 (M3d / M3e) at most.
 
@@ -54,6 +55,14 @@ under the kit and master e2e unchanged.
   rows (a "32-px floor") may need re-deriving at 12.
 - **Your list:** start from `RUN_DIR/w02/rv-a2/<your id>.txt` (RV-A2's failures under the kit for your files); add
   what you find. A failure in someone else's file goes to your report by that subtask's id.
+  **`RUN_DIR/w02/rv-a2/other.txt`** (failures that fit no T, each with an owner RV-A2 suggests) is the
+  orchestrator's: before the wave's builders start, it gives each line to the subtask RV-A2 suggests, adding the
+  file to that subtask's Files **and** to both lines of its Tests in its prompt. A line in
+  `test/integration/release-audit.test.ts` goes to `R2-02.T2a`: that file is under T2a's token CONTENT-TEST (README
+  § "Tokens and locks"), and it runs whole (`-t 'zone X'` selects no test there). A line that no T of this wave can
+  take (a shell or render-pixi test, or any line whose suggested owner is not a T of this wave) goes to a fix
+  agent `R2-02.prepB.FIX<n>` (the next free number), in a builder slot, with the same kit proof and review as a T.
+  No line is left for `R2-02.RV-pre` (wave 4).
 - **The gates stay.** `describePortPending` / `itPortPending` / `skipIf(CONTENT_PORT_PENDING)` remain in place: under
   the kit the stub turns them off, so the gated tests must pass there; the wrappers are deleted after the port
   (`R2-02.U1` … `U5`, wave 5). `test/golden/stale.ts` and `test/e2e/gates.ts` are not yours.
@@ -77,9 +86,8 @@ under the kit and master e2e unchanged.
   stay green at K = 1.
 - **Files (only these):** the failing files of `packages/core/test/behaviors/**` (RV-A2's list `T1a`). Known groups:
   fixtures paired with a shipped tileset (`behaviors-edge`, `-fire`, `-fire-edge`, `-gimmicks`, `-gimmicks-edge`,
-  `-zones-edge`); shipped-value pins (`behaviors-zones*`, about 20 pins: ×1.5 of v1 numbers like
-  `[2.625, 3.375, 4.125]` vs `[1.75, 2.25, 2.75]`); the allocation guards' **setup** assertions
-  (`behaviors-rocket-worm-alloc` "8 to be 12": read it through `K` or the tileset).
+  `-zones-edge`); shipped-value pins (`behaviors-zones*`, about 20 pins, each ×1.5 of a v1 number); the allocation
+  guards' **setup** assertions (`behaviors-rocket-worm-alloc` "8 to be 12": read it through `K` or the tileset).
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
@@ -131,6 +139,7 @@ under the kit and master e2e unchanged.
 ### R2-02.T2d — Runtime tests I
 
 - **Wave / lane / order:** wave 3, lane 2, after `R2-02.T1b`.
+- **Depends on:** wave 2's exit; `R2-02.T1b` finished (lane order).
 - **Files (only these):** `test/integration/death-runtime.test.ts`, `world-flight.test.ts`, `stage-runtime.test.ts`,
   `enemies-runtime.test.ts`, `bullets-runtime.test.ts`, `weapons-runtime.test.ts`, `arsenal-runtime.test.ts`,
   `direct-runtime.test.ts`.
@@ -148,6 +157,7 @@ under the kit and master e2e unchanged.
 ### R2-02.T1c — Bullet, weapon, shield and pattern tests at both scales
 
 - **Wave / lane / order:** wave 3, lane 3, first.
+- **Depends on:** wave 2's exit.
 - **Files (only these):** the failing files of `packages/core/test/{bullets,weapons,shields,patterns}/**` (about 15;
   RV-A2's list `T1c`): fixtures paired with `terrain-a` (bullets ×4, weapons ×7, `patterns`, `shields-alloc`,
   `shields-arm`), pattern pins (`vx −1.47 vs −0.98` = ×1.5), the guards' setup assertions (`shields-alloc`,
@@ -163,6 +173,7 @@ under the kit and master e2e unchanged.
 ### R2-02.T2e — Runtime tests II
 
 - **Wave / lane / order:** wave 3, lane 3, after `R2-02.T1c`.
+- **Depends on:** wave 2's exit; `R2-02.T1c` finished (lane order).
 - **Files (only these; only the failing ones):** `test/integration/patterns-runtime.test.ts` (the aimed spiral starts
   at another angle at the frame-centre row: park on `v1y(100)`), `release-content-edge.test.ts`,
   `raster-range-runtime.test.ts`, `dimension-runtime.test.ts`, `bonus-stage-runtime.test.ts`, `campaign-flow.test.ts`,
@@ -170,21 +181,26 @@ under the kit and master e2e unchanged.
   `options-shields-runtime.test.ts`, `powerups-runtime.test.ts`, `loops-runtime.test.ts`, `stage-terrain.test.ts`.
 - **Tests:**
   ```bash
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration <the files you changed, plus every file of the list>
-  bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration <the same files>
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/patterns-runtime.test.ts test/integration/release-content-edge.test.ts test/integration/raster-range-runtime.test.ts test/integration/dimension-runtime.test.ts test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts test/integration/extra-edit-runtime.test.ts test/integration/boss-runtime.test.ts test/integration/advanced-bosses-runtime.test.ts test/integration/options-shields-runtime.test.ts test/integration/powerups-runtime.test.ts test/integration/loops-runtime.test.ts test/integration/stage-terrain.test.ts
+  bash test/port-v2/two-scale.sh -- env VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/patterns-runtime.test.ts test/integration/release-content-edge.test.ts test/integration/raster-range-runtime.test.ts test/integration/dimension-runtime.test.ts test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts test/integration/extra-edit-runtime.test.ts test/integration/boss-runtime.test.ts test/integration/advanced-bosses-runtime.test.ts test/integration/options-shields-runtime.test.ts test/integration/powerups-runtime.test.ts test/integration/loops-runtime.test.ts test/integration/stage-terrain.test.ts
   ```
 - **Acceptance:** green at both scales.
 - **Token:** none (`stage-terrain.test.ts` is yours in this wave).
-- **Traps:** `stage-terrain.test.ts`' `itPortPending` cases (`:30`, `:131`, `:205`) stay gated on master; R3-03.V4b
-  (wave 4) copies the checks at `:131` and `:205` into a helper — keep their bodies' structure.
+- **Traps:** `stage-terrain.test.ts`' `itPortPending` cases (`:131`, `:205`; the import at `:30`) stay gated on
+  master. R3-03.V4b (wave 4) copies two checks of that file into a helper: `expectMasksMatchArt` (`:71`, used by the
+  test at `:131`) and the heightfield check, the test "a 12-px fixture: the heightfield finds a tile for every cell
+  it shapes" (`:158`) — keep their bodies' structure (V4b finds them by name if your edits move the lines).
 
 ### R2-02.T1d — Powerup, world, debug, replay, black hole, player and option tests
 
 - **Wave / lane / order:** wave 3, lane 4, first.
+- **Depends on:** wave 2's exit.
 - **Files (only these):** the failing files of `packages/core/test/{powerups,world,debug,replay,blackhole,player,options}/**`
   and `packages/core/test/scenes/scenes-options-edge.test.ts` (about 16; RV-A2's list `T1d`): `powerups` ×4 and
   `debug-controls{,-edge}` (fixture tiles), `world-death` ×4 / `world-gimmicks` ×3 / `world-stage` (fixture tiles,
   `ROWS = PLAYFIELD_H / 8`), `replay{,-demo}`, the guards' setup assertions (`powerups-alloc*`, `world-death*-alloc`).
+  A shipped-value example: the MANTA's speeds `[1.75, 2.25, 2.75]` (`powerups/powerups-direct.test.ts:276`) become
+  `[2.625, 3.375, 4.125]`, written through `v1speed`.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/powerups packages/core/test/world packages/core/test/debug packages/core/test/replay packages/core/test/blackhole packages/core/test/player packages/core/test/options packages/core/test/scenes/scenes-options-edge.test.ts
@@ -198,9 +214,12 @@ under the kit and master e2e unchanged.
 ### R2-02.T1e — Data, stage, collision and config tests
 
 - **Wave / lane / order:** wave 3, lane 4, after `R2-02.T1d`.
-- **Files (only these):** the failing files of `packages/core/test/{data,stage,collision}/**` and
+- **Depends on:** wave 2's exit; `R2-02.T1d` finished (lane order).
+- **Files (only these):** the failing files of `packages/core/test/{data,stage,collision,config}/**` and
   `packages/core/test/data/frame-bounds.test.ts` (`:110`, "664 vs 656": `PLAYFIELD_W + 16 * K`); known groups:
-  `tilemap{,-edge}` (13), `stage-bonus{,-edge}` (8), `collision/terrain{,-edge}` (6), `data-direct{,-edge}`.
+  `tilemap{,-edge}` (13), `stage-bonus{,-edge}` (8), `collision/terrain{,-edge}` (6), `data-direct{,-edge}` (the
+  MANTA's speeds `[1.75, 2.25, 2.75]` at `data-direct.test.ts:205` become `[2.625, 3.375, 4.125]`, through
+  `v1speed`).
   **Not** A1's files (`packages/core/test/config/world-scale.test.ts`) and not `frame-constants.test.ts`.
   `packages/core/test/data/units-pairs.test.ts` already uses v1 geometry (`fromWidth: 384`, `:43`): only check it.
 - **Tests:**
@@ -229,7 +248,8 @@ under the kit and master e2e unchanged.
   - A5 fix 1's world and tile values (left for R2-02 on purpose): the MAGMA DEEP ship gap `>= 24` (`:1490`,
     `gap * map.tileSize`) → `24 * K` (36); the CELL VAULT gap `>= 48` (`:1614`) → `48 * K` (72); the ground probe
     rows `[PLAYFIELD_H - 1, PLAYFIELD_H - 8]` and `[0, 7]` (`:1811`, `:2190`) → the content tile's last / first row
-    (`PLAYFIELD_H - tileSize` and `[0, tileSize - 1]`); the sample step `y += 8` (`:2114`) → `y += tileSize`;
+    (`PLAYFIELD_H - tileSize` and `[0, tileSize - 1]`); the sample step `y += 8` (`:2114`) → `y += tileSize` (the
+    `x += 8` of the loop above it, `:2113`, stays);
   - the PRISM LABYRINTH case (`:1651-1662`, middle row `floor(PLAYFIELD_H / 2 / map.tileSize)` = 14 ported) stays: the
     content fix (zone G's walls one row up) is in `test/port-v2/handfix.patch`.
   - its 13 gated cases (`itPortPending` at `:626`, `:1121`, `:1450`, `:1650`, `:1995`;
@@ -260,8 +280,8 @@ under the kit and master e2e unchanged.
   - `test/playtest/rules.test.ts`, `rules-column-edge.test.ts`, `four-way-bot.test.ts` (from the constants; add a pin
     `BOT_X === ENTER_END_X`), `harness.test.ts`;
   - `test/playtest/zone-d.test.ts` (`:41` `expect(deepest).toBe(200)` → `v1rel(200)` = 300, O2), `zone-i.test.ts`
-    (`:42` the eels `e.y < world.camera.y + 170` → `v1y(170)`), and any other `test/playtest/zone-*.test.ts` that
-    fails under the kit.
+    (`:42` the eels `e.y < world.camera.y + 170` → `v1y(170)`), and any other `test/playtest/*.test.ts` (or BOT
+    file `harness.ts`, `campaign.ts`, `campaign-routes.ts`) that fails under the kit.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest
@@ -279,7 +299,9 @@ under the kit and master e2e unchanged.
 ### R2-02.T3 — The v2-port comparison (R2-02's acceptance test)
 
 - **Wave / lane / order:** wave 3, lane 7.
-- **Depends on:** `R2-02.T0` on master.
+- **Depends on:** `R2-02.T0` on master; the **kit run** of its acceptance waits for `R2-02.T2b` on master (the
+  README's comparison is made with the bot's constants scaled: `recordBaseline` plays `fourWayBot()`). Until then,
+  list a bot-dependent mismatch in your report by `R2-02.T2b`'s id, never as an exemption.
 - **Goal:** the test the plan's R2-02 acceptance names: a v2 run of every baseline scenario, compared field by field
   with the frozen v1 baseline (`test/fixtures/v1-baseline/*.baseline.json`, 37 scenarios).
 - **Files (only these; "new" = create):** `test/golden/v2-port.ts` (new), `test/golden/v2-port-suite.ts` (new),
@@ -343,7 +365,8 @@ under the kit and master e2e unchanged.
      `if (!assertionsGated(test.info(), PORT_UNMEASURED, '<what>', PORT_REASON)) { … }`, importing both from
      `./gates.js`; commit locally; then re-create the kit tree so it holds your commit: `git worktree remove --force
      <kit>`, then step 1's `two-scale.sh --keep` again (the new tree is made at your `HEAD`).
-  3. Re-run the batches under the kit until zero failures; then run the same specs on master (no change expected).
+  3. Re-run the batches under the kit until zero failures; then run every spec you edited in your own tree (master +
+     your commit; Tests' second line) — no change expected.
 - **Tests:**
   ```bash
   bash <kit>/docs/v2-run/helpers/e2e-batch.sh <batch A specs>   # … B, C, D, E, and G if it exists
@@ -372,7 +395,13 @@ under the kit and master e2e unchanged.
 
 1. T1a–T1e, T2a–T2e, T3 and E0 on master; their reviews at zero findings.
 2. Neutral: `git diff $(cat /home/sites/shmup-cup-run/w03-base.txt)..origin/master -- content test/golden/*.replay.json content/demos
-   test/fixtures/v1-baseline` empty; the three fingerprints green and unedited.
+   test/fixtures/v1-baseline` empty; the three fingerprints green and unedited:
+   `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts
+   test/integration/content-db-fingerprint.test.ts` and `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell
+   packages/shell/test/frame-fingerprint.test.ts` green, and this is empty:
+   ```bash
+   git diff $(cat /home/sites/shmup-cup-run/w03-base.txt)..origin/master -- test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts
+   ```
 3. Under the kit: one kept tree, then each command with `--reuse` (`<kit>` is the last line the first command prints;
    put that path in its place):
    ```bash
