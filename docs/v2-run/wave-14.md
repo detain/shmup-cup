@@ -16,7 +16,7 @@ item done.
 | Lane | Subtasks, in order | Main files | Tokens | e2e |
 |---|---|---|---|---|
 | 1–8 (zone passes) | `R6-01.B3a` (A) · `B3b` (B) · `B3c` (C) · `B3d` (D) · `B3e` (E) · `B3f` (F) · `B3g` (G) · `B3h` (H), then `B3i` (I) in the first free lane | `content/enemies/zone-<x>.enemies.json`, `content/stages/zone-<x>.stage.json` | LAND at the end of each | none |
-| 9 (alone, last) | `R6-01.B4 → R6-01.B5` | `content/rules/*`, the built-in copies in core, the rank curve; then the caravan clock, its strings and the boss-rush delays | GLOBAL (B4); SCENES, STRINGS ⇒ FINGERPRINTS (B5, a normal push under the land lock) | none |
+| 9 (alone, last) | `R6-01.B4 → R6-01.B5` | `content/rules/*`, the built-in copies in core, the rank curve; then the caravan clock, its strings and the boss-rush delays | GLOBAL + CORE-CONFIG (B4); SCENES, STRINGS ⇒ FINGERPRINTS (B5, a normal push under the land lock) | none |
 
 - **Order rules:** at most 8 zone passes build at once; their LANDs run one at a time (the land lock). **B4 starts
   only after every B3 has LANDed**, and holds the land lock for its whole re-bless (GLOBAL: no LAND meanwhile). B5
@@ -78,8 +78,8 @@ item done.
    change that breaks the zone's v2 contract (`test/integration/zones/zone-<x>.contract.ts`) or the 4-way rules is
    wrong — keep the contract green, never relax it. Density and scores are what the zone's recovery rule and its
    runtime tests measure, so each block's integration line runs `test/playtest/zone-<x>-recovery.test.ts` and, for
-   zones B … I, `test/integration/zone-<x>-runtime.test.ts` (B … G also `zone-<x>-direct.test.ts`); if R5-P.P5e kept
-   a `test/integration/zone-<x>-runtime-edge.test.ts` for your zone, add it to that line.
+   zones B … I, `test/integration/zone-<x>-runtime.test.ts` (B … G also `zone-<x>-direct.test.ts`) — by these exact
+   paths; P5e creates no `-runtime-edge` file.
 5. **Goldens:** every re-bless names its reason ("R6-01 balance: …"); a diff outside the declared scope is a bug.
    **Dry run first:** if the dry run's `test/golden` run fails on an outcome expectation (in
    `test/golden/golden-zone-<x>.test.ts`, or in `test/golden/golden.test.ts` for B4) because the report's change
@@ -101,8 +101,9 @@ item done.
 - **Wave / lane / order:** wave 14, lane 1.
 - **Depends on:** R6-01.B2.DOCS (it commits `docs/v2-run/balance-report.md`, wave 13) on `origin/master`.
 - **Goal:** apply the report's `## Zone A` section: enemy and boss `score`s, density where the report flags it.
-- **Files (only these):** `content/enemies/zone-a.enemies.json` (`score` fields; never `tender`, `picket` or
-  `halcyon-bulwark`'s other fields — `picket` and `halcyon-bulwark` also play in `bonus-range`, so their score
+- **Files (only these):** `content/enemies/zone-a.enemies.json` (`score` fields; never `tender` at all (rule 3),
+  and never `picket` or `halcyon-bulwark`'s other fields — `picket` and `halcyon-bulwark` also play in
+  `bonus-range`, so their score
   change is in this scope on purpose), `content/stages/zone-a.stage.json` (spawn / formation density);
   `test/golden/golden-zone-a.test.ts` — only an outcome expectation the change moves, and only as a fixer after a
   dry run (rule 5).
