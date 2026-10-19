@@ -926,7 +926,7 @@ above before relying on one):
 - `debug-tools.spec.ts`: `assertionsGated` `:200` → `:228` (web test `:167` → `:195`); the Tizen unlock test
   `:233` → `:261`.
 - `raster.spec.ts`: gate `:254` → `:255` (test `:253` → `:254`); risk list `:279` → `:280`, `:298` → `:299`.
-- `flight.spec.ts`: the idle test `:114` → `:152`.
+- `flight.spec.ts`: the idle test `:114` → `:152` → `:153` (`543887b`, +1) → `:137` (`8e5272b`, −15/−16).
 
 **`PORT_UNMEASURED`, `PORT_REASON`.** These pass at 640 on v1 content, so they run today. They skip from R2-02's port
 until R2-03 re-measures them. 23 whole tests plus 1 assertion gate:
