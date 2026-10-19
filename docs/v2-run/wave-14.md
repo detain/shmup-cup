@@ -8,8 +8,8 @@
 **Steps:** R6-01 (balance and difficulty). · **Gate to start:** wave 13's exit — `docs/v2-run/balance-report.md`
 (written by R6-01.B2, committed by R6-01.B2.DOCS) on `origin/master`; the owner's overrides, if he sent any (never
 required). · **Exit (summary):** the nine per-zone passes LANDed one at a time, then the global pass (rules, built-in
-tables, rank) re-blessed and the extra-mode pass pushed, each with its reason; every review at zero; the wave's docs
-item done.
+tables, rank) re-blessed and the extra-mode pass pushed (or its "no change" reported), each with its reason; every
+review at zero; the wave's docs item done.
 
 ## At a glance
 
