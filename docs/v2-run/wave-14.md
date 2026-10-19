@@ -24,9 +24,9 @@ item done.
 - **Reviews:** each `R6-01.B3x.RV` on its branch before its LAND (between the block's two turns, rule 2);
   `R6-01.B4.RV` on its branch before the re-bless (the same two turns); `R6-01.B5.RV` on B5's pushed commit;
   `R6-01.RV` (the step) at the end.
-- **No e2e in this wave:** a zone pass may move what `test/e2e/zone-<x>.spec.ts` samples at exact ticks, but no
-  subtask here runs a spec — R6-03.D6's full Chromium run (wave 15) covers every zone spec, and a moved sample there
-  becomes an `R6-03.D6.FIXn`.
+- **No e2e from a balance pass:** a zone pass may move what `test/e2e/zone-<x>.spec.ts` samples at exact ticks, but no
+  `R6-01.B3x` / `B4` / `B5` agent runs a spec — R6-03.D6's full Chromium run (wave 15) covers every zone spec, and a
+  moved sample there becomes an `R6-03.D6.FIXn`. The wave's only e2e work is a late art drop's own zone spec (rule 6).
 - **Docs item:** `W14.DOCS-A`, `W14.DOCS-B`.
 - **Fillers:** wave 15's `R6-03.D3` / `D4` must **not** start early (the art and the screens follow the balance). An
   owner-ready `R5-0n.S3` drop may run as a filler under rule 6.
@@ -43,8 +43,13 @@ item done.
    (each block names its own command). Every agent of the lane works in that worktree, one after another (never two
    at once). Start each subtask inside it with `git branch --show-current` — it must print your zone's branch
    (`r6/zone-a` for zone A); if HEAD is detached, run `git switch r6/zone-a` (your zone's branch) and say so in your
-   report — then `git fetch origin && git rebase origin/master`. Commit with explicit paths on the branch; **never
-   push the branch**; commits on it hold **sources only** (never a replay, a fingerprint's `PINNED` table,
+   report — then `git fetch origin && git rebase origin/master`. After the rebase run the WORKTREE block's
+   `pnpm install --frozen-lockfile --prefer-offline` line there (shell timeout 600000), and `pnpm assets` when your
+   tests need the atlas: the lane worktree has no `node_modules` until its first agent installs, and a rebase that
+   brings a lockfile change leaves them stale. (For a lane worktree the agent brief's WORKTREE block skips only its
+   fetch / worktree add / cd lines and still installs; the install after your rebase, here, is the one that counts.)
+   Commit with explicit paths on the branch; **never push the branch**; commits on it hold **sources only** (never a
+   replay, a fingerprint's `PINNED` table,
    `assets/source/atlas-groups.json` or `docs/images/**`). The branch reaches `origin/master` only through the LAND:
    each block's command runs `docs/v2-run/helpers/land-zone.sh`, which takes `/tmp/shmup-cup-land.lock` itself — never
    wrap it in another `flock`. Run it with `--dry-run` first and read the dry run's log. Each run takes about 25
@@ -56,13 +61,17 @@ item done.
    turns, with its review between them:**
    - **Turn 1:** the start lines, the edit, the block's tests, one commit on the branch (sources only); then report
      and stop — never write the message file, never run the helper.
-   - **Review:** the orchestrator starts `R6-01.B3x.RV` (for B4 `R6-01.B4.RV`) on the branch; a finding goes to a fix
-     agent (`R6-01.B3x.FIXn`) that works in the same lane worktree and commits on the same branch; a new review
-     follows, until a review reports zero findings.
+   - **Review:** the orchestrator starts `R6-01.B3x.RV` (for B4 `R6-01.B4.RV`) on the branch. It re-runs the
+     block's tests **inside** the lane worktree (`/home/sites/shmup-cup-run/wt/r6-zone-<x>`; B4:
+     `/home/sites/shmup-cup-run/wt/r6-global`): skip the WORKTREE block's first three lines; `git branch
+     --show-current` must print the lane's branch (`r6/zone-<x>`; B4: `r6/global`); never rebase or commit there — a
+     fresh worktree of `origin/master` would test master, not the branch. A finding goes to a fix agent
+     (`R6-01.B3x.FIXn`) that works in the same lane worktree and commits on the same branch; a new review follows,
+     until a review reports zero findings.
    - **Turn 2:** the orchestrator starts a new agent with the same block and this line at the top of its prompt:
      "You are turn 2: the review is at zero — write the commit message file, run the dry run, read its log, then
-     the LAND." It runs the start lines again (`git branch --show-current`, fetch, rebase), writes the message file
-     and runs the helper (dry run first).
+     the LAND." It runs the start lines again (`git branch --show-current`, fetch, rebase, install), writes the
+     message file and runs the helper (dry run first).
 3. **Still frozen:** `tender`'s fields (`content/enemies/zone-a.enemies.json`; it is every zone's capsule carrier —
    only B4 may change it, as a global change); the ids and sprite names every other file names.
 4. **Scores and density only** in a zone pass: an enemy's or a boss's `score`, the number and spacing of spawns. A
@@ -77,8 +86,9 @@ item done.
    moved it — a score bound, a starting-lives count — do not run the real LAND: report it; a fixer
    (`R6-01.B3x.FIXn`, `R6-01.B4.FIXn`) corrects that expectation on the branch so it states what the change predicts
    (through the constant where one exists; never a pasted run output), then a new review and a new dry run.
-6. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2, e2e pass
-   permitting), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
+6. **Late art drops (fillers).** An owner-ready `R5-0n.S3` (wave 12's template) may run as a filler (≤ 2; its zone
+   spec is one of the wave's two e2e agents, README common rule 4 — it runs through `docs/v2-run/helpers/e2e-batch.sh`
+   under the e2e lock), never while `R6-01.B4` holds GLOBAL and never once `R6-03.D6` has started; R6-03.D3 / D4 wait for any
    drop the owner names for the release. The orchestrator pastes wave 12's *Rules for this wave* into the drop's
    prompt instead of this wave's (the drop needs wave 12's rules 3–6: the normal worktree and push protocol, one
    derived-file push at a time, the art snapshot, the winners folder — this wave's rule 2 "never create another
@@ -99,10 +109,11 @@ item done.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-a` on the local branch `r6/zone-a` (rule 2). The orchestrator
   creates it: `git -C /home/sites/shmup-cup worktree add -b r6/zone-a /home/sites/shmup-cup-run/wt/r6-zone-a origin/master`.
 - **Steps** (two agent turns, rule 2):
-  - **Turn 1:** `cd /home/sites/shmup-cup-run/wt/r6-zone-a && git branch --show-current && git fetch origin && git rebase origin/master`
-    (the branch must print `r6/zone-a`); edit; run the tests; commit on `r6/zone-a` (sources only); report and stop.
+  - **Turn 1:** `cd /home/sites/shmup-cup-run/wt/r6-zone-a && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+    (shell timeout 600000; the branch must print `r6/zone-a` — rule 2; the install is rule 2's too); edit; run the
+    tests; commit on `r6/zone-a` (sources only); report and stop.
   - Between the turns: `R6-01.B3a.RV` on the branch, to zero (its fixes commit on the same branch).
-  - **Turn 2** (the prompt says "You are turn 2"): the same `cd … && git branch --show-current && git fetch origin && git rebase origin/master`;
+  - **Turn 2** (the prompt says "You are turn 2"): the same `cd … && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`;
     write the commit message file; the LAND (dry run first, then read its log, then the real LAND).
 - **Tests (targeted):**
   ```bash
@@ -136,8 +147,8 @@ item done.
   `test/golden/golden-zone-b.test.ts` (rule 5 only); LAND scope `zone-b,brine-grotto`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-b` on the local branch `r6/zone-b`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-b /home/sites/shmup-cup-run/wt/r6-zone-b origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-b && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-b`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-b && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-b` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3b-msg.txt` first): `feat(R6-01): balance zone B
   — scores and density`; the body as B3a's, for zone B (zone-b, brine-grotto); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -162,8 +173,8 @@ item done.
   `test/golden/golden-zone-c.test.ts` (rule 5 only); LAND scope `zone-c`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-c` on the local branch `r6/zone-c`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-c /home/sites/shmup-cup-run/wt/r6-zone-c origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-c && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-c`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-c && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-c` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3c-msg.txt` first): `feat(R6-01): balance zone C
   — scores and density`; the body as B3a's, for zone C (zone-c); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -188,8 +199,8 @@ item done.
   `test/golden/golden-zone-d.test.ts` (rule 5 only); LAND scope `zone-d`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-d` on the local branch `r6/zone-d`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-d /home/sites/shmup-cup-run/wt/r6-zone-d origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-d && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-d`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-d && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-d` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3d-msg.txt` first): `feat(R6-01): balance zone D
   — scores and density`; the body as B3a's, for zone D (zone-d); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -214,8 +225,8 @@ item done.
   `test/golden/golden-zone-e.test.ts` (rule 5 only); LAND scope `zone-e`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-e` on the local branch `r6/zone-e`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-e /home/sites/shmup-cup-run/wt/r6-zone-e origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-e && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-e`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-e && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-e` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3e-msg.txt` first): `feat(R6-01): balance zone E
   — scores and density`; the body as B3a's, for zone E (zone-e); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -241,8 +252,8 @@ item done.
   Zone F was the bot's hardest zone: re-run its playtest twice.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-f` on the local branch `r6/zone-f`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-f /home/sites/shmup-cup-run/wt/r6-zone-f origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-f && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-f`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-f && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-f` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3f-msg.txt` first): `feat(R6-01): balance zone F
   — scores and density`; the body as B3a's, for zone F (zone-f); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -268,8 +279,8 @@ item done.
   `test/golden/golden-zone-g.test.ts` (rule 5 only); LAND scope `zone-g,glimmer-cache`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-g` on the local branch `r6/zone-g`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-g /home/sites/shmup-cup-run/wt/r6-zone-g origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-g && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-g`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-g && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-g` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3g-msg.txt` first): `feat(R6-01): balance zone G
   — scores and density`; the body as B3a's, for zone G (zone-g, glimmer-cache); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -294,8 +305,8 @@ item done.
   `test/golden/golden-zone-h.test.ts` (rule 5 only); LAND scope `zone-h`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-h` on the local branch `r6/zone-h`. The orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-h /home/sites/shmup-cup-run/wt/r6-zone-h origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-h && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-h`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-h && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-h` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3h-msg.txt` first): `feat(R6-01): balance zone H
   — scores and density`; the body as B3a's, for zone H (zone-h); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -320,8 +331,8 @@ item done.
   `test/golden/golden-zone-i.test.ts` (rule 5 only); LAND scope `zone-i`.
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-i` on the local branch `r6/zone-i`. Starts in the first free lane; then the orchestrator creates it:
   `git -C /home/sites/shmup-cup worktree add -b r6/zone-i /home/sites/shmup-cup-run/wt/r6-zone-i origin/master`.
-- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-i && git branch --show-current && git fetch origin && git rebase origin/master`
-  (the branch must print `r6/zone-i`).
+- **Start:** `cd /home/sites/shmup-cup-run/wt/r6-zone-i && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+  (shell timeout 600000; the branch must print `r6/zone-i` — rule 2; the install is rule 2's too).
 - **Commit message** (write it to `/home/sites/shmup-cup-run/R6-01.B3i-msg.txt` first): `feat(R6-01): balance zone I
   — scores and density`; the body as B3a's, for zone I (zone-i — it includes `zone-i-escape`, the ARK's boss-escape scenario); no Co-Authored-By line.
 - **Tests (targeted):**
@@ -369,8 +380,9 @@ item done.
   LAND: `git -C /home/sites/shmup-cup worktree add -b r6/global /home/sites/shmup-cup-run/wt/r6-global origin/master`.
 - **Steps** (two agent turns, rule 2: turn 1 is step 1, then report and stop; the review runs between the turns;
   turn 2 — the prompt says "You are turn 2" — repeats step 1's start line, then does steps 2–3):
-  1. `cd /home/sites/shmup-cup-run/wt/r6-global && git branch --show-current && git fetch origin && git rebase origin/master`
-     (it must print `r6/global`; if HEAD is detached, run `git switch r6/global` and say so in your report). Edit
+  1. `cd /home/sites/shmup-cup-run/wt/r6-global && git branch --show-current && git fetch origin && git rebase origin/master && pnpm install --frozen-lockfile --prefer-offline`
+     (shell timeout 600000; it must print `r6/global` — rule 2; the install is rule 2's too; if HEAD is detached, run
+     `git switch r6/global` and say so in your report). Edit
      content and the built-in copies together; fix the pins that changed (through the constants, never by pasting a
      failing run's output); commit on the branch (sources only). Turn 1 ends here: report and stop.
   2. (Turn 2, after `R6-01.B4.RV` on the branch is at zero; its fixes, `R6-01.B4.FIXn`, commit on the same branch.)
@@ -456,7 +468,14 @@ item done.
      git commit --amend --no-edit
      git push origin HEAD:master
      ```
-     If the push is rejected, run the script again (at most 5 times, then report). After the push,
+     If the push is rejected, run the script again (at most 5 times, then report). If the script stops on a rebase
+     conflict in one of the three fingerprint files (a re-run's commit already holds their regenerated `PINNED`
+     tables, and a push that moved master in between may have re-pinned them too), take master's file and let the
+     script re-pin it — never merge it by hand:
+     `git checkout origin/master -- <that file> && git add <that file> && GIT_EDITOR=true git rebase --continue`
+     (`<that file>` is the conflicted fingerprint file's path, as `git status` prints it), then run the flock line
+     again. (During a rebase `--ours` / `--theirs` are swapped, so name `origin/master`.) A conflict in any other
+     file is real: `git rebase --abort`, stop and report. After the push,
      `git show --stat HEAD` must list only your sources and the fingerprint files; anything else: stop and report.
 - **Tests (targeted):**
   ```bash
@@ -465,7 +484,10 @@ item done.
   pnpm content:check
   ```
 - **Acceptance:** the caravan hint matches the clock in en, es and ja; the strings use only the bitmap font's glyphs
-  (`localization.test.ts`, `cjk-budget.test.ts`); the boss rush clears in god mode within its budget; every golden
+  (`localization.test.ts`, `cjk-budget.test.ts`); the boss rush clears in god mode within
+  `test/playtest/boss-rush.test.ts`'s budget — a longer rush may raise that test's own Vitest timeout **once**, with
+  the measured duration from `--reporter=verbose` in the commit body, and never the harness's tick cap
+  (`DEFAULT_MAX_TICKS`, `test/playtest/harness.ts`): a run that hits the cap means stop and report; every golden
   verified unchanged (`test/golden` — `zone-a-caravan` pins its own `timeLimit: 3600`; `CARAVAN_TICKS` moves only the
   `extra.caravan` walk of the presentation fingerprint and `scenes-extra-modes.test.ts`); the presentation fingerprint
   moves only in segments that show the caravan (its clock or its hint) or the boss rush, the content-DB fingerprint
@@ -480,10 +502,12 @@ item done.
 
 ## Reviews
 
-- `R6-01.B3a.RV` … `R6-01.B3i.RV`: on the branch, before the LAND — the diff touches only the zone's score and
-  density fields (and, after a dry run, a `golden-zone-<x>.test.ts` expectation under rule 5), every change
+- `R6-01.B3a.RV` … `R6-01.B3i.RV`: on the branch (its tests re-run inside the lane worktree, rule 2), before the
+  LAND — the diff touches only the zone's score and density fields (and, after a dry run, a
+  `golden-zone-<x>.test.ts` expectation under rule 5), every change
   traceable to the report (or an owner override), the contract green.
-- `R6-01.B4.RV`: the tables equal content, the re-bless reason, nothing outside the global section changed.
+- `R6-01.B4.RV` (its tests re-run inside `/home/sites/shmup-cup-run/wt/r6-global`, rule 2): the tables equal
+  content, the re-bless reason, nothing outside the global section changed.
 - `R6-01.B5.RV` (on B5's pushed commit, `git show <its SHA>`): the clock and its strings agree; the scope; the
   fingerprints moved only where the change shows. A finding goes to a fix agent (`R6-01.B5.FIXn`) whose fix is a new
   push (through B5's push script when it changes what a fingerprint pins).
@@ -499,12 +523,16 @@ item done.
   list (the owner's play sessions); §17 R6-01 → `done (owner parts pending)`; CHANGELOG; push; then report: the
   orchestrator runs the board sync.
 - **Files (only these):** `plan_resolution.md` (R6-01, §17), `CHANGELOG.md`. **Token:** PLAN.
-- **Tests:** `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tooling-config.test.ts`
-  (the CHANGELOG's first-section rule).
+- **Tests:** the docs tests that read `CHANGELOG.md` — `tooling-config.test.ts` (the first-section rule) and
+  `render-telemetry-pipeline.test.ts` (every "same *statistic*" claim next to "bench" keeps "not a comparable" within
+  400 characters, and nothing says "comparable to the bench"):
+  `VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/tooling-config.test.ts test/integration/render-telemetry-pipeline.test.ts`
 
 ### W14.DOCS-B — Difficulty, scoring and the extra modes
 
-- **Depends on:** R6-01.B5 (or its "no change" report) and `R6-01.RV` at zero.
+- **Depends on:** R6-01.B5 (or its "no change" report) and `R6-01.RV` at zero; `W13.DOCS-B` and `W13.DOCS-C` pushed
+  (they edit `difficulty-and-rank.md`, the client `extra-modes-and-replays.md`, `bestiary.md`, `docs/client/README.md`
+  and `preview-build.md` too).
 - **Files (only these):** `docs/dev/difficulty-and-rank.md`, `docs/dev/death-and-scoring.md`, `docs/client/controls.md`
   and `docs/client/README.md` (their difficulty notes only), `docs/client/extra-modes-and-replays.md` (the caravan,
   the boss rush), `docs/dev/zone-a-and-playtest.md`, `docs/dev/zones-b-and-c.md`, `docs/dev/zones-d-and-e.md`,
