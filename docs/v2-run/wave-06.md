@@ -97,7 +97,7 @@ them again (the lines below are `543887b`'s).
 | `test.skip(PORT_UNMEASURED, PORT_REASON)` | `advanced-bosses:259, :363, :389` (raid, captain, twins) | E3 |
 | `assertionsGated(…, R2_03_PENDING, …, CONTENT_REASON)` | `boss:136` (the hull check; TRIAL WARDEN at v1's screen x 300); `render-groups:220` (the HUD control) | E3 |
 | `assertionsGated(…, PORT_UNMEASURED, …, PORT_REASON)` | `debug-tools:203` (F7 / F8 camera x = zone A's checkpoint / WARNING x, in "web build: F4 freezes, F5 steps one tick, …") | E3 |
-| E0's gates (wave 3) | listed in `RUN_DIR/R2-02.E0-report.md`; likely bullets, bullet-palette, enemies, weapons, direct-items, option-hunter, raster `:183` / `:285` / `:306`, stage `:147`, coop-gamepad | the E1–E3 lane that owns the spec; E4 for every other spec, `attract`, `determinism` and `atlas-residency` included |
+| E0's gates (wave 3) | listed in `RUN_DIR/R2-02.E0-report.md`; likely bullets, bullet-palette, enemies, weapons, direct-items, option-hunter, raster, stage, coop-gamepad (the report lists the lines; E0 runs after `543887b`, so they are not in this table's snapshot) | the E1–E3 lane that owns the spec; E4 for every other spec, `attract`, `determinism` and `atlas-residency` included |
 | `test.skip(PORT_UNMEASURED, PORT_REASON)` that `R3-04.M3d` or its fix agent added (waves 3–4) | listed in `RUN_DIR/R3-04.M3d-report.md` (and its fix agent's report); `atlas-residency`, `atlas-context-loss` | E4 |
 | `test.skip(R2_03_PENDING, GOLDEN_REASON)` | `attract:184, :305`; `atlas-residency:409` | G1 |
 | `test.skip(recordingIsStale(doc), GOLDEN_REASON)` | `determinism:119` (per recording) | G1 |
@@ -229,7 +229,8 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
   `pnpm store:assets --check` is part of `R2-03.V`. The generated store-listing placeholders
   (`assets/generated/store/`, git-ignored) keep their v1-art layouts until then.
 - **The render bench's default (R2-03 scope: "the headless render bench's 640×360 scenario becomes the default"):**
-  already true — `test/bench/render.perf.ts` `load()` reads `FRAME_W` / `FRAME_H` since R2-01. Nothing to do;
+  already true — `test/bench/render.perf.ts` `load()` reads `FRAME_W` / `FRAME_H` (since R1-02, `e9e5af7`;
+  R2-01's flip made them 640×360). Nothing to do;
   `R2-03.RV` confirms it, `W06.DOCS-A` records it in R2-03's As built.
 
 ### R2-03.I3 — The docs screenshots on the ported content
@@ -456,7 +457,8 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
   ```
 - **Acceptance:** guards green, no budget raised; the stress bench within its gates; the three fingerprints
   unchanged (if one moves, find why: a capacity that is drawn or hashed into a view; re-pin only with that reason).
-- **Token:** DATA-INDEX.
+- **Token:** DATA-INDEX, FINGERPRINTS (only the table of a fingerprint that really moved with the recorded
+  reason; land lock at push).
 - **Traps:** every boss-part slot is hashed (`owner * MAX_BOSS_PARTS + index`), so the goldens move — that is G1's
   re-bless, by design. 24 is not a banned frame number.
 - **Docs needs:** `advanced-bosses.md`, `api-reference.md` (`MAX_BOSS_PARTS` 24).
@@ -524,7 +526,8 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
 - **Depends on:** `R5-P.P2b` pushed.
 - **Goal:** the v1 zone contract (scroll time to the WARNING 2.5–4.5 min, 4–6 new enemy types by sprite for zones
   B–I, capsule budgets; zone A instead counts 6–8 distinct enemy **behaviours** besides the boss, today 8 —
-  `content.test.ts:981-987`) would fail a 20–22 k-px zone. Each zone gets a contract file whose flag picks v1 bounds
+  `content.test.ts:981-987`, which `R5-P.P2a` moves into `content-zone-a.test.ts`'s first case) would fail a
+  20–22 k-px zone. Each zone gets a contract file whose flag picks v1 bounds
   (`false`, today) or v2 bounds (`true`, set by the zone's own R5 lane).
 - **Files (only these):** `test/integration/zones/zone-a.contract.ts` … `zone-i.contract.ts` (new, 9; each exports
   `{ remastered: false, … }`); `test/integration/zones/helpers.ts`; `test/integration/zones/contract.test.ts` (new:
