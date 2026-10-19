@@ -485,7 +485,10 @@ over).
   bash docs/v2-run/helpers/e2e-batch.sh bullet-palette.spec.ts bullets.spec.ts boss.spec.ts weapons.spec.ts
   node docs/v2-run/helpers/r34-gen-list.mjs > /home/sites/shmup-cup-run/R3-03.V1-gens-after.txt    # after it; then diff the two files
   ```
-- **Acceptance:** the scale-1 digest pin (`interim-pipeline.test.ts:341`) unchanged; at 3/2: round 11×11 (1),
+- **Acceptance:** the scale-1 digest pin of `interim-pipeline.test.ts` — 'pins the v1
+  atlas: every page’s pixels and the manifest, by digest' (`:341` on `bc8e05d`; V1's own
+  `NATIVE`-expectation edit rewrites the 3/2 cases above it, so find it by its title if the
+  range has moved) unchanged; at 3/2: round 11×11 (1),
   oval 13×13 (8), needle 17×17 (8), bend 11×11 (1); every `@<palette>` frame for frame (`content.test.ts:863`); atlas
   bytes under `ATLAS_PNG_BYTES_CAP` (`test/scripts/assets/atlas-budget.ts`); an e2e count that moves is updated in the
   same push and listed in the report; the `r34-gen-list.mjs` diff (the generators' sprite lists, frames, sizes,
@@ -686,7 +689,10 @@ over).
 
 ### R3-03.V1.RV — Review of the native v2 bullets
 
-- **Must hold:** the scale-1 build is unchanged: the digest pin `interim-pipeline.test.ts:341-357` (`fa4198…`) is
+- **Must hold:** the scale-1 build is unchanged: the digest pin of `interim-pipeline.test.ts` —
+  'pins the v1 atlas: every page’s pixels and the manifest, by digest' (`:341-357` on `bc8e05d`;
+  RV runs after V1 rewrote the 3/2 cases above it, so find it by its title or by the digest
+  `fa4198…`) is
   green **and unedited** by V1 (`node scripts/generate-assets.mjs` has no art-scale flag — it builds
   `INTERIM_ART_SCALE` 3/2, which V1 changes on purpose — so a `sha256sum assets/generated/atlas/*` before / after
   comparison is not the check here; that one is only for the byte-neutral side lanes); sizes and frame counts as V1 says; frame k+4 is the exact 90° turn of k; every
