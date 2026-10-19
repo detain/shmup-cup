@@ -22,35 +22,42 @@ by the quoted code or test title before you edit it.
 |---|---|---|---|---|
 | 1 | `R4-01.A9` → `R4-02.B4` | the R4-01 / R4-02 e2e specs, `docs/images/{ships,shots,options,shields,items}/` | DOCS-IMAGES (own folders) | yes (pass 1) |
 | 2 | `R4-05.E5` → `R4-05.E6` (E6 after A9 and B4 are on master) | `scripts/store-assets.mjs`, the 4 icons; then all of `docs/images/**` | STORE; then DOCS-IMAGES (full) | E6 runs `docs:screens` under the e2e lock (pass 2) |
-| 3 | `R5-P.P4` → `R5-P.P5a1` → `R5-P.P5a2` | `content/patterns/*`, the 20 core behaviour tests, then the `behaviors-zones*` splits | FINGERPRINTS (P4, push after P10) | no |
+| 3 | `R5-P.P4` → `R5-P.P5a1` → `R5-P.P5a2` | `content/patterns/*`, the 20 core behaviour tests, then the `behaviors-zones*` splits | none | no |
 | 4 | `R5-P.P3` → `R5-P.P10` → `R5-P.LAND` | `scripts/golden-update.mjs`, `test/golden/*.test.ts`, recovery tests; the 3 fingerprint tests; `docs/v2-run/helpers/land-zone.sh` | GOLDEN (verify only, P3); FINGERPRINTS (P10) | no |
 | 5 | `R5-P.P5e` | `test/integration/zones-*-{runtime,runtime-edge,direct}.test.ts` → per zone | none | no |
 | 6–8 | `R5-P.D-A` … `R5-P.D-I` (the designs not finished in wave 08), one agent per design | `docs/v2-run/designs/zone-<x>.md` (new) | none (docs commit of its own file) | no |
 
 - **Fillers:** none; designs take every free slot.
 - **Reviews:** slot 1 — the R4 step reviews `R4-01.RV` … `R4-05.RV` (each as soon as the step's last subtask is on
-  master; `R4-03.RV` may already run at the end of wave 08), then the R5 prep reviews. Slot 2 — `R5-P.D-RV` for each
+  master; a review that runs before `R4-05.E6` skips the `pnpm docs:images --check` re-run and says so —
+  `R4-05.RV` runs it green after E6), then the R5 prep reviews. Slot 2 — `R5-P.D-RV` for each
   design as it lands, then the remaining prep reviews.
-- **Docs item:** `W09.DOCS-A` … `W09.DOCS-E` (after the R4 step reviews are at zero; DOCS-E also covers R5 prep).
+- **Docs item:** `W09.DOCS-A` … `W09.DOCS-E` (after the R4 step reviews and the R5 prep reviews are at zero;
+  DOCS-E also covers R5 prep).
 - **e2e passes:** 2 — lane 1 (A9, then B4) and lane 2 (E6's `docs:screens`). No other subtask of this wave runs e2e.
 
 ## Rules for this wave
 
 - **The powerups spec has one owner.** `test/e2e/powerups.spec.ts` is in both R4 integrators' lists; `R4-01.A9`
   edits it, `R4-02.B4` runs after A9 is on master and only re-runs it (an item colour that still fails goes into
-  B4's report and to a small fix by A9's owner — never two edits of the spec in parallel).
+  B4's report; the orchestrator starts `R4-01.A9.FIX<n>` (a new agent with A9's files, in lane 1), and B4 re-runs
+  `powerups.spec.ts` and pushes only after that fix is on master — never two edits of the spec in parallel).
 - **E6 is the last R4 push.** It starts only when `R4-01.A9`, `R4-02.B4` and `R4-05.E5` are on master.
-- **Fingerprints in this wave:** `R5-P.P10` changes the code of the three fingerprint tests (the write mode). Push it
-  before any other fingerprint change of the wave; `R5-P.P4` builds in parallel but pushes after P10, re-pinning with
-  the new `SHMUP_FINGERPRINT_UPDATE=1`. Both take the land lock for their push (README rule 6).
+- **Fingerprints in this wave:** `R5-P.P10` changes the code of the three fingerprint tests (the write mode). It is
+  the wave's only fingerprint change and takes the land lock for its push (README rule 6). `R5-P.P4` moves no
+  fingerprint: no `ContentDb` field holds a `patterns` file's path, so splitting the file leaves all three `PINNED`
+  tables as they are.
 - **Goldens:** no subtask of this wave changes a `*.replay.json`. `R5-P.P3` runs
-  `node scripts/golden-update.mjs --only zone-b` only to prove that `--only` re-records byte for byte; its commit holds
-  no replay file. A filtered re-bless is always `node scripts/golden-update.mjs --only <ids>`, never
-  `pnpm golden:update -- --only <ids>` (pnpm 12 passes the `--` through to the script). The one exception:
-  `R5-P.P3` runs that form once, in its step 2, only to prove the script accepts pnpm's `--` (no replay changes).
-- **Two exceptions to common rule 7 (`docs/**`) in this wave, both named in their blocks:** the designers commit their
-  own design file (`docs/v2-run/designs/zone-<x>.md`, a `docs:` commit) and edit nothing else; `R5-P.LAND` commits
-  `docs/v2-run/helpers/land-zone.sh` and its row in `docs/v2-run/helpers/README.md`.
+  `node scripts/golden-update.mjs --only zone-b` only to prove that `--only` re-records byte for byte (step 2) and
+  fails on another zone's desync (step 3, a temporary edit restored before the commit); `R5-P.LAND`'s dry runs run it
+  inside `land-zone.sh` in a throwaway worktree. Neither commit holds a replay file. A filtered re-bless is always
+  `node scripts/golden-update.mjs --only <ids>`, never `pnpm golden:update -- --only <ids>` (pnpm 12 passes the `--`
+  through to the script). The one exception: `R5-P.P3` runs that form once, in its step 2, only to prove the script
+  accepts pnpm's `--` (no replay changes).
+- **Exceptions to common rule 7 (`docs/**`) in this wave, each named in its block:** the DOCS-IMAGES holders
+  (`R4-01.A9`, `R4-02.B4`: their own folders; `R4-05.E6`: all of `docs/images/**`, README rule 6); the designers
+  commit their own design file (`docs/v2-run/designs/zone-<x>.md`, a `docs:` commit) and edit nothing else;
+  `R5-P.LAND` commits `docs/v2-run/helpers/land-zone.sh` and its row in `docs/v2-run/helpers/README.md`.
 - **The gates are gone.** Every R5 subtask first checks `test/golden/stale.ts`, `test/e2e/gates.ts` and
   `packages/core/test/helpers/port-pending.ts` do not exist (R2-02 and R2-03 deleted them). If one exists, stop and
   report: the goldens are not valid yet.
@@ -78,7 +85,7 @@ by the quoted code or test title before you edit it.
   1. `pnpm assets && pnpm docs:images`, then `git status docs/images`; stage only the four folders. After your
      commit, `git restore docs/images` (it drops the unstaged plates of other folders: `R4-05.E6` regenerates them).
   2. Read 5 of the regenerated plates (ships, a shot, an Option, a shield, the Force Field) and check they show the
-     v2 art (no v1 6×8-era sprites, no missing frames).
+     v2 art (no v1-size sprite — e.g. a 16×9 KESTREL instead of the bible's 24×14 —, no missing frames).
   3. Run the 8 specs; for each failure, re-measure the expected colour / row from the art (read the sprite's pixels
      from `buildAtlas()` in a scratch script, or from the spec's own screenshot) and update the constant. Sample
      pixels through `test/e2e/frame-pixels.ts`, never `3x + 1`.
@@ -118,7 +125,8 @@ by the quoted code or test title before you edit it.
   wave 8's rule 15). Then `pnpm assets && pnpm docs:images`, stage only `docs/images/items`, commit, and
   `git restore docs/images`.
 - **Files (only these; checked on `bc8e05d`):**
-  - `test/e2e/bullet-palette.spec.ts` (the standard-palette body colours `STANDARD` at `:17-25`, and the other
+  - `test/e2e/bullet-palette.spec.ts` (the standard-palette body colours, `const STANDARD` — `:20-24` at `bc8e05d`,
+    find it by name —, and the other
     palettes' tables), `test/e2e/bullets.spec.ts`, `test/e2e/direct-items.spec.ts`, `test/e2e/boss.spec.ts` — only
     the colour / size assertions the new art moved;
   - `docs/images/items/**` (regenerated by `pnpm docs:images`; commit only this folder).
@@ -169,8 +177,9 @@ by the quoted code or test title before you edit it.
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/store-assets.test.ts test/scripts/store-assets-edge.test.ts test/integration/frame-literals-repo.test.ts
   pnpm --filter @shmup/tizen build && pnpm --filter @shmup/webos build
   ```
-- **Acceptance:** `--check` green; both bundle checks pass (they validate the icon sizes); the four icons read
-  well at their sizes (Read each PNG); the version tests in `store-assets-edge.test.ts` untouched.
+- **Acceptance:** `--check` green; both bundle checks pass (they check the icons are copied into `dist/`;
+  `pnpm store:assets --check` checks their sizes); the four icons read well at their sizes (Read each PNG); the
+  version tests in `store-assets-edge.test.ts` untouched.
 - **Token:** STORE (land lock for the push).
 - **Traps:**
   - The icon sizes are store requirements, not frame numbers — keep them; but no `640`, `360` or v1 frame literal
@@ -191,7 +200,9 @@ by the quoted code or test title before you edit it.
   sprite size (derive it; no frame literal).
 - **Steps:**
   1. `pnpm assets && pnpm docs:images`.
-  2. `flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm docs:screens` (Chromium; background it and poll its log).
+  2. `pnpm exec turbo run build:test --filter=@shmup/web` (outside the lock: `scripts/doc-screenshots.mjs` exits 1
+     without `apps/web/dist/`), then `nohup flock -w 5400 /tmp/shmup-cup-e2e.lock pnpm docs:screens >
+     /home/sites/shmup-cup-run/R4-05.E6-screens.log 2>&1 &` (Chromium); poll the log until the run ends.
   3. Read every regenerated screen (`docs/images/screens/*.png`, 18 files) and 5 plates; a screen that shows a
      glitch (a missing sprite, `ui/missing`, overlapping text) is a finding: report it, do not commit a broken
      screen.
@@ -203,13 +214,15 @@ by the quoted code or test title before you edit it.
 - **Acceptance:** both `--check`s green; every screen read and clean; `docs/images/logo.png` is the v2 banner.
 - **Token:** DOCS-IMAGES, full (land lock for the push); the e2e lock while `docs:screens` runs.
 - **Traps:** `docs:screens` plays the real game in Chromium and steps exact ticks; never run it outside the e2e
-  lock. Commit with explicit paths (`git add docs/images`), nothing else.
+  lock. Commit with explicit paths: `git add docs/images`, plus `scripts/doc-images.mjs` /
+  `scripts/doc-screenshots.mjs` only if you changed them; nothing else.
 - **Docs needs (report them; never edit docs):** `README.md` (the banner), `docs/client/*` (images),
   `docs/dev/front-end-and-attract.md` (title, cards).
 
 ### R5-P.P4 — Split `zones.patterns.json` into one pattern file per zone
 
-- **Wave / lane / order:** wave 09, lane 3, first. Builds at once; **pushes after `R5-P.P10` is on master**.
+- **Wave / lane / order:** wave 09, lane 3, first. Builds and pushes at once (it moves no fingerprint and no
+  derived file: a normal push, README rule 5).
 - **Depends on:** `R5-P.P2a`'s first commit on master (wave 06: the speed-literal scan of the 4-way block reads
   every `content/patterns/*.patterns.json`, not `patterns/zones.patterns.json` by name — today that read is at
   `test/integration/content.test.ts:1765`; after P2b it lives in a `content-zone-*.test.ts` or the shared helper).
@@ -235,8 +248,6 @@ by the quoted code or test title before you edit it.
   pnpm content:check
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/behaviors
   pnpm --filter @shmup/core typecheck   # the only typecheck of packages/core/test (shipped.ts, the 20 edited tests)
-  # only after R5-P.P10 is on master and you rebased (before that the content-DB fingerprint is expected red):
-  SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content test/golden
   ```
   Check the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly` (the filters are
@@ -249,16 +260,20 @@ by the quoted code or test title before you edit it.
     file in the diff);
   - `git grep -n "zones.patterns" -- ':!*.md'` returns nothing (the Markdown mentions — the two content READMEs, the
     docs — are the docs agents');
-  - the content-DB fingerprint is re-pinned (path names) with the reason in the commit body; the presentation and
-    shell fingerprints are unchanged.
-- **Token:** FINGERPRINTS (content-DB only; land lock for the push, after P10).
+  - no `PINNED` table changes: `content-db-fingerprint.test.ts` (in the `test/integration/content` run) stays green
+    unedited, which proves the loaded content identical, so the presentation and shell fingerprints cannot move; a
+    red fingerprint is a bug — stop and report.
+- **Token:** none.
 - **Traps:**
   - Never change an action's body or id: a moved number is a sim change.
   - A pattern id another file names must keep its id (`git grep '<id>' content/` before you move anything).
   - `example.patterns.json` stays a format sample, not a shipped file.
 - **Docs needs (report them; never edit docs):** `docs/dev/content-data.md`, `content/patterns/README.md` (per-zone
   pattern files; the prose at `:103` names `zones.patterns.json`), `content/enemies/README.md` (`:129`: the
-  `brine.jelly-ring` pattern now lives in `content/patterns/zone-b.patterns.json`).
+  `brine.jelly-ring` pattern now lives in `content/patterns/zone-b.patterns.json`), and the `zones.patterns.json`
+  mentions in `docs/dev/pattern-dsl.md` (`:440`), `docs/dev/enemies-and-behaviors.md` (`:606`),
+  `docs/dev/zones-b-and-c.md` (`:58`, `:406`), `zones-d-and-e.md` (`:59`), `zones-f-and-g.md` (`:62`),
+  `zones-h-and-i.md` (`:71`) — lines at `526af20`; find them with `git grep -n "zones.patterns" -- docs/dev`.
 
 ### R5-P.P5a1 — Split the zone behaviour tests B–E per zone
 
@@ -271,6 +286,12 @@ by the quoted code or test title before you edit it.
   - `packages/core/test/behaviors/behaviors-zone-{b,c,d,e}.test.ts` and `behaviors-zone-{b,c,d,e}-edge.test.ts` —
     **new** (8): the same cases, moved by the zone they test; a case that tests both zones goes to the earlier zone's
     file with a comment.
+  - `packages/core/test/helpers/zone-behaviors.ts` — **new** (P5a2 adds to it, never rewrites): the helpers both
+    files of a pair use. Helpers that take the world (`run`, `live`, `part`, `bullets`, `freshAngles`, …) move as
+    they are; helpers that read the file's `DB` (`freeFlight` / `world`, `fighting`, `indexOf`, `spawn`) become one
+    factory `zoneKit(db)` that returns them, and each new file starts with `const { freeFlight, fighting, … } =
+    zoneKit(DB);` — so every `it` moves verbatim. `shipped(path)` goes into `packages/core/test/helpers/shipped.ts`
+    (P4's) beside `shippedPatterns()`.
 - **Steps:** before you start (on `origin/master`), and again after your change:
   ```bash
   mkdir -p /home/sites/shmup-cup-run
@@ -284,11 +305,15 @@ by the quoted code or test title before you edit it.
   pnpm --filter @shmup/core typecheck
   ```
 - **Acceptance:** the same test count and titles (only the file names change); all green; no test helper copied
-  twice (shared helpers go to `packages/core/test/helpers/`, imported by relative path).
+  twice (shared helpers live in `packages/core/test/helpers/zone-behaviors.ts` / `shipped.ts`, imported by relative
+  path); each new file keeps only its own `DB` (and `ROSTER`).
 - **Token:** none.
-- **Traps:** moving a test is not rewriting it — copy each `it` verbatim; keep each file's docblock (`**`
-  module docs per the conventions).
-- **Docs needs:** `docs/dev/repo-layout.md` (new test files).
+- **Traps:** moving a test is not rewriting it — copy each `it` verbatim; start each new file with the old file's
+  docblock, narrowed to its zone (e.g. "The behaviours of plan M2-11 on the shipped zone B roster …"): every source
+  file starts with a file-level docblock (docs/dev/conventions.md § TSDoc).
+- **Docs needs:** `docs/dev/repo-layout.md` (new test files); the old file names in `docs/dev/zones-b-and-c.md`
+  (`:319`, `:500-501`), `docs/dev/zones-d-and-e.md` (`:486`, `:516-517`), `docs/dev/release-hardening.md` (`:222`) —
+  find them with `git grep -n "behaviors-zones" -- docs/dev`.
 
 ### R5-P.P5a2 — Split the zone behaviour tests F–I per zone
 
@@ -298,11 +323,17 @@ by the quoted code or test title before you edit it.
 - **Files (only these):** `packages/core/test/behaviors/behaviors-zones-fg.test.ts`, `behaviors-zones-fg-edge.test.ts`,
   `behaviors-zones-hi.test.ts`, `behaviors-zones-hi-edge.test.ts` — **deleted**;
   `packages/core/test/behaviors/behaviors-zone-{f,g,h,i}.test.ts` and `behaviors-zone-{f,g,h,i}-edge.test.ts` —
-  **new** (8).
-- **Tests, acceptance, traps:** as `R5-P.P5a1` (`vitest list` before / after, same count and titles; the files
+  **new** (8); `packages/core/test/helpers/zone-behaviors.ts` and `shipped.ts` (add, never rewrite).
+- **Tests, acceptance, traps:** as `R5-P.P5a1` (`vitest list` before / after, same count and titles; the one
+  `it.each` that tests both F and G — `'%s tracks the ship’s height at its speed, never past its margin (%i)'` in
+  `boss.squid / boss.facet — tracking (M2-13)` — stays whole in `behaviors-zone-f-edge.test.ts` (P5a1's "a case that
+  tests both zones" rule; that file's `ROSTER` / `DB` keeps the `facet-monarch` entry); the files
   `/home/sites/shmup-cup-run/R5-P.P5a2-before.txt` and `-after.txt`).
 - **Token:** none.
-- **Docs needs:** `docs/dev/repo-layout.md`.
+- **Docs needs:** `docs/dev/repo-layout.md`; the old file names in `docs/dev/zones-f-and-g.md` (`:541`,
+  `:570-571`) and `docs/dev/zones-h-and-i.md` (`:734-735`); and a finding for the next BEHAVIOR holder: the docblock
+  at `packages/core/src/behaviors/index.ts:2459` names `behaviors-zones-fg-edge.test.ts` (a comment only; do not
+  edit it here).
 
 ### R5-P.P3 — `node scripts/golden-update.mjs --only <stageId,…>` and the per-zone golden tests
 
