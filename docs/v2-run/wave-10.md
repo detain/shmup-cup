@@ -725,8 +725,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - `test/playtest/zone-a.test.ts` (the bounds `3 * 60` / `6 * 60` → the contract's 4.0–6.0 min; the test title's
     '3 to 6 minutes' → '4 to 6 minutes'; the captain seen;
     the peak live enemies ≤ 80 % of `MAX_ENEMIES` (64) and the peak boss parts ≤ `MAX_BOSS_PARTS` (24), both sampled
-    through the harness's `observe` hook, as every zone B … I does in wave 11; particles are not measured here — see
-    Traps), `test/playtest/zone-a-recovery.test.ts`;
+    through the harness's `observe` hook, as every zone B … I does in waves 11 and 12; particles are not
+    measured here — see Traps), `test/playtest/zone-a-recovery.test.ts`;
   - `test/golden/golden-zone-a.test.ts` (R5-P.P3) — the outcome expectations of the zone-A scenarios ("covers the
     whole stage …"), from the re-recorded runs' real outcomes as the design predicts them;
   - `test/golden/golden.test.ts` — only the cases of `describe('golden replays of the extra modes (M3-01)')` (every
@@ -746,8 +746,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     entry that zone's own `S4a` froze (`tender`'s sim fields, S4a's Frozen trap, `helpers/r5r6/carrier.py`: every
     zone B–I spawns it and it never changes, so their scenarios keep comparing; a scenario that names only
     frozen entries stays) — and name the dropped scenarios in your report. This is the one decision for every
-    later rebuilt rush boss: waves 11 and 12 never edit the shared comparison — their zones' S6 traps stop and
-    report a foreign failure exactly because this bullet owns it.
+    later rebuilt rush boss: waves 11 and 12 never edit the shared comparison: this bullet is the
+    one drop condition, and their S6 traps send a foreign failure to a stop-and-report.
 - **Tests (targeted, run all of them; the playtests in the background):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/playtest/zone-a.test.ts test/playtest/zone-a-recovery.test.ts test/playtest/boss-rush.test.ts test/integration/release-audit.test.ts test/integration/standin-budget.test.ts test/golden/v2-port test/integration/bonus-stage-runtime.test.ts test/integration/campaign-flow.test.ts
@@ -767,7 +767,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Traps:**
   - **Particles are not measured in the playtest** (as in waves 11 and 12): the harness's `observe` sees only the
     World, and particles live in render-pixi (fed by the sim's events through the shell's `connectFxEvents`). A full
-    pool recycles its oldest particle (`ParticleSystem.overwritten` counts them), so a peak above
+    pool recycles its oldest particle (`ParticleSystem.recycled` counts them), so a peak above
     `PARTICLE_CAPACITY` (256) changes the look, never the cost: the render bench (`test/bench/render.perf.ts`, re-run
     by R6-02.P1 in wave 13) always draws a full pool of twice that size (`BENCH_PARTICLE_CAPACITY` 512), and
     `R4-04.D3` (wave 08) chose the capacity from each pre-remaster stage's measured peak. Never add a particle
@@ -781,9 +781,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     S6. Any other failure of a route or the boss rush is the design's, never the route test's.
   - Never paste a failing run's output as the new expectation: derive each number from the design and the content.
   - The stage-skip cases keep the WARNING target (`R5-P.P14`, S5b's trap): the `zone-a-boss` family of
-    `test/golden/golden-zone-a.test.ts`, the 4-way boss-rule case and the `runA.boss` / `runA.zoneA` segments of
-    the fingerprint walk enter at HALCYON BULWARK's `warning`, not at the captain — re-derive their bounds only
-    for the stage's new geometry, never for a moved skip target.
+    `test/golden/golden-zone-a.test.ts` enter at HALCYON BULWARK's `warning`, not at the captain — re-derive
+    their bounds only for the stage's new geometry, never for a moved skip target. The 4-way boss-rule case
+    (in `test/integration/content-zone-a.test.ts` — S5b's file, not yours) and the walk's `runA.boss` /
+    `runA.zoneA` PINNED segments must pass or sit red only in `PINNED` comparisons: either other failure —
+    stop and report (wave 11's rule 9).
 - **Docs needs:** `docs/dev/zone-a-and-playtest.md` (zone A's v2 section: sections with x / time, set piece, new
   types, mid-boss, boss parts and phases, checkpoints, capsules, timing, stand-in vs real art),
   `docs/dev/debug-and-replays.md` (golden rows with new outcomes).
@@ -792,11 +794,12 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 
 - **Wave / lane / order:** wave 10, lane 4, after `R5-01.S6`; in the zone worktree.
 - **Depends on:** `R5-01.S6`.
-- **Goal:** about 86 files name zone A (run
+- **Goal:** about 86 files name zone A **and no other zone** (156 name it across all groups; run
   `python3 docs/v2-run/helpers/r5r6/zonerefs.py > /home/sites/shmup-cup-run/R5-01.S6b-zonerefs.txt` first, from the
-  zone worktree, and read group `a` in that file — the block that starts with the line `a <count>`; the committed
-  `zonerefs.txt` is at `bc8e05d`, before waves 2–9 moved tests); about 20 e2e specs fly it after START. Fix every
-  test that the remaster really broke — and only those.
+  zone worktree, and read group `a` in that file — the block that starts with the line `a <count>`; files
+  naming zone A with other zones sit in the mixed groups — the list below already holds the ones that matter;
+  the committed `zonerefs.txt` is at `bc8e05d`, before waves 2–9 moved tests); about 20 e2e specs fly it after
+  START. Fix every test that the remaster really broke — and only those.
 - **Step 0:** compare the script's group-`a` list with the files below. Treat every group-`a` **test** file the
   script lists that is not below (whether waves 2–9 added it or it was missed here) exactly like the listed ones:
   run it, and fix it only if the remaster broke it; name each such file in your report.
