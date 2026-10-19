@@ -2319,7 +2319,7 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
-| R2-01 | Flip the frame; interim art; versioned saves and replays | in progress — the frame is flipped on master (`72b18a1`: 640×360, 12-px HUD and tiles, `ART_SCALE` 3/2, replay format 2; master CI green); the post-flip review loops are closed at zero (the C5 loop: reviews 5 and 6, 2026-10-19); then the R2-01 docs pass, wave 1 of §18 |
+| R2-01 | Flip the frame; interim art; versioned saves and replays | done (owner parts pending) — 2026-10-19 |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
