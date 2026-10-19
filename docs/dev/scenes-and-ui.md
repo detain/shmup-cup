@@ -343,8 +343,9 @@ art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyp
   `FRAME_CY`), the rebind capture box is centred on both (`drawConfirm`'s panel is
   `28 · GLYPH_W + uiPx(8)` wide, 264 at 640×360).
 - **The weapon select's panel grows with its rows:** `WEAPON_PANEL_H` = `uiPx(22) + 10 ·
-  WEAPON_LINE_H + uiPx(40)` with `WEAPON_LINE_H` = `LINE_H + uiPx(3)` (273 at 640×360) — the plan's
-  "R2-01 decides" question is decided: it is content-sized, and the order editor matches it
+  WEAPON_LINE_H + uiPx(40)` with `WEAPON_LINE_H` = `LINE_H + uiPx(3)` (33 + 10 · 20 + 60 = 293 at
+  640×360, 192 at v1) — the plan's "R2-01 decides" question is decided: it is content-sized, and the
+  order editor matches it
   (`ORDER_PANEL` reuses the size, mirrored to the right edge, both centred on the centre row).
 - **The sprite scenes are scaled by `uiPx` / `uiOffsets`:** their positions are `uiPx` constants,
   their signed v1 tables (the citadel's and the invasion's blast lists, the abyss's bubble x's)
@@ -372,8 +373,8 @@ art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyp
   select, PRACTICE, SOUND TEST, EXTRA and REPLAYS leave it, as v1 did.
 - **Menus are laid out for the session's language, once, at scene creation** (redrawing allocates
   nothing): the title menu's cursor comes from `titleMenuLayout` (`TITLE_MENU_MIN_CELLS` 10 —
-  `FRAME_CX − 6 · GLYPH_W − 4`, 260 at 640×360 in en / ja; es `TEST DE SONIDO` pushes it to 242),
-  and the difficulty menu's CONTINUES / lives row is built from field initialisers (es reads
+  `FRAME_CX − 6 · GLYPH_W − uiPx(4)`, 260 at 640×360 in en / ja; es `TEST DE SONIDO` pushes it to
+  242), and the difficulty menu's CONTINUES / lives row is built from field initialisers (es reads
   `VIDAS 3   CONTINUACIONES 3`). A longer label pushes what follows it instead of overlapping it —
   the four es fixes (`87acfdb`): the HUD caravan clock (`TIEMPO`), name-entry `TIEMPO`,
   input-test `DISPOSITIVO` and practice `PUNTO DE CONTROL`; the English output is unchanged.
@@ -410,10 +411,10 @@ art, not with the frame (plan_resolution.md §2.6). Text-sized lengths stay glyp
   drawn while its glyphs (`GLYPH_H`) fit the window.
 - **The UI kit** (T2): `drawMenu` / `drawRebindPanel` default to a row pitch of `LINE_H + 2` (17;
   12 at v1), the cursor `MENU_CURSOR_DX` = `GLYPH_W + uiPx(4)` (15) left of the label and the value
-  column `MENU_VALUE_DX` = `13 · GLYPH_W + uiPx(2)` (119) right of it; a slider's bar is
-  `SLIDER_BAR_W` = `8 · GLYPH_W + uiPx(2)` (74); `drawConfirm`'s cursor sits `3 · GLYPH_W` left of
-  a choice's centre; `drawNameEntry`'s letters are `NAME_CELL_PITCH` = `GLYPH_W + uiPx(10)` (24)
-  apart, its half taken with `>> 1`.
+  column `MENU_VALUE_DX` = `13 · GLYPH_W + uiPx(2)` (120, 80 at v1) right of it; a slider's bar is
+  `SLIDER_BAR_W` = `8 · GLYPH_W + uiPx(2)` (75, 50 at v1); `drawConfirm`'s cursor sits `3 · GLYPH_W`
+  left of a choice's centre; `drawNameEntry`'s letters are `NAME_CELL_PITCH` = `GLYPH_W + uiPx(10)`
+  (24) apart, its half taken with `>> 1`.
 - **Text caps in the content:** `core/data/campaign.ts`'s line caps count the glyph cells that fit
   the text panels, whose margins follow the art's scale (`uiPx`, written out in `data` because it
   does not import `ui`): the panel inset `⌈40 · ART_SCALE⌉` and the line padding `⌈32 · ART_SCALE⌉`
