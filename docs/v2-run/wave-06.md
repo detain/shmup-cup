@@ -32,17 +32,18 @@ git grep -n -e R2_03_PENDING -e PORT_UNMEASURED -e GOLDENS_STALE -e goldenIsStal
 | 1 | `R2-03.E1 → R2-03.E2` | the zone specs, then stage / mode7 / raster / gimmicks / campaign-run specs | — | pass 1 |
 | 2 | `R2-03.E3 → R2-03.E4` | boss / advanced-bosses / render-groups / debug-tools, then the sprite and colour specs and every leftover content gate (rule 4) | — | pass 2 |
 | 3 | `R2-03.I1` | `scripts/doc-images.mjs`, `docs/images/**` (not `screens/`) | DOCS-IMAGES | no |
-| 4 | `R5-P.P1 → R5-P.P8` | `packages/core/src/{debug,data,pools,bosses}/…`, core tests | DATA-INDEX, CORE-CONFIG (P1, only for a barrel export), FINGERPRINTS (P1, at push) | no |
+| 4 | `R5-P.P1 → R5-P.P8` | `packages/core/src/{debug,data,world,bosses}/…`, core tests | DATA-INDEX, CORE-CONFIG (P1, only for a barrel export), FINGERPRINTS (P1, at push) | no |
 | 5 | `R5-P.P2a → R5-P.P2b → R5-P.P6` | `content.test.ts` split, `test/integration/zones/*` (new), `release-audit.test.ts`, the `content:check` script | CONTENT-TEST | no |
 | 6 | `R5-P.P5c → R5-P.P9` | `test/scripts/assets/procedural-zones*` split; four generators + `common.mjs`, the repo allow-list | — (rule 6: the repo allow-list is P9's) | no |
-| 7 | `R2-03.G1` (after E1–E4, P1, P8 and `R3-04.M3d` on master) | all goldens and demos, the gates' deletion | GOLDEN, FINGERPRINTS, land lock for the whole commit | after E1–E4 |
+| 7 | `R2-03.G1` (after E1–E4, P1, P8 and `R3-04.M3d` on master, and the review loops of E4, P1 — `RV-D` included — and P8 at zero) | all goldens and demos, the gates' deletion | GOLDEN, FINGERPRINTS, land lock from the fetch to the push (G1 step 8) | after E1–E4 |
 | 8 | `R2-03.I3` (after lanes 1–2 end) → `R2-03.G2` (optional) → `R2-03.V` | `docs/images/screens/*`; the presentation fingerprint (G2) | DOCS-IMAGES; FINGERPRINTS (G2) | I3 under the lock; V |
 
 - `R2-03.I2` is folded into `R2-03.V` by decision RR-3 (the store icons stay on the v1 art until R4-05.E5).
 - **Slots:** 8 builders in all, **wave 5's docs agents included** (README step 1). While `W05.DOCS-A` … `F` run,
   lanes 1, 2 and 4 (G1's prerequisites) take the free builder slots first, in that order; lanes 3, 5 and 6 take the
   slots the docs agents free; lanes 7 and 8 start when their Depends hold. Never more than 8 builders.
-- **Reviews:** `W05.DOCS-RV` (wave 5's docs review) uses review slot 2 before this wave's slot-2 reviews. Slot 1
+- **Reviews:** `W05.DOCS-RV` (wave 5's docs review) takes review slot 2 as soon as `W05.DOCS-A` … `F` are done,
+  ahead of any slot-2 review still queued then; until then slot 2 reviews this wave's pushes. Slot 1
   reviews E1–E4, I1, I3, G1 and G2 (if it runs) as they land, then runs `R2-03.RV`. Slot 2 reviews P1 and P8 — with
   a **second, determinism-focused** reviewer for P1 (`R5-P.P1.RV-D`), after `R5-P.P1.RV1` in slot 2 or in slot 1
   while it is free, never as a third review agent at once — then P2a … P9, then the docs.
@@ -54,7 +55,10 @@ git grep -n -e R2_03_PENDING -e PORT_UNMEASURED -e GOLDENS_STALE -e goldenIsStal
 ## Rules for this wave
 
 1. **Order of the re-bless.** G1 is the only re-bless of R2 and it covers the port (wave 4), `R5-P.P1` and
-   `R5-P.P8`. G1 starts only when E1–E4, P1 and P8 are on master. Nobody else runs `pnpm golden:update`.
+   `R5-P.P8`. G1 starts only when E1–E4, P1 and P8 are on master and the review loops of E4, `R5-P.P1` (its
+   `RV<n>` and `R5-P.P1.RV-D`) and `R5-P.P8` are at zero: a P1 / P8 fix after G1 would need a second re-bless, and
+   an E4 fix would edit `attract` / `determinism` / `atlas-residency.spec.ts` while G1 edits them. Nobody else runs
+   `pnpm golden:update`.
 2. **Until G1, the goldens are still stale** (`GOLDENS_STALE`, `R2_03_PENDING`): P1 and P8 change hashed state, but
    no golden test runs, so nothing turns red. P1 and P8 prove themselves with recordings made **inside** their tests.
 3. **G1 is one commit.** After `pnpm golden:update` nothing is stale any more, so `test/golden/stale.ts` and
@@ -177,9 +181,11 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
   lane owns (rule 4).
 - **Steps:** remove E0's and M3d's gates (`RUN_DIR/R2-02.E0-report.md`, `RUN_DIR/R3-04.M3d-report.md` and its fix
   agent's report list them; `git grep -n "PORT_UNMEASURED\|CONTENT_REASON\|PORT_REASON\|assertionsGated" --
-  'test/e2e/*.spec.ts'` shows today's) and re-measure each test they gated; re-point the specs that count exact
-  placeholder colours at the interim art (plan R2-03 scope: "the 12 specs that count exact placeholder colours"); check
-  every `@<palette>` colour the specs read.
+  'test/e2e/*.spec.ts'` shows today's) and re-measure each test they gated; in your files only, re-point every exact
+  colour count that the art on master changed (the ×1.5 interim art, `R3-03.V1`'s native bullets) at that art. A
+  colour count in another lane's spec is that lane's (rule 4: the plan's "12 specs that count exact placeholder
+  colours" include E1's `zone-a.spec.ts` and E2's `raster.spec.ts`); E1–E3 keep theirs green. Check every
+  `@<palette>` colour the specs read.
 - **Tests:** `bash docs/v2-run/helpers/e2e-batch.sh` with those 10 specs (one batch), twice (second under
   `taskset -c 0-3`, `E2E_WORKERS=2`); a second batch, also twice, with the extra specs whose gates you removed
   (for example `bash docs/v2-run/helpers/e2e-batch.sh attract.spec.ts determinism.spec.ts atlas-residency.spec.ts
@@ -243,8 +249,10 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
 
 ### R2-03.G1 — The one re-bless: goldens, demos, and the gates deleted
 
-- **Wave / lane / order:** wave 06, lane 7, after E1–E4, `R5-P.P1`, `R5-P.P8` and `R3-04.M3d` are on master.
-- **Depends on:** `R2-03.E1`, `E2`, `E3`, `E4`, `R5-P.P1`, `R5-P.P8` on master; `R3-04.M3d` on master (it extends
+- **Wave / lane / order:** wave 06, lane 7, after E1–E4, `R5-P.P1`, `R5-P.P8` and `R3-04.M3d` are on master and
+  the review loops of E4, P1 and P8 are at zero (rule 1).
+- **Depends on:** `R2-03.E1`, `E2`, `E3`, `E4`, `R5-P.P1`, `R5-P.P8` on master; the review loops of `R2-03.E4`,
+  `R5-P.P1` (`RV<n>` and `RV-D`) and `R5-P.P8` at zero; `R3-04.M3d` on master (it extends
   `atlas-residency.spec.ts`, which G1 edits; the wave's gate already requires `R3-04.RV` at zero).
 - **Goal:** re-record every golden replay and attract demo at 640×360 on the ported content, and delete everything
   that existed only because they were stale — in **one** commit.
@@ -268,19 +276,54 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
   - `test/integration/content-db-fingerprint.test.ts` — re-pin `core.demos` and `core.demoIndex`.
 - **Steps:**
   1. In your worktree on the latest master: `pnpm install --frozen-lockfile --prefer-offline && pnpm assets`.
-  2. Take the land lock for the whole commit: `flock -w 5400 /tmp/shmup-cup-land.lock bash <script>`; the script does
-     steps 3–7 and pushes.
+  2. Steps 3–7 build and check the one commit in your worktree; nothing is pushed before step 8. Step 8 takes the land
+     lock (README rule 6) and re-runs the re-bless on the latest master before it pushes. Steps 4 and 5 are edits by
+     hand, so they happen before the locked script, not inside it.
   3. `pnpm golden:update` (it runs `test/golden` with `SHMUP_GOLDEN_UPDATE=1`). `git diff --stat` must show exactly the
      62 + 10 replay files.
   4. Delete the gates and their uses as listed (both throw at import from now on).
   5. Re-pin: `SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration
-     test/integration/content-db-fingerprint.test.ts`; paste the printed table. Only `core.demos` / `core.demoIndex`
-     may move; anything else is a bug.
+     test/integration/content-db-fingerprint.test.ts`; paste both printed tables (`shipped` and `examples`) over
+     `PINNED`. In each, only `core.demos` / `core.demoIndex` may move (the format sample `example.replay.json` is
+     re-recorded too); anything else is a bug.
   6. Run the tests below.
   7. Commit `test(R2-03): re-bless the goldens and demos at 640×360; delete the R2-01 gates`. The body says why:
      R2-02 ported the content ×1.5 and the world constants; `R5-P.P1` made the world hash independent of content
      order; `R5-P.P8` raised `MAX_BOSS_PARTS` to 24; the recordings were v1 (format 1, 384×216) and refused. List the
      deleted files.
+  8. Push under the land lock. Write this script to `/home/sites/shmup-cup-run/R2-03.G1-push.sh`:
+     ```bash
+     set -e
+     git fetch origin
+     git rebase origin/master
+     pnpm install --frozen-lockfile --prefer-offline
+     pnpm assets
+     pnpm golden:update
+     if ! git diff --quiet; then echo "G1: the re-bless differs on the rebased tree"; git diff --stat; exit 1; fi
+     VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/attract-flow.test.ts test/integration/attract-flow-edge.test.ts test/integration/atlas-zone-sprites.test.ts test/integration/content-db-fingerprint.test.ts
+     VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/determinism
+     VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/replay
+     pnpm typecheck:root
+     pnpm --filter @shmup/shell typecheck
+     if git grep -n -e R2_03_PENDING -e PORT_UNMEASURED -e GOLDENS_STALE -e goldenIsStale -e GoldensStale -e "e2e/gates" -e "from './gates.js'" -e "golden/stale" -e "from './stale.js'" -- packages apps test scripts ':!*.md'; then echo "G1: a gate is left"; exit 1; fi
+     git fetch origin
+     if ! git merge-base --is-ancestor origin/master HEAD; then echo "G1: master moved during the run; run the script again"; exit 1; fi
+     git push origin HEAD:master
+     ```
+     It takes a long time (the whole re-bless and the Vitest checks), and opencode's shell tool stops a foreground
+     command after 2 minutes. So run this line from your worktree with the shell tool's `background: true` (you are
+     notified when it ends), or in the foreground with the tool's `timeout` set to `3600000`:
+     `flock -w 5400 /tmp/shmup-cup-land.lock bash /home/sites/shmup-cup-run/R2-03.G1-push.sh > /home/sites/shmup-cup-run/R2-03.G1-push.log 2>&1; echo "EXIT $?" >> /home/sites/shmup-cup-run/R2-03.G1-push.log`
+     When it ends, read `tail -n 20 /home/sites/shmup-cup-run/R2-03.G1-push.log`; its last line `EXIT <n>` is the
+     result. `EXIT 0`: pushed; `git show --stat HEAD` must list only the files of this block. Any other `EXIT`:
+     - "master moved during the run": start the same line again (at most 5 times, then stop and report);
+     - "the re-bless differs on the rebased tree": a commit that landed meanwhile changed what is recorded, which no
+       other lane of this wave may do (rule 5) — stop and report with the log; never re-bless a second time;
+     - a rebase conflict: `git rebase --abort`, stop and report;
+     - only `EXIT 1` in the log: the land lock was not free within 90 minutes — stop and report;
+     - any failed test: stop and report with the log.
+     The e2e batches of the tests below ran in step 6 on the same replay files (the script's `git diff --quiet` proves
+     they did not change), so the script does not repeat them.
 - **Tests:**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/golden test/integration/attract-flow.test.ts \
@@ -296,7 +339,7 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
 - **Acceptance:** the last grep (the gate grep, limited to code) prints nothing — it never needs a docs edit and never
   touches the render bench's `./render-harness/gates.js` imports; every golden and demo replays with all hashes
   equal; Firefox's determinism spec plays them; the commit message says why.
-- **Token:** GOLDEN, FINGERPRINTS (content-DB), the land lock for the whole commit.
+- **Token:** GOLDEN, FINGERPRINTS (content-DB), the land lock from the fetch to the push (step 8's script).
 - **Traps:** never edit a replay file by hand (Prettier skips them; they are generated); never re-bless twice to
   "fix" a desync — a desync after the re-bless is a nondeterminism bug: stop and report. `test/golden/v1-baseline*`
   and `test/fixtures/v1-baseline/` stay (the frozen v1 record; never `SHMUP_V1_BASELINE_UPDATE`).
@@ -351,12 +394,16 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
     (`:607`); formations' `f.enemy[slot]` (`:706`) and `f.path[slot]` (`:715`); and pool fields named `sprite`
     (`bullets/index.ts:434`, `:518`, `:545` — mixed in the generic pool loop `:777-783`) through the key table. Audit
     every other mixed field for a content-order index and list your verdict per field in the report;
-  - `packages/core/src/pools/index.ts` — only if the pool registry must expose field names;
+  - `packages/core/src/world/index.ts` — only if the pool registry must expose field names: `RegisteredPool`
+    (`:480` on `526af20`) keeps only `arrays`, in sorted field-name order, and `createPoolRegistry` (`:1652`) drops the
+    keys (`pools/index.ts` has no registry);
   - `packages/core/src/index.ts` — only for a new export;
   - `packages/core/test/debug/debug-hash-keys.test.ts` (new): record a short run on fixture content, add a dummy
     enemy, sprite, path and pattern action **that sort first**, replay: every hash equal;
-  - `packages/core/test/debug/debug-hash-alloc.test.ts` (new, only if `hashWorld` has no allocation guard yet; it has
-    none in `debug-alloc.test.ts` on `bc8e05d`);
+  - `packages/core/test/debug/debug-hash-alloc.test.ts` (new): a guard of `hashWorld` on a world whose enemies,
+    formations, enemy bullets and pattern runners are live, so every key lookup runs. The existing guard
+    (`debug.test.ts:101`, 'does not allocate per hashed value (only the boxed result, if anything)', a bare world with
+    one test pool) stays as it is, budget included;
   - `packages/core/test/debug/*.test.ts` — only pins that hash values changed;
   - `test/integration/content-db-fingerprint.test.ts` — the re-pin of the new `ContentDb` key fields.
 - **Tests:**
@@ -366,9 +413,11 @@ when the slowness is real (C5 did so for `render-groups:258` / `:330`, lines at 
   SHMUP_FINGERPRINT_PRINT=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/content-db-fingerprint.test.ts
   pnpm --filter @shmup/core typecheck
   ```
-- **Acceptance:** the dummy-content test green; zero allocation in `hashWorld` (guard green, warm-up ≥ 20,000, new
-  indices per window); the presentation and shell frame fingerprints **unchanged** (P1 changes no drawn output); the
-  content-DB fingerprint re-pinned for the new fields only; the goldens are re-blessed by G1, not here.
+- **Acceptance:** the dummy-content test green; zero allocation in `hashWorld` (the new guard of
+  `debug-hash-alloc.test.ts` green with warm-up ≥ 20,000 and new indices per window, and the existing guard of
+  `debug.test.ts:101` green, its budget unchanged); the presentation and shell frame fingerprints **unchanged** (P1
+  changes no drawn output); the content-DB fingerprint re-pinned for the new fields only; the goldens are re-blessed
+  by G1, not here.
 - **Token:** DATA-INDEX (lane 4), CORE-CONFIG (only if you add a barrel export to `packages/core/src/index.ts`),
   FINGERPRINTS (content-DB; land lock at push).
 - **Traps:** determinism — FNV-1a with `Math.imul` and `>>> 0` (allowed), no `**`, no `Math.pow`; keys are computed
