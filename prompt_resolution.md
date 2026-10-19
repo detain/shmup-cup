@@ -11,17 +11,18 @@
 > owner parts pending). **R2-01 is flipped on master** (`72b18a1`: 640×360, 12-px HUD bars and tiles, `ART_SCALE` 3/2,
 > replay format 2, save format 3) and closing: its docs pass is this run's first wave. **R0-04** (the art round) is
 > waiting on the owner. **Wave 0** is R2-01's last C5 review loop and the triage of the CI e2e shard-1 failures (C5
-> fixes 2 `c67c7c9`, 3 `8ff2bf6`, 4 `543887b` and 5 `0cabaec` are on master, test files only). The C5 loop closes
-> when its last review is at zero findings; the previous orchestrator then sets `docs/v2-run/wave-00.md`'s status line
-> to `**Status: closed**`. If the line still reads `**Status: open**` when you start, run wave 0's "open" branch first
-> (`wave-00.md`: its open items become `R2-01.F1` in wave 1); the open findings are in the newest
-> `r2-01C5-review*.md` / `w4-C5-fix*-report.md` under `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` (the
-> old host's scratchpad, copied to myadmin1). All remaining work is scheduled in **plan
-> §18 "Execution waves for the ~10-agent run"**, with the work orders in **`docs/v2-run/`** (index
-> `docs/v2-run/README.md`, helper scripts in `docs/v2-run/helpers/`).
+> fixes 2 `c67c7c9`, 3 `8ff2bf6`, 4 `543887b`, 5 `0cabaec`, the later `424afd7` and `b0dede1`, and any C5 fix after
+> them are on master, test files only). The C5 loop closes when its last review is at zero findings; the previous
+> orchestrator then sets `docs/v2-run/wave-00.md`'s status line to `**Status: closed**`. If the line still reads
+> `**Status: open**` when you start, run wave 0's "open" branch first (`wave-00.md`: its open items become `R2-01.F1`
+> in wave 1); the open findings are in the newest `r2-01C5-review*.md` / `w4-C5-fix*-report.md` under
+> `/home/sites/shmup-cup/.claude/orchestrator/scratchpad/` (the old host's scratchpad, copied to myadmin1). All
+> remaining work is scheduled in **plan §18 "Execution waves for the ~10-agent run"**, with the work orders in
+> **`docs/v2-run/`** (index `docs/v2-run/README.md`, helper scripts in `docs/v2-run/helpers/`).
 >
 > **What exists on myadmin1:** the repo (everything the run needs is on `master`), plus what the previous orchestrator
-> copied over: `.claude/` (`plan_board_v2.py`, `skills/`, its old notes — history only), the git-ignored art
+> copied over: `.claude/` (`plan_board_v2.py`, `skills/`, its old notes — history only, except the C5 review and fix
+> reports in `.claude/orchestrator/scratchpad/` that wave 0's open branch reads, above), the git-ignored art
 > candidates `art-prompts/v2/candidates/` and a **snapshot** of the picker site with `data/choices.json`. Nothing else
 > from the old host is here, and myadmin1 cannot ssh to it.
 
@@ -43,7 +44,7 @@ paraphrasing it.
   waves of §18**, each from its work order in `docs/v2-run/`. A new paste resumes at the first §18 wave that is not
   closed (check §17 and `RUN_DIR/RESUME.md`). Alternatives: `wave <id>` (one §18 wave), `milestone R2`, a range like
   `R2-02..R2-04`, a single step id, or `none`.
-- **MAX_PARALLEL:** `10` — agents running at the same time, every role counted: about 8 builders + 2 reviewers. The
+- **MAX_PARALLEL:** `10` — agents running at the same time, every role counted: at most 8 builders + 2 reviewers. The
   re-check scouts (wave loop, step 1) and the fix agents take builder slots; the cap is 10 agents in all.
 - **MAX_E2E_AGENTS:** `2` — agents that run Playwright. They share one machine-wide lock; a third would only wait.
 - **VITEST_MAX_WORKERS:** `6` per agent (myadmin1 has 64 cores and 251 GB of RAM).
@@ -59,10 +60,12 @@ paraphrasing it.
 - **RUN_DIR:** `/home/sites/shmup-cup-run` — the run directory of `docs/v2-run/README.md` § The run directory
   (decision RUN-5). It holds your notes (`RESUME.md`, `lanes-<wave>.md`, `wave-<wave>-notes.md`, the wave bases
   `wNN-base.txt`, the pre-release tag targets `w07-tag.txt` / `w13-tag.txt`), `prompts/<name>.md`,
-  `logs/<name>.log`, the owner's TV logs `owner-logs/` (preflight 6), every agent's report `<task id>-report.md` and
-  working files (`<id>-msg.txt`, `<id>-push.sh`, `<id>-e2e.log`, the LAND logs `land-<x>-<date>.log`), RV-A2's
-  `w02/rv-a2/`, R2-04's `w07/patches/` and the lane worktrees `wt/`. It is outside the repository; copy it along if
-  the run moves hosts. Every agent gets its value (agent brief, `RUN_DIR:` line).
+  `logs/<name>.log`, the owner's TV logs `owner-logs/` (preflight 6), every agent's report `<task id>-report.md`
+  (`<name>-report.md` for an agent without a subtask id) and working files, named after the subtask id
+  (`<id>-msg.txt`, `<id>-push.sh`, `<id>-e2e.log`, `<id>-host-check.log`, the test-list snapshots
+  `<id>-…-before.txt` / `-after.txt`, and any other `<id>-…` file or folder its block names), the LAND logs
+  `land-<x>-<date>.log`, RV-A2's `w02/rv-a2/`, R2-04's `w07/patches/` and the lane worktrees `wt/`. It is outside the
+  repository; copy it along if the run moves hosts. Every agent gets its value (agent brief, `RUN_DIR:` line).
 
 ## The owner's general instructions (follow them exactly, and pass them on to every agent)
 
@@ -116,16 +119,17 @@ each agent how to stop); 2, 4, 7 and 8 bind every agent directly.
   `docs/dev/repo-layout.md`. opencode hands these three to every session through the repo's `opencode.json`; read them
   anyway.
 - v1's definition of done and conventions (`docs/old/shmup_plan.md` §1.3, §1.5), with the v2 changes of plan §4.
-- **Where the code is now:** the frame is 640×360 since `72b18a1`; the content (the world) is still v1's ×1 until
-  R2-02's port; the goldens and attract demos are stale by design until R2-03 re-blesses them. Self-expiring gates
-  keep the tests green meanwhile (`CONTENT_PORT_PENDING`, `GOLDENS_STALE`, `test/e2e/gates.ts` — CLAUDE.md).
+- **Where the code was on 2026-10-18** (§17 says what landed since): the frame is 640×360 since `72b18a1`; the
+  content (the world) is still v1's ×1 until R2-02's port; the goldens and attract demos are stale by design until
+  R2-03 re-blesses them. Self-expiring gates keep the tests green meanwhile (`CONTENT_PORT_PENDING`,
+  `GOLDENS_STALE`, `test/e2e/gates.ts` — CLAUDE.md).
 
 ## Hard rules (paste this block verbatim into every agent prompt)
 
 ```text
 HARD RULES — Shmup Cup v2, for every agent and every task
 1. Push only to master (git push origin HEAD:master). Never push a branch, never open a PR, never force-push. Never
-   push to v1.x without the owner's explicit OK.
+   push to v1.x.
 2. Frame ≠ world (plan_resolution.md §2.6). The frame is 640×360 on master (12-px HUD bars and tiles, playfield
    640×336, 9×12 font, ART_SCALE 3/2). The world is ×1 until R2-02's port and ×1.5 after it (§17 says which). A value
    anchored to a screen edge or the centre derives from the core constants (FRAME_W, FRAME_CX, PLAYFIELD_W,
@@ -140,8 +144,9 @@ HARD RULES — Shmup Cup v2, for every agent and every task
 5. Zero allocation in per-tick and per-frame paths (docs/dev/conventions.md "Performance"). Allocation guards use
    packages/core/test/helpers/alloc.ts; never raise a guard's budget, never move a measured loop into a helper.
 6. Shipped code runs on Chromium 68 (LG webOS 5) and 69 (Tizen 5.5): no .flat / .flatMap / .at / Object.fromEntries /
-   Object.hasOwn / replaceAll / structuredClone / Promise.allSettled. The TV bundles are one classic ES2018 IIFE: no
-   dynamic import(), no top-level await.
+   Object.hasOwn / replaceAll / structuredClone / Promise.allSettled / queueMicrotask (the full list:
+   test/integration/tv-engine-floor.test.ts TOO_NEW). The TV bundles are one classic ES2018 IIFE: no dynamic
+   import(), no top-level await.
 7. Golden replays (test/golden/*.replay.json), attract demos (content/demos/*.replay.json) and the three fingerprints
    (presentation, content-DB, shell frame) change only on purpose, only by the agent holding their token, with the
    reason in the commit message. Never edit a .replay.json by hand. An unintended golden or fingerprint change is a
@@ -155,8 +160,9 @@ HARD RULES — Shmup Cup v2, for every agent and every task
    SGLang by name or GPU (no pkill, killall, sglang killall), never touch port 30000. Never print, copy or log the
    HF token. Never read, run or edit the owner's /root scripts.
 10. The picker's data/choices.json is written only by the picker (picks_save() in its lib.php). On myadmin1,
-    /home/sites/mystage/public_html/shmup-cup/data/choices.json is a SNAPSHOT: an art task first gets a fresh copy
-    from the owner, and nothing ever writes it.
+    /home/sites/mystage/public_html/shmup-cup/data/choices.json is a SNAPSHOT: an art task that reads the picks
+    (R0-04.W1, the R5 S3 drops, R3-04.M1c when it wants winners) first gets a fresh copy from the owner, and nothing
+    ever writes it.
 11. The Caliber pre-commit hook is inert: leave it alone. Skip CLAUDE.md's "Before Committing" section: never run
     caliber, never install or edit a git hook, never commit with --no-verify.
 12. Never package, sign, deploy or touch hardware (no Tizen CLI, sdb, ares-*): such scripts may be written, never
@@ -200,7 +206,8 @@ and use whatever the subagent tool is called there.
   **sessionID**, tokens held, status.
 - **Resume** an agent by calling the subagent tool again with its `sessionID` and the prompt `continue` (a blank
   reply — owner rule 5), or `RESUME: <what to do>` after a restart. Its context is intact. Never resume an agent
-  whose context is high: it returns its LEFT TO DO list and a fresh agent finishes it (owner rule 9).
+  whose context is high to go on working: resume it once with owner rule 9's stop message (finish the edit, push what
+  is consistent, reply with the LEFT TO DO list), then a fresh agent finishes the list.
 - **Fallback**, only if the subagent tool cannot run children in the background: start each agent as its own process
   from a background shell command —
   `opencode run --auto --agent general --title <name> "$(cat /home/sites/shmup-cup-run/prompts/<name>.md)"` with its
@@ -227,7 +234,8 @@ fresh agent finishes (owner rule 9).
 
 **Your notes folder is RUN_DIR (`/home/sites/shmup-cup-run/`).** It is outside the repository and survives
 restarts; never keep state in `/tmp` or a session folder. The old host's notes in
-`/home/sites/shmup-cup/.claude/orchestrator/` are history. Keep here:
+`/home/sites/shmup-cup/.claude/orchestrator/` are history, except the C5 review and fix reports in its `scratchpad/`
+subfolder, which wave 0's open branch reads (the State paragraph above). Keep here:
 - `RESUME.md` — ten lines: the wave, what runs (agent, sessionID, worktree), what is next;
 - `lanes-<wave>.md` — the lane plan: tasks, lanes, exact files, tokens, agents, status, commit SHAs;
 - `wave-<wave>-notes.md` — decisions, review rounds, findings and their outcomes, owner to-dos;
@@ -236,9 +244,11 @@ restarts; never keep state in `/tmp` or a session folder. The old host's notes i
   `gh release create --target "$(cat …)"` reads it (wave loop, step 7, "Milestone boundary");
 - `owner-logs/` — the owner's TV logs, if they arrive by hand (preflight 6);
 - `prompts/<name>.md`, `logs/<name>.log`;
-- what the agents write there: `<task id>-report.md`; their working files (commit messages `<id>-msg.txt`, push
-  scripts `<id>-push.sh`, e2e logs `<id>-e2e.log`, test-list snapshots, the LAND helper's logs
-  `land-<x>-<date>.log`); RV-A2's `w02/rv-a2/`; R2-04's `w07/patches/`; the lane worktrees `wt/`.
+- what the agents write there: `<task id>-report.md` (`<name>-report.md` for an agent without a subtask id);
+  their working files, named after the subtask id (commit messages `<id>-msg.txt`, push scripts `<id>-push.sh`, e2e
+  and host-check logs `<id>-e2e.log` / `<id>-host-check.log`, test-list snapshots `<id>-…-before.txt` / `-after.txt`,
+  and any other `<id>-…` file or folder its block names), the LAND helper's logs `land-<x>-<date>.log`; RV-A2's
+  `w02/rv-a2/`; R2-04's `w07/patches/`; the lane worktrees `wt/`.
 
 Write to it **before** any compaction, and after every agent start, report and push.
 
@@ -247,13 +257,14 @@ Write to it **before** any compaction, and after every agent start, report and p
 **The main checkout `/home/sites/shmup-cup` is yours.** It stays on `master` and clean. Agents never edit it.
 
 **Every agent works in its own git worktree** under `/home/sites/shmup-wt/` — reviewers and scouts too, so that they
-read exactly `origin/master`. `<name>` is the agent's name from the lane file (unique, e.g. `w2-S-port`). The one
-exception is a **lane worktree** that a work order names: those live in `RUN_DIR/wt/` (`zone-<x>`, `r6-zone-<x>`,
-`bonus`, `escape`, `r6-global`, and wave 13's `fix-zone-<x>`), hold a local branch that is never pushed, and are
-shared by the lane's successive agents (see below). An agent in a lane worktree skips the first three lines below
-(`fetch`, `worktree add`, `cd`), `cd`s into its lane worktree instead, and still runs the `pnpm install` line there
-(and `pnpm assets` when its tests need the atlas): the orchestrator's `git worktree add -b …` makes a tree with no
-`node_modules`, and a rebase can bring a lockfile change:
+read exactly `origin/master`. `<name>` is the agent's name from the lane file (unique, e.g. `w04-R2-02.S`, or
+`w04-R2-02.S.RV1` for the first review round of that subtask). The one exception is a **lane worktree** that a work
+order names: those live in `RUN_DIR/wt/` (`zone-<x>`, `r6-zone-<x>`, `bonus`, `escape`, `r6-global`, and wave 13's
+`fix-zone-<x>`), hold a local branch that is never pushed, and are shared by the lane's successive agents (see
+below). An agent in a lane worktree skips the first three lines below (`fetch`, `worktree add`, `cd`), `cd`s into its
+lane worktree instead, and still runs the `pnpm install` line there (and `pnpm assets` when its tests need the
+atlas): the orchestrator's `git worktree add -b …` makes a tree with no `node_modules`, and a rebase can bring a
+lockfile change:
 
 ```bash
 git -C /home/sites/shmup-cup fetch origin
