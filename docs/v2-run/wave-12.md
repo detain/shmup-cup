@@ -529,6 +529,29 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
      R5-01.S7; zones B … G and I: wave 11; zone H: R5-08.S7 above) — the same `--only` scope and `--zone` letter,
      `--message /home/sites/shmup-cup-run/<id>-msg.txt`, `--dry-run` first, then the real LAND.
   4. After the push: `git switch --detach origin/master && git branch -D r5/s3-zone-<x>` (your zone's letter).
+- **Commit and push (the normal path — no `anim.frames` count moved):** first commit your sources with explicit
+  paths — the recipes, PNG overrides, frame sidecars and `.art.json` records, and the zone's e2e rows — subject
+  `feat(R5-0n.S3): <zone> real art` (`<zone>` the zone's name, e.g. `zone B`), no Co-Authored-By line. The plates
+  are derived (README rule 6), so push under the land lock: write this script to
+  `/home/sites/shmup-cup-run/R5-0n.S3-zone-<x>-push.sh`, then run
+  `flock -w 5400 /tmp/shmup-cup-land.lock bash /home/sites/shmup-cup-run/R5-0n.S3-zone-<x>-push.sh` from your
+  worktree (several minutes: a shell timeout of 3600000, or the background with a log):
+  ```bash
+  set -e
+  git fetch origin && git rebase origin/master
+  pnpm install --frozen-lockfile --prefer-offline && pnpm assets
+  pnpm docs:images
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/provenance.test.ts test/scripts/art-origins.test.ts
+  node scripts/art-origins.mjs --check
+  git status --short docs/images   # every listed plate must be one of your drop's sprites (or the echo plate your block names) — a plate outside them: stop and report
+  git add docs/images
+  git commit --amend --no-edit
+  git push origin HEAD:master
+  ```
+  A rebase conflict in `docs/images`: take master's side and let `pnpm docs:images` re-derive it — never merge a
+  plate by hand; a conflict in a source file is real: `git rebase --abort`, stop and report. If the push is
+  rejected, run the flock line again (at most 5 times, then report). After the push, `git show --stat HEAD`
+  lists your sources, the e2e rows and only the zone's plates (and its echo plate, if the block names one).
 - **Token:** DOCS-IMAGES for the zone's plates (land lock at push); LAND only if a frame count changed.
 - **Traps:** a pure redraw (same names, same frame counts) moves only the atlas — a moved fingerprint is a bug: stop;
   never edit a v1 pixel map or a generator's v1 path (RR-1); a PNG override replaces a generated sprite by its name;
@@ -626,9 +649,9 @@ Each zone's S3 drop follows this template; the per-zone blocks below name its sp
     commands (the branch's changes exist only in that worktree; a fresh worktree of `origin/master` would test
     master).
   - **T3.RV, T6.RV, T8.RV:** these pushed to `origin/master`: read `git show <SHA>` and re-run the block's Tests in
-    your own fresh worktree of `origin/master`, except the e2e batch (read the block's log
-    `/home/sites/shmup-cup-run/<id>-e2e.log`, `<id>` being the block's id); a re-derive or `pnpm docs:images` line
-    must leave `git status --short` empty there.
+    your own fresh worktree of `origin/master`, except the e2e batch — T3 and T8 run one and leave
+    `/home/sites/shmup-cup-run/<id>-e2e.log` (`<id>` the block's id), read that log; **T6 runs no e2e batch, there
+    is no T6 log**; a re-derive or `pnpm docs:images` line must leave `git status --short` empty there.
 - `R5-0n.S3.RV` for each drop: the provenance records against `docs/dev/art-provenance.md` (rules 1–6 of the origin
   report), the cycle scan, the unchanged goldens and fingerprints.
 
