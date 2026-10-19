@@ -1,8 +1,9 @@
 /**
  * The game's frame constants for the repository's Node scripts, the browser tests and the
  * Playwright config (plan_resolution.md R1-02): a plain-JS mirror of the frame constants of
- * `@shmup/core` (`packages/core/src/config/index.ts`, R1-01) plus the two values the tools derive
- * from them, {@link SPAWN_LEAD} and {@link CAPTURE_SCALE}.
+ * `@shmup/core` (`packages/core/src/config/index.ts`, R1-01) plus the world's scale
+ * {@link WORLD_SCALE} and the two values the tools derive from the frame, {@link SPAWN_LEAD}
+ * and {@link CAPTURE_SCALE}.
  *
  * **Why a mirror.** The scripts run as plain Node ES modules, without the workspace's TypeScript
  * build, so they cannot import `@shmup/core` (its source is TypeScript and its `dist/` exists only
