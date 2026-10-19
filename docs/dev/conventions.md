@@ -112,11 +112,11 @@ that file, one entry per symbol:
 
 ```ts
 {
-  file: 'scenes/index.ts',          // relative to packages/core/src/
-  symbol: 'ZONE_TALLY_PANEL.w',     // the declarations around it, outermost first, '.'-joined
-  value: 200,
-  count: 1,                         // how many literals of `value` the symbol holds (default 1)
-  reason: "a content-sized panel: sized by the zone tally's rows of 6×8 text",
+  file: 'math/trig-table.ts',       // relative to packages/core/src/
+  symbol: 'ATAN_TABLE',             // the declarations around it, outermost first, '.'-joined
+  value: 108,
+  count: 3,                         // how many literals of `value` the symbol holds (default 1)
+  reason: 'angles: the generated arctangent table (gen-trig-tables.mjs; its test diffs it)',
 }
 ```
 
@@ -125,19 +125,22 @@ entry can be written from it. Entries never match on line numbers; the test fail
 symbol now holds more literals than `count` (a frame number crept in beside an allowed one), fewer,
 or none — the list cannot rot. Add an entry only for a count, an angle, a character cap, a world
 distance, a text-sized panel or generated data, with the reason; anything that does mean the frame
-derives from the constants. R2-01's flip will need four new entries (the 360-tick ending timers
-and the angle `640` — plan R1-01's As built).
+derives from the constants. The flip (R2-01, `72b18a1`) added three new entries covering the four
+literals plan R1-01's As built predicted: the 360-tick ending timers
+`EndingScene.drawCitadel.sink` (`count: 2`) and `StoryScene.drawDawn.rise`, and the angle `640` in
+`DIRECTION_HEADINGS`; `92120c7` removed the `ZONE_TALLY_PANEL.w` entry.
 
 **The repo-wide scan** (`test/integration/frame-literals-repo.test.ts`, R1-02) does the same for
 everything else, with the same scanner — the shared test helper
 `packages/core/test/helpers/frame-literal-scan.ts` (`scanFrameLiterals`, `listSourceFiles`,
-`frameLiteralProblems`, `FRAME_NUMBERS`), which other packages import by relative path like the
-allocation guard. It parses every package's `src/` but core's, every app's `src/` and — where it
-has one — `scripts/` (the bundle checks, the manifest validators, packaging and bench helpers), and
-the root `scripts/`; `.mjs` files are parsed as JavaScript. The trees are read from disk, so a new
-package or app is scanned without editing the test. Its own `ALLOWED` list (32 entries today) has the
-same shape, with `file` relative to the repository root, and holds HTTP statuses, alphas, colour
-channels, a key code, a brightness sum, the TV bench's 384×216 baseline row — and the four **mirror
+`frameLiteralProblems`, `FRAME_NUMBERS`), which the repo-wide test imports by relative path (as the
+packages import the allocation guard). It parses every package's `src/` but core's, every app's
+`src/` and — where it has one — `scripts/` (the bundle checks, the manifest validators, packaging
+and bench helpers), and the root `scripts/`; `.mjs` files are parsed as JavaScript. The trees are
+read from disk, so a new package or app is scanned without editing the test. Its own `ALLOWED` list
+(32 entries today) has the same shape, with `file` relative to the repository root, and holds HTTP
+statuses, alphas, colour channels, a key code, a brightness sum, degrees (the 360° turn), the TV
+bench's 384×216 and 640×360 baseline rows, v1's window-state width — and the four **mirror
 definitions**, whose entries say `value: FRAME_W` / `value: FRAME_H` rather than a number, so they
 follow the flip as long as the mirror flips with core. Its failure message ends `derive it from
 @shmup/core's constants (in a Node script: from scripts/frame.mjs)`.
