@@ -32,20 +32,22 @@ fullscreen for one launch, set `SHMUP_FULLSCREEN=1` before the last command (Com
 
 ## The window
 
-The first launch opens a **1152×648** window (the game's 384×216 picture at ×3) in the middle of
+The first launch opens a **1280×720** window (the game's 640×360 picture at ×2) in the middle of
 the screen. After that the app **remembers** how you left it: fullscreen or not, the window size
-and where it was on the screen.
+and where it was on the screen. A size remembered from the older 384×216 picture converts to the
+nearest whole size (×3 becomes ×2, ×5 becomes ×3, the largest ×10 becomes ×6).
 
 | Keys | What they do |
 |---|---|
 | **F11** or **Alt+Enter** | Fullscreen on / off |
-| **Ctrl + =** (or **Ctrl + +**) | Bigger window: the next whole size (×4 = 1536×864, ×5 = 1920×1080, …) |
-| **Ctrl + -** | Smaller window (down to ×1 = 384×216) |
-| **Ctrl + 0** | Back to ×3 (1152×648) |
+| **Ctrl + =** (or **Ctrl + +**) | Bigger window: the next whole size (×3 = 1920×1080, ×4 = 2560×1440, up to ×6 = 3840×2160) |
+| **Ctrl + -** | Smaller window (down to ×1 = 640×360) |
+| **Ctrl + 0** | Back to ×2 (1280×720) |
 
 On a Mac use **Cmd** instead of Ctrl. The size keys do nothing in fullscreen, and the window never
-grows bigger than the screen it is on — on a 1080p monitor with a taskbar ×4 is usually the largest
-window (×5 needs the whole screen: use fullscreen), on the Steam Deck ×3. None of these keys does
+grows bigger than the screen it is on — on a 1080p monitor with a taskbar ×2 is usually the largest
+window (×3 = 1920×1080 needs the whole screen: use fullscreen), and on the Steam Deck's 1280×800
+screen ×2 fits exactly. None of these keys does
 anything in the game itself.
 
 - The window always shows whole-pixel sizes of the picture, so the default **SCALE: INTEGER**

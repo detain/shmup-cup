@@ -85,6 +85,20 @@ The **84 katakana and 9 accented capitals** the Japanese and Spanish text needs 
 agent at 5×7 pixels. A pixel-font artist should pass over them before the Japanese is shown to
 anyone who reads it — see [`real-assets.md`](../dev/real-assets.md).
 
+### 1.4 The v2 manifest boot on the M7 (W3-7)
+
+Since R1-05 the TV bundle keeps the atlas **manifest outside `app.js`** and fetches
+`assets/atlas/main.json` by **XHR from `file://`**. The e2e specs drive the TV builds over
+`file://` on desktop Chromium, but the path is **never verified on the real firmware** — the
+owner's part of plan_resolution.md R2-01: install a current v2 build on an M7 and confirm it
+**boots to the title**. If it ever stops on
+**ATLAS MANIFEST FAILED TO LOAD**, the fix is one import line in the app's `main.ts`
+(`virtual:shmup-assets-inline` inlines the manifest again) and the bundle check's rule 10 relaxed
+in the same change — the recipe is in
+[`build-test-deploy.md`](../dev/build-test-deploy.md#troubleshooting) and
+[`rendering-and-shell.md`](../dev/rendering-and-shell.md#the-boot-sequence). This gates the v2 TV
+release like §1.1: v1.0.0 shipped with the manifest inlined, so only v2 builds take this path.
+
 ---
 
 ## 2. Blocks one other platform each
@@ -140,6 +154,13 @@ archive in a browser before you publish it.
   only ever be a separately loaded file. The *CPU* half needs the library and a monitor. Doing it
   means writing code (a `TrackerBackend` over `chiptune3` in a dev build); the seam it plugs into
   ships today. Background: [`audio.md`](../dev/audio.md).
+- **The interim look at 640×360** (plan_resolution.md R2-01, the owner part). The flipped game runs
+  v1's art nearest-neighbour ×1.5 and the 6×8 font as a 9×12 block — interim by design until R4
+  replaces it, but the owner should look: text readability of the interim build (`pnpm dev`, or a
+  `build:dev` bundle on the M7), the es front end on a TV, and a `V1 REPLAY` row (an old
+  `replay.last` kept by a v2 build, shown delete-only —
+  [`extra-modes-and-replays.md`](extra-modes-and-replays.md)). R2-04's play session continues the
+  look: zones A, D and I on the M7 with the overlay's `TPF` and `RENDER`.
 - **Real art and music**, whenever they exist. The hand-off is
   [`real-assets.md`](../dev/real-assets.md) and every replacement keeps the name of what it
   replaces, so nothing else has to change.
@@ -169,6 +190,7 @@ Replacing any of them is a file swap, not a rewrite: the pipeline keys everythin
 | Item | Blocks | Recipe |
 |---|---|---|
 | Play the game on both M7 monitors (§8.4, §8.5) | Everything — it has never run on hardware | [`debug-tools.md`](debug-tools.md#the-m1-release-check), [`release-candidate.md`](release-candidate.md#the-v10-checklist-both-monitors) |
+| The v2 manifest boot on an M7 (plan_resolution.md R1-05 / R2-01, W3-7) | The v2 TV release — `file://` XHR never on firmware | [§1.4](#14-the-v2-manifest-boot-on-the-m7-w3-7) |
 | Seller Office account, trade dress, store assets, alpha test (§8.6, §8.9) | The Samsung release | [`store-submission.md`](store-submission.md) |
 | A native speaker over `es` and `ja` (§8.9) | Shipping those two languages | [`content/strings/README.md`](../../content/strings/README.md) |
 | A pixel artist over the 84 katakana + 9 capitals (§8.9) | Shipping Japanese well | [`real-assets.md`](../dev/real-assets.md) |

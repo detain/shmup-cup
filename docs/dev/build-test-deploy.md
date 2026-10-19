@@ -44,7 +44,7 @@ desktop app, run `pnpm rebuild electron` without the variable set.
 | `pnpm test:all` | The same run (kept as an alias) |
 | `pnpm test:integration` | Only the repo-level `test/` project |
 | `pnpm test:e2e` | Browser smoke tests: `turbo run build:test` for `@shmup/web`, `@shmup/tizen` and `@shmup/webos` (test builds — the release code plus the debug tools and `window.__shmupDebug`, M1-19), then Playwright (`test/e2e/playwright.config.ts`) with two projects: `chromium` runs every spec in headless Chromium with SwiftShader WebGL — the web build via `vite preview` (port 4173) and the two TV builds' `dist/index.html` via `file://` (`webos.spec.ts` is the only place the LG bundle is ever executed, M3-03) — and `firefox` runs only the cross-engine determinism spec (`determinism.spec.ts`, M2-18) in headless Firefox; every test in parallel ([Test concurrency](#test-concurrency)). Extra arguments go to Playwright (`pnpm test:e2e --shard=1/5`, `pnpm test:e2e boss`); `--project=chromium` / `--project=firefox` runs one engine only. Needs both browsers once per machine: `pnpm exec playwright install --with-deps chromium firefox` (Chromium alone is enough for `--project=chromium`). See [rendering-and-shell.md](rendering-and-shell.md#browser-tests-pnpm-teste2e) |
-| `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them — since M2-15 also the attract demos of `test/golden/demos.ts` into `content/demos/*.replay.json`). Only for an **intended** simulation change, in the same commit, with the reason in the commit message — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
+| `pnpm golden:update` | Re-blesses the golden replays (`scripts/golden-update.mjs`: Vitest on `test/golden` with `SHMUP_GOLDEN_UPDATE=1` — re-records every scenario of `test/golden/golden.ts` from its bot, rewrites `test/golden/*.replay.json`, then checks them — since M2-15 also the attract demos of `test/golden/demos.ts` into `content/demos/*.replay.json`). Only for an **intended** simulation change, in the same commit, with the reason in the commit message. Since R2-01 it **refuses to run** (exit 1) while a shipped tileset is not at `TILE_SIZE` (`scripts/golden-update.mjs`): the content is v1's 8-px until R2-02's port, and the goldens and demos are stale by design until R2-03's one re-bless — see [debug-and-replays.md](debug-and-replays.md#golden-replays-testgolden) |
 | `pnpm bench` | The benchmarks (`test/bench/*.perf.ts`, own Vitest config, `--expose-gc`, one file at a time): the stress benchmark — 20,000 ticks with 512 bullets, 64 enemies, the full loadout and four lasers; fails at a median ≥ 1.0 ms/tick or ≥ 512 KB heap growth — and since M2-18 the per-zone stress benches (`zones.perf.ts`: every campaign zone start → clear with the bot under the same load, median < 1.0 ms/tick, < 1 MB retained) and the 30-minute headless soak (`soak.perf.ts`: the scene flow through runs, endings, credits and the name entry, heap flat within 1 MB), and since M3-02c the **render** bench (`render.perf.ts` + `render-harness/`: worst-case frames — every measured frame carrying 512 of 512 enemy bullets, ≥ 489 of 512 point items and ≥ 489 of 512 particles (asserted as a per-frame *floor*, not a last-frame reading), CRT off / light / full, a filtered layer, the Mode-7 floor, and the same load at ×2 the shipped frame (`2·FRAME_W` × `2·FRAME_H` since R1-02: 768×432 today, 1280×720 after R2-01) — through the real renderer in Playwright's Chromium; it prints render-ms p95, draw calls, pooled render-target bytes, structure rebuilds and a JS-heap delta, and fails on the draw-call, p95 and heap budgets. It renders through **SwiftShader**, so its milliseconds are a regression gate, never a prediction of the TV — what transfers is the counted quantities and the comparisons between scenarios). Since R0-02 the render bench also builds the TV render bench widget and opens its 18 scenarios headlessly, gating counts only, and every scenario renders to a **1280×720** display (a whole multiple of 640×360; it was 960×540) — [The TV render bench](#the-tv-render-bench-r0-02). Not part of `pnpm test`; CI runs it after the build — see [debug-and-replays.md](debug-and-replays.md#the-stress-benchmark-pnpm-bench), [release-hardening.md](release-hardening.md#benchmarks-every-zone-and-the-soak) and [rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c) |
 | `pnpm bench:tv` | R0-02: `turbo run build:bench` for `@shmup/tizen` and `@shmup/webos` — the **TV render bench** widgets into `apps/tizen/dist-bench/` and `apps/webos/dist-bench/`, each followed by its bundle check (`check-bundle.mjs dist-bench`). Set `VITE_REPORT_URL` to stream the results to the input probe's log server — [The TV render bench](#the-tv-render-bench-r0-02) |
 | `pnpm bench:tv:package` / `pnpm bench:tv:install` | R0-02: `pnpm --filter @shmup/tizen bench:package` / `bench:install` — `apps/tizen/scripts/tizen-bench.mjs` runs the Tizen CLI wrappers on `dist-bench/` under the bench's app id, so it installs next to the game. **Never run in CI or here** — the owner runs them from the Windows desktop (plan R0-03) |
@@ -166,7 +166,11 @@ parses (format 1 or 2) and lists every page with its real pixel size, no atlas P
 and `app.js` may name at most `MAX_INLINED_FRAME_NAMES` (8) atlas frames — the inlined manifest named
 all ~1,400, so more means it was inlined by accident (the bench widget, which inlines its own
 density atlases, is exempt). `DIST_BUDGET` stays 8 MiB on purpose (decision W3-4); its docblock
-gives the derivation R3-04 re-derives from measured art. A release build must also carry
+gives the derivation R3-04 re-derives from measured art. Since R2-01's flip the interim ×1.5 art
+and the 640-frame code ride these budgets: the check's OK line read **379.9 KB gzip of 512.0 KB**
+at the flip itself and **380.2 KB of 512.0 KB** at the end of the step's work (`bc8e05d`;
+1,432,504 B raw), and the webOS check of the same tree **379.9 KB of 512** — C5's figure at
+`e7ff5db`, not re-verified since. A release build must also carry
 no debug code (`tizen-build.test.ts` looks for `__shmupDebug` / `debug-overlay`).
 `apps/tizen/test/build/tizen-build.test.ts` also executes the bundle in a V8 realm with
 `globalThis` deleted.
@@ -306,7 +310,10 @@ the decode scenario**: four PNG pages (a synthetic 2048² RGBA page, the same as
 shipped `common` and zone A pages, generated at bench-build time by
 `apps/tizen/scripts/bench-decode.mjs` into `dist-bench/assets/atlas/decode-<id>.png`) fetched by XHR,
 decoded and uploaded eight times each, every stage timed — the 2048² decode figure plan R3-04
-estimates its zone-load time from. Its results **never block** the plan. The decode pages take
+estimates its zone-load time from. Since R2-01's flip the `common` and zone A pages **are** the
+×1.5 shipped pages, so decode rows from before and after the flip are not like for like
+(`bench-decode.mjs`'s docblock says so; the owner's R0-03 capture should name the side of the flip
+it ran on). Its results **never block** the plan. The decode pages take
 `dist-bench/` to ≈ 4.7 MB of the 8 MiB `DIST_BUDGET` the bench shares with the game (≈ 3.4 MiB of
 headroom), and each bench build ≈ 7.5 s longer (the RGBA page's level-9 deflate).
 
@@ -492,8 +499,12 @@ electron-builder cannot read `catalog:` — bump it with the catalog. Details:
   and `rescale-edge.test.ts` cover the rescale tool (fixtures, the shipped content at factor 1 and at the real
   v1 → v2 geometry, the command line).
 - **The v1 baseline** (for R2-02, `test/golden/v1-baseline*.test.ts`): every shipped stage's ticks,
-  spawns and boss timings at 384×216 in `test/fixtures/v1-baseline/`, re-run byte for byte until
-  R2-01 flips the frame — [test/golden/README.md](../../test/golden/README.md#the-v1-baseline-r2-02).
+  spawns and boss timings at 384×216 in `test/fixtures/v1-baseline/` — since R2-01's flip these are
+  the frozen v1 record: the re-run is skipped and re-recording refused
+  ([test/golden/README.md](../../test/golden/README.md#the-v1-baseline-r2-02)).
+- **Docs images** (R2-01 → R2-03): `pnpm docs:images --check` flags the committed
+  `docs/images/logo.png` until R2-03 regenerates it — `doc-images.mjs`'s `buildLogoBanner` is
+  `FRAME_W` wide, so the flip made the picture a frame behind. The check is not in CI.
 - **The ingest tool** (`art-prompts/ingest/`, R3-02) is a standalone npm project with its own
   `node:test` suite (`cd art-prompts/ingest && npm ci && npm test`), outside `pnpm test`; its CI job
   also runs `node ingest.mjs --check`. In `pnpm test`, `test/scripts/assets/provenance.test.ts`
@@ -599,7 +610,17 @@ electron-builder cannot read `catalog:` — bump it with the catalog. Details:
   The gameplay specs
   open `?scene=flight` (bare gameplay, open space unless `?stage=` names a stage) since M1-16;
   specs comparing captures a set number of ticks apart freeze the sim and step exact ticks
-  (`test/e2e/frame-advance.ts`, M1-19) instead of counting rAF frames. Since M1-19 the suite runs
+  (`test/e2e/frame-advance.ts`, M1-19). Since R2-01's C5 review 2 (`c67c7c9`) the rule is the wider
+  one: **an e2e wait counts game ticks**, never rAF frames or seconds of wall time — the helpers in
+  `test/e2e/ticks.ts` (since `8ff2bf6`) read `window.__shmupDebug.tick` (`waitTicks`, `pollTicks`,
+  `expectScene`; `tap` / `remoteTap` / `holdTicks` pace a press in ticks; `remoteSequence` sends a
+  key sequence the host times in milliseconds — the Tizen debug unlock — in one `page.evaluate`).
+  Wall time stays only for what is not ticks: the boot (`BOOT_TIMEOUT_MS`, 30 s), real-time page
+  work (audio started, a screenshot decoded, a console line) and a test's own timeout, sized for a
+  slow runner (the campaign-run web test: 420 s); a wait stays in rAF frames only where no tick
+  runs (a frozen sim, a hidden page), where a tick wait would hang instead of failing, or where it
+  waits for drawn frames — each such spec's docblock says why. The full rule:
+  [conventions.md § Tests](conventions.md#tests). Since M1-19 the suite runs
   on the **test builds** (`build:test`), every test in parallel on one browser per five cores
   ([Test concurrency](#test-concurrency)).
   Output goes to `test/e2e/test-results/` (git- and Prettier-ignored).
@@ -676,6 +697,14 @@ is CPU-bound: on 48 cores 8–12 browsers took 150–180 s, while 16 and 24 made
 time out. CI splits the Chromium tests over five runners (`--project=chromium --shard=i/5`) and
 runs the Firefox project (the determinism spec) on a sixth (`--project=firefox`).
 
+Since R2-01's flip the pages render the 640×360 frame into a **1280×720** e2e viewport
+(`test/e2e/frame-pixels.ts` `VIEWPORT` — the frame at `CAPTURE_SCALE`, ×2; it was 1152×648 at ×3):
+software rasterisation of the bigger picture makes every test about **×1.8 slower** (C5's CI
+comparison of the 143 tests run at both sizes: median ×1.83), and a CI shard now takes up to about
+**6 min**. Because the waits count game ticks ([Tests](#tests)), the slowdown costs wall time, not
+correctness. Retries come from `CI=1` (`playwright.config.ts` `retries: ci ? 1 : 0` — the run
+helpers export it), so a local flake repeat must pass `--retries=0` (with `--repeat-each=N`).
+
 | Variable | Default | Effect |
 |---|---|---|
 | `VITEST_MAX_WORKERS` | `cores − 1` | Vitest's own: the worker pool of `pnpm test` (lower it to share a busy machine) |
@@ -741,7 +770,7 @@ Turborepo telemetry off.
 | `typecheck` | `pnpm typecheck` |
 | `test 1/3` … `3/3` | `pnpm test --shard=<i>/3` (golden replays included): Vitest's shards split the test files by path hash |
 | `build · benchmark` | `pnpm build` (Tizen budgets included), then `pnpm exec playwright install --with-deps chromium` (M3-02c: the render bench drives a real browser), then `pnpm bench` (M1-19; since M2-18 also every zone under stress and the 30-minute soak, since M3-02c the render bench) alone on its runner — `timeout-minutes: 25` |
-| `e2e 1/5` … `5/5` | `pnpm exec playwright install --with-deps chromium`, then `pnpm test:e2e --project=chromium --shard=<i>/5`: each shard builds its own test builds and runs a fifth of the Chromium tests (one retry on CI) |
+| `e2e 1/5` … `5/5` | `pnpm exec playwright install --with-deps chromium`, then `pnpm test:e2e --project=chromium --shard=<i>/5`: each shard builds its own test builds and runs a fifth of the Chromium tests (one retry on CI; since R2-01's flip a shard takes up to about 6 min — SwiftShader software-renders the 1280×720 e2e viewport at ≈ ×1.8 the per-test cost of v1's, [Test concurrency](#test-concurrency)) |
 | `e2e · headless Firefox` (`e2e-firefox`, M2-18) | `pnpm exec playwright install --with-deps firefox`, then `pnpm test:e2e --project=firefox`: the cross-engine determinism spec — every golden replay and attract demo in SpiderMonkey against the web build's `?determinism` page ([release-hardening.md](release-hardening.md)) |
 | `input probe` | `tools/input-probe` with npm |
 | `art ingest · test · recipes up to date` (`ingest`, R3-02) | `art-prompts/ingest` with npm (its own lockfile and cache key): `npm ci`, `npm test` (syntax check + the `node:test` suite on synthetic fixtures), then `node ingest.mjs --check` — every committed recipe under `assets/source/sprites/` and `art-prompts/v2/ingested/` re-run in memory: the PNG and its sidecar on disk must match byte for byte, the provenance record apart from its date ([real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest)) |

@@ -2,8 +2,9 @@
 
 How plan step **M2-17** made the desktop build first-class and added the TV's extras. The
 **Electron** app gained **file saves** through IPC (JSON in the user-data folder, atomic write +
-backup, a quota), a **remembered window** (fullscreen, the scale of the 384×216 frame, the
-position, keyboard shortcuts), a locked-down window and a **packaging config**; the web build it
+backup, a quota), a **remembered window** (fullscreen, the scale of the game frame — 384×216 at
+M2-17, 640×360 since R2-01 — the position, keyboard shortcuts), a locked-down window and a
+**packaging config**; the web build it
 loads now knows it runs inside Electron (platform `'electron'`, EXIT quits, sound from the start).
 The **Tizen** app gained opt-in **`config.xml` variants** (Samsung's game-mode and gamepad
 metadata), **`device-info`** (the TV's model and firmware in the debug overlay), a dev-only **live
@@ -146,19 +147,28 @@ shell's fixed 60 Hz step with its accumulator and the render interpolation that 
 
 ## Electron: the window (`main/window-state.ts`, `main/window-options.ts`, `main/main.ts`)
 
-`window.json` (`WINDOW_STATE_KEY`, through the same `FileStore`) holds `WindowState { version: 1,
+`window.json` (`WINDOW_STATE_KEY`, through the same `FileStore`) holds `WindowState { version: 2,
 fullscreen, scale, x, y }`:
 
 - **Scale.** The window's **content** is `FRAME_WIDTH × scale` by `FRAME_HEIGHT × scale`
   (`windowContentSize`, `useContentSize: true`) — ×1 … ×`MAX_WINDOW_SCALE`, default
   `DEFAULT_WINDOW_SCALE` — so the game's INTEGER scale mode fills it without borders. Since R1-02
-  `FRAME_WIDTH` / `FRAME_HEIGHT` are the main process's mirror of core's `FRAME_W` / `FRAME_H` (384 /
-  216; it cannot import core — owner decision O8), pinned to core by `test/main/window-frame.test.ts`,
-  and the scales derive from them: `floor(1280 / FRAME_WIDTH)` = 3 (1152×648) and
-  `floor(3840 / FRAME_WIDTH)` = 10 today, 2 (1280×720) and 6 at 640×360 (R2-01 bumps `window.json`'s
-  version and re-fits saved scales). `fitWindowScale(scale,
+  `FRAME_WIDTH` / `FRAME_HEIGHT` are the main process's mirror of core's `FRAME_W` / `FRAME_H`
+  (it cannot import core — owner decision O8), pinned to core by `test/main/window-frame.test.ts`,
+  and R2-01's flip moved the mirror from 384 / 216 to 640 / 360 with core; the scales derive from
+  them: `floor(1280 / FRAME_WIDTH)` = **2** (1280×720) and `floor(3840 / FRAME_WIDTH)` = **6**
+  today (they were 3 — 1152×648 — and 10 at the v1 frame). `fitWindowScale(scale,
   workArea)` lowers a scale that does not fit the screen's work area (at least ×1; a fraction rounds
   down, `NaN` counts as ×1).
+- **Versions** (`WINDOW_STATE_VERSION` = 2, decision W4-10). Version 1 (M2-17) stored the scale of
+  the 384-px frame; a version-1 file is read through `scale′ = max(1, round(scale × 384 /
+  FRAME_WIDTH))`, so ×3 → ×2, ×5 → ×3, ×10 → ×6 and ×1 → ×1 — the window keeps its size as nearly
+  as a whole scale allows — while an invalid v1 scale gives the default; fullscreen and the position
+  are kept, and the next save writes version 2. Any other version is read as it is. **Pre-flip dev
+  builds:** from `346c430` until the flip `72b18a1`, a local desktop dev build already wrote
+  version-2 files counted in 384-px frames; a flipped build reads such a file as 640-px frames, so
+  the window comes out ×5/3 wider and is then fitted to the screen — only local dev builds are
+  affected, released v1 writes version 1, which converts correctly.
 - **Fullscreen.** Remembered from `enter-full-screen` / `leave-full-screen`;
   `SHMUP_FULLSCREEN=1` still forces it for one launch.
 - **Position.** The top-left corner, used only while `isOnScreen` (at least 64×32 px of the title
@@ -170,7 +180,8 @@ fullscreen, scale, x, y }`:
 **Shortcuts** (`windowShortcut(input, mac)`, read from `webContents`' `before-input-event` in the
 main process, the default prevented so the game never sees them): **F11** or **Alt+Enter** toggle
 fullscreen; **Ctrl+=** / **Ctrl++** and **Ctrl+-** step the scale (fitted to the work area of the
-screen the window is on; ignored in fullscreen), **Ctrl+0** resets it to `DEFAULT_WINDOW_SCALE` (×3 today) — Cmd instead of Ctrl
+screen the window is on; ignored in fullscreen), **Ctrl+0** resets it to `DEFAULT_WINDOW_SCALE` (×2
+today) — Cmd instead of Ctrl
 on macOS. Only a first key-down counts. None of these keys is a game or menu binding.
 
 **When it is saved.** Fullscreen and scale changes are written at once (best effort). The
@@ -183,7 +194,8 @@ settled promise) and calls `app.quit()` again once they are done — the write i
 at worst it is lost, never half-written.
 
 `createWindowOptions({ preloadPath, fullscreen, scale?, x?, y? })` builds the
-`BrowserWindowConstructorOptions`: the content size, `x` / `y` or `center`, minimum 384×216, hidden
+`BrowserWindowConstructorOptions`: the content size, `x` / `y` or `center`, a minimum of one frame
+(`FRAME_WIDTH` × `FRAME_HEIGHT`, 640×360 since the flip), hidden
 until `ready-to-show`, dark background, auto-hidden menu bar, and `webPreferences`
 `contextIsolation`, `sandbox`, no `nodeIntegration`, `backgroundThrottling: false`, no spellcheck,
 `autoplayPolicy: 'no-user-gesture-required'`. There is **no in-game Options entry** for the window
