@@ -13,12 +13,13 @@
  * **Frame ≠ world** (plan §2.6): only values anchored to the frame or a screen edge live here.
  * World values (radii, margins, speeds) stay where they are used, and R2-02 scales them ×1.5.
  *
- * Every value is a whole number, at 640×360 (since R2-01's switch) as it was at v1's 384×216.
+ * Every value but {@link WORLD_SCALE} is a whole number, at 640×360 (since R2-01's switch) as it
+ * was at v1's 384×216.
  *
  * **Public API.** {@link FRAME_W}, {@link FRAME_H}, {@link FRAME_CX}, {@link FRAME_CY},
  * {@link HUD_BAR_HEIGHT}, {@link PLAYFIELD_Y}, {@link PLAYFIELD_W}, {@link PLAYFIELD_H},
  * {@link PLAYFIELD_CY}, {@link HUD_BOTTOM_Y}, {@link TILE_SIZE}, {@link GLYPH_W}, {@link GLYPH_H},
- * {@link LINE_H}, {@link SPAWN_LEAD}, {@link CAPTURE_SCALE}.
+ * {@link LINE_H}, {@link WORLD_SCALE}, {@link SPAWN_LEAD}, {@link CAPTURE_SCALE}.
  *
  * @example
  * ```js
@@ -78,11 +79,18 @@ export const GLYPH_H = 12;
 export const LINE_H = 15;
 
 /**
- * How far ahead of the camera an enemy appears by default: 16 px past the right edge of the
- * view, `PLAYFIELD_W + 16` (`@shmup/core` `DEFAULT_SPAWN_SCREEN_X`). The 16 is a world margin
- * (R2-02 makes it 24); the playfield width is the frame part.
+ * The world's scale relative to v1 (plan §2.6, decision R-D2; `@shmup/core` `WORLD_SCALE`):
+ * 1 until R2-02's port, then 3/2 — the one mirror export that need not be a whole number.
+ * World lengths in the scripts are written `v1 × WORLD_SCALE`.
  */
-export const SPAWN_LEAD = PLAYFIELD_W + 16;
+export const WORLD_SCALE = 1;
+
+/**
+ * How far ahead of the camera an enemy appears by default: 16 px past the right edge of the
+ * view, `PLAYFIELD_W + 16 · WORLD_SCALE` (`@shmup/core` `DEFAULT_SPAWN_SCREEN_X`). The 16 is a
+ * world margin (R2-02 makes it 24); the playfield width is the frame part.
+ */
+export const SPAWN_LEAD = PLAYFIELD_W + 16 * WORLD_SCALE;
 
 /**
  * Whole-number scale of a browser capture (the e2e viewport and `pnpm docs:screens`):

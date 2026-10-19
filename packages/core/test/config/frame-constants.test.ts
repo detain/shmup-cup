@@ -27,6 +27,8 @@ import {
   PLAYFIELD_W,
   PLAYFIELD_Y,
   TILE_SIZE,
+  WORLD_SCALE,
+  WORLD_TOP_PAD,
   resolveGameConfig,
 } from '../../src/config/index.js';
 
@@ -116,6 +118,29 @@ describe('core/config frame constants (R1-01)', () => {
       expect(Number.isInteger(metric * ART_SCALE), String(metric)).toBe(true);
     }
   });
+
+  it('keeps WORLD_SCALE a positive rational with a whole double (R2-02.P0: 1; the port: 3/2)', () => {
+    expect(WORLD_SCALE).toBeGreaterThan(0);
+    // Like ART_SCALE: a rational with a small denominator (1, 3/2, 2 …) — some multiple up to
+    // 12 of it is whole. WORLD_SCALE * 2 is whole so 3/2 can arrive without a re-pin here.
+    expect(Number.isInteger(WORLD_SCALE * 2)).toBe(true);
+    let denominator = 1;
+    while (denominator < 12 && !Number.isInteger(WORLD_SCALE * denominator)) denominator += 1;
+    expect(Number.isInteger(WORLD_SCALE * denominator)).toBe(true);
+  });
+
+  it('keeps WORLD_TOP_PAD a whole number ≥ 0 (R2-02.P0: 0; the port: 36)', () => {
+    expect(Number.isInteger(WORLD_TOP_PAD)).toBe(true);
+    expect(WORLD_TOP_PAD).toBeGreaterThanOrEqual(0);
+  });
+
+  it.runIf(WORLD_SCALE !== 1)(
+    'ports the playfield: PLAYFIELD_H is 200·WORLD_SCALE + WORLD_TOP_PAD (§2.6)',
+    () => {
+      // v1's playfield was 200 px of world: the scaled world plus the top pad fills the frame's.
+      expect(PLAYFIELD_H).toBe(200 * WORLD_SCALE + WORLD_TOP_PAD);
+    },
+  );
 
   it('derives the playfield, the centres and the bottom bar from the frame and the HUD bars', () => {
     expect(PLAYFIELD_W).toBe(FRAME_W);

@@ -43,6 +43,7 @@ const MIRRORED = {
   GLYPH_W: core.GLYPH_W,
   GLYPH_H: core.GLYPH_H,
   LINE_H: core.LINE_H,
+  WORLD_SCALE: core.WORLD_SCALE,
   SPAWN_LEAD: core.DEFAULT_SPAWN_SCREEN_X,
 } as const;
 
@@ -65,8 +66,15 @@ describe('scripts/frame.mjs', () => {
 
   it('holds only whole numbers', () => {
     for (const [name, value] of Object.entries(frame)) {
+      // WORLD_SCALE may be fractional (1 until R2-02's port, then 3/2) — like ART_SCALE in core.
+      if (name === 'WORLD_SCALE') continue;
       expect(Number.isInteger(value), name).toBe(true);
     }
+  });
+
+  it('holds WORLD_SCALE positive with a whole double (1 until R2-02, 3/2 after)', () => {
+    expect(frame.WORLD_SCALE).toBeGreaterThan(0);
+    expect(Number.isInteger(frame.WORLD_SCALE * 2)).toBe(true);
   });
 });
 
