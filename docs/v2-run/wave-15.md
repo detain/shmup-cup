@@ -38,7 +38,8 @@ owner's explicit OK — the GitHub release `v2.0.0`.
 - **Reviews:** `R0-03.A1.RV` (if A1 ran), `R6-02.P3.RV`, `R6-02.P4*.RV` (if any), `R6-03.D3.RV`, `R6-03.D4.RV`,
   `W15.DOCS-RV`, then `R6-03.D6.RV` over the full-suite fixes (and `R6-03.D6.DOCS.RV` if that docs agent ran), then
   `R6-03.RV` (the release review), and after D7 `R6-03.D7.DOCS.RV`.
-- **e2e passes:** two while lanes 1–5 run, a late drop's zone spec counting toward the two (rule 6); D6 runs alone (no other agent) because it runs the full suite.
+- **e2e passes:** two while lanes 1–5 run, a late drop's zone spec counting toward the two (rule 6); D6
+  runs alone (no other agent) because it runs the full suite.
 
 ## What runs here because it was deferred
 

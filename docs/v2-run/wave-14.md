@@ -101,10 +101,10 @@ review at zero; the wave's docs item done.
 - **Wave / lane / order:** wave 14, lane 1.
 - **Depends on:** R6-01.B2.DOCS (it commits `docs/v2-run/balance-report.md`, wave 13) on `origin/master`.
 - **Goal:** apply the report's `## Zone A` section: enemy and boss `score`s, density where the report flags it.
-- **Files (only these):** `content/enemies/zone-a.enemies.json` (`score` fields; never `tender` at all (rule 3),
-  and never `picket` or `halcyon-bulwark`'s other fields — `picket` and `halcyon-bulwark` also play in
-  `bonus-range`, so their score
-  change is in this scope on purpose), `content/stages/zone-a.stage.json` (spawn / formation density);
+- **Files (only these):** `content/enemies/zone-a.enemies.json` (`score` fields;
+  never `tender` at all (rule 3), and never `picket` or `halcyon-bulwark`'s other fields —
+  `picket` and `halcyon-bulwark` also play in `bonus-range`, so their score change is in this
+  scope on purpose), `content/stages/zone-a.stage.json` (spawn / formation density);
   `test/golden/golden-zone-a.test.ts` — only an outcome expectation the change moves, and only as a fixer after a
   dry run (rule 5).
 - **Worktree:** `/home/sites/shmup-cup-run/wt/r6-zone-a` on the local branch `r6/zone-a` (rule 2). The orchestrator
