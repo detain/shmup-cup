@@ -8,8 +8,9 @@
 **Steps:** R4-01 … R4-05 (their integrators and step reviews), R5 prep (`R5-P`: P3, P4, P5a1, P5a2, P5e, P10, the
 LAND helper, the nine zone designs). · **Gate to start:** wave 08's code exit: every R4 subtask of wave 08 on
 `origin/master` with its review at zero, in particular `R4-02.B3` (the last golden re-bless of R4) and
-`R4-05.E1 … E4`. · **Exit (summary):** R4 complete and reviewed to zero; the R5 test splits on master with equal
-test counts; `node scripts/golden-update.mjs --only <ids>` and `SHMUP_FINGERPRINT_UPDATE=1` work; `land-zone.sh`
+`R4-05.E1 … E4`. · **Exit (summary):** R4 complete and reviewed to zero; the R5 test splits on master (each split's
+before/after `vitest list` comparison matches, apart from the differences its block allows);
+`node scripts/golden-update.mjs --only <ids>` and `SHMUP_FINGERPRINT_UPDATE=1` work; `land-zone.sh`
 committed and dry-run-tested; the nine designs written and reviewed to zero; §17 R4-01 … R4-05 `done (owner parts
 pending)`.
 
@@ -271,7 +272,8 @@ by the quoted code or test title before you edit it.
 - **Docs needs (report them; never edit docs):** `docs/dev/content-data.md`, `content/patterns/README.md` (per-zone
   pattern files; the prose at `:103` names `zones.patterns.json`), `content/enemies/README.md` (`:129`: the
   `brine.jelly-ring` pattern now lives in `content/patterns/zone-b.patterns.json`), and the `zones.patterns.json`
-  mentions in `docs/dev/pattern-dsl.md` (`:440`), `docs/dev/enemies-and-behaviors.md` (`:606`),
+  mentions in `docs/dev/pattern-dsl.md` (`:440`), `docs/dev/repo-layout.md` (`:113`: the `patterns/` tree line),
+  `docs/dev/enemies-and-behaviors.md` (`:606`),
   `docs/dev/zones-b-and-c.md` (`:58`, `:406`), `zones-d-and-e.md` (`:59`), `zones-f-and-g.md` (`:62`),
   `zones-h-and-i.md` (`:71`) — lines at `526af20`; find them with `git grep -n "zones.patterns" -- docs/dev`.
 
@@ -286,12 +288,21 @@ by the quoted code or test title before you edit it.
   - `packages/core/test/behaviors/behaviors-zone-{b,c,d,e}.test.ts` and `behaviors-zone-{b,c,d,e}-edge.test.ts` —
     **new** (8): the same cases, moved by the zone they test; a case that tests both zones goes to the earlier zone's
     file with a comment.
-  - `packages/core/test/helpers/zone-behaviors.ts` — **new** (P5a2 adds to it, never rewrites): the helpers both
-    files of a pair use. Helpers that take the world (`run`, `live`, `part`, `bullets`, `freshAngles`, …) move as
-    they are; helpers that read the file's `DB` (`freeFlight` / `world`, `fighting`, `indexOf`, `spawn`) become one
-    factory `zoneKit(db)` that returns them, and each new file starts with `const { freeFlight, fighting, … } =
-    zoneKit(DB);` — so every `it` moves verbatim. `shipped(path)` goes into `packages/core/test/helpers/shipped.ts`
-    (P4's) beside `shippedPatterns()`.
+  - `packages/core/test/helpers/zone-behaviors.ts` — **new** (P5a2 adds to it, never rewrites): the helpers the new
+    files share, in three groups. (a) The world-only helpers are the same code in every old file (`run`, `part`,
+    `bullets`, `freshAngles`, `untilMouth`, …) and move as they are. (b) The helpers that resolve an id against the
+    built `DB` come in **two** factories, one per old-file kind, because the same name hides two bodies (the
+    non-edge `live` — `behaviors-zones.test.ts:89` — keeps ghosts, the edge `live` —
+    `behaviors-zones-edge.test.ts:347` — drops them; `fighting` differs the same way): `zoneKit(db)` returns the
+    non-edge set (`freeFlight`, `fighting`, `live`) and `zoneKitEdge(db)` the edge set (`world`, `indexOf`,
+    `spawn`, `fighting`, `live`). Each new file destructures its own family once —
+    `const { freeFlight, fighting, live } = zoneKit(DB);` — so every `it` moves verbatim. (c) The edge files'
+    roster builders — `copy`, `enemy`, `boss` (e.g. `behaviors-zones-edge.test.ts:86–131`) — read the file's
+    `ROSTER` and run while the file *builds* its `DB` (never inside an `it`), so they cannot come from `zoneKit`:
+    they become one factory `rosterKit(roster)` that returns `copy`, `enemy`, `boss`. Each new edge file keeps only
+    its zone's `ROSTER` rows, then `const { copy, enemy, boss } = rosterKit(ROSTER);` above its `DB`, and builds
+    the `DB` with them. `shipped(path)` goes into `packages/core/test/helpers/shipped.ts` (P4's) beside
+    `shippedPatterns()`.
 - **Steps:** before you start (on `origin/master`), and again after your change:
   ```bash
   mkdir -p /home/sites/shmup-cup-run
@@ -311,7 +322,9 @@ by the quoted code or test title before you edit it.
 - **Traps:** moving a test is not rewriting it — copy each `it` verbatim; start each new file with the old file's
   docblock, narrowed to its zone (e.g. "The behaviours of plan M2-11 on the shipped zone B roster …"): every source
   file starts with a file-level docblock (docs/dev/conventions.md § TSDoc).
-- **Docs needs:** `docs/dev/repo-layout.md` (new test files); the old file names in `docs/dev/zones-b-and-c.md`
+- **Docs needs:** `docs/dev/repo-layout.md` (check `git grep -n "behaviors-zones\|behaviors-zone"
+  docs/dev/repo-layout.md` — it names none today, so likely nothing there); the old file names in
+  `docs/dev/zones-b-and-c.md`
   (`:319`, `:500-501`), `docs/dev/zones-d-and-e.md` (`:486`, `:516-517`), `docs/dev/release-hardening.md` (`:222`) —
   find them with `git grep -n "behaviors-zones" -- docs/dev`.
 
@@ -330,7 +343,8 @@ by the quoted code or test title before you edit it.
   tests both zones" rule; that file's `ROSTER` / `DB` keeps the `facet-monarch` entry); the files
   `/home/sites/shmup-cup-run/R5-P.P5a2-before.txt` and `-after.txt`).
 - **Token:** none.
-- **Docs needs:** `docs/dev/repo-layout.md`; the old file names in `docs/dev/zones-f-and-g.md` (`:541`,
+- **Docs needs:** `docs/dev/repo-layout.md` (as in P5a1: likely nothing); the old file names in
+  `docs/dev/zones-f-and-g.md` (`:541`,
   `:570-571`) and `docs/dev/zones-h-and-i.md` (`:734-735`); and a finding for the next BEHAVIOR holder: the docblock
   at `packages/core/src/behaviors/index.ts:2459` names `behaviors-zones-fg-edge.test.ts` (a comment only; do not
   edit it here).
@@ -373,7 +387,7 @@ by the quoted code or test title before you edit it.
         (4,860 < 16,419 on today's files); zone H keeps `h.outcome.ticks < zone-h-god`;
       - "F and G without god mode" checks **both** `zone-f-boss` and `zone-g-boss` with
         `toBeLessThan(arcade.file.expected.ticks / 4)`, where `arcade` is zone F's `zone-f-arcade`: zone G's file
-        checks `toBeLessThan(readGolden('zone-g-god').file.expected.ticks / 4)` instead (1,900 < 3,517); zone F
+        checks `toBeLessThan(readGolden('zone-g-god').file.expected.ticks / 4)` instead (1,900 < 3,517.5); zone F
         keeps `zone-f-arcade`.
       The H/I block's `follow` helper (defined inside that block, used by both its zones) goes into
       `test/golden/golden.ts` (exported), so both files import it. These are the only assertion changes; list them
@@ -472,7 +486,7 @@ by the quoted code or test title before you edit it.
 - **Tests (targeted, run all of them):**
   ```bash
   VITEST_MAX_WORKERS=6 pnpm exec vitest run --project core packages/core/test/helpers/pin-writer.test.ts
-  git add -A && git commit -m 'R5-P.P10 — SHMUP_FINGERPRINT_UPDATE: the fingerprints rewrite their own pins'   # your change, committed locally first (push later, under the land lock): the checks below want a clean tree, and `git diff` alone cannot tell an update-run rewrite from your own edits
+  git add packages/core/test/helpers/pin-writer.ts packages/core/test/helpers/pin-writer.test.ts test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts packages/shell/test/frame-fingerprint.test.ts && git commit -m 'test: R5-P.P10 — SHMUP_FINGERPRINT_UPDATE: the fingerprints rewrite their own pins'   # your change, committed locally first (push later, under the land lock): the checks below want a clean tree, and `git diff` alone cannot tell an update-run rewrite from your own edits
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/integration/presentation-fingerprint.test.ts test/integration/content-db-fingerprint.test.ts
   SHMUP_FINGERPRINT_UPDATE=1 VITEST_MAX_WORKERS=6 pnpm exec vitest run --project shell packages/shell/test/frame-fingerprint.test.ts
   git status --short   # must print nothing after the update runs: nothing moved, so nothing is rewritten
@@ -490,7 +504,7 @@ by the quoted code or test title before you edit it.
     `pnpm exec prettier --check` on all three after an update run).
   - The presentation test has several walks in one file; rewrite only the walk whose test ran (parallel walks must
     not clobber each other: read-modify-write the file once per walk, synchronously).
-  - The plan's §1 decision R5-D4 keeps the content-DB fingerprint; do not drop a test.
+  - Decision R5-D4 (`docs/v2-run/decisions.md` §6) keeps the content-DB fingerprint; do not drop a test.
   - Note the deviation from the scout: the writer lives in `packages/core/test/helpers/` (the shared-test-helper
     precedent of `alloc.ts`), not in a new `test/helpers/`.
 - **Docs needs (report them; never edit docs):** `docs/dev/conventions.md` (the fingerprint section: re-pin with
@@ -531,8 +545,10 @@ by the quoted code or test title before you edit it.
      `test/integration/atlas-zone-sprites.test.ts`, `test/integration/frame-literals-repo.test.ts`,
      `test/scripts/art-origins.test.ts`, `test/scripts/assets/provenance.test.ts`, `test/playtest/zone-<x>.test.ts`,
      `test/golden` (all of it: the scope proof); then, as its own command, the whole
-     `test/integration/release-audit.test.ts` (no `-t`: no test title names a zone — it audits all nine zones, so a
-     `-t 'zone X'` would select nothing); then the three fingerprints without the variable. With `--all`, run the
+     `test/integration/release-audit.test.ts` (no `-t`: it audits all nine zones, and its five `zone $label: …`
+     cases carry the campaign's UPPER-CASE labels `A` … `I` (`content/campaign/main.campaign.json`, asserted at
+     `release-audit.test.ts:122`) — a `-t "zone $z"` with the script's lower-case `--zone` letter would select
+     nothing); then the three fingerprints without the variable. With `--all`, run the
      checks of the zone `--zone` names (they include all of `test/golden`).
   8. Abort unless every changed or new `test/golden/*.replay.json` and `content/demos/*.replay.json` (untracked
      included — take the list from `git status --porcelain`) has a `header.stageId` in the `--only` list (read with a
@@ -657,7 +673,8 @@ by the quoted code or test title before you edit it.
 - **Depends on:** R2-04 closed (wave 07: the content is ported ×1.5 and retuned).
 - **Goal:** a design spec for zone A's remaster that a zone lane can build without asking a question. It writes no
   code and no content.
-- **Files (only this):** `docs/v2-run/designs/zone-a.md` — **new**; commit it alone (`docs: R5 zone A design`). This is
+- **Files (only this):** `docs/v2-run/designs/zone-a.md` — **new**; commit it alone (subject
+  `docs: R5 zone <letter> design` — for D-A: `docs: R5 zone A design`). This is
   the one exception to common rule 7 for a designer: you commit only this file, as a `docs:` commit, and edit nothing
   else.
 - **Read first:** `plan_resolution.md` §2.6, §2.7, §11 (the zone template and zone A's row: "a longer capsule-rich
@@ -689,8 +706,8 @@ by the quoted code or test title before you edit it.
      zone-A rule.
   7. **Mid-boss:** a captain (`captain.ram`, `captain.launcher`, `captain.circler` or `captain.crab`), its event x
      (< `length / 2`), params, parts.
-  8. **Boss rebuild (HALCYON BULWARK):** the part tree (≤ `MAX_BOSS_PARTS` — 24 after R5-P.P8), roles (`core`,
-     `gun`), exactly 3 phases (zone H's IRON SOVEREIGN keeps ≥ 4; zone I: the ABYSS ARK 2, THE HOLLOW KING exactly
+  8. **Boss rebuild (HALCYON BULWARK):** the part tree (≤ `MAX_BOSS_PARTS` — 24 after R5-P.P8), the `core` /
+     `gun` part flags, exactly 3 phases (zone H's IRON SOVEREIGN keeps ≥ 4; zone I: the ABYSS ARK 2, THE HOLLOW KING exactly
      3), a reachable `core`, height ≤ 60 % of the playfield (≤ 202 px), new part sprites with sizes (§5.7).
   9. **Backdrops and decor:** 4–6 layers (name, size, scroll factor), decor pieces, raster rows (playfield rows:
      `top` 0 … 335, `bottom` 1 … 336 = `PLAYFIELD_H`; `RASTER_EFFECT_SCHEMA` in `packages/core/src/data/index.ts`),
@@ -950,7 +967,8 @@ reports in `RUN_DIR` ("docs needs") and the file lists below.
   `test/golden/README.md` (`--only`), `docs/dev/content-data.md` + `content/patterns/README.md` (per-zone pattern
   files; the prose at `:103`) + `content/enemies/README.md` (`:129`: `brine.jelly-ring` now in
   `content/patterns/zone-b.patterns.json`), `docs/dev/build-test-deploy.md` + `CLAUDE.md` Commands (`node scripts/golden-update.mjs --only <ids>`),
-  `docs/dev/repo-layout.md` (the new test files), `docs/dev/platform-polish.md` + `docs/client/store-submission.md`
+  `docs/dev/repo-layout.md` (the new test files, and the `patterns/` tree line `:113`: `zones.patterns.json` → the
+  per-zone files), `docs/dev/platform-polish.md` + `docs/client/store-submission.md`
   (the icons), `README.md` (the banner), `test/README.md`, and the pattern-file and test-file names only in
   `docs/dev/enemies-and-behaviors.md` (`:606`), `docs/dev/release-hardening.md` (`:222`), `docs/dev/zones-b-and-c.md`
   (`:58`, `:406`, `:319`, `:500-501`), `docs/dev/zones-d-and-e.md` (`:59`, `:486`, `:516-517`) and
@@ -980,7 +998,8 @@ reports in `RUN_DIR` ("docs needs") and the file lists below.
    The Vitest filters are substrings (`test/integration/content` = every `content*` file, `test/integration/zone-` =
    the new per-zone runtime files); the recovery glob is unquoted, so bash expands it. Check the selection with
    `pnpm exec vitest list --project integration <the same filters> --filesOnly`.
-3. The splits' `vitest list` comparisons are in their reports (same count and titles).
+3. The splits' `vitest list` comparisons are in their reports (same count and titles), except the differences
+   each split block allows.
 4. `ls docs/v2-run/designs/` lists `zone-a.md` … `zone-i.md`, each reviewed to zero.
 5. `W09.DOCS-A` has set §17 R4-01 … R4-05 and pushed; the orchestrator ran the board sync.
 6. A look at GitHub CI for the wave's pushes (never wait for it).
