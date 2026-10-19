@@ -2119,14 +2119,14 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | R1 exit gate: every golden, demo and the v1 baseline (268 passed) plus master CI with all e2e shards, on `56f9ced` | **done** (2026-10-17) |
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
 | R0-02 | The TV render benchmark (`bench:tv`) | done (owner parts pending) — 2026-10-17 |
-| R0-03 | Run the benchmark on the M7s (owner; non-blocking) | not started |
+| R0-03 | Run the benchmark on the M7s (owner; non-blocking) | waiting on owner |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 generated and reviewed by the owner, every request done (animation frames made in code); waiting for the owner's last review, then winners to `art-prompts/v2/winners/`; see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | done — 2026-10-17 |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
 | R1-03 | Units in the content schemas, and the rescale tool | done — 2026-10-17 |
 | R1-04 | Tile size and font metrics are data | done — 2026-10-17 |
 | R1-05 | Atlas paging and memory ready for detailed art | done (owner parts pending) — 2026-10-17 |
-| R2-01 | Flip the frame; interim art; versioned saves and replays | in progress — the frame is flipped on master (`72b18a1`: 640×360, 12-px HUD and tiles, `ART_SCALE` 3/2, replay format 2; master CI green); the post-flip review loops are closing, then the wave-4 docs agent |
+| R2-01 | Flip the frame; interim art; versioned saves and replays | in progress — the frame is flipped on master (`72b18a1`: 640×360, 12-px HUD and tiles, `ART_SCALE` 3/2, replay format 2; master CI green); the post-flip review loops are closed at zero (the C5 loop: reviews 5 and 6, 2026-10-19); then the R2-01 docs pass, wave 1 of §18 |
 | R2-02 | Port all content ×1.5 | not started |
 | R2-03 | Golden replays, demos, e2e, docs images | not started |
 | R2-04 | First retune at the new scale (→ `v2.0.0-alpha.1`) | not started |
@@ -2226,7 +2226,7 @@ work (≤ 2 per wave). Ids are `<step>.<subtask>` ([`docs/v2-run/README.md`](doc
 
 | Wave | Steps | Lanes / agents | Tokens | e2e | Gate to start | Exit |
 |---|---|---|---|---|---|---|
-| **W00** | R2-01's review loops | the orchestrator before the hand-off: C5 review 2 → C5 fix 2 (`c67c7c9`, which also fixed the CI e2e shard-1 triage and the `flight.spec.ts:114` flake) → C5 review 3 (with the full Chromium e2e on myadmin1) → fix → new review, to zero | — | the triage; C5 review 4 | — | open until C5 review 4 of the fixes since `c67c7c9` (and any fix → review loop) reaches zero findings; closed by the orchestrator before the hand-off — or its open item (verifying the C5 fixes since `c67c7c9`: C5 review 4 and any fix → review loop to zero) becomes `R2-01.F1` in W01 |
+| **W00** | R2-01's review loops | the orchestrator before the hand-off: C5 review 2 → C5 fix 2 (`c67c7c9`, which also fixed the CI e2e shard-1 triage and the `flight.spec.ts:114` flake) → C5 review 3 (with the full Chromium e2e on myadmin1) → fix → new review, to zero | — | the triage; C5 review 4 | — | closed — the C5 loop reached zero findings, nits included, at reviews 5 and 6 (2026-10-19, `r2-01C5-review5.md`; the full Chromium e2e 149/78/0, zero flaky); the orchestrator closed the wave before the hand-off, so nothing became `R2-01.F1` in W01 |
 | **W01** | R2-01 docs pass; R2-02 opening | 8: `R2-01.D1` … `D7` (seven docs agents, disjoint files), `R2-02.P0 → P1`; `R2-01.F1` first if open; + 2 reviews | PLAN (D1), CORE-CONFIG and E2E-MIRROR (P0), KIT (P1) | `R2-01.F1` and `R2-01.F1.RV` only, one after the other | W00 closed, or its open item handed over as `R2-01.F1` | docs review at zero; §17 R2-01 done (owner parts pending); the F1 loop (if it ran) at zero and `wave-00.md` closed; `WORLD_SCALE` = 1 (`WORLD_TOP_PAD` 0) and the two-scale kit `test/port-v2/` on master, neutral |
 | **W02** | R2-02 prep A; R3-03 and R3-04 side lanes | 8: `W6 → W7`, `T0 → A1 → T4b`, `W2`, `W1 → T4c`, `W3 → W5`, `W4 → T4a`, `R3-03.V1 → V3`, `R3-04.M3a → … → M3e`; + 2 reviews, then `R2-02.RV-A2` | BEHAVIOR, DATA-INDEX, RP-BARREL and SHELL-BARREL (M3) | V1, M3d / M3e | W01 exit | prep A on master, reviewed and neutral (fingerprints unedited); RV-A2's failure lists written; V1 on master |
 | **W03** | R2-02 prep B | 8: `T1a → T2c`, `T1b → T2d`, `T1c → T2e`, `T1d → T1e`, `T2a`, `T2b`, `T3`, one side lane (an R3 carry-over or the filler `R3-03.V2a`); then `R2-02.E0`; + a fix agent `R2-02.prepB.FIX<n>` on demand (rule "Your list": `other.txt`'s unowned lines, a builder slot); + 2 reviews | CONTENT-TEST (T2a), BOT (T2b), KIT (T3) | E0, M3* | W02 exit | every test pin and the v2-port comparison green under the kit; E0: zero e2e failures under the kit, master unchanged |
