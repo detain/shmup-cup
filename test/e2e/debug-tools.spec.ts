@@ -91,8 +91,9 @@ function view(page: Page): Promise<DebugView> {
  * Waits for `frames` animation frames in the page.
  *
  * @remarks
- * Frames, not ticks: the spec waits with it only while the sim is frozen (F4, the remote's 4,
- * `freezeSim`), where no tick runs — the check is that none does.
+ * Frames, not ticks: every pause made with it directly runs while the sim is frozen (F4, the
+ * remote's 4, `freezeSim`), where no tick runs — the check is that none does. The debug taps
+ * hold with it too, which must work under the freeze as well (`debugTap`).
  *
  * @param page - The page.
  * @param frames - Frames to wait.
