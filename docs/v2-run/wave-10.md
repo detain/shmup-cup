@@ -32,9 +32,10 @@ this wave; re-find any line by its code before you edit.
 - **Fillers:** none.
 - **Timeout fix:** `R5-01.TO` (S6's Traps) takes a builder slot only when S6 (or `R5-01.RV`'s re-run of S6's tests)
   reports a timeout-only failure; it is pushed and reviewed before `R5-01.S7`.
-- **Reviews:** slot 1 — `R5-01.RV` (the zone-A branch loop, its highest priority), then `R5-P.P7.RV1`,
-  `R5-P.P12.RV1` (with a second, determinism-focused reviewer); slot 2 — `R5-P.P5d.RV1` and the S2 reviews
-  (`R5-0n.S2.RV1`).
+- **Reviews:** two review slots, never more than two reviewers at once. Slot 1 takes whichever of its reviews is
+  ready, `R5-01.RV` (the zone-A branch loop) first whenever it is ready — the zone-A loop has priority; its other
+  reviews are `R5-P.P7.RV1`, `R5-P.P12.RV1` and the determinism-focused `R5-P.P12.RV1b` (after `R5-P.P12.RV1`; it
+  may run in slot 2 when slot 2 is free). Slot 2 — `R5-P.P5d.RV1` and the S2 reviews (`R5-0n.S2.RV1`).
 - **Docs item:** `W10.DOCS-A`, `W10.DOCS-B`, then `W10.DOCS-RV`.
 - **e2e passes:** 2 — pass 1: `R5-P.P7`'s pair-spec batch (lane 1, only if a ramp changed), then lane 3 (P5d,
   which starts after P7's review is at zero); pass 2: lane 4 (zone A: S6, S6b, `R5-01.RV`'s re-run of their batches
@@ -100,7 +101,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 | Laser lane gap | ≥ 24 px | `rules.ts` `MIN_LANE_GAP` (16 → 24 after R2-02) |
 | Capsule recovery window | 1,350 px after each checkpoint, ≥ 3 sources | `test/playtest/recovery.ts` `RECOVERY_WINDOW` (900 → 1,350 after R2-02) |
 | Bot x | `BOT_X` 96 = `ENTER_END_X` | `test/playtest/four-way-bot.ts:56`, `packages/core/src/player/index.ts:138` (64 / 64 on `bc8e05d`, 96 after R2-02) |
-| The v2 zone contract (R5-D2) | length 20,000–22,000; scroll to the WARNING 3.75–5.25 min; bot run (god mode) 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new types by sprite; capsules before the WARNING 18–48; ≥ 3 per 1,350-px window; ≤ 2 blue capsules | `test/integration/zones/zone-<x>.contract.ts` (`remastered: true` switches a zone to these bounds; R5-P.P6) |
+| The v2 zone contract (R5-D2) | length 20,000–22,000; scroll to the WARNING 3.75–5.25 min; bot run (god mode) 4.0–6.0 min; ≥ 5 checkpoints; 6–8 new types by sprite; capsules before the WARNING 18–48; ≥ 3 per 1,350-px window; ≤ 2 blue capsules; `directItems` ≥ 30 | `test/integration/zones/zone-<x>.contract.ts` (`remastered: true` switches a zone to these bounds; R5-P.P6) |
 
 ## Subtasks
 
@@ -155,7 +156,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 - **Tests (targeted, run all of them):**
   ```bash
   pnpm assets
-  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone- test/integration/palette-cycle-scan.test.ts test/scripts/assets/interim-pipeline.test.ts test/scripts/assets/v2kit.test.ts test/golden
+  VITEST_MAX_WORKERS=6 pnpm exec vitest run --project integration test/scripts/assets/procedural-zone- test/integration/palette-cycle-scan.test.ts test/scripts/assets/interim-pipeline.test.ts test/scripts/assets/v2kit.test.ts test/integration/frame-literals-repo.test.ts test/integration/standin-budget.test.ts test/golden
   pnpm content:check
   (cd art-prompts/ingest && npm ci && npm test && node ingest.mjs --check)
   bash docs/v2-run/helpers/e2e-batch.sh zones-bc.spec.ts zones-de.spec.ts zones-fg.spec.ts zones-hi.spec.ts   # only the pair specs you edited (drop the others; skip the line if you edited none)
@@ -176,6 +177,11 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     would move the scale-1 digest pin (`interim-pipeline.test.ts`, `fa4198…`), which is never re-pinned (RR-1 A, wave 8
     rule 1).
   - Cycle art uses its ramp's colours **exactly**; every other colour stays ≥ 3/255 (Chebyshev) from all ramps.
+  - **Frame-literal scan** (`frame-literals-repo.test.ts`): no `384 216 200 208 192 108 640 360 336 348` in a
+    generator. A frame-wide band is `FRAME_W` (and `FRAME_H`) from `scripts/frame.mjs`; a semi-transparent alpha 200
+    is P9's shared constant, as in `R5-01.S2`'s Traps. Never add an allow-list entry.
+  - **Budget:** if `standin-budget.test.ts` fails or a page goes over its cap (`test/scripts/assets/atlas-budget.ts`),
+    do not push and never raise a cap: report it.
   - Never touch `raster-range.stage.json`'s ramp (a dev range; unchanged).
   - Change only `cycles`: any other field of a stage file is a zone lane's.
   - Never split, rename or move a pair e2e spec, and never create a `zone-<x>.spec.ts`: the split is `R5-P.P5d`'s,
@@ -249,8 +255,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `stepTo(page, 30)`: drop the first boss's `clear()`, the `stepTo(…)` after it (`bastion.tick + 5`,
     `regent.tick + 5`, `sovereign.tick + 5`) and the `….toBe(0)` check of the first boss's colours. `zones-bc`'s one
     Tizen case (SANDGRAVE WIDOW) goes to zone C; zone B has no Tizen case, as today;
-  - a case of the bonus stage goes with its zone (PEARL GROTTO → zone B, the glimmer cache → G); the zone-I ending /
-    escape cases go to `zone-i.spec.ts`;
+  - a case of the bonus stage goes with its zone (PEARL GROTTO → zone B; no spec has a glimmer-cache case); the
+    zone-I ending / escape cases go to `zone-i.spec.ts`;
   - keep every `describe` title verbatim (e.g. 'zones D and E (web build)' in both `zone-d.spec.ts` and
     `zone-e.spec.ts`), so the title lists below compare.
 - **Tests (targeted):** list the titles before (on `origin/master`) and after your change, with the file and line part
@@ -470,6 +476,7 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   - Decor never sits inside a collision tile.
   - Raster `top` / `bottom` and camera `yTo` are frame-anchored values: derive them from the 360-row frame, never ×1.5
     of a v1 number.
+- **Docs needs (report them; never edit docs):** `content/tilesets/README.md` (the `terrain-azure` set).
 
 ### R5-01.S5b — Zone A: events, sections and the set piece
 
@@ -495,7 +502,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
   within 1,350 px after every checkpoint; ≤ 2 blue capsules; the calm holds exactly two `carrier.straight` carriers
   between the last camera key and the WARNING; ground enemies stand on rock (`x + screenX` inside a floor or ceiling
   segment); the captain's `boss` event before `length / 2`; `remix` has spawn / formation events only, `drop: null`,
-  sorted, ≤ 64; the `directItems` plan within its budget; the 4-way rules hold.
+  sorted, ≤ 64; `directItems` ≥ 30 and within the Direct-item budget (`release-audit.test.ts`'s
+  `DIRECT_ITEM_BUDGET` check, which reads the zone's bounds from its contract since R5-P.P6); the 4-way rules hold.
 - **Token:** none (branch commit).
 - **Traps:**
   - **Above-the-top spawns:** an enemy that enters with `y < 0` stays above the screen (world y `v1 · 1.5`, no pad);
@@ -569,15 +577,17 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
 
 - **Wave / lane / order:** wave 10, lane 4, after `R5-01.S6`; in the zone worktree.
 - **Depends on:** `R5-01.S6`.
-- **Goal:** about 86 files name zone A (run `python3 docs/v2-run/helpers/r5r6/zonerefs.py` first, group `a` — the
-  block that starts with the line `a <count>`; the committed `zonerefs.txt` is at `bc8e05d`, before waves 2–9 moved
-  tests); about 20 e2e specs fly it after START. Fix every test that the remaster really broke — and only those.
+- **Goal:** about 86 files name zone A (run
+  `python3 docs/v2-run/helpers/r5r6/zonerefs.py > /home/sites/shmup-cup-run/R5-01.S6b-zonerefs.txt` first, from the
+  zone worktree, and read group `a` in that file — the block that starts with the line `a <count>`; the committed
+  `zonerefs.txt` is at `bc8e05d`, before waves 2–9 moved tests); about 20 e2e specs fly it after START. Fix every
+  test that the remaster really broke — and only those.
 - **Step 0:** compare the script's group-`a` list with the files below. Treat every group-`a` **test** file the
-  script lists that is not below (a file waves 2–9 added or renamed) exactly like the listed ones: run it, and fix it
-  only if the remaster broke it; name each such file in your report.
+  script lists that is not below (whether waves 2–9 added it or it was missed here) exactly like the listed ones:
+  run it, and fix it only if the remaster broke it; name each such file in your report.
 - **Files (only these — the test files of group `a` that fail on the branch):**
   - core: `packages/core/test/config/config-difficulty{,-edge}.test.ts`, `packages/core/test/data/{data,data-edge,data-direct,data-demos-edge,campaign-escape}.test.ts`,
-    `packages/core/test/debug/{debug-controls-edge,debug-skip,debug-skip-edge}.test.ts`, `packages/core/test/replay/{replay-coop,replay-version}.test.ts`,
+    `packages/core/test/debug/{debug-controls-edge,debug-skip,debug-skip-edge}.test.ts`, `packages/core/test/replay/{replay-coop,replay-version,replay-version-shipped}.test.ts`,
     `packages/core/test/save/{save,save-edge,save-v2-edge,save-v3}.test.ts`, `packages/core/test/scenes/scenes-campaign-edge.test.ts`,
     `packages/core/test/stage/stage-bonus.test.ts`;
   - shell: `packages/shell/test/boot/boot-manifest.test.ts`, `packages/shell/test/determinism/{determinism,determinism-edge}.test.ts`,
@@ -592,6 +602,8 @@ All in v2 world pixels on master in this wave (after R2-02). Never multiply a po
     `test/golden/golden-autofire.test.ts`;
   - playtest: `test/playtest/{four-way-bot,harness,remote-strict,remote-strict-edge}.test.ts` (read; their source
     files are BOT — report, never edit);
+  - tools: `tools/input-probe/test/{analyzeBench,logServer,logServerBench,logServerFuzz}.test.ts` (run by
+    `npm run verify`);
   - e2e: the specs of the three batches below, only the assertions the remaster moved.
 - **Tests (targeted, run all of them):**
   ```bash
@@ -791,7 +803,8 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
 
 - **Files:** `docs/dev/art-bible-v2.md` §4.4 (the frozen R5 ramps), `docs/dev/zone-a-and-playtest.md` (the bot's new
   features; zone A's v2 section), `docs/client/bestiary.md` (zone A), `content/stages/README.md` and
-  `content/enemies/README.md` (zone A paragraphs), `docs/dev/debug-and-replays.md` (golden rows with new outcomes),
+  `content/enemies/README.md` (zone A paragraphs), `content/tilesets/README.md` (the `terrain-azure` paragraph),
+  `docs/dev/debug-and-replays.md` (golden rows with new outcomes),
   `docs/client/outstanding-work.md` (zone A's owner parts: art, cleanup, the M7 sign-off), `docs/dev/build-test-deploy.md`
   and `test/README.md` (the per-zone e2e specs), `docs/dev/repo-layout.md`, `docs/dev/asset-pipeline.md` (zone A's
   stand-in generator `azure.mjs` and its `tiles/terrain-azure`), `docs/dev/zones-b-and-c.md`,
@@ -816,9 +829,11 @@ wave: zone A ships its stand-ins and is `done (owner parts pending)` (R5-D7).
    ```
    The Vitest filters are substrings (`test/scripts/assets/procedural-zone-` = every `procedural-zone-*` file); check
    the selection with `pnpm exec vitest list --project integration <the same filters> --filesOnly`.
-3. `ls test/e2e/zone-*.spec.ts` lists zone A … I;
-   `git grep -n "zones-bc\|zones-de\|zones-fg\|zones-hi" -- test ':!*.md'` returns nothing (code only:
-   `test/README.md` is the docs agents').
+3. `ls test/e2e/zone-?.spec.ts` lists exactly `zone-a.spec.ts` … `zone-i.spec.ts` (9; the `?` keeps
+   `zone-map.spec.ts` out);
+   `git grep -n "zones-\(bc\|de\|fg\|hi\)\.spec" -- test ':!*.md'` returns nothing (code only:
+   `test/README.md` is the docs agents'; the `\.spec` keeps out the `zones-*-runtime` and `procedural-zones-*`
+   names that comments may still cite).
 4. `W10.DOCS-A` has set §17 R5-01 and pushed; the orchestrator ran the board sync.
 5. A look at GitHub CI for the wave's pushes (never wait for it).
 - **Deferred to wave 15:** the full `pnpm test`, `pnpm test:e2e` and `pnpm bench`.
