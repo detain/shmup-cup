@@ -299,9 +299,12 @@ by the quoted code or test title before you edit it.
     `const { freeFlight, fighting, live } = zoneKit(DB);` — so every `it` moves verbatim. (c) The edge files'
     roster builders — `copy`, `enemy`, `boss` (e.g. `behaviors-zones-edge.test.ts:86–131`) — read the file's
     `ROSTER` and run while the file *builds* its `DB` (never inside an `it`), so they cannot come from `zoneKit`:
-    they become one factory `rosterKit(roster)` that returns `copy`, `enemy`, `boss`. Each new edge file keeps only
-    its zone's `ROSTER` rows, then `const { copy, enemy, boss } = rosterKit(ROSTER);` above its `DB`, and builds
-    the `DB` with them. `shipped(path)` goes into `packages/core/test/helpers/shipped.ts` (P4's) beside
+    they become one factory `rosterKit(roster)` that returns `copy`, `enemy`, `boss`. The same group carries the
+    edge files' `Entry` / `Phase` roster types (`behaviors-zones-edge.test.ts:61`, and `:63`/`:70` in the
+    `fg-edge` file) — the `ROSTER` rows and those builders are typed with them, so they move to `zone-behaviors.ts`
+    as exported types beside `rosterKit` (a factory cannot return a type), each edge file importing them. Each new
+    edge file keeps only its zone's `ROSTER` rows, then `const { copy, enemy, boss } = rosterKit(ROSTER);` above its
+    `DB`, and builds the `DB` with them. `shipped(path)` goes into `packages/core/test/helpers/shipped.ts` (P4's) beside
     `shippedPatterns()`.
 - **Steps:** before you start (on `origin/master`), and again after your change:
   ```bash
