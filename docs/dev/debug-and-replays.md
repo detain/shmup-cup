@@ -365,7 +365,7 @@ imports) can decode and play demos without a cycle; the attract playback is `rep
 
 | Field | Meaning |
 |---|---|
-| `formatVersion` | `REPLAY_FORMAT_VERSION` (1); another version is rejected |
+| `formatVersion` | `REPLAY_FORMAT_VERSION` (**2** since v2's R2-01 — v1 wrote 1); an older version is refused with a `ReplayVersionError` (below), a newer one or 0 as malformed |
 | `buildId` | the build that recorded it (`__SHMUP_BUILD__`; golden replays: `'golden'`) |
 | `seed` | `config.seed`, repeated for readability |
 | `config` | the session's **whole resolved `GameConfig`** — every sim-affecting option, so a new `GameConfig` field is recorded without touching the replay code (since M2-01 the difficulty preset's rank base / growth, lives, extends, continues, penalty, aim directions and bullet speed — a replay does not depend on the content's `rules` table; an M1 header without them decodes to its preset's values; since M2-05 the ship — `shipId` — and a `powerUpMode` that may be `'direct'`: a header without `shipId` decodes to `kestrel`, which is what it flew; since M2-16 `autofireMode` — the save's autofire and game options reach a World only through this config; a header without it decodes to `'always'`) |
@@ -374,6 +374,29 @@ imports) can decode and play demos without a cycle; the attract playback is `rep
 | `loadout` | `config.loadout` |
 | `assisted` | god mode was on **for the whole run** (playback turns it on) |
 | `assists` | since M3-01: the run's `AssistFlag` bits — 1 god mode, 2 the invincibility assist, 4 the game-speed assist, 8 a secret code. Informative (playback reads only `assisted` and the config, whose `invincible` *is* the assist); defaults to 1 when `assisted` plus 2 when `config.invincible`; a replay recorded before M3-01 decodes as 1 when `assisted`, else 0 |
+
+**Version refusal (v2's R2-01 — owner decision W4-7, plan_resolution.md §3.4).** R2-01 bumped
+`REPLAY_FORMAT_VERSION` (and `run.ts` `RUN_REPLAY_FORMAT_VERSION`) to **2**: a v1 recording would
+decode, play and desync at its first hash on the 640×360 world, so `decodeReplay` refuses it up
+front with a `ReplayVersionError` — a `RangeError` like every other malformed-replay rejection, so
+callers that only ask "valid or not" need no change. Two reasons:
+
+- `'format'` — the document's `formatVersion` is a *whole number from 1 up to (not including)* the
+  current one (`isOlderFormatVersion`); a **newer** version, 0 or a non-number is not an older
+  replay, just unsupported, and stays a plain `RangeError` ("… is not supported");
+- `'frame'` — the format is current but the header's `config` records another frame
+  (`internalWidth` / `internalHeight` ≠ `FRAME_W` × `FRAME_H`); since R2-01 the frame is checked, so
+  a recording from a differently-sized build of the *same* format is caught too.
+
+The message says what is known: `replay recorded at 384×216 (v1, format version 1) cannot play at
+640×360` for format 1 (the only version v1 wrote — a later bump's message says `an older build`
+instead, so a v2 recording is never called a v1 one), and `(another frame)` when only the frame
+differs. The player-facing text is the UI string `replayFromV1` (`RECORDED BY V1: CANNOT PLAY`),
+not this message. The error carries `recordedWidth` / `recordedHeight` (`NaN` when the header has
+none) for hosts that want to show them. `run.ts` `decodeRunReplay` refuses the same way; the replay
+library tells a v1 recording apart from a broken one through `classifyRunReplayText` → `'legacy'`
+and keeps such a slot **delete-only** — the library and browser behaviour is in
+[extra-modes-and-replays.md](extra-modes-and-replays.md#the-replay-library-createreplaylibrary-replaylibrary).
 
 **Body.** Per tick and per player (`MAX_PLAYERS` arrays) one 32-bit word `held | pressed << 16`
 (`packReplayInput`); `released` is derived on playback exactly as `commitPlayerInput` derives it
@@ -423,6 +446,10 @@ report.ok; // false → report.desyncTick, expectedHash, actualHash
   checked — `running` turns false at the recording's end or the first mismatching hash, so the
   scene flow's `DemoScene` moves on instead of showing a desynced demo
   ([front-end-and-attract.md](front-end-and-attract.md#attract-playback-corereplay)).
+- **The attract loop skips refused demos (R2-01 — W4-9).** `createSceneFlow` decodes every shipped
+  demo once and leaves out the ones that throw — since the flip the nine `content/demos/` files are
+  v1 format-1 recordings and every `decodeReplay` answers `ReplayVersionError`, so the loop plays
+  no demo and starts at the hi-score tables until R2-03 re-records them at 640×360.
 
 **File format** (`encodeReplay` → `ReplayJson`, plain JSON):
 `{ kind: 'replay', header, ticks, hashInterval, inputs, hashes, finalHash }`. Each player's words
@@ -766,6 +793,8 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
 | `packages/core/test/debug/debug-controls*.test.ts` | Every command, the outline and slow-mo cycles, unknown codes; frame advance / step through `Game.frame` (exact tick counts, the clock ignored, queued steps kept through a pause and dropped when frame advance goes off, `Game.step` unaffected), slow motion (a tick every 2nd / 4th frame, no burst after switching or a resume, time going backwards ignored); determinism under the debug timing (lockstep with a plain session, checkpoint jumps at the same tick); the stage jumps (only while the game scene is on top, during the WARNING but not after the stage ended, score / lives / loadout kept, a dying ship left alone, checkpoint index validation); one set of switches for the game and every World; counters read-only, rehashed exactly every 60 ticks |
 | `packages/core/test/debug/debug-alloc.test.ts` | `collectDebugCounters` and slowed / frame-advanced `Game.frame` allocation-free |
 | `packages/core/test/replay/replay*.test.ts` | Round trip (record → encode → decode → play reproduces every hash), desync on tampered input, seed or config, the zero-tick replay, header validation, every `decodeReplay` rejection, varint / base64 edge cases, recorder growth past its capacity, missing `check()` calls, checkpoint starts, `assisted`, `buildMatches`, allocation-free `poll` / `check` (`replay-alloc.test.ts`) |
+| `packages/core/test/replay/replay-version.test.ts` | R2-01 (16 tests, **permanent**): the `'frame'` and `'format'` refusals at either frame (their replays record `OTHER_FRAME`), `decodeRunReplay` passing a segment's refusal on and refusing an older run format, `classifyRunReplayText` → `'ok'` / `'legacy'` / `'invalid'`, and the library keeping a v1 slot (never self-deleted) with a legacy summary, refusing PLAY / KEEP, answering a paste with `Legacy`, deleting on REMOVE — over the committed fixture `fixtures/run-replay-v1.json` (v1.0.0's library text; never re-blessed) |
+| `packages/core/test/replay/replay-version-shipped.test.ts` | R2-01 (73 tests, **deleted by R2-03 with `test/golden/stale.ts`**): every committed golden and attract demo (each v1's, at v1's frame and format 1) refused by `decodeReplay` with a message naming v1 |
 | `packages/render-pixi/test/debug/` | Panel layout and values, the frame graph's colours and ring, every outline kind (positions, clipping, laser squares; ghosts, dying ships and boss parts without a hurtbox skipped), one colour per list, no dropped command with every pool full, `update` hiding what is off, an overlay without an atlas; allocation-free `update` (measured on a second overlay after a throwaway one — V8 hidden-class state made the first one flaky) |
 | `packages/render-pixi/test/renderer/renderer-draw-calls.test.ts` | The counter over both passes, every argument forwarded, `-1` without the option or a context to wrap |
 | `packages/shell/test/debug/`, `packages/shell/test/boot/boot.test.ts` | Keys (by code or key code, prevented defaults, only the step repeating), the TV sequence (nothing before it, wrong keys, a Pause mid-sequence, exactly the 3-s window, a keyboard Pause, the sequence keys never running a command), the web mode treating remote keys as plain keys, `__shmupDebug` (live values, destroy leaving another tools' global alone), timing hooks (first frame, smoothing, draw calls, particles); boot with a factory (`Shell.debug`, the tools created after boot, `stop()`) |
@@ -865,3 +894,9 @@ testers in [../client/debug-tools.md](../client/debug-tools.md#the-m1-release-ch
   the repo that measures `renderer.render()` at all. Presentation only: no simulation change, no
   golden re-bless ([rendering-and-shell.md](rendering-and-shell.md#measuring-render-performance-m3-02c),
   [render-performance-review.md](render-performance-review.md)).
+- **R2-01** (done, v2) — replay formats **2** (`REPLAY_FORMAT_VERSION`, `RUN_REPLAY_FORMAT_VERSION`):
+  v1's recordings are refused with a `ReplayVersionError` — `'format'` for an older version, `'frame'`
+  for the header config's other frame (the check the flip added) — delete-only in the replay library
+  (W4-7), the browser marking such a slot `V1 REPLAY`; the shipped goldens and demos are v1
+  recordings, refused until R2-03 re-blesses / re-records them (W4-9) — the library's and screens'
+  behaviour is on [extra-modes-and-replays.md](extra-modes-and-replays.md).

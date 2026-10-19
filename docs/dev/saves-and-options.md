@@ -12,7 +12,9 @@ the boss HP bar (BOSS HP — [advanced-bosses.md](advanced-bosses.md#the-boss-hp
 regrouped the screen into the CONTROLS / DISPLAY / GAME pages, added the controls options (autofire
 mode and rate, SOCD, the remote's debounce, the rebinding), the game options and the one-button
 preset, and made the save **version 2** — the pages, the rebinding and the string table are on
-[options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md).
+[options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md). v2's **R2-01**
+made it **version 3**: the 640×360 flip archives v1's hi-score tables under the read-only
+`legacyScores` and starts v2's tables empty (owner decisions W4-8 / W4-13, plan_resolution.md §3.4).
 
 This page is the *how and why*. Exact signatures are in
 [api-reference.md](api-reference.md#save--versioned-saves-hi-score-tables) (`save`),
@@ -57,7 +59,7 @@ through `Platform.storage`).
  Platform.storage — web / TV: localStorage "shmup-cup:save.v1" (TV: deleted on uninstall)
 ```
 
-## The save document (`SaveData`, format 2)
+## The save document (`SaveData`, format 3)
 
 One JSON document under the storage key **`save.v1`** (`SAVE_STORAGE_KEY`). The web and Tizen
 storage adapters prefix their keys, so in `localStorage` it is **`shmup-cup:save.v1`**; headless
@@ -69,7 +71,7 @@ Before M2-17 Electron used the web build's `localStorage`; that save is not migr
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "options": {
     "audio": { "master": 10, "music": 7, "sfx": 10 },
     "input": {
@@ -106,6 +108,11 @@ Before M2-17 Electron used the web build's `localStorage`; that save is not migr
       { "name": "JOE", "score": 91450, "reached": "C", "mode": "caravan", "difficulty": "normal", "assisted": true }
     ]
   },
+  "legacyScores": {
+    "meter-normal": [
+      { "name": "AMY", "score": 51230, "reached": "zone-a", "mode": "1p", "difficulty": "normal" }
+    ]
+  },
   "stats": { "gamesStarted": 12, "gameOvers": 9, "stagesCleared": 2 },
   "unlocks": { "extraEdit": true, "loop2": true }
 }
@@ -113,9 +120,10 @@ Before M2-17 Electron used the web build's `localStorage`; that save is not migr
 
 | Field | Meaning |
 |---|---|
-| `version` | `SAVE_VERSION` = **2** since M2-16 (1 before). Drives the migrations; a document without it counts as version 0 |
+| `version` | `SAVE_VERSION` = **3** since v2's R2-01 (2 since M2-16, 1 before). Drives the migrations; a document without it counts as version 0 |
 | `options` | The player's `UserOptions` (below): volume levels 0–10, the chosen key / remote profile id (or `null` = the platform default; M3-02b: a **retired** id is migrated on load — see [Retired profile ids](#retired-profile-ids-m3-02b)), display options (M2-02: `bulletPalette`; M2-08: `scaleMode`, `screenShake`, `reduceFlashing`, `showHitbox`; M2-09: `bossHpBar`); M2-16: the controls (`input.autofire`, `autofireInterval`, `socd`, `releaseDebounce` — `null` = the host config's / the profile's —, `bindings` — the rebinding per profile and context) and the game options (`game.difficulty`, `lives`, `deathPenalty`, `autoPowerUp`, `pickupMagnet` — `null` = the host config's / the preset's —, `oneButton`); M3-01: the assists and feel (`play.speed` 100 / 75 / 50, `invincible`, `optionRecovery` — `null` = the host config's —, `rumble`) — resolved when missing, so no new format |
 | `hiScores` | Tables by **mode key** (`hiScoreModeKey(config)` = `<powerUpMode>-<difficulty>`, `meter-normal` in M1; since M2-01 one per difficulty — `meter-easy`, `meter-normal`, `meter-hard`, `meter-arcade`; since M2-05 the Direct-mode MANTA's games in `direct-easy` … `direct-arcade` — no format change, the key was always `<powerUpMode>-<difficulty>`; since M2-15 `hiScoreModeKey(config, mode)` appends `-2p` for co-op games and `-practice` for practice runs — `meter-normal-2p`, `direct-hard-practice`: one table per difficulty × ship × mode, still no format change; since M3-01 also `-bossrush`, `-caravan` and `-arcade` for the EXTRA modes), each sorted best first, at most `HI_SCORE_TABLE_SIZE` = 10 rows, at most `MAX_HI_SCORE_TABLES` = 64 tables (32 before M3-01). A mode nobody scored in has no table. Since M3-01 a row set with an assist carries `"assisted": true` (left out otherwise) |
+| `legacyScores` | R2-01 (W4-8 / W4-13): the v1 hi-score tables the version-2 → 3 migration archived — **read-only**, kept but shown nowhere in R2-01 (v2's tables start empty; the scores were made in v1's 384×216 game). Same shape and same sanitising rules as `hiScores`, with a table budget of its own; written only when at least one table is usable, frozen, and never touched by `recordScore` / `renameScore`. The only reader today is the desktop app's Steam achievements, which take the best score in `hiScores` ∪ `legacyScores` (`apps/electron/src/main/steam.ts` `bestScore` / `bestIn`) — what a player earned in v1 stays earned |
 | `stats` | Counters: `gamesStarted` (START and RETRY STAGE), `gameOvers`, `stagesCleared` — whole numbers, capped at 2³¹−1 |
 | `unlocks` | M3-01 (`SaveUnlocks`): `extraEdit` (the weapon select's EXTRA) and `loop2` (the ARCADE mode's LOOP 2 start) — set by reaching an ending (or the title's EXTRA EDIT code), never taken back; written only once something is unlocked, so a save without it simply has nothing unlocked ([extra-modes-and-replays.md](extra-modes-and-replays.md#extra-edit-weapons-contentweaponstypes-extraweaponsjson)) |
 
@@ -154,8 +162,8 @@ It never rejects and never throws — a failing `storage.get` counts as an empty
 | `status` | When | The game gets | Side effect |
 |---|---|---|---|
 | `'empty'` | Nothing stored (a first launch) | `createDefaultSave()` | — |
-| `'ok'` | A version-2 document | The sanitised document | — |
-| `'migrated'` | An older document (version 0 or 1) | The migrated, sanitised document | — (the next flush writes it in the new layout) |
+| `'ok'` | A version-3 document | The sanitised document | — |
+| `'migrated'` | An older document (version 0, 1 or 2) | The migrated, sanitised document | — (the next flush writes it in the new layout) |
 | `'corrupt'` | Not JSON, or JSON that is not an object | Defaults | The text is copied to **`save.corrupt`** (`SAVE_CORRUPT_KEY`) |
 | `'unreadable'` | A version newer than this build, a malformed version (not a non-negative integer), a missing migration step, or a migration that threw | Defaults | Copied to `save.corrupt` too |
 
@@ -195,6 +203,14 @@ keeps everything and adds the controls fields (`input.autofire`, `autofireInterv
 played with. It also **moves the co-op and practice rows** a pre-M2-15 build kept in the one-player
 tables into their `-2p` / `-practice` tables (below) — once, here, instead of on every read.
 
+**Version 2 → 3** (v2's R2-01, `migrateV2`; fixture
+`packages/core/test/save/fixtures/save-v2-from-v1.json` — a version-2 document as v1.0.0 wrote it)
+moves the whole `hiScores` record **as it is** to `legacyScores` and starts `hiScores` empty
+(W4-13: v1's scores belong to a different game — the 384×216 world — so v2's tables begin from
+nothing; the archive keeps them). Options, stats and unlocks carry over untouched. Nothing is needed
+on the **v1.x** side: a v1.x build reading a version-3 document already treats it as newer than
+itself — defaults, with the text copied to `save.corrupt` (W4-14).
+
 ### Sanitising (`sanitizeSave`)
 
 Every field is checked, clamped or replaced by its default; unknown fields are dropped; the result
@@ -202,12 +218,15 @@ is frozen. The rules:
 
 - **Options** go through `core/config` `resolveUserOptions` (below).
 - **Tables**: only keys shaped like a mode key (lower-case kebab, ≤ 32 characters — `__proto__`,
-  `constructor` and the like never match), taken in key order until 32 tables are kept (bad keys
-  and empty tables do not use up slots); a row needs a finite score ≥ 0 (floored, capped at
-  `MAX_SCORE`); the text fields are cut (`name` to `HI_SCORE_NAME_MAX` = 8 characters, empty →
-  `DEFAULT_HI_SCORE_NAME` `---`; `reached` / `mode` / `difficulty` to 32); each table is sorted
+  `constructor` and the like never match), taken in key order until `MAX_HI_SCORE_TABLES` = 64
+  tables are kept (bad keys and empty tables do not use up slots; 32 before M3-01); a row needs a
+  finite score ≥ 0 (floored, capped at `MAX_SCORE`); the text fields are cut (`name` to
+  `HI_SCORE_NAME_MAX` = 8 characters, empty → `DEFAULT_HI_SCORE_NAME` `---`; `reached` / `mode` /
+  `difficulty` to 32); each table is sorted
   best first — **stable**, by hand, because `Array.prototype.sort` is only stable from Chrome 70 —
   and cut to 10.
+- **`legacyScores`** (R2-01): read by the same rules with a table count of its own, and left out of
+  the document when no table is usable — the field is written only when non-empty.
 - **Stats**: whole numbers `0 … 2³¹−1`; anything else (a string, NaN, a negative, `-0`) is 0.
 
 ## Writing (`SaveStore`)
@@ -248,9 +267,10 @@ written when it changed (`shmup_feat.md` §23).
 row enters when the table has fewer than 10 rows or its score **beats** the 10th; it goes **below**
 rows with the same score (the older record keeps its place); a score of 0 never enters (a game
 that scored nothing leaves no row). `createHiScoreEntry(score, fields)` normalises a row (floors
-and caps the score, name `---` until named). `SaveStore.recordScore(modeKey,
-entry)` does the insertion in the store and refuses a malformed mode key or a 33rd table;
-`hiScores(modeKey)` / `bestScore(modeKey)` read a table. Since M2-15
+and caps the score, name `---` until named). `SaveStore.recordScore(modeKey, entry)` does the insertion in the store and refuses a malformed
+mode key or a 65th table; `hiScores(modeKey)` / `bestScore(modeKey)` read a table. Since R2-01 both
+`recordScore` and `renameScore` change `hiScores` only — the archived `legacyScores` are never
+written to. Since M2-15
 `SaveStore.renameScore(modeKey, row, name)` names a row already in a table — found by **object
 identity**, so a row recorded after it (player 2's) cannot misplace it — by replacing it with a
 renamed copy (→ its rank, or −1 when the row has left the table; the name cut to 8, empty → `---`);
@@ -352,7 +372,8 @@ header records the result — [visual-and-mechanic-extras.md](visual-and-mechani
 `standard` (the default), `deuteranopia`, `protanopia`, `tritanopia` (`shmup_feat.md` §21); any
 other value resolves to `standard`. It only changes which sprite variants the renderer draws
 ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)). The save format
-stays **version 1**: a save written before M2-02 has `display: {}`, which resolves to `standard` —
+stayed **version 1** then (M2-16 later made it 2): a save written before M2-02 has `display: {}`,
+which resolves to `standard` —
 no migration step was needed, and `serializeSave` now writes the field.
 
 **The M2-08 display options.** `display.scaleMode` is one of `SCALE_MODES` — `integer` (the
@@ -601,7 +622,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 
 | To add… | Do this |
 |---|---|
-| A field or format change | Bump `SAVE_VERSION`, append a `SaveMigration` to `SAVE_MIGRATIONS` (never edit a shipped step), read / default the field in `sanitizeSave`, write it in `serializeSave` in a **fixed** position, and add a fixture of the old version to `packages/core/test/save/fixtures/` with a migration test (M2-16's v2 is the model: `migrateV1`, `save-v1.json`, `save-v2.test.ts`) |
+| A field or format change | Bump `SAVE_VERSION`, append a `SaveMigration` to `SAVE_MIGRATIONS` (never edit a shipped step), read / default the field in `sanitizeSave`, write it in `serializeSave` in a **fixed** position, and add a fixture of the old version to `packages/core/test/save/fixtures/` with a migration test (R2-01's v3 is the model: `migrateV2`, `save-v2-from-v1.json`, `save-v3.test.ts`; M2-16's v2 before it) |
 | A user option | A field in `UserOptions` / `DEFAULT_USER_OPTIONS`, read defensively in `resolveUserOptions`, serialised in `serializeSave` (a fixed position), defaulted by a migration for older saves; if it changes live, a new `UserOptionKind` code (appended) and a case in `connectOptionEvents`; if it affects the simulation it belongs in `GameConfig` — the save may hold the player's choice, folded into the next games' configs by `userGameOverrides` / `withUserGameOptions` (M2-16) |
 | An Options item | A row on the page it belongs to (`ControlsScene` / `DisplayScene` / `GameOptionsScene` — the root only holds the volumes and the pages since M2-16): a widget, its index in the page's `…Item` const (BACK moves down), a `userOption` push on `Changed` for a live option, the value in the page's `close()`, a label id in the UI string table; keep within 31 items, the flow's 512 string slots (the constructor throws otherwise) and the panel (ten rows of 14 px) |
 | A statistic | A counter in `SaveStats`, its default in `createDefaultSave`, `counter()` in `sanitizeSave`, a field in `serializeSave`, `save.count('…')` where it happens |
@@ -615,6 +636,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 |---|---|
 | `packages/core/test/save/save.test.ts`, `save-edge.test.ts` | Round trip; the v0 fixture migrated field by field (rounded / clamped volumes, rows refiled as `meter-normal`, unlocks dropped, odd shapes never throwing); `migrateSave` with missing / mismatched steps and every malformed version; `parseSave` on empty / blank / truncated / BOM text and throwing or garbage-returning migrations; `__proto__` / `constructor` keys; sanitiser limits (32-character keys, 32 tables, cut texts, zero scores, stable ties, counters, `-0`); canonical serialisation; `loadSave` with non-string / throwing storages and which statuses are copied to `save.corrupt`; insertion at the table edges; `SaveStore` dirty rules per load status, the table limit, the counter cap, overlapping writes succeeding / failing |
 | `packages/core/test/save/save-v2.test.ts`, `-edge.test.ts` | M2-16: the version-1 fixture migrated (options kept, the new groups unset, stats kept), the co-op / practice rows moved into their own tables, the v2 layout written on the next flush, the controls and game options round-tripped and read defensively |
+| `packages/core/test/save/save-v3.test.ts` | R2-01: the `save-v2-from-v1.json` fixture (a version-2 document as v1.0.0 writes it) migrated — options, stats and unlocks carried over as they are, the tables archived under `legacyScores`, v2's tables empty so the hi-score screen shows its default rows; the older fixtures migrating through to 3; the v3 layout written on the next flush and round-tripping; a broken `legacyScores` sanitised by the hiScores rules with a table count of its own; `recordScore` / `renameScore` never writing the archive; and W4-14 — an older build's view of a newer document (defaults, text to `save.corrupt`) |
+| `test/integration/e2e-save-format.test.ts` | R2-01: the browser specs' mirror `test/e2e/save-format.ts` `SAVE_FORMAT` equals core's `SAVE_VERSION` (3), so a format bump cannot leave the e2e specs behind |
 | `packages/core/test/config/config-user-options.test.ts`, `-edge.test.ts`, `config-game-options*.test.ts` | Defaults, `resolveUserOptions` (rounding, clamping, `-0`, profile-id limits, non-object groups, frozen fresh results; M2-02: every `BULLET_PALETTES` name kept, anything else → `standard`; M2-16: the controls and game fields, `resolveBindingOverrides`), `volumeGain` at every level and out of range; M2-16: `userGameOverrides` / `withUserGameOptions` |
 | `packages/core/test/ui/ui-choice.test.ts`, `-edge.test.ts` | The `Choice` widget: 1–255 labels, index clamping, Left / Right wrap and held repeat, Up / Down never changing it, Confirm stepping, two-label toggling, a disabled item, the dimmed label, the string slot rewritten only on a label change |
 | `packages/core/test/scenes/scenes-options.test.ts`, `-edge.test.ts`, `scenes-options-display-edge.test.ts` | Opening from the title and the pause menu and back, drawing, the live `UserOption` events (M2-02: BULLETS stepping the palettes, its event and the palette saved on BACK; M2-08: SCALE / SHAKE / FLASHES / HITBOX — wraps, no-op toggles, the Back button, the pause menu; since M2-16 on the DISPLAY page), Back during the open lock, sliders at their ends, a single profile, a profile stepped away and back, unknown / `null` active profiles, saving on BACK, the save re-read per open; hi-scores — recorded on game over and stage clear, `NEW HI-SCORE`, quitting and RETRY recording nothing, starts counted, a Hard game's table, the stage reached, a failing storage never breaking the flow, **the hi-score persisting across a new game instance on the same memory storage** |
@@ -627,7 +650,7 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | `apps/*/test/boot/boot-wiring.test.ts` | Web: the saved choice through the save, CONTROLS entries, a pick winning over `?profile=`, out-of-range picks, `?debounce=` kept, a corrupt save, the save on prefixed `localStorage`. TV: CONTROLS, a live switch registering keys, a pick of the profile in use registering nothing, a saved retired profile id resolving to `REMOTE`, a corrupt save, and the manual M1-17 check driven by remote keys only (SFX + CONTROLS saved on Back, kept after a relaunch) |
 | `test/e2e/bullet-palette.spec.ts` | M2-02, web build: BULLETS → DEUTERANOPIA saved on Back and drawn by the next boot's bullets; without a save none of its colours (the control) |
 | `test/e2e/display-options.spec.ts` | M2-08, web keyboard and the Tizen build's remote keys: SCALE / SHAKE / FLASHES / HITBOX applied live, saved on Back (`display` in `shmup-cup:save.v1`) and applied at the next boot (`stretch` fills the canvas, markers on the ship); without a save the frame is letterboxed and no marker shows |
-| `test/e2e/game-options.spec.ts`, `rebind.spec.ts` | M2-16: a version-1 save booting and rewritten as version 2 (the co-op row moved), LIVES 5 and ONE BUTTON reaching the next game, the rebind screen (Escape cancelling, RESET, SHOT → J applied after a reload), SOCD / DEBOUNCE saved; Tizen from disk: LIVES 1 and a POWER-UP ↔ CH− swap with the remote, kept across a relaunch |
+| `test/e2e/game-options.spec.ts`, `rebind.spec.ts` | M2-16: a version-1 save booting and rewritten in the current format (since R2-01 version 3 — the tables archived, the co-op row moved), LIVES 5 and ONE BUTTON reaching the next game, the rebind screen (Escape cancelling, RESET, SHOT → J applied after a reload), SOCD / DEBOUNCE saved; Tizen from disk: LIVES 1 and a POWER-UP ↔ CH− swap with the remote, kept across a relaunch |
 | `test/e2e/options.spec.ts` | Web build: OPTIONS opens the screen (`data-shmup-scene="options"`), a MUSIC change is written to `shmup-cup:save.v1` on Esc and read again after a reload, `data-shmup-boot-ms` < 10 s; a corrupt save boots with defaults, is copied to `shmup-cup:save.corrupt` and replaced on Back. Tizen build from `file://`: SFX and CONTROLS changed with the remote only, saved on Back, kept after a reload |
 
 ## Gotchas
@@ -648,7 +671,8 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
 | An old `shmup-cup:input.profile` entry does nothing | Since M1-17 the choice lives in the save document; the old key is not read |
 | A test that pressed Down to reach BULLETS, SCALE or BACK lands elsewhere | M2-16 moved the display rows to the DISPLAY page (`OptionsItem.Display` 4, then `DisplayItem`) and the profile to the CONTROLS page; `OptionsItem.Back` is 6 (it was 10 in M2-09) — navigate by the constants, or press Back |
 | A LIVES / AUTOFIRE change did nothing in the paused game | Intended: the sim-affecting options reach the next game or a RETRY STAGE — [options-rebinding-and-accessibility.md](options-rebinding-and-accessibility.md#sim-affecting-options-reach-the-next-game-never-the-one-in-play) |
-| A saved `version` reads 2 after one launch of the new build | The version-1 save was migrated and rewritten at the first flush (the storage key stays `save.v1`) |
+| A saved `version` reads 3 after one launch of the new build | The version-2 (v1) save was migrated and rewritten at the first flush — its tables moved to `legacyScores` (the storage key stays `save.v1`) |
+| v1's scores are gone from the HI-SCORE screen | R2-01 archived them under `legacyScores` (W4-13): v2's tables start empty, the archive is kept but shown nowhere — no UI reads it yet; only the Steam achievements still credit the v1 rows |
 | BOSS HP changed nothing in the running game until BACK | Intended: the HUD reads the saved option (`Hud.showBossHp` from `save.options.display`), and the live `BossHpBar` event has no consumer |
 | SHAKE / FLASHES in the save are ignored at boot | The host passed `ShellOptions.effects.screenShake` / `reduceFlashing` — an explicit host setting wins until the Options screen changes it |
 | BULLETS shows `STANDARD` after a relaunch although another palette was picked | The screen was not closed with BACK / Back (only closing writes), or the save predates the pick; the palette itself is applied live when stepped |
@@ -695,3 +719,10 @@ title — the M1-17 acceptance test in `scenes-options.test.ts`.
   `-arcade`; `MAX_HI_SCORE_TABLES` 64), assisted rows (`assisted`, drawn as `*`) and `unlocks` —
   all in format 2 without a migration; the replay library under its own keys beside the save
   ([extra-modes-and-replays.md](extra-modes-and-replays.md)).
+- **R2-01** (done, v2) — the 640×360 flip's save **format 3**: `migrateV2` archives v1's hi-score
+  tables under the read-only `legacyScores` and v2 starts empty (W4-13), with no UI for the archive
+  in this step (W4-8) and the Steam achievements reading `hiScores` ∪ `legacyScores`; a v1.x build
+  reading this document falls back to defaults with the text kept under `save.corrupt` (W4-14);
+  the browser specs' mirror `test/e2e/save-format.ts` `SAVE_FORMAT` = 3 is pinned by
+  `test/integration/e2e-save-format.test.ts` — **R2-02 must not bump any format** (plan_resolution.md
+  §3.4, [handoffs-w4.md](../v2-run/handoffs-w4.md)).

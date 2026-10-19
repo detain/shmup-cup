@@ -40,7 +40,7 @@ magnet).
 ## The picture at a glance
 
 ```text
- OPTIONS (OptionsScene — title / pause menu)          the save's options (core/save, format 2)
+ OPTIONS (OptionsScene — title / pause menu)          the save's options (core/save, format 3)
    MASTER / MUSIC / SFX ── live UserOption ──────────► audio.* (presentation)
    CONTROLS ─► ControlsScene                          input.profileId            (live, M1-17)
      PROFILE ── live InputProfile ─────────────────►   input.autofire / autofireInterval ─┐
@@ -343,7 +343,11 @@ press), the counted presses expire with the window, and the string became
 
 ## Save version 2 (`core/save`)
 
-`SAVE_VERSION` is **2**; the storage key stays **`save.v1`** (the format family's key — the
+This is M2-16's format; v2's **R2-01 later made `SAVE_VERSION` 3** — its step `migrateV2` moves the
+version-2 document's `hiScores` as they are under the read-only `legacyScores` and starts v2's tables
+empty (the story is in
+[saves-and-options.md](saves-and-options.md#migrations-save_migrations)). At M2-16 `SAVE_VERSION` was
+**2**; the storage key stays **`save.v1`** (the format family's key — the
 document's `version` drives the migrations). Version 2 adds the controls fields and the game options:
 
 ```json
@@ -559,7 +563,8 @@ In a browser the save is `localStorage["shmup-cup:save.v1"]`; in a dev / test bu
   release checklist on the TV (the CONTROLS / GAME pages and the rebind screen with the remote).
 - **M3-01** (done) — the GAME page's OPT RECOVERY, SPEED and INVINCIBLE (`GameOptionsItem` 6–8,
   BACK 9) and the CONTROLS page's RUMBLE (`ControlsItem.Rumble` 8, BACK 9) — `options.play`
-  (`PlayOptions`), still save format 2; assisted runs flagged in hi-score rows and replay headers;
+  (`PlayOptions`), still save format 2 at M3-01 (v2's R2-01 later made it 3); assisted runs flagged
+  in hi-score rows and replay headers;
   the scene flow recorded as whole-run replays; the new labels in the string table
   ([extra-modes-and-replays.md](extra-modes-and-replays.md#assists-and-feel-playoptions-the-game-and-controls-pages)).
 - **M3-03** — localization: a language option picking a `content/strings/` table and bitmap font

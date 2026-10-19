@@ -151,6 +151,10 @@ secret codes. **EXTRA → REPLAYS** lists what is kept:
 - **LAST GAME** is always the game you finished last — a new game replaces it.
 - **SAVED 1–3** are the ones you kept. Each line shows the ship and difficulty, the zone the run
   reached, its score and a red `*` for an **assisted** game.
+- A replay left in a slot by **v1** (the 384×216 game) shows greyed as **`V1 REPLAY`** with no
+  score: v2 cannot play it. PLAY and KEEP answer `RECORDED BY V1: CANNOT PLAY`, SHARE is not
+  offered, and DELETE is the only thing that removes it — the game keeps it until you decide
+  (the update never deletes your replays by itself).
 - OK on a line with a replay opens its actions:
 
 | Action | What it does |
@@ -196,6 +200,9 @@ free SAVED slot, ready to PLAY. Anything else you paste is ignored.
 - The browser must allow clipboard access: it works at `localhost` and on `https://` pages; on a
   plain `http://` address from another computer SHARE says `COULD NOT SHARE`.
 - A shared replay only plays in sync on the **same build** of the game.
+- A replay recorded by **v1** (the 384×216 game) cannot be imported: the page briefly shows
+  `RECORDED BY V1: CANNOT PLAY` and nothing is stored. A v1 replay you kept before the update
+  sits in its slot as `V1 REPLAY` (delete it there).
 - The TV has no clipboard, so SHARE is not offered there.
 
 ## Assists, option recovery and rumble
@@ -270,5 +277,7 @@ monitors:
 | `NO FREE SLOT: DELETE ONE FIRST` with a free slot | The kept replays together are too long — delete a long one |
 | `REPLAY OUT OF SYNC` | The replay was recorded by another build of the game (or the game's data changed) — expected between builds. Within the same build please report it, with the replay's text if you can (SHARE) |
 | `COULD NOT SHARE` | The browser refused clipboard access (open the game at `localhost` or over `https://`, and keep the page in front) |
-| A pasted replay did not appear | It was not a Shmup Cup replay, it was cut short, or every SAVED slot is taken — delete one and paste again |
+| A pasted replay did not appear | It was not a Shmup Cup replay, it was cut short, or every SAVED slot is taken — delete one and paste again. A replay recorded by **v1** says `RECORDED BY V1: CANNOT PLAY`: the 640×360 game cannot play the old recordings |
+| A slot shows `V1 REPLAY` and cannot be played | It is a replay the v1 build recorded — v2 keeps it but refuses to play it. DELETE is the way to clear the slot |
+| My high scores are gone after the update | They are not: v2 moved v1's tables into your save's archive and starts its own tables **empty**. The archived scores stay kept (and still earn your desktop-app Steam achievements), they just no longer show on the HI-SCORE screens |
 | The gamepad does not rumble | RUMBLE is OFF on the CONTROLS page, or the pad (or the browser) cannot rumble. The TV remote never rumbles |

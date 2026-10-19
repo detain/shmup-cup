@@ -180,8 +180,8 @@ and going back from EXTRA to EDIT resets an extra choice to the slot's first. Un
 **Unlocks** (`core/save` `SaveUnlocks`, `UNLOCK_IDS` `extraEdit` / `loop2`): reaching **any**
 ending unlocks both (`SaveStore.unlock` → `true` when it was locked; the ending card then says
 `EXTRA EDIT AND LOOP 2 UNLOCKED`), and the title's EXTRA EDIT code unlocks Extra Edit. Unlocks are
-never taken back; `SaveData.unlocks` is written only once something is unlocked, so the save stays
-format 2 (no migration).
+never taken back; `SaveData.unlocks` is written only once something is unlocked, so the save stayed
+format 2 through M3-01 (no migration — v2's R2-01 later made it 3 for the score archive).
 
 ## Secret codes (`SecretCodeTracker`)
 
@@ -217,7 +217,7 @@ was re-blessed in the build commit; every other golden and demo changed only in 
 ## Assists and feel (`PlayOptions`, the GAME and CONTROLS pages)
 
 The save's options gained `play` (`core/config` `PlayOptions`, `DEFAULT_PLAY_OPTIONS`; the save
-stays format 2 — `resolvePlayOptions` reads a missing or odd field as its default):
+stayed format 2 through M3-01 — `resolvePlayOptions` reads a missing or odd field as its default):
 
 | Row (page) | Field | Kind | Effect |
 |---|---|---|---|
@@ -265,12 +265,17 @@ The M1-19 replay records **one World** in bare gameplay. A game played through t
 the flow decides **between** ticks. A `RunReplay` records it as **segments**, one per World:
 
 ```text
-RunReplayJson { kind: 'run-replay', formatVersion: 1, buildId, mode, label, score, reached, assists,
+RunReplayJson { kind: 'run-replay', formatVersion: 2, buildId, mode, label, score, reached, assists,
   segments: [ { replay: ReplayJson   ← the M1-19 encoding: header (config, assists), RLE input,
                                         hashes every 600 ticks, final hash
                 start: {…} | null      ← what the flow put into the World before its first tick
                 actions: [tick, code | param << 8, …] } … ] }
 ```
+
+(R2-01 bumped `RUN_REPLAY_FORMAT_VERSION` to **2** with `REPLAY_FORMAT_VERSION`: v1 wrote 1, and
+`decodeRunReplay` refuses an older run format — or a segment recorded at another frame — with a
+`ReplayVersionError`, as `decodeReplay` does
+([debug-and-replays.md](debug-and-replays.md#replays-corereplay)).)
 
 - **The header** gained `assists` (`ReplayHeader.assists`, the run's `AssistFlag`s — informative;
   `createReplayHeader` defaults it from `assisted` and `config.invincible`, `decodeReplay` reads a
@@ -344,6 +349,14 @@ that is not a whole number 0–3 is an empty slot (the test agent found `keep(1.
 `remove(1.5)` wrote a stray `replay.1.5` key — fixed). Writes are best effort: a failing write keeps
 the replay for the session.
 
+**A v1 replay's slot is never auto-deleted (R2-01 — W4-7).** One slot escapes the clearing rule:
+text that `classifyRunReplayText` reads as `'legacy'` (a `ReplayVersionError` — recorded by v1, not
+broken) keeps its slot and text, with a summary marked `ReplaySummary.legacy` whose other fields are
+empty (`''`, 0, `false` — the text is not read further). `replay(slot)` is `null` for it, `keep`
+returns −1, `importText` answers `ReplayStoreResult.Legacy` (the web paste notice, below), and
+`remove` works — the player deletes it, nothing else ever does. A kept legacy text still counts
+toward `MAX_KEPT_REPLAY_TEXT` with the other kept slots.
+
 A 3.5-minute zone is a few hundred bytes of input; the start states and hashes add a little per
 segment, so a whole campaign run is far below the cap.
 
@@ -355,6 +368,14 @@ filled slot opens the actions (`ReplayActionItem`): PLAY, KEEP (last game only),
 the host has `shareReplay`), DELETE, BACK; a one-line message answers (`KEPT IN SAVED n`, `NO FREE
 SLOT: DELETE ONE FIRST`, `REPLAY COPIED`, `COULD NOT SHARE`, `REPLAY DELETED`, `REPLAY CANNOT BE
 READ`). The rows' texts are built on `enter` and after an action; ticking allocates nothing.
+
+**The `V1 REPLAY` row (R2-01 — W4-7).** A slot whose summary is `legacy` shows the UI string
+`replayLegacy` — `V1 REPLAY` — greyed (`UI_COLORS.disabled`) and without a score: the screen draws
+nothing from the unread archive. Its actions open with SHARE **disabled** (a v1 replay is
+delete-only); PLAY and KEEP stay focusable and answer the string `replayFromV1` —
+`RECORDED BY V1: CANNOT PLAY` — with the `PowerUpDenied` sound, refusing without touching anything;
+DELETE empties the slot as always. The strings ride `DEFAULT_UI_TEXT` and the three content tables
+(`content/strings/`).
 
 **`ReplayScene`** (PLAY): a full screen showing the playback's World with its own HUD list;
 `REPLAY  X1` at the top (`ASSISTED` for an assisted run); Right / Left step through
@@ -378,6 +399,14 @@ listener). The replay is locked to its build only by its hashes: a replay of ano
 until its first mismatching hash. The TV has no clipboard, so the Tizen app passes no hook and the
 browser offers no SHARE there. Both apps pass `__SHMUP_BUILD__` as the build id the replays record
 (`WebAppResources.buildId`, `TizenAppResources.buildId`, `ShellOptions.buildId`).
+
+**A pasted v1 replay is refused with a notice (R2-01 — W4-7).** `listenForPastedReplays` gained an
+`onResult` callback; the web app answers `ReplayStoreResult.Legacy` with `pastedReplayNotice` —
+the UI string `replayFromV1` in the player's language (`SceneFlow.text`, else the built-in table) —
+shown by the page notice (`createPageNotice` → a `PageNotice`): one `role="status"` DOM element
+over the canvas, added to the body on the first notice and reused, up for `PAGE_NOTICE_MS` (4 s,
+the time restarting on a newer text), never taking a click. The text is **not stored** (the slot
+keeps whatever was in it); every other import result stays silent, as since M3-01.
 
 ## Budgets
 
@@ -457,7 +486,8 @@ is the replay JSON — paste it on another browser's page to import it). The unl
 | `packages/core/test/world/world-m3-content.test.ts`, `world-m3-edge.test.ts` | The milking cap (script- and boss-spawned kinds only, per World; its arithmetic and rule bounds), the remix merge and its checks, revenge from every kill on loop 2, config validation (loop, clock, assists, lives up to nine), `PlayOptions` read defensively and folded into configs, unlocks and assisted rows saved only when set; loop bullet speed per loop and its cap, the caravan's limits and whole-second bonus, the new hi-score table keys |
 | `packages/input-web/test/gamepad/gamepad-rumble.test.ts`, `packages/shell/test/dispatch/dispatch-rumble.test.ts`, `packages/shell/test/boot/boot.test.ts` | `rumblePad` and `WebInput.rumble`'s seat routing; `connectRumbleEvents` gated by the option; the boot wiring (library loaded before the title, rumble only with a capable adapter) |
 | `packages/shell/test/storage/storage-replays.test.ts` | The library over the real `createWebStorage`: the longest accepted replay persists across a relaunch; a full library plus a maximal save, its corrupt copy and an input profile raise no storage issue |
-| `apps/web/test/boot/replay-share.test.ts` | `copyReplayText` (with and without a clipboard, a refusal) and `listenForPastedReplays` (only run replays, removal) |
+| `apps/web/test/boot/replay-share.test.ts` | `copyReplayText` (with and without a clipboard, a refusal) and `listenForPastedReplays` (only run replays, removal); R2-01: `pastedReplayNotice` (`Legacy` → the `replayFromV1` text, every other result `null`) and the `PageNotice` (status role, the timed show / hide) |
+| `packages/core/test/replay/replay-version.test.ts`, `replay-version-shipped.test.ts` | R2-01 refusals on this page's subjects: the library keeping a v1 slot (legacy summary, `replay()` null, `keep` −1, `importText` → `Legacy`, REMOVE works; **permanent**, over the fixture `fixtures/run-replay-v1.json`) and every shipped golden / demo refused as v1's (**73 tests, deleted by R2-03** with `test/golden/stale.ts`) — detail in [debug-and-replays.md](debug-and-replays.md#tests) |
 | `test/integration/extra-edit-runtime.test.ts`, `arsenal-runtime.test.ts` | Every Extra Edit weapon in a real World (the Control Missile following the ship, the Upper Missile and Hawk Wind's switch at the middle, Small Spread and 2-Way Back backwards, the Back Double, the Spread Gun's second equip); every one within its caps and bounds on the test range |
 | `test/integration/loops-runtime.test.ts` | Every shipped campaign zone has a remix merged into its timeline from loop 2 |
 | `test/playtest/boss-rush.test.ts` | The 4-way bot clears the shipped boss rush (god mode, full loadout) |
@@ -477,10 +507,11 @@ is the replay JSON — paste it on another browser's page to import it). The unl
 | KEEP says `NO FREE SLOT: DELETE ONE FIRST` with a free slot | The kept replays together would pass `MAX_KEPT_REPLAY_TEXT` (130,000 characters) — delete a long one |
 | The last game was not saved | Its text passed `MAX_REPLAY_TEXT` (120,000), a World passed `SEGMENT_CAPACITY` or the run passed `MAX_RUN_SEGMENTS`, or the debug tools edited a World (`noteWorldEdited`) |
 | SHARE is missing | The TV (no clipboard — no `shareReplay`), or a page served over plain `http` from another host (no `navigator.clipboard`: SHARE says `COULD NOT SHARE`) |
-| A pasted replay did not appear | The text lacked `"run-replay"`, was invalid, too long, or the kept slots are full / over budget (`importText`'s result) |
+| A pasted replay did not appear | The text lacked `"run-replay"`, was invalid, too long, or the kept slots are full / over budget (`importText`'s result); a v1 replay says `RECORDED BY V1: CANNOT PLAY` in the page notice |
 | The game runs slowly but the score is marked `*` | SPEED is 75 / 50 % on the GAME page — the assist marks the run; set it back to 100 % |
 | A paused FULL POWER did nothing | Once per World (`GameScene.secretUsed`, reset with each World), and only for alive ships |
 | Rumble never happens | RUMBLE is off, the pad has no `vibrationActuator` (the TV remote never rumbles), or the adapter has no `rumble` |
+| A REPLAYS slot reads `V1 REPLAY` | It holds a replay v1 recorded (format 1, 384×216) — R2-01 refuses it: PLAY / KEEP answer `RECORDED BY V1: CANNOT PLAY`, SHARE is disabled, only DELETE removes it (the library never auto-deletes it — W4-7) |
 
 ## Next steps that build on this page
 
@@ -491,3 +522,8 @@ is the replay JSON — paste it on another browser's page to import it). The unl
   [visual-and-mechanic-extras.md](visual-and-mechanic-extras.md).
 - **M3-03** — localization of the new labels (`content/strings/`); on Steam, cloud saves for the
   replay library's keys.
+- **R2-01** (done, v2) — the replay formats went to **2**: v1's recordings are refused with a
+  `ReplayVersionError`, the library keeps a v1 slot delete-only with a `V1 REPLAY` row, a paste of
+  one is refused in the page notice, and the attract loop skips the nine still-v1 demos (W4-9) —
+  all until R2-03 re-blesses and re-records them
+  ([debug-and-replays.md](debug-and-replays.md#replays-corereplay)).

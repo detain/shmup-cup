@@ -131,7 +131,10 @@ a `description` — `content/demos/<id>.replay.json`, loaded by `core/data` as t
   `document`) and `ContentDb.demoIndex`.
 - **Decoding.** `createSceneFlow` decodes every demo once (`decodeReplay` → `SceneFlow.demos`); a
   demo that does not decode or names a stage the content lacks is left out, and the loop plays the
-  others.
+  others. **Since R2-01 the nine shipped demos are all v1 recordings** — `decodeReplay` now refuses
+  a format-1 document (or a 384×216 header) with a `ReplayVersionError`, so every one of them is
+  left out: the loop plays no demo and starts at the hi-score tables until R2-03 re-records them
+  at 640×360 (owner decision W4-9 — the demos stay stale by design, the skip is not a bug).
 - **Recording.** `test/golden/demos.ts` records them: `DEMO_SCENARIOS` — the 4-way playtest bot
   (`test/playtest/four-way-bot.ts`) with god mode, `DEMO_TICKS` = **2,400** ticks (40 s) from the
   zone's start, seeds 101…109, zones B, E and H in the Direct-mode MANTA, the others in the
@@ -140,7 +143,10 @@ a `description` — `content/demos/<id>.replay.json`, loaded by `core/data` as t
 - **Locking.** `test/golden/demos.test.ts` (part of `pnpm test`) plays every committed file back
   through `createDemoPlayback` — the attract loop's own path — and through `playReplay`, requiring
   **every state hash** to match; it also checks that the content lists exactly the scenarios and
-  that the format sample is a valid demo. **`pnpm golden:update` re-records the demos with the
+  that the format sample is a valid demo. Since R2-01 the playback cases are **skipped by the
+  `GOLDENS_STALE` gate** (`test/golden/stale.ts`): the committed files are still v1 recordings and
+  the same `ReplayVersionError` that makes the attract loop skip them refuses them here, until R2-03
+  re-records them (W4-9). **`pnpm golden:update` re-records the demos with the
   golden replays** (`scripts/golden-update.mjs` runs the whole `test/golden` folder with
   `SHMUP_GOLDEN_UPDATE=1`), so a simulation change re-blesses both in the same commit — with the
   reason in the commit message. Prettier skips the files (`.prettierignore`); never edit them by
