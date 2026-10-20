@@ -102,11 +102,6 @@ import {
   parseFxContent,
 } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
-import {
-  CONTENT_PORT_PENDING,
-  PORT_PENDING_REASON,
-  itPortPending,
-} from '../../packages/core/test/helpers/port-pending.js';
 import { findMissingSprites } from '../../scripts/assets/manifest.mjs';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
@@ -625,44 +620,41 @@ describe('integration: content/ validates', () => {
   // that appeared while it was armed: one of an earlier event still standing when the window arms
   // could be shot in place of one of the window's own (M2-13 review — the prism gallery opened with
   // a gallery turret left standing). Played from the stage's start, nothing shot.
-  itPortPending(
-    'leaves no ground enemy of an earlier event standing when a `ground` bonus window arms',
-    () => {
-      const db = shippedDb();
-      const stages = db.stages.filter((stage) =>
-        stage.events.some((e) => e.type === 'bonus' && e.entrance === 'ground'),
+  it('leaves no ground enemy of an earlier event standing when a `ground` bonus window arms', () => {
+    const db = shippedDb();
+    const stages = db.stages.filter((stage) =>
+      stage.events.some((e) => e.type === 'bonus' && e.entrance === 'ground'),
+    );
+    expect(stages.map((stage) => stage.id).sort()).toEqual(['bonus-range', 'zone-g']);
+    for (const stage of stages) {
+      const game = createGame(
+        createHeadlessPlatform(),
+        { seed: 1, stage: stage.id, autofire: false, remoteMode: false },
+        db,
       );
-      expect(stages.map((stage) => stage.id).sort()).toEqual(['bonus-range', 'zone-g']);
-      for (const stage of stages) {
-        const game = createGame(
-          createHeadlessPlatform(),
-          { seed: 1, stage: stage.id, autofire: false, remoteMode: false },
-          db,
-        );
-        const world = game.world;
-        world.debugFlags.godMode = true;
-        spawnPlayer(world.players[0], world.camera);
-        const bonus = world.bonus;
-        for (let e = 0; e < bonus.count; e++) {
-          if (bonus.kind[e] !== BonusEntrance.Ground) continue;
-          for (let t = 0; t < 60 * 60 * 10 && bonus.armed[e] === 0; t++) {
-            game.step();
-            game.events.clear();
-          }
-          expect(bonus.armed[e], `${stage.id}: entrance ${String(e)} arms`).toBe(1);
-          // Every ground enemy up now appeared in the window (at its first tick, usually none).
-          const inWindow = world.enemies.stats.groundSpawned - bonus.groundSpawned0[e];
-          const standing = world.enemies.enemies
-            .filter((en) => en.state === EnemyState.Live && en.anchor !== BodyAnchor.Air)
-            .map((en) => `${db.enemies[en.specIndex].id} at ${String(Math.round(en.x))}`);
-          expect(
-            standing.length,
-            `${stage.id}: camera ${String(Math.round(world.camera.x))}, ${standing.join(', ')}`,
-          ).toBeLessThanOrEqual(inWindow);
+      const world = game.world;
+      world.debugFlags.godMode = true;
+      spawnPlayer(world.players[0], world.camera);
+      const bonus = world.bonus;
+      for (let e = 0; e < bonus.count; e++) {
+        if (bonus.kind[e] !== BonusEntrance.Ground) continue;
+        for (let t = 0; t < 60 * 60 * 10 && bonus.armed[e] === 0; t++) {
+          game.step();
+          game.events.clear();
         }
+        expect(bonus.armed[e], `${stage.id}: entrance ${String(e)} arms`).toBe(1);
+        // Every ground enemy up now appeared in the window (at its first tick, usually none).
+        const inWindow = world.enemies.stats.groundSpawned - bonus.groundSpawned0[e];
+        const standing = world.enemies.enemies
+          .filter((en) => en.state === EnemyState.Live && en.anchor !== BodyAnchor.Air)
+          .map((en) => `${db.enemies[en.specIndex].id} at ${String(Math.round(en.x))}`);
+        expect(
+          standing.length,
+          `${stage.id}: camera ${String(Math.round(world.camera.x))}, ${standing.join(', ')}`,
+        ).toBeLessThanOrEqual(inWindow);
       }
-    },
-  );
+    }
+  });
 });
 
 describe('integration: content/audio (M1-15)', () => {
@@ -1120,36 +1112,32 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
     expect(mid[mid.length - 1]?.sprite).toBe('bg/azure-verge');
   });
 
-  itPortPending(
-    'shapes its terrain: floors, the floor-and-ceiling corridor, an open arena for the boss',
-    () => {
-      const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-a' }, db);
-      const map = game.world.terrain;
-      expect(map).not.toBeNull();
-      if (map === null) return;
-      const ceiling = (x: number): boolean => terrainAt(map, x, 0) !== TerrainType.Empty;
-      const floor = (x: number): boolean =>
-        terrainAt(map, x, PLAYFIELD_H - 1) !== TerrainType.Empty;
-      const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-      let ceilingColumns = 0;
-      for (let x = 0; x < stage.length + PLAYFIELD_W; x += 4) {
-        if (ceiling(x)) {
-          ceilingColumns++;
-          // A ceiling only in the corridor (section 3, a little beyond its checkpoint and end).
-          expect(x, `ceiling at ${String(x)}`).toBeGreaterThanOrEqual(v1x(3400));
-          expect(x, `ceiling at ${String(x)}`).toBeLessThan(v1x(6500));
-        }
+  it('shapes its terrain: floors, the floor-and-ceiling corridor, an open arena for the boss', () => {
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-a' }, db);
+    const map = game.world.terrain;
+    expect(map).not.toBeNull();
+    if (map === null) return;
+    const ceiling = (x: number): boolean => terrainAt(map, x, 0) !== TerrainType.Empty;
+    const floor = (x: number): boolean => terrainAt(map, x, PLAYFIELD_H - 1) !== TerrainType.Empty;
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    let ceilingColumns = 0;
+    for (let x = 0; x < stage.length + PLAYFIELD_W; x += 4) {
+      if (ceiling(x)) {
+        ceilingColumns++;
+        // A ceiling only in the corridor (section 3, a little beyond its checkpoint and end).
+        expect(x, `ceiling at ${String(x)}`).toBeGreaterThanOrEqual(v1x(3400));
+        expect(x, `ceiling at ${String(x)}`).toBeLessThan(v1x(6500));
       }
-      expect(ceilingColumns).toBeGreaterThan((v1x(6000) - v1x(3500)) / 4);
-      for (const x of [600, 1000, 4000, 5500, 7000].map(v1x))
-        expect(floor(x), `floor at ${String(x)}`).toBe(true);
-      // The calm and the boss arena (the whole view at the WARNING and beyond): open space.
-      for (let x = v1x(8000); x < stage.length + PLAYFIELD_W; x += 4) {
-        expect(ceiling(x) || floor(x), `rock at ${String(x)}`).toBe(false);
-      }
-      expect(warningX).toBeGreaterThan(v1x(8000));
-    },
-  );
+    }
+    expect(ceilingColumns).toBeGreaterThan((v1x(6000) - v1x(3500)) / 4);
+    for (const x of [600, 1000, 4000, 5500, 7000].map(v1x))
+      expect(floor(x), `floor at ${String(x)}`).toBe(true);
+    // The calm and the boss arena (the whole view at the WARNING and beyond): open space.
+    for (let x = v1x(8000); x < stage.length + PLAYFIELD_W; x += 4) {
+      expect(ceiling(x) || floor(x), `rock at ${String(x)}`).toBe(false);
+    }
+    expect(warningX).toBeGreaterThan(v1x(8000));
+  });
 
   it("keeps HB-01's two lanes 16 px apart with the core's lane between them", () => {
     const warning = stage.events.find((e) => e.type === 'warning');
@@ -1449,71 +1437,68 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     expect([...(head?.requires ?? [])].sort()).toEqual(['fang-bottom', 'fang-top']);
   });
 
-  itPortPending(
-    'gives MAGMA DEEP erupting volcanoes, falling rocks, a dive into a destructible maze and a shielded core battleship',
-    () => {
-      const stage = stageOf('zone-d');
-      const placed = (script: string, ground: string): number =>
-        stage.events.filter(
-          (e) =>
-            (e.type === 'spawn' || e.type === 'formation') &&
-            db.enemies[e.enemyId].script === script &&
-            db.enemies[e.enemyId].ground === ground,
-        ).length;
-      // Erupting volcanoes on the surface floor, rocks that drop from the cave roofs.
-      expect(placed('volcano.lob', 'floor')).toBeGreaterThanOrEqual(5);
-      expect(placed('rock.fall', 'ceiling')).toBeGreaterThanOrEqual(6);
-      // The dive: a map taller than the playfield, a scroll stop that pans the camera down into it.
-      expect(stage.tilemap?.rowsTall ?? 0).toBeGreaterThanOrEqual(50);
-      const dive = stage.camera.find((k) => (k.yTo ?? 0) >= 150);
-      expect(dive?.hold ?? 0).toBeGreaterThan(0);
-      const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-      expect(dive?.x ?? warningX).toBeLessThan(warningX / 2);
-      // The destructible maze below: brick walls (breakable tiles), each with an open gap.
-      const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
-      const map = game.world.terrain;
-      const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
-      const brick = (tileset?.tiles.findIndex((t) => t.name === 'brick') ?? -1) + 1;
-      expect(tileset?.tiles[brick - 1]?.hp ?? 0).toBeGreaterThan(0);
-      if (map === null) throw new Error('no terrain');
-      const walls: number[][] = [];
-      for (let col = 0; col < map.cols; col++) {
-        const rows: number[] = [];
-        for (let row = 0; row < map.rows; row++)
-          if (map.tiles[row * map.cols + col] === brick) rows.push(row);
-        if (rows.length > 0) walls.push(rows);
-      }
-      expect(walls.length).toBeGreaterThanOrEqual(10);
-      for (const rows of walls) {
-        // below the surface (one playfield of tile rows): in the caves
-        expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / map.tileSize);
-        let gap = 0;
-        for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
-        expect(gap * map.tileSize).toBeGreaterThanOrEqual(24 * K); // a gap the ship fits through
-      }
-      // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
-      const warning = stage.events.find((e) => e.type === 'warning');
-      const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-      expect(boss?.phases.every((p) => p.script === 'boss.bastion')).toBe(true);
-      const parts = boss?.parts ?? [];
-      const core = parts.findIndex((p) => p.core);
-      const hubs = parts.filter(
-        (p) => p.parentIndex === core && p.hurtbox === null && p.radius === 0,
-      );
-      expect(hubs).toHaveLength(1);
-      const hub = parts.indexOf(hubs[0]);
-      const onHub = (index: number): boolean =>
-        index >= 0 && (parts[index].parentIndex === hub || onHub(parts[index].parentIndex));
-      const arms = parts.filter((_p, i) => onHub(i));
-      expect(arms.length).toBeGreaterThanOrEqual(4);
-      for (const arm of arms) {
-        expect(arm.vulnerable).toBe('never');
-        expect(arm.radius).toBeGreaterThan(0); // turned parts are hit as circles
-      }
-      expect(parts.filter((p) => p.gun)).toHaveLength(2);
-      for (const phase of boss?.phases ?? []) expect(phase.params.spin ?? 4).not.toBe(0);
-    },
-  );
+  it('gives MAGMA DEEP erupting volcanoes, falling rocks, a dive into a destructible maze and a shielded core battleship', () => {
+    const stage = stageOf('zone-d');
+    const placed = (script: string, ground: string): number =>
+      stage.events.filter(
+        (e) =>
+          (e.type === 'spawn' || e.type === 'formation') &&
+          db.enemies[e.enemyId].script === script &&
+          db.enemies[e.enemyId].ground === ground,
+      ).length;
+    // Erupting volcanoes on the surface floor, rocks that drop from the cave roofs.
+    expect(placed('volcano.lob', 'floor')).toBeGreaterThanOrEqual(5);
+    expect(placed('rock.fall', 'ceiling')).toBeGreaterThanOrEqual(6);
+    // The dive: a map taller than the playfield, a scroll stop that pans the camera down into it.
+    expect(stage.tilemap?.rowsTall ?? 0).toBeGreaterThanOrEqual(50);
+    const dive = stage.camera.find((k) => (k.yTo ?? 0) >= 150);
+    expect(dive?.hold ?? 0).toBeGreaterThan(0);
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    expect(dive?.x ?? warningX).toBeLessThan(warningX / 2);
+    // The destructible maze below: brick walls (breakable tiles), each with an open gap.
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-d' }, db);
+    const map = game.world.terrain;
+    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
+    const brick = (tileset?.tiles.findIndex((t) => t.name === 'brick') ?? -1) + 1;
+    expect(tileset?.tiles[brick - 1]?.hp ?? 0).toBeGreaterThan(0);
+    if (map === null) throw new Error('no terrain');
+    const walls: number[][] = [];
+    for (let col = 0; col < map.cols; col++) {
+      const rows: number[] = [];
+      for (let row = 0; row < map.rows; row++)
+        if (map.tiles[row * map.cols + col] === brick) rows.push(row);
+      if (rows.length > 0) walls.push(rows);
+    }
+    expect(walls.length).toBeGreaterThanOrEqual(10);
+    for (const rows of walls) {
+      // below the surface (one playfield of tile rows): in the caves
+      expect(rows[0]).toBeGreaterThanOrEqual(PLAYFIELD_H / map.tileSize);
+      let gap = 0;
+      for (let k = 1; k < rows.length; k++) gap = Math.max(gap, rows[k] - rows[k - 1] - 1);
+      expect(gap * map.tileSize).toBeGreaterThanOrEqual(24 * K); // a gap the ship fits through
+    }
+    // CINDER BASTION: the core guarded by armoured arms on a pivot that turns, two lane emitters.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.bastion')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const core = parts.findIndex((p) => p.core);
+    const hubs = parts.filter(
+      (p) => p.parentIndex === core && p.hurtbox === null && p.radius === 0,
+    );
+    expect(hubs).toHaveLength(1);
+    const hub = parts.indexOf(hubs[0]);
+    const onHub = (index: number): boolean =>
+      index >= 0 && (parts[index].parentIndex === hub || onHub(parts[index].parentIndex));
+    const arms = parts.filter((_p, i) => onHub(i));
+    expect(arms.length).toBeGreaterThanOrEqual(4);
+    for (const arm of arms) {
+      expect(arm.vulnerable).toBe('never');
+      expect(arm.radius).toBeGreaterThan(0); // turned parts are hit as circles
+    }
+    expect(parts.filter((p) => p.gun)).toHaveLength(2);
+    for (const phase of boss?.phases ?? []) expect(phase.params.spin ?? 4).not.toBe(0);
+  });
 
   it('gives TEMPEST RIDGE rear attackers, heavy weather, jagged ridges and a seahorse launching homing minis', () => {
     const stage = stageOf('zone-e');
@@ -1649,92 +1634,89 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     expect(db.enemies[boss?.minionId ?? -1]?.script).toBe('cell.chase');
   });
 
-  itPortPending(
-    'gives PRISM LABYRINTH crystal walls, a seeded cube rush, a crystal core with tentacle arms and a hidden bonus stage',
-    () => {
-      const stage = stageOf('zone-g');
-      // Crystal walls: rock hanging from the ceiling past the playfield's middle row, and rising
-      // from the floor past it, in turn — the labyrinth (drawn with the tileset's wall edges).
-      const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-g' }, db);
-      const map = game.world.terrain;
-      if (map === null) throw new Error('no terrain');
-      const middle = Math.floor(PLAYFIELD_H / 2 / map.tileSize);
-      const rock = (col: number, from: number, to: number): boolean => {
-        for (let row = from; row <= to; row++)
-          if (map.tiles[row * map.cols + col] === 0) return false;
-        return true;
-      };
-      let hanging = 0;
-      let rising = 0;
-      for (let col = 0; col < map.cols; col++) {
-        if (rock(col, 0, middle)) hanging++;
-        if (rock(col, middle, map.rows - 1)) rising++;
-      }
-      expect(hanging).toBeGreaterThanOrEqual(6);
-      expect(rising).toBeGreaterThanOrEqual(6);
-      // A seeded cube rush: formations of cubes that stack into the tileset's breakable cube tiles.
-      const rushes = stage.events.filter(
-        (e) => e.type === 'formation' && db.enemies[e.enemyId].script === 'cube.stack',
-      );
-      expect(rushes.length).toBeGreaterThanOrEqual(3);
-      for (const rush of rushes) {
-        if (rush.type !== 'formation') continue;
-        expect(rush.count).toBeGreaterThanOrEqual(6);
-        expect(rush.drop).toBeNull();
-      }
-      const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
-      expect(tileset?.tiles.find((t) => t.name === 'cube')?.hp ?? 0).toBeGreaterThan(0);
-      // FACET MONARCH: the core behind crystals, two tentacle arms with guns at their tips.
-      const warning = stage.events.find((e) => e.type === 'warning');
-      const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
-      expect(boss?.phases.every((p) => p.script === 'boss.facet')).toBe(true);
-      const parts = boss?.parts ?? [];
-      const core = parts.find((p) => p.core);
-      expect(core?.vulnerable).toBe('afterParts');
-      expect(core?.requires.length).toBeGreaterThanOrEqual(2);
-      for (const name of core?.requires ?? []) {
-        const crystal = parts.find((p) => p.name === name);
-        expect(crystal?.sprite).toBe('bosses/facet-crystal');
-        expect((crystal?.x ?? 0) + (crystal?.hurtbox?.hw ?? 0)).toBeLessThan(core?.x ?? 0); // in front
-      }
-      const arms = bossArms(parts);
-      expect(arms).toHaveLength(2);
-      for (const arm of arms) {
-        expect(arm.length).toBeGreaterThanOrEqual(4);
-        for (const i of arm) expect(parts[i].vulnerable).toBe('never');
-        expect(parts[arm[arm.length - 1]].gun).toBe(true);
-      }
-      // The second hidden bonus stage: a `ground` entrance — shoot down every turret of the prism
-      // gallery (floor and ceiling, no other ground enemy in the window) — into a bonus stage with
-      // bonus capsules and a 1UP.
-      const entrances = stage.events.filter((e) => e.type === 'bonus');
-      expect(entrances).toHaveLength(1);
-      const entrance = entrances[0];
-      if (entrance.type !== 'bonus') return;
-      expect(entrance.entrance).toBe('ground');
-      const window = stage.events.filter(
-        (e) =>
-          (e.type === 'spawn' || e.type === 'formation') &&
-          e.x >= entrance.x &&
-          e.x <= entrance.until &&
-          db.enemies[e.enemyId].ground !== null,
-      );
-      expect(window.length).toBeGreaterThanOrEqual(4);
-      expect(
-        new Set(window.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].sprite : ''))),
-      ).toEqual(new Set(['enemies/facet-turret']));
-      const grounds = new Set(
-        window.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].ground : '')),
-      );
-      expect([...grounds].sort()).toEqual(['ceiling', 'floor']);
-      const cache = stageOf(entrance.stage);
-      expect(cache.type).toBe('bonus');
-      expect(cache.id).not.toBe('brine-grotto'); // its own, not zone B's
-      const drops = [...stageEnemies(db, cache)].map((index) => db.enemies[index].drop);
-      expect(drops).toContain('bonusCapsule');
-      expect(drops).toContain('oneUp');
-    },
-  );
+  it('gives PRISM LABYRINTH crystal walls, a seeded cube rush, a crystal core with tentacle arms and a hidden bonus stage', () => {
+    const stage = stageOf('zone-g');
+    // Crystal walls: rock hanging from the ceiling past the playfield's middle row, and rising
+    // from the floor past it, in turn — the labyrinth (drawn with the tileset's wall edges).
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: 'zone-g' }, db);
+    const map = game.world.terrain;
+    if (map === null) throw new Error('no terrain');
+    const middle = Math.floor(PLAYFIELD_H / 2 / map.tileSize);
+    const rock = (col: number, from: number, to: number): boolean => {
+      for (let row = from; row <= to; row++)
+        if (map.tiles[row * map.cols + col] === 0) return false;
+      return true;
+    };
+    let hanging = 0;
+    let rising = 0;
+    for (let col = 0; col < map.cols; col++) {
+      if (rock(col, 0, middle)) hanging++;
+      if (rock(col, middle, map.rows - 1)) rising++;
+    }
+    expect(hanging).toBeGreaterThanOrEqual(6);
+    expect(rising).toBeGreaterThanOrEqual(6);
+    // A seeded cube rush: formations of cubes that stack into the tileset's breakable cube tiles.
+    const rushes = stage.events.filter(
+      (e) => e.type === 'formation' && db.enemies[e.enemyId].script === 'cube.stack',
+    );
+    expect(rushes.length).toBeGreaterThanOrEqual(3);
+    for (const rush of rushes) {
+      if (rush.type !== 'formation') continue;
+      expect(rush.count).toBeGreaterThanOrEqual(6);
+      expect(rush.drop).toBeNull();
+    }
+    const tileset = db.tilesets.find((t) => t.id === stage.tilemap?.tileset);
+    expect(tileset?.tiles.find((t) => t.name === 'cube')?.hp ?? 0).toBeGreaterThan(0);
+    // FACET MONARCH: the core behind crystals, two tentacle arms with guns at their tips.
+    const warning = stage.events.find((e) => e.type === 'warning');
+    const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
+    expect(boss?.phases.every((p) => p.script === 'boss.facet')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const core = parts.find((p) => p.core);
+    expect(core?.vulnerable).toBe('afterParts');
+    expect(core?.requires.length).toBeGreaterThanOrEqual(2);
+    for (const name of core?.requires ?? []) {
+      const crystal = parts.find((p) => p.name === name);
+      expect(crystal?.sprite).toBe('bosses/facet-crystal');
+      expect((crystal?.x ?? 0) + (crystal?.hurtbox?.hw ?? 0)).toBeLessThan(core?.x ?? 0); // in front
+    }
+    const arms = bossArms(parts);
+    expect(arms).toHaveLength(2);
+    for (const arm of arms) {
+      expect(arm.length).toBeGreaterThanOrEqual(4);
+      for (const i of arm) expect(parts[i].vulnerable).toBe('never');
+      expect(parts[arm[arm.length - 1]].gun).toBe(true);
+    }
+    // The second hidden bonus stage: a `ground` entrance — shoot down every turret of the prism
+    // gallery (floor and ceiling, no other ground enemy in the window) — into a bonus stage with
+    // bonus capsules and a 1UP.
+    const entrances = stage.events.filter((e) => e.type === 'bonus');
+    expect(entrances).toHaveLength(1);
+    const entrance = entrances[0];
+    if (entrance.type !== 'bonus') return;
+    expect(entrance.entrance).toBe('ground');
+    const window = stage.events.filter(
+      (e) =>
+        (e.type === 'spawn' || e.type === 'formation') &&
+        e.x >= entrance.x &&
+        e.x <= entrance.until &&
+        db.enemies[e.enemyId].ground !== null,
+    );
+    expect(window.length).toBeGreaterThanOrEqual(4);
+    expect(
+      new Set(window.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].sprite : ''))),
+    ).toEqual(new Set(['enemies/facet-turret']));
+    const grounds = new Set(
+      window.map((e) => ('enemyId' in e ? db.enemies[e.enemyId].ground : '')),
+    );
+    expect([...grounds].sort()).toEqual(['ceiling', 'floor']);
+    const cache = stageOf(entrance.stage);
+    expect(cache.type).toBe('bonus');
+    expect(cache.id).not.toBe('brine-grotto'); // its own, not zone B's
+    const drops = [...stageEnemies(db, cache)].map((index) => db.enemies[index].drop);
+    expect(drops).toContain('bonusCapsule');
+    expect(drops).toContain('oneUp');
+  });
 
   it.each(zones)(
     'keeps every aimed bullet of $name at 2 px/tick or less (tunables and patterns)',
@@ -1792,39 +1774,36 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
     },
   );
 
-  it.skipIf(CONTENT_PORT_PENDING).each(zones)(
-    `stands the ground enemies of $name on rock [${PORT_PENDING_REASON}]`,
-    (zone) => {
-      const stage = stageOf(zone.id);
-      const game = createGame(createHeadlessPlatform(), { seed: 1, stage: zone.id }, db);
-      const map = game.world.terrain;
-      expect(map).not.toBeNull();
-      if (map === null) return;
-      // The camera y each event fires at (zone D dives 200 px into its caves).
-      const runner = createStageRunner(stage, { event() {}, clear() {} });
-      let ground = 0;
-      for (const event of stage.events) {
-        if (event.type !== 'spawn' && event.type !== 'formation') continue;
-        for (let t = 0; t < 60 * 60 * 10 && runner.camera.x < event.x; t++) runner.tick();
-        const enemy = db.enemies[event.enemyId];
-        if (enemy.ground === null) continue;
-        ground++;
-        const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
-        const top = Math.round(runner.camera.y);
-        // Rock in the lower (floor) or upper (ceiling) third of the playfield below / above it.
-        const rows = (
-          enemy.ground === 'floor'
-            ? [PLAYFIELD_H - 1, PLAYFIELD_H - map.tileSize]
-            : [0, map.tileSize - 1]
-        ).map((y) => top + y);
-        expect(
-          rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
-          `${enemy.id} at ${String(event.x)}`,
-        ).toBe(true);
-      }
-      expect(ground).toBeGreaterThanOrEqual(8);
-    },
-  );
+  it.each(zones)(`stands the ground enemies of $name on rock`, (zone) => {
+    const stage = stageOf(zone.id);
+    const game = createGame(createHeadlessPlatform(), { seed: 1, stage: zone.id }, db);
+    const map = game.world.terrain;
+    expect(map).not.toBeNull();
+    if (map === null) return;
+    // The camera y each event fires at (zone D dives 200 px into its caves).
+    const runner = createStageRunner(stage, { event() {}, clear() {} });
+    let ground = 0;
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      for (let t = 0; t < 60 * 60 * 10 && runner.camera.x < event.x; t++) runner.tick();
+      const enemy = db.enemies[event.enemyId];
+      if (enemy.ground === null) continue;
+      ground++;
+      const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
+      const top = Math.round(runner.camera.y);
+      // Rock in the lower (floor) or upper (ceiling) third of the playfield below / above it.
+      const rows = (
+        enemy.ground === 'floor'
+          ? [PLAYFIELD_H - 1, PLAYFIELD_H - map.tileSize]
+          : [0, map.tileSize - 1]
+      ).map((y) => top + y);
+      expect(
+        rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
+        `${enemy.id} at ${String(event.x)}`,
+      ).toBe(true);
+    }
+    expect(ground).toBeGreaterThanOrEqual(8);
+  });
 
   it.each(zones)(
     "holds $boss's fight to the 4-way rules (the bot, god mode, stage skip)",
@@ -1998,95 +1977,92 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
     expect(placed.size).toBeLessThanOrEqual(6);
   });
 
-  itPortPending(
-    'gives IRON CITADEL hatches, laser emitters, moving floors and ceilings, a parade and a real finale',
-    () => {
-      const stage = stageOf('zone-h');
-      const placed = (script: string): Array<{ ground: string | null; x: number }> =>
-        stage.events.flatMap((e) =>
-          (e.type === 'spawn' || e.type === 'formation') && db.enemies[e.enemyId].script === script
-            ? [{ ground: db.enemies[e.enemyId].ground, x: e.x }]
-            : [],
-        );
-      // Hatches releasing drones, laser emitters projecting lanes: on the floor and on the ceiling.
-      const hatches = placed('hatch.spawner');
-      expect(hatches.length).toBeGreaterThanOrEqual(3);
-      expect(new Set(hatches.map((h) => h.ground))).toEqual(new Set(['floor', 'ceiling']));
-      const emitters = placed('emitter.laser');
-      expect(emitters.length).toBeGreaterThanOrEqual(4);
-      expect(new Set(emitters.map((h) => h.ground))).toEqual(new Set(['floor', 'ceiling']));
-      // Moving floors and ceilings: blocks swinging up and down, out of the floor and the ceiling.
-      const pistons = stage.events.filter((e) => e.type === 'block' && (e.dy ?? 0) !== 0);
-      expect(pistons.length).toBeGreaterThanOrEqual(8);
-      const low = pistons.filter((e) => e.type === 'block' && e.y > PLAYFIELD_H / 2);
-      expect(low.length).toBeGreaterThanOrEqual(3);
-      expect(pistons.length - low.length).toBeGreaterThanOrEqual(3);
-      // The parade: four earlier bosses in reduced form, captains one after another, each leaving
-      // after its time limit — every sprite an earlier zone boss's, fewer parts than the original.
-      const earlierBosses = earlierZones.map((id) => bossOf(stageOf(id)));
-      const earlierSprites = new Set(
-        earlierBosses.flatMap((b) => (b?.parts ?? []).map((p) => p.sprite ?? '')),
+  it('gives IRON CITADEL hatches, laser emitters, moving floors and ceilings, a parade and a real finale', () => {
+    const stage = stageOf('zone-h');
+    const placed = (script: string): Array<{ ground: string | null; x: number }> =>
+      stage.events.flatMap((e) =>
+        (e.type === 'spawn' || e.type === 'formation') && db.enemies[e.enemyId].script === script
+          ? [{ ground: db.enemies[e.enemyId].ground, x: e.x }]
+          : [],
       );
-      const parade = stage.events.filter(
-        (e) => e.type === 'boss' && db.enemies[e.enemyId].boss?.role === 'captain',
+    // Hatches releasing drones, laser emitters projecting lanes: on the floor and on the ceiling.
+    const hatches = placed('hatch.spawner');
+    expect(hatches.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(hatches.map((h) => h.ground))).toEqual(new Set(['floor', 'ceiling']));
+    const emitters = placed('emitter.laser');
+    expect(emitters.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(emitters.map((h) => h.ground))).toEqual(new Set(['floor', 'ceiling']));
+    // Moving floors and ceilings: blocks swinging up and down, out of the floor and the ceiling.
+    const pistons = stage.events.filter((e) => e.type === 'block' && (e.dy ?? 0) !== 0);
+    expect(pistons.length).toBeGreaterThanOrEqual(8);
+    const low = pistons.filter((e) => e.type === 'block' && e.y > PLAYFIELD_H / 2);
+    expect(low.length).toBeGreaterThanOrEqual(3);
+    expect(pistons.length - low.length).toBeGreaterThanOrEqual(3);
+    // The parade: four earlier bosses in reduced form, captains one after another, each leaving
+    // after its time limit — every sprite an earlier zone boss's, fewer parts than the original.
+    const earlierBosses = earlierZones.map((id) => bossOf(stageOf(id)));
+    const earlierSprites = new Set(
+      earlierBosses.flatMap((b) => (b?.parts ?? []).map((p) => p.sprite ?? '')),
+    );
+    const parade = stage.events.filter(
+      (e) => e.type === 'boss' && db.enemies[e.enemyId].boss?.role === 'captain',
+    );
+    expect(parade.length).toBeGreaterThanOrEqual(4);
+    const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
+    for (const event of parade) {
+      if (event.type !== 'boss') continue;
+      const echo = db.enemies[event.enemyId].boss;
+      expect(echo?.timeLimit ?? 0).toBeGreaterThan(0);
+      expect(event.x).toBeLessThan(warningX);
+      const sprites = (echo?.parts ?? []).flatMap((p) =>
+        p.sprite === undefined ? [] : [p.sprite],
       );
-      expect(parade.length).toBeGreaterThanOrEqual(4);
-      const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
-      for (const event of parade) {
-        if (event.type !== 'boss') continue;
-        const echo = db.enemies[event.enemyId].boss;
-        expect(echo?.timeLimit ?? 0).toBeGreaterThan(0);
-        expect(event.x).toBeLessThan(warningX);
-        const sprites = (echo?.parts ?? []).flatMap((p) =>
-          p.sprite === undefined ? [] : [p.sprite],
-        );
-        expect(sprites.length).toBeGreaterThan(0);
-        for (const sprite of sprites) expect(earlierSprites, sprite).toContain(sprite);
-        const original = earlierBosses.find((b) =>
-          (b?.parts ?? []).some((p) => p.sprite === sprites[0]),
-        );
-        expect(echo?.parts.length ?? 0).toBeLessThan(original?.parts.length ?? 0);
-      }
-      // Spread out one after another: the next comes at least half its predecessor's stay (intro +
-      // time limit, at the parade's scroll speed) later — never more than two up at once.
-      const keys = stage.camera.filter((k) => k.x <= parade[0].x);
-      const speed = keys[keys.length - 1].speed;
-      expect(speed).toBeLessThan(v1speed(0.75)); // a slow hangar
-      for (let i = 1; i < parade.length; i++) {
-        const before = parade[i - 1];
-        const limit = before.type === 'boss' ? db.enemies[before.enemyId].boss : null;
-        expect(parade[i].x - before.x).toBeGreaterThanOrEqual(
-          ((limit?.timeLimit ?? 0) + (limit?.introTicks ?? 0)) * speed * 0.5,
-        );
-      }
-      // IRON SOVEREIGN: four phases of `boss.sovereign` — the core behind plates, a turning shield
-      // wheel on it, lane emitters, and a spiral in the last phase.
-      const boss = bossOf(stage);
-      expect(boss?.phases.length).toBeGreaterThanOrEqual(4);
-      expect(boss?.phases.every((p) => p.script === 'boss.sovereign')).toBe(true);
-      const parts = boss?.parts ?? [];
-      const core = parts.find((p) => p.core);
-      expect(core?.vulnerable).toBe('afterParts');
-      for (const name of core?.requires ?? []) {
-        const plate = parts.find((p) => p.name === name);
-        expect((plate?.x ?? 0) + (plate?.hurtbox?.hw ?? 0)).toBeLessThan(core?.x ?? 0);
-      }
-      const coreIndex = parts.indexOf(core ?? parts[0]);
-      const hub = parts.findIndex(
-        (p) => p.parentIndex === coreIndex && p.hurtbox === null && p.radius === 0,
+      expect(sprites.length).toBeGreaterThan(0);
+      for (const sprite of sprites) expect(earlierSprites, sprite).toContain(sprite);
+      const original = earlierBosses.find((b) =>
+        (b?.parts ?? []).some((p) => p.sprite === sprites[0]),
       );
-      expect(hub).toBeGreaterThanOrEqual(0);
-      const pods = parts.filter((p) => p.parentIndex === hub);
-      expect(pods.length).toBeGreaterThanOrEqual(4);
-      for (const pod of pods) expect([pod.vulnerable, pod.radius > 0]).toEqual(['never', true]);
-      expect(parts.filter((p) => p.gun).length).toBeGreaterThanOrEqual(2);
-      const phases = boss?.phases ?? [];
-      expect(phases[0].until?.partsDestroyed?.length ?? 0).toBeGreaterThan(0);
-      expect(phases[phases.length - 1].params.spiral ?? 0).toBeGreaterThan(0);
-      expect(phases.some((p) => (p.params.spin ?? 0) !== 0)).toBe(true);
-      expect(phases.some((p) => (p.params.launchTicks ?? 0) > 0)).toBe(true);
-    },
-  );
+      expect(echo?.parts.length ?? 0).toBeLessThan(original?.parts.length ?? 0);
+    }
+    // Spread out one after another: the next comes at least half its predecessor's stay (intro +
+    // time limit, at the parade's scroll speed) later — never more than two up at once.
+    const keys = stage.camera.filter((k) => k.x <= parade[0].x);
+    const speed = keys[keys.length - 1].speed;
+    expect(speed).toBeLessThan(v1speed(0.75)); // a slow hangar
+    for (let i = 1; i < parade.length; i++) {
+      const before = parade[i - 1];
+      const limit = before.type === 'boss' ? db.enemies[before.enemyId].boss : null;
+      expect(parade[i].x - before.x).toBeGreaterThanOrEqual(
+        ((limit?.timeLimit ?? 0) + (limit?.introTicks ?? 0)) * speed * 0.5,
+      );
+    }
+    // IRON SOVEREIGN: four phases of `boss.sovereign` — the core behind plates, a turning shield
+    // wheel on it, lane emitters, and a spiral in the last phase.
+    const boss = bossOf(stage);
+    expect(boss?.phases.length).toBeGreaterThanOrEqual(4);
+    expect(boss?.phases.every((p) => p.script === 'boss.sovereign')).toBe(true);
+    const parts = boss?.parts ?? [];
+    const core = parts.find((p) => p.core);
+    expect(core?.vulnerable).toBe('afterParts');
+    for (const name of core?.requires ?? []) {
+      const plate = parts.find((p) => p.name === name);
+      expect((plate?.x ?? 0) + (plate?.hurtbox?.hw ?? 0)).toBeLessThan(core?.x ?? 0);
+    }
+    const coreIndex = parts.indexOf(core ?? parts[0]);
+    const hub = parts.findIndex(
+      (p) => p.parentIndex === coreIndex && p.hurtbox === null && p.radius === 0,
+    );
+    expect(hub).toBeGreaterThanOrEqual(0);
+    const pods = parts.filter((p) => p.parentIndex === hub);
+    expect(pods.length).toBeGreaterThanOrEqual(4);
+    for (const pod of pods) expect([pod.vulnerable, pod.radius > 0]).toEqual(['never', true]);
+    expect(parts.filter((p) => p.gun).length).toBeGreaterThanOrEqual(2);
+    const phases = boss?.phases ?? [];
+    expect(phases[0].until?.partsDestroyed?.length ?? 0).toBeGreaterThan(0);
+    expect(phases[phases.length - 1].params.spiral ?? 0).toBeGreaterThan(0);
+    expect(phases.some((p) => (p.params.spin ?? 0) !== 0)).toBe(true);
+    expect(phases.some((p) => (p.params.launchTicks ?? 0) > 0)).toBe(true);
+  });
 
   it('gives ABYSSAL THRONE mines, trench eels, a whale-class raid and a boss inside it', () => {
     const stage = stageOf('zone-i');
@@ -2181,32 +2157,28 @@ describe('integration: zones H and I, the finales, hold to the plan and the 4-wa
     },
   );
 
-  it.skipIf(CONTENT_PORT_PENDING).each(zones)(
-    `stands the ground enemies of $name on rock [${PORT_PENDING_REASON}]`,
-    (zone) => {
-      const stage = stageOf(zone.id);
-      const map = createGame(createHeadlessPlatform(), { seed: 1, stage: zone.id }, db).world
-        .terrain;
-      if (map === null) throw new Error('no terrain');
-      let ground = 0;
-      for (const event of stage.events) {
-        if (event.type !== 'spawn' && event.type !== 'formation') continue;
-        const enemy = db.enemies[event.enemyId];
-        if (enemy.ground === null) continue;
-        ground++;
-        const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
-        const rows =
-          enemy.ground === 'floor'
-            ? [PLAYFIELD_H - 1, PLAYFIELD_H - map.tileSize]
-            : [0, map.tileSize - 1];
-        expect(
-          rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
-          `${enemy.id} at ${String(event.x)}`,
-        ).toBe(true);
-      }
-      expect(ground).toBeGreaterThanOrEqual(8);
-    },
-  );
+  it.each(zones)(`stands the ground enemies of $name on rock`, (zone) => {
+    const stage = stageOf(zone.id);
+    const map = createGame(createHeadlessPlatform(), { seed: 1, stage: zone.id }, db).world.terrain;
+    if (map === null) throw new Error('no terrain');
+    let ground = 0;
+    for (const event of stage.events) {
+      if (event.type !== 'spawn' && event.type !== 'formation') continue;
+      const enemy = db.enemies[event.enemyId];
+      if (enemy.ground === null) continue;
+      ground++;
+      const x = event.x + (event.screenX ?? DEFAULT_SPAWN_SCREEN_X);
+      const rows =
+        enemy.ground === 'floor'
+          ? [PLAYFIELD_H - 1, PLAYFIELD_H - map.tileSize]
+          : [0, map.tileSize - 1];
+      expect(
+        rows.some((y) => terrainAt(map, x, y) !== TerrainType.Empty),
+        `${enemy.id} at ${String(event.x)}`,
+      ).toBe(true);
+    }
+    expect(ground).toBeGreaterThanOrEqual(8);
+  });
 
   it.each(zones)(
     "holds $boss's fight to the 4-way rules (the bot, god mode, stage skip)",
