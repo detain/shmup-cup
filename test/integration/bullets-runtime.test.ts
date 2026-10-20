@@ -211,7 +211,7 @@ describe('integration: enemy bullets on the test range', () => {
     expect(pink.length).toBeGreaterThan(0);
     // The base speed 1.5 is a world px/tick (ported); the rank curve is a multiplier (never).
     const expected = v1speed(1.5) * rankScale(6, BULLET_SPEED_RANK_CURVE);
-    expect(expected).toBeGreaterThan(1.5);
+    expect(expected).toBeGreaterThan(v1speed(1.5));
     for (const shot of pink) expect(shot.speed).toBe(expected);
   });
 
