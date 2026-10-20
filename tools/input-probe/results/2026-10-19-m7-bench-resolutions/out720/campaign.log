@@ -1,0 +1,773 @@
+[2026-10-20T03:35:48.294Z] TV render-bench campaign — 2026-10-20T03:35:48.290Z
+[2026-10-20T03:35:48.295Z]   target 10.0.0.224:26101 · build-set passes · watchdog 300 s · max restarts 20 · install yes
+[2026-10-20T03:35:48.295Z]   tizen F:\Installs\tizen-studio\tools\ide\bin\tizen.bat · sdb sdb · app ShmpCupBnc.RenderBench · dist F:\dev\shmup-cup\apps\tizen\dist-bench
+[2026-10-20T03:35:48.295Z]   log server http://127.0.0.1:8787 · logs F:\dev\shmup-cup\tools\input-probe\logs · results F:/dev/shmup-cup/tools/input-probe/results/2026-10-19-m7-bench-resolutions/out720
+[2026-10-20T03:35:48.306Z]   log server: ok
+[2026-10-20T03:35:48.312Z]   build id: f496802@1280x720
+[2026-10-20T03:35:48.313Z]   output: 1280x720 backbuffer ('fit' upscale; frames larger are skipped)
+[2026-10-20T03:35:48.317Z]   campaign build: passes 1,2,1,2 (WebGL per pass) · pause 30 s
+[2026-10-20T03:35:48.317Z]   running 4 passes · watchdog 300 s
+[2026-10-20T03:35:48.318Z]   no .wgt — packaging with profile Shmup
+[2026-10-20T03:35:48.319Z] 23:35:48 [package] > C:\nvm4w\nodejs\node.exe F:\dev\shmup-cup\apps\tizen\scripts\tizen-bench.mjs package
+[2026-10-20T03:35:48.428Z]   | > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat package -t wgt -s Shmup -- F:\dev\shmup-cup\apps\tizen\dist-bench
+[2026-10-20T03:35:50.540Z]   | Author certficate: C:\Users\joehu\SamsungCertificate\Shmup\author.p12
+[2026-10-20T03:35:50.541Z]   | Distributor1 certificate : C:\Users\joehu\SamsungCertificate\Shmup\distributor.p12
+[2026-10-20T03:35:52.042Z]   | Excludes File Pattern: {.manifest.tmp, .delta.lst}
+[2026-10-20T03:35:52.048Z]   | Ignore File: F:\dev\shmup-cup\apps\tizen\dist-bench\.manifest.tmp
+[2026-10-20T03:35:52.474Z]   | Package File Location: F:\dev\shmup-cup\apps\tizen\dist-bench\Shmup Cup Bench.wgt
+[2026-10-20T03:35:54.163Z]   | Packaged ShmupCupBench.wgt in F:\dev\shmup-cup\apps\tizen\dist-bench. Next: tizen:install
+[2026-10-20T03:35:54.187Z] 23:35:54 [connect] > sdb connect 10.0.0.224:26101
+[2026-10-20T03:35:54.383Z]   | 10.0.0.224:26101 is already connected
+[2026-10-20T03:35:54.396Z] 23:35:54 [kill app] > sdb -s 10.0.0.224:26101 shell 0 was_kill ShmpCupBnc.RenderBench
+[2026-10-20T03:35:54.548Z]   | terminate app ShmpCupBnc.RenderBench
+[2026-10-20T03:35:54.558Z]   | spend time for wascmd is [13]ms
+[2026-10-20T03:35:54.568Z] 23:35:54 [uninstall] > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat uninstall -p ShmpCupBnc -s 10.0.0.224:26101
+[2026-10-20T03:35:56.260Z]   | The package is not exist.
+[2026-10-20T03:35:56.260Z]   | [Fail] Fail uninstall. There is the problem about package.
+[2026-10-20T03:35:56.270Z]   | Total time: 00:00:00.536
+[2026-10-20T03:36:00.447Z] 23:36:00 [install] > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat install -n ShmupCupBench.wgt -s 10.0.0.224:26101 -- F:\dev\shmup-cup\apps\tizen\dist-bench
+[2026-10-20T03:36:02.152Z]   | Transferring the package...
+[2026-10-20T03:36:03.170Z]   | Transferred the package: F:\dev\shmup-cup\apps\tizen\dist-bench\ShmupCupBench.wgt -> /home/owner/share/tmp/sdk_tools/tmp
+[2026-10-20T03:36:03.170Z]   | Installing the package...
+[2026-10-20T03:36:07.982Z]   | --------------------
+[2026-10-20T03:36:07.983Z]   | Platform log view
+[2026-10-20T03:36:07.983Z]   | --------------------
+[2026-10-20T03:36:07.984Z]   | install ShmpCupBnc.RenderBench
+[2026-10-20T03:36:07.984Z]   | package_path /home/owner/share/tmp/sdk_tools/tmp/ShmupCupBench.wgt
+[2026-10-20T03:36:07.985Z]   | app_id[ShmpCupBnc.RenderBench] install start
+[2026-10-20T03:36:07.985Z]   | app_id[ShmpCupBnc.RenderBench] installing[8]
+[2026-10-20T03:36:07.985Z]   | app_id[ShmpCupBnc.RenderBench] installing[11]
+[2026-10-20T03:36:07.986Z]   | app_id[ShmpCupBnc.RenderBench] installing[13]
+[2026-10-20T03:36:07.986Z]   | app_id[ShmpCupBnc.RenderBench] installing[15]
+[2026-10-20T03:36:07.986Z]   | app_id[ShmpCupBnc.RenderBench] installing[17]
+[2026-10-20T03:36:07.987Z]   | app_id[ShmpCupBnc.RenderBench] installing[20]
+[2026-10-20T03:36:07.987Z]   | app_id[ShmpCupBnc.RenderBench] installing[22]
+[2026-10-20T03:36:07.987Z]   | app_id[ShmpCupBnc.RenderBench] installing[24]
+[2026-10-20T03:36:07.988Z]   | app_id[ShmpCupBnc.RenderBench] installing[26]
+[2026-10-20T03:36:07.988Z]   | app_id[ShmpCupBnc.RenderBench] installing[28]
+[2026-10-20T03:36:07.988Z]   | app_id[ShmpCupBnc.RenderBench] installing[31]
+[2026-10-20T03:36:07.989Z]   | app_id[ShmpCupBnc.RenderBench] installing[33]
+[2026-10-20T03:36:07.989Z]   | app_id[ShmpCupBnc.RenderBench] installing[35]
+[2026-10-20T03:36:07.989Z]   | app_id[ShmpCupBnc.RenderBench] installing[37]
+[2026-10-20T03:36:07.989Z]   | app_id[ShmpCupBnc.RenderBench] installing[40]
+[2026-10-20T03:36:07.990Z]   | app_id[ShmpCupBnc.RenderBench] installing[42]
+[2026-10-20T03:36:07.990Z]   | app_id[ShmpCupBnc.RenderBench] installing[44]
+[2026-10-20T03:36:07.991Z]   | app_id[ShmpCupBnc.RenderBench] installing[46]
+[2026-10-20T03:36:07.991Z]   | app_id[ShmpCupBnc.RenderBench] installing[48]
+[2026-10-20T03:36:07.991Z]   | app_id[ShmpCupBnc.RenderBench] installing[51]
+[2026-10-20T03:36:07.992Z]   | app_id[ShmpCupBnc.RenderBench] installing[53]
+[2026-10-20T03:36:07.992Z]   | app_id[ShmpCupBnc.RenderBench] installing[55]
+[2026-10-20T03:36:07.992Z]   | app_id[ShmpCupBnc.RenderBench] installing[57]
+[2026-10-20T03:36:07.993Z]   | app_id[ShmpCupBnc.RenderBench] installing[60]
+[2026-10-20T03:36:07.993Z]   | app_id[ShmpCupBnc.RenderBench] installing[62]
+[2026-10-20T03:36:07.993Z]   | app_id[ShmpCupBnc.RenderBench] installing[64]
+[2026-10-20T03:36:07.993Z]   | app_id[ShmpCupBnc.RenderBench] installing[66]
+[2026-10-20T03:36:07.993Z]   | app_id[ShmpCupBnc.RenderBench] installing[68]
+[2026-10-20T03:36:07.994Z]   | app_id[ShmpCupBnc.RenderBench] installing[71]
+[2026-10-20T03:36:07.994Z]   | app_id[ShmpCupBnc.RenderBench] installing[73]
+[2026-10-20T03:36:07.994Z]   | app_id[ShmpCupBnc.RenderBench] installing[75]
+[2026-10-20T03:36:07.995Z]   | app_id[ShmpCupBnc.RenderBench] installing[77]
+[2026-10-20T03:36:07.995Z]   | app_id[ShmpCupBnc.RenderBench] installing[80]
+[2026-10-20T03:36:07.996Z]   | app_id[ShmpCupBnc.RenderBench] installing[82]
+[2026-10-20T03:36:07.996Z]   | app_id[ShmpCupBnc.RenderBench] installing[84]
+[2026-10-20T03:36:07.997Z]   | app_id[ShmpCupBnc.RenderBench] installing[86]
+[2026-10-20T03:36:07.997Z]   | app_id[ShmpCupBnc.RenderBench] installing[88]
+[2026-10-20T03:36:07.998Z]   | app_id[ShmpCupBnc.RenderBench] installing[91]
+[2026-10-20T03:36:07.998Z]   | app_id[ShmpCupBnc.RenderBench] installing[93]
+[2026-10-20T03:36:07.998Z]   | app_id[ShmpCupBnc.RenderBench] installing[95]
+[2026-10-20T03:36:07.999Z]   | app_id[ShmpCupBnc.RenderBench] installing[97]
+[2026-10-20T03:36:07.999Z]   | app_id[ShmpCupBnc.RenderBench] installing[100]
+[2026-10-20T03:36:08.000Z]   | app_id[ShmpCupBnc.RenderBench] install completed
+[2026-10-20T03:36:08.000Z]   | spend time for wascmd is [4214]ms
+[2026-10-20T03:36:08.172Z]   | Installed the package: Id(ShmpCupBnc.RenderBench)
+[2026-10-20T03:36:08.173Z]   | Tizen application is successfully installed.
+[2026-10-20T03:36:08.180Z]   | Total time: 00:00:06.452
+[2026-10-20T03:36:10.658Z] 23:36:10 [launch] > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat run -p ShmpCupBnc.RenderBench -s 10.0.0.224:26101
+[2026-10-20T03:36:12.765Z]   | Launching the Tizen application...
+[2026-10-20T03:36:14.132Z]   | --------------------
+[2026-10-20T03:36:14.133Z]   | Platform log view
+[2026-10-20T03:36:14.133Z]   | --------------------
+[2026-10-20T03:36:14.133Z]   | ... successfully launched pid = 1211 with debug 0
+[2026-10-20T03:36:14.134Z]   | Tizen application is successfully launched.
+[2026-10-20T03:36:16.422Z] 23:36:16 campaign started; waiting for payloads (the app counts down before each pass)
+[2026-10-20T03:37:21.530Z] 23:37:21 pass 1/4 rb-mvg4tafk-yli8 #1 scenario 1/172 384x216-busy gl=1
+[2026-10-20T03:37:51.576Z] 23:37:51 pass 1/4 rb-mvg4tafk-yli8 #2 scenario 2/172 384x216-filter gl=1
+[2026-10-20T03:38:21.641Z] 23:38:21 pass 1/4 rb-mvg4tafk-yli8 #3 scenario 3/172 384x216-mode7 gl=1
+[2026-10-20T03:38:51.686Z] 23:38:51 pass 1/4 rb-mvg4tafk-yli8 #4 scenario 4/172 384x216-crt-light gl=1
+[2026-10-20T03:39:21.727Z] 23:39:21 pass 1/4 rb-mvg4tafk-yli8 #5 scenario 5/172 384x216-crt-full gl=1
+[2026-10-20T03:39:51.780Z] 23:39:51 pass 1/4 rb-mvg4tafk-yli8 #6 scenario 6/172 384x216-worst gl=1
+[2026-10-20T03:40:21.842Z] 23:40:21 pass 1/4 rb-mvg4tafk-yli8 #7 scenario 7/172 480x320-busy gl=1
+[2026-10-20T03:40:56.914Z] 23:40:56 pass 1/4 rb-mvg4tafk-yli8 #8 scenario 8/172 480x320-filter gl=1
+[2026-10-20T03:41:26.957Z] 23:41:26 pass 1/4 rb-mvg4tafk-yli8 #9 scenario 9/172 480x320-mode7 gl=1
+[2026-10-20T03:41:57.027Z] 23:41:57 pass 1/4 rb-mvg4tafk-yli8 #10 scenario 10/172 480x320-crt-light gl=1
+[2026-10-20T03:42:27.078Z] 23:42:27 pass 1/4 rb-mvg4tafk-yli8 #11 scenario 11/172 480x320-crt-full gl=1
+[2026-10-20T03:42:57.145Z] 23:42:57 pass 1/4 rb-mvg4tafk-yli8 #12 scenario 12/172 480x320-worst gl=1
+[2026-10-20T03:43:27.202Z] 23:43:27 pass 1/4 rb-mvg4tafk-yli8 #13 scenario 13/172 480x320n-busy gl=1
+[2026-10-20T03:43:57.267Z] 23:43:57 pass 1/4 rb-mvg4tafk-yli8 #14 scenario 14/172 480x320n-filter gl=1
+[2026-10-20T03:44:27.332Z] 23:44:27 pass 1/4 rb-mvg4tafk-yli8 #15 scenario 15/172 480x320n-mode7 gl=1
+[2026-10-20T03:45:02.399Z] 23:45:02 pass 1/4 rb-mvg4tafk-yli8 #16 scenario 16/172 480x320n-crt-light gl=1
+[2026-10-20T03:45:32.453Z] 23:45:32 pass 1/4 rb-mvg4tafk-yli8 #17 scenario 17/172 480x320n-crt-full gl=1
+[2026-10-20T03:46:02.506Z] 23:46:02 pass 1/4 rb-mvg4tafk-yli8 #18 scenario 18/172 480x320n-worst gl=1
+[2026-10-20T03:46:17.541Z] 23:46:17 running 10 min · pass 1/4 · last payload 15 s ago · restarts 0
+[2026-10-20T03:46:32.573Z] 23:46:32 pass 1/4 rb-mvg4tafk-yli8 #19 scenario 19/172 640x360-busy gl=1
+[2026-10-20T03:47:02.629Z] 23:47:02 pass 1/4 rb-mvg4tafk-yli8 #20 scenario 20/172 640x360-filter gl=1
+[2026-10-20T03:47:32.674Z] 23:47:32 pass 1/4 rb-mvg4tafk-yli8 #21 scenario 21/172 640x360-mode7 gl=1
+[2026-10-20T03:48:02.742Z] 23:48:02 pass 1/4 rb-mvg4tafk-yli8 #22 scenario 22/172 640x360-crt-light gl=1
+[2026-10-20T03:48:32.783Z] 23:48:32 pass 1/4 rb-mvg4tafk-yli8 #23 scenario 23/172 640x360-crt-full gl=1
+[2026-10-20T03:49:07.849Z] 23:49:07 pass 1/4 rb-mvg4tafk-yli8 #24 scenario 24/172 640x360-worst gl=1
+[2026-10-20T03:49:37.923Z] 23:49:37 pass 1/4 rb-mvg4tafk-yli8 #25 scenario 25/172 640x360n-busy gl=1
+[2026-10-20T03:50:07.956Z] 23:50:07 pass 1/4 rb-mvg4tafk-yli8 #26 scenario 26/172 640x360n-filter gl=1
+[2026-10-20T03:50:38.003Z] 23:50:38 pass 1/4 rb-mvg4tafk-yli8 #27 scenario 27/172 640x360n-mode7 gl=1
+[2026-10-20T03:51:08.064Z] 23:51:08 pass 1/4 rb-mvg4tafk-yli8 #28 scenario 28/172 640x360n-crt-light gl=1
+[2026-10-20T03:51:38.139Z] 23:51:38 pass 1/4 rb-mvg4tafk-yli8 #29 scenario 29/172 640x360n-crt-full gl=1
+[2026-10-20T03:52:08.193Z] 23:52:08 pass 1/4 rb-mvg4tafk-yli8 #30 scenario 30/172 640x360n-worst gl=1
+[2026-10-20T03:52:38.247Z] 23:52:38 pass 1/4 rb-mvg4tafk-yli8 #31 scenario 31/172 640x480-busy gl=1
+[2026-10-20T03:53:08.303Z] 23:53:08 pass 1/4 rb-mvg4tafk-yli8 #32 scenario 32/172 640x480-filter gl=1
+[2026-10-20T03:53:38.359Z] 23:53:38 pass 1/4 rb-mvg4tafk-yli8 #33 scenario 33/172 640x480-mode7 gl=1
+[2026-10-20T03:54:13.437Z] 23:54:13 pass 1/4 rb-mvg4tafk-yli8 #34 scenario 34/172 640x480-crt-light gl=1
+[2026-10-20T03:54:43.497Z] 23:54:43 pass 1/4 rb-mvg4tafk-yli8 #35 scenario 35/172 640x480-crt-full gl=1
+[2026-10-20T03:55:13.547Z] 23:55:13 pass 1/4 rb-mvg4tafk-yli8 #36 scenario 36/172 640x480-worst gl=1
+[2026-10-20T03:55:43.606Z] 23:55:43 pass 1/4 rb-mvg4tafk-yli8 #37 scenario 37/172 640x480n-busy gl=1
+[2026-10-20T03:56:13.654Z] 23:56:13 pass 1/4 rb-mvg4tafk-yli8 #38 scenario 38/172 640x480n-filter gl=1
+[2026-10-20T03:56:18.661Z] 23:56:18 running 20 min · pass 1/4 · last payload 5 s ago · restarts 0
+[2026-10-20T03:56:43.696Z] 23:56:43 pass 1/4 rb-mvg4tafk-yli8 #39 scenario 39/172 640x480n-mode7 gl=1
+[2026-10-20T03:57:13.755Z] 23:57:13 pass 1/4 rb-mvg4tafk-yli8 #40 scenario 40/172 640x480n-crt-light gl=1
+[2026-10-20T03:57:43.816Z] 23:57:43 pass 1/4 rb-mvg4tafk-yli8 #41 scenario 41/172 640x480n-crt-full gl=1
+[2026-10-20T03:58:18.862Z] 23:58:18 pass 1/4 rb-mvg4tafk-yli8 #42 scenario 42/172 640x480n-worst gl=1
+[2026-10-20T03:58:48.907Z] 23:58:48 pass 1/4 rb-mvg4tafk-yli8 #43 scenario 43/172 800x480-busy gl=1
+[2026-10-20T03:59:18.968Z] 23:59:18 pass 1/4 rb-mvg4tafk-yli8 #44 scenario 44/172 800x480-filter gl=1
+[2026-10-20T03:59:49.031Z] 23:59:49 pass 1/4 rb-mvg4tafk-yli8 #45 scenario 45/172 800x480-mode7 gl=1
+[2026-10-20T04:00:19.068Z] 00:00:19 pass 1/4 rb-mvg4tafk-yli8 #46 scenario 46/172 800x480-crt-light gl=1
+[2026-10-20T04:00:49.129Z] 00:00:49 pass 1/4 rb-mvg4tafk-yli8 #47 scenario 47/172 800x480-crt-full gl=1
+[2026-10-20T04:01:19.202Z] 00:01:19 pass 1/4 rb-mvg4tafk-yli8 #48 scenario 48/172 800x480-worst gl=1
+[2026-10-20T04:01:54.297Z] 00:01:54 pass 1/4 rb-mvg4tafk-yli8 #49 scenario 49/172 800x480n-busy gl=1
+[2026-10-20T04:02:24.351Z] 00:02:24 pass 1/4 rb-mvg4tafk-yli8 #50 scenario 50/172 800x480n-filter gl=1
+[2026-10-20T04:02:54.405Z] 00:02:54 pass 1/4 rb-mvg4tafk-yli8 #51 scenario 51/172 800x480n-mode7 gl=1
+[2026-10-20T04:03:24.466Z] 00:03:24 pass 1/4 rb-mvg4tafk-yli8 #52 scenario 52/172 800x480n-crt-light gl=1
+[2026-10-20T04:03:54.515Z] 00:03:54 pass 1/4 rb-mvg4tafk-yli8 #53 scenario 53/172 800x480n-crt-full gl=1
+[2026-10-20T04:04:24.598Z] 00:04:24 pass 1/4 rb-mvg4tafk-yli8 #54 scenario 54/172 800x480n-worst gl=1
+[2026-10-20T04:04:54.635Z] 00:04:54 pass 1/4 rb-mvg4tafk-yli8 #55 scenario 55/172 854x480-busy gl=1
+[2026-10-20T04:05:24.717Z] 00:05:24 pass 1/4 rb-mvg4tafk-yli8 #56 scenario 56/172 854x480-filter gl=1
+[2026-10-20T04:05:54.788Z] 00:05:54 pass 1/4 rb-mvg4tafk-yli8 #57 scenario 57/172 854x480-mode7 gl=1
+[2026-10-20T04:06:19.842Z] 00:06:19 running 30 min · pass 1/4 · last payload 25 s ago · restarts 0
+[2026-10-20T04:06:29.863Z] 00:06:29 pass 1/4 rb-mvg4tafk-yli8 #58 scenario 58/172 854x480-crt-light gl=1
+[2026-10-20T04:06:59.910Z] 00:06:59 pass 1/4 rb-mvg4tafk-yli8 #59 scenario 59/172 854x480-crt-full gl=1
+[2026-10-20T04:07:29.975Z] 00:07:29 pass 1/4 rb-mvg4tafk-yli8 #60 scenario 60/172 854x480-worst gl=1
+[2026-10-20T04:08:00.041Z] 00:08:00 pass 1/4 rb-mvg4tafk-yli8 #61 scenario 61/172 854x480n-busy gl=1
+[2026-10-20T04:08:30.100Z] 00:08:30 pass 1/4 rb-mvg4tafk-yli8 #62 scenario 62/172 854x480n-filter gl=1
+[2026-10-20T04:09:00.151Z] 00:09:00 pass 1/4 rb-mvg4tafk-yli8 #63 scenario 63/172 854x480n-mode7 gl=1
+[2026-10-20T04:09:35.223Z] 00:09:35 pass 1/4 rb-mvg4tafk-yli8 #64 scenario 64/172 854x480n-crt-light gl=1
+[2026-10-20T04:10:05.282Z] 00:10:05 pass 1/4 rb-mvg4tafk-yli8 #65 scenario 65/172 854x480n-crt-full gl=1
+[2026-10-20T04:10:35.342Z] 00:10:35 pass 1/4 rb-mvg4tafk-yli8 #66 scenario 66/172 854x480n-worst gl=1
+[2026-10-20T04:11:05.401Z] 00:11:05 pass 1/4 rb-mvg4tafk-yli8 #67 scenario 67/172 960x540-busy gl=1
+[2026-10-20T04:11:35.451Z] 00:11:35 pass 1/4 rb-mvg4tafk-yli8 #68 scenario 68/172 960x540-filter gl=1
+[2026-10-20T04:12:05.517Z] 00:12:05 pass 1/4 rb-mvg4tafk-yli8 #69 scenario 69/172 960x540-mode7 gl=1
+[2026-10-20T04:12:35.573Z] 00:12:35 pass 1/4 rb-mvg4tafk-yli8 #70 scenario 70/172 960x540-crt-light gl=1
+[2026-10-20T04:13:05.622Z] 00:13:05 pass 1/4 rb-mvg4tafk-yli8 #71 scenario 71/172 960x540-crt-full gl=1
+[2026-10-20T04:13:40.684Z] 00:13:40 pass 1/4 rb-mvg4tafk-yli8 #72 scenario 72/172 960x540-worst gl=1
+[2026-10-20T04:14:10.772Z] 00:14:10 pass 1/4 rb-mvg4tafk-yli8 #73 scenario 73/172 960x540n-busy gl=1
+[2026-10-20T04:14:40.822Z] 00:14:40 pass 1/4 rb-mvg4tafk-yli8 #74 scenario 74/172 960x540n-filter gl=1
+[2026-10-20T04:15:10.894Z] 00:15:10 pass 1/4 rb-mvg4tafk-yli8 #75 scenario 75/172 960x540n-mode7 gl=1
+[2026-10-20T04:15:40.943Z] 00:15:40 pass 1/4 rb-mvg4tafk-yli8 #76 scenario 76/172 960x540n-crt-light gl=1
+[2026-10-20T04:16:10.987Z] 00:16:10 pass 1/4 rb-mvg4tafk-yli8 #77 scenario 77/172 960x540n-crt-full gl=1
+[2026-10-20T04:16:21.006Z] 00:16:21 running 40 min · pass 1/4 · last payload 10 s ago · restarts 0
+[2026-10-20T04:16:41.058Z] 00:16:41 pass 1/4 rb-mvg4tafk-yli8 #78 scenario 78/172 960x540n-worst gl=1
+[2026-10-20T04:17:11.113Z] 00:17:11 pass 1/4 rb-mvg4tafk-yli8 #79 scenario 79/172 1024x576-busy gl=1
+[2026-10-20T04:17:46.176Z] 00:17:46 pass 1/4 rb-mvg4tafk-yli8 #80 scenario 80/172 1024x576-filter gl=1
+[2026-10-20T04:18:16.216Z] 00:18:16 pass 1/4 rb-mvg4tafk-yli8 #81 scenario 81/172 1024x576-mode7 gl=1
+[2026-10-20T04:18:46.259Z] 00:18:46 pass 1/4 rb-mvg4tafk-yli8 #82 scenario 82/172 1024x576-crt-light gl=1
+[2026-10-20T04:19:16.321Z] 00:19:16 pass 1/4 rb-mvg4tafk-yli8 #83 scenario 83/172 1024x576-crt-full gl=1
+[2026-10-20T04:19:46.377Z] 00:19:46 pass 1/4 rb-mvg4tafk-yli8 #84 scenario 84/172 1024x576-worst gl=1
+[2026-10-20T04:20:16.429Z] 00:20:16 pass 1/4 rb-mvg4tafk-yli8 #85 scenario 85/172 1024x576n-busy gl=1
+[2026-10-20T04:20:46.497Z] 00:20:46 pass 1/4 rb-mvg4tafk-yli8 #86 scenario 86/172 1024x576n-filter gl=1
+[2026-10-20T04:21:16.567Z] 00:21:16 pass 1/4 rb-mvg4tafk-yli8 #87 scenario 87/172 1024x576n-mode7 gl=1
+[2026-10-20T04:21:51.645Z] 00:21:51 pass 1/4 rb-mvg4tafk-yli8 #88 scenario 88/172 1024x576n-crt-light gl=1
+[2026-10-20T04:22:21.709Z] 00:22:21 pass 1/4 rb-mvg4tafk-yli8 #89 scenario 89/172 1024x576n-crt-full gl=1
+[2026-10-20T04:22:51.767Z] 00:22:51 pass 1/4 rb-mvg4tafk-yli8 #90 scenario 90/172 1024x576n-worst gl=1
+[2026-10-20T04:23:21.832Z] 00:23:21 pass 1/4 rb-mvg4tafk-yli8 #91 scenario 91/172 800x600-busy gl=1
+[2026-10-20T04:23:51.896Z] 00:23:51 pass 1/4 rb-mvg4tafk-yli8 #92 scenario 92/172 800x600-filter gl=1
+[2026-10-20T04:24:21.941Z] 00:24:21 pass 1/4 rb-mvg4tafk-yli8 #93 scenario 93/172 800x600-mode7 gl=1
+[2026-10-20T04:24:51.993Z] 00:24:51 pass 1/4 rb-mvg4tafk-yli8 #94 scenario 94/172 800x600-crt-light gl=1
+[2026-10-20T04:25:22.050Z] 00:25:22 pass 1/4 rb-mvg4tafk-yli8 #95 scenario 95/172 800x600-crt-full gl=1
+[2026-10-20T04:25:57.128Z] 00:25:57 pass 1/4 rb-mvg4tafk-yli8 #96 scenario 96/172 800x600-worst gl=1
+[2026-10-20T04:26:22.162Z] 00:26:22 running 50 min · pass 1/4 · last payload 25 s ago · restarts 0
+[2026-10-20T04:26:27.178Z] 00:26:27 pass 1/4 rb-mvg4tafk-yli8 #97 scenario 97/172 800x600n-busy gl=1
+[2026-10-20T04:26:57.244Z] 00:26:57 pass 1/4 rb-mvg4tafk-yli8 #98 scenario 98/172 800x600n-filter gl=1
+[2026-10-20T04:27:27.315Z] 00:27:27 pass 1/4 rb-mvg4tafk-yli8 #99 scenario 99/172 800x600n-mode7 gl=1
+[2026-10-20T04:27:57.360Z] 00:27:57 pass 1/4 rb-mvg4tafk-yli8 #100 scenario 100/172 800x600n-crt-light gl=1
+[2026-10-20T04:28:27.403Z] 00:28:27 pass 1/4 rb-mvg4tafk-yli8 #101 scenario 101/172 800x600n-crt-full gl=1
+[2026-10-20T04:28:57.462Z] 00:28:57 pass 1/4 rb-mvg4tafk-yli8 #102 scenario 102/172 800x600n-worst gl=1
+[2026-10-20T04:29:27.530Z] 00:29:27 pass 1/4 rb-mvg4tafk-yli8 #103 scenario 103/172 1024x600-busy gl=1
+[2026-10-20T04:29:57.622Z] 00:29:57 pass 1/4 rb-mvg4tafk-yli8 #104 scenario 104/172 1024x600-filter gl=1
+[2026-10-20T04:30:32.672Z] 00:30:32 pass 1/4 rb-mvg4tafk-yli8 #105 scenario 105/172 1024x600-mode7 gl=1
+[2026-10-20T04:31:02.724Z] 00:31:02 pass 1/4 rb-mvg4tafk-yli8 #106 scenario 106/172 1024x600-crt-light gl=1
+[2026-10-20T04:31:32.775Z] 00:31:32 pass 1/4 rb-mvg4tafk-yli8 #107 scenario 107/172 1024x600-crt-full gl=1
+[2026-10-20T04:32:02.833Z] 00:32:02 pass 1/4 rb-mvg4tafk-yli8 #108 scenario 108/172 1024x600-worst gl=1
+[2026-10-20T04:32:32.897Z] 00:32:32 pass 1/4 rb-mvg4tafk-yli8 #109 scenario 109/172 1024x600n-busy gl=1
+[2026-10-20T04:33:02.971Z] 00:33:02 pass 1/4 rb-mvg4tafk-yli8 #110 scenario 110/172 1024x600n-filter gl=1
+[2026-10-20T04:33:33.032Z] 00:33:33 pass 1/4 rb-mvg4tafk-yli8 #111 scenario 111/172 1024x600n-mode7 gl=1
+[2026-10-20T04:34:03.101Z] 00:34:03 pass 1/4 rb-mvg4tafk-yli8 #112 scenario 112/172 1024x600n-crt-light gl=1
+[2026-10-20T04:34:33.164Z] 00:34:33 pass 1/4 rb-mvg4tafk-yli8 #113 scenario 113/172 1024x600n-crt-full gl=1
+[2026-10-20T04:35:03.211Z] 00:35:03 pass 1/4 rb-mvg4tafk-yli8 #114 scenario 114/172 1024x600n-worst gl=1
+[2026-10-20T04:35:38.253Z] 00:35:38 pass 1/4 rb-mvg4tafk-yli8 #115 scenario 115/172 960x640-busy gl=1
+[2026-10-20T04:36:08.314Z] 00:36:08 pass 1/4 rb-mvg4tafk-yli8 #116 scenario 116/172 960x640-filter gl=1
+[2026-10-20T04:36:23.349Z] 00:36:23 running 60 min · pass 1/4 · last payload 15 s ago · restarts 0
+[2026-10-20T04:36:38.377Z] 00:36:38 pass 1/4 rb-mvg4tafk-yli8 #117 scenario 117/172 960x640-mode7 gl=1
+[2026-10-20T04:37:08.431Z] 00:37:08 pass 1/4 rb-mvg4tafk-yli8 #118 scenario 118/172 960x640-crt-light gl=1
+[2026-10-20T04:37:38.464Z] 00:37:38 pass 1/4 rb-mvg4tafk-yli8 #119 scenario 119/172 960x640-crt-full gl=1
+[2026-10-20T04:38:08.524Z] 00:38:08 pass 1/4 rb-mvg4tafk-yli8 #120 scenario 120/172 960x640-worst gl=1
+[2026-10-20T04:38:38.574Z] 00:38:38 pass 1/4 rb-mvg4tafk-yli8 #121 scenario 121/172 960x640n-busy gl=1
+[2026-10-20T04:39:08.610Z] 00:39:08 pass 1/4 rb-mvg4tafk-yli8 #122 scenario 122/172 960x640n-filter gl=1
+[2026-10-20T04:39:38.668Z] 00:39:38 pass 1/4 rb-mvg4tafk-yli8 #123 scenario 123/172 960x640n-mode7 gl=1
+[2026-10-20T04:40:13.726Z] 00:40:13 pass 1/4 rb-mvg4tafk-yli8 #124 scenario 124/172 960x640n-crt-light gl=1
+[2026-10-20T04:40:43.780Z] 00:40:43 pass 1/4 rb-mvg4tafk-yli8 #125 scenario 125/172 960x640n-crt-full gl=1
+[2026-10-20T04:41:13.838Z] 00:41:13 pass 1/4 rb-mvg4tafk-yli8 #126 scenario 126/172 960x640n-worst gl=1
+[2026-10-20T04:41:43.890Z] 00:41:43 pass 1/4 rb-mvg4tafk-yli8 #127 scenario 127/172 1280x720n-busy gl=1
+[2026-10-20T04:42:13.924Z] 00:42:13 pass 1/4 rb-mvg4tafk-yli8 #128 scenario 128/172 1280x720n-filter gl=1
+[2026-10-20T04:42:43.989Z] 00:42:43 pass 1/4 rb-mvg4tafk-yli8 #129 scenario 129/172 1280x720n-mode7 gl=1
+[2026-10-20T04:43:14.040Z] 00:43:14 pass 1/4 rb-mvg4tafk-yli8 #130 scenario 130/172 1280x720n-crt-light gl=1
+[2026-10-20T04:43:49.116Z] 00:43:49 pass 1/4 rb-mvg4tafk-yli8 #131 scenario 131/172 1280x720n-crt-full gl=1
+[2026-10-20T04:44:19.186Z] 00:44:19 pass 1/4 rb-mvg4tafk-yli8 #132 scenario 132/172 1280x720n-worst gl=1
+[2026-10-20T04:44:49.262Z] 00:44:49 pass 1/4 rb-mvg4tafk-yli8 #133 scenario 151/172 800x600-busy-fit gl=1
+[2026-10-20T04:45:19.339Z] 00:45:19 pass 1/4 rb-mvg4tafk-yli8 #134 scenario 152/172 800x600-worst-fit gl=1
+[2026-10-20T04:45:49.405Z] 00:45:49 pass 1/4 rb-mvg4tafk-yli8 #135 scenario 153/172 854x480-busy-fit gl=1
+[2026-10-20T04:46:19.441Z] 00:46:19 pass 1/4 rb-mvg4tafk-yli8 #136 scenario 154/172 854x480-worst-fit gl=1
+[2026-10-20T04:46:24.452Z] 00:46:24 running 70 min · pass 1/4 · last payload 5 s ago · restarts 0
+[2026-10-20T04:46:49.511Z] 00:46:49 pass 1/4 rb-mvg4tafk-yli8 #137 scenario 155/172 800x600-busy-stretch gl=1
+[2026-10-20T04:47:19.560Z] 00:47:19 pass 1/4 rb-mvg4tafk-yli8 #138 scenario 156/172 800x600-worst-stretch gl=1
+[2026-10-20T04:47:54.630Z] 00:47:54 pass 1/4 rb-mvg4tafk-yli8 #139 scenario 157/172 854x480-busy-stretch gl=1
+[2026-10-20T04:48:24.693Z] 00:48:24 pass 1/4 rb-mvg4tafk-yli8 #140 scenario 158/172 854x480-worst-stretch gl=1
+[2026-10-20T04:48:54.747Z] 00:48:54 pass 1/4 rb-mvg4tafk-yli8 #141 scenario 159/172 640x360-busy-stretch gl=1
+[2026-10-20T04:49:24.791Z] 00:49:24 pass 1/4 rb-mvg4tafk-yli8 #142 scenario 160/172 640x360-worst-stretch gl=1
+[2026-10-20T04:49:54.861Z] 00:49:54 pass 1/4 rb-mvg4tafk-yli8 #143 scenario 161/172 640x360-busy-interp gl=1
+[2026-10-20T04:50:24.909Z] 00:50:24 pass 1/4 rb-mvg4tafk-yli8 #144 scenario 162/172 640x360-worst-interp gl=1
+[2026-10-20T04:50:54.961Z] 00:50:54 pass 1/4 rb-mvg4tafk-yli8 #145 scenario 163/172 1280x720n-busy-interp gl=1
+[2026-10-20T04:51:30.047Z] 00:51:30 pass 1/4 rb-mvg4tafk-yli8 #146 scenario 164/172 1280x720n-worst-interp gl=1
+[2026-10-20T04:52:00.097Z] 00:52:00 pass 1/4 rb-mvg4tafk-yli8 #147 scenario 167/172 640x360-busy-out720 gl=1
+[2026-10-20T04:52:30.150Z] 00:52:30 pass 1/4 rb-mvg4tafk-yli8 #148 scenario 168/172 640x360-worst-out720 gl=1
+[2026-10-20T04:53:00.190Z] 00:53:00 pass 1/4 rb-mvg4tafk-yli8 #149 scenario 171/172 640x360-busy-out540 gl=1
+[2026-10-20T04:53:30.239Z] 00:53:30 pass 1/4 rb-mvg4tafk-yli8 #150 scenario 172/172 640x360-worst-out540 gl=1
+[2026-10-20T04:53:50.274Z] 00:53:50 pass 1/4 rb-mvg4tafk-yli8 #151 DONE 150/172 records + decode gl=1 · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169
+[2026-10-20T04:53:50.274Z] 00:53:50 pass 1/4 finished — starting pass 2
+[2026-10-20T04:53:50.274Z] 00:53:50 relaunch (next pass)
+[2026-10-20T04:53:50.275Z] 00:53:50 [kill app] > sdb -s 10.0.0.224:26101 shell 0 was_kill ShmpCupBnc.RenderBench
+[2026-10-20T04:53:50.465Z]   | terminate app ShmpCupBnc.RenderBench
+[2026-10-20T04:53:50.490Z]   | spend time for wascmd is [30]ms
+[2026-10-20T04:53:55.520Z] 00:53:55 [launch] > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat run -p ShmpCupBnc.RenderBench -s 10.0.0.224:26101
+[2026-10-20T04:53:57.623Z]   | Launching the Tizen application...
+[2026-10-20T04:53:58.944Z]   | --------------------
+[2026-10-20T04:53:58.944Z]   | Platform log view
+[2026-10-20T04:53:58.944Z]   | --------------------
+[2026-10-20T04:53:58.945Z]   | ... successfully launched pid = 3662 with debug 0
+[2026-10-20T04:53:58.945Z]   | Tizen application is successfully launched.
+[2026-10-20T04:55:02.439Z] 00:55:02 pass 2/4 rb-mvg7l9vw-bp11 #1 scenario 1/172 384x216-busy gl=2
+[2026-10-20T04:55:32.483Z] 00:55:32 pass 2/4 rb-mvg7l9vw-bp11 #2 scenario 2/172 384x216-filter gl=2
+[2026-10-20T04:56:07.534Z] 00:56:07 pass 2/4 rb-mvg7l9vw-bp11 #3 scenario 3/172 384x216-mode7 gl=2
+[2026-10-20T04:56:27.555Z] 00:56:27 running 80 min · pass 2/4 · last payload 20 s ago · restarts 0
+[2026-10-20T04:56:37.577Z] 00:56:37 pass 2/4 rb-mvg7l9vw-bp11 #4 scenario 4/172 384x216-crt-light gl=2
+[2026-10-20T04:57:07.633Z] 00:57:07 pass 2/4 rb-mvg7l9vw-bp11 #5 scenario 5/172 384x216-crt-full gl=2
+[2026-10-20T04:57:37.696Z] 00:57:37 pass 2/4 rb-mvg7l9vw-bp11 #6 scenario 6/172 384x216-worst gl=2
+[2026-10-20T04:58:07.754Z] 00:58:07 pass 2/4 rb-mvg7l9vw-bp11 #7 scenario 7/172 480x320-busy gl=2
+[2026-10-20T04:58:37.834Z] 00:58:37 pass 2/4 rb-mvg7l9vw-bp11 #8 scenario 8/172 480x320-filter gl=2
+[2026-10-20T04:59:07.882Z] 00:59:07 pass 2/4 rb-mvg7l9vw-bp11 #9 scenario 9/172 480x320-mode7 gl=2
+[2026-10-20T04:59:42.946Z] 00:59:42 pass 2/4 rb-mvg7l9vw-bp11 #10 scenario 10/172 480x320-crt-light gl=2
+[2026-10-20T05:00:13.010Z] 01:00:13 pass 2/4 rb-mvg7l9vw-bp11 #11 scenario 11/172 480x320-crt-full gl=2
+[2026-10-20T05:00:43.062Z] 01:00:43 pass 2/4 rb-mvg7l9vw-bp11 #12 scenario 12/172 480x320-worst gl=2
+[2026-10-20T05:01:13.113Z] 01:01:13 pass 2/4 rb-mvg7l9vw-bp11 #13 scenario 13/172 480x320n-busy gl=2
+[2026-10-20T05:01:43.193Z] 01:01:43 pass 2/4 rb-mvg7l9vw-bp11 #14 scenario 14/172 480x320n-filter gl=2
+[2026-10-20T05:02:13.250Z] 01:02:13 pass 2/4 rb-mvg7l9vw-bp11 #15 scenario 15/172 480x320n-mode7 gl=2
+[2026-10-20T05:02:43.297Z] 01:02:43 pass 2/4 rb-mvg7l9vw-bp11 #16 scenario 16/172 480x320n-crt-light gl=2
+[2026-10-20T05:03:13.339Z] 01:03:13 pass 2/4 rb-mvg7l9vw-bp11 #17 scenario 17/172 480x320n-crt-full gl=2
+[2026-10-20T05:03:43.402Z] 01:03:43 pass 2/4 rb-mvg7l9vw-bp11 #18 scenario 18/172 480x320n-worst gl=2
+[2026-10-20T05:04:18.482Z] 01:04:18 pass 2/4 rb-mvg7l9vw-bp11 #19 scenario 19/172 640x360-busy gl=2
+[2026-10-20T05:04:48.575Z] 01:04:48 pass 2/4 rb-mvg7l9vw-bp11 #20 scenario 20/172 640x360-filter gl=2
+[2026-10-20T05:05:18.642Z] 01:05:18 pass 2/4 rb-mvg7l9vw-bp11 #21 scenario 21/172 640x360-mode7 gl=2
+[2026-10-20T05:05:48.687Z] 01:05:48 pass 2/4 rb-mvg7l9vw-bp11 #22 scenario 22/172 640x360-crt-light gl=2
+[2026-10-20T05:06:18.729Z] 01:06:18 pass 2/4 rb-mvg7l9vw-bp11 #23 scenario 23/172 640x360-crt-full gl=2
+[2026-10-20T05:06:28.741Z] 01:06:28 running 90 min · pass 2/4 · last payload 10 s ago · restarts 0
+[2026-10-20T05:06:48.770Z] 01:06:48 pass 2/4 rb-mvg7l9vw-bp11 #24 scenario 24/172 640x360-worst gl=2
+[2026-10-20T05:07:23.837Z] 01:07:23 pass 2/4 rb-mvg7l9vw-bp11 #25 scenario 25/172 640x360n-busy gl=2
+[2026-10-20T05:07:53.901Z] 01:07:53 pass 2/4 rb-mvg7l9vw-bp11 #26 scenario 26/172 640x360n-filter gl=2
+[2026-10-20T05:08:23.978Z] 01:08:23 pass 2/4 rb-mvg7l9vw-bp11 #27 scenario 27/172 640x360n-mode7 gl=2
+[2026-10-20T05:08:54.029Z] 01:08:54 pass 2/4 rb-mvg7l9vw-bp11 #28 scenario 28/172 640x360n-crt-light gl=2
+[2026-10-20T05:09:24.105Z] 01:09:24 pass 2/4 rb-mvg7l9vw-bp11 #29 scenario 29/172 640x360n-crt-full gl=2
+[2026-10-20T05:09:54.157Z] 01:09:54 pass 2/4 rb-mvg7l9vw-bp11 #30 scenario 30/172 640x360n-worst gl=2
+[2026-10-20T05:10:24.206Z] 01:10:24 pass 2/4 rb-mvg7l9vw-bp11 #31 scenario 31/172 640x480-busy gl=2
+[2026-10-20T05:10:54.264Z] 01:10:54 pass 2/4 rb-mvg7l9vw-bp11 #32 scenario 32/172 640x480-filter gl=2
+[2026-10-20T05:11:29.313Z] 01:11:29 pass 2/4 rb-mvg7l9vw-bp11 #33 scenario 33/172 640x480-mode7 gl=2
+[2026-10-20T05:11:59.357Z] 01:11:59 pass 2/4 rb-mvg7l9vw-bp11 #34 scenario 34/172 640x480-crt-light gl=2
+[2026-10-20T05:12:29.401Z] 01:12:29 pass 2/4 rb-mvg7l9vw-bp11 #35 scenario 35/172 640x480-crt-full gl=2
+[2026-10-20T05:12:59.456Z] 01:12:59 pass 2/4 rb-mvg7l9vw-bp11 #36 scenario 36/172 640x480-worst gl=2
+[2026-10-20T05:13:29.502Z] 01:13:29 pass 2/4 rb-mvg7l9vw-bp11 #37 scenario 37/172 640x480n-busy gl=2
+[2026-10-20T05:13:59.544Z] 01:13:59 pass 2/4 rb-mvg7l9vw-bp11 #38 scenario 38/172 640x480n-filter gl=2
+[2026-10-20T05:14:29.599Z] 01:14:29 pass 2/4 rb-mvg7l9vw-bp11 #39 scenario 39/172 640x480n-mode7 gl=2
+[2026-10-20T05:14:59.660Z] 01:14:59 pass 2/4 rb-mvg7l9vw-bp11 #40 scenario 40/172 640x480n-crt-light gl=2
+[2026-10-20T05:15:29.709Z] 01:15:29 pass 2/4 rb-mvg7l9vw-bp11 #41 scenario 41/172 640x480n-crt-full gl=2
+[2026-10-20T05:15:59.752Z] 01:15:59 pass 2/4 rb-mvg7l9vw-bp11 #42 scenario 42/172 640x480n-worst gl=2
+[2026-10-20T05:16:29.805Z] 01:16:29 pass 2/4 rb-mvg7l9vw-bp11 #43 scenario 43/172 800x480-busy gl=2
+[2026-10-20T05:16:29.805Z] 01:16:29 running 100 min · pass 2/4 · last payload 0 s ago · restarts 0
+[2026-10-20T05:17:04.870Z] 01:17:04 pass 2/4 rb-mvg7l9vw-bp11 #44 scenario 44/172 800x480-filter gl=2
+[2026-10-20T05:17:34.935Z] 01:17:34 pass 2/4 rb-mvg7l9vw-bp11 #45 scenario 45/172 800x480-mode7 gl=2
+[2026-10-20T05:18:05.000Z] 01:18:04 pass 2/4 rb-mvg7l9vw-bp11 #46 scenario 46/172 800x480-crt-light gl=2
+[2026-10-20T05:18:35.050Z] 01:18:35 pass 2/4 rb-mvg7l9vw-bp11 #47 scenario 47/172 800x480-crt-full gl=2
+[2026-10-20T05:19:05.120Z] 01:19:05 pass 2/4 rb-mvg7l9vw-bp11 #48 scenario 48/172 800x480-worst gl=2
+[2026-10-20T05:19:35.173Z] 01:19:35 pass 2/4 rb-mvg7l9vw-bp11 #49 scenario 49/172 800x480n-busy gl=2
+[2026-10-20T05:20:05.233Z] 01:20:05 pass 2/4 rb-mvg7l9vw-bp11 #50 scenario 50/172 800x480n-filter gl=2
+[2026-10-20T05:20:35.290Z] 01:20:35 pass 2/4 rb-mvg7l9vw-bp11 #51 scenario 51/172 800x480n-mode7 gl=2
+[2026-10-20T05:21:05.335Z] 01:21:05 pass 2/4 rb-mvg7l9vw-bp11 #52 scenario 52/172 800x480n-crt-light gl=2
+[2026-10-20T05:21:40.389Z] 01:21:40 pass 2/4 rb-mvg7l9vw-bp11 #53 scenario 53/172 800x480n-crt-full gl=2
+[2026-10-20T05:22:10.446Z] 01:22:10 pass 2/4 rb-mvg7l9vw-bp11 #54 scenario 54/172 800x480n-worst gl=2
+[2026-10-20T05:22:40.495Z] 01:22:40 pass 2/4 rb-mvg7l9vw-bp11 #55 scenario 55/172 854x480-busy gl=2
+[2026-10-20T05:23:10.533Z] 01:23:10 pass 2/4 rb-mvg7l9vw-bp11 #56 scenario 56/172 854x480-filter gl=2
+[2026-10-20T05:23:40.579Z] 01:23:40 pass 2/4 rb-mvg7l9vw-bp11 #57 scenario 57/172 854x480-mode7 gl=2
+[2026-10-20T05:24:10.645Z] 01:24:10 pass 2/4 rb-mvg7l9vw-bp11 #58 scenario 58/172 854x480-crt-light gl=2
+[2026-10-20T05:24:40.685Z] 01:24:40 pass 2/4 rb-mvg7l9vw-bp11 #59 scenario 59/172 854x480-crt-full gl=2
+[2026-10-20T05:25:10.715Z] 01:25:10 pass 2/4 rb-mvg7l9vw-bp11 #60 scenario 60/172 854x480-worst gl=2
+[2026-10-20T05:25:40.767Z] 01:25:40 pass 2/4 rb-mvg7l9vw-bp11 #61 scenario 61/172 854x480n-busy gl=2
+[2026-10-20T05:26:15.813Z] 01:26:15 pass 2/4 rb-mvg7l9vw-bp11 #62 scenario 62/172 854x480n-filter gl=2
+[2026-10-20T05:26:30.834Z] 01:26:30 running 110 min · pass 2/4 · last payload 15 s ago · restarts 0
+[2026-10-20T05:26:45.863Z] 01:26:45 pass 2/4 rb-mvg7l9vw-bp11 #63 scenario 63/172 854x480n-mode7 gl=2
+[2026-10-20T05:27:15.945Z] 01:27:15 pass 2/4 rb-mvg7l9vw-bp11 #64 scenario 64/172 854x480n-crt-light gl=2
+[2026-10-20T05:27:46.000Z] 01:27:46 pass 2/4 rb-mvg7l9vw-bp11 #65 scenario 65/172 854x480n-crt-full gl=2
+[2026-10-20T05:28:16.040Z] 01:28:16 pass 2/4 rb-mvg7l9vw-bp11 #66 scenario 66/172 854x480n-worst gl=2
+[2026-10-20T05:28:46.095Z] 01:28:46 pass 2/4 rb-mvg7l9vw-bp11 #67 scenario 67/172 960x540-busy gl=2
+[2026-10-20T05:29:16.162Z] 01:29:16 pass 2/4 rb-mvg7l9vw-bp11 #68 scenario 68/172 960x540-filter gl=2
+[2026-10-20T05:29:46.217Z] 01:29:46 pass 2/4 rb-mvg7l9vw-bp11 #69 scenario 69/172 960x540-mode7 gl=2
+[2026-10-20T05:30:21.292Z] 01:30:21 pass 2/4 rb-mvg7l9vw-bp11 #70 scenario 70/172 960x540-crt-light gl=2
+[2026-10-20T05:30:51.345Z] 01:30:51 pass 2/4 rb-mvg7l9vw-bp11 #71 scenario 71/172 960x540-crt-full gl=2
+[2026-10-20T05:31:21.407Z] 01:31:21 pass 2/4 rb-mvg7l9vw-bp11 #72 scenario 72/172 960x540-worst gl=2
+[2026-10-20T05:31:51.446Z] 01:31:51 pass 2/4 rb-mvg7l9vw-bp11 #73 scenario 73/172 960x540n-busy gl=2
+[2026-10-20T05:32:21.499Z] 01:32:21 pass 2/4 rb-mvg7l9vw-bp11 #74 scenario 74/172 960x540n-filter gl=2
+[2026-10-20T05:32:51.561Z] 01:32:51 pass 2/4 rb-mvg7l9vw-bp11 #75 scenario 75/172 960x540n-mode7 gl=2
+[2026-10-20T05:33:21.608Z] 01:33:21 pass 2/4 rb-mvg7l9vw-bp11 #76 scenario 76/172 960x540n-crt-light gl=2
+[2026-10-20T05:33:51.677Z] 01:33:51 pass 2/4 rb-mvg7l9vw-bp11 #77 scenario 77/172 960x540n-crt-full gl=2
+[2026-10-20T05:34:21.740Z] 01:34:21 pass 2/4 rb-mvg7l9vw-bp11 #78 scenario 78/172 960x540n-worst gl=2
+[2026-10-20T05:34:56.813Z] 01:34:56 pass 2/4 rb-mvg7l9vw-bp11 #79 scenario 79/172 1024x576-busy gl=2
+[2026-10-20T05:35:26.864Z] 01:35:26 pass 2/4 rb-mvg7l9vw-bp11 #80 scenario 80/172 1024x576-filter gl=2
+[2026-10-20T05:35:56.916Z] 01:35:56 pass 2/4 rb-mvg7l9vw-bp11 #81 scenario 81/172 1024x576-mode7 gl=2
+[2026-10-20T05:36:26.976Z] 01:36:26 pass 2/4 rb-mvg7l9vw-bp11 #82 scenario 82/172 1024x576-crt-light gl=2
+[2026-10-20T05:36:31.979Z] 01:36:31 running 120 min · pass 2/4 · last payload 5 s ago · restarts 0
+[2026-10-20T05:36:57.017Z] 01:36:57 pass 2/4 rb-mvg7l9vw-bp11 #83 scenario 83/172 1024x576-crt-full gl=2
+[2026-10-20T05:37:27.085Z] 01:37:27 pass 2/4 rb-mvg7l9vw-bp11 #84 scenario 84/172 1024x576-worst gl=2
+[2026-10-20T05:37:57.154Z] 01:37:57 pass 2/4 rb-mvg7l9vw-bp11 #85 scenario 85/172 1024x576n-busy gl=2
+[2026-10-20T05:38:27.212Z] 01:38:27 pass 2/4 rb-mvg7l9vw-bp11 #86 scenario 86/172 1024x576n-filter gl=2
+[2026-10-20T05:38:57.261Z] 01:38:57 pass 2/4 rb-mvg7l9vw-bp11 #87 scenario 87/172 1024x576n-mode7 gl=2
+[2026-10-20T05:39:32.327Z] 01:39:32 pass 2/4 rb-mvg7l9vw-bp11 #88 scenario 88/172 1024x576n-crt-light gl=2
+[2026-10-20T05:40:02.379Z] 01:40:02 pass 2/4 rb-mvg7l9vw-bp11 #89 scenario 89/172 1024x576n-crt-full gl=2
+[2026-10-20T05:40:32.437Z] 01:40:32 pass 2/4 rb-mvg7l9vw-bp11 #90 scenario 90/172 1024x576n-worst gl=2
+[2026-10-20T05:41:02.490Z] 01:41:02 pass 2/4 rb-mvg7l9vw-bp11 #91 scenario 91/172 800x600-busy gl=2
+[2026-10-20T05:41:32.551Z] 01:41:32 pass 2/4 rb-mvg7l9vw-bp11 #92 scenario 92/172 800x600-filter gl=2
+[2026-10-20T05:42:02.596Z] 01:42:02 pass 2/4 rb-mvg7l9vw-bp11 #93 scenario 93/172 800x600-mode7 gl=2
+[2026-10-20T05:42:32.641Z] 01:42:32 pass 2/4 rb-mvg7l9vw-bp11 #94 scenario 94/172 800x600-crt-light gl=2
+[2026-10-20T05:43:02.695Z] 01:43:02 pass 2/4 rb-mvg7l9vw-bp11 #95 scenario 95/172 800x600-crt-full gl=2
+[2026-10-20T05:43:32.756Z] 01:43:32 pass 2/4 rb-mvg7l9vw-bp11 #96 scenario 96/172 800x600-worst gl=2
+[2026-10-20T05:44:02.828Z] 01:44:02 pass 2/4 rb-mvg7l9vw-bp11 #97 scenario 97/172 800x600n-busy gl=2
+[2026-10-20T05:44:37.925Z] 01:44:37 pass 2/4 rb-mvg7l9vw-bp11 #98 scenario 98/172 800x600n-filter gl=2
+[2026-10-20T05:45:07.988Z] 01:45:07 pass 2/4 rb-mvg7l9vw-bp11 #99 scenario 99/172 800x600n-mode7 gl=2
+[2026-10-20T05:45:38.040Z] 01:45:38 pass 2/4 rb-mvg7l9vw-bp11 #100 scenario 100/172 800x600n-crt-light gl=2
+[2026-10-20T05:46:08.101Z] 01:46:08 pass 2/4 rb-mvg7l9vw-bp11 #101 scenario 101/172 800x600n-crt-full gl=2
+[2026-10-20T05:46:33.168Z] 01:46:33 running 130 min · pass 2/4 · last payload 25 s ago · restarts 0
+[2026-10-20T05:46:38.177Z] 01:46:38 pass 2/4 rb-mvg7l9vw-bp11 #102 scenario 102/172 800x600n-worst gl=2
+[2026-10-20T05:47:08.245Z] 01:47:08 pass 2/4 rb-mvg7l9vw-bp11 #103 scenario 103/172 1024x600-busy gl=2
+[2026-10-20T05:47:38.295Z] 01:47:38 pass 2/4 rb-mvg7l9vw-bp11 #104 scenario 104/172 1024x600-filter gl=2
+[2026-10-20T05:48:08.338Z] 01:48:08 pass 2/4 rb-mvg7l9vw-bp11 #105 scenario 105/172 1024x600-mode7 gl=2
+[2026-10-20T05:48:38.402Z] 01:48:38 pass 2/4 rb-mvg7l9vw-bp11 #106 scenario 106/172 1024x600-crt-light gl=2
+[2026-10-20T05:49:08.444Z] 01:49:08 pass 2/4 rb-mvg7l9vw-bp11 #107 scenario 107/172 1024x600-crt-full gl=2
+[2026-10-20T05:49:43.519Z] 01:49:43 pass 2/4 rb-mvg7l9vw-bp11 #108 scenario 108/172 1024x600-worst gl=2
+[2026-10-20T05:50:13.575Z] 01:50:13 pass 2/4 rb-mvg7l9vw-bp11 #109 scenario 109/172 1024x600n-busy gl=2
+[2026-10-20T05:50:43.648Z] 01:50:43 pass 2/4 rb-mvg7l9vw-bp11 #110 scenario 110/172 1024x600n-filter gl=2
+[2026-10-20T05:51:13.707Z] 01:51:13 pass 2/4 rb-mvg7l9vw-bp11 #111 scenario 111/172 1024x600n-mode7 gl=2
+[2026-10-20T05:51:43.759Z] 01:51:43 pass 2/4 rb-mvg7l9vw-bp11 #112 scenario 112/172 1024x600n-crt-light gl=2
+[2026-10-20T05:52:13.833Z] 01:52:13 pass 2/4 rb-mvg7l9vw-bp11 #113 scenario 113/172 1024x600n-crt-full gl=2
+[2026-10-20T05:52:43.872Z] 01:52:43 pass 2/4 rb-mvg7l9vw-bp11 #114 scenario 114/172 1024x600n-worst gl=2
+[2026-10-20T05:53:13.935Z] 01:53:13 pass 2/4 rb-mvg7l9vw-bp11 #115 scenario 115/172 960x640-busy gl=2
+[2026-10-20T05:53:43.994Z] 01:53:43 pass 2/4 rb-mvg7l9vw-bp11 #116 scenario 116/172 960x640-filter gl=2
+[2026-10-20T05:54:19.057Z] 01:54:19 pass 2/4 rb-mvg7l9vw-bp11 #117 scenario 117/172 960x640-mode7 gl=2
+[2026-10-20T05:54:49.125Z] 01:54:49 pass 2/4 rb-mvg7l9vw-bp11 #118 scenario 118/172 960x640-crt-light gl=2
+[2026-10-20T05:55:19.167Z] 01:55:19 pass 2/4 rb-mvg7l9vw-bp11 #119 scenario 119/172 960x640-crt-full gl=2
+[2026-10-20T05:55:49.211Z] 01:55:49 pass 2/4 rb-mvg7l9vw-bp11 #120 scenario 120/172 960x640-worst gl=2
+[2026-10-20T05:56:19.265Z] 01:56:19 pass 2/4 rb-mvg7l9vw-bp11 #121 scenario 121/172 960x640n-busy gl=2
+[2026-10-20T05:56:34.291Z] 01:56:34 running 140 min · pass 2/4 · last payload 15 s ago · restarts 0
+[2026-10-20T05:56:49.315Z] 01:56:49 pass 2/4 rb-mvg7l9vw-bp11 #122 scenario 122/172 960x640n-filter gl=2
+[2026-10-20T05:57:24.374Z] 01:57:24 pass 2/4 rb-mvg7l9vw-bp11 #123 scenario 123/172 960x640n-mode7 gl=2
+[2026-10-20T05:57:54.413Z] 01:57:54 pass 2/4 rb-mvg7l9vw-bp11 #124 scenario 124/172 960x640n-crt-light gl=2
+[2026-10-20T05:58:24.463Z] 01:58:24 pass 2/4 rb-mvg7l9vw-bp11 #125 scenario 125/172 960x640n-crt-full gl=2
+[2026-10-20T05:58:54.505Z] 01:58:54 pass 2/4 rb-mvg7l9vw-bp11 #126 scenario 126/172 960x640n-worst gl=2
+[2026-10-20T05:59:24.547Z] 01:59:24 pass 2/4 rb-mvg7l9vw-bp11 #127 scenario 127/172 1280x720n-busy gl=2
+[2026-10-20T05:59:54.602Z] 01:59:54 pass 2/4 rb-mvg7l9vw-bp11 #128 scenario 128/172 1280x720n-filter gl=2
+[2026-10-20T06:00:24.656Z] 02:00:24 pass 2/4 rb-mvg7l9vw-bp11 #129 scenario 129/172 1280x720n-mode7 gl=2
+[2026-10-20T06:00:54.702Z] 02:00:54 pass 2/4 rb-mvg7l9vw-bp11 #130 scenario 130/172 1280x720n-crt-light gl=2
+[2026-10-20T06:01:24.744Z] 02:01:24 pass 2/4 rb-mvg7l9vw-bp11 #131 scenario 131/172 1280x720n-crt-full gl=2
+[2026-10-20T06:01:54.807Z] 02:01:54 pass 2/4 rb-mvg7l9vw-bp11 #132 scenario 132/172 1280x720n-worst gl=2
+[2026-10-20T06:02:29.883Z] 02:02:29 pass 2/4 rb-mvg7l9vw-bp11 #133 scenario 151/172 800x600-busy-fit gl=2
+[2026-10-20T06:02:59.940Z] 02:02:59 pass 2/4 rb-mvg7l9vw-bp11 #134 scenario 152/172 800x600-worst-fit gl=2
+[2026-10-20T06:03:30.007Z] 02:03:30 pass 2/4 rb-mvg7l9vw-bp11 #135 scenario 153/172 854x480-busy-fit gl=2
+[2026-10-20T06:04:00.061Z] 02:04:00 pass 2/4 rb-mvg7l9vw-bp11 #136 scenario 154/172 854x480-worst-fit gl=2
+[2026-10-20T06:04:30.120Z] 02:04:30 pass 2/4 rb-mvg7l9vw-bp11 #137 scenario 155/172 800x600-busy-stretch gl=2
+[2026-10-20T06:05:00.167Z] 02:05:00 pass 2/4 rb-mvg7l9vw-bp11 #138 scenario 156/172 800x600-worst-stretch gl=2
+[2026-10-20T06:05:30.221Z] 02:05:30 pass 2/4 rb-mvg7l9vw-bp11 #139 scenario 157/172 854x480-busy-stretch gl=2
+[2026-10-20T06:06:05.276Z] 02:06:05 pass 2/4 rb-mvg7l9vw-bp11 #140 scenario 158/172 854x480-worst-stretch gl=2
+[2026-10-20T06:06:35.329Z] 02:06:35 pass 2/4 rb-mvg7l9vw-bp11 #141 scenario 159/172 640x360-busy-stretch gl=2
+[2026-10-20T06:06:35.329Z] 02:06:35 running 150 min · pass 2/4 · last payload 0 s ago · restarts 0
+[2026-10-20T06:07:05.378Z] 02:07:05 pass 2/4 rb-mvg7l9vw-bp11 #142 scenario 160/172 640x360-worst-stretch gl=2
+[2026-10-20T06:07:35.438Z] 02:07:35 pass 2/4 rb-mvg7l9vw-bp11 #143 scenario 161/172 640x360-busy-interp gl=2
+[2026-10-20T06:08:05.482Z] 02:08:05 pass 2/4 rb-mvg7l9vw-bp11 #144 scenario 162/172 640x360-worst-interp gl=2
+[2026-10-20T06:08:35.521Z] 02:08:35 pass 2/4 rb-mvg7l9vw-bp11 #145 scenario 163/172 1280x720n-busy-interp gl=2
+[2026-10-20T06:09:05.575Z] 02:09:05 pass 2/4 rb-mvg7l9vw-bp11 #146 scenario 164/172 1280x720n-worst-interp gl=2
+[2026-10-20T06:09:40.648Z] 02:09:40 pass 2/4 rb-mvg7l9vw-bp11 #147 scenario 167/172 640x360-busy-out720 gl=2
+[2026-10-20T06:10:10.725Z] 02:10:10 pass 2/4 rb-mvg7l9vw-bp11 #148 scenario 168/172 640x360-worst-out720 gl=2
+[2026-10-20T06:10:40.789Z] 02:10:40 pass 2/4 rb-mvg7l9vw-bp11 #149 scenario 171/172 640x360-busy-out540 gl=2
+[2026-10-20T06:11:10.841Z] 02:11:10 pass 2/4 rb-mvg7l9vw-bp11 #150 scenario 172/172 640x360-worst-out540 gl=2
+[2026-10-20T06:11:25.867Z] 02:11:25 pass 2/4 rb-mvg7l9vw-bp11 #151 DONE 150/172 records + decode gl=2 · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169
+[2026-10-20T06:11:25.868Z] 02:11:25 pass 2/4 finished — starting pass 3
+[2026-10-20T06:11:25.868Z] 02:11:25 relaunch (next pass)
+[2026-10-20T06:11:25.868Z] 02:11:25 [kill app] > sdb -s 10.0.0.224:26101 shell 0 was_kill ShmpCupBnc.RenderBench
+[2026-10-20T06:11:26.138Z]   | terminate app ShmpCupBnc.RenderBench
+[2026-10-20T06:11:26.168Z]   | spend time for wascmd is [31]ms
+[2026-10-20T06:11:31.190Z] 02:11:31 [launch] > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat run -p ShmpCupBnc.RenderBench -s 10.0.0.224:26101
+[2026-10-20T06:11:37.113Z]   | Launching the Tizen application...
+[2026-10-20T06:11:57.073Z]   | --------------------
+[2026-10-20T06:11:57.073Z]   | Platform log view
+[2026-10-20T06:11:57.073Z]   | --------------------
+[2026-10-20T06:11:57.074Z]   | ... successfully launched pid = 3879 with debug 0
+[2026-10-20T06:11:57.074Z]   | Tizen application is successfully launched.
+[2026-10-20T06:13:00.500Z] 02:13:00 pass 3/4 rb-mvgadjmz-uozj #1 scenario 1/172 384x216-busy gl=1
+[2026-10-20T06:13:30.556Z] 02:13:30 pass 3/4 rb-mvgadjmz-uozj #2 scenario 2/172 384x216-filter gl=1
+[2026-10-20T06:14:05.629Z] 02:14:05 pass 3/4 rb-mvgadjmz-uozj #3 scenario 3/172 384x216-mode7 gl=1
+[2026-10-20T06:14:35.684Z] 02:14:35 pass 3/4 rb-mvgadjmz-uozj #4 scenario 4/172 384x216-crt-light gl=1
+[2026-10-20T06:15:05.738Z] 02:15:05 pass 3/4 rb-mvgadjmz-uozj #5 scenario 5/172 384x216-crt-full gl=1
+[2026-10-20T06:15:35.793Z] 02:15:35 pass 3/4 rb-mvgadjmz-uozj #6 scenario 6/172 384x216-worst gl=1
+[2026-10-20T06:16:05.848Z] 02:16:05 pass 3/4 rb-mvgadjmz-uozj #7 scenario 7/172 480x320-busy gl=1
+[2026-10-20T06:16:35.913Z] 02:16:35 pass 3/4 rb-mvgadjmz-uozj #8 scenario 8/172 480x320-filter gl=1
+[2026-10-20T06:16:35.914Z] 02:16:35 running 160 min · pass 3/4 · last payload 0 s ago · restarts 0
+[2026-10-20T06:17:05.971Z] 02:17:05 pass 3/4 rb-mvgadjmz-uozj #9 scenario 9/172 480x320-mode7 gl=1
+[2026-10-20T06:17:36.032Z] 02:17:36 pass 3/4 rb-mvgadjmz-uozj #10 scenario 10/172 480x320-crt-light gl=1
+[2026-10-20T06:18:06.087Z] 02:18:06 pass 3/4 rb-mvgadjmz-uozj #11 scenario 11/172 480x320-crt-full gl=1
+[2026-10-20T06:18:41.169Z] 02:18:41 pass 3/4 rb-mvgadjmz-uozj #12 scenario 12/172 480x320-worst gl=1
+[2026-10-20T06:19:11.222Z] 02:19:11 pass 3/4 rb-mvgadjmz-uozj #13 scenario 13/172 480x320n-busy gl=1
+[2026-10-20T06:19:41.293Z] 02:19:41 pass 3/4 rb-mvgadjmz-uozj #14 scenario 14/172 480x320n-filter gl=1
+[2026-10-20T06:20:11.345Z] 02:20:11 pass 3/4 rb-mvgadjmz-uozj #15 scenario 15/172 480x320n-mode7 gl=1
+[2026-10-20T06:20:41.406Z] 02:20:41 pass 3/4 rb-mvgadjmz-uozj #16 scenario 16/172 480x320n-crt-light gl=1
+[2026-10-20T06:21:11.462Z] 02:21:11 pass 3/4 rb-mvgadjmz-uozj #17 scenario 17/172 480x320n-crt-full gl=1
+[2026-10-20T06:21:46.520Z] 02:21:46 pass 3/4 rb-mvgadjmz-uozj #18 scenario 18/172 480x320n-worst gl=1
+[2026-10-20T06:22:16.558Z] 02:22:16 pass 3/4 rb-mvgadjmz-uozj #19 scenario 19/172 640x360-busy gl=1
+[2026-10-20T06:22:46.592Z] 02:22:46 pass 3/4 rb-mvgadjmz-uozj #20 scenario 20/172 640x360-filter gl=1
+[2026-10-20T06:23:16.645Z] 02:23:16 pass 3/4 rb-mvgadjmz-uozj #21 scenario 21/172 640x360-mode7 gl=1
+[2026-10-20T06:23:46.713Z] 02:23:46 pass 3/4 rb-mvgadjmz-uozj #22 scenario 22/172 640x360-crt-light gl=1
+[2026-10-20T06:24:16.777Z] 02:24:16 pass 3/4 rb-mvgadjmz-uozj #23 scenario 23/172 640x360-crt-full gl=1
+[2026-10-20T06:24:46.841Z] 02:24:46 pass 3/4 rb-mvgadjmz-uozj #24 scenario 24/172 640x360-worst gl=1
+[2026-10-20T06:25:21.910Z] 02:25:21 pass 3/4 rb-mvgadjmz-uozj #25 scenario 25/172 640x360n-busy gl=1
+[2026-10-20T06:25:51.949Z] 02:25:51 pass 3/4 rb-mvgadjmz-uozj #26 scenario 26/172 640x360n-filter gl=1
+[2026-10-20T06:26:22.011Z] 02:26:22 pass 3/4 rb-mvgadjmz-uozj #27 scenario 27/172 640x360n-mode7 gl=1
+[2026-10-20T06:26:37.029Z] 02:26:37 running 170 min · pass 3/4 · last payload 15 s ago · restarts 0
+[2026-10-20T06:26:52.064Z] 02:26:52 pass 3/4 rb-mvgadjmz-uozj #28 scenario 28/172 640x360n-crt-light gl=1
+[2026-10-20T06:27:22.135Z] 02:27:22 pass 3/4 rb-mvgadjmz-uozj #29 scenario 29/172 640x360n-crt-full gl=1
+[2026-10-20T06:27:52.173Z] 02:27:52 pass 3/4 rb-mvgadjmz-uozj #30 scenario 30/172 640x360n-worst gl=1
+[2026-10-20T06:28:22.246Z] 02:28:22 pass 3/4 rb-mvgadjmz-uozj #31 scenario 31/172 640x480-busy gl=1
+[2026-10-20T06:28:52.318Z] 02:28:52 pass 3/4 rb-mvgadjmz-uozj #32 scenario 32/172 640x480-filter gl=1
+[2026-10-20T06:29:22.375Z] 02:29:22 pass 3/4 rb-mvgadjmz-uozj #33 scenario 33/172 640x480-mode7 gl=1
+[2026-10-20T06:29:52.431Z] 02:29:52 pass 3/4 rb-mvgadjmz-uozj #34 scenario 34/172 640x480-crt-light gl=1
+[2026-10-20T06:30:27.524Z] 02:30:27 pass 3/4 rb-mvgadjmz-uozj #35 scenario 35/172 640x480-crt-full gl=1
+[2026-10-20T06:30:57.577Z] 02:30:57 pass 3/4 rb-mvgadjmz-uozj #36 scenario 36/172 640x480-worst gl=1
+[2026-10-20T06:31:27.639Z] 02:31:27 pass 3/4 rb-mvgadjmz-uozj #37 scenario 37/172 640x480n-busy gl=1
+[2026-10-20T06:31:57.711Z] 02:31:57 pass 3/4 rb-mvgadjmz-uozj #38 scenario 38/172 640x480n-filter gl=1
+[2026-10-20T06:32:27.780Z] 02:32:27 pass 3/4 rb-mvgadjmz-uozj #39 scenario 39/172 640x480n-mode7 gl=1
+[2026-10-20T06:32:57.816Z] 02:32:57 pass 3/4 rb-mvgadjmz-uozj #40 scenario 40/172 640x480n-crt-light gl=1
+[2026-10-20T06:33:27.868Z] 02:33:27 pass 3/4 rb-mvgadjmz-uozj #41 scenario 41/172 640x480n-crt-full gl=1
+[2026-10-20T06:33:57.923Z] 02:33:57 pass 3/4 rb-mvgadjmz-uozj #42 scenario 42/172 640x480n-worst gl=1
+[2026-10-20T06:34:32.997Z] 02:34:32 pass 3/4 rb-mvgadjmz-uozj #43 scenario 43/172 800x480-busy gl=1
+[2026-10-20T06:35:03.053Z] 02:35:03 pass 3/4 rb-mvgadjmz-uozj #44 scenario 44/172 800x480-filter gl=1
+[2026-10-20T06:35:33.101Z] 02:35:33 pass 3/4 rb-mvgadjmz-uozj #45 scenario 45/172 800x480-mode7 gl=1
+[2026-10-20T06:36:03.135Z] 02:36:03 pass 3/4 rb-mvgadjmz-uozj #46 scenario 46/172 800x480-crt-light gl=1
+[2026-10-20T06:36:33.197Z] 02:36:33 pass 3/4 rb-mvgadjmz-uozj #47 scenario 47/172 800x480-crt-full gl=1
+[2026-10-20T06:36:38.215Z] 02:36:38 running 180 min · pass 3/4 · last payload 5 s ago · restarts 0
+[2026-10-20T06:37:03.271Z] 02:37:03 pass 3/4 rb-mvgadjmz-uozj #48 scenario 48/172 800x480-worst gl=1
+[2026-10-20T06:37:33.341Z] 02:37:33 pass 3/4 rb-mvgadjmz-uozj #49 scenario 49/172 800x480n-busy gl=1
+[2026-10-20T06:38:03.404Z] 02:38:03 pass 3/4 rb-mvgadjmz-uozj #50 scenario 50/172 800x480n-filter gl=1
+[2026-10-20T06:38:38.451Z] 02:38:38 pass 3/4 rb-mvgadjmz-uozj #51 scenario 51/172 800x480n-mode7 gl=1
+[2026-10-20T06:39:08.509Z] 02:39:08 pass 3/4 rb-mvgadjmz-uozj #52 scenario 52/172 800x480n-crt-light gl=1
+[2026-10-20T06:39:38.574Z] 02:39:38 pass 3/4 rb-mvgadjmz-uozj #53 scenario 53/172 800x480n-crt-full gl=1
+[2026-10-20T06:40:08.641Z] 02:40:08 pass 3/4 rb-mvgadjmz-uozj #54 scenario 54/172 800x480n-worst gl=1
+[2026-10-20T06:40:38.715Z] 02:40:38 pass 3/4 rb-mvgadjmz-uozj #55 scenario 55/172 854x480-busy gl=1
+[2026-10-20T06:41:08.767Z] 02:41:08 pass 3/4 rb-mvgadjmz-uozj #56 scenario 56/172 854x480-filter gl=1
+[2026-10-20T06:41:38.819Z] 02:41:38 pass 3/4 rb-mvgadjmz-uozj #57 scenario 57/172 854x480-mode7 gl=1
+[2026-10-20T06:42:08.864Z] 02:42:08 pass 3/4 rb-mvgadjmz-uozj #58 scenario 58/172 854x480-crt-light gl=1
+[2026-10-20T06:42:38.916Z] 02:42:38 pass 3/4 rb-mvgadjmz-uozj #59 scenario 59/172 854x480-crt-full gl=1
+[2026-10-20T06:43:13.968Z] 02:43:13 pass 3/4 rb-mvgadjmz-uozj #60 scenario 60/172 854x480-worst gl=1
+[2026-10-20T06:43:44.031Z] 02:43:44 pass 3/4 rb-mvgadjmz-uozj #61 scenario 61/172 854x480n-busy gl=1
+[2026-10-20T06:44:14.099Z] 02:44:14 pass 3/4 rb-mvgadjmz-uozj #62 scenario 62/172 854x480n-filter gl=1
+[2026-10-20T06:44:44.153Z] 02:44:44 pass 3/4 rb-mvgadjmz-uozj #63 scenario 63/172 854x480n-mode7 gl=1
+[2026-10-20T06:45:14.209Z] 02:45:14 pass 3/4 rb-mvgadjmz-uozj #64 scenario 64/172 854x480n-crt-light gl=1
+[2026-10-20T06:45:44.285Z] 02:45:44 pass 3/4 rb-mvgadjmz-uozj #65 scenario 65/172 854x480n-crt-full gl=1
+[2026-10-20T06:46:14.343Z] 02:46:14 pass 3/4 rb-mvgadjmz-uozj #66 scenario 66/172 854x480n-worst gl=1
+[2026-10-20T06:46:39.388Z] 02:46:39 running 190 min · pass 3/4 · last payload 25 s ago · restarts 0
+[2026-10-20T06:46:44.395Z] 02:46:44 pass 3/4 rb-mvgadjmz-uozj #67 scenario 67/172 960x540-busy gl=1
+[2026-10-20T06:47:14.444Z] 02:47:14 pass 3/4 rb-mvgadjmz-uozj #68 scenario 68/172 960x540-filter gl=1
+[2026-10-20T06:47:44.490Z] 02:47:44 pass 3/4 rb-mvgadjmz-uozj #69 scenario 69/172 960x540-mode7 gl=1
+[2026-10-20T06:48:19.540Z] 02:48:19 pass 3/4 rb-mvgadjmz-uozj #70 scenario 70/172 960x540-crt-light gl=1
+[2026-10-20T06:48:49.605Z] 02:48:49 pass 3/4 rb-mvgadjmz-uozj #71 scenario 71/172 960x540-crt-full gl=1
+[2026-10-20T06:49:19.680Z] 02:49:19 pass 3/4 rb-mvgadjmz-uozj #72 scenario 72/172 960x540-worst gl=1
+[2026-10-20T06:49:49.753Z] 02:49:49 pass 3/4 rb-mvgadjmz-uozj #73 scenario 73/172 960x540n-busy gl=1
+[2026-10-20T06:50:19.817Z] 02:50:19 pass 3/4 rb-mvgadjmz-uozj #74 scenario 74/172 960x540n-filter gl=1
+[2026-10-20T06:50:49.870Z] 02:50:49 pass 3/4 rb-mvgadjmz-uozj #75 scenario 75/172 960x540n-mode7 gl=1
+[2026-10-20T06:51:19.933Z] 02:51:19 pass 3/4 rb-mvgadjmz-uozj #76 scenario 76/172 960x540n-crt-light gl=1
+[2026-10-20T06:51:50.001Z] 02:51:50 pass 3/4 rb-mvgadjmz-uozj #77 scenario 77/172 960x540n-crt-full gl=1
+[2026-10-20T06:52:20.054Z] 02:52:20 pass 3/4 rb-mvgadjmz-uozj #78 scenario 78/172 960x540n-worst gl=1
+[2026-10-20T06:52:50.112Z] 02:52:50 pass 3/4 rb-mvgadjmz-uozj #79 scenario 79/172 1024x576-busy gl=1
+[2026-10-20T06:53:20.178Z] 02:53:20 pass 3/4 rb-mvgadjmz-uozj #80 scenario 80/172 1024x576-filter gl=1
+[2026-10-20T06:53:55.246Z] 02:53:55 pass 3/4 rb-mvgadjmz-uozj #81 scenario 81/172 1024x576-mode7 gl=1
+[2026-10-20T06:54:25.291Z] 02:54:25 pass 3/4 rb-mvgadjmz-uozj #82 scenario 82/172 1024x576-crt-light gl=1
+[2026-10-20T06:54:55.354Z] 02:54:55 pass 3/4 rb-mvgadjmz-uozj #83 scenario 83/172 1024x576-crt-full gl=1
+[2026-10-20T06:55:25.405Z] 02:55:25 pass 3/4 rb-mvgadjmz-uozj #84 scenario 84/172 1024x576-worst gl=1
+[2026-10-20T06:55:55.470Z] 02:55:55 pass 3/4 rb-mvgadjmz-uozj #85 scenario 85/172 1024x576n-busy gl=1
+[2026-10-20T06:56:25.506Z] 02:56:25 pass 3/4 rb-mvgadjmz-uozj #86 scenario 86/172 1024x576n-filter gl=1
+[2026-10-20T06:56:40.537Z] 02:56:40 running 200 min · pass 3/4 · last payload 15 s ago · restarts 0
+[2026-10-20T06:56:55.558Z] 02:56:55 pass 3/4 rb-mvgadjmz-uozj #87 scenario 87/172 1024x576n-mode7 gl=1
+[2026-10-20T06:57:25.627Z] 02:57:25 pass 3/4 rb-mvgadjmz-uozj #88 scenario 88/172 1024x576n-crt-light gl=1
+[2026-10-20T06:58:00.687Z] 02:58:00 pass 3/4 rb-mvgadjmz-uozj #89 scenario 89/172 1024x576n-crt-full gl=1
+[2026-10-20T06:58:30.737Z] 02:58:30 pass 3/4 rb-mvgadjmz-uozj #90 scenario 90/172 1024x576n-worst gl=1
+[2026-10-20T06:59:00.777Z] 02:59:00 pass 3/4 rb-mvgadjmz-uozj #91 scenario 91/172 800x600-busy gl=1
+[2026-10-20T06:59:30.831Z] 02:59:30 pass 3/4 rb-mvgadjmz-uozj #92 scenario 92/172 800x600-filter gl=1
+[2026-10-20T07:00:00.885Z] 03:00:00 pass 3/4 rb-mvgadjmz-uozj #93 scenario 93/172 800x600-mode7 gl=1
+[2026-10-20T07:00:30.921Z] 03:00:30 pass 3/4 rb-mvgadjmz-uozj #94 scenario 94/172 800x600-crt-light gl=1
+[2026-10-20T07:01:00.975Z] 03:01:00 pass 3/4 rb-mvgadjmz-uozj #95 scenario 95/172 800x600-crt-full gl=1
+[2026-10-20T07:01:31.034Z] 03:01:31 pass 3/4 rb-mvgadjmz-uozj #96 scenario 96/172 800x600-worst gl=1
+[2026-10-20T07:02:01.086Z] 03:02:01 pass 3/4 rb-mvgadjmz-uozj #97 scenario 97/172 800x600n-busy gl=1
+[2026-10-20T07:02:36.170Z] 03:02:36 pass 3/4 rb-mvgadjmz-uozj #98 scenario 98/172 800x600n-filter gl=1
+[2026-10-20T07:03:06.227Z] 03:03:06 pass 3/4 rb-mvgadjmz-uozj #99 scenario 99/172 800x600n-mode7 gl=1
+[2026-10-20T07:03:36.307Z] 03:03:36 pass 3/4 rb-mvgadjmz-uozj #100 scenario 100/172 800x600n-crt-light gl=1
+[2026-10-20T07:04:06.392Z] 03:04:06 pass 3/4 rb-mvgadjmz-uozj #101 scenario 101/172 800x600n-crt-full gl=1
+[2026-10-20T07:04:36.473Z] 03:04:36 pass 3/4 rb-mvgadjmz-uozj #102 scenario 102/172 800x600n-worst gl=1
+[2026-10-20T07:05:06.537Z] 03:05:06 pass 3/4 rb-mvgadjmz-uozj #103 scenario 103/172 1024x600-busy gl=1
+[2026-10-20T07:05:36.579Z] 03:05:36 pass 3/4 rb-mvgadjmz-uozj #104 scenario 104/172 1024x600-filter gl=1
+[2026-10-20T07:06:06.637Z] 03:06:06 pass 3/4 rb-mvgadjmz-uozj #105 scenario 105/172 1024x600-mode7 gl=1
+[2026-10-20T07:06:36.678Z] 03:06:36 pass 3/4 rb-mvgadjmz-uozj #106 scenario 106/172 1024x600-crt-light gl=1
+[2026-10-20T07:06:41.694Z] 03:06:41 running 210 min · pass 3/4 · last payload 5 s ago · restarts 0
+[2026-10-20T07:07:11.753Z] 03:07:11 pass 3/4 rb-mvgadjmz-uozj #107 scenario 107/172 1024x600-crt-full gl=1
+[2026-10-20T07:07:41.811Z] 03:07:41 pass 3/4 rb-mvgadjmz-uozj #108 scenario 108/172 1024x600-worst gl=1
+[2026-10-20T07:08:11.873Z] 03:08:11 pass 3/4 rb-mvgadjmz-uozj #109 scenario 109/172 1024x600n-busy gl=1
+[2026-10-20T07:08:41.947Z] 03:08:41 pass 3/4 rb-mvgadjmz-uozj #110 scenario 110/172 1024x600n-filter gl=1
+[2026-10-20T07:09:12.002Z] 03:09:12 pass 3/4 rb-mvgadjmz-uozj #111 scenario 111/172 1024x600n-mode7 gl=1
+[2026-10-20T07:09:42.059Z] 03:09:42 pass 3/4 rb-mvgadjmz-uozj #112 scenario 112/172 1024x600n-crt-light gl=1
+[2026-10-20T07:10:12.116Z] 03:10:12 pass 3/4 rb-mvgadjmz-uozj #113 scenario 113/172 1024x600n-crt-full gl=1
+[2026-10-20T07:10:42.165Z] 03:10:42 pass 3/4 rb-mvgadjmz-uozj #114 scenario 114/172 1024x600n-worst gl=1
+[2026-10-20T07:11:12.221Z] 03:11:12 pass 3/4 rb-mvgadjmz-uozj #115 scenario 115/172 960x640-busy gl=1
+[2026-10-20T07:11:42.287Z] 03:11:42 pass 3/4 rb-mvgadjmz-uozj #116 scenario 116/172 960x640-filter gl=1
+[2026-10-20T07:12:17.349Z] 03:12:17 pass 3/4 rb-mvgadjmz-uozj #117 scenario 117/172 960x640-mode7 gl=1
+[2026-10-20T07:12:47.407Z] 03:12:47 pass 3/4 rb-mvgadjmz-uozj #118 scenario 118/172 960x640-crt-light gl=1
+[2026-10-20T07:13:17.466Z] 03:13:17 pass 3/4 rb-mvgadjmz-uozj #119 scenario 119/172 960x640-crt-full gl=1
+[2026-10-20T07:13:47.526Z] 03:13:47 pass 3/4 rb-mvgadjmz-uozj #120 scenario 120/172 960x640-worst gl=1
+[2026-10-20T07:14:17.584Z] 03:14:17 pass 3/4 rb-mvgadjmz-uozj #121 scenario 121/172 960x640n-busy gl=1
+[2026-10-20T07:14:47.655Z] 03:14:47 pass 3/4 rb-mvgadjmz-uozj #122 scenario 122/172 960x640n-filter gl=1
+[2026-10-20T07:15:17.718Z] 03:15:17 pass 3/4 rb-mvgadjmz-uozj #123 scenario 123/172 960x640n-mode7 gl=1
+[2026-10-20T07:15:47.779Z] 03:15:47 pass 3/4 rb-mvgadjmz-uozj #124 scenario 124/172 960x640n-crt-light gl=1
+[2026-10-20T07:16:22.855Z] 03:16:22 pass 3/4 rb-mvgadjmz-uozj #125 scenario 125/172 960x640n-crt-full gl=1
+[2026-10-20T07:16:42.891Z] 03:16:42 running 220 min · pass 3/4 · last payload 20 s ago · restarts 0
+[2026-10-20T07:16:52.908Z] 03:16:52 pass 3/4 rb-mvgadjmz-uozj #126 scenario 126/172 960x640n-worst gl=1
+[2026-10-20T07:17:22.936Z] 03:17:22 pass 3/4 rb-mvgadjmz-uozj #127 scenario 127/172 1280x720n-busy gl=1
+[2026-10-20T07:17:52.996Z] 03:17:52 pass 3/4 rb-mvgadjmz-uozj #128 scenario 128/172 1280x720n-filter gl=1
+[2026-10-20T07:18:23.025Z] 03:18:23 pass 3/4 rb-mvgadjmz-uozj #129 scenario 129/172 1280x720n-mode7 gl=1
+[2026-10-20T07:18:53.080Z] 03:18:53 pass 3/4 rb-mvgadjmz-uozj #130 scenario 130/172 1280x720n-crt-light gl=1
+[2026-10-20T07:19:23.141Z] 03:19:23 pass 3/4 rb-mvgadjmz-uozj #131 scenario 131/172 1280x720n-crt-full gl=1
+[2026-10-20T07:19:53.193Z] 03:19:53 pass 3/4 rb-mvgadjmz-uozj #132 scenario 132/172 1280x720n-worst gl=1
+[2026-10-20T07:20:23.244Z] 03:20:23 pass 3/4 rb-mvgadjmz-uozj #133 scenario 151/172 800x600-busy-fit gl=1
+[2026-10-20T07:20:58.296Z] 03:20:58 pass 3/4 rb-mvgadjmz-uozj #134 scenario 152/172 800x600-worst-fit gl=1
+[2026-10-20T07:21:28.352Z] 03:21:28 pass 3/4 rb-mvgadjmz-uozj #135 scenario 153/172 854x480-busy-fit gl=1
+[2026-10-20T07:21:58.412Z] 03:21:58 pass 3/4 rb-mvgadjmz-uozj #136 scenario 154/172 854x480-worst-fit gl=1
+[2026-10-20T07:22:28.480Z] 03:22:28 pass 3/4 rb-mvgadjmz-uozj #137 scenario 155/172 800x600-busy-stretch gl=1
+[2026-10-20T07:22:58.541Z] 03:22:58 pass 3/4 rb-mvgadjmz-uozj #138 scenario 156/172 800x600-worst-stretch gl=1
+[2026-10-20T07:23:28.606Z] 03:23:28 pass 3/4 rb-mvgadjmz-uozj #139 scenario 157/172 854x480-busy-stretch gl=1
+[2026-10-20T07:23:58.653Z] 03:23:58 pass 3/4 rb-mvgadjmz-uozj #140 scenario 158/172 854x480-worst-stretch gl=1
+[2026-10-20T07:24:28.703Z] 03:24:28 pass 3/4 rb-mvgadjmz-uozj #141 scenario 159/172 640x360-busy-stretch gl=1
+[2026-10-20T07:25:03.781Z] 03:25:03 pass 3/4 rb-mvgadjmz-uozj #142 scenario 160/172 640x360-worst-stretch gl=1
+[2026-10-20T07:25:33.826Z] 03:25:33 pass 3/4 rb-mvgadjmz-uozj #143 scenario 161/172 640x360-busy-interp gl=1
+[2026-10-20T07:26:03.873Z] 03:26:03 pass 3/4 rb-mvgadjmz-uozj #144 scenario 162/172 640x360-worst-interp gl=1
+[2026-10-20T07:26:33.920Z] 03:26:33 pass 3/4 rb-mvgadjmz-uozj #145 scenario 163/172 1280x720n-busy-interp gl=1
+[2026-10-20T07:26:43.933Z] 03:26:43 running 230 min · pass 3/4 · last payload 10 s ago · restarts 0
+[2026-10-20T07:27:03.973Z] 03:27:03 pass 3/4 rb-mvgadjmz-uozj #146 scenario 164/172 1280x720n-worst-interp gl=1
+[2026-10-20T07:27:34.023Z] 03:27:34 pass 3/4 rb-mvgadjmz-uozj #147 scenario 167/172 640x360-busy-out720 gl=1
+[2026-10-20T07:28:09.081Z] 03:28:09 pass 3/4 rb-mvgadjmz-uozj #148 scenario 168/172 640x360-worst-out720 gl=1
+[2026-10-20T07:28:39.127Z] 03:28:39 pass 3/4 rb-mvgadjmz-uozj #149 scenario 171/172 640x360-busy-out540 gl=1
+[2026-10-20T07:29:09.191Z] 03:29:09 pass 3/4 rb-mvgadjmz-uozj #150 scenario 172/172 640x360-worst-out540 gl=1
+[2026-10-20T07:29:24.225Z] 03:29:24 pass 3/4 rb-mvgadjmz-uozj #151 DONE 150/172 records + decode gl=1 · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169
+[2026-10-20T07:29:24.225Z] 03:29:24 pass 3/4 finished — starting pass 4
+[2026-10-20T07:29:24.225Z] 03:29:24 relaunch (next pass)
+[2026-10-20T07:29:24.225Z] 03:29:24 [kill app] > sdb -s 10.0.0.224:26101 shell 0 was_kill ShmpCupBnc.RenderBench
+[2026-10-20T07:29:24.450Z]   | terminate app ShmpCupBnc.RenderBench
+[2026-10-20T07:29:24.467Z]   | spend time for wascmd is [23]ms
+[2026-10-20T07:29:29.484Z] 03:29:29 [launch] > F:\Installs\tizen-studio\tools\ide\bin\tizen.bat run -p ShmpCupBnc.RenderBench -s 10.0.0.224:26101
+[2026-10-20T07:29:34.126Z]   | Launching the Tizen application...
+[2026-10-20T07:29:53.152Z]   | --------------------
+[2026-10-20T07:29:53.153Z]   | Platform log view
+[2026-10-20T07:29:53.153Z]   | --------------------
+[2026-10-20T07:29:53.153Z]   | ... successfully launched pid = 499 with debug 0
+[2026-10-20T07:29:53.154Z]   | Tizen application is successfully launched.
+[2026-10-20T07:30:55.980Z] 03:30:55 pass 4/4 rb-mvgd5rof-fuwz #1 scenario 1/172 384x216-busy gl=2
+[2026-10-20T07:31:31.036Z] 03:31:31 pass 4/4 rb-mvgd5rof-fuwz #2 scenario 2/172 384x216-filter gl=2
+[2026-10-20T07:32:01.093Z] 03:32:01 pass 4/4 rb-mvgd5rof-fuwz #3 scenario 3/172 384x216-mode7 gl=2
+[2026-10-20T07:32:31.141Z] 03:32:31 pass 4/4 rb-mvgd5rof-fuwz #4 scenario 4/172 384x216-crt-light gl=2
+[2026-10-20T07:33:01.199Z] 03:33:01 pass 4/4 rb-mvgd5rof-fuwz #5 scenario 5/172 384x216-crt-full gl=2
+[2026-10-20T07:33:31.265Z] 03:33:31 pass 4/4 rb-mvgd5rof-fuwz #6 scenario 6/172 384x216-worst gl=2
+[2026-10-20T07:34:01.339Z] 03:34:01 pass 4/4 rb-mvgd5rof-fuwz #7 scenario 7/172 480x320-busy gl=2
+[2026-10-20T07:34:31.378Z] 03:34:31 pass 4/4 rb-mvgd5rof-fuwz #8 scenario 8/172 480x320-filter gl=2
+[2026-10-20T07:35:06.446Z] 03:35:06 pass 4/4 rb-mvgd5rof-fuwz #9 scenario 9/172 480x320-mode7 gl=2
+[2026-10-20T07:35:36.493Z] 03:35:36 pass 4/4 rb-mvgd5rof-fuwz #10 scenario 10/172 480x320-crt-light gl=2
+[2026-10-20T07:36:06.565Z] 03:36:06 pass 4/4 rb-mvgd5rof-fuwz #11 scenario 11/172 480x320-crt-full gl=2
+[2026-10-20T07:36:36.612Z] 03:36:36 pass 4/4 rb-mvgd5rof-fuwz #12 scenario 12/172 480x320-worst gl=2
+[2026-10-20T07:36:46.635Z] 03:36:46 running 241 min · pass 4/4 · last payload 10 s ago · restarts 0
+[2026-10-20T07:37:06.669Z] 03:37:06 pass 4/4 rb-mvgd5rof-fuwz #13 scenario 13/172 480x320n-busy gl=2
+[2026-10-20T07:37:36.711Z] 03:37:36 pass 4/4 rb-mvgd5rof-fuwz #14 scenario 14/172 480x320n-filter gl=2
+[2026-10-20T07:38:06.773Z] 03:38:06 pass 4/4 rb-mvgd5rof-fuwz #15 scenario 15/172 480x320n-mode7 gl=2
+[2026-10-20T07:38:36.817Z] 03:38:36 pass 4/4 rb-mvgd5rof-fuwz #16 scenario 16/172 480x320n-crt-light gl=2
+[2026-10-20T07:39:11.873Z] 03:39:11 pass 4/4 rb-mvgd5rof-fuwz #17 scenario 17/172 480x320n-crt-full gl=2
+[2026-10-20T07:39:41.935Z] 03:39:41 pass 4/4 rb-mvgd5rof-fuwz #18 scenario 18/172 480x320n-worst gl=2
+[2026-10-20T07:40:11.991Z] 03:40:11 pass 4/4 rb-mvgd5rof-fuwz #19 scenario 19/172 640x360-busy gl=2
+[2026-10-20T07:40:42.062Z] 03:40:42 pass 4/4 rb-mvgd5rof-fuwz #20 scenario 20/172 640x360-filter gl=2
+[2026-10-20T07:41:12.135Z] 03:41:12 pass 4/4 rb-mvgd5rof-fuwz #21 scenario 21/172 640x360-mode7 gl=2
+[2026-10-20T07:41:42.180Z] 03:41:42 pass 4/4 rb-mvgd5rof-fuwz #22 scenario 22/172 640x360-crt-light gl=2
+[2026-10-20T07:42:12.222Z] 03:42:12 pass 4/4 rb-mvgd5rof-fuwz #23 scenario 23/172 640x360-crt-full gl=2
+[2026-10-20T07:42:47.270Z] 03:42:47 pass 4/4 rb-mvgd5rof-fuwz #24 scenario 24/172 640x360-worst gl=2
+[2026-10-20T07:43:17.303Z] 03:43:17 pass 4/4 rb-mvgd5rof-fuwz #25 scenario 25/172 640x360n-busy gl=2
+[2026-10-20T07:43:47.354Z] 03:43:47 pass 4/4 rb-mvgd5rof-fuwz #26 scenario 26/172 640x360n-filter gl=2
+[2026-10-20T07:44:17.402Z] 03:44:17 pass 4/4 rb-mvgd5rof-fuwz #27 scenario 27/172 640x360n-mode7 gl=2
+[2026-10-20T07:44:47.439Z] 03:44:47 pass 4/4 rb-mvgd5rof-fuwz #28 scenario 28/172 640x360n-crt-light gl=2
+[2026-10-20T07:45:17.486Z] 03:45:17 pass 4/4 rb-mvgd5rof-fuwz #29 scenario 29/172 640x360n-crt-full gl=2
+[2026-10-20T07:45:47.519Z] 03:45:47 pass 4/4 rb-mvgd5rof-fuwz #30 scenario 30/172 640x360n-worst gl=2
+[2026-10-20T07:46:22.575Z] 03:46:22 pass 4/4 rb-mvgd5rof-fuwz #31 scenario 31/172 640x480-busy gl=2
+[2026-10-20T07:46:47.596Z] 03:46:47 running 251 min · pass 4/4 · last payload 25 s ago · restarts 0
+[2026-10-20T07:46:52.610Z] 03:46:52 pass 4/4 rb-mvgd5rof-fuwz #32 scenario 32/172 640x480-filter gl=2
+[2026-10-20T07:47:22.662Z] 03:47:22 pass 4/4 rb-mvgd5rof-fuwz #33 scenario 33/172 640x480-mode7 gl=2
+[2026-10-20T07:47:52.708Z] 03:47:52 pass 4/4 rb-mvgd5rof-fuwz #34 scenario 34/172 640x480-crt-light gl=2
+[2026-10-20T07:48:22.735Z] 03:48:22 pass 4/4 rb-mvgd5rof-fuwz #35 scenario 35/172 640x480-crt-full gl=2
+[2026-10-20T07:48:52.781Z] 03:48:52 pass 4/4 rb-mvgd5rof-fuwz #36 scenario 36/172 640x480-worst gl=2
+[2026-10-20T07:49:22.826Z] 03:49:22 pass 4/4 rb-mvgd5rof-fuwz #37 scenario 37/172 640x480n-busy gl=2
+[2026-10-20T07:49:52.864Z] 03:49:52 pass 4/4 rb-mvgd5rof-fuwz #38 scenario 38/172 640x480n-filter gl=2
+[2026-10-20T07:50:27.929Z] 03:50:27 pass 4/4 rb-mvgd5rof-fuwz #39 scenario 39/172 640x480n-mode7 gl=2
+[2026-10-20T07:50:57.973Z] 03:50:57 pass 4/4 rb-mvgd5rof-fuwz #40 scenario 40/172 640x480n-crt-light gl=2
+[2026-10-20T07:51:28.022Z] 03:51:28 pass 4/4 rb-mvgd5rof-fuwz #41 scenario 41/172 640x480n-crt-full gl=2
+[2026-10-20T07:51:58.050Z] 03:51:58 pass 4/4 rb-mvgd5rof-fuwz #42 scenario 42/172 640x480n-worst gl=2
+[2026-10-20T07:52:28.111Z] 03:52:28 pass 4/4 rb-mvgd5rof-fuwz #43 scenario 43/172 800x480-busy gl=2
+[2026-10-20T07:52:58.199Z] 03:52:58 pass 4/4 rb-mvgd5rof-fuwz #44 scenario 44/172 800x480-filter gl=2
+[2026-10-20T07:53:28.256Z] 03:53:28 pass 4/4 rb-mvgd5rof-fuwz #45 scenario 45/172 800x480-mode7 gl=2
+[2026-10-20T07:53:58.306Z] 03:53:58 pass 4/4 rb-mvgd5rof-fuwz #46 scenario 46/172 800x480-crt-light gl=2
+[2026-10-20T07:54:28.342Z] 03:54:28 pass 4/4 rb-mvgd5rof-fuwz #47 scenario 47/172 800x480-crt-full gl=2
+[2026-10-20T07:55:03.386Z] 03:55:03 pass 4/4 rb-mvgd5rof-fuwz #48 scenario 48/172 800x480-worst gl=2
+[2026-10-20T07:55:33.434Z] 03:55:33 pass 4/4 rb-mvgd5rof-fuwz #49 scenario 49/172 800x480n-busy gl=2
+[2026-10-20T07:56:03.479Z] 03:56:03 pass 4/4 rb-mvgd5rof-fuwz #50 scenario 50/172 800x480n-filter gl=2
+[2026-10-20T07:56:33.533Z] 03:56:33 pass 4/4 rb-mvgd5rof-fuwz #51 scenario 51/172 800x480n-mode7 gl=2
+[2026-10-20T07:56:48.545Z] 03:56:48 running 261 min · pass 4/4 · last payload 15 s ago · restarts 0
+[2026-10-20T07:57:03.578Z] 03:57:03 pass 4/4 rb-mvgd5rof-fuwz #52 scenario 52/172 800x480n-crt-light gl=2
+[2026-10-20T07:57:33.610Z] 03:57:33 pass 4/4 rb-mvgd5rof-fuwz #53 scenario 53/172 800x480n-crt-full gl=2
+[2026-10-20T07:58:03.645Z] 03:58:03 pass 4/4 rb-mvgd5rof-fuwz #54 scenario 54/172 800x480n-worst gl=2
+[2026-10-20T07:58:38.689Z] 03:58:38 pass 4/4 rb-mvgd5rof-fuwz #55 scenario 55/172 854x480-busy gl=2
+[2026-10-20T07:59:08.733Z] 03:59:08 pass 4/4 rb-mvgd5rof-fuwz #56 scenario 56/172 854x480-filter gl=2
+[2026-10-20T07:59:38.773Z] 03:59:38 pass 4/4 rb-mvgd5rof-fuwz #57 scenario 57/172 854x480-mode7 gl=2
+[2026-10-20T08:00:08.826Z] 04:00:08 pass 4/4 rb-mvgd5rof-fuwz #58 scenario 58/172 854x480-crt-light gl=2
+[2026-10-20T08:00:38.889Z] 04:00:38 pass 4/4 rb-mvgd5rof-fuwz #59 scenario 59/172 854x480-crt-full gl=2
+[2026-10-20T08:01:08.937Z] 04:01:08 pass 4/4 rb-mvgd5rof-fuwz #60 scenario 60/172 854x480-worst gl=2
+[2026-10-20T08:01:38.977Z] 04:01:38 pass 4/4 rb-mvgd5rof-fuwz #61 scenario 61/172 854x480n-busy gl=2
+[2026-10-20T08:02:09.016Z] 04:02:09 pass 4/4 rb-mvgd5rof-fuwz #62 scenario 62/172 854x480n-filter gl=2
+[2026-10-20T08:02:39.055Z] 04:02:39 pass 4/4 rb-mvgd5rof-fuwz #63 scenario 63/172 854x480n-mode7 gl=2
+[2026-10-20T08:03:14.103Z] 04:03:14 pass 4/4 rb-mvgd5rof-fuwz #64 scenario 64/172 854x480n-crt-light gl=2
+[2026-10-20T08:03:44.136Z] 04:03:44 pass 4/4 rb-mvgd5rof-fuwz #65 scenario 65/172 854x480n-crt-full gl=2
+[2026-10-20T08:04:14.173Z] 04:04:14 pass 4/4 rb-mvgd5rof-fuwz #66 scenario 66/172 854x480n-worst gl=2
+[2026-10-20T08:04:44.205Z] 04:04:44 pass 4/4 rb-mvgd5rof-fuwz #67 scenario 67/172 960x540-busy gl=2
+[2026-10-20T08:05:14.253Z] 04:05:14 pass 4/4 rb-mvgd5rof-fuwz #68 scenario 68/172 960x540-filter gl=2
+[2026-10-20T08:05:44.301Z] 04:05:44 pass 4/4 rb-mvgd5rof-fuwz #69 scenario 69/172 960x540-mode7 gl=2
+[2026-10-20T08:06:14.346Z] 04:06:14 pass 4/4 rb-mvgd5rof-fuwz #70 scenario 70/172 960x540-crt-light gl=2
+[2026-10-20T08:06:44.369Z] 04:06:44 pass 4/4 rb-mvgd5rof-fuwz #71 scenario 71/172 960x540-crt-full gl=2
+[2026-10-20T08:06:49.380Z] 04:06:49 running 271 min · pass 4/4 · last payload 5 s ago · restarts 0
+[2026-10-20T08:07:14.413Z] 04:07:14 pass 4/4 rb-mvgd5rof-fuwz #72 scenario 72/172 960x540-worst gl=2
+[2026-10-20T08:07:49.462Z] 04:07:49 pass 4/4 rb-mvgd5rof-fuwz #73 scenario 73/172 960x540n-busy gl=2
+[2026-10-20T08:08:19.513Z] 04:08:19 pass 4/4 rb-mvgd5rof-fuwz #74 scenario 74/172 960x540n-filter gl=2
+[2026-10-20T08:08:49.550Z] 04:08:49 pass 4/4 rb-mvgd5rof-fuwz #75 scenario 75/172 960x540n-mode7 gl=2
+[2026-10-20T08:09:19.596Z] 04:09:19 pass 4/4 rb-mvgd5rof-fuwz #76 scenario 76/172 960x540n-crt-light gl=2
+[2026-10-20T08:09:49.626Z] 04:09:49 pass 4/4 rb-mvgd5rof-fuwz #77 scenario 77/172 960x540n-crt-full gl=2
+[2026-10-20T08:10:19.673Z] 04:10:19 pass 4/4 rb-mvgd5rof-fuwz #78 scenario 78/172 960x540n-worst gl=2
+[2026-10-20T08:10:49.727Z] 04:10:49 pass 4/4 rb-mvgd5rof-fuwz #79 scenario 79/172 1024x576-busy gl=2
+[2026-10-20T08:11:24.789Z] 04:11:24 pass 4/4 rb-mvgd5rof-fuwz #80 scenario 80/172 1024x576-filter gl=2
+[2026-10-20T08:11:54.837Z] 04:11:54 pass 4/4 rb-mvgd5rof-fuwz #81 scenario 81/172 1024x576-mode7 gl=2
+[2026-10-20T08:12:24.892Z] 04:12:24 pass 4/4 rb-mvgd5rof-fuwz #82 scenario 82/172 1024x576-crt-light gl=2
+[2026-10-20T08:12:54.951Z] 04:12:54 pass 4/4 rb-mvgd5rof-fuwz #83 scenario 83/172 1024x576-crt-full gl=2
+[2026-10-20T08:13:25.019Z] 04:13:25 pass 4/4 rb-mvgd5rof-fuwz #84 scenario 84/172 1024x576-worst gl=2
+[2026-10-20T08:13:55.067Z] 04:13:55 pass 4/4 rb-mvgd5rof-fuwz #85 scenario 85/172 1024x576n-busy gl=2
+[2026-10-20T08:14:30.143Z] 04:14:30 pass 4/4 rb-mvgd5rof-fuwz #86 scenario 86/172 1024x576n-filter gl=2
+[2026-10-20T08:15:00.186Z] 04:15:00 pass 4/4 rb-mvgd5rof-fuwz #87 scenario 87/172 1024x576n-mode7 gl=2
+[2026-10-20T08:15:30.252Z] 04:15:30 pass 4/4 rb-mvgd5rof-fuwz #88 scenario 88/172 1024x576n-crt-light gl=2
+[2026-10-20T08:16:00.310Z] 04:16:00 pass 4/4 rb-mvgd5rof-fuwz #89 scenario 89/172 1024x576n-crt-full gl=2
+[2026-10-20T08:16:30.371Z] 04:16:30 pass 4/4 rb-mvgd5rof-fuwz #90 scenario 90/172 1024x576n-worst gl=2
+[2026-10-20T08:16:50.416Z] 04:16:50 running 281 min · pass 4/4 · last payload 20 s ago · restarts 0
+[2026-10-20T08:17:00.436Z] 04:17:00 pass 4/4 rb-mvgd5rof-fuwz #91 scenario 91/172 800x600-busy gl=2
+[2026-10-20T08:17:30.483Z] 04:17:30 pass 4/4 rb-mvgd5rof-fuwz #92 scenario 92/172 800x600-filter gl=2
+[2026-10-20T08:18:00.523Z] 04:18:00 pass 4/4 rb-mvgd5rof-fuwz #93 scenario 93/172 800x600-mode7 gl=2
+[2026-10-20T08:18:30.585Z] 04:18:30 pass 4/4 rb-mvgd5rof-fuwz #94 scenario 94/172 800x600-crt-light gl=2
+[2026-10-20T08:19:00.627Z] 04:19:00 pass 4/4 rb-mvgd5rof-fuwz #95 scenario 95/172 800x600-crt-full gl=2
+[2026-10-20T08:19:35.697Z] 04:19:35 pass 4/4 rb-mvgd5rof-fuwz #96 scenario 96/172 800x600-worst gl=2
+[2026-10-20T08:20:05.768Z] 04:20:05 pass 4/4 rb-mvgd5rof-fuwz #97 scenario 97/172 800x600n-busy gl=2
+[2026-10-20T08:20:35.839Z] 04:20:35 pass 4/4 rb-mvgd5rof-fuwz #98 scenario 98/172 800x600n-filter gl=2
+[2026-10-20T08:21:05.895Z] 04:21:05 pass 4/4 rb-mvgd5rof-fuwz #99 scenario 99/172 800x600n-mode7 gl=2
+[2026-10-20T08:21:35.953Z] 04:21:35 pass 4/4 rb-mvgd5rof-fuwz #100 scenario 100/172 800x600n-crt-light gl=2
+[2026-10-20T08:22:06.018Z] 04:22:06 pass 4/4 rb-mvgd5rof-fuwz #101 scenario 101/172 800x600n-crt-full gl=2
+[2026-10-20T08:22:36.074Z] 04:22:36 pass 4/4 rb-mvgd5rof-fuwz #102 scenario 102/172 800x600n-worst gl=2
+[2026-10-20T08:23:06.107Z] 04:23:06 pass 4/4 rb-mvgd5rof-fuwz #103 scenario 103/172 1024x600-busy gl=2
+[2026-10-20T08:23:41.184Z] 04:23:41 pass 4/4 rb-mvgd5rof-fuwz #104 scenario 104/172 1024x600-filter gl=2
+[2026-10-20T08:24:11.250Z] 04:24:11 pass 4/4 rb-mvgd5rof-fuwz #105 scenario 105/172 1024x600-mode7 gl=2
+[2026-10-20T08:24:41.311Z] 04:24:41 pass 4/4 rb-mvgd5rof-fuwz #106 scenario 106/172 1024x600-crt-light gl=2
+[2026-10-20T08:25:11.378Z] 04:25:11 pass 4/4 rb-mvgd5rof-fuwz #107 scenario 107/172 1024x600-crt-full gl=2
+[2026-10-20T08:25:41.430Z] 04:25:41 pass 4/4 rb-mvgd5rof-fuwz #108 scenario 108/172 1024x600-worst gl=2
+[2026-10-20T08:26:11.496Z] 04:26:11 pass 4/4 rb-mvgd5rof-fuwz #109 scenario 109/172 1024x600n-busy gl=2
+[2026-10-20T08:26:41.549Z] 04:26:41 pass 4/4 rb-mvgd5rof-fuwz #110 scenario 110/172 1024x600n-filter gl=2
+[2026-10-20T08:26:51.573Z] 04:26:51 running 291 min · pass 4/4 · last payload 10 s ago · restarts 0
+[2026-10-20T08:27:11.614Z] 04:27:11 pass 4/4 rb-mvgd5rof-fuwz #111 scenario 111/172 1024x600n-mode7 gl=2
+[2026-10-20T08:27:41.679Z] 04:27:41 pass 4/4 rb-mvgd5rof-fuwz #112 scenario 112/172 1024x600n-crt-light gl=2
+[2026-10-20T08:28:16.760Z] 04:28:16 pass 4/4 rb-mvgd5rof-fuwz #113 scenario 113/172 1024x600n-crt-full gl=2
+[2026-10-20T08:28:46.810Z] 04:28:46 pass 4/4 rb-mvgd5rof-fuwz #114 scenario 114/172 1024x600n-worst gl=2
+[2026-10-20T08:29:16.862Z] 04:29:16 pass 4/4 rb-mvgd5rof-fuwz #115 scenario 115/172 960x640-busy gl=2
+[2026-10-20T08:29:46.921Z] 04:29:46 pass 4/4 rb-mvgd5rof-fuwz #116 scenario 116/172 960x640-filter gl=2
+[2026-10-20T08:30:16.980Z] 04:30:16 pass 4/4 rb-mvgd5rof-fuwz #117 scenario 117/172 960x640-mode7 gl=2
+[2026-10-20T08:30:47.021Z] 04:30:47 pass 4/4 rb-mvgd5rof-fuwz #118 scenario 118/172 960x640-crt-light gl=2
+[2026-10-20T08:31:17.080Z] 04:31:17 pass 4/4 rb-mvgd5rof-fuwz #119 scenario 119/172 960x640-crt-full gl=2
+[2026-10-20T08:31:47.134Z] 04:31:47 pass 4/4 rb-mvgd5rof-fuwz #120 scenario 120/172 960x640-worst gl=2
+[2026-10-20T08:32:17.182Z] 04:32:17 pass 4/4 rb-mvgd5rof-fuwz #121 scenario 121/172 960x640n-busy gl=2
+[2026-10-20T08:32:47.239Z] 04:32:47 pass 4/4 rb-mvgd5rof-fuwz #122 scenario 122/172 960x640n-filter gl=2
+[2026-10-20T08:33:17.271Z] 04:33:17 pass 4/4 rb-mvgd5rof-fuwz #123 scenario 123/172 960x640n-mode7 gl=2
+[2026-10-20T08:33:52.332Z] 04:33:52 pass 4/4 rb-mvgd5rof-fuwz #124 scenario 124/172 960x640n-crt-light gl=2
+[2026-10-20T08:34:22.387Z] 04:34:22 pass 4/4 rb-mvgd5rof-fuwz #125 scenario 125/172 960x640n-crt-full gl=2
+[2026-10-20T08:34:52.461Z] 04:34:52 pass 4/4 rb-mvgd5rof-fuwz #126 scenario 126/172 960x640n-worst gl=2
+[2026-10-20T08:35:22.497Z] 04:35:22 pass 4/4 rb-mvgd5rof-fuwz #127 scenario 127/172 1280x720n-busy gl=2
+[2026-10-20T08:35:52.555Z] 04:35:52 pass 4/4 rb-mvgd5rof-fuwz #128 scenario 128/172 1280x720n-filter gl=2
+[2026-10-20T08:36:22.618Z] 04:36:22 pass 4/4 rb-mvgd5rof-fuwz #129 scenario 129/172 1280x720n-mode7 gl=2
+[2026-10-20T08:36:52.666Z] 04:36:52 pass 4/4 rb-mvgd5rof-fuwz #130 scenario 130/172 1280x720n-crt-light gl=2
+[2026-10-20T08:36:52.666Z] 04:36:52 running 301 min · pass 4/4 · last payload 0 s ago · restarts 0
+[2026-10-20T08:37:27.731Z] 04:37:27 pass 4/4 rb-mvgd5rof-fuwz #131 scenario 131/172 1280x720n-crt-full gl=2
+[2026-10-20T08:37:57.777Z] 04:37:57 pass 4/4 rb-mvgd5rof-fuwz #132 scenario 132/172 1280x720n-worst gl=2
+[2026-10-20T08:38:27.842Z] 04:38:27 pass 4/4 rb-mvgd5rof-fuwz #133 scenario 151/172 800x600-busy-fit gl=2
+[2026-10-20T08:38:57.893Z] 04:38:57 pass 4/4 rb-mvgd5rof-fuwz #134 scenario 152/172 800x600-worst-fit gl=2
+[2026-10-20T08:39:27.948Z] 04:39:27 pass 4/4 rb-mvgd5rof-fuwz #135 scenario 153/172 854x480-busy-fit gl=2
+[2026-10-20T08:39:58.012Z] 04:39:58 pass 4/4 rb-mvgd5rof-fuwz #136 scenario 154/172 854x480-worst-fit gl=2
+[2026-10-20T08:40:28.059Z] 04:40:28 pass 4/4 rb-mvgd5rof-fuwz #137 scenario 155/172 800x600-busy-stretch gl=2
+[2026-10-20T08:40:58.116Z] 04:40:58 pass 4/4 rb-mvgd5rof-fuwz #138 scenario 156/172 800x600-worst-stretch gl=2
+[2026-10-20T08:41:28.172Z] 04:41:28 pass 4/4 rb-mvgd5rof-fuwz #139 scenario 157/172 854x480-busy-stretch gl=2
+[2026-10-20T08:42:03.225Z] 04:42:03 pass 4/4 rb-mvgd5rof-fuwz #140 scenario 158/172 854x480-worst-stretch gl=2
+[2026-10-20T08:42:33.272Z] 04:42:33 pass 4/4 rb-mvgd5rof-fuwz #141 scenario 159/172 640x360-busy-stretch gl=2
+[2026-10-20T08:43:03.317Z] 04:43:03 pass 4/4 rb-mvgd5rof-fuwz #142 scenario 160/172 640x360-worst-stretch gl=2
+[2026-10-20T08:43:33.381Z] 04:43:33 pass 4/4 rb-mvgd5rof-fuwz #143 scenario 161/172 640x360-busy-interp gl=2
+[2026-10-20T08:44:03.438Z] 04:44:03 pass 4/4 rb-mvgd5rof-fuwz #144 scenario 162/172 640x360-worst-interp gl=2
+[2026-10-20T08:44:33.482Z] 04:44:33 pass 4/4 rb-mvgd5rof-fuwz #145 scenario 163/172 1280x720n-busy-interp gl=2
+[2026-10-20T08:45:08.544Z] 04:45:08 pass 4/4 rb-mvgd5rof-fuwz #146 scenario 164/172 1280x720n-worst-interp gl=2
+[2026-10-20T08:45:38.597Z] 04:45:38 pass 4/4 rb-mvgd5rof-fuwz #147 scenario 167/172 640x360-busy-out720 gl=2
+[2026-10-20T08:46:08.630Z] 04:46:08 pass 4/4 rb-mvgd5rof-fuwz #148 scenario 168/172 640x360-worst-out720 gl=2
+[2026-10-20T08:46:38.662Z] 04:46:38 pass 4/4 rb-mvgd5rof-fuwz #149 scenario 171/172 640x360-busy-out540 gl=2
+[2026-10-20T08:46:53.681Z] 04:46:53 running 311 min · pass 4/4 · last payload 15 s ago · restarts 0
+[2026-10-20T08:47:08.702Z] 04:47:08 pass 4/4 rb-mvgd5rof-fuwz #150 scenario 172/172 640x360-worst-out540 gl=2
+[2026-10-20T08:47:28.731Z] 04:47:28 pass 4/4 rb-mvgd5rof-fuwz #151 DONE 150/172 records + decode gl=2 · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169
+[2026-10-20T08:47:28.732Z] 04:47:28 stopping the app
+[2026-10-20T08:47:28.732Z] 04:47:28 [kill app] > sdb -s 10.0.0.224:26101 shell 0 was_kill ShmpCupBnc.RenderBench
+[2026-10-20T08:47:28.933Z]   | terminate app ShmpCupBnc.RenderBench
+[2026-10-20T08:47:29.004Z]   | spend time for wascmd is [32]ms
+[2026-10-20T08:47:29.020Z] 04:47:29 campaign complete after 311 min · 4/4 passes · 0 restart(s)
+[2026-10-20T08:47:29.021Z]   rb-mvg4tafk-yli8 pass 1 GL 1 · 150/172 records + decode · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169 · restarts 0 · done
+[2026-10-20T08:47:29.021Z]   rb-mvg7l9vw-bp11 pass 2 GL 2 · 150/172 records + decode · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169 · restarts 0 · done
+[2026-10-20T08:47:29.022Z]   rb-mvgadjmz-uozj pass 3 GL 1 · 150/172 records + decode · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169 · restarts 0 · done
+[2026-10-20T08:47:29.022Z]   rb-mvgd5rof-fuwz pass 4 GL 2 · 150/172 records + decode · missing 132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,164,165,168,169 · restarts 0 · done
+[2026-10-20T08:47:29.023Z]   copied 4 session file(s) to F:/dev/shmup-cup/tools/input-probe/results/2026-10-19-m7-bench-resolutions/out720; log F:\dev\shmup-cup\tools\input-probe\results\2026-10-19-m7-bench-resolutions\out720\campaign.log
