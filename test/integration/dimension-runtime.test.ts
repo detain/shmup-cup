@@ -24,7 +24,6 @@ import {
 } from '@shmup/core';
 import { createLayerStack, createMode7Floor, type Mode7Shader } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { INTERIM_ART_SCALE, scaleLength } from '../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
 import {
@@ -88,7 +87,7 @@ describe('integration: the high-speed dimension stage (M3-02)', () => {
     expect([band.w, band.h]).toEqual([art(DIMENSION_SKY_W), art(DIMENSION_SKY_H)]);
   });
 
-  itPortPending('asks for that floor and sky, meeting at the horizon', () => {
+  it('asks for that floor and sky, meeting at the horizon', () => {
     const stage = dimension(shipped());
     const floor = stage.mode7;
     expect(floor).not.toBeNull();

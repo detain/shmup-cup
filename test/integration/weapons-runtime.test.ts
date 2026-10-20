@@ -50,7 +50,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 
 /**
  * The shipped content with the engine sprites, validated like the shell does.
@@ -214,76 +213,72 @@ describe('integration: player weapons on the test range', () => {
     expect([g.config.autofireInterval, g.config.missileInterval]).toEqual([4, 10]);
   });
 
-  itPortPending(
-    'plays the stage with the full loadout within every cap, bound and surface',
-    () => {
-      const g = game({ loadout: 'full' });
-      const w = g.world;
-      w.debugFlags.godMode = true;
-      const v = new Violations();
-      let peak = 0;
-      let lasers = 0;
-      let slid = 0;
-      let kills = 0;
-      let bonuses = 0;
-      let clinks = 0;
-      let aliveTicks = 0;
-      playThrough(g, (events) => {
-        checkShots(w, v);
-        const tick = w.tick - 1;
-        const counts = liveCounts(w);
-        for (let s = 0; s < SHOOTERS_PER_PLAYER; s++) {
-          const base = s * WEAPON_ROLE_COUNT;
-          v.check(
-            counts[base + WeaponRole.Laser] <= 1 &&
-              counts[base + WeaponRole.Missile] <= 1 &&
-              counts[base + WeaponRole.Main] === 0 &&
-              counts[base + WeaponRole.Double] === 0,
-            () => `tick ${tick}: shooter ${s} has ${counts.slice(base, base + 4).join('/')}`,
-          );
-        }
-        // Player 2 is not in the game: its shooters never fire.
+  it('plays the stage with the full loadout within every cap, bound and surface', () => {
+    const g = game({ loadout: 'full' });
+    const w = g.world;
+    w.debugFlags.godMode = true;
+    const v = new Violations();
+    let peak = 0;
+    let lasers = 0;
+    let slid = 0;
+    let kills = 0;
+    let bonuses = 0;
+    let clinks = 0;
+    let aliveTicks = 0;
+    playThrough(g, (events) => {
+      checkShots(w, v);
+      const tick = w.tick - 1;
+      const counts = liveCounts(w);
+      for (let s = 0; s < SHOOTERS_PER_PLAYER; s++) {
+        const base = s * WEAPON_ROLE_COUNT;
         v.check(
-          counts.slice(SHOOTERS_PER_PLAYER * WEAPON_ROLE_COUNT).every((n) => n === 0),
-          () => `tick ${tick}: player 2 fired`,
+          counts[base + WeaponRole.Laser] <= 1 &&
+            counts[base + WeaponRole.Missile] <= 1 &&
+            counts[base + WeaponRole.Main] === 0 &&
+            counts[base + WeaponRole.Double] === 0,
+          () => `tick ${tick}: shooter ${s} has ${counts.slice(base, base + 4).join('/')}`,
         );
-        peak = Math.max(peak, w.weapons.pool.count);
-        const f = w.weapons.pool.fields;
-        let live = 0;
-        for (let i = 0; i < w.weapons.pool.count; i++) {
-          if (f.kind[i] === ShotKind.Laser) live++;
-          if ((f.flags[i] & ShotFlag.Sliding) !== 0) slid++;
-        }
-        lasers = Math.max(lasers, live);
-        if (w.players[0].state === 'alive') {
-          aliveTicks++;
-          v.check(
-            w.weapons.options[0].count === 4 && w.weapons.optionBatch.count === 4,
-            () => `tick ${tick}: ${w.weapons.options[0].count} Options`,
-          );
-        }
-        const o = w.enemies.outcomes;
-        for (let k = 0; k < o.killCount; k++) {
-          v.check(o.killBy[k] === 0, () => `tick ${tick}: kill credited to ${o.killBy[k]}`);
-          kills++;
-        }
-        for (const e of events) {
-          if (e.kind === SimEventKind.FormationBonus) bonuses++;
-          if (e.kind === SimEventKind.Sfx && e.id === SFX_CUES.Clink) clinks++;
-        }
-      });
-      expect(v.list).toEqual([]);
-      expect(aliveTicks).toBeGreaterThan(1000);
-      expect(peak).toBeGreaterThanOrEqual(8);
-      expect(lasers).toBe(5);
-      expect(slid).toBeGreaterThan(100); // missiles found the floor and slid along it
-      expect(kills).toBeGreaterThan(20);
-      expect(bonuses).toBeGreaterThan(0);
-      // The shipped roster has no armour yet.
-      expect(clinks).toBe(0);
-    },
-    60_000,
-  );
+      }
+      // Player 2 is not in the game: its shooters never fire.
+      v.check(
+        counts.slice(SHOOTERS_PER_PLAYER * WEAPON_ROLE_COUNT).every((n) => n === 0),
+        () => `tick ${tick}: player 2 fired`,
+      );
+      peak = Math.max(peak, w.weapons.pool.count);
+      const f = w.weapons.pool.fields;
+      let live = 0;
+      for (let i = 0; i < w.weapons.pool.count; i++) {
+        if (f.kind[i] === ShotKind.Laser) live++;
+        if ((f.flags[i] & ShotFlag.Sliding) !== 0) slid++;
+      }
+      lasers = Math.max(lasers, live);
+      if (w.players[0].state === 'alive') {
+        aliveTicks++;
+        v.check(
+          w.weapons.options[0].count === 4 && w.weapons.optionBatch.count === 4,
+          () => `tick ${tick}: ${w.weapons.options[0].count} Options`,
+        );
+      }
+      const o = w.enemies.outcomes;
+      for (let k = 0; k < o.killCount; k++) {
+        v.check(o.killBy[k] === 0, () => `tick ${tick}: kill credited to ${o.killBy[k]}`);
+        kills++;
+      }
+      for (const e of events) {
+        if (e.kind === SimEventKind.FormationBonus) bonuses++;
+        if (e.kind === SimEventKind.Sfx && e.id === SFX_CUES.Clink) clinks++;
+      }
+    });
+    expect(v.list).toEqual([]);
+    expect(aliveTicks).toBeGreaterThan(1000);
+    expect(peak).toBeGreaterThanOrEqual(8);
+    expect(lasers).toBe(5);
+    expect(slid).toBeGreaterThan(100); // missiles found the floor and slid along it
+    expect(kills).toBeGreaterThan(20);
+    expect(bonuses).toBeGreaterThan(0);
+    // The shipped roster has no armour yet.
+    expect(clinks).toBe(0);
+  }, 60_000);
 
   it('plays the stage with the Double: pairs only, never more than two per shooter', () => {
     const g = game();
@@ -331,36 +326,32 @@ describe('integration: player weapons on the test range', () => {
     expect(kills).toBeGreaterThan(10);
   }, 60_000);
 
-  itPortPending(
-    'fires in remote mode with no button ever held (autofire forced, feat §4 rule 1)',
-    () => {
-      const g = game({ autofire: false, remoteMode: true });
-      const w = g.world;
-      w.debugFlags.godMode = true;
-      let fired = 0;
-      let kills = 0;
-      let held = 0;
-      playThrough(g, () => {
-        held |= w.intents[0].held;
-        fired = Math.max(fired, w.weapons.pool.count);
-        kills += w.enemies.outcomes.killCount;
-      });
-      expect(held).toBe(0);
-      expect(fired).toBeGreaterThan(0);
-      expect(kills).toBeGreaterThan(10);
-      // Without remote mode the same config never fires.
-      const silent = game({ autofire: false, remoteMode: false });
-      silent.world.debugFlags.godMode = true;
-      let silentShots = 0;
-      for (let t = 0; t < 600; t++) {
-        silent.step();
-        silent.world.events.clear();
-        silentShots += silent.world.weapons.pool.count;
-      }
-      expect(silentShots).toBe(0);
-    },
-    60_000,
-  );
+  it('fires in remote mode with no button ever held (autofire forced, feat §4 rule 1)', () => {
+    const g = game({ autofire: false, remoteMode: true });
+    const w = g.world;
+    w.debugFlags.godMode = true;
+    let fired = 0;
+    let kills = 0;
+    let held = 0;
+    playThrough(g, () => {
+      held |= w.intents[0].held;
+      fired = Math.max(fired, w.weapons.pool.count);
+      kills += w.enemies.outcomes.killCount;
+    });
+    expect(held).toBe(0);
+    expect(fired).toBeGreaterThan(0);
+    expect(kills).toBeGreaterThan(10);
+    // Without remote mode the same config never fires.
+    const silent = game({ autofire: false, remoteMode: false });
+    silent.world.debugFlags.godMode = true;
+    let silentShots = 0;
+    for (let t = 0; t < 600; t++) {
+      silent.step();
+      silent.world.events.clear();
+      silentShots += silent.world.weapons.pool.count;
+    }
+    expect(silentShots).toBe(0);
+  }, 60_000);
 
   it('keeps two sessions fed the same wandering input in lockstep, shots and Options too', () => {
     const run = (config: Partial<GameConfig>): number[] => {

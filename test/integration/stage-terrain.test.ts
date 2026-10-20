@@ -27,7 +27,6 @@ import {
   type TilesetSpec,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { v1rel, v1y } from '../../packages/core/test/helpers/v1-port.js';
 import { getPixel } from '../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
@@ -129,7 +128,7 @@ describe('integration: tilesets match their art', () => {
     }
   });
 
-  itPortPending('has masks equal to the opaque pixels of every solid tile frame', () => {
+  it('has masks equal to the opaque pixels of every solid tile frame', () => {
     const db = shipped();
     for (const tileset of db.tilesets) {
       const frames = manifest.sprites[tileset.sprite]?.frames ?? [];
@@ -203,29 +202,26 @@ describe('integration: tilesets match their art', () => {
 });
 
 describe('integration: the test-range stage', () => {
-  itPortPending(
-    'expands into a terrain map drawn with existing frames; bands use real sprites',
-    () => {
-      const db = shipped();
-      const stage = db.stages[db.stageIndex.get('test-range') ?? -1];
-      expect(stage.terrain).not.toBeNull();
-      const terrain = stage.terrain;
-      if (terrain === null) return;
-      const tileset = db.tilesets[terrain.tilesetId];
-      expect(terrain.tileSize).toBe(TILE_SIZE);
-      expect(terrain.cols).toBe(Math.ceil((stage.length + PLAYFIELD_W) / terrain.tileSize));
-      const used = new Set(terrain.tiles);
-      expect(used.size).toBeGreaterThan(5); // floors, ceilings and several slope shapes
-      for (const id of used) {
-        if (id === 0) continue;
-        expect(tileset.tables.frame[id]).toBeGreaterThanOrEqual(0);
-      }
-      for (const band of stage.parallax) {
-        const frame = manifest.frames[manifest.sprites[band.sprite].frames[0]];
-        expect(frame.w, band.sprite).toBe(band.spacing);
-      }
-    },
-  );
+  it('expands into a terrain map drawn with existing frames; bands use real sprites', () => {
+    const db = shipped();
+    const stage = db.stages[db.stageIndex.get('test-range') ?? -1];
+    expect(stage.terrain).not.toBeNull();
+    const terrain = stage.terrain;
+    if (terrain === null) return;
+    const tileset = db.tilesets[terrain.tilesetId];
+    expect(terrain.tileSize).toBe(TILE_SIZE);
+    expect(terrain.cols).toBe(Math.ceil((stage.length + PLAYFIELD_W) / terrain.tileSize));
+    const used = new Set(terrain.tiles);
+    expect(used.size).toBeGreaterThan(5); // floors, ceilings and several slope shapes
+    for (const id of used) {
+      if (id === 0) continue;
+      expect(tileset.tables.frame[id]).toBeGreaterThanOrEqual(0);
+    }
+    for (const band of stage.parallax) {
+      const frame = manifest.frames[manifest.sprites[band.sprite].frames[0]];
+      expect(frame.w, band.sprite).toBe(band.spacing);
+    }
+  });
 
   it('plays to the end headless, deterministically, with terrain under the camera', () => {
     const db = shipped();

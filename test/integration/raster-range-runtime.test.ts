@@ -33,7 +33,6 @@ import {
   type LayerEffectFilter,
 } from '@shmup/render-pixi';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { INTERIM_ART_SCALE, scaleLength } from '../../scripts/assets/interim.mjs';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
@@ -162,7 +161,7 @@ describe('integration: the raster range matches its art (M2-08)', () => {
     expect(Math.min(...strips)).toBeGreaterThanOrEqual(1);
   });
 
-  itPortPending("puts the wave on the sea band's rows and the floor on the checker floor's", () => {
+  it("puts the wave on the sea band's rows and the floor on the checker floor's", () => {
     const stage = rasterRange(shipped());
     const band = (sprite: string) => stage.parallax.find((layer) => layer.sprite === sprite);
     const sea = band('bg/sea-swell');

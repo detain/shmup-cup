@@ -30,7 +30,6 @@ import {
   type HeadlessPlatform,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -172,33 +171,30 @@ describe('Extra Edit missiles (M3-01)', () => {
     expect(Math.abs(now[0].y - (ship.y + 4))).toBeLessThan(y0 - now[0].y);
   });
 
-  itPortPending(
-    'the Upper Missile climbs; Hawk Wind climbs above the middle and dives below it',
-    () => {
-      const upper = armed('missile', 'missile.upper');
-      upper.hold(FIRE, 2);
-      const up = upper.shots(WeaponRole.Missile);
-      expect(up.length).toBeGreaterThan(0);
-      expect(up.every((m) => m.kind === ShotKind.Upper && m.vy < 0 && m.vx > 0)).toBe(true);
+  it('the Upper Missile climbs; Hawk Wind climbs above the middle and dives below it', () => {
+    const upper = armed('missile', 'missile.upper');
+    upper.hold(FIRE, 2);
+    const up = upper.shots(WeaponRole.Missile);
+    expect(up.length).toBeGreaterThan(0);
+    expect(up.every((m) => m.kind === ShotKind.Upper && m.vy < 0 && m.vx > 0)).toBe(true);
 
-      const high = armed('missile', 'missile.hawkWind');
-      high.hold(Action.Up, 20);
-      const w = high.g.world;
-      expect(w.players[0].y).toBeLessThan(w.camera.y + PLAYFIELD_H / 2 - 16);
-      high.hold(FIRE, 2);
-      const climbing = high.shots(WeaponRole.Missile);
-      expect(climbing.length).toBeGreaterThan(0);
-      expect(climbing.every((m) => m.kind === ShotKind.Upper && m.vy < 0)).toBe(true);
+    const high = armed('missile', 'missile.hawkWind');
+    high.hold(Action.Up, 20);
+    const w = high.g.world;
+    expect(w.players[0].y).toBeLessThan(w.camera.y + PLAYFIELD_H / 2 - 16);
+    high.hold(FIRE, 2);
+    const climbing = high.shots(WeaponRole.Missile);
+    expect(climbing.length).toBeGreaterThan(0);
+    expect(climbing.every((m) => m.kind === ShotKind.Upper && m.vy < 0)).toBe(true);
 
-      const low = armed('missile', 'missile.hawkWind');
-      low.hold(Action.Down, 20);
-      expect(low.g.world.players[0].y).toBeGreaterThan(low.g.world.camera.y + PLAYFIELD_H / 2 + 16);
-      low.hold(FIRE, 2);
-      const diving = low.shots(WeaponRole.Missile);
-      expect(diving.length).toBeGreaterThan(0);
-      expect(diving.every((m) => m.kind === ShotKind.Missile && m.vy > 0)).toBe(true);
-    },
-  );
+    const low = armed('missile', 'missile.hawkWind');
+    low.hold(Action.Down, 20);
+    expect(low.g.world.players[0].y).toBeGreaterThan(low.g.world.camera.y + PLAYFIELD_H / 2 + 16);
+    low.hold(FIRE, 2);
+    const diving = low.shots(WeaponRole.Missile);
+    expect(diving.length).toBeGreaterThan(0);
+    expect(diving.every((m) => m.kind === ShotKind.Missile && m.vy > 0)).toBe(true);
+  });
 
   it('Small Spread lobs backwards; 2-Way Back flies a climbing and a diving missile backwards', () => {
     const small = armed('missile', 'missile.smallSpread');

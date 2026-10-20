@@ -54,7 +54,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import { readContentFiles } from '../../vite.shared.js';
-import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
 
 /**
  * The shipped content with the engine sprites, validated like the shell does.
@@ -345,7 +344,7 @@ describe('integration: the meter arsenal on the shipped content (M2-03)', () => 
 });
 
 describe('integration: the weapon range of the select`s preview (M2-03)', () => {
-  itPortPending('is harmless: no enemy bullet over a whole loop', () => {
+  it('is harmless: no enemy bullet over a whole loop', () => {
     const { g } = game({ stage: 'weapon-range', loadout: 'full' });
     const w = g.world;
     let bullets = 0;

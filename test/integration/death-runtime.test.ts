@@ -41,11 +41,6 @@ import {
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { v1x } from '../../packages/core/test/helpers/v1-port.js';
-import {
-  CONTENT_PORT_PENDING,
-  PORT_PENDING_REASON,
-  itPortPending,
-} from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 
 /**
@@ -180,44 +175,38 @@ function unattended(deathPenalty: DeathPenaltyPreset): Session {
 }
 
 describe('integration: unattended sessions on the test range (M1-12)', () => {
-  it.skipIf(CONTENT_PORT_PENDING).each(PRESETS)(
-    `%s: three deaths, then game over after the last dead time [${PORT_PENDING_REASON}]`,
-    (preset) => {
-      const a = unattended(preset);
-      const w = a.world;
-      expect(a.deaths).toHaveLength(3);
-      expect(a.respawns).toHaveLength(2);
-      for (let i = 0; i < a.respawns.length; i++) {
-        expect(a.respawns[i] - a.deaths[i]).toBe(
-          DEATH_HIT_STOP_TICKS + PLAYER_DYING_TICKS + PLAYER_DEAD_TICKS,
-        );
-      }
-      expect(a.overAt).toBe(
-        a.deaths[2] + DEATH_HIT_STOP_TICKS + PLAYER_DYING_TICKS + PLAYER_DEAD_TICKS,
+  it.each(PRESETS)('%s: three deaths, then game over after the last dead time', (preset) => {
+    const a = unattended(preset);
+    const w = a.world;
+    expect(a.deaths).toHaveLength(3);
+    expect(a.respawns).toHaveLength(2);
+    for (let i = 0; i < a.respawns.length; i++) {
+      expect(a.respawns[i] - a.deaths[i]).toBe(
+        DEATH_HIT_STOP_TICKS + PLAYER_DYING_TICKS + PLAYER_DEAD_TICKS,
       );
-      expect([w.players[0].lives, w.players[0].state]).toEqual([0, 'dead']);
-      expect(w.scoring.board.scores[0].score).toBeGreaterThan(0);
-      // Game over is final: the World simulates on, the ship never comes back.
-      for (let t = 0; t < 300; t++) a.game.step();
-      expect([w.status, w.players[0].state]).toEqual(['gameOver', 'dead']);
-      // Two identical sessions: identical hashes on every tick, through every hit-stop.
-      const b = unattended(preset);
-      expect(b.hashes).toEqual(a.hashes);
-    },
-  );
+    }
+    expect(a.overAt).toBe(
+      a.deaths[2] + DEATH_HIT_STOP_TICKS + PLAYER_DYING_TICKS + PLAYER_DEAD_TICKS,
+    );
+    expect([w.players[0].lives, w.players[0].state]).toEqual([0, 'dead']);
+    expect(w.scoring.board.scores[0].score).toBeGreaterThan(0);
+    // Game over is final: the World simulates on, the ship never comes back.
+    for (let t = 0; t < 300; t++) a.game.step();
+    expect([w.status, w.players[0].state]).toEqual(['gameOver', 'dead']);
+    // Two identical sessions: identical hashes on every tick, through every hit-stop.
+    const b = unattended(preset);
+    expect(b.hashes).toEqual(a.hashes);
+  });
 
-  itPortPending(
-    'arcade replays from the checkpoint: the camera goes back, the score is kept',
-    () => {
-      const s = unattended('arcade');
-      const classic = unattended('classic');
-      // Arcade flies the same opening again after each restart, so it scores more before its end.
-      expect(s.world.scoring.board.scores[0].score).toBeGreaterThan(
-        classic.world.scoring.board.scores[0].score,
-      );
-      expect(s.world.camera.x).toBeLessThan(classic.world.camera.x);
-    },
-  );
+  it('arcade replays from the checkpoint: the camera goes back, the score is kept', () => {
+    const s = unattended('arcade');
+    const classic = unattended('classic');
+    // Arcade flies the same opening again after each restart, so it scores more before its end.
+    expect(s.world.scoring.board.scores[0].score).toBeGreaterThan(
+      classic.world.scoring.board.scores[0].score,
+    );
+    expect(s.world.camera.x).toBeLessThan(classic.world.camera.x);
+  });
 });
 
 /**
@@ -251,7 +240,7 @@ function crash(g: Game): number {
 }
 
 describe('integration: death penalties on the shipped content (decision D6)', () => {
-  itPortPending('classic: one level per death in the D6 order, cursor kept, shield gone', () => {
+  it('classic: one level per death in the D6 order, cursor kept, shield gone', () => {
     const g = game({ loadout: 'full', startingLives: 5 });
     const w = g.world;
     const ship = w.players[0];
@@ -277,7 +266,7 @@ describe('integration: death penalties on the shipped content (decision D6)', ()
     stepUntil(g, () => w.status === 'gameOver');
   });
 
-  itPortPending('casual: the loadout survives every death; only the shield is lost', () => {
+  it('casual: the loadout survives every death; only the shield is lost', () => {
     const g = game({ loadout: 'full', deathPenalty: 'casual' });
     const w = g.world;
     const ship = w.players[0];
@@ -291,40 +280,37 @@ describe('integration: death penalties on the shipped content (decision D6)', ()
     stepUntil(g, () => w.status === 'gameOver');
   });
 
-  itPortPending(
-    'arcade: everything and the cursor lost, the stage restarted at the checkpoint passed',
-    () => {
-      const g = game({ loadout: 'full', deathPenalty: 'arcade' });
-      const w = g.world;
-      const ship = w.players[0];
-      const stage = w.stage!;
-      const loadout = w.weapons.loadouts[0];
-      stepUntil(g, () => w.camera.x >= v1x(1700)); // past the second checkpoint, short of the third
-      expect(stage.checkpoint).toBe(1);
-      const checkpointX = stage.stage.checkpoints[1].x;
-      expect(checkpointX).toBe(v1x(1500));
-      w.powerups.meters[0].cursor = 4;
-      crash(g);
-      expect([loadout.options, loadout.main, loadout.missile, ship.speedLevel]).toEqual([
-        0,
-        MainWeapon.Basic,
-        false,
-        0,
-      ]);
-      expect(w.powerups.meters[0].cursor).toBe(-1);
-      const score = w.scoring.board.scores[0].score;
-      expect(score).toBeGreaterThan(0);
-      stepUntil(g, () => ship.state === 'respawning');
-      expect(w.camera.x - w.camera.dx).toBe(checkpointX);
-      expect([
-        w.bullets.count,
-        w.bullets.lasers.count,
-        w.powerups.count,
-        w.weapons.pool.count,
-      ]).toEqual([0, 0, 0, 0]);
-      expect(w.scoring.board.scores[0].score).toBe(score);
-      // The stage plays on from there (its timeline fires again).
-      stepUntil(g, () => w.enemies.count > 0, 2000);
-    },
-  );
+  it('arcade: everything and the cursor lost, the stage restarted at the checkpoint passed', () => {
+    const g = game({ loadout: 'full', deathPenalty: 'arcade' });
+    const w = g.world;
+    const ship = w.players[0];
+    const stage = w.stage!;
+    const loadout = w.weapons.loadouts[0];
+    stepUntil(g, () => w.camera.x >= v1x(1700)); // past the second checkpoint, short of the third
+    expect(stage.checkpoint).toBe(1);
+    const checkpointX = stage.stage.checkpoints[1].x;
+    expect(checkpointX).toBe(v1x(1500));
+    w.powerups.meters[0].cursor = 4;
+    crash(g);
+    expect([loadout.options, loadout.main, loadout.missile, ship.speedLevel]).toEqual([
+      0,
+      MainWeapon.Basic,
+      false,
+      0,
+    ]);
+    expect(w.powerups.meters[0].cursor).toBe(-1);
+    const score = w.scoring.board.scores[0].score;
+    expect(score).toBeGreaterThan(0);
+    stepUntil(g, () => ship.state === 'respawning');
+    expect(w.camera.x - w.camera.dx).toBe(checkpointX);
+    expect([
+      w.bullets.count,
+      w.bullets.lasers.count,
+      w.powerups.count,
+      w.weapons.pool.count,
+    ]).toEqual([0, 0, 0, 0]);
+    expect(w.scoring.board.scores[0].score).toBe(score);
+    // The stage plays on from there (its timeline fires again).
+    stepUntil(g, () => w.enemies.count > 0, 2000);
+  });
 });
