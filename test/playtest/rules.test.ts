@@ -25,6 +25,7 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
+import { v1rel, v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { shippedContent } from './harness.js';
 import {
   COLUMN_HALF_WIDTH,
@@ -230,7 +231,8 @@ describe('playtest rules: createRuleWatch', () => {
 
   it('lists at most 20 violations', () => {
     const w = world();
-    spawnBullet(w, 200, 100, ANGLE_UNITS / 2, 3, BulletKind.RoundPink);
+    // A v1-3-px/tick bullet: over the (v1-2-px/tick) limit at every scale.
+    spawnBullet(w, 200, 100, ANGLE_UNITS / 2, v1speed(3), BulletKind.RoundPink);
     const watch = createRuleWatch();
     for (let i = 0; i < 25; i++) watch.observe(w);
     expect(watch.violations).toHaveLength(20);
@@ -259,20 +261,20 @@ describe('playtest rules: columnGap (M2-18)', () => {
   it('finds the gap a wall of bullets leaves, and the watch flags a wall under 16 px', () => {
     const w = world();
     const x = w.players[0].x;
-    // A wall every 8 px from row 0 to PLAYFIELD_H but a 30-px hole around row 100.
-    for (let y = 4; y < PLAYFIELD_H; y += 8) {
-      if (y > 85 && y < 115) continue;
+    // A wall every v1 8 px from row 0 to PLAYFIELD_H but a v1 30-px hole around row v1 100.
+    for (let y = 4; y < PLAYFIELD_H; y += v1rel(8)) {
+      if (y > v1rel(85) && y < v1rel(115)) continue;
       spawnBullet(w, x, y, ANGLE_UNITS / 2, 0.5, BulletKind.RoundPink);
     }
     const open = columnGap(w);
     expect(open).toBeGreaterThan(MIN_LANE_GAP);
-    expect(open).toBeLessThan(40);
+    expect(open).toBeLessThan(v1rel(40));
     const watch = createRuleWatch();
     watch.observe(w);
     expect(watch.narrowestColumn).toBe(open);
     expect(watch.violations).toEqual([]);
     // Plug the hole: the column is walled in.
-    for (const y of [92, 100, 108])
+    for (const y of [92, 100, 108].map(v1rel))
       spawnBullet(w, x, y, ANGLE_UNITS / 2, 0.5, BulletKind.RoundPink);
     expect(columnGap(w)).toBeLessThan(MIN_LANE_GAP);
     watch.observe(w);

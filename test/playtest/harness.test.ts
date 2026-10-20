@@ -14,6 +14,7 @@
 import { Action, type World } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { itPortPending } from '../../packages/core/test/helpers/port-pending.js';
+import { v1rel } from '../../packages/core/test/helpers/v1-port.js';
 import {
   DEFAULT_MAX_TICKS,
   DIRECTIONS,
@@ -172,7 +173,7 @@ describe('playtest harness: runStage', () => {
     const warning = shippedContent()
       .stages.find((s) => s.id === 'zone-a')
       ?.events.find((e) => e.type === 'warning');
-    expect(cameraX).toBeGreaterThan((warning?.x ?? 0) - 100);
+    expect(cameraX).toBeGreaterThan((warning?.x ?? 0) - v1rel(100));
     expect(difficulty).toBe('hard');
     expect(run.seed).toBe(7);
   });
