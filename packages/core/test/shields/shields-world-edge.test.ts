@@ -19,6 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  BENDING_LASER_WIDTH,
   BULLET_KINDS,
   BulletFlag,
   BulletKind,
@@ -353,7 +354,7 @@ describe('M2-04 shields in a World (edge): Reduce against every hurt test', () =
     const [bare, reduced] = pair();
     for (const w of [bare, reduced]) {
       const ship = w.players[0];
-      const at = { slot: -1, x: ship.x + 3 + 0.8 * HURT, y: ship.y }; // width 6: radius 3
+      const at = { slot: -1, x: ship.x + BENDING_LASER_WIDTH / 2 + 0.8 * HURT, y: ship.y }; // the beam's own radius
       expect(fireBendingLaser(w, at, 0)).toBeGreaterThanOrEqual(0);
       w.bullets.collidePlayers();
     }
