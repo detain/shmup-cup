@@ -41,16 +41,27 @@ const DB: ContentDb = (() => {
 /** The Direct-mode item kinds as plain numbers (the pool's `kind` field), in `DIRECT_ITEMS` order. */
 const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
 
-/** The zones and their bosses. */
+/**
+ * The zones, their bosses and the honest hand-out floors of this bot run.
+ *
+ * prepB.FIX8 (d25de31, the physical nearer-target pick): zone-b's run now ends at cursor 9,
+ * not 11. The pick did not lose zone-b anything a real player must rely on — the whole run
+ * redirects exactly ONE shot, tick 5945, from the gill-dart the OLD lowest-slot rule let a
+ * bolt pass THROUGH the boss's front part to reach (an abstraction leak of the same family
+ * FIX2 cured at K=1.5); that one hit retimes the boss's phase and the bot's threat-aim, and
+ * two tenders then fly past the firing corridor. Hand-outs stay strictly in plan order —
+ * the `wrong`/order checks below are the invariant this test owns, the floor only measures
+ * how much of the plan the shared bot happens to reach by the clear.
+ */
 const ZONES = [
-  { stage: 'zone-b', boss: 'galvanic-maw' },
-  { stage: 'zone-c', boss: 'sandgrave-widow' },
+  { stage: 'zone-b', boss: 'galvanic-maw', handed: 9 },
+  { stage: 'zone-c', boss: 'sandgrave-widow', handed: 10 },
 ] as const;
 
 describe('integration: zones B and C in Direct mode (M2-11)', () => {
   it.each(ZONES)(
     'the MANTA clears $stage, the carriers handing out its own item plan in order',
-    ({ stage, boss }) => {
+    ({ stage, boss, handed }) => {
       const platform = createHeadlessPlatform();
       const game = createGame(
         platform,
@@ -109,9 +120,9 @@ describe('integration: zones B and C in Direct mode (M2-11)', () => {
       expect(bossBeaten).toBe(true);
       // Every drop was the plan's entry at the cursor it was handed out at (the plan cycles).
       const cursor = w.powerups.planCursor;
-      expect(cursor).toBeGreaterThanOrEqual(10);
+      expect(cursor).toBeGreaterThanOrEqual(handed);
       // Most drops are seen one at a time; the rest shared a tick or were swallowed on their own.
-      expect(dropped.length).toBeGreaterThanOrEqual(10);
+      expect(dropped.length).toBeGreaterThanOrEqual(handed);
       expect(dropped.map((d) => d.name)).toEqual(dropped.map((d) => plan[d.at % plan.length]));
       const names = dropped.map((d) => d.name);
       // The zone's own colours: red, green and blue levels, the octagon among the first dozen.
