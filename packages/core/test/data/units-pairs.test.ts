@@ -10,14 +10,15 @@
  *   following the bands they bound — stacks stay closed, bottom bands stay on the bottom edge;
  * - the camera's `yTo` is ×k (`rel-px`): with the three pad rows the deepest pan ports exactly.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as core from '../../src/index.js';
-import { PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
 import { CONTENT_FILE_SCHEMAS, DEFAULT_BLOCK_SCREEN_X } from '../../src/data/index.js';
 import { DEFAULT_SPAWN_SCREEN_X } from '../../src/enemies/index.js';
+import { PAD, V1_FRAME, v1rel } from '../helpers/v1-port.js';
 import {
   UNIT_RULES,
   listNumberFields,
@@ -35,30 +36,22 @@ import {
   type RescaleOptions,
   type WorldSumPair,
 } from '../../src/data/units.js';
-/** The repository's `content/tilesets/` folder. */
-const TILESETS = new URL('../../../../content/tilesets/', import.meta.url);
 
 /**
- * Whether R2-02's port is still pending: some shipped tileset is not at the build's `TILE_SIZE`
- * — read straight from the content files, the port's own signal.
+ * A second, hypothetical port of the already-ported content: the live geometry — the world ×1.5
+ * under a playfield that keeps its size, with the §2.6 pad (`PAD`, three live tile rows). The
+ * pair rules do not care which scale they port from; running them on the ported files checks the
+ * relations the shipped content was built with still hold (R2-03's premise for the suites that
+ * used to gate on the v1 files).
  */
-const CONTENT_PORT_PENDING = readdirSync(TILESETS)
-  .filter((name) => name.endsWith('.tileset.json'))
-  .some((name) => {
-    const tileset = JSON.parse(readFileSync(new URL(name, TILESETS), 'utf8')) as {
-      tileSize?: unknown;
-    };
-    return tileset.tileSize !== TILE_SIZE;
-  });
-
-/**
- * Suites that port the shipped `content/` with the tool and check the result in v1 terms —
- * the premise broke with R2-02's port of `content/`, so they run only while the pending signal
- * above holds (some tileset still at another size); R2-02's final pass rewrites them to read
- * the ported files.
- */
-const describeV1Content = (name: string, fn: () => void): void => {
-  describe.runIf(CONTENT_PORT_PENDING)(name, fn);
+const LIVE: RescaleOptions = {
+  factor: 1.5,
+  topPad: PAD,
+  fromWidth: PLAYFIELD_W,
+  fromHeight: PLAYFIELD_H,
+  toWidth: PLAYFIELD_W,
+  toHeight: PLAYFIELD_H,
+  tileSize: TILE_SIZE,
 };
 
 /** The v1 → v2 port (plan §2.6 / §2.7): the content's own geometry, not today's constants. */
@@ -111,9 +104,10 @@ const stageFile = (name: string): Record<string, unknown> =>
  * rows and looked-up units are left out (they are not what these tests check).
  *
  * @param data - The stage file.
+ * @param options - The port's geometry.
  * @returns JSON path → ported value.
  */
-function portStage(data: unknown): Map<string, number> {
+function portStage(data: unknown, options: RescaleOptions): Map<string, number> {
   const out = new Map<string, number>();
   walkNumbers(CONTENT_FILE_SCHEMAS.stage, data, (leaf: NumberLeaf) => {
     if (typeof leaf.value !== 'number' || leaf.unit === undefined) return;
@@ -122,7 +116,7 @@ function portStage(data: unknown): Map<string, number> {
     if (pair !== undefined && pair.pair.rule === 'world-sum' && pair.pair.when === 'always') {
       const camera = holder[pair.pair.camera] as number;
       const screen = holder[pair.pair.screen] as number | undefined;
-      const ported = rescaleWorldSum(camera, screen, pair.pair, V2);
+      const ported = rescaleWorldSum(camera, screen, pair.pair, options);
       out.set(leaf.path, pair.role === 'camera' ? ported.camera : ported.screen);
       return;
     }
@@ -130,14 +124,14 @@ function portStage(data: unknown): Map<string, number> {
       const box = rescaleBoxY(
         holder[pair.pair.top] as number,
         holder[pair.pair.height] as number,
-        V2,
+        options,
       );
       out.set(leaf.path, pair.role === 'top' ? box.top : box.height);
       return;
     }
     const rule = UNIT_RULES[leaf.unit];
     if (rule === 'lookup' || rule === 'band') return;
-    out.set(leaf.path, rescaleNumber(leaf.unit, leaf.value, V2));
+    out.set(leaf.path, rescaleNumber(leaf.unit, leaf.value, options));
   });
   return out;
 }
@@ -302,70 +296,70 @@ describe('core/data units: the pairs of the stage schema', () => {
   });
 });
 
-describeV1Content(
-  'core/data units: the gap entrances keep their bricks around their region',
-  () => {
-    for (const [stage, left, right, region] of [
-      ['bonus-range', 1, 2, 3],
-      ['zone-b', 33, 34, 35],
-    ] as const) {
-      it(`${stage}: events[${String(left)}]–[${String(right)}] around events[${String(region)}]`, () => {
-        const data = stageFile(stage);
-        const events = data['events'] as Record<string, unknown>[];
-        const brick = (index: number) => events[index] as Record<string, number>;
-        /** A block's column as written (the default stands 16 px past the right edge). */
-        const column = (index: number): number => brick(index)['screenX'] ?? V2.fromWidth + 16;
-        // As written: the region is exactly the gap between the bricks, from the top edge down.
-        const gap = (events[region] as { region: Record<string, number> }).region;
-        expect(brick(left).x + column(left) + brick(left).w).toBe(gap.x);
-        expect(brick(right).x + column(right)).toBe(gap.x + gap.w);
-        expect([brick(left).y, gap.y, brick(left).h]).toEqual([0, 0, gap.h]);
+describe('core/data units: the gap entrances keep their bricks around their region', () => {
+  for (const [stage, left, right, region] of [
+    ['bonus-range', 1, 2, 3],
+    ['zone-b', 33, 34, 35],
+  ] as const) {
+    it(`${stage}: events[${String(left)}]–[${String(right)}] around events[${String(region)}]`, () => {
+      const data = stageFile(stage);
+      const events = data['events'] as Record<string, unknown>[];
+      const brick = (index: number) => events[index] as Record<string, number>;
+      /** A block's column as written (the default stands 16 px past the right edge). */
+      const column = (index: number): number => brick(index)['screenX'] ?? DEFAULT_BLOCK_SCREEN_X;
+      // On the ported files: the region is still exactly the gap between the bricks, from the
+      // top edge down (R2-02's port kept the relation).
+      const gap = (events[region] as { region: Record<string, number> }).region;
+      expect(brick(left).x + column(left) + brick(left).w).toBe(gap.x);
+      expect(brick(right).x + column(right)).toBe(gap.x + gap.w);
+      expect([brick(left).y, gap.y, brick(left).h]).toEqual([0, 0, gap.h]);
 
-        const ported = portStage(data);
-        const get = (path: string): number => ported.get(path) as number;
-        const leftEdge = get(`events[${String(left)}].x`) + get(`events[${String(left)}].screenX`);
-        const rightEdge =
-          get(`events[${String(right)}].x`) + get(`events[${String(right)}].screenX`);
-        const gapX = get(`events[${String(region)}].region.x`);
-        const gapW = get(`events[${String(region)}].region.w`);
-        // The bricks stand ×k and still close the region in.
-        expect(leftEdge).toBe((brick(left).x + column(left)) * 1.5);
-        expect(leftEdge + get(`events[${String(left)}].w`)).toBe(gapX);
-        expect(rightEdge).toBe(gapX + gapW);
-        // Both still appear past the new right edge.
-        expect(get(`events[${String(left)}].screenX`)).toBeGreaterThan(V2.toWidth);
-        // Bricks and region still hang from the top edge, grown by the pad together.
-        expect(get(`events[${String(left)}].y`)).toBe(0);
-        expect(get(`events[${String(region)}].region.y`)).toBe(0);
-        expect(get(`events[${String(left)}].h`)).toBe(72);
-        expect(get(`events[${String(region)}].region.h`)).toBe(72);
-        // Ported one value at a time (the old rules), the region would miss the gap.
-        const alone =
-          rescaleNumber('world-x', brick(left).x, V2) + rescaleNumber('screen-x', column(left), V2);
-        expect(alone + rescaleNumber('world-px', brick(left).w, V2)).not.toBe(gapX);
-      });
-    }
-  },
-);
+      const ported = portStage(data, LIVE);
+      const get = (path: string): number => ported.get(path) as number;
+      const leftEdge = get(`events[${String(left)}].x`) + get(`events[${String(left)}].screenX`);
+      const rightEdge = get(`events[${String(right)}].x`) + get(`events[${String(right)}].screenX`);
+      const gapX = get(`events[${String(region)}].region.x`);
+      const gapW = get(`events[${String(region)}].region.w`);
+      // Re-ported, the bricks stand ×k and still close the region in.
+      expect(leftEdge).toBe((brick(left).x + column(left)) * LIVE.factor);
+      expect(leftEdge + get(`events[${String(left)}].w`)).toBe(gapX);
+      expect(rightEdge).toBe(gapX + gapW);
+      // Both still appear past the right edge.
+      expect(get(`events[${String(left)}].screenX`)).toBeGreaterThan(LIVE.toWidth);
+      // Bricks and region still hang from the top edge, grown by the pad together.
+      expect(get(`events[${String(left)}].y`)).toBe(0);
+      expect(get(`events[${String(region)}].region.y`)).toBe(0);
+      expect(get(`events[${String(left)}].h`)).toBe(brick(left).h * LIVE.factor + LIVE.topPad);
+      expect(get(`events[${String(region)}].region.h`)).toBe(gap.h * LIVE.factor + LIVE.topPad);
+      // Ported one value at a time (the old rules), the region would miss the gap.
+      const alone =
+        rescaleNumber('world-x', brick(left).x, LIVE) +
+        rescaleNumber('screen-x', column(left), LIVE);
+      expect(alone + rescaleNumber('world-px', brick(left).w, LIVE)).not.toBe(gapX);
+    });
+  }
+});
 
-describeV1Content('core/data units: the camera’s yTo', () => {
+describe('core/data units: the camera’s yTo', () => {
   it('is ×k, so a pan to the bottom of a map ports to the bottom of the padded map', () => {
     const fields = listNumberFields(CONTENT_FILE_SCHEMAS.stage).fields;
     expect(fields.find((field) => field.path === 'camera[].yTo')?.unit).toBe('rel-px');
-    const padRows = V2.topPad / (V2.tileSize * V2.factor);
+    // On the ported files the map carries the three pad rows the port inserted at its top, so
+    // the pan that reached the map's bottom in v1 reaches it here too, one playfield under the
+    // top edge — rel-px ×k against a map of rows ×k(ish) at the new tile.
     let deepest = 0;
     for (const name of ['zone-d', 'gimmick-range']) {
       const data = stageFile(name);
       const rows = (data['tilemap'] as { rowsTall: number }).rowsTall;
       const lowest = Math.max(...(data['camera'] as { yTo?: number }[]).map((key) => key.yTo ?? 0));
-      // Both shipped pans scroll to the map's bottom in v1 …
-      expect(lowest + V2.fromHeight, name).toBe(rows * V2.tileSize);
-      // … and ×k reaches exactly the bottom of the map with its three pad rows.
-      const ported = rescaleNumber('rel-px', lowest, V2);
-      expect(ported + V2.toHeight, name).toBe((rows + padRows) * V2.tileSize * V2.factor);
-      deepest = Math.max(deepest, ported);
+      // Both shipped pans scroll exactly to the map's bottom …
+      expect(lowest + PLAYFIELD_H, name).toBe(rows * TILE_SIZE);
+      // … and the map holds one playfield plus taller — the pad rows are whole rows.
+      expect(PAD % TILE_SIZE, name).toBe(0);
+      deepest = Math.max(deepest, lowest);
     }
-    expect(deepest).toBe(300);
+    // The deepest pan is v1's full playfield (200 px), ported ×k.
+    expect(deepest).toBe(v1rel(V1_FRAME.h));
   });
 });
 

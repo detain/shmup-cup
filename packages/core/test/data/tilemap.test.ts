@@ -6,10 +6,10 @@
  * matching a tileset tile, slopes of at most one tile per column with half-tile heights left by
  * half-tile steps, ramping in and out at the segment ends, floor over ceiling, missing tiles.
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { describe as describeRaw, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType } from '../../src/collision/index.js';
-import { PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
 import {
   TILE_ANCHORS,
   TILE_TYPES,
@@ -19,32 +19,6 @@ import {
 } from '../../src/data/index.js';
 import { decodeRleRow } from '../../src/data/tilemap.js';
 
-/** The repository's `content/tilesets/` folder. */
-const TILESETS = new URL('../../../../content/tilesets/', import.meta.url);
-
-/**
- * Whether R2-02's port is still pending: some shipped tileset is not at the build's `TILE_SIZE`
- * — read straight from the content files, the port's own signal.
- */
-const CONTENT_PORT_PENDING = readdirSync(TILESETS)
-  .filter((name) => name.endsWith('.tileset.json'))
-  .some((name) => {
-    const tileset = JSON.parse(readFileSync(new URL(name, TILESETS), 'utf8')) as {
-      tileSize?: unknown;
-    };
-    return tileset.tileSize !== TILE_SIZE;
-  });
-
-/**
- * Every suite in this file builds tilemaps of the v1 8-px tile over the shipped `terrain-a`
- * tileset and checks the expansion in v1 pixel terms — the premise broke with R2-02's port of
- * `content/`, so the suites run only while the pending signal above holds (some tileset still
- * at another size), and R2-02's final pass rewrites them for the 12-px content.
- */
-const describe = (name: string, fn: () => void): void => {
-  describeRaw.runIf(CONTENT_PORT_PENDING)(name, fn);
-};
-
 /** The shipped `terrain-a` tileset JSON. */
 const TERRAIN_A = JSON.parse(
   readFileSync(
@@ -53,8 +27,11 @@ const TERRAIN_A = JSON.parse(
   ),
 ) as Record<string, unknown>;
 
-/** Map width of a 1000-px stage (length + one playfield, in 8-px tiles: 173 at 384×216). */
-const COLS = Math.ceil((1000 + PLAYFIELD_W) / 8);
+/** Rows of a fixture stage: one playfield of the build's `TILE_SIZE` tiles (the fly-in law). */
+const ROWS = PLAYFIELD_H / TILE_SIZE;
+
+/** Map width of a 1000-px stage (length + one playfield, in `TILE_SIZE` tiles). */
+const COLS = Math.ceil((1000 + PLAYFIELD_W) / TILE_SIZE);
 
 /**
  * A stage file.
@@ -94,7 +71,7 @@ const tilesetFile = (body: Record<string, unknown> = {}): ContentFile => ({
 /**
  * Loads a stage with the given tilemap over the shipped tileset.
  *
- * @param tilemap - Tilemap fields over `{ tileSize: 8, tileset: 'terrain-a', rowsTall: 25 }`.
+ * @param tilemap - Tilemap fields over `{ tileSize: TILE_SIZE, tileset: 'terrain-a', rowsTall: ROWS }`.
  * @param tileset - Tileset fields.
  * @returns The load result.
  */
@@ -103,7 +80,9 @@ const withTilemap = (
   tileset: Record<string, unknown> = {},
 ): LoadContentResult =>
   loadContent([
-    stageFile({ tilemap: { tileSize: 8, tileset: 'terrain-a', rowsTall: 25, ...tilemap } }),
+    stageFile({
+      tilemap: { tileSize: TILE_SIZE, tileset: 'terrain-a', rowsTall: ROWS, ...tilemap },
+    }),
     tilesetFile(tileset),
   ]);
 
@@ -125,7 +104,9 @@ describe('core/data tilesets', () => {
     expect(tables.count).toBe(tileset.tiles.length + 1);
     expect([tables.type[0], tables.frame[0]]).toEqual([TerrainType.Empty, -1]);
     const up = tables.byName.get('slope-up') ?? 0;
-    expect(Array.from(tables.mask.subarray(up * 8, up * 8 + 8))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(Array.from(tables.mask.subarray(up * TILE_SIZE, up * TILE_SIZE + TILE_SIZE))).toEqual(
+      Array.from({ length: TILE_SIZE }, (_, i) => i + 1),
+    );
     expect(tables.anchor[tables.byName.get('ceiling') ?? 0]).toBe(TerrainAnchor.Ceiling);
     expect(tables.frame[up]).toBe(5);
   });
@@ -142,7 +123,7 @@ describe('core/data tilesets', () => {
       type: 'solid',
       frame: 0,
       anchor: 'floor',
-      mask: [8, 8, 8, 8, 8, 8, 8, 8],
+      mask: new Array<number>(TILE_SIZE).fill(TILE_SIZE),
     };
     const { db, issues } = loadContent([
       tilesetFile({
@@ -150,7 +131,11 @@ describe('core/data tilesets', () => {
           tile,
           tile,
           { ...tile, name: 'b', mask: [1, 2] },
-          { ...tile, name: 'c', mask: [9, 0, 0, 0, 0, 0, 0, 0] },
+          {
+            ...tile,
+            name: 'c',
+            mask: Array.from({ length: TILE_SIZE }, (_, i) => (i === 0 ? TILE_SIZE + 1 : 0)),
+          },
         ],
       }),
     ]);
@@ -158,11 +143,11 @@ describe('core/data tilesets', () => {
       { path: 'tilesets/terrain-a.tileset.json:tiles[1].name', message: 'duplicate tile name "a"' },
       {
         path: 'tilesets/terrain-a.tileset.json:tiles[2].mask',
-        message: 'must have tileSize (8) entries',
+        message: `must have tileSize (${TILE_SIZE}) entries`,
       },
       {
         path: 'tilesets/terrain-a.tileset.json:tiles[3].mask[0]',
-        message: 'must be <= tileSize (8)',
+        message: `must be <= tileSize (${TILE_SIZE})`,
       },
     ]);
     expect(db.tilesets).toEqual([]);
@@ -226,9 +211,9 @@ describe('core/data stage checks beyond the schema', () => {
     [
       {
         tilemap: {
-          tileSize: 8,
+          tileSize: TILE_SIZE,
           tileset: 'terrain-a',
-          rowsTall: 25,
+          rowsTall: ROWS,
           generator: { type: 'heightfield', segments: [{ from: 100, to: 100 }] },
         },
       },
@@ -252,7 +237,7 @@ describe('core/data stage checks beyond the schema', () => {
 
   it('reports an unknown tileset and leaves the stage without terrain', () => {
     const { db, issues } = loadContent([
-      stageFile({ tilemap: { tileSize: 8, tileset: 'nope', rowsTall: 25, rle: [] } }),
+      stageFile({ tilemap: { tileSize: TILE_SIZE, tileset: 'nope', rowsTall: ROWS, rle: [] } }),
     ]);
     expect(issues).toEqual([
       { path: 'stages/s.stage.json:tilemap.tileset', message: 'unknown tileset id "nope"' },
@@ -287,27 +272,33 @@ describe('core/data RLE rows', () => {
   });
 
   it('expands rows top to bottom into the stage map', () => {
-    const rle = new Array(25).fill('');
-    rle[24] = '3*1';
+    const rle = new Array(ROWS).fill('');
+    rle[ROWS - 1] = '3*1';
     rle[0] = '2*0, 3';
     const tiles = tilesOf(withTilemap({ rle }));
-    expect(tiles.length).toBe(COLS * 25);
-    expect([tiles[2], tiles[24 * COLS], tiles[24 * COLS + 2], tiles[24 * COLS + 3]]).toEqual([
-      3, 1, 1, 0,
-    ]);
+    expect(tiles.length).toBe(COLS * ROWS);
+    expect([
+      tiles[2],
+      tiles[(ROWS - 1) * COLS],
+      tiles[(ROWS - 1) * COLS + 2],
+      tiles[(ROWS - 1) * COLS + 3],
+    ]).toEqual([3, 1, 1, 0]);
   });
 
   it('reports a wrong row count and a bad row at their paths', () => {
     expect(withTilemap({ rle: ['1'] }).issues).toEqual([
-      { path: 'stages/s.stage.json:tilemap.rle', message: 'must have exactly rowsTall (25) rows' },
+      {
+        path: 'stages/s.stage.json:tilemap.rle',
+        message: `must have exactly rowsTall (${ROWS}) rows`,
+      },
     ]);
-    const rle = new Array(25).fill('');
+    const rle = new Array(ROWS).fill('');
     rle[3] = '99';
     const bad = withTilemap({ rle });
     expect(bad.issues).toEqual([
       {
         path: 'stages/s.stage.json:tilemap.rle[3]',
-        message: 'tile id 99 does not exist (the tileset has 20)',
+        message: `tile id 99 does not exist (the tileset has ${String((TERRAIN_A.tiles as unknown[]).length)})`,
       },
     ]);
     expect(bad.db.stages[0]?.terrain).toBeNull();
@@ -315,12 +306,14 @@ describe('core/data RLE rows', () => {
 });
 
 describe('core/data heightfield generator', () => {
+  const FROM = 40;
+  const TO = 900;
   const generator = {
     type: 'heightfield',
     segments: [
       {
-        from: 40,
-        to: 900,
+        from: FROM,
+        to: TO,
         floor: { base: 40, amp: 30, period: 160, seed: 11 },
         ceiling: { base: 30, amp: 24, period: 96, seed: 12 },
       },
@@ -333,7 +326,9 @@ describe('core/data heightfield generator', () => {
       loadContent(
         [
           tilesetFile(),
-          stageFile({ tilemap: { tileSize: 8, tileset: 'terrain-a', rowsTall: 25, generator } }),
+          stageFile({
+            tilemap: { tileSize: TILE_SIZE, tileset: 'terrain-a', rowsTall: ROWS, generator },
+          }),
         ].reverse(),
       ),
     );
@@ -348,23 +343,26 @@ describe('core/data heightfield generator', () => {
     const tables = result.db.tilesets[0].tables;
     // Column heights of the floor, measured in pixels from the map bottom.
     const surface = (col: number, px: number): number => {
-      for (let row = 24; row >= 0; row--) {
+      for (let row = ROWS - 1; row >= 0; row--) {
         const id = tiles[row * COLS + col];
         if (id === 0 || tables.anchor[id] !== TerrainAnchor.Floor) {
-          return (24 - row) * 8;
+          return (ROWS - 1 - row) * TILE_SIZE;
         }
-        const h = tables.mask[id * 8 + px];
-        if (h < 8) return (24 - row) * 8 + h;
+        const h = tables.mask[id * TILE_SIZE + px];
+        if (h < TILE_SIZE) return (ROWS - 1 - row) * TILE_SIZE + h;
       }
-      return 200;
+      return ROWS * TILE_SIZE;
     };
     const heights: number[] = [];
     for (let col = 0; col < COLS; col++)
-      for (let px = 0; px < 8; px++) heights.push(surface(col, px));
-    // Nothing before `from` (column 5) or after `to` (column 113); a surface pixel never
-    // jumps by more than one pixel between neighbouring columns (≤ 45°).
-    expect(heights.slice(0, 5 * 8).every((h) => h === 0)).toBe(true);
-    expect(heights.slice(113 * 8).every((h) => h === 0)).toBe(true);
+      for (let px = 0; px < TILE_SIZE; px++) heights.push(surface(col, px));
+    // Nothing before `from` (column floor(FROM / TILE_SIZE)) or after `to` (column
+    // ceil(TO / TILE_SIZE)); a surface pixel never jumps by more than one pixel between
+    // neighbouring columns (≤ 45°).
+    const c0 = Math.floor(FROM / TILE_SIZE);
+    const c1 = Math.min(COLS, Math.ceil(TO / TILE_SIZE));
+    expect(heights.slice(0, c0 * TILE_SIZE).every((h) => h === 0)).toBe(true);
+    expect(heights.slice(c1 * TILE_SIZE).every((h) => h === 0)).toBe(true);
     for (let i = 1; i < heights.length; i++) {
       expect(Math.abs(heights[i] - heights[i - 1]), `pixel column ${i}`).toBeLessThanOrEqual(1);
     }
@@ -375,20 +373,26 @@ describe('core/data heightfield generator', () => {
     const result = withTilemap({
       generator: {
         type: 'heightfield',
-        segments: [{ from: 0, to: 400, floor: { base: 24, amp: 0, period: 64, seed: 1 } }],
+        segments: [
+          {
+            from: 0,
+            to: 400,
+            floor: { base: 3 * TILE_SIZE, amp: 0, period: 64, seed: 1 },
+          },
+        ],
       },
     });
     const tiles = tilesOf(result);
     const byName = result.db.tilesets[0].tables.byName;
-    const col = 20; // well inside the flat part (24 px = 3 rows)
+    const col = 20; // well inside the flat part (3 rows)
     expect([
-      tiles[24 * COLS + col],
-      tiles[23 * COLS + col],
-      tiles[22 * COLS + col],
-      tiles[21 * COLS + col],
+      tiles[(ROWS - 1) * COLS + col],
+      tiles[(ROWS - 2) * COLS + col],
+      tiles[(ROWS - 3) * COLS + col],
+      tiles[(ROWS - 4) * COLS + col],
     ]).toEqual([byName.get('solid'), byName.get('solid'), byName.get('floor'), 0]);
     // Ramp-in at the start: a 45° slope right after `from`.
-    expect(tiles[24 * COLS]).toBe(byName.get('slope-up'));
+    expect(tiles[(ROWS - 1) * COLS]).toBe(byName.get('slope-up'));
   });
 
   it('lets a floor win over a ceiling it overlaps', () => {
@@ -400,8 +404,8 @@ describe('core/data heightfield generator', () => {
           {
             from: 0,
             to: 200,
-            floor: { base: 32, amp: 0, period: 64, seed: 1 },
-            ceiling: { base: 32, amp: 0, period: 64, seed: 2 },
+            floor: { base: 4 * TILE_SIZE, amp: 0, period: 64, seed: 1 },
+            ceiling: { base: 4 * TILE_SIZE, amp: 0, period: 64, seed: 2 },
           },
         ],
       },
@@ -412,19 +416,21 @@ describe('core/data heightfield generator', () => {
   });
 
   it('applies RLE rows over the generated terrain', () => {
-    const rle = new Array(25).fill('');
-    rle[24] = '20*0, 3';
+    const rle = new Array(ROWS).fill('');
+    rle[ROWS - 1] = '20*0, 3';
     const tiles = tilesOf(
       withTilemap({
         rle,
         generator: {
           type: 'heightfield',
-          segments: [{ from: 0, to: 400, floor: { base: 24, amp: 0, period: 64, seed: 1 } }],
+          segments: [
+            { from: 0, to: 400, floor: { base: 3 * TILE_SIZE, amp: 0, period: 64, seed: 1 } },
+          ],
         },
       }),
     );
-    expect(tiles[24 * COLS + 20]).toBe(3);
-    expect(tiles[24 * COLS + 21]).toBe(1);
+    expect(tiles[(ROWS - 1) * COLS + 20]).toBe(3);
+    expect(tiles[(ROWS - 1) * COLS + 21]).toBe(1);
   });
 
   it('reports a tileset without the named tiles or without a needed slope mask', () => {
@@ -442,15 +448,25 @@ describe('core/data heightfield generator', () => {
       {
         generator: {
           type: 'heightfield',
-          segments: [{ from: 0, to: 400, floor: { base: 20, amp: 0, period: 64, seed: 1 } }],
+          segments: [
+            {
+              from: 0,
+              to: 400,
+              floor: { base: (3 * TILE_SIZE) / 2, amp: 0, period: 64, seed: 1 },
+            },
+          ],
         },
       },
       { tiles: noLow },
     ).issues;
+    // The missing tile is the 22.5° low slope the half-tile boundary column lays down first.
+    const lowSlope = Array.from({ length: TILE_SIZE }, (_, px) => Math.floor((px + 1) / 2)).join(
+      ',',
+    );
     expect(issues).toEqual([
       {
         path: 'stages/s.stage.json:tilemap.generator.segments[0].floor',
-        message: 'the tileset has no solid floor tile with the mask [0,1,1,2,2,3,3,4]',
+        message: `the tileset has no solid floor tile with the mask [${lowSlope}]`,
       },
     ]);
   });

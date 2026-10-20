@@ -2,50 +2,24 @@
  * Edge cases of tilesets and tilemap expansion (plan M1-07), beyond `tilemap.test.ts`:
  *
  * - the `heightfield` generator over 120 random single-segment profiles (floor or ceiling, every
- *   map height from 1 to 25 rows, segments not aligned to tiles or running past the map): no
- *   issue with the shipped `terrain-a` tileset, a continuous surface (≤ 1 px between pixel
- *   columns), nothing outside `[from, to)`, heights within the map, and floors that `findFloor`
- *   finds at exactly the generated height (data and collision agree);
+ *   map height from one row to the playfield's rows, segments not aligned to tiles or running
+ *   past the map): no issue with the shipped `terrain-a` tileset, a continuous surface (≤ 1 px
+ *   between pixel columns), nothing outside `[from, to)`, heights within the map, and floors that
+ *   `findFloor` finds at exactly the generated height (data and collision agree);
  * - random multi-segment floor + ceiling maps: no issues, deterministic, seed-dependent;
  * - small hand-checked shapes: a one-row map, a half-tile target, a segment of one tile;
  * - RLE rows: whitespace, trailing commas, leading zeros, the largest id, exact-width rows, a
  *   failed row leaving the map untouched, a bad row discarding the whole terrain;
  * - `buildTilesetTables`: codes, frames, short masks, the first of duplicate names.
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { describe as describeRaw, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 import { TerrainAnchor, TerrainType, findCeiling, findFloor } from '../../src/collision/index.js';
-import { PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
+import { PLAYFIELD_H, PLAYFIELD_W, TILE_SIZE } from '../../src/config/index.js';
 import { loadContent, type ContentFile, type LoadContentResult } from '../../src/data/index.js';
 import { buildTilesetTables, decodeRleRow } from '../../src/data/tilemap.js';
 import { createRng, type Rng } from '../../src/rng/index.js';
 import { createStageTerrain } from '../../src/stage/index.js';
-
-/** The repository's `content/tilesets/` folder. */
-const TILESETS = new URL('../../../../content/tilesets/', import.meta.url);
-
-/**
- * Whether R2-02's port is still pending: some shipped tileset is not at the build's `TILE_SIZE`
- * — read straight from the content files, the port's own signal.
- */
-const CONTENT_PORT_PENDING = readdirSync(TILESETS)
-  .filter((name) => name.endsWith('.tileset.json'))
-  .some((name) => {
-    const tileset = JSON.parse(readFileSync(new URL(name, TILESETS), 'utf8')) as {
-      tileSize?: unknown;
-    };
-    return tileset.tileSize !== TILE_SIZE;
-  });
-
-/**
- * Every suite in this file lays tilemaps of the v1 8-px tile over the shipped `terrain-a`
- * tileset and checks heights and surfaces in v1 pixel terms — the premise broke with R2-02's
- * port of `content/`, so the suites run only while the pending signal above holds (some tileset
- * still at another size), and R2-02's final pass rewrites them for the 12-px content.
- */
-const describe = (name: string, fn: () => void): void => {
-  describeRaw.runIf(CONTENT_PORT_PENDING)(name, fn);
-};
 
 /** The shipped `terrain-a` tileset JSON. */
 const TERRAIN_A = JSON.parse(
@@ -55,11 +29,14 @@ const TERRAIN_A = JSON.parse(
   ),
 ) as Record<string, unknown>;
 
+/** One playfield of the build's `TILE_SIZE` tiles: the default fixture map height. */
+const ROWS = PLAYFIELD_H / TILE_SIZE;
+
 /**
  * Loads a stage with a tilemap over the shipped tileset.
  *
  * @param length - Stage length.
- * @param tilemap - Tilemap fields over `{ tileSize: 8, tileset: 'terrain-a', rowsTall: 25 }`.
+ * @param tilemap - Tilemap fields over `{ tileSize: TILE_SIZE, tileset: 'terrain-a', rowsTall: ROWS }`.
  * @returns The load result.
  */
 function load(length: number, tilemap: Record<string, unknown>): LoadContentResult {
@@ -75,7 +52,7 @@ function load(length: number, tilemap: Record<string, unknown>): LoadContentResu
       camera: [{ x: 0, speed: 1 }],
       checkpoints: [],
       parallax: [],
-      tilemap: { tileSize: 8, tileset: 'terrain-a', rowsTall: 25, ...tilemap },
+      tilemap: { tileSize: TILE_SIZE, tileset: 'terrain-a', rowsTall: ROWS, ...tilemap },
       events: [],
     },
   };
@@ -91,9 +68,9 @@ function load(length: number, tilemap: Record<string, unknown>): LoadContentResu
  */
 function profile(rng: Rng, rows: number): Record<string, number> {
   return {
-    base: rng.rangeInt(0, rows * 8 + 16),
-    amp: rng.nextFloat() < 0.2 ? 0 : rng.rangeInt(1, 64),
-    period: rng.rangeInt(16, 700),
+    base: rng.rangeInt(0, (rows + 2) * TILE_SIZE),
+    amp: rng.nextFloat() < 0.2 ? 0 : rng.rangeInt(1, 8 * TILE_SIZE),
+    period: rng.rangeInt(2 * TILE_SIZE, 88 * TILE_SIZE),
     seed: rng.rangeInt(0, 0x7fffffff) * 2 + rng.rangeInt(0, 1),
   };
 }
@@ -114,15 +91,15 @@ function edgeHeights(result: LoadContentResult, anchor: number): number[] {
   const { cols, rows, tiles } = terrain;
   const heights: number[] = [];
   for (let col = 0; col < cols; col++) {
-    for (let px = 0; px < 8; px++) {
+    for (let px = 0; px < TILE_SIZE; px++) {
       let h = 0;
       for (let k = 0; k < rows; k++) {
         const row = anchor === TerrainAnchor.Floor ? rows - 1 - k : k;
         const id = tiles[row * cols + col];
         if (id === 0) break;
-        const m = tables.mask[id * 8 + px];
-        if (m === 8) {
-          h += 8;
+        const m = tables.mask[id * TILE_SIZE + px];
+        if (m === TILE_SIZE) {
+          h += TILE_SIZE;
           continue;
         }
         if (tables.anchor[id] === anchor) h += m;
@@ -139,9 +116,9 @@ describe('core/data heightfield edge — random single profiles', () => {
     const rng = createRng(31337);
     let wavy = 0;
     for (let trial = 0; trial < 120; trial++) {
-      const rows = trial < 25 ? trial + 1 : rng.rangeInt(1, 25);
+      const rows = trial < ROWS ? trial + 1 : rng.rangeInt(1, ROWS);
       const length = rng.rangeInt(100, 1500);
-      const cols = Math.ceil((length + PLAYFIELD_W) / 8);
+      const cols = Math.ceil((length + PLAYFIELD_W) / TILE_SIZE);
       const from = rng.rangeInt(0, length);
       const to = from + rng.rangeInt(1, trial % 10 === 0 ? 3000 : 800);
       const ceiling = trial % 2 === 1;
@@ -155,18 +132,18 @@ describe('core/data heightfield edge — random single profiles', () => {
       expect(result.issues, label).toEqual([]);
       const anchor = ceiling ? TerrainAnchor.Ceiling : TerrainAnchor.Floor;
       const heights = edgeHeights(result, anchor);
-      expect(heights, label).toHaveLength(cols * 8);
-      const c0 = Math.floor(from / 8);
-      const c1 = Math.min(cols, Math.ceil(to / 8));
+      expect(heights, label).toHaveLength(cols * TILE_SIZE);
+      const c0 = Math.floor(from / TILE_SIZE);
+      const c1 = Math.min(cols, Math.ceil(to / TILE_SIZE));
       // ~230k pixel columns in all: check each in plain code and call `expect` only on a
       // mismatch (a per-pixel `expect` + label made this test time out on a loaded CI runner).
       for (let x = 0; x < heights.length; x++) {
         const h = heights[x];
-        const outside = x < c0 * 8 || x >= c1 * 8;
+        const outside = x < c0 * TILE_SIZE || x >= c1 * TILE_SIZE;
         const step = x > 0 ? Math.abs(h - heights[x - 1]) : 0;
-        if (h <= rows * 8 && (!outside || h === 0) && step <= 1) continue;
+        if (h <= rows * TILE_SIZE && (!outside || h === 0) && step <= 1) continue;
         const at = `${label} x ${String(x)}`;
-        expect(h, at).toBeLessThanOrEqual(rows * 8);
+        expect(h, at).toBeLessThanOrEqual(rows * TILE_SIZE);
         if (outside) expect(h, at).toBe(0);
         expect(step, at).toBeLessThanOrEqual(1);
       }
@@ -177,9 +154,9 @@ describe('core/data heightfield edge — random single profiles', () => {
       for (let x = 0; x < heights.length; x += 3) {
         const h = heights[x];
         const got = ceiling
-          ? findCeiling(map, x, rows * 8 - 1, rows * 8)
-          : findFloor(map, x, 0, rows * 8);
-        const want = h === 0 ? NaN : ceiling ? h : rows * 8 - h;
+          ? findCeiling(map, x, rows * TILE_SIZE - 1, rows * TILE_SIZE)
+          : findFloor(map, x, 0, rows * TILE_SIZE);
+        const want = h === 0 ? NaN : ceiling ? h : rows * TILE_SIZE - h;
         if (!Object.is(got, want)) expect(got, `${label} x ${String(x)}`).toBe(want);
       }
     }
@@ -189,7 +166,7 @@ describe('core/data heightfield edge — random single profiles', () => {
   it('expands 40 random multi-segment floor + ceiling maps without issues, deterministically', () => {
     const rng = createRng(777);
     for (let trial = 0; trial < 40; trial++) {
-      const rows = rng.rangeInt(2, 25);
+      const rows = rng.rangeInt(2, ROWS);
       const segments: Record<string, unknown>[] = [];
       let from = rng.rangeInt(0, 200);
       for (let i = rng.rangeInt(1, 5); i > 0; i--) {
@@ -251,7 +228,9 @@ describe('core/data heightfield edge — small shapes', () => {
       rowsTall: 1,
       generator: {
         type: 'heightfield',
-        segments: [{ from: 0, to: 48, floor: { base: 100, amp: 0, period: 64, seed: 0 } }],
+        segments: [
+          { from: 0, to: 6 * TILE_SIZE, floor: { base: 100, amp: 0, period: 64, seed: 0 } },
+        ],
       },
     });
     expect(result.issues).toEqual([]);
@@ -271,21 +250,38 @@ describe('core/data heightfield edge — small shapes', () => {
       rowsTall: 2,
       generator: {
         type: 'heightfield',
-        segments: [{ from: 0, to: 64, floor: { base: 4, amp: 0, period: 64, seed: 0 } }],
+        segments: [
+          {
+            from: 0,
+            to: 8 * TILE_SIZE,
+            floor: { base: TILE_SIZE / 2, amp: 0, period: 64, seed: 0 },
+          },
+        ],
       },
     });
     expect(result.issues).toEqual([]);
-    const heights = edgeHeights(result, TerrainAnchor.Floor).slice(0, 72);
-    // Boundary heights 0, 4, 8, 4, 0, 4, 8, 4, 0: every tile column is a 22.5° half slope.
-    const boundaries = [0, 8, 16, 24, 32, 40, 48, 56, 64].map((x) =>
+    const heights = edgeHeights(result, TerrainAnchor.Floor).slice(0, 9 * TILE_SIZE);
+    // Boundary heights 0, T/2, T, T/2, 0, T/2, T, T/2, 0 (T the tile edge): every tile column
+    // is a 22.5° half slope.
+    const boundaries = Array.from({ length: 9 }, (_, i) => i * TILE_SIZE).map((x) =>
       x === 0 ? 0 : heights[x - 1],
     );
-    expect(boundaries).toEqual([0, 4, 8, 4, 0, 4, 8, 4, 0]);
+    expect(boundaries).toEqual([
+      0,
+      TILE_SIZE / 2,
+      TILE_SIZE,
+      TILE_SIZE / 2,
+      0,
+      TILE_SIZE / 2,
+      TILE_SIZE,
+      TILE_SIZE / 2,
+      0,
+    ]);
   });
 
   it('produces nothing for a segment of one tile, or one starting past the map', () => {
     for (const segment of [
-      { from: 16, to: 24 },
+      { from: TILE_SIZE, to: 2 * TILE_SIZE },
       { from: 3, to: 5 },
       { from: 5000, to: 6000 },
     ]) {
@@ -304,8 +300,8 @@ describe('core/data heightfield edge — small shapes', () => {
     const result = load(100, { rowsTall: 3 });
     expect(result.issues).toEqual([]);
     const terrain = result.db.stages[0].terrain;
-    // length + one playfield, in whole 8-px tiles (61 at 384×216).
-    const cols = Math.ceil((100 + PLAYFIELD_W) / 8);
+    // length + one playfield, in whole TILE_SIZE tiles.
+    const cols = Math.ceil((100 + PLAYFIELD_W) / TILE_SIZE);
     expect([terrain?.cols, terrain?.rows, terrain?.tiles.length]).toEqual([cols, 3, cols * 3]);
     expect(terrain?.tiles.every((t) => t === 0)).toBe(true);
   });
@@ -326,7 +322,7 @@ describe('core/data heightfield edge — small shapes', () => {
           checkpoints: [],
           parallax: [],
           tilemap: {
-            tileSize: 8,
+            tileSize: TILE_SIZE,
             tileset: 'terrain-a',
             rowsTall: 2,
             rle: ['', '2*1'],
@@ -390,13 +386,13 @@ describe('core/data RLE edge', () => {
     const out = new Uint8Array(16);
     expect(decodeRleRow('3*2', 8, 17, out, 8, 'p', [])).toBe(true);
     expect(Array.from(out)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0]);
-    const rle = new Array<string>(25).fill('');
+    const rle = new Array<string>(ROWS).fill('');
     rle[0] = '1';
-    rle[24] = 'x';
+    rle[ROWS - 1] = 'x';
     const result = load(100, { rle });
     expect(result.issues).toEqual([
       {
-        path: 'stages/s.stage.json:tilemap.rle[24]',
+        path: `stages/s.stage.json:tilemap.rle[${ROWS - 1}]`,
         message: 'token 1 "x" is not <id> or <count>*<id>',
       },
     ]);
@@ -411,10 +407,22 @@ describe('core/data tileset tables edge', () => {
     const tables = buildTilesetTables(
       [
         { name: 'a', type: 'hazard', frame: 9, anchor: 'ceiling', mask: [1, 2] },
-        { name: 'b', type: 'empty', frame: 0, anchor: 'floor', mask: [8, 8, 8, 8, 8, 8, 8, 8] },
-        { name: 'a', type: 'solid', frame: 3, anchor: 'floor', mask: [4, 4, 4, 4, 4, 4, 4, 4] },
+        {
+          name: 'b',
+          type: 'empty',
+          frame: 0,
+          anchor: 'floor',
+          mask: new Array<number>(TILE_SIZE).fill(TILE_SIZE),
+        },
+        {
+          name: 'a',
+          type: 'solid',
+          frame: 3,
+          anchor: 'floor',
+          mask: new Array<number>(TILE_SIZE).fill(4),
+        },
       ],
-      8,
+      TILE_SIZE,
     );
     expect(tables.count).toBe(4);
     expect(Array.from(tables.type)).toEqual([
@@ -425,8 +433,14 @@ describe('core/data tileset tables edge', () => {
     ]);
     expect(Array.from(tables.anchor)).toEqual([0, TerrainAnchor.Ceiling, 0, 0]);
     expect(Array.from(tables.frame)).toEqual([-1, 9, 0, 3]);
-    expect(Array.from(tables.mask.subarray(8, 16))).toEqual([1, 2, 0, 0, 0, 0, 0, 0]);
-    expect(Array.from(tables.mask.subarray(0, 8))).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(Array.from(tables.mask.subarray(TILE_SIZE, 2 * TILE_SIZE))).toEqual([
+      1,
+      2,
+      ...new Array<number>(TILE_SIZE - 2).fill(0),
+    ]);
+    expect(Array.from(tables.mask.subarray(0, TILE_SIZE))).toEqual(
+      new Array<number>(TILE_SIZE).fill(0),
+    );
     expect(tables.byName.get('a')).toBe(1);
     expect(tables.byName.get('b')).toBe(2);
   });
