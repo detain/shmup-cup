@@ -2311,8 +2311,8 @@ uses sub-pixel positions. Where a constant feeds a whole-pixel draw or a per-tic
 | — | R3-01's prompt-library update done early | **done** (2026-10-16) |
 | — | R1 exit gate: every golden, demo and the v1 baseline (268 passed) plus master CI with all e2e shards, on `56f9ced` | **done** (2026-10-17) |
 | R0-01 | Maintenance branch, version lines and CI | done (owner parts pending) — 2026-10-17 |
-| R0-02 | The TV render benchmark (`bench:tv`) | done (owner parts pending) — 2026-10-17 |
-| R0-03 | Run the benchmark on the M7s (owner; non-blocking) | waiting on owner |
+| R0-02 | The TV render benchmark (`bench:tv`) | done — 2026-10-17 (owner parts: the M7 runs, R0-03, landed 2026-10-20) |
+| R0-03 | Run the benchmark on the M7s (owner; non-blocking) | done — 2026-10-20 (three campaigns, twelve sessions: the 1080p / 720p / 540p sweep in `tools/input-probe/results/2026-10-19-m7-bench-resolutions/`; the output size is the lever — a 720p backbuffer clears 640×360 on the M7, the WebGL 2 step only matters at 1080p, the decode page loads ≤ 1.56 s / ≤ 0.77 s; R2-03 sets its budgets from it) |
 | R0-04 | The early art round: generate, pick, follow up | in progress — round 1 done and picked (91 image sets, 33 video sets); round 2 generated and reviewed by the owner, every request done (animation frames made in code); waiting for the owner's last review, then winners to `art-prompts/v2/winners/`; see `art-prompts/v2/STATUS.md` |
 | R1-01 | Frame constants in core | done — 2026-10-17 |
 | R1-02 | Frame constants in presentation, hosts, scripts and tests | done — 2026-10-17 |
