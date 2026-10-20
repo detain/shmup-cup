@@ -40,11 +40,6 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import {
-  CONTENT_PORT_PENDING,
-  PORT_PENDING_REASON,
-  itPortPending,
-} from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
@@ -156,8 +151,8 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     });
   }
 
-  it.skipIf(CONTENT_PORT_PENDING).each(starts)(
-    `practice start in zone %s at checkpoint %i (x %i): the camera at y %i, the ship in open space [${PORT_PENDING_REASON}]`,
+  it.each(starts)(
+    'practice start in zone %s at checkpoint %i (x %i): the camera at y %i, the ship in open space',
     (letter, checkpoint, x, y) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
@@ -206,41 +201,38 @@ describe('integration: zones D and E, edge cases (M2-12)', () => {
     expectInOpenSpace(world, 'while the boss fights');
   });
 
-  itPortPending(
-    'restarts an Arcade death in the caves at the cave checkpoint, the maze rolled back',
-    () => {
-      const game = createGame(
-        createHeadlessPlatform(),
-        { seed: 11, stage: 'zone-d', loadout: 'full', deathPenalty: 'arcade', startingLives: 3 },
-        DB,
-      );
-      const world = game.world;
-      world.debugFlags.godMode = true;
-      const full = bricks(world);
-      world.stage?.jumpTo(v1x(4300));
-      // `jumpTo` moves the camera, not the ship: fly it in anew down in the caves.
-      spawnPlayer(world.players[0], world.camera);
-      stepUntil(game, () => world.camera.x >= v1x(5400), 3000);
-      const broken = full - bricks(world);
-      expect(broken).toBeGreaterThan(10);
-      // A crash (god mode off for the hit).
-      world.debugFlags.godMode = false;
-      const ship = world.players[0];
-      stepUntil(game, () => ship.state === 'alive' && ship.invulnTicks === 0, 400);
-      expect(playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags)).toBe(true);
-      game.step();
-      expect(ship.state).toBe('dying');
-      world.debugFlags.godMode = true;
-      stepUntil(game, () => ship.state === 'alive', 600);
-      expect(ship.lives).toBe(2);
-      // Back at the checkpoint in the caves, every brick standing again.
-      expect(world.camera.x).toBeGreaterThanOrEqual(v1x(4000));
-      expect(world.camera.x).toBeLessThan(v1x(4400));
-      expect(world.camera.y).toBe(v1rel(200));
-      expect(bricks(world)).toBe(full);
-      expectInOpenSpace(world, 'after the restart');
-    },
-  );
+  it('restarts an Arcade death in the caves at the cave checkpoint, the maze rolled back', () => {
+    const game = createGame(
+      createHeadlessPlatform(),
+      { seed: 11, stage: 'zone-d', loadout: 'full', deathPenalty: 'arcade', startingLives: 3 },
+      DB,
+    );
+    const world = game.world;
+    world.debugFlags.godMode = true;
+    const full = bricks(world);
+    world.stage?.jumpTo(v1x(4300));
+    // `jumpTo` moves the camera, not the ship: fly it in anew down in the caves.
+    spawnPlayer(world.players[0], world.camera);
+    stepUntil(game, () => world.camera.x >= v1x(5400), 3000);
+    const broken = full - bricks(world);
+    expect(broken).toBeGreaterThan(10);
+    // A crash (god mode off for the hit).
+    world.debugFlags.godMode = false;
+    const ship = world.players[0];
+    stepUntil(game, () => ship.state === 'alive' && ship.invulnTicks === 0, 400);
+    expect(playerHit(ship, PlayerHitCause.Terrain, world.tick, world.debugFlags)).toBe(true);
+    game.step();
+    expect(ship.state).toBe('dying');
+    world.debugFlags.godMode = true;
+    stepUntil(game, () => ship.state === 'alive', 600);
+    expect(ship.lives).toBe(2);
+    // Back at the checkpoint in the caves, every brick standing again.
+    expect(world.camera.x).toBeGreaterThanOrEqual(v1x(4000));
+    expect(world.camera.x).toBeLessThan(v1x(4400));
+    expect(world.camera.y).toBe(v1rel(200));
+    expect(bricks(world)).toBe(full);
+    expectInOpenSpace(world, 'after the restart');
+  });
 
   it('restarts an Arcade death before the cave checkpoint on the surface, and dives again', () => {
     const game = createGame(

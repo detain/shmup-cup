@@ -28,10 +28,6 @@ import {
   type ContentDb,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import {
-  CONTENT_PORT_PENDING,
-  PORT_PENDING_REASON,
-} from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 
@@ -55,9 +51,9 @@ const KINDS: readonly number[] = DIRECT_ITEM_KINDS;
  * twins): d25de31's physical nearer-target pick shifts this bot's kill order — the redirect
  * mechanism class FIX2 cured (the old lowest-slot rule handed a shot to a target another
  * enemy entered first). The kit run (world ×1.5, ported content) ends at cursor 13 for
- * zone-f and 9 for zone-g; at ×1 the gated rows would end at 10 and 8. Only the kit scale
- * ever executes this file (CONTENT_PORT_PENDING holds until R2-02's port), so the floors are
- * the honest kit numbers: zone-f keeps the shared 10, zone-g's re-pins to 9. The pick took
+ * zone-f and 9 for zone-g; at ×1 the rows would end at 10 and 8. Since R2-02's port the
+ * shipped content is the kit one, so the floors are the honest kit numbers: zone-f keeps
+ * the shared 10, zone-g's re-pins to 9. The pick took
  * nothing from the plan handing — every drop is still plan[cursor] in strict order, the
  * `wrong`/order checks and the dropped-plus-caught account below are UNEDITED, and both
  * runs still see red, green, blue and the octagon. FIX8's precedent (0264e33) adjudicated
@@ -69,8 +65,8 @@ const ZONES = [
 ] as const;
 
 describe('integration: zones F and G in Direct mode (M2-13)', () => {
-  it.skipIf(CONTENT_PORT_PENDING).each(ZONES)(
-    `the MANTA clears $stage, the carriers handing out its own item plan in order [${PORT_PENDING_REASON}]`,
+  it.each(ZONES)(
+    'the MANTA clears $stage, the carriers handing out its own item plan in order',
     ({ stage, boss, handed }) => {
       const platform = createHeadlessPlatform();
       const game = createGame(

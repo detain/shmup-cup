@@ -40,11 +40,6 @@ import {
   type World,
 } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
-import {
-  CONTENT_PORT_PENDING,
-  PORT_PENDING_REASON,
-  itPortPending,
-} from '../../packages/core/test/helpers/port-pending.js';
 import { readContentFiles } from '../../vite.shared.js';
 import { v1x, v1rel } from '../../packages/core/test/helpers/v1-port.js';
 
@@ -147,8 +142,8 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     stage.checkpoints.forEach((checkpoint, i) => starts.push([letter, i, checkpoint.x]));
   }
 
-  it.skipIf(CONTENT_PORT_PENDING).each(starts)(
-    `practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space [${PORT_PENDING_REASON}]`,
+  it.each(starts)(
+    'practice start in zone %s at checkpoint %i (x %i): the ship flown in to open space',
     (letter, checkpoint, x) => {
       const platform = createHeadlessPlatform();
       const game = createGame(platform, { seed: 5, stage: 'zone-a' }, DB, { scenes: 'game' });
@@ -174,36 +169,33 @@ describe('integration: zones H and I, edge cases (M2-14 tests)', () => {
     expect(starts).toHaveLength(8);
   });
 
-  itPortPending(
-    'skips zone H to the parade: BULWARK ECHO fights inside the view, the ship in open space',
-    () => {
-      const game = createGame(
-        createHeadlessPlatform(),
-        { seed: 9, stage: 'zone-h', stageSkip: 'boss', loadout: 'full' },
-        DB,
-      );
-      const world = game.world;
-      world.debugFlags.godMode = true;
-      steps(game, 90);
-      expectInOpenSpace(world, 'after the skip');
-      expect(world.camera.x).toBeGreaterThan(v1x(4400));
-      expect(world.camera.x).toBeLessThan(v1x(4520));
-      const boss = world.bosses.boss;
-      stepUntil(
-        game,
-        () => boss.specIndex === enemyIndex('echo-bulwark') && boss.state === BossState.Fight,
-        1500,
-      );
-      for (let i = 0; i < boss.partCount; i++) {
-        const p = boss.parts[i];
-        expect(p.x - world.camera.x, p.name).toBeGreaterThan(0);
-        expect(p.x - world.camera.x, p.name).toBeLessThan(PLAYFIELD_W);
-        expect(p.y - world.camera.y, p.name).toBeGreaterThan(0);
-        expect(p.y - world.camera.y, p.name).toBeLessThan(PLAYFIELD_H);
-      }
-      expectInOpenSpace(world, 'while the echo fights');
-    },
-  );
+  it('skips zone H to the parade: BULWARK ECHO fights inside the view, the ship in open space', () => {
+    const game = createGame(
+      createHeadlessPlatform(),
+      { seed: 9, stage: 'zone-h', stageSkip: 'boss', loadout: 'full' },
+      DB,
+    );
+    const world = game.world;
+    world.debugFlags.godMode = true;
+    steps(game, 90);
+    expectInOpenSpace(world, 'after the skip');
+    expect(world.camera.x).toBeGreaterThan(v1x(4400));
+    expect(world.camera.x).toBeLessThan(v1x(4520));
+    const boss = world.bosses.boss;
+    stepUntil(
+      game,
+      () => boss.specIndex === enemyIndex('echo-bulwark') && boss.state === BossState.Fight,
+      1500,
+    );
+    for (let i = 0; i < boss.partCount; i++) {
+      const p = boss.parts[i];
+      expect(p.x - world.camera.x, p.name).toBeGreaterThan(0);
+      expect(p.x - world.camera.x, p.name).toBeLessThan(PLAYFIELD_W);
+      expect(p.y - world.camera.y, p.name).toBeGreaterThan(0);
+      expect(p.y - world.camera.y, p.name).toBeLessThan(PLAYFIELD_H);
+    }
+    expectInOpenSpace(world, 'while the echo fights');
+  });
 
   it('skips zone I to the ABYSS ARK: the raid`s camera follows it', () => {
     const game = createGame(
