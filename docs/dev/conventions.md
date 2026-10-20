@@ -89,9 +89,10 @@ Since R1-02 the same holds outside core: the other packages and the apps import 
 `@shmup/core`, and code that cannot — Electron's main process, the Node scripts — reads a **pinned
 mirror** (owner decision O8): `apps/electron/src/main/window-state.ts` `FRAME_WIDTH` /
 `FRAME_HEIGHT` (pinned by `apps/electron/test/main/window-frame.test.ts`) and
-[`scripts/frame.mjs`](../../scripts/frame.mjs) — the frame constants plus `SPAWN_LEAD` and
-`CAPTURE_SCALE` — for the root scripts, the apps' scripts, the browser specs and the Playwright
-config (pinned export by export by `test/scripts/frame.test.ts`). A mirror's test fails when core
+[`scripts/frame.mjs`](../../scripts/frame.mjs) — the frame constants plus `WORLD_SCALE`,
+`SPAWN_LEAD` and `CAPTURE_SCALE` — for the root scripts, the apps' scripts, the browser specs and
+the Playwright config (pinned export by export by `test/scripts/frame.test.ts`). A mirror's test
+fails when core
 flips alone, so R2-01 changes them together. Since R2-01 the browser specs hold three mirrors of
 their own, each pinned to core by a Node test: `test/e2e/frame-pixels.ts` re-exports the font
 metrics and computes `UI_ART_SCALE` (core's `ART_SCALE`, read back as `GLYPH_W` over the font
@@ -105,11 +106,21 @@ file's cell width) and its own `uiPx` exactly as `core/ui` does (both pinned by
 |---|---|
 | No literal frame number in `packages/core/src`: write `FRAME_W`, `PLAYFIELD_W + 16`, `FRAME_CX - 120`, `n * GLYPH_W` — never `384`, `400`, `72` | `packages/core/test/frame-literals.test.ts` |
 | No literal frame number in the other packages' `src/`, the apps' `src/` and `scripts/`, or the root `scripts/`: import the constants from `@shmup/core` (in a Node script: from `scripts/frame.mjs`) | `test/integration/frame-literals-repo.test.ts` |
-| **Frame ≠ world** (plan §2.6): only values anchored to the frame derive from it — an edge, the centre, "one playfield", a text width. World values (radii, margins, speeds, a boss's distance from the edge) stay literal; R2-02 scales them ×1.5 | review |
+| **Frame ≠ world** (plan §2.6): only values anchored to the frame derive from it — an edge, the centre, "one playfield", a text width. World values (radii, margins, speeds, a boss's distance from the edge) are written `v1 × WORLD_SCALE` since R2-02's port (3/2): an absolute world y takes `+ WORLD_TOP_PAD` (36), a y above the top edge (`y < 0`) `WORLD_SCALE · y` only; frame-anchored values read neither | review; the audits below |
 | Since R2-01 (`92120c7`) no panel size is a literal at all — they derive from `GLYPH_W` / `LINE_H` through `core/ui` `uiPx`; a panel's position derives from the centre or an edge | [scenes-and-ui.md](scenes-and-ui.md) |
 | A browser spec samples a screenshot through `test/e2e/frame-pixels.ts` (`sx`, `sy`, `pixelIndex`, `VIEWPORT`) — never `3x + 1`; rows that come from content (a stage's bands, a Mode-7 horizon) stay literal | review |
 | Core's presentation output does not move unless a step means it to | `test/integration/presentation-fingerprint.test.ts` |
 | The shell's own scenes (flight, showcase, fx-gallery) do not move either | `packages/shell/test/frame-fingerprint.test.ts` |
+
+**The world-value audits (R2-02).** A scaled world number cannot hide, and neither can an unscaled
+one. `packages/core/test/config/world-scale.test.ts` freezes every world-unit numeric export of
+core's barrel at its **v1** value and its unit (`V1_WORLD`; `V1_WORLD_ARRAYS` for the frozen
+`number[]` exports) and requires each to equal `rescaleNumber(unit, v1, geometry)` at the live
+scale — the identity while `WORLD_SCALE` was 1, the ported value now; a completeness pass over the
+barrel fails any new world-shaped export until it is classified into that table or the reasoned
+`UNSCALED` / `UNSCALED_ARRAYS` list. `packages/core/test/behaviors/behavior-defaults-port.test.ts`
+holds every behaviour and weapon default to the same rule against the frozen
+`fixtures/v1-behavior-defaults.json`, so a new world-unit tunable without a fixture row fails too.
 
 **The literal scan** (`frame-literals.test.ts`) parses every `packages/core/src/**/*.ts` file with
 the TypeScript compiler — comments and docblocks are never read, numbers inside strings and
@@ -187,24 +198,26 @@ only, not render-pixi or the shell.
   test/integration/presentation-fingerprint.test.ts`, paste the printed tables over `PINNED`, and
   say in the commit message why the output changed. Never re-pin to quiet an unexplained change.
 
-**Self-expiring gates (R2-01 → R2-03).** Between the flip, R2-02's content port and R2-03's
-re-bless, some checks cannot pass. Each gate skips its cases — the reason rides in the test's
-name — while its condition holds, and its helper throws at import once the condition is gone, so
-the step that clears it deletes the file and every use of it. `CONTENT_PORT_PENDING`
-(`packages/core/test/helpers/port-pending.ts`) holds while a shipped tileset is not at `TILE_SIZE`
-— the content stays at 8-px tiles until R2-02's port; `GOLDENS_STALE` (`test/golden/stale.ts`,
-re-exported by `golden.ts`) holds while a committed golden replay or attract demo records another
-replay format or another frame (`goldenIsStale`), and is never true under `SHMUP_GOLDEN_UPDATE=1`,
+**Self-expiring gates (R2-01 → R2-03).** Between the flip and R2-03's re-bless, some checks
+cannot pass. Each gate skips its cases — the reason rides in the test's name — while its condition
+holds, and its helper throws at import once the condition is gone, so the step that clears it
+deletes the file and every use of it. The port's gate — `CONTENT_PORT_PENDING`
+(`packages/core/test/helpers/port-pending.ts`), which held while a shipped tileset was not at
+`TILE_SIZE` — expired with R2-02's port, and `R2-02.U5` deleted the file. What stands until R2-03:
+`GOLDENS_STALE` (`test/golden/stale.ts`, re-exported by `golden.ts`) holds while a committed golden
+replay or attract demo records another replay format or another frame (`goldenIsStale`), and is
+never true under `SHMUP_GOLDEN_UPDATE=1`,
 so the re-bless run itself is spared; and the browser specs' twins, `R2_03_PENDING` (a committed
 recording is stale — `CONTENT_REASON` / `GOLDEN_REASON` name which rule) and `PORT_UNMEASURED`
 (the port happened but R2-03 has not re-recorded and re-measured yet — `PORT_REASON`), skip the
 specs whose numbers belong to the ported world (`test/e2e/gates.ts`). Its logic — and the
 `REPLAY_FORMAT` mirror above — is pinned in Node by `test/integration/e2e-gates.test.ts`
-(10 tests); the gate's own self-expiry is `checkGateExpiry`. While the port is pending,
-`scripts/golden-update.mjs` refuses to run — `golden:update refused: … shipped tileset(s) are not
-at TILE_SIZE …; R2-02 ports the content first, then R2-03 re-blesses` — a refusal pinned by
-`test/golden/golden-edge.test.ts`. A failure that comes from a test's own fixture is fixed, never
-gated: only a content-caused assertion skips.
+(10 tests); the gate's own self-expiry is `checkGateExpiry`. `scripts/golden-update.mjs` reads the
+same tileset signal: its refusal — `golden:update refused: … shipped tileset(s) are not at
+TILE_SIZE …`, pinned by `test/golden/golden-edge.test.ts` — could fire only while the port was
+pending and cannot fire since it landed, so `pnpm golden:update` would really re-bless the v1
+recordings; it is R2-03's run, not anyone else's. A failure that comes from a test's own fixture
+is fixed, never gated: only a content-caused assertion skips.
 
 ## Chromium 68 / 69 rules (the TV engine floor)
 
@@ -475,6 +488,16 @@ the looser of two rules rather than the rule.
   presentation pass attaches and detaches only at a range or setting edge (the Mode-7 floor's
   camera range, the CRT pass's setting and viewport)
   ([visual-and-mechanic-extras.md](visual-and-mechanic-extras.md#zero-allocation)).
+  And from R2-02: a fractional **offset does not travel across a call V8 leaves un-inlined** —
+  after the port the muzzle trigger's `dx` is 13.5, and added at the `emitRow` call it boxed on
+  every shot (166,000 B against `dispatch-fx-alloc`'s 65,536 B budget); the particle system hands
+  `emitSlot` the whole x and y, the cue row and the trigger's slot, and `spawn` adds `dx[slot]` /
+  `dy[slot]` only where it stores `px[i]` / `py[i]` (commit `d031d41`); and a cold path that
+  **recompiles content tables** re-lowers its fractions in V8's mid tiers and boxes them — at the
+  port scale half the behaviour defaults stop being whole, so every `setArsenal` recompile of the
+  weapon-select preview boxed ~79 B (`compileRole`'s `tunable()` reads); the per-weapon compiled
+  row is captured once into a `Float64Array` and restored by number (`captureRow` / `applyRow`,
+  commit `3b56c26`) — [meter-arsenal.md](meter-arsenal.md#zero-allocation-and-the-hot-path-rules).
 - Behaviour coroutines (generators, D29) allocate a small result object on every resume:
   scripts **sleep** (`yield ticks`) and are resumed only when they wake; per-tick motion
   belongs in a mover (numbers on the body), never in a `yield 1` loop.
@@ -550,6 +573,15 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   writes to a fixed path another test reads (use a temp dir). A Playwright file whose tests
   truly must share state says so with `test.describe.configure({ mode: 'serial' })`; none does
   today.
+- **A wrong-depth relative import in a test file is a `pnpm typecheck` catch, not a test-run
+  catch** (wave 3's FIX5): Vitest can resolve such a specifier root-anchored at the project root
+  and load it green, while importer-anchored resolution — the shipped truth — fails. Only the
+  root `tsc` passes (`typecheck:root`: `tsconfig.json` and `test/tsconfig.json`) see it, so a
+  landing battery without `pnpm typecheck` is incomplete.
+- **Vitest flags come after the file filter**: `--disable-console-intercept` placed before it
+  makes vitest ignore the filter and run the whole project (wave 4's FIXE mis-run: 1,959 passed /
+  421 skipped / 2 failed, EXIT 1, where one file was the target) — the flag is how one prints a
+  passing test's stdout, since the default reporter hides it.
 - **Allocation guards** run in the shared worker pool, next to everything else: the guard lands
   V8's background compiles before every round it measures and leaves compiled code out of its
   count, so the full suite's load no longer shows in its result
@@ -565,9 +597,9 @@ recovery) are `GameConfig` fields, the game speed only slows the clock.
   number. A heightfield floor reaches its `base` only after `base / tile` columns of ramp — a
   fixture that wants flat ground at `base` must leave the ramp room. And tile-row ↔ pixel
   conversions inside a test read the content's own tile size (`map.tileSize`,
-  `tileset.tileSize`), not `TILE_SIZE`: since R2-01 `TILE_SIZE` is 12 while the shipped content
-  stays at 8 until R2-02's port, so the two are different numbers and a test that mixes them is
-  wrong at one of the two frames.
+  `tileset.tileSize`), not `TILE_SIZE`: since R2-02's port the shipped content is at `TILE_SIZE`
+  (12) like the code, but the loader still accepts 8 or 12 (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`), so
+  a fixture may sit at either and a test that mixes the two is wrong at one of them.
 - **Browser specs count the game's ticks, never rAF frames or wall seconds** (the rule C5 wrote
   into `test/e2e/ticks.ts`). The loop runs up to 4 ticks a frame under load, so a count of rAF
   frames or a wall timeout is a different number of game ticks on every machine; a spec waiting
@@ -615,7 +647,7 @@ Only original names, art and music — never Konami or Taito names or assets
 | Placeholder art is source data, never a hand-drawn binary: a `*.sprite.json` pixel map under `assets/source/sprites/` or a seeded generator in `scripts/assets/procedural/` (plan §1.5). PNGs there are real-art overrides only | review; [asset-pipeline.md](asset-pipeline.md) |
 | `assets/source/atlas-groups.json` (which sprites pack onto a zone's own atlas pages) equals its derivation from the content — re-derive it with `SHMUP_ATLAS_GROUPS_UPDATE=1` after a content change that moves a sprite between zones, never edit it by hand (R1-05) | `test/integration/atlas-groups.test.ts`; [asset-pipeline.md](asset-pipeline.md#atlas-groups-r1-05) |
 | A real-art PNG override (v2) comes from the ingest tool with its `<name>.art.json` provenance record, or is hand-drawn with a record of `"origin": "hand"` or a `LICENSES.md` entry; `ingest.mjs --check` re-creates every committed output byte for byte | `test/scripts/assets/provenance.test.ts`; CI's `ingest` job — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
-| Every shipped tileset and stage tilemap uses `TILE_SIZE` (8 until R2-01, 12 after R2-02's port); the loader accepts 8 or 12 (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`) so test fixtures can use either | `test/integration/tile-size.test.ts`; `core/data` `checkTileset` |
+| Every shipped tileset and stage tilemap uses `TILE_SIZE` (12 since R2-02's port); the loader accepts 8 or 12 (`MIN_TILE_SIZE` / `MAX_TILE_SIZE`) so test fixtures can use either | `test/integration/tile-size.test.ts`; `core/data` `checkTileset` |
 | A sprite's name is its path below `assets/source/sprites/` (lower-case kebab segments, `/`-separated) and the file's `name` field repeats it | `scripts/assets/sprite-source.mjs` (source issue) |
 | Every sprite name the shipped content uses exists in the atlas | `pnpm content:check` (`findMissingSprites`) |
 | Every bullet, laser beam and bending laser sprite has a `<sprite>@<palette>` variant for each colour-blind palette (`BULLET_PALETTES` other than `standard`), frame for frame — a real-art override of one needs its variants too (M2-02) | `pnpm content:check` |
