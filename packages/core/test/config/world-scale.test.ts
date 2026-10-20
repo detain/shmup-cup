@@ -13,8 +13,17 @@
  * whose name matches the world-shaped regex to sit in one of the two tables (the list is taken
  * from the barrel at run time, never hard-coded), so a new world-shaped export fails the audit
  * until it is classified.
+ *
+ * The array half (owner ruling 2026-10-19 on reviewer w02-RV3 finding F1): `numericExports()`
+ * reads `typeof value === 'number'` only, so a frozen `number[]` world-unit export — the
+ * Formation's offset arrays — is structurally invisible to the walk above. `V1_WORLD_ARRAYS`
+ * freezes those exports with their **v1** elements and the audit checks every element through
+ * `rescaleNumber` at the live scale; an array completeness audit requires every frozen `number[]`
+ * export of `options/index.ts` to sit in `V1_WORLD_ARRAYS` or the explicit `UNSCALED_ARRAYS`
+ * list, so the next array cannot hide either.
  */
 import * as core from '../../src/index.js';
+import * as options from '../../src/options/index.js';
 import { describe, expect, it } from 'vitest';
 import {
   PLAYFIELD_H,
@@ -55,6 +64,20 @@ interface Unscaled {
     | 'resolution'
     | 'bound';
   readonly value: number;
+}
+
+/** One frozen world-unit array export: its v1 elements and the unit that ports every one. */
+interface V1WorldArray {
+  readonly name: string;
+  readonly v1: readonly number[];
+  readonly unit: NumberUnit;
+}
+
+/** One frozen `number[]` export of `options/index.ts` whose elements never scale, with its reason. */
+interface UnscaledArray {
+  readonly name: string;
+  readonly reason: 'screen-space' | 'count' | 'index';
+  readonly values: readonly number[];
 }
 
 /** The live world scale. */
@@ -144,6 +167,26 @@ const V1_WORLD: readonly V1World[] = Object.freeze([
 ]);
 
 /**
+ * The frozen `number[]` exports with world units (owner ruling 2026-10-19 on RV3-F1): the
+ * Formation's ship-relative offsets — the same rel-px class as `SNAKE_LINK` above, but an array,
+ * so the `numericExports()` walk cannot see them. Every element is `v1 * WORLD_SCALE` in
+ * `options/index.ts`; the v1 literals here come from the pre-flip tree `d4de048`, never from
+ * today's code, as the number table's do.
+ */
+const V1_WORLD_ARRAYS: readonly V1WorldArray[] = Object.freeze([
+  {
+    name: 'FORMATION_RETRACTED',
+    v1: Object.freeze([-14, -8, -14, 8, -26, -14, -26, 14]),
+    unit: 'rel-px',
+  },
+  {
+    name: 'FORMATION_SPREAD',
+    v1: Object.freeze([-6, -24, -6, 24, -16, -44, -16, 44]),
+    unit: 'rel-px',
+  },
+]);
+
+/**
  * The frame-anchored exports — a frame edge plus a world margin (conventions § Frame ≠ world):
  * each is `PLAYFIELD_W + offset * WORLD_SCALE`, its v1 absolute being the v1 `PLAYFIELD_W` plus
  * the same offset. Offsets from plan R2-02.T0 (32, 40, 16, 16, −88).
@@ -215,11 +258,38 @@ const UNSCALED: readonly Unscaled[] = Object.freeze([
   { name: 'SPAWN_Y', reason: 'frame', value: PLAYFIELD_H / 2 },
 ]);
 
+/**
+ * The frozen `number[]` exports of `options/index.ts` whose elements never scale, with the reason
+ * (RV3-F1: the sibling screen-space drift arrays live in `core/powerups`, outside this module and
+ * outside the port). Empty today — the array completeness audit fails if a new frozen `number[]`
+ * export of the module joins neither this list nor {@link V1_WORLD_ARRAYS}.
+ */
+const UNSCALED_ARRAYS: readonly UnscaledArray[] = Object.freeze([]);
+
 /** Today's numeric barrel exports, by name (the audit never hard-codes the list). */
 function numericExports(): Map<string, number> {
   const out = new Map<string, number>();
   for (const [name, value] of Object.entries(core)) {
     if (typeof value === 'number') out.set(name, value);
+  }
+  return out;
+}
+
+/**
+ * Today's frozen `number[]` exports of `options/index.ts`, by name (the array half of the audit,
+ * RV3-F1 — same never-hard-coded idiom as {@link numericExports}, which plain numbers alone let
+ * an array of world offsets hide).
+ */
+function frozenNumberArrays(): Map<string, readonly number[]> {
+  const out = new Map<string, readonly number[]>();
+  for (const [name, value] of Object.entries(options)) {
+    if (
+      Array.isArray(value) &&
+      Object.isFrozen(value) &&
+      value.every((v) => typeof v === 'number')
+    ) {
+      out.set(name, value);
+    }
   }
   return out;
 }
@@ -253,6 +323,60 @@ describe('the world-scale audit (R2-02.A1)', () => {
       expect(numericExports().get(name), name).toBe(value);
     });
   }
+
+  describe('the world-scale array audit (R2-02.A1, RV3-F1)', () => {
+    const arrays = frozenNumberArrays();
+
+    it('holds the v1 elements at K = 1 (the world is still v1)', () => {
+      if (K !== 1) return;
+      for (const { name, v1 } of V1_WORLD_ARRAYS) {
+        expect([...(arrays.get(name) ?? [])], name).toEqual([...v1]);
+      }
+    });
+
+    for (const { name, v1, unit } of V1_WORLD_ARRAYS) {
+      it(`${name} = ${unit} of its v1 elements [${v1.join(', ')}] at the live scale`, () => {
+        const expected = v1.map((v) =>
+          rescaleNumber(unit, v, K === 1 ? IDENTITY_GEOMETRY : PORT_GEOMETRY),
+        );
+        expect([...(arrays.get(name) ?? [])], name).toEqual(expected);
+      });
+    }
+
+    for (const { name, reason, values } of UNSCALED_ARRAYS) {
+      it(`${name} (${reason}) never scales`, () => {
+        expect([...(arrays.get(name) ?? [])], name).toEqual([...values]);
+      });
+    }
+
+    describe('the array completeness audit', () => {
+      const classified = new Set<string>([
+        ...V1_WORLD_ARRAYS.map((e) => e.name),
+        ...UNSCALED_ARRAYS.map((e) => e.name),
+      ]);
+
+      it('every frozen number[] export of options/index.ts is classified', () => {
+        const missing: string[] = [];
+        for (const name of arrays.keys()) {
+          if (!classified.has(name)) missing.push(name);
+        }
+        expect(missing).toEqual([]);
+      });
+
+      it('every classified array name is a live frozen number[] export (the tables cannot rot)', () => {
+        const stale: string[] = [];
+        for (const name of classified) {
+          if (!arrays.has(name)) stale.push(name);
+        }
+        expect(stale).toEqual([]);
+      });
+
+      it('classifies each array name at most once', () => {
+        const all = [...V1_WORLD_ARRAYS, ...UNSCALED_ARRAYS].map((e) => e.name);
+        expect(new Set(all).size).toBe(all.length);
+      });
+    });
+  });
 
   describe('the completeness audit', () => {
     const exports = numericExports();

@@ -105,14 +105,37 @@ export const SNAKE_LINK = 16 * WORLD_SCALE;
 /**
  * Offsets of the Formation's options from the ship when retracted — a tight `>` behind it — as
  * `[x0, y0, x1, y1, …]` for options 1–4.
+ *
+ * World rel-px: every element is `v1 * WORLD_SCALE` (R2-02-ported by owner ruling 2026-10-19 on
+ * RV3-F1), frozen at module load — {@link OptionGroup.place} reads the elements per tick and never
+ * maps the array.
  */
 export const FORMATION_RETRACTED: readonly number[] = Object.freeze([
-  -14, -8, -14, 8, -26, -14, -26, 14,
+  -14 * WORLD_SCALE,
+  -8 * WORLD_SCALE,
+  -14 * WORLD_SCALE,
+  8 * WORLD_SCALE,
+  -26 * WORLD_SCALE,
+  -14 * WORLD_SCALE,
+  -26 * WORLD_SCALE,
+  14 * WORLD_SCALE,
 ]);
 
-/** Offsets of the Formation's options when spread — a wide `V` — as `[x0, y0, x1, y1, …]`. */
+/**
+ * Offsets of the Formation's options when spread — a wide `V` — as `[x0, y0, x1, y1, …]`.
+ *
+ * World rel-px: every element is `v1 * WORLD_SCALE` (R2-02-ported by owner ruling 2026-10-19 on
+ * RV3-F1), like {@link FORMATION_RETRACTED}.
+ */
 export const FORMATION_SPREAD: readonly number[] = Object.freeze([
-  -6, -24, -6, 24, -16, -44, -16, 44,
+  -6 * WORLD_SCALE,
+  -24 * WORLD_SCALE,
+  -6 * WORLD_SCALE,
+  24 * WORLD_SCALE,
+  -16 * WORLD_SCALE,
+  -44 * WORLD_SCALE,
+  -16 * WORLD_SCALE,
+  44 * WORLD_SCALE,
 ]);
 
 /** Radius of the Rotate Options' orbit, in pixels. */
