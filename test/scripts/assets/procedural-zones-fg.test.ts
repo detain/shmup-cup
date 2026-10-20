@@ -10,6 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getPixel, type Image } from '../../../scripts/assets/image.mjs';
+import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import * as prism from '../../../scripts/assets/procedural/prism.mjs';
 import * as terrain from '../../../scripts/assets/procedural/terrain.mjs';
 import * as vault from '../../../scripts/assets/procedural/vault.mjs';
@@ -91,13 +92,51 @@ interface RosterEnemy {
 }
 
 /**
- * Checks that every hurtbox of a roster lies inside the frames of the sprite drawn for it.
+ * The zone F boxes W5-3 allows 1 px outside their art: entries whose half-extent is odd, so the
+ * port's ×1.5 lands on a `.5` that the rescale tool rounds up (owner decision O4) — a radius of
+ * 5 becomes 8, a 16×16 box against the interim segment's 15×15 frame. Exactly the entries
+ * `docs/v2-run/helpers/w5pre/hurtbox.mjs` counts for zone F (six). A box not named here must sit
+ * inside the frame at both scales; a named box may exceed it by at most the one rounded pixel.
+ */
+const ZONE_F_ROUNDED_BOXES: ReadonlySet<string> = new Set([
+  'seg-top-1',
+  'seg-top-2',
+  'seg-top-3',
+  'seg-bottom-1',
+  'seg-bottom-2',
+  'seg-bottom-3',
+]);
+
+/**
+ * The zone G boxes with the same 1 px rounding allowance (seven, per `w5pre/hurtbox.mjs`): the
+ * shard's hurtbox and the monarch's six arm segments.
+ */
+const ZONE_G_ROUNDED_BOXES: ReadonlySet<string> = new Set([
+  'geode-shard',
+  'arm-top-1',
+  'arm-top-2',
+  'arm-top-3',
+  'arm-bottom-1',
+  'arm-bottom-2',
+  'arm-bottom-3',
+]);
+
+/**
+ * Checks that every hurtbox of a roster lies inside the frame of the sprite drawn for it — the
+ * **atlas** frame (R2-02.T4c): the interim art is ×1.5 (R2-01) and the two-scale kit ports the
+ * roster's boxes ×1.5 too (with O4's rounding), so only the packed sizes compare fairly. A sprite
+ * missing from the manifest measures 0×0 and fails the box loudly.
  *
  * @param roster - Path of the roster below `content/`.
- * @param sprites - The generator's output.
+ * @param rounded - The box labels W5-3 allows the one rounded pixel (checked to be all seen).
  */
-function hurtboxesInside(roster: string, sprites: readonly SpriteDef[]): void {
+function hurtboxesInside(roster: string, rounded: ReadonlySet<string>): void {
   const { enemies } = content<{ enemies: RosterEnemy[] }>(roster);
+  const { manifest } = buildAtlas();
+  const size = (sprite: string): [number, number] => {
+    const frame = manifest.frames[manifest.sprites[sprite]?.frames[0] ?? ''];
+    return frame === undefined ? [0, 0] : [frame.w, frame.h];
+  };
   const boxes: [string, string, number, number][] = [];
   for (const enemy of enemies) {
     if (enemy.sprite !== undefined && enemy.hurtbox !== undefined) {
@@ -111,11 +150,16 @@ function hurtboxesInside(roster: string, sprites: readonly SpriteDef[]): void {
     }
   }
   expect(boxes.length).toBeGreaterThan(8);
+  const seen = new Set<string>();
   for (const [who, sprite, hw, hh] of boxes) {
-    const frame = byName(sprites, sprite).frames[0];
-    expect(2 * hw, who).toBeLessThanOrEqual(frame.width);
-    expect(2 * hh, who).toBeLessThanOrEqual(frame.height);
+    const [w, h] = size(sprite);
+    const allowance = rounded.has(who) ? 1 : 0;
+    if (allowance === 1) seen.add(who);
+    expect(2 * hw, who).toBeLessThanOrEqual(w + allowance);
+    expect(2 * hh, who).toBeLessThanOrEqual(h + allowance);
   }
+  // The allowance list must not rot: every named box has to be a box of this roster.
+  expect([...seen].sort()).toEqual([...rounded].sort());
 }
 
 /**
@@ -170,7 +214,7 @@ describe('scripts/assets/procedural/vault (M2-13)', () => {
     expect(byName(sprites, 'bosses/regent-eye').animations).toEqual({ dilate: [0, 1] });
     expect(byName(sprites, 'bosses/regent-mantle').frames[0].width).toBe(60);
     framesDiffer(sprites);
-    hurtboxesInside('enemies/zone-f.enemies.json', sprites);
+    hurtboxesInside('enemies/zone-f.enemies.json', ZONE_F_ROUNDED_BOXES);
   });
 
   it('paints the cell wall only in the four ramp colours zone F cycles, repeating both ways', () => {
@@ -215,7 +259,7 @@ describe('scripts/assets/procedural/prism (M2-13)', () => {
     expect(byName(sprites, 'bosses/facet-core').animations).toEqual({ glow: [0, 1] });
     expect(byName(sprites, 'bosses/facet-body').frames[0].height).toBe(56);
     framesDiffer(sprites);
-    hurtboxesInside('enemies/zone-g.enemies.json', sprites);
+    hurtboxesInside('enemies/zone-g.enemies.json', ZONE_G_ROUNDED_BOXES);
   });
 
   it('paints the crystal facets only in the four ramp colours zone G cycles, repeating both ways', () => {

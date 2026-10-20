@@ -35,6 +35,24 @@ function byName(sprites: readonly SpriteDef[], name: string): SpriteDef {
 }
 
 /**
+ * The zone H and I boxes W5-3 allows 1 px outside their art: entries whose half-extent is odd, so
+ * the port's ×1.5 lands on a `.5` that the rescale tool rounds up (owner decision O4) — a v1 box
+ * half of 5 becomes 8, a 16×16 box against the interim segment's 15×15 frame. Exactly the entries
+ * `docs/v2-run/helpers/w5pre/hurtbox.mjs` counts for zones H and I (six and one), keyed by this
+ * file's `enemy-id part-name` labels. A box not named here must sit inside the atlas frame at
+ * both scales; a named box may exceed it by at most the one rounded pixel.
+ */
+const ROUNDED_BOXES: ReadonlySet<string> = new Set([
+  'echo-bulwark plate-1',
+  'echo-bulwark plate-2',
+  'echo-regent seg-top',
+  'echo-regent seg-bottom',
+  'iron-sovereign emitter-top',
+  'iron-sovereign emitter-bottom',
+  'abyss-ark heart',
+]);
+
+/**
  * The `#rrggbb` colours of an image's opaque pixels, with their counts.
  *
  * @param image - The image.
@@ -190,6 +208,7 @@ describe('scripts/assets/procedural — zones H and I, the ending scenes (M2-14)
       return frame === undefined ? [0, 0] : [frame.w, frame.h];
     };
     let boxes = 0;
+    const roundedSeen = new Set<string>();
     for (const roster of ['zone-h', 'zone-i']) {
       const { enemies } = JSON.parse(
         readFileSync(
@@ -223,13 +242,18 @@ describe('scripts/assets/procedural — zones H and I, the ending scenes (M2-14)
         }
         for (const [who, sprite, hw, hh] of all) {
           if (sprite === undefined) continue; // an armour box without a sprite
+          const label = `${enemy.id} ${who}`;
           const [w, hgt] = size(sprite);
-          expect(2 * hw, `${enemy.id} ${who}`).toBeLessThanOrEqual(w);
-          expect(2 * hh, `${enemy.id} ${who}`).toBeLessThanOrEqual(hgt);
+          const allowance = ROUNDED_BOXES.has(label) ? 1 : 0;
+          if (allowance === 1) roundedSeen.add(label);
+          expect(2 * hw, label).toBeLessThanOrEqual(w + allowance);
+          expect(2 * hh, label).toBeLessThanOrEqual(hgt + allowance);
           boxes++;
         }
       }
     }
     expect(boxes).toBeGreaterThan(40);
+    // The allowance list must not rot: every named box has to be a box of these rosters.
+    expect([...roundedSeen].sort()).toEqual([...ROUNDED_BOXES].sort());
   });
 });

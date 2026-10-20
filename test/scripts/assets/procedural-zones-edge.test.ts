@@ -14,6 +14,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createImage, getPixel, type Image } from '../../../scripts/assets/image.mjs';
+import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import * as brine from '../../../scripts/assets/procedural/brine.mjs';
 import { color, drawLine, fillEllipse } from '../../../scripts/assets/procedural/common.mjs';
 import * as dune from '../../../scripts/assets/procedural/dune.mjs';
@@ -152,10 +153,15 @@ describe('zone B and C hurtboxes fit their art (M2-11)', () => {
   }
 
   it('keeps every hurtbox inside the frame of the sprite drawn for it', () => {
-    const frames = new Map<string, Image>();
-    for (const sprite of [...brine.generate(), ...dune.generate()]) {
-      frames.set(sprite.name, sprite.frames[0]);
-    }
+    // The **atlas** frame is the measure (R2-02.T4c): the interim art is ×1.5 (R2-01) and the
+    // two-scale kit ports these rosters' boxes ×1.5 too, so only the packed sizes compare fairly.
+    // Zones B and C need no W5-3 rounding allowance (`docs/v2-run/helpers/w5pre/hurtbox.mjs`
+    // counts none). A sprite missing from the manifest measures 0×0 and fails the box loudly.
+    const { manifest } = buildAtlas();
+    const size = (sprite: string): [number, number] => {
+      const frame = manifest.frames[manifest.sprites[sprite]?.frames[0] ?? ''];
+      return frame === undefined ? [0, 0] : [frame.w, frame.h];
+    };
     let checked = 0;
     for (const zone of ['zone-b', 'zone-c']) {
       const roster = JSON.parse(
@@ -177,10 +183,9 @@ describe('zone B and C hurtboxes fit their art (M2-11)', () => {
           if (body.hurtbox === undefined || body.hurtbox === null || body.sprite === undefined) {
             continue;
           }
-          const frame = frames.get(body.sprite);
-          if (frame === undefined) continue; // a sprite of another generator
-          expect(body.hurtbox.hw * 2, body.name).toBeLessThanOrEqual(frame.width);
-          expect(body.hurtbox.hh * 2, body.name).toBeLessThanOrEqual(frame.height);
+          const [w, h] = size(body.sprite);
+          expect(body.hurtbox.hw * 2, body.name).toBeLessThanOrEqual(w);
+          expect(body.hurtbox.hh * 2, body.name).toBeLessThanOrEqual(h);
           checked++;
         }
       }

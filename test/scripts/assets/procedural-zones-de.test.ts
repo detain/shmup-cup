@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getPixel, type Image } from '../../../scripts/assets/image.mjs';
+import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import * as magma from '../../../scripts/assets/procedural/magma.mjs';
 import * as tempest from '../../../scripts/assets/procedural/tempest.mjs';
 import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
@@ -89,13 +90,21 @@ interface RosterEnemy {
 }
 
 /**
- * Checks that every hurtbox of a roster lies inside the frames of the sprite drawn for it.
+ * Checks that every hurtbox of a roster lies inside the frame of the sprite drawn for it — the
+ * **atlas** frame (R2-02.T4c): the interim art is ×1.5 (R2-01) and the two-scale kit ports the
+ * roster's boxes ×1.5 too, so only the packed sizes compare fairly. Zones D and E need no W5-3
+ * rounding allowance (`docs/v2-run/helpers/w5pre/hurtbox.mjs` counts none): every ported box
+ * stays strictly inside. A sprite missing from the manifest measures 0×0 and fails loudly.
  *
  * @param roster - Path of the roster below `content/`.
- * @param sprites - The generator's output.
  */
-function hurtboxesInside(roster: string, sprites: readonly SpriteDef[]): void {
+function hurtboxesInside(roster: string): void {
   const { enemies } = content<{ enemies: RosterEnemy[] }>(roster);
+  const { manifest } = buildAtlas();
+  const size = (sprite: string): [number, number] => {
+    const frame = manifest.frames[manifest.sprites[sprite]?.frames[0] ?? ''];
+    return frame === undefined ? [0, 0] : [frame.w, frame.h];
+  };
   const boxes: [string, string, number, number][] = [];
   for (const enemy of enemies) {
     if (enemy.sprite !== undefined && enemy.hurtbox !== undefined) {
@@ -110,9 +119,9 @@ function hurtboxesInside(roster: string, sprites: readonly SpriteDef[]): void {
   }
   expect(boxes.length).toBeGreaterThan(8);
   for (const [who, sprite, hw, hh] of boxes) {
-    const frame = byName(sprites, sprite).frames[0];
-    expect(2 * hw, who).toBeLessThanOrEqual(frame.width);
-    expect(2 * hh, who).toBeLessThanOrEqual(frame.height);
+    const [w, h] = size(sprite);
+    expect(2 * hw, who).toBeLessThanOrEqual(w);
+    expect(2 * hh, who).toBeLessThanOrEqual(h);
   }
 }
 
@@ -131,7 +140,7 @@ describe('scripts/assets/procedural/magma (M2-12)', () => {
     expect(byName(sprites, 'enemies/magma-cone').frames).toHaveLength(2);
     expect(byName(sprites, 'bosses/bastion-core').animations).toEqual({ glow: [0, 1] });
     expect(byName(sprites, 'bosses/bastion-hull').frames[0].width).toBe(56);
-    hurtboxesInside('enemies/zone-d.enemies.json', sprites);
+    hurtboxesInside('enemies/zone-d.enemies.json');
   });
 
   it('paints the lava lake only in the four ramp colours zone D cycles (and its crust floes)', () => {
@@ -187,7 +196,7 @@ describe('scripts/assets/procedural/tempest (M2-12)', () => {
         expect(getPixel(top, x, y).join()).toBe(getPixel(bottom, x, top.height - 1 - y).join());
       }
     }
-    hurtboxesInside('enemies/zone-e.enemies.json', sprites);
+    hurtboxesInside('enemies/zone-e.enemies.json');
   });
 
   it('paints the storm clouds only in the four ramp colours zone E cycles, open sky between', () => {
