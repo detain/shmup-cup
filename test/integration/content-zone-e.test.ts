@@ -23,10 +23,11 @@ import { describe, expect, it } from 'vitest';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
-import { RECOVERY_WINDOW } from '../playtest/recovery.js';
 import {
   ZONES_B_G,
+  boundsOf,
   capsuleSources,
+  contractPx,
   placedIn as placedInOf,
   scrollTicksToWarning,
   shippedDb,
@@ -35,6 +36,7 @@ import {
   stageOf as stageOfIn,
   zoneEnemies as zoneEnemiesOf,
 } from './zones/helpers.js';
+import { zoneEContract } from './zones/zone-e.contract.js';
 
 describe('integration: zones B–G hold to the plan and the 4-way design rules (M2-11 … M2-13)', () => {
   const db = shippedDb();
@@ -47,13 +49,16 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
   // Zone e's single row: the shared `it.each` templates re-substitute into the very case
   // titles the six-zone table produced in `content.test.ts`.
   const zones = ZONES_B_G.filter((zone) => zone.id === 'zone-e');
+  // The zone content contract, live branch (R5-P.P6).
+  const b = boundsOf(zoneEContract);
   it.each(zones)(
     'ships $name with $boss ($code): 3–6 minutes, checkpoints, its own tileset and songs',
     (zone) => {
       const stage = stageOf(zone.id);
       expect(stage.name).toBe(zone.name);
       expect(stage.type).toBe('normal');
-      expect(stage.checkpoints.length).toBeGreaterThanOrEqual(4);
+      if (b.checkpointsMin !== null)
+        expect(stage.checkpoints.length).toBeGreaterThanOrEqual(b.checkpointsMin);
       expect(stage.tilemap?.tileset).toBe(zone.tileset);
       const warning = stage.events.find((e) => e.type === 'warning');
       const boss = warning?.type === 'warning' ? db.enemies[warning.enemyId].boss : null;
@@ -62,8 +67,12 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       expect(boss?.phases).toHaveLength(3);
       // The scroll takes 2.5–4.5 minutes to the WARNING; the fight brings the run to 3–6 minutes.
       const ticks = scrollTicksToWarning(stage);
-      expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
-      expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
+      expect(ticks / 60).toBeGreaterThanOrEqual(b.scrollSec[0]);
+      expect(ticks / 60).toBeLessThanOrEqual(b.scrollSec[1]);
+      if (b.lengthPx !== null) {
+        expect(stage.length).toBeGreaterThanOrEqual(contractPx(zoneEContract, b.lengthPx[0]));
+        expect(stage.length).toBeLessThanOrEqual(contractPx(zoneEContract, b.lengthPx[1]));
+      }
       // A high-speed section, then a calm before the WARNING with exactly two carriers.
       expect(Math.max(...stage.camera.map((k) => k.speed))).toBeGreaterThanOrEqual(1.25);
       const calmX = stage.camera[stage.camera.length - 1].x;
@@ -76,7 +85,7 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
         'carrier.straight',
       ]);
       // Its own Direct-mode item plan, stage theme and boss theme (stage-scoped tracks).
-      expect(stage.directItems?.length).toBeGreaterThanOrEqual(20);
+      expect(stage.directItems?.length).toBeGreaterThanOrEqual(b.directItems[0]);
       const { content } = loadMusicContent(
         shippedFiles.filter((file) => (file.data as { kind?: unknown }).kind === 'music'),
       );
@@ -104,8 +113,10 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       if (!earlier.has(enemy.id) && !earlierSprites.has(enemy.sprite)) placed.add(enemy.sprite);
     }
     expect(zoneA.size).toBeGreaterThan(0);
-    expect(placed.size).toBeGreaterThanOrEqual(4);
-    expect(placed.size).toBeLessThanOrEqual(6);
+    if (b.newTypesBySprite !== null) {
+      expect(placed.size).toBeGreaterThanOrEqual(b.newTypesBySprite[0]);
+      expect(placed.size).toBeLessThanOrEqual(b.newTypesBySprite[1]);
+    }
   });
 
   it('gives TEMPEST RIDGE rear attackers, heavy weather, jagged ridges and a seahorse launching homing minis', () => {
@@ -184,12 +195,16 @@ describe('integration: zones B–G hold to the plan and the 4-way design rules (
       const stage = stageOf(zone.id);
       const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
       const sources = capsuleSources(db, stage);
-      expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
+      expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(
+        b.capsulesBeforeWarning[0],
+      );
       for (const checkpoint of stage.checkpoints) {
         const after = sources.filter(
-          (x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW,
+          (x) => x >= checkpoint.x && x < checkpoint.x + b.capsuleWindow.px,
         );
-        expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
+        expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(
+          b.capsuleWindow.min,
+        );
       }
     },
   );

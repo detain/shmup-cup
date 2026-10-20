@@ -24,19 +24,30 @@ import { describe, expect, it } from 'vitest';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage } from '../playtest/harness.js';
 import { createRuleWatch, MAX_AIMED_BULLET_SPEED, MIN_LANE_GAP } from '../playtest/rules.js';
-import { RECOVERY_WINDOW } from '../playtest/recovery.js';
 import { v1x, v1speed } from '../../packages/core/test/helpers/v1-port.js';
 import { buildAtlas } from '../../scripts/assets/pipeline.mjs';
-import { capsuleSources, scrollTicksToWarning, shippedDb, stageEnemies } from './zones/helpers.js';
+import {
+  boundsOf,
+  capsuleSources,
+  contractPx,
+  scrollTicksToWarning,
+  shippedDb,
+  stageEnemies,
+} from './zones/helpers.js';
+import { zoneAContract } from './zones/zone-a.contract.js';
 
 describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
   const db = shippedDb();
   const stage = db.stages[db.stageIndex.get('zone-a') ?? -1];
+  // The zone content contract, live branch (R5-P.P6).
+  const b = boundsOf(zoneAContract);
 
   it('ships AZURE VERGE with HALCYON BULWARK (HB-01) and its five sections', () => {
     expect(stage.name).toBe('AZURE VERGE');
-    expect(stage.length).toBeGreaterThanOrEqual(v1x(8500));
-    expect(stage.length).toBeLessThanOrEqual(v1x(9500));
+    if (b.lengthPx !== null) {
+      expect(stage.length).toBeGreaterThanOrEqual(contractPx(zoneAContract, b.lengthPx[0]));
+      expect(stage.length).toBeLessThanOrEqual(contractPx(zoneAContract, b.lengthPx[1]));
+    }
     expect(stage.checkpoints.map((c) => c.x)).toEqual([0, 3500, 6000].map(v1x));
     // The high-speed section of 6,000–8,000 at 1.5 px/tick, then the calm before the boss.
     const key = (x: number): number => stage.camera.find((k) => k.x === x)?.speed ?? -1;
@@ -66,8 +77,10 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
       [...stageEnemies(db, stage)].map((i) => db.enemies[i]).filter((e) => e.boss === null),
     );
     const behaviours = new Set([...types].map((e) => e.script));
-    expect(behaviours.size).toBeGreaterThanOrEqual(6);
-    expect(behaviours.size).toBeLessThanOrEqual(8);
+    if (b.behaviours !== null) {
+      expect(behaviours.size).toBeGreaterThanOrEqual(b.behaviours[0]);
+      expect(behaviours.size).toBeLessThanOrEqual(b.behaviours[1]);
+    }
   });
 
   it('keeps every aimed bullet tunable at 2 px/tick or less (Normal)', () => {
@@ -119,10 +132,16 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
   it('places the capsules for recovery: ≥ 12 before the boss, ≥ 3 after every checkpoint', () => {
     const warningX = stage.events.find((e) => e.type === 'warning')?.x ?? 0;
     const sources = capsuleSources(db, stage);
-    expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(12);
+    expect(sources.filter((x) => x < warningX).length).toBeGreaterThanOrEqual(
+      b.capsulesBeforeWarning[0],
+    );
     for (const checkpoint of stage.checkpoints) {
-      const after = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW);
-      expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(3);
+      const after = sources.filter(
+        (x) => x >= checkpoint.x && x < checkpoint.x + b.capsuleWindow.px,
+      );
+      expect(after.length, `checkpoint ${String(checkpoint.x)}`).toBeGreaterThanOrEqual(
+        b.capsuleWindow.min,
+      );
     }
     expect(sources.filter((x) => x >= v1x(8000) && x < warningX)).toHaveLength(2);
   });
@@ -260,8 +279,8 @@ describe('integration: zone A holds to the 4-way design rules (M1-18)', () => {
 
   it('takes the scroll about three minutes to reach the WARNING (the run lasts 3–6 min)', () => {
     const ticks = scrollTicksToWarning(stage);
-    expect(ticks / 60).toBeGreaterThanOrEqual(2.5 * 60);
-    expect(ticks / 60).toBeLessThanOrEqual(4.5 * 60);
+    expect(ticks / 60).toBeGreaterThanOrEqual(b.scrollSec[0]);
+    expect(ticks / 60).toBeLessThanOrEqual(b.scrollSec[1]);
   });
   it('animates every shipped enemy and boss part with frames the atlas has; zone A flashes on hits', () => {
     const { manifest } = buildAtlas();

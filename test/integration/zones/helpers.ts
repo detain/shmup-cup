@@ -4,10 +4,12 @@
  * `content.test.ts` held the zones' content tests in one describe per zone group (R5-P.P2a
  * splits them into one file per zone, so an R5 zone lane never shares a test file with
  * another zone). What the moved tests share lives here: the shipped DB and its stage /
- * enemy resolution, the capsule sources of a stage, the scroll timing to the WARNING, and
- * the zone tables the `it.each` blocks walk — the case templates ride on those blocks, so
- * every split file re-substitutes the very titles the single file produced. The tests
- * themselves moved verbatim.
+ * enemy resolution, the capsule sources of a stage, the scroll timing to the WARNING, the
+ * zone tables the `it.each` blocks walk — the case templates ride on those blocks, so
+ * every split file re-substitutes the very titles the single file produced — and, since
+ * R5-P.P6, the zone contracts (`ZoneContract`, `boundsOf`, `contractPx`, `shapeViolations`,
+ * `ZONE_CONTRACTS`): each zone's shape bounds for its v1 branch and its ported R5-D2 branch.
+ * The tests themselves moved verbatim.
  */
 import {
   ENGINE_SPRITES,
@@ -23,6 +25,16 @@ import {
 } from '@shmup/core';
 import { expect } from 'vitest';
 import { readContentFiles } from '../../../vite.shared.js';
+import { K, v1x } from '../../../packages/core/test/helpers/v1-port.js';
+import { zoneAContract } from './zone-a.contract.js';
+import { zoneBContract } from './zone-b.contract.js';
+import { zoneCContract } from './zone-c.contract.js';
+import { zoneDContract } from './zone-d.contract.js';
+import { zoneEContract } from './zone-e.contract.js';
+import { zoneFContract } from './zone-f.contract.js';
+import { zoneGContract } from './zone-g.contract.js';
+import { zoneHContract } from './zone-h.contract.js';
+import { zoneIContract } from './zone-i.contract.js';
 
 /** The shipped content files (what `virtual:shmup-content` inlines), examples excluded. */
 export const shippedFiles = readContentFiles();
@@ -294,3 +306,147 @@ export const ZONES_H_I: readonly ZoneHiRow[] = [
     tileset: 'terrain-abyss',
   },
 ];
+
+/**
+ * One branch of a zone's content contract (R5-P.P6, plan_resolution decision R5-D2): the shape
+ * bounds its per-zone test and the release audit gate on. Numbers are **authored on the
+ * branch**: a v1 branch states the v1 plan's numbers (M2-11 … M2-14's rulings, what
+ * `content.test.ts` always asserted), a v2 branch states the ported world's (R5-D2). `null`
+ * means the branch has no such gate.
+ */
+export interface ZoneBounds {
+  /** Stage length `[min, max]` px (`null`: the branch gates no length). */
+  readonly lengthPx: readonly [number, number] | null;
+  /** Seconds `[min, max]` of scroll from the start to the WARNING. */
+  readonly scrollSec: readonly [number, number];
+  /**
+   * Seconds `[min, max]` for the 4-way bot's whole god-mode clear (`null`: the branch gates
+   * none). No case in P6's file list plays a whole run (the zone files' bot cases stage-skip
+   * to the boss); the wave 09 zone lanes read this for their playtest runs.
+   */
+  readonly botRunSec: readonly [number, number] | null;
+  /** Fewest checkpoints (`null`: the zone's ships case pins its exact checkpoint map instead). */
+  readonly checkpointsMin: number | null;
+  /** New enemy types by sprite over the earlier zones `[min, max]` (`null`: zone A debut). */
+  readonly newTypesBySprite: readonly [number, number] | null;
+  /**
+   * Distinct enemy behaviours besides the boss `[min, max]` — zone A's rule (it has no earlier
+   * zone to be new against); `null` for zones B–I.
+   */
+  readonly behaviours: readonly [number, number] | null;
+  /** Capsule sources before the WARNING `[min, max]` (zone tests gate the min, the audit both). */
+  readonly capsulesBeforeWarning: readonly [number, number];
+  /** The recovery rule after a checkpoint: `min` capsule sources within `px` of its x. */
+  readonly capsuleWindow: { readonly px: number; readonly min: number };
+  /** Entries of the Direct-mode item plan `[min, max]` (zone tests gate the min, the audit both). */
+  readonly directItems: readonly [number, number];
+  /** Most blue capsules (the Option Hunter's counter) the zone drops (the audit's gate). */
+  readonly blueCapsulesMax: number;
+}
+
+/**
+ * A zone's content contract: `remastered` is the zone's flip flag — the wave 09 R5-P.D-* lane
+ * that lands the zone's port sets it `true`, and every consumer (`boundsOf`, `contractPx`,
+ * the per-zone test, the release audit) moves to the v2 bounds with no other edit.
+ */
+export interface ZoneContract {
+  readonly remastered: boolean;
+  readonly v1: ZoneBounds;
+  readonly v2: ZoneBounds;
+}
+
+/** A campaign zone's letter (`stage.id` is `zone-<letter>`). */
+export type ZoneLetter = keyof typeof ZONE_CONTRACTS;
+
+/** The live branch of a contract. */
+export function boundsOf(contract: ZoneContract): ZoneBounds {
+  return contract.remastered ? contract.v2 : contract.v1;
+}
+
+/**
+ * A px number authored on a contract's branch, in the live world's px: the identity once the
+ * zone is remastered, {@link v1x} (the port's ×K + pad rules are the content's own) while its
+ * authored numbers are still v1 px.
+ *
+ * @param contract - The zone's contract.
+ * @param px - The branch-authored px.
+ * @returns The live px.
+ */
+export function contractPx(contract: ZoneContract, px: number): number {
+  return contract.remastered ? px : v1x(px);
+}
+
+/** The zone-shape numbers {@link shapeViolations} gates; an absent field skips its gate. */
+export interface StageShape {
+  readonly lengthPx?: number;
+  readonly scrollSec?: number;
+  readonly checkpoints?: number;
+  readonly directItems?: number;
+}
+
+/**
+ * Violations of a bounds object by a stage shape — the contract's numeric gates the shipped DB
+ * cannot re-derive (capsule placement and the rosters need the DB and stay in the zone tests).
+ * Pure, so `contract.test.ts` can run **either branch** against any shape.
+ *
+ * @param bounds - The bounds of either branch.
+ * @param lengthScale - What to multiply `bounds.lengthPx` by: {@link K} on a v1 branch (its
+ * length is authored in v1 px), 1 on a v2 branch (authored in the ported world's px).
+ * @param shape - The stage's numbers.
+ * @returns One message per violated gate (empty when the shape is in contract).
+ */
+export function shapeViolations(
+  bounds: ZoneBounds,
+  lengthScale: number,
+  shape: StageShape,
+): string[] {
+  const out: string[] = [];
+  if (bounds.lengthPx !== null && shape.lengthPx !== undefined) {
+    const lo = bounds.lengthPx[0] * lengthScale;
+    const hi = bounds.lengthPx[1] * lengthScale;
+    if (shape.lengthPx < lo || shape.lengthPx > hi)
+      out.push(`length ${String(shape.lengthPx)} outside [${String(lo)}, ${String(hi)}]`);
+  }
+  if (shape.scrollSec !== undefined) {
+    if (shape.scrollSec < bounds.scrollSec[0] || shape.scrollSec > bounds.scrollSec[1])
+      out.push(
+        `scroll ${String(shape.scrollSec)} s outside [${String(bounds.scrollSec[0])}, ${String(
+          bounds.scrollSec[1],
+        )}]`,
+      );
+  }
+  if (
+    bounds.checkpointsMin !== null &&
+    shape.checkpoints !== undefined &&
+    shape.checkpoints < bounds.checkpointsMin
+  )
+    out.push(`${String(shape.checkpoints)} checkpoints under ${String(bounds.checkpointsMin)}`);
+  if (
+    shape.directItems !== undefined &&
+    (shape.directItems < bounds.directItems[0] || shape.directItems > bounds.directItems[1])
+  )
+    out.push(
+      `${String(shape.directItems)} item-plan entries outside [${String(
+        bounds.directItems[0],
+      )}, ${String(bounds.directItems[1])}]`,
+    );
+  return out;
+}
+
+/** The violations against a contract's live branch (the flag picks scale 1 / {@link K}). */
+export function contractViolations(contract: ZoneContract, shape: StageShape): string[] {
+  return shapeViolations(boundsOf(contract), contract.remastered ? 1 : K, shape);
+}
+
+/** Every campaign zone's content contract, keyed by its letter. */
+export const ZONE_CONTRACTS = {
+  a: zoneAContract,
+  b: zoneBContract,
+  c: zoneCContract,
+  d: zoneDContract,
+  e: zoneEContract,
+  f: zoneFContract,
+  g: zoneGContract,
+  h: zoneHContract,
+  i: zoneIContract,
+} as const;

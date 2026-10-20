@@ -43,7 +43,7 @@ import { describe, expect, it } from 'vitest';
 import { readContentFiles } from '../../vite.shared.js';
 import { fourWayBot } from '../playtest/four-way-bot.js';
 import { runStage, shippedContent } from '../playtest/harness.js';
-import { MIN_RECOVERY_CAPSULES, RECOVERY_WINDOW, capsuleSources } from '../playtest/recovery.js';
+import { capsuleSources } from '../playtest/recovery.js';
 import { ROUTE_SHIPS } from '../playtest/campaign-routes.js';
 import {
   MAX_AIMED_BULLET_SPEED,
@@ -52,15 +52,35 @@ import {
   createRuleWatch,
   maxBulletSpeed,
 } from '../playtest/rules.js';
+import { ZONE_CONTRACTS, boundsOf, type ZoneBounds, type ZoneLetter } from './zones/helpers.js';
 
-/** Capsule sources a campaign zone places before its WARNING. */
-export const CAPSULE_BUDGET = Object.freeze({ min: 12, max: 32 });
+/**
+ * The live contract branch of a campaign zone's stage (R5-P.P6): the capsule, recovery-window
+ * and item budgets are read from the zone's own contract, never restated here.
+ *
+ * @param stageId - The stage id (`zone-<letter>`).
+ * @returns The zone's live bounds.
+ */
+function zoneBounds(stageId: string): ZoneBounds {
+  return boundsOf(ZONE_CONTRACTS[stageId.slice(-1) as ZoneLetter]);
+}
 
-/** A campaign zone's Direct-mode item plan. */
+/**
+ * Capsule sources a campaign zone has before its WARNING — zone A's live branch, restated in
+ * the old shape for readers of the audit's API (each zone's loop uses its own contract).
+ */
+export const CAPSULE_BUDGET = Object.freeze({
+  min: boundsOf(ZONE_CONTRACTS.a).capsulesBeforeWarning[0],
+  max: boundsOf(ZONE_CONTRACTS.a).capsulesBeforeWarning[1],
+});
+
+/**
+ * A campaign zone's Direct-mode item plan — the entry budget comes from zone A's contract, the
+ * composition (which the contract does not carry) from the v1 plan's M2-05 rules.
+ */
 export const DIRECT_ITEM_BUDGET = Object.freeze({
-  /** Entries of the plan. */
-  min: 20,
-  max: 30,
+  min: boundsOf(ZONE_CONTRACTS.a).directItems[0],
+  max: boundsOf(ZONE_CONTRACTS.a).directItems[1],
   /** Fewest red (main shot), green (sub-weapon) and blue (Arm) items each. */
   minEach: 6,
   /** Octagons (the main-shot family switch). */
@@ -69,8 +89,8 @@ export const DIRECT_ITEM_BUDGET = Object.freeze({
   maxRare: 1,
 });
 
-/** Most blue capsules (the Option Hunter's counter) a campaign zone places. */
-export const MAX_BLUE_CAPSULES = 2;
+/** Most blue capsules (the Option Hunter's counter) a campaign zone places (zone A's contract). */
+export const MAX_BLUE_CAPSULES = boundsOf(ZONE_CONTRACTS.a).blueCapsulesMax;
 
 /** Ticks each pattern probe runs (several loops of every shipped pattern). */
 const PROBE_TICKS = 1500;
@@ -126,8 +146,9 @@ describe('release audit: capsule and item budgets, the recovery rule (M2-18)', (
   it.each(ZONES)('zone $label: 12–32 capsule sources before the WARNING', ({ stage }) => {
     const warning = stage.events.find((e) => e.type === 'warning')?.x ?? stage.length;
     const before = capsuleSources(stage).filter((x) => x < warning).length;
-    expect(before, stage.id).toBeGreaterThanOrEqual(CAPSULE_BUDGET.min);
-    expect(before, stage.id).toBeLessThanOrEqual(CAPSULE_BUDGET.max);
+    const budget = zoneBounds(stage.id).capsulesBeforeWarning;
+    expect(before, stage.id).toBeGreaterThanOrEqual(budget[0]);
+    expect(before, stage.id).toBeLessThanOrEqual(budget[1]);
   });
 
   it.each(ZONES)(
@@ -135,20 +156,22 @@ describe('release audit: capsule and item budgets, the recovery rule (M2-18)', (
     ({ stage }) => {
       const sources = capsuleSources(stage);
       expect(stage.checkpoints.length).toBeGreaterThanOrEqual(3);
+      const rule = zoneBounds(stage.id).capsuleWindow;
       for (const checkpoint of stage.checkpoints) {
-        const near = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + RECOVERY_WINDOW);
+        const near = sources.filter((x) => x >= checkpoint.x && x < checkpoint.x + rule.px);
         expect(
           near.length,
           `${stage.id} checkpoint ${String(checkpoint.x)}`,
-        ).toBeGreaterThanOrEqual(MIN_RECOVERY_CAPSULES);
+        ).toBeGreaterThanOrEqual(rule.min);
       }
     },
   );
 
   it.each(ZONES)("zone $label: the MANTA's item plan within its budget", ({ stage }) => {
     const plan = stage.directItems ?? [];
-    expect(plan.length, stage.id).toBeGreaterThanOrEqual(DIRECT_ITEM_BUDGET.min);
-    expect(plan.length, stage.id).toBeLessThanOrEqual(DIRECT_ITEM_BUDGET.max);
+    const entries = zoneBounds(stage.id).directItems;
+    expect(plan.length, stage.id).toBeGreaterThanOrEqual(entries[0]);
+    expect(plan.length, stage.id).toBeLessThanOrEqual(entries[1]);
     const count = (item: string): number => plan.filter((i) => i === item).length;
     for (const item of ['red', 'green', 'blue']) {
       expect(count(item), `${stage.id} ${item}`).toBeGreaterThanOrEqual(DIRECT_ITEM_BUDGET.minEach);
@@ -164,7 +187,9 @@ describe('release audit: capsule and item budgets, the recovery rule (M2-18)', (
       const drops = dropCounts(DB, stage);
       expect(drops.oneUp ?? 0, stage.id).toBe(0);
       expect(drops.bonusCapsule ?? 0, stage.id).toBe(0);
-      expect(drops.blueCapsule ?? 0, stage.id).toBeLessThanOrEqual(MAX_BLUE_CAPSULES);
+      expect(drops.blueCapsule ?? 0, stage.id).toBeLessThanOrEqual(
+        zoneBounds(stage.id).blueCapsulesMax,
+      );
     },
   );
 
