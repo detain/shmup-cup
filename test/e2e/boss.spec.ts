@@ -24,7 +24,6 @@ import {
   sy,
   uiPx,
 } from './frame-pixels.js';
-import { CONTENT_REASON, R2_03_PENDING, assertionsGated } from './gates.js';
 import { BOOT_TIMEOUT_MS, waitTicks } from './ticks.js';
 
 /** The WARNING band's edge colour (0xf85858, the flight scene's WARNING_BAND rows). */
@@ -111,24 +110,15 @@ test.describe('boss (web build, ?stage=test-boss)', () => {
 
     // The intro takes 120 ticks; then the boss holds the right side of the playfield. Poll for
     // it every 5 ticks rather than wait out the intro: the ship's autofire can destroy the test
-    // boss before a late capture. The TRIAL WARDEN holds v1's screen x 300, left of the 640×360
-    // frame's centre, until R2-02's port: the hull check waits for it (`gates.ts`,
-    // CONTENT_REASON); the band above is the shell's own layout and runs either way.
-    if (
-      !assertionsGated(
-        test.info(),
-        R2_03_PENDING,
-        'the boss hull in the right half',
-        CONTENT_REASON,
-      )
-    ) {
-      let hull = 0;
-      for (let poll = 0; poll < 60 && hull <= 50; poll++) {
-        await waitTicks(page, 5);
-        hull = (await capture(page)).hull;
-      }
-      expect(hull).toBeGreaterThan(50);
+    // boss before a late capture. R2-02's port moved the TRIAL WARDEN's hold to the ported x in
+    // `content/enemies/test-boss.enemies.json` — right of the frame's centre — so the hull check
+    // measures the drawn picture (R2-03); the band above is the shell's own layout.
+    let hull = 0;
+    for (let poll = 0; poll < 60 && hull <= 50; poll++) {
+      await waitTicks(page, 5);
+      hull = (await capture(page)).hull;
     }
+    expect(hull).toBeGreaterThan(50);
     expect(errors).toEqual([]);
   });
 });

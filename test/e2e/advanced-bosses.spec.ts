@@ -22,6 +22,7 @@
  * never rAF frames: a slow runner draws fewer frames a second and catches up by up to 4 ticks a
  * frame, so a count of frames is a different number of ticks on every machine (C5 review 4).
  */
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
@@ -40,7 +41,6 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import { BOOT_TIMEOUT_MS, pollTicks, tap, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -54,6 +54,20 @@ const STEEL = [0x46, 0x50, 0x6a] as const;
 const BAR_RED = [0xf8, 0x58, 0x58] as const;
 /** The save's `localStorage` key (the web adapter prefixes `core/save`'s `save.v1`). */
 const SAVE_KEY = 'shmup-cup:save.v1';
+
+/**
+ * Captain-range's own scroll speed, in px/tick — read from `content/stages/captain-range.stage.json`
+ * (the ported content; R2-03 re-measured the captain test by the content, never a v1 literal), so
+ * the camera's 60-tick delta derives from what the stage really runs.
+ */
+const CAPTAIN_SCROLL: number = (
+  JSON.parse(
+    readFileSync(
+      fileURLToPath(new URL('../../content/stages/captain-range.stage.json', import.meta.url)),
+      'utf8',
+    ),
+  ) as { camera: Array<{ speed: number }> }
+).camera[0].speed;
 
 /** `window` with the parts of the test build's debug API the spec reads. */
 interface DebugWindow {
@@ -225,7 +239,6 @@ test.describe('advanced bosses (web build)', () => {
   test('the raid: a battleship wider than the screen, the camera panning round it', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await page.goto('./?scene=flight&stage=raid-range');
@@ -233,7 +246,8 @@ test.describe('advanced bosses (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await freezeSim(page);
-    // The WARNING at x 400 (≈ 430 ticks), 180 ticks of it, a 240-tick intro: step to the fight.
+    // The WARNING at the ported x 600 (R2-02 scales the event, the scroll speed with it — the
+    // same ≈ 430 ticks), 180 ticks of it, a 240-tick intro: step to the fight.
     let tick = 0;
     let state = 0;
     for (let i = 0; i < 40 && state !== 3; i++) {
@@ -250,7 +264,8 @@ test.describe('advanced bosses (web build)', () => {
       });
     const before = await camera();
     const first = await steel(page);
-    // The hull spans the view (it starts 48 px in and runs past the right edge).
+    // The hull spans the view (R2-02's port scales its offsets too; it still starts well inside
+    // the left edge and runs past the right one).
     expect(first.columns).toBeGreaterThan(300);
     await stepTo(page, tick + 400);
     const after = await camera();
@@ -331,7 +346,6 @@ test.describe('advanced bosses (web build)', () => {
   });
 
   test('a captain: it fights while the camera keeps scrolling', async ({ page }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await page.goto('./?scene=flight&stage=captain-range');
@@ -339,16 +353,17 @@ test.describe('advanced bosses (web build)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await freezeSim(page);
-    // CAPTAIN RAM's boss event at x 300 (≈ 315 ticks), then its 60-tick intro.
+    // CAPTAIN RAM's boss event, then its 60-tick intro.
     const fighting = await stepUntilFight(page, 0, 20);
     expect(fighting.front).toBeGreaterThan(0);
     await stepTo(page, fighting.tick + 60);
     const later = await bossesNow(page);
     // Still fighting (god mode is off, but nothing here shoots it down in a second) and the scroll
-    // went on at 1 px/tick: a captain never locks it.
+    // went on the whole time: a captain never locks it. The 60 ticks move the camera by the
+    // stage's own scroll speed (R2-03's re-measure reads it from the content, never a literal).
     expect(later.states[0]).toBe(3);
     expect(later.locked).toBe(false);
-    expect(later.cameraX - fighting.cameraX).toBe(60);
+    expect(later.cameraX - fighting.cameraX).toBeCloseTo(CAPTAIN_SCROLL * 60, 6);
     expect(errors).toEqual([]);
   });
 });
@@ -357,7 +372,6 @@ test.describe('advanced bosses (Tizen build from file://)', () => {
   test('the twins: the resting one drawn behind, and they swap at the pair’s turn', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(180_000);
     const errors = watchErrors(page);
     await page.goto(TIZEN_INDEX + '?scene=flight');

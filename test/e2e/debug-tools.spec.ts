@@ -21,10 +21,11 @@
  * under the freeze, when no tick runs. So do the waits that check the freeze holds: no tick runs
  * there either.
  */
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { WORLD_SCALE } from '../../scripts/frame.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { PORT_REASON, PORT_UNMEASURED, assertionsGated } from './gates.js';
 import { BOOT_TIMEOUT_MS, remoteSequence, tap, waitTicks } from './ticks.js';
 
 /** The Tizen build's page, as a `file://` URL. */
@@ -32,8 +33,27 @@ const TIZEN_INDEX = pathToFileURL(
   fileURLToPath(new URL('../../apps/tizen/dist/index.html', import.meta.url)),
 ).href;
 
-/** Zone A's checkpoints and the x of its WARNING event (content/stages/zone-a.stage.json). */
-const ZONE_A = { checkpoints: [0, 3500, 6000], warningX: 8600, skipLead: 96 } as const;
+/**
+ * Zone A's checkpoints and the x of its WARNING event, read from
+ * `content/stages/zone-a.stage.json` (R2-03's re-measure: the file carries the ported numbers —
+ * the spec derives them from the content, never from v1 literals). `skipLead` mirrors
+ * `core/debug` `BOSS_SKIP_LEAD` = 96 px at the world's scale, the lead `skipToBoss` keeps.
+ */
+const ZONE_A = (() => {
+  const stage = JSON.parse(
+    readFileSync(
+      fileURLToPath(new URL('../../content/stages/zone-a.stage.json', import.meta.url)),
+      'utf8',
+    ),
+  ) as { checkpoints: Array<{ x: number }>; events: Array<{ x: number; type: string }> };
+  const warning = stage.events.find((event) => event.type === 'warning' || event.type === 'boss');
+  if (warning === undefined) throw new Error('zone-a has no warning/boss event');
+  return {
+    checkpoints: stage.checkpoints.map((checkpoint) => checkpoint.x),
+    warningX: warning.x,
+    skipLead: 96 * WORLD_SCALE,
+  };
+})();
 
 /** What the spec reads from `window.__shmupDebug`. */
 interface DebugView {
@@ -218,20 +238,13 @@ test.describe('debug tools (M1-19)', () => {
     await debugTap(page, 'F7');
     const jumped = await view(page);
     expect(jumped.checkpoint).toBe(before.checkpoint + 1);
-    // The camera x's are zone A's v1 numbers, right at 640×360 on the v1 content: R2-02 ports
-    // them ×1.5, R2-03 re-measures them (`gates.ts`, PORT_REASON). The jumps themselves are
-    // checked either way.
-    const cameraGated = assertionsGated(
-      test.info(),
-      PORT_UNMEASURED,
-      'the F7 / F8 camera x’s (zone A’s checkpoint and WARNING x)',
-      PORT_REASON,
-    );
-    if (!cameraGated) expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
+    // The camera lands at the content's own x's (ZONE_A above, read from the ported stage file);
+    // R2-03 re-measured these on the ported world.
+    expect(jumped.cameraX).toBe(ZONE_A.checkpoints[jumped.checkpoint]);
     expect(jumped.worldTick).toBe(before.worldTick); // a jump is not a tick
     await debugTap(page, 'F8');
     const skipped = await view(page);
-    if (!cameraGated) expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
+    expect(skipped.cameraX).toBe(ZONE_A.warningX - ZONE_A.skipLead);
     expect(skipped.cameraX).toBeGreaterThan(jumped.cameraX);
     expect(skipped.status).toBe('playing');
 

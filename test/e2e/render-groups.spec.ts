@@ -29,7 +29,6 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { CONTENT_REASON, R2_03_PENDING, assertionsGated } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Layers M3-02e makes render groups (`render-pixi`'s `RENDER_GROUP_LAYERS`). */
@@ -213,17 +212,10 @@ test.describe('render groups draw the same picture (M3-02e, review F1)', () => {
     // - `PLAYER` under them as well (the ship behind the background),
     // - `HUD` under the whole world container (the bars behind the stage).
     //
-    // The `HUD` control needs the stage to draw under a bar. Zone A's v1-scale terrain and bands
-    // (8-px tiles, v1 rows) end above the 640×360 frame's bottom bar, so the bars hide nothing and
-    // moving the `HUD` changes no pixel: that control waits for R2-02's port and R2-03's
-    // re-measure (`gates.ts`, CONTENT_REASON).
-    const hudGated = assertionsGated(
-      test.info(),
-      R2_03_PENDING,
-      'the HUD control (layer 11 moved under the world)',
-      CONTENT_REASON,
-    );
-    for (const layer of hudGated ? [2, 6] : [2, 6, 11]) {
+    // The `HUD` control needs the stage to draw under a bar. Since R2-02's port the zone A
+    // content fills the whole 640×336 playfield — its terrain and bands reach under the 12-px
+    // bottom bar — so moving the `HUD` under the world changes pixels (R2-03's re-measure).
+    for (const layer of [2, 6, 11]) {
       const restore = await page.evaluate((id) => {
         const { layers } = (window as unknown as DebugWindow).__shmupDebug.renderer;
         const target = layers.layers[id];
