@@ -22,7 +22,6 @@ import {
   sx,
   sy,
 } from './frame-pixels.js';
-import { CONTENT_REASON, R2_03_PENDING } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /** Face colour of the placeholder `brick` tile (`scripts/assets/procedural/terrain.mjs`). */
@@ -74,7 +73,6 @@ async function countColour(page: Page, rgb: readonly [number, number, number]): 
 
 test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
   test('boots the gimmick range and draws its destructible brick pillar', async ({ page }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors: string[] = [];
     page.on('console', (message) => {
       // Errors, plus the atlas's "unknown sprite" warning (content naming a missing sprite).
@@ -88,10 +86,11 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
       timeout: BOOT_TIMEOUT_MS,
     });
     await freezeSim(page);
-    // Near the start the pillar (world x 480…511) is still off screen.
+    // Near the start the pillar (tiles 60 … 63, the ported world x 720 … 767) is still off screen.
     const start = await stepTo(page, 30);
     expect(await countColour(page, BRICK)).toBe(0);
-    // ≈ 450 px of scroll later it stands in the left part of the view.
+    // ≈ 675 px of scroll (450 ticks at the ported 1.5 px/tick) later it stands in the left part
+    // of the view.
     await stepTo(page, start + 450);
     expect(await countColour(page, BRICK)).toBeGreaterThan(300);
     expect(errors).toEqual([]);
@@ -100,7 +99,6 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
   test('takes broken bricks off the screen at once and draws them again after the rollback', async ({
     page,
   }) => {
-    test.skip(R2_03_PENDING, CONTENT_REASON);
     const errors: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error' || message.text().startsWith('atlas:')) {
@@ -120,13 +118,14 @@ test.describe('stage gimmicks (web build, ?stage=gimmick-range)', () => {
     // Break every cell of the pillar in the sim (28 bricks), without a shot and without a scroll
     // of a whole tile: only the change log tells the renderer.
     // Each cell is hit at its centre: the tile edge is the frame's `TILE_SIZE` (12 since R2-01),
-    // the pillar's columns and rows are the stage's own.
+    // the pillar's columns and rows are the stage's own — the ported RLE holds its 4×7 cells at
+    // tiles 60 … 63 × 18 … 24 (`content/stages/gimmick-range.stage.json`).
     const broken = await page.evaluate((tile) => {
       const d = (window as unknown as DebugWindow).__shmupDebug.game.world.gimmicks.destructible;
       if (d === null) return -1;
       const half = tile >> 1;
       for (let col = 60; col <= 63; col++) {
-        for (let row = 15; row <= 21; row++) d.hit(col * tile + half, row * tile + half, 99);
+        for (let row = 18; row <= 24; row++) d.hit(col * tile + half, row * tile + half, 99);
       }
       return d.destroyed;
     }, TILE_SIZE);

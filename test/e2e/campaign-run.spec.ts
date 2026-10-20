@@ -26,7 +26,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import {
   BONUS_WARP_TICKS,
   BOOT_TIMEOUT_MS,
@@ -49,9 +48,8 @@ const TIZEN_INDEX = pathToFileURL(
 ).href;
 
 /**
- * Ticks from the bonus-range test's jump to the digit window's close: the camera's 20 px from x
- * 1980 to 2000 at the stage's 1 px a tick (v1 content numbers, which R2-02 ports and R2-03
- * re-measures: `gates.ts` `PORT_REASON`).
+ * Ticks from the bonus-range test's jump to the digit window's close: the camera's 30 px from x
+ * 2970 to 3000 at the stage's 1.5 px a tick (`content/stages/bonus-range.stage.json`, ported).
  */
 const DIGIT_WINDOW_TICKS = 20;
 
@@ -289,15 +287,15 @@ test.describe('campaign run (web build)', () => {
   test('?stage=bonus-range: the digit entrance flies the ship into the vault, its items drawn', async ({
     page,
   }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     test.setTimeout(120_000);
     const errors = watchErrors(page);
     await startGame(page, './?stage=bonus-range');
     expect((await view(page)).stage).toBe('bonus-range');
-    // The digit window closes at x 2000 (thousands digit 0): jump before it with such a score.
+    // The digit window closes at x 3000 (thousands digit 0 — the ported bonus-range event):
+    // jump before it with such a score.
     await page.evaluate(() => {
       const world = (window as unknown as DebugWindow).__shmupDebug.game.world;
-      world.stage?.jumpTo(1980);
+      world.stage?.jumpTo(2970);
       world.scoring.board.scores[0].score = 40_000;
     });
     // The window closes, the entrance opens, the warp flies the ship in.

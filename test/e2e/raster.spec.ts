@@ -24,7 +24,6 @@ import {
 } from '../../packages/render-pixi/src/effects/shaders.js';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_W, HUD_BOTTOM_Y, PLAYFIELD_Y, pixelIndex, sx, sy } from './frame-pixels.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /**
@@ -221,7 +220,6 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
   test('draws the sea wave, the palette cycle and the line-band floor within the draw-call budget', async ({
     page,
   }, testInfo) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
@@ -232,14 +230,15 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
     const on = await capture(page);
     await testInfo.attach('raster-range-effects-on', { body: on.png, contentType: 'image/png' });
     const state = await rendererState(page);
-    // The sea and the floor are filtered; the haze on the far layer waits for camera x 1200.
+    // The sea and the floor are filtered; the haze on the far layer waits for camera x 1800.
     expect(state.mask & MID_BIT).toBe(MID_BIT);
     expect(state.mask & FAR_BIT).toBe(0);
     expect(state.drawCalls).toBeGreaterThan(0);
     expect(state.drawCalls).toBeLessThanOrEqual(DRAW_CALL_BUDGET);
-    // The same tick with the effects off: the sea (playfield rows 112 … 151 — frame rows
-    // 124 … 163 at 640×360, 120 … 159 at 384×216) and the floor (playfield rows 152 … 199 —
-    // frame rows 164 … 211; 160 … 207 at v1) change, the sky above them does not.
+    // The same tick with the effects off: the sea (the ported wave's rows 204 … 263 — frame rows
+    // 216 … 275 under the raster's `PLAYFIELD_Y` offset, `content/stages/raster-range.stage.json`)
+    // and the floor (the ported line bands' rows 264 … 335 — frame rows 276 … 347) change, the sky
+    // above the wave's top ± its 4.5-px amplitude does not.
     await setEffects(page, false);
     await stepTo(page, tick);
     await page.evaluate(
@@ -247,28 +246,28 @@ test.describe('raster effects and palette cycles (web build, ?stage=raster-range
     );
     const off = await capture(page);
     expect((await rendererState(page)).mask).toBe(0);
-    expect(diffRows(on.image, off.image, 120, 160)).toBeGreaterThan(1000);
-    expect(diffRows(on.image, off.image, 164, HUD_BOTTOM_Y)).toBeGreaterThan(1000);
-    expect(diffRows(on.image, off.image, PLAYFIELD_Y, 100)).toBe(0);
+    expect(diffRows(on.image, off.image, 216, 276)).toBeGreaterThan(1000);
+    expect(diffRows(on.image, off.image, 276, HUD_BOTTOM_Y)).toBeGreaterThan(1000);
+    expect(diffRows(on.image, off.image, PLAYFIELD_Y, 204)).toBe(0);
     await setEffects(page, true);
     expect(errors).toEqual([]);
   });
 
   test('runs the heat haze only inside its camera range', async ({ page }, testInfo) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=raster-range');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
       timeout: BOOT_TIMEOUT_MS,
     });
     await freezeSim(page);
-    // Camera x 1 px a tick after the 60-tick ramp: inside [1200, 2400) at tick 1600.
+    // Camera x 1.5 px a tick after the 60-tick ramp (x ≈ 2355): inside the ported range
+    // [1800, 3600) at tick 1600.
     await stepTo(page, 1600);
     const cameraX = await page.evaluate(
       () => (window as unknown as DebugWindow).__shmupDebug.game.world.camera.x,
     );
-    expect(cameraX).toBeGreaterThanOrEqual(1200);
-    expect(cameraX).toBeLessThan(2400);
+    expect(cameraX).toBeGreaterThanOrEqual(1800);
+    expect(cameraX).toBeLessThan(3600);
     const state = await rendererState(page);
     expect(state.mask).toBe(FAR_BIT | MID_BIT);
     expect(state.drawCalls).toBeLessThanOrEqual(DRAW_CALL_BUDGET);

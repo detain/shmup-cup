@@ -30,7 +30,6 @@ import {
 import { decodePng } from '../../scripts/assets/png.mjs';
 import { freezeSim, stepTo } from './frame-advance.js';
 import { FRAME_H, FRAME_W, PLAYFIELD_Y, VIEWPORT, pixelIndex, sx, sy } from './frame-pixels.js';
-import { PORT_REASON, PORT_UNMEASURED } from './gates.js';
 import { BOOT_TIMEOUT_MS } from './ticks.js';
 
 /**
@@ -50,11 +49,14 @@ import { BOOT_TIMEOUT_MS } from './ticks.js';
  */
 const DRAW_CALL_BUDGET = 16;
 
-/** The first playfield row the dimension stage's floor covers (its `mode7.horizon`). */
-const FLOOR_TOP = 101;
+/**
+ * The first frame row the dimension stage's floor covers: the ported stage's `mode7.horizon` —
+ * 168 rows below the playfield's top (`content/stages/dimension.stage.json`, the R2-02 port).
+ */
+const FLOOR_TOP = PLAYFIELD_Y + 168;
 
-/** The row after the last one it covers (`mode7.bottom`). */
-const FLOOR_BOTTOM = 200;
+/** The row after the last one it covers (the ported `mode7.bottom`: 336 — the playfield's edge). */
+const FLOOR_BOTTOM = PLAYFIELD_Y + 336;
 
 /**
  * Width of the `classic` aspect's 4:3 window on the e2e display (960 of 1280×720, 864 of
@@ -482,7 +484,6 @@ test.describe('the pseudo-3D dimension stage (web build, ?stage=dimension)', () 
   test('draws the Mode-7 floor under the horizon within the draw-call budget', async ({
     page,
   }, testInfo) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
@@ -507,7 +508,8 @@ test.describe('the pseudo-3D dimension stage (web build, ?stage=dimension)', () 
     const off = await capture(page);
     await testInfo.attach('dimension-no-floor', { body: off.png, contentType: 'image/png' });
     const floorRows = diffRows(on.image, off.image, FLOOR_TOP, FLOOR_BOTTOM);
-    // A grid over most of the ground band (the floor is the frame's width × 99 rows there).
+    // A grid over most of the ground band (the floor is the frame's width × 168 rows there —
+    // the ported horizon to bottom).
     expect(floorRows).toBeGreaterThan(FRAME_W * 20);
     expect(diffRows(on.image, off.image, 0, FLOOR_TOP - 2)).toBe(0);
     expect(errors).toEqual([]);
@@ -776,13 +778,12 @@ test.describe('the pass-2 blit (plan M3-02d, decision D19)', () => {
 
 test.describe('the Mode-7 floor is aligned to the frame (plan M3-02d)', () => {
   test('covers exactly the frame rows between its horizon and its bottom', async ({ page }) => {
-    test.skip(PORT_UNMEASURED, PORT_REASON);
     // The floor is a `Mesh` on `BG_MID` since M3-02d, so its fragment shader's `vScreen.y` is the
     // frame row the per-row affine matrix is built from. Half a row out and the whole floor would
     // be sheared by one row of depth; the exact first and last rows it touches pin that.
-    // `content/stages/dimension.stage.json` has `horizon: 100`, `bottom: 200`, and the shader
-    // measures both from `PLAYFIELD_Y` (12 at 640×360, 8 at 384×216) — so rows 112 … 211 of the
-    // 360-row frame (108 … 207 of v1's 216), and nothing above or below.
+    // `content/stages/dimension.stage.json` has `horizon: 168`, `bottom: 336` (the R2-02 port),
+    // and the shader measures both from `PLAYFIELD_Y` (12 at 640×360) — so rows 180 … 347 of the
+    // 360-row frame (the playfield's exact lower half), and nothing above or below.
     const errors = collectErrors(page);
     await page.goto('./?scene=flight&stage=dimension');
     await expect(page.locator('#game')).toHaveAttribute('data-shmup-state', 'running', {
@@ -801,9 +802,9 @@ test.describe('the Mode-7 floor is aligned to the frame (plan M3-02d)', () => {
     const off = await capture(page);
     const rows = changedRows(on.image, off.image, place);
     expect(rows.length).toBeGreaterThan(80);
-    // The horizon (100) and the bottom (200) are the stage's own numbers, the offset the frame's.
-    expect(rows[0]).toBe(PLAYFIELD_Y + 100);
-    expect(rows[rows.length - 1]).toBe(PLAYFIELD_Y + 200 - 1);
+    // The horizon (168) and the bottom (336) are the stage's own numbers, the offset the frame's.
+    expect(rows[0]).toBe(PLAYFIELD_Y + 168);
+    expect(rows[rows.length - 1]).toBe(PLAYFIELD_Y + 336 - 1);
     expect(errors).toEqual([]);
   });
 });
