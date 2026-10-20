@@ -414,8 +414,12 @@ within 1.5/255** of it. The rules, from R3-03:
 - **New v2 art keeps the margin from every reserved ramp, on any layer.** From R3-02 on, everything
   ingested or hand-made that is not cycle art stays ≥ 3/255 from all of today's ramps (and R5's), so
   any layer can later be cycled and art can move between layers without a recheck. Ingest pushes
-  near pixels away and its report lists them; a project-wide scan, if R3-03 adds one, applies this
-  rule with the exemptions below.
+  near pixels away and its report lists them. The project-wide scan exists —
+  `test/integration/palette-cycle-scan.test.ts` (R3-03.V3) checks the whole shipped atlas by these
+  rules: rule 1 per stage on the layers it cycles, rule 2 project-wide against all eight reserved
+  ramps (a ramp's own cycle art excepted), and a synthetic fixture proves the measure. It **fails**,
+  never warns (decision W5-12), and the exemptions below are pinned inside it — an exemption that
+  stops tripping is itself a failure, so the list cannot rot.
 - **A ramp's own colours differ by at least 2 in some channel** — the loader rejects closer ones.
   A layer cycles at most 8 colours.
 - **Cycled regions are flat-coloured,** not dithered (a dithered ramp shimmers), and binary-alpha
@@ -435,9 +439,9 @@ within 1.5/255** of it. The rules, from R3-03:
   | `ABYSS_RAMP` | zone I, far | `bg/abyss-murk` |
 
 - **Exempt: v1 and interim art that breaks the project-wide margin** but sits on no layer that
-  cycles that ramp. A scan of today's atlas (2026-10-17) finds exact ramp colours or near misses
-  (distance 1–2) in these; each leaves the list when R4 or R5 replaces it, and the list is empty by
-  the end of R5:
+  cycles that ramp. The scan finds exact ramp colours or near misses (distance 1–2) in these — the
+  list it pins, from the atlas scan of 2026-10-17; each row leaves the list when R4 or R5 replaces
+  it, and the list is empty by the end of R5:
 
   | Ramp | Sprites |
   |---|---|
@@ -453,8 +457,8 @@ within 1.5/255** of it. The rules, from R3-03:
 | Variant | How | Step |
 |---|---|---|
 | `<name>@flash` | white silhouette of the opaque pixels (binary alpha makes it exact) | as v1 |
-| `<ship>@p2` | a **palette map** in the ship's recipe — P1 ramp → P2 ramp: stripe blue → red-orange, canopy cyan → gold, engine orange → blue — replacing v1's channel swap | R3-03 |
-| `<bullet>@<palette>` | procedural, frame for frame, shape-coded cores (`CORE_MARKS`: pink solid, red ring, purple dot) — `procedural/palettes.mjs` at the new sizes | R3-03 / R4-02 |
+| `<ship>@p2` | a **`p2` palette map** — the ship's recipe `"p2"` (lands in the sidecar's `meta.shmup.p2`) or a pixel map's own `"p2"` key — P1 ramp → P2 ramp: stripe blue → red-orange, canopy cyan → gold, engine orange → blue — replacing v1's channel swap | R3-03 |
+| `<bullet>@<palette>` | procedural, frame for frame, shape-coded cores (`CORE_MARKS`: pink solid, red ring, purple dot) — `procedural/palettes.mjs` at the new sizes; when the base is a real-art override its variants are **recoloured from it** (luma bands rim / body / core, same cores, alpha kept — decision W5-13) | R3-03 / R4-02 |
 
 ---
 

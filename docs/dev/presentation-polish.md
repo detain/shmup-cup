@@ -229,7 +229,11 @@ There are no indexed-colour sprites: the shader matches the ramp's **exact colou
 ordinary RGBA atlas art, so one sprite serves plain and cycled layers alike. The art has to use
 the ramp's `#rrggbb` values (the `raster-bands` generator paints the sea only in `SEA_RAMP`), and
 nothing else drawn on the cycled layer may come within 1 per channel of them — the
-`raster-range-runtime` integration test checks both in the packed atlas.
+`raster-range-runtime` integration test checks both in the packed atlas, and since R3-03.V3 the
+project-wide scan `test/integration/palette-cycle-scan.test.ts` checks the whole shipped atlas
+against every reserved ramp (rules 1–2 of [art-bible-v2.md](art-bible-v2.md#44-reserved-palette-cycle-ramps),
+a fixture proves the measure; it fails, never warns — decision W5-12). The ingest tool additionally
+pushes near pixels away and its report lists them.
 
 - `colorCycleStep(tick, ticksPerStep, count)` → `floor(tick / ticksPerStep) mod count` (negative
   ticks count backwards; a count below 1, a non-positive step, or a NaN / infinite tick → 0 — the
@@ -455,6 +459,7 @@ const refresh = createRefreshMonitor();
 | `packages/shell/test/frame-loop/frame-loop-refresh*.test.ts` | The probe's estimate, jitter, hitches, `reset`, NaN sizes; the allocation guard in its own file |
 | `packages/shell/test/dispatch/dispatch-options-display*.test.ts`, `boot/boot*.test.ts`, `flight/flight-effects.test.ts`, `scene-view/scene-view-effects.test.ts` | `connectOptionEvents`' display target and `applyDisplayOptions`; saved options applied at boot, `ShellOptions.effects` winning, interpolation modes; the dev scenes and the scene view passing `effects` / `hitboxes` through |
 | `test/integration/raster-range-runtime.test.ts` | The stage's art matches its effects, the ramp only in the sea and nothing near it on the cycled layer, a headless session driving the layer effects over the whole stage within bounds |
+| `test/integration/palette-cycle-scan.test.ts` | R3-03.V3, the bible §4.4 scan: rule 1 per stage over the sprites and tiles of its cycled layers, rule 2 project-wide margin from all eight reserved ramps (each ramp's own cycle art excepted, the bible exemptions pinned and rot-checked), rule 3 a synthetic fixture that passes clean and names the one planted near-miss — fails CI, never warns (W5-12) |
 | `test/scripts/assets/procedural.test.ts` | `raster-bands`: sizes, seamless repeat, the sea only in `SEA_RAMP`, the floor's strips |
 | `test/golden/` | `raster-range-god`, also played back with `raster` / `cycles` stripped |
 | `test/e2e/raster.spec.ts` | The shader compiles and links in a real WebGL1 context; `?stage=raster-range` draws the wave, cycle and floor (differing from the same frame with the effects off) within 12 draw calls, the haze only in its range, `stretch` filling what `integer` letterboxes, hitbox markers only while on; screenshots attached |
@@ -466,7 +471,7 @@ const refresh = createRefreshMonitor();
 |---|---|
 | A raster effect or cycle never shows | The camera x is outside `[from, to)`, `settings.rasterEffects` is off, the scene's own `WorldView` did not pass `effects` through, or the renderer has no WebGL program (Node tests need `createLayerEffectFilter` faked) |
 | A line-band floor turns into noise after a while | Per-row factors on a uniform pattern drift out of phase; draw strips (wider patterns lower down) and list them in `bands`, and give the band `"factor": 0` |
-| A cycled colour flickers somewhere else | Other art on that layer uses a ramp colour or one within 1 per channel of it; the loader only checks the cycles against each other, the integration test checks the raster range's atlas — do the same for a new stage |
+| A cycled colour flickers somewhere else | Other art on that layer uses a ramp colour or one within 1 per channel of it; the loader only checks the cycles against each other — the `raster-range-runtime` test checks its stage, and the project-wide `palette-cycle-scan.test.ts` fails CI on any new near-miss in the shipped atlas, so a keep needs a row (and reason) in the bible §4.4 exemption list |
 | `lines` effect shows a seam | `wrap` is not the art's repeat (`spacing` of the band / the tile width) |
 | The terrain wobbles but the ship hits the old outline | Raster effects move pixels, not collision — keep them off gameplay rows of `terrain` |
 | Draw calls jumped by 3 | A filter is attached (one filtered layer ≈ +3); expected while an effect is on screen |

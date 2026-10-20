@@ -28,7 +28,7 @@ generated image into a sprite source with its provenance. Its companions:
 | **Original work only** — never a Konami or Taito name, sprite, sound or look-alike; no prompt names a game, studio, artist or character | `shmup_feat.md` §26; `test/integration/art-prompt-names.test.ts`; the store review checks it too |
 | Art is drawn at the **native 640×360 density** — the 640×336 playfield between two 12-px HUD bars, ×1.5 world sizes (the ship 24×14, 12-px tiles). Never upscale v1 art, never mix pixel sizes ("mixels") | art bible §1, §3.1. *The frame is 640×360 since R2-01; the interim art is v1's sprites upscaled ×1.5 — the real art arrives with R3; v1's art stays on `v1.x`* |
 | Sprites are **indexed-looking pixel art with hard edges and binary alpha**; the renderer samples nearest and never rotates or scales a sprite (laser beams excepted, bible §3.2) | decisions D24, D30; art bible §3.2, §3.6 |
-| An atlas page is at most **2048 × 2048** and the whole `dist/` at most **8 MB** | `apps/tizen/scripts/check-bundle.mjs`; R3-04 sets the v2 budgets |
+| An atlas page is at most **2048 × 2048** and the whole `dist/` at most **16 MB** | `apps/tizen/scripts/check-bundle.mjs` (`ATLAS_PAGE_MAX_SIZE`, `DIST_BUDGET` — R3-04.M2b set the v2 budgets, doubling the 8 MB); the pages' PNG total is capped by `test/scripts/assets/atlas-budget.ts` |
 | Music loops **sample-exactly**; nothing is decoded mid-stage | decision D22, `shmup_tech.md` §2.4 |
 | A replacement keeps the **name** of what it replaces | that is what makes it a drop-in |
 | **Every override PNG is traced**: a `<name>.art.json` provenance record, or a `LICENSES.md` entry | `test/scripts/assets/provenance.test.ts`; [art-provenance.md](art-provenance.md) §6 |
@@ -61,8 +61,8 @@ anchor and animations; a `<name>.png` next to it **overrides** its pixels
 | Variant | From the art? |
 |---|---|
 | `<name>@flash` (the hit flash, D30) | **yes** — the white silhouette of the override's opaque pixels |
-| `<ship>@p2`, `hud/life@p2` (player 2) | **yes**, but by swapping red and blue (`scripts/assets/coop.mjs`), which is unpredictable on full-colour art — R3-03 replaces it with a palette map in the ship's recipe |
-| `<bullet>@deuteranopia` and the other colour-blind variants | **no** — `scripts/assets/procedural/palettes.mjs` redraws them from its own shapes. A real-art bullet, beam or bend segment needs its `@<palette>` variants overridden too, frame for frame, or `pnpm content:check` fails. Bullets stay procedural (bible §6) |
+| `<ship>@p2`, `hud/life@p2` (player 2) | **yes** — a **`p2` palette map** applied by `scripts/assets/coop.mjs`: in the ship's recipe (`"p2"`), shipped as the sidecar's `meta.shmup.p2` on the override, carried on a pixel map's own `"p2"` key (R3-03.V2a replaced v1's red ↔ blue channel swap, [asset-pipeline.md](asset-pipeline.md#player-2s-palette-map-m2-06-r3-03v2a)) |
+| `<bullet>@deuteranopia` and the other colour-blind variants | **yes** — a real-art bullet, beam or bend segment has its variants **recoloured from the override** (luma bands and the same core marks, R3-03.V5), frame for frame, and `pnpm content:check` pins the result; the procedural `palettes.mjs` still draws them for procedural bases, which bullets remain today (bible §6) |
 
 ## Two ways in
 
@@ -72,10 +72,14 @@ anchor and animations; a `<name>.png` next to it **overrides** its pixels
 | Produces | `<name>.recipe.json` → `<name>.png` + `<name>.json` + `<name>.art.json` (+ your `<name>.edit.png`) | `<name>.png` + `<name>.json` (export with a slice for the pivot) |
 | Provenance | written by the tool | a hand-written `<name>.art.json` with `"origin": "hand"`, or an entry in a `LICENSES.md` |
 
-**Where it goes.** After R2-01 (the switch to 640×360): `assets/source/sprites/<name>.*`. **Until
-R2-01 the output is staged** in `art-prompts/v2/ingested/<name>.*` (plan R3-02), so the 384×216
-atlas and the goldens do not change; the files move into `assets/source/sprites/` with R2-01 or
-the first R4 step after it. The tool, `provenance.test.ts` and CI treat both trees alike.
+**Where it goes.** R2-01 has landed, so the output lives under `assets/source/sprites/<name>.*`.
+Every merged override changes what is drawn, so its step re-pins the presentation fingerprint (the
+atlas bytes move; the goldens move only when an override *adds* a sprite, [above](#sprites-how-the-pipeline-reads-a-real-art-png)
+— and they are still v1 recordings by design until R2-03 re-blesses). `art-prompts/v2/ingested/<name>.*`
+remains the staging folder for art under review — an unreviewed or untraced sprite is kept there,
+out of the atlas. The tool, `provenance.test.ts`, the origin report and CI treat both trees alike,
+and an override brings its `<name>.masks.json` (tile collision,
+[below](#tile-collision-and-the-mask-copy-r3-03v4)) with it just as it brings its record and sidecar.
 
 ## The ingest tool (`art-prompts/ingest/`)
 
@@ -222,6 +226,8 @@ anything runs.
 | `reserved` | none | extra colours to keep ≥ 3/255 away from |
 | `layer` | — | backdrops only, required: `far`, `mid-far`, `mid`, `near`, `foreground` (the lighting budget) |
 | `anchor`, `animations` | none | written into the sidecar as the slice pivot and the frame tags |
+| `p2` | none | a **player-2 palette map** for a ship or the stock icon: pairs `"#rrggbb": "#rrggbb"`, at least one, exact lowercase, keys sorted. The tool stores it verbatim in the sidecar's `meta.shmup.p2`, and the asset pipeline derives the sprite's `@p2` sibling from it instead of its code map (whether the colours are really in the art is the pipeline's check — R3-03.V2b, [asset-pipeline.md](asset-pipeline.md#player-2s-palette-map-m2-06-r3-03v2a)) |
+| `collision` | none | **tile recipes** only: `{ "tileset", "mode" }` — `tileset` is the path of the designed tileset JSON the art is cut for, `mode` is `clip-to-mask` (default) or `mask-from-art`. [Tile collision and the mask copy](#tile-collision-and-the-mask-copy-r3-03v4) |
 | `edit.erase` | `#ff00ff` | the hand-edit layer's erase colour |
 | `provenance` | from the candidate sidecar | recipe-wide, or per source: `model` (a `models.json` key, or `"none"` for a hand-made source — required when there is no candidate sidecar), `prompt` `{ file, entry }`, `seed`, `sidecar` (a path, or `false`), `reference` (an edit's input images, below), `author`, `use`, `cleanup`, `reviewed` `{ on, by }`, `notes` |
 
@@ -280,7 +286,41 @@ files** only, so a fresh clone gives the same record as the owner's machine:
 | `<name>.png` | the frame strip: frame `i` at `x = i · width`, one row |
 | `<name>.json` | Aseprite array format: `frames[i].frame`, `meta.frameTags` from `animations`, `meta.slices[0]` with the `anchor` as its pivot (and so the anchor the pipeline uses) |
 | `<name>.art.json` | the provenance record below |
+| `<name>.masks.json` | the tile collision recipe's derived masks (`shmup-ingest-masks@1`), only with `collision.mode: "mask-from-art"` — [below](#tile-collision-and-the-mask-copy-r3-03v4) |
 | `<name>.recipe.json`, `<name>.edit.png` | your inputs, committed next to them |
+
+### Tile collision and the mask copy (R3-03.V4)
+
+A terrain tile collides as **heightfield columns**, not as pixels: the designed tileset names each
+frame's solid mask, and the renderer clips the art at its anchor edge. When a real-art PNG replaces
+a tileset's art, the picture and that mask must agree, or the ship crashes into thin air or sails
+through drawn rock. A tile recipe therefore carries a `collision` field — `{ "tileset":
+"content/tilesets/terrain-a.tileset.json", "mode": "clip-to-mask" }` — and the tool handles the two
+directions of truth:
+
+- **`clip-to-mask` (the default)** — the designed tileset is the truth. The tool reads the tileset
+  JSON (read-only; `empty` deco tiles carry no collision to clip) and forces each column of the
+  finished art, from the tile's anchor edge, to the height of that frame's designed mask: the
+  strip's alpha becomes byte-exactly collision-lawful. A frame no collision tile references keeps
+  its art as it is and **warns**.
+- **`mask-from-art`** — the art is the truth. The tool derives each frame's column heights from
+  the finished pixels (the run touching the anchor edge) and writes them beside the PNG as
+  **`<name>.masks.json`** (schema `shmup-ingest-masks@1`). A column that is not one run from its
+  anchor edge — a floating island, a gap above solid — fails the recipe: no honest column height
+  exists for it. The masks file never goes into `content/` (the tool refuses to write there), and
+  `node ingest.mjs --check` **rewrites** it, so a stale derivation is caught like a stale PNG.
+
+Frames are matched **by index**; the tileset's `sprite` field is not consulted, and mismatched
+names only warn. The fixture `art-prompts/ingest/test/fixtures/tiles/` commits both routes: a 12-px
+tileset, one sheet per mode, with their outputs and the derived masks file.
+
+The copy is repo-side: `node scripts/assets/tileset-masks.mjs --write <tileset> <masks.json>` moves
+the derived masks into the designed tileset (by frame index; names only warn), refusing without
+`--allow-remap` to remap a solid tile the heightfield places by anchor + mask (decision W5-11), and
+`--check` fails loudly when a tileset and its sidecar disagree — the guard the ingest run cannot be,
+since its own check rewrites the sidecar silently. See `scripts/README.md`.
+`pnpm content:check` stays the content's own judge: after a copy, the stage's checkpoints, the
+4-way rules and the playtest see whether the new heights still fly.
 
 ### The provenance record (`<name>.art.json`, `shmup-art-provenance@1`)
 
@@ -350,9 +390,9 @@ that file (`kestrel.png`, `ships/kestrel.png`) or by its sprite name in backtick
    re-run, and set `provenance.cleanup` if the work is `heavy` or the AI image was only a reference
    (`redrawn`). Record the content review in `provenance.reviewed` — a shipped AI-assisted sprite
    without it fails the origin report.
-6. **Commit** the recipe, the edit layer and the three outputs; `--check` must pass. Then
-   `pnpm assets`, `pnpm content:check` and `node scripts/art-origins.mjs --check` (after R2-01, when
-   the files live under `assets/source/sprites/`).
+6. **Commit** the recipe, the edit layer, the three outputs and, for a tile collision recipe, the
+   `<name>.masks.json`; `--check` must pass. Then `pnpm assets`, `pnpm content:check` and
+   `node scripts/art-origins.mjs --check` — the files live under `assets/source/sprites/` now.
 
 ## Music — Furnace / OpenMPT → `content/audio/music/`
 

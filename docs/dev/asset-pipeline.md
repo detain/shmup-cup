@@ -26,9 +26,11 @@ assets/source/sprites/**/*.png (+ .json)┤  real-art overrides, replace frames 
 assets/source/fonts/*.font.json ────────┘  bitmap fonts → one sprite, a frame per glyph
 assets/source/atlas-groups.json ────────  R1-05: which sprites pack onto a zone's own pages
    │  collectSprites()     validate, scale every v1-scale source by `artScale` (the interim ×1.5
-   │                       stage, below), merge the PNG overrides after the scale, add <name>@flash
-   │                       and <name>@p2 siblings from the scaled sprites, default anchors from the
-   │                       scaled frame 0, give every sprite its group (common, zone-a … zone-i)
+   │                       stage, below), merge the PNG overrides after the scale, recolour an
+   │                       override's colour-blind siblings (R3-03.V5), add <name>@flash and
+   │                       <name>@p2 siblings (a ship's @p2 from its own `p2` palette map since
+   │                       R3-03.V2a), default anchors from the scaled frame 0, give every sprite
+   │                       its group (common, zone-a … zone-i)
    ▼
 packRects()                 MaxRects per group, 1-px padding + 1-px edge extrusion, power-of-two pages ≤ 2048²
    │  buildAtlas()          place frames, encodePng(…, { indexed: 'auto' }) each page (PNG-8 when it fits), build the manifest
@@ -47,7 +49,7 @@ dist/assets/atlas/*.png      emitted next to the bundle, with dist/assets/atlas/
 one 512×256 page — grown with every step since; one 512×512 page since the M1-16 logo, one
 1024×512 page since the M2-09 boss parts, 1024² since M2-14; **since R1-05 split by zone**, and
 since R2-01's interim ×1.5 art (below) a 1024² `common` page plus zone pages of 256² / 512×128 /
-512×256 / 256×512, 438 sprites in 1,459 frames and 139,944 B of PNG in all — v1's art held 438
+512×256 / 256×512, 438 sprites in 1,459 frames and 143,775 B of PNG in all — v1's art held 438
 sprites in 1,411 frames; split by zone that was 120,400 B of PNG),
 the pixel font, the Vite plugin and the sprite-name check in `pnpm content:check` are done. The apps register `shmupAssets()` and ship the pages; since
 M1-04 their `main.ts` imports `virtual:shmup-assets`, `@shmup/shell` loads the pages with
@@ -68,7 +70,9 @@ Why this design:
   base's page because Pixi's tint can only darken (multiply).
 - **Pages a zone does not need can leave the GPU** (R1-05). Each campaign zone's own art packs
   onto pages of its own ([below](#atlas-groups-r1-05)), so the shell's residency unloads the other
-  zones' pages ([platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)).
+  zones' pages ([platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory)) — and
+  since R3-04.M3 a page the shown World does not need never enters the GPU at all: pages load
+  lazily ([below](#lazy-atlas-pages-r3-04m3)).
 - **Nothing comes from a server on the TV.** The pages are plain PNG files the host loads with
   `HTMLImageElement` from a relative URL, and since R1-05 the manifest is `assets/atlas/main.json`
   next to them, read with `XMLHttpRequest` (`fetch()` fails on `file://` — D25; XHR returns status
@@ -100,7 +104,9 @@ rescale tool agrees with: its `spreadBands` spreads a stage's raster `bands` so 
 lands a row taller or shorter with its neighbours — and pixel-centre sampling would land the `.5`
 boundaries a pixel higher. The procedural generators run at their native size
 first and the stage scales their output, exactly like the pixel maps (`ships/kestrel` 16×9 with
-anchor [8, 4] → 24×14 with anchor [12, 6]).
+anchor [8, 4] → 24×14 with anchor [12, 6]) — except the enemy bullets and the bending laser's
+nodes, which `bullets.mjs` / `lasers.mjs` draw at the bible's v2 sizes and mark `native` whenever
+the build's art scale is not 1 (R3-03.V1, below and the generator table).
 
 **Never upscaled** (decision W4-5, amended by `16aff20`) — these sources are *drawn* at the
 build's art size instead:
@@ -111,7 +117,7 @@ build's art size instead:
 | `ui/pixel` | The renderer stretches the one texel — its drawn size is the quad's, never the art's |
 | The laser beams `lasers/beam-*` and their `@<palette>` variants | The renderer reads a frame's number as the beam's thickness, so frame `k` must be a band `k + 1` px tall — ×1.5 of frame `k` would not be `k + 1` px any more. `lasers.mjs` therefore draws one frame per band height at the art scale itself: 8 frames of 4×8 at scale 1, **12 frames of 6×12 at 3/2** (frame `k` a band `k + 1` px tall — the art bible's v2 beam, `art-bible-v2.md` §5.4). The only frames whose *count* changes at the interim scale (+4 per beam) |
 | Real-art PNG overrides | Already v2-native: drawn at the art bible's sizes ([below](#real-art-png-overrides)) |
-| A `native: true` source | A pixel map's `"native"` key, or `makeSprite({ native })` — what the R3 / R4 redraws set |
+| A `native: true` source | A pixel map's `"native"` key, or `makeSprite({ native })` — what the R3 / R4 redraws set. Since R3-03.V1 the procedural bullets and bend nodes join it at every non-1 scale: `bullets.mjs` draws round 11×11 (1 frame), oval 13×13 and needle 17×17 (8 headings) and `lasers.mjs` the 11×11 bend node — the bible §5.4 sizes, marked `native`, where the interim upscale had landed the oval on 14 px (the one missed frame; round, needle and bend already matched). At scale 1 everything stays the v1 pixel map, byte for byte (`bullets-v2.test.ts`; the scale-1 digest pin never moved) |
 
 **The interim font** (decision W4-4): `assets/source/fonts/pixel6x8.font.json` stays on disk
 unchanged; `scaleFont` turns it into a 9 × 12 cell with a 15-px line and a 9-px advance inside the
@@ -127,9 +133,13 @@ until R2-03 switches the doc images to the default; the store icons keep the v1 
 bench's R0-02 / R0-03 figures therefore stay comparable across the frame flip.
 
 **The atlas with interim art** — what `pnpm assets` writes today: 438 sprites and **1,459** frames
-(v1: 1,411; the beams' +4 each is the only count change), `main.png` a 1024² `common` page plus
-zone pages of 256² / 512×128 / 512×256 / 256×512 — **139,944 B** of PNG in all, inside the 256 KiB
-`ATLAS_PNG_BYTES_CAP` (now `test/scripts/assets/atlas-budget.ts`), and a 204,869 B `main.json`.
+(v1: 1,411; the beams' +4 each is the only count change — the native bullets of R3-03.V1 change
+sizes and pixels, never a count), `main.png` a 1024² `common` page plus
+zone pages of 256² / 512×128 / 512×256 / 256×512 — **143,775 B** of PNG in all (re-measured after
+R3-03.V1's native bullets; the interim ×1.5 upscale had written 139,944 B), far inside the
+**5,700,000 B** `ATLAS_PNG_BYTES_CAP` (R1-05's 256 KiB sum cap became the detailed-art projection
+`ATLAS_COMMON_PNG_CAP` 300,000 B + 9 × `ATLAS_ZONE_PNG_CAP` 600,000 B — the RR-7 stand-in band —
+in R3-04.M2b; `test/scripts/assets/atlas-budget.ts`), and a 204,896 B `main.json`.
 The sprite *names* do not change, so the interim art packs into the same zone groups (R1-05).
 
 **Hand-offs to R3.** The `artScale: 1` builds pass real-art PNG overrides and `native` sources
@@ -187,9 +197,9 @@ the `native` sprites the interim stage never upscales (the "Never upscaled" list
 
 | Module | Sprites |
 |---|---|
-| `bullets` | `bullets/{round,oval,needle}-{pink,red,purple}` — bright core, saturated body, dark rim (`shmup_feat.md` §12). Round 7×7 × 1 frame; oval 9×9 and needle 11×11 × 8 directional frames. Since M2-02 drawn by `bulletSprites(colours, suffix?, marks?, generator?)` — any body colours, a name suffix and per-family **core marks** (`CoreMark`: `solid` — the bright core disc, `ring` — the core with a dark centre pixel, `dot` — no core band, one bright centre pixel) |
-| `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width. M2-02: `lasers/bend-{pink,red,purple}` — the bending lasers' segment, one 7×7 round blob (`BEND_SIZE`; rim outside radius 2.6, body, a bright core inside 1.3) drawn at every node; both drawn by `laserSprites(colours, suffix?, generator?)` |
-| `palettes` | M2-02 (`shmup_feat.md` §21): every bullet, beam and bend sprite again for each colour-blind palette as `<sprite>@<palette>` — 15 sprites × `deuteranopia`, `protanopia`, `tritanopia` (the names match `@shmup/core` `BULLET_PALETTES`; `standard` is the plain sprites). `BULLET_PALETTES` here maps each palette to the three families' body colours (deuteranopia `#ff8ad8` / `#3ab0ff` / `#e4e4ff`, protanopia `#ff9ce4` / `#44c4ff` / `#eeeeff`, tritanopia `#ff4870` / `#22d8cc` / `#f2f2f2` for pink / red / purple — hues apart for that colour blindness and away from the gold items and orange explosions), `CORE_MARKS` the shape coding (pink `solid`, red `ring`, purple `dot`). Same frames, same order, so directional frames and band widths still line up |
+| `bullets` | `bullets/{round,oval,needle}-{pink,red,purple}` — bright core, saturated body, dark rim (`shmup_feat.md` §12). At scale 1: round 7×7 × 1 frame, oval 9×9 and needle 11×11 × 8 directional frames. At the v2 build scale it draws the bible §5.4 sizes natively instead, marked `native` (R3-03.V1): round **11×11**, oval **13×13**, needle **17×17**, 8 headings (round 1) — `bullets-v2.test.ts`. Since M2-02 drawn by `bulletSprites(colours, suffix?, marks?, generator?)` — any body colours, a name suffix and per-family **core marks** (`CoreMark`: `solid` — the bright core disc, `ring` — the core with a dark centre pixel, `dot` — no core band, one bright centre pixel); the ring / dot marks grow with the art — one pixel at v1, a five-pixel plus at the v2 core size |
+| `lasers` | `lasers/beam-{pink,red,purple}` (M1-09) — enemy laser beams in the bullet colours: 8 frames of 4×8 px, frame `k` a horizontal band `k + 1` px tall (dark rim rows from 3 px, body rows from 5 px, a bright core). Every column is identical, so the renderer stretches a frame to any length and picks the frame of the beam's drawn width. M2-02: `lasers/bend-{pink,red,purple}` — the bending lasers' segment, one 7×7 round blob (`BEND_SIZE`; rim outside radius 2.6, body, a bright core inside 1.3) drawn at every node; at the v2 build scale the blob is drawn native at **11×11** (`BEND_SIZE_V2`, R3-03.V1 — `BEND_SIZE` at scale 1). Both drawn by `laserSprites(colours, suffix?, generator?)` |
+| `palettes` | M2-02 (`shmup_feat.md` §21): every bullet, beam and bend sprite again for each colour-blind palette as `<sprite>@<palette>` — 15 sprites × `deuteranopia`, `protanopia`, `tritanopia` (the names match `@shmup/core` `BULLET_PALETTES`; `standard` is the plain sprites). `BULLET_PALETTES` here maps each palette to the three families' body colours (deuteranopia `#ff8ad8` / `#3ab0ff` / `#e4e4ff`, protanopia `#ff9ce4` / `#44c4ff` / `#eeeeff`, tritanopia `#ff4870` / `#22d8cc` / `#f2f2f2` for pink / red / purple — hues apart for that colour blindness and away from the gold items and orange explosions), `CORE_MARKS` the shape coding (pink `solid`, red `ring`, purple `dot`). Same frames, same order, so directional frames and band widths still line up. At the v2 build scale it passes the scale through, so the variants carry the native v2 shapes frame for frame (R3-03.V1). And since R3-03.V5 a bullet / beam / bend whose frames come from a real-art PNG override gets its variants **recoloured from that art** instead of redrawn (decision W5-13, [below](#real-art-png-overrides)) |
 | `explosions` | `fx/explosion-small` (16×16 × 6), `-medium` (32×32 × 7), `-large` (48×48 × 8); animation `burst` |
 | `particles` | `fx/spark` (5×5 × 3, `fade`), `fx/debris` (6×6 × 4, `tumble`), `fx/sparkle` (5×5 × 4, `twinkle` — fixed pixel lists, M1-14), `fx/ring` (9×9 × 4, `grow` — a 1-px ring of radius 1…4 by a `Math.sqrt` distance test, M1-14) |
 | `items` | `items/capsule` (12×8 × 2, `blink`); M2-02: `items/point` (5×5 × 2, `twinkle`) — the gold diamond (`|dx| + |dy| ≤ 2`, dark rim, white centre) cancelled bullets turn into; frame 1 lights its tips; M2-04: `items/capsule-blue` (12×8 × 2, `blink`) — the same pill in blue with a white core (`capsule(bright, tint)`, `CAPSULE_COLORS`); M2-10: `items/capsule-bonus` (12×8 × 2, `blink`) — the pill in gold, the 1,000-point bonus capsule — and `items/1up` (12×8 × 2, `blink`) — the pill in green with a white `+` (`oneUp(bright)`), the bonus stages' extra life |
@@ -241,14 +251,37 @@ A PNG under `assets/source/sprites/` targets the sprite named by its path:
   does not provide keep their code-defined pixels; extra PNG frames are appended; sidecar
   tags win over code tags of the same name; the sidecar's pivot wins over a code-defined
   anchor, which stays the fallback for a PNG without one (R3-02 — before, the code anchor
-  won, so a v2 PNG drawn at ×1.5 kept its v1 anchor). A PNG with no code-defined
+  won, so a v2 PNG drawn at ×1.5 kept its v1 anchor). A sidecar `meta.shmup.p2` map wins
+  over the sprite's own `p2` the same way (R3-03.V2a, [Player 2's palette
+  map](#player-2s-palette-map-m2-06-r3-03v2a)). A PNG with no code-defined
   counterpart adds a new sprite.
 - The export must list at least one frame, and every frame must fit an atlas page with its
   border (at most 2046×2046). Both are reported as source issues naming the file.
 - `README.md`, `LICENSES.md`, `.gitkeep`, editor files such as `*.aseprite` and the ingest
   tool's `*.recipe.json`, `*.art.json` and `*.edit.png` (R3-02,
   [real-assets.md](real-assets.md)) are ignored; a `*.json` that is neither a sprite source
-  nor the sidecar of a PNG is an issue.
+  nor the sidecar of a PNG is an issue. The one ingest output *not* in the ignore list is the
+  tile masks sidecar `<name>.masks.json` (R3-03.V4a) — under `assets/source/sprites/` it is
+  reported as a stray JSON, so keep it beside the recipe in the staging folder (or delete it
+  once its masks are copied); `scripts/assets/tileset-masks.mjs --check` scans both trees.
+
+**Palette variants of overridden art (R3-03.V5, decision W5-13).** When a bullet, beam or bend
+frame comes from a PNG override, its `@<palette>` colour-blind siblings are **recoloured from
+that art**, not redrawn from the procedural shapes. `recolourBulletOverrides` runs in
+`collectSprites` right after the override merge, before the font and the `@flash` / `@p2`
+siblings: every opaque pixel is classified into the v1 art's rim / body / core bands by luma
+(integer BT.601 weights 77/150/29; the boundaries are sums of neighbouring reference lumas
+compared against twice the pixel's, so no engine rounds differently), each band is mixed to the
+palette's body colour with `bullets.mjs`'s own ratios (rim toward black 0.68, core toward white
+0.75), and the family's shape code is re-applied — `CORE_MARKS` draws the `ring`'s dark plus and
+the `dot`'s bright plus over the recoloured body, the `dot` family additionally drops the core
+band to the body. Beams and bend nodes carry no mark. Alpha, sizes, anchor, frame count and
+frame order are kept, so the `content.test.ts` variant pin (every variant defined, frame for
+frame, equal `w/h/ax/ay`) still holds. The variant's origin is `palette:<base>` — kind `palette`
+in the origin report, inheriting the base's provenance ([art-provenance.md](art-provenance.md)).
+Only sprites of the procedural `BULLET_SPRITES` set gain recoloured siblings: a PNG introducing
+a *new* bullet name outside that set has no variants and none are required. Today's shipped atlas
+is byte-identical either way — no override PNG exists yet.
 
 ### Bitmap fonts (`*.font.json`)
 
@@ -320,9 +353,10 @@ The number that made this decision is the one a **real kanji set** would cost �
   and about 0.95 of that page on its own;
 - one 2048² page is 4,194,304 pixels, so that set is **under a quarter of a single page**: it needs
   **one extra atlas page**, not five;
-- `apps/tizen/dist` is **1,676.1 KB** of the 8,192 KB `DIST_BUDGET` (the figure the build's own
-  check prints; measured again 2026-09-16), and the page above encodes to 136.6 KB, so an extra
-  page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
+- `apps/tizen/dist` measured **1,676.1 KB** on 2026-09-16, against the 8,192 KB `DIST_BUDGET` of
+  that day; the budget doubled to **16,384 KB** in R3-04.M2b (`DIST_BUDGET` in
+  `apps/tizen/scripts/check-bundle.mjs`, imported by the webOS check), and the page above encodes
+  to 136.6 KB, so an extra page of glyphs is **nowhere near** a `DIST_BUDGET` overrun.
 
 A kanji language is therefore **feasible** — do not read this section as saying it is impossible.
 What rules it out *here* is that an extra page of that size roughly **doubles the atlas download
@@ -333,9 +367,10 @@ Before shipping one:
 1. **Subset by use**, not by standard — only the characters the shipped `strings` files actually
    contain (a full UI is a few hundred kanji, not seven thousand);
 2. give that set **its own atlas page**, named so the loader can fetch it per language rather than
-   for everyone (the manifest already lists one file and, since R1-05, one group per page, and the
-   residency already keeps pages off the GPU by group — but the shell still loads every page at boot,
-   so a per-language page also needs the lazy loading R3-04 may build);
+   for everyone (the manifest already lists one file and, since R1-05, one group per page — and since
+   R3-04.M3 the shell's lazy residency loads only the pages the shown World needs, so a page no
+   language selects is never fetched; what a per-language page still needs is the residency learning
+   the language's group, which R3-04 did not build);
 3. re-measure `dist/` against `DIST_BUDGET` and — the figure that actually decides it — the **boot
    time** against the ≤ 10 s launch rule before believing it fits.
 
@@ -344,21 +379,34 @@ Before shipping one:
 For every sprite with `hitFlash: true` the pipeline adds a **sibling sprite**
 `<name>@flash`: the same frame count, sizes, anchor and animations, every visible pixel
 turned white with its alpha kept. The renderer shows a hit by drawing
-`manifest.sprites[name].flash` with the same frame index — one sprite-id swap, on the same
+`manifest.sprites[name].flash` with the same frame index — one sprite-id change, on the same
 atlas page as its base (siblings follow their base's group) and in the same batch. (The plan sketched one `<frame>@flash` per frame; a whole sprite
 is simpler for the renderer.) Today the seven enemies and the four boss parts flash.
 
-### Player 2's palette swap (M2-06)
+### Player 2's palette map (M2-06, R3-03.V2a)
 
 After the `@flash` siblings, `collectSprites` adds a `<name>@p2` sibling (`scripts/assets/coop.mjs`)
-for every sprite under `ships/` and for `hud/life`: the same anchor, frame sizes and animations,
-`hitFlash: false`, every pixel with its **red and blue channels swapped** (green and alpha kept) —
-the KESTREL's blue hull stripe turns red-orange, its cyan canopy gold, its orange engine glow blue.
-It is exact integer work, so the atlas stays byte-identical on every machine; a real-art PNG
-override of a ship gets its variant derived from the override's pixels. The core interns
-`<ship sprite>@p2` for every ship (`P2_SPRITE_SUFFIX`, `PlayerShipSpec.spriteP2Id`) and the HUD
-`hud/life@p2`, and `pnpm content:check` requires them; the oversize report skips generated
-siblings. The atlas page stays 512×512 ([coop.md](coop.md#player-2s-palette-swap)).
+for every sprite under `ships/` and for `hud/life` (`P2_VARIANT_PREFIXES`, `P2_VARIANT_SPRITES` —
+never a generated `@` name): the same anchor, frame sizes and animations, `hitFlash: false`, every
+pixel recoloured through the sprite's **`p2` palette map** — `"#rrggbb": "#rrggbb"` pairs that
+`makeP2Sprite` applies, so the KESTREL's blue hull stripe turns red-orange, its cyan canopy gold,
+its orange engine glow blue. Only the listed colours are exchanged; every unlisted colour and the
+whole alpha pass through, so full-colour real art keeps its shading. A channel swap is unpredictable
+there — R3-03.V2a replaced v1's red ↔ blue swap (history: M2-06 drew the variant by swapping the red
+and blue channels, green and alpha kept) with the map, and the four shipped sprites
+(`ships/kestrel`, `ships/kestrel-thruster`, `ships/manta`, `hud/life` — the last a pixel map) declare
+maps that exchange exactly the colours the old swap did, so the atlas is byte-identical at both art
+scales. The map is the sprite's own `p2` field: the `"p2"` key of a pixel map or generator sprite, or
+the sidecar's `meta.shmup.p2` on a PNG override, which wins over the code-defined map just as the
+slice pivot wins over the anchor (real art declares its own player-2 colours — no code change to
+recolour a ship, `p2-ingest.test.ts`). Every sprite the rule reaches is a pixel map today, so
+`makeP2Sprite` takes the map from the source JSON; a generated sprite cannot declare one yet
+(`makeSprite` has no `p2` option).
+`collectSprites` **demands** the map: a `wantsP2Variant` sprite without one, or with a map naming a
+colour its art does not contain, or changing no pixel, fails the build with those issues
+(`coop-p2.test.ts`). The core interns `<ship sprite>@p2` for every ship (`P2_SPRITE_SUFFIX`,
+`PlayerShipSpec.spriteP2Id`) and the HUD `hud/life@p2`, and `pnpm content:check` requires them; the
+oversize report skips generated siblings ([coop.md](coop.md)).
 
 ## The initial sprite set
 
@@ -454,6 +502,92 @@ its own, so the shell's residency can unload the pages of the zones not being pl
   numbers frames by sprite name), so a re-derivation or a new split moves no golden replay — only
   page positions change. R1-05 compared 53 canvas captures of the grouped and the ungrouped build at
   frozen ticks: byte-identical.
+
+## Lazy atlas pages (R3-04.M3)
+
+Since R1-05 the residency loads every page a zone needs and holds it; since R3-04.M3 pages are
+fetched on demand and **detached when the stage changes**, and that is the default (M3a `e1dcedf`,
+M3b `46663d6`, M3c `1c5762c`, M3d `c61ccca`, M3e `338c3fe` — decision W5-15). Nothing the
+pipeline builds changes: the same pages, the same manifest, the same bytes — laziness is entirely
+runtime. The pipeline-relevant facts:
+
+- **render-pixi** (`@shmup/render-pixi` `atlas`): `createAtlas` takes `null` for a page that starts
+  unloaded; `Atlas` gains `isPageLoaded` / `loadPage` / `unloadPage`. A `TextureSource` and its
+  `Texture`s keep their object identity across attach / detach, so every sprite binding made at load
+  time stays valid; a frame on an unloaded page reads Pixi's empty source (0×0) — nothing samples
+  or draws it, and no `NaN` bounds appear. `loadPage` restores the manifest rects; `unloadPage`
+  drops the decoded image (the object, not the manifest entry).
+- **shell residency** (`@shmup/shell` `memory`, the runtime half in
+  [rendering-and-shell.md](rendering-and-shell.md) and
+  [platform-polish.md](platform-polish.md)): `createLazyAtlasResidency` — `prepare(stage)` detaches
+  the pages the stage does not need and fetches, decodes, attaches and uploads the ones it does, in
+  parallel through `Promise.all` (`Promise.allSettled` is Chromium 76). It is idempotent, retries a
+  failed load or upload on the next `prepare`, and fires the same `onChange` shape as the eager
+  residency. The image policy is `resident` for the lazy pages where the eager one is `all`
+  (decision W3-2); the loader gained `loadImageTimed` so a page keeps its timed fetch row.
+- **The zone-change hold** (`ShellOptions.atlasPages: 'lazy' | 'eager'`): boot awaits the current
+  stage's own `prepare` (decision W5-16), and a `PrepareStage` or a new `World` fires the loads.
+  While pages are in flight the frame loop **redraws the last frame** — no tick, no input, no
+  events — so a replay played across a zone change hashes identically with and without the hold,
+  and the held frame allocates nothing. The debug frame advance queues its step in
+  `Game.requestStep` and runs it on the first released frame (what `test/e2e/frame-advance.ts`
+  `stepTo` waits through).
+- **Context loss**: on `webglcontextrestored` the boot re-fetches, re-attaches, `unload()`s and
+  re-uploads each resident page serially (a cold re-upload); if that fails it falls back to Pixi's
+  lazy re-creation (`test/e2e/atlas-context-loss.spec.ts`).
+- **Parity rule**: a screen that draws sprites **outside** its zone's page set must either keep
+  those pages resident or attach them like the weapon-select preview World does — its private World
+  sits outside the residency, so `attachUnloadedPageImages` attaches the page images without
+  uploading or marking them resident, and each page uploads itself on first draw exactly as an
+  eager page would; the next real `prepare` detaches them. Tests that pin eager behaviour pass
+  `atlasPages: 'eager'` explicitly.
+- A page whose bytes do not fit the manifest rects throws a `RangeError` reading
+  `ATLAS DOES NOT MATCH ITS MANIFEST` (stale `dist/` versus a newer build); `AssetLoadError`
+  carries the `pageUrl` so the error screen names the page.
+
+## Stand-in zone art (`standin.mjs`, R3-04.M1)
+
+R3-04.M2 could not set the real-art atlas budget before the real art exists, so R3-04.M1 built a
+generator that draws a **whole zone with a detailed sprite's byte profile**: deterministic, seeded,
+palette-lawful placeholder art dense enough to measure against (`scripts/assets/standin.mjs`,
+M1a `341836b` + `1f49f41`, M1b). It sits at `scripts/assets/` rather than `procedural/` on purpose
+(decision W5-14): the `procedural/` folder is the **shipped** generator set — this file must never
+pack into the game's atlas. Nothing imports it except its own tests and R3-04.M4a's TV render
+bench (`apps/tizen/scripts/bench-atlas.mjs` calls `standinAtlas`); adding it rebuilt the shipped
+atlas with no byte change, and the scale-1 digest pin has never moved. Like the terrain generator it
+may import `scripts/frame.mjs` — the one root-script exception, because zone art is laid out in
+frame coordinates (`scripts/assets/terrain.mjs` explains why).
+
+- **`standinZone(zoneId, { seed })`** returns the zone's pixel maps, backdrops and tileset as data
+  (nothing is written): a `PALETTE_SIZE` of **48–64** colours in windows sky 0…15 / mid 16…31 /
+  rock 32…47 / accent 48…55, every one at least `RAMP_MARGIN`/255 (Chebyshev) from all eight
+  reserved palette-cycle ramps (bible §4.4) and never exactly a reserved bullet, gold or explosion
+  colour; the far layer `FRAME_W × FRAME_H` opaque (`FAR_WIDE_ZONES` build it 2 frames
+  `FRAME_W` wide) inside its ≤32-colour window; **4–5** keyed mid bands, each `FRAME_W × 120–240`
+  (far + bands = a 4–6 stack), drawn on the green-key **`KEY` pixel** that the written pixel maps
+  carry as `null` (bible §8, binary alpha §3.6); enemies in the 16-colour window, the boss, its
+  parts and states in the 24-colour one (bible §4.3 caps); 40 tiles at `TILE_SIZE` — edges,
+  corners, slopes, destructibles, deco — in a ≤32-colour set.
+- **`standinAtlas(zones, { seed })`** (M1b) builds a real atlas from it: a temporary tree that
+  copies `assets/source/`, adds `sprites/standin/zone-<x>/…` sprites marked `native: true` (the
+  enemies and boss parts with `hitFlash: true`), gives `atlas-groups.json` a `standin-zone-<x>`
+  group per zone — so the shipped groups stay untouched and every stand-in zone packs onto its own
+  pure pages — then runs the ordinary `buildAtlas` and removes the temp. `assets/source/` is never
+  written.
+- **Why the byte model is honest**: the entropy knobs (`NOISE_CELL`, `HAZE_CELL`,
+  `FAR_STREAK_ROWS`, `DETAIL_DENSITY`, `RIBBON_DENSITY`, `BAND_STEP`, `BAND_WINDOW_DENSITY`,
+  `TILE_TEXTURE_LEVELS`, `SPRITE_DETAIL_DENSITY`) tune each zone's own 2048×1024 PNG-8 page into
+  the **338,822–446,323 B** band `test/scripts/assets/standin.test.ts` pins (300,000–600,000 B
+  scaled to the page size — the RR-7 projection), and `test/integration/standin-budget.test.ts`
+  reads the zone residency from the built atlas (430,743–538,244 B per page including the shared
+  `common` page). R3-04.M2b set `ATLAS_ZONE_PNG_CAP` **600,000 B** and `ATLAS_COMMON_PNG_CAP`
+  **300,000 B** from these rows. Measured at `7baeb4d`: the worst zone (D) lands 153,677 B inside
+  the per-page ceiling; M1c will re-calibrate the band against the first real AI ingests.
+- **Its limits are documented**: the stand-in boss parts (`STANDIN_BOSS_PARTS`,
+  `scripts/assets/standin.mjs:879-882` — turret 44×44 ×4 frames, pod 26×26 ×3, cannon 30×18 ×2)
+  deliberately shortcut the bible §5.7 part table as a **byte-model shorthand** — they buy §5.7's
+  memory profile, not its silhouette. Real art replaces them through R3/R5, and §5.7 governs that
+  art, not these placeholders.
 
 ## The manifest (`assets/generated/atlas/main.json`)
 
@@ -571,7 +705,9 @@ its own — the nine bullet kinds and `lasers/beam-pink` (M1-09), `options/orb` 
 `lasers/bend-pink` and `items/point` (M2-02), the Spread Bomb's `shots/blast` (M2-03), `core/world` `ENGINE_SPRITES` — are checked the same
 way; hosts intern them with `loadContent`'s `extraSprites`. Since M2-02 the check also requires
 every colour-blind variant (`<sprite>@<palette>` for each non-standard `BULLET_PALETTES` entry) of
-every bullet / beam / bend sprite, frame for frame. The variants are never content names — the
+every bullet / beam / bend sprite, frame for frame — and since R3-03.V5 an overridden bullet needs
+nothing extra for it: the variant recolours from the override ([above](#real-art-png-overrides)).
+The variants are never content names — the
 renderer finds them by name when the player picks a palette
 ([rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)).
 
@@ -611,9 +747,10 @@ Drop `<name>.png` (and optionally the Aseprite `<name>.json` export) next to whe
 pixel map would live, keep the `.aseprite` file beside it and record third-party licences
 in a `LICENSES.md`. The pixel map can stay — frames the PNG lacks fall back to it — or be
 deleted once the PNG covers every frame. **Bullets, beams and bend segments** also have
-colour-blind variants (M2-02): a PNG named `bullets/oval-red.png` replaces only the standard
-sprite — override `bullets/oval-red@deuteranopia` (and the other two palettes) as well, or the
-colour-blind sets keep the placeholder's shapes.
+colour-blind variants (M2-02), and a PNG cannot name one (`@` is not valid in a sprite path):
+since R3-03.V5 the variant of an overridden bullet is recoloured from the override's own pixels
+in `collectSprites` ([above](#real-art-png-overrides)), and player 2's ship variants come from the
+sidecar's `meta.shmup.p2` map (R3-03.V2a) — one PNG per sprite is enough.
 
 ### Adding glyphs or a font
 
@@ -647,6 +784,7 @@ pnpm assets                                   # regenerate (cached)
 pnpm content:check                            # content validates + every content sprite exists
 pnpm test:integration                         # includes the pipeline, plugin and CLI tests
 pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit tests only
+node scripts/assets/tileset-masks.mjs --check # R3-03.V4: tileset art and its masks sidecars agree
 ```
 
 ## Tests
@@ -663,10 +801,17 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | `test/scripts/assets/sprite-source.test.ts`, `sprite-source-edge.test.ts` | Every validation path, Aseprite sidecars (hash/array, tags, pivot, trimmed, frameless), PNG overrides, loader error paths |
 | `test/scripts/assets/font.test.ts`, `font-edge.test.ts` | The charset equals core's `UI_GLYPHS` exactly (M3-03), the katakana layout and the derived voiced kana, glyph-key rules, `loadFontSources()`, the pixel font's design rules |
 | `test/scripts/assets/provenance.test.ts` | R3-02: every override PNG (under `assets/source/sprites/` and the staging folder `art-prompts/v2/ingested/`) has a valid `.art.json` or a `LICENSES.md` entry; a record without its PNG, a PNG or sidecar changed after ingest, a recipe never ingested fail; the ingest tool's fixture outputs load as overrides (its recipes, records and edit layers ignored) and pack pixel for pixel with the sidecar's anchor and tags — [real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest) |
-| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native`), the 9×12 interim font, the scale-1 digest pin |
+| `test/scripts/assets/interim.test.ts`, `interim-pipeline.test.ts` | R2-01: the interim stage — `parseArtScale` exact fractions and rejects, `scaleImage` / `scaleLength` / `scaleAnchor` at 1, 3/2 and 2 (the ⌈s·w⌉ sizes, ⌊2d/3⌋ sampling, ⌈s·a⌉ anchors, alpha copied), `scaleSprite` (frames and animations), `scaleFont`; the whole atlas `buildAtlas({ artScale: 1.5 })` against `buildAtlas({ artScale: 1 })` — the never-upscaled sources (terrain, `ui/pixel`, the beams' 8 → 12 frames of 4×8 → 6×12, overrides, `native` — since R3-03.V1 the set names the native v2 bullets and bend nodes too, pinned exactly, and the comparison's upscaled-frame floor follows it), the 9×12 interim font, the scale-1 digest pin |
 | `test/scripts/assets/terrain-size.test.ts`, `font-cell-size.test.ts` | R1-04: the terrain generator at 12 px and any even size (masks equal to every shipped mask resampled 8 → 12, the 8-px frames byte-identical to before, its `TILE_SIZE` equal to core's, `INTERIM_ART_SCALE` equal to core's `ART_SCALE`), `resampleMask` both ways; a 9×12 font made in the test (a ×1.5 upscale of `pixel6x8`, exactly the `UI_GLYPHS` code points) parses, packs next to the shipped font and lays out at advance 9 and a 15-px line |
-| `test/integration/tile-size.test.ts`, `stage-terrain.test.ts` | Every shipped tileset and stage uses `TILE_SIZE` (R1-04); every tileset mask equals the opaque pixels of its frame — since R1-04 also at 12 px |
-| `test/scripts/assets/coop.test.ts` | M2-06: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the exact red / blue swap, `makeP2Sprite`, every ship's and the stock icon's variant in the atlas |
+| `test/integration/tile-size.test.ts`, `stage-terrain.test.ts` | Every shipped tileset and stage uses `TILE_SIZE` (R1-04); every tileset mask equals the opaque pixels of its frame — since R1-04 also at 12 px. Since R3-03.V4b the two terrain checks live in `test/integration/terrain-checks.ts` (the spec imports them) and also run on tilesets ingested from real art |
+| `test/scripts/assets/coop.test.ts` | M2-06, R3-03.V2a: the core's suffix, `wantsP2Variant` (ships and the stock icon only), the palette map's exact colour exchanges with unlisted colours and every alpha kept, `makeP2Sprite`, every ship's and the stock icon's map-declared variant in the atlas — and that the shipped maps exchange exactly the colours v1's red ↔ blue channel swap did (that swap is the M2-06 history the pin keeps honest) |
+| `test/scripts/assets/coop-p2.test.ts` | R3-03.V2a: the shipped maps draw what the deleted channel swap drew, pixel for pixel at both art scales, the three `collectSprites` issues (no map, a colour the art lacks, a no-op map), and a PNG override whose sidecar carries `meta.shmup.p2` |
+| `test/scripts/assets/p2-ingest.test.ts` | R3-03.V2b: the ingest recipe's `p2` map through the sidecar's `meta.shmup.p2` into the atlas — the ship override's `@p2` from the sidecar map (replacing the code pixel-map's), unlisted colours kept, and the `@flash` silhouette of an overridden enemy from the new art |
+| `test/scripts/assets/bullets-v2.test.ts` | R3-03.V1: the native v2 bullet art — round 11×11 (1 frame), oval 13×13, needle 17×17 (8 headings), bend node 11×11, all `native` at `artScale ≠ 1`, the ring / dot marks as five-pixel plus, every `@<palette>` variant frame for frame; at scale 1 the v1 pixel map unchanged, and the direction rule (`k · 22.5°`, `k + 4` the exact quarter turn) holds at both sizes |
+| `test/scripts/assets/palette-recolour.test.ts` | R3-03.V5: the colour-blind variants of an overridden bullet / beam / bend recolour the override — luma banding against the v1 reference colours, the family's core mark re-applied (ring plus, dot plus, beams and bends unmarked), alpha and sizes kept frame for frame, origin `palette:<base>` |
+| `test/scripts/assets/tileset-masks.test.ts` | R3-03.V4b: the copied terrain checks on a fixture tileset of ingested tile art, `--check` (pair and scan modes) failing loudly on a tileset / sidecar disagreement, `--write` refusing to remap a solid tile (W5-11) and writing nothing when it refuses, frames matched by index with the name only a warning |
+| `test/scripts/assets/standin.test.ts`, `test/integration/standin-budget.test.ts` | R3-04.M1: the stand-in generator — palette cap and ramp margins, far / band / tile sizes and colour windows, determinism across processes and seeds; part 2 the enemy / boss describes and the RR-7 band gate (300–600 K scaled per 2048×1024 group page); the budget test runs `standinAtlas()` in memory and sums GPU and PNG bytes through `estimateStageMemory` ([below](#stand-in-zone-art-standinmjs-r3-04m1)) |
+| `test/integration/palette-cycle-scan.test.ts` | R3-03.V3: the art bible §4.4 scan of the shipped atlas (decision W5-12 — fail, not warn): per-stage cycled-layer exact-or-≥3/255, the project-wide margin from all eight reserved ramps with the bible's exemptions pinned inside the test (an exemption that stops tripping fails), and a synthetic fixture proving the measure — [presentation-polish.md](presentation-polish.md#palette-cycling-render-pixi-palette) |
 | `test/scripts/assets/palettes-names.test.ts` | M2-02: the pipeline's palettes are exactly core's `BULLET_PALETTES` other than `standard`, in core order; every family has a body colour and a core mark in every palette; one `<standard sprite>@<palette>` per standard sprite and palette; two runs draw the same pixels |
 | `test/scripts/assets/procedural.test.ts`, `image.test.ts`, `rng.test.ts`, `manifest.test.ts` | Each generator's documented shapes (bullets outlined by the dark rim, the M2-02 core marks, bend segments and the point diamond, slope profiles, seamless star tiles, M2-08: the sea only in `SEA_RAMP`, the floor's strips …), raster helpers, the asset RNG's known-answer vectors, the manifest layout and self-consistency |
 | `test/scripts/assets/pipeline.test.ts`, `pipeline-edge.test.ts` | The whole atlas: frames pixel-exact, extrusion, the initial sprite set, byte-identical runs, every cache state (including a pipeline edit after the code was loaded), stale-page removal, oversized frames as issues, parallel runs |
@@ -691,7 +836,8 @@ pnpm exec vitest run --project integration test/scripts/assets   # pipeline unit
 | The atlas differs on another machine | Only a different zlib (Node version) can change the PNG bytes; the pixels never change. The zlib version is part of the input hash, so the cache rebuilds |
 | `pngjs` has no types in the editor | Deliberate — it is loaded untyped (no `@types/pngjs` dependency); only `png.mjs` and the hash in `pipeline.mjs` touch it |
 | TypeScript cannot see a new export of a `scripts/assets/*.mjs` module | The Node-side TS reads the JSDoc types through `allowJs` in `tsconfig.tooling.json` (no `checkJs`): give the export a JSDoc `@param` / `@returns` type |
-| A colour-blind palette shows the placeholder bullet next to real art | The `@<palette>` variants are sprites of their own — override them too (above) |
+| A colour-blind palette shows a recoloured real-art bullet wrong | Since R3-03.V5 the variant is recoloured from the override's pixels (luma bands, the family's core mark) — there is nothing to override by hand; a flat band means the art's shades collapsed into one luma band, fix the art's contrast (above) |
+| `asset sources are invalid` names `:p2` | A `wantsP2Variant` sprite (a ship, `hud/life`) declares no `"p2"` palette map, a pair of the map is not `"#rrggbb" → "#rrggbb"`, a map colour is not in the art, or the map changes no pixel — fix the pixel map's `"p2"` key or the sidecar's `meta.shmup.p2` (R3-03.V2a, above) |
 | `covers exactly the charset core declares` fails | The font source and `UI_GLYPHS` (`packages/core/src/ui/strings.ts`) disagree — add the glyph, or remove the code point, in the same commit (M3-03) |
 | A translation is rejected with `uses a character the bitmap font does not have` | Its text uses a character outside `UI_GLYPHS`. Either it is a typo (a full-width digit, a curly quote, `ヴ`) or the font really needs the glyph — see "Adding glyphs or a font" |
 | A real-art PNG seems ignored | Its path must be a valid sprite name (lower-case kebab segments) — otherwise it is reported as an issue, not skipped silently. Check that the sidecar has the same base name |
@@ -725,8 +871,8 @@ M1-18 (done) added zone A's art: the pixel maps `enemies/vane`, `enemies/gyre` a
 BULWARK's five `bosses/bulwark-*` parts (all with `@flash`; its core reuses `bosses/core`), and
 the new `backdrops` generator with the planet band `bg/azure-verge` — the page stays 512×512
 ([zone-a-and-playtest.md](zone-a-and-playtest.md)); M2-02 (done) added `lasers/bend-*`,
-`items/point` and the `palettes` generator's 45 colour-blind variants, which the renderer swaps in
-when the player picks a palette ([pattern-dsl.md](pattern-dsl.md),
+`items/point` and the `palettes` generator's 45 colour-blind variants, which the renderer draws
+instead when the player selects a palette ([pattern-dsl.md](pattern-dsl.md),
 [rendering-and-shell.md](rendering-and-shell.md#colour-blind-bullet-palettes)); M2-03 (done) added
 the Types B–D shots (seven pixel maps and the new `weapons` generator's `shots/blast`,
 `shots/ripple`, `shots/cyclone`) and grew `hud/meter-labels` to 16 frames — the page stays
@@ -738,7 +884,8 @@ M2-05 (done) added the pixel maps `ships/manta` and `enemies/cube` and the `dire
 (the MANTA's shots, the six colour items, `shields/arm`) — the items and the Arm joined
 `ENGINE_SPRITES`, and the page stays 512×512 ([direct-mode.md](direct-mode.md#assets)); M2-06
 (done) added `coop.mjs` — the `<name>@p2` palette swaps of every ship and `hud/life` (which joined
-`UI_SPRITES`) — and the page stays 512×512 ([coop.md](coop.md#player-2s-palette-swap)); M2-07
+`UI_SPRITES`) — and the page stays 512×512 ([coop.md](coop.md)); the swap
+became a **`p2` palette map** in R3-03.V2a ([above](#player-2s-palette-map-m2-06-r3-03v2a)); M2-07
 (done) added three `terrain-a` tiles to the `terrain` generator (`brick`, `cube`, `tissue` —
 frames 17–19, tile ids 18–20), the eight gimmick enemy pixel maps and the engine sprite
 `gimmicks/chain-link`, which joined `ENGINE_SPRITES` (`GIMMICK_SPRITES`) — the page stays 512×512
@@ -787,5 +934,11 @@ R1-05 (done, v2) split the atlas by zone: the packer's groups, the content-deriv
 [Atlas groups](#atlas-groups-r1-05) above, the residency in
 [platform-polish.md](platform-polish.md#memory-budget-shmupshell-memory). R2-01 (done, v2) flipped
 the frame and shipped the interim ×1.5 art ([above](#the-interim-15-art-stage-r2-01)) — it packs
-into the same groups, the names do not change; R3-04 sets the atlas budget from detailed
-stand-in art.
+into the same groups, the names do not change; R3-04 (done, v2) set the atlas budget from the
+detailed stand-in art ([Stand-in zone art](#stand-in-zone-art-standinmjs-r3-04m1)) and made the
+lazy atlas pages the default ([Lazy atlas pages](#lazy-atlas-pages-r3-04m3)); R3-03 (done, v2) made
+the `<ship>@p2` variant a **palette map** ([above](#player-2s-palette-map-m2-06-r3-03v2a)), drew
+v2's bullets and bend nodes **native** at the bible's §5.4 sizes, recoloured the colour-blind
+variants of overridden art ([Real-art PNG overrides](#real-art-png-overrides)), and shipped the
+ingest `collision` recipes with `scripts/assets/tileset-masks.mjs`
+([real-assets.md](real-assets.md#tile-collision-and-the-mask-copy-r3-03v4)).

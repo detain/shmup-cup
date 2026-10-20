@@ -468,6 +468,10 @@ Shipped sprites by served model (as a source or an edit reference):
 0 failures, 0 warnings
 ```
 
+*(The kinds columns print only when the kind has sprites, so the table still matches today's run;
+R3-03.V5's `palette` kind — the recoloured colour-blind variants of a real-art override — appears
+with the first override that names a bullet, beam or bend.)*
+
 ### 9.2 What it reads
 
 - **The asset pipeline's own sprite list**, `collectSprites()` of `scripts/assets/pipeline.mjs`
@@ -479,7 +483,7 @@ Shipped sprites by served model (as a source or an edit reference):
   | `procedural:<module>` | procedural | `generator` |
   | `…/<name>.sprite.json` | procedural | `pixel-map` |
   | `…/<name>.font.json` | procedural | `font` |
-  | `flash:<base>`, `p2:<base>` | the base's | `flash`, `p2` — the base's models, record and status too |
+  | `flash:<base>`, `p2:<base>`, `palette:<base>` | the base's | `flash`, `p2`, `palette` — the base's models, record and status too |
   | ends in `.png` (an override PNG, alone or `<base> + <png>`) | the record's `origin`: `ai-assisted` or `hand` | `record` — or `hand` / `licensed` for a `LICENSES.md` entry, `unknown` / `untraced` with neither |
   | anything else | `unknown` | `unclassified` (rule 6) |
 
@@ -561,11 +565,12 @@ line of the script to relax.
   art only from a `ship` model, FLUX on hold, keep every output's sidecar for ingest). It waits for
   round 2, with R3-01's post-round-2 edits, because the art round uses the library until then.
 - The owner items of section 8 (registration, LTX notices, store texts) are unchanged.
-- **Colour-blind variants of real art (for R3-03).** A real-art bullet needs its `@<palette>`
-  variants too, but an override PNG cannot supply them (`@` is not valid in a sprite name), so they
-  stay `procedural:palettes` sprites and the report lists them as procedural even when their base is
-  real art. When R3-03 decides how variants of real art are made, a derived variant should inherit
-  its base's provenance, as `@flash` / `@p2` already do.
+- ~~**Colour-blind variants of real art (for R3-03)**~~ **delivered (R3-03.V5, decision W5-13):**
+  when a bullet, beam or bend name is a real-art override, its `@<palette>` variants are recoloured
+  **from the override's own pixels** by the pipeline's recolour stage (luma bands, the same
+  shape-coded cores) — the `@`-in-a-file-name problem is gone, one PNG per base suffices. Those
+  variants carry origin `palette:<base>` and kind `palette`, so the report inherits the base's
+  provenance exactly as `@flash` / `@p2` do ([asset-pipeline.md](asset-pipeline.md#real-art-png-overrides)).
 
 **What part 2 needed from R3-02**, and where R3-02 delivered it ([real-assets.md](real-assets.md#the-ingest-tool-art-promptsingest)):
 
