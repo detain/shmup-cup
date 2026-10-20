@@ -805,10 +805,15 @@ describe('core/weapons', () => {
 });
 
 /**
- * The hits `collide` must find, computed by testing every shot against every enemy slot.
+ * The hits `collide` must find, computed by testing every shot against every enemy slot. A
+ * non-piercing shot mirrors the physical pick of the engine's `offerHit` (prepB.FIX2): the
+ * target whose box the shot's leading edge entered first — the smallest entry gap
+ * `cx · qVx + cy · qVy − hw · |qVx| − hh · |qVy|` on the shot's travel vector (a beam's
+ * `qVy` is 0, as `collide` sets it); on an exact tie the damageable target wins over the
+ * armoured one, a further tie the lower slot, and a non-finite gap never steals the pick.
  *
  * @param w - The world (shots and enemies as they are).
- * @returns `[shot, enemy]` pairs in shot order, then enemy-slot order.
+ * @returns `[shot, enemy]` pairs in shot order, each shot's piercing hits in enemy-slot order.
  */
 function bruteForce(w: World): [number, number][] {
   const out: [number, number][] = [];
@@ -821,17 +826,41 @@ function bruteForce(w: World): [number, number][] {
     const y0 = f.y[i] - f.hh[i];
     const y1 = f.y[i] + f.hh[i];
     const pierce = (f.flags[i] & ShotFlag.Pierce) !== 0;
+    // The non-piercing pick mirrors `collide`'s published vectors and `offerHit`, line for line.
+    const qVx = f.vx[i];
+    const qVy = laser || f.kind[i] === ShotKind.Twin ? 0 : f.vy[i];
+    const qAx = Math.abs(qVx);
+    const qAy = Math.abs(qVy);
+    let best = -1;
+    let bestGap = 0;
+    let bestArm = false;
     for (const e of w.enemies.enemies) {
       if (e.state !== EnemyState.Live || (e.flags & EnemyFlag.Ghost) !== 0) continue;
       const hit = e.x + e.hw >= x0 && e.x - e.hw <= x1 && e.y + e.hh >= y0 && e.y - e.hh <= y1;
       if (!hit) continue;
       if (!pierce) {
-        out.push([i, e.slot]);
-        break;
+        const armoured = (e.flags & EnemyFlag.Invulnerable) !== 0;
+        const gap = e.x * qVx + e.y * qVy - e.hw * qAx - e.hh * qAy;
+        if (best >= 0) {
+          if (!(gap < bestGap)) {
+            if (gap === bestGap) {
+              if (armoured !== bestArm) {
+                if (armoured) continue;
+              } else if (e.slot >= best) continue;
+            } else {
+              continue; // farther along the travel — or a non-finite gap never steals the pick
+            }
+          }
+        }
+        best = e.slot;
+        bestGap = gap;
+        bestArm = armoured;
+        continue;
       }
       const cooldown = w.weapons.cooldowns[(f.table[i] - 1) * MAX_ENEMIES + e.slot];
       if ((e.flags & EnemyFlag.Invulnerable) !== 0 || cooldown === 0) out.push([i, e.slot]);
     }
+    if (best >= 0) out.push([i, best]);
   }
   return out;
 }
