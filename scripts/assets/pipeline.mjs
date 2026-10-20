@@ -65,7 +65,7 @@ import { generateProceduralSprites } from './procedural/index.mjs';
 import { FLASH_SUFFIX, makeFlashSprite } from './flash.mjs';
 import { P2_SUFFIX, makeP2Sprite, wantsP2Variant } from './coop.mjs';
 import { buildFontSprite, loadFontSources } from './font.mjs';
-import { createImage, blit, getPixel, setPixel } from './image.mjs';
+import { createImage, blit, getPixel, parseColor, setPixel } from './image.mjs';
 import { INTERIM_ART_SCALE, parseArtScale, scaleFont, scaleSprite } from './interim.mjs';
 import { MANIFEST_FORMAT_VERSION, formatManifest, frameName } from './manifest.mjs';
 import { MAX_PAGE_SIZE, packRects } from './packer.mjs';
@@ -336,7 +336,8 @@ function terrainTileSize(artScale) {
  * every sprite but a `native` one scaled nearest-neighbour, its explicit anchor `⌈s·a⌉`) → PNG
  * overrides by name (never scaled: real art is v2-native) → font sprites (`font/<name>`, scaled
  * with their metrics) → `<name>@flash` siblings for `hitFlash` sprites → `<name>@p2` palette
- * swaps of the ships and the stock icon (M2-06, `coop.mjs`) — both from the scaled sprites →
+ * maps of the ships and the stock icon (M2-06, `coop.mjs`, R3-03.V2a) — both from the scaled
+ * sprites →
  * default anchors (centre of the scaled frame 0) → atlas groups ({@link resolveAtlasGroup} over
  * `atlas-groups.json`, R1-05: a listed name the atlas lacks, a listed font and an empty `common`
  * group are issues). Names, animations and groups never depend on the art scale, and frame counts
@@ -425,12 +426,28 @@ export function collectSprites(options = {}) {
       byName.set(flash.name, flash);
     }
   }
-  // Player 2's palette swap of the ships and the stock icon (plan M2-06).
+  // Player 2's palette map of the ships and the stock icon (plan M2-06; R3-03.V2a — the
+  // sprite's own `p2` map replaced the red ↔ blue channel swap, so the variant is defined for
+  // full-colour real art too). The map must exist and fit the art; either way it draws the
+  // sibling or the build fails with the issues.
   for (const sprite of [...byName.values()]) {
-    if (wantsP2Variant(sprite.name)) {
-      const p2 = makeP2Sprite(sprite);
-      byName.set(p2.name, p2);
+    if (!wantsP2Variant(sprite.name)) continue;
+    const path = `${sprite.origin}:p2`;
+    const map = sprite.p2;
+    if (map === undefined) {
+      issues.push({
+        path,
+        message: `"${sprite.name}" gets a "@p2" variant and needs a "p2" palette map`,
+      });
+      continue;
     }
+    const problems = p2MapIssues(sprite, map, path);
+    if (problems.length > 0) {
+      issues.push(...problems);
+      continue;
+    }
+    const p2 = makeP2Sprite(sprite, map);
+    byName.set(p2.name, p2);
   }
 
   // Atlas groups (R1-05): every name the file lists must be a sprite of this atlas, and
@@ -478,6 +495,54 @@ export function collectSprites(options = {}) {
     });
   }
   return { sprites, fonts, issues };
+}
+
+/**
+ * Checks a player 2 palette map against the art it must draw (R3-03.V2a): every key must be a
+ * colour the frames actually hold, and at least one pixel of the art must change. A colour the
+ * art does not contain is a stale map (the art was redrawn without it); a map that changes no
+ * pixel is a no-op masquerading as a variant.
+ *
+ * @param {SpriteDef} sprite - The sprite whose `@p2` variant the map draws.
+ * @param {Readonly<Record<string, string>>} map - The `"#rrggbb": "#rrggbb"` map.
+ * @param {string} path - Issue path (`<origin>:p2`).
+ * @returns {AssetIssue[]} The problems — empty when the map maps the art.
+ */
+function p2MapIssues(sprite, map, path) {
+  /** @type {Set<number>} */
+  const colors = new Set();
+  for (const frame of sprite.frames) {
+    const d = frame.data;
+    for (let i = 0; i < d.length; i += 4) colors.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+  }
+  /** @type {AssetIssue[]} */
+  const problems = [];
+  let changes = false;
+  for (const [from, to] of Object.entries(map)) {
+    const src = parseColor(from);
+    const dst = parseColor(to);
+    if (src === null || dst === null) {
+      problems.push({
+        path: `${path}.${from}`,
+        message: `"${from}" → "${to}" is not a colour pair "#rrggbb" → "#rrggbb"`,
+      });
+      continue;
+    }
+    const key = (src[0] << 16) | (src[1] << 8) | src[2];
+    const value = (dst[0] << 16) | (dst[1] << 8) | dst[2];
+    if (!colors.has(key)) {
+      problems.push({
+        path: `${path}.${from}`,
+        message: `colour "${from}" is not in the art of "${sprite.name}"`,
+      });
+    } else if (value !== key) {
+      changes = true;
+    }
+  }
+  if (!changes) {
+    problems.push({ path, message: `changes no pixel of "${sprite.name}"` });
+  }
+  return problems;
 }
 
 /**

@@ -2,6 +2,7 @@
   "name": "ships/manta",
   "description": "MANTA, the Direct-mode ship (original, plan M2-05): a flat ray-winged hull with a green canopy and twin thrusters. Frames: 0 level, 1 banking up, 2 banking down.",
   "palette": { ".": null, "o": "#10281e", "h": "#c8e0d0", "s": "#6a9a88", "g": "#40d070", "c": "#a8f8c0", "e": "#f8b030" },
+  "p2": { "#10281e": "#1e2810", "#c8e0d0": "#d0e0c8", "#6a9a88": "#889a6a", "#40d070": "#70d040", "#a8f8c0": "#c0f8a8", "#f8b030": "#30b0f8" },
   "anchor": [8, 5],
   "hitFlash": false,
   "frames": [

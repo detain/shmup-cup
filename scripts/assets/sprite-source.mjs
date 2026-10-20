@@ -22,7 +22,9 @@
  * `#rgb`, `#rgba`, `#rrggbb` or `#rrggbbaa`. Every frame has the same size; `anchor`
  * (pixels from the frame's top-left) defaults to the frame centre (`floor(w / 2)`,
  * `floor(h / 2)`); `hitFlash: true` makes the pipeline add the `<name>@flash` silhouette
- * sprite (decision D30). `native: true` (optional, default `false`) says the pixels are already at
+ * sprite (decision D30). `p2` (optional) is player 2's palette map — `"#rrggbb": "#rrggbb"`
+ * pairs, every colour of the art that its `<name>@p2` variant exchanges (`coop.mjs`,
+ * R3-03.V2a); the pipeline demands one from every sprite `wantsP2Variant` accepts. `native: true` (optional, default `false`) says the pixels are already at
  * the art's v2 size, so the interim ×1.5 stage leaves them alone (plan_resolution.md R2-01, W4-5 —
  * `scripts/assets/interim.mjs`); a v1-scale map leaves it out.
  *
@@ -33,7 +35,8 @@
  * replaces frame `i` (frame name `<sprite>#<i>`) of the code-defined sprite with the
  * same name; frames the PNG does not provide keep their code-defined pixels, extra PNG
  * frames are appended. A sidecar anchor wins over the code-defined one (the art knows its
- * own pivot: a v2 PNG drawn ×1.5 must not keep a v1 anchor — R3-02). A PNG with no
+ * own pivot: a v2 PNG drawn ×1.5 must not keep a v1 anchor — R3-02). A sidecar `meta.shmup.p2`
+ * map wins over the code-defined one the same way (R3-03.V2a). A PNG with no
  * code-defined counterpart adds a new sprite.
  *
  * **Ingest files.** The R3-02 ingest tool (`art-prompts/ingest/`) keeps its recipe, its
@@ -80,6 +83,9 @@ import { decodePng } from './png.mjs';
  * @property {boolean} [native] - `true` when the frames are already at the art's v2 size: the
  *   pipeline's interim stage never scales them (R2-01, W4-5 — the terrain tilesets, `ui/pixel`,
  *   the laser beams, R3 / R4 redraws). Absent (= `false`) for a v1-scale source.
+ * @property {Record<string, string>} [p2] - Player 2's palette map, `"#rrggbb": "#rrggbb"`
+ *   pairs (`coop.mjs`, R3-03.V2a). Only a source that declares one carries it; a PNG override's
+ *   sidecar map wins over the code-defined one, like the anchor.
  * @property {string} [group] - Atlas group (`common`, `zone-a`, …), set by the pipeline's
  *   `collectSprites` (R1-05); sources never set it.
  */
@@ -93,6 +99,8 @@ import { decodePng } from './png.mjs';
  * @property {Image[]} frames - Frames cut out of the PNG.
  * @property {Record<string, number[]>} animations - From the sidecar's `meta.frameTags`.
  * @property {[number, number] | null} anchor - From the sidecar's first slice pivot.
+ * @property {Record<string, string>} [p2] - Player 2's palette map from the sidecar's
+ *   `meta.shmup.p2` (R3-03.V2a). Absent when the sidecar carries none.
  */
 
 /**
@@ -128,12 +136,51 @@ const SPRITE_KEYS = [
   'name',
   'description',
   'palette',
+  'p2',
   'anchor',
   'hitFlash',
   'native',
   'frames',
   'animations',
 ];
+
+/** One side of a player 2 palette map: an exact six-digit lower-case hex colour. */
+const P2_COLOR_PATTERN = /^#[0-9a-f]{6}$/;
+
+/**
+ * Validates a player 2 palette map (`p2` of a pixel map, `meta.shmup.p2` of a sidecar): an
+ * object of `"#rrggbb": "#rrggbb"` pairs (R3-03.V2a — the map `coop.mjs` draws `<name>@p2`
+ * from; whether its colours fit the art is the pipeline's check).
+ *
+ * @param {unknown} value - The candidate map.
+ * @param {string} path - Issue path prefix (`<file>:p2`).
+ * @param {AssetIssue[]} issues - Collector.
+ * @returns {Record<string, string> | null} A copy of the valid map, or `null` when anything is
+ *   wrong (the problems are issues then).
+ */
+function parseP2Map(value, path, issues) {
+  if (!isObject(value)) {
+    issues.push({ path, message: 'must be an object of "#rrggbb": "#rrggbb" colour pairs' });
+    return null;
+  }
+  /** @type {Record<string, string>} */
+  const map = {};
+  for (const [from, to] of Object.entries(value)) {
+    if (!P2_COLOR_PATTERN.test(from)) {
+      issues.push({ path: `${path}.${from}`, message: 'keys are exact colours "#rrggbb"' });
+      continue;
+    }
+    if (typeof to !== 'string' || !P2_COLOR_PATTERN.test(to)) {
+      issues.push({
+        path: `${path}.${from}`,
+        message: `"${from}" must map to an exact colour "#rrggbb"`,
+      });
+      continue;
+    }
+    map[from] = to;
+  }
+  return map;
+}
 
 /**
  * Whether a value is a plain JSON object.
@@ -225,6 +272,11 @@ export function parseSpriteSource(json, file, expectedName = null) {
   }
   if (json.description !== undefined && typeof json.description !== 'string') {
     issues.push({ path: `${file}:description`, message: 'must be a string' });
+  }
+
+  let p2Map;
+  if (json.p2 !== undefined) {
+    p2Map = parseP2Map(json.p2, `${file}:p2`, issues) ?? undefined;
   }
 
   /** @type {Record<string, Rgba | null>} */
@@ -358,6 +410,8 @@ export function parseSpriteSource(json, file, expectedName = null) {
   };
   // Only a native source carries the flag, so a v1-scale sprite keeps its pre-R2-01 shape.
   if (native) sprite.native = true;
+  // Only a source that declares a player 2 map carries it, so every other sprite keeps its shape.
+  if (p2Map !== undefined) sprite.p2 = p2Map;
   return { sprite, issues };
 }
 
@@ -494,7 +548,16 @@ export function readPngFrames(image, sidecar, file, issues) {
       }
     }
   }
-  return { frames, animations, anchor };
+  /** @type {Record<string, string> | undefined} */
+  let p2;
+  if (isObject(meta.shmup) && meta.shmup.p2 !== undefined) {
+    p2 = parseP2Map(meta.shmup.p2, `${file}:meta.shmup.p2`, issues) ?? undefined;
+  }
+
+  /** @type {Omit<PngSprite, 'name' | 'origin'>} */
+  const parts = { frames, animations, anchor };
+  if (p2 !== undefined) parts.p2 = p2;
+  return parts;
 }
 
 /**
@@ -623,14 +686,17 @@ export function applyPngOverrides(sprites, overrides) {
     const index = byName.get(png.name);
     if (index === undefined) {
       byName.set(png.name, out.length);
-      out.push({
+      /** @type {SpriteDef} */
+      const fresh = {
         name: png.name,
         anchor: png.anchor,
         hitFlash: false,
         frames: png.frames.slice(),
         animations: { ...png.animations },
         origin: png.origin,
-      });
+      };
+      if (png.p2 !== undefined) fresh.p2 = png.p2;
+      out.push(fresh);
       continue;
     }
     const base = out[index];
@@ -638,13 +704,16 @@ export function applyPngOverrides(sprites, overrides) {
     png.frames.forEach((frame, i) => {
       frames[i] = frame;
     });
-    out[index] = {
+    const merged = {
       ...base,
       frames,
       anchor: png.anchor ?? base.anchor,
       animations: { ...base.animations, ...png.animations },
       origin: `${base.origin} + ${png.origin}`,
     };
+    // A sidecar map wins over the code-defined one, like the anchor (R3-03.V2a).
+    if (png.p2 !== undefined) merged.p2 = png.p2;
+    out[index] = merged;
   }
   return out;
 }

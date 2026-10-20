@@ -285,6 +285,51 @@ describe('scripts/assets/sprite-source — parseSpriteSource (edge)', () => {
   });
 });
 
+describe('scripts/assets/sprite-source — the p2 palette map key (R3-03.V2a)', () => {
+  const MAP = { '#ffffff': '#ff0000', '#000000': '#ffffff' };
+
+  it('accepts exact "#rrggbb": "#rrggbb" pairs and copies its input', () => {
+    const json = { ...MINI, p2: { ...MAP } };
+    const { sprite, issues } = parseSpriteSource(json, 'f');
+    expect(issues).toEqual([]);
+    expect(sprite?.p2).toEqual(MAP);
+    expect(sprite?.p2).not.toBe(json.p2);
+    json.p2['#ffffff'] = '#00ff00';
+    expect(sprite?.p2['#ffffff']).toBe('#ff0000');
+  });
+
+  it('leaves the field off a sprite that declares no map', () => {
+    const { sprite } = parseSpriteSource(MINI, 'f');
+    expect(sprite).not.toBeNull();
+    expect('p2' in (sprite as object)).toBe(false);
+  });
+
+  it.each([
+    ['an array', []],
+    ['a string', '#fff'],
+    ['null', null],
+  ])('rejects a p2 given as %s', (_label, p2) => {
+    const { issues } = parseSpriteSource({ ...MINI, p2 }, 'f');
+    expect(issues).toEqual([
+      { path: 'f:p2', message: 'must be an object of "#rrggbb": "#rrggbb" colour pairs' },
+    ]);
+  });
+
+  it.each([
+    ['#fff', '#ff0000'], // a short-form key
+    ['#ff0000', '#fff'], // a short-form value
+    ['#FF0000', '#ff0000'], // an upper-case key
+    ['#ff000000', '#ff0000'], // a key with alpha
+    ['#ff0000', 'nope'], // a value that is not a colour
+    ['#ff0000', 3], // a value that is not a string
+  ])('reports the pair %j → %j', (from, to) => {
+    const { issues } = parseSpriteSource({ ...MINI, p2: { [from]: to } }, 'f');
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toBe(`f:p2.${from}`);
+    expect(issues[0].message).toContain('#rrggbb');
+  });
+});
+
 describe('scripts/assets/sprite-source — Aseprite sidecars (edge)', () => {
   it('reports an export without frames (regression: it made a zero-frame sprite)', () => {
     for (const sidecar of [{ frames: [] }, { frames: {} }]) {
@@ -465,6 +510,26 @@ describe('scripts/assets/sprite-source — Aseprite sidecars (edge)', () => {
       expect(parts.anchor).toBeNull();
     }
   });
+
+  it('reads a player 2 map from meta.shmup.p2 (R3-03.V2a)', () => {
+    const one = [{ frame: { x: 0, y: 0, w: 1, h: 1 } }];
+    const good = sidecarParts({
+      frames: one,
+      meta: { shmup: { p2: { '#ff0000': '#00ff00' } } },
+    });
+    expect(good.issues).toEqual([]);
+    expect(good.p2).toEqual({ '#ff0000': '#00ff00' });
+    // No shmup block, or one without a p2, is no issue and no map.
+    for (const meta of [{}, { shmup: {} }, { shmup: 3 }, { shmup: null }]) {
+      const parts = sidecarParts({ frames: one, meta });
+      expect(parts.issues, JSON.stringify(meta)).toEqual([]);
+      expect('p2' in parts).toBe(false);
+    }
+    const bad = sidecarParts({ frames: one, meta: { shmup: { p2: { '#f00': '#0f0' } } } });
+    expect(bad.issues).toEqual([
+      { path: 's.json:meta.shmup.p2.#f00', message: 'keys are exact colours "#rrggbb"' },
+    ]);
+  });
 });
 
 describe('scripts/assets/sprite-source — loading from disk (edge)', () => {
@@ -605,6 +670,20 @@ describe('scripts/assets/sprite-source — applyPngOverrides (edge)', () => {
     const [out] = applyPngOverrides([base], [png({ animations: { idle: [0, 0] } })]);
     expect(out.animations).toEqual({ idle: [0, 0] });
     expect(base.animations).toEqual({ idle: [0] });
+  });
+
+  it('lets a sidecar p2 map win over the code one and keeps the code one without a map (R3-03.V2a)', () => {
+    const mapped: SpriteDef = { ...base, p2: { '#010101': '#020202' } };
+    expect(applyPngOverrides([mapped], [png({ p2: { '#0f0f0f': '#f0f0f0' } })])[0].p2).toEqual({
+      '#0f0f0f': '#f0f0f0',
+    });
+    expect(applyPngOverrides([mapped], [png()])[0].p2).toEqual({ '#010101': '#020202' });
+    expect('p2' in applyPngOverrides([base], [png()])[0]).toBe(false);
+  });
+
+  it('carries a sidecar p2 map onto a PNG-only sprite', () => {
+    const out = applyPngOverrides([], [png({ name: 'ships/new', p2: { '#ffffff': '#000000' } })]);
+    expect(out[0].p2).toEqual({ '#ffffff': '#000000' });
   });
 
   it('returns a new list and leaves sprites without an override untouched (same object)', () => {

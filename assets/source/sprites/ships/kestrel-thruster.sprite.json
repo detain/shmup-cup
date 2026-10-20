@@ -2,6 +2,7 @@
   "name": "ships/kestrel-thruster",
   "description": "KESTREL thruster flame, drawn behind the ship; the anchor is the attachment point at its right edge.",
   "palette": { ".": null, "r": "#e84818", "y": "#f8c030", "w": "#fff8d0" },
+  "p2": { "#e84818": "#1848e8", "#f8c030": "#30c0f8", "#fff8d0": "#d0f8ff" },
   "anchor": [6, 1],
   "hitFlash": false,
   "frames": [
