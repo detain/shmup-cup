@@ -1,6 +1,8 @@
 /**
- * Stand-in zone art for the R3-04 memory round (decision W5-14) — part 1 (R3-04.M1a):
- * the seeded palette, the far layer, the keyed parallax bands and the tile set.
+ * Stand-in zone art for the R3-04 memory round (decision W5-14). Part 1 (R3-04.M1a) draws
+ * the seeded palette, the far layer, the keyed parallax bands and the tile set; part 2
+ * (R3-04.M1b, below) draws the enemies, the boss with its parts, and packs a whole stand-in
+ * set through the real pipeline with {@link standinAtlas}.
  *
  * The generators the shipped atlas uses draw v1's interim art (`procedural/`); real v2 art
  * arrives with R3. Between them, R3-04 must measure what a full v2 zone costs — PNG-8 bytes
@@ -9,7 +11,7 @@
  * the art bible's v2 sizes and honouring its colour rules, so the measurement is of a zone
  * the bible would accept, not of a flat placeholder.
  *
- * `standinZone(zoneId, { seed })` returns one zone's whole part-1 content:
+ * `standinZone(zoneId, { seed })` returns one zone's part-1 content:
  *
  * - `palette` — {@link PALETTE_SIZE} colours (bible §4.3 allows a zone 48–64), a seeded
  *   hue family laid out in fixed windows: sky `0…15`, mid `16…31`, rock `32…47`, accent
@@ -30,8 +32,23 @@
  *   is a binary mask painted with the rock window, a bright cap row, a dark underside and
  *   hashed surface texture. The whole set shares one palette window of at most 32 colours.
  *
- * Every surface stays inside bible §4.3's per-layer cap of 32 colours — the enemy and boss
- * caps belong to the sprites part 2 (R3-04.M1b) adds to this file.
+ * Every surface stays inside bible §4.3's per-layer cap of 32 colours; part 2's enemies stay
+ * inside {@link ENEMY_WINDOW} (16 colours) and the boss, its parts and states inside
+ * {@link BOSS_WINDOW} (24), the §4.3 caps for those roles.
+ *
+ * `standinAtlas(zones, { seed })` (part 2) turns the stand-ins of the given zones into
+ * `*.sprite.json` pixel maps of a **temporary source tree**: the shipped `assets/source/` is
+ * copied in (the pipeline reads sprites, fonts and the groups file from one root, and every
+ * name a groups file lists must be a sprite there), each stand-in layer, tile, enemy, the
+ * boss and its parts are written under `sprites/standin/zone-<x>/…` with `"native": true`
+ * (the pixels are drawn at the v2 size — the interim stage must not scale them) and, for the
+ * enemies and boss art, `"hitFlash": true` (the pipeline then adds the `@flash` silhouettes
+ * exactly as it does for the shipped sprites), and the tree's `atlas-groups.json` gains one
+ * `standin-zone-<x>` group per zone, listing that zone's stand-in base names — the shipped
+ * groups stay unchanged, so the stand-in pages stay pure (the stand-in never joins a shipped
+ * zone's pages, and the interim zone art never joins the stand-in's) and `common` stays
+ * today's `common`. {@link buildAtlas} then packs it for real — groups, packer, PNG-8
+ * encoder — and the temp tree is removed. Nothing is ever written into `assets/source/`.
  *
  * **The entropy is uncalibrated (decision RR-7).** `NOISE_CELL`, `HAZE_CELL`,
  * `FAR_STREAK_ROWS`, `DETAIL_DENSITY`, `RIBBON_DENSITY`, `BAND_STEP`,
@@ -53,7 +70,11 @@
  *
  * @module
  */
-import { FRAME_H, FRAME_W, TILE_SIZE } from '../frame.mjs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { FRAME_H, FRAME_W, PLAYFIELD_H, TILE_SIZE } from '../frame.mjs';
+import { ATLAS_GROUPS_FILE, DEFAULT_SOURCE_DIR, buildAtlas } from './pipeline.mjs';
 import { createAssetRng, hash2 } from './rng.mjs';
 import { color, seedOf } from './procedural/common.mjs';
 import { SEA_RAMP } from './procedural/raster-bands.mjs';
@@ -160,7 +181,7 @@ export const ZONE_IDS = Object.freeze(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', '
 export const FAR_WIDE_ZONES = Object.freeze(['b', 'd', 'f', 'h']);
 
 /** Fewest keyed bands a zone gets (§5.10: far plus 3–5 mid layers reads 4–6 total). */
-export const BAND_MIN_COUNT = 3;
+export const BAND_MIN_COUNT = 4;
 /** Most keyed bands a zone gets. */
 export const BAND_MAX_COUNT = 5;
 /** Shortest band layer (§5.10: mid layers are 120–240 px tall). */
@@ -184,7 +205,7 @@ export const NOISE_CELL = 8;
  * Width (px) of the large wash noise cells that soften the far gradient and the band
  * terraces. **Uncalibrated (RR-7)**.
  */
-export const HAZE_CELL = 32;
+export const HAZE_CELL = 16;
 
 /**
  * Rows the far layer's cloud streaks merge per noise cell — streaks are wide and flat, not
@@ -196,18 +217,18 @@ export const FAR_STREAK_ROWS = 3;
  * Speckle probability (per thousand pixels): a speckled pixel steps one level brighter or
  * darker. **Uncalibrated (RR-7)** — the dominant PNG-8 cost of noise.
  */
-export const DETAIL_DENSITY = 600;
+export const DETAIL_DENSITY = 1000;
 
 /**
  * Cloud coverage of the far layer (per thousand): the streak noise must rise above this
  * quantile of its `0…15` range before a pixel steps two levels up. **Uncalibrated (RR-7)**.
  */
-export const RIBBON_DENSITY = 105;
+export const RIBBON_DENSITY = 230;
 
 /**
  * Depth (px) per colour terrace of a band below its skyline. **Uncalibrated (RR-7)**.
  */
-export const BAND_STEP = 6;
+export const BAND_STEP = 3;
 
 /** Skyline rows drawn with the band window's brightest colour (rim light). */
 export const BAND_RIM_DEPTH = 2;
@@ -547,9 +568,9 @@ function buildBands(rng) {
     const period1 = BAND_PERIODS[rng.rangeInt(0, BAND_PERIODS.length - 1)];
     const period2 = BAND_PERIODS[rng.rangeInt(0, BAND_PERIODS.length - 1)];
     const shift = rng.rangeInt(0, period2 - 1);
-    const amp1 = rng.rangeInt(140, 420);
-    const amp2 = rng.rangeInt(60, 220);
-    const base = rng.rangeInt(Math.floor(height / 3), Math.floor((height * 3) / 4));
+    const amp1 = Math.round((height * rng.rangeInt(140, 420)) / 1000);
+    const amp2 = Math.round((height * rng.rangeInt(60, 220)) / 1000);
+    const base = rng.rangeInt(Math.floor(height / 8), Math.floor(height / 2));
     const seedWobble = rng.nextU32();
     const seedHaze = rng.nextU32();
     const seedSpeck = rng.nextU32();
@@ -769,4 +790,728 @@ export function standinZone(zoneId, { seed } = {}) {
   const bands = buildBands(rng);
   const tiles = buildTiles(rng);
   return Object.freeze({ zoneId, seed: seed32, palette, far, bands, tiles });
+}
+
+/* ------------------------------------------------------------------------ *
+ * Part 2 (R3-04.M1b): the enemy and boss sprites, and the real-pipeline pack.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * The enemy roster of one stand-in zone (§5.6's roles at bible v2 sizes; the shapes are the
+ * archetypes the interim `procedural/enemies` draws, dressed with wings, pods and lights).
+ * `width`/`height` are the base pixel edges; the zone seed jitters each by `0…4` px (even).
+ *
+ * @typedef {object} StandinEnemyKind
+ * @property {string} name - Kebab name, sprite `standin/zone-<id>/<name>`.
+ * @property {number} width - Base edge across.
+ * @property {number} height - Base edge down.
+ */
+
+/**
+ * The boss part sprites of one stand-in zone (the multi-part boss's weak points, §5.7):
+ * `frames` static per part, sizes fixed by the recipe.
+ *
+ * @typedef {object} StandinBossPart
+ * @property {string} name - Kebab name, sprite `standin/zone-<id>/<name>`.
+ * @property {number} width - Pixel edge across.
+ * @property {number} height - Pixel edge down.
+ * @property {number} frames - Frame count (a turret's headings, a pod's pulse).
+ */
+
+/** Fewest frames one stand-in enemy gets. */
+export const ENEMY_FRAME_MIN = 4;
+/** Most frames one stand-in enemy gets. */
+export const ENEMY_FRAME_MAX = 6;
+
+/** Width (px) of the stand-in boss (§5.7's big multi-part hull at v2 size). */
+export const BOSS_WIDTH = 420;
+
+/**
+ * Height (px) of the stand-in boss: 60 % of the playfield — `Math.round(0.6 * PLAYFIELD_H)`,
+ * never a literal (the frame scan; the value is 202 at 640×360).
+ */
+export const BOSS_HEIGHT = Math.round(0.6 * PLAYFIELD_H);
+
+/** The boss's states (frames): phase-1 armour, cracked plating, exposed core. */
+export const BOSS_STATES = 3;
+
+/** The stand-in zone's enemies (§5.6 roles; {@link ENEMY_FRAME_MIN}–{@link ENEMY_FRAME_MAX} frames each). */
+export const STANDIN_ENEMY_KINDS = Object.freeze([
+  { name: 'grunt', width: 28, height: 22 },
+  { name: 'dart', width: 26, height: 16 },
+  { name: 'orb', width: 22, height: 22 },
+  { name: 'tank', width: 44, height: 32 },
+  { name: 'turret', width: 30, height: 28 },
+  { name: 'bomber', width: 40, height: 30 },
+  { name: 'weaver', width: 28, height: 18 },
+  { name: 'skimmer', width: 34, height: 20 },
+  { name: 'pod', width: 22, height: 26 },
+  { name: 'hauler', width: 48, height: 32 },
+]);
+
+/** The stand-in boss's parts (weak points a multi-part boss tree hangs on its hull). */
+export const STANDIN_BOSS_PARTS = Object.freeze([
+  { name: 'boss-turret', width: 44, height: 44, frames: 4 },
+  { name: 'boss-pod', width: 26, height: 26, frames: 3 },
+  { name: 'boss-cannon', width: 30, height: 18, frames: 2 },
+]);
+
+/** An enemy's colour window: the eight brightest mids and the accents (16, §4.3's cap). */
+export const ENEMY_WINDOW = Object.freeze(
+  range(MID_FIRST + 8, 8).concat(range(ACCENT_FIRST, ACCENT_COUNT)),
+);
+
+/** The boss's colour window: bright rocks, bright mids, accents (24, §4.3's cap). */
+export const BOSS_WINDOW = Object.freeze(
+  range(ROCK_FIRST + 8, 8).concat(range(MID_FIRST + 8, 8), range(ACCENT_FIRST, ACCENT_COUNT)),
+);
+
+/**
+ * Speckle probability (per thousand pixels) on the stand-in sprites — the same §5.10/§5.12
+ * surface noise the part-1 layers carry, so the enemy and boss art costs PNG-8 bytes like
+ * detailed art, not like flat fills. **Uncalibrated (RR-7)**: an entropy knob like the ones above.
+ */
+export const SPRITE_DETAIL_DENSITY = 1000;
+
+/** Characters for palette slots: slot `i` draws with `SPRITE_CHAR_POOL[i]` (94 printable keys fit). */
+export const SPRITE_CHAR_POOL = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+/** Transparent pixel's character in a stand-in pixel map. */
+const TRANS_CHAR = '.';
+
+/** Frame wing offsets (doubled px): a four-frame flap cycle (no trig, a table). */
+const FLAP = Object.freeze([-2, 0, 2, 0]);
+
+/** Frame ribbon heights (doubled px ×2): an eight-step wave the weaver swims. */
+const WAVE8 = Object.freeze([0, 1, 2, 3, 4, 3, 2, 1]);
+
+/**
+ * The sprite name of one stand-in part: `standin/zone-<zoneId>/<segments…>`.
+ *
+ * @param zoneId - Zone letter.
+ * @param segments - Path segments below the zone.
+ * @returns The sprite name.
+ */
+export function standinSpriteName(zoneId, ...segments) {
+  return `standin/zone-${zoneId}/${segments.join('/')}`;
+}
+
+/**
+ * The atlas group of one stand-in zone: `standin-zone-<zoneId>` — never `zone-<id>`, the
+ * shipped group its directory segment alone would fall into.
+ *
+ * @param zoneId - Zone letter.
+ * @returns The group name.
+ */
+export function standinGroupName(zoneId) {
+  return `standin-zone-${zoneId}`;
+}
+
+/**
+ * Axis-aligned box in doubled coordinates (centred frame, even half-edges).
+ *
+ * @param dx - Doubled column from the centre.
+ * @param dy - Doubled row from the centre.
+ * @param cx - Centre column (doubled).
+ * @param cy - Centre row (doubled).
+ * @param hw - Half-width (doubled px, even).
+ * @param hh - Half-height (doubled px, even).
+ * @returns `true` inside.
+ */
+function inBox(dx, dy, cx, cy, hw, hh) {
+  return Math.abs(dx - cx) <= hw && Math.abs(dy - cy) <= hh;
+}
+
+/**
+ * Diamond in doubled coordinates (even half-diagonals).
+ *
+ * @param dx - Doubled column.
+ * @param dy - Doubled row.
+ * @param cx - Centre column.
+ * @param cy - Centre row.
+ * @param rx - Half-diagonal across (doubled px).
+ * @param ry - Half-diagonal down (doubled px).
+ * @returns `true` inside.
+ */
+function inDiamond(dx, dy, cx, cy, rx, ry) {
+  return Math.abs(dx - cx) * ry + Math.abs(dy - cy) * rx <= rx * ry;
+}
+
+/**
+ * Ellipse in doubled coordinates (even half-axes); exact integer maths only.
+ *
+ * @param dx - Doubled column.
+ * @param dy - Doubled row.
+ * @param cx - Centre column.
+ * @param cy - Centre row.
+ * @param rx - Semi-axis across (doubled px).
+ * @param ry - Semi-axis down (doubled px).
+ * @returns `true` inside.
+ */
+function inEllipse(dx, dy, cx, cy, rx, ry) {
+  const a = (dx - cx) * ry;
+  const b = (dy - cy) * rx;
+  return a * a + b * b <= rx * rx * ry * ry;
+}
+
+/** Sprite roles part 2 paints (0 is empty). */
+const ROLE = Object.freeze({ HULL: 1, WING: 2, DARK: 3, ACCENT: 4, PLATE: 5 });
+
+/**
+ * The role of one enemy pixel: each archetype is a union of ellipse/diamond/box primitives
+ * with a lighted part; wings ride the {@link FLAP} cycle. Faces point left (the side-scroller
+ * convention the interim enemies share).
+ *
+ * @param kind - The archetype's kebab name.
+ * @param dx - Doubled column from the frame centre.
+ * @param dy - Doubled row from the frame centre.
+ * @param x - Pixel column (for the hashed seams).
+ * @param y - Pixel row.
+ * @param f - Frame index.
+ * @param w - Frame width (px).
+ * @param h - Frame height (px).
+ * @returns A {@link ROLE} value.
+ */
+function enemyRole(kind, dx, dy, x, y, f, w, h) {
+  const bob = FLAP[f % 4];
+  if (kind === 'grunt') {
+    if (inDiamond(dx, dy, -6, 0, 8, 6)) return ROLE.ACCENT;
+    if (inEllipse(dx, dy, 0, 0, w - 6, h - 4)) return ROLE.HULL;
+    if (inBox(dx, dy, 0, bob, w - 6, 6) && Math.abs(dx) >= 14) return ROLE.WING;
+    return 0;
+  }
+  if (kind === 'dart') {
+    if (inDiamond(dx, dy, -(w - 5), 0, 8, 6)) return ROLE.ACCENT;
+    if (inBox(dx, dy, w - 4, 0, 4, 6)) return ROLE.DARK;
+    if (inDiamond(dx, dy, 0, 0, w - 2, h - 1)) return ROLE.HULL;
+    if (inBox(dx, dy, 8, bob, 10, 3)) return ROLE.WING;
+    return 0;
+  }
+  if (kind === 'orb') {
+    if (inEllipse(dx, dy, 0, 0, 8, 8)) return ROLE.DARK;
+    if (inEllipse(dx, dy, 0, 0, w - 4, h - 4) && !inEllipse(dx, dy, 0, 0, w - 10, h - 10)) {
+      return ROLE.ACCENT;
+    }
+    if (inEllipse(dx, dy, 0, 0, w - 2, h - 2)) return ROLE.HULL;
+    return 0;
+  }
+  if (kind === 'tank') {
+    if (inBox(dx, dy, 24, -20 + bob, 4, 2)) return ROLE.ACCENT;
+    if (inBox(dx, dy, 0, h - 8, w - 6, 5)) return x % 5 === 0 ? ROLE.HULL : ROLE.DARK;
+    if (inEllipse(dx, dy, 2, -10, w - 22, 10)) return ROLE.HULL;
+    if (inBox(dx, dy, -(w - 12), -8, 12, 3)) return ROLE.WING;
+    if (inBox(dx, dy, 2, 4, w - 8, h - 16)) return ROLE.HULL;
+    return 0;
+  }
+  if (kind === 'turret') {
+    if (f % 2 === 0 && inDiamond(dx, dy, 0, -4, 8, 8)) return ROLE.ACCENT;
+    if (inEllipse(dx, dy, 0, -4, w - 10, 14)) return ROLE.HULL;
+    if (inBox(dx, dy, -16, -10, 12, 4)) return ROLE.WING;
+    if (inBox(dx, dy, 0, h - 8, w - 6, 6)) return x % 6 === 0 ? ROLE.HULL : ROLE.DARK;
+    return 0;
+  }
+  if (kind === 'bomber') {
+    if (inEllipse(dx, dy, -16, 14, 10, 8) || inEllipse(dx, dy, 16, 14, 10, 8)) return ROLE.HULL;
+    if (Math.abs(dy - 8) <= 3 && Math.abs(dx) <= 20 && (x % 4 === 0 || (x >> 2) % 3 === f % 3)) {
+      return (x + (f % 3) * 6) % 8 < 2 ? ROLE.ACCENT : ROLE.DARK;
+    }
+    if (inEllipse(dx, dy, 0, 0, w - 4, h - 6)) return ROLE.HULL;
+    if (inBox(dx, dy, w - 8, -10, 6, 10)) return ROLE.WING;
+    return 0;
+  }
+  if (kind === 'weaver') {
+    const yoff = (WAVE8[(Math.floor(x / 2) + f) % 8] - 2) * 2;
+    if (inDiamond(dx, dy, -(w - 8), yoff, 8, 6)) return ROLE.ACCENT;
+    if (inEllipse(dx, dy, 0, yoff, 12, 8)) return ROLE.HULL;
+    if (Math.abs(dy - yoff) <= 3 && Math.abs(dx) >= 12) return ROLE.WING;
+    return 0;
+  }
+  if (kind === 'skimmer') {
+    if (inEllipse(dx, dy, -8, 0, 8, 6)) return ROLE.ACCENT;
+    if (inBox(dx, dy, w - 6, 0, 6, 8)) return ROLE.DARK;
+    if (inDiamond(dx, dy, 0, 0, w - 2, h - 2)) return ROLE.HULL;
+    if (inBox(dx, dy, 6, bob - 2, 10, 3)) return ROLE.WING;
+    return 0;
+  }
+  if (kind === 'pod') {
+    if (f % 3 === 0 && inDiamond(dx, dy, 0, -6, 6, 10)) return ROLE.ACCENT;
+    if (inBox(dx, dy, 0, h - 6, 10, 4)) return ROLE.DARK;
+    if (Math.abs(dy) % 10 <= 1 && Math.abs(dx) < w - 4) return ROLE.DARK;
+    if (inEllipse(dx, dy, 0, 0, w - 2, h - 4)) return ROLE.HULL;
+    return 0;
+  }
+  // hauler
+  if (f % 2 === 1 && inBox(dx, dy, -30, -24, 4, 4)) return ROLE.ACCENT;
+  if (inBox(dx, dy, 0, 0, w - 4, h - 6) && x % 8 === 0) return ROLE.DARK;
+  if (inBox(dx, dy, -28, -10, 10, 12)) return ROLE.PLATE;
+  if (inBox(dx, dy, 8, 0, w - 10, h - 8)) return ROLE.HULL;
+  if (inBox(dx, dy, w - 6, 0, 4, 10)) return ROLE.DARK;
+  return 0;
+}
+
+/**
+ * The {@link ENEMY_WINDOW} level of one enemy pixel: a top-lit gradient on the hull and
+ * wings, hashed speckle (the same §5.10 surface noise, the {@link SPRITE_DETAIL_DENSITY}
+ * quantile), the light roles riding the accent tail, and a rimmed top edge.
+ *
+ * @param role - The pixel's {@link ROLE}.
+ * @param x - Pixel column.
+ * @param y - Pixel row.
+ * @param f - Frame index.
+ * @param h - Frame height (px).
+ * @param seed - The kind's texture seed.
+ * @param aboveEmpty - `true` when the pixel above is transparent (a rim-lit row).
+ * @param belowEmpty - `true` when the pixel below is transparent (a shadowed foot).
+ * @returns An {@link ENEMY_WINDOW} index.
+ */
+function enemyLevel(role, x, y, f, h, seed, aboveEmpty, belowEmpty) {
+  const noise = hash2(x, y, seed);
+  if (role === ROLE.ACCENT) return 8 + ((f + (x >> 2) + (y >> 1) + (noise % 2)) % 8);
+  let level;
+  if (role === ROLE.DARK) level = noise % 3;
+  else if (role === ROLE.WING) level = (noise >>> 3) % 3;
+  else level = 2 + Math.floor((y * 4) / h) + (noise % 3) - 1;
+  if ((noise >>> 7) % 1000 < SPRITE_DETAIL_DENSITY) level += (noise & 1) === 0 ? 1 : -1;
+  if (belowEmpty) level = 0;
+  else if (aboveEmpty && role !== ROLE.DARK) level = 6;
+  return clamp(level, 0, 7);
+}
+
+/**
+ * The role of one boss pixel in state `s`: a big bevelled hull — box bands unioned with an
+ * ellipse, like the interim capital ships — armour plates, vents, seam grilles, a left eye
+ * cluster and a growing core; damage cracks spread with the state.
+ *
+ * @param dx - Doubled column from the centre.
+ * @param dy - Doubled row from the centre.
+ * @param x - Pixel column.
+ * @param y - Pixel row.
+ * @param s - State index.
+ * @param seed - The boss's texture seed.
+ * @returns A {@link ROLE} value.
+ */
+function bossRole(dx, dy, x, y, s, seed) {
+  const hw = BOSS_WIDTH - 2;
+  const hh = BOSS_HEIGHT - 2;
+  const hull =
+    inBox(dx, dy, 0, 0, hw - 8, hh - 24) ||
+    inBox(dx, dy, 0, 0, hw - 28, hh - 8) ||
+    inEllipse(dx, dy, 0, 0, hw - 4, hh - 6);
+  if (!hull) return 0;
+  const core = 44 + s * 44;
+  if (inEllipse(dx, dy, 0, 0, core, core - 12)) return ROLE.ACCENT;
+  if (inDiamond(dx, dy, -180, -30, 14, 8)) return ROLE.ACCENT;
+  if (inDiamond(dx, dy, -150, 10, 10, 6)) return ROLE.ACCENT;
+  if (s > 0 && hash2(x, y, seed + s * 101) % 1000 < s * 90) return ROLE.DARK;
+  if (dy > hh - 44 && dy < hh - 20 && x % 10 < 6) return ROLE.DARK;
+  if (inEllipse(dx, dy, 0, 0, core + 14, core + 2) && (x * 3 + y * 5) % 9 < 4) return ROLE.PLATE;
+  if (x % 26 < 1 || y % 30 < 1) return ROLE.DARK;
+  if (Math.abs(dy + 30) <= 20 && x % 78 < 40) return ROLE.PLATE;
+  if (Math.abs(dy - 40) <= 24 && x % 6 < 3) return ROLE.PLATE;
+  return ROLE.HULL;
+}
+
+/**
+ * The {@link BOSS_WINDOW} level of one boss pixel: rock gradient on the hull, mid families
+ * on the plates, the accent tail for core and eyes with a hashed pulse, speckle throughout,
+ * rim and foot edges like the enemies.
+ *
+ * @param role - The pixel's {@link ROLE}.
+ * @param x - Pixel column.
+ * @param y - Pixel row.
+ * @param s - State index.
+ * @param seed - The boss's texture seed.
+ * @param aboveEmpty - `true` when the pixel above is transparent.
+ * @param belowEmpty - `true` when the pixel below is transparent.
+ * @returns A {@link BOSS_WINDOW} index.
+ */
+function bossLevel(role, x, y, s, seed, aboveEmpty, belowEmpty) {
+  const noise = hash2(x, y, seed);
+  let level;
+  if (role === ROLE.ACCENT) level = 16 + (noise % 8);
+  else if (role === ROLE.DARK) level = 1 + (noise % 3);
+  else if (role === ROLE.PLATE) level = 8 + ((noise >>> 2) % 6) + ((x + y) % 6 < 2 ? 2 : 0);
+  else {
+    level = 3 + Math.floor((y * 5) / BOSS_HEIGHT) + (noise % 4);
+    if ((x + noise) % 9 < 2) level -= 2;
+  }
+  if (noise % 1000 < SPRITE_DETAIL_DENSITY) level += (noise >> 5) & 1 ? 1 : -1;
+  if (belowEmpty) level = 0;
+  else if (aboveEmpty && role !== ROLE.DARK && level < 16) level += 2;
+  return clamp(level, 0, 23);
+}
+
+/**
+ * The role of one boss-part pixel: the turret's barrel steps through four headings frame by
+ * frame, the pod pulses a ring, the cannon flashes its muzzle alternate frames.
+ *
+ * @param part - The part's kebab name.
+ * @param dx - Doubled column from the centre.
+ * @param dy - Doubled row from the centre.
+ * @param x - Pixel column.
+ * @param y - Pixel row.
+ * @param f - Frame index.
+ * @returns A {@link ROLE} value.
+ */
+function partRole(part, dx, dy, x, y, f) {
+  if (part === 'boss-turret') {
+    if (inEllipse(dx, dy, 0, 0, 28, 28)) {
+      if (inEllipse(dx, dy, 0, 0, 12, 12)) return ROLE.DARK;
+      if (x % 7 < 2 && Math.abs(dx) + Math.abs(dy) < 24) return ROLE.PLATE;
+      return ROLE.HULL;
+    }
+    if (f % 4 === 0 && inBox(dx, dy, 0, -18, 6, 16)) return ROLE.WING;
+    if (f % 4 === 1 && inBox(dx, dy, 18, 0, 16, 6)) return ROLE.WING;
+    if (f % 4 === 2 && inBox(dx, dy, 0, 18, 6, 16)) return ROLE.WING;
+    if (f % 4 === 3 && inBox(dx, dy, -18, 0, 16, 6)) return ROLE.WING;
+    return 0;
+  }
+  if (part === 'boss-pod') {
+    if (f % 3 === 0 && inDiamond(dx, dy, 0, 0, 8, 8)) return ROLE.ACCENT;
+    if (inEllipse(dx, dy, 0, 0, 12, 12) && !inEllipse(dx, dy, 0, 0, 8, 8)) return ROLE.PLATE;
+    if (inEllipse(dx, dy, 0, 0, 20, 20)) return ROLE.HULL;
+    return 0;
+  }
+  // boss-cannon
+  if (f === 1 && inBox(dx, dy, -16, 0, 8, 6)) return ROLE.ACCENT;
+  if (inBox(dx, dy, 2, 0, 22, 10)) return x % 6 < 2 ? ROLE.PLATE : ROLE.HULL;
+  if (inBox(dx, dy, 14, -6, 8, 2)) return ROLE.DARK;
+  return 0;
+}
+
+/**
+ * The {@link BOSS_WINDOW} level of one boss-part pixel (parts share the boss's window and cap).
+ *
+ * @param role - The pixel's {@link ROLE}.
+ * @param x - Pixel column.
+ * @param y - Pixel row.
+ * @param f - Frame index.
+ * @param seed - The part's texture seed.
+ * @param aboveEmpty - `true` when the pixel above is transparent.
+ * @param belowEmpty - `true` when the pixel below is transparent.
+ * @returns A {@link BOSS_WINDOW} index.
+ */
+function partLevel(role, x, y, f, seed, aboveEmpty, belowEmpty) {
+  const noise = hash2(x, y, seed);
+  let level;
+  if (role === ROLE.ACCENT) level = 20 + (f % 4);
+  else if (role === ROLE.DARK) level = 1;
+  else if (role === ROLE.PLATE) level = 9 + (noise % 3);
+  else if (role === ROLE.WING) level = 8 + (noise % 2);
+  else level = 4 + Math.floor((y * 3) / 22) + (noise % 2);
+  if (noise % 1000 < SPRITE_DETAIL_DENSITY) level += (noise & 1) === 0 ? 1 : -1;
+  if (belowEmpty) level = 0;
+  else if (aboveEmpty && level < 16) level += 2;
+  return clamp(level, 0, 23);
+}
+
+/**
+ * Draws a sprite's frames: a role pass, then the level pass over its neighbours, mapped
+ * through the colour window to palette slots ({@link KEY} where empty). The pixel data the
+ * sprite JSON files carry.
+ *
+ * @param width - Frame width (px).
+ * @param height - Frame height (px).
+ * @param frameCount - Frames to draw.
+ * @param window - The sprite's palette window (level → palette slot).
+ * @param roleAt - `(f, dx, dy, x, y) => role`, the silhouette test in doubled coords.
+ * @param levelAt - `(role, x, y, f, aboveEmpty, belowEmpty) => level`, the colouring.
+ * @returns {Uint8Array} Row-major palette indices (`frames * width * height`), {@link KEY} empty.
+ */
+function paintFrames(width, height, frameCount, window, roleAt, levelAt) {
+  const size = width * height;
+  const indices = new Uint8Array(size * frameCount).fill(KEY);
+  for (let f = 0; f < frameCount; f++) {
+    const roles = new Uint8Array(size);
+    for (let y = 0; y < height; y++) {
+      const dy = 2 * y - (height - 1);
+      for (let x = 0; x < width; x++) {
+        roles[y * width + x] = roleAt(f, 2 * x - (width - 1), dy, x, y);
+      }
+    }
+    const grid = indices.subarray(f * size);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const role = roles[y * width + x];
+        if (role === 0) continue;
+        const above = y > 0 ? roles[y * width + x - width] : 0;
+        const below = y + 1 < height ? roles[y * width + x + width] : 0;
+        grid[y * width + x] = window[levelAt(role, x, y, f, above === 0, below === 0)];
+      }
+    }
+  }
+  return indices;
+}
+
+/**
+ * The `rows` strings of one frame: every palette slot its own {@link SPRITE_CHAR_POOL}
+ * character, {@link KEY} the transparent dot.
+ *
+ * @param indices - Row-major palette indices of the frame.
+ * @param width - Frame width (px).
+ * @param height - Frame height (px).
+ * @returns The pixel-map rows.
+ */
+function rowsOf(indices, width, height) {
+  const rows = [];
+  for (let y = 0; y < height; y++) {
+    let row = '';
+    for (let x = 0; x < width; x++) {
+      const v = indices[y * width + x];
+      row += v === KEY ? TRANS_CHAR : SPRITE_CHAR_POOL[v];
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+/**
+ * Writes one stand-in sprite as a `*.sprite.json` pixel map below `sprites/` (the name is
+ * its path, so `standin/zone-a/boss` lands at `standin/zone-a/boss.sprite.json`):
+ * `"native": true` (the pixels are drawn at the v2 size; a non-native map would be scaled
+ * ×1.5 by the interim stage), and `"hitFlash": true` for the enemies and boss art, which is
+ * what makes the pipeline build the `@flash` silhouettes. No `p2` map: the stand-ins are
+ * never player ships, so `wantsP2Variant` leaves them alone.
+ *
+ * @param spritesDir - The temp tree's `sprites/` directory.
+ * @param name - The sprite name.
+ * @param description - One-line note carried in the file.
+ * @param palette - The zone palette (slot → `#rrggbb`).
+ * @param indices - Row-major palette indices, {@link KEY} empty.
+ * @param width - Frame width (px).
+ * @param height - Frame height (px).
+ * @param frameCount - Frames in `indices`.
+ * @param hitFlash - Whether the pipeline adds the `@flash` sibling.
+ * @returns {void}
+ */
+function writeStandinSprite(
+  spritesDir,
+  name,
+  description,
+  palette,
+  indices,
+  width,
+  height,
+  frameCount,
+  hitFlash,
+) {
+  const size = width * height;
+  const used = new Set();
+  for (let i = 0; i < indices.length; i++) {
+    if (indices[i] !== KEY) used.add(indices[i]);
+  }
+  const paletteObj = /** @type {Record<string, string | null>} */ ({ '.': null });
+  const slots = [...used].sort((a, b) => a - b);
+  for (const slot of slots) paletteObj[SPRITE_CHAR_POOL[slot]] = palette[slot];
+  const frames = [];
+  for (let f = 0; f < frameCount; f++) {
+    frames.push({ rows: rowsOf(indices.subarray(f * size, (f + 1) * size), width, height) });
+  }
+  const doc = /** @type {Record<string, unknown>} */ ({
+    name,
+    description,
+    palette: paletteObj,
+    hitFlash,
+    native: true,
+    frames,
+  });
+  const parts = name.split('/');
+  const dir = join(spritesDir, ...parts.slice(0, -1));
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `${parts[parts.length - 1]}.sprite.json`), JSON.stringify(doc) + '\n');
+}
+
+/**
+ * Draws and writes one zone's whole sprite set — the 40 tiles, the ten enemies, the boss
+ * and its parts — into the temp tree below `sprites/`, and lists the base names (the
+ * stand-in group's content, tiles first). The zone's part-1 layers are written by
+ * {@link writeStandinLayers}.
+ *
+ * @param spritesDir - The temp tree's `sprites/` directory.
+ * @param zone - The drawn {@link StandinZone}.
+ * @returns {string[]} Every stand-in base name written, in write order.
+ */
+function writeStandinSprites(spritesDir, zone) {
+  const rng = createAssetRng((zone.seed ^ seedOf(`standin/sprites/zone-${zone.zoneId}`)) >>> 0);
+  const names = [];
+  const size = zone.tiles.size;
+  for (let ti = 0; ti < zone.tiles.names.length; ti++) {
+    const name = standinSpriteName(zone.zoneId, 'tiles', zone.tiles.names[ti]);
+    const grid = zone.tiles.indices.subarray(ti * size * size, (ti + 1) * size * size);
+    writeStandinSprite(
+      spritesDir,
+      name,
+      `R3-04 stand-in tile ${zone.tiles.names[ti]}`,
+      zone.palette,
+      grid,
+      size,
+      size,
+      1,
+      false,
+    );
+    names.push(name);
+  }
+  for (const kind of STANDIN_ENEMY_KINDS) {
+    const width = kind.width + 2 * rng.rangeInt(0, 2);
+    const height = kind.height + 2 * rng.rangeInt(0, 2);
+    const frames = rng.rangeInt(ENEMY_FRAME_MIN, ENEMY_FRAME_MAX);
+    const seed = rng.nextU32();
+    const indices = paintFrames(
+      width,
+      height,
+      frames,
+      ENEMY_WINDOW,
+      (f, dx, dy, x, y) => enemyRole(kind.name, dx, dy, x, y, f, width, height),
+      (role, x, y, f, above, below) => enemyLevel(role, x, y, f, height, seed, above, below),
+    );
+    const name = standinSpriteName(zone.zoneId, kind.name);
+    writeStandinSprite(
+      spritesDir,
+      name,
+      `R3-04 stand-in enemy ${kind.name}`,
+      zone.palette,
+      indices,
+      width,
+      height,
+      frames,
+      true,
+    );
+    names.push(name);
+  }
+  const bossSeed = rng.nextU32();
+  const bossIndices = paintFrames(
+    BOSS_WIDTH,
+    BOSS_HEIGHT,
+    BOSS_STATES,
+    BOSS_WINDOW,
+    (s, dx, dy, x, y) => bossRole(dx, dy, x, y, s, bossSeed),
+    (role, x, y, s, above, below) => bossLevel(role, x, y, s, bossSeed, above, below),
+  );
+  const bossName = standinSpriteName(zone.zoneId, 'boss');
+  writeStandinSprite(
+    spritesDir,
+    bossName,
+    'R3-04 stand-in boss (three states)',
+    zone.palette,
+    bossIndices,
+    BOSS_WIDTH,
+    BOSS_HEIGHT,
+    BOSS_STATES,
+    true,
+  );
+  names.push(bossName);
+  for (const part of STANDIN_BOSS_PARTS) {
+    const seed = rng.nextU32();
+    const indices = paintFrames(
+      part.width,
+      part.height,
+      part.frames,
+      BOSS_WINDOW,
+      (f, dx, dy, x, y) => partRole(part.name, dx, dy, x, y, f),
+      (role, x, y, f, above, below) => partLevel(role, x, y, f, seed, above, below),
+    );
+    const name = standinSpriteName(zone.zoneId, part.name);
+    writeStandinSprite(
+      spritesDir,
+      name,
+      `R3-04 stand-in boss part ${part.name}`,
+      zone.palette,
+      indices,
+      part.width,
+      part.height,
+      part.frames,
+      true,
+    );
+    names.push(name);
+  }
+  return names;
+}
+
+/**
+ * Draws and writes one zone's part-1 backdrop layers — the far (opaque) and the keyed bands
+ * — as pixel maps too, so the stand-in atlas measures the whole zone (§5.10's stack), not
+ * only its sprites. The `KEY` sentinel becomes the `null` palette entry (binary alpha, the
+ * green key's pre-atlas form; M1a's mapping note).
+ *
+ * @param spritesDir - The temp tree's `sprites/` directory.
+ * @param zone - The drawn {@link StandinZone}.
+ * @returns {string[]} The layer base names, far first.
+ */
+function writeStandinLayers(spritesDir, zone) {
+  const names = [];
+  const far = zone.far;
+  const farName = standinSpriteName(zone.zoneId, 'far');
+  writeStandinSprite(
+    spritesDir,
+    farName,
+    'R3-04 stand-in far layer',
+    zone.palette,
+    far.indices,
+    far.width,
+    far.height,
+    1,
+    false,
+  );
+  names.push(farName);
+  zone.bands.forEach((band, b) => {
+    const name = standinSpriteName(zone.zoneId, `band-${b + 1}`);
+    writeStandinSprite(
+      spritesDir,
+      name,
+      `R3-04 stand-in keyed band ${b + 1}`,
+      zone.palette,
+      band.indices,
+      band.width,
+      band.height,
+      1,
+      false,
+    );
+    names.push(name);
+  });
+  return names;
+}
+
+/**
+ * Packs the stand-in art of the given zones through the real pipeline (decision W5-14, the
+ * R3-04 measurement's data source): a temp source tree gets (1) a copy of all of
+ * `assets/source/`, (2) every stand-in layer, tile, enemy, the boss and its parts as
+ * `sprites/standin/zone-<x>/…` pixel maps, (3) the shipped `atlas-groups.json` plus one
+ * `standin-zone-<x>` group per zone listing its stand-in names, and then (4) the real
+ * {@link buildAtlas} — groups, packer and PNG-8 encoder — before the tree is removed. The
+ * shipped `assets/source/` is never written to.
+ *
+ * Every `standin-zone-<x>` group's pages are PNG-8 (their colours are the ≤ 56-slot zone
+ * palette plus the flash white, far under the 256-entry indexed ceiling), which is what
+ * makes the group's byte measurement comparable to a shipped zone page.
+ *
+ * @param {string[]} [zones] - Zone letters to include (default all nine {@link ZONE_IDS}).
+ * @param {{ seed?: number }} [options] - Forwarded to {@link standinZone} for every zone.
+ * @returns {ReturnType<typeof buildAtlas>} Exactly what `buildAtlas({ sourceDir })` returns
+ *   for the temp tree.
+ * @throws {RangeError} When a zone id is not one of the campaign's.
+ */
+export function standinAtlas(zones = ZONE_IDS, options = {}) {
+  for (const zoneId of zones) {
+    if (!ZONE_IDS.includes(zoneId)) throw new RangeError(`unknown stand-in zone ${zoneId}`);
+  }
+  const tmp = mkdtempSync(join(tmpdir(), 'shmup-standin-'));
+  try {
+    cpSync(DEFAULT_SOURCE_DIR, tmp, { recursive: true });
+    const spritesDir = join(tmp, 'sprites');
+    const groupsPath = join(tmp, ATLAS_GROUPS_FILE);
+    const groupsDoc = /** @type {{ groups: Record<string, string[]> }} */ (
+      JSON.parse(readFileSync(groupsPath, 'utf8'))
+    );
+    for (const zoneId of zones) {
+      const zone = standinZone(zoneId, options);
+      const names = writeStandinLayers(spritesDir, zone).concat(
+        writeStandinSprites(spritesDir, zone),
+      );
+      groupsDoc.groups[standinGroupName(zoneId)] = names;
+    }
+    writeFileSync(groupsPath, JSON.stringify(groupsDoc, null, 2) + '\n');
+    return buildAtlas({ sourceDir: tmp });
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 }
