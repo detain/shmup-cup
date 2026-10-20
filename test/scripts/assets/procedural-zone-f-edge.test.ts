@@ -1,9 +1,9 @@
 /**
- * Edge cases of the M2-13 placeholder art (`scripts/assets/procedural/vault.mjs`, `prism.mjs` and
- * the zone tilesets `tiles/terrain-vault` / `tiles/terrain-prism` of `terrain.mjs`), beyond
- * `procedural-zones-fg.test.ts`:
+ * Edge cases of the zone F placeholder art (split out of `procedural-zones-fg-edge.test.ts` by
+ * R5-P.P5c; the cross-zone tests stayed with the earlier zone of their pair), beyond
+ * `procedural-zone-f.test.ts`:
  *
- * - both generators: frozen, unique, lower-case kebab path names, the same pixels in **every**
+ * - the vault generator: frozen, unique, lower-case kebab path names, the same pixels in **every**
  *   frame every run, every frame of a sprite the same size, every sprite that can be hit clearly
  *   visible in every frame (a quarter of it ≥ half opaque), animations naming existing frames,
  *   backdrops never flashing, the two ramps distinct from each other and from every other palette
@@ -17,10 +17,11 @@
  *   the solid rock is drawn only in the set's own rock colours, opaque in every pixel; the
  *   `content/tilesets/` files name their sprite and list the tiles in zone A's order; all seven
  *   sets have distinct rims and rock.
+ *
+ * @module
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getPixel, type Image } from '../../../scripts/assets/image.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
 import * as brine from '../../../scripts/assets/procedural/brine.mjs';
 import * as magma from '../../../scripts/assets/procedural/magma.mjs';
@@ -30,65 +31,11 @@ import * as tempest from '../../../scripts/assets/procedural/tempest.mjs';
 import * as terrain from '../../../scripts/assets/procedural/terrain.mjs';
 import * as vault from '../../../scripts/assets/procedural/vault.mjs';
 import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
-
-/**
- * Whether a frame is clearly visible: at least a quarter of its pixels at least half opaque.
- *
- * @param image - The frame.
- * @returns `true` when enough is drawn.
- */
-function drawn(image: Image): boolean {
-  let solid = 0;
-  for (let i = 3; i < image.data.length; i += 4) if (image.data[i] >= 128) solid++;
-  return solid * 4 >= image.width * image.height;
-}
-
-/**
- * The `#rrggbb` colours of an image's opaque pixels.
- *
- * @param image - The image.
- * @returns The set of colours.
- */
-function opaqueColours(image: Image): Set<string> {
-  const out = new Set<string>();
-  for (let y = 0; y < image.height; y++) {
-    for (let x = 0; x < image.width; x++) {
-      const [r, g, b, a] = getPixel(image, x, y);
-      if (a === 255) out.add('#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join(''));
-    }
-  }
-  return out;
-}
-
-/**
- * A sprite of a generator's output by name.
- *
- * @param sprites - The output.
- * @param name - Sprite name.
- * @returns The sprite.
- */
-function byName(sprites: readonly SpriteDef[], name: string): SpriteDef {
-  const sprite = sprites.find((s) => s.name === name);
-  if (sprite === undefined) throw new Error(`no ${name}`);
-  return sprite;
-}
-
-/**
- * Every frame of every sprite as text (base64 per frame), for byte comparisons.
- *
- * @param sprites - The sprites.
- * @returns One string per sprite.
- */
-function bytes(sprites: readonly SpriteDef[]): string[] {
-  return sprites.map(
-    (s) => s.name + ':' + s.frames.map((f) => Buffer.from(f.data).toString('base64')).join('|'),
-  );
-}
+import { byName, bytes, drawn, opaqueColours } from './procedural-zone-helpers.js';
 
 describe('scripts/assets/procedural vault / prism — every sprite (M2-13)', () => {
   const sets: readonly [string, readonly string[], () => SpriteDef[]][] = [
     ['vault', vault.VAULT_SPRITES, vault.generate],
-    ['prism', prism.PRISM_SPRITES, prism.generate],
   ];
 
   it.each(sets)('%s: frozen, unique, kebab path names', (_id, names) => {
@@ -174,7 +121,7 @@ describe('scripts/assets/procedural/terrain — zones F and G tilesets (M2-13)',
   const sets = terrain.generate();
   const a = byName(sets, 'tiles/terrain-a');
 
-  it.each(['tiles/terrain-vault', 'tiles/terrain-prism'])(
+  it.each(['tiles/terrain-vault'])(
     '%s: bricks, cubes and tissue exactly as in zone A; the rock in its own colours only',
     (name) => {
       const set = byName(sets, name);

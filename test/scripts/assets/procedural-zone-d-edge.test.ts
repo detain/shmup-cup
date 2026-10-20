@@ -1,14 +1,12 @@
 /**
- * Edge cases of the M2-12 placeholder art (`scripts/assets/procedural/magma.mjs`, `tempest.mjs`
- * and the zone tilesets `tiles/terrain-magma` / `tiles/terrain-ridge` of `terrain.mjs`), beyond
- * `procedural-zones-de.test.ts`:
+ * Edge cases of the zone D placeholder art (split out of `procedural-zones-de-edge.test.ts` by
+ * R5-P.P5c; the cross-zone tests stayed with the earlier zone of their pair), beyond
+ * `procedural-zone-d.test.ts`:
  *
- * - both generators: frozen, unique, lower-case kebab path names, the same pixels every run,
+ * - the magma generator: frozen, unique, lower-case kebab path names, the same pixels every run,
  *   every frame of a sprite the same size, every sprite that can be hit clearly visible in every
  *   frame (a quarter of it ≥ half opaque), every animated sprite's frames really differ and its
- *   animations name existing frames, backdrops never flash — the fix of this test round: the
- *   squall jumper's two frames were identical (the flame that should flicker was drawn where the
- *   fuselage and the wings cover it), so its jet never flickered;
+ *   animations name existing frames, backdrops never flash;
  * - the bands tile: the rain repeats seamlessly along both axes (its drops sit on a wrapped grid),
  *   the lava lake is opaque in every pixel (the cycle recolours all of it);
  * - the registry: `procedural/index.mjs` runs both generators (ids `magma` / `tempest`) and every
@@ -16,74 +14,22 @@
  * - the zone tilesets: the destructible tiles (brick, cube, tissue) look exactly like zone A's (a
  *   brick reads as a brick in every zone); the solid rock is drawn only in the set's own rock
  *   colours; the `content/tilesets/` files name their sprite; all five sets have distinct rims.
+ *
+ * @module
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getPixel, type Image } from '../../../scripts/assets/image.mjs';
+import { getPixel } from '../../../scripts/assets/image.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
 import * as magma from '../../../scripts/assets/procedural/magma.mjs';
 import * as tempest from '../../../scripts/assets/procedural/tempest.mjs';
 import * as terrain from '../../../scripts/assets/procedural/terrain.mjs';
 import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
-
-/**
- * Whether a frame is clearly visible: at least a quarter of its pixels at least half opaque.
- *
- * @param image - The frame.
- * @returns `true` when enough is drawn.
- */
-function drawn(image: Image): boolean {
-  let solid = 0;
-  for (let i = 3; i < image.data.length; i += 4) if (image.data[i] >= 128) solid++;
-  return solid * 4 >= image.width * image.height;
-}
-
-/**
- * The `#rrggbb` colours of an image's opaque pixels.
- *
- * @param image - The image.
- * @returns The set of colours.
- */
-function opaqueColours(image: Image): Set<string> {
-  const out = new Set<string>();
-  for (let y = 0; y < image.height; y++) {
-    for (let x = 0; x < image.width; x++) {
-      const [r, g, b, a] = getPixel(image, x, y);
-      if (a === 255) out.add('#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join(''));
-    }
-  }
-  return out;
-}
-
-/**
- * A sprite of a generator's output by name.
- *
- * @param sprites - The output.
- * @param name - Sprite name.
- * @returns The sprite.
- */
-function byName(sprites: readonly SpriteDef[], name: string): SpriteDef {
-  const sprite = sprites.find((s) => s.name === name);
-  if (sprite === undefined) throw new Error(`no ${name}`);
-  return sprite;
-}
-
-/**
- * A sprite's frames as text (base64 per frame), for byte comparisons.
- *
- * @param sprites - The sprites.
- * @returns One string per sprite.
- */
-function bytes(sprites: readonly SpriteDef[]): string[] {
-  return sprites.map(
-    (s) => s.name + ':' + s.frames.map((f) => Buffer.from(f.data).toString('base64')).join('|'),
-  );
-}
+import { byName, bytes, drawn, opaqueColours } from './procedural-zone-helpers.js';
 
 describe('scripts/assets/procedural magma / tempest — every sprite (M2-12)', () => {
   const sets: readonly [string, readonly string[], () => SpriteDef[]][] = [
     ['magma', magma.MAGMA_SPRITES, magma.generate],
-    ['tempest', tempest.TEMPEST_SPRITES, tempest.generate],
   ];
 
   it.each(sets)('%s: frozen, unique, kebab path names', (_id, names) => {
@@ -159,7 +105,7 @@ describe('scripts/assets/procedural/terrain — zones D and E tilesets (M2-12)',
   const sets = terrain.generate();
   const a = byName(sets, 'tiles/terrain-a');
 
-  it.each(['tiles/terrain-magma', 'tiles/terrain-ridge'])(
+  it.each(['tiles/terrain-magma'])(
     '%s: bricks, cubes and tissue exactly as in zone A; the rock in its own colours only',
     (name) => {
       const set = byName(sets, name);

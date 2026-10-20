@@ -1,16 +1,16 @@
 /**
- * The placeholder art of plan M2-14 (`scripts/assets/procedural/citadel.mjs`, `abyss.mjs`,
- * `ending.mjs` and the zone tilesets `tiles/terrain-citadel` / `tiles/terrain-abyss` of
- * `terrain.mjs`): every zone H and I sprite and every ending-scene piece drawn in its documented
- * order, with hit flashes on everything that can be hit (not on the ARK's hull sections —
- * decoration — nor on the ending's pieces); the citadel wall's running lights and the deep's
- * specks painted only in the ramps the zones' palette cycles name, and nothing else in those
- * colours; the bands repeating; animated frames that differ; the ARK's turret with sixteen
- * heading frames; every hurtbox of the zone H and I rosters inside the sprite drawn for it; the
- * ending pieces exactly the core's ending UI sprites; deterministic output.
+ * The zone H placeholder art of plan M2-14 (`scripts/assets/procedural/citadel.mjs`, with the
+ * abyss and ending generators and the zone tilesets of `terrain.mjs` this pair file held — split
+ * out of `procedural-zones-hi.test.ts` by R5-P.P5c; the tests that examine more than one zone
+ * stayed with the earlier zone of the pair): the zone H sprite list drawn in its documented order,
+ * registered and deterministic, its citadel wall's running lights painted only in the ramp the
+ * zone's palette cycle names, the conduits repeating every 32 px, two more tilesets with their own
+ * rims, and every hurtbox of the zone H and I rosters inside the sprite drawn for it. The tests
+ * that examine only zone I's art and the ending pieces are in `procedural-zone-i.test.ts`.
+ *
+ * @module
  */
 import { readFileSync } from 'node:fs';
-import { UI_SPRITES } from '@shmup/core';
 import { describe, expect, it } from 'vitest';
 import { getPixel, imagesEqual, type Image } from '../../../scripts/assets/image.mjs';
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
@@ -19,20 +19,7 @@ import * as citadel from '../../../scripts/assets/procedural/citadel.mjs';
 import * as ending from '../../../scripts/assets/procedural/ending.mjs';
 import { PROCEDURAL_GENERATORS } from '../../../scripts/assets/procedural/index.mjs';
 import * as terrain from '../../../scripts/assets/procedural/terrain.mjs';
-import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
-
-/**
- * A sprite of a generator's output by name.
- *
- * @param sprites - The output.
- * @param name - Sprite name.
- * @returns The sprite.
- */
-function byName(sprites: readonly SpriteDef[], name: string): SpriteDef {
-  const sprite = sprites.find((s) => s.name === name);
-  if (sprite === undefined) throw new Error(`no ${name}`);
-  return sprite;
-}
+import { byName } from './procedural-zone-helpers.js';
 
 /**
  * The zone H and I boxes W5-3 allows 1 px outside their art: entries whose half-extent is odd, so
@@ -160,38 +147,6 @@ describe('scripts/assets/procedural — zones H and I, the ending scenes (M2-14)
     }
     expect(abyss.SPIRES_TILE_W % 32).toBe(0);
     expect(wraps(byName(i, 'bg/abyss-spires').frames[0])).toBeGreaterThan(0.75);
-  });
-
-  it("gives the ARK's turret sixteen heading frames and the ending pieces their shapes", () => {
-    const turret = byName(i, 'bosses/ark-turret');
-    expect(turret.frames).toHaveLength(16);
-    const blast = byName(e, 'ui/ending-blast');
-    expect(blast.frames).toHaveLength(4);
-    const opaque = (image: Image): number => {
-      let n = 0;
-      for (let y = 0; y < image.height; y++)
-        for (let x = 0; x < image.width; x++) if (getPixel(image, x, y)[3] > 0) n++;
-      return n;
-    };
-    // The blast grows from a small flash to a wide ring.
-    expect(opaque(blast.frames[0])).toBeLessThan(opaque(blast.frames[1]));
-    const sun = byName(e, 'ui/ending-sun').frames[0];
-    expect(getPixel(sun, 32, sun.height - 1)[3]).toBe(255); // the half disc sits on its bottom row
-    expect(getPixel(sun, 4, 4)[3]).toBe(0); // a transparent sky round it
-    const surface = byName(e, 'ui/ending-surface').frames[0];
-    expect(surface.width).toBe(64);
-    // Its waves repeat every 32 px, so copies side by side join without a seam.
-    for (let x = 0; x < 32; x++) {
-      for (let y = 0; y < surface.height; y++) {
-        expect(getPixel(surface, x, y)).toEqual(getPixel(surface, x + 32, y));
-      }
-    }
-  });
-
-  it("names exactly the core's ending UI sprites", () => {
-    expect([...ending.ENDING_SPRITES].sort()).toEqual(
-      UI_SPRITES.filter((name) => name.startsWith('ui/ending-')).sort(),
-    );
   });
 
   it('draws two more tilesets with their own rims', () => {

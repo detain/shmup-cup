@@ -1,15 +1,18 @@
 /**
- * Edge cases of the M2-11 placeholder art (`scripts/assets/procedural/common.mjs` shape helpers,
- * `brine.mjs`, `dune.mjs`), beyond `procedural-zones.test.ts`:
+ * Edge cases of the zone B placeholder art and of the `common.mjs` shape helpers (split out of
+ * `procedural-zones-edge.test.ts` by R5-P.P5c; the cross-zone tests stayed with the earlier zone
+ * of their pair), beyond `procedural-zone-b.test.ts`:
  *
  * - `drawLine`: a zero-length line is one dot (a single pixel, or a plus of five at width 3), a
  *   horizontal line covers exactly its span, lines overhanging the image are clipped;
  * - `fillEllipse`: a radius below half a pixel paints only the centre pixel, `paint` gets the
  *   pixel's own coordinates, a centre between pixels paints a mirror-symmetric shape;
- * - both generators: deterministic, frozen name lists, every frame of a sprite the same size,
+ * - the brine generator: deterministic, frozen name list, every frame of a sprite the same size,
  *   every sprite that can be hit is clearly visible in every frame (a quarter of it ≥ half opaque);
  * - the rosters: every zone B and C hurtbox fits inside the sprite drawn for it (a shot never
- *   hits empty space around the art).
+ *   hits empty space around the art). Zone C's own edge cases are in `procedural-zone-c-edge.test.ts`.
+ *
+ * @module
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -17,8 +20,8 @@ import { createImage, getPixel, type Image } from '../../../scripts/assets/image
 import { buildAtlas } from '../../../scripts/assets/pipeline.mjs';
 import * as brine from '../../../scripts/assets/procedural/brine.mjs';
 import { color, drawLine, fillEllipse } from '../../../scripts/assets/procedural/common.mjs';
-import * as dune from '../../../scripts/assets/procedural/dune.mjs';
 import type { SpriteDef } from '../../../scripts/assets/sprite-source.mjs';
+import { drawn } from './procedural-zone-helpers.js';
 
 /**
  * The painted (alpha > 0) pixels of an image as `x,y` strings.
@@ -32,19 +35,6 @@ function painted(image: Image): string[] {
     for (let x = 0; x < image.width; x++) if (getPixel(image, x, y)[3] > 0) out.push(`${x},${y}`);
   }
   return out;
-}
-
-/**
- * Whether a frame is clearly visible: at least a quarter of its pixels at least half opaque (the
- * dust devil is drawn translucent on purpose).
- *
- * @param image - The frame.
- * @returns `true` when enough is drawn.
- */
-function drawn(image: Image): boolean {
-  let solid = 0;
-  for (let i = 3; i < image.data.length; i += 4) if (image.data[i] >= 128) solid++;
-  return solid * 4 >= image.width * image.height;
 }
 
 describe('scripts/assets/procedural/common drawLine — edge cases (M2-11)', () => {
@@ -109,7 +99,6 @@ describe('scripts/assets/procedural/common fillEllipse — edge cases (M2-11)', 
 describe('scripts/assets/procedural brine / dune — every sprite (M2-11)', () => {
   const sets: readonly [string, readonly string[], () => SpriteDef[]][] = [
     ['brine', brine.BRINE_SPRITES, brine.generate],
-    ['dune', dune.DUNE_SPRITES, dune.generate],
   ];
 
   it.each(sets)(
